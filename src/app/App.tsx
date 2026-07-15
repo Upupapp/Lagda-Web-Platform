@@ -6,15 +6,13 @@ import { useLocation } from "react-router";
 // reads the current pathname and derives the active section/tab.
 // No state machine, no bidirectional effects, no URL sync loops.
 
-type Section = "security" | "solutions" | "pricing" | "resources";
-type SecurityTab = "security-overview" | "trust-center";
+type Section = "solutions" | "pricing" | "resources";
 type PricingTab = "pricing-main" | "compare-plans";
 type ResourcesTab = "guides" | "faq";
 type SolutionsTab = "all" | "lawyers";
 
 type UrlState = {
   section: Section;
-  securityTab?: SecurityTab;
   pricingTab?: PricingTab;
   resourcesTab?: ResourcesTab;
   solutionsTab?: SolutionsTab;
@@ -22,8 +20,6 @@ type UrlState = {
 
 function pathToState(pathname: string): UrlState | null {
   const p = pathname.replace(/\/$/, "");
-  if (p === "/security" || p === "/security/security-overview") return { section: "security",  securityTab: "security-overview" };
-  if (p === "/security/trust-center")                          return { section: "security",   securityTab: "trust-center" };
   if (p === "/solutions")                                      return { section: "solutions",  solutionsTab: "all" };
   if (p === "/solutions/lawyers")                              return { section: "solutions",  solutionsTab: "lawyers" };
   if (p === "/pricing")                                        return { section: "pricing",    pricingTab: "pricing-main" };
@@ -33,8 +29,6 @@ function pathToState(pathname: string): UrlState | null {
   return null;
 }
 
-import DLagdaSecurityOverview from "@/imports/DLagdaSecurityOverview/index";
-import DLagdaSecurityTrustCenter from "@/imports/DLagdaSecurityTrustCenter/index";
 import DLagdaSolutionsAll from "@/imports/DLagdaSolutionsAll/index";
 import DLagdaPricingMainPage from "@/imports/DLagdaPricingMainPage/index";
 import DLagdaPricingComparePlans from "@/imports/DLagdaPricingComparePlans/index";
@@ -103,7 +97,6 @@ const globalOverrides = `
   }
 
   /* Root page containers: stretch children to full width */
-  [data-name="d-lagda-security-overview"],
   [data-name="d-lagda-solutions-all"],
   [data-name="d-lagda-resources-guides"],
   [data-name="d-lagda-resources-faq"] {
@@ -114,33 +107,8 @@ const globalOverrides = `
   [data-name="featured-section"] { align-items: center !important; }
   [data-name="workflow-strip"] > div:not([aria-hidden]) { align-items: center !important; }
 
-  [data-name="d-lagda-security-overview"] [data-name="Footer"] > div > div {
-    align-items: center !important;
-  }
-
   [data-name="Trust Badges - Section"] [class*="e6e6e6"] { color: black !important; }
 
-  [data-name="Hero - Security & Trust"] [data-name="Left Column"] > p:nth-child(2) {
-    top: 2px !important; left: 8px !important;
-  }
-
-  [data-name="Hero - Security & Trust"] [data-name="Left Column"] > div:nth-child(3) { height: auto !important; }
-  [data-name="Hero - Security & Trust"] [data-name="Left Column"] > div:nth-child(3) p { line-height: 64px !important; }
-  [data-name="Hero - Security & Trust"] [data-name="Left Column"] > p:nth-child(4) { top: 270px !important; }
-  [data-name="Hero - Security & Trust"] [data-name="Badge Row"] { top: 423px !important; }
-  [data-name="Hero - Security & Trust"] [data-name="CTA: Create Free LAGDA Account"] { top: 543px !important; }
-  [data-name="Hero - Security & Trust"] [data-name="CTA: Book a Demo"] { top: 543px !important; }
-  [data-name="Hero - Security & Trust"] [data-name="Left Column"] > p:nth-child(8) { top: 633px !important; }
-  [data-name="Hero - Security & Trust"] [data-name="Left Column"] > p:nth-child(9) { top: 651px !important; }
-  [data-name="Hero - Security & Trust"] [data-name="Left Column"] { height: 723px !important; }
-
-  [data-name="Audit Trail - Section"] { height: auto !important; }
-
-  [data-name="Identity Verification"] [data-name="Right Column"] { align-items: center !important; }
-  [data-name="Identity Verification"] [data-name="Right Column"] [data-name="Divider"] {
-    width: 50% !important; margin-left: auto !important; margin-right: auto !important;
-  }
-  [data-name="Two Column Layout"] { align-items: center !important; }
   [data-name^="Row:"] { height: auto !important; min-height: 90px; }
 
   [data-name^="Card:"] {
@@ -268,8 +236,7 @@ export default function App() {
 
   // Derive current view entirely from URL — no state, no effects for sync.
   const parsed        = pathToState(pathname);
-  const section       = (parsed?.section      ?? "security")          as Section;
-  const securityTab   = (parsed?.securityTab  ?? "security-overview") as SecurityTab;
+  const section       = (parsed?.section      ?? "solutions")  as Section;
   const pricingTab    = (parsed?.pricingTab   ?? "pricing-main")      as PricingTab;
   const resourcesTab  = (parsed?.resourcesTab ?? "guides")            as ResourcesTab;
   const solutionsTab  = (parsed?.solutionsTab ?? "all")               as SolutionsTab;
@@ -345,6 +312,7 @@ export default function App() {
     : section === "solutions" ? solutionsPullUp
     : 0;
 
+
   return (
     <>
       {/* Global CSS overrides for Figma imports — nav/footer suppression + polish */}
@@ -360,8 +328,6 @@ export default function App() {
             className="lagda-page-enter"
             style={{ width: 1440, minWidth: 1440, marginLeft: "auto", marginRight: "auto" }}
           >
-            {section === "security"   && securityTab === "security-overview"   && <DLagdaSecurityOverview />}
-            {section === "security"   && securityTab === "trust-center"        && <DLagdaSecurityTrustCenter />}
             {section === "solutions"  && solutionsTab === "all"                && <DLagdaSolutionsAll />}
             {section === "solutions"  && solutionsTab === "lawyers"            && <DLagdaSolutionsLawyers />}
             {section === "pricing"    && pricingTab === "pricing-main"         && <DLagdaPricingMainPage />}

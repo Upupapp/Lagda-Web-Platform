@@ -16,6 +16,36 @@ import { EsigAdvancedCapabilities } from "./app/pages/public/esignature/EsigAdva
 import { EsigTemplatesBranding } from "./app/pages/public/esignature/EsigTemplatesBranding";
 import { EsigTeamEnterprise } from "./app/pages/public/esignature/EsigTeamEnterprise";
 
+// ── Features pages (Command 7) ─────────────────────────────────────────────────
+import { FeaturesOverview } from "./app/pages/public/features/FeaturesOverview";
+import { DocPrep } from "./app/pages/public/features/DocPrep";
+import { ParticipantRoles } from "./app/pages/public/features/ParticipantRoles";
+import { ParallelSigning } from "./app/pages/public/features/ParallelSigning";
+import { SequentialSigning } from "./app/pages/public/features/SequentialSigning";
+import { SignerAuth } from "./app/pages/public/features/SignerAuth";
+import { IdentityAwareSigning } from "./app/pages/public/features/IdentityAwareSigning";
+import { AuditTrail } from "./app/pages/public/features/AuditTrail";
+import { DocVerification } from "./app/pages/public/features/DocVerification";
+import { Templates } from "./app/pages/public/features/Templates";
+import { Contacts } from "./app/pages/public/features/Contacts";
+import { CompanyBranding } from "./app/pages/public/features/CompanyBranding";
+import { Notifications } from "./app/pages/public/features/Notifications";
+import { TeamWorkspaces } from "./app/pages/public/features/TeamWorkspaces";
+import { StoragePlanLimits } from "./app/pages/public/features/StoragePlanLimits";
+import { ApiIntegrations } from "./app/pages/public/features/ApiIntegrations";
+
+// ── Security pages (Command 7) ─────────────────────────────────────────────────
+import { SecurityOverview } from "./app/pages/public/security/SecurityOverview";
+import { TrustCenter } from "./app/pages/public/security/TrustCenter";
+import { AccountSecurity } from "./app/pages/public/security/AccountSecurity";
+import { SecuritySignerAuth } from "./app/pages/public/security/SecuritySignerAuth";
+import { IdentityVerification } from "./app/pages/public/security/IdentityVerification";
+import { SecurityAuditTrail } from "./app/pages/public/security/SecurityAuditTrail";
+import { SecurityDocVerification } from "./app/pages/public/security/SecurityDocVerification";
+import { DeviceLocationEvidence } from "./app/pages/public/security/DeviceLocationEvidence";
+import { SecureStorage } from "./app/pages/public/security/SecureStorage";
+import { PrivacyDataProtection } from "./app/pages/public/security/PrivacyDataProtection";
+
 // ── Router definition ─────────────────────────────────────────────────────────
 //
 // Route order matters: more-specific paths (auth, platform) are defined first
@@ -150,7 +180,18 @@ export const router = createBrowserRouter([
       { path: "esignature/advanced-capabilities", element: <EsigAdvancedCapabilities /> },
       { path: "esignature/templates-and-branding", element: <EsigTemplatesBranding /> },
       { path: "esignature/team-and-enterprise", element: <EsigTeamEnterprise /> },
-      { path: "security/*", element: <App /> },
+      // ── Security pages (Command 7 — production React pages) ──────────────────
+      { path: "security",                              element: <SecurityOverview /> },
+      { path: "security/trust-center",                element: <TrustCenter /> },
+      { path: "security/account-security",            element: <AccountSecurity /> },
+      { path: "security/signer-authentication",       element: <SecuritySignerAuth /> },
+      { path: "security/identity-verification",       element: <IdentityVerification /> },
+      { path: "security/audit-trail",                 element: <SecurityAuditTrail /> },
+      { path: "security/document-verification",       element: <SecurityDocVerification /> },
+      { path: "security/device-and-location-evidence", element: <DeviceLocationEvidence /> },
+      { path: "security/secure-storage",              element: <SecureStorage /> },
+      { path: "security/privacy-and-data-protection", element: <PrivacyDataProtection /> },
+
       { path: "solutions/*", element: <App /> },
       { path: "pricing/*", element: <App /> },
       { path: "resources/*", element: <App /> },
@@ -198,26 +239,23 @@ export const router = createBrowserRouter([
         ),
       },
 
-      // ── Features ──────────────────────────────────────────────────────────────
-      {
-        path: "features",
-        element: (
-          <DevPlaceholder
-            title="LAGDA Features"
-            subtitle="Full feature index coming soon."
-          />
-        ),
-      },
-      {
-        path: "features/*",
-        element: (
-          <DevPlaceholder
-            title="Feature Detail"
-            subtitle="This feature page is coming soon."
-            showBack
-          />
-        ),
-      },
+      // ── Features pages (Command 7 — production React pages) ─────────────────
+      { path: "features",                           element: <FeaturesOverview /> },
+      { path: "features/document-preparation",      element: <DocPrep /> },
+      { path: "features/participant-roles",         element: <ParticipantRoles /> },
+      { path: "features/parallel-signing",          element: <ParallelSigning /> },
+      { path: "features/sequential-signing",        element: <SequentialSigning /> },
+      { path: "features/signer-authentication",     element: <SignerAuth /> },
+      { path: "features/identity-aware-signing",    element: <IdentityAwareSigning /> },
+      { path: "features/audit-trail",               element: <AuditTrail /> },
+      { path: "features/document-verification",     element: <DocVerification /> },
+      { path: "features/templates",                 element: <Templates /> },
+      { path: "features/contacts",                  element: <Contacts /> },
+      { path: "features/company-branding",          element: <CompanyBranding /> },
+      { path: "features/notifications",             element: <Notifications /> },
+      { path: "features/team-workspaces",           element: <TeamWorkspaces /> },
+      { path: "features/storage-and-plan-limits",   element: <StoragePlanLimits /> },
+      { path: "features/api-and-integrations",      element: <ApiIntegrations /> },
 
       // ── Help and Contact ──────────────────────────────────────────────────────
       {
