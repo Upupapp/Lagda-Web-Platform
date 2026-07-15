@@ -169,12 +169,12 @@ function getDocActions(
     acts.push({ id: "continue-draft", label: "Continue Editing", href: `/app/documents/${item.id}` });
     acts.push({ id: "rename-draft",   label: "Rename" });
   }
-  acts.push({ id: "view-activity", label: "View Activity", href: `/app/documents/${item.id}?tab=activity` });
+  acts.push({ id: "view-activity", label: "View Activity", href: `/app/documents/${item.id}/activity` });
   if (item.participantCount > 0 && item.status !== "draft") {
-    acts.push({ id: "view-participants", label: "Participants", href: `/app/documents/${item.id}?tab=participants` });
+    acts.push({ id: "view-participants", label: "Participants", href: `/app/documents/${item.id}/participants` });
   }
   if (item.verificationId && item.verificationStatus === "available" && canVerify) {
-    acts.push({ id: "view-evidence", label: "View Evidence", href: `/app/documents/${item.id}?tab=evidence` });
+    acts.push({ id: "view-evidence", label: "View Evidence", href: `/app/documents/${item.id}/evidence` });
   }
   if (item.status === "archived") {
     acts.push({ id: "restore", label: "Restore" });

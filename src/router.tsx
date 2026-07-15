@@ -137,6 +137,14 @@ const PlatformNotFound    = lazy(() => import("./app/pages/platform/PlatformNotF
 const PermissionDenied    = lazy(() => import("./app/pages/platform/PermissionDenied").then(m => ({ default: m.PermissionDenied })));
 const SessionExpired      = lazy(() => import("./app/pages/platform/SessionExpired").then(m => ({ default: m.SessionExpired })));
 
+// Transaction detail (Command 16)
+const TransactionDetailLayout = lazy(() => import("./app/pages/platform/documents/TransactionDetailPage").then(m => ({ default: m.TransactionDetailLayout })));
+const OverviewTab     = lazy(() => import("./app/pages/platform/documents/TransactionDetailPage").then(m => ({ default: m.OverviewTab })));
+const ParticipantsTab = lazy(() => import("./app/pages/platform/documents/TransactionDetailPage").then(m => ({ default: m.ParticipantsTab })));
+const ActivityTab     = lazy(() => import("./app/pages/platform/documents/TransactionDetailPage").then(m => ({ default: m.ActivityTab })));
+const EvidenceTab     = lazy(() => import("./app/pages/platform/documents/TransactionDetailPage").then(m => ({ default: m.EvidenceTab })));
+const SettingsTab     = lazy(() => import("./app/pages/platform/documents/TransactionDetailPage").then(m => ({ default: m.SettingsTab })));
+
 // ── Auth Suspense fallback ────────────────────────────────────────────────────
 function AuthPageLoader() {
   return (
@@ -260,10 +268,21 @@ export const router = createBrowserRouter([
       // Dashboard
       { path: "dashboard", element: <Suspense fallback={null}><PlatformDashboard /></Suspense> },
 
-      // Documents (Command 15 — list workspace; new/detail are Command 16 targets)
-      { path: "documents",         element: <Suspense fallback={null}><DocumentsPage /></Suspense> },
-      { path: "documents/new",     element: <Suspense fallback={null}><PlatformPlaceholder /></Suspense> },
-      { path: "documents/:id",     element: <Suspense fallback={null}><PlatformPlaceholder /></Suspense> },
+      // Documents
+      { path: "documents",     element: <Suspense fallback={null}><DocumentsPage /></Suspense> },
+      { path: "documents/new", element: <Suspense fallback={null}><PlatformPlaceholder /></Suspense> },
+      // Transaction detail — nested routes (Command 16)
+      {
+        path: "documents/:transactionId",
+        element: <Suspense fallback={null}><TransactionDetailLayout /></Suspense>,
+        children: [
+          { index: true,              element: <Suspense fallback={null}><OverviewTab /></Suspense> },
+          { path: "participants",     element: <Suspense fallback={null}><ParticipantsTab /></Suspense> },
+          { path: "activity",        element: <Suspense fallback={null}><ActivityTab /></Suspense> },
+          { path: "evidence",        element: <Suspense fallback={null}><EvidenceTab /></Suspense> },
+          { path: "settings",        element: <Suspense fallback={null}><SettingsTab /></Suspense> },
+        ],
+      },
 
       // Templates
       { path: "templates",         element: <Suspense fallback={null}><PlatformPlaceholder /></Suspense> },
