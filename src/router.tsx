@@ -7,6 +7,7 @@ import { NotFound } from "./app/pages/public/NotFound";
 import { DevPlaceholder } from "./app/pages/shared/DevPlaceholder";
 import { PlatformIndex } from "./app/pages/platform/PlatformIndex";
 import { SignIn } from "./app/pages/auth/SignIn";
+import { DesignSystemShowcase } from "./app/pages/dev/DesignSystemShowcase";
 
 // ── Router definition ─────────────────────────────────────────────────────────
 //
@@ -277,5 +278,12 @@ export const router = createBrowserRouter([
       // ── 404 ──────────────────────────────────────────────────────────────────
       { path: "*", element: <NotFound /> },
     ],
+  },
+
+  // ── Dev-only routes (not linked from public navigation) ─────────────────────
+  // /dev/design-system — component showcase for design system validation
+  {
+    path: "/dev/design-system",
+    element: <DesignSystemShowcase />,
   },
 ]);

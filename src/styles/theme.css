@@ -1,66 +1,207 @@
 @custom-variant dark (&:is(.dark *));
 
+/* ── shadcn/ui base tokens (updated with LAGDA brand values) ─────────────── */
 :root {
   --font-size: 16px;
+
+  /* Surfaces */
   --background: #ffffff;
-  --foreground: oklch(0.145 0 0);
+  --foreground: #07111f;
   --card: #ffffff;
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: #030213;
-  --primary-foreground: oklch(1 0 0);
-  --secondary: oklch(0.95 0.0058 264.53);
-  --secondary-foreground: #030213;
-  --muted: #ececf0;
+  --card-foreground: #07111f;
+  --popover: #ffffff;
+  --popover-foreground: #07111f;
+
+  /* Brand primary — LAGDA Azure Blue */
+  --primary: #0078D4;
+  --primary-foreground: #ffffff;
+
+  /* Secondary — Light Azure surface */
+  --secondary: #EAF6FF;
+  --secondary-foreground: #07111f;
+
+  /* Muted */
+  --muted: #f3f3f5;
   --muted-foreground: #717182;
-  --accent: #e9ebef;
-  --accent-foreground: #030213;
-  --destructive: #d4183d;
+
+  /* Accent */
+  --accent: #EAF6FF;
+  --accent-foreground: #07111f;
+
+  /* Destructive — Error Red */
+  --destructive: #DC2626;
   --destructive-foreground: #ffffff;
-  --border: rgba(0, 0, 0, 0.1);
+
+  /* Form */
+  --border: rgba(0, 0, 0, 0.09);
   --input: transparent;
   --input-background: #f3f3f5;
   --switch-background: #cbced4;
+
+  /* Typography weights */
   --font-weight-medium: 500;
   --font-weight-normal: 400;
-  --ring: oklch(0.708 0 0);
+
+  /* Focus ring — Azure */
+  --ring: #0078D4;
+
+  /* Charts */
   --chart-1: oklch(0.646 0.222 41.116);
   --chart-2: oklch(0.6 0.118 184.704);
   --chart-3: oklch(0.398 0.07 227.392);
   --chart-4: oklch(0.828 0.189 84.429);
   --chart-5: oklch(0.769 0.188 70.08);
-  --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: #030213;
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+
+  /* Base radius */
+  --radius: 0.5rem;
+
+  /* Sidebar */
+  --sidebar: #f8fafb;
+  --sidebar-foreground: #07111f;
+  --sidebar-primary: #0078D4;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #EAF6FF;
+  --sidebar-accent-foreground: #07111f;
+  --sidebar-border: rgba(0, 0, 0, 0.08);
+  --sidebar-ring: #0078D4;
+
+  /* ── LAGDA Brand Tokens ───────────────────────────────────────────────── */
+
+  /* Azure (eSignature, primary actions, active product) */
+  --lagda-azure: #0078D4;
+  --lagda-azure-hover: #006CC1;
+  --lagda-azure-active: #005BA9;
+  --lagda-azure-glow: #38BDF8;
+  --lagda-azure-surface: #EAF6FF;
+  --lagda-azure-border: #BAE0FA;
+  --lagda-azure-contrast: #ffffff;
+
+  /* Navy */
+  --lagda-navy: #07111F;
+  --lagda-navy-mid: #0B2344;
+
+  /* Burgundy (eNotary — future regulated capability) */
+  --lagda-burgundy: #67023B;
+  --lagda-burgundy-hover: #B01262;
+  --lagda-burgundy-surface: #FCE7F3;
+  --lagda-burgundy-border: #F9A8D4;
+  --lagda-burgundy-contrast: #ffffff;
+
+  /* Gold (verification, completion, premium accents) */
+  --lagda-gold: #C9960C;
+  --lagda-gold-light: #FCD34D;
+  --lagda-gold-surface: #FFFBEB;
+
+  /* Semantic */
+  --lagda-success: #16A34A;
+  --lagda-success-surface: #DCFCE7;
+  --lagda-success-border: #86EFAC;
+  --lagda-warning: #D97706;
+  --lagda-warning-surface: #FEF3C7;
+  --lagda-warning-border: #FDE68A;
+  --lagda-error: #DC2626;
+  --lagda-error-surface: #FEE2E2;
+  --lagda-error-border: #FECACA;
+  --lagda-info: #0078D4;
+  --lagda-info-surface: #EAF6FF;
+  --lagda-info-border: #BAE0FA;
+
+  /* Text */
+  --lagda-text-primary: #07111F;
+  --lagda-text-secondary: #334155;
+  --lagda-text-muted: #64748B;
+  --lagda-text-subtle: #94A3B8;
+  --lagda-text-on-dark: #ffffff;
+  --lagda-text-on-dark-muted: #94A3B8;
+
+  /* Surfaces (light mode) */
+  --lagda-surface-page: #ffffff;
+  --lagda-surface-raised: #ffffff;
+  --lagda-surface-muted: #f8fafb;
+  --lagda-surface-navy: #07111F;
+  --lagda-surface-navy-mid: #0B2344;
+  --lagda-surface-code: #f3f3f5;
+
+  /* ── Layout ───────────────────────────────────────────────────────────── */
+  --lagda-page-max: 1440px;
+  --lagda-content-max: 1280px;
+  --lagda-reading-max: 680px;
+  --lagda-header-h: 64px;
+  --lagda-header-h-mobile: 56px;
+
+  /* ── Radius ───────────────────────────────────────────────────────────── */
+  --lagda-radius-xs: 4px;
+  --lagda-radius-sm: 6px;
+  --lagda-radius-md: 8px;
+  --lagda-radius-lg: 12px;
+  --lagda-radius-xl: 16px;
+  --lagda-radius-2xl: 20px;
+  --lagda-radius-pill: 9999px;
+  --lagda-radius-dialog: 16px;
+
+  /* ── Borders ───────────────────────────────────────────────────────────── */
+  --lagda-border-default: rgba(0, 0, 0, 0.09);
+  --lagda-border-strong: rgba(0, 0, 0, 0.16);
+  --lagda-border-subtle: rgba(0, 0, 0, 0.05);
+
+  /* ── Shadows ──────────────────────────────────────────────────────────── */
+  --lagda-shadow-subtle: 0 1px 2px rgba(7, 17, 31, 0.05);
+  --lagda-shadow-card: 0 1px 4px rgba(7, 17, 31, 0.07), 0 0 1px rgba(7, 17, 31, 0.04);
+  --lagda-shadow-elevated: 0 4px 16px rgba(7, 17, 31, 0.10), 0 1px 4px rgba(7, 17, 31, 0.05);
+  --lagda-shadow-dialog: 0 8px 40px rgba(7, 17, 31, 0.18), 0 2px 8px rgba(7, 17, 31, 0.07);
+  --lagda-shadow-azure-glow: 0 4px 20px rgba(0, 120, 212, 0.22);
+  --lagda-shadow-gold-glow: 0 4px 16px rgba(201, 150, 12, 0.30);
+
+  /* ── Motion ───────────────────────────────────────────────────────────── */
+  --lagda-ease: cubic-bezier(0.4, 0, 0.2, 1);
+  --lagda-ease-out: cubic-bezier(0, 0, 0.2, 1);
+  --lagda-ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --lagda-dur-fast: 100ms;
+  --lagda-dur-std: 200ms;
+  --lagda-dur-reveal: 350ms;
+  --lagda-dur-dialog: 250ms;
+  --lagda-dur-load: 2600ms;
+
+  /* ── Spacing scale ────────────────────────────────────────────────────── */
+  --lagda-sp-1: 4px;
+  --lagda-sp-2: 8px;
+  --lagda-sp-3: 12px;
+  --lagda-sp-4: 16px;
+  --lagda-sp-5: 20px;
+  --lagda-sp-6: 24px;
+  --lagda-sp-8: 32px;
+  --lagda-sp-10: 40px;
+  --lagda-sp-12: 48px;
+  --lagda-sp-16: 64px;
+  --lagda-sp-20: 80px;
+  --lagda-sp-24: 96px;
+  --lagda-sp-30: 120px;
+
+  /* ── Breakpoints (reference — use in CSS @media) ─────────────────────── */
+  /* xs: 375px | sm: 640px | md: 768px | lg: 1024px | xl: 1280px | 2xl: 1440px */
 }
 
+/* ── Dark mode overrides ──────────────────────────────────────────────────── */
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.145 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.145 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.985 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.396 0.141 25.723);
-  --destructive-foreground: oklch(0.637 0.237 25.331);
-  --border: oklch(0.269 0 0);
-  --input: oklch(0.269 0 0);
-  --ring: oklch(0.439 0 0);
+  --background: #07111f;
+  --foreground: #f0f4f8;
+  --card: #0d1f35;
+  --card-foreground: #f0f4f8;
+  --popover: #0d1f35;
+  --popover-foreground: #f0f4f8;
+  --primary: #38BDF8;
+  --primary-foreground: #07111f;
+  --secondary: #0B2344;
+  --secondary-foreground: #f0f4f8;
+  --muted: #0B2344;
+  --muted-foreground: #94A3B8;
+  --accent: #0B2344;
+  --accent-foreground: #f0f4f8;
+  --destructive: #EF4444;
+  --destructive-foreground: #ffffff;
+  --border: rgba(255, 255, 255, 0.08);
+  --input: rgba(255, 255, 255, 0.06);
+  --ring: #38BDF8;
   --font-weight-medium: 500;
   --font-weight-normal: 400;
   --chart-1: oklch(0.488 0.243 264.376);
@@ -68,16 +209,25 @@
   --chart-3: oklch(0.769 0.188 70.08);
   --chart-4: oklch(0.627 0.265 303.9);
   --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(0.269 0 0);
-  --sidebar-ring: oklch(0.439 0 0);
+  --sidebar: #0d1f35;
+  --sidebar-foreground: #f0f4f8;
+  --sidebar-primary: #38BDF8;
+  --sidebar-primary-foreground: #07111f;
+  --sidebar-accent: #0B2344;
+  --sidebar-accent-foreground: #f0f4f8;
+  --sidebar-border: rgba(255, 255, 255, 0.08);
+  --sidebar-ring: #38BDF8;
+
+  /* LAGDA dark overrides */
+  --lagda-surface-page: #07111f;
+  --lagda-surface-raised: #0d1f35;
+  --lagda-surface-muted: #0B2344;
+  --lagda-border-default: rgba(255, 255, 255, 0.08);
+  --lagda-border-strong: rgba(255, 255, 255, 0.14);
+  --lagda-border-subtle: rgba(255, 255, 255, 0.04);
 }
 
+/* ── Tailwind v4: expose CSS properties as utilities ─────────────────────── */
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -117,6 +267,21 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+
+  /* LAGDA tokens as Tailwind utilities */
+  --color-lagda-azure: var(--lagda-azure);
+  --color-lagda-azure-surface: var(--lagda-azure-surface);
+  --color-lagda-navy: var(--lagda-navy);
+  --color-lagda-navy-mid: var(--lagda-navy-mid);
+  --color-lagda-burgundy: var(--lagda-burgundy);
+  --color-lagda-burgundy-surface: var(--lagda-burgundy-surface);
+  --color-lagda-gold: var(--lagda-gold);
+  --color-lagda-success: var(--lagda-success);
+  --color-lagda-success-surface: var(--lagda-success-surface);
+  --color-lagda-warning: var(--lagda-warning);
+  --color-lagda-warning-surface: var(--lagda-warning-surface);
+  --color-lagda-error: var(--lagda-error);
+  --color-lagda-error-surface: var(--lagda-error-surface);
 }
 
 @layer base {
@@ -127,11 +292,6 @@
   body {
     @apply bg-background text-foreground;
   }
-
-  /**
-  * Default typography styles for HTML elements (h1-h4, p, label, button, input).
-  * These are in @layer base, so Tailwind utility classes (like text-sm, text-lg) automatically override them.
-  */
 
   html {
     font-size: var(--font-size);
@@ -177,5 +337,17 @@
     font-size: var(--text-base);
     font-weight: var(--font-weight-normal);
     line-height: 1.5;
+  }
+
+  /* Reduced motion: disable all animations and transitions */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
   }
 }

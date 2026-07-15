@@ -105,6 +105,7 @@ function haptic(type: "light" | "selection" | "success" | "warning" | "error") {
   };
   navigator.vibrate(patterns[type] ?? [10]);
 }
+import { LagdaLogo } from "@/app/components/brand/LagdaLogo";
 import DLagdaEsignatureOverview from "@/imports/DLagdaEsignatureOverview/index";
 import DLagdaEsignatureCoreWorkflow from "@/imports/DLagdaEsignatureCoreWorkflow/index";
 import DLagdaEsignatureVerificationAudit from "@/imports/DLagdaEsignatureVerificationAudit/index";
@@ -148,20 +149,7 @@ const PRICING_SUB_TABS: { id: PricingTab; label: string }[] = [
 ];
 
 function Brand() {
-  return (
-    <div className="flex gap-[10px] items-center shrink-0">
-      <div className="shrink-0 size-[40px] relative">
-        <svg fill="none" viewBox="0 0 40 40" className="size-full">
-          <rect fill="#0078D4" height="40" rx="8" width="40" />
-          <path d={SHIELD_PATH} stroke="white" strokeWidth="2" />
-        </svg>
-      </div>
-      <div className="flex flex-col items-start leading-none">
-        <p className="font-extrabold text-[20px] text-white mb-[-2px] tracking-widest" style={{ fontFamily: "'Geist', sans-serif" }}>LAGDA</p>
-        <p className="font-semibold text-[9px] text-[#0078d4] tracking-[0.2em]" style={{ fontFamily: "'Geist Mono', monospace" }}>BY UPUP TECHNOLOGIES</p>
-      </div>
-    </div>
-  );
+  return <LagdaLogo variant="white-horizontal" size="md" decorative />;
 }
 
 // ─── Nav dropdown data ─────────────────────────────────────────────────────

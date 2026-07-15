@@ -1,5 +1,6 @@
 import { Outlet, Link, useLocation } from "react-router";
 import { APP_CONFIG } from "../config/app.config";
+import { LagdaLogo } from "../components/brand/LagdaLogo";
 
 // Stub shell for the authenticated customer platform (/app/...).
 // Intentionally minimal — the full platform nav and sidebar will be built
@@ -34,28 +35,18 @@ export function PlatformLayout() {
       >
         <Link
           to="/esignature"
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 8,
-            textDecoration: "none",
-          }}
+          style={{ display: "flex", alignItems: "center", gap: 8, textDecoration: "none" }}
+          aria-label="LAGDA — Go to homepage"
         >
-          <span
-            style={{
-              fontWeight: 700,
-              fontSize: 15,
-              color: "white",
-              letterSpacing: "0.08em",
-            }}
-          >
-            LAGDA
-          </span>
+          <LagdaLogo variant="white-horizontal" size="sm" decorative />
           <span
             style={{
               fontSize: 10,
               color: "#475569",
               fontFamily: "'Geist Mono', monospace",
+              borderLeft: "1px solid rgba(255,255,255,0.1)",
+              paddingLeft: 8,
+              marginLeft: 4,
             }}
           >
             Platform
