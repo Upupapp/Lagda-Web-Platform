@@ -311,7 +311,10 @@ export const AUTH_ROUTES: RouteMeta[] = [
 // ── Platform (authenticated customer) routes ──────────────────────────────────
 
 export const PLATFORM_ROUTES: RouteMeta[] = [
-  { path: "/app",                             title: "Dashboard — LAGDA",                          breadcrumb: "Dashboard",             section: "platform", product: "esignature", layout: "platform", requiresAuth: true, isPublic: false, isIndexable: false, status: "planned", analyticsName: "platform_dashboard" },
+  // /app redirects to /app/dashboard — keep for usePageMeta fallback
+  { path: "/app",                             title: "Dashboard | LAGDA",                          breadcrumb: "Dashboard",             section: "platform", product: "esignature", layout: "platform", requiresAuth: true, isPublic: false, isIndexable: false, status: "implemented", analyticsName: "platform_dashboard" },
+  // Canonical authenticated Dashboard route
+  { path: "/app/dashboard",                   title: "Dashboard | LAGDA",                          breadcrumb: "Dashboard",             section: "platform", product: "esignature", layout: "platform", requiresAuth: true, isPublic: false, isIndexable: false, status: "implemented", analyticsName: "platform_dashboard" },
   { path: "/app/documents",                   title: "Documents — LAGDA",                          breadcrumb: "Documents",             section: "platform", product: "esignature", layout: "platform", requiresAuth: true, isPublic: false, isIndexable: false, status: "planned", analyticsName: "platform_documents" },
   { path: "/app/documents/:transactionId",    title: "Document — LAGDA",                           breadcrumb: "Document Detail",       section: "platform", product: "esignature", layout: "platform", requiresAuth: true, isPublic: false, isIndexable: false, status: "planned", analyticsName: "platform_doc_detail" },
   { path: "/app/prepare",                     title: "Prepare a Document — LAGDA",                 breadcrumb: "Prepare",               section: "platform", product: "esignature", layout: "platform", requiresAuth: true, isPublic: false, isIndexable: false, status: "planned", analyticsName: "platform_prepare" },
