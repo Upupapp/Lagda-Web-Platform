@@ -164,6 +164,15 @@ const ActivityTab     = lazy(() => import("./app/pages/platform/documents/Transa
 const EvidenceTab     = lazy(() => import("./app/pages/platform/documents/TransactionDetailPage").then(m => ({ default: m.EvidenceTab })));
 const SettingsTab     = lazy(() => import("./app/pages/platform/documents/TransactionDetailPage").then(m => ({ default: m.SettingsTab })));
 
+// Templates (Command 21)
+const TemplatesPage       = lazy(() => import("./app/pages/platform/templates/TemplatesPage").then(m => ({ default: m.TemplatesPage })));
+const CreateTemplatePage  = lazy(() => import("./app/pages/platform/templates/CreateTemplatePage").then(m => ({ default: m.CreateTemplatePage })));
+const TemplateDetailPage  = lazy(() => import("./app/pages/platform/templates/TemplateDetailPage").then(m => ({ default: m.TemplateDetailPage })));
+const TemplateEditPage    = lazy(() => import("./app/pages/platform/templates/TemplateEditPage").then(m => ({ default: m.TemplateEditPage })));
+const TemplateFieldsPage  = lazy(() => import("./app/pages/platform/templates/TemplateFieldsPage").then(m => ({ default: m.TemplateFieldsPage })));
+const TemplatePreviewPage = lazy(() => import("./app/pages/platform/templates/TemplatePreviewPage").then(m => ({ default: m.TemplatePreviewPage })));
+const UseTemplatePage     = lazy(() => import("./app/pages/platform/templates/UseTemplatePage").then(m => ({ default: m.UseTemplatePage })));
+
 // ── Auth Suspense fallback ────────────────────────────────────────────────────
 function AuthPageLoader() {
   return (
@@ -304,10 +313,15 @@ export const router = createBrowserRouter([
         ],
       },
 
-      // Templates
-      { path: "templates",         element: <Suspense fallback={null}><PlatformPlaceholder /></Suspense> },
-      { path: "templates/:id",     element: <Suspense fallback={null}><PlatformPlaceholder /></Suspense> },
-      { path: "templates/new",     element: <Suspense fallback={null}><PlatformPlaceholder /></Suspense> },
+      // Templates (Command 21) — library, create, detail, edit, preview, use
+      // Note: templates/new MUST precede templates/:templateId to avoid shadowing
+      { path: "templates",                        element: <Suspense fallback={null}><TemplatesPage /></Suspense> },
+      { path: "templates/new",                    element: <Suspense fallback={null}><CreateTemplatePage /></Suspense> },
+      { path: "templates/:templateId",            element: <Suspense fallback={null}><TemplateDetailPage /></Suspense> },
+      { path: "templates/:templateId/edit",       element: <Suspense fallback={null}><TemplateEditPage /></Suspense> },
+      { path: "templates/:templateId/preview",    element: <Suspense fallback={null}><TemplatePreviewPage /></Suspense> },
+      { path: "templates/:templateId/use",        element: <Suspense fallback={null}><UseTemplatePage /></Suspense> },
+      // templates/:templateId/fields — full-screen editor, registered as top-level route below
 
       // Contacts
       { path: "contacts",          element: <Suspense fallback={null}><PlatformPlaceholder /></Suspense> },
@@ -363,6 +377,13 @@ export const router = createBrowserRouter([
       { path: "fields",         element: <Suspense fallback={null}><FieldsPage /></Suspense> },
       { path: "confirmation",   element: <Suspense fallback={null}><ConfirmationPage /></Suspense> },
     ],
+  },
+
+  // ── Template field editor (Command 21) — full-screen, outside PlatformLayout ─
+  // Like PrepareLayout: self-contained dark editor shell, no sidebar.
+  {
+    path: "/app/templates/:templateId/fields",
+    element: <Suspense fallback={null}><TemplateFieldsPage /></Suspense>,
   },
 
   // ── Recipient signing experience (Command 20) ────────────────────────────────
