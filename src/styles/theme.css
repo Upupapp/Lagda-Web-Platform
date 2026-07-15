@@ -106,6 +106,9 @@
   --lagda-info-surface: #EAF6FF;
   --lagda-info-border: #BAE0FA;
 
+  /* Cool gray — neutral borders, divisions (from brand guidelines §5) */
+  --lagda-cool-gray: #E5E7EB;
+
   /* Text */
   --lagda-text-primary: #07111F;
   --lagda-text-secondary: #334155;
@@ -282,6 +285,7 @@
   --color-lagda-warning-surface: var(--lagda-warning-surface);
   --color-lagda-error: var(--lagda-error);
   --color-lagda-error-surface: var(--lagda-error-surface);
+  --color-lagda-cool-gray: var(--lagda-cool-gray);
 }
 
 @layer base {

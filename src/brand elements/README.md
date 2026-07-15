@@ -1,50 +1,70 @@
 # LAGDA Brand Assets
 
-> Working digital standards — Command 3 (2026-07-15)
-> These are frontend working files. Official print-ready files pending formal brand book.
+> Working digital standards — updated Command 3 (2026-07-15)
 
-## Current Asset Inventory
+## How the Logo Component Uses These Files
 
-| File | Description | Status |
-|---|---|---|
-| `lagda-icon-azure.svg` | Shield icon, Azure bg, white mark | Working SVG from App.tsx geometry |
-| `lagda-icon-white-on-dark.svg` | Shield icon, frosted white bg, white mark | Working SVG |
-| `lagda-icon-mono.svg` | Shield icon, Deep Navy bg, white mark | Working SVG |
+Official PNG files must live in **TWO places**:
 
-## Missing Official Files (pending from brand team)
+1. **Here (`src/brand elements/`)** — source archive, originals for reference
+2. **`public/brand/`** — runtime serving (REQUIRED for the app to switch to official logos)
 
-The following official PNG exports were specified in Command 3 but are not yet available.
-When received, replace the SVG files and update `LagdaLogo.tsx` to reference them.
+`LagdaLogo` loads images from `/brand/<filename>` at runtime via `<img>`.
+Copy the official PNGs to `public/brand/` and they activate immediately — no code change needed.
 
-- `Lagda-black-logo-horizontal-whitebg-withtext.png`
-- `Lagda-white-logo-horizontal-bluebg-withtext.png`
-- `Lagda-white-logo-square-bluebg-withouttext.png`
-- `Lagda-colored-logo-horizontal-whitebg-withtext.png`
-- `Lagda-colored-logo-square-whitebg-withouttext.png`
-- `Lagda-colored-logo-square-whitebg-withtext.png`
+---
 
-## Working Logo Rules
+## Official PNG Files (copy to `public/brand/` to activate)
 
-The `LagdaLogo` React component (`src/app/components/brand/LagdaLogo.tsx`) is the
-canonical source of truth until official PNG files are available.
+| File | `LagdaLogo` variant |
+|------|---------------------|
+| `Lagda-colored-logo-horizontal-whitebg-withtext.png` | `colored-horizontal` |
+| `Lagda-white-logo-horizontal-bluebg-withtext.png` | `white-horizontal` |
+| `Lagda-black-logo-horizontal-whitebg-withtext.png` | `black-horizontal` |
+| `Lagda-colored-logo-square-whitebg-withouttext.png` | `colored-icon` |
+| `Lagda-white-logo-square-bluebg-withouttext.png` | `white-icon` |
+| `Lagda-colored-logo-square-whitebg-withtext.png` | `stacked-colored` |
 
-**Use LagdaLogo, not raw SVG files, in all UI code.**
+Until these files are present, `LagdaLogo` renders inline SVG placeholder geometry.
+
+---
+
+## Working SVG Files (created Command 3 — placeholder geometry)
+
+| File | Description |
+|------|-------------|
+| `lagda-icon-azure.svg` | Azure icon mark (working file, not official logo geometry) |
+| `lagda-icon-white-on-dark.svg` | White-on-dark icon mark (working file) |
+| `lagda-icon-mono.svg` | Monochrome icon mark (working file) |
+
+---
+
+## Logo Treatment Rules (from brand guidelines)
+
+- Preserve the official geometry, proportions, and icon-to-wordmark relationship
+- Do not stretch, skew, squash, rotate, trace, or redraw the logo
+- Do not replace the wordmark with another font
+- Do not recolor individual elements outside approved brand variants
+- Do not crop the icon so the gold stroke or red diamond is damaged
+- Do not add bevels, outlines, drop shadows, or effects directly to the logo
+- Do not place a white-background PNG over a dark background — select the correct variant
+- For animation: the complete logo may fade, scale subtly, or receive a masked light sweep; it must not spin or bounce
 
 ## Clear Space (Working Rule)
 
-Maintain clear space of at least 0.25 × icon height on all sides.
-For the 40px icon: 10px minimum clear space on every edge.
+Maintain at least 0.25 × icon height on all sides.
+At 40px icon: 10px minimum clear space on every edge.
 
 ## Minimum Size
 
-- Horizontal logo: minimum display width 120px (wordmark must remain legible)
-- Icon only: minimum display size 20×20px
+- Horizontal logo: 120px minimum width
+- Icon only: 20×20px minimum
 
-## What NOT to Do
+---
 
-- Do not stretch or squash the logo
-- Do not rotate the complete logo
-- Do not recolor the shield or wordmark outside approved variants
-- Do not place white-background logos over dark backgrounds
-- Do not use the azure-bg icon on an azure surface without ensuring contrast
-- Do not crop the logo mark with overflow-hidden containers
+## Unresolved as of Command 3
+
+- Official animated SVG or Lottie asset: not yet received
+- CMYK/Pantone values: not finalized
+- Minimum size and clear-space formula: not formally documented
+- `mono-icon` variant: no official PNG (SVG placeholder used indefinitely)

@@ -63,6 +63,14 @@ const LOADER_STYLES = `
   50%       { opacity: 1; }
 }
 
+@keyframes lagda-diamond-pulse {
+  0%   { opacity: 0;    transform: rotate(45deg) scale(0.6); }
+  55%  { opacity: 0;    transform: rotate(45deg) scale(0.6); }
+  70%  { opacity: 0.85; transform: rotate(45deg) scale(1.0); }
+  85%  { opacity: 0.55; transform: rotate(45deg) scale(1.1); }
+  100% { opacity: 0;    transform: rotate(45deg) scale(0.9); }
+}
+
 @media (prefers-reduced-motion: reduce) {
   @keyframes lagda-icon-entrance {
     0%, 100% { opacity: 1; transform: scale(1); }
@@ -72,6 +80,7 @@ const LOADER_STYLES = `
   @keyframes lagda-wordmark-in   { 0%, 100% { opacity: 1; transform: none; } }
   @keyframes lagda-inline-spin   { 0%, 100% { transform: rotate(0deg); } }
   @keyframes lagda-subtle-pulse  { 0%, 100% { opacity: 1; } }
+  @keyframes lagda-diamond-pulse { 0%, 100% { opacity: 0; } }
 }
 `;
 
@@ -219,6 +228,21 @@ function FullscreenLoader({
             pointerEvents: "none",
           }}
           aria-hidden="true"
+        />
+
+        {/* Red-diamond pulse (single restrained pass — verification/authenticity mark) */}
+        <div
+          aria-hidden="true"
+          style={{
+            position: "absolute",
+            bottom: -4,
+            right: -4,
+            width: 10,
+            height: 10,
+            backgroundColor: "#67023B",
+            animation: "lagda-diamond-pulse 2.6s cubic-bezier(0.4,0,0.2,1) 0.2s both",
+            pointerEvents: "none",
+          }}
         />
       </div>
 
