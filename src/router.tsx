@@ -3,6 +3,7 @@ import { createBrowserRouter, Navigate } from "react-router";
 import { PublicLayout } from "./app/layouts/PublicLayout";
 import { AuthLayout } from "./app/layouts/AuthLayout";
 import { PlatformLayout } from "./app/layouts/PlatformLayout";
+import { RecipientLayout } from "./app/layouts/RecipientLayout";
 import { NotFound } from "./app/pages/public/NotFound";
 import { DevPlaceholder } from "./app/pages/shared/DevPlaceholder";
 
@@ -151,6 +152,9 @@ const SettingsStep      = lazy(() => import("./app/pages/platform/prepare/Settin
 const ReviewStep        = lazy(() => import("./app/pages/platform/prepare/ReviewStep").then(m => ({ default: m.ReviewStep })));
 const FieldsPage        = lazy(() => import("./app/pages/platform/prepare/FieldsPage").then(m => ({ default: m.FieldsPage })));
 const ConfirmationPage  = lazy(() => import("./app/pages/platform/prepare/ConfirmationPage").then(m => ({ default: m.ConfirmationPage })));
+
+// Recipient flow (Command 20)
+const RecipientRoot = lazy(() => import("./app/pages/recipient/RecipientRoot").then(m => ({ default: m.RecipientRoot })));
 
 // Transaction detail (Command 16)
 const TransactionDetailLayout = lazy(() => import("./app/pages/platform/documents/TransactionDetailPage").then(m => ({ default: m.TransactionDetailLayout })));
@@ -358,6 +362,19 @@ export const router = createBrowserRouter([
       { path: "review",         element: <Suspense fallback={null}><ReviewStep /></Suspense> },
       { path: "fields",         element: <Suspense fallback={null}><FieldsPage /></Suspense> },
       { path: "confirmation",   element: <Suspense fallback={null}><ConfirmationPage /></Suspense> },
+    ],
+  },
+
+  // ── Recipient signing experience (Command 20) ────────────────────────────────
+  // /sign/:requestId — no auth guard; access is controlled by the flow itself.
+  // These routes are excluded from sitemap and not indexed.
+  {
+    path: "/sign",
+    element: <RecipientLayout />,
+    children: [
+      // /sign with no requestId → unavailable
+      { index: true, element: <Suspense fallback={null}><RecipientRoot /></Suspense> },
+      { path: ":requestId", element: <Suspense fallback={null}><RecipientRoot /></Suspense> },
     ],
   },
 

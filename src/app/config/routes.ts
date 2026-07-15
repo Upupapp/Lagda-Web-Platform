@@ -347,9 +347,21 @@ export const PLATFORM_ROUTES: RouteMeta[] = [
   { path: "/app/settings/webhooks",           title: "Webhooks — LAGDA",                           breadcrumb: "Webhooks",              section: "platform", product: "esignature", layout: "platform", requiresAuth: true, isPublic: false, isIndexable: false, status: "planned", analyticsName: "settings_webhooks" },
 ];
 
+// ── Recipient signing routes (Command 20) ────────────────────────────────────
+// All /sign/* routes are excluded from indexing and sitemap.
+// requiresAuth: false — access control is handled inside the flow (invitation link + optional OTP).
+// layout: "platform" is a LayoutType approximation; these use RecipientLayout in the router.
+
+export type RecipientLayoutType = "recipient";
+
+export const RECIPIENT_ROUTES: RouteMeta[] = [
+  { path: "/sign/:requestId", title: "Document Request — LAGDA eSignature", breadcrumb: "Document Request", section: "recipient", product: "esignature", layout: "platform", requiresAuth: false, isPublic: false, isIndexable: false, status: "implemented", analyticsName: "recipient_access"   },
+  { path: "/sign",            title: "Document Request — LAGDA eSignature", breadcrumb: "Document Request", section: "recipient", product: "esignature", layout: "platform", requiresAuth: false, isPublic: false, isIndexable: false, status: "implemented", analyticsName: "recipient_root"     },
+];
+
 // ── Utility helpers ────────────────────────────────────────────────────────────
 
-const ALL_ROUTES = [...PUBLIC_ROUTES, ...AUTH_ROUTES, ...PLATFORM_ROUTES];
+const ALL_ROUTES = [...PUBLIC_ROUTES, ...AUTH_ROUTES, ...PLATFORM_ROUTES, ...RECIPIENT_ROUTES];
 
 export function getRouteMeta(pathname: string): RouteMeta | undefined {
   return ALL_ROUTES.find((r) => r.path === pathname);
