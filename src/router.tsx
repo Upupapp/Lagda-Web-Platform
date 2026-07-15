@@ -140,6 +140,17 @@ const SessionExpired      = lazy(() => import("./app/pages/platform/SessionExpir
 // Verify (Command 17)
 const VerifyPage = lazy(() => import("./app/pages/platform/VerifyPage").then(m => ({ default: m.VerifyPage })));
 
+// Prepare document workflow (Command 18)
+const PrepareRoot       = lazy(() => import("./app/pages/platform/prepare/PrepareLayout").then(m => ({ default: m.PrepareRoot })));
+const PrepareEntryPage  = lazy(() => import("./app/pages/platform/prepare/PrepareEntryPage").then(m => ({ default: m.PrepareEntryPage })));
+const UploadStep        = lazy(() => import("./app/pages/platform/prepare/UploadStep").then(m => ({ default: m.UploadStep })));
+const ParticipantsStep  = lazy(() => import("./app/pages/platform/prepare/ParticipantsStep").then(m => ({ default: m.ParticipantsStep })));
+const RoutingStep       = lazy(() => import("./app/pages/platform/prepare/RoutingStep").then(m => ({ default: m.RoutingStep })));
+const AuthStep          = lazy(() => import("./app/pages/platform/prepare/AuthStep").then(m => ({ default: m.AuthStep })));
+const SettingsStep      = lazy(() => import("./app/pages/platform/prepare/SettingsStep").then(m => ({ default: m.SettingsStep })));
+const ReviewStep        = lazy(() => import("./app/pages/platform/prepare/ReviewStep").then(m => ({ default: m.ReviewStep })));
+const FieldsHandoff     = lazy(() => import("./app/pages/platform/prepare/FieldsHandoff").then(m => ({ default: m.FieldsHandoff })));
+
 // Transaction detail (Command 16)
 const TransactionDetailLayout = lazy(() => import("./app/pages/platform/documents/TransactionDetailPage").then(m => ({ default: m.TransactionDetailLayout })));
 const OverviewTab     = lazy(() => import("./app/pages/platform/documents/TransactionDetailPage").then(m => ({ default: m.OverviewTab })));
@@ -273,7 +284,8 @@ export const router = createBrowserRouter([
 
       // Documents
       { path: "documents",     element: <Suspense fallback={null}><DocumentsPage /></Suspense> },
-      { path: "documents/new", element: <Suspense fallback={null}><PlatformPlaceholder /></Suspense> },
+      // /documents/new → /app/prepare (preparation entry)
+      { path: "documents/new", element: <Navigate to="/app/prepare" replace /> },
       // Transaction detail — nested routes (Command 16)
       {
         path: "documents/:transactionId",
@@ -325,6 +337,25 @@ export const router = createBrowserRouter([
 
       // Platform 404 — must be last
       { path: "*", element: <Suspense fallback={null}><PlatformNotFound /></Suspense> },
+    ],
+  },
+
+  // ── Prepare document workflow (Command 18) ────────────────────────────────────
+  // Separate from PlatformLayout: PrepareLayout is a full-page wizard shell with
+  // its own stepper sidebar. PrepareRoot provides PrepareProvider to all children.
+  {
+    path: "/app/prepare",
+    element: <Suspense fallback={null}><PrepareRoot /></Suspense>,
+    children: [
+      // Entry screen: no stepper shell — shows Start / Template / Resume options
+      { index: true, element: <Suspense fallback={null}><PrepareEntryPage /></Suspense> },
+      { path: "upload",         element: <Suspense fallback={null}><UploadStep /></Suspense> },
+      { path: "participants",   element: <Suspense fallback={null}><ParticipantsStep /></Suspense> },
+      { path: "routing",        element: <Suspense fallback={null}><RoutingStep /></Suspense> },
+      { path: "authentication", element: <Suspense fallback={null}><AuthStep /></Suspense> },
+      { path: "settings",       element: <Suspense fallback={null}><SettingsStep /></Suspense> },
+      { path: "review",         element: <Suspense fallback={null}><ReviewStep /></Suspense> },
+      { path: "fields",         element: <Suspense fallback={null}><FieldsHandoff /></Suspense> },
     ],
   },
 

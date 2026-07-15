@@ -222,7 +222,7 @@ function QuickActionsSection({ canPrepare, canTemplate, canVerify, canInvite }: 
   canPrepare: boolean; canTemplate: boolean; canVerify: boolean; canInvite: boolean;
 }) {
   const actions: QuickAction[] = [
-    { icon: <FilePlus size={20} aria-hidden />, label: "Prepare a Document", sub: "Upload and request signatures", to: "/app/documents/new", accent: AZURE, bg: "rgba(0,120,212,0.08)", permission: canPrepare },
+    { icon: <FilePlus size={20} aria-hidden />, label: "Prepare a Document", sub: "Upload and request signatures", to: "/app/prepare", accent: AZURE, bg: "rgba(0,120,212,0.08)", permission: canPrepare },
     { icon: <FileText size={20} aria-hidden />, label: "My Documents", sub: "View and manage documents", to: "/app/documents", accent: NAVY, bg: "#F8FAFC", permission: true },
     { icon: <LayoutTemplate size={20} aria-hidden />, label: "Use a Template", sub: "Start from a saved template", to: "/app/templates", accent: NAVY, bg: "#F8FAFC", permission: canTemplate },
     { icon: <ShieldCheck size={20} aria-hidden />, label: "Verify a Document", sub: "Check a document's authenticity", to: "/app/verify", accent: NAVY, bg: "#F8FAFC", permission: canVerify },
@@ -393,7 +393,7 @@ function RecentDocumentsSection({ docs, hasError, isLoading, onRetry }: {
             title="No documents yet"
             description="Prepare your first document to request signatures."
             action={
-              <Link to="/app/documents/new" style={{ display: "inline-flex", alignItems: "center", gap: 6, background: AZURE, color: "white", ...GF, fontSize: 13, fontWeight: 600, padding: "10px 16px", borderRadius: 8, textDecoration: "none" }}>
+              <Link to="/app/prepare" style={{ display: "inline-flex", alignItems: "center", gap: 6, background: AZURE, color: "white", ...GF, fontSize: 13, fontWeight: 600, padding: "10px 16px", borderRadius: 8, textDecoration: "none" }}>
                 <FilePlus size={15} aria-hidden /> Prepare a Document
               </Link>
             }
@@ -734,7 +734,7 @@ function NewUserWelcome({ canPrepare }: { canPrepare: boolean }) {
         </p>
         {canPrepare && (
           <Link
-            to="/app/documents/new"
+            to="/app/prepare"
             style={{ display: "inline-flex", alignItems: "center", gap: 8, background: AZURE, color: "white", ...GF, fontSize: 14, fontWeight: 700, padding: "12px 20px", borderRadius: 8, textDecoration: "none" }}
           >
             <FilePlus size={16} aria-hidden /> Prepare your first document

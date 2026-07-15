@@ -1045,7 +1045,7 @@ function DocEmptyView({
       action={
         canPrepare ? (
           <Link
-            to="/app/documents/new"
+            to="/app/prepare"
             style={{
               display: "inline-flex", alignItems: "center", gap: 6, padding: "8px 16px",
               borderRadius: 8, background: AZURE, color: "#fff", textDecoration: "none",
@@ -1294,7 +1294,7 @@ export function DocumentsPage() {
         actions={
           canPrepare ? (
             <Link
-              to="/app/documents/new"
+              to="/app/prepare"
               style={{
                 display: "inline-flex", alignItems: "center", gap: 6,
                 padding: "7px 14px", borderRadius: 8, fontSize: 13, fontWeight: 600,
