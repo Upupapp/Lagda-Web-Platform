@@ -1,5 +1,10 @@
 # LAGDA Frontend Baseline
 > Generated: 2026-07-15 — Command 1 (Initialize and Audit)
+> Updated: 2026-07-15 — Command 2 (Architecture and Route Foundation)
+>
+> **Architecture document:** [docs/frontend-architecture.md](frontend-architecture.md)
+>
+> **Command 2 changes:** React Router wired (`createBrowserRouter`), URL-based routing active for all 14 existing Figma screens, 3 layout boundaries established (PublicLayout / AuthLayout / PlatformLayout), centralized route metadata (200+ routes), foundational models, service interfaces and mock conventions, application config, fictional mock data, DevPlaceholder for unbuilt routes, NotFound page, `public/_redirects` for SPA hosting.
 
 ---
 

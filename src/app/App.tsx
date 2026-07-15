@@ -1,4 +1,96 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import { useNavigate, useLocation } from "react-router";
+
+// ── URL ↔ State synchronization ───────────────────────────────────────────────
+//
+// Maps between browser URL paths and App's internal (section, tab) state.
+// This is the only coupling between the router and the existing state machine.
+// All existing navigation callbacks, dropdown behavior, and animations are
+// unchanged — the URL is just kept in sync as a side effect.
+
+type UrlState = {
+  section: Section;
+  esigTab?: EsigTab;
+  securityTab?: SecurityTab;
+  pricingTab?: PricingTab;
+  resourcesTab?: ResourcesTab;
+  solutionsTab?: SolutionsTab;
+};
+
+function pathToState(pathname: string): UrlState | null {
+  const p = pathname.replace(/\/$/, "") || "/esignature";
+  if (p === "/esignature" || p === "/")      return { section: "esignature", esigTab: "overview" };
+  if (p === "/esignature/core-workflow")     return { section: "esignature", esigTab: "core-workflow" };
+  if (p === "/esignature/verification-and-audit") return { section: "esignature", esigTab: "verification-audit" };
+  if (p === "/esignature/advanced-capabilities")  return { section: "esignature", esigTab: "advanced-capabilities" };
+  if (p === "/esignature/templates-and-branding") return { section: "esignature", esigTab: "templates-branding" };
+  if (p === "/esignature/team-and-enterprise")    return { section: "esignature", esigTab: "team-enterprise" };
+  if (p === "/security" || p === "/security/security-overview") return { section: "security", securityTab: "security-overview" };
+  if (p === "/security/trust-center")        return { section: "security", securityTab: "trust-center" };
+  if (p === "/solutions")                    return { section: "solutions", solutionsTab: "all" };
+  if (p === "/solutions/lawyers")            return { section: "solutions", solutionsTab: "lawyers" };
+  if (p === "/pricing")                      return { section: "pricing", pricingTab: "pricing-main" };
+  if (p === "/pricing/compare")              return { section: "pricing", pricingTab: "compare-plans" };
+  if (p === "/resources" || p === "/resources/guides") return { section: "resources", resourcesTab: "guides" };
+  if (p === "/resources/faq")                return { section: "resources", resourcesTab: "faq" };
+  return null;
+}
+
+function stateToPath(
+  section: Section,
+  esigTab: EsigTab,
+  securityTab: SecurityTab,
+  pricingTab: PricingTab,
+  resourcesTab: ResourcesTab,
+  solutionsTab: SolutionsTab
+): string {
+  if (section === "esignature") {
+    if (esigTab === "overview")                  return "/esignature";
+    if (esigTab === "core-workflow")             return "/esignature/core-workflow";
+    if (esigTab === "verification-audit")        return "/esignature/verification-and-audit";
+    if (esigTab === "advanced-capabilities")     return "/esignature/advanced-capabilities";
+    if (esigTab === "templates-branding")        return "/esignature/templates-and-branding";
+    if (esigTab === "team-enterprise")           return "/esignature/team-and-enterprise";
+  }
+  if (section === "security") {
+    if (securityTab === "security-overview")     return "/security";
+    if (securityTab === "trust-center")          return "/security/trust-center";
+  }
+  if (section === "solutions") {
+    if (solutionsTab === "all")                  return "/solutions";
+    if (solutionsTab === "lawyers")              return "/solutions/lawyers";
+  }
+  if (section === "pricing") {
+    if (pricingTab === "pricing-main")           return "/pricing";
+    if (pricingTab === "compare-plans")          return "/pricing/compare";
+  }
+  if (section === "resources") {
+    if (resourcesTab === "guides")               return "/resources";
+    if (resourcesTab === "faq")                  return "/resources/faq";
+  }
+  return "/esignature";
+}
+
+// Derive initial state from the current URL (avoids state→URL effect
+// firing with defaults before URL→state effect can correct them).
+function initialStateFromUrl(): {
+  section: Section;
+  esigTab: EsigTab;
+  securityTab: SecurityTab;
+  pricingTab: PricingTab;
+  resourcesTab: ResourcesTab;
+  solutionsTab: SolutionsTab;
+} {
+  const parsed = pathToState(window.location.pathname);
+  return {
+    section:      (parsed?.section      ?? "esignature") as Section,
+    esigTab:      (parsed?.esigTab      ?? "overview")   as EsigTab,
+    securityTab:  (parsed?.securityTab  ?? "security-overview") as SecurityTab,
+    pricingTab:   (parsed?.pricingTab   ?? "pricing-main") as PricingTab,
+    resourcesTab: (parsed?.resourcesTab ?? "guides")     as ResourcesTab,
+    solutionsTab: (parsed?.solutionsTab ?? "all")        as SolutionsTab,
+  };
+}
 
 // ─── Haptic feedback — mobile only, silently skipped on desktop ───────────────
 function haptic(type: "light" | "selection" | "success" | "warning" | "error") {
@@ -1160,12 +1252,40 @@ const globalOverrides = `
 `;
 
 export default function App() {
-  const [section, setSection] = useState<Section>("esignature");
-  const [esigTab, setEsigTab] = useState<EsigTab>("overview");
-  const [securityTab, setSecurityTab] = useState<SecurityTab>("security-overview");
-  const [pricingTab, setPricingTab] = useState<PricingTab>("pricing-main");
-  const [resourcesTab, setResourcesTab] = useState<ResourcesTab>("guides");
-  const [solutionsTab, setSolutionsTab] = useState<SolutionsTab>("all");
+  // ── URL-aware state initialization ──────────────────────────────────────────
+  // State is derived from the URL on first mount so that deep links, refreshes,
+  // and browser back/forward all restore the correct page without a flash.
+  const initState = initialStateFromUrl();
+  const [section, setSection] = useState<Section>(initState.section);
+  const [esigTab, setEsigTab] = useState<EsigTab>(initState.esigTab);
+  const [securityTab, setSecurityTab] = useState<SecurityTab>(initState.securityTab);
+  const [pricingTab, setPricingTab] = useState<PricingTab>(initState.pricingTab);
+  const [resourcesTab, setResourcesTab] = useState<ResourcesTab>(initState.resourcesTab);
+  const [solutionsTab, setSolutionsTab] = useState<SolutionsTab>(initState.solutionsTab);
+
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  // ── State → URL: keep the URL in sync when user navigates via the nav UI ────
+  useEffect(() => {
+    const targetPath = stateToPath(section, esigTab, securityTab, pricingTab, resourcesTab, solutionsTab);
+    if (targetPath !== location.pathname) {
+      navigate(targetPath, { replace: false });
+    }
+  }, [section, esigTab, securityTab, pricingTab, resourcesTab, solutionsTab]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── URL → State: respond to browser back/forward and direct links ────────────
+  useEffect(() => {
+    const parsed = pathToState(location.pathname);
+    if (!parsed) return;
+    // Only update what changed to avoid spurious re-renders
+    if (parsed.section      !== section)      setSection(parsed.section);
+    if (parsed.esigTab      && parsed.esigTab      !== esigTab)      setEsigTab(parsed.esigTab);
+    if (parsed.securityTab  && parsed.securityTab  !== securityTab)  setSecurityTab(parsed.securityTab);
+    if (parsed.pricingTab   && parsed.pricingTab   !== pricingTab)   setPricingTab(parsed.pricingTab);
+    if (parsed.resourcesTab && parsed.resourcesTab !== resourcesTab) setResourcesTab(parsed.resourcesTab);
+    if (parsed.solutionsTab && parsed.solutionsTab !== solutionsTab) setSolutionsTab(parsed.solutionsTab);
+  }, [location.pathname]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Navbar scroll detection ─────────────────────────────────────────────────
   const [scrolled, setScrolled] = useState(false);
