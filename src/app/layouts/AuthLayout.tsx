@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { Link } from "react-router";
 import { LagdaLogo } from "../components/brand/LagdaLogo";
 import { APP_CONFIG } from "../config/app.config";
+import { usePageMeta } from "../hooks/usePageMeta";
 
 // Minimal shell for authentication routes (/sign-in, /create-account, etc.)
 // Uses the deep navy background with the white-horizontal logo variant.
@@ -13,6 +14,7 @@ interface AuthLayoutProps {
 }
 
 export function AuthLayout({ children }: AuthLayoutProps) {
+  usePageMeta();
   return (
     <div
       style={{

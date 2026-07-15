@@ -1,0 +1,44 @@
+# robots.txt — LAGDA.io
+# Production origin: https://lagda.io
+# This file controls search-engine crawler access.
+
+User-agent: *
+
+# Allow public informational pages
+Allow: /
+Allow: /esignature
+Allow: /features
+Allow: /solutions
+Allow: /pricing
+Allow: /security
+Allow: /resources
+Allow: /legal
+Allow: /verify
+Allow: /help
+Allow: /contact
+
+# Disallow authentication and platform routes
+Disallow: /sign-in
+Disallow: /create-account
+Disallow: /verify-email
+Disallow: /forgot-password
+Disallow: /reset-password
+Disallow: /mfa
+Disallow: /invitation
+Disallow: /onboarding
+Disallow: /app/
+Disallow: /app/*
+
+# Disallow conversion-flow and demonstration-only routes
+Disallow: /book-a-demo
+Disallow: /service-status
+
+# Disallow development-only routes
+Disallow: /dev/
+Disallow: /dev/*
+
+# eNotary is Coming Soon — allow crawling for awareness but pages are noindexed
+Allow: /enotary
+
+# Sitemap
+Sitemap: https://lagda.io/sitemap.xml

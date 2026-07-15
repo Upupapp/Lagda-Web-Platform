@@ -24,7 +24,7 @@ export const APP_CONFIG = {
   // Feature flags — control access to in-progress sections
   features: {
     enotaryWaitlist: true,       // Show eNotary waitlist signup
-    publicVerification: false,   // Public document verification page (not yet built)
+    publicVerification: true,    // Public document verification page (built in C10)
     platformDashboard: false,    // Authenticated platform (not yet built)
     devPlaceholders: true,       // Show dev placeholder pages for unbuilt routes
   },
