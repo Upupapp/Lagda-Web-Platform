@@ -5,9 +5,10 @@
 //   inline     — Small spinner area, subtle, non-blocking
 //   button     — Minimal, fits inside a button control
 //
+// isExiting (fullscreen only): set true before unmounting to trigger a 240ms fade-out.
+// The parent is responsible for waiting 240ms then unmounting the component.
+//
 // Animation uses CSS keyframes (no JS animation library required).
-// Framer Motion is available in the project but not needed here —
-// CSS animations are lighter and degrade gracefully with reduced motion.
 
 import { useEffect, useState } from "react";
 import { APP_CONFIG } from "../../config/app.config";
@@ -20,6 +21,8 @@ interface LagdaLoaderProps {
   theme?: LoaderTheme;
   message?: string;
   showWordmark?: boolean;
+  /** Triggers 240ms exit animation before unmount. Parent must unmount after ~240ms. */
+  isExiting?: boolean;
   size?: number;
   ariaLabel?: string;
   className?: string;
@@ -71,16 +74,20 @@ const LOADER_STYLES = `
   100% { opacity: 0;    transform: rotate(45deg) scale(0.9); }
 }
 
+@keyframes lagda-fullscreen-exit {
+  0%   { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(0.98); }
+}
+
 @media (prefers-reduced-motion: reduce) {
-  @keyframes lagda-icon-entrance {
-    0%, 100% { opacity: 1; transform: scale(1); }
-  }
-  @keyframes lagda-gold-sweep    { 0%, 100% { opacity: 0; } }
-  @keyframes lagda-azure-pulse   { 0%, 100% { opacity: 0; } }
-  @keyframes lagda-wordmark-in   { 0%, 100% { opacity: 1; transform: none; } }
-  @keyframes lagda-inline-spin   { 0%, 100% { transform: rotate(0deg); } }
-  @keyframes lagda-subtle-pulse  { 0%, 100% { opacity: 1; } }
-  @keyframes lagda-diamond-pulse { 0%, 100% { opacity: 0; } }
+  @keyframes lagda-icon-entrance     { 0%, 100% { opacity: 1; transform: scale(1); } }
+  @keyframes lagda-gold-sweep        { 0%, 100% { opacity: 0; } }
+  @keyframes lagda-azure-pulse       { 0%, 100% { opacity: 0; } }
+  @keyframes lagda-wordmark-in       { 0%, 100% { opacity: 1; transform: none; } }
+  @keyframes lagda-inline-spin       { 0%, 100% { transform: rotate(0deg); } }
+  @keyframes lagda-subtle-pulse      { 0%, 100% { opacity: 1; } }
+  @keyframes lagda-diamond-pulse     { 0%, 100% { opacity: 0; } }
+  @keyframes lagda-fullscreen-exit   { 0%, 100% { opacity: 0; } }
 }
 `;
 
@@ -151,18 +158,30 @@ function FullscreenLoader({
   showWordmark = true,
   theme = "dark",
   ariaLabel,
-}: Pick<LagdaLoaderProps, "message" | "showWordmark" | "theme" | "ariaLabel">) {
+  isExiting = false,
+}: Pick<LagdaLoaderProps, "message" | "showWordmark" | "theme" | "ariaLabel" | "isExiting">) {
   const [wordmarkVisible, setWordmarkVisible] = useState(false);
+  const [iconImgErr, setIconImgErr] = useState(false);
 
   useEffect(() => {
     const t = setTimeout(() => setWordmarkVisible(true), 900);
     return () => clearTimeout(t);
   }, []);
 
+  // PNG icon source: white-icon for dark theme, colored-icon for light theme.
+  // Falls back to inline SVG placeholder if the PNG is unavailable.
+  const iconPng = theme === "dark"
+    ? "/brand/Lagda-white-logo-square-bluebg-withouttext.png"
+    : "/brand/Lagda-colored-logo-square-whitebg-withouttext.png";
+
   const bg       = theme === "dark" ? "#07111F" : "#ffffff";
   const msgColor = theme === "dark" ? "#64748B" : "#94A3B8";
   const nameColor   = theme === "dark" ? "#ffffff" : "#07111F";
   const tagColor    = theme === "dark" ? "#0078D4" : "#0078D4";
+
+  const exitStyle = isExiting
+    ? { animation: "lagda-fullscreen-exit 0.24s cubic-bezier(0.4,0,1,1) both" }
+    : {};
 
   return (
     <div
@@ -180,6 +199,7 @@ function FullscreenLoader({
         gap: 24,
         zIndex: 9999,
         fontFamily: "'Geist', sans-serif",
+        ...exitStyle,
       }}
     >
       <style>{LOADER_STYLES}</style>
@@ -188,10 +208,30 @@ function FullscreenLoader({
       <div style={{ position: "relative", width: 64, height: 64 }} aria-hidden="true">
         {/* Base icon — entrance animation */}
         <div style={{ animation: "lagda-icon-entrance 0.8s cubic-bezier(0.4,0,0.2,1) both" }}>
-          <svg fill="none" viewBox="0 0 40 40" width="64" height="64" style={{ display: "block" }}>
-            <rect fill="#0078D4" height="40" rx="8" width="40" />
-            <path d={SHIELD_PATH} stroke="white" strokeWidth="2" />
-          </svg>
+          {!iconImgErr ? (
+            <img
+              src={iconPng}
+              alt=""
+              aria-hidden="true"
+              width="64"
+              height="64"
+              draggable={false}
+              onError={() => setIconImgErr(true)}
+              style={{
+                display: "block",
+                width: 64,
+                height: 64,
+                objectFit: "contain",
+                borderRadius: 13,
+                ...(theme === "light" ? { boxShadow: "0 2px 8px rgba(0,120,212,0.18)" } : {}),
+              }}
+            />
+          ) : (
+            <svg fill="none" viewBox="0 0 40 40" width="64" height="64" style={{ display: "block" }}>
+              <rect fill="#0078D4" height="40" rx="8" width="40" />
+              <path d={SHIELD_PATH} stroke="white" strokeWidth="2" />
+            </svg>
+          )}
         </div>
 
         {/* Gold sweep overlay */}
@@ -315,6 +355,7 @@ export function LagdaLoader({
   theme = "dark",
   message,
   showWordmark = true,
+  isExiting = false,
   size,
   ariaLabel,
   className,
@@ -327,6 +368,7 @@ export function LagdaLoader({
         showWordmark={showWordmark}
         theme={theme}
         ariaLabel={ariaLabel}
+        isExiting={isExiting}
       />
     );
   }

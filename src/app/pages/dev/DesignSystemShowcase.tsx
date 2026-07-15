@@ -2,7 +2,7 @@
 // Only accessible at /dev/design-system.
 // Demonstrates all foundational design system components for validation.
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { LagdaLogo } from "../../components/brand/LagdaLogo";
 import { LagdaLoader } from "../../components/brand/LagdaLoader";
 import { Button } from "../../components/ui/button";
@@ -12,6 +12,7 @@ import { ComingSoonBadge } from "../../components/ui/ComingSoonBadge";
 import { EmptyState } from "../../components/ui/EmptyState";
 import { VerificationId } from "../../components/ui/VerificationId";
 import { DOCUMENT_STATUS_MAP, VERIFICATION_STATUS_MAP } from "../../data/status-map";
+import { useLagdaLoading } from "../../services/loading.service";
 import type { TransactionStatus } from "../../models";
 import { Link } from "react-router";
 
@@ -92,10 +93,45 @@ function TypeRow({ role, size, weight, sample }: { role: string; size: string; w
   );
 }
 
+// ── Fullscreen loader with smooth exit ───────────────────────────────────────
+function FullscreenPreview({ theme }: { theme: "dark" | "light" }) {
+  const [mounted,   setMounted]   = useState(false);
+  const [isExiting, setIsExiting] = useState(false);
+  const exitTimer = useRef<ReturnType<typeof setTimeout>>();
+
+  function launch() {
+    clearTimeout(exitTimer.current);
+    setIsExiting(false);
+    setMounted(true);
+    exitTimer.current = setTimeout(() => {
+      setIsExiting(true);
+      setTimeout(() => { setMounted(false); setIsExiting(false); }, 240);
+    }, 3000);
+  }
+
+  const label = theme === "dark" ? "Preview fullscreen (dark, 3s)" : "Preview fullscreen (light, 3s)";
+  const variant = theme === "dark" ? "navy" as const : "primary-outline" as const;
+
+  return (
+    <>
+      <Button variant={variant} size="md" onClick={launch}>{label}</Button>
+      {mounted && (
+        <LagdaLoader
+          mode="fullscreen"
+          theme={theme}
+          message="Preparing your secure workspace"
+          showWordmark
+          isExiting={isExiting}
+        />
+      )}
+    </>
+  );
+}
+
 // ── Main showcase ─────────────────────────────────────────────────────────────
 export function DesignSystemShowcase() {
-  const [showFullscreenLoader, setShowFullscreenLoader] = useState(false);
-  const [inlineMsg, setInlineMsg] = useState("Verifying document record");
+  const [inlineMsg] = useState("Verifying document record");
+  const { show, hide } = useLagdaLoading();
 
   const ALL_STATUSES = Object.keys(DOCUMENT_STATUS_MAP) as TransactionStatus[];
 
@@ -540,27 +576,18 @@ export function DesignSystemShowcase() {
 
         {/* ── LOADING COMPONENT ─────────────────────────────────────────────── */}
         <Section title="Loading Component" id="loader">
-          <div style={{ display: "flex", gap: 48, flexWrap: "wrap", alignItems: "flex-start" }}>
+          {/* Inline modes */}
+          <div style={{ display: "flex", gap: 48, flexWrap: "wrap", alignItems: "flex-start", marginBottom: 32 }}>
             <div>
               <p style={{ margin: "0 0 12px", fontSize: 11, color: "#94A3B8", fontFamily: "'Geist Mono', monospace" }}>inline (dark)</p>
               <div style={{ background: "#07111F", padding: 24, borderRadius: 12, display: "inline-block" }}>
-                <LagdaLoader
-                  mode="inline"
-                  theme="dark"
-                  message={inlineMsg}
-                  size={40}
-                />
+                <LagdaLoader mode="inline" theme="dark" message={inlineMsg} size={40} />
               </div>
             </div>
             <div>
               <p style={{ margin: "0 0 12px", fontSize: 11, color: "#94A3B8", fontFamily: "'Geist Mono', monospace" }}>inline (light)</p>
               <div style={{ background: "#ffffff", border: "1px solid rgba(0,0,0,0.08)", padding: 24, borderRadius: 12, display: "inline-block" }}>
-                <LagdaLoader
-                  mode="inline"
-                  theme="light"
-                  message="Preparing your secure workspace"
-                  size={32}
-                />
+                <LagdaLoader mode="inline" theme="light" message="Preparing your secure workspace" size={32} />
               </div>
             </div>
             <div>
@@ -577,17 +604,56 @@ export function DesignSystemShowcase() {
               </div>
             </div>
           </div>
-          <div style={{ marginTop: 24 }}>
-            <Button
-              variant="navy"
-              size="md"
-              onClick={() => {
-                setShowFullscreenLoader(true);
-                setTimeout(() => setShowFullscreenLoader(false), 3000);
-              }}
-            >
-              Preview fullscreen loader (3s)
-            </Button>
+
+          {/* Fullscreen previews — each manages its own exit animation */}
+          <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginBottom: 32 }}>
+            <FullscreenPreview theme="dark" />
+            <FullscreenPreview theme="light" />
+          </div>
+
+          {/* Loading service demo */}
+          <div>
+            <p style={{ margin: "0 0 12px", fontSize: 12, fontWeight: 600, color: "#334155" }}>
+              Loading service — use case examples
+            </p>
+            <p style={{ margin: "0 0 16px", fontSize: 12, color: "#64748B" }}>
+              Each button calls <code style={{ fontFamily: "'Geist Mono', monospace", background: "#f3f3f5", padding: "1px 6px", borderRadius: 4 }}>useLagdaLoading().show()</code> then hides after a delay. Ref-counted: rapid clicks merge correctly.
+            </p>
+            <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+              {[
+                { label: "Initial portal load",        msg: "Loading LAGDA",                          ms: 2800 },
+                { label: "Document Verification",      msg: "Verifying document record",               ms: 2200 },
+                { label: "Prepare Document",           msg: "Preparing your secure workspace",         ms: 1800 },
+                { label: "Contact Sales form",         msg: "Submitting your request",                 ms: 1600 },
+                { label: "Book a Demo",                msg: "Booking your demo session",               ms: 1400 },
+                { label: "Create Account",             msg: "Creating your LAGDA account",             ms: 2000 },
+                { label: "eNotary Waitlist",           msg: "Registering your interest",               ms: 1500 },
+              ].map(({ label, msg, ms }) => (
+                <Button
+                  key={label}
+                  variant="primary-outline"
+                  size="sm"
+                  onClick={() => { show(msg); setTimeout(hide, ms); }}
+                >
+                  {label}
+                </Button>
+              ))}
+            </div>
+          </div>
+
+          {/* Reduced-motion note */}
+          <div
+            style={{
+              marginTop: 24,
+              padding: "12px 16px",
+              background: "#EAF6FF",
+              border: "1px solid #BAE0FA",
+              borderRadius: 8,
+            }}
+          >
+            <p style={{ margin: 0, fontSize: 12, color: "#005BA9" }}>
+              <strong>Reduced motion:</strong> All animation keyframes (gold sweep, azure pulse, diamond pulse, entrance scale, exit fade) collapse to static or very subtle opacity changes via <code style={{ fontFamily: "'Geist Mono', monospace", background: "rgba(0,120,212,0.08)", padding: "1px 5px", borderRadius: 4 }}>@media (prefers-reduced-motion: reduce)</code>. The loading message and aria-live region remain fully accessible.
+            </p>
           </div>
         </Section>
 
@@ -791,15 +857,6 @@ export function DesignSystemShowcase() {
 
       </div>
 
-      {/* Fullscreen loader overlay */}
-      {showFullscreenLoader && (
-        <LagdaLoader
-          mode="fullscreen"
-          theme="dark"
-          message="Preparing your secure workspace"
-          showWordmark
-        />
-      )}
     </div>
   );
 }
