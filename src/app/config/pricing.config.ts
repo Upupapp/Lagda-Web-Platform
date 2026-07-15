@@ -100,7 +100,7 @@ export const LAGDA_PLANS: LagdaPlan[] = [
     ctaLabel: "Contact Sales",
     ctaPath: "/contact",
     secondaryCtaLabel: "Book a Demo",
-    secondaryCtaPath: "/contact",
+    secondaryCtaPath: "/book-a-demo?topic=enterprise-admin",
     availabilityStatus: "available",
     highlights: [
       "Everything in Business",

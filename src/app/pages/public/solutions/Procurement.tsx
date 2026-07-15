@@ -164,7 +164,7 @@ export function Procurement() {
         heading="Streamline your vendor agreement process."
         sub="Contact Sales for a team workspace or start free to explore procurement workflow templates."
         primaryLabel="Book a Demo"
-        primaryPath="/contact"
+        primaryPath="/book-a-demo?solution=procurement"
         secondaryLabel="Create Free Account"
         secondaryPath="/create-account"
       />

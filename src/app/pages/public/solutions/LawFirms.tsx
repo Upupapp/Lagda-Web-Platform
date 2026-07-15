@@ -185,7 +185,7 @@ export function LawFirms() {
         heading="Get your firm workspace set up."
         sub="LAGDA team workspaces support multiple senders, shared templates, and firm branding. Contact Sales for larger deployments."
         primaryLabel="Book a Demo"
-        primaryPath="/contact"
+        primaryPath="/book-a-demo?solution=law-firms"
         secondaryLabel="Compare Plans"
         secondaryPath="/pricing/compare"
       />

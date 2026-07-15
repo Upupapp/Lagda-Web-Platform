@@ -154,7 +154,7 @@ export function Finance() {
         heading="Bring structure to your internal approvals."
         sub="Contact Sales for a team workspace setup or start free to explore the approval workflow."
         primaryLabel="Book a Demo"
-        primaryPath="/contact"
+        primaryPath="/book-a-demo?solution=finance"
         secondaryLabel="Create Free Account"
         secondaryPath="/create-account"
       />

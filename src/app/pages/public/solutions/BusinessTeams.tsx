@@ -155,7 +155,7 @@ export function BusinessTeams() {
         primaryLabel="Create Free Account"
         primaryPath="/create-account"
         secondaryLabel="Book a Demo"
-        secondaryPath="/contact"
+        secondaryPath="/book-a-demo?solution=business-teams"
       />
       <SolLegalNote />
     </SolPageShell>

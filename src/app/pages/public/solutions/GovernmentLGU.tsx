@@ -164,7 +164,7 @@ export function GovernmentLGU() {
         heading="Explore whether LAGDA fits your office's needs."
         sub="Contact us with questions about how LAGDA eSignature may apply to your internal workflows."
         primaryLabel="Book a Demo"
-        primaryPath="/contact"
+        primaryPath="/book-a-demo?solution=government-and-lgu"
         secondaryLabel="Explore eSignature"
         secondaryPath="/esignature"
       />

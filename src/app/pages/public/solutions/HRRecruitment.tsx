@@ -153,7 +153,7 @@ export function HRRecruitment() {
         primaryLabel="Create Free Account"
         primaryPath="/create-account"
         secondaryLabel="Book a Demo"
-        secondaryPath="/contact"
+        secondaryPath="/book-a-demo?solution=hr-and-recruitment"
       />
       <SolLegalNote extra="HR organizations remain responsible for ensuring their document processes comply with applicable labor law and privacy regulations." />
     </SolPageShell>

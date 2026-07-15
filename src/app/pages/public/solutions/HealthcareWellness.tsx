@@ -189,7 +189,7 @@ export function HealthcareWellness() {
         heading="Explore LAGDA for your wellness practice."
         sub="Contact us with questions about how LAGDA eSignature may apply to your specific workflow."
         primaryLabel="Book a Demo"
-        primaryPath="/contact"
+        primaryPath="/book-a-demo?solution=healthcare-and-wellness"
         secondaryLabel="Create Free Account"
         secondaryPath="/create-account"
       />

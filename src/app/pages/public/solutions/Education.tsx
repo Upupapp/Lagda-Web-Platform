@@ -163,7 +163,7 @@ export function Education() {
         primaryLabel="Create Free Account"
         primaryPath="/create-account"
         secondaryLabel="Book a Demo"
-        secondaryPath="/contact"
+        secondaryPath="/book-a-demo?solution=education"
       />
       <SolLegalNote extra="Educational institutions remain responsible for ensuring their use of LAGDA eSignature complies with applicable privacy laws, institutional policies, and document-handling requirements." />
     </SolPageShell>

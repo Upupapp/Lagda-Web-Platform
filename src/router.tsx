@@ -51,6 +51,11 @@ import { AccreditationRoadmap } from "./app/pages/public/enotary/AccreditationRo
 import { EnotaryWaitlist } from "./app/pages/public/enotary/EnotaryWaitlist";
 import { EnotaryFaq } from "./app/pages/public/enotary/EnotaryFaq";
 
+// ── Command 10 — Conversion flows ──────────────────────────────────────────────
+import { CreateAccount } from "./app/pages/auth/CreateAccount";
+import { BookADemo } from "./app/pages/public/demo/BookADemo";
+import { VerifyDocument } from "./app/pages/public/verify/VerifyDocument";
+
 // ── Features pages (Command 7) ─────────────────────────────────────────────────
 import { FeaturesOverview } from "./app/pages/public/features/FeaturesOverview";
 import { DocPrep } from "./app/pages/public/features/DocPrep";
@@ -118,10 +123,7 @@ export const router = createBrowserRouter([
     path: "/create-account",
     element: (
       <AuthLayout>
-        <DevPlaceholder
-          title="Create Your LAGDA Account"
-          subtitle="Account registration coming soon."
-        />
+        <CreateAccount />
       </AuthLayout>
     ),
   },
@@ -283,25 +285,9 @@ export const router = createBrowserRouter([
       { path: "enotary/waitlist",                 element: <EnotaryWaitlist /> },
       { path: "enotary/faq",                      element: <EnotaryFaq /> },
 
-      // ── Document Verification (public) ───────────────────────────────────────
-      {
-        path: "verify",
-        element: (
-          <DevPlaceholder
-            title="Verify a Document"
-            subtitle="Enter a Verification ID or scan a QR code to verify a LAGDA-signed document."
-          />
-        ),
-      },
-      {
-        path: "verify/*",
-        element: (
-          <DevPlaceholder
-            title="Document Verification"
-            subtitle="Public document verification coming soon."
-          />
-        ),
-      },
+      // ── Conversion flows (Command 10) ────────────────────────────────────────
+      { path: "book-a-demo", element: <BookADemo /> },
+      { path: "verify",      element: <VerifyDocument /> },
 
       // ── Features pages (Command 7 — production React pages) ─────────────────
       { path: "features",                           element: <FeaturesOverview /> },

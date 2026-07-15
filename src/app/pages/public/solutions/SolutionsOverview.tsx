@@ -25,7 +25,7 @@ export function SolutionsOverview() {
           }}>
             Explore LAGDA eSignature
           </Link>
-          <Link to="/contact" style={{
+          <Link to="/book-a-demo" style={{
             background: "rgba(255,255,255,0.06)", color: "white", padding: "12px 20px", borderRadius: 10,
             border: "1px solid rgba(255,255,255,0.15)",
             ...GF, fontSize: 14, fontWeight: 600, textDecoration: "none", minHeight: 44,
@@ -144,7 +144,7 @@ export function SolutionsOverview() {
         primaryLabel="Explore LAGDA eSignature"
         primaryPath="/esignature"
         secondaryLabel="Book a Demo"
-        secondaryPath="/contact"
+        secondaryPath="/book-a-demo"
       />
       <SolLegalNote />
     </SolPageShell>

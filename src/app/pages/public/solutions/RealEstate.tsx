@@ -170,7 +170,7 @@ export function RealEstate() {
         primaryLabel="Create Free Account"
         primaryPath="/create-account"
         secondaryLabel="Book a Demo"
-        secondaryPath="/contact"
+        secondaryPath="/book-a-demo?solution=real-estate"
       />
       <SolLegalNote extra="Real estate organizations remain responsible for confirming that each document type is eligible for electronic signing under applicable law." />
     </SolPageShell>
