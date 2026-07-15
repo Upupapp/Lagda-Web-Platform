@@ -1,4 +1,4 @@
-import { createBrowserRouter, Navigate } from "react-router";
+import { createBrowserRouter } from "react-router";
 import App from "./app/App";
 import { PublicLayout } from "./app/layouts/PublicLayout";
 import { AuthLayout } from "./app/layouts/AuthLayout";
@@ -8,6 +8,7 @@ import { DevPlaceholder } from "./app/pages/shared/DevPlaceholder";
 import { PlatformIndex } from "./app/pages/platform/PlatformIndex";
 import { SignIn } from "./app/pages/auth/SignIn";
 import { DesignSystemShowcase } from "./app/pages/dev/DesignSystemShowcase";
+import { Home } from "./app/pages/public/Home";
 
 // ── Router definition ─────────────────────────────────────────────────────────
 //
@@ -133,8 +134,8 @@ export const router = createBrowserRouter([
     path: "/",
     element: <PublicLayout />,
     children: [
-      // Root → redirect to eSignature overview
-      { index: true, element: <Navigate to="/esignature" replace /> },
+      // Root → Home page
+      { index: true, element: <Home /> },
 
       // ── Implemented sections (App.tsx state machine handles subrouting) ──────
       { path: "esignature/*", element: <App /> },
