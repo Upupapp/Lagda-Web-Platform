@@ -149,7 +149,8 @@ const RoutingStep       = lazy(() => import("./app/pages/platform/prepare/Routin
 const AuthStep          = lazy(() => import("./app/pages/platform/prepare/AuthStep").then(m => ({ default: m.AuthStep })));
 const SettingsStep      = lazy(() => import("./app/pages/platform/prepare/SettingsStep").then(m => ({ default: m.SettingsStep })));
 const ReviewStep        = lazy(() => import("./app/pages/platform/prepare/ReviewStep").then(m => ({ default: m.ReviewStep })));
-const FieldsHandoff     = lazy(() => import("./app/pages/platform/prepare/FieldsHandoff").then(m => ({ default: m.FieldsHandoff })));
+const FieldsPage        = lazy(() => import("./app/pages/platform/prepare/FieldsPage").then(m => ({ default: m.FieldsPage })));
+const ConfirmationPage  = lazy(() => import("./app/pages/platform/prepare/ConfirmationPage").then(m => ({ default: m.ConfirmationPage })));
 
 // Transaction detail (Command 16)
 const TransactionDetailLayout = lazy(() => import("./app/pages/platform/documents/TransactionDetailPage").then(m => ({ default: m.TransactionDetailLayout })));
@@ -355,7 +356,8 @@ export const router = createBrowserRouter([
       { path: "authentication", element: <Suspense fallback={null}><AuthStep /></Suspense> },
       { path: "settings",       element: <Suspense fallback={null}><SettingsStep /></Suspense> },
       { path: "review",         element: <Suspense fallback={null}><ReviewStep /></Suspense> },
-      { path: "fields",         element: <Suspense fallback={null}><FieldsHandoff /></Suspense> },
+      { path: "fields",         element: <Suspense fallback={null}><FieldsPage /></Suspense> },
+      { path: "confirmation",   element: <Suspense fallback={null}><ConfirmationPage /></Suspense> },
     ],
   },
 
