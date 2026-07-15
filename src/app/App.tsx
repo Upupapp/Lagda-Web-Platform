@@ -6,8 +6,7 @@ import { useLocation } from "react-router";
 // reads the current pathname and derives the active section/tab.
 // No state machine, no bidirectional effects, no URL sync loops.
 
-type Section = "esignature" | "security" | "solutions" | "pricing" | "resources";
-type EsigTab = "overview" | "core-workflow" | "verification-audit" | "advanced-capabilities" | "templates-branding" | "team-enterprise";
+type Section = "security" | "solutions" | "pricing" | "resources";
 type SecurityTab = "security-overview" | "trust-center";
 type PricingTab = "pricing-main" | "compare-plans";
 type ResourcesTab = "guides" | "faq";
@@ -15,7 +14,6 @@ type SolutionsTab = "all" | "lawyers";
 
 type UrlState = {
   section: Section;
-  esigTab?: EsigTab;
   securityTab?: SecurityTab;
   pricingTab?: PricingTab;
   resourcesTab?: ResourcesTab;
@@ -23,13 +21,7 @@ type UrlState = {
 };
 
 function pathToState(pathname: string): UrlState | null {
-  const p = pathname.replace(/\/$/, "") || "/esignature";
-  if (p === "/esignature" || p === "/")                        return { section: "esignature", esigTab: "overview" };
-  if (p === "/esignature/core-workflow")                       return { section: "esignature", esigTab: "core-workflow" };
-  if (p === "/esignature/verification-and-audit")              return { section: "esignature", esigTab: "verification-audit" };
-  if (p === "/esignature/advanced-capabilities")               return { section: "esignature", esigTab: "advanced-capabilities" };
-  if (p === "/esignature/templates-and-branding")              return { section: "esignature", esigTab: "templates-branding" };
-  if (p === "/esignature/team-and-enterprise")                 return { section: "esignature", esigTab: "team-enterprise" };
+  const p = pathname.replace(/\/$/, "");
   if (p === "/security" || p === "/security/security-overview") return { section: "security",  securityTab: "security-overview" };
   if (p === "/security/trust-center")                          return { section: "security",   securityTab: "trust-center" };
   if (p === "/solutions")                                      return { section: "solutions",  solutionsTab: "all" };
@@ -41,12 +33,6 @@ function pathToState(pathname: string): UrlState | null {
   return null;
 }
 
-import DLagdaEsignatureOverview from "@/imports/DLagdaEsignatureOverview/index";
-import DLagdaEsignatureCoreWorkflow from "@/imports/DLagdaEsignatureCoreWorkflow/index";
-import DLagdaEsignatureVerificationAudit from "@/imports/DLagdaEsignatureVerificationAudit/index";
-import DLagdaEsignatureAdvancedCapabilities from "@/imports/DLagdaEsignatureAdvancedCapabilities/index";
-import DLagdaEsignatureTemplatesBranding from "@/imports/DLagdaEsignatureTemplatesBranding/index";
-import DLagdaEsignatureTeamEnterprise from "@/imports/DLagdaEsignatureTeamEnterprise/index";
 import DLagdaSecurityOverview from "@/imports/DLagdaSecurityOverview/index";
 import DLagdaSecurityTrustCenter from "@/imports/DLagdaSecurityTrustCenter/index";
 import DLagdaSolutionsAll from "@/imports/DLagdaSolutionsAll/index";
@@ -117,11 +103,6 @@ const globalOverrides = `
   }
 
   /* Root page containers: stretch children to full width */
-  [data-name="d-lagda-esignature-core-workflow"],
-  [data-name="d-lagda-esignature-team-enterprise"],
-  [data-name="d-lagda-esignature-advanced-capabilities"],
-  [data-name="d-lagda-esignature-templates-branding"],
-  [data-name="d-lagda-esignature-overview"],
   [data-name="d-lagda-security-overview"],
   [data-name="d-lagda-solutions-all"],
   [data-name="d-lagda-resources-guides"],
@@ -132,11 +113,6 @@ const globalOverrides = `
   [data-name="faq-row-1"] { align-items: center !important; }
   [data-name="featured-section"] { align-items: center !important; }
   [data-name="workflow-strip"] > div:not([aria-hidden]) { align-items: center !important; }
-  [data-name="d-lagda-esignature-verification-audit"] > div:first-child { align-items: stretch !important; }
-
-  [data-name="d-lagda-esignature-advanced-capabilities"] .bg-\\[\\#eaf6ff\\].relative.shrink-0.w-full > div {
-    align-items: center !important;
-  }
 
   [data-name="d-lagda-security-overview"] [data-name="Footer"] > div > div {
     align-items: center !important;
@@ -292,12 +268,11 @@ export default function App() {
 
   // Derive current view entirely from URL — no state, no effects for sync.
   const parsed        = pathToState(pathname);
-  const section       = (parsed?.section      ?? "esignature")       as Section;
-  const esigTab       = (parsed?.esigTab      ?? "overview")         as EsigTab;
+  const section       = (parsed?.section      ?? "security")          as Section;
   const securityTab   = (parsed?.securityTab  ?? "security-overview") as SecurityTab;
-  const pricingTab    = (parsed?.pricingTab   ?? "pricing-main")     as PricingTab;
-  const resourcesTab  = (parsed?.resourcesTab ?? "guides")           as ResourcesTab;
-  const solutionsTab  = (parsed?.solutionsTab ?? "all")              as SolutionsTab;
+  const pricingTab    = (parsed?.pricingTab   ?? "pricing-main")      as PricingTab;
+  const resourcesTab  = (parsed?.resourcesTab ?? "guides")            as ResourcesTab;
+  const solutionsTab  = (parsed?.solutionsTab ?? "all")               as SolutionsTab;
 
   // Page animation key — increments on pathname change to trigger CSS enter animation.
   const pageKey  = useRef(0);
@@ -365,8 +340,7 @@ export default function App() {
   const pricingPullUp   = pricingTab   === "compare-plans" ? 80 : 0;
   const solutionsPullUp = solutionsTab === "lawyers"       ? 144 : 0;
   const resourcesPullUp = resourcesTab === "faq"           ? 72  : 80;
-  const contentPullUp   = section === "esignature" ? (esigTab === "overview" ? 80 : 136)
-    : section === "pricing"   ? pricingPullUp
+  const contentPullUp   = section === "pricing"   ? pricingPullUp
     : section === "resources" ? resourcesPullUp
     : section === "solutions" ? solutionsPullUp
     : 0;
@@ -386,12 +360,6 @@ export default function App() {
             className="lagda-page-enter"
             style={{ width: 1440, minWidth: 1440, marginLeft: "auto", marginRight: "auto" }}
           >
-            {section === "esignature" && esigTab === "overview"               && <DLagdaEsignatureOverview />}
-            {section === "esignature" && esigTab === "core-workflow"           && <DLagdaEsignatureCoreWorkflow />}
-            {section === "esignature" && esigTab === "verification-audit"      && <DLagdaEsignatureVerificationAudit />}
-            {section === "esignature" && esigTab === "advanced-capabilities"   && <DLagdaEsignatureAdvancedCapabilities />}
-            {section === "esignature" && esigTab === "templates-branding"      && <DLagdaEsignatureTemplatesBranding />}
-            {section === "esignature" && esigTab === "team-enterprise"         && <DLagdaEsignatureTeamEnterprise />}
             {section === "security"   && securityTab === "security-overview"   && <DLagdaSecurityOverview />}
             {section === "security"   && securityTab === "trust-center"        && <DLagdaSecurityTrustCenter />}
             {section === "solutions"  && solutionsTab === "all"                && <DLagdaSolutionsAll />}

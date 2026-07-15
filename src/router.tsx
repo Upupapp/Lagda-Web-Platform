@@ -9,6 +9,12 @@ import { PlatformIndex } from "./app/pages/platform/PlatformIndex";
 import { SignIn } from "./app/pages/auth/SignIn";
 import { DesignSystemShowcase } from "./app/pages/dev/DesignSystemShowcase";
 import { Home } from "./app/pages/public/Home";
+import { EsigOverview } from "./app/pages/public/esignature/EsigOverview";
+import { EsigCoreWorkflow } from "./app/pages/public/esignature/EsigCoreWorkflow";
+import { EsigVerificationAudit } from "./app/pages/public/esignature/EsigVerificationAudit";
+import { EsigAdvancedCapabilities } from "./app/pages/public/esignature/EsigAdvancedCapabilities";
+import { EsigTemplatesBranding } from "./app/pages/public/esignature/EsigTemplatesBranding";
+import { EsigTeamEnterprise } from "./app/pages/public/esignature/EsigTeamEnterprise";
 
 // ── Router definition ─────────────────────────────────────────────────────────
 //
@@ -137,8 +143,13 @@ export const router = createBrowserRouter([
       // Root → Home page
       { index: true, element: <Home /> },
 
-      // ── Implemented sections (App.tsx state machine handles subrouting) ──────
-      { path: "esignature/*", element: <App /> },
+      // ── eSignature product pages (Command 6 — production React pages) ────────
+      { path: "esignature", element: <EsigOverview /> },
+      { path: "esignature/core-workflow", element: <EsigCoreWorkflow /> },
+      { path: "esignature/verification-and-audit", element: <EsigVerificationAudit /> },
+      { path: "esignature/advanced-capabilities", element: <EsigAdvancedCapabilities /> },
+      { path: "esignature/templates-and-branding", element: <EsigTemplatesBranding /> },
+      { path: "esignature/team-and-enterprise", element: <EsigTeamEnterprise /> },
       { path: "security/*", element: <App /> },
       { path: "solutions/*", element: <App /> },
       { path: "pricing/*", element: <App /> },
