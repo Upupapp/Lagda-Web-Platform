@@ -1,11 +1,18 @@
+// C13 — Sign-in page with deterministic mock auth scenarios.
+// Email-based routing: standard → /app, mfa → /mfa, verify → /verify-email,
+// locked → /auth/account-locked, onboarding (default) → /onboarding/profile.
+// Password is NEVER logged or stored.
+
 import { useState, useRef } from "react";
 import { Link, useSearchParams, useNavigate } from "react-router";
-import { type SubmissionStatus, type FormErrors, type SignInRequest } from "../../models/forms";
-import { publicAccountService, conversionTracker } from "../../services/public";
+import { type FormErrors } from "../../models/forms";
+import { conversionTracker } from "../../services/public";
 import { usePlatform, createMockSignInPayload } from "../../context/PlatformContext";
+import { useOnboarding } from "../../context/OnboardingContext";
+import { mockAuthService } from "../../services/mock/auth.service";
 
-const GF = { fontFamily: "'Geist', sans-serif" };
-const GM = { fontFamily: "'Geist Mono', monospace" };
+const GF    = { fontFamily: "'Geist', sans-serif" };
+const GM    = { fontFamily: "'Geist Mono', monospace" };
 const AZURE = "#0078D4";
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -20,25 +27,26 @@ function safeReturnPath(raw: string | null): string {
 }
 
 export function SignIn() {
-  const [params] = useSearchParams();
+  const [params]   = useSearchParams();
   const redirectTo = safeReturnPath(params.get("returnTo") ?? params.get("redirect"));
-  const navigate = useNavigate();
-  const platform = usePlatform();
+  const navigate   = useNavigate();
+  const platform   = usePlatform();
+  const { setPendingUser } = useOnboarding();
 
-  const [fields, setFields] = useState<SignInRequest>({ email: "", password: "" });
+  const [email,        setEmail]        = useState("");
+  const [password,     setPassword]     = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [errors, setErrors] = useState<FormErrors>({});
-  const [status, setStatus] = useState<SubmissionStatus>("idle");
-  const [serverError, setServerError] = useState<string | null>(null);
+  const [errors,       setErrors]       = useState<FormErrors>({});
+  const [status,       setStatus]       = useState<"idle"|"submitting"|"error">("idle");
+  const [serverError,  setServerError]  = useState<string | null>(null);
   const errorRef = useRef<HTMLDivElement>(null);
-  const confirmRef = useRef<HTMLDivElement>(null);
 
   function validate(): FormErrors {
     const e: FormErrors = {};
-    if (!fields.email.trim()) e.email = "Email address is required";
-    else if (!EMAIL_RE.test(fields.email.trim())) e.email = "Enter a valid email address";
-    if (!fields.password) e.password = "Password is required";
-    else if (fields.password.length < 6) e.password = "Password must be at least 6 characters";
+    if (!email.trim()) e.email = "Email address is required";
+    else if (!EMAIL_RE.test(email.trim())) e.email = "Enter a valid email address";
+    if (!password) e.password = "Password is required";
+    else if (password.length < 6) e.password = "Password must be at least 6 characters";
     return e;
   }
 
@@ -55,35 +63,46 @@ export function SignIn() {
     setServerError(null);
     setStatus("submitting");
     conversionTracker.track({ name: "sign_in_started" });
-    // Password is passed to the mock service interface but never logged or stored.
-    const result = await publicAccountService.signIn({ email: fields.email, password: fields.password });
-    if (result.success) {
-      setStatus("success");
-      conversionTracker.track({ name: "sign_in_mock_completed" });
-      // Establish the in-memory platform session for the authenticated shell.
-      const p = createMockSignInPayload();
-      platform.signIn(p.user, p.workspaces, p.currentWorkspace, p.subscription, p.notifications);
-      setTimeout(() => confirmRef.current?.focus(), 50);
-      setTimeout(() => navigate(redirectTo), 1400);
-    } else {
-      setStatus("error");
-      setServerError(result.errorMessage ?? "An error occurred. Please try again.");
-      setTimeout(() => errorRef.current?.focus(), 50);
-    }
-  }
 
-  if (status === "success") {
-    return (
-      <div ref={confirmRef} tabIndex={-1} style={{ outline: "none", textAlign: "center" }}>
-        <div style={{ width: 48, height: 48, borderRadius: "50%", background: "rgba(0,120,212,0.15)", border: "1px solid rgba(0,120,212,0.3)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px", fontSize: 20 }} aria-hidden>✓</div>
-        <h1 style={{ color: "white", ...GF, fontSize: 20, fontWeight: 900, margin: "0 0 8px" }}>Signing you in…</h1>
-        <div style={{ background: "rgba(0,120,212,0.08)", border: "1px solid rgba(0,120,212,0.2)", borderRadius: 10, padding: "14px 18px", marginTop: 16 }} role="status">
-          <p style={{ color: "#94a3b8", ...GF, fontSize: 13, lineHeight: 1.65, margin: 0 }}>
-            Sign-in validation is complete in this frontend demonstration. Secure authentication will be connected during backend integration.
-          </p>
-        </div>
-      </div>
-    );
+    // Password is never logged — passed as unnamed arg to satisfy interface only.
+    const result = await mockAuthService.signIn(email.trim(), password);
+
+    if (!result.success) {
+      setStatus("error");
+      setServerError(result.errorMessage);
+      setTimeout(() => errorRef.current?.focus(), 50);
+      return;
+    }
+
+    conversionTracker.track({ name: "sign_in_mock_completed" });
+    const { scenario, user } = result;
+    setPendingUser(user);
+
+    switch (scenario) {
+      case "standard":
+        // Fully authenticated — go straight to platform
+        const p = createMockSignInPayload();
+        platform.signIn(p.user, p.workspaces, p.currentWorkspace, p.subscription, p.notifications);
+        navigate(redirectTo, { replace: true });
+        break;
+
+      case "mfa-challenge":
+        navigate(`/mfa${redirectTo !== "/app/dashboard" ? `?returnTo=${encodeURIComponent(redirectTo)}` : ""}`, { replace: true });
+        break;
+
+      case "email-verification":
+        navigate("/verify-email", { replace: true });
+        break;
+
+      case "locked":
+        navigate("/auth/account-locked", { replace: true });
+        break;
+
+      case "onboarding":
+      default:
+        navigate("/onboarding/profile", { replace: true });
+        break;
+    }
   }
 
   return (
@@ -114,11 +133,13 @@ export function SignIn() {
           <label htmlFor="si-email" style={{ display: "block", color: "#94a3b8", ...GF, fontSize: 12, fontWeight: 600, marginBottom: 5 }}>
             Email address <span aria-hidden style={{ color: "#ef4444" }}>*</span>
           </label>
-          <input id="si-email" type="email" value={fields.email}
-            onChange={(e) => setFields((f) => ({ ...f, email: e.target.value }))}
+          <input
+            id="si-email" type="email" value={email}
+            onChange={(e) => { setEmail(e.target.value); if (errors.email) setErrors((p) => ({ ...p, email: undefined })); }}
             autoComplete="email" aria-required aria-invalid={!!errors.email}
             aria-describedby={errors.email ? "si-email-err" : undefined}
-            style={{ width: "100%", boxSizing: "border-box", background: "rgba(255,255,255,0.05)", border: `1px solid ${errors.email ? "rgba(239,68,68,0.4)" : "rgba(255,255,255,0.12)"}`, borderRadius: 8, color: "white", ...GF, fontSize: 14, padding: "11px 14px", outline: "none" }} />
+            style={{ width: "100%", boxSizing: "border-box", background: "rgba(255,255,255,0.05)", border: `1px solid ${errors.email ? "rgba(239,68,68,0.4)" : "rgba(255,255,255,0.12)"}`, borderRadius: 8, color: "white", ...GF, fontSize: 14, padding: "11px 14px", outline: "none" }}
+          />
           {errors.email && <p id="si-email-err" role="alert" style={{ color: "#ef4444", ...GF, fontSize: 12, margin: "4px 0 0" }}>{errors.email}</p>}
         </div>
 
@@ -130,31 +151,50 @@ export function SignIn() {
             <Link to="/forgot-password" style={{ color: "#64748b", ...GF, fontSize: 12, textDecoration: "none" }}>Forgot password?</Link>
           </div>
           <div style={{ position: "relative" }}>
-            <input id="si-password" type={showPassword ? "text" : "password"}
-              value={fields.password} onChange={(e) => setFields((f) => ({ ...f, password: e.target.value }))}
+            <input
+              id="si-password" type={showPassword ? "text" : "password"}
+              value={password}
+              onChange={(e) => { setPassword(e.target.value); if (errors.password) setErrors((p) => ({ ...p, password: undefined })); }}
               autoComplete="current-password" aria-required aria-invalid={!!errors.password}
               aria-describedby={errors.password ? "si-pw-err" : undefined}
-              style={{ width: "100%", boxSizing: "border-box", background: "rgba(255,255,255,0.05)", border: `1px solid ${errors.password ? "rgba(239,68,68,0.4)" : "rgba(255,255,255,0.12)"}`, borderRadius: 8, color: "white", ...GF, fontSize: 14, padding: "11px 44px 11px 14px", outline: "none" }} />
-            <button type="button" onClick={() => setShowPassword((s) => !s)}
+              style={{ width: "100%", boxSizing: "border-box", background: "rgba(255,255,255,0.05)", border: `1px solid ${errors.password ? "rgba(239,68,68,0.4)" : "rgba(255,255,255,0.12)"}`, borderRadius: 8, color: "white", ...GF, fontSize: 14, padding: "11px 44px 11px 14px", outline: "none" }}
+            />
+            <button
+              type="button" onClick={() => setShowPassword((s) => !s)}
               aria-label={showPassword ? "Hide password" : "Show password"}
-              style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: "#64748b", ...GF, fontSize: 11, padding: "4px", minHeight: 28 }}>
+              style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: "#64748b", ...GF, fontSize: 11, padding: "4px", minHeight: 28 }}
+            >
               {showPassword ? "Hide" : "Show"}
             </button>
           </div>
           {errors.password && <p id="si-pw-err" role="alert" style={{ color: "#ef4444", ...GF, fontSize: 12, margin: "4px 0 0" }}>{errors.password}</p>}
         </div>
 
-        <button type="submit" disabled={status === "submitting"}
+        <button
+          type="submit" disabled={status === "submitting"}
           style={{ background: status === "submitting" ? "rgba(0,120,212,0.5)" : AZURE, color: "white", ...GF, fontSize: 15, fontWeight: 700, padding: "14px", borderRadius: 8, border: "none", cursor: status === "submitting" ? "not-allowed" : "pointer", minHeight: 48, transition: "background 0.15s" }}
-          aria-busy={status === "submitting"}>
-          {status === "submitting" ? "Signing in…" : "Continue to Sign In"}
+          aria-busy={status === "submitting"}
+        >
+          {status === "submitting" ? "Signing in…" : "Sign In"}
         </button>
 
+        {/* Demo scenarios */}
         <div style={{ padding: "12px 14px", background: "rgba(201,150,12,0.06)", border: "1px solid rgba(201,150,12,0.15)", borderRadius: 8 }}>
-          <p style={{ color: "#C9960C", ...GM, fontSize: 9, fontWeight: 700, marginBottom: 4 }}>FRONTEND DEMONSTRATION</p>
-          <p style={{ color: "#475569", ...GF, fontSize: 11, margin: 0, lineHeight: 1.5 }}>
-            No real authentication occurs in this phase. Secure sign-in will be connected during backend integration.
-          </p>
+          <p style={{ color: "#C9960C", ...GM, fontSize: 9, fontWeight: 700, marginBottom: 6 }}>FRONTEND DEMONSTRATION — TEST SCENARIOS</p>
+          <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+            {[
+              { email: "ana.reyes@example.com", label: "Standard sign-in → dashboard" },
+              { email: "mfa.user@example.com",  label: "MFA challenge → /mfa (code: 123456)" },
+              { email: "new.user@example.com",  label: "Email verification → /verify-email" },
+              { email: "locked.user@example.com", label: "Account locked state" },
+              { email: "(any other email)",     label: "Onboarding flow → /onboarding/profile" },
+              { email: "error@example.com",     label: "Invalid credentials error" },
+            ].map(({ email: em, label }) => (
+              <p key={em} style={{ color: "#475569", ...GF, fontSize: 11, margin: 0 }}>
+                <span style={{ fontFamily: "'Geist Mono', monospace", color: "#64748B" }}>{em}</span> → {label}
+              </p>
+            ))}
+          </div>
         </div>
       </form>
 

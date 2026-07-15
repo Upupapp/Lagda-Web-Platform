@@ -12,8 +12,26 @@ import { DevPlaceholder } from "./app/pages/shared/DevPlaceholder";
 // Auth routes use an inline <AuthSuspense> wrapper below.
 
 // Auth
-const SignIn        = lazy(() => import("./app/pages/auth/SignIn").then(m => ({ default: m.SignIn })));
-const CreateAccount = lazy(() => import("./app/pages/auth/CreateAccount").then(m => ({ default: m.CreateAccount })));
+const SignIn            = lazy(() => import("./app/pages/auth/SignIn").then(m => ({ default: m.SignIn })));
+const CreateAccount     = lazy(() => import("./app/pages/auth/CreateAccount").then(m => ({ default: m.CreateAccount })));
+const VerifyEmail       = lazy(() => import("./app/pages/auth/VerifyEmail").then(m => ({ default: m.VerifyEmail })));
+const ForgotPassword    = lazy(() => import("./app/pages/auth/ForgotPassword").then(m => ({ default: m.ForgotPassword })));
+const ResetPassword     = lazy(() => import("./app/pages/auth/ResetPassword").then(m => ({ default: m.ResetPassword })));
+const MfaChallenge      = lazy(() => import("./app/pages/auth/MfaChallenge").then(m => ({ default: m.MfaChallenge })));
+const MfaSetup          = lazy(() => import("./app/pages/auth/MfaSetup").then(m => ({ default: m.MfaSetup })));
+const RecoveryCodes     = lazy(() => import("./app/pages/auth/RecoveryCodes").then(m => ({ default: m.RecoveryCodes })));
+const AcceptInvitation  = lazy(() => import("./app/pages/auth/AcceptInvitation").then(m => ({ default: m.AcceptInvitation })));
+const AccountLocked     = lazy(() => import("./app/pages/auth/AccountLocked").then(m => ({ default: m.AccountLocked })));
+const LinkError         = lazy(() => import("./app/pages/auth/LinkError").then(m => ({ default: m.LinkError })));
+
+// Onboarding
+const OnboardingProfile       = lazy(() => import("./app/pages/onboarding/OnboardingProfile").then(m => ({ default: m.OnboardingProfile })));
+const OnboardingUseCase       = lazy(() => import("./app/pages/onboarding/OnboardingUseCase").then(m => ({ default: m.OnboardingUseCase })));
+const OnboardingWorkspace     = lazy(() => import("./app/pages/onboarding/OnboardingWorkspace").then(m => ({ default: m.OnboardingWorkspace })));
+const OnboardingSecurity      = lazy(() => import("./app/pages/onboarding/OnboardingSecurity").then(m => ({ default: m.OnboardingSecurity })));
+const OnboardingNotifications = lazy(() => import("./app/pages/onboarding/OnboardingNotifications").then(m => ({ default: m.OnboardingNotifications })));
+const OnboardingReview        = lazy(() => import("./app/pages/onboarding/OnboardingReview").then(m => ({ default: m.OnboardingReview })));
+const OnboardingComplete      = lazy(() => import("./app/pages/onboarding/OnboardingComplete").then(m => ({ default: m.OnboardingComplete })));
 
 // Home
 const Home = lazy(() => import("./app/pages/public/Home").then(m => ({ default: m.Home })));
@@ -158,51 +176,74 @@ export const router = createBrowserRouter([
   },
   {
     path: "/verify-email",
-    element: (
-      <AuthLayout>
-        <DevPlaceholder title="Verify Your Email" subtitle="Email verification flow coming soon." />
-      </AuthLayout>
-    ),
+    element: <AuthPage><VerifyEmail /></AuthPage>,
   },
   {
     path: "/forgot-password",
-    element: (
-      <AuthLayout>
-        <DevPlaceholder title="Forgot Password" subtitle="Password reset coming soon." />
-      </AuthLayout>
-    ),
+    element: <AuthPage><ForgotPassword /></AuthPage>,
   },
   {
     path: "/reset-password",
-    element: (
-      <AuthLayout>
-        <DevPlaceholder title="Reset Password" subtitle="Password reset coming soon." />
-      </AuthLayout>
-    ),
+    element: <AuthPage><ResetPassword /></AuthPage>,
   },
   {
     path: "/mfa",
-    element: (
-      <AuthLayout>
-        <DevPlaceholder title="Two-Factor Authentication" subtitle="MFA verification coming soon." />
-      </AuthLayout>
-    ),
+    element: <AuthPage><MfaChallenge /></AuthPage>,
   },
   {
-    path: "/invitation",
-    element: (
-      <AuthLayout>
-        <DevPlaceholder title="Accept Invitation" subtitle="Team invitation flow coming soon." />
-      </AuthLayout>
-    ),
+    path: "/mfa/setup",
+    element: <AuthPage><MfaSetup /></AuthPage>,
   },
+  {
+    path: "/mfa/recovery",
+    element: <AuthPage><RecoveryCodes /></AuthPage>,
+  },
+  {
+    path: "/accept-invitation",
+    element: <AuthPage><AcceptInvitation /></AuthPage>,
+  },
+  {
+    path: "/auth/account-locked",
+    element: <AuthPage><AccountLocked /></AuthPage>,
+  },
+  {
+    path: "/auth/link-error",
+    element: <AuthPage><LinkError /></AuthPage>,
+  },
+
+  // ── Onboarding routes (use OnboardingLayout internally) ────────────────────
+  // These pages manage their own layout, so they render fullscreen without AuthLayout.
   {
     path: "/onboarding",
-    element: (
-      <AuthLayout>
-        <DevPlaceholder title="Welcome to LAGDA" subtitle="Onboarding flow coming soon." />
-      </AuthLayout>
-    ),
+    element: <Suspense fallback={null}><Navigate to="/onboarding/profile" replace /></Suspense>,
+  },
+  {
+    path: "/onboarding/profile",
+    element: <Suspense fallback={<AuthPageLoader />}><OnboardingProfile /></Suspense>,
+  },
+  {
+    path: "/onboarding/use-case",
+    element: <Suspense fallback={<AuthPageLoader />}><OnboardingUseCase /></Suspense>,
+  },
+  {
+    path: "/onboarding/workspace",
+    element: <Suspense fallback={<AuthPageLoader />}><OnboardingWorkspace /></Suspense>,
+  },
+  {
+    path: "/onboarding/security",
+    element: <Suspense fallback={<AuthPageLoader />}><OnboardingSecurity /></Suspense>,
+  },
+  {
+    path: "/onboarding/notifications",
+    element: <Suspense fallback={<AuthPageLoader />}><OnboardingNotifications /></Suspense>,
+  },
+  {
+    path: "/onboarding/review",
+    element: <Suspense fallback={<AuthPageLoader />}><OnboardingReview /></Suspense>,
+  },
+  {
+    path: "/onboarding/complete",
+    element: <Suspense fallback={<AuthPageLoader />}><OnboardingComplete /></Suspense>,
   },
 
   // ── Platform (authenticated customer) routes ─────────────────────────────────

@@ -1,28 +1,34 @@
-import { useState, useRef, useEffect } from "react";
-import { Link, useSearchParams } from "react-router";
+// C13 update — adds password + confirm password fields.
+// On mock success: sets pendingUser in OnboardingContext, navigates to /verify-email.
+// Password is NEVER logged or stored.
+
+import { useState, useRef } from "react";
+import { Link, useSearchParams, useNavigate } from "react-router";
 import {
   parsePlanId, PLAN_DISPLAY_NAMES,
   type SubmissionStatus, type FormErrors, type CreateAccountRequest,
 } from "../../models/forms";
-import { publicAccountService, conversionTracker } from "../../services/public";
+import { conversionTracker } from "../../services/public";
+import { useOnboarding } from "../../context/OnboardingContext";
+import { checkPassword, isPasswordAcceptable } from "../../models/auth";
 
-const GF = { fontFamily: "'Geist', sans-serif" };
-const GM = { fontFamily: "'Geist Mono', monospace" };
+const GF    = { fontFamily: "'Geist', sans-serif" };
+const GM    = { fontFamily: "'Geist Mono', monospace" };
 const AZURE = "#0078D4";
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const INTENDED_USE_OPTIONS = [
-  { value: "",                     label: "Select…" },
-  { value: "individual-signing",   label: "Personal document signing" },
-  { value: "legal-professional",   label: "Legal professional" },
-  { value: "business-team",        label: "Business team" },
-  { value: "government",           label: "Government or LGU" },
-  { value: "hr-recruitment",       label: "HR and recruitment" },
-  { value: "finance",              label: "Finance or accounting" },
-  { value: "procurement",          label: "Procurement" },
-  { value: "education",            label: "Education" },
-  { value: "healthcare",           label: "Healthcare or wellness" },
-  { value: "other",                label: "Other" },
+  { value: "",                   label: "Select…" },
+  { value: "individual-signing", label: "Personal document signing" },
+  { value: "legal-professional", label: "Legal professional" },
+  { value: "business-team",      label: "Business team" },
+  { value: "government",         label: "Government or LGU" },
+  { value: "hr-recruitment",     label: "HR and recruitment" },
+  { value: "finance",            label: "Finance or accounting" },
+  { value: "procurement",        label: "Procurement" },
+  { value: "education",          label: "Education" },
+  { value: "healthcare",         label: "Healthcare or wellness" },
+  { value: "other",              label: "Other" },
 ];
 
 function InputField({
@@ -34,8 +40,8 @@ function InputField({
   return (
     <div>
       <label htmlFor={id} style={{ display: "block", color: "#94a3b8", ...GF, fontSize: 12, fontWeight: 600, marginBottom: 5 }}>
-        {label}{required && <span aria-hidden style={{ color: "#ef4444" }}> *</span>}
-        {!required && <span style={{ color: "#475569" }}> (optional)</span>}
+        {label}
+        {required ? <span aria-hidden style={{ color: "#ef4444" }}> *</span> : <span style={{ color: "#475569" }}> (optional)</span>}
       </label>
       {hint && <p id={`${id}-hint`} style={{ color: "#475569", ...GF, fontSize: 11, marginBottom: 5, lineHeight: 1.4 }}>{hint}</p>}
       <input
@@ -55,27 +61,47 @@ function InputField({
   );
 }
 
-export function CreateAccount() {
-  const [params] = useSearchParams();
-  const planId = parsePlanId(params.get("plan"));
-  const source = params.get("source") ?? undefined;
+function PwReq({ met, children }: { met: boolean; children: string }) {
+  return (
+    <li style={{ display: "flex", alignItems: "center", gap: 7, color: met ? "#38BDF8" : "#334155", ...GF, fontSize: 11, margin: 0 }}>
+      <span aria-hidden style={{ fontSize: 9 }}>{met ? "✓" : "○"}</span>
+      {children}
+    </li>
+  );
+}
 
-  const [fields, setFields] = useState<CreateAccountRequest>({ name: "", email: "", organization: "", intendedUse: "", consent: false });
-  const [errors, setErrors] = useState<FormErrors>({});
-  const [status, setStatus] = useState<SubmissionStatus>("idle");
+export function CreateAccount() {
+  const [params]    = useSearchParams();
+  const navigate    = useNavigate();
+  const planId      = parsePlanId(params.get("plan"));
+  const source      = params.get("source") ?? undefined;
+  const { setPendingUser } = useOnboarding();
+
+  const [fields,      setFields]      = useState<CreateAccountRequest>({ name: "", email: "", organization: "", intendedUse: "", consent: false });
+  const [password,    setPassword]    = useState("");
+  const [confirm,     setConfirm]     = useState("");
+  const [showPw,      setShowPw]      = useState(false);
+  const [errors,      setErrors]      = useState<FormErrors & { password?: string; confirm?: string }>({});
+  const [status,      setStatus]      = useState<SubmissionStatus>("idle");
   const [serverError, setServerError] = useState<string | null>(null);
   const errorSummaryRef = useRef<HTMLDivElement>(null);
-  const confirmRef = useRef<HTMLDivElement>(null);
 
   const set = <K extends keyof CreateAccountRequest>(k: K, v: CreateAccountRequest[K]) =>
     setFields((f) => ({ ...f, [k]: v }));
 
-  function validate(): FormErrors {
-    const e: FormErrors = {};
-    if (!fields.name.trim()) e.name = "Full name is required";
+  const pwChecks  = checkPassword(password);
+  const pwOk      = isPasswordAcceptable(password);
+  const matchOk   = password === confirm && confirm.length > 0;
+
+  function validate(): typeof errors {
+    const e: typeof errors = {};
+    if (!fields.name.trim())  e.name  = "Full name is required";
     else if (fields.name.trim().length < 2) e.name = "Enter at least 2 characters";
-    if (!fields.email.trim()) e.email = "Work email is required";
+    if (!fields.email.trim()) e.email = "Email address is required";
     else if (!EMAIL_RE.test(fields.email.trim())) e.email = "Enter a valid email address";
+    if (!pwOk) e.password = "Password must be at least 8 characters";
+    if (!confirm) e.confirm = "Please confirm your password";
+    else if (!matchOk) e.confirm = "Passwords do not match";
     if (!fields.consent) e.consent = "Please confirm to continue";
     return e;
   }
@@ -93,42 +119,21 @@ export function CreateAccount() {
     setErrors({});
     setStatus("submitting");
     conversionTracker.track({ name: "create_account_started", source, planId: planId ?? undefined });
-    const result = await publicAccountService.createAccount(fields);
-    if (result.success) {
-      setStatus("success");
-      conversionTracker.track({ name: "create_account_mock_completed", planId: planId ?? undefined });
-      setTimeout(() => confirmRef.current?.focus(), 50);
-    } else {
-      setStatus(result.errorCode === "duplicate" ? "duplicate" : "error");
-      setServerError(result.errorMessage ?? "An error occurred. Please try again.");
-    }
-  }
 
-  if (status === "success") {
-    return (
-      <div ref={confirmRef} tabIndex={-1} style={{ outline: "none" }}>
-        <div style={{ textAlign: "center", marginBottom: 24 }}>
-          <div style={{ width: 48, height: 48, borderRadius: "50%", background: "rgba(0,120,212,0.15)", border: "1px solid rgba(0,120,212,0.3)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px", fontSize: 20 }} aria-hidden>✓</div>
-          <h1 style={{ color: "white", ...GF, fontSize: 20, fontWeight: 900, margin: "0 0 8px" }}>Account setup started</h1>
-        </div>
-        <div style={{ background: "rgba(0,120,212,0.08)", border: "1px solid rgba(0,120,212,0.2)", borderRadius: 10, padding: "14px 18px", marginBottom: 20 }} role="status">
-          <p style={{ color: "#94a3b8", ...GF, fontSize: 13, lineHeight: 1.65, margin: 0 }}>
-            Your account information has been validated in this frontend demonstration. Secure registration and account creation will be connected during backend integration.
-          </p>
-        </div>
-        {planId && planId !== "enterprise" && (
-          <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 8, padding: "10px 14px", marginBottom: 16 }}>
-            <p style={{ color: "#64748b", ...GF, fontSize: 12, margin: 0 }}>
-              Selected plan: <strong style={{ color: "white" }}>{PLAN_DISPLAY_NAMES[planId]}</strong> — You can change your plan after account setup.
-            </p>
-          </div>
-        )}
-        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-          <Link to="/esignature" style={{ display: "block", textAlign: "center", background: AZURE, color: "white", ...GF, fontSize: 14, fontWeight: 700, padding: "12px", borderRadius: 8, textDecoration: "none" }}>Explore LAGDA eSignature</Link>
-          <Link to="/pricing" style={{ display: "block", textAlign: "center", background: "rgba(255,255,255,0.06)", color: "white", ...GF, fontSize: 14, fontWeight: 600, padding: "12px", borderRadius: 8, textDecoration: "none", border: "1px solid rgba(255,255,255,0.1)" }}>View Plans</Link>
-        </div>
-      </div>
-    );
+    // Mock delay — password is NOT logged.
+    await new Promise((r) => setTimeout(r, 700));
+    conversionTracker.track({ name: "create_account_mock_completed", planId: planId ?? undefined });
+
+    // Set pending user for the verification flow
+    const name = fields.name.trim();
+    setPendingUser({
+      email: fields.email.trim().toLowerCase(),
+      displayName: name,
+      authStatus: "email-verification-required",
+    });
+
+    // Navigate to verify-email
+    navigate("/verify-email?returnTo=/onboarding/profile", { replace: true });
   }
 
   const planName = planId ? PLAN_DISPLAY_NAMES[planId] : null;
@@ -153,21 +158,64 @@ export function CreateAccount() {
         <div ref={errorSummaryRef} tabIndex={-1} role="alert" aria-label="Form errors" style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: 8, padding: "12px 14px", marginBottom: 18, outline: "none" }}>
           <p style={{ color: "#ef4444", ...GF, fontSize: 13, fontWeight: 600, margin: "0 0 6px" }}>Please correct the following:</p>
           <ul style={{ margin: 0, padding: "0 0 0 16px" }}>
-            {Object.values(errors).map((msg) => <li key={msg} style={{ color: "#ef4444", ...GF, fontSize: 12, lineHeight: 1.5 }}>{msg}</li>)}
+            {Object.values(errors).map((msg) => msg && <li key={msg} style={{ color: "#ef4444", ...GF, fontSize: 12, lineHeight: 1.5 }}>{msg}</li>)}
           </ul>
         </div>
       )}
-      {(status === "error" || status === "duplicate") && serverError && (
+      {(status === "error") && serverError && (
         <div role="alert" style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: 8, padding: "12px 14px", marginBottom: 18 }}>
           <p style={{ color: "#ef4444", ...GF, fontSize: 13, margin: 0 }}>{serverError}</p>
-          {status === "error" && <button onClick={() => setStatus("idle")} style={{ color: "#38bdf8", ...GF, fontSize: 12, background: "none", border: "none", cursor: "pointer", padding: "4px 0 0", display: "block" }}>Try again</button>}
+          <button onClick={() => setStatus("idle")} style={{ color: "#38bdf8", ...GF, fontSize: 12, background: "none", border: "none", cursor: "pointer", padding: "4px 0 0", display: "block" }}>Try again</button>
         </div>
       )}
 
       <form onSubmit={handleSubmit} noValidate aria-label="Create account form" style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-        <InputField id="ca-name" label="Full name" value={fields.name} onChange={(v) => set("name", v)} error={errors.name} required autocomplete="name" />
-        <InputField id="ca-email" label="Work email" type="email" value={fields.email} onChange={(v) => set("email", v)} error={errors.email} required autocomplete="email" placeholder="you@organization.com" />
-        <InputField id="ca-org" label="Organization" value={fields.organization ?? ""} onChange={(v) => set("organization", v)} error={errors.organization} autocomplete="organization" />
+        <InputField id="ca-name"  label="Full name"  value={fields.name}  onChange={(v) => set("name", v)}  error={errors.name}  required autocomplete="name" />
+        <InputField id="ca-email" label="Email address" type="email" value={fields.email} onChange={(v) => set("email", v)} error={errors.email} required autocomplete="email" placeholder="you@example.com" />
+        <InputField id="ca-org"   label="Organization"  value={fields.organization ?? ""} onChange={(v) => set("organization", v)} autocomplete="organization" />
+
+        {/* Password */}
+        <div>
+          <label htmlFor="ca-pw" style={{ display: "block", color: "#94a3b8", ...GF, fontSize: 12, fontWeight: 600, marginBottom: 5 }}>
+            Password <span aria-hidden style={{ color: "#ef4444" }}>*</span>
+          </label>
+          <div style={{ position: "relative" }}>
+            <input
+              id="ca-pw" type={showPw ? "text" : "password"} value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              autoComplete="new-password" aria-required aria-invalid={!!errors.password}
+              aria-describedby="ca-pw-reqs"
+              style={{ width: "100%", boxSizing: "border-box", background: "rgba(255,255,255,0.05)", border: `1px solid ${errors.password ? "rgba(239,68,68,0.4)" : "rgba(255,255,255,0.12)"}`, borderRadius: 8, color: "white", ...GF, fontSize: 14, padding: "11px 44px 11px 14px", outline: "none" }}
+            />
+            <button type="button" onClick={() => setShowPw((v) => !v)} aria-label={showPw ? "Hide password" : "Show password"} style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: "#64748b", ...GF, fontSize: 11, padding: 4 }}>
+              {showPw ? "Hide" : "Show"}
+            </button>
+          </div>
+          {errors.password && <p role="alert" style={{ color: "#ef4444", ...GF, fontSize: 12, margin: "4px 0 0" }}>{errors.password}</p>}
+          {password.length > 0 && (
+            <ul id="ca-pw-reqs" aria-label="Password requirements" style={{ margin: "8px 0 0", padding: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: 3 }}>
+              <PwReq met={pwChecks.minLength}>At least 8 characters</PwReq>
+              <PwReq met={pwChecks.hasUppercase}>One uppercase letter</PwReq>
+              <PwReq met={pwChecks.hasNumber}>One number</PwReq>
+            </ul>
+          )}
+        </div>
+
+        {/* Confirm password */}
+        <div>
+          <label htmlFor="ca-confirm" style={{ display: "block", color: "#94a3b8", ...GF, fontSize: 12, fontWeight: 600, marginBottom: 5 }}>
+            Confirm password <span aria-hidden style={{ color: "#ef4444" }}>*</span>
+          </label>
+          <input
+            id="ca-confirm" type={showPw ? "text" : "password"} value={confirm}
+            onChange={(e) => setConfirm(e.target.value)}
+            autoComplete="new-password" aria-required
+            aria-invalid={confirm.length > 0 && !matchOk}
+            style={{ width: "100%", boxSizing: "border-box", background: "rgba(255,255,255,0.05)", border: `1px solid ${confirm.length > 0 && !matchOk ? "rgba(239,68,68,0.4)" : "rgba(255,255,255,0.12)"}`, borderRadius: 8, color: "white", ...GF, fontSize: 14, padding: "11px 14px", outline: "none" }}
+          />
+          {errors.confirm && <p role="alert" style={{ color: "#ef4444", ...GF, fontSize: 12, margin: "4px 0 0" }}>{errors.confirm}</p>}
+          {confirm.length > 0 && matchOk && <p style={{ color: "#38BDF8", ...GF, fontSize: 12, margin: "4px 0 0" }}>Passwords match.</p>}
+        </div>
 
         <div>
           <label htmlFor="ca-use" style={{ display: "block", color: "#94a3b8", ...GF, fontSize: 12, fontWeight: 600, marginBottom: 5 }}>
@@ -192,14 +240,14 @@ export function CreateAccount() {
 
         <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 7, padding: "10px 12px" }}>
           <p style={{ color: "#334155", ...GF, fontSize: 11, lineHeight: 1.6, margin: 0 }}>
-            Do not include passwords, government ID numbers, confidential documents, payment details, or other highly sensitive information in optional fields.
+            Do not include government ID numbers, confidential documents, payment details, or other highly sensitive information in optional fields.
           </p>
         </div>
 
         <button type="submit" disabled={status === "submitting"}
           style={{ background: status === "submitting" ? "rgba(0,120,212,0.5)" : AZURE, color: "white", ...GF, fontSize: 15, fontWeight: 700, padding: "14px", borderRadius: 8, border: "none", cursor: status === "submitting" ? "not-allowed" : "pointer", minHeight: 48, transition: "background 0.15s" }}
           aria-busy={status === "submitting"}>
-          {status === "submitting" ? "Setting up…" : "Continue Account Setup"}
+          {status === "submitting" ? "Creating account…" : "Create account"}
         </button>
 
         <div style={{ padding: "12px 14px", background: "rgba(201,150,12,0.06)", border: "1px solid rgba(201,150,12,0.15)", borderRadius: 8 }}>
