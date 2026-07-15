@@ -16,6 +16,41 @@ import { EsigAdvancedCapabilities } from "./app/pages/public/esignature/EsigAdva
 import { EsigTemplatesBranding } from "./app/pages/public/esignature/EsigTemplatesBranding";
 import { EsigTeamEnterprise } from "./app/pages/public/esignature/EsigTeamEnterprise";
 
+// ── Pricing pages (Command 9) ──────────────────────────────────────────────
+import { PricingOverview } from "./app/pages/public/pricing/PricingOverview";
+import { ComparePlans } from "./app/pages/public/pricing/ComparePlans";
+import { SigningRequests } from "./app/pages/public/pricing/SigningRequests";
+import { StorageLimits } from "./app/pages/public/pricing/StorageLimits";
+import { TemplatesByPlan } from "./app/pages/public/pricing/TemplatesByPlan";
+import { AuthByPlan } from "./app/pages/public/pricing/AuthByPlan";
+import { EnterprisePricing } from "./app/pages/public/pricing/EnterprisePricing";
+import { PricingFaq } from "./app/pages/public/pricing/PricingFaq";
+
+// ── Resources pages (Command 9) ────────────────────────────────────────────
+import { ResourcesOverview } from "./app/pages/public/resources/ResourcesOverview";
+import { ResourcesFaq } from "./app/pages/public/resources/ResourcesFaq";
+import { GuidesOverview } from "./app/pages/public/resources/GuidesOverview";
+import { LegalFramework } from "./app/pages/public/resources/LegalFramework";
+import { VerificationGuide } from "./app/pages/public/resources/VerificationGuide";
+import { AuthGuide } from "./app/pages/public/resources/AuthGuide";
+import { TemplatesGuide } from "./app/pages/public/resources/TemplatesGuide";
+import { SecurityGuide } from "./app/pages/public/resources/SecurityGuide";
+import { HelpCenter } from "./app/pages/public/resources/HelpCenter";
+import { ContactPage } from "./app/pages/public/resources/ContactPage";
+import { ServiceStatus } from "./app/pages/public/resources/ServiceStatus";
+
+// ── Legal pages (Command 9) ────────────────────────────────────────────────
+import { Privacy } from "./app/pages/public/legal/Privacy";
+import { Terms } from "./app/pages/public/legal/Terms";
+import { Accessibility } from "./app/pages/public/legal/Accessibility";
+
+// ── eNotary pages (Command 9) ──────────────────────────────────────────────
+import { EnotaryOverview } from "./app/pages/public/enotary/EnotaryOverview";
+import { FutureCapabilities } from "./app/pages/public/enotary/FutureCapabilities";
+import { AccreditationRoadmap } from "./app/pages/public/enotary/AccreditationRoadmap";
+import { EnotaryWaitlist } from "./app/pages/public/enotary/EnotaryWaitlist";
+import { EnotaryFaq } from "./app/pages/public/enotary/EnotaryFaq";
+
 // ── Features pages (Command 7) ─────────────────────────────────────────────────
 import { FeaturesOverview } from "./app/pages/public/features/FeaturesOverview";
 import { DocPrep } from "./app/pages/public/features/DocPrep";
@@ -217,31 +252,36 @@ export const router = createBrowserRouter([
       { path: "solutions/procurement",                  element: <Procurement /> },
       { path: "solutions/education",                    element: <Education /> },
       { path: "solutions/healthcare-and-wellness",      element: <HealthcareWellness /> },
-      { path: "pricing/*", element: <App /> },
-      { path: "resources/*", element: <App /> },
+      // ── Pricing pages (Command 9 — production React pages) ───────────────────
+      { path: "pricing",                          element: <PricingOverview /> },
+      { path: "pricing/compare",                  element: <ComparePlans /> },
+      { path: "pricing/signing-requests",         element: <SigningRequests /> },
+      { path: "pricing/storage-limits",           element: <StorageLimits /> },
+      { path: "pricing/templates-by-plan",        element: <TemplatesByPlan /> },
+      { path: "pricing/authentication-by-plan",   element: <AuthByPlan /> },
+      { path: "pricing/enterprise",               element: <EnterprisePricing /> },
+      { path: "pricing/faq",                      element: <PricingFaq /> },
 
-      // ── eNotary — Coming Soon (all subroutes) ────────────────────────────────
-      // Legal constraint: must never imply eNotary is live, accredited, or purchasable
-      {
-        path: "enotary",
-        element: (
-          <DevPlaceholder
-            title="LAGDA eNotary"
-            subtitle="Electronic notarization services are in development. Register your interest below."
-            isEnotary
-          />
-        ),
-      },
-      {
-        path: "enotary/*",
-        element: (
-          <DevPlaceholder
-            title="LAGDA eNotary"
-            subtitle="This section will be available once LAGDA eNotary reaches its development milestone."
-            isEnotary
-          />
-        ),
-      },
+      // ── Resources pages (Command 9 — production React pages) ──────────────────
+      { path: "resources",                              element: <ResourcesOverview /> },
+      { path: "resources/faq",                          element: <ResourcesFaq /> },
+      { path: "resources/guides",                       element: <GuidesOverview /> },
+      { path: "resources/legal-framework",              element: <LegalFramework /> },
+      { path: "resources/document-verification-guide",  element: <VerificationGuide /> },
+      { path: "resources/authentication-guide",         element: <AuthGuide /> },
+      { path: "resources/templates-guide",              element: <TemplatesGuide /> },
+      { path: "resources/security-guide",               element: <SecurityGuide /> },
+      { path: "help",                                   element: <HelpCenter /> },
+      { path: "contact",                                element: <ContactPage /> },
+      { path: "service-status",                         element: <ServiceStatus /> },
+
+      // ── eNotary pages (Command 9 — production React pages) ────────────────────
+      // Legal constraint: never implies eNotary is live, accredited, or purchasable
+      { path: "enotary",                          element: <EnotaryOverview /> },
+      { path: "enotary/future-capabilities",      element: <FutureCapabilities /> },
+      { path: "enotary/accreditation-roadmap",    element: <AccreditationRoadmap /> },
+      { path: "enotary/waitlist",                 element: <EnotaryWaitlist /> },
+      { path: "enotary/faq",                      element: <EnotaryFaq /> },
 
       // ── Document Verification (public) ───────────────────────────────────────
       {
@@ -281,63 +321,10 @@ export const router = createBrowserRouter([
       { path: "features/storage-and-plan-limits",   element: <StoragePlanLimits /> },
       { path: "features/api-and-integrations",      element: <ApiIntegrations /> },
 
-      // ── Help and Contact ──────────────────────────────────────────────────────
-      {
-        path: "help",
-        element: (
-          <DevPlaceholder
-            title="Help Center"
-            subtitle="Product documentation and support coming soon."
-          />
-        ),
-      },
-      {
-        path: "contact",
-        element: (
-          <DevPlaceholder
-            title="Contact LAGDA"
-            subtitle="Contact page coming soon."
-          />
-        ),
-      },
-      {
-        path: "service-status",
-        element: (
-          <DevPlaceholder
-            title="Service Status"
-            subtitle="Real-time service status coming soon."
-          />
-        ),
-      },
-
-      // ── Legal pages ───────────────────────────────────────────────────────────
-      {
-        path: "legal/privacy",
-        element: (
-          <DevPlaceholder
-            title="Privacy Policy"
-            subtitle="Our privacy policy is coming soon."
-          />
-        ),
-      },
-      {
-        path: "legal/terms",
-        element: (
-          <DevPlaceholder
-            title="Terms of Service"
-            subtitle="Terms of service coming soon."
-          />
-        ),
-      },
-      {
-        path: "legal/accessibility",
-        element: (
-          <DevPlaceholder
-            title="Accessibility Statement"
-            subtitle="Accessibility statement coming soon."
-          />
-        ),
-      },
+      // ── Legal pages (Command 9 — production React pages) ─────────────────────
+      { path: "legal/privacy",      element: <Privacy /> },
+      { path: "legal/terms",        element: <Terms /> },
+      { path: "legal/accessibility", element: <Accessibility /> },
       {
         path: "legal/*",
         element: (
