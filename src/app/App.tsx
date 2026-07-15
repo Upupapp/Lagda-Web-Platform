@@ -6,22 +6,18 @@ import { useLocation } from "react-router";
 // reads the current pathname and derives the active section/tab.
 // No state machine, no bidirectional effects, no URL sync loops.
 
-type Section = "solutions" | "pricing" | "resources";
+type Section = "pricing" | "resources";
 type PricingTab = "pricing-main" | "compare-plans";
 type ResourcesTab = "guides" | "faq";
-type SolutionsTab = "all" | "lawyers";
 
 type UrlState = {
   section: Section;
   pricingTab?: PricingTab;
   resourcesTab?: ResourcesTab;
-  solutionsTab?: SolutionsTab;
 };
 
 function pathToState(pathname: string): UrlState | null {
   const p = pathname.replace(/\/$/, "");
-  if (p === "/solutions")                                      return { section: "solutions",  solutionsTab: "all" };
-  if (p === "/solutions/lawyers")                              return { section: "solutions",  solutionsTab: "lawyers" };
   if (p === "/pricing")                                        return { section: "pricing",    pricingTab: "pricing-main" };
   if (p === "/pricing/compare")                                return { section: "pricing",    pricingTab: "compare-plans" };
   if (p === "/resources" || p === "/resources/guides")         return { section: "resources",  resourcesTab: "guides" };
@@ -29,12 +25,10 @@ function pathToState(pathname: string): UrlState | null {
   return null;
 }
 
-import DLagdaSolutionsAll from "@/imports/DLagdaSolutionsAll/index";
 import DLagdaPricingMainPage from "@/imports/DLagdaPricingMainPage/index";
 import DLagdaPricingComparePlans from "@/imports/DLagdaPricingComparePlans/index";
 import DLagdaResourcesGuides from "@/imports/DLagdaResourcesGuides/index";
 import DLagdaResourcesFaq from "@/imports/DLagdaResourcesFaq/index";
-import DLagdaSolutionsLawyers from "@/imports/DLagdaSolutionsLawyers/index";
 
 // CSS overrides applied globally to fix Figma-import rendering.
 // See inline comments for rationale on each rule.
@@ -60,30 +54,9 @@ const globalOverrides = `
     display: none !important;
   }
 
-  /* DLagdaSolutionsLawyers sub-nav strip */
-  [data-name="d-lagda-solutions-lawyers"] [data-name="sub-nav"] {
-    display: none !important;
-  }
-
   /* Hide the "RESOURCES & EDUCATION" eyebrow badge in the Guides hero */
   [data-name="d-lagda-resources-guides"] [data-name="hero"] [data-name="badge"] {
     display: none !important;
-  }
-
-  /* Parallel signing section top padding */
-  [data-name="d-lagda-solutions-lawyers"] [class*="gap-\\[48px\\]"][class*="bg-white"] {
-    padding-top: 80px !important;
-  }
-
-  /* OTP input row overflow fix */
-  [data-name="d-lagda-solutions-lawyers"] [class*="eaf6ff"] > div > [data-name="Frame"] {
-    gap: 5px !important;
-    flex-wrap: nowrap;
-    max-width: 100%;
-  }
-  [data-name="d-lagda-solutions-lawyers"] [class*="eaf6ff"] > div > [data-name="Frame"] > [data-name="Rectangle"] {
-    width: 26px !important;
-    flex-shrink: 1 !important;
   }
 
   /* Rule 3: in-page anchor nav */
@@ -97,7 +70,6 @@ const globalOverrides = `
   }
 
   /* Root page containers: stretch children to full width */
-  [data-name="d-lagda-solutions-all"],
   [data-name="d-lagda-resources-guides"],
   [data-name="d-lagda-resources-faq"] {
     align-items: stretch !important;
@@ -236,10 +208,9 @@ export default function App() {
 
   // Derive current view entirely from URL — no state, no effects for sync.
   const parsed        = pathToState(pathname);
-  const section       = (parsed?.section      ?? "solutions")  as Section;
+  const section       = (parsed?.section      ?? "pricing")    as Section;
   const pricingTab    = (parsed?.pricingTab   ?? "pricing-main")      as PricingTab;
   const resourcesTab  = (parsed?.resourcesTab ?? "guides")            as ResourcesTab;
-  const solutionsTab  = (parsed?.solutionsTab ?? "all")               as SolutionsTab;
 
   // Page animation key — increments on pathname change to trigger CSS enter animation.
   const pageKey  = useRef(0);
@@ -300,16 +271,14 @@ export default function App() {
     return () => { clearTimeout(id); revealObserver.current?.disconnect(); };
   }, [pathname, attachReveal]);
 
-  // contentPullUp: hides the Figma-embedded navbar (and sub-nav where present).
+  // contentPullUp: hides the Figma-embedded navbar.
   // PublicLayout's <main> already adds 72px top-padding for the fixed header.
   // Negative marginTop here slides the Figma content up so its nav area goes
   // behind the fixed PublicHeader, effectively hiding it without display:none.
   const pricingPullUp   = pricingTab   === "compare-plans" ? 80 : 0;
-  const solutionsPullUp = solutionsTab === "lawyers"       ? 144 : 0;
   const resourcesPullUp = resourcesTab === "faq"           ? 72  : 80;
   const contentPullUp   = section === "pricing"   ? pricingPullUp
     : section === "resources" ? resourcesPullUp
-    : section === "solutions" ? solutionsPullUp
     : 0;
 
 
@@ -328,8 +297,6 @@ export default function App() {
             className="lagda-page-enter"
             style={{ width: 1440, minWidth: 1440, marginLeft: "auto", marginRight: "auto" }}
           >
-            {section === "solutions"  && solutionsTab === "all"                && <DLagdaSolutionsAll />}
-            {section === "solutions"  && solutionsTab === "lawyers"            && <DLagdaSolutionsLawyers />}
             {section === "pricing"    && pricingTab === "pricing-main"         && <DLagdaPricingMainPage />}
             {section === "pricing"    && pricingTab === "compare-plans"        && <DLagdaPricingComparePlans />}
             {section === "resources"  && resourcesTab === "guides"             && <DLagdaResourcesGuides />}

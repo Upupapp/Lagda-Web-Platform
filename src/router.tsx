@@ -34,6 +34,19 @@ import { TeamWorkspaces } from "./app/pages/public/features/TeamWorkspaces";
 import { StoragePlanLimits } from "./app/pages/public/features/StoragePlanLimits";
 import { ApiIntegrations } from "./app/pages/public/features/ApiIntegrations";
 
+// ── Solutions pages (Command 8) ────────────────────────────────────────────────
+import { SolutionsOverview } from "./app/pages/public/solutions/SolutionsOverview";
+import { Lawyers } from "./app/pages/public/solutions/Lawyers";
+import { LawFirms } from "./app/pages/public/solutions/LawFirms";
+import { BusinessTeams } from "./app/pages/public/solutions/BusinessTeams";
+import { GovernmentLGU } from "./app/pages/public/solutions/GovernmentLGU";
+import { RealEstate } from "./app/pages/public/solutions/RealEstate";
+import { HRRecruitment } from "./app/pages/public/solutions/HRRecruitment";
+import { Finance } from "./app/pages/public/solutions/Finance";
+import { Procurement } from "./app/pages/public/solutions/Procurement";
+import { Education } from "./app/pages/public/solutions/Education";
+import { HealthcareWellness } from "./app/pages/public/solutions/HealthcareWellness";
+
 // ── Security pages (Command 7) ─────────────────────────────────────────────────
 import { SecurityOverview } from "./app/pages/public/security/SecurityOverview";
 import { TrustCenter } from "./app/pages/public/security/TrustCenter";
@@ -192,7 +205,18 @@ export const router = createBrowserRouter([
       { path: "security/secure-storage",              element: <SecureStorage /> },
       { path: "security/privacy-and-data-protection", element: <PrivacyDataProtection /> },
 
-      { path: "solutions/*", element: <App /> },
+      // ── Solutions pages (Command 8 — production React pages) ─────────────────
+      { path: "solutions",                              element: <SolutionsOverview /> },
+      { path: "solutions/lawyers",                      element: <Lawyers /> },
+      { path: "solutions/law-firms",                    element: <LawFirms /> },
+      { path: "solutions/business-teams",               element: <BusinessTeams /> },
+      { path: "solutions/government-and-lgu",           element: <GovernmentLGU /> },
+      { path: "solutions/real-estate",                  element: <RealEstate /> },
+      { path: "solutions/hr-and-recruitment",           element: <HRRecruitment /> },
+      { path: "solutions/finance",                      element: <Finance /> },
+      { path: "solutions/procurement",                  element: <Procurement /> },
+      { path: "solutions/education",                    element: <Education /> },
+      { path: "solutions/healthcare-and-wellness",      element: <HealthcareWellness /> },
       { path: "pricing/*", element: <App /> },
       { path: "resources/*", element: <App /> },
 
