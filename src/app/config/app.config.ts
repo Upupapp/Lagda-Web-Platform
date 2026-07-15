@@ -25,7 +25,7 @@ export const APP_CONFIG = {
   features: {
     enotaryWaitlist: true,       // Show eNotary waitlist signup
     publicVerification: true,    // Public document verification page (built in C10)
-    platformDashboard: false,    // Authenticated platform (not yet built)
+    platformDashboard: true,     // Authenticated platform (built in C12)
     devPlaceholders: true,       // Show dev placeholder pages for unbuilt routes
   },
 

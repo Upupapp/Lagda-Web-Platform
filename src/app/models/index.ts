@@ -287,3 +287,145 @@ export const EMPTY_SESSION: MockSession = {
   workspace: null,
   subscription: null,
 };
+
+// ── Platform (authenticated shell) ────────────────────────────────────────────
+
+export type PlatformSessionStatus =
+  | "initializing"
+  | "authenticated"
+  | "unauthenticated"
+  | "expired"
+  | "error";
+
+export type PlatformRole =
+  | "owner"
+  | "administrator"
+  | "billing_administrator"
+  | "security_administrator"
+  | "template_administrator"
+  | "sender"
+  | "reviewer"
+  | "viewer"
+  | "auditor";
+
+export const PLATFORM_ROLE_LABELS: Record<PlatformRole, string> = {
+  owner:                    "Owner",
+  administrator:            "Administrator",
+  billing_administrator:    "Billing Administrator",
+  security_administrator:   "Security Administrator",
+  template_administrator:   "Template Administrator",
+  sender:                   "Sender",
+  reviewer:                 "Reviewer",
+  viewer:                   "Viewer",
+  auditor:                  "Auditor",
+};
+
+export type PlatformPermission =
+  | "view_dashboard"
+  | "view_documents"
+  | "prepare_documents"
+  | "manage_templates"
+  | "manage_contacts"
+  | "verify_documents"
+  | "manage_team"
+  | "manage_workspace"
+  | "view_billing"
+  | "manage_billing"
+  | "view_usage"
+  | "manage_security"
+  | "manage_branding"
+  | "manage_integrations"
+  | "manage_api"
+  | "manage_webhooks"
+  | "view_audit";
+
+export const ROLE_PERMISSIONS: Record<PlatformRole, PlatformPermission[]> = {
+  owner: [
+    "view_dashboard","view_documents","prepare_documents","manage_templates","manage_contacts",
+    "verify_documents","manage_team","manage_workspace","view_billing","manage_billing",
+    "view_usage","manage_security","manage_branding","manage_integrations","manage_api",
+    "manage_webhooks","view_audit",
+  ],
+  administrator: [
+    "view_dashboard","view_documents","prepare_documents","manage_templates","manage_contacts",
+    "verify_documents","manage_team","manage_workspace","view_billing","view_usage",
+    "manage_security","manage_branding","view_audit",
+  ],
+  billing_administrator: [
+    "view_dashboard","view_documents","view_billing","manage_billing","view_usage",
+  ],
+  security_administrator: [
+    "view_dashboard","view_documents","manage_security","view_audit",
+  ],
+  template_administrator: [
+    "view_dashboard","view_documents","prepare_documents","manage_templates","manage_contacts",
+    "verify_documents","view_usage",
+  ],
+  sender: [
+    "view_dashboard","view_documents","prepare_documents","manage_contacts","verify_documents","view_usage",
+  ],
+  reviewer: [
+    "view_dashboard","view_documents","verify_documents",
+  ],
+  viewer: [
+    "view_dashboard","view_documents",
+  ],
+  auditor: [
+    "view_dashboard","view_documents","view_audit",
+  ],
+};
+
+export type WorkspaceType = "personal" | "team" | "enterprise";
+
+export interface PlatformWorkspace extends WorkspaceSummary {
+  type: WorkspaceType;
+  role: PlatformRole;
+  memberCount: number;
+  initials: string;
+  accentColor: string;
+}
+
+export type PlatformFeatureFlag =
+  | "dashboardEnabled"
+  | "documentsEnabled"
+  | "prepareFlowEnabled"
+  | "templatesEnabled"
+  | "contactsEnabled"
+  | "verificationEnabled"
+  | "notificationsEnabled"
+  | "teamEnabled"
+  | "billingEnabled"
+  | "integrationsEnabled"
+  | "apiEnabled"
+  | "webhooksEnabled"
+  | "developmentPlaceholdersEnabled";
+
+export interface PlatformFlags {
+  dashboardEnabled: boolean;
+  documentsEnabled: boolean;
+  prepareFlowEnabled: boolean;
+  templatesEnabled: boolean;
+  contactsEnabled: boolean;
+  verificationEnabled: boolean;
+  notificationsEnabled: boolean;
+  teamEnabled: boolean;
+  billingEnabled: boolean;
+  integrationsEnabled: boolean;
+  apiEnabled: boolean;
+  webhooksEnabled: boolean;
+  developmentPlaceholdersEnabled: boolean;
+}
+
+export interface SearchResult {
+  id: string;
+  type: "document" | "template" | "contact" | "help";
+  title: string;
+  subtitle?: string;
+  path: string;
+}
+
+export interface SearchResultGroup {
+  type: SearchResult["type"];
+  label: string;
+  items: SearchResult[];
+}

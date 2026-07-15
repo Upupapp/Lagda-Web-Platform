@@ -1,158 +1,174 @@
-import { Outlet, Link, useLocation, NavLink } from "react-router";
-import { LagdaLogo } from "../components/brand/LagdaLogo";
+// Authenticated customer-platform layout.
+// Guards all /app/* routes with a mock session check.
+// Desktop: fixed sidebar + scrollable content.
+// Mobile (<768px): top bar + slide-in drawer (MobileNav).
+// Tablet (768-1023px): same as mobile.
 
-// Authenticated platform shell — left-sidebar layout.
-// Navy sidebar + white content area. Responsive: sidebar collapses to icons on ≤768px.
+import { Suspense, useEffect, useRef } from "react";
+import { Outlet, Navigate, useLocation } from "react-router";
+import { usePlatform } from "../context/PlatformContext";
+import { PlatformSidebar } from "../components/platform/PlatformSidebar";
+import { MobileNav } from "../components/platform/MobileNav";
+import { PlatformHeader } from "../components/platform/PlatformHeader";
+import { SKELETON_STYLE } from "../components/platform/AppContentLayout";
 
-const NAVY = "#07111F";
-const NAVY2 = "#0B1929";
-const BORDER = "rgba(255,255,255,0.07)";
 const GF = { fontFamily: "'Geist', sans-serif" };
-const GM = { fontFamily: "'Geist Mono', monospace" };
 
-const NAV_ITEMS = [
-  { to: "/app/documents", label: "Documents",  icon: "📄" },
-  { to: "/app/templates", label: "Templates",  icon: "📑" },
-  { to: "/app/contacts",  label: "Contacts",   icon: "📇" },
-  { to: "/app/activity",  label: "Activity",   icon: "📋" },
-  { to: "/app/settings",  label: "Settings",   icon: "⚙️" },
-];
+// ── Route loading fallback ────────────────────────────────────────────────────
+function PlatformPageLoader() {
+  return (
+    <div
+      role="status"
+      aria-label="Loading page"
+      style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "60vh", background: "#F8FAFC" }}
+    >
+      <div style={{ width: 32, height: 32, border: "2px solid rgba(0,120,212,0.2)", borderTopColor: "#0078D4", borderRadius: "50%", animation: "plat-spin 0.8s linear infinite" }} aria-hidden />
+      <style>{`
+        @keyframes plat-spin { to { transform: rotate(360deg); } }
+        @media (prefers-reduced-motion: reduce) { [style*="plat-spin"] { animation: none; border: 2px solid #0078D4; } }
+        ${SKELETON_STYLE}
+      `}</style>
+    </div>
+  );
+}
 
+// ── Session initializing screen (brief branded splash) ────────────────────────
+function SessionInitializing() {
+  return (
+    <div
+      role="status"
+      aria-label="Loading your workspace"
+      style={{
+        minHeight: "100vh", background: "#07111F",
+        display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+        gap: 16,
+      }}
+    >
+      <div style={{ width: 40, height: 40, border: "2px solid rgba(0,120,212,0.2)", borderTopColor: "#0078D4", borderRadius: "50%", animation: "plat-spin 0.8s linear infinite" }} aria-hidden />
+      <p style={{ color: "#334155", ...GF, fontSize: 13 }}>Loading your workspace…</p>
+      <style>{`@keyframes plat-spin { to { transform: rotate(360deg); } } @media (prefers-reduced-motion: reduce) { [style*="plat-spin"] { animation: none; } }`}</style>
+    </div>
+  );
+}
+
+// ── Return-route validation ───────────────────────────────────────────────────
+// Only allows internal /app/* paths to prevent open redirect.
+function buildReturnUrl(pathname: string): string {
+  const safe = pathname.startsWith("/app") ? pathname : "/app/dashboard";
+  return `/sign-in?returnTo=${encodeURIComponent(safe)}`;
+}
+
+// ── Platform shell ────────────────────────────────────────────────────────────
 export function PlatformLayout() {
-  const { pathname } = useLocation();
+  const { sessionStatus } = usePlatform();
+  const location = useLocation();
+  const mainRef  = useRef<HTMLElement>(null);
+
+  // Scroll content to top on route change
+  useEffect(() => {
+    if (mainRef.current) mainRef.current.scrollTop = 0;
+  }, [location.pathname]);
+
+  if (sessionStatus === "initializing") {
+    return <SessionInitializing />;
+  }
+
+  if (sessionStatus === "expired") {
+    return <Navigate to={buildReturnUrl(location.pathname)} replace state={{ reason: "expired" }} />;
+  }
+
+  if (sessionStatus !== "authenticated") {
+    return <Navigate to={buildReturnUrl(location.pathname)} replace />;
+  }
 
   return (
-    <div style={{ minHeight: "100vh", display: "flex", ...GF }}>
-      {/* ── Sidebar ──────────────────────────────────────────────── */}
-      <aside
-        aria-label="Platform navigation"
-        style={{
-          width: 220, flexShrink: 0,
-          background: NAVY,
-          borderRight: `1px solid ${BORDER}`,
-          display: "flex", flexDirection: "column",
-          position: "sticky", top: 0, height: "100vh",
-          overflowY: "auto",
-          zIndex: 50,
-        }}
-        className="platform-sidebar"
-      >
-        {/* Logo + workspace */}
-        <div style={{ padding: "18px 20px 12px", borderBottom: `1px solid ${BORDER}` }}>
-          <Link to="/" style={{ display: "block", textDecoration: "none", marginBottom: 14 }}>
-            <LagdaLogo variant="white-horizontal" size="sm" decorative />
-          </Link>
-          <div style={{
-            display: "flex", alignItems: "center", gap: 8,
-            background: "rgba(255,255,255,0.04)", border: `1px solid ${BORDER}`,
-            borderRadius: 8, padding: "7px 10px", cursor: "pointer",
-          }}>
-            <div style={{
-              width: 22, height: 22, borderRadius: 5,
-              background: "#0078D4", display: "flex", alignItems: "center",
-              justifyContent: "center", ...GM, fontSize: 9, color: "white", fontWeight: 700, flexShrink: 0,
-            }}>NL</div>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <p style={{ color: "white", ...GF, fontSize: 12, fontWeight: 600, margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                Northbridge Legal
-              </p>
-              <p style={{ color: "#475569", ...GM, fontSize: 9, margin: 0 }}>Professional</p>
-            </div>
-            <span style={{ color: "#334155", fontSize: 10 }}>▾</span>
-          </div>
+    <div style={{ display: "flex", minHeight: "100vh", background: "#F8FAFC" }}>
+      {/* ── Desktop sidebar (hidden <768px via CSS) ─────────────── */}
+      <div className="platform-desktop-nav" aria-hidden={undefined}>
+        <PlatformSidebar />
+      </div>
+
+      {/* ── Mobile nav (hidden ≥768px via CSS) ─────────────────── */}
+      <div className="platform-mobile-nav">
+        <MobileNav />
+      </div>
+
+      {/* ── Content column ──────────────────────────────────────── */}
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0, overflow: "hidden" }}>
+        {/* Desktop header */}
+        <div className="platform-desktop-header">
+          <PlatformHeader />
         </div>
 
-        {/* Nav links */}
-        <nav aria-label="Platform sections" style={{ flex: 1, padding: "10px 10px" }}>
-          <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: 2 }}>
-            {NAV_ITEMS.map(({ to, label, icon }) => {
-              const active = pathname === to || (to !== "/app" && pathname.startsWith(to));
-              return (
-                <li key={to}>
-                  <NavLink
-                    to={to}
-                    aria-current={active ? "page" : undefined}
-                    style={{
-                      display: "flex", alignItems: "center", gap: 10,
-                      padding: "8px 10px", borderRadius: 8, textDecoration: "none",
-                      background: active ? "rgba(0,120,212,0.14)" : "transparent",
-                      border: active ? "1px solid rgba(0,120,212,0.25)" : "1px solid transparent",
-                      transition: "all 0.15s ease",
-                    }}
-                  >
-                    <span aria-hidden style={{ fontSize: 14, width: 18, textAlign: "center" }}>{icon}</span>
-                    <span style={{
-                      color: active ? "#38bdf8" : "#64748b",
-                      ...GF, fontSize: 13, fontWeight: active ? 600 : 400,
-                    }}>
-                      {label}
-                    </span>
-                    {to === "/app/documents" && (
-                      <span style={{
-                        marginLeft: "auto", background: "rgba(0,120,212,0.14)",
-                        color: "#0078D4", ...GM, fontSize: 9, fontWeight: 700,
-                        padding: "1px 6px", borderRadius: 999,
-                      }}>8</span>
-                    )}
-                  </NavLink>
-                </li>
-              );
-            })}
-          </ul>
+        {/* Skip to main content */}
+        <a
+          href="#plat-main"
+          style={{
+            position: "absolute", left: -9999, top: "auto", width: 1, height: 1, overflow: "hidden",
+          }}
+          className="platform-skip-link"
+          onFocus={(e) => {
+            (e.target as HTMLAnchorElement).style.left = "8px";
+            (e.target as HTMLAnchorElement).style.top = "8px";
+            (e.target as HTMLAnchorElement).style.width = "auto";
+            (e.target as HTMLAnchorElement).style.height = "auto";
+            (e.target as HTMLAnchorElement).style.zIndex = "9999";
+            (e.target as HTMLAnchorElement).style.background = "#0078D4";
+            (e.target as HTMLAnchorElement).style.color = "white";
+            (e.target as HTMLAnchorElement).style.padding = "8px 16px";
+            (e.target as HTMLAnchorElement).style.borderRadius = "6px";
+            (e.target as HTMLAnchorElement).style.textDecoration = "none";
+            (e.target as HTMLAnchorElement).style.fontFamily = "'Geist', sans-serif";
+            (e.target as HTMLAnchorElement).style.fontSize = "13px";
+          }}
+          onBlur={(e) => {
+            (e.target as HTMLAnchorElement).style.left = "-9999px";
+          }}
+        >
+          Skip to main content
+        </a>
 
-          {/* Quick action */}
-          <div style={{ marginTop: 20 }}>
-            <Link
-              to="/app/prepare"
-              style={{
-                display: "flex", alignItems: "center", justifyContent: "center",
-                gap: 6, background: "#0078D4", color: "white",
-                borderRadius: 8, padding: "9px 14px", textDecoration: "none",
-                ...GF, fontSize: 13, fontWeight: 600, minHeight: 36,
-              }}
-            >
-              <span aria-hidden>+</span> Prepare Document
-            </Link>
-          </div>
-        </nav>
-
-        {/* User footer */}
-        <div style={{
-          padding: "12px 16px", borderTop: `1px solid ${BORDER}`,
-          display: "flex", alignItems: "center", gap: 10,
-        }}>
-          <div style={{
-            width: 30, height: 30, borderRadius: "50%",
-            background: "rgba(0,120,212,0.2)", display: "flex",
-            alignItems: "center", justifyContent: "center",
-            ...GM, fontSize: 10, color: "#38bdf8", fontWeight: 700, flexShrink: 0,
-          }}>AR</div>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <p style={{ color: "white", ...GF, fontSize: 12, fontWeight: 600, margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-              Ana Reyes
-            </p>
-            <p style={{ color: "#475569", ...GM, fontSize: 9, margin: 0 }}>Owner</p>
-          </div>
-          <Link to="/sign-in" style={{ color: "#334155", fontSize: 12, textDecoration: "none" }} title="Sign out">↩</Link>
-        </div>
-      </aside>
-
-      {/* ── Content ──────────────────────────────────────────────── */}
-      <main
-        id="main-content"
-        style={{ flex: 1, background: "#F8FAFC", minWidth: 0, overflowX: "auto" }}
-        tabIndex={-1}
-      >
-        <Outlet />
-      </main>
+        <main
+          id="plat-main"
+          ref={mainRef}
+          tabIndex={-1}
+          style={{
+            flex: 1,
+            overflowY: "auto",
+            overflowX: "hidden",
+            outline: "none",
+            // On mobile, add top padding for the fixed top bar
+          }}
+          className="platform-main"
+        >
+          <Suspense fallback={<PlatformPageLoader />}>
+            <Outlet />
+          </Suspense>
+        </main>
+      </div>
 
       <style>{`
-        .platform-sidebar a:hover span[style] { color: white !important; }
-        .platform-sidebar a:focus-visible { outline: 2px solid #0078D4; outline-offset: 2px; border-radius: 8px; }
-        @media (max-width: 768px) {
-          .platform-sidebar { width: 56px !important; }
-          .platform-sidebar span[style*="color: #64748b"], .platform-sidebar p, .platform-sidebar .hide-mobile { display: none !important; }
+        /* Desktop: show sidebar, hide mobile nav */
+        @media (min-width: 768px) {
+          .platform-desktop-nav  { display: flex !important; }
+          .platform-mobile-nav   { display: none  !important; }
+          .platform-desktop-header { display: block !important; }
+          .platform-main { padding-top: 0 !important; }
         }
+        /* Mobile/tablet: hide sidebar, show mobile nav */
+        @media (max-width: 767px) {
+          .platform-desktop-nav  { display: none  !important; }
+          .platform-mobile-nav   { display: block !important; }
+          .platform-desktop-header { display: none !important; }
+          .platform-main { padding-top: 56px !important; }
+        }
+        /* Focus management */
+        #plat-main:focus { outline: none; }
+        /* Scrollbar */
+        .platform-main::-webkit-scrollbar { width: 6px; }
+        .platform-main::-webkit-scrollbar-track { background: transparent; }
+        .platform-main::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 4px; }
+        ${SKELETON_STYLE}
       `}</style>
     </div>
   );

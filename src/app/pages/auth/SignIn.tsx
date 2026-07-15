@@ -2,16 +2,28 @@ import { useState, useRef } from "react";
 import { Link, useSearchParams, useNavigate } from "react-router";
 import { type SubmissionStatus, type FormErrors, type SignInRequest } from "../../models/forms";
 import { publicAccountService, conversionTracker } from "../../services/public";
+import { usePlatform, createMockSignInPayload } from "../../context/PlatformContext";
 
 const GF = { fontFamily: "'Geist', sans-serif" };
 const GM = { fontFamily: "'Geist Mono', monospace" };
 const AZURE = "#0078D4";
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+function safeReturnPath(raw: string | null): string {
+  if (!raw) return "/app/dashboard";
+  try {
+    const decoded = decodeURIComponent(raw);
+    return decoded.startsWith("/app") ? decoded : "/app/dashboard";
+  } catch {
+    return "/app/dashboard";
+  }
+}
+
 export function SignIn() {
   const [params] = useSearchParams();
-  const redirectTo = params.get("redirect") ?? "/app";
+  const redirectTo = safeReturnPath(params.get("returnTo") ?? params.get("redirect"));
   const navigate = useNavigate();
+  const platform = usePlatform();
 
   const [fields, setFields] = useState<SignInRequest>({ email: "", password: "" });
   const [showPassword, setShowPassword] = useState(false);
@@ -48,9 +60,11 @@ export function SignIn() {
     if (result.success) {
       setStatus("success");
       conversionTracker.track({ name: "sign_in_mock_completed" });
+      // Establish the in-memory platform session for the authenticated shell.
+      const p = createMockSignInPayload();
+      platform.signIn(p.user, p.workspaces, p.currentWorkspace, p.subscription, p.notifications);
       setTimeout(() => confirmRef.current?.focus(), 50);
-      const safePath = redirectTo.startsWith("/app") ? redirectTo : "/app";
-      setTimeout(() => navigate(safePath), 1400);
+      setTimeout(() => navigate(redirectTo), 1400);
     } else {
       setStatus("error");
       setServerError(result.errorMessage ?? "An error occurred. Please try again.");

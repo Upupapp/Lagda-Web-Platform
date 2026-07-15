@@ -1,11 +1,10 @@
 import { lazy, Suspense } from "react";
-import { createBrowserRouter } from "react-router";
+import { createBrowserRouter, Navigate } from "react-router";
 import { PublicLayout } from "./app/layouts/PublicLayout";
 import { AuthLayout } from "./app/layouts/AuthLayout";
 import { PlatformLayout } from "./app/layouts/PlatformLayout";
 import { NotFound } from "./app/pages/public/NotFound";
 import { DevPlaceholder } from "./app/pages/shared/DevPlaceholder";
-import { PlatformIndex } from "./app/pages/platform/PlatformIndex";
 
 // ── Lazy-loaded page families ─────────────────────────────────────────────────
 // Each family shares a chunk, keeping the initial bundle small.
@@ -112,6 +111,13 @@ const VerifyDocument = lazy(() => import("./app/pages/public/verify/VerifyDocume
 // Dev only
 const DesignSystemShowcase = lazy(() => import("./app/pages/dev/DesignSystemShowcase").then(m => ({ default: m.DesignSystemShowcase })));
 
+// ── Platform (authenticated) pages ────────────────────────────────────────────
+const PlatformDashboard   = lazy(() => import("./app/pages/platform/PlatformDashboard").then(m => ({ default: m.PlatformDashboard })));
+const PlatformPlaceholder = lazy(() => import("./app/pages/platform/PlatformPlaceholder").then(m => ({ default: m.PlatformPlaceholder })));
+const PlatformNotFound    = lazy(() => import("./app/pages/platform/PlatformNotFound").then(m => ({ default: m.PlatformNotFound })));
+const PermissionDenied    = lazy(() => import("./app/pages/platform/PermissionDenied").then(m => ({ default: m.PermissionDenied })));
+const SessionExpired      = lazy(() => import("./app/pages/platform/SessionExpired").then(m => ({ default: m.SessionExpired })));
+
 // ── Auth Suspense fallback ────────────────────────────────────────────────────
 function AuthPageLoader() {
   return (
@@ -200,21 +206,61 @@ export const router = createBrowserRouter([
   },
 
   // ── Platform (authenticated customer) routes ─────────────────────────────────
+  // All /app/* routes are guarded by PlatformLayout's auth check.
+  // Deferred pages use PlatformPlaceholder so they render inside the shell.
   {
     path: "/app",
     element: <PlatformLayout />,
     children: [
-      { index: true, element: <PlatformIndex /> },
-      {
-        path: "*",
-        element: (
-          <DevPlaceholder
-            title="Platform Page"
-            subtitle="This platform screen will be built in a later command."
-            showBack
-          />
-        ),
-      },
+      // Index: redirect /app → /app/dashboard
+      { index: true, element: <Navigate to="/app/dashboard" replace /> },
+
+      // Dashboard
+      { path: "dashboard", element: <Suspense fallback={null}><PlatformDashboard /></Suspense> },
+
+      // Documents
+      { path: "documents",         element: <Suspense fallback={null}><PlatformPlaceholder /></Suspense> },
+      { path: "documents/new",     element: <Suspense fallback={null}><PlatformPlaceholder /></Suspense> },
+      { path: "documents/:id",     element: <Suspense fallback={null}><PlatformPlaceholder /></Suspense> },
+
+      // Templates
+      { path: "templates",         element: <Suspense fallback={null}><PlatformPlaceholder /></Suspense> },
+      { path: "templates/:id",     element: <Suspense fallback={null}><PlatformPlaceholder /></Suspense> },
+      { path: "templates/new",     element: <Suspense fallback={null}><PlatformPlaceholder /></Suspense> },
+
+      // Contacts
+      { path: "contacts",          element: <Suspense fallback={null}><PlatformPlaceholder /></Suspense> },
+      { path: "contacts/:id",      element: <Suspense fallback={null}><PlatformPlaceholder /></Suspense> },
+
+      // Verify (within platform)
+      { path: "verify",            element: <Suspense fallback={null}><PlatformPlaceholder /></Suspense> },
+
+      // Notifications
+      { path: "notifications",     element: <Suspense fallback={null}><PlatformPlaceholder /></Suspense> },
+
+      // Team
+      { path: "team",              element: <Suspense fallback={null}><PlatformPlaceholder /></Suspense> },
+      { path: "team/members",      element: <Suspense fallback={null}><PlatformPlaceholder /></Suspense> },
+      { path: "team/roles",        element: <Suspense fallback={null}><PlatformPlaceholder /></Suspense> },
+      { path: "team/invitations",  element: <Suspense fallback={null}><PlatformPlaceholder /></Suspense> },
+
+      // Settings
+      { path: "settings",          element: <Suspense fallback={null}><PlatformPlaceholder /></Suspense> },
+      { path: "settings/profile",  element: <Suspense fallback={null}><PlatformPlaceholder /></Suspense> },
+      { path: "settings/security", element: <Suspense fallback={null}><PlatformPlaceholder /></Suspense> },
+      { path: "settings/workspace",element: <Suspense fallback={null}><PlatformPlaceholder /></Suspense> },
+      { path: "settings/billing",  element: <Suspense fallback={null}><PlatformPlaceholder /></Suspense> },
+      { path: "settings/api",      element: <Suspense fallback={null}><PlatformPlaceholder /></Suspense> },
+      { path: "settings/notifications", element: <Suspense fallback={null}><PlatformPlaceholder /></Suspense> },
+      { path: "settings/appearance",element: <Suspense fallback={null}><PlatformPlaceholder /></Suspense> },
+      { path: "settings/audit-log",element: <Suspense fallback={null}><PlatformPlaceholder /></Suspense> },
+
+      // Permission / session error states
+      { path: "permission-denied", element: <Suspense fallback={null}><PermissionDenied /></Suspense> },
+      { path: "session-expired",   element: <Suspense fallback={null}><SessionExpired /></Suspense> },
+
+      // Platform 404 — must be last
+      { path: "*", element: <Suspense fallback={null}><PlatformNotFound /></Suspense> },
     ],
   },
 
