@@ -131,6 +131,7 @@ const DesignSystemShowcase = lazy(() => import("./app/pages/dev/DesignSystemShow
 
 // ── Platform (authenticated) pages ────────────────────────────────────────────
 const PlatformDashboard   = lazy(() => import("./app/pages/platform/PlatformDashboard").then(m => ({ default: m.PlatformDashboard })));
+const DocumentsPage       = lazy(() => import("./app/pages/platform/documents/DocumentsPage").then(m => ({ default: m.DocumentsPage })));
 const PlatformPlaceholder = lazy(() => import("./app/pages/platform/PlatformPlaceholder").then(m => ({ default: m.PlatformPlaceholder })));
 const PlatformNotFound    = lazy(() => import("./app/pages/platform/PlatformNotFound").then(m => ({ default: m.PlatformNotFound })));
 const PermissionDenied    = lazy(() => import("./app/pages/platform/PermissionDenied").then(m => ({ default: m.PermissionDenied })));
@@ -259,8 +260,8 @@ export const router = createBrowserRouter([
       // Dashboard
       { path: "dashboard", element: <Suspense fallback={null}><PlatformDashboard /></Suspense> },
 
-      // Documents
-      { path: "documents",         element: <Suspense fallback={null}><PlatformPlaceholder /></Suspense> },
+      // Documents (Command 15 — list workspace; new/detail are Command 16 targets)
+      { path: "documents",         element: <Suspense fallback={null}><DocumentsPage /></Suspense> },
       { path: "documents/new",     element: <Suspense fallback={null}><PlatformPlaceholder /></Suspense> },
       { path: "documents/:id",     element: <Suspense fallback={null}><PlatformPlaceholder /></Suspense> },
 
