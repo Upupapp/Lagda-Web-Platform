@@ -137,6 +137,9 @@ const PlatformNotFound    = lazy(() => import("./app/pages/platform/PlatformNotF
 const PermissionDenied    = lazy(() => import("./app/pages/platform/PermissionDenied").then(m => ({ default: m.PermissionDenied })));
 const SessionExpired      = lazy(() => import("./app/pages/platform/SessionExpired").then(m => ({ default: m.SessionExpired })));
 
+// Verify (Command 17)
+const VerifyPage = lazy(() => import("./app/pages/platform/VerifyPage").then(m => ({ default: m.VerifyPage })));
+
 // Transaction detail (Command 16)
 const TransactionDetailLayout = lazy(() => import("./app/pages/platform/documents/TransactionDetailPage").then(m => ({ default: m.TransactionDetailLayout })));
 const OverviewTab     = lazy(() => import("./app/pages/platform/documents/TransactionDetailPage").then(m => ({ default: m.OverviewTab })));
@@ -293,8 +296,8 @@ export const router = createBrowserRouter([
       { path: "contacts",          element: <Suspense fallback={null}><PlatformPlaceholder /></Suspense> },
       { path: "contacts/:id",      element: <Suspense fallback={null}><PlatformPlaceholder /></Suspense> },
 
-      // Verify (within platform)
-      { path: "verify",            element: <Suspense fallback={null}><PlatformPlaceholder /></Suspense> },
+      // Verify (within platform) — Command 17
+      { path: "verify",            element: <Suspense fallback={null}><VerifyPage /></Suspense> },
 
       // Notifications
       { path: "notifications",     element: <Suspense fallback={null}><PlatformPlaceholder /></Suspense> },
