@@ -188,7 +188,7 @@ function MobileDrawer({ onClose }: { onClose: () => void }) {
           padding: "20px 24px", borderBottom: "1px solid rgba(255,255,255,0.07)",
           display: "flex", alignItems: "center", justifyContent: "space-between",
         }}>
-          <Link to="/esignature" onClick={onClose}>
+          <Link to="/" onClick={onClose}>
             <LagdaLogo variant="white-horizontal" size="md" decorative />
           </Link>
           <button
