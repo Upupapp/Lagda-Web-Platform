@@ -11,13 +11,15 @@ import {
   FileText, FilePlus, Search, MoreHorizontal, Archive, RotateCcw, Pencil,
   X, AlertCircle, ChevronLeft, ChevronRight, Tag, FolderOpen, Folder,
   ShieldCheck, Activity, Users, RefreshCw, Inbox, ArrowUpDown,
-  CheckSquare, Square,
+  CheckSquare, Square, Star, Clock, ExternalLink, Move,
+  Eye, Bell, Ban, Shuffle, Shield, Info,
 } from "lucide-react";
 import { usePlatform } from "../../../context/PlatformContext";
 import {
   AppContent, EmptyStateLayout, SkeletonBlock, SKELETON_STYLE, PageHeader,
 } from "../../../components/platform";
 import { mockDocumentService } from "../../../services/mock/document.service";
+import { documentOrganizationService } from "../../../services/mock/document-organization.service";
 import { TRANSACTION_STATUS_LABELS } from "../../../models";
 import type { TransactionStatus } from "../../../models";
 import type {
@@ -30,12 +32,17 @@ import {
   VALID_SORT_FIELDS, SORT_LABELS,
   DOCUMENT_STATUS_TONE, STATUS_TONE_CSS,
   VALID_DOC_SCENARIOS,
+  ORG_FILTERED_VIEWS,
 } from "../../../models/documents";
+import type {
+  OrgTag, OrgFolder as OrgFolderType, OrgFolderId, OrgTagId, OrgSavedView,
+} from "../../../models/document-organization";
+import { TAG_STYLE_COLORS } from "../../../models/document-organization";
 import { usePageMeta } from "../../../hooks/usePageMeta";
 
 // ── Design tokens (inline styles only — no Tailwind in JSX) ──────────────────
 
-const GF:   React.CSSProperties = { fontFamily: "'Geist', sans-serif" };
+const GF:    React.CSSProperties = { fontFamily: "'Geist', sans-serif" };
 const AZURE  = "#0078D4";
 const NAVY   = "#07111F";
 const SLATE6 = "#64748B";
@@ -43,6 +50,9 @@ const SLATE4 = "#94A3B8";
 const SLATE2 = "#E2E8F0";
 const SLATE1 = "#F8FAFC";
 const RED    = "#DC2626";
+const AMBER  = "#D97706";
+const GREEN  = "#16A34A";
+const GOLD   = "#C9960C";
 
 // ── Responsive CSS ────────────────────────────────────────────────────────────
 
@@ -54,16 +64,26 @@ const DOC_STYLES = SKELETON_STYLE + `
     margin-top: 8px;
   }
   .doc-folder-panel {
-    width: 220px;
+    width: 232px;
     flex-shrink: 0;
     border-right: 1px solid #E2E8F0;
     padding: 4px 0;
+    overflow-y: auto;
   }
   .doc-main {
     flex: 1;
     min-width: 0;
     padding-top: 4px;
   }
+  .doc-org-view-btn {
+    display: flex; align-items: center; gap: 7px;
+    width: 100%; padding: 6px 14px; border: none; cursor: pointer;
+    text-align: left; font-family: 'Geist', sans-serif;
+    font-size: 12px; border-left: 2px solid transparent;
+    background: transparent; color: #64748B;
+  }
+  .doc-org-view-btn:hover { background: #F8FAFC; }
+  .doc-org-view-btn.active { background: #EFF6FF18; color: #0078D4; border-left-color: #0078D4; font-weight: 600; }
   .doc-table-desktop { display: block; }
   .doc-cards-mobile  { display: none; }
   .doc-row { display: grid; grid-template-columns: 40px 1fr 150px 100px 110px 48px; align-items: center; min-height: 52px; border-bottom: 1px solid #F1F5F9; }
@@ -463,69 +483,391 @@ function ActiveFilterChips({
   );
 }
 
-// ── FolderPanel ───────────────────────────────────────────────────────────────
+// ── OrgSidePanel ──────────────────────────────────────────────────────────────
+// Extended folder panel with org views (starred, recents, etc.), saved views,
+// and a management link to /app/documents/folders.
 
-function FolderPanel({
-  folders, selectedId, counts, onChange,
+function OrgSidePanel({
+  folders, selectedFolderId, folderCounts, activeView, savedViews, starredCount, recentCount,
+  onFolderChange, onViewChange,
 }: {
   folders: DocumentFolder[];
-  selectedId: string | null;
-  counts: Record<string, number>;
-  onChange: (id: string | null) => void;
+  selectedFolderId: string | null;
+  folderCounts: Record<string, number>;
+  activeView: DocumentView;
+  savedViews: OrgSavedView[];
+  starredCount: number;
+  recentCount: number;
+  onFolderChange: (id: string | null) => void;
+  onViewChange: (v: DocumentView) => void;
 }) {
+  // Org views shown in sidebar
+  const ORG_VIEWS: Array<{ view: DocumentView; icon: React.ReactNode; label: string }> = [
+    { view: "starred",        icon: <Star size={12} aria-hidden />,     label: "Starred" },
+    { view: "recently-viewed", icon: <Clock size={12} aria-hidden />,   label: "Recently Viewed" },
+    { view: "owned-by-me",    icon: <ShieldCheck size={12} aria-hidden />, label: "Owned by Me" },
+    { view: "shared-with-me", icon: <Users size={12} aria-hidden />,    label: "Shared with Me" },
+    { view: "awaiting-others", icon: <Activity size={12} aria-hidden />, label: "Awaiting Others" },
+  ];
+
+  const isOrgView = ORG_FILTERED_VIEWS.includes(activeView);
+  const activeSavedViews = savedViews.filter(v => v.status !== "archived").slice(0, 5);
+
   return (
-    <nav aria-label="Document folders" className="doc-folder-panel">
-      <p style={{ fontSize: 10, fontWeight: 700, color: SLATE4, textTransform: "uppercase", letterSpacing: "0.08em", padding: "8px 16px 4px", margin: 0, ...GF }}>
-        Folders
-      </p>
-      <button
-        onClick={() => onChange(null)}
-        aria-current={!selectedId ? "true" : undefined}
-        style={{
-          display: "flex", alignItems: "center", gap: 8, width: "100%",
-          padding: "7px 16px", border: "none", cursor: "pointer", textAlign: "left",
-          background: !selectedId ? `${AZURE}0c` : "transparent",
-          color: !selectedId ? AZURE : SLATE6, fontSize: 13, ...GF,
-          borderLeft: !selectedId ? `2px solid ${AZURE}` : "2px solid transparent",
-        }}
-      >
-        <FolderOpen size={14} aria-hidden />
-        All Folders
-      </button>
-      {folders.map(f => {
-        const isActive = f.id === selectedId;
-        const count = counts[f.id] ?? 0;
-        return (
-          <button
-            key={f.id}
-            onClick={() => onChange(isActive ? null : f.id)}
-            aria-current={isActive ? "true" : undefined}
-            style={{
-              display: "flex", alignItems: "center", justifyContent: "space-between",
-              gap: 8, width: "100%", padding: "7px 16px", border: "none",
-              cursor: "pointer", textAlign: "left",
-              background: isActive ? `${AZURE}0c` : "transparent",
-              color: isActive ? AZURE : SLATE6, fontSize: 13, ...GF,
-              borderLeft: isActive ? `2px solid ${AZURE}` : "2px solid transparent",
-            }}
-          >
-            <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <Folder size={13} aria-hidden />
-              {f.name}
-            </span>
-            {count > 0 && (
-              <span style={{ fontSize: 10, fontWeight: 700, color: isActive ? AZURE : SLATE4 }}>
-                {count}
+    <nav aria-label="Document organization" className="doc-folder-panel">
+
+      {/* Org Views */}
+      <div style={{ marginBottom: 4 }}>
+        <p style={{ fontSize: 10, fontWeight: 700, color: SLATE4, textTransform: "uppercase", letterSpacing: "0.08em", padding: "8px 14px 4px", margin: 0, ...GF }}>Views</p>
+        {ORG_VIEWS.map(({ view, icon, label }) => {
+          const isActive = activeView === view && !selectedFolderId;
+          const badge = view === "starred" ? starredCount : view === "recently-viewed" ? recentCount : undefined;
+          return (
+            <button
+              key={view}
+              className={`doc-org-view-btn${isActive ? " active" : ""}`}
+              aria-current={isActive ? "true" : undefined}
+              onClick={() => { onFolderChange(null); onViewChange(view); }}
+            >
+              {icon}
+              <span style={{ flex: 1 }}>{label}</span>
+              {badge != null && badge > 0 && (
+                <span style={{ fontSize: 10, fontWeight: 700, color: isActive ? AZURE : SLATE4 }}>{badge}</span>
+              )}
+            </button>
+          );
+        })}
+      </div>
+
+      <div style={{ height: 1, background: SLATE2, margin: "6px 10px" }} />
+
+      {/* Folders */}
+      <div>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "4px 14px 4px" }}>
+          <p style={{ fontSize: 10, fontWeight: 700, color: SLATE4, textTransform: "uppercase", letterSpacing: "0.08em", margin: 0, ...GF }}>Folders</p>
+          <Link to="/app/documents/folders" style={{ fontSize: 10, color: AZURE, ...GF, textDecoration: "none", fontWeight: 600 }} aria-label="Manage folders">Manage</Link>
+        </div>
+        <button
+          onClick={() => { onFolderChange(null); if (isOrgView) onViewChange("all"); }}
+          aria-current={!selectedFolderId && !isOrgView ? "true" : undefined}
+          style={{
+            display: "flex", alignItems: "center", gap: 8, width: "100%",
+            padding: "6px 14px", border: "none", cursor: "pointer", textAlign: "left",
+            background: !selectedFolderId && !isOrgView ? `${AZURE}0c` : "transparent",
+            color: !selectedFolderId && !isOrgView ? AZURE : SLATE6, fontSize: 12, ...GF,
+            borderLeft: !selectedFolderId && !isOrgView ? `2px solid ${AZURE}` : "2px solid transparent",
+          }}
+        >
+          <FolderOpen size={13} aria-hidden />
+          All Folders
+        </button>
+        {folders.map(f => {
+          const isActive = f.id === selectedFolderId;
+          const count = folderCounts[f.id] ?? 0;
+          return (
+            <button
+              key={f.id}
+              onClick={() => { onFolderChange(isActive ? null : f.id); if (isOrgView) onViewChange("all"); }}
+              aria-current={isActive ? "true" : undefined}
+              style={{
+                display: "flex", alignItems: "center", justifyContent: "space-between",
+                gap: 8, width: "100%", padding: "6px 14px", border: "none",
+                cursor: "pointer", textAlign: "left",
+                background: isActive ? `${AZURE}0c` : "transparent",
+                color: isActive ? AZURE : SLATE6, fontSize: 12, ...GF,
+                borderLeft: isActive ? `2px solid ${AZURE}` : "2px solid transparent",
+              }}
+            >
+              <span style={{ display: "flex", alignItems: "center", gap: 7, minWidth: 0, overflow: "hidden" }}>
+                <Folder size={12} aria-hidden style={{ flexShrink: 0 }} />
+                <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{f.name}</span>
               </span>
-            )}
-          </button>
-        );
-      })}
+              {count > 0 && <span style={{ fontSize: 10, fontWeight: 700, color: isActive ? AZURE : SLATE4, flexShrink: 0 }}>{count}</span>}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Saved Views */}
+      {activeSavedViews.length > 0 && (
+        <>
+          <div style={{ height: 1, background: SLATE2, margin: "6px 10px" }} />
+          <div>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "4px 14px 4px" }}>
+              <p style={{ fontSize: 10, fontWeight: 700, color: SLATE4, textTransform: "uppercase", letterSpacing: "0.08em", margin: 0, ...GF }}>Saved Views</p>
+              <Link to="/app/documents/saved-views" style={{ fontSize: 10, color: AZURE, ...GF, textDecoration: "none", fontWeight: 600 }} aria-label="Manage saved views">All</Link>
+            </div>
+            {activeSavedViews.map(sv => (
+              <Link
+                key={sv.id}
+                to={`/app/documents/saved-views/${sv.id}`}
+                style={{
+                  display: "flex", alignItems: "center", gap: 7, padding: "6px 14px",
+                  fontSize: 12, color: SLATE6, ...GF, textDecoration: "none",
+                  borderLeft: "2px solid transparent",
+                  overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+                }}
+              >
+                <Eye size={11} aria-hidden style={{ flexShrink: 0 }} />
+                <span style={{ overflow: "hidden", textOverflow: "ellipsis" }}>{sv.name}</span>
+                {sv.isDefault && <Star size={9} style={{ color: AZURE, flexShrink: 0 }} aria-label="Default" />}
+              </Link>
+            ))}
+          </div>
+        </>
+      )}
+
+      {/* Tags management link */}
+      <div style={{ height: 1, background: SLATE2, margin: "6px 10px" }} />
+      <Link
+        to="/app/documents/tags"
+        style={{ display: "flex", alignItems: "center", gap: 7, padding: "6px 14px", fontSize: 12, color: SLATE6, ...GF, textDecoration: "none" }}
+      >
+        <Tag size={12} aria-hidden /> Manage Tags
+      </Link>
     </nav>
   );
 }
 
-// ── SelectionBar ──────────────────────────────────────────────────────────────
+// ── OrgBulkBar ────────────────────────────────────────────────────────────────
+// Full C31 bulk action bar with org operations and preview actions.
+
+function OrgBulkBar({
+  count, total, items, orgTags, orgFolders, onSelectAll, onDeselectAll,
+  onBulkArchive, onBulkRestore, onBulkAddTag, onBulkRemoveTag,
+  onBulkStar, onBulkUnstar,
+  onPreviewExport, onPreviewReminders, onPreviewCancel,
+  onPreviewOwnership, onPreviewRetention,
+  activeView,
+}: {
+  count: number;
+  total: number;
+  items: DocumentListItem[];
+  orgTags: OrgTag[];
+  orgFolders: OrgFolderType[];
+  onSelectAll: () => void;
+  onDeselectAll: () => void;
+  onBulkArchive?: () => void;
+  onBulkRestore?: () => void;
+  onBulkAddTag?: (tagId: OrgTagId) => void;
+  onBulkRemoveTag?: (tagId: OrgTagId) => void;
+  onBulkStar?: () => void;
+  onBulkUnstar?: () => void;
+  onPreviewExport?: () => void;
+  onPreviewReminders?: () => void;
+  onPreviewCancel?: () => void;
+  onPreviewOwnership?: () => void;
+  onPreviewRetention?: () => void;
+  activeView: DocumentView;
+}) {
+  const [tagMenuOpen, setTagMenuOpen] = useState<"add" | "remove" | null>(null);
+  const [moreOpen, setMoreOpen]       = useState(false);
+  const tagRef  = useRef<HTMLDivElement>(null);
+  const moreRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!tagMenuOpen && !moreOpen) return;
+    function h(e: MouseEvent) {
+      if (tagRef.current && !tagRef.current.contains(e.target as Node)) setTagMenuOpen(null);
+      if (moreRef.current && !moreRef.current.contains(e.target as Node)) setMoreOpen(false);
+    }
+    document.addEventListener("mousedown", h);
+    return () => document.removeEventListener("mousedown", h);
+  }, [tagMenuOpen, moreOpen]);
+
+  const isArchivedView = activeView === "archived";
+  const activeTags = orgTags.filter(t => t.status === "active");
+
+  return (
+    <div
+      role="region"
+      aria-live="polite"
+      aria-atomic
+      aria-label={`${count} document${count !== 1 ? "s" : ""} selected`}
+      style={{
+        display: "flex", alignItems: "center", gap: 6, padding: "8px 0 10px",
+        borderBottom: `1px solid ${SLATE2}`, flexWrap: "wrap",
+      }}
+    >
+      <span style={{ fontSize: 13, fontWeight: 600, color: NAVY, ...GF, marginRight: 4 }}>
+        {count} selected
+      </span>
+      {count < total && (
+        <button onClick={onSelectAll} style={{ fontSize: 12, color: AZURE, border: "none", background: "none", cursor: "pointer", ...GF }}>
+          Select all {total}
+        </button>
+      )}
+      <button onClick={onDeselectAll} style={{ fontSize: 12, color: SLATE6, border: "none", background: "none", cursor: "pointer", ...GF }}>
+        Clear
+      </button>
+
+      <div style={{ width: 1, height: 20, background: SLATE2, margin: "0 2px" }} aria-hidden />
+
+      {/* Move to Folder (not in this bar — done via document detail) */}
+
+      {/* Add Tags */}
+      {onBulkAddTag && (
+        <div ref={tagRef} style={{ position: "relative" }}>
+          <button
+            onClick={() => setTagMenuOpen(prev => prev === "add" ? null : "add")}
+            aria-expanded={tagMenuOpen === "add"}
+            style={{ display: "flex", alignItems: "center", gap: 5, padding: "5px 9px", border: `1px solid ${SLATE2}`, borderRadius: 6, background: "#fff", cursor: "pointer", fontSize: 12, color: SLATE6, ...GF }}
+          >
+            <Tag size={12} aria-hidden /> Add Tag
+          </button>
+          {tagMenuOpen === "add" && (
+            <div style={{ position: "absolute", top: "100%", left: 0, zIndex: 80, background: "#fff", border: `1px solid ${SLATE2}`, borderRadius: 8, boxShadow: "0 4px 16px rgba(0,0,0,0.08)", minWidth: 160, padding: "4px 0" }}>
+              <p style={{ fontSize: 10, fontWeight: 700, color: SLATE4, textTransform: "uppercase", letterSpacing: "0.06em", padding: "6px 12px 4px", margin: 0, ...GF }}>Add tag to selected</p>
+              {activeTags.length === 0 && <p style={{ fontSize: 12, color: SLATE4, padding: "8px 12px", margin: 0, ...GF }}>No active tags</p>}
+              {activeTags.map(t => (
+                <button key={t.id} onClick={() => { onBulkAddTag(t.id); setTagMenuOpen(null); }}
+                  style={{ display: "flex", alignItems: "center", gap: 8, width: "100%", padding: "7px 12px", border: "none", background: "none", cursor: "pointer", fontSize: 12, color: NAVY, ...GF, textAlign: "left" }}>
+                  <span style={{ width: 9, height: 9, borderRadius: "50%", background: TAG_STYLE_COLORS[t.style], flexShrink: 0 }} aria-hidden />
+                  {t.name}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Remove Tags */}
+      {onBulkRemoveTag && (
+        <div style={{ position: "relative" }}>
+          <button
+            onClick={() => setTagMenuOpen(prev => prev === "remove" ? null : "remove")}
+            aria-expanded={tagMenuOpen === "remove"}
+            style={{ display: "flex", alignItems: "center", gap: 5, padding: "5px 9px", border: `1px solid ${SLATE2}`, borderRadius: 6, background: "#fff", cursor: "pointer", fontSize: 12, color: SLATE6, ...GF }}
+          >
+            <Tag size={12} aria-hidden /> Remove Tag
+          </button>
+          {tagMenuOpen === "remove" && (
+            <div style={{ position: "absolute", top: "100%", left: 0, zIndex: 80, background: "#fff", border: `1px solid ${SLATE2}`, borderRadius: 8, boxShadow: "0 4px 16px rgba(0,0,0,0.08)", minWidth: 160, padding: "4px 0" }}>
+              <p style={{ fontSize: 10, fontWeight: 700, color: SLATE4, textTransform: "uppercase", letterSpacing: "0.06em", padding: "6px 12px 4px", margin: 0, ...GF }}>Remove tag from selected</p>
+              {activeTags.length === 0 && <p style={{ fontSize: 12, color: SLATE4, padding: "8px 12px", margin: 0, ...GF }}>No active tags</p>}
+              {activeTags.map(t => (
+                <button key={t.id} onClick={() => { onBulkRemoveTag(t.id); setTagMenuOpen(null); }}
+                  style={{ display: "flex", alignItems: "center", gap: 8, width: "100%", padding: "7px 12px", border: "none", background: "none", cursor: "pointer", fontSize: 12, color: NAVY, ...GF, textAlign: "left" }}>
+                  <span style={{ width: 9, height: 9, borderRadius: "50%", background: TAG_STYLE_COLORS[t.style], flexShrink: 0 }} aria-hidden />
+                  {t.name}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Star / Unstar */}
+      {onBulkStar && (
+        <button onClick={onBulkStar} style={{ display: "flex", alignItems: "center", gap: 5, padding: "5px 9px", border: `1px solid ${SLATE2}`, borderRadius: 6, background: "#fff", cursor: "pointer", fontSize: 12, color: SLATE6, ...GF }}>
+          <Star size={12} aria-hidden /> Star
+        </button>
+      )}
+      {onBulkUnstar && (
+        <button onClick={onBulkUnstar} style={{ display: "flex", alignItems: "center", gap: 5, padding: "5px 9px", border: `1px solid ${SLATE2}`, borderRadius: 6, background: "#fff", cursor: "pointer", fontSize: 12, color: SLATE6, ...GF }}>
+          <Star size={12} aria-hidden /> Unstar
+        </button>
+      )}
+
+      {/* Archive / Restore */}
+      {onBulkArchive && !isArchivedView && (
+        <button onClick={onBulkArchive} style={{ display: "flex", alignItems: "center", gap: 5, padding: "5px 9px", border: `1px solid ${SLATE2}`, borderRadius: 6, background: "#fff", cursor: "pointer", fontSize: 12, color: SLATE6, ...GF }}>
+          <Archive size={12} aria-hidden /> Archive
+        </button>
+      )}
+      {onBulkRestore && isArchivedView && (
+        <button onClick={onBulkRestore} style={{ display: "flex", alignItems: "center", gap: 5, padding: "5px 9px", border: `1px solid ${SLATE2}`, borderRadius: 6, background: "#fff", cursor: "pointer", fontSize: 12, color: SLATE6, ...GF }}>
+          <RotateCcw size={12} aria-hidden /> Restore
+        </button>
+      )}
+
+      {/* More / Preview actions */}
+      <div ref={moreRef} style={{ position: "relative", marginLeft: "auto" }}>
+        <button
+          onClick={() => setMoreOpen(o => !o)}
+          aria-expanded={moreOpen}
+          aria-haspopup="menu"
+          style={{ display: "flex", alignItems: "center", gap: 5, padding: "5px 9px", border: `1px solid ${SLATE2}`, borderRadius: 6, background: "#fff", cursor: "pointer", fontSize: 12, color: SLATE6, ...GF }}
+        >
+          More actions
+        </button>
+        {moreOpen && (
+          <div role="menu" aria-label="More bulk actions" style={{ position: "absolute", right: 0, top: "100%", zIndex: 80, background: "#fff", border: `1px solid ${SLATE2}`, borderRadius: 8, boxShadow: "0 4px 16px rgba(0,0,0,0.08)", minWidth: 220, padding: "4px 0" }}>
+            <p style={{ fontSize: 10, fontWeight: 700, color: SLATE4, textTransform: "uppercase", letterSpacing: "0.06em", padding: "6px 12px 4px", margin: 0, ...GF }}>Previews (no mutation)</p>
+            {onPreviewExport && (
+              <button role="menuitem" onClick={() => { setMoreOpen(false); onPreviewExport(); }} style={{ display: "flex", alignItems: "center", gap: 8, width: "100%", padding: "8px 12px", border: "none", background: "none", cursor: "pointer", fontSize: 12, color: NAVY, ...GF, textAlign: "left" }}>
+                <ExternalLink size={12} aria-hidden /> Preview Export
+              </button>
+            )}
+            {onPreviewReminders && (
+              <button role="menuitem" onClick={() => { setMoreOpen(false); onPreviewReminders(); }} style={{ display: "flex", alignItems: "center", gap: 8, width: "100%", padding: "8px 12px", border: "none", background: "none", cursor: "pointer", fontSize: 12, color: NAVY, ...GF, textAlign: "left" }}>
+                <Bell size={12} aria-hidden /> Preview Reminders
+              </button>
+            )}
+            {onPreviewCancel && (
+              <button role="menuitem" onClick={() => { setMoreOpen(false); onPreviewCancel(); }} style={{ display: "flex", alignItems: "center", gap: 8, width: "100%", padding: "8px 12px", border: "none", background: "none", cursor: "pointer", fontSize: 12, color: NAVY, ...GF, textAlign: "left" }}>
+                <Ban size={12} aria-hidden /> Preview Cancellation
+              </button>
+            )}
+            {onPreviewOwnership && (
+              <button role="menuitem" onClick={() => { setMoreOpen(false); onPreviewOwnership(); }} style={{ display: "flex", alignItems: "center", gap: 8, width: "100%", padding: "8px 12px", border: "none", background: "none", cursor: "pointer", fontSize: 12, color: NAVY, ...GF, textAlign: "left" }}>
+                <Shuffle size={12} aria-hidden /> Preview Ownership Transfer
+              </button>
+            )}
+            {onPreviewRetention && (
+              <button role="menuitem" onClick={() => { setMoreOpen(false); onPreviewRetention(); }} style={{ display: "flex", alignItems: "center", gap: 8, width: "100%", padding: "8px 12px", border: "none", background: "none", cursor: "pointer", fontSize: 12, color: NAVY, ...GF, textAlign: "left" }}>
+                <Shield size={12} aria-hidden /> Preview Retention
+              </button>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ── Preview Dialogs ───────────────────────────────────────────────────────────
+// Each preview shows the notice and never mutates state.
+
+function PreviewDialog({
+  title, notice, body, onClose,
+}: {
+  title: string;
+  notice: string;
+  body: React.ReactNode;
+  onClose: () => void;
+}) {
+  useEffect(() => {
+    function h(e: KeyboardEvent) { if (e.key === "Escape") onClose(); }
+    document.addEventListener("keydown", h);
+    return () => document.removeEventListener("keydown", h);
+  }, [onClose]);
+
+  return (
+    <div
+      role="dialog" aria-modal="true" aria-labelledby="preview-dialog-title"
+      style={{ position: "fixed", inset: 0, zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(7,17,31,0.5)" }}
+      onClick={e => { if (e.target === e.currentTarget) onClose(); }}
+    >
+      <div style={{ background: "#fff", borderRadius: 12, padding: 24, maxWidth: 480, width: "calc(100vw - 32px)", boxShadow: "0 8px 32px rgba(0,0,0,0.2)", maxHeight: "80vh", overflowY: "auto" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+          <h2 id="preview-dialog-title" style={{ fontSize: 16, fontWeight: 700, color: NAVY, margin: 0, ...GF }}>{title}</h2>
+          <button onClick={onClose} aria-label="Close" style={{ background: "none", border: "none", cursor: "pointer", color: SLATE4, padding: 2 }}><X size={16} aria-hidden /></button>
+        </div>
+        <div style={{ display: "flex", alignItems: "flex-start", gap: 8, padding: "8px 12px", borderRadius: 8, background: "#FFFBEB", border: "1px solid #FDE68A", marginBottom: 16 }}>
+          <Info size={13} style={{ color: AMBER, flexShrink: 0, marginTop: 1 }} aria-hidden />
+          <p style={{ fontSize: 12, color: "#92400E", margin: 0, ...GF, fontStyle: "italic" }}>{notice}</p>
+        </div>
+        {body}
+        <div style={{ marginTop: 20, display: "flex", justifyContent: "flex-end" }}>
+          <button onClick={onClose} style={{ padding: "8px 16px", borderRadius: 8, border: `1px solid ${SLATE2}`, background: "#fff", cursor: "pointer", fontSize: 13, ...GF, color: SLATE6 }}>Close</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Legacy SelectionBar (kept for backward compat, unused in new flow) ─────────
 
 function SelectionBar({
   count, total, tags, onSelectAll, onDeselectAll, onBulkArchive, onBulkAddTag, bulkTagOpen, onToggleBulkTag,
@@ -1179,7 +1521,7 @@ function RenameDraftDialog({
 
 export function DocumentsPage() {
   usePageMeta();
-  const { hasPermission, currentWorkspace } = usePlatform();
+  const { hasPermission, currentWorkspace, user } = usePlatform();
   const [searchParams, setSearchParams] = useSearchParams();
 
   const canViewDocs = hasPermission("view_documents");
@@ -1190,6 +1532,10 @@ export function DocumentsPage() {
   const scenario = useMemo(() => safeScenario(searchParams), [searchParams]);
   const query    = useMemo(() => parseQuery(searchParams),   [searchParams]);
 
+  const userId      = user?.id ?? "usr_ana_reyes";
+  const workspaceId = currentWorkspace?.id ?? "ws_northbridge_001";
+
+  // ── Core document state ───────────────────────────────────────────────────
   const [result,      setResult]      = useState<DocumentListResult | null>(null);
   const [loadState,   setLoadState]   = useState<"loading" | "ready" | "full-error">("loading");
   const [folders,     setFolders]     = useState<DocumentFolder[]>([]);
@@ -1197,27 +1543,73 @@ export function DocumentsPage() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [openMenuId,  setOpenMenuId]  = useState<string | null>(null);
   const [renameItem,  setRenameItem]  = useState<DocumentListItem | null>(null);
-  const [bulkTagOpen, setBulkTagOpen] = useState(false);
   const [loadKey,     setLoadKey]     = useState(0);
+
+  // ── C31 org state ─────────────────────────────────────────────────────────
+  const [orgTags,      setOrgTags]      = useState<OrgTag[]>([]);
+  const [orgFolders,   setOrgFolders]   = useState<OrgFolderType[]>([]);
+  const [savedViews,   setSavedViews]   = useState<OrgSavedView[]>([]);
+  const [starredIds,   setStarredIds]   = useState<Set<string>>(new Set());
+  const [recentIds,    setRecentIds]    = useState<string[]>([]);
+
+  // ── C31 preview dialog state ─────────────────────────────────────────────
+  const [previewDialog, setPreviewDialog] = useState<"export" | "reminders" | "cancel" | "ownership" | "retention" | null>(null);
 
   const reloadData = useCallback(() => setLoadKey(k => k + 1), []);
 
-  // Load data; stale-result guard via cancelled flag
+  // ── Load org state ────────────────────────────────────────────────────────
+  useEffect(() => {
+    const tagsResult = documentOrganizationService.listTags({});
+    if (tagsResult.ok) setOrgTags(tagsResult.data.filter(t => t.status === "active"));
+
+    const foldersResult = documentOrganizationService.listFolders({} as never, userId);
+    if (foldersResult.ok) setOrgFolders(foldersResult.data.filter(f => f.status === "active"));
+
+    const viewsResult = documentOrganizationService.listSavedViews(userId);
+    if (viewsResult.ok) setSavedViews(viewsResult.data);
+
+    const starred = documentOrganizationService.listStarredDocuments();
+    setStarredIds(new Set(starred.map(s => s.documentId)));
+
+    const recents = documentOrganizationService.listRecentDocuments(workspaceId);
+    setRecentIds(recents.map(r => r.documentId));
+  }, [userId, workspaceId, loadKey]);
+
+  // ── Load document data with stale-result guard ────────────────────────────
   useEffect(() => {
     if (!canViewDocs) return;
     let cancelled = false;
     setLoadState("loading");
     setSelectedIds(new Set());
     setOpenMenuId(null);
-    setBulkTagOpen(false);
+
+    // For org-filtered views, use the "all" base view and filter client-side
+    const baseQuery = ORG_FILTERED_VIEWS.includes(query.view)
+      ? { ...query, view: "all" as DocumentView }
+      : query;
 
     Promise.all([
-      mockDocumentService.list(query, scenario),
+      mockDocumentService.list(baseQuery, scenario),
       mockDocumentService.getFolders(),
       mockDocumentService.getTags(),
     ]).then(([res, fols, tgs]) => {
       if (cancelled) return;
-      setResult(res);
+      // Apply org-view client-side filtering
+      let filteredItems = res.items;
+      if (query.view === "starred") {
+        filteredItems = res.items.filter(d => starredIds.has(d.id));
+      } else if (query.view === "recently-viewed") {
+        filteredItems = recentIds
+          .map(id => res.items.find(d => d.id === id))
+          .filter((d): d is DocumentListItem => d != null);
+      } else if (query.view === "owned-by-me") {
+        filteredItems = res.items.filter(d => !d.isMyAction && d.status !== "archived");
+      } else if (query.view === "shared-with-me") {
+        filteredItems = res.items.filter(d => d.participantCount > 0 && !d.isMyAction);
+      } else if (query.view === "awaiting-others") {
+        filteredItems = res.items.filter(d => ["sent", "delivered", "viewed", "awaiting-signature"].includes(d.status));
+      }
+      setResult({ ...res, items: filteredItems, total: filteredItems.length });
       setFolders(fols);
       setTags(tgs);
       setLoadState("ready");
@@ -1227,7 +1619,7 @@ export function DocumentsPage() {
     });
 
     return () => { cancelled = true; };
-  }, [query, scenario, currentWorkspace?.id, loadKey, canViewDocs]);
+  }, [query, scenario, currentWorkspace?.id, loadKey, canViewDocs, starredIds, recentIds]);
 
   const updateQuery = useCallback((patch: Partial<DocumentListQuery> & { page?: number }) => {
     const next = { ...query, ...patch, page: patch.page ?? 1 };
@@ -1248,6 +1640,7 @@ export function DocumentsPage() {
     reloadData();
   }, [renameItem, reloadData]);
 
+  // ── C31 bulk handlers ─────────────────────────────────────────────────────
   const handleBulkArchive = useCallback(async () => {
     if (!selectedIds.size) return;
     await mockDocumentService.archive([...selectedIds]);
@@ -1255,12 +1648,43 @@ export function DocumentsPage() {
     reloadData();
   }, [selectedIds, reloadData]);
 
-  const handleBulkAddTag = useCallback(async (tagId: string) => {
+  const handleBulkRestore = useCallback(async () => {
     if (!selectedIds.size) return;
-    await mockDocumentService.addTag([...selectedIds], tagId);
-    setBulkTagOpen(false);
+    await mockDocumentService.restore([...selectedIds]);
+    setSelectedIds(new Set());
     reloadData();
   }, [selectedIds, reloadData]);
+
+  const handleBulkAddTag = useCallback(async (tagId: OrgTagId) => {
+    if (!selectedIds.size) return;
+    // Use org service for org tags; fall back to legacy addTag for base tags
+    documentOrganizationService.addTagsToDocuments([...selectedIds], [tagId]);
+    reloadData();
+  }, [selectedIds, reloadData]);
+
+  const handleBulkRemoveTag = useCallback(async (tagId: OrgTagId) => {
+    if (!selectedIds.size) return;
+    documentOrganizationService.removeTagsFromDocuments([...selectedIds], [tagId]);
+    reloadData();
+  }, [selectedIds, reloadData]);
+
+  const handleBulkStar = useCallback(() => {
+    if (!selectedIds.size) return;
+    documentOrganizationService.starDocuments([...selectedIds]);
+    setStarredIds(prev => new Set([...prev, ...selectedIds]));
+    setSelectedIds(new Set());
+  }, [selectedIds]);
+
+  const handleBulkUnstar = useCallback(() => {
+    if (!selectedIds.size) return;
+    documentOrganizationService.unstarDocuments([...selectedIds]);
+    setStarredIds(prev => {
+      const next = new Set(prev);
+      selectedIds.forEach(id => next.delete(id));
+      return next;
+    });
+    setSelectedIds(new Set());
+  }, [selectedIds, userId]);
 
   const toggleSelect = useCallback((id: string) => {
     setSelectedIds(prev => {
@@ -1271,6 +1695,37 @@ export function DocumentsPage() {
   }, []);
 
   const pageItems = result?.items ?? [];
+
+  // Preview body content
+  function previewBody(type: typeof previewDialog) {
+    const count = selectedIds.size;
+    const docList = pageItems.filter(d => selectedIds.has(d.id));
+    if (!count) return <p style={{ fontSize: 13, color: SLATE6, ...GF }}>No documents selected.</p>;
+    return (
+      <div>
+        <p style={{ fontSize: 13, color: NAVY, margin: "0 0 10px", ...GF, fontWeight: 600 }}>
+          {count} document{count !== 1 ? "s" : ""} selected
+        </p>
+        <ul style={{ margin: 0, paddingLeft: 16 }}>
+          {docList.slice(0, 6).map(d => (
+            <li key={d.id} style={{ fontSize: 12, color: SLATE6, ...GF, marginBottom: 4 }}>{d.title}</li>
+          ))}
+          {docList.length > 6 && <li style={{ fontSize: 12, color: SLATE4, ...GF }}>…and {docList.length - 6} more</li>}
+        </ul>
+        <p style={{ fontSize: 11, color: SLATE4, margin: "12px 0 0", ...GF }}>
+          This is a frontend demonstration only. No mutation, export, delivery, or legal action is performed.
+        </p>
+      </div>
+    );
+  }
+
+  const PREVIEW_CONFIGS: Record<NonNullable<typeof previewDialog>, { title: string; notice: string }> = {
+    export:     { title: "Preview Export",             notice: "This preview does not generate, download, or deliver any files." },
+    reminders:  { title: "Preview Reminders",          notice: "No reminder, email, SMS message, or notification is sent from this frontend preview." },
+    cancel:     { title: "Preview Cancellation / Void", notice: "This frontend preview does not cancel, void, notify, or modify any transaction." },
+    ownership:  { title: "Preview Ownership Transfer", notice: "This preview does not transfer ownership or change document access." },
+    retention:  { title: "Preview Retention",          notice: "This preview does not enforce retention, create legal holds, or delete records." },
+  };
 
   if (!canViewDocs) {
     return (
@@ -1309,9 +1764,9 @@ export function DocumentsPage() {
       />
       <AppContent style={{ padding: "0 24px 32px" }}>
 
-        {/* View tabs */}
+        {/* View tabs — show only non-org views in the tab strip to keep it clean */}
         <ViewTabStrip
-          view={query.view}
+          view={ORG_FILTERED_VIEWS.includes(query.view) ? "all" : query.view}
           viewCounts={result?.viewCounts ?? {}}
           onChange={v => updateQuery({ view: v })}
         />
@@ -1337,6 +1792,19 @@ export function DocumentsPage() {
           </button>
         </div>
 
+        {/* Active org-view banner */}
+        {ORG_FILTERED_VIEWS.includes(query.view) && (
+          <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 12px", borderRadius: 8, background: "#EFF6FF", border: "1px solid #BFDBFE", marginBottom: 8, ...GF }}>
+            <Info size={13} style={{ color: AZURE, flexShrink: 0 }} aria-hidden />
+            <span style={{ fontSize: 12, color: "#1D4ED8" }}>
+              {VIEW_LABELS[query.view]} — documents filtered from frontend organization state.
+            </span>
+            <button onClick={() => updateQuery({ view: "all" })} style={{ fontSize: 12, color: AZURE, background: "none", border: "none", cursor: "pointer", marginLeft: "auto", ...GF }}>
+              Clear
+            </button>
+          </div>
+        )}
+
         {/* Active filter chips */}
         {(query.q || query.folderId || query.tagId) && (
           <ActiveFilterChips
@@ -1350,25 +1818,40 @@ export function DocumentsPage() {
 
         {/* Layout */}
         <div className="doc-layout">
-          <FolderPanel
+          <OrgSidePanel
             folders={folders}
-            selectedId={query.folderId}
-            counts={result?.folderCounts ?? {}}
-            onChange={folderId => updateQuery({ folderId })}
+            selectedFolderId={query.folderId}
+            folderCounts={result?.folderCounts ?? {}}
+            activeView={query.view}
+            savedViews={savedViews}
+            starredCount={starredIds.size}
+            recentCount={recentIds.length}
+            onFolderChange={folderId => updateQuery({ folderId })}
+            onViewChange={v => updateQuery({ view: v })}
           />
           <main className="doc-main" aria-label="Document list">
 
             {selectedIds.size > 0 && (
-              <SelectionBar
+              <OrgBulkBar
                 count={selectedIds.size}
                 total={pageItems.length}
-                tags={tags}
+                items={pageItems}
+                orgTags={orgTags}
+                orgFolders={orgFolders}
                 onSelectAll={() => setSelectedIds(new Set(pageItems.map(i => i.id)))}
                 onDeselectAll={() => setSelectedIds(new Set())}
                 onBulkArchive={canArchive ? handleBulkArchive : undefined}
+                onBulkRestore={canArchive ? handleBulkRestore : undefined}
                 onBulkAddTag={canPrepare ? handleBulkAddTag : undefined}
-                bulkTagOpen={bulkTagOpen}
-                onToggleBulkTag={() => setBulkTagOpen(o => !o)}
+                onBulkRemoveTag={canPrepare ? handleBulkRemoveTag : undefined}
+                onBulkStar={handleBulkStar}
+                onBulkUnstar={handleBulkUnstar}
+                onPreviewExport={() => setPreviewDialog("export")}
+                onPreviewReminders={() => setPreviewDialog("reminders")}
+                onPreviewCancel={() => setPreviewDialog("cancel")}
+                onPreviewOwnership={() => setPreviewDialog("ownership")}
+                onPreviewRetention={() => setPreviewDialog("retention")}
+                activeView={query.view}
               />
             )}
 
@@ -1432,6 +1915,16 @@ export function DocumentsPage() {
           item={renameItem}
           onSave={handleRenameSave}
           onClose={() => setRenameItem(null)}
+        />
+      )}
+
+      {/* Preview dialogs */}
+      {previewDialog && (
+        <PreviewDialog
+          title={PREVIEW_CONFIGS[previewDialog].title}
+          notice={PREVIEW_CONFIGS[previewDialog].notice}
+          body={previewBody(previewDialog)}
+          onClose={() => setPreviewDialog(null)}
         />
       )}
     </>

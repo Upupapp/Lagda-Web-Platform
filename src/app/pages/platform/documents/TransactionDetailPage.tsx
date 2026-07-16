@@ -42,6 +42,7 @@ import {
   ExternalLink,
   RefreshCw,
   ArrowLeft,
+  Star,
 } from "lucide-react";
 import { usePlatform } from "../../../context/PlatformContext";
 import { PageHeader } from "../../../components/platform/PageHeader";
@@ -74,6 +75,9 @@ import {
   mockTransactionDetailService,
   resolveActions,
 } from "../../../services/mock/transaction-detail.service";
+import { documentOrganizationService } from "../../../services/mock/document-organization.service";
+import { TAG_STYLE_COLORS } from "../../../models/document-organization";
+import type { OrgTag } from "../../../models/document-organization";
 
 // ── Design tokens ─────────────────────────────────────────────────────────────
 
@@ -414,6 +418,41 @@ export function OverviewTab() {
   const { txn, actions, canPrepare, reload } = useTxnContext();
   const navigate = useNavigate();
 
+  // ── Org state (starred, org tags) ────────────────────────────────────────
+  const [isStarred,    setIsStarred]    = useState(false);
+  const [orgTags,      setOrgTags]      = useState<OrgTag[]>([]);
+  const [orgToast,     setOrgToast]     = useState<string | null>(null);
+
+  useEffect(() => {
+    const starred = documentOrganizationService.listStarredDocuments();
+    setIsStarred(starred.some(s => s.documentId === txn.id));
+    const tagsResult = documentOrganizationService.listTags({});
+    if (tagsResult.ok) {
+      const allTags = tagsResult.data;
+      // Only show tags that are scoped to this document via fixture demonstrationOnly assignments
+      const docTagIds = new Set(
+        starred.filter(s => s.documentId === txn.id).flatMap(() => [] as string[])
+      );
+      setOrgTags(allTags.filter(t => t.status === "active" && docTagIds.has(t.id)));
+    }
+  }, [txn.id]);
+
+  useEffect(() => {
+    if (!orgToast) return;
+    const t = setTimeout(() => setOrgToast(null), 3000);
+    return () => clearTimeout(t);
+  }, [orgToast]);
+
+  function handleToggleStar() {
+    if (isStarred) {
+      const r = documentOrganizationService.unstarDocuments([txn.id]);
+      if (r.ok) { setIsStarred(false); setOrgToast("Removed from Starred."); }
+    } else {
+      const r = documentOrganizationService.starDocuments([txn.id]);
+      if (r.ok) { setIsStarred(true); setOrgToast("Added to Starred."); }
+    }
+  }
+
   const base = `/app/documents/${txn.id}`;
 
   function SectionCard({ title, children }: { title: string; children: React.ReactNode }) {
@@ -653,6 +692,66 @@ export function OverviewTab() {
             </div>
           </SectionCard>
         )}
+
+        {/* Organization */}
+        <SectionCard title="Organization">
+          <div style={{ display: "flex", alignItems: "flex-start", gap: 8, padding: "8px 10px", borderRadius: 7, background: "#EFF6FF", border: "1px solid #BFDBFE", marginBottom: 14, ...GF }}>
+            <Info size={13} style={{ color: AZURE, flexShrink: 0, marginTop: 1 }} aria-hidden />
+            <p style={{ fontSize: 11, color: "#1E40AF", margin: 0 }}>
+              Organization controls (folders, tags, star) do not affect document access, status, participants, or legal records. Folder and tag assignment is managed from the Documents list.
+            </p>
+          </div>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 12, alignItems: "center" }}>
+            {/* Star toggle */}
+            <button
+              onClick={handleToggleStar}
+              aria-pressed={isStarred}
+              aria-label={isStarred ? "Remove from starred" : "Add to starred"}
+              style={{
+                display: "flex", alignItems: "center", gap: 6, padding: "7px 12px",
+                borderRadius: 8, border: `1px solid ${isStarred ? "#FDE68A" : "#E2E8F0"}`,
+                background: isStarred ? "#FFFBEB" : "#fff", cursor: "pointer",
+                fontSize: 13, fontWeight: 500, color: isStarred ? "#92400E" : "#64748B", ...GF,
+              }}
+            >
+              <Star size={13} style={{ fill: isStarred ? "#D97706" : "none", color: isStarred ? "#D97706" : "#94A3B8" }} aria-hidden />
+              {isStarred ? "Starred" : "Star"}
+            </button>
+
+            {/* Org tags (read-only — assigned from Documents list) */}
+            {orgTags.length > 0 && orgTags.map(tag => (
+              <span key={tag.id} style={{
+                ...GF, fontSize: 12, fontWeight: 600, padding: "3px 10px", borderRadius: 100,
+                background: TAG_STYLE_COLORS[tag.style] + "22",
+                color: TAG_STYLE_COLORS[tag.style],
+                border: `1px solid ${TAG_STYLE_COLORS[tag.style]}44`,
+              }}>
+                {tag.name}
+              </span>
+            ))}
+
+            {/* Link to manage folders/tags in documents list */}
+            <Link
+              to="/app/documents/folders"
+              style={{ ...GF, fontSize: 12, color: AZURE, textDecoration: "none", display: "flex", alignItems: "center", gap: 4, marginLeft: "auto" }}
+            >
+              <Folder size={12} aria-hidden /> Manage Folders
+            </Link>
+            <Link
+              to="/app/documents/tags"
+              style={{ ...GF, fontSize: 12, color: AZURE, textDecoration: "none", display: "flex", alignItems: "center", gap: 4 }}
+            >
+              <Tag size={12} aria-hidden /> Manage Tags
+            </Link>
+          </div>
+
+          {/* Toast */}
+          {orgToast && (
+            <div role="status" aria-live="polite" style={{ marginTop: 10, fontSize: 12, color: "#166534", background: "#F0FDF4", border: "1px solid #BBF7D0", borderRadius: 6, padding: "6px 10px", ...GF }}>
+              {orgToast}
+            </div>
+          )}
+        </SectionCard>
 
         {/* Quick actions */}
         {canPrepare && (

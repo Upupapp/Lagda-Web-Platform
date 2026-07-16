@@ -16,11 +16,18 @@ export type DocumentView =
   | "completed"
   | "expiring"
   | "failed-delivery"
-  | "archived";
+  | "archived"
+  // C31 organization views
+  | "starred"
+  | "recently-viewed"
+  | "owned-by-me"
+  | "shared-with-me"
+  | "awaiting-others";
 
 export const VALID_DOCUMENT_VIEWS: readonly DocumentView[] = [
   "all", "needs-attention", "drafts", "in-progress",
   "awaiting-my-action", "completed", "expiring", "failed-delivery", "archived",
+  "starred", "recently-viewed", "owned-by-me", "shared-with-me", "awaiting-others",
 ];
 
 export const VIEW_LABELS: Record<DocumentView, string> = {
@@ -33,7 +40,18 @@ export const VIEW_LABELS: Record<DocumentView, string> = {
   "expiring":           "Expiring",
   "failed-delivery":    "Failed Delivery",
   "archived":           "Archived",
+  // C31 organization views
+  "starred":            "Starred",
+  "recently-viewed":    "Recently Viewed",
+  "owned-by-me":        "Owned by Me",
+  "shared-with-me":     "Shared with Me",
+  "awaiting-others":    "Awaiting Others",
 };
+
+// C31 — views that are handled via frontend org filtering (not status sets)
+export const ORG_FILTERED_VIEWS: readonly DocumentView[] = [
+  "starred", "recently-viewed", "owned-by-me", "shared-with-me", "awaiting-others",
+];
 
 export const ACTIVE_TRANSACTION_STATUSES: TransactionStatus[] = [
   "sent", "delivered", "viewed", "authentication-completed",

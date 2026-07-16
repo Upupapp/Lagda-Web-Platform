@@ -39,6 +39,7 @@ import {
   VALID_SORT_FIELDS,
 } from "../../models/search";
 import { MOCK_TRANSACTIONS, MOCK_TEMPLATES, MOCK_CONTACTS } from "../../data/mock";
+import { documentOrganizationService } from "./document-organization.service";
 
 // ── Module-level in-memory state ──────────────────────────────────────────────
 // Reset on sign-out, workspace switch, or explicit reset call.
@@ -522,6 +523,70 @@ function buildHelpResults(query: string): GlobalSearchResult[] {
     }));
 }
 
+// Document organization — folders, tags, saved views
+function buildFolderResults(query: string): GlobalSearchResult[] {
+  const result = documentOrganizationService.listFolders({});
+  if (!result.ok) return [];
+  return result.data
+    .filter((f) => f.status === "active" && (tokenMatch(query, f.name) || tokenMatch(query, f.scope)))
+    .slice(0, 4)
+    .map((f): GlobalSearchResult => ({
+      id:               `sr_folder_${f.id}` as GlobalSearchResultId,
+      type:             "document" as GlobalSearchResultType,
+      title:            f.name,
+      description:      f.scope === "workspace" ? "Workspace folder" : "Personal folder",
+      workspaceContext: "Northbridge Legal",
+      matchedFields:    buildMatchFields(query, [{ field: "title", label: "Folder", text: f.name }]),
+      matchScore:       computeScore(query, f.name),
+      destination:      { type: "platform-route", path: `/app/documents/folders/${f.id}`, requiresPermission: "view_documents" },
+      availability:     "available",
+      demonstrationOnly: true,
+    }));
+}
+
+function buildOrgTagResults(query: string): GlobalSearchResult[] {
+  const result = documentOrganizationService.listTags({});
+  if (!result.ok) return [];
+  return result.data
+    .filter((t) => t.status === "active" && tokenMatch(query, t.name))
+    .slice(0, 4)
+    .map((t): GlobalSearchResult => ({
+      id:               `sr_orgtag_${t.id}` as GlobalSearchResultId,
+      type:             "document" as GlobalSearchResultType,
+      title:            t.name,
+      description:      "Document tag",
+      workspaceContext: "Northbridge Legal",
+      matchedFields:    buildMatchFields(query, [{ field: "title", label: "Tag", text: t.name }]),
+      matchScore:       computeScore(query, t.name),
+      destination:      { type: "platform-route", path: `/app/documents/tags`, requiresPermission: "view_documents" },
+      availability:     "available",
+      demonstrationOnly: true,
+    }));
+}
+
+function buildOrgSavedViewResults(query: string): GlobalSearchResult[] {
+  const result = documentOrganizationService.listSavedViews();
+  if (!result.ok) return [];
+  return result.data
+    .filter((v) => v.status !== "archived" && (tokenMatch(query, v.name) || tokenMatch(query, v.description ?? "")))
+    .slice(0, 4)
+    .map((v): GlobalSearchResult => ({
+      id:               `sr_orgview_${v.id}` as GlobalSearchResultId,
+      type:             "document" as GlobalSearchResultType,
+      title:            v.name,
+      description:      v.description ?? "Saved document view",
+      workspaceContext: "Northbridge Legal",
+      matchedFields:    buildMatchFields(query, [
+        { field: "title",       label: "Saved view",  text: v.name },
+        { field: "description", label: "Description", text: v.description ?? "" },
+      ]),
+      matchScore:       computeScore(query, v.name, v.description),
+      destination:      { type: "platform-route", path: `/app/documents/saved-views/${v.id}`, requiresPermission: "view_documents" },
+      availability:     "available",
+      demonstrationOnly: true,
+    }));
+}
+
 // ── Sort results ──────────────────────────────────────────────────────────────
 
 function sortResults(results: GlobalSearchResult[], sort: string, dir: string): GlobalSearchResult[] {
@@ -546,7 +611,7 @@ function sortResults(results: GlobalSearchResult[], sort: string, dir: string): 
 type ScopeBuilder = (query: string) => GlobalSearchResult[];
 
 const SCOPE_BUILDERS: Partial<Record<GlobalSearchScope, ScopeBuilder[]>> = {
-  "documents":        [buildDocumentResults],
+  "documents":        [buildDocumentResults, buildFolderResults, buildOrgTagResults, buildOrgSavedViewResults],
   "my-actions":       [buildMyActionsResults],
   "templates":        [buildTemplateResults],
   "contacts":         [buildContactResults, buildContactGroupResults],
@@ -597,6 +662,11 @@ const ALL_COMMANDS: CommandPaletteCommand[] = [
   { id: "cmd_usage"         as CommandPaletteCommandId, label: "Open Usage",                 group: "Settings", type: "settings",    icon: "BarChart2",       isPinnable: false, requiresPermission: "view_usage",       destination: { type: "platform-route", path: "/app/settings/usage" } },
   { id: "cmd_integrations"  as CommandPaletteCommandId, label: "Open Integrations",          group: "Settings", type: "settings",    icon: "Puzzle",          isPinnable: false, requiresPermission: "manage_integrations", destination: { type: "platform-route", path: "/app/settings/integrations" } },
   { id: "cmd_dataprivacy"   as CommandPaletteCommandId, label: "Data & Privacy",             group: "Settings", type: "settings",    icon: "Shield",          isPinnable: false, destination: { type: "platform-route", path: "/app/settings/data-and-privacy" } },
+
+  // Document organization group
+  { id: "cmd_doc_folders"     as CommandPaletteCommandId, label: "Open Document Folders",      group: "Navigate", type: "navigate",     icon: "Folder",          isPinnable: true,  requiresPermission: "view_documents",   destination: { type: "platform-route", path: "/app/documents/folders" } },
+  { id: "cmd_doc_tags"        as CommandPaletteCommandId, label: "Open Document Tags",          group: "Navigate", type: "navigate",     icon: "Tag",             isPinnable: false, requiresPermission: "view_documents",   destination: { type: "platform-route", path: "/app/documents/tags" } },
+  { id: "cmd_doc_savedviews"  as CommandPaletteCommandId, label: "Open Saved Views",            group: "Navigate", type: "navigate",     icon: "Bookmark",        isPinnable: true,  requiresPermission: "view_documents",   destination: { type: "platform-route", path: "/app/documents/saved-views" } },
 
   // Help group
   { id: "cmd_help"          as CommandPaletteCommandId, label: "Open Help Center",           group: "Help",     type: "help",        icon: "HelpCircle",      isPinnable: false, destination: { type: "internal-route", path: "/help" } },

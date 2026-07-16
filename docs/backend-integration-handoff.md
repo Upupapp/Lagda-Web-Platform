@@ -592,6 +592,61 @@ No eNotary search scope, index, or commands. Do not index eNotary records, sessi
 
 ---
 
+## 37. Document Organization (C31)
+
+Document organization is a metadata and navigation layer. It does **not** change document access, ownership, workflow status, or legal records. Backend must enforce all access rules independently of organization state.
+
+### Folders
+- `GET /api/workspaces/:wsId/folders` — list folders; filter by `scope`, `parentId`, `status`
+- `POST /api/workspaces/:wsId/folders` — create; enforce `MAX_FOLDER_DEPTH = 3` server-side
+- `PATCH /api/workspaces/:wsId/folders/:folderId` — rename
+- `DELETE /api/workspaces/:wsId/folders/:folderId` — soft-archive
+- `POST /api/workspaces/:wsId/folders/:folderId/restore`
+- `GET /api/workspaces/:wsId/folders/:folderId/documents` — returns document summaries in folder
+
+**Access rule:** Personal folders (`scope = "personal"`) must only be returned to the owning user. Workspace Administrators must not see other users' personal folders.
+
+### Tags
+- `GET/POST /api/workspaces/:wsId/tags`
+- `PATCH /api/workspaces/:wsId/tags/:tagId` — rename or update style
+- `DELETE /api/workspaces/:wsId/tags/:tagId` — soft-archive
+- `POST /api/workspaces/:wsId/tags/:tagId/restore`
+- `POST /api/workspaces/:wsId/documents/bulk/add-tags` — `{ documentIds, tagIds }`
+- `POST /api/workspaces/:wsId/documents/bulk/remove-tags`
+
+**Tag style:** Backend must validate against the 10 allowed `OrgTagStyle` values. Never accept raw hex.
+
+### Starred / Favorites
+- `GET /api/users/:userId/starred-documents` — per-user, not workspace-scoped
+- `POST /api/users/:userId/starred-documents` — `{ documentIds }`
+- `DELETE /api/users/:userId/starred-documents` — `{ documentIds }`
+
+### Recently Viewed
+- `GET /api/users/:userId/recently-viewed?workspaceId=` — returns up to 20 most recent
+- `POST /api/users/:userId/recently-viewed` — called when a document detail page mounts
+
+### Saved Views
+- `GET /api/users/:userId/saved-views` — personal, per-user
+- `POST /api/users/:userId/saved-views`
+- `PATCH /api/users/:userId/saved-views/:viewId/name`
+- `POST /api/users/:userId/saved-views/:viewId/duplicate`
+- `PATCH /api/users/:userId/saved-views/:viewId/default` — must clear previous default
+- `DELETE /api/users/:userId/saved-views/:viewId` — soft-archive
+- `POST /api/users/:userId/saved-views/:viewId/restore`
+
+### Bulk move
+- `POST /api/workspaces/:wsId/documents/bulk/move` — `{ documentIds, folderId }`
+
+### Org-filtered document views
+The five org views (starred, recently-viewed, owned-by-me, shared-with-me, awaiting-others) are currently handled client-side. When a real backend is connected, add these as accepted `view` query parameters on the main documents list endpoint so filtering can move server-side.
+
+### What must never happen
+- Folder/tag assignment must never change `TransactionStatus`, delivery state, participant list, or signing order
+- Personal folder contents must never be visible to workspace admins
+- `demonstrationOnly: true` must be stripped from all real API responses; it is a frontend-only flag
+
+---
+
 ## 36. Explicit eNotary Exclusion
 
 LAGDA eNotary is a separate future product pending Supreme Court accreditation. Backend work for eNotary must not begin until:

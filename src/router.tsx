@@ -238,6 +238,14 @@ const ReportsTeamsPage        = lazy(() => import("./app/pages/platform/reports/
 const ReportsSavedPage        = lazy(() => import("./app/pages/platform/reports/ReportsSavedPage").then(m => ({ default: m.ReportsSavedPage })));
 const ReportDetailPage        = lazy(() => import("./app/pages/platform/reports/ReportDetailPage").then(m => ({ default: m.ReportDetailPage })));
 
+// Document Organization (Command 31)
+// Static paths before :folderId / :viewId to prevent shadowing
+const DocumentFoldersPage     = lazy(() => import("./app/pages/platform/documents/folders/DocumentFoldersPage").then(m => ({ default: m.DocumentFoldersPage })));
+const FolderDetailPage        = lazy(() => import("./app/pages/platform/documents/folders/FolderDetailPage").then(m => ({ default: m.FolderDetailPage })));
+const DocumentTagsPage        = lazy(() => import("./app/pages/platform/documents/tags/DocumentTagsPage").then(m => ({ default: m.DocumentTagsPage })));
+const DocumentSavedViewsPage  = lazy(() => import("./app/pages/platform/documents/saved-views/DocumentSavedViewsPage").then(m => ({ default: m.DocumentSavedViewsPage })));
+const SavedViewDetailPage     = lazy(() => import("./app/pages/platform/documents/saved-views/SavedViewDetailPage").then(m => ({ default: m.SavedViewDetailPage })));
+
 // ── Auth Suspense fallback ────────────────────────────────────────────────────
 function AuthPageLoader() {
   return (
@@ -365,6 +373,14 @@ export const router = createBrowserRouter([
       { path: "documents",     element: <Suspense fallback={null}><DocumentsPage /></Suspense> },
       // /documents/new → /app/prepare (preparation entry)
       { path: "documents/new", element: <Navigate to="/app/prepare" replace /> },
+
+      // Document Organization (Command 31) — static paths BEFORE :transactionId
+      { path: "documents/folders",                    element: <Suspense fallback={null}><DocumentFoldersPage /></Suspense> },
+      { path: "documents/folders/:folderId",          element: <Suspense fallback={null}><FolderDetailPage /></Suspense> },
+      { path: "documents/tags",                       element: <Suspense fallback={null}><DocumentTagsPage /></Suspense> },
+      { path: "documents/saved-views",                element: <Suspense fallback={null}><DocumentSavedViewsPage /></Suspense> },
+      { path: "documents/saved-views/:viewId",        element: <Suspense fallback={null}><SavedViewDetailPage /></Suspense> },
+
       // Transaction detail — nested routes (Command 16)
       {
         path: "documents/:transactionId",
