@@ -879,6 +879,47 @@ function ReportsDirectionSection() {
   );
 }
 
+// ── Automation Direction Section (C32) ───────────────────────────────────────
+
+function AutomationDirectionSection() {
+  return (
+    <section aria-label="Automation direction" style={{ marginBottom: 24 }}>
+      <SectionHeader label="Automation" to="/app/automation" linkLabel="Open automation" />
+      <Card>
+        <div style={{ padding: "12px 16px" }}>
+          <p style={{ ...GF, fontSize: 12, color: SLATE6, margin: "0 0 10px" }}>
+            Configure rules, reusable policies, and workspace defaults that shape
+            how document transactions are processed and routed.
+          </p>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            {[
+              { label: "Rules",     path: "/app/automation/rules" },
+              { label: "Policies",  path: "/app/automation/policies" },
+              { label: "Conflicts", path: "/app/automation/conflicts" },
+              { label: "Activity",  path: "/app/automation/activity" },
+            ].map(r => (
+              <Link
+                key={r.path}
+                to={r.path}
+                style={{
+                  ...GF, fontSize: 12, color: AZURE, textDecoration: "none",
+                  background: "rgba(0,120,212,0.06)", borderRadius: 6,
+                  padding: "4px 9px", border: "1px solid rgba(0,120,212,0.15)",
+                }}
+              >
+                {r.label} →
+              </Link>
+            ))}
+          </div>
+          <p style={{ ...GF, fontSize: 10, color: SLATE4, margin: "8px 0 0" }}>
+            Active in Demonstration — rules and policies do not modify live transactions.
+          </p>
+        </div>
+      </Card>
+    </section>
+  );
+}
+
 // ── Full Error State ──────────────────────────────────────────────────────────
 
 function FullErrorState({ onRetry }: { onRetry: () => void }) {
@@ -995,9 +1036,10 @@ export function PlatformDashboard() {
   const canTemplate  = hasPermission("manage_templates");
   const canVerify    = hasPermission("verify_documents");
   const canInvite    = hasPermission("manage_team");
-  const canBilling   = hasPermission("view_billing") || hasPermission("view_usage");
-  const canAudit     = hasPermission("view_audit");
-  const canReports   = hasPermission("view_reports");
+  const canBilling    = hasPermission("view_billing") || hasPermission("view_usage");
+  const canAudit      = hasPermission("view_audit");
+  const canReports    = hasPermission("view_reports");
+  const canAutomation = hasPermission("view_workflow_automation");
 
   const firstName = user?.displayName?.split(" ")[0] ?? "there";
   const wsName    = currentWorkspace?.name ?? "Your Workspace";
@@ -1092,6 +1134,9 @@ export function PlatformDashboard() {
 
             {/* Reports direction (C29) — concise link section for roles with view_reports */}
             {canReports && <ReportsDirectionSection />}
+
+            {/* Automation direction (C32) — concise link section for roles with view_workflow_automation */}
+            {canAutomation && <AutomationDirectionSection />}
 
           </div>
 

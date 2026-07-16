@@ -322,6 +322,7 @@ export type CommandPaletteCommandGroup =
   | "My Work"
   | "Workspace"
   | "Reports"
+  | "Automation"
   | "Settings"
   | "Help";
 

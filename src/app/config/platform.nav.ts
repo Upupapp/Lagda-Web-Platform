@@ -109,6 +109,17 @@ export const PRIMARY_NAV: PlatformNavItem[] = [
     showOnMobile: false,
     description: "Operational insights and analytics",
   },
+  {
+    id: "automation",
+    label: "Automation",
+    path: "/app/automation",
+    icon: "Zap",
+    group: "primary",
+    permission: "view_workflow_automation",
+    featureFlag: "automationEnabled",
+    showOnMobile: false,
+    description: "Workflow rules, policies, and defaults",
+  },
 ];
 
 // Utility navigation — shown below primary nav (or bottom of sidebar)

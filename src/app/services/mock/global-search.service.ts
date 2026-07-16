@@ -40,6 +40,7 @@ import {
 } from "../../models/search";
 import { MOCK_TRANSACTIONS, MOCK_TEMPLATES, MOCK_CONTACTS } from "../../data/mock";
 import { documentOrganizationService } from "./document-organization.service";
+import { workflowAutomationService } from "./workflow-automation.service";
 
 // ── Module-level in-memory state ──────────────────────────────────────────────
 // Reset on sign-out, workspace switch, or explicit reset call.
@@ -606,6 +607,51 @@ function sortResults(results: GlobalSearchResult[], sort: string, dir: string): 
   });
 }
 
+// ── Automation scope builder ──────────────────────────────────────────────────
+
+function buildAutomationResults(query: string): GlobalSearchResult[] {
+  const results: GlobalSearchResult[] = [];
+  const q = query.toLowerCase();
+
+  const rulesRes = workflowAutomationService.listRules({ query });
+  if (rulesRes.ok) {
+    for (const rule of rulesRes.data.slice(0, 6)) {
+      if (!rule.name.toLowerCase().includes(q) && !q) continue;
+      results.push({
+        id: `sr_auto_rule_${rule.id}` as GlobalSearchResultId,
+        type: "navigation-command" as GlobalSearchResultType,
+        title: rule.name,
+        subtitle: `Rule · ${rule.status}`,
+        scope: "reports" as GlobalSearchScope,
+        destination: { type: "platform-route", path: `/app/automation/rules/${rule.id}` },
+        score: 70,
+        matchFields: [{ field: "name" as GlobalSearchMatchField, ranges: [] }],
+        demonstrationOnly: true,
+      });
+    }
+  }
+
+  const policiesRes = workflowAutomationService.listPolicies();
+  if (policiesRes.ok) {
+    for (const policy of policiesRes.data) {
+      if (!policy.name.toLowerCase().includes(q) && !q) continue;
+      results.push({
+        id: `sr_auto_pol_${policy.id}` as GlobalSearchResultId,
+        type: "navigation-command" as GlobalSearchResultType,
+        title: policy.name,
+        subtitle: `Policy · ${policy.family}`,
+        scope: "reports" as GlobalSearchScope,
+        destination: { type: "platform-route", path: `/app/automation/policies/${policy.id}` },
+        score: 60,
+        matchFields: [{ field: "name" as GlobalSearchMatchField, ranges: [] }],
+        demonstrationOnly: true,
+      });
+    }
+  }
+
+  return results;
+}
+
 // ── Scope → builder mapping ───────────────────────────────────────────────────
 
 type ScopeBuilder = (query: string) => GlobalSearchResult[];
@@ -618,7 +664,7 @@ const SCOPE_BUILDERS: Partial<Record<GlobalSearchScope, ScopeBuilder[]>> = {
   "people-and-teams": [buildMemberResults, buildTeamResults, buildRoleResults],
   "verification":     [buildVerificationResults],
   "notifications":    [buildNotificationResults],
-  "reports":          [buildReportResults],
+  "reports":          [buildReportResults, buildAutomationResults],
   "settings":         [buildSettingsResults],
   "help":             [buildHelpResults],
 };
@@ -640,7 +686,15 @@ const ALL_COMMANDS: CommandPaletteCommand[] = [
   { id: "cmd_contacts"      as CommandPaletteCommandId, label: "Open Contacts",              group: "Navigate", type: "navigate",     icon: "Users",           isPinnable: true,  requiresPermission: "manage_contacts",  destination: { type: "platform-route", path: "/app/contacts" } },
   { id: "cmd_verify"        as CommandPaletteCommandId, label: "Open Verification",          group: "Navigate", type: "navigate",     icon: "ShieldCheck",     isPinnable: true,  requiresPermission: "verify_documents", destination: { type: "platform-route", path: "/app/verify" } },
   { id: "cmd_notifications" as CommandPaletteCommandId, label: "Open Notifications",         group: "Navigate", type: "my-work",      icon: "Bell",            isPinnable: false, destination: { type: "platform-route", path: "/app/notifications" } },
-  { id: "cmd_reports"       as CommandPaletteCommandId, label: "Open Reports",               group: "Reports",  type: "navigate",     icon: "BarChart2",       isPinnable: true,  requiresPermission: "view_reports",     destination: { type: "platform-route", path: "/app/reports" } },
+  { id: "cmd_reports"       as CommandPaletteCommandId, label: "Open Reports",               group: "Reports",  type: "navigate",     icon: "BarChart2",       isPinnable: true,  requiresPermission: "view_reports",           destination: { type: "platform-route", path: "/app/reports" } },
+
+  // Automation group
+  { id: "cmd_automation"           as CommandPaletteCommandId, label: "Open Automation",           group: "Automation", type: "navigate",     icon: "Zap",           isPinnable: true,  requiresPermission: "view_workflow_automation",   destination: { type: "platform-route", path: "/app/automation" } },
+  { id: "cmd_automation_rules"     as CommandPaletteCommandId, label: "Open Automation Rules",     group: "Automation", type: "navigate",     icon: "Settings",      isPinnable: true,  requiresPermission: "view_workflow_automation",   destination: { type: "platform-route", path: "/app/automation/rules" } },
+  { id: "cmd_automation_policies"  as CommandPaletteCommandId, label: "Open Automation Policies",  group: "Automation", type: "navigate",     icon: "ClipboardList", isPinnable: false, requiresPermission: "view_workflow_automation",   destination: { type: "platform-route", path: "/app/automation/policies" } },
+  { id: "cmd_automation_conflicts" as CommandPaletteCommandId, label: "Open Automation Conflicts", group: "Automation", type: "navigate",     icon: "AlertTriangle", isPinnable: false, requiresPermission: "view_workflow_automation",   destination: { type: "platform-route", path: "/app/automation/conflicts" } },
+  { id: "cmd_new_rule"             as CommandPaletteCommandId, label: "Create Automation Rule",    group: "Automation", type: "quick-action", icon: "Plus",          isPinnable: false, requiresPermission: "manage_workflow_automation", destination: { type: "platform-route", path: "/app/automation/rules/new" } },
+
   { id: "cmd_workspace"     as CommandPaletteCommandId, label: "Open Workspace Administration", group: "Workspace", type: "workspace", icon: "Building2",       isPinnable: false, requiresPermission: "manage_team",      destination: { type: "platform-route", path: "/app/workspace" } },
   { id: "cmd_search"        as CommandPaletteCommandId, label: "Open Global Search",         group: "Navigate", type: "navigate",     icon: "Search",          isPinnable: false, destination: { type: "platform-route", path: "/app/search" } },
 

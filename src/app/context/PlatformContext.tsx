@@ -30,6 +30,7 @@ import {
 import { MOCK_NOTIFICATIONS } from "../data/mock";
 import { globalSearchService } from "../services/mock/global-search.service";
 import { documentOrganizationService } from "../services/mock/document-organization.service";
+import { workflowAutomationService } from "../services/mock/workflow-automation.service";
 
 // ── Platform flags (default all active for demo) ──────────────────────────────
 
@@ -47,6 +48,7 @@ export const DEFAULT_PLATFORM_FLAGS: PlatformFlags = {
   apiEnabled:                 true,
   webhooksEnabled:            true,
   reportsEnabled:             true,
+  automationEnabled:          true,
   developmentPlaceholdersEnabled: true,
 };
 
@@ -121,6 +123,7 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
   const signOut = useCallback(() => {
     globalSearchService.resetGlobalSearchDemonstration();
     documentOrganizationService.resetDocumentOrganizationDemonstration();
+    workflowAutomationService.resetWorkflowAutomationDemonstration();
     setSessionStatus("unauthenticated");
     setUser(null);
     setWorkspaces([]);
@@ -135,6 +138,7 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
     if (!ws) return;
     globalSearchService.clearWorkspaceScopedDestinations();
     documentOrganizationService.clearWorkspaceScopedOrganization(ws.id);
+    workflowAutomationService.clearWorkspaceScopedAutomation(ws.id);
     setCurrentWorkspace(ws);
     setRole(ws.role);
     // In production: re-fetch documents, notifications, etc. for the new workspace.

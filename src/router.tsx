@@ -246,6 +246,17 @@ const DocumentTagsPage        = lazy(() => import("./app/pages/platform/document
 const DocumentSavedViewsPage  = lazy(() => import("./app/pages/platform/documents/saved-views/DocumentSavedViewsPage").then(m => ({ default: m.DocumentSavedViewsPage })));
 const SavedViewDetailPage     = lazy(() => import("./app/pages/platform/documents/saved-views/SavedViewDetailPage").then(m => ({ default: m.SavedViewDetailPage })));
 
+// Workflow Automation (Command 32) — static paths before :ruleId/:policyId
+const AutomationOverviewPage  = lazy(() => import("./app/pages/platform/automation/AutomationOverviewPage").then(m => ({ default: m.AutomationOverviewPage })));
+const AutomationRulesPage     = lazy(() => import("./app/pages/platform/automation/AutomationRulesPage").then(m => ({ default: m.AutomationRulesPage })));
+const CreateEditRulePage      = lazy(() => import("./app/pages/platform/automation/CreateEditRulePage").then(m => ({ default: m.CreateEditRulePage })));
+const RuleDetailPage          = lazy(() => import("./app/pages/platform/automation/RuleDetailPage").then(m => ({ default: m.RuleDetailPage })));
+const TestRulePage            = lazy(() => import("./app/pages/platform/automation/TestRulePage").then(m => ({ default: m.TestRulePage })));
+const ConflictsPage           = lazy(() => import("./app/pages/platform/automation/ConflictsPage").then(m => ({ default: m.ConflictsPage })));
+const PoliciesPage            = lazy(() => import("./app/pages/platform/automation/PoliciesPage").then(m => ({ default: m.PoliciesPage })));
+const PolicyDetailPage        = lazy(() => import("./app/pages/platform/automation/PolicyDetailPage").then(m => ({ default: m.PolicyDetailPage })));
+const AutomationActivityPage  = lazy(() => import("./app/pages/platform/automation/AutomationActivityPage").then(m => ({ default: m.AutomationActivityPage })));
+
 // ── Auth Suspense fallback ────────────────────────────────────────────────────
 function AuthPageLoader() {
   return (
@@ -436,6 +447,18 @@ export const router = createBrowserRouter([
       { path: "reports/teams",                     element: <Suspense fallback={null}><ReportsTeamsPage /></Suspense> },
       { path: "reports/saved",                     element: <Suspense fallback={null}><ReportsSavedPage /></Suspense> },
       { path: "reports/:reportId",                 element: <Suspense fallback={null}><ReportDetailPage /></Suspense> },
+
+      // Workflow Automation (Command 32) — static paths before :ruleId/:policyId
+      { path: "automation",                              element: <Suspense fallback={null}><AutomationOverviewPage /></Suspense> },
+      { path: "automation/rules",                        element: <Suspense fallback={null}><AutomationRulesPage /></Suspense> },
+      { path: "automation/rules/new",                    element: <Suspense fallback={null}><CreateEditRulePage /></Suspense> },
+      { path: "automation/rules/:ruleId",                element: <Suspense fallback={null}><RuleDetailPage /></Suspense> },
+      { path: "automation/rules/:ruleId/edit",           element: <Suspense fallback={null}><CreateEditRulePage /></Suspense> },
+      { path: "automation/rules/:ruleId/test",           element: <Suspense fallback={null}><TestRulePage /></Suspense> },
+      { path: "automation/conflicts",                    element: <Suspense fallback={null}><ConflictsPage /></Suspense> },
+      { path: "automation/policies",                     element: <Suspense fallback={null}><PoliciesPage /></Suspense> },
+      { path: "automation/policies/:policyId",           element: <Suspense fallback={null}><PolicyDetailPage /></Suspense> },
+      { path: "automation/activity",                     element: <Suspense fallback={null}><AutomationActivityPage /></Suspense> },
 
       // Team (legacy placeholders kept for redirect compatibility)
       { path: "team",              element: <Suspense fallback={null}><PlatformPlaceholder /></Suspense> },

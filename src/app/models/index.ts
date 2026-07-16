@@ -338,19 +338,21 @@ export type PlatformPermission =
   | "manage_api"
   | "manage_webhooks"
   | "view_audit"
-  | "view_reports";
+  | "view_reports"
+  | "view_workflow_automation"
+  | "manage_workflow_automation";
 
 export const ROLE_PERMISSIONS: Record<PlatformRole, PlatformPermission[]> = {
   owner: [
     "view_dashboard","view_documents","prepare_documents","manage_templates","manage_contacts",
     "verify_documents","manage_team","manage_workspace","view_billing","manage_billing",
     "view_usage","manage_security","manage_branding","manage_integrations","manage_api",
-    "manage_webhooks","view_audit","view_reports",
+    "manage_webhooks","view_audit","view_reports","view_workflow_automation","manage_workflow_automation",
   ],
   administrator: [
     "view_dashboard","view_documents","prepare_documents","manage_templates","manage_contacts",
     "verify_documents","manage_team","manage_workspace","view_billing","view_usage",
-    "manage_security","manage_branding","view_audit","view_reports",
+    "manage_security","manage_branding","view_audit","view_reports","view_workflow_automation","manage_workflow_automation",
   ],
   billing_administrator: [
     "view_dashboard","view_documents","view_billing","manage_billing","view_usage",
@@ -363,7 +365,7 @@ export const ROLE_PERMISSIONS: Record<PlatformRole, PlatformPermission[]> = {
     "verify_documents","view_usage","view_reports",
   ],
   sender: [
-    "view_dashboard","view_documents","prepare_documents","manage_contacts","verify_documents","view_usage","view_reports",
+    "view_dashboard","view_documents","prepare_documents","manage_contacts","verify_documents","view_usage","view_reports","view_workflow_automation",
   ],
   reviewer: [
     "view_dashboard","view_documents","verify_documents","view_reports",
@@ -400,6 +402,7 @@ export type PlatformFeatureFlag =
   | "apiEnabled"
   | "webhooksEnabled"
   | "reportsEnabled"
+  | "automationEnabled"
   | "developmentPlaceholdersEnabled";
 
 export interface PlatformFlags {
@@ -416,6 +419,7 @@ export interface PlatformFlags {
   apiEnabled: boolean;
   webhooksEnabled: boolean;
   reportsEnabled: boolean;
+  automationEnabled: boolean;
   developmentPlaceholdersEnabled: boolean;
 }
 

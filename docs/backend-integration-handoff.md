@@ -655,3 +655,111 @@ LAGDA eNotary is a separate future product pending Supreme Court accreditation. 
 - A separate implementation plan is approved
 
 No eNotary backend routes, data models, or infrastructure should be built as part of this eSignature backend integration.
+
+---
+
+## 38. Workflow Automation — Rules, Policies, Simulations & Conflicts (C32)
+
+Automation is a workspace-scoped configuration layer. Rules and policies configure how the platform behaves; they do **not** act on participants directly. All backend enforcement of prohibited actions listed below is mandatory.
+
+### Access control
+- `view_workflow_automation` — required to read any automation resource
+- `manage_workflow_automation` — required to create, update, activate, archive, or delete rules/policies
+- All automation resources are strictly scoped to the requesting workspace (`workspace_id` column on every row)
+- Workspace members with `sender` role may read rules but must never write them
+
+### Rules
+
+```
+GET    /api/workspaces/:wsId/automation/rules                 list rules; filter: status, priority, trigger, q
+POST   /api/workspaces/:wsId/automation/rules                 create rule
+GET    /api/workspaces/:wsId/automation/rules/:ruleId         get rule
+PATCH  /api/workspaces/:wsId/automation/rules/:ruleId         update rule (name/description/trigger/conditions/actions/priority/conflictBehavior/scope)
+POST   /api/workspaces/:wsId/automation/rules/:ruleId/activate    set status → active
+POST   /api/workspaces/:wsId/automation/rules/:ruleId/pause        set status → paused
+POST   /api/workspaces/:wsId/automation/rules/:ruleId/archive      set status → archived
+POST   /api/workspaces/:wsId/automation/rules/:ruleId/restore      set status → draft (from archived)
+POST   /api/workspaces/:wsId/automation/rules/:ruleId/duplicate    clone rule, set status → draft
+DELETE /api/workspaces/:wsId/automation/rules/:ruleId         hard delete (only if status is draft or archived)
+```
+
+Rule validation (backend must enforce):
+- `name` required, max 120 chars
+- `trigger` must be a valid trigger kind
+- `actions` array must have at least one element
+- Each action `kind` must be in the allowed list (see Prohibited Actions below)
+- Each action's required params must be present and non-empty
+
+### Policies
+
+```
+GET    /api/workspaces/:wsId/automation/policies              list policies (one per family)
+GET    /api/workspaces/:wsId/automation/policies/:policyId    get policy
+PATCH  /api/workspaces/:wsId/automation/policies/:policyId    update policy settings
+POST   /api/workspaces/:wsId/automation/policies/:policyId/activate   set status → active
+POST   /api/workspaces/:wsId/automation/policies/:policyId/pause      set status → paused
+```
+
+Policy families: `request_defaults`, `participant_security`, `reminder_direction`, `completion_behavior`, `organization`. Each workspace has exactly one policy row per family (seeded on workspace creation). PATCH is additive/partial — only update fields included in the request body.
+
+### Conflict detection
+
+```
+GET    /api/workspaces/:wsId/automation/conflicts             list conflicts; filter: resolved (bool)
+GET    /api/workspaces/:wsId/automation/conflicts/:conflictId get conflict
+POST   /api/workspaces/:wsId/automation/conflicts/:conflictId/resolve  resolve conflict (strategy + notes)
+POST   /api/workspaces/:wsId/automation/conflicts/scan        trigger conflict re-scan; returns updated conflict list
+```
+
+Conflict detection must run:
+- After any rule create/update/activate/archive
+- After any policy update/status change
+- On explicit `/scan` request
+
+Detected conflicts update rule `status` to `conflict-detected` and policy `status` accordingly.
+
+### Simulations
+
+```
+POST   /api/workspaces/:wsId/automation/simulations           run simulation against provided context
+GET    /api/workspaces/:wsId/automation/simulations/:simId    get simulation result
+GET    /api/workspaces/:wsId/automation/simulations           list recent simulations (last 50)
+```
+
+Simulation request body: `{ triggerKind, transactionTitle?, templateName?, participantCount?, participantRole?, senderRole? }`. Returns matched rules, projected changes, activity notes. Simulation results are read-only and must be flagged `demonstrationOnly: true` at the API level for the frontend environment.
+
+### Activity log
+
+```
+GET    /api/workspaces/:wsId/automation/activity              list activity; filter: kind, q, limit, offset
+GET    /api/workspaces/:wsId/automation/activity/:activityId  get single entry
+```
+
+### Default resolution
+
+```
+GET    /api/workspaces/:wsId/automation/defaults?templateId=... resolve defaults for a context
+```
+
+Returns the effective reminder, completion, and invitation defaults applying the priority chain: explicit per-transaction > template default > active rule action > workspace policy > system default.
+
+### Prohibited actions — backend must reject these action kinds with HTTP 422
+
+The following action kinds must never be executed by the backend, regardless of what the frontend sends:
+- `auto_sign_document` — backend must never sign a document on a participant's behalf
+- `auto_approve_document` — backend must never approve without participant action
+- `auto_complete_fields` — backend must never fill signing fields
+- `bypass_authentication` — backend must never skip the configured auth method
+- `bypass_routing_order` — backend must never skip a signing order step
+- `modify_participant_permissions` — backend must never change participant access rights
+- `send_real_email` — email delivery must only occur through the notification service; automation rules must not trigger raw email sends
+- `send_real_sms` — same as above for SMS
+- `trigger_real_webhook` — webhook delivery must only occur through the integrations service; automation rules must not fire arbitrary HTTP requests
+
+### Invariants
+
+- Rules and policies must never modify `TransactionStatus`, the signing order, participant auth methods in progress, or document fields after a transaction is active
+- Conflict detection must be idempotent — running the scan twice produces the same result
+- All automation resources must be hard-deleted when a workspace is deleted
+- Simulation results must never affect real transaction state
+- `demonstrationOnly` is a frontend-only field; strip it from production API responses
