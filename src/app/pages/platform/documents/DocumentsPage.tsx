@@ -98,7 +98,7 @@ const DOC_STYLES = SKELETON_STYLE + `
     .doc-header { grid-template-columns: 40px 1fr 130px 88px 48px; }
     .doc-col-updated { display: none; }
   }
-  @media (max-width: 640px) {
+  @media (max-width: 767px) {
     .doc-table-desktop { display: none; }
     .doc-cards-mobile  { display: block; }
   }

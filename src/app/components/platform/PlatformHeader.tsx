@@ -88,7 +88,7 @@ export function PlatformHeader({ pageTitle }: PlatformHeaderProps) {
             borderRadius: 8, padding: "6px 10px",
             color: "#64748B", cursor: "pointer",
             ...GF, fontSize: 13,
-            minHeight: 36, minWidth: 36,
+            minHeight: 44, minWidth: 44,
           }}
           className="header-search-btn"
         >
@@ -111,7 +111,7 @@ export function PlatformHeader({ pageTitle }: PlatformHeaderProps) {
           rel="noopener noreferrer"
           aria-label="Help Center (opens in new tab)"
           title="Help Center"
-          style={{ color: "#94A3B8", display: "flex", alignItems: "center", justifyContent: "center", width: 36, height: 36, borderRadius: 8, textDecoration: "none" }}
+          style={{ color: "#94A3B8", display: "flex", alignItems: "center", justifyContent: "center", width: 44, height: 44, borderRadius: 8, textDecoration: "none" }}
           className="header-help-btn"
         >
           <HelpCircle size={18} aria-hidden />

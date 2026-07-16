@@ -360,6 +360,7 @@ const LAYOUT_STYLES = `
     .prep-topbar  { display: block; }
     .prep-step-area { padding: 20px 16px; }
     .prep-nav-bar   { padding: 12px 16px; }
+    .prep-breadcrumb { padding: 0 16px !important; }
   }
 `;
 
@@ -430,6 +431,7 @@ export function PrepareLayout() {
 
       {/* Top header with breadcrumb */}
       <div
+        className="prep-breadcrumb"
         style={{
           ...GF,
           borderBottom: "1px solid #E3E8EF",

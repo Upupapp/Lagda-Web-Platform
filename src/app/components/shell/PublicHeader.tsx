@@ -442,8 +442,8 @@ export function PublicHeader() {
               {/* Desktop nav */}
               <ul
                 role="list"
-                style={{ display: "flex", gap: 4, alignItems: "center", margin: 0, padding: 0, listStyle: "none" }}
-                className="hidden lg:flex"
+                style={{ gap: 4, alignItems: "center", margin: 0, padding: 0, listStyle: "none" }}
+                className="phdr-desktop-nav"
               >
                 {TOP_NAV.map((nav) => {
                   const isActive = pathname.startsWith(nav.matchPrefix);
@@ -527,7 +527,7 @@ export function PublicHeader() {
                 {/* Sign In — desktop */}
                 <Link
                   to="/sign-in"
-                  className="hidden lg:block"
+                  className="phdr-signin"
                   style={{
                     color: "white", fontSize: 13, fontWeight: 600, ...GF,
                     textDecoration: "none", padding: 8,
@@ -542,7 +542,7 @@ export function PublicHeader() {
                 {/* Create Account — desktop */}
                 <Link
                   to="/create-account"
-                  className="hidden lg:flex"
+                  className="phdr-cta"
                   onClick={() => haptic("light")}
                   style={{
                     background: "#0078d4", color: "white", borderRadius: 10,
@@ -550,7 +550,7 @@ export function PublicHeader() {
                     textDecoration: "none", whiteSpace: "nowrap",
                     boxShadow: "0 4px 12px rgba(0,120,212,0.25)",
                     transition: "filter 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease",
-                    display: "inline-flex", alignItems: "center",
+                    alignItems: "center",
                   }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.filter = "brightness(1.1)";
@@ -568,7 +568,7 @@ export function PublicHeader() {
 
                 {/* Hamburger — mobile/tablet */}
                 <button
-                  className="lg:hidden"
+                  className="phdr-hamburger"
                   onClick={() => { haptic("selection"); setMobileOpen(true); }}
                   aria-label="Open navigation menu"
                   aria-expanded={mobileOpen}
@@ -594,6 +594,24 @@ export function PublicHeader() {
           <MobileDrawer onClose={() => { haptic("selection"); setMobileOpen(false); }} />
         </div>
       )}
+
+      <style>{`
+        /* Desktop nav / CTA: hidden on mobile, flex on ≥1024px */
+        .phdr-desktop-nav { display: none !important; }
+        .phdr-signin      { display: none !important; }
+        .phdr-cta         { display: none !important; }
+        .phdr-hamburger   { display: flex !important; }
+        @media (min-width: 1024px) {
+          .phdr-desktop-nav { display: flex !important; }
+          .phdr-signin      { display: block !important; }
+          .phdr-cta         { display: inline-flex !important; }
+          .phdr-hamburger   { display: none !important; }
+        }
+        @keyframes dropdownEnter {
+          from { opacity: 0; transform: translateY(-6px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+      `}</style>
     </>
   );
 }

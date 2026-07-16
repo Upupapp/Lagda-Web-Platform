@@ -98,7 +98,7 @@ export function AuthLayout({ children }: AuthLayoutProps) {
         style={{
           marginTop: 16,
           color: "#334155",
-          fontSize: 11,
+          fontSize: 12,
           fontFamily: "'Geist Mono', monospace",
         }}
       >

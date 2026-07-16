@@ -177,7 +177,7 @@ export function MobileNav() {
           <button
             onClick={() => { setDrawerOpen(false); triggerRef.current?.focus(); }}
             aria-label="Close navigation"
-            style={{ width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(255,255,255,0.06)", border: "none", borderRadius: 8, color: "#64748b", cursor: "pointer" }}
+            style={{ width: 44, height: 44, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(255,255,255,0.06)", border: "none", borderRadius: 8, color: "#64748b", cursor: "pointer" }}
           >
             <X size={16} aria-hidden />
           </button>
@@ -226,7 +226,7 @@ export function MobileNav() {
                     onClick={closeAndNavigate}
                     style={({ isActive }) => ({
                       display: "flex", alignItems: "center", gap: 12,
-                      padding: "10px 12px", borderRadius: 8,
+                      padding: "12px 12px", borderRadius: 8, minHeight: 44,
                       textDecoration: "none",
                       background: isActive ? "rgba(0,120,212,0.14)" : "transparent",
                       border: isActive ? "1px solid rgba(0,120,212,0.22)" : "1px solid transparent",
@@ -296,7 +296,7 @@ export function MobileNav() {
             </div>
             <button
               onClick={handleSignOut}
-              style={{ width: "100%", background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: 8, color: "#ef4444", ...GF, fontSize: 13, fontWeight: 600, padding: "9px 14px", cursor: "pointer" }}
+              style={{ width: "100%", background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: 8, color: "#ef4444", ...GF, fontSize: 13, fontWeight: 600, padding: "9px 14px", minHeight: 44, cursor: "pointer" }}
             >
               Sign Out
             </button>
