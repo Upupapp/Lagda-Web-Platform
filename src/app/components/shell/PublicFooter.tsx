@@ -124,6 +124,7 @@ export function PublicFooter() {
           </p>
           <div style={{ display: "flex", gap: 20 }}>
             {[
+              { label: "Sign In",          path: "/sign-in" },
               { label: "Privacy Policy",   path: "/legal/privacy" },
               { label: "Terms of Service", path: "/legal/terms" },
               { label: "Accessibility",    path: "/legal/accessibility" },

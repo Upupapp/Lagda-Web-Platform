@@ -21,15 +21,6 @@ export interface PlatformNavItem {
   description?: string;
 }
 
-export interface PlatformSettingsItem {
-  id: string;
-  label: string;
-  path: string;
-  icon: string;
-  permission?: PlatformPermission;
-  description?: string;
-}
-
 // Primary navigation — shown in sidebar and mobile drawer
 export const PRIMARY_NAV: PlatformNavItem[] = [
   {
@@ -146,19 +137,6 @@ export const UTILITY_NAV: PlatformNavItem[] = [
     showOnMobile: false,
     description: "Manage workspace members",
   },
-];
-
-// Settings navigation — shown in the settings section
-export const SETTINGS_NAV: PlatformSettingsItem[] = [
-  { id: "profile",        label: "Profile",             path: "/app/settings/profile",        icon: "CircleUser",     description: "Name, email, and preferences" },
-  { id: "security",       label: "Security",            path: "/app/settings/security",       icon: "Lock",           permission: "manage_security" },
-  { id: "notifications",  label: "Notifications",       path: "/app/settings/notifications",  icon: "BellRing" },
-  { id: "branding",       label: "Branding",            path: "/app/settings/branding",       icon: "Palette",        permission: "manage_branding" },
-  { id: "billing",        label: "Billing",             path: "/app/settings/billing",        icon: "CreditCard",     permission: "view_billing" },
-  { id: "usage",          label: "Usage",               path: "/app/settings/usage",          icon: "BarChart2",      permission: "view_usage" },
-  { id: "integrations",   label: "Integrations",        path: "/app/settings/integrations",   icon: "Puzzle",         permission: "manage_integrations" },
-  { id: "api",            label: "API Access",          path: "/app/settings/api",            icon: "Code2",          permission: "manage_api" },
-  { id: "webhooks",       label: "Webhooks",            path: "/app/settings/webhooks",       icon: "Webhook",        permission: "manage_webhooks" },
 ];
 
 // Prepare Document CTA — primary action, always visible
