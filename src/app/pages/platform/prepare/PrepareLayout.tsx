@@ -5,7 +5,7 @@
 // eNotary content is NEVER shown here. Burgundy (#67023B) is NEVER used.
 
 import React, { useState, useCallback } from "react";
-import { Outlet, useNavigate, useLocation, Link } from "react-router";
+import { Outlet, Navigate, useNavigate, useLocation, Link } from "react-router";
 import { PrepareProvider, usePrepare } from "../../../context/PrepareContext";
 import { PREPARATION_STEPS } from "../../../models/prepare";
 import type { PreparationStepId, PreparationStepState } from "../../../models/prepare";
@@ -378,6 +378,11 @@ export function PrepareLayout() {
   const [showDiscard, setShowDiscard] = useState(false);
 
   const activeStepId = currentStepFromPath(location.pathname);
+
+  // Guard: if user deep-links to a step URL without an active draft, redirect to entry.
+  if (activeStepId !== null && draft === null) {
+    return <Navigate to="/app/prepare" replace />;
+  }
 
   const handleStepClick = useCallback((id: PreparationStepId) => {
     setStep(id);

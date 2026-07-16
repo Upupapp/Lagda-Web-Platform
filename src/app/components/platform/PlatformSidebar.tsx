@@ -233,7 +233,7 @@ export function PlatformSidebar() {
             const allowed = !item.permission || hasPermission(item.permission);
             const enabled = !item.featureFlag || hasFlag(item.featureFlag);
             if (!allowed || !enabled) return null;
-            const badge = item.showBadge && item.id === "notifications" ? unreadCount : null;
+            const badge = item.showBadge && item.id === "inbox" ? unreadCount : null;
             return (
               <SidebarItem
                 key={item.id}
