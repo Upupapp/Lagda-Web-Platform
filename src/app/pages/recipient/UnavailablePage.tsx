@@ -121,7 +121,6 @@ export function UnavailablePage() {
         {info.canRetry && (
           <button
             onClick={() => {
-              const urlParams = new URLSearchParams(window.location.search);
               const id = window.location.pathname.split("/sign/")[1]?.split("/")[0] ?? "";
               if (id) loadRequest(id);
             }}

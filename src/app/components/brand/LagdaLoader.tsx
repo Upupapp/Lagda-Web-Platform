@@ -270,7 +270,7 @@ function FullscreenLoader({
           aria-hidden="true"
         />
 
-        {/* Red-diamond pulse (single restrained pass — verification/authenticity mark) */}
+        {/* Gold-diamond pulse (single restrained pass — verification/authenticity mark) */}
         <div
           aria-hidden="true"
           style={{
@@ -279,7 +279,7 @@ function FullscreenLoader({
             right: -4,
             width: 10,
             height: 10,
-            backgroundColor: "#67023B",
+            backgroundColor: "#C9960C",
             animation: "lagda-diamond-pulse 2.6s cubic-bezier(0.4,0,0.2,1) 0.2s both",
             pointerEvents: "none",
           }}
