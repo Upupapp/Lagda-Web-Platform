@@ -2,7 +2,7 @@
 // Frontend-only demonstration. No Burgundy. No eNotary.
 
 import React, { useEffect, useState } from "react";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { SettingsPage, SCard, SSection, StatusBadge, Skeleton, DEMO_NOTICE } from "./SettingsShell";
 import { mockSecuritySettingsService } from "../../../services/mock/settings.service";
 import type { SecurityOverview } from "../../../models/settings";
@@ -55,9 +55,10 @@ export function SecurityOverviewPage() {
     mockSecuritySettingsService.getSecurityOverview().then(o => { setOverview(o); setLoading(false); });
   }, []);
 
+  const navigate = useNavigate();
   const handleAction = (id: string) => {
-    if (id === "password")  window.location.href = "/app/settings/security/password";
-    else                    window.location.href = "/app/settings/security/mfa";
+    if (id === "password") navigate("/app/settings/security/password");
+    else                   navigate("/app/settings/security/mfa");
   };
 
   if (loading) return <SettingsPage title="Account Security" breadcrumb="Security"><Skeleton h={160} mb={16} /><Skeleton h={120} /></SettingsPage>;
