@@ -18,3 +18,4 @@ export {
   SkeletonBlock,
   SKELETON_STYLE,
 } from "./AppContentLayout";
+export { CapabilityUnavailable, CapabilityGuard } from "./CapabilityUnavailable";

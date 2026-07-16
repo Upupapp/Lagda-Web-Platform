@@ -763,3 +763,46 @@ The following action kinds must never be executed by the backend, regardless of 
 - All automation resources must be hard-deleted when a workspace is deleted
 - Simulation results must never affect real transaction state
 - `demonstrationOnly` is a frontend-only field; strip it from production API responses
+
+---
+
+## 39. MVP Consolidation Notes (C35)
+
+### Capability Registry
+
+The frontend now includes a canonical product capability registry at `src/app/config/product-capability-registry.ts`. Each capability lists its `backendDependencies` as strings. The backend must implement these services before a capability is production-ready.
+
+The capability system is frontend-only. Backend must enforce all access controls independently — the frontend capability resolver does not substitute for server-side authorization.
+
+### Feature Flag Synchronization
+
+`DEFAULT_PLATFORM_FLAGS` in `PlatformContext.tsx` contains the client-side defaults. In production, the backend may override these per-workspace by returning a `featureFlags` object in the `/auth/me` response:
+
+```json
+{
+  "user": { ... },
+  "workspace": { ... },
+  "featureFlags": {
+    "automationEnabled": false,
+    "reportsEnabled": true
+  }
+}
+```
+
+Only flags returned by the backend should override defaults. Unknown flags should be ignored. The backend must not expose `automationEnabled: true` to workspaces on plans that don't include Workflow Automation.
+
+### Launch Profile Isolation
+
+The `VITE_LAUNCH_PROFILE` environment variable controls which capability maturity levels are visible. The backend must not expose enterprise-preview endpoints to workspaces in the default launch profile. Profile boundaries should be enforced at both the frontend (compilation) and backend (authorization) layers.
+
+### Permission Enforcement
+
+The frontend `ROLE_PERMISSIONS` map (`src/app/models/index.ts`) defines which permissions each role receives. The backend must implement equivalent role-based access control. Frontend permission checks are advisory and not a security boundary.
+
+### C33 / C34 Confirmation
+
+Commands 33 (Bulk Send) and 34 (Real-time Collaboration) were not implemented. There are no frontend routes, services, models, or components for these features. The backend should not define endpoints for them at this stage.
+
+### Backend Priority Reference
+
+See `docs/backend-implementation-priority.md` for the full P0→P3 endpoint list with recommended implementation order.

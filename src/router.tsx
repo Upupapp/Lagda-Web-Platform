@@ -6,6 +6,7 @@ import { PlatformLayout } from "./app/layouts/PlatformLayout";
 import { RecipientLayout } from "./app/layouts/RecipientLayout";
 import { NotFound } from "./app/pages/public/NotFound";
 import { DevPlaceholder } from "./app/pages/shared/DevPlaceholder";
+import { CapabilityGuard } from "./app/components/platform/CapabilityUnavailable";
 
 // ── Lazy-loaded page families ─────────────────────────────────────────────────
 // Each family shares a chunk, keeping the initial bundle small.
@@ -448,17 +449,19 @@ export const router = createBrowserRouter([
       { path: "reports/saved",                     element: <Suspense fallback={null}><ReportsSavedPage /></Suspense> },
       { path: "reports/:reportId",                 element: <Suspense fallback={null}><ReportDetailPage /></Suspense> },
 
-      // Workflow Automation (Command 32) — static paths before :ruleId/:policyId
-      { path: "automation",                              element: <Suspense fallback={null}><AutomationOverviewPage /></Suspense> },
-      { path: "automation/rules",                        element: <Suspense fallback={null}><AutomationRulesPage /></Suspense> },
-      { path: "automation/rules/new",                    element: <Suspense fallback={null}><CreateEditRulePage /></Suspense> },
-      { path: "automation/rules/:ruleId",                element: <Suspense fallback={null}><RuleDetailPage /></Suspense> },
-      { path: "automation/rules/:ruleId/edit",           element: <Suspense fallback={null}><CreateEditRulePage /></Suspense> },
-      { path: "automation/rules/:ruleId/test",           element: <Suspense fallback={null}><TestRulePage /></Suspense> },
-      { path: "automation/conflicts",                    element: <Suspense fallback={null}><ConflictsPage /></Suspense> },
-      { path: "automation/policies",                     element: <Suspense fallback={null}><PoliciesPage /></Suspense> },
-      { path: "automation/policies/:policyId",           element: <Suspense fallback={null}><PolicyDetailPage /></Suspense> },
-      { path: "automation/activity",                     element: <Suspense fallback={null}><AutomationActivityPage /></Suspense> },
+      // Workflow Automation (C32) — Enterprise Preview, guarded by CapabilityGuard.
+      // In the default launch profile, all /app/automation/* routes show a safe
+      // unavailable state without loading the automation page components.
+      { path: "automation",                 element: <CapabilityGuard capabilityId="workflow-automation"><Suspense fallback={null}><AutomationOverviewPage /></Suspense></CapabilityGuard> },
+      { path: "automation/rules",           element: <CapabilityGuard capabilityId="workflow-automation"><Suspense fallback={null}><AutomationRulesPage /></Suspense></CapabilityGuard> },
+      { path: "automation/rules/new",       element: <CapabilityGuard capabilityId="workflow-automation"><Suspense fallback={null}><CreateEditRulePage /></Suspense></CapabilityGuard> },
+      { path: "automation/rules/:ruleId",   element: <CapabilityGuard capabilityId="workflow-automation"><Suspense fallback={null}><RuleDetailPage /></Suspense></CapabilityGuard> },
+      { path: "automation/rules/:ruleId/edit", element: <CapabilityGuard capabilityId="workflow-automation"><Suspense fallback={null}><CreateEditRulePage /></Suspense></CapabilityGuard> },
+      { path: "automation/rules/:ruleId/test", element: <CapabilityGuard capabilityId="workflow-automation"><Suspense fallback={null}><TestRulePage /></Suspense></CapabilityGuard> },
+      { path: "automation/conflicts",       element: <CapabilityGuard capabilityId="workflow-automation"><Suspense fallback={null}><ConflictsPage /></Suspense></CapabilityGuard> },
+      { path: "automation/policies",        element: <CapabilityGuard capabilityId="workflow-automation"><Suspense fallback={null}><PoliciesPage /></Suspense></CapabilityGuard> },
+      { path: "automation/policies/:policyId", element: <CapabilityGuard capabilityId="workflow-automation"><Suspense fallback={null}><PolicyDetailPage /></Suspense></CapabilityGuard> },
+      { path: "automation/activity",        element: <CapabilityGuard capabilityId="workflow-automation"><Suspense fallback={null}><AutomationActivityPage /></Suspense></CapabilityGuard> },
 
       // Team (legacy placeholders kept for redirect compatibility)
       { path: "team",              element: <Suspense fallback={null}><PlatformPlaceholder /></Suspense> },

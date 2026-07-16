@@ -993,7 +993,7 @@ function DemoNotice({ scenario }: { scenario: DashboardScenario }) {
 export function PlatformDashboard() {
   usePageMeta();
 
-  const { user, currentWorkspace, role, hasPermission } = usePlatform();
+  const { user, currentWorkspace, role, hasPermission, resolveCapability } = usePlatform();
   const [searchParams] = useSearchParams();
 
   const scenario = deriveScenario(role, searchParams.get("demo"));
@@ -1039,7 +1039,9 @@ export function PlatformDashboard() {
   const canBilling    = hasPermission("view_billing") || hasPermission("view_usage");
   const canAudit      = hasPermission("view_audit");
   const canReports    = hasPermission("view_reports");
-  const canAutomation = hasPermission("view_workflow_automation");
+  // Automation: gated by capability (enterprise-preview, disabled by default)
+  const automationCap = resolveCapability("workflow-automation");
+  const canAutomation = automationCap.available && hasPermission("view_workflow_automation");
 
   const firstName = user?.displayName?.split(" ")[0] ?? "there";
   const wsName    = currentWorkspace?.name ?? "Your Workspace";

@@ -41,6 +41,16 @@ import {
 import { MOCK_TRANSACTIONS, MOCK_TEMPLATES, MOCK_CONTACTS } from "../../data/mock";
 import { documentOrganizationService } from "./document-organization.service";
 import { workflowAutomationService } from "./workflow-automation.service";
+import { ACTIVE_LAUNCH_PROFILE, buildCapabilityContext } from "../../config/capability-resolver";
+import { resolveCapability } from "../../config/capability-resolver";
+import { capabilityId } from "../../models/product-capability";
+
+// Automation is enterprise-preview; check whether it's available in the current profile.
+// We use a static context here (no permissions needed for search visibility gating).
+function isAutomationSearchEnabled(): boolean {
+  const ctx = buildCapabilityContext(ACTIVE_LAUNCH_PROFILE, [], {});
+  return resolveCapability(capabilityId("workflow-automation"), ctx).available;
+}
 
 // ── Module-level in-memory state ──────────────────────────────────────────────
 // Reset on sign-out, workspace switch, or explicit reset call.
@@ -664,7 +674,9 @@ const SCOPE_BUILDERS: Partial<Record<GlobalSearchScope, ScopeBuilder[]>> = {
   "people-and-teams": [buildMemberResults, buildTeamResults, buildRoleResults],
   "verification":     [buildVerificationResults],
   "notifications":    [buildNotificationResults],
-  "reports":          [buildReportResults, buildAutomationResults],
+  "reports":          isAutomationSearchEnabled()
+                        ? [buildReportResults, buildAutomationResults]
+                        : [buildReportResults],
   "settings":         [buildSettingsResults],
   "help":             [buildHelpResults],
 };
@@ -819,14 +831,23 @@ class GlobalSearchService {
 
   // ── Commands ───────────────────────────────────────────────────────────────
 
+  private _getAvailableCommands(): CommandPaletteCommand[] {
+    const automationEnabled = isAutomationSearchEnabled();
+    return ALL_COMMANDS.filter((cmd) => {
+      if (cmd.group === "Automation" && !automationEnabled) return false;
+      return true;
+    });
+  }
+
   listCommands(): CommandPaletteCommand[] {
-    return ALL_COMMANDS;
+    return this._getAvailableCommands();
   }
 
   searchCommands(query: string): CommandPaletteCommand[] {
-    if (!query || query.trim().length < 1) return ALL_COMMANDS;
+    const available = this._getAvailableCommands();
+    if (!query || query.trim().length < 1) return available;
     const q = query.toLowerCase().trim();
-    return ALL_COMMANDS.filter((cmd) =>
+    return available.filter((cmd) =>
       tokenMatch(q, cmd.label) ||
       tokenMatch(q, cmd.description) ||
       tokenMatch(q, cmd.group) ||
@@ -836,7 +857,7 @@ class GlobalSearchService {
 
   getCommandsByGroup(): Partial<Record<CommandPaletteCommandGroup, CommandPaletteCommand[]>> {
     const groups: Partial<Record<CommandPaletteCommandGroup, CommandPaletteCommand[]>> = {};
-    for (const cmd of ALL_COMMANDS) {
+    for (const cmd of this._getAvailableCommands()) {
       if (!groups[cmd.group]) groups[cmd.group] = [];
       groups[cmd.group]!.push(cmd);
     }
@@ -918,11 +939,12 @@ class GlobalSearchService {
   }
 
   getPinnedCommands(): CommandPaletteCommand[] {
-    return ALL_COMMANDS.filter((c) => _pinnedCommandIds.includes(c.id) && c.isPinnable);
+    const available = this._getAvailableCommands();
+    return available.filter((c) => _pinnedCommandIds.includes(c.id) && c.isPinnable);
   }
 
   pinCommand(id: string): void {
-    const cmd = ALL_COMMANDS.find((c) => c.id === id);
+    const cmd = this._getAvailableCommands().find((c) => c.id === id);
     if (!cmd || !cmd.isPinnable) return;
     if (!_pinnedCommandIds.includes(id)) _pinnedCommandIds.push(id);
   }

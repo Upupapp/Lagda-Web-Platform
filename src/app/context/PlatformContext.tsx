@@ -31,6 +31,8 @@ import { MOCK_NOTIFICATIONS } from "../data/mock";
 import { globalSearchService } from "../services/mock/global-search.service";
 import { documentOrganizationService } from "../services/mock/document-organization.service";
 import { workflowAutomationService } from "../services/mock/workflow-automation.service";
+import { ACTIVE_LAUNCH_PROFILE, resolveCapability, buildCapabilityContext } from "../config/capability-resolver";
+import type { LaunchProfileId, CapabilityResolution, ProductCapabilityId } from "../models/product-capability";
 
 // ── Platform flags (default all active for demo) ──────────────────────────────
 
@@ -48,7 +50,9 @@ export const DEFAULT_PLATFORM_FLAGS: PlatformFlags = {
   apiEnabled:                 true,
   webhooksEnabled:            true,
   reportsEnabled:             true,
-  automationEnabled:          true,
+  // Automation is Enterprise Preview — disabled in the default launch profile.
+  // Enable via VITE_LAUNCH_PROFILE=enterprise-preview at build time.
+  automationEnabled:          false,
   developmentPlaceholdersEnabled: true,
 };
 
@@ -64,6 +68,10 @@ export interface PlatformContextValue {
   notifications:      NotificationSummary[];
   unreadCount:        number;
   flags:              PlatformFlags;
+
+  // Launch profile + capability resolution
+  activeLaunchProfile: LaunchProfileId;
+  resolveCapability: (id: ProductCapabilityId | string) => CapabilityResolution;
 
   // Actions
   signIn: (
@@ -166,10 +174,21 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
     return flags[f];
   }, [flags]);
 
+  const resolveCapabilityFn = useCallback((id: ProductCapabilityId | string): CapabilityResolution => {
+    const ctx = buildCapabilityContext(
+      ACTIVE_LAUNCH_PROFILE,
+      role ? (ROLE_PERMISSIONS[role] ?? []) : [],
+      flags as Record<string, boolean>,
+    );
+    return resolveCapability(id, ctx);
+  }, [role, flags]);
+
   return (
     <PlatformContext.Provider value={{
       sessionStatus, user, workspaces, currentWorkspace, subscription, role,
       notifications, unreadCount, flags,
+      activeLaunchProfile: ACTIVE_LAUNCH_PROFILE,
+      resolveCapability: resolveCapabilityFn,
       signIn, signOut, switchWorkspace,
       markNotificationRead, markAllNotificationsRead,
       expireSession, hasPermission, hasFlag,
@@ -195,6 +214,11 @@ export function usePermission(permission: PlatformPermission): boolean {
 export function usePlatformFlag(flag: keyof PlatformFlags): boolean {
   const { hasFlag } = usePlatform();
   return hasFlag(flag);
+}
+
+export function useCapability(id: ProductCapabilityId | string): CapabilityResolution {
+  const { resolveCapability: resolve } = usePlatform();
+  return resolve(id);
 }
 
 // Mock sign-in helper — loads demo data into context.

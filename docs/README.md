@@ -1,6 +1,6 @@
 # LAGDA Frontend Documentation Index
 
-Last updated: 2026-07-16 (Commands 1–25 complete)
+Last updated: 2026-07-16 (Commands 1–35 complete)
 
 ---
 
@@ -197,7 +197,41 @@ Last updated: 2026-07-16 (Commands 1–25 complete)
 | Document | Description |
 |----------|-------------|
 | [backend-integration-handoff.md](backend-integration-handoff.md) | All backend requirements — auth, documents, signing, completion, admin, billing |
+| [backend-implementation-priority.md](backend-implementation-priority.md) | Prioritized backend endpoint list (P0–P3) with recommended build order |
 | [frontend-known-limitations.md](frontend-known-limitations.md) | Honest list of all frontend-only limitations |
+
+---
+
+## MVP Consolidation (C35)
+
+**Read these in order for a complete picture of the current product state:**
+
+| Document | Description |
+|----------|-------------|
+| [lagda-esignature-mvp-scope.md](lagda-esignature-mvp-scope.md) | Definitive MVP scope — what's in, what's not, demonstration accuracy statement |
+| [mvp-consolidation-audit.md](mvp-consolidation-audit.md) | Full audit through C32 — nav, routes, search, flags, gating issues found and fixed |
+| [launch-feature-classification.md](launch-feature-classification.md) | Every capability classified by maturity level |
+| [advanced-feature-gating.md](advanced-feature-gating.md) | 3-layer gating architecture: launch profiles, feature flags, permissions |
+| [launch-readiness-matrix.md](launch-readiness-matrix.md) | Frontend/backend/legal readiness per capability — P0 blockers identified |
+| [launch-route-map.md](launch-route-map.md) | Complete route inventory (~187 routes across public + authenticated) |
+| [launch-navigation-model.md](launch-navigation-model.md) | Nav architecture, role-based visibility, mobile nav rules |
+| [end-to-end-launch-journeys.md](end-to-end-launch-journeys.md) | 9 critical user journeys with step-by-step flows and backend deps |
+| [mvp-readiness-gaps.md](mvp-readiness-gaps.md) | 39 gaps across backend, infrastructure, legal, and frontend |
+| [deferred-feature-roadmap.md](deferred-feature-roadmap.md) | All deferred/future capabilities with readiness requirements |
+
+---
+
+## Module Docs Added C26–C35
+
+| Document | Description |
+|----------|-------------|
+| [signature-library.md](signature-library.md) | Signature Library (C26) |
+| [recipient-inbox.md](recipient-inbox.md) | Recipient Inbox (C27) |
+| [notifications-center.md](notifications-center.md) | Notifications Center (C28) |
+| [reports-center.md](reports-center.md) | Reports Center (C29) |
+| [global-search-command-palette.md](global-search-command-palette.md) | Global Search + Command Palette (C30) |
+| [document-organization.md](document-organization.md) | Document Organization — Folders, Tags, Views, Favorites, Bulk (C31) |
+| [workflow-automation-rules-policies-simulations-and-conflicts.md](workflow-automation-rules-policies-simulations-and-conflicts.md) | Workflow Automation (C32) — enterprise-preview, gated by default |
 
 ---
 
