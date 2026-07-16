@@ -628,6 +628,133 @@ All 14 Figma-imported screens (`src/imports/`) are legacy generated code and do 
 
 ---
 
+## 34. FormCard Standard (Command 35 — BRAND)
+
+**File:** `src/app/components/platform/AppContentLayout.tsx`  
+**Import:** `import { FormCard, FormCardHeading, FormCardDivider, FormField } from "../components/platform"`
+
+The `FormCard` is the canonical container for all platform forms, settings panels, and structured data-entry sections.
+
+| Property | Value |
+|---|---|
+| Background | `#ffffff` |
+| Border | `1px solid #E2E8F0` |
+| Border radius | `12px` |
+| Padding | `24px` |
+
+### Components
+
+```tsx
+// Container
+<FormCard>
+  <FormCardHeading title="Workspace Settings" description="Manage your workspace display name and preferences." />
+  <FormField label="Workspace Name" htmlFor="ws-name" required hint="Visible to all workspace members">
+    <input id="ws-name" ... />
+  </FormField>
+  <FormCardDivider />
+  <FormField label="Time Zone" htmlFor="ws-tz" error="Please select a time zone">
+    <select id="ws-tz">...</select>
+  </FormField>
+</FormCard>
+```
+
+### Rules
+- Every platform form lives inside a `FormCard`
+- Labels are always visible — never placeholder-only
+- Required fields use `required` prop (renders `*` in red beside label)
+- Error text renders below input with `role="alert"`
+- Multiple logical groups within one card are separated with `FormCardDivider`
+- Inline styles only — Tailwind classes must not be added to these components
+
+---
+
+## 35. PageError and SectionError (Command 35 — BRAND)
+
+**File:** `src/app/components/platform/PageError.tsx`  
+**Import:** `import { PageError, SectionError } from "../components/platform"`
+
+### PageError
+
+Page-level error state when a route fails to load its data. Has 6 error kinds:
+
+| Kind | Icon | Title | Scenario |
+|---|---|---|---|
+| `generic` (default) | ⚠️ | Something went wrong | Unexpected errors |
+| `not-found` | 🔍 | Not Found | Document/record doesn't exist |
+| `permission-denied` | 🔒 | Permission Required | Missing role/permission |
+| `session-expired` | 🕐 | Session Expired | Auth timeout |
+| `service-unavailable` | 🔌 | Service Unavailable | Backend unreachable |
+| `empty-results` | 📄 | No Results | Empty filtered/search result |
+
+```tsx
+// Default — supply onRetry for a branded Try Again button
+<PageError kind="not-found" onRetry={() => refetch()} />
+
+// Custom message
+<PageError kind="generic" title="Signature Failed" description="The signing service returned an error." onRetry={retry} />
+```
+
+### SectionError
+
+Inline compact error strip for section-level failures (inside a card, below a table, etc.).
+
+```tsx
+<SectionError message="Failed to load recipients." onRetry={() => refetch()} />
+<SectionError message="Could not verify document hash." compact />
+```
+
+---
+
+## 36. BrandToaster (Command 35 — BRAND)
+
+**File:** `src/app/components/brand/BrandToast.tsx`  
+**Mount:** Already mounted in `main.tsx` — do not mount again.  
+**Import:** `import { toastSuccess, toastError, toastInfo, toastWarning, toast } from "../components/brand"`
+
+### Typed helpers (preferred)
+
+```tsx
+toastSuccess("Document sent", "All 3 recipients notified by email.")
+toastError("Signing failed", "Retry or contact support.")
+toastInfo("Draft saved")
+toastWarning("Signing link expires in 24 hours")
+```
+
+### Raw `toast` (for complex cases)
+
+```tsx
+import { toast } from "sonner";
+toast("Processing…", { duration: Infinity, id: "doc-send" });
+toast.dismiss("doc-send");
+```
+
+### Rules
+- Never import the shadcn/ui `sonner.tsx` wrapper — it depends on `next-themes` which is not installed
+- Always use the typed helpers for consistency — they apply correct surface colors
+- Toaster renders at bottom-right; do not change position without design review
+
+---
+
+## 37. Page Entrance Animation (Command 35 — BRAND)
+
+**Token:** `.lagda-page-enter` in `src/styles/theme.css`
+
+Subtle upward fade (4px, 220ms, ease-out) applied on every route change via a `key={location.pathname}` wrapper in `PlatformLayout.tsx`. Disabled automatically under `prefers-reduced-motion: reduce`.
+
+```css
+@keyframes lagda-page-enter {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.lagda-page-enter {
+  animation: lagda-page-enter 220ms cubic-bezier(0,0,0.2,1) both;
+}
+```
+
+**Do not** apply this class manually on sub-elements within a page — it plays once per navigation at the route level.
+
+---
+
 ## Validation Results (Command 3)
 
 | Check | Result |

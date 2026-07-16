@@ -1,7 +1,6 @@
-// Shared empty-state component for document lists, search results, etc.
-// Always includes a clear heading and CTA — never just "No items."
+// Empty state — always includes a clear heading and CTA, never just "No items."
+// Pure inline styles only — no Tailwind classes.
 import type { ReactNode } from "react";
-import { cn } from "./utils";
 
 interface EmptyStateProps {
   icon?: ReactNode;
@@ -9,28 +8,37 @@ interface EmptyStateProps {
   description?: string;
   action?: ReactNode;
   tone?: "default" | "muted";
-  className?: string;
 }
 
-export function EmptyState({ icon, title, description, action, tone = "default", className }: EmptyStateProps) {
+const GF = { fontFamily: "'Geist', sans-serif" };
+
+export function EmptyState({ icon, title, description, action, tone = "default" }: EmptyStateProps) {
   return (
     <div
-      className={cn(
-        "flex flex-col items-center justify-center py-16 px-6 text-center",
-        tone === "muted" && "opacity-75",
-        className,
-      )}
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: "64px 24px",
+        textAlign: "center",
+        opacity: tone === "muted" ? 0.75 : 1,
+      }}
     >
       {icon && (
         <div
-          className="mb-4 flex items-center justify-center rounded-xl p-3"
+          aria-hidden="true"
           style={{
-            background: "#EAF6FF",
-            color: "#0078D4",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
             width: 52,
             height: 52,
+            borderRadius: 12,
+            background: "#EAF6FF",
+            color: "#0078D4",
+            marginBottom: 16,
           }}
-          aria-hidden="true"
         >
           {icon}
         </div>
@@ -38,12 +46,11 @@ export function EmptyState({ icon, title, description, action, tone = "default",
 
       <h3
         style={{
-          margin: 0,
+          ...GF,
+          margin: "0 0 6px",
           fontSize: 16,
           fontWeight: 600,
           color: "#07111F",
-          fontFamily: "'Geist', sans-serif",
-          marginBottom: 6,
         }}
       >
         {title}
@@ -52,13 +59,12 @@ export function EmptyState({ icon, title, description, action, tone = "default",
       {description && (
         <p
           style={{
-            margin: 0,
+            ...GF,
+            margin: action ? "0 0 20px" : 0,
             fontSize: 14,
             color: "#64748B",
-            fontFamily: "'Geist', sans-serif",
             lineHeight: 1.6,
             maxWidth: 360,
-            marginBottom: action ? 20 : 0,
           }}
         >
           {description}

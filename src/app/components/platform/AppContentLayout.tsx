@@ -144,3 +144,89 @@ export const SKELETON_STYLE = `
     @keyframes skeleton-pulse { 0%, 100% { opacity: 0.7; } }
   }
 `;
+
+// ── Form card system ───────────────────────────────────────────────────────────
+// Standard container for platform forms and settings panels.
+// radius:12 padding:24 border:#E2E8F0 — consistent across all screens.
+
+export function FormCard({
+  children,
+  style,
+}: {
+  children: React.ReactNode;
+  style?: React.CSSProperties;
+}) {
+  return (
+    <div style={{
+      background: "#ffffff",
+      border: "1px solid #E2E8F0",
+      borderRadius: 12,
+      padding: 24,
+      ...style,
+    }}>
+      {children}
+    </div>
+  );
+}
+
+// Heading block inside a FormCard — title + optional description
+export function FormCardHeading({
+  title,
+  description,
+}: {
+  title: string;
+  description?: string;
+}) {
+  return (
+    <div style={{ marginBottom: description ? 20 : 16 }}>
+      <h2 style={{ ...GF, margin: 0, fontSize: 16, fontWeight: 700, color: "#07111F" }}>
+        {title}
+      </h2>
+      {description && (
+        <p style={{ ...GF, margin: "4px 0 0", fontSize: 13, color: "#64748B", lineHeight: 1.6 }}>
+          {description}
+        </p>
+      )}
+    </div>
+  );
+}
+
+// Horizontal rule between FormCard sections
+export function FormCardDivider() {
+  return <hr style={{ border: "none", borderTop: "1px solid #F1F5F9", margin: "20px 0" }} />;
+}
+
+// Field wrapper — label above input, optional hint and error text below
+export function FormField({
+  label,
+  htmlFor,
+  hint,
+  error,
+  required,
+  children,
+}: {
+  label: string;
+  htmlFor?: string;
+  hint?: string;
+  error?: string;
+  required?: boolean;
+  children: React.ReactNode;
+}) {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+      <label
+        htmlFor={htmlFor}
+        style={{ ...GF, fontSize: 13, fontWeight: 600, color: "#374151", display: "flex", gap: 3 }}
+      >
+        {label}
+        {required && <span aria-hidden="true" style={{ color: "#DC2626" }}>*</span>}
+      </label>
+      {children}
+      {error ? (
+        <span role="alert" style={{ ...GF, fontSize: 12, color: "#DC2626" }}>{error}</span>
+      ) : hint ? (
+        <span style={{ ...GF, fontSize: 12, color: "#94A3B8" }}>{hint}</span>
+      ) : null}
+    </div>
+  );
+}

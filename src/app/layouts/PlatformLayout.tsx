@@ -12,8 +12,7 @@ import { PlatformSidebar } from "../components/platform/PlatformSidebar";
 import { MobileNav } from "../components/platform/MobileNav";
 import { PlatformHeader } from "../components/platform/PlatformHeader";
 import { SKELETON_STYLE } from "../components/platform/AppContentLayout";
-
-const GF = { fontFamily: "'Geist', sans-serif" };
+import { LagdaLoader } from "../components/brand/LagdaLoader";
 
 // ── Route loading fallback ────────────────────────────────────────────────────
 function PlatformPageLoader() {
@@ -23,32 +22,21 @@ function PlatformPageLoader() {
       aria-label="Loading page"
       style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "60vh", background: "#F8FAFC" }}
     >
-      <div style={{ width: 32, height: 32, border: "2px solid rgba(0,120,212,0.2)", borderTopColor: "#0078D4", borderRadius: "50%", animation: "plat-spin 0.8s linear infinite" }} aria-hidden />
-      <style>{`
-        @keyframes plat-spin { to { transform: rotate(360deg); } }
-        @media (prefers-reduced-motion: reduce) { [style*="plat-spin"] { animation: none; border: 2px solid #0078D4; } }
-        ${SKELETON_STYLE}
-      `}</style>
+      <LagdaLoader mode="inline" theme="light" size={28} ariaLabel="Loading page" />
+      <style>{SKELETON_STYLE}</style>
     </div>
   );
 }
 
-// ── Session initializing screen (brief branded splash) ────────────────────────
+// ── Session initializing screen — full branded splash ────────────────────────
 function SessionInitializing() {
   return (
-    <div
-      role="status"
-      aria-label="Loading your workspace"
-      style={{
-        minHeight: "100vh", background: "#07111F",
-        display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
-        gap: 16,
-      }}
-    >
-      <div style={{ width: 40, height: 40, border: "2px solid rgba(0,120,212,0.2)", borderTopColor: "#0078D4", borderRadius: "50%", animation: "plat-spin 0.8s linear infinite" }} aria-hidden />
-      <p style={{ color: "#334155", ...GF, fontSize: 13 }}>Loading your workspace…</p>
-      <style>{`@keyframes plat-spin { to { transform: rotate(360deg); } } @media (prefers-reduced-motion: reduce) { [style*="plat-spin"] { animation: none; } }`}</style>
-    </div>
+    <LagdaLoader
+      mode="fullscreen"
+      theme="dark"
+      message="Preparing your secure workspace"
+      showWordmark
+    />
   );
 }
 
@@ -143,7 +131,9 @@ export function PlatformLayout() {
             className="platform-main"
           >
             <Suspense fallback={<PlatformPageLoader />}>
-              <Outlet />
+              <div key={location.pathname} className="lagda-page-enter">
+                <Outlet />
+              </div>
             </Suspense>
           </main>
         </div>
