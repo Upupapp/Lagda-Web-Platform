@@ -419,9 +419,15 @@ export interface PlatformFlags {
   developmentPlaceholdersEnabled: boolean;
 }
 
+// Legacy narrow search result — kept for backward compatibility.
+// New code should use GlobalSearchResult from models/search.ts.
 export interface SearchResult {
   id: string;
-  type: "document" | "template" | "contact" | "help";
+  type: "document" | "template" | "contact" | "help"
+      | "document-draft" | "recipient-assignment" | "contact-group"
+      | "workspace-member" | "team" | "role" | "verification-record"
+      | "notification" | "report-definition" | "saved-report-view"
+      | "settings-route" | "help-resource" | "navigation-command" | "quick-action";
   title: string;
   subtitle?: string;
   path: string;

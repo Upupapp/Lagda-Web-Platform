@@ -225,6 +225,9 @@ const AssignmentDetailPage  = lazy(() => import("./app/pages/platform/inbox/Assi
 const NotificationsPage       = lazy(() => import("./app/pages/platform/notifications/NotificationsPage").then(m => ({ default: m.NotificationsPage })));
 const NotificationDetailPage  = lazy(() => import("./app/pages/platform/notifications/NotificationDetailPage").then(m => ({ default: m.NotificationDetailPage })));
 
+// Global Search (Command 30)
+const GlobalSearchPage        = lazy(() => import("./app/pages/platform/search/GlobalSearchPage").then(m => ({ default: m.GlobalSearchPage })));
+
 // Reports Center (Command 29)
 const ReportsOverviewPage     = lazy(() => import("./app/pages/platform/reports/ReportsOverviewPage").then(m => ({ default: m.ReportsOverviewPage })));
 const ReportsDocumentsPage    = lazy(() => import("./app/pages/platform/reports/ReportsDocumentsPage").then(m => ({ default: m.ReportsDocumentsPage })));
@@ -404,6 +407,9 @@ export const router = createBrowserRouter([
       // Notifications Center (Command 28) — static path before parametric
       { path: "notifications",                     element: <Suspense fallback={null}><NotificationsPage /></Suspense> },
       { path: "notifications/:notificationId",     element: <Suspense fallback={null}><NotificationDetailPage /></Suspense> },
+
+      // Global Search (Command 30) — static path, no parametric conflict
+      { path: "search",                             element: <Suspense fallback={null}><GlobalSearchPage /></Suspense> },
 
       // Reports Center (Command 29) — static paths before parametric :reportId
       { path: "reports",                           element: <Suspense fallback={null}><ReportsOverviewPage /></Suspense> },

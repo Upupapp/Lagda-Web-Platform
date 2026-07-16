@@ -468,6 +468,130 @@ No eNotary report family, metrics, notarial rankings, or accreditation reports. 
 
 ---
 
+## 37. Global Search and Indexing (Command 30)
+
+### Purpose
+
+Replace the frontend's deterministic in-memory mock (`global-search.service.ts`) with a production search backend. The frontend service boundary is already defined — each domain projection maps to one or more backend endpoints.
+
+### API Endpoints Required
+
+```
+GET /api/v1/search?q=&scope=&sort=&page=&perPage=     (authenticated; workspace-scoped from session)
+GET /api/v1/search/commands?q=                         (authenticated; returns permitted commands only)
+```
+
+#### Query Parameters
+- `q` — UTF-8 search query, max 200 chars
+- `scope` — one of: `all | documents | my-actions | templates | contacts | people-and-teams | verification | notifications | reports | settings | help`
+- `sort` — one of: `relevance | updated-at | title | status`
+- `page` / `perPage` — pagination (default page=1, perPage=20, max perPage=100)
+
+#### Response shape (must match `GlobalSearchResponse` in `src/app/models/search.ts`)
+```json
+{
+  "query": "agreement",
+  "scope": "documents",
+  "groups": [
+    {
+      "scope": "documents",
+      "label": "Documents",
+      "icon": "FileText",
+      "results": [...],
+      "totalCount": 12,
+      "hasMore": true
+    }
+  ],
+  "totalPermittedCount": 12,
+  "sourceStatuses": [{"scope": "documents", "status": "ok", "label": "Documents"}],
+  "demonstrationOnly": false
+}
+```
+
+#### Each result must match `GlobalSearchResult`
+- `id` — stable, workspace-scoped ID
+- `type` — one of the 18 `GlobalSearchResultType` values
+- `title`, `description` — plain text only; no HTML
+- `matchedFields` — pre-computed match ranges for safe client-side highlighting (never raw HTML snippets)
+- `matchScore` — server-ranked relevance score (0–100); client uses for display order confirmation only
+- `destination.path` — internal route path (validated against `SAFE_RETURN_ROUTE_PREFIXES` on both client and server)
+- `availability` — server determines whether resource is available, archived, restricted, etc.
+- `demonstrationOnly: false` — always false in production
+
+### Privacy Requirements (Mandatory)
+
+**The following must NEVER appear in search result `title`, `description`, or any snippet field:**
+- Raw signatures, initials, or drawn marks
+- Participant field values (text fields, signatures, checkboxes)
+- Consent evidence or authentication event details
+- Document content text (PDF body, OCR output)
+- Integration credentials, API keys, or webhook secrets
+- Payment details, billing identifiers
+- Another user's personal My Actions or private notifications
+- Signature Library entries (user's personal library)
+- eNotary records, accreditation data, or notarial evidence
+- OTP codes, MFA secrets, or session tokens
+
+**Scope-level permission enforcement (server-side, not frontend-advisory):**
+- `documents` → requires `view_documents` permission
+- `my-actions` → returns only the authenticated user's own pending assignments
+- `templates` → requires `manage_templates`
+- `contacts` → requires `manage_contacts`
+- `people-and-teams` → requires `manage_team`
+- `verification` → requires `verify_documents`
+- `notifications` → returns only the authenticated user's own notifications
+- `reports` → requires `view_reports`
+- `settings` → returns only route metadata; no stored config values
+- `help` → no permission required; public help content only
+
+### Indexing Architecture
+
+Recommended: Elasticsearch or Meilisearch per workspace.
+
+**Index per workspace** (strict tenant isolation — never cross-workspace):
+```
+index: lagda_search_{workspace_id}
+```
+
+**Index documents include:**
+- `id`, `type`, `title`, `description`, `workspaceContext`, `teamContext`, `status`, `updatedAt`
+- Pre-approved text fields only — document title, template name, contact name and organization, member display name
+- **No document content body**, **no participant PII beyond display name**, **no signatures**
+
+**Re-index triggers:**
+- Document status change
+- Template created/updated
+- Contact created/updated
+- Member role change
+- Workspace settings update
+
+### Match Range Generation
+
+The frontend uses pre-computed `matchedFields[].ranges[]` (`{ start, end }`) for safe client-side highlighting. The backend must return these — never raw HTML with `<em>` or `<mark>` tags, which could be rendered unsafely.
+
+```json
+"matchedFields": [
+  {
+    "field": "title",
+    "label": "Title",
+    "text": "Retainer Agreement — Mabini Business Services",
+    "ranges": [{ "start": 0, "end": 8 }]
+  }
+]
+```
+
+### Rate Limiting
+
+- Search endpoint: 120 requests/minute per authenticated user
+- Commands endpoint: 60 requests/minute per authenticated user
+- Burst: 10 concurrent requests per user
+
+### eNotary Exclusion
+
+No eNotary search scope, index, or commands. Do not index eNotary records, session logs, or notarial evidence in this search infrastructure. If eNotary is implemented in the future, it must use a separate index and separate endpoint, gated by explicit eNotary accreditation status.
+
+---
+
 ## 36. Explicit eNotary Exclusion
 
 LAGDA eNotary is a separate future product pending Supreme Court accreditation. Backend work for eNotary must not begin until:

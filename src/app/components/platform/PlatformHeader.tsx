@@ -6,7 +6,7 @@ import { useLocation } from "react-router";
 import { Search, HelpCircle } from "lucide-react";
 import { Link } from "react-router";
 import { NotificationMenu } from "./NotificationMenu";
-import { SearchDialog } from "./SearchDialog";
+import { CommandPalette } from "./CommandPalette";
 
 const GF    = { fontFamily: "'Geist', sans-serif" };
 const BORDER = "rgba(255,255,255,0.07)";
@@ -118,7 +118,7 @@ export function PlatformHeader({ pageTitle }: PlatformHeaderProps) {
         </Link>
       </header>
 
-      <SearchDialog open={searchOpen} onClose={closeSearch} />
+      <CommandPalette open={searchOpen} onClose={closeSearch} />
 
       <style>{`
         .header-search-btn:hover { background: #E2E8F0 !important; }

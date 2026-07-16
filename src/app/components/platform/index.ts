@@ -4,7 +4,7 @@ export { PlatformHeader } from "./PlatformHeader";
 export { WorkspaceSwitcher } from "./WorkspaceSwitcher";
 export { UserMenu } from "./UserMenu";
 export { NotificationMenu } from "./NotificationMenu";
-export { SearchDialog } from "./SearchDialog";
+export { CommandPalette, CommandPalette as SearchDialog } from "./CommandPalette";
 export { PageHeader } from "./PageHeader";
 export type { PageHeaderProps, BreadcrumbItem } from "./PageHeader";
 export {
