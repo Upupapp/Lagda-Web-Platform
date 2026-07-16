@@ -173,6 +173,15 @@ const TemplateFieldsPage  = lazy(() => import("./app/pages/platform/templates/Te
 const TemplatePreviewPage = lazy(() => import("./app/pages/platform/templates/TemplatePreviewPage").then(m => ({ default: m.TemplatePreviewPage })));
 const UseTemplatePage     = lazy(() => import("./app/pages/platform/templates/UseTemplatePage").then(m => ({ default: m.UseTemplatePage })));
 
+// Contacts (Command 22)
+const ContactsPage          = lazy(() => import("./app/pages/platform/contacts/ContactsPage").then(m => ({ default: m.ContactsPage })));
+const CreateContactPage     = lazy(() => import("./app/pages/platform/contacts/CreateContactPage").then(m => ({ default: m.CreateContactPage })));
+const ContactDetailPage     = lazy(() => import("./app/pages/platform/contacts/ContactDetailPage").then(m => ({ default: m.ContactDetailPage })));
+const EditContactPage       = lazy(() => import("./app/pages/platform/contacts/EditContactPage").then(m => ({ default: m.EditContactPage })));
+const ContactGroupsPage     = lazy(() => import("./app/pages/platform/contacts/ContactGroupsPage").then(m => ({ default: m.ContactGroupsPage })));
+const ContactGroupDetailPage= lazy(() => import("./app/pages/platform/contacts/ContactGroupDetailPage").then(m => ({ default: m.ContactGroupDetailPage })));
+const ContactImportPage     = lazy(() => import("./app/pages/platform/contacts/ContactImportPage").then(m => ({ default: m.ContactImportPage })));
+
 // ── Auth Suspense fallback ────────────────────────────────────────────────────
 function AuthPageLoader() {
   return (
@@ -323,9 +332,14 @@ export const router = createBrowserRouter([
       { path: "templates/:templateId/use",        element: <Suspense fallback={null}><UseTemplatePage /></Suspense> },
       // templates/:templateId/fields — full-screen editor, registered as top-level route below
 
-      // Contacts
-      { path: "contacts",          element: <Suspense fallback={null}><PlatformPlaceholder /></Suspense> },
-      { path: "contacts/:id",      element: <Suspense fallback={null}><PlatformPlaceholder /></Suspense> },
+      // Contacts (Command 22) — static paths before :contactId to prevent shadowing
+      { path: "contacts",                               element: <Suspense fallback={null}><ContactsPage /></Suspense> },
+      { path: "contacts/new",                           element: <Suspense fallback={null}><CreateContactPage /></Suspense> },
+      { path: "contacts/import",                        element: <Suspense fallback={null}><ContactImportPage /></Suspense> },
+      { path: "contacts/groups",                        element: <Suspense fallback={null}><ContactGroupsPage /></Suspense> },
+      { path: "contacts/groups/:groupId",               element: <Suspense fallback={null}><ContactGroupDetailPage /></Suspense> },
+      { path: "contacts/:contactId",                    element: <Suspense fallback={null}><ContactDetailPage /></Suspense> },
+      { path: "contacts/:contactId/edit",               element: <Suspense fallback={null}><EditContactPage /></Suspense> },
 
       // Verify (within platform) — Command 17
       { path: "verify",            element: <Suspense fallback={null}><VerifyPage /></Suspense> },
