@@ -838,6 +838,47 @@ function NotificationsSection() {
   );
 }
 
+// ── Reports Direction Section (C29) ──────────────────────────────────────────
+
+function ReportsDirectionSection() {
+  return (
+    <section aria-label="Reports direction" style={{ marginBottom: 24 }}>
+      <SectionHeader label="Reports" to="/app/reports" linkLabel="View all reports" />
+      <Card>
+        <div style={{ padding: "12px 16px" }}>
+          <p style={{ ...GF, fontSize: 12, color: SLATE6, margin: "0 0 10px" }}>
+            Operational insights across document transactions, participants, templates,
+            verification, and workspace activity.
+          </p>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            {[
+              { label: "Document Operations",      path: "/app/reports/documents" },
+              { label: "Participants & Routing",   path: "/app/reports/participants" },
+              { label: "Verification",             path: "/app/reports/verification" },
+              { label: "Team Activity",            path: "/app/reports/teams" },
+            ].map(r => (
+              <Link
+                key={r.path}
+                to={r.path}
+                style={{
+                  ...GF, fontSize: 12, color: AZURE, textDecoration: "none",
+                  background: "rgba(0,120,212,0.06)", borderRadius: 6,
+                  padding: "4px 9px", border: "1px solid rgba(0,120,212,0.15)",
+                }}
+              >
+                {r.label} →
+              </Link>
+            ))}
+          </div>
+          <p style={{ ...GF, fontSize: 10, color: SLATE4, margin: "8px 0 0" }}>
+            Demonstration data only — not connected to a production analytics backend.
+          </p>
+        </div>
+      </Card>
+    </section>
+  );
+}
+
 // ── Full Error State ──────────────────────────────────────────────────────────
 
 function FullErrorState({ onRetry }: { onRetry: () => void }) {
@@ -956,6 +997,7 @@ export function PlatformDashboard() {
   const canInvite    = hasPermission("manage_team");
   const canBilling   = hasPermission("view_billing") || hasPermission("view_usage");
   const canAudit     = hasPermission("view_audit");
+  const canReports   = hasPermission("view_reports");
 
   const firstName = user?.displayName?.split(" ")[0] ?? "there";
   const wsName    = currentWorkspace?.name ?? "Your Workspace";
@@ -1047,6 +1089,9 @@ export function PlatformDashboard() {
                 onRetry={load}
               />
             )}
+
+            {/* Reports direction (C29) — concise link section for roles with view_reports */}
+            {canReports && <ReportsDirectionSection />}
 
           </div>
 

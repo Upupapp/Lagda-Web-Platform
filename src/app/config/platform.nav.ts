@@ -98,6 +98,17 @@ export const PRIMARY_NAV: PlatformNavItem[] = [
     showOnMobile: true,
     description: "Document requests assigned to you",
   },
+  {
+    id: "reports",
+    label: "Reports",
+    path: "/app/reports",
+    icon: "BarChart2",
+    group: "primary",
+    permission: "view_reports",
+    featureFlag: "reportsEnabled",
+    showOnMobile: false,
+    description: "Operational insights and analytics",
+  },
 ];
 
 // Utility navigation — shown below primary nav (or bottom of sidebar)

@@ -404,7 +404,71 @@ Steps for each domain:
 
 ---
 
-## 35. Explicit eNotary Exclusion
+## 35. Reporting and Analytics (Command 29)
+
+### API Endpoints Needed
+- `GET /api/v1/reports/documents?workspace_id=&from=&to=` — Document operations aggregation
+- `GET /api/v1/reports/participants?workspace_id=&from=&to=` — Participant role/routing aggregation
+- `GET /api/v1/reports/templates?workspace_id=&from=&to=` — Template usage aggregation
+- `GET /api/v1/reports/verification?workspace_id=&from=&to=` — Verification outcome aggregation
+- `GET /api/v1/reports/teams?workspace_id=&from=&to=` — Workspace and team activity aggregation
+- `GET /api/v1/report-views` — List saved views for authenticated user
+- `POST /api/v1/report-views` — Create saved view
+- `PATCH /api/v1/report-views/:id` — Rename, update annotation, set default
+- `DELETE /api/v1/report-views/:id` — Archive or remove saved view
+- `POST /api/v1/reports/:family/export` — Async export (returns job ID / download URL when complete)
+- `POST /api/v1/reports/:family/share` — Create time-limited share token
+- `POST /api/v1/reports/schedules` — Create scheduled delivery
+- `GET/DELETE /api/v1/reports/schedules/:id` — Manage schedules
+
+### Query Parameters
+All report queries must accept:
+- `workspace_id` (required, from session — never from client without re-validation)
+- `from` / `to` (ISO 8601 timestamps)
+- `team_id` (optional scope filter)
+- `sender_id` (optional scope filter)
+
+### Privacy Requirements (Mandatory, not Optional)
+- **No participant names** in any aggregate report output
+- **No authentication evidence** (OTP attempts, biometrics, identity data)
+- **No field values** filled by participants (signature text, text fields, initials)
+- **No exact coordinates** or device fingerprints in report output
+- **No personal My Actions data** in workspace reports
+- **No cross-workspace data** — strict isolation by workspace_id from authenticated session
+
+### Member Activity Endpoint Requirement
+The Teams report requires a member activity note returned with aggregate data:
+
+```json
+{
+  "memberActivityNote": "Member-level information is limited to operational workflow direction and should not be interpreted as a productivity, trust, identity, or legal-quality score."
+}
+```
+
+This note must be server-generated, not client-side injected, so it cannot be stripped by a future API consumer.
+
+### Permission Gate
+All reporting endpoints require `view_reports` scope. The permission must be enforced server-side (not frontend-only).
+
+### Export Privacy
+Export endpoint must enforce same privacy restrictions as report API:
+- No participant names, signatures, field values, device data, exact location
+- Export file must not include authentication evidence
+- Export must be scoped to the authenticated user's workspace only
+
+### Saved Views Storage
+Saved views in the frontend are currently module-level memory only (reset on reload). Backend needs:
+- User-scoped saved views table (`user_id`, `workspace_id`, `name`, `family`, `date_preset`, `filters`, `is_default`, `status`)
+- Annotation stored as plain text field (max 500 chars)
+- Archived vs. active distinction
+- Per-family default-view designation (one default per family per user)
+
+### eNotary Boundary
+No eNotary report family, metrics, notarial rankings, or accreditation reports. Reports are scoped to eSignature workflows only.
+
+---
+
+## 36. Explicit eNotary Exclusion
 
 LAGDA eNotary is a separate future product pending Supreme Court accreditation. Backend work for eNotary must not begin until:
 - Supreme Court accreditation is obtained

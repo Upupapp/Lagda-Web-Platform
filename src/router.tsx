@@ -225,6 +225,16 @@ const AssignmentDetailPage  = lazy(() => import("./app/pages/platform/inbox/Assi
 const NotificationsPage       = lazy(() => import("./app/pages/platform/notifications/NotificationsPage").then(m => ({ default: m.NotificationsPage })));
 const NotificationDetailPage  = lazy(() => import("./app/pages/platform/notifications/NotificationDetailPage").then(m => ({ default: m.NotificationDetailPage })));
 
+// Reports Center (Command 29)
+const ReportsOverviewPage     = lazy(() => import("./app/pages/platform/reports/ReportsOverviewPage").then(m => ({ default: m.ReportsOverviewPage })));
+const ReportsDocumentsPage    = lazy(() => import("./app/pages/platform/reports/ReportsDocumentsPage").then(m => ({ default: m.ReportsDocumentsPage })));
+const ReportsParticipantsPage = lazy(() => import("./app/pages/platform/reports/ReportsParticipantsPage").then(m => ({ default: m.ReportsParticipantsPage })));
+const ReportsTemplatesPage    = lazy(() => import("./app/pages/platform/reports/ReportsTemplatesPage").then(m => ({ default: m.ReportsTemplatesPage })));
+const ReportsVerificationPage = lazy(() => import("./app/pages/platform/reports/ReportsVerificationPage").then(m => ({ default: m.ReportsVerificationPage })));
+const ReportsTeamsPage        = lazy(() => import("./app/pages/platform/reports/ReportsTeamsPage").then(m => ({ default: m.ReportsTeamsPage })));
+const ReportsSavedPage        = lazy(() => import("./app/pages/platform/reports/ReportsSavedPage").then(m => ({ default: m.ReportsSavedPage })));
+const ReportDetailPage        = lazy(() => import("./app/pages/platform/reports/ReportDetailPage").then(m => ({ default: m.ReportDetailPage })));
+
 // ── Auth Suspense fallback ────────────────────────────────────────────────────
 function AuthPageLoader() {
   return (
@@ -394,6 +404,16 @@ export const router = createBrowserRouter([
       // Notifications Center (Command 28) — static path before parametric
       { path: "notifications",                     element: <Suspense fallback={null}><NotificationsPage /></Suspense> },
       { path: "notifications/:notificationId",     element: <Suspense fallback={null}><NotificationDetailPage /></Suspense> },
+
+      // Reports Center (Command 29) — static paths before parametric :reportId
+      { path: "reports",                           element: <Suspense fallback={null}><ReportsOverviewPage /></Suspense> },
+      { path: "reports/documents",                 element: <Suspense fallback={null}><ReportsDocumentsPage /></Suspense> },
+      { path: "reports/participants",              element: <Suspense fallback={null}><ReportsParticipantsPage /></Suspense> },
+      { path: "reports/templates",                 element: <Suspense fallback={null}><ReportsTemplatesPage /></Suspense> },
+      { path: "reports/verification",              element: <Suspense fallback={null}><ReportsVerificationPage /></Suspense> },
+      { path: "reports/teams",                     element: <Suspense fallback={null}><ReportsTeamsPage /></Suspense> },
+      { path: "reports/saved",                     element: <Suspense fallback={null}><ReportsSavedPage /></Suspense> },
+      { path: "reports/:reportId",                 element: <Suspense fallback={null}><ReportDetailPage /></Suspense> },
 
       // Team (legacy placeholders kept for redirect compatibility)
       { path: "team",              element: <Suspense fallback={null}><PlatformPlaceholder /></Suspense> },

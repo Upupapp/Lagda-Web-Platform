@@ -337,19 +337,20 @@ export type PlatformPermission =
   | "manage_integrations"
   | "manage_api"
   | "manage_webhooks"
-  | "view_audit";
+  | "view_audit"
+  | "view_reports";
 
 export const ROLE_PERMISSIONS: Record<PlatformRole, PlatformPermission[]> = {
   owner: [
     "view_dashboard","view_documents","prepare_documents","manage_templates","manage_contacts",
     "verify_documents","manage_team","manage_workspace","view_billing","manage_billing",
     "view_usage","manage_security","manage_branding","manage_integrations","manage_api",
-    "manage_webhooks","view_audit",
+    "manage_webhooks","view_audit","view_reports",
   ],
   administrator: [
     "view_dashboard","view_documents","prepare_documents","manage_templates","manage_contacts",
     "verify_documents","manage_team","manage_workspace","view_billing","view_usage",
-    "manage_security","manage_branding","view_audit",
+    "manage_security","manage_branding","view_audit","view_reports",
   ],
   billing_administrator: [
     "view_dashboard","view_documents","view_billing","manage_billing","view_usage",
@@ -359,19 +360,19 @@ export const ROLE_PERMISSIONS: Record<PlatformRole, PlatformPermission[]> = {
   ],
   template_administrator: [
     "view_dashboard","view_documents","prepare_documents","manage_templates","manage_contacts",
-    "verify_documents","view_usage",
+    "verify_documents","view_usage","view_reports",
   ],
   sender: [
-    "view_dashboard","view_documents","prepare_documents","manage_contacts","verify_documents","view_usage",
+    "view_dashboard","view_documents","prepare_documents","manage_contacts","verify_documents","view_usage","view_reports",
   ],
   reviewer: [
-    "view_dashboard","view_documents","verify_documents",
+    "view_dashboard","view_documents","verify_documents","view_reports",
   ],
   viewer: [
     "view_dashboard","view_documents",
   ],
   auditor: [
-    "view_dashboard","view_documents","view_audit",
+    "view_dashboard","view_documents","view_audit","view_reports",
   ],
 };
 
@@ -398,6 +399,7 @@ export type PlatformFeatureFlag =
   | "integrationsEnabled"
   | "apiEnabled"
   | "webhooksEnabled"
+  | "reportsEnabled"
   | "developmentPlaceholdersEnabled";
 
 export interface PlatformFlags {
@@ -413,6 +415,7 @@ export interface PlatformFlags {
   integrationsEnabled: boolean;
   apiEnabled: boolean;
   webhooksEnabled: boolean;
+  reportsEnabled: boolean;
   developmentPlaceholdersEnabled: boolean;
 }
 

@@ -44,6 +44,7 @@ export const DEFAULT_PLATFORM_FLAGS: PlatformFlags = {
   integrationsEnabled:        true,
   apiEnabled:                 true,
   webhooksEnabled:            true,
+  reportsEnabled:             true,
   developmentPlaceholdersEnabled: true,
 };
 
