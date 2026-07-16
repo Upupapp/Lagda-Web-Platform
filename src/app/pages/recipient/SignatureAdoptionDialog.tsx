@@ -1,17 +1,22 @@
-// Signature adoption dialog — typed and drawn modes.
+// Signature adoption dialog — typed, drawn, and from-library modes.
 // No image is uploaded or persisted. Drawn canvas data stays in memory only.
+// Library tab shows active library entries for the current target kind.
 // IMPORTANT: "Adopt" does NOT constitute a legally binding signature.
 // Burgundy (#67023B) is never used here — eNotary-only.
 
 import React, { useRef, useEffect, useState } from "react";
 import { useRecipient, TYPED_SIGNATURE_STYLES } from "../../context/RecipientContext";
 import type { SignatureAdoptionMethod } from "../../models/recipient";
+import { signatureLibraryService } from "../../services/mock/signature-library.service";
+import type { SignatureLibraryEntry } from "../../models/signature-library";
 
 const GF     = { fontFamily: "'Geist', sans-serif" };
 const NAVY   = "#07111F";
 const AZURE  = "#0078D4";
 const SILVER = "#8A9BAE";
 const WHITE  = "#FFFFFF";
+
+type DialogTab = "typed" | "drawn" | "library";
 
 export function SignatureAdoptionDialog() {
   const {
@@ -22,22 +27,33 @@ export function SignatureAdoptionDialog() {
     setSignatureStyle,
     setSignatureDrawn,
     adoptSignature,
+    adoptFromLibrary,
   } = useRecipient();
 
   const target = state.signatureTargetField ?? "signature";
   const adoption = target === "signature" ? state.signature : state.initials;
 
+  const [activeTab, setActiveTab] = useState<DialogTab>("typed");
+
+  // Library entries active for this target kind
+  const [libraryEntries, setLibraryEntries] = useState<SignatureLibraryEntry[]>([]);
+  const [selectedLibraryId, setSelectedLibraryId] = useState<string | null>(null);
+
   const canvasRef     = useRef<HTMLCanvasElement>(null);
   const [drawing, setDrawing] = useState(false);
   const [hasDrawing, setHasDrawing] = useState(false);
 
-  // Reset drawing state when dialog opens for a new target
+  // Reset drawing state and load library entries when dialog opens for a new target
   useEffect(() => {
     setHasDrawing(false);
+    setActiveTab("typed");
+    setSelectedLibraryId(null);
     const ctx = canvasRef.current?.getContext("2d");
     if (ctx && canvasRef.current) {
       ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
     }
+    const kind = target === "signature" ? "signature" : "initials";
+    setLibraryEntries(signatureLibraryService.getActiveEntries(kind));
   }, [target, state.showSignatureDialog]);
 
   function getPos(e: React.PointerEvent<HTMLCanvasElement>) {
@@ -85,8 +101,26 @@ export function SignatureAdoptionDialog() {
 
   const isTitle    = target === "initials" ? "Initials" : "Signature";
   const canAdopt   =
-    (adoption.method === "typed" && adoption.typedText.trim().length >= 2) ||
-    (adoption.method === "drawn" && hasDrawing);
+    (activeTab === "typed"   && adoption.method === "typed" && adoption.typedText.trim().length >= 2) ||
+    (activeTab === "drawn"   && adoption.method === "drawn" && hasDrawing) ||
+    (activeTab === "library" && selectedLibraryId !== null);
+
+  function handleAdopt() {
+    if (activeTab === "library" && selectedLibraryId) {
+      const entry = libraryEntries.find(e => e.id === selectedLibraryId);
+      if (!entry) return;
+      const rep = entry.representation;
+      adoptFromLibrary(
+        target,
+        rep.method,
+        rep.method === "typed" ? rep.typedText : "",
+        rep.method === "typed" ? rep.styleIndex : 0,
+        rep.method === "drawn" ? rep.dataUrl    : null,
+      );
+    } else {
+      adoptSignature(target);
+    }
+  }
 
   return (
     <div
@@ -144,34 +178,37 @@ export function SignatureAdoptionDialog() {
           role="tablist"
           aria-label="Signature method"
         >
-          {(["typed", "drawn"] as SignatureAdoptionMethod[]).map(method => (
+          {([["typed", "Type"], ["drawn", "Draw"], ["library", "From Library"]] as [DialogTab, string][]).map(([tab, label]) => (
             <button
-              key={method}
+              key={tab}
               role="tab"
-              aria-selected={adoption.method === method}
-              onClick={() => setSignatureMethod(method, target)}
+              aria-selected={activeTab === tab}
+              onClick={() => {
+                setActiveTab(tab);
+                if (tab === "typed" || tab === "drawn") setSignatureMethod(tab as SignatureAdoptionMethod, target);
+              }}
               style={{
                 ...GF,
                 flex:         1,
                 padding:      "8px 0",
                 borderRadius: 6,
                 border:       "none",
-                background:   adoption.method === method ? WHITE : "transparent",
-                color:        adoption.method === method ? NAVY : SILVER,
-                fontSize:     13,
-                fontWeight:   adoption.method === method ? 700 : 500,
+                background:   activeTab === tab ? WHITE : "transparent",
+                color:        activeTab === tab ? NAVY : SILVER,
+                fontSize:     12,
+                fontWeight:   activeTab === tab ? 700 : 500,
                 cursor:       "pointer",
-                boxShadow:    adoption.method === method ? "0 1px 4px rgba(0,0,0,0.08)" : "none",
+                boxShadow:    activeTab === tab ? "0 1px 4px rgba(0,0,0,0.08)" : "none",
                 transition:   "background 0.15s",
               }}
             >
-              {method === "typed" ? "Type" : "Draw"}
+              {label}
             </button>
           ))}
         </div>
 
         {/* Typed panel */}
-        {adoption.method === "typed" && (
+        {activeTab === "typed" && (
           <div>
             {/* Name input */}
             <label
@@ -248,7 +285,7 @@ export function SignatureAdoptionDialog() {
         )}
 
         {/* Drawn panel */}
-        {adoption.method === "drawn" && (
+        {activeTab === "drawn" && (
           <div>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
               <div style={{ fontSize: 11, fontWeight: 700, color: SILVER, textTransform: "uppercase", letterSpacing: "0.06em" }}>
@@ -289,6 +326,77 @@ export function SignatureAdoptionDialog() {
           </div>
         )}
 
+        {/* Library panel */}
+        {activeTab === "library" && (
+          <div style={{ marginBottom: 14 }}>
+            {libraryEntries.length === 0 ? (
+              <div style={{ padding: "24px 0", textAlign: "center" }}>
+                <div style={{ ...GF, fontSize: 13, color: SILVER, marginBottom: 8 }}>
+                  No saved {target === "initials" ? "initials" : "signatures"} in your library.
+                </div>
+                <div style={{ ...GF, fontSize: 11, color: SILVER }}>
+                  Add one in Settings → Signatures &amp; Initials.
+                </div>
+              </div>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: 8, maxHeight: 280, overflowY: "auto" }}>
+                {libraryEntries.map(entry => {
+                  const rep = entry.representation;
+                  const isSelected = selectedLibraryId === entry.id;
+                  const isDefault  = entry.defaultState !== "non-default";
+                  return (
+                    <button
+                      key={entry.id}
+                      onClick={() => setSelectedLibraryId(entry.id)}
+                      aria-pressed={isSelected}
+                      aria-label={`Select ${entry.displayName}`}
+                      style={{
+                        ...GF,
+                        display:      "flex",
+                        alignItems:   "center",
+                        gap:          12,
+                        padding:      "10px 12px",
+                        borderRadius: 8,
+                        border:       `1.5px solid ${isSelected ? AZURE : "#E3E8EF"}`,
+                        background:   isSelected ? "#EBF4FC" : WHITE,
+                        cursor:       "pointer",
+                        textAlign:    "left",
+                        width:        "100%",
+                      }}
+                    >
+                      {/* Preview area */}
+                      <div style={{ width: 80, height: 36, flexShrink: 0, border: "1px solid #E3E8EF", borderRadius: 6, overflow: "hidden", background: "#FAFBFC", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        {rep.method === "typed" ? (
+                          <span style={{ fontFamily: TYPED_SIGNATURE_STYLES[rep.styleIndex]?.fontFamily, fontSize: 11, fontStyle: TYPED_SIGNATURE_STYLES[rep.styleIndex]?.fontStyle ?? "normal", color: NAVY, padding: "0 4px", textAlign: "center", wordBreak: "break-word" }}>
+                            {rep.typedText}
+                          </span>
+                        ) : rep.dataUrl ? (
+                          <img src={rep.dataUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+                        ) : (
+                          <span style={{ ...GF, fontSize: 9, color: SILVER }}>N/A</span>
+                        )}
+                      </div>
+                      {/* Label */}
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ ...GF, fontSize: 13, fontWeight: 600, color: NAVY, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                          {entry.displayName}
+                          {isDefault && <span style={{ marginLeft: 6, fontSize: 10, color: AZURE, fontWeight: 700, background: "#EBF4FC", borderRadius: 4, padding: "1px 5px" }}>default</span>}
+                        </div>
+                        <div style={{ ...GF, fontSize: 10, color: SILVER }}>{rep.method === "typed" ? "Typed" : "Drawn"}</div>
+                      </div>
+                      {/* Selection indicator */}
+                      {isSelected && <span aria-hidden style={{ color: AZURE, fontSize: 16, flexShrink: 0 }}>✓</span>}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+            <p style={{ ...GF, fontSize: 11, color: SILVER, marginTop: 10, lineHeight: 1.5 }}>
+              Selecting from your library still requires explicit adoption. It is not applied automatically.
+            </p>
+          </div>
+        )}
+
         {/* Global dialog error */}
         {state.globalError && (
           <p role="alert" style={{ ...GF, fontSize: 12, color: "#C0392B", margin: "0 0 12px" }}>
@@ -324,7 +432,7 @@ export function SignatureAdoptionDialog() {
           </button>
           <button
             disabled={!canAdopt}
-            onClick={() => adoptSignature(target)}
+            onClick={handleAdopt}
             style={{
               ...GF,
               flex:         1,

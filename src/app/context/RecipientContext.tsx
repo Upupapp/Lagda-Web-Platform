@@ -142,6 +142,7 @@ type Action =
   | { type: "SET_SIGNATURE_STYLE"; idx: number; target: "signature" | "initials" }
   | { type: "SET_SIGNATURE_DRAWN"; dataUrl: string; target: "signature" | "initials" }
   | { type: "ADOPT_SIGNATURE"; target: "signature" | "initials" }
+  | { type: "ADOPT_FROM_LIBRARY"; target: "signature" | "initials"; method: SignatureAdoptionMethod; typedText: string; styleIndex: number; drawnDataUrl: string | null }
   | { type: "SET_APPROVAL_DECISION"; decision: ApprovalDecision }
   | { type: "SET_APPROVAL_NOTES"; notes: string }
   | { type: "SET_REVIEW_DECISION"; decision: ReviewDecision }
@@ -236,6 +237,20 @@ function reducer(state: RecipientState, action: Action): RecipientState {
         ? { ...state, signature: updated, showSignatureDialog: false, signatureTargetField: null }
         : { ...state, initials:  updated, showSignatureDialog: false, signatureTargetField: null };
     }
+    case "ADOPT_FROM_LIBRARY": {
+      // Atomic: sets representation from library entry + marks adopted in one state update.
+      // Requires explicit user action — never auto-fills or auto-submits.
+      const adopted: SignatureAdoption = {
+        method:       action.method,
+        typedText:    action.typedText,
+        styleIndex:   action.styleIndex,
+        drawnDataUrl: action.drawnDataUrl,
+        adopted:      true,
+      };
+      return action.target === "signature"
+        ? { ...state, signature: adopted, showSignatureDialog: false, signatureTargetField: null }
+        : { ...state, initials:  adopted, showSignatureDialog: false, signatureTargetField: null };
+    }
     case "SET_APPROVAL_DECISION":
       return { ...state, approvalDecision: action.decision };
     case "SET_APPROVAL_NOTES":
@@ -303,6 +318,7 @@ interface RecipientContextValue {
   setSignatureStyle:    (idx: number, target: "signature" | "initials") => void;
   setSignatureDrawn:    (dataUrl: string, target: "signature" | "initials") => void;
   adoptSignature:       (target: "signature" | "initials") => void;
+  adoptFromLibrary:     (target: "signature" | "initials", method: SignatureAdoptionMethod, typedText: string, styleIndex: number, drawnDataUrl: string | null) => void;
   setApprovalDecision:  (d: ApprovalDecision) => void;
   setApprovalNotes:     (n: string) => void;
   setReviewDecision:    (d: ReviewDecision) => void;
@@ -443,6 +459,16 @@ export function RecipientProvider({ children }: { children: React.ReactNode }) {
     dispatch({ type: "SET_SIGNATURE_DRAWN", dataUrl, target });
   }, []);
 
+  const adoptFromLibrary = useCallback((
+    target: "signature" | "initials",
+    method: SignatureAdoptionMethod,
+    typedText: string,
+    styleIndex: number,
+    drawnDataUrl: string | null,
+  ) => {
+    dispatch({ type: "ADOPT_FROM_LIBRARY", target, method, typedText, styleIndex, drawnDataUrl });
+  }, []);
+
   const adoptSignature = useCallback((target: "signature" | "initials") => {
     const adoption = target === "signature" ? state.signature : state.initials;
     const validationResult = validateSignatureAdoption(
@@ -563,6 +589,7 @@ export function RecipientProvider({ children }: { children: React.ReactNode }) {
     setSignatureStyle,
     setSignatureDrawn,
     adoptSignature,
+    adoptFromLibrary,
     setApprovalDecision,
     setApprovalNotes,
     setReviewDecision,
@@ -579,7 +606,7 @@ export function RecipientProvider({ children }: { children: React.ReactNode }) {
     loadRequest, setStep, setAuthCode, submitAuth, acceptConsentAction,
     setDocument, setPage, setFieldValue, openSignatureDialog, closeSignatureDialog,
     setSignatureMethod, setSignatureTypedText, setSignatureStyle, setSignatureDrawn,
-    adoptSignature, setApprovalDecision, setApprovalNotes, setReviewDecision,
+    adoptSignature, adoptFromLibrary, setApprovalDecision, setApprovalNotes, setReviewDecision,
     setReviewNotes, goToSummary, submitFinalAction, setDeclineReason, setDeclineNote,
     submitDecline, endSession,
   ]);

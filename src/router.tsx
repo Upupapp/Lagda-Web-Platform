@@ -211,6 +211,12 @@ const SettingsIntegrationsPage      = lazy(() => import("./app/pages/platform/se
 const SettingsIntegrationDetailPage = lazy(() => import("./app/pages/platform/settings/IntegrationDetailPage").then(m => ({ default: m.IntegrationDetailPage })));
 const SettingsDataPrivacyPage       = lazy(() => import("./app/pages/platform/settings/DataPrivacyPage").then(m => ({ default: m.DataPrivacyPage })));
 
+// Signature Library (Command 26)
+const SignaturesLibraryPage  = lazy(() => import("./app/pages/platform/settings/signatures/SignaturesLibraryPage").then(m => ({ default: m.SignaturesLibraryPage })));
+const NewSignaturePage       = lazy(() => import("./app/pages/platform/settings/signatures/NewSignaturePage").then(m => ({ default: m.NewSignaturePage })));
+const SignatureDetailPage    = lazy(() => import("./app/pages/platform/settings/signatures/SignatureDetailPage").then(m => ({ default: m.SignatureDetailPage })));
+const EditSignaturePage      = lazy(() => import("./app/pages/platform/settings/signatures/EditSignaturePage").then(m => ({ default: m.EditSignaturePage })));
+
 // ── Auth Suspense fallback ────────────────────────────────────────────────────
 function AuthPageLoader() {
   return (
@@ -404,6 +410,11 @@ export const router = createBrowserRouter([
       { path: "settings/security/sessions",           element: <Suspense fallback={null}><SettingsSessionsPage /></Suspense> },
       { path: "settings/security/activity",           element: <Suspense fallback={null}><SettingsSecurityActivityPage /></Suspense> },
       { path: "settings/notifications",               element: <Suspense fallback={null}><SettingsNotificationsPage /></Suspense> },
+      // Signature Library (Command 26) — static paths before parametric
+      { path: "settings/signatures",                  element: <Suspense fallback={null}><SignaturesLibraryPage /></Suspense> },
+      { path: "settings/signatures/new",              element: <Suspense fallback={null}><NewSignaturePage /></Suspense> },
+      { path: "settings/signatures/:signatureId",     element: <Suspense fallback={null}><SignatureDetailPage /></Suspense> },
+      { path: "settings/signatures/:signatureId/edit",element: <Suspense fallback={null}><EditSignaturePage /></Suspense> },
       { path: "settings/branding",                    element: <Suspense fallback={null}><SettingsBrandingPage /></Suspense> },
       { path: "settings/billing",                     element: <Suspense fallback={null}><SettingsBillingPage /></Suspense> },
       { path: "settings/usage",                       element: <Suspense fallback={null}><SettingsUsagePage /></Suspense> },

@@ -36,6 +36,7 @@ export const SETTINGS_NAV: SettingsNavItem[] = [
     ]
   },
   { path: "/app/settings/notifications", label: "Notifications",     group: "personal" },
+  { path: "/app/settings/signatures",    label: "Signatures & Initials", group: "personal" },
   { path: "/app/settings/data-and-privacy", label: "Data & Privacy", group: "personal" },
   { path: "/app/settings/branding",      label: "Branding",          group: "workspace" },
   { path: "/app/settings/billing",       label: "Billing & Plan",    group: "workspace" },

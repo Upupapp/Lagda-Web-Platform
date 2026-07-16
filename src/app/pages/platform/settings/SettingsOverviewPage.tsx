@@ -95,6 +95,7 @@ export function SettingsOverviewPage() {
               <QuickLinkCard to="/app/settings/preferences" title="Preferences"   description="Language, timezone, appearance" />
               <QuickLinkCard to="/app/settings/security"    title="Security"      description={`MFA: ${data?.mfaStatus === "demonstration-enabled" ? "Enabled" : "Not enabled"} · ${data?.sessions ?? 0} session${data?.sessions !== 1 ? "s" : ""}`} badge={data?.mfaStatus === "not-enabled" ? "Review" : undefined} />
               <QuickLinkCard to="/app/settings/notifications" title="Notifications" description="Email, in-app, and digest preferences" />
+              <QuickLinkCard to="/app/settings/signatures"    title="Signatures & Initials" description="Manage your reusable signature and initials library" />
               <QuickLinkCard to="/app/settings/data-and-privacy" title="Data & Privacy" description="Export and account closure direction" />
             </div>
           </SCard>
