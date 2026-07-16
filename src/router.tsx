@@ -173,6 +173,18 @@ const TemplateFieldsPage  = lazy(() => import("./app/pages/platform/templates/Te
 const TemplatePreviewPage = lazy(() => import("./app/pages/platform/templates/TemplatePreviewPage").then(m => ({ default: m.TemplatePreviewPage })));
 const UseTemplatePage     = lazy(() => import("./app/pages/platform/templates/UseTemplatePage").then(m => ({ default: m.UseTemplatePage })));
 
+// Workspace Administration (Command 23)
+const WorkspaceOverviewPage  = lazy(() => import("./app/pages/platform/workspace/WorkspaceOverviewPage").then(m => ({ default: m.WorkspaceOverviewPage })));
+const MembersPage            = lazy(() => import("./app/pages/platform/workspace/MembersPage").then(m => ({ default: m.MembersPage })));
+const MemberDetailPage       = lazy(() => import("./app/pages/platform/workspace/MemberDetailPage").then(m => ({ default: m.MemberDetailPage })));
+const InvitationsPage        = lazy(() => import("./app/pages/platform/workspace/InvitationsPage").then(m => ({ default: m.InvitationsPage })));
+const TeamsPage              = lazy(() => import("./app/pages/platform/workspace/TeamsPage").then(m => ({ default: m.TeamsPage })));
+const TeamDetailPage         = lazy(() => import("./app/pages/platform/workspace/TeamDetailPage").then(m => ({ default: m.TeamDetailPage })));
+const RolesPage              = lazy(() => import("./app/pages/platform/workspace/RolesPage").then(m => ({ default: m.RolesPage })));
+const RoleDetailPage         = lazy(() => import("./app/pages/platform/workspace/RoleDetailPage").then(m => ({ default: m.RoleDetailPage })));
+const ActivityPage           = lazy(() => import("./app/pages/platform/workspace/ActivityPage").then(m => ({ default: m.ActivityPage })));
+const WorkspaceSettingsPage  = lazy(() => import("./app/pages/platform/workspace/WorkspaceSettingsPage").then(m => ({ default: m.WorkspaceSettingsPage })));
+
 // Contacts (Command 22)
 const ContactsPage          = lazy(() => import("./app/pages/platform/contacts/ContactsPage").then(m => ({ default: m.ContactsPage })));
 const CreateContactPage     = lazy(() => import("./app/pages/platform/contacts/CreateContactPage").then(m => ({ default: m.CreateContactPage })));
@@ -347,11 +359,23 @@ export const router = createBrowserRouter([
       // Notifications
       { path: "notifications",     element: <Suspense fallback={null}><PlatformPlaceholder /></Suspense> },
 
-      // Team
+      // Team (legacy placeholders kept for redirect compatibility)
       { path: "team",              element: <Suspense fallback={null}><PlatformPlaceholder /></Suspense> },
       { path: "team/members",      element: <Suspense fallback={null}><PlatformPlaceholder /></Suspense> },
       { path: "team/roles",        element: <Suspense fallback={null}><PlatformPlaceholder /></Suspense> },
       { path: "team/invitations",  element: <Suspense fallback={null}><PlatformPlaceholder /></Suspense> },
+
+      // Workspace Administration (Command 23) — static paths before parametric
+      { path: "workspace",                          element: <Suspense fallback={null}><WorkspaceOverviewPage /></Suspense> },
+      { path: "workspace/members",                  element: <Suspense fallback={null}><MembersPage /></Suspense> },
+      { path: "workspace/invitations",              element: <Suspense fallback={null}><InvitationsPage /></Suspense> },
+      { path: "workspace/teams",                    element: <Suspense fallback={null}><TeamsPage /></Suspense> },
+      { path: "workspace/roles",                    element: <Suspense fallback={null}><RolesPage /></Suspense> },
+      { path: "workspace/activity",                 element: <Suspense fallback={null}><ActivityPage /></Suspense> },
+      { path: "workspace/settings",                 element: <Suspense fallback={null}><WorkspaceSettingsPage /></Suspense> },
+      { path: "workspace/members/:memberId",        element: <Suspense fallback={null}><MemberDetailPage /></Suspense> },
+      { path: "workspace/teams/:teamId",            element: <Suspense fallback={null}><TeamDetailPage /></Suspense> },
+      { path: "workspace/roles/:roleId",            element: <Suspense fallback={null}><RoleDetailPage /></Suspense> },
 
       // Settings
       { path: "settings",          element: <Suspense fallback={null}><PlatformPlaceholder /></Suspense> },
