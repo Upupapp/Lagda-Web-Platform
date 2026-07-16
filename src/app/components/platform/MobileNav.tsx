@@ -237,7 +237,7 @@ export function MobileNav() {
                       <>
                         <span style={{ color: isActive ? "#38bdf8" : "#64748b", display: "flex" }}><NavIcon name={item.icon} /></span>
                         <span style={{ ...GF, fontSize: 14, fontWeight: isActive ? 600 : 400 }}>{item.label}</span>
-                        {item.id === "notifications" && unreadCount > 0 && (
+                        {item.id === "inbox" && unreadCount > 0 && (
                           <span style={{ marginLeft: "auto", background: "#0078D4", color: "white", fontFamily: "'Geist Mono', monospace", fontSize: 10, fontWeight: 700, borderRadius: 999, padding: "1px 6px" }}>
                             {unreadCount > 99 ? "99+" : unreadCount}
                           </span>
@@ -263,6 +263,11 @@ export function MobileNav() {
                       <>
                         <span style={{ color: isActive ? "#38bdf8" : "#64748b", display: "flex" }}><NavIcon name={item.icon} /></span>
                         <span style={{ ...GF, fontSize: 14, fontWeight: isActive ? 600 : 400 }}>{item.label}</span>
+                        {item.id === "notifications" && unreadCount > 0 && (
+                          <span style={{ marginLeft: "auto", background: "#0078D4", color: "white", fontFamily: "'Geist Mono', monospace", fontSize: 10, fontWeight: 700, borderRadius: 999, padding: "1px 6px" }}>
+                            {unreadCount > 99 ? "99+" : unreadCount}
+                          </span>
+                        )}
                       </>
                     )}
                   </NavLink>
