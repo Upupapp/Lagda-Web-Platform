@@ -217,6 +217,10 @@ const NewSignaturePage       = lazy(() => import("./app/pages/platform/settings/
 const SignatureDetailPage    = lazy(() => import("./app/pages/platform/settings/signatures/SignatureDetailPage").then(m => ({ default: m.SignatureDetailPage })));
 const EditSignaturePage      = lazy(() => import("./app/pages/platform/settings/signatures/EditSignaturePage").then(m => ({ default: m.EditSignaturePage })));
 
+// Recipient Inbox (Command 27)
+const InboxPage             = lazy(() => import("./app/pages/platform/inbox/InboxPage").then(m => ({ default: m.InboxPage })));
+const AssignmentDetailPage  = lazy(() => import("./app/pages/platform/inbox/AssignmentDetailPage").then(m => ({ default: m.AssignmentDetailPage })));
+
 // ── Auth Suspense fallback ────────────────────────────────────────────────────
 function AuthPageLoader() {
   return (
@@ -378,6 +382,10 @@ export const router = createBrowserRouter([
 
       // Verify (within platform) — Command 17
       { path: "verify",            element: <Suspense fallback={null}><VerifyPage /></Suspense> },
+
+      // Recipient Inbox (Command 27) — static path before :requestId
+      { path: "inbox",             element: <Suspense fallback={null}><InboxPage /></Suspense> },
+      { path: "inbox/:requestId",  element: <Suspense fallback={null}><AssignmentDetailPage /></Suspense> },
 
       // Notifications
       { path: "notifications",     element: <Suspense fallback={null}><PlatformPlaceholder /></Suspense> },

@@ -11,8 +11,11 @@ import {
   FilePlus, FileText, LayoutTemplate, ShieldCheck, Users,
   AlertCircle, Clock, CheckCircle2, XCircle, RefreshCw,
   ChevronRight, AlertTriangle, Send, FileEdit, Activity,
-  ArrowRight,
+  ArrowRight, Inbox, PenLine, ThumbsUp, Eye, FileCheck, Mail, Calendar,
 } from "lucide-react";
+import { inboxService } from "../../services/mock/inbox.service";
+import type { RecipientInboxItem } from "../../models/inbox";
+import type { RecipientParticipantRole } from "../../models/recipient";
 import { usePlatform } from "../../context/PlatformContext";
 import type { PlatformRole } from "../../models";
 import {
@@ -692,6 +695,84 @@ function WorkspaceTeamSummary({ memberCount, workspaceName, planLabel, isLoading
   );
 }
 
+// ── My Actions section (C27 inbox integration) ────────────────────────────────
+
+const INBOX_ROLE_ICONS: Record<RecipientParticipantRole, React.ReactNode> = {
+  "signer":                   <PenLine size={13} aria-hidden />,
+  "approver":                 <ThumbsUp size={13} aria-hidden />,
+  "reviewer":                 <Eye size={13} aria-hidden />,
+  "acknowledgment-recipient": <FileCheck size={13} aria-hidden />,
+  "viewer":                   <Eye size={13} aria-hidden />,
+  "copy-recipient":           <Mail size={13} aria-hidden />,
+};
+
+const INBOX_ROLE_LABELS: Record<RecipientParticipantRole, string> = {
+  "signer":                   "Signer",
+  "approver":                 "Approver",
+  "reviewer":                 "Reviewer",
+  "acknowledgment-recipient": "Acknowledgment",
+  "viewer":                   "Viewer",
+  "copy-recipient":           "Copy Recipient",
+};
+
+function MyActionsSection() {
+  const [items, setItems] = useState<RecipientInboxItem[]>([]);
+  const [loaded, setLoaded] = useState(false);
+
+  useEffect(() => {
+    const result = inboxService.getActionRequiredItems(3);
+    if (result.ok) setItems(result.data);
+    setLoaded(true);
+  }, []);
+
+  if (!loaded) return null;
+  if (items.length === 0) return null;
+
+  return (
+    <section aria-label="My Actions — awaiting your action" style={{ marginBottom: 24 }}>
+      <SectionHeader label="My Actions" to="/app/inbox" linkLabel="View all" />
+      <Card style={{ padding: "4px 0" }}>
+        {items.map((item, idx) => {
+          const dueSoon = item.dueAt && (new Date(item.dueAt).getTime() - Date.now()) / 3_600_000 < 72;
+          return (
+            <Link
+              key={item.id}
+              to={`/app/inbox/${item.id}`}
+              style={{
+                display: "flex", alignItems: "center", gap: 12, padding: "12px 16px",
+                textDecoration: "none",
+                borderBottom: idx < items.length - 1 ? "1px solid #F1F5F9" : "none",
+              }}
+              className="dashboard-inbox-link"
+            >
+              <div style={{ width: 32, height: 32, borderRadius: 8, background: item.assignmentStatus === "in-progress" ? "rgba(217,119,6,0.1)" : "rgba(0,120,212,0.1)", display: "flex", alignItems: "center", justifyContent: "center", color: item.assignmentStatus === "in-progress" ? AMBER : AZURE, flexShrink: 0 }}>
+                {INBOX_ROLE_ICONS[item.role]}
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <p style={{ color: "#0F172A", ...GF, fontSize: 13, fontWeight: 600, margin: "0 0 2px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  {item.documentTitle}
+                </p>
+                <p style={{ color: SLATE6, ...GF, fontSize: 12, margin: 0 }}>
+                  {INBOX_ROLE_LABELS[item.role]} · {item.senderName}
+                </p>
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 3, flexShrink: 0 }}>
+                {item.dueAt && (
+                  <span style={{ display: "flex", alignItems: "center", gap: 3, color: dueSoon ? AMBER : SLATE4, ...GF, fontSize: 11, fontWeight: dueSoon ? 600 : 400 }}>
+                    <Calendar size={11} aria-hidden />
+                    {new Date(item.dueAt).toLocaleDateString("en-PH", { month: "short", day: "numeric" })}
+                  </span>
+                )}
+                <ChevronRight size={14} color={SLATE4} aria-hidden />
+              </div>
+            </Link>
+          );
+        })}
+      </Card>
+    </section>
+  );
+}
+
 // ── Full Error State ──────────────────────────────────────────────────────────
 
 function FullErrorState({ onRetry }: { onRetry: () => void }) {
@@ -864,6 +945,9 @@ export function PlatformDashboard() {
           {/* Main column */}
           <div className="dashboard-main">
 
+            {/* My Actions (C27) — shown for all roles */}
+            <MyActionsSection />
+
             {canViewDocs && (
               <>
                 <NeedsAttentionSection
@@ -985,6 +1069,8 @@ export function PlatformDashboard() {
         .dashboard-verify-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.06); border-color: #CBD5E1 !important; }
         .dashboard-verify-card:focus-visible { outline: 2px solid ${AZURE}; outline-offset: 2px; }
         .dashboard-invite-link:hover { background: rgba(0,120,212,0.1) !important; }
+        .dashboard-inbox-link:hover { background: #F8FAFC; }
+        .dashboard-inbox-link:focus-visible { outline: 2px solid ${AZURE}; outline-offset: -2px; }
 
         /* Refresh spin */
         @keyframes spin-anim { to { transform: rotate(360deg); } }

@@ -88,6 +88,16 @@ export const PRIMARY_NAV: PlatformNavItem[] = [
     showOnMobile: true,
     description: "Check document authenticity",
   },
+  {
+    id: "inbox",
+    label: "My Actions",
+    path: "/app/inbox",
+    icon: "Inbox",
+    group: "primary",
+    showBadge: true,
+    showOnMobile: true,
+    description: "Document requests assigned to you",
+  },
 ];
 
 // Utility navigation — shown below primary nav (or bottom of sidebar)
