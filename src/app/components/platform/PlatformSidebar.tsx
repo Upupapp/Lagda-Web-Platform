@@ -7,10 +7,11 @@ import { NavLink, useNavigate } from "react-router";
 import {
   LayoutDashboard, FileText, Files, Users, ShieldCheck,
   Bell, Users2, Settings, FilePlus, ChevronLeft, ChevronRight,
-  HelpCircle,
+  HelpCircle, Inbox,
 } from "lucide-react";
 import { LagdaLogo } from "../brand/LagdaLogo";
 import { usePlatform } from "../../context/PlatformContext";
+import { useNotificationCenter } from "../../context/NotificationCenterContext";
 import { PRIMARY_NAV, UTILITY_NAV, PREPARE_ACTION } from "../../config/platform.nav";
 import { WorkspaceSwitcher } from "./WorkspaceSwitcher";
 import { UserMenu } from "./UserMenu";
@@ -22,7 +23,7 @@ const GM     = { fontFamily: "'Geist Mono', monospace" };
 
 const ICON_MAP: Record<string, React.ElementType> = {
   LayoutDashboard, FileText, Files, Users, ShieldCheck,
-  Bell, Users2, Settings, FilePlus, HelpCircle,
+  Bell, Users2, Settings, FilePlus, HelpCircle, Inbox,
 };
 
 function NavIcon({ name, size = 16 }: { name: string; size?: number }) {
@@ -90,7 +91,8 @@ function SidebarItem({ to, icon, label, badge, collapsed }: SidebarItemProps) {
 
 export function PlatformSidebar() {
   const [collapsed, setCollapsed] = useState(false);
-  const { unreadCount, hasPermission, hasFlag, signOut } = usePlatform();
+  const { hasPermission, hasFlag, signOut } = usePlatform();
+  const { unreadCount } = useNotificationCenter();
   const navigate = useNavigate();
 
   const handleSignOut = useCallback(async () => {

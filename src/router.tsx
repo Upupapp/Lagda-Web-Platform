@@ -221,6 +221,10 @@ const EditSignaturePage      = lazy(() => import("./app/pages/platform/settings/
 const InboxPage             = lazy(() => import("./app/pages/platform/inbox/InboxPage").then(m => ({ default: m.InboxPage })));
 const AssignmentDetailPage  = lazy(() => import("./app/pages/platform/inbox/AssignmentDetailPage").then(m => ({ default: m.AssignmentDetailPage })));
 
+// Notifications Center (Command 28)
+const NotificationsPage       = lazy(() => import("./app/pages/platform/notifications/NotificationsPage").then(m => ({ default: m.NotificationsPage })));
+const NotificationDetailPage  = lazy(() => import("./app/pages/platform/notifications/NotificationDetailPage").then(m => ({ default: m.NotificationDetailPage })));
+
 // ── Auth Suspense fallback ────────────────────────────────────────────────────
 function AuthPageLoader() {
   return (
@@ -387,8 +391,9 @@ export const router = createBrowserRouter([
       { path: "inbox",             element: <Suspense fallback={null}><InboxPage /></Suspense> },
       { path: "inbox/:requestId",  element: <Suspense fallback={null}><AssignmentDetailPage /></Suspense> },
 
-      // Notifications
-      { path: "notifications",     element: <Suspense fallback={null}><PlatformPlaceholder /></Suspense> },
+      // Notifications Center (Command 28) — static path before parametric
+      { path: "notifications",                     element: <Suspense fallback={null}><NotificationsPage /></Suspense> },
+      { path: "notifications/:notificationId",     element: <Suspense fallback={null}><NotificationDetailPage /></Suspense> },
 
       // Team (legacy placeholders kept for redirect compatibility)
       { path: "team",              element: <Suspense fallback={null}><PlatformPlaceholder /></Suspense> },

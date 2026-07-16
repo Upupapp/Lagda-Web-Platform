@@ -11,11 +11,13 @@ import {
   FilePlus, FileText, LayoutTemplate, ShieldCheck, Users,
   AlertCircle, Clock, CheckCircle2, XCircle, RefreshCw,
   ChevronRight, AlertTriangle, Send, FileEdit, Activity,
-  ArrowRight, Inbox, PenLine, ThumbsUp, Eye, FileCheck, Mail, Calendar,
+  ArrowRight, Inbox, PenLine, ThumbsUp, Eye, FileCheck, Mail, Calendar, Bell, ShieldAlert,
 } from "lucide-react";
 import { inboxService } from "../../services/mock/inbox.service";
 import type { RecipientInboxItem } from "../../models/inbox";
 import type { RecipientParticipantRole } from "../../models/recipient";
+import { useNotificationCenter } from "../../context/NotificationCenterContext";
+import { NOTIFICATION_CATEGORY_LABELS } from "../../models/notifications";
 import { usePlatform } from "../../context/PlatformContext";
 import type { PlatformRole } from "../../models";
 import {
@@ -773,6 +775,69 @@ function MyActionsSection() {
   );
 }
 
+// ── Notifications Dashboard Section (C28) ────────────────────────────────────
+
+function NotificationsSection() {
+  const { items, unreadCount, markRead } = useNotificationCenter();
+
+  const urgent = items
+    .filter((n) => n.status !== "dismissed" && n.priority === "high" && n.status === "unread")
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+    .slice(0, 3);
+
+  if (unreadCount === 0 && urgent.length === 0) return null;
+
+  return (
+    <section aria-label="High-priority notifications" style={{ marginBottom: 24 }}>
+      <SectionHeader label="Notifications" to="/app/notifications" linkLabel="View all" />
+      <Card style={{ padding: "4px 0" }}>
+        {urgent.length > 0 ? (
+          urgent.map((n, idx) => {
+            const sevColor = n.severity === "critical" ? RED : n.severity === "warning" ? AMBER : AZURE;
+            return (
+              <Link
+                key={n.id}
+                to={`/app/notifications/${n.id}`}
+                onClick={() => markRead(n.id)}
+                style={{
+                  display: "flex", alignItems: "center", gap: 12, padding: "12px 16px",
+                  textDecoration: "none",
+                  borderBottom: idx < urgent.length - 1 ? "1px solid #F1F5F9" : "none",
+                  borderLeft: `3px solid ${sevColor}`,
+                }}
+                className="dashboard-notif-link"
+              >
+                <div style={{ width: 32, height: 32, borderRadius: 8, background: `${sevColor}14`, display: "flex", alignItems: "center", justifyContent: "center", color: sevColor, flexShrink: 0 }}>
+                  {n.category === "security" ? <ShieldAlert size={15} aria-hidden /> : <Bell size={15} aria-hidden />}
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <p style={{ color: "#0F172A", ...GF, fontSize: 13, fontWeight: 600, margin: "0 0 2px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    {n.title}
+                  </p>
+                  <p style={{ color: SLATE6, ...GF, fontSize: 12, margin: 0 }}>
+                    {NOTIFICATION_CATEGORY_LABELS[n.category]}
+                  </p>
+                </div>
+                <ChevronRight size={14} color={SLATE4} aria-hidden />
+              </Link>
+            );
+          })
+        ) : (
+          <div style={{ padding: "12px 16px", display: "flex", alignItems: "center", gap: 10 }}>
+            <Bell size={15} style={{ color: SLATE6 }} aria-hidden />
+            <p style={{ ...GF, fontSize: 13, color: SLATE6, margin: 0 }}>
+              {unreadCount > 0 ? `${unreadCount} unread notification${unreadCount === 1 ? "" : "s"}` : "No new notifications"}
+            </p>
+            <Link to="/app/notifications" style={{ marginLeft: "auto", ...GF, fontSize: 12, color: AZURE, textDecoration: "none" }}>
+              View all →
+            </Link>
+          </div>
+        )}
+      </Card>
+    </section>
+  );
+}
+
 // ── Full Error State ──────────────────────────────────────────────────────────
 
 function FullErrorState({ onRetry }: { onRetry: () => void }) {
@@ -948,6 +1013,9 @@ export function PlatformDashboard() {
             {/* My Actions (C27) — shown for all roles */}
             <MyActionsSection />
 
+            {/* Notifications (C28) — high-priority unread only */}
+            <NotificationsSection />
+
             {canViewDocs && (
               <>
                 <NeedsAttentionSection
@@ -1071,6 +1139,8 @@ export function PlatformDashboard() {
         .dashboard-invite-link:hover { background: rgba(0,120,212,0.1) !important; }
         .dashboard-inbox-link:hover { background: #F8FAFC; }
         .dashboard-inbox-link:focus-visible { outline: 2px solid ${AZURE}; outline-offset: -2px; }
+        .dashboard-notif-link:hover { background: #F8FAFC; }
+        .dashboard-notif-link:focus-visible { outline: 2px solid ${AZURE}; outline-offset: -2px; }
 
         /* Refresh spin */
         @keyframes spin-anim { to { transform: rotate(360deg); } }

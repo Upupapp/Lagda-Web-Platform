@@ -1,25 +1,48 @@
-// Notification bell with dropdown panel.
-// Displays recent mock notifications and unread count badge.
+// Notification bell with compact dropdown panel.
+// Command 28: uses NotificationCenterContext for live unread count and rich fixture data.
 
 import { useState, useRef, useEffect } from "react";
 import { Link } from "react-router";
-import { Bell, Check, CheckCheck, FileText, AlertTriangle, Clock, UserPlus, Building2 } from "lucide-react";
-import { usePlatform } from "../../context/PlatformContext";
-import type { NotificationType } from "../../models";
+import {
+  Bell, CheckCheck,
+  FileText, AlertTriangle, Clock, ShieldAlert, CreditCard,
+  BarChart2, Puzzle, Settings, Megaphone, Inbox,
+} from "lucide-react";
+import { useNotificationCenter } from "../../context/NotificationCenterContext";
+import type { NotificationRecord, NotificationCategory, NotificationSeverity } from "../../models/notifications";
 
-const GF   = { fontFamily: "'Geist', sans-serif" };
+const GF    = { fontFamily: "'Geist', sans-serif" };
 const BORDER = "rgba(255,255,255,0.07)";
 
-function getNotificationIcon(type: NotificationType) {
-  switch (type) {
-    case "signature-completed":
-    case "document-completed": return <Check size={14} style={{ color: "#22c55e" }} aria-hidden />;
-    case "document-declined":  return <AlertTriangle size={14} style={{ color: "#ef4444" }} aria-hidden />;
-    case "document-expiring":
-    case "document-expired":   return <Clock size={14} style={{ color: "#f59e0b" }} aria-hidden />;
-    case "team-invitation":    return <UserPlus size={14} style={{ color: "#0078D4" }} aria-hidden />;
-    case "workspace-update":   return <Building2 size={14} style={{ color: "#64748b" }} aria-hidden />;
-    default:                   return <FileText size={14} style={{ color: "#64748b" }} aria-hidden />;
+const AZURE = "#0078D4";
+const AMBER = "#D97706";
+const RED   = "#DC2626";
+const GREEN = "#16A34A";
+const SLATE = "#64748B";
+
+function severityColor(severity: NotificationSeverity): string {
+  switch (severity) {
+    case "critical": return RED;
+    case "warning":  return AMBER;
+    case "success":  return GREEN;
+    default:         return AZURE;
+  }
+}
+
+function getCategoryIcon(category: NotificationCategory, severity: NotificationSeverity) {
+  const color = severityColor(severity);
+  const size  = 14;
+  switch (category) {
+    case "my-actions":   return <Inbox size={size} style={{ color }} aria-hidden />;
+    case "documents":    return <FileText size={size} style={{ color }} aria-hidden />;
+    case "workspace":    return <Settings size={size} style={{ color: SLATE }} aria-hidden />;
+    case "security":     return <ShieldAlert size={size} style={{ color }} aria-hidden />;
+    case "billing":      return <CreditCard size={size} style={{ color }} aria-hidden />;
+    case "usage":        return <BarChart2 size={size} style={{ color }} aria-hidden />;
+    case "integrations": return <Puzzle size={size} style={{ color: SLATE }} aria-hidden />;
+    case "system":       return <Settings size={size} style={{ color: SLATE }} aria-hidden />;
+    case "promotional":  return <Megaphone size={size} style={{ color: SLATE }} aria-hidden />;
+    default:             return <FileText size={size} style={{ color: SLATE }} aria-hidden />;
   }
 }
 
@@ -28,20 +51,21 @@ function formatRelativeDate(iso: string): string {
   const now = new Date();
   const diffMs = now.getTime() - d.getTime();
   const diffMin = Math.round(diffMs / 60000);
-  if (diffMin < 60) return `${diffMin}m ago`;
+  if (diffMin < 2)   return "Just now";
+  if (diffMin < 60)  return `${diffMin}m ago`;
   const diffHr = Math.round(diffMin / 60);
-  if (diffHr < 24) return `${diffHr}h ago`;
+  if (diffHr < 24)   return `${diffHr}h ago`;
   const diffDay = Math.round(diffHr / 24);
-  return `${diffDay}d ago`;
+  if (diffDay < 7)   return `${diffDay}d ago`;
+  return d.toLocaleDateString("en-PH", { month: "short", day: "numeric" });
 }
 
 interface NotificationMenuProps {
-  /** Where to anchor the dropdown — used in mobile top bar vs. header */
   align?: "right" | "left";
 }
 
 export function NotificationMenu({ align = "right" }: NotificationMenuProps) {
-  const { notifications, unreadCount, markNotificationRead, markAllNotificationsRead } = usePlatform();
+  const { items, unreadCount, markRead, markAllRead } = useNotificationCenter();
   const [open, setOpen] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const panelRef   = useRef<HTMLDivElement>(null);
@@ -67,7 +91,16 @@ export function NotificationMenu({ align = "right" }: NotificationMenuProps) {
     return () => document.removeEventListener("keydown", handler);
   }, [open]);
 
-  const recent = notifications.slice(0, 5);
+  // Show 5 most recent non-dismissed notifications
+  const recent = [...items]
+    .filter((n) => n.status !== "dismissed")
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+    .slice(0, 5);
+
+  function handleItemClick(n: NotificationRecord) {
+    if (n.status === "unread") markRead(n.id);
+    setOpen(false);
+  }
 
   return (
     <div style={{ position: "relative" }}>
@@ -93,7 +126,7 @@ export function NotificationMenu({ align = "right" }: NotificationMenuProps) {
             aria-hidden
             style={{
               position: "absolute", top: 4, right: 4,
-              background: "#0078D4", color: "white",
+              background: AZURE, color: "white",
               borderRadius: "50%", width: 16, height: 16,
               display: "flex", alignItems: "center", justifyContent: "center",
               fontFamily: "'Geist Mono', monospace", fontSize: 9, fontWeight: 700,
@@ -109,13 +142,13 @@ export function NotificationMenu({ align = "right" }: NotificationMenuProps) {
         <div
           ref={panelRef}
           role="dialog"
-          aria-label="Notifications"
+          aria-label="Recent notifications"
           aria-modal
           style={{
             position: "absolute",
             top: "calc(100% + 8px)",
             [align]: 0,
-            width: 360,
+            width: 380,
             maxWidth: "calc(100vw - 16px)",
             zIndex: 300,
             background: "#0B1929",
@@ -130,14 +163,14 @@ export function NotificationMenu({ align = "right" }: NotificationMenuProps) {
             <h2 style={{ color: "white", ...GF, fontSize: 14, fontWeight: 700, margin: 0 }}>
               Notifications
               {unreadCount > 0 && (
-                <span style={{ marginLeft: 8, fontFamily: "'Geist Mono', monospace", fontSize: 10, color: "#0078D4", background: "rgba(0,120,212,0.15)", borderRadius: 999, padding: "1px 7px" }}>
+                <span style={{ marginLeft: 8, fontFamily: "'Geist Mono', monospace", fontSize: 10, color: AZURE, background: "rgba(0,120,212,0.15)", borderRadius: 999, padding: "1px 7px" }}>
                   {unreadCount}
                 </span>
               )}
             </h2>
             {unreadCount > 0 && (
               <button
-                onClick={() => markAllNotificationsRead()}
+                onClick={() => markAllRead()}
                 style={{ background: "none", border: "none", color: "#38bdf8", ...GF, fontSize: 12, cursor: "pointer", display: "flex", alignItems: "center", gap: 4 }}
                 aria-label="Mark all notifications as read"
               >
@@ -148,43 +181,43 @@ export function NotificationMenu({ align = "right" }: NotificationMenuProps) {
           </div>
 
           {/* Notification list */}
-          <ul style={{ listStyle: "none", margin: 0, padding: "6px 0", maxHeight: 320, overflowY: "auto" }} role="list">
+          <ul style={{ listStyle: "none", margin: 0, padding: "6px 0", maxHeight: 340, overflowY: "auto" }} role="list">
             {recent.length === 0 ? (
-              <li style={{ padding: "24px 14px", textAlign: "center", color: "#334155", ...GF, fontSize: 13 }}>
+              <li style={{ padding: "24px 14px", textAlign: "center", color: "#475569", ...GF, fontSize: 13 }}>
                 No notifications yet.
               </li>
             ) : (
               recent.map((n) => (
                 <li key={n.id}>
-                  <button
-                    onClick={() => {
-                      markNotificationRead(n.id);
-                      setOpen(false);
-                    }}
+                  <Link
+                    to={`/app/notifications/${n.id}`}
+                    onClick={() => handleItemClick(n)}
                     style={{
                       display: "flex", gap: 10, padding: "10px 14px",
-                      background: n.isRead ? "transparent" : "rgba(0,120,212,0.06)",
-                      border: "none", width: "100%", textAlign: "left",
-                      cursor: "pointer", borderBottom: `1px solid ${BORDER}`,
+                      background: n.status === "unread" ? "rgba(0,120,212,0.07)" : "transparent",
+                      textDecoration: "none",
+                      borderBottom: `1px solid ${BORDER}`,
                     }}
-                    className="notif-item"
+                    className="notif-item-link"
                   >
-                    <div style={{ width: 28, height: 28, borderRadius: "50%", background: "rgba(255,255,255,0.06)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                      {getNotificationIcon(n.type)}
+                    <div style={{ width: 28, height: 28, borderRadius: "50%", background: "rgba(255,255,255,0.06)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 1 }}>
+                      {getCategoryIcon(n.category, n.severity)}
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <p style={{ color: n.isRead ? "#64748b" : "white", ...GF, fontSize: 12, fontWeight: n.isRead ? 400 : 600, margin: "0 0 2px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      <p style={{ color: n.status === "unread" ? "white" : "#64748b", ...GF, fontSize: 12, fontWeight: n.status === "unread" ? 600 : 400, margin: "0 0 2px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                         {n.title}
                       </p>
-                      <p style={{ color: "#475569", ...GF, fontSize: 11, margin: "0 0 4px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      <p style={{ color: "#475569", ...GF, fontSize: 11, margin: "0 0 3px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                         {n.body}
                       </p>
                       <p style={{ color: "#334155", fontFamily: "'Geist Mono', monospace", fontSize: 10, margin: 0 }}>
                         {formatRelativeDate(n.createdAt)}
                       </p>
                     </div>
-                    {!n.isRead && <div style={{ width: 7, height: 7, borderRadius: "50%", background: "#0078D4", flexShrink: 0, marginTop: 4 }} aria-hidden />}
-                  </button>
+                    {n.status === "unread" && (
+                      <div style={{ width: 7, height: 7, borderRadius: "50%", background: AZURE, flexShrink: 0, marginTop: 5 }} aria-hidden />
+                    )}
+                  </Link>
                 </li>
               ))
             )}
@@ -206,8 +239,8 @@ export function NotificationMenu({ align = "right" }: NotificationMenuProps) {
       <style>{`
         .notif-trigger:hover, .notif-trigger:focus-visible { color: white !important; background: rgba(255,255,255,0.06) !important; }
         .notif-trigger:focus-visible { outline: 2px solid #0078D4; outline-offset: 2px; }
-        .notif-item:hover { background: rgba(255,255,255,0.04) !important; }
-        .notif-item:focus-visible { outline: 2px solid #0078D4; outline-offset: -2px; }
+        .notif-item-link:hover { background: rgba(255,255,255,0.04) !important; }
+        .notif-item-link:focus-visible { outline: 2px solid #0078D4; outline-offset: -2px; }
       `}</style>
     </div>
   );
