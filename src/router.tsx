@@ -194,6 +194,23 @@ const ContactGroupsPage     = lazy(() => import("./app/pages/platform/contacts/C
 const ContactGroupDetailPage= lazy(() => import("./app/pages/platform/contacts/ContactGroupDetailPage").then(m => ({ default: m.ContactGroupDetailPage })));
 const ContactImportPage     = lazy(() => import("./app/pages/platform/contacts/ContactImportPage").then(m => ({ default: m.ContactImportPage })));
 
+// Settings (Command 24)
+const SettingsOverviewPage          = lazy(() => import("./app/pages/platform/settings/SettingsOverviewPage").then(m => ({ default: m.SettingsOverviewPage })));
+const SettingsProfilePage           = lazy(() => import("./app/pages/platform/settings/ProfilePage").then(m => ({ default: m.ProfilePage })));
+const SettingsPreferencesPage       = lazy(() => import("./app/pages/platform/settings/PreferencesPage").then(m => ({ default: m.PreferencesPage })));
+const SettingsSecurityOverviewPage  = lazy(() => import("./app/pages/platform/settings/SecurityOverviewPage").then(m => ({ default: m.SecurityOverviewPage })));
+const SettingsPasswordPage          = lazy(() => import("./app/pages/platform/settings/PasswordPage").then(m => ({ default: m.PasswordPage })));
+const SettingsMfaPage               = lazy(() => import("./app/pages/platform/settings/MfaPage").then(m => ({ default: m.MfaPage })));
+const SettingsSessionsPage          = lazy(() => import("./app/pages/platform/settings/SessionsPage").then(m => ({ default: m.SessionsPage })));
+const SettingsSecurityActivityPage  = lazy(() => import("./app/pages/platform/settings/SecurityActivityPage").then(m => ({ default: m.SecurityActivityPage })));
+const SettingsNotificationsPage     = lazy(() => import("./app/pages/platform/settings/NotificationsPage").then(m => ({ default: m.NotificationsPage })));
+const SettingsBrandingPage          = lazy(() => import("./app/pages/platform/settings/BrandingPage").then(m => ({ default: m.BrandingPage })));
+const SettingsBillingPage           = lazy(() => import("./app/pages/platform/settings/BillingPage").then(m => ({ default: m.BillingPage })));
+const SettingsUsagePage             = lazy(() => import("./app/pages/platform/settings/UsagePage").then(m => ({ default: m.UsagePage })));
+const SettingsIntegrationsPage      = lazy(() => import("./app/pages/platform/settings/IntegrationsPage").then(m => ({ default: m.IntegrationsPage })));
+const SettingsIntegrationDetailPage = lazy(() => import("./app/pages/platform/settings/IntegrationDetailPage").then(m => ({ default: m.IntegrationDetailPage })));
+const SettingsDataPrivacyPage       = lazy(() => import("./app/pages/platform/settings/DataPrivacyPage").then(m => ({ default: m.DataPrivacyPage })));
+
 // ── Auth Suspense fallback ────────────────────────────────────────────────────
 function AuthPageLoader() {
   return (
@@ -377,16 +394,22 @@ export const router = createBrowserRouter([
       { path: "workspace/teams/:teamId",            element: <Suspense fallback={null}><TeamDetailPage /></Suspense> },
       { path: "workspace/roles/:roleId",            element: <Suspense fallback={null}><RoleDetailPage /></Suspense> },
 
-      // Settings
-      { path: "settings",          element: <Suspense fallback={null}><PlatformPlaceholder /></Suspense> },
-      { path: "settings/profile",  element: <Suspense fallback={null}><PlatformPlaceholder /></Suspense> },
-      { path: "settings/security", element: <Suspense fallback={null}><PlatformPlaceholder /></Suspense> },
-      { path: "settings/workspace",element: <Suspense fallback={null}><PlatformPlaceholder /></Suspense> },
-      { path: "settings/billing",  element: <Suspense fallback={null}><PlatformPlaceholder /></Suspense> },
-      { path: "settings/api",      element: <Suspense fallback={null}><PlatformPlaceholder /></Suspense> },
-      { path: "settings/notifications", element: <Suspense fallback={null}><PlatformPlaceholder /></Suspense> },
-      { path: "settings/appearance",element: <Suspense fallback={null}><PlatformPlaceholder /></Suspense> },
-      { path: "settings/audit-log",element: <Suspense fallback={null}><PlatformPlaceholder /></Suspense> },
+      // Settings (Command 24) — 15 canonical routes; static paths before parametric
+      { path: "settings",                             element: <Suspense fallback={null}><SettingsOverviewPage /></Suspense> },
+      { path: "settings/profile",                     element: <Suspense fallback={null}><SettingsProfilePage /></Suspense> },
+      { path: "settings/preferences",                 element: <Suspense fallback={null}><SettingsPreferencesPage /></Suspense> },
+      { path: "settings/security",                    element: <Suspense fallback={null}><SettingsSecurityOverviewPage /></Suspense> },
+      { path: "settings/security/password",           element: <Suspense fallback={null}><SettingsPasswordPage /></Suspense> },
+      { path: "settings/security/mfa",                element: <Suspense fallback={null}><SettingsMfaPage /></Suspense> },
+      { path: "settings/security/sessions",           element: <Suspense fallback={null}><SettingsSessionsPage /></Suspense> },
+      { path: "settings/security/activity",           element: <Suspense fallback={null}><SettingsSecurityActivityPage /></Suspense> },
+      { path: "settings/notifications",               element: <Suspense fallback={null}><SettingsNotificationsPage /></Suspense> },
+      { path: "settings/branding",                    element: <Suspense fallback={null}><SettingsBrandingPage /></Suspense> },
+      { path: "settings/billing",                     element: <Suspense fallback={null}><SettingsBillingPage /></Suspense> },
+      { path: "settings/usage",                       element: <Suspense fallback={null}><SettingsUsagePage /></Suspense> },
+      { path: "settings/integrations",                element: <Suspense fallback={null}><SettingsIntegrationsPage /></Suspense> },
+      { path: "settings/integrations/:integrationId", element: <Suspense fallback={null}><SettingsIntegrationDetailPage /></Suspense> },
+      { path: "settings/data-and-privacy",            element: <Suspense fallback={null}><SettingsDataPrivacyPage /></Suspense> },
 
       // Permission / session error states
       { path: "permission-denied", element: <Suspense fallback={null}><PermissionDenied /></Suspense> },
