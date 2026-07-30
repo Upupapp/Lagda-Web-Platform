@@ -1,16 +1,15 @@
 // Official LAGDA logo component.
 //
 // Image-first: serves official PNG files from /brand/ (public folder).
-// Falls back to inline SVG placeholder until official PNGs are present.
-// To activate official logos: drop files into public/brand/ — no code change needed.
+// Falls back to inline SVG placeholder when PNG fails to load.
 //
 // Variants:
 //   colored-horizontal  — colored icon + Deep Navy wordmark   (light backgrounds)
 //   white-horizontal    — white icon + White wordmark          (dark/navy backgrounds)
 //   black-horizontal    — mono icon + Black wordmark           (monochrome/print)
-//   colored-icon        — colored square, no wordmark          (compact contexts)
-//   white-icon          — white square, no wordmark            (dark compact contexts)
-//   mono-icon           — navy square, no wordmark             (monochrome compact)
+//   colored-icon        — colored square, no wordmark          (compact light contexts)
+//   white-icon          — white square, no wordmark            (dark/navy compact contexts)
+//   mono-icon           — navy square, no wordmark             (monochrome compact; SVG fallback only)
 //   stacked-colored     — colored icon + centered wordmark     (presentations, social)
 
 import { useState } from "react";
@@ -36,15 +35,15 @@ interface LagdaLogoProps {
   className?: string;
 }
 
-// Official PNG files served from /public/brand/.
-// Drop the files there; they take effect immediately with no code change.
+// Official PNG files served from /public/brand/ (canonical filenames from brand guidelines).
 const PNG_SRCS: Partial<Record<LogoVariant, string>> = {
-  "colored-horizontal": "/brand/Lagda-colored-logo-horizontal-whitebg-withtext.png",
-  "white-horizontal":   "/brand/Lagda-white-logo-horizontal-bluebg-withtext.png",
-  "black-horizontal":   "/brand/Lagda-black-logo-horizontal-whitebg-withtext.png",
-  "colored-icon":       "/brand/Lagda-colored-logo-square-whitebg-withouttext.png",
-  "white-icon":         "/brand/Lagda-white-logo-square-bluebg-withouttext.png",
-  "stacked-colored":    "/brand/Lagda-colored-logo-square-whitebg-withtext.png",
+  "colored-horizontal": "/brand/LagdaLogoPrimaryHorizontalFullColor.png",
+  "white-horizontal":   "/brand/LagdaLogoHorizontalWhiteonNavy.png",
+  "black-horizontal":   "/brand/LagdaLogoHorizontalBlack.png",
+  "colored-icon":       "/brand/LagdaLogoIconFullColorSquare.png",
+  "white-icon":         "/brand/LagdaLogoIconWhiteonNavySquare.png",
+  "stacked-colored":    "/brand/LagdaLogoStackedFullColor.png",
+  // mono-icon has no official PNG; continues to use inline SVG fallback.
 };
 
 // Placeholder SVG path used until official PNGs land.

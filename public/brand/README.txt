@@ -1,16 +1,23 @@
 LAGDA Official Logo Assets
 ==========================
 
-Drop the six official PNG files here. The LagdaLogo component will use them
-automatically — no code change required.
+All six official PNG files are present. The LagdaLogo component serves them
+automatically from this directory via Vite's public folder (/brand/<filename>).
 
-Expected files (exact names):
-  Lagda-colored-logo-horizontal-whitebg-withtext.png  → colored-horizontal variant
-  Lagda-white-logo-horizontal-bluebg-withtext.png     → white-horizontal variant
-  Lagda-black-logo-horizontal-whitebg-withtext.png    → black-horizontal variant
-  Lagda-colored-logo-square-whitebg-withouttext.png   → colored-icon variant
-  Lagda-white-logo-square-bluebg-withouttext.png      → white-icon variant
-  Lagda-colored-logo-square-whitebg-withtext.png      → stacked-colored variant
+Canonical filenames (must not be renamed — code references these exactly):
+  LagdaLogoPrimaryHorizontalFullColor.png  → colored-horizontal variant (light backgrounds)
+  LagdaLogoHorizontalWhiteonNavy.png       → white-horizontal variant  (dark/navy backgrounds)
+  LagdaLogoHorizontalBlack.png             → black-horizontal variant  (monochrome/print)
+  LagdaLogoIconFullColorSquare.png         → colored-icon variant      (compact, light backgrounds)
+  LagdaLogoIconWhiteonNavySquare.png       → white-icon variant        (compact, dark/navy backgrounds)
+  LagdaLogoStackedFullColor.png            → stacked-colored variant   (presentations, social)
 
-These are served at runtime as /brand/<filename>.png via Vite's public folder.
-Until the files are present, LagdaLogo falls back to its inline SVG placeholder.
+Note: All PNGs have baked (opaque, non-transparent) backgrounds.
+  Light-background variants (colored-horizontal, black-horizontal, colored-icon,
+  stacked-colored) have a WHITE baked background — use on white/light surfaces only.
+  Dark-background variants (white-horizontal, white-icon) have a NAVY (#07111F)
+  baked background — use on the canonical LAGDA Deep Navy only.
+
+The mono-icon variant has no PNG file and uses the inline SVG fallback.
+
+Favicon: LagdaLogoIconFullColorSquare.png (referenced in /index.html).

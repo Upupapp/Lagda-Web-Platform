@@ -33,7 +33,7 @@ export function NotFound() {
         style={{ textDecoration: "none", display: "block", marginBottom: 48 }}
         aria-label="LAGDA — Go to homepage"
       >
-        <LagdaLogo variant="colored-icon" size="lg" decorative />
+        <LagdaLogo variant="white-icon" size="lg" decorative />
       </Link>
 
       {/* Status code */}
