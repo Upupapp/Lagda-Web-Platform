@@ -235,3 +235,35 @@ At backend integration time:
 2. Replace each `src/app/services/mock/*.service.ts` with a real adapter
 3. Keep fixture files as a fallback/offline mode for demonstration
 4. Fixture integrity tests become API contract tests
+
+
+---
+
+## Signing Workflow fixtures (Command 37)
+
+`src/app/data/mock/signing-workflow.ts`. All names, organizations, and documents are fictional and
+line up with the existing `txn_001`–`txn_008` transaction fixtures.
+
+| Fixture | Document | Scenario |
+|---------|----------|----------|
+| `wf_001` | txn_001 | Sequential two-stage signing. Stage 1 complete, stage 2 current. |
+| `wf_002` | txn_002 | Review (no signature) → Approval (+ signature) → parallel Signing → Distribution. Fully completed. |
+| `wf_003` | txn_003 | Parallel signing in progress, two of four complete, distribution waiting. |
+| `wf_004` | txn_004 | Draft with deliberate issues: missing signature field, a field owned by another participant, a stale field reference, an empty distribution stage, and an ordered stage. |
+| `wf_006` | txn_006 | Expired workflow, one participant complete, one expired. |
+| `wf_008` | txn_008 | Blocked workflow (authentication not completed), later stage waiting. |
+
+`txn_005` and `txn_007` deliberately have **no** workflow so the empty state and the
+"create from current recipient order" path can both be exercised. `txn_007` is also in
+`PREVIEW_UNAVAILABLE_DOCUMENT_IDS` so the preview-failure fallback can be exercised.
+
+Also defined: `WORKFLOW_PARTICIPANT_CANDIDATES` (contacts, workspace members, one suspended
+member, and one member in a different workspace — the last two must never appear in the picker)
+and `WORKFLOW_TEMPLATE_BLUEPRINTS` (three reusable stage structures using role placeholders).
+
+Scenarios: `signingWorkflowService.setWorkflowScenario()` accepts `standard`,
+`preview-unavailable`, `partial-error`, `full-error`.
+
+Contains no signature representations, no evidence payloads, no authentication codes, no access
+tokens, no recipient links, no field values, and no legal-validity claims. Field references carry
+a type, a page number, and an owning assignment only.

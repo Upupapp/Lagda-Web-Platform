@@ -114,3 +114,30 @@ The product is in **"Active in Demonstration"** phase — not Live, not Deployed
 ## Backend Readiness Requirement for Launch
 
 The frontend is decoupled and backend-ready. A backend API implementing the contracts in `docs/backend-integration-handoff.md` is required for any production deployment. The frontend will connect when `VITE_API_BASE_URL` is set to a real backend endpoint.
+
+
+---
+
+## Signing Workflow (Command 37)
+
+In scope for the eSignature MVP as a launch-core capability:
+
+- A Workflow tab in Document Details showing a stage-based Kanban status board, plus Timeline and
+  List views of the same data.
+- Guided creation of a signing workflow: named ordered stages, people assigned to each stage, an
+  explicit required action per person (Sign, Approve, Review, Acknowledge, View, Receive a Copy),
+  and an explicit individual electronic-signature and initials requirement per person.
+- Sequential execution between stages; parallel (default) or ordered execution within a stage.
+- One completion rule: all required people must complete their action.
+- Field readiness validation tying every signature requirement to that person's own Signature
+  field, and a repair path into Field Placement.
+- Review screen, creation result, and stage details.
+- Optional conversion of an existing recipient order into stages, with preview and undo.
+
+Explicitly out of MVP scope: conditional branching, quorum or weighted voting, recipient groups
+("any one of these people may sign"), bulk send, collaboration, versioning, contract lifecycle
+management, and any notarial or eNotary stage.
+
+Production enforcement of signing order, participant eligibility, access, signature application,
+and completion requires backend services — see
+`docs/backend-integration-handoff.md` § 40.

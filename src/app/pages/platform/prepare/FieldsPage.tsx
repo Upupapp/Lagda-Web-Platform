@@ -11,6 +11,7 @@ import React, {
   useEffect,
   useRef,
   useCallback,
+  useMemo,
   useState,
 } from "react";
 import { useNavigate } from "react-router";
@@ -1416,9 +1417,12 @@ interface ToolbarProps {
   showKbDialog:  boolean;
   setShowKbDialog: (v: boolean) => void;
   onContinue:    () => void;
+  /** Validated internal path to return to (Command 37 workflow round-trip). */
+  returnTo:      string | null;
+  returnLabel:   string;
 }
 
-function EditorToolbar({ draftTitle, participants, draft, showKbDialog, setShowKbDialog, onContinue }: ToolbarProps) {
+function EditorToolbar({ draftTitle, participants, draft, showKbDialog, setShowKbDialog, onContinue, returnTo, returnLabel }: ToolbarProps) {
   const {
     undo, redo, canUndo, canRedo,
     zoom, setZoom,
@@ -1480,13 +1484,13 @@ function EditorToolbar({ draftTitle, participants, draft, showKbDialog, setShowK
         minHeight:   50,
       }}
     >
-      {/* Back */}
+      {/* Back — returns to the caller when a validated internal returnTo was supplied */}
       <button
-        onClick={() => navigate("/app/prepare/review")}
-        aria-label="Back to Review step"
+        onClick={() => navigate(returnTo ?? "/app/prepare/review")}
+        aria-label={returnTo ? `Back to ${returnLabel}` : "Back to Review step"}
         style={{ ...btnBase, border: "1px solid #2D4059", background: "transparent", color: "#BDC8D4" }}
       >
-        ← Review
+        ← {returnLabel}
       </button>
 
       <div style={{ width: 1, height: 24, background: "#2D4059", flexShrink: 0 }} role="separator" />
@@ -1590,6 +1594,18 @@ function EditorToolbar({ draftTitle, participants, draft, showKbDialog, setShowK
 function FieldsPageInner() {
   const navigate = useNavigate();
   const { draft, setStep } = usePrepare();
+
+  // Command 37: the Signing Workflow can send the sender here to assign a
+  // participant's own fields. Only an internal /app/... path is ever accepted, and
+  // no participant name, email, requirement, or field value is carried in the URL.
+  const returnTo = useMemo(() => {
+    const raw = new URLSearchParams(window.location.search).get("returnTo");
+    if (!raw) return null;
+    if (!raw.startsWith("/app/documents/")) return null;
+    if (raw.includes("//") || raw.includes("..") || /[<>"']/.test(raw)) return null;
+    return raw.slice(0, 200);
+  }, []);
+  const returnLabel = returnTo ? "Signing Workflow" : "Review";
   const {
     loadState, errorMessage,
     initialize, discard,
@@ -1697,7 +1713,9 @@ function FieldsPageInner() {
         draft={draft}
         showKbDialog={showKbDialog}
         setShowKbDialog={setShowKbDialog}
-        onContinue={() => navigate("/app/prepare/confirmation")}
+        onContinue={() => navigate(returnTo ?? "/app/prepare/confirmation")}
+        returnTo={returnTo}
+        returnLabel={returnLabel}
       />
 
       {/* Body */}

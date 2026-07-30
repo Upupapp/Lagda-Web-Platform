@@ -165,6 +165,13 @@ const ActivityTab     = lazy(() => import("./app/pages/platform/documents/Transa
 const EvidenceTab     = lazy(() => import("./app/pages/platform/documents/TransactionDetailPage").then(m => ({ default: m.EvidenceTab })));
 const SettingsTab     = lazy(() => import("./app/pages/platform/documents/TransactionDetailPage").then(m => ({ default: m.SettingsTab })));
 
+// Signing Workflow (Command 37) — nested inside Document Details so the document
+// shell renders exactly once and document access is already established.
+const WorkflowTab             = lazy(() => import("./app/pages/platform/documents/workflow/WorkflowTab").then(m => ({ default: m.WorkflowTab })));
+const WorkflowCreatePage      = lazy(() => import("./app/pages/platform/documents/workflow/WorkflowCreatePage").then(m => ({ default: m.WorkflowCreatePage })));
+const WorkflowReviewPage      = lazy(() => import("./app/pages/platform/documents/workflow/WorkflowReviewPage").then(m => ({ default: m.WorkflowReviewPage })));
+const WorkflowStageDetailPage = lazy(() => import("./app/pages/platform/documents/workflow/WorkflowStageDetailPage").then(m => ({ default: m.WorkflowStageDetailPage })));
+
 // Templates (Command 21)
 const TemplatesPage       = lazy(() => import("./app/pages/platform/templates/TemplatesPage").then(m => ({ default: m.TemplatesPage })));
 const CreateTemplatePage  = lazy(() => import("./app/pages/platform/templates/CreateTemplatePage").then(m => ({ default: m.CreateTemplatePage })));
@@ -399,6 +406,12 @@ export const router = createBrowserRouter([
         element: <Suspense fallback={null}><TransactionDetailLayout /></Suspense>,
         children: [
           { index: true,              element: <Suspense fallback={null}><OverviewTab /></Suspense> },
+          // Signing Workflow (C37) — static workflow paths BEFORE :stageId to prevent
+          // shadowing. All four are guarded by the signing-workflow capability.
+          { path: "workflow",                  element: <CapabilityGuard capabilityId="signing-workflow"><Suspense fallback={null}><WorkflowTab /></Suspense></CapabilityGuard> },
+          { path: "workflow/create",           element: <CapabilityGuard capabilityId="signing-workflow"><Suspense fallback={null}><WorkflowCreatePage /></Suspense></CapabilityGuard> },
+          { path: "workflow/review",           element: <CapabilityGuard capabilityId="signing-workflow"><Suspense fallback={null}><WorkflowReviewPage /></Suspense></CapabilityGuard> },
+          { path: "workflow/stages/:stageId",  element: <CapabilityGuard capabilityId="signing-workflow"><Suspense fallback={null}><WorkflowStageDetailPage /></Suspense></CapabilityGuard> },
           { path: "participants",     element: <Suspense fallback={null}><ParticipantsTab /></Suspense> },
           { path: "activity",        element: <Suspense fallback={null}><ActivityTab /></Suspense> },
           { path: "evidence",        element: <Suspense fallback={null}><EvidenceTab /></Suspense> },

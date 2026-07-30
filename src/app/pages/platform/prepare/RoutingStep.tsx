@@ -403,6 +403,27 @@ export function RoutingStep() {
         </p>
       </div>
 
+      {/* Command 37: the Signing Workflow tab turns this routing order into named
+          stages with an explicit required action and eSignature requirement per person.
+          It is optional — simple routing configured here continues to work on its own,
+          and Workflow Automation is never required. */}
+      <div
+        style={{
+          ...GF, marginBottom: 24, padding: "14px 16px", borderRadius: 10,
+          border: "1px solid #C8E1F5", background: "#F0F9FF",
+        }}
+      >
+        <p style={{ fontSize: 13, fontWeight: 700, color: NAVY, margin: "0 0 4px" }}>
+          Need named stages and per-person requirements?
+        </p>
+        <p style={{ fontSize: 12.5, color: SILVER, margin: 0, lineHeight: 1.6 }}>
+          After this document exists, its Signing Workflow tab can turn the routing order below
+          into named stages — each with an explicit required action and an individual electronic
+          signature requirement for every person. Routing configured here keeps working on its own,
+          and nothing here depends on Workflow Automation.
+        </p>
+      </div>
+
       {/* Errors / Warnings */}
       {routeErrors.length > 0 && (
         <ul aria-live="polite" style={{ ...GF, listStyle: "none", margin: "0 0 16px", padding: "10px 14px", borderRadius: 8, border: "1px solid #F5C6CB", background: "#FFF5F5", fontSize: 13, color: "#C0392B" }}>

@@ -120,3 +120,33 @@ The following capabilities were planned but are **not implemented** in C1–C32 
 | enotary | not-started | not-defined |
 
 All frontend capabilities are `complete-demonstration`. No backend is yet defined.
+
+
+---
+
+## Signing Workflow (Command 37)
+
+| Field | Value |
+|-------|-------|
+| Capability ID | `signing-workflow` |
+| Label | Signing Workflow |
+| Group | Core |
+| Maturity | `launch-core` |
+| Enabled by default | Yes |
+| Frontend readiness | `complete-demonstration` |
+| Backend readiness | `contract-defined` |
+| Public launch ready | Yes |
+| Navigation visibility | No (lives inside Document Details) |
+| Search visibility | Yes (document Workflow tab destinations only) |
+| Command palette visibility | Yes (navigation only) |
+| Dashboard visibility | No |
+| Permissions | `view_documents` (read), `prepare_documents` (write) |
+| Feature flag | `documentsEnabled` |
+| Indexable | No |
+| Sitemap | Excluded |
+| Safe fallback route | `/app/documents` |
+| Depends on | `documents` |
+| Does NOT depend on | `workflow-automation` |
+
+Signing Workflow is launch core and works with Workflow Automation disabled. Workflow Automation
+remains `enterprise-preview` and is not a launch dependency of this feature.

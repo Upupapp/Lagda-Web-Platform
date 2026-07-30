@@ -241,3 +241,34 @@ See `docs/backend-integration-handoff.md` for the full backend requirements. Sum
 - Pagination contracts need to be agreed before `list()` operations go to a real API
 - Idempotency keys needed for signing requests, invitation sends, and plan changes
 - Audit log entries need to be server-generated; the current activity fixtures are frontend-seeded
+
+
+---
+
+## Signing Workflow service (Command 37)
+
+`src/app/services/mock/signing-workflow.service.ts` — one canonical service boundary for the
+per-document Signing Workflow feature. Pages never call it directly for reads; the
+`useWorkflowData` hook (`src/app/pages/platform/documents/workflow/useWorkflowData.ts`) owns
+loading, cancellation, capability resolution, and permission mapping.
+
+Two pure engines sit alongside it and are shared by every surface:
+
+| Module | Responsibility |
+|--------|----------------|
+| `src/app/services/signing-workflow.validation.ts` | The single validation engine. `validateSigningWorkflow()` and `computeFieldReadiness()`. No component contains its own validation logic. |
+| `src/app/services/signing-workflow.resolver.ts` | The single current/next-stage, completion, and progress resolver. Visual board order never determines the current stage. |
+
+Contract notes:
+
+- Every method takes a `SigningWorkflowContext` carrying `workspaceId`, `teamId`,
+  `capabilityAvailable`, `canView`, `canEdit`, and an optional `AbortSignal`.
+- Every ID is shape-validated with `isSafeWorkflowIdValue` before use.
+- All results are `ServiceResult<T>` from `models/errors.ts`.
+- Reorder operations require an exact permutation of existing IDs; they can never add, remove, or
+  invent an item.
+- Derived state (role, blocking, signature coherence, field readiness, configuration status) is
+  recomputed by the service on every load and mutation, so the UI can never set it directly.
+- `clearWorkspaceScopedWorkflows()` runs on workspace switch and
+  `resetSigningWorkflowDemonstration()` on sign-out, both wired in `PlatformContext`.
+- No network request, no persistence, no storage API.

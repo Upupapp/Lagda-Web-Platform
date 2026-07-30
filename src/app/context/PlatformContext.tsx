@@ -31,6 +31,7 @@ import { MOCK_NOTIFICATIONS } from "../data/mock";
 import { globalSearchService } from "../services/mock/global-search.service";
 import { documentOrganizationService } from "../services/mock/document-organization.service";
 import { workflowAutomationService } from "../services/mock/workflow-automation.service";
+import { signingWorkflowService } from "../services/mock/signing-workflow.service";
 import { ACTIVE_LAUNCH_PROFILE, resolveCapability, buildCapabilityContext } from "../config/capability-resolver";
 import type { LaunchProfileId, CapabilityResolution, ProductCapabilityId } from "../models/product-capability";
 
@@ -132,6 +133,9 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
     globalSearchService.resetGlobalSearchDemonstration();
     documentOrganizationService.resetDocumentOrganizationDemonstration();
     workflowAutomationService.resetWorkflowAutomationDemonstration();
+    // Clears every signing-workflow draft, stage selection, and demonstration activity
+    // record before the next account can load.
+    signingWorkflowService.resetSigningWorkflowDemonstration();
     setSessionStatus("unauthenticated");
     setUser(null);
     setWorkspaces([]);
@@ -147,6 +151,7 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
     globalSearchService.clearWorkspaceScopedDestinations();
     documentOrganizationService.clearWorkspaceScopedOrganization(ws.id);
     workflowAutomationService.clearWorkspaceScopedAutomation(ws.id);
+    signingWorkflowService.clearWorkspaceScopedWorkflows(ws.id);
     setCurrentWorkspace(ws);
     setRole(ws.role);
     // In production: re-fetch documents, notifications, etc. for the new workspace.

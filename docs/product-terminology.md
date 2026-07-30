@@ -134,3 +134,35 @@ Use these exact phrases in UI where actions are simulated:
 - "This plan change is simulated in frontend state. No subscription, invoice, payment, seat allocation, or feature entitlement is changed by a backend."
 - "This creates a frontend export-request demonstration only. No archive is generated and no data is delivered."
 - "This creates a frontend account-closure request demonstration only. No account, Workspace, document, transaction, or stored data is deleted."
+
+
+---
+
+## Signing Workflow terminology (Command 37)
+
+**"Workflow" alone is ambiguous — never use it unqualified.**
+
+| Use | Not |
+|-----|-----|
+| Signing Workflow (per-document recipient routing, C37) | Workflow |
+| Workflow Automation (workspace-wide rules and policies, C32) | Workflow |
+| Stage | Step, column, swimlane, task list |
+| Participant assignment | Task, ticket, card, item |
+| Required action | Role (a role is who they are; an action is what they must do) |
+| Electronic signature required | Signed, signature captured |
+| Approval + Signature | Approval (when a signature is also required) |
+| Review Only | Approval (a review is never an approval) |
+| Acknowledgment + Signature | Signature (when acknowledgment is the action) |
+| Copy Only / Receive a Copy | Recipient, viewer |
+| Field readiness | Compliance, validity, legal readiness |
+| Workflow Preview / Created in Frontend Demonstration | Workflow activated, request sent |
+| Ready for Review | Ready to send |
+| Current Stage in Demonstration | Current stage |
+| Notification Preview | Notification sent, recipients notified |
+| Stage progress | Completion score, productivity |
+
+**Never say** (unless the production event actually occurred): workflow activated · recipients
+notified · request sent · signature received · stage legally completed · evidence recorded ·
+workflow persisted · reminder delivered · email sent · legally approved · guaranteed valid signing
+order · court-approved routing · certified stage · verified identity · notarized · immutable
+workflow history · evidence-backed board · guaranteed enforceability.

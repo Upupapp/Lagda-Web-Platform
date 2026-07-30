@@ -223,3 +223,36 @@ Every authenticated platform screen uses demonstration data. Key screens:
 - All settings pages — fictional profile, security, billing, usage, integrations
 - Recipient flow — fictional signing requests (navigate to /sign/:requestId with fixture IDs)
 - Verification — fictional verification records (navigate to /verify with fixture IDs)
+
+
+---
+
+## Signing Workflow (Command 37)
+
+1. **No automated tests.** The repository has no test framework (no vitest, jest, playwright, or
+   axe). No C37 tests could be written or run. Verification was a production build plus a strict
+   TypeScript check of the new files using a temporary config and `npx typescript`.
+2. **No type-checking or linting in the repository.** There is no `tsconfig.json`, no `typescript`
+   dependency, and no ESLint configuration. `npm run check` is an alias for `vite build`, which
+   uses esbuild and does not type-check. Adding `tsconfig.json` and a `typecheck` script is the
+   highest-value follow-up.
+3. **Ten pre-existing type errors** exist outside C37 and were left untouched:
+   `capability-resolver.ts` (ImportMeta cast), `PlatformContext.tsx` (PlatformFlags cast), and
+   `global-search.service.ts` (saved-view `description`, and the C32 automation builder using
+   `subtitle` / `matchFields` / `score` instead of `description` / `matchedFields` / `matchScore`).
+4. **Field Placement round trip is conditional.** The workflow passes a validated `returnTo`, and
+   `FieldsPage` now honours it, but the field editor is bound to an active preparation draft.
+   Opening it for a document without one redirects safely to `/app/prepare`.
+5. **No Dashboard or Documents-list workflow projections.** Optional in the brief and deliberately
+   deferred: adding a workflow column to the documents list would require loading workflow state
+   for every row, which is a real performance and access-scoping cost for a secondary signal.
+6. **Progress is fixture-derived, not enforced.** Stage advancement, participant eligibility, and
+   completion come from deterministic frontend fixtures. Nothing is persisted, sent, signed, or
+   enforced.
+7. **No recipient groups, quorum, weighted voting, or conditional branching.** Deliberate: the
+   repository contains no approved Recipient Group model with legal, permission, access, field,
+   and notification boundaries.
+8. **Haptics are disabled by default.** No approved interaction-preference opt-in exists, so
+   `interaction-feedback.ts` is a permanent no-op in this build.
+9. **NOTIFY and STITCH skills are not registered** in this environment, so neither was invoked.
+   The notification event table in the C37 doc is the deliverable NOTIFY would have produced.

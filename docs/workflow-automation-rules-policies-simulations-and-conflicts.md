@@ -274,3 +274,32 @@ Automation rules and policies appear as `navigation-command` results under the `
 ## 10. Backend Handoff Notes
 
 See `docs/backend-integration-handoff.md` §38 for the full endpoint specification, access control rules, and prohibited action enforcement requirements.
+
+
+---
+
+## Boundary with Signing Workflow (Command 37)
+
+Command 37 added **Signing Workflow** — per-document, stage-based recipient routing at
+`/app/documents/:documentId/workflow*`. It is a different system from Workflow Automation and the
+two must never be merged.
+
+| | Signing Workflow (C37) | Workflow Automation (C32) |
+|---|---|---|
+| Scope | One document transaction | Workspace-wide |
+| Primitive | Stage → participant assignment → required action | Rule → trigger → condition → action; Policy |
+| Capability | `signing-workflow` | `workflow-automation` |
+| Maturity | `launch-core`, enabled by default | `enterprise-preview`, disabled by default |
+| Feature flag | `documentsEnabled` | `automationEnabled` |
+| Permissions | `view_documents` / `prepare_documents` | `view_workflow_automation` / `manage_workflow_automation` |
+
+Hard rules:
+
+- Signing Workflow imports nothing from `models/workflow-automation.ts` or
+  `services/mock/workflow-automation.service.ts`.
+- Signing Workflow works fully with `automationEnabled: false` — the default launch profile.
+- `view_workflow_automation` never grants Signing Workflow access, and `view_documents` never
+  grants Workflow Automation access.
+- The Signing Workflow UI never mentions Rules, Policies, Simulations, or Conflicts.
+- Global search never presents a Workflow Automation record as a Signing Workflow record.
+- Workflow Automation remains an Enterprise Preview capability and is not a launch dependency.

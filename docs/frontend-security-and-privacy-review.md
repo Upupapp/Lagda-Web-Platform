@@ -154,3 +154,63 @@ These limitations exist by design in the frontend-only phase and are not defects
 8. returnTo validation — should be allowlisted to known /app/* paths before production deployment.
 
 All limitations are honestly disclosed in the UI via DEMO_NOTICE components and are documented in `docs/frontend-known-limitations.md`.
+
+
+---
+
+## Signing Workflow (Command 37)
+
+### Never rendered
+
+Signature representations · Signature Library records · authentication codes · access tokens ·
+recipient links · consent evidence · IP addresses · device evidence · filled field values ·
+another participant's private status · another workspace's workflow · another team's participants.
+
+Participant email addresses arrive already masked from the transaction fixtures
+(`m****@example.com`) and are never unmasked anywhere in the feature.
+
+### Signature Library boundary
+
+The participant configuration panel states explicitly that a person's saved signature is private
+to them. The sender cannot select, view, or apply another participant's Signature Library item,
+and no Signature Library service is imported by any C37 module.
+
+### Drag payload
+
+The HTML5 drag payload contains **only an opaque assignment ID**. No name, email, requirement,
+readiness, or field data is placed in `dataTransfer`.
+
+### Input handling
+
+Every user-authored string passes through `normalizeWorkflowText()`: control characters stripped,
+whitespace collapsed, length-capped, plain text only. No `dangerouslySetInnerHTML` and no HTML is
+accepted, stored, or rendered as markup anywhere in the feature.
+
+### Route and query safety
+
+- Path values `documentId` and `stageId` are shape-validated against `^[A-Za-z0-9_-]{1,64}$`.
+- `view` and `step` are validated against whitelists and fall back to safe defaults.
+- `returnTo` must start with `/app/documents/`, must not contain `//`, `..`, or `<>"'`, and is
+  capped at 200 characters.
+- No email, name, document title, signature requirement, or field value is ever placed in a URL.
+- No query value can create a stage, reorder stages, complete a participant, broaden access, or
+  elevate the capability profile.
+- The creation result is delivered via router `state`, not the URL, so it cannot be forged.
+
+### Authorization boundary
+
+A hidden Workflow tab is never treated as authorization — the four routes are independently
+guarded by `CapabilityGuard` plus permission checks inside each page and inside the service.
+Feature flags never grant document access. Workflow configuration never grants document access.
+Assigning a person never grants them access. Plan availability never grants permission.
+`view_workflow_automation` never grants Signing Workflow access.
+
+### Storage
+
+Nothing is written to `localStorage` or `sessionStorage`. All workflow state is in-memory and is
+cleared on workspace switch, sign-out, and page reload.
+
+### eNotary
+
+No notary stage, notarial role, notarial session, seal stage, or accreditation stage exists in the
+feature. No active eNotary workflow can appear.

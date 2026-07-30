@@ -806,3 +806,115 @@ Commands 33 (Bulk Send) and 34 (Real-time Collaboration) were not implemented. T
 ### Backend Priority Reference
 
 See `docs/backend-implementation-priority.md` for the full P0→P3 endpoint list with recommended implementation order.
+
+
+---
+
+## 40. Signing Workflow — Stage Routing and eSignature Requirements (C37)
+
+Frontend reference: `docs/signing-workflow-stage-routing-kanban-and-esignature-requirements.md`
+Mock service: `src/app/services/mock/signing-workflow.service.ts`
+Domain models: `src/app/models/signing-workflow.ts`
+
+**Nothing in Command 37 is implemented on a backend.** All workflow state, stage state,
+participant assignment state, progress, notification direction, and completion behaviour is
+deterministic in-memory frontend state that resets on reload, workspace switch, and sign-out.
+
+This is a DIFFERENT system from Workflow Automation (§38). Signing Workflow is per-document
+recipient routing and is `launch-core`; Workflow Automation is workspace-wide rules and is
+`enterprise-preview`. Do not merge their persistence, endpoints, or permissions.
+
+### Required endpoints
+
+| Method | Path | Replaces |
+|--------|------|----------|
+| GET    | /api/documents/:documentId/signing-workflow | getDocumentWorkflow, getWorkflowSummary |
+| POST   | /api/documents/:documentId/signing-workflow | createWorkflowDraft |
+| PATCH  | /api/documents/:documentId/signing-workflow/:workflowId | updateWorkflowDraft |
+| DELETE | /api/documents/:documentId/signing-workflow/:workflowId | removeWorkflowDraftDemonstration |
+| POST   | /api/documents/:documentId/signing-workflow/:workflowId/activate | createWorkflowPreview (real activation) |
+| GET    | /api/documents/:documentId/signing-workflow/:workflowId/stages | listWorkflowStages |
+| POST   | /api/documents/:documentId/signing-workflow/:workflowId/stages | addWorkflowStage |
+| GET    | /api/documents/:documentId/signing-workflow/:workflowId/stages/:stageId | getWorkflowStage |
+| PATCH  | /api/documents/:documentId/signing-workflow/:workflowId/stages/:stageId | updateWorkflowStage |
+| DELETE | /api/documents/:documentId/signing-workflow/:workflowId/stages/:stageId | removeWorkflowStage |
+| POST   | /api/documents/:documentId/signing-workflow/:workflowId/stages/:stageId/duplicate | duplicateWorkflowStage |
+| PUT    | /api/documents/:documentId/signing-workflow/:workflowId/stage-order | reorderWorkflowStages |
+| POST   | /api/documents/:documentId/signing-workflow/:workflowId/stages/:stageId/assignments | addStageParticipant |
+| PATCH  | .../assignments/:assignmentId | updateStageParticipant |
+| DELETE | .../assignments/:assignmentId | removeStageParticipant |
+| PUT    | .../stages/:stageId/assignment-order | reorderStageParticipants |
+| GET    | .../signing-workflow/:workflowId/validation | validateWorkflow |
+| GET    | .../signing-workflow/:workflowId/progress | getWorkflowProgress |
+| GET    | .../signing-workflow/:workflowId/field-readiness | getFieldReadiness |
+| GET    | .../signing-workflow/:workflowId/preview | getWorkflowDocumentPreview |
+| GET    | .../signing-workflow/candidates | listParticipantCandidates |
+| POST   | .../signing-workflow/convert-from-recipient-order | applyRecipientOrderConversion |
+
+### Production requirements
+
+**Persistence**
+- Signing workflow persistence, scoped to one document transaction, one workspace, one team.
+- Stage persistence with a stable ID, name, description, type, execution mode, completion rule.
+- Stage ordering persisted as a contiguous 1..n sequence; reorder must be a permutation-only
+  operation that cannot add, remove, or invent a stage.
+- Participant assignment persistence keyed to the canonical participant identity, never a copy.
+- Participant action requirements and per-participant eSignature/initials requirements, each
+  recorded with its explicit source (action-implied vs. explicit sender choice).
+
+**Field assignment validation**
+- A Sign assignment MUST have a Signature field owned by that assignment.
+- Approve/Review/Acknowledge with a signature requirement MUST have a Signature field owned by
+  that assignment.
+- Exactly one assignment owns any given Signature or Initials field. Reject shared ownership.
+- View and Receive-a-Copy assignments MUST NOT carry a signature or initials requirement.
+- Detect removed and reassigned fields and surface them as validation issues.
+
+**Routing state machine**
+- Stage activation: a stage becomes ready only when every blocking assignment in the prior stage
+  has completed.
+- Participant eligibility: parallel stages make all blocking assignments eligible together;
+  ordered stages gate each assignment on the prior position.
+- Completion resolution: `all-required-participants-complete`. Non-blocking assignments
+  (View, Receive a Copy) never block. Quorum and weighted voting are NOT in scope.
+- Current-stage and next-stage resolution must be server-authoritative. The frontend resolver
+  in `src/app/services/signing-workflow.resolver.ts` documents the exact expected semantics.
+- Integrate with transaction status: cancelled, voided, expired, and declined transactions
+  terminate the workflow.
+
+**Enforcement (security-critical)**
+- Recipient access, authentication, and consent must be enforced server-side. Workflow
+  configuration MUST NOT grant document access.
+- Signature application, approval, review, acknowledgment, decline, and rejection must be tied to
+  one authenticated identified participant. One participant must never be able to complete
+  another participant's assignment, and a sender must never be able to complete a participant's
+  assignment on their behalf.
+- A participant's Signature Library item must be readable only by that participant.
+- A copy recipient must not receive document access before the approved transaction point.
+
+**Lifecycle and eventing**
+- Expiration, cancellation, voiding, and completion handling.
+- Activity events and Evidence generation remain the canonical transaction systems. Workflow
+  configuration history must NOT be presented as an audit trail or as Evidence.
+- Notification event publication via a transactional outbox for the seven events defined in
+  `SIGNING_WORKFLOW_NOTIFICATION_DEFINITIONS`.
+- Reminder scheduling and cancellation honouring all ten stop conditions (participant completed,
+  declined, rejected, stage completed, workflow completed, transaction cancelled, voided,
+  expired, participant removed, access revoked).
+- Email delivery is owned by the existing notification service (§12, §24). Do not add a second one.
+
+**Operational**
+- Idempotency keys on every mutating endpoint (§28).
+- Optimistic concurrency (version or ETag) on workflow, stage, and assignment updates so two
+  senders cannot silently overwrite each other's routing changes.
+- Authorization: `view_documents` to read, `prepare_documents` to write. Workflow Automation
+  permissions must NOT grant Signing Workflow access.
+- Workspace isolation and team scope on every read and write.
+- Audit requirements, retention, observability, retry behaviour, and error contracts follow
+  §26, §29, §31, §32.
+
+### Explicit non-goals for C37 backend work
+
+Conditional branching, quorum voting, weighted voting, arbitrary completion formulas, recipient
+groups ("any one of these people may sign"), bulk send, collaboration, document versioning,
+contract lifecycle management, and any notarial or eNotary stage.

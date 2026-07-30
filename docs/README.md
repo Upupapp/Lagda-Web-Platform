@@ -232,6 +232,8 @@ Last updated: 2026-07-16 (Commands 1–35 complete)
 | [global-search-command-palette.md](global-search-command-palette.md) | Global Search + Command Palette (C30) |
 | [document-organization.md](document-organization.md) | Document Organization — Folders, Tags, Views, Favorites, Bulk (C31) |
 | [workflow-automation-rules-policies-simulations-and-conflicts.md](workflow-automation-rules-policies-simulations-and-conflicts.md) | Workflow Automation (C32) — enterprise-preview, gated by default |
+| [signing-workflow-stage-routing-kanban-and-esignature-requirements.md](signing-workflow-stage-routing-kanban-and-esignature-requirements.md) | **Signing Workflow (C37)** — per-document stage routing, Kanban board, per-participant eSignature requirements. Launch core, enabled by default. **Not** Workflow Automation. |
+| [signing-workflow-audit.md](signing-workflow-audit.md) | Pre-implementation audit of the routing surface for C37 |
 
 ---
 

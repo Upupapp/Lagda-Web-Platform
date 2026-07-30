@@ -109,3 +109,27 @@ Command 12 · Authenticated `/app/*` Routes
 - **Role on primary:** `owner` — all 17 permissions active
 - **Sign-in flow:** Enter any email + password (≥6 chars) on `/sign-in` → platform session established → redirect to `/app/dashboard`
 - **Sign-out:** Clears in-memory session → redirect to `/sign-in`
+
+
+---
+
+## Signing Workflow (Command 37)
+
+Per-document stage-based recipient routing. Nested inside Document Details so the platform shell
+and document shell each render exactly once. All routes are authenticated, workspace aware, team
+aware, document-access aware, permission aware, capability aware (`signing-workflow`),
+non-indexable, and excluded from the public sitemap.
+
+| Route | Title | Purpose |
+|-------|-------|---------|
+| /app/documents/:transactionId/workflow | Signing Workflow \| LAGDA | Workflow tab + Kanban status board (Board / Timeline / List) |
+| /app/documents/:transactionId/workflow/create | Create Signing Workflow \| LAGDA | Guided six-step creation workspace with the Kanban builder |
+| /app/documents/:transactionId/workflow/review | Review Signing Workflow \| LAGDA | Final review before creating in frontend demonstration |
+| /app/documents/:transactionId/workflow/stages/:stageId | Signing Stage \| LAGDA | Stage configuration, people, progress, checks |
+
+Static `workflow/*` paths are registered before `workflow/stages/:stageId` to prevent shadowing.
+Route titles deliberately contain no document title, participant name, stage name, email, or ID.
+
+Document Details tab order is now: Overview · **Workflow** · Participants · Activity · Evidence ·
+Settings. The Workflow tab is hidden unless the capability resolves as available, the user has
+`view_documents`, and the document type supports participant routing.

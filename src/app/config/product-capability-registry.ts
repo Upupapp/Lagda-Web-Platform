@@ -182,6 +182,36 @@ const REGISTRY: ProductCapability[] = [
     dependencies:             [capabilityId("documents")],
   },
 
+  // ── SIGNING WORKFLOW (C37) ────────────────────────────────────────────────
+  // Stage-based recipient routing for ONE document. This is NOT Workflow Automation.
+  // Launch core, enabled by default, and completely independent of `automationEnabled`.
+  {
+    id:                       capabilityId("signing-workflow"),
+    label:                    "Signing Workflow",
+    description:              "Stage-based signing and approval routing for a document — stages, participant assignments, required actions, and individual eSignature requirements",
+    group:                    "Core",
+    maturity:                 "launch-core",
+    enabledByDefault:         true,
+    frontendReady:            "complete-demonstration",
+    backendReady:             "contract-defined",
+    publicLaunchReady:        true,
+    navigationVisibility:     false,
+    searchVisibility:         true,
+    commandPaletteVisibility: true,
+    dashboardVisibility:      false,
+    permissionRequirements:   ["view_documents"],
+    planRequirements:         [],
+    featureRequirements:      ["documentsEnabled"],
+    routeIds:                 ["app-document-workflow","app-document-workflow-create","app-document-workflow-review","app-document-workflow-stage"],
+    unavailableReason:        "The signing workflow is not available for this document.",
+    previewNotice:            "",
+    safeFallbackRoute:        "/app/documents",
+    indexable:                false,
+    sitemapInclude:           false,
+    backendDependencies:      ["Signing workflow service","Routing state machine","Participant eligibility service","Field assignment validation","Notification event publication"],
+    dependencies:             [capabilityId("documents")],
+  },
+
   // ── FIELD PLACEMENT ───────────────────────────────────────────────────────
   {
     id:                       capabilityId("field-placement"),

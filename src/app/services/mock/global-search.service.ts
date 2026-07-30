@@ -39,6 +39,7 @@ import {
   VALID_SORT_FIELDS,
 } from "../../models/search";
 import { MOCK_TRANSACTIONS, MOCK_TEMPLATES, MOCK_CONTACTS } from "../../data/mock";
+import { SIGNING_WORKFLOW_FIXTURES } from "../../data/mock/signing-workflow";
 import { documentOrganizationService } from "./document-organization.service";
 import { workflowAutomationService } from "./workflow-automation.service";
 import { ACTIVE_LAUNCH_PROFILE, buildCapabilityContext } from "../../config/capability-resolver";
@@ -149,6 +150,40 @@ function buildDocumentResults(query: string): GlobalSearchResult[] {
       matchScore:       computeScore(query, t.title),
       destination:      { type: "platform-route", path: `/app/documents/${t.id}`, requiresPermission: "view_documents" },
       availability:     t.status === "archived" ? "archived" : t.status === "expired" ? "unavailable" : "available",
+      demonstrationOnly: true,
+    }));
+}
+
+// Signing Workflow destinations (Command 37).
+// Safe destinations only: the document's Workflow tab. Deliberately NOT indexed:
+// participant emails or names, signature requirements, field values, authentication
+// data, consent evidence, inaccessible document titles, or Workflow Automation records.
+const SIGNING_WORKFLOW_DOCUMENT_IDS: ReadonlySet<string> = new Set(
+  SIGNING_WORKFLOW_FIXTURES.map(w => w.documentId),
+);
+
+function buildSigningWorkflowResults(query: string): GlobalSearchResult[] {
+  const q = query.toLowerCase();
+  const matchesWorkflowTerm =
+    q.includes("workflow") || q.includes("signing") || q.includes("stage") || q.includes("routing");
+
+  return MOCK_TRANSACTIONS
+    .filter((t) => t.status !== "archived")
+    .filter((t) => matchesWorkflowTerm || tokenMatch(query, t.title))
+    .filter((t) => SIGNING_WORKFLOW_DOCUMENT_IDS.has(t.id))
+    .slice(0, 5)
+    .map((t): GlobalSearchResult => ({
+      id:               `sr_wf_${t.id}` as GlobalSearchResultId,
+      type:             "navigation-command" as GlobalSearchResultType,
+      title:            `Signing Workflow — ${t.title}`,
+      description:      "Stages, people, and required actions for this document",
+      workspaceContext: "Northbridge Legal",
+      matchedFields:    buildMatchFields(query, [
+        { field: "title", label: "Title", text: t.title },
+      ]),
+      matchScore:       computeScore(query, t.title) - 5,
+      destination:      { type: "platform-route", path: `/app/documents/${t.id}/workflow`, requiresPermission: "view_documents" },
+      availability:     "available",
       demonstrationOnly: true,
     }));
 }
@@ -667,7 +702,7 @@ function buildAutomationResults(query: string): GlobalSearchResult[] {
 type ScopeBuilder = (query: string) => GlobalSearchResult[];
 
 const SCOPE_BUILDERS: Partial<Record<GlobalSearchScope, ScopeBuilder[]>> = {
-  "documents":        [buildDocumentResults, buildFolderResults, buildOrgTagResults, buildOrgSavedViewResults],
+  "documents":        [buildDocumentResults, buildSigningWorkflowResults, buildFolderResults, buildOrgTagResults, buildOrgSavedViewResults],
   "my-actions":       [buildMyActionsResults],
   "templates":        [buildTemplateResults],
   "contacts":         [buildContactResults, buildContactGroupResults],

@@ -43,8 +43,9 @@ import {
   RefreshCw,
   ArrowLeft,
   Star,
+  GitBranch,
 } from "lucide-react";
-import { usePlatform } from "../../../context/PlatformContext";
+import { usePlatform, useCapability } from "../../../context/PlatformContext";
 import { PageHeader } from "../../../components/platform/PageHeader";
 import { AppContent } from "../../../components/platform/AppContentLayout";
 import type {
@@ -306,9 +307,19 @@ export function TransactionDetailLayout() {
     return location.pathname.startsWith(base + suffix);
   };
 
+  // Signing Workflow (C37) — routing configuration sits between the document
+  // overview and the participant directory. The tab appears only when the
+  // capability is enabled, the user can view documents, and the document type
+  // supports participant routing. It never replaces Participants, Activity,
+  // Evidence, Field Placement, or Workflow Automation.
+  const workflowCapability = useCapability("signing-workflow");
+  const documentSupportsRouting = !!txn && txn.status !== "archived";
+  const showWorkflowTab = workflowCapability.available && canVerify && documentSupportsRouting;
+
   // Tab visibility
   const TAB_LINKS = [
     { label: "Overview",     icon: <FileText size={14} />,  to: base,                    suffix: "" },
+    { label: "Workflow",     icon: <GitBranch size={14} />, to: `${base}/workflow`,      suffix: "/workflow",   hidden: !showWorkflowTab },
     { label: "Participants", icon: <Users size={14} />,     to: `${base}/participants`,  suffix: "/participants" },
     { label: "Activity",     icon: <Activity size={14} />,  to: `${base}/activity`,      suffix: "/activity" },
     { label: "Evidence",     icon: <Shield size={14} />,    to: `${base}/evidence`,      suffix: "/evidence",   hidden: !canVerify && !canAudit },
