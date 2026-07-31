@@ -198,6 +198,21 @@ eNotary content is limited to the public /enotary/* information pages which clea
 
 ---
 
+## Contacts as a Bulk Send recipient source (Gap Closure Command 1)
+
+| Limitation | Detail |
+|------------|--------|
+| No Team scope for Contacts | The canonical Contacts service exposes no team scoping — no method takes a team argument and `ContactListItem` has no `teamId`. None was invented. Workspace scope **is** enforced client-side; team scope is a backend requirement only. |
+| Workspace filtering is presentation, not authorization | The picker filters by `workspaceId` and a cross-workspace fixture proves the filter bites, but a real backend must enforce tenancy server-side. |
+| Contacts fixtures were re-stamped to the session workspace | They were `ws_northbridge_001` while the session holds `ws_mls_001`, which made a correct tenancy filter return zero Contacts. Aligned to `ws_mls_001` so the filter is real rather than empty. |
+| Bulk Send fixture batches are still invisible at runtime | They remain `ws_northbridge_001`, so `listBatches` filters them out. Reaching the recipients flow requires creating a batch in-session. Pre-existing; not repaired. |
+| One source per batch | `applyRecipientSource` replaces `batch.schema` and `batch.rows` rather than appending, and the selector only renders when a batch has no rows. Duplicate detection against *pre-existing* rows from a different source therefore cannot arise today. |
+| Eligibility is a point-in-time snapshot | A Contact can change between selection and projection. Re-validation at send time is a backend responsibility. |
+| Contact statuses are passed through, not looked up | `buildValidationContext` is synchronous and the Contacts service is async, so the picker forwards the statuses it already holds. A Contact archived after projection is not re-detected. |
+| No automated tests | Verified by executable probes and a production build only; the repository still has no test framework. |
+
+---
+
 ## Feature Gating (C35, re-audited 2026-07-31)
 
 | Limitation | Detail |

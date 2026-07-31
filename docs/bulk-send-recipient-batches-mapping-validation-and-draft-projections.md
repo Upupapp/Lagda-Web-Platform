@@ -213,10 +213,22 @@ record". No eNotary batch, mapping, configuration, projection, or workflow exist
 
 1. **No automated tests.** The repository still has no test framework, `tsconfig.json`, or
    ESLint, so STEP 82/87's suites could not be written or run.
-2. **Contacts and Contact Group sources are declared but not wired to a picker.** The source
-   selector currently offers Demonstration Dataset, Structured Paste, and Local CSV Preview.
-   Contact-sourced rows exist in fixtures and the service accepts `contactId`, but the
-   in-app Contact picker is not connected. This is the largest gap versus the brief.
+2. ~~**Contacts and Contact Group sources are declared but not wired to a picker.**~~
+   ✅ **CLOSED — Gap Closure Command 1 (2026-07-31).** The source selector now offers five
+   sources: Contacts, Contact Groups, Demonstration Dataset, Structured Paste, and Local CSV
+   Preview. A multi-select `ContactRecipientPicker` reads the canonical Contacts service,
+   expands Contact Groups into individual people, de-duplicates by Contact identity, flags
+   distinct Contacts that share an email rather than merging them, and projects rows through
+   the canonical `applyRecipientSource` path with Contact and Contact Group provenance.
+   Full detail: `docs/contact-and-contact-group-recipient-source-gap.md`.
+
+   Carried forward from that work, still open:
+   - **Team scope is not enforced for Contacts** — the canonical Contacts service exposes no
+     team scoping at all, so none was invented. Recorded as a backend requirement.
+   - **Bulk Send fixture batches remain stamped `ws_northbridge_001`** while the session holds
+     `ws_mls_001`, so `listBatches` filters them out and they are invisible at runtime.
+     Reaching the recipients flow requires creating a batch in-session. Pre-existing; not
+     repaired by that command.
 3. **Row inline editing is not built.** Rows can be excluded, restored, and bulk-corrected
    (trim whitespace), but per-cell editing UI is not present; the service method
    (`updateRecipientRow`) exists and is tested by type only.
@@ -234,4 +246,5 @@ record". No eNotary batch, mapping, configuration, projection, or workflow exist
    service-level only.
 9. Pre-existing repo errors are unchanged (137 repo-wide, including `data/mock/templates.ts`).
 
-Items 2–7 are the honest remainder of Command 33 and are the recommended next focus.
+Item 2 is **closed** (Gap Closure Command 1). Items 3–7 are the honest remainder of Command 33
+and are the recommended next focus, in that order.

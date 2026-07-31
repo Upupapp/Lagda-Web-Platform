@@ -8,7 +8,8 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router";
-import { ArrowLeft, ArrowRight, FileText, Upload, Users, Wand2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, FileText, Upload, UserRound, Users, UsersRound, Wand2 } from "lucide-react";
+import { ContactRecipientPicker } from "../../../components/contacts/ContactRecipientPicker";
 import { AppContent } from "../../../components/platform/AppContentLayout";
 import { PageHeader } from "../../../components/platform/PageHeader";
 import { CapabilityUnavailable } from "../../../components/platform/CapabilityUnavailable";
@@ -404,9 +405,14 @@ export function BulkSendRecipientsPage() {
   const [pasteText, setPasteText] = useState("");
   const [preview, setPreview] = useState<BulkSendImportPreview | null>(null);
   const [busy, setBusy] = useState(false);
+  // NOTE: `selected` holds recipient ROW ids for the exclude/restore controls.
+  // Contact selection deliberately lives inside ContactRecipientPicker so the two
+  // cannot corrupt each other.
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [rowFilter, setRowFilter] = useState<string>("all");
+  const [commitError, setCommitError] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+  const rowsPanelRef = useRef<HTMLDivElement>(null);
 
   if (blocked) return blocked;
   if (state === "loading") return <LoadingShell label="Loading recipients" title="Bulk Send Recipients" />;
@@ -415,11 +421,27 @@ export function BulkSendRecipientsPage() {
 
   const commit = async (headers: string[], cells: string[][], src: BulkSendRecipientRowSource, extra = {}) => {
     setBusy(true);
+    setCommitError(null);
     const r = await bulkSendService.applyRecipientSource(batchId!, headers, cells, src, ctx, extra);
     setBusy(false);
     if (r.ok) {
       setBatch(r.data); setPreview(null); setSource(null); setPasteText("");
-      announce(`${r.data.rows.length} recipient rows added. Mappings were suggested deterministically and need review.`);
+      const requested = cells.length;
+      const created = r.data.rows.length;
+      // buildRows silently truncates at BULK_SEND_MAX_ROWS. Say so rather than
+      // letting the counts quietly disagree.
+      const truncated = created < requested
+        ? ` ${requested} were selected and ${created} were added; the rest exceed the row limit for one batch.`
+        : "";
+      announce(`${created} recipient rows added.${truncated} Mappings were suggested deterministically and need review.`);
+      // The source selector this action came from has just been replaced by the
+      // rows panel, so move focus there rather than letting it drop to <body>.
+      window.setTimeout(() => rowsPanelRef.current?.focus(), 60);
+    } else {
+      // Previously there was no else branch at all: a denied or archived batch
+      // produced no error, no announcement, and a silently unchanged screen.
+      setCommitError(r.message ?? "Those recipients could not be added.");
+      announce("Recipients could not be added.");
     }
   };
 
@@ -437,14 +459,28 @@ export function BulkSendRecipientsPage() {
             <div className="bs-panel bs-stack">
               <SectionHeading title="Add recipients"
                 description="Choose one source. Nothing is imported until you confirm, and nothing is uploaded to a server." />
+              {commitError && (
+                <div role="alert" className="bs-card" style={{ padding: 12, background: "#FEF2F2", borderColor: "#FECACA" }}>
+                  <p style={{ ...GF, margin: 0, fontSize: 13, color: "#991B1B" }}>{commitError}</p>
+                </div>
+              )}
               <div className="bs-stack" style={{ gap: 8 }}>
-                {(["deterministic-fixture", "structured-paste", "local-csv-preview"] as BulkSendRecipientRowSource[]).map(s => (
+                {/* Contacts and Contact Groups were declared in the source union and
+                    in the label/privacy maps from the start but never surfaced.
+                    They are gated on canAddRecipients (manage_contacts) because
+                    reading Contacts is what they additionally require; the other
+                    three sources keep their existing behaviour. */}
+                {(["contact", "contact-group", "deterministic-fixture", "structured-paste", "local-csv-preview"] as BulkSendRecipientRowSource[])
+                  .filter(s => (s !== "contact" && s !== "contact-group") || permissions.canAddRecipients)
+                  .map(s => (
                   <button key={s} type="button" className="bs-card"
                     onClick={() => setSource(s)}
                     style={{ padding: 14, textAlign: "left", cursor: "pointer", fontFamily: "inherit", background: BS.white }}>
                     <span className="bs-row" style={{ gap: 8 }}>
                       {s === "local-csv-preview" ? <Upload size={16} color={BS.azure} aria-hidden />
                         : s === "structured-paste" ? <FileText size={16} color={BS.azure} aria-hidden />
+                        : s === "contact" ? <UserRound size={16} color={BS.azure} aria-hidden />
+                        : s === "contact-group" ? <UsersRound size={16} color={BS.azure} aria-hidden />
                         : <Users size={16} color={BS.azure} aria-hidden />}
                       <span style={{ ...GF, fontSize: 14, fontWeight: 700, color: BS.navy }}>
                         {BULK_SEND_SOURCE_LABELS[s]}
@@ -457,6 +493,27 @@ export function BulkSendRecipientsPage() {
                 ))}
               </div>
             </div>
+          )}
+
+          {/* ── Contacts / Contact Groups ─────────────────────────────── */}
+          {(source === "contact" || source === "contact-group") && (
+            <ContactRecipientPicker
+              mode={source === "contact" ? "contacts" : "contact-groups"}
+              workspaceId={ctx.workspaceId}
+              canUseContacts={permissions.canAddRecipients}
+              busy={busy}
+              onCancel={() => { setSource(null); setCommitError(null); }}
+              onAdd={(payload, sourceKind) => commit(
+                payload.headers,
+                payload.cells,
+                sourceKind,
+                {
+                  contactIds:      payload.contactIds,
+                  contactGroupIds: payload.contactGroupIds,
+                  contactStatuses: payload.contactStatuses,
+                },
+              )}
+            />
           )}
 
           {/* ── Demonstration dataset ─────────────────────────────────── */}
@@ -547,7 +604,10 @@ export function BulkSendRecipientsPage() {
 
           {/* ── Recipient grid ────────────────────────────────────────── */}
           {batch.rows.length > 0 && (
-            <div className="bs-panel bs-stack">
+            // tabIndex -1 so focus can be moved here after a source is applied.
+            // Without it, adding recipients from the picker unmounts the source
+            // selector and focus falls to <body>.
+            <div className="bs-panel bs-stack" ref={rowsPanelRef} tabIndex={-1} style={{ outline: "none" }}>
               <SectionHeading title="Recipient rows"
                 description="Row status is derived from the current mappings. Excluding a row is not deletion and never changes a Contact record."
                 action={permissions.canEditBatch ? (

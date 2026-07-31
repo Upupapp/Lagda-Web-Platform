@@ -87,6 +87,21 @@ function log(batch: BulkSendBatch, type: BulkSendActivityType, title: string, de
   if (activity.length > 300) activity.length = 300;
 }
 
+// ── Contact statuses observed from the Contacts source ────────────────────────
+//
+// `buildValidationContext` is synchronous and the Contacts service is async, so
+// validation cannot look a Contact up. The Contacts picker therefore passes the
+// statuses it already holds through `applyRecipientSource`, and they are recorded
+// here. Cleared on sign-out and on workspace switch — this map holds Contact IDs
+// and must not survive an account change.
+const _contactStatusById = new Map<string, string>();
+
+function contactIdsWithStatus(status: string): Set<string> {
+  const out = new Set<string>();
+  for (const [id, s] of _contactStatusById) if (s === status) out.add(id);
+  return out;
+}
+
 // ── Validation context ────────────────────────────────────────────────────────
 
 function buildValidationContext(batch: BulkSendBatch, ctx: BulkSendContext): ValidationContext {
@@ -98,8 +113,10 @@ function buildValidationContext(batch: BulkSendBatch, ctx: BulkSendContext): Val
     senderRestricted: false,
     teamRestricted: !!batch.scope.teamId && ctx.teamId !== null && ctx.teamId !== batch.scope.teamId,
     featureUnavailable: scenario === "feature-restricted",
-    archivedContactIds: ARCHIVED_CONTACT_IDS,
-    restrictedContactIds: RESTRICTED_CONTACT_IDS,
+    // Fixture IDs unioned with statuses observed from the real Contacts system,
+    // so a Contact archived in Contacts is flagged here too.
+    archivedContactIds: new Set([...ARCHIVED_CONTACT_IDS, ...contactIdsWithStatus("archived")]),
+    restrictedContactIds: new Set([...RESTRICTED_CONTACT_IDS, ...contactIdsWithStatus("restricted")]),
     folderArchived: batch.organization.folderArchived,
     archivedTagCount: batch.organization.archivedTagNames.length,
     policyStale: batch.policy.stale,
@@ -177,6 +194,10 @@ function buildRows(
   cells: string[][],
   source: BulkSendRecipientRowSource,
   contactIds: (string | null)[] = [],
+  // Index-aligned with `cells`, exactly like `contactIds`. Without this, group
+  // provenance was silently discarded: the field was hardcoded to null, so a row
+  // could never record which Contact Group it came from.
+  contactGroupIds: (string | null)[] = [],
 ): BulkSendRecipientRow[] {
   return cells.slice(0, BULK_SEND_MAX_ROWS).map((cellRow, i) => {
     const values: Record<string, string> = {};
@@ -187,7 +208,7 @@ function buildRows(
       rowNumber: i + 1,
       source,
       contactId: contactIds[i] ?? null,
-      contactGroupId: null,
+      contactGroupId: contactGroupIds[i] ?? null,
       values,
       originalValues: { ...values },
       status: "incomplete",
@@ -513,7 +534,23 @@ class MockBulkSendService {
     cells: string[][],
     source: BulkSendRecipientRowSource,
     ctx: BulkSendContext,
-    extra: { contactIds?: (string | null)[]; fileNameDirection?: string | null; fileSizeBytes?: number | null } = {},
+    extra: {
+      contactIds?: (string | null)[];
+      /** Index-aligned with `cells`, like `contactIds`. */
+      contactGroupIds?: (string | null)[];
+      /**
+       * Statuses of the Contacts being projected. Needed because
+       * `buildValidationContext` is synchronous while the Contacts service is
+       * async, so validation cannot look a Contact up on its own. Without this,
+       * archived and restricted Contacts sourced from the real Contacts system
+       * would validate as clean — the hardcoded fixture ID sets never match a
+       * canonical `contact-*` ID, and `contactId` is a plain string so nothing
+       * type-checks the join.
+       */
+      contactStatuses?: Array<{ contactId: string; status: string }>;
+      fileNameDirection?: string | null;
+      fileSizeBytes?: number | null;
+    } = {},
   ): Promise<ServiceResult<BulkSendBatch>> {
     const g = guard(ctx, true); if (g) return g;
     const batch = find(batchId);
@@ -525,8 +562,15 @@ class MockBulkSendService {
       fileNameDirection: extra.fileNameDirection ?? null,
       fileSizeBytes: extra.fileSizeBytes ?? null,
     });
+    // Record Contact statuses before rows are built so the validation pass that
+    // `refresh()` triggers can see archived/restricted Contacts sourced from the
+    // canonical Contacts system, not just the hardcoded fixture IDs.
+    for (const s of extra.contactStatuses ?? []) {
+      _contactStatusById.set(s.contactId, s.status);
+    }
+
     batch.schema = schema;
-    batch.rows = buildRows(batch, schema, cells, source, extra.contactIds ?? []);
+    batch.rows = buildRows(batch, schema, cells, source, extra.contactIds ?? [], extra.contactGroupIds ?? []);
 
     const template = batch.templateId ? getTemplateById(batch.templateId) : null;
     if (template) {
@@ -1104,6 +1148,8 @@ class MockBulkSendService {
   clearWorkspaceScopedBulkSend(nextWorkspaceId: string): void {
     batches = batches.filter(b => b.scope.workspaceId === nextWorkspaceId);
     activity = activity.filter(a => batches.some(b => b.id === a.batchId));
+    // Holds Contact IDs from the previous workspace.
+    _contactStatusById.clear();
   }
 
   /** Sign-out / account change: clear ALL recipient rows, CSV data, and mappings. */
@@ -1113,6 +1159,8 @@ class MockBulkSendService {
     activity = [];
     scenario = "standard";
     counter = 5000;
+    // Contact IDs must not survive an account change.
+    _contactStatusById.clear();
   }
 
   setScenario(next: BulkSendScenario): void { scenario = next; }

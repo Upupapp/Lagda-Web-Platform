@@ -1086,3 +1086,65 @@ Real-time presence, typing indicators, live cursors, operational transforms, cha
 external-recipient conversation, attachments, comment export, PDF annotation, document
 redaction, field editing through comments, electronic notarization, and accreditation
 workflows.
+
+
+---
+
+## 43. Contacts as a Bulk Send recipient source (Gap Closure Command 1)
+
+**Nothing here is implemented on a backend.** Contact selection, Contact Group
+expansion, eligibility, de-duplication and recipient-row projection are in-memory
+frontend demonstration state. No Contact is read from, written to, or synchronized
+with any service; nothing is imported, invited, sent, or persisted.
+
+Full feature detail: `docs/contact-and-contact-group-recipient-source-gap.md`.
+
+### What the backend must own
+
+**Contact and Contact Group reads**
+- Paginated, searchable Contact list scoped to the caller's workspace. The frontend
+  currently pages client-side at 50 and cannot express a server cursor.
+- Contact Group list, and group membership resolved server-side. Note the frontend
+  found the two membership sides disagree in fixtures (a group's `contactIds` vs a
+  contact's `groupIds`); the backend must pick one authoritative direction.
+- Group member counts must be computed with the same status filter used to list
+  groups, or the count shown on a card will disagree with the expansion.
+
+**Tenancy — currently the weakest point**
+- Workspace scoping must be enforced **server-side**. The frontend filters by
+  `workspaceId`, but that is presentation, not authorization.
+- **Team scope is not implemented at all** on the frontend because the canonical
+  Contacts service exposes none. If Contacts are team-scoped in production, the
+  backend must enforce it and expose it; the frontend claims nothing today.
+- A Contact ID must never grant access. A Contact Group ID must never grant access.
+  Group membership must never imply document permission.
+
+**Eligibility and validation**
+- Re-validate every Contact at projection time, not only at selection time. The
+  frontend resolves eligibility when the picker renders; a Contact can be archived,
+  restricted, removed, or have its address changed between selection and send.
+- Email normalization and validity must match the rules applied to CSV-sourced rows
+  so the two sources cannot disagree about the same address.
+- Distinct Contact records sharing an address must be surfaced as a conflict for
+  review, never silently merged.
+
+**Projection integrity**
+- Contact and Contact Group provenance (`contactId`, `contactGroupId`) must survive
+  the row lifecycle and must not be inferable from a URL.
+- Row-to-Contact attribution is positional in the current frontend contract; a real
+  API should carry the association explicitly per row instead.
+- Row limits must be reported, not silently truncated.
+
+**Operational**
+- Pagination, search, rate limiting, concurrency and idempotency on projection.
+- Behaviour when a Contact is removed or a group's membership changes after rows
+  were projected but before anything is sent.
+- Privacy minimisation: only the fields a recipient row needs should ever leave the
+  Contacts service. Notes, phone numbers, tags, owner and usage history must not.
+- Audit requirements for reading Contacts in bulk, and retention for projected rows.
+- Error contracts consistent with §26.
+
+### Explicit non-goals
+
+Contact import, contact synchronization, CRM behaviour, marketing campaigns,
+recipient invitation delivery, and any notification to a selected Contact.

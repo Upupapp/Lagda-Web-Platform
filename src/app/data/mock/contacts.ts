@@ -16,8 +16,21 @@ import type {
 } from "../../models/contacts";
 
 // ── Workspace / owner constants ───────────────────────────────────────────────
-
-const WS_ID    = "ws_northbridge_001";
+//
+// This MUST be the workspace the signed-in demonstration session actually holds
+// (`MOCK_WORKSPACES[0].id` in data/mock/workspaces.ts), not the older
+// `ws_northbridge_001` that some other fixture families still use.
+//
+// Reason: the Bulk Send Contacts recipient source filters Contacts by the session
+// workspace, as workspace tenancy requires. With the fixtures stamped
+// `ws_northbridge_001` while the session holds `ws_mls_001`, that filter is
+// correct and returns *nothing* — the picker would be permanently empty. The
+// choice is therefore between an empty picker and no tenancy filter at all;
+// aligning the fixture removes the false dilemma and lets the filter be real.
+//
+// `WS_OTHER` below exists so the filter is provably exercised rather than assumed.
+const WS_ID    = "ws_mls_001";
+const WS_OTHER = "ws_southgate_002";
 const OWNER_ID = "user_ana_reyes_001";
 
 // ── Tag IDs ───────────────────────────────────────────────────────────────────
@@ -52,6 +65,7 @@ export const CID_SOFIA       = "contact-sofia-navarro"          as ContactId;
 export const CID_EMILIO      = "contact-emilio-garcia-archived" as ContactId;
 export const CID_MARCO_ALT   = "contact-marco-santos-alt"       as ContactId;
 export const CID_INVALID     = "contact-invalid-email"          as ContactId;
+export const CID_OTHER_WS    = "contact-other-workspace"        as ContactId;
 
 // ── Core fixture contacts ─────────────────────────────────────────────────────
 
@@ -214,6 +228,33 @@ export const CONTACT_INVALID_EMAIL: Contact = {
   groupIds:     [],
   createdAt:    "2026-07-10T15:00:00Z",
   updatedAt:    "2026-07-10T15:00:00Z",
+  lastUsedAt:   undefined,
+  usageCount:   0,
+  demonstrationOnly: true,
+};
+
+/**
+ * Belongs to a DIFFERENT workspace. Exists so workspace tenancy filtering is
+ * provably exercised rather than merely asserted: this Contact must never appear
+ * in any picker, count, suggestion, or projection while the session holds
+ * `ws_mls_001`. It is deliberately given an ordinary name and a valid email so
+ * that nothing but the workspace check can exclude it.
+ */
+export const CONTACT_OTHER_WORKSPACE: Contact = {
+  id:           CID_OTHER_WS,
+  status:       "active",
+  scope:        "workspace",
+  source:       "manually-created",
+  workspaceId:  WS_OTHER,
+  ownerId:      "user_southgate_001",
+  name:         "Beatriz Ocampo",
+  email:        "b.ocampo@example.com",
+  organization: "Southgate Partners",
+  title:        "Administrator",
+  tagIds:       [],
+  groupIds:     [],
+  createdAt:    "2026-06-01T09:00:00Z",
+  updatedAt:    "2026-06-01T09:00:00Z",
   lastUsedAt:   undefined,
   usageCount:   0,
   demonstrationOnly: true,
@@ -403,6 +444,7 @@ export const ALL_BASE_CONTACTS: Contact[] = [
   CONTACT_EMILIO_ARCHIVED,
   CONTACT_MARCO_ALT,
   CONTACT_INVALID_EMAIL,
+  CONTACT_OTHER_WORKSPACE,
 ];
 
 export function getMockContact(id: ContactId): Contact | undefined {

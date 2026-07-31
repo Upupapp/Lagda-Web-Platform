@@ -34,6 +34,7 @@ import { workflowAutomationService } from "../services/mock/workflow-automation.
 import { signingWorkflowService } from "../services/mock/signing-workflow.service";
 import { bulkSendService } from "../services/mock/bulk-send.service";
 import { documentCollaborationService } from "../services/mock/document-collaboration.service";
+import { mockContactService } from "../services/mock/contacts.service";
 import { ACTIVE_LAUNCH_PROFILE, resolveCapability, buildCapabilityContext } from "../config/capability-resolver";
 import type { LaunchProfileId, CapabilityResolution, ProductCapabilityId } from "../models/product-capability";
 
@@ -153,6 +154,12 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
     // response, and collaboration activity record. Comment text must never survive
     // into the next account's session.
     documentCollaborationService.resetCollaborationDemonstration();
+    // Contact session state (session-created Contacts, session Groups, picker log)
+    // previously survived sign-out entirely: clearSessionState() existed but its
+    // only caller was a ContactContext method that itself had no call sites. Now
+    // that Contacts feed Bulk Send recipient rows, that is a live cross-account
+    // path for Contact data.
+    mockContactService.clearSessionState();
     setSessionStatus("unauthenticated");
     setUser(null);
     setWorkspaces([]);
@@ -171,6 +178,9 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
     signingWorkflowService.clearWorkspaceScopedWorkflows(ws.id);
     bulkSendService.clearWorkspaceScopedBulkSend(ws.id);
     documentCollaborationService.clearWorkspaceScopedCollaboration(ws.id);
+    // Session-created Contacts and Groups belong to the previous workspace, and
+    // the Bulk Send Contacts picker reads them.
+    mockContactService.clearSessionState();
     setCurrentWorkspace(ws);
     setRole(ws.role);
     // In production: re-fetch documents, notifications, etc. for the new workspace.
