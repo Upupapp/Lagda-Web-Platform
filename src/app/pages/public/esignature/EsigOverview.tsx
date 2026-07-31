@@ -94,12 +94,11 @@ function StatusReference() {
   return (
     <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
       {TRANSACTION_STATUSES.map((s) => (
-        <div key={s.status} style={{
+        <div key={s.status} title={s.desc} style={{
           display: "flex", alignItems: "center", gap: 6,
           background: "rgba(255,255,255,0.03)",
           border: "1px solid rgba(255,255,255,0.07)",
           borderRadius: 8, padding: "6px 12px",
-          title: s.desc,
         }}>
           <div style={{ width: 6, height: 6, borderRadius: "50%", background: s.color, flexShrink: 0 }} />
           <span style={{ color: "#94a3b8", ...GF, fontSize: 12 }}>{s.status}</span>

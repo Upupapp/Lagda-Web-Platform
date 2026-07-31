@@ -81,7 +81,7 @@ export function detectDelimiter(text: string): TabularDelimiter | null {
 
   for (const delimiter of CANDIDATE_DELIMITERS) {
     const counts = lines.map(l => splitLine(l, delimiter).length);
-    const first = counts[0];
+    const first = counts[0] ?? 0;
     if (first < 2) continue;
     const consistent = counts.filter(c => c === first).length;
     // Prefer consistency, then column count.
@@ -219,11 +219,12 @@ export function parseTabularText(
   }
 
   const records = splitRecords(text).filter(r => r.trim().length > 0);
-  if (records.length === 0) {
+  const firstRecord = records[0];
+  if (firstRecord === undefined) {
     return { ...EMPTY_RESULT, delimiter, errors: ["No rows were found."] };
   }
 
-  const firstCells = splitLine(records[0], delimiter);
+  const firstCells = splitLine(firstRecord, delimiter);
   const headerDetected = looksLikeHeader(firstCells);
 
   let headers: string[];

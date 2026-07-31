@@ -37,8 +37,8 @@ function EntryPreview({ entry }: { entry: SignatureLibraryEntry }) {
         }}
       >
         <span style={{
-          fontFamily: style.fontFamily, fontSize: style.fontSize,
-          fontStyle:  style.fontStyle,  color: NAVY, padding: "8px 24px",
+          fontFamily: style?.fontFamily, fontSize: style?.fontSize,
+          fontStyle:  style?.fontStyle,  color: NAVY, padding: "8px 24px",
           textAlign: "center", wordBreak: "break-word",
         }}>
           {rep.typedText}

@@ -550,11 +550,11 @@ class DocumentOrganizationService {
 
   getDocumentTagAssignments(documentIds: readonly string[], availableTags: OrgTag[]): OrgTagAssignment[] {
     return availableTags.filter(t => t.status === "active").map(tag => {
-      const assigned = documentIds.filter(id => (_docTags[id] ?? []).includes(tag.id as OrgTagId));
+      const assigned = documentIds.filter(id => (_docTags[id] ?? []).includes(tag.id));
       let state: OrgTagAssignment["state"] = "none";
       if (assigned.length === documentIds.length) state = "all";
       else if (assigned.length > 0) state = "some";
-      return { tagId: tag.id as OrgTagId, tagName: tag.name, style: tag.style, state };
+      return { tagId: tag.id, tagName: tag.name, style: tag.style, state };
     });
   }
 

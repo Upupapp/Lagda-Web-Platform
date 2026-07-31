@@ -384,7 +384,7 @@ function UseTemplateInner() {
     }
   }, [t?.id]);
 
-  usePageMeta(t ? `Use ${t.name} — LAGDA` : "Use Template — LAGDA");
+  usePageMeta();
 
   const handleMappingChange = (idx: number, patch: Partial<TemplateRoleMapping>) => {
     setMappings(m => m.map((r, i) => i === idx ? { ...r, ...patch } : r));

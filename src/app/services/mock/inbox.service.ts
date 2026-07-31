@@ -331,7 +331,7 @@ const FIXTURES: RecipientInboxItem[] = [
 // ── Module-level state ────────────────────────────────────────────────────────
 
 // Deep-copy the fixtures so the service state is independent of the const array
-let _items: RecipientInboxItem[] = FIXTURES.map(f => ({ ...f }));
+const _items: RecipientInboxItem[] = FIXTURES.map(f => ({ ...f }));
 
 // ── Filter and sort helpers ───────────────────────────────────────────────────
 
@@ -388,19 +388,19 @@ export const inboxService = {
       results = sortItems(results, query.sort);
       return ok(results);
     } catch {
-      return fail("INBOX_LIST_FAILED");
+      return fail("UNKNOWN");
     }
   },
 
   getAssignment(assignmentId: string): ServiceResult<RecipientInboxItem> {
     const item = _items.find(i => i.id === assignmentId);
-    if (!item) return fail("INBOX_ITEM_NOT_FOUND");
+    if (!item) return fail("NOT_FOUND");
     return ok({ ...item });
   },
 
   markAsRead(assignmentId: string): ServiceResult<void> {
     const item = _items.find(i => i.id === assignmentId);
-    if (!item) return fail("INBOX_ITEM_NOT_FOUND");
+    if (!item) return fail("NOT_FOUND");
     item.isRead = true;
     return ok(undefined);
   },
@@ -417,7 +417,7 @@ export const inboxService = {
       };
       return ok(summary);
     } catch {
-      return fail("INBOX_SUMMARY_FAILED");
+      return fail("UNKNOWN");
     }
   },
 
@@ -435,7 +435,7 @@ export const inboxService = {
         .slice(0, limit);
       return ok(items);
     } catch {
-      return fail("INBOX_ACTIONS_FAILED");
+      return fail("UNKNOWN");
     }
   },
 

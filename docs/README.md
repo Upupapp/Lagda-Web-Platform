@@ -175,11 +175,22 @@ Last updated: 2026-07-16 (Commands 1Ã¢â‚¬â€œ35 complete)
 
 ---
 
-## Testing
+## Testing and Quality Infrastructure
 
 | Document | Description |
 |----------|-------------|
-| [frontend-testing-strategy.md](frontend-testing-strategy.md) | Unit, component, service, fixture, route, permission, integration, a11y test strategy |
+| [quality-infrastructure-audit.md](quality-infrastructure-audit.md) | **Read first.** What the repository was before any tooling existed, why each tool was chosen, which duplicates were rejected, and the production defects that turning the checks on exposed |
+| [frontend-testing-strategy.md](frontend-testing-strategy.md) | The implemented toolchain: TypeScript projects and strictness, ESLint rules, Vitest, Playwright, axe, coverage policy, browser matrix, commands, honest limitations |
+| [manual-quality-validation-checklist.md](manual-quality-validation-checklist.md) | What automation cannot reach — screen readers, real 200% zoom, real devices, cross-browser. Records what was actually validated and what was not |
+
+Quick reference: `npm run typecheck` · `npm run lint` · `npm test` ·
+`npm run test:coverage` · `npm run test:e2e` · `npm run test:a11y` ·
+`npm run check`. CI: `.github/workflows/quality.yml`.
+
+**Current gate status:** typecheck, unit tests, coverage, browser flows,
+accessibility, responsive, reduced-motion and both production builds all pass.
+**ESLint does not — 466 pre-existing errors remain.** See
+[frontend-known-limitations.md](frontend-known-limitations.md).
 
 ---
 

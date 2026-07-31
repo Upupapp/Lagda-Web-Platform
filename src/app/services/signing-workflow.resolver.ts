@@ -208,8 +208,9 @@ export function resolveNextStage(
   currentStageId: SigningStageId | null,
 ): WorkflowNextStageResolution {
   const stages = orderedStages(workflow);
+  const first = stages[0];
 
-  if (stages.length === 0) {
+  if (!first) {
     return {
       nextStageId: null, nextStageName: null, nextStagePosition: null,
       isFinalStage: false,
@@ -218,7 +219,6 @@ export function resolveNextStage(
   }
 
   if (!currentStageId) {
-    const first = stages[0];
     return {
       nextStageId: first.id, nextStageName: first.name, nextStagePosition: first.position,
       isFinalStage: stages.length === 1,
@@ -235,7 +235,8 @@ export function resolveNextStage(
     };
   }
 
-  if (index === stages.length - 1) {
+  const next = stages[index + 1];
+  if (!next) {
     return {
       nextStageId: null, nextStageName: null, nextStagePosition: null,
       isFinalStage: true,
@@ -243,7 +244,6 @@ export function resolveNextStage(
     };
   }
 
-  const next = stages[index + 1];
   return {
     nextStageId: next.id, nextStageName: next.name, nextStagePosition: next.position,
     isFinalStage: false,
@@ -372,8 +372,9 @@ export function describeAssignmentEligibility(
     const earlier = (stage.assignments ?? [])
       .filter(a => a.position < assignment.position && isAssignmentBlocking(a));
     const pending = earlier.filter(a => !isAssignmentComplete(a));
-    if (pending.length > 0) {
-      return `Waiting for ${pending[0].participantName}.`;
+    const blocker = pending[0];
+    if (blocker) {
+      return `Waiting for ${blocker.participantName}.`;
     }
   }
   return isCurrentStage ? "Ready to act." : "Becomes ready when this stage starts.";

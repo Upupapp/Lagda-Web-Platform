@@ -6,3 +6,13 @@ dist/
 
 # Local Netlify folder
 .netlify
+
+# Quality infrastructure output (Gap Closure Command 6).
+# Generated artifacts only — never source, and never committed. Failure
+# screenshots and traces can contain rendered fixture data, so they stay local
+# and are uploaded only as short-retention CI artifacts.
+coverage/
+playwright-report/
+test-results/
+playwright/.cache/
+*.tsbuildinfo

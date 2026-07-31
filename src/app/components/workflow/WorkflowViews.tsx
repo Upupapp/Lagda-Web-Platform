@@ -144,6 +144,7 @@ export function WorkflowTimeline({
                 {[...stage.assignments].sort((a, b) => a.position - b.position).map(assignment => {
                   const blocking = issuesForAssignment(validation, String(assignment.id))
                     .filter(i => i.severity === "blocking");
+                  const firstBlocking = blocking[0];
                   const body = (
                     <>
                       <div className="wf-row" style={{ gap: 8, flexWrap: "nowrap" }}>
@@ -160,9 +161,9 @@ export function WorkflowTimeline({
                       <p style={{ ...GF, margin: "6px 0 0", fontSize: 11, color: WF.slate5, lineHeight: 1.5 }}>
                         {describeAssignmentEligibility(stage, assignment, isCurrent)}
                       </p>
-                      {blocking.length > 0 && (
+                      {firstBlocking && (
                         <p style={{ ...GF, margin: "6px 0 0", fontSize: 11, fontWeight: 600, color: WF.errorText, lineHeight: 1.5 }}>
-                          {blocking[0].message}
+                          {firstBlocking.message}
                         </p>
                       )}
                     </>

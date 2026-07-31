@@ -31,7 +31,8 @@ const PAGE_RATIO   = 842 / 595;
 // ── Local field state ─────────────────────────────────────────────────────────
 
 interface LocalField extends TemplateField {
-  _localId: string;
+  _localId:      string;
+  isSenderText?: boolean;   // true = sender-prefill field (mirrors the recipient-side flag)
 }
 
 interface EditorState {
@@ -60,12 +61,12 @@ function mkId() { return `tpl-f-${Date.now()}-${++_fid}`; }
 function clamp(v: number, lo: number, hi: number) { return Math.max(lo, Math.min(hi, v)); }
 
 function clampRect(r: NormalizedRect, type: FieldType): NormalizedRect {
-  const c = FIELD_SIZE_CONSTRAINTS[type] ?? { minW: 0.04, minH: 0.02, maxW: 0.9, maxH: 0.5 };
+  const c = FIELD_SIZE_CONSTRAINTS[type] ?? { minWidth: 0.04, minHeight: 0.02, maxWidth: 0.9, maxHeight: 0.5 };
   return {
-    x:      clamp(r.x, 0, 1 - c.minW),
-    y:      clamp(r.y, 0, 1 - c.minH),
-    width:  clamp(r.width,  c.minW, c.maxW),
-    height: clamp(r.height, c.minH, c.maxH),
+    x:      clamp(r.x, 0, 1 - c.minWidth),
+    y:      clamp(r.y, 0, 1 - c.minHeight),
+    width:  clamp(r.width,  c.minWidth, c.maxWidth),
+    height: clamp(r.height, c.minHeight, c.maxHeight),
   };
 }
 
@@ -106,6 +107,7 @@ function editorReducer(s: EditorState, a: EditorAction): EditorState {
         rect,
         isSenderText:  a.placeholderId === null,
         placeholderId: a.placeholderId,
+        demonstrationOnly: true,
       };
       return { ...s, dragging: null, fields: [...s.fields, field], selected: field._localId, changed: true };
     }
@@ -391,7 +393,7 @@ function RightPanel({
 
 // ── Fields editor inner ───────────────────────────────────────────────────────
 function FieldsEditorInner({ template }: { template: DocumentTemplate }) {
-  usePageMeta(`Fields — ${template.name} — LAGDA`);
+  usePageMeta();
   const [edState, edDispatch] = useReducer(editorReducer, INITIAL_STATE);
   const [saved, setSaved]     = useState(false);
   const [pendingType, setPendingType] = useState<FieldType | null>(null);

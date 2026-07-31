@@ -818,7 +818,7 @@ function renameSavedView(id: ReportViewId, name: string): ServiceResult<ReportSa
   if (idx === -1) return fail("NOT_FOUND");
   if (!name.trim()) return fail("REQUIRED_FIELD", "name");
   _savedViews[idx] = { ..._savedViews[idx]!, name: name.trim(), updatedAt: demoNow().toISOString() };
-  return ok(_savedViews[idx]!);
+  return ok(_savedViews[idx]);
 }
 
 function duplicateSavedView(id: ReportViewId): ServiceResult<ReportSavedView> {
@@ -962,7 +962,10 @@ function getSchedulePreview(family: ReportFamily): ReportSchedulePreview {
 // Group membership, pasted values and CSV cells are not on the projection, so no
 // column here can carry them. There is no recipient-level table by design.
 function buildPreparationReport(_query: ReportQuery): PreparationReportData {
-  const items   = buildPlatformSummaries(MOCK_CURRENT_WORKSPACE.id);
+  // The workspace fixture list is never empty, so the fallback is not reachable —
+  // it exists so the fixture's index access stays type-safe.
+  const workspaceId = MOCK_CURRENT_WORKSPACE?.id ?? "";
+  const items   = buildPlatformSummaries(workspaceId);
   const summary = buildAttentionSummary(items);
   const rows    = buildReportRows(items);
 
@@ -996,7 +999,7 @@ function buildPreparationReport(_query: ReportQuery): PreparationReportData {
     linkTo: i.route,
   }));
 
-  const mix = buildSourceMix(MOCK_CURRENT_WORKSPACE.id);
+  const mix = buildSourceMix(workspaceId);
   const sourceRows: ReportTableRow[] = mix.map((m, n) => ({
     id: `ps${n + 1}`,
     cells: { source: m.label, batches: m.count },

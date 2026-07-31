@@ -74,7 +74,7 @@ export const DOCUMENT_STATUS_MAP: Record<TransactionStatus, StatusPresentation> 
     icon: "dot",
     description: "At least one recipient has opened the document.",
   },
-  "auth-completed": {
+  "authentication-completed": {
     label: "Identity Verified",
     tone: "primary",
     bgColor: "#EAF6FF",

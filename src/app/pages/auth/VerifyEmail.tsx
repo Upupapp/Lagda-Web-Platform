@@ -55,7 +55,7 @@ export function VerifyEmail() {
     } else {
       setStatus("error");
       setErrorCode(result.errorCode ?? "invalid");
-      const msgs: Record<string, string> = {
+      const msgs: Record<"invalid" | "expired" | "locked", string> = {
         invalid:  "That code is not valid. Please check and try again.",
         expired:  "This verification code has expired. Please request a new one.",
         locked:   "Too many incorrect attempts. This verification session has been locked.",

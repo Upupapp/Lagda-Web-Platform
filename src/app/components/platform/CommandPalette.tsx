@@ -44,7 +44,9 @@ const GF     = { fontFamily: "'Geist', sans-serif" };
 
 // ── Icon registry (string name → Lucide component) ────────────────────────────
 
-const ICON_MAP: Record<string, React.ComponentType<{ size?: number; "aria-hidden"?: boolean | "true" | "false" }>> = {
+// Lucide icons accept `size?: string | number` — the registry must match that
+// contract exactly, otherwise the icon components are not assignable to it.
+const ICON_MAP: Record<string, React.ComponentType<{ size?: string | number; "aria-hidden"?: boolean | "true" | "false" }>> = {
   LayoutDashboard, FileText, Inbox, Files, Users, ShieldCheck, Bell, BarChart2,
   Building2, Search, FilePlus, FilePlus2, UserPlus, UsersRound, UserPlus2,
   Users2, Bookmark, CircleUser, Lock, PenLine, BellRing, CreditCard, Shield,

@@ -5,7 +5,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router";
 import { WorkspaceAdminProvider, useWorkspaceAdmin } from "../../../context/WorkspaceAdminContext";
-import type { WorkspaceRoleId, WorkspaceTeamId, WorkspacePermission } from "../../../models/workspace-admin";
+import type { WorkspaceMemberId, WorkspaceMemberStatus, WorkspaceRoleId, WorkspaceTeamId, WorkspacePermission } from "../../../models/workspace-admin";
 import { WORKSPACE_MEMBER_STATUS_LABELS, ALL_PERMISSIONS } from "../../../models/workspace-admin";
 import { mockWorkspaceAdminService } from "../../../services/mock/workspace-admin.service";
 
@@ -18,7 +18,7 @@ const SLATE = "#64748B";
 const SILVER= "#8A9BAE";
 const LIGHT = "#F0F7FF";
 
-const STATUS_BADGE: Record<string, { bg: string; color: string }> = {
+const STATUS_BADGE: Record<WorkspaceMemberStatus, { bg: string; color: string }> = {
   "active":             { bg: "#E8F5E9", color: "#1B5E20" },
   "suspended":          { bg: "#FFF3E0", color: "#E65100" },
   "deactivated":        { bg: "#F1F5F9", color: "#475569" },
@@ -106,7 +106,7 @@ function MemberDetailInner() {
 
   useEffect(() => {
     if (!memberId) return;
-    asyncLoadMember(memberId as WorkspaceRoleId);
+    asyncLoadMember(memberId as WorkspaceMemberId);
     asyncLoadRoles();
     return () => clearActiveMember();
   }, [memberId, asyncLoadMember, asyncLoadRoles, clearActiveMember]);
@@ -118,27 +118,27 @@ function MemberDetailInner() {
   const handleSuspend = async (reason: string) => {
     if (!memberId) return;
     setModal(null);
-    await asyncSuspendMember(memberId as WorkspaceRoleId, reason);
-    await asyncLoadMember(memberId as WorkspaceRoleId);
+    await asyncSuspendMember(memberId as WorkspaceMemberId, reason);
+    await asyncLoadMember(memberId as WorkspaceMemberId);
   };
 
   const handleReactivate = async () => {
     if (!memberId) return;
-    await asyncReactivateMember(memberId as WorkspaceRoleId);
-    await asyncLoadMember(memberId as WorkspaceRoleId);
+    await asyncReactivateMember(memberId as WorkspaceMemberId);
+    await asyncLoadMember(memberId as WorkspaceMemberId);
   };
 
   const handleDeactivate = async () => {
     if (!memberId) return;
     setModal(null);
-    await asyncDeactivateMember(memberId as WorkspaceRoleId);
-    await asyncLoadMember(memberId as WorkspaceRoleId);
+    await asyncDeactivateMember(memberId as WorkspaceMemberId);
+    await asyncLoadMember(memberId as WorkspaceMemberId);
   };
 
   const handleRemove = async () => {
     if (!memberId) return;
     setModal(null);
-    await asyncRemoveMember(memberId as WorkspaceRoleId);
+    await asyncRemoveMember(memberId as WorkspaceMemberId);
     navigate("/app/workspace/members");
   };
 
@@ -146,8 +146,8 @@ function MemberDetailInner() {
     if (!memberId || !newRoleId) return;
     setRoleUpdating(true);
     const role = [...SYSTEM_ROLES, ...state.roles.map(r => ({ id: r.id, name: r.name }))].find(r => r.id === newRoleId);
-    await asyncUpdateMemberRole(memberId as WorkspaceRoleId, newRoleId as WorkspaceRoleId, role?.name ?? newRoleId);
-    await asyncLoadMember(memberId as WorkspaceRoleId);
+    await asyncUpdateMemberRole(memberId as WorkspaceMemberId, newRoleId as WorkspaceRoleId, role?.name ?? newRoleId);
+    await asyncLoadMember(memberId as WorkspaceMemberId);
     setRoleUpdating(false);
   };
 
@@ -175,8 +175,9 @@ function MemberDetailInner() {
   const badge = STATUS_BADGE[m.status] ?? STATUS_BADGE["active"];
   const perms = mockWorkspaceAdminService.resolveEffectivePermissions(m);
   const permByCategory = ALL_PERMISSIONS.reduce<Record<string, typeof ALL_PERMISSIONS>>((acc, p) => {
-    if (!acc[p.category]) acc[p.category] = [];
-    acc[p.category].push(p);
+    const bucket = acc[p.category] ?? [];
+    bucket.push(p);
+    acc[p.category] = bucket;
     return acc;
   }, {});
   const allRoles = [

@@ -160,7 +160,7 @@ function refresh(workflow: SigningWorkflow): void {
         };
       }
 
-      a.fieldReadiness = computeFieldReadiness(a) as StageParticipantFieldReadiness;
+      a.fieldReadiness = computeFieldReadiness(a);
     }
   }
 
@@ -740,10 +740,11 @@ class MockSigningWorkflowService {
     const wf = findWorkflowById(workflowId);
     if (!wf || wf.documentId !== documentId) return fail("NOT_FOUND");
     const index = wf.stages.findIndex(s => s.id === stageId);
-    if (index === -1) return fail("NOT_FOUND");
+    const removed = wf.stages[index];
+    if (index === -1 || !removed) return fail("NOT_FOUND");
 
     await delay(130);
-    const [removed] = wf.stages.splice(index, 1);
+    wf.stages.splice(index, 1);
     refresh(wf);
     logActivity(wf, "stage-removed", "Stage removed", `"${removed.name}" was removed from the draft.`);
     return ok(true);
@@ -955,10 +956,11 @@ class MockSigningWorkflowService {
     const stage = wf.stages.find(s => s.id === stageId);
     if (!stage) return fail("NOT_FOUND");
     const index = stage.assignments.findIndex(a => a.id === assignmentId);
-    if (index === -1) return fail("NOT_FOUND");
+    const removed = stage.assignments[index];
+    if (index === -1 || !removed) return fail("NOT_FOUND");
 
     await delay(120);
-    const [removed] = stage.assignments.splice(index, 1);
+    stage.assignments.splice(index, 1);
     refresh(wf);
     logActivity(wf, "participant-removed", "Person removed",
       `${removed.participantName} was removed from "${stage.name}".`, stage.id);

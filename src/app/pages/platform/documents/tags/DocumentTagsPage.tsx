@@ -413,8 +413,8 @@ export function DocumentTagsPage() {
       <style>{STYLES}</style>
       <PageHeader
         title="Document Tags"
-        breadcrumbs={[{ label: "Documents", href: "/app/documents" }, { label: "Tags" }]}
-        actions={
+        breadcrumbs={[{ label: "Documents", to: "/app/documents" }, { label: "Tags" }]}
+        primaryAction={
           <button
             onClick={() => setCreating(true)}
             style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "7px 14px", borderRadius: 8, background: AZURE, color: "#fff", border: "none", cursor: "pointer", fontSize: 13, fontWeight: 600, ...GF }}

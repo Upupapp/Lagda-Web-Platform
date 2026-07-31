@@ -36,7 +36,10 @@ export function RecoveryCodes() {
     if (trimmed.length > 0) {
       setStatus("success");
       const payload = createMockSignInPayload();
-      platform.signIn(payload.user, payload.workspaces, payload.currentWorkspace, payload.subscription, payload.notifications);
+      // The mock fixture always has a current workspace; guard so a missing one
+      // never enters the session as an undefined workspace.
+      const ws = payload.currentWorkspace ?? payload.workspaces[0];
+      if (ws) platform.signIn(payload.user, payload.workspaces, ws, payload.subscription, payload.notifications);
       setTimeout(() => navigate(safeReturnTo(returnTo), { replace: true }), 800);
     } else {
       setStatus("error");

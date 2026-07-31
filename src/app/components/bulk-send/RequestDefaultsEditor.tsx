@@ -97,6 +97,7 @@ export function RequestDefaultsEditor({
         'a[href],button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])');
       if (f.length === 0) return;
       const first = f[0], last = f[f.length - 1];
+      if (!first || !last) return;
       if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
       else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
     }
@@ -173,13 +174,17 @@ export function RequestDefaultsEditor({
     else setSaveError(r.message ?? "That value could not be restored.");
   };
 
+  const restoreAllOverrides = async () => {
+    setDraft({});
+    const r = await onRestore("all");
+    if (r.ok) announce("All request overrides removed. Values are inherited again.");
+    else setSaveError(r.message ?? "The overrides could not be removed.");
+  };
+
   const handleResetAll = () => {
-    confirmReset(overrideCount, async () => {
-      setDraft({});
-      const r = await onRestore("all");
-      if (r.ok) announce("All request overrides removed. Values are inherited again.");
-      else setSaveError(r.message ?? "The overrides could not be removed.");
-    });
+    // `confirmReset` hands back a synchronous callback, so the restore is
+    // started here rather than awaited by the dialog.
+    confirmReset(overrideCount, () => { void restoreAllOverrides(); });
   };
 
   const fieldsInCategory = DEFAULT_FIELD_DEFINITIONS.filter((d) => d.category === category);

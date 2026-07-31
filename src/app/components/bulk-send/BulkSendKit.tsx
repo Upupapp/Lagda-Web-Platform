@@ -294,8 +294,8 @@ export function useBulkSendConfirm() {
       if (e.key === "Escape") { e.stopPropagation(); setRequest(null); return; }
       if (e.key !== "Tab" || !panelRef.current) return;
       const f = panelRef.current.querySelectorAll<HTMLElement>('button:not([disabled])');
-      if (f.length === 0) return;
       const first = f[0], last = f[f.length - 1];
+      if (!first || !last) return;
       if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
       else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
     }
@@ -388,8 +388,8 @@ export function Sheet({ title, onClose, children, footer }: {
       if (e.key !== "Tab" || !panelRef.current) return;
       const f = panelRef.current.querySelectorAll<HTMLElement>(
         'a[href],button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])');
-      if (f.length === 0) return;
       const first = f[0], last = f[f.length - 1];
+      if (!first || !last) return;
       if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
       else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
     }

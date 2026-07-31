@@ -1008,7 +1008,7 @@ export function BulkSendRecipientsPage() {
                               : issues.length === 0
                                 ? <span style={{ color: BS.slate4 }}>None</span>
                                 : <span style={{ ...GF, fontSize: 12, color: issues.some(i => i.severity === "blocking") ? BS.errorText : BS.warnText, lineHeight: 1.5 }}>
-                                    {issues[0].message}{issues.length > 1 ? ` (+${issues.length - 1} more)` : ""}
+                                    {issues[0]?.message}{issues.length > 1 ? ` (+${issues.length - 1} more)` : ""}
                                   </span>}
                           </td>
 
@@ -1262,7 +1262,7 @@ export function BulkSendMappingPage() {
                             {(field === "displayName" || field === "email") && <span aria-hidden style={{ color: BS.errorText }}> *</span>}
                           </label>
                           <div className="bs-row" style={{ gap: 8, flex: 1, justifyContent: "flex-end" }}>
-                            {m.confidence[field] && <ConfidencePill c={m.confidence[field]!} />}
+                            {m.confidence[field] && <ConfidencePill c={m.confidence[field]} />}
                             <select id={`rm-${m.id}-${field}`} className="bs-select" disabled={!editable || busy}
                               value={String(m.columnByField[field] ?? "")}
                               onChange={e => setRole(String(m.id), field, e.target.value)}

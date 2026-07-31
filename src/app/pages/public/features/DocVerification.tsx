@@ -11,6 +11,7 @@ const GM = { fontFamily: "'Geist Mono', monospace" };
 function VerificationDemo() {
   const [selected, setSelected] = useState(0);
   const state = VERIFICATION_STATES[selected];
+  if (!state) return null;
   return (
     <div style={{ maxWidth: 460, width: "100%" }}>
       {/* State selector */}

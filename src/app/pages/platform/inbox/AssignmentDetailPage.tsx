@@ -368,7 +368,7 @@ export function AssignmentDetailPage() {
       <PageHeader
         title={item.documentTitle}
         description={`${item.documentCount > 1 ? `${item.documentCount} documents` : "1 document"} · Assigned by ${item.senderName}`}
-        actions={
+        primaryAction={
           <Link
             to="/app/inbox"
             style={{ display: "flex", alignItems: "center", gap: 6, color: SLATE, ...GF, fontSize: 13, textDecoration: "none" }}

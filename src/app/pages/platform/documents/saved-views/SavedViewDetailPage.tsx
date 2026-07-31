@@ -153,7 +153,7 @@ export function SavedViewDetailPage() {
     return (
       <>
         <style>{STYLES}</style>
-        <PageHeader title="Saved View" breadcrumbs={[{ label: "Documents", href: "/app/documents" }, { label: "Saved Views", href: "/app/documents/saved-views" }, { label: "Loading…" }]} />
+        <PageHeader title="Saved View" breadcrumbs={[{ label: "Documents", to: "/app/documents" }, { label: "Saved Views", to: "/app/documents/saved-views" }, { label: "Loading…" }]} />
         <AppContent style={{ padding: "24px" }}>
           <div role="status" aria-label="Loading view" style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             <SkeletonBlock height={24} width="40%" />
@@ -169,7 +169,7 @@ export function SavedViewDetailPage() {
     return (
       <>
         <style>{STYLES}</style>
-        <PageHeader title="Saved View" breadcrumbs={[{ label: "Documents", href: "/app/documents" }, { label: "Saved Views", href: "/app/documents/saved-views" }]} />
+        <PageHeader title="Saved View" breadcrumbs={[{ label: "Documents", to: "/app/documents" }, { label: "Saved Views", to: "/app/documents/saved-views" }]} />
         <AppContent style={{ padding: "48px 24px", textAlign: "center" }}>
           <AlertCircle size={32} style={{ color: RED, marginBottom: 12 }} aria-hidden />
           <p style={{ fontSize: 15, fontWeight: 600, color: NAVY, margin: "0 0 8px", ...GF }}>{error ?? "View not found"}</p>
@@ -188,11 +188,11 @@ export function SavedViewDetailPage() {
       <PageHeader
         title={view.name}
         breadcrumbs={[
-          { label: "Documents", href: "/app/documents" },
-          { label: "Saved Views", href: "/app/documents/saved-views" },
+          { label: "Documents", to: "/app/documents" },
+          { label: "Saved Views", to: "/app/documents/saved-views" },
           { label: view.name },
         ]}
-        actions={
+        primaryAction={
           <div style={{ display: "flex", gap: 8 }}>
             {!view.isDefault && !isArchived && (
               <button onClick={handleSetDefault} style={{ display: "flex", alignItems: "center", gap: 6, padding: "7px 12px", borderRadius: 8, border: `1px solid ${SLATE2}`, background: "#fff", cursor: "pointer", fontSize: 13, color: SLATE6, ...GF }}>

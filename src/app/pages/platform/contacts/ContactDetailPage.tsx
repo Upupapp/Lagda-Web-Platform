@@ -171,13 +171,13 @@ function ContactDetail() {
   const handleArchive = async () => {
     if (!contact) return;
     setArchiving(true);
-    await asyncArchive(contact.id as ContactId);
+    await asyncArchive(contact.id);
     setArchiving(false);
   };
 
   const handleRestore = async () => {
     if (!contact) return;
-    await asyncRestore(contact.id as ContactId);
+    await asyncRestore(contact.id);
   };
 
   if (loading) {

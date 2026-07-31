@@ -82,7 +82,10 @@ export function SignIn() {
       case "standard":
         // Fully authenticated — go straight to platform
         const p = createMockSignInPayload();
-        platform.signIn(p.user, p.workspaces, p.currentWorkspace, p.subscription, p.notifications);
+        // The mock fixture always has a current workspace; guard so a missing one
+        // never enters the session as an undefined workspace.
+        const ws = p.currentWorkspace ?? p.workspaces[0];
+        if (ws) platform.signIn(p.user, p.workspaces, ws, p.subscription, p.notifications);
         navigate(redirectTo, { replace: true });
         break;
 
@@ -135,7 +138,7 @@ export function SignIn() {
           </label>
           <input
             id="si-email" type="email" value={email}
-            onChange={(e) => { setEmail(e.target.value); if (errors.email) setErrors((p) => ({ ...p, email: undefined })); }}
+            onChange={(e) => { setEmail(e.target.value); if (errors.email) setErrors((p) => { const n = { ...p }; delete n.email; return n; }); }}
             autoComplete="email" aria-required aria-invalid={!!errors.email}
             aria-describedby={errors.email ? "si-email-err" : undefined}
             style={{ width: "100%", boxSizing: "border-box", background: "rgba(255,255,255,0.05)", border: `1px solid ${errors.email ? "rgba(239,68,68,0.4)" : "rgba(255,255,255,0.12)"}`, borderRadius: 8, color: "white", ...GF, fontSize: 14, padding: "11px 14px", outline: "none" }}
@@ -154,7 +157,7 @@ export function SignIn() {
             <input
               id="si-password" type={showPassword ? "text" : "password"}
               value={password}
-              onChange={(e) => { setPassword(e.target.value); if (errors.password) setErrors((p) => ({ ...p, password: undefined })); }}
+              onChange={(e) => { setPassword(e.target.value); if (errors.password) setErrors((p) => { const n = { ...p }; delete n.password; return n; }); }}
               autoComplete="current-password" aria-required aria-invalid={!!errors.password}
               aria-describedby={errors.password ? "si-pw-err" : undefined}
               style={{ width: "100%", boxSizing: "border-box", background: "rgba(255,255,255,0.05)", border: `1px solid ${errors.password ? "rgba(239,68,68,0.4)" : "rgba(255,255,255,0.12)"}`, borderRadius: 8, color: "white", ...GF, fontSize: 14, padding: "11px 44px 11px 14px", outline: "none" }}

@@ -108,7 +108,9 @@ function TemplateCard({
   template,
   onUse,
 }: {
-  template: { id: string; name: string; description: string; participantCount: number; usageCount: number };
+  // Mirrors MockTemplateSummary. A template summary carries participant roles and
+  // files only — it has no usage history to report.
+  template: { id: string; name: string; description: string; roleCount: number; fileCount: number };
   onUse: (id: string) => void;
 }) {
   return (
@@ -132,8 +134,7 @@ function TemplateCard({
           {template.description}
         </div>
         <div style={{ ...GF, fontSize: 11, color: SILVER }}>
-          {template.participantCount} participant{template.participantCount !== 1 ? "s" : ""}
-          {template.usageCount > 0 && ` · Used ${template.usageCount} times`}
+          {template.roleCount} participant{template.roleCount !== 1 ? "s" : ""}
         </div>
       </div>
       <button

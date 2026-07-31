@@ -47,9 +47,9 @@ function EntryPreview({
         }}
       >
         <span style={{
-          fontFamily: style.fontFamily,
-          fontSize: Math.min(style.fontSize * 0.75, 18),
-          fontStyle:  style.fontStyle,
+          fontFamily: style?.fontFamily,
+          fontSize: style ? Math.min(style.fontSize * 0.75, 18) : 18,
+          fontStyle:  style?.fontStyle,
           color: NAVY, padding: "4px 8px", textAlign: "center", wordBreak: "break-word",
         }}>
           {rep.typedText}

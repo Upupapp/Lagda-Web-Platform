@@ -338,7 +338,7 @@ export function DocumentSavedViewsPage() {
       <style>{STYLES}</style>
       <PageHeader
         title="Saved Views"
-        breadcrumbs={[{ label: "Documents", href: "/app/documents" }, { label: "Saved Views" }]}
+        breadcrumbs={[{ label: "Documents", to: "/app/documents" }, { label: "Saved Views" }]}
       />
       <AppContent style={{ padding: "0 24px 32px" }}>
 

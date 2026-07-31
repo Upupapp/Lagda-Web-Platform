@@ -244,7 +244,9 @@ export const mockWorkspaceAdminService = {
         occurredAt: nowIso(),
       });
     }
-    SESSION_MEMBERS.set(memberId, { ...(base ?? FIXTURE_MEMBERS[0]), status: "deactivated", deactivatedAt: nowIso() });
+    const source = base ?? FIXTURE_MEMBERS[0];
+    if (!source) return;
+    SESSION_MEMBERS.set(memberId, { ...source, status: "deactivated", deactivatedAt: nowIso() });
   },
 
   resolveEffectivePermissions(member: WorkspaceMember): EffectivePermissionSet {

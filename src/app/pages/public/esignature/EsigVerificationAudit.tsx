@@ -91,6 +91,7 @@ function AuditTrailMockup() {
 function VerificationDemo() {
   const [activeId, setActiveId] = useState("verified");
   const active = VERIFICATION_STATES.find((s) => s.id === activeId) ?? VERIFICATION_STATES[0];
+  if (!active) return null;
 
   const DETAILS: Record<string, { label: string; value: string; mono?: boolean }[]> = {
     verified: [

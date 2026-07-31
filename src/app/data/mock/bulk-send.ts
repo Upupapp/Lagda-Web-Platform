@@ -359,7 +359,7 @@ function config(
   return {
     id: bulkSendConfigId(id),
     name, status,
-    templateId: templateId as BulkSendSavedConfiguration["templateId"],
+    templateId: templateId,
     templateName,
     teamId: null, teamName: null,
     roleMappings: [], variableMappings: [],

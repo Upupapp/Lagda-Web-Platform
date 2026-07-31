@@ -7,7 +7,7 @@ import React, { useEffect, useState } from "react";
 import { useParams, Link } from "react-router";
 import { ContactProvider, useContacts } from "../../../context/ContactContext";
 import { mockContactService } from "../../../services/mock/contacts.service";
-import type { Contact, ContactGroup, ContactGroupId } from "../../../models/contacts";
+import type { ContactGroup, ContactGroupId, ContactListItem } from "../../../models/contacts";
 import { CONTACT_SCOPE_LABELS } from "../../../models/contacts";
 
 const GF    = { fontFamily: "'Geist', sans-serif" };
@@ -30,14 +30,15 @@ function InitialsAvatar({ name }: { name: string }) {
 function GroupDetail() {
   const { groupId } = useParams<{ groupId: string }>();
   const { state, asyncLoadGroups, asyncAddContactsToGroup, asyncRemoveContactsFromGroup, asyncArchiveGroup, asyncRestoreGroup } = useContacts();
-  const [groupData, setGroupData] = useState<{ group: ContactGroup; members: Contact[] } | null>(null);
+  // getGroup returns the lighter list projection, not full Contact records.
+  const [groupData, setGroupData] = useState<{ group: ContactGroup; members: ContactListItem[] } | null>(null);
   const [loading,   setLoading]   = useState(true);
   const [removing,  setRemoving]  = useState<Set<string>>(new Set());
   const [archiving, setArchiving] = useState(false);
 
   useEffect(() => {
     if (!groupId) return;
-    mockContactService.getGroup(groupId as ContactGroupId).then((res: typeof groupData) => {
+    mockContactService.getGroup(groupId as ContactGroupId).then(res => {
       setGroupData(res);
       setLoading(false);
     });

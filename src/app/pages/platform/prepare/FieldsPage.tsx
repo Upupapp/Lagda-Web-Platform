@@ -401,7 +401,7 @@ function PageCanvas({ participants }: PageCanvasProps) {
     } else if (d.type === "resize" && d.handle) {
       const field = currentPageFields.find(f => f.id === d.fieldId);
       if (!field) return;
-      const newRect = applyResizeDelta(d.origRect, d.handle!, dx, dy, field.type);
+      const newRect = applyResizeDelta(d.origRect, d.handle, dx, dy, field.type);
       setDragging({ fieldId: d.fieldId, rect: newRect });
     }
   }, [currentPageFields]);

@@ -262,10 +262,8 @@ function StepperSidebar({
 
 function StepperTopBar({
   activeStepId,
-  stepStates,
 }: {
   activeStepId: PreparationStepId | null;
-  stepStates: Record<PreparationStepId, PreparationStepState>;
 }) {
   const totalSteps = PREPARATION_STEPS.length;
   const activeIdx  = activeStepId ? STEP_ORDER.indexOf(activeStepId) + 1 : 1;
@@ -379,23 +377,18 @@ export function PrepareLayout() {
 
   const activeStepId = currentStepFromPath(location.pathname);
 
-  // Guard: if user deep-links to a step URL without an active draft, redirect to entry.
-  if (activeStepId !== null && draft === null) {
-    return <Navigate to="/app/prepare" replace />;
-  }
-
   const handleStepClick = useCallback((id: PreparationStepId) => {
     setStep(id);
-    navigate(stepRoute(id));
+    void navigate(stepRoute(id));
   }, [navigate, setStep]);
 
   const handlePrevious = useCallback(() => {
     const prev = prevStep(activeStepId);
     if (prev) {
       setStep(prev);
-      navigate(stepRoute(prev));
+      void navigate(stepRoute(prev));
     } else {
-      navigate("/app/prepare");
+      void navigate("/app/prepare");
     }
   }, [activeStepId, navigate, setStep]);
 
@@ -403,7 +396,7 @@ export function PrepareLayout() {
     const next = nextStep(activeStepId);
     if (next) {
       setStep(next);
-      navigate(stepRoute(next));
+      void navigate(stepRoute(next));
     }
   }, [activeStepId, navigate, setStep]);
 
@@ -414,16 +407,23 @@ export function PrepareLayout() {
   const handleDiscardConfirm = useCallback(async () => {
     setShowDiscard(false);
     await discardDraft();
-    navigate("/app/prepare");
+    await navigate("/app/prepare");
   }, [discardDraft, navigate]);
 
   const handleDiscardCancel = useCallback(() => {
     setShowDiscard(false);
   }, []);
 
+  // Guard: if user deep-links to a step URL without an active draft, redirect to entry.
+  // Deliberately placed BELOW every hook: an early return above them made the
+  // useCallback calls conditional, so hook order changed between the draft and
+  // no-draft renders. None of the callbacks above read `draft`.
+  if (activeStepId !== null && draft === null) {
+    return <Navigate to="/app/prepare" replace />;
+  }
+
   const prevId = prevStep(activeStepId);
   const nextId = nextStep(activeStepId);
-  const nextState = nextId ? stepStates[nextId] : null;
   const continueBlocked = nextId === "fields"
     ? stepStates["fields"] === "blocked"
     : false;
@@ -510,7 +510,7 @@ export function PrepareLayout() {
         <div className="prep-content">
           {/* Mobile top bar */}
           <div className="prep-topbar">
-            <StepperTopBar activeStepId={activeStepId} stepStates={stepStates} />
+            <StepperTopBar activeStepId={activeStepId} />
           </div>
 
           {/* Step content */}

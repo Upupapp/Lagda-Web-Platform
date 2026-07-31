@@ -192,7 +192,7 @@ function TemplateDetailInner() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [templateId]);
 
-  usePageMeta(t ? `${t.name} — Templates — LAGDA` : "Template — LAGDA");
+  usePageMeta();
 
   const handleDuplicate = useCallback(() => {
     if (!t) return;

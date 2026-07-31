@@ -14,8 +14,8 @@ function LegalSection({ id, title, children }: { id: string; title: string; chil
   );
 }
 
-function P({ children }: { children: React.ReactNode }) {
-  return <p style={{ color: "#94a3b8", ...GF, fontSize: 15, lineHeight: 1.75, margin: "0 0 14px" }}>{children}</p>;
+function P({ children, style }: { children: React.ReactNode; style?: React.CSSProperties }) {
+  return <p style={{ color: "#94a3b8", ...GF, fontSize: 15, lineHeight: 1.75, margin: "0 0 14px", ...style }}>{children}</p>;
 }
 
 function UL({ items }: { items: string[] }) {

@@ -79,7 +79,7 @@ function RelativeDate({ iso }: { iso?: string }) {
   const d = new Date(iso);
   const now = new Date();
   const diff = Math.floor((now.getTime() - d.getTime()) / 86400000);
-  let label = diff === 0 ? "Today" : diff === 1 ? "Yesterday" : diff < 7 ? `${diff}d ago` : diff < 30 ? `${Math.floor(diff/7)}w ago` : `${Math.floor(diff/30)}mo ago`;
+  const label = diff === 0 ? "Today" : diff === 1 ? "Yesterday" : diff < 7 ? `${diff}d ago` : diff < 30 ? `${Math.floor(diff/7)}w ago` : `${Math.floor(diff/30)}mo ago`;
   return <span style={{ ...GM, fontSize: 11, color: SLATE }} title={d.toLocaleDateString()}>{label}</span>;
 }
 

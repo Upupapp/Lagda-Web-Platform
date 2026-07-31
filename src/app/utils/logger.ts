@@ -36,10 +36,10 @@ function emit(level: LogLevel, message: string, data?: unknown): void {
   const prefix = `[LAGDA:${level.toUpperCase()}]`;
   const safe = data !== undefined ? redact(data) : undefined;
   if (level === "error") {
-    // eslint-disable-next-line no-console
+     
     console.error(prefix, message, safe ?? "");
   } else if (level === "warn") {
-    // eslint-disable-next-line no-console
+     
     console.warn(prefix, message, safe ?? "");
   } else {
     // eslint-disable-next-line no-console

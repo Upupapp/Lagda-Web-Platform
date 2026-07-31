@@ -146,7 +146,7 @@ export function FolderDetailPage() {
     return (
       <>
         <style>{STYLES}</style>
-        <PageHeader title="Folder" breadcrumbs={[{ label: "Documents", href: "/app/documents" }, { label: "Folders", href: "/app/documents/folders" }, { label: "Loading…" }]} />
+        <PageHeader title="Folder" breadcrumbs={[{ label: "Documents", to: "/app/documents" }, { label: "Folders", to: "/app/documents/folders" }, { label: "Loading…" }]} />
         <AppContent style={{ padding: "24px" }}>
           <div role="status" aria-label="Loading folder" style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             <SkeletonBlock height={28} width="40%" />
@@ -162,7 +162,7 @@ export function FolderDetailPage() {
     return (
       <>
         <style>{STYLES}</style>
-        <PageHeader title="Folder" breadcrumbs={[{ label: "Documents", href: "/app/documents" }, { label: "Folders", href: "/app/documents/folders" }]} />
+        <PageHeader title="Folder" breadcrumbs={[{ label: "Documents", to: "/app/documents" }, { label: "Folders", to: "/app/documents/folders" }]} />
         <AppContent style={{ padding: "48px 24px", textAlign: "center" }}>
           <AlertCircle size={32} style={{ color: RED, marginBottom: 12 }} aria-hidden />
           <p style={{ fontSize: 15, fontWeight: 600, color: NAVY, margin: "0 0 8px", ...GF }}>
@@ -201,11 +201,11 @@ export function FolderDetailPage() {
           ) : folder.name
         }
         breadcrumbs={[
-          { label: "Documents", href: "/app/documents" },
-          { label: "Folders", href: "/app/documents/folders" },
+          { label: "Documents", to: "/app/documents" },
+          { label: "Folders", to: "/app/documents/folders" },
           { label: folder.name },
         ]}
-        actions={
+        primaryAction={
           <div style={{ display: "flex", gap: 8 }}>
             {!isArchived && (
               <button onClick={() => setRenaming(true)} style={{ display: "flex", alignItems: "center", gap: 6, padding: "7px 12px", borderRadius: 8, border: `1px solid ${SLATE2}`, background: "#fff", cursor: "pointer", fontSize: 13, color: SLATE6, ...GF }}>

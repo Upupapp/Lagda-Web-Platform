@@ -211,8 +211,44 @@ record". No eNotary batch, mapping, configuration, projection, or workflow exist
 
 ## 17. Known limitations — honest
 
-1. **No automated tests.** The repository still has no test framework, `tsconfig.json`, or
-   ESLint, so STEP 82/87's suites could not be written or run.
+1. **Quality infrastructure — PARTIALLY CLOSED, Gap Closure Command 6 (2026-08-01).**
+
+   The repository previously had no TypeScript configuration, no ESLint, no test
+   framework, and no CI. It now has all four, and most gates pass:
+
+   | Layer | State |
+   | --- | --- |
+   | TypeScript (3 projects, `strict` + `noUncheckedIndexedAccess`) | ✅ **PASSES — 0 errors**, from 317. No `any`, `@ts-ignore` or `@ts-nocheck` was added anywhere. |
+   | Vitest unit + component tests | ✅ **419 passing** across 7 suites |
+   | Coverage (v8) | ✅ Baseline measured and ratcheted; thresholds met |
+   | Playwright browser flows | ✅ **24 passing** |
+   | Automated accessibility (axe) | ✅ **18 passing** — zero serious/critical WCAG A/AA violations on 6 routes |
+   | Responsive + enlarged layout | ✅ **60 passing** across 4 viewport projects |
+   | Reduced motion | ✅ **7 passing** |
+   | Production build, both profiles | ✅ Both succeed |
+   | CI workflow | ✅ Created (`.github/workflows/quality.yml`) — **not yet observed running**, the repository has no remote |
+   | **ESLint** | ❌ **DOES NOT PASS — 466 errors remain** |
+
+   **This gap stays OPEN because the lint gate does not pass.** The 466 errors are
+   pre-existing defects in code written before any linter existed; they were
+   surfaced, not introduced. The rules were deliberately left at `error` rather
+   than downgraded, so the debt stays visible. Remaining: 265
+   `no-unused-vars` (dead imports), 119 `no-floating-promises`, 21
+   `no-misused-promises`, 14 `no-base-to-string`, 5 `no-alert`, ~42 assorted.
+
+   Real defects this command already found and fixed are listed in
+   `docs/quality-infrastructure-audit.md` §8 — including template field placement
+   producing `NaN` rectangles, three pages whose header action buttons never
+   rendered, 21 breadcrumbs that were dead text, six conditional React hooks, and
+   a template signer silently degraded to the weakest authentication method.
+
+   Full detail: `docs/quality-infrastructure-audit.md`,
+   `docs/frontend-testing-strategy.md`,
+   `docs/manual-quality-validation-checklist.md`.
+
+   Also still open: no screen-reader testing, no real-device testing, no
+   cross-browser coverage beyond Chromium, and real 200% browser zoom remains a
+   manual step.
 2. ~~**Contacts and Contact Group sources are declared but not wired to a picker.**~~
    ✅ **CLOSED — Gap Closure Command 1 (2026-07-31).** The source selector now offers five
    sources: Contacts, Contact Groups, Demonstration Dataset, Structured Paste, and Local CSV
@@ -311,10 +347,31 @@ record". No eNotary batch, mapping, configuration, projection, or workflow exist
    beyond duplicate/archive/restore/remove.
 8. Batch **duplication with rows**, and per-row **exclusion reasons** beyond the default, are
    service-level only.
-9. Pre-existing repo errors are unchanged (137 repo-wide, including `data/mock/templates.ts`).
+9. ~~Pre-existing repo errors are unchanged (137 repo-wide, including `data/mock/templates.ts`).~~
+   ✅ **CLOSED — Gap Closure Command 6 (2026-08-01).** The "137" and later "160" figures were
+   both undercounts, measured with an ad-hoc config that had no `paths` mapping, no
+   `vite/client` types, and — critically — **no `@types/react` installed**, so no component
+   prop was ever checked. Measured properly for the first time the count was **317**. All 317
+   are now fixed and `npm run typecheck` reports **0 errors**. `data/mock/templates.ts`
+   specifically had 37 errors, all from a fixture vocabulary the models do not define; the
+   fixture was corrected to the canonical unions rather than the unions being widened.
 
-Items 2, 3, 4 (Request scope), 5 and 6 are **closed** (Gap Closure Commands 1–5). Item 7 is
-the honest remainder of Command 33 and is the recommended next focus.
+## Gap status
+
+| # | Gap | Status |
+| --- | --- | --- |
+| 2 | Contacts and Contact Groups picker | ✅ Complete — Gap Closure 1 |
+| 3 | Inline recipient-row editing | ✅ Complete — Gap Closure 2 |
+| 4 | Request and Organization Defaults editor | ✅ Complete (Request scope) — Gap Closure 3 |
+| 5 | Policy and Automation resolution | ✅ Complete — Gap Closure 4 |
+| 6 | Platform providers and discovery surfaces | ✅ Complete — Gap Closure 5 |
+| 1 | TypeScript, ESLint, tests, accessibility, browser, CI | ⚠️ **OPEN** — every layer exists and passes **except ESLint (466 errors)**. See item 1. |
+
+Item 7 (saved configuration create/rename/apply have no UI entry point) remains the honest
+remainder of Command 33.
+
+**The final gap is deliberately NOT marked complete.** Configuration files existing is not
+completion; the lint gate must pass first.
 
 **Correction to item 2's carried-forward note:** the fixture-workspace mismatch it describes
 was repaired in Gap Closure Command 5. `BULK_SEND_BATCH_FIXTURES` now carry `ws_mls_001` /

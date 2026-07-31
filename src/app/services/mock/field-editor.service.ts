@@ -269,7 +269,7 @@ class MockFieldEditorService {
       coverageMap.set(pax.id, {
         participantId:      pax.id,
         name:               pax.name,
-        role:               pax.role as PrepParticipantRole,
+        role:               pax.role,
         fieldCount:         paxFields.length,
         requiredFieldCount: paxFields.filter(f => f.required).length,
         hasSignature,

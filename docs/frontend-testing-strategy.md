@@ -1,302 +1,274 @@
 # LAGDA Frontend Testing Strategy
 
-## 1. Testing Goals
+Gap Closure Command 6. Frontend demonstration only.
 
-The LAGDA frontend testing strategy has four objectives:
-1. Prevent regressions in working routes and components
-2. Verify fixture data integrity across domain boundaries
-3. Confirm service contracts return expected shapes
-4. Document the permission model with table-driven tests
+**Status: implemented.** Earlier revisions of this document described a *proposed*
+toolchain (Vitest + happy-dom + vitest-axe) that was never installed. That
+proposal is superseded — this document now records what is actually configured and
+running. Where the implementation diverges from the old proposal, the reason is
+stated.
 
-Tests must be deterministic (no real time, no network, no randomness), isolated (no shared state between tests), and fast (no full browser launch required for unit/component tests).
+One tool per quality layer. No layer has two.
 
 ---
 
-## 2. Recommended Test Framework
+## 1. The toolchain
 
-**Vitest** (recommended) — integrates with Vite, fast, Jest-compatible API.  
-**@testing-library/react** — semantic queries, accessible by default.  
-**@testing-library/user-event** — realistic user interactions.  
-**vitest-axe** or **axe-core** — automated accessibility checks.
+| Layer | Tool | Config |
+| --- | --- | --- |
+| Type checking | TypeScript 5.6.3 | `tsconfig.json` → `.app` / `.node` / `.test` |
+| Linting | ESLint 9 flat + typescript-eslint 8 | `eslint.config.js` |
+| Unit + component | Vitest 3 (**jsdom**) | `vitest.config.ts` |
+| DOM interaction | Testing Library `react` / `user-event` / `jest-dom` | `src/test/setup.ts` |
+| Browser flows | Playwright 1.49 | `playwright.config.ts` |
+| Accessibility | **`@axe-core/playwright`** | `tests/accessibility/` |
+| Coverage | `@vitest/coverage-v8` | `vitest.config.ts` |
+| CI | GitHub Actions | `.github/workflows/quality.yml` |
 
-No test framework is configured in the current build. Add with:
-```bash
-npm install --save-dev vitest @testing-library/react @testing-library/jest-dom @testing-library/user-event happy-dom
+**Divergences from the earlier proposal, with reasons:**
+
+- **jsdom, not happy-dom.** These screens rely on focus management, dialogs and
+  `matchMedia`; jsdom's implementations are the closer match.
+- **`@axe-core/playwright`, not `vitest-axe`.** Accessibility violations that
+  matter here — focus order, contrast, reflow, landmark structure — need a real
+  browser with real layout. Scanning a jsdom tree finds a fraction of them.
+- **A separate `vitest.config.ts`, not a `test` block inside `vite.config.ts`.** It
+  merges the Vite config so plugins and the `@` alias are shared, while keeping
+  build and test concerns readable.
+
+## 2. TypeScript architecture
+
+Three projects behind a solution-style root, because they run in genuinely
+different environments:
+
+- **`tsconfig.app.json`** — browser source (`src/`). `types: ["vite/client"]` only.
+  Node types are deliberately absent so browser code cannot reach for `process`
+  or `__dirname`.
+- **`tsconfig.node.json`** — `vite.config.ts`, `vitest.config.ts`,
+  `playwright.config.ts`, `eslint.config.js`. `types: ["node"]`.
+- **`tsconfig.test.json`** — Vitest tests, shared utilities, Playwright specs. The
+  only project with `vitest/globals`, so **production source cannot see
+  `describe`, `it`, or `expect`** — a test helper imported into the app fails the
+  type-check.
+
+`paths: { "@/*": ["./src/*"] }` mirrors the single alias in `vite.config.ts`. The
+two must stay in sync.
+
+### Strictness
+
+`strict: true` plus:
+
+| Flag | Why |
+| --- | --- |
+| `noUncheckedIndexedAccess` | Highest-value flag here — found 111 unguarded array/record index reads across 35 files, each a latent `undefined`. |
+| `noImplicitOverride` | Explicit override intent. |
+| `noFallthroughCasesInSwitch` | This codebase switches over status unions constantly. |
+| `forceConsistentCasingInFileNames` | The repo path appears as both `Lagda` and `LAGDA` on this case-insensitive filesystem; CI's is case-sensitive. |
+| `useUnknownInCatchVariables` | No untyped `catch (e)`. |
+
+`noUnusedLocals` / `noUnusedParameters` are **off in tsconfig, enforced by ESLint
+instead**, so an unused import mid-edit does not break the type-check.
+`exactOptionalPropertyTypes` is off — largely incompatible with React's optional-
+prop idiom, and it produces churn without finding defects.
+
+**Result: 0 errors**, from 317 under the same configuration. **No `any`, no
+`as any`, no `@ts-ignore`, no `@ts-nocheck` was added anywhere.**
+
+## 3. ESLint
+
+Scope is correctness, security, accessibility and test reliability. Formatting is
+deliberately not enforced — the repository has a consistent hand-maintained style
+no formatter produced, and adding one would rewrite 466 files to catch nothing.
+
+Rules that carry weight here:
+
+| Rule | Why |
+| --- | --- |
+| `react-hooks/rules-of-hooks` | Found 6 conditional `useCallback` calls in `PrepareLayout.tsx` — real bugs. |
+| `react-hooks/exhaustive-deps` | Stale-closure defence in a codebase full of `useCallback` service calls. |
+| `@typescript-eslint/no-floating-promises` | Every service is async. Found 124 dropped promises. |
+| `@typescript-eslint/no-misused-promises` | Async handlers in a void slot. |
+| `no-alert` | Browser dialogs cannot be styled, focus-trapped or made accessible. Found 5 survivors after C37. |
+| `no-eval`, `no-implied-eval`, `no-new-func`, `no-script-url` | Hard product constraints, now mechanically enforced. |
+| `no-restricted-syntax` → `dangerouslySetInnerHTML` | Forbidden by the feature commands; recipient names, comment bodies and pasted values are user-controlled. |
+| `no-restricted-syntax` → `localStorage`/`sessionStorage` | Private provider data must never be persisted. |
+| `no-console` (allows `warn`/`error`) | `logger.ts` is the approved path and redacts. |
+| `testing-library/await-async-queries` | The main source of flaky Testing Library assertions. |
+| `playwright/missing-playwright-await` | A forgotten `await` makes an assertion pass unconditionally. |
+
+**`no-duplicate-imports` is deliberately off.** It counts `import type { T }` and
+`import { v }` from the same module as duplicates, but that split is idiomatic
+TypeScript. It flagged 155 correct imports and zero defects.
+
+**`react-refresh/only-export-components` is a warning, not an error.** Nearly every
+page file co-locates constants with its component; making it blocking would force
+a large mechanical refactor with no correctness benefit.
+
+## 4. Layout and naming
+
+```
+src/test/                       shared utilities (not tests)
+  setup.ts                      global setup — network blocking, resets, matchers
+  reset-services.ts             resetAllTestServices()
+  fixtures.ts                   deterministic fictional builders
+  render.tsx                    renderWithAppProviders, renderWithRouter
+
+src/app/**/__tests__/*.test.ts  unit and component tests, beside what they test
+
+tests/
+  support/app.ts                Playwright helpers
+  e2e/                          critical browser flows
+  accessibility/                axe scans
+  responsive/                   viewport + enlarged-layout
+  reduced-motion/               prefers-reduced-motion
 ```
 
-Add to `vite.config.ts`:
-```ts
-test: {
-  environment: "happy-dom",
-  globals: true,
-  setupFiles: ["src/test/setup.ts"],
-}
-```
-
----
-
-## 3. Unit Tests
-
-**Target:** Pure functions in utils/, models/, config/
-
-Priority targets:
-- `demo-clock.ts` — `formatRelative`, `isoDaysAgo`, `demoDaysFromNow`
-- `errors.ts` — `ok()`, `fail()`, `isFail()`, `isOk()`
-- `logger.ts` — redaction of sensitive keys
-- `analytics.ts` — no-op behavior, typed events
-- `pricing.config.ts` — plan IDs, plan comparison rows
-- `routes.ts` — route metadata completeness (every route has title, isIndexable, requiresAuth)
-
----
-
-## 4. Component Tests
-
-**Target:** Shared UI components and page-level smoke tests
-
-Priority components:
-- `SettingsShell.tsx` — SettingsPage renders sidebar + content
-- `DevPlaceholder` — renders without crash
-- Status badges — correct labels for each status value
-- Empty states — render when list is empty
-- Error states — render ServiceFailure messages
-- Loading states — render skeleton
-
-Page smoke tests (render the page with fixture data; assert it doesn't crash and key content is present):
-- Every settings page
-- Dashboard
-- DocumentsPage
-- RecipientRoot (each scenario type)
-- Public home, pricing, verify
-
----
-
-## 5. Service-Contract Tests
-
-**Target:** Every mock service implementation
-
-For each service, test representative cases:
-- Success (returns ok: true with expected shape)
-- Not found (returns fail with NOT_FOUND code)
-- Permission denied (when applicable)
-- Cancellation (operation token cancelled before completion)
-- Stale request (OperationScope detects mismatch)
-
-Use `vi.useFakeTimers()` with a fixed time to avoid delay-based flakiness.
-
----
-
-## 6. Fixture-Integrity Tests
-
-**Target:** `src/app/data/mock/` files
-
-Tests should fail with a useful message when:
-- Duplicate IDs exist within a domain
-- Cross-domain references point to non-existent IDs
-- Required fields are missing
-- Dates are in the wrong order (e.g., completedAt before createdAt)
-
-Example:
-```ts
-it("has no duplicate transaction IDs", () => {
-  const ids = MOCK_DOCUMENTS.map(d => d.id);
-  const unique = new Set(ids);
-  expect(unique.size).toBe(ids.length);
-});
-
-it("current user belongs to current workspace", () => {
-  expect(MOCK_CURRENT_USER.workspaceId).toBe(MOCK_CURRENT_WORKSPACE.id);
-});
-```
-
----
-
-## 7. Route Tests
-
-**Target:** `src/router.tsx`
-
-Tests:
-- Every authenticated route redirects to /sign-in when session is null
-- Every public route renders public layout (no platform shell)
-- Recipient routes render RecipientLayout (no public or platform shell)
-- Platform routes render PlatformLayout once (not double-nested)
-- /app redirects to /app/dashboard
-- /onboarding redirects to /onboarding/profile
-
-Use `MemoryRouter` or `createMemoryRouter` from react-router for test isolation.
-
----
-
-## 8. Permission Tests
-
-**Target:** `PlatformContext.hasPermission()` + `ROLE_PERMISSIONS` in models/index.ts
-
-Table-driven tests for all system roles:
-
-```ts
-const cases: [PlatformRole, PlatformPermission, boolean][] = [
-  ["owner",    "manage_billing", true],
-  ["viewer",   "manage_billing", false],
-  ["sender",   "prepare_documents", true],
-  ["reviewer", "prepare_documents", false],
-  // ...all 9 roles × all 17 permissions
-];
-test.each(cases)("%s can %s: %s", (role, permission, expected) => {
-  expect(ROLE_PERMISSIONS[role].includes(permission)).toBe(expected);
-});
-```
-
-Also test:
-- Final owner cannot be removed (workspace admin safeguard)
-- Plan availability does not grant permission
-- Query parameters do not grant permission
-
----
-
-## 9. Integration Tests
-
-**Target:** Cross-domain frontend flows
-
-Flow A — Sign in → Dashboard → Documents:
-- Sign in with mock auth
-- Assert PlatformContext.sessionStatus === "authenticated"
-- Navigate to /app/documents
-- Assert document list renders
-
-Flow B — Prepare document:
-- Start prepare flow
-- Add participant
-- Configure routing
-- Reach field editor
-- Assert draft state contains participant and routing
-
-Flow C — Recipient flow:
-- Load request by scenario (signer, approver, expired, locked)
-- Assert correct layout and actions for each scenario
-- Complete signing demonstration
-- Assert completion state
-
-Flow D — Settings:
-- Navigate through profile → security → notifications → billing → integrations
-- Assert each page renders without error
-- Perform one mutation per page
-- Assert session-local state update
-
----
-
-## 10. Accessibility Tests
-
-Run `axe` against each major page:
-
-```ts
-import { axe, toHaveNoViolations } from "vitest-axe";
-expect.extend(toHaveNoViolations);
-
-it("Settings profile has no a11y violations", async () => {
-  const { container } = render(<ProfilePage />);
-  const results = await axe(container);
-  expect(results).toHaveNoViolations();
-});
-```
-
-Priority pages: Dashboard, Documents, Prepare steps, Recipient signing, Settings overview.
-
-Known exemptions (document in test):
-- Field editor drag-and-drop (requires keyboard alternative verification separately)
-- Signature canvas (alternative text input required)
-
----
-
-## 11. Responsive Tests
-
-If Playwright or Cypress is available, add viewport tests:
-
-```ts
-test("Documents page has no horizontal overflow at 320px", async ({ page }) => {
-  await page.setViewportSize({ width: 320, height: 812 });
-  await page.goto("/app/documents");
-  const bodyWidth = await page.evaluate(() => document.body.scrollWidth);
-  expect(bodyWidth).toBeLessThanOrEqual(320);
-});
-```
-
-Priority routes at 320px: home, pricing, sign-in, dashboard, documents, settings.
-
----
-
-## 12. Offline Tests
-
-Verify core workflows with network blocked:
-
-```ts
-// In Playwright:
-await context.route("**/*", route => {
-  if (route.request().resourceType() === "xhr" || route.request().resourceType() === "fetch") {
-    route.abort();
-  } else {
-    route.continue();
-  }
-});
-```
-
-Expected: All pages render using local fixture data. No core action requires a network response.
-
----
-
-## 13. Test Helpers
-
-Required test helpers (add to `src/test/`):
-
-| Helper | Purpose |
-|--------|---------|
-| `renderWithProviders(ui, options)` | Wraps component in all required providers (PlatformProvider, etc.) |
-| `renderAuthenticated(ui, scenario)` | Renders with a mock authenticated session |
-| `renderWithWorkspace(ui, workspace)` | Renders with a specific workspace scenario |
-| `renderRecipient(ui, requestId)` | Renders in RecipientLayout with a fixture request |
-| `setupDemoClock(date)` | Sets deterministic base date before each test |
-| `createMockToken()` | Creates a cancellation token for service tests |
-
----
-
-## 14. Scenario Selection in Tests
-
-Tests select scenarios by injecting fixture data directly:
-
-```ts
-it("shows expired banner when request is expired", () => {
-  const { getByText } = renderRecipient(
-    <RecipientRoot />,
-    "req_expired",
-  );
-  expect(getByText(/request has expired/i)).toBeInTheDocument();
-});
-```
-
-Do not rely on URL query parameters for test scenario selection.
-
----
-
-## 15. Deterministic Time
-
-Always call `setupDemoClock(new Date("2026-01-01"))` in `beforeEach` when testing date-relative content. Reset with `resetDemoBaseDate()` in `afterEach`.
-
----
-
-## 16. Avoiding Flaky Tests
-
-- Never use `setTimeout` with real delays in tests — use `vi.useFakeTimers()`
-- Never assert on exact pixel positions
-- Avoid exact full-paragraph copy assertions — use semantic role queries
-- Clean up mocked modules with `vi.restoreAllMocks()` in `afterEach`
-- Avoid test-ordering dependencies — each test must set up its own state
-
----
-
-## 17. Deferred Production Testing
-
-When backend services are integrated:
-- Replace service fakes with real API contract tests
-- Add E2E flows in a staging environment
-- Add authentication flow tests with real OAuth
-- Add PDF processing tests
-- Add email delivery verification tests
-- Add signing persistence verification tests
+`*.test.ts(x)` for Vitest, `*.spec.ts` for Playwright. They never overlap:
+`vitest.config.ts` excludes `tests/`, `playwright.config.ts` only reads it.
+
+## 5. Test data rules
+
+All fictional. Email domains are `example.test` / `example.invalid`, reserved by
+RFC 2606 and RFC 6761 so they can never resolve to a real host.
+
+Never used: real customer names, recipient emails, document contents, signatures,
+Contact Groups, organization details, access links, API keys, tokens, or Policy
+configurations.
+
+Timestamps are fixed ISO strings with explicit offsets (`src/test/fixtures.ts`).
+Timezone is pinned to `Asia/Manila` and locale to `en-PH` in both Vitest and
+Playwright, because LAGDA formats dates that way and an unpinned test passes
+locally then fails in CI.
+
+## 6. Determinism
+
+`src/test/setup.ts` enforces:
+
+- **No network, ever.** `fetch`, `XMLHttpRequest`, `WebSocket`, `EventSource` and
+  `navigator.sendBeacon` all throw. A test can never pass against a real service,
+  and CI can never depend on one being up. This supersedes the old "offline tests"
+  section — network absence is now the default, not a scenario.
+- **`Notification` is undefined**, so nothing can request browser push.
+- **All mock services reset after every test** via `resetAllTestServices()`. Every
+  mock service holds module-level mutable state; without this, suites pass or fail
+  by order.
+- **`localStorage` and `sessionStorage` are cleared** after every test.
+
+No `sleep`, no arbitrary timeouts. Tests wait on state (`waitFor`, `findBy`,
+`toHaveCount`).
+
+**Launch-profile caveat.** `ACTIVE_LAUNCH_PROFILE` resolves once at module import.
+A test needing a different profile must `vi.stubEnv("VITE_LAUNCH_PROFILE", …)`,
+then `vi.resetModules()`, then `await import(...)`. Setting the env var alone does
+nothing — this is the single most common way to write a profile test that passes
+for the wrong reason.
+
+## 7. What is covered
+
+**417 unit and component tests across 7 suites, all passing.**
+
+| Suite | Gap | Covers |
+| --- | --- | --- |
+| `contact-recipient-source.test.ts` | 1 | Eligibility (active / archived / restricted / missing-email / invalid-email), Contact Group expansion into individual rows, **de-duplication by Contact ID not email** (two distinct Contacts sharing an address both survive, flagged `ambiguous-shared-email`), payload built with the canonical `Name`/`Email`/`Organization` headers, index alignment |
+| `bulk-send-defaults.test.ts` | 3 | Field definitions, draft validation, change preview incl. the null-defaults guard, override counting, the enum-outside-the-union case, `updateRequestDefaults` setting `source: "user"`, `restoreRequestDefaults` recomputing rather than blanking, read-only refusal |
+| `preparation-resolution.test.ts` | 4 | Availability gating, **resolution input carries no PII**, input-version staleness, Automation unavailable in `launch-default` |
+| `preparation-platform-projection.test.ts` | 5 | Workspace tenancy, **status is a pure mapping of the service's own status**, **no recipient value reaches any surface**, hostile-ID route fallback, aggregate consistency, empty projection out of profile, exact field-shape lock |
+| `platform-providers.test.ts` | 5 | Registration is deterministic and does not require visiting a page; no destination or label carries an email; notifications never claim a send; export columns carry no recipient column |
+| `privacy-and-cleanup.test.ts` | cross-cutting | Capability ≠ permission, workspace isolation, workspace/account/session cleanup, **no `localStorage`/`sessionStorage` writes**, no recipient data in any URL |
+| `capability-resolver.test.ts` | cross-cutting | Full resolution precedence order, profile-only `isCapabilityInActiveProfile`, eNotary future-product in every profile, Workflow Automation and Bulk Send enterprise-preview gating, unknown-capability safety |
+
+Browser specs: `tests/e2e/critical-flows.spec.ts`,
+`tests/accessibility/platform-a11y.spec.ts`, `tests/responsive/layout.spec.ts`,
+`tests/responsive/zoom-200.spec.ts`, `tests/reduced-motion/motion.spec.ts`.
+
+## 8. Coverage policy
+
+v8 provider over `src/app/**`. Excluded with reasons: `models/**` (type unions and
+label maps, no branches), `data/**` (static fixtures), `imports/**`
+(Figma-generated), `components/ui/**` (vendored shadcn), `pages/dev/**`
+(development-only), `src/test/**`.
+
+**No difficult production module is excluded to inflate the number.**
+
+Repository-wide thresholds are a **ratchet at the measured baseline**, not an
+aspiration — they exist to stop regression and should be raised as coverage grows.
+Setting them high today would force exactly the superficial render-only tests this
+work forbids.
+
+Per-module thresholds are set high on the pure logic this command is about:
+`preparation-platform-projection.ts` 90%, `contact-recipient-source.ts` 85%,
+`capability-resolver.ts` 85%, `bulk-send-defaults.ts` 70%.
+
+## 9. Production defects found by turning the checks on
+
+Full list in `docs/quality-infrastructure-audit.md` §8. The most consequential:
+
+1. **Template field placement produced `NaN` rectangles** — `clampRect()` read
+   `minW/minH/maxW/maxH` where the records are keyed `minWidth/minHeight/…`, so
+   every field a user drew snapped to the top-left at default size, and the NaN
+   rect was persisted.
+2. **`PageHeader` silently dropped action buttons** on three pages — they passed
+   `actions=`, the component renders `primaryAction`/`secondaryActions`.
+3. **21 breadcrumb items were dead text**, passing `href` where the type declares `to`.
+4. **Six conditional React hooks** in `PrepareLayout.tsx`.
+5. **`SearchDialog` icon map missing 14 of 18 result types** — a latent crash of
+   the whole result list.
+6. **A template's highest-trust signer silently degraded to the weakest
+   authentication**, because the fixture used auth IDs outside the union
+   (`"authenticator"`, 20 × `"email-code"`, 6 × `"invitation-access"`) and the
+   resolver falls back to the first entry, `"none"`.
+
+## 10. Commands
+
+| Command | What it does |
+| --- | --- |
+| `npm run typecheck` | All three TS projects |
+| `npm run lint` / `lint:fix` | ESLint, non-mutating / with safe fixes |
+| `npm test` / `test:watch` / `test:coverage` | Vitest |
+| `npm run test:e2e` | Playwright critical flows (Chromium) |
+| `npm run test:a11y` | axe accessibility project |
+| `npm run test:responsive` | mobile-320 / mobile-390 / tablet / zoom-200 |
+| `npm run test:reduced-motion` | reduced-motion project |
+| `npm run check` | typecheck + lint + test + build |
+| `npm run ci` | typecheck + lint + coverage + build |
+
+All cross-platform. No Windows path is embedded in any script.
+
+## 11. Browser matrix
+
+Deliberately narrow, to keep CI usable:
+
+- **Chromium desktop (1440×900)** — full critical-flow suite
+- **Chromium + axe** — accessibility, on loaded states
+- **320 / 390 / tablet-portrait** — responsive
+- **720×450 @2× ** — enlarged layout, approximating 200% zoom reflow
+- **Chromium, `prefers-reduced-motion: reduce`** — reduced motion
+
+Firefox and WebKit are **not** run — downloading them per commit triples install
+cost for little added signal on a React SPA. Recorded as a limitation.
+
+Browser tests run against the **production build** via `vite preview`, not the dev
+server, so they exercise the shipped bundle, real capability gating and real lazy
+route splitting.
+
+## 12. Failure artifacts
+
+On failure Playwright retains a trace, a screenshot and the HTML report; CI
+uploads them with 7-day retention. They render **fictional fixture data only** —
+this application contains no real recipient, document, credential or token to
+capture. `coverage/`, `playwright-report/` and `test-results/` are gitignored.
+
+## 13. Honest limitations
+
+- **No screen-reader testing.** axe is automated scanning; it does not replace
+  NVDA / JAWS / VoiceOver review. See `docs/manual-quality-validation-checklist.md`.
+- **200% zoom is approximated, not real.** Playwright cannot set browser zoom. The
+  `zoom-200` project uses a half-width viewport at 2× scale, which exercises WCAG
+  1.4.10 reflow but is not the same thing. Manual review remains required.
+- **No real device testing.** Viewport emulation is not a physical phone;
+  virtual-keyboard behaviour cannot be simulated.
+- **No cross-browser coverage** beyond Chromium.
+- **Nothing here tests a backend, because there is none.** Every service is an
+  in-memory mock. These are frontend fixture tests and must not be represented as
+  production integration tests. The production test requirements that remain
+  outstanding are listed in `docs/backend-integration-handoff.md`.

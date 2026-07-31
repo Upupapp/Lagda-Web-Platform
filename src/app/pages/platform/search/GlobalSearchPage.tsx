@@ -63,7 +63,8 @@ function getFieldRanges(matchedFields: GlobalSearchMatchField[], field: "title" 
 
 // ── Result type color / icon ──────────────────────────────────────────────────
 
-type IconComp = React.ComponentType<{ size?: number; "aria-hidden"?: boolean | "true" | "false" }>;
+// `size` matches lucide's own LucideProps (string | number) so lucide icons assign cleanly.
+type IconComp = React.ComponentType<{ size?: string | number; "aria-hidden"?: boolean | "true" | "false" }>;
 
 const TYPE_ICON_MAP: Partial<Record<GlobalSearchResult["type"], IconComp>> = {
   "document":             FileText,
@@ -170,9 +171,8 @@ function StatusBadge({ status, label }: { status?: string; label?: string }) {
 
 // ── Result card ───────────────────────────────────────────────────────────────
 
-function ResultCard({ result, query, onNavigate }: {
+function ResultCard({ result, onNavigate }: {
   result:     GlobalSearchResult;
-  query:      string;
   onNavigate: (path: string, label: string) => void;
 }) {
   const IconComp = TYPE_ICON_MAP[result.type] ?? FileText;
@@ -258,9 +258,8 @@ function ResultCard({ result, query, onNavigate }: {
 
 // ── Result group ──────────────────────────────────────────────────────────────
 
-function ResultGroup({ group, query, onNavigate, onScopeExpand }: {
+function ResultGroup({ group, onNavigate, onScopeExpand }: {
   group:         GlobalSearchResponse["groups"][number];
-  query:         string;
   onNavigate:    (path: string, label: string) => void;
   onScopeExpand: (scope: GlobalSearchScope) => void;
 }) {
@@ -297,7 +296,6 @@ function ResultGroup({ group, query, onNavigate, onScopeExpand }: {
           <ResultCard
             key={result.id}
             result={result}
-            query={query}
             onNavigate={onNavigate}
           />
         ))}
@@ -724,7 +722,6 @@ export function GlobalSearchPage() {
                 <ResultGroup
                   key={group.scope}
                   group={group}
-                  query={paramQ.trim()}
                   onNavigate={handleNavigate}
                   onScopeExpand={handleScopeExpand}
                 />

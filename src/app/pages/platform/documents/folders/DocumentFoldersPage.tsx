@@ -485,8 +485,8 @@ export function DocumentFoldersPage() {
       <style>{STYLES}</style>
       <PageHeader
         title="Document Folders"
-        breadcrumbs={[{ label: "Documents", href: "/app/documents" }, { label: "Folders" }]}
-        actions={
+        breadcrumbs={[{ label: "Documents", to: "/app/documents" }, { label: "Folders" }]}
+        primaryAction={
           <button
             onClick={() => setCreateParent(null)}
             style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "7px 14px", borderRadius: 8, background: AZURE, color: "#fff", border: "none", cursor: "pointer", fontSize: 13, fontWeight: 600, ...GF }}

@@ -474,7 +474,7 @@ export function VerifyPage() {
         compact
         title="Verify a Document"
         breadcrumbs={[
-          { label: "Dashboard", href: "/app/dashboard" },
+          { label: "Dashboard", to: "/app/dashboard" },
           { label: "Verify a Document" },
         ]}
       />

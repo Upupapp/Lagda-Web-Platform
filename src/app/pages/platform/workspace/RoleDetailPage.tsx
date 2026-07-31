@@ -128,8 +128,9 @@ function RoleDetailInner() {
 
   const role = state.activeRole;
   const permByCategory = ALL_PERMISSIONS.reduce<Record<string, typeof ALL_PERMISSIONS>>((acc, p) => {
-    if (!acc[p.category]) acc[p.category] = [];
-    acc[p.category].push(p);
+    const bucket = acc[p.category] ?? [];
+    bucket.push(p);
+    acc[p.category] = bucket;
     return acc;
   }, {});
 

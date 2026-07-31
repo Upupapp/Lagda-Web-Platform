@@ -14,6 +14,7 @@ import {
 import type {
   PrepRoutingGroup,
   PrepGroupId,
+  PrepParticipantRole,
   PrepPaxId,
   RoutingMode,
   RoutingCompletionRule,
@@ -38,9 +39,9 @@ function generateGroupId(): string {
 
 function buildDefaultGroups(
   mode: RoutingMode,
-  participants: { id: PrepPaxId; role: string; name: string }[],
+  participants: { id: PrepPaxId; role: PrepParticipantRole; name: string }[],
 ): PrepRoutingGroup[] {
-  const blocking = participants.filter(p => PREP_ROLE_IS_BLOCKING[p.role as any]);
+  const blocking = participants.filter(p => PREP_ROLE_IS_BLOCKING[p.role]);
 
   if (mode === "parallel") {
     return [
@@ -108,7 +109,7 @@ function GroupCard({
 }: {
   group: PrepRoutingGroup;
   index: number;
-  allParticipants: { id: PrepPaxId; name: string; role: string }[];
+  allParticipants: { id: PrepPaxId; name: string; role: PrepParticipantRole }[];
   canRemove: boolean;
   onLabelChange:        (groupId: PrepGroupId, label: string) => void;
   onRuleChange:         (groupId: PrepGroupId, rule: RoutingCompletionRule) => void;
@@ -262,7 +263,7 @@ function GroupCard({
                 />
                 <span style={{ fontWeight: 600 }}>{p.name}</span>
                 <span style={{ color: SILVER, fontSize: 12 }}>
-                  {PREP_PARTICIPANT_ROLE_LABELS[p.role as any] ?? p.role}
+                  {PREP_PARTICIPANT_ROLE_LABELS[p.role] ?? p.role}
                 </span>
               </label>
             );
@@ -309,7 +310,7 @@ export function RoutingStep() {
 
   useEffect(() => { setStep("routing"); }, [setStep]);
 
-  const participants = (draft?.participants ?? []).filter(p => PREP_ROLE_IS_BLOCKING[p.role as any]);
+  const participants = (draft?.participants ?? []).filter(p => PREP_ROLE_IS_BLOCKING[p.role]);
   const routing      = draft?.routing ?? DEFAULT_ROUTING_CONFIG;
   const validation   = draft ? validate() : null;
   const routeErrors  = validation?.errors.filter(e => e.stepId === "routing") ?? [];

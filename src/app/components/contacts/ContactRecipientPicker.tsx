@@ -108,8 +108,8 @@ export function ContactRecipientPicker({
       if (e.key !== "Tab" || !panelRef.current) return;
       const f = panelRef.current.querySelectorAll<HTMLElement>(
         'a[href],button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])');
-      if (f.length === 0) return;
       const first = f[0], last = f[f.length - 1];
+      if (!first || !last) return;   // empty NodeList — nothing to contain focus within
       if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
       else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
     }
@@ -533,7 +533,7 @@ function PreviewRow({ entry, onToggle }: { entry: ContactSelectionEntry; onToggl
 
 function Shell({ title, onCancel, panelRef, children }: {
   title: string; onCancel: () => void;
-  panelRef: React.RefObject<HTMLDivElement | null>; children: React.ReactNode;
+  panelRef: React.RefObject<HTMLDivElement>; children: React.ReactNode;
 }) {
   return (
     <div className="bs-panel" ref={panelRef} role="group" aria-label={title}>

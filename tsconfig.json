@@ -1,0 +1,18 @@
+{
+  // Solution-style root config (Gap Closure Command 6).
+  //
+  // Three projects, because they run in genuinely different environments and must
+  // not share globals:
+  //   - tsconfig.app.json   browser application source (src/)
+  //   - tsconfig.node.json  build-time config files that run under Node
+  //   - tsconfig.test.json  Vitest unit/component tests and Playwright specs
+  //
+  // Keeping them separate is what stops Node globals leaking into browser code and
+  // stops test globals (describe/it/expect) being visible to production source.
+  "files": [],
+  "references": [
+    { "path": "./tsconfig.app.json" },
+    { "path": "./tsconfig.node.json" },
+    { "path": "./tsconfig.test.json" }
+  ]
+}

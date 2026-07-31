@@ -1801,7 +1801,7 @@ export function DocumentsPage() {
       <style>{DOC_STYLES}</style>
       <PageHeader
         title="Documents"
-        actions={
+        primaryAction={
           canPrepare ? (
             <Link
               to="/app/prepare"

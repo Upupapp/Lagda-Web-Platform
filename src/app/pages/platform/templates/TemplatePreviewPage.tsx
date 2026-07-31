@@ -135,7 +135,7 @@ function TemplatePreviewInner() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [templateId]);
 
-  usePageMeta(t ? `Preview — ${t.name} — LAGDA` : "Template Preview — LAGDA");
+  usePageMeta();
 
   if (state.activeLoading || (!t && !state.activeError)) {
     return <div style={{ padding: 24 }}><style>{SKELETON_STYLE}</style><SkeletonBlock height={20} width={200} /><div style={{ marginTop: 14 }}><SkeletonBlock height={400} /></div></div>;

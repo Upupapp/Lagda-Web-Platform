@@ -16,9 +16,9 @@ const SAFE_BRAND_TYPES = ["image/png", "image/jpeg", "image/jpg"];
 const MAX_LOGO_SIZE = 2 * 1024 * 1024;
 
 function hexToRgb(hex: string): { r: number; g: number; b: number } | null {
-  const m = /^#([A-Fa-f0-9]{6})$/.exec(hex);
-  if (!m) return null;
-  return { r: parseInt(m[1].slice(0, 2), 16), g: parseInt(m[1].slice(2, 4), 16), b: parseInt(m[1].slice(4, 6), 16) };
+  const digits = /^#([A-Fa-f0-9]{6})$/.exec(hex)?.[1];
+  if (!digits) return null;
+  return { r: parseInt(digits.slice(0, 2), 16), g: parseInt(digits.slice(2, 4), 16), b: parseInt(digits.slice(4, 6), 16) };
 }
 
 function relativeLuminance({ r, g, b }: { r: number; g: number; b: number }): number {

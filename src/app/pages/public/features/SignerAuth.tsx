@@ -17,11 +17,12 @@ const TIER_CONFIG = {
 function AuthMethodSelector() {
   const [selected, setSelected] = useState(0);
   const method = AUTH_METHODS[selected];
+  if (!method) return null;
   return (
     <div style={{ display: "flex", gap: 16, flexDirection: "column" }} className="auth-sel">
       <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
         {AUTH_METHODS.map((m, i) => {
-          const cfg = TIER_CONFIG[m.tier as keyof typeof TIER_CONFIG];
+          const cfg = TIER_CONFIG[m.tier];
           return (
             <button
               key={m.method}
@@ -48,7 +49,7 @@ function AuthMethodSelector() {
       <div style={{ background: "rgba(7,17,31,0.95)", border: "1px solid rgba(0,120,212,0.2)", borderRadius: 12, padding: "14px 16px" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
           <p style={{ color: "white", ...GF, fontSize: 13, fontWeight: 700, margin: 0 }}>{method.method}</p>
-          <AvailBadge tier={TIER_CONFIG[method.tier as keyof typeof TIER_CONFIG].badge} />
+          <AvailBadge tier={TIER_CONFIG[method.tier].badge} />
         </div>
         <p style={{ color: "#94a3b8", ...GF, fontSize: 13, lineHeight: 1.6, margin: 0 }}>{method.desc}</p>
       </div>

@@ -33,9 +33,9 @@ function TypedPreview({ text, styleIndex }: { text: string; styleIndex: number }
       }}
     >
       <span style={{
-        fontFamily: style.fontFamily,
-        fontSize:   Math.min(style.fontSize, 28),
-        fontStyle:  style.fontStyle,
+        fontFamily: style?.fontFamily,
+        fontSize:   style ? Math.min(style.fontSize, 28) : 28,
+        fontStyle:  style?.fontStyle,
         color:      text ? NAVY : SILVER,
         padding:    "0 16px",
       }}>

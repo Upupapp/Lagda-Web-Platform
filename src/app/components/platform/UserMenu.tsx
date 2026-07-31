@@ -17,7 +17,8 @@ interface UserMenuProps {
 
 function getInitials(name: string): string {
   const parts = name.trim().split(" ");
-  if (parts.length >= 2) return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  const first = parts[0] ?? "", last = parts[parts.length - 1] ?? "";
+  if (parts.length >= 2) return (first.charAt(0) + last.charAt(0)).toUpperCase();
   return name.slice(0, 2).toUpperCase();
 }
 

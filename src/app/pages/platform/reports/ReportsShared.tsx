@@ -9,13 +9,13 @@ import {
   BarChart2, FileText, Users, Files, ShieldCheck, Building2, Send,
   BookMarked, ChevronRight, Info, AlertTriangle, Clock, Calendar,
   Download, Share2, CalendarClock, PenLine, X,
-  CheckCircle2, Archive, RotateCcw, Trash2, Copy, Star,
+  Archive, RotateCcw, Trash2, Copy, Star,
 } from "lucide-react";
 import type {
   ReportMetricCard, ReportDistribution, ReportTimeSeries,
   ReportTable, ReportDataQualityNotice, ReportDatePreset,
   ReportSavedView, ReportExportPreview, ReportSharePreview,
-  ReportSchedulePreview, ReportFamily,
+  ReportSchedulePreview, ReportFamily, ReportViewId,
 } from "../../../models/reports";
 import {
   REPORT_FAMILY_LABELS, REPORT_FAMILY_DESCRIPTIONS,
@@ -846,13 +846,13 @@ export function SavedViewCard({
   onAnnotate,
 }: {
   view: ReportSavedView;
-  onRename:     (id: string) => void;
-  onDuplicate:  (id: string) => void;
-  onSetDefault: (id: string) => void;
-  onArchive:    (id: string) => void;
-  onRestore:    (id: string) => void;
-  onRemove:     (id: string) => void;
-  onAnnotate:   (id: string) => void;
+  onRename:     (id: ReportViewId) => void;
+  onDuplicate:  (id: ReportViewId) => void;
+  onSetDefault: (id: ReportViewId) => void;
+  onArchive:    (id: ReportViewId) => void;
+  onRestore:    (id: ReportViewId) => void;
+  onRemove:     (id: ReportViewId) => void;
+  onAnnotate:   (id: ReportViewId) => void;
 }) {
   return (
     <article

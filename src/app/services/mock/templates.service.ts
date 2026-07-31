@@ -182,7 +182,7 @@ export function validateTemplate(template: DocumentTemplate): TemplateValidation
   if (!template.name.trim())                               errors.push({ id: "v-name",  severity: "error",   message: "Template name is required.",               area: "details" });
   if (template.documents.length === 0)                     errors.push({ id: "v-docs",  severity: "error",   message: "At least one document is required.",        area: "documents" });
   if (template.placeholders.length === 0)                  errors.push({ id: "v-phs",   severity: "error",   message: "At least one role placeholder is required.",area: "placeholders" });
-  if (template.fields.filter(f => !f.isSenderText).length === 0) warnings.push({ id: "v-flds", severity: "warning", message: "No recipient fields have been added.", area: "fields" });
+  if (template.fields.filter(f => f.placeholderId !== null).length === 0) warnings.push({ id: "v-flds", severity: "warning", message: "No recipient fields have been added.", area: "fields" });
 
   const isValid          = errors.length === 0;
   const canMakeAvailable = isValid;
@@ -341,7 +341,7 @@ export function createBlankTemplate(name: string, category: DocumentTemplate["ca
     documents:      [],
     placeholders:   [],
     routing:        { mode: "sequential", groups: [] },
-    authentication: { globalDefault: "email-code", placeholderOverrides: {} },
+    authentication: { globalDefault: "email-otp", placeholderOverrides: {} },
     settings: {
       invitationSubject:         "Please review and sign",
       invitationMessage:         "",

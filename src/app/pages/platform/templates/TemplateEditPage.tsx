@@ -410,7 +410,7 @@ function TemplateEditInner() {
     }
   }, [state.activeTemplate, draft]);
 
-  usePageMeta(draft ? `Edit ${draft.name} — LAGDA` : "Edit Template — LAGDA");
+  usePageMeta();
 
   const handleSave = () => {
     // In-memory only — no real persistence

@@ -220,9 +220,10 @@ export function WorkflowCreatePage() {
     if (!data.workflow) return;
     const ordered = [...data.stages];
     const from = ordered.findIndex(s => s.id === stageId);
-    if (from === -1) return;
+    const moved = ordered[from];
+    if (from === -1 || !moved) return;
     const target = Math.max(0, Math.min(ordered.length - 1, toPosition - 1));
-    const [moved] = ordered.splice(from, 1);
+    ordered.splice(from, 1);
     ordered.splice(target, 0, moved);
     void runStageMutation(
       () => signingWorkflowService.reorderWorkflowStages(
@@ -240,9 +241,10 @@ export function WorkflowCreatePage() {
     if (!stage) return;
     const ordered = [...stage.assignments].sort((a, b) => a.position - b.position);
     const from = ordered.findIndex(a => a.id === assignmentId);
-    if (from === -1) return;
+    const moved = ordered[from];
+    if (from === -1 || !moved) return;
     const target = Math.max(0, Math.min(ordered.length - 1, toPosition - 1));
-    const [moved] = ordered.splice(from, 1);
+    ordered.splice(from, 1);
     ordered.splice(target, 0, moved);
     void runStageMutation(
       () => signingWorkflowService.reorderStageParticipants(
@@ -700,7 +702,8 @@ export function WorkflowCreatePage() {
             disabled={!data.workflow && step === "basics" && !name.trim()}
             onClick={() => {
               if (!data.workflow && step === "basics") { void createDraft(); return; }
-              setStep(WORKFLOW_CREATION_STEPS[stepIndex + 1].id);
+              const nextStep = WORKFLOW_CREATION_STEPS[stepIndex + 1];
+              if (nextStep) setStep(nextStep.id);
             }}
           >
             Continue
@@ -918,7 +921,7 @@ function StageEditorSheet({
 
   return (
     <WorkflowSheet
-      title={editing ? `Edit Stage ${stage!.position}` : `Add Stage ${(insertAfterPosition ?? 0) + 1}`}
+      title={editing ? `Edit Stage ${stage.position}` : `Add Stage ${(insertAfterPosition ?? 0) + 1}`}
       onClose={onClose}
       footer={
         <>

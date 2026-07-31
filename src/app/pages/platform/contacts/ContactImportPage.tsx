@@ -170,10 +170,13 @@ function ImportLibrary() {
                         <div style={{ marginBottom: row.issues.length > 0 ? 6 : 0 }}>
                           <RowStatusBadge status={effectiveStatus} />
                         </div>
+                        {/* ContactImportIssue carries only field + message — it has no
+                            severity of its own, so every issue reads neutrally. The row
+                            status badge above is what conveys severity. */}
                         {row.issues.map((issue, i) => (
                           <div key={i} style={{ display: "flex", gap: 4, alignItems: "flex-start", marginBottom: 2 }}>
-                            <span style={{ fontSize: 10, marginTop: 1 }}>{issue.severity === "error" ? "🔴" : issue.severity === "warning" ? "🟡" : "🔵"}</span>
-                            <span style={{ ...GF, fontSize: 11, color: issue.severity === "error" ? "#991B1B" : SLATE }}>{issue.message}</span>
+                            <span style={{ fontSize: 10, marginTop: 1 }}>🔵</span>
+                            <span style={{ ...GF, fontSize: 11, color: SLATE }}>{issue.message}</span>
                           </div>
                         ))}
                         {row.matchingContactId && (

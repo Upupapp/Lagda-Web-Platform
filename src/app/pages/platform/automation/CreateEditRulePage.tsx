@@ -214,7 +214,7 @@ export function CreateEditRulePage() {
     const payload = {
       name: form.name,
       description: form.description,
-      trigger: form.trigger as AutoTriggerKind,
+      trigger: form.trigger,
       conditionLogic: form.conditionLogic,
       conditions: form.conditions,
       actions: form.actions,

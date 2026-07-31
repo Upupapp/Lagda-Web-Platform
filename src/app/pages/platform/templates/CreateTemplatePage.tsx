@@ -153,7 +153,7 @@ function BlankForm({ onCreated }: { onCreated: (id: string) => void }) {
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 export function CreateTemplatePage() {
-  usePageMeta("New Template — LAGDA");
+  usePageMeta();
   const navigate = useNavigate();
   const [selected, setSelected] = useState<string | null>(null);
 
@@ -199,7 +199,7 @@ export function CreateTemplatePage() {
               <div style={{ marginBottom: 10 }}>{s.icon}</div>
               <div style={{ ...GF, fontSize: 13, fontWeight: 700, color: "#0F172A", marginBottom: 5 }}>{s.label}</div>
               <div style={{ ...GF, fontSize: 12, color: "#64748B", lineHeight: 1.5 }}>{s.description}</div>
-              {s.note && !s.available && (
+              {"note" in s && !s.available && (
                 <div style={{ ...GF, fontSize: 11, color: "#94A3B8", marginTop: 8, fontStyle: "italic" }}>{s.note}</div>
               )}
               {selected === s.id && s.available && (

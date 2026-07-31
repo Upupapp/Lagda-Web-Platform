@@ -1358,3 +1358,101 @@ not make on its own.
 
 Background execution, event processing, queues, webhooks, scheduling, conditional
 branching, user-authored scripting, and any external workflow engine.
+
+---
+
+# Production test requirements
+
+Gap Closure Command 6 (2026-08-01). **Not implemented — this is a handoff.**
+
+The frontend now has a working quality system (see
+`docs/frontend-testing-strategy.md`), but every service it tests is an in-memory
+mock. Nothing below can be tested until a backend exists, and none of it should be
+represented as covered today.
+
+Each item states the invariant the test must protect, because the invariant is the
+part worth carrying across.
+
+## Authentication and session
+
+- **Authentication integration** — real credential validation; failure paths do not
+  leak whether an account exists.
+- **Session integration** — issue, refresh, revoke. A revoked session is rejected
+  immediately, not at next refresh.
+- **Session expiry** — an expired session cannot complete an in-flight mutation,
+  and the client is never told an operation succeeded when it did not.
+
+## Authorization and tenancy
+
+- **Workspace isolation** — every read and write is scoped server-side. A user
+  cannot reach another workspace's batch, document, Contact, report or
+  notification by ID, by query parameter, or by a stale deep link.
+- **Team scope** — enforced on the server. The frontend passes `teamId` but team
+  membership is not modelled.
+- **Document authorization** — being named in a batch, mentioned in a comment, or
+  assigned as a reviewer must never by itself grant document access.
+- **Capability versus permission** — a capability being available must never grant
+  a permission. Test both directions.
+
+## Domain persistence
+
+- **Contact API** and **Contact Group API** — CRUD, archive/restore, membership.
+  Expanding a group must never mutate its membership.
+- **Recipient-row persistence** — rows survive a reload; editing a row never
+  mutates its source Contact, Contact Group, uploaded file, or pasted text.
+- **Request Default persistence** and **Organization Default persistence** — the
+  precedence chain `user > saved-configuration > template > workflow-policy >
+  automation-rule > workspace-default > product-default` resolves identically on
+  the server. **The workspace-level store does not exist yet** (see §17 gap 4).
+- **Policy enforcement** — a mandatory Policy requirement genuinely blocks; it
+  cannot be bypassed by a query parameter or a direct API call.
+- **Automation execution** — a Rule can never send a notification, apply a
+  signature, complete a participant, or grant access.
+- **Signing Workflow state machine** — stage transitions, parallel versus ordered
+  behaviour, one signature per assignment, a stage never signs, a group never
+  signs, one participant cannot sign for another.
+- **Recipient actions** and **eSignature application** — idempotent; a replayed
+  request does not double-apply.
+
+## Delivery
+
+- **Notification outbox** — transactional outbox, at-least-once delivery with
+  deduplication per recipient per event. Audience resolution excludes Contacts and
+  recipients. Deep links revalidate authorization at the destination.
+- **Email provider** and **SMS provider** — bounce and failure handling; a failed
+  send is never reported as delivered.
+
+## Read models
+
+- **Search index** — permission-filtered at index time and again at query time.
+  Recipient emails and names are never indexed. Deleting a record removes it from
+  the index. Eventual consistency is bounded and stale results fail safely.
+- **Report aggregation** — counts match the source of truth; export and schedule
+  endpoints reject any request for recipient-level columns from the preparation
+  family.
+- **Dashboard aggregates** — permission-filtered counts; cache invalidation on
+  workspace switch; partial failure degrades one card rather than the page.
+
+## Records
+
+- **Activity** — append-only, tamper-evident, complete for every state change.
+- **Evidence** — generated only from real events; never from a demonstration path.
+- **Verification** — a verification record corresponds to a real document and a
+  real check.
+
+## Cross-cutting
+
+- **Idempotency** — every mutating endpoint accepts an idempotency key; replay
+  returns the original result rather than duplicating.
+- **Concurrency** — optimistic concurrency on batches, rows and defaults; a
+  conflicting write is rejected with a usable error, not silently merged.
+- **Rate limiting** — per user, per workspace, per endpoint.
+- **Security** — authorization on every endpoint, injection, SSRF, file-upload
+  validation, and the negative cases for each.
+- **Data retention** — deletion actually deletes, including from indexes,
+  aggregates and backups.
+- **Backup and restoration** — restore is exercised, not just backup.
+- **Observability** — structured logs with **redaction of recipient identity**,
+  traces, and alerting on the outbox and index lag.
+- **Failure recovery** — partial service failure degrades gracefully; no operation
+  reports success on a failed write.

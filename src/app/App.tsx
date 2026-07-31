@@ -208,9 +208,9 @@ export default function App() {
 
   // Derive current view entirely from URL — no state, no effects for sync.
   const parsed        = pathToState(pathname);
-  const section       = (parsed?.section      ?? "pricing")    as Section;
-  const pricingTab    = (parsed?.pricingTab   ?? "pricing-main")      as PricingTab;
-  const resourcesTab  = (parsed?.resourcesTab ?? "guides")            as ResourcesTab;
+  const section       = (parsed?.section      ?? "pricing");
+  const pricingTab    = (parsed?.pricingTab   ?? "pricing-main");
+  const resourcesTab  = (parsed?.resourcesTab ?? "guides");
 
   // Page animation key — increments on pathname change to trigger CSS enter animation.
   const pageKey  = useRef(0);

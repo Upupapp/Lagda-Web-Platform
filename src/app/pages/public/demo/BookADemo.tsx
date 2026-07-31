@@ -187,7 +187,7 @@ export function BookADemo() {
             <Field id="demo-role" label="Your role" optional>
               <select id="demo-role" value={fields.role} onChange={(e) => set("role", e.target.value as DemoRequest["role"])} style={{ ...inputStyle, cursor: "pointer" }}>
                 <option value="" style={{ background: "#07111F" }}>Select…</option>
-                {(Object.entries(INQUIRY_ROLE_LABELS) as [string, string][]).map(([v, l]) => <option key={v} value={v} style={{ background: "#07111F" }}>{l}</option>)}
+                {(Object.entries(INQUIRY_ROLE_LABELS)).map(([v, l]) => <option key={v} value={v} style={{ background: "#07111F" }}>{l}</option>)}
               </select>
             </Field>
           </div>
@@ -196,7 +196,7 @@ export function BookADemo() {
             <Field id="demo-size" label="Organization size" optional>
               <select id="demo-size" value={fields.orgSize} onChange={(e) => set("orgSize", e.target.value as DemoRequest["orgSize"])} style={{ ...inputStyle, cursor: "pointer" }}>
                 <option value="" style={{ background: "#07111F" }}>Select…</option>
-                {(Object.entries(ORG_SIZE_LABELS) as [string, string][]).map(([v, l]) => <option key={v} value={v} style={{ background: "#07111F" }}>{l}</option>)}
+                {(Object.entries(ORG_SIZE_LABELS)).map(([v, l]) => <option key={v} value={v} style={{ background: "#07111F" }}>{l}</option>)}
               </select>
             </Field>
             <Field id="demo-industry" label="Industry" optional>

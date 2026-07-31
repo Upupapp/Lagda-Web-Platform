@@ -32,7 +32,15 @@ const SCENARIO_MAP: Record<string, () => AuthScenarioResult> = {
 
 // ── Mock invitation fixture ───────────────────────────────────────────────────
 
-const MOCK_INVITATIONS: Record<string, MockInvitation> = {
+const MOCK_INVITATION_KEYS = ["valid", "expired", "revoked", "accepted", "mismatch"] as const;
+type MockInvitationKey = typeof MOCK_INVITATION_KEYS[number];
+
+function parseInvitationKey(raw: string): MockInvitationKey {
+  // Unknown UI state params fall back to the valid invitation fixture.
+  return (MOCK_INVITATION_KEYS as readonly string[]).includes(raw) ? (raw as MockInvitationKey) : "valid";
+}
+
+const MOCK_INVITATIONS: Record<MockInvitationKey, MockInvitation> = {
   valid: {
     id: "inv_mls_demo_001",
     workspaceName: "Mabini Legal Solutions",
@@ -118,11 +126,12 @@ class MockAuthService {
     if (factory) return factory();
 
     // Default: onboarding required (new user demo scenario)
+    const localPart = normalized.split("@")[0] ?? normalized;
     return {
       success: true, scenario: "onboarding",
       user: {
         email: normalized,
-        displayName: normalized.split("@")[0].replace(/[._-]/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
+        displayName: localPart.replace(/[._-]/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
         authStatus: "onboarding-required",
       },
     };
@@ -147,7 +156,7 @@ class MockAuthService {
 
   // MFA challenge.
   // "123456" → success; "000000" → locked; anything else → invalid.
-  async submitMfaChallenge(code: string): Promise<{ success: boolean; errorCode?: "invalid" | "expired" | "locked" }> {
+  async submitMfaChallenge(code: string): Promise<{ success: boolean; errorCode?: "invalid" | "locked" }> {
     await delay(500);
     const trimmed = code.trim();
     if (trimmed === "123456") return { success: true };
@@ -182,7 +191,7 @@ class MockAuthService {
   // Get invitation by UI state param (not a real token).
   async getInvitation(invParam: string): Promise<MockInvitation> {
     await delay(500);
-    return MOCK_INVITATIONS[invParam] ?? MOCK_INVITATIONS["valid"];
+    return MOCK_INVITATIONS[parseInvitationKey(invParam)];
   }
 
   // Accept invitation — demonstration only.

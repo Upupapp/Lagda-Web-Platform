@@ -12,7 +12,11 @@ export interface BreadcrumbItem {
 }
 
 export interface PageHeaderProps {
-  title: string;
+  // ReactNode, not string: the component's only use of `title` is
+  // `<h1>{title}</h1>`, and FolderDetailPage renders an inline rename input in
+  // that slot. The narrower `string` type never matched what the component
+  // actually accepts.
+  title: React.ReactNode;
   description?: string;
   breadcrumbs?: BreadcrumbItem[];
   primaryAction?: React.ReactNode;

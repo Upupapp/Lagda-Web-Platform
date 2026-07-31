@@ -1149,7 +1149,7 @@ export function PlatformDashboard() {
       <PageHeader
         title={`Welcome back, ${firstName}`}
         description={currentWorkspace ? `${wsName} — ${planLabel} Plan` : undefined}
-        actions={
+        primaryAction={
           <button
             onClick={load}
             aria-label="Refresh dashboard"

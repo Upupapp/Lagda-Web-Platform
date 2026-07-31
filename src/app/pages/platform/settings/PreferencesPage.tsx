@@ -114,7 +114,7 @@ export function PreferencesPage() {
               {TIMEZONES.map(z => <option key={z.value} value={z.value}>{z.label}</option>)}
             </select>
           </SField>
-          <SField label="Date format" help={`Preview: ${formatDateExample((form.dateFormat ?? "DD/MM/YYYY") as DateFormatPref)}`}>
+          <SField label="Date format" help={`Preview: ${formatDateExample((form.dateFormat ?? "DD/MM/YYYY"))}`}>
             <select value={form.dateFormat ?? "DD/MM/YYYY"} onChange={e => update("dateFormat", e.target.value as DateFormatPref)} style={SELECT_STYLE} aria-label="Date format">
               {DATE_FORMATS.map(f => <option key={f.value} value={f.value}>{f.label}</option>)}
             </select>

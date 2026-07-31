@@ -92,8 +92,10 @@ function isPreparationSearchEnabled(): boolean {
  * so the value comes from the canonical workspace fixture the session is built
  * from rather than being guessed per provider.
  */
-const SESSION_WORKSPACE_ID = MOCK_CURRENT_WORKSPACE.id;
-const SESSION_WORKSPACE_NAME = MOCK_CURRENT_WORKSPACE.name;
+// The workspace fixture list is never empty, so the fallbacks below are not
+// reachable — they exist so the fixture's index access stays type-safe.
+const SESSION_WORKSPACE_ID = MOCK_CURRENT_WORKSPACE?.id ?? "";
+const SESSION_WORKSPACE_NAME = MOCK_CURRENT_WORKSPACE?.name ?? "";
 
 // Bulk Send preparation results (Gap Closure Command 5).
 //

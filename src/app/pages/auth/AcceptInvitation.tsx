@@ -58,7 +58,10 @@ export function AcceptInvitation() {
     await mockAuthService.acceptInvitation(invitation.id);
     // Sign into the platform session with mock payload
     const payload = createMockSignInPayload();
-    platform.signIn(payload.user, payload.workspaces, payload.currentWorkspace, payload.subscription, payload.notifications);
+    // The mock fixture always has a current workspace; guard so a missing one
+    // never enters the session as an undefined workspace.
+    const ws = payload.currentWorkspace ?? payload.workspaces[0];
+    if (ws) platform.signIn(payload.user, payload.workspaces, ws, payload.subscription, payload.notifications);
     setPageState("accepted");
     setTimeout(() => navigate("/app/dashboard", { replace: true }), 1500);
   }

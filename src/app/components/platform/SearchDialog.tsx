@@ -3,7 +3,11 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router";
-import { Search, FileText, Files, Users, HelpCircle, X } from "lucide-react";
+import {
+  Search, FileText, Files, Users, HelpCircle, X,
+  FilePlus, Inbox, UsersRound, CircleUser, Users2, Shield, ShieldCheck,
+  Bell, BarChart2, Bookmark, Settings, ArrowRight,
+} from "lucide-react";
 import { mockSearchService } from "../../services/mock/search.service";
 import type { SearchResultGroup, SearchResult } from "../../models";
 
@@ -11,11 +15,27 @@ const GF    = { fontFamily: "'Geist', sans-serif" };
 const GM    = { fontFamily: "'Geist Mono', monospace" };
 const BORDER = "rgba(255,255,255,0.08)";
 
+// Every SearchResult type needs an icon — the mock service only emits the first
+// four, but the union covers the whole legacy result vocabulary.
 const TYPE_ICONS: Record<SearchResult["type"], React.ElementType> = {
-  document: FileText,
-  template: Files,
-  contact:  Users,
-  help:     HelpCircle,
+  document:                FileText,
+  template:                Files,
+  contact:                 Users,
+  help:                    HelpCircle,
+  "document-draft":        FilePlus,
+  "recipient-assignment":  Inbox,
+  "contact-group":         UsersRound,
+  "workspace-member":      CircleUser,
+  team:                    Users2,
+  role:                    Shield,
+  "verification-record":   ShieldCheck,
+  notification:            Bell,
+  "report-definition":     BarChart2,
+  "saved-report-view":     Bookmark,
+  "settings-route":        Settings,
+  "help-resource":         HelpCircle,
+  "navigation-command":    ArrowRight,
+  "quick-action":          FilePlus,
 };
 
 interface SearchDialogProps {

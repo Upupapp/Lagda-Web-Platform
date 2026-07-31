@@ -41,12 +41,15 @@ export function MfaChallenge() {
     if (result.success) {
       setStatus("success");
       const payload = createMockSignInPayload();
-      platform.signIn(payload.user, payload.workspaces, payload.currentWorkspace, payload.subscription, payload.notifications);
+      // The mock fixture always has a current workspace; guard so a missing one
+      // never enters the session as an undefined workspace.
+      const ws = payload.currentWorkspace ?? payload.workspaces[0];
+      if (ws) platform.signIn(payload.user, payload.workspaces, ws, payload.subscription, payload.notifications);
       setTimeout(() => navigate(safeReturnTo(returnTo), { replace: true }), 800);
     } else {
       setStatus("error");
       setErrorCode(result.errorCode ?? "invalid");
-      const msgs: Record<string, string> = {
+      const msgs: Record<"invalid" | "locked", string> = {
         invalid: "That code is incorrect. Please try again.",
         locked:  "Too many incorrect attempts. Your account access has been locked.",
       };

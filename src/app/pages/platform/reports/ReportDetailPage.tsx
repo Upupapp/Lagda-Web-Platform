@@ -3,18 +3,18 @@
 // No Burgundy. No eNotary.
 
 import { useMemo } from "react";
-import { useParams, Link, Navigate } from "react-router";
+import { useParams, Link } from "react-router";
 import { BookMarked, ChevronLeft, Clock } from "lucide-react";
 import { usePlatform } from "../../../context/PlatformContext";
 import { reportingService } from "../../../services/mock/reporting.service";
 import { isCapabilityInActiveProfile } from "../../../config/capability-resolver";
-import type { ReportViewId, ReportDatePreset } from "../../../models/reports";
+import type { ReportViewId } from "../../../models/reports";
 import { REPORT_FAMILY_LABELS, REPORT_DATE_PRESET_LABELS } from "../../../models/reports";
 import {
-  GF, NAVY, AZURE, SLATE, SILVER, GOLD,
+  GF, NAVY, AZURE, SLATE, SILVER,
   DemoBanner, ReportFamilyNav, ReportsRestricted, ReportPageHeader,
   DataQualityNotices, MetricGrid, SectionCard, DistributionChart,
-  TimeSeriesChart, ReportTable, SectionDivider, FamilyIcon,
+  TimeSeriesChart, ReportTable, FamilyIcon,
 } from "./ReportsShared";
 
 function isValidReportId(id: string): boolean {
@@ -43,7 +43,7 @@ export function ReportDetailPage() {
   const reportData = useMemo(() => {
     if (!result) return null;
     const query = {
-      datePreset: result.datePreset as ReportDatePreset,
+      datePreset: result.datePreset,
       page: 1,
       ...result.filters,
     };
@@ -125,7 +125,7 @@ export function ReportDetailPage() {
 
       {/* Render family-specific report data */}
       {reportData?.family === "documents" && (() => {
-        const d = reportData.data as ReturnType<typeof reportingService.getDocumentOperationsReport>;
+        const d = reportData.data;
         return (
           <>
             <MetricGrid cols={3} cards={[d.completionRate, d.completionTime, d.awaitingAction, d.expiringCount, d.deliveryIssues, d.evidenceAvailability]} />
@@ -137,7 +137,7 @@ export function ReportDetailPage() {
       })()}
 
       {reportData?.family === "participants" && (() => {
-        const d = reportData.data as ReturnType<typeof reportingService.getParticipantReport>;
+        const d = reportData.data;
         return (
           <>
             <SectionCard><DistributionChart dist={d.roleDistribution} /></SectionCard>
@@ -149,7 +149,7 @@ export function ReportDetailPage() {
       })()}
 
       {reportData?.family === "templates" && (() => {
-        const d = reportData.data as ReturnType<typeof reportingService.getTemplateReport>;
+        const d = reportData.data;
         return (
           <>
             <MetricGrid cols={3} cards={[...d.summary, d.placeholderSummary]} />
@@ -161,7 +161,7 @@ export function ReportDetailPage() {
       })()}
 
       {reportData?.family === "verification" && (() => {
-        const d = reportData.data as ReturnType<typeof reportingService.getVerificationReport>;
+        const d = reportData.data;
         return (
           <>
             <MetricGrid cols={3} cards={d.summary} />
@@ -173,7 +173,7 @@ export function ReportDetailPage() {
       })()}
 
       {reportData?.family === "teams" && (() => {
-        const d = reportData.data as ReturnType<typeof reportingService.getTeamActivityReport>;
+        const d = reportData.data;
         return (
           <>
             <MetricGrid cols={5} cards={d.workspaceSummary} />

@@ -66,9 +66,11 @@ export const mockAccountSettingsService = {
     SESSION_PROFILE = { ...SESSION_PROFILE, ...changes };
     if (changes.fullName) {
       const parts = changes.fullName.trim().split(/\s+/);
+      const first = parts[0] ?? "";
+      const last  = parts[parts.length - 1] ?? "";
       SESSION_PROFILE.initials = parts.length >= 2
-        ? `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase()
-        : parts[0].substring(0, 2).toUpperCase();
+        ? `${first.charAt(0)}${last.charAt(0)}`.toUpperCase()
+        : first.substring(0, 2).toUpperCase();
     }
     return { ...SESSION_PROFILE };
   },

@@ -4,17 +4,18 @@
 // Burgundy (#67023B) never appears here — eNotary boundary.
 
 import type { DocumentTemplate, TemplateField } from "../../models/templates";
+import type { FieldType } from "../../models/field-editor";
 
 // ── Helper to build a simple TemplateField ────────────────────────────────────
 
 function makeField(
   id: string,
-  type: string,
+  type: FieldType,
   label: string,
   placeholderId: string | null,
   page: number,
   options: {
-    x?: number; y?: number; w?: number; h?: number; required?: boolean; layer?: number;
+    x?: number; y?: number; w?: number; h?: number; required?: boolean; layer?: number; documentId?: string;
   } = {}
 ): TemplateField {
   return {
@@ -25,9 +26,9 @@ function makeField(
     required:      options.required ?? true,
     layer:         options.layer   ?? 1,
     pageId:        `page-${page}`,
-    documentId:    "doc-1",
+    documentId:    options.documentId ?? "doc-1",
     rect:          { x: options.x ?? 0.10, y: options.y ?? 0.10, width: options.w ?? 0.35, height: options.h ?? 0.04 },
-    isSenderText:  placeholderId === null,
+    demonstrationOnly: true,
   };
 }
 
@@ -55,7 +56,7 @@ const TPL_ENGAGEMENT_STANDARD: DocumentTemplate = {
       role:                 "approver",
       required:             true,
       routingStep:          1,
-      defaultAuthMethod:    "email-code",
+      defaultAuthMethod:    "email-otp",
       description:          "Internal attorney who must approve the engagement letter before it is sent to the client.",
       mustMapToParticipant: true,
     },
@@ -65,17 +66,17 @@ const TPL_ENGAGEMENT_STANDARD: DocumentTemplate = {
       role:                 "signer",
       required:             true,
       routingStep:          2,
-      defaultAuthMethod:    "email-code",
+      defaultAuthMethod:    "email-otp",
       description:          "External client who will sign the engagement letter.",
       mustMapToParticipant: true,
     },
     {
       id:                   "ph-billing",
       label:                "Billing Contact (Copy)",
-      role:                 "copy-recipient",
+      role:                 "carbon-copy",
       required:             false,
       routingStep:          2,
-      defaultAuthMethod:    "invitation-access",
+      defaultAuthMethod:    "none",
       description:          "Optional billing contact who receives a copy of the completed letter.",
       mustMapToParticipant: false,
     },
@@ -88,8 +89,8 @@ const TPL_ENGAGEMENT_STANDARD: DocumentTemplate = {
     ],
   },
   authentication: {
-    globalDefault:        "email-code",
-    placeholderOverrides: { "ph-billing": "invitation-access" },
+    globalDefault:        "email-otp",
+    placeholderOverrides: { "ph-billing": "none" },
   },
   settings: {
     invitationSubject:         "Your Engagement Letter from {{firm_name}} — Action Required",
@@ -110,12 +111,12 @@ const TPL_ENGAGEMENT_STANDARD: DocumentTemplate = {
     { id: "var-fee",     label: "Estimated Fee Range",   internalKey: "fee_range",          type: "short-text",    required: false, helpText: "Optional fee range for this engagement.",                           placeholder: "e.g. PHP 50,000 – PHP 120,000" },
   ],
   fields: [
-    makeField("f-client-sig",    "signature",  "Client Signature",         "ph-client",   3, { x: 0.10, y: 0.72, w: 0.35, h: 0.06 }),
-    makeField("f-client-date",   "date",       "Date Signed",              "ph-client",   3, { x: 0.55, y: 0.72, w: 0.25, h: 0.04 }),
-    makeField("f-client-name",   "text",       "Client Printed Name",      "ph-client",   3, { x: 0.10, y: 0.80, w: 0.35, h: 0.04 }),
-    makeField("f-client-init",   "initials",   "Client Initials — Fees",   "ph-client",   2, { x: 0.82, y: 0.90, w: 0.10, h: 0.04 }),
-    makeField("f-attorney-sig",  "signature",  "Attorney Approval",        "ph-attorney", 1, { x: 0.10, y: 0.82, w: 0.35, h: 0.06 }),
-    makeField("f-sender-firm",   "text",       "Firm Name (Prefill)",      null,          1, { x: 0.55, y: 0.15, w: 0.35, h: 0.04, required: false }),
+    makeField("f-client-sig",    "signature",   "Client Signature",         "ph-client",   3, { x: 0.10, y: 0.72, w: 0.35, h: 0.06 }),
+    makeField("f-client-date",   "date-signed", "Date Signed",              "ph-client",   3, { x: 0.55, y: 0.72, w: 0.25, h: 0.04 }),
+    makeField("f-client-name",   "text",        "Client Printed Name",      "ph-client",   3, { x: 0.10, y: 0.80, w: 0.35, h: 0.04 }),
+    makeField("f-client-init",   "initials",    "Client Initials — Fees",   "ph-client",   2, { x: 0.82, y: 0.90, w: 0.10, h: 0.04 }),
+    makeField("f-attorney-sig",  "signature",   "Attorney Approval",        "ph-attorney", 1, { x: 0.10, y: 0.82, w: 0.35, h: 0.06 }),
+    makeField("f-sender-firm",   "text",        "Firm Name (Prefill)",      null,          1, { x: 0.55, y: 0.15, w: 0.35, h: 0.04, required: false }),
   ],
   usageSummary: { timesUsed: 24, lastUsedDate: "2026-07-10", recentDraftStarts: 3, relatedFixtureIds: ["txn-demo-001"], demonstrationOnly: true },
   createdAt: "2025-09-01T08:00:00Z",
@@ -146,7 +147,7 @@ const TPL_VENDOR_AGREEMENT: DocumentTemplate = {
       role:                 "approver",
       required:             true,
       routingStep:          1,
-      defaultAuthMethod:    "email-code",
+      defaultAuthMethod:    "email-otp",
       description:          "Procurement Manager who approves vendor terms before external counter-signature.",
       mustMapToParticipant: true,
     },
@@ -156,7 +157,7 @@ const TPL_VENDOR_AGREEMENT: DocumentTemplate = {
       role:                 "signer",
       required:             true,
       routingStep:          2,
-      defaultAuthMethod:    "email-code",
+      defaultAuthMethod:    "email-otp",
       description:          "Authorized representative of the vendor company.",
       mustMapToParticipant: true,
     },
@@ -166,7 +167,7 @@ const TPL_VENDOR_AGREEMENT: DocumentTemplate = {
       role:                 "reviewer",
       required:             false,
       routingStep:          1,
-      defaultAuthMethod:    "email-code",
+      defaultAuthMethod:    "email-otp",
       description:          "Optional finance team reviewer during the approval stage.",
       mustMapToParticipant: false,
     },
@@ -179,7 +180,7 @@ const TPL_VENDOR_AGREEMENT: DocumentTemplate = {
     ],
   },
   authentication: {
-    globalDefault:        "email-code",
+    globalDefault:        "email-otp",
     placeholderOverrides: {},
   },
   settings: {
@@ -201,13 +202,13 @@ const TPL_VENDOR_AGREEMENT: DocumentTemplate = {
     { id: "var-eff",   label: "Effective Date",      internalKey: "effective_date",      type: "date",       required: true,  helpText: "Date from which services commence.", placeholder: "" },
   ],
   fields: [
-    makeField("f-pm-approval",  "signature", "Procurement Manager Approval", "ph-procurement", 1, { x: 0.10, y: 0.88, w: 0.35, h: 0.06 }),
-    makeField("f-pm-date",      "date",      "Approval Date",                "ph-procurement", 1, { x: 0.55, y: 0.88, w: 0.25, h: 0.04 }),
-    makeField("f-vendor-sig",   "signature", "Vendor Authorized Signature",  "ph-vendor",      4, { x: 0.10, y: 0.80, w: 0.35, h: 0.06 }),
-    makeField("f-vendor-title", "text",      "Vendor Signer Title",          "ph-vendor",      4, { x: 0.10, y: 0.88, w: 0.30, h: 0.04 }),
-    makeField("f-vendor-date",  "date",      "Vendor Signature Date",        "ph-vendor",      4, { x: 0.55, y: 0.88, w: 0.25, h: 0.04 }),
-    makeField("f-vendor-init-1","initials",  "Vendor Initials — Page 2",     "ph-vendor",      2, { x: 0.82, y: 0.92, w: 0.10, h: 0.04 }),
-    makeField("f-vendor-init-2","initials",  "Vendor Initials — Page 3",     "ph-vendor",      3, { x: 0.82, y: 0.92, w: 0.10, h: 0.04 }),
+    makeField("f-pm-approval",  "signature",   "Procurement Manager Approval", "ph-procurement", 1, { x: 0.10, y: 0.88, w: 0.35, h: 0.06 }),
+    makeField("f-pm-date",      "date-signed", "Approval Date",                "ph-procurement", 1, { x: 0.55, y: 0.88, w: 0.25, h: 0.04 }),
+    makeField("f-vendor-sig",   "signature",   "Vendor Authorized Signature",  "ph-vendor",      4, { x: 0.10, y: 0.80, w: 0.35, h: 0.06 }),
+    makeField("f-vendor-title", "text",        "Vendor Signer Title",          "ph-vendor",      4, { x: 0.10, y: 0.88, w: 0.30, h: 0.04 }),
+    makeField("f-vendor-date",  "date-signed", "Vendor Signature Date",        "ph-vendor",      4, { x: 0.55, y: 0.88, w: 0.25, h: 0.04 }),
+    makeField("f-vendor-init-1","initials",    "Vendor Initials — Page 2",     "ph-vendor",      2, { x: 0.82, y: 0.92, w: 0.10, h: 0.04 }),
+    makeField("f-vendor-init-2","initials",    "Vendor Initials — Page 3",     "ph-vendor",      3, { x: 0.82, y: 0.92, w: 0.10, h: 0.04 }),
   ],
   usageSummary: { timesUsed: 11, lastUsedDate: "2026-06-28", recentDraftStarts: 1, relatedFixtureIds: [], demonstrationOnly: true },
   createdAt: "2025-11-15T09:00:00Z",
@@ -238,17 +239,17 @@ const TPL_POLICY_ACKNOWLEDGMENT: DocumentTemplate = {
       role:                 "acknowledgment-recipient",
       required:             true,
       routingStep:          1,
-      defaultAuthMethod:    "email-code",
+      defaultAuthMethod:    "email-otp",
       description:          "Employee who must acknowledge receipt and understanding of this policy.",
       mustMapToParticipant: true,
     },
     {
       id:                   "ph-hr-cc",
       label:                "HR File Contact (Copy)",
-      role:                 "copy-recipient",
+      role:                 "carbon-copy",
       required:             false,
       routingStep:          1,
-      defaultAuthMethod:    "invitation-access",
+      defaultAuthMethod:    "none",
       description:          "HR representative who receives a copy of the acknowledged policy for file records.",
       mustMapToParticipant: false,
     },
@@ -260,8 +261,8 @@ const TPL_POLICY_ACKNOWLEDGMENT: DocumentTemplate = {
     ],
   },
   authentication: {
-    globalDefault:        "email-code",
-    placeholderOverrides: { "ph-hr-cc": "invitation-access" },
+    globalDefault:        "email-otp",
+    placeholderOverrides: { "ph-hr-cc": "none" },
   },
   settings: {
     invitationSubject:         "Action Required: {{policy_name}} — Please Acknowledge",
@@ -282,10 +283,10 @@ const TPL_POLICY_ACKNOWLEDGMENT: DocumentTemplate = {
     { id: "var-dept",   label: "Department",         internalKey: "department",     type: "short-text", required: false, helpText: "Employee department.", placeholder: "e.g. Finance" },
   ],
   fields: [
-    makeField("f-emp-ack",  "checkbox",  "I have read and understood this policy",   "ph-employee", 4, { x: 0.10, y: 0.70, w: 0.02, h: 0.025, required: true }),
-    makeField("f-emp-name", "text",      "Employee Full Name",                       "ph-employee", 4, { x: 0.10, y: 0.76, w: 0.35, h: 0.04 }),
-    makeField("f-emp-date", "date",      "Acknowledgment Date",                      "ph-employee", 4, { x: 0.55, y: 0.76, w: 0.25, h: 0.04 }),
-    makeField("f-emp-dept", "text",      "Department",                               "ph-employee", 4, { x: 0.10, y: 0.82, w: 0.25, h: 0.04, required: false }),
+    makeField("f-emp-ack",  "checkbox",    "I have read and understood this policy",   "ph-employee", 4, { x: 0.10, y: 0.70, w: 0.02, h: 0.025, required: true }),
+    makeField("f-emp-name", "text",        "Employee Full Name",                       "ph-employee", 4, { x: 0.10, y: 0.76, w: 0.35, h: 0.04 }),
+    makeField("f-emp-date", "date-signed", "Acknowledgment Date",                      "ph-employee", 4, { x: 0.55, y: 0.76, w: 0.25, h: 0.04 }),
+    makeField("f-emp-dept", "text",        "Department",                               "ph-employee", 4, { x: 0.10, y: 0.82, w: 0.25, h: 0.04, required: false }),
   ],
   usageSummary: { timesUsed: 47, lastUsedDate: "2026-07-14", recentDraftStarts: 6, relatedFixtureIds: [], demonstrationOnly: true },
   createdAt: "2025-08-10T07:00:00Z",
@@ -316,7 +317,7 @@ const TPL_PROFESSIONAL_SERVICES: DocumentTemplate = {
       role:                 "signer",
       required:             true,
       routingStep:          2,
-      defaultAuthMethod:    "email-code",
+      defaultAuthMethod:    "email-otp",
       description:          "Authorized representative of the client company.",
       mustMapToParticipant: true,
     },
@@ -326,7 +327,7 @@ const TPL_PROFESSIONAL_SERVICES: DocumentTemplate = {
       role:                 "signer",
       required:             true,
       routingStep:          1,
-      defaultAuthMethod:    "invitation-access",
+      defaultAuthMethod:    "none",
       description:          "The individual or entity providing the professional services.",
       mustMapToParticipant: true,
     },
@@ -339,8 +340,8 @@ const TPL_PROFESSIONAL_SERVICES: DocumentTemplate = {
     ],
   },
   authentication: {
-    globalDefault:        "email-code",
-    placeholderOverrides: { "ph-service-provider": "invitation-access" },
+    globalDefault:        "email-otp",
+    placeholderOverrides: { "ph-service-provider": "none" },
   },
   settings: {
     invitationSubject:         "Professional Services Contract — Please Review and Sign",
@@ -360,10 +361,10 @@ const TPL_PROFESSIONAL_SERVICES: DocumentTemplate = {
     { id: "var-fee2",   label: "Contract Fee",       internalKey: "contract_fee",   type: "short-text", required: false, helpText: "Total fee or rate.", placeholder: "" },
   ],
   fields: [
-    makeField("f-prov-sig",    "signature", "Service Provider Signature", "ph-service-provider", 4, { x: 0.10, y: 0.78, w: 0.35, h: 0.06 }),
-    makeField("f-prov-date",   "date",      "Provider Signature Date",    "ph-service-provider", 4, { x: 0.55, y: 0.78, w: 0.25, h: 0.04 }),
-    makeField("f-client-sig2", "signature", "Client Signature",           "ph-client-co",        4, { x: 0.10, y: 0.86, w: 0.35, h: 0.06 }),
-    makeField("f-client-date2","date",      "Client Signature Date",      "ph-client-co",        4, { x: 0.55, y: 0.86, w: 0.25, h: 0.04 }),
+    makeField("f-prov-sig",    "signature",   "Service Provider Signature", "ph-service-provider", 4, { x: 0.10, y: 0.78, w: 0.35, h: 0.06 }),
+    makeField("f-prov-date",   "date-signed", "Provider Signature Date",    "ph-service-provider", 4, { x: 0.55, y: 0.78, w: 0.25, h: 0.04 }),
+    makeField("f-client-sig2", "signature",   "Client Signature",           "ph-client-co",        4, { x: 0.10, y: 0.86, w: 0.35, h: 0.06 }),
+    makeField("f-client-date2","date-signed", "Client Signature Date",      "ph-client-co",        4, { x: 0.55, y: 0.86, w: 0.25, h: 0.04 }),
   ],
   validation: {
     isValid:          false,
@@ -405,7 +406,7 @@ const TPL_PROCUREMENT_APPROVAL: DocumentTemplate = {
       role:                 "approver",
       required:             true,
       routingStep:          1,
-      defaultAuthMethod:    "email-code",
+      defaultAuthMethod:    "email-otp",
       description:          "Department head who initiates the approval chain.",
       mustMapToParticipant: true,
     },
@@ -415,7 +416,7 @@ const TPL_PROCUREMENT_APPROVAL: DocumentTemplate = {
       role:                 "approver",
       required:             true,
       routingStep:          2,
-      defaultAuthMethod:    "email-code",
+      defaultAuthMethod:    "email-otp",
       description:          "Finance Controller who approves the budget allocation.",
       mustMapToParticipant: true,
     },
@@ -425,7 +426,7 @@ const TPL_PROCUREMENT_APPROVAL: DocumentTemplate = {
       role:                 "signer",
       required:             true,
       routingStep:          3,
-      defaultAuthMethod:    "authenticator",
+      defaultAuthMethod:    "account-signin",
       description:          "CFO who provides final countersignature for procurement orders.",
       mustMapToParticipant: true,
     },
@@ -439,8 +440,8 @@ const TPL_PROCUREMENT_APPROVAL: DocumentTemplate = {
     ],
   },
   authentication: {
-    globalDefault:        "email-code",
-    placeholderOverrides: { "ph-cfo": "authenticator" },
+    globalDefault:        "email-otp",
+    placeholderOverrides: { "ph-cfo": "account-signin" },
   },
   settings: {
     invitationSubject:         "Procurement Approval Required — {{item_description}}",
@@ -461,12 +462,12 @@ const TPL_PROCUREMENT_APPROVAL: DocumentTemplate = {
     { id: "var-reqdate","label": "Required By",             internalKey: "required_by",      type: "date",          required: false, helpText: "Date by which the item must be received.", placeholder: "" },
   ],
   fields: [
-    makeField("f-dh-approve",  "signature", "Department Head Approval",  "ph-dept-head",    1, { x: 0.10, y: 0.82, w: 0.30, h: 0.06 }),
-    makeField("f-dh-date",     "date",      "Dept Head Date",            "ph-dept-head",    1, { x: 0.50, y: 0.82, w: 0.20, h: 0.04 }),
-    makeField("f-fc-approve",  "signature", "Finance Controller Approval","ph-finance-ctrl", 1, { x: 0.10, y: 0.90, w: 0.30, h: 0.04 }),
-    makeField("f-fc-date",     "date",      "Finance Controller Date",    "ph-finance-ctrl", 1, { x: 0.50, y: 0.90, w: 0.20, h: 0.04 }),
-    makeField("f-cfo-sig",     "signature", "CFO Countersignature",       "ph-cfo",          2, { x: 0.10, y: 0.82, w: 0.35, h: 0.06 }),
-    makeField("f-cfo-date",    "date",      "CFO Signature Date",         "ph-cfo",          2, { x: 0.55, y: 0.82, w: 0.25, h: 0.04 }),
+    makeField("f-dh-approve",  "signature",   "Department Head Approval",  "ph-dept-head",    1, { x: 0.10, y: 0.82, w: 0.30, h: 0.06 }),
+    makeField("f-dh-date",     "date-signed", "Dept Head Date",            "ph-dept-head",    1, { x: 0.50, y: 0.82, w: 0.20, h: 0.04 }),
+    makeField("f-fc-approve",  "signature",   "Finance Controller Approval","ph-finance-ctrl", 1, { x: 0.10, y: 0.90, w: 0.30, h: 0.04 }),
+    makeField("f-fc-date",     "date-signed", "Finance Controller Date",    "ph-finance-ctrl", 1, { x: 0.50, y: 0.90, w: 0.20, h: 0.04 }),
+    makeField("f-cfo-sig",     "signature",   "CFO Countersignature",       "ph-cfo",          2, { x: 0.10, y: 0.82, w: 0.35, h: 0.06 }),
+    makeField("f-cfo-date",    "date-signed", "CFO Signature Date",         "ph-cfo",          2, { x: 0.55, y: 0.82, w: 0.25, h: 0.04 }),
   ],
   usageSummary: { timesUsed: 38, lastUsedDate: "2026-07-12", recentDraftStarts: 4, relatedFixtureIds: [], demonstrationOnly: true },
   createdAt: "2025-10-05T06:00:00Z",
@@ -499,7 +500,7 @@ const TPL_ONBOARDING_PACKAGE: DocumentTemplate = {
       role:                 "approver",
       required:             true,
       routingStep:          1,
-      defaultAuthMethod:    "email-code",
+      defaultAuthMethod:    "email-otp",
       description:          "HR Representative who reviews and approves the package before sending to the new hire.",
       mustMapToParticipant: true,
     },
@@ -509,7 +510,7 @@ const TPL_ONBOARDING_PACKAGE: DocumentTemplate = {
       role:                 "signer",
       required:             true,
       routingStep:          2,
-      defaultAuthMethod:    "email-code",
+      defaultAuthMethod:    "email-otp",
       description:          "Incoming employee who signs the onboarding documents.",
       mustMapToParticipant: true,
     },
@@ -522,7 +523,7 @@ const TPL_ONBOARDING_PACKAGE: DocumentTemplate = {
     ],
   },
   authentication: {
-    globalDefault:        "email-code",
+    globalDefault:        "email-otp",
     placeholderOverrides: {},
   },
   settings: {
@@ -544,12 +545,12 @@ const TPL_ONBOARDING_PACKAGE: DocumentTemplate = {
     { id: "var-comp",   label: "Compensation",     internalKey: "compensation",  type: "short-text", required: false, helpText: "Salary or compensation package details.", placeholder: "e.g. PHP 75,000 / month" },
   ],
   fields: [
-    makeField("f-hr-approve",   "signature", "HR Rep Approval",              "ph-hr-rep",  1, { x: 0.55, y: 0.88, w: 0.30, h: 0.06, documentId: "doc-1" }),
-    makeField("f-nh-offer-sig", "signature", "New Hire — Offer Letter",      "ph-new-hire",1, { x: 0.10, y: 0.88, w: 0.35, h: 0.06, documentId: "doc-1" }),
-    makeField("f-nh-ec-sig",    "signature", "New Hire — Employment Contract","ph-new-hire",6, { x: 0.10, y: 0.84, w: 0.35, h: 0.06, documentId: "doc-2" }),
-    makeField("f-nh-ec-date",   "date",      "Contract Signature Date",      "ph-new-hire",6, { x: 0.55, y: 0.84, w: 0.25, h: 0.04, documentId: "doc-2" }),
-    makeField("f-nh-dp-ack",    "checkbox",  "I acknowledge the Data Privacy Policy", "ph-new-hire", 1, { x: 0.10, y: 0.80, w: 0.02, h: 0.025, documentId: "doc-3" }),
-    makeField("f-nh-dp-date",   "date",      "Acknowledgment Date",          "ph-new-hire",1, { x: 0.55, y: 0.80, w: 0.25, h: 0.04,  documentId: "doc-3" }),
+    makeField("f-hr-approve",   "signature",   "HR Rep Approval",              "ph-hr-rep",  1, { x: 0.55, y: 0.88, w: 0.30, h: 0.06, documentId: "doc-1" }),
+    makeField("f-nh-offer-sig", "signature",   "New Hire — Offer Letter",      "ph-new-hire",1, { x: 0.10, y: 0.88, w: 0.35, h: 0.06, documentId: "doc-1" }),
+    makeField("f-nh-ec-sig",    "signature",   "New Hire — Employment Contract","ph-new-hire",6, { x: 0.10, y: 0.84, w: 0.35, h: 0.06, documentId: "doc-2" }),
+    makeField("f-nh-ec-date",   "date-signed", "Contract Signature Date",      "ph-new-hire",6, { x: 0.55, y: 0.84, w: 0.25, h: 0.04, documentId: "doc-2" }),
+    makeField("f-nh-dp-ack",    "checkbox",    "I acknowledge the Data Privacy Policy", "ph-new-hire", 1, { x: 0.10, y: 0.80, w: 0.02, h: 0.025, documentId: "doc-3" }),
+    makeField("f-nh-dp-date",   "date-signed", "Acknowledgment Date",          "ph-new-hire",1, { x: 0.55, y: 0.80, w: 0.25, h: 0.04,  documentId: "doc-3" }),
   ],
   validation: {
     isValid:          false,
@@ -590,7 +591,7 @@ const TPL_NDA_ARCHIVED: DocumentTemplate = {
       role:                 "signer",
       required:             true,
       routingStep:          1,
-      defaultAuthMethod:    "email-code",
+      defaultAuthMethod:    "email-otp",
       description:          "The party disclosing confidential information.",
       mustMapToParticipant: true,
     },
@@ -600,7 +601,7 @@ const TPL_NDA_ARCHIVED: DocumentTemplate = {
       role:                 "signer",
       required:             true,
       routingStep:          2,
-      defaultAuthMethod:    "email-code",
+      defaultAuthMethod:    "email-otp",
       description:          "The party receiving and protecting confidential information.",
       mustMapToParticipant: true,
     },
@@ -613,7 +614,7 @@ const TPL_NDA_ARCHIVED: DocumentTemplate = {
     ],
   },
   authentication: {
-    globalDefault:        "email-code",
+    globalDefault:        "email-otp",
     placeholderOverrides: {},
   },
   settings: {
@@ -633,27 +634,18 @@ const TPL_NDA_ARCHIVED: DocumentTemplate = {
     { id: "var-pd", label: "Effective Date",internalKey: "effective_date",type: "date",     required: true, helpText: "Date on which the NDA takes effect.", placeholder: "" },
   ],
   fields: [
-    makeField("f-pa-sig",  "signature", "Party A Signature", "ph-party-a", 3, { x: 0.10, y: 0.78, w: 0.35, h: 0.06 }),
-    makeField("f-pa-name", "text",      "Party A Name",      "ph-party-a", 3, { x: 0.10, y: 0.86, w: 0.35, h: 0.04 }),
-    makeField("f-pa-date", "date",      "Party A Date",      "ph-party-a", 3, { x: 0.55, y: 0.86, w: 0.25, h: 0.04 }),
-    makeField("f-pb-sig",  "signature", "Party B Signature", "ph-party-b", 3, { x: 0.10, y: 0.78, w: 0.35, h: 0.06 }),
-    makeField("f-pb-name", "text",      "Party B Name",      "ph-party-b", 3, { x: 0.10, y: 0.86, w: 0.35, h: 0.04 }),
-    makeField("f-pb-date", "date",      "Party B Date",      "ph-party-b", 3, { x: 0.55, y: 0.86, w: 0.25, h: 0.04 }),
+    makeField("f-pa-sig",  "signature",   "Party A Signature", "ph-party-a", 3, { x: 0.10, y: 0.78, w: 0.35, h: 0.06 }),
+    makeField("f-pa-name", "text",        "Party A Name",      "ph-party-a", 3, { x: 0.10, y: 0.86, w: 0.35, h: 0.04 }),
+    makeField("f-pa-date", "date-signed", "Party A Date",      "ph-party-a", 3, { x: 0.55, y: 0.86, w: 0.25, h: 0.04 }),
+    makeField("f-pb-sig",  "signature",   "Party B Signature", "ph-party-b", 3, { x: 0.10, y: 0.78, w: 0.35, h: 0.06 }),
+    makeField("f-pb-name", "text",        "Party B Name",      "ph-party-b", 3, { x: 0.10, y: 0.86, w: 0.35, h: 0.04 }),
+    makeField("f-pb-date", "date-signed", "Party B Date",      "ph-party-b", 3, { x: 0.55, y: 0.86, w: 0.25, h: 0.04 }),
   ],
   usageSummary: { timesUsed: 8, lastUsedDate: "2025-12-10", recentDraftStarts: 0, relatedFixtureIds: [], demonstrationOnly: true },
   createdAt: "2024-03-01T09:00:00Z",
   updatedAt: "2025-12-10T11:30:00Z",
   demonstrationOnly: true,
 };
-
-// ── makeField option type fix — documentId support ────────────────────────────
-// The helper above doesn't support per-field documentId override.
-// Patch the onboarding fields that need doc-2 / doc-3:
-(TPL_ONBOARDING_PACKAGE.fields as TemplateField[]).forEach(f => {
-  if (f.id === "f-nh-ec-sig" || f.id === "f-nh-ec-date")            (f as any).documentId = "doc-2";
-  if (f.id === "f-nh-dp-ack" || f.id === "f-nh-dp-date")            (f as any).documentId = "doc-3";
-  if (f.id === "f-hr-approve" || f.id === "f-nh-offer-sig")         (f as any).documentId = "doc-1";
-});
 
 // ── Export map ────────────────────────────────────────────────────────────────
 

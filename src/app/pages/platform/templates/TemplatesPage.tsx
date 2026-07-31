@@ -241,7 +241,7 @@ function CardSkeleton() {
 
 // ── Main inner component ──────────────────────────────────────────────────────
 function TemplatesInner() {
-  usePageMeta("Templates — LAGDA");
+  usePageMeta();
   const { state, setQuery, loadList } = useTemplates();
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [showFilters, setShowFilters] = useState(false);
@@ -439,7 +439,7 @@ function TemplatesInner() {
             label="Category"
             value={state.query.category ?? ""}
             onChange={v => updateQuery({ category: v as TemplateCategory || undefined })}
-            options={[["", "All Categories"], ...TEMPLATE_CATEGORIES.map(c => [c, TEMPLATE_CATEGORY_LABELS[c]])]}
+            options={[["", "All Categories"], ...TEMPLATE_CATEGORIES.map((c): [string, string] => [c, TEMPLATE_CATEGORY_LABELS[c]])]}
           />
           <FilterSelect
             label="Scope"

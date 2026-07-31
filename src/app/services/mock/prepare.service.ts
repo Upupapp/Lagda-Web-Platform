@@ -287,7 +287,7 @@ class MockPrepareDocumentService implements IPrepareDocumentService {
       return { ...this.drafts.get(draftId)! };
     }
     if (DRAFT_FIXTURES[draftId]) {
-      const f = { ...DRAFT_FIXTURES[draftId]! };
+      const f = { ...DRAFT_FIXTURES[draftId] };
       this.drafts.set(draftId, f);
       return { ...f };
     }

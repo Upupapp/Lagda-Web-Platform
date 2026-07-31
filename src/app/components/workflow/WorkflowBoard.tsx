@@ -458,6 +458,7 @@ function ParticipantCard({
 }: ParticipantCardProps) {
   const issues = issuesForAssignment(validation, String(assignment.id));
   const blocking = issues.filter(i => i.severity === "blocking");
+  const firstBlocking = blocking[0];
   const eligibility = describeAssignmentEligibility(stage, assignment, isCurrentStage);
   const requirement = describeRequirement(assignment);
   const readiness = assignment.fieldReadiness;
@@ -547,14 +548,14 @@ function ParticipantCard({
           {eligibility}
         </p>
 
-        {blocking.length > 0 && (
+        {firstBlocking && (
           <p style={{
             ...GF, margin: "8px 0 0", fontSize: 11, color: WF.errorText,
             fontWeight: 600, lineHeight: 1.5,
             background: TONES.error.bg, border: `1px solid ${TONES.error.border}`,
             borderRadius: 6, padding: "6px 8px",
           }}>
-            {blocking[0].message}
+            {firstBlocking.message}
           </p>
         )}
       </div>

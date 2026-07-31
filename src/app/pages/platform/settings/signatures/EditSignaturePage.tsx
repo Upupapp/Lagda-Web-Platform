@@ -33,7 +33,7 @@ function EntryPreview({ entry }: { entry: SignatureLibraryEntry }) {
         aria-label={`Preview: ${rep.typedText}`}
         style={{ height: 64, display: "flex", alignItems: "center", justifyContent: "center", background: "#FAFBFC", border: "1px solid #E3E8EF", borderRadius: 8 }}
       >
-        <span style={{ fontFamily: style.fontFamily, fontSize: Math.min(style.fontSize, 24), fontStyle: style.fontStyle, color: NAVY, padding: "0 12px", textAlign: "center", wordBreak: "break-word" }}>
+        <span style={{ fontFamily: style?.fontFamily, fontSize: style ? Math.min(style.fontSize, 24) : 24, fontStyle: style?.fontStyle, color: NAVY, padding: "0 12px", textAlign: "center", wordBreak: "break-word" }}>
           {rep.typedText}
         </span>
       </div>

@@ -244,7 +244,7 @@ export function BillingPage() {
                 {group.rows.map(row => [
                   <div key={`label-${row.id}`} style={{ padding: "10px 16px", borderTop: "1px solid #F0F2F5", ...GF, fontSize: 13, color: NAVY }}>{row.label}</div>,
                   ...LAGDA_PLANS.map(p => {
-                    const planVals: Record<string, string> = { personal: row.personal as string, business: row.business as string, enterprise: row.enterprise as string };
+                    const planVals: Record<string, string> = { personal: row.personal, business: row.business, enterprise: row.enterprise };
                     const val = planVals[p.id] ?? "";
                     const icon = val === "included" ? "✓" : val === "not-included" ? "—" : val === "enterprise" ? "E" : val === "varies" ? "~" : val === "pending" ? "·" : val;
                     const color = val === "included" ? GREEN : val === "not-included" ? "#CBD5E1" : val === "enterprise" ? GOLD : SLATE;

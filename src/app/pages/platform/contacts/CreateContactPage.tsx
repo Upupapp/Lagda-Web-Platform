@@ -176,15 +176,18 @@ function CreateContactForm() {
     }
   };
 
+  // asyncFindDuplicates only ever stores a non-empty list or null, so `firstDup`
+  // is the one candidate every "review the existing contact" link points at.
+  const firstDup = dupCandidates?.[0];
   const showDupModal = dupChecked && dupCandidates && dupCandidates.length > 0;
 
   return (
     <>
       {showDupModal && (
         <DuplicateWarningModal
-          candidates={dupCandidates!}
+          candidates={dupCandidates}
           onContinue={() => { setDupChecked(false); void handleSubmit(true); }}
-          onReview={() => { navigate(`/app/contacts/${dupCandidates![0].existingContactId}`); }}
+          onReview={() => { if (firstDup) navigate(`/app/contacts/${firstDup.existingContactId}`); }}
           onCancel={() => setDupChecked(false)}
         />
       )}
@@ -215,12 +218,12 @@ function CreateContactForm() {
             )}
 
             {/* Duplicate pre-warning (inline, not blocking) */}
-            {dupCandidates && !dupChecked && (
+            {firstDup && !dupChecked && (
               <div role="status" style={{ background: "#FFFBEB", border: "1.5px solid #FCD34D", borderRadius: 8, padding: "10px 14px", marginBottom: 20, display: "flex", alignItems: "flex-start", gap: 10 }}>
                 <span style={{ fontSize: 16 }}>⚠️</span>
                 <div style={{ ...GF, fontSize: 12, color: "#92400E" }}>
                   <strong>Possible duplicate:</strong> A contact with similar name or email may already exist.{" "}
-                  <Link to={`/app/contacts/${dupCandidates[0].existingContactId}`} style={{ color: "#B45309", fontWeight: 700 }}>
+                  <Link to={`/app/contacts/${firstDup.existingContactId}`} style={{ color: "#B45309", fontWeight: 700 }}>
                     Review existing contact
                   </Link>
                 </div>

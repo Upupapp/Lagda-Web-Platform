@@ -54,6 +54,7 @@ export function WorkflowSection() {
   };
 
   const step = HOW_IT_WORKS[active];
+  if (!step) return null;
 
   return (
     <section

@@ -249,10 +249,11 @@ export const signatureLibraryService = {
   /** Renames an entry display name. Representation is unchanged. */
   rename(id: SignatureLibraryEntryId, input: RenameEntryInput): ServiceResult<SignatureLibraryEntry> {
     const idx = _library.findIndex(e => e.id === id);
-    if (idx < 0) return fail("NOT_FOUND");
+    const current = _library[idx];
+    if (!current) return fail("NOT_FOUND");
     if (!input.displayName.trim()) return fail("REQUIRED_FIELD", "displayName");
 
-    const updated = { ..._library[idx], displayName: input.displayName.trim(), updatedAt: nowIso() };
+    const updated = { ...current, displayName: input.displayName.trim(), updatedAt: nowIso() };
     _library = [..._library.slice(0, idx), updated, ..._library.slice(idx + 1)];
     return ok({ ...updated });
   },
@@ -260,11 +261,12 @@ export const signatureLibraryService = {
   /** Replaces typed representation. Entry ID and default state preserved. */
   replaceTyped(id: SignatureLibraryEntryId, input: ReplaceTypedInput): ServiceResult<SignatureLibraryEntry> {
     const idx = _library.findIndex(e => e.id === id);
-    if (idx < 0) return fail("NOT_FOUND");
+    const current = _library[idx];
+    if (!current) return fail("NOT_FOUND");
     if (!input.typedText.trim()) return fail("REQUIRED_FIELD", "typedText");
 
     const updated = {
-      ..._library[idx],
+      ...current,
       representation: { method: "typed" as const, typedText: input.typedText.trim(), styleIndex: input.styleIndex },
       status: "active" as const,
       updatedAt: nowIso(),
@@ -276,11 +278,12 @@ export const signatureLibraryService = {
   /** Replaces drawn representation. Entry ID and default state preserved. */
   replaceDrawn(id: SignatureLibraryEntryId, input: ReplaceDrawnInput): ServiceResult<SignatureLibraryEntry> {
     const idx = _library.findIndex(e => e.id === id);
-    if (idx < 0) return fail("NOT_FOUND");
+    const current = _library[idx];
+    if (!current) return fail("NOT_FOUND");
     if (!input.dataUrl) return fail("REQUIRED_FIELD", "dataUrl");
 
     const updated = {
-      ..._library[idx],
+      ...current,
       representation: { method: "drawn" as const, dataUrl: input.dataUrl },
       status: "active" as const,
       updatedAt: nowIso(),
@@ -291,7 +294,8 @@ export const signatureLibraryService = {
 
   /** Sets the entry as default for its kind. Clears previous default of same kind. */
   setDefault(id: SignatureLibraryEntryId): ServiceResult<SignatureLibraryEntry> {
-    const entry = _library.find(e => e.id === id);
+    const idx = _library.findIndex(e => e.id === id);
+    const entry = _library[idx];
     if (!entry) return fail("NOT_FOUND");
     if (entry.status !== "active") return fail("INVALID_STATE");
 
@@ -299,8 +303,9 @@ export const signatureLibraryService = {
 
     const targetState: SignatureDefaultState =
       entry.kind === "signature" ? "default-signature" : "default-initials";
-    const idx = _library.findIndex(e => e.id === id);
-    const updated = { ..._library[idx], defaultState: targetState, updatedAt: nowIso() };
+    // clearDefault preserves order and length, so idx still addresses this entry;
+    // defaultState is the only field it rewrites and it is overwritten here anyway.
+    const updated = { ...entry, defaultState: targetState, updatedAt: nowIso() };
     _library = [..._library.slice(0, idx), updated, ..._library.slice(idx + 1)];
     return ok({ ...updated });
   },
@@ -308,11 +313,12 @@ export const signatureLibraryService = {
   /** Archives an entry. Clears default state if it was default. */
   archive(id: SignatureLibraryEntryId): ServiceResult<SignatureLibraryEntry> {
     const idx = _library.findIndex(e => e.id === id);
-    if (idx < 0) return fail("NOT_FOUND");
-    if (_library[idx].status === "archived") return fail("INVALID_STATE");
+    const current = _library[idx];
+    if (!current) return fail("NOT_FOUND");
+    if (current.status === "archived") return fail("INVALID_STATE");
 
     const updated = {
-      ..._library[idx],
+      ...current,
       status: "archived" as const,
       defaultState: "non-default" as SignatureDefaultState,
       updatedAt: nowIso(),
@@ -324,10 +330,11 @@ export const signatureLibraryService = {
   /** Restores an archived entry to active. Does not restore default state. */
   restore(id: SignatureLibraryEntryId): ServiceResult<SignatureLibraryEntry> {
     const idx = _library.findIndex(e => e.id === id);
-    if (idx < 0) return fail("NOT_FOUND");
-    if (_library[idx].status !== "archived") return fail("INVALID_STATE");
+    const current = _library[idx];
+    if (!current) return fail("NOT_FOUND");
+    if (current.status !== "archived") return fail("INVALID_STATE");
 
-    const updated = { ..._library[idx], status: "active" as const, updatedAt: nowIso() };
+    const updated = { ...current, status: "active" as const, updatedAt: nowIso() };
     _library = [..._library.slice(0, idx), updated, ..._library.slice(idx + 1)];
     return ok({ ...updated });
   },

@@ -8,7 +8,7 @@ import { reportingService } from "../../../services/mock/reporting.service";
 import { DEFAULT_REPORT_QUERY } from "../../../models/reports";
 import type { ReportDatePreset } from "../../../models/reports";
 import {
-  GF, NAVY, AZURE, SLATE,
+  GF,
   DemoBanner, ReportFamilyNav, ReportsRestricted,
   ReportPageHeader, DatePresetSelector, DataQualityNotices,
   MetricGrid, SectionCard, DistributionChart, TimeSeriesChart,

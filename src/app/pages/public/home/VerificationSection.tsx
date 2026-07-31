@@ -7,6 +7,7 @@ const GM = { fontFamily: "'Geist Mono', monospace" };
 export function VerificationSection() {
   const [activeId, setActiveId] = useState<string>("verified");
   const active = MOCK_VERIFICATION_STATES.find((s) => s.id === activeId) ?? MOCK_VERIFICATION_STATES[0];
+  if (!active) return null;
 
   return (
     <section

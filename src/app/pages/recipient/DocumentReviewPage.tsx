@@ -148,8 +148,8 @@ function FieldOverlay({
   // Adopted signature display
   if (isSignature && signatureAdopted) {
     const typedStyle = TYPED_SIGNATURE_STYLES[signatureStyle] ?? TYPED_SIGNATURE_STYLES[0];
-    const fontFamily = typedStyle.fontFamily;
-    const fontStyleStr = typedStyle.fontStyle;
+    const fontFamily = typedStyle?.fontFamily;
+    const fontStyleStr = typedStyle?.fontStyle ?? "normal";
     return (
       <div
         aria-label={`Signature: ${signatureTypedText}`}
@@ -176,8 +176,8 @@ function FieldOverlay({
 
   if (isInitials && initialsAdopted) {
     const initTypedStyle = TYPED_SIGNATURE_STYLES[initialsStyle] ?? TYPED_SIGNATURE_STYLES[0];
-    const fontFamily = initTypedStyle.fontFamily;
-    const fontStyleStr = initTypedStyle.fontStyle;
+    const fontFamily = initTypedStyle?.fontFamily;
+    const fontStyleStr = initTypedStyle?.fontStyle ?? "normal";
     return (
       <div
         aria-label={`Initials: ${initialsTypedText}`}

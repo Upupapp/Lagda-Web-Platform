@@ -555,8 +555,8 @@ export const mockContactService = {
       resolvedPhone: p.phone ?? s.phone,
       resolvedOrg:   p.organization ?? s.organization,
       resolvedTitle: p.title ?? s.title,
-      mergedTagIds:  mergedTags as ContactTagId[],
-      mergedGroupIds: mergedGroups as ContactGroupId[],
+      mergedTagIds:  mergedTags,
+      mergedGroupIds: mergedGroups,
       demonstrationOnly: true,
     };
   },

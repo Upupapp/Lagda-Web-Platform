@@ -330,7 +330,7 @@ class MockBulkSendService {
         teamId: ctx.teamId, teamName: null,
         senderId: "wm_ana", senderName: "Ana Reyes",
       },
-      templateId: (template?.id ?? null) as BulkSendBatch["templateId"],
+      templateId: (template?.id ?? null),
       templateName: template?.name ?? null,
       templateArchived: template?.status === "archived",
       schema: null, rows: [],
@@ -372,7 +372,7 @@ class MockBulkSendService {
     }
     if (input.templateId !== undefined) {
       const template = input.templateId ? getTemplateById(input.templateId) : null;
-      batch.templateId = (template?.id ?? null) as BulkSendBatch["templateId"];
+      batch.templateId = (template?.id ?? null);
       batch.templateName = template?.name ?? null;
       batch.templateArchived = template?.status === "archived";
       // Changing the Template invalidates every existing binding.
@@ -576,7 +576,7 @@ class MockBulkSendService {
     if (template) {
       batch.roleMappings = suggestRoleMappings(
         batch.roleMappings.length ? batch.roleMappings : buildRoleMappings(template), schema.columns);
-      const used = batch.roleMappings.flatMap(m => Object.values(m.columnByField)).filter(Boolean) as BulkSendBatch["roleMappings"][number]["columnByField"]["email"][];
+      const used = batch.roleMappings.flatMap(m => Object.values(m.columnByField)).filter(Boolean);
       batch.variableMappings = suggestVariableMappings(
         batch.variableMappings.length ? batch.variableMappings : buildVariableMappings(template),
         schema.columns, used.filter(Boolean) as never);
@@ -794,7 +794,7 @@ class MockBulkSendService {
       if (!affected.has(String(row.id))) continue;
       switch (correction.type) {
         case "trim-whitespace":
-          for (const k of Object.keys(row.values)) row.values[k] = row.values[k].trim();
+          for (const [k, v] of Object.entries(row.values)) row.values[k] = v.trim();
           break;
         case "apply-organization":
         case "apply-variable-constant":

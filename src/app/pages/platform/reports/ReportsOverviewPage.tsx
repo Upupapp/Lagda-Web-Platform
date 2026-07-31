@@ -4,17 +4,17 @@
 
 import { useMemo } from "react";
 import { Link } from "react-router";
-import { BarChart2, BookMarked, ChevronRight } from "lucide-react";
+import { BookMarked, ChevronRight } from "lucide-react";
 import { usePlatform } from "../../../context/PlatformContext";
 import { reportingService } from "../../../services/mock/reporting.service";
 import { isCapabilityInActiveProfile } from "../../../config/capability-resolver";
 import { DEFAULT_REPORT_QUERY } from "../../../models/reports";
 import type { ReportFamily } from "../../../models/reports";
 import {
-  GF, NAVY, AZURE, SLATE, SILVER, GREEN,
+  GF, NAVY, AZURE, SLATE, SILVER,
   DemoBanner, ReportFamilyNav, ReportsRestricted,
   ReportPageHeader, MetricGrid, SectionCard,
-  FamilyCard, SectionDivider, SavedViewCard, GOLD,
+  FamilyCard, SectionDivider, GOLD,
   availableReportFamilies,
 } from "./ReportsShared";
 

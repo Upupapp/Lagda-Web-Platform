@@ -53,7 +53,10 @@ export function OnboardingReview() {
     await delay(800);
     markComplete();
     const payload = createMockSignInPayload();
-    platform.signIn(payload.user, payload.workspaces, payload.currentWorkspace, payload.subscription, payload.notifications);
+    // The mock fixture always has a current workspace; guard so a missing one
+    // never enters the session as an undefined workspace.
+    const ws = payload.currentWorkspace ?? payload.workspaces[0];
+    if (ws) platform.signIn(payload.user, payload.workspaces, ws, payload.subscription, payload.notifications);
     setStatus("done");
     setTimeout(() => navigate("/onboarding/complete", { replace: true }), 400);
   }

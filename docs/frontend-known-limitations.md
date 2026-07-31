@@ -329,3 +329,57 @@ Every authenticated platform screen uses demonstration data. Key screens:
    `interaction-feedback.ts` is a permanent no-op in this build.
 9. **NOTIFY and STITCH skills are not registered** in this environment, so neither was invoked.
    The notification event table in the C37 doc is the deliverable NOTIFY would have produced.
+
+---
+
+## Quality infrastructure and testing (Gap Closure Command 6, 2026-08-01)
+
+### What is tested
+
+| Layer | State |
+|------------|--------|
+| TypeScript, 3 projects, `strict` + `noUncheckedIndexedAccess` | **0 errors.** Was 317 when first measured correctly. No `any`, `@ts-ignore` or `@ts-nocheck` added. |
+| Vitest unit + component | **419 tests, 7 suites, all passing.** |
+| Coverage (v8) | Statements/lines 7.67%, **branches 74.93%**, functions 45.66%. Ratcheted at baseline. |
+| Playwright critical flows | **24 passing** (Chromium desktop, against the production build). |
+| Automated accessibility (axe) | **18 passing.** Zero serious or critical WCAG 2.1 A/AA violations on 6 platform routes. |
+| Responsive + enlarged layout | **60 passing** across 320 / 390 / tablet-portrait / zoom-200. |
+| Reduced motion | **7 passing.** |
+| Production build | Both launch profiles succeed. |
+
+Covered by regression tests: Contact and Contact Group recipient sourcing
+(including de-duplication by Contact ID rather than email), inline recipient-row
+editing defaults, Request Defaults resolution and restore, Policy/Automation
+resolution and its PII-free input, the platform projection and every provider
+that reads it, capability and permission resolution precedence, workspace/team
+isolation, account and session cleanup, storage boundaries, and route/deep-link
+safety.
+
+### What is NOT tested — honest
+
+| Limitation | Detail |
+|------------|--------|
+| **ESLint does not pass** | **466 errors remain**: 265 `no-unused-vars` (dead imports), 119 `no-floating-promises`, 21 `no-misused-promises`, 14 `no-base-to-string`, 5 `no-alert` (browser dialogs still present in 4 Settings pages and TemplateEditPage), ~42 assorted. These are pre-existing defects surfaced by turning the linter on for the first time — not introduced by this command. The rules were deliberately left at `error` rather than downgraded, so the debt stays visible. **CI will fail at the lint step until this is cleared.** |
+| No screen-reader testing | axe is automated scanning. NVDA/JAWS/VoiceOver review has not been performed. |
+| 200% zoom is approximated | Playwright cannot set browser zoom. The `zoom-200` project uses a half-width viewport at 2× scale, which exercises WCAG 1.4.10 reflow but is not the same thing. Manual review remains required. |
+| No real-device testing | Viewport emulation is not a phone. Virtual-keyboard behaviour in particular cannot be simulated. |
+| No cross-browser coverage | Chromium only. Firefox and WebKit unverified. |
+| CI has never run | The workflow exists but this repository has no remote, so no run has been observed. |
+| Coverage line percentage is low | 7.67% of ~77k statements. Expected: the suites target pure logic — resolvers, projections, validators, provider registries — not presentational page code. Branch coverage at 74.93% is the figure that reflects what is actually exercised. |
+| Moderate/minor a11y findings | Printed by the axe suite but not failing the run. Reviewing and clearing them is outstanding. |
+
+### Nothing here tests a backend
+
+Every service is an in-memory mock. **These are frontend fixture tests and must
+not be represented as production integration tests.** Specifically NOT tested,
+because no such thing exists in this application:
+
+production authentication and sessions · backend authorization · document
+persistence · production email · production SMS · browser push · production
+signing or signature application · Evidence records · Activity records ·
+Verification · Policy enforcement · Automation execution · search indexing ·
+report aggregation · dashboard aggregation · idempotency · concurrency ·
+rate limiting · data retention · backup and restore · observability.
+
+The production test requirements that remain outstanding are enumerated in
+`docs/backend-integration-handoff.md` § "Production test requirements".

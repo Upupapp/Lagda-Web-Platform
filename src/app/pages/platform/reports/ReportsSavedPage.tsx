@@ -6,7 +6,7 @@ import { useSearchParams } from "react-router";
 import { BookMarked, PlusCircle } from "lucide-react";
 import { usePlatform } from "../../../context/PlatformContext";
 import { reportingService } from "../../../services/mock/reporting.service";
-import type { ReportFamily } from "../../../models/reports";
+import type { ReportFamily, ReportViewId } from "../../../models/reports";
 import { REPORT_FAMILY_LABELS } from "../../../models/reports";
 import {
   GF, NAVY, AZURE, SLATE, SILVER,
@@ -26,9 +26,9 @@ export function ReportsSavedPage() {
   const [params, setParams] = useSearchParams();
   const [views, setViews]   = useState(() => reportingService.getSavedViews());
   const [toast, setToast]   = useState("");
-  const [renamingId, setRenamingId] = useState<string | null>(null);
+  const [renamingId, setRenamingId] = useState<ReportViewId | null>(null);
   const [renameVal,  setRenameVal]  = useState("");
-  const [annotatingId, setAnnotatingId] = useState<string | null>(null);
+  const [annotatingId, setAnnotatingId] = useState<ReportViewId | null>(null);
 
   const canView = hasPermission("view_reports") && hasFlag("reportsEnabled");
 
@@ -41,43 +41,43 @@ export function ReportsSavedPage() {
     setTimeout(() => setToast(""), 4000);
   }
 
-  function handleRename(id: string) {
+  function handleRename(id: ReportViewId) {
     setRenamingId(id);
     setRenameVal(views.find(v => v.id === id)?.name ?? "");
   }
   function submitRename() {
     if (!renamingId) return;
-    const res = reportingService.renameSavedView(renamingId as any, renameVal);
+    const res = reportingService.renameSavedView(renamingId, renameVal);
     if (res.ok) { showToast("View renamed."); refresh(); }
     setRenamingId(null);
   }
 
-  function handleDuplicate(id: string) {
-    const res = reportingService.duplicateSavedView(id as any);
+  function handleDuplicate(id: ReportViewId) {
+    const res = reportingService.duplicateSavedView(id);
     if (res.ok) { showToast("View duplicated."); refresh(); }
   }
-  function handleSetDefault(id: string) {
-    const res = reportingService.setDefaultSavedView(id as any);
+  function handleSetDefault(id: ReportViewId) {
+    const res = reportingService.setDefaultSavedView(id);
     if (res.ok) { showToast("Default view updated."); refresh(); }
   }
-  function handleArchive(id: string) {
-    const res = reportingService.archiveSavedView(id as any);
+  function handleArchive(id: ReportViewId) {
+    const res = reportingService.archiveSavedView(id);
     if (res.ok) { showToast("View archived."); refresh(); }
   }
-  function handleRestore(id: string) {
-    const res = reportingService.restoreSavedView(id as any);
+  function handleRestore(id: ReportViewId) {
+    const res = reportingService.restoreSavedView(id);
     if (res.ok) { showToast("View restored."); refresh(); }
   }
-  function handleRemove(id: string) {
-    const res = reportingService.removeSavedViewDemonstration(id as any);
+  function handleRemove(id: ReportViewId) {
+    const res = reportingService.removeSavedViewDemonstration(id);
     if (res.ok) { showToast("View removed from demonstration."); refresh(); }
   }
-  function handleAnnotate(id: string) {
+  function handleAnnotate(id: ReportViewId) {
     setAnnotatingId(id);
   }
   function saveAnnotation(text: string) {
     if (!annotatingId) return;
-    reportingService.updateAnnotation(annotatingId as any, text);
+    reportingService.updateAnnotation(annotatingId, text);
     refresh();
     showToast("Annotation saved.");
   }
@@ -148,7 +148,7 @@ export function ReportsSavedPage() {
               borderColor:familyFilter === f ? NAVY : "#E2E8F0",
             }}
           >
-            {f === "all" ? "All Families" : REPORT_FAMILY_LABELS[f as ReportFamily]}
+            {f === "all" ? "All Families" : REPORT_FAMILY_LABELS[f]}
           </button>
         ))}
       </div>
