@@ -20,6 +20,7 @@ import {
 } from "../../../components/platform";
 import { mockDocumentService } from "../../../services/mock/document.service";
 import { documentOrganizationService } from "../../../services/mock/document-organization.service";
+import { isCapabilityInActiveProfile } from "../../../config/capability-resolver";
 import { TRANSACTION_STATUS_LABELS } from "../../../models";
 import type { TransactionStatus } from "../../../models";
 import type {
@@ -588,8 +589,10 @@ function OrgSidePanel({
         })}
       </div>
 
-      {/* Saved Views */}
-      {activeSavedViews.length > 0 && (
+      {/* Saved Views — advanced-document-organization (post-launch). The whole
+          section is omitted in the launch profile because every link inside it
+          targets a capability-guarded route. */}
+      {isCapabilityInActiveProfile("advanced-document-organization") && activeSavedViews.length > 0 && (
         <>
           <div style={{ height: 1, background: SLATE2, margin: "6px 10px" }} />
           <div>

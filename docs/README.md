@@ -210,6 +210,7 @@ Last updated: 2026-07-16 (Commands 1Ã¢â‚¬â€œ35 complete)
 |----------|-------------|
 | [lagda-esignature-mvp-scope.md](lagda-esignature-mvp-scope.md) | Definitive MVP scope Ã¢â‚¬â€ what's in, what's not, demonstration accuracy statement |
 | [mvp-consolidation-audit.md](mvp-consolidation-audit.md) | Full audit through C32 Ã¢â‚¬â€ nav, routes, search, flags, gating issues found and fixed |
+| [mvp-consolidation-reaudit.md](mvp-consolidation-reaudit.md) | **Read first.** Re-audit at HEAD `7c6713b`. Four capability-gating defects found and fixed, verified with an executable resolver probe. The original `mvp-consolidation-audit.md` above is partially superseded: its "Commands 33/34 not implemented" statements are no longer true. |
 | [launch-feature-classification.md](launch-feature-classification.md) | Every capability classified by maturity level |
 | [advanced-feature-gating.md](advanced-feature-gating.md) | 3-layer gating architecture: launch profiles, feature flags, permissions |
 | [launch-readiness-matrix.md](launch-readiness-matrix.md) | Frontend/backend/legal readiness per capability Ã¢â‚¬â€ P0 blockers identified |

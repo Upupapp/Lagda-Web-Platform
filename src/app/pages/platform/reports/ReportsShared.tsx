@@ -4,6 +4,7 @@
 
 import { useState } from "react";
 import { Link, useSearchParams } from "react-router";
+import { isCapabilityInActiveProfile } from "../../../config/capability-resolver";
 import {
   BarChart2, FileText, Users, Files, ShieldCheck, Building2,
   BookMarked, ChevronRight, Info, AlertTriangle, Clock, Calendar,
@@ -169,21 +170,25 @@ export function ReportFamilyNav({ current }: { current: ReportFamily | "overview
           {REPORT_FAMILY_LABELS[f]}
         </Link>
       ))}
-      <Link
-        to="/app/reports/saved"
-        aria-current={current === "saved" ? "page" : undefined}
-        style={{
-          ...GF, fontSize: 13, fontWeight: 500, textDecorationLine: "none",
-          padding: "6px 12px", borderRadius: 6,
-          background: current === "saved" ? GOLD : "transparent",
-          color: current === "saved" ? "#fff" : SLATE,
-          border: `1px solid ${current === "saved" ? GOLD : "#E2E8F0"}`,
-          display: "flex", alignItems: "center", gap: 5,
-        }}
-      >
-        <BookMarked size={13} aria-hidden />
-        Saved Views
-      </Link>
+      {/* Saved report views are advanced-reports (post-launch). Omitted rather than
+          rendered as a tab that leads to a capability-unavailable page. */}
+      {isCapabilityInActiveProfile("advanced-reports") && (
+        <Link
+          to="/app/reports/saved"
+          aria-current={current === "saved" ? "page" : undefined}
+          style={{
+            ...GF, fontSize: 13, fontWeight: 500, textDecorationLine: "none",
+            padding: "6px 12px", borderRadius: 6,
+            background: current === "saved" ? GOLD : "transparent",
+            color: current === "saved" ? "#fff" : SLATE,
+            border: `1px solid ${current === "saved" ? GOLD : "#E2E8F0"}`,
+            display: "flex", alignItems: "center", gap: 5,
+          }}
+        >
+          <BookMarked size={13} aria-hidden />
+          Saved Views
+        </Link>
+      )}
     </nav>
   );
 }

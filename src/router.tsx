@@ -7,6 +7,7 @@ import { RecipientLayout } from "./app/layouts/RecipientLayout";
 import { NotFound } from "./app/pages/public/NotFound";
 import { DevPlaceholder } from "./app/pages/shared/DevPlaceholder";
 import { CapabilityGuard } from "./app/components/platform/CapabilityUnavailable";
+import { isCapabilityInActiveProfile } from "./app/config/capability-resolver";
 
 // ── Lazy-loaded page families ─────────────────────────────────────────────────
 // Each family shares a chunk, keeping the initial bundle small.
@@ -423,8 +424,11 @@ export const router = createBrowserRouter([
       { path: "documents/folders",                    element: <Suspense fallback={null}><DocumentFoldersPage /></Suspense> },
       { path: "documents/folders/:folderId",          element: <Suspense fallback={null}><FolderDetailPage /></Suspense> },
       { path: "documents/tags",                       element: <Suspense fallback={null}><DocumentTagsPage /></Suspense> },
-      { path: "documents/saved-views",                element: <Suspense fallback={null}><DocumentSavedViewsPage /></Suspense> },
-      { path: "documents/saved-views/:viewId",        element: <Suspense fallback={null}><SavedViewDetailPage /></Suspense> },
+      // Saved views are advanced-document-organization (post-launch), so they are
+      // guarded like any other non-launch capability. Without this the registry
+      // declared them unavailable while the route stayed openable by direct URL.
+      { path: "documents/saved-views",                element: <CapabilityGuard capabilityId="advanced-document-organization"><Suspense fallback={null}><DocumentSavedViewsPage /></Suspense></CapabilityGuard> },
+      { path: "documents/saved-views/:viewId",        element: <CapabilityGuard capabilityId="advanced-document-organization"><Suspense fallback={null}><SavedViewDetailPage /></Suspense></CapabilityGuard> },
 
       // Transaction detail — nested routes (Command 16)
       {
@@ -510,7 +514,8 @@ export const router = createBrowserRouter([
       { path: "reports/templates",                 element: <Suspense fallback={null}><ReportsTemplatesPage /></Suspense> },
       { path: "reports/verification",              element: <Suspense fallback={null}><ReportsVerificationPage /></Suspense> },
       { path: "reports/teams",                     element: <Suspense fallback={null}><ReportsTeamsPage /></Suspense> },
-      { path: "reports/saved",                     element: <Suspense fallback={null}><ReportsSavedPage /></Suspense> },
+      // Saved report views are advanced-reports (post-launch).
+      { path: "reports/saved",                     element: <CapabilityGuard capabilityId="advanced-reports"><Suspense fallback={null}><ReportsSavedPage /></Suspense></CapabilityGuard> },
       { path: "reports/:reportId",                 element: <Suspense fallback={null}><ReportDetailPage /></Suspense> },
 
       // Workflow Automation (C32) — Enterprise Preview, guarded by CapabilityGuard.
@@ -563,8 +568,11 @@ export const router = createBrowserRouter([
       { path: "settings/branding",                    element: <Suspense fallback={null}><SettingsBrandingPage /></Suspense> },
       { path: "settings/billing",                     element: <Suspense fallback={null}><SettingsBillingPage /></Suspense> },
       { path: "settings/usage",                       element: <Suspense fallback={null}><SettingsUsagePage /></Suspense> },
-      { path: "settings/integrations",                element: <Suspense fallback={null}><SettingsIntegrationsPage /></Suspense> },
-      { path: "settings/integrations/:integrationId", element: <Suspense fallback={null}><SettingsIntegrationDetailPage /></Suspense> },
+      // Integrations is post-launch. No Integration executes anything in this
+      // frontend, so exposing it in the launch profile would advertise a capability
+      // the product does not have.
+      { path: "settings/integrations",                element: <CapabilityGuard capabilityId="integrations"><Suspense fallback={null}><SettingsIntegrationsPage /></Suspense></CapabilityGuard> },
+      { path: "settings/integrations/:integrationId", element: <CapabilityGuard capabilityId="integrations"><Suspense fallback={null}><SettingsIntegrationDetailPage /></Suspense></CapabilityGuard> },
       { path: "settings/data-and-privacy",            element: <Suspense fallback={null}><SettingsDataPrivacyPage /></Suspense> },
 
       // Permission / session error states
@@ -729,13 +737,18 @@ export const router = createBrowserRouter([
     ],
   },
 
-  // ── Dev-only routes (not linked from public navigation) ─────────────────────
-  {
+  // ── Dev-only routes ─────────────────────────────────────────────────────────
+  // Registered ONLY in the development profile. Being unlinked from navigation is
+  // not the same as being unavailable: this route was previously reachable by
+  // direct URL in every profile, which is exactly the leak the development-only
+  // classification exists to prevent. Spreading an empty array leaves the path
+  // undefined, so it falls through to the public NotFound.
+  ...(isCapabilityInActiveProfile("development-scenarios") ? [{
     path: "/dev/design-system",
     element: (
       <Suspense fallback={null}>
         <DesignSystemShowcase />
       </Suspense>
     ),
-  },
+  }] : []),
 ]);

@@ -539,7 +539,10 @@ export function DesignSystemShowcase() {
           >
             <ComingSoonBadge size="md" style={{ marginBottom: 12 }} />
             <p style={{ margin: "12px 0 0", fontSize: 14, color: "#67023B", fontFamily: "'Geist', sans-serif", lineHeight: 1.6 }}>
-              LAGDA eNotary will enable legally compliant electronic notarization once Supreme Court accreditation is confirmed.
+              {/* "legally compliant" is an unsupported claim and a forward promise:
+                  LAGDA is not accredited and cannot state what a future product
+                  would comply with. */}
+              LAGDA eNotary is Coming Soon and Subject to Supreme Court Accreditation and applicable rules.
             </p>
           </div>
         </Section>

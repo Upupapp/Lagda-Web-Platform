@@ -81,7 +81,9 @@ function InviteForm({ onDone }: { onDone: () => void }) {
         </button>
       </form>
       {error   && <p role="alert" style={{ ...GF, fontSize: 12, color: "#DC2626", margin: "8px 0 0" }}>{error}</p>}
-      {success && <p role="status" style={{ ...GF, fontSize: 12, color: "#16A34A", margin: "8px 0 0" }}>Invitation sent.</p>}
+      {/* No invitation email is sent. Saying "Invitation sent." would claim a
+          delivery that did not happen. */}
+      {success && <p role="status" style={{ ...GF, fontSize: 12, color: "#16A34A", margin: "8px 0 0" }}>Invitation added to this demonstration. No email was sent.</p>}
     </div>
   );
 }

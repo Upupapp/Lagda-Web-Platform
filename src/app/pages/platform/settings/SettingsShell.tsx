@@ -4,6 +4,7 @@
 
 import React from "react";
 import { Link, useLocation } from "react-router";
+import { isCapabilityInActiveProfile } from "../../../config/capability-resolver";
 
 const GF    = { fontFamily: "'Geist', sans-serif" };
 const NAVY  = "#07111F";
@@ -22,9 +23,11 @@ interface SettingsNavItem {
   label:    string;
   group:    "personal" | "workspace";
   sub?:     { path: string; label: string }[];
+  /** When set, the entry is shown only if this capability is in the active profile. */
+  capability?: string;
 }
 
-export const SETTINGS_NAV: SettingsNavItem[] = [
+const ALL_SETTINGS_NAV: SettingsNavItem[] = [
   { path: "/app/settings/profile",       label: "Profile",           group: "personal" },
   { path: "/app/settings/preferences",   label: "Preferences",       group: "personal" },
   { path: "/app/settings/security",      label: "Security",          group: "personal",
@@ -41,8 +44,13 @@ export const SETTINGS_NAV: SettingsNavItem[] = [
   { path: "/app/settings/branding",      label: "Branding",          group: "workspace" },
   { path: "/app/settings/billing",       label: "Billing & Plan",    group: "workspace" },
   { path: "/app/settings/usage",         label: "Usage",             group: "workspace" },
-  { path: "/app/settings/integrations",  label: "Integrations",      group: "workspace" },
+  // Integrations is post-launch and its route is capability-guarded. Linking to it
+  // from the launch profile would produce a dead end.
+  { path: "/app/settings/integrations",  label: "Integrations",      group: "workspace", capability: "integrations" },
 ];
+
+export const SETTINGS_NAV: SettingsNavItem[] =
+  ALL_SETTINGS_NAV.filter((n) => !n.capability || isCapabilityInActiveProfile(n.capability));
 
 function NavEntry({ item }: { item: SettingsNavItem }) {
   const loc = useLocation();

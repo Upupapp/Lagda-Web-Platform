@@ -7,6 +7,7 @@ import { Link } from "react-router";
 import { BarChart2, BookMarked, ChevronRight } from "lucide-react";
 import { usePlatform } from "../../../context/PlatformContext";
 import { reportingService } from "../../../services/mock/reporting.service";
+import { isCapabilityInActiveProfile } from "../../../config/capability-resolver";
 import { DEFAULT_REPORT_QUERY } from "../../../models/reports";
 import type { ReportFamily } from "../../../models/reports";
 import {
@@ -100,7 +101,10 @@ export function ReportsOverviewPage() {
               </div>
             </Link>
           ))}
-          {reportingService.getSavedViews().filter(v => v.status === "active").length > 4 ? (
+          {/* Saved report views are advanced-reports (post-launch) and the route is
+              capability-guarded, so the link is omitted in the launch profile. */}
+          {isCapabilityInActiveProfile("advanced-reports")
+            && reportingService.getSavedViews().filter(v => v.status === "active").length > 4 ? (
             <Link to="/app/reports/saved" style={{ ...GF, fontSize: 12, color: AZURE, textDecorationLine: "none", display: "flex", alignItems: "center", gap: 4 }}>
               View all saved views <ChevronRight size={12} aria-hidden />
             </Link>

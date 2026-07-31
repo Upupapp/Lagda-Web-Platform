@@ -43,21 +43,40 @@ import { SIGNING_WORKFLOW_FIXTURES } from "../../data/mock/signing-workflow";
 import { COLLABORATION_THREAD_FIXTURES, COLLAB_WORKSPACE_ID } from "../../data/mock/collaboration";
 import { documentOrganizationService } from "./document-organization.service";
 import { workflowAutomationService } from "./workflow-automation.service";
-import { ACTIVE_LAUNCH_PROFILE, buildCapabilityContext } from "../../config/capability-resolver";
-import { resolveCapability } from "../../config/capability-resolver";
+import { isCapabilityInActiveProfile } from "../../config/capability-resolver";
 import { capabilityId } from "../../models/product-capability";
 
 // Automation is enterprise-preview; check whether it's available in the current profile.
 // We use a static context here (no permissions needed for search visibility gating).
+// Search visibility is a PROFILE question, not a per-user one. These run at module
+// scope, where there is no user, no permissions, and no feature flags — so they use
+// isCapabilityInActiveProfile() rather than resolveCapability() with an empty
+// context, which returned false for every capability in every profile and silently
+// disabled the gates it was meant to control.
+//
+// Per-user enforcement is preserved: each result and command carries its own
+// `requiresPermission`, and route access goes through CapabilityGuard.
 function isAutomationSearchEnabled(): boolean {
-  const ctx = buildCapabilityContext(ACTIVE_LAUNCH_PROFILE, [], {});
-  return resolveCapability(capabilityId("workflow-automation"), ctx).available;
+  return isCapabilityInActiveProfile(capabilityId("workflow-automation"));
 }
 
-// Document Collaboration is enterprise-preview, gated the same way.
 function isCollaborationSearchEnabled(): boolean {
-  const ctx = buildCapabilityContext(ACTIVE_LAUNCH_PROFILE, [], {});
-  return resolveCapability(capabilityId("document-collaboration"), ctx).available;
+  return isCapabilityInActiveProfile(capabilityId("document-collaboration"));
+}
+
+/** Saved views belong to advanced-document-organization (post-launch). */
+function isAdvancedOrganizationEnabled(): boolean {
+  return isCapabilityInActiveProfile(capabilityId("advanced-document-organization"));
+}
+
+/** Saved report views belong to advanced-reports (post-launch). */
+function isAdvancedReportsEnabled(): boolean {
+  return isCapabilityInActiveProfile(capabilityId("advanced-reports"));
+}
+
+/** The Integrations settings area is post-launch. */
+function isIntegrationsEnabled(): boolean {
+  return isCapabilityInActiveProfile(capabilityId("integrations"));
 }
 
 // ── Module-level in-memory state ──────────────────────────────────────────────
@@ -590,9 +609,11 @@ const SETTINGS_ROUTE_FIXTURES = [
   { id: "st_branding",      label: "Branding",                 path: "/app/settings/branding",        desc: "Workspace logo and display name", perm: "manage_branding" },
   { id: "st_billing",       label: "Billing",                  path: "/app/settings/billing",         desc: "Subscription and payment details", perm: "view_billing" },
   { id: "st_usage",         label: "Usage",                    path: "/app/settings/usage",           desc: "Signing requests, storage, and plan limits", perm: "view_usage" },
-  { id: "st_integrations",  label: "Integrations",             path: "/app/settings/integrations",    desc: "Connected apps and services", perm: "manage_integrations" },
+  // Integrations is post-launch and its route is capability-guarded, so it is
+  // filtered out below rather than listed unconditionally here.
+  { id: "st_integrations",  label: "Integrations",             path: "/app/settings/integrations",    desc: "Connected apps and services", perm: "manage_integrations", capability: "integrations" },
   { id: "st_dataprivacy",   label: "Data & Privacy",           path: "/app/settings/data-and-privacy", desc: "Export account data and privacy controls" },
-];
+].filter((s) => !("capability" in s) || isCapabilityInActiveProfile(s.capability as string));
 
 function buildSettingsResults(query: string): GlobalSearchResult[] {
   return SETTINGS_ROUTE_FIXTURES
@@ -792,9 +813,19 @@ function buildAutomationResults(query: string): GlobalSearchResult[] {
 type ScopeBuilder = (query: string) => GlobalSearchResult[];
 
 const SCOPE_BUILDERS: Partial<Record<GlobalSearchScope, ScopeBuilder[]>> = {
-  "documents":        isCollaborationSearchEnabled()
-                        ? [buildDocumentResults, buildSigningWorkflowResults, buildCollaborationResults, buildFolderResults, buildOrgTagResults, buildOrgSavedViewResults]
-                        : [buildDocumentResults, buildSigningWorkflowResults, buildFolderResults, buildOrgTagResults, buildOrgSavedViewResults],
+  // Composed rather than nested-ternaried: three capabilities now gate parts of the
+  // documents scope, and each gate is independent.
+  //   buildFolderResults / buildOrgTagResults -> basic-document-organization (launch-supporting)
+  //   buildOrgSavedViewResults               -> advanced-document-organization (post-launch)
+  //   buildCollaborationResults              -> document-collaboration (enterprise-preview)
+  "documents":        [
+                        buildDocumentResults,
+                        buildSigningWorkflowResults,
+                        ...(isCollaborationSearchEnabled() ? [buildCollaborationResults] : []),
+                        buildFolderResults,
+                        buildOrgTagResults,
+                        ...(isAdvancedOrganizationEnabled() ? [buildOrgSavedViewResults] : []),
+                      ],
   "my-actions":       [buildMyActionsResults],
   "templates":        [buildTemplateResults],
   "contacts":         [buildContactResults, buildContactGroupResults],
@@ -826,6 +857,21 @@ const COLLABORATION_COMMANDS: CommandPaletteCommand[] = isCollaborationSearchEna
   { id: "cmd_collab_blocking" as CommandPaletteCommandId, label: "Open Blocking Discussions",   group: "Navigate", type: "navigate", icon: "AlertTriangle",  isPinnable: false, aliases: ["blocking"],                                  requiresPermission: "view_documents", destination: { type: "platform-route", path: "/app/collaboration/blocking" } },
 ] : [];
 
+// Post-launch capabilities. Their routes are capability-guarded, so their commands
+// must disappear together with the routes — a palette entry that lands on a
+// "not available" page is a dead end, and it also discloses that the feature exists.
+const ADVANCED_ORGANIZATION_COMMANDS: CommandPaletteCommand[] = isAdvancedOrganizationEnabled() ? [
+  { id: "cmd_doc_savedviews" as CommandPaletteCommandId, label: "Open Saved Views",           group: "Navigate", type: "navigate",     icon: "Bookmark", isPinnable: true,  requiresPermission: "view_documents",      destination: { type: "platform-route", path: "/app/documents/saved-views" } },
+] : [];
+
+const ADVANCED_REPORTS_COMMANDS: CommandPaletteCommand[] = isAdvancedReportsEnabled() ? [
+  { id: "cmd_savedrep"       as CommandPaletteCommandId, label: "Create Saved Report View",   group: "Create",   type: "quick-action", icon: "Bookmark", isPinnable: false, requiresPermission: "view_reports",        destination: { type: "platform-route", path: "/app/reports/saved" } },
+] : [];
+
+const INTEGRATIONS_COMMANDS: CommandPaletteCommand[] = isIntegrationsEnabled() ? [
+  { id: "cmd_integrations"   as CommandPaletteCommandId, label: "Open Integrations",          group: "Settings", type: "settings",     icon: "Puzzle",   isPinnable: false, requiresPermission: "manage_integrations", destination: { type: "platform-route", path: "/app/settings/integrations" } },
+] : [];
+
 const ALL_COMMANDS: CommandPaletteCommand[] = [
   // Navigate group
   { id: "cmd_dashboard"     as CommandPaletteCommandId, label: "Go to Dashboard",           group: "Navigate", type: "navigate",     icon: "LayoutDashboard", isPinnable: true,  aliases: ["home", "overview"],          destination: { type: "platform-route", path: "/app/dashboard" } },
@@ -854,7 +900,7 @@ const ALL_COMMANDS: CommandPaletteCommand[] = [
   { id: "cmd_newgroup"      as CommandPaletteCommandId, label: "Create Contact Group",       group: "Create",   type: "quick-action", icon: "UsersRound",      isPinnable: false, requiresPermission: "manage_contacts",   destination: { type: "platform-route", path: "/app/contacts/groups" } },
   { id: "cmd_invitemember"  as CommandPaletteCommandId, label: "Invite Member",              group: "Create",   type: "quick-action", icon: "UserPlus2",       isPinnable: false, requiresPermission: "manage_team",       destination: { type: "platform-route", path: "/app/workspace/invitations" } },
   { id: "cmd_newteam"       as CommandPaletteCommandId, label: "Create Team",                group: "Create",   type: "quick-action", icon: "Users2",          isPinnable: false, requiresPermission: "manage_team",       destination: { type: "platform-route", path: "/app/workspace/teams" } },
-  { id: "cmd_savedrep"      as CommandPaletteCommandId, label: "Create Saved Report View",  group: "Create",   type: "quick-action", icon: "Bookmark",        isPinnable: false, requiresPermission: "view_reports",      destination: { type: "platform-route", path: "/app/reports/saved" } },
+  ...ADVANCED_REPORTS_COMMANDS,
 
   // Settings group
   { id: "cmd_profile"       as CommandPaletteCommandId, label: "Open Profile",               group: "Settings", type: "settings",    icon: "CircleUser",      isPinnable: false, destination: { type: "platform-route", path: "/app/settings/profile" } },
@@ -863,13 +909,13 @@ const ALL_COMMANDS: CommandPaletteCommand[] = [
   { id: "cmd_notifpref"     as CommandPaletteCommandId, label: "Notification Preferences",  group: "Settings", type: "settings",    icon: "BellRing",        isPinnable: false, destination: { type: "platform-route", path: "/app/settings/notifications" } },
   { id: "cmd_billing"       as CommandPaletteCommandId, label: "Open Billing",               group: "Settings", type: "settings",    icon: "CreditCard",      isPinnable: false, requiresPermission: "view_billing",     destination: { type: "platform-route", path: "/app/settings/billing" } },
   { id: "cmd_usage"         as CommandPaletteCommandId, label: "Open Usage",                 group: "Settings", type: "settings",    icon: "BarChart2",       isPinnable: false, requiresPermission: "view_usage",       destination: { type: "platform-route", path: "/app/settings/usage" } },
-  { id: "cmd_integrations"  as CommandPaletteCommandId, label: "Open Integrations",          group: "Settings", type: "settings",    icon: "Puzzle",          isPinnable: false, requiresPermission: "manage_integrations", destination: { type: "platform-route", path: "/app/settings/integrations" } },
+  ...INTEGRATIONS_COMMANDS,
   { id: "cmd_dataprivacy"   as CommandPaletteCommandId, label: "Data & Privacy",             group: "Settings", type: "settings",    icon: "Shield",          isPinnable: false, destination: { type: "platform-route", path: "/app/settings/data-and-privacy" } },
 
   // Document organization group
   { id: "cmd_doc_folders"     as CommandPaletteCommandId, label: "Open Document Folders",      group: "Navigate", type: "navigate",     icon: "Folder",          isPinnable: true,  requiresPermission: "view_documents",   destination: { type: "platform-route", path: "/app/documents/folders" } },
   { id: "cmd_doc_tags"        as CommandPaletteCommandId, label: "Open Document Tags",          group: "Navigate", type: "navigate",     icon: "Tag",             isPinnable: false, requiresPermission: "view_documents",   destination: { type: "platform-route", path: "/app/documents/tags" } },
-  { id: "cmd_doc_savedviews"  as CommandPaletteCommandId, label: "Open Saved Views",            group: "Navigate", type: "navigate",     icon: "Bookmark",        isPinnable: true,  requiresPermission: "view_documents",   destination: { type: "platform-route", path: "/app/documents/saved-views" } },
+  ...ADVANCED_ORGANIZATION_COMMANDS,
 
   ...COLLABORATION_COMMANDS,
 

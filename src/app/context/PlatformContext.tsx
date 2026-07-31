@@ -53,9 +53,17 @@ export const DEFAULT_PLATFORM_FLAGS: PlatformFlags = {
   apiEnabled:                 true,
   webhooksEnabled:            true,
   reportsEnabled:             true,
-  // Automation is Enterprise Preview — disabled in the default launch profile.
-  // Enable via VITE_LAUNCH_PROFILE=enterprise-preview at build time.
-  automationEnabled:          false,
+  // Automation is Enterprise Preview — off in the default launch profile, on in
+  // the enterprise-preview and development profiles.
+  //
+  // This MUST be derived from the active profile rather than hardcoded false.
+  // The `workflow-automation` capability declares `featureRequirements:
+  // ["automationEnabled"]`, and the resolver checks feature flags AFTER the
+  // profile allowlist. With the flag pinned false, Workflow Automation resolved
+  // `unavailable-feature` in every profile including enterprise-preview — the
+  // whole module was unreachable everywhere, which is exactly the failure the
+  // capability system exists to prevent.
+  automationEnabled:          ACTIVE_LAUNCH_PROFILE !== "launch-default",
   developmentPlaceholdersEnabled: true,
 };
 

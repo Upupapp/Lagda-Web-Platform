@@ -105,14 +105,15 @@ export function resolveCapability(
   // 4. Profile + maturity allowlist
   const allowedMaturities = PROFILE_MATURITY_ALLOWLIST[ctx.profile];
   if (!allowedMaturities.includes(maturity)) {
-    const isEnterprisePreview = maturity === "enterprise-preview";
+    // Each capability carries its own unavailableReason. Do not hardcode a
+    // feature name here — there are three enterprise-preview capabilities
+    // (workflow-automation, bulk-send, document-collaboration) and naming one of
+    // them would show the wrong feature to a user who asked for another.
     return {
-      outcome:          isEnterprisePreview ? "unavailable-profile" : "unavailable-profile",
+      outcome:          "unavailable-profile",
       available:        false,
       preview:          false,
-      reasonLabel:      isEnterprisePreview
-        ? "Workflow Automation is an Enterprise Preview capability not included in the current product profile."
-        : (cap.unavailableReason || "This capability is not available in the current profile."),
+      reasonLabel:      cap.unavailableReason || "This capability is not available in the current product profile.",
       safeFallbackRoute: cap.safeFallbackRoute,
       capabilityId:     cap.id,
     };
@@ -166,6 +167,37 @@ export function isCapabilityAvailable(
   ctx: CapabilityResolutionContext,
 ): boolean {
   return resolveCapability(id, ctx).available;
+}
+
+/**
+ * Profile-level visibility check for MODULE-SCOPE callers — search providers and
+ * command registries that are evaluated at import time and therefore have no
+ * user, no permissions, and no feature flags.
+ *
+ * It answers only: "is this capability part of the active product profile?"
+ *
+ * It deliberately does NOT check permissions or feature flags. Callers used to do
+ * `resolveCapability(id, buildCapabilityContext(profile, [], {}))`, which looks
+ * right but is not: an empty permission array and an empty flag object make
+ * `hasPermission` and `hasFeatureFlag` return false for everything, so any
+ * capability declaring either requirement resolved unavailable in EVERY profile.
+ * That silently disabled the search and command-palette integrations it was meant
+ * to gate.
+ *
+ * Per-user enforcement is not lost. It still happens where it belongs:
+ *   - route access, through CapabilityGuard (which uses the real React context)
+ *   - each search result and command, through its own `requiresPermission`
+ */
+export function isCapabilityInActiveProfile(id: ProductCapabilityId | string): boolean {
+  const cap = getCapability(id);
+  if (!cap) return false;
+
+  // Same boundaries as resolveCapability steps 1-4, minus the per-user checks.
+  if (cap.maturity === "future-product") return false;
+  if (cap.maturity === "deferred") return false;
+  if (cap.maturity === "development-only") return ACTIVE_LAUNCH_PROFILE === "development";
+
+  return PROFILE_MATURITY_ALLOWLIST[ACTIVE_LAUNCH_PROFILE].includes(cap.maturity);
 }
 
 /** Build a minimal context for use outside React (e.g. service layer) */

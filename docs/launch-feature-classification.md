@@ -80,13 +80,16 @@ Separate products, not part of eSignature MVP.
 
 ## Not Implemented (Confirmed Absent)
 
-The following capabilities were planned but are **not implemented** in C1–C32 and have no code representation:
+> **Updated 2026-07-31 (HEAD `7c6713b`).** This list was accurate at C32. Bulk Send
+> and Document Collaboration have since been built and are now classified
+> `enterprise-preview`, not "absent".
 
-| Capability | Reason Not Implemented |
+| Capability | Status at HEAD `7c6713b` |
 |---|---|
-| Bulk Send | Deferred — requires backend job queue, separate CSV recipient flow |
-| Real-time Collaboration | Deferred — requires WebSocket infrastructure |
-| Document Versioning / Redlining | Deferred — requires document comparison engine |
+| Bulk Send | **Implemented (C33)** — `enterprise-preview`, 9 guarded routes. Still requires a backend job queue for production. |
+| Document Collaboration | **Implemented (C34)** — `enterprise-preview`, 9 guarded routes. Asynchronous internal review only. |
+| Real-time collaboration (presence, typing indicators, live cursors, WebSockets, SSE) | Not implemented, and explicitly out of scope. C34 is not real-time. |
+| Document Versioning / Redlining | Not implemented — `deferred`. Requires a document comparison engine. |
 | AI Document Analysis | Future — no AI infrastructure defined |
 | Mobile App | Future — out of scope for web MVP |
 | Third-party KYC | Future — vendor selection required |

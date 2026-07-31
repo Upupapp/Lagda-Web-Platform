@@ -7,6 +7,7 @@ import { SettingsPage, SCard, StatusBadge, Skeleton, DEMO_NOTICE } from "./Setti
 import { mockSecuritySettingsService } from "../../../services/mock/settings.service";
 import { mockBillingSettingsService } from "../../../services/mock/settings.service";
 import { mockUsageService } from "../../../services/mock/settings.service";
+import { isCapabilityInActiveProfile } from "../../../config/capability-resolver";
 
 const GF    = { fontFamily: "'Geist', sans-serif" };
 const NAVY  = "#07111F";
@@ -111,7 +112,11 @@ export function SettingsOverviewPage() {
               <QuickLinkCard to="/app/settings/branding"      title="Branding"       description="Workspace logo, colors, and sender display" />
               <QuickLinkCard to="/app/settings/billing"       title="Billing & Plan" description="Plan, seats, invoices, and payment method" />
               <QuickLinkCard to="/app/settings/usage"         title="Usage"          description="Signing requests, storage, and member usage" badge={data && data.warningCount > 0 ? `${data.warningCount} alerts` : undefined} />
-              <QuickLinkCard to="/app/settings/integrations"  title="Integrations"   description="Cloud storage, identity, CRM, and developer tools" />
+              {/* Integrations is post-launch; its route is capability-guarded, so the
+                  card is omitted rather than linking to an unavailable page. */}
+              {isCapabilityInActiveProfile("integrations") && (
+                <QuickLinkCard to="/app/settings/integrations"  title="Integrations"   description="Cloud storage, identity, CRM, and developer tools" />
+              )}
             </div>
           </SCard>
 

@@ -1,6 +1,15 @@
 # MVP Consolidation Audit — C35
 
-**Date:** 2026-07-16  
+> **⚠️ SUPERSEDED IN PART — re-audited 2026-07-31 at HEAD `7c6713b`.**
+>
+> This document was written on 2026-07-16 when the repository was at C32. Commands
+> 33, 34, 36 and 37 have landed since. Section 1 below is preserved as the original
+> record; **the statements about Commands 33 and 34 are no longer true.**
+>
+> Read `docs/mvp-consolidation-reaudit.md` for the current state, including four
+> capability-gating defects this original audit did not catch.
+
+**Date:** 2026-07-16 (original) · re-audited 2026-07-31  
 **Scope:** Full audit of LAGDA frontend through Command 32  
 **Purpose:** Classify every existing capability and identify gating requirements
 
@@ -8,16 +17,30 @@
 
 ## 1. Repository Confirmation
 
+### 1a. Original record (2026-07-16, HEAD `c2eac3d`) — historical
+
 - **Location:** `C:\Users\paulg\OneDrive\Desktop\Lagda`
 - **HEAD:** `c2eac3d` (C32: Workflow Automation)
 - **Commands Confirmed in Repository:** C1–C32
-- **Commands 33 & 34:** NOT implemented. No Bulk Send, Collaboration, or Versioning routes, models, services, or pages exist.
+- **Commands 33 & 34:** NOT implemented at that time.
 
-### Evidence: Absent C33/C34 Artifacts
-```
-grep -r "bulk-send\|collaboration\|versioning\|redlining\|csv-import" src/ → no results
-grep -r "BulkSend\|Collaboration\|Versioning" src/ → no results
-```
+### 1b. Current state (2026-07-31, HEAD `7c6713b`) — authoritative
+
+| Command | Status now |
+|---|---|
+| C33 Bulk Send | **IMPLEMENTED** — 9 routes, `enterprise-preview`, capability-guarded |
+| C34 Document Collaboration | **IMPLEMENTED** — 9 routes, `enterprise-preview`, capability-guarded. Asynchronous internal review, **not** real-time collaboration |
+| C36 Logo integration | Implemented |
+| C37 Signing Workflow | Implemented — `launch-core` |
+| Document Versioning | Still **not** implemented — remains `deferred` |
+
+The capability registry now holds **29** capabilities (16 launch-core, 4
+launch-supporting, 3 enterprise-preview, 3 post-launch, 1 deferred, 1
+future-product, 1 development-only), not the count recorded below.
+
+The original "Evidence: Absent C33/C34 Artifacts" grep block has been removed
+because re-running it today returns extensive results and reproducing it would
+assert something false.
 
 ---
 
@@ -193,8 +216,8 @@ Automation         — enterprise-preview, featureFlag: automationEnabled (NOW F
 | Audit Trail / Evidence | ⚠️ Needs qualification — frontend-only, no production persistence |
 | eNotary | ✅ Correctly labeled "Coming Soon — Subject to Supreme Court Accreditation" |
 | Automation | ✅ Not advertised on public pages |
-| Bulk Send | ✅ Not mentioned — not implemented |
-| Collaboration | ✅ Not mentioned — not implemented |
+| Bulk Send | ✅ Not mentioned on public pages. (Implemented since C33 as `enterprise-preview`; correctly absent from public claims.) |
+| Collaboration | ✅ Not mentioned on public pages. (Implemented since C34 as `enterprise-preview`; correctly absent from public claims.) |
 
 ---
 

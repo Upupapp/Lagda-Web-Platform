@@ -198,13 +198,30 @@ eNotary content is limited to the public /enotary/* information pages which clea
 
 ---
 
-## Feature Gating (C35)
+## Feature Gating (C35, re-audited 2026-07-31)
 
 | Limitation | Detail |
 |------------|--------|
 | Launch profile is compile-time only | `VITE_LAUNCH_PROFILE` is a build-time environment variable. There is no runtime mechanism to change launch profiles, and URL query parameters cannot override it. |
 | Capability resolver uses frontend context only | `resolveCapability()` evaluates feature flags and role permissions as held in PlatformContext. A real backend would also enforce these server-side. |
 | Permission checks are frontend-only | A user with direct URL knowledge could bypass frontend permission checks without a backend enforcement layer. |
+| `routeIds` in the registry is decorative | Every capability declares `routeIds`, but **no code consumes it**. It cannot enforce anything and has already drifted from reality. Route gating is enforced only by explicit `CapabilityGuard` wrapping in `router.tsx`. |
+| Navigation gates on feature flags, not capabilities | `platform.nav.ts` has no capability field; `PlatformSidebar`/`MobileNav` filter on `permission` + `featureFlag`. This now yields the correct result because `automationEnabled` is derived from the active profile, but a future capability whose flag is not wired would not be hidden by navigation alone. |
+| Module-scope gates cannot see permissions | Search providers and command registries are evaluated at import time, so they use `isCapabilityInActiveProfile()` (profile only). Per-user enforcement happens at the route guard and via each result's `requiresPermission`. |
+
+### Defects found and fixed in the 2026-07-31 re-audit
+
+Recorded because each was latent for multiple commands. See
+`docs/mvp-consolidation-reaudit.md`.
+
+| Defect | Effect before fix |
+|---|---|
+| `automationEnabled` hardcoded `false` | Workflow Automation resolved unavailable in **every** profile, including `enterprise-preview`. The whole module was unreachable. |
+| Module-scope gates used an empty capability context | `isAutomationSearchEnabled()` / `isCollaborationSearchEnabled()` were permanently `false` in every profile. |
+| Three `post-launch` routes unguarded | `/app/documents/saved-views`, `/app/reports/saved`, `/app/settings/integrations` were reachable by direct URL in the launch profile. |
+| `/dev/design-system` unguarded | A development-only page was live in production builds. |
+| Resolver hardcoded one feature name | Gated Bulk Send and Collaboration routes told the user about *Workflow Automation*. |
+| `notif-int-001` claimed webhook delivery | A notification asserted events "were delivered successfully" when nothing is sent. |
 
 ---
 

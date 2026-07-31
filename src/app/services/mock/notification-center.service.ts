@@ -13,6 +13,7 @@ import type {
 } from "../../models/notifications";
 import { ok, fail } from "../../models/errors";
 import type { ServiceResult } from "../../models/errors";
+import { isCapabilityInActiveProfile } from "../../config/capability-resolver";
 
 // ── Fixtures ──────────────────────────────────────────────────────────────────
 
@@ -103,9 +104,13 @@ const FIXTURES: NotificationRecord[] = [
     category: "integrations",
     severity: "info",
     priority: "normal",
-    title: "Webhook delivery confirmed",
-    body: "All webhook events configured for Northbridge Legal were delivered successfully in the last 24 hours. No failed deliveries detected.",
-    detailBody: "Your webhook integration endpoints have been receiving and acknowledging all document lifecycle events without error. This summary is generated when your integrations complete a 24-hour window with no failed delivery attempts.",
+    // Rewritten for frontend-only honesty. The previous copy claimed webhook events
+    // "were delivered successfully" and that endpoints "have been receiving and
+    // acknowledging" events — no webhook is configured, sent, received, or
+    // acknowledged anywhere in this frontend.
+    title: "Integration summary (demonstration)",
+    body: "This is a sample integration summary in the frontend demonstration. No webhook endpoint is configured, and no event has been sent, delivered, or acknowledged.",
+    detailBody: "Integrations are shown as product direction only. This frontend connects to no external service, registers no endpoint, and transmits no document lifecycle event. Nothing here reflects a real integration state.",
     createdAt: "2026-07-15T16:00:00Z",
     workspaceId: "ws_northbridge_001",
     workspaceName: "Northbridge Legal",
@@ -114,7 +119,7 @@ const FIXTURES: NotificationRecord[] = [
     hasAction: true,
     actionLabel: "View Integrations",
     actionPath: "/app/settings/integrations",
-    whyReceivedReason: "You received this notification because you have active webhook integrations configured on this workspace and you have webhook delivery summary notifications enabled.",
+    whyReceivedReason: "This sample notification illustrates what an integration summary would look like. It does not reflect any configured integration.",
     status: "read",
   },
   {
@@ -319,9 +324,28 @@ const FIXTURES: NotificationRecord[] = [
   },
 ];
 
+// ── Capability gating ─────────────────────────────────────────────────────────
+//
+// A notification must never be the way a user discovers a capability that is not in
+// the active product profile, and must never link to a capability-guarded route —
+// following it would land on a "not available" page.
+//
+// Categories map onto capabilities. Anything not listed here belongs to a
+// launch-core capability and is always shown.
+const CATEGORY_CAPABILITY: Partial<Record<NotificationRecord["category"], string>> = {
+  "integrations": "integrations",
+};
+
+function categoryIsInActiveProfile(category: NotificationRecord["category"]): boolean {
+  const capability = CATEGORY_CAPABILITY[category];
+  return !capability || isCapabilityInActiveProfile(capability);
+}
+
 // ── Module-level state (no localStorage, no persistence) ──────────────────────
 
-let _items: NotificationRecord[] = FIXTURES.map((f) => ({ ...f }));
+let _items: NotificationRecord[] = FIXTURES
+  .filter((f) => categoryIsInActiveProfile(f.category))
+  .map((f) => ({ ...f }));
 
 // ── Filtering helpers ─────────────────────────────────────────────────────────
 

@@ -65,9 +65,10 @@ LAGDA is a Philippine-market eSignature platform for individuals and organizatio
 | Capability | Status | When |
 |---|---|---|
 | Workflow Automation (C32) | Enterprise Preview | Post-MVP, enterprise tier |
-| Bulk Send | Not Implemented | Future — after backend stable |
-| Real-time Collaboration | Not Implemented | Future |
-| Document Versioning / Redlining | Not Implemented | Future |
+| Bulk Send (C33) | **Implemented — Enterprise Preview** | Post-MVP. Built, gated, hidden from the launch profile. |
+| Document Collaboration (C34) | **Implemented — Enterprise Preview** | Post-MVP. Asynchronous internal review — **not** real-time collaboration, which remains out of scope. |
+| Real-time collaboration (presence, live cursors, WebSockets) | Not Implemented | Not planned |
+| Document Versioning / Redlining | Not Implemented | Future — still `deferred` |
 | eNotary / Remote Online Notarization | Future Product | Subject to Supreme Court Accreditation |
 | AI Document Analysis | Not Implemented | Future |
 | Mobile App | Not Implemented | Future |

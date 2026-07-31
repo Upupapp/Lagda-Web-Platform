@@ -7,6 +7,7 @@ import { useParams, Link, Navigate } from "react-router";
 import { BookMarked, ChevronLeft, Clock } from "lucide-react";
 import { usePlatform } from "../../../context/PlatformContext";
 import { reportingService } from "../../../services/mock/reporting.service";
+import { isCapabilityInActiveProfile } from "../../../config/capability-resolver";
 import type { ReportViewId, ReportDatePreset } from "../../../models/reports";
 import { REPORT_FAMILY_LABELS, REPORT_DATE_PRESET_LABELS } from "../../../models/reports";
 import {
@@ -19,6 +20,13 @@ import {
 function isValidReportId(id: string): boolean {
   return /^sv_[a-zA-Z0-9_]+$/.test(id);
 }
+
+// The saved-views list is advanced-reports (post-launch) and its route is
+// capability-guarded. In the launch profile the back link goes to the Reports
+// overview instead, so it never lands on a "not available" page.
+const ADVANCED_REPORTS_ON  = isCapabilityInActiveProfile("advanced-reports");
+const SAVED_VIEWS_BACK       = ADVANCED_REPORTS_ON ? "/app/reports/saved" : "/app/reports";
+const SAVED_VIEWS_BACK_LABEL = ADVANCED_REPORTS_ON ? "Saved Views" : "Reports";
 
 export function ReportDetailPage() {
   const { reportId } = useParams<{ reportId: string }>();
@@ -59,8 +67,10 @@ export function ReportDetailPage() {
         <p style={{ ...GF, fontSize: 14, color: SLATE, maxWidth: 400, margin: "0 auto 24px" }}>
           The report ID in this URL does not match a saved view in the demonstration. It may have been removed or the link may be outdated.
         </p>
-        <Link to="/app/reports/saved" style={{ ...GF, fontSize: 13, color: AZURE, textDecorationLine: "none", fontWeight: 500 }}>
-          ← View all saved views
+        {/* /app/reports/saved is advanced-reports (post-launch) and guarded, so the
+            back link falls back to the Reports overview in the launch profile. */}
+        <Link to={SAVED_VIEWS_BACK} style={{ ...GF, fontSize: 13, color: AZURE, textDecorationLine: "none", fontWeight: 500 }}>
+          ← {SAVED_VIEWS_BACK_LABEL}
         </Link>
       </main>
     );
@@ -73,10 +83,10 @@ export function ReportDetailPage() {
     <main aria-labelledby="detail-title" style={{ ...GF, maxWidth: 1100, margin: "0 auto" }}>
       <div style={{ marginBottom: 16 }}>
         <Link
-          to="/app/reports/saved"
+          to={SAVED_VIEWS_BACK}
           style={{ ...GF, fontSize: 12, color: AZURE, textDecorationLine: "none", display: "inline-flex", alignItems: "center", gap: 4, marginBottom: 12 }}
         >
-          <ChevronLeft size={13} aria-hidden /> Saved Views
+          <ChevronLeft size={13} aria-hidden /> {SAVED_VIEWS_BACK_LABEL}
         </Link>
       </div>
 
