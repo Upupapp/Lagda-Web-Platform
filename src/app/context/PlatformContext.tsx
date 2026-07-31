@@ -33,6 +33,7 @@ import { documentOrganizationService } from "../services/mock/document-organizat
 import { workflowAutomationService } from "../services/mock/workflow-automation.service";
 import { signingWorkflowService } from "../services/mock/signing-workflow.service";
 import { bulkSendService } from "../services/mock/bulk-send.service";
+import { documentCollaborationService } from "../services/mock/document-collaboration.service";
 import { ACTIVE_LAUNCH_PROFILE, resolveCapability, buildCapabilityContext } from "../config/capability-resolver";
 import type { LaunchProfileId, CapabilityResolution, ProductCapabilityId } from "../models/product-capability";
 
@@ -140,6 +141,10 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
     // Clears every batch, recipient row, parsed CSV, pasted text, mapping,
     // validation result, and saved configuration before the next account loads.
     bulkSendService.resetBulkSendDemonstration();
+    // Clears every thread, comment body, Personal Draft Note, mention, review
+    // response, and collaboration activity record. Comment text must never survive
+    // into the next account's session.
+    documentCollaborationService.resetCollaborationDemonstration();
     setSessionStatus("unauthenticated");
     setUser(null);
     setWorkspaces([]);
@@ -157,6 +162,7 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
     workflowAutomationService.clearWorkspaceScopedAutomation(ws.id);
     signingWorkflowService.clearWorkspaceScopedWorkflows(ws.id);
     bulkSendService.clearWorkspaceScopedBulkSend(ws.id);
+    documentCollaborationService.clearWorkspaceScopedCollaboration(ws.id);
     setCurrentWorkspace(ws);
     setRole(ws.role);
     // In production: re-fetch documents, notifications, etc. for the new workspace.

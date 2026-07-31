@@ -44,6 +44,7 @@ import {
   ArrowLeft,
   Star,
   GitBranch,
+  MessageSquare,
 } from "lucide-react";
 import { usePlatform, useCapability } from "../../../context/PlatformContext";
 import { PageHeader } from "../../../components/platform/PageHeader";
@@ -316,10 +317,17 @@ export function TransactionDetailLayout() {
   const documentSupportsRouting = !!txn && txn.status !== "archived";
   const showWorkflowTab = workflowCapability.available && canVerify && documentSupportsRouting;
 
+  // Collaboration (C34) is internal discussion, so it needs only read access to the
+  // document. It is deliberately NOT gated on preparation permission: someone who
+  // can read a document should be able to see the internal discussion about it.
+  const collaborationCapability = useCapability("document-collaboration");
+  const showCollaborationTab = collaborationCapability.available && !!txn;
+
   // Tab visibility
   const TAB_LINKS = [
     { label: "Overview",     icon: <FileText size={14} />,  to: base,                    suffix: "" },
     { label: "Workflow",     icon: <GitBranch size={14} />, to: `${base}/workflow`,      suffix: "/workflow",   hidden: !showWorkflowTab },
+    { label: "Collaboration",icon: <MessageSquare size={14} />, to: `${base}/collaboration`, suffix: "/collaboration", hidden: !showCollaborationTab },
     { label: "Participants", icon: <Users size={14} />,     to: `${base}/participants`,  suffix: "/participants" },
     { label: "Activity",     icon: <Activity size={14} />,  to: `${base}/activity`,      suffix: "/activity" },
     { label: "Evidence",     icon: <Shield size={14} />,    to: `${base}/evidence`,      suffix: "/evidence",   hidden: !canVerify && !canAudit },

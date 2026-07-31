@@ -278,6 +278,19 @@ const BulkSendResultsPage         = lazy(() => import("./app/pages/platform/bulk
 const BulkSendConfigurationsPage  = lazy(() => import("./app/pages/platform/bulk-send/BulkSendConfigurationPages").then(m => ({ default: m.BulkSendConfigurationsPage })));
 const BulkSendConfigurationDetailPage = lazy(() => import("./app/pages/platform/bulk-send/BulkSendConfigurationPages").then(m => ({ default: m.BulkSendConfigurationDetailPage })));
 
+// Document Collaboration (Command 34) — asynchronous internal review only.
+// In the default launch profile every collaboration route renders a safe
+// capability fallback rather than the feature.
+const CollaborationTab            = lazy(() => import("./app/pages/platform/documents/collaboration/CollaborationTab").then(m => ({ default: m.CollaborationTab })));
+const CollaborationThreadPage     = lazy(() => import("./app/pages/platform/documents/collaboration/CollaborationThreadPages").then(m => ({ default: m.CollaborationThreadPage })));
+const CollaborationNewThreadPage  = lazy(() => import("./app/pages/platform/documents/collaboration/CollaborationThreadPages").then(m => ({ default: m.CollaborationNewThreadPage })));
+const CollaborationReviewPage     = lazy(() => import("./app/pages/platform/documents/collaboration/CollaborationReviewPage").then(m => ({ default: m.CollaborationReviewPage })));
+const CollaborationCenterOverview = lazy(() => import("./app/pages/platform/collaboration/CollaborationCenterPage").then(m => ({ default: m.CollaborationCenterOverview })));
+const CollaborationCenterAssigned = lazy(() => import("./app/pages/platform/collaboration/CollaborationCenterPage").then(m => ({ default: m.CollaborationCenterAssigned })));
+const CollaborationCenterMentions = lazy(() => import("./app/pages/platform/collaboration/CollaborationCenterPage").then(m => ({ default: m.CollaborationCenterMentions })));
+const CollaborationCenterBlocking = lazy(() => import("./app/pages/platform/collaboration/CollaborationCenterPage").then(m => ({ default: m.CollaborationCenterBlocking })));
+const CollaborationCenterResolved = lazy(() => import("./app/pages/platform/collaboration/CollaborationCenterPage").then(m => ({ default: m.CollaborationCenterResolved })));
+
 // ── Auth Suspense fallback ────────────────────────────────────────────────────
 function AuthPageLoader() {
   return (
@@ -425,6 +438,12 @@ export const router = createBrowserRouter([
           { path: "workflow/create",           element: <CapabilityGuard capabilityId="signing-workflow"><Suspense fallback={null}><WorkflowCreatePage /></Suspense></CapabilityGuard> },
           { path: "workflow/review",           element: <CapabilityGuard capabilityId="signing-workflow"><Suspense fallback={null}><WorkflowReviewPage /></Suspense></CapabilityGuard> },
           { path: "workflow/stages/:stageId",  element: <CapabilityGuard capabilityId="signing-workflow"><Suspense fallback={null}><WorkflowStageDetailPage /></Suspense></CapabilityGuard> },
+          // Document Collaboration (C34) — static `new` BEFORE :threadId to prevent
+          // shadowing. All guarded by the document-collaboration capability.
+          { path: "collaboration",             element: <CapabilityGuard capabilityId="document-collaboration"><Suspense fallback={null}><CollaborationTab /></Suspense></CapabilityGuard> },
+          { path: "collaboration/new",         element: <CapabilityGuard capabilityId="document-collaboration"><Suspense fallback={null}><CollaborationNewThreadPage /></Suspense></CapabilityGuard> },
+          { path: "collaboration/:threadId",   element: <CapabilityGuard capabilityId="document-collaboration"><Suspense fallback={null}><CollaborationThreadPage /></Suspense></CapabilityGuard> },
+          { path: "review",                    element: <CapabilityGuard capabilityId="document-collaboration"><Suspense fallback={null}><CollaborationReviewPage /></Suspense></CapabilityGuard> },
           { path: "participants",     element: <Suspense fallback={null}><ParticipantsTab /></Suspense> },
           { path: "activity",        element: <Suspense fallback={null}><ActivityTab /></Suspense> },
           { path: "evidence",        element: <Suspense fallback={null}><EvidenceTab /></Suspense> },
@@ -442,6 +461,14 @@ export const router = createBrowserRouter([
       { path: "bulk-send/:batchId/mapping",                      element: <CapabilityGuard capabilityId="bulk-send"><Suspense fallback={null}><BulkSendMappingPage /></Suspense></CapabilityGuard> },
       { path: "bulk-send/:batchId/review",                       element: <CapabilityGuard capabilityId="bulk-send"><Suspense fallback={null}><BulkSendReviewPage /></Suspense></CapabilityGuard> },
       { path: "bulk-send/:batchId/results",                      element: <CapabilityGuard capabilityId="bulk-send"><Suspense fallback={null}><BulkSendResultsPage /></Suspense></CapabilityGuard> },
+
+      // Collaboration Center (Command 34) — workspace-level view of internal review
+      // work. It never widens access: every row passed the same visibility resolver.
+      { path: "collaboration",           element: <CapabilityGuard capabilityId="document-collaboration"><Suspense fallback={null}><CollaborationCenterOverview /></Suspense></CapabilityGuard> },
+      { path: "collaboration/assigned",  element: <CapabilityGuard capabilityId="document-collaboration"><Suspense fallback={null}><CollaborationCenterAssigned /></Suspense></CapabilityGuard> },
+      { path: "collaboration/mentions",  element: <CapabilityGuard capabilityId="document-collaboration"><Suspense fallback={null}><CollaborationCenterMentions /></Suspense></CapabilityGuard> },
+      { path: "collaboration/blocking",  element: <CapabilityGuard capabilityId="document-collaboration"><Suspense fallback={null}><CollaborationCenterBlocking /></Suspense></CapabilityGuard> },
+      { path: "collaboration/resolved",  element: <CapabilityGuard capabilityId="document-collaboration"><Suspense fallback={null}><CollaborationCenterResolved /></Suspense></CapabilityGuard> },
 
       // Templates (Command 21) — library, create, detail, edit, preview, use
       // Note: templates/new MUST precede templates/:templateId to avoid shadowing

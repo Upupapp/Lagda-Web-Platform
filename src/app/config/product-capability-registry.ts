@@ -778,33 +778,37 @@ const REGISTRY: ProductCapability[] = [
     dependencies:             [capabilityId("documents"), capabilityId("templates")],
   },
 
-  // ── DEFERRED ─────────────────────────────────────────────────────────────
+  // ── DOCUMENT COLLABORATION (C34) ─────────────────────────────────────────
   {
     id:                       capabilityId("document-collaboration"),
     label:                    "Document Collaboration",
-    description:              "Internal comments, mentions, and review threads within documents",
-    group:                    "Deferred",
-    maturity:                 "deferred",
+    // Asynchronous internal review only. Real-time collaboration, presence, typing
+    // indicators, and live cursors are explicitly out of scope for this capability.
+    description:              "Internal review threads, comments, mentions, and resolution within documents",
+    group:                    "Advanced",
+    maturity:                 "enterprise-preview",
     enabledByDefault:         false,
-    frontendReady:            "not-started",
-    backendReady:             "not-defined",
+    frontendReady:            "complete-demonstration",
+    backendReady:             "contract-defined",
     publicLaunchReady:        false,
     navigationVisibility:     false,
-    searchVisibility:         false,
-    commandPaletteVisibility: false,
+    searchVisibility:         true,
+    commandPaletteVisibility: true,
     dashboardVisibility:      false,
-    permissionRequirements:   [],
+    permissionRequirements:   ["view_documents"],
     planRequirements:         [],
-    featureRequirements:      [],
-    routeIds:                 [],
-    unavailableReason:        "Document collaboration is deferred to a future release.",
-    previewNotice:            "",
+    featureRequirements:      ["documentsEnabled"],
+    routeIds:                 ["app-document-collaboration","app-document-collaboration-thread","app-document-collaboration-new","app-document-review","app-collaboration-center","app-collaboration-assigned","app-collaboration-mentions","app-collaboration-blocking","app-collaboration-resolved"],
+    unavailableReason:        "Document Collaboration is an Enterprise Preview capability not included in the current product profile.",
+    previewNotice:            "Active in Enterprise Preview — threads, comments, mentions, and internal review operate in frontend demonstration only. Nothing is delivered, persisted, or recorded, and internal review is not participant approval.",
     safeFallbackRoute:        "/app/documents",
     indexable:                false,
     sitemapInclude:           false,
-    backendDependencies:      ["Collaboration service","Real-time presence"],
-    dependencies:             [],
+    backendDependencies:      ["Collaboration service","Comment storage","Mention resolution","Notification delivery"],
+    dependencies:             [capabilityId("documents")],
   },
+
+  // ── DEFERRED ─────────────────────────────────────────────────────────────
   {
     id:                       capabilityId("document-versioning"),
     label:                    "Document Versioning",

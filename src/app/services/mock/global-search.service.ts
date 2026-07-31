@@ -40,6 +40,7 @@ import {
 } from "../../models/search";
 import { MOCK_TRANSACTIONS, MOCK_TEMPLATES, MOCK_CONTACTS } from "../../data/mock";
 import { SIGNING_WORKFLOW_FIXTURES } from "../../data/mock/signing-workflow";
+import { COLLABORATION_THREAD_FIXTURES, COLLAB_WORKSPACE_ID } from "../../data/mock/collaboration";
 import { documentOrganizationService } from "./document-organization.service";
 import { workflowAutomationService } from "./workflow-automation.service";
 import { ACTIVE_LAUNCH_PROFILE, buildCapabilityContext } from "../../config/capability-resolver";
@@ -51,6 +52,12 @@ import { capabilityId } from "../../models/product-capability";
 function isAutomationSearchEnabled(): boolean {
   const ctx = buildCapabilityContext(ACTIVE_LAUNCH_PROFILE, [], {});
   return resolveCapability(capabilityId("workflow-automation"), ctx).available;
+}
+
+// Document Collaboration is enterprise-preview, gated the same way.
+function isCollaborationSearchEnabled(): boolean {
+  const ctx = buildCapabilityContext(ACTIVE_LAUNCH_PROFILE, [], {});
+  return resolveCapability(capabilityId("document-collaboration"), ctx).available;
 }
 
 // ── Module-level in-memory state ──────────────────────────────────────────────
@@ -186,6 +193,81 @@ function buildSigningWorkflowResults(query: string): GlobalSearchResult[] {
       availability:     "available",
       demonstrationOnly: true,
     }));
+}
+
+// Collaboration (C34).
+//
+// Search matches thread TITLES only. Comment bodies, Personal Draft Notes, mention
+// text, resolution summaries, and restricted-thread titles are never searched and
+// never surfaced — a search result must not become a way to read something the
+// viewer could not open directly.
+//
+// Only `internal-workspace` threads are searchable here: team-scoped and
+// owner-and-reviewers threads depend on a per-viewer check that this module has no
+// context to perform, so they are excluded rather than guessed at.
+function buildCollaborationResults(query: string): GlobalSearchResult[] {
+  const q = query.toLowerCase();
+  const matchesTerm =
+    q.includes("comment") || q.includes("discussion") || q.includes("thread") ||
+    q.includes("collaboration") || q.includes("review") || q.includes("mention");
+
+  const searchable = COLLABORATION_THREAD_FIXTURES.filter(
+    (t) => t.workspaceId === COLLAB_WORKSPACE_ID &&
+           t.visibility === "internal-workspace" &&
+           t.status !== "archived",
+  );
+
+  const threads = searchable
+    .filter((t) => matchesTerm || tokenMatch(query, t.title))
+    .slice(0, 5)
+    .map((t): GlobalSearchResult => ({
+      id:               `sr_collab_${t.id}` as GlobalSearchResultId,
+      type:             "navigation-command" as GlobalSearchResultType,
+      title:            `Discussion — ${t.title}`,
+      description:      "Internal discussion. Opening it does not grant access to anything new.",
+      workspaceContext: "Northbridge Legal",
+      matchedFields:    buildMatchFields(query, [
+        { field: "title", label: "Title", text: t.title },
+      ]),
+      matchScore:       computeScore(query, t.title) - 6,
+      destination:      {
+        type: "platform-route",
+        path: `/app/documents/${t.documentId}/collaboration/${t.id}`,
+        requiresPermission: "view_documents",
+      },
+      availability:     "available",
+      demonstrationOnly: true,
+    }));
+
+  if (!matchesTerm) return threads;
+
+  return [
+    {
+      id:               "sr_collab_center" as GlobalSearchResultId,
+      type:             "navigation-command" as GlobalSearchResultType,
+      title:            "Collaboration Center",
+      description:      "Internal review work across documents you already have access to",
+      workspaceContext: "Northbridge Legal",
+      matchedFields:    [],
+      matchScore:       58,
+      destination:      { type: "platform-route", path: "/app/collaboration", requiresPermission: "view_documents" },
+      availability:     "available",
+      demonstrationOnly: true,
+    },
+    {
+      id:               "sr_collab_mentions" as GlobalSearchResultId,
+      type:             "navigation-command" as GlobalSearchResultType,
+      title:            "My Mentions",
+      description:      "Comments where someone mentioned you. A mention never grants access.",
+      workspaceContext: "Northbridge Legal",
+      matchedFields:    [],
+      matchScore:       55,
+      destination:      { type: "platform-route", path: "/app/collaboration/mentions", requiresPermission: "view_documents" },
+      availability:     "available",
+      demonstrationOnly: true,
+    },
+    ...threads,
+  ];
 }
 
 // My Actions — own assignments only (never another user's inbox)
@@ -710,7 +792,9 @@ function buildAutomationResults(query: string): GlobalSearchResult[] {
 type ScopeBuilder = (query: string) => GlobalSearchResult[];
 
 const SCOPE_BUILDERS: Partial<Record<GlobalSearchScope, ScopeBuilder[]>> = {
-  "documents":        [buildDocumentResults, buildSigningWorkflowResults, buildFolderResults, buildOrgTagResults, buildOrgSavedViewResults],
+  "documents":        isCollaborationSearchEnabled()
+                        ? [buildDocumentResults, buildSigningWorkflowResults, buildCollaborationResults, buildFolderResults, buildOrgTagResults, buildOrgSavedViewResults]
+                        : [buildDocumentResults, buildSigningWorkflowResults, buildFolderResults, buildOrgTagResults, buildOrgSavedViewResults],
   "my-actions":       [buildMyActionsResults],
   "templates":        [buildTemplateResults],
   "contacts":         [buildContactResults, buildContactGroupResults],
@@ -731,6 +815,16 @@ const ALL_SCOPE_ORDER: GlobalSearchScope[] = [
 ];
 
 // ── Command palette commands ──────────────────────────────────────────────────
+
+// Collaboration commands (C34). Navigation only — none of them posts a comment,
+// mentions anyone, resolves a thread, or changes a review response. Present only
+// when the capability is available in the active launch profile.
+const COLLABORATION_COMMANDS: CommandPaletteCommand[] = isCollaborationSearchEnabled() ? [
+  { id: "cmd_collab_center"   as CommandPaletteCommandId, label: "Open Collaboration Center",   group: "Navigate", type: "navigate", icon: "MessagesSquare", isPinnable: true,  aliases: ["discussions", "comments", "internal review"], requiresPermission: "view_documents", destination: { type: "platform-route", path: "/app/collaboration" } },
+  { id: "cmd_collab_mentions" as CommandPaletteCommandId, label: "Open My Mentions",            group: "Navigate", type: "my-work",  icon: "AtSign",         isPinnable: true,  aliases: ["mentions"],                                  requiresPermission: "view_documents", destination: { type: "platform-route", path: "/app/collaboration/mentions" } },
+  { id: "cmd_collab_assigned" as CommandPaletteCommandId, label: "Open Reviews Assigned to Me", group: "Navigate", type: "my-work",  icon: "ClipboardCheck", isPinnable: false, aliases: ["my reviews"],                                requiresPermission: "view_documents", destination: { type: "platform-route", path: "/app/collaboration/assigned" } },
+  { id: "cmd_collab_blocking" as CommandPaletteCommandId, label: "Open Blocking Discussions",   group: "Navigate", type: "navigate", icon: "AlertTriangle",  isPinnable: false, aliases: ["blocking"],                                  requiresPermission: "view_documents", destination: { type: "platform-route", path: "/app/collaboration/blocking" } },
+] : [];
 
 const ALL_COMMANDS: CommandPaletteCommand[] = [
   // Navigate group
@@ -776,6 +870,8 @@ const ALL_COMMANDS: CommandPaletteCommand[] = [
   { id: "cmd_doc_folders"     as CommandPaletteCommandId, label: "Open Document Folders",      group: "Navigate", type: "navigate",     icon: "Folder",          isPinnable: true,  requiresPermission: "view_documents",   destination: { type: "platform-route", path: "/app/documents/folders" } },
   { id: "cmd_doc_tags"        as CommandPaletteCommandId, label: "Open Document Tags",          group: "Navigate", type: "navigate",     icon: "Tag",             isPinnable: false, requiresPermission: "view_documents",   destination: { type: "platform-route", path: "/app/documents/tags" } },
   { id: "cmd_doc_savedviews"  as CommandPaletteCommandId, label: "Open Saved Views",            group: "Navigate", type: "navigate",     icon: "Bookmark",        isPinnable: true,  requiresPermission: "view_documents",   destination: { type: "platform-route", path: "/app/documents/saved-views" } },
+
+  ...COLLABORATION_COMMANDS,
 
   // Help group
   { id: "cmd_help"          as CommandPaletteCommandId, label: "Open Help Center",           group: "Help",     type: "help",        icon: "HelpCircle",      isPinnable: false, destination: { type: "internal-route", path: "/help" } },

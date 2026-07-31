@@ -799,9 +799,18 @@ The `VITE_LAUNCH_PROFILE` environment variable controls which capability maturit
 
 The frontend `ROLE_PERMISSIONS` map (`src/app/models/index.ts`) defines which permissions each role receives. The backend must implement equivalent role-based access control. Frontend permission checks are advisory and not a security boundary.
 
-### C33 / C34 Confirmation
+### C33 / C34 Confirmation — SUPERSEDED
 
-Commands 33 (Bulk Send) and 34 (Real-time Collaboration) were not implemented. There are no frontend routes, services, models, or components for these features. The backend should not define endpoints for them at this stage.
+This section previously stated that Commands 33 and 34 were not implemented. **Both have
+since been built.** See §41 (Bulk Send) and §42 (Document Collaboration).
+
+Two corrections to the original wording:
+
+- Command 34 is **not** "Real-time Collaboration". Real-time collaboration, presence,
+  typing indicators, live cursors, WebSockets, and Server-Sent Events are on that
+  command's explicit do-not-implement list and none of them exists in the code.
+  Command 34 is **asynchronous internal review**.
+- Both capabilities are `enterprise-preview` and disabled in the default launch profile.
 
 ### Backend Priority Reference
 
@@ -993,3 +1002,87 @@ Bulk Send is `enterprise-preview` and disabled in the default launch profile.
 
 Campaign analytics, marketing automation, open/click tracking, recipient scoring, electronic
 notarization, and accreditation workflows.
+
+
+---
+
+## 42. Document Collaboration — Internal Review, Comments, Mentions (C34)
+
+**Nothing in Command 34 is implemented on a backend.** Threads, comments, Personal Draft
+Notes, mentions, reviewer assignments, reviewer responses, resolutions, and collaboration
+activity are in-memory frontend demonstration state only. Nothing is persisted, delivered,
+emailed, texted, pushed, or recorded.
+
+Document Collaboration is `enterprise-preview` and disabled in the default launch profile.
+
+Full feature detail: `docs/document-collaboration-internal-review-comments-mentions-and-resolution.md`.
+
+### Scope correction
+
+C34 is **asynchronous internal review**, not real-time collaboration. Presence, typing
+indicators, live cursors, WebSockets, and Server-Sent Events are explicitly out of scope
+and must not be assumed by any backend design.
+
+### What the backend must own
+
+**Authorization — the frontend resolvers are advisory, not a security boundary**
+- Thread visibility must be enforced server-side for all five levels
+  (internal-workspace, internal-team, owner-and-reviewers, participant-visible,
+  personal-draft-note), with the same ordering the frontend uses: Personal Draft Notes
+  first and absolutely, then document access, then workspace, then thread rules.
+- **A Workspace Administrator must not gain access to a private thread or to anyone's
+  Personal Draft Notes by virtue of being an administrator.** There must be no elevation
+  path, and the existence of a Personal Draft Note must not be disclosed.
+- Collaboration must never grant document access. A mention must never grant access.
+  Reviewer assignment must never grant access.
+- Restricted threads must be refused at the API, not filtered in the client. A detail
+  read of a restricted thread returns a permission error; only the list endpoint may
+  return an existence-only row.
+
+**Content safety**
+- Comments are plain text. The backend must store and return plain text, must not
+  render or accept HTML, and must apply its own control-character stripping and length
+  caps (comment 2000, note 1000, title 140, summary 600, review name 120) rather than
+  trusting client normalisation.
+- Removal must clear the stored body and mentions, not merely flag the row.
+
+**Mentions**
+- Re-validate every mention against document access and thread visibility at write
+  time. A crafted request must not be able to mention a member without access.
+- Excluded members must be reported as a **count only**; returning names would leak
+  workspace membership.
+- Contacts are not mentionable. Suspended, deactivated, and other-workspace members are
+  not mentionable. Cap of 10 per comment.
+
+**Internal review**
+- A member may update **only their own** reviewer response. There must be no path to
+  respond on another member's behalf.
+- A reviewer without document access is recorded as unavailable with a reason — never
+  auto-granted access.
+- "Ready for Preparation" is internal readiness direction. It must not be represented
+  as participant approval, legal approval, or Evidence, and must not gate any
+  participant action.
+
+**Boundaries the backend must preserve**
+- Collaboration must not write to transaction Activity, Evidence, Verification, or
+  My Actions.
+- Collaboration activity is not an immutable audit trail and must not be presented as
+  one. Audit logging is a separate concern with its own retention rules.
+- Blocking is workflow direction only. It must never block a participant action.
+
+**Operational**
+- Concurrency and optimistic locking on comment edits and resolution.
+- Retention and deletion rules for comment content, especially Personal Draft Notes.
+- Notification generation for mentions and replies — including delivery preferences,
+  suppression, and the fact that a notification must not disclose thread content the
+  recipient may not read.
+- Anchor integrity: when a field, stage, folder, or tag is removed, the anchor must
+  degrade to stale rather than breaking or silently retargeting.
+- Error contracts consistent with §26.
+
+### Explicit non-goals
+
+Real-time presence, typing indicators, live cursors, operational transforms, chat,
+external-recipient conversation, attachments, comment export, PDF annotation, document
+redaction, field editing through comments, electronic notarization, and accreditation
+workflows.
