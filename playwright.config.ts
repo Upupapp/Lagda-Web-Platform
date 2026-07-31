@@ -15,7 +15,10 @@
 import { defineConfig, devices } from "@playwright/test";
 
 const PORT = 4173;
-const BASE_URL = `http://127.0.0.1:${PORT}`;
+// `localhost`, NOT `127.0.0.1`. `vite preview` binds to IPv6 `[::1]` only on
+// this platform, so an IPv4 literal never resolves and `webServer` sits waiting
+// until it times out. `localhost` follows whichever family the server chose.
+const BASE_URL = `http://localhost:${PORT}`;
 const IS_CI = !!process.env.CI;
 
 export default defineConfig({
@@ -120,10 +123,17 @@ export default defineConfig({
   ],
 
   // Build once, then serve the built artifact.
+  //
+  // `reuseExistingServer` is FALSE even locally, deliberately. `dist/` is shared
+  // with `npm run build`, so a preview server left running from an earlier run
+  // keeps serving whatever profile was built last — which silently ran the whole
+  // browser suite against the launch-default bundle once, failing 22 tests for a
+  // reason that had nothing to do with the code under test. Always building here
+  // costs ~10s and removes a class of false result.
   webServer: {
     command: "npm run build && npm run preview -- --port 4173 --strictPort",
     url: BASE_URL,
-    reuseExistingServer: !IS_CI,
+    reuseExistingServer: false,
     timeout: 180_000,
     env: { VITE_LAUNCH_PROFILE: "enterprise-preview" },
     stdout: "ignore",

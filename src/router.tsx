@@ -7,6 +7,13 @@ import { RecipientLayout } from "./app/layouts/RecipientLayout";
 import { NotFound } from "./app/pages/public/NotFound";
 import { DevPlaceholder } from "./app/pages/shared/DevPlaceholder";
 import { CapabilityGuard } from "./app/components/platform/CapabilityUnavailable";
+// Route-level error boundaries. Every top-level route root carries one, so a
+// thrown render or lazy-chunk error can never reach react-router's default
+// screen (which prints the raw error outside the LAGDA shell). See
+// components/shell/RouteErrorBoundary.tsx.
+import {
+  PublicRouteError, PlatformRouteError, RecipientRouteError,
+} from "./app/components/shell/RouteErrorBoundary";
 import { isCapabilityInActiveProfile } from "./app/config/capability-resolver";
 
 // ── Lazy-loaded page families ─────────────────────────────────────────────────
@@ -325,46 +332,57 @@ export const router = createBrowserRouter([
   // ── Auth routes ─────────────────────────────────────────────────────────────
   {
     path: "/sign-in",
+    errorElement: <PublicRouteError />,
     element: <AuthPage><SignIn /></AuthPage>,
   },
   {
     path: "/create-account",
+    errorElement: <PublicRouteError />,
     element: <AuthPage><CreateAccount /></AuthPage>,
   },
   {
     path: "/verify-email",
+    errorElement: <PublicRouteError />,
     element: <AuthPage><VerifyEmail /></AuthPage>,
   },
   {
     path: "/forgot-password",
+    errorElement: <PublicRouteError />,
     element: <AuthPage><ForgotPassword /></AuthPage>,
   },
   {
     path: "/reset-password",
+    errorElement: <PublicRouteError />,
     element: <AuthPage><ResetPassword /></AuthPage>,
   },
   {
     path: "/mfa",
+    errorElement: <PublicRouteError />,
     element: <AuthPage><MfaChallenge /></AuthPage>,
   },
   {
     path: "/mfa/setup",
+    errorElement: <PublicRouteError />,
     element: <AuthPage><MfaSetup /></AuthPage>,
   },
   {
     path: "/mfa/recovery",
+    errorElement: <PublicRouteError />,
     element: <AuthPage><RecoveryCodes /></AuthPage>,
   },
   {
     path: "/accept-invitation",
+    errorElement: <PublicRouteError />,
     element: <AuthPage><AcceptInvitation /></AuthPage>,
   },
   {
     path: "/auth/account-locked",
+    errorElement: <PublicRouteError />,
     element: <AuthPage><AccountLocked /></AuthPage>,
   },
   {
     path: "/auth/link-error",
+    errorElement: <PublicRouteError />,
     element: <AuthPage><LinkError /></AuthPage>,
   },
 
@@ -372,34 +390,42 @@ export const router = createBrowserRouter([
   // These pages manage their own layout, so they render fullscreen without AuthLayout.
   {
     path: "/onboarding",
+    errorElement: <PublicRouteError />,
     element: <Suspense fallback={null}><Navigate to="/onboarding/profile" replace /></Suspense>,
   },
   {
     path: "/onboarding/profile",
+    errorElement: <PublicRouteError />,
     element: <Suspense fallback={<AuthPageLoader />}><OnboardingProfile /></Suspense>,
   },
   {
     path: "/onboarding/use-case",
+    errorElement: <PublicRouteError />,
     element: <Suspense fallback={<AuthPageLoader />}><OnboardingUseCase /></Suspense>,
   },
   {
     path: "/onboarding/workspace",
+    errorElement: <PublicRouteError />,
     element: <Suspense fallback={<AuthPageLoader />}><OnboardingWorkspace /></Suspense>,
   },
   {
     path: "/onboarding/security",
+    errorElement: <PublicRouteError />,
     element: <Suspense fallback={<AuthPageLoader />}><OnboardingSecurity /></Suspense>,
   },
   {
     path: "/onboarding/notifications",
+    errorElement: <PublicRouteError />,
     element: <Suspense fallback={<AuthPageLoader />}><OnboardingNotifications /></Suspense>,
   },
   {
     path: "/onboarding/review",
+    errorElement: <PublicRouteError />,
     element: <Suspense fallback={<AuthPageLoader />}><OnboardingReview /></Suspense>,
   },
   {
     path: "/onboarding/complete",
+    errorElement: <PublicRouteError />,
     element: <Suspense fallback={<AuthPageLoader />}><OnboardingComplete /></Suspense>,
   },
 
@@ -408,6 +434,7 @@ export const router = createBrowserRouter([
   // Deferred pages use PlatformPlaceholder so they render inside the shell.
   {
     path: "/app",
+    errorElement: <PlatformRouteError />,
     element: <PlatformLayout />,
     children: [
       // Index: redirect /app → /app/dashboard
@@ -595,6 +622,7 @@ export const router = createBrowserRouter([
   // its own stepper sidebar. PrepareRoot provides PrepareProvider to all children.
   {
     path: "/app/prepare",
+    errorElement: <PlatformRouteError />,
     element: <Suspense fallback={null}><PrepareRoot /></Suspense>,
     children: [
       // Entry screen: no stepper shell — shows Start / Template / Resume options
@@ -614,6 +642,7 @@ export const router = createBrowserRouter([
   // Like PrepareLayout: self-contained dark editor shell, no sidebar.
   {
     path: "/app/templates/:templateId/fields",
+    errorElement: <PlatformRouteError />,
     element: <Suspense fallback={null}><TemplateFieldsPage /></Suspense>,
   },
 
@@ -622,6 +651,7 @@ export const router = createBrowserRouter([
   // These routes are excluded from sitemap and not indexed.
   {
     path: "/sign",
+    errorElement: <RecipientRouteError />,
     element: <RecipientLayout />,
     children: [
       // /sign with no requestId → unavailable
@@ -634,6 +664,7 @@ export const router = createBrowserRouter([
   // PublicLayout wraps <Outlet> in <Suspense> so lazy pages get a spinner.
   {
     path: "/",
+    errorElement: <PublicRouteError />,
     element: <PublicLayout />,
     children: [
       { index: true, element: <Home /> },
