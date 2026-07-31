@@ -836,6 +836,8 @@ export type BulkSendActivityType =
   | "mapping-updated"
   | "validation-run"
   | "rows-corrected"
+  /** A request default was overridden for this draft, or returned to inheritance. */
+  | "defaults-updated"
   | "rows-excluded"
   | "rows-restored"
   | "batch-reviewed"

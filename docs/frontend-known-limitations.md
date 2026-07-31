@@ -198,6 +198,20 @@ eNotary content is limited to the public /enotary/* information pages which clea
 
 ---
 
+## Request and Organization Defaults (Gap Closure Command 3)
+
+| Limitation | Detail |
+|------------|--------|
+| No workspace-level defaults store | Canonical `WorkspaceSettings` holds membership and session fields only — no request or signing defaults. `workspace-default` is a declared source and precedence entry that nothing produces. The Workspace scope in the editor states this rather than presenting it as a permission restriction. |
+| Saved-configuration defaults are never applied | `SavedConfiguration.defaults` is stored but no code reads it during resolution, so the `saved-configuration` precedence layer is inert. |
+| Policy and Automation are not evaluated | Both are declared sources sitting in the precedence order; the Command 32 engine is deliberately not called. Values are reported as "not evaluated", never simulated. |
+| Direction-only fields schedule nothing | Due date, expiration, completion-copy and verification directions are written statements. No reminder is scheduled and no expiry is enforced. |
+| Defaults lock after projection | Once Draft Projections exist, or the batch is archived, defaults become read-only with the reason stated. |
+| A Template fixture carries an unsupported auth value | `tpl-policy-acknowledgment` uses `"email-code"`, outside `PrepAuthMethodId` (one of the 160 pre-existing type errors). The editor surfaces it as "not a supported option" so opening and saving cannot silently change it. |
+| No optimistic locking | No version or ETag on either scope; concurrent edits would overwrite each other once a backend exists. |
+
+---
+
 ## Recipient row editing (Gap Closure Command 2)
 
 | Limitation | Detail |

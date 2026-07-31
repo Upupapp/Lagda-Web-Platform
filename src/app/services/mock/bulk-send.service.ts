@@ -613,6 +613,94 @@ class MockBulkSendService {
     return ok(deepCopy(batch));
   }
 
+  // ── Request Defaults ────────────────────────────────────────────────────────
+  //
+  // Two methods, both minimal extensions of this existing service boundary. No
+  // separate defaults store is introduced: an override is simply the canonical
+  // resolved value carrying `source: "user"`, which is the top of
+  // BULK_SEND_DEFAULT_PRECEDENCE, and restoring inheritance recomputes the field
+  // from `buildDefaults` — the same resolver that produced it originally.
+  //
+  // Neither method touches recipient rows. A default is a fallback; a row the user
+  // edited keeps its own value.
+
+  /** Applies request-level overrides. Values are already normalised by the caller. */
+  async updateRequestDefaults(
+    batchId: string,
+    overrides: Partial<Record<keyof BulkSendRequestDefaults, unknown>>,
+    ctx: BulkSendContext,
+  ): Promise<ServiceResult<BulkSendBatch>> {
+    const g = guard(ctx, true); if (g) return g;
+    const batch = find(batchId);
+    if (!batch) return fail("NOT_FOUND");
+    if (batch.status === "archived") return fail("ARCHIVED");
+    // Defaults describe how a request will be prepared, so they stop being
+    // editable once projections exist.
+    if (batch.status === "draft-projections-created" || batch.status === "partially-projected") {
+      return fail("INVALID_STATE");
+    }
+    await delay(140);
+
+    // A batch created without a Template starts with no resolved defaults. Build
+    // them from the canonical resolver first so there is always something to
+    // override, rather than refusing the edit.
+    if (!batch.defaults) {
+      batch.defaults = buildDefaults(batch.templateId ? getTemplateById(batch.templateId) : null);
+    }
+
+    for (const [key, value] of Object.entries(overrides)) {
+      const field = key as keyof BulkSendRequestDefaults;
+      if (!(field in batch.defaults)) continue;
+      (batch.defaults[field] as { value: unknown; source: string; conflict: boolean; conflictExplanation: string | null }) = {
+        value,
+        source: "user",
+        conflict: false,
+        conflictExplanation: null,
+      };
+    }
+
+    refresh(batch, ctx);
+    log(batch, "defaults-updated", "Request defaults updated",
+      `${Object.keys(overrides).length} request default(s) were overridden in this preparation draft.`);
+    return ok(deepCopy(batch));
+  }
+
+  /**
+   * Removes request-level overrides, letting the canonical resolver decide again.
+   * Passing "all" resets every field.
+   */
+  async restoreRequestDefaults(
+    batchId: string,
+    fields: (keyof BulkSendRequestDefaults)[] | "all",
+    ctx: BulkSendContext,
+  ): Promise<ServiceResult<BulkSendBatch>> {
+    const g = guard(ctx, true); if (g) return g;
+    const batch = find(batchId);
+    if (!batch) return fail("NOT_FOUND");
+    if (batch.status === "archived") return fail("ARCHIVED");
+    await delay(130);
+
+    const template = batch.templateId ? getTemplateById(batch.templateId) : null;
+    const inherited = buildDefaults(template);
+    if (!batch.defaults) batch.defaults = inherited;
+
+    const targets = fields === "all"
+      ? (Object.keys(inherited) as (keyof BulkSendRequestDefaults)[])
+      : fields;
+
+    for (const field of targets) {
+      if (!(field in batch.defaults) || !(field in inherited)) continue;
+      (batch.defaults[field] as unknown) = { ...(inherited[field] as object) };
+    }
+
+    refresh(batch, ctx);
+    log(batch, "defaults-updated", "Request defaults restored",
+      fields === "all"
+        ? "All request overrides were removed. Values are inherited again."
+        : `${targets.length} request default(s) returned to their inherited value.`);
+    return ok(deepCopy(batch));
+  }
+
   async excludeRows(batchId: string, rowIds: string[], reason: string, ctx: BulkSendContext): Promise<ServiceResult<BulkSendBatch>> {
     const g = guard(ctx, true); if (g) return g;
     const batch = find(batchId);

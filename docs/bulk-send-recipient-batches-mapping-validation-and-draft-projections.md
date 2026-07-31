@@ -244,9 +244,25 @@ record". No eNotary batch, mapping, configuration, projection, or workflow exist
      column, so a template-less batch has none. This affects every recipient source equally
      and predates row editing; the shared engine was deliberately not forked for it. The
      condition is now detected and stated in the UI rather than left silent.
-4. **Request defaults and organization defaults are resolved and displayed but not editable**
-   in the UI. `BulkSendRequestDefaults` carries source attribution and conflict flags, and the
-   service computes them from the Template, but no defaults editor screen was built.
+4. ~~**Request defaults and organization defaults are resolved and displayed but not editable.**~~
+   ✅ **CLOSED (Request scope) — Gap Closure Command 3 (2026-07-31).** A Defaults editor now
+   sits on the batch overview: nine fields across five categories, each showing its effective
+   value and source, with per-field override, per-field Restore inherited value, Reset all
+   request overrides, centralized validation, dependency warnings, and an impact preview.
+   Overrides set `source: "user"` — the top of the existing `BULK_SEND_DEFAULT_PRECEDENCE` —
+   and restoring recomputes from `buildDefaults()`. **Recipient rows edited directly keep
+   their own values**, proven by execution. Full detail:
+   `docs/request-and-organization-defaults-editor-gap.md`.
+
+   Carried forward, still open:
+   - **The Organization/Workspace scope is NOT editable, because no workspace-level store
+     exists.** Canonical `WorkspaceSettings` holds no request or signing defaults, and
+     `workspace-default` is a source label nothing produces. Building it would mean inventing
+     a second Organization Settings architecture. The editor states this plainly rather than
+     presenting it as a permission restriction.
+   - **Saved configurations carry `defaults` that are never applied to a batch.** The
+     `saved-configuration` precedence layer exists in the model and in storage, but nothing
+     reads it during resolution.
 5. **Policy and Automation resolution is modelled, not wired.** The types, precedence order,
    and conflict fields exist; the C32 resolution engine is not yet called.
 6. **Notifications, Reports, Global Search, Command Palette, Dashboard, and platform-nav
@@ -258,5 +274,5 @@ record". No eNotary batch, mapping, configuration, projection, or workflow exist
    service-level only.
 9. Pre-existing repo errors are unchanged (137 repo-wide, including `data/mock/templates.ts`).
 
-Items 2 and 3 are **closed** (Gap Closure Commands 1 and 2). Items 4–7 are the honest
-remainder of Command 33 and are the recommended next focus, in that order.
+Items 2, 3 and 4 (Request scope) are **closed** (Gap Closure Commands 1, 2 and 3). Items 5–7
+are the honest remainder of Command 33 and are the recommended next focus, in that order.

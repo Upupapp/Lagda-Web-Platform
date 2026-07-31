@@ -8,13 +8,18 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router";
-import { ArrowLeft, ArrowRight, FileText, Pencil, Upload, UserRound, Users, UsersRound, Wand2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, FileText, Pencil, Sliders, Upload, UserRound, Users, UsersRound, Wand2 } from "lucide-react";
 import { ContactRecipientPicker } from "../../../components/contacts/ContactRecipientPicker";
 import {
   DuplicateCheckNotice, RowField, RowProvenance, deriveEditableColumns,
   emailDuplicateCheckingUnavailable, overriddenColumnIds, useRowEditor,
 } from "../../../components/bulk-send/RecipientRowEditor";
 import { useIsMobile } from "../../../components/ui/use-mobile";
+import { RequestDefaultsEditor } from "../../../components/bulk-send/RequestDefaultsEditor";
+import {
+  DEFAULT_FIELD_DEFINITIONS, describeSource, formatDefaultValue,
+  readDefaultSource, readDefaultValue,
+} from "../../../services/bulk-send-defaults";
 import { AppContent } from "../../../components/platform/AppContentLayout";
 import { PageHeader } from "../../../components/platform/PageHeader";
 import { CapabilityUnavailable } from "../../../components/platform/CapabilityUnavailable";
@@ -271,9 +276,27 @@ function BatchShell({ batchId, current, batch, children }: {
 export function BulkSendBatchPage() {
   const { batchId } = useParams<{ batchId: string }>();
   const { blocked } = useGuards();
-  const { batch, state, errorMessage, reload, permissions, ctx } = useBatch(batchId);
+  const { batch, setBatch, state, errorMessage, reload, permissions, ctx } = useBatch(batchId);
   const { confirm, confirmDialog } = useBulkSendConfirm();
+  const { announce, announcerNode } = useAnnouncer();
   const navigate = useNavigate();
+
+  // Declared with the other hooks, before the early returns below.
+  const [defaultsOpen, setDefaultsOpen] = useState(false);
+
+  // Defaults describe how requests will be prepared, so they stop being editable
+  // once the batch has produced projections or been archived. The row stays
+  // inspectable and states the reason rather than disappearing.
+  const defaultsReadOnlyReason =
+    batch?.status === "archived"
+      ? "This batch is archived. Defaults can no longer be changed."
+      : batch?.status === "draft-projections-created" || batch?.status === "partially-projected"
+        ? "Draft Projections have been created from this batch. Defaults can no longer be changed."
+        : null;
+
+  // Workspace switch, sign-out and account change all replace the batch context;
+  // any open editor and its unsaved values belong to the previous one.
+  useEffect(() => { setDefaultsOpen(false); }, [ctx.workspaceId]);
 
   if (blocked) return blocked;
   if (state === "loading") return <LoadingShell label="Loading batch" title="Bulk Send Batch Details" />;
@@ -296,6 +319,7 @@ export function BulkSendBatchPage() {
   return (
     <div className="bs-root">
       <style>{BULK_SEND_STYLES}</style>
+      {announcerNode}
       <PageHeader title="Bulk Send Batch Details" />
       <AppContent>
         <BatchShell batchId={batchId!} current="overview" batch={batch}>
@@ -325,6 +349,70 @@ export function BulkSendBatchPage() {
               <Row label="Tags" value={batch.organization.tagNames.length ? batch.organization.tagNames.join(", ") : "None"} />
             </dl>
           </div>
+
+          {/* ── Resolved defaults + editor ─────────────────────────────────── */}
+          <div className="bs-panel bs-stack">
+            <SectionHeading
+              title="Defaults"
+              description="The values this batch will prepare each request with, and where each one comes from."
+              action={!defaultsOpen ? (
+                <button type="button" className="bs-btn bs-btn-secondary bs-btn-sm"
+                  onClick={() => setDefaultsOpen(true)}
+                  disabled={!batch.defaults}
+                  title={!batch.defaults ? "This batch has no resolved defaults yet." : undefined}>
+                  <Sliders size={14} aria-hidden /> Edit Defaults
+                </button>
+              ) : undefined}
+            />
+
+            {batch.defaults ? (
+              <dl style={{ ...GF, margin: 0, display: "flex", flexDirection: "column", gap: 10, fontSize: 13 }}>
+                {DEFAULT_FIELD_DEFINITIONS.map(def => (
+                  <Row key={def.id}
+                    label={def.label}
+                    value={`${formatDefaultValue(def, readDefaultValue(batch.defaults!, def.id))} — ${describeSource(readDefaultSource(batch.defaults!, def.id))}`} />
+                ))}
+              </dl>
+            ) : (
+              <p style={{ ...GF, margin: 0, fontSize: 13, color: BS.slate5 }}>
+                No resolved defaults yet. Select a Template or add recipients.
+              </p>
+            )}
+          </div>
+
+          {defaultsOpen && batch.defaults && (
+            <RequestDefaultsEditor
+              batch={batch}
+              canEdit={permissions.canEditBatch}
+              readOnlyReason={defaultsReadOnlyReason}
+              busy={false}
+              announce={announce}
+              onClose={() => setDefaultsOpen(false)}
+              confirmDiscard={(onConfirm) => confirm({
+                title: "Discard unsaved default changes?",
+                body: "The values you changed have not been saved and will be lost. Recipient rows are not affected.",
+                confirmLabel: "Discard changes",
+                destructive: true,
+                onConfirm,
+              })}
+              confirmReset={(count, onConfirm) => confirm({
+                title: `Reset ${count} request ${count === 1 ? "override" : "overrides"}?`,
+                body: "Each value returns to what this request inherits from its Template or the product default. Recipient rows you edited directly keep their own values.",
+                confirmLabel: "Reset overrides",
+                onConfirm,
+              })}
+              onSave={async (overrides) => {
+                const r = await bulkSendService.updateRequestDefaults(batchId!, overrides, ctx);
+                if (r.ok) { setBatch(r.data); return { ok: true }; }
+                return { ok: false, message: r.message };
+              }}
+              onRestore={async (fields) => {
+                const r = await bulkSendService.restoreRequestDefaults(batchId!, fields, ctx);
+                if (r.ok) { setBatch(r.data); return { ok: true }; }
+                return { ok: false, message: r.message };
+              }}
+            />
+          )}
 
           <div className="bs-panel bs-stack">
             <SectionHeading title="Validation" />

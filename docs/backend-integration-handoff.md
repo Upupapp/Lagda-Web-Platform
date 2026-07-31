@@ -1215,3 +1215,72 @@ Full feature detail: `docs/inline-recipient-row-editing-gap.md`.
 
 Contact editing, Contact Group editing, contact synchronization, CSV rewriting,
 fixture mutation, and any notification to an edited recipient.
+
+
+---
+
+## 45. Request and Organization Defaults (Gap Closure Command 3)
+
+**Nothing here is persisted.** Request Defaults live on an in-memory batch draft.
+No workspace setting, reminder, invitation, authentication requirement, consent
+record, Policy, or Automation Rule is created, scheduled, applied, or delivered.
+
+Full feature detail: `docs/request-and-organization-defaults-editor-gap.md`.
+
+### The missing layer the backend must supply
+
+The frontend models a seven-layer precedence stack
+(`BULK_SEND_DEFAULT_PRECEDENCE`) but only three layers have producers:
+`user` (added by this command), `template`, and `product-default`.
+
+- **`workspace-default` has no store at all.** Canonical `WorkspaceSettings` holds
+  membership and session fields only — no routing mode, authentication direction,
+  consent, expiration, or sender message. A backend that wants workspace-inherited
+  request defaults must define that store; the frontend deliberately did not invent
+  one.
+- **`saved-configuration` has a store but no reader.** `SavedConfiguration.defaults`
+  is populated and persisted in the mock, but nothing consults it during
+  resolution. Either wire it or remove the layer.
+- **`workflow-policy` and `automation-rule` remain unproduced by design** (the
+  Command 32 engine is a separate deferred gap).
+
+### What the backend must own
+
+**Persistence and concurrency**
+- Request-default persistence scoped to the draft, and workspace-default
+  persistence scoped to the workspace, as two distinct stores with distinct
+  permissions.
+- A version or ETag per scope. There is none today, so concurrent edits would
+  overwrite each other silently.
+- Idempotency for retried saves; a defined conflict response and resolution flow.
+
+**Resolution**
+- Server-side effective-value resolution. The frontend resolver is advisory.
+- The resolved value must carry its source, or the UI cannot explain inheritance.
+- Changing a workspace default must **not** rewrite existing request overrides,
+  participant overrides, or recipient-row values, and must not touch sent or
+  completed transactions.
+
+**Authorization**
+- Editing request defaults and managing workspace defaults must be separately
+  permissioned. Holding one must not imply the other.
+- Workspace isolation enforced server-side; team scope enforced if it applies.
+- Permission removed mid-edit must fail the save without leaking prior values.
+
+**Validation and safety**
+- Re-validate server-side, including enum membership. Note that a Template fixture
+  currently carries an authentication value outside `PrepAuthMethodId`; a backend
+  must reject or migrate such values rather than propagate them.
+- Direction-only fields (due date, expiration, reminders, completion copy) must not
+  be treated as scheduling instructions until real scheduling exists.
+
+**Operational**
+- Cache invalidation when a workspace default changes.
+- Audit policy for defaults changes, kept separate from transaction Activity.
+- Privacy minimisation — sender messages and subjects must not accumulate in logs.
+- Error contracts consistent with §26.
+
+### Explicit non-goals
+
+Policy evaluation, Automation execution, reminder scheduling, notification
+delivery, and any production request or transaction mutation.
