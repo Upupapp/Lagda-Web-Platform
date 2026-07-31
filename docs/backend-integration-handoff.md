@@ -918,3 +918,78 @@ recipient routing and is `launch-core`; Workflow Automation is workspace-wide ru
 Conditional branching, quorum voting, weighted voting, arbitrary completion formulas, recipient
 groups ("any one of these people may sign"), bulk send, collaboration, document versioning,
 contract lifecycle management, and any notarial or eNotary stage.
+
+
+---
+
+## 41. Bulk Send — Recipient Batches and Draft Projections (C33)
+
+Frontend reference: `docs/bulk-send-recipient-batches-mapping-validation-and-draft-projections.md`
+Mock service: `src/app/services/mock/bulk-send.service.ts`
+Engines: `src/app/services/bulk-send.engine.ts`
+Import parser: `src/app/utils/tabular-import.ts`
+
+**Nothing in Command 33 is implemented on a backend.** Batches, recipient rows, parsed CSV,
+mappings, validation, and Draft Projections are in-memory frontend state cleared on reload,
+workspace switch, and sign-out. No file is uploaded. No request is delivered.
+
+Bulk Send is `enterprise-preview` and disabled in the default launch profile.
+
+### Required endpoints (illustrative)
+
+| Method | Path |
+|--------|------|
+| GET/POST | /api/bulk-send/batches |
+| GET/PATCH/DELETE | /api/bulk-send/batches/:batchId |
+| POST | /api/bulk-send/batches/:batchId/duplicate |
+| POST | /api/bulk-send/batches/:batchId/recipients (import job) |
+| GET/PATCH/DELETE | /api/bulk-send/batches/:batchId/rows/:rowId |
+| POST | /api/bulk-send/batches/:batchId/rows/bulk-correct |
+| PUT | /api/bulk-send/batches/:batchId/role-mappings |
+| PUT | /api/bulk-send/batches/:batchId/variable-mappings |
+| POST | /api/bulk-send/batches/:batchId/validate |
+| GET | /api/bulk-send/batches/:batchId/eligibility |
+| POST | /api/bulk-send/batches/:batchId/create-drafts |
+| GET | /api/bulk-send/batches/:batchId/results |
+| CRUD | /api/bulk-send/saved-configurations |
+
+### Production requirements
+
+**Import and storage**
+- Secure import storage with encryption at rest and a short retention window
+- Server-side CSV/spreadsheet ingestion, virus and content scanning, encoding detection
+- Column detection, delimiter detection, and header normalisation server-side
+- **Formula-injection neutralisation must be re-applied server-side.** The frontend
+  neutralisation is a display and copy-out safeguard, never a security boundary.
+- Explicit import-data deletion and data-subject deletion paths
+
+**Validation and authorization**
+- Re-run the entire validation pipeline server-side; the client result is advisory only
+- Per-row authorization: Contact, Template, sender, Team, and Workspace checked for every row
+- Batch-size limits, rate limiting, and abuse controls
+- Duplicate detection using server-side normalisation
+
+**Execution**
+- Queueing, background workers, and job status
+- Idempotency keys so a retried batch cannot double-create transactions
+- Optimistic concurrency and batch locking against concurrent edits
+- Partial batch success, safe retry of failed rows only, cancellation, and emergency stop
+- Progress reporting (the frontend deliberately shows no fake progress or queue position)
+
+**Delivery — none of which Bulk Send may do client-side**
+- Transaction creation from Template + role mappings + variable values
+- Recipient invitation generation and secure access-token issuance
+- Email, SMS, and push delivery; reminder scheduling and cancellation
+- Bounce handling, suppression lists, and delivery-failure reporting
+- Recipient privacy and Contact consent direction
+
+**Operational**
+- Template and mapping versioning so a saved configuration cannot silently drift
+- Folder/Tag application, Policy and Rule evaluation, notification generation
+- Audit logging, observability, metrics, alerting, retention
+- Error contracts consistent with §26
+
+### Explicit non-goals
+
+Campaign analytics, marketing automation, open/click tracking, recipient scoring, electronic
+notarization, and accreditation workflows.

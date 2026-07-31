@@ -32,6 +32,7 @@ import { globalSearchService } from "../services/mock/global-search.service";
 import { documentOrganizationService } from "../services/mock/document-organization.service";
 import { workflowAutomationService } from "../services/mock/workflow-automation.service";
 import { signingWorkflowService } from "../services/mock/signing-workflow.service";
+import { bulkSendService } from "../services/mock/bulk-send.service";
 import { ACTIVE_LAUNCH_PROFILE, resolveCapability, buildCapabilityContext } from "../config/capability-resolver";
 import type { LaunchProfileId, CapabilityResolution, ProductCapabilityId } from "../models/product-capability";
 
@@ -136,6 +137,9 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
     // Clears every signing-workflow draft, stage selection, and demonstration activity
     // record before the next account can load.
     signingWorkflowService.resetSigningWorkflowDemonstration();
+    // Clears every batch, recipient row, parsed CSV, pasted text, mapping,
+    // validation result, and saved configuration before the next account loads.
+    bulkSendService.resetBulkSendDemonstration();
     setSessionStatus("unauthenticated");
     setUser(null);
     setWorkspaces([]);
@@ -152,6 +156,7 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
     documentOrganizationService.clearWorkspaceScopedOrganization(ws.id);
     workflowAutomationService.clearWorkspaceScopedAutomation(ws.id);
     signingWorkflowService.clearWorkspaceScopedWorkflows(ws.id);
+    bulkSendService.clearWorkspaceScopedBulkSend(ws.id);
     setCurrentWorkspace(ws);
     setRole(ws.role);
     // In production: re-fetch documents, notifications, etc. for the new workspace.

@@ -150,6 +150,20 @@ export interface DocumentListItem {
   verificationStatus?:       "pending" | "available" | "viewed";
   isMyAction:                boolean;
   preArchiveStatus?:         TransactionStatus;
+  /**
+   * Bulk Send (C33) provenance, present only on frontend Draft Projections.
+   * Carries opaque IDs and safe labels only — never recipient names, email
+   * direction, or source-row values.
+   */
+  bulkSendSource?: {
+    isDemonstrationProjection: true;
+    batchId:      string;
+    batchName:    string;
+    rowId:        string;
+    templateId:   string;
+    templateName: string;
+    noDeliveryPerformed: true;
+  };
 }
 
 // ── Service result ────────────────────────────────────────────────────────────

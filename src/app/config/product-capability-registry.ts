@@ -744,33 +744,41 @@ const REGISTRY: ProductCapability[] = [
     dependencies:             [],
   },
 
-  // ── DEFERRED ─────────────────────────────────────────────────────────────
+  // ── BULK SEND (C33) ──────────────────────────────────────────────────────
+  // Reclassified from "deferred" to "enterprise-preview" when Command 33 was
+  // implemented. `deferred` is evaluated before the profile allowlist in
+  // capability-resolver.ts and returns unavailable in EVERY profile, which would
+  // have made the whole route family unreachable. Enterprise Preview mirrors how
+  // Workflow Automation (C32) is handled: fully built, disabled in the default
+  // launch profile, usable with VITE_LAUNCH_PROFILE=enterprise-preview.
   {
     id:                       capabilityId("bulk-send"),
     label:                    "Bulk Send",
-    description:              "Send a document to many recipients in one operation via CSV import",
-    group:                    "Deferred",
-    maturity:                 "deferred",
+    description:              "Prepare one approved Template against many recipient rows, validate mappings, and create frontend Draft Projections",
+    group:                    "Advanced",
+    maturity:                 "enterprise-preview",
     enabledByDefault:         false,
-    frontendReady:            "not-started",
-    backendReady:             "not-defined",
+    frontendReady:            "complete-demonstration",
+    backendReady:             "contract-defined",
     publicLaunchReady:        false,
     navigationVisibility:     false,
-    searchVisibility:         false,
-    commandPaletteVisibility: false,
+    searchVisibility:         true,
+    commandPaletteVisibility: true,
     dashboardVisibility:      false,
-    permissionRequirements:   [],
+    permissionRequirements:   ["view_documents"],
     planRequirements:         [],
-    featureRequirements:      [],
-    routeIds:                 [],
-    unavailableReason:        "Bulk Send is deferred to a future release.",
-    previewNotice:            "",
+    featureRequirements:      ["documentsEnabled"],
+    routeIds:                 ["app-bulk-send","app-bulk-send-new","app-bulk-send-batch","app-bulk-send-recipients","app-bulk-send-mapping","app-bulk-send-review","app-bulk-send-results","app-bulk-send-configurations","app-bulk-send-configuration"],
+    unavailableReason:        "Bulk Send is an Enterprise Preview capability not included in the current product profile.",
+    previewNotice:            "Active in Enterprise Preview — batches, mappings, validation, and Draft Projections operate in frontend demonstration only. No request is sent and no production transaction is created.",
     safeFallbackRoute:        "/app/documents",
     indexable:                false,
     sitemapInclude:           false,
-    backendDependencies:      ["Bulk operation service","Email delivery","CSV processing"],
-    dependencies:             [],
+    backendDependencies:      ["Bulk operation service","Import processing","Validation pipeline","Queue and workers","Transaction creation","Email delivery"],
+    dependencies:             [capabilityId("documents"), capabilityId("templates")],
   },
+
+  // ── DEFERRED ─────────────────────────────────────────────────────────────
   {
     id:                       capabilityId("document-collaboration"),
     label:                    "Document Collaboration",

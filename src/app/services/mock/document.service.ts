@@ -286,6 +286,29 @@ class MockDocumentService {
     }
   }
 
+  /**
+   * Bulk Send (C33) Draft Projections.
+   *
+   * Documents stays the single source of truth for transactions: Bulk Send does NOT
+   * keep its own transaction store. It hands finished Draft records here and they
+   * appear in the normal Documents workspace from then on.
+   *
+   * These are Drafts and nothing more — no invitation, no recipient session, no
+   * My Actions assignment, no Evidence, no Verification, and no delivery of any kind.
+   */
+  addDraftProjections(items: DocumentListItem[]): void {
+    const existing = new Set(store.map(i => i.id));
+    for (const item of items) {
+      if (existing.has(item.id)) continue;
+      store = [deepCopy(item), ...store];
+    }
+  }
+
+  /** Removes Draft Projections created by one Bulk Send batch (demonstration only). */
+  removeDraftProjectionsForBatch(batchId: string): void {
+    store = store.filter(i => i.bulkSendSource?.batchId !== batchId);
+  }
+
   // Resets in-memory store to the original fixtures (useful for dev/demo)
   reset(): void {
     store = deepCopy(DOCUMENT_FIXTURES);

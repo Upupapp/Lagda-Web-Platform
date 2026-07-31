@@ -265,6 +265,19 @@ const PoliciesPage            = lazy(() => import("./app/pages/platform/automati
 const PolicyDetailPage        = lazy(() => import("./app/pages/platform/automation/PolicyDetailPage").then(m => ({ default: m.PolicyDetailPage })));
 const AutomationActivityPage  = lazy(() => import("./app/pages/platform/automation/AutomationActivityPage").then(m => ({ default: m.AutomationActivityPage })));
 
+// Bulk Send (Command 33) — Enterprise Preview, guarded by CapabilityGuard.
+// In the default launch profile every /app/bulk-send/* route renders a safe
+// unavailable state without loading these chunks.
+const BulkSendOverviewPage        = lazy(() => import("./app/pages/platform/bulk-send/BulkSendOverviewPage").then(m => ({ default: m.BulkSendOverviewPage })));
+const BulkSendNewPage             = lazy(() => import("./app/pages/platform/bulk-send/BulkSendBatchPages").then(m => ({ default: m.BulkSendNewPage })));
+const BulkSendBatchPage           = lazy(() => import("./app/pages/platform/bulk-send/BulkSendBatchPages").then(m => ({ default: m.BulkSendBatchPage })));
+const BulkSendRecipientsPage      = lazy(() => import("./app/pages/platform/bulk-send/BulkSendBatchPages").then(m => ({ default: m.BulkSendRecipientsPage })));
+const BulkSendMappingPage         = lazy(() => import("./app/pages/platform/bulk-send/BulkSendBatchPages").then(m => ({ default: m.BulkSendMappingPage })));
+const BulkSendReviewPage          = lazy(() => import("./app/pages/platform/bulk-send/BulkSendBatchPages").then(m => ({ default: m.BulkSendReviewPage })));
+const BulkSendResultsPage         = lazy(() => import("./app/pages/platform/bulk-send/BulkSendBatchPages").then(m => ({ default: m.BulkSendResultsPage })));
+const BulkSendConfigurationsPage  = lazy(() => import("./app/pages/platform/bulk-send/BulkSendConfigurationPages").then(m => ({ default: m.BulkSendConfigurationsPage })));
+const BulkSendConfigurationDetailPage = lazy(() => import("./app/pages/platform/bulk-send/BulkSendConfigurationPages").then(m => ({ default: m.BulkSendConfigurationDetailPage })));
+
 // ── Auth Suspense fallback ────────────────────────────────────────────────────
 function AuthPageLoader() {
   return (
@@ -418,6 +431,17 @@ export const router = createBrowserRouter([
           { path: "settings",        element: <Suspense fallback={null}><SettingsTab /></Suspense> },
         ],
       },
+
+      // Bulk Send (Command 33) — static paths BEFORE :batchId to prevent shadowing.
+      { path: "bulk-send",                                       element: <CapabilityGuard capabilityId="bulk-send"><Suspense fallback={null}><BulkSendOverviewPage /></Suspense></CapabilityGuard> },
+      { path: "bulk-send/new",                                   element: <CapabilityGuard capabilityId="bulk-send"><Suspense fallback={null}><BulkSendNewPage /></Suspense></CapabilityGuard> },
+      { path: "bulk-send/saved-configurations",                  element: <CapabilityGuard capabilityId="bulk-send"><Suspense fallback={null}><BulkSendConfigurationsPage /></Suspense></CapabilityGuard> },
+      { path: "bulk-send/saved-configurations/:configurationId", element: <CapabilityGuard capabilityId="bulk-send"><Suspense fallback={null}><BulkSendConfigurationDetailPage /></Suspense></CapabilityGuard> },
+      { path: "bulk-send/:batchId",                              element: <CapabilityGuard capabilityId="bulk-send"><Suspense fallback={null}><BulkSendBatchPage /></Suspense></CapabilityGuard> },
+      { path: "bulk-send/:batchId/recipients",                   element: <CapabilityGuard capabilityId="bulk-send"><Suspense fallback={null}><BulkSendRecipientsPage /></Suspense></CapabilityGuard> },
+      { path: "bulk-send/:batchId/mapping",                      element: <CapabilityGuard capabilityId="bulk-send"><Suspense fallback={null}><BulkSendMappingPage /></Suspense></CapabilityGuard> },
+      { path: "bulk-send/:batchId/review",                       element: <CapabilityGuard capabilityId="bulk-send"><Suspense fallback={null}><BulkSendReviewPage /></Suspense></CapabilityGuard> },
+      { path: "bulk-send/:batchId/results",                      element: <CapabilityGuard capabilityId="bulk-send"><Suspense fallback={null}><BulkSendResultsPage /></Suspense></CapabilityGuard> },
 
       // Templates (Command 21) — library, create, detail, edit, preview, use
       // Note: templates/new MUST precede templates/:templateId to avoid shadowing
