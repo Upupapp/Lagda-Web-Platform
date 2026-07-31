@@ -1284,3 +1284,77 @@ The frontend models a seven-layer precedence stack
 
 Policy evaluation, Automation execution, reminder scheduling, notification
 delivery, and any production request or transaction mutation.
+
+
+---
+
+## 46. Policy and Automation resolution in preparation (Gap Closure Command 4)
+
+**Nothing is enforced or executed.** No Policy is enforced, no Automation Rule is
+run by a backend, and no recipient, request, transaction, notification, reminder or
+invitation is created, changed, scheduled or delivered. Resolution is a frontend
+evaluation preview over in-memory fixtures.
+
+Full feature detail: `docs/policy-and-automation-resolution-integration-gap.md`.
+
+### Capability reality the backend must resolve
+
+There is exactly one capability, `workflow-automation`, and it owns both Rules and
+Policies. It is `enterprise-preview`, so **Policy resolution does not run in the
+default launch profile** — verified: zero engine calls there. If Policies are meant
+to govern launch-profile preparation they need their own capability classification
+and authorization model. That is a product decision the frontend deliberately did
+not make on its own.
+
+### What the backend must own
+
+**Authoritative evaluation**
+- Rule matching and Policy enforcement must be server-side. The frontend evaluation
+  is a preview and must never be treated as enforcement.
+- A preparation-specific trigger kind. The frontend uses `transaction_created` as
+  the closest available approximation because the engine models no preparation
+  trigger.
+- Deterministic resolution: identical input must yield identical output, and every
+  result must carry the input version it was computed from.
+
+**Input contract and minimization**
+- The frontend sends counts, kinds and flags only — no recipient identity, no
+  document content, no field values. A backend contract must preserve that
+  minimization rather than widening it for convenience.
+- Raw resolution input must not be logged or retained beyond evaluation.
+
+**Precedence and provenance**
+- The seven-layer precedence order must be enforced server-side.
+- An accepted recommendation must stay distinguishable from a value the user typed.
+  The frontend records both as `source: "user"` — honest at the UI level, but it
+  loses that distinction; a backend should keep them separate.
+- Rule or Policy output must never overwrite an explicit recipient-row or
+  participant value without an explicit acceptance step.
+
+**Conflicts**
+- Conflict detection, priority resolution, and a defined resolution strategy.
+- Preserve the distinction between a conflict that affected a given evaluation and
+  one that merely exists in the workspace. Blocking on the latter prevents work for
+  reasons the user cannot address in context.
+
+**Authorization and isolation**
+- Rule and Policy definitions are workspace- and team-scoped; another workspace's or
+  team's definitions must never be evaluated or named.
+- Viewing a requirement must not require permission to read the Rule that produced
+  it. The frontend shows a safe explanation and conflict source counts, never
+  private definitions.
+- Rule output must never grant access, bypass a permission, apply a signature,
+  complete a participant, advance a stage, create Evidence, or send anything.
+
+**Operational**
+- Versioning, activation and archival of definitions; migration on change.
+- Evaluation latency budget, timeouts, retry and safe-failure behaviour. A failed
+  evaluation must not silently allow continuation where Policy is mandatory.
+- Idempotency on recommendation acceptance.
+- Explanation retention and sensitive-data redaction in any audit record.
+- Error contracts consistent with §26.
+
+### Explicit non-goals
+
+Background execution, event processing, queues, webhooks, scheduling, conditional
+branching, user-authored scripting, and any external workflow engine.

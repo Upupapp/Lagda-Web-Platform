@@ -198,6 +198,20 @@ eNotary content is limited to the public /enotary/* information pages which clea
 
 ---
 
+## Policy and Automation resolution (Gap Closure Command 4)
+
+| Limitation | Detail |
+|------------|--------|
+| Policy resolution is unavailable at launch | There is one capability, `workflow-automation`, owning both Rules and Policies. It is `enterprise-preview`, so in `launch-default` the engine is never called (verified: 0 calls) and no Policy or Automation UI appears. Giving Policy its own capability is a product decision, not a code change. |
+| Nothing is enforced | Every result is a frontend evaluation preview. No Policy is enforced, no Rule is executed by a backend, no reminder is scheduled and no notification is sent. |
+| `transaction_created` is an approximation | The engine models no preparation-specific trigger kind. `template_used` matches no Rule at all, which is why the first integration attempt silently returned nothing. |
+| No fixture exercises the apply path | Every currently matching recommendation targets `settings.reminders.*`, which the batch does not model, so all report honestly as "not applicable". The apply path is typed and wired but unexercised. |
+| Accepted recommendations look like typed values | Applying one records `source: "user"` through the existing defaults service. Honest at the UI level, but a backend should keep "accepted a recommendation" distinct from "typed it". |
+| Policy requirements are largely informational | Only the signer-authentication Policy can block. The reminder, completion and invitation Policies have no counterpart field on a batch, so they are reported as direction. |
+| Conflict blocking is deliberately narrow | All open conflicts are surfaced, but only those that affected the current evaluation block the final review — otherwise an unrelated workspace fixture conflict would permanently prevent Draft Projections. |
+
+---
+
 ## Request and Organization Defaults (Gap Closure Command 3)
 
 | Limitation | Detail |

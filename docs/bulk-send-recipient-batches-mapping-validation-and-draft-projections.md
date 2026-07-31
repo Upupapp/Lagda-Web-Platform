@@ -263,8 +263,26 @@ record". No eNotary batch, mapping, configuration, projection, or workflow exist
    - **Saved configurations carry `defaults` that are never applied to a batch.** The
      `saved-configuration` precedence layer exists in the model and in storage, but nothing
      reads it during resolution.
-5. **Policy and Automation resolution is modelled, not wired.** The types, precedence order,
-   and conflict fields exist; the C32 resolution engine is not yet called.
+5. ~~**Policy and Automation resolution is modelled, not wired.**~~
+   ✅ **CLOSED — Gap Closure Command 4 (2026-07-31).** The Command 32 engine is now called
+   through a thin preparation-facing boundary (`services/preparation-resolution.ts`):
+   `runSimulation` for Rule matching, `resolveDefaultsForContext` + `listPolicies` for Policy
+   requirements, `listConflicts` for conflicts. Policy requirements are mandatory and block the
+   final review; Automation recommendations are optional and apply only on explicit acceptance,
+   through the existing `updateRequestDefaults` so they stay traceable and revertible. Full
+   detail: `docs/policy-and-automation-resolution-integration-gap.md`.
+
+   Carried forward, still open:
+   - **Policy resolution is NOT available in the default launch profile.** There is exactly one
+     capability — `workflow-automation` — and it owns both Rules and Policies. It is
+     `enterprise-preview`, so in `launch-default` the engine is never called (verified: 0 engine
+     calls) and no Policy or Automation UI appears. If Policy is meant to govern launch
+     preparation it needs its own capability classification — a product decision.
+   - **No fixture exercises the recommendation apply path.** Every currently matching
+     recommendation targets a reminder field the batch does not model, so all report honestly
+     as "not applicable".
+   - **`transaction_created` is an approximation.** The engine has no preparation-specific
+     trigger kind.
 6. **Notifications, Reports, Global Search, Command Palette, Dashboard, and platform-nav
    integration are not wired.** The capability is flagged `searchVisibility: true` and
    `commandPaletteVisibility: true` but no provider or command was added.
@@ -274,5 +292,5 @@ record". No eNotary batch, mapping, configuration, projection, or workflow exist
    service-level only.
 9. Pre-existing repo errors are unchanged (137 repo-wide, including `data/mock/templates.ts`).
 
-Items 2, 3 and 4 (Request scope) are **closed** (Gap Closure Commands 1, 2 and 3). Items 5–7
+Items 2, 3, 4 (Request scope) and 5 are **closed** (Gap Closure Commands 1–4). Items 6 and 7
 are the honest remainder of Command 33 and are the recommended next focus, in that order.

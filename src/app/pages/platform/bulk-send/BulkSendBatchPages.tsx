@@ -17,6 +17,14 @@ import {
 import { useIsMobile } from "../../../components/ui/use-mobile";
 import { RequestDefaultsEditor } from "../../../components/bulk-send/RequestDefaultsEditor";
 import {
+  PreparationResolutionPanel, ResolutionSummaryRow,
+} from "../../../components/bulk-send/PreparationResolutionPanel";
+import {
+  RESOLUTION_STATUS_LABELS, blockingIssues, buildResolutionInput, computeInputVersion,
+  isResolutionAvailable, recommendationTargetField, recommendationValue, resolvePreparation,
+  type PreparationResolutionResult,
+} from "../../../services/preparation-resolution";
+import {
   DEFAULT_FIELD_DEFINITIONS, describeSource, formatDefaultValue,
   readDefaultSource, readDefaultValue,
 } from "../../../services/bulk-send-defaults";
@@ -294,9 +302,63 @@ export function BulkSendBatchPage() {
         ? "Draft Projections have been created from this batch. Defaults can no longer be changed."
         : null;
 
+  // ── Policy and Automation resolution ───────────────────────────────────────
+  // Runs ONLY when the workflow-automation capability is in the active profile.
+  // In launch-default the engine is never called and no section is rendered.
+  const [resolution, setResolution] = useState<PreparationResolutionResult | null>(null);
+  const [resolutionOpen, setResolutionOpen] = useState(false);
+  const [evaluating, setEvaluating] = useState(false);
+  const [applyingRecs, setApplyingRecs] = useState(false);
+  const [resolutionError, setResolutionError] = useState<string | null>(null);
+
+  const resolutionAvailable = isResolutionAvailable();
+
+  // The fingerprint of the CURRENT batch. Comparing it with the version a result
+  // was produced from is what makes staleness detectable.
+  const currentInputVersion = useMemo(
+    () => (batch ? computeInputVersion(buildResolutionInput(batch)) : null),
+    [batch],
+  );
+  const resolutionStale = !!resolution && !!currentInputVersion
+    && resolution.inputVersion !== currentInputVersion;
+
+  const evaluate = useCallback(() => {
+    if (!batch || !resolutionAvailable || evaluating) return;   // no duplicate runs
+    setEvaluating(true);
+    setResolutionError(null);
+    const input = buildResolutionInput(batch);
+    const version = computeInputVersion(input);
+    const r = resolvePreparation(input);
+    // Discard a result whose input has already been superseded.
+    if (r.ok) {
+      setResolution(r.data.inputVersion === version ? r.data : null);
+    } else {
+      setResolutionError(r.message);
+    }
+    setEvaluating(false);
+  }, [batch, resolutionAvailable, evaluating]);
+
+  // Evaluate once when the batch first loads, then only on explicit re-evaluate
+  // or after recommendations are applied — never on keystrokes.
+  const evaluatedFor = useRef<string | null>(null);
+  useEffect(() => {
+    if (!resolutionAvailable || !batch || !currentInputVersion) return;
+    if (evaluatedFor.current === null) {
+      evaluatedFor.current = currentInputVersion;
+      evaluate();
+    }
+  }, [resolutionAvailable, batch, currentInputVersion, evaluate]);
+
   // Workspace switch, sign-out and account change all replace the batch context;
-  // any open editor and its unsaved values belong to the previous one.
-  useEffect(() => { setDefaultsOpen(false); }, [ctx.workspaceId]);
+  // any open editor, unsaved values, and every resolution result belong to the
+  // previous one and must not survive.
+  useEffect(() => {
+    setDefaultsOpen(false);
+    setResolution(null);
+    setResolutionOpen(false);
+    setResolutionError(null);
+    evaluatedFor.current = null;
+  }, [ctx.workspaceId]);
 
   if (blocked) return blocked;
   if (state === "loading") return <LoadingShell label="Loading batch" title="Bulk Send Batch Details" />;
@@ -379,6 +441,76 @@ export function BulkSendBatchPage() {
               </p>
             )}
           </div>
+
+          {/* ── Policy and Automation ──────────────────────────────────────
+              Absent entirely in the default launch profile: the capability that
+              owns both Policies and Rules is enterprise-preview, so there is
+              nothing to show and the engine is never called. */}
+          {resolutionAvailable && (
+            <div className="bs-panel bs-stack">
+              <SectionHeading title="Policy and Automation"
+                description="How this preparation draft evaluates against active Policies and Automation Rules. Frontend preview only." />
+              {resolution ? (
+                <ResolutionSummaryRow
+                  status={resolutionStale ? RESOLUTION_STATUS_LABELS.stale : RESOLUTION_STATUS_LABELS[resolution.status]}
+                  blocking={blockingIssues(resolution)}
+                  evaluating={evaluating}
+                  onOpen={() => setResolutionOpen(true)}
+                />
+              ) : (
+                <div className="bs-row" style={{ justifyContent: "space-between", gap: 10 }}>
+                  <span style={{ ...GF, fontSize: 13, color: BS.slate6 }}>
+                    {resolutionError ?? RESOLUTION_STATUS_LABELS["not-evaluated"]}
+                  </span>
+                  <button type="button" className="bs-btn bs-btn-secondary bs-btn-sm"
+                    onClick={evaluate} disabled={evaluating}>
+                    {evaluating ? "Evaluating…" : "Evaluate"}
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
+          {resolutionAvailable && resolutionOpen && resolution && (
+            <PreparationResolutionPanel
+              result={resolution}
+              stale={resolutionStale}
+              evaluating={evaluating}
+              applying={applyingRecs}
+              canApply={permissions.canEditBatch}
+              error={resolutionError}
+              onReevaluate={evaluate}
+              onClose={() => setResolutionOpen(false)}
+              onApply={async (ids) => {
+                if (resolutionStale) return;   // never apply from a stale result
+                setApplyingRecs(true);
+                setResolutionError(null);
+                // Accepted recommendations become ordinary REQUEST OVERRIDES
+                // through the existing service. The user accepted them, so they
+                // are recorded as the user's choice. No new mutation path, and no
+                // recipient row is touched.
+                const overrides: Record<string, unknown> = {};
+                for (const id of ids) {
+                  const rec = resolution.recommendations.find(r => r.id === id);
+                  if (!rec || !rec.applicable) continue;
+                  const field = recommendationTargetField(rec);
+                  if (field) overrides[field] = recommendationValue(rec);
+                }
+                if (Object.keys(overrides).length === 0) { setApplyingRecs(false); return; }
+                const r = await bulkSendService.updateRequestDefaults(batchId!, overrides, ctx);
+                setApplyingRecs(false);
+                if (r.ok) {
+                  setBatch(r.data);
+                  announce("Automation recommendations applied to this frontend preparation draft.");
+                  // The draft changed, so the prior result is stale by definition.
+                  setResolution(null);
+                  setResolutionOpen(false);
+                } else {
+                  setResolutionError(r.message ?? "Those recommendations could not be applied.");
+                }
+              }}
+            />
+          )}
 
           {defaultsOpen && batch.defaults && (
             <RequestDefaultsEditor
@@ -1232,6 +1364,19 @@ export function BulkSendReviewPage() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Final-review resolution state. Evaluated fresh here rather than carried from
+  // the overview, so the gate reflects the batch as it is right now.
+  const reviewResolution = useMemo(() => {
+    if (!batch || !isResolutionAvailable()) return null;
+    const r = resolvePreparation(buildResolutionInput(batch));
+    return r.ok ? r.data : null;
+  }, [batch]);
+  const reviewBlockingCount = blockingIssues(reviewResolution);
+  // Recomputed from the current batch above, so it can only be stale if the
+  // evaluation itself failed to produce a matching version.
+  const reviewResolutionStale = !!reviewResolution && !!batch
+    && reviewResolution.inputVersion !== computeInputVersion(buildResolutionInput(batch));
+
   if (blocked) return blocked;
   if (state === "loading") return <LoadingShell label="Loading review" title="Review Bulk Send Batch" />;
   if (state === "restricted") return <Restricted />;
@@ -1310,8 +1455,21 @@ export function BulkSendReviewPage() {
             <p style={{ ...GF, margin: 0, fontSize: 14, color: BS.slate7 }}>
               <strong>{eligibleCount}</strong> {eligibleCount === 1 ? "row is" : "rows are"} eligible.
             </p>
+            {/* Blocking Policy requirements and blocking conflicts stop the final
+                review. Automation being unavailable never blocks anything — core
+                launch behaviour must not depend on an Enterprise Preview
+                capability, so `reviewResolution` is null in launch-default. */}
+            {reviewBlockingCount > 0 && (
+              <Notice tone={TONES.error}
+                text={`${reviewBlockingCount} blocking Policy ${reviewBlockingCount === 1 ? "issue" : "issues"} must be resolved before creating Draft Projections. Open the batch overview to review them.`} />
+            )}
+            {reviewResolutionStale && (
+              <Notice tone={TONES.warning}
+                text="Preparation details changed since the last Policy evaluation. Re-evaluate on the batch overview before continuing." />
+            )}
             <button type="button" className="bs-btn bs-btn-primary"
-              disabled={busy || blockedByIssues || eligibleCount === 0 || !permissions.canCreateDraftProjections}
+              disabled={busy || blockedByIssues || eligibleCount === 0 || !permissions.canCreateDraftProjections
+                || reviewBlockingCount > 0 || reviewResolutionStale}
               onClick={() => confirm({
                 title: `Create ${eligibleCount} Draft ${eligibleCount === 1 ? "Projection" : "Projections"}?`,
                 body: "This creates frontend Draft records in Documents only. No request, invitation, email, SMS message, reminder, or recipient session is created or delivered, and no signature is applied.",
