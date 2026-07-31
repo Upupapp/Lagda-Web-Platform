@@ -8,8 +8,13 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router";
-import { ArrowLeft, ArrowRight, FileText, Upload, UserRound, Users, UsersRound, Wand2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, FileText, Pencil, Upload, UserRound, Users, UsersRound, Wand2 } from "lucide-react";
 import { ContactRecipientPicker } from "../../../components/contacts/ContactRecipientPicker";
+import {
+  DuplicateCheckNotice, RowField, RowProvenance, deriveEditableColumns,
+  emailDuplicateCheckingUnavailable, overriddenColumnIds, useRowEditor,
+} from "../../../components/bulk-send/RecipientRowEditor";
+import { useIsMobile } from "../../../components/ui/use-mobile";
 import { AppContent } from "../../../components/platform/AppContentLayout";
 import { PageHeader } from "../../../components/platform/PageHeader";
 import { CapabilityUnavailable } from "../../../components/platform/CapabilityUnavailable";
@@ -414,6 +419,38 @@ export function BulkSendRecipientsPage() {
   const fileRef = useRef<HTMLInputElement>(null);
   const rowsPanelRef = useRef<HTMLDivElement>(null);
 
+  // ── Row editing ────────────────────────────────────────────────────────────
+  // Declared with the other hooks, BEFORE the early returns below — the editor
+  // uses state and memos, so calling it after a conditional return would break
+  // the Rules of Hooks. It tolerates a null batch during loading.
+  const isMobile = useIsMobile();
+  const editableColumns = useMemo(
+    () => (batch ? deriveEditableColumns(batch) : []),
+    [batch],
+  );
+  const editor = useRowEditor({
+    batch,
+    columns: editableColumns,
+    announce,
+    confirmDiscard: (onConfirm) => confirm({
+      title: "Discard changes to this row?",
+      body: "The values you entered for this row have not been saved and will be lost. Other rows are not affected.",
+      confirmLabel: "Discard row changes",
+      destructive: true,
+      onConfirm,
+    }),
+    commit: async (rowId, values) => {
+      const r = await bulkSendService.updateRecipientRow(batchId!, rowId, values, ctx);
+      if (r.ok) { setBatch(r.data); return { ok: true }; }
+      return { ok: false, message: r.message };
+    },
+  });
+
+  // Workspace switch, sign-out and account change all replace the batch context.
+  // Any open editor belongs to the previous one, so it is closed and its working
+  // values dropped rather than being carried across.
+  useEffect(() => { editor.reset(); }, [ctx.workspaceId]);   // eslint-disable-line react-hooks/exhaustive-deps
+
   if (blocked) return blocked;
   if (state === "loading") return <LoadingShell label="Loading recipients" title="Bulk Send Recipients" />;
   if (state === "restricted") return <Restricted />;
@@ -446,6 +483,7 @@ export function BulkSendRecipientsPage() {
   };
 
   const rows = batch.rows.filter(r => rowFilter === "all" || r.status === rowFilter);
+  const canEditRows = permissions.canEditBatch;
 
   return (
     <div className="bs-root">
@@ -618,14 +656,25 @@ export function BulkSendRecipientsPage() {
                         body: "Excluded rows stay in the batch for review but cannot create Draft Projections. This does not delete anything.",
                         confirmLabel: "Exclude rows",
                         onConfirm: async () => {
+                          const affected = new Set(selected);
                           const r = await bulkSendService.excludeRows(batchId!, [...selected], "Excluded during review.", ctx);
-                          if (r.ok) { setBatch(r.data); setSelected(new Set()); announce("Rows excluded."); }
+                          if (r.ok) {
+                            setBatch(r.data); setSelected(new Set()); announce("Rows excluded.");
+                            // The row being edited may have just been excluded.
+                            // Leaving the editor open on it would let the user keep
+                            // typing into a row that no longer participates.
+                            if (editor.state.rowId && affected.has(editor.state.rowId)) editor.close();
+                          }
                         },
                       })}>Exclude selected</button>
                     <button type="button" className="bs-btn bs-btn-secondary bs-btn-sm" disabled={busy || selected.size === 0}
                       onClick={async () => {
+                        const affected = new Set(selected);
                         const r = await bulkSendService.restoreRows(batchId!, [...selected], ctx);
-                        if (r.ok) { setBatch(r.data); setSelected(new Set()); announce("Rows restored and revalidated."); }
+                        if (r.ok) {
+                          setBatch(r.data); setSelected(new Set()); announce("Rows restored and revalidated.");
+                          if (editor.state.rowId && affected.has(editor.state.rowId)) editor.close();
+                        }
                       }}>Restore selected</button>
                   </div>
                 ) : undefined} />
@@ -651,6 +700,10 @@ export function BulkSendRecipientsPage() {
                 )}
               </div>
 
+              {canEditRows && emailDuplicateCheckingUnavailable(batch) && (
+                <DuplicateCheckNotice />
+              )}
+
               <div className="bs-card bs-scroll-x">
                 <table className="bs-table">
                   <caption className="bs-visually-hidden">Recipient rows with status and validation issues.</caption>
@@ -664,38 +717,122 @@ export function BulkSendRecipientsPage() {
                         <th key={String(c.id)} scope="col">{c.header}</th>
                       ))}
                       <th scope="col">Issues</th>
+                      {canEditRows && <th scope="col"><span className="bs-visually-hidden">Row actions</span></th>}
                     </tr>
                   </thead>
                   <tbody>
                     {rows.map(r => {
                       const issues = batch.validation.issuesByRow[String(r.id)] ?? [];
+                      const rowId = String(r.id);
+                      const editingThis = !isMobile && editor.state.rowId === rowId;
+                      const overrides = overriddenColumnIds(r, editableColumns);
+                      // A projected row cannot be edited once it has produced a
+                      // Draft Projection — it stays inspectable, with the reason.
+                      const lockedReason = r.projectionId
+                        ? "This row already produced a Draft Projection and can no longer be edited."
+                        : null;
+
                       return (
-                        <tr key={String(r.id)} style={r.excluded ? { opacity: 0.6 } : undefined}>
+                        <tr key={rowId} style={r.excluded ? { opacity: 0.6 } : undefined}>
                           <td>
                             <label className="bs-visually-hidden" htmlFor={`sel-${r.id}`}>Select row {r.rowNumber}</label>
                             <input id={`sel-${r.id}`} type="checkbox" style={{ width: 18, height: 18 }}
-                              checked={selected.has(String(r.id))}
+                              checked={selected.has(rowId)}
                               onChange={e => {
                                 const next = new Set(selected);
-                                if (e.target.checked) next.add(String(r.id)); else next.delete(String(r.id));
+                                if (e.target.checked) next.add(rowId); else next.delete(rowId);
                                 setSelected(next);
                               }} />
                           </td>
                           <td>{r.rowNumber}</td>
-                          <td><RowStatusPill status={r.status} /></td>
-                          <td style={{ fontSize: 12 }}>{BULK_SEND_SOURCE_LABELS[r.source]}</td>
-                          {batch.schema?.columns.slice(0, 4).map(c => (
-                            <td key={String(c.id)} style={{ overflowWrap: "anywhere", maxWidth: 220 }}>
-                              {r.values[String(c.id)] || <span style={{ color: BS.slate4 }}>—</span>}
-                            </td>
-                          ))}
-                          <td style={{ maxWidth: 260 }}>
-                            {issues.length === 0
-                              ? <span style={{ color: BS.slate4 }}>None</span>
-                              : <span style={{ ...GF, fontSize: 12, color: issues.some(i => i.severity === "blocking") ? BS.errorText : BS.warnText, lineHeight: 1.5 }}>
-                                  {issues[0].message}{issues.length > 1 ? ` (+${issues.length - 1} more)` : ""}
-                                </span>}
+                          <td>
+                            <RowStatusPill status={r.status} />
+                            {/* Text, never colour alone, and kept separate from status. */}
+                            {overrides.length > 0 && (
+                              <span style={{ ...GF, display: "block", fontSize: 11, color: BS.slate5, marginTop: 3 }}>
+                                Draft override
+                              </span>
+                            )}
                           </td>
+                          <td style={{ fontSize: 12 }}>{BULK_SEND_SOURCE_LABELS[r.source]}</td>
+
+                          {batch.schema?.columns.slice(0, 4).map(c => {
+                            const cid = String(c.id);
+                            const col = editableColumns.find(ec => ec.id === cid);
+                            if (editingThis && col) {
+                              return (
+                                <td key={cid} style={{ maxWidth: 220 }}>
+                                  <RowField
+                                    column={col}
+                                    variant="inline"
+                                    value={editor.state.values[cid] ?? ""}
+                                    error={editor.state.errors[cid] || undefined}
+                                    disabled={editor.state.saving}
+                                    overridden={overrides.includes(cid)}
+                                    onChange={(v) => editor.setField(cid, v)}
+                                    onEnterSave={() => void editor.save()}
+                                  />
+                                </td>
+                              );
+                            }
+                            return (
+                              <td key={cid} style={{ overflowWrap: "anywhere", maxWidth: 220 }}>
+                                {r.values[cid] || <span style={{ color: BS.slate4 }}>—</span>}
+                              </td>
+                            );
+                          })}
+
+                          <td style={{ maxWidth: 260 }}>
+                            {editingThis && editor.state.saveError
+                              ? <span role="alert" style={{ ...GF, fontSize: 12, color: BS.errorText, lineHeight: 1.5 }}>{editor.state.saveError}</span>
+                              : issues.length === 0
+                                ? <span style={{ color: BS.slate4 }}>None</span>
+                                : <span style={{ ...GF, fontSize: 12, color: issues.some(i => i.severity === "blocking") ? BS.errorText : BS.warnText, lineHeight: 1.5 }}>
+                                    {issues[0].message}{issues.length > 1 ? ` (+${issues.length - 1} more)` : ""}
+                                  </span>}
+                          </td>
+
+                          {canEditRows && (
+                            <td style={{ whiteSpace: "nowrap" }}>
+                              {editingThis ? (
+                                <span className="bs-row" style={{ gap: 6, flexWrap: "nowrap" }}>
+                                  <button type="button" className="bs-btn bs-btn-primary bs-btn-sm"
+                                    disabled={editor.state.saving}
+                                    onClick={() => void editor.save()}>
+                                    {editor.state.saving ? "Saving…" : "Save row"}
+                                  </button>
+                                  <button type="button" className="bs-btn bs-btn-secondary bs-btn-sm"
+                                    disabled={editor.state.saving}
+                                    onClick={editor.requestClose}>Cancel</button>
+                                </span>
+                              ) : (
+                                <span className="bs-row" style={{ gap: 6, flexWrap: "nowrap" }}>
+                                  <button type="button" className="bs-btn bs-btn-secondary bs-btn-sm"
+                                    disabled={busy || !!lockedReason}
+                                    aria-disabled={busy || !!lockedReason}
+                                    title={lockedReason ?? undefined}
+                                    aria-label={`Edit recipient row ${r.rowNumber}`}
+                                    onClick={() => editor.requestOpen(r)}>
+                                    <Pencil size={13} aria-hidden /> Edit
+                                  </button>
+                                  {overrides.length > 0 && !lockedReason && (
+                                    <button type="button" className="bs-btn bs-btn-ghost bs-btn-sm"
+                                      disabled={busy}
+                                      aria-label={`Revert row ${r.rowNumber} to its source values`}
+                                      onClick={() => confirm({
+                                        title: "Revert this row?",
+                                        body: "The row returns to the values it was created with. Your edits to this row are discarded. The source record is not changed.",
+                                        confirmLabel: "Revert row",
+                                        onConfirm: () => void editor.revert(r),
+                                      })}>Revert</button>
+                                  )}
+                                </span>
+                              )}
+                              {lockedReason && (
+                                <span className="bs-visually-hidden">{lockedReason}</span>
+                              )}
+                            </td>
+                          )}
                         </tr>
                       );
                     })}
@@ -708,6 +845,51 @@ export function BulkSendRecipientsPage() {
                   Continue to Mapping <ArrowRight size={15} aria-hidden />
                 </Link>
               </div>
+
+              {/* Mobile editing. Only ONE editor variant is ever mounted, so the
+                  inline table controls are not focusable behind this sheet. */}
+              {isMobile && editor.editingRow && (
+                <Sheet
+                  title="Edit Recipient"
+                  onClose={editor.requestClose}
+                  footer={
+                    <>
+                      <button type="button" className="bs-btn bs-btn-secondary"
+                        disabled={editor.state.saving} onClick={editor.requestClose}>Cancel</button>
+                      <button type="button" className="bs-btn bs-btn-primary"
+                        disabled={editor.state.saving} onClick={() => void editor.save()}>
+                        {editor.state.saving ? "Saving…" : "Save row"}
+                      </button>
+                    </>
+                  }
+                >
+                  <div className="bs-stack">
+                    <RowProvenance row={editor.editingRow} />
+                    {editor.state.saveError && (
+                      <div role="alert" className="bs-card" style={{ padding: 12, background: BS.errorBg, borderColor: BS.errorBorder }}>
+                        <p style={{ ...GF, margin: 0, fontSize: 13, color: BS.errorText }}>{editor.state.saveError}</p>
+                      </div>
+                    )}
+                    {editableColumns.map(col => (
+                      <RowField
+                        key={col.id}
+                        column={col}
+                        variant="stacked"
+                        value={editor.state.values[col.id] ?? ""}
+                        error={editor.state.errors[col.id] || undefined}
+                        disabled={editor.state.saving}
+                        overridden={overriddenColumnIds(editor.editingRow!, editableColumns).includes(col.id)}
+                        onChange={(v) => editor.setField(col.id, v)}
+                      />
+                    ))}
+                    {emailDuplicateCheckingUnavailable(batch) && <DuplicateCheckNotice />}
+                    <p style={{ ...GF, margin: 0, fontSize: 12, color: BS.slate5, lineHeight: 1.6 }}>
+                      Saving updates this recipient row in the current preparation draft.
+                      No request, invitation, email, or SMS message is created or sent.
+                    </p>
+                  </div>
+                </Sheet>
+              )}
             </div>
           )}
         </BatchShell>

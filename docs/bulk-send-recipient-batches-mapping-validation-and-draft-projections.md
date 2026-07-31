@@ -229,9 +229,21 @@ record". No eNotary batch, mapping, configuration, projection, or workflow exist
      `ws_mls_001`, so `listBatches` filters them out and they are invisible at runtime.
      Reaching the recipients flow requires creating a batch in-session. Pre-existing; not
      repaired by that command.
-3. **Row inline editing is not built.** Rows can be excluded, restored, and bulk-corrected
-   (trim whitespace), but per-cell editing UI is not present; the service method
-   (`updateRecipientRow`) exists and is tested by type only.
+3. ~~**Row inline editing is not built.**~~
+   ✅ **CLOSED — Gap Closure Command 2 (2026-07-31).** `updateRecipientRow` is now wired to a
+   real editing interface: inline editing on desktop, an Edit Recipient sheet below 768px,
+   Save / Cancel / Revert, pre-commit validation reusing the canonical email helper, and full
+   revalidation through the service's existing `refresh()`. Editing writes only
+   `row.values`; `originalValues`, provenance and the row ID are preserved, and no source
+   record — Contact, Contact Group membership, CSV file, pasted text, or fixture — is
+   modified. Full detail: `docs/inline-recipient-row-editing-gap.md`.
+
+   Carried forward from that work, still open:
+   - **Email duplicate detection does not run for batches created without a Template.** The
+     engine's duplicate rule iterates role mappings and skips any without a mapped email
+     column, so a template-less batch has none. This affects every recipient source equally
+     and predates row editing; the shared engine was deliberately not forked for it. The
+     condition is now detected and stated in the UI rather than left silent.
 4. **Request defaults and organization defaults are resolved and displayed but not editable**
    in the UI. `BulkSendRequestDefaults` carries source attribution and conflict flags, and the
    service computes them from the Template, but no defaults editor screen was built.
@@ -246,5 +258,5 @@ record". No eNotary batch, mapping, configuration, projection, or workflow exist
    service-level only.
 9. Pre-existing repo errors are unchanged (137 repo-wide, including `data/mock/templates.ts`).
 
-Item 2 is **closed** (Gap Closure Command 1). Items 3–7 are the honest remainder of Command 33
-and are the recommended next focus, in that order.
+Items 2 and 3 are **closed** (Gap Closure Commands 1 and 2). Items 4–7 are the honest
+remainder of Command 33 and are the recommended next focus, in that order.

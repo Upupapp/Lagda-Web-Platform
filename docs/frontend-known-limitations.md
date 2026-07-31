@@ -198,6 +198,19 @@ eNotary content is limited to the public /enotary/* information pages which clea
 
 ---
 
+## Recipient row editing (Gap Closure Command 2)
+
+| Limitation | Detail |
+|------------|--------|
+| Email duplicate detection needs a Template | The engine's duplicate rule iterates role mappings and skips any without a mapped email column. A batch created without a Template has no role mappings, so editing an address there cannot raise a duplicate. Pre-existing, affects every recipient source equally; the shared engine was deliberately not forked. The condition is detected and stated in the UI. |
+| No optimistic locking | There is no row version or ETag. Concurrent edits to the same batch would overwrite each other silently once a backend exists. |
+| Role and template mapping are not edited inline | Mapping has its own authoritative screen; duplicating it in a table row would fork the mapping logic. The editor links onward instead. |
+| Rows with a Draft Projection are locked | They stay inspectable and state the reason, but cannot be edited. |
+| Edits are draft-only | Values live on the in-memory batch. Nothing is persisted, and no source record — Contact, Contact Group, CSV file, pasted text, or fixture — is ever modified. |
+| No automated tests | Verified by executable probes and production builds only. |
+
+---
+
 ## Contacts as a Bulk Send recipient source (Gap Closure Command 1)
 
 | Limitation | Detail |

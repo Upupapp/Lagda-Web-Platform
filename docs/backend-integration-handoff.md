@@ -1148,3 +1148,70 @@ Full feature detail: `docs/contact-and-contact-group-recipient-source-gap.md`.
 
 Contact import, contact synchronization, CRM behaviour, marketing campaigns,
 recipient invitation delivery, and any notification to a selected Contact.
+
+
+---
+
+## 44. Recipient row editing (Gap Closure Command 2)
+
+**Nothing here is implemented on a backend.** Row edits mutate an in-memory batch
+draft. No recipient, Contact, request, invitation, or transaction is updated,
+persisted, delivered, or synchronized.
+
+Full feature detail: `docs/inline-recipient-row-editing-gap.md`.
+
+### What the backend must own
+
+**Update endpoint**
+- A row-update endpoint accepting a row ID and a partial value map. The frontend
+  contract is `updateRecipientRow(batchId, rowId, values, ctx)` returning the whole
+  revalidated batch; a real API should return the updated row plus recomputed
+  summaries rather than the entire batch.
+- Server-side normalisation and length limits. The frontend caps values at 500
+  characters and strips control characters, but that is convenience, not a guarantee.
+
+**Concurrency**
+- A stable row version or ETag. Two people editing the same batch will otherwise
+  overwrite each other silently — the frontend has no version field today.
+- Optimistic locking with a clear conflict response, and a defined resolution flow.
+- Idempotency for retried saves.
+
+**Validation and duplicates**
+- Re-validate server-side. Frontend validation is advisory.
+- Duplicate detection must not depend on a Template being selected. The current
+  engine keys its email rule on mapped role columns, so a template-less batch gets
+  no email duplicate detection at all. A backend should define duplicate identity
+  independently of mapping.
+- Email normalisation must match whatever the projection path uses, or the same
+  address will be judged differently depending on how it arrived.
+
+**Provenance and source immutability**
+- `contactId` and `contactGroupId` must survive an edit and must not become
+  writable through the update endpoint.
+- Editing a projected row must never write back to the Contact, the Contact Group,
+  or its membership. This boundary must be enforced server-side, not assumed.
+- The projected-source snapshot (`originalValues`) must be preserved so Revert
+  remains meaningful, and must not be client-supplied.
+
+**Authorization**
+- Row editing must be permission-checked per request. The frontend gates on an
+  existing batch-edit permission; that is presentation.
+- Workspace isolation must be enforced. Team scope, if it applies to batches, must
+  be enforced too.
+- Permission removed mid-edit must fail the save safely without leaking the prior
+  row state.
+
+**Operational**
+- Stale-row handling: a defined response when the row was removed by someone else,
+  and a client contract for closing the editor safely.
+- Rate limiting on rapid successive edits.
+- Audit policy for who changed which recipient value and when, kept separate from
+  transaction Activity.
+- Privacy minimisation: an edit log must not accumulate recipient email history
+  beyond retention need.
+- Error contracts consistent with §26.
+
+### Explicit non-goals
+
+Contact editing, Contact Group editing, contact synchronization, CSV rewriting,
+fixture mutation, and any notification to an edited recipient.
