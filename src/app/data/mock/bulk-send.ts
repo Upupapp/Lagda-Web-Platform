@@ -83,8 +83,8 @@ function baseBatch(
     name,
     status,
     scope: {
-      workspaceId: "ws_northbridge_001",
-      workspaceName: "Northbridge Legal",
+      workspaceId: "ws_mls_001",
+      workspaceName: "Mabini Legal Solutions",
       teamId: extra.scope?.teamId ?? null,
       teamName: extra.scope?.teamName ?? null,
       senderId: "wm_ana",
@@ -183,7 +183,7 @@ const BATCH_ACK = baseBatch(
   "tpl-policy-acknowledgment", "Policy Acknowledgment",
   {
     scope: {
-      workspaceId: "ws_northbridge_001", workspaceName: "Northbridge Legal",
+      workspaceId: "ws_mls_001", workspaceName: "Mabini Legal Solutions",
       teamId: "team_hr", teamName: "Human Resources",
       senderId: "wm_ana", senderName: "Ana Reyes",
     },
@@ -273,7 +273,7 @@ const BATCH_PARTIAL = baseBatch(
   "tpl-vendor-agreement", "Vendor Services Agreement",
   {
     scope: {
-      workspaceId: "ws_northbridge_001", workspaceName: "Northbridge Legal",
+      workspaceId: "ws_mls_001", workspaceName: "Mabini Legal Solutions",
       teamId: "team_procurement", teamName: "Procurement",
       senderId: "wm_ana", senderName: "Ana Reyes",
     },

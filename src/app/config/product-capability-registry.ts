@@ -761,10 +761,19 @@ const REGISTRY: ProductCapability[] = [
     frontendReady:            "complete-demonstration",
     backendReady:             "contract-defined",
     publicLaunchReady:        false,
+    // Gap Closure Command 5 — these flags now describe registered providers
+    // rather than intent. Search, Command Palette and Dashboard contributions
+    // exist and are gated on this capability.
+    //
+    // `navigationVisibility` stays false deliberately: Bulk Send is reached from
+    // Documents and from a Template, and adding a top-level item would promote an
+    // Enterprise Preview capability above launch features in the primary
+    // navigation. It is not a permission decision — a user who can reach the
+    // routes can still reach them by every other path.
     navigationVisibility:     false,
     searchVisibility:         true,
     commandPaletteVisibility: true,
-    dashboardVisibility:      false,
+    dashboardVisibility:      true,
     permissionRequirements:   ["view_documents"],
     planRequirements:         [],
     featureRequirements:      ["documentsEnabled"],

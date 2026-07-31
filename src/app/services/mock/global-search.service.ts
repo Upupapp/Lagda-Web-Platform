@@ -41,6 +41,8 @@ import {
 import { MOCK_TRANSACTIONS, MOCK_TEMPLATES, MOCK_CONTACTS } from "../../data/mock";
 import { SIGNING_WORKFLOW_FIXTURES } from "../../data/mock/signing-workflow";
 import { COLLABORATION_THREAD_FIXTURES, COLLAB_WORKSPACE_ID } from "../../data/mock/collaboration";
+import { buildPlatformSummaries } from "../preparation-platform-projection";
+import { MOCK_CURRENT_WORKSPACE } from "../../data/mock/workspaces";
 import { documentOrganizationService } from "./document-organization.service";
 import { workflowAutomationService } from "./workflow-automation.service";
 import { isCapabilityInActiveProfile } from "../../config/capability-resolver";
@@ -77,6 +79,58 @@ function isAdvancedReportsEnabled(): boolean {
 /** The Integrations settings area is post-launch. */
 function isIntegrationsEnabled(): boolean {
   return isCapabilityInActiveProfile(capabilityId("integrations"));
+}
+
+/** Bulk Send preparation is enterprise-preview, gated the same way. */
+function isPreparationSearchEnabled(): boolean {
+  return isCapabilityInActiveProfile(capabilityId("bulk-send"));
+}
+
+/**
+ * The workspace this demonstration session holds. Search providers and the
+ * Command Palette registry are evaluated at module scope with no React context,
+ * so the value comes from the canonical workspace fixture the session is built
+ * from rather than being guessed per provider.
+ */
+const SESSION_WORKSPACE_ID = MOCK_CURRENT_WORKSPACE.id;
+const SESSION_WORKSPACE_NAME = MOCK_CURRENT_WORKSPACE.name;
+
+// Bulk Send preparation results (Gap Closure Command 5).
+//
+// The capability had declared `searchVisibility: true` since C33 but no provider
+// was ever registered — a flag is a declaration of intent, not an implementation.
+//
+// Matches the batch NAME, its status label, and its Template name only. Recipient
+// names, email addresses, organizations, pasted text and CSV cell values are never
+// indexed and never appear in a result: the provider reads the safe platform
+// projection, which does not carry them.
+function buildPreparationResults(query: string): GlobalSearchResult[] {
+  if (!isPreparationSearchEnabled()) return [];
+
+  const q = query.toLowerCase();
+  const matchesTerm =
+    q.includes("bulk") || q.includes("preparation") || q.includes("batch") || q.includes("recipient");
+
+  // Workspace scope comes from the projection, which filters on it.
+  const items = buildPlatformSummaries(SESSION_WORKSPACE_ID);
+
+  return items
+    .filter((i) => matchesTerm || tokenMatch(query, i.title) || tokenMatch(query, i.statusLabel))
+    .slice(0, 5)
+    .map((i): GlobalSearchResult => ({
+      id:               `sr_prep_${i.batchId}` as GlobalSearchResultId,
+      type:             "navigation-command" as GlobalSearchResultType,
+      title:            `Bulk Send — ${i.title}`,
+      description:      `${i.statusLabel} · ${i.includedRows} ${i.includedRows === 1 ? "recipient row" : "recipient rows"}`,
+      workspaceContext: SESSION_WORKSPACE_NAME,
+      matchedFields:    buildMatchFields(query, [
+        { field: "title", label: "Title", text: i.title },
+      ]),
+      matchScore:       computeScore(query, i.title) - 4,
+      destination:      { type: "platform-route", path: i.route, requiresPermission: "view_documents" },
+      availability:     "available",
+      demonstrationOnly: true,
+    }));
 }
 
 // ── Module-level in-memory state ──────────────────────────────────────────────
@@ -821,6 +875,7 @@ const SCOPE_BUILDERS: Partial<Record<GlobalSearchScope, ScopeBuilder[]>> = {
   "documents":        [
                         buildDocumentResults,
                         buildSigningWorkflowResults,
+                        ...(isPreparationSearchEnabled() ? [buildPreparationResults] : []),
                         ...(isCollaborationSearchEnabled() ? [buildCollaborationResults] : []),
                         buildFolderResults,
                         buildOrgTagResults,
@@ -872,7 +927,23 @@ const INTEGRATIONS_COMMANDS: CommandPaletteCommand[] = isIntegrationsEnabled() ?
   { id: "cmd_integrations"   as CommandPaletteCommandId, label: "Open Integrations",          group: "Settings", type: "settings",     icon: "Puzzle",   isPinnable: false, requiresPermission: "manage_integrations", destination: { type: "platform-route", path: "/app/settings/integrations" } },
 ] : [];
 
+// Bulk Send preparation commands (Gap Closure Command 5).
+//
+// The capability had declared `commandPaletteVisibility: true` since C33 with no
+// provider registered.
+//
+// NAVIGATION ONLY. Every command opens authoritative UI. None sends a request,
+// notifies a recipient, marks a batch ready, applies a recommendation, removes
+// rows, executes Automation, or schedules anything — the palette must never
+// bypass a confirmation, a validation step, or an authoritative form.
+const PREPARATION_COMMANDS: CommandPaletteCommand[] = isPreparationSearchEnabled() ? [
+  { id: "cmd_prep_open"      as CommandPaletteCommandId, label: "Open Bulk Send",              group: "Navigate", type: "navigate", icon: "Send",       isPinnable: true,  aliases: ["preparation", "bulk", "recipients", "batch"], requiresPermission: "view_documents",    destination: { type: "platform-route", path: "/app/bulk-send" } },
+  { id: "cmd_prep_new"       as CommandPaletteCommandId, label: "Create Bulk Send Batch",      group: "Create",   type: "quick-action", icon: "Plus",   isPinnable: false, aliases: ["new batch"],                                  requiresPermission: "prepare_documents", destination: { type: "platform-route", path: "/app/bulk-send/new" } },
+  { id: "cmd_prep_configs"   as CommandPaletteCommandId, label: "Open Saved Bulk Send Configurations", group: "Navigate", type: "navigate", icon: "Bookmark", isPinnable: false, aliases: ["saved configurations"],              requiresPermission: "view_documents",    destination: { type: "platform-route", path: "/app/bulk-send/saved-configurations" } },
+] : [];
+
 const ALL_COMMANDS: CommandPaletteCommand[] = [
+  ...PREPARATION_COMMANDS,
   // Navigate group
   { id: "cmd_dashboard"     as CommandPaletteCommandId, label: "Go to Dashboard",           group: "Navigate", type: "navigate",     icon: "LayoutDashboard", isPinnable: true,  aliases: ["home", "overview"],          destination: { type: "platform-route", path: "/app/dashboard" } },
   { id: "cmd_documents"     as CommandPaletteCommandId, label: "Open Documents",             group: "Navigate", type: "navigate",     icon: "FileText",        isPinnable: true,  requiresPermission: "view_documents",   destination: { type: "platform-route", path: "/app/documents" } },

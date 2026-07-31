@@ -15,14 +15,17 @@ import {
   DemoBanner, ReportFamilyNav, ReportsRestricted,
   ReportPageHeader, MetricGrid, SectionCard,
   FamilyCard, SectionDivider, SavedViewCard, GOLD,
+  availableReportFamilies,
 } from "./ReportsShared";
-
-const FAMILIES: ReportFamily[] = ["documents", "participants", "templates", "verification", "teams"];
 
 export function ReportsOverviewPage() {
   const { hasPermission, hasFlag } = usePlatform();
 
   const canView = hasPermission("view_reports") && hasFlag("reportsEnabled");
+
+  // Bulk Send Preparation joins this list only when the capability is in the
+  // active profile — see availableReportFamilies().
+  const families: ReportFamily[] = availableReportFamilies();
 
   const teamData  = useMemo(() => reportingService.getTeamActivityReport(DEFAULT_REPORT_QUERY), []);
   const savedViews = useMemo(() => reportingService.getSavedViews().filter(v => v.status === "active").slice(0, 4), []);
@@ -64,7 +67,7 @@ export function ReportsOverviewPage() {
         role="list"
         aria-label="Report family navigation"
       >
-        {FAMILIES.map(f => (
+        {families.map(f => (
           <div role="listitem" key={f}><FamilyCard family={f} /></div>
         ))}
       </div>

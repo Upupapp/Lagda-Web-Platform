@@ -1230,6 +1230,52 @@ class MockBulkSendService {
     return ok(activity.filter(a => String(a.batchId) === batchId).slice(0, 30));
   }
 
+  /**
+   * Synchronous, workspace-scoped, validated snapshot for platform surfaces
+   * (Gap Closure Command 5).
+   *
+   * Global Search providers, the Command Palette registry, the Dashboard and the
+   * Reports builders all need batch state, and none of them can await — they run
+   * at module scope or during render.
+   *
+   * WHY THIS EXISTS RATHER THAN READING FIXTURES DIRECTLY: fixtures ship with
+   * `EMPTY_VALIDATION_SUMMARY` and no role mappings. Validation is computed by
+   * `refresh()`, which `getBatch` calls on every read. A surface that read the
+   * fixtures directly would report every batch as having zero issues and no
+   * mapping — which is exactly what the first version of this integration did.
+   * Validation stays owned by this service; callers get the result, never their
+   * own copy of the rules.
+   *
+   * Returns live batches. The caller is responsible for narrowing them to a safe
+   * shape before anything reaches a search index, a report row, or a URL —
+   * `preparation-platform-projection.ts` is that narrowing layer.
+   */
+  snapshotForPlatform(workspaceId: string, teamId: string | null = null): BulkSendBatch[] {
+    if (scenario === "new-workspace" || scenario === "full-failure") return [];
+    const ctx: BulkSendContext = {
+      workspaceId, teamId,
+      capabilityAvailable: true, canView: true, canEdit: false,
+    } as BulkSendContext;
+    const scoped = batches.filter(b => {
+      if (b.scope.workspaceId !== workspaceId) return false;
+      if (teamId && b.scope.teamId && b.scope.teamId !== teamId) return false;
+      return true;
+    });
+    // Refresh a COPY, never the live store. `refresh()` stamps
+    // `updatedAtDemonstration` with the current time, and this is a read path
+    // called during render — refreshing in place would reset every batch's "last
+    // updated" to now on every Dashboard paint.
+    const snapshot = deepCopy(scoped);
+    for (let i = 0; i < snapshot.length; i++) {
+      const b = snapshot[i]!;
+      refresh(b, ctx);
+      // Reading a batch is not editing it. Restore the real last-updated time so
+      // surfaces report when the work actually changed.
+      b.updatedAtDemonstration = scoped[i]!.updatedAtDemonstration;
+    }
+    return snapshot;
+  }
+
   // ── Lifecycle ───────────────────────────────────────────────────────────────
 
   /** Workspace switch: drop every batch and configuration scoped to the prior Workspace. */

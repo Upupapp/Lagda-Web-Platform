@@ -21,6 +21,33 @@ export interface PlatformNavItem {
   description?: string;
 }
 
+// ── Bulk Send: deliberately absent from navigation (Gap Closure Command 5) ───
+//
+// Bulk Send is registered with Global Search, the Command Palette, the Dashboard,
+// Reports, Notifications and the Documents workspace, but NOT here. That is a
+// decision, not an omission — recorded so nobody "fixes" it by adding an item.
+//
+// WHY NOT:
+//   1. It is an Enterprise Preview capability. A top-level item would rank it
+//      alongside Documents and Templates, above launch features, for every user
+//      in every profile that has it.
+//   2. It is entered from context — from Documents, or from a Template that is
+//      being sent to many recipients. A standalone entry point invites starting a
+//      batch before there is a Template to send, which is the state the feature
+//      handles worst.
+//   3. Nothing about it is unreachable. The Command Palette ("Open Bulk Send"),
+//      Global Search, the Dashboard card, the Reports family, and the Documents
+//      provenance link all lead there.
+//
+// THIS IS NOT A PERMISSION DECISION. Hidden navigation is presentation, never
+// authorization: /app/bulk-send/* is guarded by CapabilityGuard and the service's
+// own permission checks, and a user who can reach those routes can still reach
+// them by every other path, including a direct URL.
+//
+// Revisit if Bulk Send graduates out of Enterprise Preview into a launch
+// capability — at that point the registry's `navigationVisibility` flag should be
+// flipped to true and an item added here.
+
 // Primary navigation — shown in sidebar and mobile drawer
 export const PRIMARY_NAV: PlatformNavItem[] = [
   {

@@ -6,7 +6,7 @@ import { useState } from "react";
 import { Link, useSearchParams } from "react-router";
 import { isCapabilityInActiveProfile } from "../../../config/capability-resolver";
 import {
-  BarChart2, FileText, Users, Files, ShieldCheck, Building2,
+  BarChart2, FileText, Users, Files, ShieldCheck, Building2, Send,
   BookMarked, ChevronRight, Info, AlertTriangle, Clock, Calendar,
   Download, Share2, CalendarClock, PenLine, X,
   CheckCircle2, Archive, RotateCcw, Trash2, Copy, Star,
@@ -128,13 +128,30 @@ export function FamilyIcon({ family, size = 16, color }: { family: ReportFamily;
     case "templates":    return <Files       size={size} style={{ color: c }} aria-hidden />;
     case "verification": return <ShieldCheck size={size} style={{ color: c }} aria-hidden />;
     case "teams":        return <Building2   size={size} style={{ color: c }} aria-hidden />;
+    case "preparation":  return <Send        size={size} style={{ color: c }} aria-hidden />;
   }
+}
+
+// ── Available report families ─────────────────────────────────────────────────
+
+/**
+ * The five launch families are always listed. `preparation` (Bulk Send) is
+ * availability-gated the same way the Saved Views tab is: omitted entirely rather
+ * than rendered as a tab that leads to a capability-unavailable page.
+ *
+ * Exported so the Overview page and the family nav cannot drift apart — one list,
+ * one gate.
+ */
+export function availableReportFamilies(): ReportFamily[] {
+  const families: ReportFamily[] = ["documents", "participants", "templates", "verification", "teams"];
+  if (isCapabilityInActiveProfile("bulk-send")) families.push("preparation");
+  return families;
 }
 
 // ── Report family navigation tabs ─────────────────────────────────────────────
 
 export function ReportFamilyNav({ current }: { current: ReportFamily | "overview" | "saved" }) {
-  const families: ReportFamily[] = ["documents", "participants", "templates", "verification", "teams"];
+  const families = availableReportFamilies();
   return (
     <nav aria-label="Report sections" style={{ display: "flex", gap: 4, flexWrap: "wrap", marginBottom: 24 }}>
       <Link

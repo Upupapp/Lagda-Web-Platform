@@ -12,9 +12,14 @@ import {
   GF, NAVY, AZURE, SLATE, SILVER,
   ReportFamilyNav, ReportsRestricted, ReportPageHeader,
   SavedViewCard, AnnotationEditor, SectionDivider, SectionCard,
+  availableReportFamilies,
 } from "./ReportsShared";
 
-const ALL_FAMILIES: (ReportFamily | "all")[] = ["all", "documents", "participants", "templates", "verification", "teams"];
+// Built from the same availability-gated list the family nav and Overview use, so
+// a family can never be saveable-but-unfilterable. A view saved from the Bulk
+// Send Preparation report was previously reachable under "All Families" with no
+// way to filter to it.
+const ALL_FAMILIES: (ReportFamily | "all")[] = ["all", ...availableReportFamilies()];
 
 export function ReportsSavedPage() {
   const { hasPermission, hasFlag } = usePlatform();

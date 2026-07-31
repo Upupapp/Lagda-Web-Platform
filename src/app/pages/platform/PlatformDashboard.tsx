@@ -33,6 +33,11 @@ import type {
 import type { TransactionStatus } from "../../models";
 import { TRANSACTION_STATUS_LABELS } from "../../models";
 import { usePageMeta } from "../../hooks/usePageMeta";
+import {
+  buildPlatformSummaries, buildAttentionSummary,
+  PREPARATION_LIST_ROUTE, PREPARATION_DEMONSTRATION_NOTICE,
+} from "../../services/preparation-platform-projection";
+import type { PreparationPlatformSummary } from "../../services/preparation-platform-projection";
 
 // ── Design tokens (inline-style only — no Tailwind in JSX) ───────────────────
 
@@ -920,6 +925,79 @@ function AutomationDirectionSection() {
   );
 }
 
+// ── Bulk Send Preparation Section (Gap Closure Command 5) ────────────────────
+//
+// The capability declared `dashboardVisibility: false`, so the Dashboard never
+// mentioned Bulk Send even where the feature was fully available. A user who
+// left a batch with unresolved recipient issues had no way to learn that from
+// the Dashboard — the work was invisible until they navigated to the feature.
+//
+// The flag is flipped to true in the registry and this section is the
+// implementation behind it.
+//
+// SAFE BY CONSTRUCTION: everything rendered comes from the shared platform
+// projection — batch names, status labels and counts. No recipient name, email
+// address, organization, Contact, Contact Group, pasted value or CSV cell can
+// reach this card, because the projection does not carry them.
+function PreparationSection({ items }: { items: PreparationPlatformSummary[] }) {
+  const summary = buildAttentionSummary(items);
+  if (summary.total === 0) return null;
+
+  // Attention first, then ready — a batch that needs correcting is the reason
+  // this section exists.
+  const listed = [...items]
+    .sort((a, b) => Number(b.needsAttention) - Number(a.needsAttention))
+    .slice(0, 4);
+
+  return (
+    <section aria-label="Bulk Send preparation" style={{ marginBottom: 24 }}>
+      <SectionHeader label="Bulk Send" to={PREPARATION_LIST_ROUTE} linkLabel="Open Bulk Send" />
+      <Card>
+        <div style={{ padding: "12px 16px" }}>
+          <p style={{ ...GF, fontSize: 12, color: SLATE6, margin: "0 0 10px" }}>
+            {summary.needsAttention + summary.mappingRequired > 0
+              ? `${summary.needsAttention + summary.mappingRequired} of ${summary.total} ${summary.total === 1 ? "batch needs" : "batches need"} attention before review.`
+              : `${summary.total} ${summary.total === 1 ? "batch" : "batches"} in preparation. ${summary.readyForReview} ready for review.`}
+          </p>
+
+          <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "grid", gap: 6 }}>
+            {listed.map((i) => (
+              <li key={i.batchId}>
+                <Link
+                  to={i.route}
+                  style={{
+                    ...GF, fontSize: 12, textDecoration: "none", color: NAVY,
+                    display: "flex", alignItems: "center", justifyContent: "space-between",
+                    gap: 10, padding: "7px 10px", borderRadius: 6,
+                    border: `1px solid ${SLATE2}`,
+                  }}
+                >
+                  <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    {i.title}
+                  </span>
+                  <span
+                    style={{
+                      ...GF, fontSize: 11, flexShrink: 0,
+                      color: i.needsAttention ? AMBER : SLATE6,
+                    }}
+                  >
+                    {i.statusLabel}
+                    {i.issueCount > 0 ? ` · ${i.issueCount} ${i.issueCount === 1 ? "issue" : "issues"}` : ""}
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+
+          <p style={{ ...GF, fontSize: 10, color: SLATE4, margin: "8px 0 0" }}>
+            {PREPARATION_DEMONSTRATION_NOTICE}
+          </p>
+        </div>
+      </Card>
+    </section>
+  );
+}
+
 // ── Full Error State ──────────────────────────────────────────────────────────
 
 function FullErrorState({ onRetry }: { onRetry: () => void }) {
@@ -1043,6 +1121,20 @@ export function PlatformDashboard() {
   const automationCap = resolveCapability("workflow-automation");
   const canAutomation = automationCap.available && hasPermission("view_workflow_automation");
 
+  // Bulk Send preparation (Gap Closure Command 5).
+  //
+  // Resolved through the SAME capability resolver every other gated surface uses,
+  // so availability, permission and profile stay in one place. The dashboard does
+  // not re-implement the decision.
+  //
+  // Scoped to the current workspace: switching workspaces re-runs this and the
+  // previous workspace's batches disappear from the card.
+  const preparationCap  = resolveCapability("bulk-send");
+  const canPreparation  = preparationCap.available && canViewDocs;
+  const preparationItems = canPreparation
+    ? buildPlatformSummaries(currentWorkspace?.id ?? "")
+    : [];
+
   const firstName = user?.displayName?.split(" ")[0] ?? "there";
   const wsName    = currentWorkspace?.name ?? "Your Workspace";
   const planRaw   = currentWorkspace?.plan ?? "";
@@ -1133,6 +1225,9 @@ export function PlatformDashboard() {
                 onRetry={load}
               />
             )}
+
+            {/* Bulk Send preparation (Gap 5) — batches needing attention before review */}
+            {canPreparation && <PreparationSection items={preparationItems} />}
 
             {/* Reports direction (C29) — concise link section for roles with view_reports */}
             {canReports && <ReportsDirectionSection />}

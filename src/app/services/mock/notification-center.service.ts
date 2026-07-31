@@ -324,6 +324,88 @@ const FIXTURES: NotificationRecord[] = [
   },
 ];
 
+// ── Bulk Send preparation notifications (Gap Closure Command 5) ───────────────
+//
+// AUDIENCE — the single most important constraint here.
+//
+// These go to the person doing the preparation work. They NEVER go to a
+// recipient, a Contact, or a Contact Group member. Being named in a batch is not
+// a relationship with the platform: a Contact has no account, no session, and no
+// notification inbox, and preparing a batch must never be the thing that creates
+// one. Workspace Administrators are not added either — a batch in progress is not
+// an administrative event, and a blanket admin audience would turn ordinary
+// preparation work into something watched.
+//
+// BODY CONTENT — batch names, statuses and counts only. No recipient name, email
+// address, organization, Contact, Contact Group, uploaded file name, or pasted
+// value appears in a title, body, detail body, or action path. Notification
+// bodies are the easiest place in a platform to leak data, because they travel:
+// they are read in lists, in previews, and out of context.
+//
+// LANGUAGE — nothing here may imply a send. A batch produces frontend Draft
+// Projections. "Ready for review" is not "sent", "delivered", or "signed", and
+// the detail body says so explicitly.
+//
+// DEDUPLICATION — one notification per batch per condition. A batch that is
+// edited repeatedly does not produce a stream; the condition either holds or it
+// does not.
+const PREPARATION_FIXTURES: NotificationRecord[] = [
+  {
+    id: "notif-prep-attention-001" as NotificationId,
+    demonstrationOnly: true,
+    category: "documents",
+    severity: "warning",
+    priority: "normal",
+    title: "Bulk Send batch needs attention",
+    body: "Vendor Renewals — Draft has recipient rows that need correcting before the batch can be reviewed.",
+    detailBody:
+      "Some recipient rows in this batch did not pass validation, or a required role mapping is incomplete. " +
+      "Open the batch to see which rows need attention. " +
+      "Nothing has been sent — a batch produces frontend Draft Projections only. No request was sent, no recipient " +
+      "was notified, and no transaction was created.",
+    createdAt: "2026-07-29T09:15:00Z",
+    workspaceId: "ws_mls_001",
+    workspaceName: "Mabini Legal Solutions",
+    // In-app only. A preparation state is not worth an email, and this
+    // demonstration sends no email regardless.
+    deliveryClass: "in-app-only",
+    isDismissible: true,
+    hasAction: true,
+    actionLabel: "Open Batch",
+    actionPath: "/app/bulk-send/bsb_issues",
+    whyReceivedReason:
+      "You received this notification because you are preparing this Bulk Send batch and it has unresolved recipient " +
+      "row issues. Preparation notifications go only to the people preparing a batch. They are never sent to " +
+      "recipients, Contacts, or Contact Group members, and being included in a batch never causes anyone to be notified.",
+    status: "unread",
+  },
+  {
+    id: "notif-prep-ready-001" as NotificationId,
+    demonstrationOnly: true,
+    category: "documents",
+    severity: "info",
+    priority: "low",
+    title: "Bulk Send batch ready for review",
+    body: "Q3 Engagement Letters has passed validation and is ready for you to review.",
+    detailBody:
+      "All included recipient rows passed validation and required role mappings are complete. " +
+      "Ready for review means the batch can now be checked before Draft Projections are created. " +
+      "It does not mean anything was sent, delivered, or signed.",
+    createdAt: "2026-07-28T14:40:00Z",
+    workspaceId: "ws_mls_001",
+    workspaceName: "Mabini Legal Solutions",
+    deliveryClass: "in-app-only",
+    isDismissible: true,
+    hasAction: true,
+    actionLabel: "Review Batch",
+    actionPath: "/app/bulk-send/bsb_ready/review",
+    whyReceivedReason:
+      "You received this notification because you are preparing this Bulk Send batch and it reached a reviewable state. " +
+      "Preparation notifications go only to the people preparing a batch, never to recipients or Contacts.",
+    status: "read",
+  },
+];
+
 // ── Capability gating ─────────────────────────────────────────────────────────
 //
 // A notification must never be the way a user discovers a capability that is not in
@@ -343,9 +425,23 @@ function categoryIsInActiveProfile(category: NotificationRecord["category"]): bo
 
 // ── Module-level state (no localStorage, no persistence) ──────────────────────
 
-let _items: NotificationRecord[] = FIXTURES
-  .filter((f) => categoryIsInActiveProfile(f.category))
-  .map((f) => ({ ...f }));
+// Preparation notifications live in the launch-core "documents" category, so the
+// category gate above cannot reach them — a per-feature gate is required.
+//
+// Without it, a profile without Bulk Send would show a notification whose action
+// leads to a capability-guarded route, and following it would land on a "not
+// available" page. Worse, the notification itself would be how the user learned
+// the feature exists.
+function buildInitialItems(): NotificationRecord[] {
+  const base = isCapabilityInActiveProfile("bulk-send")
+    ? [...FIXTURES, ...PREPARATION_FIXTURES]
+    : FIXTURES;
+  return base
+    .filter((f) => categoryIsInActiveProfile(f.category))
+    .map((f) => ({ ...f }));
+}
+
+let _items: NotificationRecord[] = buildInitialItems();
 
 // ── Filtering helpers ─────────────────────────────────────────────────────────
 
@@ -486,5 +582,20 @@ export const notificationCenterService = {
     if (!item) return fail("NOT_FOUND");
     if (item.status === "dismissed") item.status = "read";
     return ok(item);
+  },
+
+  /**
+   * Rebuilds the notification store from fixtures (Gap Closure Command 5).
+   *
+   * Read and dismissed state belongs to one signed-in session in one workspace.
+   * Carrying it across a sign-out, an account switch, or a workspace switch would
+   * mean the next session inherits which notifications the previous one had seen
+   * — and, for preparation notifications, would leave a batch reference from a
+   * workspace the new session may not be in.
+   *
+   * Called from PlatformContext on signOut() and switchWorkspace().
+   */
+  clearSessionState(): void {
+    _items = buildInitialItems();
   },
 };

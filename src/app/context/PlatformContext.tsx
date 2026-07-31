@@ -35,6 +35,7 @@ import { signingWorkflowService } from "../services/mock/signing-workflow.servic
 import { bulkSendService } from "../services/mock/bulk-send.service";
 import { documentCollaborationService } from "../services/mock/document-collaboration.service";
 import { mockContactService } from "../services/mock/contacts.service";
+import { notificationCenterService } from "../services/mock/notification-center.service";
 import { ACTIVE_LAUNCH_PROFILE, resolveCapability, buildCapabilityContext } from "../config/capability-resolver";
 import type { LaunchProfileId, CapabilityResolution, ProductCapabilityId } from "../models/product-capability";
 
@@ -160,6 +161,10 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
     // that Contacts feed Bulk Send recipient rows, that is a live cross-account
     // path for Contact data.
     mockContactService.clearSessionState();
+    // Notification read/dismiss state is per-session. It also holds preparation
+    // notifications that reference batches in the signed-out workspace, so it
+    // must not survive into the next account.
+    notificationCenterService.clearSessionState();
     setSessionStatus("unauthenticated");
     setUser(null);
     setWorkspaces([]);
@@ -181,6 +186,8 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
     // Session-created Contacts and Groups belong to the previous workspace, and
     // the Bulk Send Contacts picker reads them.
     mockContactService.clearSessionState();
+    // Preparation notifications name a batch in the workspace being left.
+    notificationCenterService.clearSessionState();
     setCurrentWorkspace(ws);
     setRole(ws.role);
     // In production: re-fetch documents, notifications, etc. for the new workspace.

@@ -31,9 +31,14 @@ import type {
   TemplateReportData,
   VerificationReportData,
   TeamActivityData,
+  PreparationReportData,
 } from "../../models/reports";
 import { DOCUMENT_FIXTURES } from "../../data/mock/documents";
 import { demoNow, isoDaysAgo, formatDemoDate } from "../../utils/demo-clock";
+import {
+  buildPlatformSummaries, buildAttentionSummary, buildReportRows, buildSourceMix,
+} from "../preparation-platform-projection";
+import { MOCK_CURRENT_WORKSPACE } from "../../data/mock/workspaces";
 
 // ── Saved views store (module-level, not localStorage) ──────────────────────
 
@@ -885,6 +890,11 @@ function getExportPreview(family: ReportFamily, query: ReportQuery): ReportExpor
       templates:    ["Template Name", "Status", "Uses", "Last Used", "Role Placeholder Count"],
       verification: ["Verification ID", "Record Status", "File Match Direction"],
       teams:        ["Team", "Members", "Transactions", "Completed", "Awaiting Action"],
+      // Batch names, statuses and counts only. There is deliberately no
+      // recipient column, no email column, and no Contact or Contact Group
+      // column — an export of this family cannot carry recipient data because
+      // the report never held any.
+      preparation:  ["Batch", "Preparation Status", "Template", "Scope", "Recipient Rows", "Ready Rows", "Issues", "Last Updated"],
     }[family],
     excludedPrivateFields: [
       "Participant names (aggregate only)",
@@ -911,7 +921,14 @@ function getSharePreview(family: ReportFamily): ReportSharePreview {
     permissionRequired: "view_reports",
     expirationDirection: "Future backend: share links would expire after a configurable period",
     dataIncluded: ["Aggregate metrics", "Status distribution", "Trend direction", "Table summaries"],
-    dataExcluded: ["Private participant data", "Signatures", "Authentication evidence", "Field values", "Personal My Actions"],
+    dataExcluded: [
+      "Private participant data", "Signatures", "Authentication evidence", "Field values", "Personal My Actions",
+      // Stated on the Share panel itself, not only on the report page — a user
+      // deciding whether to share sees the exclusion at the moment of deciding.
+      ...(family === "preparation"
+        ? ["Recipient names, email addresses, and organizations", "Contact records and Contact Group membership", "Uploaded file contents and pasted recipient values"]
+        : []),
+    ],
     revocationDirection: "Future backend: share access can be revoked by the Workspace Owner",
     demonstrationOnly: true,
   };
@@ -933,6 +950,127 @@ function getSchedulePreview(family: ReportFamily): ReportSchedulePreview {
 
 // ── Data quality notices ───────────────────────────────────────────────────────
 
+// ── Bulk Send Preparation report (Gap Closure Command 5) ─────────────────────
+//
+// Registered as a report FAMILY through the existing Reports architecture rather
+// than as a separate reporting surface. It shares the same query, date range,
+// saved-view, export-preview and share-preview machinery as the five launch
+// families.
+//
+// It reads the shared platform projection, which is the reason it cannot leak:
+// recipient names, email addresses, organizations, Contact identity, Contact
+// Group membership, pasted values and CSV cells are not on the projection, so no
+// column here can carry them. There is no recipient-level table by design.
+function buildPreparationReport(_query: ReportQuery): PreparationReportData {
+  const items   = buildPlatformSummaries(MOCK_CURRENT_WORKSPACE.id);
+  const summary = buildAttentionSummary(items);
+  const rows    = buildReportRows(items);
+
+  const readinessSummary: ReportMetricCard[] = [
+    metric("prep-total",     "Batches in Preparation", summary.total,           "count"),
+    metric("prep-ready",     "Ready for Review",       summary.readyForReview,  "count"),
+    metric("prep-attention", "Needing Attention",      summary.needsAttention + summary.mappingRequired, "count"),
+    metric("prep-issues",    "Validation Issues",      summary.totalIssues,     "count"),
+    metric("prep-dupes",     "Batches with Duplicates", summary.withDuplicates, "count"),
+  ];
+
+  const batchColumns: ReportTableColumn[] = [
+    { id: "batch",    label: "Batch",             format: "text",  sortable: true  },
+    { id: "status",   label: "Preparation Status", format: "text", sortable: true  },
+    { id: "rows",     label: "Recipient Rows",    format: "count", sortable: true  },
+    { id: "ready",    label: "Ready Rows",        format: "count", sortable: false },
+    { id: "issues",   label: "Issues",            format: "count", sortable: true  },
+  ];
+
+  const batchRows: ReportTableRow[] = items.map((i, n) => ({
+    id: `pb${n + 1}`,
+    cells: {
+      batch:  i.title,
+      status: i.statusLabel,
+      rows:   i.includedRows,
+      ready:  i.readyRows,
+      issues: i.issueCount,
+    },
+    // Built by the projection, never assembled here — no private value can be
+    // appended to a report row's destination.
+    linkTo: i.route,
+  }));
+
+  const mix = buildSourceMix(MOCK_CURRENT_WORKSPACE.id);
+  const sourceRows: ReportTableRow[] = mix.map((m, n) => ({
+    id: `ps${n + 1}`,
+    cells: { source: m.label, batches: m.count },
+  }));
+
+  const detailRows: ReportTableRow[] = rows.map((r, n) => ({
+    id: `pd${n + 1}`,
+    cells: {
+      batch:    r.title,
+      status:   r.statusLabel,
+      template: r.templateName,
+      team:     r.teamName,
+      rows:     r.includedRows,
+      updated:  formatDemoDate(r.updatedAtDemonstration),
+    },
+  }));
+
+  return {
+    readinessSummary,
+    batchTable: {
+      id: "preparation-batch-table",
+      title: "Batch Readiness",
+      columns: batchColumns,
+      rows: batchRows,
+      totalRows: batchRows.length,
+      page: 1,
+      perPage: 10,
+      hasNextPage: false,
+      textSummary: summary.total === 0
+        ? "No batches are in preparation in this demonstration workspace."
+        : `${summary.readyForReview} of ${summary.total} batches are ready for review. ${summary.needsAttention + summary.mappingRequired} still need attention.`,
+      demonstrationOnly: true,
+    },
+    sourceMix: {
+      id: "preparation-source-mix-table",
+      title: "Recipient Source Mix",
+      columns: [
+        { id: "source",  label: "Recipient Source", format: "text",  sortable: true },
+        { id: "batches", label: "Batches",          format: "count", sortable: true },
+      ],
+      rows: sourceRows,
+      totalRows: sourceRows.length,
+      page: 1,
+      perPage: 10,
+      hasNextPage: false,
+      textSummary: "How batches were populated. Counts only — no Contact, Contact Group member, uploaded file, or pasted value is identified.",
+      demonstrationOnly: true,
+    },
+    recipientDataNote:
+      "This report covers preparation work, not recipients. Recipient names, email addresses, " +
+      "organizations, Contact records, Contact Group membership, uploaded file contents, and " +
+      "pasted values are never reported, exported, or shared from this family.",
+    detailTable: {
+      id: "preparation-detail-table",
+      title: "Preparation Detail",
+      columns: [
+        { id: "batch",    label: "Batch",              format: "text",  sortable: true  },
+        { id: "status",   label: "Preparation Status", format: "text",  sortable: true  },
+        { id: "template", label: "Template",           format: "text",  sortable: false },
+        { id: "team",     label: "Scope",              format: "text",  sortable: false },
+        { id: "rows",     label: "Recipient Rows",     format: "count", sortable: true  },
+        { id: "updated",  label: "Last Updated",       format: "date",  sortable: false },
+      ],
+      rows: detailRows,
+      totalRows: detailRows.length,
+      page: 1,
+      perPage: 10,
+      hasNextPage: false,
+      textSummary: "Preparation state per batch in the current workspace.",
+      demonstrationOnly: true,
+    },
+  };
+}
+
 function getDataQualityNotices(family: ReportFamily): ReportDataQualityNotice[] {
   const base: ReportDataQualityNotice[] = [
     {
@@ -949,6 +1087,21 @@ function getDataQualityNotices(family: ReportFamily): ReportDataQualityNotice[] 
       message: "No file hashing or real verification was performed.",
       detail: "File match direction is a simulated demonstration output. No document content was analyzed.",
       linkTo: "/app/verify",
+    });
+  }
+  if (family === "preparation") {
+    base.push({
+      id: "dq-prep-no-recipients",
+      level: "info",
+      message: "Recipient data is excluded from this report family.",
+      detail: "Batch names, statuses, and counts are reported. Recipient names, email addresses, organizations, Contact records, Contact Group membership, uploaded file contents, and pasted values are never included, exported, or shared.",
+    });
+    base.push({
+      id: "dq-prep-not-sent",
+      level: "info",
+      message: "Preparation counts do not describe anything that was sent.",
+      detail: "A batch produces frontend Draft Projections only. No request was sent, no recipient was notified, and no transaction was created.",
+      linkTo: "/app/bulk-send",
     });
   }
   if (family === "participants") {
@@ -984,6 +1137,8 @@ function buildTextSummary(family: ReportFamily, dateRange: ReportDateRange): str
       return `Verification check direction shows 4 of 10 demonstration records with a completed status and file match direction. 1 mismatch direction appears in the demonstration dataset.`;
     case "teams":
       return `Legal Services has the highest transaction volume among teams in this demonstration. Team size affects transaction counts — comparisons should account for team membership size.`;
+    case "preparation":
+      return `Bulk Send preparation direction for the current workspace. Values describe batch readiness and outstanding validation work only — no recipient is identified.`;
   }
 }
 
@@ -1056,6 +1211,7 @@ function runReport(family: ReportFamily, query: ReportQuery): ReportResult<unkno
     case "templates":    data = buildTemplateReport(query);          break;
     case "verification": data = buildVerificationReport(query);      break;
     case "teams":        data = buildTeamActivityReport(query);      break;
+    case "preparation":  data = buildPreparationReport(query);       break;
   }
   return { family, dateRange, metrics: [], data, dataQuality, textSummary, generatedAt: demoNow().toISOString(), demonstrationOnly: true };
 }
@@ -1070,6 +1226,7 @@ export const reportingService = {
   getTemplateReport:           (q: ReportQuery) => buildTemplateReport(q),
   getVerificationReport:       (q: ReportQuery) => buildVerificationReport(q),
   getTeamActivityReport:       (q: ReportQuery) => buildTeamActivityReport(q),
+  getPreparationReport:        (q: ReportQuery) => buildPreparationReport(q),
 
   getSavedViews,
   getSavedView,

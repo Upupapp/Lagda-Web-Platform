@@ -14,12 +14,16 @@ export type ReportAnnotationId = string & { readonly __brand: "ReportAnnotationI
 
 // ── Report families ───────────────────────────────────────────────────────────
 
+// `preparation` (Gap Closure Command 5) is the Bulk Send projection. It is an
+// availability-gated family: it appears only when the Bulk Send capability is in
+// the active profile, unlike the five launch families which are always listed.
 export type ReportFamily =
   | "documents"
   | "participants"
   | "templates"
   | "verification"
-  | "teams";
+  | "teams"
+  | "preparation";
 
 export const REPORT_FAMILY_LABELS: Record<ReportFamily, string> = {
   documents:     "Document Operations",
@@ -27,6 +31,7 @@ export const REPORT_FAMILY_LABELS: Record<ReportFamily, string> = {
   templates:     "Template Adoption",
   verification:  "Verification",
   teams:         "Workspace & Team Activity",
+  preparation:   "Bulk Send Preparation",
 };
 
 export const REPORT_FAMILY_DESCRIPTIONS: Record<ReportFamily, string> = {
@@ -35,6 +40,9 @@ export const REPORT_FAMILY_DESCRIPTIONS: Record<ReportFamily, string> = {
   templates:    "Template usage trends, frequently used templates, status distribution, and role-placeholder direction.",
   verification: "Verification checks, outcome distribution, coverage direction, and match/mismatch direction.",
   teams:        "Workspace operational summary, team comparison, sender activity direction, and member participation direction.",
+  // Deliberately describes counts and readiness only. This family reports on the
+  // STATE OF PREPARATION WORK, never on the recipients inside a batch.
+  preparation:  "Bulk Send batch readiness, recipient-row counts, validation-issue direction, and recipient-source mix. No recipient identity is reported.",
 };
 
 export const REPORT_FAMILY_PATHS: Record<ReportFamily, string> = {
@@ -43,6 +51,7 @@ export const REPORT_FAMILY_PATHS: Record<ReportFamily, string> = {
   templates:    "/app/reports/templates",
   verification: "/app/reports/verification",
   teams:        "/app/reports/teams",
+  preparation:  "/app/reports/preparation",
 };
 
 export const REPORT_FAMILY_ICONS: Record<ReportFamily, string> = {
@@ -51,6 +60,7 @@ export const REPORT_FAMILY_ICONS: Record<ReportFamily, string> = {
   templates:    "Files",
   verification: "ShieldCheck",
   teams:        "Building2",
+  preparation:  "Send",
 };
 
 // ── Date range presets ────────────────────────────────────────────────────────
@@ -403,4 +413,20 @@ export interface TeamActivityData {
   senderActivity:       ReportTable;
   memberActivityNote:   string;
   detailTable:          ReportTable;
+}
+
+/**
+ * Bulk Send Preparation report data (Gap Closure Command 5).
+ *
+ * Reports on the state of preparation WORK. Every table column is a batch name,
+ * a status label, or a count. There is deliberately no recipient table, no
+ * recipient column, and no Contact or Contact Group breakdown — this family
+ * reports how much preparation is outstanding, never who is in a batch.
+ */
+export interface PreparationReportData {
+  readinessSummary:  ReportMetricCard[];
+  batchTable:        ReportTable;
+  sourceMix:         ReportTable;
+  recipientDataNote: string;
+  detailTable:       ReportTable;
 }

@@ -12,7 +12,7 @@ import {
   X, AlertCircle, ChevronLeft, ChevronRight, Tag, FolderOpen, Folder,
   ShieldCheck, Activity, Users, RefreshCw, Inbox, ArrowUpDown,
   CheckSquare, Square, Star, Clock, ExternalLink, Move,
-  Eye, Bell, Ban, Shuffle, Shield, Info,
+  Eye, Bell, Ban, Shuffle, Shield, Info, Send,
 } from "lucide-react";
 import { usePlatform } from "../../../context/PlatformContext";
 import {
@@ -40,6 +40,7 @@ import type {
 } from "../../../models/document-organization";
 import { TAG_STYLE_COLORS } from "../../../models/document-organization";
 import { usePageMeta } from "../../../hooks/usePageMeta";
+import { preparationRoute } from "../../../services/preparation-platform-projection";
 
 // ── Design tokens (inline styles only — no Tailwind in JSX) ──────────────────
 
@@ -257,6 +258,55 @@ function VerificationBadge({ status }: { status: "pending" | "available" | "view
       style={{ color: "#059669", display: "inline-flex", alignItems: "center" }}>
       <ShieldCheck size={13} aria-label={`Verification ${status}`} />
     </span>
+  );
+}
+
+// ── PreparationBadge (Gap Closure Command 5) ─────────────────────────────────
+//
+// Bulk Send provenance, shown SECONDARY to document status — never in place of
+// it, never styled to compete with it, and never in the Status cell. A document
+// created from a batch has a real document status; where it came from is
+// context, not state.
+//
+// Renders only for documents that carry `bulkSendSource`, which the Bulk Send
+// service attaches to frontend Draft Projections. That field holds opaque IDs and
+// safe labels only — batch name and Template name, never a recipient name, email
+// address, organization, or source-row value — so nothing private can surface
+// here.
+//
+// The link is the batch, not the row: opening it goes to preparation UI the user
+// can already reach, and grants no access to anything new.
+function PreparationBadge({ source }: { source: DocumentListItem["bulkSendSource"] }) {
+  const { resolveCapability } = usePlatform();
+  if (!source) return null;
+  // A projection can outlive the capability being in the profile. Show plain
+  // provenance text rather than a link into a guarded route.
+  const available = resolveCapability("bulk-send").available;
+
+  const label = "From Bulk Send";
+  const title = `Created from the Bulk Send batch "${source.batchName}". Preparation only — nothing was sent from this batch.`;
+
+  if (!available) {
+    return (
+      <span title={title} style={{ fontSize: 11, color: SLATE4, ...GF }}>
+        {label}
+      </span>
+    );
+  }
+
+  return (
+    <Link
+      to={preparationRoute(source.batchId)}
+      title={title}
+      style={{
+        fontSize: 11, color: SLATE4, textDecoration: "none", ...GF,
+        display: "inline-flex", alignItems: "center", gap: 3,
+        borderBottom: "1px dotted #CBD5E1",
+      }}
+    >
+      <Send size={11} aria-hidden />
+      {label}
+    </Link>
   );
 }
 
@@ -1149,6 +1199,7 @@ function DocumentTable({
                       </span>
                     )}
                     <VerificationBadge status={item.verificationStatus} />
+                    <PreparationBadge source={item.bulkSendSource} />
                     {item.tags.slice(0, 2).map(t => <TagChip key={t.id} tag={t} />)}
                   </div>
                 </div>
@@ -1244,6 +1295,7 @@ function DocumentCardList({
                   <span style={{ fontSize: 11, color: "#C2410C", ...GF }}>Expires {fmtShort(item.expiresAt)}</span>
                 )}
                 <VerificationBadge status={item.verificationStatus} />
+                <PreparationBadge source={item.bulkSendSource} />
               </div>
             </div>
             <RowActionMenu

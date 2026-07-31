@@ -244,6 +244,7 @@ const ReportsParticipantsPage = lazy(() => import("./app/pages/platform/reports/
 const ReportsTemplatesPage    = lazy(() => import("./app/pages/platform/reports/ReportsTemplatesPage").then(m => ({ default: m.ReportsTemplatesPage })));
 const ReportsVerificationPage = lazy(() => import("./app/pages/platform/reports/ReportsVerificationPage").then(m => ({ default: m.ReportsVerificationPage })));
 const ReportsTeamsPage        = lazy(() => import("./app/pages/platform/reports/ReportsTeamsPage").then(m => ({ default: m.ReportsTeamsPage })));
+const ReportsPreparationPage  = lazy(() => import("./app/pages/platform/reports/ReportsPreparationPage").then(m => ({ default: m.ReportsPreparationPage })));
 const ReportsSavedPage        = lazy(() => import("./app/pages/platform/reports/ReportsSavedPage").then(m => ({ default: m.ReportsSavedPage })));
 const ReportDetailPage        = lazy(() => import("./app/pages/platform/reports/ReportDetailPage").then(m => ({ default: m.ReportDetailPage })));
 
@@ -514,6 +515,11 @@ export const router = createBrowserRouter([
       { path: "reports/templates",                 element: <Suspense fallback={null}><ReportsTemplatesPage /></Suspense> },
       { path: "reports/verification",              element: <Suspense fallback={null}><ReportsVerificationPage /></Suspense> },
       { path: "reports/teams",                     element: <Suspense fallback={null}><ReportsTeamsPage /></Suspense> },
+      // Bulk Send Preparation is a sixth report family, gated on the same
+      // capability as the feature itself. A deep link from a stale bookmark,
+      // saved view, or shared URL lands on the standard unavailable state rather
+      // than a broken or empty report.
+      { path: "reports/preparation",               element: <CapabilityGuard capabilityId="bulk-send"><Suspense fallback={null}><ReportsPreparationPage /></Suspense></CapabilityGuard> },
       // Saved report views are advanced-reports (post-launch).
       { path: "reports/saved",                     element: <CapabilityGuard capabilityId="advanced-reports"><Suspense fallback={null}><ReportsSavedPage /></Suspense></CapabilityGuard> },
       { path: "reports/:reportId",                 element: <Suspense fallback={null}><ReportDetailPage /></Suspense> },

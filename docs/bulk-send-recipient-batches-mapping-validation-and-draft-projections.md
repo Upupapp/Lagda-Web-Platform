@@ -283,14 +283,41 @@ record". No eNotary batch, mapping, configuration, projection, or workflow exist
      as "not applicable".
    - **`transaction_created` is an approximation.** The engine has no preparation-specific
      trigger kind.
-6. **Notifications, Reports, Global Search, Command Palette, Dashboard, and platform-nav
-   integration are not wired.** The capability is flagged `searchVisibility: true` and
-   `commandPaletteVisibility: true` but no provider or command was added.
+6. ~~**Notifications, Reports, Global Search, Command Palette, Dashboard, and platform-nav
+   integration are not wired.**~~
+   ✅ **CLOSED — Gap Closure Command 5 (2026-07-31).** All seven surfaces now register through
+   their own canonical registries: a Global Search provider in `SCOPE_BUILDERS`, three
+   navigation-only Command Palette commands, a Dashboard attention section, a sixth Reports
+   family (`preparation`, route `/app/reports/preparation`), two in-app Notifications, and a
+   secondary provenance badge in the Documents workspace. Every surface reads one shared safe
+   projection (`services/preparation-platform-projection.ts`) that carries batch names, status
+   labels and counts only — recipient names, email addresses, organizations, Contact identity,
+   Contact Group membership, uploaded file contents and pasted values are structurally absent.
+   The dormant `dashboardVisibility` flag was flipped to true now that an implementation backs
+   it. Full detail: `docs/preparation-platform-provider-integration-gap.md`.
+
+   Carried forward, still open:
+   - **Bulk Send is deliberately NOT in primary navigation.** `navigationVisibility` stays
+     `false`: it is an Enterprise Preview capability entered from Documents or a Template, and
+     a top-level item would rank it above launch features. This is presentation, not
+     authorization — the routes remain guarded and reachable by URL. Rationale recorded in
+     `config/platform.nav.ts`.
+   - **Notification fixtures are static.** They demonstrate the attention and ready-for-review
+     conditions against real batches; nothing generates a notification when a batch actually
+     changes state, because there is no backend to observe that change.
+   - **The Documents provenance badge only appears on Draft Projections** created in-session,
+     since `bulkSendSource` is attached at projection time and no fixture document carries it.
 7. **Saved configuration create/rename/apply exist in the service but have no UI entry point**
    beyond duplicate/archive/restore/remove.
 8. Batch **duplication with rows**, and per-row **exclusion reasons** beyond the default, are
    service-level only.
 9. Pre-existing repo errors are unchanged (137 repo-wide, including `data/mock/templates.ts`).
 
-Items 2, 3, 4 (Request scope) and 5 are **closed** (Gap Closure Commands 1–4). Items 6 and 7
-are the honest remainder of Command 33 and are the recommended next focus, in that order.
+Items 2, 3, 4 (Request scope), 5 and 6 are **closed** (Gap Closure Commands 1–5). Item 7 is
+the honest remainder of Command 33 and is the recommended next focus.
+
+**Correction to item 2's carried-forward note:** the fixture-workspace mismatch it describes
+was repaired in Gap Closure Command 5. `BULK_SEND_BATCH_FIXTURES` now carry `ws_mls_001` /
+"Mabini Legal Solutions", matching the session, so the six fixture batches are visible at
+runtime and reachable without creating one first. The remaining "Northbridge Legal" strings in
+that file are recipient *cell values* and were correctly left alone.
