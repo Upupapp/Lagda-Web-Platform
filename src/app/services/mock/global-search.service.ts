@@ -613,20 +613,23 @@ function buildOrgTagResults(query: string): GlobalSearchResult[] {
 function buildOrgSavedViewResults(query: string): GlobalSearchResult[] {
   const result = documentOrganizationService.listSavedViews();
   if (!result.ok) return [];
+  // A saved view has no description in the domain model (see OrgSavedView), so it is
+  // matched and scored on its name only. Previously this read `v.description`, which
+  // is always undefined — saved views were therefore never searchable by description
+  // and every result scored as a name-only match anyway.
   return result.data
-    .filter((v) => v.status !== "archived" && (tokenMatch(query, v.name) || tokenMatch(query, v.description ?? "")))
+    .filter((v) => v.status !== "archived" && tokenMatch(query, v.name))
     .slice(0, 4)
     .map((v): GlobalSearchResult => ({
       id:               `sr_orgview_${v.id}` as GlobalSearchResultId,
       type:             "document" as GlobalSearchResultType,
       title:            v.name,
-      description:      v.description ?? "Saved document view",
+      description:      v.isDefault ? "Saved document view · Default" : "Saved document view",
       workspaceContext: "Northbridge Legal",
       matchedFields:    buildMatchFields(query, [
-        { field: "title",       label: "Saved view",  text: v.name },
-        { field: "description", label: "Description", text: v.description ?? "" },
+        { field: "title", label: "Saved view", text: v.name },
       ]),
-      matchScore:       computeScore(query, v.name, v.description),
+      matchScore:       computeScore(query, v.name),
       destination:      { type: "platform-route", path: `/app/documents/saved-views/${v.id}`, requiresPermission: "view_documents" },
       availability:     "available",
       demonstrationOnly: true,
@@ -656,21 +659,23 @@ function sortResults(results: GlobalSearchResult[], sort: string, dir: string): 
 
 function buildAutomationResults(query: string): GlobalSearchResult[] {
   const results: GlobalSearchResult[] = [];
-  const q = query.toLowerCase();
 
   const rulesRes = workflowAutomationService.listRules({ query });
   if (rulesRes.ok) {
     for (const rule of rulesRes.data.slice(0, 6)) {
-      if (!rule.name.toLowerCase().includes(q) && !q) continue;
+      if (!tokenMatch(query, rule.name)) continue;
       results.push({
         id: `sr_auto_rule_${rule.id}` as GlobalSearchResultId,
         type: "navigation-command" as GlobalSearchResultType,
         title: rule.name,
-        subtitle: `Rule · ${rule.status}`,
-        scope: "reports" as GlobalSearchScope,
-        destination: { type: "platform-route", path: `/app/automation/rules/${rule.id}` },
-        score: 70,
-        matchFields: [{ field: "name" as GlobalSearchMatchField, ranges: [] }],
+        description: `Rule · ${rule.status}`,
+        workspaceContext: "Northbridge Legal",
+        matchedFields: buildMatchFields(query, [
+          { field: "title", label: "Rule", text: rule.name },
+        ]),
+        matchScore: computeScore(query, rule.name),
+        destination: { type: "platform-route", path: `/app/automation/rules/${rule.id}`, requiresPermission: "view_workflow_automation" },
+        availability: "available",
         demonstrationOnly: true,
       });
     }
@@ -679,16 +684,19 @@ function buildAutomationResults(query: string): GlobalSearchResult[] {
   const policiesRes = workflowAutomationService.listPolicies();
   if (policiesRes.ok) {
     for (const policy of policiesRes.data) {
-      if (!policy.name.toLowerCase().includes(q) && !q) continue;
+      if (!tokenMatch(query, policy.name)) continue;
       results.push({
         id: `sr_auto_pol_${policy.id}` as GlobalSearchResultId,
         type: "navigation-command" as GlobalSearchResultType,
         title: policy.name,
-        subtitle: `Policy · ${policy.family}`,
-        scope: "reports" as GlobalSearchScope,
-        destination: { type: "platform-route", path: `/app/automation/policies/${policy.id}` },
-        score: 60,
-        matchFields: [{ field: "name" as GlobalSearchMatchField, ranges: [] }],
+        description: `Policy · ${policy.family}`,
+        workspaceContext: "Northbridge Legal",
+        matchedFields: buildMatchFields(query, [
+          { field: "title", label: "Policy", text: policy.name },
+        ]),
+        matchScore: computeScore(query, policy.name),
+        destination: { type: "platform-route", path: `/app/automation/policies/${policy.id}`, requiresPermission: "view_workflow_automation" },
+        availability: "available",
         demonstrationOnly: true,
       });
     }

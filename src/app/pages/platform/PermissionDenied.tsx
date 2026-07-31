@@ -1,6 +1,6 @@
 // Permission denied state for authenticated users who lack access to a specific route.
 
-import { Link, useLocation } from "react-router";
+import { Link } from "react-router";
 import { ShieldOff } from "lucide-react";
 import { usePlatform } from "../../context/PlatformContext";
 
@@ -44,8 +44,13 @@ export function PermissionDenied() {
         >
           Back to Dashboard
         </Link>
+        {/* /help lives on the public site. Opened in a new tab so the user is not
+            pulled out of the authenticated shell — matches PlatformHeader/UserMenu. */}
         <Link
           to="/help"
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="Get Help (opens in new tab)"
           style={{
             display: "inline-flex", alignItems: "center", gap: 8,
             background: "#F1F5F9", color: "#334155",

@@ -14,7 +14,6 @@ import type {
   SigningStageId,
   SigningWorkflowId,
   StageParticipantAssignment,
-  StageParticipantAssignmentId,
   StageParticipantAction,
   StageParticipantStatus,
   SigningStageStatus,

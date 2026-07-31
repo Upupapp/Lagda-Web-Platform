@@ -9,7 +9,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation, useNavigate, useSearchParams } from "react-router";
-import { ArrowLeft, ArrowRight, FileText, Plus, Undo2, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, FileText, Plus, Undo2 } from "lucide-react";
 import {
   GF, WF, TONES, WORKFLOW_STYLES,
   AddPersonPanel, DemonstrationNotice, FieldReadinessMatrix, ParticipantConfigPanel,
@@ -79,7 +79,6 @@ export function WorkflowCreatePage() {
   // ── Unsaved-change protection ───────────────────────────────────────────────
   // Only meaningful, untransferred work counts. An untouched form never warns.
   const hasUnsavedBasics = !data.workflow && (name.trim().length > 0 || description.trim().length > 0);
-  const hasDraftWork = !!data.workflow && data.workflow.configurationStatus !== "ready-in-demonstration";
 
   useEffect(() => {
     if (!hasUnsavedBasics) return;

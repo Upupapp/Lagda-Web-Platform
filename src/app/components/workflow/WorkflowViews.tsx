@@ -23,7 +23,6 @@ import type {
 } from "../../models/signing-workflow";
 import {
   STAGE_ACTION_LABELS,
-  STAGE_STATUS_LABELS,
   WORKFLOW_BOARD_FILTER_LABELS,
   VALID_WORKFLOW_BOARD_FILTERS,
   FIELD_READINESS_LABELS,
@@ -31,7 +30,6 @@ import {
 } from "../../models/signing-workflow";
 import {
   describeAssignmentEligibility,
-  isAssignmentBlocking,
   resolveStageProgress,
 } from "../../services/signing-workflow.resolver";
 import { issuesForAssignment } from "../../services/signing-workflow.validation";

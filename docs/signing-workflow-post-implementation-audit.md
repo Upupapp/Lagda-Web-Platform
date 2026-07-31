@@ -234,9 +234,9 @@ The strict type-check found 10 real errors in code C37 did not author:
 | `global-search.service.ts` | 617, 623, 627, 629 | `OrgSavedView.description` does not exist | **Real** — saved-view descriptions are never searchable; the field is always `undefined` |
 | `global-search.service.ts` | 669, 673, 687, 691 | Automation results emit `subtitle` / `matchFields` / `score` instead of `description` / `matchedFields` / `matchScore` | **Real** — automation search results render without a subtitle and at default relevance |
 
-Two of these are genuine user-visible bugs in C30/C31/C32 search. They were left untouched
-because this pass was scoped to recent development. **Recommend a follow-up to fix all 10 and
-then land `tsconfig.json` + a `typecheck` script**, which is already an open project TODO.
+Two of these are genuine user-visible bugs in C30/C31/C32 search.
+
+**Update — all 10 have since been fixed.** See "Pending frontend follow-up" below.
 
 ---
 
@@ -246,3 +246,71 @@ then land `tsconfig.json` + a `typecheck` script**, which is already an open pro
 - Strict type-check of all C37 files — 0 errors
 - `window.confirm` in C37 — 0 occurrences (one explanatory comment remains)
 - `WorkflowTab` chunk 96.7 kB (23.6 kB gzip), up 2.9 kB for the in-app confirm dialog
+
+
+---
+
+## Pending frontend follow-up — completed
+
+The frontend items left open by the five passes were subsequently fixed.
+
+### Global Search: saved-view descriptions (real bug) — FIXED
+`buildOrgSavedViewResults` filtered, described, highlighted, and scored on
+`v.description`. `OrgSavedView` has **no `description` field** — `OrgFolder` and `OrgTag` do,
+and the builder was copy-pasted from them. Every read was `undefined`, so saved views were
+never searchable by description and the "description" match field was always empty.
+
+Fixed to match the real model: matched and scored on `name` only, with the description line
+now showing `Saved document view` / `Saved document view · Default` (`isDefault` exists and is
+genuinely useful in a result list).
+
+### Global Search: automation results emitted the wrong contract (real bug) — FIXED
+`buildAutomationResults` emitted `subtitle`, `scope`, `score`, and `matchFields`.
+`GlobalSearchResult` defines `description`, `matchedFields`, `matchScore` — and no `subtitle`
+or per-result `scope` at all. Consequences: automation rules and policies rendered with **no
+subtitle**, at a **hard-coded relevance** that ignored the query, and with a `matchedFields`
+entry whose `field` was `"name"` — not one of the six allowed values, so the highlighter never
+matched it and search terms were never highlighted.
+
+Fixed to the real contract, now using the same `buildMatchFields()` / `computeScore()` helpers
+as every other builder, plus `workspaceContext`, `availability`, and a
+`requiresPermission: "view_workflow_automation"` on the destination that the other automation
+destinations already carried.
+
+### Global Search: automation filter never filtered (real bug, found while fixing the above) — FIXED
+```ts
+if (!rule.name.toLowerCase().includes(q) && !q) continue;
+```
+With an empty query, `includes("")` is always `true`, so the first clause is `false`.
+With a non-empty query, `!q` is `false`. **The condition is unreachable either way** — every
+automation rule and policy was returned for every query, including queries matching nothing.
+Replaced with `tokenMatch(query, rule.name)`, consistent with all other builders (and which
+correctly returns nothing for an empty query). The now-unused `q` local was removed.
+
+### Cosmetic casts — FIXED
+`capability-resolver.ts:36` and `PlatformContext.tsx:186` now cast through `unknown`.
+
+### `PermissionDenied` same-tab help link — FIXED
+Flagged as the pre-existing counterpart to STITCH-1. Now `target="_blank"` +
+`rel="noopener noreferrer"` + an "(opens in new tab)" accessible name, matching
+`PlatformHeader` / `UserMenu`. Its unused `useLocation` import was removed.
+
+### Dead imports in C37 files — FIXED
+Running the check with `noUnusedLocals` surfaced dead imports in the C37 files, several of them
+orphaned by this audit's own edits (removing `ActionPill` stranded `StageParticipantAction` and
+`STAGE_ACTION_LABELS`; the fixture relocation stranded `StageParticipantAssignmentId`). All
+cleaned: `WorkflowPrimitives`, `WorkflowViews`, `WorkflowBoard`, `WorkflowCreatePage`,
+`signing-workflow.service`, `data/mock/signing-workflow`.
+
+### Verification
+Every file authored or touched by C37 and this follow-up now passes
+`strict` **plus** `noUnusedLocals` with zero errors, and `npm run build` succeeds.
+
+### Still outstanding — deliberately not done
+
+| Item | Why not |
+|---|---|
+| Repo-wide type cleanup | A full-repo strict check reports **137** errors — dead imports in `CommandPalette`, `NotificationMenu`, `PlatformHeader`, `WorkspaceSwitcher`, `TransactionDetailPage`, `transaction-detail.ts`, plus real type mismatches in `data/mock/templates.ts` (`PrepAuthMethodId`, `PrepParticipantRole`, `FieldType`), `data/status-map.ts`, `SearchDialog.tsx`, and `routes.ts` (`"fullscreen"` is not a `LayoutType`). This is its own project, not an audit follow-up. |
+| `tsconfig.json` + `typecheck` script + ESLint | Adds a `typescript` devDependency and lockfile churn, and the gate would be red on arrival until the 137 above are cleared. Needs an explicit decision. |
+| BRAND-1 token reconciliation | Requires a design decision — update the brand doc to record the derived accessible pairs, or migrate 200+ usages in code. Not a unilateral call. |
+| STITCH-3 Field Placement round trip | Architectural: field placement is bound to a preparation draft. |

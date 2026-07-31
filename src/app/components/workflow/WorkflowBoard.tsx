@@ -171,7 +171,7 @@ function StageColumnWithConnector(props: ColumnProps) {
 
 function StageColumn(props: ColumnProps) {
   const {
-    stage, index, totalStages, isCurrent, builder, canEdit, validation, selection,
+    stage, totalStages, isCurrent, builder, canEdit, validation, selection,
     onSelect, announce, onAddPerson, onEditStage, onDuplicateStage, onDeleteStage,
     onMoveStage, onOpenStageDetail, onMoveAssignment,
     draggingAssignment, dropTargetStage, setDraggingAssignment, setDropTargetStage,

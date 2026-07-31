@@ -33,7 +33,7 @@ import { getCapability } from "./product-capability-registry";
 
 function deriveActiveLaunchProfile(): LaunchProfileId {
   const env = (typeof import.meta !== "undefined"
-    ? (import.meta as Record<string, Record<string, string>>).env?.VITE_LAUNCH_PROFILE
+    ? (import.meta as unknown as Record<string, Record<string, string> | undefined>).env?.VITE_LAUNCH_PROFILE
     : undefined) ?? "";
   if (env === "enterprise-preview") return "enterprise-preview";
   if (env === "development") return "development";

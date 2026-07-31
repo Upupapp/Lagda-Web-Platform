@@ -183,7 +183,7 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
     const ctx = buildCapabilityContext(
       ACTIVE_LAUNCH_PROFILE,
       role ? (ROLE_PERMISSIONS[role] ?? []) : [],
-      flags as Record<string, boolean>,
+      flags as unknown as Record<string, boolean>,
     );
     return resolveCapability(id, ctx);
   }, [role, flags]);

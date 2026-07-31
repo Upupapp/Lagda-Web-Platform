@@ -17,14 +17,12 @@ import type {
   SigningStageStatus,
   SigningWorkflowStatus,
   SigningWorkflowValidationIssue,
-  StageParticipantAction,
   StageParticipantAssignment,
   StageParticipantStatus,
   FieldReadinessState,
 } from "../../models/signing-workflow";
 import {
   FIELD_READINESS_LABELS,
-  STAGE_ACTION_LABELS,
   STAGE_PARTICIPANT_STATUS_LABELS,
   STAGE_STATUS_LABELS,
   WORKFLOW_STATUS_LABELS,
