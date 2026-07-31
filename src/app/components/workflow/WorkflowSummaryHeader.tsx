@@ -187,7 +187,7 @@ export function WorkflowNotificationPreview({ documentId }: { documentId: string
                 className="wf-btn wf-btn-ghost"
                 aria-expanded={open}
                 onClick={() => setOpenEvent(open ? null : def.eventId)}
-                style={{ width: "100%", justifyContent: "flex-start", padding: 0, minHeight: 36 }}
+                style={{ width: "100%", justifyContent: "flex-start", padding: 0 }}
               >
                 {open ? <ChevronDown size={15} aria-hidden /> : <ChevronRight size={15} aria-hidden />}
                 <span style={{ ...GF, fontSize: 13, fontWeight: 700, color: WF.navy, textAlign: "left" }}>

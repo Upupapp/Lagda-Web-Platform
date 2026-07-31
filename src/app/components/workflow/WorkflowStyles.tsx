@@ -198,6 +198,11 @@ export const WORKFLOW_STYLES = `
     .wf-split { grid-template-columns: minmax(0, 1fr); }
   }
   @media (max-width: 860px) {
+    /* Touch viewports: the dense 36px desktop variants are raised to the LAGDA
+       44px minimum. Desktop keeps 36px where pointer precision makes it safe. */
+    .wf-btn-sm { min-height: 44px; padding: 10px 14px; }
+    .wf-icon-btn-sm { width: 44px !important; height: 44px !important; }
+
     /* Mobile uses stacked stages, not a shrunken horizontal canvas. */
     .wf-board-scroll { flex-direction: column; overflow-x: visible; gap: 0; }
     .wf-column { flex: 1 1 auto; width: 100%; }

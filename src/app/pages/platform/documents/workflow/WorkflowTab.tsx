@@ -540,7 +540,16 @@ function EmptyWorkflowState({
           </p>
         )}
 
-        <Link to="/help" style={{ ...GF, fontSize: 13, color: WF.azure, fontWeight: 600 }}>
+        {/* /help lives on the public site. Opened in a new tab so the sender is
+            not pulled out of the authenticated shell mid-task — matching the
+            PlatformHeader and UserMenu convention. */}
+        <Link
+          to="/help"
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="Learn how signing workflows work (opens in new tab)"
+          style={{ ...GF, fontSize: 13, color: WF.azure, fontWeight: 600 }}
+        >
           Learn how signing workflows work
         </Link>
       </div>
@@ -695,7 +704,16 @@ export function WorkflowErrorState({
         <Link to={primaryTo} className="wf-btn wf-btn-primary">{primaryLabel}</Link>
       </div>
       <p style={{ ...GF, margin: "24px 0 0", fontSize: 12, color: WF.slate5 }}>
-        Still stuck? <Link to="/contact" style={{ color: WF.azure, fontWeight: 600 }}>Contact support</Link>.
+        Still stuck?{" "}
+        <Link
+          to="/contact"
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="Contact support (opens in new tab)"
+          style={{ color: WF.azure, fontWeight: 600 }}
+        >
+          Contact support
+        </Link>.
       </p>
     </div>
   );

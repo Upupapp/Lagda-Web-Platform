@@ -441,97 +441,11 @@ const WF_003 = mkWorkflow({
   ],
 });
 
-// ── txn_004 — Draft workflow with deliberate configuration issues ─────────────
-// Demonstrates: missing signature field, field owned by another participant,
-// an empty stage, and an ordered stage. Used by the field-readiness matrix.
-
-const WF_004 = mkWorkflow({
-  id: "wf_004",
-  documentId: "txn_004",
-  name: "Faculty Employment Contract Workflow",
-  description: "Draft configuration with unresolved issues.",
-  configurationStatus: "needs-attention",
-  status: "waiting",
-  origin: "built-from-scratch",
-  createdAt: "2026-07-15T07:40:00Z",
-  updatedAt: "2026-07-15T08:05:00Z",
-  stages: [
-    {
-      id: "stg_004_review",
-      name: "Internal Review",
-      description: "Department review before approval.",
-      executionMode: "ordered",
-      status: "draft",
-      assignments: [
-        {
-          id: "asg_004_caridad",
-          participantId: "par_004_caridad",
-          name: "Dr. Caridad Lim",
-          emailMasked: "c****@example.com",
-          organization: "Sampaguita Learning Institute",
-          action: "review",
-          signatureRequired: true, // explicit sender choice → needs a Signature field
-          status: "waiting-for-prior-stage",
-          position: 1,
-          fields: [], // deliberately missing → missing-signature-field
-        },
-        {
-          id: "asg_004_registrar",
-          participantId: "par_004_registrar",
-          name: "Office of the Registrar",
-          emailMasked: "r****@example.com",
-          organization: "Sampaguita Learning Institute",
-          action: "acknowledge",
-          signatureRequired: false,
-          status: "waiting-for-prior-stage",
-          position: 2,
-        },
-      ],
-    },
-    {
-      id: "stg_004_signing",
-      name: "Signing",
-      description: "Employer and faculty member sign.",
-      status: "draft",
-      assignments: [
-        {
-          id: "asg_004_employer",
-          participantId: "par_004_employer",
-          name: "Rafael Gomez",
-          emailMasked: "r****@example.com",
-          organization: "Sampaguita Learning Institute",
-          action: "sign",
-          status: "waiting-for-prior-stage",
-          fields: [
-            // Deliberately owned by a different assignment → blocking issue.
-            { id: "fld_004_sig_shared", type: "signature", page: 3, foreignOwner: "asg_004_faculty" },
-          ],
-        },
-        {
-          id: "asg_004_faculty",
-          participantId: "par_004_faculty",
-          name: "Luis Bautista",
-          emailMasked: "l****@example.com",
-          action: "sign",
-          status: "waiting-for-prior-stage",
-          fields: [
-            { id: "fld_004_sig_shared", type: "signature", page: 3 },
-            // A stale reference: this field no longer exists on the document.
-            { id: "fld_004_init_removed", type: "initials", page: 2, present: false },
-          ],
-        },
-      ],
-    },
-    {
-      id: "stg_004_distribution",
-      name: "Distribution",
-      description: "No one has been added yet.",
-      type: "distribution",
-      status: "draft",
-      assignments: [], // deliberately empty → blocking issue
-    },
-  ],
-});
+// NOTE ON txn_004: the draft "Faculty Employment Contract" deliberately has NO
+// workflow. It is the only transaction fixture whose status leaves the signing
+// workflow editable, so it is reserved as the document where the from-scratch
+// creation journey and the recipient-order conversion can both be exercised
+// end to end. The configuration-issue demonstrations live on txn_008 instead.
 
 // ── txn_006 — Expired workflow ────────────────────────────────────────────────
 
@@ -602,8 +516,14 @@ const WF_008 = mkWorkflow({
       ],
     },
     {
+      // Also carries the configuration-issue demonstrations used by the
+      // field-readiness matrix and the validation summary:
+      //   - a Review assignment with an explicit signature requirement but no field
+      //   - one Signature field claimed by two people (only one can own it)
+      //   - a stale field reference that no longer exists on the document
       id: "stg_008_second",
       name: "Company Signing",
+      executionMode: "ordered",
       status: "waiting-for-prior-stage",
       assignments: [
         {
@@ -613,9 +533,38 @@ const WF_008 = mkWorkflow({
           emailMasked: "j****@example.com",
           action: "sign",
           status: "waiting-for-prior-stage",
-          fields: [{ id: "fld_008_sig_jose", type: "signature", page: 2 }],
+          position: 1,
+          fields: [
+            // Deliberately owned by a different assignment → blocking issue:
+            // one Signature field can belong to only one person.
+            { id: "fld_008_sig_shared", type: "signature", page: 2, foreignOwner: "asg_008_rina_review" },
+            // A stale reference: this field no longer exists on the document.
+            { id: "fld_008_init_removed", type: "initials", page: 1, present: false },
+          ],
+        },
+        {
+          // Rina also appears in stage 1, which additionally exercises the
+          // "assigned in more than one stage" advisory. Each assignment is a
+          // separate action she must complete — they are never merged.
+          id: "asg_008_rina_review",
+          participantId: "par_008_rina",
+          name: "Rina Evangelista",
+          emailMasked: "r****@example.com",
+          action: "review",
+          signatureRequired: true, // explicit sender choice → needs its own Signature field
+          status: "waiting-for-prior-stage",
+          position: 2,
+          fields: [], // deliberately missing → missing-signature-field
         },
       ],
+    },
+    {
+      id: "stg_008_distribution",
+      name: "Distribution",
+      description: "No one has been added yet.",
+      type: "distribution",
+      status: "waiting-for-prior-stage",
+      assignments: [], // deliberately empty → blocking issue
     },
   ],
 });
@@ -623,16 +572,20 @@ const WF_008 = mkWorkflow({
 // ── Registry ──────────────────────────────────────────────────────────────────
 
 export const SIGNING_WORKFLOW_FIXTURES: SigningWorkflow[] = [
-  WF_001, WF_002, WF_003, WF_004, WF_006, WF_008,
+  WF_001, WF_002, WF_003, WF_006, WF_008,
 ];
 
 /**
- * Documents that deliberately have NO workflow configured, so the empty state and
- * the "create from current recipient order" path can both be exercised.
- *   txn_005 — sent, parallel, 2 participants
- *   txn_007 — archived/expired
+ * Documents that deliberately have NO workflow configured.
+ *
+ *   txn_004 — DRAFT. The only fixture whose transaction status leaves the signing
+ *             workflow editable, so it is the document where the empty state,
+ *             from-scratch creation, recipient-order conversion, review, and the
+ *             creation result can all be exercised end to end.
+ *   txn_005 — sent (configuration locked) — empty state, read-only explanation
+ *   txn_007 — archived (configuration locked) — also exercises preview-unavailable
  */
-export const DOCUMENTS_WITHOUT_WORKFLOW: readonly string[] = ["txn_005", "txn_007"];
+export const DOCUMENTS_WITHOUT_WORKFLOW: readonly string[] = ["txn_004", "txn_005", "txn_007"];
 
 export const VALID_WORKFLOW_DOCUMENT_IDS: ReadonlySet<string> = new Set([
   "txn_001", "txn_002", "txn_003", "txn_004", "txn_005", "txn_006", "txn_007", "txn_008",

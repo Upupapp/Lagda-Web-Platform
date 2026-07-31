@@ -1,6 +1,6 @@
 # LAGDA Frontend Documentation Index
 
-Last updated: 2026-07-16 (Commands 1–35 complete)
+Last updated: 2026-07-16 (Commands 1â€“35 complete)
 
 ---
 
@@ -8,8 +8,8 @@ Last updated: 2026-07-16 (Commands 1–35 complete)
 
 | Document | Description |
 |----------|-------------|
-| [product-terminology.md](product-terminology.md) | Canonical terminology — preferred terms, terms to avoid, status vocabulary |
-| [final-content-and-claims-review.md](final-content-and-claims-review.md) | Legal and product-claim review — what is approved, what needs revision |
+| [product-terminology.md](product-terminology.md) | Canonical terminology â€” preferred terms, terms to avoid, status vocabulary |
+| [final-content-and-claims-review.md](final-content-and-claims-review.md) | Legal and product-claim review â€” what is approved, what needs revision |
 
 ---
 
@@ -187,7 +187,7 @@ Last updated: 2026-07-16 (Commands 1–35 complete)
 
 | Document | Description |
 |----------|-------------|
-| [frontend-release-checklist.md](frontend-release-checklist.md) | Full release checklist — quality, content, security, a11y, responsive |
+| [frontend-release-checklist.md](frontend-release-checklist.md) | Full release checklist â€” quality, content, security, a11y, responsive |
 | [final-frontend-audit.md](final-frontend-audit.md) | C25 complete audit report |
 
 ---
@@ -196,8 +196,8 @@ Last updated: 2026-07-16 (Commands 1–35 complete)
 
 | Document | Description |
 |----------|-------------|
-| [backend-integration-handoff.md](backend-integration-handoff.md) | All backend requirements — auth, documents, signing, completion, admin, billing |
-| [backend-implementation-priority.md](backend-implementation-priority.md) | Prioritized backend endpoint list (P0–P3) with recommended build order |
+| [backend-integration-handoff.md](backend-integration-handoff.md) | All backend requirements â€” auth, documents, signing, completion, admin, billing |
+| [backend-implementation-priority.md](backend-implementation-priority.md) | Prioritized backend endpoint list (P0â€“P3) with recommended build order |
 | [frontend-known-limitations.md](frontend-known-limitations.md) | Honest list of all frontend-only limitations |
 
 ---
@@ -208,11 +208,11 @@ Last updated: 2026-07-16 (Commands 1–35 complete)
 
 | Document | Description |
 |----------|-------------|
-| [lagda-esignature-mvp-scope.md](lagda-esignature-mvp-scope.md) | Definitive MVP scope — what's in, what's not, demonstration accuracy statement |
-| [mvp-consolidation-audit.md](mvp-consolidation-audit.md) | Full audit through C32 — nav, routes, search, flags, gating issues found and fixed |
+| [lagda-esignature-mvp-scope.md](lagda-esignature-mvp-scope.md) | Definitive MVP scope â€” what's in, what's not, demonstration accuracy statement |
+| [mvp-consolidation-audit.md](mvp-consolidation-audit.md) | Full audit through C32 â€” nav, routes, search, flags, gating issues found and fixed |
 | [launch-feature-classification.md](launch-feature-classification.md) | Every capability classified by maturity level |
 | [advanced-feature-gating.md](advanced-feature-gating.md) | 3-layer gating architecture: launch profiles, feature flags, permissions |
-| [launch-readiness-matrix.md](launch-readiness-matrix.md) | Frontend/backend/legal readiness per capability — P0 blockers identified |
+| [launch-readiness-matrix.md](launch-readiness-matrix.md) | Frontend/backend/legal readiness per capability â€” P0 blockers identified |
 | [launch-route-map.md](launch-route-map.md) | Complete route inventory (~187 routes across public + authenticated) |
 | [launch-navigation-model.md](launch-navigation-model.md) | Nav architecture, role-based visibility, mobile nav rules |
 | [end-to-end-launch-journeys.md](end-to-end-launch-journeys.md) | 9 critical user journeys with step-by-step flows and backend deps |
@@ -221,7 +221,7 @@ Last updated: 2026-07-16 (Commands 1–35 complete)
 
 ---
 
-## Module Docs Added C26–C35
+## Module Docs Added C26â€“C35
 
 | Document | Description |
 |----------|-------------|
@@ -230,15 +230,16 @@ Last updated: 2026-07-16 (Commands 1–35 complete)
 | [notifications-center.md](notifications-center.md) | Notifications Center (C28) |
 | [reports-center.md](reports-center.md) | Reports Center (C29) |
 | [global-search-command-palette.md](global-search-command-palette.md) | Global Search + Command Palette (C30) |
-| [document-organization.md](document-organization.md) | Document Organization — Folders, Tags, Views, Favorites, Bulk (C31) |
-| [workflow-automation-rules-policies-simulations-and-conflicts.md](workflow-automation-rules-policies-simulations-and-conflicts.md) | Workflow Automation (C32) — enterprise-preview, gated by default |
-| [signing-workflow-stage-routing-kanban-and-esignature-requirements.md](signing-workflow-stage-routing-kanban-and-esignature-requirements.md) | **Signing Workflow (C37)** — per-document stage routing, Kanban board, per-participant eSignature requirements. Launch core, enabled by default. **Not** Workflow Automation. |
+| [document-organization.md](document-organization.md) | Document Organization â€” Folders, Tags, Views, Favorites, Bulk (C31) |
+| [workflow-automation-rules-policies-simulations-and-conflicts.md](workflow-automation-rules-policies-simulations-and-conflicts.md) | Workflow Automation (C32) â€” enterprise-preview, gated by default |
+| [signing-workflow-stage-routing-kanban-and-esignature-requirements.md](signing-workflow-stage-routing-kanban-and-esignature-requirements.md) | **Signing Workflow (C37)** â€” per-document stage routing, Kanban board, per-participant eSignature requirements. Launch core, enabled by default. **Not** Workflow Automation. |
 | [signing-workflow-audit.md](signing-workflow-audit.md) | Pre-implementation audit of the routing surface for C37 |
+| [signing-workflow-post-implementation-audit.md](signing-workflow-post-implementation-audit.md) | SWEEP / STITCH / BRAND / MOBILEVIEW / TEST audit of C37 — 7 findings, 6 fixed |
 
 ---
 
 ## Notes
 
-Documents marked *(pending)* were not created in Commands 1–25 because the implementation was completed correctly without requiring a separate doc file. They are candidates for future documentation sprints.
+Documents marked *(pending)* were not created in Commands 1â€“25 because the implementation was completed correctly without requiring a separate doc file. They are candidates for future documentation sprints.
 
 Documents marked *(planned)* require tooling (automated accessibility scanner, browser automation) that is outside the current frontend-only build phase.

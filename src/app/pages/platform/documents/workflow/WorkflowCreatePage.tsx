@@ -14,7 +14,7 @@ import {
   GF, WF, TONES, WORKFLOW_STYLES,
   AddPersonPanel, DemonstrationNotice, FieldReadinessMatrix, ParticipantConfigPanel,
   ValidationSummary, WorkflowBoard, WorkflowDocumentPreview, WorkflowSectionHeading,
-  WorkflowSheet, WorkflowSkeleton, WorkflowSummaryHeader, useAnnouncer,
+  WorkflowSheet, WorkflowSkeleton, WorkflowSummaryHeader, useAnnouncer, useWorkflowConfirm,
 } from "../../../../components/workflow";
 import { CapabilityUnavailable } from "../../../../components/platform/CapabilityUnavailable";
 import { WorkflowErrorState } from "./WorkflowTab";
@@ -51,6 +51,7 @@ export function WorkflowCreatePage() {
   const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
   const { announce, announcerNode } = useAnnouncer();
+  const { confirm, confirmDialog } = useWorkflowConfirm();
 
   const base = `/app/documents/${data.documentId}/workflow`;
   const step: WorkflowCreationStepId = parseCreationStepId(searchParams.get("step"));
@@ -87,12 +88,16 @@ export function WorkflowCreatePage() {
     return () => window.removeEventListener("beforeunload", onBeforeUnload);
   }, [hasUnsavedBasics]);
 
-  const confirmLeave = useCallback(() => {
-    if (!hasUnsavedBasics) return true;
-    return window.confirm(
-      "Leave without creating this workflow? The temporary frontend state you entered will be cleared.",
-    );
-  }, [hasUnsavedBasics]);
+  const leaveBuilder = useCallback((destination: string) => {
+    if (!hasUnsavedBasics) { navigate(destination); return; }
+    confirm({
+      title: "Leave without creating this workflow?",
+      body: "The workflow details you entered have not been created yet. They are temporary frontend state and will be cleared.",
+      confirmLabel: "Leave and clear",
+      destructive: true,
+      onConfirm: () => navigate(destination),
+    });
+  }, [hasUnsavedBasics, confirm, navigate]);
 
   // ── Default workflow name ───────────────────────────────────────────────────
   const defaultName = useMemo(
@@ -144,21 +149,28 @@ export function WorkflowCreatePage() {
     }
   }, [data, name, defaultName, announce, setStep]);
 
-  const undoConversion = useCallback(async () => {
+  const undoConversion = useCallback(() => {
     if (!data.workflow) return;
-    if (!window.confirm("Undo the stages created from the recipient order? The draft will be removed.")) return;
-    setBusy(true);
-    const result = await signingWorkflowService.removeWorkflowDraftDemonstration(
-      data.documentId, String(data.workflow.id), data.ctx,
-    );
-    setBusy(false);
-    if (result.ok) {
-      setConversionApplied(false);
-      data.reload();
-      announce("The generated stages were removed. You can start again.");
-      setStep("basics");
-    }
-  }, [data, announce, setStep]);
+    confirm({
+      title: "Undo the generated stages?",
+      body: "The stages created from the current recipient order will be removed and the draft workflow deleted. The document's own recipient order is not changed.",
+      confirmLabel: "Undo and remove draft",
+      destructive: true,
+      onConfirm: async () => {
+        setBusy(true);
+        const result = await signingWorkflowService.removeWorkflowDraftDemonstration(
+          data.documentId, String(data.workflow!.id), data.ctx,
+        );
+        setBusy(false);
+        if (result.ok) {
+          setConversionApplied(false);
+          data.reload();
+          announce("The generated stages were removed. You can start again.");
+          setStep("basics");
+        }
+      },
+    });
+  }, [data, announce, setStep, confirm]);
 
   // ── Mutations ───────────────────────────────────────────────────────────────
 
@@ -375,7 +387,7 @@ export function WorkflowCreatePage() {
           type="button"
           className="wf-btn wf-btn-ghost wf-btn-sm"
           style={{ padding: 0, marginBottom: 8 }}
-          onClick={() => { if (confirmLeave()) navigate(base); }}
+          onClick={() => leaveBuilder(base)}
         >
           <ArrowLeft size={15} aria-hidden />
           Back to Signing Workflow
@@ -555,16 +567,20 @@ export function WorkflowCreatePage() {
               onDeleteStage={(stageId) => {
                 const stage = data.stages.find(s => s.id === stageId);
                 if (!stage) return;
-                const message = stage.assignments.length > 0
-                  ? `Delete "${stage.name}"? It contains ${stage.assignments.length} ${stage.assignments.length === 1 ? "person" : "people"}, and their assignments will be removed from the draft.`
-                  : `Delete "${stage.name}"?`;
-                if (!window.confirm(message)) return;
-                void runStageMutation(
-                  () => signingWorkflowService.removeWorkflowStage(
-                    data.documentId, String(data.workflow!.id), String(stageId), data.ctx,
+                confirm({
+                  title: `Delete "${stage.name}"?`,
+                  body: stage.assignments.length > 0
+                    ? `This stage contains ${stage.assignments.length} ${stage.assignments.length === 1 ? "person" : "people"}. Their assignments will be removed from the draft configuration. No invitation is withdrawn and no completed action is undone.`
+                    : "This empty stage will be removed from the draft configuration.",
+                  confirmLabel: "Delete stage",
+                  destructive: true,
+                  onConfirm: () => void runStageMutation(
+                    () => signingWorkflowService.removeWorkflowStage(
+                      data.documentId, String(data.workflow!.id), String(stageId), data.ctx,
+                    ),
+                    `${stage.name} was removed.`,
                   ),
-                  `${stage.name} was removed.`,
-                );
+                });
               }}
               onMoveStage={moveStage}
               onAddPerson={(stageId) => setAddPersonStageId(stageId)}
@@ -807,6 +823,8 @@ export function WorkflowCreatePage() {
           }}
         />
       )}
+
+      {confirmDialog}
 
       {/* Cards open the participant panel when clicked on the board */}
       <BoardSelectionBridge

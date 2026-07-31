@@ -380,7 +380,7 @@ export function FieldReadinessMatrix({
             ? "Everyone who must act has the fields they need."
             : `${issueCount} ${issueCount === 1 ? "person needs" : "people need"} field attention.`}
         </p>
-        <label className="wf-row" style={{ ...GF, gap: 8, fontSize: 13, color: WF.slate6, cursor: "pointer" }}>
+        <label className="wf-row" style={{ ...GF, gap: 8, fontSize: 13, color: WF.slate6, cursor: "pointer", minHeight: 44 }}>
           <input
             type="checkbox"
             checked={issuesOnly}

@@ -392,7 +392,7 @@ function StageColumn(props: ColumnProps) {
               {onDuplicateStage && (
                 <button
                   type="button"
-                  className="wf-icon-btn"
+                  className="wf-icon-btn wf-icon-btn-sm"
                   style={{ width: 36, height: 36 }}
                   onClick={() => {
                     onDuplicateStage(stage.id);
@@ -407,7 +407,7 @@ function StageColumn(props: ColumnProps) {
               {onDeleteStage && (
                 <button
                   type="button"
-                  className="wf-icon-btn"
+                  className="wf-icon-btn wf-icon-btn-sm"
                   style={{ width: 36, height: 36, color: WF.errorText, borderColor: WF.errorBorder }}
                   onClick={() => onDeleteStage(stage.id)}
                   aria-label={`Delete stage: ${stage.name}`}

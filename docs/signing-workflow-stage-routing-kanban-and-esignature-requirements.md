@@ -502,3 +502,34 @@ See `docs/backend-integration-handoff.md` § *Signing Workflow (Command 37)*.
    component set. The other three routes are 9–25 kB and reuse it.
 8. **No recipient groups, quorum, weighted voting, or conditional branching** — deliberate.
 9. **NOTIFY and STITCH skills are not registered** in this environment, so neither was invoked.
+
+
+---
+
+## Post-implementation audit (SWEEP · STITCH · BRAND · MOBILEVIEW · TEST)
+
+Full record: `docs/signing-workflow-post-implementation-audit.md`.
+
+Six findings fixed after C37 landed:
+- Native `window.confirm` (C37 held the only 6 uses in the repo) replaced with a focus-trapped
+  in-app `WorkflowConfirmDialog`.
+- Dead export `ActionPill` removed.
+- `/help` and `/contact` now open in a new tab, matching the PlatformHeader / UserMenu
+  convention, so a sender is not pulled out of the authenticated shell mid-task.
+- **`wf_004` removed and `txn_004` reserved as the editable, workflow-free document.** Because
+  `txn_004` is the only draft transaction fixture, seeding a workflow onto it had left the
+  empty-state CTA, the from-scratch creation flow, and the recipient-order conversion
+  unreachable anywhere in the demonstration. Issue demonstrations moved to `wf_008`.
+- Touch targets below 44px raised on touch viewports (`.wf-btn-sm`, both board icon buttons,
+  the summary disclosure toggle).
+- "Issues only" checkbox label given a 44px hit area.
+
+Accepted with rationale, not changed: `demo-clock` is not used for mutation timestamps (they
+are session events, not fixtures); the 860px board breakpoint deliberately differs from the
+project's 768px threshold; the Field Placement round trip remains conditional on an active
+preparation draft.
+
+**Systemic finding, not a C37 defect:** the brand guideline's raw tokens (`#EAF6FF`,
+`#E5E7EB`, `#22C55E`) are used **zero** times platform-wide; the codebase uses derived
+accessible pairs (`#F0F9FF`, `#E2E8F0`, `#166534`). C37 matches the codebase. Reconciling the
+brand doc with the implemented palette needs its own command.

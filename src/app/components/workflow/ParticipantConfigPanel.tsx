@@ -16,7 +16,9 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { AlertTriangle, ChevronDown, ChevronRight, Search, X } from "lucide-react";
 import { GF, TONES, WF } from "./WorkflowStyles";
-import { ParticipantAvatar, ReadinessPill, WorkflowPill, describeRequirement } from "./WorkflowPrimitives";
+import {
+  ParticipantAvatar, ReadinessPill, WorkflowPill, describeRequirement, useWorkflowConfirm,
+} from "./WorkflowPrimitives";
 import type {
   SigningStage,
   SigningStageId,
@@ -184,6 +186,7 @@ export function ParticipantConfigPanel({
   const [notify, setNotify] = useState<StageParticipantNotificationDirection>(assignment.notificationDirection);
   const [instruction, setInstruction] = useState(assignment.instruction ?? "");
   const [targetStageId, setTargetStageId] = useState<SigningStageId>(stage.id);
+  const { confirm, confirmDialog } = useWorkflowConfirm();
 
   const dirty =
     action !== assignment.action
@@ -204,23 +207,25 @@ export function ParticipantConfigPanel({
 
   const signatureLocked = actionForbidsSignature(action) || actionAlwaysRequiresSignature(action);
 
+  // Unsaved changes are protected, but an untouched form never prompts.
+  const requestClose = () => {
+    if (!dirty) { onClose(); return; }
+    confirm({
+      title: "Discard these changes?",
+      body: "The changes to this person's configuration have not been applied. They are temporary frontend state and will be cleared.",
+      confirmLabel: "Discard changes",
+      destructive: true,
+      onConfirm: onClose,
+    });
+  };
+
   return (
     <Sheet
       title="Participant"
-      onClose={() => {
-        if (dirty && !window.confirm("Discard the changes to this person's configuration?")) return;
-        onClose();
-      }}
+      onClose={requestClose}
       footer={canEdit ? (
         <>
-          <button
-            type="button"
-            className="wf-btn wf-btn-secondary"
-            onClick={() => {
-              if (dirty && !window.confirm("Discard the changes to this person's configuration?")) return;
-              onClose();
-            }}
-          >
+          <button type="button" className="wf-btn wf-btn-secondary" onClick={requestClose}>
             Cancel
           </button>
           <button
@@ -502,16 +507,20 @@ export function ParticipantConfigPanel({
           <button
             type="button"
             className="wf-btn wf-btn-danger wf-btn-sm"
-            onClick={() => {
-              if (window.confirm(`Remove ${assignment.participantName} from ${stage.name}? This only changes the draft configuration.`)) {
-                onRemove();
-              }
-            }}
+            onClick={() => confirm({
+              title: "Remove this person from the stage?",
+              body: `${assignment.participantName} will be removed from "${stage.name}". This only changes the draft configuration — no invitation is withdrawn and no completed action is undone.`,
+              confirmLabel: "Remove from stage",
+              destructive: true,
+              onConfirm: onRemove,
+            })}
           >
             Remove from this stage
           </button>
         </div>
       )}
+
+      {confirmDialog}
     </Sheet>
   );
 }

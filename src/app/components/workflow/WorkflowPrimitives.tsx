@@ -153,10 +153,6 @@ export function RequirementPill({ assignment }: { assignment: StageParticipantAs
   return <WorkflowPill label={label} tone={tone} />;
 }
 
-export function ActionPill({ action }: { action: StageParticipantAction }) {
-  return <WorkflowPill label={STAGE_ACTION_LABELS[action]} tone={TONES.neutral} />;
-}
-
 // ── Stage number badge ────────────────────────────────────────────────────────
 // A design-system badge. The official LAGDA logo is never used here.
 
@@ -495,6 +491,107 @@ export function WorkflowSkeleton({ label }: { label: string }) {
       </div>
     </div>
   );
+}
+
+// ── Confirm dialog ────────────────────────────────────────────────────────────
+// The platform never uses native window.confirm: it is unstyled, cannot be
+// brand-aligned, is not focus-managed by the app, and some embedded contexts
+// suppress it. This matches the focus-trapped dialog pattern used elsewhere.
+
+export interface WorkflowConfirmRequest {
+  title:        string;
+  body:         string;
+  confirmLabel: string;
+  destructive?: boolean;
+  onConfirm:    () => void;
+}
+
+export function WorkflowConfirmDialog({
+  request, onClose,
+}: { request: WorkflowConfirmRequest | null; onClose: () => void }) {
+  const panelRef = useRef<HTMLDivElement>(null);
+  const confirmRef = useRef<HTMLButtonElement>(null);
+  const previousFocus = useRef<HTMLElement | null>(null);
+
+  useEffect(() => {
+    if (!request) return;
+    previousFocus.current = document.activeElement as HTMLElement | null;
+    confirmRef.current?.focus();
+    return () => { previousFocus.current?.focus?.(); };
+  }, [request]);
+
+  useEffect(() => {
+    if (!request) return;
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") { e.stopPropagation(); onClose(); return; }
+      if (e.key !== "Tab" || !panelRef.current) return;
+      const focusable = panelRef.current.querySelectorAll<HTMLElement>(
+        'button:not([disabled]), [tabindex]:not([tabindex="-1"])',
+      );
+      if (focusable.length === 0) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+    }
+    document.addEventListener("keydown", onKeyDown, true);
+    return () => document.removeEventListener("keydown", onKeyDown, true);
+  }, [request, onClose]);
+
+  if (!request) return null;
+
+  return (
+    <div
+      role="alertdialog"
+      aria-modal="true"
+      aria-labelledby="wf-confirm-title"
+      aria-describedby="wf-confirm-body"
+      style={{
+        position: "fixed", inset: 0, zIndex: 1300,
+        display: "flex", alignItems: "center", justifyContent: "center", padding: 20,
+      }}
+    >
+      <div onClick={onClose} aria-hidden style={{ position: "absolute", inset: 0, background: "rgba(7,17,31,0.42)" }} />
+      <div
+        ref={panelRef}
+        className="wf-root"
+        style={{
+          position: "relative", background: WF.white, borderRadius: 12,
+          padding: "24px 26px", maxWidth: 440, width: "100%",
+          boxShadow: "0 20px 60px rgba(7,17,31,0.18)",
+        }}
+      >
+        <h2 id="wf-confirm-title" style={{ ...GF, margin: "0 0 10px", fontSize: 17, fontWeight: 700, color: WF.navy }}>
+          {request.title}
+        </h2>
+        <p id="wf-confirm-body" style={{ ...GF, margin: "0 0 22px", fontSize: 14, color: WF.slate6, lineHeight: 1.65 }}>
+          {request.body}
+        </p>
+        <div className="wf-row" style={{ gap: 10, justifyContent: "flex-end" }}>
+          <button type="button" className="wf-btn wf-btn-secondary" onClick={onClose}>
+            Cancel
+          </button>
+          <button
+            ref={confirmRef}
+            type="button"
+            className={`wf-btn ${request.destructive ? "wf-btn-danger" : "wf-btn-primary"}`}
+            onClick={() => { request.onConfirm(); onClose(); }}
+          >
+            {request.confirmLabel}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** Small hook so pages can request a confirmation without managing dialog state. */
+export function useWorkflowConfirm() {
+  const [request, setRequest] = useState<WorkflowConfirmRequest | null>(null);
+  const confirm = useCallback((r: WorkflowConfirmRequest) => setRequest(r), []);
+  const close = useCallback(() => setRequest(null), []);
+  const dialog = <WorkflowConfirmDialog request={request} onClose={close} />;
+  return { confirm, confirmDialog: dialog };
 }
 
 // ── Small inline helpers ──────────────────────────────────────────────────────

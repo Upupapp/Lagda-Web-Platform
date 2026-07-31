@@ -249,13 +249,22 @@ line up with the existing `txn_001`–`txn_008` transaction fixtures.
 | `wf_001` | txn_001 | Sequential two-stage signing. Stage 1 complete, stage 2 current. |
 | `wf_002` | txn_002 | Review (no signature) → Approval (+ signature) → parallel Signing → Distribution. Fully completed. |
 | `wf_003` | txn_003 | Parallel signing in progress, two of four complete, distribution waiting. |
-| `wf_004` | txn_004 | Draft with deliberate issues: missing signature field, a field owned by another participant, a stale field reference, an empty distribution stage, and an ordered stage. |
 | `wf_006` | txn_006 | Expired workflow, one participant complete, one expired. |
-| `wf_008` | txn_008 | Blocked workflow (authentication not completed), later stage waiting. |
+| `wf_008` | txn_008 | Blocked workflow (authentication not completed) **plus every configuration-issue demonstration**: a Review assignment with an explicit signature requirement but no field, one Signature field claimed by two people, a stale field reference, an ordered stage, an empty distribution stage, and the same person assigned in two stages. |
 
-`txn_005` and `txn_007` deliberately have **no** workflow so the empty state and the
-"create from current recipient order" path can both be exercised. `txn_007` is also in
-`PREVIEW_UNAVAILABLE_DOCUMENT_IDS` so the preview-failure fallback can be exercised.
+Documents deliberately **without** a workflow:
+
+| Document | Status | Why |
+|----------|--------|-----|
+| `txn_004` | draft | The **only** transaction fixture whose status leaves the workflow editable. Reserved so the empty state, from-scratch creation, recipient-order conversion, review, and creation result can all be exercised end to end. |
+| `txn_005` | sent | Configuration locked — exercises the read-only empty state. |
+| `txn_007` | archived | Configuration locked, and in `PREVIEW_UNAVAILABLE_DOCUMENT_IDS` so the preview-failure fallback can be exercised. |
+
+> **Why `wf_004` no longer exists.** It originally sat on `txn_004`. Because every other
+> transaction fixture is in a status that locks workflow configuration, that made `txn_004`
+> the only editable document *and* occupied it — leaving the from-scratch creation journey
+> and the recipient-order conversion unreachable in the demonstration. The issue
+> demonstrations moved to `wf_008`, which is already the "needs attention" document.
 
 Also defined: `WORKFLOW_PARTICIPANT_CANDIDATES` (contacts, workspace members, one suspended
 member, and one member in a different workspace — the last two must never appear in the picker)
