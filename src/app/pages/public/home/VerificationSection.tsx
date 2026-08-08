@@ -21,10 +21,8 @@ export function VerificationSection() {
       <div style={{ maxWidth: 1200, margin: "0 auto", padding: "80px 24px" }}>
         <div style={{
           display: "grid",
-          gridTemplateColumns: "1fr 1fr",
           gap: "48px 64px",
-          alignItems: "center",
-        }} className="verify-grid">
+          alignItems: "center" }} className="verify-grid">
           {/* Left: copy */}
           <div>
             <p style={{ color: "#38bdf8", ...GM, fontSize: 11, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 12 }}>

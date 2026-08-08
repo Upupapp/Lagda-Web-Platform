@@ -85,7 +85,7 @@ export function DocPrep() {
       />
 
       <PageSection id="workspace" light bordered>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "32px 48px", alignItems: "start" }} className="dp-two-col">
+        <div style={{ display: "grid", gap: "32px 48px", alignItems: "start" }} className="dp-two-col">
           <div>
             <SectionHeading eyebrow="Field placement" id="fp-h2" heading="Place the right fields for the right participants." sub="Assign each field to a specific participant role. Signers only see and complete their own required fields." />
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
@@ -104,7 +104,7 @@ export function DocPrep() {
 
       <PageSection id="field-types">
         <SectionHeading eyebrow="Field types" id="ft-h2" heading="Capture exactly what each transaction requires." center />
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 10 }} className="ft-grid">
+        <div style={{ display: "grid", gap: 10 }} className="ft-grid">
           {FIELD_TYPES.map((f) => (
             <div key={f.type} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 10, padding: "12px 14px" }}>
               <p style={{ color: "#38bdf8", ...GM, fontSize: 11, fontWeight: 700, margin: 0, marginBottom: 4 }}>{f.type}</p>
@@ -116,7 +116,7 @@ export function DocPrep() {
       </PageSection>
 
       <PageSection id="templates-link" light bordered>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "32px 48px", alignItems: "center" }} className="dp-two-col">
+        <div style={{ display: "grid", gap: "32px 48px", alignItems: "center" }} className="dp-two-col">
           <div>
             <SectionHeading eyebrow="Reuse" id="reuse-h2" heading="Save your setup as a template." sub="Once a document workflow is configured, save it as a template to reuse with different participants — without reconfiguring fields and routing each time." />
             <div style={{ display: "flex", gap: 10 }}>

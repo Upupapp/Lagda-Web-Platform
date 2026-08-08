@@ -34,7 +34,7 @@ export function SecurityOverview() {
 
       <PageSection id="section-map">
         <SectionHeading eyebrow="What this section covers" id="sm-h2" heading="Each security topic — covered in its own page." center />
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10 }} className="sm-grid">
+        <div style={{ display: "grid", gap: 10 }} className="sm-grid">
           {[
             { path: "/security/account-security",           label: "Account Security",          desc: "Passwords, MFA, session controls, and access history." },
             { path: "/security/signer-authentication",      label: "Signer Authentication",     desc: "Methods that increase confidence the right person is signing." },

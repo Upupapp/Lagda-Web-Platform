@@ -100,7 +100,7 @@ export function BusinessTeams() {
       />
 
       <PageSection id="challenges" light bordered>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "32px 48px", alignItems: "start" }} className="biz-two-col">
+        <div style={{ display: "grid", gap: "32px 48px", alignItems: "start" }} className="biz-two-col">
           <div>
             <SectionHeading eyebrow="What slows you down" id="ch-h2" heading="The problems that grow with every new deal." />
             <ChallengeCards challenges={CHALLENGES} />
@@ -114,7 +114,7 @@ export function BusinessTeams() {
       </PageSection>
 
       <PageSection id="workflow">
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "32px 48px" }} className="biz-two-col">
+        <div style={{ display: "grid", gap: "32px 48px" }} className="biz-two-col">
           <div>
             <SectionHeading eyebrow="Approval workflow" id="wf-h2" heading="Structured routing — every department in order." />
             <WorkflowSteps steps={BUSINESS_WORKFLOW} />

@@ -73,7 +73,7 @@ export function SequentialSigning() {
       />
 
       <PageSection id="diagram" light bordered>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "32px 48px", alignItems: "start" }} className="ss-two-col">
+        <div style={{ display: "grid", gap: "32px 48px", alignItems: "start" }} className="ss-two-col">
           <div>
             <SectionHeading eyebrow="How it works" id="ss-how-h2" heading="Each step waits for the previous one to finish." sub="When Step 1 is complete, Step 2 participants receive their invitation — and so on. No step starts until the previous is done." />
             <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 20 }}>
@@ -98,7 +98,7 @@ export function SequentialSigning() {
 
       <PageSection id="use-cases">
         <SectionHeading eyebrow="Use cases" id="ss-uc-h2" heading="When sequential routing makes sense." center />
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 12 }} className="uc-grid">
+        <div style={{ display: "grid", gap: 12 }} className="uc-grid">
           {[
             { title: "Approval before signing", desc: "A manager or legal counsel reviews and approves before the authorized signatory is invited to sign." },
             { title: "HR acknowledgement",      desc: "Employee signs an employment document first; HR acknowledges receipt in a subsequent step." },

@@ -50,7 +50,7 @@ export function ApiIntegrations() {
       />
 
       <PageSection id="overview" light bordered>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "32px 48px", alignItems: "start" }} className="api-two-col">
+        <div style={{ display: "grid", gap: "32px 48px", alignItems: "start" }} className="api-two-col">
           <div>
             <SectionHeading eyebrow="Enterprise API" id="ea-h2" heading="Trigger signing transactions from your own applications." sub="The LAGDA API is designed for enterprise and developer integrations where document workflows need to be embedded in an existing system." />
             <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 20 }}>
@@ -79,7 +79,7 @@ export function ApiIntegrations() {
 
       <PageSection id="webhooks">
         <SectionHeading eyebrow="Webhooks" id="wh-h2" heading="Real-time event delivery to your endpoint." center />
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10 }} className="wh-grid">
+        <div style={{ display: "grid", gap: 10 }} className="wh-grid">
           {[
             { event: "transaction.created",   desc: "A new signing transaction has been created." },
             { event: "participant.viewed",     desc: "A participant has opened the document." },
@@ -99,7 +99,7 @@ export function ApiIntegrations() {
 
       <PageSection id="safeguards" light bordered>
         <SectionHeading eyebrow="Safeguards" id="sg-h2" heading="What API integrations do not do." center />
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 10 }} className="sg-grid">
+        <div style={{ display: "grid", gap: 10 }} className="sg-grid">
           {[
             { label: "No credential issuance here",    desc: "API keys and credentials are issued through your account settings after contacting Sales — not via a self-serve mechanism on this page." },
             { label: "No production environment here", desc: "This page describes integration capabilities. It does not connect to any LAGDA signing infrastructure." },

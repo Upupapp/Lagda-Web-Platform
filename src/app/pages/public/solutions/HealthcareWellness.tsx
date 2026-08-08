@@ -126,7 +126,7 @@ export function HealthcareWellness() {
       </PageSection>
 
       <PageSection id="challenges">
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "32px 48px", alignItems: "start" }} className="hc-two-col">
+        <div style={{ display: "grid", gap: "32px 48px", alignItems: "start" }} className="hc-two-col">
           <div>
             <SectionHeading eyebrow="Wellness operation challenges" id="ch-h2" heading="Where manual paperwork slows down your practice." sub="These are common challenges in wellness and fitness operations where digital document workflows may apply — subject to confirmation that each document type is appropriate." />
             <ChallengeCards challenges={CHALLENGES} />
@@ -140,7 +140,7 @@ export function HealthcareWellness() {
       </PageSection>
 
       <PageSection id="workflow" light bordered>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "32px 48px" }} className="hc-two-col">
+        <div style={{ display: "grid", gap: "32px 48px" }} className="hc-two-col">
           <div>
             <SectionHeading eyebrow="Workflow example" id="wf-h2" heading="Client acknowledgment — from form to verified record." />
             <WorkflowSteps steps={WELLNESS_WORKFLOW} />

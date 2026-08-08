@@ -69,7 +69,7 @@ export function SecuritySignerAuth() {
 
       <PageSection id="channel-concept">
         <SectionHeading eyebrow="Independent channels" id="ic-h2" heading="Why a separate channel matters." sub="Using a different communication channel for authentication increases confidence that the recipient controls both the email account and the phone or device." center />
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }} className="ic-grid">
+        <div style={{ display: "grid", gap: 12 }} className="ic-grid">
           <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 12, padding: "16px" }}>
             <p style={{ color: "#475569", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.07em", marginBottom: 10 }}>SAME-CHANNEL (Email OTP)</p>
             <p style={{ color: "#94a3b8", ...GF, fontSize: 13, lineHeight: 1.6, margin: 0 }}>
@@ -88,7 +88,7 @@ export function SecuritySignerAuth() {
 
       <PageSection id="risk-model" light bordered>
         <SectionHeading eyebrow="Choosing a method" id="rm-h2" heading="Match the method to the transaction's risk level." center />
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10 }} className="rm-grid">
+        <div style={{ display: "grid", gap: 10 }} className="rm-grid">
           {[
             { tier: "Low risk",    method: "Secure link or Email OTP",    examples: "Internal approvals, low-value contracts, standard correspondence" },
             { tier: "Medium risk", method: "SMS OTP or Authenticator app", examples: "Client agreements, employment documents, financial forms" },

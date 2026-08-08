@@ -179,7 +179,7 @@ function PublicPrivateSection() {
   return (
     <PageSection id="public-private" light bordered>
       <SectionHeading eyebrow="Privacy" id="pp-heading" heading="Public verification protects participant privacy." sub="LAGDA's public verification surface is designed to confirm a document's status without exposing participant information." />
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }} className="pp-grid">
+      <div style={{ display: "grid", gap: 20 }} className="pp-grid">
         <div style={{ background: "rgba(34,197,94,0.06)", border: "1px solid rgba(34,197,94,0.2)", borderRadius: 14, padding: "20px 20px" }}>
           <p style={{ color: "#22C55E", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", marginBottom: 14 }}>PUBLICLY SHOWN BY DEFAULT</p>
           {PUBLIC.map((item) => (
@@ -217,7 +217,7 @@ export function EsigVerificationAudit() {
 
       {/* Tracking */}
       <PageSection id="tracking" light bordered>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "32px 48px", alignItems: "start" }} className="va-two-col">
+        <div style={{ display: "grid", gap: "32px 48px", alignItems: "start" }} className="va-two-col">
           <div>
             <SectionHeading eyebrow="Real-time tracking" id="tracking-heading" heading="Track every document from send to completion." sub="LAGDA shows exactly where each participant stands at every moment — who has signed, who is pending, and what is outstanding." />
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
@@ -236,7 +236,7 @@ export function EsigVerificationAudit() {
 
       {/* Audit trail */}
       <PageSection id="audit-trail">
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "32px 48px", alignItems: "start" }} className="va-two-col">
+        <div style={{ display: "grid", gap: "32px 48px", alignItems: "start" }} className="va-two-col">
           <AuditTrailMockup />
           <div>
             <SectionHeading eyebrow="Audit trail" id="audit-heading" heading="Create audit-ready records automatically." sub="Every significant action in a transaction is recorded — with a timestamp and relevant contextual evidence." />
@@ -253,7 +253,7 @@ export function EsigVerificationAudit() {
       {/* Evidence details */}
       <PageSection id="evidence" light bordered>
         <SectionHeading eyebrow="Evidence" id="evidence-heading" heading="What each event may record." center />
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12 }} className="ev-grid">
+        <div style={{ display: "grid", gap: 12 }} className="ev-grid">
           {[
             { label: "Event type",              desc: "What happened in the transaction." },
             { label: "Date and time",            desc: "Timestamp in Philippine time zone." },
@@ -276,7 +276,7 @@ export function EsigVerificationAudit() {
 
       {/* Verification */}
       <PageSection id="verification">
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "32px 48px", alignItems: "start" }} className="va-two-col">
+        <div style={{ display: "grid", gap: "32px 48px", alignItems: "start" }} className="va-two-col">
           <div>
             <SectionHeading eyebrow="Document Verification" id="verif-heading" heading="Store completed documents and verify records when needed." sub="Every completed LAGDA transaction receives a Verification ID. Scan the QR code or enter the ID to check a document's LAGDA status." />
             <div style={{ background: "rgba(201,150,12,0.08)", border: "1px solid rgba(201,150,12,0.2)", borderRadius: 12, padding: "14px 16px", marginBottom: 16 }}>

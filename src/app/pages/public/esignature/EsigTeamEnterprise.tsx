@@ -128,7 +128,7 @@ export function EsigTeamEnterprise() {
       {/* Team capabilities grid */}
       <PageSection id="team-capabilities" light bordered>
         <SectionHeading eyebrow="Workspace features" id="ws-heading" heading="Organize your team's legal-document workflow." sub="One workspace. Every team member, template, contact, and transaction — organized and controlled." />
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 14 }} className="tc-grid">
+        <div style={{ display: "grid", gap: 14 }} className="tc-grid">
           {TEAM_CAPABILITIES.map((c) => (
             <div key={c.title} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 14, padding: "20px 18px" }}>
               <span aria-hidden style={{ fontSize: 22, display: "block", marginBottom: 10 }}>{c.icon}</span>
@@ -142,7 +142,7 @@ export function EsigTeamEnterprise() {
 
       {/* Members + workspace mockup */}
       <PageSection id="workspace">
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "32px 48px", alignItems: "start" }} className="te-two-col">
+        <div style={{ display: "grid", gap: "32px 48px", alignItems: "start" }} className="te-two-col">
           <div>
             <SectionHeading eyebrow="Workspace management" id="wsm-heading" heading="Everyone in the right place with the right access." sub="Role-based access controls help organizations define who can send, review, administer, or audit document transactions." />
             <p style={{ color: "#94a3b8", ...GF, fontSize: 14, lineHeight: 1.65, margin: 0, marginBottom: 16 }}>
@@ -162,7 +162,7 @@ export function EsigTeamEnterprise() {
 
       {/* Workspace roles */}
       <PageSection id="roles" light bordered>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "32px 48px", alignItems: "start" }} className="te-two-col">
+        <div style={{ display: "grid", gap: "32px 48px", alignItems: "start" }} className="te-two-col">
           <div>
             <SectionHeading eyebrow="Role-based access" id="roles-heading" heading="Control who can do what." />
             <p style={{ color: "#94a3b8", ...GF, fontSize: 14, lineHeight: 1.65, margin: 0, marginBottom: 20 }}>
@@ -178,7 +178,7 @@ export function EsigTeamEnterprise() {
 
       {/* Reporting */}
       <PageSection id="reporting">
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "32px 48px", alignItems: "start" }} className="te-two-col">
+        <div style={{ display: "grid", gap: "32px 48px", alignItems: "start" }} className="te-two-col">
           <div>
             <SectionHeading eyebrow="Usage reporting" id="report-heading" heading="Monitor your team's document activity." sub="Track transaction volume, completion rates, sender activity, expiring requests, and failed deliveries — all within the workspace." />
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
@@ -204,7 +204,7 @@ export function EsigTeamEnterprise() {
       {/* Security + enterprise */}
       <PageSection id="security-enterprise" light bordered>
         <SectionHeading eyebrow="Enterprise direction" id="ent-heading" heading="Ready for higher-volume organizations." center />
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 14 }} className="ent-grid">
+        <div style={{ display: "grid", gap: 14 }} className="ent-grid">
           {[
             { title: "Multi-factor authentication",  desc: "Require MFA for all workspace members as an organization-level control." },
             { title: "Session management",            desc: "Control how long sessions remain active and set timeout policies." },

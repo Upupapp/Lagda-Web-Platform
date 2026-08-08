@@ -37,7 +37,7 @@ export function SecureStorage() {
 
       <PageSection id="access">
         <SectionHeading eyebrow="Access controls" id="ac-h2" heading="Who can access stored documents." center />
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 10 }} className="acc-grid">
+        <div style={{ display: "grid", gap: 10 }} className="acc-grid">
           {[
             { who: "Senders",           access: "Can access their own transactions, download completed documents, and export audit records within their retention period." },
             { who: "Workspace admins",  access: "Can view transaction status and audit records across the workspace. Access to document content depends on workspace configuration." },

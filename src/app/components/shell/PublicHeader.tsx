@@ -195,7 +195,12 @@ function MobileDrawer({ onClose }: { onClose: () => void }) {
           <button
             onClick={() => { haptic("selection"); onClose(); }}
             aria-label="Close menu"
-            style={{ color: "#64748b", background: "none", border: "none", cursor: "pointer", padding: 8, fontSize: 20, lineHeight: 1 }}
+            style={{
+              color: "#64748b", background: "none", border: "none", cursor: "pointer",
+              padding: 8, fontSize: 20, lineHeight: 1,
+              minWidth: 44, minHeight: 44,
+              display: "inline-flex", alignItems: "center", justifyContent: "center",
+            }}
           >
             ✕
           </button>
@@ -436,7 +441,7 @@ export function PublicHeader() {
               height: "100%",
             }}>
               {/* Logo */}
-              <Link to="/esignature" aria-label="LAGDA — go to home" style={{ display: "flex", flexShrink: 0 }}>
+              <Link to="/esignature" aria-label="LAGDA — go to home" style={{ display: "flex", alignItems: "center", flexShrink: 0, minHeight: 44 }}>
                 <LagdaLogo variant="white-horizontal" size="md" decorative />
               </Link>
 
@@ -577,6 +582,11 @@ export function PublicHeader() {
                   style={{
                     background: "none", border: "1px solid rgba(255,255,255,0.15)",
                     borderRadius: 8, padding: "8px 10px", cursor: "pointer", color: "white",
+                    // The only route to navigation on a phone. A 14px icon with
+                    // 8px padding measured 30px; the accessibility rules ask for
+                    // 44px and this is the control that most deserves it.
+                    minWidth: 44, minHeight: 44,
+                    display: "inline-flex", alignItems: "center", justifyContent: "center",
                   }}
                 >
                   <svg width="18" height="14" viewBox="0 0 18 14" fill="none" aria-hidden="true">

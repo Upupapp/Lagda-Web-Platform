@@ -45,7 +45,7 @@ export function DeviceLocationEvidence() {
 
       <PageSection id="ip-accuracy">
         <SectionHeading eyebrow="IP address and location" id="ip-h2" heading="Approximate only — not a GPS fix." center />
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 10 }} className="ip-grid">
+        <div style={{ display: "grid", gap: 10 }} className="ip-grid">
           {[
             { title: "City-level accuracy at best",    desc: "IP-based geolocation is not GPS. It may place the participant in the correct city or region — not an exact address." },
             { title: "VPN and proxy affected",         desc: "Participants using a VPN or corporate proxy may show an IP location that differs significantly from their physical location." },

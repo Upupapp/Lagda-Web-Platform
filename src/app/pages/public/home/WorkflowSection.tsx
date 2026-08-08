@@ -78,10 +78,8 @@ export function WorkflowSection() {
 
       <div style={{
         display: "grid",
-        gridTemplateColumns: "1fr 1fr",
         gap: 48,
-        alignItems: "start",
-      }} className="workflow-grid">
+        alignItems: "start" }} className="workflow-grid">
         {/* Left: step list */}
         <div role="tablist" aria-label="Workflow steps" style={{ display: "flex", flexDirection: "column", gap: 4 }}>
           {HOW_IT_WORKS.map((s, idx) => {

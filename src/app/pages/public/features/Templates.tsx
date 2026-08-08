@@ -61,11 +61,11 @@ export function Templates() {
       />
 
       <PageSection id="library" light bordered>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "32px 48px", alignItems: "start" }} className="tmpl-two-col">
+        <div style={{ display: "grid", gap: "32px 48px", alignItems: "start" }} className="tmpl-two-col">
           <div>
             <SectionHeading eyebrow="Template library" id="tl-h2" heading="Every team's recurring documents — organized." sub="Templates are stored in your workspace library. Authorized senders can start a new transaction from any ready template." />
             <p style={{ color: "#475569", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", marginBottom: 10 }}>WHAT A TEMPLATE RETAINS</p>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }} className="tf-grid">
+            <div style={{ display: "grid", gap: 6 }} className="tf-grid">
               {TEMPLATE_FIELDS.map((f) => (
                 <div key={f} style={{ display: "flex", gap: 7, alignItems: "flex-start" }}>
                   <span style={{ color: "#0078D4", fontWeight: 700, flexShrink: 0, fontSize: 12, marginTop: 1 }}>✓</span>
@@ -85,7 +85,7 @@ export function Templates() {
 
       <PageSection id="roles">
         <SectionHeading eyebrow="Role placeholders" id="rp-h2" heading="Define the workflow. Assign the right people each time." sub="Templates use role placeholders — not fixed email addresses. Each time you start a transaction, assign the right person to each role." />
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10 }} className="rp-grid">
+        <div style={{ display: "grid", gap: 10 }} className="rp-grid">
           {["Client", "Lawyer / Counsel", "Authorized Representative", "HR Manager", "Finance Approver", "Copy Recipient"].map((r) => (
             <div key={r} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 10, padding: "12px 12px" }}>
               <span style={{ color: "#38bdf8", ...GM, fontSize: 10, fontWeight: 700 }}>ROLE</span>
@@ -98,7 +98,7 @@ export function Templates() {
 
       <PageSection id="statuses" light bordered>
         <SectionHeading eyebrow="Template status" id="ts-h2" heading="Know which templates are ready to use." center />
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10 }} className="ts-grid">
+        <div style={{ display: "grid", gap: 10 }} className="ts-grid">
           {TEMPLATE_STATUSES.map((s) => (
             <div key={s.status} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 10, padding: "12px 12px" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>

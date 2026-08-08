@@ -66,7 +66,7 @@ export function Notifications() {
       />
 
       <PageSection id="center" light bordered>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "32px 48px", alignItems: "start" }} className="notif-two-col">
+        <div style={{ display: "grid", gap: "32px 48px", alignItems: "start" }} className="notif-two-col">
           <div>
             <SectionHeading eyebrow="Event types" id="et-h2" heading="Dismiss events from the interactive example." sub="The notification center surfaces the events that require attention. Action-required events are labeled so they stand out." />
             <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 16 }}>
@@ -95,7 +95,7 @@ export function Notifications() {
 
       <PageSection id="channels">
         <SectionHeading eyebrow="Channels" id="ch-h2" heading="How LAGDA delivers notifications." center />
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10 }} className="ch-grid">
+        <div style={{ display: "grid", gap: 10 }} className="ch-grid">
           {[
             { icon: "📧", channel: "Email",                   desc: "Notification emails sent to the sender's verified email address. Includes transaction summary and direct link." },
             { icon: "📱", channel: "In-app",                  desc: "Notifications appear in the LAGDA notification center when the sender or team member is signed in." },
@@ -113,7 +113,7 @@ export function Notifications() {
 
       <PageSection id="reminders" light bordered>
         <SectionHeading eyebrow="Automatic reminders" id="ar-h2" heading="Pending signers are reminded so you don't have to follow up manually." center />
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 10 }} className="ar-grid">
+        <div style={{ display: "grid", gap: 10 }} className="ar-grid">
           {[
             { title: "Automatic reminders",    desc: "LAGDA can send reminder notifications to participants who have not yet completed their action." },
             { title: "Configurable schedule",  desc: "Reminder timing and frequency is set during transaction preparation or template configuration." },

@@ -16,7 +16,7 @@ const GM = { fontFamily: "'Geist Mono', monospace" };
 // ── Parallel vs sequential visual ─────────────────────────────────────────────
 function ParallelSequentialComparison() {
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }} className="ps-grid">
+    <div style={{ display: "grid", gap: 16 }} className="ps-grid">
       {/* Parallel */}
       <div style={{ background: "rgba(0,120,212,0.06)", border: "1px solid rgba(0,120,212,0.2)", borderRadius: 14, padding: "20px 18px" }}>
         <p style={{ color: "#0078D4", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", marginBottom: 14 }}>PARALLEL SIGNING</p>
@@ -107,7 +107,7 @@ function CapabilitiesTable() {
         ))}
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 10 }} className="cap-table-grid">
+      <div style={{ display: "grid", gap: 10 }} className="cap-table-grid">
         {ADVANCED_CAPS.map((cap) => (
           <div key={cap.title} style={{
             display: "flex", gap: 12, alignItems: "flex-start",
@@ -158,7 +158,7 @@ export function EsigAdvancedCapabilities() {
 
       {/* Reminders and expiration */}
       <PageSection id="reminders">
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "32px 48px", alignItems: "start" }} className="ac-two-col">
+        <div style={{ display: "grid", gap: "32px 48px", alignItems: "start" }} className="ac-two-col">
           <div>
             <SectionHeading eyebrow="Reminders & expiration" id="remind-heading" heading="Know when, how, and where signing happened." sub="Configure automated reminders for pending participants and set a completion deadline to keep transactions moving." />
             <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>
@@ -188,7 +188,7 @@ export function EsigAdvancedCapabilities() {
       {/* Organization features */}
       <PageSection id="organization" light bordered>
         <SectionHeading eyebrow="Organization" id="org-heading" heading="Find and manage your documents at scale." sub="LAGDA includes tools to organize, search, and navigate a growing set of transactions." />
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12 }} className="org-grid">
+        <div style={{ display: "grid", gap: 12 }} className="org-grid">
           {[
             { title: "Search",             desc: "Find transactions by document name, participant, or keyword." },
             { title: "Status filters",     desc: "Filter by status — pending, completed, expired, or declined." },

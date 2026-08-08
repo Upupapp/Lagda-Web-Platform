@@ -6,7 +6,35 @@ export function PublicFooter() {
   const year = new Date().getFullYear();
   const GF = { fontFamily: "'Geist', sans-serif" };
 
+  const FOOTER_CSS = `
+    .pf-body { max-width: 1440px; margin: 0 auto; padding: 64px 48px 48px; }
+    .pf-grid {
+      display: grid;
+      grid-template-columns: 260px repeat(6, 1fr);
+      gap: 0 40px;
+      align-items: start;
+    }
+    /* Tablet: brand on its own row, links in three columns. */
+    @media (max-width: 1024px) {
+      .pf-body { padding: 56px 32px 40px; }
+      .pf-grid { grid-template-columns: repeat(3, 1fr); gap: 32px 24px; }
+      .pf-brand { grid-column: 1 / -1; }
+    }
+    /* Phone: two columns of links, brand full width. */
+    @media (max-width: 767px) {
+      .pf-body { padding: 48px 20px 32px; }
+      .pf-grid { grid-template-columns: repeat(2, 1fr); gap: 28px 20px; }
+    }
+    @media (max-width: 380px) {
+      .pf-grid { grid-template-columns: 1fr; }
+    }
+    /* Footer links are the densest tap targets on the public site. */
+    .pf-grid a, .pf-bottom a { display: inline-flex; align-items: center; min-height: 44px; }
+  `;
+
   return (
+    <>
+      <style>{FOOTER_CSS}</style>
     <footer
       role="contentinfo"
       style={{
@@ -35,17 +63,21 @@ export function PublicFooter() {
         </p>
       </div>
 
-      {/* Main footer body */}
-      <div style={{ maxWidth: 1440, margin: "0 auto", padding: "64px 48px 48px" }}>
-        <div style={{
-          display: "grid",
-          gridTemplateColumns: "260px repeat(6, 1fr)",
-          gap: "0 40px",
-          alignItems: "start",
-        }}>
+      {/* Main footer body.
+          The column count is set in CSS rather than inline because it has to
+          change with the viewport, and an inline style cannot carry a media
+          query. It previously could not: `260px repeat(6, 1fr)` was fixed at
+          every width, so on a 390px phone the footer alone pushed the page
+          about 600px sideways — on EVERY public page, since the footer is part
+          of the shell. */}
+      <div className="pf-body">
+        <div className="pf-grid">
           {/* Brand column */}
-          <div>
-            <Link to="/esignature" style={{ display: "inline-block", marginBottom: 16 }}>
+          <div className="pf-brand">
+            {/* The logo inside is marked decorative, so without a label on the link
+                itself this reads to a screen reader as "link" and nothing more —
+                axe reports it as a serious link-name violation. */}
+            <Link to="/esignature" aria-label="LAGDA — go to the eSignature home page" style={{ display: "inline-flex", alignItems: "center", minHeight: 44, marginBottom: 16 }}>
               <LagdaLogo variant="white-horizontal" size="sm" decorative />
             </Link>
             <p style={{
@@ -109,7 +141,7 @@ export function PublicFooter() {
         </div>
 
         {/* Bottom bar */}
-        <div style={{
+        <div className="pf-bottom" style={{
           marginTop: 48,
           paddingTop: 24,
           borderTop: "1px solid rgba(255,255,255,0.06)",
@@ -145,6 +177,7 @@ export function PublicFooter() {
           </div>
         </div>
       </div>
-    </footer>
+        </footer>
+    </>
   );
 }

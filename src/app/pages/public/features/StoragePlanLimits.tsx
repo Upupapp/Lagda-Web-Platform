@@ -19,7 +19,7 @@ export function StoragePlanLimits() {
 
       <PageSection id="categories" light bordered>
         <SectionHeading eyebrow="Limit categories" id="lc-h2" heading="Every dimension that varies by plan." sub="Exact figures are shown on the Pricing page. This page explains what each category means and why it matters." center />
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 10 }} className="lc-grid">
+        <div style={{ display: "grid", gap: 10 }} className="lc-grid">
           {PLAN_LIMIT_CATEGORIES.map((c) => (
             <div key={c.title} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 10, padding: "14px 14px", display: "flex", gap: 12 }}>
               <span aria-hidden style={{ fontSize: 20, flexShrink: 0, marginTop: 1 }}>{c.icon}</span>
@@ -35,7 +35,7 @@ export function StoragePlanLimits() {
 
       <PageSection id="storage">
         <SectionHeading eyebrow="Document storage" id="ds-h2" heading="Where documents are stored and for how long." center />
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10 }} className="ds-grid">
+        <div style={{ display: "grid", gap: 10 }} className="ds-grid">
           {[
             { title: "During the transaction",   desc: "Documents are retained during the active signing workflow until completed, declined, cancelled, or expired." },
             { title: "After completion",          desc: "Completed transaction records are retained according to the plan's retention period. Download and export at any time." },

@@ -108,7 +108,7 @@ export function GovernmentLGU() {
       </PageSection>
 
       <PageSection id="challenges">
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "32px 48px", alignItems: "start" }} className="gov-two-col">
+        <div style={{ display: "grid", gap: "32px 48px", alignItems: "start" }} className="gov-two-col">
           <div>
             <SectionHeading eyebrow="Common internal challenges" id="ch-h2" heading="Routing and tracking internal forms." sub="LAGDA may help with internal workflows where electronic signing is permitted under your office's applicable rules and policies." />
             <ChallengeCards challenges={CHALLENGES} />
@@ -122,7 +122,7 @@ export function GovernmentLGU() {
       </PageSection>
 
       <PageSection id="workflow" light bordered>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "32px 48px" }} className="gov-two-col">
+        <div style={{ display: "grid", gap: "32px 48px" }} className="gov-two-col">
           <div>
             <SectionHeading eyebrow="Typical internal workflow" id="wf-h2" heading="From form preparation to verified approval record." />
             <WorkflowSteps steps={GOVERNMENT_WORKFLOW} />

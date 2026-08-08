@@ -68,7 +68,7 @@ export function SignerAuth() {
       />
 
       <PageSection id="methods" light bordered>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "32px 48px", alignItems: "start" }} className="sa-two-col">
+        <div style={{ display: "grid", gap: "32px 48px", alignItems: "start" }} className="sa-two-col">
           <div>
             <SectionHeading eyebrow="Authentication methods" id="sa-m-h2" heading="Choose the method that fits the transaction." sub="Authentication selection may depend on transaction risk, organization policy, participant relationship, plan, availability, and legal or compliance requirements." />
             <div style={{ display: "flex", gap: 10, marginBottom: 16, flexWrap: "wrap" }}>
@@ -87,7 +87,7 @@ export function SignerAuth() {
 
       <PageSection id="channel-note">
         <SectionHeading eyebrow="Channel awareness" id="channel-h2" heading="Independent channels provide stronger evidence." sub="When the invitation link and the authentication code arrive through the same channel (email), they do not provide independent second-factor verification. A separate channel — SMS, authenticator app, enterprise SSO — offers a stronger evidence basis." />
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }} className="ch-grid">
+        <div style={{ display: "grid", gap: 12 }} className="ch-grid">
           <div style={{ background: "rgba(0,120,212,0.06)", border: "1px solid rgba(0,120,212,0.2)", borderRadius: 12, padding: "16px 16px" }}>
             <p style={{ color: "#38bdf8", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", marginBottom: 8 }}>SAME CHANNEL</p>
             <p style={{ color: "#94a3b8", ...GF, fontSize: 13, lineHeight: 1.55, margin: 0 }}>Invitation link + email OTP both arrive in the same inbox. Access to that inbox satisfies both steps.</p>
@@ -102,7 +102,7 @@ export function SignerAuth() {
 
       <PageSection id="selection" light bordered>
         <SectionHeading eyebrow="Selecting authentication" id="sel-h2" heading="Match authentication to transaction risk." center />
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12 }} className="risk-grid">
+        <div style={{ display: "grid", gap: 12 }} className="risk-grid">
           {[
             { risk: "Lower risk",    example: "Internal team review, routine document sharing", method: "Secure link or email OTP" },
             { risk: "Standard risk", example: "Client engagement letters, NDA, service agreements", method: "Email OTP or SMS OTP" },

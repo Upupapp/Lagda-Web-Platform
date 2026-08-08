@@ -19,7 +19,7 @@ export function PrivacyDataProtection() {
 
       <PageSection id="categories" light bordered>
         <SectionHeading eyebrow="Data categories" id="dc-h2" heading="Every type of data LAGDA processes." sub="Each category is processed for a specific purpose. The full details are in the Privacy Policy." center />
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 10 }} className="dc-grid">
+        <div style={{ display: "grid", gap: 10 }} className="dc-grid">
           {DATA_CATEGORIES.map((c) => (
             <div key={c.category} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 10, padding: "12px 14px" }}>
               <p style={{ color: "#38bdf8", ...GM, fontSize: 10, fontWeight: 700, margin: 0, marginBottom: 4 }}>{c.category.toUpperCase()}</p>
@@ -32,7 +32,7 @@ export function PrivacyDataProtection() {
 
       <PageSection id="principles">
         <SectionHeading eyebrow="Privacy principles" id="pp-h2" heading="The principles that guide how LAGDA handles data." center />
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 10 }} className="pp-grid">
+        <div style={{ display: "grid", gap: 10 }} className="pp-grid">
           {PRIVACY_PRINCIPLES.map((p) => (
             <div key={p.title} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 10, padding: "14px 14px", display: "flex", gap: 12 }}>
               <span aria-hidden style={{ fontSize: 20, flexShrink: 0 }}>{p.icon}</span>

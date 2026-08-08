@@ -83,7 +83,7 @@ export function AuditTrail() {
       />
 
       <PageSection id="timeline" light bordered>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "32px 48px", alignItems: "start" }} className="at-two-col">
+        <div style={{ display: "grid", gap: "32px 48px", alignItems: "start" }} className="at-two-col">
           <div>
             <SectionHeading eyebrow="Transaction events" id="te-h2" heading="A complete, expandable timeline of every event." sub="Click any event to see what information is recorded. Detailed evidence — IP, device, authentication method — is access-controlled and not exposed publicly." />
             <p style={{ color: "#475569", ...GF, fontSize: 13, lineHeight: 1.6, margin: 0, marginTop: 8 }}>
@@ -97,7 +97,7 @@ export function AuditTrail() {
 
       <PageSection id="all-events">
         <SectionHeading eyebrow="Recorded events" id="ae-h2" heading="What the audit trail may include." sub="Not all events occur in every transaction. The events present depend on the workflow, routing, and participant actions." center />
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }} className="ae-grid">
+        <div style={{ display: "grid", gap: 8 }} className="ae-grid">
           {ALL_EVENTS.map((ev) => (
             <div key={ev} style={{ display: "flex", gap: 8, alignItems: "flex-start", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 8, padding: "8px 10px" }}>
               <span style={{ color: "#0078D4", fontSize: 12, flexShrink: 0, marginTop: 1 }}>●</span>
@@ -110,7 +110,7 @@ export function AuditTrail() {
 
       <PageSection id="evidence-detail" light bordered>
         <SectionHeading eyebrow="Event details" id="ed-h2" heading="What an event record may contain." center />
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 10 }} className="ed-grid">
+        <div style={{ display: "grid", gap: 10 }} className="ed-grid">
           {[
             { field: "Event type",              example: "Signature adopted" },
             { field: "Participant role",         example: "Marco Santos · Signer" },

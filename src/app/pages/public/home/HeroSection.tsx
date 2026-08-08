@@ -163,10 +163,8 @@ export function HeroSection() {
 
         <div style={{
           display: "grid",
-          gridTemplateColumns: "1fr auto",
           gap: "48px 64px",
-          alignItems: "center",
-        }}
+          alignItems: "center" }}
           className="hero-grid"
         >
           {/* Left: copy */}

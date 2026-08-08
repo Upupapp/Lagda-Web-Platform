@@ -76,7 +76,7 @@ export function DocVerification() {
       />
 
       <PageSection id="demo" light bordered>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "32px 48px", alignItems: "start" }} className="dv-two-col">
+        <div style={{ display: "grid", gap: "32px 48px", alignItems: "start" }} className="dv-two-col">
           <div>
             <SectionHeading eyebrow="Verification result" id="vr-h2" heading="Every result state — clearly explained." sub="Select a state to see what the public verification record shows. Private evidence is never exposed in public verification." />
             <p style={{ color: "#475569", ...GF, fontSize: 13, lineHeight: 1.6, margin: 0, marginBottom: 16 }}>
@@ -104,7 +104,7 @@ export function DocVerification() {
 
       <PageSection id="methods">
         <SectionHeading eyebrow="How to verify" id="hv-h2" heading="Multiple ways to verify a LAGDA document." center />
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12 }} className="vm-grid">
+        <div style={{ display: "grid", gap: 12 }} className="vm-grid">
           {[
             { icon: "🔍", method: "Verification ID", desc: "Enter the LAGDA-VER- identifier printed on or attached to the document. Example: LAGDA-VER-2026-004821." },
             { icon: "📷", method: "QR code",          desc: "Scan the QR code printed or embedded on the completed document. Opens the verification record directly." },
@@ -122,7 +122,7 @@ export function DocVerification() {
 
       <PageSection id="public-private" light bordered>
         <SectionHeading eyebrow="Public and private" id="pp-h2" heading="What public verification shows — and what it does not." center />
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }} className="pp-grid">
+        <div style={{ display: "grid", gap: 12 }} className="pp-grid">
           <div style={{ background: "rgba(34,197,94,0.06)", border: "1px solid rgba(34,197,94,0.2)", borderRadius: 12, padding: "16px 16px" }}>
             <p style={{ color: "#22C55E", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", marginBottom: 10 }}>SHOWN PUBLICLY</p>
             {["Verification ID", "Transaction status (completed, cancelled, expired)", "Completion date", "Document description", "File match result"].map((t) => (

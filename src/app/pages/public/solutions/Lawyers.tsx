@@ -94,7 +94,7 @@ export function Lawyers() {
 
       {/* Challenges + mockup */}
       <PageSection id="challenges" light bordered>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "32px 48px", alignItems: "start" }} className="law-two-col">
+        <div style={{ display: "grid", gap: "32px 48px", alignItems: "start" }} className="law-two-col">
           <div>
             <SectionHeading eyebrow="What slows you down" id="ch-h2" heading="The same problems appear in every matter." />
             <ChallengeCards challenges={CHALLENGES} />
@@ -109,7 +109,7 @@ export function Lawyers() {
 
       {/* Workflow */}
       <PageSection id="workflow">
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "32px 48px" }} className="law-two-col">
+        <div style={{ display: "grid", gap: "32px 48px" }} className="law-two-col">
           <div>
             <SectionHeading eyebrow="Typical workflow" id="wf-h2" heading="From template to verified record — without leaving LAGDA." />
             <WorkflowSteps steps={LAWYER_WORKFLOW} />

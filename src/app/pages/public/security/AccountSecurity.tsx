@@ -47,7 +47,7 @@ export function AccountSecurity() {
       />
 
       <PageSection id="controls" light bordered>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "32px 48px", alignItems: "start" }} className="as-two-col">
+        <div style={{ display: "grid", gap: "32px 48px", alignItems: "start" }} className="as-two-col">
           <div>
             <SectionHeading eyebrow="Account controls" id="ac-h2" heading="What LAGDA provides for account-level protection." sub="Senders and workspace administrators should enable all available controls. Stronger account protection reduces the risk of unauthorized transactions." />
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
@@ -72,7 +72,7 @@ export function AccountSecurity() {
 
       <PageSection id="mfa">
         <SectionHeading eyebrow="Multi-factor authentication" id="mfa-h2" heading="A second layer beyond your password." center />
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 10 }} className="mfa-grid">
+        <div style={{ display: "grid", gap: 10 }} className="mfa-grid">
           {[
             { icon: "📱", title: "Authenticator app",   desc: "Use a TOTP app (Google Authenticator, Authy, or similar) to generate time-based codes for account login." },
             { icon: "🔑", title: "Backup codes",        desc: "One-time recovery codes for when your primary MFA device is unavailable. Store these securely." },

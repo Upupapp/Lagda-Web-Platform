@@ -52,7 +52,7 @@ export function TeamWorkspaces() {
       />
 
       <PageSection id="members" light bordered>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "32px 48px", alignItems: "start" }} className="tw-two-col">
+        <div style={{ display: "grid", gap: "32px 48px", alignItems: "start" }} className="tw-two-col">
           <div>
             <SectionHeading eyebrow="Member management" id="mm-h2" heading="Add team members and define their permissions." sub="Each workspace member is assigned a role that determines what they can see, do, and manage. Roles can be changed at any time by an Owner or Administrator." />
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
@@ -76,7 +76,7 @@ export function TeamWorkspaces() {
 
       <PageSection id="roles">
         <SectionHeading eyebrow="Workspace roles" id="wr-h2" heading="Every role — and what it controls." sub="LAGDA uses purpose-built workspace roles. Assign more than one role to a member to combine permissions." center />
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10 }} className="wr-grid">
+        <div style={{ display: "grid", gap: 10 }} className="wr-grid">
           {WORKSPACE_ROLES.map((r) => (
             <div key={r.role} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 10, padding: "12px 14px" }}>
               <p style={{ color: "white", ...GF, fontSize: 13, fontWeight: 700, margin: 0, marginBottom: 4 }}>{r.role}</p>
@@ -89,7 +89,7 @@ export function TeamWorkspaces() {
 
       <PageSection id="shared" light bordered>
         <SectionHeading eyebrow="Shared workspace resources" id="sr-h2" heading="One library. Every authorized sender." center />
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 12 }} className="sr-grid">
+        <div style={{ display: "grid", gap: 12 }} className="sr-grid">
           {[
             { icon: "📑", label: "Templates",       desc: "Authorized senders share the same template library. Template Administrators control what's available." },
             { icon: "📇", label: "Contacts",        desc: "Contact records can be workspace-visible or sender-private depending on the configuration." },

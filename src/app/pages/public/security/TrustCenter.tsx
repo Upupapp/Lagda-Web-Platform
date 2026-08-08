@@ -19,7 +19,7 @@ export function TrustCenter() {
 
       <PageSection id="resources" light bordered>
         <SectionHeading eyebrow="Trust resources" id="tr-h2" heading="Documents and contacts." center />
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12 }} className="tr-grid">
+        <div style={{ display: "grid", gap: 12 }} className="tr-grid">
           {TRUST_RESOURCES.map((r) => (
             <a key={r.path} href={r.path} style={{ textDecoration: "none" }}>
               <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 12, padding: "16px 16px", height: "100%" }}>

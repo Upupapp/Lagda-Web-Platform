@@ -116,7 +116,7 @@ function SenderRecipientSection() {
   return (
     <PageSection id="sender-recipient" bordered>
       <SectionHeading eyebrow="Two experiences" id="sr-heading" heading="Designed differently for senders and recipients." sub="The sender configures and tracks. The recipient signs in a clean, guided experience — no LAGDA account required." center />
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24 }} className="sr-grid">
+      <div style={{ display: "grid", gap: 24 }} className="sr-grid">
         {[{ title: "Sender", color: "#0078D4", bg: "rgba(0,120,212,0.08)", border: "rgba(0,120,212,0.2)", steps: SENDER },
           { title: "Recipient", color: "#C9960C", bg: "rgba(201,150,12,0.08)", border: "rgba(201,150,12,0.2)", steps: RECIPIENT }].map((col) => (
           <div key={col.title} style={{
@@ -203,7 +203,7 @@ export function EsigOverview() {
 
       {/* Dashboard mockup + lifecycle strip */}
       <PageSection id="overview-mockup" light bordered>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: "32px 48px", alignItems: "start" }} className="overview-mock-grid">
+        <div style={{ display: "grid", gap: "32px 48px", alignItems: "start" }} className="overview-mock-grid">
           <div>
             <SectionHeading eyebrow="Full lifecycle" id="lifecycle-heading" heading="Built for the full eSignature workflow." sub="LAGDA covers every step — from preparing a document to verifying the completed record." />
             <LifecycleStrip />

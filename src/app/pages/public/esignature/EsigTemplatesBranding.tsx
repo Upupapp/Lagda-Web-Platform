@@ -67,7 +67,7 @@ function TemplateFeatureList() {
   return (
     <div>
       <p style={{ color: "#475569", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", marginBottom: 14 }}>WHAT A TEMPLATE RETAINS</p>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 8 }} className="tf-grid">
+      <div style={{ display: "grid", gap: 8 }} className="tf-grid">
         {TEMPLATE_FEATURES.map((f) => (
           <div key={f} style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
             <span style={{ color: "#0078D4", fontWeight: 700, flexShrink: 0, fontSize: 12 }}>✓</span>
@@ -128,7 +128,7 @@ function RolePlaceholders() {
   ];
 
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 10 }} className="rp-grid">
+    <div style={{ display: "grid", gap: 10 }} className="rp-grid">
       {ROLES.map((r) => (
         <div key={r.role} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 10, padding: "12px 14px" }}>
           <p style={{ color: "white", ...GF, fontSize: 13, fontWeight: 700, margin: 0, marginBottom: 3 }}>{r.role}</p>
@@ -153,7 +153,7 @@ export function EsigTemplatesBranding() {
 
       {/* Template library */}
       <PageSection id="template-library" light bordered>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "32px 48px", alignItems: "start" }} className="tb-two-col">
+        <div style={{ display: "grid", gap: "32px 48px", alignItems: "start" }} className="tb-two-col">
           <div>
             <SectionHeading eyebrow="Template library" id="lib-heading" heading="Build once. Use every time." sub="Save any completed transaction setup — fields, participants, routing, authentication, and branding — as a reusable template." />
             <TemplateFeatureList />
@@ -179,7 +179,7 @@ export function EsigTemplatesBranding() {
 
       {/* Branding */}
       <PageSection id="branding" light bordered>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "32px 48px", alignItems: "start" }} className="tb-two-col">
+        <div style={{ display: "grid", gap: "32px 48px", alignItems: "start" }} className="tb-two-col">
           <div>
             <SectionHeading eyebrow="Company branding" id="brand-heading" heading="Apply company branding only when it fits the document." />
             <p style={{ color: "#94a3b8", ...GF, fontSize: 15, lineHeight: 1.65, margin: 0, marginBottom: 16 }}>
@@ -211,7 +211,7 @@ export function EsigTemplatesBranding() {
       {/* Template states */}
       <PageSection id="template-states">
         <SectionHeading eyebrow="Template status" id="ts-heading" heading="Know which templates are ready to use." />
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10 }} className="ts-grid">
+        <div style={{ display: "grid", gap: 10 }} className="ts-grid">
           {[
             { status: "Ready",           color: "#22C55E", desc: "Template is complete and available to all authorized senders in the workspace." },
             { status: "Draft",           color: "#F59E0B", desc: "Template setup is incomplete and not yet available to other senders." },

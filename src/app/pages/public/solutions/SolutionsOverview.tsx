@@ -45,7 +45,7 @@ export function SolutionsOverview() {
           sub="LAGDA addresses the common pain points in physical and manual document workflows — regardless of sector."
           center
         />
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10 }} className="prob-grid">
+        <div style={{ display: "grid", gap: 10 }} className="prob-grid">
           {COMMON_PROBLEMS.map((p) => (
             <div key={p.title} style={{
               background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)",
@@ -69,7 +69,7 @@ export function SolutionsOverview() {
           sub="Select the audience that best matches your organization or workflow to see how LAGDA applies."
           center
         />
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 16 }} className="aud-grid">
+        <div style={{ display: "grid", gap: 16 }} className="aud-grid">
           {AUDIENCE_GROUPS.map((group) => (
             <div key={group.group} style={{
               background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)",
@@ -114,7 +114,7 @@ export function SolutionsOverview() {
           sub="The same LAGDA features power workflows across legal, business, government, and institutional teams."
           center
         />
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10 }} className="cap-grid">
+        <div style={{ display: "grid", gap: 10 }} className="cap-grid">
           {SHARED_CAPABILITIES.map((cap) => (
             <Link key={cap.path} to={cap.path} style={{ textDecoration: "none" }}>
               <div style={{

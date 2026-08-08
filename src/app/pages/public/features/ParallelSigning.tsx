@@ -102,7 +102,7 @@ export function ParallelSigning() {
       />
 
       <PageSection id="diagram" light bordered>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "32px 48px", alignItems: "start" }} className="ps-two-col">
+        <div style={{ display: "grid", gap: "32px 48px", alignItems: "start" }} className="ps-two-col">
           <div>
             <SectionHeading eyebrow="How it works" id="ps-how-h2" heading="Everyone receives their invitation at the same time." sub="Parallel routing is useful when signing order does not matter — all required participants must act, but no one is waiting for another to go first." />
             <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 20 }}>
@@ -130,7 +130,7 @@ export function ParallelSigning() {
 
       <PageSection id="use-cases">
         <SectionHeading eyebrow="Use cases" id="ps-uc-h2" heading="When parallel signing makes sense." center />
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12 }} className="uc-grid">
+        <div style={{ display: "grid", gap: 12 }} className="uc-grid">
           {[
             { title: "Joint agreement",   desc: "Two authorized company representatives both need to sign the same contract." },
             { title: "Multi-party NDA",   desc: "Several parties sign a non-disclosure agreement without a required order." },

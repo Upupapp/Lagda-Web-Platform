@@ -104,7 +104,7 @@ export function LawFirms() {
       />
 
       <PageSection id="challenges" light bordered>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "32px 48px", alignItems: "start" }} className="lf-two-col">
+        <div style={{ display: "grid", gap: "32px 48px", alignItems: "start" }} className="lf-two-col">
           <div>
             <SectionHeading eyebrow="Firm-level problems" id="ch-h2" heading="The problems that grow with your team." />
             <ChallengeCards challenges={CHALLENGES} />
@@ -118,7 +118,7 @@ export function LawFirms() {
       </PageSection>
 
       <PageSection id="workspace-model">
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "32px 48px" }} className="lf-two-col">
+        <div style={{ display: "grid", gap: "32px 48px" }} className="lf-two-col">
           <div>
             <SectionHeading eyebrow="Workspace model" id="wm-h2" heading="One firm workspace — every lawyer, one system." sub="A LAGDA firm workspace provides shared contacts, templates, branding, and audit visibility across all authorized senders." />
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
@@ -146,7 +146,7 @@ export function LawFirms() {
       </PageSection>
 
       <PageSection id="workflow" light bordered>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "32px 48px" }} className="lf-two-col">
+        <div style={{ display: "grid", gap: "32px 48px" }} className="lf-two-col">
           <div>
             <SectionHeading eyebrow="Client engagement workflow" id="wf-h2" heading="From template to verified completion." />
             <WorkflowSteps steps={FIRM_WORKFLOW} />

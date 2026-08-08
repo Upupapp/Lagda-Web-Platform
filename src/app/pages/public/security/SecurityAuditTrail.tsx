@@ -35,7 +35,7 @@ export function SecurityAuditTrail() {
 
       <PageSection id="access-levels">
         <SectionHeading eyebrow="Access levels" id="al-h2" heading="Not all audit detail is accessible to everyone." sub="The audit trail uses three access levels. Higher-detail evidence is restricted to authorized workspace members and legal process." center />
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10 }} className="al-grid">
+        <div style={{ display: "grid", gap: 10 }} className="al-grid">
           {[
             {
               level: "Public",
@@ -73,7 +73,7 @@ export function SecurityAuditTrail() {
 
       <PageSection id="retention" light bordered>
         <SectionHeading eyebrow="Retention" id="ret-h2" heading="How long audit records are kept." center />
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 10 }} className="ret-grid">
+        <div style={{ display: "grid", gap: 10 }} className="ret-grid">
           {[
             { title: "Retention period by plan",      desc: "Audit record retention varies by plan. Exact durations are on the Pricing page." },
             { title: "Export before deletion",        desc: "Audit records can be exported before a retention period ends. Senders and Auditors can initiate exports." },

@@ -17,7 +17,7 @@ export function DocExampleList({ docs, qualifier }: {
           {qualifier}
         </p>
       )}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }} className="doc-ex-grid">
+      <div style={{ display: "grid", gap: 6 }} className="doc-ex-grid">
         {docs.map((d) => (
           <div key={d} style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
             <span style={{ color: "#0078D4", flexShrink: 0, fontSize: 12, marginTop: 2 }}>·</span>
@@ -65,7 +65,7 @@ export function ChallengeCards({ challenges }: {
   challenges: { icon: string; title: string; desc: string }[];
 }) {
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10 }} className="ch-cards-grid">
+    <div style={{ display: "grid", gap: 10 }} className="ch-cards-grid">
       {challenges.map((c) => (
         <div key={c.title} style={{
           background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)",
@@ -86,7 +86,7 @@ export function CapabilityLinks({ items }: {
   items: { icon: string; title: string; desc: string; path: string }[];
 }) {
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 10 }} className="cap-links-grid">
+    <div style={{ display: "grid", gap: 10 }} className="cap-links-grid">
       {items.map((item) => (
         <Link key={item.path} to={item.path} style={{ textDecoration: "none" }}>
           <div style={{
@@ -184,7 +184,7 @@ export function RelatedSolutions({ paths }: {
   paths: { label: string; desc: string; path: string }[];
 }) {
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 10 }} className="rel-sol-grid">
+    <div style={{ display: "grid", gap: 10 }} className="rel-sol-grid">
       {paths.map((p) => (
         <Link key={p.path} to={p.path} style={{ textDecoration: "none" }}>
           <div style={{

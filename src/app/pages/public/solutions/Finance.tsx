@@ -101,7 +101,7 @@ export function Finance() {
       </PageSection>
 
       <PageSection id="challenges">
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "32px 48px", alignItems: "start" }} className="fin-two-col">
+        <div style={{ display: "grid", gap: "32px 48px", alignItems: "start" }} className="fin-two-col">
           <div>
             <SectionHeading eyebrow="Internal finance workflow problems" id="ch-h2" heading="The same delays appear in every approval cycle." />
             <ChallengeCards challenges={CHALLENGES} />
@@ -115,7 +115,7 @@ export function Finance() {
       </PageSection>
 
       <PageSection id="workflow" light bordered>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "32px 48px" }} className="fin-two-col">
+        <div style={{ display: "grid", gap: "32px 48px" }} className="fin-two-col">
           <div>
             <SectionHeading eyebrow="Approval workflow" id="wf-h2" heading="From submission to verified approval record." />
             <WorkflowSteps steps={FINANCE_WORKFLOW} />

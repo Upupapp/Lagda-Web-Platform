@@ -98,7 +98,7 @@ export function HRRecruitment() {
       />
 
       <PageSection id="challenges" light bordered>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "32px 48px", alignItems: "start" }} className="hr-two-col">
+        <div style={{ display: "grid", gap: "32px 48px", alignItems: "start" }} className="hr-two-col">
           <div>
             <SectionHeading eyebrow="HR document challenges" id="ch-h2" heading="Onboarding shouldn't slow your first hire down." />
             <ChallengeCards challenges={CHALLENGES} />
@@ -112,7 +112,7 @@ export function HRRecruitment() {
       </PageSection>
 
       <PageSection id="workflow">
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "32px 48px" }} className="hr-two-col">
+        <div style={{ display: "grid", gap: "32px 48px" }} className="hr-two-col">
           <div>
             <SectionHeading eyebrow="HR workflow" id="wf-h2" heading="From template to completed employee record." />
             <WorkflowSteps steps={HR_WORKFLOW} />

@@ -104,7 +104,7 @@ export function Education() {
       />
 
       <PageSection id="challenges" light bordered>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "32px 48px", alignItems: "start" }} className="edu-two-col">
+        <div style={{ display: "grid", gap: "32px 48px", alignItems: "start" }} className="edu-two-col">
           <div>
             <SectionHeading eyebrow="Institutional form challenges" id="ch-h2" heading="The same delays appear every enrollment cycle." />
             <ChallengeCards challenges={CHALLENGES} />
@@ -118,7 +118,7 @@ export function Education() {
       </PageSection>
 
       <PageSection id="workflow">
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "32px 48px" }} className="edu-two-col">
+        <div style={{ display: "grid", gap: "32px 48px" }} className="edu-two-col">
           <div>
             <SectionHeading eyebrow="Enrollment workflow" id="wf-h2" heading="Student and guardian — sequential, verified." />
             <WorkflowSteps steps={EDUCATION_WORKFLOW} />

@@ -204,7 +204,7 @@ export function EsigCoreWorkflow() {
 
       {/* Prepare */}
       <PageSection id="prepare" light bordered>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "32px 48px", alignItems: "start" }} className="cw-two-col">
+        <div style={{ display: "grid", gap: "32px 48px", alignItems: "start" }} className="cw-two-col">
           <div>
             <SectionHeading eyebrow="Step 1" id="prepare-heading" heading="Prepare documents faster." sub="Upload PDFs, configure fields, set instructions and reminders, and prepare the complete document before it goes out." />
             <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>
@@ -224,7 +224,7 @@ export function EsigCoreWorkflow() {
       {/* Participants */}
       <PageSection id="participants">
         <SectionHeading eyebrow="Step 2" id="part-heading" heading="Send documents to the right people in the right order." sub="Add participants by email and assign each a role that determines what they can do in the transaction." />
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12 }} className="roles-grid">
+        <div style={{ display: "grid", gap: 12 }} className="roles-grid">
           {PARTICIPANT_ROLES.map((r) => (
             <div key={r.label} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 12, padding: "14px 16px" }}>
               <p style={{ color: "white", ...GF, fontSize: 13, fontWeight: 700, margin: 0, marginBottom: 4 }}>{r.label}</p>
@@ -240,7 +240,7 @@ export function EsigCoreWorkflow() {
 
       {/* Routing */}
       <PageSection id="routing" light bordered>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "32px 48px", alignItems: "start" }} className="cw-two-col">
+        <div style={{ display: "grid", gap: "32px 48px", alignItems: "start" }} className="cw-two-col">
           <div>
             <SectionHeading eyebrow="Step 3" id="routing-heading" heading="Control the order signing happens." sub="LAGDA supports sequential, parallel, and mixed routing to match how your documents actually need to move." />
             <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 12, padding: "14px 16px", marginTop: 16 }}>
@@ -257,7 +257,7 @@ export function EsigCoreWorkflow() {
       {/* Authentication */}
       <PageSection id="authentication">
         <SectionHeading eyebrow="Step 4" id="auth-heading" heading="Know exactly who is signing." sub="Select an authentication method for each participant. Identity is confirmed at the moment of signing." />
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 10 }} className="auth-grid">
+        <div style={{ display: "grid", gap: 10 }} className="auth-grid">
           {AUTH_METHODS.map((m) => (
             <div key={m.label} style={{ display: "flex", gap: 12, alignItems: "flex-start", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 10, padding: "12px 14px" }}>
               <span style={{ color: m.available ? "#22C55E" : "#C9960C", fontWeight: 700, flexShrink: 0, fontSize: 13 }}>{m.available ? "✓" : "★"}</span>
@@ -276,7 +276,7 @@ export function EsigCoreWorkflow() {
 
       {/* Field placement */}
       <PageSection id="field-placement" light bordered>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "32px 48px", alignItems: "start" }} className="cw-two-col">
+        <div style={{ display: "grid", gap: "32px 48px", alignItems: "start" }} className="cw-two-col">
           <div>
             <SectionHeading eyebrow="Step 5" id="fields-heading" heading="Place the right fields for each participant." sub="Define exactly what each participant must complete — where on the document and in what form." />
             <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 8 }}>
@@ -298,7 +298,7 @@ export function EsigCoreWorkflow() {
       {/* Recipient journey */}
       <PageSection id="recipient">
         <SectionHeading eyebrow="Recipient experience" id="recip-heading" heading="Make signing simple for every recipient." sub="Recipients follow a guided, step-by-step experience. No LAGDA account required — just the secure invitation link." />
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10 }} className="recip-grid">
+        <div style={{ display: "grid", gap: 10 }} className="recip-grid">
           {RECIPIENT_STEPS.map((s) => (
             <div key={s.num} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 12, padding: "14px 14px" }}>
               <span style={{ color: "#0078D4", ...GM, fontSize: 11, fontWeight: 700, display: "block", marginBottom: 6 }}>

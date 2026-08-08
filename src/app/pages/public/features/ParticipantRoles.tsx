@@ -49,7 +49,7 @@ export function ParticipantRoles() {
 
       <PageSection id="role-list" light bordered>
         <SectionHeading eyebrow="Active roles" id="roles-h2" heading="Six roles for eSignature transactions." sub="Assign each participant to the role that matches their responsibility in the workflow." />
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12 }} className="roles-grid">
+        <div style={{ display: "grid", gap: 12 }} className="roles-grid">
           {PARTICIPANT_ROLES.map((r) => (
             <div key={r.role} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 14, padding: "20px 18px" }}>
               <span aria-hidden style={{ fontSize: 24, display: "block", marginBottom: 10 }}>{r.icon}</span>
@@ -62,7 +62,7 @@ export function ParticipantRoles() {
       </PageSection>
 
       <PageSection id="assignment">
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "32px 48px", alignItems: "start" }} className="dp-two-col">
+        <div style={{ display: "grid", gap: "32px 48px", alignItems: "start" }} className="dp-two-col">
           <div>
             <SectionHeading eyebrow="Field assignment" id="fa-h2" heading="Each participant only sees and acts on their assigned fields." sub="When you place a field on a document, you assign it to a specific role. That role's participants interact only with their own fields — not others." />
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
@@ -88,7 +88,7 @@ export function ParticipantRoles() {
 
       <PageSection id="routing" light bordered>
         <SectionHeading eyebrow="Routing" id="routing-h2" heading="Role determines when a participant receives their invitation." center />
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 12 }} className="route-grid">
+        <div style={{ display: "grid", gap: 12 }} className="route-grid">
           {[
             { title: "Parallel routing", desc: "All participants in a step receive their invitation at the same time. Completion order does not matter." },
             { title: "Sequential routing", desc: "One participant's invitation is sent only after the previous step is complete. Useful for approval chains." },

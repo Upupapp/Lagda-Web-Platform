@@ -46,7 +46,7 @@ export function IdentityVerification() {
 
       <PageSection id="what-lagda-does-not-do">
         <SectionHeading eyebrow="Scope and limitations" id="scl-h2" heading="What identity-aware signing is — and is not." center />
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }} className="iv-cmp-grid">
+        <div style={{ display: "grid", gap: 12 }} className="iv-cmp-grid">
           <div style={{ background: "rgba(34,197,94,0.06)", border: "1px solid rgba(34,197,94,0.2)", borderRadius: 12, padding: "16px" }}>
             <p style={{ color: "#22C55E", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.07em", marginBottom: 10 }}>LAGDA PROVIDES</p>
             {[

@@ -42,7 +42,7 @@ export function SecurityDocVerification() {
 
       <PageSection id="public-private">
         <SectionHeading eyebrow="What is shared" id="ws-h2" heading="Public verification exposes only what's necessary." center />
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }} className="pv-grid">
+        <div style={{ display: "grid", gap: 12 }} className="pv-grid">
           <div style={{ background: "rgba(34,197,94,0.06)", border: "1px solid rgba(34,197,94,0.2)", borderRadius: 12, padding: "16px" }}>
             <p style={{ color: "#22C55E", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.07em", marginBottom: 10 }}>SHOWN PUBLICLY</p>
             {PUBLIC_EVIDENCE.map((t) => (

@@ -48,10 +48,10 @@ export function Contacts() {
       />
 
       <PageSection id="contact-list" light bordered>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "32px 48px", alignItems: "start" }} className="con-two-col">
+        <div style={{ display: "grid", gap: "32px 48px", alignItems: "start" }} className="con-two-col">
           <div>
             <SectionHeading eyebrow="Contact information" id="ci-h2" heading="Store what you need for each transaction." sub="A saved contact can include the information used to add them to a signing transaction — name, email, mobile, and preferred authentication method." />
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }} className="con-info-grid">
+            <div style={{ display: "grid", gap: 6 }} className="con-info-grid">
               {CONTACT_INFO.map((f) => (
                 <div key={f} style={{ display: "flex", gap: 7, alignItems: "flex-start" }}>
                   <span style={{ color: "#0078D4", flexShrink: 0, fontSize: 12 }}>·</span>
@@ -68,7 +68,7 @@ export function Contacts() {
 
       <PageSection id="actions">
         <SectionHeading eyebrow="Contact actions" id="ca-h2" heading="Manage your contact list." center />
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10 }} className="ca-grid">
+        <div style={{ display: "grid", gap: 10 }} className="ca-grid">
           {[
             { action: "Add from transaction", desc: "After sending a transaction, save the recipient as a contact automatically." },
             { action: "Search and filter",    desc: "Find contacts by name, organization, tag, or last transaction date." },

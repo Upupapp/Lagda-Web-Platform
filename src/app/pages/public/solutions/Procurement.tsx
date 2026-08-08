@@ -107,7 +107,7 @@ export function Procurement() {
       />
 
       <PageSection id="challenges" light bordered>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "32px 48px", alignItems: "start" }} className="proc-two-col">
+        <div style={{ display: "grid", gap: "32px 48px", alignItems: "start" }} className="proc-two-col">
           <div>
             <SectionHeading eyebrow="Procurement workflow problems" id="ch-h2" heading="Delays at every step of the approval chain." />
             <ChallengeCards challenges={CHALLENGES} />
@@ -121,7 +121,7 @@ export function Procurement() {
       </PageSection>
 
       <PageSection id="workflow">
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "32px 48px" }} className="proc-two-col">
+        <div style={{ display: "grid", gap: "32px 48px" }} className="proc-two-col">
           <div>
             <SectionHeading eyebrow="Procurement workflow" id="wf-h2" heading="Internal approvals first — then vendor." />
             <WorkflowSteps steps={PROCUREMENT_WORKFLOW} />

@@ -64,7 +64,7 @@ export function CompanyBranding() {
       />
 
       <PageSection id="preview" light bordered>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "32px 48px", alignItems: "start" }} className="cb-two-col">
+        <div style={{ display: "grid", gap: "32px 48px", alignItems: "start" }} className="cb-two-col">
           <div>
             <SectionHeading eyebrow="Before and after" id="ba-h2" heading="See what branding adds to the recipient experience." sub="Toggle to compare an unbranded and branded signing invitation. LAGDA trust indicators remain visible in both states." />
             <div style={{ display: "flex", gap: 8, marginBottom: 20 }}>
@@ -106,7 +106,7 @@ export function CompanyBranding() {
 
       <PageSection id="safeguards">
         <SectionHeading eyebrow="Document safeguards" id="ds-h2" heading="Branding is applied to the interface — not the document content." center />
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 12 }} className="ds-grid">
+        <div style={{ display: "grid", gap: 12 }} className="ds-grid">
           {[
             { title: "Applied to interface",       desc: "Branding appears in the signing environment and invitation email — not overlaid on the PDF content itself." },
             { title: "Source content respected",   desc: "Existing headers, footers, and document content should not be obscured by organizational branding." },

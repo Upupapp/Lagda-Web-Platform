@@ -105,7 +105,7 @@ export function RealEstate() {
       </PageSection>
 
       <PageSection id="challenges">
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "32px 48px", alignItems: "start" }} className="re-two-col">
+        <div style={{ display: "grid", gap: "32px 48px", alignItems: "start" }} className="re-two-col">
           <div>
             <SectionHeading eyebrow="What slows you down" id="ch-h2" heading="Paper-heavy workflows for recurring processes." />
             <ChallengeCards challenges={CHALLENGES} />
@@ -119,7 +119,7 @@ export function RealEstate() {
       </PageSection>
 
       <PageSection id="workflow" light bordered>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "32px 48px" }} className="re-two-col">
+        <div style={{ display: "grid", gap: "32px 48px" }} className="re-two-col">
           <div>
             <SectionHeading eyebrow="Workflow" id="wf-h2" heading="From template to completed lease record." />
             <WorkflowSteps steps={REAL_ESTATE_WORKFLOW} />

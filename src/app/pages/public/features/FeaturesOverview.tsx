@@ -44,7 +44,7 @@ function LifecycleStrip() {
 function CapabilityMap({ group }: { group: string }) {
   const caps = OVERVIEW_CAPABILITIES.filter((c) => c.group === group);
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 12 }} className="cap-map-grid">
+    <div style={{ display: "grid", gap: 12 }} className="cap-map-grid">
       {caps.map((c) => (
         <Link key={c.path} to={c.path} style={{ textDecoration: "none" }}>
           <div style={{

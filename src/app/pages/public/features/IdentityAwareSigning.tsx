@@ -49,7 +49,7 @@ export function IdentityAwareSigning() {
       />
 
       <PageSection id="layers" light bordered>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "32px 64px", alignItems: "start" }} className="ias-two-col">
+        <div style={{ display: "grid", gap: "32px 64px", alignItems: "start" }} className="ias-two-col">
           <div>
             <SectionHeading eyebrow="The six layers" id="layers-h2" heading="Six overlapping layers build the evidence record." sub="No single layer proves legal identity in every case. Together, they create a transaction record that supports review, attribution, and verification." />
             <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 12, padding: "14px 16px", marginTop: 16 }}>
@@ -65,7 +65,7 @@ export function IdentityAwareSigning() {
 
       <PageSection id="sig-vs-identity">
         <SectionHeading eyebrow="Signature vs identity" id="sig-h2" heading="A visible signature is not identity." center />
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }} className="sig-grid">
+        <div style={{ display: "grid", gap: 12 }} className="sig-grid">
           <div style={{ background: "rgba(0,120,212,0.06)", border: "1px solid rgba(0,120,212,0.2)", borderRadius: 12, padding: "18px 18px" }}>
             <p style={{ color: "#38bdf8", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", marginBottom: 10 }}>VISIBLE SIGNATURE</p>
             <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: 7 }}>

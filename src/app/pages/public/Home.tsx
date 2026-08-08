@@ -133,7 +133,7 @@ function SigningSection() {
 
   return (
     <Section id="identity-aware-signing">
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "48px 64px", alignItems: "center" }} className="signing-grid">
+      <div style={{ display: "grid", gap: "48px 64px", alignItems: "center" }} className="signing-grid">
         <div>
           <SectionHeader
             eyebrow="Signer authentication"
@@ -173,6 +173,7 @@ function SigningSection() {
       </div>
       <style>{`
         .signing-grid { grid-template-columns: 1fr 1fr; }
+        .signing-grid { grid-template-columns: 1fr 1fr; }
         @media (max-width: 760px) { .signing-grid { grid-template-columns: 1fr; } }
       `}</style>
     </Section>
@@ -210,7 +211,7 @@ function WorkflowTypesSection() {
         sub="LAGDA supports the way your documents actually need to move — in sequence, all at once, or in combinations."
         center
       />
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 20 }} className="wt-grid">
+      <div style={{ display: "grid", gap: 20 }} className="wt-grid">
         {TYPES.map((t) => (
           <div key={t.title} style={{
             background: "rgba(7,17,31,0.95)",
@@ -255,7 +256,7 @@ function AuditSection() {
 
   return (
     <Section id="audit-trail">
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "48px 64px", alignItems: "center" }} className="audit-grid">
+      <div style={{ display: "grid", gap: "48px 64px", alignItems: "center" }} className="audit-grid">
         {/* Mock audit panel */}
         <div style={{
           background: "rgba(7,17,31,0.95)",
@@ -305,6 +306,7 @@ function AuditSection() {
         </div>
       </div>
       <style>{`
+        .audit-grid { grid-template-columns: 1fr 1fr; }
         .audit-grid { grid-template-columns: 1fr 1fr; }
         @media (max-width: 760px) { .audit-grid { grid-template-columns: 1fr; } }
       `}</style>
@@ -361,7 +363,7 @@ function SolutionsSection() {
 function SecuritySection() {
   return (
     <Section id="security">
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "48px 64px", alignItems: "start" }} className="security-grid">
+      <div style={{ display: "grid", gap: "48px 64px", alignItems: "start" }} className="security-grid">
         <div>
           <SectionHeader
             eyebrow="Trust architecture"
@@ -393,6 +395,7 @@ function SecuritySection() {
         </div>
       </div>
       <style>{`
+        .security-grid { grid-template-columns: 1fr 1fr; }
         .security-grid { grid-template-columns: 1fr 1fr; }
         @media (max-width: 760px) { .security-grid { grid-template-columns: 1fr; } }
       `}</style>
@@ -488,7 +491,7 @@ function ResourcesSection() {
         sub="Guides and references to help you understand how LAGDA works and what to expect from each step."
         center
       />
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 20 }} className="resources-grid">
+      <div style={{ display: "grid", gap: 20 }} className="resources-grid">
         {RESOURCES.map((r) => (
           <Link key={r.title} to={r.path} style={{ textDecoration: "none" }}>
             <div style={{
@@ -513,6 +516,7 @@ function ResourcesSection() {
         ))}
       </div>
       <style>{`
+        .resources-grid { grid-template-columns: repeat(3, 1fr); }
         .resources-grid { grid-template-columns: repeat(3, 1fr); }
         @media (max-width: 760px) { .resources-grid { grid-template-columns: 1fr; } }
       `}</style>
