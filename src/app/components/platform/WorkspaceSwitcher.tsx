@@ -110,9 +110,11 @@ export function WorkspaceSwitcher({ collapsed }: WorkspaceSwitcherProps) {
           <p style={{ color: "white", ...GF, fontSize: 12, fontWeight: 600, margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
             {currentWorkspace.name}
           </p>
-          <p style={{ color: "#475569", ...GM, fontSize: 9, margin: 0 }}>{planLabel}</p>
+          {/* #475569 on #111B28 measured 2.29:1 at 9px — the worst contrast in the
+              shell. #94A3B8 measures 6.76:1. */}
+          <p style={{ color: "#94A3B8", ...GM, fontSize: 9, margin: 0 }}>{planLabel}</p>
         </div>
-        <ChevronDown size={12} style={{ color: "#475569", flexShrink: 0, transform: open ? "rotate(180deg)" : undefined, transition: "transform 0.15s" }} aria-hidden />
+        <ChevronDown size={12} style={{ color: "#94A3B8", flexShrink: 0, transform: open ? "rotate(180deg)" : undefined, transition: "transform 0.15s" }} aria-hidden />
       </button>
 
       {open && (
@@ -187,7 +189,7 @@ const WorkspaceMenu = forwardRef<HTMLDivElement, WorkspaceMenuProps>(
               <p style={{ ...GF, fontSize: 12, fontWeight: 600, margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                 {ws.name}
               </p>
-              <p style={{ ...GM, fontSize: 9, color: "#475569", margin: 0 }}>
+              <p style={{ ...GM, fontSize: 9, color: "#94A3B8", margin: 0 }}>
                 {PLAN_LABELS[ws.plan]} · {ws.role.replace("_", " ")}
               </p>
             </div>

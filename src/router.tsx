@@ -181,6 +181,14 @@ const WorkflowReviewPage      = lazy(() => import("./app/pages/platform/document
 const WorkflowStageDetailPage = lazy(() => import("./app/pages/platform/documents/workflow/WorkflowStageDetailPage").then(m => ({ default: m.WorkflowStageDetailPage })));
 
 // Templates (Command 21)
+const WorkflowOverviewPage       = lazy(() => import("./app/pages/platform/workflow/WorkflowPages").then(m => ({ default: m.WorkflowOverviewPage })));
+const WorkflowTemplatesPage      = lazy(() => import("./app/pages/platform/workflow/WorkflowPages").then(m => ({ default: m.WorkflowTemplatesPage })));
+const WorkflowRunsPage           = lazy(() => import("./app/pages/platform/workflow/WorkflowPages").then(m => ({ default: m.WorkflowRunsPage })));
+const WorkflowCompletedPage      = lazy(() => import("./app/pages/platform/workflow/WorkflowPages").then(m => ({ default: m.WorkflowCompletedPage })));
+const WorkflowRunDetailPage      = lazy(() => import("./app/pages/platform/workflow/WorkflowPages").then(m => ({ default: m.WorkflowRunDetailPage })));
+const WorkflowTemplateDetailPage = lazy(() => import("./app/pages/platform/workflow/WorkflowPages").then(m => ({ default: m.WorkflowTemplateDetailPage })));
+const WorkflowBuilderPage        = lazy(() => import("./app/pages/platform/workflow/WorkflowBuilderPage").then(m => ({ default: m.WorkflowBuilderPage })));
+const StartWorkflowPage          = lazy(() => import("./app/pages/platform/workflow/WorkflowBuilderPage").then(m => ({ default: m.StartWorkflowPage })));
 const TemplatesPage       = lazy(() => import("./app/pages/platform/templates/TemplatesPage").then(m => ({ default: m.TemplatesPage })));
 const CreateTemplatePage  = lazy(() => import("./app/pages/platform/templates/CreateTemplatePage").then(m => ({ default: m.CreateTemplatePage })));
 const TemplateDetailPage  = lazy(() => import("./app/pages/platform/templates/TemplateDetailPage").then(m => ({ default: m.TemplateDetailPage })));
@@ -501,6 +509,19 @@ export const router = createBrowserRouter([
       { path: "collaboration/mentions",  element: <CapabilityGuard capabilityId="document-collaboration"><Suspense fallback={null}><CollaborationCenterMentions /></Suspense></CapabilityGuard> },
       { path: "collaboration/blocking",  element: <CapabilityGuard capabilityId="document-collaboration"><Suspense fallback={null}><CollaborationCenterBlocking /></Suspense></CapabilityGuard> },
       { path: "collaboration/resolved",  element: <CapabilityGuard capabilityId="document-collaboration"><Suspense fallback={null}><CollaborationCenterResolved /></Suspense></CapabilityGuard> },
+
+      // ── Workflow (primary product area) ────────────────────────────────────
+      // Reusable workflow designs and the runs started from them. Static paths
+      // MUST precede the parametric ones or "builder", "start" and "runs" are
+      // swallowed by :workflowTemplateId.
+      { path: "workflow",                          element: <CapabilityGuard capabilityId="workflow"><Suspense fallback={null}><WorkflowOverviewPage /></Suspense></CapabilityGuard> },
+      { path: "workflow/templates",                element: <CapabilityGuard capabilityId="workflow"><Suspense fallback={null}><WorkflowTemplatesPage /></Suspense></CapabilityGuard> },
+      { path: "workflow/runs",                     element: <CapabilityGuard capabilityId="workflow"><Suspense fallback={null}><WorkflowRunsPage /></Suspense></CapabilityGuard> },
+      { path: "workflow/completed",                element: <CapabilityGuard capabilityId="workflow"><Suspense fallback={null}><WorkflowCompletedPage /></Suspense></CapabilityGuard> },
+      { path: "workflow/builder",                  element: <CapabilityGuard capabilityId="workflow"><Suspense fallback={null}><WorkflowBuilderPage /></Suspense></CapabilityGuard> },
+      { path: "workflow/start",                    element: <CapabilityGuard capabilityId="workflow"><Suspense fallback={null}><StartWorkflowPage /></Suspense></CapabilityGuard> },
+      { path: "workflow/templates/:workflowTemplateId", element: <CapabilityGuard capabilityId="workflow"><Suspense fallback={null}><WorkflowTemplateDetailPage /></Suspense></CapabilityGuard> },
+      { path: "workflow/runs/:workflowRunId",      element: <CapabilityGuard capabilityId="workflow"><Suspense fallback={null}><WorkflowRunDetailPage /></Suspense></CapabilityGuard> },
 
       // Templates (Command 21) — library, create, detail, edit, preview, use
       // Note: templates/new MUST precede templates/:templateId to avoid shadowing

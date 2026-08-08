@@ -340,7 +340,12 @@ export type PlatformPermission =
   | "view_audit"
   | "view_reports"
   | "view_workflow_automation"
-  | "manage_workflow_automation";
+  | "manage_workflow_automation"
+  // Reusable workflow templates and the runs started from them. Separate from
+  // `*_workflow_automation`, which is the rules engine, and from signing
+  // workflow, which is per-document routing under `view_documents`.
+  | "view_workflow"
+  | "manage_workflow";
 
 export const ROLE_PERMISSIONS: Record<PlatformRole, PlatformPermission[]> = {
   owner: [
@@ -348,11 +353,13 @@ export const ROLE_PERMISSIONS: Record<PlatformRole, PlatformPermission[]> = {
     "verify_documents","manage_team","manage_workspace","view_billing","manage_billing",
     "view_usage","manage_security","manage_branding","manage_integrations","manage_api",
     "manage_webhooks","view_audit","view_reports","view_workflow_automation","manage_workflow_automation",
+    "view_workflow","manage_workflow",
   ],
   administrator: [
     "view_dashboard","view_documents","prepare_documents","manage_templates","manage_contacts",
     "verify_documents","manage_team","manage_workspace","view_billing","view_usage",
     "manage_security","manage_branding","view_audit","view_reports","view_workflow_automation","manage_workflow_automation",
+    "view_workflow","manage_workflow",
   ],
   billing_administrator: [
     "view_dashboard","view_documents","view_billing","manage_billing","view_usage",
@@ -363,12 +370,15 @@ export const ROLE_PERMISSIONS: Record<PlatformRole, PlatformPermission[]> = {
   template_administrator: [
     "view_dashboard","view_documents","prepare_documents","manage_templates","manage_contacts",
     "verify_documents","view_usage","view_reports",
+    "view_workflow","manage_workflow",
   ],
   sender: [
     "view_dashboard","view_documents","prepare_documents","manage_contacts","verify_documents","view_usage","view_reports","view_workflow_automation",
+    "view_workflow",
   ],
   reviewer: [
     "view_dashboard","view_documents","verify_documents","view_reports",
+    "view_workflow",
   ],
   viewer: [
     "view_dashboard","view_documents",

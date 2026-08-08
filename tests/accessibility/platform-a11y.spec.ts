@@ -105,7 +105,13 @@ interface RouteUnderTest {
 
 /** WCAG 1.4.3 (AA). Slate-on-navy chrome and slate-on-white body copy across the
  *  platform sit between 2.2:1 and 4.0:1 against a 4.5:1 requirement. This is a
- *  palette-level defect, not a per-page one; it cannot be fixed from a spec. */
+ *  palette-level defect, not a per-page one; it cannot be fixed from a spec.
+ *
+ *  Counts were lowered on 2026-08-08 after the two worst offenders in the shell
+ *  were fixed: sidebar labels were #64748B on #07111F (3.98:1) and the plan
+ *  label was #475569 on #111B28 (2.29:1), both now #94A3B8 at 7.39:1 and
+ *  6.76:1. The ratchet asserts `actual <= nodes`, so leaving the old numbers
+ *  would have quietly re-admitted every node the fix removed. */
 const contrast = (nodes: number): TrackedDefect => ({
   rule: "color-contrast",
   nodes,
@@ -124,7 +130,7 @@ const ROUTES: readonly RouteUnderTest[] = [
       // Recent-documents grid must actually contain fixture rows.
       await expect(page.getByRole("row")).not.toHaveCount(0);
     },
-    trackedDefects: [contrast(84)],
+    trackedDefects: [contrast(73)],
     h1Baseline: 2,
     mainBaseline: 1,
   },
@@ -136,7 +142,7 @@ const ROUTES: readonly RouteUnderTest[] = [
       // 1 header row + 7 fixture documents.
       await expect(page.getByRole("row")).toHaveCount(8);
     },
-    trackedDefects: [contrast(47)],
+    trackedDefects: [contrast(36)],
     h1Baseline: 2,
     mainBaseline: 2,
   },
@@ -150,7 +156,7 @@ const ROUTES: readonly RouteUnderTest[] = [
       // 1 header row + 6 fixture batches.
       await expect(page.getByRole("row")).toHaveCount(7);
     },
-    trackedDefects: [contrast(17)],
+    trackedDefects: [contrast(5)],
     // Three: the shell header, `<PageHeader title="Bulk Send" />`, and
     // `<SectionHeading level={1} title="Bulk Send" />` in BulkSendOverviewPage.
     h1Baseline: 3,
@@ -164,7 +170,7 @@ const ROUTES: readonly RouteUnderTest[] = [
       await expect(page.getByRole("article", { name: "Batches in Preparation" })).toBeVisible();
       await expect(page.getByRole("article", { name: "Validation Issues" })).toBeVisible();
     },
-    trackedDefects: [contrast(27)],
+    trackedDefects: [contrast(16)],
     h1Baseline: 2,
     mainBaseline: 2,
   },
@@ -176,7 +182,7 @@ const ROUTES: readonly RouteUnderTest[] = [
       await expect(page.getByRole("button", { name: /Mark all read/i })).toBeVisible();
     },
     trackedDefects: [
-      contrast(74),
+      contrast(62),
       {
         // WCAG 4.1.2. The unread dot is `<span aria-label="Unread">` with no
         // role, so the attribute is dropped: unread state is announced to no
@@ -199,7 +205,7 @@ const ROUTES: readonly RouteUnderTest[] = [
       // 1 header row + 8 fixture contacts.
       await expect(page.getByRole("row")).toHaveCount(9);
     },
-    trackedDefects: [contrast(37)],
+    trackedDefects: [contrast(26)],
     h1Baseline: 2,
     mainBaseline: 2,
   },

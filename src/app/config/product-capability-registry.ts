@@ -212,6 +212,38 @@ const REGISTRY: ProductCapability[] = [
     dependencies:             [capabilityId("documents")],
   },
 
+  // ── WORKFLOW ──────────────────────────────────────────────────────────────
+  // Reusable workflow TEMPLATES and the RUNS started from them. Distinct from
+  // both neighbours and importing neither: `signing-workflow` routes ONE
+  // document from its own detail page, and `workflow-automation` is a rules
+  // engine. This is the layer that lets one design be started many times.
+  {
+    id:                       capabilityId("workflow"),
+    label:                    "Workflow",
+    description:              "Reusable multi-stage workflows — design a process once, start it as many times as needed, and track each run's stages, participants, progress and audit trail separately",
+    group:                    "Core",
+    maturity:                 "launch-core",
+    enabledByDefault:         true,
+    frontendReady:            "complete-demonstration",
+    backendReady:             "contract-defined",
+    publicLaunchReady:        true,
+    navigationVisibility:     true,
+    searchVisibility:         true,
+    commandPaletteVisibility: true,
+    dashboardVisibility:      false,
+    permissionRequirements:   ["view_workflow"],
+    planRequirements:         [],
+    featureRequirements:      ["documentsEnabled"],
+    routeIds:                 ["app-workflow","app-workflow-templates","app-workflow-runs","app-workflow-completed","app-workflow-builder"],
+    unavailableReason:        "Workflow is not available for your account.",
+    previewNotice:            "",
+    safeFallbackRoute:        "/app/dashboard",
+    indexable:                false,
+    sitemapInclude:           false,
+    backendDependencies:      ["Workflow template service","Workflow run state machine","Stage transition rules","Participant assignment service","Workflow notification events","Workflow audit trail"],
+    dependencies:             [capabilityId("documents")],
+  },
+
   // ── FIELD PLACEMENT ───────────────────────────────────────────────────────
   {
     id:                       capabilityId("field-placement"),

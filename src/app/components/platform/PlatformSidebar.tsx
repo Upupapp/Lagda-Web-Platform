@@ -8,6 +8,9 @@ import {
   LayoutDashboard, FileText, Files, Users, ShieldCheck,
   Bell, Users2, Settings, FilePlus, ChevronLeft, ChevronRight,
   HelpCircle, Inbox,
+  GitBranch,
+  BarChart2,
+  Zap,
 } from "lucide-react";
 import { LagdaLogo } from "../brand/LagdaLogo";
 import { usePlatform } from "../../context/PlatformContext";
@@ -22,9 +25,13 @@ const BORDER = "rgba(255,255,255,0.07)";
 const GF     = { fontFamily: "'Geist', sans-serif" };
 const GM     = { fontFamily: "'Geist Mono', monospace" };
 
+// Keyed by the `icon` string on each nav item. A name missing here renders a
+// blank space rather than failing, which is why `nav-icons.test.ts` asserts
+// every navigation item resolves in BOTH this map and MobileNav's.
 const ICON_MAP: Record<string, React.ElementType> = {
   LayoutDashboard, FileText, Files, Users, ShieldCheck,
-  Bell, Users2, Settings, FilePlus, HelpCircle, Inbox,
+  Bell, Users2, Settings, FilePlus, HelpCircle, Inbox, GitBranch,
+  BarChart2, Zap,
 };
 
 function NavIcon({ name, size = 16 }: { name: string; size?: number }) {
@@ -58,7 +65,10 @@ function SidebarItem({ to, icon, label, badge, collapsed }: SidebarItemProps) {
           textDecoration: "none",
           background: isActive ? "rgba(0,120,212,0.14)" : "transparent",
           border: isActive ? "1px solid rgba(0,120,212,0.22)" : "1px solid transparent",
-          color: isActive ? "#38bdf8" : "#64748b",
+          // #64748b on the navy sidebar measured 3.98:1 — below the 4.5:1 that
+          // WCAG 1.4.3 AA requires for body text, on the primary navigation of
+          // the whole product. #94A3B8 measures 7.39:1 on the same background.
+          color: isActive ? "#38bdf8" : "#94A3B8",
           transition: "background 0.12s, color 0.12s",
           position: "relative",
           minHeight: 36,
@@ -67,7 +77,7 @@ function SidebarItem({ to, icon, label, badge, collapsed }: SidebarItemProps) {
       >
         {({ isActive }) => (
           <>
-            <span aria-hidden style={{ flexShrink: 0, color: isActive ? "#38bdf8" : "#64748b", display: "flex", alignItems: "center" }}>
+            <span aria-hidden style={{ flexShrink: 0, color: isActive ? "#38bdf8" : "#94A3B8", display: "flex", alignItems: "center" }}>
               <NavIcon name={icon} />
             </span>
             {!collapsed && (

@@ -74,6 +74,22 @@ export const PRIMARY_NAV: PlatformNavItem[] = [
     description: "All document transactions",
   },
   {
+    // Workflow sits between Documents and Templates deliberately. It is a
+    // primary product area, not a feature of either: a workflow is designed
+    // once and started many times, which is neither a document nor a document
+    // template. Burying it under either would hide the thing the product is
+    // sold on.
+    id: "workflow",
+    label: "Workflow",
+    path: "/app/workflow",
+    icon: "GitBranch",
+    group: "primary",
+    permission: "view_workflow",
+    featureFlag: "documentsEnabled",
+    showOnMobile: true,
+    description: "Reusable workflows and active runs",
+  },
+  {
     id: "templates",
     label: "Templates",
     path: "/app/templates",
