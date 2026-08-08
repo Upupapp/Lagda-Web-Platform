@@ -306,11 +306,42 @@ export const AUTH_ROUTES: RouteMeta[] = [
   { path: "/mfa",            title: "Two-Factor Authentication — LAGDA",   breadcrumb: "Verify Identity",  section: "auth", product: "shared", layout: "auth", requiresAuth: false, isPublic: false, isIndexable: false, status: "planned", analyticsName: "mfa" },
   { path: "/invitation",     title: "Accept Invitation — LAGDA",           breadcrumb: "Accept Invitation",section: "auth", product: "shared", layout: "auth", requiresAuth: false, isPublic: false, isIndexable: false, status: "planned", analyticsName: "invitation" },
   { path: "/onboarding",     title: "Welcome to LAGDA",                    breadcrumb: "Get Started",      section: "auth", product: "shared", layout: "auth", requiresAuth: true,  isPublic: false, isIndexable: false, status: "planned", analyticsName: "onboarding" },
+
+  // Routes that were live in router.tsx with no metadata here. Without an entry
+  // usePageMeta falls back to the generic site title, so every one of these
+  // shared one browser-tab name, one history entry name and one bookmark name.
+  { path: "/accept-invitation", title: "Accept Invitation — LAGDA",           breadcrumb: "Accept Invitation", section: "auth", product: "shared", layout: "auth", requiresAuth: false, isPublic: false, isIndexable: false, status: "implemented", analyticsName: "accept_invitation" },
+  { path: "/auth/account-locked", title: "Account Locked — LAGDA",            breadcrumb: "Account Locked",    section: "auth", product: "shared", layout: "auth", requiresAuth: false, isPublic: false, isIndexable: false, status: "implemented", analyticsName: "account_locked" },
+  { path: "/auth/link-error",   title: "Link Problem — LAGDA",                breadcrumb: "Link Problem",      section: "auth", product: "shared", layout: "auth", requiresAuth: false, isPublic: false, isIndexable: false, status: "implemented", analyticsName: "link_error" },
+  { path: "/mfa/setup",         title: "Set Up Two-Factor Authentication — LAGDA", breadcrumb: "Set Up MFA",   section: "auth", product: "shared", layout: "auth", requiresAuth: false, isPublic: false, isIndexable: false, status: "implemented", analyticsName: "mfa_setup" },
+  { path: "/mfa/recovery",      title: "Recovery Codes — LAGDA",              breadcrumb: "Recovery Codes",    section: "auth", product: "shared", layout: "auth", requiresAuth: false, isPublic: false, isIndexable: false, status: "implemented", analyticsName: "mfa_recovery" },
+  { path: "/onboarding/profile",       title: "Your Profile — LAGDA",         breadcrumb: "Profile",       section: "auth", product: "shared", layout: "auth", requiresAuth: true,  isPublic: false, isIndexable: false, status: "implemented", analyticsName: "onboarding_profile" },
+  { path: "/onboarding/use-case",      title: "How You Will Use LAGDA",       breadcrumb: "Use Case",      section: "auth", product: "shared", layout: "auth", requiresAuth: true,  isPublic: false, isIndexable: false, status: "implemented", analyticsName: "onboarding_use_case" },
+  { path: "/onboarding/workspace",     title: "Set Up Your Workspace — LAGDA", breadcrumb: "Workspace",    section: "auth", product: "shared", layout: "auth", requiresAuth: true,  isPublic: false, isIndexable: false, status: "implemented", analyticsName: "onboarding_workspace" },
+  { path: "/onboarding/security",      title: "Secure Your Account — LAGDA",  breadcrumb: "Security",      section: "auth", product: "shared", layout: "auth", requiresAuth: true,  isPublic: false, isIndexable: false, status: "implemented", analyticsName: "onboarding_security" },
+  { path: "/onboarding/notifications", title: "Notification Preferences — LAGDA", breadcrumb: "Notifications", section: "auth", product: "shared", layout: "auth", requiresAuth: true,  isPublic: false, isIndexable: false, status: "implemented", analyticsName: "onboarding_notifications" },
+  { path: "/onboarding/review",        title: "Review Your Setup — LAGDA",    breadcrumb: "Review",        section: "auth", product: "shared", layout: "auth", requiresAuth: true,  isPublic: false, isIndexable: false, status: "implemented", analyticsName: "onboarding_review" },
+  { path: "/onboarding/complete",      title: "You Are Ready — LAGDA",        breadcrumb: "Complete",      section: "auth", product: "shared", layout: "auth", requiresAuth: true,  isPublic: false, isIndexable: false, status: "implemented", analyticsName: "onboarding_complete" },
 ];
 
 // ── Platform (authenticated customer) routes ──────────────────────────────────
 
 export const PLATFORM_ROUTES: RouteMeta[] = [
+  // Live in router.tsx with no metadata until now — see the note in AUTH_ROUTES.
+  { path: "/app/documents/new",   title: "New Document | LAGDA",        breadcrumb: "New Document",   section: "platform", product: "esignature", layout: "platform", requiresAuth: true, isPublic: false, isIndexable: false, status: "implemented", analyticsName: "platform_document_new" },
+  { path: "/app/inbox",           title: "My Actions | LAGDA",          description: "Documents waiting for you to sign, approve, review or acknowledge.", breadcrumb: "My Actions", section: "platform", product: "esignature", layout: "platform", requiresAuth: true, isPublic: false, isIndexable: false, status: "implemented", analyticsName: "platform_inbox" },
+  { path: "/app/inbox/:requestId", title: "Assignment | LAGDA",         breadcrumb: "Assignment",     section: "platform", product: "esignature", layout: "platform", requiresAuth: true, isPublic: false, isIndexable: false, status: "implemented", analyticsName: "platform_inbox_detail" },
+  { path: "/app/notifications/:notificationId", title: "Notification | LAGDA", breadcrumb: "Notification", section: "platform", product: "esignature", layout: "platform", requiresAuth: true, isPublic: false, isIndexable: false, status: "implemented", analyticsName: "platform_notification_detail" },
+  { path: "/app/reports/preparation", title: "Preparation Report | LAGDA", breadcrumb: "Preparation", section: "platform", product: "esignature", layout: "platform", requiresAuth: true, isPublic: false, isIndexable: false, status: "implemented", analyticsName: "platform_reports_preparation" },
+  { path: "/app/team/members",     title: "Members | LAGDA",            breadcrumb: "Members",        section: "platform", product: "esignature", layout: "platform", requiresAuth: true, isPublic: false, isIndexable: false, status: "implemented", analyticsName: "platform_team_members" },
+  { path: "/app/team/invitations", title: "Invitations | LAGDA",        breadcrumb: "Invitations",    section: "platform", product: "esignature", layout: "platform", requiresAuth: true, isPublic: false, isIndexable: false, status: "implemented", analyticsName: "platform_team_invitations" },
+  { path: "/app/team/roles",       title: "Roles | LAGDA",              breadcrumb: "Roles",          section: "platform", product: "esignature", layout: "platform", requiresAuth: true, isPublic: false, isIndexable: false, status: "implemented", analyticsName: "platform_team_roles" },
+  { path: "/app/settings/signatures",                 title: "Signatures & Initials | LAGDA", description: "Manage the signatures and initials you can apply to documents.", breadcrumb: "Signatures & Initials", section: "platform", product: "esignature", layout: "platform", requiresAuth: true, isPublic: false, isIndexable: false, status: "implemented", analyticsName: "platform_signatures" },
+  { path: "/app/settings/signatures/new",             title: "New Signature | LAGDA",      breadcrumb: "New Signature",  section: "platform", product: "esignature", layout: "platform", requiresAuth: true, isPublic: false, isIndexable: false, status: "implemented", analyticsName: "platform_signature_new" },
+  { path: "/app/settings/signatures/:signatureId",     title: "Signature | LAGDA",         breadcrumb: "Signature",      section: "platform", product: "esignature", layout: "platform", requiresAuth: true, isPublic: false, isIndexable: false, status: "implemented", analyticsName: "platform_signature_detail" },
+  { path: "/app/settings/signatures/:signatureId/edit", title: "Edit Signature | LAGDA",   breadcrumb: "Edit Signature", section: "platform", product: "esignature", layout: "platform", requiresAuth: true, isPublic: false, isIndexable: false, status: "implemented", analyticsName: "platform_signature_edit" },
+  { path: "/app/permission-denied", title: "Access Not Available | LAGDA", breadcrumb: "Access",      section: "platform", product: "esignature", layout: "platform", requiresAuth: true, isPublic: false, isIndexable: false, status: "implemented", analyticsName: "platform_permission_denied" },
+  { path: "/app/session-expired",   title: "Session Expired | LAGDA",     breadcrumb: "Session",      section: "platform", product: "esignature", layout: "platform", requiresAuth: true, isPublic: false, isIndexable: false, status: "implemented", analyticsName: "platform_session_expired" },
   // /app redirects to /app/dashboard — keep for usePageMeta fallback
   { path: "/app",                             title: "Dashboard | LAGDA",                          breadcrumb: "Dashboard",             section: "platform", product: "esignature", layout: "platform", requiresAuth: true, isPublic: false, isIndexable: false, status: "implemented", analyticsName: "platform_dashboard" },
   // Canonical authenticated Dashboard route
@@ -457,7 +488,21 @@ export const RECIPIENT_ROUTES: RouteMeta[] = [
 const ALL_ROUTES = [...PUBLIC_ROUTES, ...AUTH_ROUTES, ...PLATFORM_ROUTES, ...RECIPIENT_ROUTES];
 
 export function getRouteMeta(pathname: string): RouteMeta | undefined {
-  return ALL_ROUTES.find((r) => r.path === pathname);
+  // Patterns as well as exact paths — most of this table is parametric, and
+  // comparing "/app/documents/:transactionId" to a real pathname never matched.
+  const exact = ALL_ROUTES.find((r) => r.path === pathname);
+  if (exact) return exact;
+  const actual = pathname.split("/").filter(Boolean);
+  return ALL_ROUTES
+    .filter((r) => r.path.includes(":"))
+    .map((r) => ({ r, segs: r.path.split("/").filter(Boolean) }))
+    // Static segments beat parameters so the more specific pattern wins.
+    .sort((a, b) =>
+      b.segs.filter((x) => !x.startsWith(":")).length -
+      a.segs.filter((x) => !x.startsWith(":")).length)
+    .find(({ segs }) =>
+      segs.length === actual.length &&
+      segs.every((seg, i) => seg.startsWith(":") || seg === actual[i]))?.r;
 }
 
 export function getRouteTitle(pathname: string): string {
