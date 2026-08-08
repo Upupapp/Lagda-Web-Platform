@@ -41,6 +41,20 @@ export const PUBLIC_ROUTES: RouteMeta[] = [
 
   // eSignature section
   {
+    path: "/workflow",
+    title: "Document Workflows | LAGDA",
+    description: "Design a document process once and run it as many times as you need. Stages for review, approval, signature and verification, with every run tracked separately.",
+    breadcrumb: "Workflow",
+    section: "product",
+    product: "esignature",
+    layout: "public",
+    requiresAuth: false,
+    isPublic: true,
+    isIndexable: true,
+    status: "implemented",
+    analyticsName: "public_workflow",
+  },
+  {
     path: "/esignature",
     title: "LAGDA eSignature — Electronic Signing for the Philippines",
     description: "Send, sign, track, and verify documents online with LAGDA eSignature.",

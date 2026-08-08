@@ -658,6 +658,50 @@ function FinalCTA() {
 // ─────────────────────────────────────────────────────────────────────────────
 // Home page orchestrator
 // ─────────────────────────────────────────────────────────────────────────────
+// ── Reusable workflows ────────────────────────────────────────────────────────
+// The homepage already covers routing ORDER within one document
+// (WorkflowTypesSection: sequential, parallel, mixed). This is the other thing:
+// a process designed once and started many times, each start independent. They
+// sit next to each other deliberately — a visitor who reads "workflow" on this
+// page should not have to guess which of the two is meant.
+function ReusableWorkflowSection() {
+  return (
+    <Section id="reusable-workflows">
+      <SectionHeader
+        eyebrow="Document workflows"
+        headingId="reusable-workflows-heading"
+        heading="Design a process once. Run it as many times as you need."
+        sub="Stages for review, approval, signature and verification, with the right people on each. Every run keeps its own documents, progress and audit trail."
+        center
+      />
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 20, marginBottom: 28 }}>
+        {[
+          { t: "One design",        d: "Build the stages and the roles each one needs. Edit it whenever the process changes." },
+          { t: "Many runs at once", d: "Start it for one client or a hundred. Runs never interfere with each other." },
+          { t: "Visible progress",  d: "See which stage a document is in, who is holding it up, and what is already done." },
+        ].map((x) => (
+          <div key={x.t} style={{
+            background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.08)",
+            borderRadius: 14, padding: 22,
+          }}>
+            <h3 style={{ color: "white", ...GF, fontSize: 16, fontWeight: 700, margin: "0 0 8px" }}>{x.t}</h3>
+            <p style={{ color: "#94a3b8", ...GF, fontSize: 13.5, lineHeight: 1.65, margin: 0 }}>{x.d}</p>
+          </div>
+        ))}
+      </div>
+      <div style={{ textAlign: "center" }}>
+        <Link to="/workflow" style={{
+          ...GF, display: "inline-flex", alignItems: "center", minHeight: 48, padding: "0 24px",
+          borderRadius: 10, border: "1px solid rgba(0,120,212,0.4)", background: "rgba(0,120,212,0.1)",
+          color: "#38bdf8", fontSize: 15, fontWeight: 700, textDecoration: "none",
+        }}>
+          How document workflows work
+        </Link>
+      </div>
+    </Section>
+  );
+}
+
 export function Home() {
   return (
     <>
@@ -666,6 +710,7 @@ export function Home() {
       <WorkflowSection />
       <SigningSection />
       <WorkflowTypesSection />
+      <ReusableWorkflowSection />
       <AuditSection />
       <VerificationSection />
       <SolutionsSection />

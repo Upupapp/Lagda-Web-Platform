@@ -48,6 +48,7 @@ const Home = lazy(() => import("./app/pages/public/Home").then(m => ({ default: 
 
 // eSignature family
 const EsigOverview            = lazy(() => import("./app/pages/public/esignature/EsigOverview").then(m => ({ default: m.EsigOverview })));
+const WorkflowPortalPage      = lazy(() => import("./app/pages/public/workflow/WorkflowPortalPage").then(m => ({ default: m.WorkflowPortalPage })));
 const EsigCoreWorkflow        = lazy(() => import("./app/pages/public/esignature/EsigCoreWorkflow").then(m => ({ default: m.EsigCoreWorkflow })));
 const EsigVerificationAudit   = lazy(() => import("./app/pages/public/esignature/EsigVerificationAudit").then(m => ({ default: m.EsigVerificationAudit })));
 const EsigAdvancedCapabilities= lazy(() => import("./app/pages/public/esignature/EsigAdvancedCapabilities").then(m => ({ default: m.EsigAdvancedCapabilities })));
@@ -692,6 +693,8 @@ export const router = createBrowserRouter([
 
       // ── eSignature product pages ──────────────────────────────────────────
       { path: "esignature",                          element: <EsigOverview /> },
+      // Public marketing for the Workflow product area (/app/workflow).
+      { path: "workflow",                           element: <WorkflowPortalPage /> },
       { path: "esignature/core-workflow",            element: <EsigCoreWorkflow /> },
       { path: "esignature/verification-and-audit",   element: <EsigVerificationAudit /> },
       { path: "esignature/advanced-capabilities",    element: <EsigAdvancedCapabilities /> },

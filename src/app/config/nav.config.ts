@@ -36,6 +36,7 @@ export const TOP_NAV: NavSection[] = [
     menuCtaLabel: "Explore eSignature",
     items: [
       { label: "Core Workflow",         path: "/esignature/core-workflow",          description: "Prepare, send, verify, and sign documents." },
+      { label: "Document Workflows",    path: "/workflow",                          description: "Reusable multi-stage processes, started as many times as needed." },
       { label: "Verification & Audit",  path: "/esignature/verification-and-audit", description: "Audit trails, QR verification, and signing records." },
       { label: "Advanced Capabilities", path: "/esignature/advanced-capabilities",  description: "Parallel signing, storage, and advanced workflows." },
       { label: "Templates & Branding",  path: "/esignature/templates-and-branding", description: "Reusable templates and company branding controls." },
@@ -157,6 +158,7 @@ export const FOOTER_COLUMNS: FooterColumn[] = [
     heading: "Product",
     links: [
       { label: "eSignature",            path: "/esignature" },
+      { label: "Document Workflows",    path: "/workflow" },
       { label: "Core Workflow",         path: "/esignature/core-workflow" },
       { label: "Document Verification", path: "/verify" },
       { label: "Templates & Branding",  path: "/esignature/templates-and-branding" },
