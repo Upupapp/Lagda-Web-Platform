@@ -12,6 +12,7 @@ import {
   SYSTEM_CONTACT_TAGS, getContactTagById,
 } from "../../../models/contacts";
 import { Z } from "../../../utils/z-index";
+import { TabStrip } from "../../../components/platform/TabStrip";
 
 const GF    = { fontFamily: "'Geist', sans-serif" };
 const GM    = { fontFamily: "'Geist Mono', monospace" };
@@ -193,7 +194,7 @@ function ContactsLibrary() {
         </div>
 
         {/* Views bar */}
-        <nav aria-label="Contact views" style={{ display: "flex", gap: 4, marginTop: 16, overflowX: "auto" }}>
+        <TabStrip label="Contact views" activeKey={currentView} className="contacts-viewstrip">
           {CONTACT_VIEWS.map(v => (
             <button
               key={v}
@@ -215,7 +216,7 @@ function ContactsLibrary() {
               )}
             </button>
           ))}
-        </nav>
+        </TabStrip>
       </header>
 
       {/* Toolbar */}

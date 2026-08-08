@@ -392,3 +392,49 @@
     animation: none;
   }
 }
+
+/* ── Tab strip ───────────────────────────────────────────────────────────────
+   The scrolling container behind <TabStrip>. Twenty-six surfaces render a row
+   of tabs in an `overflowX: auto` div; this is the shared behaviour they were
+   each missing.
+
+   The mask is the affordance: when the row overflows, the leading and trailing
+   edges fade, so a narrow screen shows that the strip continues instead of
+   ending flush at the viewport edge. `scrollbar-width: none` hides the bar
+   itself — it steals vertical space from a 44px target and, on the platforms
+   that show it permanently, sits on top of the tab labels. */
+.lagda-tabstrip {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  scroll-behavior: smooth;
+  /* Keeps a tab from being left half-scrolled after a swipe. */
+  scroll-snap-type: x proximity;
+  -webkit-mask-image: linear-gradient(to right, transparent 0, #000 16px, #000 calc(100% - 16px), transparent 100%);
+  mask-image: linear-gradient(to right, transparent 0, #000 16px, #000 calc(100% - 16px), transparent 100%);
+}
+
+.lagda-tabstrip::-webkit-scrollbar { display: none; }
+
+.lagda-tabstrip > * {
+  scroll-snap-align: center;
+  flex-shrink: 0;
+}
+
+/* Below the LAGDA mobile threshold every tab must clear 44px. Desktop keeps its
+   denser rhythm, matching the touch-target rule applied to workflow controls. */
+@media (max-width: 767px) {
+  .lagda-tabstrip > * {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lagda-tabstrip { scroll-behavior: auto; }
+}

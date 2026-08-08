@@ -18,6 +18,7 @@ import type {
   InboxFilterView, InboxSortOrder,
 } from "../../../models/inbox";
 import type { RecipientParticipantRole } from "../../../models/recipient";
+import { TabStrip } from "../../../components/platform/TabStrip";
 
 // ── Design tokens ─────────────────────────────────────────────────────────────
 
@@ -370,11 +371,7 @@ export function InboxPage() {
         )}
 
         {/* Tab bar */}
-        <div
-          role="tablist"
-          aria-label="Filter by status"
-          style={{ display: "flex", gap: 0, borderBottom: "1.5px solid #E2E8F0", marginBottom: 20, overflowX: "auto" }}
-        >
+        <TabStrip as="tablist" label="Filter by status" activeKey={activeView} className="inbox-tabstrip">
           {TABS.map(({ view, label }) => {
             const isActive = activeView === view;
             return (
@@ -396,7 +393,7 @@ export function InboxPage() {
               </button>
             );
           })}
-        </div>
+        </TabStrip>
 
         {/* Search + filters */}
         <div style={{ display: "flex", gap: 10, marginBottom: 20, flexWrap: "wrap", alignItems: "center" }}>

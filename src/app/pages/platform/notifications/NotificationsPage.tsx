@@ -24,6 +24,7 @@ import {
   NOTIFICATION_CATEGORY_LABELS,
   NOTIFICATION_DATE_GROUP_LABELS,
 } from "../../../models/notifications";
+import { TabStrip } from "../../../components/platform/TabStrip";
 
 // ── Design tokens ─────────────────────────────────────────────────────────────
 const GF    = { fontFamily: "'Geist', sans-serif" };
@@ -404,12 +405,7 @@ export function NotificationsPage() {
 
       {/* ── Tab bar ───────────────────────────────────────────────── */}
       <div style={{ borderBottom: "1px solid #E2E8F0", marginTop: 4 }}>
-        <div
-          role="tablist"
-          aria-label="Notification views"
-          style={{ display: "flex", overflowX: "auto", padding: "0 24px", gap: 0 }}
-          className="notif-tablist"
-        >
+        <TabStrip as="tablist" label="Notification views" activeKey={view} className="notif-tablist">
           {ALL_VIEWS.map((v) => {
             const isActive = v === view;
             const count    = viewCounts[v] ?? 0;
@@ -438,7 +434,7 @@ export function NotificationsPage() {
               </button>
             );
           })}
-        </div>
+        </TabStrip>
       </div>
 
       {/* ── Notification list ─────────────────────────────────────── */}

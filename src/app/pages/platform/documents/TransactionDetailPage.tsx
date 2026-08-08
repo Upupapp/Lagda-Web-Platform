@@ -48,6 +48,7 @@ import {
 } from "lucide-react";
 import { usePlatform, useCapability } from "../../../context/PlatformContext";
 import { PageHeader } from "../../../components/platform/PageHeader";
+import { TabStrip } from "../../../components/platform/TabStrip";
 import { AppContent } from "../../../components/platform/AppContentLayout";
 import type {
   TransactionDetail,
@@ -407,8 +408,7 @@ export function TransactionDetailLayout() {
           </button>
         }
         tabs={
-          <nav aria-label="Transaction sections">
-            <div style={{ display: "flex", alignItems: "center", gap: 0, overflowX: "auto" }}>
+          <TabStrip label="Transaction sections" activeKey={location.pathname}>
               {TAB_LINKS.filter(t => !t.hidden).map(t => (
                 <Link
                   key={t.suffix}
@@ -421,8 +421,7 @@ export function TransactionDetailLayout() {
                   {t.label}
                 </Link>
               ))}
-            </div>
-          </nav>
+          </TabStrip>
         }
       />
       <div style={{ flex: 1, overflowY: "auto" }}>
