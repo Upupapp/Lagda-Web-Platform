@@ -18,6 +18,7 @@ import {
   BULK_SEND_CONFIDENCE_LABELS, BULK_SEND_PROJECTION_RESULT_LABELS,
   BULK_SEND_DEFAULT_SOURCE_LABELS, BULK_SEND_CONFIG_STATUS_LABELS,
 } from "../../models/bulk-send";
+import { Z } from "../../utils/z-index";
 
 export const GF = { fontFamily: "'Geist', 'Inter', system-ui, sans-serif" } as const;
 
@@ -308,7 +309,7 @@ export function useBulkSendConfirm() {
 
   const dialog = request ? (
     <div role="alertdialog" aria-modal="true" aria-label={request.title}
-      style={{ position: "fixed", inset: 0, zIndex: 1300, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+      style={{ position: "fixed", inset: 0, zIndex: Z.modal, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
       <div onClick={() => setRequest(null)} aria-hidden style={{ position: "absolute", inset: 0, background: "rgba(7,17,31,0.42)" }} />
       <div ref={panelRef} className="bs-root" style={{
         position: "relative", background: BS.white, borderRadius: 12, padding: "24px 26px",
@@ -399,7 +400,7 @@ export function Sheet({ title, onClose, children, footer }: {
 
   return (
     <div role="dialog" aria-modal="true" aria-label={title}
-      style={{ position: "fixed", inset: 0, zIndex: 1200, display: "flex", justifyContent: "flex-end" }}>
+      style={{ position: "fixed", inset: 0, zIndex: Z.modal, display: "flex", justifyContent: "flex-end" }}>
       <div onClick={onClose} aria-hidden style={{ position: "absolute", inset: 0, background: "rgba(7,17,31,0.42)" }} />
       <div ref={panelRef} tabIndex={-1} className="bs-root" style={{
         position: "relative", background: BS.white, width: "min(560px,100%)", height: "100%",

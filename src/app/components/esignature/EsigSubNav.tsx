@@ -1,5 +1,6 @@
 import { Link, useLocation } from "react-router";
 import { ESIG_SUBNAV } from "../../pages/public/esignature/content";
+import { Z } from "../../utils/z-index";
 
 const GF = { fontFamily: "'Geist', sans-serif" };
 
@@ -21,7 +22,7 @@ export function EsigSubNav() {
         backdropFilter: "blur(12px)",
         position: "sticky",
         top: 72,
-        zIndex: 40,
+        zIndex: Z.sticky,
       }}
     >
       <div

@@ -1,5 +1,6 @@
 import { Link, useLocation } from "react-router";
 import { SECURITY_SUBNAV } from "../../pages/public/security/content";
+import { Z } from "../../utils/z-index";
 
 const GF = { fontFamily: "'Geist', sans-serif" };
 
@@ -20,7 +21,7 @@ export function SecuritySubNav() {
         backdropFilter: "blur(12px)",
         position: "sticky",
         top: 72,
-        zIndex: 40,
+        zIndex: Z.sticky,
       }}
     >
       <div

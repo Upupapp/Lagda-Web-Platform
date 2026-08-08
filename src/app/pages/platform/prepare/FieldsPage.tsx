@@ -39,6 +39,19 @@ import {
   applyResizeDelta,
 } from "../../../models/field-editor";
 import type { PrepParticipant } from "../../../models/prepare";
+import { Z } from "../../../utils/z-index";
+
+// Stacking INSIDE the field-placement canvas. Deliberately not part of the
+// global `Z` ladder: these order a field's own furniture against each other
+// within the editor surface, so they are relative to the field, not the page.
+const CANVAS_Z = {
+  /** The small red dot marking a required field. */
+  requiredMarker: 10,
+  /** Resize handles must sit above the field body they resize. */
+  resizeHandle:   200,
+  /** The dashed selection outline sits above handles so it is never clipped. */
+  selectionOutline: 500,
+} as const;
 
 // ── Design tokens ─────────────────────────────────────────────────────────────
 const GF     = { fontFamily: "'Geist', sans-serif" };
@@ -239,7 +252,7 @@ function FieldElement({ field, isSelected, identity, isSender, onPointerDown, on
             border:    "1px solid #fff",
             borderRadius: 2,
             cursor:    HANDLE_CURSORS[handle],
-            zIndex:    200,
+            zIndex:    CANVAS_Z.resizeHandle,
             ...HANDLE_POSITIONS[handle],
           }}
           onPointerDown={e => { e.stopPropagation(); onResizeDown(field.id, handle, e); }}
@@ -255,7 +268,7 @@ function FieldElement({ field, isSelected, identity, isSender, onPointerDown, on
             width: 5, height: 5,
             background: "#C0392B",
             borderRadius: "50%",
-            zIndex: 10,
+            zIndex: CANVAS_Z.requiredMarker,
           }}
           aria-hidden="true"
         />
@@ -538,7 +551,7 @@ function PageCanvas({ participants }: PageCanvasProps) {
               position: "absolute", inset: 0,
               border: `2px dashed ${AZURE}`,
               pointerEvents: "none",
-              zIndex: 500,
+              zIndex: CANVAS_Z.selectionOutline,
             }} />
           )}
         </div>
@@ -1276,7 +1289,7 @@ function KeyboardPlaceDialog({ participants, onClose }: KeyboardPlaceDialogProps
       aria-modal="true"
       aria-label="Add field — keyboard placement"
       style={{
-        position: "fixed", inset: 0, zIndex: 1000,
+        position: "fixed", inset: 0, zIndex: Z.modal,
         background: "rgba(7,17,31,0.5)",
         display: "flex", alignItems: "center", justifyContent: "center",
         padding: 16,
@@ -1693,7 +1706,7 @@ function FieldsPageInner() {
       style={{
         position:  "fixed",
         inset:     0,
-        zIndex:    50,
+        zIndex:    Z.drawer,
         display:   "flex",
         flexDirection: "column",
         background: "#F0F2F5",

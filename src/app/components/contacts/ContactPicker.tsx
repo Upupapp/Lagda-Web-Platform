@@ -10,6 +10,7 @@ import { SYSTEM_CONTACT_TAGS, getContactTagById } from "../../models/contacts";
 import type { PrepParticipantRole } from "../../models/prepare";
 import { PREP_PARTICIPANT_ROLE_LABELS } from "../../models/prepare";
 import { mockContactService } from "../../services/mock/contacts.service";
+import { Z } from "../../utils/z-index";
 
 const GF    = { fontFamily: "'Geist', sans-serif" };
 const GM    = { fontFamily: "'Geist Mono', monospace" };
@@ -147,7 +148,7 @@ export function ContactPicker({ open, onClose, onSelect, context, roleLabel, sug
         position: "fixed", inset: 0,
         background: "rgba(7,17,31,0.55)",
         display: "flex", alignItems: "center", justifyContent: "center",
-        zIndex: 2000, padding: "16px",
+        zIndex: Z.modal, padding: "16px",
       }}
       onClick={e => { if (e.target === e.currentTarget) onClose(); }}
     >

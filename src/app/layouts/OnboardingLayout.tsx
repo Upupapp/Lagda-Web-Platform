@@ -9,6 +9,7 @@ import { LagdaLogo } from "../components/brand/LagdaLogo";
 import { ONBOARDING_STEPS } from "../models/auth";
 import { useOnboarding } from "../context/OnboardingContext";
 import { usePlatform } from "../context/PlatformContext";
+import { Z } from "../utils/z-index";
 
 const GF = { fontFamily: "'Geist', sans-serif" };
 const GM = { fontFamily: "'Geist Mono', monospace" };
@@ -66,7 +67,7 @@ export function OnboardingLayout({ children, showProgress = true }: OnboardingLa
         display: "flex", alignItems: "center", justifyContent: "space-between",
         padding: "16px 24px",
         borderBottom: "1px solid rgba(255,255,255,0.06)",
-        position: "sticky", top: 0, zIndex: 20,
+        position: "sticky", top: 0, zIndex: Z.sticky,
         background: "#07111F",
       }}>
         <Link to="/" aria-label="LAGDA — Go to homepage" style={{ display: "flex", alignItems: "center", textDecoration: "none" }}>

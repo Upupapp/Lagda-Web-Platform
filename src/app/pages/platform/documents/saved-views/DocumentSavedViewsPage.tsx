@@ -14,6 +14,7 @@ import { AppContent, PageHeader, EmptyStateLayout, SkeletonBlock, SKELETON_STYLE
 import { documentOrganizationService } from "../../../../services/mock/document-organization.service";
 import type { OrgSavedView, OrgViewId, OrgViewStatus } from "../../../../models/document-organization";
 import { usePageMeta } from "../../../../hooks/usePageMeta";
+import { Z } from "../../../../utils/z-index";
 
 const GF    = { fontFamily: "'Geist', sans-serif" } as React.CSSProperties;
 const AZURE  = "#0078D4";
@@ -134,7 +135,7 @@ function SavedViewCard({
             <span style={{ fontSize: 16, lineHeight: 1 }} aria-hidden>⋯</span>
           </button>
           {menuOpen && (
-            <div role="menu" style={{ position: "absolute", right: 0, top: "100%", zIndex: 100, background: "#fff", border: `1px solid ${SLATE2}`, borderRadius: 8, boxShadow: "0 4px 16px rgba(0,0,0,0.1)", minWidth: 200, padding: "4px 0" }}>
+            <div role="menu" style={{ position: "absolute", right: 0, top: "100%", zIndex: Z.dropdown, background: "#fff", border: `1px solid ${SLATE2}`, borderRadius: 8, boxShadow: "0 4px 16px rgba(0,0,0,0.1)", minWidth: 200, padding: "4px 0" }}>
               {!isArchived && (
                 <>
                   <Link to={`/app/documents/saved-views/${view.id}`} role="menuitem"
@@ -232,7 +233,7 @@ function RenameViewDialog({ view, onSave, onClose }: { view: OrgSavedView; onSav
 
   return (
     <div role="dialog" aria-modal="true" aria-labelledby="rename-view-title"
-      style={{ position: "fixed", inset: 0, zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(7,17,31,0.5)" }}
+      style={{ position: "fixed", inset: 0, zIndex: Z.modal, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(7,17,31,0.5)" }}
       onClick={e => { if (e.target === e.currentTarget) onClose(); }}
     >
       <div style={{ background: "#fff", borderRadius: 12, padding: 24, maxWidth: 400, width: "calc(100vw - 32px)", boxShadow: "0 8px 32px rgba(0,0,0,0.2)" }}>
@@ -448,7 +449,7 @@ export function DocumentSavedViewsPage() {
       {/* Confirm remove dialog */}
       {removeTarget && (
         <div role="dialog" aria-modal="true" aria-labelledby="remove-view-title"
-          style={{ position: "fixed", inset: 0, zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(7,17,31,0.5)" }}
+          style={{ position: "fixed", inset: 0, zIndex: Z.modal, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(7,17,31,0.5)" }}
           onClick={e => { if (e.target === e.currentTarget) setRemoveTarget(null); }}
         >
           <div style={{ background: "#fff", borderRadius: 12, padding: 24, maxWidth: 420, width: "calc(100vw - 32px)", boxShadow: "0 8px 32px rgba(0,0,0,0.2)" }}>
@@ -466,7 +467,7 @@ export function DocumentSavedViewsPage() {
 
       {/* Toast */}
       {toast && (
-        <div role="status" aria-live="polite" style={{ position: "fixed", bottom: 24, right: 24, zIndex: 300, padding: "10px 16px", borderRadius: 8, fontSize: 13, fontWeight: 500, ...GF, background: toast.type === "error" ? "#FEF2F2" : "#F0FDF4", color: toast.type === "error" ? "#991B1B" : "#166534", border: `1px solid ${toast.type === "error" ? "#FECACA" : "#BBF7D0"}`, boxShadow: "0 4px 16px rgba(0,0,0,0.1)", display: "flex", alignItems: "center", gap: 8, maxWidth: 360 }}>
+        <div role="status" aria-live="polite" style={{ position: "fixed", bottom: 24, right: 24, zIndex: Z.toast, padding: "10px 16px", borderRadius: 8, fontSize: 13, fontWeight: 500, ...GF, background: toast.type === "error" ? "#FEF2F2" : "#F0FDF4", color: toast.type === "error" ? "#991B1B" : "#166534", border: `1px solid ${toast.type === "error" ? "#FECACA" : "#BBF7D0"}`, boxShadow: "0 4px 16px rgba(0,0,0,0.1)", display: "flex", alignItems: "center", gap: 8, maxWidth: 360 }}>
           {toast.msg}
           <button onClick={() => setToast(null)} aria-label="Dismiss" style={{ background: "none", border: "none", cursor: "pointer", padding: 0, color: "inherit" }}><X size={13} aria-hidden /></button>
         </div>

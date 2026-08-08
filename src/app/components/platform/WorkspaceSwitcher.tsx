@@ -132,6 +132,7 @@ export function WorkspaceSwitcher({ collapsed }: WorkspaceSwitcherProps) {
 // ── Workspace menu panel ──────────────────────────────────────────────────────
 
 import { forwardRef } from "react";
+import { Z } from "../../utils/z-index";
 
 interface WorkspaceMenuProps {
   workspaces: ReturnType<typeof usePlatform>["workspaces"];
@@ -149,7 +150,7 @@ const WorkspaceMenu = forwardRef<HTMLDivElement, WorkspaceMenuProps>(
       aria-label="Select workspace"
       style={{
         position: "absolute",
-        zIndex: 200,
+        zIndex: Z.dropdown,
         background: "#0B1929",
         border: `1px solid ${BORDER}`,
         borderRadius: 10,

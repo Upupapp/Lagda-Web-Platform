@@ -16,6 +16,7 @@ import type { OrgSavedView, OrgViewId } from "../../../../models/document-organi
 import type { DocumentListItem } from "../../../../models/documents";
 import { TRANSACTION_STATUS_LABELS } from "../../../../models";
 import { usePageMeta } from "../../../../hooks/usePageMeta";
+import { Z } from "../../../../utils/z-index";
 
 const GF    = { fontFamily: "'Geist', sans-serif" } as React.CSSProperties;
 const AZURE  = "#0078D4";
@@ -287,7 +288,7 @@ export function SavedViewDetailPage() {
 
       {/* Toast */}
       {toast && (
-        <div role="status" aria-live="polite" style={{ position: "fixed", bottom: 24, right: 24, zIndex: 300, padding: "10px 16px", borderRadius: 8, fontSize: 13, fontWeight: 500, ...GF, background: toast.type === "error" ? "#FEF2F2" : "#F0FDF4", color: toast.type === "error" ? "#991B1B" : "#166534", border: `1px solid ${toast.type === "error" ? "#FECACA" : "#BBF7D0"}`, boxShadow: "0 4px 16px rgba(0,0,0,0.1)", display: "flex", alignItems: "center", gap: 8 }}>
+        <div role="status" aria-live="polite" style={{ position: "fixed", bottom: 24, right: 24, zIndex: Z.toast, padding: "10px 16px", borderRadius: 8, fontSize: 13, fontWeight: 500, ...GF, background: toast.type === "error" ? "#FEF2F2" : "#F0FDF4", color: toast.type === "error" ? "#991B1B" : "#166534", border: `1px solid ${toast.type === "error" ? "#FECACA" : "#BBF7D0"}`, boxShadow: "0 4px 16px rgba(0,0,0,0.1)", display: "flex", alignItems: "center", gap: 8 }}>
           {toast.msg}
           <button onClick={() => setToast(null)} aria-label="Dismiss" style={{ background: "none", border: "none", cursor: "pointer", padding: 0, color: "inherit" }}><X size={13} aria-hidden /></button>
         </div>

@@ -15,6 +15,7 @@ import { DOCUMENT_STATUS_MAP, VERIFICATION_STATUS_MAP } from "../../data/status-
 import { useLagdaLoading } from "../../services/loading.service";
 import type { TransactionStatus } from "../../models";
 import { Link } from "react-router";
+import { Z } from "../../utils/z-index";
 
 // ── Section wrapper ──────────────────────────────────────────────────────────
 function Section({ title, id, children }: { title: string; id: string; children: React.ReactNode }) {
@@ -155,7 +156,7 @@ export function DesignSystemShowcase() {
           justifyContent: "space-between",
           position: "sticky",
           top: 0,
-          zIndex: 100,
+          zIndex: Z.sticky,
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: 16 }}>

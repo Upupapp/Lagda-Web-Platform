@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router";
+import { Z } from "../../utils/z-index";
 
 export interface AnnouncementBannerProps {
   message: string;
@@ -56,7 +57,7 @@ export function AnnouncementBanner({
         gap: 12,
         padding: "8px 20px",
         position: "relative",
-        zIndex: 60,
+        zIndex: Z.raised,
       }}
     >
       <p style={{ margin: 0, fontSize: 13, color: s.text, ...GF, textAlign: "center" }}>

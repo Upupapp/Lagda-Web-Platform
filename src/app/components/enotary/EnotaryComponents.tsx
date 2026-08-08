@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { NavLink, useLocation } from "react-router";
 import { ENOTARY_SUBNAV, ENOTARY_DISCLAIMER } from "../../pages/public/enotary/content";
+import { Z } from "../../utils/z-index";
 
 const GF = { fontFamily: "'Geist', sans-serif" };
 const GM = { fontFamily: "'Geist Mono', monospace" };
@@ -15,7 +16,7 @@ export function EnotarySubNav() {
     <nav
       aria-label="eNotary navigation"
       style={{
-        position: "sticky", top: 72, zIndex: 40,
+        position: "sticky", top: 72, zIndex: Z.sticky,
         background: "rgba(7,17,31,0.95)", backdropFilter: "blur(12px)",
         borderBottom: "1px solid rgba(255,255,255,0.05)",
       }}

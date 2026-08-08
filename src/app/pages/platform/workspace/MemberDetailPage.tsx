@@ -8,6 +8,7 @@ import { WorkspaceAdminProvider, useWorkspaceAdmin } from "../../../context/Work
 import type { WorkspaceMemberId, WorkspaceMemberStatus, WorkspaceRoleId, WorkspaceTeamId, WorkspacePermission } from "../../../models/workspace-admin";
 import { WORKSPACE_MEMBER_STATUS_LABELS, ALL_PERMISSIONS } from "../../../models/workspace-admin";
 import { mockWorkspaceAdminService } from "../../../services/mock/workspace-admin.service";
+import { Z } from "../../../utils/z-index";
 
 const GF    = { fontFamily: "'Geist', sans-serif" };
 const GM    = { fontFamily: "'Geist Mono', monospace" };
@@ -41,7 +42,7 @@ function SuspendModal({ onConfirm, onCancel }: { onConfirm: (reason: string) => 
   const [reason, setReason] = useState("");
   return (
     <div role="dialog" aria-modal="true" aria-labelledby="suspend-title"
-      style={{ position: "fixed", inset: 0, background: "rgba(7,17,31,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000 }}>
+      style={{ position: "fixed", inset: 0, background: "rgba(7,17,31,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: Z.modal }}>
       <div style={{ background: "#FFFFFF", borderRadius: 14, padding: "28px 32px", maxWidth: 440, width: "90%", boxShadow: "0 20px 60px rgba(7,17,31,0.22)" }}>
         <h2 id="suspend-title" style={{ ...GF, fontSize: 18, fontWeight: 800, color: NAVY, margin: "0 0 8px" }}>Suspend member</h2>
         <p style={{ ...GF, fontSize: 13, color: SLATE, margin: "0 0 16px" }}>
@@ -73,7 +74,7 @@ function ConfirmModal({ title, body, confirmLabel, confirmColor, onConfirm, onCa
 }) {
   return (
     <div role="dialog" aria-modal="true" aria-labelledby="confirm-title"
-      style={{ position: "fixed", inset: 0, background: "rgba(7,17,31,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000 }}>
+      style={{ position: "fixed", inset: 0, background: "rgba(7,17,31,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: Z.modal }}>
       <div style={{ background: "#FFFFFF", borderRadius: 14, padding: "28px 32px", maxWidth: 420, width: "90%", boxShadow: "0 20px 60px rgba(7,17,31,0.22)" }}>
         <h2 id="confirm-title" style={{ ...GF, fontSize: 18, fontWeight: 800, color: NAVY, margin: "0 0 8px" }}>{title}</h2>
         <p style={{ ...GF, fontSize: 13, color: SLATE, margin: "0 0 20px" }}>{body}</p>

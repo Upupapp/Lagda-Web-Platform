@@ -10,6 +10,7 @@ import {
 import { signatureLibraryService } from "../../../../services/mock/signature-library.service";
 import { TYPED_SIGNATURE_STYLES } from "../../../../models/recipient";
 import type { SignatureLibraryEntry, SignatureLibraryEntryId } from "../../../../models/signature-library";
+import { Z } from "../../../../utils/z-index";
 
 const GF     = { fontFamily: "'Geist', sans-serif" };
 const NAVY   = "#07111F";
@@ -107,7 +108,7 @@ function ConfirmRemoveDialog({
       aria-modal="true"
       aria-label="Remove from Demonstration"
       style={{
-        position: "fixed", inset: 0, zIndex: 300,
+        position: "fixed", inset: 0, zIndex: Z.modal,
         background: "rgba(7,17,31,0.45)",
         display: "flex", alignItems: "center", justifyContent: "center", padding: 20,
       }}

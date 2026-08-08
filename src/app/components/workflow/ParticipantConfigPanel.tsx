@@ -43,6 +43,7 @@ import {
   actionSupportsOptionalSignature,
 } from "../../models/signing-workflow";
 import type { WorkflowParticipantCandidate } from "../../services/mock/signing-workflow.service";
+import { Z } from "../../utils/z-index";
 
 // ── Focus-containing sheet ────────────────────────────────────────────────────
 
@@ -88,7 +89,7 @@ function Sheet({
       role="dialog"
       aria-modal="true"
       aria-label={title}
-      style={{ position: "fixed", inset: 0, zIndex: 1200, display: "flex", justifyContent: "flex-end" }}
+      style={{ position: "fixed", inset: 0, zIndex: Z.modal, display: "flex", justifyContent: "flex-end" }}
     >
       <div onClick={onClose} aria-hidden style={{ position: "absolute", inset: 0, background: "rgba(7,17,31,0.42)" }} />
       <div

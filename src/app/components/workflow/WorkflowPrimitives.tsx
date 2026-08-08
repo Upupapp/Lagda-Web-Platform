@@ -27,6 +27,7 @@ import {
   STAGE_STATUS_LABELS,
   WORKFLOW_STATUS_LABELS,
 } from "../../models/signing-workflow";
+import { Z } from "../../utils/z-index";
 
 // ── Tone mapping (presentation only — never in the model layer) ───────────────
 
@@ -545,7 +546,7 @@ export function WorkflowConfirmDialog({
       aria-labelledby="wf-confirm-title"
       aria-describedby="wf-confirm-body"
       style={{
-        position: "fixed", inset: 0, zIndex: 1300,
+        position: "fixed", inset: 0, zIndex: Z.modal,
         display: "flex", alignItems: "center", justifyContent: "center", padding: 20,
       }}
     >

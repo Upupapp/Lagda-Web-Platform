@@ -8,6 +8,7 @@ import { useNavigate, Link } from "react-router";
 import { ContactProvider, useContacts } from "../../../context/ContactContext";
 import type { ContactGroupSummary, ContactScope } from "../../../models/contacts";
 import { CONTACT_SCOPE_LABELS } from "../../../models/contacts";
+import { Z } from "../../../utils/z-index";
 
 const GF    = { fontFamily: "'Geist', sans-serif" };
 const GM    = { fontFamily: "'Geist Mono', monospace" };
@@ -40,7 +41,7 @@ function CreateGroupModal({ onClose, onCreated }: { onClose: () => void; onCreat
   };
 
   return (
-    <div role="dialog" aria-modal="true" aria-labelledby="cg-title" style={{ position: "fixed", inset: 0, zIndex: 9000, display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
+    <div role="dialog" aria-modal="true" aria-labelledby="cg-title" style={{ position: "fixed", inset: 0, zIndex: Z.modal, display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
       <div onClick={onClose} style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.4)" }} />
       <div style={{ position: "relative", background: "#FFFFFF", borderRadius: 14, padding: "28px 28px 24px", maxWidth: 420, width: "100%", boxShadow: "0 20px 60px rgba(0,0,0,0.2)" }}>
         <h2 id="cg-title" style={{ ...GF, fontSize: 17, fontWeight: 800, color: NAVY, margin: "0 0 20px" }}>Create Group</h2>

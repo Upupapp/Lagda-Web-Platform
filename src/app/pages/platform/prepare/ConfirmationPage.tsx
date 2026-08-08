@@ -12,6 +12,7 @@ import { usePrepare } from "../../../context/PrepareContext";
 import { FieldEditorProvider, useFieldEditor } from "../../../context/FieldEditorContext";
 import { FIELD_TYPE_LABELS, FIELD_TYPE_ICONS } from "../../../models/field-editor";
 import type { PrepParticipant } from "../../../models/prepare";
+import { Z } from "../../../utils/z-index";
 
 // ── Design tokens ─────────────────────────────────────────────────────────────
 const GF     = { fontFamily: "'Geist', sans-serif" };
@@ -76,7 +77,7 @@ function ConfirmationPageInner({ participants }: { participants: PrepParticipant
     <div style={{
       position:  "fixed",
       inset:     0,
-      zIndex:    50,
+      zIndex:    Z.drawer,
       overflow:  "auto",
       background: "#F5F7FA",
     }}>

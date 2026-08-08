@@ -40,6 +40,7 @@ import {
   parseWorkflowBoardView,
 } from "../../../../models/signing-workflow";
 import { signingWorkflowService } from "../../../../services/mock/signing-workflow.service";
+import { Z } from "../../../../utils/z-index";
 
 type Panel = "issues" | "fields" | "notifications";
 
@@ -414,7 +415,7 @@ export function WorkflowTab() {
               aria-modal="true"
               aria-label="Document preview"
               className="wf-mobile-only"
-              style={{ position: "fixed", inset: 0, zIndex: 1100, background: WF.white, overflowY: "auto", padding: 16 }}
+              style={{ position: "fixed", inset: 0, zIndex: Z.modal, background: WF.white, overflowY: "auto", padding: 16 }}
             >
               <WorkflowDocumentPreview
                 preview={data.preview}

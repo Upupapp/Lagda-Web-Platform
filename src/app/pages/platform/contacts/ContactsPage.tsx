@@ -11,6 +11,7 @@ import {
   CONTACT_VIEW_LABELS, CONTACT_VIEWS, CONTACT_STATUS_LABELS, CONTACT_SCOPE_LABELS,
   SYSTEM_CONTACT_TAGS, getContactTagById,
 } from "../../../models/contacts";
+import { Z } from "../../../utils/z-index";
 
 const GF    = { fontFamily: "'Geist', sans-serif" };
 const GM    = { fontFamily: "'Geist Mono', monospace" };
@@ -166,7 +167,7 @@ function ContactsLibrary() {
   return (
     <div style={{ minHeight: "100vh", background: PAGE_BG }}>
       {/* Skip link */}
-      <a href="#contacts-main" style={{ position: "absolute", left: -9999, top: 0, zIndex: 9999, ...GF, background: AZURE, color: "#fff", padding: "6px 12px" }}
+      <a href="#contacts-main" style={{ position: "absolute", left: -9999, top: 0, zIndex: Z.skipLink, ...GF, background: AZURE, color: "#fff", padding: "6px 12px" }}
          onFocus={e => (e.currentTarget.style.left = "16px")}
          onBlur={e  => (e.currentTarget.style.left = "-9999px")}>
         Skip to contacts
@@ -513,7 +514,7 @@ function ContactRow({ contact: c, selected, onToggle }: { contact: ContactListIt
             ⋮
           </button>
           {menuOpen && (
-            <div role="menu" style={{ position: "absolute", right: 0, top: "100%", zIndex: 100, background: "#FFFFFF", border: "1.5px solid #E3E8EF", borderRadius: 10, boxShadow: "0 8px 24px rgba(0,0,0,0.12)", minWidth: 160, overflow: "hidden" }}>
+            <div role="menu" style={{ position: "absolute", right: 0, top: "100%", zIndex: Z.dropdown, background: "#FFFFFF", border: "1.5px solid #E3E8EF", borderRadius: 10, boxShadow: "0 8px 24px rgba(0,0,0,0.12)", minWidth: 160, overflow: "hidden" }}>
               <MenuItem label="View Contact"        onClick={() => { navigate(`/app/contacts/${c.id}`); setMenuOpen(false); }} />
               {c.status === "active" && <MenuItem label="Edit"          onClick={() => { navigate(`/app/contacts/${c.id}/edit`); setMenuOpen(false); }} />}
               {c.status !== "archived" && <MenuItem label="Archive"    onClick={() => { setMenuOpen(false); }} />}

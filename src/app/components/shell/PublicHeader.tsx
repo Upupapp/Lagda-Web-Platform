@@ -3,6 +3,7 @@ import { Link, useLocation } from "react-router";
 import { LagdaLogo } from "@/app/components/brand/LagdaLogo";
 import { TOP_NAV, type NavSection, type NavItem } from "@/app/config/nav.config";
 import { haptic } from "@/app/utils/haptic";
+import { Z } from "../../utils/z-index";
 
 // ── Chevron icon ──────────────────────────────────────────────────────────────
 function Chevron({ open }: { open: boolean }) {
@@ -166,7 +167,7 @@ function MobileDrawer({ onClose }: { onClose: () => void }) {
         onClick={onClose}
         aria-hidden="true"
         style={{
-          position: "fixed", inset: 0, background: "rgba(7,17,31,0.7)", zIndex: 998,
+          position: "fixed", inset: 0, background: "rgba(7,17,31,0.7)", zIndex: Z.drawerScrim,
           backdropFilter: "blur(4px)", animation: "fadeIn 0.22s ease",
         }}
       />
@@ -177,7 +178,7 @@ function MobileDrawer({ onClose }: { onClose: () => void }) {
         aria-label="Navigation menu"
         style={{
           position: "fixed", top: 0, right: 0, bottom: 0,
-          width: "min(400px, 100vw)", background: "#07111f", zIndex: 999,
+          width: "min(400px, 100vw)", background: "#07111f", zIndex: Z.drawer,
           overflowY: "auto", borderLeft: "1px solid rgba(255,255,255,0.08)",
           boxShadow: "-24px 0 64px rgba(0,0,0,0.5)",
           animation: "slideInRight 0.25s ease-out",
@@ -415,7 +416,7 @@ export function PublicHeader() {
       <header
         ref={navRef}
         role="banner"
-        style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 50 }}
+        style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: Z.shell }}
       >
         <nav aria-label="Main navigation">
           <div
@@ -506,7 +507,7 @@ export function PublicHeader() {
                             top: "calc(100% + 8px)",
                             left: "50%",
                             transform: "translateX(-50%)",
-                            zIndex: 100,
+                            zIndex: Z.dropdown,
                           }}
                           onMouseEnter={cancelClose}
                           onMouseLeave={startClose}

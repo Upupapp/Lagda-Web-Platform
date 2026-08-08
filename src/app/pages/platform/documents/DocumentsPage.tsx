@@ -41,6 +41,7 @@ import type {
 import { TAG_STYLE_COLORS } from "../../../models/document-organization";
 import { usePageMeta } from "../../../hooks/usePageMeta";
 import { preparationRoute } from "../../../services/preparation-platform-projection";
+import { Z } from "../../../utils/z-index";
 
 // ── Design tokens (inline styles only — no Tailwind in JSX) ──────────────────
 
@@ -446,7 +447,7 @@ function SortControl({
           role="listbox"
           aria-label="Sort options"
           style={{
-            position: "absolute", top: "calc(100% + 4px)", right: 0, zIndex: 50,
+            position: "absolute", top: "calc(100% + 4px)", right: 0, zIndex: Z.dropdown,
             background: "#fff", border: `1px solid ${SLATE2}`, borderRadius: 8,
             boxShadow: "0 4px 16px rgba(0,0,0,0.08)", minWidth: 180, padding: "4px 0",
           }}
@@ -769,7 +770,7 @@ function OrgBulkBar({
             <Tag size={12} aria-hidden /> Add Tag
           </button>
           {tagMenuOpen === "add" && (
-            <div style={{ position: "absolute", top: "100%", left: 0, zIndex: 80, background: "#fff", border: `1px solid ${SLATE2}`, borderRadius: 8, boxShadow: "0 4px 16px rgba(0,0,0,0.08)", minWidth: 160, padding: "4px 0" }}>
+            <div style={{ position: "absolute", top: "100%", left: 0, zIndex: Z.dropdown, background: "#fff", border: `1px solid ${SLATE2}`, borderRadius: 8, boxShadow: "0 4px 16px rgba(0,0,0,0.08)", minWidth: 160, padding: "4px 0" }}>
               <p style={{ fontSize: 10, fontWeight: 700, color: SLATE4, textTransform: "uppercase", letterSpacing: "0.06em", padding: "6px 12px 4px", margin: 0, ...GF }}>Add tag to selected</p>
               {activeTags.length === 0 && <p style={{ fontSize: 12, color: SLATE4, padding: "8px 12px", margin: 0, ...GF }}>No active tags</p>}
               {activeTags.map(t => (
@@ -795,7 +796,7 @@ function OrgBulkBar({
             <Tag size={12} aria-hidden /> Remove Tag
           </button>
           {tagMenuOpen === "remove" && (
-            <div style={{ position: "absolute", top: "100%", left: 0, zIndex: 80, background: "#fff", border: `1px solid ${SLATE2}`, borderRadius: 8, boxShadow: "0 4px 16px rgba(0,0,0,0.08)", minWidth: 160, padding: "4px 0" }}>
+            <div style={{ position: "absolute", top: "100%", left: 0, zIndex: Z.dropdown, background: "#fff", border: `1px solid ${SLATE2}`, borderRadius: 8, boxShadow: "0 4px 16px rgba(0,0,0,0.08)", minWidth: 160, padding: "4px 0" }}>
               <p style={{ fontSize: 10, fontWeight: 700, color: SLATE4, textTransform: "uppercase", letterSpacing: "0.06em", padding: "6px 12px 4px", margin: 0, ...GF }}>Remove tag from selected</p>
               {activeTags.length === 0 && <p style={{ fontSize: 12, color: SLATE4, padding: "8px 12px", margin: 0, ...GF }}>No active tags</p>}
               {activeTags.map(t => (
@@ -845,7 +846,7 @@ function OrgBulkBar({
           More actions
         </button>
         {moreOpen && (
-          <div role="menu" aria-label="More bulk actions" style={{ position: "absolute", right: 0, top: "100%", zIndex: 80, background: "#fff", border: `1px solid ${SLATE2}`, borderRadius: 8, boxShadow: "0 4px 16px rgba(0,0,0,0.08)", minWidth: 220, padding: "4px 0" }}>
+          <div role="menu" aria-label="More bulk actions" style={{ position: "absolute", right: 0, top: "100%", zIndex: Z.dropdown, background: "#fff", border: `1px solid ${SLATE2}`, borderRadius: 8, boxShadow: "0 4px 16px rgba(0,0,0,0.08)", minWidth: 220, padding: "4px 0" }}>
             <p style={{ fontSize: 10, fontWeight: 700, color: SLATE4, textTransform: "uppercase", letterSpacing: "0.06em", padding: "6px 12px 4px", margin: 0, ...GF }}>Previews (no mutation)</p>
             {onPreviewExport && (
               <button role="menuitem" onClick={() => { setMoreOpen(false); onPreviewExport(); }} style={{ display: "flex", alignItems: "center", gap: 8, width: "100%", padding: "8px 12px", border: "none", background: "none", cursor: "pointer", fontSize: 12, color: NAVY, ...GF, textAlign: "left" }}>
@@ -899,7 +900,7 @@ function PreviewDialog({
   return (
     <div
       role="dialog" aria-modal="true" aria-labelledby="preview-dialog-title"
-      style={{ position: "fixed", inset: 0, zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(7,17,31,0.5)" }}
+      style={{ position: "fixed", inset: 0, zIndex: Z.modal, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(7,17,31,0.5)" }}
       onClick={e => { if (e.target === e.currentTarget) onClose(); }}
     >
       <div style={{ background: "#fff", borderRadius: 12, padding: 24, maxWidth: 480, width: "calc(100vw - 32px)", boxShadow: "0 8px 32px rgba(0,0,0,0.2)", maxHeight: "80vh", overflowY: "auto" }}>
@@ -984,7 +985,7 @@ function SelectionBar({
           </button>
           {bulkTagOpen && (
             <div style={{
-              position: "absolute", top: "100%", left: 0, zIndex: 60,
+              position: "absolute", top: "100%", left: 0, zIndex: Z.dropdown,
               background: "#fff", border: `1px solid ${SLATE2}`, borderRadius: 8,
               boxShadow: "0 4px 16px rgba(0,0,0,0.08)", minWidth: 160, padding: "4px 0",
             }}>
@@ -1061,7 +1062,7 @@ function RowActionMenu({
           role="menu"
           aria-label="Document actions"
           style={{
-            position: "absolute", right: 0, top: "100%", zIndex: 100,
+            position: "absolute", right: 0, top: "100%", zIndex: Z.dropdown,
             background: "#fff", border: `1px solid ${SLATE2}`, borderRadius: 8,
             boxShadow: "0 4px 16px rgba(0,0,0,0.1)", minWidth: 178, padding: "4px 0",
           }}
@@ -1515,7 +1516,7 @@ function RenameDraftDialog({
       aria-modal="true"
       aria-labelledby="rename-title"
       style={{
-        position: "fixed", inset: 0, zIndex: 200,
+        position: "fixed", inset: 0, zIndex: Z.modal,
         display: "flex", alignItems: "center", justifyContent: "center",
         background: "rgba(7,17,31,0.5)",
       }}

@@ -8,6 +8,7 @@ import { SettingsPage, SSection, SCard, SField, INPUT_STYLE, StatusBadge, Skelet
 import { mockBillingSettingsService } from "../../../services/mock/settings.service";
 import type { BillingAccount, InvoiceSummary } from "../../../models/settings";
 import { LAGDA_PLANS, COMPARE_GROUPS } from "../../../config/pricing.config";
+import { Z } from "../../../utils/z-index";
 
 const GF    = { fontFamily: "'Geist', sans-serif" };
 const NAVY  = "#07111F";
@@ -261,7 +262,7 @@ export function BillingPage() {
 
           {/* Plan change preview dialog */}
           {planPreview && (
-            <div role="dialog" aria-modal="true" aria-label="Plan change preview" style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.4)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
+            <div role="dialog" aria-modal="true" aria-label="Plan change preview" style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.4)", zIndex: Z.modal, display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
               <div style={{ background: "#FFFFFF", borderRadius: 14, padding: 28, maxWidth: 460, width: "100%" }}>
                 <h2 style={{ ...GF, fontSize: 18, fontWeight: 800, color: NAVY, margin: "0 0 12px" }}>Plan Change Preview</h2>
                 <p style={{ ...GF, fontSize: 13, color: SLATE, margin: "0 0 14px" }}>

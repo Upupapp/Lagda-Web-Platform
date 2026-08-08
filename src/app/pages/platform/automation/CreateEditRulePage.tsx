@@ -27,6 +27,7 @@ import {
   AUTO_RULE_PRIORITY_LABELS,
   AUTO_CONFLICT_BEHAVIOR_LABELS,
 } from "../../../models/workflow-automation";
+import { Z } from "../../../utils/z-index";
 
 const GF    = { fontFamily: "'Geist', sans-serif" };
 const NAVY  = "#07111F";
@@ -244,7 +245,7 @@ export function CreateEditRulePage() {
 
       {/* Toast */}
       {toast && (
-        <div role="status" aria-live="polite" style={{ ...GF, position: "fixed", top: 20, right: 20, background: toast.type === "error" ? RED : NAVY, color: "#FFFFFF", fontSize: 13, padding: "10px 16px", borderRadius: 8, zIndex: 1000 }}>
+        <div role="status" aria-live="polite" style={{ ...GF, position: "fixed", top: 20, right: 20, background: toast.type === "error" ? RED : NAVY, color: "#FFFFFF", fontSize: 13, padding: "10px 16px", borderRadius: 8, zIndex: Z.toast }}>
           {toast.msg}
         </div>
       )}

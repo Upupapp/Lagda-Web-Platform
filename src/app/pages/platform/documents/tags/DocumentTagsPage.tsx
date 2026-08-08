@@ -14,6 +14,7 @@ import { documentOrganizationService } from "../../../../services/mock/document-
 import type { OrgTag, OrgTagId, OrgTagStyle } from "../../../../models/document-organization";
 import { TAG_STYLE_COLORS, TAG_STYLE_LABELS, VALID_TAG_STYLES } from "../../../../models/document-organization";
 import { usePageMeta } from "../../../../hooks/usePageMeta";
+import { Z } from "../../../../utils/z-index";
 
 const GF    = { fontFamily: "'Geist', sans-serif" } as React.CSSProperties;
 const AZURE  = "#0078D4";
@@ -133,7 +134,7 @@ function CreateTagDialog({
   return (
     <div
       role="dialog" aria-modal="true" aria-labelledby="create-tag-title"
-      style={{ position: "fixed", inset: 0, zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(7,17,31,0.5)" }}
+      style={{ position: "fixed", inset: 0, zIndex: Z.modal, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(7,17,31,0.5)" }}
       onClick={e => { if (e.target === e.currentTarget) onClose(); }}
     >
       <div style={{ background: "#fff", borderRadius: 12, padding: 24, maxWidth: 460, width: "calc(100vw - 32px)", boxShadow: "0 8px 32px rgba(0,0,0,0.2)" }}>
@@ -221,7 +222,7 @@ function EditTagDialog({
   return (
     <div
       role="dialog" aria-modal="true" aria-labelledby="edit-tag-title"
-      style={{ position: "fixed", inset: 0, zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(7,17,31,0.5)" }}
+      style={{ position: "fixed", inset: 0, zIndex: Z.modal, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(7,17,31,0.5)" }}
       onClick={e => { if (e.target === e.currentTarget) onClose(); }}
     >
       <div style={{ background: "#fff", borderRadius: 12, padding: 24, maxWidth: 460, width: "calc(100vw - 32px)", boxShadow: "0 8px 32px rgba(0,0,0,0.2)" }}>
@@ -293,7 +294,7 @@ function TagCard({
             <span style={{ fontSize: 16, lineHeight: 1 }} aria-hidden>⋯</span>
           </button>
           {menuOpen && (
-            <div role="menu" style={{ position: "absolute", right: 0, top: "100%", zIndex: 100, background: "#fff", border: `1px solid ${SLATE2}`, borderRadius: 8, boxShadow: "0 4px 16px rgba(0,0,0,0.1)", minWidth: 180, padding: "4px 0" }}>
+            <div role="menu" style={{ position: "absolute", right: 0, top: "100%", zIndex: Z.dropdown, background: "#fff", border: `1px solid ${SLATE2}`, borderRadius: 8, boxShadow: "0 4px 16px rgba(0,0,0,0.1)", minWidth: 180, padding: "4px 0" }}>
               {!isArchived && (
                 <>
                   <button role="menuitem" onClick={() => { setMenuOpen(false); onEdit(tag); }}
@@ -534,7 +535,7 @@ export function DocumentTagsPage() {
       {removeTarget && (
         <div
           role="dialog" aria-modal="true" aria-labelledby="remove-tag-title"
-          style={{ position: "fixed", inset: 0, zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(7,17,31,0.5)" }}
+          style={{ position: "fixed", inset: 0, zIndex: Z.modal, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(7,17,31,0.5)" }}
           onClick={e => { if (e.target === e.currentTarget) setRemoveTarget(null); }}
         >
           <div style={{ background: "#fff", borderRadius: 12, padding: 24, maxWidth: 420, width: "calc(100vw - 32px)", boxShadow: "0 8px 32px rgba(0,0,0,0.2)" }}>
@@ -552,7 +553,7 @@ export function DocumentTagsPage() {
 
       {/* Toast */}
       {toast && (
-        <div role="status" aria-live="polite" style={{ position: "fixed", bottom: 24, right: 24, zIndex: 300, padding: "10px 16px", borderRadius: 8, fontSize: 13, fontWeight: 500, ...GF, background: toast.type === "error" ? "#FEF2F2" : "#F0FDF4", color: toast.type === "error" ? "#991B1B" : "#166534", border: `1px solid ${toast.type === "error" ? "#FECACA" : "#BBF7D0"}`, boxShadow: "0 4px 16px rgba(0,0,0,0.1)", display: "flex", alignItems: "center", gap: 8 }}>
+        <div role="status" aria-live="polite" style={{ position: "fixed", bottom: 24, right: 24, zIndex: Z.toast, padding: "10px 16px", borderRadius: 8, fontSize: 13, fontWeight: 500, ...GF, background: toast.type === "error" ? "#FEF2F2" : "#F0FDF4", color: toast.type === "error" ? "#991B1B" : "#166534", border: `1px solid ${toast.type === "error" ? "#FECACA" : "#BBF7D0"}`, boxShadow: "0 4px 16px rgba(0,0,0,0.1)", display: "flex", alignItems: "center", gap: 8 }}>
           {toast.msg}
           <button onClick={() => setToast(null)} aria-label="Dismiss" style={{ background: "none", border: "none", cursor: "pointer", padding: 0, color: "inherit" }}><X size={13} aria-hidden /></button>
         </div>

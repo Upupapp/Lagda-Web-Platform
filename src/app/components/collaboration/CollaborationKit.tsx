@@ -28,6 +28,7 @@ import {
   COLLAB_THREAD_STATUS_LABELS,
   COLLAB_VISIBILITY_LABELS,
 } from "../../models/collaboration";
+import { Z } from "../../utils/z-index";
 
 export const GF = { fontFamily: "'Geist', 'Inter', system-ui, sans-serif" } as const;
 
@@ -381,7 +382,7 @@ export function useCollaborationConfirm() {
 
   const dialog = request ? (
     <div role="alertdialog" aria-modal="true" aria-label={request.title}
-      style={{ position: "fixed", inset: 0, zIndex: 1300, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+      style={{ position: "fixed", inset: 0, zIndex: Z.modal, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
       <div onClick={() => setRequest(null)} aria-hidden style={{ position: "absolute", inset: 0, background: "rgba(7,17,31,0.42)" }} />
       <div ref={panelRef} className="co-root" style={{
         position: "relative", background: CO.white, borderRadius: 12, padding: "24px 26px",
@@ -452,7 +453,7 @@ export function Sheet({ title, onClose, children, footer }: {
 
   return (
     <div role="dialog" aria-modal="true" aria-label={title}
-      style={{ position: "fixed", inset: 0, zIndex: 1200, display: "flex", justifyContent: "flex-end" }}>
+      style={{ position: "fixed", inset: 0, zIndex: Z.modal, display: "flex", justifyContent: "flex-end" }}>
       <div onClick={onClose} aria-hidden style={{ position: "absolute", inset: 0, background: "rgba(7,17,31,0.42)" }} />
       <div ref={panelRef} tabIndex={-1} className="co-root" style={{
         position: "relative", background: CO.white, width: "min(560px,100%)", height: "100%",

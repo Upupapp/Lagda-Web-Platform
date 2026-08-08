@@ -7,6 +7,7 @@ import { Link } from "react-router";
 import { WorkspaceAdminProvider, useWorkspaceAdmin } from "../../../context/WorkspaceAdminContext";
 import type { WorkspaceRoleCreateInput, WorkspacePermission } from "../../../models/workspace-admin";
 import { ALL_PERMISSIONS } from "../../../models/workspace-admin";
+import { Z } from "../../../utils/z-index";
 
 const GF    = { fontFamily: "'Geist', sans-serif" };
 const GM    = { fontFamily: "'Geist Mono', monospace" };
@@ -45,7 +46,7 @@ function CreateRoleModal({ onDone, onCancel }: { onDone: () => void; onCancel: (
 
   return (
     <div role="dialog" aria-modal="true" aria-labelledby="create-role-title"
-      style={{ position: "fixed", inset: 0, background: "rgba(7,17,31,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, overflowY: "auto", padding: "24px" }}>
+      style={{ position: "fixed", inset: 0, background: "rgba(7,17,31,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: Z.modal, overflowY: "auto", padding: "24px" }}>
       <div style={{ background: "#FFFFFF", borderRadius: 14, padding: "28px 32px", maxWidth: 600, width: "100%", boxShadow: "0 20px 60px rgba(7,17,31,0.22)" }}>
         <h2 id="create-role-title" style={{ ...GF, fontSize: 18, fontWeight: 800, color: NAVY, margin: "0 0 18px" }}>Create custom role</h2>
         <form onSubmit={handleSubmit}>

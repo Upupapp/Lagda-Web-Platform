@@ -6,6 +6,7 @@ import React, { useEffect, useState } from "react";
 import { useParams, Link } from "react-router";
 import { WorkspaceAdminProvider, useWorkspaceAdmin } from "../../../context/WorkspaceAdminContext";
 import type { WorkspaceTeamId, WorkspaceMemberId } from "../../../models/workspace-admin";
+import { Z } from "../../../utils/z-index";
 
 const GF    = { fontFamily: "'Geist', sans-serif" };
 const GM    = { fontFamily: "'Geist Mono', monospace" };
@@ -24,7 +25,7 @@ function EditTeamModal({ name, description, onSave, onCancel }: {
   const [d, setD] = useState(description);
   return (
     <div role="dialog" aria-modal="true" aria-labelledby="edit-team-title"
-      style={{ position: "fixed", inset: 0, background: "rgba(7,17,31,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000 }}>
+      style={{ position: "fixed", inset: 0, background: "rgba(7,17,31,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: Z.modal }}>
       <div style={{ background: "#FFFFFF", borderRadius: 14, padding: "28px 32px", maxWidth: 440, width: "90%", boxShadow: "0 20px 60px rgba(7,17,31,0.22)" }}>
         <h2 id="edit-team-title" style={{ ...GF, fontSize: 18, fontWeight: 800, color: NAVY, margin: "0 0 18px" }}>Edit team</h2>
         <div style={{ marginBottom: 14 }}>

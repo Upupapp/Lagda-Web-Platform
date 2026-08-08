@@ -6,6 +6,7 @@ import React, { useEffect, useState } from "react";
 import { Link } from "react-router";
 import { WorkspaceAdminProvider, useWorkspaceAdmin } from "../../../context/WorkspaceAdminContext";
 import type { WorkspaceTeamCreateInput } from "../../../models/workspace-admin";
+import { Z } from "../../../utils/z-index";
 
 const GF    = { fontFamily: "'Geist', sans-serif" };
 const GM    = { fontFamily: "'Geist Mono', monospace" };
@@ -35,7 +36,7 @@ function CreateTeamModal({ onDone, onCancel }: { onDone: () => void; onCancel: (
 
   return (
     <div role="dialog" aria-modal="true" aria-labelledby="create-team-title"
-      style={{ position: "fixed", inset: 0, background: "rgba(7,17,31,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000 }}>
+      style={{ position: "fixed", inset: 0, background: "rgba(7,17,31,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: Z.modal }}>
       <div style={{ background: "#FFFFFF", borderRadius: 14, padding: "28px 32px", maxWidth: 440, width: "90%", boxShadow: "0 20px 60px rgba(7,17,31,0.22)" }}>
         <h2 id="create-team-title" style={{ ...GF, fontSize: 18, fontWeight: 800, color: NAVY, margin: "0 0 20px" }}>Create team</h2>
         <form onSubmit={handleSubmit}>

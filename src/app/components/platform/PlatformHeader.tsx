@@ -1,12 +1,19 @@
 // Platform top bar — shown in the authenticated shell on desktop/tablet.
 // Contains: breadcrumb / page title, search trigger, notification bell, help link.
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, lazy, Suspense } from "react";
 import { useLocation } from "react-router";
 import { Search, HelpCircle } from "lucide-react";
 import { Link } from "react-router";
 import { NotificationMenu } from "./NotificationMenu";
-import { CommandPalette } from "./CommandPalette";
+// Lazily loaded. The palette reaches the global search service, which builds
+// providers over every domain and therefore imports the transaction, template,
+// contact, workflow, collaboration and automation fixtures. Statically importing
+// it here put all of that in the entry chunk for every user on every page,
+// whether or not they ever press Ctrl+K.
+const CommandPalette = lazy(() =>
+  import("./CommandPalette").then(m => ({ default: m.CommandPalette })),
+);
 import { Z } from "../../utils/z-index";
 
 const GF    = { fontFamily: "'Geist', sans-serif" };
@@ -119,7 +126,11 @@ export function PlatformHeader({ pageTitle }: PlatformHeaderProps) {
         </Link>
       </header>
 
-      <CommandPalette open={searchOpen} onClose={closeSearch} />
+      {searchOpen && (
+        <Suspense fallback={null}>
+          <CommandPalette open={searchOpen} onClose={closeSearch} />
+        </Suspense>
+      )}
 
       <style>{`
         .header-search-btn:hover { background: #E2E8F0 !important; }

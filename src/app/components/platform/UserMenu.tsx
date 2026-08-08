@@ -5,6 +5,7 @@ import { Link } from "react-router";
 import { CircleUser, Lock, CreditCard, HelpCircle, LogOut, ChevronUp, Settings } from "lucide-react";
 import { usePlatform } from "../../context/PlatformContext";
 import { PLATFORM_ROLE_LABELS } from "../../models";
+import { Z } from "../../utils/z-index";
 
 const GF   = { fontFamily: "'Geist', sans-serif" };
 const GM   = { fontFamily: "'Geist Mono', monospace" };
@@ -107,7 +108,7 @@ export function UserMenu({ collapsed, onSignOut }: UserMenuProps) {
             left: collapsed ? 44 : 8,
             right: collapsed ? "auto" : 8,
             minWidth: collapsed ? 220 : undefined,
-            zIndex: 200,
+            zIndex: Z.dropdown,
             background: "#0B1929",
             border: `1px solid ${BORDER}`,
             borderRadius: 10,

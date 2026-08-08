@@ -8,6 +8,7 @@ import { useNavigate, Link } from "react-router";
 import { ContactProvider, useContacts } from "../../../context/ContactContext";
 import type { ContactCreateInput, ContactScope, ContactTagId, ContactGroupId, ContactDuplicateCandidate } from "../../../models/contacts";
 import { SYSTEM_CONTACT_TAGS, CONTACT_SCOPE_LABELS, getContactTagById } from "../../../models/contacts";
+import { Z } from "../../../utils/z-index";
 
 const GF    = { fontFamily: "'Geist', sans-serif" };
 const GM    = { fontFamily: "'Geist Mono', monospace" };
@@ -60,7 +61,7 @@ function DuplicateWarningModal({ candidates, onContinue, onReview, onCancel }: {
   onCancel:   () => void;
 }) {
   return (
-    <div role="dialog" aria-modal="true" aria-labelledby="dup-title" style={{ position: "fixed", inset: 0, zIndex: 9000, display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
+    <div role="dialog" aria-modal="true" aria-labelledby="dup-title" style={{ position: "fixed", inset: 0, zIndex: Z.modal, display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
       <div onClick={onCancel} style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.4)" }} />
       <div style={{ position: "relative", background: "#FFFFFF", borderRadius: 14, padding: "28px 28px 24px", maxWidth: 460, width: "100%", boxShadow: "0 20px 60px rgba(0,0,0,0.2)" }}>
         <div style={{ display: "flex", alignItems: "flex-start", gap: 14, marginBottom: 18 }}>

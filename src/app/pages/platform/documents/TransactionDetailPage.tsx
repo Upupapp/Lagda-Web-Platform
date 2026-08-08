@@ -80,6 +80,7 @@ import {
 import { documentOrganizationService } from "../../../services/mock/document-organization.service";
 import { TAG_STYLE_COLORS } from "../../../models/document-organization";
 import type { OrgTag } from "../../../models/document-organization";
+import { Z } from "../../../utils/z-index";
 
 // ── Design tokens ─────────────────────────────────────────────────────────────
 
@@ -224,7 +225,7 @@ function ConfirmDialog({ open, title, body, confirmLabel, confirmDanger, loading
   if (!open) return null;
   return (
     <div role="dialog" aria-modal="true" aria-label={title}
-      style={{ position: "fixed", inset: 0, zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
+      style={{ position: "fixed", inset: 0, zIndex: Z.modal, display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
       <div onClick={onCancel} style={{ position: "absolute", inset: 0, background: "rgba(7,17,31,0.4)" }} aria-hidden />
       <div ref={ref} tabIndex={-1} style={{
         position: "relative", background: "#fff", borderRadius: 12, padding: "24px 28px",
@@ -1622,7 +1623,7 @@ export function SettingsTab() {
       {/* Cancel dialog — needs reason input */}
       {cancelOpen && (
         <div role="dialog" aria-modal="true" aria-label="Cancel Transaction"
-          style={{ position: "fixed", inset: 0, zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
+          style={{ position: "fixed", inset: 0, zIndex: Z.modal, display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
           <div onClick={() => setCancelOpen(false)} style={{ position: "absolute", inset: 0, background: "rgba(7,17,31,0.4)" }} aria-hidden />
           <div style={{ position: "relative", background: "#fff", borderRadius: 12, padding: "24px 28px",
             maxWidth: 440, width: "100%", boxShadow: "0 20px 60px rgba(7,17,31,0.18)", ...GF }}>

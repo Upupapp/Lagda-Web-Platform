@@ -9,6 +9,7 @@ import { Outlet, Navigate, useNavigate, useLocation, Link } from "react-router";
 import { PrepareProvider, usePrepare } from "../../../context/PrepareContext";
 import { PREPARATION_STEPS } from "../../../models/prepare";
 import type { PreparationStepId, PreparationStepState } from "../../../models/prepare";
+import { Z } from "../../../utils/z-index";
 
 const GF = { fontFamily: "'Geist', sans-serif" };
 const NAVY   = "#07111F";
@@ -87,7 +88,7 @@ function DiscardDialog({
       style={{
         position: "fixed",
         inset: 0,
-        zIndex: 200,
+        zIndex: Z.modal,
         background: "rgba(7,17,31,0.55)",
         display: "flex",
         alignItems: "center",

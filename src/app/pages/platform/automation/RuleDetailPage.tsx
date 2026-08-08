@@ -15,6 +15,7 @@ import {
   AUTO_TRIGGER_CONFIGS,
   AUTO_ACTION_CONFIGS,
 } from "../../../models/workflow-automation";
+import { Z } from "../../../utils/z-index";
 
 const GF    = { fontFamily: "'Geist', sans-serif" };
 const NAVY  = "#07111F";
@@ -123,14 +124,14 @@ export function RuleDetailPage() {
 
       {/* Toast */}
       {toast && (
-        <div role="status" aria-live="polite" style={{ ...GF, position: "fixed", top: 20, right: 20, background: toast.type === "error" ? RED : NAVY, color: "#FFFFFF", fontSize: 13, padding: "10px 16px", borderRadius: 8, zIndex: 1000 }}>
+        <div role="status" aria-live="polite" style={{ ...GF, position: "fixed", top: 20, right: 20, background: toast.type === "error" ? RED : NAVY, color: "#FFFFFF", fontSize: 13, padding: "10px 16px", borderRadius: 8, zIndex: Z.toast }}>
           {toast.msg}
         </div>
       )}
 
       {/* Remove confirm */}
       {confirmRemove && (
-        <div style={{ position: "fixed", inset: 0, background: "rgba(7,17,31,0.45)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 500 }} role="dialog" aria-modal="true" aria-label="Remove rule">
+        <div style={{ position: "fixed", inset: 0, background: "rgba(7,17,31,0.45)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: Z.modal }} role="dialog" aria-modal="true" aria-label="Remove rule">
           <div style={{ ...GF, background: "#FFFFFF", borderRadius: 14, padding: "28px", width: 400, maxWidth: "90vw" }}>
             <h2 style={{ fontSize: 17, fontWeight: 800, color: NAVY, margin: "0 0 10px" }}>Remove rule?</h2>
             <p style={{ fontSize: 13, color: SLATE6, margin: "0 0 20px", lineHeight: 1.6 }}>

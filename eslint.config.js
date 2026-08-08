@@ -159,6 +159,21 @@ export default tseslint.config(
             "data (recipient rows, comments, Policy inputs) must never be persisted. " +
             "If a safe UI preference is genuinely needed, add an approved abstraction first.",
         },
+        {
+          // How the stacking mess happened: every overlay picked its own number,
+          // and the only way to win an argument with an existing overlay was to
+          // pick a bigger one. That produced values from 0 to 10100 and dialogs
+          // doing the same job six layers apart. Values of 10 and below are left
+          // alone because they order siblings inside one component, which is a
+          // local concern; anything higher is competing for the page and belongs
+          // on the shared ladder.
+          selector: "Property[key.name='zIndex'][value.type='Literal'][value.value>10]",
+          message:
+            "Use the shared stacking ladder: `import { Z } from '@/app/utils/z-index'` " +
+            "and pick the layer that describes the thing (Z.modal, Z.dropdown, Z.toast, …). " +
+            "If this orders siblings inside a single component rather than against the " +
+            "page, name them in a local constant instead — see CANVAS_Z in FieldsPage.",
+        },
       ],
     },
   },

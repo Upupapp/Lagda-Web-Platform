@@ -2,6 +2,7 @@ import { Link, useLocation } from "react-router";
 import { useState } from "react";
 import { LAGDA_PLANS, COMPARE_GROUPS, type LagdaPlan, type AvailValue } from "../../config/pricing.config";
 import { PRICING_SUBNAV } from "../../pages/public/pricing/content";
+import { Z } from "../../utils/z-index";
 
 const GF = { fontFamily: "'Geist', sans-serif" };
 const GM = { fontFamily: "'Geist Mono', monospace" };
@@ -11,7 +12,7 @@ export function PricingSubNav() {
   const { pathname } = useLocation();
   return (
     <nav aria-label="Pricing navigation" style={{
-      position: "sticky", top: 72, zIndex: 40,
+      position: "sticky", top: 72, zIndex: Z.sticky,
       background: "rgba(7,17,31,0.95)", backdropFilter: "blur(12px)",
       borderBottom: "1px solid rgba(255,255,255,0.07)",
     }}>

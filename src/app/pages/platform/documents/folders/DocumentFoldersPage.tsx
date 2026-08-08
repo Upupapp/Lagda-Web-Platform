@@ -16,6 +16,7 @@ import { documentOrganizationService } from "../../../../services/mock/document-
 import type { OrgFolder, OrgFolderId, OrgFolderScope } from "../../../../models/document-organization";
 import { FOLDER_SCOPE_LABELS, MAX_FOLDER_DEPTH } from "../../../../models/document-organization";
 import { usePageMeta } from "../../../../hooks/usePageMeta";
+import { Z } from "../../../../utils/z-index";
 
 const GF   = { fontFamily: "'Geist', sans-serif" } as React.CSSProperties;
 const AZURE = "#0078D4";
@@ -120,7 +121,7 @@ function CreateFolderDialog({
   return (
     <div
       role="dialog" aria-modal="true" aria-labelledby="create-folder-title"
-      style={{ position: "fixed", inset: 0, zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(7,17,31,0.5)" }}
+      style={{ position: "fixed", inset: 0, zIndex: Z.modal, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(7,17,31,0.5)" }}
       onClick={e => { if (e.target === e.currentTarget) onClose(); }}
     >
       <div style={{ background: "#fff", borderRadius: 12, padding: 24, maxWidth: 440, width: "calc(100vw - 32px)", boxShadow: "0 8px 32px rgba(0,0,0,0.2)" }}>
@@ -206,7 +207,7 @@ function RenameFolderDialog({
   return (
     <div
       role="dialog" aria-modal="true" aria-labelledby="rename-folder-title"
-      style={{ position: "fixed", inset: 0, zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(7,17,31,0.5)" }}
+      style={{ position: "fixed", inset: 0, zIndex: Z.modal, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(7,17,31,0.5)" }}
       onClick={e => { if (e.target === e.currentTarget) onClose(); }}
     >
       <div style={{ background: "#fff", borderRadius: 12, padding: 24, maxWidth: 400, width: "calc(100vw - 32px)", boxShadow: "0 8px 32px rgba(0,0,0,0.2)" }}>
@@ -239,7 +240,7 @@ function ConfirmRemoveDialog({
   return (
     <div
       role="dialog" aria-modal="true" aria-labelledby="remove-folder-title"
-      style={{ position: "fixed", inset: 0, zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(7,17,31,0.5)" }}
+      style={{ position: "fixed", inset: 0, zIndex: Z.modal, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(7,17,31,0.5)" }}
       onClick={e => { if (e.target === e.currentTarget) onClose(); }}
     >
       <div style={{ background: "#fff", borderRadius: 12, padding: 24, maxWidth: 420, width: "calc(100vw - 32px)", boxShadow: "0 8px 32px rgba(0,0,0,0.2)" }}>
@@ -332,7 +333,7 @@ function FolderRow({
           <span style={{ fontSize: 16, lineHeight: 1 }} aria-hidden>⋯</span>
         </button>
         {menuOpen && (
-          <div role="menu" aria-label="Folder actions" style={{ position: "absolute", right: 0, top: "100%", zIndex: 100, background: "#fff", border: `1px solid ${SLATE2}`, borderRadius: 8, boxShadow: "0 4px 16px rgba(0,0,0,0.1)", minWidth: 200, padding: "4px 0" }}>
+          <div role="menu" aria-label="Folder actions" style={{ position: "absolute", right: 0, top: "100%", zIndex: Z.dropdown, background: "#fff", border: `1px solid ${SLATE2}`, borderRadius: 8, boxShadow: "0 4px 16px rgba(0,0,0,0.1)", minWidth: 200, padding: "4px 0" }}>
             {!isArchived && (
               <>
                 <button role="menuitem" onClick={() => { setMenuOpen(false); onOpen(folder); }}
@@ -650,7 +651,7 @@ export function DocumentFoldersPage() {
           role="status"
           aria-live="polite"
           style={{
-            position: "fixed", bottom: 24, right: 24, zIndex: 300,
+            position: "fixed", bottom: 24, right: 24, zIndex: Z.toast,
             padding: "10px 16px", borderRadius: 8, fontSize: 13, fontWeight: 500, ...GF,
             background: toast.type === "error" ? "#FEF2F2" : "#F0FDF4",
             color: toast.type === "error" ? "#991B1B" : "#166534",

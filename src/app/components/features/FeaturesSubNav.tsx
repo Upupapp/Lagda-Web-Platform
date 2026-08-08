@@ -1,5 +1,6 @@
 import { Link, useLocation } from "react-router";
 import { FEATURES_GROUPS } from "../../pages/public/features/content";
+import { Z } from "../../utils/z-index";
 
 const GF = { fontFamily: "'Geist', sans-serif" };
 
@@ -22,7 +23,7 @@ export function FeaturesSubNav() {
         backdropFilter: "blur(12px)",
         position: "sticky",
         top: 72,
-        zIndex: 40,
+        zIndex: Z.sticky,
       }}
     >
       <div

@@ -9,6 +9,7 @@ import { useRecipient, TYPED_SIGNATURE_STYLES } from "../../context/RecipientCon
 import type { SignatureAdoptionMethod } from "../../models/recipient";
 import { signatureLibraryService } from "../../services/mock/signature-library.service";
 import type { SignatureLibraryEntry } from "../../models/signature-library";
+import { Z } from "../../utils/z-index";
 
 const GF     = { fontFamily: "'Geist', sans-serif" };
 const NAVY   = "#07111F";
@@ -130,7 +131,7 @@ export function SignatureAdoptionDialog() {
       style={{
         position:         "fixed",
         inset:            0,
-        zIndex:           200,
+        zIndex:           Z.modal,
         background:       "rgba(7, 17, 31, 0.55)",
         display:          "flex",
         alignItems:       "center",

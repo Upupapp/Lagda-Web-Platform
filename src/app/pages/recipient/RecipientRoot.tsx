@@ -17,6 +17,7 @@ import { CompletionPage      } from "./CompletionPage";
 import { DeclinePage         } from "./DeclinePage";
 import { UnavailablePage     } from "./UnavailablePage";
 import { RECIPIENT_SCENARIOS } from "../../models/recipient";
+import { Z } from "../../utils/z-index";
 
 // ── Dev scenario switcher (only in dev/preview mode) ──────────────────────────
 
@@ -30,7 +31,7 @@ function DevScenarioSwitcher() {
         position:  "fixed",
         bottom:    60,
         right:     12,
-        zIndex:    300,
+        zIndex:    Z.toast,
         background:"#07111F",
         borderRadius: 9,
         padding:   "10px 12px",
