@@ -14,6 +14,7 @@ import type {
 import { ok, fail } from "../../models/errors";
 import type { ServiceResult } from "../../models/errors";
 import { isCapabilityInActiveProfile } from "../../config/capability-resolver";
+import { registerSessionCleanup } from "../session-lifecycle";
 
 // ── Fixtures ──────────────────────────────────────────────────────────────────
 
@@ -599,3 +600,11 @@ export const notificationCenterService = {
     _items = buildInitialItems();
   },
 };
+
+// Notification read/dismiss state is per-session, and it holds preparation
+// notifications that name batches in the workspace being left.
+registerSessionCleanup({
+  id: "notification-center",
+  onSignOut: () => notificationCenterService.clearSessionState(),
+  onWorkspaceSwitch: () => notificationCenterService.clearSessionState(),
+});

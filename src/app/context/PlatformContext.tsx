@@ -28,16 +28,9 @@ import {
   MOCK_SUBSCRIPTION,
 } from "../data/mock/workspaces";
 import { MOCK_NOTIFICATIONS } from "../data/mock";
-import { globalSearchService } from "../services/mock/global-search.service";
-import { documentOrganizationService } from "../services/mock/document-organization.service";
-import { workflowAutomationService } from "../services/mock/workflow-automation.service";
-import { signingWorkflowService } from "../services/mock/signing-workflow.service";
-import { bulkSendService } from "../services/mock/bulk-send.service";
-import { documentCollaborationService } from "../services/mock/document-collaboration.service";
-import { mockContactService } from "../services/mock/contacts.service";
-import { notificationCenterService } from "../services/mock/notification-center.service";
 import { ACTIVE_LAUNCH_PROFILE, resolveCapability, buildCapabilityContext } from "../config/capability-resolver";
 import type { LaunchProfileId, CapabilityResolution, ProductCapabilityId } from "../models/product-capability";
+import { runSignOutCleanup, runWorkspaceSwitchCleanup } from "../services/session-lifecycle";
 
 // ── Platform flags (default all active for demo) ──────────────────────────────
 
@@ -142,29 +135,11 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signOut = useCallback(() => {
-    globalSearchService.resetGlobalSearchDemonstration();
-    documentOrganizationService.resetDocumentOrganizationDemonstration();
-    workflowAutomationService.resetWorkflowAutomationDemonstration();
-    // Clears every signing-workflow draft, stage selection, and demonstration activity
-    // record before the next account can load.
-    signingWorkflowService.resetSigningWorkflowDemonstration();
-    // Clears every batch, recipient row, parsed CSV, pasted text, mapping,
-    // validation result, and saved configuration before the next account loads.
-    bulkSendService.resetBulkSendDemonstration();
-    // Clears every thread, comment body, Personal Draft Note, mention, review
-    // response, and collaboration activity record. Comment text must never survive
-    // into the next account's session.
-    documentCollaborationService.resetCollaborationDemonstration();
-    // Contact session state (session-created Contacts, session Groups, picker log)
-    // previously survived sign-out entirely: clearSessionState() existed but its
-    // only caller was a ContactContext method that itself had no call sites. Now
-    // that Contacts feed Bulk Send recipient rows, that is a live cross-account
-    // path for Contact data.
-    mockContactService.clearSessionState();
-    // Notification read/dismiss state is per-session. It also holds preparation
-    // notifications that reference batches in the signed-out workspace, so it
-    // must not survive into the next account.
-    notificationCenterService.clearSessionState();
+    // Every feature that holds session state registers its own cleanup in
+    // services/session-lifecycle. The shell deliberately does not name them:
+    // importing eight feature services here put them, and every fixture they
+    // reach, in the entry chunk for all visitors on all pages.
+    runSignOutCleanup();
     setSessionStatus("unauthenticated");
     setUser(null);
     setWorkspaces([]);
@@ -177,17 +152,7 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
   const switchWorkspace = useCallback((workspaceId: string) => {
     const ws = workspaces.find((w) => w.id === workspaceId);
     if (!ws) return;
-    globalSearchService.clearWorkspaceScopedDestinations();
-    documentOrganizationService.clearWorkspaceScopedOrganization(ws.id);
-    workflowAutomationService.clearWorkspaceScopedAutomation(ws.id);
-    signingWorkflowService.clearWorkspaceScopedWorkflows(ws.id);
-    bulkSendService.clearWorkspaceScopedBulkSend(ws.id);
-    documentCollaborationService.clearWorkspaceScopedCollaboration(ws.id);
-    // Session-created Contacts and Groups belong to the previous workspace, and
-    // the Bulk Send Contacts picker reads them.
-    mockContactService.clearSessionState();
-    // Preparation notifications name a batch in the workspace being left.
-    notificationCenterService.clearSessionState();
+    runWorkspaceSwitchCleanup(ws.id);
     setCurrentWorkspace(ws);
     setRole(ws.role);
     // In production: re-fetch documents, notifications, etc. for the new workspace.

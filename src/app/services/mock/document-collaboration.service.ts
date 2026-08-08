@@ -78,6 +78,7 @@ import { DOCUMENT_FIXTURES } from "../../data/mock/documents";
 import type { ServiceResult } from "../../models/errors";
 import { fail, ok } from "../../models/errors";
 import { delay } from "./delay";
+import { registerSessionCleanup } from "../session-lifecycle";
 
 // ── Request context ───────────────────────────────────────────────────────────
 
@@ -963,3 +964,13 @@ export const documentCollaborationService = new DocumentCollaborationService();
 // Re-exported so screens import one module rather than reaching into the resolver.
 export { ANONYMOUS_VIEWER, anchorIsNavigable, resolveThreadActions, resolveThreadVisibility };
 export type { CollaborationViewer };
+
+// Clears every thread, comment body, Personal Draft Note, mention, review
+// response and collaboration activity record. Comment text must never survive
+// into the next account's session.
+registerSessionCleanup({
+  id: "document-collaboration",
+  onSignOut: () => documentCollaborationService.resetCollaborationDemonstration(),
+  onWorkspaceSwitch: (workspaceId) =>
+    documentCollaborationService.clearWorkspaceScopedCollaboration(workspaceId),
+});

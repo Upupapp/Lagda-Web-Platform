@@ -13,8 +13,13 @@
 
 import { Link } from "react-router";
 import type { CapabilityResolutionOutcome } from "../../models/product-capability";
-import { PageHeader } from "./index";
-import { AppContent } from "./index";
+// Imported from the modules directly, NOT from "./index". The barrel re-exports
+// CommandPalette, which reaches the global search service and every fixture it
+// indexes — and this component is imported statically by router.tsx, so going
+// through the barrel put all of that in the entry chunk for every visitor. It
+// was also a cycle: the barrel imports this file.
+import { PageHeader } from "./PageHeader";
+import { AppContent } from "./AppContentLayout";
 
 const NAVY  = "#07111F";
 const SLATE6 = "#64748B";

@@ -24,6 +24,7 @@ import {
   MAX_FOLDER_DEPTH, MAX_RECENT_ITEMS, TAG_STYLE_COLORS,
 } from "../../models/document-organization";
 import type { DocumentListItem } from "../../models/documents";
+import { registerSessionCleanup } from "../session-lifecycle";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -889,3 +890,10 @@ class DocumentOrganizationService {
 }
 
 export const documentOrganizationService = new DocumentOrganizationService();
+
+registerSessionCleanup({
+  id: "document-organization",
+  onSignOut: () => documentOrganizationService.resetDocumentOrganizationDemonstration(),
+  onWorkspaceSwitch: (workspaceId) =>
+    documentOrganizationService.clearWorkspaceScopedOrganization(workspaceId),
+});

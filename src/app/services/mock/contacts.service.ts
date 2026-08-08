@@ -37,6 +37,7 @@ import {
   CID_MARCO,
   CID_MARCO_ALT,
 } from "../../../app/data/mock/contacts";
+import { registerSessionCleanup } from "../session-lifecycle";
 
 // ── Session mutation store ────────────────────────────────────────────────────
 
@@ -670,3 +671,14 @@ export const mockContactService = {
     return [[CID_MARCO, CID_MARCO_ALT]];
   },
 };
+
+// Contact session state (session-created Contacts, session Groups, picker log)
+// once survived sign-out entirely. Now that Contacts feed Bulk Send recipient
+// rows, that is a live cross-account path for Contact data. Session-created
+// Contacts also belong to the workspace being left, and the Bulk Send Contacts
+// picker reads them — so a workspace switch clears them too.
+registerSessionCleanup({
+  id: "contacts",
+  onSignOut: () => mockContactService.clearSessionState(),
+  onWorkspaceSwitch: () => mockContactService.clearSessionState(),
+});

@@ -42,6 +42,7 @@ import type { DocumentTemplate } from "../../models/templates";
 import type { ServiceResult } from "../../models/errors";
 import { ok, fail } from "../../models/errors";
 import { delay } from "./delay";
+import { registerSessionCleanup } from "../session-lifecycle";
 
 // ── Context ───────────────────────────────────────────────────────────────────
 
@@ -1303,3 +1304,11 @@ class MockBulkSendService {
 
 export const bulkSendService = new MockBulkSendService();
 export { readRoleField, readVariableValue, applyTitlePattern };
+
+// Clears every batch, recipient row, parsed CSV, pasted text, mapping,
+// validation result and saved configuration before the next account loads.
+registerSessionCleanup({
+  id: "bulk-send",
+  onSignOut: () => bulkSendService.resetBulkSendDemonstration(),
+  onWorkspaceSwitch: (workspaceId) => bulkSendService.clearWorkspaceScopedBulkSend(workspaceId),
+});

@@ -4,7 +4,12 @@ export { PlatformHeader } from "./PlatformHeader";
 export { WorkspaceSwitcher } from "./WorkspaceSwitcher";
 export { UserMenu } from "./UserMenu";
 export { NotificationMenu } from "./NotificationMenu";
-export { CommandPalette, CommandPalette as SearchDialog } from "./CommandPalette";
+// CommandPalette is deliberately NOT re-exported here. It reaches the global
+// search service, which indexes every domain and therefore imports the
+// transaction, template, contact, workflow, collaboration and automation
+// fixtures. A barrel makes that graph arrive for anyone importing anything from
+// this directory. Its only consumer is PlatformHeader, which loads it lazily
+// when the palette is actually opened — import it from "./CommandPalette".
 export { PageHeader } from "./PageHeader";
 export type { PageHeaderProps, BreadcrumbItem } from "./PageHeader";
 export {

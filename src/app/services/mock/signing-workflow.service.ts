@@ -77,6 +77,7 @@ import type { TransactionDetail } from "../../models/transaction-detail";
 import type { ServiceResult } from "../../models/errors";
 import { ok, fail } from "../../models/errors";
 import { delay } from "./delay";
+import { registerSessionCleanup } from "../session-lifecycle";
 
 // ── Context passed by every caller ────────────────────────────────────────────
 
@@ -1199,3 +1200,12 @@ class MockSigningWorkflowService {
 
 export const signingWorkflowService = new MockSigningWorkflowService();
 export type { WorkflowParticipantCandidate };
+
+// Clears every signing-workflow draft, stage selection and demonstration
+// activity record before the next account can load.
+registerSessionCleanup({
+  id: "signing-workflow",
+  onSignOut: () => signingWorkflowService.resetSigningWorkflowDemonstration(),
+  onWorkspaceSwitch: (workspaceId) =>
+    signingWorkflowService.clearWorkspaceScopedWorkflows(workspaceId),
+});

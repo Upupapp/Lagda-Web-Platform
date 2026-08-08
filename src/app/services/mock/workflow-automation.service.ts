@@ -40,6 +40,7 @@ import {
   AUTO_ACTION_CONFIGS,
   AUTO_TRIGGER_CONFIGS,
 } from "../../models/workflow-automation";
+import { registerSessionCleanup } from "../session-lifecycle";
 
 // ── ID generation ─────────────────────────────────────────────────────────────
 
@@ -1226,3 +1227,10 @@ export const workflowAutomationService = {
     _sims = [];
   },
 };
+
+registerSessionCleanup({
+  id: "workflow-automation",
+  onSignOut: () => workflowAutomationService.resetWorkflowAutomationDemonstration(),
+  onWorkspaceSwitch: (workspaceId) =>
+    workflowAutomationService.clearWorkspaceScopedAutomation(workspaceId),
+});

@@ -47,6 +47,7 @@ import { documentOrganizationService } from "./document-organization.service";
 import { workflowAutomationService } from "./workflow-automation.service";
 import { isCapabilityInActiveProfile } from "../../config/capability-resolver";
 import { capabilityId } from "../../models/product-capability";
+import { registerSessionCleanup } from "../session-lifecycle";
 
 // Automation is enterprise-preview; check whether it's available in the current profile.
 // We use a static context here (no permissions needed for search visibility gating).
@@ -1289,3 +1290,11 @@ export const globalSearchService = new GlobalSearchService();
 
 // Backward-compatible re-export for anything still importing from search.service
 export { globalSearchService as mockSearchService };
+
+// Recent queries and recent destinations are per-session and name documents,
+// templates and contacts in the signed-out account's workspace.
+registerSessionCleanup({
+  id: "global-search",
+  onSignOut: () => globalSearchService.resetGlobalSearchDemonstration(),
+  onWorkspaceSwitch: () => globalSearchService.clearWorkspaceScopedDestinations(),
+});
