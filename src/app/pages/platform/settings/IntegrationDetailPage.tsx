@@ -5,6 +5,7 @@ import React, { useEffect, useState } from "react";
 import { Link, useParams } from "react-router";
 import { SettingsPage, SSection, SField, INPUT_STYLE, StatusBadge, Skeleton, DEMO_NOTICE } from "./SettingsShell";
 import { mockIntegrationService } from "../../../services/mock/settings.service";
+import { useConfirm } from "../../../components/platform/ConfirmDialog";
 import type { IntegrationDefinition, IntegrationId } from "../../../models/settings";
 import { INTEGRATION_CATEGORY_LABELS } from "../../../models/settings";
 
@@ -31,6 +32,7 @@ export function IntegrationDetailPage() {
   const [integration, setIntegration] = useState<IntegrationDefinition | null>(null);
   const [loading, setLoading]         = useState(true);
   const [notFound, setNotFound]       = useState(false);
+  const { confirm, confirmDialog }    = useConfirm();
   const [configValues, setConfigValues] = useState<Record<string, string>>({});
   const [connecting, setConnecting]   = useState<ActionState>("idle");
   const [connectResult, setConnectResult] = useState<string | null>(null);
@@ -71,9 +73,19 @@ export function IntegrationDetailPage() {
     setTimeout(() => setTestResult(null), 5000);
   };
 
-  const handleDisconnect = async () => {
+  const handleDisconnect = () => {
     if (!integration) return;
-    if (!confirm(`Disconnect ${integration.name}? This is a frontend demonstration only.`)) return;
+    confirm({
+      title: `Disconnect ${integration.name}?`,
+      body: `LAGDA will stop sending documents and events to ${integration.name}. Anything already delivered stays where it is. You can reconnect at any time. In this frontend demonstration no real integration is disconnected.`,
+      confirmLabel: "Disconnect",
+      destructive: true,
+      onConfirm: performDisconnect,
+    });
+  };
+
+  const performDisconnect = async () => {
+    if (!integration) return;
     setDisconnecting("loading");
     await mockIntegrationService.disconnectIntegrationDemonstration(integration.id);
     await refresh(integration.id);
@@ -105,6 +117,7 @@ export function IntegrationDetailPage() {
 
   return (
     <SettingsPage title={integration.name} breadcrumb={`Integrations › ${integration.name}`}>
+      {confirmDialog}
       {DEMO_NOTICE}
 
       {/* Header */}

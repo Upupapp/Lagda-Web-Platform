@@ -5,6 +5,7 @@
 import React, { useEffect, useState } from "react";
 import { SettingsPage, SSection, StatusBadge, Skeleton, DEMO_NOTICE } from "./SettingsShell";
 import { mockSecuritySettingsService } from "../../../services/mock/settings.service";
+import { useConfirm } from "../../../components/platform/ConfirmDialog";
 import type { ActiveSession, ActiveSessionId } from "../../../models/settings";
 
 const GF    = { fontFamily: "'Geist', sans-serif" };
@@ -39,10 +40,13 @@ export function SessionsPage() {
   const [loading, setLoading]   = useState(true);
   const [revoking, setRevoking] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<string | null>(null);
+  const { confirm, confirmDialog } = useConfirm();
 
   useEffect(() => {
     mockSecuritySettingsService.listActiveSessions().then(s => { setSessions(s); setLoading(false); });
   }, []);
+
+  const active = sessions.filter(s => s.status === "active" && !s.isCurrent);
 
   const revokeOne = async (id: ActiveSessionId) => {
     setRevoking(id);
@@ -54,8 +58,17 @@ export function SessionsPage() {
     setTimeout(() => setFeedback(null), 4000);
   };
 
-  const revokeOthers = async () => {
-    if (!confirm("Revoke all other sessions? This is a frontend demonstration only.")) return;
+  const revokeOthers = () => {
+    confirm({
+      title: "Revoke all other sessions?",
+      body: `This signs out ${active.length === 1 ? "the other device" : `all ${active.length} other devices`} currently signed in to your account. This device stays signed in. In this frontend demonstration no production session is invalidated.`,
+      confirmLabel: "Revoke other sessions",
+      destructive: true,
+      onConfirm: performRevokeOthers,
+    });
+  };
+
+  const performRevokeOthers = async () => {
     setRevoking("all");
     const result = await mockSecuritySettingsService.revokeOtherSessionsDemonstration();
     const updated = await mockSecuritySettingsService.listActiveSessions();
@@ -65,12 +78,11 @@ export function SessionsPage() {
     setTimeout(() => setFeedback(null), 4000);
   };
 
-  const active = sessions.filter(s => s.status === "active" && !s.isCurrent);
-
   if (loading) return <SettingsPage title="Active Sessions" breadcrumb="Security › Active Sessions"><Skeleton h={80} mb={10} /><Skeleton h={80} mb={10} /><Skeleton h={80} /></SettingsPage>;
 
   return (
     <SettingsPage title="Active Sessions" breadcrumb="Security › Active Sessions">
+      {confirmDialog}
       {DEMO_NOTICE}
 
       {feedback && (

@@ -28,6 +28,7 @@ import type {
 } from "../../models/search";
 import { SEARCH_SCOPE_LABELS, VALID_SEARCH_SCOPES } from "../../models/search";
 import { globalSearchService } from "../../services/mock/global-search.service";
+import { Z } from "../../utils/z-index";
 
 // ── Design tokens ─────────────────────────────────────────────────────────────
 
@@ -861,7 +862,7 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
         aria-hidden
         onClick={handleBackdropClick}
         style={{
-          position: "fixed", inset: 0, zIndex: 500,
+          position: "fixed", inset: 0, zIndex: Z.palette,
           background: "rgba(7,17,31,0.75)",
           backdropFilter: "blur(4px)",
         }}
@@ -876,7 +877,7 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
         aria-modal
         onKeyDown={handleKeyDown}
         style={{
-          position: "fixed", zIndex: 501,
+          position: "fixed", zIndex: Z.palette + 1,
           top: 0, left: 0, right: 0, bottom: 0,
           display: "flex", alignItems: "flex-start", justifyContent: "center",
           padding: "60px 16px 16px",

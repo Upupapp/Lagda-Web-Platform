@@ -15,6 +15,7 @@ import { useNotificationCenter } from "../../context/NotificationCenterContext";
 import { PRIMARY_NAV, UTILITY_NAV, PREPARE_ACTION } from "../../config/platform.nav";
 import { WorkspaceSwitcher } from "./WorkspaceSwitcher";
 import { UserMenu } from "./UserMenu";
+import { Z } from "../../utils/z-index";
 
 const NAVY   = "#07111F";
 const BORDER = "rgba(255,255,255,0.07)";
@@ -119,7 +120,7 @@ export function PlatformSidebar() {
         height: "100vh",
         overflowY: "auto",
         overflowX: "hidden",
-        zIndex: 50,
+        zIndex: Z.shell,
         transition: "width 0.2s ease",
       }}
       className="platform-sidebar"

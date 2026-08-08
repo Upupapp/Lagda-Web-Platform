@@ -7,6 +7,7 @@ import { Search, HelpCircle } from "lucide-react";
 import { Link } from "react-router";
 import { NotificationMenu } from "./NotificationMenu";
 import { CommandPalette } from "./CommandPalette";
+import { Z } from "../../utils/z-index";
 
 const GF    = { fontFamily: "'Geist', sans-serif" };
 const BORDER = "rgba(255,255,255,0.07)";
@@ -49,7 +50,7 @@ export function PlatformHeader({ pageTitle }: PlatformHeaderProps) {
       <header
         aria-label="Platform header"
         style={{
-          position: "sticky", top: 0, zIndex: 40,
+          position: "sticky", top: 0, zIndex: Z.shell,
           height: 52,
           background: "rgba(248,250,252,0.95)",
           backdropFilter: "blur(8px)",

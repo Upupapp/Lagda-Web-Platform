@@ -12,6 +12,7 @@ import { LagdaLogo } from "../brand/LagdaLogo";
 import { usePlatform } from "../../context/PlatformContext";
 import { PRIMARY_NAV, UTILITY_NAV, PREPARE_ACTION } from "../../config/platform.nav";
 import { NotificationMenu } from "./NotificationMenu";
+import { Z } from "../../utils/z-index";
 
 const NAVY   = "#07111F";
 const BORDER = "rgba(255,255,255,0.07)";
@@ -105,7 +106,7 @@ export function MobileNav() {
       {/* ── Top bar ─────────────────────────────────────────────── */}
       <header
         style={{
-          position: "fixed", top: 0, left: 0, right: 0, zIndex: 100,
+          position: "fixed", top: 0, left: 0, right: 0, zIndex: Z.shell,
           height: 56, background: NAVY,
           borderBottom: `1px solid ${BORDER}`,
           display: "flex", alignItems: "center", gap: 0,
@@ -150,7 +151,7 @@ export function MobileNav() {
         <div
           onClick={() => { setDrawerOpen(false); triggerRef.current?.focus(); }}
           aria-hidden
-          style={{ position: "fixed", inset: 0, zIndex: 149, background: "rgba(0,0,0,0.5)" }}
+          style={{ position: "fixed", inset: 0, zIndex: Z.drawerScrim, background: "rgba(0,0,0,0.5)" }}
         />
       )}
 
@@ -162,7 +163,7 @@ export function MobileNav() {
         aria-label="Navigation"
         aria-modal
         style={{
-          position: "fixed", top: 0, left: 0, bottom: 0, zIndex: 150,
+          position: "fixed", top: 0, left: 0, bottom: 0, zIndex: Z.drawer,
           width: 280,
           background: NAVY,
           borderRight: `1px solid ${BORDER}`,

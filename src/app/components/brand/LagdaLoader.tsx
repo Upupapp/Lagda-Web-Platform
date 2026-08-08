@@ -12,6 +12,7 @@
 
 import { useEffect, useState } from "react";
 import { APP_CONFIG } from "../../config/app.config";
+import { Z } from "../../utils/z-index";
 
 export type LoaderMode = "fullscreen" | "inline" | "button";
 export type LoaderTheme = "dark" | "light";
@@ -197,7 +198,7 @@ function FullscreenLoader({
         alignItems: "center",
         justifyContent: "center",
         gap: 24,
-        zIndex: 9999,
+        zIndex: Z.loader,
         fontFamily: "'Geist', sans-serif",
         ...exitStyle,
       }}

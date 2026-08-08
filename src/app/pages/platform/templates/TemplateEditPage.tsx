@@ -150,13 +150,25 @@ function DocumentsTab({ draft }: { draft: DocumentTemplate }) {
           ))}
         </div>
       )}
-      <button
-        onClick={() => alert("Document upload is not available in the frontend demonstration.")}
-        style={{ marginTop: 12, display: "inline-flex", alignItems: "center", gap: 7, padding: "8px 14px", border: "1px dashed #CBD5E1", borderRadius: 8, background: "white", color: "#64748B", ...GF, fontSize: 12, fontWeight: 600, cursor: "pointer" }}
-      >
-        <Plus size={13} />
-        Add Document (Demo — no upload)
-      </button>
+      {/* This control used to look live and answer with a browser alert once
+          clicked. A disabled button carrying its own reason tells the user the
+          same thing before they spend the click, and matches the rule applied
+          everywhere else in the platform: a control is never disabled without
+          saying why. */}
+      <div style={{ marginTop: 12 }}>
+        <button
+          type="button"
+          disabled
+          aria-describedby="tpl-upload-reason"
+          style={{ display: "inline-flex", alignItems: "center", gap: 7, padding: "8px 14px", border: "1px dashed #CBD5E1", borderRadius: 8, background: "#F8FAFC", color: "#94A3B8", ...GF, fontSize: 12, fontWeight: 600, cursor: "not-allowed", minHeight: 44 }}
+        >
+          <Plus size={13} />
+          Add document
+        </button>
+        <p id="tpl-upload-reason" style={{ ...GF, fontSize: 12, color: "#94A3B8", margin: "6px 0 0", lineHeight: 1.5 }}>
+          Uploading is not available in this frontend demonstration. The documents above are placeholders.
+        </p>
+      </div>
     </div>
   );
 }

@@ -1,3 +1,5 @@
+import { Z } from "../../utils/z-index";
+
 export function SkipLink() {
   return (
     <a
@@ -6,7 +8,7 @@ export function SkipLink() {
         position: "fixed",
         top: -56,
         left: 16,
-        zIndex: 10100,
+        zIndex: Z.skipLink,
         background: "#0078D4",
         color: "#ffffff",
         padding: "10px 20px",

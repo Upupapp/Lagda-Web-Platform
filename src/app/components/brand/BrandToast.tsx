@@ -12,6 +12,7 @@
 //   toastWarning("Signing link will expire soon")
 
 import { Toaster } from "sonner";
+import { Z } from "../../utils/z-index";
 export type { ExternalToast } from "sonner";
 
 export function BrandToaster() {
@@ -22,6 +23,11 @@ export function BrandToaster() {
       richColors={false}
       closeButton
       duration={4000}
+      // Toasts carried no stacking value at all, so they inherited Sonner's own
+      // and could be covered by any dialog. A toast that reports the result of
+      // what you just did in a dialog is worthless if the dialog hides it, so
+      // this layer deliberately outranks `Z.modal`.
+      style={{ zIndex: Z.toast }}
       toastOptions={{
         style: {
           fontFamily: "'Geist', sans-serif",

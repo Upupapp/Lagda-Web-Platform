@@ -4,6 +4,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { SettingsPage, SSection, SField, INPUT_STYLE, BTN_PRIMARY, BTN_SECONDARY, Skeleton, DEMO_NOTICE, StatusBadge } from "./SettingsShell";
 import { mockBrandingSettingsService } from "../../../services/mock/settings.service";
+import { useConfirm } from "../../../components/platform/ConfirmDialog";
 import type { WorkspaceBranding } from "../../../models/settings";
 
 const GF    = { fontFamily: "'Geist', sans-serif" };
@@ -73,6 +74,7 @@ export function BrandingPage() {
   const [dirty, setDirty]       = useState(false);
   const [saving, setSaving]     = useState(false);
   const [saved, setSaved]       = useState(false);
+  const { confirm, confirmDialog } = useConfirm();
   const [logoErr, setLogoErr]   = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const objRef  = useRef<string | null>(null);
@@ -130,8 +132,17 @@ export function BrandingPage() {
     setTimeout(() => setSaved(false), 2500);
   };
 
-  const handleReset = async () => {
-    if (!confirm("Reset branding to defaults? This is a demonstration only.")) return;
+  const handleReset = () => {
+    confirm({
+      title: "Reset branding to defaults?",
+      body: "Your workspace logo, colours and sender name go back to the LAGDA defaults. Anything you have typed but not saved is discarded. In this frontend demonstration no real branding is changed.",
+      confirmLabel: "Reset branding",
+      destructive: true,
+      onConfirm: performReset,
+    });
+  };
+
+  const performReset = async () => {
     const reset = await mockBrandingSettingsService.resetBrandingDemonstration();
     setBranding(reset);
     setForm({ ...reset });
@@ -148,6 +159,7 @@ export function BrandingPage() {
 
   return (
     <SettingsPage title="Workspace Branding" breadcrumb="Branding">
+      {confirmDialog}
       {DEMO_NOTICE}
 
       <div style={{ marginBottom: 16 }}>

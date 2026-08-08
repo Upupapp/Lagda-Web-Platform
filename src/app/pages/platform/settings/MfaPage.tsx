@@ -5,6 +5,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { SettingsPage, SSection, SCard, StatusBadge } from "./SettingsShell";
 import { mockSecuritySettingsService } from "../../../services/mock/settings.service";
+import { useConfirm } from "../../../components/platform/ConfirmDialog";
 import type { SecurityMethodSummary } from "../../../models/settings";
 
 const GF    = { fontFamily: "'Geist', sans-serif" };
@@ -39,6 +40,7 @@ export function MfaPage() {
   const [codeErr, setCodeErr]       = useState<string | null>(null);
   const [busy, setBusy]             = useState(false);
   const [result, setResult]         = useState<string | null>(null);
+  const { confirm, confirmDialog }  = useConfirm();
   const isMounted = useRef(true);
 
   useEffect(() => {
@@ -72,8 +74,18 @@ export function MfaPage() {
     if (isMounted.current) setMethods(updated);
   };
 
-  const handleDisable = async (methodId: string) => {
-    if (!confirm("Disable this demonstration MFA method?")) return;
+  const handleDisable = (methodId: string) => {
+    const method = methods.find(m => m.id === methodId);
+    confirm({
+      title: "Turn off multi-factor authentication?",
+      body: `${method ? `"${method.label}" will no longer be required.` : "This method will no longer be required."} Your account will be protected by your password alone, which makes it easier for someone else to sign in as you. In this frontend demonstration no real security setting is changed.`,
+      confirmLabel: "Turn off",
+      destructive: true,
+      onConfirm: performDisable,
+    });
+  };
+
+  const performDisable = async () => {
     await mockSecuritySettingsService.disableMfaDemonstration();
     const updated = await mockSecuritySettingsService.listMfaMethods();
     if (isMounted.current) { setMethods(updated); setResult("MFA demonstration disabled."); }
@@ -83,6 +95,7 @@ export function MfaPage() {
 
   return (
     <SettingsPage title="Multi-Factor Authentication" breadcrumb="Security › Multi-Factor Auth">
+      {confirmDialog}
       <div role="note" style={{ background: "#FFFBEB", border: "1px solid #FDE68A", borderRadius: 8, padding: "10px 16px", marginBottom: 18, ...GF, fontSize: 12, color: "#92400E" }}>
         This is a frontend demonstration. No real authenticator codes are generated, delivered, or validated.
       </div>

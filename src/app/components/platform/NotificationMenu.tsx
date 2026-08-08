@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { useNotificationCenter } from "../../context/NotificationCenterContext";
 import type { NotificationRecord, NotificationCategory, NotificationSeverity } from "../../models/notifications";
+import { Z } from "../../utils/z-index";
 
 const GF    = { fontFamily: "'Geist', sans-serif" };
 const BORDER = "rgba(255,255,255,0.07)";
@@ -150,7 +151,7 @@ export function NotificationMenu({ align = "right" }: NotificationMenuProps) {
             [align]: 0,
             width: 380,
             maxWidth: "calc(100vw - 16px)",
-            zIndex: 300,
+            zIndex: Z.dropdown,
             background: "#0B1929",
             border: `1px solid ${BORDER}`,
             borderRadius: 12,

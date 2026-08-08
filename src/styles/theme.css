@@ -165,6 +165,25 @@
   --lagda-dur-dialog: 250ms;
   --lagda-dur-load: 2600ms;
 
+  /* ── Z-index scale ────────────────────────────────────────────────────── */
+  /* One ordered ladder for everything that stacks. Before this existed the
+     codebase held more than twenty ad-hoc values between 0 and 10100, and
+     structurally identical dialogs sat at 200, 1000, 1300, 2000, 9000 and 9999
+     — so which overlay won was decided by whichever page was written last.
+     Layers are spaced by 10 so a one-off can slot between two without a
+     renumbering. Consume these from `utils/z-index.ts` in TSX, never a literal. */
+  --lagda-z-base:            0;
+  --lagda-z-raised:         10;
+  --lagda-z-sticky:         20;   /* in-page sticky toolbars, table headers   */
+  --lagda-z-shell:          30;   /* platform header, sidebar, mobile top bar */
+  --lagda-z-dropdown:       40;   /* menus, popovers, comboboxes, tooltips    */
+  --lagda-z-drawer:         50;   /* mobile nav + side panels (scrim at -1)   */
+  --lagda-z-modal:          60;   /* dialogs, sheets, confirmations           */
+  --lagda-z-palette:        70;   /* command palette — sits over a dialog     */
+  --lagda-z-toast:          80;   /* must outrank a modal to be readable      */
+  --lagda-z-loader:         90;   /* full-screen branded loading sequence     */
+  --lagda-z-skip-link:     100;   /* keyboard escape hatch — always on top    */
+
   /* ── Spacing scale ────────────────────────────────────────────────────── */
   --lagda-sp-1: 4px;
   --lagda-sp-2: 8px;

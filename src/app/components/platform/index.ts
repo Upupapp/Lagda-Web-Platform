@@ -22,5 +22,7 @@ export {
   FormCardDivider,
   FormField,
 } from "./AppContentLayout";
+export { ConfirmDialog, useConfirm } from "./ConfirmDialog";
+export type { ConfirmRequest } from "./ConfirmDialog";
 export { CapabilityUnavailable, CapabilityGuard } from "./CapabilityUnavailable";
 export { PageError, SectionError } from "./PageError";
