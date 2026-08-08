@@ -299,6 +299,13 @@ interface RecipientContextValue {
   currentPageFields:  RecipientField[];
   requiredMyFieldIds: string[];
   allRequiredComplete: boolean;
+  /**
+   * Human-readable names of what is still outstanding, in the order the signer
+   * will meet them. Empty exactly when `allRequiredComplete` is true. Exists so
+   * a disabled Submit button can say WHAT is missing rather than only that
+   * something is.
+   */
+  remainingRequiredLabels: string[];
   completionHeading:  string;
   role:               RecipientParticipantRole | null;
 
@@ -365,15 +372,26 @@ export function RecipientProvider({ children }: { children: React.ReactNode }) {
     [myFields],
   );
 
-  const allRequiredComplete = useMemo(() => {
+  // Derived together so the list and the boolean can never disagree — a Submit
+  // button that is disabled while the list says nothing is missing would be
+  // worse than no list at all.
+  const remainingRequiredLabels = useMemo(() => {
+    const labels: string[] = [];
+    const participantRole = state.request?.participant.role;
+    if (participantRole === "signer" && !state.signature.adopted) {
+      labels.push("Adopt your signature");
+    }
     for (const fieldId of requiredMyFieldIds) {
       const val = state.fieldValues[fieldId];
-      if (val === undefined || val === null || val === "" || val === false) return false;
+      if (val === undefined || val === null || val === "" || val === false) {
+        const field = state.request?.fields.find(f => f.id === fieldId);
+        labels.push(field?.label ?? "Required field");
+      }
     }
-    const role = state.request?.participant.role;
-    if (role === "signer" && !state.signature.adopted) return false;
-    return true;
+    return labels;
   }, [requiredMyFieldIds, state.fieldValues, state.request, state.signature.adopted]);
+
+  const allRequiredComplete = remainingRequiredLabels.length === 0;
 
   const role = state.request?.participant.role ?? null;
 
@@ -572,6 +590,7 @@ export function RecipientProvider({ children }: { children: React.ReactNode }) {
     currentPageFields,
     requiredMyFieldIds,
     allRequiredComplete,
+    remainingRequiredLabels,
     completionHeading,
     role,
     loadRequest,
@@ -602,7 +621,7 @@ export function RecipientProvider({ children }: { children: React.ReactNode }) {
     endSession,
   }), [
     state, currentDocument, currentPage, myFields, currentPageFields,
-    requiredMyFieldIds, allRequiredComplete, completionHeading, role,
+    requiredMyFieldIds, allRequiredComplete, remainingRequiredLabels, completionHeading, role,
     loadRequest, setStep, setAuthCode, submitAuth, acceptConsentAction,
     setDocument, setPage, setFieldValue, openSignatureDialog, closeSignatureDialog,
     setSignatureMethod, setSignatureTypedText, setSignatureStyle, setSignatureDrawn,

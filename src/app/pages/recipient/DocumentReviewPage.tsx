@@ -243,7 +243,7 @@ function FieldOverlay({
 function FieldPanel({ activeField, onClose }: { activeField: RecipientField | null; onClose: () => void }) {
   const {
     state, setFieldValue, openSignatureDialog, goToSummary,
-    allRequiredComplete, myFields, role, setStep,
+    allRequiredComplete, remainingRequiredLabels, myFields, role, setStep,
   } = useRecipient();
 
   if (!activeField) {
@@ -293,14 +293,34 @@ function FieldPanel({ activeField, onClose }: { activeField: RecipientField | nu
         {myFields.length === 0 && (
           <p style={{ fontSize: 12, color: SILVER, margin: 0 }}>No fields assigned to you.</p>
         )}
+        {/* What is still outstanding. A disabled Continue button that does not
+            say why leaves the signer hunting the document for something they
+            cannot identify — the one moment in this product where being stuck
+            is most costly. */}
+        {!allRequiredComplete && remainingRequiredLabels.length > 0 && (
+          <div
+            id="recipient-remaining"
+            style={{ marginTop: 14, padding: "10px 12px", borderRadius: 7, background: "#FFFBEB", border: "1px solid #FDE68A" }}
+          >
+            <p style={{ ...GF, margin: "0 0 6px", fontSize: 12, fontWeight: 700, color: "#92400E" }}>
+              {remainingRequiredLabels.length} item{remainingRequiredLabels.length === 1 ? "" : "s"} left before you can submit
+            </p>
+            <ul style={{ ...GF, margin: 0, paddingLeft: 16, fontSize: 12, color: "#92400E", lineHeight: 1.7 }}>
+              {remainingRequiredLabels.map(label => <li key={label}>{label}</li>)}
+            </ul>
+          </div>
+        )}
+
         {/* Continue button */}
         <button
           onClick={goToSummary}
           disabled={!allRequiredComplete}
+          aria-describedby={allRequiredComplete ? undefined : "recipient-remaining"}
           style={{
             ...GF, marginTop: 16, width: "100%", padding: "10px", borderRadius: 7,
             border: "none", background: allRequiredComplete ? AZURE : "#8AB8D8",
-            color: WHITE, fontSize: 13, fontWeight: 700, cursor: allRequiredComplete ? "pointer" : "not-allowed",
+            color: WHITE, fontSize: 13, fontWeight: 700, minHeight: 44,
+            cursor: allRequiredComplete ? "pointer" : "not-allowed",
           }}
         >
           {role === "viewer" || role === "copy-recipient" ? "Continue →" : "Review & Submit →"}
@@ -387,7 +407,7 @@ export function DocumentReviewPage() {
   const {
     request, state, currentDocument, currentPage,
     currentPageFields, setDocument, setPage, setStep,
-    openSignatureDialog, goToSummary, allRequiredComplete,
+    openSignatureDialog, goToSummary, allRequiredComplete, remainingRequiredLabels,
   } = useRecipient();
 
   const [activeField, setActiveField] = useState<RecipientField | null>(null);

@@ -20,7 +20,7 @@ export function ActionPage() {
     request, state, setStep,
     setApprovalDecision, setApprovalNotes,
     setReviewDecision,   setReviewNotes,
-    goToSummary, allRequiredComplete,
+    goToSummary, allRequiredComplete, remainingRequiredLabels,
   } = useRecipient();
 
   if (!request) return null;
@@ -226,15 +226,24 @@ export function ActionPage() {
       {!allRequiredComplete && (
         <div
           role="alert"
+          id="action-remaining"
           style={{
             background: "#FFF5F5", border: "1px solid #F5C6CB", borderRadius: 7,
             padding: "10px 14px", marginBottom: 16, fontSize: 13, color: RED,
           }}
         >
-          Please complete all required fields before continuing.
+          {/* Naming what is missing, not just that something is. */}
+          <p style={{ ...GF, margin: "0 0 6px", fontWeight: 700 }}>
+            {remainingRequiredLabels.length === 1
+              ? "One item still needs your attention"
+              : `${remainingRequiredLabels.length} items still need your attention`}
+          </p>
+          <ul style={{ ...GF, margin: "0 0 8px", paddingLeft: 16, fontSize: 12, lineHeight: 1.7 }}>
+            {remainingRequiredLabels.map(label => <li key={label}>{label}</li>)}
+          </ul>
           <button
             onClick={() => setStep("review")}
-            style={{ ...GF, background: "none", border: "none", cursor: "pointer", color: RED, fontSize: 12, textDecoration: "underline", padding: "0 0 0 6px" }}
+            style={{ ...GF, background: "none", border: "none", cursor: "pointer", color: RED, fontSize: 13, textDecoration: "underline", padding: "8px 0", minHeight: 44 }}
           >
             Return to document →
           </button>
@@ -244,10 +253,11 @@ export function ActionPage() {
       <button
         disabled={!allRequiredComplete}
         onClick={goToSummary}
+        aria-describedby={allRequiredComplete ? undefined : "action-remaining"}
         style={{
           ...GF, width: "100%", padding: "12px 20px", borderRadius: 8, border: "none",
           background: allRequiredComplete ? AZURE : "#8AB8D8",
-          color: WHITE, fontSize: 14, fontWeight: 700,
+          color: WHITE, fontSize: 14, fontWeight: 700, minHeight: 44,
           cursor: allRequiredComplete ? "pointer" : "not-allowed",
         }}
       >
