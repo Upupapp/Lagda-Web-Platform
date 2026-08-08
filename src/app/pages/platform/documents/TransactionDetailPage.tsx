@@ -1010,9 +1010,11 @@ function ActivityEventRow({ event: ev, compact }: { event: ActivityEvent; compac
         <span style={{ marginTop: 1, flexShrink: 0 }}>{SEV_ICON[ev.severity]}</span>
         <div style={{ flex: 1, minWidth: 0, ...GF }}>
           <div style={{ fontWeight: 600, fontSize: 13, color: NAVY }}>{ev.title}</div>
-          {(!compact || true) && (
-            <div style={{ fontSize: 12, color: "#64748B", marginTop: 2, lineHeight: 1.4 }}>{ev.description}</div>
-          )}
+          {/* The description is shown in both densities. This was written as
+              `(!compact || true)`, which reads as "hidden when compact" but can
+              never be false; rendering it plainly keeps the behaviour and drops
+              the contradiction. */}
+          <div style={{ fontSize: 12, color: "#64748B", marginTop: 2, lineHeight: 1.4 }}>{ev.description}</div>
           <div style={{ fontSize: 11, color: "#94A3B8", marginTop: 4, display: "flex", gap: 8, flexWrap: "wrap" }}>
             <span>{fmtDateTime(ev.timestamp)}</span>
             {ev.actorName && <span>· {ev.actorName}</span>}

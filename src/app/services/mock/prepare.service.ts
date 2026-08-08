@@ -16,6 +16,7 @@ import type {
   PrepValidationIssue,
   PreparationStepId,
   PrepParticipantRole,
+  PrepSource,
   ResumableDraftSummary,
 } from "../../models/prepare";
 import {
@@ -250,6 +251,19 @@ export interface IPrepareDocumentService {
 
 // ── Mock implementation ───────────────────────────────────────────────────────
 
+// `createDraft` accepts a plain `string` source because callers pass a route or
+// entry-point name. Narrowing it here — rather than asserting it — means an
+// unrecognised entry point starts a normal blank draft instead of writing a
+// value outside `PrepSource` into the draft and corrupting every later branch
+// that switches on it.
+const PREP_SOURCES: readonly PrepSource[] = [
+  "new", "template", "dashboard", "documents", "transaction-draft", "direct",
+];
+
+function toPrepSource(value: string | undefined): PrepSource {
+  return PREP_SOURCES.find((s) => s === value) ?? "new";
+}
+
 class MockPrepareDocumentService implements IPrepareDocumentService {
 
   private drafts: Map<PrepDraftId, PreparationDraft> = new Map();
@@ -271,7 +285,7 @@ class MockPrepareDocumentService implements IPrepareDocumentService {
       base = {
         ...DRAFT_BLANK,
         id,
-        sourceContext: { source: (context?.source as any) ?? "new" },
+        sourceContext: { source: toPrepSource(context?.source) },
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };

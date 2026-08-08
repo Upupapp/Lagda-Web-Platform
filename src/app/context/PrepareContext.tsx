@@ -33,6 +33,7 @@ import {
   validateDraftState,
 } from "../services/mock/prepare.service";
 import type { MockContact, MockTemplateSummary } from "../data/mock/prepare";
+import { log } from "../utils/logger";
 
 // ── Step gating (centralized) ─────────────────────────────────────────────────
 
@@ -318,25 +319,36 @@ export function PrepareProvider({ children }: { children: React.ReactNode }) {
     }
   }, [state.draft]);
 
+  // These three loads are deliberately non-blocking: a failure leaves the
+  // corresponding picker empty rather than stopping preparation. They must still
+  // be reported, because an empty catch makes "the lookup failed" and "you have
+  // none of these" indistinguishable — to the user AND to whoever debugs it.
+  // `log` is the approved channel and redacts before emitting.
   const loadContacts = useCallback(async () => {
     try {
       const contacts = await prepareService.getContacts();
       dispatch({ type: "SET_CONTACTS", contacts });
-    } catch {}
+    } catch (error) {
+      log.warn("prepare: contact lookup failed; the contact picker will be empty", error);
+    }
   }, []);
 
   const loadTemplates = useCallback(async () => {
     try {
       const templates = await prepareService.getTemplates();
       dispatch({ type: "SET_TEMPLATES", templates });
-    } catch {}
+    } catch (error) {
+      log.warn("prepare: template lookup failed; the template list will be empty", error);
+    }
   }, []);
 
   const loadResumableDrafts = useCallback(async () => {
     try {
       const drafts = await prepareService.listResumableDrafts();
       dispatch({ type: "SET_RESUMABLE", drafts });
-    } catch {}
+    } catch (error) {
+      log.warn("prepare: resumable-draft lookup failed; no drafts will be offered", error);
+    }
   }, []);
 
   const value: PrepareContextValue = {

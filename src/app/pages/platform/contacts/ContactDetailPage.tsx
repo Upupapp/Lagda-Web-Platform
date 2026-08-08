@@ -24,7 +24,9 @@ function StatusBadge({ status }: { status: string }) {
     active:     { bg: "#DCFCE7", color: "#166534" },
     archived:   { bg: "#F1F5F9", color: "#475569" },
     invalid:    { bg: "#FEF3C7", color: "#92400E" },
-    restricted: { bg: "#FCE7F3", color: "#9D174D" },
+    // Slate, not the Soft Burgundy Tint this used to be — Burgundy at any
+    // strength belongs to eNotary. Kept identical to ContactsPage's badge.
+    restricted: { bg: "#E2E8F0", color: "#334155" },
   };
   const c = configs[status] ?? { bg: "#F1F5F9", color: "#475569" };
   return (

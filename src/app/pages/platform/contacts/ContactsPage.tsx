@@ -33,7 +33,10 @@ function StatusBadge({ status }: { status: string }) {
     active:     { bg: "#DCFCE7", color: "#166534" },
     archived:   { bg: "#F1F5F9", color: "#475569" },
     invalid:    { bg: "#FEF3C7", color: "#92400E" },
-    restricted: { bg: "#FCE7F3", color: "#9D174D" },
+    // Slate, not the Soft Burgundy Tint this used to be. Burgundy of any
+    // strength is reserved for eNotary; spending it on an eSignature contact
+    // status is what erodes the one visual cue separating the two products.
+    restricted: { bg: "#E2E8F0", color: "#334155" },
   };
   const c = configs[status] ?? { bg: "#F1F5F9", color: "#475569" };
   return (

@@ -195,7 +195,7 @@ export function PrepareEntryPage() {
   };
 
   const handleResumeDraft = async (draftId: string) => {
-    await loadDraft(draftId as any);
+    await loadDraft(draftId);
     navigate("/app/prepare/upload");
   };
 

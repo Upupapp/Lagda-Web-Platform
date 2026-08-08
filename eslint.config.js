@@ -208,6 +208,13 @@ export default tseslint.config(
     extends: [playwright.configs["flat/recommended"]],
     languageOptions: {
       globals: globals.node,
+      // `playwright/flat/recommended` supplies rules but NOT a parser, and the
+      // application block above only matches `src/**`. Without this line these
+      // specs were handed to the default JavaScript parser, every one of them
+      // failed with a syntax error on its first type annotation, and every rule
+      // below silently never ran. Setting `parserOptions` alone does not do it —
+      // the parser itself has to be named.
+      parser: tseslint.parser,
       parserOptions: {
         project: ["./tsconfig.test.json"],
         tsconfigRootDir: import.meta.dirname,
@@ -219,7 +226,25 @@ export default tseslint.config(
       "playwright/missing-playwright-await": "error",
       "playwright/no-wait-for-timeout": "error",
       "playwright/no-force-option": "warn",
-      "playwright/expect-expect": "error",
+      // The suite asserts through shared helpers in `tests/support/app.ts`
+      // (`expectNoHorizontalScroll`, `expectSingleH1`, …). Without naming them
+      // the rule reads those tests as assertion-free and reports false failures.
+      // Named explicitly rather than by glob — the rule compares call names
+      // literally, so a pattern like `expect*` matches nothing and the tests
+      // that assert only through a helper get reported as assertion-free.
+      "playwright/expect-expect": [
+        "error",
+        {
+          assertFunctionNames: [
+            "expect",
+            "expectNoHorizontalScroll",
+            "expectSingleH1",
+          ],
+        },
+      ],
+      // `describe` is also a local helper inside several `page.evaluate`
+      // callbacks in this suite, which this rule mistakes for `test.describe`.
+      "playwright/valid-describe-callback": "off",
       "playwright/no-conditional-in-test": "off",
       "@typescript-eslint/no-explicit-any": "off",
       "@typescript-eslint/no-unsafe-assignment": "off",
