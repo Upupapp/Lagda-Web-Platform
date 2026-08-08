@@ -13,6 +13,7 @@ import {
 } from "../../../models/contacts";
 import { Z } from "../../../utils/z-index";
 import { TabStrip } from "../../../components/platform/TabStrip";
+import { FilterChips } from "../../../components/platform/FilterChips";
 
 const GF    = { fontFamily: "'Geist', sans-serif" };
 const GM    = { fontFamily: "'Geist Mono', monospace" };
@@ -152,6 +153,37 @@ function ContactsLibrary() {
   const setSort    = (s: ContactSortField)  => { const p = new URLSearchParams(searchParams); p.set("sort", s); setSearchParams(p); };
   const toggleDir  = ()                     => { const p = new URLSearchParams(searchParams); p.set("dir", state.query.direction === "asc" ? "desc" : "asc"); setSearchParams(p); };
   const setPage    = (pg: number)           => { const p = new URLSearchParams(searchParams); p.set("page", String(pg)); setSearchParams(p); };
+
+  // Only genuine narrowing appears as a chip. `view` is a tab and `sort`/`dir`
+  // reorder rather than hide, so neither is a filter the user needs warning about.
+  const activeFilterChips = [
+    ...(searchInput.trim() ? [{ key: "q", label: `Search: "${searchInput.trim()}"` }] : []),
+    ...(state.query.scopeFilter !== "all"
+      ? [{ key: "scope", label: `Scope: ${CONTACT_SCOPE_LABELS[state.query.scopeFilter as ContactScope] ?? state.query.scopeFilter}` }]
+      : []),
+    ...(state.query.statusFilter !== "all"
+      ? [{ key: "status", label: `Status: ${CONTACT_STATUS_LABELS[state.query.statusFilter as ContactStatus] ?? state.query.statusFilter}` }]
+      : []),
+    ...state.query.tagFilter.map(tagId => ({
+      key: `tag:${tagId}`,
+      label: `Tag: ${getContactTagById(tagId)?.label ?? tagId}`,
+    })),
+  ];
+
+  const removeFilter = (key: string) => {
+    if (key === "q")      { setSearchInput(""); return; }
+    if (key === "scope")  { setQuery({ scopeFilter: "all", page: 1 }); return; }
+    if (key === "status") { setQuery({ statusFilter: "all", page: 1 }); return; }
+    if (key.startsWith("tag:")) {
+      const tagId = key.slice(4) as ContactTagId;
+      setQuery({ tagFilter: state.query.tagFilter.filter(t => t !== tagId), page: 1 });
+    }
+  };
+
+  const clearAllFilters = () => {
+    setSearchInput("");
+    setQuery({ tagFilter: [], scopeFilter: "all", statusFilter: "all", page: 1 });
+  };
 
   const toggleSelect = (id: string) => setSelectedIds(prev => { const s = new Set(prev); s.has(id) ? s.delete(id) : s.add(id); return s; });
   const selectAll    = () => { if (!state.listResult) return; setSelectedIds(new Set(state.listResult.items.map(c => c.id))); };
@@ -332,6 +364,18 @@ function ContactsLibrary() {
           )}
         </div>
       )}
+
+      {/* Active filters, ALWAYS visible.
+          The panel above is collapsed by default but scope, status and tag all
+          arrive from the URL, so following a shared link used to produce a
+          filtered list with nothing saying it was filtered and no way to clear
+          it without first finding the Filters toggle. */}
+      <FilterChips
+        chips={activeFilterChips}
+        onRemove={removeFilter}
+        onClearAll={clearAllFilters}
+        label="Active contact filters"
+      />
 
       {/* Pending message */}
       {(state.pendingMessage || state.pendingError) && (

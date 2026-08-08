@@ -42,6 +42,7 @@ import { TAG_STYLE_COLORS } from "../../../models/document-organization";
 import { usePageMeta } from "../../../hooks/usePageMeta";
 import { preparationRoute } from "../../../services/preparation-platform-projection";
 import { Z } from "../../../utils/z-index";
+import { FilterChips } from "../../../components/platform/FilterChips";
 
 // ── Design tokens (inline styles only — no Tailwind in JSX) ──────────────────
 
@@ -481,17 +482,15 @@ function SortControl({
   );
 }
 
-// ── ActiveFilterChips ─────────────────────────────────────────────────────────
+// ── Active filter derivation ──────────────────────────────────────────────────
+// The chips themselves now live in components/platform/FilterChips so every
+// list surface renders them identically; this only decides what is active here.
 
-function ActiveFilterChips({
-  query, folders, tags, onRemove, onClearAll,
-}: {
-  query: DocumentListQuery;
-  folders: DocumentFolder[];
-  tags: DocumentTag[];
-  onRemove: (key: string) => void;
-  onClearAll: () => void;
-}) {
+function documentFilterChips(
+  query: DocumentListQuery,
+  folders: DocumentFolder[],
+  tags: DocumentTag[],
+): Array<{ key: string; label: string }> {
   const chips: Array<{ key: string; label: string }> = [];
   if (query.q) chips.push({ key: "q", label: `Search: "${query.q}"` });
   if (query.folderId) {
@@ -502,37 +501,7 @@ function ActiveFilterChips({
     const t = tags.find(t => t.id === query.tagId);
     chips.push({ key: "tagId", label: `Tag: ${t?.name ?? query.tagId}` });
   }
-  if (chips.length === 0) return null;
-
-  return (
-    <div role="region" aria-label="Active filters" style={{ display: "flex", gap: 6, flexWrap: "wrap", margin: "4px 0 8px" }}>
-      {chips.map(c => (
-        <span key={c.key} style={{
-          display: "inline-flex", alignItems: "center", gap: 4,
-          padding: "3px 8px 3px 10px", borderRadius: 12, fontSize: 12,
-          background: "#EFF6FF", color: "#1D4ED8", border: "1px solid #BFDBFE", ...GF,
-        }}>
-          {c.label}
-          <button
-            onClick={() => onRemove(c.key)}
-            aria-label={`Remove filter: ${c.label}`}
-            style={{ background: "none", border: "none", cursor: "pointer", padding: 0, color: "#60A5FA", lineHeight: 1 }}
-          >
-            <X size={11} aria-hidden />
-          </button>
-        </span>
-      ))}
-      <button
-        onClick={onClearAll}
-        style={{
-          fontSize: 12, ...GF, color: SLATE6, border: "none", background: "none",
-          cursor: "pointer", textDecoration: "underline", padding: "3px 4px",
-        }}
-      >
-        Clear all
-      </button>
-    </div>
-  );
+  return chips;
 }
 
 // ── OrgSidePanel ──────────────────────────────────────────────────────────────
@@ -1862,15 +1831,12 @@ export function DocumentsPage() {
         )}
 
         {/* Active filter chips */}
-        {(query.q || query.folderId || query.tagId) && (
-          <ActiveFilterChips
-            query={query}
-            folders={folders}
-            tags={tags}
-            onRemove={key => updateQuery({ [key]: key === "q" ? "" : null })}
-            onClearAll={() => updateQuery({ q: "", folderId: null, tagId: null })}
-          />
-        )}
+        <FilterChips
+          chips={documentFilterChips(query, folders, tags)}
+          onRemove={key => updateQuery({ [key]: key === "q" ? "" : null })}
+          onClearAll={() => updateQuery({ q: "", folderId: null, tagId: null })}
+          label="Active document filters"
+        />
 
         {/* Layout */}
         <div className="doc-layout">
