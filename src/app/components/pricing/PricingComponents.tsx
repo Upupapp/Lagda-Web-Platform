@@ -3,6 +3,7 @@ import { useState } from "react";
 import { LAGDA_PLANS, COMPARE_GROUPS, type LagdaPlan, type AvailValue } from "../../config/pricing.config";
 import { PRICING_SUBNAV } from "../../pages/public/pricing/content";
 import { Z } from "../../utils/z-index";
+import { TabStrip } from "../platform/TabStrip";
 
 const GF = { fontFamily: "'Geist', sans-serif" };
 const GM = { fontFamily: "'Geist Mono', monospace" };
@@ -16,11 +17,8 @@ export function PricingSubNav() {
       background: "rgba(7,17,31,0.95)", backdropFilter: "blur(12px)",
       borderBottom: "1px solid rgba(255,255,255,0.07)",
     }}>
-      <div style={{
-        maxWidth: 1200, margin: "0 auto", padding: "0 24px",
-        display: "flex", gap: 0, overflowX: "auto",
-        scrollbarWidth: "none", WebkitOverflowScrolling: "touch",
-      }}>
+      <TabStrip as="scroller" label="Pricing pages" activeKey={pathname}
+        style={{ maxWidth: 1200, margin: "0 auto", padding: "0 24px" }}>
         {PRICING_SUBNAV.map(({ label, path }) => {
           const active = pathname === path || (path !== "/pricing" && pathname.startsWith(path + "/"));
           return (
@@ -36,7 +34,7 @@ export function PricingSubNav() {
             </Link>
           );
         })}
-      </div>
+      </TabStrip>
       <style>{`.pricing-subnav a:hover span { color: #e2e8f0 !important; }`}</style>
     </nav>
   );

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { NavLink, useLocation } from "react-router";
 import { ENOTARY_SUBNAV, ENOTARY_DISCLAIMER } from "../../pages/public/enotary/content";
 import { Z } from "../../utils/z-index";
+import { TabStrip } from "../platform/TabStrip";
 
 const GF = { fontFamily: "'Geist', sans-serif" };
 const GM = { fontFamily: "'Geist Mono', monospace" };
@@ -22,10 +23,8 @@ export function EnotarySubNav() {
       }}
     >
       <div style={{ maxWidth: 1280, margin: "0 auto", padding: "0 24px" }}>
-        <div
-          style={{ display: "flex", gap: 0, overflowX: "auto", scrollbarWidth: "none" }}
-          className="enotary-subnav-scroll"
-        >
+        <TabStrip as="scroller" label="eNotary pages" activeKey={location.pathname}
+          className="enotary-subnav-scroll">
           {ENOTARY_SUBNAV.map(({ label, path }) => {
             const isActive = path === "/enotary"
               ? location.pathname === "/enotary"
@@ -46,7 +45,7 @@ export function EnotarySubNav() {
               </NavLink>
             );
           })}
-        </div>
+        </TabStrip>
       </div>
       <style>{`.enotary-subnav-scroll::-webkit-scrollbar{display:none}`}</style>
     </nav>

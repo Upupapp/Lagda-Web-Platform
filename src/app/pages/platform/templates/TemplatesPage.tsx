@@ -22,9 +22,10 @@ import {
 } from "../../../models/templates";
 import type {
   TemplateListItem, TemplateListQuery, TemplateView, TemplateSortField,
-  TemplateCategory, TemplateStatus,
+  TemplateCategory, TemplateStatus, TemplateScope,
 } from "../../../models/templates";
 import { usePageMeta } from "../../../hooks/usePageMeta";
+import { FilterChips } from "../../../components/platform/FilterChips";
 
 // ── Design tokens ─────────────────────────────────────────────────────────────
 const GF    = { fontFamily: "'Geist', sans-serif" };
@@ -51,6 +52,20 @@ const SORT_OPTIONS: { value: TemplateSortField; label: string }[] = [
 ];
 
 // ── Status badge ──────────────────────────────────────────────────────────────
+// Only genuine narrowing becomes a chip. `view` is a tab and `sort` reorders
+// rather than hides, so neither is something the user needs warning about.
+function templateFilterChips(query: {
+  status?: TemplateStatus;
+  scope?: TemplateScope;
+  category?: TemplateCategory;
+}): Array<{ key: string; label: string }> {
+  const chips: Array<{ key: string; label: string }> = [];
+  if (query.status)   chips.push({ key: "status",   label: `Status: ${TEMPLATE_STATUS_LABELS[query.status] ?? query.status}` });
+  if (query.scope)    chips.push({ key: "scope",    label: `Scope: ${TEMPLATE_SCOPE_LABELS[query.scope] ?? query.scope}` });
+  if (query.category) chips.push({ key: "category", label: `Category: ${TEMPLATE_CATEGORY_LABELS[query.category] ?? query.category}` });
+  return chips;
+}
+
 function StatusBadge({ status }: { status: TemplateStatus }) {
   const tone  = TEMPLATE_STATUS_TONE[status] ?? "neutral";
   const label = TEMPLATE_STATUS_LABELS[status] ?? status;
@@ -277,6 +292,12 @@ function TemplatesInner() {
   const total          = listResult?.total ?? 0;
   const hasFilters     = !!(state.query.status || state.query.scope || state.query.category);
 
+  const removeFilter = useCallback((key: string) => {
+    if (key === "status")   updateQuery({ status: undefined });
+    if (key === "scope")    updateQuery({ scope: undefined });
+    if (key === "category") updateQuery({ category: undefined });
+  }, [updateQuery]);
+
   return (
     <div style={{ background: "#F8FAFC", minHeight: "100%", ...GF }}>
       {/* Header */}
@@ -460,6 +481,16 @@ function TemplatesInner() {
 
       {/* Content */}
       <div style={{ padding: "20px 24px" }}>
+        {/* Active filters, ALWAYS visible. Status, scope and category live in
+            the panel above, which is collapsed by default — so a filtered list
+            could look like the whole library with nothing saying otherwise. */}
+        <FilterChips
+          chips={templateFilterChips(state.query)}
+          onRemove={removeFilter}
+          onClearAll={() => updateQuery({ status: undefined, scope: undefined, category: undefined })}
+          label="Active template filters"
+        />
+
         {/* Result count */}
         {!listLoading && listResult && (
           <p style={{ ...GF, fontSize: 12, color: "#94A3B8", marginBottom: 14 }}>

@@ -1,6 +1,7 @@
 import { Link, useLocation } from "react-router";
 import { FEATURES_GROUPS } from "../../pages/public/features/content";
 import { Z } from "../../utils/z-index";
+import { TabStrip } from "../platform/TabStrip";
 
 const GF = { fontFamily: "'Geist', sans-serif" };
 
@@ -26,15 +27,8 @@ export function FeaturesSubNav() {
         zIndex: Z.sticky,
       }}
     >
-      <div
-        style={{
-          maxWidth: 1200,
-          margin: "0 auto",
-          padding: "0 24px",
-          overflowX: "auto",
-          scrollbarWidth: "none",
-        }}
-      >
+      <TabStrip as="scroller" label="Feature pages" activeKey={pathname}
+        style={{ maxWidth: 1200, margin: "0 auto", padding: "0 24px" }}>
         <ul
           role="list"
           style={{
@@ -75,7 +69,7 @@ export function FeaturesSubNav() {
             );
           })}
         </ul>
-      </div>
+      </TabStrip>
       <style>{`nav[aria-label="Features sections"] ::-webkit-scrollbar { display: none; }`}</style>
     </nav>
   );

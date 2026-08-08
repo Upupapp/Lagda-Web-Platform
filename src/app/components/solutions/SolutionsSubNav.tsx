@@ -1,6 +1,7 @@
 import { useLocation, Link } from "react-router";
 import { SOLUTIONS_NAV } from "../../pages/public/solutions/content";
 import { Z } from "../../utils/z-index";
+import { TabStrip } from "../platform/TabStrip";
 
 const GF = { fontFamily: "'Geist', sans-serif" };
 const GM = { fontFamily: "'Geist Mono', monospace" };
@@ -25,12 +26,8 @@ export function SolutionsSubNav() {
         borderBottom: "1px solid rgba(255,255,255,0.07)",
       }}
     >
-      <div style={{
-        maxWidth: 1200, margin: "0 auto",
-        padding: "0 24px",
-        display: "flex", gap: 0, overflowX: "auto",
-        scrollbarWidth: "none", WebkitOverflowScrolling: "touch",
-      }}>
+      <TabStrip as="scroller" label="Solution pages" activeKey={pathname}
+        style={{ maxWidth: 1200, margin: "0 auto", padding: "0 24px" }}>
         {GROUPS.map((group) => {
           const items = SOLUTIONS_NAV.filter((n) => n.group === group);
           const isGroupActive = items.some((n) => pathname === n.path || pathname.startsWith(n.path + "/"));
@@ -83,7 +80,7 @@ export function SolutionsSubNav() {
             </div>
           );
         })}
-      </div>
+      </TabStrip>
       <style>{`
         nav[aria-label="Solutions navigation"] ::-webkit-scrollbar { display: none; }
         nav[aria-label="Solutions navigation"] a:hover span { color: white !important; }

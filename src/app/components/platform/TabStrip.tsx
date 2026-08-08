@@ -19,7 +19,7 @@
 // would be a much larger and riskier change than the problem warrants.
 
 import { useEffect, useRef } from "react";
-import type { ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
 
 export interface TabStripProps {
   /** Accessible name for the tab row, e.g. "Transaction sections". */
@@ -35,10 +35,17 @@ export interface TabStripProps {
    * a <nav>. `"tablist"` for strips of buttons that switch a view in place, in
    * which case the scroller itself takes the role — a tablist must be the direct
    * parent of its tabs, so it cannot be nested inside a <nav> wrapper.
+   * `"scroller"` renders the scrolling element ONLY, for callers that already
+   * own their landmark — the public sub-navs put sticky positioning and the
+   * page background on their <nav> and constrain width on the scroller inside
+   * it, so wrapping them in a second <nav> would both duplicate the landmark
+   * and break the layout.
    */
-  as?: "navigation" | "tablist";
+  as?: "navigation" | "tablist" | "scroller";
   children: ReactNode;
   className?: string;
+  /** Merged onto the scrolling element. For width and padding constraints. */
+  style?: CSSProperties;
 }
 
 // Both ARIA conventions in use here mark the active item, but differently:
@@ -51,6 +58,7 @@ export function TabStrip({
   as = "navigation",
   children,
   className,
+  style,
 }: TabStripProps) {
   const scrollerRef = useRef<HTMLDivElement>(null);
 
@@ -76,14 +84,21 @@ export function TabStrip({
     });
   }, [activeKey]);
 
+  const cls = `lagda-tabstrip${className ? ` ${className}` : ""}`;
+
   if (as === "tablist") {
     return (
-      <div
-        ref={scrollerRef}
-        role="tablist"
-        aria-label={label}
-        className={`lagda-tabstrip${className ? ` ${className}` : ""}`}
-      >
+      <div ref={scrollerRef} role="tablist" aria-label={label} className={cls} style={style}>
+        {children}
+      </div>
+    );
+  }
+
+  if (as === "scroller") {
+    // The caller owns the landmark, so `label` is not rendered here — it would
+    // be a second, conflicting accessible name for the same navigation.
+    return (
+      <div ref={scrollerRef} className={cls} style={style}>
         {children}
       </div>
     );
@@ -91,7 +106,7 @@ export function TabStrip({
 
   return (
     <nav aria-label={label} className={className}>
-      <div ref={scrollerRef} className="lagda-tabstrip">
+      <div ref={scrollerRef} className="lagda-tabstrip" style={style}>
         {children}
       </div>
     </nav>

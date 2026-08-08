@@ -2,6 +2,7 @@ import { Link, useLocation } from "react-router";
 import { useState } from "react";
 import { RESOURCES_SUBNAV, EDU_DISCLAIMER } from "../../pages/public/resources/content";
 import { Z } from "../../utils/z-index";
+import { TabStrip } from "../platform/TabStrip";
 
 const GF = { fontFamily: "'Geist', sans-serif" };
 const GM = { fontFamily: "'Geist Mono', monospace" };
@@ -15,11 +16,8 @@ export function ResourcesSubNav() {
       background: "rgba(7,17,31,0.95)", backdropFilter: "blur(12px)",
       borderBottom: "1px solid rgba(255,255,255,0.07)",
     }}>
-      <div style={{
-        maxWidth: 1200, margin: "0 auto", padding: "0 24px",
-        display: "flex", gap: 0, overflowX: "auto",
-        scrollbarWidth: "none", WebkitOverflowScrolling: "touch",
-      }}>
+      <TabStrip as="scroller" label="Resource pages" activeKey={pathname}
+        style={{ maxWidth: 1200, margin: "0 auto", padding: "0 24px" }}>
         {RESOURCES_SUBNAV.map(({ label, path }) => {
           const active = pathname === path || (path !== "/resources" && pathname.startsWith(path + "/"));
           return (
@@ -33,7 +31,7 @@ export function ResourcesSubNav() {
             </Link>
           );
         })}
-      </div>
+      </TabStrip>
     </nav>
   );
 }

@@ -10,6 +10,7 @@ import { ONBOARDING_STEPS } from "../models/auth";
 import { useOnboarding } from "../context/OnboardingContext";
 import { usePlatform } from "../context/PlatformContext";
 import { Z } from "../utils/z-index";
+import { TabStrip } from "../components/platform/TabStrip";
 
 const GF = { fontFamily: "'Geist', sans-serif" };
 const GM = { fontFamily: "'Geist Mono', monospace" };
@@ -19,6 +20,13 @@ interface OnboardingLayoutProps {
   /** Override to hide the progress bar (used on /onboarding/complete) */
   showProgress?: boolean;
 }
+
+// Removed from view but not from the accessibility tree. `display: none` and
+// `visibility: hidden` would hide it from screen readers too.
+const SR_ONLY: React.CSSProperties = {
+  position: "absolute", width: 1, height: 1, padding: 0, margin: -1,
+  overflow: "hidden", clip: "rect(0 0 0 0)", whiteSpace: "nowrap", border: 0,
+};
 
 function StepDot({ step, isCurrent, isDone }: { step: number; isCurrent: boolean; isDone: boolean; label: string }) {
   const bg = isDone ? "#0078D4" : isCurrent ? "#07111F" : "rgba(255,255,255,0.06)";
@@ -97,11 +105,15 @@ export function OnboardingLayout({ children, showProgress = true }: OnboardingLa
 
       {/* Progress indicator */}
       {showProgress && currentStepNumber > 0 && (
-        <nav aria-label="Onboarding progress" style={{
-          display: "flex", alignItems: "center", justifyContent: "center",
-          padding: "20px 24px 0", gap: 0,
-          overflowX: "auto",
-        }}>
+        <nav aria-label="Onboarding progress">
+          {/* The dots are aria-hidden and each label carries aria-current, so a
+              screen reader hears WHICH step is current but not how many remain.
+              The count is the part that tells someone whether to keep going. */}
+          <p style={SR_ONLY}>
+            Step {currentStepNumber} of {ONBOARDING_STEPS.length}
+          </p>
+          <TabStrip as="scroller" label="Onboarding progress" activeKey={pathname}
+            style={{ justifyContent: "center", padding: "20px 24px 0" }}>
           {ONBOARDING_STEPS.map((step, i) => {
             const isDone    = step.stepNumber < currentStepNumber;
             const isCurrent = step.stepNumber === currentStepNumber;
@@ -127,6 +139,7 @@ export function OnboardingLayout({ children, showProgress = true }: OnboardingLa
               </div>
             );
           })}
+          </TabStrip>
         </nav>
       )}
 

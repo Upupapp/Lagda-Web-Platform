@@ -29,6 +29,7 @@ import type {
 import { SEARCH_SCOPE_LABELS, VALID_SEARCH_SCOPES } from "../../models/search";
 import { globalSearchService } from "../../services/mock/global-search.service";
 import { Z } from "../../utils/z-index";
+import { TabStrip } from "./TabStrip";
 
 // ── Design tokens ─────────────────────────────────────────────────────────────
 
@@ -959,14 +960,10 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
 
           {/* Scope tabs — only shown when actively querying */}
           {isQuerying && (
-            <div
-              role="tablist"
-              aria-label="Search scope"
+            <TabStrip as="tablist" label="Search scope" activeKey={scope}
               style={{
-                display: "flex", gap: 0, overflowX: "auto",
                 padding: "0 12px",
                 borderBottom: "1px solid rgba(255,255,255,0.06)",
-                scrollbarWidth: "none",
               }}
             >
               {VALID_SEARCH_SCOPES.map((sc) => (
@@ -988,7 +985,7 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
                   {SEARCH_SCOPE_LABELS[sc]}
                 </button>
               ))}
-            </div>
+            </TabStrip>
           )}
 
           {/* Demo notice — always shown */}

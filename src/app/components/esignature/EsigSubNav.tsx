@@ -1,6 +1,7 @@
 import { Link, useLocation } from "react-router";
 import { ESIG_SUBNAV } from "../../pages/public/esignature/content";
 import { Z } from "../../utils/z-index";
+import { TabStrip } from "../platform/TabStrip";
 
 const GF = { fontFamily: "'Geist', sans-serif" };
 
@@ -25,15 +26,8 @@ export function EsigSubNav() {
         zIndex: Z.sticky,
       }}
     >
-      <div
-        style={{
-          maxWidth: 1200,
-          margin: "0 auto",
-          padding: "0 24px",
-          overflowX: "auto",
-          scrollbarWidth: "none",
-        }}
-      >
+      <TabStrip as="scroller" label="eSignature pages" activeKey={pathname}
+        style={{ maxWidth: 1200, margin: "0 auto", padding: "0 24px" }}>
         <ul
           role="list"
           style={{
@@ -78,7 +72,7 @@ export function EsigSubNav() {
             );
           })}
         </ul>
-      </div>
+      </TabStrip>
       {/* Hide scrollbar in webkit */}
       <style>{`.esig-subnav-list::-webkit-scrollbar { display: none; }`}</style>
     </nav>

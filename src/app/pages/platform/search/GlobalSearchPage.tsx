@@ -21,6 +21,7 @@ import type {
 } from "../../../models/search";
 import { SEARCH_SCOPE_LABELS, VALID_SEARCH_SCOPES } from "../../../models/search";
 import { globalSearchService } from "../../../services/mock/global-search.service";
+import { TabStrip } from "../../../components/platform/TabStrip";
 
 // ── Design tokens ─────────────────────────────────────────────────────────────
 
@@ -325,13 +326,8 @@ function ScopeTabBar({ current, onChange, counts }: {
   counts:   Partial<Record<GlobalSearchScope, number>>;
 }) {
   return (
-    <div
-      role="tablist"
-      aria-label="Search scope"
-      style={{
-        display: "flex", gap: 0, overflowX: "auto", borderBottom: "2px solid #E2E8F0",
-        scrollbarWidth: "none", marginBottom: 24,
-      }}
+    <TabStrip as="tablist" label="Search scope" activeKey={current}
+      style={{ borderBottom: "2px solid #E2E8F0", marginBottom: 24 }}
     >
       {VALID_SEARCH_SCOPES.map((sc) => {
         const IconComp = sc === "all" ? Search : (SCOPE_ICONS[sc] ?? Search);
@@ -372,7 +368,7 @@ function ScopeTabBar({ current, onChange, counts }: {
           </button>
         );
       })}
-    </div>
+    </TabStrip>
   );
 }
 
