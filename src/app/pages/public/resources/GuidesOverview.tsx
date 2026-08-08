@@ -16,7 +16,7 @@ export function GuidesOverview() {
           <h1 style={{ color: "white", ...GF, fontSize: "clamp(26px, 4.5vw, 44px)", fontWeight: 900, lineHeight: 1.1, letterSpacing: "-0.02em", margin: "0 0 16px" }}>
             LAGDA product guides.
           </h1>
-          <p style={{ color: "#64748b", ...GF, fontSize: 16, lineHeight: 1.65 }}>
+          <p style={{ color: "#94A3B8", ...GF, fontSize: 16, lineHeight: 1.65 }}>
             Practical guidance on using LAGDA eSignature — from preparing documents to verifying completed transactions and managing your workspace.
           </p>
         </div>
@@ -48,7 +48,7 @@ export function GuidesOverview() {
                     onMouseLeave={(e) => (e.currentTarget as HTMLAnchorElement).style.borderColor = "rgba(255,255,255,0.06)"}
                   >
                     <span style={{ color: "#94a3b8", ...GF, fontSize: 13 }}>{g.title}</span>
-                    <span style={{ color: "#475569", fontSize: 12 }}>→</span>
+                    <span style={{ color: "#8A9BAE", fontSize: 12 }}>→</span>
                   </Link>
                 ))}
               </div>
@@ -79,7 +79,7 @@ export function GuidesOverview() {
               background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)",
             }}>
               <span style={{ color: "#94a3b8", ...GF, fontSize: 13 }}>{label}</span>
-              <span style={{ color: "#475569", fontSize: 12 }}>→</span>
+              <span style={{ color: "#8A9BAE", fontSize: 12 }}>→</span>
             </Link>
           ))}
         </div>

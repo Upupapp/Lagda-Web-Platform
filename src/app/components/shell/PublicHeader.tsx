@@ -55,7 +55,7 @@ function MegaPanel({
             <p style={{ color: "white", ...GF, fontSize: 15, fontWeight: 700, margin: 0, marginBottom: 4 }}>
               {section.menuTitle}
             </p>
-            <p style={{ color: "#64748b", ...GF, fontSize: 13, margin: 0 }}>
+            <p style={{ color: "#94A3B8", ...GF, fontSize: 13, margin: 0 }}>
               {section.menuDescription}
             </p>
           </div>
@@ -129,7 +129,7 @@ function MegaPanel({
                   </span>
                 )}
               </div>
-              <p style={{ color: "#64748b", ...GF, fontSize: 12, margin: 0, marginTop: 2 }}>
+              <p style={{ color: "#94A3B8", ...GF, fontSize: 12, margin: 0, marginTop: 2 }}>
                 {item.description}
               </p>
             </div>
@@ -196,7 +196,7 @@ function MobileDrawer({ onClose }: { onClose: () => void }) {
             onClick={() => { haptic("selection"); onClose(); }}
             aria-label="Close menu"
             style={{
-              color: "#64748b", background: "none", border: "none", cursor: "pointer",
+              color: "#94A3B8", background: "none", border: "none", cursor: "pointer",
               padding: 8, fontSize: 20, lineHeight: 1,
               minWidth: 44, minHeight: 44,
               display: "inline-flex", alignItems: "center", justifyContent: "center",
@@ -330,10 +330,10 @@ function MobileDrawer({ onClose }: { onClose: () => void }) {
           padding: "16px 24px", borderTop: "1px solid rgba(255,255,255,0.07)",
           display: "flex", flexDirection: "column", gap: 10, marginTop: "auto",
         }}>
-          <Link to="/verify" onClick={onClose} style={{ color: "#64748b", ...GF, fontSize: 13, textDecoration: "none" }}>
+          <Link to="/verify" onClick={onClose} style={{ color: "#94A3B8", ...GF, fontSize: 13, textDecoration: "none" }}>
             Verify Document
           </Link>
-          <Link to="/contact" onClick={onClose} style={{ color: "#64748b", ...GF, fontSize: 13, textDecoration: "none" }}>
+          <Link to="/contact" onClick={onClose} style={{ color: "#94A3B8", ...GF, fontSize: 13, textDecoration: "none" }}>
             Contact Sales
           </Link>
           <div style={{
@@ -456,6 +456,14 @@ export function PublicHeader() {
                   const isEnotary = nav.id === "enotary";
                   const isOpen = openDropdown === nav.id;
                   const accentColor = isEnotary ? "#b01262" : "#0078d4";
+                  // Both accents fail as TEXT on the navy header: #0078D4 is
+                  // 4.18:1 and #B01262 is 2.80:1, against 4.5:1. They are correct
+                  // as fills behind white text, which is why the fill above keeps
+                  // them. The active nav item is the one thing in the header that
+                  // has to be readable, so its label uses the glow variants —
+                  // Azure Glow #38BDF8 at 8.84:1, and a lightened burgundy at
+                  // 5.11:1 that stays in the eNotary colour family.
+                  const accentTextColor = isEnotary ? "#D4589A" : "#38BDF8";
 
                   return (
                     <li
@@ -481,7 +489,7 @@ export function PublicHeader() {
                           background: "none", border: "none", cursor: "pointer",
                           padding: "8px 10px 8px 12px",
                           display: "flex", alignItems: "center", gap: 4,
-                          color: isActive ? accentColor : "#94a3b8",
+                          color: isActive ? accentTextColor : "#94a3b8",
                           fontSize: 13, fontWeight: isActive ? 600 : 500, ...GF,
                           transition: "color 0.18s ease",
                           borderBottom: isActive ? `2px solid ${accentColor}` : "2px solid transparent",

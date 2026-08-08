@@ -28,7 +28,7 @@ function Field({ id, label, children, error, required, optional }: { id: string;
       <label htmlFor={id} style={{ display: "block", color: "#94a3b8", ...GF, fontSize: 12, fontWeight: 600, marginBottom: 5 }}>
         {label}
         {required && <span aria-hidden style={{ color: "#ef4444" }}> *</span>}
-        {optional && <span style={{ color: "#475569" }}> (optional)</span>}
+        {optional && <span style={{ color: "#8A9BAE" }}> (optional)</span>}
       </label>
       {children}
       {error && <p id={`${id}-err`} role="alert" style={{ color: "#ef4444", ...GF, fontSize: 12, margin: "4px 0 0" }}>{error}</p>}
@@ -117,7 +117,7 @@ export function BookADemo() {
               <Link to="/esignature/team-and-enterprise" style={{ background: AZURE, color: "white", ...GF, fontSize: 14, fontWeight: 700, padding: "12px 22px", borderRadius: 8, textDecoration: "none" }}>Explore Team and Enterprise</Link>
               <Link to="/security/trust-center" style={{ background: "rgba(255,255,255,0.06)", color: "white", ...GF, fontSize: 14, fontWeight: 600, padding: "12px 22px", borderRadius: 8, textDecoration: "none", border: "1px solid rgba(255,255,255,0.1)" }}>Visit Trust Center</Link>
             </div>
-            <Link to="/" style={{ display: "block", color: "#64748b", ...GF, fontSize: 13, textDecoration: "none", marginTop: 20 }}>← Return to Home</Link>
+            <Link to="/" style={{ display: "block", color: "#94A3B8", ...GF, fontSize: 13, textDecoration: "none", marginTop: 20 }}>← Return to Home</Link>
           </div>
         </div>
       </div>
@@ -128,7 +128,7 @@ export function BookADemo() {
     <div style={{ background: "#07111F", minHeight: "100vh", color: "white", ...GF }}>
       <section style={{ padding: "64px 24px 48px", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
         <div style={{ maxWidth: 680, margin: "0 auto" }}>
-          <p style={{ color: "#0078D4", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.12em", marginBottom: 14 }}>BOOK A DEMO</p>
+          <p style={{ color: "#38BDF8", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.12em", marginBottom: 14 }}>BOOK A DEMO</p>
           <h1 style={{ color: "white", ...GF, fontSize: "clamp(24px, 4vw, 40px)", fontWeight: 900, lineHeight: 1.1, letterSpacing: "-0.02em", margin: "0 0 14px" }}>
             See LAGDA in action
           </h1>
@@ -139,7 +139,7 @@ export function BookADemo() {
             <div style={{ marginTop: 16, display: "inline-flex", alignItems: "center", gap: 8, background: "rgba(0,120,212,0.1)", border: "1px solid rgba(0,120,212,0.2)", borderRadius: 6, padding: "5px 12px" }}>
               <span style={{ color: "#38bdf8", ...GM, fontSize: 10, fontWeight: 700 }}>CONTEXT</span>
               <span style={{ color: "white", ...GF, fontSize: 12 }}>{SOLUTION_DISPLAY_NAMES[parsedSolution]}</span>
-              <Link to="/book-a-demo" style={{ color: "#64748b", ...GF, fontSize: 11, textDecoration: "none" }}>Clear</Link>
+              <Link to="/book-a-demo" style={{ color: "#94A3B8", ...GF, fontSize: 11, textDecoration: "none" }}>Clear</Link>
             </div>
           )}
         </div>
@@ -149,7 +149,7 @@ export function BookADemo() {
 
         {/* Sensitive data warning */}
         <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 8, padding: "11px 14px", marginBottom: 24 }}>
-          <p style={{ color: "#475569", ...GF, fontSize: 12, lineHeight: 1.55, margin: 0 }}>
+          <p style={{ color: "#8A9BAE", ...GF, fontSize: 12, lineHeight: 1.55, margin: 0 }}>
             Do not include passwords, government ID numbers, confidential document content, payment details, case-sensitive legal information, or other highly sensitive personal data in the message field.
           </p>
         </div>
@@ -243,20 +243,20 @@ export function BookADemo() {
 
           <div style={{ padding: "12px 14px", background: "rgba(201,150,12,0.06)", border: "1px solid rgba(201,150,12,0.15)", borderRadius: 8 }}>
             <p style={{ color: "#C9960C", ...GM, fontSize: 9, fontWeight: 700, marginBottom: 4 }}>FRONTEND DEMONSTRATION</p>
-            <p style={{ color: "#475569", ...GF, fontSize: 11, margin: 0, lineHeight: 1.5 }}>
+            <p style={{ color: "#8A9BAE", ...GF, fontSize: 11, margin: 0, lineHeight: 1.5 }}>
               No live scheduling or sales follow-up occurs during this demonstration phase. This will be connected during backend integration.
             </p>
           </div>
         </form>
 
         <div style={{ marginTop: 32, paddingTop: 24, borderTop: "1px solid rgba(255,255,255,0.05)" }}>
-          <p style={{ color: "#475569", ...GF, fontSize: 13, lineHeight: 1.65, margin: "0 0 10px" }}>
+          <p style={{ color: "#8A9BAE", ...GF, fontSize: 13, lineHeight: 1.65, margin: "0 0 10px" }}>
             Looking for something else?
           </p>
           <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
             <Link to="/contact?category=sales" style={{ color: "#38bdf8", ...GF, fontSize: 13, textDecoration: "none" }}>Contact Sales →</Link>
-            <Link to="/pricing" style={{ color: "#64748b", ...GF, fontSize: 13, textDecoration: "none" }}>View Plans</Link>
-            <Link to="/help" style={{ color: "#64748b", ...GF, fontSize: 13, textDecoration: "none" }}>Help Center</Link>
+            <Link to="/pricing" style={{ color: "#94A3B8", ...GF, fontSize: 13, textDecoration: "none" }}>View Plans</Link>
+            <Link to="/help" style={{ color: "#94A3B8", ...GF, fontSize: 13, textDecoration: "none" }}>Help Center</Link>
           </div>
         </div>
       </div>

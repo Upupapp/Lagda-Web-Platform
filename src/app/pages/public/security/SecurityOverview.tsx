@@ -25,7 +25,7 @@ export function SecurityOverview() {
               <div style={{ width: 32, height: 32, borderRadius: 8, background: "rgba(0,120,212,0.12)", border: "1px solid rgba(0,120,212,0.2)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, flexShrink: 0 }}>{l.icon}</div>
               <div>
                 <p style={{ color: "white", ...GF, fontSize: 14, fontWeight: 700, margin: 0, marginBottom: 3 }}>{l.layer}</p>
-                <p style={{ color: "#64748b", ...GF, fontSize: 13, lineHeight: 1.55, margin: 0 }}>{l.desc}</p>
+                <p style={{ color: "#94A3B8", ...GF, fontSize: 13, lineHeight: 1.55, margin: 0 }}>{l.desc}</p>
               </div>
             </div>
           ))}
@@ -48,9 +48,9 @@ export function SecurityOverview() {
           ].map((item) => (
             <a key={item.path} href={item.path} style={{ textDecoration: "none" }}>
               <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 12, padding: "14px 14px", height: "100%", transition: "border-color 0.15s ease" }}>
-                <p style={{ color: "#0078D4", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.05em", margin: 0, marginBottom: 4 }}>→ {item.path.split("/security/")[1]?.toUpperCase() ?? "SECURITY"}</p>
+                <p style={{ color: "#38BDF8", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.05em", margin: 0, marginBottom: 4 }}>→ {item.path.split("/security/")[1]?.toUpperCase() ?? "SECURITY"}</p>
                 <p style={{ color: "white", ...GF, fontSize: 13, fontWeight: 700, margin: 0, marginBottom: 4 }}>{item.label}</p>
-                <p style={{ color: "#64748b", ...GF, fontSize: 12, lineHeight: 1.5, margin: 0 }}>{item.desc}</p>
+                <p style={{ color: "#94A3B8", ...GF, fontSize: 12, lineHeight: 1.5, margin: 0 }}>{item.desc}</p>
               </div>
             </a>
           ))}

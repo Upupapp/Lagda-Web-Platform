@@ -46,7 +46,7 @@ export function FutureCapabilities() {
                 <span style={{ color: BURGUNDY, ...GM, fontSize: 11, fontWeight: 700, flexShrink: 0, minWidth: 22, marginTop: 1 }}>{String(i + 1).padStart(2, "0")}</span>
                 <div>
                   <p style={{ color: "white", ...GF, fontSize: 14, fontWeight: 700, margin: "0 0 4px" }}>{label}</p>
-                  <p style={{ color: "#64748b", ...GF, fontSize: 13, lineHeight: 1.65, margin: 0 }}>{body}</p>
+                  <p style={{ color: "#94A3B8", ...GF, fontSize: 13, lineHeight: 1.65, margin: 0 }}>{body}</p>
                 </div>
               </div>
             ))}
@@ -68,7 +68,7 @@ export function FutureCapabilities() {
               <div key={id}>
                 <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12, flexWrap: "wrap" }}>
                   <h3 style={{ color: "white", ...GF, fontSize: 16, fontWeight: 800, margin: 0 }}>{label}</h3>
-                  <span style={{ color: "#475569", ...GM, fontSize: 9, fontWeight: 700, padding: "2px 7px", borderRadius: 3, background: "rgba(71,85,105,0.12)", border: "1px solid rgba(71,85,105,0.2)", whiteSpace: "nowrap" }}>
+                  <span style={{ color: "#8A9BAE", ...GM, fontSize: 9, fontWeight: 700, padding: "2px 7px", borderRadius: 3, background: "rgba(71,85,105,0.12)", border: "1px solid rgba(71,85,105,0.2)", whiteSpace: "nowrap" }}>
                     {status}
                   </span>
                 </div>
@@ -131,7 +131,7 @@ export function FutureCapabilities() {
       <EnotarySection id="cta" bordered>
         <div style={{ maxWidth: 640, margin: "0 auto", textAlign: "center" }}>
           <h2 style={{ color: "white", ...GF, fontSize: "clamp(18px, 2.5vw, 26px)", fontWeight: 900, margin: "0 0 12px" }}>Stay informed</h2>
-          <p style={{ color: "#64748b", ...GF, fontSize: 14, lineHeight: 1.7, margin: "0 0 22px" }}>
+          <p style={{ color: "#94A3B8", ...GF, fontSize: 14, lineHeight: 1.7, margin: "0 0 22px" }}>
             Join the waitlist to receive updates as we progress toward accreditation. Joining the waitlist does not guarantee access.
           </p>
           <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>

@@ -38,7 +38,7 @@ function AuthMethodSelector() {
             >
               <span style={{ color: selected === i ? "white" : "#94a3b8", ...GF, fontSize: 13, fontWeight: selected === i ? 700 : 500 }}>{m.method}</span>
               <div style={{ display: "flex", gap: 6, alignItems: "center", flexShrink: 0 }}>
-                <span style={{ color: "#334155", ...GM, fontSize: 9 }}>{m.channel}</span>
+                <span style={{ color: "#7C8DA4", ...GM, fontSize: 9 }}>{m.channel}</span>
                 <div style={{ width: 8, height: 8, borderRadius: "50%", background: cfg.color }} />
               </div>
             </button>
@@ -75,7 +75,7 @@ export function SignerAuth() {
               {Object.entries(TIER_CONFIG).map(([tier, cfg]) => (
                 <div key={tier} style={{ display: "flex", alignItems: "center", gap: 5 }}>
                   <div style={{ width: 8, height: 8, borderRadius: "50%", background: cfg.color }} />
-                  <span style={{ color: "#64748b", ...GF, fontSize: 12 }}>{tier}</span>
+                  <span style={{ color: "#94A3B8", ...GF, fontSize: 12 }}>{tier}</span>
                 </div>
               ))}
             </div>
@@ -110,12 +110,12 @@ export function SignerAuth() {
           ].map((r) => (
             <div key={r.risk} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 12, padding: "14px 14px" }}>
               <p style={{ color: "white", ...GF, fontSize: 13, fontWeight: 700, margin: 0, marginBottom: 4 }}>{r.risk}</p>
-              <p style={{ color: "#64748b", ...GF, fontSize: 12, lineHeight: 1.5, margin: 0, marginBottom: 8 }}>{r.example}</p>
+              <p style={{ color: "#94A3B8", ...GF, fontSize: 12, lineHeight: 1.5, margin: 0, marginBottom: 8 }}>{r.example}</p>
               <p style={{ color: "#38bdf8", ...GM, fontSize: 11, margin: 0, fontWeight: 600 }}>{r.method}</p>
             </div>
           ))}
         </div>
-        <p style={{ color: "#475569", ...GF, fontSize: 13, lineHeight: 1.6, marginTop: 16 }}>
+        <p style={{ color: "#8A9BAE", ...GF, fontSize: 13, lineHeight: 1.6, marginTop: 16 }}>
           Risk classification is the responsibility of the sending organization and its legal counsel. LAGDA does not determine legal sufficiency or risk level for any specific transaction.
         </p>
         <style>{`.risk-grid { grid-template-columns: repeat(3, 1fr); } @media (max-width: 720px) { .risk-grid { grid-template-columns: 1fr; } }`}</style>

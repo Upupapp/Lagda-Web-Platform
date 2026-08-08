@@ -27,7 +27,7 @@ export function SecurityAuditTrail() {
           ].map((item) => (
             <div key={item.title} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 10, padding: "12px 14px" }}>
               <p style={{ color: "white", ...GF, fontSize: 13, fontWeight: 700, margin: 0, marginBottom: 4 }}>{item.title}</p>
-              <p style={{ color: "#64748b", ...GF, fontSize: 12, lineHeight: 1.5, margin: 0 }}>{item.desc}</p>
+              <p style={{ color: "#94A3B8", ...GF, fontSize: 12, lineHeight: 1.5, margin: 0 }}>{item.desc}</p>
             </div>
           ))}
         </div>
@@ -58,7 +58,7 @@ export function SecurityAuditTrail() {
           ].map((tier) => (
             <div key={tier.level} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 12, padding: "14px 14px" }}>
               <p style={{ color: tier.color, ...GM, fontSize: 10, fontWeight: 700, margin: 0, marginBottom: 4 }}>{tier.level.toUpperCase()}</p>
-              <p style={{ color: "#64748b", ...GF, fontSize: 12, lineHeight: 1.45, marginBottom: 10 }}>{tier.desc}</p>
+              <p style={{ color: "#94A3B8", ...GF, fontSize: 12, lineHeight: 1.45, marginBottom: 10 }}>{tier.desc}</p>
               {tier.items.map((item) => (
                 <div key={item} style={{ display: "flex", gap: 7, marginBottom: 5 }}>
                   <span style={{ color: tier.color, flexShrink: 0, fontSize: 11 }}>·</span>
@@ -82,7 +82,7 @@ export function SecurityAuditTrail() {
           ].map((r) => (
             <div key={r.title} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 10, padding: "12px 14px" }}>
               <p style={{ color: "white", ...GF, fontSize: 13, fontWeight: 700, margin: 0, marginBottom: 4 }}>{r.title}</p>
-              <p style={{ color: "#64748b", ...GF, fontSize: 12, lineHeight: 1.5, margin: 0 }}>{r.desc}</p>
+              <p style={{ color: "#94A3B8", ...GF, fontSize: 12, lineHeight: 1.5, margin: 0 }}>{r.desc}</p>
             </div>
           ))}
         </div>

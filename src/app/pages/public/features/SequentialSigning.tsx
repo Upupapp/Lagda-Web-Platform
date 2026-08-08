@@ -41,12 +41,12 @@ function SequentialDiagram() {
               transition: "all 0.2s ease",
             }}
           >
-            <span style={{ color: i < activeStep ? "#22C55E" : i === activeStep ? "#38bdf8" : "#334155", ...GM, fontSize: 11, fontWeight: 700, flexShrink: 0, minWidth: 48 }}>
+            <span style={{ color: i < activeStep ? "#22C55E" : i === activeStep ? "#38bdf8" : "#7C8DA4", ...GM, fontSize: 11, fontWeight: 700, flexShrink: 0, minWidth: 48 }}>
               {i < activeStep ? "✓ Done" : i === activeStep ? "Active" : "Pending"}
             </span>
             <div style={{ flex: 1 }}>
               <p style={{ color: "white", ...GF, fontSize: 12, fontWeight: 600, margin: 0 }}>{s.label}: {s.participant}</p>
-              <p style={{ color: "#475569", ...GM, fontSize: 10, margin: "2px 0 0" }}>{s.role}</p>
+              <p style={{ color: "#8A9BAE", ...GM, fontSize: 10, margin: "2px 0 0" }}>{s.role}</p>
             </div>
             <div style={{ width: 28, height: 28, borderRadius: "50%", background: "rgba(0,120,212,0.2)", display: "flex", alignItems: "center", justifyContent: "center", ...GM, fontSize: 10, fontWeight: 700, color: "#38bdf8", flexShrink: 0 }}>{s.avatar}</div>
           </button>
@@ -57,7 +57,7 @@ function SequentialDiagram() {
           )}
         </div>
       ))}
-      <p style={{ color: "#334155", ...GM, fontSize: 10, marginTop: 12, textAlign: "center" }}>Click a step to see details</p>
+      <p style={{ color: "#7C8DA4", ...GM, fontSize: 10, marginTop: 12, textAlign: "center" }}>Click a step to see details</p>
     </div>
   );
 }
@@ -85,7 +85,7 @@ export function SequentialSigning() {
                 "Declined or expired transactions prevent the next step from starting",
               ].map((item) => (
                 <div key={item} style={{ display: "flex", gap: 8 }}>
-                  <span style={{ color: "#0078D4", fontWeight: 700, flexShrink: 0 }}>✓</span>
+                  <span style={{ color: "#38BDF8", fontWeight: 700, flexShrink: 0 }}>✓</span>
                   <span style={{ color: "#94a3b8", ...GF, fontSize: 14, lineHeight: 1.5 }}>{item}</span>
                 </div>
               ))}
@@ -109,7 +109,7 @@ export function SequentialSigning() {
           ].map((u) => (
             <div key={u.title} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 12, padding: "14px 16px" }}>
               <p style={{ color: "white", ...GF, fontSize: 13, fontWeight: 700, margin: 0, marginBottom: 4 }}>{u.title}</p>
-              <p style={{ color: "#64748b", ...GF, fontSize: 13, lineHeight: 1.5, margin: 0 }}>{u.desc}</p>
+              <p style={{ color: "#94A3B8", ...GF, fontSize: 13, lineHeight: 1.5, margin: 0 }}>{u.desc}</p>
             </div>
           ))}
         </div>

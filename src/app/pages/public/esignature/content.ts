@@ -52,16 +52,16 @@ export const AUTH_METHODS = [
 ];
 
 export const TRANSACTION_STATUSES = [
-  { status: "Draft",               color: "#64748b", desc: "Transaction prepared but not yet sent." },
-  { status: "Sent",                color: "#0078D4", desc: "Invitations dispatched to all participants." },
-  { status: "Delivered",           color: "#0078D4", desc: "Invitation confirmed as received." },
+  { status: "Draft",               color: "#94A3B8", desc: "Transaction prepared but not yet sent." },
+  { status: "Sent",                color: "#38BDF8", desc: "Invitations dispatched to all participants." },
+  { status: "Delivered",           color: "#38BDF8", desc: "Invitation confirmed as received." },
   { status: "Viewed",              color: "#38bdf8", desc: "Participant has opened the document." },
   { status: "Awaiting Signature",  color: "#F59E0B", desc: "Participant's action is pending." },
   { status: "Awaiting Approval",   color: "#F59E0B", desc: "An approver's decision is outstanding." },
   { status: "Partially Completed", color: "#F59E0B", desc: "Some participants have completed; others are pending." },
   { status: "Completed",           color: "#22C55E", desc: "All participants have completed their actions." },
   { status: "Declined",            color: "#DC2626", desc: "A participant chose not to sign or approve." },
-  { status: "Cancelled",           color: "#475569", desc: "The sender cancelled the transaction." },
+  { status: "Cancelled",           color: "#8A9BAE", desc: "The sender cancelled the transaction." },
   { status: "Expired",             color: "#94a3b8", desc: "The signing deadline passed before completion." },
 ];
 

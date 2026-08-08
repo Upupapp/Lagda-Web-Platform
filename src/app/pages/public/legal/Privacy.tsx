@@ -29,12 +29,12 @@ export function Privacy() {
         <div style={{ maxWidth: 780, margin: "0 auto" }}>
           <p style={{ color: "#38bdf8", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 12 }}>LEGAL</p>
           <h1 style={{ color: "white", ...GF, fontSize: "clamp(24px, 4vw, 40px)", fontWeight: 900, lineHeight: 1.1, letterSpacing: "-0.02em", margin: "0 0 14px" }}>Privacy Policy</h1>
-          <p style={{ color: "#64748b", ...GF, fontSize: 15, margin: "0 0 10px" }}>UpUp Technologies — LAGDA Platform</p>
+          <p style={{ color: "#94A3B8", ...GF, fontSize: 15, margin: "0 0 10px" }}>UpUp Technologies — LAGDA Platform</p>
           <div style={{ display: "inline-flex", gap: 12, alignItems: "center" }}>
             <span style={{ color: "#C9960C", ...GM, fontSize: 10, fontWeight: 700, padding: "3px 8px", borderRadius: 4, background: "rgba(201,150,12,0.1)", border: "1px solid rgba(201,150,12,0.2)" }}>DRAFT — PENDING LEGAL REVIEW</span>
-            <span style={{ color: "#334155", ...GM, fontSize: 10 }}>Structure reviewed: {LAST_REVIEWED}</span>
+            <span style={{ color: "#7C8DA4", ...GM, fontSize: 10 }}>Structure reviewed: {LAST_REVIEWED}</span>
           </div>
-          <p style={{ color: "#475569", ...GF, fontSize: 13, lineHeight: 1.65, marginTop: 14 }}>
+          <p style={{ color: "#8A9BAE", ...GF, fontSize: 13, lineHeight: 1.65, marginTop: 14 }}>
             This privacy policy structure has been prepared as part of the frontend development phase. It requires formal legal review and approval before publication. Content marked as pending requires legal confirmation.
           </p>
         </div>
@@ -86,12 +86,12 @@ export function Privacy() {
 
         <LegalSection id="sharing" title="Sharing and service providers">
           <P>LAGDA does not sell personal information. We may share information with service providers who assist in operating the platform — including hosting, infrastructure, email delivery, and security services — subject to appropriate confidentiality and data-handling requirements.</P>
-          <P style={{ color: "#475569" }}>[Specific service provider list and data-processing agreements — pending legal review before publication]</P>
+          <P style={{ color: "#8A9BAE" }}>[Specific service provider list and data-processing agreements — pending legal review before publication]</P>
         </LegalSection>
 
         <LegalSection id="retention" title="Retention">
           <P>We retain account information while an account is active. Transaction records and audit trails are retained to support verification and dispute resolution, subject to applicable legal obligations and plan terms.</P>
-          <P style={{ color: "#475569" }}>[Specific retention periods — pending confirmation and legal review before publication]</P>
+          <P style={{ color: "#8A9BAE" }}>[Specific retention periods — pending confirmation and legal review before publication]</P>
         </LegalSection>
 
         <LegalSection id="security" title="Security">
@@ -100,7 +100,7 @@ export function Privacy() {
 
         <LegalSection id="rights" title="Rights and requests">
           <P>Depending on applicable law, you may have rights to access, correct, delete, or restrict the processing of personal information. To make a request, contact us using the contact information below.</P>
-          <P style={{ color: "#475569" }}>[Rights-handling procedure and jurisdictional detail — pending legal review before publication]</P>
+          <P style={{ color: "#8A9BAE" }}>[Rights-handling procedure and jurisdictional detail — pending legal review before publication]</P>
         </LegalSection>
 
         <LegalSection id="changes" title="Changes to this policy">
@@ -109,12 +109,12 @@ export function Privacy() {
 
         <LegalSection id="contact" title="Contact">
           <P>For privacy questions, requests, or concerns, contact us through the <Link to="/contact" style={{ color: "#38bdf8", textDecoration: "none" }}>Contact page</Link> and select "Security or privacy" as the category.</P>
-          <P style={{ color: "#475569" }}>[Registered address, data protection officer, regulatory registration — pending legal review and corporate confirmation before publication]</P>
+          <P style={{ color: "#8A9BAE" }}>[Registered address, data protection officer, regulatory registration — pending legal review and corporate confirmation before publication]</P>
         </LegalSection>
 
         <div style={{ marginTop: 40, padding: "16px 20px", background: "rgba(201,150,12,0.06)", border: "1px solid rgba(201,150,12,0.15)", borderRadius: 10 }}>
           <p style={{ color: "#C9960C", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", marginBottom: 6 }}>LEGAL REVIEW REQUIRED BEFORE PUBLICATION</p>
-          <p style={{ color: "#475569", ...GF, fontSize: 13, lineHeight: 1.65, margin: 0 }}>
+          <p style={{ color: "#8A9BAE", ...GF, fontSize: 13, lineHeight: 1.65, margin: 0 }}>
             This document is a structural draft prepared during the frontend development phase. Sections marked "pending legal review" require review and approval by qualified legal counsel before this policy can be published as the official LAGDA Privacy Policy.
           </p>
         </div>

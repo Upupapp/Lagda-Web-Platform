@@ -41,7 +41,7 @@ export function SolutionsSubNav() {
                 flexShrink: 0,
               }}>
                 <span style={{
-                  color: isGroupActive ? GROUP_COLORS[group] : "#334155",
+                  color: isGroupActive ? GROUP_COLORS[group] : "#7C8DA4",
                   ...GM, fontSize: 9, fontWeight: 700, letterSpacing: "0.1em",
                   textTransform: "uppercase", whiteSpace: "nowrap",
                   transition: "color 0.15s ease",
@@ -68,7 +68,7 @@ export function SolutionsSubNav() {
                     <span style={{
                       ...GF, fontSize: 13,
                       fontWeight: active ? 700 : 500,
-                      color: active ? "white" : "#64748b",
+                      color: active ? "white" : "#94A3B8",
                       whiteSpace: "nowrap",
                       transition: "color 0.15s ease",
                     }}>

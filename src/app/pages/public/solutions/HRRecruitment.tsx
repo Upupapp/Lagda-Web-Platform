@@ -14,8 +14,8 @@ function HROnboardingMockup() {
   const docs = [
     { label: "Employment offer letter",      status: "SIGNED",  color: "#22C55E" },
     { label: "Code of conduct acknowledgment", status: "SIGNED", color: "#22C55E" },
-    { label: "IT equipment policy",           status: "ACTIVE",  color: "#0078D4" },
-    { label: "Data privacy consent form",     status: "PENDING", color: "#334155" },
+    { label: "IT equipment policy",           status: "ACTIVE",  color: "#38BDF8" },
+    { label: "Data privacy consent form",     status: "PENDING", color: "#7C8DA4" },
   ];
   return (
     <div aria-hidden style={{
@@ -25,7 +25,7 @@ function HROnboardingMockup() {
       <div style={{ padding: "12px 16px", borderBottom: "1px solid rgba(255,255,255,0.07)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <div>
           <p style={{ color: "white", ...GF, fontSize: 12, fontWeight: 700, margin: 0 }}>Onboarding Packet</p>
-          <p style={{ color: "#475569", ...GM, fontSize: 10, margin: "1px 0 0" }}>Sofia Navarro · 4 documents</p>
+          <p style={{ color: "#8A9BAE", ...GM, fontSize: 10, margin: "1px 0 0" }}>Sofia Navarro · 4 documents</p>
         </div>
         <span style={{ background: "rgba(0,120,212,0.12)", color: "#38bdf8", ...GM, fontSize: 9, fontWeight: 700, padding: "2px 8px", borderRadius: 999, border: "1px solid rgba(0,120,212,0.25)" }}>IN PROGRESS</span>
       </div>
@@ -40,14 +40,14 @@ function HROnboardingMockup() {
             {d.status === "SIGNED" ? "✓" : String(i + 1).padStart(2, "0")}
           </div>
           <div style={{ flex: 1 }}>
-            <p style={{ color: d.status === "PENDING" ? "#334155" : "white", ...GF, fontSize: 12, fontWeight: 600, margin: 0 }}>{d.label}</p>
+            <p style={{ color: d.status === "PENDING" ? "#7C8DA4" : "white", ...GF, fontSize: 12, fontWeight: 600, margin: 0 }}>{d.label}</p>
           </div>
           <span style={{ color: d.color, ...GM, fontSize: 9, fontWeight: 700 }}>{d.status}</span>
         </div>
       ))}
       <div style={{ padding: "10px 16px", background: "rgba(0,0,0,0.2)", display: "flex", justifyContent: "space-between" }}>
         <span style={{ color: "#22C55E", ...GM, fontSize: 9, fontWeight: 700 }}>2 of 4 complete</span>
-        <span style={{ color: "#475569", ...GM, fontSize: 9 }}>Audit trail active</span>
+        <span style={{ color: "#8A9BAE", ...GM, fontSize: 9 }}>Audit trail active</span>
       </div>
     </div>
   );
@@ -104,7 +104,7 @@ export function HRRecruitment() {
             <ChallengeCards challenges={CHALLENGES} />
           </div>
           <div>
-            <p style={{ color: "#475569", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", marginBottom: 12 }}>ONBOARDING PACKET</p>
+            <p style={{ color: "#8A9BAE", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", marginBottom: 12 }}>ONBOARDING PACKET</p>
             <HROnboardingMockup />
           </div>
         </div>

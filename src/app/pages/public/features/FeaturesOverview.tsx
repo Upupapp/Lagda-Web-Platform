@@ -28,7 +28,7 @@ function LifecycleStrip() {
             <div style={{ textAlign: "center", padding: "12px 14px" }}>
               <div style={{ fontSize: 22, marginBottom: 6 }} aria-hidden>{s.icon}</div>
               <p style={{ color: "white", ...GF, fontSize: 12, fontWeight: 700, margin: 0 }}>{s.label}</p>
-              <p style={{ color: "#475569", ...GM, fontSize: 10, margin: "2px 0 0" }}>{s.sub}</p>
+              <p style={{ color: "#8A9BAE", ...GM, fontSize: 10, margin: "2px 0 0" }}>{s.sub}</p>
             </div>
             {i < steps.length - 1 && (
               <div aria-hidden style={{ width: 24, height: 1, background: "rgba(0,120,212,0.4)", flexShrink: 0 }} />
@@ -58,7 +58,7 @@ function CapabilityMap({ group }: { group: string }) {
           >
             <span aria-hidden style={{ fontSize: 20, display: "block", marginBottom: 8 }}>{c.icon}</span>
             <p style={{ color: "white", ...GF, fontSize: 13, fontWeight: 700, margin: 0, marginBottom: 4 }}>{c.title}</p>
-            <p style={{ color: "#64748b", ...GF, fontSize: 12, lineHeight: 1.5, margin: 0 }}>{c.desc}</p>
+            <p style={{ color: "#94A3B8", ...GF, fontSize: 12, lineHeight: 1.5, margin: 0 }}>{c.desc}</p>
           </div>
         </Link>
       ))}
@@ -119,7 +119,7 @@ export function FeaturesOverview() {
       {/* Capability note */}
       <PageSection id="capability-note">
         <div style={{ maxWidth: 720, margin: "0 auto", textAlign: "center" }}>
-          <p style={{ color: "#475569", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", marginBottom: 16 }}>CAPABILITY NOTE</p>
+          <p style={{ color: "#8A9BAE", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", marginBottom: 16 }}>CAPABILITY NOTE</p>
           <p style={{ color: "#94a3b8", ...GF, fontSize: 15, lineHeight: 1.7, margin: 0 }}>
             Some capabilities are available on all plans. Others depend on the plan selected or are designed for enterprise organizations. Look for availability labels on each feature page. Contact Sales to discuss enterprise requirements.
           </p>

@@ -18,7 +18,7 @@ function NotificationCenter() {
         {dismissed.length < NOTIFICATION_EVENTS.length && (
           <button
             onClick={() => setDismissed(NOTIFICATION_EVENTS.map((_, i) => i))}
-            style={{ background: "none", border: "none", color: "#475569", ...GF, fontSize: 11, cursor: "pointer", padding: 0 }}
+            style={{ background: "none", border: "none", color: "#8A9BAE", ...GF, fontSize: 11, cursor: "pointer", padding: 0 }}
           >
             Clear all
           </button>
@@ -26,7 +26,7 @@ function NotificationCenter() {
       </div>
       {visible.length === 0 ? (
         <div style={{ padding: "24px 16px", textAlign: "center" }}>
-          <p style={{ color: "#334155", ...GM, fontSize: 11, margin: 0 }}>No new notifications</p>
+          <p style={{ color: "#7C8DA4", ...GM, fontSize: 11, margin: 0 }}>No new notifications</p>
         </div>
       ) : visible.map((n, idx) => {
         const originalIdx = NOTIFICATION_EVENTS.indexOf(n);
@@ -38,13 +38,13 @@ function NotificationCenter() {
                 <p style={{ color: "white", ...GF, fontSize: 12, fontWeight: 600, margin: 0, flex: 1 }}>{n.title}</p>
                 {n.action && <span style={{ background: "rgba(239,68,68,0.15)", color: "#ef4444", ...GM, fontSize: 8, fontWeight: 700, padding: "1px 6px", borderRadius: 999, flexShrink: 0 }}>ACTION</span>}
               </div>
-              <p style={{ color: "#64748b", ...GF, fontSize: 11, margin: "2px 0 0", lineHeight: 1.4 }}>{n.desc}</p>
-              <p style={{ color: "#334155", ...GM, fontSize: 9, margin: "3px 0 0" }}>{n.time}</p>
+              <p style={{ color: "#94A3B8", ...GF, fontSize: 11, margin: "2px 0 0", lineHeight: 1.4 }}>{n.desc}</p>
+              <p style={{ color: "#7C8DA4", ...GM, fontSize: 9, margin: "3px 0 0" }}>{n.time}</p>
             </div>
             <button
               onClick={() => setDismissed((prev) => [...prev, originalIdx])}
               aria-label={`Dismiss ${n.title}`}
-              style={{ background: "none", border: "none", color: "#334155", cursor: "pointer", padding: 0, fontSize: 12, flexShrink: 0, marginTop: 1 }}
+              style={{ background: "none", border: "none", color: "#7C8DA4", cursor: "pointer", padding: 0, fontSize: 12, flexShrink: 0, marginTop: 1 }}
             >
               ✕
             </button>
@@ -82,7 +82,7 @@ export function Notifications() {
                   <span style={{ fontSize: 14, width: 20, textAlign: "center", flexShrink: 0 }}>{e.icon}</span>
                   <div>
                     <p style={{ color: "white", ...GF, fontSize: 12, fontWeight: 600, margin: 0 }}>{e.label}</p>
-                    <p style={{ color: "#475569", ...GM, fontSize: 10, margin: 0 }}>{e.when}</p>
+                    <p style={{ color: "#8A9BAE", ...GM, fontSize: 10, margin: 0 }}>{e.when}</p>
                   </div>
                 </div>
               ))}
@@ -104,7 +104,7 @@ export function Notifications() {
             <div key={c.channel} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 12, padding: "16px 14px" }}>
               <span aria-hidden style={{ fontSize: 22, display: "block", marginBottom: 8 }}>{c.icon}</span>
               <p style={{ color: "white", ...GF, fontSize: 13, fontWeight: 700, margin: 0, marginBottom: 4 }}>{c.channel}</p>
-              <p style={{ color: "#64748b", ...GF, fontSize: 12, lineHeight: 1.5, margin: 0 }}>{c.desc}</p>
+              <p style={{ color: "#94A3B8", ...GF, fontSize: 12, lineHeight: 1.5, margin: 0 }}>{c.desc}</p>
             </div>
           ))}
         </div>
@@ -122,7 +122,7 @@ export function Notifications() {
           ].map((r) => (
             <div key={r.title} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 10, padding: "12px 14px" }}>
               <p style={{ color: "white", ...GF, fontSize: 13, fontWeight: 700, margin: 0, marginBottom: 4 }}>{r.title}</p>
-              <p style={{ color: "#64748b", ...GF, fontSize: 12, lineHeight: 1.5, margin: 0 }}>{r.desc}</p>
+              <p style={{ color: "#94A3B8", ...GF, fontSize: 12, lineHeight: 1.5, margin: 0 }}>{r.desc}</p>
             </div>
           ))}
         </div>

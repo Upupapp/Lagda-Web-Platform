@@ -56,7 +56,7 @@ export function SectionHeading({
         {heading}
       </h2>
       {sub && (
-        <p style={{ color: "#64748b", ...GF, fontSize: 16, lineHeight: 1.65, margin: center ? "0 auto" : 0, maxWidth: 620 }}>
+        <p style={{ color: "#94A3B8", ...GF, fontSize: 16, lineHeight: 1.65, margin: center ? "0 auto" : 0, maxWidth: 620 }}>
           {sub}
         </p>
       )}
@@ -69,7 +69,7 @@ export function RelatedPages({ links }: { links: { label: string; desc: string; 
   return (
     <section style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}>
       <div style={{ maxWidth: 1200, margin: "0 auto", padding: "48px 24px" }}>
-        <p style={{ color: "#475569", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", marginBottom: 20 }}>
+        <p style={{ color: "#8A9BAE", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", marginBottom: 20 }}>
           EXPLORE MORE
         </p>
         <div style={{ display: "grid", gap: 12 }} className="related-grid">
@@ -87,9 +87,9 @@ export function RelatedPages({ links }: { links: { label: string; desc: string; 
               >
                 <div>
                   <p style={{ color: "white", ...GF, fontSize: 14, fontWeight: 700, margin: 0 }}>{l.label}</p>
-                  <p style={{ color: "#64748b", ...GF, fontSize: 13, margin: 0, marginTop: 2 }}>{l.desc}</p>
+                  <p style={{ color: "#94A3B8", ...GF, fontSize: 13, margin: 0, marginTop: 2 }}>{l.desc}</p>
                 </div>
-                <span style={{ color: "#0078D4", ...GF, fontSize: 16, flexShrink: 0 }}>→</span>
+                <span style={{ color: "#38BDF8", ...GF, fontSize: 16, flexShrink: 0 }}>→</span>
               </div>
             </Link>
           ))}
@@ -126,7 +126,7 @@ export function PageCTA({
           {heading}
         </h2>
         {sub && (
-          <p style={{ color: "#64748b", ...GF, fontSize: 16, lineHeight: 1.65, margin: "0 auto 24px", maxWidth: 520 }}>
+          <p style={{ color: "#94A3B8", ...GF, fontSize: 16, lineHeight: 1.65, margin: "0 auto 24px", maxWidth: 520 }}>
             {sub}
           </p>
         )}
@@ -176,11 +176,11 @@ export function LegalNote({ showEnotary }: { showEnotary?: boolean }) {
       padding: "20px 24px",
     }}>
       <div style={{ maxWidth: 1200, margin: "0 auto" }}>
-        <p style={{ color: "#334155", ...GF, fontSize: 12, lineHeight: 1.6, margin: 0, marginBottom: showEnotary ? 8 : 0 }}>
+        <p style={{ color: "#7C8DA4", ...GF, fontSize: 12, lineHeight: 1.6, margin: 0, marginBottom: showEnotary ? 8 : 0 }}>
           {LEGAL_NOTE}
         </p>
         {showEnotary && (
-          <p style={{ color: "#475569", ...GF, fontSize: 12, lineHeight: 1.6, margin: 0 }}>
+          <p style={{ color: "#8A9BAE", ...GF, fontSize: 12, lineHeight: 1.6, margin: 0 }}>
             {ENOTARY_NOTE}
           </p>
         )}
@@ -199,7 +199,7 @@ export function FeatureCard({ icon, title, desc }: { icon: string; title: string
     }}>
       <span aria-hidden="true" style={{ fontSize: 24, display: "block", marginBottom: 12 }}>{icon}</span>
       <p style={{ color: "white", ...GF, fontSize: 14, fontWeight: 700, margin: 0, marginBottom: 6 }}>{title}</p>
-      <p style={{ color: "#64748b", ...GF, fontSize: 13, lineHeight: 1.55, margin: 0 }}>{desc}</p>
+      <p style={{ color: "#94A3B8", ...GF, fontSize: 13, lineHeight: 1.55, margin: 0 }}>{desc}</p>
     </div>
   );
 }

@@ -118,7 +118,7 @@ export function ContactPage() {
           <div style={{ maxWidth: 540, margin: "0 auto", textAlign: "center", padding: "40px 0" }}>
             <div style={{ fontSize: 40, marginBottom: 16 }}>✅</div>
             <h1 style={{ color: "white", ...GF, fontSize: 28, fontWeight: 800, marginBottom: 12 }}>Message received.</h1>
-            <p style={{ color: "#64748b", ...GF, fontSize: 15, lineHeight: 1.65, marginBottom: 20 }}>
+            <p style={{ color: "#94A3B8", ...GF, fontSize: 15, lineHeight: 1.65, marginBottom: 20 }}>
               Your message has been validated in this frontend demonstration. Live message delivery will be connected during backend integration.
             </p>
             <div style={{ background: "rgba(0,120,212,0.08)", border: "1px solid rgba(0,120,212,0.2)", borderRadius: 10, padding: "14px 18px", marginBottom: 24 }}>
@@ -138,7 +138,7 @@ export function ContactPage() {
         <div style={{ maxWidth: 680, margin: "0 auto" }}>
           <p style={{ color: "#38bdf8", ...GM, fontSize: 11, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 12 }}>CONTACT</p>
           <h1 style={{ color: "white", ...GF, fontSize: "clamp(26px, 4.5vw, 44px)", fontWeight: 900, lineHeight: 1.1, letterSpacing: "-0.02em", margin: "0 0 16px" }}>Contact LAGDA</h1>
-          <p style={{ color: "#64748b", ...GF, fontSize: 15, lineHeight: 1.65 }}>Sales, product questions, account support, and partnership inquiries.</p>
+          <p style={{ color: "#94A3B8", ...GF, fontSize: 15, lineHeight: 1.65 }}>Sales, product questions, account support, and partnership inquiries.</p>
         </div>
       </section>
 
@@ -184,7 +184,7 @@ export function ContactPage() {
 
             <div>
               <Label htmlFor="c-category" required>Contact category</Label>
-              <select id="c-category" value={form.category} onChange={e => set("category")(e.target.value)} style={{ width: "100%", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, padding: "11px 14px", color: form.category ? "white" : "#64748b", ...GF, fontSize: 14, outline: "none", minHeight: 44 }}>
+              <select id="c-category" value={form.category} onChange={e => set("category")(e.target.value)} style={{ width: "100%", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, padding: "11px 14px", color: form.category ? "white" : "#94A3B8", ...GF, fontSize: 14, outline: "none", minHeight: 44 }}>
                 <option value="">Select a category</option>
                 {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
               </select>
@@ -226,7 +226,7 @@ export function ContactPage() {
                   onChange={e => set("consent")(e.target.checked)}
                   style={{ width: 18, height: 18, marginTop: 2, flexShrink: 0, accentColor: "#0078D4", cursor: "pointer" }}
                 />
-                <span style={{ color: "#64748b", ...GF, fontSize: 13, lineHeight: 1.55 }}>
+                <span style={{ color: "#94A3B8", ...GF, fontSize: 13, lineHeight: 1.55 }}>
                   I acknowledge that this form is a frontend demonstration. I understand no message will be delivered until backend integration is complete. I agree not to include sensitive personal or confidential information in this form.
                 </span>
               </label>
@@ -237,7 +237,7 @@ export function ContactPage() {
               <button
                 type="submit"
                 disabled={state === "submitting"}
-                style={{ background: state === "submitting" ? "#334155" : "#0078D4", color: "white", ...GF, fontSize: 15, fontWeight: 700, padding: "13px 32px", borderRadius: 8, border: "none", cursor: state === "submitting" ? "not-allowed" : "pointer", minHeight: 48, opacity: state === "submitting" ? 0.7 : 1, transition: "all 0.15s" }}
+                style={{ background: state === "submitting" ? "#7C8DA4" : "#0078D4", color: "white", ...GF, fontSize: 15, fontWeight: 700, padding: "13px 32px", borderRadius: 8, border: "none", cursor: state === "submitting" ? "not-allowed" : "pointer", minHeight: 48, opacity: state === "submitting" ? 0.7 : 1, transition: "all 0.15s" }}
               >
                 {state === "submitting" ? "Submitting…" : "Send Message"}
               </button>

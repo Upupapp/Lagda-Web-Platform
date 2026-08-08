@@ -48,11 +48,11 @@ function ParallelDiagram() {
             >
               <div style={{ width: 28, height: 28, borderRadius: "50%", background: "rgba(0,120,212,0.2)", margin: "0 auto 6px", display: "flex", alignItems: "center", justifyContent: "center", ...GM, fontSize: 10, fontWeight: 700, color: "#38bdf8" }}>{p.avatar}</div>
               <p style={{ color: "white", ...GF, fontSize: 11, fontWeight: 600, margin: 0 }}>{p.name}</p>
-              <p style={{ color: "#475569", ...GM, fontSize: 9, margin: "2px 0 0" }}>{p.role}</p>
+              <p style={{ color: "#8A9BAE", ...GM, fontSize: 9, margin: "2px 0 0" }}>{p.role}</p>
               <div style={{ marginTop: 6, height: 20, display: "flex", alignItems: "center", justifyContent: "center" }}>
                 {completed.includes(p.name)
                   ? <span style={{ color: "#22C55E", fontSize: 14 }}>✓</span>
-                  : <span style={{ color: "#475569", ...GM, fontSize: 9 }}>Waiting</span>
+                  : <span style={{ color: "#8A9BAE", ...GM, fontSize: 9 }}>Waiting</span>
                 }
               </div>
             </button>
@@ -80,10 +80,10 @@ function ParallelDiagram() {
         borderRadius: 10, padding: "10px 14px", textAlign: "center",
         transition: "all 0.3s ease",
       }}>
-        <p style={{ color: allDone ? "#22C55E" : "#475569", ...GM, fontSize: 10, fontWeight: 700, margin: 0, marginBottom: 2 }}>
+        <p style={{ color: allDone ? "#22C55E" : "#8A9BAE", ...GM, fontSize: 10, fontWeight: 700, margin: 0, marginBottom: 2 }}>
           {allDone ? "COMPLETE" : "WAITING FOR ALL PARTICIPANTS"}
         </p>
-        <p style={{ color: allDone ? "white" : "#334155", ...GF, fontSize: 12, margin: 0 }}>
+        <p style={{ color: allDone ? "white" : "#7C8DA4", ...GF, fontSize: 12, margin: 0 }}>
           {allDone ? "All required participants have acted." : `${completed.length} of ${participants.length} completed — click to simulate`}
         </p>
       </div>
@@ -114,12 +114,12 @@ export function ParallelSigning() {
                 "Parallel workflows may help reduce total completion time",
               ].map((item) => (
                 <div key={item} style={{ display: "flex", gap: 8 }}>
-                  <span style={{ color: "#0078D4", fontWeight: 700, flexShrink: 0 }}>✓</span>
+                  <span style={{ color: "#38BDF8", fontWeight: 700, flexShrink: 0 }}>✓</span>
                   <span style={{ color: "#94a3b8", ...GF, fontSize: 14, lineHeight: 1.5 }}>{item}</span>
                 </div>
               ))}
             </div>
-            <p style={{ color: "#475569", ...GF, fontSize: 13, lineHeight: 1.6, margin: 0 }}>
+            <p style={{ color: "#8A9BAE", ...GF, fontSize: 13, lineHeight: 1.6, margin: 0 }}>
               Use the diagram to simulate each participant completing their action. The transaction completes when all have acted.
             </p>
           </div>
@@ -141,7 +141,7 @@ export function ParallelSigning() {
           ].map((u) => (
             <div key={u.title} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 12, padding: "14px 14px" }}>
               <p style={{ color: "white", ...GF, fontSize: 13, fontWeight: 700, margin: 0, marginBottom: 4 }}>{u.title}</p>
-              <p style={{ color: "#64748b", ...GF, fontSize: 12, lineHeight: 1.5, margin: 0 }}>{u.desc}</p>
+              <p style={{ color: "#94A3B8", ...GF, fontSize: 12, lineHeight: 1.5, margin: 0 }}>{u.desc}</p>
             </div>
           ))}
         </div>

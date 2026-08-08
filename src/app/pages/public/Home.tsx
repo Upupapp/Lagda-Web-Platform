@@ -65,7 +65,7 @@ function SectionHeader({
         {heading}
       </h2>
       {sub && (
-        <p style={{ color: "#64748b", ...GF, fontSize: 16, lineHeight: 1.65, margin: center ? "0 auto" : 0, maxWidth: 600 }}>
+        <p style={{ color: "#94A3B8", ...GF, fontSize: 16, lineHeight: 1.65, margin: center ? "0 auto" : 0, maxWidth: 600 }}>
           {sub}
         </p>
       )}
@@ -105,7 +105,7 @@ function CapabilitiesSection() {
             >
               <span aria-hidden="true" style={{ fontSize: 24, display: "block", marginBottom: 12 }}>{cap.icon}</span>
               <p style={{ color: "white", ...GF, fontSize: 14, fontWeight: 700, margin: 0, marginBottom: 6 }}>{cap.title}</p>
-              <p style={{ color: "#64748b", ...GF, fontSize: 13, lineHeight: 1.55, margin: 0 }}>{cap.desc}</p>
+              <p style={{ color: "#94A3B8", ...GF, fontSize: 13, lineHeight: 1.55, margin: 0 }}>{cap.desc}</p>
             </div>
           </Link>
         ))}
@@ -145,7 +145,7 @@ function SigningSection() {
             to="/features/signer-authentication"
             style={{
               display: "inline-flex", alignItems: "center", gap: 6,
-              color: "#0078D4", ...GF, fontSize: 14, fontWeight: 700, textDecoration: "none",
+              color: "#38BDF8", ...GF, fontSize: 14, fontWeight: 700, textDecoration: "none",
               transition: "color 0.15s ease",
             }}
             onMouseEnter={(e) => { e.currentTarget.style.color = "#38bdf8"; }}
@@ -162,10 +162,10 @@ function SigningSection() {
               borderRadius: 10, padding: "12px 16px",
               display: "flex", gap: 12, alignItems: "flex-start",
             }}>
-              <span style={{ color: "#0078D4", ...GM, fontSize: 10, fontWeight: 700, flexShrink: 0, paddingTop: 2 }}>✓</span>
+              <span style={{ color: "#38BDF8", ...GM, fontSize: 10, fontWeight: 700, flexShrink: 0, paddingTop: 2 }}>✓</span>
               <div>
                 <p style={{ color: "white", ...GF, fontSize: 13, fontWeight: 700, margin: 0, marginBottom: 2 }}>{m.label}</p>
-                <p style={{ color: "#64748b", ...GF, fontSize: 12, lineHeight: 1.5, margin: 0 }}>{m.desc}</p>
+                <p style={{ color: "#94A3B8", ...GF, fontSize: 12, lineHeight: 1.5, margin: 0 }}>{m.desc}</p>
               </div>
             </div>
           ))}
@@ -229,7 +229,7 @@ function WorkflowTypesSection() {
               {t.icon}
             </div>
             <p style={{ color: "white", ...GF, fontSize: 16, fontWeight: 800, margin: 0, marginBottom: 10 }}>{t.title}</p>
-            <p style={{ color: "#64748b", ...GF, fontSize: 14, lineHeight: 1.6, margin: 0 }}>{t.desc}</p>
+            <p style={{ color: "#94A3B8", ...GF, fontSize: 14, lineHeight: 1.6, margin: 0 }}>{t.desc}</p>
           </div>
         ))}
       </div>
@@ -247,11 +247,11 @@ function WorkflowTypesSection() {
 function AuditSection() {
   const EVENTS = [
     { time: "14 Jul · 2:00 PM", event: "Transaction created", by: "Mabini Legal Solutions", color: "#38bdf8" },
-    { time: "14 Jul · 2:01 PM", event: "Invitation sent", by: "Ana Reyes · ana@example.ph", color: "#64748b" },
-    { time: "14 Jul · 2:14 PM", event: "Document viewed", by: "Ana Reyes · IP ··· .42", color: "#64748b" },
+    { time: "14 Jul · 2:01 PM", event: "Invitation sent", by: "Ana Reyes · ana@example.ph", color: "#94A3B8" },
+    { time: "14 Jul · 2:14 PM", event: "Document viewed", by: "Ana Reyes · IP ··· .42", color: "#94A3B8" },
     { time: "14 Jul · 2:15 PM", event: "Email OTP verified", by: "Ana Reyes", color: "#22C55E" },
-    { time: "14 Jul · 2:16 PM", event: "Signed", by: "Ana Reyes · signature adopted", color: "#0078D4" },
-    { time: "14 Jul · 2:16 PM", event: "Approval request sent", by: "Marco Santos · marco@example.ph", color: "#64748b" },
+    { time: "14 Jul · 2:16 PM", event: "Signed", by: "Ana Reyes · signature adopted", color: "#38BDF8" },
+    { time: "14 Jul · 2:16 PM", event: "Approval request sent", by: "Marco Santos · marco@example.ph", color: "#94A3B8" },
   ];
 
   return (
@@ -273,9 +273,9 @@ function AuditSection() {
                 <div style={{ width: 8, height: 8, borderRadius: "50%", background: ev.color, flexShrink: 0, marginTop: 4 }} />
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <p style={{ color: "white", ...GF, fontSize: 12, fontWeight: 600, margin: 0 }}>{ev.event}</p>
-                  <p style={{ color: "#475569", ...GM, fontSize: 10, margin: "2px 0 0", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{ev.by}</p>
+                  <p style={{ color: "#8A9BAE", ...GM, fontSize: 10, margin: "2px 0 0", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{ev.by}</p>
                 </div>
-                <span style={{ color: "#334155", ...GM, fontSize: 10, flexShrink: 0 }}>{ev.time}</span>
+                <span style={{ color: "#7C8DA4", ...GM, fontSize: 10, flexShrink: 0 }}>{ev.time}</span>
               </div>
             ))}
           </div>
@@ -291,14 +291,14 @@ function AuditSection() {
           <p style={{ color: "#94a3b8", ...GF, fontSize: 15, lineHeight: 1.65, margin: 0, marginBottom: 16 }}>
             LAGDA records a timestamped, detailed activity log for every transaction — from invitation to completion. Each event includes who performed the action and contextual evidence.
           </p>
-          <p style={{ color: "#64748b", ...GF, fontSize: 14, lineHeight: 1.65, margin: 0, marginBottom: 24 }}>
+          <p style={{ color: "#94A3B8", ...GF, fontSize: 14, lineHeight: 1.65, margin: 0, marginBottom: 24 }}>
             The audit trail supports transparency and accountability. For situations requiring formal legal evidence, consult applicable requirements for what records must be produced.
           </p>
           <Link
             to="/esignature/verification-and-audit"
             style={{
               display: "inline-flex", alignItems: "center", gap: 6,
-              color: "#0078D4", ...GF, fontSize: 14, fontWeight: 700, textDecoration: "none",
+              color: "#38BDF8", ...GF, fontSize: 14, fontWeight: 700, textDecoration: "none",
             }}
           >
             Learn about audit trails →
@@ -340,9 +340,9 @@ function SolutionsSection() {
               onMouseLeave={(e) => { (e.currentTarget as HTMLDivElement).style.borderColor = "rgba(255,255,255,0.07)"; }}
             >
               <p style={{ color: "white", ...GF, fontSize: 15, fontWeight: 700, margin: 0, marginBottom: 8 }}>{s.title}</p>
-              <p style={{ color: "#64748b", ...GF, fontSize: 13, lineHeight: 1.55, margin: 0, marginBottom: s.note ? 8 : 0 }}>{s.desc}</p>
+              <p style={{ color: "#94A3B8", ...GF, fontSize: 13, lineHeight: 1.55, margin: 0, marginBottom: s.note ? 8 : 0 }}>{s.desc}</p>
               {s.note && (
-                <p style={{ color: "#334155", ...GF, fontSize: 11, lineHeight: 1.5, margin: 0, marginTop: 6, fontStyle: "italic" }}>{s.note}</p>
+                <p style={{ color: "#7C8DA4", ...GF, fontSize: 11, lineHeight: 1.5, margin: 0, marginTop: 6, fontStyle: "italic" }}>{s.note}</p>
               )}
             </div>
           </Link>
@@ -371,7 +371,7 @@ function SecuritySection() {
             heading="Six layers of transaction confidence."
             sub="LAGDA is designed with multiple overlapping controls so that confidence in a transaction is never dependent on a single mechanism."
           />
-          <Link to="/security" style={{ color: "#0078D4", ...GF, fontSize: 14, fontWeight: 700, textDecoration: "none" }}>
+          <Link to="/security" style={{ color: "#38BDF8", ...GF, fontSize: 14, fontWeight: 700, textDecoration: "none" }}>
             View the Trust Center →
           </Link>
         </div>
@@ -383,12 +383,12 @@ function SecuritySection() {
               border: "1px solid rgba(255,255,255,0.06)",
               borderRadius: 12, padding: "14px 16px",
             }}>
-              <span style={{ color: "#0078D4", ...GM, fontSize: 11, fontWeight: 700, flexShrink: 0, paddingTop: 1 }}>
+              <span style={{ color: "#38BDF8", ...GM, fontSize: 11, fontWeight: 700, flexShrink: 0, paddingTop: 1 }}>
                 {layer.num}
               </span>
               <div>
                 <p style={{ color: "white", ...GF, fontSize: 13, fontWeight: 700, margin: 0, marginBottom: 3 }}>{layer.title}</p>
-                <p style={{ color: "#64748b", ...GF, fontSize: 12, lineHeight: 1.55, margin: 0 }}>{layer.desc}</p>
+                <p style={{ color: "#94A3B8", ...GF, fontSize: 12, lineHeight: 1.55, margin: 0 }}>{layer.desc}</p>
               </div>
             </div>
           ))}
@@ -435,7 +435,7 @@ function PricingPreviewSection() {
               </span>
             )}
             <p style={{ color: "white", ...GF, fontSize: 18, fontWeight: 800, margin: 0, marginBottom: 4 }}>{plan.tier}</p>
-            <p style={{ color: "#64748b", ...GF, fontSize: 13, margin: 0, marginBottom: 20 }}>{plan.for}</p>
+            <p style={{ color: "#94A3B8", ...GF, fontSize: 13, margin: 0, marginBottom: 20 }}>{plan.for}</p>
             <ul style={{ listStyle: "none", margin: 0, padding: 0, flex: 1, marginBottom: 24 }}>
               {plan.features.map((f) => (
                 <li key={f} style={{ display: "flex", gap: 8, alignItems: "flex-start", marginBottom: 8 }}>
@@ -463,9 +463,9 @@ function PricingPreviewSection() {
         ))}
       </div>
       <div style={{ textAlign: "center", marginTop: 24 }}>
-        <Link to="/pricing" style={{ color: "#64748b", ...GF, fontSize: 14, textDecoration: "none", transition: "color 0.15s ease" }}
+        <Link to="/pricing" style={{ color: "#94A3B8", ...GF, fontSize: 14, textDecoration: "none", transition: "color 0.15s ease" }}
           onMouseEnter={(e) => { e.currentTarget.style.color = "white"; }}
-          onMouseLeave={(e) => { e.currentTarget.style.color = "#64748b"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.color = "#94A3B8"; }}
         >
           View full pricing details →
         </Link>
@@ -506,11 +506,11 @@ function ResourcesSection() {
             >
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                 <span aria-hidden="true" style={{ fontSize: 20 }}>{r.icon}</span>
-                <span style={{ color: "#475569", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.06em" }}>{r.tag}</span>
+                <span style={{ color: "#8A9BAE", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.06em" }}>{r.tag}</span>
               </div>
               <p style={{ color: "white", ...GF, fontSize: 14, fontWeight: 700, margin: 0 }}>{r.title}</p>
-              <p style={{ color: "#64748b", ...GF, fontSize: 13, lineHeight: 1.55, margin: 0, flex: 1 }}>{r.desc}</p>
-              <span style={{ color: "#0078D4", ...GF, fontSize: 13, fontWeight: 600 }}>Read →</span>
+              <p style={{ color: "#94A3B8", ...GF, fontSize: 13, lineHeight: 1.55, margin: 0, flex: 1 }}>{r.desc}</p>
+              <span style={{ color: "#38BDF8", ...GF, fontSize: 13, fontWeight: 600 }}>Read →</span>
             </div>
           </Link>
         ))}
@@ -568,7 +568,7 @@ function ENotarySection() {
             </p>
           </div>
 
-          <p style={{ color: "#64748b", ...GF, fontSize: 14, lineHeight: 1.6, margin: 0 }}>
+          <p style={{ color: "#94A3B8", ...GF, fontSize: 14, lineHeight: 1.6, margin: 0 }}>
             eNotary is a separate product from LAGDA eSignature. It is not currently available, not purchasable, and not included in any eSignature plan.
           </p>
 
@@ -614,7 +614,7 @@ function FinalCTA() {
         <h2 id="final-cta-heading" style={{ color: "white", ...GF, fontSize: "clamp(26px, 4vw, 44px)", fontWeight: 800, margin: 0, marginBottom: 14, letterSpacing: "-0.02em" }}>
           Ready to send your first document?
         </h2>
-        <p style={{ color: "#64748b", ...GF, fontSize: 16, lineHeight: 1.65, margin: 0, marginBottom: 32 }}>
+        <p style={{ color: "#94A3B8", ...GF, fontSize: 16, lineHeight: 1.65, margin: 0, marginBottom: 32 }}>
           Create a free LAGDA account and send your first document today. No credit card required.
         </p>
         <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
@@ -651,7 +651,7 @@ function FinalCTA() {
             Talk to Sales
           </Link>
         </div>
-        <p style={{ color: "#334155", ...GF, fontSize: 12, lineHeight: 1.5, margin: "24px auto 0", maxWidth: 500 }}>
+        <p style={{ color: "#7C8DA4", ...GF, fontSize: 12, lineHeight: 1.5, margin: "24px auto 0", maxWidth: 500 }}>
           Some documents may require wet signatures, notarization, or other formal steps. Users are responsible for determining the formality requirements applicable to their transactions.
         </p>
       </div>

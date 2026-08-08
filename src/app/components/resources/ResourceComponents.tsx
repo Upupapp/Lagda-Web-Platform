@@ -27,7 +27,7 @@ export function ResourcesSubNav() {
               borderBottom: active ? "2px solid #38bdf8" : "2px solid transparent",
               transition: "border-color 0.15s ease",
             }}>
-              <span style={{ ...GF, fontSize: 12, fontWeight: active ? 700 : 500, color: active ? "white" : "#64748b", whiteSpace: "nowrap" }}>{label}</span>
+              <span style={{ ...GF, fontSize: 12, fontWeight: active ? 700 : 500, color: active ? "white" : "#94A3B8", whiteSpace: "nowrap" }}>{label}</span>
             </Link>
           );
         })}
@@ -63,7 +63,7 @@ export function GuideHero({ eyebrow, title, sub }: { eyebrow: string; title: str
       <div style={{ maxWidth: 780, margin: "0 auto" }}>
         <p style={{ color: "#38bdf8", ...GM, fontSize: 11, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 12 }}>{eyebrow}</p>
         <h1 style={{ color: "white", ...GF, fontSize: "clamp(24px, 4.5vw, 42px)", fontWeight: 900, lineHeight: 1.1, letterSpacing: "-0.02em", margin: "0 0 16px" }}>{title}</h1>
-        <p style={{ color: "#64748b", ...GF, fontSize: 16, lineHeight: 1.65, margin: 0 }}>{sub}</p>
+        <p style={{ color: "#94A3B8", ...GF, fontSize: 16, lineHeight: 1.65, margin: 0 }}>{sub}</p>
       </div>
     </section>
   );
@@ -104,8 +104,8 @@ export function GuideList({ items }: { items: string[] }) {
 export function EduDisclaimer() {
   return (
     <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 10, padding: "14px 18px", marginTop: 32 }}>
-      <p style={{ color: "#475569", ...GF, fontSize: 12, lineHeight: 1.65, margin: 0 }}>
-        <strong style={{ color: "#64748b", fontWeight: 600 }}>Educational information:</strong> {EDU_DISCLAIMER}
+      <p style={{ color: "#8A9BAE", ...GF, fontSize: 12, lineHeight: 1.65, margin: 0 }}>
+        <strong style={{ color: "#94A3B8", fontWeight: 600 }}>Educational information:</strong> {EDU_DISCLAIMER}
       </p>
     </div>
   );
@@ -129,8 +129,8 @@ export function ResourceCard({ icon, title, desc, path, category, audience }: { 
           <span style={{ color: "#38bdf8", ...GM, fontSize: 9, fontWeight: 700, letterSpacing: "0.08em" }}>{category.toUpperCase()}</span>
         </div>
         <p style={{ color: "white", ...GF, fontSize: 15, fontWeight: 700, margin: 0 }}>{title}</p>
-        <p style={{ color: "#64748b", ...GF, fontSize: 13, margin: 0, lineHeight: 1.5, flex: 1 }}>{desc}</p>
-        <p style={{ color: "#334155", ...GM, fontSize: 9, margin: 0 }}>For: {audience}</p>
+        <p style={{ color: "#94A3B8", ...GF, fontSize: 13, margin: 0, lineHeight: 1.5, flex: 1 }}>{desc}</p>
+        <p style={{ color: "#7C8DA4", ...GM, fontSize: 9, margin: 0 }}>For: {audience}</p>
       </div>
     </Link>
   );
@@ -150,7 +150,7 @@ export function FaqAccordion({ items }: { items: { id: string; q: string; a: str
             style={{ width: "100%", textAlign: "left", background: "none", border: "none", cursor: "pointer", padding: "16px 20px", display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12 }}
           >
             <span style={{ color: "white", ...GF, fontSize: 14, fontWeight: 600, lineHeight: 1.4 }}>{q}</span>
-            <span style={{ color: "#64748b", flexShrink: 0, fontSize: 14, transition: "transform 0.2s", transform: open === id ? "rotate(180deg)" : "none", display: "inline-block" }}>▾</span>
+            <span style={{ color: "#94A3B8", flexShrink: 0, fontSize: 14, transition: "transform 0.2s", transform: open === id ? "rotate(180deg)" : "none", display: "inline-block" }}>▾</span>
           </button>
           <div id={`${id}-answer`} hidden={open !== id} style={{ padding: open === id ? "0 20px 16px" : "0 20px 0" }}>
             <p style={{ color: "#94a3b8", ...GF, fontSize: 14, lineHeight: 1.65, margin: 0 }}>{a}</p>
@@ -175,7 +175,7 @@ export function ResourcesHeading({ eyebrow, id, heading, sub, center }: { eyebro
     <div style={{ marginBottom: 40, textAlign: center ? "center" : undefined }}>
       <p style={{ color: "#38bdf8", ...GM, fontSize: 11, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 10 }}>{eyebrow}</p>
       <h2 id={id} style={{ color: "white", ...GF, fontSize: "clamp(22px, 3.5vw, 36px)", fontWeight: 800, margin: 0, marginBottom: sub ? 12 : 0, letterSpacing: "-0.02em", lineHeight: 1.15 }}>{heading}</h2>
-      {sub && <p style={{ color: "#64748b", ...GF, fontSize: 16, lineHeight: 1.65, margin: center ? "0 auto" : 0, maxWidth: 640 }}>{sub}</p>}
+      {sub && <p style={{ color: "#94A3B8", ...GF, fontSize: 16, lineHeight: 1.65, margin: center ? "0 auto" : 0, maxWidth: 640 }}>{sub}</p>}
     </div>
   );
 }

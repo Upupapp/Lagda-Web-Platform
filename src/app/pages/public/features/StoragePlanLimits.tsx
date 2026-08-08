@@ -25,7 +25,7 @@ export function StoragePlanLimits() {
               <span aria-hidden style={{ fontSize: 20, flexShrink: 0, marginTop: 1 }}>{c.icon}</span>
               <div>
                 <p style={{ color: "white", ...GF, fontSize: 13, fontWeight: 700, margin: 0, marginBottom: 3 }}>{c.title}</p>
-                <p style={{ color: "#64748b", ...GF, fontSize: 12, lineHeight: 1.5, margin: 0 }}>{c.desc}</p>
+                <p style={{ color: "#94A3B8", ...GF, fontSize: 12, lineHeight: 1.5, margin: 0 }}>{c.desc}</p>
               </div>
             </div>
           ))}
@@ -43,7 +43,7 @@ export function StoragePlanLimits() {
           ].map((s) => (
             <div key={s.title} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 10, padding: "14px 14px" }}>
               <p style={{ color: "white", ...GF, fontSize: 13, fontWeight: 700, margin: 0, marginBottom: 4 }}>{s.title}</p>
-              <p style={{ color: "#64748b", ...GF, fontSize: 12, lineHeight: 1.5, margin: 0 }}>{s.desc}</p>
+              <p style={{ color: "#94A3B8", ...GF, fontSize: 12, lineHeight: 1.5, margin: 0 }}>{s.desc}</p>
             </div>
           ))}
         </div>
@@ -68,9 +68,9 @@ export function StoragePlanLimits() {
           ))}
         </div>
         <div style={{ textAlign: "center", marginTop: 24 }}>
-          <p style={{ color: "#475569", ...GF, fontSize: 13, margin: 0 }}>
+          <p style={{ color: "#8A9BAE", ...GF, fontSize: 13, margin: 0 }}>
             Exact limits, upgrade flows, and overage behavior are on the{" "}
-            <a href="/pricing" style={{ color: "#0078D4", textDecoration: "underline" }}>Pricing page</a>.
+            <a href="/pricing" style={{ color: "#38BDF8", textDecoration: "underline" }}>Pricing page</a>.
           </p>
         </div>
       </PageSection>

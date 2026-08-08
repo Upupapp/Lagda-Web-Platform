@@ -38,12 +38,12 @@ function TemplateLibraryMockup() {
         <div key={t.name} style={{ padding: "11px 18px", borderBottom: "1px solid rgba(255,255,255,0.05)", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
           <div style={{ flex: 1, minWidth: 0 }}>
             <p style={{ color: "white", ...GF, fontSize: 12, fontWeight: 600, margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t.name}</p>
-            <p style={{ color: "#475569", ...GM, fontSize: 10, margin: "3px 0 0" }}>
+            <p style={{ color: "#8A9BAE", ...GM, fontSize: 10, margin: "3px 0 0" }}>
               {t.roles} roles · {t.fields} fields
             </p>
           </div>
           <div style={{ display: "flex", gap: 8, flexShrink: 0, alignItems: "center" }}>
-            <span style={{ color: "#64748b", ...GM, fontSize: 10 }}>{t.uses}× used</span>
+            <span style={{ color: "#94A3B8", ...GM, fontSize: 10 }}>{t.uses}× used</span>
             <span style={{
               background: t.status === "Ready" ? "rgba(34,197,94,0.1)" : "rgba(100,116,139,0.1)",
               color: t.status === "Ready" ? "#22C55E" : "#94a3b8",
@@ -56,7 +56,7 @@ function TemplateLibraryMockup() {
         </div>
       ))}
       <div style={{ padding: "10px 18px", background: "rgba(0,120,212,0.06)" }}>
-        <span style={{ color: "#0078D4", ...GF, fontSize: 12, fontWeight: 700 }}>+ Create New Template</span>
+        <span style={{ color: "#38BDF8", ...GF, fontSize: 12, fontWeight: 700 }}>+ Create New Template</span>
       </div>
     </div>
   );
@@ -66,11 +66,11 @@ function TemplateLibraryMockup() {
 function TemplateFeatureList() {
   return (
     <div>
-      <p style={{ color: "#475569", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", marginBottom: 14 }}>WHAT A TEMPLATE RETAINS</p>
+      <p style={{ color: "#8A9BAE", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", marginBottom: 14 }}>WHAT A TEMPLATE RETAINS</p>
       <div style={{ display: "grid", gap: 8 }} className="tf-grid">
         {TEMPLATE_FEATURES.map((f) => (
           <div key={f} style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
-            <span style={{ color: "#0078D4", fontWeight: 700, flexShrink: 0, fontSize: 12 }}>✓</span>
+            <span style={{ color: "#38BDF8", fontWeight: 700, flexShrink: 0, fontSize: 12 }}>✓</span>
             <span style={{ color: "#94a3b8", ...GF, fontSize: 13, lineHeight: 1.5 }}>{f}</span>
           </div>
         ))}
@@ -99,7 +99,7 @@ function BrandingMockup() {
       </div>
       <div style={{ padding: "16px 18px" }}>
         <p style={{ color: "white", ...GF, fontSize: 13, fontWeight: 700, margin: 0, marginBottom: 4 }}>Professional Services Agreement</p>
-        <p style={{ color: "#64748b", ...GF, fontSize: 12, margin: 0, marginBottom: 14 }}>Please review and sign the document below.</p>
+        <p style={{ color: "#94A3B8", ...GF, fontSize: 12, margin: 0, marginBottom: 14 }}>Please review and sign the document below.</p>
         <div style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 8, padding: "10px 12px", marginBottom: 12 }}>
           <p style={{ color: "#94a3b8", ...GF, fontSize: 12, margin: 0 }}>📄 Professional Services Agreement.pdf</p>
         </div>
@@ -109,8 +109,8 @@ function BrandingMockup() {
       </div>
       {/* Footer */}
       <div style={{ padding: "10px 18px", borderTop: "1px solid rgba(255,255,255,0.06)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <span style={{ color: "#334155", ...GM, fontSize: 10 }}>LAGDA-VER-2026-004821</span>
-        <span style={{ color: "#334155", ...GF, fontSize: 10 }}>Secured by LAGDA</span>
+        <span style={{ color: "#7C8DA4", ...GM, fontSize: 10 }}>LAGDA-VER-2026-004821</span>
+        <span style={{ color: "#7C8DA4", ...GF, fontSize: 10 }}>Secured by LAGDA</span>
       </div>
     </div>
   );
@@ -132,7 +132,7 @@ function RolePlaceholders() {
       {ROLES.map((r) => (
         <div key={r.role} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 10, padding: "12px 14px" }}>
           <p style={{ color: "white", ...GF, fontSize: 13, fontWeight: 700, margin: 0, marginBottom: 3 }}>{r.role}</p>
-          <p style={{ color: "#64748b", ...GF, fontSize: 12, margin: 0, lineHeight: 1.5 }}>{r.fills}</p>
+          <p style={{ color: "#94A3B8", ...GF, fontSize: 12, margin: 0, lineHeight: 1.5 }}>{r.fills}</p>
         </div>
       ))}
       <style>{`.rp-grid { grid-template-columns: repeat(2, 1fr); } @media (max-width: 560px) { .rp-grid { grid-template-columns: 1fr; } }`}</style>
@@ -157,7 +157,7 @@ export function EsigTemplatesBranding() {
           <div>
             <SectionHeading eyebrow="Template library" id="lib-heading" heading="Build once. Use every time." sub="Save any completed transaction setup — fields, participants, routing, authentication, and branding — as a reusable template." />
             <TemplateFeatureList />
-            <p style={{ color: "#475569", ...GF, fontSize: 13, lineHeight: 1.6, marginTop: 16 }}>
+            <p style={{ color: "#8A9BAE", ...GF, fontSize: 13, lineHeight: 1.6, marginTop: 16 }}>
               Template availability and workspace-sharing controls may vary by plan.
             </p>
           </div>
@@ -198,7 +198,7 @@ export function EsigTemplatesBranding() {
                 "Company branding never removes LAGDA trust indicators",
               ].map((item) => (
                 <div key={item} style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
-                  <span style={{ color: "#0078D4", fontWeight: 700, flexShrink: 0, fontSize: 13 }}>✓</span>
+                  <span style={{ color: "#38BDF8", fontWeight: 700, flexShrink: 0, fontSize: 13 }}>✓</span>
                   <span style={{ color: "#94a3b8", ...GF, fontSize: 14, lineHeight: 1.5 }}>{item}</span>
                 </div>
               ))}
@@ -217,7 +217,7 @@ export function EsigTemplatesBranding() {
             { status: "Draft",           color: "#F59E0B", desc: "Template setup is incomplete and not yet available to other senders." },
             { status: "Needs Review",    color: "#F59E0B", desc: "Template has been flagged for review by an administrator." },
             { status: "Restricted",      color: "#94a3b8", desc: "Template is available only to specific roles or senders." },
-            { status: "Archived",        color: "#475569", desc: "Template is no longer active. Existing transactions are retained." },
+            { status: "Archived",        color: "#8A9BAE", desc: "Template is no longer active. Existing transactions are retained." },
             { status: "Enterprise Managed", color: "#C9960C", desc: "Template is centrally managed at the enterprise level." },
           ].map((s) => (
             <div key={s.status} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 10, padding: "12px 14px" }}>
@@ -225,7 +225,7 @@ export function EsigTemplatesBranding() {
                 <div style={{ width: 8, height: 8, borderRadius: "50%", background: s.color }} />
                 <span style={{ color: "white", ...GF, fontSize: 13, fontWeight: 700 }}>{s.status}</span>
               </div>
-              <p style={{ color: "#64748b", ...GF, fontSize: 12, margin: 0, lineHeight: 1.5 }}>{s.desc}</p>
+              <p style={{ color: "#94A3B8", ...GF, fontSize: 12, margin: 0, lineHeight: 1.5 }}>{s.desc}</p>
             </div>
           ))}
         </div>

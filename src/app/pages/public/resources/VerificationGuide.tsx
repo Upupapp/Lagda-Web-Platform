@@ -10,10 +10,10 @@ const RESULT_STATES = [
   { state: "Verified",                     color: "#22C55E", desc: "LAGDA found a completed transaction record. Where file comparison was performed, the supplied file matched the recorded document." },
   { state: "Record found — file mismatch", color: "#ef4444", desc: "LAGDA found a transaction record, but the supplied file does not match the file recorded at completion. The document may have been altered." },
   { state: "Incomplete",                   color: "#C9960C", desc: "The transaction exists but has not been completed by all required participants. The document is not yet in a completed state." },
-  { state: "Cancelled",                    color: "#475569", desc: "The sender cancelled the transaction before completion." },
-  { state: "Voided",                       color: "#475569", desc: "The transaction was voided after completion under applicable terms." },
+  { state: "Cancelled",                    color: "#8A9BAE", desc: "The sender cancelled the transaction before completion." },
+  { state: "Voided",                       color: "#8A9BAE", desc: "The transaction was voided after completion under applicable terms." },
   { state: "No matching record",           color: "#ef4444", desc: "No LAGDA transaction record matches the supplied Verification ID. The document may not be from LAGDA, or the ID may be incorrect." },
-  { state: "Service unavailable",          color: "#64748b", desc: "LAGDA verification is temporarily unavailable. Try again later." },
+  { state: "Service unavailable",          color: "#94A3B8", desc: "LAGDA verification is temporarily unavailable. Try again later." },
 ];
 
 export function VerificationGuide() {
@@ -66,10 +66,10 @@ export function VerificationGuide() {
               { num: "03", method: "Use a verification link",  desc: "Follow a direct verification link shared by the sender or embedded in the document." },
             ].map(({ num, method, desc }) => (
               <div key={num} style={{ display: "flex", gap: 14, alignItems: "flex-start", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 10, padding: "14px 18px" }}>
-                <span style={{ color: "#0078D4", fontFamily: "'Geist Mono', monospace", fontSize: 16, fontWeight: 800, flexShrink: 0 }}>{num}</span>
+                <span style={{ color: "#38BDF8", fontFamily: "'Geist Mono', monospace", fontSize: 16, fontWeight: 800, flexShrink: 0 }}>{num}</span>
                 <div>
                   <p style={{ color: "white", ...GF, fontSize: 14, fontWeight: 700, margin: "0 0 4px" }}>{method}</p>
-                  <p style={{ color: "#64748b", ...GF, fontSize: 13, margin: 0, lineHeight: 1.5 }}>{desc}</p>
+                  <p style={{ color: "#94A3B8", ...GF, fontSize: 13, margin: 0, lineHeight: 1.5 }}>{desc}</p>
                 </div>
               </div>
             ))}
@@ -100,7 +100,7 @@ export function VerificationGuide() {
                 <span style={{ color, fontFamily: "'Geist Mono', monospace", fontSize: 10, fontWeight: 700, flexShrink: 0, marginTop: 2 }}>●</span>
                 <div>
                   <p style={{ color: "white", ...GF, fontSize: 13, fontWeight: 700, margin: "0 0 3px" }}>{state}</p>
-                  <p style={{ color: "#64748b", ...GF, fontSize: 13, margin: 0, lineHeight: 1.5 }}>{desc}</p>
+                  <p style={{ color: "#94A3B8", ...GF, fontSize: 13, margin: 0, lineHeight: 1.5 }}>{desc}</p>
                 </div>
               </div>
             ))}

@@ -77,7 +77,7 @@ export function AuthGuide() {
                 <p style={{ color: "white", ...GF, fontSize: 14, fontWeight: 700, margin: 0 }}>{name}</p>
                 <span style={{ color: "#38bdf8", ...GM, fontSize: 9, fontWeight: 700, flexShrink: 0 }}>{plans.toUpperCase()}</span>
               </div>
-              <p style={{ color: "#64748b", ...GF, fontSize: 13, margin: 0, lineHeight: 1.5 }}>{desc}</p>
+              <p style={{ color: "#94A3B8", ...GF, fontSize: 13, margin: 0, lineHeight: 1.5 }}>{desc}</p>
               {caution && <p style={{ color: "#C9960C", ...GM, fontSize: 10, marginTop: 8, borderTop: "1px solid rgba(255,255,255,0.05)", paddingTop: 8 }}>⚠ {caution}</p>}
             </div>
           ))}

@@ -33,7 +33,7 @@ export function SecurityDocVerification() {
               </div>
               <div style={{ paddingTop: 7 }}>
                 <p style={{ color: "white", ...GF, fontSize: 13, fontWeight: 700, margin: 0, marginBottom: 3 }}>{s.title}</p>
-                <p style={{ color: "#64748b", ...GF, fontSize: 12, lineHeight: 1.5, margin: 0 }}>{s.desc}</p>
+                <p style={{ color: "#94A3B8", ...GF, fontSize: 12, lineHeight: 1.5, margin: 0 }}>{s.desc}</p>
               </div>
             </div>
           ))}

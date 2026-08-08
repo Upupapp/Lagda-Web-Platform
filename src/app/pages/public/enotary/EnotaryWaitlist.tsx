@@ -137,12 +137,12 @@ export function EnotaryWaitlist() {
 
           {/* What this is not */}
           <div style={{ marginBottom: 28 }}>
-            <p style={{ color: "#475569", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", marginBottom: 10 }}>JOINING THE WAITLIST</p>
+            <p style={{ color: "#8A9BAE", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", marginBottom: 10 }}>JOINING THE WAITLIST</p>
             <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
               {NON_GUARANTEES.map((item) => (
                 <div key={item} style={{ display: "flex", gap: 10, padding: "9px 14px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 7 }}>
                   <span style={{ color: BURGUNDY, flexShrink: 0 }}>—</span>
-                  <span style={{ color: "#64748b", ...GF, fontSize: 12, lineHeight: 1.5 }}>{item}</span>
+                  <span style={{ color: "#94A3B8", ...GF, fontSize: 12, lineHeight: 1.5 }}>{item}</span>
                 </div>
               ))}
             </div>
@@ -230,7 +230,7 @@ export function EnotaryWaitlist() {
                 {formState === "submitting" ? "Registering…" : "Join the waitlist"}
               </button>
 
-              <p style={{ color: "#334155", ...GF, fontSize: 12, lineHeight: 1.6, margin: 0 }}>
+              <p style={{ color: "#7C8DA4", ...GF, fontSize: 12, lineHeight: 1.6, margin: 0 }}>
                 This is a frontend demonstration. Waitlist registrations are not currently stored or processed. Live registration will be connected during backend integration.
               </p>
             </div>

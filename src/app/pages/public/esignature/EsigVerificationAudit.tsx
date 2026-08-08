@@ -16,7 +16,7 @@ const GM = { fontFamily: "'Geist Mono', monospace" };
 // ── Transaction progress tracker ──────────────────────────────────────────────
 function ProgressTracker() {
   const STATUSES = [
-    { label: "Sent",               color: "#0078D4", done: true },
+    { label: "Sent",               color: "#38BDF8", done: true },
     { label: "Ana Reyes — Signed", color: "#22C55E", done: true },
     { label: "Marco Santos — Approving", color: "#F59E0B", done: false },
     { label: "Completed",          color: "#94a3b8", done: false },
@@ -29,7 +29,7 @@ function ProgressTracker() {
       borderRadius: 14, padding: "20px 20px",
       maxWidth: 360, width: "100%",
     }}>
-      <p style={{ color: "#475569", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.06em", marginBottom: 16 }}>
+      <p style={{ color: "#8A9BAE", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.06em", marginBottom: 16 }}>
         PROFESSIONAL SERVICES AGREEMENT
       </p>
       {STATUSES.map((s, i) => (
@@ -48,7 +48,7 @@ function ProgressTracker() {
             )}
           </div>
           <div style={{ paddingBottom: i < STATUSES.length - 1 ? 16 : 0 }}>
-            <span style={{ color: s.done ? "white" : "#475569", ...GF, fontSize: 12, fontWeight: s.done ? 600 : 400 }}>
+            <span style={{ color: s.done ? "white" : "#8A9BAE", ...GF, fontSize: 12, fontWeight: s.done ? 600 : 400 }}>
               {s.label}
             </span>
           </div>
@@ -77,9 +77,9 @@ function AuditTrailMockup() {
             <span aria-hidden style={{ fontSize: 13, flexShrink: 0, marginTop: 1 }}>{ev.icon}</span>
             <div style={{ flex: 1, minWidth: 0 }}>
               <p style={{ color: "white", ...GF, fontSize: 12, fontWeight: 600, margin: 0 }}>{ev.event}</p>
-              <p style={{ color: "#475569", ...GM, fontSize: 10, margin: "2px 0 0", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{ev.who}</p>
+              <p style={{ color: "#8A9BAE", ...GM, fontSize: 10, margin: "2px 0 0", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{ev.who}</p>
             </div>
-            <span style={{ color: "#334155", ...GM, fontSize: 10, flexShrink: 0 }}>{ev.time}</span>
+            <span style={{ color: "#7C8DA4", ...GM, fontSize: 10, flexShrink: 0 }}>{ev.time}</span>
           </div>
         ))}
       </div>
@@ -127,7 +127,7 @@ function VerificationDemo() {
               all: "unset", padding: "5px 12px", borderRadius: 999, cursor: "pointer",
               background: s.id === activeId ? "rgba(0,120,212,0.15)" : "rgba(255,255,255,0.05)",
               border: `1px solid ${s.id === activeId ? "rgba(0,120,212,0.4)" : "rgba(255,255,255,0.1)"}`,
-              color: s.id === activeId ? "#38bdf8" : "#64748b",
+              color: s.id === activeId ? "#38bdf8" : "#94A3B8",
               ...GF, fontSize: 12, fontWeight: s.id === activeId ? 700 : 500,
               transition: "all 0.15s ease",
             }}
@@ -156,13 +156,13 @@ function VerificationDemo() {
         <div style={{ padding: "8px 0" }}>
           {DETAILS[active.id]?.map((f) => (
             <div key={f.label} style={{ padding: "8px 18px", borderBottom: "1px solid rgba(255,255,255,0.04)", display: "flex", gap: 12, alignItems: "flex-start" }}>
-              <span style={{ color: "#475569", ...GM, fontSize: 10, flexShrink: 0, minWidth: 80, paddingTop: 2 }}>{f.label}</span>
+              <span style={{ color: "#8A9BAE", ...GM, fontSize: 10, flexShrink: 0, minWidth: 80, paddingTop: 2 }}>{f.label}</span>
               <span style={{ color: "white", ...(f.mono ? GM : GF), fontSize: 12, lineHeight: 1.4, wordBreak: "break-word" }}>{f.value}</span>
             </div>
           ))}
         </div>
         <div style={{ padding: "10px 18px", background: "rgba(0,0,0,0.2)" }}>
-          <p style={{ color: "#334155", ...GF, fontSize: 11, margin: 0, lineHeight: 1.5 }}>
+          <p style={{ color: "#7C8DA4", ...GF, fontSize: 11, margin: 0, lineHeight: 1.5 }}>
             Verification confirms LAGDA records only. Not a substitute for legal authentication.
           </p>
         </div>
@@ -194,7 +194,7 @@ function PublicPrivateSection() {
           {PRIVATE.map((item) => (
             <div key={item} style={{ display: "flex", gap: 8, alignItems: "flex-start", marginBottom: 8 }}>
               <span style={{ color: "#DC2626", fontWeight: 700, flexShrink: 0, fontSize: 13 }}>✗</span>
-              <span style={{ color: "#64748b", ...GF, fontSize: 13, lineHeight: 1.5 }}>{item}</span>
+              <span style={{ color: "#94A3B8", ...GF, fontSize: 13, lineHeight: 1.5 }}>{item}</span>
             </div>
           ))}
         </div>
@@ -223,7 +223,7 @@ export function EsigVerificationAudit() {
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               {["View per-participant status in real time", "See when the document was viewed", "Know which authentication step was completed", "Monitor partial completion progress", "Identify pending or failed actions", "Cancel or extend where needed"].map((item) => (
                 <div key={item} style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
-                  <span style={{ color: "#0078D4", fontWeight: 700, flexShrink: 0, fontSize: 13 }}>✓</span>
+                  <span style={{ color: "#38BDF8", fontWeight: 700, flexShrink: 0, fontSize: 13 }}>✓</span>
                   <span style={{ color: "#94a3b8", ...GF, fontSize: 14, lineHeight: 1.5 }}>{item}</span>
                 </div>
               ))}
@@ -243,7 +243,7 @@ export function EsigVerificationAudit() {
             <p style={{ color: "#94a3b8", ...GF, fontSize: 14, lineHeight: 1.65, margin: 0, marginBottom: 16 }}>
               Recorded events may include: transaction creation, invitation delivery, document views, authentication attempts and completions, field entries, signatures, approvals, completions, cancellations, expirations, and verification record generation.
             </p>
-            <p style={{ color: "#475569", ...GF, fontSize: 13, lineHeight: 1.6, margin: 0 }}>
+            <p style={{ color: "#8A9BAE", ...GF, fontSize: 13, lineHeight: 1.6, margin: 0 }}>
               The audit trail supports transparency and accountability. For situations requiring formal legal evidence, consult applicable requirements for what records must be produced.
             </p>
           </div>
@@ -264,11 +264,11 @@ export function EsigVerificationAudit() {
           ].map((e) => (
             <div key={e.label} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 10, padding: "12px 14px" }}>
               <p style={{ color: "white", ...GF, fontSize: 13, fontWeight: 700, margin: 0, marginBottom: 4 }}>{e.label}</p>
-              <p style={{ color: "#64748b", ...GF, fontSize: 12, margin: 0, lineHeight: 1.5 }}>{e.desc}</p>
+              <p style={{ color: "#94A3B8", ...GF, fontSize: 12, margin: 0, lineHeight: 1.5 }}>{e.desc}</p>
             </div>
           ))}
         </div>
-        <p style={{ color: "#475569", ...GF, fontSize: 13, lineHeight: 1.6, margin: "20px 0 0" }}>
+        <p style={{ color: "#8A9BAE", ...GF, fontSize: 13, lineHeight: 1.6, margin: "20px 0 0" }}>
           Exact device location is never collected automatically. Location information, where shown, is derived from IP address only and is approximate. Precise location should only be collected with explicit participant permission and where justified by the selected workflow.
         </p>
         <style>{`.ev-grid { grid-template-columns: repeat(3, 1fr); } @media (max-width: 720px) { .ev-grid { grid-template-columns: 1fr; } }`}</style>
@@ -285,8 +285,8 @@ export function EsigVerificationAudit() {
                 That a document matches the LAGDA record for a given Verification ID. Verification helps detect whether the submitted file has been altered since completion. It does not substitute for legal authentication or notarization.
               </p>
             </div>
-            <p style={{ color: "#475569", ...GF, fontSize: 13, lineHeight: 1.6, margin: 0 }}>
-              <strong style={{ color: "#64748b" }}>Verification methods:</strong> QR code, Verification ID, secure verification link, or document upload where supported.
+            <p style={{ color: "#8A9BAE", ...GF, fontSize: 13, lineHeight: 1.6, margin: 0 }}>
+              <strong style={{ color: "#94A3B8" }}>Verification methods:</strong> QR code, Verification ID, secure verification link, or document upload where supported.
             </p>
           </div>
           <VerificationDemo />

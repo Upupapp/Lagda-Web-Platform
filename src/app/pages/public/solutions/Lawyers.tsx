@@ -26,7 +26,7 @@ function ClientEngagementMockup() {
       <div style={{ padding: "12px 16px", borderBottom: "1px solid rgba(255,255,255,0.07)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <div>
           <p style={{ color: "white", ...GF, fontSize: 12, fontWeight: 700, margin: 0 }}>New Transaction</p>
-          <p style={{ color: "#475569", ...GM, fontSize: 10, margin: "1px 0 0" }}>Engagement Letter · Mabini Legal Solutions</p>
+          <p style={{ color: "#8A9BAE", ...GM, fontSize: 10, margin: "1px 0 0" }}>Engagement Letter · Mabini Legal Solutions</p>
         </div>
         <span style={{ background: "rgba(34,197,94,0.1)", color: "#22C55E", ...GM, fontSize: 9, fontWeight: 700, padding: "2px 8px", borderRadius: 999, border: "1px solid rgba(34,197,94,0.25)" }}>ACTIVE</span>
       </div>
@@ -35,13 +35,13 @@ function ClientEngagementMockup() {
           <div style={{ width: 28, height: 28, borderRadius: "50%", background: "rgba(0,120,212,0.15)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, ...GM, fontSize: 9, color: "#38bdf8", fontWeight: 700 }}>{String(i + 1).padStart(2, "0")}</div>
           <div style={{ flex: 1, minWidth: 0 }}>
             <p style={{ color: "white", ...GF, fontSize: 12, fontWeight: 600, margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{s.label}</p>
-            <p style={{ color: "#475569", ...GM, fontSize: 10, margin: "1px 0 0" }}>{s.who}</p>
+            <p style={{ color: "#8A9BAE", ...GM, fontSize: 10, margin: "1px 0 0" }}>{s.who}</p>
           </div>
           <span style={{ color: "#38bdf8", ...GM, fontSize: 9, fontWeight: 700, flexShrink: 0 }}>{s.status}</span>
         </div>
       ))}
       <div style={{ padding: "10px 16px", background: "rgba(0,0,0,0.2)", display: "flex", justifyContent: "space-between" }}>
-        <span style={{ color: "#334155", ...GM, fontSize: 9 }}>LAGDA-VER-2026-004821</span>
+        <span style={{ color: "#7C8DA4", ...GM, fontSize: 9 }}>LAGDA-VER-2026-004821</span>
         <span style={{ color: "#22C55E", ...GM, fontSize: 9, fontWeight: 700 }}>Audit trail active</span>
       </div>
     </div>
@@ -100,7 +100,7 @@ export function Lawyers() {
             <ChallengeCards challenges={CHALLENGES} />
           </div>
           <div>
-            <p style={{ color: "#475569", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", marginBottom: 12 }}>ENGAGEMENT IN PROGRESS</p>
+            <p style={{ color: "#8A9BAE", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", marginBottom: 12 }}>ENGAGEMENT IN PROGRESS</p>
             <ClientEngagementMockup />
           </div>
         </div>

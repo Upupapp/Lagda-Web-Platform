@@ -18,20 +18,20 @@ function ContactListMockup() {
     <div aria-hidden style={{ background: "rgba(7,17,31,0.95)", border: "1px solid rgba(0,120,212,0.22)", borderRadius: 14, overflow: "hidden", maxWidth: 440, width: "100%" }}>
       <div style={{ padding: "10px 16px", borderBottom: "1px solid rgba(255,255,255,0.07)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <span style={{ color: "white", ...GF, fontSize: 13, fontWeight: 700 }}>Contacts</span>
-        <span style={{ background: "rgba(255,255,255,0.05)", ...GM, fontSize: 10, color: "#475569", padding: "2px 8px", borderRadius: 6 }}>Search contacts…</span>
+        <span style={{ background: "rgba(255,255,255,0.05)", ...GM, fontSize: 10, color: "#8A9BAE", padding: "2px 8px", borderRadius: 6 }}>Search contacts…</span>
       </div>
       {contacts.map((c) => (
         <div key={c.name} style={{ padding: "10px 16px", borderBottom: "1px solid rgba(255,255,255,0.05)", display: "flex", alignItems: "center", gap: 12 }}>
           <div style={{ width: 32, height: 32, borderRadius: "50%", background: "rgba(0,120,212,0.2)", display: "flex", alignItems: "center", justifyContent: "center", ...GM, fontSize: 10, fontWeight: 700, color: "#38bdf8", flexShrink: 0 }}>{c.avatar}</div>
           <div style={{ flex: 1, minWidth: 0 }}>
             <p style={{ color: "white", ...GF, fontSize: 12, fontWeight: 600, margin: 0 }}>{c.name}</p>
-            <p style={{ color: "#475569", ...GM, fontSize: 10, margin: "1px 0 0", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.role} · {c.org}</p>
+            <p style={{ color: "#8A9BAE", ...GM, fontSize: 10, margin: "1px 0 0", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.role} · {c.org}</p>
           </div>
           <span style={{ background: "rgba(0,120,212,0.1)", color: "#38bdf8", border: "1px solid rgba(0,120,212,0.2)", ...GM, fontSize: 9, fontWeight: 700, padding: "2px 7px", borderRadius: 999, flexShrink: 0 }}>{c.tag}</span>
         </div>
       ))}
       <div style={{ padding: "10px 16px", background: "rgba(0,120,212,0.06)" }}>
-        <span style={{ color: "#0078D4", ...GF, fontSize: 12, fontWeight: 700 }}>+ Add contact</span>
+        <span style={{ color: "#38BDF8", ...GF, fontSize: 12, fontWeight: 700 }}>+ Add contact</span>
       </div>
     </div>
   );
@@ -54,7 +54,7 @@ export function Contacts() {
             <div style={{ display: "grid", gap: 6 }} className="con-info-grid">
               {CONTACT_INFO.map((f) => (
                 <div key={f} style={{ display: "flex", gap: 7, alignItems: "flex-start" }}>
-                  <span style={{ color: "#0078D4", flexShrink: 0, fontSize: 12 }}>·</span>
+                  <span style={{ color: "#38BDF8", flexShrink: 0, fontSize: 12 }}>·</span>
                   <span style={{ color: "#94a3b8", ...GF, fontSize: 13, lineHeight: 1.45 }}>{f}</span>
                 </div>
               ))}
@@ -79,7 +79,7 @@ export function Contacts() {
           ].map((a) => (
             <div key={a.action} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 10, padding: "12px 12px" }}>
               <p style={{ color: "white", ...GF, fontSize: 13, fontWeight: 700, margin: 0, marginBottom: 4 }}>{a.action}</p>
-              <p style={{ color: "#64748b", ...GF, fontSize: 12, lineHeight: 1.5, margin: 0 }}>{a.desc}</p>
+              <p style={{ color: "#94A3B8", ...GF, fontSize: 12, lineHeight: 1.5, margin: 0 }}>{a.desc}</p>
             </div>
           ))}
         </div>

@@ -19,8 +19,8 @@ const STATUS_DISPLAY: Record<ServiceStatusValue, { label: string; color: string;
   "degraded":        { label: "Degraded Performance", color: "#C9960C", bg: "rgba(201,150,12,0.1)"  },
   "partial-outage":  { label: "Partial Outage",       color: "#F97316", bg: "rgba(249,115,22,0.1)"  },
   "major-outage":    { label: "Major Outage",         color: "#ef4444", bg: "rgba(239,68,68,0.1)"   },
-  "maintenance":     { label: "Maintenance",          color: "#0078D4", bg: "rgba(0,120,212,0.1)"   },
-  "not-available":   { label: "Not Available",        color: "#475569", bg: "rgba(71,85,105,0.1)"   },
+  "maintenance":     { label: "Maintenance",          color: "#38BDF8", bg: "rgba(0,120,212,0.1)"   },
+  "not-available":   { label: "Not Available",        color: "#8A9BAE", bg: "rgba(71,85,105,0.1)"   },
   "future-product":  { label: "Future Product",       color: "#c084fc", bg: "rgba(103,2,59,0.1)"    },
 };
 
@@ -83,8 +83,8 @@ export function ServiceStatus() {
               </div>
             </div>
             <div style={{ textAlign: "right", flexShrink: 0 }}>
-              <p style={{ color: "#334155", ...GM, fontSize: 9, marginBottom: 2 }}>LAST UPDATED</p>
-              <p style={{ color: "#475569", ...GM, fontSize: 11, margin: 0 }}>{MOCK_LAST_UPDATED}</p>
+              <p style={{ color: "#7C8DA4", ...GM, fontSize: 9, marginBottom: 2 }}>LAST UPDATED</p>
+              <p style={{ color: "#8A9BAE", ...GM, fontSize: 11, margin: 0 }}>{MOCK_LAST_UPDATED}</p>
             </div>
           </div>
         </div>
@@ -102,13 +102,13 @@ export function ServiceStatus() {
 
       <ResourcesSection id="services">
         <div style={{ maxWidth: 780, margin: "0 auto" }}>
-          <p style={{ color: "#475569", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", marginBottom: 16 }}>SERVICES</p>
+          <p style={{ color: "#8A9BAE", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", marginBottom: 16 }}>SERVICES</p>
           <div style={{ display: "flex", flexDirection: "column", gap: 4 }} role="list" aria-label="Service status list">
             {MOCK_SERVICES.map(({ id, name, status, note }) => (
               <div key={id} role="listitem" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 16, padding: "14px 18px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 9, flexWrap: "wrap" }}>
                 <div>
                   <p style={{ color: "white", ...GF, fontSize: 14, fontWeight: 600, margin: 0 }}>{name}</p>
-                  {note && <p style={{ color: "#475569", ...GF, fontSize: 12, margin: "3px 0 0" }}>{note}</p>}
+                  {note && <p style={{ color: "#8A9BAE", ...GF, fontSize: 12, margin: "3px 0 0" }}>{note}</p>}
                 </div>
                 <StatusBadge status={status} />
               </div>
@@ -119,15 +119,15 @@ export function ServiceStatus() {
 
       <ResourcesSection id="incidents" light bordered>
         <div style={{ maxWidth: 780, margin: "0 auto" }}>
-          <p style={{ color: "#475569", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", marginBottom: 16 }}>RECENT INCIDENTS</p>
+          <p style={{ color: "#8A9BAE", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", marginBottom: 16 }}>RECENT INCIDENTS</p>
           {MOCK_INCIDENTS.map(({ id, date, title, status: incStatus, detail }) => (
             <div key={id} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 10, padding: "16px 20px" }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, flexWrap: "wrap", marginBottom: 8 }}>
                 <p style={{ color: "white", ...GF, fontSize: 14, fontWeight: 700, margin: 0 }}>{title}</p>
                 <span style={{ color: "#22C55E", ...GM, fontSize: 10, fontWeight: 700, flexShrink: 0 }}>{incStatus.toUpperCase()}</span>
               </div>
-              <p style={{ color: "#475569", ...GM, fontSize: 10, margin: "0 0 8px" }}>{date}</p>
-              <p style={{ color: "#64748b", ...GF, fontSize: 13, margin: 0, lineHeight: 1.5 }}>{detail}</p>
+              <p style={{ color: "#8A9BAE", ...GM, fontSize: 10, margin: "0 0 8px" }}>{date}</p>
+              <p style={{ color: "#94A3B8", ...GF, fontSize: 13, margin: 0, lineHeight: 1.5 }}>{detail}</p>
             </div>
           ))}
         </div>
@@ -135,12 +135,12 @@ export function ServiceStatus() {
 
       <ResourcesSection id="legend">
         <div style={{ maxWidth: 780, margin: "0 auto" }}>
-          <p style={{ color: "#475569", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", marginBottom: 16 }}>STATUS KEY</p>
+          <p style={{ color: "#8A9BAE", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", marginBottom: 16 }}>STATUS KEY</p>
           <div style={{ display: "grid", gap: 8 }} className="legend-grid">
             {(Object.entries(STATUS_DISPLAY) as [ServiceStatusValue, { label: string; color: string; bg: string }][]).map(([key, { label, color }]) => (
               <div key={key} style={{ display: "flex", alignItems: "center", gap: 8 }}>
                 <span style={{ color, fontSize: 10 }}>●</span>
-                <span style={{ color: "#64748b", ...GF, fontSize: 13 }}><strong style={{ color: "white" }}>{label}</strong> — {key === "operational" ? "System is functioning normally" : key === "degraded" ? "System is slower or partially impaired" : key === "partial-outage" ? "Some features are unavailable" : key === "major-outage" ? "System is unavailable" : key === "maintenance" ? "Planned maintenance in progress" : key === "not-available" ? "Feature is not yet available" : "Future regulated product not yet launched"}</span>
+                <span style={{ color: "#94A3B8", ...GF, fontSize: 13 }}><strong style={{ color: "white" }}>{label}</strong> — {key === "operational" ? "System is functioning normally" : key === "degraded" ? "System is slower or partially impaired" : key === "partial-outage" ? "Some features are unavailable" : key === "major-outage" ? "System is unavailable" : key === "maintenance" ? "Planned maintenance in progress" : key === "not-available" ? "Feature is not yet available" : "Future regulated product not yet launched"}</span>
               </div>
             ))}
           </div>

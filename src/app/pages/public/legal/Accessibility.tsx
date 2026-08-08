@@ -27,8 +27,8 @@ export function Accessibility() {
         <div style={{ maxWidth: 780, margin: "0 auto" }}>
           <p style={{ color: "#38bdf8", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 12 }}>LEGAL</p>
           <h1 style={{ color: "white", ...GF, fontSize: "clamp(24px, 4vw, 40px)", fontWeight: 900, lineHeight: 1.1, letterSpacing: "-0.02em", margin: "0 0 14px" }}>Accessibility Statement</h1>
-          <p style={{ color: "#64748b", ...GF, fontSize: 15, margin: "0 0 10px" }}>UpUp Technologies — LAGDA Platform</p>
-          <span style={{ color: "#475569", ...GM, fontSize: 10 }}>Updated: July 2026</span>
+          <p style={{ color: "#94A3B8", ...GF, fontSize: 15, margin: "0 0 10px" }}>UpUp Technologies — LAGDA Platform</p>
+          <span style={{ color: "#8A9BAE", ...GM, fontSize: 10 }}>Updated: July 2026</span>
         </div>
       </section>
 
@@ -87,7 +87,7 @@ export function Accessibility() {
         </LegalSection>
 
         <div style={{ marginTop: 40, background: "rgba(0,120,212,0.06)", border: "1px solid rgba(0,120,212,0.15)", borderRadius: 10, padding: "14px 18px" }}>
-          <p style={{ color: "#64748b", ...GF, fontSize: 13, lineHeight: 1.65, margin: 0 }}>
+          <p style={{ color: "#94A3B8", ...GF, fontSize: 13, lineHeight: 1.65, margin: 0 }}>
             LAGDA aims to align its public website and product interfaces with recognized accessibility practices. This statement describes our current approach and does not claim formal conformance to any standard unless a completed audit confirms it.
           </p>
         </div>

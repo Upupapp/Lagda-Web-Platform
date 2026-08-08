@@ -19,14 +19,14 @@ function EnrollmentMockup() {
       <div style={{ padding: "12px 16px", borderBottom: "1px solid rgba(255,255,255,0.07)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <div>
           <p style={{ color: "white", ...GF, fontSize: 12, fontWeight: 700, margin: 0 }}>Enrollment Confirmation</p>
-          <p style={{ color: "#475569", ...GM, fontSize: 10, margin: "1px 0 0" }}>Sampaguita Learning Institute · AY 2026–2027</p>
+          <p style={{ color: "#8A9BAE", ...GM, fontSize: 10, margin: "1px 0 0" }}>Sampaguita Learning Institute · AY 2026–2027</p>
         </div>
         <span style={{ background: "rgba(0,120,212,0.12)", color: "#38bdf8", ...GM, fontSize: 9, fontWeight: 700, padding: "2px 8px", borderRadius: 999, border: "1px solid rgba(0,120,212,0.25)" }}>ACTIVE</span>
       </div>
       {[
         { label: "Student — Ana Reyes",     role: "Student acknowledgment",     status: "DONE",    color: "#22C55E" },
-        { label: "Parent — Marco Reyes",    role: "Guardian acknowledgment",    status: "ACTIVE",  color: "#0078D4" },
-        { label: "Registrar",               role: "Institutional confirmation",  status: "PENDING", color: "#334155" },
+        { label: "Parent — Marco Reyes",    role: "Guardian acknowledgment",    status: "ACTIVE",  color: "#38BDF8" },
+        { label: "Registrar",               role: "Institutional confirmation",  status: "PENDING", color: "#7C8DA4" },
       ].map((p, i) => (
         <div key={i} style={{ padding: "9px 16px", borderBottom: i < 2 ? "1px solid rgba(255,255,255,0.04)" : "none", display: "flex", gap: 10, alignItems: "center" }}>
           <div style={{
@@ -38,14 +38,14 @@ function EnrollmentMockup() {
             {p.status === "DONE" ? "✓" : String(i + 1).padStart(2, "0")}
           </div>
           <div style={{ flex: 1 }}>
-            <p style={{ color: p.status === "PENDING" ? "#334155" : "white", ...GF, fontSize: 12, fontWeight: 600, margin: 0 }}>{p.label}</p>
-            <p style={{ color: "#475569", ...GM, fontSize: 10, margin: "1px 0 0" }}>{p.role}</p>
+            <p style={{ color: p.status === "PENDING" ? "#7C8DA4" : "white", ...GF, fontSize: 12, fontWeight: 600, margin: 0 }}>{p.label}</p>
+            <p style={{ color: "#8A9BAE", ...GM, fontSize: 10, margin: "1px 0 0" }}>{p.role}</p>
           </div>
           <span style={{ color: p.color, ...GM, fontSize: 9, fontWeight: 700 }}>{p.status}</span>
         </div>
       ))}
       <div style={{ padding: "10px 16px", background: "rgba(0,0,0,0.2)", display: "flex", justifyContent: "space-between" }}>
-        <span style={{ color: "#334155", ...GM, fontSize: 9 }}>LAGDA-VER-2026-003492</span>
+        <span style={{ color: "#7C8DA4", ...GM, fontSize: 9 }}>LAGDA-VER-2026-003492</span>
         <span style={{ color: "#22C55E", ...GM, fontSize: 9, fontWeight: 700 }}>Audit trail active</span>
       </div>
     </div>
@@ -110,7 +110,7 @@ export function Education() {
             <ChallengeCards challenges={CHALLENGES} />
           </div>
           <div>
-            <p style={{ color: "#475569", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", marginBottom: 12 }}>ENROLLMENT FORM IN PROGRESS</p>
+            <p style={{ color: "#8A9BAE", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", marginBottom: 12 }}>ENROLLMENT FORM IN PROGRESS</p>
             <EnrollmentMockup />
           </div>
         </div>

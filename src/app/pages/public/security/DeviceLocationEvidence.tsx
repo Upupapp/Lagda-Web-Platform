@@ -24,7 +24,7 @@ export function DeviceLocationEvidence() {
             <thead>
               <tr>
                 {["Data type", "Public", "Description"].map((h) => (
-                  <th key={h} style={{ color: "#475569", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.06em", textAlign: "left", padding: "8px 12px", borderBottom: "1px solid rgba(255,255,255,0.08)" }}>{h}</th>
+                  <th key={h} style={{ color: "#8A9BAE", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.06em", textAlign: "left", padding: "8px 12px", borderBottom: "1px solid rgba(255,255,255,0.08)" }}>{h}</th>
                 ))}
               </tr>
             </thead>
@@ -35,7 +35,7 @@ export function DeviceLocationEvidence() {
                   <td style={{ padding: "10px 12px", textAlign: "center" }}>
                     <span style={{ color: e.public ? "#22C55E" : "#ef4444", fontSize: 14 }}>{e.public ? "✓" : "✕"}</span>
                   </td>
-                  <td style={{ padding: "10px 12px", color: "#64748b", ...GF, fontSize: 12 }}>{e.desc}</td>
+                  <td style={{ padding: "10px 12px", color: "#94A3B8", ...GF, fontSize: 12 }}>{e.desc}</td>
                 </tr>
               ))}
             </tbody>
@@ -54,7 +54,7 @@ export function DeviceLocationEvidence() {
           ].map((item) => (
             <div key={item.title} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 10, padding: "12px 14px" }}>
               <p style={{ color: "white", ...GF, fontSize: 13, fontWeight: 700, margin: 0, marginBottom: 4 }}>{item.title}</p>
-              <p style={{ color: "#64748b", ...GF, fontSize: 12, lineHeight: 1.5, margin: 0 }}>{item.desc}</p>
+              <p style={{ color: "#94A3B8", ...GF, fontSize: 12, lineHeight: 1.5, margin: 0 }}>{item.desc}</p>
             </div>
           ))}
         </div>

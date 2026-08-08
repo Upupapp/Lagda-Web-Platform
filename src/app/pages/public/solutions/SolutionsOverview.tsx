@@ -53,7 +53,7 @@ export function SolutionsOverview() {
             }}>
               <span aria-hidden style={{ fontSize: 20, display: "block", marginBottom: 8 }}>{p.icon}</span>
               <p style={{ color: "white", ...GF, fontSize: 13, fontWeight: 700, margin: 0, marginBottom: 3 }}>{p.title}</p>
-              <p style={{ color: "#64748b", ...GF, fontSize: 12, lineHeight: 1.5, margin: 0 }}>{p.desc}</p>
+              <p style={{ color: "#94A3B8", ...GF, fontSize: 12, lineHeight: 1.5, margin: 0 }}>{p.desc}</p>
             </div>
           ))}
         </div>
@@ -83,10 +83,10 @@ export function SolutionsOverview() {
                 }}>{group.icon}</div>
                 <div>
                   <p style={{ color: "white", ...GF, fontSize: 14, fontWeight: 700, margin: 0 }}>{group.group}</p>
-                  <p style={{ color: "#475569", ...GM, fontSize: 10, margin: 0 }}>{group.solutions.length} solution{group.solutions.length > 1 ? "s" : ""}</p>
+                  <p style={{ color: "#8A9BAE", ...GM, fontSize: 10, margin: 0 }}>{group.solutions.length} solution{group.solutions.length > 1 ? "s" : ""}</p>
                 </div>
               </div>
-              <p style={{ color: "#64748b", ...GF, fontSize: 13, lineHeight: 1.55, margin: 0 }}>{group.desc}</p>
+              <p style={{ color: "#94A3B8", ...GF, fontSize: 13, lineHeight: 1.55, margin: 0 }}>{group.desc}</p>
               <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
                 {group.solutions.map((s) => (
                   <Link key={s.path} to={s.path} style={{
@@ -123,7 +123,7 @@ export function SolutionsOverview() {
               }}>
                 <span aria-hidden style={{ fontSize: 20, display: "block", marginBottom: 8 }}>{cap.icon}</span>
                 <p style={{ color: "white", ...GF, fontSize: 13, fontWeight: 700, margin: 0, marginBottom: 3 }}>{cap.title}</p>
-                <p style={{ color: "#64748b", ...GF, fontSize: 12, lineHeight: 1.45, margin: 0 }}>{cap.desc}</p>
+                <p style={{ color: "#94A3B8", ...GF, fontSize: 12, lineHeight: 1.45, margin: 0 }}>{cap.desc}</p>
               </div>
             </Link>
           ))}

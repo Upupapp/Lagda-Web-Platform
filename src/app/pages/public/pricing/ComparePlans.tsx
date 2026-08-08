@@ -16,7 +16,7 @@ export function ComparePlans() {
           <h1 style={{ color: "white", ...GF, fontSize: "clamp(26px, 4.5vw, 46px)", fontWeight: 900, lineHeight: 1.1, letterSpacing: "-0.03em", margin: "0 0 16px" }}>
             Compare LAGDA eSignature Plans
           </h1>
-          <p style={{ color: "#64748b", ...GF, fontSize: 16, lineHeight: 1.65, maxWidth: 640, margin: "0 auto" }}>
+          <p style={{ color: "#94A3B8", ...GF, fontSize: 16, lineHeight: 1.65, maxWidth: 640, margin: "0 auto" }}>
             A detailed view of what's included in each plan. Prices and exact limits will be confirmed at launch.
           </p>
         </div>
@@ -36,10 +36,10 @@ export function ComparePlans() {
         <div style={{ display: "flex", gap: 20, flexWrap: "wrap", marginBottom: 28 }}>
           {[
             { sym: "✓ Included",       col: "#22C55E" },
-            { sym: "— Not included",   col: "#475569" },
+            { sym: "— Not included",   col: "#8A9BAE" },
             { sym: "Enterprise",       col: "#0078D4" },
             { sym: "Planned",          col: "#C9960C" },
-            { sym: "Varies by plan",   col: "#64748b" },
+            { sym: "Varies by plan",   col: "#94A3B8" },
           ].map(({ sym, col }) => (
             <span key={sym} style={{ color: col, ...GM, fontSize: 10, display: "flex", alignItems: "center", gap: 4 }}>{sym}</span>
           ))}
@@ -47,7 +47,7 @@ export function ComparePlans() {
 
         <CompareTable />
 
-        <p style={{ color: "#334155", ...GF, fontSize: 12, lineHeight: 1.65, marginTop: 20 }}>
+        <p style={{ color: "#7C8DA4", ...GF, fontSize: 12, lineHeight: 1.65, marginTop: 20 }}>
           Feature availability may vary by plan configuration, product version, and market. This comparison reflects planned availability and is subject to change. Planned features are not yet confirmed as included.
         </p>
       </PricingSection>
@@ -68,7 +68,7 @@ export function ComparePlans() {
           ].map(({ method, note }) => (
             <div key={method} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 10, padding: "12px 16px", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
               <span style={{ color: "#94a3b8", ...GF, fontSize: 13 }}>{method}</span>
-              <span style={{ color: "#64748b", ...GM, fontSize: 10, flexShrink: 0 }}>{note}</span>
+              <span style={{ color: "#94A3B8", ...GM, fontSize: 10, flexShrink: 0 }}>{note}</span>
             </div>
           ))}
         </div>
@@ -84,7 +84,7 @@ export function ComparePlans() {
       <PricingSection id="cta" light bordered>
         <div style={{ maxWidth: 600, margin: "0 auto", textAlign: "center" }}>
           <h2 style={{ color: "white", ...GF, fontSize: 28, fontWeight: 800, marginBottom: 14 }}>Ready to get started?</h2>
-          <p style={{ color: "#64748b", ...GF, fontSize: 15, lineHeight: 1.65, marginBottom: 28 }}>Create a free account or contact sales to discuss your requirements.</p>
+          <p style={{ color: "#94A3B8", ...GF, fontSize: 15, lineHeight: 1.65, marginBottom: 28 }}>Create a free account or contact sales to discuss your requirements.</p>
           <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
             <Link to="/create-account" style={{ background: "#0078D4", color: "white", ...GF, fontSize: 14, fontWeight: 700, padding: "12px 28px", borderRadius: 8, textDecoration: "none", minHeight: 44, display: "flex", alignItems: "center" }}>Create Free Account</Link>
             <Link to="/contact" style={{ background: "rgba(255,255,255,0.06)", color: "white", ...GF, fontSize: 14, fontWeight: 600, padding: "12px 28px", borderRadius: 8, textDecoration: "none", minHeight: 44, display: "flex", alignItems: "center", border: "1px solid rgba(255,255,255,0.1)" }}>Contact Sales</Link>

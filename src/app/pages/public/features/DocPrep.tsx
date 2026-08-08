@@ -26,15 +26,15 @@ function DocWorkspaceMockup() {
       {/* Document preview */}
       <div style={{ padding: "12px 16px", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
         <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 10 }}>
-          <div style={{ width: 32, height: 40, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 4, display: "flex", alignItems: "center", justifyContent: "center", ...GM, fontSize: 8, color: "#475569" }}>PDF</div>
+          <div style={{ width: 32, height: 40, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 4, display: "flex", alignItems: "center", justifyContent: "center", ...GM, fontSize: 8, color: "#8A9BAE" }}>PDF</div>
           <div>
             <p style={{ color: "white", ...GF, fontSize: 12, fontWeight: 600, margin: 0 }}>Professional Services Agreement</p>
-            <p style={{ color: "#475569", ...GM, fontSize: 10, margin: 0 }}>3 pages · 4 fields placed</p>
+            <p style={{ color: "#8A9BAE", ...GM, fontSize: 10, margin: 0 }}>3 pages · 4 fields placed</p>
           </div>
         </div>
         <div style={{ display: "flex", gap: 4 }}>
           {[1, 2, 3].map((pg) => (
-            <div key={pg} style={{ flex: 1, height: 48, background: pg === 3 ? "rgba(0,120,212,0.1)" : "rgba(255,255,255,0.03)", border: `1px solid ${pg === 3 ? "rgba(0,120,212,0.3)" : "rgba(255,255,255,0.07)"}`, borderRadius: 6, display: "flex", alignItems: "center", justifyContent: "center", ...GM, fontSize: 9, color: "#475569" }}>
+            <div key={pg} style={{ flex: 1, height: 48, background: pg === 3 ? "rgba(0,120,212,0.1)" : "rgba(255,255,255,0.03)", border: `1px solid ${pg === 3 ? "rgba(0,120,212,0.3)" : "rgba(255,255,255,0.07)"}`, borderRadius: 6, display: "flex", alignItems: "center", justifyContent: "center", ...GM, fontSize: 9, color: "#8A9BAE" }}>
               Pg {pg}{pg === 3 && " ●"}
             </div>
           ))}
@@ -46,9 +46,9 @@ function DocWorkspaceMockup() {
           <div key={f.type + f.participant} style={{ padding: "7px 16px", borderBottom: "1px solid rgba(255,255,255,0.04)", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
               <span style={{ background: "rgba(0,120,212,0.12)", color: "#38bdf8", ...GM, fontSize: 9, fontWeight: 700, padding: "2px 6px", borderRadius: 4, flexShrink: 0 }}>{f.type}</span>
-              <span style={{ color: "#64748b", ...GF, fontSize: 11 }}>{f.participant}</span>
+              <span style={{ color: "#94A3B8", ...GF, fontSize: 11 }}>{f.participant}</span>
             </div>
-            <span style={{ color: "#334155", ...GM, fontSize: 9 }}>pg {f.page}</span>
+            <span style={{ color: "#7C8DA4", ...GM, fontSize: 9 }}>pg {f.page}</span>
           </div>
         ))}
       </div>
@@ -91,7 +91,7 @@ export function DocPrep() {
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               {["Upload one or more PDFs in a single transaction", "Set document order for multi-document workflows", "Browse page thumbnails and preview before placing fields", "Assign fields to specific participant roles", "Mark fields as required or optional", "Review the complete preparation summary before sending", "Save as a draft if setup is not complete"].map((item) => (
                 <div key={item} style={{ display: "flex", gap: 8 }}>
-                  <span style={{ color: "#0078D4", fontWeight: 700, flexShrink: 0 }}>✓</span>
+                  <span style={{ color: "#38BDF8", fontWeight: 700, flexShrink: 0 }}>✓</span>
                   <span style={{ color: "#94a3b8", ...GF, fontSize: 14, lineHeight: 1.5 }}>{item}</span>
                 </div>
               ))}
@@ -108,7 +108,7 @@ export function DocPrep() {
           {FIELD_TYPES.map((f) => (
             <div key={f.type} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 10, padding: "12px 14px" }}>
               <p style={{ color: "#38bdf8", ...GM, fontSize: 11, fontWeight: 700, margin: 0, marginBottom: 4 }}>{f.type}</p>
-              <p style={{ color: "#64748b", ...GF, fontSize: 13, lineHeight: 1.5, margin: 0 }}>{f.desc}</p>
+              <p style={{ color: "#94A3B8", ...GF, fontSize: 13, lineHeight: 1.5, margin: 0 }}>{f.desc}</p>
             </div>
           ))}
         </div>

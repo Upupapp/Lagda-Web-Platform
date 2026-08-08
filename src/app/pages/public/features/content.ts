@@ -133,7 +133,7 @@ export const VERIFICATION_STATES = [
   {
     id: "incomplete",
     label: "Incomplete Transaction",
-    color: "#64748b",
+    color: "#94A3B8",
     bg: "rgba(100,116,139,0.1)",
     border: "rgba(100,116,139,0.25)",
     desc: "A transaction matching this ID exists, but it has not yet been completed. Verification is not available until all required participants have acted.",

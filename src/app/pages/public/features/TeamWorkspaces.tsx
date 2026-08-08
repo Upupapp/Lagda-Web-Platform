@@ -19,7 +19,7 @@ function WorkspaceMockup() {
       <div style={{ padding: "10px 16px", borderBottom: "1px solid rgba(255,255,255,0.07)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <div>
           <p style={{ color: "white", ...GF, fontSize: 12, fontWeight: 700, margin: 0 }}>Mabini Legal Solutions</p>
-          <p style={{ color: "#475569", ...GM, fontSize: 10, margin: "1px 0 0" }}>Team Workspace</p>
+          <p style={{ color: "#8A9BAE", ...GM, fontSize: 10, margin: "1px 0 0" }}>Team Workspace</p>
         </div>
         <span style={{ background: "rgba(0,120,212,0.15)", color: "#38bdf8", ...GM, fontSize: 10, fontWeight: 700, padding: "2px 9px", borderRadius: 999, border: "1px solid rgba(0,120,212,0.25)" }}>4 members</span>
       </div>
@@ -28,14 +28,14 @@ function WorkspaceMockup() {
           <div style={{ width: 30, height: 30, borderRadius: "50%", background: "rgba(0,120,212,0.2)", display: "flex", alignItems: "center", justifyContent: "center", ...GM, fontSize: 9, fontWeight: 700, color: "#38bdf8", flexShrink: 0 }}>{m.avatar}</div>
           <div style={{ flex: 1 }}>
             <p style={{ color: "white", ...GF, fontSize: 12, fontWeight: 600, margin: 0 }}>{m.name}</p>
-            <p style={{ color: "#475569", ...GM, fontSize: 10, margin: "1px 0 0" }}>{m.role}</p>
+            <p style={{ color: "#8A9BAE", ...GM, fontSize: 10, margin: "1px 0 0" }}>{m.role}</p>
           </div>
-          <div style={{ width: 6, height: 6, borderRadius: "50%", background: m.active ? "#22C55E" : "#334155", flexShrink: 0 }} />
+          <div style={{ width: 6, height: 6, borderRadius: "50%", background: m.active ? "#22C55E" : "#7C8DA4", flexShrink: 0 }} />
         </div>
       ))}
       <div style={{ padding: "10px 16px", background: "rgba(0,120,212,0.06)", display: "flex", gap: 12 }}>
-        <span style={{ color: "#0078D4", ...GF, fontSize: 12, fontWeight: 700 }}>+ Invite member</span>
-        <span style={{ color: "#475569", ...GF, fontSize: 12 }}>Manage roles</span>
+        <span style={{ color: "#38BDF8", ...GF, fontSize: 12, fontWeight: 700 }}>+ Invite member</span>
+        <span style={{ color: "#8A9BAE", ...GF, fontSize: 12 }}>Manage roles</span>
       </div>
     </div>
   );
@@ -63,7 +63,7 @@ export function TeamWorkspaces() {
                 "Audit records show activity per sender",
               ].map((item) => (
                 <div key={item} style={{ display: "flex", gap: 8 }}>
-                  <span style={{ color: "#0078D4", fontWeight: 700, flexShrink: 0 }}>✓</span>
+                  <span style={{ color: "#38BDF8", fontWeight: 700, flexShrink: 0 }}>✓</span>
                   <span style={{ color: "#94a3b8", ...GF, fontSize: 14, lineHeight: 1.5 }}>{item}</span>
                 </div>
               ))}
@@ -80,7 +80,7 @@ export function TeamWorkspaces() {
           {WORKSPACE_ROLES.map((r) => (
             <div key={r.role} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 10, padding: "12px 14px" }}>
               <p style={{ color: "white", ...GF, fontSize: 13, fontWeight: 700, margin: 0, marginBottom: 4 }}>{r.role}</p>
-              <p style={{ color: "#64748b", ...GF, fontSize: 12, lineHeight: 1.5, margin: 0 }}>{r.perms}</p>
+              <p style={{ color: "#94A3B8", ...GF, fontSize: 12, lineHeight: 1.5, margin: 0 }}>{r.perms}</p>
             </div>
           ))}
         </div>
@@ -100,7 +100,7 @@ export function TeamWorkspaces() {
               <span aria-hidden style={{ fontSize: 22, flexShrink: 0 }}>{item.icon}</span>
               <div>
                 <p style={{ color: "white", ...GF, fontSize: 13, fontWeight: 700, margin: 0, marginBottom: 4 }}>{item.label}</p>
-                <p style={{ color: "#64748b", ...GF, fontSize: 12, lineHeight: 1.5, margin: 0 }}>{item.desc}</p>
+                <p style={{ color: "#94A3B8", ...GF, fontSize: 12, lineHeight: 1.5, margin: 0 }}>{item.desc}</p>
               </div>
             </div>
           ))}

@@ -28,7 +28,7 @@ export function PricingSubNav() {
               borderBottom: active ? "2px solid #0078D4" : "2px solid transparent",
               transition: "border-color 0.15s ease",
             }}>
-              <span style={{ ...GF, fontSize: 13, fontWeight: active ? 700 : 500, color: active ? "white" : "#64748b", whiteSpace: "nowrap", transition: "color 0.15s ease" }}>
+              <span style={{ ...GF, fontSize: 13, fontWeight: active ? 700 : 500, color: active ? "white" : "#94A3B8", whiteSpace: "nowrap", transition: "color 0.15s ease" }}>
                 {label}
               </span>
             </Link>
@@ -70,7 +70,7 @@ export function PlanCard({ plan }: { plan: LagdaPlan }) {
         {plan.name.toUpperCase()}
       </p>
       <p style={{ color: "white", ...GF, fontSize: 20, fontWeight: 800, margin: 0, marginBottom: 4 }}>{plan.name}</p>
-      <p style={{ color: "#64748b", ...GF, fontSize: 13, lineHeight: 1.5, marginBottom: 20 }}>{plan.tagline}</p>
+      <p style={{ color: "#94A3B8", ...GF, fontSize: 13, lineHeight: 1.5, marginBottom: 20 }}>{plan.tagline}</p>
 
       {/* Price */}
       <div style={{ marginBottom: 20, padding: "14px 0", borderTop: "1px solid rgba(255,255,255,0.06)", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
@@ -78,8 +78,8 @@ export function PlanCard({ plan }: { plan: LagdaPlan }) {
           <p style={{ color: "white", ...GF, fontSize: 18, fontWeight: 700, margin: 0 }}>Contact Sales</p>
         ) : (
           <>
-            <p style={{ color: "#475569", ...GM, fontSize: 11, margin: "0 0 4px" }}>PRICING</p>
-            <p style={{ color: "#64748b", ...GF, fontSize: 13, margin: 0 }}>To be confirmed at launch</p>
+            <p style={{ color: "#8A9BAE", ...GM, fontSize: 11, margin: "0 0 4px" }}>PRICING</p>
+            <p style={{ color: "#94A3B8", ...GF, fontSize: 13, margin: 0 }}>To be confirmed at launch</p>
           </>
         )}
       </div>
@@ -107,13 +107,13 @@ export function PlanCard({ plan }: { plan: LagdaPlan }) {
         {plan.secondaryCtaLabel && plan.secondaryCtaPath && (
           <Link to={plan.secondaryCtaPath} style={{
             display: "flex", alignItems: "center", justifyContent: "center",
-            color: "#64748b", borderRadius: 8, padding: "10px 20px", textDecoration: "none",
+            color: "#94A3B8", borderRadius: 8, padding: "10px 20px", textDecoration: "none",
             ...GF, fontSize: 13, fontWeight: 500, minHeight: 44,
           }}>{plan.secondaryCtaLabel}</Link>
         )}
       </div>
       {plan.note && (
-        <p style={{ color: "#334155", ...GM, fontSize: 9, marginTop: 12, lineHeight: 1.5, textAlign: "center" }}>{plan.note}</p>
+        <p style={{ color: "#7C8DA4", ...GM, fontSize: 9, marginTop: 12, lineHeight: 1.5, textAlign: "center" }}>{plan.note}</p>
       )}
     </div>
   );
@@ -137,11 +137,11 @@ export function PlanCards() {
 // ── Avail cell ────────────────────────────────────────────────────────────────
 function AvailCell({ value }: { value: AvailValue | string }) {
   if (value === "included")     return <span style={{ color: "#22C55E", fontSize: 15 }} title="Included">✓ <span style={{ ...GF, fontSize: 11, color: "#22C55E" }}>Included</span></span>;
-  if (value === "not-included") return <span style={{ color: "#334155", fontSize: 15 }} title="Not included">— <span style={{ ...GF, fontSize: 11, color: "#475569" }}>Not included</span></span>;
-  if (value === "enterprise")   return <span style={{ color: "#0078D4", ...GM, fontSize: 10, fontWeight: 700 }}>Enterprise</span>;
+  if (value === "not-included") return <span style={{ color: "#7C8DA4", fontSize: 15 }} title="Not included">— <span style={{ ...GF, fontSize: 11, color: "#8A9BAE" }}>Not included</span></span>;
+  if (value === "enterprise")   return <span style={{ color: "#38BDF8", ...GM, fontSize: 10, fontWeight: 700 }}>Enterprise</span>;
   if (value === "pending")      return <span style={{ color: "#C9960C", ...GM, fontSize: 10 }}>Planned</span>;
-  if (value === "varies")       return <span style={{ color: "#64748b", ...GF, fontSize: 12 }}>Varies by plan</span>;
-  return <span style={{ color: "#64748b", ...GF, fontSize: 12 }}>{value}</span>;
+  if (value === "varies")       return <span style={{ color: "#94A3B8", ...GF, fontSize: 12 }}>Varies by plan</span>;
+  return <span style={{ color: "#94A3B8", ...GF, fontSize: 12 }}>{value}</span>;
 }
 
 // ── Compare table (desktop) ────────────────────────────────────────────────────
@@ -156,12 +156,12 @@ export function CompareTable() {
   return (
     <div style={{ overflowX: "auto" }}>
       <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 620 }} aria-label="LAGDA plan comparison">
-        <caption style={{ ...GM, fontSize: 10, color: "#475569", textAlign: "left", padding: "0 0 12px", letterSpacing: "0.08em" }}>
+        <caption style={{ ...GM, fontSize: 10, color: "#8A9BAE", textAlign: "left", padding: "0 0 12px", letterSpacing: "0.08em" }}>
           LAGDA ESIGNATURE PLAN COMPARISON · LAGDA ENOTARY IS A SEPARATE FUTURE PRODUCT NOT INCLUDED IN ANY PLAN
         </caption>
         <thead>
           <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.1)" }}>
-            <th style={{ textAlign: "left", padding: "12px 16px 12px 0", color: "#475569", ...GF, fontSize: 13, fontWeight: 600, width: "40%" }}>Feature</th>
+            <th style={{ textAlign: "left", padding: "12px 16px 12px 0", color: "#8A9BAE", ...GF, fontSize: 13, fontWeight: 600, width: "40%" }}>Feature</th>
             {LAGDA_PLANS.map(p => (
               <th key={p.id} style={{ textAlign: "center", padding: "12px 16px", color: p.featured ? "#38bdf8" : "white", ...GF, fontSize: 13, fontWeight: 700 }}>
                 {p.name}
@@ -225,7 +225,7 @@ export function FaqAccordion({ items }: { items: { id: string; q: string; a: str
             }}
           >
             <span style={{ color: "white", ...GF, fontSize: 14, fontWeight: 600, lineHeight: 1.4 }}>{q}</span>
-            <span style={{ color: "#64748b", flexShrink: 0, fontSize: 14, transition: "transform 0.2s", transform: open === id ? "rotate(180deg)" : "none", display: "inline-block" }}>▾</span>
+            <span style={{ color: "#94A3B8", flexShrink: 0, fontSize: 14, transition: "transform 0.2s", transform: open === id ? "rotate(180deg)" : "none", display: "inline-block" }}>▾</span>
           </button>
           <div id={`${id}-answer`} hidden={open !== id} style={{ padding: open === id ? "0 20px 16px" : "0 20px 0" }}>
             <p style={{ color: "#94a3b8", ...GF, fontSize: 14, lineHeight: 1.65, margin: 0 }}>{a}</p>
@@ -250,7 +250,7 @@ export function PricingHeading({ eyebrow, id, heading, sub, center }: { eyebrow:
     <div style={{ marginBottom: 40, textAlign: center ? "center" : undefined }}>
       <p style={{ color: "#38bdf8", ...GM, fontSize: 11, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 10 }}>{eyebrow}</p>
       <h2 id={id} style={{ color: "white", ...GF, fontSize: "clamp(22px, 3.5vw, 36px)", fontWeight: 800, margin: 0, marginBottom: sub ? 12 : 0, letterSpacing: "-0.02em", lineHeight: 1.15 }}>{heading}</h2>
-      {sub && <p style={{ color: "#64748b", ...GF, fontSize: 16, lineHeight: 1.65, margin: center ? "0 auto" : 0, maxWidth: 640 }}>{sub}</p>}
+      {sub && <p style={{ color: "#94A3B8", ...GF, fontSize: 16, lineHeight: 1.65, margin: center ? "0 auto" : 0, maxWidth: 640 }}>{sub}</p>}
     </div>
   );
 }
@@ -261,7 +261,7 @@ export function PricingHero({ heading, sub }: { heading: string; sub: string }) 
       <div style={{ maxWidth: 720, margin: "0 auto" }}>
         <p style={{ color: "#38bdf8", ...GM, fontSize: 11, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 14 }}>LAGDA ESIGNATURE</p>
         <h1 style={{ color: "white", ...GF, fontSize: "clamp(28px, 5vw, 52px)", fontWeight: 900, lineHeight: 1.1, letterSpacing: "-0.03em", margin: "0 0 20px" }}>{heading}</h1>
-        <p style={{ color: "#64748b", ...GF, fontSize: 17, lineHeight: 1.65, margin: "0 auto" }}>{sub}</p>
+        <p style={{ color: "#94A3B8", ...GF, fontSize: 17, lineHeight: 1.65, margin: "0 auto" }}>{sub}</p>
       </div>
     </section>
   );

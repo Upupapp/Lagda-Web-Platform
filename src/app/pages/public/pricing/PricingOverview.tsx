@@ -46,7 +46,7 @@ export function PricingOverview() {
               <span aria-hidden style={{ fontSize: 22, flexShrink: 0 }}>{icon}</span>
               <div>
                 <p style={{ color: "white", ...GF, fontSize: 14, fontWeight: 700, margin: "0 0 4px" }}>{title}</p>
-                <p style={{ color: "#64748b", ...GF, fontSize: 13, margin: 0, lineHeight: 1.5 }}>{desc}</p>
+                <p style={{ color: "#94A3B8", ...GF, fontSize: 13, margin: 0, lineHeight: 1.5 }}>{desc}</p>
               </div>
             </div>
           ))}
@@ -79,7 +79,7 @@ export function PricingOverview() {
         <div style={{ maxWidth: 720, margin: "0 auto", textAlign: "center" }}>
           <p style={{ color: "#38bdf8", ...GM, fontSize: 11, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 12 }}>ENTERPRISE</p>
           <h2 style={{ color: "white", ...GF, fontSize: "clamp(22px, 3.5vw, 34px)", fontWeight: 800, marginBottom: 14, letterSpacing: "-0.02em" }}>High-volume, complex, or integration requirements?</h2>
-          <p style={{ color: "#64748b", ...GF, fontSize: 16, lineHeight: 1.65, marginBottom: 28 }}>Enterprise arrangements include custom volume, workspace administration, onboarding, security review, and integration planning.</p>
+          <p style={{ color: "#94A3B8", ...GF, fontSize: 16, lineHeight: 1.65, marginBottom: 28 }}>Enterprise arrangements include custom volume, workspace administration, onboarding, security review, and integration planning.</p>
           <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
             <Link to="/contact" style={{ background: "#0078D4", color: "white", ...GF, fontSize: 14, fontWeight: 700, padding: "12px 28px", borderRadius: 8, textDecoration: "none", minHeight: 44, display: "flex", alignItems: "center" }}>Contact Sales</Link>
             <Link to="/pricing/enterprise" style={{ background: "rgba(255,255,255,0.06)", color: "white", ...GF, fontSize: 14, fontWeight: 600, padding: "12px 28px", borderRadius: 8, textDecoration: "none", minHeight: 44, display: "flex", alignItems: "center", border: "1px solid rgba(255,255,255,0.1)" }}>Learn About Enterprise</Link>
@@ -89,7 +89,7 @@ export function PricingOverview() {
 
       {/* Responsible-use note */}
       <div style={{ maxWidth: 1200, margin: "0 auto", padding: "0 24px 48px" }}>
-        <p style={{ color: "#334155", ...GF, fontSize: 12, lineHeight: 1.65, borderTop: "1px solid rgba(255,255,255,0.05)", paddingTop: 20 }}>
+        <p style={{ color: "#7C8DA4", ...GF, fontSize: 12, lineHeight: 1.65, borderTop: "1px solid rgba(255,255,255,0.05)", paddingTop: 20 }}>
           Some documents may still require wet signatures, notarization, personal appearance, witnesses, or other legal formalities. Users remain responsible for determining the requirements that apply to each transaction. LAGDA eNotary is a separate future regulated product — Coming Soon and Subject to Supreme Court Accreditation and applicable rules.
         </p>
       </div>

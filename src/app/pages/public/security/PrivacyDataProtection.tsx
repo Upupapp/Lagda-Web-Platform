@@ -38,7 +38,7 @@ export function PrivacyDataProtection() {
               <span aria-hidden style={{ fontSize: 20, flexShrink: 0 }}>{p.icon}</span>
               <div>
                 <p style={{ color: "white", ...GF, fontSize: 13, fontWeight: 700, margin: 0, marginBottom: 3 }}>{p.title}</p>
-                <p style={{ color: "#64748b", ...GF, fontSize: 12, lineHeight: 1.5, margin: 0 }}>{p.desc}</p>
+                <p style={{ color: "#94A3B8", ...GF, fontSize: 12, lineHeight: 1.5, margin: 0 }}>{p.desc}</p>
               </div>
             </div>
           ))}
@@ -63,7 +63,7 @@ export function PrivacyDataProtection() {
           ))}
         </div>
         <div style={{ textAlign: "center", marginTop: 20 }}>
-          <p style={{ color: "#475569", ...GF, fontSize: 13, marginBottom: 12 }}>Rights availability depends on your jurisdiction and relationship with LAGDA. See the Privacy Policy for full details.</p>
+          <p style={{ color: "#8A9BAE", ...GF, fontSize: 13, marginBottom: 12 }}>Rights availability depends on your jurisdiction and relationship with LAGDA. See the Privacy Policy for full details.</p>
           <a href="/legal/privacy" style={{ display: "inline-block", background: "#0078D4", color: "white", ...GF, fontSize: 13, fontWeight: 700, padding: "10px 20px", borderRadius: 8, textDecoration: "none" }}>
             Read Privacy Policy
           </a>

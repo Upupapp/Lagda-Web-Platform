@@ -15,8 +15,8 @@ function ProcurementMockup() {
     { label: "Procurement",           action: "Agreement prepared",   status: "DONE",    color: "#22C55E" },
     { label: "Legal",                 action: "Review complete",      status: "DONE",    color: "#22C55E" },
     { label: "Finance",               action: "Budget approved",      status: "DONE",    color: "#22C55E" },
-    { label: "Company Representative",action: "Signing now",          status: "ACTIVE",  color: "#0078D4" },
-    { label: "Vendor",                action: "Awaiting company sign", status: "PENDING", color: "#334155" },
+    { label: "Company Representative",action: "Signing now",          status: "ACTIVE",  color: "#38BDF8" },
+    { label: "Vendor",                action: "Awaiting company sign", status: "PENDING", color: "#7C8DA4" },
   ];
   return (
     <div aria-hidden style={{
@@ -26,7 +26,7 @@ function ProcurementMockup() {
       <div style={{ padding: "12px 16px", borderBottom: "1px solid rgba(255,255,255,0.07)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <div>
           <p style={{ color: "white", ...GF, fontSize: 12, fontWeight: 700, margin: 0 }}>Supplier Service Agreement</p>
-          <p style={{ color: "#475569", ...GM, fontSize: 10, margin: "1px 0 0" }}>5-step approval chain · Annual contract</p>
+          <p style={{ color: "#8A9BAE", ...GM, fontSize: 10, margin: "1px 0 0" }}>5-step approval chain · Annual contract</p>
         </div>
         <span style={{ background: "rgba(0,120,212,0.12)", color: "#38bdf8", ...GM, fontSize: 9, fontWeight: 700, padding: "2px 8px", borderRadius: 999, border: "1px solid rgba(0,120,212,0.25)" }}>STEP 4 OF 5</span>
       </div>
@@ -41,14 +41,14 @@ function ProcurementMockup() {
             {s.status === "DONE" ? "✓" : String(i + 1).padStart(2, "0")}
           </div>
           <div style={{ flex: 1 }}>
-            <p style={{ color: s.status === "PENDING" ? "#334155" : "white", ...GF, fontSize: 12, fontWeight: 600, margin: 0 }}>{s.label}</p>
-            <p style={{ color: "#475569", ...GM, fontSize: 10, margin: "1px 0 0" }}>{s.action}</p>
+            <p style={{ color: s.status === "PENDING" ? "#7C8DA4" : "white", ...GF, fontSize: 12, fontWeight: 600, margin: 0 }}>{s.label}</p>
+            <p style={{ color: "#8A9BAE", ...GM, fontSize: 10, margin: "1px 0 0" }}>{s.action}</p>
           </div>
           <span style={{ color: s.color, ...GM, fontSize: 9, fontWeight: 700 }}>{s.status}</span>
         </div>
       ))}
       <div style={{ padding: "10px 16px", background: "rgba(0,0,0,0.2)" }}>
-        <span style={{ color: "#334155", ...GM, fontSize: 9 }}>Full audit trail from first step</span>
+        <span style={{ color: "#7C8DA4", ...GM, fontSize: 9 }}>Full audit trail from first step</span>
       </div>
     </div>
   );
@@ -113,7 +113,7 @@ export function Procurement() {
             <ChallengeCards challenges={CHALLENGES} />
           </div>
           <div>
-            <p style={{ color: "#475569", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", marginBottom: 12 }}>SUPPLIER AGREEMENT ROUTING</p>
+            <p style={{ color: "#8A9BAE", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", marginBottom: 12 }}>SUPPLIER AGREEMENT ROUTING</p>
             <ProcurementMockup />
           </div>
         </div>

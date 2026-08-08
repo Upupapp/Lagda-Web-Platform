@@ -40,7 +40,7 @@ export function VerificationSection() {
 
             {/* State selector */}
             <div style={{ marginBottom: 8 }}>
-              <p style={{ color: "#475569", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", marginBottom: 8 }}>
+              <p style={{ color: "#8A9BAE", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", marginBottom: 8 }}>
                 EXPLORE VERIFICATION STATES
               </p>
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
@@ -54,7 +54,7 @@ export function VerificationSection() {
                       padding: "6px 14px", borderRadius: 999,
                       background: s.id === activeId ? "rgba(0,120,212,0.15)" : "rgba(255,255,255,0.05)",
                       border: `1px solid ${s.id === activeId ? "rgba(0,120,212,0.4)" : "rgba(255,255,255,0.1)"}`,
-                      color: s.id === activeId ? "#38bdf8" : "#64748b",
+                      color: s.id === activeId ? "#38bdf8" : "#94A3B8",
                       ...GF, fontSize: 13, fontWeight: s.id === activeId ? 700 : 500,
                       cursor: "pointer", transition: "all 0.15s ease",
                     }}
@@ -79,7 +79,7 @@ export function VerificationSection() {
                 <div style={{
                   flex: 1, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)",
                   borderRadius: 8, padding: "8px 12px",
-                  ...GM, fontSize: 12, color: "#64748b",
+                  ...GM, fontSize: 12, color: "#94A3B8",
                 }}>
                   {active.fields[0]?.value ?? "Enter Verification ID"}
                 </div>
@@ -116,7 +116,7 @@ export function VerificationSection() {
                     padding: "8px 0", borderBottom: "1px solid rgba(255,255,255,0.05)",
                     gap: 16,
                   }}>
-                    <span style={{ color: "#475569", ...GM, fontSize: 11, flexShrink: 0 }}>{f.label}</span>
+                    <span style={{ color: "#8A9BAE", ...GM, fontSize: 11, flexShrink: 0 }}>{f.label}</span>
                     <span style={{ color: "white", ...(f.mono ? GM : GF), fontSize: 12, fontWeight: f.mono ? 600 : 400, textAlign: "right", wordBreak: "break-word" }}>
                       {f.value}
                     </span>
@@ -126,7 +126,7 @@ export function VerificationSection() {
 
               {/* Legal footer */}
               <div style={{ padding: "12px 20px", background: "rgba(0,0,0,0.2)" }}>
-                <p style={{ color: "#334155", ...GF, fontSize: 11, margin: 0, lineHeight: 1.5 }}>
+                <p style={{ color: "#7C8DA4", ...GF, fontSize: 11, margin: 0, lineHeight: 1.5 }}>
                   Verification confirms LAGDA transaction records only. For legal authentication or notarization, consult applicable requirements.
                 </p>
               </div>

@@ -46,7 +46,7 @@ export function EnotaryFaq() {
               Some documents may still require wet signatures, notarization, personal appearance, witnesses, or other legal formalities. Users remain responsible for determining the requirements that apply to each transaction. Neither LAGDA eSignature nor LAGDA eNotary (when available) eliminates this responsibility.
             </p>
           </div>
-          <p style={{ color: "#64748b", ...GF, fontSize: 13, lineHeight: 1.7 }}>
+          <p style={{ color: "#94A3B8", ...GF, fontSize: 13, lineHeight: 1.7 }}>
             If you are unsure whether electronic signing or electronic notarization (when available) satisfies the requirements for a specific document or transaction, consult qualified legal counsel.
           </p>
         </div>
@@ -56,7 +56,7 @@ export function EnotaryFaq() {
       <EnotarySection id="more-questions" bordered>
         <div style={{ maxWidth: 640, margin: "0 auto", textAlign: "center" }}>
           <h2 style={{ color: "white", ...GF, fontSize: "clamp(18px, 2.5vw, 26px)", fontWeight: 900, margin: "0 0 12px" }}>Still have questions?</h2>
-          <p style={{ color: "#64748b", ...GF, fontSize: 14, lineHeight: 1.7, margin: "0 0 22px" }}>
+          <p style={{ color: "#94A3B8", ...GF, fontSize: 14, lineHeight: 1.7, margin: "0 0 22px" }}>
             Contact us through the LAGDA contact form. Select the most appropriate category for your question.
           </p>
           <div style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap" }}>

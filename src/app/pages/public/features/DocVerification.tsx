@@ -25,7 +25,7 @@ function VerificationDemo() {
               background: selected === i ? s.bg : "rgba(255,255,255,0.03)",
               border: `1px solid ${selected === i ? s.border : "rgba(255,255,255,0.08)"}`,
               borderRadius: 8, padding: "6px 12px", cursor: "pointer",
-              color: selected === i ? s.color : "#64748b",
+              color: selected === i ? s.color : "#94A3B8",
               ...GF, fontSize: 12, fontWeight: selected === i ? 700 : 500,
               transition: "all 0.15s ease",
             }}
@@ -43,22 +43,22 @@ function VerificationDemo() {
         </div>
         {/* Public info */}
         <div style={{ padding: "12px 16px" }}>
-          <p style={{ color: "#475569", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", marginBottom: 8 }}>PUBLIC VERIFICATION RESULT</p>
+          <p style={{ color: "#8A9BAE", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", marginBottom: 8 }}>PUBLIC VERIFICATION RESULT</p>
           <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
             {state.public.map((line) => (
               <div key={line} style={{ display: "flex", gap: 10 }}>
-                <span style={{ color: "#334155", ...GM, fontSize: 10, flexShrink: 0 }}>›</span>
+                <span style={{ color: "#7C8DA4", ...GM, fontSize: 10, flexShrink: 0 }}>›</span>
                 <span style={{ color: "#94a3b8", ...GF, fontSize: 12 }}>{line}</span>
               </div>
             ))}
           </div>
           <div style={{ marginTop: 12, padding: "8px 10px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 8 }}>
-            <p style={{ color: "#334155", ...GM, fontSize: 9, margin: 0 }}>Private: Signer identities, IP addresses, device data, and authentication details are not shown publicly.</p>
+            <p style={{ color: "#7C8DA4", ...GM, fontSize: 9, margin: 0 }}>Private: Signer identities, IP addresses, device data, and authentication details are not shown publicly.</p>
           </div>
         </div>
         {/* Explanation */}
         <div style={{ padding: "10px 16px", borderTop: "1px solid rgba(255,255,255,0.06)", background: "rgba(0,0,0,0.15)" }}>
-          <p style={{ color: "#64748b", ...GF, fontSize: 12, lineHeight: 1.5, margin: 0 }}>{state.desc}</p>
+          <p style={{ color: "#94A3B8", ...GF, fontSize: 12, lineHeight: 1.5, margin: 0 }}>{state.desc}</p>
         </div>
       </div>
     </div>
@@ -79,7 +79,7 @@ export function DocVerification() {
         <div style={{ display: "grid", gap: "32px 48px", alignItems: "start" }} className="dv-two-col">
           <div>
             <SectionHeading eyebrow="Verification result" id="vr-h2" heading="Every result state — clearly explained." sub="Select a state to see what the public verification record shows. Private evidence is never exposed in public verification." />
-            <p style={{ color: "#475569", ...GF, fontSize: 13, lineHeight: 1.6, margin: 0, marginBottom: 16 }}>
+            <p style={{ color: "#8A9BAE", ...GF, fontSize: 13, lineHeight: 1.6, margin: 0, marginBottom: 16 }}>
               These are illustrative frontend examples. Real verification requires a valid LAGDA Verification ID and an active transaction record.
             </p>
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
@@ -91,7 +91,7 @@ export function DocVerification() {
                 "Distinguish record status from file-match status",
               ].map((item) => (
                 <div key={item} style={{ display: "flex", gap: 8 }}>
-                  <span style={{ color: "#0078D4", fontWeight: 700, flexShrink: 0 }}>✓</span>
+                  <span style={{ color: "#38BDF8", fontWeight: 700, flexShrink: 0 }}>✓</span>
                   <span style={{ color: "#94a3b8", ...GF, fontSize: 13, lineHeight: 1.5 }}>{item}</span>
                 </div>
               ))}
@@ -113,7 +113,7 @@ export function DocVerification() {
             <div key={m.method} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 12, padding: "18px 16px" }}>
               <span aria-hidden style={{ fontSize: 22, display: "block", marginBottom: 10 }}>{m.icon}</span>
               <p style={{ color: "white", ...GF, fontSize: 13, fontWeight: 700, margin: 0, marginBottom: 6 }}>{m.method}</p>
-              <p style={{ color: "#64748b", ...GF, fontSize: 12, lineHeight: 1.5, margin: 0 }}>{m.desc}</p>
+              <p style={{ color: "#94A3B8", ...GF, fontSize: 12, lineHeight: 1.5, margin: 0 }}>{m.desc}</p>
             </div>
           ))}
         </div>

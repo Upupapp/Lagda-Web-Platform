@@ -25,7 +25,7 @@ export function SecureStorage() {
               <div style={{ width: 36, height: 36, borderRadius: 8, background: "rgba(0,120,212,0.1)", border: "1px solid rgba(0,120,212,0.2)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, flexShrink: 0 }}>{s.icon}</div>
               <div style={{ flex: 1 }}>
                 <p style={{ color: "white", ...GF, fontSize: 14, fontWeight: 700, margin: 0, marginBottom: 3 }}>{s.stage}</p>
-                <p style={{ color: "#64748b", ...GF, fontSize: 13, lineHeight: 1.5, margin: 0 }}>{s.desc}</p>
+                <p style={{ color: "#94A3B8", ...GF, fontSize: 13, lineHeight: 1.5, margin: 0 }}>{s.desc}</p>
               </div>
               {i < STORAGE_STAGES.length - 1 && (
                 <div style={{ position: "absolute", display: "none" }} aria-hidden />
@@ -66,7 +66,7 @@ export function SecureStorage() {
           ].map((item) => (
             <div key={item.title} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 10, padding: "12px 14px" }}>
               <p style={{ color: "white", ...GF, fontSize: 13, fontWeight: 700, margin: 0, marginBottom: 4 }}>{item.title}</p>
-              <p style={{ color: "#64748b", ...GF, fontSize: 12, lineHeight: 1.5, margin: 0 }}>{item.desc}</p>
+              <p style={{ color: "#94A3B8", ...GF, fontSize: 12, lineHeight: 1.5, margin: 0 }}>{item.desc}</p>
             </div>
           ))}
         </div>

@@ -53,7 +53,7 @@ export function EsigSubNav() {
                     ...GF,
                     fontSize: 13,
                     fontWeight: active ? 700 : 500,
-                    color: active ? "white" : "#64748b",
+                    color: active ? "white" : "#94A3B8",
                     textDecoration: "none",
                     borderBottom: active ? "2px solid #0078D4" : "2px solid transparent",
                     marginBottom: -1,
@@ -63,7 +63,7 @@ export function EsigSubNav() {
                     if (!active) e.currentTarget.style.color = "#94a3b8";
                   }}
                   onMouseLeave={(e) => {
-                    if (!active) e.currentTarget.style.color = "#64748b";
+                    if (!active) e.currentTarget.style.color = "#94A3B8";
                   }}
                 >
                   {item.label}

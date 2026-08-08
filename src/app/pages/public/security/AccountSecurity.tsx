@@ -17,7 +17,7 @@ function AccountSecurityDiagram() {
     <div aria-hidden style={{ background: "rgba(7,17,31,0.95)", border: "1px solid rgba(0,120,212,0.22)", borderRadius: 14, overflow: "hidden", maxWidth: 380, width: "100%" }}>
       <div style={{ padding: "12px 16px", borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
         <p style={{ color: "white", ...GF, fontSize: 13, fontWeight: 700, margin: 0 }}>Account Security</p>
-        <p style={{ color: "#475569", ...GM, fontSize: 10, margin: "1px 0 0" }}>Ana Reyes · ana@mabinilegal.ph</p>
+        <p style={{ color: "#8A9BAE", ...GM, fontSize: 10, margin: "1px 0 0" }}>Ana Reyes · ana@mabinilegal.ph</p>
       </div>
       {controls.map((c) => (
         <div key={c.label} style={{ padding: "10px 16px", borderBottom: "1px solid rgba(255,255,255,0.05)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
@@ -59,7 +59,7 @@ export function AccountSecurity() {
                 "Suspicious-activity detection",
               ].map((item) => (
                 <div key={item} style={{ display: "flex", gap: 8 }}>
-                  <span style={{ color: "#0078D4", fontWeight: 700, flexShrink: 0 }}>✓</span>
+                  <span style={{ color: "#38BDF8", fontWeight: 700, flexShrink: 0 }}>✓</span>
                   <span style={{ color: "#94a3b8", ...GF, fontSize: 14, lineHeight: 1.5 }}>{item}</span>
                 </div>
               ))}
@@ -83,7 +83,7 @@ export function AccountSecurity() {
               <span aria-hidden style={{ fontSize: 20, flexShrink: 0 }}>{m.icon}</span>
               <div>
                 <p style={{ color: "white", ...GF, fontSize: 13, fontWeight: 700, margin: 0, marginBottom: 4 }}>{m.title}</p>
-                <p style={{ color: "#64748b", ...GF, fontSize: 12, lineHeight: 1.5, margin: 0 }}>{m.desc}</p>
+                <p style={{ color: "#94A3B8", ...GF, fontSize: 12, lineHeight: 1.5, margin: 0 }}>{m.desc}</p>
               </div>
             </div>
           ))}
@@ -101,7 +101,7 @@ export function AccountSecurity() {
           ].map((r) => (
             <div key={r.rule} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 10, padding: "12px 14px" }}>
               <p style={{ color: "white", ...GF, fontSize: 13, fontWeight: 700, margin: 0, marginBottom: 3 }}>{r.rule}</p>
-              <p style={{ color: "#64748b", ...GF, fontSize: 12, lineHeight: 1.5, margin: 0 }}>{r.desc}</p>
+              <p style={{ color: "#94A3B8", ...GF, fontSize: 12, lineHeight: 1.5, margin: 0 }}>{r.desc}</p>
             </div>
           ))}
         </div>

@@ -31,7 +31,7 @@ function WorkspaceMockup() {
       <div style={{ padding: "12px 18px", borderBottom: "1px solid rgba(255,255,255,0.07)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <div>
           <p style={{ color: "white", ...GF, fontSize: 13, fontWeight: 700, margin: 0 }}>Mabini Legal Solutions</p>
-          <p style={{ color: "#475569", ...GF, fontSize: 11, margin: 0 }}>Workspace</p>
+          <p style={{ color: "#8A9BAE", ...GF, fontSize: 11, margin: 0 }}>Workspace</p>
         </div>
         <span style={{ background: "rgba(0,120,212,0.15)", color: "#38bdf8", border: "1px solid rgba(0,120,212,0.25)", borderRadius: 999, padding: "2px 10px", ...GM, fontSize: 10, fontWeight: 700 }}>
           4 members
@@ -45,12 +45,12 @@ function WorkspaceMockup() {
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
               <p style={{ color: "white", ...GF, fontSize: 12, fontWeight: 600, margin: 0 }}>{m.name}</p>
-              <p style={{ color: "#475569", ...GM, fontSize: 10, margin: "2px 0 0" }}>{m.role}</p>
+              <p style={{ color: "#8A9BAE", ...GM, fontSize: 10, margin: "2px 0 0" }}>{m.role}</p>
             </div>
             <span style={{
               ...GM, fontSize: 9, fontWeight: 700, padding: "2px 8px", borderRadius: 999,
               background: m.status === "Active" ? "rgba(34,197,94,0.1)" : "rgba(100,116,139,0.1)",
-              color: m.status === "Active" ? "#22C55E" : "#64748b",
+              color: m.status === "Active" ? "#22C55E" : "#94A3B8",
               border: `1px solid ${m.status === "Active" ? "rgba(34,197,94,0.25)" : "rgba(100,116,139,0.25)"}`,
             }}>
               {m.status}
@@ -59,7 +59,7 @@ function WorkspaceMockup() {
         ))}
       </div>
       <div style={{ padding: "10px 18px", background: "rgba(0,120,212,0.06)" }}>
-        <span style={{ color: "#0078D4", ...GF, fontSize: 12, fontWeight: 700 }}>+ Invite Team Member</span>
+        <span style={{ color: "#38BDF8", ...GF, fontSize: 12, fontWeight: 700 }}>+ Invite Team Member</span>
       </div>
     </div>
   );
@@ -68,7 +68,7 @@ function WorkspaceMockup() {
 // ── Reporting preview ─────────────────────────────────────────────────────────
 function ReportingPreview() {
   const STATS = [
-    { label: "Transactions sent (30d)", value: "48",  color: "#0078D4" },
+    { label: "Transactions sent (30d)", value: "48",  color: "#38BDF8" },
     { label: "Completion rate",         value: "87%", color: "#22C55E" },
     { label: "Avg. completion time",    value: "1.4d",color: "#38bdf8" },
     { label: "Expiring this week",      value: "3",   color: "#F59E0B" },
@@ -86,7 +86,7 @@ function ReportingPreview() {
           borderRadius: 12, padding: "14px 16px",
         }}>
           <p style={{ color: s.color, ...GF, fontSize: 22, fontWeight: 800, margin: 0, lineHeight: 1 }}>{s.value}</p>
-          <p style={{ color: "#475569", ...GM, fontSize: 10, margin: "6px 0 0", lineHeight: 1.4 }}>{s.label}</p>
+          <p style={{ color: "#8A9BAE", ...GM, fontSize: 10, margin: "6px 0 0", lineHeight: 1.4 }}>{s.label}</p>
         </div>
       ))}
     </div>
@@ -104,10 +104,10 @@ function WorkspaceRolesTable() {
           border: "1px solid rgba(255,255,255,0.07)",
           borderRadius: 10, padding: "12px 14px",
         }}>
-          <span style={{ color: "#0078D4", ...GM, fontSize: 12, fontWeight: 700, flexShrink: 0, minWidth: 160 }}>
+          <span style={{ color: "#38BDF8", ...GM, fontSize: 12, fontWeight: 700, flexShrink: 0, minWidth: 160 }}>
             {r.role}
           </span>
-          <span style={{ color: "#64748b", ...GF, fontSize: 13, lineHeight: 1.5 }}>{r.perms}</span>
+          <span style={{ color: "#94A3B8", ...GF, fontSize: 13, lineHeight: 1.5 }}>{r.perms}</span>
         </div>
       ))}
     </div>
@@ -133,7 +133,7 @@ export function EsigTeamEnterprise() {
             <div key={c.title} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 14, padding: "20px 18px" }}>
               <span aria-hidden style={{ fontSize: 22, display: "block", marginBottom: 10 }}>{c.icon}</span>
               <p style={{ color: "white", ...GF, fontSize: 14, fontWeight: 700, margin: 0, marginBottom: 6 }}>{c.title}</p>
-              <p style={{ color: "#64748b", ...GF, fontSize: 13, lineHeight: 1.55, margin: 0 }}>{c.desc}</p>
+              <p style={{ color: "#94A3B8", ...GF, fontSize: 13, lineHeight: 1.55, margin: 0 }}>{c.desc}</p>
             </div>
           ))}
         </div>
@@ -168,7 +168,7 @@ export function EsigTeamEnterprise() {
             <p style={{ color: "#94a3b8", ...GF, fontSize: 14, lineHeight: 1.65, margin: 0, marginBottom: 20 }}>
               Role-based access helps organizations control who prepares, sends, reviews, administers, or audits document transactions — without giving everyone full workspace access.
             </p>
-            <p style={{ color: "#475569", ...GF, fontSize: 13, lineHeight: 1.6, margin: 0 }}>
+            <p style={{ color: "#8A9BAE", ...GF, fontSize: 13, lineHeight: 1.6, margin: 0 }}>
               The exact permission matrix depends on your plan and workspace configuration. Contact Sales to discuss enterprise governance requirements.
             </p>
           </div>
@@ -191,7 +191,7 @@ export function EsigTeamEnterprise() {
                 "Verification activity",
               ].map((item) => (
                 <div key={item} style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
-                  <span style={{ color: "#0078D4", fontWeight: 700, flexShrink: 0, fontSize: 13 }}>✓</span>
+                  <span style={{ color: "#38BDF8", fontWeight: 700, flexShrink: 0, fontSize: 13 }}>✓</span>
                   <span style={{ color: "#94a3b8", ...GF, fontSize: 14, lineHeight: 1.5 }}>{item}</span>
                 </div>
               ))}
@@ -224,7 +224,7 @@ export function EsigTeamEnterprise() {
                   </span>
                 )}
               </div>
-              <p style={{ color: "#64748b", ...GF, fontSize: 12, margin: 0, lineHeight: 1.5 }}>{f.desc}</p>
+              <p style={{ color: "#94A3B8", ...GF, fontSize: 12, margin: 0, lineHeight: 1.5 }}>{f.desc}</p>
             </div>
           ))}
         </div>

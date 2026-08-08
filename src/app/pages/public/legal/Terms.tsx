@@ -19,7 +19,7 @@ function P({ children }: { children: React.ReactNode }) {
 }
 
 function Pending({ children }: { children: React.ReactNode }) {
-  return <p style={{ color: "#475569", ...GF, fontSize: 14, lineHeight: 1.65, margin: "0 0 14px" }}>[{children} — pending legal review before publication]</p>;
+  return <p style={{ color: "#8A9BAE", ...GF, fontSize: 14, lineHeight: 1.65, margin: "0 0 14px" }}>[{children} — pending legal review before publication]</p>;
 }
 
 export function Terms() {
@@ -29,12 +29,12 @@ export function Terms() {
         <div style={{ maxWidth: 780, margin: "0 auto" }}>
           <p style={{ color: "#38bdf8", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 12 }}>LEGAL</p>
           <h1 style={{ color: "white", ...GF, fontSize: "clamp(24px, 4vw, 40px)", fontWeight: 900, lineHeight: 1.1, letterSpacing: "-0.02em", margin: "0 0 14px" }}>Terms of Service</h1>
-          <p style={{ color: "#64748b", ...GF, fontSize: 15, margin: "0 0 10px" }}>UpUp Technologies — LAGDA Platform</p>
+          <p style={{ color: "#94A3B8", ...GF, fontSize: 15, margin: "0 0 10px" }}>UpUp Technologies — LAGDA Platform</p>
           <div style={{ display: "inline-flex", gap: 12, alignItems: "center" }}>
             <span style={{ color: "#C9960C", ...GM, fontSize: 10, fontWeight: 700, padding: "3px 8px", borderRadius: 4, background: "rgba(201,150,12,0.1)", border: "1px solid rgba(201,150,12,0.2)" }}>DRAFT — PENDING LEGAL REVIEW</span>
-            <span style={{ color: "#334155", ...GM, fontSize: 10 }}>Structure reviewed: {LAST_REVIEWED}</span>
+            <span style={{ color: "#7C8DA4", ...GM, fontSize: 10 }}>Structure reviewed: {LAST_REVIEWED}</span>
           </div>
-          <p style={{ color: "#475569", ...GF, fontSize: 13, lineHeight: 1.65, marginTop: 14 }}>
+          <p style={{ color: "#8A9BAE", ...GF, fontSize: 13, lineHeight: 1.65, marginTop: 14 }}>
             These terms of service have been structured as part of the frontend development phase. They require formal legal review and approval before publication. Sections marked as pending require legal confirmation of specific terms.
           </p>
         </div>
@@ -111,7 +111,7 @@ export function Terms() {
 
         <div style={{ marginTop: 40, padding: "16px 20px", background: "rgba(201,150,12,0.06)", border: "1px solid rgba(201,150,12,0.15)", borderRadius: 10 }}>
           <p style={{ color: "#C9960C", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", marginBottom: 6 }}>LEGAL REVIEW REQUIRED BEFORE PUBLICATION</p>
-          <p style={{ color: "#475569", ...GF, fontSize: 13, lineHeight: 1.65, margin: 0 }}>
+          <p style={{ color: "#8A9BAE", ...GF, fontSize: 13, lineHeight: 1.65, margin: 0 }}>
             This document is a structural draft prepared during the frontend development phase. It requires review and approval by qualified legal counsel before it can be published as the official LAGDA Terms of Service.
           </p>
         </div>

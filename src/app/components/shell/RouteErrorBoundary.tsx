@@ -21,7 +21,7 @@ import { log } from "../../utils/logger";
 
 const GF = { fontFamily: "'Geist', sans-serif" };
 const NAVY = "#07111F";
-const SLATE = "#64748B";
+const SLATE = "#94A3B8";
 const AZURE = "#0078D4";
 
 /**

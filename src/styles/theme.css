@@ -165,6 +165,19 @@
   --lagda-dur-dialog: 250ms;
   --lagda-dur-load: 2600ms;
 
+  /* ── Text on the navy surfaces ────────────────────────────────────────── */
+  /* The public site is dark end to end, and its three muted tones all failed
+     WCAG 1.4.3 AA against #07111F: #64748B = 3.98:1, #475569 = 2.50:1,
+     #334155 = 1.83:1, against a 4.5:1 requirement. Roughly 500 uses.
+
+     Replacing all three with one passing tone would have flattened heading,
+     body and muted into two levels, so this is a RAMP: three tones that all
+     pass and stay visually ordered. Same slate hue family as before, so only
+     the luminance moved. Measured against #07111F. */
+  --lagda-on-navy-muted:  #94A3B8;   /* 7.39:1 — body copy, section sub-text  */
+  --lagda-on-navy-subtle: #8A9BAE;   /* 6.65:1 — secondary and helper text    */
+  --lagda-on-navy-faint:  #7C8DA4;   /* 5.59:1 — least prominent, still legible */
+
   /* ── Z-index scale ────────────────────────────────────────────────────── */
   /* One ordered ladder for everything that stacks. Before this existed the
      codebase held more than twenty ad-hoc values between 0 and 10100, and

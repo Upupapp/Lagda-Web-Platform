@@ -27,7 +27,7 @@ function FirmWorkspaceMockup() {
       <div style={{ padding: "12px 16px", borderBottom: "1px solid rgba(255,255,255,0.07)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <div>
           <p style={{ color: "white", ...GF, fontSize: 12, fontWeight: 700, margin: 0 }}>Northbridge Legal Group</p>
-          <p style={{ color: "#475569", ...GM, fontSize: 10, margin: "1px 0 0" }}>Firm Workspace · 4 members</p>
+          <p style={{ color: "#8A9BAE", ...GM, fontSize: 10, margin: "1px 0 0" }}>Firm Workspace · 4 members</p>
         </div>
         <span style={{ background: "rgba(0,120,212,0.12)", color: "#38bdf8", ...GM, fontSize: 9, fontWeight: 700, padding: "2px 8px", borderRadius: 999, border: "1px solid rgba(0,120,212,0.25)" }}>WORKSPACE</span>
       </div>
@@ -36,14 +36,14 @@ function FirmWorkspaceMockup() {
           <div style={{ width: 28, height: 28, borderRadius: "50%", background: "rgba(0,120,212,0.15)", display: "flex", alignItems: "center", justifyContent: "center", ...GM, fontSize: 9, fontWeight: 700, color: "#38bdf8", flexShrink: 0 }}>{m.avatar}</div>
           <div style={{ flex: 1 }}>
             <p style={{ color: "white", ...GF, fontSize: 12, fontWeight: 600, margin: 0 }}>{m.name}</p>
-            <p style={{ color: "#475569", ...GM, fontSize: 10, margin: "1px 0 0" }}>{m.role}</p>
+            <p style={{ color: "#8A9BAE", ...GM, fontSize: 10, margin: "1px 0 0" }}>{m.role}</p>
           </div>
           <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#22C55E", flexShrink: 0 }} />
         </div>
       ))}
       <div style={{ padding: "10px 16px", background: "rgba(0,0,0,0.2)", display: "flex", gap: 14 }}>
-        <span style={{ color: "#0078D4", ...GF, fontSize: 11, fontWeight: 700 }}>+ Invite member</span>
-        <span style={{ color: "#475569", ...GF, fontSize: 11 }}>7 templates · 26 active</span>
+        <span style={{ color: "#38BDF8", ...GF, fontSize: 11, fontWeight: 700 }}>+ Invite member</span>
+        <span style={{ color: "#8A9BAE", ...GF, fontSize: 11 }}>7 templates · 26 active</span>
       </div>
     </div>
   );
@@ -110,7 +110,7 @@ export function LawFirms() {
             <ChallengeCards challenges={CHALLENGES} />
           </div>
           <div>
-            <p style={{ color: "#475569", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", marginBottom: 12 }}>FIRM WORKSPACE</p>
+            <p style={{ color: "#8A9BAE", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", marginBottom: 12 }}>FIRM WORKSPACE</p>
             <FirmWorkspaceMockup />
           </div>
         </div>
@@ -131,7 +131,7 @@ export function LawFirms() {
                 "Centralized usage and activity visibility",
               ].map((item) => (
                 <div key={item} style={{ display: "flex", gap: 8 }}>
-                  <span style={{ color: "#0078D4", flexShrink: 0, fontWeight: 700 }}>✓</span>
+                  <span style={{ color: "#38BDF8", flexShrink: 0, fontWeight: 700 }}>✓</span>
                   <span style={{ color: "#94a3b8", ...GF, fontSize: 13, lineHeight: 1.5 }}>{item}</span>
                 </div>
               ))}

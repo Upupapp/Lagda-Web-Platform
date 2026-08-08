@@ -16,7 +16,7 @@ export function ResourcesOverview() {
           <h1 style={{ color: "white", ...GF, fontSize: "clamp(28px, 5vw, 50px)", fontWeight: 900, lineHeight: 1.1, letterSpacing: "-0.03em", margin: "0 0 18px" }}>
             Guides and resources for secure digital document workflows.
           </h1>
-          <p style={{ color: "#64748b", ...GF, fontSize: 17, lineHeight: 1.65 }}>
+          <p style={{ color: "#94A3B8", ...GF, fontSize: 17, lineHeight: 1.65 }}>
             Product guides, verification and security resources, legal framework context, and support information for LAGDA eSignature.
           </p>
         </div>
@@ -50,7 +50,7 @@ export function ResourcesOverview() {
                     onMouseLeave={(e) => (e.currentTarget as HTMLAnchorElement).style.borderColor = "rgba(255,255,255,0.06)"}
                   >
                     <span style={{ color: "#94a3b8", ...GF, fontSize: 13, fontWeight: g.available ? 500 : 400 }}>{g.title}</span>
-                    <span style={{ color: "#334155", fontSize: 12, flexShrink: 0 }}>→</span>
+                    <span style={{ color: "#7C8DA4", fontSize: 12, flexShrink: 0 }}>→</span>
                   </Link>
                 ))}
               </div>
@@ -72,7 +72,7 @@ export function ResourcesOverview() {
             <div key={path} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 12, padding: "20px 22px", display: "flex", flexDirection: "column", gap: 10 }}>
               <span aria-hidden style={{ fontSize: 24 }}>{icon}</span>
               <p style={{ color: "white", ...GF, fontSize: 15, fontWeight: 700, margin: 0 }}>{title}</p>
-              <p style={{ color: "#64748b", ...GF, fontSize: 13, margin: 0, lineHeight: 1.5, flex: 1 }}>{desc}</p>
+              <p style={{ color: "#94A3B8", ...GF, fontSize: 13, margin: 0, lineHeight: 1.5, flex: 1 }}>{desc}</p>
               <Link to={path} style={{ color: "#38bdf8", ...GF, fontSize: 13, fontWeight: 600, textDecoration: "none" }}>{cta} →</Link>
             </div>
           ))}
@@ -98,9 +98,9 @@ export function ResourcesOverview() {
               }}>
                 <div>
                   <p style={{ color: "white", ...GF, fontSize: 14, fontWeight: 600, margin: "0 0 3px" }}>{title}</p>
-                  <p style={{ color: "#64748b", ...GF, fontSize: 12, margin: 0 }}>{desc}</p>
+                  <p style={{ color: "#94A3B8", ...GF, fontSize: 12, margin: 0 }}>{desc}</p>
                 </div>
-                <span style={{ color: "#475569", fontSize: 14, flexShrink: 0 }}>→</span>
+                <span style={{ color: "#8A9BAE", fontSize: 14, flexShrink: 0 }}>→</span>
               </Link>
             ))}
           </div>

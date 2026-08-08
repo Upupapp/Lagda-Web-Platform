@@ -95,7 +95,7 @@ export function Breadcrumb({ minDepth = 2, className }: BreadcrumbProps) {
           return (
             <li key={crumb.path} style={{ display: "flex", alignItems: "center", gap: 6 }}>
               {i > 0 && (
-                <span aria-hidden="true" style={{ color: "#334155", fontSize: 12, userSelect: "none" }}>
+                <span aria-hidden="true" style={{ color: "#7C8DA4", fontSize: 12, userSelect: "none" }}>
                   /
                 </span>
               )}
@@ -110,11 +110,11 @@ export function Breadcrumb({ minDepth = 2, className }: BreadcrumbProps) {
                 <Link
                   to={crumb.path}
                   style={{
-                    color: "#475569", ...GF, fontSize: 12, fontWeight: 500,
+                    color: "#8A9BAE", ...GF, fontSize: 12, fontWeight: 500,
                     textDecoration: "none", transition: "color 0.15s ease",
                   }}
                   onMouseEnter={(e) => { e.currentTarget.style.color = "#94a3b8"; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.color = "#475569"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.color = "#8A9BAE"; }}
                 >
                   {crumb.label}
                 </Link>

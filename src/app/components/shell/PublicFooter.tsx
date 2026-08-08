@@ -81,15 +81,15 @@ export function PublicFooter() {
               <LagdaLogo variant="white-horizontal" size="sm" decorative />
             </Link>
             <p style={{
-              color: "#64748b", ...GF, fontSize: 13, lineHeight: 1.6, margin: 0, marginBottom: 20,
+              color: "#94A3B8", ...GF, fontSize: 13, lineHeight: 1.6, margin: 0, marginBottom: 20,
             }}>
               The Philippine-first electronic signature and document verification platform for legal, business, and institutional workflows.
             </p>
             <p style={{
-              color: "#334155", ...GF, fontSize: 11, lineHeight: 1.5, margin: 0,
+              color: "#7C8DA4", ...GF, fontSize: 11, lineHeight: 1.5, margin: 0,
             }}>
               A product of{" "}
-              <span style={{ color: "#64748b", fontWeight: 600 }}>UpUp Technologies</span>
+              <span style={{ color: "#94A3B8", fontWeight: 600 }}>UpUp Technologies</span>
             </p>
           </div>
 
@@ -120,13 +120,13 @@ export function PublicFooter() {
                     <Link
                       to={link.path}
                       style={{
-                        color: link.isComingSoon ? "#475569" : "#64748b",
+                        color: link.isComingSoon ? "#8A9BAE" : "#94A3B8",
                         ...GF, fontSize: 13, textDecoration: "none",
                         transition: "color 0.18s ease",
                         display: "inline-flex", alignItems: "center", gap: 6,
                       }}
                       onMouseEnter={(e) => { e.currentTarget.style.color = link.isComingSoon ? "#94a3b8" : "#e2e8f0"; }}
-                      onMouseLeave={(e) => { e.currentTarget.style.color = link.isComingSoon ? "#475569" : "#64748b"; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.color = link.isComingSoon ? "#8A9BAE" : "#94A3B8"; }}
                     >
                       {link.label}
                       {link.isComingSoon && (
@@ -151,7 +151,7 @@ export function PublicFooter() {
           flexWrap: "wrap",
           gap: 12,
         }}>
-          <p style={{ margin: 0, color: "#334155", ...GF, fontSize: 12 }}>
+          <p style={{ margin: 0, color: "#7C8DA4", ...GF, fontSize: 12 }}>
             © {year} UpUp Technologies. LAGDA and the LAGDA shield mark are trademarks of UpUp Technologies.
           </p>
           <div style={{ display: "flex", gap: 20 }}>
@@ -165,11 +165,11 @@ export function PublicFooter() {
                 key={l.label}
                 to={l.path}
                 style={{
-                  color: "#475569", ...GF, fontSize: 12, textDecoration: "none",
+                  color: "#8A9BAE", ...GF, fontSize: 12, textDecoration: "none",
                   transition: "color 0.18s ease",
                 }}
                 onMouseEnter={(e) => { e.currentTarget.style.color = "#94a3b8"; }}
-                onMouseLeave={(e) => { e.currentTarget.style.color = "#475569"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.color = "#8A9BAE"; }}
               >
                 {l.label}
               </Link>

@@ -33,7 +33,7 @@ function BrandingPreview({ branded }: { branded: boolean }) {
       {/* Body */}
       <div style={{ padding: "16px 18px" }}>
         <p style={{ color: "white", ...GF, fontSize: 13, fontWeight: 700, margin: 0, marginBottom: 4 }}>Professional Services Agreement</p>
-        <p style={{ color: "#64748b", ...GF, fontSize: 12, margin: 0, marginBottom: 14 }}>Please review and sign the document below.</p>
+        <p style={{ color: "#94A3B8", ...GF, fontSize: 12, margin: 0, marginBottom: 14 }}>Please review and sign the document below.</p>
         <div style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 8, padding: "10px 12px", marginBottom: 12 }}>
           <p style={{ color: "#94a3b8", ...GF, fontSize: 12, margin: 0 }}>📄 Professional Services Agreement.pdf</p>
         </div>
@@ -43,8 +43,8 @@ function BrandingPreview({ branded }: { branded: boolean }) {
       </div>
       {/* Footer */}
       <div style={{ padding: "10px 18px", borderTop: "1px solid rgba(255,255,255,0.06)", display: "flex", justifyContent: "space-between" }}>
-        <span style={{ color: "#334155", ...GM, fontSize: 10 }}>LAGDA-VER-2026-004821</span>
-        <span style={{ color: branded ? "#0078D4" : "#334155", ...GF, fontSize: 10 }}>
+        <span style={{ color: "#7C8DA4", ...GM, fontSize: 10 }}>LAGDA-VER-2026-004821</span>
+        <span style={{ color: branded ? "#0078D4" : "#7C8DA4", ...GF, fontSize: 10 }}>
           {branded ? "Mabini Legal Solutions via LAGDA" : "Secured by LAGDA"}
         </span>
       </div>
@@ -71,14 +71,14 @@ export function CompanyBranding() {
               <button
                 onClick={() => setBranded(false)}
                 aria-pressed={!branded}
-                style={{ padding: "8px 16px", borderRadius: 8, ...GF, fontSize: 13, fontWeight: !branded ? 700 : 500, background: !branded ? "rgba(0,120,212,0.12)" : "rgba(255,255,255,0.04)", border: `1px solid ${!branded ? "rgba(0,120,212,0.4)" : "rgba(255,255,255,0.1)"}`, color: !branded ? "white" : "#64748b", cursor: "pointer" }}
+                style={{ padding: "8px 16px", borderRadius: 8, ...GF, fontSize: 13, fontWeight: !branded ? 700 : 500, background: !branded ? "rgba(0,120,212,0.12)" : "rgba(255,255,255,0.04)", border: `1px solid ${!branded ? "rgba(0,120,212,0.4)" : "rgba(255,255,255,0.1)"}`, color: !branded ? "white" : "#94A3B8", cursor: "pointer" }}
               >
                 Without branding
               </button>
               <button
                 onClick={() => setBranded(true)}
                 aria-pressed={branded}
-                style={{ padding: "8px 16px", borderRadius: 8, ...GF, fontSize: 13, fontWeight: branded ? 700 : 500, background: branded ? "rgba(0,120,212,0.12)" : "rgba(255,255,255,0.04)", border: `1px solid ${branded ? "rgba(0,120,212,0.4)" : "rgba(255,255,255,0.1)"}`, color: branded ? "white" : "#64748b", cursor: "pointer" }}
+                style={{ padding: "8px 16px", borderRadius: 8, ...GF, fontSize: 13, fontWeight: branded ? 700 : 500, background: branded ? "rgba(0,120,212,0.12)" : "rgba(255,255,255,0.04)", border: `1px solid ${branded ? "rgba(0,120,212,0.4)" : "rgba(255,255,255,0.1)"}`, color: branded ? "white" : "#94A3B8", cursor: "pointer" }}
               >
                 With branding
               </button>
@@ -93,7 +93,7 @@ export function CompanyBranding() {
                 "Branding never removes LAGDA trust indicators",
               ].map((item) => (
                 <div key={item} style={{ display: "flex", gap: 8 }}>
-                  <span style={{ color: "#0078D4", fontWeight: 700, flexShrink: 0 }}>✓</span>
+                  <span style={{ color: "#38BDF8", fontWeight: 700, flexShrink: 0 }}>✓</span>
                   <span style={{ color: "#94a3b8", ...GF, fontSize: 14, lineHeight: 1.5 }}>{item}</span>
                 </div>
               ))}
@@ -115,13 +115,13 @@ export function CompanyBranding() {
           ].map((s) => (
             <div key={s.title} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 10, padding: "14px 14px" }}>
               <p style={{ color: "white", ...GF, fontSize: 13, fontWeight: 700, margin: 0, marginBottom: 4 }}>{s.title}</p>
-              <p style={{ color: "#64748b", ...GF, fontSize: 12, lineHeight: 1.5, margin: 0 }}>{s.desc}</p>
+              <p style={{ color: "#94A3B8", ...GF, fontSize: 12, lineHeight: 1.5, margin: 0 }}>{s.desc}</p>
             </div>
           ))}
         </div>
         <div style={{ marginTop: 12 }}>
           <AvailBadge tier="Advanced" />
-          <span style={{ color: "#475569", ...GF, fontSize: 13, marginLeft: 10 }}>Workspace branding may be plan-dependent.</span>
+          <span style={{ color: "#8A9BAE", ...GF, fontSize: 13, marginLeft: 10 }}>Workspace branding may be plan-dependent.</span>
         </div>
         <style>{`.ds-grid { grid-template-columns: repeat(2, 1fr); } @media (max-width: 600px) { .ds-grid { grid-template-columns: 1fr; } }`}</style>
       </PageSection>

@@ -7,7 +7,7 @@ const GF = { fontFamily: "'Geist', sans-serif" };
 const GM = { fontFamily: "'Geist Mono', monospace" };
 
 const LAYERS = [
-  { num: "01", label: "Recipient access",    color: "#0078D4", desc: "The participant receives a secure invitation to the transaction. Access is controlled by the invitation method — link, account login, or enterprise session." },
+  { num: "01", label: "Recipient access",    color: "#38BDF8", desc: "The participant receives a secure invitation to the transaction. Access is controlled by the invitation method — link, account login, or enterprise session." },
   { num: "02", label: "Authentication",      color: "#38bdf8", desc: "A configured method verifies the participant has access to a credential — email account, mobile number, authenticator app, or enterprise identity. Different methods provide different evidence." },
   { num: "03", label: "Signature adoption",  color: "#22C55E", desc: "The participant applies a visible representation — typed, drawn, uploaded, or certificate-based. A signature image is a representation. Authentication is what builds the evidence record." },
   { num: "04", label: "Intent and consent",  color: "#C9960C", desc: "The platform records that the participant took a deliberate action — reviewing, consenting, and completing their assigned fields — not that the document was signed accidentally." },
@@ -30,7 +30,7 @@ function IdentityLayerDiagram() {
           {/* Content */}
           <div style={{ paddingLeft: 12, paddingBottom: i < LAYERS.length - 1 ? 16 : 0 }}>
             <p style={{ color: l.color, ...GM, fontSize: 11, fontWeight: 700, margin: 0, marginBottom: 4 }}>{l.label}</p>
-            <p style={{ color: "#64748b", ...GF, fontSize: 13, lineHeight: 1.55, margin: 0 }}>{l.desc}</p>
+            <p style={{ color: "#94A3B8", ...GF, fontSize: 13, lineHeight: 1.55, margin: 0 }}>{l.desc}</p>
           </div>
         </div>
       ))}
@@ -70,7 +70,7 @@ export function IdentityAwareSigning() {
             <p style={{ color: "#38bdf8", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", marginBottom: 10 }}>VISIBLE SIGNATURE</p>
             <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: 7 }}>
               {["A typed, drawn, or uploaded image", "Represents the participant's chosen signature style", "A visual cue — not cryptographic proof", "Can be adopted without additional authentication"].map((t) => (
-                <li key={t} style={{ color: "#64748b", ...GF, fontSize: 13, lineHeight: 1.45 }}>{t}</li>
+                <li key={t} style={{ color: "#94A3B8", ...GF, fontSize: 13, lineHeight: 1.45 }}>{t}</li>
               ))}
             </ul>
           </div>
@@ -78,7 +78,7 @@ export function IdentityAwareSigning() {
             <p style={{ color: "#22C55E", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", marginBottom: 10 }}>IDENTITY EVIDENCE</p>
             <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: 7 }}>
               {["Authentication event and method", "Timestamps for each key action", "Device, browser, and IP context", "Consent and intent record", "Document integrity reference"].map((t) => (
-                <li key={t} style={{ color: "#64748b", ...GF, fontSize: 13, lineHeight: 1.45 }}>{t}</li>
+                <li key={t} style={{ color: "#94A3B8", ...GF, fontSize: 13, lineHeight: 1.45 }}>{t}</li>
               ))}
             </ul>
           </div>
@@ -103,7 +103,7 @@ export function IdentityAwareSigning() {
                   <div key={n} style={{ width: 14, height: 14, borderRadius: 3, background: n <= a.strength ? "#0078D4" : "rgba(255,255,255,0.06)" }} />
                 ))}
               </div>
-              <span style={{ color: "#475569", ...GF, fontSize: 12, lineHeight: 1.4 }}>{a.note}</span>
+              <span style={{ color: "#8A9BAE", ...GF, fontSize: 12, lineHeight: 1.4 }}>{a.note}</span>
             </div>
           ))}
         </div>

@@ -27,7 +27,7 @@ function DocumentSetupMockup() {
         <span style={{ color: "white", ...GF, fontSize: 12, fontWeight: 700 }}>Professional Services Agreement.pdf</span>
       </div>
       <div style={{ padding: "14px 16px" }}>
-        <p style={{ color: "#475569", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.06em", marginBottom: 10 }}>FIELDS PLACED</p>
+        <p style={{ color: "#8A9BAE", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.06em", marginBottom: 10 }}>FIELDS PLACED</p>
         {[
           { field: "Signature",    by: "Ana Reyes · Page 4",    icon: "✍️" },
           { field: "Initials",     by: "Ana Reyes · Page 2",    icon: "🖊" },
@@ -40,13 +40,13 @@ function DocumentSetupMockup() {
           }}>
             <span style={{ fontSize: 13 }}>{f.icon}</span>
             <span style={{ color: "white", ...GF, fontSize: 12, fontWeight: 600, flex: 1 }}>{f.field}</span>
-            <span style={{ color: "#475569", ...GM, fontSize: 10 }}>{f.by}</span>
+            <span style={{ color: "#8A9BAE", ...GM, fontSize: 10 }}>{f.by}</span>
           </div>
         ))}
       </div>
       <div style={{ padding: "10px 16px", background: "rgba(0,120,212,0.06)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <span style={{ color: "#64748b", ...GF, fontSize: 12 }}>4 fields · 2 participants</span>
-        <span style={{ color: "#0078D4", ...GF, fontSize: 12, fontWeight: 700 }}>Review & Send →</span>
+        <span style={{ color: "#94A3B8", ...GF, fontSize: 12 }}>4 fields · 2 participants</span>
+        <span style={{ color: "#38BDF8", ...GF, fontSize: 12, fontWeight: 700 }}>Review & Send →</span>
       </div>
     </div>
   );
@@ -67,7 +67,7 @@ function RoutingDiagram() {
               all: "unset", padding: "6px 14px", borderRadius: 999, cursor: "pointer",
               background: mode === m ? "rgba(0,120,212,0.15)" : "rgba(255,255,255,0.05)",
               border: `1px solid ${mode === m ? "rgba(0,120,212,0.4)" : "rgba(255,255,255,0.1)"}`,
-              color: mode === m ? "#38bdf8" : "#64748b",
+              color: mode === m ? "#38bdf8" : "#94A3B8",
               ...GF, fontSize: 13, fontWeight: mode === m ? 700 : 500,
               transition: "all 0.15s ease",
             }}
@@ -89,7 +89,7 @@ function RoutingDiagram() {
             <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
               {["Ana Reyes · Signer", "→", "Marco Santos · Approver", "→", "Completed"].map((item, i) => (
                 item === "→" ? (
-                  <span key={i} style={{ color: "#0078D4", fontSize: 18, fontWeight: 700 }}>→</span>
+                  <span key={i} style={{ color: "#38BDF8", fontSize: 18, fontWeight: 700 }}>→</span>
                 ) : (
                   <div key={i} style={{
                     background: item === "Completed" ? "rgba(34,197,94,0.1)" : "rgba(0,120,212,0.1)",
@@ -103,7 +103,7 @@ function RoutingDiagram() {
                 )
               ))}
             </div>
-            <p style={{ color: "#475569", ...GF, fontSize: 13, lineHeight: 1.5, margin: "16px 0 0" }}>
+            <p style={{ color: "#8A9BAE", ...GF, fontSize: 13, lineHeight: 1.5, margin: "16px 0 0" }}>
               Each participant acts only after the previous one completes. Useful when an approval or authority depends on prior action.
             </p>
           </div>
@@ -126,7 +126,7 @@ function RoutingDiagram() {
             <div style={{ background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.25)", borderRadius: 8, padding: "7px 12px", display: "inline-flex", color: "#22C55E", ...GF, fontSize: 12, fontWeight: 600 }}>
               Completed when both sign
             </div>
-            <p style={{ color: "#475569", ...GF, fontSize: 13, lineHeight: 1.5, margin: "16px 0 0" }}>
+            <p style={{ color: "#8A9BAE", ...GF, fontSize: 13, lineHeight: 1.5, margin: "16px 0 0" }}>
               All participants in this step act at the same time. Completion requires all to respond. Useful when signing order does not matter.
             </p>
           </div>
@@ -158,7 +158,7 @@ function ReviewSummaryMockup() {
         { label: "Expires",     value: "21 July 2026" },
       ].map((row) => (
         <div key={row.label} style={{ padding: "9px 16px", borderBottom: "1px solid rgba(255,255,255,0.04)", display: "flex", gap: 12, alignItems: "flex-start" }}>
-          <span style={{ color: "#475569", ...GM, fontSize: 10, flexShrink: 0, paddingTop: 2, minWidth: 80 }}>{row.label}</span>
+          <span style={{ color: "#8A9BAE", ...GM, fontSize: 10, flexShrink: 0, paddingTop: 2, minWidth: 80 }}>{row.label}</span>
           <span style={{ color: "#94a3b8", ...GF, fontSize: 12, lineHeight: 1.4 }}>{row.value}</span>
         </div>
       ))}
@@ -195,10 +195,10 @@ export function EsigCoreWorkflow() {
       >
         <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginTop: 24 }}>
           <a href="#prepare" style={{ color: "#38bdf8", ...GF, fontSize: 14, fontWeight: 600, textDecoration: "none" }}>Prepare ↓</a>
-          <a href="#participants" style={{ color: "#64748b", ...GF, fontSize: 14, textDecoration: "none" }}>Participants ↓</a>
-          <a href="#routing" style={{ color: "#64748b", ...GF, fontSize: 14, textDecoration: "none" }}>Routing ↓</a>
-          <a href="#authentication" style={{ color: "#64748b", ...GF, fontSize: 14, textDecoration: "none" }}>Authentication ↓</a>
-          <a href="#recipient" style={{ color: "#64748b", ...GF, fontSize: 14, textDecoration: "none" }}>Recipient journey ↓</a>
+          <a href="#participants" style={{ color: "#94A3B8", ...GF, fontSize: 14, textDecoration: "none" }}>Participants ↓</a>
+          <a href="#routing" style={{ color: "#94A3B8", ...GF, fontSize: 14, textDecoration: "none" }}>Routing ↓</a>
+          <a href="#authentication" style={{ color: "#94A3B8", ...GF, fontSize: 14, textDecoration: "none" }}>Authentication ↓</a>
+          <a href="#recipient" style={{ color: "#94A3B8", ...GF, fontSize: 14, textDecoration: "none" }}>Recipient journey ↓</a>
         </div>
       </PageHero>
 
@@ -210,7 +210,7 @@ export function EsigCoreWorkflow() {
             <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>
               {["Upload one or multiple PDFs", "Define document order in multi-document transactions", "Add instructions visible to all participants", "Set automated reminder schedule", "Set a completion deadline", "Save as a draft before sending"].map((item) => (
                 <li key={item} style={{ display: "flex", gap: 8, alignItems: "flex-start", marginBottom: 8 }}>
-                  <span style={{ color: "#0078D4", fontWeight: 700, flexShrink: 0, fontSize: 13 }}>✓</span>
+                  <span style={{ color: "#38BDF8", fontWeight: 700, flexShrink: 0, fontSize: 13 }}>✓</span>
                   <span style={{ color: "#94a3b8", ...GF, fontSize: 14, lineHeight: 1.5 }}>{item}</span>
                 </li>
               ))}
@@ -228,11 +228,11 @@ export function EsigCoreWorkflow() {
           {PARTICIPANT_ROLES.map((r) => (
             <div key={r.label} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 12, padding: "14px 16px" }}>
               <p style={{ color: "white", ...GF, fontSize: 13, fontWeight: 700, margin: 0, marginBottom: 4 }}>{r.label}</p>
-              <p style={{ color: "#64748b", ...GF, fontSize: 13, margin: 0, lineHeight: 1.5 }}>{r.desc}</p>
+              <p style={{ color: "#94A3B8", ...GF, fontSize: 13, margin: 0, lineHeight: 1.5 }}>{r.desc}</p>
             </div>
           ))}
         </div>
-        <p style={{ color: "#334155", ...GF, fontSize: 12, lineHeight: 1.6, marginTop: 16 }}>
+        <p style={{ color: "#7C8DA4", ...GF, fontSize: 12, lineHeight: 1.6, marginTop: 16 }}>
           Recipients do not need an existing LAGDA account to sign or approve a document. A secure invitation link is sufficient.
         </p>
         <style>{`.roles-grid { grid-template-columns: repeat(3, 1fr); } @media (max-width: 720px) { .roles-grid { grid-template-columns: 1fr; } }`}</style>
@@ -266,7 +266,7 @@ export function EsigCoreWorkflow() {
                   {m.label}
                   {!m.available && <span style={{ color: "#C9960C", ...GM, fontSize: 9, fontWeight: 700, marginLeft: 8 }}>ENTERPRISE</span>}
                 </p>
-                <p style={{ color: "#64748b", ...GF, fontSize: 12, margin: 0, lineHeight: 1.5 }}>{m.desc}</p>
+                <p style={{ color: "#94A3B8", ...GF, fontSize: 12, margin: 0, lineHeight: 1.5 }}>{m.desc}</p>
               </div>
             </div>
           ))}
@@ -285,7 +285,7 @@ export function EsigCoreWorkflow() {
                   <span aria-hidden style={{ fontSize: 16, flexShrink: 0 }}>{f.icon}</span>
                   <div>
                     <p style={{ color: "white", ...GF, fontSize: 12, fontWeight: 700, margin: 0 }}>{f.label}</p>
-                    <p style={{ color: "#64748b", ...GF, fontSize: 11, margin: 0, lineHeight: 1.4 }}>{f.desc}</p>
+                    <p style={{ color: "#94A3B8", ...GF, fontSize: 11, margin: 0, lineHeight: 1.4 }}>{f.desc}</p>
                   </div>
                 </div>
               ))}
@@ -301,11 +301,11 @@ export function EsigCoreWorkflow() {
         <div style={{ display: "grid", gap: 10 }} className="recip-grid">
           {RECIPIENT_STEPS.map((s) => (
             <div key={s.num} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 12, padding: "14px 14px" }}>
-              <span style={{ color: "#0078D4", ...GM, fontSize: 11, fontWeight: 700, display: "block", marginBottom: 6 }}>
+              <span style={{ color: "#38BDF8", ...GM, fontSize: 11, fontWeight: 700, display: "block", marginBottom: 6 }}>
                 {String(s.num).padStart(2, "0")}
               </span>
               <p style={{ color: "white", ...GF, fontSize: 13, fontWeight: 700, margin: 0, marginBottom: 4 }}>{s.title}</p>
-              <p style={{ color: "#64748b", ...GF, fontSize: 12, margin: 0, lineHeight: 1.5 }}>{s.desc}</p>
+              <p style={{ color: "#94A3B8", ...GF, fontSize: 12, margin: 0, lineHeight: 1.5 }}>{s.desc}</p>
             </div>
           ))}
         </div>

@@ -49,7 +49,7 @@ export function EnotaryOverview() {
             ].map(({ label, body }) => (
               <div key={label} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 10, padding: "20px 22px" }}>
                 <p style={{ color: "white", ...GF, fontSize: 14, fontWeight: 700, margin: "0 0 8px" }}>{label}</p>
-                <p style={{ color: "#64748b", ...GF, fontSize: 13, lineHeight: 1.65, margin: 0 }}>{body}</p>
+                <p style={{ color: "#94A3B8", ...GF, fontSize: 13, lineHeight: 1.65, margin: 0 }}>{body}</p>
               </div>
             ))}
           </div>
@@ -66,7 +66,7 @@ export function EnotaryOverview() {
                 <span style={{ color: BURGUNDY, fontSize: 16, marginTop: 1, flexShrink: 0 }}>≠</span>
                 <div>
                   <p style={{ color: "white", ...GF, fontSize: 14, fontWeight: 700, margin: "0 0 4px" }}>{heading}</p>
-                  <p style={{ color: "#64748b", ...GF, fontSize: 13, lineHeight: 1.6, margin: 0 }}>{body}</p>
+                  <p style={{ color: "#94A3B8", ...GF, fontSize: 13, lineHeight: 1.6, margin: 0 }}>{body}</p>
                 </div>
               </div>
             ))}
@@ -100,13 +100,13 @@ export function EnotaryOverview() {
         <div style={{ maxWidth: 680, margin: "0 auto", textAlign: "center" }}>
           <p style={{ color: BURGUNDY, ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.12em", marginBottom: 12 }}>STAY INFORMED</p>
           <h2 style={{ color: "white", ...GF, fontSize: "clamp(20px, 3vw, 32px)", fontWeight: 900, lineHeight: 1.15, margin: "0 0 14px" }}>Join the waitlist</h2>
-          <p style={{ color: "#64748b", ...GF, fontSize: 15, lineHeight: 1.7, margin: "0 0 24px" }}>
+          <p style={{ color: "#94A3B8", ...GF, fontSize: 15, lineHeight: 1.7, margin: "0 0 24px" }}>
             Receive updates on LAGDA eNotary as we progress toward accreditation. Joining the waitlist does not create an account, guarantee access, or reserve accreditation.
           </p>
           <Link to="/enotary/waitlist" style={{ display: "inline-block", background: BURGUNDY, color: "white", ...GF, fontSize: 14, fontWeight: 700, padding: "13px 28px", borderRadius: 8, textDecoration: "none" }}>
             Join the waitlist
           </Link>
-          <p style={{ color: "#334155", ...GF, fontSize: 12, marginTop: 14 }}>
+          <p style={{ color: "#7C8DA4", ...GF, fontSize: 12, marginTop: 14 }}>
             No purchase required. Waitlist registration does not create a LAGDA account.
           </p>
         </div>
@@ -115,7 +115,7 @@ export function EnotaryOverview() {
       {/* Nav links */}
       <EnotarySection id="learn-more" bordered>
         <div style={{ maxWidth: 900, margin: "0 auto" }}>
-          <p style={{ color: "#475569", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", marginBottom: 20 }}>LEARN MORE</p>
+          <p style={{ color: "#8A9BAE", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", marginBottom: 20 }}>LEARN MORE</p>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 12 }}>
             {[
               { label: "Future Capabilities", path: "/enotary/future-capabilities", sub: "Concepts under exploration" },
@@ -124,7 +124,7 @@ export function EnotaryOverview() {
             ].map(({ label, path, sub }) => (
               <Link key={path} to={path} style={{ display: "block", textDecoration: "none", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 10, padding: "16px 20px", transition: "border-color 0.15s" }}>
                 <p style={{ color: "white", ...GF, fontSize: 14, fontWeight: 700, margin: "0 0 4px" }}>{label}</p>
-                <p style={{ color: "#475569", ...GF, fontSize: 12, margin: 0 }}>{sub}</p>
+                <p style={{ color: "#8A9BAE", ...GF, fontSize: 12, margin: 0 }}>{sub}</p>
               </Link>
             ))}
           </div>

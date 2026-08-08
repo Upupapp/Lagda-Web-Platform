@@ -19,7 +19,7 @@ function ParallelSequentialComparison() {
     <div style={{ display: "grid", gap: 16 }} className="ps-grid">
       {/* Parallel */}
       <div style={{ background: "rgba(0,120,212,0.06)", border: "1px solid rgba(0,120,212,0.2)", borderRadius: 14, padding: "20px 18px" }}>
-        <p style={{ color: "#0078D4", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", marginBottom: 14 }}>PARALLEL SIGNING</p>
+        <p style={{ color: "#38BDF8", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", marginBottom: 14 }}>PARALLEL SIGNING</p>
         <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 12 }}>
           {["Ana Reyes · Signer", "Marco Santos · Signer"].map((p) => (
             <div key={p} style={{ background: "rgba(0,120,212,0.12)", border: "1px solid rgba(0,120,212,0.2)", borderRadius: 8, padding: "7px 12px", ...GF, fontSize: 12, fontWeight: 600, color: "white" }}>
@@ -31,7 +31,7 @@ function ParallelSequentialComparison() {
         <div style={{ background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.25)", borderRadius: 8, padding: "7px 12px", ...GF, fontSize: 12, fontWeight: 600, color: "#22C55E", display: "inline-flex" }}>
           Complete when both sign
         </div>
-        <p style={{ color: "#64748b", ...GF, fontSize: 13, lineHeight: 1.5, margin: "14px 0 0" }}>
+        <p style={{ color: "#94A3B8", ...GF, fontSize: 13, lineHeight: 1.5, margin: "14px 0 0" }}>
           All participants act at the same time. Useful when signing order does not matter.
         </p>
       </div>
@@ -47,7 +47,7 @@ function ParallelSequentialComparison() {
             </div>
           ))}
         </div>
-        <p style={{ color: "#64748b", ...GF, fontSize: 13, lineHeight: 1.5, margin: "14px 0 0" }}>
+        <p style={{ color: "#94A3B8", ...GF, fontSize: 13, lineHeight: 1.5, margin: "14px 0 0" }}>
           Each participant acts only after the previous one completes. Useful when authority or approval depends on sequence.
         </p>
       </div>
@@ -75,12 +75,12 @@ function RemindersMockup() {
         { label: "After expiry",         value: "Transaction locked, record retained" },
       ].map((row) => (
         <div key={row.label} style={{ padding: "9px 16px", borderBottom: "1px solid rgba(255,255,255,0.04)", display: "flex", gap: 12 }}>
-          <span style={{ color: "#475569", ...GM, fontSize: 10, flexShrink: 0, minWidth: 120 }}>{row.label}</span>
+          <span style={{ color: "#8A9BAE", ...GM, fontSize: 10, flexShrink: 0, minWidth: 120 }}>{row.label}</span>
           <span style={{ color: "#94a3b8", ...GF, fontSize: 12 }}>{row.value}</span>
         </div>
       ))}
       <div style={{ padding: "10px 16px", background: "rgba(0,0,0,0.2)" }}>
-        <p style={{ color: "#334155", ...GF, fontSize: 11, margin: 0 }}>
+        <p style={{ color: "#7C8DA4", ...GF, fontSize: 11, margin: 0 }}>
           Reminder delivery is not guaranteed. LAGDA dispatches reminders but cannot control email delivery.
         </p>
       </div>
@@ -100,7 +100,7 @@ function CapabilitiesTable() {
         {tiers.map((t) => (
           <div key={t} style={{ display: "flex", alignItems: "center", gap: 6 }}>
             <div style={{ width: 10, height: 10, borderRadius: "50%", background: tierColors[t] }} />
-            <span style={{ color: "#64748b", ...GF, fontSize: 13 }}>
+            <span style={{ color: "#94A3B8", ...GF, fontSize: 13 }}>
               {t === "Core" ? "Available" : t === "Advanced" ? "Plan dependent" : "Enterprise"}
             </span>
           </div>
@@ -123,7 +123,7 @@ function CapabilitiesTable() {
                 <span style={{ color: "white", ...GF, fontSize: 13, fontWeight: 700 }}>{cap.title}</span>
                 <AvailBadge tier={cap.tier as "Core" | "Advanced" | "Enterprise"} />
               </div>
-              <p style={{ color: "#64748b", ...GF, fontSize: 12, margin: 0, lineHeight: 1.5 }}>{cap.desc}</p>
+              <p style={{ color: "#94A3B8", ...GF, fontSize: 12, margin: 0, lineHeight: 1.5 }}>{cap.desc}</p>
             </div>
           </div>
         ))}
@@ -171,12 +171,12 @@ export function EsigAdvancedCapabilities() {
                 "Expired transactions are locked; records are retained",
               ].map((item) => (
                 <li key={item} style={{ display: "flex", gap: 8, alignItems: "flex-start", marginBottom: 8 }}>
-                  <span style={{ color: "#0078D4", fontWeight: 700, flexShrink: 0, fontSize: 13 }}>✓</span>
+                  <span style={{ color: "#38BDF8", fontWeight: 700, flexShrink: 0, fontSize: 13 }}>✓</span>
                   <span style={{ color: "#94a3b8", ...GF, fontSize: 14, lineHeight: 1.5 }}>{item}</span>
                 </li>
               ))}
             </ul>
-            <p style={{ color: "#475569", ...GF, fontSize: 12, marginTop: 16, lineHeight: 1.6 }}>
+            <p style={{ color: "#8A9BAE", ...GF, fontSize: 12, marginTop: 16, lineHeight: 1.6 }}>
               Reminder delivery is not guaranteed. LAGDA dispatches reminders but cannot control email or SMS delivery.
             </p>
           </div>
@@ -202,7 +202,7 @@ export function EsigAdvancedCapabilities() {
                 <span style={{ color: "white", ...GF, fontSize: 13, fontWeight: 700 }}>{f.title}</span>
                 {f.tier && <AvailBadge tier="Advanced" />}
               </div>
-              <p style={{ color: "#64748b", ...GF, fontSize: 12, margin: 0, lineHeight: 1.5 }}>{f.desc}</p>
+              <p style={{ color: "#94A3B8", ...GF, fontSize: 12, margin: 0, lineHeight: 1.5 }}>{f.desc}</p>
             </div>
           ))}
         </div>

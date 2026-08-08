@@ -25,36 +25,41 @@ interface PublicRoute {
   readonly trackedDefects?: readonly TrackedDefect[];
 }
 
-/** WCAG 1.4.3 (AA). The public palette puts three muted tones on the navy
- *  background, and all three fail: #64748B = 3.98:1 (229 uses), #475569 =
- *  2.50:1 (181 uses), #334155 = 1.83:1 (90 uses), against a 4.5:1 requirement.
+/** WCAG 1.4.3 (AA). Largely FIXED by the design-system pass: 809 failing nodes
+ *  across these ten routes became 26.
  *
- *  This is deliberately tracked rather than fixed here. Raising all 500 to a
- *  passing tone collapses the type hierarchy — heading, body and muted would
- *  become two tones instead of three — so it is a palette decision for the
- *  design-system pass, not a find-and-replace. The ratchet asserts
- *  `actual <= nodes`, so the defect is bounded and can only shrink. */
+ *  The three muted tones were replaced with a RAMP that all passes and stays
+ *  visually ordered — #64748B -> #94A3B8 (3.98 -> 7.39:1), #475569 -> #8A9BAE
+ *  (2.50 -> 6.65:1), #334155 -> #7C8DA4 (1.83 -> 5.59:1) — rather than being
+ *  flattened to one tone, which would have collapsed heading/body/muted from
+ *  three levels to two. Azure as TEXT moved to Azure Glow (#0078D4 4.18:1 ->
+ *  #38BDF8 8.84:1); azure as a BUTTON FILL was left alone, since it carries
+ *  white text and is correct.
+ *
+ *  What remains is the eNotary burgundy on navy. Burgundy is brand-reserved for
+ *  the future eNotary product, so lightening it further is a brand decision
+ *  rather than an accessibility one. The ratchet asserts `actual <= nodes`. */
 const contrast = (nodes: number): TrackedDefect => ({
   rule: "color-contrast",
   nodes,
   reason:
-    "WCAG 1.4.3 AA: public palette ships three muted tones below 4.5:1 on #07111F " +
-    "(#64748B = 3.98:1, #475569 = 2.50:1, #334155 = 1.83:1). Open brand-palette defect; " +
-    "fixing it changes the type hierarchy and belongs to the design-system pass.",
+    "WCAG 1.4.3 AA: remaining nodes are the eNotary burgundy (#B01262 = 2.80:1) on navy. " +
+    "Burgundy is brand-reserved for the future eNotary product, so lightening it further " +
+    "is a brand decision. The muted ramp and azure text were fixed: 809 nodes -> 26.",
 });
 
 // Baselines measured against this build at 1440x900.
 const ROUTES: readonly PublicRoute[] = [
-  { path: "/",           name: "home",       trackedDefects: [contrast(135)] },
-  { path: "/esignature", name: "eSignature", trackedDefects: [contrast(89)] },
-  { path: "/workflow",   name: "workflow",   trackedDefects: [contrast(58)] },
-  { path: "/pricing",    name: "pricing",    trackedDefects: [contrast(111)] },
-  { path: "/security",   name: "security",   trackedDefects: [contrast(85)] },
-  { path: "/solutions",  name: "solutions",  trackedDefects: [contrast(83)] },
-  { path: "/resources",  name: "resources",  trackedDefects: [contrast(71)] },
-  { path: "/verify",     name: "verify",     trackedDefects: [contrast(54)] },
-  { path: "/enotary",    name: "eNotary",    trackedDefects: [contrast(70)] },
-  { path: "/contact",    name: "contact",    trackedDefects: [contrast(53)] },
+  { path: "/",           name: "home",       trackedDefects: [contrast(2)] },
+  { path: "/esignature", name: "eSignature", trackedDefects: [contrast(2)] },
+  { path: "/workflow",   name: "workflow",   trackedDefects: [contrast(2)] },
+  { path: "/pricing",    name: "pricing",    trackedDefects: [contrast(2)] },
+  { path: "/security",   name: "security",   trackedDefects: [contrast(2)] },
+  { path: "/solutions",  name: "solutions",  trackedDefects: [contrast(3)] },
+  { path: "/resources",  name: "resources",  trackedDefects: [contrast(2)] },
+  { path: "/verify",     name: "verify",     trackedDefects: [contrast(2)] },
+  { path: "/enotary",    name: "eNotary",    trackedDefects: [contrast(7)] },
+  { path: "/contact",    name: "contact",    trackedDefects: [contrast(2)] },
 ];
 
 async function open(page: Page, path: string) {

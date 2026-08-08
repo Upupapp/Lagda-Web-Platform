@@ -28,12 +28,12 @@ function ApiEndpointMockup() {
           }}>{e.method}</span>
           <div>
             <p style={{ color: "#e2e8f0", ...GM, fontSize: 11, margin: 0 }}>{e.path}</p>
-            <p style={{ color: "#475569", ...GF, fontSize: 11, margin: "2px 0 0" }}>{e.desc}</p>
+            <p style={{ color: "#8A9BAE", ...GF, fontSize: 11, margin: "2px 0 0" }}>{e.desc}</p>
           </div>
         </div>
       ))}
       <div style={{ padding: "10px 16px", background: "rgba(0,0,0,0.2)" }}>
-        <p style={{ color: "#334155", ...GM, fontSize: 9, margin: 0 }}>Representative endpoint shapes — not production documentation. API access is Enterprise.</p>
+        <p style={{ color: "#7C8DA4", ...GM, fontSize: 9, margin: 0 }}>Representative endpoint shapes — not production documentation. API access is Enterprise.</p>
       </div>
     </div>
   );
@@ -62,14 +62,14 @@ export function ApiIntegrations() {
                 "Launch workflows from saved templates",
               ].map((item) => (
                 <div key={item} style={{ display: "flex", gap: 8 }}>
-                  <span style={{ color: "#0078D4", fontWeight: 700, flexShrink: 0 }}>✓</span>
+                  <span style={{ color: "#38BDF8", fontWeight: 700, flexShrink: 0 }}>✓</span>
                   <span style={{ color: "#94a3b8", ...GF, fontSize: 14, lineHeight: 1.5 }}>{item}</span>
                 </div>
               ))}
             </div>
             <div>
               <AvailBadge tier="Enterprise" />
-              <span style={{ color: "#475569", ...GF, fontSize: 13, marginLeft: 10 }}>API access is available on Enterprise plans. Contact Sales for details.</span>
+              <span style={{ color: "#8A9BAE", ...GF, fontSize: 13, marginLeft: 10 }}>API access is available on Enterprise plans. Contact Sales for details.</span>
             </div>
           </div>
           <ApiEndpointMockup />
@@ -90,7 +90,7 @@ export function ApiIntegrations() {
           ].map((w) => (
             <div key={w.event} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 10, padding: "10px 12px" }}>
               <p style={{ color: "#38bdf8", ...GM, fontSize: 10, fontWeight: 700, margin: 0, marginBottom: 4 }}>{w.event}</p>
-              <p style={{ color: "#64748b", ...GF, fontSize: 12, lineHeight: 1.5, margin: 0 }}>{w.desc}</p>
+              <p style={{ color: "#94A3B8", ...GF, fontSize: 12, lineHeight: 1.5, margin: 0 }}>{w.desc}</p>
             </div>
           ))}
         </div>

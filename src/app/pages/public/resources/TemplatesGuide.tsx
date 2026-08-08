@@ -71,7 +71,7 @@ export function TemplatesGuide() {
             ].map(({ title, desc }) => (
               <div key={title} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 9, padding: "12px 16px" }}>
                 <p style={{ color: "white", ...GF, fontSize: 13, fontWeight: 700, margin: "0 0 4px" }}>{title}</p>
-                <p style={{ color: "#64748b", ...GF, fontSize: 13, margin: 0, lineHeight: 1.5 }}>{desc}</p>
+                <p style={{ color: "#94A3B8", ...GF, fontSize: 13, margin: 0, lineHeight: 1.5 }}>{desc}</p>
               </div>
             ))}
           </div>

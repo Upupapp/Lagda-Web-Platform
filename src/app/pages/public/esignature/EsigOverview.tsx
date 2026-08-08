@@ -19,7 +19,7 @@ function DashboardMockup() {
   const docs = [
     { name: "Professional Services Agreement", status: "Awaiting Approval", statusColor: "#F59E0B", updated: "Just now" },
     { name: "Engagement Letter — Reyes Family", status: "Completed",         statusColor: "#22C55E", updated: "Yesterday" },
-    { name: "Board Resolution No. 12",          status: "Sent",              statusColor: "#0078D4", updated: "2 days ago" },
+    { name: "Board Resolution No. 12",          status: "Sent",              statusColor: "#38BDF8", updated: "2 days ago" },
   ];
 
   return (
@@ -47,7 +47,7 @@ function DashboardMockup() {
             <p style={{ color: "white", ...GF, fontSize: 12, fontWeight: 600, margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
               {doc.name}
             </p>
-            <p style={{ color: "#475569", ...GM, fontSize: 10, margin: "3px 0 0" }}>{doc.updated}</p>
+            <p style={{ color: "#8A9BAE", ...GM, fontSize: 10, margin: "3px 0 0" }}>{doc.updated}</p>
           </div>
           <span style={{ ...GM, fontSize: 10, fontWeight: 700, color: doc.statusColor, flexShrink: 0, background: `${doc.statusColor}18`, padding: "2px 8px", borderRadius: 999 }}>
             {doc.status}
@@ -57,11 +57,11 @@ function DashboardMockup() {
 
       {/* Audit event preview */}
       <div style={{ padding: "12px 20px", background: "rgba(0,120,212,0.04)" }}>
-        <p style={{ color: "#475569", ...GM, fontSize: 10, fontWeight: 600, letterSpacing: "0.06em", marginBottom: 8 }}>LATEST EVENT</p>
+        <p style={{ color: "#8A9BAE", ...GM, fontSize: 10, fontWeight: 600, letterSpacing: "0.06em", marginBottom: 8 }}>LATEST EVENT</p>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#F59E0B", flexShrink: 0 }} />
           <span style={{ color: "#94a3b8", ...GF, fontSize: 12 }}>Marco Santos viewed the document</span>
-          <span style={{ color: "#334155", ...GM, fontSize: 10, marginLeft: "auto", flexShrink: 0 }}>2m ago</span>
+          <span style={{ color: "#7C8DA4", ...GM, fontSize: 10, marginLeft: "auto", flexShrink: 0 }}>2m ago</span>
         </div>
       </div>
     </div>
@@ -79,7 +79,7 @@ function LifecycleStrip() {
           border: `1px solid ${s.role === "recipient" ? "rgba(201,150,12,0.2)" : "rgba(0,120,212,0.2)"}`,
           borderRadius: 8, padding: "6px 12px",
         }}>
-          <span style={{ color: s.role === "recipient" ? "#C9960C" : "#0078D4", ...GM, fontSize: 10, fontWeight: 700 }}>
+          <span style={{ color: s.role === "recipient" ? "#C9960C" : "#38BDF8", ...GM, fontSize: 10, fontWeight: 700 }}>
             {String(s.num).padStart(2, "0")}
           </span>
           <span style={{ color: "white", ...GF, fontSize: 12, fontWeight: 600 }}>{s.title}</span>
@@ -117,7 +117,7 @@ function SenderRecipientSection() {
     <PageSection id="sender-recipient" bordered>
       <SectionHeading eyebrow="Two experiences" id="sr-heading" heading="Designed differently for senders and recipients." sub="The sender configures and tracks. The recipient signs in a clean, guided experience — no LAGDA account required." center />
       <div style={{ display: "grid", gap: 24 }} className="sr-grid">
-        {[{ title: "Sender", color: "#0078D4", bg: "rgba(0,120,212,0.08)", border: "rgba(0,120,212,0.2)", steps: SENDER },
+        {[{ title: "Sender", color: "#38BDF8", bg: "rgba(0,120,212,0.08)", border: "rgba(0,120,212,0.2)", steps: SENDER },
           { title: "Recipient", color: "#C9960C", bg: "rgba(201,150,12,0.08)", border: "rgba(201,150,12,0.2)", steps: RECIPIENT }].map((col) => (
           <div key={col.title} style={{
             background: col.bg, border: `1px solid ${col.border}`,
@@ -181,9 +181,9 @@ export function EsigOverview() {
           >
             See How It Works
           </Link>
-          <Link to="/verify" style={{ color: "#64748b", padding: "13px 8px", ...GF, fontSize: 14, fontWeight: 500, textDecoration: "none", display: "inline-flex", alignItems: "center", transition: "color 0.15s ease", minHeight: 44 }}
+          <Link to="/verify" style={{ color: "#94A3B8", padding: "13px 8px", ...GF, fontSize: 14, fontWeight: 500, textDecoration: "none", display: "inline-flex", alignItems: "center", transition: "color 0.15s ease", minHeight: 44 }}
             onMouseEnter={(e) => { e.currentTarget.style.color = "white"; }}
-            onMouseLeave={(e) => { e.currentTarget.style.color = "#64748b"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.color = "#94A3B8"; }}
           >
             Verify a Document →
           </Link>
@@ -209,9 +209,9 @@ export function EsigOverview() {
             <LifecycleStrip />
             <div style={{ marginTop: 20, display: "flex", gap: 8 }}>
               <div style={{ width: 10, height: 10, borderRadius: "50%", background: "#0078D4", marginTop: 2, flexShrink: 0 }} />
-              <span style={{ color: "#64748b", ...GF, fontSize: 13 }}>Blue = Sender actions</span>
+              <span style={{ color: "#94A3B8", ...GF, fontSize: 13 }}>Blue = Sender actions</span>
               <div style={{ width: 10, height: 10, borderRadius: "50%", background: "#C9960C", marginTop: 2, flexShrink: 0, marginLeft: 12 }} />
-              <span style={{ color: "#64748b", ...GF, fontSize: 13 }}>Gold = Recipient actions</span>
+              <span style={{ color: "#94A3B8", ...GF, fontSize: 13 }}>Gold = Recipient actions</span>
             </div>
           </div>
           <div className="overview-mockup-col">

@@ -34,7 +34,7 @@ export function EnotarySubNav() {
                 key={path}
                 to={path}
                 style={{
-                  color: isActive ? BURGUNDY : "#64748b",
+                  color: isActive ? BURGUNDY : "#94A3B8",
                   ...GF, fontSize: 13, fontWeight: isActive ? 700 : 500,
                   padding: "14px 18px", textDecoration: "none", whiteSpace: "nowrap",
                   borderBottom: isActive ? `2px solid ${BURGUNDY}` : "2px solid transparent",
@@ -85,7 +85,7 @@ export function EnotaryStatusBanner() {
 export function EnotaryDisclaimer({ variant = "default" }: { variant?: "default" | "compact" }) {
   if (variant === "compact") {
     return (
-      <p style={{ color: "#475569", ...GF, fontSize: 12, lineHeight: 1.6, margin: "12px 0 0" }}>
+      <p style={{ color: "#8A9BAE", ...GF, fontSize: 12, lineHeight: 1.6, margin: "12px 0 0" }}>
         {ENOTARY_DISCLAIMER}
       </p>
     );
@@ -120,7 +120,7 @@ export function EnotaryHeading({ children, sub }: { children: React.ReactNode; s
   return (
     <div style={{ marginBottom: 36 }}>
       <h2 style={{ color: "white", ...GF, fontSize: "clamp(20px, 3vw, 30px)", fontWeight: 900, lineHeight: 1.15, letterSpacing: "-0.02em", margin: "0 0 10px" }}>{children}</h2>
-      {sub && <p style={{ color: "#64748b", ...GF, fontSize: 15, margin: 0, maxWidth: 640 }}>{sub}</p>}
+      {sub && <p style={{ color: "#94A3B8", ...GF, fontSize: 15, margin: 0, maxWidth: 640 }}>{sub}</p>}
     </div>
   );
 }
@@ -130,7 +130,7 @@ export function EnotaryHeading({ children, sub }: { children: React.ReactNode; s
 export function FutureConceptCard({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div style={{ background: "rgba(103,2,59,0.06)", border: `1px solid rgba(103,2,59,0.2)`, borderRadius: 12, padding: "20px 24px", position: "relative" }}>
-      <span style={{ position: "absolute", top: 12, right: 14, color: "#475569", ...GM, fontSize: 9, fontWeight: 700, letterSpacing: "0.08em" }}>FUTURE CONCEPT — NOT AN AVAILABLE SERVICE</span>
+      <span style={{ position: "absolute", top: 12, right: 14, color: "#8A9BAE", ...GM, fontSize: 9, fontWeight: 700, letterSpacing: "0.08em" }}>FUTURE CONCEPT — NOT AN AVAILABLE SERVICE</span>
       <h3 style={{ color: "white", ...GF, fontSize: 16, fontWeight: 700, margin: "20px 0 10px" }}>{label}</h3>
       <div style={{ color: "#94a3b8", ...GF, fontSize: 14, lineHeight: 1.7 }}>{children}</div>
     </div>
@@ -153,7 +153,7 @@ const CAT_COLOR: Record<StageCategory, string> = {
   "active": "#22C55E",
   "planned": "#38bdf8",
   "future-regulatory": BURGUNDY,
-  "after-approval": "#475569",
+  "after-approval": "#8A9BAE",
 };
 
 export function AccreditationTimeline({ stages }: { stages: TimelineStage[] }) {
@@ -175,7 +175,7 @@ export function AccreditationTimeline({ stages }: { stages: TimelineStage[] }) {
                   {stage.status}
                 </span>
               </div>
-              <p style={{ color: "#64748b", ...GF, fontSize: 13, lineHeight: 1.6, margin: 0 }}>{stage.desc}</p>
+              <p style={{ color: "#94A3B8", ...GF, fontSize: 13, lineHeight: 1.6, margin: 0 }}>{stage.desc}</p>
             </div>
           </div>
         );

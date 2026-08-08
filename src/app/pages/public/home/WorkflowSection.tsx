@@ -25,7 +25,7 @@ function StepMockup({ step }: { step: typeof HOW_IT_WORKS[0] }) {
       <p style={{ color: "white", ...GF, fontSize: 15, fontWeight: 700, margin: 0, marginBottom: 4 }}>
         {step.mockLabel}
       </p>
-      <p style={{ color: "#64748b", ...GF, fontSize: 12, margin: 0, lineHeight: 1.5 }}>
+      <p style={{ color: "#94A3B8", ...GF, fontSize: 12, margin: 0, lineHeight: 1.5 }}>
         {step.mockSub}
       </p>
     </div>
@@ -71,7 +71,7 @@ export function WorkflowSection() {
         <h2 id="workflow-heading" style={{ color: "white", ...GF, fontSize: "clamp(26px, 4vw, 40px)", fontWeight: 800, margin: 0, letterSpacing: "-0.02em" }}>
           Six steps. One seamless workflow.
         </h2>
-        <p style={{ color: "#64748b", ...GF, fontSize: 16, lineHeight: 1.65, margin: "12px auto 0", maxWidth: 560 }}>
+        <p style={{ color: "#94A3B8", ...GF, fontSize: 16, lineHeight: 1.65, margin: "12px auto 0", maxWidth: 560 }}>
           From uploading a document to verifying the completed result — every step is designed to be straightforward.
         </p>
       </div>
@@ -126,7 +126,7 @@ export function WorkflowSection() {
                   <span style={{
                     position: "absolute", inset: 0,
                     display: "flex", alignItems: "center", justifyContent: "center",
-                    color: isActive ? "white" : "#475569", ...GM, fontSize: 11, fontWeight: 700,
+                    color: isActive ? "white" : "#8A9BAE", ...GM, fontSize: 11, fontWeight: 700,
                   }}>
                     {String(s.num).padStart(2, "0")}
                   </span>
@@ -136,7 +136,7 @@ export function WorkflowSection() {
                   <p style={{ color: isActive ? "white" : "#94a3b8", ...GF, fontSize: 14, fontWeight: 700, margin: 0 }}>
                     {s.title}
                   </p>
-                  <p style={{ color: "#475569", ...GF, fontSize: 12, margin: "2px 0 0" }}>
+                  <p style={{ color: "#8A9BAE", ...GF, fontSize: 12, margin: "2px 0 0" }}>
                     {s.short}
                   </p>
                 </div>

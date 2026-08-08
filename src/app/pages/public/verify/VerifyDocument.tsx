@@ -13,10 +13,10 @@ const OUTCOME_CONFIG: Record<DemoVerificationOutcome, { label: string; color: st
   "verified":      { label: "Verified",                    color: "#22C55E", bg: "rgba(34,197,94,0.1)",    icon: "✓", guidance: "The verification record confirms this transaction was completed. If you supplied a file, the file-match status below indicates whether the file matches the original."  },
   "file-mismatch": { label: "File Mismatch",               color: "#F97316", bg: "rgba(249,115,22,0.1)",   icon: "!", guidance: "A matching verification record was found but the file you supplied does not match the original document on record. Contact the document sender if you believe this is an error." },
   "incomplete":    { label: "Transaction Not Complete",     color: "#C9960C", bg: "rgba(201,150,12,0.1)",   icon: "○", guidance: "This transaction has not yet been completed by all participants. Verification of completed status is not available until all signing steps are finished." },
-  "cancelled":     { label: "Cancelled",                   color: "#64748b", bg: "rgba(100,116,139,0.1)",  icon: "×", guidance: "This transaction was cancelled. No completion verification is available for cancelled transactions." },
-  "voided":        { label: "Voided",                      color: "#64748b", bg: "rgba(100,116,139,0.1)",  icon: "×", guidance: "This transaction was voided. The document is no longer valid for signing or verification purposes." },
+  "cancelled":     { label: "Cancelled",                   color: "#94A3B8", bg: "rgba(100,116,139,0.1)",  icon: "×", guidance: "This transaction was cancelled. No completion verification is available for cancelled transactions." },
+  "voided":        { label: "Voided",                      color: "#94A3B8", bg: "rgba(100,116,139,0.1)",  icon: "×", guidance: "This transaction was voided. The document is no longer valid for signing or verification purposes." },
   "no-record":     { label: "No Matching Record",          color: "#ef4444", bg: "rgba(239,68,68,0.1)",    icon: "?", guidance: "No matching verification record was found for this ID. Check that you entered the ID correctly, including the prefix. If the record was recently created, try again in a few moments." },
-  "unavailable":   { label: "Service Temporarily Unavailable", color: "#475569", bg: "rgba(71,85,105,0.1)", icon: "—", guidance: "The verification service is temporarily unavailable. Please try again later or contact support." },
+  "unavailable":   { label: "Service Temporarily Unavailable", color: "#8A9BAE", bg: "rgba(71,85,105,0.1)", icon: "—", guidance: "The verification service is temporarily unavailable. Please try again later or contact support." },
 };
 
 const FILE_MATCH_LABELS: Record<string, string> = {
@@ -61,7 +61,7 @@ function ResultPanel({ result, onReset }: { result: DemoVerificationResult; onRe
 
       {/* Record details — public safe info only */}
       <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 10, padding: "16px 18px", marginBottom: 16 }}>
-        <p style={{ color: "#475569", ...GM, fontSize: 9, fontWeight: 700, marginBottom: 12, letterSpacing: "0.08em" }}>VERIFICATION RECORD</p>
+        <p style={{ color: "#8A9BAE", ...GM, fontSize: 9, fontWeight: 700, marginBottom: 12, letterSpacing: "0.08em" }}>VERIFICATION RECORD</p>
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           <Row label="Verification ID" value={result.verificationId} mono />
           <Row label="Document" value={result.documentDescription} />
@@ -73,7 +73,7 @@ function ResultPanel({ result, onReset }: { result: DemoVerificationResult; onRe
       </div>
 
       <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)", borderRadius: 8, padding: "10px 14px", marginBottom: 20 }}>
-        <p style={{ color: "#334155", ...GF, fontSize: 11, lineHeight: 1.6, margin: 0 }}>
+        <p style={{ color: "#7C8DA4", ...GF, fontSize: 11, lineHeight: 1.6, margin: 0 }}>
           Public verification shows transaction status and completion date only. Full signer identities, authentication evidence, and audit events are available to authorized workspace members only.
         </p>
       </div>
@@ -86,7 +86,7 @@ function ResultPanel({ result, onReset }: { result: DemoVerificationResult; onRe
           Verification Guide
         </Link>
       </div>
-      <Link to="/contact?category=verification" style={{ color: "#64748b", ...GF, fontSize: 13, textDecoration: "none" }}>Report an issue or contact support →</Link>
+      <Link to="/contact?category=verification" style={{ color: "#94A3B8", ...GF, fontSize: 13, textDecoration: "none" }}>Report an issue or contact support →</Link>
     </div>
   );
 }
@@ -94,7 +94,7 @@ function ResultPanel({ result, onReset }: { result: DemoVerificationResult; onRe
 function Row({ label, value, mono }: { label: string; value: string; mono?: boolean }) {
   return (
     <div style={{ display: "flex", gap: 12, justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap" }}>
-      <span style={{ color: "#64748b", ...GF, fontSize: 13, flexShrink: 0 }}>{label}</span>
+      <span style={{ color: "#94A3B8", ...GF, fontSize: 13, flexShrink: 0 }}>{label}</span>
       <span style={{ color: "white", ...(mono ? GM : GF), fontSize: 13, textAlign: "right", wordBreak: "break-word" }}>{value}</span>
     </div>
   );
@@ -178,7 +178,7 @@ export function VerifyDocument() {
     <div style={{ background: "#07111F", minHeight: "100vh", color: "white", ...GF }}>
       <section style={{ padding: "64px 24px 48px", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
         <div style={{ maxWidth: 680, margin: "0 auto" }}>
-          <p style={{ color: "#0078D4", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.12em", marginBottom: 14 }}>DOCUMENT VERIFICATION</p>
+          <p style={{ color: "#38BDF8", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.12em", marginBottom: 14 }}>DOCUMENT VERIFICATION</p>
           <h1 style={{ color: "white", ...GF, fontSize: "clamp(24px, 4vw, 40px)", fontWeight: 900, lineHeight: 1.1, letterSpacing: "-0.02em", margin: "0 0 14px" }}>
             Verify a LAGDA Document
           </h1>
@@ -217,7 +217,7 @@ export function VerifyDocument() {
                 <div style={{ display: "flex", gap: 0, background: "rgba(255,255,255,0.04)", borderRadius: 9, border: "1px solid rgba(255,255,255,0.08)", overflow: "hidden" }}>
                   {([["id", "Verification ID"], ["file", "Upload File"]] as [VerificationInputType, string][]).map(([v, l]) => (
                     <button key={v} type="button" onClick={() => setInputType(v)} role="radio" aria-checked={inputType === v}
-                      style={{ flex: 1, padding: "10px", ...GF, fontSize: 13, fontWeight: inputType === v ? 700 : 500, color: inputType === v ? "white" : "#64748b", background: inputType === v ? "rgba(0,120,212,0.2)" : "none", border: "none", cursor: "pointer", transition: "background 0.15s", minHeight: 40 }}>
+                      style={{ flex: 1, padding: "10px", ...GF, fontSize: 13, fontWeight: inputType === v ? 700 : 500, color: inputType === v ? "white" : "#94A3B8", background: inputType === v ? "rgba(0,120,212,0.2)" : "none", border: "none", cursor: "pointer", transition: "background 0.15s", minHeight: 40 }}>
                       {l}
                     </button>
                   ))}
@@ -229,7 +229,7 @@ export function VerifyDocument() {
                 <label htmlFor="ver-id" style={{ display: "block", color: "#94a3b8", ...GF, fontSize: 12, fontWeight: 600, marginBottom: 5 }}>
                   Verification ID <span aria-hidden style={{ color: "#ef4444" }}>*</span>
                 </label>
-                <p id="ver-id-hint" style={{ color: "#475569", ...GF, fontSize: 11, marginBottom: 6, lineHeight: 1.4 }}>
+                <p id="ver-id-hint" style={{ color: "#8A9BAE", ...GF, fontSize: 11, marginBottom: 6, lineHeight: 1.4 }}>
                   Format: LAGDA-VER-YYYY-XXXXXX — found on the completion report and signed document.
                 </p>
                 <input id="ver-id" type="text" value={verificationId}
@@ -245,23 +245,23 @@ export function VerifyDocument() {
               {inputType === "file" && (
                 <div>
                   <label htmlFor="ver-file" style={{ display: "block", color: "#94a3b8", ...GF, fontSize: 12, fontWeight: 600, marginBottom: 5 }}>
-                    Upload signed PDF <span style={{ color: "#475569" }}>(optional — for file comparison)</span>
+                    Upload signed PDF <span style={{ color: "#8A9BAE" }}>(optional — for file comparison)</span>
                   </label>
                   <div style={{ background: "rgba(255,255,255,0.03)", border: "1px dashed rgba(255,255,255,0.15)", borderRadius: 9, padding: "18px", textAlign: "center" }}>
                     <input id="ver-file" type="file" accept=".pdf" onChange={handleFileChange}
                       aria-describedby="ver-file-hint"
                       style={{ display: "block", margin: "0 auto", color: "#94a3b8", ...GF, fontSize: 13 }} />
-                    <p id="ver-file-hint" style={{ color: "#475569", ...GF, fontSize: 11, margin: "8px 0 0", lineHeight: 1.5 }}>
+                    <p id="ver-file-hint" style={{ color: "#8A9BAE", ...GF, fontSize: 11, margin: "8px 0 0", lineHeight: 1.5 }}>
                       PDF files only. The file is not uploaded or analyzed in this demonstration.
                     </p>
                   </div>
                   {fileName && (
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 8, padding: "8px 12px", background: "rgba(255,255,255,0.04)", borderRadius: 7, border: "1px solid rgba(255,255,255,0.08)" }}>
                       <span style={{ color: "#94a3b8", ...GF, fontSize: 12 }}>{fileName} ({fileSize ? `${(fileSize / 1024).toFixed(1)} KB` : ""})</span>
-                      <button type="button" onClick={() => { setFileName(null); setFileSize(null); }} style={{ color: "#64748b", background: "none", border: "none", cursor: "pointer", ...GF, fontSize: 12, padding: "2px" }} aria-label="Remove file">Remove</button>
+                      <button type="button" onClick={() => { setFileName(null); setFileSize(null); }} style={{ color: "#94A3B8", background: "none", border: "none", cursor: "pointer", ...GF, fontSize: 12, padding: "2px" }} aria-label="Remove file">Remove</button>
                     </div>
                   )}
-                  <p style={{ color: "#334155", ...GF, fontSize: 11, margin: "6px 0 0", lineHeight: 1.5 }}>
+                  <p style={{ color: "#7C8DA4", ...GF, fontSize: 11, margin: "6px 0 0", lineHeight: 1.5 }}>
                     Production file comparison uses cryptographic hash verification. This demonstration shows the file name and size only — no content is read, analyzed, or uploaded.
                   </p>
                 </div>
@@ -276,25 +276,25 @@ export function VerifyDocument() {
 
             {/* Demo examples */}
             <div style={{ marginTop: 32, paddingTop: 24, borderTop: "1px solid rgba(255,255,255,0.05)" }}>
-              <p style={{ color: "#475569", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", marginBottom: 12 }}>DEMONSTRATION IDs — TRY THESE</p>
+              <p style={{ color: "#8A9BAE", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", marginBottom: 12 }}>DEMONSTRATION IDs — TRY THESE</p>
               <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                 {DEMO_VER_IDS.map(({ id, outcome }) => (
                   <button key={id} type="button" onClick={() => setVerificationId(id)}
                     style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, padding: "9px 12px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 7, cursor: "pointer", textAlign: "left" }}>
                     <span style={{ color: "white", ...GM, fontSize: 12 }}>{id}</span>
-                    <span style={{ color: "#64748b", ...GF, fontSize: 11, flexShrink: 0 }}>{outcome}</span>
+                    <span style={{ color: "#94A3B8", ...GF, fontSize: 11, flexShrink: 0 }}>{outcome}</span>
                   </button>
                 ))}
               </div>
-              <p style={{ color: "#334155", ...GF, fontSize: 11, lineHeight: 1.55, margin: "10px 0 0" }}>
+              <p style={{ color: "#7C8DA4", ...GF, fontSize: 11, lineHeight: 1.55, margin: "10px 0 0" }}>
                 These are fictional demonstration records. Any other ID returns "No Matching Record."
               </p>
             </div>
 
             <div style={{ marginTop: 24, display: "flex", gap: 16, flexWrap: "wrap" }}>
               <Link to="/resources/document-verification-guide" style={{ color: "#38bdf8", ...GF, fontSize: 13, textDecoration: "none" }}>Read the Verification Guide →</Link>
-              <Link to="/features/document-verification" style={{ color: "#64748b", ...GF, fontSize: 13, textDecoration: "none" }}>About Document Verification</Link>
-              <Link to="/contact?category=verification" style={{ color: "#64748b", ...GF, fontSize: 13, textDecoration: "none" }}>Contact Support</Link>
+              <Link to="/features/document-verification" style={{ color: "#94A3B8", ...GF, fontSize: 13, textDecoration: "none" }}>About Document Verification</Link>
+              <Link to="/contact?category=verification" style={{ color: "#94A3B8", ...GF, fontSize: 13, textDecoration: "none" }}>Contact Support</Link>
             </div>
           </>
         )}

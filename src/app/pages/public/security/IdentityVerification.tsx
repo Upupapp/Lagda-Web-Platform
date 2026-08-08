@@ -8,7 +8,7 @@ const GM = { fontFamily: "'Geist Mono', monospace" };
 
 const LAYERS = [
   { num: "01", label: "Signing-request access",    color: "#38bdf8", desc: "Control how a participant reaches the transaction — via a secure link, account login, or enterprise session." },
-  { num: "02", label: "Signer authentication",     color: "#0078D4", desc: "Verify the participant's identity before they can act — via OTP, authenticator, account, or enterprise SSO." },
+  { num: "02", label: "Signer authentication",     color: "#38BDF8", desc: "Verify the participant's identity before they can act — via OTP, authenticator, account, or enterprise SSO." },
   { num: "03", label: "Declared signature intent", color: "#7c3aed", desc: "Confirmation that the participant understands and intends to apply their signature." },
   { num: "04", label: "Audit evidence",            color: "#a78bfa", desc: "Timestamped record of every action — delivery, viewing, authentication, field completion, and signature adoption." },
 ];
@@ -37,7 +37,7 @@ export function IdentityVerification() {
               </div>
               <div style={{ paddingTop: 8 }}>
                 <p style={{ color: "white", ...GF, fontSize: 14, fontWeight: 700, margin: 0, marginBottom: 4 }}>{l.label}</p>
-                <p style={{ color: "#64748b", ...GF, fontSize: 13, lineHeight: 1.55, margin: 0 }}>{l.desc}</p>
+                <p style={{ color: "#94A3B8", ...GF, fontSize: 13, lineHeight: 1.55, margin: 0 }}>{l.desc}</p>
               </div>
             </div>
           ))}

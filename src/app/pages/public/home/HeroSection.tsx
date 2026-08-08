@@ -4,7 +4,7 @@ import { Link } from "react-router";
 const PARTICIPANTS = [
   { name: "Ana Reyes",     role: "Signer",   status: "signed",   auth: "Email OTP",    color: "#22C55E" },
   { name: "Marco Santos",  role: "Approver", status: "pending",  auth: "Secure Link",  color: "#F59E0B" },
-  { name: "Lea Cruz",      role: "CC",       status: "awaiting", auth: "—",            color: "#475569" },
+  { name: "Lea Cruz",      role: "CC",       status: "awaiting", auth: "—",            color: "#8A9BAE" },
 ];
 
 const STATUS_ICON: Record<string, string> = {
@@ -41,7 +41,7 @@ function DocumentMockup() {
             <p style={{ color: "white", ...GF, fontSize: 13, fontWeight: 700, margin: 0, lineHeight: 1.3 }}>
               Professional Services Agreement
             </p>
-            <p style={{ color: "#64748b", ...GF, fontSize: 11, margin: 0 }}>
+            <p style={{ color: "#94A3B8", ...GF, fontSize: 11, margin: 0 }}>
               Mabini Legal Solutions
             </p>
           </div>
@@ -59,7 +59,7 @@ function DocumentMockup() {
 
       {/* Participants */}
       <div style={{ marginBottom: 16 }}>
-        <p style={{ color: "#475569", ...GM, fontSize: 10, fontWeight: 600, letterSpacing: "0.08em", marginBottom: 8 }}>
+        <p style={{ color: "#8A9BAE", ...GM, fontSize: 10, fontWeight: 600, letterSpacing: "0.08em", marginBottom: 8 }}>
           PARTICIPANTS
         </p>
         {PARTICIPANTS.map((p) => (
@@ -78,10 +78,10 @@ function DocumentMockup() {
               }}>
                 {STATUS_ICON[p.status]}
               </span>
-              <span style={{ ...GF, fontSize: 12, color: p.status === "awaiting" ? "#475569" : "white", fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              <span style={{ ...GF, fontSize: 12, color: p.status === "awaiting" ? "#8A9BAE" : "white", fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                 {p.name}
               </span>
-              <span style={{ ...GF, fontSize: 10, color: "#475569", flexShrink: 0 }}>· {p.role}</span>
+              <span style={{ ...GF, fontSize: 10, color: "#8A9BAE", flexShrink: 0 }}>· {p.role}</span>
             </div>
             <span style={{ ...GM, fontSize: 10, color: p.color, flexShrink: 0, marginLeft: 8 }}>
               {p.auth}
@@ -93,7 +93,7 @@ function DocumentMockup() {
       {/* Progress bar */}
       <div style={{ marginBottom: 16 }}>
         <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
-          <span style={{ color: "#64748b", ...GF, fontSize: 11 }}>Step 2 of 3</span>
+          <span style={{ color: "#94A3B8", ...GF, fontSize: 11 }}>Step 2 of 3</span>
           <span style={{ color: "#38bdf8", ...GF, fontSize: 11 }}>Awaiting approval</span>
         </div>
         <div style={{ height: 4, background: "rgba(255,255,255,0.08)", borderRadius: 999, overflow: "hidden" }}>
@@ -185,7 +185,7 @@ export function HeroSection() {
               }}
             >
               Prepare, sign, track,{" "}
-              <span style={{ color: "#0078D4" }}>and verify</span>{" "}
+              <span style={{ color: "#38BDF8" }}>and verify</span>{" "}
               documents with confidence.
             </h1>
 
@@ -246,7 +246,7 @@ export function HeroSection() {
             </div>
 
             {/* Legal note */}
-            <p style={{ color: "#334155", ...GF, fontSize: 12, lineHeight: 1.5, maxWidth: 480 }}>
+            <p style={{ color: "#7C8DA4", ...GF, fontSize: 12, lineHeight: 1.5, maxWidth: 480 }}>
               Some documents may still require wet signatures, notarization, or other legal formalities.
               Users remain responsible for determining the requirements applicable to each transaction.
             </p>
@@ -273,7 +273,7 @@ export function HeroSection() {
           {TRUST_ITEMS.map((item) => (
             <div key={item.text} style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
               <span aria-hidden="true" style={{ fontSize: 16 }}>{item.icon}</span>
-              <span style={{ color: "#64748b", ...GF, fontSize: 13 }}>{item.text}</span>
+              <span style={{ color: "#94A3B8", ...GF, fontSize: 13 }}>{item.text}</span>
             </div>
           ))}
         </div>

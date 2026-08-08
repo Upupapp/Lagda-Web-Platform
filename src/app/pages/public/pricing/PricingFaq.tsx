@@ -15,7 +15,7 @@ export function PricingFaq() {
           <h1 style={{ color: "white", ...GF, fontSize: "clamp(26px, 4.5vw, 44px)", fontWeight: 900, lineHeight: 1.1, letterSpacing: "-0.03em", margin: "0 0 16px" }}>
             Pricing frequently asked questions.
           </h1>
-          <p style={{ color: "#64748b", ...GF, fontSize: 16, lineHeight: 1.65 }}>
+          <p style={{ color: "#94A3B8", ...GF, fontSize: 16, lineHeight: 1.65 }}>
             Common questions about plans, usage, features, and billing. Answers reflect available information and will be updated as plan terms are confirmed.
           </p>
         </div>
@@ -40,7 +40,7 @@ export function PricingFaq() {
           <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 14, padding: "24px 28px", display: "flex", gap: 20, alignItems: "flex-start", flexWrap: "wrap" }}>
             <div style={{ flex: 1, minWidth: 200 }}>
               <p style={{ color: "white", ...GF, fontSize: 16, fontWeight: 700, margin: "0 0 6px" }}>Have another question?</p>
-              <p style={{ color: "#64748b", ...GF, fontSize: 14, margin: 0, lineHeight: 1.5 }}>Our team can help with specific pricing or plan questions not answered here.</p>
+              <p style={{ color: "#94A3B8", ...GF, fontSize: 14, margin: 0, lineHeight: 1.5 }}>Our team can help with specific pricing or plan questions not answered here.</p>
             </div>
             <a href="/contact" style={{ background: "#0078D4", color: "white", ...GF, fontSize: 14, fontWeight: 700, padding: "11px 24px", borderRadius: 8, textDecoration: "none", minHeight: 44, display: "flex", alignItems: "center", flexShrink: 0 }}>Contact Sales</a>
           </div>

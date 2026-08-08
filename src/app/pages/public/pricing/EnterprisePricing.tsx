@@ -16,7 +16,7 @@ export function EnterprisePricing() {
           <h1 style={{ color: "white", ...GF, fontSize: "clamp(28px, 5vw, 50px)", fontWeight: 900, lineHeight: 1.1, letterSpacing: "-0.03em", margin: "0 0 20px" }}>
             Built for organizations with complex requirements.
           </h1>
-          <p style={{ color: "#64748b", ...GF, fontSize: 17, lineHeight: 1.65, marginBottom: 32 }}>
+          <p style={{ color: "#94A3B8", ...GF, fontSize: 17, lineHeight: 1.65, marginBottom: 32 }}>
             Enterprise arrangements may include tailored usage, workspace administration, onboarding, security review, and integration planning based on approved product availability.
           </p>
           <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
@@ -35,7 +35,7 @@ export function EnterprisePricing() {
                 <span aria-hidden style={{ fontSize: 22, flexShrink: 0 }}>{icon}</span>
                 <div>
                   <p style={{ color: "white", ...GF, fontSize: 14, fontWeight: 700, margin: "0 0 4px" }}>{title}</p>
-                  <p style={{ color: "#64748b", ...GF, fontSize: 13, margin: 0, lineHeight: 1.5 }}>{desc}</p>
+                  <p style={{ color: "#94A3B8", ...GF, fontSize: 13, margin: 0, lineHeight: 1.5 }}>{desc}</p>
                 </div>
               </div>
             </div>
@@ -69,7 +69,7 @@ export function EnterprisePricing() {
               </div>
             ))}
           </div>
-          <p style={{ color: "#334155", ...GF, fontSize: 12, marginTop: 16, lineHeight: 1.65 }}>
+          <p style={{ color: "#7C8DA4", ...GF, fontSize: 12, marginTop: 16, lineHeight: 1.65 }}>
             Not all capabilities listed are confirmed as currently available. Enterprise plans do not include LAGDA eNotary, which is a separate future regulated product.
           </p>
         </div>
@@ -86,10 +86,10 @@ export function EnterprisePricing() {
             { num: "05", title: "Ongoing support",         desc: "Dedicated support and account management throughout your arrangement." },
           ].map(({ num, title, desc }) => (
             <div key={num} style={{ display: "flex", gap: 16, alignItems: "flex-start" }}>
-              <span style={{ color: "#0078D4", ...GM, fontSize: 20, fontWeight: 800, width: 36, flexShrink: 0 }}>{num}</span>
+              <span style={{ color: "#38BDF8", ...GM, fontSize: 20, fontWeight: 800, width: 36, flexShrink: 0 }}>{num}</span>
               <div>
                 <p style={{ color: "white", ...GF, fontSize: 14, fontWeight: 700, margin: "0 0 4px" }}>{title}</p>
-                <p style={{ color: "#64748b", ...GF, fontSize: 13, margin: 0, lineHeight: 1.5 }}>{desc}</p>
+                <p style={{ color: "#94A3B8", ...GF, fontSize: 13, margin: 0, lineHeight: 1.5 }}>{desc}</p>
               </div>
             </div>
           ))}
@@ -99,7 +99,7 @@ export function EnterprisePricing() {
       <PricingSection id="cta-bottom" light bordered>
         <div style={{ maxWidth: 600, margin: "0 auto", textAlign: "center" }}>
           <h2 style={{ color: "white", ...GF, fontSize: 28, fontWeight: 800, marginBottom: 12 }}>Discuss your organization's requirements.</h2>
-          <p style={{ color: "#64748b", ...GF, fontSize: 15, lineHeight: 1.65, marginBottom: 28 }}>Contact our sales team to explore how LAGDA can support your organization's document workflow.</p>
+          <p style={{ color: "#94A3B8", ...GF, fontSize: 15, lineHeight: 1.65, marginBottom: 28 }}>Contact our sales team to explore how LAGDA can support your organization's document workflow.</p>
           <Link to="/contact" style={{ background: "#0078D4", color: "white", ...GF, fontSize: 15, fontWeight: 700, padding: "13px 32px", borderRadius: 8, textDecoration: "none", minHeight: 48, display: "inline-flex", alignItems: "center" }}>Contact Sales</Link>
         </div>
       </PricingSection>

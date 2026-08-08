@@ -29,13 +29,13 @@ function WellnessMockup() {
       <div style={{ padding: "12px 16px", borderBottom: "1px solid rgba(255,255,255,0.07)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <div>
           <p style={{ color: "white", ...GF, fontSize: 12, fontWeight: 700, margin: 0 }}>Service Agreement & Consent Form</p>
-          <p style={{ color: "#475569", ...GM, fontSize: 10, margin: "1px 0 0" }}>Lakandula Wellness Center</p>
+          <p style={{ color: "#8A9BAE", ...GM, fontSize: 10, margin: "1px 0 0" }}>Lakandula Wellness Center</p>
         </div>
         <span style={{ background: "rgba(0,120,212,0.12)", color: "#38bdf8", ...GM, fontSize: 9, fontWeight: 700, padding: "2px 8px", borderRadius: 999, border: "1px solid rgba(0,120,212,0.25)" }}>ACTIVE</span>
       </div>
       {[
         { label: "Sofia Navarro — Client",  role: "Client acknowledgment",      status: "DONE",    color: "#22C55E" },
-        { label: "Lea Cruz — Practitioner", role: "Practitioner countersign",   status: "ACTIVE",  color: "#0078D4" },
+        { label: "Lea Cruz — Practitioner", role: "Practitioner countersign",   status: "ACTIVE",  color: "#38BDF8" },
       ].map((p, i) => (
         <div key={i} style={{ padding: "9px 16px", borderBottom: i < 1 ? "1px solid rgba(255,255,255,0.04)" : "none", display: "flex", gap: 10, alignItems: "center" }}>
           <div style={{
@@ -48,13 +48,13 @@ function WellnessMockup() {
           </div>
           <div style={{ flex: 1 }}>
             <p style={{ color: "white", ...GF, fontSize: 12, fontWeight: 600, margin: 0 }}>{p.label}</p>
-            <p style={{ color: "#475569", ...GM, fontSize: 10, margin: "1px 0 0" }}>{p.role}</p>
+            <p style={{ color: "#8A9BAE", ...GM, fontSize: 10, margin: "1px 0 0" }}>{p.role}</p>
           </div>
           <span style={{ color: p.color, ...GM, fontSize: 9, fontWeight: 700 }}>{p.status}</span>
         </div>
       ))}
       <div style={{ padding: "10px 16px", background: "rgba(0,0,0,0.2)", display: "flex", justifyContent: "space-between" }}>
-        <span style={{ color: "#334155", ...GM, fontSize: 9 }}>LAGDA-VER-2026-009917</span>
+        <span style={{ color: "#7C8DA4", ...GM, fontSize: 9 }}>LAGDA-VER-2026-009917</span>
         <span style={{ color: "#22C55E", ...GM, fontSize: 9, fontWeight: 700 }}>Audit trail active</span>
       </div>
     </div>
@@ -132,7 +132,7 @@ export function HealthcareWellness() {
             <ChallengeCards challenges={CHALLENGES} />
           </div>
           <div>
-            <p style={{ color: "#475569", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", marginBottom: 12 }}>WELLNESS CONSENT FORM</p>
+            <p style={{ color: "#8A9BAE", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", marginBottom: 12 }}>WELLNESS CONSENT FORM</p>
             <WellnessMockup />
           </div>
         </div>
@@ -156,7 +156,7 @@ export function HealthcareWellness() {
                 {NOT_RECOMMENDED.map((d) => (
                   <div key={d} style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
                     <span style={{ color: "#ef4444", flexShrink: 0, fontSize: 12, marginTop: 2 }}>×</span>
-                    <span style={{ color: "#64748b", ...GF, fontSize: 13, lineHeight: 1.45 }}>{d}</span>
+                    <span style={{ color: "#94A3B8", ...GF, fontSize: 13, lineHeight: 1.45 }}>{d}</span>
                   </div>
                 ))}
               </div>

@@ -24,8 +24,8 @@ export function TrustCenter() {
             <a key={r.path} href={r.path} style={{ textDecoration: "none" }}>
               <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 12, padding: "16px 16px", height: "100%" }}>
                 <p style={{ color: "white", ...GF, fontSize: 13, fontWeight: 700, margin: 0, marginBottom: 4 }}>{r.title}</p>
-                <p style={{ color: "#64748b", ...GF, fontSize: 12, lineHeight: 1.5, margin: 0 }}>{r.desc}</p>
-                <p style={{ color: "#0078D4", ...GM, fontSize: 10, fontWeight: 700, margin: "8px 0 0" }}>→ View</p>
+                <p style={{ color: "#94A3B8", ...GF, fontSize: 12, lineHeight: 1.5, margin: 0 }}>{r.desc}</p>
+                <p style={{ color: "#38BDF8", ...GM, fontSize: 10, fontWeight: 700, margin: "8px 0 0" }}>→ View</p>
               </div>
             </a>
           ))}
@@ -37,7 +37,7 @@ export function TrustCenter() {
         <SectionHeading eyebrow="Responsible disclosure" id="rd-h2" heading="Found a security issue? Contact us." center />
         <div style={{ maxWidth: 600, margin: "0 auto" }}>
           <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 14, padding: "24px 24px" }}>
-            <p style={{ color: "#475569", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", marginBottom: 12 }}>RESPONSIBLE DISCLOSURE</p>
+            <p style={{ color: "#8A9BAE", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", marginBottom: 12 }}>RESPONSIBLE DISCLOSURE</p>
             <p style={{ color: "#94a3b8", ...GF, fontSize: 14, lineHeight: 1.7, marginBottom: 16 }}>
               If you believe you have found a security vulnerability in LAGDA, please contact us before disclosing it publicly. We aim to respond promptly and work with you to address the issue responsibly.
             </p>
@@ -49,7 +49,7 @@ export function TrustCenter() {
                 "Avoid accessing or modifying other users' data during testing",
               ].map((item) => (
                 <div key={item} style={{ display: "flex", gap: 8 }}>
-                  <span style={{ color: "#0078D4", flexShrink: 0 }}>✓</span>
+                  <span style={{ color: "#38BDF8", flexShrink: 0 }}>✓</span>
                   <span style={{ color: "#94a3b8", ...GF, fontSize: 13, lineHeight: 1.5 }}>{item}</span>
                 </div>
               ))}

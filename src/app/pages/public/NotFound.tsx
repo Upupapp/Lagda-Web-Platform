@@ -68,7 +68,7 @@ export function NotFound() {
 
       <p
         style={{
-          color: "#64748B",
+          color: "#94A3B8",
           fontSize: 15,
           textAlign: "center",
           maxWidth: 420,
@@ -121,13 +121,13 @@ export function NotFound() {
             key={to}
             to={to}
             style={{
-              color: "#475569",
+              color: "#8A9BAE",
               textDecoration: "none",
               fontSize: 13,
               transition: "color 0.15s ease",
             }}
             onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.color = "#94A3B8")}
-            onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.color = "#475569")}
+            onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.color = "#8A9BAE")}
           >
             {label}
           </Link>

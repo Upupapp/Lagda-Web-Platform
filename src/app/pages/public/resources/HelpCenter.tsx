@@ -74,14 +74,14 @@ export function HelpCenter() {
           <button
             onClick={() => setSelectedCategory(null)}
             aria-pressed={!selectedCategory}
-            style={{ background: !selectedCategory ? "#0078D4" : "rgba(255,255,255,0.05)", color: !selectedCategory ? "white" : "#64748b", border: "1px solid " + (!selectedCategory ? "#0078D4" : "rgba(255,255,255,0.1)"), borderRadius: 6, padding: "6px 14px", cursor: "pointer", ...GF, fontSize: 12, fontWeight: 600, minHeight: 32 }}
+            style={{ background: !selectedCategory ? "#0078D4" : "rgba(255,255,255,0.05)", color: !selectedCategory ? "white" : "#94A3B8", border: "1px solid " + (!selectedCategory ? "#0078D4" : "rgba(255,255,255,0.1)"), borderRadius: 6, padding: "6px 14px", cursor: "pointer", ...GF, fontSize: 12, fontWeight: 600, minHeight: 32 }}
           >All</button>
           {CATEGORIES.map(cat => (
             <button
               key={cat}
               onClick={() => setSelectedCategory(selectedCategory === cat ? null : cat)}
               aria-pressed={selectedCategory === cat}
-              style={{ background: selectedCategory === cat ? "rgba(0,120,212,0.15)" : "rgba(255,255,255,0.04)", color: selectedCategory === cat ? "#38bdf8" : "#64748b", border: "1px solid " + (selectedCategory === cat ? "rgba(0,120,212,0.3)" : "rgba(255,255,255,0.08)"), borderRadius: 6, padding: "6px 14px", cursor: "pointer", ...GF, fontSize: 12, fontWeight: 500, minHeight: 32, whiteSpace: "nowrap" }}
+              style={{ background: selectedCategory === cat ? "rgba(0,120,212,0.15)" : "rgba(255,255,255,0.04)", color: selectedCategory === cat ? "#38bdf8" : "#94A3B8", border: "1px solid " + (selectedCategory === cat ? "rgba(0,120,212,0.3)" : "rgba(255,255,255,0.08)"), borderRadius: 6, padding: "6px 14px", cursor: "pointer", ...GF, fontSize: 12, fontWeight: 500, minHeight: 32, whiteSpace: "nowrap" }}
             >{cat}</button>
           ))}
         </div>
@@ -89,12 +89,12 @@ export function HelpCenter() {
         {/* Results */}
         {filtered.length === 0 ? (
           <div style={{ textAlign: "center", padding: "40px 0" }}>
-            <p style={{ color: "#64748b", ...GF, fontSize: 16, fontWeight: 600 }}>No articles found for "{query}"</p>
-            <p style={{ color: "#475569", ...GF, fontSize: 13 }}>Try a different search term or <Link to="/contact" style={{ color: "#38bdf8", textDecoration: "none" }}>contact our team</Link>.</p>
+            <p style={{ color: "#94A3B8", ...GF, fontSize: 16, fontWeight: 600 }}>No articles found for "{query}"</p>
+            <p style={{ color: "#8A9BAE", ...GF, fontSize: 13 }}>Try a different search term or <Link to="/contact" style={{ color: "#38bdf8", textDecoration: "none" }}>contact our team</Link>.</p>
           </div>
         ) : (
           <div>
-            <p style={{ color: "#475569", ...GM, fontSize: 10, marginBottom: 16 }}>{filtered.length} ARTICLE{filtered.length !== 1 ? "S" : ""}</p>
+            <p style={{ color: "#8A9BAE", ...GM, fontSize: 10, marginBottom: 16 }}>{filtered.length} ARTICLE{filtered.length !== 1 ? "S" : ""}</p>
             <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
               {filtered.map(({ id, category, title, path }) => (
                 <Link key={id} to={path} style={{
@@ -110,7 +110,7 @@ export function HelpCenter() {
                     <span style={{ color: "#38bdf8", ...GM, fontSize: 9, fontWeight: 700, letterSpacing: "0.08em", display: "block", marginBottom: 3 }}>{category.toUpperCase()}</span>
                     <span style={{ color: "white", ...GF, fontSize: 14, fontWeight: 500 }}>{title}</span>
                   </div>
-                  <span style={{ color: "#475569", fontSize: 14, flexShrink: 0 }}>→</span>
+                  <span style={{ color: "#8A9BAE", fontSize: 14, flexShrink: 0 }}>→</span>
                 </Link>
               ))}
             </div>
@@ -122,7 +122,7 @@ export function HelpCenter() {
         <div style={{ maxWidth: 600, margin: "0 auto", textAlign: "center" }}>
           <p style={{ color: "#38bdf8", ...GM, fontSize: 11, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 12 }}>STILL NEED HELP?</p>
           <h2 style={{ color: "white", ...GF, fontSize: 26, fontWeight: 800, marginBottom: 12 }}>Contact our team.</h2>
-          <p style={{ color: "#64748b", ...GF, fontSize: 15, lineHeight: 1.65, marginBottom: 24 }}>Our team can help with sales, product questions, and support inquiries.</p>
+          <p style={{ color: "#94A3B8", ...GF, fontSize: 15, lineHeight: 1.65, marginBottom: 24 }}>Our team can help with sales, product questions, and support inquiries.</p>
           <Link to="/contact" style={{ background: "#0078D4", color: "white", ...GF, fontSize: 14, fontWeight: 700, padding: "12px 28px", borderRadius: 8, textDecoration: "none", minHeight: 44, display: "inline-flex", alignItems: "center" }}>Contact Support</Link>
         </div>
       </ResourcesSection>
