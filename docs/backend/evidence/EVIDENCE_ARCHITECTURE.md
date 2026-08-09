@@ -359,3 +359,40 @@ Sealing must never run inside a database transaction (INV-082).
 Storage does not exist. `storage_reference` currently holds synthetic values in
 tests (`lagda://foundation/...`). This is **FOUNDATION** — the schema and
 repositories are real and tested; the storage layer they reference is BACKEND-17.
+
+## `storage_reference` — defined by BACKEND-17
+
+The column has existed since BACKEND-10 as `varchar(512) NOT NULL`. BACKEND-17
+defines what goes in it. **No migration was required.**
+
+It holds an internal object key:
+
+```
+workspaces/{workspaceId}/documents/{documentId}/artifacts/{artifactId}.pdf
+```
+
+Typed as a branded `StorageObjectKey` with one validating constructor — the
+port previously declared a bare `string` with a comment claiming it was opaque,
+and nothing enforced the claim. The row-to-record mapping now goes through the
+constructor rather than a cast, because a row written by an older deployment is
+still input.
+
+**The zone is not stored.** An artifact row describes ACCEPTED bytes, and those
+always live in the `artifacts` zone. Quarantine objects have no artifact row,
+because an unvalidated upload is not yet an artifact. If a second accepted zone
+ever exists, a zone column is a purely additive migration.
+
+**Never a URL.** Not a presigned URL — those expire and are bearer credentials —
+and not a permanent one, which would imply a readable bucket (INV-207). A test
+asserts the persisted value contains no scheme, signature or query string.
+
+**The key is stable.** It is not recomputed on read: a derived key would break
+every historical artifact at once the moment the derivation changed. A provider
+migration copies bytes, verifies the digest, and updates the reference under
+controlled change — artifact identity and digest never move, because they are
+what evidence refers to.
+
+**The digest stays authoritative here, not in storage.** The adapter may write
+LAGDA's SHA-256 as provider metadata for operator diagnosis, and nothing reads
+it back as truth. Provider `ETag` is never a LAGDA digest (INV-206), and
+provider `LastModified` is never artifact creation time (§173).

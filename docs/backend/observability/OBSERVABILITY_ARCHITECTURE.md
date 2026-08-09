@@ -232,3 +232,30 @@ BACKEND-12 are not applied to worker output, for the same import reason. Nothing
 leaks today because no payload is logged, but `error` carries an exception
 message and a handler that interpolates a payload value into one would leak it
 with nothing to stop it (OD-049).
+
+## Object storage signals (BACKEND-17)
+
+Safe to record for a storage operation: `operation` (`put` / `get` / `head` /
+`delete`), `durationMs`, `byteSize`, `result`, `errorCategory`, `storageZone`,
+and the provider request id on failure — which is what a provider support ticket
+needs.
+
+Never: a signed URL, an access key, a secret key, an `Authorization` header, a
+response body, or any decoded document content. Byte count is a numeric
+observation, not a label.
+
+Suggested bounded metrics, when an exporter exists:
+`storage_operations_total`, `storage_operation_duration_ms`,
+`storage_bytes_transferred_total`, `storage_failures_total` — labelled by
+`operation`, `result` and `zone` only. Never by artifact or workspace id, which
+are unbounded.
+
+Alert signals for the catalog: storage failure rate, timeout spike,
+access-denied or configuration errors (usually a credential or bucket problem,
+not load), and **integrity mismatch, which is high severity** — it means stored
+bytes no longer match what LAGDA recorded about them.
+
+**Not wired.** BACKEND-17 adds no instrumentation, because no route or job
+performs a storage operation yet. The adapter itself logs nothing; operational
+logging belongs at the composition boundary that calls it, which does not exist
+until BACKEND-18.

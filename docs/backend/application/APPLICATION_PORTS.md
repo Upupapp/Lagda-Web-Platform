@@ -174,3 +174,60 @@ dependency the architecture rests on. The adapter narrows it.
   handler.
 - Rename a job type. The name is a persistence contract from the moment a row is
   written (INV-197).
+
+## `ObjectStorage` — document bytes (BACKEND-17)
+
+Declared in `packages/application/src/common/ports/storage.ts`. Implemented by
+`packages/storage` over an S3-compatible provider.
+
+```ts
+readonly putObject:    (input: PutObjectInput)   => Promise<StoredObject>;
+readonly getObject:    (ref: StorageObjectRef)   => Promise<StoredObjectContent | null>;
+readonly headObject:   (ref: StorageObjectRef)   => Promise<StoredObjectMetadata | null>;
+readonly deleteObject: (ref: StorageObjectRef)   => Promise<void>;
+```
+
+Declared as properties rather than method shorthand: no implementation uses
+`this`, and a consumer destructuring one capability off an injected object is
+doing something normal.
+
+### The split it exists to hold
+
+PostgreSQL owns digest, size, ownership, provenance and creation time. Object
+storage owns bytes. A digest in PostgreSQL that no longer describes the stored
+bytes is a corrupted document — which is why every round trip is verified by
+digest, not by size.
+
+### Types
+
+- `StorageZone` — closed union, `"quarantine" | "artifacts"`. The application
+  never names a bucket (INV-208).
+- `StorageObjectKey` — branded, one validating constructor. A request-body
+  string cannot become one by assignment (INV-205).
+- `ByteStream = AsyncIterable<Uint8Array>` — no Node or SDK stream type crosses
+  this port (INV-204).
+- `ObjectContent` — `bytes` for content already in memory, `stream` for an
+  upload.
+
+### `StorageKeyStrategy`
+
+Builds keys from trusted identifiers. Owned as a port because the layout is
+infrastructure knowledge: the application knows *which artifact*, not *where
+bytes live*.
+
+### What a consumer must not do
+
+- **Accept a key from a client.** Resolve the resource through the tenant-scoped
+  repository, take the reference from the record, then call storage. Object
+  storage performs no authorization (INV-214).
+- **Treat `providerEntityTag` as a digest.** It is an ETag — an MD5, or a
+  digest-of-digests, or provider-specific (INV-206).
+- **Persist a URL.** The artifact row holds a key. A presigned URL expires and
+  is a bearer credential (INV-207).
+- **Assume a write and a database write are atomic.** They are not, and never
+  will be (INV-215). Write bytes first; an artifact row pointing at nothing is
+  far worse than an orphan object.
+- **Put a filename, party name or any customer text in a key or in provider
+  metadata** (INV-209).
+- **Call `deleteObject` from a feature path.** It is a privileged primitive for
+  quarantine cleanup and retention workflows.

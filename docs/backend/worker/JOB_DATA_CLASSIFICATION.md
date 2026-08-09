@@ -72,3 +72,25 @@ Both jobs defined so far are `system`. **No workspace-scoped job exists yet**, s
 the question of how a worker establishes RLS tenant context for a job is
 unanswered and untested (OD-045). The `WorkspaceJobContext` type exists and its
 `workspaceId` is non-optional, but nothing constructs one.
+
+## Storage identifiers, not bytes (BACKEND-17)
+
+Now that object storage exists, the rule has a concrete form:
+
+| Allowed in a payload | Never |
+|---|---|
+| `artifactId` | Document bytes, in any encoding |
+| `documentId`, `workspaceId` | A base64 PDF |
+| A storage zone discriminant | A presigned URL (a bearer credential) |
+| | A raw storage object key |
+
+A handler resolves an artifact through the tenant-scoped repository, takes the
+storage reference from the record, and streams the object. The reference comes
+from authorized state, never from the payload — the same rule that keeps a route
+from accepting a key (INV-214).
+
+A presigned URL in a payload would be worse than a key: it is durable, it is a
+credential, and a queue row outlives the request that created it (INV-207).
+
+The 16 KiB payload cap already makes queueing a document impossible in practice.
+This is the reason it exists.

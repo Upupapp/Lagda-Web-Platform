@@ -780,3 +780,102 @@ The worker logs no payload today, so nothing leaks today. But `error` carries an
 exception message, and a handler that interpolates a payload value into an error
 would leak it with nothing to stop it. The redactor belongs in a package both
 roles can import - the same move OD-046 needs.
+
+## OD-050 - Production object-storage provider and region
+
+**Raised by:** BACKEND-17.
+
+The adapter is S3-compatible and hard-codes no provider: not `amazonaws.com`,
+not `linodeobjects.com`, no bucket, no region. The deployment decides.
+
+Unresolved deliberately. Object storage will hold the same regulated documents
+as the database, so region and provider carry the same privacy,
+controller/processor and customer review already identified for PostgreSQL.
+Choosing a region because another project uses one would be exactly the wrong
+way to decide it (OD-039 covers the equivalent database question).
+
+Co-locating the database and object storage in one region is likely right for
+latency and residency simplicity, but that is a deployment and privacy decision,
+not an architectural one.
+
+## OD-051 - Conditional-write behaviour on the production provider
+
+**Raised by:** BACKEND-17.
+
+MEASURED on MinIO: `IfNoneMatch: "*"` is honoured for a key that already exists,
+and provides NO serialisation of concurrent creates - six simultaneous writers
+all succeeded.
+
+AWS S3 documents stronger behaviour. Whether the chosen provider enforces the
+conditional atomically changes create-once from "guarded" to "guaranteed", and
+it can only be measured against the real service.
+
+LAGDA does not depend on the answer: globally unique artifact ids make a genuine
+collision impossible, and a true race for one key means one artifact written
+twice, where converging is correct. The measurement should still be repeated on
+the production provider and recorded here.
+
+## OD-052 - Multipart upload thresholds and cleanup
+
+**Raised by:** BACKEND-17.
+
+The SDK may switch to multipart for large objects. Nothing in LAGDA exposes
+multipart mechanics - it is adapter-internal and must stay that way - but
+incomplete multipart uploads consume storage until removed.
+
+That is a provider lifecycle rule rather than application code. Deferred to the
+deployment command (BACKEND-65) rather than solved with a manual cleaner nothing
+has yet needed. The 3 MB integration object is below any multipart threshold, so
+multipart is currently untested.
+
+## OD-053 - Bucket versioning and server-side encryption
+
+**Raised by:** BACKEND-17.
+
+Versioning: RECOMMENDED FOR PRODUCTION as recovery from accidental overwrite or
+deletion, and explicitly NOT a substitute for immutable keys. LAGDA does not
+depend on it.
+
+Server-side encryption: use whatever the provider supports. Deliberately not
+specified as AWS KMS, because S3-compatible providers differ and a KMS-shaped
+configuration would fail on the provider actually chosen.
+
+Object lock / WORM: NOT enabled, and not to be enabled without a legal retention
+requirement - it conflicts directly with erasure obligations.
+
+Both are deployment settings, so neither is application code. Recorded here so
+BACKEND-58/65 pick them up deliberately.
+
+## OD-054 - Whether an ArtifactContentStore abstraction is wanted
+
+**Raised by:** BACKEND-17.
+
+A thin application service mapping artifact identity to bytes -
+`ArtifactContentStore.get(artifactId)` - would keep storage references out of
+feature code entirely.
+
+NOT built, because it would have zero callers today, and this project has
+already documented what foundations without callers cost. The existing pieces
+already compose correctly: the tenant-scoped artifact repository yields a
+reference, and the storage port takes it, which is proven end to end by an
+integration test.
+
+BACKEND-18 is the first command with a real caller and should decide then, with
+a concrete use case rather than a guess.
+
+## OD-055 - Orphan object reconciliation
+
+**Raised by:** BACKEND-17.
+
+Storage and PostgreSQL are not atomic. Writing bytes first means the failure
+window produces an ORPHAN OBJECT (bytes with no metadata) rather than the worse
+alternative (metadata with no bytes).
+
+An orphan wastes storage and nothing else. No scanner is built: reconciling
+"objects with no artifact row" requires listing a bucket, and doing that
+carelessly against live data is a good way to delete something real. It also
+cannot be written safely until BACKEND-18 defines when a partial upload is
+genuinely abandoned.
+
+BACKEND-55 or BACKEND-60 owns it. Until then orphans accumulate slowly and
+harmlessly, which is the right trade for the alternative.

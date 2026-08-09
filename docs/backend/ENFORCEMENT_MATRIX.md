@@ -512,3 +512,53 @@ artefact.
 
 **No workspace-scoped job exists**, so how a worker establishes RLS tenant
 context for a job is unanswered and untested (OD-045).
+
+## BACKEND-17 - Object storage
+
+| Rule | Status | Mechanism |
+|---|---|---|
+| No SDK types outside packages/storage | **ENFORCED** | ESLint names + wildcard; 7 violations probed, 4 negative controls |
+| Application/core/contracts free of S3 types | **ENFORCED** | Import bans plus the existing core-purity test |
+| Byte-exact round trip | **ENFORCED** | SHA-256 compared across a 3 MB streamed round trip against real MinIO |
+| No storage-side transformation | **ENFORCED** | Digest equality plus a `Content-Encoding` assertion |
+| ETag is not the artifact digest | **ENFORCED** | Typed separately; inequality and length asserted |
+| Immutable artifact keys | **PARTIALLY ENFORCED** | Refusal of different bytes is enforced and probed. NOT atomic under concurrency - measured, 6 of 6 concurrent writers succeeded. Uniqueness of artifact ids carries the rest |
+| Identical-byte retry converges | **ENFORCED** | Sequential and concurrent tests |
+| No torn object under concurrency | **ENFORCED** | Stored bytes always equal exactly one writer's payload |
+| Missing bucket is not "object not found" | **ENFORCED** | Probed; found by pointing at a non-existent bucket |
+| Typed absence, never empty content | **ENFORCED** | `null` from get/head; tested through the artifact path |
+| Keys derived, never client-supplied | **ENFORCED** | Branded type, one validating constructor, probed |
+| No customer filename in keys | **ENFORCED** | Probed by injecting one - 4 tests fail |
+| Traversal / empty segment / overlong key rejected | **ENFORCED** | Probed |
+| Zones map to separate buckets | **ENFORCED** | Verified against the live service |
+| Tenant isolation of storage references | **ENFORCED** | Workspace B obtains no reference under RLS |
+| TLS required in production | **ENFORCED** | Plaintext refused; the override is refused in production |
+| Credentials never logged | **ENFORCED** | Allowlist projection, probed; live auth-failure leak test |
+| Provider errors mapped structurally | **ENFORCED** | Induced against a real service |
+| Bounded retries, no hidden loop | **ENFORCED** | SDK `maxAttempts` configured; no retry loop in any method |
+| No binary queue payloads | **ENFORCED** | BACKEND-16 payload cap and schemas, unchanged |
+| No presigned URL logging | **ENFORCED (vacuously)** | Not implemented; the redactor already scrubs signatures |
+| No public buckets | **DEPLOYMENT ENFORCED** | No ACL in code (audited); bucket policy is BACKEND-58/65 |
+| Server-side encryption | **DOCUMENTED ONLY** | A provider setting, not application code |
+| DB/storage atomicity handled | **PARTIALLY ENFORCED** | Non-atomicity documented and ordering stated; flows are BACKEND-18/38 |
+| Least-privilege credentials | **DOCUMENTED ONLY** | IAM lives in the provider |
+
+### Honest gaps
+
+**Nothing uploads and nothing downloads.** The port is implemented and proven,
+and no product route uses it. Quarantine is provisioned and tested as a zone but
+has no writer.
+
+**Create-once is weaker than it first appeared.** `IfNoneMatch: "*"` is honoured
+sequentially by MinIO, and an earlier version of this work generalised that into
+an atomicity claim. Six concurrent writers with the header set ALL succeeded.
+The claim was corrected in code comments, architecture doc and tests; the
+guarantee now rests on unique artifact ids, with the conditional as a guard that
+is stronger on providers which enforce it.
+
+**The conditional-write probe catches nothing locally**, because the HEAD
+pre-check covers every case MinIO would reject. Its value is provider-dependent
+and cannot be demonstrated here.
+
+**All provider-specific behaviour is measured against MinIO only.** AWS S3 is
+expected to differ on exactly the conditional-write behaviour above (OD-051).
