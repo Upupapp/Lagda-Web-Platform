@@ -26,6 +26,11 @@ connecting as `postgres` would pass while production leaked.
 | Repeated alternating transactions | PASS | PASS |
 | FK to non-existent workspace | N/A | PASS |
 | Repository-level isolation (no RLS) | PASS | PASS |
+| Repository refuses cross-workspace insert | PASS | PASS |
+| Repository refuses cross-workspace conditional update | N/A | PASS |
+| Unit-of-work rollback discards all writes | PASS | PASS |
+| Contract suite — in-memory fake | PASS | PASS |
+| Contract suite — PostgreSQL | PASS | PASS |
 | Application-level not-found parity | PASS | PASS |
 
 ## Preconditions

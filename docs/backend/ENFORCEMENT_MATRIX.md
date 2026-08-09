@@ -65,6 +65,36 @@ allowed location too would push PDF work back out of the seam.
 
 
 
+
+## Repositories and unit of work (BACKEND-08)
+
+| Invariant | Rule | Enforcement | Tool | Completed by |
+|---|---|---|---|---|
+| **INV-062** | Ports in application, adapters in db; no DB types escape | **ENFORCED** | ESLint + typecheck | BACKEND-08 |
+| **INV-063** | Scope bound by the unit of work, never a parameter | **ENFORCED** — the cross-tenant call is not expressible | Type system | BACKEND-08 |
+| **INV-064** | Workspace mismatch rejected, never rewritten | **ENFORCED** — contract suite, both adapters | Vitest | BACKEND-08 |
+| **INV-065** | One unit of work, one transaction | **ENFORCED** — rollback discards both repositories' writes | Vitest + PostgreSQL | BACKEND-08 |
+| **INV-066** | SQLSTATE classification; unknown errors untranslated | **ENFORCED** | Vitest + PostgreSQL | BACKEND-08 |
+| **INV-067** | Conditional updates for state-sensitive writes | **ENFORCED** — stale second writer refused | Vitest + PostgreSQL | BACKEND-08 |
+| **INV-068** | Repositories have no external side effects | DOCUMENTED ONLY | — | — |
+| **INV-069** | Contract runs against fake AND PostgreSQL | **ENFORCED** | Vitest | BACKEND-08 |
+
+### Probes run
+
+| Probe | Expected | Result |
+|---|---|---|
+| Insert a workspace-B record while scoped to A | reject before write | `WorkspaceScopeMismatchError` |
+| Transaction fails after two repository writes | both discarded | both discarded |
+| 15 consecutive transaction failures | pool survives | ping true |
+| `runGlobal` exposes tenant repositories | no | none present |
+| Duplicate membership | `UniqueConstraintViolation` + constraint name | matched |
+| Membership in a missing workspace | `ForeignKeyConstraintViolation` | matched |
+| Role outside the vocabulary | `CheckConstraintViolation` | matched |
+| `ECONNREFUSED` passed to the translator | unchanged | unchanged |
+| Stale conditional writer | `false`, first value survives | confirmed |
+| Cross-tenant conditional update | `false`, target untouched | confirmed |
+| Same contract against fake and PostgreSQL | both pass | both pass |
+
 ## Workspace tenancy (BACKEND-07)
 
 | Invariant | Rule | Enforcement | Tool | Completed by |
