@@ -162,3 +162,21 @@ credential-issuing endpoint should do.
 The browser credential is an opaque server-managed session cookie. Nothing here
 returns an access token, a refresh token, or any value a script is expected to
 store.
+
+## Verification unblocks login (BACKEND-21)
+
+BACKEND-20 refuses an unverified account after a correct password. BACKEND-21
+completes the loop: redeeming a verification code sets `email_verified_at`, and
+the same credentials then authenticate.
+
+Proven end to end against real PostgreSQL:
+
+```
+register → login BLOCKED (403 EMAIL_VERIFICATION_REQUIRED)
+         → verify        (POST /auth/verify-email)
+         → login SUCCEEDS
+```
+
+Verification issues **no session**. The user signs in afterwards, which is what
+the frontend does. Verification state is read from the account on every login,
+so it is never a stale cookie claim.

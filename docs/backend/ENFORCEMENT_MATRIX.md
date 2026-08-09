@@ -698,3 +698,49 @@ and a passing flaky test is worse than an honest gap.
 
 **The frontend still uses its mock auth service.** No frontend change was made,
 so cookie-session compatibility is unproven end to end.
+
+## BACKEND-21 - Email verification
+
+| Rule | Status | Mechanism |
+|---|---|---|
+| Raw code never persisted | **ENFORCED** | Digest-only schema; row scanned in a test |
+| Raw code never logged | **ENFORCED** | Marker test at trace level |
+| Digest lookup, domain-separated | **ENFORCED** | Unique index; compared against a bare hash; probed |
+| Credential strength independent of rate limits | **ENFORCED** | 60 bits; probed by shortening |
+| Single use | **ENFORCED** | Conditional UPDATE, tested at the repository; probed |
+| Expiry honoured, never reactivated | **ENFORCED** | Derived from timestamps; probed |
+| Supersession on resend | **ENFORCED** | Probed; old code refused |
+| One active challenge per user | **ENFORCED** | PARTIAL UNIQUE INDEX; concurrent-resend test |
+| First verification timestamp preserved | **ENFORCED** | Conditional UPDATE, tested directly; probed |
+| Concurrent redemption yields one transition | **ENFORCED** | 8 concurrent transactions |
+| Delivery failure does not invalidate the old code | **ENFORCED** | Scheduling inside the transaction; failure test |
+| Public resend anti-enumeration | **ENFORCED** | Identical responses; route discards the reason; probed |
+| Verification failures collapse publicly | **ENFORCED** | Probed |
+| Configured link base URL | **ENFORCED** | Tested |
+| No session from verification | **ENFORCED** | Tested |
+| No GET mutation | **ENFORCED** | Tested |
+| Login eligibility changes after verification | **ENFORCED** | Cross-feature test end to end |
+| Consumed and superseded are mutually exclusive | **ENFORCED** | Database CHECK, tested |
+| Rate-limit policies defined | **ENFORCED** | Registry validation with strengthened provenance |
+| Rate limiter BOUND to these routes | **NOT ENFORCED** | Composition work; neither route is wired into createApp |
+| Verification email delivery | **BLOCKED** | No notification infrastructure - BACKEND-44/45 |
+| Challenge retention / cleanup | **NOT IMPLEMENTED** | No policy exists to implement |
+
+### Honest gaps
+
+**Delivery is still blocked.** The lifecycle is complete and proven, and nothing
+sends a code. A production user cannot verify. Unchanged since BACKEND-19.
+
+**Neither route is composed.** Like login and registration, they are registered
+by their own function and tested through a Fastify instance built in the test,
+so the rate limiter is not attached in a running application.
+
+**Three controls had no test until probed.** `consumeIfActive`'s conditions,
+`markEmailVerifiedIfUnverified`'s condition, and the digest domain prefix were
+each masked by a redundant application-level check. Defence in depth is right;
+untested defence in depth is deletable, and each now has a direct test.
+
+**A provenance check was checking nothing.** `sources every threshold` matched
+any string containing the word "handoff" - including "not specified by the
+handoff". It now requires a section citation or an explicit admission that the
+number was chosen.

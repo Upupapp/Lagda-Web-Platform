@@ -323,3 +323,21 @@ generic rule set.
 | **INV-258** | Logout is a POST and carries CSRF protection. | A GET logout can be fired by an image tag on any page on the internet. | **ENFORCED** - GET is not routed; CSRF is the standard authenticated-mutation hook |
 | **INV-259** | Login is not wrapped in the generic idempotency replay framework. | Replaying a stored response would replay a session credential. | Documented - no idempotency wrapper on this route |
 | **INV-260** | Session identity authenticates a user and implies no workspace authorization. | Permissions in a cookie cannot be revoked. | **ENFORCED** - the login response carries no workspace data |
+
+## Email verification (BACKEND-21)
+
+| ID | Invariant | Why | Enforcement |
+|---|---|---|---|
+| **INV-261** | Verification credentials are opaque, cryptographically random, single-purpose and expiring, and their strength does not depend on rate limiting. | If entropy were weak, limits would only slow an attacker down. | **ENFORCED** - 60 bits, rejection-sampled; probed by shortening the code |
+| **INV-262** | Raw verification codes and full verification URLs are never persisted or logged. | A stored code means a database read verifies every pending account. | **ENFORCED** - digest-only schema; marker tests over trace-level logs |
+| **INV-263** | Challenge lookup uses a domain-separated digest, never a scan and never the raw value. | Domain separation stops a code minted for one purpose being accepted for another. | **ENFORCED** - unique indexed digest; probed by removing the prefix |
+| **INV-264** | Successful verification transactionally consumes the challenge and sets the verification timestamp, and never rewrites an existing one. | The first verification time is account-security history. | **ENFORCED** - conditional updates, tested directly at the repository; probed twice |
+| **INV-265** | A consumed, expired or superseded credential can never perform first-time verification. | Otherwise single-use and rotation mean nothing. | **ENFORCED** - probed for each state independently |
+| **INV-266** | Resend rotates and supersedes prior active credentials rather than accumulating valid ones, and at most one challenge per user is active. | An unbounded set of live codes multiplies the chance one leaks. | **ENFORCED** - partial unique index; concurrent-resend test; probed |
+| **INV-267** | A resend that cannot durably schedule delivery may not invalidate the currently usable credential. | Otherwise a queue outage strands an account with no way in. | **ENFORCED** - scheduling inside the rotation transaction; failure test |
+| **INV-268** | Public resend never reveals whether an account exists, is verified, or is unverified. | Unlike registration the caller has asserted nothing about the address. | **ENFORCED** - one response shape; the route discards the reason; probed |
+| **INV-269** | Provider delivery never verifies an email. Only redeeming a credential sets the verification timestamp. | A delivery receipt proves a message reached a server, not that the owner read it. | Documented - nothing in this path writes verification state from delivery |
+| **INV-270** | A verification credential authorizes only email verification - never a session, a password reset, or workspace access. | Credential-purpose confusion is how one flow becomes an entry to another. | **ENFORCED** - verification issues no session, tested; digest domain separation |
+| **INV-271** | Verification links are built from configured application URLs, never an incoming Host header. | A Host-derived link sends the code to an attacker's domain. | **ENFORCED** - builder takes a configured base; tested |
+| **INV-272** | Verification state is server-authoritative and is never an immutable client-side claim. | A cached claim goes stale exactly when it matters. | **ENFORCED** - read from the account on every login |
+| **INV-273** | Link-preview and security scanners cannot consume a verification credential: consumption is a POST, and the product collects a typed code. | Scanners fetch every link in a message before a human sees it. | **ENFORCED** - GET is not routed; tested |

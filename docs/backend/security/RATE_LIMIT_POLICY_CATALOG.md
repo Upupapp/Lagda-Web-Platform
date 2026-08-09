@@ -78,3 +78,28 @@ visible, with **TBD** rather than a guessed number.
 Validation refuses a limit below 1 — a limit of 0 silently disables the
 operation it protects, and a security control that quietly blocks everything is
 as much a defect as one that allows everything.
+
+## Email verification (BACKEND-21) — IMPLEMENTED
+
+| Policy | Scope | Limit | Window | Mode | Source |
+|---|---|---|---|---|---|
+| `verification.redeem.ip` | IP | 20 | 1 min | fail-closed | handoff §317 |
+| `verification.resend.account` | account | 3 | 10 min | fail-closed | chosen — matches OTP delivery |
+| `verification.resend.ip` | IP | 10 | 10 min | fail-closed | chosen |
+
+**Redeeming** is cheap and the credential carries 60 bits, so its limit is
+volumetric — it bounds someone submitting random codes at scale rather than being
+what makes the code safe.
+
+**Resend triggers outbound email**, which makes it an email-bombing tool if left
+open. Both scopes are required: per-account stops one address being buried,
+per-IP stops one source doing it to many addresses. Layered rather than
+aggressive on one axis, so a shared office NAT stays usable.
+
+The two chosen thresholds say so in their `source` field. The registry test now
+requires every threshold to either cite a handoff section or state plainly that
+it was chosen — it previously accepted any string containing the word "handoff",
+which "not specified by the handoff" satisfied.
+
+**Not yet bound to the routes.** Neither verification route is wired into
+`createApp`, so the limiter is not attached in a running application.

@@ -1123,3 +1123,73 @@ That is a decision, not an omission: permanent lockout is weaponizable, because
 anyone who knows an email address can lock that account out by guessing at it.
 Revisit only if a product or compliance requirement demands it, and pair it with
 a self-service unlock so the weapon is blunted.
+
+## OD-065 - RESOLVED: verification credential lifetime
+
+**Raised by:** BACKEND-19. **Resolved by:** BACKEND-21.
+
+24 hours, configurable through `EMAIL_VERIFICATION_TTL_MS`. Long enough that
+someone registering in the evening can finish the next morning; short enough that
+a code sitting in a mailbox does not stay useful indefinitely.
+
+Expiry is DERIVED from `expires_at` rather than stored as a status, so no job has
+to keep a column honest.
+
+## OD-073 - RESOLVED: the credential is a typed code
+
+**Raised by:** BACKEND-21.
+
+BACKEND-19 generated a 43-character base64url link token. The product collects a
+TYPED code - `VerifyEmail.tsx` has an input field and the auth service takes
+`verifyEmail(code)`. Nobody types 43 characters of base64url.
+
+Now a 12-character Crockford base32 code (~60 bits), grouped `XXXX-XXXX-XXXX`,
+canonicalized on input. Confirmed with the product owner before building. See
+ADR-015.
+
+## OD-074 - Challenge record retention
+
+**Raised by:** BACKEND-21.
+
+Consumed, expired and superseded challenges are never deleted. Their non-secret
+history - that a code was issued, rotated or redeemed and when - is useful to an
+account-security review, and the CREDENTIAL is already dead in every case, so
+retaining the row leaks nothing.
+
+But rows accumulate forever, and "useful history" is not a retention policy.
+BACKEND-16's cleanup foundation can remove them once someone decides how long
+that history is worth keeping - which is a privacy question as much as a storage
+one, and belongs alongside BACKEND-55's erasure work.
+
+Deliberately separated from credential lifetime: the code dies in 24 hours; the
+record does not have to.
+
+## OD-075 - Email change must invalidate active challenges
+
+**Raised by:** BACKEND-21. **For BACKEND-24.**
+
+A challenge references a USER, not a specific address, because email is
+currently immutable after registration - there is no change flow.
+
+When BACKEND-24 adds one, a challenge issued for the old address must not be
+able to verify a new one. Changing an email MUST supersede every active
+challenge for that user, and issue a fresh one for the new address.
+
+The repository primitive already exists: `supersedeActiveForUser`. Recorded here
+so it is a requirement rather than something discovered later.
+
+## OD-076 - The frontend's "locked" account state has no backend
+
+**Raised by:** BACKEND-21.
+
+`VerifyEmail.tsx` and the sign-in mock both handle a `locked` outcome, and
+`/auth/account-locked` is a real route. No account status column exists, and
+BACKEND-19 deliberately did not invent one.
+
+So `locked` is currently unreachable from the backend. Either the product wants
+account suspension - which needs a state model, an operator flow, and a
+deliberate decision about whether login reveals it - or the UI state is
+aspirational and should be recorded as such.
+
+Not invented here: an account-state machine nobody has specified is exactly the
+kind of thing that becomes load-bearing before anyone defines it.
