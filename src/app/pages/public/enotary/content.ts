@@ -11,7 +11,10 @@ export const ENOTARY_SUBNAV = [
   { label: "FAQ",                  path: "/enotary/faq"                  },
 ];
 
-export const ENOTARY_DISCLAIMER = "LAGDA eNotary is Coming Soon and Subject to Supreme Court Accreditation and applicable rules.";
+// Re-exported so the eNotary pages can keep importing it from their own content
+// module. The sentence itself is defined once in config/enotary-disclaimer.ts,
+// which has no imports and is therefore safe for the shell and config to use too.
+export { ENOTARY_DISCLAIMER } from "../../../config/enotary-disclaimer";
 
 export const ENOTARY_FAQ_GROUPS = [
   {

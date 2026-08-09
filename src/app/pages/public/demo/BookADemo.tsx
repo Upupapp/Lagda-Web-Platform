@@ -7,6 +7,7 @@ import {
   VALID_DEMO_TOPICS,
 } from "../../../models/forms";
 import { demoRequestService, conversionTracker } from "../../../services/public";
+import { ENOTARY_STATUS, ENOTARY_QUALIFIER } from "../../../config/enotary-disclaimer";
 
 const GF = { fontFamily: "'Geist', sans-serif" };
 const GM = { fontFamily: "'Geist Mono', monospace" };
@@ -20,7 +21,11 @@ const INDUSTRY_OPTIONS = [
   "Logistics", "Manufacturing", "Non-profit", "Other",
 ];
 
-const ENOTARY_DISCLAIMER = "LAGDA eNotary is Coming Soon and Subject to Supreme Court Accreditation and applicable rules. Selecting eNotary updates as an interest does not enrol you in any active service.";
+// The caveat this page adds after the canonical disclaimer. The disclaimer
+// itself is not restated here — it is rendered from the shared constant below,
+// so a change to the accreditation wording reaches this page automatically.
+const DEMO_ENOTARY_CAVEAT =
+  " Selecting this interest does not enrol you in any active service or schedule an eNotary demonstration.";
 
 function Field({ id, label, children, error, required, optional }: { id: string; label: string; children: React.ReactNode; error?: string; required?: boolean; optional?: boolean }) {
   return (
@@ -216,7 +221,7 @@ export function BookADemo() {
           {isEnotaryInterest && (
             <div style={{ background: "rgba(103,2,59,0.08)", border: "1px solid rgba(103,2,59,0.25)", borderRadius: 9, padding: "12px 16px" }}>
               <p style={{ color: "#94a3b8", ...GF, fontSize: 13, lineHeight: 1.65, margin: 0 }}>
-                <strong style={{ color: "#67023B" }}>LAGDA eNotary is Coming Soon</strong> and Subject to Supreme Court Accreditation and applicable rules. Selecting this interest does not enrol you in any active service or schedule an eNotary demonstration.
+                <strong style={{ color: BURGUNDY }}>{ENOTARY_STATUS}</strong>{ENOTARY_QUALIFIER}{DEMO_ENOTARY_CAVEAT}
               </p>
             </div>
           )}
