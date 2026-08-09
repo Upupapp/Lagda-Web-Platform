@@ -63,6 +63,41 @@ allowed location too would push PDF work back out of the seam.
 
 
 
+
+## Persistence (BACKEND-06)
+
+| Invariant | Rule | Enforcement | Tool | Completed by |
+|---|---|---|---|---|
+| **INV-046** | Database confined to `@lagda/db` | **ENFORCED** — `kysely`/`pg` banned outside it | ESLint | BACKEND-06 |
+| **INV-047** | Tenant integrity at the DB level | **PARTIALLY ENFORCED** — compound-key target in place; referencing tables arrive in BACKEND-07 | Schema | BACKEND-07 |
+| **INV-048** | Migrations sole schema mechanism, immutable once applied | **ENFORCED** — CI migrates an empty database from zero, then re-runs for idempotency | CI | BACKEND-06 |
+| **INV-049** | Business vs technical timestamps | DOCUMENTED ONLY | — | — |
+| **INV-050** | No document bytes in PostgreSQL | DOCUMENTED ONLY | — | BACKEND-17 |
+| **INV-051** | Parameterized SQL, whitelisted identifiers | DOCUMENTED ONLY — no interpolation exists today | — | — |
+| **INV-052** | Real PostgreSQL for integration tests | **ENFORCED** — 16 tests against PostgreSQL 16 | Vitest + CI | BACKEND-06 |
+| **INV-053** | SQLSTATE, never message text | **ENFORCED** — helpers tested against real violations | Vitest | BACKEND-06 |
+| **INV-003** | Workspace-scoped data access | **ENFORCED at the port AND in SQL** — no unscoped lookup exists, and the query carries both predicates. Verified cross-tenant against PostgreSQL. | Type system + Vitest | BACKEND-06 |
+
+### Probes run against real PostgreSQL
+
+| Probe | Expected | Result |
+|---|---|---|
+| Empty database → current schema | applies | applied |
+| Re-run migration | no-op | no-op |
+| Transaction fails after first write | both discarded | rolled back |
+| 15 consecutive transaction failures | pool survives | ping still true |
+| Foreign transaction context | rejected | rejected |
+| Duplicate user in one workspace | 23505 | 23505 |
+| Same user in two workspaces | allowed | allowed |
+| Membership in a non-existent workspace | 23503 | 23503 |
+| Role outside the vocabulary | 23514 | 23514 |
+| Blank workspace name | 23514 | 23514 |
+| Delete a workspace with members | 23503 (RESTRICT) | blocked |
+| UTC timestamp round trip | no shift | exact |
+| Member of workspace B read from A | null | null |
+| `kysely` imported in application | lint error | error raised |
+| `kysely` imported in `@lagda/db` | **no error** | no error |
+
 ## Application layer (BACKEND-05)
 
 | Invariant | Rule | Enforcement | Tool | Completed by |

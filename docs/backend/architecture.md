@@ -193,6 +193,35 @@ The most consequential finding is recorded as **OD-013**: the canonical
 `awaiting-signature` are not mutually exclusive — so a persistence design that
 treats it as the whole truth will lose evidence.
 
+### Persistence
+
+PostgreSQL 16 with **Kysely** ([ADR-003](./adr/ADR-003-postgresql-query-layer.md)),
+confined to `@lagda/db` and enforced by ESLint (INV-046). Conventions in
+[`db/DATABASE_CONVENTIONS.md`](./db/DATABASE_CONVENTIONS.md); the
+[foundation report](./db/DATABASE_FOUNDATION_REPORT.md) records what exists.
+
+Kysely was chosen because **tenant integrity has to be expressible as compound
+foreign keys** — `FOREIGN KEY (workspace_id, parent_id) REFERENCES parent
+(workspace_id, id)` — so a row in one workspace cannot reference a parent in
+another even when application code is wrong. That, plus the need for a security
+reviewer to read what a query actually does, outweighed Prisma's convenience.
+
+`workspace_id` is a first-class column on every tenant-owned table, indexes lead
+with it, and repository ports expose no unscoped lookup. Deletion defaults to
+**RESTRICT**: this is a legal-evidence system and deletion semantics are
+unresolved, so a default CASCADE would answer that question silently and
+destructively.
+
+**RLS assessed and deferred** ([assessment](./db/RLS_ASSESSMENT.md)). It needs a
+per-transaction `SET LOCAL` which, missed under pooling, carries one request's
+workspace into the next — worse than the failure it prevents. Compound FKs stop
+cross-tenant *writes*, which RLS does not.
+
+Migrations are an explicit deployment step, never application startup, and CI
+proves an empty database reaches the current schema. Integration tests run
+against real PostgreSQL — 16 of them — because SQLite would not exercise
+`timestamptz`, compound constraints, transaction semantics or SQLSTATE.
+
 ### Application layer
 
 `@lagda/application` orchestrates: load, validate, invoke domain behaviour,

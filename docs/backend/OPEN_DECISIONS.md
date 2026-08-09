@@ -101,6 +101,50 @@ contracts.
 
 ---
 
+## OD-018 — Production PostgreSQL major version
+
+**Needs:** a deployment decision. **Raised by:** BACKEND-06.
+
+Local development and CI are pinned to **PostgreSQL 16**. Production is not
+decided, and the code uses no version-specific features. CI and production
+majors should match — a feature working on 16 and absent on 15 is found in
+production otherwise.
+
+**Blocks:** nothing. **Decide with:** BACKEND-65 deployment.
+
+---
+
+## OD-019 — Row Level Security timing
+
+**Needs:** a decision after the schema grows. **Raised by:** BACKEND-06.
+
+Assessed in `db/RLS_ASSESSMENT.md` and **deferred**. RLS needs a per-transaction
+`SET LOCAL` which, missed under connection pooling, carries one request's
+workspace into the next — a silent, intermittent, load-dependent failure worse
+than the one RLS prevents. It also needs a role split that does not exist yet,
+and today would guard two tables.
+
+Compound foreign keys do the higher-value work meanwhile: they stop cross-tenant
+*writes*, which RLS does not address.
+
+**Blocks:** nothing. **Revisit:** when tenant-owned tables are numerous, or
+after BACKEND-07 splits database roles.
+
+---
+
+## OD-020 — Production database hosting topology
+
+**Needs:** resolution of OD-001 first. **Raised by:** BACKEND-06.
+
+Region, managed versus self-hosted, replication and backup topology all depend
+on the data-residency posture, which is unresolved. Deliberately not decided
+here — the code stays portable PostgreSQL with no vendor-specific APIs, so this
+can be settled without touching persistence code.
+
+**Blocks:** production deployment. **Decide with:** OD-001.
+
+---
+
 ## OD-013 — `TransactionStatus` conflates lifecycle state with events
 
 **Needs:** a contract decision. **Raised by:** BACKEND-04.
@@ -233,6 +277,19 @@ guardrail does not exist. Backend CI checks the contracts package thoroughly;
 nothing checks the frontend against it.
 
 **Blocks:** nothing. **Resolve with:** OD-005.
+
+---
+
+## OD-021 — ORM / query-builder — **RESOLVED**
+
+**Resolved by:** BACKEND-06. **Decision:** Kysely over `pg`, with Kysely's
+migrator and hand-maintained row types.
+**Recorded in:** `adr/ADR-003-postgresql-query-layer.md`.
+
+Chosen because tenant integrity must be expressible as compound foreign keys and
+because a security reviewer has to be able to read what a query does. Prisma's
+generated types would leak across boundaries; Drizzle's generated migrations are
+harder to review, and for tenant constraints the diff is the review.
 
 ---
 
