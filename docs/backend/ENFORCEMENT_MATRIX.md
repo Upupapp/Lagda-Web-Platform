@@ -62,6 +62,33 @@ The negative case matters as much as the positive ones: a rule that blocks the
 allowed location too would push PDF work back out of the seam.
 
 
+
+## Application layer (BACKEND-05)
+
+| Invariant | Rule | Enforcement | Tool | Completed by |
+|---|---|---|---|---|
+| **INV-039** | No concrete infrastructure in application | **ENFORCED** — bans third-party infra *and* `@lagda/db`/`storage`/`sealing`, with composition roots exempt | ESLint | BACKEND-05 |
+| **INV-040** | Workspace-owned ports require scope | **ENFORCED by port shape** — no unscoped lookup exists to call | Type system | BACKEND-05 |
+| **INV-041** | Clock and ID generators, not globals | **ENFORCED** | Vitest | BACKEND-05 |
+| **INV-042** | No HTTP semantics in application errors | **ENFORCED** | Vitest | BACKEND-05 |
+| **INV-043** | Resolved actor context only | DOCUMENTED ONLY | — | BACKEND-11 |
+| **INV-044** | Cross-tenant lookup indistinguishable from absent | **ENFORCED** | Vitest | BACKEND-05 |
+| **INV-045** | External side effects not falsely durable | DOCUMENTED ONLY — no outbox exists | — | BACKEND-06/16 |
+| **INV-002** | Only completion invokes `DocumentSealer` | **PARTIALLY ENFORCED** — the port exposes one high-level `seal()`, so no caller can reach `mergeFields`/`signPdf`. Nothing yet restricts *which* use case calls it, because completion does not exist. | Port shape | BACKEND-38 |
+
+### Probes run
+
+| Probe | Expected | Result |
+|---|---|---|
+| `import "@lagda/db"` in application | lint error | error raised |
+| `import "pg"` in application | lint error | error raised |
+| `import "@lagda/db"` in `packages/api` | **no error** — composition root | no error raised |
+| Workspace A reads a member existing in workspace B | not-found | not-found |
+| Foreign member vs absent member | identical code and message | identical |
+| Empty name | no transaction opened | none opened |
+| Transaction failure | nothing persisted | nothing persisted |
+| Application error | no `statusCode`/`status` property | none present |
+
 ## Core domain (BACKEND-04)
 
 | Invariant | Rule | Enforcement | Tool | Completed by |

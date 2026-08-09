@@ -193,6 +193,36 @@ The most consequential finding is recorded as **OD-013**: the canonical
 `awaiting-signature` are not mutually exclusive — so a persistence design that
 treats it as the whole truth will lose evidence.
 
+### Application layer
+
+`@lagda/application` orchestrates: load, validate, invoke domain behaviour,
+persist, hand off follow-up. Details in
+[`application/APPLICATION_CONVENTIONS.md`](./application/APPLICATION_CONVENTIONS.md),
+[`APPLICATION_PORTS.md`](./application/APPLICATION_PORTS.md) and the
+[use-case catalog](./application/USE_CASE_CATALOG.md).
+
+Use cases take explicit constructor dependencies — no container, no globals, no
+service locator — and each receives only the ports it needs.
+
+**The dependency inversion is enforced, including for LAGDA's own packages.**
+`@lagda/db`, `@lagda/storage` and `@lagda/sealing` implement the ports
+application declares, so application importing *them* would invert the
+architecture and create a cycle. ESLint bans it; `api` and `worker` are exempt,
+because wiring both sides is exactly what a composition root does.
+
+**Workspace scope comes from the resolved actor, never from a request body**, and
+a tenant-scoped lookup for another workspace's resource returns the same outcome
+as one that does not exist — otherwise guessing IDs would confirm what exists
+elsewhere.
+
+**One transaction style**, chosen and documented: repositories take an opaque
+`TransactionContext` as a final parameter. Mixing styles is what makes
+transaction boundaries impossible to audit.
+
+Two gaps are recorded rather than papered over: durable follow-up has no outbox
+yet (BACKEND-06/16), and fake transactions cannot prove PostgreSQL rollback
+(BACKEND-08).
+
 ### API conventions
 
 Cross-cutting API behaviour — the error envelope, pagination, sorting, search,

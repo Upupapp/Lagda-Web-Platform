@@ -63,6 +63,13 @@ generic rule set.
 | **INV-036** | Terminal signing states never transition back to an active state. | A completed transaction is legally significant history. Corrections create a new transaction. | **ENFORCED** — every terminal state × every action |
 | **INV-037** | The frontend does not depend on `@lagda/core`. | Core is backend-only. Shared needs belong in `@lagda/contracts`. | Documented → review |
 | **INV-038** | Domain events and errors carry no infrastructure concerns — no HTTP status, log level, severity, queue name, or delivery detail. | Core must not decide how a failure is presented or recorded. | **ENFORCED for errors** — `DomainError` has no such fields |
+| **INV-039** | Application use cases may not import concrete infrastructure, including LAGDA's own `@lagda/db`, `@lagda/storage` and `@lagda/sealing`. | Those packages implement application's ports; importing them inverts the dependency and creates a cycle. Only composition roots import both sides. | **ENFORCED** — ESLint |
+| **INV-040** | Workspace-owned repository ports require workspace scope in their signature. | Tenant isolation must not depend on a caller remembering to filter. A method resolving a member from any workspace is a cross-tenant read waiting to happen. | **ENFORCED by port shape** — no unscoped lookup exists |
+| **INV-041** | Application business time comes from `Clock`; generated entity IDs come from explicit generators. | Hidden `Date.now()` or `randomUUID()` makes a use case untestable and non-reproducible. | **ENFORCED** — tests assert both |
+| **INV-042** | Application errors contain no HTTP status codes, headers, or log levels. | One use case must serve an HTTP route, a worker, and a future partner API. | **ENFORCED** — test asserts no status property |
+| **INV-043** | Use cases receive resolved actor context, never raw HTTP, session, cookie, or token objects. | A worker must be able to invoke the same use case without fabricating a request. A token in an actor object reaches logs. | Documented → review |
+| **INV-044** | A tenant-scoped lookup for another workspace's resource is indistinguishable from one that does not exist. | Distinguishing them confirms the existence of another tenant's data to anyone who can guess an ID. | **ENFORCED** — anti-enumeration test |
+| **INV-045** | External side effects are not treated as durable simply because a transaction committed. | Publishing before commit describes state that may not exist; after commit without an outbox, the event is lost if the process dies. | Documented → BACKEND-06/16 |
 
 ## Rules for future `BACKEND-XX` commands
 
