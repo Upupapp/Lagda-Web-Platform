@@ -612,3 +612,48 @@ fix and it is a deployment setting.
 **Signature coverage is a deployment property.** The integration scanner runs a
 minimal EICAR database. What is proven is the adapter, the protocol and the
 fail-closed behaviour - not that production signatures are fresh (OD-060).
+
+## BACKEND-19 - Registration
+
+| Rule | Status | Mechanism |
+|---|---|---|
+| One canonical email normalizer | **ENFORCED** | Single function; boundary assertion; probed twice |
+| Unique normalized email | **ENFORCED** | DB constraint + six-way concurrency test |
+| No plaintext password persistence | **ENFORCED** | Marker test over every column |
+| No plaintext password logging | **ENFORCED** | Marker test over captured trace-level output |
+| Password never altered | **ENFORCED** | Probed by trimming |
+| Argon2id with explicit parameters | **ENFORCED** | PHC string parsed and asserted; probed with argon2i |
+| Argon2 parameter floors | **ENFORCED** | Constructor throws; probed |
+| Rate limit before hashing | **ENFORCED** | Hook ordering test observes zero hasher calls |
+| Hashing outside transactions | **ENFORCED** | Ordering test; probed |
+| No account overwrite / password replacement | **ENFORCED** | No update path; real-DB test |
+| Mass assignment blocked | **ENFORCED** | Closed schema + explicit mapping; probed |
+| New account unverified | **ENFORCED** | Probed |
+| Verification digest, not raw token | **ENFORCED** | Probed |
+| Token domain separation | **ENFORCED** | Distinct prefixes; digest allowlist test |
+| Verification URL from configuration | **ENFORCED** | Builder takes a configured base |
+| Atomic user + challenge | **ENFORCED** | Rollback tested |
+| No session on registration | **ENFORCED** | Asserted |
+| No false "email sent" claim | **ENFORCED** | Asserted |
+| Stored credential must be Argon2id | **ENFORCED** | Database CHECK |
+| Registration rate-limit policies exist | **ENFORCED** | Registry validation |
+| Rate limiter BOUND to the route | **NOT ENFORCED** | Policies defined; binding is composition work with the wired app |
+| Email verification delivery | **BLOCKED** | No notification infrastructure - BACKEND-44/45 |
+
+### Honest gaps
+
+**Verification cannot happen.** The challenge is created and stored correctly and
+the raw token is returned for delivery, but nothing delivers it. A registered
+account is therefore permanently unverified until BACKEND-21 and BACKEND-44/45
+exist. Labelled a blocker, not a detail.
+
+**The rate limiter is not bound to the route.** The policies are defined and the
+ORDERING is proven with a hook, but the real limiter plugin is attached during
+app composition, which this command did not perform - the route is registered by
+its own function and not yet wired into `createApp`.
+
+**A handler-level unknown-field guard was written and deleted.** Fastify's
+default ajv strips unknown properties before the handler runs, so the guard could
+never fire. It read as defence in depth while being incapable of doing anything.
+The real control is `removeAdditional: false`, which `createApp` sets, and both
+behaviours are now measured by tests.

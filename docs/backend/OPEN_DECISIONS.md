@@ -983,3 +983,82 @@ Deliberately not guessed. Too short and an in-flight upload loses its bytes; too
 long and rejected uploads - including malware - sit in a bucket longer than
 necessary. A few hours is the likely answer, and it should be chosen alongside
 the incident-response question of how long a rejected sample is worth keeping.
+
+## OD-063 - Password minimum length
+
+**Raised by:** BACKEND-19. **Current answer: 8, from the frontend.**
+
+MEASURED from `isPasswordAcceptable` in the real registration form. The handoff
+specifies no password policy, so the UI is the only stated requirement, and a
+server minimum stricter than the UI would reject passwords the UI accepted.
+
+Recorded rather than presented as a security target: 8 is on the low side of
+modern guidance. Raising it is a product decision with a migration question
+attached - existing accounts would keep shorter passwords until they change them,
+so a raise needs a policy for what happens at login.
+
+## OD-064 - Registration rate-limit thresholds
+
+**Raised by:** BACKEND-19. **Chosen, not measured.**
+
+The handoff gives thresholds for sign-in, OTP and verification but NOT for
+registration. Rather than leave account creation unlimited, two policies were
+chosen - 5 per 10 minutes per IP, 3 per 10 minutes per account identity - and
+their `source` field says plainly that they were chosen here.
+
+They bound the two real risks: mass account creation, and Argon2id cost as a DoS
+primitive. Whether they are right for a legitimate office behind one NAT address
+is a product question that real traffic should answer.
+
+## OD-065 - Verification token lifetime
+
+**Raised by:** BACKEND-19. **Configurable; no product answer exists.**
+
+The handoff says "password reset via time-limited secure token" but specifies no
+duration for email verification. The TTL is a parameter of the use case rather
+than a constant, so it is deliberate at the composition root.
+
+Needs a product answer alongside BACKEND-21's resend flow: too short and users
+returning the next morning are stuck, too long and a leaked link stays useful.
+
+## OD-066 - May unverified accounts log in?
+
+**Raised by:** BACKEND-19. **Unresolved, and BACKEND-20 must answer it.**
+
+The frontend has an `email-verification-required` auth status and a
+`/verify-email` page, which suggests an unverified user reaches a limited state
+rather than being refused outright. But no product rule says which actions are
+restricted.
+
+This is the single most important decision for BACKEND-20. It cannot be inferred
+from registration, and getting it wrong in either direction is visible: refusing
+login entirely strands anyone whose verification mail was lost, while allowing
+full access makes verification decorative.
+
+## OD-067 - Production verification email delivery
+
+**Raised by:** BACKEND-19. **BLOCKING for the feature, not for BACKEND-20.**
+
+Registration creates a verification challenge and returns the raw token for
+delivery. Nothing delivers it, because notification infrastructure is
+BACKEND-44/45.
+
+The raw token was deliberately NOT parked in a queue payload or an outbox row in
+the meantime: a one-time credential in general-purpose storage has weaker
+handling than the account it protects, and that is the insecure workaround this
+command was told not to invent.
+
+Until delivery exists, registered accounts cannot be verified.
+
+## OD-068 - Stale unverified accounts
+
+**Raised by:** BACKEND-19.
+
+An unverified account holds a normalized email forever, so a real owner of that
+address can never register it. Nothing expires or reclaims them.
+
+Deliberately not solved by deletion in registration - that would be an account
+takeover primitive. It needs a retention policy alongside BACKEND-21's resend and
+BACKEND-55's erasure work, and the answer probably involves an expiry window plus
+a way for the genuine owner to claim the address through verification rather than
+through re-registration.
