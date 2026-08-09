@@ -362,7 +362,7 @@ rules is worse than a link.
 ---
 
 
-## OD-022 — `Sha256Digest` is unbranded
+## OD-022 — `Sha256Digest` is unbranded — **RESOLVED**
 
 **Raised by:** BACKEND-09. **Needs:** a decision on changing a shared contract.
 
@@ -377,8 +377,22 @@ fails for every document with no visible cause.
 Found because ESLint flagged `as Sha256Digest` in the digest helper as an
 unnecessary assertion — it was, and the reason it was is the problem.
 
-**Not fixed here.** `@lagda/contracts` is shared with the frontend, and branding
-a type it already consumes is a contract change, not a sealing change.
+**RESOLVED by BACKEND-10.** `Sha256Digest` is now branded, with `toSha256Digest`
+as the single validating constructor.
+
+**The deferral reason was wrong.** It claimed `@lagda/contracts` is shared with
+the frontend and that branding would be a breaking contract change. The frontend
+consumes **nothing** from the package — OD-005 records exactly that, and a search
+of `src/` confirms zero imports. So the change cost nothing, and every command
+that persists a digest would have made it more expensive.
+
+The prompt to recheck was ESLint flagging `as Sha256Digest` as an unnecessary
+assertion in the new repository mapper — the assertion did nothing because the
+type was `string`, at the precise moment two hashes were being mapped into
+adjacent columns.
+
+Branding required exactly one code change: the sealer's digest helper now returns
+through the validating constructor. Nothing else in the backend produces a digest.
 
 **Interim mitigation.** Both tests compare each digest against one computed
 independently from the artifact it describes, so a swap fails the suite even
@@ -417,3 +431,44 @@ memory, twice during sealing (source plus output).
 
 No limit is enforced, and no measurement exists. Stating it as unmeasured rather
 than asserting it is fine.
+
+## OD-025 — Device and location evidence
+
+**Raised by:** BACKEND-10. **Needs:** a product decision and a derivation capability.
+
+Handoff §16 lists "IP geolocation (city level only)" and "device fingerprint (no
+biometrics)" in the evidence package. The *meaning* is settled — the frontend's
+`DeviceNetworkSummary` states `networkRegion` is "never lat/lng or exact IP", so
+this is IP-derived, city-level, and not browser geolocation.
+
+**Not persisted.** Nothing can derive either value: geolocation needs a lookup
+service that does not exist, and device categorisation needs a parser nobody has
+chosen. Adding nullable columns with no writer is the failure this codebase
+already shipped once — `RouteMeta.status`, declared on 225 routes and read by no
+code, which drifted until three routes misreported themselves.
+
+Adding these columns later is a cheap migration precisely because no rows exist
+yet. The seal-metadata argument for writing fields early does not apply: those
+are unrecoverable if omitted, these are not.
+
+**Open:** whether city-level geolocation is wanted at all under RA 10173 data
+minimization, and which device attributes have evidentiary value rather than
+merely being collectable.
+
+## OD-026 — Strict per-request evidence sequencing
+
+**Raised by:** BACKEND-10. **Needs:** a requirement that ordering be strict, not merely deterministic.
+
+Evidence is ordered by `(occurred_at, evidence_event_id)`, which is a total order
+and is tested. It is not a *gapless sequence*.
+
+A `sequence_no` would give one, but concurrency-safe allocation requires either a
+row lock or a counter row — both of which serialize concurrent recipients, which
+is precisely what parallel signing must not do. `SELECT MAX(seq)+1` without
+locking is unsafe and is not an option.
+
+**Open:** whether any legal or product requirement needs gap detection ("was an
+event removed?"). Note that append-only privileges already make removal
+impossible for the application, so the gap this would close is a
+database-administrator threat — the same one INV-085 says this design does not
+claim to address.

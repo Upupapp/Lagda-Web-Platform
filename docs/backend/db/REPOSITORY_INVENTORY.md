@@ -45,3 +45,21 @@ migrate around. No use case publishes events, so nothing pretends otherwise.
 One repository per **aggregate**, not per table. `SigningRequest` will span
 `signing_requests`, `recipients` and fields, and should be one repository
 because those rows must be consistent together. Table count is not the boundary.
+
+
+## BACKEND-10 additions
+
+| Repository | Scope | Methods | Status |
+|---|---|---|---|
+| `ScopedEvidenceRepository` | workspace + transaction | `append`, `listForSigningRequest` | **Implemented.** Append-only — no update or delete exists, and the runtime role has no privilege for either |
+| `ScopedArtifactRepository` | workspace + transaction | `insert`, `find`, `listForDocument` | **Implemented.** Insert-only in practice: no UPDATE privilege |
+| `ScopedFinalizationRepository` | workspace + transaction | `recordFinalization`, `findBySigningRequest` | **Implemented.** Writes seal + verification together, deliberately as one method |
+| `PublicVerificationLookup` | **global, no tenant context** | `findByVerificationId` | **Implemented, unconsumed.** Not on the unit of work — see INV-099/100 |
+
+Three repositories for four tables. Grouping follows aggregates: a seal and its
+verification record are always written together, and separate repositories would
+make that pairing a convention rather than a signature.
+
+`PublicVerificationLookup` is deliberately off the unit of work. Nothing holding
+a workspace transaction can reach it, and nothing holding it can reach anything
+else.

@@ -115,7 +115,26 @@ object-storage references, hashes, ownership and lifecycle; binaries live in
 object storage (BACKEND-17/29).
 
 Hashes are named for their artifact — `original_document_hash`,
-`prepared_document_hash`, `signed_document_hash` — never one ambiguous `hash`.
+`signed_document_hash` — never one ambiguous `hash`. (There is no
+`prepared_document_hash` column: preparation produces field metadata, not bytes,
+so the prepared digest and the original digest are the same value.)
+
+**A digest CHECK is algorithm-aware, never a bare length rule:**
+
+```sql
+CHECK (digest_algorithm = 'sha-256' AND digest ~ '^[a-f0-9]{64}$')
+```
+
+A fixed 64-character check has to be *dropped* to introduce SHA-512, and dropping
+a CHECK is how historical rows stop being validated. Extending a disjunction
+leaves every existing row constrained exactly as written.
+
+**Never `UNIQUE (digest)`.** Two identical PDFs legitimately share a SHA-256.
+
+**Evidence tables are append-only by database privilege.** The runtime role holds
+`INSERT` and `SELECT` and is explicitly revoked `UPDATE` and `DELETE`. A trigger
+is not used, because it would also block the privileged erasure path BACKEND-55
+must define.
 
 Evidence and final-artifact records must carry `seal_scheme`, `seal_version` and
 `digest_algorithm` **from the first row written**. A migration must never rewrite

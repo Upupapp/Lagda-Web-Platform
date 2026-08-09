@@ -91,3 +91,41 @@ Full detail in [`docs/backend/sealing/`](../sealing/SEALING_ARCHITECTURE.md).
 `ObjectStorage`, `MalwareScanner`, `NotificationPublisher`, `PasswordHasher`, `TokenGenerator`, `BackgroundWorkScheduler`, `EvidenceRepository`, `AuthorizationService`.
 
 Each is genuinely needed later, and none has a consumer today. Creating them now would produce exactly the decorative architecture this repository has already shipped once. Each belongs to the command that first needs it: BACKEND-17/18 (storage, AV), BACKEND-44 (notifications), BACKEND-19/20 (auth), BACKEND-16 (jobs), BACKEND-10/43 (evidence), BACKEND-27 (authorization).
+
+
+## BACKEND-10 — evidence, artifacts and finalization
+
+Defined in `packages/application/src/common/ports/evidence.ts`, re-exported from
+`ports/index.ts`. Three scoped repositories join the unit of work
+(`uow.evidence`, `uow.artifacts`, `uow.finalizations`), so completion can write
+evidence, artifacts, the finalization pair and signing state in one transaction.
+
+| Port | Consumer | Implemented by |
+|---|---|---|
+| `ScopedEvidenceRepository` | **none yet** — BACKEND-36/38 | `@lagda/db` |
+| `ScopedArtifactRepository` | **none yet** — BACKEND-17/38 | `@lagda/db` |
+| `ScopedFinalizationRepository` | **none yet** — BACKEND-38 | `@lagda/db` |
+| `PublicVerificationLookup` | **none yet** — BACKEND-42 | `@lagda/db` |
+| `EvidenceEventIdGenerator`, `ArtifactIdGenerator`, `SealIdGenerator` | as above | composition root |
+| `VerificationIdGenerator` | as above | composition root |
+
+`VerificationIdGenerator` is separate from the entity ID generators on purpose:
+the value it produces is **published**, so it must be unguessable, while an
+entity ID only has to be unique. Merging them would let a routine generator
+quietly become the source of a public identifier.
+
+### Backend-owned identifiers
+
+`EvidenceEventId`, `ArtifactId`, `SealId` and `RecipientId` are branded here and
+deliberately **not** added to `@lagda/contracts`: none crosses a public boundary.
+`VerificationId` is the opposite case and already lives in contracts, because it
+is the one identifier the public is expected to hold.
+
+### What a consumer must not do
+
+- Append an evidence event built from client-supplied fields (INV-104). Evidence
+  comes from the authenticated actor, the server clock, observed request context
+  and authoritative state.
+- Expect to correct an evidence row. A correction is a new event.
+- Reach `PublicVerificationLookup` from a tenant-scoped path, or widen its
+  projection without revisiting INV-099.
