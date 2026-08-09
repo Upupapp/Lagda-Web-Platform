@@ -130,10 +130,24 @@ domain knowledge. That does **not** make the frontend a dependency.
 
 **Not** backend importing frontend source, and **not** hand-copied duplicates.
 
-BACKEND-02 owns the classification and extraction. It must decide per type
-whether it is a genuine shared boundary contract, a frontend view model, or a
-backend-only concern — and it must resolve the identifier inconsistency in §7
-rather than carrying it into the shared package.
+**BACKEND-02 status: partially delivered.** The package exists, uses TypeBox
+schemas with types derived from them (ADR-002), and exposes `.`, `./ids`,
+`./common`, `./verification` as subpaths. The backend consumes it, proven by a
+compile-time fixture.
+
+Extracted so far: 9 branded IDs, shared primitives (timestamp, SHA-256 digest,
+nullability), and the full verification domain. The identifier inconsistency
+from §7 is resolved for those IDs — `WorkspaceId` is branded, which is what makes
+INV-003 a type error rather than a review item.
+
+**The frontend does not yet consume it**, so it is authoritative for the backend
+only and drift remains possible. The blocker is distribution across two
+repositories (OD-005), not effort. Classification of all 27 model files, the
+conflicts found, and the status/ID/resolver matrices are in
+[`contracts/CONTRACT_EXTRACTION_REPORT.md`](./contracts/CONTRACT_EXTRACTION_REPORT.md).
+
+19 of the 27 files are MIXED — domain and UI grown together — and each needs
+splitting before extraction rather than moving wholesale.
 
 ### Type safety is not runtime validation
 

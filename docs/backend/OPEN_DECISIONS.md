@@ -66,16 +66,98 @@ design, which uses a replaceable scanner interface.
 
 ---
 
-## OD-005 — Shared contracts distribution
+## OD-005 — Shared contracts distribution — **STILL OPEN, now precise**
 
-**Needs:** confirmation during BACKEND-02.
+**Needs:** a decision by the user. BACKEND-02 could not resolve it.
+**Blocks:** frontend migration to `@lagda/contracts` — and therefore the main
+benefit of choosing TypeScript.
 
-Preferred direction is a versioned `@lagda/contracts` consumed by both frontend
-and backend. Unconfirmed: whether that is a path reference, a published package,
-or a generation step — which determines whether the two repositories can silently
-drift.
+`@lagda/contracts` exists and the backend consumes it. The frontend cannot,
+because there is no mechanism to deliver it across two repositories:
 
-**Blocks:** nothing yet. **Decide in:** BACKEND-02.
+| Mechanism | Status |
+|---|---|
+| Private registry / GitHub Packages | Needs publishing; neither repo has a remote |
+| Git dependency | Needs a remote; both repos are local-only |
+| `file:` path reference | §51 forbids it as a source of truth, and it breaks frontend CI, which checks out only the frontend repo |
+| Copying files | Defeats the purpose |
+
+Until this is decided the frontend keeps its own definitions and drift between
+the two is possible. That is stated rather than papered over.
+
+**The options, honestly:**
+
+1. **Push both repos to GitHub and use GitHub Packages.** Cleanest long-term;
+   needs a remote and publish authorization.
+2. **Merge into one monorepo.** Removes the problem entirely — a workspace
+   dependency needs no registry. Reverses BACKEND-01's topology, and the reason
+   for that topology (frontend CI pins Node 22, backend needs 24) would have to
+   be handled.
+3. **Stay split and accept drift** for now, revisiting when the backend has
+   endpoints the frontend actually calls.
+
+**Decide before:** any command that expects the frontend to consume shared
+contracts.
+
+---
+
+## OD-009 — `AuthMethod` means two different things
+
+**Needs:** product clarification. **Raised by:** BACKEND-02 (conflict C-4).
+
+`AuthMethod` is declared in two files with almost disjoint values:
+
+- `index.ts`: `email-otp, sms-otp, knowledge-based, id-verification, none`
+- `recipient.ts`: `invitation-access, email-code, sms-code, authenticator, account-signin, enterprise-idp, none`
+
+These look like two concepts sharing a name — the authentication a *sender
+requires* of a recipient, versus how a recipient *actually authenticated*. The
+handoff specifies neither, so naming them by guess would set API semantics by
+accident.
+
+**Blocks:** extraction of the recipient and prepare domains.
+
+---
+
+## OD-010 — Status near-synonyms across domains
+
+**Needs:** per-domain resolution as each is extracted. **Raised by:** BACKEND-02
+(conflict C-6).
+
+Across 284 string-literal unions: `completed`(15) vs `complete`(3);
+`cancelled`(13) vs `voided`(8) vs `revoked`(1); `declined`(10) vs `rejected`(4)
+vs `failed`(1); `active`(18) vs `in-progress`(9).
+
+Whether these are synonyms or genuinely distinct states is a domain question per
+union. §12 forbids normalizing by guessing, so nothing was changed.
+
+**Blocks:** nothing now. **Resolve with:** each domain's extraction, and
+BACKEND-07's state machines.
+
+---
+
+## OD-011 — Cross-repository contract CI
+
+**Needs:** resolution alongside OD-005. **Raised by:** BACKEND-02.
+
+The strongest argument for a shared package is that changing a contract fails CI
+when the frontend stops compiling. With two repositories and no shared CI, that
+guardrail does not exist. Backend CI checks the contracts package thoroughly;
+nothing checks the frontend against it.
+
+**Blocks:** nothing. **Resolve with:** OD-005.
+
+---
+
+## OD-007 — Runtime schema library — **RESOLVED**
+
+**Resolved by:** BACKEND-02. **Decision:** TypeBox.
+**Recorded in:** `adr/ADR-002-contract-runtime-schema-strategy.md`.
+
+Chosen on architecture fit: Fastify validates with JSON Schema natively and
+TypeBox *is* JSON Schema, so contract schemas reach routes with no conversion
+layer. Zod has better ergonomics and was rejected for needing that layer at every
+route.
 
 ---
 
@@ -120,12 +202,3 @@ rules is worse than a link.
 
 ---
 
-## OD-007 — Runtime schema library
-
-**Needs:** decision during BACKEND-02/03.
-
-The architecture requires schema-first contracts with types derived from
-schemas, so that validation, typing, and generated API documentation share one
-definition. The specific library is not chosen.
-
-**Blocks:** nothing yet.

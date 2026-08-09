@@ -25,7 +25,12 @@ overstates enforcement would repeat exactly that failure.
 | **INV-004** | Routes contain no primary domain logic | DOCUMENTED ONLY | — | — | BACKEND-11 |
 | **INV-005** | `core` does not depend on infrastructure | **ENFORCED** | ESLint `no-restricted-imports` | `npm run lint` | BACKEND-01 |
 | **INV-006** | Frontend source is not a backend dependency | **ENFORCED** | Vitest architecture test | `npm test` | BACKEND-01 |
-| **INV-007** | Shared contracts originate from `@lagda/contracts` | **PARTIALLY ENFORCED** — `contracts` is barred from importing frameworks, DB, queue, PDF, storage and React. Nothing yet asserts that shared types *originate* there; that needs contracts to exist. | ESLint | `npm run lint` | BACKEND-02 |
+| **INV-007** | Shared contracts originate from `@lagda/contracts` | **PARTIALLY ENFORCED** — the package exists and the backend consumes it, proven by a compile-time fixture. The **frontend does not**, because distribution is unresolved (OD-005), so the frontend remains a second authoritative source. | ESLint + consumption test | `npm run lint`, `npm test` | Blocked on OD-005 |
+| **INV-021** | Contract types derived from schemas | DOCUMENTED ONLY | — | — | — |
+| **INV-022** | Contracts stay browser-compatible | **PARTIALLY ENFORCED** — ESLint bars infrastructure and framework imports from `contracts`; emitted output verified free of Node references. A real browser bundle check needs the frontend to consume the package (OD-005). | ESLint + inspection | `npm run lint` | Blocked on OD-005 |
+| **INV-023** | Public responses expose no more than the operation needs | **ENFORCED for verification** — `additionalProperties: false`, with tests asserting the public schema rejects `issuerWorkspaceId`, `transactionId`, `originalDocumentHash` | Vitest | `npm test` | BACKEND-02 |
+| **INV-024** | No non-JSON values in contracts | **ENFORCED for verification** — JSON round-trip test | Vitest | `npm test` | BACKEND-02 |
+| **INV-025** | Serialized status values are API contract | DOCUMENTED ONLY | — | — | — |
 | **INV-008** | Public API types expose no infrastructure-library types | DOCUMENTED ONLY | — | — | BACKEND-09/11 |
 | **INV-009** | eNotary is out of scope | DOCUMENTED ONLY | — | — | — |
 | **INV-010** | Original uploaded documents are immutable | DOCUMENTED ONLY | — | — | BACKEND-05 |
@@ -55,6 +60,26 @@ tested.
 
 The negative case matters as much as the positive ones: a rule that blocks the
 allowed location too would push PDF work back out of the seam.
+
+## Enforcement added by BACKEND-02
+
+| Probe | Expected | Result |
+|---|---|---|
+| Public verification schema given `issuerWorkspaceId` | reject | rejected |
+| Public verification schema given `transactionId` | reject | rejected |
+| Public verification schema given `originalDocumentHash` | reject | rejected |
+| `FileComparisonResult` given `match-demo` | reject | rejected |
+| Malformed SHA-256 digests (case, length, non-hex) | reject | rejected |
+| Timestamp with `+08:00` offset instead of `Z` | reject | rejected |
+| `DocumentId` passed where `WorkspaceId` expected | compile error | `@ts-expect-error` satisfied |
+| Plain `string` passed where `WorkspaceId` expected | compile error | `@ts-expect-error` satisfied |
+
+The `@ts-expect-error` assertions fail the build if the error they expect stops
+occurring, so branding cannot silently weaken.
+
+**Not enforced, and stated plainly:** contract drift between frontend and
+backend. The frontend does not consume the package (OD-005), so the guardrail
+that would catch it — the frontend failing to compile — does not exist.
 
 ### Known imprecision
 
