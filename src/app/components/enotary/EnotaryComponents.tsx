@@ -3,6 +3,8 @@ import { NavLink, useLocation } from "react-router";
 import { ENOTARY_SUBNAV, ENOTARY_DISCLAIMER } from "../../pages/public/enotary/content";
 import { Z } from "../../utils/z-index";
 import { TabStrip } from "../platform/TabStrip";
+import { PublicSection } from "../public/PublicKit";
+import type { PublicSectionProps } from "../public/PublicKit";
 
 const GF = { fontFamily: "'Geist', sans-serif" };
 const GM = { fontFamily: "'Geist Mono', monospace" };
@@ -101,19 +103,11 @@ export function EnotaryDisclaimer({ variant = "default" }: { variant?: "default"
 
 // ── EnotarySection ───────────────────────────────────────────────────────────
 
-export function EnotarySection({ id, children, light, bordered }: { id?: string; children: React.ReactNode; light?: boolean; bordered?: boolean }) {
-  return (
-    <section
-      id={id}
-      style={{
-        padding: "56px 24px",
-        background: light ? "rgba(255,255,255,0.015)" : "transparent",
-        borderTop: bordered ? "1px solid rgba(255,255,255,0.05)" : undefined,
-      }}
-    >
-      {children}
-    </section>
-  );
+// The eNotary pages are denser than the rest of the public site, which is why
+// they had 56px sections. That is now the shared `compact` density rather than
+// a fourth private implementation.
+export function EnotarySection(props: Omit<PublicSectionProps, "density">) {
+  return <PublicSection {...props} density="compact" />;
 }
 
 export function EnotaryHeading({ children, sub }: { children: React.ReactNode; sub?: string }) {

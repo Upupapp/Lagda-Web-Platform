@@ -1,67 +1,21 @@
 import { Link } from "react-router";
 import { EsigSubNav } from "./EsigSubNav";
 import { LEGAL_NOTE, ENOTARY_NOTE } from "../../pages/public/esignature/content";
+import { PublicSection, PublicHeading } from "../public/PublicKit";
+import type { PublicSectionProps, PublicHeadingProps } from "../public/PublicKit";
 
 const GF = { fontFamily: "'Geist', sans-serif" };
 const GM = { fontFamily: "'Geist Mono', monospace" };
 
 // ── Reusable section container ────────────────────────────────────────────────
-export function PageSection({
-  id,
-  children,
-  light,
-  bordered,
-}: {
-  id?: string;
-  children: React.ReactNode;
-  light?: boolean;
-  bordered?: boolean;
-}) {
-  return (
-    <section
-      id={id}
-      style={{
-        background: light ? "rgba(255,255,255,0.02)" : "transparent",
-        borderTop: bordered ? "1px solid rgba(255,255,255,0.06)" : undefined,
-        borderBottom: bordered ? "1px solid rgba(255,255,255,0.06)" : undefined,
-      }}
-    >
-      <div style={{ maxWidth: 1200, margin: "0 auto", padding: "72px 24px" }}>
-        {children}
-      </div>
-    </section>
-  );
+// Section and heading are the shared public primitives. Kept exported under
+// their original names so the 43 pages importing them did not have to change.
+export function PageSection(props: PublicSectionProps) {
+  return <PublicSection {...props} />;
 }
 
-// ── Section header ────────────────────────────────────────────────────────────
-export function SectionHeading({
-  eyebrow,
-  id,
-  heading,
-  sub,
-  center,
-}: {
-  eyebrow: string;
-  id: string;
-  heading: string;
-  sub?: string;
-  center?: boolean;
-}) {
-  return (
-    <div style={{ marginBottom: 40, textAlign: center ? "center" : undefined }}>
-      <p style={{ color: "#38bdf8", ...GM, fontSize: 11, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 10 }}>
-        {eyebrow}
-      </p>
-      <h2 id={id} style={{ color: "white", ...GF, fontSize: "clamp(22px, 3.5vw, 36px)", fontWeight: 800, margin: 0, marginBottom: sub ? 12 : 0, letterSpacing: "-0.02em", lineHeight: 1.15 }}>
-        {heading}
-      </h2>
-      {sub && (
-        <p style={{ color: "#94A3B8", ...GF, fontSize: 16, lineHeight: 1.65, margin: center ? "0 auto" : 0, maxWidth: 620 }}>
-          {sub}
-        </p>
-      )}
-    </div>
-  );
+export function SectionHeading(props: PublicHeadingProps) {
+  return <PublicHeading {...props} />;
 }
 
 // ── Related pages nav ─────────────────────────────────────────────────────────

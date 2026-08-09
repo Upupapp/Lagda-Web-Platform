@@ -4,6 +4,8 @@ import { LAGDA_PLANS, COMPARE_GROUPS, type LagdaPlan, type AvailValue } from "..
 import { PRICING_SUBNAV } from "../../pages/public/pricing/content";
 import { Z } from "../../utils/z-index";
 import { TabStrip } from "../platform/TabStrip";
+import { PublicSection, PublicHeading } from "../public/PublicKit";
+import type { PublicSectionProps, PublicHeadingProps } from "../public/PublicKit";
 
 const GF = { fontFamily: "'Geist', sans-serif" };
 const GM = { fontFamily: "'Geist Mono', monospace" };
@@ -205,54 +207,16 @@ export function CompareTable() {
 }
 
 // ── FAQ accordion ─────────────────────────────────────────────────────────────
-export function FaqAccordion({ items }: { items: { id: string; q: string; a: string }[] }) {
-  const [open, setOpen] = useState<string | null>(null);
-  return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-      {items.map(({ id, q, a }) => (
-        <div key={id} id={id} style={{
-          background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)",
-          borderRadius: 10, overflow: "hidden",
-        }}>
-          <button
-            aria-expanded={open === id}
-            aria-controls={`${id}-answer`}
-            onClick={() => setOpen(open === id ? null : id)}
-            style={{
-              width: "100%", textAlign: "left", background: "none", border: "none",
-              cursor: "pointer", padding: "16px 20px",
-              display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12,
-            }}
-          >
-            <span style={{ color: "white", ...GF, fontSize: 14, fontWeight: 600, lineHeight: 1.4 }}>{q}</span>
-            <span style={{ color: "#94A3B8", flexShrink: 0, fontSize: 14, transition: "transform 0.2s", transform: open === id ? "rotate(180deg)" : "none", display: "inline-block" }}>▾</span>
-          </button>
-          <div id={`${id}-answer`} hidden={open !== id} style={{ padding: open === id ? "0 20px 16px" : "0 20px 0" }}>
-            <p style={{ color: "#94a3b8", ...GF, fontSize: 14, lineHeight: 1.65, margin: 0 }}>{a}</p>
-          </div>
-        </div>
-      ))}
-    </div>
-  );
+// FaqAccordion now comes from the shared kit; it was character-identical to
+// the copy in ResourceComponents.
+export { FaqAccordion } from "../public/PublicKit";
+
+export function PricingSection(props: PublicSectionProps) {
+  return <PublicSection {...props} />;
 }
 
-// ── Section wrapper (same as EsigPageShell's PageSection) ─────────────────────
-export function PricingSection({ id, children, light, bordered }: { id?: string; children: React.ReactNode; light?: boolean; bordered?: boolean }) {
-  return (
-    <section id={id} style={{ background: light ? "rgba(255,255,255,0.02)" : "transparent", borderTop: bordered ? "1px solid rgba(255,255,255,0.06)" : undefined, borderBottom: bordered ? "1px solid rgba(255,255,255,0.06)" : undefined }}>
-      <div style={{ maxWidth: 1200, margin: "0 auto", padding: "64px 24px" }}>{children}</div>
-    </section>
-  );
-}
-
-export function PricingHeading({ eyebrow, id, heading, sub, center }: { eyebrow: string; id: string; heading: string; sub?: string; center?: boolean }) {
-  return (
-    <div style={{ marginBottom: 40, textAlign: center ? "center" : undefined }}>
-      <p style={{ color: "#38bdf8", ...GM, fontSize: 11, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 10 }}>{eyebrow}</p>
-      <h2 id={id} style={{ color: "white", ...GF, fontSize: "clamp(22px, 3.5vw, 36px)", fontWeight: 800, margin: 0, marginBottom: sub ? 12 : 0, letterSpacing: "-0.02em", lineHeight: 1.15 }}>{heading}</h2>
-      {sub && <p style={{ color: "#94A3B8", ...GF, fontSize: 16, lineHeight: 1.65, margin: center ? "0 auto" : 0, maxWidth: 640 }}>{sub}</p>}
-    </div>
-  );
+export function PricingHeading(props: PublicHeadingProps) {
+  return <PublicHeading {...props} />;
 }
 
 export function PricingHero({ heading, sub }: { heading: string; sub: string }) {
