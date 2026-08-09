@@ -1365,3 +1365,75 @@ a denial-of-service anyone could trigger by knowing an email address.
 
 The `locked` state in SIGN-IN and email verification remains unreachable, and
 that part of OD-076 stands.
+
+## OD-069 — ESCALATED AGAIN: seventeen uncomposed routes
+
+**Raised by:** BACKEND-20. **Escalated by:** BACKEND-23 and BACKEND-24.
+
+Six account routes added, none registered in `createApp`. The running total is
+seventeen auth and account routes and roughly fourteen rate-limit policies,
+none attached to anything.
+
+BACKEND-24 adds three more controls that exist only as route options: the
+refusal of a pre-auth credential at `/me`, CSRF on account mutations, and a rate
+limit on password change. Each is specified, each is designed, and none is
+demonstrated where a request actually flows.
+
+**This should be the next command.** Everything it needs is built; nothing else
+should be layered on top first.
+
+## OD-085 — RESOLVED: email change is not a product feature
+
+**Raised and resolved by:** BACKEND-24.
+
+`ProfilePage.tsx` renders the address read-only: *"Contact support to change
+your account email."* The product routes this through support.
+
+No endpoint was built. The full security requirements for a future one — ten of
+them, from reauthentication through to notifying the old address — are recorded
+in ACCOUNT_SECURITY_BOUNDARIES.md so they exist before the feature does.
+
+If the product later wants self-service email change, that is a command of its
+own, not an addition to a profile form.
+
+## OD-086 — Avatar upload
+
+**Raised by:** BACKEND-24.
+
+`ProfilePage.tsx` has an avatar control that previews a local object URL and
+persists nothing. `UserProfile` has no avatar field.
+
+Deliberately not built. An avatar is an image-upload security problem in its own
+right — content-type verification, decompression bounds, stripping EXIF (which
+carries GPS coordinates), and a serving path that cannot become stored XSS. It
+must not reuse the document pipeline, which is tuned for PDFs and quarantine
+scanning.
+
+Worth doing properly when the product commits to it.
+
+## OD-087 — The sessions page shows device and region; nothing records them
+
+**Raised by:** BACKEND-24.
+
+`ActiveSession` carries `deviceLabel`, `deviceType`, `browser` and `region`.
+`user_sessions` has no user-agent and no IP column — BACKEND-13 chose not to
+collect them.
+
+The projection returns what exists and does not invent the rest. Closing the gap
+means deciding to store a user-agent string and derive a coarse region, which is
+a privacy decision with retention consequences, not a mapping exercise. The
+product's own page already says it shows "no full IP addresses, exact
+locations", so whatever is added must stay coarse.
+
+Until then the settings page has fields the backend cannot fill.
+
+## OD-088 — Notification preferences belong to BACKEND-44
+
+**Raised by:** BACKEND-24.
+
+`NotificationsPage` exists. Its preferences were deliberately not folded into
+account preferences: they describe which messages a user receives, which is
+notification-domain state, and there is still no notification infrastructure to
+receive them.
+
+Recorded so they are not accidentally implemented twice.

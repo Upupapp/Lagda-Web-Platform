@@ -214,3 +214,24 @@ steps.
 
 Password reset revokes pending authentications as well as sessions: a ceremony
 is a proof of the OLD password.
+
+## Account-initiated session management (BACKEND-24)
+
+A user may list their own sessions and revoke them from settings.
+
+The projection is `sessionId`, `createdAt`, `lastSeenAt`, `expiresAt`,
+`isCurrent` — no token, no digest, no IP, no user agent. Nothing else is
+selected, so nothing else can be serialized.
+
+Every operation is scoped by `user_id` **and** `session_id`. A revoke keyed on
+the session alone would let anyone who learned an identifier sign another
+account out. "Not found" covers both "no such session" and "not yours", so the
+endpoint is not an oracle for which identifiers exist.
+
+**Password change** revokes every session except the caller's own, with reason
+`password-change`, and revokes pending MFA ceremonies. Preserving the current
+session is deliberate: signing someone out of the browser they just used to
+change their password teaches them the security action breaks things.
+
+Revoking one's OWN session returns `signedOut: true` and clears both cookies,
+so the browser stops presenting a dead credential.

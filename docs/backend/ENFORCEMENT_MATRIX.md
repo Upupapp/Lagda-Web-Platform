@@ -849,3 +849,47 @@ skew window, a route assertion that passed vacuously because its stub returned
 
 **One flaky full-suite run**, not reproduced in four subsequent full runs and
 five focused ones. Test names not captured. Recorded rather than dismissed.
+
+## BACKEND-24 — Account and profile
+
+| Rule | Status | Mechanism |
+|---|---|---|
+| Profile field allowlist | **ENFORCED** | Closed schema + explicit column lists; probed |
+| Security fields excluded | **ENFORCED** | 14 mass-assignment payloads each a 400; probed |
+| No generic user patch exists | **ENFORCED** | Repository surface asserted by a test |
+| `/me` safe projection | **ENFORCED** | Closed response schema + leak tests; probed |
+| MFA secret cannot reach `/me` | **ENFORCED BY TYPES** | The projection type has nowhere to put it — the leak does not compile |
+| Session digests cannot reach a response | **ENFORCED** | Projection selects four columns; probed |
+| Identity resolved from the session only | **ENFORCED** | No id in any path or schema |
+| Pre-auth denied account access | **PARTIALLY ENFORCED** | Route refuses it; not demonstrated in a composed app (OD-069) |
+| CSRF on account mutations | **NOT ENFORCED** | No plugin bound anywhere — OD-069 |
+| Rate limit on password change | **NOT ENFORCED** | Policy exists, binding does not — OD-069 |
+| Current password required to change it | **ENFORCED** | Probed |
+| Registration password policy reused | **ENFORCED** | Imported, not restated; probed |
+| Other sessions revoked, own preserved | **ENFORCED** | Probed in both directions |
+| Pending MFA revoked on password change | **ENFORCED** | Tested |
+| Session ops scoped to the owner | **ENFORCED** | Probed |
+| IANA time zones only | **ENFORCED** | Shape + runtime + CHECK; probed. A real defect found here |
+| Unicode names accepted | **ENFORCED** | Tested against real names |
+| `no-store` on account responses | **ENFORCED** | Probed |
+| Email change is not a profile edit | **ENFORCED BY ABSENCE** | Not in product; requirements documented |
+| Workspace state excluded | **ENFORCED** | No workspace field anywhere in this surface |
+| Historical evidence untouched | **ENFORCED ARCHITECTURALLY** | No import path from account code to evidence |
+| Account deletion | **NOT IMPLEMENTED** | BACKEND-55; no hard delete exists |
+| Avatar / phone | **NOT IMPLEMENTED** | Not persisted / not collected |
+
+### Honest gaps
+
+**OD-069 now spans seventeen routes.** Six added here, none composed. Three
+controls this command is supposed to enforce — pre-auth refusal, CSRF, and a
+rate limit on password change — are therefore properties of route options and
+test doubles rather than of a running application. This is the same gap
+BACKEND-20 raised and it has grown with every command since.
+
+**The sessions page shows device and region; nothing records them.** BACKEND-13
+stores no user agent or IP. The projection returns what exists rather than
+fabricating labels — OD-087.
+
+**Probing found a real defect.** The timezone check trusted
+`Intl.DateTimeFormat`, which accepts `"+08:00"`. Raw offsets would have been
+stored. Fixed with an IANA shape check, and probed.

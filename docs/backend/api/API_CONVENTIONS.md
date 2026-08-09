@@ -290,3 +290,18 @@ becomes permanent contract debt.
 
 No URL versioning (`/v1`) yet; nothing requires it and the structure allows
 adding it later.
+
+## Account endpoints are never cacheable (BACKEND-24)
+
+`/me`, `/me/profile`, `/me/preferences`, `/me/password` and `/me/sessions` all
+send `Cache-Control: no-store`.
+
+`no-store`, not `no-cache`: the latter permits a shared cache to KEEP the
+response and merely revalidate it. These bodies carry an email address, MFA
+status and session metadata, and a proxy holding one user's `/me` for another to
+receive is exactly the failure to avoid.
+
+**No account route takes a user id.** Identity comes from the validated session,
+so there is no `:userId` segment and no `userId` request field. "User A edits
+user B" is not expressible, which is stronger than an authorization check that
+compares them.

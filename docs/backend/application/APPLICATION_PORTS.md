@@ -299,3 +299,18 @@ infrastructure — the application never imports `otpauth`.
 **Deliberately no `OtpCodeGenerator` and no `OtpVerifier`.** TOTP issues no code
 and stores no verifier; ports for them would have no implementation and no
 caller.
+
+## Account ports (BACKEND-24)
+
+| Port | Owns | Notes |
+|---|---|---|
+| `AccountProfileRepository` | read the current user; write profile; write preferences | **Three methods. No generic patch** — the mass-assignment defence is the absence |
+| `AccountCredentialRepository` | read and replace the password hash | Separate on purpose: reaching a hash should need its own import |
+| `AccountSessionRepository` | list, revoke one, revoke all others | Every method scoped by `userId` |
+| `AccountPendingAuthRevoker` | revoke in-flight MFA ceremonies | Optional, as in password reset |
+
+`UpdatePreferencesDependencies.isKnownTimezone` is a port because zone validity
+belongs to the platform's ICU data, not the domain — a hard-coded list would be
+wrong the next time the tz database changes. The domain rule that the value must
+be an IANA identifier rather than an offset lives in the use case, because
+`Intl` accepts offsets and the port alone would let them through.
