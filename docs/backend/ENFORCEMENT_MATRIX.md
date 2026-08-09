@@ -264,10 +264,55 @@ occurring, so branding cannot silently weaken.
 backend. The frontend does not consume the package (OD-005), so the guardrail
 that would catch it — the frontend failing to compile — does not exist.
 
+### CORRECTION — the "known imprecision" was not merely cosmetic
+
+This section previously recorded that a PDF import inside `packages/core` cited
+the INV-005 message rather than INV-001, and concluded that only the citation was
+imprecise while "the import is still blocked".
+
+**The first half was true and the conclusion was wrong.** BACKEND-09 probed the
+mechanism instead of reasoning about it, and found real holes.
+
+`no-restricted-imports` is **last-wins per file**, not additive. When two config
+blocks both matched a package, the later block *replaced* the earlier one. The
+overlapping layout therefore deleted bans nobody noticed were gone:
+
+| Import | Package | Was | Now |
+|---|---|---|---|
+| `react` | `@lagda/contracts` | **allowed** | blocked |
+| `vite` | `@lagda/contracts` | **allowed** | blocked |
+| `@lagda/api` | `@lagda/application` | **allowed** | blocked |
+| `@lagda/worker` | `@lagda/application` | **allowed** | blocked |
+| `pdf-lib` | `@lagda/sealing` | **blocked** | allowed |
+
+The last row is the inverse failure: the persistence block spread a package list
+that transitively contained the PDF libraries, so the one package that *must*
+import `pdf-lib` was forbidden from doing so — and told "Database access belongs
+in `@lagda/db`" when it tried. `@lagda/sealing` had no source files at the time,
+so nothing failed and the rule looked fine.
+
+**Fix.** One block per package, built from groups that each keep their own
+message. Lists are now purpose-specific (`DB_PACKAGES`, `INFRA_NON_PDF`,
+`FRONTEND_PACKAGES`, `LAGDA_ADAPTERS`) rather than one `INFRA_PACKAGES` reused
+for unrelated bans.
+
+**Verification.** 17 probes, each appending a real import and reading the result:
+14 must-block cases and 3 negative controls (`pdf-lib` in sealing, `pg` in db,
+`@lagda/db` in api), plus the previously-broken four. All 17 behave correctly.
+
+**The lesson, recorded because it generalises.** The original note reasoned about
+the config rather than executing it, and reached a conclusion that was
+comfortable and wrong. Every claim in this matrix should be a probe result. The
+earlier reading also had the strongest possible reason to look correct: `npm run
+lint` passed, in a repository where nothing had yet tried to violate the deleted
+rules.
+
 ### Known imprecision
 
-Inside `packages/core`, a PDF import reports the **INV-005** message rather than
-INV-001, because the core-specific restriction block overrides the general PDF
-block for the same rule. The import is still blocked; only the citation is less
-specific. Both statements are true — a PDF library is infrastructure — so this is
-recorded rather than worked around with a more fragile configuration.
+~~Inside `packages/core`, a PDF import reports the INV-005 message rather than
+INV-001 … recorded rather than worked around with a more fragile
+configuration.~~
+
+**Superseded by the correction above.** Each package now carries one rule whose
+groups keep their own messages, so a PDF import reports the PDF message
+everywhere, and no ban is silently replaced by another block.

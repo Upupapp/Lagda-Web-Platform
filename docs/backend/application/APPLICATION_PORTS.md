@@ -14,7 +14,7 @@ Every port below has a named consumer except one, which is called out.
 | `TransactionManager` | Group writes atomically **and establish tenant context** | `CreateWorkspace`, `GetWorkspaceMember` | BACKEND-06 ✅ | `runForWorkspace` / `runGlobal` | yes |
 | `WorkspaceRepository` | Workspace persistence | `CreateWorkspace` | BACKEND-06 ✅ | **is** the scope | reads + writes |
 | `WorkspaceMembershipRepository` | Membership persistence | `CreateWorkspace`, `GetWorkspaceMember` | BACKEND-06 ✅ | **scoped, required** | reads + writes |
-| `DocumentSealer` | Document finalization seam | **none yet** | `@lagda/sealing` (BACKEND-09) | workspace in request | no |
+| `DocumentSealer` | Document finalization seam | **none yet** | `NodeDocumentSealer` in `@lagda/sealing` (BACKEND-09) | workspace in request | no |
 
 ## Why separate ID generators
 
@@ -61,15 +61,30 @@ The alternative — a transaction-scoped repository set (`tx.workspaces`) — re
 
 `TransactionContext` carries nothing. A `PoolClient` here would put a driver type in every repository signature and application would depend on PostgreSQL through the back door.
 
-## DocumentSealer — the one port with no consumer
+## DocumentSealer — implemented, still with no consumer
 
-Stated rather than hidden. It exists now because §148 asked to fix its ownership, and because inverting a dependency before the implementation exists is exactly what a port is for.
+Stated rather than hidden. BACKEND-09 built the implementation; nothing calls it yet, and that stays correct until signing completion exists (BACKEND-38, INV-002).
 
 - **Owned by** application. It needs the capability, so it declares the interface.
-- **Implemented by** `@lagda/sealing` (BACKEND-09).
+- **Defined in** `packages/application/src/common/ports/sealing.ts` — the single declaration in the codebase, asserted by test (INV-071). `ports/index.ts` re-exports it rather than restating it.
+- **Implemented by** `NodeDocumentSealer` in `@lagda/sealing`.
 - **Consumed by** signing completion only (BACKEND-38, INV-002).
-- **One operation.** `mergeFields`, `hashDocument` and `signPdf` stay internal to the sealing package; exposing them would give twenty callers a reason to reach past the seam.
-- `SealRequest`/`SealResult` are LAGDA-owned. No `pdf-lib` type crosses (INV-008) — which is what makes a later Java or .NET implementation a substitution rather than a rewrite.
+- **One operation** (INV-070). `mergeFields`, `hashDocument` and `renderCertificate` stay private to the sealing package; exposing them would give twenty callers a reason to reach past the seam. A test counts the methods.
+- `SealRequest`/`SealResult` are LAGDA-owned. No `pdf-lib` type crosses (INV-008), and document bytes are `Uint8Array` rather than Node's `Buffer` (INV-072) — which is what makes a later Java or .NET implementation a substitution rather than a rewrite.
+
+### What a consumer must supply
+
+The port deliberately pushes three things onto its caller, and a future use case has to provide all three:
+
+- **The document bytes.** The sealer never fetches from object storage, so a remote signer needs no knowledge of LAGDA's storage topology (and no credentials for it).
+- **`verificationId`.** Its format is `LAGDA-{workspace}-{date}-{random}`; randomness and identifier namespaces belong to the application, not to a sealing service.
+- **`sealedAt`.** From the `Clock` port, so output stays reproducible.
+
+### What a consumer must not do
+
+Call `seal()` inside a database transaction (INV-082). It is slow, it is external, and it cannot be rolled back when the commit later fails.
+
+Full detail in [`docs/backend/sealing/`](../sealing/SEALING_ARCHITECTURE.md).
 
 ## Ports deliberately NOT created
 

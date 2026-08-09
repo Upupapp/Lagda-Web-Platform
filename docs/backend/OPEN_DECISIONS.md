@@ -361,3 +361,59 @@ rules is worse than a link.
 
 ---
 
+
+## OD-022 — `Sha256Digest` is unbranded
+
+**Raised by:** BACKEND-09. **Needs:** a decision on changing a shared contract.
+
+Every ID type in `@lagda/contracts` is branded (`Branded<"TransactionId">`), but
+`Sha256Digest` is `Static<Type.String>` — a plain alias for `string`.
+
+So `preparedDocumentHash` and `signedDocumentHash` are mutually assignable, and
+swapping them in `SealResult` would compile silently. That swap publishes the
+input's digest as the verification value for the output, and verification then
+fails for every document with no visible cause.
+
+Found because ESLint flagged `as Sha256Digest` in the digest helper as an
+unnecessary assertion — it was, and the reason it was is the problem.
+
+**Not fixed here.** `@lagda/contracts` is shared with the frontend, and branding
+a type it already consumes is a contract change, not a sealing change.
+
+**Interim mitigation.** Both tests compare each digest against one computed
+independently from the artifact it describes, so a swap fails the suite even
+though it compiles.
+
+**Options.** (a) Brand `Sha256Digest` and add a validating constructor; (b) leave
+it and rely on tests; (c) brand per-artifact types (`PreparedDocumentHash`,
+`SignedDocumentHash`), which prevents the swap outright but multiplies types.
+
+## OD-023 — Who renders the completion certificate after a remote signer arrives
+
+**Raised by:** BACKEND-09. **Needs:** OD-013 (certificate-backed signing) first.
+
+`SealResult` returns the sealed document and the certificate together. A signing
+service that only signs — the likely shape of a PAdES implementation — would not
+render LAGDA's certificate.
+
+Either the renderer stays in Node while signing moves out, splitting one
+operation across two runtimes, or the remote service takes on LAGDA-specific
+layout and copy.
+
+**Deliberately not decided.** Extracting a `CertificateRenderer` port now would
+create a second seam with one implementation and one caller, which is the
+decorative-architecture failure recorded against `RouteMeta.status`. The
+certificate being a separate artifact already means moving its production later
+does not change the sealed document's bytes.
+
+## OD-024 — Large-document memory behaviour
+
+**Raised by:** BACKEND-09. **Needs:** real document-size data from production.
+
+`SealRequest` carries document bytes in memory rather than a storage reference.
+That is what keeps a future remote signer ignorant of LAGDA's storage topology,
+and it is the right trade today — but a very large PDF is held entirely in
+memory, twice during sealing (source plus output).
+
+No limit is enforced, and no measurement exists. Stating it as unmeasured rather
+than asserting it is fine.

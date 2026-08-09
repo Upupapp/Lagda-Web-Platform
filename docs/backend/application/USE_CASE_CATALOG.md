@@ -42,6 +42,31 @@ These prove the pattern. They are **not** feature-complete.
 | `CreateTemplate` / `UseTemplate` | both | yes | yes | no | BACKEND-33 |
 | `SendReminder` | command | yes | yes | yes | BACKEND-46 |
 
+### `CompleteSigningRequest` — what BACKEND-09 pinned down
+
+The one use case that requires `DocumentSealer`. Its shape is now constrained by
+the seam, so BACKEND-38 inherits these rather than choosing them:
+
+- It supplies the document bytes, the `verificationId`
+  (`LAGDA-{workspace}-{date}-{random}` — generated here, never by the sealer) and
+  `sealedAt` from the `Clock`.
+- It calls `seal()` **outside** the database transaction (INV-082). Sealing is
+  slow, external, and cannot be rolled back when the commit later fails. The
+  ordering is therefore: decide completion in the domain → seal → persist
+  artifacts and hashes → commit.
+- It persists `seal_scheme`, `seal_version` and `digest_algorithm` on the first
+  row written (INV-076), and names hashes `original_document_hash` /
+  `signed_document_hash` (INV-074).
+- It stores THREE artifacts, per handoff §15: original, sealed document, and the
+  completion certificate as a separate file — never appended (INV-077).
+- Its idempotency guarantee has teeth here: sealing twice produces two artifacts
+  with two different digests, and the second would silently become the record.
+  Because the sealer is deterministic, a retry with identical input yields
+  identical bytes — but a retry that regenerates `verificationId` or `sealedAt`
+  does not.
+- It branches on `SealingError.retryable`. A malformed document is permanent; a
+  future remote signer timing out is not.
+
 Idempotency requirements are the five from handoff §28 — send, invite, plan change, signature submission, OTP delivery — plus completion, which must not produce two final artifacts. None invented.
 
 ## Deferred
