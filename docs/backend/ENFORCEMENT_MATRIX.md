@@ -426,3 +426,42 @@ key validator exist; wiring them is the first feature command's work.
 
 **Only single-transaction operations are covered.** Plan change and OTP delivery
 call external providers and are catalogued as PLANNED.
+
+
+## BACKEND-15 - Rate limiting
+
+| Rule | Status | Mechanism |
+|---|---|---|
+| Durable shared counters | **ENFORCED** | PostgreSQL; 10 concurrent increments yield 10 distinct counts |
+| Atomic increment | **ENFORCED** | Single upsert. Probed by substituting read-then-write |
+| Threshold boundary exact | **ENFORCED** | 5 allowed, 6th rejected. Probed with an off-by-one |
+| Window reset | **ENFORCED** | Deterministic clock, no sleeping |
+| Trusted IP only | **ENFORCED** | Spoofed header ignored when untrusted, honoured when a hop is trusted |
+| Personal-data scope keys digested | **ENFORCED** | Tested; probed by storing raw |
+| Every threshold sourced | **ENFORCED** | Startup validation plus a test citing handoff sections |
+| Limit below 1 rejected | **ENFORCED** | Startup validation |
+| Unknown policy rejected | **ENFORCED** | Throws rather than skipping the check |
+| Fail-closed for credential policies | **ENFORCED** | Both modes tested; probed by forcing fail-open |
+| Canonical 429 + Retry-After | **ENFORCED** | Integration test including the current request ID |
+| No policy/count/scope in response | **ENFORCED** | Leak test |
+| CORS preflight not counted | **ENFORCED** | Tested |
+| Health/readiness unlimited | **ENFORCED** | Tested |
+| Rate limit before idempotency | **ENFORCED** | Claim count unchanged after a 429 |
+| Replay still counted | **ENFORCED** | Tested |
+| No identifier metric labels | **ENFORCED** | Exact label assertion plus catalog audit |
+| No raw IP in logs | **ENFORCED** | Log capture against the app's real logger |
+| Feature thresholds (11 operations) | **DOCUMENTED ONLY** | TBD in the catalog; each feature command owns its number |
+| No permanent lockout / anti-enumeration | **DOCUMENTED ONLY** | No auth endpoint exists to enforce it against |
+
+### Honest gaps
+
+**No policy has a production consumer.** Eight are implemented and enforceable;
+none is wired to a feature endpoint, because no feature endpoint exists. The
+wiring is two lines per route and belongs to the feature command.
+
+**IP limits are not yet meaningful in production.** `TRUST_PROXY` defaults to
+trusting nothing, so behind a proxy every request shares one bucket. That is the
+safe failure, not a working control (OD-027).
+
+**Anti-enumeration and no-permanent-lockout are stated, not enforced.** They
+constrain BACKEND-20/22/23 and cannot be tested before those exist.

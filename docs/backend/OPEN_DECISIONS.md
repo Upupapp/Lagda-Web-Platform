@@ -642,3 +642,41 @@ exists to prevent.
 **Open:** whether any operation needs materially longer. Per-operation retention
 was deliberately not built, since one default is simpler and nothing yet
 requires otherwise.
+
+## OD-039 - Thresholds the handoff does not specify
+
+**Raised by:** BACKEND-15. **Needs:** each feature command, with product input.
+
+Eight policies are implemented with handoff-sourced thresholds. Eleven more
+operations are catalogued with **TBD** rather than a guessed number - password
+recovery, invitations, sending, signing access, uploads, reports and API keys.
+
+Deliberately not invented. An unsourced threshold is one nobody can defend when
+it starts blocking a customer, and validation rejects a policy with an empty
+source.
+
+## OD-040 - Edge and WAF limits
+
+**Raised by:** BACKEND-15. **Needs:** BACKEND-65.
+
+A reverse proxy or CDN can shed volumetric load before it reaches Node, which
+application-level counting cannot.
+
+**Open:** whether to add one, and where. **Not open:** whether it would replace
+these controls. It could not - an edge does not know what an account or a
+challenge is, so it cannot express "5 attempts per account". Complementary, not
+substitutive.
+
+If an edge stores IP data it becomes a processor and belongs in the cross-border
+review (OD-030).
+
+## OD-041 - General authenticated read ceiling
+
+**Raised by:** BACKEND-15.
+
+`api.write.user` is 100/min per handoff §317. Whether a *read* ceiling is also
+wanted is unanswered - a document editor issues many reads legitimately, and a
+number set without measuring real client behaviour would break normal use.
+
+Deliberately not guessed. BACKEND-61 can measure; until then no read policy
+exists rather than a wrong one.

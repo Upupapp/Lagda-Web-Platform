@@ -197,6 +197,23 @@ generic rule set.
 | **INV-170** | Raw idempotency keys are never logged and never used as metric labels. | Client-supplied, unbounded, and identifying. | **ENFORCED** - redaction covers the header; catalog audit covers labels |
 | **INV-171** | Stored replay results are bounded and contain no headers - no cookies, no CORS, no security headers, no request ID. | Replaying a stored Set-Cookie would re-issue an old session; a replay must get its own request ID. | **ENFORCED** - stored shape has no header field; 64 KiB bound tested |
 | **INV-172** | Idempotency does not imply exactly-once external delivery. | An email or billing provider may still receive a retry. Provider adapters need their own keys. | Documented -> review |
+| **INV-173** | Rate limiting is defence in depth and never substitutes for authentication, authorization, tenancy, CSRF or idempotency. | A limit answers "too much, too fast" and nothing about who you are. | Documented -> review |
+| **INV-174** | Security-sensitive limits use durable shared state, never process memory. | With N instances, a local counter turns "5 per minute" into "5N per minute". | **ENFORCED** - PostgreSQL only; real concurrency test |
+| **INV-175** | Concurrent increments are atomic. No read-then-write. | Two callers receiving the same count let one extra request through, and that one is the attacker. | **ENFORCED** - single upsert; probed by replacing it |
+| **INV-176** | IP scope comes from proxy-aware observed request metadata. Client-supplied headers never select a bucket. | Otherwise an attacker picks a fresh bucket per request and the limiter is decorative. | **ENFORCED** - spoofing tested both ways |
+| **INV-177** | Rate-limit scope identities come from trusted context - resolved session, authorized workspace, validated signing access - never a request body. | A body field lets an attacker choose which bucket to fill. | **ENFORCED** - typed scopes; no body-derived construction exists |
+| **INV-178** | Personal-data scope keys are digested before storage. | An IP or an email is personal data the counter table only compares, so it need not hold it reversibly. | **ENFORCED** - tested; probed by storing raw |
+| **INV-179** | Every threshold records its source. | A number nobody chose is one nobody can defend when it blocks a customer. | **ENFORCED** - validation rejects an empty source |
+| **INV-180** | A limit below 1 is rejected at startup. | A limit of 0 silently disables the operation it protects. | **ENFORCED** - tested |
+| **INV-181** | Rate limiting runs BEFORE idempotency and before the business transaction. | Everything after costs something an attacker would otherwise get free. | **ENFORCED** - a rate-limited request never claims an idempotency key |
+| **INV-182** | An idempotency replay is still counted. | Exempting replays makes the key a rate-limit bypass. | **ENFORCED** - tested |
+| **INV-183** | Rate-limited responses are canonical 429s carrying no policy, count, remaining or scope. | "2 attempts left" is a gift to an attacker; a policy name tells them which dimension to rotate. | **ENFORCED** - leak test |
+| **INV-184** | A limiter store failure is reported as a dependency failure, never as a rate limit. | A caller must not be told "slow down" when the truth is "the control is broken". | **ENFORCED** - distinct error, maps to 503 |
+| **INV-185** | Pre-auth limits apply whether or not the account exists. No permanent lockout. | An "unknown account is unlimited" path enumerates accounts; a permanent lockout is a denial-of-service weapon. | Documented -> BACKEND-20/22/23 |
+| **INV-186** | Rate-limit metrics and logs contain no IP, account, digest, count or unbounded identifier. | Metrics are the surface that should carry no personal data at all. | **ENFORCED** - catalog audit; log capture test |
+| **INV-187** | Counters have bounded operational retention and are not a request log or signing evidence. | One row per window, not per request. | **ENFORCED** - schema; bounded cleanup tested |
+| **INV-188** | Rate limiting does not claim exactly-once execution or network-layer DDoS protection. | An application counting requests is already past where a volumetric flood does its damage. | Documented -> review |
+| **INV-189** | A new public or credential-guarding operation requires an explicit rate-limit policy. | The absence of a policy is the absence of a control. | Documented -> feature commands |
 
 ## Rules for future `BACKEND-XX` commands
 
