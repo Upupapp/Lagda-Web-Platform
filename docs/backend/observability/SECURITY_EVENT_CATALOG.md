@@ -58,3 +58,26 @@ telemetry must not become the disclosure the API response was designed to avoid.
   need longer retention and tighter access — recorded for BACKEND-56/66.
 - **No customer-facing exposure.** This telemetry never reaches a workspace user.
   The audit UI reads curated business records.
+
+## Password recovery (BACKEND-22)
+
+| Event | Fields | Notes |
+|---|---|---|
+| `auth.password_reset.requested` | `requestId`, result | Emitted for known and unknown alike |
+| `auth.password_reset.challenge_created` | `requestId`, `userId`, `challengeId` | Internal; only after the account resolves |
+| `auth.password_reset.rate_limited` | `requestId`, scope | Scope is a digested limiter key, never a raw address |
+| `auth.password_reset.succeeded` | `requestId`, `userId`, `challengeId`, `revokedSessionCount` | A COUNT, never session identifiers |
+| `auth.password_reset.invalid_token` | `requestId` | The internal reason may be recorded; it never reaches a response |
+| `auth.password_reset.expired` | `requestId` | |
+
+**Never recorded, anywhere:** the raw reset token, its digest, the full reset
+URL, the plaintext password, the password hash, session tokens, CSRF tokens, or
+the requesting email address.
+
+The raw address is not logged on the public request path. Operational
+correlation, if it is ever needed, uses the digested account scope the limiter
+already produces.
+
+Note the asymmetry: `requested` fires for every call, `challenge_created` only
+when an account resolved. Internal logs may distinguish what the public response
+does not — but only in a store the caller cannot read.

@@ -63,3 +63,22 @@ No feature job exists: no email delivery, no document sealing, no evidence
 generation, no notification. Those arrive with the commands that need them. What
 exists here is the seam they will plug into, and the two maintenance jobs that
 give it something real to execute.
+
+## Password-reset email (BACKEND-22) — NOT IMPLEMENTED
+
+`requestPasswordReset` takes an optional `scheduleDelivery` dependency, invoked
+**inside** the rotation transaction so that a scheduling failure rolls the whole
+rotation back and leaves the user's existing link usable.
+
+Where it is absent — which is everywhere today — the challenge is still created
+correctly and the raw token is discarded.
+
+Conceptual template identity: `auth.password-reset`. No template system is built
+here.
+
+When the notification foundation exists, the job payload must carry a
+notification-record ID rather than the raw token wherever the approved
+one-time-secret design allows, must never carry a password, and must not
+regenerate a token on provider retry — retries redeliver the same challenge.
+
+**Blocked on BACKEND-44/45.** Nothing sends a reset email today.

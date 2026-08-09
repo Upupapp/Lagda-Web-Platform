@@ -157,3 +157,28 @@ question.
 Neither token can reach a log: BACKEND-12's deep redaction removes any key
 matching `*token`/`*secret`, cookie headers are never serialized, and a test
 asserts both raw values are absent from captured output.
+
+## Password reset revokes everything (BACKEND-22)
+
+A successful password reset calls `revokeAllForUser` with reason
+`password-change`, **inside the same transaction** as the password replacement.
+If revocation fails, the password does not change.
+
+The threat is specific: an attacker who already holds a stolen session is
+usually the reason the user is resetting. Changing the password while leaving
+that session alive achieves nothing — the intruder keeps their access and the
+user believes they have removed it.
+
+No session is created afterwards. The product navigates to
+`/sign-in?notice=password-reset`, so the user authenticates with the new
+password and gets a fresh session through the normal path. The reset token never
+becomes a session credential.
+
+Both cookies are cleared on success. The sessions are already dead server-side,
+so this is defence in depth — without it the browser keeps presenting a revoked
+credential and the user sees a logged-in shell that 401s on contact. Any CSRF
+token tied to a revoked session dies with it, and no new one is issued because
+there is no session for one to protect.
+
+Proven against real PostgreSQL: a session issued before a reset resolves as
+`rejected` with reason `revoked` afterwards; one issued after is unaffected.

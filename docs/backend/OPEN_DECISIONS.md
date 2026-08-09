@@ -1193,3 +1193,78 @@ aspirational and should be recorded as such.
 
 Not invented here: an account-state machine nobody has specified is exactly the
 kind of thing that becomes load-bearing before anyone defines it.
+
+## OD-069 — UPDATED: no auth route is composed
+
+**Raised by:** BACKEND-20. **Still open after BACKEND-22.**
+
+Seven auth routes now exist across four commands. None is registered in
+`createApp`. Each is tested through a Fastify instance built in its own test,
+which proves the handler and proves nothing about a running application.
+
+The consequence compounds with every command: eleven rate-limit policies are
+now defined for auth flows and **not one is attached**. The password-recovery
+limits are the first where the gap is directly exploitable — an unbound
+forgot-password endpoint is an email-bombing tool.
+
+This is composition work, and it is now the largest single gap in the auth
+surface.
+
+## OD-077 — Reset challenge record retention
+
+**Raised by:** BACKEND-22.
+
+Consumed and superseded reset challenges are never deleted. The credential is
+dead in every case, so the row leaks nothing, and "a reset was requested and
+redeemed at this time" is exactly what an account-security review wants.
+
+But rows accumulate forever. BACKEND-16's cleanup foundation can remove them
+once someone decides how long that history is worth keeping — a privacy question
+as much as a storage one, and one that belongs alongside OD-074 (the identical
+question for verification challenges) and BACKEND-55's erasure work.
+
+Deliberately separate from credential lifetime: the token dies in an hour, the
+record does not have to.
+
+## OD-078 — Password-changed security notification
+
+**Raised by:** BACKEND-22.
+
+A "your password was changed" email is a standard control: it tells a user who
+did **not** initiate the reset that their account was taken, at the one moment
+they can still act.
+
+Not implemented, because there is no notification infrastructure to implement it
+on and §77 says not to build one speculatively. When it exists, the message must
+contain no password and no reset link, must go out after commit through the
+durable queue, and must not be conflated with the reset-request delivery.
+
+## OD-079 — The frontend's three reset-link states have one backend answer
+
+**Raised by:** BACKEND-22.
+
+`ResetPassword.tsx` renders distinct `expired`, `used` and `invalid` screens.
+It selects between them from a `?state=` URL parameter **it sets itself** — a
+demo affordance, not an API contract.
+
+The backend collapses all five internal failures into
+`INVALID_OR_EXPIRED_RESET_TOKEN`, per §120, and the frontend's `invalid` copy
+already covers every case.
+
+There is a defensible argument for distinguishing "already used": unlike login,
+a reset token is 256 bits and identifies no public account, so telling its holder
+that it is spent reveals nothing they could not already determine by trying. It
+would be a genuine UX improvement. It would also tell a token thief whether their
+stolen link is live.
+
+Not decided unilaterally. Recorded so the choice is made deliberately rather
+than discovered when someone wires the real API to the demo's three screens.
+
+## OD-076 — UPDATED: the `locked` account state is now load-bearing in two flows
+
+**Raised by:** BACKEND-21.
+
+Unchanged, and now more visible: sign-in, verification and — implicitly —
+recovery all have UI for an account state the backend cannot produce. §32 asked
+whether account-state restrictions gate reset eligibility. They cannot, because
+no account state exists. Recorded, not invented.

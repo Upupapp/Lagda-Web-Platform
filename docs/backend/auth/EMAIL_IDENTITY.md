@@ -134,3 +134,17 @@ Verification itself needs no email lookup at all — the code's digest resolves 
 challenge, which carries the user. One fewer place identity can drift.
 
 Still to come: password reset (BACKEND-22) and invitation acceptance.
+
+## Consumers (BACKEND-22)
+
+`requestPasswordReset` calls `normalizeEmail` and looks up by
+`normalized_email`. A recovery request made with different casing or surrounding
+whitespace finds the account registration created — tested against real
+PostgreSQL.
+
+The reset submission needs no email at all: the token's digest resolves the
+challenge, which carries the user. The route deliberately refuses an `email`
+field alongside the token, so there is never a second identity claim to
+reconcile.
+
+Still to come: invitation acceptance.

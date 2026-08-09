@@ -744,3 +744,53 @@ untested defence in depth is deletable, and each now has a direct test.
 any string containing the word "handoff" - including "not specified by the
 handoff". It now requires a section citation or an explicit admission that the
 number was chosen.
+
+## BACKEND-22 — Password recovery
+
+| Rule | Status | Mechanism |
+|---|---|---|
+| Forgot-password anti-enumeration | **ENFORCED** | Identical status, body and header set; route discards the reason; probed |
+| Raw reset token not persisted | **ENFORCED** | Digest-only schema; the row is scanned in a test |
+| Raw reset token / URL not logged | **ENFORCED** | Never reaches a query, error or body; response bodies asserted clean |
+| Digest lookup, domain-separated | **ENFORCED** | Unique index; asserted against a bare SHA-256 and the verification digest; probed |
+| Credential strength independent of rate limits | **ENFORCED** | 256 bits; probed by shortening |
+| Single-use reset token | **ENFORCED** | Conditional consume; probed |
+| Expiry honoured | **ENFORCED** | Derived from timestamps; probed |
+| Supersession on re-request | **ENFORCED** | Probed; old token refused |
+| One active reset credential | **ENFORCED** | PARTIAL UNIQUE INDEX; 5 concurrent requests |
+| Concurrent same-token reset yields one change | **ENFORCED** | 4 concurrent resets; exactly one candidate verifies |
+| Reset + session revocation atomic | **ENFORCED** | One transaction; probed |
+| Delivery failure does not invalidate the old token | **ENFORCED** | Scheduling inside the transaction; probed |
+| Rate limit before Argon2 | **PARTIALLY ENFORCED** | Ordering enforced, order-asserted and probed; limiter NOT bound |
+| Cheap validation before Argon2 | **ENFORCED** | Shape and policy precede the hash; probed |
+| Argon2 outside the DB transaction | **ENFORCED** | Order asserted in a route test |
+| Reset URL uses the configured host | **ENFORCED** | Probed |
+| Password policy identical to registration | **ENFORCED** | Imported, not restated; probed |
+| Password reset does not verify email | **ENFORCED** | One-column update; probed |
+| No GET mutation | **ENFORCED** | Tested on both endpoints |
+| No auto-login; cookies cleared | **ENFORCED** | Tested; probed |
+| Old password fails, new password works | **ENFORCED** | Cross-feature test end to end |
+| Rate limiter BOUND to these routes | **NOT ENFORCED** | Composition work; neither route is wired into `createApp` |
+| Reset email delivery | **BLOCKED** | No notification infrastructure — BACKEND-44/45 |
+| Timing equivalence between branches | **DOCUMENTED ONLY** | Structurally identical pipeline; no constant-time guarantee |
+| Challenge retention / cleanup | **NOT IMPLEMENTED** | No policy exists to implement — OD-077 |
+| Supersede other active challenges on success | **UNREACHABLE** | Written and correct; the one-active index makes it unmatchable. The test asserts the property instead |
+
+### Honest gaps
+
+**Delivery is still blocked.** Fourth command in a row. The recovery lifecycle
+is complete and proven, and a production user cannot receive a link.
+
+**Still nothing is composed.** No auth route — register, sign-in, sign-out,
+verify, resend, forgot, reset — is registered in `createApp`. Every rate-limit
+policy in this feature is a defined policy attached to nothing.
+
+**A probe caught nothing on its first run.** `drop the digest domain prefix`
+passed every test. The domain-separation test compared the digest function to
+itself and then asserted that a garbage value found no row — two things that are
+true regardless of the prefix. Rewritten to assert the actual property.
+
+**One control is unreachable.** `supersedeActiveForUser` in the reset path
+cannot match a row while `password_reset_one_active` exists. Kept as defence in
+depth; the test asserts the outcome §72 wants rather than the mechanism, so it
+stays meaningful either way.

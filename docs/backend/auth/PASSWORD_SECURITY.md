@@ -158,3 +158,22 @@ transaction, and a failure to persist the upgrade never fails the login.
 **Timing defence** is the dummy path plus one public error, not artificial
 delays. Constant-time padding was rejected: it is easy to get wrong, it slows
 every legitimate login, and it does not remove the difference it hides.
+
+## Password reset uses this policy unchanged (BACKEND-22)
+
+`resetPassword` imports `checkPassword` from the registration module rather than
+restating the rule. Same minimum (8), same maximum (1024), same absence of
+composition requirements, same treatment of whitespace and Unicode — a reset
+password is not trimmed, folded or normalized, exactly as at registration.
+
+The Argon2id parameters are the same too, because both paths go through the same
+`PasswordHasher` port. There is no reset-specific hasher and no reset-specific
+column.
+
+A probe that weakened the reset policy to accept short passwords was caught by
+three tests. That matters because a weaker reset path is invisible: the signup
+form still enforces the strong rule, so nobody notices until an account holds a
+password the product would have refused to create.
+
+Argon2 runs **outside** the reset transaction — see
+PASSWORD_RECOVERY_ARCHITECTURE.md for why, and what revalidates afterwards.

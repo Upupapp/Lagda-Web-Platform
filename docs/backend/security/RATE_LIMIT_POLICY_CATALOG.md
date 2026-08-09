@@ -103,3 +103,34 @@ which "not specified by the handoff" satisfied.
 
 **Not yet bound to the routes.** Neither verification route is wired into
 `createApp`, so the limiter is not attached in a running application.
+
+## Password recovery (BACKEND-22) — IMPLEMENTED, NOT BOUND
+
+| Policy | Scope | Limit | Window | Mode | Source |
+|---|---|---|---|---|---|
+| `auth.reset.request.account` | account | 3 | 15 min | fail-closed | chosen — below OTP delivery |
+| `auth.reset.request.ip` | IP | 10 | 15 min | fail-closed | chosen |
+| `auth.reset.submit.ip` | IP | 10 | 1 min | fail-closed | chosen — sized against Argon2 cost |
+
+**Requesting a reset triggers outbound email** to an address the caller has
+proved nothing about, which makes an unlimited endpoint a mailbox-flooding tool
+aimed at any user by name.
+
+The per-account limit is **tighter than verification resend** (3/15min against
+3/10min). The reason is the payload: a verification code proves an address; a
+reset link grants the account.
+
+The account scope keys on the normalized address and **applies to unknown
+addresses too**. Otherwise "unlimited attempts" versus "limited attempts" is
+itself an account-existence oracle, and the anti-enumeration design leaks
+straight through the limiter.
+
+**Submission** is bounded because it costs Argon2 — roughly 50ms of CPU and 19MB
+per attempt. That is the real risk, not guessing: the token carries 256 bits and
+is not brute-forceable at any rate.
+
+All three thresholds were chosen rather than sourced, and say so in their
+`source` field, which the registry test requires.
+
+**Not bound to any route.** Neither recovery route is wired into `createApp`.
+See OD-069 — eleven auth policies are now defined and none is attached.
