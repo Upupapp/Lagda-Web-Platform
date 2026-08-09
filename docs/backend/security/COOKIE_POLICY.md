@@ -1,0 +1,83 @@
+# Cookie Policy — BACKEND-13
+
+Two cookies. One is a credential; one deliberately is not.
+
+## `lagda_session`
+
+| Attribute | Value | Why |
+|---|---|---|
+| `HttpOnly` | **true**, always | The single control that stops XSS from stealing the session outright. Never relaxed in any environment — a test asserts it holds even with `SESSION_COOKIE_SECURE=false` |
+| `Secure` | **true**; false only outside production | Production start **fails** if set false. A session cookie without Secure travels in the clear |
+| `SameSite` | **Lax** | See below |
+| `Domain` | **not set** (host-only) | `Domain=.lagda.io` would send the session to every subdomain, widening the blast radius of an XSS on an unrelated marketing or status page |
+| `Path` | `/` | A session applies to every authenticated endpoint; anything narrower only breaks requests |
+| `Max-Age` | the absolute lifetime | Alignment only. **The server is authoritative** — a surviving cookie does not make an expired session valid |
+
+## `lagda_csrf`
+
+Identical, with one deliberate difference:
+
+| Attribute | Value | Why |
+|---|---|---|
+| `HttpOnly` | **false** | The frontend must read it to send `X-CSRF-Token`. Making it httpOnly would make the mechanism unusable |
+
+**This is not an authentication credential.** Holding it grants nothing — the
+server validates it against the session's stored digest. It is named
+`lagda_csrf` so no developer mistakes it for the session.
+
+## SameSite=Lax — and why OD-028 does not block it
+
+SameSite is evaluated per **site** (registrable domain), not per **origin**.
+
+`app.lagda.io` calling `api.lagda.io` is **same-site**, so `Lax` sends the
+cookie under both candidate deployments — same-origin *and* subdomain-split.
+Only a frontend on a genuinely different registrable domain would need `None`,
+and nobody has proposed that.
+
+So the deployment question stays open (OD-028) while the cookie configuration
+does not.
+
+**`Strict` was rejected.** It withholds the cookie on top-level navigation from
+an external link, so a signer following an invitation from their email would
+land on a page that believes they are signed out.
+
+**`None`** is configurable, requires `Secure`, and production start fails if the
+two disagree.
+
+## Clearing
+
+Deletion uses the **same** `path`, `sameSite` and `secure` as creation, derived
+from one shared base so they cannot drift. A browser matches a deletion to an
+existing cookie by name, path and domain — clearing with different attributes
+silently leaves the original in place, producing a logout that appears to work
+and does not. A test asserts the scopes match.
+
+Server-side revocation is authoritative regardless. If the response carrying the
+clearing header is lost, the session is still revoked and the stale cookie
+authenticates nobody.
+
+## Environments
+
+| | Development | Production |
+|---|---|---|
+| `HttpOnly` | true | true |
+| `Secure` | configurable | **true, enforced at startup** |
+| `SameSite` | lax | lax (configurable) |
+| `Domain` | host-only | host-only |
+
+Secure defaults to **true everywhere**; development must opt out explicitly. A
+missing environment variable can therefore never silently produce an insecure
+production cookie.
+
+## Verified structurally, not in a browser
+
+`app.inject()` asserts the attributes LAGDA sets. It cannot verify what a real
+browser does with them — cross-site behaviour, `__Host-` prefix semantics,
+partitioned-cookie rules. Those need browser-level tests (BACKEND-62/63), and
+this document does not claim otherwise.
+
+## Future cookies
+
+Recipient signing access (BACKEND-34) may need its own transport. It must **not**
+reuse `lagda_session`: an external signer is not a LAGDA account holder, and
+overloading the cookie would hand them a user session.

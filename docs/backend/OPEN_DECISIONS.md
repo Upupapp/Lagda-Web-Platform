@@ -486,7 +486,7 @@ Until it is set and verified end to end, forwarded IP must not be described as
 authoritative evidence — see [api/TRUST_PROXY.md](./api/TRUST_PROXY.md) for the
 four-step verification.
 
-## OD-028 — Same-origin or separate subdomain deployment
+## OD-028 — Same-origin or separate subdomain deployment — **NO LONGER BLOCKS COOKIES**
 
 **Raised by:** BACKEND-11. **Needs:** BACKEND-65, and it constrains BACKEND-13.
 
@@ -545,3 +545,69 @@ retention. Nothing is hardcoded.
 Security events plausibly need longer retention and tighter access than ordinary
 operational logs. Today they share one pipeline; whether they should is part of
 this decision.
+
+### OD-028 update (BACKEND-13)
+
+Recorded at the end of BACKEND-12 as blocking session cookie attributes. **It
+does not.**
+
+SameSite is evaluated per *site* (registrable domain), not per *origin*.
+`app.lagda.io` calling `api.lagda.io` is same-site, so `SameSite=Lax` is correct
+under **both** candidate deployments. Only a frontend on a different registrable
+domain would need `None`, and none has been proposed.
+
+The deployment question remains open for CORS origin configuration and
+operational topology. It no longer blocks session security.
+
+## OD-033 — Absolute session lifetime
+
+**Raised by:** BACKEND-13. **Needs:** a product/security decision.
+
+Handoff §3 specifies the **idle** timeout ("default 8 hours idle") and says
+nothing about an absolute ceiling. One is required regardless: idle expiry alone
+lets a stolen cookie live indefinitely through use.
+
+**Current:** 7 days, configurable via `SESSION_ABSOLUTE_LIFETIME_MS`. A
+conservative default, not an invented business rule.
+
+**Open:** whether 7 days is right for a legal-document product, and whether a
+"remember me" option should extend it — which must be a longer *session policy*,
+never a weaker cookie.
+
+## OD-034 — Session security metadata
+
+**Raised by:** BACKEND-13. **Needs:** a decision on account-security UI.
+
+`created_ip` and `user_agent` are **not** stored. They were not collected merely
+because they are available, and no consumer exists.
+
+They become necessary if an account-security screen lists "your active sessions"
+with device and location — a real product feature the handoff does not currently
+specify.
+
+**Note:** they must remain *context*, never validity requirements. Binding a
+session to an IP or user-agent produces false logouts as users change networks,
+while barely inconveniencing an attacker on the same network.
+
+## OD-035 — Session cleanup and retention
+
+**Raised by:** BACKEND-13. **Needs:** BACKEND-16 (worker) and BACKEND-55 (privacy).
+
+Expired and revoked rows accumulate. A partial index on `expires_at` exists for a
+future cleanup job; no job runs, and cleanup deliberately does not happen on the
+request path.
+
+**Open:** how long revoked sessions are retained — long enough to answer "when
+was this session ended, and why" during an incident, and not forever. Separate
+from document and evidence retention.
+
+## OD-036 — Origin and Fetch-Metadata validation
+
+**Raised by:** BACKEND-13. **Needs:** BACKEND-56.
+
+Not implemented. The session-bound CSRF token is the control; `Origin` and
+`Sec-Fetch-Site` would be additional defence in depth.
+
+Deferred because the compatibility surface needs review — non-browser clients and
+some proxies omit `Origin`, and a check that rejected a missing header would
+break them. Recorded rather than half-implemented.
