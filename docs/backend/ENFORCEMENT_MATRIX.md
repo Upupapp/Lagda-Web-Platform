@@ -465,3 +465,50 @@ safe failure, not a working control (OD-027).
 
 **Anti-enumeration and no-permanent-lockout are stated, not enforced.** They
 constrain BACKEND-20/22/23 and cannot be tested before those exist.
+
+## BACKEND-16 - Worker and queue
+
+| Rule | Status | Mechanism |
+|---|---|---|
+| API cannot import pg-boss or the worker | **ENFORCED** | ESLint; bare and subpath forms both probed |
+| Worker cannot import fastify or the API | **ENFORCED** | ESLint; probed |
+| Bans are not over-broad | **ENFORCED** | Three negative controls pass unflagged |
+| Transactional enqueue commits together | **ENFORCED** | Real PostgreSQL, real pg-boss |
+| Transactional enqueue rolls back together | **ENFORCED** | Probed by deleting the `db:` override |
+| Payload size bounded | **ENFORCED** | Probed by raising the cap to 10 MB |
+| Payload validated at execution | **ENFORCED** | Probed by skipping validation |
+| Handler failure rethrown | **ENFORCED** | Probed by swallowing. Initially caught nothing - see gaps |
+| Retry bound reaches the queue row | **ENFORCED** | `retry_limit`/`retry_backoff` asserted from the database |
+| Queues exist before work or schedule | **ENFORCED** | Regression test after a boot failure |
+| Schedules idempotent across restarts | **ENFORCED** | Repeated registration asserted |
+| Schedules registered in UTC | **ENFORCED** | `timezone` column asserted |
+| Every job declares a retry bound and idempotency strategy | **ENFORCED** | Registry test over all definitions |
+| Configuration rejects invalid values | **ENFORCED** | Zero pool, out-of-range batch, malformed cron, non-numeric |
+| Schedules default OFF | **ENFORCED** | Tested |
+| Worker runs no migrations | **ENFORCED** | No migrator present; boot verified against a real database |
+| Graceful shutdown is idempotent | **ENFORCED** | `close()` called twice |
+| Job payload content rules (no PII/credentials) | **DOCUMENTED ONLY** | No detector; JOB_DATA_CLASSIFICATION.md states the rule |
+| Job type names never renamed | **DOCUMENTED ONLY** | Review |
+| Terminal errors stop retrying | **NOT ENFORCED** | Sets a log field only - see OD-048 |
+| Worker log redaction | **NOT ENFORCED** | The API's redactor is not applied to worker output - OD-049 |
+| SIGTERM/SIGINT handling | **NOT VERIFIED** | Proven only by calling `close()` directly - OD-047 |
+
+### Honest gaps
+
+**Nothing enqueues a job in production.** The scheduler port is implemented and
+its atomicity is proven, but no route calls it. Two maintenance jobs are the only
+consumers, and they are scheduled, not enqueued by a request.
+
+**The rethrow guarantee was untested until this command's probe caught it.**
+Every retry test drove `boss.work` directly, so the worker's own wrapper - the
+code that actually runs in production - was covered by nothing. Deleting
+`throw error;` broke no test. This is the `RouteMeta.status` failure mode
+exactly: a rule that existed and executed nothing.
+
+**The worker could not boot at all, and the suite was green.** pg-boss 12 does
+not create queues implicitly. Twenty passing tests each created their own queue,
+so none of them exercised the path production takes. Found by running the built
+artefact.
+
+**No workspace-scoped job exists**, so how a worker establishes RLS tenant
+context for a job is unanswered and untested (OD-045).

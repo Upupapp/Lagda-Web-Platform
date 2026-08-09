@@ -680,3 +680,103 @@ number set without measuring real client behaviour would break normal use.
 
 Deliberately not guessed. BACKEND-61 can measure; until then no read policy
 exists rather than a wrong one.
+
+## OD-042 - No dead-letter handling or failure alerting
+
+**Raised by:** BACKEND-16.
+
+A job that exhausts its attempts becomes state `failed` and stays in
+`pgboss.job`, durable and completely invisible. Nothing alerts, nothing
+summarises, and an operator would have to know to run a query.
+
+This is a gap, not a decision. The likely answer is a metric on failed-job count
+plus an entry in ALERT_SIGNAL_CATALOG.md, but metrics are not wired to an
+exporter yet, so an alert would fire into nothing. Deferred to the command that
+wires the exporter rather than half-built here.
+
+## OD-043 - Job execution is not in the metric catalog
+
+**Raised by:** BACKEND-16.
+
+BACKEND-12 defined `MetricName` as a closed union in `@lagda/api`. The worker
+cannot import it - correctly, per INV-190 - so job duration, attempt count and
+failure count are emitted as log fields only.
+
+Either the metric vocabulary moves somewhere both roles can reach, or the worker
+declares its own. Both are defensible; picking one without a metrics exporter to
+validate against would be guessing.
+
+## OD-044 - Worker concurrency and database load are unmeasured
+
+**Raised by:** BACKEND-16.
+
+`concurrency: 1` on both jobs, `QUEUE_POOL_MAX=4`. Conservative defaults chosen
+so nothing is starved, not numbers derived from measurement.
+
+Queue polling and job churn land on the application database (ADR-011). The total
+connection count across API replicas, the worker application pool and the pg-boss
+pool is a real production constraint. BACKEND-61 can measure it.
+
+## OD-045 - No workspace-scoped job exists
+
+**Raised by:** BACKEND-16.
+
+Both jobs are `system`. `WorkspaceJobContext` exists with a non-optional
+`workspaceId`, but nothing constructs one.
+
+The unanswered question is how a worker establishes RLS tenant context for a job:
+the API does it per request from the session, and a worker has no session. It
+will most likely set the tenant GUC from the job's declared workspace inside the
+unit of work, but that is a design to write with the first workspace job, not to
+speculate into the foundation.
+
+## OD-046 - How the API obtains a JobScheduler
+
+**Raised by:** BACKEND-16.
+
+The API is banned from importing `@lagda/worker`, and the pg-boss adapter lives
+there. When the first route needs to enqueue, the adapter has to move somewhere
+both composition roots can reach - a small `@lagda/queue` package is the obvious
+shape.
+
+Not done now, because building a package for a caller that does not exist is how
+foundations acquire dead code. The ban is deliberately in place *first*, so the
+question is forced rather than answered by an accidental import.
+
+## OD-047 - Signal handling is unverified
+
+**Raised by:** BACKEND-16.
+
+`SIGTERM` and `SIGINT` both route to one idempotent `close()`, and `close()`
+itself is verified - called twice, emitting `worker.stopping` / `worker.stopped`
+then silence.
+
+The signal *delivery* is not verified. Development is on Windows, which does not
+deliver these signals to a Node process the way production Linux will. Stated
+rather than assumed working; a Linux CI job or a container smoke test closes it.
+
+## OD-048 - TerminalJobError does not stop retries
+
+**Raised by:** BACKEND-16.
+
+The name says the failure will not succeed on retry. The behaviour sets
+`errorCategory: "terminal"` in the log and then lets the job consume its
+remaining attempts exactly like any other failure.
+
+Short-circuiting requires pg-boss's failure semantics or an explicit
+`boss.fail()`, and neither is wired. Recorded prominently because a reader could
+reasonably infer the opposite from the type name - which is precisely how a
+documented-only rule turns into a believed-enforced one.
+
+## OD-049 - Worker output is not redacted
+
+**Raised by:** BACKEND-16.
+
+BACKEND-12 built a deep recursive redactor and `scrubSecretsFromText()` for the
+API's logger. The worker writes structured JSON directly and applies neither,
+because it cannot import `@lagda/api` (INV-190).
+
+The worker logs no payload today, so nothing leaks today. But `error` carries an
+exception message, and a handler that interpolates a payload value into an error
+would leak it with nothing to stop it. The redactor belongs in a package both
+roles can import - the same move OD-046 needs.

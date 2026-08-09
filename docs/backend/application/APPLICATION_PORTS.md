@@ -129,3 +129,48 @@ is the one identifier the public is expected to hold.
 - Expect to correct an evidence row. A correction is a new event.
 - Reach `PublicVerificationLookup` from a tenant-scoped path, or widen its
   projection without revisiting INV-099.
+
+## `JobScheduler` — durable background work (BACKEND-16)
+
+Declared in `packages/application/src/common/ports/jobs.ts`. Implemented by
+`packages/worker`. The application requests follow-up work through this port and
+never imports pg-boss — which is what keeps a use case callable from a test, from
+the API and from the worker itself with no queue running.
+
+```ts
+enqueue<TPayload>(
+  definition: JobDefinition<TPayload>,
+  payload: TPayload,
+  options?: JobScheduleOptions & { readonly transaction?: unknown },
+): Promise<JobReference>;
+```
+
+### The `transaction` parameter is the point
+
+Passing the caller's open transaction inserts the job row **inside it**, so
+business state and the intent to follow it up commit or roll back together. This
+is what removes the need for an outbox table, and it is proven by an integration
+test that rolls back and asserts no job exists — see QUEUE_CONSISTENCY.md.
+
+Omitting it is correct when no business write accompanies the job: a maintenance
+sweep has no state to be atomic with.
+
+It is typed `unknown` rather than `Transaction<Database>` deliberately.
+`@lagda/application` may not name a Kysely type — that would invert the
+dependency the architecture rests on. The adapter narrows it.
+
+### What a consumer must not do
+
+- Put resource content, personal data or credentials in a payload. Jobs carry
+  identifiers; the handler reloads authoritative state (INV-192). Enqueue refuses
+  anything over 16 KiB, but the content rule is not detectable — see
+  JOB_DATA_CLASSIFICATION.md.
+- Bake a timestamp horizon into a payload. Read the clock in the handler, or a
+  job delayed by an outage acts on a stale cutoff (INV-201).
+- Assume exactly-once execution. Duplicate delivery is inherent to a durable
+  queue; every definition must declare how it stays safe (INV-196).
+- Assume ordering. Two jobs enqueued in one transaction may run in either order,
+  concurrently. A job that must follow another is enqueued by the first one's
+  handler.
+- Rename a job type. The name is a persistence contract from the moment a row is
+  written (INV-197).

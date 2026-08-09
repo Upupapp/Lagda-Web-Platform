@@ -193,3 +193,42 @@ PostgreSQL on the request path.
 `[migrate] applied 003_x`, which no aggregator can filter on and which is exactly
 what someone searches for during an incident. `worker` inherits all of this
 (BACKEND-16); `test` exists so suites do not pollute output.
+
+## The worker process role (BACKEND-16)
+
+`processRole` now has a third value: `"api"`, `"migration"`, `"worker"`.
+
+The worker emits the same structured JSON envelope — `level`, `time`, `service`,
+`processRole`, `event` — so a job failure is findable next to the request that
+caused it. It writes those fields directly rather than importing `@lagda/api`,
+because the worker may not depend on the HTTP package (INV-190). The duplication
+is a few lines; the coupling would not be.
+
+### Worker events
+
+| Event | Level | Fields |
+|---|---|---|
+| `worker.started` | info | `jobTypes`, `schedulesEnabled` |
+| `worker.stopping` / `worker.stopped` | info | — |
+| `worker.signal` | info | `signal` |
+| `worker.queue_error` | error | `error` |
+| `worker.start_failed` | fatal | `error` |
+| `worker.stop_failed` | error | `error` |
+| `worker.job_completed` | info | `jobId`, `jobType`, `attempt`, `durationMs`, `result`, plus the handler's result shape |
+| `worker.job_failed` | error | as above, plus `errorCategory` (`terminal` \| `retryable`) and `error` |
+
+`job.data` is never logged — only the result shape. A payload may carry resource
+identifiers, and a full dump is how those reach log aggregation (INV-198).
+
+### Two honest gaps
+
+**No metrics.** `MetricName` is a closed union in `@lagda/api`, which the worker
+cannot import. Job duration, attempts and failures exist as log fields only. The
+vocabulary has to move somewhere both roles reach, or the worker declares its own
+(OD-043).
+
+**No redaction.** The deep redactor and `scrubSecretsFromText()` built in
+BACKEND-12 are not applied to worker output, for the same import reason. Nothing
+leaks today because no payload is logged, but `error` carries an exception
+message and a handler that interpolates a payload value into one would leak it
+with nothing to stop it (OD-049).
