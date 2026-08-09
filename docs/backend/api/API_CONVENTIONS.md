@@ -305,3 +305,38 @@ receive is exactly the failure to avoid.
 so there is no `:userId` segment and no `userId` request field. "User A edits
 user B" is not expressible, which is stronger than an authorization check that
 compares them.
+
+## 20. Tenant-scoped routes (BACKEND-25)
+
+Workspace-owned resources nest under the workspace:
+
+```
+POST   /workspaces
+GET    /workspaces
+GET    /workspaces/:workspaceId
+PATCH  /workspaces/:workspaceId
+       /workspaces/:workspaceId/<resource>…   ← every future tenant resource
+```
+
+**A path segment, not a header.** No `X-Workspace-ID` exists. A header tenant
+boundary does not appear in a route pattern, a normalized metric label or an
+access log, so "which tenant did this request address" becomes unanswerable from
+the places an operator actually looks. If a header is ever introduced it must be
+resolved and membership-checked exactly like a path ID, and must never override
+one.
+
+**No request body carries a `workspaceId`.** A body value that could disagree
+with the path is a reconciliation rule waiting to be written the wrong way
+round. The field simply does not exist on any schema.
+
+**A path ID is addressing, never authorization.** The segment says which tenant;
+`requireWorkspaceAccess` says whether the caller may enter it, by reading the
+authoritative membership on every request.
+
+**Cross-tenant access returns 404**, using the discretion §3 already grants —
+"authorization policy may deliberately return 404 instead of 403 to avoid
+confirming another workspace's resource exists". A real foreign workspace and a
+fictional one must be indistinguishable in status, code and message.
+
+**Tenant responses are `Cache-Control: no-store`.** Not `no-cache`, which lets a
+shared cache keep the response and merely revalidate it.

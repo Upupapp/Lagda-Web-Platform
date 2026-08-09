@@ -893,3 +893,53 @@ fabricating labels — OD-087.
 **Probing found a real defect.** The timezone check trusted
 `Intl.DateTimeFormat`, which accepts `"+08:00"`. Raw offsets would have been
 stored. Fixed with an IANA shape check, and probed.
+
+## BACKEND-25 — Workspace lifecycle
+
+| Rule | Status | How |
+|---|---|---|
+| Workspace + owner membership atomic | **ENFORCED** | One unit of work; rollback forced with PostgreSQL's own FK, both rows asserted absent |
+| Creator taken from the authenticated actor | **ENFORCED** | Use-case input has no owner field; ten privileged payloads each rejected at the schema |
+| Client cannot choose a WorkspaceId | **ENFORCED** | Generated from a port; `additionalProperties: false` |
+| Membership uniqueness | **ENFORCED** | `UNIQUE(workspace_id, user_id)`; duplicate insert refused |
+| Membership references a real account | **ENFORCED** | FK added in 013; a ghost user is refused |
+| No cascade on either FK | **ENFORCED** | Both `RESTRICT`; both refusals tested |
+| Current membership required for tenant access | **ENFORCED** | Resolved per request; out-of-band removal refused on the next call |
+| Cross-tenant access hidden | **ENFORCED** | 404 for foreign and fictional alike, compared field by field; three layers (predicate, RLS, error) |
+| Active workspace is not session authority | **ENFORCED ARCHITECTURALLY** | No workspace field on the actor, no column on `user_sessions`, no cookie, no server preference |
+| User-scoped read path cannot write | **ENFORCED** | `FOR SELECT` policies; UPDATE affects zero rows, INSERT raises |
+| Runtime role is unprivileged | **ENFORCED** | `rolsuper` and `rolbypassrls` asserted false before any other tenancy assertion |
+| Tenant/user context does not leak across pooled connections | **ENFORCED** | `set_config(..., true)`; a later transaction sees nothing |
+| Owner-only workspace management | **ENFORCED** | Role read from the membership row; a `reviewer` can read and cannot rename |
+| CSRF on workspace mutations | **ENFORCED** | **In a running application** — through `createApp`, not a test double |
+| Pre-auth credential refused | **ENFORCED** | **In a running application** — through `createApp` |
+| Create rate limit | **ENFORCED** | 10/hour per user, bound in the authenticated scope, 429 asserted with `Retry-After` |
+| Create idempotency | **ENFORCED** | Required header; replay, conflict, concurrency and rollback all tested against PostgreSQL |
+| No hard workspace deletion | **ENFORCED** | Route audit over 8 absent paths; FKs refuse it independently |
+| Workspace name absent from routine logs | **ENFORCED** | Full captured log output searched for a distinctive name |
+| No tenant identifiers as metric labels | **ENFORCED** | Exact label set asserted |
+| Historical evidence untouched by rename | **ENFORCED ARCHITECTURALLY** | No import path from workspace code to evidence; stable id and `created_at` asserted unchanged |
+| Archive / restore | **NOT IMPLEMENTED** | No product action exists — OD-091 |
+| Ownership transfer / leave | **NOT IMPLEMENTED** | BACKEND-26/27 |
+| Full RBAC and permission matrix | **DOCUMENTED ONLY** | BACKEND-27. One predicate, `canManageWorkspace`, stands in |
+| Invitations | **DOCUMENTED ONLY** | BACKEND-26. No table, no route, no job |
+| Last-owner invariant | **DOCUMENTED + PURE FUNCTIONS** | `assertExactlyOneOwner` and `wouldOrphanWorkspace` exist and are tested; no endpoint in this command can violate the rule, and BACKEND-26/27 must call them |
+| Workspace entitlements / plan limits | **NOT IMPLEMENTED** | BACKEND-50 — OD-090 |
+
+### Honest gaps
+
+**OD-069 narrows but does not close.** BACKEND-25 built the authenticated scope
+and put four routes inside it, so for the first time a pre-auth refusal, a CSRF
+rejection and a 429 are demonstrated through `createApp` rather than a test
+double. The seventeen auth and account routes are still uncomposed, which means
+a real browser cannot yet sign in to reach the workspace surface — the tests
+issue a session directly from the service. Composing them is now wiring into an
+existing scope rather than designing one.
+
+**Six of seven workspace settings fields are unimplemented.** The settings page
+will save `name` and silently do nothing with the other six until BACKEND-26,
+BACKEND-27 and BACKEND-50 land. Each is listed with its owner in
+WORKSPACE_PRODUCT_INVENTORY.md.
+
+**`workspace_operations_total` collects nothing.** No exporter until BACKEND-66
+— the pre-existing INSTRUMENTED_NO_EXPORTER status.

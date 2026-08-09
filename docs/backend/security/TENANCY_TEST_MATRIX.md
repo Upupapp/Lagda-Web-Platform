@@ -60,3 +60,27 @@ is nothing to attack. It becomes required with the first child table.
 
 Adding a workspace-owned table without adding its row here is incomplete work.
 
+
+## Workspace lifecycle (BACKEND-25)
+
+The tenancy cases BACKEND-25 added run in
+`tests/integration/workspace.integration.test.ts`, as the runtime role
+`lagda_app`, and are tabulated in full in
+[`../workspace/WORKSPACE_TEST_MATRIX.md`](../workspace/WORKSPACE_TEST_MATRIX.md).
+
+The ones that extend this matrix rather than repeating it:
+
+| Case | Result |
+|---|---|
+| Membership resolution is the authorization step, per request | **PASS** |
+| A membership removed out of band is refused on the very next call, same session | **PASS** |
+| A user-scoped transaction reads its own memberships and can write nothing | **PASS** |
+| `lagda.user_id` does not leak into the next pooled transaction | **PASS** |
+| No context at all sees no rows (fail closed, both settings) | **PASS** |
+| A real foreign workspace and a fictional one answer identically | **PASS** |
+| A workspace cannot be committed without its owner membership | **PASS** |
+| A membership cannot name an account that does not exist | **PASS** |
+
+The pre-existing suite in `packages/db/src/tenancy.integration.test.ts` still
+passes unchanged, with fixtures updated for the dropped `owner_user_id` column
+and the new `users` foreign key.

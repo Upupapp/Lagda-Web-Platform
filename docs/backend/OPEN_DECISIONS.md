@@ -1437,3 +1437,93 @@ notification-domain state, and there is still no notification infrastructure to
 receive them.
 
 Recorded so they are not accidentally implemented twice.
+
+## OD-069 — NARROWED: the authenticated scope now exists
+
+**Raised by:** BACKEND-20. **Escalated by:** BACKEND-23, BACKEND-24.
+**Narrowed by:** BACKEND-25.
+
+BACKEND-25 built the authenticated scope in `createApp` and registered four
+workspace routes inside it. For the first time in this repository, a pre-auth
+refusal, a CSRF rejection and a rate-limit 429 are asserted against a request
+flowing through the real application factory rather than a test double.
+
+**Still open:** the seventeen auth and account routes remain uncomposed. Until
+they are, a real browser cannot sign in to reach the workspace surface — the
+workspace tests issue a session directly from the session service.
+
+What changed is the nature of the work. It was "design a protection model and
+prove it protects"; it is now "call `registerXRoutes(scope, …)` inside the
+callback that already exists, and supply the dependencies". The pattern, the
+encapsulation and the hook ordering are settled and tested.
+
+**This should still be the next composition task.**
+
+## OD-089 — Workspace slug
+
+**Raised by:** BACKEND-25.
+
+`WorkspaceOverviewPage.tsx` displays `/{workspace.slug}` and
+`WorkspaceSettingsPage.tsx` lets it be edited, with help text saying "Changing
+affects all deep links".
+
+**No route resolves a slug.** There is no `/w/:slug` segment anywhere in
+`routes.ts` or `router.tsx`, and no deep link uses one. §9 says to build slug
+infrastructure only where the product actually routes on it.
+
+Two things must be decided before it is built:
+
+1. **Uniqueness scope.** Globally unique makes it an enumerable public
+   namespace and leaks which names are taken. Unique per nothing makes it
+   useless for routing. There is no third option that is also a URL.
+2. **Rename semantics.** If deep links contain slugs, a rename breaks every
+   saved link unless old slugs are retained and redirected — which is a second
+   table and a retention question.
+
+Neither is a technical default. Until they are answered, a slug is decoration
+the backend does not store.
+
+## OD-090 — Workspace entitlements and plan limits
+
+**Raised by:** BACKEND-25.
+
+There is no maximum number of workspaces per user, and no plan check on
+creation. §24 and §73 forbid inventing one before billing exists.
+
+The `workspace.create.user` rate limit — 10 per hour — is an **abuse control**,
+not a product limit. It bounds a runaway client; it does not express an
+entitlement, and it must not be mistaken for one when BACKEND-50 arrives. The
+lifecycle is arranged so an entitlement check can be added before the
+transaction opens without restructuring anything.
+
+## OD-091 — Workspace lifecycle states the product does not have
+
+**Raised by:** BACKEND-25.
+
+`WorkspaceStatus` declares `active | suspended | archived |
+pending-verification`, and `WorkspaceOverviewPage.tsx` renders the value as a
+badge. **No screen can set any of them**, no fixture uses `archived` or
+`suspended`, and there is no archive, suspend, restore or delete action anywhere
+in the workspace UI — while teams and custom roles have Archive/Restore buttons.
+
+The backend has one state, `active`, and no column implying otherwise.
+
+This is the same shape as OD-087 (the sessions page showing device and region
+that BACKEND-13 never records): a page with a field the backend cannot fill.
+Closing it means the product deciding what archiving a workspace *does* — to its
+documents, its signing evidence, its members' access, and its billing — which is
+a retention decision (OD-002, BACKEND-55), not a column.
+
+## OD-092 — Per-workspace session timeout
+
+**Raised by:** BACKEND-25.
+
+`WorkspaceSettingsPage.tsx` offers a session timeout of 1, 4, 8 or 24 hours.
+
+A session is **global to the user** (BACKEND-13), and a user may belong to
+several workspaces with different values. Which one applies? The strictest? The
+active one — so switching workspaces changes when you are signed out? Per
+workspace, meaning one browser holds several sessions?
+
+Not implemented, because each answer is a different session architecture and
+none is a default. BACKEND-13's global policy stands.

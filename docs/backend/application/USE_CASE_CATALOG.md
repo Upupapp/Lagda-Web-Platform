@@ -91,3 +91,18 @@ eNotary: notarial certificate issuance · remote online notarization · notary c
 ## Handoff endpoint → use case
 
 `POST /api/workspaces` → `CreateWorkspace` · `POST /api/documents` → `UploadDocument` · `POST /api/signing-requests` → `CreateSigningRequest` · `POST /api/signing-requests/:id/send` → `SendSigningRequest` · `POST /api/sign/:requestId/submit` → `SubmitSignature` · `GET /verify/:verificationId` → `GetPublicVerification` (unauthenticated).
+
+## Workspace lifecycle — IMPLEMENTED (BACKEND-25)
+
+| Use case | Kind | Scope | Notes |
+|---|---|---|---|
+| `CreateWorkspace` | command | tenant (the new one) | Creator from `AuthenticatedActor`. Workspace + owner membership in one transaction. Idempotency claim on the same transaction. |
+| `listMyWorkspaces` | query | **user** | The only user-scoped operation. Joins through membership; never loads workspaces and filters. |
+| `getWorkspace` | query | tenant | Membership first; hidden 404 otherwise. |
+| `updateWorkspace` | command | tenant | Owner only. `name` is the sole mutable field. |
+| `resolveWorkspaceAccess` / `requireWorkspaceAccess` / `requireWorkspaceManager` | authorization | tenant | Produces `WorkspaceAccessContext`. Called by routes AND callable by workers — authorization is not a Fastify hook. |
+| `GetWorkspaceMember` | query | tenant | BACKEND-05's representative query, rewired to take an access context. Not a member directory — that is BACKEND-26. |
+
+Deferred with named owners: invitations and acceptance (BACKEND-26); roles,
+permissions, member management, ownership transfer (BACKEND-27); archive and
+erasure (BACKEND-55); entitlements (BACKEND-50).

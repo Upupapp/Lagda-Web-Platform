@@ -65,3 +65,32 @@ Required, not optional:
 - [ ] `GRANT` to `lagda_app`.
 - [ ] Repository methods take workspace scope **and** the transaction.
 - [ ] Cross-tenant tests, added to `../security/TENANCY_TEST_MATRIX.md`.
+
+## The user-scoped read path (BACKEND-25)
+
+One question is not tenant-scoped: *which workspaces do I belong to?* It cannot
+begin by choosing a workspace, because finding them is the point.
+
+Migration 013 adds a second, narrower context alongside the tenant one:
+
+| Setting | Policies | Reads | Writes |
+|---|---|---|---|
+| `lagda.workspace_id` | `tenant_isolation` on both tables | rows in that workspace | rows in that workspace |
+| `lagda.user_id` | `member_self_read`, `member_workspace_read` | your own memberships, and their workspaces | **none — `FOR SELECT`** |
+
+`TransactionManager.runForUser` sets the user setting and **not** the workspace
+one, so `tenant_isolation` matches nothing for the transaction's whole lifetime
+and the only policies in play are the two read-only ones. The scope cannot write
+to either table — an `UPDATE` matches zero rows and an `INSERT` raises, and both
+are asserted.
+
+`member_workspace_read`'s subquery over `workspace_memberships` is itself
+subject to `member_self_read`, so it cannot answer "is someone *else* a member
+of workspace X" — the rows that would answer are invisible to the query asking.
+
+**This is not a second tenant mechanism.** It establishes no workspace context
+and exposes no tenant repository. It exists because the alternatives were
+`BYPASSRLS` on the runtime role, or an application-side filter over a result set
+containing every tenant's rows.
+
+Both settings remain transaction-local via `set_config(name, value, true)`.

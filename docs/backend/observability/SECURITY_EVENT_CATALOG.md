@@ -105,3 +105,41 @@ never in metric labels.
 in a response discloses the security configuration for no product benefit.
 
 These are account-security events. They are **not** eSignature signing evidence.
+
+## Workspace lifecycle (BACKEND-25)
+
+| Event | Emitted when | Fields | Never |
+|---|---|---|---|
+| `workspace.created` | a workspace and its owner membership commit | `workspaceId`, `actorUserId`, `result` | the workspace **name** |
+| `workspace.updated` | metadata changes | `workspaceId`, `actorUserId`, `changedFields`, `result` | the changed **values** |
+| `security.tenant_access_denied` | a caller addresses a workspace they are not a member of | `requestedWorkspaceId`, `result: denied`, route | anything about the other tenant, and nothing in the RESPONSE |
+
+`workspace.archived` is **not** in this catalog, because no archive action
+exists (WORKSPACE_LIFECYCLE.md).
+
+### Why no workspace name
+
+A workspace name can carry a client, a matter, a counterparty, or the existence
+of a transaction that has not been announced. It is the most revealing field in
+the workspace schema and the least obviously so — see
+WORKSPACE_DATA_CLASSIFICATION.md. Routine operational logs get the ID.
+
+Enforced by a test that creates a workspace with a distinctive name and searches
+the **entire** captured log output for it, rather than checking the fields of one
+line.
+
+### Alerting
+
+A single `tenant_access_denied` is not an incident — a stale bookmark after
+someone leaves a workspace produces one. A sustained spike from one actor is a
+signal. Thresholds belong with the alerting work in BACKEND-66; the event is
+emitted with bounded fields so a rule can be written against it.
+
+### Metrics
+
+`workspace_operations_total{operation, result, processRole}`. Three labels, all
+code-defined and bounded. No `workspaceId`, no `userId`, no `membershipId` and
+no name — the first three are unbounded and the fourth is business data. A test
+asserts the exact label set.
+
+Instrumented, collecting nothing: there is no exporter until BACKEND-66.
