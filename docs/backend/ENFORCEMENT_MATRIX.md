@@ -562,3 +562,53 @@ and cannot be demonstrated here.
 
 **All provider-specific behaviour is measured against MinIO only.** AWS S3 is
 expected to differ on exactly the conditional-write behaviour above (OD-051).
+
+## BACKEND-18 - Secure upload
+
+| Rule | Status | Mechanism |
+|---|---|---|
+| Quarantine before acceptance | **ENFORCED** | Order asserted; probed (13 tests fail) |
+| Client MIME/extension not trusted | **ENFORCED** | Content detection + parser; probed (3 fail) |
+| Malware scan mandatory | **ENFORCED** | Real ClamAV integration; no disable switch exists |
+| Scanner failure fails closed | **ENFORCED** | Probed in the pipeline and in health (5 fail combined) |
+| Unscannable file refused | **ENFORCED** | Tested against a real scanner limit |
+| Malformed PDF rejected | **ENFORCED** | Two distinct branches, each probed separately |
+| Encrypted PDF rejected | **ENFORCED** | Probed |
+| Zero-page PDF rejected | **ENFORCED** | Hand-built fixture; probed |
+| Accepted hash = exact bytes | **ENFORCED** | Byte-exact round trip through real MinIO |
+| Digest re-verified at promotion | **ENFORCED** | Probed; tamper test |
+| Extra files refused, not ignored | **ENFORCED** | Exact status and code asserted; probed |
+| Oversized upload abandoned, not drained | **ENFORCED** | Chunk-count assertion |
+| Identity never from the body | **ENFORCED** | Structural - the route parses no body |
+| No long DB transaction | **ENFORCED** | One short transaction; reviewed |
+| DB/storage consistency | **ENFORCED** | Failure injection at both windows |
+| Accepted row implies an artifact | **ENFORCED** | Database CHECK constraint, tested directly |
+| Cross-tenant promotion impossible | **ENFORCED** | Compound FK plus RLS; tenancy test |
+| Cleanup row-driven and idempotent | **ENFORCED** | Run twice; horizon tested |
+| No binary queue payloads | **ENFORCED** | Inherited from BACKEND-16; nothing enqueued here |
+| Scanner/parser/SDK types confined | **ENFORCED** | ESLint bans on four package groups |
+| Rejected uploads create no evidence | **ENFORCED** | No evidence write exists in this path |
+| Document bytes never logged | **PARTIALLY ENFORCED** | Nothing in this path logs; no redaction test, because no log statement exists to test |
+| Session / CSRF / rate limit ordering | **NOT ENFORCED HERE** | The route is test-only; the product route is BACKEND-29 |
+| Quarantine retention schedule | **NOT ENFORCED** | Primitive built and tested; recurring job unregistered (OD-062) |
+| Active-content sanitization | **DOCUMENTED ONLY** | Explicitly not performed - OD-059 |
+
+### Honest gaps
+
+**The route is test-only.** `POST /documents` is P0-16, a Documents-phase
+endpoint owned by BACKEND-29. The pipeline is fully wired and exercised
+end-to-end, but session, CSRF and rate-limit hooks are not attached, because
+attaching them to a test route would prove nothing about the product route.
+
+**No logging exists in the upload path.** The data classification is written and
+the rules are clear, but there is no log statement to redact and therefore no
+redaction test. Wiring observability belongs with the product route.
+
+**Two orphan windows remain.** An upload row insert failing, or the acceptance
+transaction failing, leaves a private unreferenced object that row-driven cleanup
+cannot see. Both are recorded (OD-061); a bucket lifecycle rule is the intended
+fix and it is a deployment setting.
+
+**Signature coverage is a deployment property.** The integration scanner runs a
+minimal EICAR database. What is proven is the adapter, the protocol and the
+fail-closed behaviour - not that production signatures are fresh (OD-060).

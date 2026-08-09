@@ -231,3 +231,49 @@ bytes live*.
   metadata** (INV-209).
 - **Call `deleteObject` from a feature path.** It is a privileged primitive for
   quarantine cleanup and retention workflows.
+
+## Upload ports (BACKEND-18)
+
+Declared in `packages/application/src/common/ports/upload.ts`.
+
+### `DocumentInspector`
+
+`inspect(bytes) => InspectionResult`. Implemented in `@lagda/sealing`, because
+INV-001 confines pdf-lib to that package. Returns a detected media type, page
+count and page sizes, or a closed failure reason — never a library string, never
+a pdf-lib object.
+
+Takes complete bytes rather than a stream: PDF validation needs the
+cross-reference table at the end of the file.
+
+### `MalwareScanner`
+
+`scan(input) => MalwareScanResult` and `isAvailable() => boolean`. Implemented in
+`@lagda/scanning` over ClamAV's `INSTREAM` protocol.
+
+**Must fail closed.** An implementation that cannot reach its scanner returns
+`unavailable`, never `clean` (INV-221). `infected` and `unavailable` are distinct
+outcomes because a client may retry one and must never retry the other.
+
+`isAvailable()` never scans a file.
+
+### `ScopedUploadRepository` and `QuarantineCleanupLookup`
+
+Upload processing records, tenant-scoped and part of the `WorkspaceUnitOfWork` —
+so an upload row and the artifact it accepts are written on one transaction with
+one tenant context. Building the repository separately runs it with no RLS
+context at all, which is how the first integration run failed.
+
+`QuarantineCleanupLookup` is deliberately global: cleanup is a system job with no
+tenant, and it reads rows rather than listing a bucket.
+
+### What a consumer must not do
+
+- **Trust anything the client said about the file** — filename, extension, media
+  type, size, hash (INV-219).
+- **Read identity from a multipart field.** Workspace and actor come from the
+  authenticated context (INV-224).
+- **Treat a non-`clean` scan as acceptable**, or scan failure as clean (INV-221).
+- **Write untrusted bytes anywhere but quarantine** (INV-218).
+- **Hold a transaction across transfer, inspection or scanning** (INV-227).
+- **Log document bytes, a malware payload, or a signature name to a client.**

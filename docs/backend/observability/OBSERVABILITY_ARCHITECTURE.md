@@ -259,3 +259,32 @@ bytes no longer match what LAGDA recorded about them.
 performs a storage operation yet. The adapter itself logs nothing; operational
 logging belongs at the composition boundary that calls it, which does not exist
 until BACKEND-18.
+
+## Upload signals (BACKEND-18)
+
+Events the upload path should emit once it is wired to a product route:
+`upload.accepted`, `upload.rejected`, `upload.malware_detected`,
+`upload.scan_failed`, `upload.integrity_failed`.
+
+Safe fields: `requestId`, `workspaceId`, `userId`, `uploadId`, `artifactId`,
+`result`, `reason`, `byteSize`, `detectedMediaType`, `durationMs`,
+`scanOutcome`. Internally also the malware signature name — never to a client.
+
+**Never**: document bytes in any encoding, the malware payload, the original
+filename, the quarantine key, storage credentials, or the scanner's raw reply.
+
+Metrics: `upload_requests_total`, `upload_bytes_total`,
+`upload_processing_duration_ms`, `upload_rejections_total`,
+`malware_scan_duration_ms`, `malware_scan_results_total`. Labels limited to
+`result`, `reason`, `detected_type`, `scan_outcome` — never workspace, user,
+artifact, filename, digest or IP, all of which are unbounded.
+
+Alert signals: a malware-detection spike, scanner unavailability, stale scanner
+signatures where the engine exposes them, and **integrity mismatch, which is high
+severity** — it means stored bytes stopped matching what LAGDA recorded. An
+ordinary unsupported-file rejection must not page anyone.
+
+**Not wired.** BACKEND-18 adds no log statement or metric to the upload path,
+because the route is test-only. There is consequently no redaction test here —
+there is nothing logged to redact, and asserting otherwise would be the kind of
+claim this project keeps deleting.

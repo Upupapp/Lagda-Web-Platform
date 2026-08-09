@@ -879,3 +879,107 @@ genuinely abandoned.
 
 BACKEND-55 or BACKEND-60 owns it. Until then orphans accumulate slowly and
 harmlessly, which is the right trade for the alternative.
+
+## OD-056 - Maximum document size
+
+**Raised by:** BACKEND-18.
+
+Handoff §7 says "Maximum file size: to be determined (suggest 25MB)". The
+suggestion is implemented as the configurable default, and the multipart limit,
+the pipeline bound and the scanner limit are all derived from it.
+
+Still a PRODUCT decision. It interacts with three things: request duration under
+a synchronous pipeline, memory (the file is buffered, OD-058), and the scanner's
+own StreamMaxLength. Raising it materially should be a deliberate choice across
+all three rather than a config edit.
+
+## OD-057 - Synchronous versus asynchronous processing
+
+**Raised by:** BACKEND-18. **Decided for now: SYNCHRONOUS.**
+
+The request stays open through quarantine, inspection, scanning and promotion.
+Justified by a 25 MB ceiling and sub-second local scans, and by the absence of
+any upload-status API for a client to poll.
+
+What would change it: measured scan latency, larger documents, or a frontend
+that gains a processing state. The move is cheap - BACKEND-16 provides the
+queue, and the payload is already known to be `{ workspaceId, uploadId }`, never
+bytes. Recorded so the choice is revisited on evidence rather than drifting.
+
+## OD-058 - The upload is buffered, not streamed
+
+**Raised by:** BACKEND-18.
+
+The file is held in memory under a hard bound rather than streamed to
+quarantine. Two causes: the storage port's stream variant needs a content length
+that multipart does not trustworthily supply, and PDF inspection needs the
+cross-reference table at the end of the file regardless.
+
+Cost: up to the maximum upload size per upload in flight. Mitigated by the bound
+itself, by abandoning oversized uploads immediately, and by rate limiting.
+
+Fixing it properly means unknown-length streaming through S3 multipart, which is
+a change to the BACKEND-17 storage contract. BACKEND-61 should measure before
+that is worth doing.
+
+## OD-059 - Active PDF content is not sanitized
+
+**Raised by:** BACKEND-18.
+
+PDFs can carry JavaScript, launch actions, embedded files and external
+references. LAGDA refuses what a real antivirus engine flags and what a real
+parser cannot read, and never executes or renders a PDF - but it removes
+nothing.
+
+AV plus parsing is NOT sanitization, and no code or document claims it is.
+
+Real sanitization produces DIFFERENT BYTES, which under LAGDA's integrity model
+is a different artifact with its own digest and provenance - not a quiet rewrite
+of the original. BACKEND-56 owns the decision, and it is a product and legal
+question as much as a technical one.
+
+## OD-060 - Production malware scanner deployment
+
+**Raised by:** BACKEND-18.
+
+The adapter is provider-neutral and proven against a real ClamAV daemon. What is
+unresolved is how one runs in production: sidecar process, dedicated host, or a
+managed scanning service.
+
+Whatever is chosen must also answer signature freshness (freshclam scheduled and
+MONITORED - an engine with stale signatures answers "clean" confidently),
+resource limits, and StreamMaxLength at least the upload maximum.
+
+Uploads are unavailable when the scanner is, by design. That makes scanner
+availability a product availability concern, which is a deployment decision
+rather than a code one.
+
+## OD-061 - Orphan objects with no row
+
+**Raised by:** BACKEND-18.
+
+Two windows leave an object that row-driven cleanup cannot see: an upload row
+insert failing after the quarantine write, and the acceptance transaction
+failing after the accepted-object write.
+
+Both leave PRIVATE, UNREFERENCED objects - nothing serves them, because serving
+requires an artifact row behind a tenant-scoped lookup. The cost is storage, not
+exposure.
+
+Not auto-deleted, deliberately: deleting on an uncertain transaction outcome is
+how a real artifact gets destroyed. A quarantine-bucket lifecycle rule handles
+the first cheaply and is a deployment setting; the second needs the
+reconciliation job already recorded as OD-055.
+
+## OD-062 - Quarantine retention duration
+
+**Raised by:** BACKEND-18.
+
+The cleanup primitive is built, horizon-bounded, idempotent and tested. The
+recurring job is NOT registered, because registering it requires choosing how
+long a quarantine object may live.
+
+Deliberately not guessed. Too short and an in-flight upload loses its bytes; too
+long and rejected uploads - including malware - sit in a bucket longer than
+necessary. A few hours is the likely answer, and it should be chosen alongside
+the incident-response question of how long a rejected sample is worth keeping.
