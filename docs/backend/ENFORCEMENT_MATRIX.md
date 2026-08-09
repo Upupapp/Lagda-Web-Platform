@@ -316,3 +316,40 @@ configuration.~~
 **Superseded by the correction above.** Each package now carries one rule whose
 groups keep their own messages, so a PDF import reports the PDF message
 everywhere, and no ban is silently replaced by another block.
+
+
+## BACKEND-11 — API boundaries
+
+| Rule | Status | Mechanism |
+|---|---|---|
+| Routes cannot import `@lagda/db`, `kysely`, `pg` | **ENFORCED** | Directory-scoped ESLint on `api/src/routes/**`, `api/src/plugins/**`. Probed: 3 blocked, plus `fastify` allowed as a control |
+| Routes cannot import `@lagda/sealing` / `@lagda/storage` | **ENFORCED** | Same rule. Probed |
+| Composition root MAY import `@lagda/db` | **ENFORCED (as permitted)** | `api/src/app/**` and `api/src/server/**` excluded. Probed — both allowed |
+| HTTP framework confined to `@lagda/api` | **ENFORCED** | Architecture test + manifest check, with a negative control |
+| Importing the package starts no listener | **ENFORCED** | No call at statement position in the entry point; probed |
+| Every route declares a response schema | **ENFORCED for current routes** | Serialization test (leaky handler) + a route/schema count test. **Future feature commands must keep this true** — the count test enforces it per file |
+| Unknown request fields rejected | **ENFORCED** | `removeAdditional: false`; probed by flipping it |
+| No framework/validator error reaches a client | **ENFORCED** | One mapper; validator-internals test |
+| No stack/SQL/credential in a 5xx body | **ENFORCED** | Credential-leak test; probed by returning `error.message` |
+| Request ID on every response and error | **ENFORCED** | Tested on success, 404 and 500 |
+| Client request ID ignored | **ENFORCED** | `requestIdHeader: false`; CRLF test; probed |
+| Forwarded IP trusted only when configured | **ENFORCED (default-deny)** | `TRUST_PROXY=true` rejected at config load; spoofing tested both ways. **Production topology is OD-027** |
+| CORS exact-match, never wildcard+credentials | **ENFORCED** | Lookalike-origin test; probed with a substring matcher |
+| No migrations at startup | **ENFORCED** | Architecture test on migration symbols |
+| No request/response body logging | **ENFORCED** | Explicit serializer allowlists; no body serializer exists |
+| Sensitive headers redacted | **PARTIALLY ENFORCED** | Pino `redact` with `remove: true` is configured and reviewed, but no test asserts a redacted log line — BACKEND-12 owns log assertions |
+| `process.env` read only in config | **ENFORCED** | Architecture test |
+| No `console.*` | **ENFORCED** | Architecture test |
+| API and worker are separate roles | **DOCUMENTED ONLY** | The worker does not exist yet |
+
+### Honest gaps
+
+**Log redaction is configured but unverified.** The paths are set and reviewed,
+and bodies are never serialized at all — but nothing asserts that a log line
+containing a cookie comes out without it. That assertion needs a log capture
+harness, which is BACKEND-12's to build.
+
+**Response-schema coverage is enforced per file, not per future route.** The
+count test compares registered routes to declared response schemas in each route
+module, so a new route without a schema fails. It cannot enforce that the schema
+is *correct*.

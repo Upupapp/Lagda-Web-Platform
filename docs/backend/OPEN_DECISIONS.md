@@ -472,3 +472,40 @@ event removed?"). Note that append-only privileges already make removal
 impossible for the application, so the gap this would close is a
 database-administrator threat — the same one INV-085 says this design does not
 claim to address.
+
+## OD-027 — Production reverse-proxy topology — **architecture decided, value open**
+
+**Raised by:** BACKEND-11. **Needs:** BACKEND-65 deployment.
+
+The *architecture* is settled and not open: **default deny**, explicit
+configuration required, `TRUST_PROXY=true` rejected outright. What remains open
+is the production **value**, which depends on how many proxies terminate the
+connection before the API.
+
+Until it is set and verified end to end, forwarded IP must not be described as
+authoritative evidence — see [api/TRUST_PROXY.md](./api/TRUST_PROXY.md) for the
+four-step verification.
+
+## OD-028 — Same-origin or separate subdomain deployment
+
+**Raised by:** BACKEND-11. **Needs:** BACKEND-65, and it constrains BACKEND-13.
+
+If the frontend and API share an origin, CORS is unnecessary and session cookies
+are simple. If they are `app.lagda.io` and `api.lagda.io`, CORS with credentials
+is mandatory and the cookie needs a deliberate domain and `SameSite` decision.
+
+Nothing is hardcoded either way: CORS is configuration-driven and registered only
+when origins are present. BACKEND-13 cannot finalize cookie attributes until this
+is answered.
+
+## OD-029 — Whether to expose the OpenAPI document over HTTP
+
+**Raised by:** BACKEND-11.
+
+Generation is implemented; **exposure is not**. No `/documentation`,
+`/openapi.json` or UI route exists, and a test asserts they 404.
+
+Open: whether to serve it in production at all, and if so whether behind
+authentication. A public document enumerates every endpoint and field name, which
+is a reconnaissance aid; an internal one still needs an access decision. Deferring
+costs nothing because the document is generated from route schemas on demand.
