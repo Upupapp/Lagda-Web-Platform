@@ -160,6 +160,26 @@ library choice belongs to BACKEND-02/03.
 
 ---
 
+### API conventions
+
+Cross-cutting API behaviour — the error envelope, pagination, sorting, search,
+timestamps, request IDs, the idempotency header, unknown-field policy, and HTTP
+status mapping — is specified once in
+[`api/API_CONVENTIONS.md`](./api/API_CONVENTIONS.md) and implemented in
+`@lagda/contracts/api`.
+
+Endpoint commands consume those contracts and must not define route-local
+equivalents. Most of the conventions were **derived from the handoff rather than
+chosen**: it already specifies lowercase snake_case error codes, 422 for
+validation, 410 for expired requests, and page-based pagination that the
+frontend already implements.
+
+Two distinctions that are easy to collapse and expensive to unpick: a **request
+ID** identifies one HTTP attempt and is new every time, while an **idempotency
+key** identifies a logical operation and is deliberately the same across
+retries; and **CORS, authentication, authorization and CSRF** solve four
+different problems, none substituting for another.
+
 ## 4. Tenancy
 
 LAGDA is workspace-scoped. **Workspace ownership is enforced at the

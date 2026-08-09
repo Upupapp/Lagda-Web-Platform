@@ -50,6 +50,13 @@ generic rule set.
 | **INV-023** | Public response contracts set no field that the operation does not require, and separate public from authenticated shapes as distinct types. | Verification is unauthenticated. One shape guarded by a boolean has to be checked correctly at every call site forever; two types cannot leak into each other. | **ENFORCED for verification** — `additionalProperties: false` plus tests asserting the public schema rejects owner-only fields |
 | **INV-024** | Contracts contain no non-JSON values — no `Date`, `BigInt`, `Map`, `Set`, `Buffer`, or class instances. | A `Date`-typed field describes something the wire never carries; the receiver always gets a string. Making the string the contract removes the asymmetry. | **ENFORCED for verification** — round-trip test |
 | **INV-025** | A serialized status value is an API contract. Changing one is a compatibility change, not a refactor. | `pending` → `awaiting` is invisible to TypeScript and breaks every stored record and client. | Documented → review |
+| **INV-026** | Every API error response uses the canonical `ApiError` envelope from `@lagda/contracts/api`. | One shape, or every client writes a parser per endpoint. | **ENFORCED for the schema** — runtime schema + tests; route adoption needs BACKEND-11 |
+| **INV-027** | Clients branch on `error.code`, never on `error.message`. HTTP mapping never inspects a message either. | Copy and localization change; `message.includes("not found")` is how status mapping silently breaks. | Documented → review |
+| **INV-028** | Unknown properties in mutation request bodies are rejected. | Silently stripping hides stale clients and typos, and rejecting is the cheapest defence against mass assignment. | **ENFORCED** — `additionalProperties: false` + tests |
+| **INV-029** | List sort keys are closed typed unions per endpoint, never free strings. | A free sort key reaching a repository becomes `ORDER BY ${input}`. | **ENFORCED** — `sortSchema()` + test rejecting `id; DROP TABLE documents` |
+| **INV-030** | API timestamps are RFC 3339 UTC strings, never `Date` objects. | `JSON.stringify` produces a string, so a `Date`-typed field describes something the wire never carries. | **ENFORCED for extracted contracts** — pattern + tests |
+| **INV-031** | Request and response contracts stay distinct types where server-owned or write-only fields exist. | Structural reuse is how `createdAt` becomes settable and a password reaches a response. | Documented → review |
+| **INV-032** | Route handlers map domain results into declared response contracts. A persistence row is never serialized directly. | It is how persistence-only and secret fields leak. | Documented → BACKEND-11 |
 
 ## Rules for future `BACKEND-XX` commands
 

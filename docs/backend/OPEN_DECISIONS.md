@@ -101,6 +101,25 @@ contracts.
 
 ---
 
+## OD-012 — Dead `ApiResponse<T>` in the frontend
+
+**Needs:** a small frontend cleanup. **Raised by:** BACKEND-03.
+
+`src/app/models/index.ts` declares `ApiResult<T>`, `ApiError` and
+`ApiResponse<T>` using a `{ success: true, data }` wrapper. **Nothing imports
+them.** The live convention is `ServiceResult<T>` in `models/errors.ts`, used by
+all 24 mock services.
+
+Not deleted here: BACKEND-03 owns API conventions, not frontend cleanup, and
+removing frontend types is outside its scope. It carries no compatibility weight
+— the canonical API deliberately does not wrap success responses — but leaving
+two conflicting conventions in one file invites the wrong one being copied.
+
+**Blocks:** nothing. **Do:** in a frontend command, or the next one that touches
+`models/index.ts`.
+
+---
+
 ## OD-009 — `AuthMethod` means two different things
 
 **Needs:** product clarification. **Raised by:** BACKEND-02 (conflict C-4).

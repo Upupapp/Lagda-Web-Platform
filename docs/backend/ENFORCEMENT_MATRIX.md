@@ -61,6 +61,33 @@ tested.
 The negative case matters as much as the positive ones: a rule that blocks the
 allowed location too would push PDF work back out of the seam.
 
+## API conventions (BACKEND-03)
+
+| Invariant | Rule | Enforcement | Tool | Completed by |
+|---|---|---|---|---|
+| **INV-026** | Canonical `ApiError` envelope | **ENFORCED for the schema** — the shape is validated and rejects `stack`/`sql`/`path`. Nothing yet forces routes to use it, because no routes exist. | Vitest | BACKEND-11 |
+| **INV-027** | Branch on code, never message | DOCUMENTED ONLY | — | — |
+| **INV-028** | Unknown request fields rejected | **ENFORCED** — `additionalProperties: false` on every request schema, with tests | Vitest | BACKEND-03 |
+| **INV-029** | Sort keys whitelisted | **ENFORCED** — `sortSchema()` is a closed union; `id; DROP TABLE documents` is rejected | Vitest | BACKEND-03 |
+| **INV-030** | Timestamps are UTC strings | **ENFORCED for extracted contracts** — RFC 3339 pattern | Vitest | BACKEND-03 |
+| **INV-031** | Request/response DTOs distinct | DOCUMENTED ONLY | — | BACKEND-11 |
+| **INV-032** | Handlers map to declared contracts | DOCUMENTED ONLY | — | BACKEND-11 |
+
+### Probes run
+
+| Probe | Expected | Result |
+|---|---|---|
+| Error carrying `stack`, `sql` or `path` | reject | rejected |
+| Validation detail carrying the submitted value | reject | rejected |
+| More than 25 validation details | reject | rejected |
+| `NOT_FOUND` / `notFound` / `not-found` as a wire code | reject | rejected |
+| `perPage: 1000000` | reject | rejected |
+| `page: 0`, `page: -1`, `page: 1.5` | reject | rejected |
+| `{ page: 1, isAdmin: true }` | reject | rejected |
+| `sortBy: "id; DROP TABLE documents"` | reject | rejected |
+| `{ totalItems, pageSize, hasMore }` instead of the canonical names | reject | rejected |
+| Out-of-range page as `items: []` | accept | accepted |
+
 ## Enforcement added by BACKEND-02
 
 | Probe | Expected | Result |
