@@ -61,6 +61,34 @@ tested.
 The negative case matters as much as the positive ones: a rule that blocks the
 allowed location too would push PDF work back out of the seam.
 
+
+## Core domain (BACKEND-04)
+
+| Invariant | Rule | Enforcement | Tool | Completed by |
+|---|---|---|---|---|
+| **INV-005** | Core free of infrastructure | **ENFORCED** — ESLint import bans plus a purity test reading core's own source | ESLint + Vitest | BACKEND-01/04 |
+| **INV-013** | State transitions explicit and validated | **PARTIALLY ENFORCED** — the signing request machine is a table with terminal protection and 59 tests. Document, template and invitation lifecycles are not modelled yet. | Vitest | BACKEND-29/33 |
+| **INV-033** | No clock read in core | **ENFORCED** | Vitest | BACKEND-04 |
+| **INV-034** | No randomness in core | **ENFORCED** | Vitest | BACKEND-04 |
+| **INV-035** | No generic status setter | **ENFORCED** | Vitest | BACKEND-04 |
+| **INV-036** | Terminal states never reactivate | **ENFORCED** — every terminal state tested against every action | Vitest | BACKEND-04 |
+| **INV-037** | Frontend does not import core | DOCUMENTED ONLY — cross-repo, so nothing can check it (OD-005) | — | — |
+| **INV-038** | Domain errors carry no infrastructure concerns | **ENFORCED for errors** | Type shape | BACKEND-04 |
+
+### Probes run
+
+| Probe | Expected | Result |
+|---|---|---|
+| `Date.now()` / `new Date()` in core production source | none | none found |
+| `Math.random` / `randomUUID` / `crypto.` in core | none | none found |
+| `process.env` in core | none | none found |
+| `node:` / fastify / pg / pdf-lib import in core | none | none found |
+| `any` / `as any` in core | none | none found |
+| `TODO` / `FIXME` / `HACK` in core | none | none found |
+| `setStatus` / `setWorkspaceId` in core | none | none found |
+| Every terminal state × every action | all forbidden | all forbidden |
+| Signature required for a viewer | throw | threw |
+
 ## API conventions (BACKEND-03)
 
 | Invariant | Rule | Enforcement | Tool | Completed by |

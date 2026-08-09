@@ -160,6 +160,39 @@ library choice belongs to BACKEND-02/03.
 
 ---
 
+### Core domain
+
+`@lagda/core` answers *"is this allowed?"* without knowing how anything is
+stored or transported. Details in
+[`domain/DOMAIN_CONVENTIONS.md`](./domain/DOMAIN_CONVENTIONS.md),
+[`STATE_MACHINES.md`](./domain/STATE_MACHINES.md) and the
+[foundation report](./domain/DOMAIN_FOUNDATION_REPORT.md).
+
+Four decisions worth knowing here:
+
+**Time is a parameter.** No core function reads a clock, so expiry rules are
+reproducible from their inputs and give the same answer next decade. Randomness
+and identity come from the application layer for the same reason.
+
+**Transitions live in a table, not in conditionals.** The signing request has
+eight states; terminal ones carry an explicitly empty action set, and there is
+no generic `setStatus` — a single setter would make every invariant bypassable
+in one line.
+
+**Two outcome mechanisms.** `PolicyResult` for questions a user could reasonably
+fail, returning *all* reasons at once; `DomainError` thrown for operations
+against impossible states. Domain error codes are internal and carry no HTTP
+status, log level, or severity.
+
+**No entities yet.** Immutable read models and pure functions cover every rule
+needed today. An entity becomes justified when something owns mutable state
+across a lifecycle, which arrives with persistence.
+
+The most consequential finding is recorded as **OD-013**: the canonical
+`TransactionStatus` mixes lifecycle states with events — `viewed` and
+`awaiting-signature` are not mutually exclusive — so a persistence design that
+treats it as the whole truth will lose evidence.
+
 ### API conventions
 
 Cross-cutting API behaviour — the error envelope, pagination, sorting, search,

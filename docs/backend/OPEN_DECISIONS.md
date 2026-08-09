@@ -101,6 +101,74 @@ contracts.
 
 ---
 
+## OD-013 — `TransactionStatus` conflates lifecycle state with events
+
+**Needs:** a contract decision. **Raised by:** BACKEND-04.
+
+Six of the 14 canonical values are not lifecycle states. `delivered`, `viewed`
+and `authentication-completed` are facts that occurred — a viewed request is
+still awaiting signature, so the two are not mutually exclusive and cannot share
+one field without losing information. `awaiting-signature` and
+`awaiting-approval` are derived from outstanding participants.
+`failed-delivery` is a delivery-channel outcome.
+
+Core models 8 states and treats the rest as events. The contract union was **not**
+redefined — parallel status ownership would be worse than the conflation.
+
+**Blocks:** persistence design. A schema that stores `TransactionStatus` as the
+whole truth will lose evidence. **Decide before:** BACKEND-06.
+
+---
+
+## OD-014 — Is expiry derived, or an explicit transition?
+
+**Needs:** a product decision. **Raised by:** BACKEND-04.
+
+`isExpired()` derives expiry from a deadline and a supplied time, and the machine
+also has an explicit `expire` action. Whether a scheduled job must transition the
+stored status — and what happens to a request that is past its deadline but never
+transitioned — is unspecified.
+
+**Blocks:** nothing now. **Decide with:** BACKEND-16 (queues) or BACKEND-37.
+
+---
+
+## OD-015 — Which roles may receive workspace ownership?
+
+**Needs:** a product decision. **Raised by:** BACKEND-04.
+
+`canReceiveOwnership` currently accepts any existing non-owner member. Whether an
+auditor or reviewer should be eligible is a product question.
+
+**Blocks:** nothing. **Decide with:** BACKEND-25/27.
+
+---
+
+## OD-016 — May a signing request contain duplicate recipient emails?
+
+**Needs:** a product decision. **Raised by:** BACKEND-04.
+
+The same person may legitimately hold two roles — signer and copy recipient — but
+two independent signer slots for one address is likely an error. Nothing in the
+handoff settles it, so no invariant was written.
+
+**Blocks:** recipient validation. **Decide with:** BACKEND-31.
+
+---
+
+## OD-017 — What does one participant's decline do to the whole request?
+
+**Needs:** a product decision. **Raised by:** BACKEND-04.
+
+Core takes the conservative reading: any decline blocks completion, so a
+transaction a participant refused never completes. Whether the request should
+also transition to `declined` automatically — ending it for everyone — or
+continue for other participants is genuinely open, and §54 forbids inventing it.
+
+**Blocks:** the decline use case. **Decide before:** BACKEND-37.
+
+---
+
 ## OD-012 — Dead `ApiResponse<T>` in the frontend
 
 **Needs:** a small frontend cleanup. **Raised by:** BACKEND-03.

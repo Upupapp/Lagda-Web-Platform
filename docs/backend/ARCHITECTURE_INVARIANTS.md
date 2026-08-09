@@ -57,6 +57,12 @@ generic rule set.
 | **INV-030** | API timestamps are RFC 3339 UTC strings, never `Date` objects. | `JSON.stringify` produces a string, so a `Date`-typed field describes something the wire never carries. | **ENFORCED for extracted contracts** — pattern + tests |
 | **INV-031** | Request and response contracts stay distinct types where server-owned or write-only fields exist. | Structural reuse is how `createdAt` becomes settable and a password reaches a response. | Documented → review |
 | **INV-032** | Route handlers map domain results into declared response contracts. A persistence row is never serialized directly. | It is how persistence-only and secret fields leak. | Documented → BACKEND-11 |
+| **INV-033** | Core never reads the current time. Time-dependent rules take `now` as a parameter. | A hidden clock read makes expiry logic untestable without stubbing globals, and non-reproducible across dates. | **ENFORCED** — purity test |
+| **INV-034** | Core never generates identifiers, tokens, or randomness. | Identity comes from the application layer; a domain that invents IDs cannot be replayed. | **ENFORCED** — purity test |
+| **INV-035** | Lifecycle state changes go through named actions. No generic `setStatus`/`setState`/`setWorkspaceId`. | A generic setter makes the transition table decorative — every invariant becomes bypassable in one line. | **ENFORCED** — purity test |
+| **INV-036** | Terminal signing states never transition back to an active state. | A completed transaction is legally significant history. Corrections create a new transaction. | **ENFORCED** — every terminal state × every action |
+| **INV-037** | The frontend does not depend on `@lagda/core`. | Core is backend-only. Shared needs belong in `@lagda/contracts`. | Documented → review |
+| **INV-038** | Domain events and errors carry no infrastructure concerns — no HTTP status, log level, severity, queue name, or delivery detail. | Core must not decide how a failure is presented or recorded. | **ENFORCED for errors** — `DomainError` has no such fields |
 
 ## Rules for future `BACKEND-XX` commands
 
