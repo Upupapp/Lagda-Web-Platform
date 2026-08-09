@@ -131,3 +131,31 @@ Once login exists, the frontend must:
 
 `X-CSRF-Token` is already in the CORS allowed-header list, so no CORS change is
 needed when this is wired.
+
+## Login and logout (BACKEND-20)
+
+**Login (`POST /auth/sign-in`) — public, no session-bound CSRF token.**
+
+A session-bound token cannot be required from a caller who has no session; that
+is what logging in is for. Login CSRF is still a real attack - a forged login
+authenticates a victim's browser as the ATTACKER'S account, who then observes
+what the victim does in it - so three controls apply:
+
+1. **SameSite=Lax** on the session cookie, so the forged login's cookie is not
+   carried onward cross-site.
+2. **Exact-origin CORS**, never `*`, so a scripted cross-origin login cannot
+   read the response.
+3. **A server-side Origin check** on the request itself. An ABSENT Origin is
+   allowed, because browsers omit it on some same-origin requests and rejecting
+   it would break legitimate logins; a PRESENT Origin not on the allowlist is
+   refused before any credential work.
+
+**Logout (`POST /auth/sign-out`) — authenticated, CSRF required.**
+
+A state-changing authenticated mutation, protected exactly like every other one.
+POST only: a GET logout can be fired by an image tag on any page on the
+internet. The CSRF plugin is attached at composition; the route is written to be
+protected by it.
+
+Successful logout revokes the session, which invalidates the CSRF state bound to
+it - a CSRF token whose session no longer resolves cannot validate anything.

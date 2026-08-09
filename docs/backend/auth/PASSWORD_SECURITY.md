@@ -128,11 +128,33 @@ does not become a 500 that distinguishes it from a wrong password.
 The library's **async** API runs the hash on a libuv thread. A synchronous hash
 would stall every other in-flight request for tens of milliseconds.
 
-## Not implemented here
+## Not implemented at BACKEND-19
 
-- **No login.** `verify` exists on the port because BACKEND-20 needs it and
-  splitting the port later would churn every caller. No authentication flow is
-  built.
+- **No login.** `verify` existed on the port because BACKEND-20 would need it.
+  *(BACKEND-20 has since implemented login and rehash-on-login — see below.)*
 - **No breached-password checking.** Worth considering later; it needs a data
   source and a privacy decision about how a password prefix is queried.
-- **No password reset, no MFA, no rehash-on-login.**
+- **No password reset, no MFA.** Still true.
+
+## Verification at login (BACKEND-20)
+
+`PasswordHasher.verify` reads Argon2 parameters from the ENCODED HASH, not from
+current settings, so a password hashed under older parameters still verifies.
+
+**The dummy hash.** An unknown account still runs a real verification against a
+fixed Argon2id hash that authenticates nobody, so response time does not reveal
+whether an account exists (INV-250). It is derived ONCE at startup from a random
+secret nobody keeps - per-request generation would double the cost of every
+unknown-account attempt.
+
+It is not a credential: no account references it, and no password matches it.
+It is still not logged, because a fixed hash in logs invites confusion with a
+real one.
+
+**Rehash on login** is implemented: if `needsRehash` reports a stored hash below
+current policy, it is upgraded after a SUCCESSFUL verification, outside any
+transaction, and a failure to persist the upgrade never fails the login.
+
+**Timing defence** is the dummy path plus one public error, not artificial
+delays. Constant-time padding was rejected: it is easy to get wrong, it slows
+every legitimate login, and it does not remove the difference it hides.

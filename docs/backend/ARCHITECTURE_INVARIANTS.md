@@ -305,3 +305,21 @@ generic rule set.
 | **INV-245** | Registration input may not set ids, roles, verification state, timestamps or account status. | Mass assignment. | **ENFORCED** - closed request schema plus explicit field mapping; probed |
 | **INV-246** | Registration issues no session and no session-bound CSRF credential. | The frontend requires email verification before authenticated use; a session here would authenticate an unproven mailbox. | **ENFORCED** - no cookie set, asserted by test |
 | **INV-247** | Registration never claims a verification email was sent unless a durable delivery path exists. | A false claim sends a user to wait for mail that will never arrive. | **ENFORCED** - the response carries `nextAction`, never a sent claim; asserted |
+
+## Login and sessions (BACKEND-20)
+
+| ID | Invariant | Why | Enforcement |
+|---|---|---|---|
+| **INV-248** | Login resolves accounts through the SAME canonical email normalizer registration used. | A login that normalized differently would fail to find accounts registration created. | **ENFORCED** - one normalizer; every casing tested against a real registered account |
+| **INV-249** | An unknown account and a wrong password produce identical public results - status, code, body and absence of metadata. | Any difference is an account-existence oracle. | **ENFORCED** - responses compared byte for byte; probed by splitting them |
+| **INV-250** | An unknown account still runs a real Argon2id verification against a fixed dummy hash, unless rejected earlier by validation or rate limiting. | Returning early makes response time an existence oracle. | **ENFORCED** - probed by removing the dummy path |
+| **INV-251** | Account eligibility is checked AFTER password verification, never before. | Checking first lets anyone learn verification state without knowing the password. | **ENFORCED** - probed by reordering |
+| **INV-252** | Raw session and CSRF tokens exist only long enough to write cookies. They are never persisted, never logged, never serialized into JSON. | A credential in a log or a response body is a credential in someone else's hands. | **ENFORCED** - digest-only storage; marker tests over logs and bodies; closed response schema, probed |
+| **INV-253** | Successful login always issues a FRESH session credential. An incoming cookie is never promoted to authenticated state. | Session fixation: an attacker plants a cookie, waits for the victim to log in, and inherits the session. | **ENFORCED** - planted-cookie test |
+| **INV-254** | Login input may not set ids, roles, verification state or session identity. | Mass assignment. | **ENFORCED** - closed schema, probed |
+| **INV-255** | Login-CSRF is defended by SameSite, exact-origin CORS and a server-side Origin check - not by declaring the route public. | A forged login authenticates a victim's browser as the ATTACKER, who then observes what they do. | **ENFORCED** - cross-site origin rejected before credential work; probed |
+| **INV-256** | Browser authentication never returns a JWT, access token, refresh token or script-readable session credential. | A token a script can read is a token XSS can steal, and the session cookie already solves the problem. | **ENFORCED** - closed response schema; no such dependency exists |
+| **INV-257** | Logout revokes server-side session state. Clearing a cookie alone is never sufficient, and a failed revocation is never reported as success. | A copied credential keeps authenticating until the server refuses it. | **ENFORCED** - revocation tested against real PostgreSQL; probed twice |
+| **INV-258** | Logout is a POST and carries CSRF protection. | A GET logout can be fired by an image tag on any page on the internet. | **ENFORCED** - GET is not routed; CSRF is the standard authenticated-mutation hook |
+| **INV-259** | Login is not wrapped in the generic idempotency replay framework. | Replaying a stored response would replay a session credential. | Documented - no idempotency wrapper on this route |
+| **INV-260** | Session identity authenticates a user and implies no workspace authorization. | Permissions in a cookie cannot be revoked. | **ENFORCED** - the login response carries no workspace data |

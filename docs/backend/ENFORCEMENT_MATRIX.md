@@ -657,3 +657,44 @@ default ajv strips unknown properties before the handler runs, so the guard coul
 never fire. It read as defence in depth while being incapable of doing anything.
 The real control is `removeAdditional: false`, which `createApp` sets, and both
 behaviours are now measured by tests.
+
+## BACKEND-20 - Login and sessions
+
+| Rule | Status | Mechanism |
+|---|---|---|
+| Canonical login email normalization | **ENFORCED** | Shared normalizer; real-DB casing test |
+| Unknown / wrong-password public equivalence | **ENFORCED** | Byte-for-byte response comparison; probed |
+| Dummy Argon2 path for unknown accounts | **ENFORCED** | Probed by removal |
+| No account metadata on failure | **ENFORCED** | Serialized-failure scan |
+| Verification checked after the password | **ENFORCED** | Probed by reordering |
+| Unverified accounts cannot log in | **ENFORCED** | Probed; real-DB test on a freshly registered account |
+| Registration hashes authenticate | **ENFORCED** | Cross-command integration test |
+| Fresh session per login | **ENFORCED** | Distinct tokens asserted |
+| Session fixation prevented | **ENFORCED** | Planted-cookie test |
+| Raw tokens never in body or logs | **ENFORCED** | Marker tests; closed response schema, probed |
+| Only digests persisted | **ENFORCED** | Real-DB assertion |
+| Cookie attributes correct | **ENFORCED** | HttpOnly/Secure/SameSite/Path/Max-Age asserted |
+| Login-CSRF origin check | **ENFORCED** | Probed |
+| Logout revokes server-side | **ENFORCED** | Probed; revoked credential no longer resolves |
+| Failed revocation not reported as success | **ENFORCED** | Probed |
+| Logout cookie scope matches | **ENFORCED** | Path comparison; probed |
+| Repeated logout safe | **ENFORCED** | Tested |
+| No JWT / refresh token / bearer | **ENFORCED** | Closed schema; no dependency |
+| Rate limit BEFORE Argon2 | **PARTIALLY ENFORCED** | Ordering proven with a hook; the real limiter is not yet BOUND to the route |
+| Logout CSRF hook | **PARTIALLY ENFORCED** | Written as a protected mutation; the plugin is attached at composition |
+| Rehash on login | **ENFORCED** | Success-only, non-fatal, probed |
+
+### Honest gaps
+
+**Neither route is wired into `createApp` yet.** They are registered by their own
+function and tested through a Fastify instance built in the test. That means the
+rate-limit plugin and the session/CSRF plugin are not attached to them in a
+running application - the ORDERING is proven with a stand-in hook, and the
+binding is composition work.
+
+**No timing benchmark.** The dummy-hash path is verified structurally rather
+than by measuring response times, because microsecond assertions are flaky in CI
+and a passing flaky test is worse than an honest gap.
+
+**The frontend still uses its mock auth service.** No frontend change was made,
+so cookie-session compatibility is unproven end to end.

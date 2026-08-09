@@ -1062,3 +1062,64 @@ takeover primitive. It needs a retention policy alongside BACKEND-21's resend an
 BACKEND-55's erasure work, and the answer probably involves an expiry window plus
 a way for the genuine owner to claim the address through verification rather than
 through re-registration.
+
+## OD-066 - RESOLVED: unverified accounts may not log in
+
+**Raised by:** BACKEND-19. **Resolved by:** BACKEND-20.
+
+MEASURED from `SignIn.tsx`: `platform.signIn(...)` - the call that establishes an
+authenticated session - runs only in the `standard` case. The
+`email-verification` case navigates to `/verify-email` and establishes nothing.
+
+So a correct password on an unverified account creates NO session and returns
+`403 EMAIL_VERIFICATION_REQUIRED`. Being specific is safe there only because the
+caller already proved control of the credential; a wrong password never produces
+that response.
+
+## OD-069 - Login rate limits are not yet bound to the route
+
+**Raised by:** BACKEND-20.
+
+`auth.signin.ip` and `auth.signin.account` exist with handoff-sourced thresholds,
+and the ORDERING - limiter before Argon2id - is proven with a hook. But the real
+limiter plugin is attached during app composition, and neither auth route is
+wired into `createApp` yet.
+
+Until they are, the routes are protected by nothing but their own schema in a
+running application. This is the single most important item to close when the
+routes are composed, because Argon2id without a limiter in front of it is a
+memory-hard DoS primitive.
+
+## OD-070 - Frontend cookie-session migration
+
+**Raised by:** BACKEND-20.
+
+The frontend still calls its mock auth service. Switching it to the real
+endpoints needs credentialed requests, a CSRF header read from the readable
+cookie on mutations, and 401 handling that routes to sign-in.
+
+Deliberately not done here: it is frontend work, and doing it blind - without a
+running backend to test against - would produce a client nobody has verified.
+No backend change is required to enable it.
+
+## OD-071 - Sign out of all devices
+
+**Raised by:** BACKEND-20.
+
+`revokeAllForUser` exists in the session repository and is unused. BACKEND-22
+will need it, because a password reset must invalidate every existing session.
+
+Whether it is also a product feature - a "sign out everywhere" button in account
+settings - is a UX decision nobody has made. The capability is ready either way.
+
+## OD-072 - Account lockout is deliberately absent
+
+**Raised by:** BACKEND-20.
+
+Only temporary rate-limit cooldown protects against brute force. There is no
+permanent lockout and no `failedLoginCount` column.
+
+That is a decision, not an omission: permanent lockout is weaponizable, because
+anyone who knows an email address can lock that account out by guessing at it.
+Revisit only if a product or compliance requirement demands it, and pair it with
+a self-service unlock so the weapon is blunted.

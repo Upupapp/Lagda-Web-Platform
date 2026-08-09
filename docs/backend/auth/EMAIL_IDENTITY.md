@@ -113,3 +113,13 @@ Login, password reset, email verification and invitations **must** call
 `normalizeEmail` and look up by `normalized_email`. A flow that lowercases its
 own way, or queries the display column, will silently fail to find accounts that
 registration created.
+
+## Consumers (BACKEND-20)
+
+`loginUser` calls `normalizeEmail` and looks up by `normalized_email` - the same
+function and the same column registration writes. An integration test registers
+with one casing and authenticates with three others against real PostgreSQL.
+
+Still to come: password reset (BACKEND-22), email verification redemption
+(BACKEND-21) and invitation acceptance. Each must use this normalizer; a flow
+that lowercases its own way will silently fail to find accounts.
