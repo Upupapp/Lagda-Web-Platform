@@ -611,3 +611,34 @@ Not implemented. The session-bound CSRF token is the control; `Origin` and
 Deferred because the compatibility surface needs review — non-browser clients and
 some proxies omit `Origin`, and a check that rejected a missing header would
 break them. Recorded rather than half-implemented.
+
+## OD-037 - In-progress HTTP semantics
+
+**Raised by:** BACKEND-14. **Needs:** the first feature route (BACKEND-33).
+
+Under the in-transaction claim a concurrent duplicate **blocks** on the unique
+index and then replays, so the `in-progress` outcome is not normally reachable.
+It becomes reachable for the staged operations that call external providers.
+
+**Current:** `IdempotencyInProgressError`, category `conflict` -> 409.
+
+**Open:** whether those responses should carry `Retry-After`, and whether a
+bounded server-side wait is ever preferable to an immediate 409. Not decided
+speculatively - it depends on how long the staged operations actually take, and
+BACKEND-14 deliberately implements no waiting (a held HTTP connection waiting on
+another request is a resource an attacker can exhaust).
+
+## OD-038 - Idempotency retention duration
+
+**Raised by:** BACKEND-14. **Needs:** product input on client retry behaviour.
+
+**Current:** 24 hours, configurable.
+
+Long enough for any realistic network or browser retry; short enough that a
+stored response containing PII does not linger. **Unrelated to evidence,
+session or document retention** - conflating them is the mistake this note
+exists to prevent.
+
+**Open:** whether any operation needs materially longer. Per-operation retention
+was deliberately not built, since one default is simpler and nothing yet
+requires otherwise.

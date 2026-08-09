@@ -389,3 +389,40 @@ already shipped once.
 
 **Redaction cost is unmeasured.** The walk is bounded in depth, breadth and
 string length, but its cost per log line under load has not been measured.
+
+
+## BACKEND-14 - Idempotency
+
+| Rule | Status | Mechanism |
+|---|---|---|
+| One record per scope+operation+key | **ENFORCED** | DB unique constraint. Probed by removing `ON CONFLICT` |
+| Concurrent duplicates execute once | **ENFORCED** | Two independent transactions on separate connections; the second blocks then replays |
+| Rollback frees the key | **ENFORCED** | Real transaction test - no poisoned row |
+| Mutation + completion commit atomically | **ENFORCED** | Real transaction test against a second table |
+| Fingerprint mismatch conflicts | **ENFORCED** | Tested at both application and DB level |
+| Canonicalization stable across key order | **ENFORCED** | Tested; probed by sorting arrays |
+| Raw key never persisted | **ENFORCED** | Schema asserted against the live database - no such column; CHECK rejects non-hex |
+| Request body never persisted | **ENFORCED** | Same assertion |
+| Raw key never logged | **ENFORCED** | BACKEND-12 redaction covers `idempotencyKey` and the header |
+| No identifier metric labels | **ENFORCED** | Catalog audit test from BACKEND-12 |
+| Bounded replay body | **ENFORCED** | 64 KiB, tested |
+| No headers replayed | **ENFORCED** | The stored shape has no header field at all |
+| Expired reclaim is race-free | **ENFORCED** | Conditional UPDATE, not delete-then-insert; tested |
+| Cleanup spares unexpired rows | **ENFORCED** | Tested |
+| **Replay requires current authorization** | **DOCUMENTED ONLY** | No feature route exists to enforce it. The framework cannot force ordering; the handoff states it |
+| CSRF before claim | **PARTIALLY ENFORCED** | Structural - `requireSession` runs in `onRequest`, the claim in the handler. No feature route yet exercises the ordering |
+| Exactly-once external delivery | **NOT CLAIMED** | Explicitly disclaimed |
+
+### Honest gaps
+
+**Authorization-before-replay is documented, not enforced.** It is the most
+security-relevant rule this command states and the one the framework cannot
+guarantee alone: a feature route must resolve authorization before reaching the
+idempotency path. BACKEND-33/36 must do it, and a reviewer must check it.
+
+**No HTTP adapter exists.** There is no route reading `Idempotency-Key`, because
+there is no protected product route to attach it to. The header contract and the
+key validator exist; wiring them is the first feature command's work.
+
+**Only single-transaction operations are covered.** Plan change and OTP delivery
+call external providers and are catalogued as PLANNED.
