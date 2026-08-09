@@ -99,6 +99,27 @@ branded type at all. Extraction must decide:
 
 ---
 
+## OD-008 — Location of the backend architecture documents
+
+**Needs:** a decision once BACKEND-02 settles how the two repositories share code.
+**Raised by:** BACKEND-01.
+
+BACKEND-00 created these documents in the frontend repository. BACKEND-01 then
+established the backend as a **separate repository** at `Desktop/lagda-backend`,
+so the architecture documents and the code they govern now live apart. A
+developer cloning only the backend does not get them; the backend README links to
+them instead.
+
+Options are to move them to the backend repository, keep them here and link, or
+publish them alongside `@lagda/contracts`. The right answer depends on OD-005,
+so it is deliberately not decided now — and duplicating them into both
+repositories is the one option to avoid, since drift between two copies of the
+rules is worse than a link.
+
+**Blocks:** nothing. **Decide with:** OD-005, in BACKEND-02.
+
+---
+
 ## OD-007 — Runtime schema library
 
 **Needs:** decision during BACKEND-02/03.

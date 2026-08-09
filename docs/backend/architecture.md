@@ -40,6 +40,21 @@ roles where useful.
 persistence models. The separation is enforced by package boundaries, not by
 convention.
 
+### Repository topology
+
+The backend is a **separate repository**, created by BACKEND-01 at
+`Desktop/lagda-backend`, alongside this frontend repository at `Desktop/Lagda`.
+
+Two facts decided it. This repository is a single package with no `workspaces`
+field, so hosting backend packages here would mean converting a working Vite
+application into a monorepo root — a large structural change to a system with a
+passing test suite and CI. And this repository's CI pins **Node 22** while the
+backend requires **Node 24**: a direct conflict inside one repository, a
+non-issue across two.
+
+The cost is that these architecture documents and the code they govern live in
+different repositories. That is tracked as **OD-008** rather than left implicit.
+
 ### Package structure
 
 ```
@@ -54,8 +69,11 @@ lagda-backend/
     api/          HTTP layer
     worker/       asynchronous job consumers
   infra/
-  docs/
+  tests/architecture/
 ```
+
+All eight exist and compile. Every one is empty by design — BACKEND-01 built the
+boundaries, not the behaviour.
 
 New packages need genuine justification. Dozens of tiny packages is its own
 failure mode.
@@ -348,15 +366,23 @@ Requirement-based, never scheduled or assumed. Any one justifies the work:
 
 Honest separation of what executes from what is written down.
 
+Authoritative detail is in [`ENFORCEMENT_MATRIX.md`](./ENFORCEMENT_MATRIX.md).
+Summary after BACKEND-01:
+
 | Rule | Enforcement today |
 |---|---|
-| INV-001 no PDF imports outside sealing | **ESLint** — `no-restricted-imports` in `eslint.config.js`, active now |
-| INV-009 no eNotary backend | Documentation + existing frontend disclosure tests |
-| All other invariants | **Documentation only** — no backend repository exists yet |
+| INV-001 no PDF imports outside sealing | **ENFORCED** — ESLint, in both repositories |
+| INV-005 `core` free of infrastructure | **ENFORCED** — ESLint (backend) |
+| INV-006 no frontend source dependency | **ENFORCED** — architecture test (backend) |
+| INV-020 no dependency cycles; graph declarations agree | **ENFORCED** — architecture test (backend) |
+| INV-007 contracts originate from `@lagda/contracts` | **Partially** — infrastructure barred from `contracts`; origination needs BACKEND-02 |
+| INV-009 no eNotary backend | Documentation + frontend disclosure tests |
+| All other invariants | **Documentation only** |
 
-Every remaining invariant becomes executable as the packages it governs are
-created. BACKEND-01 owns the boundary lint rules and package manifests;
-BACKEND-02 owns contract extraction and the F-1 identifier decision.
+Each was verified by deliberately violating it, including the negative case that
+`packages/sealing` may still import a PDF library. Remaining invariants become
+executable as the packages they govern gain behaviour; BACKEND-02 owns contract
+extraction and the F-1 identifier decision.
 
 ---
 
