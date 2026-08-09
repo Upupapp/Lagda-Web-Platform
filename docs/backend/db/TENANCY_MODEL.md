@@ -1,0 +1,67 @@
+# Tenancy Model
+
+**Workspace is LAGDA's tenant boundary.** Every application resource is global,
+user-scoped, or workspace-scoped — and which one is a decision recorded here, not
+inferred later.
+
+## Classification of current tables
+
+| Table | Class | `workspace_id` | Tenant unique key | Tenant FK | Tenant index | RLS | Repository scoped |
+|---|---|---|---|---|---|---|---|
+| `workspaces` | WORKSPACE_SCOPED (is the scope) | PK | — | — | PK | **yes** | yes |
+| `workspace_memberships` | WORKSPACE_SCOPED | yes | `(workspace_id, member_id)`, `(workspace_id, user_id)` | → `workspaces` RESTRICT | `(workspace_id, created_at DESC)` | **yes** | yes |
+| `kysely_migration` / `_lock` | SYSTEM_INTERNAL | n/a | — | — | — | no | n/a |
+
+**Counts.** WORKSPACE_SCOPED 2 · SYSTEM_INTERNAL 2 · GLOBAL 0 · USER_SCOPED 0 ·
+REQUIRES_REVIEW 0.
+
+No table is unclassified.
+
+## Classification for tables not yet created
+
+Recorded so the decision is not made accidentally by whoever writes the migration.
+
+**WORKSPACE_SCOPED:** invitations · contacts · documents · document versions and
+artifacts · signing requests · recipients · templates · evidence · webhooks ·
+API keys · in-app workspace notifications · reports · usage records.
+
+**GLOBAL / USER_SCOPED:** user accounts · sessions · MFA configuration · password
+credentials · account-security notifications.
+
+Membership is the **edge** between them: a global user related to one workspace.
+The membership row is workspace-scoped; the user row is not.
+
+**Nullable `workspace_id` is prohibited** as a way to mix global and tenant rows
+in one table. It forces policies like `workspace_id = current OR workspace_id IS
+NULL`, which are easy to get subtly wrong. Separate the resource types instead.
+
+## Rules
+
+1. A workspace-owned table carries `workspace_id` **directly**. Ownership is
+   never derived through a chain of joins — repositories scope on it, indexes
+   lead with it, RLS reads it.
+2. `workspace_id` is **immutable**. There is no generic reassignment, and the RLS
+   `WITH CHECK` rejects an update that would move a row to another workspace.
+3. Relationships between workspace-owned records preserve tenant identity:
+   `UNIQUE (workspace_id, id)` on the parent, `FOREIGN KEY (workspace_id,
+   parent_id)` on the child.
+4. Uniqueness is per workspace unless a value is genuinely global.
+5. Indexes lead with `workspace_id` where queries filter by tenant first.
+6. Every workspace-owned repository method requires workspace scope. No optional
+   tenant parameter, no `skipTenantCheck`.
+7. A resource in another workspace is **not found**, never "forbidden" — the
+   difference would confirm it exists.
+
+## Adding a workspace-owned table
+
+Required, not optional:
+
+- [ ] Add it to the table above.
+- [ ] `workspace_id` column, `NOT NULL`.
+- [ ] `UNIQUE (workspace_id, id)` if anything will reference it.
+- [ ] Compound FK to any workspace-owned parent.
+- [ ] Index leading with `workspace_id`.
+- [ ] `ENABLE` + `FORCE ROW LEVEL SECURITY`, and the `tenant_isolation` policy.
+- [ ] `GRANT` to `lagda_app`.
+- [ ] Repository methods take workspace scope **and** the transaction.
+- [ ] Cross-tenant tests, added to `../security/TENANCY_TEST_MATRIX.md`.

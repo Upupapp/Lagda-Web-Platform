@@ -114,7 +114,22 @@ production otherwise.
 
 ---
 
-## OD-019 — Row Level Security timing
+## OD-019 — Row Level Security — **RESOLVED**
+
+**Resolved by:** BACKEND-07. **Decision:** IMPLEMENTED.
+**Recorded in:** `adr/ADR-004-workspace-row-level-security.md`.
+
+This **reverses BACKEND-06's deferral**. Its three objections were all cost
+rather than blockers: the role split is inside BACKEND-07's scope, the pooling
+hazard is manageable because `SET LOCAL` is issued in exactly one place and is
+directly testable, and "only two tables" argues for doing it now, since the cost
+is mostly fixed and retrofitting across twenty is far worse.
+
+Repository scoping remains mandatory. RLS is defence in depth.
+
+---
+
+## OD-019-original — Row Level Security timing (superseded)
 
 **Needs:** a decision after the schema grows. **Raised by:** BACKEND-06.
 

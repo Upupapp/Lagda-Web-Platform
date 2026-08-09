@@ -11,9 +11,9 @@ Every port below has a named consumer except one, which is called out.
 | `Clock` | The only source of "now" | `CreateWorkspace` | trivial system adapter (BACKEND-11) | n/a | no |
 | `WorkspaceIdGenerator` | New workspace identity | `CreateWorkspace` | BACKEND-06 | n/a | no |
 | `WorkspaceMemberIdGenerator` | New membership identity | `CreateWorkspace` | BACKEND-06 | n/a | no |
-| `TransactionManager` | Group writes atomically | `CreateWorkspace` | BACKEND-08 | n/a | yes |
-| `WorkspaceRepository` | Workspace persistence | `CreateWorkspace` | BACKEND-08 | **is** the scope | writes |
-| `WorkspaceMembershipRepository` | Membership persistence | `CreateWorkspace`, `GetWorkspaceMember` | BACKEND-08 | **scoped** | writes |
+| `TransactionManager` | Group writes atomically **and establish tenant context** | `CreateWorkspace`, `GetWorkspaceMember` | BACKEND-06 ✅ | `runForWorkspace` / `runGlobal` | yes |
+| `WorkspaceRepository` | Workspace persistence | `CreateWorkspace` | BACKEND-06 ✅ | **is** the scope | reads + writes |
+| `WorkspaceMembershipRepository` | Membership persistence | `CreateWorkspace`, `GetWorkspaceMember` | BACKEND-06 ✅ | **scoped, required** | reads + writes |
 | `DocumentSealer` | Document finalization seam | **none yet** | `@lagda/sealing` (BACKEND-09) | workspace in request | no |
 
 ## Why separate ID generators
@@ -25,6 +25,26 @@ Not one `generateId(): string`. A single generator returning a bare string hands
 `WorkspaceRepository.findById(workspaceId)` takes no extra scope — a workspace *is* the scope, and a redundant parameter would make the rule look ceremonial.
 
 `WorkspaceMembershipRepository` is scoped by construction. There is deliberately **no** `findByMemberId(memberId)`: such a method would resolve a member from any workspace, and a caller who forgot to check ownership would read across tenants silently. Absence returns `null`, so a membership in another workspace is indistinguishable from one that does not exist.
+
+## Reads take the transaction too
+
+Every workspace-owned method takes the transaction context — **reads included**,
+which looks redundant until you know why. RLS tenant context is transaction-local
+(`SET LOCAL`), so a read issued on a pooled connection carries no context and,
+because the policy fails closed, returns nothing.
+
+Found by a test that expected a workspace to see its own members and got an empty
+list. See ADR-004.
+
+## Transaction scope — two explicit methods
+
+```ts
+runForWorkspace(workspaceId, op)   // ordinary path
+runGlobal(op)                      // user accounts, sessions, system records
+```
+
+Never `run(workspaceId?)`. With an optional workspace, forgetting the argument
+means unrestricted access — the most dangerous possible default.
 
 ## Transaction style — one, chosen
 

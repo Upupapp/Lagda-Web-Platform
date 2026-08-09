@@ -64,6 +64,42 @@ allowed location too would push PDF work back out of the seam.
 
 
 
+
+## Workspace tenancy (BACKEND-07)
+
+| Invariant | Rule | Enforcement | Tool | Completed by |
+|---|---|---|---|---|
+| **INV-054** | Repository methods require workspace scope + transaction | **ENFORCED** — no unscoped signature exists; reads take the transaction | Type system + RLS | BACKEND-07 |
+| **INV-055** | Tenant context transaction-local, one place | **ENFORCED** — leak tested across commit, rollback, and 10 alternating transactions | Vitest | BACKEND-07 |
+| **INV-056** | Missing context fails closed | **ENFORCED** | Vitest | BACKEND-07 |
+| **INV-057** | Runtime role cannot bypass RLS | **ENFORCED** — asserted before every policy test | Vitest | BACKEND-07 |
+| **INV-058** | RLS does not replace repository predicates | **ENFORCED** — both layers tested independently | Vitest | BACKEND-07 |
+| **INV-059** | `workspace_id` immutable | **ENFORCED** — `WITH CHECK` rejects the move | Vitest | BACKEND-07 |
+| **INV-060** | Cross-tenant lookup indistinguishable from absent | **ENFORCED** | Vitest | BACKEND-05/07 |
+| **INV-061** | New tenant tables update model + matrix | Process | Review | — |
+| **INV-047** | Tenant integrity at DB level | **PARTIALLY ENFORCED** — compound-key target exists; no referencing table yet, so the cross-tenant relationship attack is PLANNED not tested | Schema | BACKEND-08 |
+
+### Probes run as the RUNTIME role against real PostgreSQL
+
+| Probe | Expected | Result |
+|---|---|---|
+| Runtime role superuser / BYPASSRLS | both false | both false |
+| Runtime role owns tenant tables | no | no |
+| `FORCE ROW LEVEL SECURITY` | enabled | enabled |
+| Read own workspace | visible | visible |
+| Read other workspace by ID | null | null |
+| Query with **no predicate at all** | only own workspace | only own workspace |
+| Insert row for another workspace | rejected | RLS violation |
+| Move own row to another workspace | rejected | RLS violation |
+| Update another workspace's row | 0 rows | 0 rows |
+| Delete another workspace's row | 0 rows, row survives | 0 rows, survived |
+| Read with NO tenant context | 0 rows | 0 rows |
+| Insert with NO tenant context | rejected | rejected |
+| B transaction then A transaction | no leak | no leak |
+| Rolled-back B then global | no leak | no leak |
+| 10 alternating A/B transactions | no leak | no leak |
+| Membership FK to non-existent workspace | rejected | rejected |
+
 ## Persistence (BACKEND-06)
 
 | Invariant | Rule | Enforcement | Tool | Completed by |

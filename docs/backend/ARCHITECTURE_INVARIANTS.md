@@ -78,6 +78,14 @@ generic rule set.
 | **INV-051** | SQL values are always parameterized; dynamic identifiers come from code-level whitelists. | The shortest path from a query parameter to SQL injection. | Documented → review |
 | **INV-052** | Database integration tests use real PostgreSQL, and must not mutate schema. | SQLite would not exercise timestamptz, compound constraints or SQLSTATE. TRUNCATE clears rows but not DDL, so a schema-mutating test leaks a broken schema into later runs. | **ENFORCED** — real PostgreSQL in CI |
 | **INV-053** | Database error classification uses SQLSTATE, never message text. | `message.includes("duplicate key")` breaks on an upgrade or a non-English locale, silently. | **ENFORCED** — SQLSTATE helpers, tested |
+| **INV-054** | Every workspace-owned repository method requires workspace scope AND the transaction context. No optional tenant parameter, no `skipTenantCheck`, no bypass flag. | Optional tenancy defeats the invariant, and a bypass flag becomes the security trap everyone reaches for. Reads take the transaction because RLS context is transaction-local. | **ENFORCED** — port shape + RLS |
+| **INV-055** | Tenant context is transaction-local (`SET LOCAL`), established in exactly one place, and never session-level. | A session-level setting rides a pooled connection into the next request — a silent, intermittent, load-dependent cross-tenant read. | **ENFORCED** — leak tests incl. after rollback |
+| **INV-056** | Missing tenant context fails CLOSED: no rows, not all rows. | If absent context meant unrestricted, every bug that loses context becomes a full cross-tenant read. | **ENFORCED** — tested |
+| **INV-057** | The runtime database role owns no tenant tables and lacks `BYPASSRLS`; tenant tables use `FORCE ROW LEVEL SECURITY`. | An owner bypasses RLS unless forced. Testing as a superuser gives false confidence while production leaks. | **ENFORCED** — asserted before every RLS test |
+| **INV-058** | RLS is defence in depth and never replaces explicit repository predicates. | A query relying on an invisible policy is one nobody can review by reading it. | **ENFORCED** — both layers tested separately |
+| **INV-059** | `workspace_id` is immutable for tenant-owned resources; there is no generic reassignment. | Moving a row between tenants is a privileged audited operation, not an ordinary update. | **ENFORCED** — RLS `WITH CHECK` rejects it |
+| **INV-060** | A cross-tenant lookup is indistinguishable from an absent resource. | Any difference confirms the resource exists elsewhere. | **ENFORCED** — application + DB |
+| **INV-061** | Adding a workspace-owned table requires updating TENANCY_MODEL.md and TENANCY_TEST_MATRIX.md, with RLS, compound FK, tenant index and cross-tenant tests. | Tenancy applied to some tables and forgotten on others is the realistic failure mode. | Process → review |
 
 ## Rules for future `BACKEND-XX` commands
 
