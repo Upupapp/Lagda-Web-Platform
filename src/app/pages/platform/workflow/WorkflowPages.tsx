@@ -19,9 +19,8 @@ import { useConfirm } from "../../../components/platform/ConfirmDialog";
 import { usePlatform } from "../../../context/PlatformContext";
 import { usePageMeta } from "../../../hooks/usePageMeta";
 import { workflowService } from "../../../services/mock/workflow.service";
-import type { WorkflowOverviewSummary } from "../../../services/mock/workflow.service";
 import type {
-  WorkflowTemplate, WorkflowRun, TemplateQuery, RunQuery,
+  WorkflowRun, TemplateQuery, RunQuery,
   WorkflowTemplateId, WorkflowRunId, WorkflowTemplateStatus, WorkflowCategory,
 } from "../../../models/workflow";
 import {
@@ -34,6 +33,8 @@ import {
   WorkflowStageColumn, WorkflowConceptNote, WorkflowDemoNote, RunStatusBadge,
   ParticipantRow,
 } from "../../../components/workflow/WorkflowKit";
+import { useAsyncData } from "../../../hooks/useAsyncData";
+import { AsyncBoundary, RetryPanel, SkeletonCard, SkeletonCardGrid, SkeletonStatRow } from "../../../components/platform/AsyncBoundary";
 
 const GF = { fontFamily: "'Geist', sans-serif" };
 const GM = { fontFamily: "'Geist Mono', monospace" };
@@ -107,13 +108,12 @@ function CreateWorkflowLink() {
   );
 }
 
-function Loading({ label }: { label: string }) {
-  return (
-    <p role="status" aria-label={label} style={{ ...GF, fontSize: 13, color: SLATE, padding: "24px 0" }}>
-      {label}
-    </p>
-  );
-}
+// Removed from view but not from the accessibility tree — the skeletons beside
+// it are aria-hidden, so this is what announces that something is loading.
+const SR_ONLY: React.CSSProperties = {
+  position: "absolute", width: 1, height: 1, padding: 0, margin: -1,
+  overflow: "hidden", clip: "rect(0 0 0 0)", whiteSpace: "nowrap", border: 0,
+};
 
 // ── Overview ──────────────────────────────────────────────────────────────────
 
@@ -121,20 +121,24 @@ export function WorkflowOverviewPage() {
   usePageMeta();
   const { currentWorkspace } = usePlatform();
   const wsId = currentWorkspace?.id ?? WS_FALLBACK;
-  const [summary, setSummary] = useState<WorkflowOverviewSummary | null>(null);
-
-  useEffect(() => {
-    let cancelled = false;
-    void workflowService.getOverview(wsId).then(s => { if (!cancelled) setSummary(s); });
-    return () => { cancelled = true; };
-  }, [wsId]);
+  const { status, data: summary, retry } = useAsyncData(
+    () => workflowService.getOverview(wsId),
+    [wsId],
+    "workflow overview",
+  );
 
   return (
     <WorkflowShell actions={<CreateWorkflowLink />}>
       <WorkflowDemoNote />
       <WorkflowConceptNote />
 
-      {!summary ? <Loading label="Loading workflow overview…" /> : (
+      <AsyncBoundary
+        status={status}
+        what="the workflow overview"
+        onRetry={retry}
+        skeleton={<SkeletonStatRow />}
+      >
+        {summary && (
         <>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 12 }}>
             <Stat label="Workflows" value={summary.templateCount} to="/app/workflow/templates" />
@@ -167,7 +171,8 @@ export function WorkflowOverviewPage() {
             )}
           </section>
         </>
-      )}
+        )}
+      </AsyncBoundary>
     </WorkflowShell>
   );
 }
@@ -193,7 +198,6 @@ export function WorkflowTemplatesPage() {
   const { currentWorkspace } = usePlatform();
   const wsId = currentWorkspace?.id ?? WS_FALLBACK;
   const [params, setParams] = useSearchParams();
-  const [templates, setTemplates] = useState<WorkflowTemplate[] | null>(null);
 
   const query: TemplateQuery = useMemo(() => ({
     ...DEFAULT_TEMPLATE_QUERY,
@@ -202,12 +206,11 @@ export function WorkflowTemplatesPage() {
     category: (params.get("category") as WorkflowCategory | "all") ?? "all",
   }), [params]);
 
-  useEffect(() => {
-    let cancelled = false;
-    setTemplates(null);
-    void workflowService.listTemplates(wsId, query).then(t => { if (!cancelled) setTemplates(t); });
-    return () => { cancelled = true; };
-  }, [wsId, query]);
+  const { status, data: templates, retry } = useAsyncData(
+    () => workflowService.listTemplates(wsId, query),
+    [wsId, query],
+    "workflows",
+  );
 
   const setParam = useCallback((key: string, value: string) => {
     const next = new URLSearchParams(params);
@@ -248,7 +251,8 @@ export function WorkflowTemplatesPage() {
         label="Active workflow filters"
       />
 
-      {!templates ? <Loading label="Loading workflows…" />
+      <AsyncBoundary status={status} what="your workflows" onRetry={retry} skeleton={<SkeletonCardGrid count={6} />}>
+      {!templates ? null
         : templates.length === 0 ? (
           <WorkflowEmptyState
             title={chips.length > 0 ? "No workflows match these filters." : "No workflows yet."}
@@ -262,6 +266,7 @@ export function WorkflowTemplatesPage() {
             {templates.map(t => <WorkflowTemplateCard key={t.id} template={t} />)}
           </div>
         )}
+      </AsyncBoundary>
     </WorkflowShell>
   );
 }
@@ -290,7 +295,6 @@ function RunsList({ scope }: { scope: "active" | "completed" }) {
   const { currentWorkspace } = usePlatform();
   const wsId = currentWorkspace?.id ?? WS_FALLBACK;
   const [params, setParams] = useSearchParams();
-  const [runs, setRuns] = useState<WorkflowRun[] | null>(null);
 
   const query: RunQuery = useMemo(() => ({
     ...DEFAULT_RUN_QUERY,
@@ -298,12 +302,11 @@ function RunsList({ scope }: { scope: "active" | "completed" }) {
     status: (params.get("status") as RunQuery["status"]) ?? "all",
   }), [params]);
 
-  useEffect(() => {
-    let cancelled = false;
-    setRuns(null);
-    void workflowService.listRuns(wsId, scope, query).then(r => { if (!cancelled) setRuns(r); });
-    return () => { cancelled = true; };
-  }, [wsId, scope, query]);
+  const { status, data: runs, retry } = useAsyncData(
+    () => workflowService.listRuns(wsId, scope, query),
+    [wsId, scope, query],
+    scope === "active" ? "active workflow runs" : "completed workflow runs",
+  );
 
   const setParam = (key: string, value: string) => {
     const next = new URLSearchParams(params);
@@ -353,7 +356,13 @@ function RunsList({ scope }: { scope: "active" | "completed" }) {
         label="Active run filters"
       />
 
-      {!runs ? <Loading label="Loading workflow runs…" />
+      <AsyncBoundary
+        status={status}
+        what={scope === "active" ? "your active runs" : "your completed runs"}
+        onRetry={retry}
+        skeleton={<SkeletonCardGrid count={4} minWidth={320} />}
+      >
+      {!runs ? null
         : runs.length === 0 ? (
           <WorkflowEmptyState
             title={chips.length > 0 ? "No runs match these filters." : empty.title}
@@ -365,6 +374,7 @@ function RunsList({ scope }: { scope: "active" | "completed" }) {
             {runs.map(r => <WorkflowRunCard key={r.id} run={r} />)}
           </div>
         )}
+      </AsyncBoundary>
     </WorkflowShell>
   );
 }
@@ -380,21 +390,29 @@ export function WorkflowRunDetailPage() {
   const navigate = useNavigate();
   const { user, hasPermission } = usePlatform();
   const { confirm, confirmDialog } = useConfirm();
-  const [run, setRun] = useState<WorkflowRun | null>(null);
-  const [notFound, setNotFound] = useState(false);
   const [tab, setTab] = useState<"board" | "documents" | "participants" | "activity">("board");
+
+  const { status, data: loaded, retry } = useAsyncData(
+    () => workflowService.getRun(workflowRunId as WorkflowRunId),
+    [workflowRunId],
+    "workflow run",
+  );
+  // Local copy so the cancel and reminder actions can update the view without
+  // re-reading. Reset whenever a fresh load lands.
+  const [run, setRun] = useState<WorkflowRun | null>(null);
+  useEffect(() => { setRun(loaded); }, [loaded]);
+  const notFound = status === "ready" && loaded === null;
 
   const canManage = hasPermission("manage_workflow");
 
-  useEffect(() => {
-    if (!workflowRunId) return;
-    let cancelled = false;
-    void workflowService.getRun(workflowRunId as WorkflowRunId).then(r => {
-      if (cancelled) return;
-      if (!r) setNotFound(true); else setRun(r);
-    });
-    return () => { cancelled = true; };
-  }, [workflowRunId]);
+  if (status === "full-error") {
+    return (
+      <AppContent>
+        <PageHeader title="Workflow run" />
+        <RetryPanel what="this workflow run" onRetry={retry} />
+      </AppContent>
+    );
+  }
 
   if (notFound) {
     return (
@@ -410,7 +428,13 @@ export function WorkflowRunDetailPage() {
   }
 
   if (!run) {
-    return <AppContent><PageHeader title="Workflow run" /><Loading label="Loading workflow run…" /></AppContent>;
+    return (
+      <AppContent>
+        <PageHeader title="Workflow run" />
+        <p role="status" style={SR_ONLY}>Loading the workflow run…</p>
+        <SkeletonCard lines={5} />
+      </AppContent>
+    );
   }
 
   const progress = computeRunProgress(run);
@@ -577,18 +601,21 @@ const secondaryBtn: React.CSSProperties = {
 export function WorkflowTemplateDetailPage() {
   usePageMeta();
   const { workflowTemplateId } = useParams<{ workflowTemplateId: string }>();
-  const [template, setTemplate] = useState<WorkflowTemplate | null>(null);
-  const [notFound, setNotFound] = useState(false);
+  const { status, data: template, retry } = useAsyncData(
+    () => workflowService.getTemplate(workflowTemplateId as WorkflowTemplateId),
+    [workflowTemplateId],
+    "workflow",
+  );
+  const notFound = status === "ready" && template === null;
 
-  useEffect(() => {
-    if (!workflowTemplateId) return;
-    let cancelled = false;
-    void workflowService.getTemplate(workflowTemplateId as WorkflowTemplateId).then(t => {
-      if (cancelled) return;
-      if (!t) setNotFound(true); else setTemplate(t);
-    });
-    return () => { cancelled = true; };
-  }, [workflowTemplateId]);
+  if (status === "full-error") {
+    return (
+      <AppContent>
+        <PageHeader title="Workflow" />
+        <RetryPanel what="this workflow" onRetry={retry} />
+      </AppContent>
+    );
+  }
 
   if (notFound) {
     return (
@@ -603,7 +630,13 @@ export function WorkflowTemplateDetailPage() {
     );
   }
   if (!template) {
-    return <AppContent><PageHeader title="Workflow" /><Loading label="Loading workflow…" /></AppContent>;
+    return (
+      <AppContent>
+        <PageHeader title="Workflow" />
+        <p role="status" style={SR_ONLY}>Loading the workflow…</p>
+        <SkeletonCard lines={5} />
+      </AppContent>
+    );
   }
 
   return (

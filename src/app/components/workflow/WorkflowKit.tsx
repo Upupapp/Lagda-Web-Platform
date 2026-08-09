@@ -12,7 +12,7 @@ import type { ReactNode } from "react";
 import { Link } from "react-router";
 import {
   CheckCircle2, Circle, Clock, AlertTriangle, PauseCircle, XCircle,
-  FileText, Users, PenLine, ShieldCheck, Bell, Archive, ClipboardCheck,
+  FileText, PenLine, ShieldCheck, Bell, Archive, ClipboardCheck,
 } from "lucide-react";
 
 import type {
