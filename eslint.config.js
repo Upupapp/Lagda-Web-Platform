@@ -178,6 +178,39 @@ export default tseslint.config(
     },
   },
 
+  // ── Guardrail: PDF work is server-side, behind the sealing boundary ─────────
+  // Established by BACKEND-00 (INV-001). Two separate decisions land on the same
+  // rule. The handoff already requires every PDF operation to be server-side, so
+  // a PDF library in this repository would be a defect on its own. And in the
+  // backend, all PDF work is confined to `packages/sealing` — the seam that lets
+  // certificate-backed signing move to a dedicated service later without
+  // touching the rest of the application.
+  //
+  // No PDF dependency exists today, so this rule passes trivially. That is the
+  // point: it exists to stop the first violation, not to clean up an existing
+  // one. It is written here rather than left to the backend repository because
+  // an unenforced boundary is how `RouteMeta.status` drifted.
+  {
+    files: ["src/**/*.{ts,tsx}"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          paths: [
+            "pdf-lib", "pdfkit", "jspdf", "pdfmake", "hummus", "hummus-recipe",
+            "@pdf-lib/fontkit", "pdf-parse", "node-signpdf",
+          ].map(name => ({
+            name,
+            message:
+              `PDF libraries are forbidden in the frontend. All PDF operations are ` +
+              `server-side, and in the backend they live only in packages/sealing ` +
+              `(INV-001). See docs/backend/ARCHITECTURE_INVARIANTS.md.`,
+          })),
+        },
+      ],
+    },
+  },
+
   // ── Node-side configuration files ──────────────────────────────────────────
   {
     files: ["*.config.{ts,js,mjs}", "vite.config.ts", "vitest.config.ts", "playwright.config.ts"],
