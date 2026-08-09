@@ -509,3 +509,39 @@ Open: whether to serve it in production at all, and if so whether behind
 authentication. A public document enumerates every endpoint and field name, which
 is a reconnaissance aid; an internal one still needs an access decision. Deferring
 costs nothing because the document is generated from route schemas on demand.
+
+## OD-030 - Observability vendors are processors, and logs are in privacy scope
+
+**Raised by:** BACKEND-12. **Needs:** the cross-border data decision (OD-001), then BACKEND-66.
+
+Operational logs contain `userId`, `workspaceId` and - in security flows - IP
+addresses. That makes any log aggregator, APM or error-tracking vendor a
+**processor of personal data**, in scope for RA 10173 alongside the database.
+
+No vendor is selected. The baseline is provider-neutral JSON on stdout, and
+nothing in the backend requires a vendor to function.
+
+**Open:** which vendors, in which region, under what subprocessor terms. Logs
+must not be treated as outside privacy scope because they are "just diagnostics".
+
+## OD-031 - Metrics exporter and scrape mechanism
+
+**Raised by:** BACKEND-12. **Needs:** BACKEND-66.
+
+Instrumentation and a typed catalog exist; nothing collects them. The port has
+three methods and no vendor type, so an implementation is a small adapter.
+
+**Open:** Prometheus scrape versus push, OpenTelemetry, or a vendor SDK; whether
+a `/metrics` endpoint is exposed and how it is protected; histogram buckets,
+which should come from measured traffic rather than a guess.
+
+## OD-032 - Retention for logs, security events, metrics and traces
+
+**Raised by:** BACKEND-12. **Needs:** BACKEND-55 (privacy) and BACKEND-66.
+
+Four separate durations, and all four are separate from document and evidence
+retention. Nothing is hardcoded.
+
+Security events plausibly need longer retention and tighter access than ordinary
+operational logs. Today they share one pipeline; whether they should is part of
+this decision.

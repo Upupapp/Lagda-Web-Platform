@@ -353,3 +353,39 @@ harness, which is BACKEND-12's to build.
 count test compares registered routes to declared response schemas in each route
 module, so a new route without a schema fails. It cannot enforce that the schema
 is *correct*.
+
+
+## BACKEND-12 - Observability
+
+| Rule | Status | Mechanism |
+|---|---|---|
+| No request-body logging | **ENFORCED** | No body serializer exists; capture test |
+| No response-body logging | **ENFORCED** | Same |
+| Secret redaction at any depth | **ENFORCED** | Deep walk in `formatters.log`; 20 capture tests. Probed: disabling it fails 7 |
+| Secrets scrubbed from error MESSAGES | **ENFORCED** | `hooks.logMethod` + err serializer. Probed |
+| Document/PDF content never logged | **ENFORCED** | Binary becomes a size marker; synthetic-marker test |
+| Redaction does not over-match diagnostics | **ENFORCED** | Nine field names asserted to survive |
+| No high-cardinality metric labels | **ENFORCED** | Catalog audit test. Probed by adding `workspaceId` |
+| No dynamic metric names | **ENFORCED** | Closed union - the compiler refuses |
+| `core`/`application` provider-independent | **ENFORCED** | Architecture test; no use-case signature takes a logger |
+| Observability context is not authorization | **ENFORCED** | No `@lagda/db` file reads it; consumers an exact named set |
+| Context does not leak across concurrent requests | **ENFORCED** | Three overlapping executions with different delays |
+| Instrumentation rethrows the original error | **ENFORCED** | Identity assertion. Probed by swallowing it |
+| Logs are not evidence | **ENFORCED ARCHITECTURALLY** | No telemetry table may be created; schema asserted. Feature commands must preserve it |
+| No `console.*` in runtime code | **ENFORCED** | Architecture test across all packages |
+| Structured logs in every process role | **ENFORCED** | Migration runner converted and verified against a live database |
+| Metrics actually collected | **NOT ENFORCED - none are** | INSTRUMENTED_NO_EXPORTER. BACKEND-66 |
+| DB / sealing telemetry | **DOCUMENTED ONLY** | Hooks and catalog defined; nothing wraps a repository or the sealer yet |
+
+### Honest gaps
+
+**No metric is exported.** The catalog and instrumentation exist and are tested
+through an in-memory recorder. Nothing collects them, and the status says so.
+
+**DB and sealing instrumentation are hooks, not wiring.** No repository is
+wrapped and no sealing call exists to wrap. Writing a wrapper for an uncalled
+operation would produce code nothing executes - the failure this repository has
+already shipped once.
+
+**Redaction cost is unmeasured.** The walk is bounded in depth, breadth and
+string length, but its cost per log line under load has not been measured.
