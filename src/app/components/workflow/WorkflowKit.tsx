@@ -215,7 +215,12 @@ export function WorkflowStageColumn({
       aria-label={`Stage ${stage.position}: ${stage.name}. ${STAGE_STATUS_LABELS[stage.status]}.`}
       aria-current={isCurrent ? "step" : undefined}
       style={{
-        width: 268, flexShrink: 0, background: "#FFFFFF",
+        // Fixed 268px meant that on a 320px phone exactly one column fitted the
+        // screen with nothing visible beside it, so a scrollable board read as a
+        // single card and the remaining stages were invisible. Capping at 82vw
+        // leaves the next column peeking, which is the affordance that tells
+        // someone the board scrolls without adding any chrome to say so.
+        width: "min(268px, 82vw)", flexShrink: 0, background: "#FFFFFF",
         border: `1px solid ${isCurrent ? AZURE : BORDER}`,
         boxShadow: isCurrent ? "0 0 0 3px rgba(0,120,212,0.12)" : "none",
         borderRadius: 12, display: "flex", flexDirection: "column",

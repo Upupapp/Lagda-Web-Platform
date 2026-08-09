@@ -26,6 +26,7 @@ import type {
 } from "../../../models/templates";
 import { usePageMeta } from "../../../hooks/usePageMeta";
 import { FilterChips } from "../../../components/platform/FilterChips";
+import { TabStrip } from "../../../components/platform/TabStrip";
 
 // ── Design tokens ─────────────────────────────────────────────────────────────
 const GF    = { fontFamily: "'Geist', sans-serif" };
@@ -333,11 +334,22 @@ function TemplatesInner() {
           </Link>
         </div>
 
-        {/* View tabs */}
-        <div style={{ display: "flex", gap: 2, marginTop: 16, borderBottom: "1px solid #E2E8F0", marginBottom: -1 }}>
+        {/* View tabs.
+            Was a plain flex row with no overflow handling, so at 390px the last
+            three views sat at x 435..690 — off-screen and unreachable, with no
+            way to scroll to them. TabStrip makes the row scrollable, scrolls the
+            active tab into view, and raises the targets to 44px on mobile. */}
+        <TabStrip
+          as="tablist"
+          label="Template views"
+          activeKey={activeView}
+          style={{ gap: 2, marginTop: 16, borderBottom: "1px solid #E2E8F0", marginBottom: -1 }}
+        >
           {TEMPLATE_VIEWS.map(v => (
             <button
               key={v.id}
+              role="tab"
+              aria-selected={activeView === v.id}
               onClick={() => updateQuery({ view: v.id })}
               style={{
                 ...GF,
@@ -355,7 +367,7 @@ function TemplatesInner() {
               {v.label}
             </button>
           ))}
-        </div>
+        </TabStrip>
       </div>
 
       {/* Toolbar */}

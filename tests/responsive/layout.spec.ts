@@ -32,6 +32,13 @@ const ROUTES = [
   { path: "/app/documents", name: "documents", heading: /^Documents$/ },
   { path: "/app/bulk-send", name: "bulk send", heading: /^Bulk Send$/ },
   { path: "/app/reports/preparation", name: "preparation report", heading: /^Bulk Send Preparation$/ },
+  // Workflow is the product's headline capability and its board is the densest
+  // layout in the application, so it is the most likely thing to break on a
+  // phone and the most costly if it does.
+  { path: "/app/workflow", name: "workflow overview", heading: /^Workflow$/ },
+  { path: "/app/workflow/runs/wfr_001", name: "workflow run board", heading: /Northbridge Legal/ },
+  { path: "/app/templates", name: "templates", heading: /^Templates$/ },
+  { path: "/app/contacts", name: "contacts", heading: /^Contacts$/ },
 ] as const;
 
 /** The `@media (max-width: 767px)` boundary in PlatformLayout's own stylesheet. */
@@ -211,6 +218,17 @@ async function scanForHiddenTabbables(page: Page, options: ScanOptions = {}): Pr
 
     for (const el of Array.from(scope.querySelectorAll(CANDIDATES))) {
       if (opts.notWithin?.some((selector) => el.closest(selector))) continue;
+
+      // Skip-link pattern: an in-page anchor parked far off-screen that reveals
+      // itself on focus. It is SUPPOSED to be outside the viewport at rest —
+      // that is the whole technique — so reporting it as clipped would flag
+      // correct accessibility work as a layout defect. Each one's reveal-on-focus
+      // behaviour is asserted separately below.
+      const href = el.getAttribute("href");
+      if (href?.startsWith("#")) {
+        const box = el.getBoundingClientRect();
+        if (box.right < -1000 || box.left > window.innerWidth + 1000) continue;
+      }
       if (!isTabbable(el)) continue;
       candidates += 1;
 
@@ -326,6 +344,26 @@ test.describe("platform shell", () => {
       result.hidden,
       `${result.hidden.length} shell control(s) are hidden at ${width}px:\n${formatViolations(result)}`,
     ).toEqual([]);
+  });
+
+  test("reveals every off-screen in-page skip link when it receives focus", async ({ page }) => {
+    // The scan above skips these; this is what keeps them honest. A skip link
+    // that never becomes visible is worse than none — a keyboard user tabs to a
+    // control they cannot see.
+    const links = page.locator('a[href^="#"]');
+    const count = await links.count();
+    for (let i = 0; i < count; i++) {
+      const link = links.nth(i);
+      const parked = await link.boundingBox();
+      if (!parked || parked.x > -1000) continue; // not the off-screen pattern
+      await link.focus();
+      const revealed = await link.boundingBox();
+      expect(revealed, "skip link vanished on focus").not.toBeNull();
+      expect(
+        revealed!.x,
+        `"${(await link.textContent())?.trim()}" stayed off-screen when focused`,
+      ).toBeGreaterThan(-1000);
+    }
   });
 
   test("reveals the skip link when it receives focus", async ({ page }) => {

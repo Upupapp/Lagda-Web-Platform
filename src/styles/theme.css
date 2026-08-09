@@ -451,3 +451,24 @@
 @media (prefers-reduced-motion: reduce) {
   .lagda-tabstrip { scroll-behavior: auto; }
 }
+
+/* ── Workflow stage board ────────────────────────────────────────────────────
+   The board scrolls horizontally by design — a run can have up to twelve
+   stages and they are ordered, so stacking them would lose the sequence that
+   is the whole point of the view. What it lacked was any signal that it
+   scrolls. The mask fades both edges when there is more board than viewport,
+   and scroll-snap stops a swipe from leaving a stage half shown.
+
+   Columns cap at 82vw (see WorkflowKit), so the next stage always peeks. */
+.wf-board {
+  scroll-snap-type: x proximity;
+  scrollbar-width: thin;
+  -webkit-mask-image: linear-gradient(to right, transparent 0, #000 12px, #000 calc(100% - 12px), transparent 100%);
+  mask-image: linear-gradient(to right, transparent 0, #000 12px, #000 calc(100% - 12px), transparent 100%);
+}
+
+.wf-board > * { scroll-snap-align: start; }
+
+@media (prefers-reduced-motion: reduce) {
+  .wf-board { scroll-behavior: auto; }
+}

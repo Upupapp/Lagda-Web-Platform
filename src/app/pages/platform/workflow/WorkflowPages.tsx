@@ -498,7 +498,7 @@ export function WorkflowRunDetailPage() {
               {/* The order is stated in text, never left to horizontal position alone. */}
               {run.stages.length} stages, in order. {progress.summaryLine}
             </p>
-            <div style={{ display: "flex", gap: 12, overflowX: "auto", paddingBottom: 8 }}>
+            <div className="wf-board" style={{ display: "flex", gap: 12, overflowX: "auto", paddingBottom: 8 }}>
               {run.stages.map(stage => (
                 <WorkflowStageColumn
                   key={stage.id}
@@ -651,7 +651,7 @@ export function WorkflowTemplateDetailPage() {
           <p style={{ ...GF, fontSize: 12.5, color: SLATE, margin: "0 0 10px" }}>
             {template.stages.length} stages, in order. Each run follows this sequence with its own participants.
           </p>
-          <ol style={{ listStyle: "none", margin: 0, padding: 0, display: "flex", gap: 12, overflowX: "auto", paddingBottom: 8 }}>
+          <ol className="wf-board" style={{ listStyle: "none", margin: 0, padding: 0, display: "flex", gap: 12, overflowX: "auto", paddingBottom: 8 }}>
             {template.stages.map(stage => (
               <li key={stage.id} style={{
                 width: 250, flexShrink: 0, background: "#FFFFFF", border: `1px solid ${BORDER}`,
