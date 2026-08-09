@@ -1268,3 +1268,100 @@ Unchanged, and now more visible: sign-in, verification and — implicitly —
 recovery all have UI for an account state the backend cannot produce. §32 asked
 whether account-state restrictions gate reset eligibility. They cannot, because
 no account state exists. Recorded, not invented.
+
+## OD-069 — ESCALATED: no auth route is composed, and it now hides a security guarantee
+
+**Raised by:** BACKEND-20. **Escalated by:** BACKEND-23.
+
+Eleven auth routes now exist across five commands. None is registered in
+`createApp`. Fourteen rate-limit policies are defined and none is attached.
+
+BACKEND-23 makes this qualitatively worse. `registerMfaRoutes` takes
+`authenticatedUser` and `issueSession` as OPTIONS, so "a pre-authentication
+credential cannot resolve a user on the settings routes" is currently a property
+of a test double. The cookie's `Path=/auth` scoping is real and enforced by
+browsers; the route-level refusal is not demonstrated anywhere a request
+actually flows.
+
+**This should be the next composition command.** Everything below it is built.
+
+## OD-081 — MFA key management
+
+**Raised by:** BACKEND-23.
+
+TOTP secrets are encrypted with AES-256-GCM using one key from
+`MFA_SECRET_KEY`, with a version label stored beside each ciphertext.
+
+There is no KMS, no envelope encryption, no automatic rotation and no escrow.
+The version column makes rotation possible without a migration; nothing performs
+one. Consequences:
+
+- the key sits in the application environment, so a host compromise yields both
+  ciphertext and key;
+- losing the key makes every enrolled factor undecryptable, leaving affected
+  users dependent on recovery codes;
+- rotating it needs a re-encryption pass nobody has written.
+
+This was a deliberate choice over two alternatives: storing plaintext (rejected
+outright) and blocking TOTP entirely for want of a KMS (rejected because it would
+have left the product's whole MFA surface unusable). Recorded so the gap is
+visible rather than implied by its absence.
+
+## OD-082 — MFA account recovery when both factors are lost
+
+**Raised by:** BACKEND-23.
+
+A user who loses their authenticator AND their recovery codes is locked out.
+Password reset is deliberately not a bypass (§197 Model A) — if it were, the
+second factor would only ever be as strong as the mailbox.
+
+There is no support-mediated recovery path, because designing one means deciding
+what proof a human operator may accept, and that is a product and legal
+question, not a coding one. Recorded rather than solved by weakening the factor.
+
+BACKEND-59's support tooling is where this belongs.
+
+## OD-083 — Step-up authentication
+
+**Raised by:** BACKEND-23.
+
+`authentication_method` is recorded on the pending authentication, and
+`completeMfaChallenge` reports `PASSWORD_PLUS_TOTP` or
+`PASSWORD_PLUS_RECOVERY_CODE`. That is as far as it goes.
+
+No assurance level is stored on the session and no operation requires recent-MFA
+re-proof, because no product operation asks for one today. Building an AAL
+framework with no consumer is the failure this codebase has already recorded
+under "foundation without callers".
+
+When a sensitive operation genuinely needs it — deleting a workspace, changing
+billing — the pieces are here to extend.
+
+## OD-084 — The `/mfa` challenge route is marked `status: "planned"`
+
+**Raised by:** BACKEND-23.
+
+`routes.ts` marks `/mfa` as `planned` while `/mfa/setup` and `/mfa/recovery` are
+`implemented`, and `MfaChallenge.tsx` exists and works.
+
+The backend now implements the full login challenge, so the route metadata is
+behind reality. Worth correcting — and a reminder of the `RouteMeta.status`
+drift already recorded for the frontend.
+
+## OD-076 — RESOLVED: the `locked` state is now reachable
+
+**Raised by:** BACKEND-21. **Resolved by:** BACKEND-23.
+
+`MfaChallenge.tsx` renders a `locked` outcome, and until now no backend state
+produced one.
+
+It does now: exhausting the five attempts on a ceremony returns
+`MFA_ATTEMPTS_EXHAUSTED` and clears the pre-auth cookie, which is exactly the
+"too many incorrect attempts" state the UI describes.
+
+Note what this is NOT: an account lockout. The ceremony dies, not the account —
+the user signs in again with their password. An indefinite account lock would be
+a denial-of-service anyone could trigger by knowing an email address.
+
+The `locked` state in SIGN-IN and email verification remains unreachable, and
+that part of OD-076 stands.

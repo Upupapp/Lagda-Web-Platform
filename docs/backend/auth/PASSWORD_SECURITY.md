@@ -177,3 +177,16 @@ password the product would have refused to create.
 
 Argon2 runs **outside** the reset transaction — see
 PASSWORD_RECOVERY_ARCHITECTURE.md for why, and what revalidates afterwards.
+
+## Password re-authentication for MFA disable (BACKEND-23)
+
+`disableMfa` verifies the current password through the same `PasswordHasher`
+port, with Argon2 running **outside** the transaction — the same discipline as
+password reset.
+
+A valid session is not sufficient. Removing the second factor is precisely what
+an attacker holding a stolen session wants to do first, and permitting it on the
+session alone would make the control worthless in the case it exists for.
+
+Rate-limited at 5/min per user, matching sign-in: both verify a password, and
+both are worth guessing against.

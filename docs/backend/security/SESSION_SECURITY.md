@@ -182,3 +182,35 @@ there is no session for one to protect.
 
 Proven against real PostgreSQL: a session issued before a reset resolves as
 `rejected` with reason `revoked` afterwards; one issued after is unaffected.
+
+## MFA changes when a session is issued (BACKEND-23)
+
+An account with a verified TOTP factor gets **no session from a correct password
+alone**. `loginUser` returns `mfa-required` — a distinct outcome whose type has
+nowhere to put credentials, so "a session exists before MFA completed" is not a
+state the code can express.
+
+Between the factors the browser holds a **pre-authentication credential**:
+
+| | Session | Pre-auth |
+|---|---|---|
+| Cookie | `lagda_session` | `lagda_pre_auth` |
+| Path | `/` | **`/auth`** |
+| Life | 8 hours | **10 minutes, absolute** |
+| Grants | the application | finishing one MFA ceremony |
+| Storage | digest | digest |
+
+Two names, not one with status-dependent meaning: overloading a single cookie
+pushes "is this browser fully authenticated?" into every middleware that reads
+it.
+
+The `Path=/auth` scoping means browsers **do not transmit** the credential to
+application routes at all — stronger than rejecting it on arrival, because a
+value that never reaches a handler cannot be misread by one.
+
+On success a **fresh** session is issued and the pre-auth credential is consumed
+and cleared. It is never promoted — that would be session fixation with extra
+steps.
+
+Password reset revokes pending authentications as well as sessions: a ceremony
+is a proof of the OLD password.

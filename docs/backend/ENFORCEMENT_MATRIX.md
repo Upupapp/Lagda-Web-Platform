@@ -794,3 +794,58 @@ true regardless of the prefix. Rewritten to assert the actual property.
 cannot match a row while `password_reset_one_active` exists. Kept as defence in
 depth; the test asserts the outcome §72 wants rather than the mechanism, so it
 stays meaningful either way.
+
+## BACKEND-23 — Multi-factor authentication
+
+| Rule | Status | Mechanism |
+|---|---|---|
+| Implemented factor matches the product | **ENFORCED** | Inventory measured from the frontend; closed type + DB CHECK |
+| No raw code persistence | **NOT APPLICABLE** | TOTP codes are computed, never stored |
+| TOTP secret encrypted at rest | **ENFORCED** | AES-256-GCM; row scanned for plaintext; probed (fixed IV) |
+| GCM authentication | **ENFORCED** | Tampered-ciphertext and wrong-key tests |
+| Purpose / subject binding | **ENFORCED** | The ceremony resolves the user; codes checked against that user's factor; cross-user tests |
+| Attempt limit, durable and atomic | **ENFORCED** | PostgreSQL-computed increment; 8 concurrent → exactly 5; probed twice |
+| Exhausted ceremony cannot authenticate | **ENFORCED** | Ceiling in the UPDATE; probed; direct repository test |
+| Replay prevention | **ENFORCED** | Conditional watermark; probed |
+| Malformed submissions cost an attempt | **ENFORCED** | Tested |
+| Narrow skew window | **ENFORCED** | Probed, after the gap was found |
+| One session per ceremony (recovery path) | **ENFORCED** | Conditional consume; probed 3/3 |
+| One session per ceremony (TOTP path) | **DEFENCE IN DEPTH** | Unreachable while the watermark serializes first; kept, and honestly labelled |
+| No full session before MFA | **ENFORCED** | Result type carries no credentials; probed |
+| Fresh session after MFA | **ENFORCED** | Probed |
+| Pre-auth never promoted to a session | **ENFORCED** | Probed |
+| Pre-auth restricted to `/auth` | **ENFORCED** at the cookie | `Path=/auth`; browsers do not transmit it elsewhere |
+| Pre-auth cannot access app routes | **PARTIALLY ENFORCED** | Route-level refusal tested through a test double; not demonstrated in a composed app (OD-069) |
+| MFA enumeration blocked | **ENFORCED** | Three login paths return identical rejections; probed |
+| Enrolment requires proving the factor | **ENFORCED** | Probed |
+| Disable requires the password | **ENFORCED** | Probed |
+| Password reset revokes ceremonies | **ENFORCED** | Probed |
+| Password reset does not disable MFA | **ENFORCED** | Tested |
+| No code / secret / credential in bodies | **ENFORCED** | Response-body tests |
+| No attempt count disclosed | **ENFORCED** | Tested |
+| Replay indistinguishable from a wrong code | **ENFORCED** | Probed, after the test was found to be passing vacuously |
+| Rate limiters BOUND to routes | **NOT ENFORCED** | No auth route is composed — OD-069 |
+| Key management | **PARTIALLY ENFORCED** | One configured key with a version column; no KMS, no rotation, no escrow — OD-081 |
+| OTP delivery | **NOT APPLICABLE** | TOTP delivers nothing |
+| Challenge retention / cleanup | **NOT IMPLEMENTED** | No policy exists — OD-077 |
+
+### Honest gaps
+
+**OD-069 is now the top blocker, and it has changed character.** Eleven auth
+routes across five commands, none composed into `createApp`. Until BACKEND-23
+that meant unbound rate limiters. It now also means the guarantee that a pre-auth
+credential cannot resolve a user is a property of a test double: `authenticatedUser`
+is a route option, and nothing in a running application supplies it.
+
+**Two probes caught nothing, for defensible reasons** — the TOTP-path consume
+guard is unreachable behind the watermark, and the secret box's tag-length guard
+is redundant with GCM itself. Both are recorded as defence in depth rather than
+counted as enforced.
+
+**Four probes caught nothing on their first run and exposed real gaps**, since
+fixed: repository conditions masked by redundant application checks, an untested
+skew window, a route assertion that passed vacuously because its stub returned
+`valid: false` for the replay case, and two concurrency paths no test reached.
+
+**One flaky full-suite run**, not reproduced in four subsequent full runs and
+five focused ones. Test names not captured. Recorded rather than dismissed.

@@ -134,3 +134,27 @@ All three thresholds were chosen rather than sourced, and say so in their
 
 **Not bound to any route.** Neither recovery route is wired into `createApp`.
 See OD-069 — eleven auth policies are now defined and none is attached.
+
+## Multi-factor authentication (BACKEND-23) — IMPLEMENTED, NOT BOUND
+
+| Policy | Scope | Limit | Window | Mode |
+|---|---|---|---|---|
+| `mfa.verify.ip` | IP | 20 | 15 min | fail-closed |
+| `mfa.enroll.user` | user | 5 | 15 min | fail-closed |
+| `mfa.disable.user` | user | 5 | 1 min | fail-closed |
+
+**These are not the brute-force bound.** The real bound on a 6-digit code is the
+**durable per-ceremony attempt counter of 5** (handoff §145), which lives in
+`pending_authentications` and is enforced by an atomic UPDATE. A rate limiter is
+per IP or per account; the attempt counter is per LOGIN CEREMONY, and starting a
+ceremony requires the password — which is what an attacker cannot spread across
+addresses.
+
+`mfa.verify.ip` is therefore volumetric: it bounds someone who has stolen a
+password and is starting ceremony after ceremony for five fresh guesses each.
+
+`mfa.disable.user` matches sign-in (5/min) because each attempt costs an Argon2
+verification and the action removes a security control.
+
+**Not bound to any route.** Fourteen auth policies are now defined and none is
+attached — see OD-069.

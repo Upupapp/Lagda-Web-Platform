@@ -81,3 +81,27 @@ already produces.
 Note the asymmetry: `requested` fires for every call, `challenge_created` only
 when an account resolved. Internal logs may distinguish what the public response
 does not — but only in a store the caller cannot read.
+
+## Multi-factor authentication (BACKEND-23)
+
+| Event | Fields |
+|---|---|
+| `auth.mfa.required` | `requestId`, `userId` |
+| `auth.mfa.verification_succeeded` | `requestId`, `userId`, `pendingId`, `method` |
+| `auth.mfa.verification_failed` | `requestId`, `pendingId`, `attemptNumber` |
+| `auth.mfa.attempts_exhausted` | `requestId`, `pendingId` |
+| `auth.mfa.enabled` / `auth.mfa.disabled` | `requestId`, `userId`, `factorType` |
+| `auth.mfa.recovery_code_used` | `requestId`, `userId`, `remaining` |
+
+**Never recorded, anywhere:** the submitted code, the TOTP secret in any form,
+the provisioning URI, a recovery code, the pre-auth credential, the encryption
+key, or a session credential.
+
+`method` is a closed vocabulary (`PASSWORD_PLUS_TOTP`,
+`PASSWORD_PLUS_RECOVERY_CODE`), safe as a metric label. Ids are safe in logs and
+never in metric labels.
+
+`attemptNumber` is recorded internally and **never returned** — an attempt count
+in a response discloses the security configuration for no product benefit.
+
+These are account-security events. They are **not** eSignature signing evidence.

@@ -81,3 +81,17 @@ this document does not claim otherwise.
 Recipient signing access (BACKEND-34) may need its own transport. It must **not**
 reuse `lagda_session`: an external signer is not a LAGDA account holder, and
 overloading the cookie would hand them a user session.
+
+## The pre-authentication cookie (BACKEND-23)
+
+`lagda_pre_auth` — httpOnly, Secure in production, SameSite per configuration,
+**`Path=/auth`**, Max-Age bounded by the ceremony's remaining life (≤10 minutes).
+
+The narrow Path is the point. It is not merely "rejected elsewhere": the browser
+never sends it to `/documents`, `/workspaces` or `/profile`.
+
+Cleared on success, on attempt exhaustion, and on an expired ceremony — always
+with the same name, path and domain, or the browser silently keeps the original.
+
+No CSRF cookie accompanies it. There is no session for one to protect, and
+minting one would make the pre-auth credential a route to authentication.

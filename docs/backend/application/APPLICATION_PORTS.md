@@ -277,3 +277,25 @@ tenant, and it reads rows rather than listing a bucket.
 - **Write untrusted bytes anywhere but quarantine** (INV-218).
 - **Hold a transaction across transfer, inspection or scanning** (INV-227).
 - **Log document bytes, a malware payload, or a signature name to a client.**
+
+## MFA ports (BACKEND-23)
+
+| Port | Owns | Implemented by |
+|---|---|---|
+| `MfaFactorRepository` | factor lifecycle, replay watermark | `@lagda/db` |
+| `RecoveryCodeRepository` | issue, consume, count, replace | `@lagda/db` |
+| `PendingAuthenticationRepository` | ceremony lifecycle, atomic attempts | `@lagda/db` |
+| `SecretSealer` | seal / open, key version | `@lagda/api` (AES-256-GCM) |
+| `TotpEngine` | generate, provision, verify, shape | `@lagda/api` (`otpauth`) |
+| `RecoveryCodeFactory` | issue a set, digest a submission | `@lagda/api` |
+| `PendingAuthCredentialFactory` | issue, digest | `@lagda/api` |
+
+No port exposes a key. `SecretSealer` publishes `keyVersion` and two functions;
+the key itself never crosses the boundary.
+
+`TotpEngine` keeps RFC arithmetic and the library's types entirely inside
+infrastructure — the application never imports `otpauth`.
+
+**Deliberately no `OtpCodeGenerator` and no `OtpVerifier`.** TOTP issues no code
+and stores no verifier; ports for them would have no implementation and no
+caller.
