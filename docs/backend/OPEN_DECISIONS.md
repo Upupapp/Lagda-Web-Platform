@@ -2529,3 +2529,73 @@ from the immutable snapshot. `title` and `company` are recipient-supplied and
 genuinely unfillable today, so a sender can build a request no signer can
 complete. BACKEND-36 needs either renderers or a product decision to remove the
 types.
+
+## OD-150 - Amendment and reissue after an accepted submission
+
+**Raised by:** BACKEND-36.
+
+`AMEND AFTER SUBMISSION: NOT_IN_PRODUCT`, enforced by a unique constraint and by
+the absence of any update privilege. A signer who mistypes a text field cannot
+correct it; the request must be reissued.
+
+That is the right default - "the signer corrected it" and "somebody changed what
+they signed" are indistinguishable afterwards - but it is a real product
+limitation, and the first support ticket about a typo will surface it.
+
+If correction is needed it must be an explicit workflow with NEW history: a
+superseding submission that references the one it replaces, never an edit. The
+schema is ready for that (values carry a submission id) and the constraint would
+need to move from "one per recipient" to "one ACTIVE per recipient".
+
+## OD-151 - Lock order for submission versus terminal transitions
+
+**Raised by:** BACKEND-36. **Needs:** BACKEND-37.
+
+A submission revalidates request state inside its transaction; a concurrent
+cancellation is a separate write with no shared lock. The window is narrow -
+both are short transactions - but **a submission can commit microseconds before
+a cancellation**, leaving an accepted signing act on a request that then became
+terminal.
+
+The canonical order, to be honoured by BACKEND-37 and BACKEND-46:
+
+```
+signing_requests -> signing_request_recipient_activation
+  -> signing_recipient_progress -> recipient_submissions / idempotency
+```
+
+Outermost is the request, so a terminal transition can exclude a submission in
+flight. Until then BACKEND-37 must handle an accepted submission on a
+terminal request rather than assume it cannot happen.
+
+## OD-152 - DATE_SIGNED rendering timezone
+
+**Raised by:** BACKEND-36. **Needs:** BACKEND-39.
+
+Stored as a UTC instant, which is correct and unambiguous. A field that visually
+shows only a date must render it in SOME zone, and deriving a date from an
+instant is deterministic only once that zone is fixed.
+
+Candidates: the workspace's zone, the recipient's, or UTC. LAGDA is a Philippine
+product, so Asia/Manila is the likely answer - but a document signed at 08:00
+UTC shows a different date in Manila than in UTC, and that difference is visible
+on the page somebody signed. Decide it explicitly, and snapshot the choice
+rather than reading a setting at render time.
+
+## OD-153 - Signature retention and erasure
+
+**Raised by:** BACKEND-36. **Needs:** BACKEND-55.
+
+Signature representations and field values survive ordinary deletion by design -
+no DELETE grant, no cascade from any mutable resource.
+
+That is deliberate and it collides with erasure requests. A signature is
+sensitive personal content AND a legal record, and the two obligations pull in
+opposite directions. Any privileged erasure path must weigh retention against
+deletion rather than treating a signature as ordinary profile data, and it
+should probably be able to remove a representation while keeping the fact that
+one existed.
+
+Also unresolved: whether a workspace admin should ever be able to see a raw
+signature image. Today no endpoint returns one (§177), which is the safe
+default.

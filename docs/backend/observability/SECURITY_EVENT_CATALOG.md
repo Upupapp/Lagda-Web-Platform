@@ -324,3 +324,38 @@ Logging it would add volume for a signer legitimately waiting their turn.
 
 PDF bytes, storage keys, session or CSRF tokens or their digests, recipient name
 or email, document title, field labels, field coordinates, consent text.
+
+## Signature submission (BACKEND-36)
+
+| Event | Meaning | Fields |
+|---|---|---|
+| `signing_submission.accepted` | A recipient's signing act was accepted | `submissionId`, `acceptedFieldCount`, `replayed` |
+| `signing_submission.rejected` | A submission was refused | `result` — a closed set of six |
+
+`accepted` carries a **count**, not the values. It is the operational
+counterpart to `recipient_submissions`, which is the authoritative record.
+
+`replayed` distinguishes a genuine acceptance from an idempotent replay, which
+matters when reading a log after an incident: three lines with `replayed: true`
+are one signature and two lost responses, not three signatures.
+
+`rejected` carries one of `invalid_field`, `not_signable`, `consent_required`,
+`already_submitted`, `idempotency_conflict`, `error`. **Never a field id, never
+a message, never any part of the payload** — a guard asserts the reason function
+contains no interpolation and no `.message`.
+
+### Never in either
+
+Signature bytes, typed signature text, any field value, the digest, the request
+body, recipient name or email, the session credential, the IP.
+
+The reason a text field value is on that list is worth stating: it is a free-text
+box on a legal document and can be a salary, a medical detail or a settlement
+figure. It is classified HIGHLY SENSITIVE precisely so nobody later decides a
+debug log of submitted values would be convenient.
+
+### Not emitted
+
+**`RECIPIENT_SUBMISSION_ACCEPTED` as an `evidence_events` row.** No use case in
+this codebase writes an evidence event, and the first one here would produce a
+trail whose only entries are signature submissions. OD-145.

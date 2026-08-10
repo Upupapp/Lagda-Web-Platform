@@ -151,3 +151,25 @@ error the recipient already received.
 
 Reads are not counted. A polled endpoint that increments a counter measures the
 frontend's poll interval, not anything about signing.
+
+## Signature submission (BACKEND-36)
+
+| Metric | Labels |
+|---|---|
+| `signing_submission_results_total` | `result`, `submissionModel`, `processRole` |
+
+`result` is `accepted` \| `replayed` \| `rejected`. `submissionModel` is one
+value, `atomic`, and it is there so the day a second model exists the series
+splits rather than silently merging.
+
+**Deliberately not labels:** `signingRequestId`, `recipientId`, `submissionId`,
+`fieldId` — one time series per document, per signer or per field, which is a
+metrics bill and a PII incident arriving together. Nor an IP, nor an email.
+
+**Nor the signature digest.** A digest looks like a safe opaque token and is
+not: it is derived from the signature content, it is stable, and a metric label
+is the most widely replicated string store in an observability stack.
+
+**Nor the rejection reason.** The bounded reason is in the log line, which is
+not public. A dashboard breaking down why signers were refused is a dashboard
+nobody meant to build.

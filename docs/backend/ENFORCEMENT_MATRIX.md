@@ -1421,3 +1421,42 @@ missing is a request that exercises them end to end.
 
 The third — evidence wiring — is absent by choice, not omission, and
 CEREMONY_VIEW_EVENT.md gives the argument.
+
+## BACKEND-36 — signature submission
+
+| Rule | Status | Evidence |
+|---|---|---|
+| Field ownership | **ENFORCED** | four-column assignment FK; cross-recipient insert refused with the application bypassed |
+| Cross-request field submission | **ENFORCED BY THE DATABASE** | FK has no referent |
+| Submission idempotency | **ENFORCED** | BACKEND-14 framework; replay, conflict and order-insensitivity all asserted |
+| One final submission per recipient | **ENFORCED** | unique constraint; concurrency test in real PostgreSQL |
+| One value per field | **ENFORCED** | unique constraint |
+| Immutable accepted values | **ENFORCED BY PRIVILEGE** | no UPDATE/DELETE grant; `permission denied` |
+| No update/delete method exists | **ENFORCED** | port declares two methods; guard forbids the rest |
+| Server-owned field values | **ENFORCED** | derived in core; client value rejected, not ignored |
+| Consent revalidation | **ENFORCED** | read from the record inside the transaction |
+| Signability revalidation | **ENFORCED** | five checks at commit time |
+| Typed value contracts | **ENFORCED** | discriminated union + typed columns; no `any` |
+| Signature bounds | **ENFORCED TWICE** | validator and database CHECK |
+| PNG only, SVG refused | **ENFORCED** | magic bytes; guard forbids other media types |
+| Signature asset isolation | **NOT APPLICABLE** | no object storage; bytes are row-scoped |
+| Atomicity | **ENFORCED** | one transaction; no partial values |
+| Backend-authoritative timestamp | **ENFORCED** | one Clock read; single column |
+| Recipient CSRF realm | **PARTIALLY ENFORCED** | validator called and unit-tested; no HTTP-level test |
+| No PDF mutation, no sealer | **ENFORCED** | guards over seven files |
+| No routing advancement | **ENFORCED** | guarded and asserted |
+| No request completion | **ENFORCED** | asserted |
+| Telemetry redaction | **ENFORCED** | payload and label guards |
+| Evidence event | **DOCUMENTED ONLY** | deliberately absent; OD-145 |
+| IP / user agent capture | **NOT APPLICABLE** | not captured; OD-143 |
+| Recipient SIGNED state | **DOCUMENTED ONLY** | BACKEND-37 |
+| Routing activation / completion | **DOCUMENTED ONLY** | BACKEND-37/38 |
+| `acceptedAt` reuse by BACKEND-37 | **DOCUMENTED ONLY** | nothing here can enforce a future command |
+| Submission vs cancellation race | **DOCUMENTED ONLY** | narrow window; closed by BACKEND-37's lock order (OD-151) |
+
+### Honest gaps
+
+Four rows are DOCUMENTED ONLY because they belong to BACKEND-37, one because
+evidence wiring is a cross-cutting decision, and one — recipient CSRF — because
+there is still **no HTTP route suite** for the signing stack. That gap is now
+four commands old and is the largest single one in this area.

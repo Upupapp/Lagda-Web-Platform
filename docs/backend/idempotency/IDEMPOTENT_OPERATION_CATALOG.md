@@ -185,3 +185,52 @@ is the backstop that makes it race-safe.
 
 `signingRequest.create` (BACKEND-32) and `signingRequest.send` are separate
 operations deliberately: a retry of a CREATE must never replay as a SEND.
+
+## `signature.submit` — IMPLEMENTED (BACKEND-36)
+
+| | |
+|---|---|
+| Scope | `{ type: "recipient", recipientId, signingRequestId }` |
+| Required | **Yes.** A submission without a key is refused with `IDEMPOTENCY_KEY_REQUIRED` |
+| Retention | 24 hours |
+| Stored result | `201` + `{ submissionId, acceptedAt, acceptedFieldCount }` |
+
+Listed from the handoff by BACKEND-14 and implemented here. The `recipient`
+scope variant was added at the same time, with the comment *"signature
+submission (BACKEND-36) is performed by an external signer with no workspace
+session"* — so both halves of what this command needed were provisioned in
+advance, and neither had to be invented.
+
+### Fingerprint
+
+`{ v:1, signingRequestId, recipientId, signatureMethod, initialsMethod,
+values[] }` where `values` are the submitted field values **sorted by field id**.
+
+**The signature payload is excluded.** A drawn signature is a canvas
+rasterisation, and a retry that re-renders the same strokes can differ by a
+byte — antialiasing, device pixel ratio, a repaint. Fingerprinting the pixels
+would make every drawn-signature retry a 409, which is exactly the failure the
+key exists to prevent. The presence and the method are included, because
+typed→drawn is a different act.
+
+Excluded per §33: correlation id, session token, CSRF token, IP, user agent, the
+generated submission id, and all backend timestamps.
+
+### Behaviours
+
+| | |
+|---|---|
+| Same key, same payload | Replays the original `submissionId` and `acceptedAt` |
+| Same key, different payload | `409 IDEMPOTENCY_CONFLICT` |
+| Same key, in progress | `409` in-progress |
+| **New key after acceptance** | **`RECIPIENT_ALREADY_SUBMITTED`** — never a silent second act |
+
+The last row is the one that differs from the other operations in this catalog.
+A workspace create with a new key legitimately creates a second workspace; a
+signature with a new key cannot legitimately create a second signature, because
+there is no such thing.
+
+### Ordering
+
+Authentication, CSRF and the key header are checked **before** the claim.
+Possession of a key grants nothing.

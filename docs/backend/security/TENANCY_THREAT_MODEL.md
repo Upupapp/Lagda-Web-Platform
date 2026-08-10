@@ -352,3 +352,49 @@ shares a document with you is the other signer on the same request, and tenant
 isolation cannot see them at all. That is what the restrictive policies exist
 for, and it is why the counts in the integration suite are 1-of-2 rather than
 1-of-0.
+
+## Signature submission (BACKEND-36)
+
+| Threat | Control | Status |
+|---|---|---|
+| **Submitting another recipient's field** | Four-column assignment FK | **ENFORCED BY THE DATABASE** — no referent, proven with the application layer bypassed |
+| Cross-request field submission | Same FK | **ENFORCED BY THE DATABASE** |
+| Replay / double submission | Idempotency key, recipient-scoped | **ENFORCED** — replay returns the original `acceptedAt` |
+| Multi-device conflicting submissions | Unique per recipient | **ENFORCED** — exactly one survives, in real PostgreSQL |
+| Accepted value overwritten | No UPDATE grant; unique per field | **ENFORCED BY PRIVILEGE** — `permission denied` |
+| Client-spoofed `signedAt` | No contract member; one Clock read | **ENFORCED BY ABSENCE** |
+| Client-spoofed DATE_SIGNED / NAME / EMAIL | No contract member, and a value for one is REJECTED | **ENFORCED** — the defect this command found in itself |
+| Oversized signature payload | Transport bound, byte bound, dimension bound, DB CHECK | **ENFORCED FOUR TIMES** |
+| Malicious uploaded signature image | No upload path exists | **NOT APPLICABLE** — and PNG-only magic bytes if one ever arrives |
+| SVG as a signature | Refused by magic-byte check | **ENFORCED** — a scriptable document wearing an image's name |
+| Decompression bomb | IHDR dimensions bounded before any decode | **ENFORCED** — no image library is used at all |
+| Signature asset cross-recipient reuse | Representations are submission-scoped | **ENFORCED BY THE SCHEMA** |
+| Signature data in logs | Payload-scoped guard over every log call | **ENFORCED** |
+| Text field value in logs | Same guard | **ENFORCED** — and classified HIGHLY SENSITIVE, because it can be a salary |
+| Consent bypass | Read from the record, never a client boolean | **ENFORCED** |
+| Submission after the request becomes non-signable | Revalidated at commit time | **ENFORCED**, with a narrow race — see below |
+| Idempotency key used as authorization | Session resolved before the claim | **ENFORCED BY ORDERING** |
+
+### The one that is honestly open
+
+**A submission can commit microseconds before a cancellation.** Both are short
+transactions with no shared lock, so revalidation inside the submission cannot
+exclude a terminal transition that starts immediately after it reads.
+
+The window is narrow and the consequence is bounded — an accepted signing act on
+a request that then became terminal, which BACKEND-37 must handle rather than
+assume away. It closes when the state machine takes the request row lock in the
+order OD-151 fixes.
+
+Stated rather than claimed impossible, because a reader who assumes it cannot
+happen will write code that breaks when it does.
+
+### The one worth singling out
+
+**Field ownership inside a tenant.** Cross-tenant is the threat everyone models.
+The adversary here is the other signer on the same document — someone with a
+legitimate session, legitimate access, and a field id they can simply read from
+their own ceremony payload if anyone ever returns it.
+
+That is why the control is a foreign key rather than a validation: a validation
+is code somebody can refactor, and a missing referent is not.

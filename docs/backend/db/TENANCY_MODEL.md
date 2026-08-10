@@ -572,3 +572,56 @@ construction to a workspace, a request and a recipient.
 `RecipientWorkspaceUnitOfWork` (BACKEND-34) established "do not hand over what
 must not be reached". This goes one step further: even the repository that IS
 handed over cannot be asked the wrong question.
+
+## BACKEND-36 — signature submission
+
+| Table | Classification |
+|---|---|
+| `recipient_submissions` | WORKSPACE_SCOPED signing record |
+| `signing_representations` | WORKSPACE_SCOPED **sensitive** signing resource |
+| `signing_field_values` | WORKSPACE_SCOPED signing record |
+
+All three carry `workspace_id`, `tenant_isolation`, and the BACKEND-35
+restrictive `recipient_submission_scope` policy. All three are **SELECT and
+INSERT only**.
+
+### The four-column assignment foreign key
+
+The strongest tenancy control this schema has, and it is worth describing as a
+tenancy control rather than only as a data-integrity one.
+
+Migration 023 adds a unique key to `signing_request_fields` on
+`(workspace_id, signing_request_id, request_field_id, request_recipient_id)`,
+and every `signing_field_values` row references it.
+
+A value therefore points at an **assignment**, not a field. Tenant isolation
+already stopped a value crossing workspaces; this stops it crossing *recipients
+inside one request*, which is where the real adversary is — the counterparty who
+legitimately holds a session for the same document.
+
+Submitting another recipient's field does not fail a check. **It has no
+referent.** Integration proves it with the application layer bypassed entirely.
+
+### The load-bearing teardown order
+
+The same key makes `signing_request_fields` undeletable while a value points at
+it, so `truncateAll` had to grow six entries in a specific order:
+
+```
+signing_field_values -> signing_representations -> recipient_submissions
+  -> signing_recipient_consents -> signing_recipient_progress
+  -> recipient_signing_sessions -> (existing send artefacts)
+```
+
+Thirteen integration tests failed until it was unwound in the reverse order it
+was built. Recorded because the next person to add a signing table will hit it.
+
+### Sensitive resource
+
+`signing_representations` holds signature bytes and typed signature text. It is
+the first table in this schema whose CONTENT is sensitive rather than its
+association — a `bytea` column that is a person's signature.
+
+No workspace endpoint returns it. No cascade from a contact, profile, document
+or session reaches it. Erasure is BACKEND-55's and must weigh legal retention
+against a deletion request (OD-153).
