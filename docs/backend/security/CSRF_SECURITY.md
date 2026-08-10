@@ -159,3 +159,38 @@ protected by it.
 
 Successful logout revokes the session, which invalidates the CSRF state bound to
 it - a CSRF token whose session no longer resolves cannot validate anything.
+
+## Recipient CSRF (BACKEND-34)
+
+The recipient realm runs the same double-submit pattern with **its own
+credential, its own digest domain, and its own cookie**. Nothing is shared with
+the workspace realm — not the secret, not the derivation, not the name.
+
+| | Workspace | Recipient |
+|---|---|---|
+| Cookie | `lagda_csrf` | `lagda_signing_csrf` |
+| Digest domain | `lagda.csrf` | `lagda.recipient-signing-csrf` |
+| Stored on | `user_sessions.csrf_token_digest` | `recipient_signing_sessions.csrf_token_digest` |
+| Validator | the authenticated hook | `validateRecipientCsrf` |
+
+**Independently drawn, not derived.** The session token and the CSRF token are
+two separate `randomBytes(32)` calls under two domains. Deriving one from the
+other would make a double-submit check whose two halves share a secret — the
+attacker who can compute one can compute the other, which is the entire thing
+the pattern is supposed to prevent. A database CHECK refuses a row whose two
+digests are equal, so the mistake cannot be made later either.
+
+**A workspace CSRF token cannot satisfy a recipient check** and vice versa: the
+domains differ, so the digests differ, so the comparison fails. There is no
+shared code path through which to write a direct test — recorded as BY
+CONSTRUCTION in the test matrix rather than claimed as tested.
+
+**Built and not yet enforced.** No recipient endpoint mutates anything, so
+nothing calls the validator in production code today. Three unit tests cover it:
+own token accepted, another session's token refused, and the session token
+offered as its own CSRF token refused.
+
+**BACKEND-35's first state-changing recipient route must call
+`validateRecipientCsrf`.** A recipient session cookie is sent on cross-site form
+posts under `Lax` for top-level navigations, and the ceremony is precisely where
+a forged consent or signature would be worth forging.

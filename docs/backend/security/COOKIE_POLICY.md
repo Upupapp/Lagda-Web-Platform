@@ -95,3 +95,34 @@ with the same name, path and domain, or the browser silently keeps the original.
 
 No CSRF cookie accompanies it. There is no session for one to protect, and
 minting one would make the pre-auth credential a route to authentication.
+
+## Recipient signing cookies (BACKEND-34)
+
+| Cookie | HttpOnly | Path | SameSite | Secure | Max-Age |
+|---|---|---|---|---|---|
+| `lagda_signing_session` | **yes** | `/` | Lax | in production | 8 h |
+| `lagda_signing_csrf` | **no** | `/` | Lax | in production | 8 h |
+
+Five cookie names now exist. Each belongs to exactly one realm and no resolver
+reads another realm's name.
+
+**`Path=/`, and it is the weakest thing here.** The pre-auth credential gets
+`/auth` because everything that reads it lives under `/auth`. Recipient
+bootstrap and the signing ceremony do not yet share a prefix — bootstrap is
+`/signing-access/*`, context is `/signing/*` — so a narrower path would have to
+be a guess about routes BACKEND-35 has not written. If BACKEND-35 unifies them,
+narrowing is one line, and the reasoning is recorded at the constant so the
+next reader does not have to reconstruct it.
+
+**The CSRF cookie is readable by script on purpose.** That is what a
+double-submit token is: the page reads it and echoes it in a header, which an
+attacker's origin cannot do. It carries no authority alone — the session cookie
+does, and that one is HttpOnly.
+
+**`SameSite=Lax` is load-bearing here in a way it is not elsewhere.** A signing
+recipient arrives by clicking a link in an email, which is a cross-site
+top-level navigation. `Strict` would withhold the cookie on exactly the
+navigation the whole flow is built around.
+
+**Both cookies are cleared together.** A cleared session with a live CSRF cookie
+is a page that believes it can still act.

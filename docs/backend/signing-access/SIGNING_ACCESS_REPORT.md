@@ -1,6 +1,6 @@
 # BACKEND-34 report — recipient signing access
 
-**Backend:** `d229e15` · **Migration:** 021 · **Date:** 2026-08-10
+**Backend:** `d229e15` + `5115900` · **Migration:** 021 · **Date:** 2026-08-10
 
 ## What was built
 
@@ -50,6 +50,13 @@ frontend requirements, not patched — §277 says do not redesign the UX.
 **The recipient auth step exists in the UI and nothing is behind it.**
 `AuthChallengePage.tsx` is a real six-digit screen whose own copy says
 *"Demo: Enter 000000, 123456, or 111111 to pass. No real code was sent."*
+
+**The bootstrap limiter contradicted its own rationale.** It was written as
+30/hour with a source string saying it matched `workspace.invitation.redeem.ip`
+- same scope, same failure mode, sixty times tighter window. Corrected to
+30/min in `5115900`. The security argument never rested on the number, and a
+rationale that names a precedent then silently departs from it is worse than no
+rationale, because the next reader trusts it.
 
 **Two architecture guards were narrowed during the run**, each with the reason
 recorded at the assertion — a substring `otp` guard that failed on the declared

@@ -196,3 +196,37 @@ invited to.
 **Status:** all five defined, validated at startup by `assertPoliciesValid`, and
 bound in the route handlers through `checkSemanticLimits`. No dedicated 429 test
 yet — INVITATION_TEST_MATRIX.md records that honestly rather than as coverage.
+
+## BACKEND-34 — signing access bootstrap
+
+| Policy | Scope | Limit | Window | Failure | Source |
+|---|---|---|---|---|---|
+| `signing-access.bootstrap.ip` | ip | 30 | 1 min | **fail-open** | BACKEND-34, chosen |
+
+Eight policies now. This one is the public-credential shape again: no account,
+no session, so IP is the only scope that exists.
+
+**It is not what makes guessing infeasible.** The credential carries 256 bits.
+This bounds volume and gives an attempt a signal, and saying so plainly matters
+because a limiter described as anti-guessing invites someone to weaken the
+entropy later on the grounds that the limiter has it covered.
+
+**Fail-open, for the redeem reason.** A limiter outage that refuses a legitimate
+signer blocks them from signing a document they were asked to sign. Contrast the
+outbound-email policies, which fail closed: their failure mode is *sending*, and
+unsent mail is an annoyance where unlimited mail is a reputation incident.
+
+**The window was corrected during the command.** It was written as 30/hour with
+a source string claiming it matched `workspace.invitation.redeem.ip` — same
+scope, same failure mode, sixty times tighter. A rationale that names a
+precedent and then departs from it silently is worse than no rationale, because
+the next reader trusts it. Aligned to 30/min; a corporate NAT whose staff sign
+routinely would have found the hour floor.
+
+**No per-workspace or per-recipient scope**, and neither is available at this
+point: the workspace is only known *after* the credential resolves, so a
+per-workspace limiter would have to admit the request in order to decide whether
+to admit it.
+
+**No dedicated 429 test.** SIGNING_ACCESS_TEST_MATRIX.md records that as a gap
+rather than as coverage.
