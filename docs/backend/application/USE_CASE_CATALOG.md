@@ -106,3 +106,24 @@ eNotary: notarial certificate issuance · remote online notarization · notary c
 Deferred with named owners: invitations and acceptance (BACKEND-26); roles,
 permissions, member management, ownership transfer (BACKEND-27); archive and
 erasure (BACKEND-55); entitlements (BACKEND-50).
+
+
+## Workspace invitations — IMPLEMENTED (BACKEND-26)
+
+| Use case | Kind | Scope | Notes |
+|---|---|---|---|
+| `createWorkspaceInvitation` | command | tenant | Authorization, then grant policy, then the address. Refuses an existing member and a live duplicate before any mail. Idempotent, workspace-scoped. |
+| `listWorkspaceInvitations` | query | tenant | Manager only. State derived per row from the clock. |
+| `resendWorkspaceInvitation` | command | tenant | Rotates the credential in place. Rotation and scheduling share a transaction. |
+| `revokeWorkspaceInvitation` | command | tenant | Conditional transition; reports the state rather than failing when it is already terminal. |
+| `getWorkspaceInvitationPreview` | query | **credential** | Unauthenticated. Reads one invitation and its workspace name. Consumes nothing. |
+| `acceptWorkspaceInvitation` | command | **credential → tenant** | The two proofs. Consume, then insert, in one transaction. |
+| `declineWorkspaceInvitation` | command | **credential → tenant** | Same two proofs; no membership. |
+
+`credential` is the fourth transaction scope, introduced here: the only one a
+non-member can enter, and the only one that resolves a tenant rather than being
+given one.
+
+Deferred with named owners: roles, permissions, member directories, member
+removal, role changes and ownership transfer (BACKEND-27); delivery
+(BACKEND-44/45); retention (BACKEND-55).

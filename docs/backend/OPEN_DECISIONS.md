@@ -1527,3 +1527,109 @@ workspace, meaning one browser holds several sessions?
 
 Not implemented, because each answer is a different session architecture and
 none is a default. BACKEND-13's global policy stands.
+
+## OD-093 — RESOLVED: invitation lifetime, authority and role policy
+
+**Raised and resolved by:** BACKEND-26.
+
+Every question the invitation lifecycle needed answered, and the answer:
+
+| Question | Decision |
+|---|---|
+| Credential lifetime | **7 days.** Not specified by the product or the handoff, so CHOSEN and marked as chosen: long enough that a Friday invitation survives a holiday week, short enough that a forwarded mailbox does not carry a live credential for months. The frontend's own list flags "expiring" inside two days, which is consistent with this order and not with a much shorter one. |
+| Who may invite | **`owner` only**, through `canManageInvitations` — the minimum authority BACKEND-25 established. Deliberately a separate predicate from `canManageWorkspace`, because the product's own table grants `members:invite` more widely and BACKEND-27 will likely split them. |
+| Which roles may be invited | **Every canonical role except `owner`.** |
+| May OWNER be invited | **No.** Absent from the schema union and refused by a database CHECK. A workspace has exactly one owner; an emailed link is not an ownership transfer. |
+| One active invite per address | **Yes**, enforced by a partial unique index over the four terminal timestamps. |
+| Create vs resend | **Separate operations.** Create refuses a live duplicate rather than silently resending, so a double-submitted form cannot mail twice. |
+| Resend credential rotation | **Rotates in place**, one row. The old digest stops resolving at commit: exactly one valid link at any moment. |
+| Acceptance authentication | **A full session.** A pre-auth MFA credential is refused by the authenticated scope before any lookup. |
+| Email/account matching | **Current canonical email of the account vs the invitation**, read at acceptance time. |
+| Unverified accounts | **No special rule.** Invitation acceptance follows whatever the normal login path already requires; there is no verification bypass and no verification side effect. |
+| Already a member | **Converges.** The invitation is consumed and `joined: false` is reported, so no live credential dangles for access that already exists. |
+| Rate limits | Four fail-closed policies: create and resend, each per-user and per-workspace. |
+| Idempotency | Required on create and resend, workspace-scoped, with distinct operations so a retry and a later deliberate resend are distinguishable. |
+
+## OD-094 — RESOLVED: `member` is a real membership role
+
+**Raised and resolved by:** BACKEND-26.
+
+`WORKSPACE_ROLES` had six values and none of them was the one the product's
+invite form defaults to. `InvitationsPage.tsx` selects `role_member`, and
+`SYSTEM_ROLE_PERMISSIONS` defines `role_member`.
+
+`member` was added in migration 014. Not invented — adopted from the product,
+which is the distinction §14 draws.
+
+## OD-095 — Reviewer or auditor?
+
+**Raised by:** BACKEND-26.
+
+The invite form offers a single option, **"Reviewer / Auditor"**
+(`role_reviewer_auditor`). `WORKSPACE_ROLES` has both `reviewer` and `auditor`
+as separate values, with different permission sets in the frontend's own table:
+an auditor gets `view_audit`, a reviewer gets `verify_documents`.
+
+One UI option, two canonical roles, and nothing in the product says which one an
+invitation should grant.
+
+Not guessed. Both roles are invitable, so the API can express either; the
+frontend cannot currently ask for a specific one. Closing this means the product
+deciding whether they are one role or two — which is BACKEND-27's question,
+since it is really a question about what the permissions are.
+
+## OD-096 — Editing a pending invitation's role
+
+**Raised by:** BACKEND-26.
+
+There is no edit control on `InvitationsPage.tsx` — a pending row offers Resend
+and Revoke, and nothing else.
+
+So there is no role-edit operation, and resend deliberately carries the original
+role: a resend that could silently change what the recipient is being granted
+would be a new offer wearing an old audit trail (§79, §90).
+
+If the product wants it, the safe shape is already visible: revoke the
+invitation and create a replacement, which supersedes the credential and records
+both events. Whether that is enough UX, or whether an explicit edit is wanted,
+is a product decision.
+
+## OD-097 — Invitation history retention
+
+**Raised by:** BACKEND-26.
+
+Two clocks that must not be conflated:
+
+- **Credential validity** — 7 days, settled.
+- **Invitation history retention** — undecided.
+
+Terminal invitations (accepted, revoked, declined, superseded) are retained
+indefinitely, and the runtime role has no `DELETE` grant, so nothing in the
+application can remove one. That is the right default while the question is
+open: invitation history is security history — who was offered access to a
+tenant, by whom, and whether they took it.
+
+It is also personal data. Invitation records belong in BACKEND-54's export
+review and BACKEND-55's erasure review, and a cleanup job (BACKEND-16) can
+enforce whatever BACKEND-55 decides. Nothing in this command expires or removes
+a row.
+
+## OD-098 — Invitation delivery is BLOCKED
+
+**Raised by:** BACKEND-26. **Depends on:** OD-003, BACKEND-44/45.
+
+`scheduleDelivery` is called inside the creation and rotation transactions — the
+placement that guarantees a failed enqueue rolls the invitation back rather than
+stranding it. It is **optional**, exactly as the equivalent seams in email
+verification and password reset are, because there is no notification
+infrastructure.
+
+**A production invitee cannot currently receive a link.** The complete secure
+lifecycle exists behind that seam; a provider and a template do not.
+
+One design question is deferred with it, and it is not trivial: the raw token
+exists for the length of one transaction and is never persisted, so a background
+worker cannot recover it to build a link later. Whichever notification
+architecture BACKEND-44/45 chooses has to hand the secret to the renderer inside
+that window, or encrypt it the way BACKEND-23 encrypts TOTP secrets. Recorded
+here so the constraint is not discovered late.

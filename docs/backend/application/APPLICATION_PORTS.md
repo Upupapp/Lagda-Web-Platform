@@ -314,3 +314,23 @@ belongs to the platform's ICU data, not the domain — a hard-coded list would b
 wrong the next time the tz database changes. The domain rule that the value must
 be an IANA identifier rather than an offset lives in the use case, because
 `Intl` accepts offsets and the port alone would let them through.
+
+
+## Workspace invitation ports (BACKEND-26)
+
+| Port | Purpose |
+|---|---|
+| `ScopedInvitationRepository` | Management, bound to one workspace and one transaction. Every state transition is a conditional UPDATE, which is the concurrency control rather than a style. |
+| `InvitationCredentialLookup` | **One method, one row, read-only.** Resolves an invitation from its digest with no workspace context. The narrow security exception, shaped so it cannot become anything else — no `list`, no `findByWorkspace`, no write. |
+| `InvitationCredentialUnitOfWork` | The credential lookup plus `enterWorkspace`, which adds tenant context from the RESOLVED invitation on the same transaction. |
+| `InvitationTokenFactory` | `issue()` returns the raw token exactly once; `digest()` returns null for anything that cannot be a token, so a malformed submission is refused by shape before it becomes a query. |
+| `InvitationLinkBuilder` | Takes a configured origin and a raw token. **No request parameter** — host-header injection is unexpressible rather than sanitized. |
+| `InvitationDeliveryScheduler` | Persists the intent to deliver, inside the transaction. Optional while no notification infrastructure exists (OD-098). |
+| `WorkspaceInvitationIdGenerator` | Opaque invitation ids, generated server-side. The id is not the credential. |
+
+`TransactionManager` gains a fourth scope,
+`runForInvitationCredential(digest, op)` — the narrowest of the four, and the
+only one a non-member can enter.
+
+No provider SDK appears in any of these. The delivery port takes a URL and an
+address; what sends it is BACKEND-44/45's problem.

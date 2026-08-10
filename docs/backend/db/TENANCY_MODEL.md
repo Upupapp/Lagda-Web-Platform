@@ -94,3 +94,43 @@ and exposes no tenant repository. It exists because the alternatives were
 containing every tenant's rows.
 
 Both settings remain transaction-local via `set_config(name, value, true)`.
+
+
+## The invitation credential path (BACKEND-26)
+
+`workspace_invitations` is **WORKSPACE_SCOPED** for every management operation:
+create, list, resend and revoke all run under tenant context with
+`tenant_isolation`, exactly like any other workspace-owned table.
+
+Acceptance is the exception, and it is narrow by construction. An invitee is not
+a member, has no tenant context, and cannot be given one before the invitation
+says which tenant. Migration 014 adds a **third** transaction-local setting:
+
+| Setting | Policy | Reads | Writes |
+|---|---|---|---|
+| `lagda.workspace_id` | `tenant_isolation` | rows in that workspace | rows in that workspace |
+| `lagda.user_id` | `member_self_read`, `member_workspace_read` | your own memberships and their workspaces | **none** |
+| `lagda.invitation_digest` | `invitation_credential_read` | **one invitation, by digest** | **none** |
+
+```sql
+create policy invitation_credential_read on workspace_invitations
+for select
+using (token_digest = lagda_current_invitation_digest())
+```
+
+Two facts carry the whole argument:
+
+1. **Equality against a UNIQUE column** matches at most one row. The scope
+   cannot enumerate, cannot scan a workspace, and cannot answer any question
+   except "the invitation whose credential I already hold".
+2. **`FOR SELECT`.** Every write still requires tenant context.
+
+`TransactionManager.runForInvitationCredential` sets the digest and no workspace,
+then `enterWorkspace` adds tenant context **from the resolved invitation** on the
+same transaction — so validating the invitation and creating the membership
+commit or roll back together, and the workspace is never a client input.
+
+No role gains `BYPASSRLS` and no `SECURITY DEFINER` function was introduced. The
+integration suite proves the boundary by issuing `SELECT * FROM
+workspace_invitations` with no predicate, in a workspace holding two
+invitations, and asserting one row.

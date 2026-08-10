@@ -158,3 +158,41 @@ verification and the action removes a security control.
 
 **Not bound to any route.** Fourteen auth policies are now defined and none is
 attached — see OD-069.
+
+
+## Workspace invitations (BACKEND-26) — IMPLEMENTED
+
+Invitation create and resend are the only endpoints in LAGDA where the server
+mails an address the **caller** chose. That makes them an email-bombing
+primitive aimed at anyone, and the abuse is free.
+
+| Policy | Scope | Limit | Window | On failure | Source |
+|---|---|---|---|---|---|
+| `workspace.invitation.create.user` | user | 20 | 1 h | fail-closed | BACKEND-26, chosen |
+| `workspace.invitation.create.workspace` | workspace | 50 | 1 h | fail-closed | BACKEND-26, chosen |
+| `workspace.invitation.resend.user` | user | 10 | 1 h | fail-closed | BACKEND-26, chosen |
+| `workspace.invitation.resend.workspace` | workspace | 25 | 1 h | fail-closed | BACKEND-26, chosen |
+| `workspace.invitation.redeem.ip` | ip | 30 | 1 min | **fail-open** | BACKEND-26, chosen |
+
+**Two scopes on each outbound policy, and both are load-bearing.** Per-user
+bounds one compromised or runaway account; per-workspace bounds a team of
+colluding managers using one tenant as a relay. Either alone leaves the other
+route open.
+
+**Resend is tighter than create**, deliberately. It is the sharper tool: no new
+invitation record, no new row in the manager's list, and it can be pointed at
+one victim repeatedly.
+
+**The outbound policies fail CLOSED.** Refusing an invitation during a database
+blip is an annoyance; sending unlimited mail during one is a reputation incident
+that cannot be undone.
+
+**`redeem.ip` fails OPEN**, and that is only acceptable because the token
+carries 256 bits. This policy bounds volume and gives an attack a signal; it is
+explicitly NOT what makes guessing infeasible. Refusing a legitimate invitee
+during a limiter outage would block someone from joining a workspace they were
+invited to.
+
+**Status:** all five defined, validated at startup by `assertPoliciesValid`, and
+bound in the route handlers through `checkSemanticLimits`. No dedicated 429 test
+yet — INVITATION_TEST_MATRIX.md records that honestly rather than as coverage.

@@ -340,3 +340,31 @@ fictional one must be indistinguishable in status, code and message.
 
 **Tenant responses are `Cache-Control: no-store`.** Not `no-cache`, which lets a
 shared cache keep the response and merely revalidate it.
+
+
+## 21. Emailed-credential routes (BACKEND-26)
+
+An invitation is the first credential LAGDA sends to someone who may have no
+account. Three conventions follow, and they apply to any future flow of the same
+shape.
+
+**The credential travels in a POST body, never a query string.** Fastify logs
+`request.url`, proxies log it, and browsers send it as a referrer — a token in a
+query string is a token in three places nobody audits. This holds even for
+READS: `POST /invitations/preview` is a read, and it is a POST anyway.
+
+**No GET may consume or preview a credential-addressed resource.** Mail security
+scanners fetch every link in a message before a human sees it. A GET that
+consumed an invitation would let a scanner join a workspace. Route audits assert
+the absence rather than trusting it.
+
+**Links are built from configured origins.** The builder takes an origin and a
+token and has no request parameter, so an inbound `Host` or `X-Forwarded-Host`
+cannot reach it. This is unexpressible rather than sanitized.
+
+**Public error collapsing.** On a credential path, unknown / expired / revoked /
+superseded / consumed return ONE error. Distinguishing them confirms to an
+anonymous caller that a token once existed. The exception is a caller who has
+already proved possession of a live credential and needs actionable advice — the
+account-mismatch case — which stays distinct and still discloses nothing about
+the invitation.

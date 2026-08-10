@@ -84,3 +84,28 @@ The ones that extend this matrix rather than repeating it:
 The pre-existing suite in `packages/db/src/tenancy.integration.test.ts` still
 passes unchanged, with fixtures updated for the dropped `owner_user_id` column
 and the new `users` foreign key.
+
+
+## Workspace invitations (BACKEND-26)
+
+Tabulated in full in
+[`../workspace/INVITATION_TEST_MATRIX.md`](../workspace/INVITATION_TEST_MATRIX.md).
+The cases that extend this matrix rather than repeating it:
+
+| Case | Result |
+|---|---|
+| The credential scope resolves exactly one invitation, by digest | **PASS** |
+| A predicate-free SELECT in that scope returns one row of two | **PASS** |
+| The credential scope cannot UPDATE — zero rows affected | **PASS** |
+| An absent digest setting sees nothing (fail closed) | **PASS** |
+| `lagda.invitation_digest` does not leak into the next pooled transaction | **PASS** |
+| Tenant context entered from the RESOLVED invitation, same transaction | **PASS** |
+| A manager of workspace A sees no invitation of workspace B | **PASS** |
+| A cross-tenant create is refused | **PASS** |
+| The runtime role has no DELETE grant on `workspace_invitations` | **PASS** |
+| Membership creation and invitation consumption are atomic | **PASS** |
+| A forced membership failure leaves the invitation live | **PASS** |
+| Two concurrent acceptances of one token yield one membership | **PASS** |
+
+All run as `lagda_app`, asserted non-superuser and non-`BYPASSRLS` before any
+other assertion in the file.

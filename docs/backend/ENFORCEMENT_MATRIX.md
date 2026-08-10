@@ -943,3 +943,51 @@ WORKSPACE_PRODUCT_INVENTORY.md.
 
 **`workspace_operations_total` collects nothing.** No exporter until BACKEND-66
 — the pre-existing INSTRUMENTED_NO_EXPORTER status.
+
+## BACKEND-26 — Workspace invitations
+
+| Rule | Status | How |
+|---|---|---|
+| Invitation is not membership | **ENFORCED** | Separate table; creation writes no membership; acceptance tests |
+| Canonical invitee email | **ENFORCED** | The shared `normalizeEmail`, plus a lower-case CHECK on the stored key |
+| Inviter authority is current membership | **ENFORCED** | `requireWorkspaceAccess` then `canManageInvitations`, before parsing the address |
+| Inviter cannot be client-supplied | **ENFORCED** | No field on the input type or the schema; 9 privileged payloads rejected |
+| OWNER not invitable | **ENFORCED** | Absent from the schema union AND refused by a database CHECK |
+| Raw token not persisted | **ENFORCED** | Digest-only schema; the row is scanned for the raw value |
+| Raw token not returned | **ENFORCED** | Create and list responses scanned |
+| Token entropy and format | **ENFORCED** | 256 bits, base64url, 43 chars, shape-validated before any lookup |
+| Invitation single-use | **ENFORCED** | Conditional UPDATE plus a concurrency test on real PostgreSQL |
+| Membership and consumption atomic | **ENFORCED** | One transaction; a forced insert failure leaves the invitation live |
+| Duplicate membership protection | **ENFORCED** | `UNIQUE(workspace_id, user_id)`; concurrent acceptance yields one |
+| One live invitation per workspace and email | **ENFORCED** | Partial unique index; expired rows superseded explicitly |
+| Create is not resend | **ENFORCED** | Create refuses a live duplicate; separate operations, policies and keys |
+| Resend rotates safely | **ENFORCED** | Rotation and scheduling in one transaction; failure preserves the old token |
+| Account match on acceptance | **ENFORCED** | Current canonical email from the account; wrong-account and changed-email tests |
+| No email-verification side effect | **ENFORCED** | `email_verified_at` asserted unchanged |
+| Pre-auth MFA cannot accept | **ENFORCED** | **In a running application** — the authenticated scope refuses it |
+| CSRF on every invitation mutation | **ENFORCED** | **In a running application** — through `createApp` |
+| No GET consumes an invitation | **ENFORCED** | Route audit, four shapes, all 404 |
+| Host-header injection | **ENFORCED BY CONSTRUCTION** | The link builder has no request parameter |
+| Token lookup without RLS bypass | **ENFORCED** | `FOR SELECT` on a UNIQUE column; predicate-free SELECT returns 1, UPDATE affects 0 |
+| Management tenant isolation | **ENFORCED** | Scoped repository plus `tenant_isolation`; cross-tenant read tested |
+| No session rotation after acceptance | **ENFORCED** | Same cookie, workspace unreachable before and reachable after |
+| Invitation history not erasable | **ENFORCED** | No `DELETE` grant on the table |
+| Create and resend rate limits | **PARTIALLY ENFORCED** | Four policies defined, validated at startup, bound in the handlers; no dedicated 429 test — INVITATION_TEST_MATRIX.md records them as N/A |
+| No email or token in logs and metrics | **ENFORCED BY CONSTRUCTION** | Event builders take IDs only; metric labels are a closed union. No grep-the-log test as the workspace suite has |
+| Delivery | **BLOCKED** | The seam is inside the transaction; no notification infrastructure (OD-003). A production invitee cannot receive a link |
+| Member removal, role change, ownership transfer | **NOT IMPLEMENTED** | BACKEND-27 |
+| Full RBAC and permission matrix | **DOCUMENTED ONLY** | BACKEND-27. Two predicates stand in: `canManageInvitations`, `canGrantRole` |
+| Last-owner invariant | **DOCUMENTED, WITH PURE FUNCTIONS** | Still no caller; no BACKEND-26 endpoint can violate it |
+
+### Honest gaps
+
+**Delivery is blocked, and that is the headline.** Everything above describes a
+lifecycle nobody can currently enter, because no email is sent. The scheduling
+call sits inside the transaction so that the moment a scheduler exists, a
+failure to enqueue rolls the invitation back rather than stranding it — but
+today the seam is absent and a created invitation is a row in a list.
+
+**OD-069 is unchanged.** The invitation routes are inside the authenticated
+scope BACKEND-25 built, so their CSRF and pre-auth behaviour is demonstrated
+through `createApp`. The seventeen auth and account routes are still uncomposed,
+so a browser cannot sign in to reach any of it.

@@ -143,3 +143,43 @@ no name — the first three are unbounded and the fourth is business data. A tes
 asserts the exact label set.
 
 Instrumented, collecting nothing: there is no exporter until BACKEND-66.
+
+
+## Workspace invitations (BACKEND-26)
+
+| Event | Emitted when | Fields | Never |
+|---|---|---|---|
+| `workspace.invitation.created` | an invitation and its delivery intent commit | `workspaceId`, `invitationId`, `actorUserId`, `role`, `result` | the invitee **email**, the token, the URL |
+| `workspace.invitation.resent` | a credential is rotated | `workspaceId`, `invitationId`, `actorUserId`, `result` | the old or new token |
+| `workspace.invitation.revoked` | a manager withdraws one | `workspaceId`, `invitationId`, `actorUserId`, `result` | — |
+| `workspace.invitation.accepted` | a membership is created, or converges | `workspaceId`, `actorUserId`, `role`, `joined`, `result` | the token, the invitee email |
+| `workspace.invitation.declined` | the invitee refuses | `actorUserId`, `result` | the token |
+
+### Why the invitee email is absent
+
+A manager is entitled to see who they invited — the pending list returns it. That
+entitlement is scoped to the **response**. An address in an operational log is
+personal data in a system that retains logs differently from tenant data and
+ships them to places nobody reviewed for PII. Events carry `invitationId`.
+
+### Why no token, ever
+
+The raw credential grants tenant access. It appears in no event, no error, no
+metric and no URL the backend constructs a log line from — and it is not
+persisted, so there is nothing to leak from storage either.
+
+### Metrics
+
+`workspace_invitation_operations_total{operation, result, processRole}`. Three
+labels, all code-defined and bounded. No workspace, user or invitation ID, no
+email, no digest.
+
+Instrumented, collecting nothing: there is no exporter until BACKEND-66.
+
+### Alerting
+
+A sustained spike in invitation **rejections** — rate-limit 429s, or repeated
+`invalid_or_expired_invitation` from one address — is worth a signal: the first
+suggests an email-bombing attempt or a runaway client, the second suggests token
+guessing. A single instance of either is normal. Thresholds belong with
+BACKEND-66.

@@ -62,3 +62,33 @@ provider.
    operation *means*, including path identifiers, and nothing from transport.
 4. Confirm the mutation fits one transaction. If not, stage it.
 5. Add a row here.
+
+
+## Workspace invitations (BACKEND-26) — IMPLEMENTED
+
+| Operation | Scope | Fingerprint | Status |
+|---|---|---|---|
+| `workspace.invitation.create` | `workspace` | normalized invitee email + requested role | **IMPLEMENTED** — required at the route |
+| `workspace.invitation.resend` | `workspace` | invitation id | **IMPLEMENTED** — required at the route |
+
+**Workspace-scoped, not user-scoped.** Two managers of one workspace inviting the
+same person are the same logical operation, and the handoff already named
+`workspace.invitation.create` a workspace concern.
+
+The fingerprint uses the **normalized** address, so two retries differing only in
+casing replay rather than conflicting. A different address or a different role is
+a different request and produces a 409.
+
+**Why resend needs its own operation.** A network retry of one resend must not
+rotate the credential twice — the first rotation already invalidated the link in
+the recipient's mailbox — while a later deliberate resend must rotate. The
+client's key is what draws that distinction, and two operations keep the two
+namespaces apart.
+
+**Completion point:** the invitation state and the durable delivery intent have
+committed. It does not wait for an email provider to confirm anything — and
+today there is no provider to wait for (OD-098).
+
+**Acceptance takes no key.** It is single-use by construction, and the membership
+unique constraint makes a retry converge to `joined: false` rather than
+duplicating anything.

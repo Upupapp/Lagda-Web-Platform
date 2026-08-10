@@ -75,3 +75,29 @@ from workspace A, returning null.
 Implement the compound-FK pattern across tenant-owned tables as they arrive, and
 the role split. Treat RLS as a follow-on with its own decision, not as part of
 tenancy architecture by default.
+
+
+## Invitation credential lookup (BACKEND-26)
+
+**The question:** how does a caller with no workspace context read one row out of
+a tenant-scoped table?
+
+**Rejected:** granting the runtime role `BYPASSRLS` (defeats the mechanism
+entirely, and §141 forbids it); a `SECURITY DEFINER` lookup function (workable
+and narrower, but it is a privilege escalation living outside the policy system,
+so reviewing tenancy would mean reading both the policies and every definer
+function).
+
+**Chosen:** a transaction-local `lagda.invitation_digest` setting and a
+`FOR SELECT` policy matching equality against the UNIQUE `token_digest` column.
+Holding the setting is holding the credential; the uniqueness makes the result
+set at most one row; `FOR SELECT` makes it read-only.
+
+This is the same shape as BACKEND-25's user-scoped membership read — a second
+narrow, read-only, transaction-local context alongside tenant isolation — which
+means the codebase now has one pattern for "a caller who is not a tenant member
+needs exactly one thing", rather than two mechanisms to review.
+
+Verified against PostgreSQL as the runtime role: a predicate-free SELECT returns
+one row of two, an UPDATE affects zero rows, an absent setting returns nothing,
+and the setting does not survive into the next pooled transaction.

@@ -57,3 +57,35 @@ Tenant scope answers *whose data is this?* Authorization answers *may this actor
 do this?* Both are required, and BACKEND-27 owns the second. A workspace owner is
 powerful **inside** their workspace and has no standing outside it — no role
 grants cross-tenant reach.
+
+
+## Workspace invitations (BACKEND-26)
+
+A non-member can now interact with a tenant-scoped table through a credential.
+That is a new shape in this threat model and it gets its own rows.
+
+| # | Threat | Primary control | Defence in depth | Status |
+|---|---|---|---|---|
+| T-26 | **Invitation token guessing** | 256 bits from a CSPRNG | IP rate limit on preview and accept | **Tested** — entropy and format asserted |
+| T-27 | **Token theft or forwarding** | Acceptance requires a session whose canonical email matches | The token alone previews four fields and grants nothing | **Tested** |
+| T-28 | **Enumeration through the credential path** | Policy matches equality on a UNIQUE column, so at most one row | Digest lookup, never an id | **Tested** — a predicate-free SELECT returns exactly one row |
+| T-29 | **RLS bypass through the credential path** | The policy is `FOR SELECT`; no `BYPASSRLS`, no `SECURITY DEFINER` | Writes still require tenant context | **Tested** — an UPDATE from the credential scope affects zero rows |
+| T-30 | **Credential context leak across pooled connections** | `set_config(..., true)` | Single point of issue, in the unit of work | **Tested** |
+| T-31 | **Role tampering at acceptance** | Role read from the persisted invitation | No `role` field on the accept schema | **Tested** — 422 |
+| T-32 | **Workspace tampering at acceptance** | Workspace resolved from the invitation | No workspace field on the accept schema | **Tested** — 422 |
+| T-33 | **Owner escalation by invitation** | `owner` absent from the invitable union | Independent database CHECK | **Tested** at both layers |
+| T-34 | **Cross-tenant invitation access** | Scoped repository with no workspace parameter | `tenant_isolation` | **Tested** |
+| T-35 | **Duplicate membership through concurrent acceptance** | Conditional UPDATE on four terminal timestamps | `UNIQUE(workspace_id, user_id)` | **Tested** — two concurrent acceptances, one membership |
+| T-36 | **Email bombing through create or resend** | Four fail-closed policies, per user and per workspace | Create refuses a live duplicate | **Partially** — policies bound, no 429 test |
+| T-37 | **Link-scanner acceptance** | No GET route consumes or previews | Preview creates nothing | **Tested** — four GET shapes, all 404 |
+| T-38 | **Stale or superseded links** | Resend rotates the digest in place | Exactly one valid link at any moment | **Tested** |
+| T-39 | **Resend stranding the invitee** | Rotation and scheduling share a transaction | — | **Tested** in memory and on PostgreSQL |
+| T-40 | **Host-header injection into an invitation link** | The link builder takes a configured origin and has no request parameter | — | **Enforced by construction** |
+| T-41 | **Archived-workspace acceptance** | **Not applicable** — there is no archived state | — | **N/A** |
+| T-42 | **Invitation history erasure** | The runtime role has no `DELETE` grant | Revocation is a timestamp | **Tested** |
+
+**The limit, stated plainly.** If an attacker controls the invited mailbox AND
+an account for that address, they can accept. No email-based invitation can
+distinguish them from the legitimate owner. What the design buys is that BOTH
+are required — reading the email is not enough and holding an account is not
+enough.

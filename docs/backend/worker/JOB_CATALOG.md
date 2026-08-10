@@ -82,3 +82,26 @@ one-time-secret design allows, must never carry a password, and must not
 regenerate a token on provider retry — retries redeliver the same challenge.
 
 **Blocked on BACKEND-44/45.** Nothing sends a reset email today.
+
+
+## Workspace invitation delivery (BACKEND-26) — BLOCKED
+
+**No job is registered.** `InvitationDeliveryScheduler` is an application port,
+called inside the creation and rotation transactions, and it is optional — the
+same seam email verification and password reset carry, for the same reason
+(OD-003, BACKEND-44/45).
+
+**Status: BLOCKED, not DURABLE INTENT ONLY.** Nothing is enqueued, because there
+is nothing to enqueue into: no notification record, no template registry, no
+provider adapter. Claiming a durable intent exists would overstate it.
+
+One constraint for whoever builds this, recorded now so it is not discovered
+late: **the raw invitation token exists for the length of one transaction and is
+never persisted.** A background worker therefore cannot recover it to build a
+link afterwards. The delivery design has to either hand the secret to the
+renderer inside that window, or encrypt it at rest the way BACKEND-23 encrypts
+TOTP secrets — a job payload carrying a plaintext token is the one option ruled
+out (§124, §125).
+
+A cleanup job for terminal invitations is likewise absent, pending OD-097 and
+BACKEND-55.
