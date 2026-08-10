@@ -101,3 +101,47 @@ whose lookup would simply miss.
 
 Recorded rather than patched. Whoever wires the real flow reconciles it, and the
 six requirements above are what they need.
+
+## The carrier — decided 2026-08-10, pending measurement
+
+Everything above describes the GET/POST split, which is settled and which no
+carrier choice changes: the token arrives at the API in a **POST body**, never
+in a URL, whatever route the browser was on.
+
+What was open was how the credential reaches the browser in the first place.
+
+**Decision: the URL fragment.** `https://app.lagda.example/sign#t=<43 chars>`
+
+A fragment is not transmitted to any server, so the credential never enters an
+access log — not the CDN's, not a proxy's, not a `Referer`. Under the path form
+it enters all three, and `history.replaceState` cannot unwrite a log line
+written before the page's JS ran.
+
+**Gated on** SIGNING_LINK_CARRIER_TEST.md: every inbox in that list must show
+the fragment arriving intact at 43 characters. Corporate link rewriters are the
+only thing that can defeat this, and whether they do is measurable rather than
+arguable. If any strips it, the path form stays and its logging cost is accepted
+explicitly rather than by default.
+
+### What the frontend must do under the fragment form
+
+Adds to, and does not replace, the six requirements above.
+
+1. **Add a `/sign` route with no parameter.** Only `/sign/:requestId` exists
+   today, and a fragment link never fills a path parameter.
+2. **Read `location.hash` on mount**, parse `t=`, and exchange it immediately
+   via `POST /signing-access/bootstrap`.
+3. **Clear the hash after a successful exchange** —
+   `history.replaceState(null, "", location.pathname)`. Cosmetic rather than
+   protective, since a fragment never left the browser, but it keeps the
+   credential out of screenshots, screen shares and the back button.
+4. **Never put the credential in component state, a logger, an error boundary or
+   an analytics payload.** Read it, send it, drop the reference.
+5. **Handle an absent fragment explicitly.** That is the rewriter-stripped case,
+   and the signer needs to be told their email provider modified the link — not
+   shown a generic "invalid link", which sends them looking for a fault that is
+   not theirs.
+6. **Do not re-read the credential from the URL later.**
+   `UnavailablePage.tsx:124` currently does exactly that for its Retry button;
+   after the hash is cleared there is nothing there, and Retry must re-exchange
+   through the session it already has or send the signer back to their email.

@@ -2398,9 +2398,57 @@ from a request body, and never as a metric label.
 ## OD-144 - The frontend signing-link contract
 
 **Raised by:** BACKEND-34.
+**Status 2026-08-10: DECIDED, pending one measurement.**
 
 The frontend route is `/sign/:requestId` resolving a fixture `Map`; BACKEND-33
 emits `/sign/<43-char credential>`. The backend's shape is correct.
 
-Six frontend requirements are recorded in SIGNING_LINK_SCANNER_SAFETY.md. The
-open part is who does it and when - not what it should be.
+Six frontend requirements are recorded in SIGNING_LINK_SCANNER_SAFETY.md.
+
+### What was decided
+
+**The credential will travel in the URL FRAGMENT** - `/sign#t=<43 chars>` - if
+and only if SIGNING_LINK_CARRIER_TEST.md passes in every inbox it lists.
+
+A fragment is never transmitted to any server. The path form, which is what
+BACKEND-33 emits today, puts a 14-day bearer credential into the access log of
+whatever serves the SPA - and this frontend deploys to Netlify, whose edge logs
+are neither yours to read nor yours to purge. `history.replaceState` cleans the
+address bar; it cannot unwrite a log line that was written before your JS ran.
+
+The one thing that defeats a fragment is a corporate link rewriter that drops
+it, which is a measurement rather than an argument. Hence the gate.
+
+Its failure mode is the good kind: a stripped fragment gives the signer a
+visible dead end and you a support ticket, not a silent exposure.
+
+### Why this was NOT decided by picking the safer-sounding option
+
+The path form is what every comparable product ships and it never fails to
+arrive. Choosing the fragment accepts a compatibility risk to remove a
+confidentiality one, and that trade is only correct because the credential
+authorizes signing a legal instrument and the compatibility risk is both
+testable in advance and safe when it fires.
+
+### Scope note
+
+This is the first place the mock frontend meets a real backend. There is no HTTP
+client in the frontend at all - no `fetch`, no axios, no dependency - so
+whatever is chosen here becomes the precedent for roughly forty other screens.
+
+### Still genuinely open
+
+1. The measurement itself (SIGNING_LINK_CARRIER_TEST.md), which cannot run
+   through the product because BACKEND-45 does not exist and nothing consumes
+   `signing_delivery_intents`. It runs standalone.
+2. Who owns the frontend wiring project, and when it is scheduled.
+3. Under the fragment form, the SPA needs a **`/sign` route with no parameter**;
+   only `/sign/:requestId` exists today.
+4. `UnavailablePage.tsx` re-reads the credential from `window.location.pathname`
+   for its Retry button. That breaks under the fragment form and undoes the
+   cleanup under the path form. Either way it is a site the wiring project must
+   handle.
+
+**This does not block BACKEND-35**, which is an API command and touches no
+frontend file. An earlier note in the BACKEND-34 audit said it did; that was
+written before the frontend had been read.

@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<meta name="robots" content="noindex, nofollow">
+<title>LAGDA link-carrier probe</title>
+<style>
+  :root { color-scheme: light dark; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 20px 16px 48px;
+    font: 15px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: #07111F; color: #E8EFF6;
+  }
+  .wrap { max-width: 640px; margin: 0 auto; }
+  h1 { font-size: 17px; margin: 0 0 4px; letter-spacing: -0.01em; }
+  .sub { color: #8A9BAE; font-size: 13px; margin: 0 0 20px; }
+  .verdict {
+    border-radius: 12px; padding: 20px; margin-bottom: 20px;
+    text-align: center; font-weight: 700; font-size: 20px; letter-spacing: -0.01em;
+  }
+  .ok   { background: #0B3B22; color: #6EE7A8; border: 1px solid #17603A; }
+  .bad  { background: #45141A; color: #FF9AA5; border: 1px solid #7A2430; }
+  .none { background: #142130; color: #8A9BAE; border: 1px solid #24374C; }
+  .verdict small { display: block; font-weight: 500; font-size: 13px; margin-top: 6px; opacity: .85; }
+  table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+  th, td { text-align: left; padding: 9px 10px; border-bottom: 1px solid #1D2C3E; vertical-align: top; }
+  th { color: #8A9BAE; font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: .06em; }
+  td.k { color: #8A9BAE; width: 34%; }
+  code {
+    font-family: ui-monospace, "Cascadia Code", Consolas, monospace; font-size: 12px;
+    word-break: break-all; color: #C8DCEE;
+  }
+  .yes { color: #6EE7A8; font-weight: 700; }
+  .no  { color: #FF9AA5; font-weight: 700; }
+  .len { color: #8A9BAE; }
+  button {
+    width: 100%; padding: 13px; border: 0; border-radius: 9px;
+    background: #0078D4; color: #fff; font-size: 15px; font-weight: 700;
+    cursor: pointer; font-family: inherit;
+  }
+  button:active { background: #005FA8; }
+  .href {
+    background: #0C1826; border: 1px solid #1D2C3E; border-radius: 9px;
+    padding: 12px; margin-bottom: 20px;
+  }
+  .href .k { font-size: 12px; color: #8A9BAE; margin-bottom: 5px; }
+  .note { color: #6E8299; font-size: 12px; margin-top: 18px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>LAGDA link-carrier probe</h1>
+  <p class="sub">Reports which parts of a URL survived the mail path. Sends nothing anywhere.</p>
+
+  <div id="verdict" class="verdict none">…</div>
+
+  <table>
+    <tr><th>Carrier</th><th>Arrived</th></tr>
+    <tr><td class="k">Fragment <code>#t=</code></td><td id="r-frag">—</td></tr>
+    <tr><td class="k">Query <code>?t=</code></td><td id="r-query">—</td></tr>
+    <tr><td class="k">Path <code>/sign/…</code></td><td id="r-path">—</td></tr>
+  </table>
+
+  <div class="href">
+    <div class="k">Full URL as this browser received it</div>
+    <code id="href"></code>
+  </div>
+
+  <button id="copy">Copy result</button>
+  <p class="note">
+    Expected credential length is 43 characters. A shorter value means something
+    truncated it; a missing value means something stripped it.
+  </p>
+</div>
+
+<script>
+(function () {
+  var EXPECTED = 43;
+
+  function readFragment() {
+    var h = location.hash.replace(/^#/, "");
+    if (!h) return null;
+    var m = /(?:^|&)t=([^&]*)/.exec(h);
+    return m ? decodeURIComponent(m[1]) : null;
+  }
+  function readQuery() {
+    var m = /[?&]t=([^&]*)/.exec(location.search);
+    return m ? decodeURIComponent(m[1]) : null;
+  }
+  function readPath() {
+    var m = /\/sign\/([^/?#]+)/.exec(location.pathname);
+    return m ? decodeURIComponent(m[1]) : null;
+  }
+
+  var frag = readFragment(), query = readQuery(), path = readPath();
+
+  function cell(id, value) {
+    var el = document.getElementById(id);
+    if (value === null) { el.innerHTML = '<span class="no">STRIPPED / absent</span>'; return; }
+    var exact = value.length === EXPECTED;
+    el.innerHTML =
+      '<span class="' + (exact ? "yes" : "no") + '">' +
+        (exact ? "SURVIVED" : "MANGLED") +
+      '</span> <span class="len">(' + value.length + ' chars)</span><br><code>' +
+      value.replace(/[<>&]/g, function (c) {
+        return { "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c];
+      }) + "</code>";
+  }
+
+  cell("r-frag", frag);
+  cell("r-query", query);
+  cell("r-path", path);
+
+  document.getElementById("href").textContent = location.href;
+
+  var v = document.getElementById("verdict");
+  if (frag === null && query === null && path === null) {
+    v.className = "verdict none";
+    v.innerHTML = "No carrier present<small>Open this page from a probe link, not directly.</small>";
+  } else if (frag !== null && frag.length === EXPECTED) {
+    v.className = "verdict ok";
+    v.innerHTML = "FRAGMENT SURVIVED<small>This mail path preserves <code>#t=</code> intact.</small>";
+  } else if (frag === null) {
+    v.className = "verdict bad";
+    v.innerHTML = "FRAGMENT STRIPPED<small>This mail path removed <code>#t=</code>. Option 2 fails here.</small>";
+  } else {
+    v.className = "verdict bad";
+    v.innerHTML = "FRAGMENT MANGLED<small>Present but " + frag.length +
+      " chars, expected " + EXPECTED + ".</small>";
+  }
+
+  document.getElementById("copy").addEventListener("click", function () {
+    function s(name, val) {
+      return name + ": " + (val === null ? "STRIPPED" : val.length + " chars " +
+        (val.length === EXPECTED ? "OK" : "MANGLED"));
+    }
+    var out = [
+      "LAGDA link-carrier probe",
+      "when: " + new Date().toISOString(),
+      "ua: " + navigator.userAgent,
+      s("fragment", frag),
+      s("query", query),
+      s("path", path),
+      "href: " + location.href,
+    ].join("\n");
+    navigator.clipboard.writeText(out).then(
+      function () { document.getElementById("copy").textContent = "Copied"; },
+      function () { window.prompt("Copy this:", out); }
+    );
+  });
+})();
+</script>
+</body>
+</html>
