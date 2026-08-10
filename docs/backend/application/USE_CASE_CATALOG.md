@@ -31,10 +31,10 @@ These prove the pattern. They are **not** feature-complete.
 | `PrepareDocument` | command | yes | yes | no | BACKEND-30 |
 | `CreateSigningRequest` | command | yes | yes | no | BACKEND-31 |
 | `SendSigningRequest` | command | yes | yes | **yes** | BACKEND-33 |
-| `CancelSigningRequest` | command | yes | yes | no | BACKEND-35 |
+| `CancelSigningRequest` | command | yes | yes | no | **BACKEND-37 — implemented, no route (OD-154)** |
 | `ResolveSigningAccess` | query | n/a | no | n/a | BACKEND-34 |
 | `SubmitSignature` | command | yes | yes | **yes** | BACKEND-36 |
-| `DeclineSigningRequest` | command | yes | yes | no | BACKEND-37 |
+| `DeclineSigningRequest` | command | yes | yes | no | **BACKEND-37 — implemented, no route (OD-154)** |
 | `CompleteSigningRequest` | command | yes | yes | **yes** | BACKEND-38 |
 | `ExpireSigningRequests` | command | system | yes | yes | BACKEND-16 |
 | `GetPublicVerification` | query | **unauthenticated** | no | n/a | BACKEND-42 |
@@ -145,3 +145,18 @@ are **removed**. Both were `role === "owner"`, and reading the product showed
 Deferred with named owners: ownership transfer (OD-101), leave (OD-102),
 suspend/deactivate (OD-103), custom roles (OD-105), role-change history
 (OD-106).
+
+
+## Added by BACKEND-37
+
+| Use case | Type | Actor | Scoped | Tx | Idempotent | Command |
+|---|---|---|---|---|---|---|
+| `ApplyRecipientSubmissionToWorkflow` | command | **system** | yes | joins the submission's | by conditional update | BACKEND-37 |
+| `AdvanceSigningWorkflow` | command | **system** | yes | yes | by construction — a function of durable rows | BACKEND-37 |
+| `ReconcileSigningWorkflow` | command | **system** | per workspace | one per request | yes | BACKEND-37 |
+| `DeclineSigningRequest` | command | recipient | yes | yes | by conditional update | BACKEND-37 |
+| `CancelSigningRequest` | command | user | yes | yes | by conditional update | BACKEND-37 |
+
+The three system operations assert NO workspace capability and read no
+membership. They derive from facts a recipient created, and faking an owner to
+satisfy an authorization check would be inventing an actor (§152, §153).

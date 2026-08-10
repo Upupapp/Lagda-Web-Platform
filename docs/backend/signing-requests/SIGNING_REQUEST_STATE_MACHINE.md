@@ -147,3 +147,63 @@ Two values, on `signing_request_recipient_activation`. Neither is a ceremony
 state: this table answers "should this recipient currently be able to reach the
 document", and nothing else. BACKEND-37 adds `viewed`, `signed` and `declined`
 to its own table.
+
+
+---
+
+# Updated by BACKEND-37
+
+```
+   draft ──send──► sent ──first signature, work remains──► partially-completed
+                     │                                            │
+                     └──────── every required signer signed ──────┤
+                                                                  ▼
+                                                        completion-ready
+                                                                  │
+                                                                  ┆ BACKEND-38
+                                                                  ▼
+                                                            [ completed ]
+
+   sent / partially-completed ──decline──► declined      (a participant refused)
+   sent / partially-completed ──cancel───► cancelled     (the sender withdrew)
+   sent / partially-completed ──expire───► [ expired ]   (edge exists, BACKEND-46 schedules)
+```
+
+**Six states in the CHECK**: `draft`, `sent`, `partially-completed`,
+`completion-ready`, `declined`, `cancelled`. `completed` and `expired` are still
+in the type and still cannot be written — the type is the vocabulary and the
+database is the gate, exactly as before.
+
+## `completion-ready`, and why it is not `completed`
+
+The one value in the union that is NOT from the product's `TransactionStatus`.
+The product conflates two facts that fail independently — everyone signed, and
+the completed document exists — and PDF merge, certificate generation and
+sealing all happen afterwards. `completed` is terminal and legally significant,
+so a request that reached it wrongly could not be walked back.
+
+**BACKEND-37 REMOVED the `sent --complete--> completed` edge** that BACKEND-04's
+table carried. `complete` now has exactly one source, `completion-ready`, and
+BACKEND-37 holds no path to it.
+
+## `partially-completed` is the product's IN_PROGRESS
+
+`status-map.ts` — "Partially Signed / Some but not all recipients have completed
+their actions." The trigger is the first accepted submission that is not the
+last. It is a real product status with real copy, so it is used rather than
+invented around.
+
+## What `cancel` cannot do
+
+`cancel` is absent from `completion-ready`, and it is the product's rule:
+`transaction-detail.service.ts` offers cancel only while a transaction is
+active, and a request whose signatures are all collected is not. `expire` is
+absent for the same reason — a deadline that passes after the last signature
+does not un-sign anything.
+
+## Recipient activation is no longer a separate machine
+
+BACKEND-33 wrote that `signing_request_recipient_activation` held "two values,
+and neither is a ceremony state". BACKEND-37 widened the column to four and
+renamed it `recipient_state`: once `signed` exists, whose turn it is and what
+they did are the same question. See `../signing-state/RECIPIENT_STATE_MACHINE.md`.

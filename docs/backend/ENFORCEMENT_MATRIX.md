@@ -1460,3 +1460,27 @@ Four rows are DOCUMENTED ONLY because they belong to BACKEND-37, one because
 evidence wiring is a cross-cutting decision, and one — recipient CSRF — because
 there is still **no HTTP route suite** for the signing stack. That gap is now
 four commands old and is the largest single one in this area.
+
+## BACKEND-37 — signing workflow state
+
+| Rule | Status | How |
+|---|---|---|
+| Recipient SIGNED requires a `RecipientSubmission` | **ENFORCED** | four-column FK + CHECK + transition table + tests |
+| `signedAt == submission.acceptedAt` | **ENFORCED** | no clock on the path; asserted by test |
+| Sequential cohort completion before advance | **ENFORCED** | routing tests, exhaustive over the shapes |
+| Next cohort activates once | **ENFORCED** | conditional UPDATE on `waiting` + one-active-grant index + repeat-advance test |
+| Parallel signers stay independent | **ENFORCED** | routing tests |
+| Request `completion-ready` | **ENFORCED** | required-participant evaluation tests |
+| Non-signing participants do not block | **ENFORCED** | per-type tests |
+| Accepted submission progression recovery | **ENFORCED** | intent commits with the signature; reconciler test |
+| No generic state mutation | **ENFORCED** | architecture guard over sources and routes |
+| No PDF / sealer in BACKEND-37 | **ENFORCED** | architecture guard over imports |
+| No PII or unbounded label in state telemetry | **ENFORCED** | architecture guard |
+| Terminal request denies access | **ENFORCED** | policy + grant and session revocation |
+| Recipient realm cannot touch another recipient's state | **ENFORCED** | migration 024 restrictive policy + bound repository |
+| Recipient realm cannot read grants or delivery intents | **ENFORCED** | migration 024 restrictive deny |
+| **Concurrent final signers converge** | **PARTIALLY ENFORCED** | conditional UPDATEs make it true; NOT proven against real PostgreSQL |
+| Request `completed` | **DOCUMENTED ONLY** | BACKEND-38 |
+| PDF merge, certificate, sealing | **DOCUMENTED ONLY** | BACKEND-38/39/40/41 |
+| Decline and cancel HTTP surface | **NOT IMPLEMENTED** | use cases exist and are tested; no route composed |
+| Evidence events for state transitions | **DOCUMENTED ONLY** | OD-145 — nothing in this codebase writes one |

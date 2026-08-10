@@ -2599,3 +2599,61 @@ one existed.
 Also unresolved: whether a workspace admin should ever be able to see a raw
 signature image. Today no endpoint returns one (§177), which is the safe
 default.
+
+## Resolved by BACKEND-37
+
+- **OD-017 — what one decline does to the request.** CLOSED by the product:
+  `status-map.ts` marks `declined` terminal and the C37 resolver's reason is "A
+  participant declined." One required participant's refusal ends the request.
+- **OD-151 — lock order for submission versus terminal transitions.** CLOSED.
+  `lockRequest` is a `select ... for update` taken FIRST by both the advance and
+  the cancellation, so the race is closed rather than narrowed.
+- Recipient state set, request state set, IN_PROGRESS semantics
+  (`partially-completed`), the required-participant predicate, parallel and
+  sequential cohort behaviour, the `signedAt` source, completion-ready
+  semantics, the consistency model, next-recipient provisioning and the
+  retry/reconciliation model are all settled in `signing-state/`.
+
+## OD-154 — Decline and cancel have no HTTP surface
+
+**Raised by:** BACKEND-37. **Needs:** the API layer work.
+
+`declineSigningRequest` and `cancelSigningRequest` are implemented, tested and
+exported, and neither has a route. A recipient cannot decline and a sender
+cannot cancel through the product. This is a scope shortfall, not a design
+decision — contracts schemas, two route modules and `createApp` wiring remain.
+
+**Blocks:** the recipient decline journey and the sender cancel control.
+
+## OD-155 — Concurrency is not proven against PostgreSQL
+
+**Raised by:** BACKEND-37. **Needs:** an integration suite.
+
+§241 and §242 are mandatory and unmet. Two final signers racing readiness, and
+two same-cohort signers racing an activation, are safe by conditional UPDATE and
+are asserted only against the in-memory fake. A fake cannot demonstrate that two
+transactions serialize.
+
+**Blocks:** nothing today. **Decide before:** BACKEND-38 relies on
+`completion-ready` being established exactly once.
+
+## OD-156 — Queued delivery intents survive a cancellation
+
+**Raised by:** BACKEND-37.
+
+Cancelling revokes grants and sessions and leaves already-queued
+`signing_delivery_intents` alone, so an invitation may still be dispatched for a
+cancelled request. It lands on a page that refuses it, so the failure is
+cosmetic rather than a disclosure — but it is a real rough edge. §89 permits
+deferring it; BACKEND-45 owns dispatch and is the right place to suppress it.
+
+## OD-157 — Void has no state to act on
+
+**Raised by:** BACKEND-37.
+
+The product offers void only on a COMPLETED transaction and gates it on
+`canAudit` rather than `canPrepare`. Nothing can produce `completed` yet, so
+void is deferred with its semantics unwritten: invalidating a document people
+have already signed is a different act from withdrawing one in flight.
+
+**Decide with:** BACKEND-38, once `completed` exists.

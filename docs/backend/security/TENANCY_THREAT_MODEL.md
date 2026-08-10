@@ -398,3 +398,22 @@ their own ceremony payload if anyone ever returns it.
 
 That is why the control is a foreign key rather than a validation: a validation
 is code somebody can refactor, and a missing referent is not.
+
+## BACKEND-37 — signing workflow state
+
+| Threat | Control |
+|---|---|
+| Client forces a SIGNED state | No route accepts a state or a `signedAt`; no generic setter exists at any layer. Architecture guard over every route file |
+| Duplicate routing activation | Conditional UPDATE on `waiting`, a unique advance-intent key, and the one-active-grant partial index |
+| Accepted submission not reflected in state | Impossible: the state change is in the submission transaction and throws if it does not apply |
+| State says SIGNED without a submission | Four-column FK to `recipient_submissions` plus a CHECK requiring both `signed_at` and `submission_id` |
+| Wrong signed timestamp | `signed_at` is copied from the submission; no clock exists on the path, and the row names the submission for verification |
+| Next cohort activates before the current one completes | `planWorkflowAdvance` requires every required participant at or before the cohort to be signed |
+| Parallel signing incorrectly serialized | One recipient's completion neither blocks nor deactivates the others; asserted |
+| CC or viewer blocking completion | `canHoldFields && isRequired`; a count is never used |
+| State-transition replay | The advance is a function of durable rows; a second run changes nothing |
+| Concurrent final signers racing readiness | Conditional UPDATE on the two active states. **Not yet proven against PostgreSQL — OD-155** |
+| Terminal request still accepting submissions | `completion-ready` and every terminal state are outside `SIGNABLE_REQUEST_STATES`; grants and sessions are revoked as well |
+| Cross-request or cross-recipient progress mutation | The recipient repository is bound to all three identifiers and has no method taking one; migration 024 adds a RESTRICTIVE policy binding writes to the session's own recipient |
+| Recipient realm reading grants or delivery intents | Migration 024 denies the realm outright on both tables |
+| Cross-tenant transition | Every workflow repository is workspace-bound; the reconciler reads identifiers from a policy-free table and then enters each workspace properly |
