@@ -286,3 +286,41 @@ the more useful.
 
 Raw bootstrap credentials, signing URLs, session or CSRF tokens, any digest,
 recipient names or addresses, document titles, cookies.
+
+## The signing ceremony (BACKEND-35)
+
+| Event | Meaning | Fields |
+|---|---|---|
+| `signing_ceremony.entered` | An authenticated recipient began signing | `signingRequestId`, `recipientId` |
+| `signing_consent.accepted` | A disclosure version was accepted | `signingRequestId`, `recipientId`, `consentType`, `consentVersion` |
+
+Both are operational counterparts to durable rows —
+`signing_recipient_progress.first_entered_at` and a `signing_recipient_consents`
+row respectively. The rows are authoritative; these lines are for a human
+reading a log at 2am.
+
+**`entered` does not mean viewed, read, consented or signed.**
+CEREMONY_VIEW_EVENT.md states the operational meaning precisely, and the short
+version is: an authenticated session asked for the ceremony and got it.
+
+**`accepted` carries the VERSION and never the text** (§211). The version is the
+whole record — it names which words were agreed to, which is exactly what a log
+line should carry and exactly what the disclosure body should not.
+
+### Deliberately NOT emitted
+
+**A document-access event.** The backend knows a byte stream opened. It does not
+know the document arrived, rendered, or was looked at, and an event named for
+any of those would claim more than the system can support (§93). A metric
+counts it; nothing durable records it.
+
+**A read event.** `GET /signing/ceremony` writes no log line at all, because a
+signing page polls it and a read that records something cannot be polled.
+
+**Refusals.** A blocked ceremony throws a bounded error the caller already sees.
+Logging it would add volume for a signer legitimately waiting their turn.
+
+### Never in any of these
+
+PDF bytes, storage keys, session or CSRF tokens or their digests, recipient name
+or email, document title, field labels, field coordinates, consent text.

@@ -511,3 +511,64 @@ type simply does not name the repositories a recipient must never reach.
 BACKEND-35 will add repositories here. Each one added is a decision, not a
 convenience, and the question to ask is whether a signer with a forwarded link
 should be able to read it.
+
+## BACKEND-35 — the signing ceremony
+
+| Table | Classification |
+|---|---|
+| `signing_recipient_progress` | WORKSPACE_SCOPED |
+| `signing_recipient_consents` | WORKSPACE_SCOPED, and legal evidence |
+
+Both carry `workspace_id` and the standard `tenant_isolation` policy. Both hold
+SELECT and INSERT only — no UPDATE, no DELETE — so a first-entry time cannot be
+rewritten and an acceptance cannot be amended by any statement the runtime role
+can issue.
+
+### RESTRICTIVE policies: the pattern this command introduces
+
+Tenancy in this schema has always been permissive policies: `tenant_isolation`
+on every table, credential policies beside it. Permissive policies **OR**.
+
+That is exactly wrong for the recipient realm. Once `enterWorkspace` sets
+`lagda.workspace_id`, `tenant_isolation` alone lets a recipient read every row
+of that tenant — every request, every recipient, every field, every artifact.
+Adding a narrow *permissive* policy would have made it worse, not better.
+
+So BACKEND-35 adds six **RESTRICTIVE** policies, which AND:
+
+| Table | Bound to |
+|---|---|
+| `signing_requests` | the session's request |
+| `signing_request_recipients` | the session's recipient — not the request's others |
+| `signing_request_fields` | fields assigned to the session's recipient |
+| `document_artifacts` | the artifact the session's request froze |
+| `signing_recipient_progress` | the session's recipient |
+| `signing_recipient_consents` | the session's recipient |
+
+Each opens with `lagda_current_recipient_session_digest() is null or …`, which
+makes it **inert** in the workspace realm and in the bootstrap-credential realm.
+Neither sets that setting, so neither changes behaviour — integration asserts
+the workspace realm still sees 2 recipients and 2 artifacts where the recipient
+realm sees 1 and 1.
+
+**The rule this establishes:** a policy that is meant to NARROW must be
+`AS RESTRICTIVE`. A permissive policy can only ever add rows. An architecture
+guard asserts all six, and an integration test re-checks `polpermissive` against
+the live catalog — because the guard reads source and the catalog is the truth.
+
+### Two settings on one transaction, again
+
+`runForRecipientSession` sets the session digest; `enterWorkspace` then sets the
+workspace from the resolved session. Both live for the rest of the transaction,
+which is what the restrictive policies need: the workspace admits the tenant and
+the session digest narrows to the recipient.
+
+### The narrow unit of work, narrower still
+
+`RecipientCeremonyUnitOfWork` exposes ONE repository — `ceremony` — and that
+repository's read methods take **no identifying arguments**. It is bound at
+construction to a workspace, a request and a recipient.
+
+`RecipientWorkspaceUnitOfWork` (BACKEND-34) established "do not hand over what
+must not be reached". This goes one step further: even the repository that IS
+handed over cannot be asked the wrong question.

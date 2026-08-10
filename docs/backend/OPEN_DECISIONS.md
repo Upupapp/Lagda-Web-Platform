@@ -2452,3 +2452,80 @@ whatever is chosen here becomes the precedent for roughly forty other screens.
 **This does not block BACKEND-35**, which is an API command and touches no
 frontend file. An earlier note in the BACKEND-34 audit said it did; that was
 written before the frontend had been read.
+
+## OD-145 - Evidence events are declared and nothing writes them
+
+**Raised by:** BACKEND-35. **Needs:** one cross-cutting command.
+
+`evidence_events` exists with a 13-value vocabulary including `document-viewed`
+and `consent-accepted`. **No use case in this codebase writes a single row.**
+Not request creation, not send, not access, not the ceremony.
+
+BACKEND-35 deliberately did not write the first one. An audit trail whose only
+entries are ceremony entries reads as *missing* rather than as *not yet built*,
+and the gap would be in the middle - the document's creation and dispatch.
+
+Wiring needs one hand across the lifecycle: `transaction-created`,
+`transaction-sent`, `document-viewed`, `consent-accepted`,
+`signature-completed`, with one decision about actor types and observed
+metadata. BACKEND-43 is the natural owner if it is not given its own command.
+
+Until then the authoritative facts live in purpose-built append-only tables,
+which is better evidence and worse discoverability.
+
+## OD-146 - Where the required consent version is frozen
+
+**Raised by:** BACKEND-35.
+
+The required version is system policy (`RECIPIENT_CONSENT_VERSION`) rather than
+per-request, because the immutable recipient row has no consent column and
+adding one is a BACKEND-32 change. §141 permits either provided the lifecycle
+point is clear.
+
+The consequence is real: **rotating the version asks already-accepted recipients
+again.** Their old acceptance stays on record as an acceptance of the old words.
+That is arguably the correct behaviour - a new disclosure says something
+different - but it is friction, and a mid-flight rotation across a large batch
+would be visible.
+
+The alternative is freezing the required version onto the SigningRequest at
+send. Decide when legal copy actually rotates, which cannot happen before
+counsel supplies operative text (OD-140).
+
+## OD-147 - The frontend models several documents per request
+
+**Raised by:** BACKEND-35.
+
+`RecipientRequest.documents: RecipientDocument[]`, with per-document pages and
+`RecipientField.documentId`. The backend snapshot has exactly one
+`source_artifact_id` and `signing_request_fields` has `page_number` and no
+document reference.
+
+One document per request is the backend's model and BACKEND-35 did not change
+it. Multi-document is a snapshot-model change - BACKEND-32 territory - and it
+would touch field identity, coordinates and sealing.
+
+## OD-148 - No sender or workspace display name is available to the ceremony
+
+**Raised by:** BACKEND-35.
+
+`SignPage` shows `senderWorkspaceDisplayName`. Nothing snapshots it at send, and
+reading the workspace's CURRENT name would both widen the recipient realm - the
+ceremony unit of work has no workspace repository, on purpose - and make what a
+signer saw depend on a value that can change afterwards.
+
+If the product needs it, snapshot it at send (BACKEND-33) rather than resolving
+it at read time.
+
+## OD-149 - Four field types have no recipient renderer
+
+**Raised by:** BACKEND-35.
+
+`full-name`, `email`, `title` and `company` can be placed by a preparation and
+have no input anywhere in the recipient UI.
+
+The first two are SERVER_DERIVED and therefore fine - the backend fills them
+from the immutable snapshot. `title` and `company` are recipient-supplied and
+genuinely unfillable today, so a sender can build a request no signer can
+complete. BACKEND-36 needs either renderers or a product decision to remove the
+types.

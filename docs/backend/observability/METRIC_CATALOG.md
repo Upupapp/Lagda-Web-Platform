@@ -129,3 +129,25 @@ an email or any digest. The first four would make one time series per document
 or per signer; an IP is PII; and a digest as a metric label would put a
 credential-derived value in the most widely replicated string store in an
 observability stack.
+
+## The signing ceremony (BACKEND-35)
+
+| Metric | Labels |
+|---|---|
+| `signing_ceremony_results_total` | `operation`, `result`, `processRole` |
+
+`operation` is a three-value closed set — `enter`, `document`, `consent` — and
+`result` is two.
+
+**Deliberately not labels:** `signingRequestId` and `recipientId`, which would
+make one time series per document or per signer — a metrics bill and a PII
+incident arriving together. Nor `workspaceId`, nor an IP.
+
+**Nor the blocker.** The ceremony error is not an oracle the way BACKEND-34's
+bootstrap error is — the caller has already authenticated and is told the reason
+directly. But a dashboard showing why named signers were refused is still a
+dashboard nobody meant to build, and the bounded reason is available in the
+error the recipient already received.
+
+Reads are not counted. A polled endpoint that increments a counter measures the
+frontend's poll interval, not anything about signing.

@@ -230,3 +230,41 @@ to admit it.
 
 **No dedicated 429 test.** SIGNING_ACCESS_TEST_MATRIX.md records that as a gap
 rather than as coverage.
+
+## BACKEND-35 — the signing ceremony
+
+| Policy | Scope | Limit | Window | Failure | Source |
+|---|---|---|---|---|---|
+| `signing-ceremony.read.ip` | ip | 240 | 1 min | fail-open | BACKEND-35, chosen |
+| `signing-ceremony.document.ip` | ip | 60 | 1 min | fail-open | BACKEND-35, chosen |
+| `signing-ceremony.consent.ip` | ip | 60 | 1 min | fail-open | BACKEND-35, chosen |
+
+Eleven policies now. IP again, because a recipient has an account nowhere.
+
+**These are NOT sized like the credential endpoints, and the difference is the
+point.** `signing-access.bootstrap.ip` bounds attempts against a credential.
+These bound traffic from a caller who **already holds a valid session** — there
+is nothing left to guess. A signing page reads its ceremony on load, again after
+consent, and again on every reload; a signer working through a long document
+legitimately makes many requests. Limits tight enough to deter a credential
+attack would break the ordinary case and deter nothing.
+
+**All three fail OPEN.** What they bound is bandwidth and noise. What refusing
+costs is a signer who cannot finish signing a legal document. Contrast the
+outbound-email policies, which fail closed because their failure mode is
+*sending*.
+
+**Document access is separated from reads** because a PDF is expensive where a
+JSON projection is not. 60/min is deliberately not lower: a viewer that refetches
+should be slow, not broken.
+
+**Consent is limited for hygiene, not security.** Acceptance converges on one
+row, so a repeat is a no-op.
+
+**No per-recipient or per-request scope**, though both identities are known
+after the session resolves. A per-recipient limiter would be the natural
+tightening, and it needs a scope type the limiter does not have; recorded here
+rather than approximated with an IP.
+
+**No dedicated 429 test**, consistent with the rest of the catalog and recorded
+as a gap in SIGNING_CEREMONY_TEST_MATRIX.md.

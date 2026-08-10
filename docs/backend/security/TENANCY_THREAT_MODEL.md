@@ -319,3 +319,36 @@ What makes it defensible is that nothing overclaims. The session records
 `link-only`, the policy document states in those words that it proves neither
 mailbox control nor identity, and no field exists that a certificate could round
 up. The day the product wants more, OD-140 lists exactly what to build.
+
+## The signing ceremony (BACKEND-35)
+
+| Threat | Control | Status |
+|---|---|---|
+| Ceremony escaping its request scope | Session-derived identity; no id in any path, query or body | **ENFORCED BY CONSTRUCTION** |
+| Reading another recipient of the SAME request | Restrictive policy on `signing_request_recipients` | **ENFORCED BY THE DATABASE** — 1 row of 2 |
+| Other-recipient field leakage | Restrictive policy + repository predicate + no-argument method | **ENFORCED at three layers** — and their name asserted absent |
+| Sender-authored labels naming a third party | Other recipients' fields are not returned at all | **ENFORCED** |
+| Source artifact drift | Accessor takes no parameter; join from the request; restrictive policy | **ENFORCED** — and the schema already forbids two originals |
+| Mutable preparation changing the ceremony | No method exists to read one | **ENFORCED BY ABSENCE** — deletion tests prove indifference |
+| Workspace document API reused by a recipient | A separate use case, repository and authorization basis | **ENFORCED** — no shared code path |
+| Recipient enumerating tenant documents | Restrictive policy on `document_artifacts` | **ENFORCED** — 1 artifact of 2 |
+| Presigned URL leakage | None is issued | **NOT APPLICABLE** |
+| PDF Range authorization | Not supported; `Accept-Ranges: none` | **NOT APPLICABLE**, and honestly signalled |
+| PDF content in logs | Bytes stream; nothing buffers them | **ENFORCED** — payload guard |
+| Storage key exposure | Never leaves the application layer | **ENFORCED** — response shape asserted |
+| Scanner producing a viewed state | Entry needs an HttpOnly cookie and a CSRF token | **ENFORCED** — both tables empty after a bootstrap |
+| Viewed event overclaiming human review | Meaning documented; no field could hold a stronger claim | **ENFORCED BY SHAPE AND DOCUMENTATION** |
+| Consent inferred from viewing | Three separate records; each asserted to leave the others alone | **ENFORCED** |
+| Consent version confusion | Acceptance bound to an exact version; the submitted version is checked against the requirement | **ENFORCED** — and rotation re-asks rather than silently counting |
+| Accepting a disclosure never shown | Server compares against what the ceremony is asking for | **ENFORCED** |
+| Recipient / user CSRF realm confusion | Separate digest domains | **ENFORCED BY DERIVATION** — no HTTP-level test |
+| Non-signable request continuing | Every request revalidates state and routing | **ENFORCED** — a session that outlives signability is refused |
+| Premature signature draft persistence | No table, no port, no path | **ENFORCED BY ABSENCE** |
+| A permissive policy added by habit | Architecture guard + live catalog check | **ENFORCED** — the pattern is new here, so it is guarded twice |
+
+The one worth singling out is **other-recipient isolation inside a tenant**.
+Cross-tenant isolation is the threat everyone models; the adversary who actually
+shares a document with you is the other signer on the same request, and tenant
+isolation cannot see them at all. That is what the restrictive policies exist
+for, and it is why the counts in the integration suite are 1-of-2 rather than
+1-of-0.

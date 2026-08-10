@@ -1380,3 +1380,44 @@ directly.
 
 **Nothing revokes**, and **CSRF is unenforced** because there is nothing yet to
 guard.
+
+## BACKEND-35 — the signing ceremony
+
+| Rule | Status | Evidence |
+|---|---|---|
+| Recipient-only ceremony scope | **ENFORCED** | repository bound at construction; 6 restrictive policies; 1-of-2 counts |
+| Immutable request snapshot is the only source | **ENFORCED** | contact and preparation deletion tests; guards over six files |
+| Exact source artifact | **ENFORCED** | no-parameter accessor, join from the request, restrictive policy, storage call asserted |
+| Other-recipient field isolation | **ENFORCED** | 1 field of 2 in the recipient realm; the other signer's name asserted absent |
+| Other-recipient PII never returned | **ENFORCED BY THE DATABASE** | 1 recipient row of 2 on the same request |
+| Scanner-safe entry | **ENFORCED** | POST + session cookie + CSRF; both tables empty after a bootstrap |
+| Repeated entry idempotent | **ENFORCED** | `on conflict do nothing`; asserted in both suites |
+| Refused entry records nothing | **ENFORCED** | the view is built, and throws, before the write |
+| Recipient CSRF realm | **PARTIALLY ENFORCED** | validator unit-tested and called; no HTTP-level cross-realm assertion |
+| Explicit versioned consent | **ENFORCED** | unique constraint; backend clock; version checked against the requirement |
+| Consent concurrency converges | **ENFORCED** | asserted in both suites |
+| Consent text never stored | **ENFORCED** | migration guard forbids the column names |
+| Append-only progress and consent | **ENFORCED BY PRIVILEGE** | no UPDATE, no DELETE; permission denied, asserted |
+| No PDF mutation, no DocumentSealer | **ENFORCED** | guards over six files |
+| No signature or field value persisted | **ENFORCED BY ABSENCE** | no table, no port, no path |
+| No routing advancement | **ENFORCED** | asserted after entry and after consent |
+| Canonical geometry unchanged | **ENFORCED** | values returned verbatim; asserted |
+| Storage key secrecy | **ENFORCED** | never leaves the application layer; response shape asserted |
+| Telemetry redaction | **ENFORCED** | payload-scoped and label-scoped guards |
+| Restrictive policies | **ENFORCED** | `polpermissive = false` on all six, checked twice |
+| No BYPASSRLS, no SUPERUSER | **ENFORCED** | asserted against `pg_roles` |
+| Range request support | **NOT APPLICABLE** | no PDF viewer exists; `Accept-Ranges: none` |
+| Presigned URL handling | **NOT APPLICABLE** | none is issued |
+| Evidence event wiring | **DOCUMENTED ONLY** | deliberately absent; nothing in the codebase writes one |
+| Recipient cannot reach workspace APIs | **PARTIALLY ENFORCED** | scope registration; no direct HTTP assertion |
+| Signature submission | **DOCUMENTED ONLY** | BACKEND-36 |
+
+### Honest gaps
+
+Three rows above are not full PASS and the reason is the same for two of them:
+there is **no HTTP route suite** for this surface, as there was none for
+BACKEND-33 or BACKEND-34. The mechanisms are real and centrally tested; what is
+missing is a request that exercises them end to end.
+
+The third — evidence wiring — is absent by choice, not omission, and
+CEREMONY_VIEW_EVENT.md gives the argument.
