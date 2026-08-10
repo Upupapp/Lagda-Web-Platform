@@ -89,3 +89,61 @@ seam BACKEND-33 uses, and the reason the two snapshot tables were granted
    sending twice.
 4. Refuse to send anything not in the exact send-eligible state.
 5. Use its own capability, `signing-request.send`. Create does not imply send.
+
+---
+
+# Updated by BACKEND-33
+
+```
+        create                       send
+          │                            │
+          ▼                            ▼
+      ┌───────┐   SendSigningRequest  ┌──────┐
+      │ draft │ ────────────────────► │ sent │
+      └───────┘   conditional, atomic └──────┘
+                                          │
+                                          ┆ BACKEND-37
+                                          ▼
+                            [ partially-completed, completed,
+                              declined, cancelled, expired ]
+```
+
+**Two states.** The CHECK now admits `draft` and `sent`, and nothing else. The
+remaining five in the type are still claims nothing can make true.
+
+## The transition
+
+```sql
+update signing_requests set state = 'sent', sent_at = $1
+ where workspace_id = $2 and signing_request_id = $3 and state = 'draft'
+```
+
+Conditional in the statement, not before it. Two sends racing under different
+keys would both read `draft`; the second matches zero rows.
+
+A CHECK refuses `state = 'sent'` with a NULL `sent_at`, and the reverse.
+
+## What `sent` means, precisely
+
+The sender committed the request, and the durable work required for initial
+recipient access was written.
+
+**Not** delivered, opened, viewed, authenticated or signed. Provider delivery
+state is BACKEND-45's and lives in a different subsystem.
+
+## One-way
+
+There is no `sent → draft`. A request that has been sent cannot be un-sent;
+cancel, void and reissue are future transitions with their own semantics, not a
+rollback.
+
+## Recipient activation is a separate machine
+
+```
+waiting ──► active
+```
+
+Two values, on `signing_request_recipient_activation`. Neither is a ceremony
+state: this table answers "should this recipient currently be able to reach the
+document", and nothing else. BACKEND-37 adds `viewed`, `signed` and `declined`
+to its own table.

@@ -105,3 +105,33 @@ out (§124, §125).
 
 A cleanup job for terminal invitations is likewise absent, pending OD-097 and
 BACKEND-55.
+
+## Signing invitation delivery - NOT YET A JOB (BACKEND-33)
+
+**Status: DURABLE INTENT ONLY.**
+
+BACKEND-33 writes `signing_delivery_intents` rows and registers **no job type**
+and **no handler**. That is deliberate rather than incomplete:
+
+- no email provider exists or has been chosen (OD-003);
+- `createJobScheduler` is not instantiated in the API process, and no production
+  code enqueues anything;
+- a job definition with no handler and no provider would be a stub that made the
+  catalog claim capability the system does not have.
+
+The durable record is the intent table. Outstanding work is discoverable through
+a partial index:
+
+```sql
+select * from signing_delivery_intents where dispatched_at is null
+```
+
+**BACKEND-45 adds** the job type (`signing.invitation.deliver` or its canonical
+equivalent), the handler, the renderer, and the provider adapter. Its payload
+must carry `workspaceId` and `deliveryIntentId` and **nothing else** - never the
+raw credential, never the URL, never the recipient's address. The handler reads
+the intent, unseals the credential, builds the link from configured base, and
+renders.
+
+It must also carry an explicit workspace into a system execution context rather
+than fabricating an owner membership.

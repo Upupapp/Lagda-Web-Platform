@@ -221,3 +221,34 @@ accessed on a different basis. Events carry `targetUserId`.
 A sustained spike in `authorization.denied` from one actor may be probing or a
 client regression. A single denial is normal — a stale browser tab after a
 demotion produces one. Thresholds belong with BACKEND-66.
+
+## Send (BACKEND-33)
+
+| Event | Meaning | Fields |
+|---|---|---|
+| `signing_request.sent` | A sender COMMITTED a request for recipient delivery | `workspaceId`, `signingRequestId`, `actorUserId`, `activatedRecipientCount`, `waitingRecipientCount` |
+
+A security event as well as telemetry: it records the moment specific people
+were committed to being asked to sign a specific agreement.
+
+**It does not prove delivery.** The name says `sent`, not `delivered`, and it is
+emitted when the database transaction commits - before any provider exists to
+attempt transmission.
+
+### Events deliberately NOT emitted
+
+`signing_recipient.access_provisioned` and `signing_recipient.delivery_scheduled`
+were both considered and are absent. Each would fire once per recipient, and
+each would carry a recipient id - a stable pseudonymous handle per party. A log
+line per counterparty per send builds a participation graph out of what is
+supposed to be an operational record, and the counts in
+`signing_request.sent` answer the operational question already.
+
+They become worth adding when there is something to correlate them WITH: a
+provider result, a delivery failure, a bounce. That is BACKEND-45's, and it
+should decide the shape alongside the delivery state it introduces.
+
+### Never in any of these
+
+Raw bootstrap credentials, signing URLs, credential digests, recipient names or
+addresses, document titles, sealed payloads.

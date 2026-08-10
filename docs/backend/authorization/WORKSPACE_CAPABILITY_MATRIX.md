@@ -203,3 +203,25 @@ otherwise before the operation exists.
 
 An architecture guard asserts both names are in `WORKSPACE_CAPABILITIES` and
 that no role literal appears in the signing-request routes.
+
+## Send adds one capability (BACKEND-33)
+
+**21 capabilities x 7 roles = 147 exhaustive cells.**
+
+| Capability | Roles | Follows |
+|---|---|---|
+| `signing-request.send` | owner, administrator, template_administrator, sender | `signing-request.create` |
+
+The highest-impact capability in the workspace. Creating a request writes rows
+nobody outside LAGDA can see; sending it puts a document in front of
+counterparties, mints bearer credentials, and cannot be undone.
+
+Same four roles as create today, and separate anyway. Create-without-send is the
+first differentiation a real deployment is likely to want - an assistant who
+assembles the document and a partner who releases it - and it is a one-line
+change here rather than a new concept (OD-134).
+
+**Authorization is resolved against CURRENT membership, inside the send
+transaction.** A sender demoted between the route's session check and the commit
+does not send. That is stronger than the route middleware alone, and Send is the
+mutation that most deserves it.

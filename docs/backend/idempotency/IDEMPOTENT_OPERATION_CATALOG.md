@@ -143,3 +143,45 @@ a new key is a new intention, and a repeated key is a repeated attempt.
 `signingRequest.send` was already in the catalog from the handoff, before
 anything could be sent. The two are separate operations deliberately: a retry of
 a CREATE must never replay as a SEND.
+
+## `signingRequest.send` (BACKEND-33) - now implemented
+
+Pre-listed from the handoff before anything could be sent. Now in use.
+
+| Property | Value |
+|---|---|
+| Operation | `signingRequest.send` |
+| Scope | `workspace` |
+| Key | **Required** at the route. Missing is 422 |
+| Fingerprint | `{ signingRequestId }` |
+| Success status | 200 |
+| Replay | The original `sentAt` and id, and **no new credentials** |
+| Retention | The framework's standard window |
+
+### Why the key is required
+
+A double click, or a lost response, would otherwise send a second set of
+invitations to the same counterparties carrying different credentials. Unlike a
+duplicate workspace, that reaches people outside LAGDA.
+
+### Why the fingerprint is only the request id
+
+BACKEND-33 owns no send-level configuration - the product has no send screen, so
+there is no subject or message. If BACKEND-46 adds one it belongs here: sending
+the same request with a different message is a different logical request.
+
+Note the consequence, which is fine: the request id is also in the URL, so there
+is no input that can change while the key stays the same. A same-key
+different-input conflict is therefore unreachable, and that is recorded as N/A
+rather than untested.
+
+### Different key after SENT
+
+**Not** a replay - a deliberate second attempt. `409
+SIGNING_REQUEST_ALREADY_SENT`, and nothing is minted. The conditional transition
+is the backstop that makes it race-safe.
+
+### The sibling
+
+`signingRequest.create` (BACKEND-32) and `signingRequest.send` are separate
+operations deliberately: a retry of a CREATE must never replay as a SEND.

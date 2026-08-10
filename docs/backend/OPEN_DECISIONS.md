@@ -2216,3 +2216,102 @@ once:
 
 The schema is ready for any of them: `DELETE` is granted, the CASCADE is in
 place, and the state CHECK is one line to widen.
+
+## Resolved by BACKEND-33
+
+| Question | Resolution | Where |
+|---|---|---|
+| SENT semantics | Workflow committed for delivery. Not delivered, viewed or signed | SIGNING_REQUEST_STATE_MACHINE.md |
+| Send capability | `signing-request.send`, separate from create | ADR-026 |
+| Send idempotency scope and fingerprint | Workspace scope; `{ signingRequestId }` | SEND_CONSISTENCY |
+| Routing activation semantics | Earliest cohort present; one integer expresses all three shapes | ROUTING_ACTIVATION |
+| Bootstrap credential format | Opaque 256-bit base64url, own digest domain. Not a JWT | SIGNING_ACCESS_PROVISIONING |
+| Access credential TTL | 14 days, configurable, always set | SIGNING_ACCESS_PROVISIONING |
+| One-active-grant policy | Partial unique index on `revoked_at is null` | SIGNING_ACCESS_PROVISIONING |
+| **Secure delivery-secret mechanism** | **AES-256-GCM `SecretBox`, own key. This resolves OD-098 for signing** | ADR-026 |
+| Signing-link canonical URL | Configured base only; the builder takes no request | SIGNING_ACCESS_PROVISIONING |
+| Subject / message ownership | NOT_IN_PRODUCT at send. Nothing persists them | SEND_PRODUCT_INVENTORY |
+| Delivery intent persistence model | A narrow signing-specific table, not a generic outbox | ADR-026 |
+
+### OD-098 is partially resolved
+
+It recorded that invitation delivery is blocked because a raw token cannot
+survive its transaction, and named encryption as the fix. BACKEND-33 built that
+for signing.
+
+**Invitations, email verification and password reset still drop their raw
+secrets.** They are now the odd ones out, and the mechanism that would fix them
+is proven and in the codebase. OD-098 stays open for those three.
+
+## OD-134 - Splitting create from send
+
+**Raised by:** BACKEND-33. **Resolved for now: same four roles.**
+
+`signing-request.create` and `signing-request.send` are separate capabilities
+held by identical role sets, which makes the matrix look redundant. It is not:
+assembling a document and releasing it to counterparties are different acts with
+different consequences, and an assistant-drafts / partner-releases split is the
+most likely first differentiation a real deployment asks for. A one-line change
+when it does.
+
+## OD-135 - How viewers and carbon-copies learn about a document
+
+**Raised by:** BACKEND-33.
+
+`viewer` and `carbon-copy` cannot hold fields, so a SIGNING credential is not
+what they need - handing one to a participant the ceremony does not involve
+would be wrong. They are activated, so a later command can find them, and they
+receive nothing.
+
+Which means today they learn nothing at all. Three questions:
+
+- do they receive an invitation at send, or a copy at completion?
+- do they need a document-VIEW credential, which does not exist?
+- is a carbon-copy recipient a delivery target at all, or a completion-copy
+  target?
+
+The product's role descriptions say carbon-copy "receives a copy of the
+completed document", which suggests completion rather than send - but nothing
+implements completion yet.
+
+## OD-136 - Resend
+
+**Raised by:** BACKEND-33. **BACKEND-34/45.**
+
+Transport retry is not resend: a retry reuses the same intent and the same
+credential, which is enforced. A deliberate resend is a different operation and
+must decide whether it rotates the credential. The partial index already permits
+reissue after revocation.
+
+## OD-137 - Cancel and void after send
+
+**Raised by:** BACKEND-33.
+
+A sent request cannot be un-sent. When cancellation arrives it must revoke
+outstanding grants and mark pending intents undeliverable, and it must decide
+what a recipient holding a live link sees. `void` in the product's vocabulary
+applies to COMPLETED transactions and means something different again.
+
+## OD-138 - Sender display name
+
+**Raised by:** BACKEND-33. **Deferred to BACKEND-45.**
+
+The delivery intent snapshots a `sender_display_name`, and today it is the
+WORKSPACE name. The request's creator is a `UserId`, there is no profile read on
+the send path, and an email saying "usr_3f2a invited you to sign" would be worse
+than one saying the firm did.
+
+If a real person's name should appear, whoever writes the renderer must snapshot
+it deliberately at send - reading a mutable profile at render time would make a
+retry render different content from the first attempt.
+
+## OD-139 - Dispatched-intent retention
+
+**Raised by:** BACKEND-33.
+
+A delivery intent holds a recipient's email and name in a record whose purpose
+is operational. Once dispatched, the snapshot has no further use.
+
+Clearing dispatched intents after a window would reduce the PII surface without
+touching the legal record. Not implemented; recorded as a concrete option
+OD-110 can take.

@@ -406,3 +406,47 @@ The same treatment is worth considering for `document_artifacts` and
 `evidence_events`, both of which are append-only by intent and hold their
 UPDATE grants today. Not changed here: retro-fitting a grant to an existing
 table is a separate decision with its own blast radius.
+
+## Send (BACKEND-33)
+
+Three more `WORKSPACE_SCOPED` tables, all `tenant_isolation` with FORCE:
+
+| Table | Notes |
+|---|---|
+| `signing_request_recipient_activation` | PK is the recipient itself; CASCADE from it |
+| `signing_access_grants` | THREE-column FK to the recipient; globally unique digest; partial unique on one active grant |
+| `signing_delivery_intents` | CASCADE from the recipient; RESTRICT to the grant |
+
+`signing_access_grants` is a **security resource** as well as a tenant one. It
+holds the digest of a bearer credential that reaches someone with no LAGDA
+account at all, and no workspace repository method resolves a credential -
+BACKEND-34 needs a narrow public path, deliberately absent here.
+
+### The within-tenant parent rule, a third time
+
+`signing_access_grants -> signing_request_recipients` on
+`(workspace_id, signing_request_id, request_recipient_id)`.
+
+BACKEND-31 introduced the rule, BACKEND-32 needed it again, BACKEND-33 makes it
+three commands running. It is no longer a pattern worth noticing; it is the
+default shape for any reference into a request.
+
+### Partial unique indexes as lifecycle constraints
+
+New with this command and worth generalizing.
+
+`signing_access_grants_one_active_idx` is unique on the recipient WHERE
+`revoked_at is null`. That expresses "one live credential at a time" while
+leaving room for a revoked predecessor - which is what makes BACKEND-34's
+reissue possible with no migration and no application-side "is there already
+one" check that could race.
+
+Where a rule is "at most one ACTIVE X", a partial unique index says it better
+than a full one plus application logic.
+
+### Worker execution context
+
+BACKEND-45's dispatcher will read `signing_delivery_intents` outside any user
+session. It must carry an explicit `workspaceId` into a system execution
+context - **never** by fabricating an owner membership. The workspace column is
+on every row for exactly that reason.

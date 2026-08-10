@@ -237,3 +237,51 @@ use-case file at `getSigningRequest` and forbids `uow.contacts`,
 `uow.recipients`, `uow.preparations`, `uow.documents` and `uow.artifacts` after
 that point. Any future read that reaches for mutable state fails a test rather
 than passing review.
+
+## Send (BACKEND-33)
+
+| Threat | Control | Status |
+|---|---|---|
+| Duplicate send from a double click | Required idempotency key | **ENFORCED** - replay mints nothing |
+| Duplicate send under a different key | `where state = 'draft'` in the claiming UPDATE | **ENFORCED** - 409, counts unchanged; concurrent case probed |
+| A retry creating a second signing link | One active grant per recipient; one intent per grant | **ENFORCED BY THE DATABASE** |
+| Sending after the sender lost the capability | Membership read inside the transaction | **ENFORCED** - removed-member test |
+| Client choosing who receives a link | Routing policy derives the cohort; empty closed body | **ENFORCED** - 422 |
+| Client supplying recipients, fields or state | Same | **ENFORCED** |
+| Mutable preparation reread at send | Module-path architecture guard | **ENFORCED** - the guard that would fail silently otherwise |
+| Cross-tenant send | Scoped repositories, RLS, membership | **ENFORCED** in the use case; no end-to-end route assertion |
+| Cross-request access grant | Three-column foreign key | **ENFORCED BY THE DATABASE** |
+| Raw bootstrap token leaking into the grant table | Digest-only column with a shape CHECK | **ENFORCED** - and the assertion caught a bad test double |
+| Raw token leaking into logs or metrics | Payload-scoped guard; bounded labels only | **ENFORCED** |
+| Signing URL leaking anywhere | Only the TOKEN is sealed; the URL is built at render time | **ENFORCED** - never stored, never logged, never returned |
+| Host-header link injection | The builder takes no request and cannot see one | **ENFORCED** |
+| Insecure secret storage | AES-256-GCM, own key, key-versioned | **ENFORCED** - no key means Send fails, tested |
+| A request marked SENT with no durable access | The transition is the LAST statement in the transaction | **ENFORCED** - positional guard + rollback tests |
+| Sequential routing activating the wrong recipients | `planActivation`, pure and deterministic | **ENFORCED** - four routing tests |
+| A waiting recipient holding a long-lived secret | `provision` is a strict subset of `active` | **ENFORCED** |
+| Provider duplicate delivery | Not prevented, and not claimed | **ACCEPTED** - delivery is at-least-once; both copies carry the same valid credential |
+| Email scanner opening a link | Not BACKEND-33's control | **DOCUMENTED** - BACKEND-34 owns scanner-safe bootstrap |
+| Outbound email abuse | Two fail-closed policies, checked before credential generation | **ENFORCED** |
+| Credential guessing | 256 bits | **ENFORCED** - the rate limit bounds volume; entropy is what makes guessing infeasible |
+
+## The bootstrap credential's own threat model
+
+| Threat | Control | Owner |
+|---|---|---|
+| Token guessing | 256 bits of CSPRNG | BACKEND-33 |
+| Token theft from the database | Digest only in the grant; the recoverable copy is encrypted under a separate key | BACKEND-33 |
+| URL leakage via referrer or logs | Path segment, never stored, never logged; strip after bootstrap | BACKEND-33 / **BACKEND-34** |
+| Cross-recipient use | Three-column FK binds a grant to one recipient | BACKEND-33 |
+| Cross-request use | Same | BACKEND-33 |
+| Expired token | `expires_at` NOT NULL, 14 days | BACKEND-33 provisions; **BACKEND-34** enforces at lookup |
+| Revocation | `revoked_at` column and a partial index that permits reissue | BACKEND-33 provides; **BACKEND-34** operates |
+| Scanner opening the link | — | **BACKEND-34** |
+| Possession mistaken for identity | — | **BACKEND-34** |
+
+The one worth singling out is **the recoverable secret**. Every other LAGDA
+credential is a one-way digest, and this is the second exception after a TOTP
+seed. The mitigations are that it is encrypted with authenticated encryption
+under a key that is not the MFA key, that the key version is stored so rotation
+is possible, that a missing key fails the operation rather than degrading it,
+and that the value has a 14-day life. The alternative was a signing link nobody
+could ever build.

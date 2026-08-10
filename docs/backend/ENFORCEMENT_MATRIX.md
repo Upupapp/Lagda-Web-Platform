@@ -1284,3 +1284,58 @@ correct and unexercised by a real client.
 must be contiguous, are product questions BACKEND-37 must answer.
 
 **A rotated source blocks creation**, because it blocks preparation (OD-124).
+
+## Signing request send (BACKEND-33)
+
+| Claim | Status | Evidence |
+|---|---|---|
+| Send snapshot-only source | **ENFORCED** | Module-path architecture guard; four independence tests |
+| DRAFT to SENT transition | **ENFORCED** | Conditional UPDATE; concurrent transition probed |
+| `sent_at` agrees with state | **ENFORCED BY THE DATABASE** | CHECK constraint, probed |
+| Only two request states exist | **ENFORCED** | Widened CHECK; a third value refused |
+| Already sent, new key | **ENFORCED** | 409, and counts unchanged |
+| Send idempotency | **ENFORCED** | Required key; replay mints nothing |
+| Atomic grants + intents + state | **ENFORCED** | Multi-recipient partial-failure rollback test |
+| Transition is LAST | **ENFORCED** | Positional architecture guard |
+| Raw credential not persisted in the grant | **ENFORCED** | Digest-only column with a shape CHECK; the assertion caught a bad test double |
+| Raw credential recoverable for delivery | **ENFORCED** | AES-256-GCM sealed intent; `v1.` format asserted in integration |
+| No key means no send | **ENFORCED** | Sealer throws before the transition; request stays draft |
+| Cross-request access grants | **ENFORCED BY THE DATABASE** | Three-column FK, probed |
+| One active grant per recipient | **ENFORCED BY THE DATABASE** | Partial unique index, probed; reissue after revoke permitted |
+| One delivery intent per grant | **ENFORCED BY THE DATABASE** | Unique constraint, probed |
+| Explicit credential expiry | **ENFORCED** | NOT NULL plus `expires_at > created_at` |
+| Parallel routing activation | **ENFORCED** | Tested |
+| Sequential routing activation | **ENFORCED** | First cohort only; waiting recipients hold no credential |
+| Mixed routing activation | **ENFORCED** | Tested |
+| Earliest cohort present, not literal 1 | **ENFORCED** | Tested |
+| Client cannot choose active recipients | **ENFORCED** | Empty closed body |
+| SIGNING_REQUEST_SEND authorization | **ENFORCED** | Central capability; 21 x 7 exhaustive matrix |
+| Current-membership authorization | **ENFORCED** | Read inside the transaction; removed-member test |
+| Outbound abuse limits | **ENFORCED** | Two fail-closed policies, checked before credential generation |
+| CSRF on send | **ENFORCED BY COMPOSITION** | Registered inside the authenticated scope |
+| MFA pre-auth refusal | **ENFORCED BY COMPOSITION** | The scope hook, tested centrally |
+| Canonical link base | **ENFORCED** | The builder takes no request |
+| No URL persisted or logged | **ENFORCED** | Only the token is sealed; guards on both |
+| No PII in send telemetry | **ENFORCED** | Payload-scoped guard |
+| Metric labels bounded | **ENFORCED** | Three-value routing shape only |
+| RLS on activation, grants, intents | **ENFORCED** | FORCE asserted from `pg_class`; runtime role has no BYPASSRLS |
+| No signing ceremony or sealing | **ENFORCED BY ABSENCE** | Guarded across seven files |
+| Provider delivery | **PARTIALLY ENFORCED - DURABLE INTENT ONLY** | The intent is durable and discoverable. No provider, no renderer, no worker. BACKEND-45 |
+| Provider retry reuses the credential | **ENFORCED STRUCTURALLY** | Made unrepresentable by two constraints; no worker exists to exercise it |
+| Provider outage does not revert SENT | **ENFORCED BY CONSTRUCTION** | No provider is called at all. Re-assert in BACKEND-45 |
+| Recipient authentication | **DOCUMENTED ONLY** | BACKEND-34 |
+| Cross-tenant send via the API | **PARTIALLY ENFORCED** | The membership control is proven in the use case and RLS is proven per table; there is no end-to-end route assertion |
+| Send route HTTP contract | **PARTIALLY ENFORCED** | Schema and behaviour covered by inspection and by call; no `createApp` route suite |
+| Resend / cancel / void | **NOT IMPLEMENTED** | Not in the product - OD-136, OD-137 |
+| CC and viewer delivery | **NOT IMPLEMENTED** | They need a view credential that does not exist - OD-135 |
+
+### Honest gaps
+
+**Nothing is transmitted.** DURABLE INTENT ONLY, and the report says so rather
+than implying delivery works.
+
+**No HTTP route suite for send**, and no end-to-end cross-tenant assertion. Both
+are missing assertions rather than missing controls.
+
+**Viewers receive nothing at all** - not even a notification that a document
+exists.

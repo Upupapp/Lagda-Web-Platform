@@ -86,3 +86,26 @@ surface with no consumer (OD-031).
 `createInMemoryMetrics()` exists for tests and local diagnosis. It is bounded by
 the name union and label allowlist, but is still unbounded in distinct label
 *combinations* and must never become a production store.
+
+## Send (BACKEND-33)
+
+| Metric | Labels |
+|---|---|
+| `signing_request_send_results_total` | `result`, `routingShape`, `processRole` |
+
+`routingShape` is `parallel`, `sequential` or `mixed` - three bounded values,
+derived in the DOMAIN from the recipient set and returned by the use case.
+
+The route does not infer it from the waiting count. A count cannot tell
+sequential from mixed, and a label that is wrong on a three-cohort request is
+worse than no label.
+
+**Deliberately not labels:** the recipient count, the activated count, the cohort
+number, the request id, the workspace id. The first three are unbounded; the
+last two would make one time series per document. The counts are in the log
+line, where a number is a number rather than a dimension.
+
+**And emphatically never** a credential, a digest or a URL. A metric label is
+the most widely replicated string in an observability stack.
+
+Provider delivery metrics - accepted, bounced, failed - belong to BACKEND-45.
