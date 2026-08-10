@@ -285,3 +285,37 @@ under a key that is not the MFA key, that the key version is stored so rotation
 is possible, that a missing key fails the operation rather than degrading it,
 and that the value has a 14-day life. The alternative was a signing link nobody
 could ever build.
+
+## Recipient signing access (BACKEND-34)
+
+| Threat | Control | Status |
+|---|---|---|
+| Signing-link guessing | 256 bits, plus an IP limiter for volume | **ENFORCED** - entropy is the control; the limiter is the signal |
+| Signing-link forwarding or theft | Bound to one recipient of one request; 14-day expiry; revocable | **ACCEPTED AND BOUNDED** - link possession IS the policy, documented as such |
+| Email scanner opening the link | The emailed link targets a frontend route; only an explicit POST exchanges | **ENFORCED** - guard asserts POST-only and no `:token` parameter |
+| A GET recording viewing or consent | Neither is recorded anywhere by this command | **ENFORCED BY ABSENCE** |
+| Cross-request session use | Three-column FK binds a session to one request | **ENFORCED BY THE DATABASE** |
+| Cross-recipient session use | Same FK; access is id-based and never email-based | **ENFORCED** - guard forbids email lookup shapes |
+| Same email on two requests | Two grants, two sessions, neither crosses | **ENFORCED** - tested directly |
+| Recipient session fixation | The credential is generated server-side inside the use case and never read from a request | **ENFORCED BY CONSTRUCTION** - no HTTP-level assertion |
+| User / recipient realm confusion | Five distinct cookie names, distinct digest domains, distinct resolvers | **ENFORCED** |
+| A user session acting as a recipient | Bootstrap reads no session cookie at all | **ENFORCED BY CONSTRUCTION** |
+| A recipient reaching workspace APIs | Those routes live inside a scope whose hook does not read this cookie | **ENFORCED BY COMPOSITION** - no direct HTTP assertion |
+| RLS public-path escalation | FOR SELECT policies, equality on unique columns, fail closed | **ENFORCED BY THE DATABASE** - 1 of 2, and 0 with no setting |
+| Writing through the public path | Every policy is FOR SELECT | **ENFORCED** - UPDATE affects 0 rows; pre-transition INSERT violates policy |
+| A matching LAGDA account mistaken for the recipient | Nothing looks | **ENFORCED** - guard forbids `uow.users`, `findUser`, `UserId` |
+| Credential leakage via URL, referrer or logs | Body not path; `Referrer-Policy: no-referrer`; payload-scoped log guard | **ENFORCED** backend-side; frontend requirements documented |
+| Credential in a response body | Cookies only | **ENFORCED** - guard over both response shapes |
+| Overclaiming assurance | No `identity_verified` field exists | **ENFORCED BY ABSENCE** |
+| OTP brute force / email bombing | No OTP exists | **NOT APPLICABLE** |
+| Revoked grant still usable | Checked before the session is created | **ENFORCED** - but nothing revokes yet (OD-142) |
+| A session outliving its request's signability | Resolution does not cache eligibility | **ENFORCED**, and it is BACKEND-35's obligation to revalidate |
+
+The one worth singling out is **link possession as the whole assurance**. It is
+not a control failure — it is the product's chosen policy, and the risk is real:
+a forwarded email is a forwarded signing capability.
+
+What makes it defensible is that nothing overclaims. The session records
+`link-only`, the policy document states in those words that it proves neither
+mailbox control nor identity, and no field exists that a certificate could round
+up. The day the product wants more, OD-140 lists exactly what to build.

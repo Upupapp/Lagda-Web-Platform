@@ -235,3 +235,41 @@ change their password teaches them the security action breaks things.
 
 Revoking one's OWN session returns `signedOut: true` and clears both cookies,
 so the browser stops presenting a dead credential.
+
+## The recipient signing realm (BACKEND-34)
+
+A **second** authentication realm, and the separation is structural rather than
+conventional.
+
+| | Workspace actor | Signing recipient |
+|---|---|---|
+| Cookie | `lagda_session` | `lagda_signing_session` |
+| CSRF cookie | `lagda_csrf` | `lagda_signing_csrf` |
+| Digest domain | `lagda.session` | `lagda.recipient-signing-session` |
+| CSRF domain | `lagda.csrf` | `lagda.recipient-signing-csrf` |
+| Transaction setting | `lagda.workspace_id` | `lagda.recipient_session_digest` |
+| Identity | `UserId` + membership | `SigningRequestRecipientId` |
+| Lifetime | 7 days absolute / 8 hours idle | **8 hours absolute, no idle** |
+| Scope | every authenticated endpoint | one request, one recipient |
+
+Five cookie names now exist across three realms — the third being the MFA
+pre-auth credential. None is read by another realm's resolver.
+
+**Why no idle timeout on a recipient session.** The workspace session slides
+`last_seen_at` because a working day is longer than any sensible absolute
+window. A signing session is short by construction; touching a row on every
+request buys nothing against a lifetime already measured in hours.
+
+**Why `SameSite=Lax` matters more here.** The existing note explains that
+`Strict` withholds the cookie on top-level navigation from an external link.
+For a signing invitation, that navigation *is* the flow.
+
+**Two independent draws per session.** The session token and its CSRF token are
+separate `randomBytes` calls under separate domains, and a database CHECK
+refuses a row whose two digests are equal. A CSRF token derived from a session
+token makes a double-submit check whose halves share a secret.
+
+**A session is not perpetual authorization.** Resolution deliberately does not
+re-check request state — a test asserts a session resolves after its request
+moved back to `draft`. Each sensitive operation must revalidate; eligibility
+must never be cached in a cookie.

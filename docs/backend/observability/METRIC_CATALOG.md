@@ -109,3 +109,23 @@ line, where a number is a number rather than a dimension.
 the most widely replicated string in an observability stack.
 
 Provider delivery metrics - accepted, bounced, failed - belong to BACKEND-45.
+
+## Recipient signing access (BACKEND-34)
+
+| Metric | Labels |
+|---|---|
+| `signing_access_attempts_total` | `operation`, `result`, `processRole` |
+
+`operation` is one value today (`bootstrap`) and `result` is two
+(`success`, `denied`).
+
+**The failure REASON is deliberately not a label.** The public error is
+collapsed precisely so a caller cannot distinguish "expired" from "unknown"; a
+metric that split them would rebuild that oracle for anyone who can read a
+dashboard. The bounded reason is in the log line, which is not public.
+
+Never a request id, a recipient id, a workspace id, a session id, an IP address,
+an email or any digest. The first four would make one time series per document
+or per signer; an IP is PII; and a digest as a metric label would put a
+credential-derived value in the most widely replicated string store in an
+observability stack.

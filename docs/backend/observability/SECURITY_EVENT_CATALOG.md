@@ -252,3 +252,37 @@ should decide the shape alongside the delivery state it introduces.
 
 Raw bootstrap credentials, signing URLs, credential digests, recipient names or
 addresses, document titles, sealed payloads.
+
+## Recipient signing access (BACKEND-34)
+
+| Event | Meaning | Fields |
+|---|---|---|
+| `signing_access.session_created` | A recipient authenticated | `signingRequestId`, `recipientId`, `authenticationMethod` |
+| `signing_access.bootstrap_failed` | A credential was refused | `result` — `invalid_or_expired` or `not_active` |
+
+`session_created` is the authoritative operational record that a recipient got
+in, by which method. The durable fact lives on the session row; this is its log
+counterpart.
+
+**It does not record viewing, consent or signing**, none of which has happened.
+A recipient who bootstraps and closes the tab has viewed nothing.
+
+`bootstrap_failed` carries a **bounded reason and never the token, not even
+truncated** — a prefix of a credential is still a credential's prefix. The two
+reasons match the two public errors exactly, so the log reveals nothing the
+caller was not already told.
+
+### Events deliberately NOT emitted
+
+`signing_access.bootstrap_succeeded` would duplicate `session_created` — one
+event per successful exchange is enough, and the one that names the session is
+the more useful.
+
+`signing_access.authentication_required` is unreachable under LINK_ONLY.
+
+`signing_access.rate_limited` is emitted by the shared limiter, not here.
+
+### Never in any of these
+
+Raw bootstrap credentials, signing URLs, session or CSRF tokens, any digest,
+recipient names or addresses, document titles, cookies.

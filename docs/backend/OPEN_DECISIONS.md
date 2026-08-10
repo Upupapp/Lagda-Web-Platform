@@ -2315,3 +2315,92 @@ is operational. Once dispatched, the snapshot has no further use.
 Clearing dispatched intents after a window would reduce the PII surface without
 touching the legal record. Not implemented; recorded as a concrete option
 OD-110 can take.
+
+## Resolved by BACKEND-34
+
+| Question | Resolution | Where |
+|---|---|---|
+| Recipient authentication policy | **LINK_ONLY** - the product's default | RECIPIENT_AUTHENTICATION_POLICY.md |
+| Bootstrap one-time vs reusable | **Reusable** until expiry; each exchange mints an independent session | OD-141 |
+| Bootstrap TTL | 14 days, set by BACKEND-33 | SIGNING_ACCESS_PROVISIONING.md |
+| Recipient session TTL | 8 hours, absolute, no idle timeout | RECIPIENT_SIGNING_SESSION.md |
+| Single vs multiple sessions | **Multiple**, independent | RECIPIENT_SIGNING_SESSION.md |
+| Session cookie policy | HttpOnly, host-only, SameSite=Lax, `Path=/`, distinct names | RECIPIENT_SIGNING_SESSION.md |
+| Recipient CSRF policy | Session-bound double-submit, own digest domain, independent draw | RECIPIENT_SIGNING_SESSION.md |
+| OTP format / lifetime / attempts | **N/A** - not implemented | OD-140 |
+| OTP resend | **N/A** | OD-140 |
+| Authentication evidence fields | Request, recipient, method, backend time, source grant - on the session row | RECIPIENT_AUTHENTICATION_EVIDENCE.md |
+| Public credential lookup / RLS | Four FOR SELECT policies on unique columns, three transaction settings | SIGNING_ACCESS_RLS.md |
+
+## OD-140 - Email OTP for recipient authentication
+
+**Raised by:** BACKEND-34. **Deferred, with a route.**
+
+`email-otp` is `active` in the product's method list, so it is intended. Five
+things must happen first, in order:
+
+1. **Persist the policy.** BACKEND-30 or BACKEND-31 stores `PrepAuthConfig`;
+   BACKEND-32 snapshots it. It must be per-request, because the product makes it
+   per-participant.
+2. **Build the challenge model.** `email_verification_challenges` is the
+   template - digest-only, expiry, single-use, supersession, a one-active
+   partial index - plus a per-challenge attempt counter in the shape
+   `pending_authentications` uses. A six-digit code is not safe on entropy alone.
+3. **Have a provider** (BACKEND-45).
+4. **Bind** the challenge to request, recipient and a pending transaction, under
+   its own purpose constant.
+5. **Revalidate inside the final transaction** - the grant and the request state
+   can change while a user types a code.
+
+Until then, adding OTP would ship a factor nobody can complete.
+
+## OD-141 - One-time vs reusable bootstrap credential
+
+**Raised by:** BACKEND-34. **Resolved for now: REUSABLE.**
+
+The security argument for one-time exchange is real. The product argument
+against it is stronger today: the recipient flow loses its state on every page
+reload, and there is no resend operation - so a one-time credential would lock a
+signer out of their own document permanently, with no self-service recovery.
+
+The exposure is bounded: 14-day expiry, bound to one recipient of one request,
+revocable, and invalid the moment routing or request state changes. Each
+exchange mints an independent short-lived session.
+
+Revisit when a resend operation exists (OD-136), which removes the lock-out
+objection.
+
+## OD-142 - Access and session revocation operations
+
+**Raised by:** BACKEND-34. **BACKEND-46.**
+
+Everything is in place and nothing calls it: `revoked_at` on both the grant and
+the session, a five-value reason vocabulary, `source_grant_id`, a partial index
+for "everything this grant produced", and a repository method.
+
+When a request expires, is cancelled or completes, both must be revoked. Two
+questions remain: whether revoking a grant should immediately revoke the
+sessions derived from it (the lineage exists to make that one statement), and
+what a recipient holding a live link should see afterwards.
+
+## OD-143 - Observed IP and user agent in authentication evidence
+
+**Raised by:** BACKEND-34. **BACKEND-43.**
+
+§89 permits capturing them through BACKEND-11's trusted request metadata if the
+evidence architecture requires it. It has not said so, and capturing PII for a
+consumer that may never want it is collecting first and justifying later.
+
+Adding them is a column and a parameter. BACKEND-43 decides whether a completion
+certificate names them - and if it does, they come from trusted metadata, never
+from a request body, and never as a metric label.
+
+## OD-144 - The frontend signing-link contract
+
+**Raised by:** BACKEND-34.
+
+The frontend route is `/sign/:requestId` resolving a fixture `Map`; BACKEND-33
+emits `/sign/<43-char credential>`. The backend's shape is correct.
+
+Six frontend requirements are recorded in SIGNING_LINK_SCANNER_SAFETY.md. The
+open part is who does it and when - not what it should be.

@@ -1339,3 +1339,44 @@ are missing assertions rather than missing controls.
 
 **Viewers receive nothing at all** - not even a notification that a document
 exists.
+
+## Recipient signing access (BACKEND-34)
+
+| Claim | Status | Evidence |
+|---|---|---|
+| Signing grant digest lookup | **ENFORCED** | Narrow repository + integration |
+| No broad RLS bypass | **ENFORCED BY THE DATABASE** | Unfiltered selects return 1 of 2; 0 with no setting; no BYPASSRLS |
+| Credential path is read-only | **ENFORCED BY THE DATABASE** | UPDATE affects 0 rows; insert before `enterWorkspace` violates policy |
+| Cannot enumerate grants, requests, recipients or activations | **ENFORCED** | Four count assertions |
+| Cannot see another recipient of the same request | **ENFORCED** | Integration |
+| Scanner-safe GET | **ENFORCED** | Architecture: POST-only exchange, no `:token` parameter |
+| Recipient authentication policy | **ENFORCED** | LINK_ONLY; the use case writes one literal and a guard checks it |
+| OTP attempt limits | **N/A** | No OTP. A guard asserts no challenge, verifier or counter exists |
+| Fresh recipient session | **ENFORCED** | Non-equality and non-containment both ways |
+| Session and CSRF credentials independent | **ENFORCED** | Two `randomBytes` draws; a CHECK refuses equal digests |
+| Digest-only persistence | **ENFORCED** | Shape CHECKs; no raw value in any response |
+| Request/recipient session scope | **ENFORCED BY THE DATABASE** | Three-column FK; same-email test |
+| No workspace access | **ENFORCED BY COMPOSITION** | Scope registration and cookie names; no direct HTTP assertion |
+| `/me` denial | **ENFORCED BY COMPOSITION** | Same |
+| User session is not recipient auth | **ENFORCED BY CONSTRUCTION** | Bootstrap reads no session cookie |
+| Cookie coexistence | **ENFORCED BY CONSTRUCTION** | Distinct names and resolvers |
+| Recipient CSRF realm | **ENFORCED** in the service, **NOT YET AT A ROUTE** | Built and tested; no recipient mutation exists to guard |
+| Session expiry | **ENFORCED** | Derived from the clock; test |
+| Session revocation | **FOUNDATION_ONLY** | Column, reasons, lineage index and a repository method. Nothing calls it |
+| Snapshot-only source | **ENFORCED** | Guards forbid contact and preparation imports and email lookups |
+| No account matching | **ENFORCED** | Guard forbids `uow.users`, `findUser`, `UserId` |
+| Authentication evidence | **PARTIAL** | The authoritative fact is persisted on the session row with method and time. BACKEND-43 owns the projection |
+| Observed IP / user agent | **NOT CAPTURED** | Permitted by §89; no consumer has defined a need - OD-143 |
+| No PII or credential in telemetry | **ENFORCED** | Payload-scoped guard |
+| Metric labels bounded | **ENFORCED** | Guard; the failure reason deliberately excluded |
+| Signing ceremony | **DOCUMENTED ONLY** | BACKEND-35 |
+| Route-level HTTP contract | **NOT TESTED** | No `createApp` suite for this surface - the same gap BACKEND-33 left |
+
+### Honest gaps
+
+**No HTTP route suite**, so the cookie attributes, the 401 body, the rate-limit
+rejection and the cross-realm denials are asserted by composition rather than
+directly.
+
+**Nothing revokes**, and **CSRF is unenforced** because there is nothing yet to
+guard.
