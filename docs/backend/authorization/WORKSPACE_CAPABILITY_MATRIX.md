@@ -1,11 +1,11 @@
 # Workspace capability matrix
 
-**Established by:** BACKEND-27, extended by BACKEND-28 (contacts) and
-BACKEND-29 (documents). **The canonical mapping lives in
+**Established by:** BACKEND-27, extended by BACKEND-28 (contacts), BACKEND-29
+(documents) and BACKEND-30 (preparation). **The canonical mapping lives in
 `packages/core/src/authorization/index.ts`.** This document describes it; the
 code decides it.
 
-The two are kept in step by 119 table-driven assertions — every role against
+The two are kept in step by 126 table-driven assertions — every role against
 every capability — whose expectations are written out by hand rather than
 derived from the mapping they check. A test that read `ROLE_CAPABILITIES` would
 assert that the policy equals itself.
@@ -32,9 +32,10 @@ assert that the policy equals itself.
 | `document.view` | ✅ | ✅ | — | ✅ | ✅ | ✅ | ✅ |
 | `document.create` | ✅ | ✅ | — | ✅ | ✅ | — | — |
 | `document.update` | ✅ | ✅ | — | ✅ | ✅ | — | — |
+| `document.prepare` | ✅ | ✅ | — | ✅ | ✅ | — | — |
 | `workspace.ownership.transfer` | ✅ | — | — | — | — | — | — |
 
-Seventeen capabilities. Seven roles. **Default deny** — an unrecognised role holds
+Eighteen capabilities. Seven roles. **Default deny** — an unrecognised role holds
 nothing, and a capability absent from a role's list is refused. There is no
 wildcard, no inheritance and no numeric rank.
 
@@ -50,6 +51,7 @@ wildcard, no inheritance and no numeric rank.
 | `invitation.*` | Four separate capabilities though the same two roles hold all four today. Splitting a capability clients already branch on would be a breaking change; splitting one nobody has yet is free. |
 | `contact.*` | Four capabilities over the address book, and **the first row of this matrix that an `owner || administrator` check would have got wrong** — see below. `contact.archive` covers restore too: one reversible control, and nothing in the product separates them. There is no `contact.delete`, because there is no delete. |
 | `document.*` | Three capabilities, and **the first row where VIEW and WRITE diverge** — see below. There is no `document.delete`, no `document.archive` and no `document.download`: none exists in the product. |
+| `document.prepare` | Authoring the signing layout. Separate from `document.update` because the product's `prepare_documents` is its own permission — today the same four roles hold both, and they are declared separately so the first product change that distinguishes renaming from preparing is a one-line edit. READING a layout needs only `document.view`. |
 | `workspace.ownership.transfer` | **The one capability with no operation behind it.** The product's transfer control says "demonstration only" (OD-101). It is declared because the ownership model is meaningless without naming who could ever do it. |
 
 ## Why `member` holds exactly one capability

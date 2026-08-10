@@ -144,3 +144,33 @@ from migration 003 until now: `document_artifacts.document_id` was `NOT NULL`
 with no foreign key, and BACKEND-18 then wrote that caller-supplied value into
 the storage key. Nothing but application code stood between it and a document in
 one workspace pointing at bytes in another. It is now a constraint violation.
+
+
+## Document preparation (BACKEND-30)
+
+| Threat | Control | Status |
+|---|---|---|
+| Cross-tenant preparation read or edit | Scoped repository + `tenant_isolation` FORCE RLS + hidden 404 | **ENFORCED** — probed as the runtime role |
+| Cross-tenant artifact targeting | Compound FK `(workspace_id, source_artifact_id)` | **ENFORCED BY THE DATABASE** — probed |
+| Cross-tenant field attachment | Compound FK `(workspace_id, preparation_id)` | **ENFORCED BY THE DATABASE** — probed |
+| Malicious out-of-page coordinates | Domain rule, request schema and database CHECK | **ENFORCED** — partial overflow refused too, never clipped |
+| NaN / Infinity geometry | Explicit finite check BEFORE any comparison | **ENFORCED** — a comparative check alone would pass NaN |
+| Browser-pixel coordinate confusion | Contract accepts only normalized 0–1 | **PARTIALLY ENFORCED** — the backend cannot tell a correct conversion from a lucky one; OD-126 |
+| **Page rotation mismatch** | Inspector records rotation; preparation REFUSES rotated and unknown | **ENFORCED** — previously silent misplacement; OD-124 |
+| Field type or config tampering | Closed union, `additionalProperties: false`, database CHECK | **ENFORCED** — 422, and no generic config bag exists |
+| Client state spoofing | `state`, `lockedAt`, `revision`, `sourceArtifactId`, `workspaceId`, `preparationId` all refused | **ENFORCED** — 422 each, probed |
+| Submitted-value injection | No value column; `value`/`signatureValue`/`signedAt` refused | **ENFORCED** — 422 |
+| Editing a frozen preparation | `locked_at is null` inside the claiming UPDATE | **ENFORCED** — probed by locking a row directly |
+| Stale-tab overwrite | `expectedRevision` in the same UPDATE | **ENFORCED** — 409, newer work preserved |
+| Source artifact replacement race | Preparation names the exact artifact | **DOCUMENTED** — detection is possible; the migration policy is OD-115 |
+| PDF overwrite | No PDF library, no storage client, no sealer in the domain | **ENFORCED** — three guards; whole artifact row compared before/after |
+| Field layout or label in logs | Counts only, computed before the log call | **ENFORCED** — two guards plus a live serialized-log assertion; reads unlogged |
+| Assignee PII in logs | The slot is never logged | **ENFORCED** — becomes more important once BACKEND-31 makes it a real identity |
+| Stale-role editing | Authority read inside the mutation transaction | **ENFORCED** — demotion mid-flight probed |
+
+The one worth singling out is **page rotation**. It was not a new risk this
+command introduced — it has been latent since the sealer was written, because
+`page.getSize()` returns the unrotated mediabox while every viewer renders the
+rotated page. Nothing in LAGDA had ever looked at rotation, so a sideways-scanned
+contract would have had every field placed into the wrong coordinate space with
+no error anywhere. It is now inspected, persisted, and refused.

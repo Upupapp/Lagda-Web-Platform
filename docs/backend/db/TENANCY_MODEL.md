@@ -14,9 +14,11 @@ inferred later.
 | `contacts` | WORKSPACE_SCOPED | yes | `(workspace_id, contact_id)` — and deliberately **no** unique key on the email | → `workspaces` RESTRICT | `(workspace_id, updated_at DESC)`, `(workspace_id, normalized_contact_email)`, `(workspace_id, name)` | **yes** | yes |
 | `documents` | WORKSPACE_SCOPED | yes | `(workspace_id, document_id)` — and no unique key on the title | → `workspaces` RESTRICT | `(workspace_id, created_at desc, document_id desc)` | **yes** | yes |
 | `document_artifacts` | WORKSPACE_SCOPED | yes | `(workspace_id, artifact_id)`; partial unique on one ORIGINAL per document | → `workspaces`, `documents`, self — all RESTRICT | `(workspace_id, document_id, artifact_type)` | **yes** | yes |
+| `document_preparations` | WORKSPACE_SCOPED | yes | `(workspace_id, preparation_id)`; `(workspace_id, document_id)` unique — one per document | → `documents`, `document_artifacts`, both RESTRICT | PK | **yes** | yes |
+| `preparation_fields` | WORKSPACE_SCOPED | yes | `(workspace_id, field_id)` | → `document_preparations` **CASCADE** — the only one in this schema | `(workspace_id, preparation_id, page_number, layer, field_id)` | **yes** | yes |
 | `kysely_migration` / `_lock` | SYSTEM_INTERNAL | n/a | — | — | — | no | n/a |
 
-**Counts.** WORKSPACE_SCOPED 6 · SYSTEM_INTERNAL 2 · GLOBAL 0 · USER_SCOPED 0 ·
+**Counts.** WORKSPACE_SCOPED 8 · SYSTEM_INTERNAL 2 · GLOBAL 0 · USER_SCOPED 0 ·
 REQUIRES_REVIEW 0.
 
 (The table lists the workspace-domain tables. Account, session, evidence and
@@ -266,3 +268,48 @@ Partial, covering `original` only. `sealed` and `completion-certificate` are
 left unconstrained because nobody has decided a document has at most one of
 either, and a constraint promising something undecided is one that gets dropped
 later.
+
+
+## Preparation, and the one cascade (BACKEND-30)
+
+`document_preparations` and `preparation_fields` are **WORKSPACE_SCOPED** with
+the ordinary pattern — `tenant_isolation` with `FORCE`, scoped repositories with
+no workspace parameter, and no new transaction scope.
+
+Two things about the foreign keys are worth recording.
+
+### Three compound references, not one
+
+A preparation names both a document and an artifact, and a field names a
+preparation:
+
+```sql
+foreign key (workspace_id, document_id)        references documents (workspace_id, document_id)
+foreign key (workspace_id, source_artifact_id) references document_artifacts (workspace_id, artifact_id)
+foreign key (workspace_id, preparation_id)     references document_preparations (workspace_id, preparation_id)
+```
+
+All three compound, for the reason migration 016 established: a single-column
+reference would let a preparation in one workspace target another tenant's
+document or bytes, with only application code in the way.
+
+The artifact reference is the one that would be easiest to get wrong, because it
+looks redundant — the document already constrains the tenant. It is not: the
+artifact is named independently, so without the compound form a preparation
+could target a valid document and a foreign artifact.
+
+### The schema's only ON DELETE CASCADE
+
+`preparation_fields → document_preparations`.
+
+Every other reference in LAGDA is RESTRICT, deliberately: they protect records
+something else references, and a cascade would let one delete destroy evidence.
+
+A preparation field is different. It has no meaning without its preparation, no
+independent history, and **nothing references it** — a signing request will
+SNAPSHOT these values, not point at them (PREPARATION_EDITABILITY.md). A
+soft-delete would have to be filtered out of every read and every future
+snapshot.
+
+An architecture test asserts there is exactly ONE cascade in the migration and
+no `SET NULL`, so a later addition has to be deliberate.

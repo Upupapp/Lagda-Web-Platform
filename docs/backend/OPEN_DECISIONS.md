@@ -1996,3 +1996,107 @@ render.
 The fix is a batch repository method - `listOriginalsForDocuments(ids)` - and it
 is a pure addition. Recorded rather than left for someone to discover under
 load.
+
+## OD-121 - Preparation field types beyond the renderable nine
+
+**Raised by:** BACKEND-30. **Partially resolved.**
+
+The editor offers thirteen field types; the sealer renders five. Nine are
+implemented - the five renderable directly, plus `full-name`, `email`, `title`
+and `company`, which are semantically distinct requests that all draw as text.
+
+Four are deferred, each needing work in the same command that adds them:
+
+- `radio-group` - option sets, group semantics, a renderer, and it is the one
+  type behind a paid plan tier;
+- `multiline-text` - no multiline renderer; single-line text would truncate
+  silently;
+- `acknowledgment` - no renderer, and its own participant role implies semantics
+  nobody has specified;
+- `sender-text` - sender-filled content, which carries different authority and
+  audit semantics from anything a signer supplies (§39).
+
+`renderTypeFor` is the single mapping, and a guard asserts every preparation
+type maps onto a `SealableFieldType`. Adding a tenth without a renderer fails
+the build.
+
+## OD-122 - Preparation snapshot representation
+
+**Raised by:** BACKEND-30. **BACKEND-32 must resolve.**
+
+A signing request must not read live preparation after it is created - a sender
+editing on Tuesday would change what a recipient saw on Monday.
+
+What is decided: it is a SNAPSHOT, not merely a lock, for the reasons in
+PREPARATION_EDITABILITY.md. What is not: the representation. Copied rows, a
+serialized document, or a hashed canonical form are all viable, and the choice
+depends on what evidence needs to prove.
+
+Canonical serialization is already in place should hashing be wanted: stable
+ordering, explicit types, no arbitrary maps, coordinates at a fixed precision.
+No hash is computed today because nothing consumes one (§161).
+
+## OD-123 - Whether one document may be sent more than once
+
+**Raised by:** BACKEND-30. **BACKEND-32 must resolve, and it decides two other
+things.**
+
+Nothing in the product says a document is sent once. BACKEND-30 deliberately did
+not encode either assumption: preparation is per-document and carries no signing
+state.
+
+The answer determines:
+
+- whether recipients belong to the preparation or to the signing request
+  (BACKEND-31 cannot settle this alone);
+- whether `locked_at` is a per-send lock or a permanent one.
+
+## OD-124 - Rotated pages cannot be prepared
+
+**Raised by:** BACKEND-30. **The highest-priority gap this command leaves.**
+
+`page.getSize()` returns the UNROTATED mediabox; a viewer renders the rotated
+page. So on a 90-degree page the editor's normalized coordinates are taken
+against a landscape view and placed into portrait space - every field lands
+wrong, with no error at any layer.
+
+Nothing in LAGDA knew a page could be rotated; the inspector never looked. It
+does now, and preparation REFUSES rather than misplacing.
+
+**This is a real limitation.** A contract scanned sideways - an ordinary thing -
+cannot be prepared. Lifting it means teaching `toPdfRect` and the renderer about
+rotation, then relaxing `canPlaceFields`, in that order. Not the reverse.
+
+Artifacts inspected before this are `null` and are refused too: assuming
+unrotated would silently accept the exact case the check exists to catch.
+
+## OD-125 - A ready or lock control
+
+**Raised by:** BACKEND-30. **Resolved for now: NEITHER.**
+
+The prepare flow's steps are upload, participants, routing, authentication,
+settings, review, fields. A **Review** step is a page you look at, not a lock
+you set, and there is no "Ready to send" control that changes server state.
+
+Building one would mean inventing the validation it gates (§111) and the rule
+about whether READY can return to EDITABLE (§116) - two product decisions with
+no product answer.
+
+`locked_at` exists as the freeze seam and nothing sets it. The real immutability
+moment is signing-request creation.
+
+## OD-126 - Frontend coordinate fixtures
+
+**Raised by:** BACKEND-30.
+
+The backend cannot detect a bad viewport-to-normalized conversion: `0.5` looks
+identical whether it was computed correctly or by luck.
+
+Whoever wires the editor to these routes must add the shared fixtures §285 asks
+for - known page dimensions, known viewport dimensions, known rectangle,
+expected canonical coordinates - plus a zoom-invariance test (§286). A field
+whose persisted geometry changes when the user zooms is a bug only the frontend
+can catch.
+
+Not applicable this command: no frontend contract changed, and these are new
+backend routes the frontend does not yet call.

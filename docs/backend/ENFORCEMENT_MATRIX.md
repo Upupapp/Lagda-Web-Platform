@@ -1129,3 +1129,54 @@ OD-120.
 
 **A document can exist with no bytes indefinitely** if an upload is abandoned or
 rejected. Nothing cleans it up. OD-117.
+
+## Document preparation (BACKEND-30)
+
+| Control | Status | Evidence |
+|---|---|---|
+| Original artifact immutable during preparation | **ENFORCED** | Whole artifact row compared before/after; three import guards |
+| No prepared artifact produced | **ENFORCED** | Architecture guard; use-case assertion |
+| DocumentSealer never invoked | **ENFORCED** | Static import and call check over every domain file |
+| No PDF library outside the approved boundary | **ENFORCED** | Architecture guard |
+| No storage client, no artifact write | **ENFORCED** | Architecture guard |
+| Canonical coordinate model | **ENFORCED** | BACKEND-09's model reused; a guard fails on a second origin, unit or page convention |
+| Field within page bounds | **ENFORCED** | Domain rule, request schema AND database CHECK - possible because coordinates are normalized |
+| NaN / Infinity rejected | **ENFORCED** | Explicit finite check first in the domain; the CHECK catches them too |
+| 1-based page numbers, page 0 refused | **ENFORCED** | Schema, domain and CHECK |
+| Page ceiling from server-inspected metadata | **ENFORCED** | `document_artifacts.page_count`; no schema accepts one |
+| Rotated pages refused | **ENFORCED** | Inspector records it; `canPlaceFields` refuses rotated AND unknown |
+| Every field type renderable | **ENFORCED** | `renderTypeFor` total onto `SealableFieldType`, asserted |
+| Unknown field type rejected | **ENFORCED** | Closed union, 422, and a database CHECK |
+| No submitted signer value stored | **ENFORCED** | No column; the API rejects `value`/`signatureValue`/`signedAt` with 422 |
+| No generic configuration bag | **ENFORCED** | Architecture guard over the migration |
+| Preparation tenant scope | **ENFORCED** | Scoped repository, RLS + FORCE, compound FKs to document/artifact/preparation |
+| Cross-tenant preparation or artifact target | **ENFORCED BY THE DATABASE** | Probed as the runtime role |
+| One preparation per document | **ENFORCED** | Unique constraint; real concurrent inserts converge |
+| DOCUMENT_PREPARE authorization | **ENFORCED** | Central capability tests; no prepare without view |
+| Editability checked inside the write | **ENFORCED** | Single claiming UPDATE; locked row probed |
+| Stale layout save refused | **ENFORCED** | `expectedRevision` in the same UPDATE; 409 at the route |
+| Layout save atomicity | **ENFORCED** | Integration: a CHECK violation mid-batch leaves the previous layout intact |
+| CSRF on save | **ENFORCED** | Route test through the real `createApp` |
+| Anonymous refused | **ENFORCED** | Both routes, real app |
+| Pre-auth refusal | **ENFORCED BY COMPOSITION** | The scope hook; no dedicated preparation assertion |
+| No layout, label or coordinate in telemetry | **ENFORCED** | Two guards plus a live serialized-log assertion; reads unlogged |
+| Metric labels bounded | **ENFORCED** | Guard pins the label set; field count deliberately excluded |
+| No signing evidence written | **ENFORCED** | Architecture guard |
+| Document/signing lifecycle separation | **ENFORCED ARCHITECTURALLY** | No signing column; guard on signing-status literals |
+| Historical signing snapshot independence | **DOCUMENTED / FUTURE ENFORCEMENT** | PREPARATION_EDITABILITY.md specifies it for BACKEND-32; nothing outside the domain reads preparation yet |
+| Recipient assignment validation | **NOT APPLICABLE YET** | The slot dereferences nothing; BACKEND-31 adds the FK and the check |
+| Ready/lock operation | **NOT IMPLEMENTED** | No product control - OD-125 |
+| Rate limiting on layout saves | **NOT APPLIED** | Normal authenticated write; a low limit would break editor autosave (§152) |
+| Frontend coordinate fixtures | **NOT APPLICABLE THIS COMMAND** | No frontend contract changed - OD-126 |
+
+### Honest gaps
+
+**A rotated document cannot be prepared at all.** Refused with a clear message
+rather than mis-signed. OD-124, and the highest-priority gap this command
+leaves.
+
+**`locked_at` has no writer.** The seam is built and every mutation conditions
+on it; BACKEND-32 adds the transition.
+
+**The backend cannot detect a bad viewport conversion.** `0.5` looks identical
+whether computed correctly or by luck. OD-126.
