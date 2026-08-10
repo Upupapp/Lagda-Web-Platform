@@ -1236,3 +1236,51 @@ delete-vs-assign - are held by constraints.
 **A document with no accepted bytes accepts no recipients**, because the
 preparation that holds them targets an exact artifact. Correct for the product's
 flow, and it means OD-124's rotated-document refusal blocks recipients too.
+
+## Signing requests (BACKEND-32)
+
+| Claim | Status | Evidence |
+|---|---|---|
+| SigningRequest snapshots coherent preparation state | **ENFORCED** | One unit of work for all reads and writes; integration atomicity test |
+| Request recipients independent of preparation recipients | **ENFORCED** | New ids + eight independence tests |
+| Request fields independent of preparation fields | **ENFORCED** | New ids + move/delete/reassign tests |
+| No live Contact or Preparation reconstruction on read | **ENFORCED** | Positional architecture guard over the read function; no contact reference anywhere in the module |
+| Cross-request field assignment | **ENFORCED BY THE DATABASE** | Three-column FK; probed with two requests in one workspace |
+| Cross-tenant document, artifact or preparation reference | **ENFORCED BY THE DATABASE** | Probed as the runtime role |
+| Exact source artifact captured | **ENFORCED** | Resolved from the preparation; no input field |
+| Document title snapshotted | **ENFORCED** | Rename test |
+| Client cannot author the snapshot | **ENFORCED** | Empty closed body; twelve 422 cases |
+| Client cannot choose the state | **ENFORCED** | 422, plus a CHECK admitting only `draft` |
+| Snapshot rows immutable | **ENFORCED BY PRIVILEGE** | No UPDATE grant; attempted write returns permission denied |
+| Request row updatable, for BACKEND-33 | **ENFORCED** | Grant asserted present |
+| Readiness gate before any write | **ENFORCED** | Seven blockers; nothing written on failure |
+| Blockers carry indexes, not names | **ENFORCED** | Asserted against real PII fixtures |
+| Create idempotency | **ENFORCED** | Required key; concurrent same-key produces exactly one request |
+| Replay after preparation edit | **ENFORCED** | The T0-T3 sequence is a test |
+| No send or access side effects | **ENFORCED** | No provider, mailer, queue, PDF or sealer; guarded across six files |
+| No signing evidence written | **ENFORCED** | Architecture guard + unit assertion |
+| No storage write | **ENFORCED BY ABSENCE** | No storage import |
+| SIGNING_REQUEST_CREATE authorization | **ENFORCED** | Central capability; 20 x 7 exhaustive matrix |
+| SIGNING_REQUEST_VIEW authorization | **ENFORCED** | Auditor may read, not create |
+| Request tenant scope | **ENFORCED** | Scoped repository, RLS + FORCE, compound FKs |
+| Anonymous refused | **ENFORCED** | Both routes, real app |
+| CSRF on creation | **ENFORCED** | Real app |
+| MFA pre-auth refusal | **ENFORCED BY COMPOSITION** | The scope hook; no dedicated signing-request assertion |
+| No PII in telemetry | **ENFORCED** | Whole serialized line, real fixtures; reads unlogged |
+| Metric labels bounded | **ENFORCED** | Guard pins the set; counts deliberately excluded |
+| Future request state transitions | **DOCUMENTED ONLY** | BACKEND-33 / 37; the CHECK admits one value and the UPDATE grant is the seam |
+| Snapshot digest | **NOT IMPLEMENTED** | No consumer - deferred to evidence |
+| Archived-document rejection | **NOT APPLICABLE** | BACKEND-29 has no archive state to reject |
+| Rate limiting | **NOT APPLIED** | Normal authenticated write with no external work |
+| Request list | **NOT IMPLEMENTED** | No product surface - BACKEND-49 |
+| Delete or cancel before send | **NOT IN PRODUCT** | No affordance exists |
+
+### Honest gaps
+
+**Nothing calls these routes.** There is no frontend send flow. The surface is
+correct and unexercised by a real client.
+
+**Readiness is coarse.** Whether an approver needs a field, and whether routing
+must be contiguous, are product questions BACKEND-37 must answer.
+
+**A rotated source blocks creation**, because it blocks preparation (OD-124).

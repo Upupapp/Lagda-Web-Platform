@@ -203,3 +203,37 @@ same workspace passes that question and is still wrong. It is the first place
 LAGDA needed a containment check *below* the tenant, and it is worth assuming it
 will not be the last: any future reference into a preparation, a signing request
 or a ceremony needs the parent in its key, not just the workspace.
+
+## Signing requests (BACKEND-32)
+
+| Threat | Control | Status |
+|---|---|---|
+| Mutable preparation changing a historical request | Everything is COPIED; the read path touches no mutable repository | **ENFORCED** - eight independence tests plus a positional architecture guard |
+| Mutable Contact changing recipient identity | Two snapshots away; no recipient file references contacts at all | **ENFORCED** |
+| Mixed-revision snapshot | All reads and writes on one unit of work | **ENFORCED** - both interleavings with a concurrent save are coherent; atomicity probed |
+| A field assigned to another REQUEST's recipient | Three-column foreign key | **ENFORCED BY THE DATABASE** - the case RLS cannot catch |
+| Cross-tenant request, document, artifact or preparation | Compound foreign keys plus RLS | **ENFORCED** - probed as the runtime role |
+| Client injecting recipients or fields | An EMPTY closed creation body | **ENFORCED** - 422 |
+| Client choosing the source artifact | Resolved from the preparation; no input field exists | **ENFORCED** |
+| Client spoofing the state | 422 at the schema, and a CHECK admitting only `draft` | **ENFORCED** twice |
+| Client claiming another creator | Taken from the session | **ENFORCED** |
+| Idempotent retry creating a duplicate workflow | Required key; claim inside the business transaction | **ENFORCED** - concurrent same-key produces exactly one request |
+| Retry after an edit creating a SECOND workflow from the new revision | The fingerprint is the document alone | **ENFORCED** - the T0-T3 sequence is a test |
+| Editing a snapshot after creation | No UPDATE grant on either snapshot table | **ENFORCED BY PRIVILEGE** - attempted write returns permission denied |
+| A workflow that can never complete becoming durable | The readiness gate, before any id is generated | **ENFORCED** - seven blockers |
+| Stale-role authorization | Membership read inside the mutation transaction | **ENFORCED** |
+| Request snapshot PII in logs | Counts and ids only | **ENFORCED** - whole serialized line against real fixtures; reads unlogged |
+| Storage key reaching a client | Not in any projection | **ENFORCED** - `sourceArtifactId` is not even exposed |
+| Probing which request ids exist | Scoped lookup; absent and forbidden are one answer | **ENFORCED** - hidden 404 |
+
+The one worth singling out is **the read path**. Every other control here fails
+loudly: a constraint violates, a schema rejects, a grant denies. A `getSigningRequest`
+that joined to `contacts` to resolve a display name would fail nothing. Every
+independence test would still pass, because they assert on stored rows. The
+snapshot would be intact and the API would quietly serve current data.
+
+That is why the guard for it is positional rather than textual: it slices the
+use-case file at `getSigningRequest` and forbids `uow.contacts`,
+`uow.recipients`, `uow.preparations`, `uow.documents` and `uow.artifacts` after
+that point. Any future read that reaches for mutable state fails a test rather
+than passing review.

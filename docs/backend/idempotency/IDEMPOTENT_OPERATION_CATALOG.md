@@ -92,3 +92,54 @@ today there is no provider to wait for (OD-098).
 **Acceptance takes no key.** It is single-use by construction, and the membership
 unique constraint makes a retry converge to `joined: false` rather than
 duplicating anything.
+
+## `signingRequest.create` (BACKEND-32)
+
+| Property | Value |
+|---|---|
+| Operation | `signingRequest.create` |
+| Scope | `workspace` |
+| Key | **Required** at the route. A missing key is 422 |
+| Fingerprint | `{ documentId }` - the document alone |
+| Success status | 201 |
+| Replay | Returns the originally created request |
+
+### Why the key is required
+
+A lost response is indistinguishable from a failure to the browser that sent it,
+and the natural reaction - retry - would create a SECOND immutable signing
+workflow over the same document. BACKEND-33 could then send both, and one
+agreement would reach its counterparties as two sets of invitations with two
+sets of signing positions.
+
+The same reasoning that made `workspace.invitation.create` required, one step
+more consequential.
+
+### Why the fingerprint excludes the preparation revision
+
+This is the subtle part. "Create a signing request for document D" is ONE
+logical request. Including the revision would make this sequence fail:
+
+```
+T0  create with key K          preparation at revision 7
+T1  it commits                 SR-1 exists
+T2  the sender edits           preparation reaches revision 8
+T3  the network retry sends K
+```
+
+At T3 the fingerprint would differ and the framework would report a CONFLICT -
+for a retry of a request that already succeeded, which the caller cannot act on.
+
+With the document alone, T3 replays SR-1 and the caller learns the id of the
+workflow that exists. A unit test walks exactly this sequence and asserts the
+replayed snapshot still holds the revision-7 values.
+
+The trade is real and worth stating: a caller who deliberately wants a SECOND
+request after editing must send a DIFFERENT key. That is the correct division -
+a new key is a new intention, and a repeated key is a repeated attempt.
+
+### The sibling operation
+
+`signingRequest.send` was already in the catalog from the handoff, before
+anything could be sent. The two are separate operations deliberately: a retry of
+a CREATE must never replay as a SEND.

@@ -366,3 +366,43 @@ The other direction is RESTRICT, not cascade: removing a party must not silently
 destroy positioned signature blocks. PostgreSQL's foreign-key locking serializes
 "assign a field" against "delete the recipient" correctly in both orders, which
 is what makes the application's count-first check safe rather than advisory.
+
+## Signing requests (BACKEND-32)
+
+Three more `WORKSPACE_SCOPED` tables, all with `tenant_isolation` and FORCE:
+
+| Table | Notes |
+|---|---|
+| `signing_requests` | Compound FKs to `documents`, `document_artifacts` and `document_preparations`, all RESTRICT |
+| `signing_request_recipients` | CASCADE from the request; provenance FK to `preparation_recipients` with `on delete set null (source_preparation_recipient_id)` |
+| `signing_request_fields` | CASCADE from the request; THREE-column FK to the recipient, RESTRICT; provenance FK to `preparation_fields`, SET NULL with the column list |
+
+### The within-tenant parent rule, applied a second time
+
+BACKEND-31 introduced it: a compound key needs a column for every level of
+containment that matters, not just the tenant. BACKEND-32 needed it again, for
+`signing_request_fields -> signing_request_recipients`.
+
+Two requests in one workspace are both legitimately visible to RLS, so nothing
+about tenancy stops a field of request A naming a recipient of request B. A
+two-column key would look correct and permit exactly that.
+
+Twice in two commands is a pattern, not a coincidence. Any future reference into
+a request, a ceremony or a signature needs the parent in its key.
+
+### Immutability as a GRANT, not a convention
+
+New with this command, and worth generalizing.
+
+`signing_request_recipients` and `signing_request_fields` are granted
+`SELECT, INSERT, DELETE` and no `UPDATE`. `signing_requests` is granted `UPDATE`
+too, because its `state` column must change when BACKEND-33 sends it.
+
+A missing repository method is a convention a future author can undo. A missing
+privilege fails at the database. Where a table is genuinely write-once, withhold
+the grant - it costs one word in the migration and it cannot be forgotten.
+
+The same treatment is worth considering for `document_artifacts` and
+`evidence_events`, both of which are append-only by intent and hold their
+UPDATE grants today. Not changed here: retro-fitting a grant to an existing
+table is a separate decision with its own blast radius.

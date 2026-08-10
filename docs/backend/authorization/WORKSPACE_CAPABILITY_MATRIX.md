@@ -173,3 +173,33 @@ both a `WorkspaceRole` and a `RecipientType`, and they mean different things - a
 workspace reviewer reads the document library, a signing reviewer reviews one
 transaction. They share no authorization semantics, and a guard asserts no
 `recipient.<type>` capability exists to blur them.
+
+## Signing requests add two capabilities (BACKEND-32)
+
+The matrix is now **20 capabilities x 7 roles = 140 exhaustive cells**.
+
+| Capability | Roles | Follows |
+|---|---|---|
+| `signing-request.create` | owner, administrator, template_administrator, sender | `document.prepare` |
+| `signing-request.view` | the four above, plus reviewer and auditor | `document.view` |
+
+**Why create is separate from `document.prepare`.** The product has no separate
+permission, because the product has no send flow at all - so today the same four
+roles hold both and the matrix looks redundant. It is not. Preparing is
+reversible: a sender who places a field badly moves it. Creating a request is
+not: it produces a durable record that can be sent to counterparties, completed
+against, and cited as evidence. The day a role should draft layouts without
+committing anyone to a signature, that is a one-line change here rather than a
+new concept.
+
+**Why view follows `document.view` rather than create.** Six roles, including
+`reviewer` and `auditor`. Reading what was asked of whom is part of reading the
+document, and an auditor who could not see the signing configuration could not
+audit anything that happened to it.
+
+**No send capability yet.** `signing-request.send` arrives with BACKEND-33.
+Holding create does not imply holding send, and the matrix should not pretend
+otherwise before the operation exists.
+
+An architecture guard asserts both names are in `WORKSPACE_CAPABILITIES` and
+that no role literal appears in the signing-request routes.

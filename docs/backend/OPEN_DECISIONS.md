@@ -2135,3 +2135,84 @@ Revisit if the product grows a distinct "manage recipients" permission - for
 instance a coordinator who assembles the party list while someone else places
 the fields. Adding a capability later is additive; splitting one that turned out
 to be two is not.
+
+## Resolved by BACKEND-32
+
+These were open going into the command and are now decided. Recorded here so a
+reader does not reopen them:
+
+| Question | Resolution | Where |
+|---|---|---|
+| Initial request state | `draft` alone, with a CHECK admitting one value | SIGNING_REQUEST_STATE_MACHINE.md |
+| Request-scoped RecipientId | New brand, provenance kept as SET NULL | SIGNING_REQUEST_RECIPIENT_MODEL.md |
+| Request-scoped FieldId | New brand, three-column assignment key | SIGNING_REQUEST_FIELD_MODEL.md |
+| Source artifact basis | ORIGINAL + field metadata. There is no PREPARED artifact | SIGNING_REQUEST_SNAPSHOT_MODEL.md |
+| Preparation revision model | Snapshotted as provenance, not as authority | SNAPSHOT_MODEL |
+| Request title | No separate title. The DOCUMENT title is snapshotted, because the signer sees it and it is mutable | PRODUCT_INVENTORY |
+| One vs many requests per document | Many. No unique constraint | ADR-025 |
+| Immutable request vs editable draft | Immutable. Editing stays in preparation | SIGNING_REQUEST_IMMUTABILITY.md |
+| Create capability | `signing-request.create`, separate from `document.prepare` | ADR-025 |
+| View capability | `signing-request.view`, following `document.view` | ADR-025 |
+| Idempotency scope and fingerprint | Workspace scope; the DOCUMENT alone | SIGNING_REQUEST_CREATION_CONSISTENCY.md |
+
+## OD-129 - Send metadata ownership
+
+**Raised by:** BACKEND-32. **Deferred to BACKEND-33.**
+
+`settings.invitation.{subject, message, senderDisplayName}` exist in the prepare
+wizard and are persisted by NO backend command. There is nothing to snapshot
+today, and email copy belongs with the send that uses it.
+
+BACKEND-33 must decide whether they are configured at send time, or persisted on
+the preparation first and snapshotted onto the request. If the latter, note the
+tension: they would be the only MUTABLE thing a request carries, and
+SIGNING_REQUEST_IMMUTABILITY.md would need an explicit exception rather than a
+quiet one.
+
+## OD-130 - Expiration and reminders
+
+**Raised by:** BACKEND-32. **Deferred to BACKEND-46.**
+
+`settings.expiration.{enabled, expiresAt}` and `settings.reminders.*` exist in
+the wizard (`maxReminders` has no UI control at all) and are persisted nowhere.
+The master sequence places both in BACKEND-46.
+
+Whichever command implements them must decide whether expiry is a property of
+the REQUEST (snapshotted, immutable) or of the SEND (set when it goes out, and
+extendable). The product's expiry is an absolute date on a preparation, which
+suggests the second.
+
+## OD-131 - Recipient authentication policy
+
+**Raised by:** BACKEND-32. **Deferred to BACKEND-34.**
+
+`PrepAuthConfig` exists in the wizard with a default method and per-participant
+overrides. Persisted by no backend command.
+
+BACKEND-34 must decide whether the policy is snapshotted onto the request - so
+the rule a signer faces cannot change after they were invited - or read live.
+The snapshot answer is almost certainly right, for the same reason everything
+else here is snapshotted.
+
+## OD-132 - Signing-link credential lifetime
+
+**Raised by:** BACKEND-32. **BACKEND-34.**
+
+Nothing in this command issues a credential. When one exists, its lifetime,
+rotation on resend, and behaviour after expiry are all open.
+
+## OD-133 - Post-send amendment, cancel and void
+
+**Raised by:** BACKEND-32.
+
+A request is immutable and there is no way to abandon an unsent one, because the
+product has no such control. Once BACKEND-33 can send, three questions arrive at
+once:
+
+- can a sent request be cancelled, and what does a recipient holding a link see?
+- is an amended agreement a NEW request, or a revision of one?
+- `void` exists in the product's vocabulary for COMPLETED transactions and means
+  something different from `cancel`.
+
+The schema is ready for any of them: `DELETE` is granted, the CASCADE is in
+place, and the state CHECK is one line to widen.
