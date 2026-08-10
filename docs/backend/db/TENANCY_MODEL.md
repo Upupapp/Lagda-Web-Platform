@@ -134,3 +134,25 @@ No role gains `BYPASSRLS` and no `SECURITY DEFINER` function was introduced. The
 integration suite proves the boundary by issuing `SELECT * FROM
 workspace_invitations` with no predicate, in a workspace holding two
 invitations, and asserting one row.
+
+## Tenancy is not authorization (BACKEND-27)
+
+Stated here because the two are easy to conflate, and conflating them is how a
+role matrix ends up half in SQL.
+
+| Question | Mechanism | Where |
+|---|---|---|
+| Which tenant does this row belong to? | `workspace_id`, scoped repositories, RLS | database + repository |
+| May this actor perform this action? | capability policy | `@lagda/core/authorization` |
+
+RLS stops workspace A reading workspace B. It says nothing about whether a
+`member` of A may remove someone from A — and it should not.
+
+**The complete role matrix is deliberately NOT duplicated into RLS.** A policy
+per capability would be a second implementation, in a different language,
+deployed by migration rather than code review, and the two would drift. What is
+in the database is what belongs there: tenant isolation, plus the CHECK
+constraint that bounds the role vocabulary.
+
+Repositories enforce tenant scope. They do not decide business authorization —
+`may this person invite` is not a question a SQL adapter should answer (§86).

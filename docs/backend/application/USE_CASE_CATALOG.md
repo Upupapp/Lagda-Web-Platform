@@ -127,3 +127,21 @@ given one.
 Deferred with named owners: roles, permissions, member directories, member
 removal, role changes and ownership transfer (BACKEND-27); delivery
 (BACKEND-44/45); retention (BACKEND-55).
+
+## Member administration — IMPLEMENTED (BACKEND-27)
+
+| Use case | Kind | Capability | Notes |
+|---|---|---|---|
+| `listWorkspaceMembers` | query | `membership.view` | Returns email addresses. Actor authority read in-transaction. |
+| `changeWorkspaceMemberRole` | command | `membership.role.change` | Plus the grant matrix, the self-target refusal and the last-owner rule. Conditional write. |
+| `removeWorkspaceMember` | command | `membership.remove` | Deletes the row. Never the account, never a session, never another workspace. |
+| `requireCapability` / `assertCapability` | authorization | — | The centralization point. Every workspace operation names a capability here. |
+| `accessCapabilities` | projection | — | Informational only. The backend re-evaluates on every mutation. |
+
+BACKEND-25's `requireWorkspaceManager` and BACKEND-26's `canManageInvitations`
+are **removed**. Both were `role === "owner"`, and reading the product showed
+`administrator` should have held those powers all along.
+
+Deferred with named owners: ownership transfer (OD-101), leave (OD-102),
+suspend/deactivate (OD-103), custom roles (OD-105), role-change history
+(OD-106).

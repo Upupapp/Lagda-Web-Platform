@@ -89,3 +89,31 @@ an account for that address, they can accept. No email-based invitation can
 distinguish them from the legitimate owner. What the design buys is that BOTH
 are required — reading the email is not enough and holding an account is not
 enough.
+
+## Authorization (BACKEND-27)
+
+Tenancy answers *whose data*. These are the *what may you do* threats, and they
+live inside a tenant the actor is legitimately in.
+
+| # | Threat | Primary control | Defence in depth | Status |
+|---|---|---|---|---|
+| T-43 | **Vertical escalation** — a member acts as an administrator | Capability policy, default-deny | Hidden 404 discloses nothing | **Tested** — every role against every capability |
+| T-44 | **Self-promotion** | Actor compared to target before the grant rule | No capability permits it either | **Tested** from every role |
+| T-45 | **Peer escalation to OWNER** | `canGrantRole` refuses `owner` first, unconditionally | Invitable list, database CHECK | **Tested** — four layers |
+| T-46 | **Client-supplied capabilities** | No capability or permission field on any schema | `additionalProperties: false` | **Tested** |
+| T-47 | **Horizontal escalation** — administering another tenant's member | Workspace-scoped repository with no workspace parameter | `tenant_isolation` RLS | **Tested** with real ids from another tenant |
+| T-48 | **Stale role in a session** | No role in the credential | Membership read per operation | **Enforced by construction** + architecture test |
+| T-49 | **Stale authorization pre-check (TOCTOU)** | Actor's membership read inside the mutation transaction | Conditional write on the checked role | **Tested** — demoted actor's next write fails |
+| T-50 | **Last-owner deletion** | `wouldRemoveLastOwner`, count read in-transaction | Conditional write | **Tested** — two concurrency tests |
+| T-51 | **Owner-removal race** | Both transactions read the count and refuse | — | **Tested** — ten rounds of three racing operations |
+| T-52 | **Member-removal race** | Conditional delete on the expected role | — | **Tested** |
+| T-53 | **System actor impersonating an owner** | `SystemActor` has no role field | Separate execution context | **Enforced architecturally** + test |
+| T-54 | **Role policy disclosure** | One hidden 404 for non-member and under-privileged alike | No response explains the policy | **Tested** — identical code and message |
+| T-55 | **Persisted per-member override** | Capabilities derive from the role; nothing is stored | — | **Tested** — schema scanned |
+| T-56 | **Member directory disclosure** | `membership.view`, held by two roles | Emails never logged or labelled | **Tested** |
+
+**The residual risk.** An administrator can create peer administrators. That is
+the product's own model — its permission table grants `members:invite` and its
+invite form offers Administrator — and the escalation is bounded: never a
+superior, and the owner can demote any of them. ROLE_GRANT_MATRIX.md records it
+as a deliberate choice rather than an oversight.

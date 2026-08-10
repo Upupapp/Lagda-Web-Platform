@@ -991,3 +991,42 @@ today the seam is absent and a created invitation is a row in a list.
 scope BACKEND-25 built, so their CSRF and pre-auth behaviour is demonstrated
 through `createApp`. The seventeen auth and account routes are still uncomposed,
 so a browser cannot sign in to reach any of it.
+
+## BACKEND-27 — Roles and permissions
+
+| Rule | Status | How |
+|---|---|---|
+| Central role-to-capability mapping | **ENFORCED** | One frozen total `Record` in `@lagda/core`; 70 exhaustive assertions written independently of it |
+| No route role checks | **ENFORCED** | Static architecture guard over every package, plus a route-specific guard |
+| Default-deny capability policy | **ENFORCED** | Unknown role and unknown capability both tested |
+| Role-grant policy separate from capability | **ENFORCED** | 49 exhaustive assertions |
+| Nobody may grant OWNER | **ENFORCED** | Four independent layers, two of them in the database |
+| Self-promotion impossible | **ENFORCED** | Tested from every role |
+| Last-owner protection | **ENFORCED** | Transactional count; two PostgreSQL concurrency tests |
+| Actor authority read inside the mutation transaction | **ENFORCED** | TOCTOU test: demoted actor's next write fails |
+| Current membership is the authority | **ENFORCED** | Role change and removal both take effect on the next call |
+| No role in the login session | **ENFORCED** | Architecture test over the actor contract |
+| No per-member permission column | **ENFORCED** | Architecture test over the schema |
+| No external policy engine | **ENFORCED** | Architecture test over dependencies |
+| Capability list defined once | **ENFORCED** | Contracts and core compared by test |
+| Capability projection cannot exceed the policy | **ENFORCED** | Tested for every role |
+| Cross-tenant member administration refused | **ENFORCED** | Real membership ids from another tenant, under the runtime DB role |
+| System actor separate from human roles | **ENFORCED ARCHITECTURALLY** | Architecture test; worker context unchanged |
+| Member removal does not touch account or sessions | **ENFORCED** | Integration |
+| CSRF and pre-auth on member routes | **ENFORCED BY COMPOSITION** | The authenticated scope enforces both for every route in it — proved by the workspace and invitation suites through the same factory. The member routes have no dedicated assertions |
+| Denial telemetry free of PII | **ENFORCED BY CONSTRUCTION** | Event builders take ids and roles; metric labels are a closed union |
+| Ownership transfer | **NOT IMPLEMENTED** | OD-101 — the product control says "demonstration only" |
+| Leave workspace | **NOT IMPLEMENTED** | No control exists — OD-102 |
+| Suspend / deactivate member | **NOT IMPLEMENTED** | A membership status model — OD-103 |
+| Custom roles | **DOCUMENTED ONLY** | Migration path in AUTHORIZATION_ARCHITECTURE.md §11 — OD-105 |
+| Future document / contact / billing permissions | **DOCUMENTED ONLY** | Catalogued in the product inventory; added by the commands that build the operations |
+
+### Honest gaps
+
+**Ownership never moves.** Nobody may grant `owner`, the owner cannot be demoted
+or removed, and transfer is deferred. Coherent, and a real product limitation —
+the product already tells users to transfer ownership before closing an account.
+
+**Member-route CSRF and pre-auth are structural rather than asserted.** They
+hold because of where the routes live, and the scope is tested elsewhere. A
+dedicated member-route suite would close the gap.

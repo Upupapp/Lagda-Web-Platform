@@ -78,3 +78,35 @@ Fixed clocks and sequential ID generators, so assertions mean the same thing in 
 `fastify` · `pg` · `pg-boss` · `pdf-lib` · AWS SDK · `pino` · `process.env` · `node:fs` · and LAGDA's own `@lagda/db`, `@lagda/storage`, `@lagda/sealing`.
 
 The last three are easy to miss: they *implement* application's ports, so importing them inverts the dependency the architecture is built on. Enforced by ESLint, with the composition roots exempted.
+
+## Authorization (BACKEND-27)
+
+**A feature use case declares the CAPABILITY it needs. It does not name a role.**
+
+```ts
+const access = await requireCapability(
+  userId, workspaceId, "contact.create", deps);
+```
+
+Not `if (access.role === "administrator")`. Which roles hold a capability is the
+policy's question, and it is answered in exactly one place —
+`packages/core/src/authorization/index.ts`. An architecture guard greps every
+package for a role comparison and permits four files.
+
+The one exception is an operation whose SUBJECT is the role itself — changing a
+member's role, counting owners. There the role is the thing being modified, not
+the authority being checked.
+
+**Authorization lives at the application boundary, not only in a route hook.** A
+worker, a partner API and a CLI can all invoke a use case, and none has a
+request. A route may resolve the context early for efficiency; the use case must
+not become unsafe when called from anywhere else.
+
+**Sensitive mutations read the actor's authority inside their own transaction.**
+For member administration and anything that could reduce the owner count, resolve
+the actor's membership through the same unit of work as the write. A
+pre-transaction check can commit under authority that was revoked in between —
+AUTHORIZATION_ARCHITECTURE.md §6 has the shape.
+
+Ordinary reads and simple mutations do not need it. A rename that commits under
+a role revoked milliseconds earlier is cosmetic; a removal is not.

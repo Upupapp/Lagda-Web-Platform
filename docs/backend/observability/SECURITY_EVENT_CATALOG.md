@@ -183,3 +183,41 @@ A sustained spike in invitation **rejections** — rate-limit 429s, or repeated
 suggests an email-bombing attempt or a runaway client, the second suggests token
 guessing. A single instance of either is normal. Thresholds belong with
 BACKEND-66.
+
+## Roles and member administration (BACKEND-27)
+
+| Event | Emitted when | Fields | Never |
+|---|---|---|---|
+| `workspace.member.role_changed` | a role actually changes | `workspaceId`, `membershipId`, `actorUserId`, `targetUserId`, `toRole`, `result` | the member's **email**, any capability list |
+| `workspace.member.removed` | a membership is deleted | `workspaceId`, `membershipId`, `actorUserId`, `targetUserId`, `result` | the member's **email** |
+| `authorization.denied` | a capability check refuses | `capability`, `result` | the request body, the target's details, what would have been needed |
+
+`workspace.ownership.transferred` is **not** in this catalog: the operation does
+not exist (OD-101).
+
+### Successful checks are not logged
+
+One line per authorized request is noise that buries the signal, and the signal
+is refusal (§183).
+
+### Roles and capabilities ARE safe dimensions
+
+The only bounded values here. Seven roles, ten capabilities, both closed sets
+defined in code — a metric keyed on `capability` produces at most ten series and
+answers the useful question, "what are people being refused".
+
+`workspace_member_operations_total{operation, result, processRole}` and
+`authorization_denials_total{capability, processRole}`. No `workspaceId`, no
+`userId`, no `membershipId`, no email.
+
+### Why the member's email is absent
+
+An administrator is entitled to see it in the directory. That entitlement is
+scoped to the response: logs are retained differently, shipped further, and
+accessed on a different basis. Events carry `targetUserId`.
+
+### Alerting
+
+A sustained spike in `authorization.denied` from one actor may be probing or a
+client regression. A single denial is normal — a stale browser tab after a
+demotion produces one. Thresholds belong with BACKEND-66.

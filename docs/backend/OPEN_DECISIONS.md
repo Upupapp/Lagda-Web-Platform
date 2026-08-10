@@ -1633,3 +1633,133 @@ worker cannot recover it to build a link later. Whichever notification
 architecture BACKEND-44/45 chooses has to hand the secret to the renderer inside
 that window, or encrypt it the way BACKEND-23 encrypts TOTP secrets. Recorded
 here so the constraint is not discovered late.
+
+## OD-099 — RESOLVED: the workspace role and capability model
+
+**Raised and resolved by:** BACKEND-27.
+
+| Question | Decision |
+|---|---|
+| Role set | Seven, from the product: `owner`, `administrator`, `member`, `template_administrator`, `sender`, `reviewer`, `auditor`. No speculative additions. |
+| Role-to-capability matrix | Ten capabilities, one frozen total `Record` in `@lagda/core`. WORKSPACE_CAPABILITY_MATRIX.md. |
+| Default behaviour | **Deny.** Unknown role, unknown capability, unmapped combination. |
+| Invitation grant matrix | `invitation.create` holders may grant any invitable role. Nobody may grant `owner`. |
+| Workspace-settings authority | `workspace.update` — `owner` and `administrator`. **Corrected from BACKEND-25's owner-only**, which contradicted the product's own table. |
+| Member-list authority | `membership.view` — `owner` and `administrator`, matching the navigation gate. |
+| Role change | **Implemented.** Never to or from `owner`, never self-targeted. |
+| Member removal | **Implemented.** The row is deleted; MEMBER_LIFECYCLE.md says why. |
+| Ownership model | `SINGLE_OWNER`, stated in code as a constant. |
+| Owner invitation | Refused at four layers. |
+| Last-owner behaviour | Demotion and removal both refused, transactionally. |
+
+## OD-100 — The product's two permission tables disagree
+
+**Raised by:** BACKEND-27.
+
+`ROLE_PERMISSIONS` (`models/index.ts`) is keyed on `PlatformRole` and drives the
+navigation gate and the capability registry. `SYSTEM_ROLE_PERMISSIONS`
+(`models/workspace-admin.ts`) is keyed on custom-role ids and drives the
+custom-role builder, and is marked `demonstrationOnly`.
+
+They disagree about the member directory: `SYSTEM_ROLE_PERMISSIONS` gives
+`role_member` the `members:view` permission, while `ROLE_PERMISSIONS` withholds
+`manage_team` from every non-administrative role — and `manage_team` is what
+gates the whole workspace-administration section.
+
+The backend implements the navigation gate's answer, because it is the one that
+controls what a user can actually reach, and because a member directory is every
+colleague's email address. Recorded rather than resolved by picking the more
+permissive reading. The product should decide whether an ordinary member sees
+the member list.
+
+## OD-101 — Ownership transfer, and the consequence of not having it
+
+**Raised by:** BACKEND-25. **Escalated by:** BACKEND-27.
+
+`WorkspaceSettingsPage.tsx` has one control: *"Transfer ownership (demonstration
+only)"*. There is no target picker and no flow.
+
+BACKEND-27 makes the consequence concrete rather than theoretical:
+
+- nobody may grant `owner` — not an invitation, not a role change, not the owner;
+- the owner cannot be demoted or removed, because either would leave zero owners.
+
+**So ownership never moves.** A workspace's owner is its owner permanently.
+
+That is coherent — the invariant holds and nothing is half-built — and it is a
+real limitation. `DataPrivacyPage.tsx` already tells users *"Workspace Owners
+must transfer ownership before closing their account"*, describing an operation
+that does not exist.
+
+**This is the highest-priority gap the workspace commands leave.** The shape it
+should take is in OWNERSHIP_MODEL.md: a dedicated atomic operation, never a role
+patch, with the target already a member and a security event recorded.
+
+## OD-102 — Leave workspace
+
+**Raised by:** BACKEND-27.
+
+There is no leave control anywhere in the product. A member cannot leave; an
+administrator removes them.
+
+Not built. If it is ever added, the owner edge case is the whole difficulty:
+under `SINGLE_OWNER` an owner cannot leave without transferring first, which
+means leave depends on OD-101.
+
+## OD-103 — Suspend, reactivate, deactivate
+
+**Raised by:** BACKEND-27.
+
+`MemberDetailPage.tsx` offers three member actions beyond removal, and
+`WorkspaceMemberStatus` declares `active | suspended | deactivated |
+pending-invitation`.
+
+They are a membership **status** model — a suspended member is still a member
+whose access is paused — and implementing them means adding the status column
+that INV-324 exists to prevent, plus deciding what suspension means for
+in-flight signing requests, for seat counts, and for directory visibility.
+
+Not built. Building it as a fourth timestamp on the authorization table, without
+those answers, is how `AND status = 'ACTIVE'` ends up in eighty queries.
+
+## OD-104 — The `viewer` role
+
+**Raised by:** BACKEND-27.
+
+`PlatformRole` includes `viewer` with `view_dashboard` and `view_documents`. It
+overlaps `member` and `reviewer`, and nothing reachable in the product
+distinguishes the three.
+
+Not added to `WORKSPACE_ROLES`. Adding a fourth read-only role whose difference
+from the other three nobody can state would be vocabulary without meaning.
+
+## OD-105 — Custom roles
+
+**Raised by:** BACKEND-27.
+
+`RolesPage.tsx` has a working custom-role builder: name, description, and a
+checkbox per permission across all 30 `WorkspacePermission` values.
+
+Not built. **26 of the 30 permissions govern documents, templates, contacts and
+billing — operations that do not exist.** A customer could compose a role
+granting `documents:send` and it would mean nothing.
+
+The migration path is recorded in AUTHORIZATION_ARCHITECTURE.md §11 and needs
+its own ADR. The important property is already in place: every caller names a
+**capability**, so `hasCapability` could become a database lookup without
+changing a single call site.
+
+## OD-106 — Role-change history
+
+**Raised by:** BACKEND-27.
+
+`workspace_memberships` stores the current role. Who changed whose role, from
+what, to what and when exists only as security events.
+
+A durable audit trail would be genuinely useful for a legal-technology product,
+and the frontend already designs one — `WorkspaceActivityEvent` has 24 event
+types including `member-role-changed` and `ownership-transferred`. That is a
+workspace activity feed, which is BACKEND-43's territory.
+
+The events are emitted with everything such a log would need, so nothing is lost
+that would have to be reconstructed.
