@@ -450,3 +450,64 @@ BACKEND-45's dispatcher will read `signing_delivery_intents` outside any user
 session. It must carry an explicit `workspaceId` into a system execution
 context - **never** by fabricating an owner membership. The workspace column is
 on every row for exactly that reason.
+
+## BACKEND-34 — recipient signing access
+
+| Table | Classification |
+|---|---|
+| `recipient_signing_sessions` | WORKSPACE_SCOPED |
+
+`signing_access_grants` and `signing_request_recipient_activation` remain
+WORKSPACE_SCOPED, unchanged; BACKEND-34 adds the narrow read path that the
+previous section said was deliberately absent.
+
+`recipient_signing_sessions` is **both** a tenant resource and a security
+resource, like the grants table before it. It carries `workspace_id` and the
+standard `tenant_isolation` policy, and it holds two credential digests.
+
+### The third realm
+
+Tenancy in this schema now has three entry shapes, and it is worth naming them
+together because a fourth will be tempting to invent.
+
+| Entry | Setting | Policy shape |
+|---|---|---|
+| Workspace actor | `lagda.workspace_id` | `tenant_isolation` on every table |
+| Invitation credential | `lagda.invitation_credential_digest` | `FOR SELECT`, equality on a unique digest |
+| Signing credential | `lagda.signing_access_digest` | `FOR SELECT`, equality on a unique digest, plus three `exists`-joined companions |
+| Recipient session | `lagda.recipient_session_digest` | `FOR SELECT`, equality on a unique digest |
+
+Every credential realm follows the same three rules:
+
+1. **`FOR SELECT` only.** A credential path reads. Writes happen after the
+   transaction has entered a workspace, under `tenant_isolation`.
+2. **Equality on a column with a unique index.** Not `like`, not a range, not a
+   function of client input. The policy can only ever admit the one row whose
+   digest the caller already held.
+3. **Fail closed.** `nullif(current_setting(..., true), '')` means an unset
+   setting yields NULL, and NULL never equals a digest. No setting, no rows.
+
+### Two settings on one transaction
+
+`runForSigningCredential` sets the credential digest, resolves the grant, and
+*then* sets `lagda.workspace_id` from the resolved row. Both settings are live
+for the remainder of that transaction, and that is intentional: the workspace is
+proven by the credential rather than supplied alongside it.
+
+The consequence to keep in mind is that a credential transaction is briefly a
+transaction with no workspace at all. Inserting a session before `enterWorkspace`
+is a policy violation, and an integration test asserts exactly that.
+
+### The narrow unit of work
+
+`RecipientWorkspaceUnitOfWork` exposes **one** repository. Not documents, not
+contacts, not memberships, not preparations.
+
+This is a deliberate departure from `WorkspaceUnitOfWork`, which exposes
+everything and relies on capability checks to bound what an actor may do. A
+recipient has no capabilities to check — the bound has to be structural, so the
+type simply does not name the repositories a recipient must never reach.
+
+BACKEND-35 will add repositories here. Each one added is a decision, not a
+convenience, and the question to ask is whether a signer with a forwarded link
+should be able to read it.
