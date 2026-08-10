@@ -10,10 +10,15 @@ inferred later.
 |---|---|---|---|---|---|---|---|
 | `workspaces` | WORKSPACE_SCOPED (is the scope) | PK | — | — | PK | **yes** | yes |
 | `workspace_memberships` | WORKSPACE_SCOPED | yes | `(workspace_id, member_id)`, `(workspace_id, user_id)` | → `workspaces` RESTRICT | `(workspace_id, created_at DESC)` | **yes** | yes |
+| `workspace_invitations` | WORKSPACE_SCOPED (+ a credential read path) | yes | `(workspace_id, invitation_id)`, partial unique on the live invitee address | → `workspaces` RESTRICT | `(workspace_id, created_at DESC)` | **yes** | yes |
+| `contacts` | WORKSPACE_SCOPED | yes | `(workspace_id, contact_id)` — and deliberately **no** unique key on the email | → `workspaces` RESTRICT | `(workspace_id, updated_at DESC)`, `(workspace_id, normalized_contact_email)`, `(workspace_id, name)` | **yes** | yes |
 | `kysely_migration` / `_lock` | SYSTEM_INTERNAL | n/a | — | — | — | no | n/a |
 
-**Counts.** WORKSPACE_SCOPED 2 · SYSTEM_INTERNAL 2 · GLOBAL 0 · USER_SCOPED 0 ·
+**Counts.** WORKSPACE_SCOPED 4 · SYSTEM_INTERNAL 2 · GLOBAL 0 · USER_SCOPED 0 ·
 REQUIRES_REVIEW 0.
+
+(The table lists the workspace-domain tables. Account, session, evidence and
+operational tables are classified in their own commands' documents.)
 
 No table is unclassified.
 
@@ -21,7 +26,7 @@ No table is unclassified.
 
 Recorded so the decision is not made accidentally by whoever writes the migration.
 
-**WORKSPACE_SCOPED:** invitations · contacts · documents · document versions and
+**WORKSPACE_SCOPED:** documents · document versions and
 artifacts · signing requests · recipients · templates · evidence · webhooks ·
 API keys · in-app workspace notifications · reports · usage records.
 
@@ -156,3 +161,49 @@ constraint that bounds the role vocabulary.
 
 Repositories enforce tenant scope. They do not decide business authorization —
 `may this person invite` is not a question a SQL adapter should answer (§86).
+
+
+## Contacts: the ordinary case, and why that is worth recording (BACKEND-28)
+
+`contacts` is **WORKSPACE_SCOPED** with nothing special about it:
+
+```sql
+create policy tenant_isolation on contacts
+using (workspace_id = lagda_current_workspace())
+with check (workspace_id = lagda_current_workspace());
+```
+
+plus `FORCE ROW LEVEL SECURITY`, a `workspace_id` foreign key, and a repository
+whose methods take no workspace argument.
+
+**No fourth setting, no new scope, no exception.** BACKEND-26 needed one because
+an invitee is not a member and had to resolve a tenant before having one. Every
+contact caller is an authenticated member with tenant context already
+established, so the ordinary mechanism is sufficient — and an architecture guard
+asserts the absence of `BYPASSRLS`, `SECURITY DEFINER`, `runGlobal` and
+`runForInvitationCredential` in every contact file, so adding one later has to
+be a deliberate decision rather than a quiet import.
+
+Two details of the table are tenancy decisions rather than schema taste:
+
+**`UNIQUE (workspace_id, contact_id)`** is redundant today — `contact_id` is the
+primary key — and exists as the target of a future tenant-safe reference:
+
+```sql
+FOREIGN KEY (workspace_id, source_contact_id)
+  REFERENCES contacts (workspace_id, contact_id)
+```
+
+A signing recipient referencing `contact_id` alone could point at another
+workspace's contact, with nothing but application code to stop it. Rule 4 of
+this document, applied before there is anything to apply it to.
+
+**There is deliberately no unique key on the email.** Duplicate contacts are
+warned about, never refused — see CONTACT_DUPLICATE_POLICY.md. The index on
+`(workspace_id, normalized_contact_email)` is for detection and exact-match
+search, and an architecture test asserts it is not unique so the constraint
+cannot arrive later as a tidy-up.
+
+**Every index leads with `workspace_id`.** Every contact query is tenant-scoped
+first; an index that did not lead with the tenant would be close to useless for
+the queries this system actually runs.

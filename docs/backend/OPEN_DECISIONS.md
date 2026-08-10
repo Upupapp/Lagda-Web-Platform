@@ -1763,3 +1763,113 @@ workspace activity feed, which is BACKEND-43's territory.
 
 The events are emitted with everything such a log would need, so nothing is lost
 that would have to be reconstructed.
+
+## OD-107 - Personal vs workspace contact scope
+
+**Raised by:** BACKEND-28.
+
+The frontend's `Contact` model has `scope: "personal" | "workspace"` and an
+`ownerId`. BACKEND-28 implemented neither: every contact is workspace-scoped.
+
+It is a **second ownership axis layered over tenancy**, and the capability model
+has no vocabulary for "mine, within this workspace". The questions it raises
+have no product answer:
+
+- Is a personal contact visible to the workspace owner?
+- Editable by an administrator?
+- What happens to it when its creator is removed from the workspace?
+- Does it participate in the duplicate check against workspace contacts?
+
+Answering those here would mean inventing an authorization rule rather than
+reading one from the product, which is exactly the mistake BACKEND-27 exists to
+correct.
+
+Adding a scope later is a nullable column plus a policy decision. Removing one
+that people have already used is a data migration and a conversation.
+
+## OD-108 - Contact usage tracking
+
+**Raised by:** BACKEND-28.
+
+`lastUsedAt`, `usageCount`, and the `recent` and `frequent` list views are all in
+the product model, and `ContactSortField` offers both fields.
+
+Not built, because **nothing would write them**. A contact is "used" when it
+becomes a document recipient, and recipients arrive with BACKEND-30. Sorting by
+either today would order every contact identically and look broken.
+
+The command that creates recipients from contacts is the one that should add
+them, in the same transaction that creates the recipient.
+
+## OD-109 - `invalid` and `restricted` contact statuses
+
+**Raised by:** BACKEND-28.
+
+`ContactStatus` in the product is `active | archived | invalid | restricted`. The
+backend implements the first two.
+
+No operation in the product sets either of the others; they appear only in mock
+fixture data. A state the system can never enter is a state machine with an
+unreachable node.
+
+`invalid` would plausibly mean "delivery bounced", which needs delivery
+infrastructure (OD-003). `restricted` would plausibly mean a compliance block,
+which needs a compliance model. Each arrives with the mechanism that sets it.
+
+## OD-110 - Contact erasure under the Data Privacy Act
+
+**Raised by:** BACKEND-28. **The highest-priority gap this command leaves.**
+
+LAGDA now stores personal data - name, email, phone, employer, job title - about
+people who are **not LAGDA users**, never consented, and do not know the record
+exists. The workspace is the controller; LAGDA is a processor.
+
+**There is no erasure operation.** Archiving sets a timestamp and the row
+survives; the runtime role has no `DELETE` grant on `contacts`. A data-subject
+request would reach the workspace, who would find that archiving is the
+strongest thing their software can do.
+
+That is coherent with the design - see ADR-021 for why hard delete was rejected
+as an ordinary button - and it is still a gap. A real erasure operation needs:
+
+- an authority model: a workspace administrator, or a LAGDA platform operator
+  acting on a verified request?
+- an audit trail of the erasure that does not itself retain what was erased;
+- a decision about signing evidence. A contact who signed a document appears in
+  that document's recipient snapshot, and eSignature evidence has a legitimate
+  competing retention basis. Erasing the address-book entry must not - and need
+  not - touch it;
+- a `DELETE` grant, currently and deliberately absent.
+
+A compliance command, not a contact-page button.
+
+## OD-111 - Merging duplicate contacts
+
+**Raised by:** BACKEND-28.
+
+The product's duplicate view offers an action named `merge-demonstration`, which
+is the product saying it is not real.
+
+Not built. Merging is destructive, has to decide which record's history survives,
+and would be the one operation in this domain capable of touching a record a
+document was sent from. Every question it raises is a product question: which
+name wins, what happens to the other id, and whether anything that referenced
+the loser follows.
+
+Detection and review are implemented; the resolution step is not, and the
+address book is fully usable without it.
+
+## OD-112 - Bulk contact creation and CSV import
+
+**Raised by:** BACKEND-28.
+
+No import UI exists in the product, and no bulk create form.
+
+Not built. Driving it through the single-contact path would be an unbounded write
+loop with no rate limit designed for it - and contact writes are currently
+unlimited precisely because the only path is one member creating one contact.
+
+**An import feature is the change that makes a rate limit mandatory**, and it
+would also need a file-size bound, a row cap, per-row validation reporting, and a
+decision about how duplicates inside one file interact with the
+warn-but-never-refuse policy.

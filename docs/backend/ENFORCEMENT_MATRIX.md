@@ -1030,3 +1030,56 @@ the product already tells users to transfer ownership before closing an account.
 **Member-route CSRF and pre-auth are structural rather than asserted.** They
 hold because of where the routes live, and the scope is tested elsewhere. A
 dedicated member-route suite would close the gap.
+
+## Contacts (BACKEND-28)
+
+| Control | Status | Evidence |
+|---|---|---|
+| Tenant isolation on `contacts` | **ENFORCED** | `tenant_isolation` + FORCE RLS; cross-tenant read, update, archive and a raw INSERT all probed as the runtime role |
+| Scoped repository, no workspace parameter | **ENFORCED** | Architecture test over the port |
+| A contact is never an identity | **ENFORCED** | Schema has no linking column; the use-case module reaches no identity repository; behavioural test with a real member's email |
+| Contact key unassignable to account key | **ENFORCED AT COMPILE TIME** | Distinct brands; `expectTypeOf` |
+| Comparison key never leaves the backend | **ENFORCED** | Response key set pinned by test |
+| No delete, at the database | **ENFORCED** | No DELETE grant; a raw `DELETE` as `lagda_app` is refused; `information_schema` asserted |
+| No delete, in code | **ENFORCED** | Architecture guard over repository, ports and routes |
+| State derived, not stored | **ENFORCED** | No `status` column; the epoch-0 case is tested |
+| Duplicates warned, never refused | **ENFORCED** | No unique index (asserted); two active contacts share an address in integration |
+| Capability gate on all six routes | **ENFORCED** | Four capabilities; 7 x 14 exhaustive matrix; every role probed through the use case, reviewer through HTTP |
+| Contact capabilities travel together | **ENFORCED** | Architecture test - every role holds 0 or 4 |
+| No role comparison in contact code | **ENFORCED** | The BACKEND-27 guard, unchanged |
+| Actor authority re-read inside the transaction | **ENFORCED** | Demotion mid-request refused |
+| Hidden 404 on denial | **ENFORCED** | Route test - reviewer and non-member both 404 |
+| Anonymous refusal on all six routes | **ENFORCED** | Route test through the real `createApp` |
+| CSRF on mutations | **ENFORCED** | Route test through the real `createApp` |
+| Pre-auth refusal | **ENFORCED BY COMPOSITION** | The scope hook covers every route in it, proved by the workspace and invitation suites through the same factory. No dedicated contact assertion |
+| Closed request schemas | **ENFORCED** | `additionalProperties: false`; `workspaceId`, `userId`, `state` and `contactId` are all rejected with 422 |
+| Bounded pagination and closed sort whitelist | **ENFORCED** | Schema bounds; an unknown sort field is 422 |
+| LIKE metacharacters escaped | **ENFORCED** | Probed against PostgreSQL |
+| Conditional mutations | **ENFORCED** | Three `...IfActive` / `...IfArchived` methods; double-archive and premature restore both refused |
+| No PII in logs | **ENFORCED** | Architecture guard over log payloads, plus a serialized real log line |
+| No PII in metric labels | **ENFORCED** | Architecture guard pins the label set |
+| `no-store` on every response | **ENFORCED** | Route test plus an architecture guard counting handlers |
+| No new RLS bypass or transaction scope | **ENFORCED** | Architecture guard |
+| Contact edits cannot rewrite signing evidence | **ENFORCED BY ABSENCE** | Nothing references `contacts`; the requirement is specified for BACKEND-30 rather than tested against nothing |
+| Rate limiting on contact writes | **NOT APPLIED** | No outbound-email surface and no unbounded write path today. Stated, not implied |
+| Data-subject erasure | **NOT IMPLEMENTED** | OD-110 - the highest-priority gap this command leaves |
+| Merge duplicates | **NOT IMPLEMENTED** | The product's action is `merge-demonstration` - OD-111 |
+| CSV import / bulk create | **NOT IMPLEMENTED** | OD-112 |
+| Personal vs workspace scope | **NOT IMPLEMENTED** | A second ownership axis - OD-107 |
+| Usage tracking, recent/frequent views | **NOT IMPLEMENTED** | Nothing writes them until recipients exist - OD-108 |
+| `invalid` / `restricted` status | **NOT IMPLEMENTED** | No operation sets either - OD-109 |
+
+### Honest gaps
+
+**There is no way to erase a contact.** Archiving is a timestamp and the runtime
+role cannot delete. LAGDA holds personal data about people who are not its
+users, did not consent, and do not know the record exists. A Data Privacy Act
+erasure request would reach the workspace as controller, who would find that
+archiving is the strongest thing their software can do. OD-110.
+
+**Contact writes are unlimited.** Member-only and no outbound email, so the
+abuse surface that made invitation limits necessary does not exist here - but a
+runaway client can still insert without bound, and nothing stops it.
+
+**Pre-auth refusal is structural rather than asserted** on these routes, the
+same label BACKEND-27 used for member routes.
