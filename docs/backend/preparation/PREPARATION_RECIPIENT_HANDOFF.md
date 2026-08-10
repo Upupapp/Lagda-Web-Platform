@@ -1,4 +1,18 @@
-# Recipient handoff — what BACKEND-31 must do
+> **Superseded by BACKEND-31.** Everything below was the specification; it is
+> now built. `participant_slot` is DROPPED and replaced by
+> `preparation_fields.recipient_id`, constrained by a three-column foreign key.
+>
+> Read [RECIPIENT_FIELD_ASSIGNMENT.md](../recipients/RECIPIENT_FIELD_ASSIGNMENT.md)
+> for what shipped, and ADR-024 for why. This file is kept because it records
+> the four confusions the slot's shape invited, and those are still the reason
+> the design looks as it does.
+>
+> One deviation from the sketch below: the column is `recipient_id`, not
+> `assigned_recipient_id`, and its foreign key is on THREE columns rather than
+> two — tenancy alone cannot stop a field naming a recipient of a different
+> preparation in the same workspace.
+
+# Recipient handoff — what BACKEND-31 required
 
 BACKEND-30 places fields. It does **not** know who signs them, and the seam it
 left is deliberately thin.

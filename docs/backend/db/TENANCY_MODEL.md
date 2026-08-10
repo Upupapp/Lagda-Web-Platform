@@ -298,9 +298,10 @@ looks redundant — the document already constrains the tenant. It is not: the
 artifact is named independently, so without the compound form a preparation
 could target a valid document and a foreign artifact.
 
-### The schema's only ON DELETE CASCADE
+### The two ON DELETE CASCADEs
 
-`preparation_fields → document_preparations`.
+`preparation_fields → document_preparations`, and since BACKEND-31
+`preparation_recipients → document_preparations`.
 
 Every other reference in LAGDA is RESTRICT, deliberately: they protect records
 something else references, and a cascade would let one delete destroy evidence.
@@ -313,3 +314,55 @@ snapshot.
 
 An architecture test asserts there is exactly ONE cascade in the migration and
 no `SET NULL`, so a later addition has to be deliberate.
+
+## Recipients, and a within-tenant parent (BACKEND-31)
+
+`preparation_recipients` follows every existing rule - `tenant_isolation` with
+FORCE, a scoped repository with no workspace argument on any method, compound
+foreign keys - and adds one shape the model had not needed before.
+
+### A THREE-column foreign key
+
+```sql
+foreign key (workspace_id, preparation_id, recipient_id)
+  references preparation_recipients (workspace_id, preparation_id, recipient_id)
+```
+
+Every compound key until now was two columns: tenancy plus the entity. Two is
+enough when the risk is a row from another tenant.
+
+It is not enough here. Two preparations in one workspace are both visible to
+RLS - correctly, they belong to the same tenant - so nothing about tenancy stops
+a field on document A naming a recipient of document B. A two-column key would
+look right and permit exactly that.
+
+**The general rule this makes explicit:** a compound key needs a column for
+every level of the containment path that matters, not just the tenant. Where a
+reference must stay inside a parent that is itself inside the tenant, the parent
+is part of the key.
+
+The other candidate for this shape is `preparation_fields →
+document_preparations`, which is already `(workspace_id, preparation_id)` - two
+columns, but the second IS the parent, so it is the same rule.
+
+### The schema's only ON DELETE SET NULL
+
+`preparation_recipients.source_contact_id → contacts`.
+
+RESTRICT would block a future erasure of a contact; CASCADE would destroy a
+party to an agreement because someone tidied an address book. SET NULL forgets
+the provenance and keeps the record.
+
+**The column list is load-bearing.** A bare `on delete set null` on a composite
+key nulls EVERY referencing column, including `workspace_id`, which is NOT NULL
+- so the delete would fail rather than forget. `on delete set null
+(source_contact_id)` (PostgreSQL 15+) sets only the one. This was a real defect
+in the first draft of migration 018, caught by the integration test that deletes
+a contact and asserts the recipient survives with its tenancy intact.
+
+### `ON DELETE RESTRICT` from the field to the recipient
+
+The other direction is RESTRICT, not cascade: removing a party must not silently
+destroy positioned signature blocks. PostgreSQL's foreign-key locking serializes
+"assign a field" against "delete the recipient" correctly in both orders, which
+is what makes the application's count-first check safe rather than advisory.

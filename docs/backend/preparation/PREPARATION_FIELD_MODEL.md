@@ -1,3 +1,9 @@
+> **Updated by BACKEND-31.** The `participantSlot` described below is GONE.
+> Migration 018 dropped it and added `recipient_id`, a real reference on a
+> three-column foreign key — see
+> [RECIPIENT_FIELD_ASSIGNMENT.md](../recipients/RECIPIENT_FIELD_ASSIGNMENT.md).
+> Everything else in this document still holds.
+
 # Preparation field model
 
 Nine field types. Every one of them can be rendered onto a signed PDF, and that

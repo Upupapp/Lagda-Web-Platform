@@ -153,3 +153,23 @@ OD-100, resolved the same way: the table that gates reachability wins.
 
 An architecture test asserts the one incoherent combination cannot arise: **no
 role holds write without view.**
+
+## Recipients add no capability (BACKEND-31)
+
+The recipient surface is governed entirely by `document.view` (read) and
+`document.prepare` (write). The matrix is unchanged: **18 capabilities, 7
+roles**, and the exhaustive test still asserts 126 cells.
+
+A `recipient.manage` was considered and rejected. It would create a role that
+may place a signature field but not say who signs it - not a state the product
+has a screen for, since the prepare flow treats participants and fields as one
+act. Recorded as OD-128, revisit if a coordinator role appears.
+
+An architecture guard asserts no capability begins with `recipient.`, so the
+decision fails loudly rather than drifting.
+
+Note the vocabulary collision, which is deliberate and harmless: `reviewer` is
+both a `WorkspaceRole` and a `RecipientType`, and they mean different things - a
+workspace reviewer reads the document library, a signing reviewer reviews one
+transaction. They share no authorization semantics, and a guard asserts no
+`recipient.<type>` capability exists to blur them.

@@ -1,3 +1,7 @@
+> **Superseded in part by BACKEND-31.** The participant-slot seam this report
+> describes as deliberately thin has been replaced by a real recipient
+> reference. See [RECIPIENT_REPORT.md](../recipients/RECIPIENT_REPORT.md).
+
 # BACKEND-30 — Document preparation report
 
 ## Product inventory

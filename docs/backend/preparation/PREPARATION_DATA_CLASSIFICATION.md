@@ -1,3 +1,9 @@
+> **Updated by BACKEND-31.** Where this document says the participant slot is
+> an opaque label carrying no personal data, the column is now `recipient_id`
+> — still an opaque server-generated id carrying none, but it resolves to a
+> row that does. Participant PII is classified in
+> [RECIPIENT_DATA_CLASSIFICATION.md](../recipients/RECIPIENT_DATA_CLASSIFICATION.md).
+
 # Preparation data classification
 
 A field layout is not obviously sensitive, and that is exactly why it needs

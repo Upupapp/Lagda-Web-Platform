@@ -1,3 +1,12 @@
+> **Implemented by BACKEND-31.** The second half of this rule now exists and
+> is enforced: see
+> [RECIPIENT_SNAPSHOT_MODEL.md](../recipients/RECIPIENT_SNAPSHOT_MODEL.md) for
+> what is copied and what propagates (nothing), and INV-435 to INV-437.
+>
+> The contact is read in exactly ONE place — `addRecipient` — and an
+> architecture guard asserts the count. Deleting a contact nulls the recipient's
+> provenance and destroys nothing.
+
 # The contact / recipient boundary
 
 Two records that look almost identical and mean entirely different things.

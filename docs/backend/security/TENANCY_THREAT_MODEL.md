@@ -174,3 +174,32 @@ command introduced — it has been latent since the sealer was written, because
 rotated page. Nothing in LAGDA had ever looked at rotation, so a sideways-scanned
 contract would have had every field placed into the wrong coordinate space with
 no error anywhere. It is now inspected, persisted, and refused.
+
+## Recipients (BACKEND-31)
+
+| Threat | Control | Status |
+|---|---|---|
+| Reading another tenant's recipients | `tenant_isolation` + FORCE; scoped repository | **ENFORCED** - probed as the runtime role |
+| Assigning a field to another PREPARATION's recipient, same tenant | Three-column foreign key | **ENFORCED** - the case RLS cannot catch; probed with a sibling preparation |
+| Naming another tenant's preparation or contact on a recipient | Compound foreign keys | **ENFORCED** - probed as the runtime role |
+| Probing which recipient ids exist | Resolution through the preparation; absent and forbidden are one answer | **ENFORCED** - a real id via the wrong document is a 404 |
+| Client-chosen recipient id | Server generator; 422 on any supplied id | **ENFORCED** |
+| Forged provenance ("this came from contact X") | `sourceContactId` excluded from `RecipientUpdate` and both request schemas | **ENFORCED** - 422 |
+| Enumerating LAGDA accounts through a recipient address | No lookup exists; the brands make one a compile error | **ENFORCED BY TYPES** |
+| Claiming an unearned verification or signature | No column, no field, no route accepts one | **ENFORCED BY ABSENCE** - eleven identifiers guarded |
+| Two invitations to one mailbox for one document | Unique index on the folded address | **ENFORCED** - concurrent inserts probed |
+| Bypassing the duplicate rule by add-then-rename | The same check on PATCH, plus the index | **ENFORCED** |
+| Silent destruction of placed fields | RESTRICT, plus a count for the message | **ENFORCED** - fields asserted present after a refused delete |
+| Demoting a signer out from under their fields | `canHoldFields` checked before the type change | **ENFORCED** - refused with the count |
+| Participant PII in logs or metrics | Counts, ids and vocabulary only | **ENFORCED** - whole serialized lines asserted against real PII fixtures |
+| Recipient details in a shared cache | `no-store` on every route | **ENFORCED** |
+| Unbounded writes from one request | 50-recipient ceiling; `maxItems` on the order route | **ENFORCED** |
+| Stale-role editing | Authority read inside the mutation transaction | **ENFORCED** - the same pattern as every other domain |
+
+The one worth singling out is the **within-tenant parent**. Every tenancy
+control before this command answered "is this row mine?", and the answer was
+always the workspace. A field naming a recipient of a different document in the
+same workspace passes that question and is still wrong. It is the first place
+LAGDA needed a containment check *below* the tenant, and it is worth assuming it
+will not be the last: any future reference into a preparation, a signing request
+or a ceremony needs the parent in its key, not just the workspace.

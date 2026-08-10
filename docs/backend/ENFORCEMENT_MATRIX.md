@@ -1164,7 +1164,7 @@ rejected. Nothing cleans it up. OD-117.
 | No signing evidence written | **ENFORCED** | Architecture guard |
 | Document/signing lifecycle separation | **ENFORCED ARCHITECTURALLY** | No signing column; guard on signing-status literals |
 | Historical signing snapshot independence | **DOCUMENTED / FUTURE ENFORCEMENT** | PREPARATION_EDITABILITY.md specifies it for BACKEND-32; nothing outside the domain reads preparation yet |
-| Recipient assignment validation | **NOT APPLICABLE YET** | The slot dereferences nothing; BACKEND-31 adds the FK and the check |
+| Recipient assignment validation | **ENFORCED (BACKEND-31)** | The slot is dropped; a three-column FK plus a use-case check against the preparation's own recipients |
 | Ready/lock operation | **NOT IMPLEMENTED** | No product control - OD-125 |
 | Rate limiting on layout saves | **NOT APPLIED** | Normal authenticated write; a low limit would break editor autosave (§152) |
 | Frontend coordinate fixtures | **NOT APPLICABLE THIS COMMAND** | No frontend contract changed - OD-126 |
@@ -1180,3 +1180,59 @@ on it; BACKEND-32 adds the transition.
 
 **The backend cannot detect a bad viewport conversion.** `0.5` looks identical
 whether computed correctly or by luck. OD-126.
+
+## Signing recipients (BACKEND-31)
+
+| Claim | Status | Evidence |
+|---|---|---|
+| Recipient is a distinct identity | **ENFORCED** | Own table and brand; guard forbids account/membership calls |
+| Snapshot, never refreshed | **ENFORCED** | Exactly one `uow.contacts.*` call, asserted by count |
+| Recipient edit does not touch the contact | **ENFORCED** | No write path exists; guard over four write methods |
+| Adding a recipient creates no contact | **ENFORCED** | Use-case assertion on the address-book count |
+| Contact deletion preserves the recipient | **ENFORCED BY THE DATABASE** | `set null (source_contact_id)`; integration deletes as the owner role |
+| Provenance not editable | **ENFORCED** | Explicit `RecipientUpdate`; 422 at the route |
+| No recipient-to-account resolution | **ENFORCED BY TYPES** | Three mutually unassignable email brands |
+| No verification, token or signature state | **ENFORCED BY ABSENCE** | Eleven forbidden identifiers, four files |
+| Duplicate address refused | **ENFORCED** | Unique index; two concurrent transactions, one survives |
+| Duplicate rule applies to edits | **ENFORCED** | Use case plus the index |
+| Duplicate error names no address | **ENFORCED** | Message asserted |
+| Same address on another document permitted | **ENFORCED** | Use case and integration |
+| Cross-preparation field assignment | **ENFORCED BY THE DATABASE** | Three-column FK; probed with a sibling preparation in one workspace |
+| Cross-tenant recipient, preparation or contact linkage | **ENFORCED BY THE DATABASE** | Probed as the runtime role |
+| Viewer / carbon-copy cannot hold fields | **ENFORCED** | `canHoldFields`; both refused, approver accepted |
+| Demotion while assigned refused | **ENFORCED** | With the count |
+| Deletion while assigned refused | **ENFORCED** | RESTRICT plus an application count; fields still present after |
+| Dense renumbering after deletion | **ENFORCED** | Use case |
+| Reorder requires the complete list | **ENFORCED** | Partial, repeated and foreign ids all refused |
+| Reorder leaves routing order alone | **ENFORCED** | Use case |
+| Recipient ceiling (50) | **ENFORCED** | Domain, plus `maxItems` on the order route |
+| Client-chosen id / provenance / order index | **ENFORCED** | 422 each |
+| Contact id mixed with a name | **ENFORCED** | Discriminated union, `additionalProperties: false` |
+| Unknown recipient type | **ENFORCED** | Closed union, 422, and a database CHECK |
+| Recipient tenant scope | **ENFORCED** | Scoped repository, RLS + FORCE, compound FKs |
+| DOCUMENT_PREPARE authorization | **ENFORCED** | Central capability; no new capability added |
+| Anonymous refused | **ENFORCED** | All five routes, real app |
+| CSRF on mutations | **ENFORCED** | Real app |
+| Pre-auth refusal | **ENFORCED BY COMPOSITION** | The scope hook; no dedicated recipient assertion |
+| No PII in telemetry | **ENFORCED** | Whole serialized log lines against real fixtures; reads unlogged |
+| Metric labels bounded | **ENFORCED** | Guard pins the set; `recipientType` deliberately excluded |
+| No signing evidence written | **ENFORCED** | Architecture guard |
+| Nothing is sent | **ENFORCED BY ABSENCE** | No mailer, no queue, no provider |
+| Readiness validation | **NOT IMPLEMENTED** | Belongs to the send flow - OD-127 |
+| Recipient-set snapshot by a signing request | **DOCUMENTED / FUTURE** | INV-448; nothing outside the domain reads recipients yet |
+| Recipient-level concurrency control | **NOT APPLIED** | Last-write-wins per field; duplicates and deletion races are handled by the database |
+| Rate limiting | **NOT APPLIED** | Normal authenticated write; lists are small and capped at 50 |
+| Recipient authentication | **NOT APPLICABLE** | BACKEND-34; no column exists |
+
+### Honest gaps
+
+**Readiness is not enforced.** A layout can be saved with required fields that
+have no assignee. OD-127.
+
+**Recipients are unversioned.** Two people editing one participant is
+last-write-wins per field. The races that corrupt state - duplicates and
+delete-vs-assign - are held by constraints.
+
+**A document with no accepted bytes accepts no recipients**, because the
+preparation that holds them targets an exact artifact. Correct for the product's
+flow, and it means OD-124's rotated-document refusal blocks recipients too.

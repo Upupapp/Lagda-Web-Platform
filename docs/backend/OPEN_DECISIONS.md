@@ -2100,3 +2100,38 @@ can catch.
 
 Not applicable this command: no frontend contract changed, and these are new
 backend routes the frontend does not yet call.
+
+## OD-127 - Readiness validation
+
+**Raised by:** BACKEND-31. **Deferred to the send flow.**
+
+`fieldRequiresRecipient` says every implemented field type needs an assignee at
+readiness. Nothing enforces it, because enforcing it at save time would block
+the ordinary act of building a layout: an editor places a field before deciding
+who fills it, and that is a permitted state (INV-429's successor).
+
+Readiness is a gate on SENDING, and a gate needs someone who can act on it. The
+full rule that BACKEND-32 must decide and enforce:
+
+- every required field has an assignee;
+- at least one participant blocks completion;
+- the routing plan terminates - no step waits on a step that never runs.
+
+The last is the interesting one, and it needs the ceremony's semantics to state
+precisely.
+
+## OD-128 - A separate recipient capability
+
+**Raised by:** BACKEND-31. **Resolved for now: NO.**
+
+Recipients are governed by `document.view` and `document.prepare`, the same two
+capabilities as the field layout.
+
+A `recipient.manage` would create a role that may place a signature field but
+not say who signs it, which is not a state the product has a screen for. The
+prepare flow treats participants and fields as one act.
+
+Revisit if the product grows a distinct "manage recipients" permission - for
+instance a coordinator who assembles the party list while someone else places
+the fields. Adding a capability later is additive; splitting one that turned out
+to be two is not.
