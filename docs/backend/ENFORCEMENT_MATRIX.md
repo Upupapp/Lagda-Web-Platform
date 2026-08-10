@@ -1083,3 +1083,49 @@ runaway client can still insert without bound, and nothing stops it.
 
 **Pre-auth refusal is structural rather than asserted** on these routes, the
 same label BACKEND-27 used for member routes.
+
+## Documents (BACKEND-29)
+
+| Control | Status | Evidence |
+|---|---|---|
+| DocumentId != ArtifactId | **ENFORCED** | Separate tables and ids; types, schema and tests |
+| Accepted artifact only | **ENFORCED** | Only `processUpload` writes an `original`; no storage path in the domain |
+| Cross-workspace artifact link | **ENFORCED** | Compound FK, probed as the runtime role |
+| One ORIGINAL per document | **ENFORCED** | Partial unique index, probed |
+| Original artifact immutable | **ENFORCED** | Whole artifact row compared before/after a rename; three import guards |
+| Client storage metadata rejected | **ENFORCED** | One-property schemas; ten forbidden properties each 422 |
+| Document capabilities | **ENFORCED** | 7 x 17 matrix; view six roles, write four; no write-without-view |
+| No role comparison in document code | **ENFORCED** | The BACKEND-27 guard, unchanged |
+| No PDF imports | **ENFORCED** | Architecture guard over every domain file |
+| No storage client imports | **ENFORCED** | Same |
+| Sealer never invoked | **ENFORCED** | Same |
+| Tenant isolation | **ENFORCED** | RLS + FORCE + scoped repository; cross-tenant read/list/rename probed |
+| No RLS bypass or new transaction scope | **ENFORCED** | Architecture guard |
+| Hidden 404 on denial | **ENFORCED** | Route test - reviewer and non-member both 404 |
+| Anonymous refusal | **ENFORCED** | All four routes through the real `createApp` |
+| CSRF on mutations | **ENFORCED** | Both mutations through the real `createApp` |
+| Pre-auth refusal | **ENFORCED BY COMPOSITION** | The scope hook covers every route in it; no dedicated document assertion |
+| Document/signing lifecycle separation | **ENFORCED** | No status column; a guard fails on any signing-status literal |
+| No delete, at the database | **ENFORCED** | No DELETE grant; raw DELETE refused; `information_schema` asserted |
+| No cascade to artifacts | **ENFORCED** | RESTRICT everywhere; guard asserts no CASCADE or SET NULL |
+| Page count server-observed | **ENFORCED** | Persisted from the upload inspection; CHECK `> 0` |
+| No PII in logs or metric labels | **ENFORCED** | Two guards plus a live serialized-log assertion |
+| `no-store` on every response | **ENFORCED** | Route test plus a handler-count guard |
+| Deletion preserves evidence | **PARTIALLY ENFORCED** | Nothing can be deleted today. The SigningRequest and evidence references that make this fully testable arrive with BACKEND-32 |
+| Document metadata cannot rewrite evidence | **ENFORCED BY ABSENCE** | Nothing references a document's title yet; the requirement is specified for BACKEND-32 |
+| Idempotency on create | **NOT APPLIED** | Document-first inverts the risk; the artifact claim is protected by a DB constraint. Stated, not implied |
+| Rate limiting on document writes | **NOT APPLIED** | The expensive limiter stays on upload; creation writes one row |
+| Download / archive / delete / search | **NOT IMPLEMENTED** | None exists in the product - OD-113..116 |
+| Data-subject erasure | **NOT IMPLEMENTED** | OD-119, and harder than the contact case |
+
+### Honest gaps
+
+**There is no way to erase a document**, and unlike contacts the two purposes
+genuinely conflict: the content is both personal data and the evidence a
+signature attests to. OD-119.
+
+**Listing is N+1** - one artifact lookup per row, bounded by `perPage <= 100`.
+OD-120.
+
+**A document can exist with no bytes indefinitely** if an upload is abandoned or
+rejected. Nothing cleans it up. OD-117.

@@ -1873,3 +1873,126 @@ unlimited precisely because the only path is one member creating one contact.
 would also need a file-size bound, a row cap, per-row validation reporting, and a
 decision about how duplicates inside one file interact with the
 warn-but-never-refuse policy.
+
+## OD-113 - Document archive and delete
+
+**Raised by:** BACKEND-29. **Resolved for now: NEITHER.**
+
+The product archives and deletes *transactions*, not documents.
+`TransactionFile` has no `archivedAt` and no delete action, and
+`document.service.ts` has no `deleteDocument`.
+
+So `documents` has no `archived_at`, no `status`, and the runtime role has no
+DELETE grant. If a document-level archive is ever wanted it is almost certainly
+an archive flag on a transaction, which the product already has.
+
+The genuinely open part is what BACKEND-32 does when a transaction referencing a
+document is cancelled or archived - and the answer must not be a cascade.
+
+## OD-114 - Download original
+
+**Raised by:** BACKEND-29.
+
+Not built. `TransactionDetailPage.tsx` imports a `Download` icon and never uses
+it: one import, zero call sites.
+
+When it is built it needs a decision this command deliberately did not make:
+**stream through the backend, or issue a short-lived presigned URL.** They have
+different security properties. A presigned URL is a bearer credential that must
+never be logged, never persisted, and generated only after the authorization
+check - and it leaves the backend unable to revoke access for its lifetime.
+Streaming costs bandwidth and holds a connection.
+
+Whichever is chosen, the storage key must not reach the client, and the download
+must be gated on `document.view` or a dedicated capability.
+
+## OD-115 - Source replacement and versioning
+
+**Raised by:** BACKEND-29.
+
+No replace control exists in the product. If one appears, the decision is
+whether replacing a draft's PDF keeps the same `DocumentId` with a new source
+artifact, or creates a new document.
+
+The schema does not foreclose either: artifact lineage (`source_artifact_id`)
+already models derivation, and `document_artifacts_one_original_idx` would need
+revisiting because it permits exactly one `original` per document.
+
+**Whatever is decided, the previous original is never overwritten.**
+
+## OD-116 - Document search
+
+**Raised by:** BACKEND-29.
+
+Not built. `DocumentListQuery.q` searches transactions, and BACKEND-48 owns
+broader search.
+
+If a document-level title search is ever needed it is a tenant-scoped `ILIKE`
+with escaped metacharacters - the shape BACKEND-28 already used for contacts -
+not a search subsystem.
+
+## OD-117 - Documents that never receive their bytes
+
+**Raised by:** BACKEND-29.
+
+Document-first creation means a document exists before its upload. If the upload
+is rejected (malware, wrong type) or the user abandons the flow, a metadata row
+remains with no artifact.
+
+Harmless and visible: it costs one row, no storage, and `source: null` renders
+as "awaiting file". Nothing cleans it up.
+
+Whether that needs a sweeper depends on how often the prepare flow is abandoned,
+which nobody has measured. Recorded so it is a decision rather than an
+accumulation nobody noticed.
+
+## OD-118 - Renaming a document attached to a sent transaction
+
+**Raised by:** BACKEND-29.
+
+The product's action is `rename-draft`, implying drafts only. But "draft" there
+is a `TransactionStatus`, and BACKEND-29 deliberately does not know about
+transaction status.
+
+BACKEND-32 can make this decision with the state to make it. Note it is about
+tidiness, not integrity: renaming cannot corrupt anything, because the artifact
+digest is untouched and evidence snapshots its own display text.
+
+## OD-119 - Document erasure under the Data Privacy Act
+
+**Raised by:** BACKEND-29. **The highest-priority gap this command leaves.**
+
+Harder than the contact case (OD-110), because the two purposes conflict rather
+than merely coexist.
+
+A document's content is personal data - names, addresses, government
+identifiers, salary figures, sometimes medical or financial detail. It is also
+**the evidence a signature attests to**. Erasing it destroys the thing a
+completion certificate certifies.
+
+The erasure right is not absolute and a signed contract has a strong competing
+retention basis. But LAGDA has **no operation at all**, so nothing is being
+weighed. A real answer needs:
+
+- who may erase, and on what verified request;
+- whether erasure means the bytes, the metadata, or both;
+- what a completion certificate says about a document that no longer exists;
+- how it interacts with the immutable artifact chain and the seal.
+
+BACKEND-55.
+
+## OD-120 - N+1 artifact lookup in document listing
+
+**Raised by:** BACKEND-29.
+
+`listDocuments` resolves each row's original artifact individually. Bounded by
+`perPage <= 100`, so it is bounded work rather than unbounded - but it is one
+query per row.
+
+The alternative considered was omitting page count and file size from the list
+response, which the product displays (`TransactionFile`), so the list would not
+render.
+
+The fix is a batch repository method - `listOriginalsForDocuments(ids)` - and it
+is a pure addition. Recorded rather than left for someone to discover under
+load.

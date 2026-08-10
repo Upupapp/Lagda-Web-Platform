@@ -12,9 +12,11 @@ inferred later.
 | `workspace_memberships` | WORKSPACE_SCOPED | yes | `(workspace_id, member_id)`, `(workspace_id, user_id)` | → `workspaces` RESTRICT | `(workspace_id, created_at DESC)` | **yes** | yes |
 | `workspace_invitations` | WORKSPACE_SCOPED (+ a credential read path) | yes | `(workspace_id, invitation_id)`, partial unique on the live invitee address | → `workspaces` RESTRICT | `(workspace_id, created_at DESC)` | **yes** | yes |
 | `contacts` | WORKSPACE_SCOPED | yes | `(workspace_id, contact_id)` — and deliberately **no** unique key on the email | → `workspaces` RESTRICT | `(workspace_id, updated_at DESC)`, `(workspace_id, normalized_contact_email)`, `(workspace_id, name)` | **yes** | yes |
+| `documents` | WORKSPACE_SCOPED | yes | `(workspace_id, document_id)` — and no unique key on the title | → `workspaces` RESTRICT | `(workspace_id, created_at desc, document_id desc)` | **yes** | yes |
+| `document_artifacts` | WORKSPACE_SCOPED | yes | `(workspace_id, artifact_id)`; partial unique on one ORIGINAL per document | → `workspaces`, `documents`, self — all RESTRICT | `(workspace_id, document_id, artifact_type)` | **yes** | yes |
 | `kysely_migration` / `_lock` | SYSTEM_INTERNAL | n/a | — | — | — | no | n/a |
 
-**Counts.** WORKSPACE_SCOPED 4 · SYSTEM_INTERNAL 2 · GLOBAL 0 · USER_SCOPED 0 ·
+**Counts.** WORKSPACE_SCOPED 6 · SYSTEM_INTERNAL 2 · GLOBAL 0 · USER_SCOPED 0 ·
 REQUIRES_REVIEW 0.
 
 (The table lists the workspace-domain tables. Account, session, evidence and
@@ -26,8 +28,7 @@ No table is unclassified.
 
 Recorded so the decision is not made accidentally by whoever writes the migration.
 
-**WORKSPACE_SCOPED:** documents · document versions and
-artifacts · signing requests · recipients · templates · evidence · webhooks ·
+**WORKSPACE_SCOPED:** document versions · signing requests · recipients · templates · evidence · webhooks ·
 API keys · in-app workspace notifications · reports · usage records.
 
 **GLOBAL / USER_SCOPED:** user accounts · sessions · MFA configuration · password
@@ -207,3 +208,61 @@ cannot arrive later as a tidy-up.
 **Every index leads with `workspace_id`.** Every contact query is tenant-scoped
 first; an index that did not lead with the tenant would be close to useless for
 the queries this system actually runs.
+
+
+## Documents, and the reference that was missing (BACKEND-29)
+
+`documents` is **WORKSPACE_SCOPED** with the ordinary pattern — `tenant_isolation`
+with `FORCE`, a `workspace_id` foreign key, a scoped repository whose methods
+take no workspace argument, and no new transaction scope.
+
+The part worth recording is not the new table. It is what the new table let
+migration 016 add to an old one.
+
+### `document_artifacts.document_id` had no foreign key for thirteen migrations
+
+Migration 003 created it `NOT NULL` and said so explicitly: there was no
+`documents` table to point at, so the column held whatever the caller passed.
+BACKEND-18 then made that caller-supplied value part of the **storage key**, and
+its route recorded the debt rather than hiding it.
+
+Migration 016 settles it:
+
+```sql
+alter table document_artifacts
+  add constraint document_artifacts_document_fk
+  foreign key (workspace_id, document_id)
+  references documents (workspace_id, document_id) on delete restrict;
+```
+
+**Compound, and that is the whole point.** A reference on `document_id` alone
+would let a Workspace A artifact name a Workspace B document — the exact
+cross-tenant link Rule 4 of this document exists to prevent, and one that
+application code alone had been standing between since BACKEND-10.
+
+This is the first place in the schema where the compound-key discipline paid out
+against a reference that already existed rather than one being created, which is
+why every table here carries `UNIQUE (workspace_id, <id>)` whether or not it has
+a dependant yet.
+
+### Document ids are globally unique
+
+`document_id` is the PRIMARY KEY, so the same id cannot exist in two workspaces.
+The compound key is a *tenant-safety* device, not a scoping device: it makes a
+reference prove both halves rather than making ids per-tenant.
+
+Two test fixtures had to be corrected for this — both were seeding one id into
+two workspaces — and an integration test now asserts it.
+
+### One ORIGINAL artifact per document
+
+```sql
+create unique index document_artifacts_one_original_idx
+  on document_artifacts (workspace_id, document_id)
+  where artifact_type = 'original';
+```
+
+Partial, covering `original` only. `sealed` and `completion-certificate` are
+left unconstrained because nobody has decided a document has at most one of
+either, and a constraint promising something undecided is one that gets dropped
+later.

@@ -1,11 +1,11 @@
 # Workspace capability matrix
 
-**Established by:** BACKEND-27, extended by BACKEND-28 (contacts). **The
-canonical mapping lives in
+**Established by:** BACKEND-27, extended by BACKEND-28 (contacts) and
+BACKEND-29 (documents). **The canonical mapping lives in
 `packages/core/src/authorization/index.ts`.** This document describes it; the
 code decides it.
 
-The two are kept in step by 98 table-driven assertions — every role against
+The two are kept in step by 119 table-driven assertions — every role against
 every capability — whose expectations are written out by hand rather than
 derived from the mapping they check. A test that read `ROLE_CAPABILITIES` would
 assert that the policy equals itself.
@@ -29,9 +29,12 @@ assert that the policy equals itself.
 | `contact.create` | ✅ | ✅ | — | ✅ | ✅ | — | — |
 | `contact.update` | ✅ | ✅ | — | ✅ | ✅ | — | — |
 | `contact.archive` | ✅ | ✅ | — | ✅ | ✅ | — | — |
+| `document.view` | ✅ | ✅ | — | ✅ | ✅ | ✅ | ✅ |
+| `document.create` | ✅ | ✅ | — | ✅ | ✅ | — | — |
+| `document.update` | ✅ | ✅ | — | ✅ | ✅ | — | — |
 | `workspace.ownership.transfer` | ✅ | — | — | — | — | — | — |
 
-Fourteen capabilities. Seven roles. **Default deny** — an unrecognised role holds
+Seventeen capabilities. Seven roles. **Default deny** — an unrecognised role holds
 nothing, and a capability absent from a role's list is refused. There is no
 wildcard, no inheritance and no numeric rank.
 
@@ -46,6 +49,7 @@ wildcard, no inheritance and no numeric rank.
 | `membership.remove` | Deletes a membership. Never the account, never another workspace. |
 | `invitation.*` | Four separate capabilities though the same two roles hold all four today. Splitting a capability clients already branch on would be a breaking change; splitting one nobody has yet is free. |
 | `contact.*` | Four capabilities over the address book, and **the first row of this matrix that an `owner || administrator` check would have got wrong** — see below. `contact.archive` covers restore too: one reversible control, and nothing in the product separates them. There is no `contact.delete`, because there is no delete. |
+| `document.*` | Three capabilities, and **the first row where VIEW and WRITE diverge** — see below. There is no `document.delete`, no `document.archive` and no `document.download`: none exists in the product. |
 | `workspace.ownership.transfer` | **The one capability with no operation behind it.** The product's transfer control says "demonstration only" (OD-101). It is declared because the ownership model is meaningless without naming who could ever do it. |
 
 ## Why `member` holds exactly one capability
@@ -121,3 +125,29 @@ caller's capability list so a client can hide controls it cannot use. That
 projection is **informational**: every mutation re-evaluates the policy against
 a membership row read at the time of the write, so a client that fabricated the
 list, or cached a stale one, changes nothing about what it may do.
+
+
+## Where view and write diverge (BACKEND-29)
+
+Contacts move as a block: every role holds all four capabilities or none.
+Documents do not, and the split is the product's:
+
+| Product permission | Roles holding it |
+|---|---|
+| `view_documents` | owner, administrator, template_administrator, sender, **reviewer**, **auditor** |
+| `prepare_documents` | owner, administrator, template_administrator, sender |
+
+**`reviewer` and `auditor` may read a document and may not create or rename
+one.** A reviewer reads documents for a living and creates none; an auditor
+cannot review what happened without reading what it happened to.
+
+That is a third distinct shape after membership (two roles, all capabilities)
+and contacts (four roles, all capabilities), and no
+`role === "owner" || role === "administrator"` check produces any of the three.
+
+`member` holds no document capability at all, including view. It is not a
+`PlatformRole` and has no entry in `ROLE_PERMISSIONS` — the same disagreement as
+OD-100, resolved the same way: the table that gates reachability wins.
+
+An architecture test asserts the one incoherent combination cannot arise: **no
+role holds write without view.**

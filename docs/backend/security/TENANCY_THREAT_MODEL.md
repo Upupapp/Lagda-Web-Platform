@@ -117,3 +117,30 @@ the product's own model — its permission table grants `members:invite` and its
 invite form offers Administrator — and the escalation is bounded: never a
 superior, and the owner can demote any of them. ROLE_GRANT_MATRIX.md records it
 as a deliberate choice rather than an oversight.
+
+
+## Documents and artifacts (BACKEND-29)
+
+| Threat | Control | Status |
+|---|---|---|
+| Cross-tenant document read / list / rename | Scoped repository (no workspace parameter) + `tenant_isolation` FORCE RLS + hidden 404 | **ENFORCED** — probed as the runtime role |
+| **Cross-tenant artifact linking** | **Compound FK `(workspace_id, document_id)`** on `document_artifacts`, added by migration 016 | **ENFORCED BY THE DATABASE** — probed with a B-context insert naming an A document |
+| Artifact-id guessing | Scoped artifact repository; a document resolves only artifacts in its own tenant | **ENFORCED** — a foreign-workspace artifact never resolves as a source |
+| Storage-key injection | One-property request schemas, `additionalProperties: false`; keys derived from authorized ids | **ENFORCED** — ten forbidden properties, each 422 |
+| Storage-key leakage | The read model has no field for it; the exclusion is in the projection, not the serializer | **ENFORCED** — response key set pinned |
+| Malware / quarantine upload bypass | No storage path in the document domain; only `processUpload` writes an `original` | **ENFORCED** — three import guards; creation writes no artifact |
+| Client hash spoofing | Digest, size and media type are server-observed; page count comes from the inspector | **ENFORCED** — no such field on any schema |
+| Document metadata mass assignment | Named `rename` operation, not a patch object | **ENFORCED** — no generic update exists |
+| Artifact overwrite | Rename writes one varchar; no storage client; one-ORIGINAL index | **ENFORCED** — whole artifact row compared before/after |
+| Unsafe delete cascade | RESTRICT everywhere; no DELETE grant | **ENFORCED** — raw DELETE refused as the runtime role |
+| Document content in logs | No bytes exist in this layer | **N/A** |
+| Document TITLE in logs | `titleLength` logged instead, computed before the call | **ENFORCED** — live serialized-log assertion plus two source guards |
+| Presigned-URL leakage | No download endpoint; no URL is generated | **N/A** — OD-114 |
+| Stale-role authorization | The actor's membership is read inside the mutation transaction | **ENFORCED** — demotion mid-flight probed |
+| Document-id enumeration | Opaque ids, but the real controls are RLS, the scoped repository and the hidden 404 | **ENFORCED** — opacity is not treated as the defence |
+
+The one worth singling out is **cross-tenant artifact linking**. It was open
+from migration 003 until now: `document_artifacts.document_id` was `NOT NULL`
+with no foreign key, and BACKEND-18 then wrote that caller-supplied value into
+the storage key. Nothing but application code stood between it and a document in
+one workspace pointing at bytes in another. It is now a constraint violation.
