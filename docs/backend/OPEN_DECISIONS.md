@@ -2987,3 +2987,32 @@ and `CertificateParticipant` are removed rather than left unread.
   summary; the audit trail is comprehensive. They must not converge by accident.
 - **Signer timezone capture** (OD-166's real fix) — would also let certificate
   times render in a signer-local form rather than UTC.
+
+
+## Decided for BACKEND-41 (before implementation) — post-completion lockout
+
+**Owner, 2026-08-11: do BOTH — deny by state AND explicitly revoke.**
+
+§149–§152 ask whether completion should revoke access grants, recipient signing
+sessions, pending authentications and OTP challenges, given that the request
+state policy already denies every signing mutation.
+
+The two are not alternatives and are not the same kind of control:
+
+- **The state check is the CONTROL.** It is the thing that must be correct, it
+  covers every path including ones added later, and it cannot be bypassed by a
+  credential that was issued before completion.
+- **Revocation is DEFENCE IN DEPTH, and it is also hygiene.** A live session or
+  an unexpired grant against a completed request is a credential with no
+  legitimate use. Leaving it valid means a future route added without the state
+  check inherits a working credential rather than a dead one — which is exactly
+  how a state check stops being sufficient without anyone noticing.
+
+So BACKEND-41 will deny by state *and* revoke on completion, and the tests must
+assert **both independently**: a revoked credential is refused, and a
+still-valid credential is *also* refused because the request is completed.
+Testing only the combination would let either control rot silently.
+
+Revocation uses the existing `RECIPIENT_SESSION_REVOCATION_REASONS` vocabulary —
+`request-terminal` already exists and means precisely this. No new reason value
+is introduced.
