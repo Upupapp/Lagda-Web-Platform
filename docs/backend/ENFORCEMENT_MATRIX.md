@@ -1484,3 +1484,16 @@ four commands old and is the largest single one in this area.
 | PDF merge, certificate, sealing | **DOCUMENTED ONLY** | BACKEND-38/39/40/41 |
 | Decline and cancel HTTP surface | **NOT IMPLEMENTED** | use cases exist and are tested; no route composed |
 | Evidence events for state transitions | **DOCUMENTED ONLY** | OD-145 — nothing in this codebase writes one |
+
+## Updated 2026-08-11 — OD-154, OD-155, OD-158 closed
+
+| Rule | Status | How |
+|---|---|---|
+| Decline and cancel HTTP surface | **ENFORCED** (was NOT IMPLEMENTED) | both routes composed; route suite proves refusal before the use case |
+| Concurrent final signers converge | **ENFORCED** (was PARTIALLY) | real PostgreSQL, two open transactions, exactly one transition |
+| Same-cohort activation exactly once | **ENFORCED** | as above |
+| A `completion-ready` request acquires durable work | **ENFORCED** (was DOCUMENTED ONLY, INV-589) | `ensureRun` in the readiness transaction |
+| One CompletionRun under a racing trigger | **ENFORCED** | unique constraint, proven under real concurrency |
+| One claim per run under two workers | **ENFORCED** | conditional claim, proven |
+| One accepted output per completion step | **ENFORCED** | unique key, proven |
+| Completion worker registration | **NOT IMPLEMENTED** | OD-161 |

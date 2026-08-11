@@ -2702,3 +2702,54 @@ out of the foundation run rather than half-built.
 The upload-before-DB choreography and its failure windows are specified in
 `COMPLETION_ARCHITECTURE.md`; no cleanup job exists, because nothing uploads
 anything yet.
+
+## Closed 2026-08-11
+
+- **OD-154 — decline and cancel have no HTTP surface. CLOSED.**
+  `POST /signing/decline` (recipient realm, session + recipient CSRF, no
+  Idempotency-Key because a decline cannot duplicate) and
+  `POST /workspaces/:id/signing-requests/:id/cancel` (authenticated scope,
+  beside Send). The decline body has one field, a closed enum, and
+  `additionalProperties: false` — so the product's optional free-text note
+  cannot arrive at all rather than being accepted and discarded.
+
+- **OD-155 — concurrency unproven against PostgreSQL. CLOSED.**
+  `packages/db/src/signing-state.integration.test.ts`, seven tests as the
+  runtime role. Completion-ready established exactly once under two final
+  signers; the next cohort activated exactly once under two same-cohort
+  signers; one CompletionRun under a racing trigger with both callers holding
+  it; one claim under two workers; one accepted output per step.
+
+  It found two harness defects, both constraints working as designed: a
+  fixture cannot mark a recipient signed without writing the submission first,
+  and `truncateAll` had to be reordered twice because the four-column FK that
+  makes `signedAt` checkable also makes the teardown order load-bearing.
+
+- **OD-158 — the completion trigger is not wired. CLOSED.**
+  `advanceSigningWorkflow` calls `uow.completion.ensureRun` in the SAME
+  transaction as `markCompletionReady`. `ensureRun` is an
+  `on conflict do nothing` insert against the one-per-request unique key, so a
+  duplicate trigger converges rather than forking, and `completionIds` is a
+  REQUIRED dependency — an optional trigger is one a composition root forgets.
+
+- **OD-159 — partially closed.** `assessRequestCompletionEligibility`,
+  `processCompletionRun`, `reconcileCompletionRuns`, the completion
+  repositories and the `VerifiedCompletionResult` proof object are built and
+  tested. See OD-161 for what remains.
+
+## OD-161 — The completion worker is not registered
+
+**Raised by:** BACKEND-38. **Needs:** one more completion run.
+
+`processCompletionRun` and `reconcileCompletionRuns` exist and are tested;
+there is no `signing-request.complete` pg-boss job, no handler and no worker
+registration, so nothing calls them on a schedule. A run is created the moment
+a request becomes completion-ready and then sits `pending` until something asks
+for it.
+
+Not urgent while the pipeline cannot succeed anyway — `processCompletionRun`
+returns the run to the claimable pool because the seal step has no
+implementation — but it is the last piece of orchestration before BACKEND-41
+can make the pipeline end-to-end.
+
+**Blocks:** nothing today. **Do with:** BACKEND-41.
