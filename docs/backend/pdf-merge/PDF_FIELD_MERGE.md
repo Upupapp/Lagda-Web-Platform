@@ -1,6 +1,7 @@
 # PDF field merge — the renderer
 
-**Command:** BACKEND-39 · **Status:** renderer built; the pipeline STEP is not
+**Command:** BACKEND-39 · **Status:** renderer built and `seal()` narrowed;
+the pipeline STEP is not wired (OD-164)
 **Code:** `packages/sealing/src/node-field-merger.ts`,
 `internal/merge.ts`, `internal/fonts.ts`, `internal/geometry.ts`
 **Read with:** `PDF_FIELD_MERGE_PRODUCT_INVENTORY.md`, ADR-031,
@@ -134,10 +135,12 @@ nothing about what reached this function after a restore or a hand-edited row.
 
 ## Coordinates
 
-Unchanged, and the flip now lives in `internal/geometry.ts` — extracted from
-`fields.ts` so the new renderer and the legacy one share **one** implementation.
-Two copies is how one path ends up correct and the other upside down, and the
-second is only discovered by someone reading a finished document.
+Unchanged, and the flip now lives in `internal/geometry.ts`. It was extracted
+from `fields.ts` so both renderers could share one implementation; `fields.ts`
+has since been deleted with OD-162, so `geometry.ts` is now simply where the
+conversion lives. Two copies is how one path ends up correct and the other
+upside down, and the second is only discovered by someone reading a finished
+document.
 
 Normalized 0–1, origin top-left, `y` to the field's TOP edge, 1-based pages.
 
