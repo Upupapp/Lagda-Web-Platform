@@ -2657,3 +2657,48 @@ void is deferred with its semantics unwritten: invalidating a document people
 have already signed is a different act from withdrawing one in flight.
 
 **Decide with:** BACKEND-38, once `completed` exists.
+
+## Resolved by BACKEND-38 (foundation)
+
+- **The completion step ledger is `seal` -> `persist` -> `finalize`**, not
+  field-merge/certificate/seal. `DocumentSealer.seal()` is one operation
+  producing both the sealed document and the certificate; splitting it is what
+  INV-002 and ADR-005 exist to prevent, and the artifact-type vocabulary has
+  never had a merged-candidate member. BACKEND-39/40 refine the inside of
+  `@lagda/sealing`.
+- **One CompletionRun per request**, by unique constraint.
+- **The request stays `completion-ready` while the pipeline runs.** No
+  `COMPLETING` state — the product has no processing screen at all.
+- **`completed` is NOT yet admitted by the request CHECK.** BACKEND-41 adds it
+  with the code path that earns it.
+- Run states, step states, failure codes and their classification, pipeline
+  versioning, and the retry bound are settled in `completion/`.
+
+## OD-158 — The completion trigger is not wired
+
+**Raised by:** BACKEND-38. **Needs:** the next completion run.
+
+BACKEND-37's `markCompletionReady` does not yet create a `CompletionRun`, so a
+request reaching `completion-ready` today gets no completion work at all. §49-§55
+and §300 are unmet until it does. The schema and the domain rule exist; nothing
+calls them.
+
+**Blocks:** every subsequent completion behaviour. This is the first thing to
+close.
+
+## OD-159 — Completion repositories, worker and finalization guard
+
+**Raised by:** BACKEND-38.
+
+`EnsureCompletionRun`, `BuildCompletionInput`, the reconciler, the
+`signing-request.complete` job, and the `VerifiedCompletionResult` guard on the
+`completed` transition are all designed and none is built. Deliberately scoped
+out of the foundation run rather than half-built.
+
+## OD-160 — Orphan object reconciliation is documented, not implemented
+
+**Raised by:** BACKEND-38.
+
+The upload-before-DB choreography and its failure windows are specified in
+`COMPLETION_ARCHITECTURE.md`; no cleanup job exists, because nothing uploads
+anything yet.

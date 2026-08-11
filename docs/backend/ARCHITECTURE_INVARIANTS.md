@@ -721,3 +721,24 @@ generic rule set.
 | **INV-571** | Workflow transitions stay workspace- and request-scoped, through bound repositories, tenant-aware foreign keys and RLS. | A cross-tenant state change. | **ENFORCED** — no method takes a workspace argument; restrictive policies added by 024 |
 | **INV-572** | Signing-state telemetry carries no recipient PII, signature or field values, credentials, or high-cardinality identifiers. | A recipient's address in a metric label. | **ENFORCED** — bounded outcome plus counts; architecture guard |
 | **INV-573** | BACKEND-37 performs no PDF merge, produces no signed document or certificate, and never invokes `DocumentSealer`. | A command quietly acquiring the completion pipeline. | **ENFORCED** — guard over imports and source |
+
+## BACKEND-38 — the completion pipeline foundation
+
+| ID | Invariant | The failure it prevents | Status |
+|---|---|---|---|
+| **INV-574** | Completion may begin only from the canonical `completion-ready` state. | Producing a document for a request somebody still owes a signature on. | **ENFORCED** — one state, not a list; asserted over every other state |
+| **INV-575** | Completion revalidates the authoritative submissions and values rather than trusting the state column. | A corrupt projection producing a legally final document. | **ENFORCED** — `assessCompletionEligibility` |
+| **INV-576** | Completion reads only immutable snapshots and the exact `sourceArtifactId`; contacts, preparations and the document's current artifact may never influence it. | A document sealed against bytes nobody agreed to. | **PARTIALLY ENFORCED** — the rule takes the source artifact as an input fact; the loader that would prove it is BACKEND-38's next run |
+| **INV-577** | One logical `CompletionRun` per request; retries and duplicate triggers reuse it. | Two pipelines producing two final documents. | **ENFORCED** — `UNIQUE (workspace_id, signing_request_id)` |
+| **INV-578** | One accepted result per logical completion step. | Two accepted seals whose bytes differ because a certificate carries a timestamp. | **ENFORCED** — `UNIQUE (completion_run_id, step)` |
+| **INV-579** | Completion run state is separate from `SigningRequest.state`, which stays `completion-ready` while production is pending. | Claiming a user-visible document state that has not succeeded. | **ENFORCED** — separate table; no `COMPLETING` state introduced |
+| **INV-580** | A request may not become `completed` merely because all recipients signed. | The failure BACKEND-37 created `completion-ready` to prevent. | **ENFORCED** — the request CHECK does not admit `completed` at all |
+| **INV-581** | `completedAt` is backend-authoritative pipeline-success time, distinct from the last recipient's `acceptedAt`. | A scheduling delay recorded as a legal completion time. | **ENFORCED** — a separate column on a separate table |
+| **INV-582** | A successful completion is unique per request and immutable. | A final artifact silently repointed. | **ENFORCED** — primary key plus NO UPDATE grant |
+| **INV-583** | Completion failures are recorded as a closed code, never a raw exception. | A field value or document title in a business table. | **ENFORCED** — CHECK-constrained vocabulary |
+| **INV-584** | Retryable and terminal failures are distinguished, and retries are bounded. | Retrying deterministic corruption forever. | **ENFORCED** — total classification record + `mayAttemptAgain` |
+| **INV-585** | Completion uses the established `DocumentSealer` seam; no second sealing architecture exists. | Twenty call sites a remote signer would have to reproduce. | **ENFORCED** — three steps, one `seal`; no new sealing port |
+| **INV-586** | The completion orchestrator contains no PDF-library type or logic. | The boundary ADR-005 was built around. | **ENFORCED** — core imports contracts only |
+| **INV-587** | No fake or no-op completion adapter may cause a successful completion. | Green tests standing in for an unbuilt pipeline. | **ENFORCED** — no adapter exists, and the request CHECK cannot reach `completed` |
+| **INV-588** | The recipient realm cannot read completion runs, steps or completions. | A signer learning that finalization is failing. | **ENFORCED** — restrictive deny on all three tables |
+| **INV-589** | A `completion-ready` request must be automatically discoverable when it has no runnable work. | A stranded request nobody notices. | **DOCUMENTED ONLY** — the trigger is not wired; OD-158 |
