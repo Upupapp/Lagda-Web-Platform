@@ -1524,6 +1524,27 @@ four commands old and is the largest single one in this area.
 | No signing after completion | **ENFORCED** | allow-list state check AND revocation, tested independently |
 | Verification identity | **ENFORCED** | one per completion, created in the finalization transaction |
 | No PAdES/PKI/TSA/HSM claim | **ENFORCED** | none implemented; absences documented |
-| Public verification | **DOCUMENTED ONLY** | BACKEND-42 |
+| Public verification | **IMPLEMENTED** | BACKEND-42 — see the section below |
 | Final document download | **NOT IMPLEMENTED** | the product has no download UX (§0 inventory) |
 | Orphan final-object sweeper | **DOCUMENTED ONLY** | OD-160 |
+
+## BACKEND-42 — public document verification
+
+| Property | Status | How |
+|---|---|---|
+| Public verification — no credential | **ENFORCED** | no session, cookie or CSRF on either route |
+| Two outcomes only | **ENFORCED** | malformed and unknown asserted byte-identical |
+| No tenant state disclosed | **ENFORCED** | seven designed statuses deliberately not implemented (OD-168) |
+| Curated projection | **ENFORCED** | six fields, stated twice; whole-body sweep for 11 terms |
+| No overclaim on the public seal | **ENFORCED** | sweep for PAdES, X.509, PNPKI, RFC 3161, TSA, HSM, notarized, legally binding |
+| No download from a verification reference | **ENFORCED BY ABSENCE** | four candidate paths 404; no listing or search |
+| No mutating verb | **ENFORCED** | PUT/PATCH/DELETE and POST-on-lookup all 404 |
+| Public verification writes nothing | **ENFORCED** | no row, no evidence event, no viewed fact |
+| Server-side digest only | **ENFORCED** | client-supplied hash ignored, asserted |
+| Bounded, unparsed, unpersisted upload | **ENFORCED** | 25 MB counted; stream destroyed; module exports two names |
+| Malformed reference costs no query | **ENFORCED** | lookup asserted not called |
+| VerificationId minting | **ENFORCED** | implemented in BACKEND-42; the BACKEND-41 gap is closed |
+| VerificationId encodes no tenancy | **ENFORCED** | measured over generated output |
+| Authenticated `/app/verify` surface | **NOT IMPLEMENTED** | out of BACKEND-42's boundary |
+| `PublicVerificationLookup` against real PostgreSQL | **NOT PROVEN** | OD-169 |
+| Routes served by a production process | **⚠ NOT WIRED** | OD-171 — `createProductionDependencies` supplies only `databaseHealth`; true of all seven feature families, not just this one |

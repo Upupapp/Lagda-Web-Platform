@@ -3072,3 +3072,125 @@ is introduced.
   revocation set** — it does not exist today because recipient OTP is
   unreachable, so nothing revokes it and nothing needs to.
 
+
+## OD-168 — Public verification exposes two outcomes, not the designed eleven
+
+**Open — needs product sign-off. BACKEND-42, 2026-08-11.**
+
+The frontend's `TransactionRecordStatus` has eleven members. Seven of them —
+`record-found-in-progress`, `-draft`, `-cancelled`, `-voided`, `-expired`,
+`-declined`, `-archived` — confirm to an **anonymous** caller that a signing
+request exists and report its state.
+
+`record-found-declined` would tell a stranger holding a leaked reference that a
+named party refused to sign. That is tenant disclosure through an
+unauthenticated, indexable endpoint.
+
+BACKEND-42 implements `completed | not-found` and collapses everything else,
+including malformed input, into a single byte-identical response.
+
+**This is a deliberate departure from the designed product**, and it is the
+decision in this command most worth a second opinion. What is lost: a person
+whose document "isn't verifying" gets no explanation. What is gained: no oracle
+for which references exist or what state other people's documents are in.
+
+The richer vocabulary remains available to the **authenticated** `/app/verify`
+surface, whose caller already holds workspace authorization. If product wants
+any of the seven publicly, it should be decided one status at a time with the
+leaked-reference case argued explicitly — not restored as a set.
+
+## OD-169 — `PublicVerificationLookup` is not proven against real PostgreSQL
+
+**Open. BACKEND-42, 2026-08-11.**
+
+BACKEND-39's renderable-values query and BACKEND-40's certified-facts query were
+both proven against real PostgreSQL, because both aggregate across joins and
+both had a plausible failure mode that a fake could not show.
+
+This query is a single indexed read on the completion join, which is materially
+simpler — but "simpler" is a judgement, not a test, and the admin-portal
+INNER JOIN that hid 40 of 95 rows was also a simple query. Recorded rather than
+claimed as covered.
+
+## OD-170 — Public verification responses are never cached
+
+**Open — revisit. BACKEND-42, 2026-08-11.**
+
+`Cache-Control: no-store` on both routes. A completion record is immutable, so
+caching the metadata would be safe in the ordinary correctness sense, and every
+lookup is currently a database read.
+
+It is refused anyway: a shared proxy holding verification responses is a privacy
+surface nobody has reviewed. Revisit once the disclosure model is mature —
+specifically once OD-168 is settled, since what may be cached depends on what
+may be said.
+
+## OD-171 — The production composition root serves no feature at all
+
+**⚠ OPEN — LAUNCH BLOCKER. Found by BACKEND-42's §284 audit, 2026-08-11.
+Not a BACKEND-42 defect; it spans every command since the API foundation.**
+
+`createProductionDependencies` returns exactly one capability:
+
+```ts
+export function createProductionDependencies(database: LagdaDatabase): AppDependencies {
+  return { databaseHealth: { isReachable: () => database.ping() } };
+}
+```
+
+`create-app` gates seven feature families on optional dependencies —
+`sessions`, `workspaces`, `signingAccess`, `signingCeremony`,
+`signingSubmission`, `signingDecline`, `publicVerification`. The production
+root supplies none of them.
+
+That gating is right, and it is the pattern the codebase deliberately chose: an
+absent dependency means the routes **do not exist**, never that they exist
+unprotected. The consequence is equally real — **a production process today
+serves health checks and nothing else.**
+
+### How it stayed invisible
+
+Every command's tests build their own `AppDependencies` in-harness, so every
+route is exercised. Nothing tests the composition root, because there is
+nothing in it to test. The same shape produced the narrower finding BACKEND-42
+opened with: `VerificationIdGenerator` had no implementation at all, and
+BACKEND-41's tests passed on an inline stub — OD-069's "ports whose only
+implementations are test ones", one level up.
+
+Two concrete instances are now in the tree: `createVerificationIdGenerator`
+(BACKEND-42) and `createPublicVerificationLookup` (`packages/db`) both exist,
+are both fully tested, and are both constructed only by tests.
+
+### Why BACKEND-42 did not fix it
+
+Assembling the root means wiring roughly thirty commands' repositories,
+services, session store, limiter and mailer, with a startup-failure story for
+each. That is command-sized work.
+
+Doing only the BACKEND-42 slice would be worse than leaving it: it would make
+an **anonymous, unauthenticated public surface** the first and only route a
+production process serves.
+
+### What closing it requires
+
+- A composition root that builds every capability, with each construction
+  failing startup loudly rather than leaving a route silently unregistered.
+- A test that asserts the production root supplies **every** optional
+  dependency `create-app` gates on — derived from the gate list, not a copied
+  literal, or it drifts the way string-keyed allow-lists always do.
+- A smoke check against the built artefact that the expected routes answer,
+  since a green build and green tests have never implied a server that serves.
+
+## Still open after BACKEND-42
+
+- **The authenticated `/app/verify` surface** — deliberately out of boundary. It
+  is the natural home for the richer status vocabulary OD-168 sets aside.
+- **QR code encoding** — the product's `/verify` copy mentions a QR path. Nothing
+  in BACKEND-42 mints, renders or parses one, and the verification reference does
+  not appear on certificate-v1.
+- **Rate-limit tuning** — the two IP policies are configured but their thresholds
+  have never met real traffic. IP is the only scope available on a surface with
+  no caller.
+- **⚠ Carried from BACKEND-41** — the upload-succeeds/DB-fails window remains
+  code-complete but untested; the fake transaction manager cannot fail
+  mid-transaction.
