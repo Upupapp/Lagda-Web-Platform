@@ -1513,3 +1513,17 @@ four commands old and is the largest single one in this area.
 | `seal()` produces neither fields nor certificate | **ENFORCED** | OD-162, OD-167 |
 | SigningRequest COMPLETED | **DOCUMENTED ONLY** | BACKEND-41 |
 | Certificate object re-verified on reuse | **DOCUMENTED ONLY** | BACKEND-41 verifies objects before composition |
+| Only completion calls DocumentSealer | **ENFORCED** | repository audit: one business caller |
+| Same-run merged + certificate inputs | **ENFORCED** | resolved by identity from the run's steps |
+| Input artifact integrity | **ENFORCED** | digests returned by the sealer, compared before upload |
+| New immutable final artifact | **ENFORCED** | new id and key; inputs asserted unchanged |
+| Final SHA-256 over stored bytes | **ENFORCED** | server-computed; ETag never used |
+| No early COMPLETED transition | **ENFORCED** | four tests: upload failure, seal failure, empty output, ordering |
+| One successful completion | **ENFORCED** | unique key; three runs leave one row |
+| completedAt semantics | **ENFORCED** | finalization clock; fixture signs a day earlier |
+| No signing after completion | **ENFORCED** | allow-list state check AND revocation, tested independently |
+| Verification identity | **ENFORCED** | one per completion, created in the finalization transaction |
+| No PAdES/PKI/TSA/HSM claim | **ENFORCED** | none implemented; absences documented |
+| Public verification | **DOCUMENTED ONLY** | BACKEND-42 |
+| Final document download | **NOT IMPLEMENTED** | the product has no download UX (§0 inventory) |
+| Orphan final-object sweeper | **DOCUMENTED ONLY** | OD-160 |
