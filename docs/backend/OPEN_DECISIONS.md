@@ -2855,19 +2855,43 @@ completed with a blank signature" — the one failure that cannot be walked back
 
 See ADR-031.
 
-## OD-164 — the `field-merge` STEP is not wired
+## OD-164 — the `field-merge` step — **mostly closed 2026-08-11**
 
-**Raised by:** BACKEND-39. **Needs:** BACKEND-39 part 3, before BACKEND-40.
+**Built:** the read path (`listRenderableFieldValues`, proven against real
+PostgreSQL) and `runFieldMergeStep` — source load, digest verification, merge,
+upload, artifact row, `acceptStep`, and both failure windows. 26 unit tests and
+9 integration tests.
 
-The renderer exists and is tested; nothing calls it from the completion
-pipeline. `processCompletionRun` still records `step-not-implemented`.
+**Still open — the last piece:** `runFieldMergeStep` is not called from
+`processCompletionRun`, which still records `step-not-implemented`.
 
-Outstanding: load the source artifact and verify its digest before rendering
-onto it; project accepted values into `MergeableField[]`; upload; write the
-`merged-candidate` artifact row; `acceptStep`; the two failure windows
-(uploaded-not-recorded — OD-160 — and recorded-not-uploaded).
+That wiring is not a one-liner and was left deliberately rather than rushed.
+`processCompletionRun` does everything inside ONE
+`transactions.runForWorkspace`, and the step opens its own transactions around
+non-transactional storage work — so the orchestrator has to be restructured into
+claim-in-a-transaction, then run-the-step-outside-it. Doing that carelessly
+either nests transactions or moves the claim outside the conditional update that
+makes two workers safe (§63, §241).
 
-**Blocks:** BACKEND-40, which has no `merged-candidate` artifact to sit beside.
+**Blocks:** BACKEND-40 still, but only by this last connection.
+
+## OD-166 — a signed date renders in UTC, and the backend has no timezone
+
+**Raised by:** BACKEND-39. **Needs:** a product decision.
+
+A `DATE_SIGNED` field stores a UTC instant. `field-merge` renders it as an
+ISO-8601 date in UTC, so a signature accepted at 07:00 in Manila renders **the
+previous day** — PHT is UTC+8.
+
+It is done that way because the backend has no timezone model at all: no
+workspace locale, no recipient timezone, nothing on the signing request.
+Hard-coding `Asia/Manila` would bake one jurisdiction into the renderer and be
+wrong the first time a document is signed elsewhere — and it would be invisible,
+because a date looks plausible whichever day it says.
+
+**This is on a legal document.** The choice is recorded in code and covered by a
+test so it is visible rather than accidental, but it is a product decision, not
+a rendering detail.
 
 ## OD-165 — two sealing failures have no completion failure code
 
