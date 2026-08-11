@@ -174,20 +174,24 @@ Still needed, and this is the whole of it:
 4. `acceptStep` with the output artifact id.
 5. The two failure windows: uploaded-but-not-recorded (orphan object, OD-160)
    and recorded-but-not-uploaded.
-6. Map `SealingError` onto `CompletionFailureCode`. **`UnrenderableTextError`
-   and `UnsupportedRepresentationError` have no code today** — the closed
-   vocabulary needs new terminal members and a migration to widen the CHECK.
+6. Map `SealingError` onto `CompletionFailureCode`. The codes now EXIST
+   (migration 027): `unrenderable-value` and `typeface-unavailable`, plus a
+   broadened `unsupported-representation`. Only the mapping is left.
 
 **BACKEND-40 remains NOT READY** until step 3 exists, because there is no
 `merged-candidate` artifact for the certificate step to sit beside.
 
-## OD-162 still stands
+## OD-162 — closed, not deferred
 
-`seal()` still merges fields. Once the `field-merge` step renders them,
-**BACKEND-41 must narrow `seal()` or every field renders twice** — and it will
-look like a font-weight bug, not an architecture bug.
+`seal()` no longer merges fields. `SealRequest.fields`, `SealableField`, the
+private `merge()` and `internal/fields.ts` are gone; `seal()` receives the merged
+candidate and adds no marks of its own.
 
-The legacy renderer was left in place, and moved onto the same embedded faces,
-precisely so that whichever path runs today is correct. It gains no new
-capability: the raster fix, the coverage guard and the measured font fitting all
-live in `merge.ts`, so nothing is tempted to keep it alive.
+It was closed in this command rather than left to BACKEND-41 because both
+renderers now exist, so the double-render window opened the moment `merge.ts`
+landed — and a value drawn twice reads as a font-weight artefact, not as an
+architecture fault.
+
+Safe because `NodeDocumentSealer` has no production caller; `start-server.ts`
+says so, and the other `.seal(` matches in the repo are a different secret-box
+sealer for credentials.

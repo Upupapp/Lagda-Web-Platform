@@ -2798,14 +2798,43 @@ New artifact kind `merged-candidate`. New failure code
   decision that keeps the font change from being a regression; see OD-163 below
   for what it prevents.
 
-## OD-162 — `seal()` still merges fields
+## OD-162 — `seal()` still merges fields — **CLOSED 2026-08-11 by BACKEND-39**
 
-**Raised by:** BACKEND-39. **Needs:** BACKEND-41.
+Closed in the same command that raised it, rather than deferred to BACKEND-41.
 
-`packages/sealing/src/internal/fields.ts` is called by `seal()`. Once
-`field-merge` renders the fields, `seal()` must stop doing it or every field
-renders twice. This is the single most important thing BACKEND-41 must not
-forget.
+The reason for not waiting: both renderers now exist, so from the moment
+`merge.ts` landed, a `seal()` that still rendered would draw every value twice —
+one over the other. That does not present as an architecture bug. It presents as
+a font-weight or double-strike artefact, and nobody debugging it would look at
+the step ledger.
+
+`SealRequest.fields`, the `SealableField` interface, the private `merge()` and
+`internal/fields.ts` are all gone. Safe because `NodeDocumentSealer` has **no
+production caller** — `start-server.ts` says so explicitly, and the `.seal(`
+matches in `mfa.ts`/`send.ts` are a different secret-box sealer for credentials.
+
+`SEALABLE_FIELD_TYPES` is kept: `renderTypeFor` in `@lagda/core` maps the
+product's nine preparation field types onto it, and which component draws does
+not change that.
+
+## OD-165 — completion failure codes — **CLOSED 2026-08-11 by BACKEND-39**
+
+Migration 027. `unrenderable-value` (terminal) and `typeface-unavailable`
+(retryable) added; `unsupported-representation` broadened to cover undecodable
+rasters, unsupported media types and out-of-range typed styles.
+
+**It also fixed a live defect migration 026 left behind.** 026 added
+`step-not-implemented` to the contracts vocabulary and widened the STEP check but
+never the FAILURE CODE check, and `processCompletionRun` writes exactly that code
+on its only reachable path — so the first real completion attempt would have
+raised Postgres 23514 rather than parking the run for retry.
+
+A new integration suite now compares the vocabulary constants against
+`pg_constraint`, and carries a self-test that narrows the constraint and asserts
+the detector names the missing code. **The first negative control was invalid**:
+rolling migration 027 back and re-running reported six passes, because
+`createTestDatabase()` calls `migrateToLatest` in `beforeAll` and the suite
+repaired the very thing it was meant to observe.
 
 ## OD-163 — Unicode rendering — **CLOSED 2026-08-11 by BACKEND-39**
 
