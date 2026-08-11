@@ -27,16 +27,34 @@ Two halves, and the second is the one that is easy to miss.
 
 ### 1. The typeface
 
-Three faces — regular, bold, italic — from `@expo-google-fonts/noto-sans`, an
-exact-pinned npm dependency, loaded through `@pdf-lib/fontkit`.
+Three faces — regular, bold, italic — **vendored** at
+`packages/sealing/assets/fonts/`, loaded through `@pdf-lib/fontkit`.
 
-**Why an npm dependency rather than a vendored binary.** The bytes must be
-identical everywhere, and they must not enter git history where removing them
-later needs a rewrite. A pinned package gives both. The alternative — resolving
-a host-installed font — was rejected outright: the sealed document's SHA-256 is
-its identity, and a host-resolved face produces different bytes on a developer's
-machine, in CI, and in a container that ships no fonts at all, where it fails
-rather than degrades.
+**Amended 2026-08-11.** This shipped first as an exact-pinned npm dependency,
+`@expo-google-fonts/noto-sans`, on the reasoning that the bytes should not enter
+git history. That reasoning was sound and the cost was not: the package ships
+**eighteen** faces to deliver three, so it carried 14 MB in `node_modules` and
+in every deploy image. Vendoring costs 1.9 MB in the repository and puts only the
+bytes that actually get embedded on disk. The owner made the call; it is recorded
+here because it reverses a decision this ADR originally argued the other way.
+
+**Still not a subset.** Subsetting would cut a further ~1.4 MB and would
+reintroduce exactly the failure the second half of this ADR exists to prevent: a
+subset silently loses glyphs and a lost glyph draws as nothing. The rejected
+`latin` subset was missing ₱ in a Philippine product, which is how that risk is
+known to be real rather than theoretical. A test asserts the vendored faces
+still cover ₱, ā and ō — the three characters that distinguish a complete face
+from the `latin` subset.
+
+**A host-installed font stays rejected** either way: the sealed document's
+SHA-256 is its identity, and a host-resolved face produces different bytes on a
+developer's machine, in CI, and in a container that ships no fonts at all, where
+it fails rather than degrades.
+
+The faces are resolved relative to the module, not to the working directory, so
+it does not matter where the server is started from — and the relative path is
+identical from `src/internal/` and `dist/internal/`. `OFL.txt` sits beside them,
+which is what the SIL Open Font License requires on redistribution.
 
 **Why not `@fontsource/noto-sans`,** which was the first choice and is the more
 obvious package. Measured, not assumed: fontsource v5 ships WOFF/WOFF2 only, and
@@ -55,9 +73,8 @@ rediscovered painfully:
 - **Output is byte-identical across runs** once the modification date is pinned,
   so embedding does not cost determinism.
 
-**Cost:** ~14 MB in `node_modules` (18 faces ship, 3 are used); nothing in the
-repository, and nothing in the sealed document beyond the subset of glyphs
-actually drawn.
+**Cost:** 1.9 MB committed; nothing in `node_modules`, and nothing in the sealed
+document beyond the subset of glyphs actually drawn (`subset: true` on embed).
 
 ### 2. The coverage guard
 
@@ -112,10 +129,12 @@ that cannot be completed.
   so leaving it on Helvetica would have thrown on precisely the names the merged
   document had just been fixed to accept — and thrown at the *last* step, after
   the document was already rendered.
-- The legacy renderer inside `seal()` was moved onto the same faces even though
-  BACKEND-41 deletes it. A half-migrated Unicode story — new renderer accepts
-  "Peñaflor", live renderer still throws — is worse than either end state,
-  because which one is true depends on which file someone reads.
+- The legacy renderer inside `seal()` was moved onto the same faces rather than
+  left on Helvetica, because a half-migrated Unicode story — new renderer accepts
+  "Peñaflor", live renderer still throws — is worse than either end state, since
+  which one is true depends on which file someone reads. **OD-162 then deleted
+  that renderer outright later the same day**, so the migration turned out to be
+  short-lived; it was still the right call while both existed.
 
 ## Alternatives rejected
 
