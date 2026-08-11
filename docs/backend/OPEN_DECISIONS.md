@@ -2783,10 +2783,20 @@ New artifact kind `merged-candidate`. New failure code
   WinAnsi and pdf-lib THROWS on out-of-range characters rather than
   substituting, so Philippine names with diacritics break the renderer today.
   §146 (names must work) beats §272 (avoid dependencies): Noto Sans under
-  OFL-1.1 plus `@pdf-lib/fontkit`. **Not yet implemented — see OD-163.**
+  OFL-1.1 plus `@pdf-lib/fontkit`. **IMPLEMENTED — see ADR-031.**
 - **Rotation: FOUNDATION_ONLY.** BACKEND-30 refuses rotated pages at
   preparation (OD-124), so only 0° can reach completion. Implementing a
   transform that cannot be exercised is untested code that looks supported.
+- **The font is a pinned npm dependency, not a vendored binary and not a
+  host-installed face.** `@expo-google-fonts/noto-sans@0.4.2`, exact.
+  `@fontsource/noto-sans` was the first choice and cannot work: it ships
+  WOFF/WOFF2 only, and its `latin` and `latin-ext` subsets are **disjoint** —
+  `latin` has ñ and not ₱, `latin-ext` has ₱ and not ñ. One `PDFFont` embeds one
+  file, so neither covers a Philippine document containing a name and a peso
+  amount. Measured, not reasoned about.
+- **A glyph the face cannot draw is REFUSED, not substituted.** This is the
+  decision that keeps the font change from being a regression; see OD-163 below
+  for what it prevents.
 
 ## OD-162 — `seal()` still merges fields
 
@@ -2797,12 +2807,50 @@ New artifact kind `merged-candidate`. New failure code
 renders twice. This is the single most important thing BACKEND-41 must not
 forget.
 
-## OD-163 — Unicode rendering is unimplemented
+## OD-163 — Unicode rendering — **CLOSED 2026-08-11 by BACKEND-39**
 
-**Raised by:** BACKEND-39.
+Noto Sans is embedded via `@pdf-lib/fontkit` in **all three** renderers: the new
+`merge.ts`, the certificate, and the legacy `fields.ts` inside `seal()`. All
+three were changed together on purpose — a half-migrated Unicode story, where
+the new renderer accepts "Peñaflor" and the live one still throws, is worse than
+either end state because which is true depends on which file someone reads.
 
-The decision is made (Noto Sans + fontkit) and the code still embeds
-`StandardFonts.Helvetica`. Until it changes, a recipient whose name carries a
-mark outside WinAnsi cannot have their document completed — pdf-lib throws.
+**What closing it exposed, and what was done about it.** Swapping Helvetica for
+an embedded face converts a LOUD failure into a SILENT one. Helvetica throws on
+a character it cannot encode; an embedded font draws **nothing** and returns a
+structurally valid PDF. Measured: `田中太郎` through a Latin face produced an
+empty page and no error. So the fix ships with a coverage guard that refuses
+uncovered code points (`UnrenderableTextError`, terminal). Without it, BACKEND-39
+would have replaced "this document cannot be completed" with "this document
+completed with a blank signature" — the one failure that cannot be walked back.
 
-**Blocks:** honest support for Philippine and international names.
+See ADR-031.
+
+## OD-164 — the `field-merge` STEP is not wired
+
+**Raised by:** BACKEND-39. **Needs:** BACKEND-39 part 3, before BACKEND-40.
+
+The renderer exists and is tested; nothing calls it from the completion
+pipeline. `processCompletionRun` still records `step-not-implemented`.
+
+Outstanding: load the source artifact and verify its digest before rendering
+onto it; project accepted values into `MergeableField[]`; upload; write the
+`merged-candidate` artifact row; `acceptStep`; the two failure windows
+(uploaded-not-recorded — OD-160 — and recorded-not-uploaded).
+
+**Blocks:** BACKEND-40, which has no `merged-candidate` artifact to sit beside.
+
+## OD-165 — two sealing failures have no completion failure code
+
+**Raised by:** BACKEND-39. **Needs:** the migration that accompanies OD-164.
+
+`UnrenderableTextError` and `UnsupportedRepresentationError` are terminal and
+have **no member** in `COMPLETION_FAILURE_CODES`. The vocabulary is a closed set
+with a frozen total `Record`, so adding them is a compile error until classified
+— which is the intended behaviour — plus a migration to widen the step CHECK.
+
+Mapping them onto an existing code would be wrong in a way that costs an
+operator real time: `invalid-geometry` says the rectangle is corrupt, and
+`unsupported-representation` as it stands is documented as "a signature
+representation *version* this build cannot interpret", not "someone submitted a
+JPEG" and not "this name has no glyph".
