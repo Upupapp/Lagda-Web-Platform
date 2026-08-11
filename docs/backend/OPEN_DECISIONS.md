@@ -2753,3 +2753,56 @@ implementation — but it is the last piece of orchestration before BACKEND-41
 can make the pipeline end-to-end.
 
 **Blocks:** nothing today. **Do with:** BACKEND-41.
+
+## Amended 2026-08-11 — the completion ledger, by BACKEND-39
+
+**BACKEND-38's `seal -> persist -> finalize` is REVERSED to
+`field-merge -> certificate -> final-seal -> finalize`.** Migration 026.
+
+BACKEND-38 chose three steps because `DocumentSealer.seal()` is one operation
+that merges fields and renders the certificate internally, and splitting it
+would split the seam INV-002 protects. BACKEND-39 requires `field-merge` to be
+a distinct durable step producing a distinct immutable artifact AND requires
+that step not to invoke `DocumentSealer` — both together are only satisfiable
+if merging is separable from sealing.
+
+`SEALING_ARCHITECTURE.md` §2's objection was that exposing `mergeFields` gives
+"twenty callers a reason to reach past the boundary". That holds for twenty and
+not for one: the completion pipeline is the only caller. The PDF work stays
+inside `@lagda/sealing`; the package exposes two operations to one caller.
+
+**This obliges BACKEND-41 to narrow `seal()` to sealing alone.** It merges
+fields today; leaving it renders every field twice.
+
+New artifact kind `merged-candidate`. New failure code
+`step-not-implemented`, classified RETRYABLE.
+
+## Decided by BACKEND-39
+
+- **Font strategy: embed a Unicode font.** `StandardFonts.Helvetica` is
+  WinAnsi and pdf-lib THROWS on out-of-range characters rather than
+  substituting, so Philippine names with diacritics break the renderer today.
+  §146 (names must work) beats §272 (avoid dependencies): Noto Sans under
+  OFL-1.1 plus `@pdf-lib/fontkit`. **Not yet implemented — see OD-163.**
+- **Rotation: FOUNDATION_ONLY.** BACKEND-30 refuses rotated pages at
+  preparation (OD-124), so only 0° can reach completion. Implementing a
+  transform that cannot be exercised is untested code that looks supported.
+
+## OD-162 — `seal()` still merges fields
+
+**Raised by:** BACKEND-39. **Needs:** BACKEND-41.
+
+`packages/sealing/src/internal/fields.ts` is called by `seal()`. Once
+`field-merge` renders the fields, `seal()` must stop doing it or every field
+renders twice. This is the single most important thing BACKEND-41 must not
+forget.
+
+## OD-163 — Unicode rendering is unimplemented
+
+**Raised by:** BACKEND-39.
+
+The decision is made (Noto Sans + fontkit) and the code still embeds
+`StandardFonts.Helvetica`. Until it changes, a recipient whose name carries a
+mark outside WinAnsi cannot have their document completed — pdf-lib throws.
+
+**Blocks:** honest support for Philippine and international names.
