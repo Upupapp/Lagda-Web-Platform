@@ -1497,3 +1497,19 @@ four commands old and is the largest single one in this area.
 | One claim per run under two workers | **ENFORCED** | conditional claim, proven |
 | One accepted output per completion step | **ENFORCED** | unique key, proven |
 | Completion worker registration | **NOT IMPLEMENTED** | OD-161 |
+| Immutable certificate input | **ENFORCED** | one query over immutable tables, proven against real PostgreSQL |
+| No Contact/profile/preparation historical reads | **ENFORCED** | query + import audit; none exists |
+| Accurate authentication language | **ENFORCED** | total wording `Record`; builder and renderer both fail closed |
+| `signedAt` from RecipientSubmission | **ENFORCED** | model requires it; builder refuses a missing one |
+| Authentication bound to the accepted submission | **ENFORCED** | integration test discriminates submission vs consent row |
+| Consent bound by `consent_id`, not recipient | **ENFORCED** | integration test with a stray consent row |
+| Only actual signers certified | **ENFORCED** | inner join, proven with a non-signing recipient |
+| No raw secrets or field values on the certificate | **ENFORCED** | the model has no field for them |
+| Certificate versioning | **ENFORCED** | `certificateVersion` + `rendererVersion`, recorded and rendered |
+| New immutable certificate artifact | **ENFORCED** | `completion-certificate` kind, new id, observed size, computed digest |
+| Certificate step retry reuse | **ENFORCED** | accepted output short-circuits the generator |
+| No final-hash or completedAt circularity | **ENFORCED** | absent from the model; source scan with a positive control |
+| No `DocumentSealer` in BACKEND-40 | **ENFORCED** | no import; architecture guard |
+| `seal()` produces neither fields nor certificate | **ENFORCED** | OD-162, OD-167 |
+| SigningRequest COMPLETED | **DOCUMENTED ONLY** | BACKEND-41 |
+| Certificate object re-verified on reuse | **DOCUMENTED ONLY** | BACKEND-41 verifies objects before composition |
