@@ -2855,43 +2855,57 @@ completed with a blank signature" — the one failure that cannot be walked back
 
 See ADR-031.
 
-## OD-164 — the `field-merge` step — **mostly closed 2026-08-11**
+## OD-164 — the `field-merge` step — **CLOSED 2026-08-11**
 
-**Built:** the read path (`listRenderableFieldValues`, proven against real
-PostgreSQL) and `runFieldMergeStep` — source load, digest verification, merge,
-upload, artifact row, `acceptStep`, and both failure windows. 26 unit tests and
-9 integration tests.
+The read path (`listRenderableFieldValues`, proven against real PostgreSQL), the
+step (`runFieldMergeStep`), and the call from `processCompletionRun`.
 
-**Still open — the last piece:** `runFieldMergeStep` is not called from
-`processCompletionRun`, which still records `step-not-implemented`.
+The orchestrator was restructured into claim-and-validate in one transaction,
+then run-steps outside it — because a step downloads an object, renders a PDF
+and uploads the result, and object storage cannot enrol in a transaction.
 
-That wiring is not a one-liner and was left deliberately rather than rushed.
-`processCompletionRun` does everything inside ONE
-`transactions.runForWorkspace`, and the step opens its own transactions around
-non-transactional storage work — so the orchestrator has to be restructured into
-claim-in-a-transaction, then run-the-step-outside-it. Doing that carelessly
-either nests transactions or moves the claim outside the conditional update that
-makes two workers safe (§63, §241).
+**The claim did not move**, which was the constraint worth protecting.
+`claimRun` is an UPDATE whose condition is IN the statement, so two workers both
+run it and exactly one matches a row; OD-155 proved that against real PostgreSQL
+because a fake cannot. Leaving the transaction *after* the claim is safe: the
+run is already `processing` and claimed.
 
-**Blocks:** BACKEND-40 still, but only by this last connection.
+Steps run in a **bounded** loop — a runner that reports success without
+accepting its step would otherwise re-download, re-render and re-upload forever,
+presenting as a hung worker rather than a bug.
 
-## OD-166 — a signed date renders in UTC, and the backend has no timezone
+The runner map is optional, so a worker that has not been updated parks the run
+exactly as before instead of failing requests terminally. All 14 pre-existing
+orchestration tests pass unchanged.
 
-**Raised by:** BACKEND-39. **Needs:** a product decision.
+**BACKEND-40 is now unblocked**: a `merged-candidate` artifact exists for the
+certificate step to sit beside.
 
-A `DATE_SIGNED` field stores a UTC instant. `field-merge` renders it as an
-ISO-8601 date in UTC, so a signature accepted at 07:00 in Manila renders **the
-previous day** — PHT is UTC+8.
+## OD-166 — how a signed date is rendered — **ANSWERED 2026-08-11**
 
-It is done that way because the backend has no timezone model at all: no
-workspace locale, no recipient timezone, nothing on the signing request.
-Hard-coding `Asia/Manila` would bake one jurisdiction into the renderer and be
-wrong the first time a document is signed elsewhere — and it would be invisible,
-because a date looks plausible whichever day it says.
+**The product is NOT Philippine-only** (owner). That rules out two things, not
+one:
 
-**This is on a legal document.** The choice is recorded in code and covered by a
-test so it is visible rather than accidental, but it is a product decision, not
-a rendering detail.
+- `Asia/Manila` is out. It would be wrong the first time a document is signed
+  elsewhere, and wrong invisibly.
+- A bare UTC date is also out. PHT is UTC+8, so a signature accepted at 07:00 in
+  Manila renders the **previous day**, and a reader cannot tell that from a
+  signature genuinely made the day before.
+
+Rendered as **`2026-08-11 (UTC)`**. The frame of reference is part of the
+document: the date may differ from the signer's calendar day, but it can no
+longer be misread — which on a legal instrument is the difference that matters.
+
+**A trap corrected.** There IS a validated IANA timezone in this codebase —
+`users.timezone`, with `looksLikeIanaZone`/`isKnownTimezone` in
+`account/profile.ts`. It is the WRONG one: that is a workspace account holder's
+display preference, and the person whose date this is signs through a link with
+no LAGDA account at all (BACKEND-33). Dating a counterparty's signature by the
+sender's preference would be worse than UTC — it would look local and be
+someone else's local. Recorded in the renderer so it is not reached for.
+
+**Still open, as a smaller item:** capture the SIGNER's zone during the ceremony
+and persist it with the submission. The validation helpers are reusable.
 
 ## OD-165 — two sealing failures have no completion failure code
 
