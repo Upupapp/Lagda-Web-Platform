@@ -2921,3 +2921,69 @@ operator real time: `invalid-geometry` says the rectangle is corrupt, and
 `unsupported-representation` as it stands is documented as "a signature
 representation *version* this build cannot interpret", not "someone submitted a
 JPEG" and not "this name has no glyph".
+
+
+## Resolved by BACKEND-40 — the completion certificate
+
+Recorded so they are not re-litigated. Each was a live choice.
+
+- **Separate artifact, not embedded.** BACKEND-41 owns final composition; a
+  standalone certificate gives an independent digest, a clean step output and
+  retry reuse.
+- **`certificateVersion` = `completion-certificate-v1`** (data schema) and
+  **`rendererVersion` = `certificate-renderer-v1`** (layout), deliberately
+  separate.
+- **Title: "Certificate of Completion."** Descriptive, asserts no legal
+  standing. §164 forbids anything grander, and the product denies being a legal
+  certificate.
+- **Recipient email: MASKED** (`j***@example.com`). The name identifies the
+  signer; a certificate is the artifact most likely to be forwarded onward. Full
+  value stays in the immutable snapshot.
+- **Authentication display:** "Signing link" / "Email one-time passcode".
+  Never "Verified". A total `Record`, failing closed on anything else.
+- **Authentication TIME: omitted.** §39 — session creation time is not
+  authentication time unless that equivalence is established, and it is not.
+- **Ceremony entry: shown**, worded "Signing session entered". It does not mean
+  anyone read the document.
+- **Consent: shown** when present, all-or-nothing. Partial consent fails.
+- **Signature method: omitted.** No product need; the signed document already
+  shows the mark.
+- **IP: omitted — LAGDA stores none as evidence.** Measured, not declined.
+- **User agent: omitted** by policy; it stays in the evidence store.
+- **Document title:** the request's frozen `document_title`. A missing snapshot
+  FAILS rather than falling back to the current Document.
+- **Workspace/sender metadata: not shown.** No historical snapshot exists, and
+  §23 forbids presenting current values as history.
+- **Visible hashes: source only.** The merged digest is internal provenance —
+  two similar hashes invite comparing the wrong one.
+- **Time format:** `YYYY-MM-DD HH:mm:ss UTC`, locale-independent and labelled.
+- **Fonts:** the vendored Noto Sans faces from ADR-031, with the coverage guard.
+- **Ordering:** `routingOrder`, `orderIndex`, `recipientId`.
+- **Pagination:** deterministic, multi-page, never truncating participants.
+
+## OD-167 — `seal()` also rendered a certificate — **CLOSED 2026-08-11**
+
+The twin of OD-162, and closed the same way for the same reason. Once the
+CERTIFICATE step produced a certificate, a `seal()` that still rendered one
+would hand completion TWO with no way to tell which was authoritative.
+
+`SealResult.completionCertificate`, `SealRequest.evidence`, `CompletionEvidence`
+and `CertificateParticipant` are removed rather than left unread.
+
+## Still open after BACKEND-40
+
+- **Final composition** — whether BACKEND-41 appends the certificate's pages to
+  the merged document or keeps them associated. BACKEND-40 deliberately does not
+  preempt it.
+- **Verification ID and QR placement** — BACKEND-41/42 own verification
+  identity. Neither appears on certificate-v1.
+- **Final sealed digest on the certificate** — impossible before BACKEND-41, and
+  a v2 question if it is ever wanted.
+- **`completedAt` presentation** — deliberately absent from v1 to avoid
+  circularity; if the product ever needs it, that is a two-phase certificate and
+  §169 advises against.
+- **Public certificate download authorization** — no product surface exists yet.
+- **Relationship to BACKEND-43's audit trail** — the certificate is the curated
+  summary; the audit trail is comprehensive. They must not converge by accident.
+- **Signer timezone capture** (OD-166's real fix) — would also let certificate
+  times render in a signer-local form rather than UTC.
