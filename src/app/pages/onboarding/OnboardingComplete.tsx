@@ -40,7 +40,8 @@ export function OnboardingComplete() {
 
   function goToDashboard() {
     // Capture before reset() clears it — a visitor who started this account
-    // from an expired /app link lands back there, not the generic dashboard.
+    // from an expired /app link (or a pre-auth document upload) lands back
+    // there, not the generic dashboard.
     const destination = returnTo ?? "/app/dashboard";
     reset(); // clear onboarding state
     navigate(destination, { replace: true });

@@ -13,7 +13,7 @@ import {
 } from "../../context/PlatformContext";
 import { useOnboarding } from "../../context/OnboardingContext";
 import { mockAuthService } from "../../services/mock/auth.service";
-import { sanitizeAppReturnTo } from "../../utils/authReturnPath";
+import { sanitizeAppReturnTo, DEFAULT_RETURN_PATH } from "../../utils/authReturnPath";
 
 const GF = { fontFamily: "'Geist', sans-serif" };
 const AZURE = "#0078D4";
@@ -26,7 +26,7 @@ export function SignIn() {
   );
   const navigate = useNavigate();
   const platform = usePlatform();
-  const { setPendingUser } = useOnboarding();
+  const { setPendingUser, setReturnTo } = useOnboarding();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -107,6 +107,17 @@ export function SignIn() {
         break;
 
       case "email-verification":
+        // These two scenarios both funnel a not-yet-fully-set-up account
+        // through onboarding before it can reach `redirectTo` — same as
+        // CreateAccount.tsx, the intended destination has to be stashed in
+        // OnboardingContext now, since nothing downstream reads a `returnTo`
+        // query param on this path. This was the actual bug behind "the
+        // pre-auth upload isn't there after I sign in and finish onboarding"
+        // for the mock "onboarding" scenario (the default for any email that
+        // isn't a recognized test address) — redirectTo was computed but
+        // never persisted anywhere, so OnboardingComplete had nothing to
+        // read and fell back to the dashboard.
+        setReturnTo(redirectTo !== DEFAULT_RETURN_PATH ? redirectTo : null);
         navigate("/verify-email", { replace: true });
         break;
 
@@ -116,6 +127,7 @@ export function SignIn() {
 
       case "onboarding":
       default:
+        setReturnTo(redirectTo !== DEFAULT_RETURN_PATH ? redirectTo : null);
         navigate("/onboarding/profile", { replace: true });
         break;
     }
