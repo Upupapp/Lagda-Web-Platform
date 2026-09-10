@@ -220,16 +220,24 @@ function TourProviderInner({ children }: { children: ReactNode }) {
     endTour("completed");
   }, [endTour]);
 
-  // Auto-start ONLY when: authenticated, on exactly /app/dashboard, and the
-  // stored status is "not_started" for THIS account. Never auto-reopens
-  // after skip/complete. Scoped per user.id (see useTourPersistence.ts) so
-  // "only if new user" holds even when a second, genuinely-new account
-  // signs in on a browser that already saw the tour under a different one.
+  // Auto-start ONLY when: authenticated, on one of the "returned to the app"
+  // landing points, and the stored status is "not_started" for THIS
+  // account. Never auto-reopens after skip/complete. Scoped per user.id
+  // (see useTourPersistence.ts) so "only if new user" holds even when a
+  // second, genuinely-new account signs in on a browser that already saw
+  // the tour under a different one.
+  //
+  // Landing points: /app/dashboard (navigated there directly) and
+  // /app/documents (finishing a document, or leaving a draft mid-prepare,
+  // both currently route back to the documents list rather than the
+  // dashboard). The tour's own first step still carries route:
+  // "/app/dashboard", so starting it from /app/documents auto-navigates
+  // there before the first coachmark renders.
   useEffect(() => {
     if (autoStartChecked) return;
     if (platform.sessionStatus !== "authenticated") return;
     if (!platform.user?.id) return;
-    if (location.pathname !== "/app/dashboard") return;
+    if (location.pathname !== "/app/dashboard" && location.pathname !== "/app/documents") return;
     setAutoStartChecked(true);
     const stored = readTourState(platform.user.id);
     if (stored.status === "not_started") {

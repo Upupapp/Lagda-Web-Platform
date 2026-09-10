@@ -112,11 +112,6 @@ const OnboardingComplete = lazy(() =>
   })),
 );
 
-// Home
-const Home = lazy(() =>
-  import("./app/pages/public/Home").then((m) => ({ default: m.Home })),
-);
-
 // eSignature family
 const EsigOverview = lazy(() =>
   import("./app/pages/public/esignature/EsigOverview").then((m) => ({
@@ -2644,7 +2639,7 @@ export const router = createBrowserRouter([
     errorElement: <PublicRouteError />,
     element: <PublicLayout />,
     children: [
-      { index: true, element: <Home /> },
+      { index: true, element: <EsigOverview /> },
 
       // ── eSignature product pages ──────────────────────────────────────────
       { path: "esignature", element: <EsigOverview /> },
