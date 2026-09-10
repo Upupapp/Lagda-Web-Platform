@@ -27,13 +27,13 @@ export function SecurityDocVerification() {
             { step: "04", title: "Controlled result returned",           desc: "The result is a status and match indicator — no private details are exposed." },
           ].map((s, i) => (
             <div key={i} style={{ display: "flex", gap: 14, paddingBottom: i < 3 ? 20 : 0, position: "relative" }}>
-              {i < 3 && <div style={{ position: "absolute", left: 19, top: 40, width: 1, height: "calc(100% - 14px)", background: "rgba(255,255,255,0.07)" }} />}
-              <div style={{ width: 38, height: 38, borderRadius: "50%", background: "rgba(0,120,212,0.12)", border: "2px solid rgba(0,120,212,0.3)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, zIndex: 1 }}>
-                <span style={{ color: "#38bdf8", ...GM, fontSize: 10, fontWeight: 700 }}>{s.step}</span>
+              {i < 3 && <div style={{ position: "absolute", left: 19, top: 40, width: 1, height: "calc(100% - 14px)", background: "rgba(0,0,0,0.08)" }} />}
+              <div style={{ width: 38, height: 38, borderRadius: "50%", background: "rgba(0,120,212,0.1)", border: "2px solid rgba(0,120,212,0.3)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, zIndex: 1 }}>
+                <span style={{ color: "#0078D4", ...GM, fontSize: 10, fontWeight: 700 }}>{s.step}</span>
               </div>
               <div style={{ paddingTop: 7 }}>
-                <p style={{ color: "white", ...GF, fontSize: 13, fontWeight: 700, margin: 0, marginBottom: 3 }}>{s.title}</p>
-                <p style={{ color: "#94A3B8", ...GF, fontSize: 12, lineHeight: 1.5, margin: 0 }}>{s.desc}</p>
+                <p style={{ color: "#07111F", ...GF, fontSize: 13, fontWeight: 700, margin: 0, marginBottom: 3 }}>{s.title}</p>
+                <p style={{ color: "#64748B", ...GF, fontSize: 12, lineHeight: 1.5, margin: 0 }}>{s.desc}</p>
               </div>
             </div>
           ))}
@@ -48,7 +48,7 @@ export function SecurityDocVerification() {
             {PUBLIC_EVIDENCE.map((t) => (
               <div key={t} style={{ display: "flex", gap: 8, marginBottom: 6 }}>
                 <span style={{ color: "#22C55E", flexShrink: 0 }}>✓</span>
-                <span style={{ color: "#94a3b8", ...GF, fontSize: 13 }}>{t}</span>
+                <span style={{ color: "#334155", ...GF, fontSize: 13 }}>{t}</span>
               </div>
             ))}
           </div>
@@ -57,7 +57,7 @@ export function SecurityDocVerification() {
             {PRIVATE_EVIDENCE.map((t) => (
               <div key={t} style={{ display: "flex", gap: 8, marginBottom: 6 }}>
                 <span style={{ color: "#ef4444", flexShrink: 0 }}>✕</span>
-                <span style={{ color: "#94a3b8", ...GF, fontSize: 13 }}>{t}</span>
+                <span style={{ color: "#334155", ...GF, fontSize: 13 }}>{t}</span>
               </div>
             ))}
           </div>
@@ -76,9 +76,9 @@ export function SecurityDocVerification() {
             { claim: "Document has not been printed and altered after verification", confirmed: false },
             { claim: "Transaction is enforceable in your jurisdiction", confirmed: false },
           ].map((c) => (
-            <div key={c.claim} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 8, padding: "10px 14px", display: "flex", gap: 12, alignItems: "center" }}>
-              <span style={{ color: c.confirmed ? "#22C55E" : "#ef4444", fontSize: 16, flexShrink: 0 }}>{c.confirmed ? "✓" : "✕"}</span>
-              <span style={{ color: "#94a3b8", ...GF, fontSize: 13, lineHeight: 1.4 }}>{c.claim}</span>
+            <div key={c.claim} style={{ background: "#ffffff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: 8, padding: "10px 14px", display: "flex", gap: 12, alignItems: "center", boxShadow: "0 1px 4px rgba(7,17,31,0.07)" }}>
+              <span style={{ color: c.confirmed ? "#16A34A" : "#DC2626", fontSize: 16, flexShrink: 0 }}>{c.confirmed ? "✓" : "✕"}</span>
+              <span style={{ color: "#334155", ...GF, fontSize: 13, lineHeight: 1.4 }}>{c.claim}</span>
             </div>
           ))}
         </div>

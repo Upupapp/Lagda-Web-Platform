@@ -56,13 +56,13 @@ function LinkError({ linkState }: { linkState: "expired" | "used" | "invalid" })
         display: "flex", alignItems: "center", justifyContent: "center",
         margin: "0 auto 18px", fontSize: 20,
       }} aria-hidden>{copy.icon}</div>
-      <h1 style={{ color: "white", ...GF, fontSize: 20, fontWeight: 900, margin: "0 0 10px" }}>{copy.title}</h1>
+      <h1 style={{ color: "#07111F", ...GF, fontSize: 20, fontWeight: 900, margin: "0 0 10px" }}>{copy.title}</h1>
       <p style={{ color: "#64748B", ...GF, fontSize: 14, lineHeight: 1.7, margin: "0 0 24px" }}>{copy.body}</p>
       <Link to={copy.to} style={{ display: "block", background: AZURE, borderRadius: 8, color: "white", ...GF, fontSize: 15, fontWeight: 700, padding: "14px", textDecoration: "none", minHeight: 48, lineHeight: "20px" }}>
         {copy.cta}
       </Link>
       <div style={{ marginTop: 16 }}>
-        <Link to="/sign-in" style={{ color: "#475569", ...GF, fontSize: 12, textDecoration: "none" }}>← Back to Sign In</Link>
+        <Link to="/sign-in" style={{ color: "#64748B", ...GF, fontSize: 12, textDecoration: "none" }}>← Back to Sign In</Link>
       </div>
     </div>
   );
@@ -72,7 +72,7 @@ function LinkError({ linkState }: { linkState: "expired" | "used" | "invalid" })
 
 function Req({ met, children }: { met: boolean; children: string }) {
   return (
-    <li style={{ display: "flex", alignItems: "center", gap: 8, color: met ? "#38BDF8" : "#475569", ...GF, fontSize: 12, margin: 0 }}>
+    <li style={{ display: "flex", alignItems: "center", gap: 8, color: met ? "#0078D4" : "#64748B", ...GF, fontSize: 12, margin: 0 }}>
       <span aria-hidden style={{ fontSize: 10, lineHeight: 1 }}>{met ? "✓" : "○"}</span>
       {children}
     </li>
@@ -118,7 +118,7 @@ function ResetForm() {
     return (
       <div ref={successRef} tabIndex={-1} role="status" aria-live="polite" style={{ outline: "none", textAlign: "center" }}>
         <div style={{ width: 52, height: 52, borderRadius: "50%", background: "rgba(0,120,212,0.12)", border: "1px solid rgba(0,120,212,0.25)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 18px", fontSize: 22 }} aria-hidden>✓</div>
-        <h1 style={{ color: "white", ...GF, fontSize: 20, fontWeight: 900, margin: "0 0 10px" }}>Password updated</h1>
+        <h1 style={{ color: "#07111F", ...GF, fontSize: 20, fontWeight: 900, margin: "0 0 10px" }}>Password updated</h1>
         <p style={{ color: "#64748B", ...GF, fontSize: 14, lineHeight: 1.7, margin: "0 0 8px" }}>
           Your password has been updated in this frontend demonstration. Redirecting to Sign In…
         </p>
@@ -129,7 +129,7 @@ function ResetForm() {
   return (
     <>
       <div style={{ textAlign: "center", marginBottom: 24 }}>
-        <h1 style={{ color: "white", ...GF, fontSize: 22, fontWeight: 900, letterSpacing: "-0.02em", margin: "0 0 6px" }}>Set new password</h1>
+        <h1 style={{ color: "#07111F", ...GF, fontSize: 22, fontWeight: 900, letterSpacing: "-0.02em", margin: "0 0 6px" }}>Set new password</h1>
         <p style={{ color: "#64748B", ...GF, fontSize: 13, lineHeight: 1.6 }}>
           Choose a strong password for your account.
         </p>
@@ -144,7 +144,7 @@ function ResetForm() {
       <form onSubmit={handleSubmit} noValidate style={{ display: "flex", flexDirection: "column", gap: 16 }}>
         {/* New password */}
         <div>
-          <label htmlFor="rp-pw" style={{ display: "block", color: "#94A3B8", ...GF, fontSize: 12, fontWeight: 600, marginBottom: 6 }}>
+          <label htmlFor="rp-pw" style={{ display: "block", color: "#64748B", ...GF, fontSize: 12, fontWeight: 600, marginBottom: 6 }}>
             New password <span aria-hidden style={{ color: "#EF4444" }}>*</span>
           </label>
           <div style={{ position: "relative" }}>
@@ -158,9 +158,9 @@ function ResetForm() {
               aria-describedby="rp-pw-reqs"
               style={{
                 width: "100%", boxSizing: "border-box",
-                background: "rgba(255,255,255,0.05)",
-                border: "1px solid rgba(255,255,255,0.12)",
-                borderRadius: 8, color: "white",
+                background: "#ffffff",
+                border: "1px solid rgba(0,0,0,0.08)",
+                borderRadius: 8, color: "#07111F",
                 ...GF, fontSize: 15, padding: "13px 44px 13px 14px",
                 outline: "none",
               }}
@@ -169,7 +169,7 @@ function ResetForm() {
               type="button"
               aria-label={showPw ? "Hide password" : "Show password"}
               onClick={() => setShowPw((v) => !v)}
-              style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: "#475569", padding: 4, fontSize: 12 }}
+              style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: "#64748B", padding: 4, fontSize: 12 }}
             >
               {showPw ? "Hide" : "Show"}
             </button>
@@ -188,7 +188,7 @@ function ResetForm() {
 
         {/* Confirm */}
         <div>
-          <label htmlFor="rp-confirm" style={{ display: "block", color: "#94A3B8", ...GF, fontSize: 12, fontWeight: 600, marginBottom: 6 }}>
+          <label htmlFor="rp-confirm" style={{ display: "block", color: "#64748B", ...GF, fontSize: 12, fontWeight: 600, marginBottom: 6 }}>
             Confirm password <span aria-hidden style={{ color: "#EF4444" }}>*</span>
           </label>
           <input
@@ -201,9 +201,9 @@ function ResetForm() {
             aria-invalid={confirm.length > 0 && !matchOk}
             style={{
               width: "100%", boxSizing: "border-box",
-              background: "rgba(255,255,255,0.05)",
-              border: `1px solid ${confirm.length > 0 && !matchOk ? "rgba(239,68,68,0.4)" : "rgba(255,255,255,0.12)"}`,
-              borderRadius: 8, color: "white",
+              background: "#ffffff",
+              border: `1px solid ${confirm.length > 0 && !matchOk ? "rgba(239,68,68,0.4)" : "rgba(0,0,0,0.08)"}`,
+              borderRadius: 8, color: "#07111F",
               ...GF, fontSize: 15, padding: "13px 14px",
               outline: "none",
             }}
@@ -212,7 +212,7 @@ function ResetForm() {
             <p role="alert" style={{ color: "#EF4444", ...GF, fontSize: 12, margin: "5px 0 0" }}>Passwords do not match.</p>
           )}
           {confirm.length > 0 && matchOk && (
-            <p style={{ color: "#38BDF8", ...GF, fontSize: 12, margin: "5px 0 0" }}>Passwords match.</p>
+            <p style={{ color: "#0078D4", ...GF, fontSize: 12, margin: "5px 0 0" }}>Passwords match.</p>
           )}
         </div>
 
@@ -234,7 +234,7 @@ function ResetForm() {
       </form>
 
       <div style={{ textAlign: "center", marginTop: 16 }}>
-        <Link to="/sign-in" style={{ color: "#475569", ...GF, fontSize: 12, textDecoration: "none" }}>← Back to Sign In</Link>
+        <Link to="/sign-in" style={{ color: "#64748B", ...GF, fontSize: 12, textDecoration: "none" }}>← Back to Sign In</Link>
       </div>
     </>
   );

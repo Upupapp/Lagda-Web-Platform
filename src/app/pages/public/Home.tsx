@@ -1,7 +1,9 @@
-import { Link } from "react-router";
+import { useEffect, useState } from "react";
+import { Link, useSearchParams } from "react-router";
 import { HeroSection } from "./home/HeroSection";
 import { WorkflowSection } from "./home/WorkflowSection";
 import { VerificationSection } from "./home/VerificationSection";
+import { UploadDocumentModal } from "../../components/prepare/PublicDocumentIntake";
 import {
   CAPABILITIES,
   SOLUTIONS,
@@ -31,9 +33,9 @@ function Section({
     <section
       id={id}
       style={{
-        background: bg ?? "transparent",
-        borderTop: bordered ? "1px solid rgba(255,255,255,0.06)" : undefined,
-        borderBottom: bordered ? "1px solid rgba(255,255,255,0.06)" : undefined,
+        background: bg ?? "#ffffff",
+        borderTop: bordered ? "1px solid rgba(0,0,0,0.07)" : undefined,
+        borderBottom: bordered ? "1px solid rgba(0,0,0,0.07)" : undefined,
       }}
     >
       <div style={{ maxWidth: 1200, margin: "0 auto", padding: "80px 24px" }}>
@@ -58,14 +60,14 @@ function SectionHeader({
 }) {
   return (
     <div style={{ marginBottom: 48, textAlign: center ? "center" : undefined }}>
-      <p style={{ color: "#38bdf8", ...GM, fontSize: 11, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 12 }}>
+      <p style={{ color: "#0078D4", ...GM, fontSize: 11, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 12 }}>
         {eyebrow}
       </p>
-      <h2 id={headingId} style={{ color: "white", ...GF, fontSize: "clamp(24px, 3.5vw, 38px)", fontWeight: 800, margin: 0, marginBottom: sub ? 12 : 0, letterSpacing: "-0.02em" }}>
+      <h2 id={headingId} style={{ color: "#07111F", ...GF, fontSize: "clamp(24px, 3.5vw, 38px)", fontWeight: 800, margin: 0, marginBottom: sub ? 12 : 0, letterSpacing: "-0.02em" }}>
         {heading}
       </h2>
       {sub && (
-        <p style={{ color: "#94A3B8", ...GF, fontSize: 16, lineHeight: 1.65, margin: center ? "0 auto" : 0, maxWidth: 600 }}>
+        <p style={{ color: "#64748B", ...GF, fontSize: 16, lineHeight: 1.65, margin: center ? "0 auto" : 0, maxWidth: 600 }}>
           {sub}
         </p>
       )}
@@ -78,7 +80,7 @@ function SectionHeader({
 // ─────────────────────────────────────────────────────────────────────────────
 function CapabilitiesSection() {
   return (
-    <Section id="capabilities" bordered bg="rgba(255,255,255,0.015)">
+    <Section id="capabilities" bordered bg="#f8fafb">
       <SectionHeader
         eyebrow="What you can do"
         headingId="cap-heading"
@@ -94,18 +96,19 @@ function CapabilitiesSection() {
             style={{ textDecoration: "none" }}
           >
             <div style={{
-              background: "rgba(255,255,255,0.03)",
-              border: "1px solid rgba(255,255,255,0.08)",
+              background: "#ffffff",
+              border: "1px solid rgba(0,0,0,0.08)",
               borderRadius: 14, padding: "20px 20px 18px",
               height: "100%",
-              transition: "border-color 0.15s ease, background 0.15s ease",
+              boxShadow: "0 1px 4px rgba(7,17,31,0.07), 0 0 1px rgba(7,17,31,0.04)",
+              transition: "border-color 0.15s ease, box-shadow 0.15s ease",
             }}
-              onMouseEnter={(e) => { (e.currentTarget as HTMLDivElement).style.borderColor = "rgba(0,120,212,0.4)"; (e.currentTarget as HTMLDivElement).style.background = "rgba(0,120,212,0.05)"; }}
-              onMouseLeave={(e) => { (e.currentTarget as HTMLDivElement).style.borderColor = "rgba(255,255,255,0.08)"; (e.currentTarget as HTMLDivElement).style.background = "rgba(255,255,255,0.03)"; }}
+              onMouseEnter={(e) => { (e.currentTarget as HTMLDivElement).style.borderColor = "rgba(0,120,212,0.35)"; (e.currentTarget as HTMLDivElement).style.boxShadow = "0 4px 16px rgba(7,17,31,0.10), 0 1px 4px rgba(7,17,31,0.05)"; }}
+              onMouseLeave={(e) => { (e.currentTarget as HTMLDivElement).style.borderColor = "rgba(0,0,0,0.08)"; (e.currentTarget as HTMLDivElement).style.boxShadow = "0 1px 4px rgba(7,17,31,0.07), 0 0 1px rgba(7,17,31,0.04)"; }}
             >
               <span aria-hidden="true" style={{ fontSize: 24, display: "block", marginBottom: 12 }}>{cap.icon}</span>
-              <p style={{ color: "white", ...GF, fontSize: 14, fontWeight: 700, margin: 0, marginBottom: 6 }}>{cap.title}</p>
-              <p style={{ color: "#94A3B8", ...GF, fontSize: 13, lineHeight: 1.55, margin: 0 }}>{cap.desc}</p>
+              <p style={{ color: "#07111F", ...GF, fontSize: 14, fontWeight: 700, margin: 0, marginBottom: 6 }}>{cap.title}</p>
+              <p style={{ color: "#64748B", ...GF, fontSize: 13, lineHeight: 1.55, margin: 0 }}>{cap.desc}</p>
             </div>
           </Link>
         ))}
@@ -145,10 +148,10 @@ function SigningSection() {
             to="/features/signer-authentication"
             style={{
               display: "inline-flex", alignItems: "center", gap: 6,
-              color: "#38BDF8", ...GF, fontSize: 14, fontWeight: 700, textDecoration: "none",
+              color: "#0078D4", ...GF, fontSize: 14, fontWeight: 700, textDecoration: "none",
               transition: "color 0.15s ease",
             }}
-            onMouseEnter={(e) => { e.currentTarget.style.color = "#38bdf8"; }}
+            onMouseEnter={(e) => { e.currentTarget.style.color = "#006CC1"; }}
             onMouseLeave={(e) => { e.currentTarget.style.color = "#0078D4"; }}
           >
             Learn about authentication →
@@ -157,15 +160,16 @@ function SigningSection() {
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           {AUTH_METHODS.map((m) => (
             <div key={m.label} style={{
-              background: "rgba(255,255,255,0.03)",
-              border: "1px solid rgba(255,255,255,0.07)",
+              background: "#ffffff",
+              border: "1px solid rgba(0,0,0,0.08)",
               borderRadius: 10, padding: "12px 16px",
               display: "flex", gap: 12, alignItems: "flex-start",
+              boxShadow: "0 1px 4px rgba(7,17,31,0.07), 0 0 1px rgba(7,17,31,0.04)",
             }}>
-              <span style={{ color: "#38BDF8", ...GM, fontSize: 10, fontWeight: 700, flexShrink: 0, paddingTop: 2 }}>✓</span>
+              <span style={{ color: "#0078D4", ...GM, fontSize: 10, fontWeight: 700, flexShrink: 0, paddingTop: 2 }}>✓</span>
               <div>
-                <p style={{ color: "white", ...GF, fontSize: 13, fontWeight: 700, margin: 0, marginBottom: 2 }}>{m.label}</p>
-                <p style={{ color: "#94A3B8", ...GF, fontSize: 12, lineHeight: 1.5, margin: 0 }}>{m.desc}</p>
+                <p style={{ color: "#07111F", ...GF, fontSize: 13, fontWeight: 700, margin: 0, marginBottom: 2 }}>{m.label}</p>
+                <p style={{ color: "#64748B", ...GF, fontSize: 12, lineHeight: 1.5, margin: 0 }}>{m.desc}</p>
               </div>
             </div>
           ))}
@@ -203,7 +207,7 @@ function WorkflowTypesSection() {
   ];
 
   return (
-    <Section id="workflow-types" bordered bg="rgba(255,255,255,0.015)">
+    <Section id="workflow-types" bordered bg="#f8fafb">
       <SectionHeader
         eyebrow="Routing"
         headingId="workflow-types-heading"
@@ -214,22 +218,23 @@ function WorkflowTypesSection() {
       <div style={{ display: "grid", gap: 20 }} className="wt-grid">
         {TYPES.map((t) => (
           <div key={t.title} style={{
-            background: "rgba(7,17,31,0.95)",
-            border: "1px solid rgba(0,120,212,0.18)",
+            background: "#ffffff",
+            border: "1px solid rgba(0,0,0,0.08)",
             borderRadius: 16, padding: "28px 24px",
             textAlign: "center",
+            boxShadow: "0 1px 4px rgba(7,17,31,0.07), 0 0 1px rgba(7,17,31,0.04)",
           }}>
             <div style={{
               width: 48, height: 48, borderRadius: 12,
-              background: "rgba(0,120,212,0.15)",
+              background: "rgba(0,120,212,0.1)",
               display: "flex", alignItems: "center", justifyContent: "center",
-              fontSize: 22, margin: "0 auto 16px", color: "#38bdf8",
+              fontSize: 22, margin: "0 auto 16px", color: "#0078D4",
               ...GM,
             }}>
               {t.icon}
             </div>
-            <p style={{ color: "white", ...GF, fontSize: 16, fontWeight: 800, margin: 0, marginBottom: 10 }}>{t.title}</p>
-            <p style={{ color: "#94A3B8", ...GF, fontSize: 14, lineHeight: 1.6, margin: 0 }}>{t.desc}</p>
+            <p style={{ color: "#07111F", ...GF, fontSize: 16, fontWeight: 800, margin: 0, marginBottom: 10 }}>{t.title}</p>
+            <p style={{ color: "#64748B", ...GF, fontSize: 14, lineHeight: 1.6, margin: 0 }}>{t.desc}</p>
           </div>
         ))}
       </div>
@@ -246,11 +251,11 @@ function WorkflowTypesSection() {
 // ─────────────────────────────────────────────────────────────────────────────
 function AuditSection() {
   const EVENTS = [
-    { time: "14 Jul · 2:00 PM", event: "Transaction created", by: "Mabini Legal Solutions", color: "#38bdf8" },
+    { time: "14 Jul · 2:00 PM", event: "Transaction created", by: "Mabini Legal Solutions", color: "#0078D4" },
     { time: "14 Jul · 2:01 PM", event: "Invitation sent", by: "Ana Reyes · ana@example.ph", color: "#94A3B8" },
     { time: "14 Jul · 2:14 PM", event: "Document viewed", by: "Ana Reyes · IP ··· .42", color: "#94A3B8" },
-    { time: "14 Jul · 2:15 PM", event: "Email OTP verified", by: "Ana Reyes", color: "#22C55E" },
-    { time: "14 Jul · 2:16 PM", event: "Signed", by: "Ana Reyes · signature adopted", color: "#38BDF8" },
+    { time: "14 Jul · 2:15 PM", event: "Email OTP verified", by: "Ana Reyes", color: "#16A34A" },
+    { time: "14 Jul · 2:16 PM", event: "Signed", by: "Ana Reyes · signature adopted", color: "#0078D4" },
     { time: "14 Jul · 2:16 PM", event: "Approval request sent", by: "Marco Santos · marco@example.ph", color: "#94A3B8" },
   ];
 
@@ -259,23 +264,24 @@ function AuditSection() {
       <div style={{ display: "grid", gap: "48px 64px", alignItems: "center" }} className="audit-grid">
         {/* Mock audit panel */}
         <div style={{
-          background: "rgba(7,17,31,0.95)",
-          border: "1px solid rgba(0,120,212,0.2)",
+          background: "#ffffff",
+          border: "1px solid rgba(0,0,0,0.08)",
           borderRadius: 16, overflow: "hidden",
+          boxShadow: "0 4px 16px rgba(7,17,31,0.10), 0 1px 4px rgba(7,17,31,0.05)",
         }}>
-          <div style={{ padding: "14px 20px", borderBottom: "1px solid rgba(255,255,255,0.07)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-            <span style={{ color: "white", ...GF, fontSize: 13, fontWeight: 700 }}>Activity Log</span>
-            <span style={{ color: "#38bdf8", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.08em" }}>6 EVENTS</span>
+          <div style={{ padding: "14px 20px", borderBottom: "1px solid rgba(0,0,0,0.08)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <span style={{ color: "#07111F", ...GF, fontSize: 13, fontWeight: 700 }}>Activity Log</span>
+            <span style={{ color: "#0078D4", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.08em" }}>6 EVENTS</span>
           </div>
           <div style={{ padding: "8px 0" }}>
             {EVENTS.map((ev, i) => (
               <div key={i} style={{ padding: "10px 20px", display: "flex", gap: 12, alignItems: "flex-start" }}>
                 <div style={{ width: 8, height: 8, borderRadius: "50%", background: ev.color, flexShrink: 0, marginTop: 4 }} />
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <p style={{ color: "white", ...GF, fontSize: 12, fontWeight: 600, margin: 0 }}>{ev.event}</p>
-                  <p style={{ color: "#8A9BAE", ...GM, fontSize: 10, margin: "2px 0 0", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{ev.by}</p>
+                  <p style={{ color: "#07111F", ...GF, fontSize: 12, fontWeight: 600, margin: 0 }}>{ev.event}</p>
+                  <p style={{ color: "#64748B", ...GM, fontSize: 10, margin: "2px 0 0", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{ev.by}</p>
                 </div>
-                <span style={{ color: "#7C8DA4", ...GM, fontSize: 10, flexShrink: 0 }}>{ev.time}</span>
+                <span style={{ color: "#94A3B8", ...GM, fontSize: 10, flexShrink: 0 }}>{ev.time}</span>
               </div>
             ))}
           </div>
@@ -288,17 +294,17 @@ function AuditSection() {
             headingId="audit-heading"
             heading="Every action. Recorded."
           />
-          <p style={{ color: "#94a3b8", ...GF, fontSize: 15, lineHeight: 1.65, margin: 0, marginBottom: 16 }}>
+          <p style={{ color: "#334155", ...GF, fontSize: 15, lineHeight: 1.65, margin: 0, marginBottom: 16 }}>
             LAGDA records a timestamped, detailed activity log for every transaction — from invitation to completion. Each event includes who performed the action and contextual evidence.
           </p>
-          <p style={{ color: "#94A3B8", ...GF, fontSize: 14, lineHeight: 1.65, margin: 0, marginBottom: 24 }}>
+          <p style={{ color: "#64748B", ...GF, fontSize: 14, lineHeight: 1.65, margin: 0, marginBottom: 24 }}>
             The audit trail supports transparency and accountability. For situations requiring formal legal evidence, consult applicable requirements for what records must be produced.
           </p>
           <Link
             to="/esignature/verification-and-audit"
             style={{
               display: "inline-flex", alignItems: "center", gap: 6,
-              color: "#38BDF8", ...GF, fontSize: 14, fontWeight: 700, textDecoration: "none",
+              color: "#0078D4", ...GF, fontSize: 14, fontWeight: 700, textDecoration: "none",
             }}
           >
             Learn about audit trails →
@@ -319,7 +325,7 @@ function AuditSection() {
 // ─────────────────────────────────────────────────────────────────────────────
 function SolutionsSection() {
   return (
-    <Section id="solutions" bordered bg="rgba(255,255,255,0.015)">
+    <Section id="solutions" bordered bg="#f8fafb">
       <SectionHeader
         eyebrow="Who uses LAGDA"
         headingId="solutions-heading"
@@ -330,19 +336,20 @@ function SolutionsSection() {
         {SOLUTIONS.map((s) => (
           <Link key={s.id} to={s.path} style={{ textDecoration: "none" }}>
             <div style={{
-              background: "rgba(255,255,255,0.03)",
-              border: "1px solid rgba(255,255,255,0.07)",
+              background: "#ffffff",
+              border: "1px solid rgba(0,0,0,0.08)",
               borderRadius: 14, padding: "20px 20px",
-              transition: "border-color 0.15s ease",
+              transition: "border-color 0.15s ease, box-shadow 0.15s ease",
               height: "100%",
+              boxShadow: "0 1px 4px rgba(7,17,31,0.07), 0 0 1px rgba(7,17,31,0.04)",
             }}
-              onMouseEnter={(e) => { (e.currentTarget as HTMLDivElement).style.borderColor = "rgba(0,120,212,0.35)"; }}
-              onMouseLeave={(e) => { (e.currentTarget as HTMLDivElement).style.borderColor = "rgba(255,255,255,0.07)"; }}
+              onMouseEnter={(e) => { (e.currentTarget as HTMLDivElement).style.borderColor = "rgba(0,120,212,0.35)"; (e.currentTarget as HTMLDivElement).style.boxShadow = "0 4px 16px rgba(7,17,31,0.10), 0 1px 4px rgba(7,17,31,0.05)"; }}
+              onMouseLeave={(e) => { (e.currentTarget as HTMLDivElement).style.borderColor = "rgba(0,0,0,0.08)"; (e.currentTarget as HTMLDivElement).style.boxShadow = "0 1px 4px rgba(7,17,31,0.07), 0 0 1px rgba(7,17,31,0.04)"; }}
             >
-              <p style={{ color: "white", ...GF, fontSize: 15, fontWeight: 700, margin: 0, marginBottom: 8 }}>{s.title}</p>
-              <p style={{ color: "#94A3B8", ...GF, fontSize: 13, lineHeight: 1.55, margin: 0, marginBottom: s.note ? 8 : 0 }}>{s.desc}</p>
+              <p style={{ color: "#07111F", ...GF, fontSize: 15, fontWeight: 700, margin: 0, marginBottom: 8 }}>{s.title}</p>
+              <p style={{ color: "#64748B", ...GF, fontSize: 13, lineHeight: 1.55, margin: 0, marginBottom: s.note ? 8 : 0 }}>{s.desc}</p>
               {s.note && (
-                <p style={{ color: "#7C8DA4", ...GF, fontSize: 11, lineHeight: 1.5, margin: 0, marginTop: 6, fontStyle: "italic" }}>{s.note}</p>
+                <p style={{ color: "#94A3B8", ...GF, fontSize: 11, lineHeight: 1.5, margin: 0, marginTop: 6, fontStyle: "italic" }}>{s.note}</p>
               )}
             </div>
           </Link>
@@ -371,7 +378,7 @@ function SecuritySection() {
             heading="Six layers of transaction confidence."
             sub="LAGDA is designed with multiple overlapping controls so that confidence in a transaction is never dependent on a single mechanism."
           />
-          <Link to="/security" style={{ color: "#38BDF8", ...GF, fontSize: 14, fontWeight: 700, textDecoration: "none" }}>
+          <Link to="/security" style={{ color: "#0078D4", ...GF, fontSize: 14, fontWeight: 700, textDecoration: "none" }}>
             View the Trust Center →
           </Link>
         </div>
@@ -379,16 +386,17 @@ function SecuritySection() {
           {TRUST_LAYERS.map((layer) => (
             <div key={layer.num} style={{
               display: "flex", gap: 16, alignItems: "flex-start",
-              background: "rgba(255,255,255,0.02)",
-              border: "1px solid rgba(255,255,255,0.06)",
+              background: "#ffffff",
+              border: "1px solid rgba(0,0,0,0.07)",
               borderRadius: 12, padding: "14px 16px",
+              boxShadow: "0 1px 4px rgba(7,17,31,0.06)",
             }}>
-              <span style={{ color: "#38BDF8", ...GM, fontSize: 11, fontWeight: 700, flexShrink: 0, paddingTop: 1 }}>
+              <span style={{ color: "#0078D4", ...GM, fontSize: 11, fontWeight: 700, flexShrink: 0, paddingTop: 1 }}>
                 {layer.num}
               </span>
               <div>
-                <p style={{ color: "white", ...GF, fontSize: 13, fontWeight: 700, margin: 0, marginBottom: 3 }}>{layer.title}</p>
-                <p style={{ color: "#94A3B8", ...GF, fontSize: 12, lineHeight: 1.55, margin: 0 }}>{layer.desc}</p>
+                <p style={{ color: "#07111F", ...GF, fontSize: 13, fontWeight: 700, margin: 0, marginBottom: 3 }}>{layer.title}</p>
+                <p style={{ color: "#64748B", ...GF, fontSize: 12, lineHeight: 1.55, margin: 0 }}>{layer.desc}</p>
               </div>
             </div>
           ))}
@@ -408,7 +416,7 @@ function SecuritySection() {
 // ─────────────────────────────────────────────────────────────────────────────
 function PricingPreviewSection() {
   return (
-    <Section id="pricing" bordered bg="rgba(255,255,255,0.015)">
+    <Section id="pricing" bordered bg="#f8fafb">
       <SectionHeader
         eyebrow="Pricing"
         headingId="pricing-heading"
@@ -419,28 +427,29 @@ function PricingPreviewSection() {
       <div style={{ display: "grid", gap: 20 }} className="pricing-grid">
         {PRICING_PLANS.map((plan) => (
           <div key={plan.tier} style={{
-            background: plan.highlight ? "rgba(0,120,212,0.08)" : "rgba(255,255,255,0.03)",
-            border: `1px solid ${plan.highlight ? "rgba(0,120,212,0.35)" : "rgba(255,255,255,0.07)"}`,
+            background: "#ffffff",
+            border: `1px solid ${plan.highlight ? "rgba(0,120,212,0.35)" : "rgba(0,0,0,0.08)"}`,
             borderRadius: 16, padding: "28px 24px",
             position: "relative", display: "flex", flexDirection: "column",
+            boxShadow: plan.highlight ? "0 8px 24px rgba(0,120,212,0.14)" : "0 1px 4px rgba(7,17,31,0.07)",
           }}>
             {plan.badge && (
               <span style={{
                 position: "absolute", top: -1, right: 20,
-                background: "#0078D4", color: "white",
+                background: "#07111F", color: "white",
                 ...GM, fontSize: 9, fontWeight: 700, letterSpacing: "0.06em",
                 padding: "4px 10px", borderRadius: "0 0 8px 8px",
               }}>
                 {plan.badge.toUpperCase()}
               </span>
             )}
-            <p style={{ color: "white", ...GF, fontSize: 18, fontWeight: 800, margin: 0, marginBottom: 4 }}>{plan.tier}</p>
-            <p style={{ color: "#94A3B8", ...GF, fontSize: 13, margin: 0, marginBottom: 20 }}>{plan.for}</p>
+            <p style={{ color: "#07111F", ...GF, fontSize: 18, fontWeight: 800, margin: 0, marginBottom: 4 }}>{plan.tier}</p>
+            <p style={{ color: "#64748B", ...GF, fontSize: 13, margin: 0, marginBottom: 20 }}>{plan.for}</p>
             <ul style={{ listStyle: "none", margin: 0, padding: 0, flex: 1, marginBottom: 24 }}>
               {plan.features.map((f) => (
                 <li key={f} style={{ display: "flex", gap: 8, alignItems: "flex-start", marginBottom: 8 }}>
-                  <span style={{ color: "#22C55E", fontWeight: 700, flexShrink: 0, fontSize: 13 }}>✓</span>
-                  <span style={{ color: "#94a3b8", ...GF, fontSize: 13, lineHeight: 1.5 }}>{f}</span>
+                  <span style={{ color: "#16A34A", fontWeight: 700, flexShrink: 0, fontSize: 13 }}>✓</span>
+                  <span style={{ color: "#334155", ...GF, fontSize: 13, lineHeight: 1.5 }}>{f}</span>
                 </li>
               ))}
             </ul>
@@ -448,13 +457,13 @@ function PricingPreviewSection() {
               to={plan.ctaPath}
               style={{
                 display: "block", textAlign: "center",
-                background: plan.highlight ? "#0078D4" : "rgba(255,255,255,0.06)",
-                color: "white", padding: "12px 20px", borderRadius: 10,
+                background: plan.highlight ? "#07111F" : "#ffffff",
+                color: plan.highlight ? "white" : "#07111F", padding: "12px 20px", borderRadius: 10,
                 ...GF, fontSize: 14, fontWeight: 700, textDecoration: "none",
-                border: plan.highlight ? "none" : "1px solid rgba(255,255,255,0.12)",
+                border: plan.highlight ? "none" : "1px solid rgba(0,0,0,0.14)",
                 transition: "filter 0.15s ease",
               }}
-              onMouseEnter={(e) => { e.currentTarget.style.filter = "brightness(1.1)"; }}
+              onMouseEnter={(e) => { e.currentTarget.style.filter = "brightness(1.2)"; }}
               onMouseLeave={(e) => { e.currentTarget.style.filter = ""; }}
             >
               {plan.cta}
@@ -463,9 +472,9 @@ function PricingPreviewSection() {
         ))}
       </div>
       <div style={{ textAlign: "center", marginTop: 24 }}>
-        <Link to="/pricing" style={{ color: "#94A3B8", ...GF, fontSize: 14, textDecoration: "none", transition: "color 0.15s ease" }}
-          onMouseEnter={(e) => { e.currentTarget.style.color = "white"; }}
-          onMouseLeave={(e) => { e.currentTarget.style.color = "#94A3B8"; }}
+        <Link to="/pricing" style={{ color: "#64748B", ...GF, fontSize: 14, textDecoration: "none", transition: "color 0.15s ease" }}
+          onMouseEnter={(e) => { e.currentTarget.style.color = "#07111F"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.color = "#64748B"; }}
         >
           View full pricing details →
         </Link>
@@ -495,22 +504,23 @@ function ResourcesSection() {
         {RESOURCES.map((r) => (
           <Link key={r.title} to={r.path} style={{ textDecoration: "none" }}>
             <div style={{
-              background: "rgba(255,255,255,0.03)",
-              border: "1px solid rgba(255,255,255,0.07)",
+              background: "#ffffff",
+              border: "1px solid rgba(0,0,0,0.08)",
               borderRadius: 14, padding: "20px 20px",
               height: "100%", display: "flex", flexDirection: "column", gap: 10,
-              transition: "border-color 0.15s ease",
+              transition: "border-color 0.15s ease, box-shadow 0.15s ease",
+              boxShadow: "0 1px 4px rgba(7,17,31,0.07)",
             }}
-              onMouseEnter={(e) => { (e.currentTarget as HTMLDivElement).style.borderColor = "rgba(0,120,212,0.35)"; }}
-              onMouseLeave={(e) => { (e.currentTarget as HTMLDivElement).style.borderColor = "rgba(255,255,255,0.07)"; }}
+              onMouseEnter={(e) => { (e.currentTarget as HTMLDivElement).style.borderColor = "rgba(0,120,212,0.35)"; (e.currentTarget as HTMLDivElement).style.boxShadow = "0 4px 16px rgba(7,17,31,0.10)"; }}
+              onMouseLeave={(e) => { (e.currentTarget as HTMLDivElement).style.borderColor = "rgba(0,0,0,0.08)"; (e.currentTarget as HTMLDivElement).style.boxShadow = "0 1px 4px rgba(7,17,31,0.07)"; }}
             >
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                 <span aria-hidden="true" style={{ fontSize: 20 }}>{r.icon}</span>
-                <span style={{ color: "#8A9BAE", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.06em" }}>{r.tag}</span>
+                <span style={{ color: "#64748B", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.06em" }}>{r.tag}</span>
               </div>
-              <p style={{ color: "white", ...GF, fontSize: 14, fontWeight: 700, margin: 0 }}>{r.title}</p>
-              <p style={{ color: "#94A3B8", ...GF, fontSize: 13, lineHeight: 1.55, margin: 0, flex: 1 }}>{r.desc}</p>
-              <span style={{ color: "#38BDF8", ...GF, fontSize: 13, fontWeight: 600 }}>Read →</span>
+              <p style={{ color: "#07111F", ...GF, fontSize: 14, fontWeight: 700, margin: 0 }}>{r.title}</p>
+              <p style={{ color: "#64748B", ...GF, fontSize: 13, lineHeight: 1.55, margin: 0, flex: 1 }}>{r.desc}</p>
+              <span style={{ color: "#0078D4", ...GF, fontSize: 13, fontWeight: 600 }}>Read →</span>
             </div>
           </Link>
         ))}
@@ -533,42 +543,42 @@ function ENotarySection() {
       id="enotary"
       aria-labelledby="enotary-heading"
       style={{
-        background: "rgba(103,2,59,0.06)",
-        borderTop: "1px solid rgba(103,2,59,0.25)",
-        borderBottom: "1px solid rgba(103,2,59,0.25)",
+        background: "rgba(103,2,59,0.04)",
+        borderTop: "1px solid rgba(176,18,98,0.16)",
+        borderBottom: "1px solid rgba(176,18,98,0.16)",
       }}
     >
       <div style={{ maxWidth: 1200, margin: "0 auto", padding: "72px 24px" }}>
         <div style={{ maxWidth: 680, margin: "0 auto", textAlign: "center" }}>
           <span style={{
             display: "inline-flex", alignItems: "center", gap: 6,
-            background: "rgba(103,2,59,0.2)", color: "#fce7f3",
-            border: "1px solid rgba(176,18,98,0.35)", borderRadius: 999,
+            background: "rgba(103,2,59,0.1)", color: "#67023B",
+            border: "1px solid rgba(176,18,98,0.3)", borderRadius: 999,
             padding: "4px 14px", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.1em",
             marginBottom: 20,
           }}>
             Coming Soon
           </span>
-          <h2 id="enotary-heading" style={{ color: "white", ...GF, fontSize: "clamp(22px, 3vw, 34px)", fontWeight: 800, margin: 0, marginBottom: 14, letterSpacing: "-0.02em" }}>
+          <h2 id="enotary-heading" style={{ color: "#07111F", ...GF, fontSize: "clamp(22px, 3vw, 34px)", fontWeight: 800, margin: 0, marginBottom: 14, letterSpacing: "-0.02em" }}>
             LAGDA eNotary
           </h2>
-          <p style={{ color: "#94a3b8", ...GF, fontSize: 16, lineHeight: 1.65, margin: 0, marginBottom: 20 }}>
+          <p style={{ color: "#334155", ...GF, fontSize: 16, lineHeight: 1.65, margin: 0, marginBottom: 20 }}>
             LAGDA eNotary will bring digital notarization capabilities to Philippine online document workflows — designed for the way notaries and their clients actually work.
           </p>
 
           {/* Required compliance notice — VERBATIM and mandatory */}
           <div style={{
-            background: "rgba(103,2,59,0.15)",
-            border: "1px solid rgba(176,18,98,0.3)",
+            background: "rgba(103,2,59,0.08)",
+            border: "1px solid rgba(176,18,98,0.25)",
             borderRadius: 12, padding: "16px 20px",
             marginBottom: 24,
           }}>
-            <p style={{ color: "#fce7f3", ...GF, fontSize: 13, lineHeight: 1.6, margin: 0, fontWeight: 500 }}>
+            <p style={{ color: "#67023B", ...GF, fontSize: 13, lineHeight: 1.6, margin: 0, fontWeight: 500 }}>
               LAGDA eNotary is Coming Soon and Subject to Supreme Court Accreditation and applicable rules.
             </p>
           </div>
 
-          <p style={{ color: "#94A3B8", ...GF, fontSize: 14, lineHeight: 1.6, margin: 0 }}>
+          <p style={{ color: "#64748B", ...GF, fontSize: 14, lineHeight: 1.6, margin: 0 }}>
             eNotary is a separate product from LAGDA eSignature. It is not currently available, not purchasable, and not included in any eSignature plan.
           </p>
 
@@ -577,14 +587,14 @@ function ENotarySection() {
               to="/enotary"
               style={{
                 display: "inline-flex", alignItems: "center", gap: 6,
-                background: "rgba(103,2,59,0.2)", color: "#fce7f3",
+                background: "#ffffff", color: "#67023B",
                 border: "1px solid rgba(176,18,98,0.3)",
                 padding: "12px 24px", borderRadius: 10,
                 ...GF, fontSize: 14, fontWeight: 700, textDecoration: "none",
                 transition: "background 0.15s ease",
               }}
-              onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(103,2,59,0.35)"; }}
-              onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(103,2,59,0.2)"; }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(103,2,59,0.06)"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = "#ffffff"; }}
             >
               Learn about eNotary
             </Link>
@@ -603,7 +613,7 @@ function FinalCTA() {
     <section aria-labelledby="final-cta-heading" style={{ overflow: "hidden", position: "relative" }}>
       <div aria-hidden="true" style={{
         position: "absolute", inset: 0,
-        background: "radial-gradient(ellipse 70% 80% at 50% 100%, rgba(0,120,212,0.1) 0%, transparent 70%)",
+        background: "radial-gradient(ellipse 70% 80% at 50% 100%, rgba(0,120,212,0.06) 0%, transparent 70%)",
         pointerEvents: "none",
       }} />
       <div style={{
@@ -611,25 +621,25 @@ function FinalCTA() {
         maxWidth: 720, margin: "0 auto", padding: "80px 24px 100px",
         textAlign: "center",
       }}>
-        <h2 id="final-cta-heading" style={{ color: "white", ...GF, fontSize: "clamp(26px, 4vw, 44px)", fontWeight: 800, margin: 0, marginBottom: 14, letterSpacing: "-0.02em" }}>
+        <h2 id="final-cta-heading" style={{ color: "#07111F", ...GF, fontSize: "clamp(26px, 4vw, 44px)", fontWeight: 800, margin: 0, marginBottom: 14, letterSpacing: "-0.02em" }}>
           Ready to send your first document?
         </h2>
-        <p style={{ color: "#94A3B8", ...GF, fontSize: 16, lineHeight: 1.65, margin: 0, marginBottom: 32 }}>
+        <p style={{ color: "#334155", ...GF, fontSize: 16, lineHeight: 1.65, margin: 0, marginBottom: 32 }}>
           Create a free LAGDA account and send your first document today. No credit card required.
         </p>
         <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
           <Link
             to="/create-account"
             style={{
-              background: "#0078D4", color: "white",
+              background: "#07111F", color: "white",
               padding: "14px 32px", borderRadius: 12,
               ...GF, fontSize: 16, fontWeight: 700, textDecoration: "none",
               display: "inline-flex", alignItems: "center",
-              boxShadow: "0 4px 16px rgba(0,120,212,0.35)",
+              boxShadow: "0 4px 16px rgba(7,17,31,0.25)",
               transition: "filter 0.15s ease, transform 0.15s ease",
               minHeight: 48,
             }}
-            onMouseEnter={(e) => { e.currentTarget.style.filter = "brightness(1.1)"; e.currentTarget.style.transform = "translateY(-1px)"; }}
+            onMouseEnter={(e) => { e.currentTarget.style.filter = "brightness(1.25)"; e.currentTarget.style.transform = "translateY(-1px)"; }}
             onMouseLeave={(e) => { e.currentTarget.style.filter = ""; e.currentTarget.style.transform = ""; }}
           >
             Create Free Account
@@ -637,21 +647,21 @@ function FinalCTA() {
           <Link
             to="/contact"
             style={{
-              background: "rgba(255,255,255,0.06)", color: "white",
-              border: "1px solid rgba(255,255,255,0.15)",
+              background: "#ffffff", color: "#07111F",
+              border: "1px solid rgba(0,0,0,0.14)",
               padding: "14px 28px", borderRadius: 12,
               ...GF, fontSize: 16, fontWeight: 600, textDecoration: "none",
               display: "inline-flex", alignItems: "center",
               transition: "background 0.15s ease",
               minHeight: 48,
             }}
-            onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.1)"; }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.06)"; }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = "#F8FAFB"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = "#ffffff"; }}
           >
             Talk to Sales
           </Link>
         </div>
-        <p style={{ color: "#7C8DA4", ...GF, fontSize: 12, lineHeight: 1.5, margin: "24px auto 0", maxWidth: 500 }}>
+        <p style={{ color: "#64748B", ...GF, fontSize: 12, lineHeight: 1.5, margin: "24px auto 0", maxWidth: 500 }}>
           Some documents may require wet signatures, notarization, or other formal steps. Users are responsible for determining the formality requirements applicable to their transactions.
         </p>
       </div>
@@ -685,19 +695,20 @@ function ReusableWorkflowSection() {
           { t: "Visible progress",  d: "See which stage a document is in, who is holding it up, and what is already done." },
         ].map((x) => (
           <div key={x.t} style={{
-            background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.08)",
+            background: "#ffffff", border: "1px solid rgba(0,0,0,0.08)",
             borderRadius: 14, padding: 22,
+            boxShadow: "0 1px 4px rgba(7,17,31,0.06)",
           }}>
-            <h3 style={{ color: "white", ...GF, fontSize: 16, fontWeight: 700, margin: "0 0 8px" }}>{x.t}</h3>
-            <p style={{ color: "#94a3b8", ...GF, fontSize: 13.5, lineHeight: 1.65, margin: 0 }}>{x.d}</p>
+            <h3 style={{ color: "#07111F", ...GF, fontSize: 16, fontWeight: 700, margin: "0 0 8px" }}>{x.t}</h3>
+            <p style={{ color: "#64748B", ...GF, fontSize: 13.5, lineHeight: 1.65, margin: 0 }}>{x.d}</p>
           </div>
         ))}
       </div>
       <div style={{ textAlign: "center" }}>
         <Link to="/workflow" style={{
           ...GF, display: "inline-flex", alignItems: "center", minHeight: 48, padding: "0 24px",
-          borderRadius: 10, border: "1px solid rgba(0,120,212,0.4)", background: "rgba(0,120,212,0.1)",
-          color: "#38bdf8", fontSize: 15, fontWeight: 700, textDecoration: "none",
+          borderRadius: 10, border: "1px solid rgba(0,120,212,0.3)", background: "rgba(0,120,212,0.06)",
+          color: "#0078D4", fontSize: 15, fontWeight: 700, textDecoration: "none",
         }}>
           How document workflows work
         </Link>
@@ -707,9 +718,25 @@ function ReusableWorkflowSection() {
 }
 
 export function Home() {
+  const [params, setParams] = useSearchParams();
+  const [isUploadOpen, setIsUploadOpen] = useState(false);
+
+  // Cross-page trigger: e.g. the "Upload File" CTA on /esignature/core-workflow
+  // links to "/?openUpload=1" since the modal only exists on this page.
+  useEffect(() => {
+    if (params.get("openUpload") === "1") {
+      setIsUploadOpen(true);
+      const next = new URLSearchParams(params);
+      next.delete("openUpload");
+      setParams(next, { replace: true });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   return (
     <>
-      <HeroSection />
+      <HeroSection onOpenUpload={() => setIsUploadOpen(true)} />
+      <UploadDocumentModal open={isUploadOpen} onClose={() => setIsUploadOpen(false)} />
       <CapabilitiesSection />
       <WorkflowSection />
       <SigningSection />

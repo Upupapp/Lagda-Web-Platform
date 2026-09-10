@@ -12,10 +12,10 @@ function AuditTimeline() {
   const [expanded, setExpanded] = useState<number | null>(null);
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 0, maxWidth: 500, width: "100%" }}>
-      <div style={{ background: "rgba(7,17,31,0.95)", border: "1px solid rgba(0,120,212,0.22)", borderRadius: 14, overflow: "hidden" }}>
-        <div style={{ padding: "10px 16px", borderBottom: "1px solid rgba(255,255,255,0.07)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <span style={{ color: "white", ...GF, fontSize: 12, fontWeight: 700 }}>Audit Trail</span>
-          <span style={{ color: "#38bdf8", ...GM, fontSize: 10, fontWeight: 700 }}>LAGDA-VER-2026-004821</span>
+      <div style={{ background: "#ffffff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: 14, overflow: "hidden", boxShadow: "0 4px 16px rgba(7,17,31,0.08)" }}>
+        <div style={{ padding: "10px 16px", borderBottom: "1px solid rgba(0,0,0,0.07)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <span style={{ color: "#07111F", ...GF, fontSize: 12, fontWeight: 700 }}>Audit Trail</span>
+          <span style={{ color: "#0078D4", ...GM, fontSize: 10, fontWeight: 700 }}>LAGDA-VER-2026-004821</span>
         </div>
         {AUDIT_EVENTS.map((e, i) => (
           <div key={i}>
@@ -24,34 +24,34 @@ function AuditTimeline() {
               aria-expanded={expanded === i}
               style={{
                 width: "100%", background: "transparent", border: "none",
-                borderBottom: i < AUDIT_EVENTS.length - 1 ? "1px solid rgba(255,255,255,0.04)" : "none",
+                borderBottom: i < AUDIT_EVENTS.length - 1 ? "1px solid rgba(0,0,0,0.05)" : "none",
                 padding: "9px 16px", cursor: "pointer",
                 display: "flex", alignItems: "center", gap: 10, textAlign: "left",
               }}
             >
               <span style={{ fontSize: 14, flexShrink: 0 }}>{e.icon}</span>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <p style={{ color: "white", ...GF, fontSize: 12, fontWeight: 600, margin: 0 }}>{e.event}</p>
-                <p style={{ color: "#8A9BAE", ...GM, fontSize: 10, margin: "1px 0 0", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{e.who}</p>
+                <p style={{ color: "#07111F", ...GF, fontSize: 12, fontWeight: 600, margin: 0 }}>{e.event}</p>
+                <p style={{ color: "#64748B", ...GM, fontSize: 10, margin: "1px 0 0", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{e.who}</p>
               </div>
-              <span style={{ color: "#7C8DA4", ...GM, fontSize: 9, flexShrink: 0 }}>{expanded === i ? "▲" : "▼"}</span>
+              <span style={{ color: "#94A3B8", ...GM, fontSize: 9, flexShrink: 0 }}>{expanded === i ? "▲" : "▼"}</span>
             </button>
             {expanded === i && (
-              <div style={{ padding: "8px 16px 10px 40px", background: "rgba(0,120,212,0.04)", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
+              <div style={{ padding: "8px 16px 10px 40px", background: "rgba(0,120,212,0.04)", borderBottom: "1px solid rgba(0,0,0,0.05)" }}>
                 <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
                   <div style={{ display: "flex", gap: 12 }}>
-                    <span style={{ color: "#7C8DA4", ...GM, fontSize: 10, minWidth: 80 }}>Time</span>
-                    <span style={{ color: "#94a3b8", ...GM, fontSize: 10 }}>{e.time}</span>
+                    <span style={{ color: "#94A3B8", ...GM, fontSize: 10, minWidth: 80 }}>Time</span>
+                    <span style={{ color: "#334155", ...GM, fontSize: 10 }}>{e.time}</span>
                   </div>
                   <div style={{ display: "flex", gap: 12 }}>
-                    <span style={{ color: "#7C8DA4", ...GM, fontSize: 10, minWidth: 80 }}>Participant</span>
-                    <span style={{ color: "#94a3b8", ...GM, fontSize: 10 }}>{e.who}</span>
+                    <span style={{ color: "#94A3B8", ...GM, fontSize: 10, minWidth: 80 }}>Participant</span>
+                    <span style={{ color: "#334155", ...GM, fontSize: 10 }}>{e.who}</span>
                   </div>
                   <div style={{ display: "flex", gap: 12 }}>
-                    <span style={{ color: "#7C8DA4", ...GM, fontSize: 10, minWidth: 80 }}>Event</span>
-                    <span style={{ color: "#94a3b8", ...GM, fontSize: 10 }}>{e.event}</span>
+                    <span style={{ color: "#94A3B8", ...GM, fontSize: 10, minWidth: 80 }}>Event</span>
+                    <span style={{ color: "#334155", ...GM, fontSize: 10 }}>{e.event}</span>
                   </div>
-                  <p style={{ color: "#7C8DA4", ...GM, fontSize: 9, margin: "4px 0 0", fontStyle: "italic" }}>
+                  <p style={{ color: "#94A3B8", ...GM, fontSize: 9, margin: "4px 0 0", fontStyle: "italic" }}>
                     Additional details (IP, device, auth method) are access-controlled and not shown publicly.
                   </p>
                 </div>
@@ -86,7 +86,7 @@ export function AuditTrail() {
         <div style={{ display: "grid", gap: "32px 48px", alignItems: "start" }} className="at-two-col">
           <div>
             <SectionHeading eyebrow="Transaction events" id="te-h2" heading="A complete, expandable timeline of every event." sub="Click any event to see what information is recorded. Detailed evidence — IP, device, authentication method — is access-controlled and not exposed publicly." />
-            <p style={{ color: "#8A9BAE", ...GF, fontSize: 13, lineHeight: 1.6, margin: 0, marginTop: 8 }}>
+            <p style={{ color: "#64748B", ...GF, fontSize: 13, lineHeight: 1.6, margin: 0, marginTop: 8 }}>
               Not every event will contain every data field. The presence of specific data depends on the authentication method, participant behavior, device, and transaction configuration.
             </p>
           </div>
@@ -99,9 +99,9 @@ export function AuditTrail() {
         <SectionHeading eyebrow="Recorded events" id="ae-h2" heading="What the audit trail may include." sub="Not all events occur in every transaction. The events present depend on the workflow, routing, and participant actions." center />
         <div style={{ display: "grid", gap: 8 }} className="ae-grid">
           {ALL_EVENTS.map((ev) => (
-            <div key={ev} style={{ display: "flex", gap: 8, alignItems: "flex-start", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 8, padding: "8px 10px" }}>
-              <span style={{ color: "#38BDF8", fontSize: 12, flexShrink: 0, marginTop: 1 }}>●</span>
-              <span style={{ color: "#94a3b8", ...GF, fontSize: 12 }}>{ev}</span>
+            <div key={ev} style={{ display: "flex", gap: 8, alignItems: "flex-start", background: "#f8fafb", border: "1px solid rgba(0,0,0,0.07)", borderRadius: 8, padding: "8px 10px" }}>
+              <span style={{ color: "#0078D4", fontSize: 12, flexShrink: 0, marginTop: 1 }}>●</span>
+              <span style={{ color: "#334155", ...GF, fontSize: 12 }}>{ev}</span>
             </div>
           ))}
         </div>
@@ -121,9 +121,9 @@ export function AuditTrail() {
             { field: "Completion state",         example: "All fields completed" },
             { field: "Session identifier",       example: "Unique to this participant session" },
           ].map((d) => (
-            <div key={d.field} style={{ display: "flex", gap: 12, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 8, padding: "10px 12px" }}>
-              <span style={{ color: "#94A3B8", ...GM, fontSize: 11, flexShrink: 0, minWidth: 160 }}>{d.field}</span>
-              <span style={{ color: "#94a3b8", ...GF, fontSize: 12 }}>{d.example}</span>
+            <div key={d.field} style={{ display: "flex", gap: 12, background: "#ffffff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: 8, padding: "10px 12px", boxShadow: "0 1px 4px rgba(7,17,31,0.06)" }}>
+              <span style={{ color: "#64748B", ...GM, fontSize: 11, flexShrink: 0, minWidth: 160 }}>{d.field}</span>
+              <span style={{ color: "#334155", ...GF, fontSize: 12 }}>{d.example}</span>
             </div>
           ))}
         </div>

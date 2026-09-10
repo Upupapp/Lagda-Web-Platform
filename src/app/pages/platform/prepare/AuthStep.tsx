@@ -3,6 +3,7 @@
 // Burgundy (#67023B) is NEVER used. eNotary is NEVER mentioned.
 
 import React, { useEffect } from "react";
+import { ShieldCheck } from "lucide-react";
 import { usePrepare } from "../../../context/PrepareContext";
 import {
   PREP_AUTH_METHODS,
@@ -12,6 +13,7 @@ import {
   DEFAULT_AUTH_CONFIG,
 } from "../../../models/prepare";
 import type { PrepAuthMethodId, PrepParticipant } from "../../../models/prepare";
+import { StepBanner, StepTwoColumn, RailCard } from "../../../components/prepare/StepBanner";
 
 const GF     = { fontFamily: "'Geist', sans-serif" };
 const NAVY   = "#07111F";
@@ -236,22 +238,14 @@ export function AuthStep() {
   };
 
   const hasParticipants = participants.length > 0;
+  const defaultMethodLabel = getAuthMethodConfig(auth.defaultMethod).label;
+  const overrideCount = Object.keys(auth.perParticipant).length;
 
-  return (
-    <div style={{ ...GF, maxWidth: 620 }}>
-      <div style={{ marginBottom: 28 }}>
-        <h2 style={{ fontSize: 20, fontWeight: 800, color: NAVY, margin: "0 0 6px" }}>
-          Authentication
-        </h2>
-        <p style={{ fontSize: 13, color: SILVER, margin: 0, lineHeight: 1.6 }}>
-          Choose how participants verify their identity before accessing the document.
-          Set a default for all participants, then override individually if needed.
-        </p>
-      </div>
-
+  const main = (
+    <div style={{ ...GF, width: "100%" }}>
       {/* Validation */}
       {authErrors.length > 0 && (
-        <ul aria-live="polite" style={{ ...GF, listStyle: "none", margin: "0 0 16px", padding: "10px 14px", borderRadius: 8, border: "1px solid #F5C6CB", background: "#FFF5F5", fontSize: 13, color: "#C0392B" }}>
+        <ul aria-live="polite" style={{ ...GF, listStyle: "none", margin: "0 0 16px", padding: "10px 14px", borderRadius: 8, border: "1px solid #F0D07A", background: "#FEF9EC", fontSize: 13, color: GOLD }}>
           {authErrors.map(e => <li key={e.id}>• {e.message}</li>)}
         </ul>
       )}
@@ -316,6 +310,51 @@ export function AuthStep() {
         passwords, or tokens are generated, transmitted, or logged in this frontend demonstration.
         Authentication selection alone does not confirm a participant's identity or legal capacity.
       </div>
+    </div>
+  );
+
+  const rail = (
+    <RailCard title="Authentication by participant">
+      {!hasParticipants ? (
+        <p style={{ ...GF, fontSize: 12, color: SILVER, margin: 0 }}>
+          Add participants to see their authentication methods here.
+        </p>
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          {participants.map(p => {
+            const override = auth.perParticipant[p.id] ?? null;
+            const effective = override ?? auth.defaultMethod;
+            return (
+              <div key={p.id} style={{ display: "flex", justifyContent: "space-between", gap: 8, minWidth: 0 }}>
+                <span
+                  style={{
+                    ...GF, fontSize: 12, fontWeight: 600, color: NAVY,
+                    overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", minWidth: 0,
+                  }}
+                >
+                  {p.name}
+                </span>
+                <span style={{ ...GF, fontSize: 11, color: override ? AZURE : SILVER, flexShrink: 0, fontWeight: override ? 700 : 400 }}>
+                  {getAuthMethodConfig(effective).label}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </RailCard>
+  );
+
+  return (
+    <div style={GF}>
+      <StepBanner
+        icon={ShieldCheck}
+        eyebrow="Step 4 of 7"
+        title="Authentication"
+        description="Choose how participants verify their identity before accessing the document. Set a default for all participants, then override individually if needed."
+        meta={`Default: ${defaultMethodLabel}${overrideCount > 0 ? ` · ${overrideCount} override${overrideCount !== 1 ? "s" : ""}` : ""}`}
+      />
+      <StepTwoColumn main={main} rail={rail} />
     </div>
   );
 }

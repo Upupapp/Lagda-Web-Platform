@@ -5,30 +5,30 @@ const GM = { fontFamily: "'Geist Mono', monospace" };
 
 function LegalSection({ id, title, children }: { id: string; title: string; children: React.ReactNode }) {
   return (
-    <section id={id} style={{ paddingTop: 36, paddingBottom: 12, borderTop: "1px solid rgba(255,255,255,0.05)", marginTop: 28 }}>
-      <h2 id={`${id}-h`} style={{ color: "white", ...GF, fontSize: "clamp(17px, 2.5vw, 22px)", fontWeight: 800, margin: "0 0 14px" }}>{title}</h2>
+    <section id={id} style={{ paddingTop: 36, paddingBottom: 12, borderTop: "1px solid rgba(0,0,0,0.07)", marginTop: 28 }}>
+      <h2 id={`${id}-h`} style={{ color: "#07111F", ...GF, fontSize: "clamp(17px, 2.5vw, 22px)", fontWeight: 800, margin: "0 0 14px" }}>{title}</h2>
       {children}
     </section>
   );
 }
 
 function P({ children }: { children: React.ReactNode }) {
-  return <p style={{ color: "#94a3b8", ...GF, fontSize: 15, lineHeight: 1.75, margin: "0 0 14px" }}>{children}</p>;
+  return <p style={{ color: "#334155", ...GF, fontSize: 15, lineHeight: 1.75, margin: "0 0 14px" }}>{children}</p>;
 }
 
 function UL({ items }: { items: string[] }) {
-  return <ul style={{ padding: "0 0 0 20px", margin: "0 0 14px" }}>{items.map(i => <li key={i} style={{ color: "#94a3b8", ...GF, fontSize: 14, lineHeight: 1.7, marginBottom: 4 }}>{i}</li>)}</ul>;
+  return <ul style={{ padding: "0 0 0 20px", margin: "0 0 14px" }}>{items.map(i => <li key={i} style={{ color: "#334155", ...GF, fontSize: 14, lineHeight: 1.7, marginBottom: 4 }}>{i}</li>)}</ul>;
 }
 
 export function Accessibility() {
   return (
-    <div style={{ background: "#07111F", minHeight: "100vh", color: "white", ...GF }}>
-      <section style={{ padding: "72px 24px 48px", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+    <div style={{ background: "#ffffff", minHeight: "100vh", color: "#07111F", ...GF }}>
+      <section style={{ padding: "72px 24px 48px", borderBottom: "1px solid rgba(0,0,0,0.07)" }}>
         <div style={{ maxWidth: 780, margin: "0 auto" }}>
-          <p style={{ color: "#38bdf8", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 12 }}>LEGAL</p>
-          <h1 style={{ color: "white", ...GF, fontSize: "clamp(24px, 4vw, 40px)", fontWeight: 900, lineHeight: 1.1, letterSpacing: "-0.02em", margin: "0 0 14px" }}>Accessibility Statement</h1>
-          <p style={{ color: "#94A3B8", ...GF, fontSize: 15, margin: "0 0 10px" }}>UpUp Technologies — LAGDA Platform</p>
-          <span style={{ color: "#8A9BAE", ...GM, fontSize: 10 }}>Updated: July 2026</span>
+          <p style={{ color: "#0078D4", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 12 }}>LEGAL</p>
+          <h1 style={{ color: "#07111F", ...GF, fontSize: "clamp(24px, 4vw, 40px)", fontWeight: 900, lineHeight: 1.1, letterSpacing: "-0.02em", margin: "0 0 14px" }}>Accessibility Statement</h1>
+          <p style={{ color: "#64748B", ...GF, fontSize: 15, margin: "0 0 10px" }}>UpUp Technologies — LAGDA Platform</p>
+          <span style={{ color: "#94A3B8", ...GM, fontSize: 10 }}>Updated: July 2026</span>
         </div>
       </section>
 
@@ -79,15 +79,15 @@ export function Accessibility() {
             "Describe the specific barrier or difficulty you experienced",
             "Include the URL or page where you encountered the issue",
           ]} />
-          <P>We will review your feedback and aim to respond with steps we are taking to address the issue. <Link to="/contact" style={{ color: "#38bdf8", textDecoration: "none" }}>Contact LAGDA →</Link></P>
+          <P>We will review your feedback and aim to respond with steps we are taking to address the issue. <Link to="/contact" style={{ color: "#0078D4", textDecoration: "none" }}>Contact LAGDA →</Link></P>
         </LegalSection>
 
         <LegalSection id="review" title="Review process">
           <P>This accessibility statement is reviewed and updated as the platform develops. We do not publish an audit date unless a formal accessibility audit has been completed and the findings incorporated.</P>
         </LegalSection>
 
-        <div style={{ marginTop: 40, background: "rgba(0,120,212,0.06)", border: "1px solid rgba(0,120,212,0.15)", borderRadius: 10, padding: "14px 18px" }}>
-          <p style={{ color: "#94A3B8", ...GF, fontSize: 13, lineHeight: 1.65, margin: 0 }}>
+        <div style={{ marginTop: 40, background: "rgba(0,120,212,0.05)", border: "1px solid rgba(0,120,212,0.2)", borderRadius: 10, padding: "14px 18px" }}>
+          <p style={{ color: "#64748B", ...GF, fontSize: 13, lineHeight: 1.65, margin: 0 }}>
             LAGDA aims to align its public website and product interfaces with recognized accessibility practices. This statement describes our current approach and does not claim formal conformance to any standard unless a completed audit confirms it.
           </p>
         </div>

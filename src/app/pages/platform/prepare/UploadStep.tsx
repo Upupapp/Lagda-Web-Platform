@@ -7,65 +7,19 @@
 // Burgundy (#67023B) is NEVER used here. eNotary is NEVER mentioned.
 
 import React, { useRef, useEffect, useCallback, useState } from "react";
+import { FileText } from "lucide-react";
 import { usePrepare } from "../../../context/PrepareContext";
-import type { PrepFile, PrepFileState } from "../../../models/prepare";
+import type { PrepFile } from "../../../models/prepare";
 import { DEFAULT_TRANSACTION_DETAILS } from "../../../models/prepare";
+import { classifyFiles, humanFileSize, fileStateLabel } from "../../../services/prepare/file-intake";
+import { StepBanner, StepTwoColumn, RailCard } from "../../../components/prepare/StepBanner";
 
 const GF     = { fontFamily: "'Geist', sans-serif" };
 const NAVY   = "#07111F";
 const AZURE  = "#0078D4";
 const SILVER = "#8A9BAE";
 const GOLD   = "#C9960C";
-
-const DEMO_SIZE_LIMIT_BYTES = 20 * 1024 * 1024; // 20 MB demo limit
-const ALLOWED_MIME_TYPES    = new Set([
-  "application/pdf",
-  "application/msword",
-  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-]);
-const ALLOWED_EXTENSIONS    = [".pdf", ".doc", ".docx"];
-
-function humanSize(bytes: number): string {
-  if (bytes < 1024)       return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-}
-
-function fileStateLabel(s: PrepFileState): { text: string; color: string } {
-  switch (s) {
-    case "ready":
-      return { text: "Ready", color: "#2E7D32" };
-    case "unsupported-type":
-      return { text: "Unsupported type — PDF, DOC, or DOCX only", color: "#C0392B" };
-    case "empty-file":
-      return { text: "Empty file — cannot be used", color: "#C0392B" };
-    case "demonstration-size-limit":
-      return { text: "File too large for demonstration (20 MB limit)", color: GOLD };
-    case "duplicate":
-      return { text: "Duplicate filename", color: GOLD };
-    case "unavailable":
-      return { text: "File unavailable", color: "#C0392B" };
-    case "removed":
-      return { text: "Removed", color: SILVER };
-    default:
-      return { text: s, color: SILVER };
-  }
-}
-
-function classifyFile(file: File, existingNames: Set<string>): PrepFileState {
-  if (file.size === 0) return "empty-file";
-  const ext = file.name.split(".").pop()?.toLowerCase() ?? "";
-  const byMime = ALLOWED_MIME_TYPES.has(file.type);
-  const byExt  = ALLOWED_EXTENSIONS.includes(`.${ext}`);
-  if (!byMime && !byExt) return "unsupported-type";
-  if (file.size > DEMO_SIZE_LIMIT_BYTES) return "demonstration-size-limit";
-  if (existingNames.has(file.name)) return "duplicate";
-  return "ready";
-}
-
-function generateFileId(): string {
-  return `pf_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
-}
+const humanSize = humanFileSize;
 
 // ── File row ──────────────────────────────────────────────────────────────────
 
@@ -95,8 +49,8 @@ function FileRow({
         gap: 12,
         padding: "12px 16px",
         borderRadius: 10,
-        border: `1px solid ${isError ? "#F5C6CB" : "#E3E8EF"}`,
-        background: isError ? "#FFF5F5" : "#FAFBFC",
+        border: `1px solid ${isError ? "#F0D07A" : "#E3E8EF"}`,
+        background: isError ? "#FEF9EC" : "#FAFBFC",
       }}
     >
       {/* Order handle */}
@@ -190,7 +144,7 @@ function FileRow({
           border: "none",
           borderRadius: 6,
           background: "transparent",
-          color: "#C0392B",
+          color: GOLD,
           cursor: "pointer",
           fontSize: 16,
           display: "flex",
@@ -264,6 +218,23 @@ function DropZone({
 
 // ── Folder + tag selector (lightweight, no real backend) ──────────────────────
 
+// Lightweight fixture: these match workspace IDs used in documents.ts
+const FOLDERS = [
+  { id: "folder_active",    name: "Active Transactions" },
+  { id: "folder_contracts", name: "Contracts" },
+  { id: "folder_hr",        name: "HR Documents" },
+  { id: "folder_legal",     name: "Legal" },
+  { id: "folder_archive",   name: "Archive" },
+];
+const TAGS = [
+  { id: "tag_urgent",       name: "Urgent" },
+  { id: "tag_nda",          name: "NDA" },
+  { id: "tag_contract",     name: "Contract" },
+  { id: "tag_hr",           name: "HR" },
+  { id: "tag_compliance",   name: "Compliance" },
+  { id: "tag_reviewed",     name: "Reviewed" },
+];
+
 function FolderTagSelector({
   selectedFolderId,
   selectedTagIds,
@@ -275,23 +246,6 @@ function FolderTagSelector({
   onFolderChange:   (id: string | null) => void;
   onTagsChange:     (ids: string[]) => void;
 }) {
-  // Lightweight fixture: these match workspace IDs used in documents.ts
-  const FOLDERS = [
-    { id: "folder_active",    name: "Active Transactions" },
-    { id: "folder_contracts", name: "Contracts" },
-    { id: "folder_hr",        name: "HR Documents" },
-    { id: "folder_legal",     name: "Legal" },
-    { id: "folder_archive",   name: "Archive" },
-  ];
-  const TAGS = [
-    { id: "tag_urgent",       name: "Urgent" },
-    { id: "tag_nda",          name: "NDA" },
-    { id: "tag_contract",     name: "Contract" },
-    { id: "tag_hr",           name: "HR" },
-    { id: "tag_compliance",   name: "Compliance" },
-    { id: "tag_reviewed",     name: "Reviewed" },
-  ];
-
   const toggleTag = (id: string) => {
     if (selectedTagIds.includes(id)) {
       onTagsChange(selectedTagIds.filter(t => t !== id));
@@ -393,26 +347,7 @@ export function UploadStep() {
   // ── File operations ─────────────────────────────────────────────────────────
 
   const addFiles = useCallback((fileList: FileList) => {
-    const currentNames = new Set(files.map(f => f.fileName));
-    const newEntries: PrepFile[] = [];
-
-    Array.from(fileList).forEach((file, i) => {
-      if (files.length + newEntries.length >= 10) return;
-      const state = classifyFile(file, currentNames);
-      currentNames.add(file.name);
-      newEntries.push({
-        id:            generateFileId(),
-        fileName:      file.name,
-        fileSizeBytes: file.size,
-        mimeType:      file.type || "application/octet-stream",
-        fileState:     state,
-        order:         files.length + newEntries.length,
-        demoPageCount: file.type === "application/pdf"
-          ? Math.max(1, Math.floor(file.size / 40000))
-          : undefined,
-      });
-    });
-
+    const newEntries: PrepFile[] = classifyFiles(Array.from(fileList), files);
     if (newEntries.length > 0) {
       updateFiles([...files, ...newEntries]);
     }
@@ -471,19 +406,12 @@ export function UploadStep() {
   const fileErrors = validation?.errors.filter(e => e.stepId === "upload") ?? [];
   const hasReady = files.some(f => f.fileState === "ready");
   const atLimit  = files.length >= 10;
+  const readyCount = files.filter(f => f.fileState === "ready").length;
+  const totalBytes = files.reduce((sum, f) => sum + f.fileSizeBytes, 0);
+  const folderName = FOLDERS.find(f => f.id === details.folderId)?.name ?? null;
 
-  return (
-    <div style={{ ...GF, maxWidth: 620 }}>
-      <div style={{ marginBottom: 28 }}>
-        <h2 style={{ fontSize: 20, fontWeight: 800, color: NAVY, margin: "0 0 6px" }}>
-          Documents
-        </h2>
-        <p style={{ fontSize: 13, color: SILVER, margin: 0, lineHeight: 1.6 }}>
-          Select the documents for this transaction. Only file names and sizes are used —
-          no file contents are read or stored in this demonstration.
-        </p>
-      </div>
-
+  const main = (
+    <div style={{ ...GF, width: "100%" }}>
       {/* Drop zone */}
       {!atLimit && (
         <div style={{ marginBottom: 20 }}>
@@ -541,10 +469,10 @@ export function UploadStep() {
             margin: "0 0 20px",
             padding: "10px 14px",
             borderRadius: 8,
-            border: "1px solid #F5C6CB",
-            background: "#FFF5F5",
+            border: "1px solid #F0D07A",
+            background: "#FEF9EC",
             fontSize: 13,
-            color: "#C0392B",
+            color: "#8A6A16",
           }}
         >
           {fileErrors.map(e => <li key={e.id}>• {e.message}</li>)}
@@ -557,7 +485,7 @@ export function UploadStep() {
           htmlFor="prep-title"
           style={{ ...GF, fontSize: 13, fontWeight: 600, color: NAVY, display: "block", marginBottom: 6 }}
         >
-          Transaction title <span style={{ color: "#C0392B" }}>*</span>
+          Transaction title <span style={{ color: GOLD }}>*</span>
         </label>
         <input
           id="prep-title"
@@ -573,7 +501,7 @@ export function UploadStep() {
             width: "100%",
             padding: "9px 12px",
             borderRadius: 8,
-            border: `1px solid ${titleError ? "#F5C6CB" : "#D1D9E0"}`,
+            border: `1px solid ${titleError ? "#F0D07A" : "#D1D9E0"}`,
             background: "#FFFFFF",
             color: NAVY,
             fontSize: 14,
@@ -581,7 +509,7 @@ export function UploadStep() {
           }}
         />
         {titleError && (
-          <div id="prep-title-error" role="alert" style={{ ...GF, fontSize: 12, color: "#C0392B", marginTop: 4 }}>
+          <div id="prep-title-error" role="alert" style={{ ...GF, fontSize: 12, color: GOLD, marginTop: 4 }}>
             {titleError}
           </div>
         )}
@@ -651,6 +579,59 @@ export function UploadStep() {
         used to validate your selection. Your documents remain on your device and are
         not transmitted in this demonstration.
       </div>
+    </div>
+  );
+
+  const rail = (
+    <>
+      <RailCard title="Files added">
+        {files.length === 0 ? (
+          <p style={{ ...GF, fontSize: 12, color: SILVER, margin: 0 }}>
+            No files added yet.
+          </p>
+        ) : (
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {files.map(f => {
+              const { text, color } = fileStateLabel(f.fileState);
+              return (
+                <div key={f.id} style={{ display: "flex", justifyContent: "space-between", gap: 8 }}>
+                  <span
+                    style={{
+                      ...GF, fontSize: 12, fontWeight: 600, color: NAVY,
+                      overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", minWidth: 0,
+                    }}
+                  >
+                    {f.fileName}
+                  </span>
+                  <span style={{ ...GF, fontSize: 11, color, flexShrink: 0, textAlign: "right" }}>
+                    {text} · {humanSize(f.fileSizeBytes)}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </RailCard>
+      <RailCard title="Transaction summary">
+        <div style={{ ...GF, fontSize: 12, color: "#4B5E70", display: "flex", flexDirection: "column", gap: 6 }}>
+          <div>Total size: <strong style={{ color: NAVY }}>{humanSize(totalBytes)}</strong></div>
+          <div>Folder: <strong style={{ color: NAVY }}>{folderName ?? "None"}</strong></div>
+          <div>Tags: <strong style={{ color: NAVY }}>{details.tagIds.length || "None"}</strong></div>
+        </div>
+      </RailCard>
+    </>
+  );
+
+  return (
+    <div style={GF}>
+      <StepBanner
+        icon={FileText}
+        eyebrow="Step 1 of 7"
+        title="Documents"
+        description="Select the documents for this transaction. Only file names and sizes are used — no file contents are read or stored in this demonstration."
+        meta={files.length === 0 ? "No files added" : `${readyCount} of ${files.length} file${files.length !== 1 ? "s" : ""} ready`}
+      />
+      <StepTwoColumn main={main} rail={rail} />
     </div>
   );
 }

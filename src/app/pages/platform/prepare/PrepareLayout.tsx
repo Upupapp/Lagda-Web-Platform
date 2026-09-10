@@ -7,9 +7,12 @@
 import React, { useState, useCallback } from "react";
 import { Outlet, Navigate, useNavigate, useLocation, Link } from "react-router";
 import { PrepareProvider, usePrepare } from "../../../context/PrepareContext";
+import { usePlatform } from "../../../context/PlatformContext";
 import { PREPARATION_STEPS } from "../../../models/prepare";
 import type { PreparationStepId, PreparationStepState } from "../../../models/prepare";
 import { Z } from "../../../utils/z-index";
+import { buildSignInUrl } from "../../../utils/authReturnPath";
+import { MissingItemsModal } from "../../../components/prepare/MissingItemsModal";
 
 const GF = { fontFamily: "'Geist', sans-serif" };
 const NAVY   = "#07111F";
@@ -202,12 +205,16 @@ function StepperSidebar({
         const isActive = step.id === activeStepId;
         const isClickable = state !== "unavailable" && state !== "blocked";
 
+        const isFilled = state === "complete" || state === "complete-with-warning";
+
         return (
           <button
             key={step.id}
+            className="prep-step-row"
             onClick={() => isClickable && onStepClick(step.id)}
             disabled={!isClickable}
             aria-current={isActive ? "step" : undefined}
+            title={isClickable && !isActive ? `Go to ${step.label}` : undefined}
             style={{
               ...GF,
               display: "flex",
@@ -229,16 +236,20 @@ function StepperSidebar({
                 height: 24,
                 borderRadius: "50%",
                 border: `2px solid ${style.dot}`,
-                background: state === "complete" || state === "complete-with-warning"
-                  ? style.dot
-                  : "transparent",
+                background: isFilled ? style.dot : "transparent",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
                 flexShrink: 0,
                 fontSize: 11,
                 fontWeight: 700,
-                color: "#FFFFFF",
+                // White only reads against the solid-filled "complete" badge —
+                // every other state leaves the circle transparent against the
+                // light sidebar background. The state color itself (SILVER,
+                // or near-white for "unavailable") is too low-contrast for
+                // text, so the digit/icon stays a plain dark color there
+                // instead of disappearing (see reported screenshot).
+                color: isFilled ? "#FFFFFF" : NAVY,
               }}
             >
               {style.icon || (state === "complete" ? "✓" : `${idx + 1}`)}
@@ -320,16 +331,24 @@ const LAYOUT_STYLES = `
   .prep-layout-root {
     display: flex;
     flex-direction: column;
-    min-height: 100vh;
+    /* height, not min-height: a flex child's overflow:auto only actually
+       scrolls internally when the ancestor chain has a BOUNDED height. With
+       min-height the document itself grew to fit tall step content instead,
+       taking .prep-nav-bar's Previous/Continue bar down the page with it —
+       the opposite of "sticks to the screen". */
+    height: 100vh;
     background: #FFFFFF;
     font-family: 'Geist', sans-serif;
+    overflow: hidden;
   }
   .prep-layout-body {
     display: flex;
     flex: 1;
+    min-height: 0;
   }
   .prep-sidebar {
     display: flex;
+    overflow-y: auto;
   }
   .prep-topbar {
     display: none;
@@ -339,11 +358,12 @@ const LAYOUT_STYLES = `
     display: flex;
     flex-direction: column;
     overflow: hidden;
+    min-width: 0;
   }
   .prep-step-area {
     flex: 1;
     overflow-y: auto;
-    padding: 32px 40px;
+    padding: 32px 40px 48px;
   }
   .prep-nav-bar {
     border-top: 1px solid #E3E8EF;
@@ -353,11 +373,23 @@ const LAYOUT_STYLES = `
     justify-content: space-between;
     background: #FFFFFF;
     flex-shrink: 0;
+    /* Sits below the scrollable .prep-step-area rather than overlapping it,
+       so it never covers the last field of a long form. */
+    position: relative;
+    z-index: 1;
+    box-shadow: 0 -2px 8px rgba(7,17,31,0.04);
+  }
+  .prep-step-row:not(:disabled):hover {
+    background: rgba(0,120,212,0.06) !important;
+  }
+  .prep-step-row:disabled {
+    cursor: default;
   }
   @media (max-width: 768px) {
+    .prep-layout-root { height: 100dvh; }
     .prep-sidebar { display: none; }
     .prep-topbar  { display: block; }
-    .prep-step-area { padding: 20px 16px; }
+    .prep-step-area { padding: 20px 16px 32px; }
     .prep-nav-bar   { padding: 12px 16px; }
     .prep-breadcrumb { padding: 0 16px !important; }
   }
@@ -372,13 +404,20 @@ export function PrepareLayout() {
     discardDraft,
     setStep,
     draft,
+    validate,
   } = usePrepare();
 
   const [showDiscard, setShowDiscard] = useState(false);
+  const [showMissing, setShowMissing] = useState(false);
 
   const activeStepId = currentStepFromPath(location.pathname);
 
   const handleStepClick = useCallback((id: PreparationStepId) => {
+    setStep(id);
+    void navigate(stepRoute(id));
+  }, [navigate, setStep]);
+
+  const goToStepFromReminder = useCallback((id: PreparationStepId) => {
     setStep(id);
     void navigate(stepRoute(id));
   }, [navigate, setStep]);
@@ -545,28 +584,41 @@ export function PrepareLayout() {
 
               <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                 {continueBlocked && (
-                  <span style={{ ...GF, fontSize: 12, color: SILVER }}>
-                    Complete required steps to continue to field placement
-                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setShowMissing(true)}
+                    style={{
+                      ...GF, fontSize: 12.5, fontWeight: 600, color: GOLD,
+                      background: "none", border: "none", cursor: "pointer",
+                      padding: "6px 4px", textDecoration: "underline", textUnderlineOffset: 2,
+                    }}
+                  >
+                    A few things still need attention — see what's left
+                  </button>
                 )}
                 {nextId && !isFieldsStep && (
                   <button
-                    onClick={continueBlocked ? undefined : handleContinue}
-                    disabled={continueBlocked}
+                    // Clicking while blocked opens the friendly reminder instead of
+                    // doing nothing — a disabled button with no explanation reads
+                    // as broken, not as "not ready yet".
+                    onClick={continueBlocked ? () => setShowMissing(true) : handleContinue}
                     aria-disabled={continueBlocked}
                     style={{
                       ...GF,
                       padding: "10px 24px",
                       borderRadius: 8,
                       border: "none",
-                      background: continueBlocked ? "#B0BEC5" : AZURE,
-                      color: "#FFFFFF",
+                      background: continueBlocked ? "#FEF9EC" : AZURE,
+                      color: continueBlocked ? GOLD : "#FFFFFF",
+                      ...(continueBlocked ? { boxShadow: "inset 0 0 0 1px #F0D07A" } : {}),
                       fontSize: 14,
                       fontWeight: 600,
-                      cursor: continueBlocked ? "not-allowed" : "pointer",
+                      cursor: "pointer",
                     }}
                   >
-                    {nextId === "fields" ? "Continue to Place Fields →" : "Continue →"}
+                    {continueBlocked
+                      ? "Not ready yet →"
+                      : nextId === "fields" ? "Continue to Place Fields →" : "Continue →"}
                   </button>
                 )}
               </div>
@@ -574,6 +626,14 @@ export function PrepareLayout() {
           )}
         </div>
       </div>
+
+      {/* Friendly reminder — what's left before Field Placement */}
+      <MissingItemsModal
+        open={showMissing}
+        onClose={() => setShowMissing(false)}
+        issues={draft ? validate().errors : []}
+        onGoToStep={goToStepFromReminder}
+      />
 
       {/* Discard confirmation */}
       {showDiscard && (
@@ -587,7 +647,24 @@ export function PrepareLayout() {
 }
 
 // Root route element: provides PrepareProvider so all child routes share draft state.
+//
+// `/app/prepare` is registered as its own top-level route (see router.tsx —
+// "Separate from PlatformLayout"), so it never passes through
+// PlatformLayout's sessionStatus guard. Without a guard here, an
+// unauthenticated visitor navigating straight to /app/prepare (including via
+// the `?resumeId=` continuation link from the public upload) would reach the
+// real preparation wizard — mirrors PlatformLayout's own check.
 export function PrepareRoot() {
+  const { sessionStatus } = usePlatform();
+  const location = useLocation();
+
+  if (sessionStatus === "initializing") {
+    return null;
+  }
+  if (sessionStatus !== "authenticated") {
+    return <Navigate to={buildSignInUrl(location.pathname + location.search)} replace />;
+  }
+
   return (
     <PrepareProvider>
       <PrepareLayout />

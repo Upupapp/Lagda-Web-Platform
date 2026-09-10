@@ -9,9 +9,9 @@ const GF = { fontFamily: "'Geist', sans-serif" };
 const GM = { fontFamily: "'Geist Mono', monospace" };
 
 const TIER_CONFIG = {
-  Core:       { color: "#22C55E", badge: "Core" as const },
-  Advanced:   { color: "#38bdf8", badge: "Advanced" as const },
-  Enterprise: { color: "#C9960C", badge: "Enterprise" as const },
+  Core:       { color: "#178A4C", badge: "Core" as const },
+  Advanced:   { color: "#0078D4", badge: "Advanced" as const },
+  Enterprise: { color: "#9A7208", badge: "Enterprise" as const },
 };
 
 function AuthMethodSelector() {
@@ -29,16 +29,16 @@ function AuthMethodSelector() {
               onClick={() => setSelected(i)}
               aria-pressed={selected === i}
               style={{
-                background: selected === i ? "rgba(0,120,212,0.1)" : "rgba(255,255,255,0.03)",
-                border: `1px solid ${selected === i ? "rgba(0,120,212,0.4)" : "rgba(255,255,255,0.08)"}`,
+                background: selected === i ? "rgba(0,120,212,0.08)" : "#f8fafb",
+                border: `1px solid ${selected === i ? "rgba(0,120,212,0.35)" : "rgba(0,0,0,0.08)"}`,
                 borderRadius: 10, padding: "10px 14px", cursor: "pointer",
                 display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8,
                 transition: "all 0.15s ease", textAlign: "left",
               }}
             >
-              <span style={{ color: selected === i ? "white" : "#94a3b8", ...GF, fontSize: 13, fontWeight: selected === i ? 700 : 500 }}>{m.method}</span>
+              <span style={{ color: selected === i ? "#07111F" : "#64748B", ...GF, fontSize: 13, fontWeight: selected === i ? 700 : 500 }}>{m.method}</span>
               <div style={{ display: "flex", gap: 6, alignItems: "center", flexShrink: 0 }}>
-                <span style={{ color: "#7C8DA4", ...GM, fontSize: 9 }}>{m.channel}</span>
+                <span style={{ color: "#94A3B8", ...GM, fontSize: 9 }}>{m.channel}</span>
                 <div style={{ width: 8, height: 8, borderRadius: "50%", background: cfg.color }} />
               </div>
             </button>
@@ -46,12 +46,12 @@ function AuthMethodSelector() {
         })}
       </div>
       {/* Detail panel */}
-      <div style={{ background: "rgba(7,17,31,0.95)", border: "1px solid rgba(0,120,212,0.2)", borderRadius: 12, padding: "14px 16px" }}>
+      <div style={{ background: "#ffffff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: 12, padding: "14px 16px", boxShadow: "0 1px 4px rgba(7,17,31,0.07)" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-          <p style={{ color: "white", ...GF, fontSize: 13, fontWeight: 700, margin: 0 }}>{method.method}</p>
+          <p style={{ color: "#07111F", ...GF, fontSize: 13, fontWeight: 700, margin: 0 }}>{method.method}</p>
           <AvailBadge tier={TIER_CONFIG[method.tier].badge} />
         </div>
-        <p style={{ color: "#94a3b8", ...GF, fontSize: 13, lineHeight: 1.6, margin: 0 }}>{method.desc}</p>
+        <p style={{ color: "#334155", ...GF, fontSize: 13, lineHeight: 1.6, margin: 0 }}>{method.desc}</p>
       </div>
     </div>
   );
@@ -75,7 +75,7 @@ export function SignerAuth() {
               {Object.entries(TIER_CONFIG).map(([tier, cfg]) => (
                 <div key={tier} style={{ display: "flex", alignItems: "center", gap: 5 }}>
                   <div style={{ width: 8, height: 8, borderRadius: "50%", background: cfg.color }} />
-                  <span style={{ color: "#94A3B8", ...GF, fontSize: 12 }}>{tier}</span>
+                  <span style={{ color: "#64748B", ...GF, fontSize: 12 }}>{tier}</span>
                 </div>
               ))}
             </div>
@@ -89,12 +89,12 @@ export function SignerAuth() {
         <SectionHeading eyebrow="Channel awareness" id="channel-h2" heading="Independent channels provide stronger evidence." sub="When the invitation link and the authentication code arrive through the same channel (email), they do not provide independent second-factor verification. A separate channel — SMS, authenticator app, enterprise SSO — offers a stronger evidence basis." />
         <div style={{ display: "grid", gap: 12 }} className="ch-grid">
           <div style={{ background: "rgba(0,120,212,0.06)", border: "1px solid rgba(0,120,212,0.2)", borderRadius: 12, padding: "16px 16px" }}>
-            <p style={{ color: "#38bdf8", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", marginBottom: 8 }}>SAME CHANNEL</p>
-            <p style={{ color: "#94a3b8", ...GF, fontSize: 13, lineHeight: 1.55, margin: 0 }}>Invitation link + email OTP both arrive in the same inbox. Access to that inbox satisfies both steps.</p>
+            <p style={{ color: "#0078D4", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", marginBottom: 8 }}>SAME CHANNEL</p>
+            <p style={{ color: "#334155", ...GF, fontSize: 13, lineHeight: 1.55, margin: 0 }}>Invitation link + email OTP both arrive in the same inbox. Access to that inbox satisfies both steps.</p>
           </div>
           <div style={{ background: "rgba(245,158,11,0.06)", border: "1px solid rgba(245,158,11,0.2)", borderRadius: 12, padding: "16px 16px" }}>
-            <p style={{ color: "#F59E0B", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", marginBottom: 8 }}>SEPARATE CHANNEL</p>
-            <p style={{ color: "#94a3b8", ...GF, fontSize: 13, lineHeight: 1.55, margin: 0 }}>SMS OTP or authenticator app requires access to a different device or app — providing a second, independent factor.</p>
+            <p style={{ color: "#B45309", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", marginBottom: 8 }}>SEPARATE CHANNEL</p>
+            <p style={{ color: "#334155", ...GF, fontSize: 13, lineHeight: 1.55, margin: 0 }}>SMS OTP or authenticator app requires access to a different device or app — providing a second, independent factor.</p>
           </div>
         </div>
         <style>{`.ch-grid { grid-template-columns: 1fr 1fr; } @media (max-width: 560px) { .ch-grid { grid-template-columns: 1fr; } }`}</style>
@@ -108,14 +108,14 @@ export function SignerAuth() {
             { risk: "Standard risk", example: "Client engagement letters, NDA, service agreements", method: "Email OTP or SMS OTP" },
             { risk: "Higher risk",   example: "Financial commitments, regulated documents, authority-sensitive transactions", method: "SMS OTP, authenticator, or enterprise SSO" },
           ].map((r) => (
-            <div key={r.risk} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 12, padding: "14px 14px" }}>
-              <p style={{ color: "white", ...GF, fontSize: 13, fontWeight: 700, margin: 0, marginBottom: 4 }}>{r.risk}</p>
-              <p style={{ color: "#94A3B8", ...GF, fontSize: 12, lineHeight: 1.5, margin: 0, marginBottom: 8 }}>{r.example}</p>
-              <p style={{ color: "#38bdf8", ...GM, fontSize: 11, margin: 0, fontWeight: 600 }}>{r.method}</p>
+            <div key={r.risk} style={{ background: "#ffffff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: 12, padding: "14px 14px", boxShadow: "0 1px 4px rgba(7,17,31,0.06)" }}>
+              <p style={{ color: "#07111F", ...GF, fontSize: 13, fontWeight: 700, margin: 0, marginBottom: 4 }}>{r.risk}</p>
+              <p style={{ color: "#64748B", ...GF, fontSize: 12, lineHeight: 1.5, margin: 0, marginBottom: 8 }}>{r.example}</p>
+              <p style={{ color: "#0078D4", ...GM, fontSize: 11, margin: 0, fontWeight: 600 }}>{r.method}</p>
             </div>
           ))}
         </div>
-        <p style={{ color: "#8A9BAE", ...GF, fontSize: 13, lineHeight: 1.6, marginTop: 16 }}>
+        <p style={{ color: "#64748B", ...GF, fontSize: 13, lineHeight: 1.6, marginTop: 16 }}>
           Risk classification is the responsibility of the sending organization and its legal counsel. LAGDA does not determine legal sufficiency or risk level for any specific transaction.
         </p>
         <style>{`.risk-grid { grid-template-columns: repeat(3, 1fr); } @media (max-width: 720px) { .risk-grid { grid-template-columns: 1fr; } }`}</style>

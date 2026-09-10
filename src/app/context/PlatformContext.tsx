@@ -31,6 +31,7 @@ import { MOCK_NOTIFICATIONS } from "../data/mock";
 import { ACTIVE_LAUNCH_PROFILE, resolveCapability, buildCapabilityContext } from "../config/capability-resolver";
 import type { LaunchProfileId, CapabilityResolution, ProductCapabilityId } from "../models/product-capability";
 import { runSignOutCleanup, runWorkspaceSwitchCleanup } from "../services/session-lifecycle";
+import { readJSON, writeJSON, removeKey, PERSISTENCE_KEYS } from "../services/local-persistence";
 
 // ── Platform flags (default all active for demo) ──────────────────────────────
 
@@ -98,6 +99,32 @@ export interface PlatformContextValue {
 
 const PlatformContext = createContext<PlatformContextValue | null>(null);
 
+// LOCAL_PERSISTENCE — see services/local-persistence.ts for removal notes.
+interface PersistedPlatformSession {
+  user:             UserSummary;
+  workspaces:       PlatformWorkspace[];
+  currentWorkspace: PlatformWorkspace;
+  subscription:     SubscriptionSummary | null;
+  role:             PlatformRole | null;
+  notifications:    NotificationSummary[];
+}
+
+// LOCAL_PERSISTENCE — structural guard: readJSON() only protects against
+// corrupt JSON, not a well-formed object saved by an earlier app version
+// that no longer matches this shape. Trusting that blindly can hand `null`
+// into fields the rest of the app assumes are always populated once
+// "authenticated" — validate before restoring instead of crashing later.
+function isUsablePlatformSession(v: unknown): v is PersistedPlatformSession {
+  if (!v || typeof v !== "object") return false;
+  const s = v as Record<string, unknown>;
+  return (
+    !!s.user && typeof (s.user as Record<string, unknown>).id === "string" &&
+    Array.isArray(s.workspaces) &&
+    !!s.currentWorkspace && typeof (s.currentWorkspace as Record<string, unknown>).id === "string" &&
+    Array.isArray(s.notifications)
+  );
+}
+
 export function PlatformProvider({ children }: { children: ReactNode }) {
   const [sessionStatus, setSessionStatus] = useState<PlatformSessionStatus>("initializing");
   const [user, setUser] = useState<UserSummary | null>(null);
@@ -108,6 +135,29 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
   const [notifications, setNotifications] = useState<NotificationSummary[]>([]);
   const [flags] = useState<PlatformFlags>(DEFAULT_PLATFORM_FLAGS);
 
+  // LOCAL_PERSISTENCE — restore a session saved before a refresh, in place of
+  // the normal "resolves to unauthenticated" initialization window below.
+  useEffect(() => {
+    let saved: PersistedPlatformSession | null = null;
+    try {
+      const raw = readJSON<PersistedPlatformSession>(PERSISTENCE_KEYS.platformSession);
+      if (isUsablePlatformSession(raw)) saved = raw;
+    } catch {
+      saved = null;
+    }
+    if (!saved) {
+      removeKey(PERSISTENCE_KEYS.platformSession); // drop whatever unusable value was there
+      return;
+    }
+    setUser(saved.user);
+    setWorkspaces(saved.workspaces);
+    setCurrentWorkspace(saved.currentWorkspace);
+    setSubscription(saved.subscription);
+    setRole(saved.role);
+    setNotifications(saved.notifications);
+    setSessionStatus("authenticated");
+  }, []);
+
   // Brief initialization window — resolves to unauthenticated if nothing restores a session
   useEffect(() => {
     const t = setTimeout(() => {
@@ -115,6 +165,17 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
     }, 350);
     return () => clearTimeout(t);
   }, []);
+
+  // LOCAL_PERSISTENCE — real-time write-through so a refresh mid-session
+  // (or mid workspace-switch, mid notification-read, etc.) never silently
+  // drops back to signed-out. Only writes once actually authenticated.
+  useEffect(() => {
+    if (sessionStatus !== "authenticated" || !user || !currentWorkspace) return;
+    const snapshot: PersistedPlatformSession = {
+      user, workspaces, currentWorkspace, subscription, role, notifications,
+    };
+    writeJSON(PERSISTENCE_KEYS.platformSession, snapshot);
+  }, [sessionStatus, user, workspaces, currentWorkspace, subscription, role, notifications]);
 
   const unreadCount = notifications.filter((n) => !n.isRead).length;
 
@@ -140,6 +201,7 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
     // importing eight feature services here put them, and every fixture they
     // reach, in the entry chunk for all visitors on all pages.
     runSignOutCleanup();
+    removeKey(PERSISTENCE_KEYS.platformSession); // LOCAL_PERSISTENCE
     setSessionStatus("unauthenticated");
     setUser(null);
     setWorkspaces([]);
@@ -168,6 +230,7 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const expireSession = useCallback(() => {
+    removeKey(PERSISTENCE_KEYS.platformSession); // LOCAL_PERSISTENCE — don't resurrect on refresh
     setSessionStatus("expired");
   }, []);
 

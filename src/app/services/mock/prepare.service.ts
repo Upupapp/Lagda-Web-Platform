@@ -137,10 +137,16 @@ function validateDraftState(draft: PreparationDraft): PrepValidationResult {
     }
   });
 
+  // Kept as a defensive check — normalizeRoutingGroups() (models/prepare.ts)
+  // is now the single place step numbers get assigned, called from every
+  // mutation site, so this should be unreachable in normal use. It stays as
+  // a safety net for anything that constructs a draft outside that path
+  // (e.g. a hand-edited localStorage value).
   const stepNumbers = draft.routing.groups.map(g => g.stepNumber).sort((a, b) => a - b);
   for (let i = 0; i < stepNumbers.length; i++) {
     if (stepNumbers[i] !== i + 1) {
-      issues.push(mk("routing", "error", "NON_CONTIGUOUS_STEPS", "Routing step numbers are not contiguous."));
+      issues.push(mk("routing", "error", "NON_CONTIGUOUS_STEPS",
+        "There's a gap in your routing order. Reorder the steps or remove an empty step to continue."));
       break;
     }
   }
@@ -183,10 +189,16 @@ function validateDraftState(draft: PreparationDraft): PrepValidationResult {
 
   // ── Settings step (mostly optional) ─────────────────────────────────────────
   if (draft.settings.expiration.enabled && draft.settings.expiration.expiresAt) {
-    const expDate = new Date(draft.settings.expiration.expiresAt);
-    const today   = new Date("2026-07-15");
-    if (expDate <= today) {
-      issues.push(mk("settings", "error", "EXPIRATION_IN_PAST", "The expiration date must be in the future."));
+    // Real current time, not a fixture date — this must correctly catch a
+    // draft that had a valid future expiration when created but has since
+    // become stale (e.g. restored from localStorage days later). Compared
+    // at day granularity so "today" itself is never wrongly flagged as
+    // already past, matching the date input's own `min={today}` below.
+    const expDate = new Date(`${draft.settings.expiration.expiresAt}T00:00:00`);
+    const startOfToday = new Date();
+    startOfToday.setHours(0, 0, 0, 0);
+    if (expDate < startOfToday) {
+      issues.push(mk("settings", "error", "EXPIRATION_IN_PAST", "This expiration date has already passed — choose a new date to continue."));
     }
   }
   if (draft.settings.reminders.enabled && draft.settings.reminders.firstReminderDays < 1) {
@@ -194,9 +206,11 @@ function validateDraftState(draft: PreparationDraft): PrepValidationResult {
   }
 
   // ── Warnings (non-blocking) ──────────────────────────────────────────────────
-  if (!draft.settings.expiration.enabled) {
-    issues.push(mk("settings", "warning", "NO_EXPIRATION", "No expiration date is set. Transactions without expiration remain open indefinitely."));
-  }
+  // No "expiration not set" warning here deliberately: expiration.enabled
+  // defaults to false, so warning about the default on every fresh document
+  // is just alert fatigue for a legitimate, common choice. It's still shown
+  // neutrally (no warning styling) in the Settings step's "Reminders &
+  // Expiry" summary card.
   if (!draft.settings.reminders.enabled) {
     issues.push(mk("settings", "warning", "REMINDERS_DISABLED", "Reminders are disabled. Participants will not receive automated follow-up in production."));
   }
@@ -233,7 +247,14 @@ function validateDraftState(draft: PreparationDraft): PrepValidationResult {
 // ── Service interface ─────────────────────────────────────────────────────────
 
 export interface IPrepareDocumentService {
-  createDraft(context?: { source?: string; templateId?: string }): Promise<PreparationDraft>;
+  createDraft(context?: {
+    source?: string;
+    templateId?: string;
+    /** Pre-populates the new draft's files — used to hand off a document
+     *  selected before authentication (see PendingPreparationContext). */
+    initialFiles?: PrepFile[];
+    initialTitle?: string;
+  }): Promise<PreparationDraft>;
   getDraft(draftId: PrepDraftId): Promise<PreparationDraft | null>;
   listResumableDrafts(): Promise<ResumableDraftSummary[]>;
   updateFiles(draftId: PrepDraftId, files: PrepFile[]): Promise<PreparationDraft>;
@@ -247,6 +268,8 @@ export interface IPrepareDocumentService {
   discardDraft(draftId: PrepDraftId): Promise<void>;
   getContacts(): Promise<MockContact[]>;
   getTemplates(): Promise<MockTemplateSummary[]>;
+  /** LOCAL_PERSISTENCE — see PrepareContext's hydration effect. */
+  seedDraft(draft: PreparationDraft): void;
 }
 
 // ── Mock implementation ───────────────────────────────────────────────────────
@@ -257,7 +280,7 @@ export interface IPrepareDocumentService {
 // value outside `PrepSource` into the draft and corrupting every later branch
 // that switches on it.
 const PREP_SOURCES: readonly PrepSource[] = [
-  "new", "template", "dashboard", "documents", "transaction-draft", "direct",
+  "new", "template", "dashboard", "documents", "transaction-draft", "direct", "public-upload",
 ];
 
 function toPrepSource(value: string | undefined): PrepSource {
@@ -268,7 +291,12 @@ class MockPrepareDocumentService implements IPrepareDocumentService {
 
   private drafts: Map<PrepDraftId, PreparationDraft> = new Map();
 
-  async createDraft(context?: { source?: string; templateId?: string }): Promise<PreparationDraft> {
+  async createDraft(context?: {
+    source?: string;
+    templateId?: string;
+    initialFiles?: PrepFile[];
+    initialTitle?: string;
+  }): Promise<PreparationDraft> {
     await delay(600);
     const id: PrepDraftId = `draft_session_${Date.now()}`;
     let base: PreparationDraft;
@@ -291,8 +319,31 @@ class MockPrepareDocumentService implements IPrepareDocumentService {
       };
     }
 
+    // Hand off a document selected before authentication — see
+    // PendingPreparationContext.claimPending(). Files were already validated
+    // by the same classifyFiles() the authenticated Documents step uses.
+    if (context?.initialFiles && context.initialFiles.length > 0) {
+      base = {
+        ...base,
+        files: context.initialFiles,
+        details: context.initialTitle
+          ? { ...base.details, title: context.initialTitle }
+          : base.details,
+      };
+    }
+
     this.drafts.set(id, base);
     return { ...base };
+  }
+
+  // LOCAL_PERSISTENCE — re-registers a draft restored from localStorage (see
+  // PrepareContext's hydration effect) into this service's in-memory map, so
+  // later calls like updateFiles(draftId, ...) find it instead of silently
+  // no-op'ing against an id this service instance has never seen. Synchronous
+  // and side-effect-only; not part of IPrepareDocumentService since nothing
+  // outside the hydration path should ever call it.
+  seedDraft(draft: PreparationDraft): void {
+    this.drafts.set(draft.id, { ...draft });
   }
 
   async getDraft(draftId: PrepDraftId): Promise<PreparationDraft | null> {

@@ -24,18 +24,18 @@ export function DeviceLocationEvidence() {
             <thead>
               <tr>
                 {["Data type", "Public", "Description"].map((h) => (
-                  <th key={h} style={{ color: "#8A9BAE", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.06em", textAlign: "left", padding: "8px 12px", borderBottom: "1px solid rgba(255,255,255,0.08)" }}>{h}</th>
+                  <th key={h} style={{ color: "#64748B", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.06em", textAlign: "left", padding: "8px 12px", borderBottom: "1px solid rgba(0,0,0,0.08)" }}>{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
               {EVIDENCE_TYPES.map((e) => (
-                <tr key={e.type} style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
-                  <td style={{ padding: "10px 12px", color: "white", ...GF, fontSize: 12, fontWeight: 600 }}>{e.type}</td>
+                <tr key={e.type} style={{ borderBottom: "1px solid rgba(0,0,0,0.05)" }}>
+                  <td style={{ padding: "10px 12px", color: "#07111F", ...GF, fontSize: 12, fontWeight: 600 }}>{e.type}</td>
                   <td style={{ padding: "10px 12px", textAlign: "center" }}>
-                    <span style={{ color: e.public ? "#22C55E" : "#ef4444", fontSize: 14 }}>{e.public ? "✓" : "✕"}</span>
+                    <span style={{ color: e.public ? "#16A34A" : "#DC2626", fontSize: 14 }}>{e.public ? "✓" : "✕"}</span>
                   </td>
-                  <td style={{ padding: "10px 12px", color: "#94A3B8", ...GF, fontSize: 12 }}>{e.desc}</td>
+                  <td style={{ padding: "10px 12px", color: "#64748B", ...GF, fontSize: 12 }}>{e.desc}</td>
                 </tr>
               ))}
             </tbody>
@@ -52,9 +52,9 @@ export function DeviceLocationEvidence() {
             { title: "Shared IPs",                    desc: "Corporate networks and NAT often assign the same IP to many users. An IP is a network location, not a personal identifier." },
             { title: "Recorded, not displayed publicly", desc: "IP addresses are recorded as part of the audit trail but are not exposed in the public verification result." },
           ].map((item) => (
-            <div key={item.title} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 10, padding: "12px 14px" }}>
-              <p style={{ color: "white", ...GF, fontSize: 13, fontWeight: 700, margin: 0, marginBottom: 4 }}>{item.title}</p>
-              <p style={{ color: "#94A3B8", ...GF, fontSize: 12, lineHeight: 1.5, margin: 0 }}>{item.desc}</p>
+            <div key={item.title} style={{ background: "#ffffff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: 10, padding: "12px 14px", boxShadow: "0 1px 4px rgba(7,17,31,0.07)" }}>
+              <p style={{ color: "#07111F", ...GF, fontSize: 13, fontWeight: 700, margin: 0, marginBottom: 4 }}>{item.title}</p>
+              <p style={{ color: "#64748B", ...GF, fontSize: 12, lineHeight: 1.5, margin: 0 }}>{item.desc}</p>
             </div>
           ))}
         </div>
@@ -63,8 +63,8 @@ export function DeviceLocationEvidence() {
 
       <PageSection id="precise-location" light bordered>
         <div style={{ maxWidth: 640, margin: "0 auto" }}>
-          <p style={{ color: "#C9960C", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", marginBottom: 10 }}>PRECISE DEVICE LOCATION</p>
-          <p style={{ color: "#94a3b8", ...GF, fontSize: 15, lineHeight: 1.7, margin: 0 }}>
+          <p style={{ color: "#B45309", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", marginBottom: 10 }}>PRECISE DEVICE LOCATION</p>
+          <p style={{ color: "#64748B", ...GF, fontSize: 15, lineHeight: 1.7, margin: 0 }}>
             GPS or device location (latitude and longitude) requires explicit participant permission via the browser. LAGDA does not collect this without an explicit permission prompt. Where a participant denies the permission, no precise location is recorded. Availability and behavior may vary by browser, device, and platform policy.
           </p>
         </div>

@@ -15,7 +15,7 @@ export function AccountLocked() {
         margin: "0 auto 20px", fontSize: 24,
       }} aria-hidden>🔒</div>
 
-      <h1 style={{ color: "white", ...GF, fontSize: 22, fontWeight: 900, letterSpacing: "-0.02em", margin: "0 0 10px" }}>
+      <h1 style={{ color: "#07111F", ...GF, fontSize: 22, fontWeight: 900, letterSpacing: "-0.02em", margin: "0 0 10px" }}>
         Account temporarily locked
       </h1>
 
@@ -23,8 +23,8 @@ export function AccountLocked() {
         For your security, access to this account has been temporarily suspended after multiple failed sign-in attempts.
       </p>
 
-      <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 12, padding: "20px 24px", textAlign: "left", marginBottom: 28 }}>
-        <h2 style={{ color: "#94A3B8", ...GF, fontSize: 13, fontWeight: 700, margin: "0 0 12px" }}>What you can do</h2>
+      <div style={{ background: "#f8fafb", border: "1px solid rgba(0,0,0,0.08)", borderRadius: 12, padding: "20px 24px", textAlign: "left", marginBottom: 28 }}>
+        <h2 style={{ color: "#07111F", ...GF, fontSize: 13, fontWeight: 700, margin: "0 0 12px" }}>What you can do</h2>
         <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: 10 }}>
           {[
             "Wait a few minutes and try again.",
@@ -48,13 +48,13 @@ export function AccountLocked() {
         </Link>
         <Link
           to="/sign-in"
-          style={{ display: "block", background: "none", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 8, color: "#64748B", ...GF, fontSize: 14, fontWeight: 600, padding: "13px", textDecoration: "none", minHeight: 44, lineHeight: "18px" }}
+          style={{ display: "block", background: "none", border: "1px solid rgba(0,0,0,0.08)", borderRadius: 8, color: "#64748B", ...GF, fontSize: 14, fontWeight: 600, padding: "13px", textDecoration: "none", minHeight: 44, lineHeight: "18px" }}
         >
           Try signing in again
         </Link>
         <Link
           to="/help"
-          style={{ display: "block", color: "#475569", ...GF, fontSize: 13, textDecoration: "none", padding: "8px" }}
+          style={{ display: "block", color: "#64748B", ...GF, fontSize: 13, textDecoration: "none", padding: "8px" }}
         >
           Contact Support
         </Link>

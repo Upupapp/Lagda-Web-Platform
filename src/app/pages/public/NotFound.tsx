@@ -1,7 +1,7 @@
 import { Link, useLocation } from "react-router";
 import { LagdaLogo } from "../../components/brand/LagdaLogo";
 
-// Public 404 page — LAGDA branded, dark background.
+// Public 404 page — LAGDA branded, light background.
 // Never exposes stack traces, internal paths, or implementation details.
 
 const NAV_LINKS = [
@@ -18,7 +18,7 @@ export function NotFound() {
     <div
       style={{
         minHeight: "100vh",
-        background: "var(--lagda-navy, #07111F)",
+        background: "#ffffff",
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
@@ -33,7 +33,7 @@ export function NotFound() {
         style={{ textDecoration: "none", display: "block", marginBottom: 48 }}
         aria-label="LAGDA — Go to homepage"
       >
-        <LagdaLogo variant="white-icon" size="lg" decorative />
+        <LagdaLogo variant="colored-icon" size="lg" decorative />
       </Link>
 
       {/* Status code */}
@@ -55,7 +55,7 @@ export function NotFound() {
       {/* Heading */}
       <h1
         style={{
-          color: "white",
+          color: "#07111F",
           fontSize: 32,
           fontWeight: 700,
           letterSpacing: "-0.02em",
@@ -68,7 +68,7 @@ export function NotFound() {
 
       <p
         style={{
-          color: "#94A3B8",
+          color: "#64748B",
           fontSize: 15,
           textAlign: "center",
           maxWidth: 420,
@@ -80,9 +80,9 @@ export function NotFound() {
         <code
           style={{
             fontFamily: "'Geist Mono', monospace",
-            color: "#94A3B8",
+            color: "#334155",
             fontSize: 13,
-            background: "rgba(255,255,255,0.06)",
+            background: "rgba(0,0,0,0.04)",
             borderRadius: 4,
             padding: "1px 6px",
           }}
@@ -121,13 +121,13 @@ export function NotFound() {
             key={to}
             to={to}
             style={{
-              color: "#8A9BAE",
+              color: "#64748B",
               textDecoration: "none",
               fontSize: 13,
               transition: "color 0.15s ease",
             }}
-            onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.color = "#94A3B8")}
-            onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.color = "#8A9BAE")}
+            onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.color = "#07111F")}
+            onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.color = "#64748B")}
           >
             {label}
           </Link>

@@ -24,8 +24,8 @@ export function SecureStorage() {
             <div key={i} style={{ display: "flex", gap: 14, alignItems: "flex-start" }}>
               <div style={{ width: 36, height: 36, borderRadius: 8, background: "rgba(0,120,212,0.1)", border: "1px solid rgba(0,120,212,0.2)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, flexShrink: 0 }}>{s.icon}</div>
               <div style={{ flex: 1 }}>
-                <p style={{ color: "white", ...GF, fontSize: 14, fontWeight: 700, margin: 0, marginBottom: 3 }}>{s.stage}</p>
-                <p style={{ color: "#94A3B8", ...GF, fontSize: 13, lineHeight: 1.5, margin: 0 }}>{s.desc}</p>
+                <p style={{ color: "#07111F", ...GF, fontSize: 14, fontWeight: 700, margin: 0, marginBottom: 3 }}>{s.stage}</p>
+                <p style={{ color: "#64748B", ...GF, fontSize: 13, lineHeight: 1.5, margin: 0 }}>{s.desc}</p>
               </div>
               {i < STORAGE_STAGES.length - 1 && (
                 <div style={{ position: "absolute", display: "none" }} aria-hidden />
@@ -46,9 +46,9 @@ export function SecureStorage() {
             { who: "LAGDA support",     access: "Access may occur in response to a verified support request. Access is logged." },
             { who: "Legal process",     access: "Records may be produced in response to a valid legal order. Documented per applicable process." },
           ].map((r) => (
-            <div key={r.who} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 10, padding: "12px 14px" }}>
-              <p style={{ color: "#38bdf8", ...GM, fontSize: 10, fontWeight: 700, margin: 0, marginBottom: 4 }}>{r.who.toUpperCase()}</p>
-              <p style={{ color: "#94a3b8", ...GF, fontSize: 12, lineHeight: 1.5, margin: 0 }}>{r.access}</p>
+            <div key={r.who} style={{ background: "#ffffff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: 10, padding: "12px 14px", boxShadow: "0 1px 4px rgba(7,17,31,0.07)" }}>
+              <p style={{ color: "#0078D4", ...GM, fontSize: 10, fontWeight: 700, margin: 0, marginBottom: 4 }}>{r.who.toUpperCase()}</p>
+              <p style={{ color: "#64748B", ...GF, fontSize: 12, lineHeight: 1.5, margin: 0 }}>{r.access}</p>
             </div>
           ))}
         </div>
@@ -64,9 +64,9 @@ export function SecureStorage() {
             { title: "Participant data",                  desc: "Participant data associated with the transaction is addressed per the applicable Privacy Policy and data retention rules." },
             { title: "Export before deletion",            desc: "Senders should export documents and audit records before reaching the end of the retention period or before initiating hard deletion." },
           ].map((item) => (
-            <div key={item.title} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 10, padding: "12px 14px" }}>
-              <p style={{ color: "white", ...GF, fontSize: 13, fontWeight: 700, margin: 0, marginBottom: 4 }}>{item.title}</p>
-              <p style={{ color: "#94A3B8", ...GF, fontSize: 12, lineHeight: 1.5, margin: 0 }}>{item.desc}</p>
+            <div key={item.title} style={{ background: "#ffffff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: 10, padding: "12px 14px", boxShadow: "0 1px 4px rgba(7,17,31,0.07)" }}>
+              <p style={{ color: "#07111F", ...GF, fontSize: 13, fontWeight: 700, margin: 0, marginBottom: 4 }}>{item.title}</p>
+              <p style={{ color: "#64748B", ...GF, fontSize: 12, lineHeight: 1.5, margin: 0 }}>{item.desc}</p>
             </div>
           ))}
         </div>

@@ -10,28 +10,28 @@ const GM = { fontFamily: "'Geist Mono', monospace" };
 // ── Role assignment mockup ────────────────────────────────────────────────────
 function RoleAssignmentMockup() {
   const assignments = [
-    { name: "Marco Santos",   email: "marco.santos@example.com", role: "Signer",         avatar: "MS", color: "#38BDF8" },
-    { name: "Ana Reyes",      email: "ana.reyes@example.com",    role: "Approver",        avatar: "AR", color: "#22C55E" },
-    { name: "Lea Cruz",       email: "lea.cruz@example.com",     role: "Copy Recipient",  avatar: "LC", color: "#94A3B8" },
+    { name: "Marco Santos",   email: "marco.santos@example.com", role: "Signer",         avatar: "MS", color: "#0078D4" },
+    { name: "Ana Reyes",      email: "ana.reyes@example.com",    role: "Approver",        avatar: "AR", color: "#178A4C" },
+    { name: "Lea Cruz",       email: "lea.cruz@example.com",     role: "Copy Recipient",  avatar: "LC", color: "#64748B" },
   ];
   return (
-    <div aria-hidden style={{ background: "rgba(7,17,31,0.95)", border: "1px solid rgba(0,120,212,0.22)", borderRadius: 14, overflow: "hidden", maxWidth: 420, width: "100%" }}>
-      <div style={{ padding: "12px 16px", borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
-        <p style={{ color: "white", ...GF, fontSize: 13, fontWeight: 700, margin: 0 }}>Participant Setup</p>
-        <p style={{ color: "#8A9BAE", ...GM, fontSize: 10, margin: "2px 0 0" }}>Professional Services Agreement</p>
+    <div aria-hidden style={{ background: "#ffffff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: 14, overflow: "hidden", maxWidth: 420, width: "100%", boxShadow: "0 4px 16px rgba(7,17,31,0.08)" }}>
+      <div style={{ padding: "12px 16px", borderBottom: "1px solid rgba(0,0,0,0.07)" }}>
+        <p style={{ color: "#07111F", ...GF, fontSize: 13, fontWeight: 700, margin: 0 }}>Participant Setup</p>
+        <p style={{ color: "#64748B", ...GM, fontSize: 10, margin: "2px 0 0" }}>Professional Services Agreement</p>
       </div>
       {assignments.map((a) => (
-        <div key={a.name} style={{ padding: "10px 16px", borderBottom: "1px solid rgba(255,255,255,0.05)", display: "flex", alignItems: "center", gap: 12 }}>
+        <div key={a.name} style={{ padding: "10px 16px", borderBottom: "1px solid rgba(0,0,0,0.05)", display: "flex", alignItems: "center", gap: 12 }}>
           <div style={{ width: 32, height: 32, borderRadius: "50%", background: `${a.color}22`, border: `1px solid ${a.color}44`, display: "flex", alignItems: "center", justifyContent: "center", ...GM, fontSize: 10, fontWeight: 700, color: a.color, flexShrink: 0 }}>{a.avatar}</div>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <p style={{ color: "white", ...GF, fontSize: 12, fontWeight: 600, margin: 0 }}>{a.name}</p>
-            <p style={{ color: "#8A9BAE", ...GM, fontSize: 10, margin: "1px 0 0", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{a.email}</p>
+            <p style={{ color: "#07111F", ...GF, fontSize: 12, fontWeight: 600, margin: 0 }}>{a.name}</p>
+            <p style={{ color: "#64748B", ...GM, fontSize: 10, margin: "1px 0 0", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{a.email}</p>
           </div>
           <span style={{ background: `${a.color}18`, border: `1px solid ${a.color}33`, color: a.color, ...GM, fontSize: 9, fontWeight: 700, padding: "3px 8px", borderRadius: 999, flexShrink: 0 }}>{a.role}</span>
         </div>
       ))}
       <div style={{ padding: "10px 16px", background: "rgba(0,120,212,0.06)" }}>
-        <span style={{ color: "#38BDF8", ...GF, fontSize: 12, fontWeight: 700 }}>+ Add participant</span>
+        <span style={{ color: "#0078D4", ...GF, fontSize: 12, fontWeight: 700 }}>+ Add participant</span>
       </div>
     </div>
   );
@@ -51,10 +51,10 @@ export function ParticipantRoles() {
         <SectionHeading eyebrow="Active roles" id="roles-h2" heading="Six roles for eSignature transactions." sub="Assign each participant to the role that matches their responsibility in the workflow." />
         <div style={{ display: "grid", gap: 12 }} className="roles-grid">
           {PARTICIPANT_ROLES.map((r) => (
-            <div key={r.role} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 14, padding: "20px 18px" }}>
+            <div key={r.role} style={{ background: "#ffffff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: 14, padding: "20px 18px", boxShadow: "0 1px 4px rgba(7,17,31,0.07)" }}>
               <span aria-hidden style={{ fontSize: 24, display: "block", marginBottom: 10 }}>{r.icon}</span>
-              <p style={{ color: "white", ...GF, fontSize: 14, fontWeight: 700, margin: 0, marginBottom: 6 }}>{r.role}</p>
-              <p style={{ color: "#94A3B8", ...GF, fontSize: 13, lineHeight: 1.55, margin: 0 }}>{r.desc}</p>
+              <p style={{ color: "#07111F", ...GF, fontSize: 14, fontWeight: 700, margin: 0, marginBottom: 6 }}>{r.role}</p>
+              <p style={{ color: "#64748B", ...GF, fontSize: 13, lineHeight: 1.55, margin: 0 }}>{r.desc}</p>
             </div>
           ))}
         </div>
@@ -75,8 +75,8 @@ export function ParticipantRoles() {
                 "A Sender manages the entire transaction from preparation to completion",
               ].map((item) => (
                 <div key={item} style={{ display: "flex", gap: 8 }}>
-                  <span style={{ color: "#38BDF8", fontWeight: 700, flexShrink: 0 }}>✓</span>
-                  <span style={{ color: "#94a3b8", ...GF, fontSize: 14, lineHeight: 1.5 }}>{item}</span>
+                  <span style={{ color: "#0078D4", fontWeight: 700, flexShrink: 0 }}>✓</span>
+                  <span style={{ color: "#334155", ...GF, fontSize: 14, lineHeight: 1.5 }}>{item}</span>
                 </div>
               ))}
             </div>
@@ -95,9 +95,9 @@ export function ParticipantRoles() {
             { title: "Mixed routing", desc: "Steps are sequential, but multiple participants within one step may act in parallel." },
             { title: "Copy Recipient timing", desc: "Copy Recipients typically receive a notification after the transaction is complete, not during signing." },
           ].map((r) => (
-            <div key={r.title} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 10, padding: "14px 16px" }}>
-              <p style={{ color: "white", ...GF, fontSize: 13, fontWeight: 700, margin: 0, marginBottom: 4 }}>{r.title}</p>
-              <p style={{ color: "#94A3B8", ...GF, fontSize: 13, lineHeight: 1.5, margin: 0 }}>{r.desc}</p>
+            <div key={r.title} style={{ background: "#ffffff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: 10, padding: "14px 16px", boxShadow: "0 1px 4px rgba(7,17,31,0.06)" }}>
+              <p style={{ color: "#07111F", ...GF, fontSize: 13, fontWeight: 700, margin: 0, marginBottom: 4 }}>{r.title}</p>
+              <p style={{ color: "#64748B", ...GF, fontSize: 13, lineHeight: 1.5, margin: 0 }}>{r.desc}</p>
             </div>
           ))}
         </div>
@@ -106,8 +106,8 @@ export function ParticipantRoles() {
 
       <PageSection id="enotary-note">
         <div style={{ background: "rgba(103,2,59,0.06)", border: "1px solid rgba(103,2,59,0.2)", borderRadius: 12, padding: "16px 18px" }}>
-          <p style={{ color: "#c084fc", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", marginBottom: 6 }}>eNOTARY — NOT AN ACTIVE ROLE</p>
-          <p style={{ color: "#94a3b8", ...GF, fontSize: 14, lineHeight: 1.6, margin: 0 }}>
+          <p style={{ color: "#B01262", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", marginBottom: 6 }}>eNOTARY — NOT AN ACTIVE ROLE</p>
+          <p style={{ color: "#334155", ...GF, fontSize: 14, lineHeight: 1.6, margin: 0 }}>
             Notary Public is not an active participant role in LAGDA eSignature. Electronic signing and electronic notarization are separate processes. LAGDA eNotary is Coming Soon and Subject to Supreme Court Accreditation and applicable rules.
           </p>
         </div>

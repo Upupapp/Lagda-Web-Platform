@@ -27,8 +27,8 @@ function LifecycleStrip() {
           <div key={s.label} style={{ display: "flex", alignItems: "center" }}>
             <div style={{ textAlign: "center", padding: "12px 14px" }}>
               <div style={{ fontSize: 22, marginBottom: 6 }} aria-hidden>{s.icon}</div>
-              <p style={{ color: "white", ...GF, fontSize: 12, fontWeight: 700, margin: 0 }}>{s.label}</p>
-              <p style={{ color: "#8A9BAE", ...GM, fontSize: 10, margin: "2px 0 0" }}>{s.sub}</p>
+              <p style={{ color: "#07111F", ...GF, fontSize: 12, fontWeight: 700, margin: 0 }}>{s.label}</p>
+              <p style={{ color: "#64748B", ...GM, fontSize: 10, margin: "2px 0 0" }}>{s.sub}</p>
             </div>
             {i < steps.length - 1 && (
               <div aria-hidden style={{ width: 24, height: 1, background: "rgba(0,120,212,0.4)", flexShrink: 0 }} />
@@ -48,17 +48,18 @@ function CapabilityMap({ group }: { group: string }) {
       {caps.map((c) => (
         <Link key={c.path} to={c.path} style={{ textDecoration: "none" }}>
           <div style={{
-            background: "rgba(255,255,255,0.03)",
-            border: "1px solid rgba(255,255,255,0.07)",
+            background: "#ffffff",
+            border: "1px solid rgba(0,0,0,0.08)",
             borderRadius: 12, padding: "16px 18px",
-            transition: "border-color 0.15s ease, background 0.15s ease",
+            boxShadow: "0 1px 4px rgba(7,17,31,0.07), 0 0 1px rgba(7,17,31,0.04)",
+            transition: "border-color 0.15s ease, box-shadow 0.15s ease",
           }}
-            onMouseEnter={(e) => { e.currentTarget.style.borderColor = "rgba(0,120,212,0.35)"; e.currentTarget.style.background = "rgba(0,120,212,0.04)"; }}
-            onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.07)"; e.currentTarget.style.background = "rgba(255,255,255,0.03)"; }}
+            onMouseEnter={(e) => { e.currentTarget.style.borderColor = "rgba(0,120,212,0.35)"; e.currentTarget.style.boxShadow = "0 4px 16px rgba(7,17,31,0.10), 0 1px 4px rgba(7,17,31,0.05)"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(0,0,0,0.08)"; e.currentTarget.style.boxShadow = "0 1px 4px rgba(7,17,31,0.07), 0 0 1px rgba(7,17,31,0.04)"; }}
           >
             <span aria-hidden style={{ fontSize: 20, display: "block", marginBottom: 8 }}>{c.icon}</span>
-            <p style={{ color: "white", ...GF, fontSize: 13, fontWeight: 700, margin: 0, marginBottom: 4 }}>{c.title}</p>
-            <p style={{ color: "#94A3B8", ...GF, fontSize: 12, lineHeight: 1.5, margin: 0 }}>{c.desc}</p>
+            <p style={{ color: "#07111F", ...GF, fontSize: 13, fontWeight: 700, margin: 0, marginBottom: 4 }}>{c.title}</p>
+            <p style={{ color: "#64748B", ...GF, fontSize: 12, lineHeight: 1.5, margin: 0 }}>{c.desc}</p>
           </div>
         </Link>
       ))}
@@ -80,7 +81,7 @@ export function FeaturesOverview() {
           <Link to="/esignature/core-workflow" style={{ background: "#0078D4", color: "white", padding: "12px 24px", borderRadius: 10, ...GF, fontSize: 14, fontWeight: 700, textDecoration: "none", display: "inline-flex", alignItems: "center", minHeight: 44 }}>
             Explore Core Workflow →
           </Link>
-          <Link to="/create-account" style={{ background: "rgba(255,255,255,0.08)", color: "white", border: "1px solid rgba(255,255,255,0.15)", padding: "12px 20px", borderRadius: 10, ...GF, fontSize: 14, fontWeight: 600, textDecoration: "none", display: "inline-flex", alignItems: "center", minHeight: 44 }}>
+          <Link to="/create-account" style={{ background: "#ffffff", color: "#07111F", border: "1px solid rgba(0,0,0,0.12)", padding: "12px 20px", borderRadius: 10, ...GF, fontSize: 14, fontWeight: 600, textDecoration: "none", display: "inline-flex", alignItems: "center", minHeight: 44 }}>
             Create Free Account
           </Link>
         </div>
@@ -119,8 +120,8 @@ export function FeaturesOverview() {
       {/* Capability note */}
       <PageSection id="capability-note">
         <div style={{ maxWidth: 720, margin: "0 auto", textAlign: "center" }}>
-          <p style={{ color: "#8A9BAE", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", marginBottom: 16 }}>CAPABILITY NOTE</p>
-          <p style={{ color: "#94a3b8", ...GF, fontSize: 15, lineHeight: 1.7, margin: 0 }}>
+          <p style={{ color: "#64748B", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", marginBottom: 16 }}>CAPABILITY NOTE</p>
+          <p style={{ color: "#334155", ...GF, fontSize: 15, lineHeight: 1.7, margin: 0 }}>
             Some capabilities are available on all plans. Others depend on the plan selected or are designed for enterprise organizations. Look for availability labels on each feature page. Contact Sales to discuss enterprise requirements.
           </p>
         </div>

@@ -6,6 +6,7 @@ import { useState, useRef, useEffect } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router";
 import { mockAuthService } from "../../services/mock/auth.service";
 import { useOnboarding } from "../../context/OnboardingContext";
+import { sanitizeOnboardingReturnTo } from "../../utils/authReturnPath";
 
 const GF   = { fontFamily: "'Geist', sans-serif" };
 const GM   = { fontFamily: "'Geist Mono', monospace" };
@@ -51,7 +52,7 @@ export function VerifyEmail() {
     if (result.success) {
       setStatus("success");
       setTimeout(() => successRef.current?.focus(), 50);
-      setTimeout(() => navigate(safeReturnTo(returnTo), { replace: true }), 1500);
+      setTimeout(() => navigate(sanitizeOnboardingReturnTo(returnTo), { replace: true }), 1500);
     } else {
       setStatus("error");
       setErrorCode(result.errorCode ?? "invalid");
@@ -79,7 +80,7 @@ export function VerifyEmail() {
     return (
       <div ref={successRef} tabIndex={-1} style={{ outline: "none", textAlign: "center", padding: "8px 0" }}>
         <div style={{ width: 48, height: 48, borderRadius: "50%", background: "rgba(0,120,212,0.15)", border: "1px solid rgba(0,120,212,0.3)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px", fontSize: 20 }} aria-hidden>✓</div>
-        <h1 style={{ color: "white", ...GF, fontSize: 20, fontWeight: 900, margin: "0 0 8px" }}>Email verified</h1>
+        <h1 style={{ color: "#07111F", ...GF, fontSize: 20, fontWeight: 900, margin: "0 0 8px" }}>Email verified</h1>
         <p style={{ color: "#64748B", ...GF, fontSize: 14, margin: "0 0 16px", lineHeight: 1.6 }}>
           Your email has been verified in this frontend demonstration. Continuing to account setup…
         </p>
@@ -92,20 +93,20 @@ export function VerifyEmail() {
   return (
     <>
       <div style={{ textAlign: "center", marginBottom: 24 }}>
-        <h1 style={{ color: "white", ...GF, fontSize: 22, fontWeight: 900, letterSpacing: "-0.02em", margin: "0 0 6px" }}>Verify your email</h1>
+        <h1 style={{ color: "#07111F", ...GF, fontSize: 22, fontWeight: 900, letterSpacing: "-0.02em", margin: "0 0 6px" }}>Verify your email</h1>
         <p style={{ color: "#64748B", ...GF, fontSize: 13, lineHeight: 1.6 }}>
           Enter the 6-character code we would send to{" "}
-          <span style={{ color: "#94A3B8" }}>{maskedEmail}</span>
+          <span style={{ color: "#334155" }}>{maskedEmail}</span>
         </p>
       </div>
 
       {/* Demo instruction */}
       <div style={{ background: "rgba(0,120,212,0.06)", border: "1px solid rgba(0,120,212,0.15)", borderRadius: 10, padding: "12px 16px", marginBottom: 20 }}>
         <p style={{ color: "#C9960C", ...GM, fontSize: 9, fontWeight: 700, margin: "0 0 4px" }}>FRONTEND DEMONSTRATION</p>
-        <p style={{ color: "#475569", ...GF, fontSize: 12, margin: 0, lineHeight: 1.5 }}>
-          Use code <strong style={{ color: "#94A3B8", fontFamily: "'Geist Mono', monospace" }}>VERIFY</strong> to succeed,{" "}
-          <strong style={{ color: "#94A3B8", fontFamily: "'Geist Mono', monospace" }}>EXPIRED</strong> to test an expired code, or{" "}
-          <strong style={{ color: "#94A3B8", fontFamily: "'Geist Mono', monospace" }}>LOCKED</strong> to test the lockout state.
+        <p style={{ color: "#334155", ...GF, fontSize: 12, margin: 0, lineHeight: 1.5 }}>
+          Use code <strong style={{ color: "#07111F", fontFamily: "'Geist Mono', monospace" }}>VERIFY</strong> to succeed,{" "}
+          <strong style={{ color: "#07111F", fontFamily: "'Geist Mono', monospace" }}>EXPIRED</strong> to test an expired code, or{" "}
+          <strong style={{ color: "#07111F", fontFamily: "'Geist Mono', monospace" }}>LOCKED</strong> to test the lockout state.
         </p>
       </div>
 
@@ -114,7 +115,7 @@ export function VerifyEmail() {
         <div ref={errorRef} tabIndex={-1} role="alert" style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: 8, padding: "12px 14px", marginBottom: 16, outline: "none" }}>
           <p style={{ color: "#EF4444", ...GF, fontSize: 13, margin: 0 }}>{errorMsg}</p>
           {errorCode === "expired" && (
-            <button onClick={handleResend} style={{ color: "#38BDF8", ...GF, fontSize: 12, background: "none", border: "none", cursor: "pointer", padding: "4px 0 0", display: "block" }}>
+            <button onClick={handleResend} style={{ color: "#0078D4", ...GF, fontSize: 12, background: "none", border: "none", cursor: "pointer", padding: "4px 0 0", display: "block" }}>
               Request a new code
             </button>
           )}
@@ -123,7 +124,7 @@ export function VerifyEmail() {
 
       <form onSubmit={handleSubmit} noValidate style={{ display: "flex", flexDirection: "column", gap: 16 }}>
         <div>
-          <label htmlFor="ve-code" style={{ display: "block", color: "#94A3B8", ...GF, fontSize: 12, fontWeight: 600, marginBottom: 6 }}>
+          <label htmlFor="ve-code" style={{ display: "block", color: "#64748B", ...GF, fontSize: 12, fontWeight: 600, marginBottom: 6 }}>
             Verification code <span aria-hidden style={{ color: "#EF4444" }}>*</span>
           </label>
           <input
@@ -141,15 +142,15 @@ export function VerifyEmail() {
             placeholder="e.g. VERIFY"
             style={{
               width: "100%", boxSizing: "border-box",
-              background: "rgba(255,255,255,0.05)",
-              border: `1px solid ${status === "error" ? "rgba(239,68,68,0.4)" : "rgba(255,255,255,0.12)"}`,
-              borderRadius: 8, color: "white",
+              background: "#ffffff",
+              border: `1px solid ${status === "error" ? "rgba(239,68,68,0.4)" : "rgba(0,0,0,0.08)"}`,
+              borderRadius: 8, color: "#07111F",
               fontFamily: "'Geist Mono', monospace", fontSize: 18, fontWeight: 700,
               padding: "14px 16px", outline: "none", letterSpacing: "0.15em",
               textAlign: "center", textTransform: "uppercase",
             }}
           />
-          <p id="ve-code-hint" style={{ color: "#475569", ...GF, fontSize: 11, margin: "6px 0 0" }}>
+          <p id="ve-code-hint" style={{ color: "#64748B", ...GF, fontSize: 11, margin: "6px 0 0" }}>
             Enter the code exactly as shown. Codes are case-insensitive.
           </p>
         </div>
@@ -175,18 +176,18 @@ export function VerifyEmail() {
       {/* Resend */}
       {errorCode !== "locked" && (
         <div style={{ textAlign: "center", marginTop: 20 }}>
-          <p style={{ color: "#475569", ...GF, fontSize: 13, margin: "0 0 8px" }}>Didn't receive a code?</p>
+          <p style={{ color: "#64748B", ...GF, fontSize: 13, margin: "0 0 8px" }}>Didn't receive a code?</p>
           {resendStatus === "sent" ? (
-            <p role="status" aria-live="polite" style={{ color: "#38BDF8", ...GF, fontSize: 13 }}>
+            <p role="status" aria-live="polite" style={{ color: "#0078D4", ...GF, fontSize: 13 }}>
               Resend requested in this frontend demonstration.
             </p>
           ) : resendCooldown > 0 ? (
-            <p aria-live="polite" style={{ color: "#475569", ...GF, fontSize: 13 }}>Resend available in {resendCooldown}s</p>
+            <p aria-live="polite" style={{ color: "#64748B", ...GF, fontSize: 13 }}>Resend available in {resendCooldown}s</p>
           ) : (
             <button
               onClick={handleResend}
               disabled={resendStatus === "sending"}
-              style={{ background: "none", border: "none", cursor: "pointer", color: "#38BDF8", ...GF, fontSize: 13 }}
+              style={{ background: "none", border: "none", cursor: "pointer", color: "#0078D4", ...GF, fontSize: 13 }}
             >
               {resendStatus === "sending" ? "Requesting…" : "Resend code (demonstration only)"}
             </button>
@@ -197,22 +198,17 @@ export function VerifyEmail() {
       {/* Locked state guidance */}
       {errorCode === "locked" && (
         <div style={{ marginTop: 20, textAlign: "center" }}>
-          <Link to="/sign-in" style={{ color: "#38BDF8", ...GF, fontSize: 13, textDecoration: "none" }}>Return to Sign In</Link>
-          <span style={{ color: "#334155", margin: "0 8px" }}>·</span>
-          <Link to="/help" style={{ color: "#475569", ...GF, fontSize: 13, textDecoration: "none" }}>Contact Support</Link>
+          <Link to="/sign-in" style={{ color: "#0078D4", ...GF, fontSize: 13, textDecoration: "none" }}>Return to Sign In</Link>
+          <span style={{ color: "#94A3B8", margin: "0 8px" }}>·</span>
+          <Link to="/help" style={{ color: "#64748B", ...GF, fontSize: 13, textDecoration: "none" }}>Contact Support</Link>
         </div>
       )}
 
       {!errorCode && (
         <div style={{ textAlign: "center", marginTop: 16 }}>
-          <Link to="/sign-in" style={{ color: "#475569", ...GF, fontSize: 12, textDecoration: "none" }}>← Back to Sign In</Link>
+          <Link to="/sign-in" style={{ color: "#64748B", ...GF, fontSize: 12, textDecoration: "none" }}>← Back to Sign In</Link>
         </div>
       )}
     </>
   );
-}
-
-function safeReturnTo(raw: string): string {
-  if (raw.startsWith("/onboarding") || raw.startsWith("/app")) return raw;
-  return "/onboarding/profile";
 }

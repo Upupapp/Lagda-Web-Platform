@@ -36,7 +36,7 @@ import { TabStrip } from "./TabStrip";
 const NAVY   = "#07111F";
 const AZURE  = "#0078D4";
 const SLATE  = "#64748B";
-const SILVER = "#8A9BAE";
+const SILVER = "#94A3B8";
 const GOLD   = "#C9960C";
 const GREEN  = "#16A34A";
 const RED    = "#DC2626";
@@ -172,9 +172,9 @@ function DemoNotice() {
   return (
     <div style={{
       display: "flex", alignItems: "center", gap: 6,
-      fontSize: 11, color: SILVER,
+      fontSize: 11, color: SLATE,
       padding: "4px 16px",
-      borderBottom: "1px solid rgba(255,255,255,0.06)",
+      borderBottom: "1px solid rgba(0,0,0,0.06)",
     }}>
       <Info size={11} aria-hidden />
       <span>
@@ -232,7 +232,7 @@ function ResultItem({ result, isActive, onActivate, onHover, itemId }: ResultIte
             display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap",
           }}>
             <span style={{
-              ...GF, fontSize: 13, fontWeight: 500, color: "#F8FAFC",
+              ...GF, fontSize: 13, fontWeight: 500, color: "#07111F",
               overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1,
             }}>
               {renderHighlighted(result.title, titleRanges)}
@@ -300,13 +300,13 @@ function CommandItem({ cmd, isActive, isPinned, onActivate, onHover, onPin, item
       >
         <span style={{
           flexShrink: 0, width: 26, height: 26,
-          background: "rgba(255,255,255,0.06)",
+          background: "#F1F5F9",
           borderRadius: 6, display: "flex", alignItems: "center", justifyContent: "center",
-          color: SILVER,
+          color: SLATE,
         }}>
           <DynIcon name={cmd.icon} size={13} />
         </span>
-        <span style={{ ...GF, fontSize: 13, color: "#E2E8F0", flex: 1 }}>{cmd.label}</span>
+        <span style={{ ...GF, fontSize: 13, color: "#07111F", flex: 1 }}>{cmd.label}</span>
         {cmd.isPinnable && (
           <button
             onClick={(e) => { e.stopPropagation(); onPin(); }}
@@ -353,7 +353,7 @@ function NoQueryState({
 }: NoQueryStateProps) {
   const sectionStyle: React.CSSProperties = {
     padding: "8px 0 4px",
-    borderTop: "1px solid rgba(255,255,255,0.06)",
+    borderTop: "1px solid rgba(0,0,0,0.06)",
   };
   const sectionLabel: React.CSSProperties = {
     ...GF, fontSize: 10, fontWeight: 700, letterSpacing: "0.08em",
@@ -410,7 +410,7 @@ function NoQueryState({
                     }}
                   >
                     <History size={13} aria-hidden style={{ color: SLATE, flexShrink: 0 }} />
-                    <span style={{ ...GF, fontSize: 13, color: "#CBD5E1", flex: 1 }}>{rq.query}</span>
+                    <span style={{ ...GF, fontSize: 13, color: "#334155", flex: 1 }}>{rq.query}</span>
                     {rq.scope && rq.scope !== "all" && (
                       <span style={{ fontSize: 10, color: SLATE }}>{SEARCH_SCOPE_LABELS[rq.scope]}</span>
                     )}
@@ -453,7 +453,7 @@ function NoQueryState({
                     }}
                   >
                     <Clock size={13} aria-hidden style={{ color: SLATE, flexShrink: 0 }} />
-                    <span style={{ ...GF, fontSize: 13, color: "#CBD5E1", flex: 1 }}>{rd.label}</span>
+                    <span style={{ ...GF, fontSize: 13, color: "#334155", flex: 1 }}>{rd.label}</span>
                     <span style={{ fontSize: 10, color: SLATE }}>{rd.path.replace("/app/", "").split("/")[0]}</span>
                   </button>
                 </li>
@@ -534,7 +534,7 @@ function NoQueryState({
                     }}
                   >
                     <ArrowRight size={13} aria-hidden style={{ color: AZURE, flexShrink: 0 }} />
-                    <span style={{ ...GF, fontSize: 13, color: "#CBD5E1" }}>{sug.label}</span>
+                    <span style={{ ...GF, fontSize: 13, color: "#334155" }}>{sug.label}</span>
                   </button>
                 </li>
               );
@@ -561,7 +561,7 @@ function ResultsState({ response, activeIndex, flatItems, setActiveIndex, onResu
   return (
     <div>
       {response.groups.map((group) => (
-        <div key={group.scope} style={{ padding: "8px 0 4px", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+        <div key={group.scope} style={{ padding: "8px 0 4px", borderTop: "1px solid rgba(0,0,0,0.06)" }}>
           <span style={{
             ...GF, fontSize: 10, fontWeight: 700, letterSpacing: "0.08em",
             color: SLATE, textTransform: "uppercase",
@@ -888,10 +888,10 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
         <div
           style={{
             width: "100%", maxWidth: 600,
-            background: "#0B1829",
+            background: "#ffffff",
             borderRadius: 12,
-            border: "1px solid rgba(255,255,255,0.1)",
-            boxShadow: "0 24px 64px rgba(0,0,0,0.6)",
+            border: "1px solid rgba(0,0,0,0.08)",
+            boxShadow: "0 24px 64px rgba(7,17,31,0.28)",
             overflow: "hidden",
             display: "flex", flexDirection: "column",
             maxHeight: "calc(100vh - 120px)",
@@ -903,7 +903,7 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
           <div style={{
             display: "flex", alignItems: "center", gap: 8,
             padding: "12px 16px",
-            borderBottom: "1px solid rgba(255,255,255,0.08)",
+            borderBottom: "1px solid rgba(0,0,0,0.08)",
           }}>
             <Search size={16} aria-hidden style={{ color: SILVER, flexShrink: 0 }} />
             <input
@@ -931,7 +931,7 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
               spellCheck={false}
               style={{
                 flex: 1, background: "none", border: "none", outline: "none",
-                ...GF, fontSize: 15, color: "#F8FAFC",
+                ...GF, fontSize: 15, color: "#07111F",
                 caretColor: AZURE,
               }}
             />
@@ -950,7 +950,7 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
               aria-label="Press Escape to close"
               style={{
                 ...GF, fontSize: 11, color: SLATE, cursor: "pointer",
-                background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)",
+                background: "#F1F5F9", border: "1px solid rgba(0,0,0,0.08)",
                 borderRadius: 4, padding: "2px 6px", fontFamily: "monospace",
               }}
             >
@@ -963,7 +963,7 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
             <TabStrip as="tablist" label="Search scope" activeKey={scope}
               style={{
                 padding: "0 12px",
-                borderBottom: "1px solid rgba(255,255,255,0.06)",
+                borderBottom: "1px solid rgba(0,0,0,0.06)",
               }}
             >
               {VALID_SEARCH_SCOPES.map((sc) => (
@@ -1017,7 +1017,7 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
               }}>
                 <AlertTriangle size={24} aria-hidden style={{ color: SLATE }} />
                 <span style={{ ...GF, fontSize: 14, color: SILVER }}>
-                  No results for <strong style={{ color: "#F8FAFC" }}>"{query.trim()}"</strong>
+                  No results for <strong style={{ color: "#07111F" }}>"{query.trim()}"</strong>
                 </span>
                 {scope !== "all" && (
                   <button
@@ -1076,7 +1076,7 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
           <div style={{
             display: "flex", alignItems: "center", justifyContent: "space-between",
             padding: "8px 16px",
-            borderTop: "1px solid rgba(255,255,255,0.06)",
+            borderTop: "1px solid rgba(0,0,0,0.06)",
             flexWrap: "wrap", gap: 8,
           }}>
             <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
@@ -1088,8 +1088,8 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
                 <span key={label} style={{ display: "flex", alignItems: "center", gap: 4 }}>
                   <kbd style={{
                     ...GF, fontFamily: "monospace", fontSize: 10,
-                    color: SILVER, background: "rgba(255,255,255,0.06)",
-                    border: "1px solid rgba(255,255,255,0.1)",
+                    color: SLATE, background: "#F1F5F9",
+                    border: "1px solid rgba(0,0,0,0.08)",
                     borderRadius: 3, padding: "1px 4px",
                   }}>{key}</kbd>
                   <span style={{ ...GF, fontSize: 11, color: SLATE }}>{label}</span>
@@ -1115,7 +1115,7 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
       </div>
 
       <style>{`
-        .cp-panel { scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.1) transparent; }
+        .cp-panel { scrollbar-width: thin; scrollbar-color: rgba(0,0,0,0.15) transparent; }
         @media (max-width: 639px) {
           .cp-panel {
             border-radius: 0 !important;

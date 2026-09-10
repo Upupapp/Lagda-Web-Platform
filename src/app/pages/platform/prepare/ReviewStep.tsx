@@ -6,6 +6,7 @@
 
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
+import { ClipboardCheck, Check, X, ChevronRight } from "lucide-react";
 import { usePrepare } from "../../../context/PrepareContext";
 import {
   PREPARATION_STEPS,
@@ -19,6 +20,8 @@ import {
   getAuthMethodConfig,
 } from "../../../models/prepare";
 import type { PreparationStepId, PrepValidationIssue } from "../../../models/prepare";
+import { StepBanner, StepTwoColumn, RailCard } from "../../../components/prepare/StepBanner";
+import { MissingItemsModal } from "../../../components/prepare/MissingItemsModal";
 
 const GF     = { fontFamily: "'Geist', sans-serif" };
 const NAVY   = "#07111F";
@@ -86,27 +89,39 @@ function SectionBlock({
   );
 }
 
-function IssueRow({ issue }: { issue: PrepValidationIssue }) {
-  const isError = issue.severity === "error";
+function IssueRow({ issue, onGoToStep }: { issue: PrepValidationIssue; onGoToStep: (id: PreparationStepId) => void }) {
+  // Both errors and warnings use the same calm amber "reminder" tone —
+  // a red error box reads as "something broke"; this is just "not done yet".
+  // Clicking jumps straight to the step that owns this field, same as the
+  // "See what's left" reminder modal — every issue already carries stepId.
   return (
-    <div
+    <button
+      type="button"
+      onClick={() => onGoToStep(issue.stepId)}
       style={{
         ...GF,
         display: "flex",
-        alignItems: "flex-start",
+        alignItems: "center",
         gap: 8,
+        width: "100%",
+        textAlign: "left",
         padding: "8px 12px",
         borderRadius: 7,
-        background: isError ? "#FFF5F5" : "#FEF9EC",
-        border: `1px solid ${isError ? "#F5C6CB" : "#F0D07A"}`,
+        background: "#FEF9EC",
+        border: "1px solid #F0D07A",
         fontSize: 13,
-        color: isError ? "#C0392B" : GOLD,
+        color: "#8A6A16",
         marginBottom: 6,
+        cursor: "pointer",
+        transition: "filter 0.12s ease",
       }}
+      onMouseEnter={(e) => { e.currentTarget.style.filter = "brightness(0.97)"; }}
+      onMouseLeave={(e) => { e.currentTarget.style.filter = ""; }}
     >
-      <span aria-hidden="true">{isError ? "!" : "⚠"}</span>
-      <span>{issue.message}</span>
-    </div>
+      <span aria-hidden="true" style={{ color: GOLD, flexShrink: 0 }}>{issue.severity === "error" ? "●" : "○"}</span>
+      <span style={{ flex: 1 }}>{issue.message}</span>
+      <ChevronRight size={14} color={GOLD} style={{ flexShrink: 0 }} />
+    </button>
   );
 }
 
@@ -122,6 +137,7 @@ export function ReviewStep() {
   } = usePrepare();
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showMissing, setShowMissing] = useState(false);
 
   useEffect(() => { setStep("review"); }, [setStep]);
 
@@ -152,36 +168,29 @@ export function ReviewStep() {
   };
 
   const readyFiles = files.filter(f => f.fileState === "ready");
+  const stepValidity = validation?.stepValidity;
+  const checklistSteps = PREPARATION_STEPS.filter(s => s.id !== "fields" && s.id !== "review");
 
-  return (
-    <div style={{ ...GF, maxWidth: 660 }}>
-      <div style={{ marginBottom: 28 }}>
-        <h2 style={{ fontSize: 20, fontWeight: 800, color: NAVY, margin: "0 0 6px" }}>
-          Review
-        </h2>
-        <p style={{ fontSize: 13, color: SILVER, margin: 0, lineHeight: 1.6 }}>
-          Check all preparation settings before proceeding to place signature fields.
-        </p>
-      </div>
-
+  const main = (
+    <div style={{ ...GF, width: "100%" }}>
       {/* Validation summary */}
       {allIssues.length > 0 && (
         <div style={{ marginBottom: 24 }}>
           <div style={{ ...GF, fontSize: 13, fontWeight: 700, color: NAVY, marginBottom: 10 }}>
             Items to review
           </div>
-          {allIssues.map(i => <IssueRow key={i.id} issue={i} />)}
+          {allIssues.map(i => <IssueRow key={i.id} issue={i} onGoToStep={goToStep} />)}
         </div>
       )}
 
       {/* Documents */}
       <SectionBlock title="Documents" stepId="upload" onEdit={goToStep}>
         {files.length === 0 ? (
-          <span style={{ ...GF, fontSize: 13, color: "#C0392B" }}>No files selected</span>
+          <span style={{ ...GF, fontSize: 13, color: GOLD, fontWeight: 600 }}>No files selected yet</span>
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
             {files.map((f, i) => (
-              <div key={f.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 13, color: f.fileState === "ready" ? NAVY : "#C0392B" }}>
+              <div key={f.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 13, color: f.fileState === "ready" ? NAVY : GOLD }}>
                 <span>{i + 1}. {f.fileName}</span>
                 <span style={{ color: SILVER }}>{humanSize(f.fileSizeBytes)}</span>
               </div>
@@ -199,7 +208,7 @@ export function ReviewStep() {
       {/* Participants */}
       <SectionBlock title="Participants" stepId="participants" onEdit={goToStep}>
         {participants.length === 0 ? (
-          <span style={{ ...GF, fontSize: 13, color: "#C0392B" }}>No participants added</span>
+          <span style={{ ...GF, fontSize: 13, color: GOLD, fontWeight: 600 }}>No participants added yet</span>
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             {participants.map((p, i) => (
@@ -285,17 +294,17 @@ export function ReviewStep() {
           marginBottom: 24,
           padding: "16px 20px",
           borderRadius: 10,
-          background: isReady ? "#F0FAF4" : "#FFF5F5",
-          border: `1px solid ${isReady ? "#A8D5B5" : "#F5C6CB"}`,
+          background: isReady ? "#F0FAF4" : "#FEF9EC",
+          border: `1px solid ${isReady ? "#A8D5B5" : "#F0D07A"}`,
         }}
       >
-        <div style={{ ...GF, fontSize: 14, fontWeight: 700, color: isReady ? "#2E7D32" : "#C0392B", marginBottom: 6 }}>
-          {isReady ? "Ready to place fields" : "Not yet ready for field placement"}
+        <div style={{ ...GF, fontSize: 14, fontWeight: 700, color: isReady ? "#2E7D32" : "#8A6A16", marginBottom: 6 }}>
+          {isReady ? "Ready to place fields" : "Almost there — a few things left"}
         </div>
-        <div style={{ ...GF, fontSize: 12, color: isReady ? "#388E3C" : "#C0392B", lineHeight: 1.5 }}>
+        <div style={{ ...GF, fontSize: 12, color: isReady ? "#388E3C" : "#8A6A16", lineHeight: 1.5 }}>
           {isReady
             ? `${readyFiles.length} file${readyFiles.length !== 1 ? "s" : ""}, ${participants.length} participant${participants.length !== 1 ? "s" : ""}, and routing are configured. You may proceed to place signature fields.`
-            : "Resolve all errors above before proceeding to field placement."}
+            : "See the checklist on the right, or open the reminder below to jump straight to what's missing."}
         </div>
       </div>
 
@@ -327,31 +336,105 @@ export function ReviewStep() {
       </div>
 
       {/* CTA */}
-      <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+      <div style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
         <button
-          onClick={isReady && !isSubmitting ? handleContinue : undefined}
-          disabled={!isReady || isSubmitting}
-          aria-disabled={!isReady || isSubmitting}
+          onClick={isReady ? (isSubmitting ? undefined : handleContinue) : () => setShowMissing(true)}
+          disabled={isSubmitting}
           style={{
             ...GF,
             padding: "12px 32px",
             borderRadius: 8,
-            border: "none",
-            background: isReady ? AZURE : "#B0BEC5",
-            color: "#FFFFFF",
+            border: isReady ? "none" : "1px solid #F0D07A",
+            background: isReady ? AZURE : "#FEF9EC",
+            color: isReady ? "#FFFFFF" : GOLD,
             fontSize: 15,
             fontWeight: 700,
-            cursor: isReady && !isSubmitting ? "pointer" : "not-allowed",
+            cursor: isSubmitting ? "not-allowed" : "pointer",
           }}
         >
-          {isSubmitting ? "Preparing…" : "Continue to Place Fields →"}
+          {isSubmitting ? "Preparing…" : isReady ? "Continue to Place Fields →" : "Not ready yet →"}
         </button>
         {!isReady && (
-          <span style={{ ...GF, fontSize: 12, color: SILVER }}>
-            Resolve errors above to continue
-          </span>
+          <button
+            type="button"
+            onClick={() => setShowMissing(true)}
+            style={{ ...GF, fontSize: 12.5, fontWeight: 600, color: GOLD, background: "none", border: "none", cursor: "pointer", textDecoration: "underline", textUnderlineOffset: 2 }}
+          >
+            See what's left
+          </button>
         )}
       </div>
+
+      <MissingItemsModal
+        open={showMissing}
+        onClose={() => setShowMissing(false)}
+        issues={validation?.errors ?? []}
+        onGoToStep={goToStep}
+      />
+    </div>
+  );
+
+  const rail = (
+    <RailCard title="Readiness checklist">
+      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+        {checklistSteps.map(s => {
+          const valid = stepValidity ? stepValidity[s.id] : false;
+          return (
+            <button
+              key={s.id}
+              onClick={() => goToStep(s.id)}
+              style={{
+                ...GF,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: 8,
+                width: "100%",
+                padding: "6px 0",
+                border: "none",
+                background: "none",
+                cursor: "pointer",
+                textAlign: "left",
+              }}
+            >
+              <span style={{ fontSize: 12, fontWeight: 600, color: NAVY }}>{s.label}</span>
+              <span
+                aria-hidden="true"
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  width: 18,
+                  height: 18,
+                  borderRadius: "50%",
+                  background: valid ? "#E8F5E9" : "#FEF9EC",
+                  flexShrink: 0,
+                }}
+              >
+                {valid
+                  ? <Check size={12} color="#2E7D32" strokeWidth={3} />
+                  : <span aria-hidden="true" style={{ width: 6, height: 6, borderRadius: "50%", background: GOLD, display: "block" }} />}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+      <div style={{ ...GF, marginTop: 12, paddingTop: 12, borderTop: "1px solid #F0F2F5", fontSize: 12, fontWeight: 700, color: isReady ? "#2E7D32" : "#8A6A16" }}>
+        {isReady ? "All steps ready" : "A few steps still need a bit more"}
+      </div>
+    </RailCard>
+  );
+
+  return (
+    <div style={GF}>
+      <StepBanner
+        icon={ClipboardCheck}
+        eyebrow="Step 6 of 7"
+        title="Review"
+        description="Check all preparation settings before proceeding to place signature fields."
+        meta={isReady ? "Ready for field placement" : "Not yet ready"}
+      />
+      <StepTwoColumn main={main} rail={rail} />
     </div>
   );
 }

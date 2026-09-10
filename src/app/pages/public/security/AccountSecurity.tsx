@@ -10,20 +10,20 @@ function AccountSecurityDiagram() {
   const controls = [
     { label: "Password",         icon: "🔒", state: "Strong", color: "#22C55E" },
     { label: "MFA",              icon: "📱", state: "Enabled", color: "#22C55E" },
-    { label: "Active sessions",  icon: "💻", state: "1 device", color: "#38bdf8" },
+    { label: "Active sessions",  icon: "💻", state: "1 device", color: "#0078D4" },
     { label: "Login history",    icon: "📋", state: "No anomalies", color: "#22C55E" },
   ];
   return (
-    <div aria-hidden style={{ background: "rgba(7,17,31,0.95)", border: "1px solid rgba(0,120,212,0.22)", borderRadius: 14, overflow: "hidden", maxWidth: 380, width: "100%" }}>
-      <div style={{ padding: "12px 16px", borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
-        <p style={{ color: "white", ...GF, fontSize: 13, fontWeight: 700, margin: 0 }}>Account Security</p>
-        <p style={{ color: "#8A9BAE", ...GM, fontSize: 10, margin: "1px 0 0" }}>Ana Reyes · ana@mabinilegal.ph</p>
+    <div aria-hidden style={{ background: "#ffffff", border: "1px solid rgba(0,120,212,0.22)", borderRadius: 14, overflow: "hidden", maxWidth: 380, width: "100%", boxShadow: "0 4px 16px rgba(7,17,31,0.10)" }}>
+      <div style={{ padding: "12px 16px", borderBottom: "1px solid rgba(0,0,0,0.08)" }}>
+        <p style={{ color: "#07111F", ...GF, fontSize: 13, fontWeight: 700, margin: 0 }}>Account Security</p>
+        <p style={{ color: "#64748B", ...GM, fontSize: 10, margin: "1px 0 0" }}>Ana Reyes · ana@mabinilegal.ph</p>
       </div>
       {controls.map((c) => (
-        <div key={c.label} style={{ padding: "10px 16px", borderBottom: "1px solid rgba(255,255,255,0.05)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <div key={c.label} style={{ padding: "10px 16px", borderBottom: "1px solid rgba(0,0,0,0.05)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
             <span style={{ fontSize: 14 }}>{c.icon}</span>
-            <span style={{ color: "#94a3b8", ...GF, fontSize: 12 }}>{c.label}</span>
+            <span style={{ color: "#334155", ...GF, fontSize: 12 }}>{c.label}</span>
           </div>
           <span style={{ color: c.color, ...GM, fontSize: 10, fontWeight: 700 }}>{c.state}</span>
         </div>
@@ -59,8 +59,8 @@ export function AccountSecurity() {
                 "Suspicious-activity detection",
               ].map((item) => (
                 <div key={item} style={{ display: "flex", gap: 8 }}>
-                  <span style={{ color: "#38BDF8", fontWeight: 700, flexShrink: 0 }}>✓</span>
-                  <span style={{ color: "#94a3b8", ...GF, fontSize: 14, lineHeight: 1.5 }}>{item}</span>
+                  <span style={{ color: "#16A34A", fontWeight: 700, flexShrink: 0 }}>✓</span>
+                  <span style={{ color: "#334155", ...GF, fontSize: 14, lineHeight: 1.5 }}>{item}</span>
                 </div>
               ))}
             </div>
@@ -79,11 +79,11 @@ export function AccountSecurity() {
             { icon: "🏢", title: "Enterprise SSO",      desc: "Enterprise accounts can delegate authentication to an organizational identity provider via SAML/SSO." },
             { icon: "⚠️", title: "Account recovery",   desc: "Identity verification is required for account recovery to prevent unauthorized access through the recovery flow." },
           ].map((m) => (
-            <div key={m.title} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 10, padding: "14px 14px", display: "flex", gap: 12 }}>
+            <div key={m.title} style={{ background: "#ffffff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: 10, padding: "14px 14px", display: "flex", gap: 12, boxShadow: "0 1px 4px rgba(7,17,31,0.07)" }}>
               <span aria-hidden style={{ fontSize: 20, flexShrink: 0 }}>{m.icon}</span>
               <div>
-                <p style={{ color: "white", ...GF, fontSize: 13, fontWeight: 700, margin: 0, marginBottom: 4 }}>{m.title}</p>
-                <p style={{ color: "#94A3B8", ...GF, fontSize: 12, lineHeight: 1.5, margin: 0 }}>{m.desc}</p>
+                <p style={{ color: "#07111F", ...GF, fontSize: 13, fontWeight: 700, margin: 0, marginBottom: 4 }}>{m.title}</p>
+                <p style={{ color: "#64748B", ...GF, fontSize: 12, lineHeight: 1.5, margin: 0 }}>{m.desc}</p>
               </div>
             </div>
           ))}
@@ -99,9 +99,9 @@ export function AccountSecurity() {
             { rule: "Require MFA before sensitive ops", desc: "Certain actions — deleting documents, changing settings, adding members — may require MFA re-verification." },
             { rule: "Enforce password policy",          desc: "Administrators can set minimum password strength requirements for all workspace members." },
           ].map((r) => (
-            <div key={r.rule} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 10, padding: "12px 14px" }}>
-              <p style={{ color: "white", ...GF, fontSize: 13, fontWeight: 700, margin: 0, marginBottom: 3 }}>{r.rule}</p>
-              <p style={{ color: "#94A3B8", ...GF, fontSize: 12, lineHeight: 1.5, margin: 0 }}>{r.desc}</p>
+            <div key={r.rule} style={{ background: "#ffffff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: 10, padding: "12px 14px", boxShadow: "0 1px 4px rgba(7,17,31,0.07)" }}>
+              <p style={{ color: "#07111F", ...GF, fontSize: 13, fontWeight: 700, margin: 0, marginBottom: 3 }}>{r.rule}</p>
+              <p style={{ color: "#64748B", ...GF, fontSize: 12, lineHeight: 1.5, margin: 0 }}>{r.desc}</p>
             </div>
           ))}
         </div>

@@ -4,11 +4,13 @@
 // Burgundy (#67023B) is NEVER used. eNotary is NEVER mentioned.
 
 import React, { useEffect, useCallback } from "react";
+import { SlidersHorizontal } from "lucide-react";
 import { usePrepare } from "../../../context/PrepareContext";
 import {
   DEFAULT_PREP_SETTINGS,
 } from "../../../models/prepare";
 import type { PrepSettings } from "../../../models/prepare";
+import { StepBanner, StepTwoColumn, RailCard, StepIssueList } from "../../../components/prepare/StepBanner";
 
 const GF     = { fontFamily: "'Geist', sans-serif" };
 const NAVY   = "#07111F";
@@ -56,6 +58,14 @@ function Toggle({
         <div style={{ fontSize: 13, fontWeight: 600, color: NAVY }}>{label}</div>
         {description && <div style={{ fontSize: 12, color: SILVER, marginTop: 2, lineHeight: 1.5 }}>{description}</div>}
       </div>
+      {/* No onClick here — this div sits inside <label htmlFor={id}>, so a
+          click anywhere in the label already toggles the checkbox natively
+          via the browser's own label association. Adding a manual onClick
+          on top of that fired onChange twice per click (once from here,
+          once from the native label→checkbox forward), which is what made
+          the switch feel unresponsive — the second call could undo the
+          first. The checkbox is the single source of truth; this div is
+          purely the visual track. */}
       <div
         style={{
           width: 40,
@@ -67,7 +77,6 @@ function Toggle({
           transition: "background 0.15s",
           cursor: "pointer",
         }}
-        onClick={() => onChange(!checked)}
       >
         <input id={id} type="checkbox" checked={checked} onChange={e => onChange(e.target.checked)} style={{ position: "absolute", opacity: 0, width: 0, height: 0 }} />
         <div
@@ -167,27 +176,11 @@ export function SettingsStep() {
 
   const today = new Date().toISOString().split("T")[0]!;
 
-  return (
-    <div style={{ ...GF, maxWidth: 560 }}>
-      <div style={{ marginBottom: 28 }}>
-        <h2 style={{ fontSize: 20, fontWeight: 800, color: NAVY, margin: "0 0 6px" }}>Settings</h2>
-        <p style={{ fontSize: 13, color: SILVER, margin: 0, lineHeight: 1.6 }}>
-          Configure how invitations are sent, when reminders fire, and what happens when the
-          transaction completes or expires.
-        </p>
-      </div>
-
+  const main = (
+    <div style={{ ...GF, width: "100%" }}>
       {/* Validation */}
-      {errors.length > 0 && (
-        <ul aria-live="polite" style={{ ...GF, listStyle: "none", margin: "0 0 16px", padding: "10px 14px", borderRadius: 8, border: "1px solid #F5C6CB", background: "#FFF5F5", fontSize: 13, color: "#C0392B" }}>
-          {errors.map(e => <li key={e.id}>• {e.message}</li>)}
-        </ul>
-      )}
-      {warnings.length > 0 && (
-        <ul style={{ ...GF, listStyle: "none", margin: "0 0 16px", padding: "10px 14px", borderRadius: 8, border: "1px solid #F0D07A", background: "#FEF9EC", fontSize: 13, color: GOLD }}>
-          {warnings.map(e => <li key={e.id}>• {e.message}</li>)}
-        </ul>
-      )}
+      <StepIssueList issues={errors} severity="error" />
+      <StepIssueList issues={warnings} severity="warning" />
 
       {/* Invitation */}
       <div style={{ marginBottom: 32, padding: "20px", borderRadius: 12, border: "1px solid #E3E8EF" }}>
@@ -333,7 +326,7 @@ export function SettingsStep() {
         {settings.expiration.enabled && (
           <div>
             <label htmlFor="expiry-date" style={{ ...GF, fontSize: 12, fontWeight: 600, color: NAVY, display: "block", marginBottom: 5 }}>
-              Expiration date <span style={{ color: "#C0392B" }}>*</span>
+              Expiration date <span style={{ color: GOLD }}>*</span>
             </label>
             <input
               id="expiry-date"
@@ -407,6 +400,63 @@ export function SettingsStep() {
         No invitations, reminders, or completion notifications are sent from this demonstration.
         Invitation messages entered here are stored only in this browser session.
       </div>
+    </div>
+  );
+
+  const completionFlags: { label: string; on: boolean }[] = [
+    { label: "Notify sender on complete", on: settings.completion.notifySenderOnComplete },
+    { label: "Copy to signers", on: settings.completion.sendCompletionCopyToParticipants },
+    { label: "Copy to CC recipients", on: settings.completion.sendCompletionCopyToCCRecipients },
+    { label: "Participant download allowed", on: settings.completion.allowParticipantDownload },
+    { label: "Verification record created", on: settings.completion.createVerificationRecord },
+  ];
+
+  const rail = (
+    <>
+      <RailCard title="Reminders & expiry">
+        <div style={{ ...GF, fontSize: 12, color: "#4B5E70", display: "flex", flexDirection: "column", gap: 8 }}>
+          <div>
+            {settings.reminders.enabled
+              ? `First reminder after ${settings.reminders.firstReminderDays} day${settings.reminders.firstReminderDays !== 1 ? "s" : ""}, then every ${settings.reminders.repeatIntervalDays} day${settings.reminders.repeatIntervalDays !== 1 ? "s" : ""}.`
+              : "Reminders are disabled."}
+          </div>
+          <div>
+            {settings.expiration.enabled && settings.expiration.expiresAt
+              ? `Expires ${new Date(settings.expiration.expiresAt).toLocaleDateString("en-PH", { year: "numeric", month: "long", day: "numeric" })}.`
+              : "No expiration date set."}
+          </div>
+        </div>
+      </RailCard>
+      <RailCard title="On completion">
+        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+          {completionFlags.map(f => (
+            <div key={f.label} style={{ ...GF, fontSize: 12, display: "flex", justifyContent: "space-between", gap: 8 }}>
+              <span style={{ color: "#4B5E70" }}>{f.label}</span>
+              <span style={{ fontWeight: 700, color: f.on ? AZURE : SILVER }}>{f.on ? "On" : "Off"}</span>
+            </div>
+          ))}
+        </div>
+      </RailCard>
+    </>
+  );
+
+  const reminderSummary = settings.reminders.enabled
+    ? `Reminders every ${settings.reminders.repeatIntervalDays}d`
+    : "Reminders off";
+  const expirySummary = settings.expiration.enabled && settings.expiration.expiresAt
+    ? "Expiration set"
+    : "No expiration";
+
+  return (
+    <div style={GF}>
+      <StepBanner
+        icon={SlidersHorizontal}
+        eyebrow="Step 5 of 7"
+        title="Settings"
+        description="Configure how invitations are sent, when reminders fire, and what happens when the transaction completes or expires."
+        meta={`${reminderSummary} · ${expirySummary}`}
+      />
+      <StepTwoColumn main={main} rail={rail} />
     </div>
   );
 }

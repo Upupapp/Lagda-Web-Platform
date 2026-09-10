@@ -1,15 +1,22 @@
-// In-memory preparation draft context for /app/prepare/*.
-// PRIVACY: No draft state is written to localStorage, sessionStorage, or cookies.
-// File objects (browser File references) are NEVER stored in this context.
-// Only metadata (filename, size, type) passes through domain models.
-// All state is cleared when the user discards the draft or leaves preparation.
+// Preparation draft context for /app/prepare/*.
+// PRIVACY: File objects (browser File references) are NEVER stored in this
+// context or anywhere downstream — only metadata (filename, size, type)
+// passes through domain models. That rule is unchanged.
+//
+// LOCAL_PERSISTENCE: the draft itself IS now mirrored to localStorage (see
+// services/local-persistence.ts) so a refresh mid-preparation doesn't lose
+// work — there is no backend draft API yet to resume from instead. All
+// state is still cleared when the user discards the draft. See that file's
+// header for how to remove this layer once a real backend exists.
 
 import React, {
   createContext,
   useContext,
   useReducer,
   useCallback,
+  useEffect,
 } from "react";
+import { readJSON, writeJSON, removeKey, PERSISTENCE_KEYS } from "../services/local-persistence";
 import type {
   PreparationDraft,
   PrepDraftId,
@@ -27,6 +34,7 @@ import type {
 import {
   PREPARATION_STEPS,
   PREP_ROLE_IS_BLOCKING,
+  normalizeRoutingGroups,
 } from "../models/prepare";
 import {
   prepareService,
@@ -157,6 +165,58 @@ const INITIAL_STATE: PrepareState = {
   resumableDrafts: [],
 };
 
+// LOCAL_PERSISTENCE — restore a draft saved before a refresh. Passed as
+// useReducer's lazy-init argument below, so it runs synchronously before the
+// first render — the step-gating in resolveStepStates() sees the real draft
+// immediately instead of flashing an empty entry screen first.
+// LOCAL_PERSISTENCE — structural guard for hydration. readJSON() only
+// protects against corrupt JSON; it can't know whether a well-formed object
+// still matches PreparationDraft's current shape. A draft saved by an
+// earlier version of this app (a field renamed, a step added) is exactly
+// this kind of "valid JSON, wrong shape" data — trusting it blindly crashed
+// the whole /app/prepare tree on first render instead of just starting a
+// fresh draft, since nothing here ever asked "is this actually usable?"
+// before handing it to resolveStepStates()/validateDraftState().
+function isUsablePreparationDraft(v: unknown): v is PreparationDraft {
+  if (!v || typeof v !== "object") return false;
+  const d = v as Record<string, unknown>;
+  return (
+    typeof d.id === "string" &&
+    Array.isArray(d.files) &&
+    !!d.details && typeof (d.details as Record<string, unknown>).title === "string" &&
+    Array.isArray(d.participants) &&
+    !!d.routing && Array.isArray((d.routing as Record<string, unknown>).groups) &&
+    !!d.auth && typeof (d.auth as Record<string, unknown>).defaultMethod === "string" &&
+    !!d.settings
+  );
+}
+
+function hydratedInitialState(): PrepareState {
+  let saved: PreparationDraft | null = null;
+  try {
+    const raw = readJSON<PreparationDraft>(PERSISTENCE_KEYS.prepareDraft);
+    if (isUsablePreparationDraft(raw)) saved = raw;
+  } catch {
+    saved = null;
+  }
+  if (!saved) {
+    removeKey(PERSISTENCE_KEYS.prepareDraft); // drop whatever unusable value was there
+    return INITIAL_STATE;
+  }
+
+  // Repair routing step numbering on restore. A draft saved before the
+  // normalizeRoutingGroups() fix (or one that predates today's approval-based
+  // numbering fix) can have a gap — e.g. a lone "Signing" group stuck at
+  // stepNumber 2 with nothing at 1. Pure positional renumbering is always
+  // safe here: it never touches participant/group configuration, only the
+  // number, so this can't lose anything the user configured.
+  if (saved.routing.groups.length > 0) {
+    saved = { ...saved, routing: { ...saved.routing, groups: normalizeRoutingGroups(saved.routing.groups) } };
+  }
+  prepareService.seedDraft(saved);
+  return { ...INITIAL_STATE, draft: saved, loadState: "ready" };
+}
+
 // ── Context interface ─────────────────────────────────────────────────────────
 
 interface PrepareContextValue {
@@ -172,7 +232,13 @@ interface PrepareContextValue {
   resumableDrafts: ResumableDraftSummary[];
 
   // Draft lifecycle
-  createDraft:  (opts?: { source?: string; templateId?: string }) => Promise<PrepDraftId | null>;
+  createDraft:  (opts?: {
+    source?: string;
+    templateId?: string;
+    /** Hands off a document selected before authentication. */
+    initialFiles?: PrepFile[];
+    initialTitle?: string;
+  }) => Promise<PrepDraftId | null>;
   loadDraft:    (draftId: PrepDraftId) => Promise<void>;
   discardDraft: () => Promise<void>;
 
@@ -210,12 +276,26 @@ export function usePrepare(): PrepareContextValue {
 // ── Provider ──────────────────────────────────────────────────────────────────
 
 export function PrepareProvider({ children }: { children: React.ReactNode }) {
-  const [state, dispatch] = useReducer(prepareReducer, INITIAL_STATE);
+  const [state, dispatch] = useReducer(prepareReducer, undefined, hydratedInitialState);
 
   // Derived step states
   const stepStates = resolveStepStates(state.draft, state.activeStepId);
 
-  const createDraft = useCallback(async (opts?: { source?: string; templateId?: string }) => {
+  // LOCAL_PERSISTENCE — real-time write-through on every draft change.
+  useEffect(() => {
+    if (state.draft) {
+      writeJSON(PERSISTENCE_KEYS.prepareDraft, state.draft);
+    } else {
+      removeKey(PERSISTENCE_KEYS.prepareDraft);
+    }
+  }, [state.draft]);
+
+  const createDraft = useCallback(async (opts?: {
+    source?: string;
+    templateId?: string;
+    initialFiles?: PrepFile[];
+    initialTitle?: string;
+  }) => {
     dispatch({ type: "LOAD_START" });
     try {
       const draft = await prepareService.createDraft(opts);

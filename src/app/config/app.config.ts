@@ -27,6 +27,7 @@ export const APP_CONFIG = {
     publicVerification: true,    // Public document verification page (built in C10)
     platformDashboard: true,     // Authenticated platform (built in C12)
     devPlaceholders: true,       // Show dev placeholder pages for unbuilt routes
+    productTour: true,           // Spotlight/coach-mark walkthrough for authenticated /app/* routes
   },
 
   // Legal — must never change without legal review

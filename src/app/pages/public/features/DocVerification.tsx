@@ -22,10 +22,10 @@ function VerificationDemo() {
             onClick={() => setSelected(i)}
             aria-pressed={selected === i}
             style={{
-              background: selected === i ? s.bg : "rgba(255,255,255,0.03)",
-              border: `1px solid ${selected === i ? s.border : "rgba(255,255,255,0.08)"}`,
+              background: selected === i ? s.bg : "#f8fafb",
+              border: `1px solid ${selected === i ? s.border : "rgba(0,0,0,0.08)"}`,
               borderRadius: 8, padding: "6px 12px", cursor: "pointer",
-              color: selected === i ? s.color : "#94A3B8",
+              color: selected === i ? s.color : "#64748B",
               ...GF, fontSize: 12, fontWeight: selected === i ? 700 : 500,
               transition: "all 0.15s ease",
             }}
@@ -35,7 +35,7 @@ function VerificationDemo() {
         ))}
       </div>
       {/* Result card */}
-      <div style={{ background: "rgba(7,17,31,0.95)", border: `1px solid ${state.border}`, borderRadius: 14, overflow: "hidden" }}>
+      <div style={{ background: "#ffffff", border: `1px solid ${state.border}`, borderRadius: 14, overflow: "hidden", boxShadow: "0 4px 16px rgba(7,17,31,0.08)" }}>
         {/* Status bar */}
         <div style={{ padding: "12px 16px", background: state.bg, borderBottom: `1px solid ${state.border}`, display: "flex", alignItems: "center", gap: 10 }}>
           <div style={{ width: 10, height: 10, borderRadius: "50%", background: state.color, flexShrink: 0 }} />
@@ -43,22 +43,22 @@ function VerificationDemo() {
         </div>
         {/* Public info */}
         <div style={{ padding: "12px 16px" }}>
-          <p style={{ color: "#8A9BAE", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", marginBottom: 8 }}>PUBLIC VERIFICATION RESULT</p>
+          <p style={{ color: "#64748B", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", marginBottom: 8 }}>PUBLIC VERIFICATION RESULT</p>
           <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
             {state.public.map((line) => (
               <div key={line} style={{ display: "flex", gap: 10 }}>
-                <span style={{ color: "#7C8DA4", ...GM, fontSize: 10, flexShrink: 0 }}>›</span>
-                <span style={{ color: "#94a3b8", ...GF, fontSize: 12 }}>{line}</span>
+                <span style={{ color: "#94A3B8", ...GM, fontSize: 10, flexShrink: 0 }}>›</span>
+                <span style={{ color: "#334155", ...GF, fontSize: 12 }}>{line}</span>
               </div>
             ))}
           </div>
-          <div style={{ marginTop: 12, padding: "8px 10px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 8 }}>
-            <p style={{ color: "#7C8DA4", ...GM, fontSize: 9, margin: 0 }}>Private: Signer identities, IP addresses, device data, and authentication details are not shown publicly.</p>
+          <div style={{ marginTop: 12, padding: "8px 10px", background: "#f8fafb", border: "1px solid rgba(0,0,0,0.07)", borderRadius: 8 }}>
+            <p style={{ color: "#94A3B8", ...GM, fontSize: 9, margin: 0 }}>Private: Signer identities, IP addresses, device data, and authentication details are not shown publicly.</p>
           </div>
         </div>
         {/* Explanation */}
-        <div style={{ padding: "10px 16px", borderTop: "1px solid rgba(255,255,255,0.06)", background: "rgba(0,0,0,0.15)" }}>
-          <p style={{ color: "#94A3B8", ...GF, fontSize: 12, lineHeight: 1.5, margin: 0 }}>{state.desc}</p>
+        <div style={{ padding: "10px 16px", borderTop: "1px solid rgba(0,0,0,0.07)", background: "#f8fafb" }}>
+          <p style={{ color: "#64748B", ...GF, fontSize: 12, lineHeight: 1.5, margin: 0 }}>{state.desc}</p>
         </div>
       </div>
     </div>
@@ -79,7 +79,7 @@ export function DocVerification() {
         <div style={{ display: "grid", gap: "32px 48px", alignItems: "start" }} className="dv-two-col">
           <div>
             <SectionHeading eyebrow="Verification result" id="vr-h2" heading="Every result state — clearly explained." sub="Select a state to see what the public verification record shows. Private evidence is never exposed in public verification." />
-            <p style={{ color: "#8A9BAE", ...GF, fontSize: 13, lineHeight: 1.6, margin: 0, marginBottom: 16 }}>
+            <p style={{ color: "#64748B", ...GF, fontSize: 13, lineHeight: 1.6, margin: 0, marginBottom: 16 }}>
               These are illustrative frontend examples. Real verification requires a valid LAGDA Verification ID and an active transaction record.
             </p>
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
@@ -91,8 +91,8 @@ export function DocVerification() {
                 "Distinguish record status from file-match status",
               ].map((item) => (
                 <div key={item} style={{ display: "flex", gap: 8 }}>
-                  <span style={{ color: "#38BDF8", fontWeight: 700, flexShrink: 0 }}>✓</span>
-                  <span style={{ color: "#94a3b8", ...GF, fontSize: 13, lineHeight: 1.5 }}>{item}</span>
+                  <span style={{ color: "#0078D4", fontWeight: 700, flexShrink: 0 }}>✓</span>
+                  <span style={{ color: "#334155", ...GF, fontSize: 13, lineHeight: 1.5 }}>{item}</span>
                 </div>
               ))}
             </div>
@@ -110,10 +110,10 @@ export function DocVerification() {
             { icon: "📷", method: "QR code",          desc: "Scan the QR code printed or embedded on the completed document. Opens the verification record directly." },
             { icon: "🔗", method: "Secure link",      desc: "Use a verification link provided with the completed document. Links may have expiration." },
           ].map((m) => (
-            <div key={m.method} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 12, padding: "18px 16px" }}>
+            <div key={m.method} style={{ background: "#ffffff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: 12, padding: "18px 16px", boxShadow: "0 1px 4px rgba(7,17,31,0.07)" }}>
               <span aria-hidden style={{ fontSize: 22, display: "block", marginBottom: 10 }}>{m.icon}</span>
-              <p style={{ color: "white", ...GF, fontSize: 13, fontWeight: 700, margin: 0, marginBottom: 6 }}>{m.method}</p>
-              <p style={{ color: "#94A3B8", ...GF, fontSize: 12, lineHeight: 1.5, margin: 0 }}>{m.desc}</p>
+              <p style={{ color: "#07111F", ...GF, fontSize: 13, fontWeight: 700, margin: 0, marginBottom: 6 }}>{m.method}</p>
+              <p style={{ color: "#64748B", ...GF, fontSize: 12, lineHeight: 1.5, margin: 0 }}>{m.desc}</p>
             </div>
           ))}
         </div>
@@ -124,20 +124,20 @@ export function DocVerification() {
         <SectionHeading eyebrow="Public and private" id="pp-h2" heading="What public verification shows — and what it does not." center />
         <div style={{ display: "grid", gap: 12 }} className="pp-grid">
           <div style={{ background: "rgba(34,197,94,0.06)", border: "1px solid rgba(34,197,94,0.2)", borderRadius: 12, padding: "16px 16px" }}>
-            <p style={{ color: "#22C55E", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", marginBottom: 10 }}>SHOWN PUBLICLY</p>
+            <p style={{ color: "#178A4C", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", marginBottom: 10 }}>SHOWN PUBLICLY</p>
             {["Verification ID", "Transaction status (completed, cancelled, expired)", "Completion date", "Document description", "File match result"].map((t) => (
               <div key={t} style={{ display: "flex", gap: 8, marginBottom: 6 }}>
-                <span style={{ color: "#22C55E", flexShrink: 0 }}>✓</span>
-                <span style={{ color: "#94a3b8", ...GF, fontSize: 13 }}>{t}</span>
+                <span style={{ color: "#178A4C", flexShrink: 0 }}>✓</span>
+                <span style={{ color: "#334155", ...GF, fontSize: 13 }}>{t}</span>
               </div>
             ))}
           </div>
           <div style={{ background: "rgba(239,68,68,0.06)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: 12, padding: "16px 16px" }}>
-            <p style={{ color: "#ef4444", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", marginBottom: 10 }}>NOT SHOWN PUBLICLY</p>
+            <p style={{ color: "#DC2626", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", marginBottom: 10 }}>NOT SHOWN PUBLICLY</p>
             {["Signer names and email addresses", "Mobile numbers", "IP addresses and device data", "Authentication event details", "Confidential document content", "Private audit details"].map((t) => (
               <div key={t} style={{ display: "flex", gap: 8, marginBottom: 6 }}>
-                <span style={{ color: "#ef4444", flexShrink: 0 }}>✕</span>
-                <span style={{ color: "#94a3b8", ...GF, fontSize: 13 }}>{t}</span>
+                <span style={{ color: "#DC2626", flexShrink: 0 }}>✕</span>
+                <span style={{ color: "#334155", ...GF, fontSize: 13 }}>{t}</span>
               </div>
             ))}
           </div>

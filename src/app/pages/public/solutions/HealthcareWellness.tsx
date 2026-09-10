@@ -23,39 +23,40 @@ const WELLNESS_WORKFLOW = [
 function WellnessMockup() {
   return (
     <div aria-hidden style={{
-      background: "rgba(7,17,31,0.95)", border: "1px solid rgba(0,120,212,0.22)",
+      background: "#ffffff", border: "1px solid rgba(0,0,0,0.08)",
       borderRadius: 14, overflow: "hidden", maxWidth: 420, width: "100%",
+      boxShadow: "0 4px 16px rgba(7,17,31,0.10), 0 1px 4px rgba(7,17,31,0.05)",
     }}>
-      <div style={{ padding: "12px 16px", borderBottom: "1px solid rgba(255,255,255,0.07)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+      <div style={{ padding: "12px 16px", borderBottom: "1px solid rgba(0,0,0,0.08)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <div>
-          <p style={{ color: "white", ...GF, fontSize: 12, fontWeight: 700, margin: 0 }}>Service Agreement & Consent Form</p>
-          <p style={{ color: "#8A9BAE", ...GM, fontSize: 10, margin: "1px 0 0" }}>Lakandula Wellness Center</p>
+          <p style={{ color: "#07111F", ...GF, fontSize: 12, fontWeight: 700, margin: 0 }}>Service Agreement & Consent Form</p>
+          <p style={{ color: "#64748B", ...GM, fontSize: 10, margin: "1px 0 0" }}>Lakandula Wellness Center</p>
         </div>
-        <span style={{ background: "rgba(0,120,212,0.12)", color: "#38bdf8", ...GM, fontSize: 9, fontWeight: 700, padding: "2px 8px", borderRadius: 999, border: "1px solid rgba(0,120,212,0.25)" }}>ACTIVE</span>
+        <span style={{ background: "rgba(0,120,212,0.1)", color: "#0078D4", ...GM, fontSize: 9, fontWeight: 700, padding: "2px 8px", borderRadius: 999, border: "1px solid rgba(0,120,212,0.25)" }}>ACTIVE</span>
       </div>
       {[
-        { label: "Sofia Navarro — Client",  role: "Client acknowledgment",      status: "DONE",    color: "#22C55E" },
-        { label: "Lea Cruz — Practitioner", role: "Practitioner countersign",   status: "ACTIVE",  color: "#38BDF8" },
+        { label: "Sofia Navarro — Client",  role: "Client acknowledgment",      status: "DONE",    color: "#16A34A" },
+        { label: "Lea Cruz — Practitioner", role: "Practitioner countersign",   status: "ACTIVE",  color: "#0078D4" },
       ].map((p, i) => (
-        <div key={i} style={{ padding: "9px 16px", borderBottom: i < 1 ? "1px solid rgba(255,255,255,0.04)" : "none", display: "flex", gap: 10, alignItems: "center" }}>
+        <div key={i} style={{ padding: "9px 16px", borderBottom: i < 1 ? "1px solid rgba(0,0,0,0.06)" : "none", display: "flex", gap: 10, alignItems: "center" }}>
           <div style={{
             width: 28, height: 28, borderRadius: "50%",
-            background: p.status === "DONE" ? "rgba(34,197,94,0.12)" : "rgba(0,120,212,0.15)",
+            background: p.status === "DONE" ? "rgba(34,197,94,0.12)" : "rgba(0,120,212,0.12)",
             display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
             ...GM, fontSize: 9, fontWeight: 700, color: p.color, border: `1px solid ${p.color}33`,
           }}>
             {p.status === "DONE" ? "✓" : "02"}
           </div>
           <div style={{ flex: 1 }}>
-            <p style={{ color: "white", ...GF, fontSize: 12, fontWeight: 600, margin: 0 }}>{p.label}</p>
-            <p style={{ color: "#8A9BAE", ...GM, fontSize: 10, margin: "1px 0 0" }}>{p.role}</p>
+            <p style={{ color: "#07111F", ...GF, fontSize: 12, fontWeight: 600, margin: 0 }}>{p.label}</p>
+            <p style={{ color: "#64748B", ...GM, fontSize: 10, margin: "1px 0 0" }}>{p.role}</p>
           </div>
           <span style={{ color: p.color, ...GM, fontSize: 9, fontWeight: 700 }}>{p.status}</span>
         </div>
       ))}
-      <div style={{ padding: "10px 16px", background: "rgba(0,0,0,0.2)", display: "flex", justifyContent: "space-between" }}>
-        <span style={{ color: "#7C8DA4", ...GM, fontSize: 9 }}>LAGDA-VER-2026-009917</span>
-        <span style={{ color: "#22C55E", ...GM, fontSize: 9, fontWeight: 700 }}>Audit trail active</span>
+      <div style={{ padding: "10px 16px", background: "#f8fafb", display: "flex", justifyContent: "space-between" }}>
+        <span style={{ color: "#94A3B8", ...GM, fontSize: 9 }}>LAGDA-VER-2026-009917</span>
+        <span style={{ color: "#16A34A", ...GM, fontSize: 9, fontWeight: 700 }}>Audit trail active</span>
       </div>
     </div>
   );
@@ -132,7 +133,7 @@ export function HealthcareWellness() {
             <ChallengeCards challenges={CHALLENGES} />
           </div>
           <div>
-            <p style={{ color: "#8A9BAE", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", marginBottom: 12 }}>WELLNESS CONSENT FORM</p>
+            <p style={{ color: "#64748B", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", marginBottom: 12 }}>WELLNESS CONSENT FORM</p>
             <WellnessMockup />
           </div>
         </div>
@@ -156,7 +157,7 @@ export function HealthcareWellness() {
                 {NOT_RECOMMENDED.map((d) => (
                   <div key={d} style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
                     <span style={{ color: "#ef4444", flexShrink: 0, fontSize: 12, marginTop: 2 }}>×</span>
-                    <span style={{ color: "#94A3B8", ...GF, fontSize: 13, lineHeight: 1.45 }}>{d}</span>
+                    <span style={{ color: "#64748B", ...GF, fontSize: 13, lineHeight: 1.45 }}>{d}</span>
                   </div>
                 ))}
               </div>

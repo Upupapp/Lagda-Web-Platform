@@ -23,30 +23,31 @@ function TemplateLibraryMockup() {
 
   return (
     <div aria-hidden style={{
-      background: "rgba(7,17,31,0.95)",
+      background: "#ffffff",
       border: "1px solid rgba(0,120,212,0.22)",
       borderRadius: 14, overflow: "hidden",
       maxWidth: 460, width: "100%",
+      boxShadow: "0 4px 16px rgba(7,17,31,0.08)",
     }}>
-      <div style={{ padding: "12px 18px", borderBottom: "1px solid rgba(255,255,255,0.07)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <span style={{ color: "white", ...GF, fontSize: 13, fontWeight: 700 }}>Template Library</span>
-        <span style={{ background: "rgba(0,120,212,0.15)", color: "#38bdf8", border: "1px solid rgba(0,120,212,0.25)", borderRadius: 999, padding: "2px 10px", ...GM, fontSize: 10, fontWeight: 700 }}>
+      <div style={{ padding: "12px 18px", borderBottom: "1px solid rgba(0,0,0,0.07)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <span style={{ color: "#07111F", ...GF, fontSize: 13, fontWeight: 700 }}>Template Library</span>
+        <span style={{ background: "rgba(0,120,212,0.15)", color: "#0078D4", border: "1px solid rgba(0,120,212,0.25)", borderRadius: 999, padding: "2px 10px", ...GM, fontSize: 10, fontWeight: 700 }}>
           {templates.length} templates
         </span>
       </div>
       {templates.map((t) => (
-        <div key={t.name} style={{ padding: "11px 18px", borderBottom: "1px solid rgba(255,255,255,0.05)", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+        <div key={t.name} style={{ padding: "11px 18px", borderBottom: "1px solid rgba(0,0,0,0.05)", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <p style={{ color: "white", ...GF, fontSize: 12, fontWeight: 600, margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t.name}</p>
-            <p style={{ color: "#8A9BAE", ...GM, fontSize: 10, margin: "3px 0 0" }}>
+            <p style={{ color: "#07111F", ...GF, fontSize: 12, fontWeight: 600, margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t.name}</p>
+            <p style={{ color: "#64748B", ...GM, fontSize: 10, margin: "3px 0 0" }}>
               {t.roles} roles · {t.fields} fields
             </p>
           </div>
           <div style={{ display: "flex", gap: 8, flexShrink: 0, alignItems: "center" }}>
-            <span style={{ color: "#94A3B8", ...GM, fontSize: 10 }}>{t.uses}× used</span>
+            <span style={{ color: "#64748B", ...GM, fontSize: 10 }}>{t.uses}× used</span>
             <span style={{
               background: t.status === "Ready" ? "rgba(34,197,94,0.1)" : "rgba(100,116,139,0.1)",
-              color: t.status === "Ready" ? "#22C55E" : "#94a3b8",
+              color: t.status === "Ready" ? "#178A4C" : "#64748B",
               border: `1px solid ${t.status === "Ready" ? "rgba(34,197,94,0.25)" : "rgba(100,116,139,0.25)"}`,
               borderRadius: 999, padding: "2px 8px", ...GM, fontSize: 9, fontWeight: 700,
             }}>
@@ -56,7 +57,7 @@ function TemplateLibraryMockup() {
         </div>
       ))}
       <div style={{ padding: "10px 18px", background: "rgba(0,120,212,0.06)" }}>
-        <span style={{ color: "#38BDF8", ...GF, fontSize: 12, fontWeight: 700 }}>+ Create New Template</span>
+        <span style={{ color: "#0078D4", ...GF, fontSize: 12, fontWeight: 700 }}>+ Create New Template</span>
       </div>
     </div>
   );
@@ -66,12 +67,12 @@ function TemplateLibraryMockup() {
 function TemplateFeatureList() {
   return (
     <div>
-      <p style={{ color: "#8A9BAE", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", marginBottom: 14 }}>WHAT A TEMPLATE RETAINS</p>
+      <p style={{ color: "#64748B", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", marginBottom: 14 }}>WHAT A TEMPLATE RETAINS</p>
       <div style={{ display: "grid", gap: 8 }} className="tf-grid">
         {TEMPLATE_FEATURES.map((f) => (
           <div key={f} style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
-            <span style={{ color: "#38BDF8", fontWeight: 700, flexShrink: 0, fontSize: 12 }}>✓</span>
-            <span style={{ color: "#94a3b8", ...GF, fontSize: 13, lineHeight: 1.5 }}>{f}</span>
+            <span style={{ color: "#0078D4", fontWeight: 700, flexShrink: 0, fontSize: 12 }}>✓</span>
+            <span style={{ color: "#64748B", ...GF, fontSize: 13, lineHeight: 1.5 }}>{f}</span>
           </div>
         ))}
       </div>
@@ -84,10 +85,11 @@ function TemplateFeatureList() {
 function BrandingMockup() {
   return (
     <div aria-hidden style={{
-      background: "rgba(7,17,31,0.95)",
-      border: "1px solid rgba(0,120,212,0.2)",
+      background: "#ffffff",
+      border: "1px solid rgba(0,0,0,0.08)",
       borderRadius: 14, overflow: "hidden",
       maxWidth: 380, width: "100%",
+      boxShadow: "0 4px 16px rgba(7,17,31,0.08)",
     }}>
       {/* Company header */}
       <div style={{ padding: "12px 18px", background: "#0078D4", display: "flex", alignItems: "center", gap: 10 }}>
@@ -98,19 +100,19 @@ function BrandingMockup() {
         </div>
       </div>
       <div style={{ padding: "16px 18px" }}>
-        <p style={{ color: "white", ...GF, fontSize: 13, fontWeight: 700, margin: 0, marginBottom: 4 }}>Professional Services Agreement</p>
-        <p style={{ color: "#94A3B8", ...GF, fontSize: 12, margin: 0, marginBottom: 14 }}>Please review and sign the document below.</p>
-        <div style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 8, padding: "10px 12px", marginBottom: 12 }}>
-          <p style={{ color: "#94a3b8", ...GF, fontSize: 12, margin: 0 }}>📄 Professional Services Agreement.pdf</p>
+        <p style={{ color: "#07111F", ...GF, fontSize: 13, fontWeight: 700, margin: 0, marginBottom: 4 }}>Professional Services Agreement</p>
+        <p style={{ color: "#64748B", ...GF, fontSize: 12, margin: 0, marginBottom: 14 }}>Please review and sign the document below.</p>
+        <div style={{ background: "#f8fafb", border: "1px solid rgba(0,0,0,0.08)", borderRadius: 8, padding: "10px 12px", marginBottom: 12 }}>
+          <p style={{ color: "#334155", ...GF, fontSize: 12, margin: 0 }}>📄 Professional Services Agreement.pdf</p>
         </div>
         <div style={{ background: "#0078D4", borderRadius: 8, padding: "9px 16px", textAlign: "center", ...GF, fontSize: 13, fontWeight: 700, color: "white" }}>
           Review and Sign
         </div>
       </div>
       {/* Footer */}
-      <div style={{ padding: "10px 18px", borderTop: "1px solid rgba(255,255,255,0.06)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <span style={{ color: "#7C8DA4", ...GM, fontSize: 10 }}>LAGDA-VER-2026-004821</span>
-        <span style={{ color: "#7C8DA4", ...GF, fontSize: 10 }}>Secured by LAGDA</span>
+      <div style={{ padding: "10px 18px", borderTop: "1px solid rgba(0,0,0,0.07)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <span style={{ color: "#64748B", ...GM, fontSize: 10 }}>LAGDA-VER-2026-004821</span>
+        <span style={{ color: "#64748B", ...GF, fontSize: 10 }}>Secured by LAGDA</span>
       </div>
     </div>
   );
@@ -130,9 +132,9 @@ function RolePlaceholders() {
   return (
     <div style={{ display: "grid", gap: 10 }} className="rp-grid">
       {ROLES.map((r) => (
-        <div key={r.role} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 10, padding: "12px 14px" }}>
-          <p style={{ color: "white", ...GF, fontSize: 13, fontWeight: 700, margin: 0, marginBottom: 3 }}>{r.role}</p>
-          <p style={{ color: "#94A3B8", ...GF, fontSize: 12, margin: 0, lineHeight: 1.5 }}>{r.fills}</p>
+        <div key={r.role} style={{ background: "#ffffff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: 10, padding: "12px 14px" }}>
+          <p style={{ color: "#07111F", ...GF, fontSize: 13, fontWeight: 700, margin: 0, marginBottom: 3 }}>{r.role}</p>
+          <p style={{ color: "#64748B", ...GF, fontSize: 12, margin: 0, lineHeight: 1.5 }}>{r.fills}</p>
         </div>
       ))}
       <style>{`.rp-grid { grid-template-columns: repeat(2, 1fr); } @media (max-width: 560px) { .rp-grid { grid-template-columns: 1fr; } }`}</style>
@@ -157,7 +159,7 @@ export function EsigTemplatesBranding() {
           <div>
             <SectionHeading eyebrow="Template library" id="lib-heading" heading="Build once. Use every time." sub="Save any completed transaction setup — fields, participants, routing, authentication, and branding — as a reusable template." />
             <TemplateFeatureList />
-            <p style={{ color: "#8A9BAE", ...GF, fontSize: 13, lineHeight: 1.6, marginTop: 16 }}>
+            <p style={{ color: "#64748B", ...GF, fontSize: 13, lineHeight: 1.6, marginTop: 16 }}>
               Template availability and workspace-sharing controls may vary by plan.
             </p>
           </div>
@@ -171,7 +173,7 @@ export function EsigTemplatesBranding() {
         <SectionHeading eyebrow="Participant roles" id="roles-heading" heading="Define the workflow. Assign the right people each time." sub="Templates use role placeholders — not fixed email addresses. Each time you use a template, you assign the right person to each role." />
         <RolePlaceholders />
         <div style={{ marginTop: 20, background: "rgba(0,120,212,0.06)", border: "1px solid rgba(0,120,212,0.15)", borderRadius: 12, padding: "14px 16px" }}>
-          <p style={{ color: "#94a3b8", ...GF, fontSize: 14, lineHeight: 1.6, margin: 0 }}>
+          <p style={{ color: "#64748B", ...GF, fontSize: 14, lineHeight: 1.6, margin: 0 }}>
             "Build the workflow once. Assign the right people each time you use it." Templates are designed for organizations that repeatedly prepare the same type of document — engagement letters, NDAs, employment contracts, board resolutions.
           </p>
         </div>
@@ -182,10 +184,10 @@ export function EsigTemplatesBranding() {
         <div style={{ display: "grid", gap: "32px 48px", alignItems: "start" }} className="tb-two-col">
           <div>
             <SectionHeading eyebrow="Company branding" id="brand-heading" heading="Apply company branding only when it fits the document." />
-            <p style={{ color: "#94a3b8", ...GF, fontSize: 15, lineHeight: 1.65, margin: 0, marginBottom: 16 }}>
+            <p style={{ color: "#64748B", ...GF, fontSize: 15, lineHeight: 1.65, margin: 0, marginBottom: 16 }}>
               LAGDA workspace branding lets organizations add a consistent identity to their outgoing documents — logo, company header, sender name, and email customization.
             </p>
-            <p style={{ color: "#94a3b8", ...GF, fontSize: 15, lineHeight: 1.65, margin: 0, marginBottom: 20 }}>
+            <p style={{ color: "#64748B", ...GF, fontSize: 15, lineHeight: 1.65, margin: 0, marginBottom: 20 }}>
               Branding is applied to the signing interface and invitation email, not directly onto document content. LAGDA does not automatically overlay logos onto the PDF content itself.
             </p>
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
@@ -198,8 +200,8 @@ export function EsigTemplatesBranding() {
                 "Company branding never removes LAGDA trust indicators",
               ].map((item) => (
                 <div key={item} style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
-                  <span style={{ color: "#38BDF8", fontWeight: 700, flexShrink: 0, fontSize: 13 }}>✓</span>
-                  <span style={{ color: "#94a3b8", ...GF, fontSize: 14, lineHeight: 1.5 }}>{item}</span>
+                  <span style={{ color: "#0078D4", fontWeight: 700, flexShrink: 0, fontSize: 13 }}>✓</span>
+                  <span style={{ color: "#64748B", ...GF, fontSize: 14, lineHeight: 1.5 }}>{item}</span>
                 </div>
               ))}
             </div>
@@ -213,19 +215,19 @@ export function EsigTemplatesBranding() {
         <SectionHeading eyebrow="Template status" id="ts-heading" heading="Know which templates are ready to use." />
         <div style={{ display: "grid", gap: 10 }} className="ts-grid">
           {[
-            { status: "Ready",           color: "#22C55E", desc: "Template is complete and available to all authorized senders in the workspace." },
+            { status: "Ready",           color: "#178A4C", desc: "Template is complete and available to all authorized senders in the workspace." },
             { status: "Draft",           color: "#F59E0B", desc: "Template setup is incomplete and not yet available to other senders." },
             { status: "Needs Review",    color: "#F59E0B", desc: "Template has been flagged for review by an administrator." },
-            { status: "Restricted",      color: "#94a3b8", desc: "Template is available only to specific roles or senders." },
-            { status: "Archived",        color: "#8A9BAE", desc: "Template is no longer active. Existing transactions are retained." },
+            { status: "Restricted",      color: "#64748B", desc: "Template is available only to specific roles or senders." },
+            { status: "Archived",        color: "#64748B", desc: "Template is no longer active. Existing transactions are retained." },
             { status: "Enterprise Managed", color: "#C9960C", desc: "Template is centrally managed at the enterprise level." },
           ].map((s) => (
-            <div key={s.status} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 10, padding: "12px 14px" }}>
+            <div key={s.status} style={{ background: "#ffffff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: 10, padding: "12px 14px" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
                 <div style={{ width: 8, height: 8, borderRadius: "50%", background: s.color }} />
-                <span style={{ color: "white", ...GF, fontSize: 13, fontWeight: 700 }}>{s.status}</span>
+                <span style={{ color: "#07111F", ...GF, fontSize: 13, fontWeight: 700 }}>{s.status}</span>
               </div>
-              <p style={{ color: "#94A3B8", ...GF, fontSize: 12, margin: 0, lineHeight: 1.5 }}>{s.desc}</p>
+              <p style={{ color: "#64748B", ...GF, fontSize: 12, margin: 0, lineHeight: 1.5 }}>{s.desc}</p>
             </div>
           ))}
         </div>

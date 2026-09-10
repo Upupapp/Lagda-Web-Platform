@@ -32,7 +32,7 @@ export function DevPlaceholder({
     <div
       style={{
         minHeight: "100vh",
-        background: "#07111f",
+        background: "#ffffff",
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
@@ -71,7 +71,7 @@ export function DevPlaceholder({
       {/* Title */}
       <h1
         style={{
-          color: "white",
+          color: "#07111F",
           fontSize: 28,
           fontWeight: 700,
           textAlign: "center",
@@ -85,7 +85,7 @@ export function DevPlaceholder({
       {subtitle && (
         <p
           style={{
-            color: "#64748b",
+            color: "#64748B",
             fontSize: 15,
             textAlign: "center",
             maxWidth: 400,
@@ -145,8 +145,8 @@ export function DevPlaceholder({
             onClick={() => window.history.back()}
             style={{
               background: "transparent",
-              color: "#64748b",
-              border: "1px solid rgba(255,255,255,0.1)",
+              color: "#64748B",
+              border: "1px solid rgba(7,17,31,0.14)",
               borderRadius: 10,
               padding: "10px 20px",
               fontSize: 13,

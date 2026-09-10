@@ -21,15 +21,15 @@ export function EnotaryOverview() {
       <EnotaryStatusBanner />
 
       {/* Hero */}
-      <section style={{ padding: "72px 24px 56px", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+      <section style={{ padding: "72px 24px 56px", borderBottom: "1px solid rgba(0,0,0,0.07)" }}>
         <div style={{ maxWidth: 860, margin: "0 auto" }}>
           <div style={{ display: "inline-flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
-            <span style={{ background: "rgba(103,2,59,0.15)", border: "1px solid rgba(103,2,59,0.3)", color: BURGUNDY, ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", padding: "4px 10px", borderRadius: 4 }}>COMING SOON — FUTURE REGULATED PRODUCT</span>
+            <span style={{ background: "rgba(103,2,59,0.1)", border: "1px solid rgba(176,18,98,0.3)", color: BURGUNDY, ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", padding: "4px 10px", borderRadius: 4 }}>COMING SOON — FUTURE REGULATED PRODUCT</span>
           </div>
-          <h1 style={{ color: "white", ...GF, fontSize: "clamp(28px, 5vw, 52px)", fontWeight: 900, lineHeight: 1.05, letterSpacing: "-0.025em", margin: "0 0 20px" }}>
+          <h1 style={{ color: "#07111F", ...GF, fontSize: "clamp(28px, 5vw, 52px)", fontWeight: 900, lineHeight: 1.05, letterSpacing: "-0.025em", margin: "0 0 20px" }}>
             LAGDA eNotary
           </h1>
-          <p style={{ color: "#94a3b8", ...GF, fontSize: "clamp(15px, 2vw, 18px)", lineHeight: 1.7, maxWidth: 680, margin: "0 0 28px" }}>
+          <p style={{ color: "#334155", ...GF, fontSize: "clamp(15px, 2vw, 18px)", lineHeight: 1.7, maxWidth: 680, margin: "0 0 28px" }}>
             LAGDA is exploring a future electronic notarization product for the Philippines — subject to Supreme Court accreditation and applicable rules. This service is not currently available.
           </p>
           <EnotaryDisclaimer />
@@ -47,9 +47,9 @@ export function EnotaryOverview() {
               { label: "Requires legal authority to operate", body: "A platform cannot offer electronic notarization without Supreme Court accreditation. LAGDA does not currently have this accreditation." },
               { label: "Distinct from eSignature", body: "Electronic signing and electronic notarization are different processes with different legal requirements. They are separate services." },
             ].map(({ label, body }) => (
-              <div key={label} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 10, padding: "20px 22px" }}>
-                <p style={{ color: "white", ...GF, fontSize: 14, fontWeight: 700, margin: "0 0 8px" }}>{label}</p>
-                <p style={{ color: "#94A3B8", ...GF, fontSize: 13, lineHeight: 1.65, margin: 0 }}>{body}</p>
+              <div key={label} style={{ background: "#ffffff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: 10, padding: "20px 22px", boxShadow: "0 1px 4px rgba(7,17,31,0.06)" }}>
+                <p style={{ color: "#07111F", ...GF, fontSize: 14, fontWeight: 700, margin: "0 0 8px" }}>{label}</p>
+                <p style={{ color: "#64748B", ...GF, fontSize: 13, lineHeight: 1.65, margin: 0 }}>{body}</p>
               </div>
             ))}
           </div>
@@ -62,11 +62,11 @@ export function EnotaryOverview() {
           <EnotaryHeading sub="LAGDA eSignature and LAGDA eNotary are separate products with distinct requirements.">eNotary is separate from eSignature</EnotaryHeading>
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             {SEPARATION_POINTS.map(({ heading, body }) => (
-              <div key={heading} style={{ display: "flex", gap: 14, padding: "14px 18px", background: "rgba(103,2,59,0.05)", border: "1px solid rgba(103,2,59,0.15)", borderRadius: 9 }}>
+              <div key={heading} style={{ display: "flex", gap: 14, padding: "14px 18px", background: "rgba(103,2,59,0.04)", border: "1px solid rgba(176,18,98,0.2)", borderRadius: 9 }}>
                 <span style={{ color: BURGUNDY, fontSize: 16, marginTop: 1, flexShrink: 0 }}>≠</span>
                 <div>
-                  <p style={{ color: "white", ...GF, fontSize: 14, fontWeight: 700, margin: "0 0 4px" }}>{heading}</p>
-                  <p style={{ color: "#94A3B8", ...GF, fontSize: 13, lineHeight: 1.6, margin: 0 }}>{body}</p>
+                  <p style={{ color: "#07111F", ...GF, fontSize: 14, fontWeight: 700, margin: "0 0 4px" }}>{heading}</p>
+                  <p style={{ color: "#64748B", ...GF, fontSize: 13, lineHeight: 1.6, margin: 0 }}>{body}</p>
                 </div>
               </div>
             ))}
@@ -99,14 +99,14 @@ export function EnotaryOverview() {
       <EnotarySection id="waitlist" light bordered>
         <div style={{ maxWidth: 680, margin: "0 auto", textAlign: "center" }}>
           <p style={{ color: BURGUNDY, ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.12em", marginBottom: 12 }}>STAY INFORMED</p>
-          <h2 style={{ color: "white", ...GF, fontSize: "clamp(20px, 3vw, 32px)", fontWeight: 900, lineHeight: 1.15, margin: "0 0 14px" }}>Join the waitlist</h2>
-          <p style={{ color: "#94A3B8", ...GF, fontSize: 15, lineHeight: 1.7, margin: "0 0 24px" }}>
+          <h2 style={{ color: "#07111F", ...GF, fontSize: "clamp(20px, 3vw, 32px)", fontWeight: 900, lineHeight: 1.15, margin: "0 0 14px" }}>Join the waitlist</h2>
+          <p style={{ color: "#64748B", ...GF, fontSize: 15, lineHeight: 1.7, margin: "0 0 24px" }}>
             Receive updates on LAGDA eNotary as we progress toward accreditation. Joining the waitlist does not create an account, guarantee access, or reserve accreditation.
           </p>
           <Link to="/enotary/waitlist" style={{ display: "inline-block", background: BURGUNDY, color: "white", ...GF, fontSize: 14, fontWeight: 700, padding: "13px 28px", borderRadius: 8, textDecoration: "none" }}>
             Join the waitlist
           </Link>
-          <p style={{ color: "#7C8DA4", ...GF, fontSize: 12, marginTop: 14 }}>
+          <p style={{ color: "#94A3B8", ...GF, fontSize: 12, marginTop: 14 }}>
             No purchase required. Waitlist registration does not create a LAGDA account.
           </p>
         </div>
@@ -115,16 +115,16 @@ export function EnotaryOverview() {
       {/* Nav links */}
       <EnotarySection id="learn-more" bordered>
         <div style={{ maxWidth: 900, margin: "0 auto" }}>
-          <p style={{ color: "#8A9BAE", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", marginBottom: 20 }}>LEARN MORE</p>
+          <p style={{ color: "#94A3B8", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", marginBottom: 20 }}>LEARN MORE</p>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 12 }}>
             {[
               { label: "Future Capabilities", path: "/enotary/future-capabilities", sub: "Concepts under exploration" },
               { label: "Accreditation Roadmap", path: "/enotary/accreditation-roadmap", sub: "Our path to Supreme Court accreditation" },
               { label: "eNotary FAQ", path: "/enotary/faq", sub: "Common questions answered" },
             ].map(({ label, path, sub }) => (
-              <Link key={path} to={path} style={{ display: "block", textDecoration: "none", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 10, padding: "16px 20px", transition: "border-color 0.15s" }}>
-                <p style={{ color: "white", ...GF, fontSize: 14, fontWeight: 700, margin: "0 0 4px" }}>{label}</p>
-                <p style={{ color: "#8A9BAE", ...GF, fontSize: 12, margin: 0 }}>{sub}</p>
+              <Link key={path} to={path} style={{ display: "block", textDecoration: "none", background: "#ffffff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: 10, padding: "16px 20px", transition: "border-color 0.15s", boxShadow: "0 1px 4px rgba(7,17,31,0.06)" }}>
+                <p style={{ color: "#07111F", ...GF, fontSize: 14, fontWeight: 700, margin: "0 0 4px" }}>{label}</p>
+                <p style={{ color: "#64748B", ...GF, fontSize: 12, margin: 0 }}>{sub}</p>
               </Link>
             ))}
           </div>

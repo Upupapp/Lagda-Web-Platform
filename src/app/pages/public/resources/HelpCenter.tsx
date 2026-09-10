@@ -40,10 +40,10 @@ export function HelpCenter() {
 
   return (
     <ResourcesPageShell>
-      <section style={{ padding: "64px 24px 48px", background: "radial-gradient(ellipse 70% 40% at 50% 0%, rgba(56,189,248,0.06) 0%, transparent 70%)" }}>
+      <section style={{ padding: "64px 24px 48px", background: "radial-gradient(ellipse 70% 40% at 50% 0%, rgba(0,120,212,0.06) 0%, transparent 70%)" }}>
         <div style={{ maxWidth: 680, margin: "0 auto", textAlign: "center" }}>
-          <p style={{ color: "#38bdf8", ...GM, fontSize: 11, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 14 }}>HELP CENTER</p>
-          <h1 style={{ color: "white", ...GF, fontSize: "clamp(26px, 4.5vw, 44px)", fontWeight: 900, lineHeight: 1.1, letterSpacing: "-0.02em", margin: "0 0 24px" }}>How can we help?</h1>
+          <p style={{ color: "#0078D4", ...GM, fontSize: 11, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 14 }}>HELP CENTER</p>
+          <h1 style={{ color: "#07111F", ...GF, fontSize: "clamp(26px, 4.5vw, 44px)", fontWeight: 900, lineHeight: 1.1, letterSpacing: "-0.02em", margin: "0 0 24px" }}>How can we help?</h1>
           {/* Search */}
           <div style={{ position: "relative", maxWidth: 480, margin: "0 auto" }}>
             <label htmlFor="help-search" style={{ position: "absolute", width: 1, height: 1, overflow: "hidden", clip: "rect(0,0,0,0)" }}>Search help articles</label>
@@ -55,12 +55,12 @@ export function HelpCenter() {
               placeholder="Search help articles…"
               style={{
                 width: "100%", boxSizing: "border-box",
-                background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)",
-                borderRadius: 10, padding: "13px 18px", color: "white", ...GF, fontSize: 15,
+                background: "#ffffff", border: "1px solid rgba(0,0,0,0.14)",
+                borderRadius: 10, padding: "13px 18px", color: "#07111F", ...GF, fontSize: 15,
                 outline: "none",
               }}
               onFocus={(e) => (e.target as HTMLInputElement).style.borderColor = "#0078D4"}
-              onBlur={(e) => (e.target as HTMLInputElement).style.borderColor = "rgba(255,255,255,0.12)"}
+              onBlur={(e) => (e.target as HTMLInputElement).style.borderColor = "rgba(0,0,0,0.14)"}
               autoComplete="off"
               aria-label="Search help articles"
             />
@@ -74,14 +74,14 @@ export function HelpCenter() {
           <button
             onClick={() => setSelectedCategory(null)}
             aria-pressed={!selectedCategory}
-            style={{ background: !selectedCategory ? "#0078D4" : "rgba(255,255,255,0.05)", color: !selectedCategory ? "white" : "#94A3B8", border: "1px solid " + (!selectedCategory ? "#0078D4" : "rgba(255,255,255,0.1)"), borderRadius: 6, padding: "6px 14px", cursor: "pointer", ...GF, fontSize: 12, fontWeight: 600, minHeight: 32 }}
+            style={{ background: !selectedCategory ? "#0078D4" : "#ffffff", color: !selectedCategory ? "white" : "#64748B", border: "1px solid " + (!selectedCategory ? "#0078D4" : "rgba(0,0,0,0.12)"), borderRadius: 6, padding: "6px 14px", cursor: "pointer", ...GF, fontSize: 12, fontWeight: 600, minHeight: 32 }}
           >All</button>
           {CATEGORIES.map(cat => (
             <button
               key={cat}
               onClick={() => setSelectedCategory(selectedCategory === cat ? null : cat)}
               aria-pressed={selectedCategory === cat}
-              style={{ background: selectedCategory === cat ? "rgba(0,120,212,0.15)" : "rgba(255,255,255,0.04)", color: selectedCategory === cat ? "#38bdf8" : "#94A3B8", border: "1px solid " + (selectedCategory === cat ? "rgba(0,120,212,0.3)" : "rgba(255,255,255,0.08)"), borderRadius: 6, padding: "6px 14px", cursor: "pointer", ...GF, fontSize: 12, fontWeight: 500, minHeight: 32, whiteSpace: "nowrap" }}
+              style={{ background: selectedCategory === cat ? "rgba(0,120,212,0.1)" : "#ffffff", color: selectedCategory === cat ? "#0078D4" : "#64748B", border: "1px solid " + (selectedCategory === cat ? "rgba(0,120,212,0.3)" : "rgba(0,0,0,0.12)"), borderRadius: 6, padding: "6px 14px", cursor: "pointer", ...GF, fontSize: 12, fontWeight: 500, minHeight: 32, whiteSpace: "nowrap" }}
             >{cat}</button>
           ))}
         </div>
@@ -89,28 +89,28 @@ export function HelpCenter() {
         {/* Results */}
         {filtered.length === 0 ? (
           <div style={{ textAlign: "center", padding: "40px 0" }}>
-            <p style={{ color: "#94A3B8", ...GF, fontSize: 16, fontWeight: 600 }}>No articles found for "{query}"</p>
-            <p style={{ color: "#8A9BAE", ...GF, fontSize: 13 }}>Try a different search term or <Link to="/contact" style={{ color: "#38bdf8", textDecoration: "none" }}>contact our team</Link>.</p>
+            <p style={{ color: "#64748B", ...GF, fontSize: 16, fontWeight: 600 }}>No articles found for "{query}"</p>
+            <p style={{ color: "#64748B", ...GF, fontSize: 13 }}>Try a different search term or <Link to="/contact" style={{ color: "#0078D4", textDecoration: "none" }}>contact our team</Link>.</p>
           </div>
         ) : (
           <div>
-            <p style={{ color: "#8A9BAE", ...GM, fontSize: 10, marginBottom: 16 }}>{filtered.length} ARTICLE{filtered.length !== 1 ? "S" : ""}</p>
+            <p style={{ color: "#64748B", ...GM, fontSize: 10, marginBottom: 16 }}>{filtered.length} ARTICLE{filtered.length !== 1 ? "S" : ""}</p>
             <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
               {filtered.map(({ id, category, title, path }) => (
                 <Link key={id} to={path} style={{
                   display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16,
                   padding: "13px 18px", borderRadius: 9, textDecoration: "none",
-                  background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)",
+                  background: "#ffffff", border: "1px solid rgba(0,0,0,0.08)",
                   transition: "border-color 0.15s ease, background 0.15s ease",
                 }}
                   onMouseEnter={(e) => { (e.currentTarget as HTMLAnchorElement).style.borderColor = "rgba(0,120,212,0.3)"; (e.currentTarget as HTMLAnchorElement).style.background = "rgba(0,120,212,0.04)"; }}
-                  onMouseLeave={(e) => { (e.currentTarget as HTMLAnchorElement).style.borderColor = "rgba(255,255,255,0.06)"; (e.currentTarget as HTMLAnchorElement).style.background = "rgba(255,255,255,0.03)"; }}
+                  onMouseLeave={(e) => { (e.currentTarget as HTMLAnchorElement).style.borderColor = "rgba(0,0,0,0.08)"; (e.currentTarget as HTMLAnchorElement).style.background = "#ffffff"; }}
                 >
                   <div>
-                    <span style={{ color: "#38bdf8", ...GM, fontSize: 9, fontWeight: 700, letterSpacing: "0.08em", display: "block", marginBottom: 3 }}>{category.toUpperCase()}</span>
-                    <span style={{ color: "white", ...GF, fontSize: 14, fontWeight: 500 }}>{title}</span>
+                    <span style={{ color: "#0078D4", ...GM, fontSize: 9, fontWeight: 700, letterSpacing: "0.08em", display: "block", marginBottom: 3 }}>{category.toUpperCase()}</span>
+                    <span style={{ color: "#07111F", ...GF, fontSize: 14, fontWeight: 500 }}>{title}</span>
                   </div>
-                  <span style={{ color: "#8A9BAE", fontSize: 14, flexShrink: 0 }}>→</span>
+                  <span style={{ color: "#94A3B8", fontSize: 14, flexShrink: 0 }}>→</span>
                 </Link>
               ))}
             </div>
@@ -120,9 +120,9 @@ export function HelpCenter() {
 
       <ResourcesSection id="contact-support" light bordered>
         <div style={{ maxWidth: 600, margin: "0 auto", textAlign: "center" }}>
-          <p style={{ color: "#38bdf8", ...GM, fontSize: 11, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 12 }}>STILL NEED HELP?</p>
-          <h2 style={{ color: "white", ...GF, fontSize: 26, fontWeight: 800, marginBottom: 12 }}>Contact our team.</h2>
-          <p style={{ color: "#94A3B8", ...GF, fontSize: 15, lineHeight: 1.65, marginBottom: 24 }}>Our team can help with sales, product questions, and support inquiries.</p>
+          <p style={{ color: "#0078D4", ...GM, fontSize: 11, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 12 }}>STILL NEED HELP?</p>
+          <h2 style={{ color: "#07111F", ...GF, fontSize: 26, fontWeight: 800, marginBottom: 12 }}>Contact our team.</h2>
+          <p style={{ color: "#64748B", ...GF, fontSize: 15, lineHeight: 1.65, marginBottom: 24 }}>Our team can help with sales, product questions, and support inquiries.</p>
           <Link to="/contact" style={{ background: "#0078D4", color: "white", ...GF, fontSize: 14, fontWeight: 700, padding: "12px 28px", borderRadius: 8, textDecoration: "none", minHeight: 44, display: "inline-flex", alignItems: "center" }}>Contact Support</Link>
         </div>
       </ResourcesSection>

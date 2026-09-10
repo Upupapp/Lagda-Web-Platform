@@ -13,6 +13,8 @@ import { MobileNav } from "../components/platform/MobileNav";
 import { PlatformHeader } from "../components/platform/PlatformHeader";
 import { SKELETON_STYLE } from "../components/platform/AppContentLayout";
 import { LagdaLoader } from "../components/brand/LagdaLoader";
+import { TourProvider } from "../tour/TourContext";
+import { buildSignInUrl } from "../utils/authReturnPath";
 
 // ── Route loading fallback ────────────────────────────────────────────────────
 function PlatformPageLoader() {
@@ -33,18 +35,11 @@ function SessionInitializing() {
   return (
     <LagdaLoader
       mode="fullscreen"
-      theme="dark"
+      theme="light"
       message="Preparing your secure workspace"
       showWordmark
     />
   );
-}
-
-// ── Return-route validation ───────────────────────────────────────────────────
-// Only allows internal /app/* paths to prevent open redirect.
-function buildReturnUrl(pathname: string): string {
-  const safe = pathname.startsWith("/app") ? pathname : "/app/dashboard";
-  return `/sign-in?returnTo=${encodeURIComponent(safe)}`;
 }
 
 // ── Platform shell ────────────────────────────────────────────────────────────
@@ -63,15 +58,16 @@ export function PlatformLayout() {
   }
 
   if (sessionStatus === "expired") {
-    return <Navigate to={buildReturnUrl(location.pathname)} replace state={{ reason: "expired" }} />;
+    return <Navigate to={buildSignInUrl(location.pathname + location.search)} replace state={{ reason: "expired" }} />;
   }
 
   if (sessionStatus !== "authenticated") {
-    return <Navigate to={buildReturnUrl(location.pathname)} replace />;
+    return <Navigate to={buildSignInUrl(location.pathname + location.search)} replace />;
   }
 
   return (
     <NotificationCenterProvider>
+    <TourProvider>
       <div style={{ display: "flex", minHeight: "100vh", background: "#F8FAFC" }}>
         {/* ── Desktop sidebar (hidden <768px via CSS) ─────────────── */}
         <div className="platform-desktop-nav" aria-hidden={undefined}>
@@ -162,6 +158,7 @@ export function PlatformLayout() {
           ${SKELETON_STYLE}
         `}</style>
       </div>
+    </TourProvider>
     </NotificationCenterProvider>
   );
 }
