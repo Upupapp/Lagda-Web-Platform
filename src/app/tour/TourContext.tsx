@@ -105,19 +105,21 @@ function TourProviderInner({ children }: { children: ReactNode }) {
     setStepIndex(-1);
     setEligibleSteps([]);
     navigationGuard.current += 1;
-    writeTourState({
-      tourId: "authenticated-platform",
-      tourVersion: 1,
-      status: finalStatus,
-      ...(finalStatus === "completed" ? { completedAt: new Date().toISOString() } : { skippedAt: new Date().toISOString() }),
-    });
+    if (platform.user?.id) {
+      writeTourState(platform.user.id, {
+        tourId: "authenticated-platform",
+        tourVersion: 1,
+        status: finalStatus,
+        ...(finalStatus === "completed" ? { completedAt: new Date().toISOString() } : { skippedAt: new Date().toISOString() }),
+      });
+    }
     // Restore focus to whatever had it before the tour started.
     const el = previouslyFocused.current;
     previouslyFocused.current = null;
     if (el && document.contains(el)) {
       try { el.focus(); } catch { /* ignore */ }
     }
-  }, []);
+  }, [platform.user?.id]);
 
   const goToStep = useCallback(async (index: number, steps: GuideStep[]) => {
     const guard = ++navigationGuard.current;
@@ -152,13 +154,15 @@ function TourProviderInner({ children }: { children: ReactNode }) {
     }
 
     setStepIndex(index);
-    writeTourState({
-      tourId: "authenticated-platform",
-      tourVersion: 1,
-      status: "in_progress",
-      lastStepId: step.id,
-    });
-  }, [location.pathname, navigate, endTour]);
+    if (platform.user?.id) {
+      writeTourState(platform.user.id, {
+        tourId: "authenticated-platform",
+        tourVersion: 1,
+        status: "in_progress",
+        lastStepId: step.id,
+      });
+    }
+  }, [location.pathname, navigate, endTour, platform.user?.id]);
 
   const beginWithSteps = useCallback(async (steps: GuideStep[]) => {
     if (steps.length === 0) return;
@@ -217,18 +221,22 @@ function TourProviderInner({ children }: { children: ReactNode }) {
   }, [endTour]);
 
   // Auto-start ONLY when: authenticated, on exactly /app/dashboard, and the
-  // stored status is "not_started". Never auto-reopens after skip/complete.
+  // stored status is "not_started" for THIS account. Never auto-reopens
+  // after skip/complete. Scoped per user.id (see useTourPersistence.ts) so
+  // "only if new user" holds even when a second, genuinely-new account
+  // signs in on a browser that already saw the tour under a different one.
   useEffect(() => {
     if (autoStartChecked) return;
     if (platform.sessionStatus !== "authenticated") return;
+    if (!platform.user?.id) return;
     if (location.pathname !== "/app/dashboard") return;
     setAutoStartChecked(true);
-    const stored = readTourState();
+    const stored = readTourState(platform.user.id);
     if (stored.status === "not_started") {
       start();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [platform.sessionStatus, location.pathname, autoStartChecked]);
+  }, [platform.sessionStatus, platform.user?.id, location.pathname, autoStartChecked]);
 
   const currentStep = isActive ? eligibleSteps[stepIndex] ?? null : null;
 
