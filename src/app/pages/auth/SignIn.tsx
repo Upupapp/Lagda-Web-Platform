@@ -264,6 +264,7 @@ export function SignIn() {
                 });
             }}
             autoComplete="email"
+            placeholder="name@company.com"
             aria-required
             aria-invalid={!!errors.email}
             aria-describedby={errors.email ? "si-email-err" : undefined}
@@ -341,6 +342,7 @@ export function SignIn() {
                   });
               }}
               autoComplete="current-password"
+              placeholder="Enter your password"
               aria-required
               aria-invalid={!!errors.password}
               aria-describedby={errors.password ? "si-pw-err" : undefined}

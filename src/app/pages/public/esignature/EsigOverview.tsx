@@ -1,5 +1,5 @@
-import { useRef, useState, useCallback } from "react";
-import { Link } from "react-router";
+import { useRef, useState, useCallback, useEffect } from "react";
+import { Link, useSearchParams } from "react-router";
 import { FileText, PenLine, ShieldCheck, Clock, QrCode } from "lucide-react";
 import {
   EsigPageShell,
@@ -11,6 +11,7 @@ import {
   PageCTA,
   LegalNote,
 } from "../../../components/esignature/EsigPageShell";
+import { UploadDocumentModal } from "../../../components/prepare/PublicDocumentIntake";
 import { OVERVIEW_FEATURES, LIFECYCLE_STEPS, TRANSACTION_STATUSES } from "./content";
 import lagdaLogoFull from "../../../../brand elements/svg/LagdaLogoPrimaryHorizontalFullColor.svg";
 
@@ -340,8 +341,25 @@ function SenderRecipientSection() {
 
 // ── Main export ───────────────────────────────────────────────────────────────
 export function EsigOverview() {
+  const [params, setParams] = useSearchParams();
+  const [isUploadOpen, setIsUploadOpen] = useState(false);
+
+  // Cross-page trigger: e.g. the "Upload File" CTA on /esignature/core-workflow
+  // links to "/?openUpload=1" since the modal only exists on this page (the
+  // main landing page).
+  useEffect(() => {
+    if (params.get("openUpload") === "1") {
+      setIsUploadOpen(true);
+      const next = new URLSearchParams(params);
+      next.delete("openUpload");
+      setParams(next, { replace: true });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   return (
     <EsigPageShell>
+      <UploadDocumentModal open={isUploadOpen} onClose={() => setIsUploadOpen(false)} />
       {/* Hero */}
       <PageHero
         eyebrow="LAGDA eSignature — Available Now"
