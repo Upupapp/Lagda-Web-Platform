@@ -52,7 +52,7 @@ function TryItNowPanel() {
           </span>
         </Link>
         <Link
-          to="/?openUpload=1"
+          to="/home?openUpload=1"
           style={{
             display: "inline-flex", alignItems: "center", gap: 10,
             background: AZURE, color: "#FFFFFF",
