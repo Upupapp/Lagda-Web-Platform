@@ -112,6 +112,13 @@ const OnboardingComplete = lazy(() =>
   })),
 );
 
+// Home — original marketing landing page. "/" now renders EsigOverview
+// (the eSignature product overview) instead; Home stays reachable at
+// /home rather than being deleted.
+const Home = lazy(() =>
+  import("./app/pages/public/Home").then((m) => ({ default: m.Home })),
+);
+
 // eSignature family
 const EsigOverview = lazy(() =>
   import("./app/pages/public/esignature/EsigOverview").then((m) => ({
@@ -2640,6 +2647,7 @@ export const router = createBrowserRouter([
     element: <PublicLayout />,
     children: [
       { index: true, element: <EsigOverview /> },
+      { path: "home", element: <Home /> },
 
       // ── eSignature product pages ──────────────────────────────────────────
       { path: "esignature", element: <EsigOverview /> },
