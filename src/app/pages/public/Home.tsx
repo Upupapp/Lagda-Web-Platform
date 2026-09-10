@@ -721,8 +721,8 @@ export function Home() {
   const [params, setParams] = useSearchParams();
   const [isUploadOpen, setIsUploadOpen] = useState(false);
 
-  // Cross-page trigger: e.g. the "Upload File" CTA on /esignature/core-workflow
-  // links to "/?openUpload=1" since the modal only exists on this page.
+  // Cross-page trigger: the "Upload File" CTA on /esignature/core-workflow
+  // links to "/home?openUpload=1" since the modal only exists on this page.
   useEffect(() => {
     if (params.get("openUpload") === "1") {
       setIsUploadOpen(true);

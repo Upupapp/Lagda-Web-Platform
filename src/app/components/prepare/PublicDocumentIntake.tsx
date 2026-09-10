@@ -1,6 +1,6 @@
 // Public, pre-auth document intake — shown as a modal, triggered by the
 // "Try The Document-Upload Now!" CTA (see HeroSection.tsx) or by navigating
-// to "/?openUpload=1" from another page (see EsigCoreWorkflow.tsx).
+// to "/home?openUpload=1" from another page (see EsigCoreWorkflow.tsx).
 //
 // SCOPE BOUNDARY: this component only ever performs Upload → Validate →
 // Preview, exactly the bounded first slice of the real preparation workflow.
