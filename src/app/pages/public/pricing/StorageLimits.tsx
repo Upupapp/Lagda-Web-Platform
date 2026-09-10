@@ -9,17 +9,17 @@ const GM = { fontFamily: "'Geist Mono', monospace" };
 
 function StorageMockup() {
   const items = [
-    { label: "Completed records", pct: 52, color: "#38BDF8",  size: "52%" },
-    { label: "Draft documents",   pct: 18, color: "#38bdf8",  size: "18%" },
-    { label: "Templates",         pct: 15, color: "#22C55E",  size: "15%" },
+    { label: "Completed records", pct: 52, color: "#0078D4",  size: "52%" },
+    { label: "Draft documents",   pct: 18, color: "#38BDF8",  size: "18%" },
+    { label: "Templates",         pct: 15, color: "#16A34A",  size: "15%" },
     { label: "Branding assets",   pct: 8,  color: "#C9960C",  size: "8%"  },
-    { label: "Other",             pct: 7,  color: "#7C8DA4",  size: "7%"  },
+    { label: "Other",             pct: 7,  color: "#94A3B8",  size: "7%"  },
   ];
   return (
-    <div aria-hidden style={{ background: "rgba(7,17,31,0.95)", border: "1px solid rgba(0,120,212,0.22)", borderRadius: 14, overflow: "hidden", maxWidth: 360, width: "100%" }}>
-      <div style={{ padding: "14px 16px", borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
-        <p style={{ color: "white", ...GF, fontSize: 12, fontWeight: 700, margin: 0 }}>Storage Usage</p>
-        <p style={{ color: "#8A9BAE", ...GM, fontSize: 10, margin: "2px 0 0" }}>Northbridge Legal · Illustrative example</p>
+    <div aria-hidden style={{ background: "#ffffff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: 14, overflow: "hidden", maxWidth: 360, width: "100%", boxShadow: "0 4px 16px rgba(7,17,31,0.10), 0 1px 4px rgba(7,17,31,0.05)" }}>
+      <div style={{ padding: "14px 16px", borderBottom: "1px solid rgba(0,0,0,0.08)" }}>
+        <p style={{ color: "#07111F", ...GF, fontSize: 12, fontWeight: 700, margin: 0 }}>Storage Usage</p>
+        <p style={{ color: "#64748B", ...GM, fontSize: 10, margin: "2px 0 0" }}>Northbridge Legal · Illustrative example</p>
       </div>
       <div style={{ padding: "16px" }}>
         {/* Bar */}
@@ -31,11 +31,11 @@ function StorageMockup() {
         {items.map(({ label, pct, color }) => (
           <div key={label} style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
             <div style={{ width: 10, height: 10, borderRadius: 2, background: color, flexShrink: 0 }} />
-            <span style={{ color: "#94a3b8", ...GF, fontSize: 12, flex: 1 }}>{label}</span>
-            <span style={{ color: "#8A9BAE", ...GM, fontSize: 10 }}>{pct}%</span>
+            <span style={{ color: "#334155", ...GF, fontSize: 12, flex: 1 }}>{label}</span>
+            <span style={{ color: "#64748B", ...GM, fontSize: 10 }}>{pct}%</span>
           </div>
         ))}
-        <p style={{ color: "#7C8DA4", ...GM, fontSize: 9, marginTop: 12, textAlign: "center" }}>ILLUSTRATIVE VALUES — NOT OFFICIAL PLAN LIMITS</p>
+        <p style={{ color: "#94A3B8", ...GM, fontSize: 9, marginTop: 12, textAlign: "center" }}>ILLUSTRATIVE VALUES — NOT OFFICIAL PLAN LIMITS</p>
       </div>
     </div>
   );
@@ -46,11 +46,11 @@ export function StorageLimits() {
     <PricingPageShell>
       <section style={{ padding: "64px 24px 48px" }}>
         <div style={{ maxWidth: 720, margin: "0 auto" }}>
-          <p style={{ color: "#38bdf8", ...GM, fontSize: 11, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 12 }}>STORAGE</p>
-          <h1 style={{ color: "white", ...GF, fontSize: "clamp(26px, 4.5vw, 44px)", fontWeight: 900, lineHeight: 1.1, letterSpacing: "-0.03em", margin: "0 0 16px" }}>
+          <p style={{ color: "#0078D4", ...GM, fontSize: 11, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 12 }}>STORAGE</p>
+          <h1 style={{ color: "#07111F", ...GF, fontSize: "clamp(26px, 4.5vw, 44px)", fontWeight: 900, lineHeight: 1.1, letterSpacing: "-0.03em", margin: "0 0 16px" }}>
             Document storage in your LAGDA workspace.
           </h1>
-          <p style={{ color: "#94A3B8", ...GF, fontSize: 16, lineHeight: 1.65 }}>
+          <p style={{ color: "#64748B", ...GF, fontSize: 16, lineHeight: 1.65 }}>
             Storage covers the documents, records, templates, and workspace assets associated with your account. Storage limits and categories will be confirmed at launch.
           </p>
         </div>
@@ -62,11 +62,11 @@ export function StorageLimits() {
             <PricingHeading eyebrow="What uses storage" id="cat-h2" heading="Storage categories." sub="Storage is used by several types of content in your workspace." />
             <div style={{ display: "grid", gap: 10 }} className="cat-grid">
               {STORAGE_CATEGORIES.map(({ icon, label, desc }) => (
-                <div key={label} style={{ display: "flex", gap: 12, alignItems: "flex-start", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 10, padding: "12px 16px" }}>
+                <div key={label} style={{ display: "flex", gap: 12, alignItems: "flex-start", background: "#ffffff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: 10, padding: "12px 16px", boxShadow: "0 1px 4px rgba(7,17,31,0.06)" }}>
                   <span aria-hidden style={{ fontSize: 18, flexShrink: 0 }}>{icon}</span>
                   <div>
-                    <p style={{ color: "white", ...GF, fontSize: 13, fontWeight: 600, margin: "0 0 2px" }}>{label}</p>
-                    <p style={{ color: "#94A3B8", ...GF, fontSize: 12, margin: 0, lineHeight: 1.5 }}>{desc}</p>
+                    <p style={{ color: "#07111F", ...GF, fontSize: 13, fontWeight: 600, margin: "0 0 2px" }}>{label}</p>
+                    <p style={{ color: "#64748B", ...GF, fontSize: 12, margin: 0, lineHeight: 1.5 }}>{desc}</p>
                   </div>
                 </div>
               ))}
@@ -74,7 +74,7 @@ export function StorageLimits() {
             <style>{`.cat-grid { grid-template-columns: 1fr; }`}</style>
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-            <p style={{ color: "#8A9BAE", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.08em" }}>STORAGE USAGE EXAMPLE</p>
+            <p style={{ color: "#64748B", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.08em" }}>STORAGE USAGE EXAMPLE</p>
             <StorageMockup />
             <PricingNotice text="This diagram shows illustrative storage proportions and does not represent official plan limits, total storage sizes, or current billing values." />
           </div>
@@ -93,11 +93,11 @@ export function StorageLimits() {
             { icon: "⬆️", title: "Upgrade your plan",   desc: "Higher plans or custom Enterprise arrangements may include greater storage." },
             { icon: "🏢", title: "Contact sales",        desc: "Organizations with large storage requirements can discuss custom arrangements." },
           ].map(({ icon, title, desc }) => (
-            <div key={title} style={{ display: "flex", gap: 12, alignItems: "flex-start", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 10, padding: "12px 16px" }}>
+            <div key={title} style={{ display: "flex", gap: 12, alignItems: "flex-start", background: "#ffffff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: 10, padding: "12px 16px", boxShadow: "0 1px 4px rgba(7,17,31,0.06)" }}>
               <span aria-hidden style={{ fontSize: 18, flexShrink: 0 }}>{icon}</span>
               <div>
-                <p style={{ color: "white", ...GF, fontSize: 13, fontWeight: 600, margin: "0 0 2px" }}>{title}</p>
-                <p style={{ color: "#94A3B8", ...GF, fontSize: 12, margin: 0, lineHeight: 1.5 }}>{desc}</p>
+                <p style={{ color: "#07111F", ...GF, fontSize: 13, fontWeight: 600, margin: "0 0 2px" }}>{title}</p>
+                <p style={{ color: "#64748B", ...GF, fontSize: 12, margin: 0, lineHeight: 1.5 }}>{desc}</p>
               </div>
             </div>
           ))}
@@ -107,8 +107,8 @@ export function StorageLimits() {
 
       <PricingSection id="cta">
         <div style={{ textAlign: "center" }}>
-          <h2 style={{ color: "white", ...GF, fontSize: 26, fontWeight: 800, marginBottom: 12 }}>View plans and storage options.</h2>
-          <p style={{ color: "#94A3B8", ...GF, fontSize: 15, lineHeight: 1.65, marginBottom: 24 }}>Storage limits vary by plan. Compare plans to find the right fit.</p>
+          <h2 style={{ color: "#07111F", ...GF, fontSize: 26, fontWeight: 800, marginBottom: 12 }}>View plans and storage options.</h2>
+          <p style={{ color: "#64748B", ...GF, fontSize: 15, lineHeight: 1.65, marginBottom: 24 }}>Storage limits vary by plan. Compare plans to find the right fit.</p>
           <Link to="/pricing" style={{ background: "#0078D4", color: "white", ...GF, fontSize: 14, fontWeight: 700, padding: "12px 28px", borderRadius: 8, textDecoration: "none", minHeight: 44, display: "inline-flex", alignItems: "center" }}>View Plans</Link>
         </div>
       </PricingSection>

@@ -8,10 +8,10 @@ const GM = { fontFamily: "'Geist Mono', monospace" };
 
 const GROUPS = ["Legal", "Business", "Property & Services", "Public & Institutional"] as const;
 const GROUP_COLORS: Record<string, string> = {
-  "Legal": "#38bdf8",
+  "Legal": "#0284C7",
   "Business": "#0078D4",
-  "Property & Services": "#22C55E",
-  "Public & Institutional": "#a78bfa",
+  "Property & Services": "#16A34A",
+  "Public & Institutional": "#7C3AED",
 };
 
 export function SolutionsSubNav() {
@@ -22,8 +22,8 @@ export function SolutionsSubNav() {
       aria-label="Solutions navigation"
       style={{
         position: "sticky", top: 72, zIndex: Z.sticky,
-        background: "rgba(7,17,31,0.95)", backdropFilter: "blur(12px)",
-        borderBottom: "1px solid rgba(255,255,255,0.07)",
+        background: "rgba(255,255,255,0.95)", backdropFilter: "blur(12px)",
+        borderBottom: "1px solid rgba(0,0,0,0.08)",
       }}
     >
       <TabStrip as="scroller" label="Solution pages" activeKey={pathname}
@@ -37,11 +37,11 @@ export function SolutionsSubNav() {
               <div style={{
                 display: "flex", alignItems: "center",
                 padding: "0 12px 0 16px",
-                borderRight: "1px solid rgba(255,255,255,0.06)",
+                borderRight: "1px solid rgba(0,0,0,0.07)",
                 flexShrink: 0,
               }}>
                 <span style={{
-                  color: isGroupActive ? GROUP_COLORS[group] : "#7C8DA4",
+                  color: isGroupActive ? GROUP_COLORS[group] : "#94A3B8",
                   ...GM, fontSize: 9, fontWeight: 700, letterSpacing: "0.1em",
                   textTransform: "uppercase", whiteSpace: "nowrap",
                   transition: "color 0.15s ease",
@@ -68,7 +68,7 @@ export function SolutionsSubNav() {
                     <span style={{
                       ...GF, fontSize: 13,
                       fontWeight: active ? 700 : 500,
-                      color: active ? "white" : "#94A3B8",
+                      color: active ? "#07111F" : "#64748B",
                       whiteSpace: "nowrap",
                       transition: "color 0.15s ease",
                     }}>
@@ -83,7 +83,7 @@ export function SolutionsSubNav() {
       </TabStrip>
       <style>{`
         nav[aria-label="Solutions navigation"] ::-webkit-scrollbar { display: none; }
-        nav[aria-label="Solutions navigation"] a:hover span { color: white !important; }
+        nav[aria-label="Solutions navigation"] a:hover span { color: #07111F !important; }
       `}</style>
     </nav>
   );

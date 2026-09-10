@@ -1,8 +1,13 @@
 // Mock Document service for the authenticated /app/documents workspace.
-// All state is in-memory — no backend, no persistence, no real mutations.
-// Archive, restore, rename, tag, and folder operations mutate a local copy
-// of the fixture data only. Changes are lost on page refresh.
-// No real document content, no real participant data, no audit evidence.
+// No backend, no real mutations, no real document content, no real
+// participant data, no audit evidence — archive/restore/rename/tag/folder
+// operations, and documents created from a finished Prepare draft, mutate a
+// local copy of the fixture data only.
+//
+// LOCAL_PERSISTENCE: that local copy IS now mirrored to localStorage (see
+// services/local-persistence.ts) so a refresh doesn't erase a document you
+// just created — there is no backend yet to hold it instead. See that
+// file's header for how to remove this layer once a real backend exists.
 
 import type {
   DocumentListQuery,
@@ -30,6 +35,7 @@ import {
   VALID_TAG_IDS,
 } from "../../data/mock/documents";
 import { delay } from "./delay";
+import { readJSON, writeJSON, removeKey, PERSISTENCE_KEYS } from "../local-persistence";
 
 const PAGE_SIZE = 20;
 const EXPIRY_WINDOW_MS = 14 * 24 * 60 * 60 * 1000; // 14 days
@@ -41,7 +47,40 @@ function deepCopy<T>(v: T): T {
   return JSON.parse(JSON.stringify(v)) as T;
 }
 
-let store: DocumentListItem[] = deepCopy(DOCUMENT_FIXTURES);
+// LOCAL_PERSISTENCE — structural guard, same reasoning as PrepareContext's
+// isUsablePreparationDraft(): readJSON() only protects against corrupt JSON,
+// not a well-formed array saved by an earlier app version that no longer
+// matches DocumentListItem's current shape.
+function isUsableDocumentStore(v: unknown): v is DocumentListItem[] {
+  return Array.isArray(v) && v.every((item) =>
+    item && typeof item === "object" &&
+    typeof (item as Record<string, unknown>).id === "string" &&
+    typeof (item as Record<string, unknown>).status === "string" &&
+    Array.isArray((item as Record<string, unknown>).participants) &&
+    Array.isArray((item as Record<string, unknown>).tags),
+  );
+}
+
+function readSavedDocumentStore(): DocumentListItem[] {
+  try {
+    const raw = readJSON<DocumentListItem[]>(PERSISTENCE_KEYS.documentsStore);
+    if (isUsableDocumentStore(raw)) return raw;
+  } catch {
+    // fall through
+  }
+  removeKey(PERSISTENCE_KEYS.documentsStore); // drop whatever unusable value was there
+  return deepCopy(DOCUMENT_FIXTURES);
+}
+
+// LOCAL_PERSISTENCE — restore documents created before a refresh (e.g. a
+// finished Prepare draft — see draft-to-document.ts), falling back to the
+// static fixtures when nothing's been saved yet.
+let store: DocumentListItem[] = readSavedDocumentStore();
+
+// LOCAL_PERSISTENCE — called at the end of every mutating method below.
+function persistStore(): void {
+  writeJSON(PERSISTENCE_KEYS.documentsStore, store);
+}
 
 // ── Filter helpers ─────────────────────────────────────────────────────────────
 
@@ -241,6 +280,7 @@ class MockDocumentService {
         item.updatedAt = new Date().toISOString();
       }
     }
+    persistStore();
   }
 
   async restore(ids: string[]): Promise<void> {
@@ -252,6 +292,7 @@ class MockDocumentService {
         item.updatedAt = new Date().toISOString();
       }
     }
+    persistStore();
   }
 
   async renameDraft(id: string, title: string): Promise<void> {
@@ -260,6 +301,7 @@ class MockDocumentService {
     if (item && item.status === "draft") {
       item.title = title.slice(0, 200); // hard cap — no XSS via innerHTML anywhere
       item.updatedAt = new Date().toISOString();
+      persistStore();
     }
   }
 
@@ -273,6 +315,7 @@ class MockDocumentService {
         item.updatedAt = new Date().toISOString();
       }
     }
+    persistStore();
   }
 
   async moveToFolder(ids: string[], folderId: string): Promise<void> {
@@ -284,10 +327,13 @@ class MockDocumentService {
         item.updatedAt = new Date().toISOString();
       }
     }
+    persistStore();
   }
 
   /**
-   * Bulk Send (C33) Draft Projections.
+   * Bulk Send (C33) Draft Projections — and, since LOCAL_PERSISTENCE, also
+   * how a finished /app/prepare draft becomes a Documents entry (see
+   * services/prepare/draft-to-document.ts).
    *
    * Documents stays the single source of truth for transactions: Bulk Send does NOT
    * keep its own transaction store. It hands finished Draft records here and they
@@ -302,16 +348,19 @@ class MockDocumentService {
       if (existing.has(item.id)) continue;
       store = [deepCopy(item), ...store];
     }
+    persistStore();
   }
 
   /** Removes Draft Projections created by one Bulk Send batch (demonstration only). */
   removeDraftProjectionsForBatch(batchId: string): void {
     store = store.filter(i => i.bulkSendSource?.batchId !== batchId);
+    persistStore();
   }
 
   // Resets in-memory store to the original fixtures (useful for dev/demo)
   reset(): void {
     store = deepCopy(DOCUMENT_FIXTURES);
+    removeKey(PERSISTENCE_KEYS.documentsStore); // LOCAL_PERSISTENCE
   }
 
   private _emptyResult(query: DocumentListQuery): DocumentListResult {

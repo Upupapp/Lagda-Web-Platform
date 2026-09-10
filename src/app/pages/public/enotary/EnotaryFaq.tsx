@@ -15,13 +15,13 @@ export function EnotaryFaq() {
       <EnotaryStatusBanner />
 
       {/* Hero */}
-      <section style={{ padding: "64px 24px 48px", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+      <section style={{ padding: "64px 24px 48px", borderBottom: "1px solid rgba(0,0,0,0.07)" }}>
         <div style={{ maxWidth: 820, margin: "0 auto" }}>
           <p style={{ color: BURGUNDY, ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.12em", marginBottom: 14 }}>ENOTARY / FAQ</p>
-          <h1 style={{ color: "white", ...GF, fontSize: "clamp(24px, 4vw, 44px)", fontWeight: 900, lineHeight: 1.08, letterSpacing: "-0.02em", margin: "0 0 16px" }}>
+          <h1 style={{ color: "#07111F", ...GF, fontSize: "clamp(24px, 4vw, 44px)", fontWeight: 900, lineHeight: 1.08, letterSpacing: "-0.02em", margin: "0 0 16px" }}>
             eNotary Frequently Asked Questions
           </h1>
-          <p style={{ color: "#94a3b8", ...GF, fontSize: 16, lineHeight: 1.7, maxWidth: 620, margin: "0 0 24px" }}>
+          <p style={{ color: "#334155", ...GF, fontSize: 16, lineHeight: 1.7, maxWidth: 620, margin: "0 0 24px" }}>
             Common questions about LAGDA eNotary — a future regulated product, not a currently available service.
           </p>
           <EnotaryDisclaimer />
@@ -41,12 +41,12 @@ export function EnotaryFaq() {
       <EnotarySection id="responsible-use" light bordered>
         <div style={{ maxWidth: 820, margin: "0 auto" }}>
           <EnotaryHeading>Legal formalities reminder</EnotaryHeading>
-          <div style={{ background: "rgba(103,2,59,0.08)", border: "1px solid rgba(103,2,59,0.2)", borderRadius: 10, padding: "16px 20px", marginBottom: 20 }}>
-            <p style={{ color: "#94a3b8", ...GF, fontSize: 14, lineHeight: 1.7, margin: 0 }}>
+          <div style={{ background: "rgba(103,2,59,0.06)", border: "1px solid rgba(176,18,98,0.2)", borderRadius: 10, padding: "16px 20px", marginBottom: 20 }}>
+            <p style={{ color: "#67023B", ...GF, fontSize: 14, lineHeight: 1.7, margin: 0 }}>
               Some documents may still require wet signatures, notarization, personal appearance, witnesses, or other legal formalities. Users remain responsible for determining the requirements that apply to each transaction. Neither LAGDA eSignature nor LAGDA eNotary (when available) eliminates this responsibility.
             </p>
           </div>
-          <p style={{ color: "#94A3B8", ...GF, fontSize: 13, lineHeight: 1.7 }}>
+          <p style={{ color: "#64748B", ...GF, fontSize: 13, lineHeight: 1.7 }}>
             If you are unsure whether electronic signing or electronic notarization (when available) satisfies the requirements for a specific document or transaction, consult qualified legal counsel.
           </p>
         </div>
@@ -55,12 +55,12 @@ export function EnotaryFaq() {
       {/* Still have questions */}
       <EnotarySection id="more-questions" bordered>
         <div style={{ maxWidth: 640, margin: "0 auto", textAlign: "center" }}>
-          <h2 style={{ color: "white", ...GF, fontSize: "clamp(18px, 2.5vw, 26px)", fontWeight: 900, margin: "0 0 12px" }}>Still have questions?</h2>
-          <p style={{ color: "#94A3B8", ...GF, fontSize: 14, lineHeight: 1.7, margin: "0 0 22px" }}>
+          <h2 style={{ color: "#07111F", ...GF, fontSize: "clamp(18px, 2.5vw, 26px)", fontWeight: 900, margin: "0 0 12px" }}>Still have questions?</h2>
+          <p style={{ color: "#64748B", ...GF, fontSize: 14, lineHeight: 1.7, margin: "0 0 22px" }}>
             Contact us through the LAGDA contact form. Select the most appropriate category for your question.
           </p>
           <div style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap" }}>
-            <Link to="/contact" style={{ background: "rgba(255,255,255,0.07)", color: "white", ...GF, fontSize: 14, fontWeight: 600, padding: "11px 22px", borderRadius: 7, textDecoration: "none", border: "1px solid rgba(255,255,255,0.1)" }}>Contact LAGDA</Link>
+            <Link to="/contact" style={{ background: "#ffffff", color: "#07111F", ...GF, fontSize: 14, fontWeight: 600, padding: "11px 22px", borderRadius: 7, textDecoration: "none", border: "1px solid rgba(0,0,0,0.14)" }}>Contact LAGDA</Link>
             <Link to="/enotary/waitlist" style={{ background: BURGUNDY, color: "white", ...GF, fontSize: 14, fontWeight: 700, padding: "11px 22px", borderRadius: 7, textDecoration: "none" }}>Join the waitlist</Link>
           </div>
         </div>

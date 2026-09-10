@@ -33,8 +33,8 @@ const GM = { fontFamily: "'Geist Mono', monospace" };
 export type SectionDensity = "default" | "compact";
 
 const DENSITY: Record<SectionDensity, { padding: string; tint: string; border: string }> = {
-  default: { padding: "72px 24px", tint: "rgba(255,255,255,0.02)",  border: "rgba(255,255,255,0.06)" },
-  compact: { padding: "56px 24px", tint: "rgba(255,255,255,0.015)", border: "rgba(255,255,255,0.05)" },
+  default: { padding: "72px 24px", tint: "#f8fafb",  border: "rgba(0,0,0,0.07)" },
+  compact: { padding: "56px 24px", tint: "#f8fafb", border: "rgba(0,0,0,0.07)" },
 };
 
 export interface PublicSectionProps {
@@ -82,20 +82,20 @@ export function PublicHeading({ eyebrow, id, heading, sub, center }: PublicHeadi
   return (
     <div style={{ marginBottom: 40, textAlign: center ? "center" : undefined }}>
       <p style={{
-        color: "#38bdf8", ...GM, fontSize: 11, fontWeight: 700,
+        color: "#0078D4", ...GM, fontSize: 11, fontWeight: 700,
         letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 10,
       }}>
         {eyebrow}
       </p>
       <h2 id={id} style={{
-        color: "white", ...GF, fontSize: "clamp(22px, 3.5vw, 36px)", fontWeight: 800,
+        color: "#07111F", ...GF, fontSize: "clamp(22px, 3.5vw, 36px)", fontWeight: 800,
         margin: 0, marginBottom: sub ? 12 : 0, letterSpacing: "-0.02em", lineHeight: 1.15,
       }}>
         {heading}
       </h2>
       {sub && (
         <p style={{
-          color: "#94A3B8", ...GF, fontSize: 16, lineHeight: 1.65,
+          color: "#64748B", ...GF, fontSize: 16, lineHeight: 1.65,
           margin: center ? "0 auto" : 0, maxWidth: 640,
         }}>
           {sub}
@@ -124,10 +124,11 @@ export function FaqAccordion({ items }: { items: FaqItem[] }) {
         const isOpen = open === id;
         return (
           <div key={id} id={id} style={{
-            background: "rgba(255,255,255,0.03)",
-            border: "1px solid rgba(255,255,255,0.07)",
+            background: "#ffffff",
+            border: "1px solid rgba(0,0,0,0.08)",
             borderRadius: 10,
             overflow: "hidden",
+            boxShadow: "0 1px 4px rgba(7,17,31,0.07), 0 0 1px rgba(7,17,31,0.04)",
           }}>
             <button
               type="button"
@@ -140,11 +141,11 @@ export function FaqAccordion({ items }: { items: FaqItem[] }) {
                 display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12,
               }}
             >
-              <span style={{ color: "white", ...GF, fontSize: 14, fontWeight: 600, lineHeight: 1.4 }}>
+              <span style={{ color: "#07111F", ...GF, fontSize: 14, fontWeight: 600, lineHeight: 1.4 }}>
                 {q}
               </span>
               <span aria-hidden style={{
-                color: "#94A3B8", flexShrink: 0, fontSize: 14,
+                color: "#64748B", flexShrink: 0, fontSize: 14,
                 transition: "transform 0.2s", transform: isOpen ? "rotate(180deg)" : "none",
                 display: "inline-block",
               }}>
@@ -152,7 +153,7 @@ export function FaqAccordion({ items }: { items: FaqItem[] }) {
               </span>
             </button>
             <div id={`${id}-answer`} hidden={!isOpen} style={{ padding: isOpen ? "0 20px 16px" : "0 20px 0" }}>
-              <p style={{ color: "#94A3B8", ...GF, fontSize: 14, lineHeight: 1.65, margin: 0 }}>{a}</p>
+              <p style={{ color: "#64748B", ...GF, fontSize: 14, lineHeight: 1.65, margin: 0 }}>{a}</p>
             </div>
           </div>
         );

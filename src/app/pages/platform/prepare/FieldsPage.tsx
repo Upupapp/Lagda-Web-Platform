@@ -1490,8 +1490,8 @@ function EditorToolbar({ draftTitle, participants, draft, showKbDialog, setShowK
         alignItems:  "center",
         gap:         6,
         padding:     "6px 12px",
-        background:  NAVY,
-        borderBottom: "1px solid #1C2B3A",
+        background:  WHITE,
+        borderBottom: "1px solid #E2E8F0",
         flexShrink:  0,
         overflowX:   "auto",
         minHeight:   50,
@@ -1501,15 +1501,15 @@ function EditorToolbar({ draftTitle, participants, draft, showKbDialog, setShowK
       <button
         onClick={() => navigate(returnTo ?? "/app/prepare/review")}
         aria-label={returnTo ? `Back to ${returnLabel}` : "Back to Review step"}
-        style={{ ...btnBase, border: "1px solid #2D4059", background: "transparent", color: "#BDC8D4" }}
+        style={{ ...btnBase, border: "1px solid #D1D9E0", background: "transparent", color: "#334155" }}
       >
         ← {returnLabel}
       </button>
 
-      <div style={{ width: 1, height: 24, background: "#2D4059", flexShrink: 0 }} role="separator" />
+      <div style={{ width: 1, height: 24, background: "#E2E8F0", flexShrink: 0 }} role="separator" />
 
       {/* Draft title */}
-      <span style={{ ...GF, fontSize: 12, color: "#BDC8D4", maxWidth: 180, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+      <span style={{ ...GF, fontSize: 12, color: "#334155", maxWidth: 180, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
         {draftTitle}
       </span>
       <span style={{ ...GF, fontSize: 10, color: SILVER }}>— Place Fields</span>
@@ -1521,19 +1521,19 @@ function EditorToolbar({ draftTitle, participants, draft, showKbDialog, setShowK
         <SaveStateLabel state={saveState} />
       </div>
 
-      <div style={{ width: 1, height: 24, background: "#2D4059", flexShrink: 0 }} role="separator" />
+      <div style={{ width: 1, height: 24, background: "#E2E8F0", flexShrink: 0 }} role="separator" />
 
       {/* Undo/Redo */}
       <button onClick={undo} disabled={!canUndo} aria-label="Undo" title="Undo (Ctrl+Z)" style={{ ...btnBase, opacity: canUndo ? 1 : 0.4 }}>↩ Undo</button>
       <button onClick={redo} disabled={!canRedo} aria-label="Redo" title="Redo (Ctrl+Shift+Z)" style={{ ...btnBase, opacity: canRedo ? 1 : 0.4 }}>↪ Redo</button>
 
-      <div style={{ width: 1, height: 24, background: "#2D4059", flexShrink: 0 }} role="separator" />
+      <div style={{ width: 1, height: 24, background: "#E2E8F0", flexShrink: 0 }} role="separator" />
 
       {/* Clipboard */}
       <button onClick={copySelected} aria-label="Copy selected fields" style={btnBase}>Copy</button>
       <button onClick={paste} disabled={clipboard.length === 0} aria-label="Paste copied fields" style={{ ...btnBase, opacity: clipboard.length > 0 ? 1 : 0.4 }}>Paste</button>
 
-      <div style={{ width: 1, height: 24, background: "#2D4059", flexShrink: 0 }} role="separator" />
+      <div style={{ width: 1, height: 24, background: "#E2E8F0", flexShrink: 0 }} role="separator" />
 
       {/* Add field keyboard */}
       <button
@@ -1554,15 +1554,15 @@ function EditorToolbar({ draftTitle, participants, draft, showKbDialog, setShowK
         {showFieldList ? "Canvas" : "List"}
       </button>
 
-      <div style={{ width: 1, height: 24, background: "#2D4059", flexShrink: 0 }} role="separator" />
+      <div style={{ width: 1, height: 24, background: "#E2E8F0", flexShrink: 0 }} role="separator" />
 
       {/* Zoom */}
       <button onClick={() => setZoom(zoom - 10)} disabled={zoom <= 50} aria-label="Zoom out" style={{ ...btnBase, padding: "0 8px", opacity: zoom > 50 ? 1 : 0.4 }}>−</button>
-      <span style={{ ...GF, fontSize: 11, color: "#BDC8D4", minWidth: 40, textAlign: "center" }} aria-live="polite" aria-label={`Zoom ${zoom}%`}>{zoom}%</span>
+      <span style={{ ...GF, fontSize: 11, color: "#334155", minWidth: 40, textAlign: "center" }} aria-live="polite" aria-label={`Zoom ${zoom}%`}>{zoom}%</span>
       <button onClick={() => setZoom(zoom + 10)} disabled={zoom >= 200} aria-label="Zoom in"  style={{ ...btnBase, padding: "0 8px", opacity: zoom < 200 ? 1 : 0.4 }}>+</button>
       <button onClick={() => setZoom(100)} aria-label="Fit page — reset zoom to 100%" style={{ ...btnBase }}>Fit</button>
 
-      <div style={{ width: 1, height: 24, background: "#2D4059", flexShrink: 0 }} role="separator" />
+      <div style={{ width: 1, height: 24, background: "#E2E8F0", flexShrink: 0 }} role="separator" />
 
       {/* Validate */}
       <button

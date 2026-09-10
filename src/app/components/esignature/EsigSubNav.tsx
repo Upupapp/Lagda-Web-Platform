@@ -18,8 +18,8 @@ export function EsigSubNav() {
     <nav
       aria-label="eSignature pages"
       style={{
-        borderBottom: "1px solid rgba(255,255,255,0.08)",
-        background: "rgba(7,17,31,0.95)",
+        borderBottom: "1px solid rgba(0,0,0,0.08)",
+        background: "rgba(255,255,255,0.95)",
         backdropFilter: "blur(12px)",
         position: "sticky",
         top: 72,
@@ -53,17 +53,17 @@ export function EsigSubNav() {
                     ...GF,
                     fontSize: 13,
                     fontWeight: active ? 700 : 500,
-                    color: active ? "white" : "#94A3B8",
+                    color: active ? "#07111F" : "#64748B",
                     textDecoration: "none",
                     borderBottom: active ? "2px solid #0078D4" : "2px solid transparent",
                     marginBottom: -1,
                     transition: "color 0.15s ease, border-color 0.15s ease",
                   }}
                   onMouseEnter={(e) => {
-                    if (!active) e.currentTarget.style.color = "#94a3b8";
+                    if (!active) e.currentTarget.style.color = "#07111F";
                   }}
                   onMouseLeave={(e) => {
-                    if (!active) e.currentTarget.style.color = "#94A3B8";
+                    if (!active) e.currentTarget.style.color = "#64748B";
                   }}
                 >
                   {item.label}

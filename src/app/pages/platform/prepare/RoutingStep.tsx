@@ -4,12 +4,15 @@
 // Burgundy (#67023B) is NEVER used. eNotary is NEVER mentioned.
 
 import React, { useEffect, useCallback, useState } from "react";
+import { Route } from "lucide-react";
 import { usePrepare } from "../../../context/PrepareContext";
 import {
   ROUTING_MODE_DESCRIPTIONS,
   PREP_PARTICIPANT_ROLE_LABELS,
   PREP_ROLE_IS_BLOCKING,
   DEFAULT_ROUTING_CONFIG,
+  normalizeRoutingGroups,
+  deriveApprovalBasedGroups,
 } from "../../../models/prepare";
 import type {
   PrepRoutingGroup,
@@ -19,6 +22,7 @@ import type {
   RoutingMode,
   RoutingCompletionRule,
 } from "../../../models/prepare";
+import { StepBanner, StepTwoColumn, RailCard, StepIssueList } from "../../../components/prepare/StepBanner";
 
 const GF     = { fontFamily: "'Geist', sans-serif" };
 const NAVY   = "#07111F";
@@ -37,58 +41,48 @@ function generateGroupId(): string {
   return `grp_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 }
 
+// Approval-based is handled separately by deriveApprovalBasedGroups() in
+// models/prepare.ts — it's system-derived from roles, not a default starting
+// point the user then customizes like the three modes here.
 function buildDefaultGroups(
-  mode: RoutingMode,
+  mode: Exclude<RoutingMode, "approval-based">,
   participants: { id: PrepPaxId; role: PrepParticipantRole; name: string }[],
 ): PrepRoutingGroup[] {
   const blocking = participants.filter(p => PREP_ROLE_IS_BLOCKING[p.role]);
 
   if (mode === "parallel") {
-    return [
+    return normalizeRoutingGroups([
       {
         id:                     generateGroupId(),
-        stepNumber:             1,
+        stepNumber:             0,
         label:                  "All participants",
         participantIds:         blocking.map(p => p.id),
         requiredCompletionRule: "all",
       },
-    ];
+    ]);
   }
 
   if (mode === "sequential") {
-    return blocking.map((p, i) => ({
+    return normalizeRoutingGroups(blocking.map((p, i) => ({
       id:                     generateGroupId(),
-      stepNumber:             i + 1,
+      stepNumber:             0,
       label:                  `Step ${i + 1}`,
       participantIds:         [p.id],
       requiredCompletionRule: "all" as RoutingCompletionRule,
-    }));
-  }
-
-  if (mode === "approval-based") {
-    const approvers = blocking.filter(p => p.role === "approver" || p.role === "reviewer");
-    const signers   = blocking.filter(p => p.role === "signer" || p.role === "acknowledgment-recipient");
-    const groups: PrepRoutingGroup[] = [];
-    if (approvers.length > 0) {
-      groups.push({ id: generateGroupId(), stepNumber: 1, label: "Approval", participantIds: approvers.map(p => p.id), requiredCompletionRule: "all" });
-    }
-    if (signers.length > 0) {
-      groups.push({ id: generateGroupId(), stepNumber: 2, label: "Signing", participantIds: signers.map(p => p.id), requiredCompletionRule: "all" });
-    }
-    return groups;
+    })));
   }
 
   // mixed
   if (blocking.length === 0) return [];
-  return [
+  return normalizeRoutingGroups([
     {
       id:                     generateGroupId(),
-      stepNumber:             1,
+      stepNumber:             0,
       label:                  "Group 1",
       participantIds:         blocking.map(p => p.id),
       requiredCompletionRule: "all",
     },
-  ];
+  ]);
 }
 
 // ── Routing group card ────────────────────────────────────────────────────────
@@ -106,6 +100,12 @@ function GroupCard({
   onMoveDown,
   isFirst,
   isLast,
+  // Approval-based groups are system-derived from participant roles (see
+  // deriveApprovalBasedGroups) — reordering, removing, or hand-picking
+  // membership doesn't apply the way it does for a user-built Sequential or
+  // Mixed structure, so those controls are locked here rather than left
+  // clickable and silently overwritten by the next reconciliation pass.
+  isSystemManaged,
 }: {
   group: PrepRoutingGroup;
   index: number;
@@ -119,9 +119,8 @@ function GroupCard({
   onMoveDown:           (groupId: PrepGroupId) => void;
   isFirst: boolean;
   isLast:  boolean;
+  isSystemManaged: boolean;
 }) {
-  const assigned = allParticipants.filter(p => group.participantIds.includes(p.id));
-
   return (
     <div
       style={{
@@ -178,57 +177,59 @@ function GroupCard({
           }}
         />
 
-        <div style={{ display: "flex", gap: 4 }}>
-          <button
-            onClick={() => onMoveUp(group.id)}
-            disabled={isFirst}
-            aria-label="Move step up"
-            style={{
-              ...GF,
-              width: 26, height: 26,
-              border: "1px solid #D1D9E0",
-              borderRadius: 5,
-              background: isFirst ? "#F5F7FA" : "#FFFFFF",
-              color: isFirst ? "#D1D9E0" : NAVY,
-              cursor: isFirst ? "not-allowed" : "pointer",
-              fontSize: 12,
-              display: "flex", alignItems: "center", justifyContent: "center",
-            }}
-          >↑</button>
-          <button
-            onClick={() => onMoveDown(group.id)}
-            disabled={isLast}
-            aria-label="Move step down"
-            style={{
-              ...GF,
-              width: 26, height: 26,
-              border: "1px solid #D1D9E0",
-              borderRadius: 5,
-              background: isLast ? "#F5F7FA" : "#FFFFFF",
-              color: isLast ? "#D1D9E0" : NAVY,
-              cursor: isLast ? "not-allowed" : "pointer",
-              fontSize: 12,
-              display: "flex", alignItems: "center", justifyContent: "center",
-            }}
-          >↓</button>
-          {canRemove && (
+        {!isSystemManaged && (
+          <div style={{ display: "flex", gap: 4 }}>
             <button
-              onClick={() => onRemove(group.id)}
-              aria-label="Remove step"
+              onClick={() => onMoveUp(group.id)}
+              disabled={isFirst}
+              aria-label="Move step up"
               style={{
                 ...GF,
                 width: 26, height: 26,
-                border: "none",
+                border: "1px solid #D1D9E0",
                 borderRadius: 5,
-                background: "transparent",
-                color: "#C0392B",
-                cursor: "pointer",
-                fontSize: 16,
+                background: isFirst ? "#F5F7FA" : "#FFFFFF",
+                color: isFirst ? "#D1D9E0" : NAVY,
+                cursor: isFirst ? "not-allowed" : "pointer",
+                fontSize: 12,
                 display: "flex", alignItems: "center", justifyContent: "center",
               }}
-            >×</button>
-          )}
-        </div>
+            >↑</button>
+            <button
+              onClick={() => onMoveDown(group.id)}
+              disabled={isLast}
+              aria-label="Move step down"
+              style={{
+                ...GF,
+                width: 26, height: 26,
+                border: "1px solid #D1D9E0",
+                borderRadius: 5,
+                background: isLast ? "#F5F7FA" : "#FFFFFF",
+                color: isLast ? "#D1D9E0" : NAVY,
+                cursor: isLast ? "not-allowed" : "pointer",
+                fontSize: 12,
+                display: "flex", alignItems: "center", justifyContent: "center",
+              }}
+            >↓</button>
+            {canRemove && (
+              <button
+                onClick={() => onRemove(group.id)}
+                aria-label="Remove step"
+                style={{
+                  ...GF,
+                  width: 26, height: 26,
+                  border: "none",
+                  borderRadius: 5,
+                  background: "transparent",
+                  color: GOLD,
+                  cursor: "pointer",
+                  fontSize: 16,
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                }}
+              >×</button>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Participants in this group */}
@@ -236,6 +237,11 @@ function GroupCard({
         <div style={{ ...GF, fontSize: 12, fontWeight: 600, color: SILVER, marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.06em" }}>
           Participants in this step
         </div>
+        {isSystemManaged && (
+          <div style={{ ...GF, fontSize: 11.5, color: SILVER, marginBottom: 10, fontStyle: "italic" }}>
+            Assigned automatically based on each participant's role.
+          </div>
+        )}
         {allParticipants.length === 0 && (
           <div style={{ ...GF, fontSize: 13, color: SILVER }}>Add participants in the Participants step first.</div>
         )}
@@ -250,14 +256,15 @@ function GroupCard({
                   display: "flex",
                   alignItems: "center",
                   gap: 10,
-                  cursor: "pointer",
+                  cursor: isSystemManaged ? "default" : "pointer",
                   fontSize: 13,
-                  color: NAVY,
+                  color: isSystemManaged && !inGroup ? SILVER : NAVY,
                 }}
               >
                 <input
                   type="checkbox"
                   checked={inGroup}
+                  disabled={isSystemManaged}
                   onChange={() => onParticipantToggle(group.id, p.id)}
                   style={{ accentColor: AZURE, width: 15, height: 15 }}
                 />
@@ -315,24 +322,74 @@ export function RoutingStep() {
   const validation   = draft ? validate() : null;
   const routeErrors  = validation?.errors.filter(e => e.stepId === "routing") ?? [];
   const routeWarnings = validation?.warnings.filter(e => e.stepId === "routing") ?? [];
+  const isApprovalBased = routing.mode === "approval-based";
 
   // ── Mode change: rebuild groups ─────────────────────────────────────────────
 
   const handleModeChange = useCallback((mode: RoutingMode) => {
-    const groups = buildDefaultGroups(mode, participants);
+    const groups = mode === "approval-based"
+      ? deriveApprovalBasedGroups(participants)
+      : buildDefaultGroups(mode, participants);
     updateRouting({ mode, groups });
   }, [participants, updateRouting]);
+
+  // ── Participant reconciliation ──────────────────────────────────────────────
+  // Runs whenever who's on the transaction (or their role) changes — not on
+  // every routing edit — so routing groups never retain a stale reference to
+  // a removed participant, and Approval-based stays fully system-derived.
+  // routingRef avoids needing `routing` itself in the dependency array, which
+  // would re-run this on every routing mutation (including the ones this
+  // effect makes) instead of only on participant changes.
+  const routingRef = React.useRef(routing);
+  routingRef.current = routing;
+  const participantsSignature = participants.map(p => `${p.id}:${p.role}`).join(",");
+
+  useEffect(() => {
+    const current = routingRef.current;
+    let nextGroups: PrepRoutingGroup[];
+
+    if (current.mode === "approval-based") {
+      nextGroups = deriveApprovalBasedGroups(participants, current.groups);
+    } else if (current.mode === "parallel") {
+      // Parallel has no "which group" choice — it's everyone, together — so
+      // the single group is kept in sync rather than left to go stale.
+      const existing = current.groups[0];
+      nextGroups = normalizeRoutingGroups([
+        {
+          id:                     existing?.id ?? generateGroupId(),
+          stepNumber:             0,
+          label:                  existing?.label ?? "All participants",
+          participantIds:         participants.map(p => p.id),
+          requiredCompletionRule: existing?.requiredCompletionRule ?? "all",
+        },
+      ]);
+    } else {
+      // Sequential / Mixed are user-customized structures — only strip
+      // references to participants who no longer exist or no longer hold a
+      // blocking role. Never auto-add; the user assigns new participants
+      // themselves via the checkboxes below.
+      const blockingIds = new Set(participants.map(p => p.id));
+      nextGroups = normalizeRoutingGroups(
+        current.groups.map(g => ({ ...g, participantIds: g.participantIds.filter(id => blockingIds.has(id)) })),
+      );
+    }
+
+    if (JSON.stringify(nextGroups) !== JSON.stringify(current.groups)) {
+      updateRouting({ ...current, groups: nextGroups });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [participantsSignature]);
 
   // ── Group operations ────────────────────────────────────────────────────────
 
   const handleLabelChange = useCallback((groupId: PrepGroupId, label: string) => {
     const groups = routing.groups.map(g => g.id === groupId ? { ...g, label } : g);
-    updateRouting({ ...routing, groups });
+    updateRouting({ ...routing, groups: normalizeRoutingGroups(groups) });
   }, [routing, updateRouting]);
 
   const handleRuleChange = useCallback((groupId: PrepGroupId, rule: RoutingCompletionRule) => {
     const groups = routing.groups.map(g => g.id === groupId ? { ...g, requiredCompletionRule: rule } : g);
-    updateRouting({ ...routing, groups });
+    updateRouting({ ...routing, groups: normalizeRoutingGroups(groups) });
   }, [routing, updateRouting]);
 
   const handleParticipantToggle = useCallback((groupId: PrepGroupId, paxId: PrepPaxId) => {
@@ -346,14 +403,12 @@ export function RoutingStep() {
           : [...g.participantIds, paxId],
       };
     });
-    updateRouting({ ...routing, groups });
+    updateRouting({ ...routing, groups: normalizeRoutingGroups(groups) });
   }, [routing, updateRouting]);
 
   const handleRemoveGroup = useCallback((groupId: PrepGroupId) => {
-    const groups = routing.groups
-      .filter(g => g.id !== groupId)
-      .map((g, i) => ({ ...g, stepNumber: i + 1 }));
-    updateRouting({ ...routing, groups });
+    const groups = routing.groups.filter(g => g.id !== groupId);
+    updateRouting({ ...routing, groups: normalizeRoutingGroups(groups) });
   }, [routing, updateRouting]);
 
   const handleMoveUp = useCallback((groupId: PrepGroupId) => {
@@ -361,7 +416,7 @@ export function RoutingStep() {
     if (idx <= 0) return;
     const next = [...routing.groups];
     [next[idx - 1], next[idx]] = [next[idx]!, next[idx - 1]!];
-    updateRouting({ ...routing, groups: next.map((g, i) => ({ ...g, stepNumber: i + 1 })) });
+    updateRouting({ ...routing, groups: normalizeRoutingGroups(next) });
   }, [routing, updateRouting]);
 
   const handleMoveDown = useCallback((groupId: PrepGroupId) => {
@@ -369,24 +424,30 @@ export function RoutingStep() {
     if (idx < 0 || idx >= routing.groups.length - 1) return;
     const next = [...routing.groups];
     [next[idx], next[idx + 1]] = [next[idx + 1]!, next[idx]!];
-    updateRouting({ ...routing, groups: next.map((g, i) => ({ ...g, stepNumber: i + 1 })) });
+    updateRouting({ ...routing, groups: normalizeRoutingGroups(next) });
   }, [routing, updateRouting]);
 
   const handleAddGroup = () => {
     const newGroup: PrepRoutingGroup = {
       id:                     generateGroupId(),
-      stepNumber:             routing.groups.length + 1,
+      stepNumber:             0,
       label:                  `Step ${routing.groups.length + 1}`,
       participantIds:         [],
       requiredCompletionRule: "all",
     };
-    updateRouting({ ...routing, groups: [...routing.groups, newGroup] });
+    updateRouting({ ...routing, groups: normalizeRoutingGroups([...routing.groups, newGroup]) });
   };
 
   if (participants.length === 0) {
     return (
-      <div style={{ ...GF, maxWidth: 580 }}>
-        <h2 style={{ fontSize: 20, fontWeight: 800, color: NAVY, margin: "0 0 12px" }}>Routing</h2>
+      <div style={GF}>
+        <StepBanner
+          icon={Route}
+          eyebrow="Step 3 of 7"
+          title="Routing"
+          description="Choose how participants are sequenced and whether they act simultaneously or one at a time."
+          meta="Waiting on participants"
+        />
         <div style={{ padding: "24px", borderRadius: 10, background: "#F5F7FA", border: "1px solid #E3E8EF", fontSize: 14, color: SILVER, lineHeight: 1.6 }}>
           Add at least one signer, approver, reviewer, or acknowledgment recipient in the
           Participants step before configuring routing.
@@ -395,15 +456,10 @@ export function RoutingStep() {
     );
   }
 
-  return (
-    <div style={{ ...GF, maxWidth: 620 }}>
-      <div style={{ marginBottom: 28 }}>
-        <h2 style={{ fontSize: 20, fontWeight: 800, color: NAVY, margin: "0 0 6px" }}>Routing</h2>
-        <p style={{ fontSize: 13, color: SILVER, margin: 0, lineHeight: 1.6 }}>
-          Choose how participants are sequenced and whether they act simultaneously or one at a time.
-        </p>
-      </div>
+  const currentModeLabel = ROUTING_MODES.find(m => m.id === routing.mode)?.label ?? routing.mode;
 
+  const main = (
+    <div style={{ ...GF, width: "100%" }}>
       {/* Command 37: the Signing Workflow tab turns this routing order into named
           stages with an explicit required action and eSignature requirement per person.
           It is optional — simple routing configured here continues to work on its own,
@@ -426,16 +482,8 @@ export function RoutingStep() {
       </div>
 
       {/* Errors / Warnings */}
-      {routeErrors.length > 0 && (
-        <ul aria-live="polite" style={{ ...GF, listStyle: "none", margin: "0 0 16px", padding: "10px 14px", borderRadius: 8, border: "1px solid #F5C6CB", background: "#FFF5F5", fontSize: 13, color: "#C0392B" }}>
-          {routeErrors.map(e => <li key={e.id}>• {e.message}</li>)}
-        </ul>
-      )}
-      {routeWarnings.length > 0 && (
-        <ul style={{ ...GF, listStyle: "none", margin: "0 0 16px", padding: "10px 14px", borderRadius: 8, border: "1px solid #F0D07A", background: "#FEF9EC", fontSize: 13, color: GOLD }}>
-          {routeWarnings.map(e => <li key={e.id}>• {e.message}</li>)}
-        </ul>
-      )}
+      <StepIssueList issues={routeErrors} severity="error" />
+      <StepIssueList issues={routeWarnings} severity="warning" />
 
       {/* Routing mode selector */}
       <fieldset style={{ border: "none", margin: "0 0 28px", padding: 0 }}>
@@ -495,6 +543,7 @@ export function RoutingStep() {
               index={idx}
               allParticipants={participants}
               canRemove={routing.groups.length > 1}
+              isSystemManaged={isApprovalBased}
               onLabelChange={handleLabelChange}
               onRuleChange={handleRuleChange}
               onParticipantToggle={handleParticipantToggle}
@@ -532,6 +581,52 @@ export function RoutingStep() {
           </button>
         )}
       </div>
+    </div>
+  );
+
+  const rail = (
+    <RailCard title="Routing preview">
+      <div style={{ ...GF, fontSize: 12, color: "#4B5E70", marginBottom: 12 }}>
+        Mode: <strong style={{ color: NAVY }}>{currentModeLabel}</strong>
+      </div>
+      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+        {routing.groups.map(g => {
+          const assigned = participants.filter(p => g.participantIds.includes(p.id));
+          return (
+            <div key={g.id} style={{ borderLeft: `2px solid ${AZURE}`, paddingLeft: 10 }}>
+              <div style={{ ...GF, fontSize: 12, fontWeight: 700, color: NAVY }}>
+                Step {g.stepNumber}: {g.label}
+              </div>
+              <div style={{ ...GF, fontSize: 11, color: SILVER, marginTop: 2 }}>
+                {g.requiredCompletionRule === "all" ? "All must complete" : "Any one completes"}
+              </div>
+              {assigned.length === 0 ? (
+                <div style={{ ...GF, fontSize: 11, color: SILVER, marginTop: 4 }}>No one assigned</div>
+              ) : (
+                <div style={{ ...GF, fontSize: 11, color: "#4B5E70", marginTop: 4 }}>
+                  {assigned.map(p => p.name).join(", ")}
+                </div>
+              )}
+            </div>
+          );
+        })}
+        {routing.groups.length === 0 && (
+          <div style={{ ...GF, fontSize: 12, color: SILVER }}>No routing steps configured.</div>
+        )}
+      </div>
+    </RailCard>
+  );
+
+  return (
+    <div style={GF}>
+      <StepBanner
+        icon={Route}
+        eyebrow="Step 3 of 7"
+        title="Routing"
+        description="Choose how participants are sequenced and whether they act simultaneously or one at a time."
+        meta={currentModeLabel}
+      />
+      <StepTwoColumn main={main} rail={rail} />
     </div>
   );
 }

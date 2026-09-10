@@ -14,26 +14,26 @@ function ApiEndpointMockup() {
     { method: "GET",  path: "/v1/audit/{id}",         desc: "Retrieve the full audit trail" },
   ];
   return (
-    <div aria-hidden style={{ background: "rgba(7,17,31,0.95)", border: "1px solid rgba(0,120,212,0.22)", borderRadius: 14, overflow: "hidden", maxWidth: 440, width: "100%" }}>
-      <div style={{ padding: "10px 16px", borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
-        <p style={{ color: "#38bdf8", ...GM, fontSize: 10, fontWeight: 700, margin: 0 }}>LAGDA API · v1 · Enterprise</p>
+    <div aria-hidden style={{ background: "#ffffff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: 14, overflow: "hidden", maxWidth: 440, width: "100%", boxShadow: "0 4px 16px rgba(7,17,31,0.08)" }}>
+      <div style={{ padding: "10px 16px", borderBottom: "1px solid rgba(0,0,0,0.07)" }}>
+        <p style={{ color: "#0078D4", ...GM, fontSize: 10, fontWeight: 700, margin: 0 }}>LAGDA API · v1 · Enterprise</p>
       </div>
       {endpoints.map((e, i) => (
-        <div key={i} style={{ padding: "10px 16px", borderBottom: "1px solid rgba(255,255,255,0.04)", display: "flex", gap: 10, alignItems: "flex-start" }}>
+        <div key={i} style={{ padding: "10px 16px", borderBottom: "1px solid rgba(0,0,0,0.05)", display: "flex", gap: 10, alignItems: "flex-start" }}>
           <span style={{
-            background: e.method === "POST" ? "rgba(0,120,212,0.15)" : "rgba(34,197,94,0.1)",
-            color: e.method === "POST" ? "#38bdf8" : "#22C55E",
+            background: e.method === "POST" ? "rgba(0,120,212,0.1)" : "rgba(34,197,94,0.1)",
+            color: e.method === "POST" ? "#0078D4" : "#178A4C",
             border: `1px solid ${e.method === "POST" ? "rgba(0,120,212,0.3)" : "rgba(34,197,94,0.25)"}`,
             ...GM, fontSize: 9, fontWeight: 700, padding: "2px 7px", borderRadius: 4, flexShrink: 0, marginTop: 1,
           }}>{e.method}</span>
           <div>
-            <p style={{ color: "#e2e8f0", ...GM, fontSize: 11, margin: 0 }}>{e.path}</p>
-            <p style={{ color: "#8A9BAE", ...GF, fontSize: 11, margin: "2px 0 0" }}>{e.desc}</p>
+            <p style={{ color: "#07111F", ...GM, fontSize: 11, margin: 0 }}>{e.path}</p>
+            <p style={{ color: "#64748B", ...GF, fontSize: 11, margin: "2px 0 0" }}>{e.desc}</p>
           </div>
         </div>
       ))}
-      <div style={{ padding: "10px 16px", background: "rgba(0,0,0,0.2)" }}>
-        <p style={{ color: "#7C8DA4", ...GM, fontSize: 9, margin: 0 }}>Representative endpoint shapes — not production documentation. API access is Enterprise.</p>
+      <div style={{ padding: "10px 16px", background: "#f8fafb" }}>
+        <p style={{ color: "#94A3B8", ...GM, fontSize: 9, margin: 0 }}>Representative endpoint shapes — not production documentation. API access is Enterprise.</p>
       </div>
     </div>
   );
@@ -62,14 +62,14 @@ export function ApiIntegrations() {
                 "Launch workflows from saved templates",
               ].map((item) => (
                 <div key={item} style={{ display: "flex", gap: 8 }}>
-                  <span style={{ color: "#38BDF8", fontWeight: 700, flexShrink: 0 }}>✓</span>
-                  <span style={{ color: "#94a3b8", ...GF, fontSize: 14, lineHeight: 1.5 }}>{item}</span>
+                  <span style={{ color: "#0078D4", fontWeight: 700, flexShrink: 0 }}>✓</span>
+                  <span style={{ color: "#334155", ...GF, fontSize: 14, lineHeight: 1.5 }}>{item}</span>
                 </div>
               ))}
             </div>
             <div>
               <AvailBadge tier="Enterprise" />
-              <span style={{ color: "#8A9BAE", ...GF, fontSize: 13, marginLeft: 10 }}>API access is available on Enterprise plans. Contact Sales for details.</span>
+              <span style={{ color: "#64748B", ...GF, fontSize: 13, marginLeft: 10 }}>API access is available on Enterprise plans. Contact Sales for details.</span>
             </div>
           </div>
           <ApiEndpointMockup />
@@ -88,9 +88,9 @@ export function ApiIntegrations() {
             { event: "transaction.completed",  desc: "All required participants have acted." },
             { event: "transaction.expired",    desc: "The transaction reached its expiration date without completion." },
           ].map((w) => (
-            <div key={w.event} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 10, padding: "10px 12px" }}>
-              <p style={{ color: "#38bdf8", ...GM, fontSize: 10, fontWeight: 700, margin: 0, marginBottom: 4 }}>{w.event}</p>
-              <p style={{ color: "#94A3B8", ...GF, fontSize: 12, lineHeight: 1.5, margin: 0 }}>{w.desc}</p>
+            <div key={w.event} style={{ background: "#ffffff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: 10, padding: "10px 12px", boxShadow: "0 1px 4px rgba(7,17,31,0.06)" }}>
+              <p style={{ color: "#0078D4", ...GM, fontSize: 10, fontWeight: 700, margin: 0, marginBottom: 4 }}>{w.event}</p>
+              <p style={{ color: "#64748B", ...GF, fontSize: 12, lineHeight: 1.5, margin: 0 }}>{w.desc}</p>
             </div>
           ))}
         </div>
@@ -107,8 +107,8 @@ export function ApiIntegrations() {
             { label: "No partner program listed",      desc: "LAGDA does not list specific integration partner names or certifications on this page." },
           ].map((s) => (
             <div key={s.label} style={{ background: "rgba(201,150,12,0.06)", border: "1px solid rgba(201,150,12,0.2)", borderRadius: 10, padding: "12px 14px" }}>
-              <p style={{ color: "#C9960C", ...GM, fontSize: 10, fontWeight: 700, margin: 0, marginBottom: 4 }}>{s.label}</p>
-              <p style={{ color: "#94a3b8", ...GF, fontSize: 12, lineHeight: 1.5, margin: 0 }}>{s.desc}</p>
+              <p style={{ color: "#9A7208", ...GM, fontSize: 10, fontWeight: 700, margin: 0, marginBottom: 4 }}>{s.label}</p>
+              <p style={{ color: "#334155", ...GF, fontSize: 12, lineHeight: 1.5, margin: 0 }}>{s.desc}</p>
             </div>
           ))}
         </div>

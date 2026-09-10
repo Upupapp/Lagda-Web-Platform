@@ -9,23 +9,24 @@ const AUTO_ADVANCE_MS = 4000;
 function StepMockup({ step }: { step: typeof HOW_IT_WORKS[0] }) {
   return (
     <div style={{
-      background: "rgba(7,17,31,0.95)",
-      border: "1px solid rgba(0,120,212,0.22)",
+      background: "#ffffff",
+      border: "1px solid rgba(0,120,212,0.18)",
       borderRadius: 16,
       padding: 24,
       minHeight: 160,
       display: "flex", flexDirection: "column", justifyContent: "center",
+      boxShadow: "0 1px 4px rgba(7,17,31,0.07)",
     }}>
       <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
         <span style={{ fontSize: 28 }} aria-hidden="true">{step.icon}</span>
-        <span style={{ color: "#38bdf8", ...GM, fontSize: 11, fontWeight: 700, letterSpacing: "0.1em" }}>
+        <span style={{ color: "#0078D4", ...GM, fontSize: 11, fontWeight: 700, letterSpacing: "0.1em" }}>
           STEP {step.num} OF 6
         </span>
       </div>
-      <p style={{ color: "white", ...GF, fontSize: 15, fontWeight: 700, margin: 0, marginBottom: 4 }}>
+      <p style={{ color: "#07111F", ...GF, fontSize: 15, fontWeight: 700, margin: 0, marginBottom: 4 }}>
         {step.mockLabel}
       </p>
-      <p style={{ color: "#94A3B8", ...GF, fontSize: 12, margin: 0, lineHeight: 1.5 }}>
+      <p style={{ color: "#64748B", ...GF, fontSize: 12, margin: 0, lineHeight: 1.5 }}>
         {step.mockSub}
       </p>
     </div>
@@ -59,19 +60,19 @@ export function WorkflowSection() {
   return (
     <section
       aria-labelledby="workflow-heading"
-      style={{ maxWidth: 1200, margin: "0 auto", padding: "80px 24px" }}
+      style={{ maxWidth: 1200, margin: "0 auto", padding: "80px 24px", background: "#ffffff" }}
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
     >
       {/* Section header */}
       <div style={{ textAlign: "center", marginBottom: 56 }}>
-        <p style={{ color: "#38bdf8", ...GM, fontSize: 11, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 12 }}>
+        <p style={{ color: "#0078D4", ...GM, fontSize: 11, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 12 }}>
           How it works
         </p>
-        <h2 id="workflow-heading" style={{ color: "white", ...GF, fontSize: "clamp(26px, 4vw, 40px)", fontWeight: 800, margin: 0, letterSpacing: "-0.02em" }}>
+        <h2 id="workflow-heading" style={{ color: "#07111F", ...GF, fontSize: "clamp(26px, 4vw, 40px)", fontWeight: 800, margin: 0, letterSpacing: "-0.02em" }}>
           Six steps. One seamless workflow.
         </h2>
-        <p style={{ color: "#94A3B8", ...GF, fontSize: 16, lineHeight: 1.65, margin: "12px auto 0", maxWidth: 560 }}>
+        <p style={{ color: "#64748B", ...GF, fontSize: 16, lineHeight: 1.65, margin: "12px auto 0", maxWidth: 560 }}>
           From uploading a document to verifying the completed result — every step is designed to be straightforward.
         </p>
       </div>
@@ -100,8 +101,8 @@ export function WorkflowSection() {
                   all: "unset",
                   display: "flex", alignItems: "flex-start", gap: 16,
                   padding: "14px 16px", borderRadius: 12, cursor: "pointer",
-                  background: isActive ? "rgba(0,120,212,0.1)" : "transparent",
-                  border: `1px solid ${isActive ? "rgba(0,120,212,0.25)" : "transparent"}`,
+                  background: isActive ? "rgba(0,120,212,0.06)" : "transparent",
+                  border: `1px solid ${isActive ? "rgba(0,120,212,0.22)" : "transparent"}`,
                   transition: "background 0.2s ease, border-color 0.2s ease",
                   width: "100%", boxSizing: "border-box", textAlign: "left",
                 }}
@@ -109,7 +110,7 @@ export function WorkflowSection() {
                 {/* Number + progress ring */}
                 <div style={{ position: "relative", flexShrink: 0, width: 32, height: 32 }}>
                   <svg width="32" height="32" aria-hidden="true" style={{ position: "absolute", inset: 0, transform: "rotate(-90deg)" }}>
-                    <circle cx="16" cy="16" r="13" fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="2" />
+                    <circle cx="16" cy="16" r="13" fill="none" stroke="rgba(7,17,31,0.1)" strokeWidth="2" />
                     {isActive && !paused && (
                       <circle
                         cx="16" cy="16" r="13" fill="none"
@@ -126,17 +127,17 @@ export function WorkflowSection() {
                   <span style={{
                     position: "absolute", inset: 0,
                     display: "flex", alignItems: "center", justifyContent: "center",
-                    color: isActive ? "white" : "#8A9BAE", ...GM, fontSize: 11, fontWeight: 700,
+                    color: isActive ? "#07111F" : "#94A3B8", ...GM, fontSize: 11, fontWeight: 700,
                   }}>
                     {String(s.num).padStart(2, "0")}
                   </span>
                 </div>
 
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <p style={{ color: isActive ? "white" : "#94a3b8", ...GF, fontSize: 14, fontWeight: 700, margin: 0 }}>
+                  <p style={{ color: isActive ? "#07111F" : "#334155", ...GF, fontSize: 14, fontWeight: 700, margin: 0 }}>
                     {s.title}
                   </p>
-                  <p style={{ color: "#8A9BAE", ...GF, fontSize: 12, margin: "2px 0 0" }}>
+                  <p style={{ color: "#64748B", ...GF, fontSize: 12, margin: "2px 0 0" }}>
                     {s.short}
                   </p>
                 </div>
@@ -159,15 +160,15 @@ export function WorkflowSection() {
             <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
               <span aria-hidden="true" style={{ fontSize: 32 }}>{step.icon}</span>
               <div>
-                <p style={{ color: "#38bdf8", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", margin: 0 }}>
+                <p style={{ color: "#0078D4", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", margin: 0 }}>
                   STEP {step.num} OF 6
                 </p>
-                <h3 style={{ color: "white", ...GF, fontSize: "clamp(20px, 3vw, 28px)", fontWeight: 800, margin: 0, lineHeight: 1.2 }}>
+                <h3 style={{ color: "#07111F", ...GF, fontSize: "clamp(20px, 3vw, 28px)", fontWeight: 800, margin: 0, lineHeight: 1.2 }}>
                   {step.title}
                 </h3>
               </div>
             </div>
-            <p style={{ color: "#94a3b8", ...GF, fontSize: 15, lineHeight: 1.65, margin: 0, marginBottom: 24 }}>
+            <p style={{ color: "#334155", ...GF, fontSize: 15, lineHeight: 1.65, margin: 0, marginBottom: 24 }}>
               {step.desc}
             </p>
             <StepMockup step={step} />

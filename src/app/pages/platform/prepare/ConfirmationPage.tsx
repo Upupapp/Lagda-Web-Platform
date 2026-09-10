@@ -9,10 +9,13 @@
 import React, { useEffect, useMemo } from "react";
 import { useNavigate } from "react-router";
 import { usePrepare } from "../../../context/PrepareContext";
+import { usePlatform } from "../../../context/PlatformContext";
 import { FieldEditorProvider, useFieldEditor } from "../../../context/FieldEditorContext";
 import { FIELD_TYPE_LABELS, FIELD_TYPE_ICONS } from "../../../models/field-editor";
 import type { PrepParticipant } from "../../../models/prepare";
 import { Z } from "../../../utils/z-index";
+import { mockDocumentService } from "../../../services/mock/document.service";
+import { mapPreparationDraftToDocumentListItem } from "../../../services/prepare/draft-to-document";
 
 // ── Design tokens ─────────────────────────────────────────────────────────────
 const GF     = { fontFamily: "'Geist', sans-serif" };
@@ -24,7 +27,8 @@ const WHITE  = "#FFFFFF";
 // ── Inner component (needs FieldEditorContext) ────────────────────────────────
 function ConfirmationPageInner({ participants }: { participants: PrepParticipant[] }) {
   const navigate = useNavigate();
-  const { draft, setStep } = usePrepare();
+  const { draft, setStep, discardDraft } = usePrepare();
+  const { user } = usePlatform();
   const {
     initialize, fields, documents, runValidation, validation,
   } = useFieldEditor();
@@ -250,7 +254,15 @@ function ConfirmationPageInner({ participants }: { participants: PrepParticipant
           <button
             disabled={!canProceed}
             onClick={() => {
-              // No signing request is created. This marks the end of the demonstration.
+              // No signing request is created — this marks the end of the
+              // demonstration, not a real send. The draft still becomes a
+              // visible Documents entry (status "draft", same mechanism Bulk
+              // Send already uses via addDraftProjections) so it doesn't just
+              // vanish, then the in-progress prepare draft itself is cleared.
+              mockDocumentService.addDraftProjections([
+                mapPreparationDraftToDocumentListItem(draft, user?.displayName ?? "You"),
+              ]);
+              void discardDraft();
               navigate("/app/documents");
             }}
             aria-disabled={!canProceed}

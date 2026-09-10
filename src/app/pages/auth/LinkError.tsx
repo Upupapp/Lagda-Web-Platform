@@ -106,7 +106,7 @@ export function LinkError() {
         margin: "0 auto 20px", fontSize: 22,
       }} aria-hidden>{cfg.icon}</div>
 
-      <h1 style={{ color: "white", ...GF, fontSize: 22, fontWeight: 900, letterSpacing: "-0.02em", margin: "0 0 12px" }}>
+      <h1 style={{ color: "#07111F", ...GF, fontSize: 22, fontWeight: 900, letterSpacing: "-0.02em", margin: "0 0 12px" }}>
         {cfg.title}
       </h1>
       <p style={{ color: "#64748B", ...GF, fontSize: 14, lineHeight: 1.7, margin: "0 0 28px", maxWidth: 380, marginLeft: "auto", marginRight: "auto" }}>
@@ -123,14 +123,14 @@ export function LinkError() {
         {cfg.secondary && (
           <Link
             to={cfg.secondary.to}
-            style={{ display: "block", background: "none", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 8, color: "#64748B", ...GF, fontSize: 14, fontWeight: 600, padding: "13px", textDecoration: "none", minHeight: 44, lineHeight: "18px" }}
+            style={{ display: "block", background: "none", border: "1px solid rgba(0,0,0,0.08)", borderRadius: 8, color: "#64748B", ...GF, fontSize: 14, fontWeight: 600, padding: "13px", textDecoration: "none", minHeight: 44, lineHeight: "18px" }}
           >
             {cfg.secondary.label}
           </Link>
         )}
         <Link
           to="/help"
-          style={{ display: "block", color: "#475569", ...GF, fontSize: 13, textDecoration: "none", padding: "8px" }}
+          style={{ display: "block", color: "#64748B", ...GF, fontSize: 13, textDecoration: "none", padding: "8px" }}
         >
           Contact Support
         </Link>

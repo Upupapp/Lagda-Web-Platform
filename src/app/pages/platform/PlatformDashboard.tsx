@@ -242,7 +242,7 @@ function QuickActionsSection({ canPrepare, canTemplate, canVerify, canInvite }: 
   if (actions.length === 0) return null;
 
   return (
-    <section aria-label="Quick actions" style={{ marginBottom: 24 }}>
+    <section aria-label="Quick actions" data-guide="dashboard-quick-actions" style={{ marginBottom: 24 }}>
       <SectionHeader label="Quick Actions" />
       <div className="dashboard-quick-actions">
         {actions.map((a) => (
@@ -279,7 +279,7 @@ function NeedsAttentionSection({ items, hasError, isLoading, onRetry }: {
   items: AttentionItem[]; hasError: boolean; isLoading: boolean; onRetry: () => void;
 }) {
   return (
-    <section aria-label="Needs attention" style={{ marginBottom: 24 }}>
+    <section aria-label="Needs attention" data-guide="dashboard-needs-attention" style={{ marginBottom: 24 }}>
       <SectionHeader label="Needs Attention" to="/app/documents" linkLabel="View all" />
       <Card>
         {isLoading ? (
@@ -347,7 +347,7 @@ function StatusSummarySection({ counts, hasError, isLoading, onRetry }: {
   counts: DocumentStatusCount | null; hasError: boolean; isLoading: boolean; onRetry: () => void;
 }) {
   return (
-    <section aria-label="Document status summary" style={{ marginBottom: 24 }}>
+    <section aria-label="Document status summary" data-guide="dashboard-status-summary" style={{ marginBottom: 24 }}>
       <SectionHeader label="Document Status" to="/app/documents" linkLabel="All documents" />
       {isLoading ? (
         <DashboardGrid>
@@ -390,7 +390,7 @@ function RecentDocumentsSection({ docs, hasError, isLoading, onRetry }: {
   docs: DashboardDocument[]; hasError: boolean; isLoading: boolean; onRetry: () => void;
 }) {
   return (
-    <section aria-label="Recent documents" style={{ marginBottom: 24 }}>
+    <section aria-label="Recent documents" data-guide="dashboard-recent-documents" style={{ marginBottom: 24 }}>
       <SectionHeader label="Recent Documents" to="/app/documents" linkLabel="View all" />
       <Card>
         {isLoading ? (
@@ -469,7 +469,7 @@ function RecentActivitySection({ items, hasError, isLoading, onRetry }: {
   items: ActivityItem[]; hasError: boolean; isLoading: boolean; onRetry: () => void;
 }) {
   return (
-    <section aria-label="Recent activity" style={{ marginBottom: 24 }}>
+    <section aria-label="Recent activity" data-guide="dashboard-recent-activity" style={{ marginBottom: 24 }}>
       <SectionHeader label="Recent Activity" to="/app/documents" linkLabel="View documents" />
       <Card>
         {isLoading ? (
@@ -512,7 +512,7 @@ function RecentActivitySection({ items, hasError, isLoading, onRetry }: {
 function TemplateShortcuts({ isLoading }: { isLoading: boolean }) {
   const templates = DASHBOARD_MOCK_TEMPLATES.slice(0, 3);
   return (
-    <section aria-label="Template shortcuts" style={{ marginBottom: 20 }}>
+    <section aria-label="Template shortcuts" data-guide="dashboard-templates" style={{ marginBottom: 20 }}>
       <SectionHeader label="Templates" to="/app/templates" linkLabel="All templates" />
       <Card>
         {isLoading ? (
@@ -550,7 +550,7 @@ function TemplateShortcuts({ isLoading }: { isLoading: boolean }) {
 
 function VerificationAccessCard() {
   return (
-    <section aria-label="Document Verification" style={{ marginBottom: 20 }}>
+    <section aria-label="Document Verification" data-guide="dashboard-verify" style={{ marginBottom: 20 }}>
       <Link
         to="/app/verify"
         className="dashboard-verify-card"
@@ -615,7 +615,7 @@ function UsageMeter({
 
 function UsageSnapshot({ usage, isLoading }: { usage: DashboardUsage | null; isLoading: boolean }) {
   return (
-    <section aria-label="Usage and plan snapshot" style={{ marginBottom: 20 }}>
+    <section aria-label="Usage and plan snapshot" data-guide="dashboard-usage" style={{ marginBottom: 20 }}>
       <SectionHeader label="Usage & Plan" to="/app/settings/billing" linkLabel="Manage" />
       <Card style={{ padding: "16px" }}>
         {isLoading || !usage ? (
@@ -664,7 +664,7 @@ function WorkspaceTeamSummary({ memberCount, workspaceName, planLabel, isLoading
   memberCount: number; workspaceName: string; planLabel: string; isLoading: boolean;
 }) {
   return (
-    <section aria-label="Workspace and team summary" style={{ marginBottom: 20 }}>
+    <section aria-label="Workspace and team summary" data-guide="dashboard-team" style={{ marginBottom: 20 }}>
       <SectionHeader label="Team" to="/app/team" linkLabel="Manage" />
       <Card style={{ padding: "16px" }}>
         {isLoading ? (
@@ -736,7 +736,7 @@ function MyActionsSection() {
   if (items.length === 0) return null;
 
   return (
-    <section aria-label="My Actions — awaiting your action" style={{ marginBottom: 24 }}>
+    <section aria-label="My Actions — awaiting your action" data-guide="dashboard-my-actions" style={{ marginBottom: 24 }}>
       <SectionHeader label="My Actions" to="/app/inbox" linkLabel="View all" />
       <Card style={{ padding: "4px 0" }}>
         {items.map((item, idx) => {
@@ -793,7 +793,7 @@ function NotificationsSection() {
   if (unreadCount === 0 && urgent.length === 0) return null;
 
   return (
-    <section aria-label="High-priority notifications" style={{ marginBottom: 24 }}>
+    <section aria-label="High-priority notifications" data-guide="dashboard-notifications" style={{ marginBottom: 24 }}>
       <SectionHeader label="Notifications" to="/app/notifications" linkLabel="View all" />
       <Card style={{ padding: "4px 0" }}>
         {urgent.length > 0 ? (
@@ -847,7 +847,7 @@ function NotificationsSection() {
 
 function ReportsDirectionSection() {
   return (
-    <section aria-label="Reports direction" style={{ marginBottom: 24 }}>
+    <section aria-label="Reports direction" data-guide="dashboard-reports" style={{ marginBottom: 24 }}>
       <SectionHeader label="Reports" to="/app/reports" linkLabel="View all reports" />
       <Card>
         <div style={{ padding: "12px 16px" }}>
@@ -888,7 +888,7 @@ function ReportsDirectionSection() {
 
 function AutomationDirectionSection() {
   return (
-    <section aria-label="Automation direction" style={{ marginBottom: 24 }}>
+    <section aria-label="Automation direction" data-guide="dashboard-automation" style={{ marginBottom: 24 }}>
       <SectionHeader label="Automation" to="/app/automation" linkLabel="Open automation" />
       <Card>
         <div style={{ padding: "12px 16px" }}>
@@ -950,7 +950,7 @@ function PreparationSection({ items }: { items: PreparationPlatformSummary[] }) 
     .slice(0, 4);
 
   return (
-    <section aria-label="Bulk Send preparation" style={{ marginBottom: 24 }}>
+    <section aria-label="Bulk Send preparation" data-guide="dashboard-bulk-send" style={{ marginBottom: 24 }}>
       <SectionHeader label="Bulk Send" to={PREPARATION_LIST_ROUTE} linkLabel="Open Bulk Send" />
       <Card>
         <div style={{ padding: "12px 16px" }}>

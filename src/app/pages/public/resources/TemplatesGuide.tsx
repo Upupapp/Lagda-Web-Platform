@@ -69,9 +69,9 @@ export function TemplatesGuide() {
               { title: "Internal approval",      desc: "A department approval template with sequential routing through department head and officer." },
               { title: "Client acknowledgment",  desc: "A service acknowledgment or consent form with client signature first, then practitioner countersign." },
             ].map(({ title, desc }) => (
-              <div key={title} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 9, padding: "12px 16px" }}>
-                <p style={{ color: "white", ...GF, fontSize: 13, fontWeight: 700, margin: "0 0 4px" }}>{title}</p>
-                <p style={{ color: "#94A3B8", ...GF, fontSize: 13, margin: 0, lineHeight: 1.5 }}>{desc}</p>
+              <div key={title} style={{ background: "#ffffff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: 9, padding: "12px 16px", boxShadow: "0 1px 4px rgba(7,17,31,0.07)" }}>
+                <p style={{ color: "#07111F", ...GF, fontSize: 13, fontWeight: 700, margin: "0 0 4px" }}>{title}</p>
+                <p style={{ color: "#64748B", ...GF, fontSize: 13, margin: 0, lineHeight: 1.5 }}>{desc}</p>
               </div>
             ))}
           </div>
@@ -102,7 +102,7 @@ export function TemplatesGuide() {
 
         <div style={{ marginTop: 40, display: "flex", gap: 12, flexWrap: "wrap" }}>
           <Link to="/features/templates" style={{ display: "inline-flex", alignItems: "center", background: "#0078D4", color: "white", ...GF, fontSize: 14, fontWeight: 700, padding: "11px 22px", borderRadius: 8, textDecoration: "none", minHeight: 44 }}>Explore Templates →</Link>
-          <Link to="/pricing/templates-by-plan" style={{ display: "inline-flex", alignItems: "center", color: "#38bdf8", ...GF, fontSize: 14, fontWeight: 600, padding: "11px 0", textDecoration: "none" }}>Templates by plan →</Link>
+          <Link to="/pricing/templates-by-plan" style={{ display: "inline-flex", alignItems: "center", color: "#0078D4", ...GF, fontSize: 14, fontWeight: 600, padding: "11px 0", textDecoration: "none" }}>Templates by plan →</Link>
         </div>
 
         <EduDisclaimer />

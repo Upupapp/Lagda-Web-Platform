@@ -12,13 +12,13 @@ function NotificationCenter() {
   const [dismissed, setDismissed] = useState<number[]>([]);
   const visible = NOTIFICATION_EVENTS.filter((_, i) => !dismissed.includes(i));
   return (
-    <div style={{ background: "rgba(7,17,31,0.95)", border: "1px solid rgba(0,120,212,0.22)", borderRadius: 14, overflow: "hidden", maxWidth: 400, width: "100%" }}>
-      <div style={{ padding: "10px 16px", borderBottom: "1px solid rgba(255,255,255,0.07)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <span style={{ color: "white", ...GF, fontSize: 13, fontWeight: 700 }}>Notifications</span>
+    <div style={{ background: "#ffffff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: 14, overflow: "hidden", maxWidth: 400, width: "100%", boxShadow: "0 4px 16px rgba(7,17,31,0.08)" }}>
+      <div style={{ padding: "10px 16px", borderBottom: "1px solid rgba(0,0,0,0.07)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <span style={{ color: "#07111F", ...GF, fontSize: 13, fontWeight: 700 }}>Notifications</span>
         {dismissed.length < NOTIFICATION_EVENTS.length && (
           <button
             onClick={() => setDismissed(NOTIFICATION_EVENTS.map((_, i) => i))}
-            style={{ background: "none", border: "none", color: "#8A9BAE", ...GF, fontSize: 11, cursor: "pointer", padding: 0 }}
+            style={{ background: "none", border: "none", color: "#64748B", ...GF, fontSize: 11, cursor: "pointer", padding: 0 }}
           >
             Clear all
           </button>
@@ -26,25 +26,25 @@ function NotificationCenter() {
       </div>
       {visible.length === 0 ? (
         <div style={{ padding: "24px 16px", textAlign: "center" }}>
-          <p style={{ color: "#7C8DA4", ...GM, fontSize: 11, margin: 0 }}>No new notifications</p>
+          <p style={{ color: "#94A3B8", ...GM, fontSize: 11, margin: 0 }}>No new notifications</p>
         </div>
       ) : visible.map((n, idx) => {
         const originalIdx = NOTIFICATION_EVENTS.indexOf(n);
         return (
-          <div key={idx} style={{ padding: "10px 16px", borderBottom: "1px solid rgba(255,255,255,0.04)", display: "flex", gap: 10, alignItems: "flex-start" }}>
+          <div key={idx} style={{ padding: "10px 16px", borderBottom: "1px solid rgba(0,0,0,0.05)", display: "flex", gap: 10, alignItems: "flex-start" }}>
             <span style={{ fontSize: 16, flexShrink: 0, marginTop: 1 }}>{n.icon}</span>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                <p style={{ color: "white", ...GF, fontSize: 12, fontWeight: 600, margin: 0, flex: 1 }}>{n.title}</p>
-                {n.action && <span style={{ background: "rgba(239,68,68,0.15)", color: "#ef4444", ...GM, fontSize: 8, fontWeight: 700, padding: "1px 6px", borderRadius: 999, flexShrink: 0 }}>ACTION</span>}
+                <p style={{ color: "#07111F", ...GF, fontSize: 12, fontWeight: 600, margin: 0, flex: 1 }}>{n.title}</p>
+                {n.action && <span style={{ background: "rgba(239,68,68,0.12)", color: "#DC2626", ...GM, fontSize: 8, fontWeight: 700, padding: "1px 6px", borderRadius: 999, flexShrink: 0 }}>ACTION</span>}
               </div>
-              <p style={{ color: "#94A3B8", ...GF, fontSize: 11, margin: "2px 0 0", lineHeight: 1.4 }}>{n.desc}</p>
-              <p style={{ color: "#7C8DA4", ...GM, fontSize: 9, margin: "3px 0 0" }}>{n.time}</p>
+              <p style={{ color: "#64748B", ...GF, fontSize: 11, margin: "2px 0 0", lineHeight: 1.4 }}>{n.desc}</p>
+              <p style={{ color: "#94A3B8", ...GM, fontSize: 9, margin: "3px 0 0" }}>{n.time}</p>
             </div>
             <button
               onClick={() => setDismissed((prev) => [...prev, originalIdx])}
               aria-label={`Dismiss ${n.title}`}
-              style={{ background: "none", border: "none", color: "#7C8DA4", cursor: "pointer", padding: 0, fontSize: 12, flexShrink: 0, marginTop: 1 }}
+              style={{ background: "none", border: "none", color: "#94A3B8", cursor: "pointer", padding: 0, fontSize: 12, flexShrink: 0, marginTop: 1 }}
             >
               ✕
             </button>
@@ -81,8 +81,8 @@ export function Notifications() {
                 <div key={e.label} style={{ display: "flex", gap: 10, alignItems: "center" }}>
                   <span style={{ fontSize: 14, width: 20, textAlign: "center", flexShrink: 0 }}>{e.icon}</span>
                   <div>
-                    <p style={{ color: "white", ...GF, fontSize: 12, fontWeight: 600, margin: 0 }}>{e.label}</p>
-                    <p style={{ color: "#8A9BAE", ...GM, fontSize: 10, margin: 0 }}>{e.when}</p>
+                    <p style={{ color: "#07111F", ...GF, fontSize: 12, fontWeight: 600, margin: 0 }}>{e.label}</p>
+                    <p style={{ color: "#64748B", ...GM, fontSize: 10, margin: 0 }}>{e.when}</p>
                   </div>
                 </div>
               ))}
@@ -101,10 +101,10 @@ export function Notifications() {
             { icon: "📱", channel: "In-app",                  desc: "Notifications appear in the LAGDA notification center when the sender or team member is signed in." },
             { icon: "🔔", channel: "Digest (where available)", desc: "Daily or periodic summaries instead of individual notifications. Availability may vary by plan." },
           ].map((c) => (
-            <div key={c.channel} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 12, padding: "16px 14px" }}>
+            <div key={c.channel} style={{ background: "#ffffff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: 12, padding: "16px 14px", boxShadow: "0 1px 4px rgba(7,17,31,0.07)" }}>
               <span aria-hidden style={{ fontSize: 22, display: "block", marginBottom: 8 }}>{c.icon}</span>
-              <p style={{ color: "white", ...GF, fontSize: 13, fontWeight: 700, margin: 0, marginBottom: 4 }}>{c.channel}</p>
-              <p style={{ color: "#94A3B8", ...GF, fontSize: 12, lineHeight: 1.5, margin: 0 }}>{c.desc}</p>
+              <p style={{ color: "#07111F", ...GF, fontSize: 13, fontWeight: 700, margin: 0, marginBottom: 4 }}>{c.channel}</p>
+              <p style={{ color: "#64748B", ...GF, fontSize: 12, lineHeight: 1.5, margin: 0 }}>{c.desc}</p>
             </div>
           ))}
         </div>
@@ -120,9 +120,9 @@ export function Notifications() {
             { title: "Manual resend",          desc: "Senders can manually trigger a resend from the transaction management view." },
             { title: "Expiry notification",    desc: "As a transaction nears its expiration date, the sender is notified to take action or extend." },
           ].map((r) => (
-            <div key={r.title} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 10, padding: "12px 14px" }}>
-              <p style={{ color: "white", ...GF, fontSize: 13, fontWeight: 700, margin: 0, marginBottom: 4 }}>{r.title}</p>
-              <p style={{ color: "#94A3B8", ...GF, fontSize: 12, lineHeight: 1.5, margin: 0 }}>{r.desc}</p>
+            <div key={r.title} style={{ background: "#ffffff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: 10, padding: "12px 14px", boxShadow: "0 1px 4px rgba(7,17,31,0.06)" }}>
+              <p style={{ color: "#07111F", ...GF, fontSize: 13, fontWeight: 700, margin: 0, marginBottom: 4 }}>{r.title}</p>
+              <p style={{ color: "#64748B", ...GF, fontSize: 12, lineHeight: 1.5, margin: 0 }}>{r.desc}</p>
             </div>
           ))}
         </div>

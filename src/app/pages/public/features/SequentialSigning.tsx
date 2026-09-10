@@ -21,43 +21,43 @@ function SequentialDiagram() {
     <div aria-hidden style={{ maxWidth: 420, width: "100%" }}>
       {/* Sender */}
       <div style={{ background: "rgba(0,120,212,0.1)", border: "1px solid rgba(0,120,212,0.25)", borderRadius: 10, padding: "10px 14px", marginBottom: 0, textAlign: "center" }}>
-        <p style={{ color: "#38bdf8", ...GM, fontSize: 10, fontWeight: 700, margin: 0, marginBottom: 2 }}>SENDER</p>
-        <p style={{ color: "white", ...GF, fontSize: 13, fontWeight: 600, margin: 0 }}>Mabini Legal Solutions</p>
+        <p style={{ color: "#0078D4", ...GM, fontSize: 10, fontWeight: 700, margin: 0, marginBottom: 2 }}>SENDER</p>
+        <p style={{ color: "#07111F", ...GF, fontSize: 13, fontWeight: 600, margin: 0 }}>Mabini Legal Solutions</p>
       </div>
 
       {steps.map((s, i) => (
         <div key={s.label}>
           <div style={{ display: "flex", justifyContent: "center" }}>
-            <div style={{ width: 1, height: 16, background: i <= activeStep ? "#0078D4" : "rgba(255,255,255,0.1)" }} />
+            <div style={{ width: 1, height: 16, background: i <= activeStep ? "#0078D4" : "rgba(0,0,0,0.1)" }} />
           </div>
           <button
             onClick={() => setActiveStep(i)}
             style={{
               width: "100%",
-              background: i === activeStep ? "rgba(0,120,212,0.12)" : i < activeStep ? "rgba(34,197,94,0.08)" : "rgba(255,255,255,0.03)",
-              border: `1px solid ${i === activeStep ? "rgba(0,120,212,0.4)" : i < activeStep ? "rgba(34,197,94,0.25)" : "rgba(255,255,255,0.08)"}`,
+              background: i === activeStep ? "rgba(0,120,212,0.12)" : i < activeStep ? "rgba(34,197,94,0.08)" : "#f8fafb",
+              border: `1px solid ${i === activeStep ? "rgba(0,120,212,0.4)" : i < activeStep ? "rgba(34,197,94,0.25)" : "rgba(0,0,0,0.08)"}`,
               borderRadius: 10, padding: "12px 14px", cursor: "pointer",
               display: "flex", alignItems: "center", gap: 12, textAlign: "left",
               transition: "all 0.2s ease",
             }}
           >
-            <span style={{ color: i < activeStep ? "#22C55E" : i === activeStep ? "#38bdf8" : "#7C8DA4", ...GM, fontSize: 11, fontWeight: 700, flexShrink: 0, minWidth: 48 }}>
+            <span style={{ color: i < activeStep ? "#178A4C" : i === activeStep ? "#0078D4" : "#64748B", ...GM, fontSize: 11, fontWeight: 700, flexShrink: 0, minWidth: 48 }}>
               {i < activeStep ? "✓ Done" : i === activeStep ? "Active" : "Pending"}
             </span>
             <div style={{ flex: 1 }}>
-              <p style={{ color: "white", ...GF, fontSize: 12, fontWeight: 600, margin: 0 }}>{s.label}: {s.participant}</p>
-              <p style={{ color: "#8A9BAE", ...GM, fontSize: 10, margin: "2px 0 0" }}>{s.role}</p>
+              <p style={{ color: "#07111F", ...GF, fontSize: 12, fontWeight: 600, margin: 0 }}>{s.label}: {s.participant}</p>
+              <p style={{ color: "#64748B", ...GM, fontSize: 10, margin: "2px 0 0" }}>{s.role}</p>
             </div>
-            <div style={{ width: 28, height: 28, borderRadius: "50%", background: "rgba(0,120,212,0.2)", display: "flex", alignItems: "center", justifyContent: "center", ...GM, fontSize: 10, fontWeight: 700, color: "#38bdf8", flexShrink: 0 }}>{s.avatar}</div>
+            <div style={{ width: 28, height: 28, borderRadius: "50%", background: "rgba(0,120,212,0.2)", display: "flex", alignItems: "center", justifyContent: "center", ...GM, fontSize: 10, fontWeight: 700, color: "#0078D4", flexShrink: 0 }}>{s.avatar}</div>
           </button>
           {i === activeStep && (
             <div style={{ background: "rgba(0,120,212,0.06)", border: "1px solid rgba(0,120,212,0.15)", borderTop: "none", borderRadius: "0 0 10px 10px", padding: "10px 14px" }}>
-              <p style={{ color: "#94a3b8", ...GF, fontSize: 12, lineHeight: 1.5, margin: 0 }}>{s.desc}</p>
+              <p style={{ color: "#334155", ...GF, fontSize: 12, lineHeight: 1.5, margin: 0 }}>{s.desc}</p>
             </div>
           )}
         </div>
       ))}
-      <p style={{ color: "#7C8DA4", ...GM, fontSize: 10, marginTop: 12, textAlign: "center" }}>Click a step to see details</p>
+      <p style={{ color: "#64748B", ...GM, fontSize: 10, marginTop: 12, textAlign: "center" }}>Click a step to see details</p>
     </div>
   );
 }
@@ -85,8 +85,8 @@ export function SequentialSigning() {
                 "Declined or expired transactions prevent the next step from starting",
               ].map((item) => (
                 <div key={item} style={{ display: "flex", gap: 8 }}>
-                  <span style={{ color: "#38BDF8", fontWeight: 700, flexShrink: 0 }}>✓</span>
-                  <span style={{ color: "#94a3b8", ...GF, fontSize: 14, lineHeight: 1.5 }}>{item}</span>
+                  <span style={{ color: "#0078D4", fontWeight: 700, flexShrink: 0 }}>✓</span>
+                  <span style={{ color: "#334155", ...GF, fontSize: 14, lineHeight: 1.5 }}>{item}</span>
                 </div>
               ))}
             </div>
@@ -107,9 +107,9 @@ export function SequentialSigning() {
             { title: "Board authorization",     desc: "Board resolution is approved before the corporate secretary certifies." },
             { title: "Internal compliance",     desc: "Compliance review completes before the final authorized execution." },
           ].map((u) => (
-            <div key={u.title} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 12, padding: "14px 16px" }}>
-              <p style={{ color: "white", ...GF, fontSize: 13, fontWeight: 700, margin: 0, marginBottom: 4 }}>{u.title}</p>
-              <p style={{ color: "#94A3B8", ...GF, fontSize: 13, lineHeight: 1.5, margin: 0 }}>{u.desc}</p>
+            <div key={u.title} style={{ background: "#f8fafb", border: "1px solid rgba(0,0,0,0.08)", borderRadius: 12, padding: "14px 16px" }}>
+              <p style={{ color: "#07111F", ...GF, fontSize: 13, fontWeight: 700, margin: 0, marginBottom: 4 }}>{u.title}</p>
+              <p style={{ color: "#64748B", ...GF, fontSize: 13, lineHeight: 1.5, margin: 0 }}>{u.desc}</p>
             </div>
           ))}
         </div>
@@ -119,8 +119,8 @@ export function SequentialSigning() {
       <PageSection id="mixed" light bordered>
         <SectionHeading eyebrow="Mixed routing" id="mixed-h2" heading="Sequential steps, parallel participants within each step." sub="Steps occur in order. Within each step, multiple participants may act simultaneously — reducing wait time without compromising the approval sequence." />
         <div style={{ background: "rgba(0,120,212,0.06)", border: "1px solid rgba(0,120,212,0.15)", borderRadius: 14, padding: "20px 18px" }}>
-          <p style={{ color: "#38bdf8", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", marginBottom: 10 }}>EXAMPLE — MIXED ROUTING</p>
-          <p style={{ color: "#94a3b8", ...GF, fontSize: 14, lineHeight: 1.65, margin: 0 }}>
+          <p style={{ color: "#0078D4", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", marginBottom: 10 }}>EXAMPLE — MIXED ROUTING</p>
+          <p style={{ color: "#334155", ...GF, fontSize: 14, lineHeight: 1.65, margin: 0 }}>
             Step 1: Two authorized representatives sign simultaneously (parallel).<br />
             Step 2: Only after both complete does the corporate secretary certify (sequential unlock).<br />
             Step 3: Finance Approver reviews once the document is fully signed.

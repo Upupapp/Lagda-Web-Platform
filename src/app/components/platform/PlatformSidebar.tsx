@@ -3,7 +3,7 @@
 // Hidden on mobile — MobileNav handles that breakpoint.
 
 import { useState, useCallback } from "react";
-import { NavLink, useNavigate } from "react-router";
+import { NavLink, useNavigate, useLocation } from "react-router";
 import {
   LayoutDashboard, FileText, Files, Users, ShieldCheck,
   Bell, Users2, Settings, FilePlus, ChevronLeft, ChevronRight,
@@ -13,6 +13,8 @@ import {
   Zap,
 } from "lucide-react";
 import { LagdaLogo } from "../brand/LagdaLogo";
+import lagdaLogoFull from "../../../brand elements/svg/LagdaLogoPrimaryHorizontalFullColor.svg";
+import lagdaLogoSmall from "../../../brand elements/svg/LagdaLogoPrimaryHorizontalFullColor_Header_small.svg";
 import { usePlatform } from "../../context/PlatformContext";
 import { useNotificationCenter } from "../../context/NotificationCenterContext";
 import { PRIMARY_NAV, UTILITY_NAV, PREPARE_ACTION } from "../../config/platform.nav";
@@ -20,8 +22,7 @@ import { WorkspaceSwitcher } from "./WorkspaceSwitcher";
 import { UserMenu } from "./UserMenu";
 import { Z } from "../../utils/z-index";
 
-const NAVY   = "#07111F";
-const BORDER = "rgba(255,255,255,0.07)";
+const BORDER = "rgba(0,0,0,0.08)";
 const GF     = { fontFamily: "'Geist', sans-serif" };
 const GM     = { fontFamily: "'Geist Mono', monospace" };
 
@@ -65,10 +66,7 @@ function SidebarItem({ to, icon, label, badge, collapsed }: SidebarItemProps) {
           textDecoration: "none",
           background: isActive ? "rgba(0,120,212,0.14)" : "transparent",
           border: isActive ? "1px solid rgba(0,120,212,0.22)" : "1px solid transparent",
-          // #64748b on the navy sidebar measured 3.98:1 — below the 4.5:1 that
-          // WCAG 1.4.3 AA requires for body text, on the primary navigation of
-          // the whole product. #94A3B8 measures 7.39:1 on the same background.
-          color: isActive ? "#38bdf8" : "#94A3B8",
+          color: isActive ? "#0078D4" : "#64748B",
           transition: "background 0.12s, color 0.12s",
           position: "relative",
           minHeight: 36,
@@ -77,7 +75,7 @@ function SidebarItem({ to, icon, label, badge, collapsed }: SidebarItemProps) {
       >
         {({ isActive }) => (
           <>
-            <span aria-hidden style={{ flexShrink: 0, color: isActive ? "#38bdf8" : "#94A3B8", display: "flex", alignItems: "center" }}>
+            <span aria-hidden style={{ flexShrink: 0, color: isActive ? "#0078D4" : "#64748B", display: "flex", alignItems: "center" }}>
               <NavIcon name={icon} />
             </span>
             {!collapsed && (
@@ -91,7 +89,7 @@ function SidebarItem({ to, icon, label, badge, collapsed }: SidebarItemProps) {
               </span>
             )}
             {collapsed && badge != null && badge > 0 && (
-              <span style={{ position: "absolute", top: 4, right: 4, width: 8, height: 8, borderRadius: "50%", background: "#0078D4", border: "2px solid #07111F" }} aria-hidden />
+              <span style={{ position: "absolute", top: 4, right: 4, width: 8, height: 8, borderRadius: "50%", background: "#0078D4", border: "2px solid #ffffff" }} aria-hidden />
             )}
           </>
         )}
@@ -105,6 +103,9 @@ export function PlatformSidebar() {
   const { hasPermission, hasFlag, signOut } = usePlatform();
   const { unreadCount } = useNotificationCenter();
   const navigate = useNavigate();
+  // The dashboard route gets its own brand-mark asset; every other platform
+  // page keeps the standard LagdaLogo component.
+  const isDashboard = useLocation().pathname === "/app/dashboard";
 
   const handleSignOut = useCallback(async () => {
     signOut();
@@ -121,7 +122,7 @@ export function PlatformSidebar() {
       style={{
         width: sidebarWidth,
         flexShrink: 0,
-        background: NAVY,
+        background: "#ffffff",
         borderRight: `1px solid ${BORDER}`,
         display: "flex",
         flexDirection: "column",
@@ -137,54 +138,63 @@ export function PlatformSidebar() {
     >
       {/* ── Logo + collapse toggle ─────────────────────────────────── */}
       <div style={{
-        padding: collapsed ? "16px 0" : "16px 16px 12px",
+        padding: collapsed ? "20px 8px 16px" : "20px 18px 16px",
         borderBottom: `1px solid ${BORDER}`,
         display: "flex",
         alignItems: "center",
+        flexDirection: collapsed ? "column" : "row",
         justifyContent: collapsed ? "center" : "space-between",
-        gap: 8,
+        gap: collapsed ? 12 : 8,
         flexShrink: 0,
       }}>
         {!collapsed ? (
-          <NavLink to="/app/dashboard" style={{ textDecoration: "none", display: "flex", alignItems: "center" }} aria-label="LAGDA — Go to Dashboard">
-            <LagdaLogo variant="white-horizontal" size="sm" decorative />
+          <NavLink to="/app/dashboard" style={{ textDecoration: "none", display: "flex", alignItems: "center", minWidth: 0 }} aria-label="LAGDA — Go to Dashboard">
+            {isDashboard ? (
+              <img src={lagdaLogoFull} alt="LAGDA" style={{ display: "block", width: 156, maxWidth: "100%", height: "auto", objectFit: "contain", objectPosition: "left center" }} />
+            ) : (
+              <LagdaLogo variant="colored-horizontal" size="sm" decorative />
+            )}
           </NavLink>
         ) : (
-          <NavLink to="/app/dashboard" style={{ textDecoration: "none" }} aria-label="LAGDA — Go to Dashboard">
-            <LagdaLogo variant="white-icon" size="xs" decorative />
+          <NavLink to="/app/dashboard" style={{ textDecoration: "none", display: "flex", justifyContent: "center" }} aria-label="LAGDA — Go to Dashboard">
+            {isDashboard ? (
+              <img src={lagdaLogoSmall} alt="LAGDA" style={{ display: "block", width: 34, height: "auto", objectFit: "contain" }} />
+            ) : (
+              <LagdaLogo variant="colored-icon" size="xs" decorative />
+            )}
           </NavLink>
         )}
         <button
           onClick={() => setCollapsed((c) => !c)}
           aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
           style={{
-            background: "rgba(255,255,255,0.04)",
+            background: "#F1F5F9",
             border: `1px solid ${BORDER}`,
-            borderRadius: 6,
-            color: "#475569",
-            width: 24,
-            height: 24,
+            borderRadius: 7,
+            color: "#64748B",
+            width: 26,
+            height: 26,
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
             cursor: "pointer",
             flexShrink: 0,
             padding: 0,
-            transition: "color 0.12s",
+            transition: "color 0.12s, background 0.12s",
           }}
           className="sidebar-collapse-btn"
         >
-          {collapsed ? <ChevronRight size={13} aria-hidden /> : <ChevronLeft size={13} aria-hidden />}
+          {collapsed ? <ChevronRight size={14} aria-hidden /> : <ChevronLeft size={14} aria-hidden />}
         </button>
       </div>
 
       {/* ── Workspace switcher ─────────────────────────────────────── */}
-      <div style={{ padding: collapsed ? "10px 0" : "10px 12px", borderBottom: `1px solid ${BORDER}`, flexShrink: 0 }}>
+      <div style={{ padding: collapsed ? "12px 8px" : "12px 14px", borderBottom: `1px solid ${BORDER}`, flexShrink: 0 }}>
         <WorkspaceSwitcher collapsed={collapsed} />
       </div>
 
       {/* ── Prepare Document CTA ───────────────────────────────────── */}
-      <div style={{ padding: collapsed ? "10px 0" : "10px 10px 0", flexShrink: 0 }}>
+      <div style={{ padding: collapsed ? "12px 8px 4px" : "14px 14px 4px", flexShrink: 0 }}>
         {canPrepare ? (
           <NavLink
             to={PREPARE_ACTION.path}
@@ -193,7 +203,7 @@ export function PlatformSidebar() {
               alignItems: "center",
               justifyContent: collapsed ? "center" : "flex-start",
               gap: collapsed ? 0 : 8,
-              background: "#0078D4",
+              background: "#07111F",
               color: "white",
               borderRadius: 8,
               padding: collapsed ? "9px 0" : "9px 12px",
@@ -218,8 +228,8 @@ export function PlatformSidebar() {
               alignItems: "center",
               justifyContent: collapsed ? "center" : "flex-start",
               gap: collapsed ? 0 : 8,
-              background: "rgba(0,120,212,0.15)",
-              color: "#475569",
+              background: "#F1F5F9",
+              color: "#94A3B8",
               borderRadius: 8,
               padding: collapsed ? "9px 0" : "9px 12px",
               cursor: "not-allowed",
@@ -238,7 +248,7 @@ export function PlatformSidebar() {
       </div>
 
       {/* ── Primary nav ───────────────────────────────────────────── */}
-      <nav aria-label="Platform sections" style={{ flex: 1, padding: collapsed ? "8px 4px" : "8px 10px", overflowY: "auto" }}>
+      <nav aria-label="Platform sections" data-guide="platform-sidebar-nav" style={{ flex: 1, padding: collapsed ? "10px 8px" : "10px 14px", overflowY: "auto" }}>
         <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: 2 }}>
           {PRIMARY_NAV.map((item) => {
             const allowed = !item.permission || hasPermission(item.permission);
@@ -261,7 +271,7 @@ export function PlatformSidebar() {
         {/* Utility nav */}
         {!collapsed && (
           <div style={{ marginTop: 8, paddingTop: 8, borderTop: `1px solid ${BORDER}` }}>
-            <p style={{ ...GM, fontSize: 9, fontWeight: 600, color: "#334155", letterSpacing: "0.08em", padding: "0 10px 4px" }}>
+            <p style={{ ...GM, fontSize: 9, fontWeight: 600, color: "#94A3B8", letterSpacing: "0.08em", padding: "0 10px 4px" }}>
               WORKSPACE
             </p>
           </div>
@@ -303,11 +313,11 @@ export function PlatformSidebar() {
       <style>{`
         .platform-sidebar::-webkit-scrollbar { width: 4px; }
         .platform-sidebar::-webkit-scrollbar-track { background: transparent; }
-        .platform-sidebar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 4px; }
+        .platform-sidebar::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.12); border-radius: 4px; }
         .platform-sidebar a:focus-visible,
         .platform-sidebar button:focus-visible,
         .sidebar-collapse-btn:focus-visible { outline: 2px solid #0078D4; outline-offset: 2px; border-radius: 6px; }
-        .prepare-cta:hover { background: #0065b3 !important; }
+        .prepare-cta:hover { background: #0B2344 !important; }
         @media (prefers-reduced-motion: reduce) {
           .platform-sidebar, .platform-sidebar * { transition: none !important; }
         }

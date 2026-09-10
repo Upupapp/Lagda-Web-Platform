@@ -39,6 +39,10 @@ export const Z = {
   toast: 80,
   /** Full-screen branded loading sequence. */
   loader: 90,
+  /** Product Tour spotlight backdrop — must sit above the shell and page content it dims. */
+  tourOverlay: 95,
+  /** Product Tour coach-mark card — above its own overlay. */
+  tourCoachmark: 96,
   /** Skip link — the keyboard escape hatch outranks everything. */
   skipLink: 100,
 } as const;

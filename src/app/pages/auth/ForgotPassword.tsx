@@ -43,14 +43,14 @@ export function ForgotPassword() {
           display: "flex", alignItems: "center", justifyContent: "center",
           margin: "0 auto 18px", fontSize: 22,
         }} aria-hidden>✉</div>
-        <h1 style={{ color: "white", ...GF, fontSize: 20, fontWeight: 900, margin: "0 0 10px" }}>Check your inbox</h1>
+        <h1 style={{ color: "#07111F", ...GF, fontSize: 20, fontWeight: 900, margin: "0 0 10px" }}>Check your inbox</h1>
         <p style={{ color: "#64748B", ...GF, fontSize: 14, lineHeight: 1.7, margin: "0 0 20px" }}>
           If an account exists for that address, a password reset link would be sent (this is a frontend demonstration — no email is actually sent).
         </p>
         <div style={{ background: "rgba(0,120,212,0.06)", border: "1px solid rgba(0,120,212,0.15)", borderRadius: 10, padding: "12px 16px", marginBottom: 24, textAlign: "left" }}>
           <p style={{ color: "#C9960C", fontFamily: "'Geist Mono', monospace", fontSize: 9, fontWeight: 700, margin: "0 0 4px" }}>FRONTEND DEMONSTRATION</p>
-          <p style={{ color: "#475569", ...GF, fontSize: 12, margin: 0, lineHeight: 1.5 }}>
-            To test the reset form, go to <strong style={{ color: "#94A3B8" }}>/reset-password?state=valid</strong> directly.
+          <p style={{ color: "#334155", ...GF, fontSize: 12, margin: 0, lineHeight: 1.5 }}>
+            To test the reset form, go to <strong style={{ color: "#07111F" }}>/reset-password?state=valid</strong> directly.
           </p>
         </div>
         <Link
@@ -66,7 +66,7 @@ export function ForgotPassword() {
   return (
     <>
       <div style={{ textAlign: "center", marginBottom: 24 }}>
-        <h1 style={{ color: "white", ...GF, fontSize: 22, fontWeight: 900, letterSpacing: "-0.02em", margin: "0 0 6px" }}>Reset your password</h1>
+        <h1 style={{ color: "#07111F", ...GF, fontSize: 22, fontWeight: 900, letterSpacing: "-0.02em", margin: "0 0 6px" }}>Reset your password</h1>
         <p style={{ color: "#64748B", ...GF, fontSize: 13, lineHeight: 1.6 }}>
           Enter your email and we will send instructions to reset your password.
         </p>
@@ -74,7 +74,7 @@ export function ForgotPassword() {
 
       <form onSubmit={handleSubmit} noValidate style={{ display: "flex", flexDirection: "column", gap: 16 }}>
         <div>
-          <label htmlFor="fp-email" style={{ display: "block", color: "#94A3B8", ...GF, fontSize: 12, fontWeight: 600, marginBottom: 6 }}>
+          <label htmlFor="fp-email" style={{ display: "block", color: "#64748B", ...GF, fontSize: 12, fontWeight: 600, marginBottom: 6 }}>
             Email address <span aria-hidden style={{ color: "#EF4444" }}>*</span>
           </label>
           <input
@@ -89,9 +89,9 @@ export function ForgotPassword() {
             placeholder="you@example.com"
             style={{
               width: "100%", boxSizing: "border-box",
-              background: "rgba(255,255,255,0.05)",
-              border: `1px solid ${emailErr ? "rgba(239,68,68,0.4)" : "rgba(255,255,255,0.12)"}`,
-              borderRadius: 8, color: "white",
+              background: "#ffffff",
+              border: `1px solid ${emailErr ? "rgba(239,68,68,0.4)" : "rgba(0,0,0,0.08)"}`,
+              borderRadius: 8, color: "#07111F",
               ...GF, fontSize: 15, padding: "13px 14px",
               outline: "none",
             }}
@@ -117,7 +117,7 @@ export function ForgotPassword() {
       </form>
 
       <div style={{ textAlign: "center", marginTop: 20 }}>
-        <Link to="/sign-in" style={{ color: "#475569", ...GF, fontSize: 13, textDecoration: "none" }}>
+        <Link to="/sign-in" style={{ color: "#64748B", ...GF, fontSize: 13, textDecoration: "none" }}>
           ← Back to Sign In
         </Link>
       </div>

@@ -21,11 +21,11 @@ export function StoragePlanLimits() {
         <SectionHeading eyebrow="Limit categories" id="lc-h2" heading="Every dimension that varies by plan." sub="Exact figures are shown on the Pricing page. This page explains what each category means and why it matters." center />
         <div style={{ display: "grid", gap: 10 }} className="lc-grid">
           {PLAN_LIMIT_CATEGORIES.map((c) => (
-            <div key={c.title} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 10, padding: "14px 14px", display: "flex", gap: 12 }}>
+            <div key={c.title} style={{ background: "#ffffff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: 10, padding: "14px 14px", display: "flex", gap: 12 }}>
               <span aria-hidden style={{ fontSize: 20, flexShrink: 0, marginTop: 1 }}>{c.icon}</span>
               <div>
-                <p style={{ color: "white", ...GF, fontSize: 13, fontWeight: 700, margin: 0, marginBottom: 3 }}>{c.title}</p>
-                <p style={{ color: "#94A3B8", ...GF, fontSize: 12, lineHeight: 1.5, margin: 0 }}>{c.desc}</p>
+                <p style={{ color: "#07111F", ...GF, fontSize: 13, fontWeight: 700, margin: 0, marginBottom: 3 }}>{c.title}</p>
+                <p style={{ color: "#64748B", ...GF, fontSize: 12, lineHeight: 1.5, margin: 0 }}>{c.desc}</p>
               </div>
             </div>
           ))}
@@ -41,9 +41,9 @@ export function StoragePlanLimits() {
             { title: "After completion",          desc: "Completed transaction records are retained according to the plan's retention period. Download and export at any time." },
             { title: "Archived transactions",    desc: "Archived transactions are removed from active views. Storage implications and retention may vary by plan." },
           ].map((s) => (
-            <div key={s.title} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 10, padding: "14px 14px" }}>
-              <p style={{ color: "white", ...GF, fontSize: 13, fontWeight: 700, margin: 0, marginBottom: 4 }}>{s.title}</p>
-              <p style={{ color: "#94A3B8", ...GF, fontSize: 12, lineHeight: 1.5, margin: 0 }}>{s.desc}</p>
+            <div key={s.title} style={{ background: "#ffffff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: 10, padding: "14px 14px" }}>
+              <p style={{ color: "#07111F", ...GF, fontSize: 13, fontWeight: 700, margin: 0, marginBottom: 4 }}>{s.title}</p>
+              <p style={{ color: "#64748B", ...GF, fontSize: 12, lineHeight: 1.5, margin: 0 }}>{s.desc}</p>
             </div>
           ))}
         </div>
@@ -59,18 +59,18 @@ export function StoragePlanLimits() {
             { trigger: "Seat limit reached",               behavior: "New member invitations may be blocked until the seat count is increased." },
             { trigger: "Authentication method gating",     behavior: "Advanced methods like SMS OTP may require a plan that includes them. Existing transactions are not disrupted." },
           ].map((r) => (
-            <div key={r.trigger} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 10, padding: "12px 14px", display: "flex", gap: 16 }}>
+            <div key={r.trigger} style={{ background: "#ffffff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: 10, padding: "12px 14px", display: "flex", gap: 16 }}>
               <div style={{ flex: 1 }}>
-                <p style={{ color: "#38bdf8", ...GM, fontSize: 10, fontWeight: 700, margin: 0, marginBottom: 3 }}>{r.trigger}</p>
-                <p style={{ color: "#94a3b8", ...GF, fontSize: 13, lineHeight: 1.5, margin: 0 }}>{r.behavior}</p>
+                <p style={{ color: "#0078D4", ...GM, fontSize: 10, fontWeight: 700, margin: 0, marginBottom: 3 }}>{r.trigger}</p>
+                <p style={{ color: "#334155", ...GF, fontSize: 13, lineHeight: 1.5, margin: 0 }}>{r.behavior}</p>
               </div>
             </div>
           ))}
         </div>
         <div style={{ textAlign: "center", marginTop: 24 }}>
-          <p style={{ color: "#8A9BAE", ...GF, fontSize: 13, margin: 0 }}>
+          <p style={{ color: "#64748B", ...GF, fontSize: 13, margin: 0 }}>
             Exact limits, upgrade flows, and overage behavior are on the{" "}
-            <a href="/pricing" style={{ color: "#38BDF8", textDecoration: "underline" }}>Pricing page</a>.
+            <a href="/pricing" style={{ color: "#0078D4", textDecoration: "underline" }}>Pricing page</a>.
           </p>
         </div>
       </PageSection>

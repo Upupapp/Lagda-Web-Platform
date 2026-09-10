@@ -72,13 +72,13 @@ export function AuthGuide() {
               plans: "Enterprise",
             },
           ].map(({ name, desc, caution, plans }) => (
-            <div key={name} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 10, padding: "14px 18px", marginBottom: 10 }}>
+            <div key={name} style={{ background: "#ffffff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: 10, padding: "14px 18px", marginBottom: 10, boxShadow: "0 1px 4px rgba(7,17,31,0.07)" }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, flexWrap: "wrap", marginBottom: 6 }}>
-                <p style={{ color: "white", ...GF, fontSize: 14, fontWeight: 700, margin: 0 }}>{name}</p>
-                <span style={{ color: "#38bdf8", ...GM, fontSize: 9, fontWeight: 700, flexShrink: 0 }}>{plans.toUpperCase()}</span>
+                <p style={{ color: "#07111F", ...GF, fontSize: 14, fontWeight: 700, margin: 0 }}>{name}</p>
+                <span style={{ color: "#0078D4", ...GM, fontSize: 9, fontWeight: 700, flexShrink: 0 }}>{plans.toUpperCase()}</span>
               </div>
-              <p style={{ color: "#94A3B8", ...GF, fontSize: 13, margin: 0, lineHeight: 1.5 }}>{desc}</p>
-              {caution && <p style={{ color: "#C9960C", ...GM, fontSize: 10, marginTop: 8, borderTop: "1px solid rgba(255,255,255,0.05)", paddingTop: 8 }}>⚠ {caution}</p>}
+              <p style={{ color: "#64748B", ...GF, fontSize: 13, margin: 0, lineHeight: 1.5 }}>{desc}</p>
+              {caution && <p style={{ color: "#B45309", ...GM, fontSize: 10, marginTop: 8, borderTop: "1px solid rgba(0,0,0,0.06)", paddingTop: 8 }}>⚠ {caution}</p>}
             </div>
           ))}
         </GuideSection>
@@ -127,7 +127,7 @@ export function AuthGuide() {
           <GuideCallout
             label="IMPORTANT NOTE"
             text="Authentication helps increase confidence that the intended participant is acting, but it does not independently determine legal identity or legal sufficiency in every transaction. Users remain responsible for determining the authentication requirements that apply to each document and transaction."
-            color="#C9960C"
+            color="#B45309"
           />
         </GuideSection>
 

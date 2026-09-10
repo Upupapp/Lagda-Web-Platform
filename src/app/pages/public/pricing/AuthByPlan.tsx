@@ -82,11 +82,11 @@ export function AuthByPlan() {
     <PricingPageShell>
       <section style={{ padding: "64px 24px 48px" }}>
         <div style={{ maxWidth: 720, margin: "0 auto" }}>
-          <p style={{ color: "#38bdf8", ...GM, fontSize: 11, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 12 }}>AUTHENTICATION BY PLAN</p>
-          <h1 style={{ color: "white", ...GF, fontSize: "clamp(26px, 4.5vw, 44px)", fontWeight: 900, lineHeight: 1.1, letterSpacing: "-0.03em", margin: "0 0 16px" }}>
+          <p style={{ color: "#0078D4", ...GM, fontSize: 11, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 12 }}>AUTHENTICATION BY PLAN</p>
+          <h1 style={{ color: "#07111F", ...GF, fontSize: "clamp(26px, 4.5vw, 44px)", fontWeight: 900, lineHeight: 1.1, letterSpacing: "-0.03em", margin: "0 0 16px" }}>
             Signer authentication methods and plan availability.
           </h1>
-          <p style={{ color: "#94A3B8", ...GF, fontSize: 16, lineHeight: 1.65 }}>
+          <p style={{ color: "#64748B", ...GF, fontSize: 16, lineHeight: 1.65 }}>
             Authentication helps increase confidence that the intended participant is acting. Method availability may also depend on organization settings, country, and provider availability.
           </p>
         </div>
@@ -96,34 +96,34 @@ export function AuthByPlan() {
         <PricingHeading eyebrow="Authentication methods" id="meth-h2" heading="Available methods by plan." />
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           {AUTH_METHODS.map(({ id, name, desc, personal, business, enterprise, caution, note, assurance }) => (
-            <div key={id} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 12, padding: "16px 20px" }}>
+            <div key={id} style={{ background: "#ffffff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: 12, padding: "16px 20px", boxShadow: "0 1px 4px rgba(7,17,31,0.07)" }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, flexWrap: "wrap", marginBottom: 8 }}>
                 <div style={{ flex: 1 }}>
-                  <p style={{ color: "white", ...GF, fontSize: 14, fontWeight: 700, margin: "0 0 4px" }}>{name}</p>
-                  <p style={{ color: "#94A3B8", ...GF, fontSize: 13, margin: 0, lineHeight: 1.5 }}>{desc}</p>
+                  <p style={{ color: "#07111F", ...GF, fontSize: 14, fontWeight: 700, margin: "0 0 4px" }}>{name}</p>
+                  <p style={{ color: "#64748B", ...GF, fontSize: 13, margin: 0, lineHeight: 1.5 }}>{desc}</p>
                 </div>
                 <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
                   {[{ label: "Personal", incl: personal }, { label: "Business", incl: business }, { label: "Enterprise", incl: enterprise }].map(({ label, incl }) => (
                     <span key={label} style={{
                       ...GM, fontSize: 9, fontWeight: 700, padding: "3px 8px", borderRadius: 4,
-                      background: incl ? "rgba(0,120,212,0.15)" : "rgba(255,255,255,0.04)",
-                      color: incl ? "#38bdf8" : "#7C8DA4",
-                      border: incl ? "1px solid rgba(0,120,212,0.25)" : "1px solid rgba(255,255,255,0.06)",
+                      background: incl ? "rgba(0,120,212,0.1)" : "rgba(0,0,0,0.04)",
+                      color: incl ? "#0078D4" : "#94A3B8",
+                      border: incl ? "1px solid rgba(0,120,212,0.25)" : "1px solid rgba(0,0,0,0.07)",
                     }}>{label}</span>
                   ))}
                 </div>
               </div>
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                <span style={{ color: "#8A9BAE", ...GM, fontSize: 9 }}>ASSURANCE: {assurance}</span>
+                <span style={{ color: "#64748B", ...GM, fontSize: 9 }}>ASSURANCE: {assurance}</span>
                 {note && <span style={{ color: "#C9960C", ...GM, fontSize: 9 }}>⚠ {note}</span>}
               </div>
               {caution && (
-                <p style={{ color: "#94A3B8", ...GM, fontSize: 10, marginTop: 8, borderTop: "1px solid rgba(255,255,255,0.05)", paddingTop: 8 }}>Note: {caution}</p>
+                <p style={{ color: "#64748B", ...GM, fontSize: 10, marginTop: 8, borderTop: "1px solid rgba(0,0,0,0.07)", paddingTop: 8 }}>Note: {caution}</p>
               )}
             </div>
           ))}
         </div>
-        <p style={{ color: "#7C8DA4", ...GF, fontSize: 12, marginTop: 16, lineHeight: 1.65 }}>
+        <p style={{ color: "#94A3B8", ...GF, fontSize: 12, marginTop: 16, lineHeight: 1.65 }}>
           Authentication helps increase confidence that the intended participant is acting, but it does not independently determine legal identity or legal sufficiency in every transaction. Users remain responsible for determining the requirements that apply to each transaction.
         </p>
       </PricingSection>
@@ -132,11 +132,11 @@ export function AuthByPlan() {
         <PricingHeading eyebrow="Choosing authentication" id="sel-h2" heading="Factors to consider when selecting a method." center />
         <div style={{ display: "grid", gap: 12, maxWidth: 900, margin: "0 auto" }} className="sel-grid">
           {SELECTION_FACTORS.map(({ icon, title, desc }) => (
-            <div key={title} style={{ display: "flex", gap: 12, alignItems: "flex-start", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 10, padding: "12px 16px" }}>
+            <div key={title} style={{ display: "flex", gap: 12, alignItems: "flex-start", background: "#ffffff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: 10, padding: "12px 16px", boxShadow: "0 1px 4px rgba(7,17,31,0.06)" }}>
               <span aria-hidden style={{ fontSize: 18, flexShrink: 0 }}>{icon}</span>
               <div>
-                <p style={{ color: "white", ...GF, fontSize: 13, fontWeight: 600, margin: "0 0 2px" }}>{title}</p>
-                <p style={{ color: "#94A3B8", ...GF, fontSize: 12, margin: 0, lineHeight: 1.5 }}>{desc}</p>
+                <p style={{ color: "#07111F", ...GF, fontSize: 13, fontWeight: 600, margin: "0 0 2px" }}>{title}</p>
+                <p style={{ color: "#64748B", ...GF, fontSize: 12, margin: 0, lineHeight: 1.5 }}>{desc}</p>
               </div>
             </div>
           ))}
@@ -147,8 +147,8 @@ export function AuthByPlan() {
       <PricingSection id="cta">
         <div style={{ display: "flex", gap: 16, flexWrap: "wrap", alignItems: "center", justifyContent: "space-between" }}>
           <div>
-            <h2 style={{ color: "white", ...GF, fontSize: 24, fontWeight: 800, margin: "0 0 8px" }}>Learn more about signer authentication.</h2>
-            <p style={{ color: "#94A3B8", ...GF, fontSize: 14, margin: 0 }}>How LAGDA uses authentication to build confidence in the signing process.</p>
+            <h2 style={{ color: "#07111F", ...GF, fontSize: 24, fontWeight: 800, margin: "0 0 8px" }}>Learn more about signer authentication.</h2>
+            <p style={{ color: "#64748B", ...GF, fontSize: 14, margin: 0 }}>How LAGDA uses authentication to build confidence in the signing process.</p>
           </div>
           <Link to="/features/signer-authentication" style={{ background: "#0078D4", color: "white", ...GF, fontSize: 14, fontWeight: 700, padding: "11px 24px", borderRadius: 8, textDecoration: "none", minHeight: 44, display: "flex", alignItems: "center", flexShrink: 0 }}>Explore Authentication</Link>
         </div>

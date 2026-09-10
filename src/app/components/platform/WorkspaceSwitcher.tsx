@@ -8,7 +8,7 @@ import { PLAN_LABELS } from "../../models";
 
 const GF   = { fontFamily: "'Geist', sans-serif" };
 const GM   = { fontFamily: "'Geist Mono', monospace" };
-const BORDER = "rgba(255,255,255,0.07)";
+const BORDER = "rgba(0,0,0,0.08)";
 
 interface WorkspaceSwitcherProps {
   collapsed: boolean;
@@ -92,7 +92,7 @@ export function WorkspaceSwitcher({ collapsed }: WorkspaceSwitcherProps) {
         aria-haspopup="listbox"
         style={{
           display: "flex", alignItems: "center", gap: 8,
-          width: "100%", background: "rgba(255,255,255,0.04)",
+          width: "100%", background: "#F8FAFB",
           border: `1px solid ${BORDER}`, borderRadius: 8,
           padding: "7px 10px", cursor: "pointer",
           textAlign: "left",
@@ -107,14 +107,12 @@ export function WorkspaceSwitcher({ collapsed }: WorkspaceSwitcherProps) {
           {initials}
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <p style={{ color: "white", ...GF, fontSize: 12, fontWeight: 600, margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+          <p style={{ color: "#07111F", ...GF, fontSize: 12, fontWeight: 600, margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
             {currentWorkspace.name}
           </p>
-          {/* #475569 on #111B28 measured 2.29:1 at 9px — the worst contrast in the
-              shell. #94A3B8 measures 6.76:1. */}
-          <p style={{ color: "#94A3B8", ...GM, fontSize: 9, margin: 0 }}>{planLabel}</p>
+          <p style={{ color: "#64748B", ...GM, fontSize: 9, margin: 0 }}>{planLabel}</p>
         </div>
-        <ChevronDown size={12} style={{ color: "#94A3B8", flexShrink: 0, transform: open ? "rotate(180deg)" : undefined, transition: "transform 0.15s" }} aria-hidden />
+        <ChevronDown size={12} style={{ color: "#64748B", flexShrink: 0, transform: open ? "rotate(180deg)" : undefined, transition: "transform 0.15s" }} aria-hidden />
       </button>
 
       {open && (
@@ -153,12 +151,12 @@ const WorkspaceMenu = forwardRef<HTMLDivElement, WorkspaceMenuProps>(
       style={{
         position: "absolute",
         zIndex: Z.dropdown,
-        background: "#0B1929",
+        background: "#ffffff",
         border: `1px solid ${BORDER}`,
         borderRadius: 10,
         padding: "6px 6px",
         minWidth: 220,
-        boxShadow: "0 8px 32px rgba(0,0,0,0.4)",
+        boxShadow: "0 8px 32px rgba(7,17,31,0.16)",
         ...style,
       }}
     >
@@ -172,9 +170,9 @@ const WorkspaceMenu = forwardRef<HTMLDivElement, WorkspaceMenuProps>(
             onClick={() => onSelect(ws.id)}
             style={{
               display: "flex", alignItems: "center", gap: 10,
-              width: "100%", border: "none", background: isCurrent ? "rgba(0,120,212,0.12)" : "transparent",
+              width: "100%", border: "none", background: isCurrent ? "#EAF6FF" : "transparent",
               borderRadius: 7, padding: "8px 10px", cursor: "pointer",
-              textAlign: "left", color: "white",
+              textAlign: "left", color: "#07111F",
             }}
           >
             <div style={{
@@ -204,7 +202,7 @@ const WorkspaceMenu = forwardRef<HTMLDivElement, WorkspaceMenuProps>(
             display: "flex", alignItems: "center", gap: 8,
             width: "100%", border: "none", background: "transparent",
             borderRadius: 7, padding: "7px 10px", cursor: "pointer",
-            color: "#64748b", ...GF, fontSize: 12,
+            color: "#64748B", ...GF, fontSize: 12,
           }}
           onClick={() => {}}
           aria-label="Create or join workspace — coming in a future release"
@@ -212,7 +210,7 @@ const WorkspaceMenu = forwardRef<HTMLDivElement, WorkspaceMenuProps>(
         >
           <Plus size={13} aria-hidden />
           <span>Create or join workspace</span>
-          <span style={{ ...GM, fontSize: 9, color: "#334155", marginLeft: "auto" }}>SOON</span>
+          <span style={{ ...GM, fontSize: 9, color: "#94A3B8", marginLeft: "auto" }}>SOON</span>
         </button>
       </div>
     </div>

@@ -109,7 +109,7 @@ export function LagdaLoadingProvider({ children }: { children: ReactNode }) {
       {mounted && (
         <LagdaLoader
           mode="fullscreen"
-          theme="dark"
+          theme="light"
           message={message}
           showWordmark
           isExiting={isExiting}

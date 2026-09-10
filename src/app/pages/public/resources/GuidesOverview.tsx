@@ -12,11 +12,11 @@ export function GuidesOverview() {
     <ResourcesPageShell>
       <section style={{ padding: "64px 24px 48px" }}>
         <div style={{ maxWidth: 720, margin: "0 auto" }}>
-          <p style={{ color: "#38bdf8", ...GM, fontSize: 11, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 12 }}>GUIDES</p>
-          <h1 style={{ color: "white", ...GF, fontSize: "clamp(26px, 4.5vw, 44px)", fontWeight: 900, lineHeight: 1.1, letterSpacing: "-0.02em", margin: "0 0 16px" }}>
+          <p style={{ color: "#0078D4", ...GM, fontSize: 11, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 12 }}>GUIDES</p>
+          <h1 style={{ color: "#07111F", ...GF, fontSize: "clamp(26px, 4.5vw, 44px)", fontWeight: 900, lineHeight: 1.1, letterSpacing: "-0.02em", margin: "0 0 16px" }}>
             LAGDA product guides.
           </h1>
-          <p style={{ color: "#94A3B8", ...GF, fontSize: 16, lineHeight: 1.65 }}>
+          <p style={{ color: "#64748B", ...GF, fontSize: 16, lineHeight: 1.65 }}>
             Practical guidance on using LAGDA eSignature — from preparing documents to verifying completed transactions and managing your workspace.
           </p>
         </div>
@@ -35,20 +35,20 @@ export function GuidesOverview() {
         <div style={{ display: "grid", gap: 28 }} className="browse-grid">
           {GUIDE_CATEGORIES.map(cat => (
             <div key={cat.id}>
-              <p style={{ color: "#38bdf8", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", marginBottom: 10 }}>{cat.label.toUpperCase()}</p>
+              <p style={{ color: "#0078D4", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", marginBottom: 10 }}>{cat.label.toUpperCase()}</p>
               <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
                 {cat.guides.map(g => (
                   <Link key={g.path} to={g.path} style={{
                     display: "flex", alignItems: "center", justifyContent: "space-between",
                     padding: "10px 14px", borderRadius: 8, textDecoration: "none",
-                    background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)",
+                    background: "#ffffff", border: "1px solid rgba(0,0,0,0.08)",
                     transition: "border-color 0.15s ease",
                   }}
-                    onMouseEnter={(e) => (e.currentTarget as HTMLAnchorElement).style.borderColor = "rgba(56,189,248,0.3)"}
-                    onMouseLeave={(e) => (e.currentTarget as HTMLAnchorElement).style.borderColor = "rgba(255,255,255,0.06)"}
+                    onMouseEnter={(e) => (e.currentTarget as HTMLAnchorElement).style.borderColor = "rgba(0,120,212,0.3)"}
+                    onMouseLeave={(e) => (e.currentTarget as HTMLAnchorElement).style.borderColor = "rgba(0,0,0,0.08)"}
                   >
-                    <span style={{ color: "#94a3b8", ...GF, fontSize: 13 }}>{g.title}</span>
-                    <span style={{ color: "#8A9BAE", fontSize: 12 }}>→</span>
+                    <span style={{ color: "#334155", ...GF, fontSize: 13 }}>{g.title}</span>
+                    <span style={{ color: "#94A3B8", fontSize: 12 }}>→</span>
                   </Link>
                 ))}
               </div>
@@ -76,10 +76,10 @@ export function GuidesOverview() {
             <Link key={path} to={path} style={{
               display: "flex", alignItems: "center", justifyContent: "space-between",
               padding: "10px 14px", borderRadius: 8, textDecoration: "none",
-              background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)",
+              background: "#ffffff", border: "1px solid rgba(0,0,0,0.08)",
             }}>
-              <span style={{ color: "#94a3b8", ...GF, fontSize: 13 }}>{label}</span>
-              <span style={{ color: "#8A9BAE", fontSize: 12 }}>→</span>
+              <span style={{ color: "#334155", ...GF, fontSize: 13 }}>{label}</span>
+              <span style={{ color: "#94A3B8", fontSize: 12 }}>→</span>
             </Link>
           ))}
         </div>

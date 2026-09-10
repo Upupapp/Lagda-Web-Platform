@@ -16,8 +16,8 @@ export function PricingSubNav() {
   return (
     <nav aria-label="Pricing navigation" style={{
       position: "sticky", top: 72, zIndex: Z.sticky,
-      background: "rgba(7,17,31,0.95)", backdropFilter: "blur(12px)",
-      borderBottom: "1px solid rgba(255,255,255,0.07)",
+      background: "rgba(255,255,255,0.95)", backdropFilter: "blur(12px)",
+      borderBottom: "1px solid rgba(0,0,0,0.08)",
     }}>
       <TabStrip as="scroller" label="Pricing pages" activeKey={pathname}
         style={{ maxWidth: 1200, margin: "0 auto", padding: "0 24px" }}>
@@ -30,14 +30,14 @@ export function PricingSubNav() {
               borderBottom: active ? "2px solid #0078D4" : "2px solid transparent",
               transition: "border-color 0.15s ease",
             }}>
-              <span style={{ ...GF, fontSize: 13, fontWeight: active ? 700 : 500, color: active ? "white" : "#94A3B8", whiteSpace: "nowrap", transition: "color 0.15s ease" }}>
+              <span style={{ ...GF, fontSize: 13, fontWeight: active ? 700 : 500, color: active ? "#07111F" : "#64748B", whiteSpace: "nowrap", transition: "color 0.15s ease" }}>
                 {label}
               </span>
             </Link>
           );
         })}
       </TabStrip>
-      <style>{`.pricing-subnav a:hover span { color: #e2e8f0 !important; }`}</style>
+      <style>{`.pricing-subnav a:hover span { color: #07111F !important; }`}</style>
     </nav>
   );
 }
@@ -45,7 +45,7 @@ export function PricingSubNav() {
 // ── Shell that wraps subnav + content ─────────────────────────────────────────
 export function PricingPageShell({ children }: { children: React.ReactNode }) {
   return (
-    <div style={{ background: "#07111F", minHeight: "100vh", color: "white", ...GF }}>
+    <div style={{ background: "#ffffff", minHeight: "100vh", color: "#07111F", ...GF }}>
       <PricingSubNav />
       {children}
     </div>
@@ -56,10 +56,11 @@ export function PricingPageShell({ children }: { children: React.ReactNode }) {
 export function PlanCard({ plan }: { plan: LagdaPlan }) {
   return (
     <div style={{
-      background: plan.featured ? "rgba(0,120,212,0.08)" : "rgba(255,255,255,0.03)",
-      border: plan.featured ? "1.5px solid rgba(0,120,212,0.4)" : "1px solid rgba(255,255,255,0.08)",
+      background: plan.featured ? "rgba(0,120,212,0.05)" : "#ffffff",
+      border: plan.featured ? "1.5px solid rgba(0,120,212,0.35)" : "1px solid rgba(0,0,0,0.08)",
       borderRadius: 16, padding: "28px 24px", display: "flex", flexDirection: "column", gap: 0,
       position: "relative",
+      boxShadow: plan.featured ? "0 8px 24px rgba(0,120,212,0.14)" : "0 1px 4px rgba(7,17,31,0.07)",
     }}>
       {plan.featured && (
         <div style={{
@@ -68,20 +69,20 @@ export function PlanCard({ plan }: { plan: LagdaPlan }) {
           letterSpacing: "0.1em", padding: "3px 12px", borderRadius: 999, whiteSpace: "nowrap",
         }}>RECOMMENDED FOR TEAMS</div>
       )}
-      <p style={{ color: "#38bdf8", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", marginBottom: 6 }}>
+      <p style={{ color: "#0078D4", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", marginBottom: 6 }}>
         {plan.name.toUpperCase()}
       </p>
-      <p style={{ color: "white", ...GF, fontSize: 20, fontWeight: 800, margin: 0, marginBottom: 4 }}>{plan.name}</p>
-      <p style={{ color: "#94A3B8", ...GF, fontSize: 13, lineHeight: 1.5, marginBottom: 20 }}>{plan.tagline}</p>
+      <p style={{ color: "#07111F", ...GF, fontSize: 20, fontWeight: 800, margin: 0, marginBottom: 4 }}>{plan.name}</p>
+      <p style={{ color: "#64748B", ...GF, fontSize: 13, lineHeight: 1.5, marginBottom: 20 }}>{plan.tagline}</p>
 
       {/* Price */}
-      <div style={{ marginBottom: 20, padding: "14px 0", borderTop: "1px solid rgba(255,255,255,0.06)", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+      <div style={{ marginBottom: 20, padding: "14px 0", borderTop: "1px solid rgba(0,0,0,0.08)", borderBottom: "1px solid rgba(0,0,0,0.08)" }}>
         {plan.contactSales ? (
-          <p style={{ color: "white", ...GF, fontSize: 18, fontWeight: 700, margin: 0 }}>Contact Sales</p>
+          <p style={{ color: "#07111F", ...GF, fontSize: 18, fontWeight: 700, margin: 0 }}>Contact Sales</p>
         ) : (
           <>
-            <p style={{ color: "#8A9BAE", ...GM, fontSize: 11, margin: "0 0 4px" }}>PRICING</p>
-            <p style={{ color: "#94A3B8", ...GF, fontSize: 13, margin: 0 }}>To be confirmed at launch</p>
+            <p style={{ color: "#64748B", ...GM, fontSize: 11, margin: "0 0 4px" }}>PRICING</p>
+            <p style={{ color: "#64748B", ...GF, fontSize: 13, margin: 0 }}>To be confirmed at launch</p>
           </>
         )}
       </div>
@@ -90,8 +91,8 @@ export function PlanCard({ plan }: { plan: LagdaPlan }) {
       <ul style={{ listStyle: "none", margin: "0 0 24px", padding: 0, display: "flex", flexDirection: "column", gap: 8 }}>
         {plan.highlights.map((h) => (
           <li key={h} style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
-            <span style={{ color: "#22C55E", flexShrink: 0, fontSize: 12, marginTop: 2 }}>✓</span>
-            <span style={{ color: "#94a3b8", ...GF, fontSize: 13, lineHeight: 1.45 }}>{h}</span>
+            <span style={{ color: "#16A34A", flexShrink: 0, fontSize: 12, marginTop: 2 }}>✓</span>
+            <span style={{ color: "#334155", ...GF, fontSize: 13, lineHeight: 1.45 }}>{h}</span>
           </li>
         ))}
       </ul>
@@ -100,22 +101,22 @@ export function PlanCard({ plan }: { plan: LagdaPlan }) {
       <div style={{ marginTop: "auto", display: "flex", flexDirection: "column", gap: 8 }}>
         <Link to={plan.ctaPath} style={{
           display: "flex", alignItems: "center", justifyContent: "center",
-          background: plan.featured ? "#0078D4" : "rgba(255,255,255,0.07)",
-          color: "white", borderRadius: 8, padding: "11px 20px", textDecoration: "none",
+          background: plan.featured ? "#0078D4" : "#ffffff",
+          color: plan.featured ? "white" : "#07111F", borderRadius: 8, padding: "11px 20px", textDecoration: "none",
           ...GF, fontSize: 14, fontWeight: 700, minHeight: 44,
-          border: plan.featured ? "none" : "1px solid rgba(255,255,255,0.12)",
-          transition: "background 0.15s ease",
+          border: plan.featured ? "none" : "1px solid rgba(0,0,0,0.14)",
+          transition: "filter 0.15s ease",
         }}>{plan.ctaLabel}</Link>
         {plan.secondaryCtaLabel && plan.secondaryCtaPath && (
           <Link to={plan.secondaryCtaPath} style={{
             display: "flex", alignItems: "center", justifyContent: "center",
-            color: "#94A3B8", borderRadius: 8, padding: "10px 20px", textDecoration: "none",
+            color: "#64748B", borderRadius: 8, padding: "10px 20px", textDecoration: "none",
             ...GF, fontSize: 13, fontWeight: 500, minHeight: 44,
           }}>{plan.secondaryCtaLabel}</Link>
         )}
       </div>
       {plan.note && (
-        <p style={{ color: "#7C8DA4", ...GM, fontSize: 9, marginTop: 12, lineHeight: 1.5, textAlign: "center" }}>{plan.note}</p>
+        <p style={{ color: "#94A3B8", ...GM, fontSize: 9, marginTop: 12, lineHeight: 1.5, textAlign: "center" }}>{plan.note}</p>
       )}
     </div>
   );
@@ -138,12 +139,12 @@ export function PlanCards() {
 
 // ── Avail cell ────────────────────────────────────────────────────────────────
 function AvailCell({ value }: { value: AvailValue | string }) {
-  if (value === "included")     return <span style={{ color: "#22C55E", fontSize: 15 }} title="Included">✓ <span style={{ ...GF, fontSize: 11, color: "#22C55E" }}>Included</span></span>;
-  if (value === "not-included") return <span style={{ color: "#7C8DA4", fontSize: 15 }} title="Not included">— <span style={{ ...GF, fontSize: 11, color: "#8A9BAE" }}>Not included</span></span>;
-  if (value === "enterprise")   return <span style={{ color: "#38BDF8", ...GM, fontSize: 10, fontWeight: 700 }}>Enterprise</span>;
+  if (value === "included")     return <span style={{ color: "#16A34A", fontSize: 15 }} title="Included">✓ <span style={{ ...GF, fontSize: 11, color: "#16A34A" }}>Included</span></span>;
+  if (value === "not-included") return <span style={{ color: "#94A3B8", fontSize: 15 }} title="Not included">— <span style={{ ...GF, fontSize: 11, color: "#94A3B8" }}>Not included</span></span>;
+  if (value === "enterprise")   return <span style={{ color: "#0078D4", ...GM, fontSize: 10, fontWeight: 700 }}>Enterprise</span>;
   if (value === "pending")      return <span style={{ color: "#C9960C", ...GM, fontSize: 10 }}>Planned</span>;
-  if (value === "varies")       return <span style={{ color: "#94A3B8", ...GF, fontSize: 12 }}>Varies by plan</span>;
-  return <span style={{ color: "#94A3B8", ...GF, fontSize: 12 }}>{value}</span>;
+  if (value === "varies")       return <span style={{ color: "#64748B", ...GF, fontSize: 12 }}>Varies by plan</span>;
+  return <span style={{ color: "#64748B", ...GF, fontSize: 12 }}>{value}</span>;
 }
 
 // ── Compare table (desktop) ────────────────────────────────────────────────────
@@ -158,14 +159,14 @@ export function CompareTable() {
   return (
     <div style={{ overflowX: "auto" }}>
       <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 620 }} aria-label="LAGDA plan comparison">
-        <caption style={{ ...GM, fontSize: 10, color: "#8A9BAE", textAlign: "left", padding: "0 0 12px", letterSpacing: "0.08em" }}>
+        <caption style={{ ...GM, fontSize: 10, color: "#64748B", textAlign: "left", padding: "0 0 12px", letterSpacing: "0.08em" }}>
           LAGDA ESIGNATURE PLAN COMPARISON · LAGDA ENOTARY IS A SEPARATE FUTURE PRODUCT NOT INCLUDED IN ANY PLAN
         </caption>
         <thead>
-          <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.1)" }}>
-            <th style={{ textAlign: "left", padding: "12px 16px 12px 0", color: "#8A9BAE", ...GF, fontSize: 13, fontWeight: 600, width: "40%" }}>Feature</th>
+          <tr style={{ borderBottom: "1px solid rgba(0,0,0,0.1)" }}>
+            <th style={{ textAlign: "left", padding: "12px 16px 12px 0", color: "#64748B", ...GF, fontSize: 13, fontWeight: 600, width: "40%" }}>Feature</th>
             {LAGDA_PLANS.map(p => (
-              <th key={p.id} style={{ textAlign: "center", padding: "12px 16px", color: p.featured ? "#38bdf8" : "white", ...GF, fontSize: 13, fontWeight: 700 }}>
+              <th key={p.id} style={{ textAlign: "center", padding: "12px 16px", color: p.featured ? "#0078D4" : "#07111F", ...GF, fontSize: 13, fontWeight: 700 }}>
                 {p.name}
               </th>
             ))}
@@ -182,7 +183,7 @@ export function CompareTable() {
                     style={{
                       background: "none", border: "none", cursor: "pointer",
                       display: "flex", alignItems: "center", gap: 8,
-                      color: "#38bdf8", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.1em",
+                      color: "#0078D4", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.1em",
                     }}
                   >
                     <span style={{ fontSize: 10, transform: openGroups.has(group.id) ? "rotate(90deg)" : "none", transition: "transform 0.2s", display: "inline-block" }}>▶</span>
@@ -191,8 +192,8 @@ export function CompareTable() {
                 </td>
               </tr>
               {openGroups.has(group.id) && group.rows.map(row => (
-                <tr key={row.id} style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
-                  <td style={{ padding: "10px 16px 10px 16px", color: "#94a3b8", ...GF, fontSize: 13 }}>{row.label}</td>
+                <tr key={row.id} style={{ borderBottom: "1px solid rgba(0,0,0,0.06)" }}>
+                  <td style={{ padding: "10px 16px 10px 16px", color: "#334155", ...GF, fontSize: 13 }}>{row.label}</td>
                   <td style={{ padding: "10px 16px", textAlign: "center" }}><AvailCell value={row.personal} /></td>
                   <td style={{ padding: "10px 16px", textAlign: "center", background: "rgba(0,120,212,0.04)" }}><AvailCell value={row.business} /></td>
                   <td style={{ padding: "10px 16px", textAlign: "center" }}><AvailCell value={row.enterprise} /></td>
@@ -223,9 +224,9 @@ export function PricingHero({ heading, sub }: { heading: string; sub: string }) 
   return (
     <section style={{ padding: "80px 24px 64px", textAlign: "center", background: "radial-gradient(ellipse 80% 50% at 50% 0%, rgba(0,120,212,0.12) 0%, transparent 70%)" }}>
       <div style={{ maxWidth: 720, margin: "0 auto" }}>
-        <p style={{ color: "#38bdf8", ...GM, fontSize: 11, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 14 }}>LAGDA ESIGNATURE</p>
-        <h1 style={{ color: "white", ...GF, fontSize: "clamp(28px, 5vw, 52px)", fontWeight: 900, lineHeight: 1.1, letterSpacing: "-0.03em", margin: "0 0 20px" }}>{heading}</h1>
-        <p style={{ color: "#94A3B8", ...GF, fontSize: 17, lineHeight: 1.65, margin: "0 auto" }}>{sub}</p>
+        <p style={{ color: "#0078D4", ...GM, fontSize: 11, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 14 }}>LAGDA ESIGNATURE</p>
+        <h1 style={{ color: "#07111F", ...GF, fontSize: "clamp(28px, 5vw, 52px)", fontWeight: 900, lineHeight: 1.1, letterSpacing: "-0.03em", margin: "0 0 20px" }}>{heading}</h1>
+        <p style={{ color: "#64748B", ...GF, fontSize: 17, lineHeight: 1.65, margin: "0 auto" }}>{sub}</p>
       </div>
     </section>
   );
@@ -233,17 +234,17 @@ export function PricingHero({ heading, sub }: { heading: string; sub: string }) 
 
 export function PricingNotice({ text }: { text: string }) {
   return (
-    <div style={{ background: "rgba(0,120,212,0.06)", border: "1px solid rgba(0,120,212,0.2)", borderRadius: 10, padding: "14px 18px", marginBottom: 20 }}>
-      <p style={{ color: "#94a3b8", ...GF, fontSize: 13, lineHeight: 1.6, margin: 0 }}>{text}</p>
+    <div style={{ background: "rgba(0,120,212,0.05)", border: "1px solid rgba(0,120,212,0.2)", borderRadius: 10, padding: "14px 18px", marginBottom: 20 }}>
+      <p style={{ color: "#334155", ...GF, fontSize: 13, lineHeight: 1.6, margin: 0 }}>{text}</p>
     </div>
   );
 }
 
 export function EnotarySeparationNote() {
   return (
-    <div style={{ background: "rgba(103,2,59,0.08)", border: "1px solid rgba(103,2,59,0.25)", borderRadius: 10, padding: "14px 18px" }}>
-      <p style={{ color: "#c084fc", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", marginBottom: 4 }}>LAGDA ENOTARY — SEPARATE FUTURE PRODUCT</p>
-      <p style={{ color: "#94a3b8", ...GF, fontSize: 13, lineHeight: 1.6, margin: 0 }}>
+    <div style={{ background: "rgba(103,2,59,0.04)", border: "1px solid rgba(103,2,59,0.2)", borderRadius: 10, padding: "14px 18px" }}>
+      <p style={{ color: "#67023B", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", marginBottom: 4 }}>LAGDA ENOTARY — SEPARATE FUTURE PRODUCT</p>
+      <p style={{ color: "#334155", ...GF, fontSize: 13, lineHeight: 1.6, margin: 0 }}>
         LAGDA eNotary is not included in any current eSignature plan. It is a separate future regulated product — Coming Soon and Subject to Supreme Court Accreditation and applicable rules.
       </p>
     </div>

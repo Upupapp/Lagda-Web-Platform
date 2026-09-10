@@ -7,34 +7,34 @@ const LAST_REVIEWED = "July 2026";
 
 function LegalSection({ id, title, children }: { id: string; title: string; children: React.ReactNode }) {
   return (
-    <section id={id} style={{ paddingTop: 36, paddingBottom: 12, borderTop: "1px solid rgba(255,255,255,0.05)", marginTop: 28 }}>
-      <h2 id={`${id}-h`} style={{ color: "white", ...GF, fontSize: "clamp(17px, 2.5vw, 22px)", fontWeight: 800, margin: "0 0 14px" }}>{title}</h2>
+    <section id={id} style={{ paddingTop: 36, paddingBottom: 12, borderTop: "1px solid rgba(0,0,0,0.07)", marginTop: 28 }}>
+      <h2 id={`${id}-h`} style={{ color: "#07111F", ...GF, fontSize: "clamp(17px, 2.5vw, 22px)", fontWeight: 800, margin: "0 0 14px" }}>{title}</h2>
       {children}
     </section>
   );
 }
 
 function P({ children }: { children: React.ReactNode }) {
-  return <p style={{ color: "#94a3b8", ...GF, fontSize: 15, lineHeight: 1.75, margin: "0 0 14px" }}>{children}</p>;
+  return <p style={{ color: "#334155", ...GF, fontSize: 15, lineHeight: 1.75, margin: "0 0 14px" }}>{children}</p>;
 }
 
 function Pending({ children }: { children: React.ReactNode }) {
-  return <p style={{ color: "#8A9BAE", ...GF, fontSize: 14, lineHeight: 1.65, margin: "0 0 14px" }}>[{children} — pending legal review before publication]</p>;
+  return <p style={{ color: "#94A3B8", ...GF, fontSize: 14, lineHeight: 1.65, margin: "0 0 14px" }}>[{children} — pending legal review before publication]</p>;
 }
 
 export function Terms() {
   return (
-    <div style={{ background: "#07111F", minHeight: "100vh", color: "white", ...GF }}>
-      <section style={{ padding: "72px 24px 48px", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+    <div style={{ background: "#ffffff", minHeight: "100vh", color: "#07111F", ...GF }}>
+      <section style={{ padding: "72px 24px 48px", borderBottom: "1px solid rgba(0,0,0,0.07)" }}>
         <div style={{ maxWidth: 780, margin: "0 auto" }}>
-          <p style={{ color: "#38bdf8", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 12 }}>LEGAL</p>
-          <h1 style={{ color: "white", ...GF, fontSize: "clamp(24px, 4vw, 40px)", fontWeight: 900, lineHeight: 1.1, letterSpacing: "-0.02em", margin: "0 0 14px" }}>Terms of Service</h1>
-          <p style={{ color: "#94A3B8", ...GF, fontSize: 15, margin: "0 0 10px" }}>UpUp Technologies — LAGDA Platform</p>
+          <p style={{ color: "#0078D4", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 12 }}>LEGAL</p>
+          <h1 style={{ color: "#07111F", ...GF, fontSize: "clamp(24px, 4vw, 40px)", fontWeight: 900, lineHeight: 1.1, letterSpacing: "-0.02em", margin: "0 0 14px" }}>Terms of Service</h1>
+          <p style={{ color: "#64748B", ...GF, fontSize: 15, margin: "0 0 10px" }}>UpUp Technologies — LAGDA Platform</p>
           <div style={{ display: "inline-flex", gap: 12, alignItems: "center" }}>
-            <span style={{ color: "#C9960C", ...GM, fontSize: 10, fontWeight: 700, padding: "3px 8px", borderRadius: 4, background: "rgba(201,150,12,0.1)", border: "1px solid rgba(201,150,12,0.2)" }}>DRAFT — PENDING LEGAL REVIEW</span>
-            <span style={{ color: "#7C8DA4", ...GM, fontSize: 10 }}>Structure reviewed: {LAST_REVIEWED}</span>
+            <span style={{ color: "#C9960C", ...GM, fontSize: 10, fontWeight: 700, padding: "3px 8px", borderRadius: 4, background: "rgba(201,150,12,0.1)", border: "1px solid rgba(201,150,12,0.3)" }}>DRAFT — PENDING LEGAL REVIEW</span>
+            <span style={{ color: "#94A3B8", ...GM, fontSize: 10 }}>Structure reviewed: {LAST_REVIEWED}</span>
           </div>
-          <p style={{ color: "#8A9BAE", ...GF, fontSize: 13, lineHeight: 1.65, marginTop: 14 }}>
+          <p style={{ color: "#64748B", ...GF, fontSize: 13, lineHeight: 1.65, marginTop: 14 }}>
             These terms of service have been structured as part of the frontend development phase. They require formal legal review and approval before publication. Sections marked as pending require legal confirmation of specific terms.
           </p>
         </div>
@@ -63,7 +63,7 @@ export function Terms() {
 
         <LegalSection id="acceptable-use" title="Acceptable use">
           <P>You agree not to use LAGDA to:</P>
-          <ul style={{ padding: "0 0 0 20px", margin: "0 0 14px", color: "#94a3b8" }}>
+          <ul style={{ padding: "0 0 0 20px", margin: "0 0 14px", color: "#334155" }}>
             {[
               "Violate applicable laws or regulations",
               "Process documents that require formalities LAGDA eSignature cannot satisfy",
@@ -106,12 +106,12 @@ export function Terms() {
         </LegalSection>
 
         <LegalSection id="contact" title="Contact">
-          <P>Questions about these terms may be directed through the <Link to="/contact" style={{ color: "#38bdf8", textDecoration: "none" }}>Contact page</Link>.</P>
+          <P>Questions about these terms may be directed through the <Link to="/contact" style={{ color: "#0078D4", textDecoration: "none" }}>Contact page</Link>.</P>
         </LegalSection>
 
-        <div style={{ marginTop: 40, padding: "16px 20px", background: "rgba(201,150,12,0.06)", border: "1px solid rgba(201,150,12,0.15)", borderRadius: 10 }}>
+        <div style={{ marginTop: 40, padding: "16px 20px", background: "rgba(201,150,12,0.06)", border: "1px solid rgba(201,150,12,0.25)", borderRadius: 10 }}>
           <p style={{ color: "#C9960C", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", marginBottom: 6 }}>LEGAL REVIEW REQUIRED BEFORE PUBLICATION</p>
-          <p style={{ color: "#8A9BAE", ...GF, fontSize: 13, lineHeight: 1.65, margin: 0 }}>
+          <p style={{ color: "#64748B", ...GF, fontSize: 13, lineHeight: 1.65, margin: 0 }}>
             This document is a structural draft prepared during the frontend development phase. It requires review and approval by qualified legal counsel before it can be published as the official LAGDA Terms of Service.
           </p>
         </div>

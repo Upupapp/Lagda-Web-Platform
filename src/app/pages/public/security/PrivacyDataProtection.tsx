@@ -21,9 +21,9 @@ export function PrivacyDataProtection() {
         <SectionHeading eyebrow="Data categories" id="dc-h2" heading="Every type of data LAGDA processes." sub="Each category is processed for a specific purpose. The full details are in the Privacy Policy." center />
         <div style={{ display: "grid", gap: 10 }} className="dc-grid">
           {DATA_CATEGORIES.map((c) => (
-            <div key={c.category} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 10, padding: "12px 14px" }}>
-              <p style={{ color: "#38bdf8", ...GM, fontSize: 10, fontWeight: 700, margin: 0, marginBottom: 4 }}>{c.category.toUpperCase()}</p>
-              <p style={{ color: "#94a3b8", ...GF, fontSize: 12, lineHeight: 1.5, margin: 0 }}>{c.examples}</p>
+            <div key={c.category} style={{ background: "#ffffff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: 10, padding: "12px 14px", boxShadow: "0 1px 4px rgba(7,17,31,0.07)" }}>
+              <p style={{ color: "#0078D4", ...GM, fontSize: 10, fontWeight: 700, margin: 0, marginBottom: 4 }}>{c.category.toUpperCase()}</p>
+              <p style={{ color: "#64748B", ...GF, fontSize: 12, lineHeight: 1.5, margin: 0 }}>{c.examples}</p>
             </div>
           ))}
         </div>
@@ -34,11 +34,11 @@ export function PrivacyDataProtection() {
         <SectionHeading eyebrow="Privacy principles" id="pp-h2" heading="The principles that guide how LAGDA handles data." center />
         <div style={{ display: "grid", gap: 10 }} className="pp-grid">
           {PRIVACY_PRINCIPLES.map((p) => (
-            <div key={p.title} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 10, padding: "14px 14px", display: "flex", gap: 12 }}>
+            <div key={p.title} style={{ background: "#ffffff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: 10, padding: "14px 14px", display: "flex", gap: 12, boxShadow: "0 1px 4px rgba(7,17,31,0.07)" }}>
               <span aria-hidden style={{ fontSize: 20, flexShrink: 0 }}>{p.icon}</span>
               <div>
-                <p style={{ color: "white", ...GF, fontSize: 13, fontWeight: 700, margin: 0, marginBottom: 3 }}>{p.title}</p>
-                <p style={{ color: "#94A3B8", ...GF, fontSize: 12, lineHeight: 1.5, margin: 0 }}>{p.desc}</p>
+                <p style={{ color: "#07111F", ...GF, fontSize: 13, fontWeight: 700, margin: 0, marginBottom: 3 }}>{p.title}</p>
+                <p style={{ color: "#64748B", ...GF, fontSize: 12, lineHeight: 1.5, margin: 0 }}>{p.desc}</p>
               </div>
             </div>
           ))}
@@ -56,14 +56,14 @@ export function PrivacyDataProtection() {
             { right: "Portability", desc: "Receive your data in a portable format where applicable." },
             { right: "Objection",   desc: "Object to certain types of processing where permitted by law." },
           ].map((r) => (
-            <div key={r.right} style={{ display: "flex", gap: 12, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 8, padding: "10px 14px" }}>
-              <span style={{ color: "#38bdf8", ...GM, fontSize: 10, fontWeight: 700, minWidth: 80, flexShrink: 0, paddingTop: 1 }}>{r.right.toUpperCase()}</span>
-              <span style={{ color: "#94a3b8", ...GF, fontSize: 13, lineHeight: 1.5 }}>{r.desc}</span>
+            <div key={r.right} style={{ display: "flex", gap: 12, background: "#ffffff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: 8, padding: "10px 14px", boxShadow: "0 1px 4px rgba(7,17,31,0.07)" }}>
+              <span style={{ color: "#0078D4", ...GM, fontSize: 10, fontWeight: 700, minWidth: 80, flexShrink: 0, paddingTop: 1 }}>{r.right.toUpperCase()}</span>
+              <span style={{ color: "#334155", ...GF, fontSize: 13, lineHeight: 1.5 }}>{r.desc}</span>
             </div>
           ))}
         </div>
         <div style={{ textAlign: "center", marginTop: 20 }}>
-          <p style={{ color: "#8A9BAE", ...GF, fontSize: 13, marginBottom: 12 }}>Rights availability depends on your jurisdiction and relationship with LAGDA. See the Privacy Policy for full details.</p>
+          <p style={{ color: "#64748B", ...GF, fontSize: 13, marginBottom: 12 }}>Rights availability depends on your jurisdiction and relationship with LAGDA. See the Privacy Policy for full details.</p>
           <a href="/legal/privacy" style={{ display: "inline-block", background: "#0078D4", color: "white", ...GF, fontSize: 13, fontWeight: 700, padding: "10px 20px", borderRadius: 8, textDecoration: "none" }}>
             Read Privacy Policy
           </a>

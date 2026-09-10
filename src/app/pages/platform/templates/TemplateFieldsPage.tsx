@@ -23,7 +23,7 @@ import { usePageMeta } from "../../../hooks/usePageMeta";
 const GF           = { fontFamily: "'Geist', sans-serif" };
 const AZURE        = "#0078D4";
 const NAVY         = "#07111F";
-const SILVER       = "#8A9BAE";
+const SILVER       = "#64748B";
 const BGCANVAS     = "#DFE3E8";
 const BASE_PAGE_W  = 595;
 const PAGE_RATIO   = 842 / 595;
@@ -309,37 +309,37 @@ function RightPanel({
   const sel = selected ? fields.find(f => f._localId === selected) ?? null : null;
 
   return (
-    <div style={{ width: 220, flexShrink: 0, borderLeft: "1px solid #162538", background: "#0A1828", overflowY: "auto" }}>
+    <div style={{ width: 220, flexShrink: 0, borderLeft: "1px solid rgba(0,0,0,0.08)", background: "#ffffff", overflowY: "auto" }}>
       {sel ? (
         <div style={{ padding: 12 }}>
           <div style={{ display: "flex", alignItems: "center", marginBottom: 10 }}>
             <span style={{ color: SILVER, ...GF, fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", flex: 1 }}>Properties</span>
             <button onClick={onDeselectAll} style={{ color: SILVER, background: "none", border: "none", cursor: "pointer", fontSize: 14, lineHeight: 1 }}>×</button>
           </div>
-          <div style={{ color: "#4A6178", ...GF, fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 4 }}>Type</div>
-          <div style={{ color: "#C8DCEE", ...GF, fontSize: 12, marginBottom: 10 }}>{FIELD_TYPE_ICONS[sel.type]} {FIELD_TYPE_LABELS[sel.type]}</div>
-          <div style={{ color: "#4A6178", ...GF, fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 4 }}>Label</div>
+          <div style={{ color: "#94A3B8", ...GF, fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 4 }}>Type</div>
+          <div style={{ color: NAVY, ...GF, fontSize: 12, marginBottom: 10 }}>{FIELD_TYPE_ICONS[sel.type]} {FIELD_TYPE_LABELS[sel.type]}</div>
+          <div style={{ color: "#94A3B8", ...GF, fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 4 }}>Label</div>
           <input
             value={sel.label}
             onChange={e => onUpdateField(sel._localId, { label: e.target.value })}
-            style={{ width: "100%", background: "#162538", border: "1px solid #2A3F55", borderRadius: 6, color: "#C8DCEE", ...GF, fontSize: 12, padding: "5px 8px", boxSizing: "border-box", marginBottom: 10 }}
+            style={{ width: "100%", background: "#F8FAFC", border: "1px solid #CBD5E1", borderRadius: 6, color: NAVY, ...GF, fontSize: 12, padding: "5px 8px", boxSizing: "border-box", marginBottom: 10 }}
           />
-          <div style={{ color: "#4A6178", ...GF, fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 4 }}>Assign to Role</div>
+          <div style={{ color: "#94A3B8", ...GF, fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 4 }}>Assign to Role</div>
           <select
             value={sel.placeholderId ?? ""}
             onChange={e => onUpdateField(sel._localId, { placeholderId: e.target.value || null, isSenderText: !e.target.value })}
-            style={{ width: "100%", background: "#162538", border: "1px solid #2A3F55", borderRadius: 6, color: "#C8DCEE", ...GF, fontSize: 12, padding: "5px 8px", marginBottom: 10 }}
+            style={{ width: "100%", background: "#F8FAFC", border: "1px solid #CBD5E1", borderRadius: 6, color: NAVY, ...GF, fontSize: 12, padding: "5px 8px", marginBottom: 10 }}
           >
             <option value="">— Sender Prefill —</option>
             {placeholders.map(ph => <option key={ph.id} value={ph.id}>{ph.label}</option>)}
           </select>
           <label style={{ display: "flex", alignItems: "center", gap: 7, cursor: "pointer", marginBottom: 12 }}>
             <input type="checkbox" checked={sel.required} onChange={e => onUpdateField(sel._localId, { required: e.target.checked })} />
-            <span style={{ ...GF, fontSize: 11, color: "#C8DCEE" }}>Required</span>
+            <span style={{ ...GF, fontSize: 11, color: NAVY }}>Required</span>
           </label>
           <button
             onClick={() => onDeleteField(sel._localId)}
-            style={{ ...GF, fontSize: 11, color: "#F87171", background: "#2A1A1A", border: "1px solid #4A2222", borderRadius: 6, padding: "6px 12px", cursor: "pointer", width: "100%" }}
+            style={{ ...GF, fontSize: 11, color: "#DC2626", background: "#FEF2F2", border: "1px solid #FECACA", borderRadius: 6, padding: "6px 12px", cursor: "pointer", width: "100%" }}
           >
             Delete Field
           </button>
@@ -350,13 +350,13 @@ function RightPanel({
             {pendingType ? `Placing: ${FIELD_TYPE_LABELS[pendingType]}` : "Add Field"}
           </div>
           {pendingType && (
-            <button onClick={() => onSetPending(null)} style={{ ...GF, fontSize: 11, color: "#F87171", background: "#2A1A1A", border: "1px solid #4A2222", borderRadius: 6, padding: "5px 10px", cursor: "pointer", width: "100%", marginBottom: 10 }}>
+            <button onClick={() => onSetPending(null)} style={{ ...GF, fontSize: 11, color: "#DC2626", background: "#FEF2F2", border: "1px solid #FECACA", borderRadius: 6, padding: "5px 10px", cursor: "pointer", width: "100%", marginBottom: 10 }}>
               Cancel
             </button>
           )}
           {FIELD_TYPE_GROUPS.map(group => (
             <div key={group.label} style={{ marginBottom: 10 }}>
-              <div style={{ color: "#4A6178", ...GF, fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 4 }}>{group.label}</div>
+              <div style={{ color: "#94A3B8", ...GF, fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 4 }}>{group.label}</div>
               {group.types.map(type => (
                 <button
                   key={type}
@@ -367,16 +367,16 @@ function RightPanel({
                     gap:         7,
                     width:       "100%",
                     padding:     "6px 8px",
-                    background:  pendingType === type ? `${AZURE}33` : "none",
+                    background:  pendingType === type ? `${AZURE}22` : "none",
                     border:      pendingType === type ? `1px solid ${AZURE}55` : "none",
                     borderRadius:6,
-                    color:       pendingType === type ? AZURE : "#C8DCEE",
+                    color:       pendingType === type ? AZURE : NAVY,
                     ...GF,
                     fontSize:    11,
                     cursor:      "pointer",
                     textAlign:   "left",
                   }}
-                  onMouseEnter={e => { if (pendingType !== type) (e.currentTarget as HTMLElement).style.background = "#162538"; }}
+                  onMouseEnter={e => { if (pendingType !== type) (e.currentTarget as HTMLElement).style.background = "#F1F5F9"; }}
                   onMouseLeave={e => { if (pendingType !== type) (e.currentTarget as HTMLElement).style.background = "none"; }}
                 >
                   <span style={{ fontSize: 12 }}>{FIELD_TYPE_ICONS[type]}</span>
@@ -437,17 +437,17 @@ function FieldsEditorInner({ template }: { template: DocumentTemplate }) {
   };
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "100dvh", background: NAVY, ...GF }}>
+    <div style={{ display: "flex", flexDirection: "column", height: "100dvh", background: "#ffffff", ...GF }}>
       {/* Top bar */}
-      <div style={{ height: 52, background: "#07111F", borderBottom: "1px solid #162538", display: "flex", alignItems: "center", padding: "0 16px", gap: 10, flexShrink: 0 }}>
+      <div style={{ height: 52, background: "#ffffff", borderBottom: "1px solid rgba(0,0,0,0.08)", display: "flex", alignItems: "center", padding: "0 16px", gap: 10, flexShrink: 0 }}>
         <Link to={`/app/templates/${template.id}`} style={{ display: "inline-flex", alignItems: "center", gap: 5, color: SILVER, ...GF, fontSize: 12, textDecoration: "none" }}>
           <ChevronLeft size={13} />
           {template.name}
         </Link>
-        <span style={{ color: "#2A3F55" }}>/</span>
-        <span style={{ color: "#C8DCEE", ...GF, fontSize: 12 }}>Fields</span>
+        <span style={{ color: "#CBD5E1" }}>/</span>
+        <span style={{ color: NAVY, ...GF, fontSize: 12 }}>Fields</span>
         {edState.changed && (
-          <span style={{ ...GF, fontSize: 11, color: SILVER, background: "#162538", padding: "2px 7px", borderRadius: 99 }}>Unsaved changes</span>
+          <span style={{ ...GF, fontSize: 11, color: SILVER, background: "#F1F5F9", padding: "2px 7px", borderRadius: 99 }}>Unsaved changes</span>
         )}
         <div style={{ flex: 1 }} />
         {saved && (
@@ -466,7 +466,7 @@ function FieldsEditorInner({ template }: { template: DocumentTemplate }) {
       </div>
 
       {/* Assign-to role bar + doc tabs */}
-      <div style={{ background: "#0A1828", borderBottom: "1px solid #162538", padding: "8px 16px", display: "flex", alignItems: "center", gap: 16, flexShrink: 0 }}>
+      <div style={{ background: "#f8fafb", borderBottom: "1px solid rgba(0,0,0,0.08)", padding: "8px 16px", display: "flex", alignItems: "center", gap: 16, flexShrink: 0 }}>
         {template.placeholders.length > 0 && (
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <span style={{ color: SILVER, ...GF, fontSize: 11 }}>Assign to:</span>
@@ -477,7 +477,7 @@ function FieldsEditorInner({ template }: { template: DocumentTemplate }) {
                 <button
                   key={ph.id}
                   onClick={() => setActivePlaceholder(ph.id)}
-                  style={{ ...GF, fontSize: 11, padding: "4px 10px", border: `1px solid ${active ? color : "#2A3F55"}`, borderRadius: 99, background: active ? `${color}22` : "none", color: active ? color : SILVER, cursor: "pointer" }}
+                  style={{ ...GF, fontSize: 11, padding: "4px 10px", border: `1px solid ${active ? color : "#CBD5E1"}`, borderRadius: 99, background: active ? `${color}18` : "none", color: active ? color : SILVER, cursor: "pointer" }}
                 >
                   {ph.label}
                 </button>
@@ -485,7 +485,7 @@ function FieldsEditorInner({ template }: { template: DocumentTemplate }) {
             })}
             <button
               onClick={() => setActivePlaceholder(null)}
-              style={{ ...GF, fontSize: 11, padding: "4px 10px", border: `1px solid ${activePlaceholder === null ? "#CBD5E1" : "#2A3F55"}`, borderRadius: 99, background: activePlaceholder === null ? "#2A3F5533" : "none", color: activePlaceholder === null ? "#CBD5E1" : SILVER, cursor: "pointer" }}
+              style={{ ...GF, fontSize: 11, padding: "4px 10px", border: `1px solid ${activePlaceholder === null ? "#0078D4" : "#CBD5E1"}`, borderRadius: 99, background: activePlaceholder === null ? "#EEF4FB" : "none", color: activePlaceholder === null ? "#0078D4" : SILVER, cursor: "pointer" }}
             >
               Sender Prefill
             </button>
@@ -559,7 +559,7 @@ function TemplateFieldsInner() {
   const t = state.activeTemplate;
 
   if (state.activeLoading || (!t && !state.activeError)) {
-    return <div style={{ padding: 24, background: NAVY, minHeight: "100vh" }}><style>{SKELETON_STYLE}</style><SkeletonBlock height={20} width={200} /></div>;
+    return <div style={{ padding: 24, background: "#ffffff", minHeight: "100vh" }}><style>{SKELETON_STYLE}</style><SkeletonBlock height={20} width={200} /></div>;
   }
 
   if (state.activeError || !t) {

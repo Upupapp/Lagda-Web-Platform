@@ -3,10 +3,11 @@
 // Permission gate: users without prepareFlowEnabled see a plan-upgrade notice.
 // Burgundy (#67023B) is NEVER used here. eNotary is NEVER mentioned.
 
-import React, { useEffect } from "react";
-import { useNavigate, Link } from "react-router";
+import React, { useEffect, useState } from "react";
+import { useNavigate, useSearchParams, Link } from "react-router";
 import { usePrepare } from "../../../context/PrepareContext";
 import { usePlatform } from "../../../context/PlatformContext";
+import { usePendingPreparation } from "../../../context/PendingPreparationContext";
 import type { ResumableDraftSummary, PreparationStepId } from "../../../models/prepare";
 import { PREPARATION_STEPS } from "../../../models/prepare";
 
@@ -161,7 +162,9 @@ function TemplateCard({
 
 export function PrepareEntryPage() {
   const navigate  = useNavigate();
+  const [params]  = useSearchParams();
   const { hasFlag } = usePlatform();
+  const { claimPending } = usePendingPreparation();
   const {
     createDraft,
     loadDraft,
@@ -172,13 +175,54 @@ export function PrepareEntryPage() {
   } = usePrepare();
 
   const canPrepare = hasFlag("prepareFlowEnabled");
+  const resumeId = params.get("resumeId");
+  const [resuming, setResuming] = useState(!!resumeId);
+  const [resumeFailed, setResumeFailed] = useState(false);
+
+  // Resuming a document selected before authentication. claimPending() only
+  // returns a match when this exact resumeId was issued for it — a stale
+  // selection left behind by a different, never-completed sign-in cannot be
+  // picked up here just because something is technically still pending.
+  useEffect(() => {
+    if (!canPrepare || !resumeId) {
+      setResuming(false);
+      return;
+    }
+    const claimed = claimPending(resumeId);
+    if (!claimed) {
+      // In-memory only, by design (see PendingPreparationContext) — a hard
+      // refresh between the public upload and reaching this page loses it.
+      // That is expected, not an error; the visitor just re-selects the file.
+      setResumeFailed(true);
+      setResuming(false);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      const draftId = await createDraft({
+        source: "public-upload",
+        initialFiles: claimed.files,
+        initialTitle: claimed.title,
+      });
+      if (cancelled) return;
+      if (draftId) {
+        navigate("/app/prepare/upload", { replace: true });
+      } else {
+        setResuming(false);
+      }
+    })();
+    return () => { cancelled = true; };
+    // Deliberately excludes claimPending/createDraft: this must run once for
+    // this resumeId, not re-run when those callbacks are recreated.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [canPrepare, resumeId]);
 
   useEffect(() => {
-    if (canPrepare) {
+    if (canPrepare && !resumeId) {
       loadResumableDrafts();
       loadTemplates();
     }
-  }, [canPrepare, loadResumableDrafts, loadTemplates]);
+  }, [canPrepare, resumeId, loadResumableDrafts, loadTemplates]);
 
   const handleStartNew = async () => {
     const draftId = await createDraft({ source: "new" });
@@ -198,6 +242,22 @@ export function PrepareEntryPage() {
     await loadDraft(draftId);
     navigate("/app/prepare/upload");
   };
+
+  // ── Resuming a pre-auth document selection ──────────────────────────────────
+
+  if (resuming) {
+    return (
+      <div style={{ ...GF, maxWidth: 480, margin: "80px auto", padding: "0 24px", textAlign: "center" }}>
+        <div style={{ fontSize: 32, marginBottom: 16 }} aria-hidden="true">📄</div>
+        <h1 style={{ fontSize: 18, fontWeight: 700, color: NAVY, marginBottom: 8 }}>
+          Continuing your document…
+        </h1>
+        <p style={{ fontSize: 13, color: SILVER, margin: 0 }} role="status" aria-live="polite">
+          Bringing the document you selected into your workspace.
+        </p>
+      </div>
+    );
+  }
 
   // ── Permission gate ───────────────────────────────────────────────────────
 
@@ -238,6 +298,17 @@ export function PrepareEntryPage() {
 
   return (
     <div style={{ ...GF, maxWidth: 680, margin: "0 auto" }}>
+      {resumeFailed && (
+        <div
+          role="status"
+          style={{
+            ...GF, marginBottom: 24, padding: "12px 16px", borderRadius: 10,
+            background: "#FEF9EC", border: "1px solid #F0D07A", fontSize: 13, color: "#8A6A16",
+          }}
+        >
+          We couldn't bring over the document you selected earlier — please choose it again below.
+        </div>
+      )}
       <div style={{ marginBottom: 36 }}>
         <h1 style={{ fontSize: 26, fontWeight: 800, color: NAVY, margin: "0 0 8px" }}>
           Prepare a Document

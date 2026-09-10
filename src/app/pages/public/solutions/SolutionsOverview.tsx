@@ -26,8 +26,8 @@ export function SolutionsOverview() {
             Explore LAGDA eSignature
           </Link>
           <Link to="/book-a-demo" style={{
-            background: "rgba(255,255,255,0.06)", color: "white", padding: "12px 20px", borderRadius: 10,
-            border: "1px solid rgba(255,255,255,0.15)",
+            background: "#ffffff", color: "#07111F", padding: "12px 20px", borderRadius: 10,
+            border: "1px solid rgba(0,0,0,0.14)",
             ...GF, fontSize: 14, fontWeight: 600, textDecoration: "none", minHeight: 44,
             display: "inline-flex", alignItems: "center",
           }}>
@@ -48,12 +48,13 @@ export function SolutionsOverview() {
         <div style={{ display: "grid", gap: 10 }} className="prob-grid">
           {COMMON_PROBLEMS.map((p) => (
             <div key={p.title} style={{
-              background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)",
+              background: "#ffffff", border: "1px solid rgba(0,0,0,0.08)",
               borderRadius: 12, padding: "14px 14px",
+              boxShadow: "0 1px 4px rgba(7,17,31,0.07)",
             }}>
               <span aria-hidden style={{ fontSize: 20, display: "block", marginBottom: 8 }}>{p.icon}</span>
-              <p style={{ color: "white", ...GF, fontSize: 13, fontWeight: 700, margin: 0, marginBottom: 3 }}>{p.title}</p>
-              <p style={{ color: "#94A3B8", ...GF, fontSize: 12, lineHeight: 1.5, margin: 0 }}>{p.desc}</p>
+              <p style={{ color: "#07111F", ...GF, fontSize: 13, fontWeight: 700, margin: 0, marginBottom: 3 }}>{p.title}</p>
+              <p style={{ color: "#64748B", ...GF, fontSize: 12, lineHeight: 1.5, margin: 0 }}>{p.desc}</p>
             </div>
           ))}
         </div>
@@ -72,8 +73,9 @@ export function SolutionsOverview() {
         <div style={{ display: "grid", gap: 16 }} className="aud-grid">
           {AUDIENCE_GROUPS.map((group) => (
             <div key={group.group} style={{
-              background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)",
+              background: "#ffffff", border: "1px solid rgba(0,0,0,0.08)",
               borderRadius: 14, padding: "20px 20px", display: "flex", flexDirection: "column", gap: 14,
+              boxShadow: "0 1px 4px rgba(7,17,31,0.07)",
             }}>
               <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
                 <div style={{
@@ -82,16 +84,16 @@ export function SolutionsOverview() {
                   display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, flexShrink: 0,
                 }}>{group.icon}</div>
                 <div>
-                  <p style={{ color: "white", ...GF, fontSize: 14, fontWeight: 700, margin: 0 }}>{group.group}</p>
-                  <p style={{ color: "#8A9BAE", ...GM, fontSize: 10, margin: 0 }}>{group.solutions.length} solution{group.solutions.length > 1 ? "s" : ""}</p>
+                  <p style={{ color: "#07111F", ...GF, fontSize: 14, fontWeight: 700, margin: 0 }}>{group.group}</p>
+                  <p style={{ color: "#64748B", ...GM, fontSize: 10, margin: 0 }}>{group.solutions.length} solution{group.solutions.length > 1 ? "s" : ""}</p>
                 </div>
               </div>
-              <p style={{ color: "#94A3B8", ...GF, fontSize: 13, lineHeight: 1.55, margin: 0 }}>{group.desc}</p>
+              <p style={{ color: "#64748B", ...GF, fontSize: 13, lineHeight: 1.55, margin: 0 }}>{group.desc}</p>
               <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
                 {group.solutions.map((s) => (
                   <Link key={s.path} to={s.path} style={{
                     background: "rgba(0,120,212,0.08)", border: "1px solid rgba(0,120,212,0.2)",
-                    color: "#38bdf8", borderRadius: 8, padding: "6px 12px",
+                    color: "#0078D4", borderRadius: 8, padding: "6px 12px",
                     ...GF, fontSize: 13, fontWeight: 700, textDecoration: "none",
                     display: "inline-flex", alignItems: "center", gap: 4,
                   }}>
@@ -118,12 +120,13 @@ export function SolutionsOverview() {
           {SHARED_CAPABILITIES.map((cap) => (
             <Link key={cap.path} to={cap.path} style={{ textDecoration: "none" }}>
               <div style={{
-                background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)",
+                background: "#ffffff", border: "1px solid rgba(0,0,0,0.08)",
                 borderRadius: 12, padding: "14px 14px", height: "100%",
+                boxShadow: "0 1px 4px rgba(7,17,31,0.07)",
               }}>
                 <span aria-hidden style={{ fontSize: 20, display: "block", marginBottom: 8 }}>{cap.icon}</span>
-                <p style={{ color: "white", ...GF, fontSize: 13, fontWeight: 700, margin: 0, marginBottom: 3 }}>{cap.title}</p>
-                <p style={{ color: "#94A3B8", ...GF, fontSize: 12, lineHeight: 1.45, margin: 0 }}>{cap.desc}</p>
+                <p style={{ color: "#07111F", ...GF, fontSize: 13, fontWeight: 700, margin: 0, marginBottom: 3 }}>{cap.title}</p>
+                <p style={{ color: "#64748B", ...GF, fontSize: 12, lineHeight: 1.45, margin: 0 }}>{cap.desc}</p>
               </div>
             </Link>
           ))}

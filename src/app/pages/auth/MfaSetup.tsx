@@ -27,9 +27,9 @@ function KeyBlock({ value }: { value: string }) {
     setTimeout(() => setCopied(false), 1800);
   }
   return (
-    <div style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, padding: "10px 14px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, marginTop: 8 }}>
-      <span style={{ ...GM, fontSize: 12, color: "#94A3B8", wordBreak: "break-all" }}>{value}</span>
-      <button onClick={doCopy} style={{ background: "none", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 6, color: "#64748B", ...GF, fontSize: 11, cursor: "pointer", padding: "4px 10px", whiteSpace: "nowrap", flexShrink: 0 }}>
+    <div style={{ background: "#f8fafb", border: "1px solid rgba(0,0,0,0.08)", borderRadius: 8, padding: "10px 14px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, marginTop: 8 }}>
+      <span style={{ ...GM, fontSize: 12, color: "#07111F", wordBreak: "break-all" }}>{value}</span>
+      <button onClick={doCopy} style={{ background: "none", border: "1px solid rgba(0,0,0,0.08)", borderRadius: 6, color: "#64748B", ...GF, fontSize: 11, cursor: "pointer", padding: "4px 10px", whiteSpace: "nowrap", flexShrink: 0 }}>
         {copied ? "Copied" : "Copy"}
       </button>
     </div>
@@ -86,7 +86,7 @@ export function MfaSetup() {
     return (
       <>
         <div style={{ textAlign: "center", marginBottom: 24 }}>
-          <h1 style={{ color: "white", ...GF, fontSize: 22, fontWeight: 900, letterSpacing: "-0.02em", margin: "0 0 6px" }}>Set up two-factor authentication</h1>
+          <h1 style={{ color: "#07111F", ...GF, fontSize: 22, fontWeight: 900, letterSpacing: "-0.02em", margin: "0 0 6px" }}>Set up two-factor authentication</h1>
           <p style={{ color: "#64748B", ...GF, fontSize: 13, lineHeight: 1.6 }}>
             Add an extra layer of security to your account using an authenticator app.
           </p>
@@ -94,7 +94,7 @@ export function MfaSetup() {
 
         <div style={{ background: "rgba(0,120,212,0.06)", border: "1px solid rgba(0,120,212,0.15)", borderRadius: 10, padding: "14px 16px", marginBottom: 20 }}>
           <p style={{ color: "#C9960C", ...GM, fontSize: 9, fontWeight: 700, margin: "0 0 4px" }}>FRONTEND DEMONSTRATION</p>
-          <p style={{ color: "#475569", ...GF, fontSize: 12, margin: 0, lineHeight: 1.5 }}>
+          <p style={{ color: "#334155", ...GF, fontSize: 12, margin: 0, lineHeight: 1.5 }}>
             No real MFA enrollment occurs here. Keys and codes shown are fictional demonstration values.
           </p>
         </div>
@@ -108,7 +108,7 @@ export function MfaSetup() {
           ].map(({ num, text }) => (
             <div key={num} style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
               <div style={{ width: 24, height: 24, borderRadius: "50%", background: "rgba(0,120,212,0.15)", border: "1px solid rgba(0,120,212,0.25)", display: "flex", alignItems: "center", justifyContent: "center", color: AZURE, ...GM, fontSize: 11, fontWeight: 700, flexShrink: 0, marginTop: 1 }}>{num}</div>
-              <p style={{ color: "#94A3B8", ...GF, fontSize: 13, margin: 0, lineHeight: 1.6 }}>{text}</p>
+              <p style={{ color: "#334155", ...GF, fontSize: 13, margin: 0, lineHeight: 1.6 }}>{text}</p>
             </div>
           ))}
         </div>
@@ -117,7 +117,7 @@ export function MfaSetup() {
           Continue
         </button>
         <div style={{ textAlign: "center", marginTop: 14 }}>
-          <button onClick={() => navigate("/onboarding/notifications")} style={{ background: "none", border: "none", cursor: "pointer", color: "#475569", ...GF, fontSize: 13 }}>
+          <button onClick={() => navigate("/onboarding/notifications")} style={{ background: "none", border: "none", cursor: "pointer", color: "#64748B", ...GF, fontSize: 13 }}>
             Skip for now
           </button>
         </div>
@@ -131,15 +131,15 @@ export function MfaSetup() {
     return (
       <>
         <div style={{ textAlign: "center", marginBottom: 20 }}>
-          <h1 style={{ color: "white", ...GF, fontSize: 20, fontWeight: 900, margin: "0 0 6px" }}>Scan with your app</h1>
+          <h1 style={{ color: "#07111F", ...GF, fontSize: 20, fontWeight: 900, margin: "0 0 6px" }}>Scan with your app</h1>
           <p style={{ color: "#64748B", ...GF, fontSize: 13, lineHeight: 1.6 }}>
             If your app supports QR scanning, use the key below. Otherwise enter it manually.
           </p>
         </div>
 
         {/* QR placeholder */}
-        <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 12, padding: 28, textAlign: "center", marginBottom: 20 }}>
-          <div style={{ width: 120, height: 120, background: "rgba(255,255,255,0.06)", borderRadius: 8, margin: "0 auto 12px", display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 6 }}>
+        <div style={{ background: "#f8fafb", border: "1px solid rgba(0,0,0,0.08)", borderRadius: 12, padding: 28, textAlign: "center", marginBottom: 20 }}>
+          <div style={{ width: 120, height: 120, background: "#ffffff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: 8, margin: "0 auto 12px", display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 6 }}>
             <span style={{ fontSize: 32 }} aria-hidden>▦</span>
             <span style={{ color: "#334155", ...GM, fontSize: 9 }}>DEMO QR</span>
           </div>
@@ -148,13 +148,13 @@ export function MfaSetup() {
 
         <div>
           <p style={{ color: "#64748B", ...GF, fontSize: 12, fontWeight: 600, margin: "0 0 4px" }}>Account</p>
-          <p style={{ color: "#94A3B8", ...GM, fontSize: 13, margin: "0 0 14px" }}>{DEMO_MFA_ACCOUNT}</p>
+          <p style={{ color: "#07111F", ...GM, fontSize: 13, margin: "0 0 14px" }}>{DEMO_MFA_ACCOUNT}</p>
           <p style={{ color: "#64748B", ...GF, fontSize: 12, fontWeight: 600, margin: "0 0 0" }}>Setup key</p>
           <KeyBlock value={DEMO_MFA_SETUP_KEY} />
         </div>
 
         <div style={{ display: "flex", gap: 10, marginTop: 24 }}>
-          <button onClick={() => setStep("intro")} style={{ flex: 1, background: "none", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 8, color: "#64748B", ...GF, fontSize: 14, fontWeight: 600, padding: "12px", cursor: "pointer", minHeight: 44 }}>Back</button>
+          <button onClick={() => setStep("intro")} style={{ flex: 1, background: "none", border: "1px solid rgba(0,0,0,0.08)", borderRadius: 8, color: "#64748B", ...GF, fontSize: 14, fontWeight: 600, padding: "12px", cursor: "pointer", minHeight: 44 }}>Back</button>
           <button onClick={() => setStep("confirm")} style={{ flex: 2, background: AZURE, border: "none", borderRadius: 8, color: "white", ...GF, fontSize: 14, fontWeight: 700, padding: "12px", cursor: "pointer", minHeight: 44 }}>I've added the account</button>
         </div>
       </>
@@ -167,15 +167,15 @@ export function MfaSetup() {
     return (
       <>
         <div style={{ textAlign: "center", marginBottom: 20 }}>
-          <h1 style={{ color: "white", ...GF, fontSize: 20, fontWeight: 900, margin: "0 0 6px" }}>Confirm your code</h1>
+          <h1 style={{ color: "#07111F", ...GF, fontSize: 20, fontWeight: 900, margin: "0 0 6px" }}>Confirm your code</h1>
           <p style={{ color: "#64748B", ...GF, fontSize: 13, lineHeight: 1.6 }}>
             Enter a 6-digit code from your authenticator app to verify setup.
           </p>
         </div>
 
         <div style={{ background: "rgba(0,120,212,0.06)", border: "1px solid rgba(0,120,212,0.15)", borderRadius: 10, padding: "12px 16px", marginBottom: 16 }}>
-          <p style={{ color: "#475569", ...GF, fontSize: 12, margin: 0, lineHeight: 1.5 }}>
-            <strong style={{ color: "#C9960C" }}>Demo:</strong> enter any 6-digit code starting with <strong style={{ color: "#94A3B8", ...GM }}>1</strong> to succeed.
+          <p style={{ color: "#334155", ...GF, fontSize: 12, margin: 0, lineHeight: 1.5 }}>
+            <strong style={{ color: "#C9960C" }}>Demo:</strong> enter any 6-digit code starting with <strong style={{ color: "#07111F", ...GM }}>1</strong> to succeed.
           </p>
         </div>
 
@@ -187,7 +187,7 @@ export function MfaSetup() {
 
         <form onSubmit={handleConfirm} noValidate style={{ display: "flex", flexDirection: "column", gap: 14 }}>
           <div>
-            <label htmlFor="mfa-confirm" style={{ display: "block", color: "#94A3B8", ...GF, fontSize: 12, fontWeight: 600, marginBottom: 6 }}>
+            <label htmlFor="mfa-confirm" style={{ display: "block", color: "#64748B", ...GF, fontSize: 12, fontWeight: 600, marginBottom: 6 }}>
               Authenticator code <span aria-hidden style={{ color: "#EF4444" }}>*</span>
             </label>
             <input
@@ -205,9 +205,9 @@ export function MfaSetup() {
               placeholder="000000"
               style={{
                 width: "100%", boxSizing: "border-box",
-                background: "rgba(255,255,255,0.05)",
-                border: `1px solid ${status === "error" ? "rgba(239,68,68,0.4)" : "rgba(255,255,255,0.12)"}`,
-                borderRadius: 8, color: "white",
+                background: "#ffffff",
+                border: `1px solid ${status === "error" ? "rgba(239,68,68,0.4)" : "rgba(0,0,0,0.08)"}`,
+                borderRadius: 8, color: "#07111F",
                 ...GM, fontSize: 24, fontWeight: 700,
                 padding: "14px 16px", outline: "none",
                 textAlign: "center", letterSpacing: "0.2em",
@@ -215,7 +215,7 @@ export function MfaSetup() {
             />
           </div>
           <div style={{ display: "flex", gap: 10 }}>
-            <button type="button" onClick={() => setStep("scan")} style={{ flex: 1, background: "none", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 8, color: "#64748B", ...GF, fontSize: 14, fontWeight: 600, padding: "12px", cursor: "pointer", minHeight: 44 }}>Back</button>
+            <button type="button" onClick={() => setStep("scan")} style={{ flex: 1, background: "none", border: "1px solid rgba(0,0,0,0.08)", borderRadius: 8, color: "#64748B", ...GF, fontSize: 14, fontWeight: 600, padding: "12px", cursor: "pointer", minHeight: 44 }}>Back</button>
             <button type="submit" disabled={code.length !== 6 || status === "submitting"} aria-busy={status === "submitting"} style={{ flex: 2, background: code.length !== 6 || status === "submitting" ? "rgba(0,120,212,0.4)" : AZURE, border: "none", borderRadius: 8, color: "white", ...GF, fontSize: 14, fontWeight: 700, padding: "12px", cursor: code.length !== 6 ? "not-allowed" : "pointer", minHeight: 44 }}>
               {status === "submitting" ? "Verifying…" : "Confirm"}
             </button>
@@ -231,22 +231,22 @@ export function MfaSetup() {
     <div ref={codesRef} tabIndex={-1} style={{ outline: "none" }}>
       <div style={{ textAlign: "center", marginBottom: 20 }}>
         <div style={{ width: 48, height: 48, borderRadius: "50%", background: "rgba(0,120,212,0.12)", border: "1px solid rgba(0,120,212,0.3)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 14px", fontSize: 20 }} aria-hidden>✓</div>
-        <h1 style={{ color: "white", ...GF, fontSize: 20, fontWeight: 900, margin: "0 0 6px" }}>Save your recovery codes</h1>
+        <h1 style={{ color: "#07111F", ...GF, fontSize: 20, fontWeight: 900, margin: "0 0 6px" }}>Save your recovery codes</h1>
         <p style={{ color: "#64748B", ...GF, fontSize: 13, lineHeight: 1.6 }}>
           Store these codes in a safe place. Each code can only be used once if you lose access to your authenticator.
         </p>
       </div>
 
-      <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 10, padding: "18px 20px", marginBottom: 16 }}>
+      <div style={{ background: "#f8fafb", border: "1px solid rgba(0,0,0,0.08)", borderRadius: 10, padding: "18px 20px", marginBottom: 16 }}>
         <p style={{ color: "#C9960C", ...GM, fontSize: 9, fontWeight: 700, margin: "0 0 12px" }}>DEMONSTRATION ONLY — THESE CODES ARE NOT FUNCTIONAL</p>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
           {DEMO_RECOVERY_CODES.map((c) => (
-            <span key={c} style={{ ...GM, fontSize: 12, color: "#94A3B8" }}>{c}</span>
+            <span key={c} style={{ ...GM, fontSize: 12, color: "#07111F" }}>{c}</span>
           ))}
         </div>
       </div>
 
-      <button onClick={handleCopyAll} style={{ width: "100%", background: "none", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 8, color: "#64748B", ...GF, fontSize: 14, fontWeight: 600, padding: "12px", cursor: "pointer", minHeight: 44, marginBottom: 10 }}>
+      <button onClick={handleCopyAll} style={{ width: "100%", background: "none", border: "1px solid rgba(0,0,0,0.08)", borderRadius: 8, color: "#64748B", ...GF, fontSize: 14, fontWeight: 600, padding: "12px", cursor: "pointer", minHeight: 44, marginBottom: 10 }}>
         {copiedAll ? "Copied!" : "Copy all codes"}
       </button>
 

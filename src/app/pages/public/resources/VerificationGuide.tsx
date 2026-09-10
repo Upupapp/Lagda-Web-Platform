@@ -7,13 +7,13 @@ const GF = { fontFamily: "'Geist', sans-serif" };
 const GM = { fontFamily: "'Geist Mono', monospace" };
 
 const RESULT_STATES = [
-  { state: "Verified",                     color: "#22C55E", desc: "LAGDA found a completed transaction record. Where file comparison was performed, the supplied file matched the recorded document." },
-  { state: "Record found — file mismatch", color: "#ef4444", desc: "LAGDA found a transaction record, but the supplied file does not match the file recorded at completion. The document may have been altered." },
-  { state: "Incomplete",                   color: "#C9960C", desc: "The transaction exists but has not been completed by all required participants. The document is not yet in a completed state." },
-  { state: "Cancelled",                    color: "#8A9BAE", desc: "The sender cancelled the transaction before completion." },
-  { state: "Voided",                       color: "#8A9BAE", desc: "The transaction was voided after completion under applicable terms." },
-  { state: "No matching record",           color: "#ef4444", desc: "No LAGDA transaction record matches the supplied Verification ID. The document may not be from LAGDA, or the ID may be incorrect." },
-  { state: "Service unavailable",          color: "#94A3B8", desc: "LAGDA verification is temporarily unavailable. Try again later." },
+  { state: "Verified",                     color: "#16A34A", desc: "LAGDA found a completed transaction record. Where file comparison was performed, the supplied file matched the recorded document." },
+  { state: "Record found — file mismatch", color: "#DC2626", desc: "LAGDA found a transaction record, but the supplied file does not match the file recorded at completion. The document may have been altered." },
+  { state: "Incomplete",                   color: "#B45309", desc: "The transaction exists but has not been completed by all required participants. The document is not yet in a completed state." },
+  { state: "Cancelled",                    color: "#64748B", desc: "The sender cancelled the transaction before completion." },
+  { state: "Voided",                       color: "#64748B", desc: "The transaction was voided after completion under applicable terms." },
+  { state: "No matching record",           color: "#DC2626", desc: "No LAGDA transaction record matches the supplied Verification ID. The document may not be from LAGDA, or the ID may be incorrect." },
+  { state: "Service unavailable",          color: "#64748B", desc: "LAGDA verification is temporarily unavailable. Try again later." },
 ];
 
 export function VerificationGuide() {
@@ -65,11 +65,11 @@ export function VerificationGuide() {
               { num: "02", method: "Scan the QR code",         desc: "Use your device's camera or a QR code reader to scan the QR code on the completed document. You will be taken directly to the verification result." },
               { num: "03", method: "Use a verification link",  desc: "Follow a direct verification link shared by the sender or embedded in the document." },
             ].map(({ num, method, desc }) => (
-              <div key={num} style={{ display: "flex", gap: 14, alignItems: "flex-start", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 10, padding: "14px 18px" }}>
-                <span style={{ color: "#38BDF8", fontFamily: "'Geist Mono', monospace", fontSize: 16, fontWeight: 800, flexShrink: 0 }}>{num}</span>
+              <div key={num} style={{ display: "flex", gap: 14, alignItems: "flex-start", background: "#ffffff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: 10, padding: "14px 18px", boxShadow: "0 1px 4px rgba(7,17,31,0.07)" }}>
+                <span style={{ color: "#0078D4", fontFamily: "'Geist Mono', monospace", fontSize: 16, fontWeight: 800, flexShrink: 0 }}>{num}</span>
                 <div>
-                  <p style={{ color: "white", ...GF, fontSize: 14, fontWeight: 700, margin: "0 0 4px" }}>{method}</p>
-                  <p style={{ color: "#94A3B8", ...GF, fontSize: 13, margin: 0, lineHeight: 1.5 }}>{desc}</p>
+                  <p style={{ color: "#07111F", ...GF, fontSize: 14, fontWeight: 700, margin: "0 0 4px" }}>{method}</p>
+                  <p style={{ color: "#64748B", ...GF, fontSize: 13, margin: 0, lineHeight: 1.5 }}>{desc}</p>
                 </div>
               </div>
             ))}
@@ -81,26 +81,26 @@ export function VerificationGuide() {
             The verification result page shows the transaction status and, where applicable, the file comparison result. The two are separate indicators.
           </GuidePara>
           <GuidePara>
-            <strong style={{ color: "white" }}>Record status</strong> reflects the current state of the transaction in LAGDA (completed, cancelled, voided, and so on).
+            <strong style={{ color: "#07111F" }}>Record status</strong> reflects the current state of the transaction in LAGDA (completed, cancelled, voided, and so on).
           </GuidePara>
           <GuidePara>
-            <strong style={{ color: "white" }}>File-match status</strong> reflects whether a file you supplied for comparison matches the file recorded at completion. A valid record status does not automatically mean the file matches.
+            <strong style={{ color: "#07111F" }}>File-match status</strong> reflects whether a file you supplied for comparison matches the file recorded at completion. A valid record status does not automatically mean the file matches.
           </GuidePara>
           <GuideCallout
             label="IMPORTANT"
             text="A valid transaction record does not automatically mean every file presented by a third party matches the recorded completed document. Always check the file-match result when comparing a specific file."
-            color="#C9960C"
+            color="#B45309"
           />
         </GuideSection>
 
         <GuideSection id="result-states" title="Possible result states">
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             {RESULT_STATES.map(({ state, color, desc }) => (
-              <div key={state} style={{ display: "flex", gap: 12, alignItems: "flex-start", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 9, padding: "12px 16px" }}>
+              <div key={state} style={{ display: "flex", gap: 12, alignItems: "flex-start", background: "#ffffff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: 9, padding: "12px 16px", boxShadow: "0 1px 4px rgba(7,17,31,0.07)" }}>
                 <span style={{ color, fontFamily: "'Geist Mono', monospace", fontSize: 10, fontWeight: 700, flexShrink: 0, marginTop: 2 }}>●</span>
                 <div>
-                  <p style={{ color: "white", ...GF, fontSize: 13, fontWeight: 700, margin: "0 0 3px" }}>{state}</p>
-                  <p style={{ color: "#94A3B8", ...GF, fontSize: 13, margin: 0, lineHeight: 1.5 }}>{desc}</p>
+                  <p style={{ color: "#07111F", ...GF, fontSize: 13, fontWeight: 700, margin: "0 0 3px" }}>{state}</p>
+                  <p style={{ color: "#64748B", ...GF, fontSize: 13, margin: 0, lineHeight: 1.5 }}>{desc}</p>
                 </div>
               </div>
             ))}

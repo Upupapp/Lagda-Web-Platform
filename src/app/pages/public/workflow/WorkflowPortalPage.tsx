@@ -113,7 +113,7 @@ export function WorkflowPortalPage() {
             accent
           />
         </div>
-        <p style={{ ...GF, color: "#94a3b8", fontSize: 14.5, lineHeight: 1.7, margin: "24px auto 0", maxWidth: 640, textAlign: "center" }}>
+        <p style={{ ...GF, color: "#334155", fontSize: 14.5, lineHeight: 1.7, margin: "24px auto 0", maxWidth: 640, textAlign: "center" }}>
           Starting a run never changes the workflow it came from, and never touches
           any other run. Editing a workflow leaves work already in progress exactly
           as it was.
@@ -130,11 +130,11 @@ export function WorkflowPortalPage() {
         <ol style={{ listStyle: "none", margin: 0, padding: 0, display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 16 }}>
           {STAGES.map((s, i) => (
             <li key={s.name} style={card}>
-              <p style={{ ...GM, color: "#38bdf8", fontSize: 10, fontWeight: 700, margin: "0 0 8px", letterSpacing: "0.08em" }}>
+              <p style={{ ...GM, color: "#0078D4", fontSize: 10, fontWeight: 700, margin: "0 0 8px", letterSpacing: "0.08em" }}>
                 STAGE TYPE {String(i + 1).padStart(2, "0")}
               </p>
-              <h3 style={{ ...GF, color: "white", fontSize: 16, fontWeight: 700, margin: "0 0 8px" }}>{s.name}</h3>
-              <p style={{ ...GF, color: "#94a3b8", fontSize: 13.5, lineHeight: 1.65, margin: 0 }}>{s.desc}</p>
+              <h3 style={{ ...GF, color: "#07111F", fontSize: 16, fontWeight: 700, margin: "0 0 8px" }}>{s.name}</h3>
+              <p style={{ ...GF, color: "#64748B", fontSize: 13.5, lineHeight: 1.65, margin: 0 }}>{s.desc}</p>
             </li>
           ))}
         </ol>
@@ -150,11 +150,11 @@ export function WorkflowPortalPage() {
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 18 }}>
           {EXAMPLES.map(ex => (
             <div key={ex.title} style={card}>
-              <h3 style={{ ...GF, color: "white", fontSize: 16, fontWeight: 700, margin: "0 0 12px" }}>{ex.title}</h3>
+              <h3 style={{ ...GF, color: "#07111F", fontSize: 16, fontWeight: 700, margin: "0 0 12px" }}>{ex.title}</h3>
               <ol style={{ listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: 6 }}>
                 {ex.stages.map((st, i) => (
-                  <li key={st} style={{ ...GF, color: "#94a3b8", fontSize: 13, display: "flex", gap: 8, alignItems: "baseline" }}>
-                    <span aria-hidden style={{ ...GM, color: "#38bdf8", fontSize: 11, flexShrink: 0 }}>{i + 1}</span>
+                  <li key={st} style={{ ...GF, color: "#334155", fontSize: 13, display: "flex", gap: 8, alignItems: "baseline" }}>
+                    <span aria-hidden style={{ ...GM, color: "#0078D4", fontSize: 11, flexShrink: 0 }}>{i + 1}</span>
                     {st}
                   </li>
                 ))}
@@ -179,8 +179,8 @@ export function WorkflowPortalPage() {
             { t: "Its own audit trail",     d: "Each run keeps its own activity record, separate from every other run of the same workflow." },
           ].map(x => (
             <div key={x.t} style={card}>
-              <h3 style={{ ...GF, color: "white", fontSize: 15.5, fontWeight: 700, margin: "0 0 8px" }}>{x.t}</h3>
-              <p style={{ ...GF, color: "#94a3b8", fontSize: 13.5, lineHeight: 1.65, margin: 0 }}>{x.d}</p>
+              <h3 style={{ ...GF, color: "#07111F", fontSize: 15.5, fontWeight: 700, margin: "0 0 8px" }}>{x.t}</h3>
+              <p style={{ ...GF, color: "#64748B", fontSize: 13.5, lineHeight: 1.65, margin: 0 }}>{x.d}</p>
             </div>
           ))}
         </div>
@@ -229,17 +229,17 @@ function ConceptCard({
   return (
     <div style={{
       ...card,
-      borderColor: accent ? "rgba(0,120,212,0.35)" : "rgba(255,255,255,0.08)",
-      background: accent ? "rgba(0,120,212,0.06)" : "rgba(255,255,255,0.02)",
+      borderColor: accent ? "rgba(0,120,212,0.35)" : "rgba(0,0,0,0.08)",
+      background: accent ? "rgba(0,120,212,0.05)" : "#ffffff",
     }}>
-      <p style={{ ...GM, color: accent ? "#38bdf8" : "#94a3b8", fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", margin: "0 0 8px" }}>
+      <p style={{ ...GM, color: accent ? "#0078D4" : "#64748B", fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", margin: "0 0 8px" }}>
         {label}
       </p>
-      <h3 style={{ ...GF, color: "white", fontSize: 18, fontWeight: 700, margin: "0 0 14px" }}>{title}</h3>
+      <h3 style={{ ...GF, color: "#07111F", fontSize: 18, fontWeight: 700, margin: "0 0 14px" }}>{title}</h3>
       <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: 8 }}>
         {points.map(p => (
-          <li key={p} style={{ ...GF, color: "#94a3b8", fontSize: 14, lineHeight: 1.6, display: "flex", gap: 8 }}>
-            <span aria-hidden style={{ color: "#38bdf8", flexShrink: 0 }}>·</span>
+          <li key={p} style={{ ...GF, color: "#334155", fontSize: 14, lineHeight: 1.6, display: "flex", gap: 8 }}>
+            <span aria-hidden style={{ color: "#0078D4", flexShrink: 0 }}>·</span>
             {p}
           </li>
         ))}
@@ -249,26 +249,27 @@ function ConceptCard({
 }
 
 const card: React.CSSProperties = {
-  background: "rgba(255,255,255,0.02)",
-  border: "1px solid rgba(255,255,255,0.08)",
+  background: "#ffffff",
+  border: "1px solid rgba(0,0,0,0.08)",
   borderRadius: 14,
   padding: 22,
+  boxShadow: "0 1px 4px rgba(7,17,31,0.07)",
 };
 
 const ctaPrimary: React.CSSProperties = {
   ...GF, display: "inline-flex", alignItems: "center", minHeight: 48, padding: "0 24px",
-  borderRadius: 10, background: "#0078D4", color: "white", fontSize: 15, fontWeight: 700,
+  borderRadius: 10, background: "#07111F", color: "white", fontSize: 15, fontWeight: 700,
   textDecoration: "none",
 };
 
 const ctaSecondary: React.CSSProperties = {
   ...GF, display: "inline-flex", alignItems: "center", minHeight: 48, padding: "0 24px",
-  borderRadius: 10, border: "1px solid rgba(255,255,255,0.18)", color: "white",
+  borderRadius: 10, border: "1px solid rgba(0,0,0,0.14)", color: "#07111F",
   fontSize: 15, fontWeight: 600, textDecoration: "none",
 };
 
 const chip: React.CSSProperties = {
   ...GF, display: "inline-flex", alignItems: "center", minHeight: 44, padding: "0 16px",
-  borderRadius: 999, border: "1px solid rgba(255,255,255,0.12)", background: "rgba(255,255,255,0.03)",
-  color: "#94a3b8", fontSize: 14, textDecoration: "none",
+  borderRadius: 999, border: "1px solid rgba(0,0,0,0.1)", background: "#ffffff",
+  color: "#334155", fontSize: 14, textDecoration: "none",
 };

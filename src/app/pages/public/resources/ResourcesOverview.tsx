@@ -10,13 +10,13 @@ const GM = { fontFamily: "'Geist Mono', monospace" };
 export function ResourcesOverview() {
   return (
     <ResourcesPageShell>
-      <section style={{ padding: "72px 24px 56px", background: "radial-gradient(ellipse 70% 40% at 50% 0%, rgba(56,189,248,0.07) 0%, transparent 70%)" }}>
+      <section style={{ padding: "72px 24px 56px", background: "radial-gradient(ellipse 70% 40% at 50% 0%, rgba(0,120,212,0.06) 0%, transparent 70%)" }}>
         <div style={{ maxWidth: 720, margin: "0 auto", textAlign: "center" }}>
-          <p style={{ color: "#38bdf8", ...GM, fontSize: 11, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 14 }}>LAGDA RESOURCES</p>
-          <h1 style={{ color: "white", ...GF, fontSize: "clamp(28px, 5vw, 50px)", fontWeight: 900, lineHeight: 1.1, letterSpacing: "-0.03em", margin: "0 0 18px" }}>
+          <p style={{ color: "#0078D4", ...GM, fontSize: 11, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 14 }}>LAGDA RESOURCES</p>
+          <h1 style={{ color: "#07111F", ...GF, fontSize: "clamp(28px, 5vw, 50px)", fontWeight: 900, lineHeight: 1.1, letterSpacing: "-0.03em", margin: "0 0 18px" }}>
             Guides and resources for secure digital document workflows.
           </h1>
-          <p style={{ color: "#94A3B8", ...GF, fontSize: 17, lineHeight: 1.65 }}>
+          <p style={{ color: "#64748B", ...GF, fontSize: 17, lineHeight: 1.65 }}>
             Product guides, verification and security resources, legal framework context, and support information for LAGDA eSignature.
           </p>
         </div>
@@ -37,20 +37,20 @@ export function ResourcesOverview() {
         <div style={{ display: "grid", gap: 24 }} className="lib-grid">
           {GUIDE_CATEGORIES.map(cat => (
             <div key={cat.id}>
-              <p style={{ color: "#38bdf8", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", marginBottom: 12 }}>{cat.label.toUpperCase()}</p>
+              <p style={{ color: "#0078D4", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", marginBottom: 12 }}>{cat.label.toUpperCase()}</p>
               <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
                 {cat.guides.map(g => (
                   <Link key={g.path} to={g.path} style={{
                     display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12,
                     padding: "10px 14px", borderRadius: 8, textDecoration: "none",
-                    background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)",
+                    background: "#ffffff", border: "1px solid rgba(0,0,0,0.08)",
                     transition: "border-color 0.15s ease",
                   }}
                     onMouseEnter={(e) => (e.currentTarget as HTMLAnchorElement).style.borderColor = "rgba(0,120,212,0.3)"}
-                    onMouseLeave={(e) => (e.currentTarget as HTMLAnchorElement).style.borderColor = "rgba(255,255,255,0.06)"}
+                    onMouseLeave={(e) => (e.currentTarget as HTMLAnchorElement).style.borderColor = "rgba(0,0,0,0.08)"}
                   >
-                    <span style={{ color: "#94a3b8", ...GF, fontSize: 13, fontWeight: g.available ? 500 : 400 }}>{g.title}</span>
-                    <span style={{ color: "#7C8DA4", fontSize: 12, flexShrink: 0 }}>→</span>
+                    <span style={{ color: "#334155", ...GF, fontSize: 13, fontWeight: g.available ? 500 : 400 }}>{g.title}</span>
+                    <span style={{ color: "#94A3B8", fontSize: 12, flexShrink: 0 }}>→</span>
                   </Link>
                 ))}
               </div>
@@ -69,11 +69,11 @@ export function ResourcesOverview() {
             { icon: "✉️", title: "Contact", desc: "Reach our team with sales, product, or support questions.", path: "/contact", cta: "Contact LAGDA" },
             { icon: "📡", title: "Service Status", desc: "View current platform status. Demonstration data — not connected to production monitoring.", path: "/service-status", cta: "View Status" },
           ].map(({ icon, title, desc, path, cta }) => (
-            <div key={path} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 12, padding: "20px 22px", display: "flex", flexDirection: "column", gap: 10 }}>
+            <div key={path} style={{ background: "#ffffff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: 12, padding: "20px 22px", display: "flex", flexDirection: "column", gap: 10, boxShadow: "0 1px 4px rgba(7,17,31,0.07)" }}>
               <span aria-hidden style={{ fontSize: 24 }}>{icon}</span>
-              <p style={{ color: "white", ...GF, fontSize: 15, fontWeight: 700, margin: 0 }}>{title}</p>
-              <p style={{ color: "#94A3B8", ...GF, fontSize: 13, margin: 0, lineHeight: 1.5, flex: 1 }}>{desc}</p>
-              <Link to={path} style={{ color: "#38bdf8", ...GF, fontSize: 13, fontWeight: 600, textDecoration: "none" }}>{cta} →</Link>
+              <p style={{ color: "#07111F", ...GF, fontSize: 15, fontWeight: 700, margin: 0 }}>{title}</p>
+              <p style={{ color: "#64748B", ...GF, fontSize: 13, margin: 0, lineHeight: 1.5, flex: 1 }}>{desc}</p>
+              <Link to={path} style={{ color: "#0078D4", ...GF, fontSize: 13, fontWeight: 600, textDecoration: "none" }}>{cta} →</Link>
             </div>
           ))}
         </div>
@@ -94,13 +94,13 @@ export function ResourcesOverview() {
               <Link key={path} to={path} style={{
                 display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12,
                 padding: "14px 18px", borderRadius: 10, textDecoration: "none",
-                background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)",
+                background: "#ffffff", border: "1px solid rgba(0,0,0,0.08)",
               }}>
                 <div>
-                  <p style={{ color: "white", ...GF, fontSize: 14, fontWeight: 600, margin: "0 0 3px" }}>{title}</p>
-                  <p style={{ color: "#94A3B8", ...GF, fontSize: 12, margin: 0 }}>{desc}</p>
+                  <p style={{ color: "#07111F", ...GF, fontSize: 14, fontWeight: 600, margin: "0 0 3px" }}>{title}</p>
+                  <p style={{ color: "#64748B", ...GF, fontSize: 12, margin: 0 }}>{desc}</p>
                 </div>
-                <span style={{ color: "#8A9BAE", fontSize: 14, flexShrink: 0 }}>→</span>
+                <span style={{ color: "#94A3B8", fontSize: 14, flexShrink: 0 }}>→</span>
               </Link>
             ))}
           </div>

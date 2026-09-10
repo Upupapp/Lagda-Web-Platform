@@ -25,9 +25,9 @@ export function SecurityAuditTrail() {
             { title: "Transaction-scoped records",       desc: "Each event is attached to its transaction ID. Records cannot be reassigned to other transactions." },
             { title: "Verification record generation",   desc: "When a transaction is completed, a Verification ID is generated and linked to the audit record for public verification." },
           ].map((item) => (
-            <div key={item.title} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 10, padding: "12px 14px" }}>
-              <p style={{ color: "white", ...GF, fontSize: 13, fontWeight: 700, margin: 0, marginBottom: 4 }}>{item.title}</p>
-              <p style={{ color: "#94A3B8", ...GF, fontSize: 12, lineHeight: 1.5, margin: 0 }}>{item.desc}</p>
+            <div key={item.title} style={{ background: "#ffffff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: 10, padding: "12px 14px", boxShadow: "0 1px 4px rgba(7,17,31,0.07)" }}>
+              <p style={{ color: "#07111F", ...GF, fontSize: 13, fontWeight: 700, margin: 0, marginBottom: 4 }}>{item.title}</p>
+              <p style={{ color: "#64748B", ...GF, fontSize: 12, lineHeight: 1.5, margin: 0 }}>{item.desc}</p>
             </div>
           ))}
         </div>
@@ -45,7 +45,7 @@ export function SecurityAuditTrail() {
             },
             {
               level: "Workspace",
-              color: "#38bdf8",
+              color: "#0078D4",
               desc: "Accessible to authorized workspace members (Sender, Auditor role).",
               items: ["Full event timeline", "Participant identities", "IP addresses", "Device and browser", "Auth method used"],
             },
@@ -56,13 +56,13 @@ export function SecurityAuditTrail() {
               items: ["Complete raw audit log", "Session identifiers", "Authentication event details", "Evidence bundle export"],
             },
           ].map((tier) => (
-            <div key={tier.level} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 12, padding: "14px 14px" }}>
+            <div key={tier.level} style={{ background: "#ffffff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: 12, padding: "14px 14px", boxShadow: "0 1px 4px rgba(7,17,31,0.07)" }}>
               <p style={{ color: tier.color, ...GM, fontSize: 10, fontWeight: 700, margin: 0, marginBottom: 4 }}>{tier.level.toUpperCase()}</p>
-              <p style={{ color: "#94A3B8", ...GF, fontSize: 12, lineHeight: 1.45, marginBottom: 10 }}>{tier.desc}</p>
+              <p style={{ color: "#64748B", ...GF, fontSize: 12, lineHeight: 1.45, marginBottom: 10 }}>{tier.desc}</p>
               {tier.items.map((item) => (
                 <div key={item} style={{ display: "flex", gap: 7, marginBottom: 5 }}>
                   <span style={{ color: tier.color, flexShrink: 0, fontSize: 11 }}>·</span>
-                  <span style={{ color: "#94a3b8", ...GF, fontSize: 12 }}>{item}</span>
+                  <span style={{ color: "#334155", ...GF, fontSize: 12 }}>{item}</span>
                 </div>
               ))}
             </div>
@@ -80,9 +80,9 @@ export function SecurityAuditTrail() {
             { title: "Workspace-configurable",        desc: "Some retention settings may be configurable by administrators within their plan's allowed range." },
             { title: "Legal hold",                    desc: "Records subject to legal hold should be exported and stored by the responsible party outside LAGDA." },
           ].map((r) => (
-            <div key={r.title} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 10, padding: "12px 14px" }}>
-              <p style={{ color: "white", ...GF, fontSize: 13, fontWeight: 700, margin: 0, marginBottom: 4 }}>{r.title}</p>
-              <p style={{ color: "#94A3B8", ...GF, fontSize: 12, lineHeight: 1.5, margin: 0 }}>{r.desc}</p>
+            <div key={r.title} style={{ background: "#ffffff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: 10, padding: "12px 14px", boxShadow: "0 1px 4px rgba(7,17,31,0.07)" }}>
+              <p style={{ color: "#07111F", ...GF, fontSize: 13, fontWeight: 700, margin: 0, marginBottom: 4 }}>{r.title}</p>
+              <p style={{ color: "#64748B", ...GF, fontSize: 12, lineHeight: 1.5, margin: 0 }}>{r.desc}</p>
             </div>
           ))}
         </div>

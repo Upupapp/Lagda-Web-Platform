@@ -23,13 +23,13 @@ export function FutureCapabilities() {
       <EnotaryStatusBanner />
 
       {/* Hero */}
-      <section style={{ padding: "64px 24px 48px", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+      <section style={{ padding: "64px 24px 48px", borderBottom: "1px solid rgba(0,0,0,0.07)" }}>
         <div style={{ maxWidth: 820, margin: "0 auto" }}>
           <p style={{ color: BURGUNDY, ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.12em", marginBottom: 14 }}>ENOTARY / FUTURE CAPABILITIES</p>
-          <h1 style={{ color: "white", ...GF, fontSize: "clamp(24px, 4vw, 44px)", fontWeight: 900, lineHeight: 1.08, letterSpacing: "-0.02em", margin: "0 0 16px" }}>
+          <h1 style={{ color: "#07111F", ...GF, fontSize: "clamp(24px, 4vw, 44px)", fontWeight: 900, lineHeight: 1.08, letterSpacing: "-0.02em", margin: "0 0 16px" }}>
             Future Capabilities
           </h1>
-          <p style={{ color: "#94a3b8", ...GF, fontSize: 16, lineHeight: 1.7, maxWidth: 620, margin: "0 0 24px" }}>
+          <p style={{ color: "#334155", ...GF, fontSize: 16, lineHeight: 1.7, maxWidth: 620, margin: "0 0 24px" }}>
             LAGDA is exploring electronic notarization capabilities for a future regulated product. All content on this page describes future concepts that are not currently available.
           </p>
           <EnotaryDisclaimer />
@@ -42,17 +42,17 @@ export function FutureCapabilities() {
           <EnotaryHeading sub="Electronic notarization is more than a signature. It involves a commissioned Notary Public performing specific legally defined acts.">What notarization requires</EnotaryHeading>
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             {WHAT_NOTARY_DOES.map(({ label, body }, i) => (
-              <div key={label} style={{ display: "flex", gap: 16, padding: "14px 18px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 9 }}>
+              <div key={label} style={{ display: "flex", gap: 16, padding: "14px 18px", background: "#ffffff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: 9, boxShadow: "0 1px 4px rgba(7,17,31,0.06)" }}>
                 <span style={{ color: BURGUNDY, ...GM, fontSize: 11, fontWeight: 700, flexShrink: 0, minWidth: 22, marginTop: 1 }}>{String(i + 1).padStart(2, "0")}</span>
                 <div>
-                  <p style={{ color: "white", ...GF, fontSize: 14, fontWeight: 700, margin: "0 0 4px" }}>{label}</p>
-                  <p style={{ color: "#94A3B8", ...GF, fontSize: 13, lineHeight: 1.65, margin: 0 }}>{body}</p>
+                  <p style={{ color: "#07111F", ...GF, fontSize: 14, fontWeight: 700, margin: "0 0 4px" }}>{label}</p>
+                  <p style={{ color: "#64748B", ...GF, fontSize: 13, lineHeight: 1.65, margin: 0 }}>{body}</p>
                 </div>
               </div>
             ))}
           </div>
-          <div style={{ marginTop: 20, padding: "14px 18px", background: "rgba(103,2,59,0.08)", border: "1px solid rgba(103,2,59,0.2)", borderRadius: 9 }}>
-            <p style={{ color: "#94a3b8", ...GF, fontSize: 13, lineHeight: 1.65, margin: 0 }}>
+          <div style={{ marginTop: 20, padding: "14px 18px", background: "rgba(103,2,59,0.06)", border: "1px solid rgba(176,18,98,0.2)", borderRadius: 9 }}>
+            <p style={{ color: "#67023B", ...GF, fontSize: 13, lineHeight: 1.65, margin: 0 }}>
               Electronic notarization requires technology that can support all of these steps in compliance with the Rules on Notarial Practice and any future Supreme Court rules on remote notarization. LAGDA is researching and designing for this — subject to accreditation.
             </p>
           </div>
@@ -67,16 +67,16 @@ export function FutureCapabilities() {
             {FUTURE_CAPABILITY_CATEGORIES.map(({ id, label, status, capabilities }) => (
               <div key={id}>
                 <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12, flexWrap: "wrap" }}>
-                  <h3 style={{ color: "white", ...GF, fontSize: 16, fontWeight: 800, margin: 0 }}>{label}</h3>
-                  <span style={{ color: "#8A9BAE", ...GM, fontSize: 9, fontWeight: 700, padding: "2px 7px", borderRadius: 3, background: "rgba(71,85,105,0.12)", border: "1px solid rgba(71,85,105,0.2)", whiteSpace: "nowrap" }}>
+                  <h3 style={{ color: "#07111F", ...GF, fontSize: 16, fontWeight: 800, margin: 0 }}>{label}</h3>
+                  <span style={{ color: "#64748B", ...GM, fontSize: 9, fontWeight: 700, padding: "2px 7px", borderRadius: 3, background: "rgba(71,85,105,0.08)", border: "1px solid rgba(71,85,105,0.2)", whiteSpace: "nowrap" }}>
                     {status}
                   </span>
                 </div>
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 8 }}>
                   {capabilities.map((cap) => (
-                    <div key={cap} style={{ display: "flex", alignItems: "flex-start", gap: 10, padding: "10px 14px", background: "rgba(103,2,59,0.05)", border: "1px solid rgba(103,2,59,0.13)", borderRadius: 8 }}>
+                    <div key={cap} style={{ display: "flex", alignItems: "flex-start", gap: 10, padding: "10px 14px", background: "rgba(103,2,59,0.04)", border: "1px solid rgba(176,18,98,0.15)", borderRadius: 8 }}>
                       <span style={{ color: BURGUNDY, fontSize: 14, marginTop: 1, flexShrink: 0 }}>○</span>
-                      <span style={{ color: "#94a3b8", ...GF, fontSize: 13, lineHeight: 1.6 }}>{cap}</span>
+                      <span style={{ color: "#64748B", ...GF, fontSize: 13, lineHeight: 1.6 }}>{cap}</span>
                     </div>
                   ))}
                 </div>
@@ -118,9 +118,9 @@ export function FutureCapabilities() {
               "Joining the eNotary waitlist does not give access to notarial services",
               "No electronic seal, notarial certificate, or notarial register function is currently available",
             ].map((item) => (
-              <div key={item} style={{ display: "flex", gap: 12, padding: "12px 16px", background: "rgba(239,68,68,0.05)", border: "1px solid rgba(239,68,68,0.1)", borderRadius: 8 }}>
+              <div key={item} style={{ display: "flex", gap: 12, padding: "12px 16px", background: "rgba(239,68,68,0.05)", border: "1px solid rgba(239,68,68,0.15)", borderRadius: 8 }}>
                 <span style={{ color: "#ef4444", flexShrink: 0 }}>✕</span>
-                <span style={{ color: "#94a3b8", ...GF, fontSize: 13, lineHeight: 1.6 }}>{item}</span>
+                <span style={{ color: "#64748B", ...GF, fontSize: 13, lineHeight: 1.6 }}>{item}</span>
               </div>
             ))}
           </div>
@@ -130,13 +130,13 @@ export function FutureCapabilities() {
       {/* CTA */}
       <EnotarySection id="cta" bordered>
         <div style={{ maxWidth: 640, margin: "0 auto", textAlign: "center" }}>
-          <h2 style={{ color: "white", ...GF, fontSize: "clamp(18px, 2.5vw, 26px)", fontWeight: 900, margin: "0 0 12px" }}>Stay informed</h2>
-          <p style={{ color: "#94A3B8", ...GF, fontSize: 14, lineHeight: 1.7, margin: "0 0 22px" }}>
+          <h2 style={{ color: "#07111F", ...GF, fontSize: "clamp(18px, 2.5vw, 26px)", fontWeight: 900, margin: "0 0 12px" }}>Stay informed</h2>
+          <p style={{ color: "#64748B", ...GF, fontSize: 14, lineHeight: 1.7, margin: "0 0 22px" }}>
             Join the waitlist to receive updates as we progress toward accreditation. Joining the waitlist does not guarantee access.
           </p>
           <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
             <Link to="/enotary/waitlist" style={{ background: BURGUNDY, color: "white", ...GF, fontSize: 14, fontWeight: 700, padding: "12px 24px", borderRadius: 8, textDecoration: "none" }}>Join the waitlist</Link>
-            <Link to="/enotary/accreditation-roadmap" style={{ background: "rgba(255,255,255,0.06)", color: "white", ...GF, fontSize: 14, fontWeight: 600, padding: "12px 24px", borderRadius: 8, textDecoration: "none", border: "1px solid rgba(255,255,255,0.1)" }}>Accreditation roadmap</Link>
+            <Link to="/enotary/accreditation-roadmap" style={{ background: "#ffffff", color: "#07111F", ...GF, fontSize: 14, fontWeight: 600, padding: "12px 24px", borderRadius: 8, textDecoration: "none", border: "1px solid rgba(0,0,0,0.14)" }}>Accreditation roadmap</Link>
           </div>
         </div>
       </EnotarySection>

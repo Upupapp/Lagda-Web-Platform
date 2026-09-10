@@ -13,9 +13,9 @@ export function VerificationSection() {
     <section
       aria-labelledby="verification-heading"
       style={{
-        background: "rgba(255,255,255,0.02)",
-        borderTop: "1px solid rgba(255,255,255,0.06)",
-        borderBottom: "1px solid rgba(255,255,255,0.06)",
+        background: "#f8fafb",
+        borderTop: "1px solid rgba(0,0,0,0.07)",
+        borderBottom: "1px solid rgba(0,0,0,0.07)",
       }}
     >
       <div style={{ maxWidth: 1200, margin: "0 auto", padding: "80px 24px" }}>
@@ -25,22 +25,22 @@ export function VerificationSection() {
           alignItems: "center" }} className="verify-grid">
           {/* Left: copy */}
           <div>
-            <p style={{ color: "#38bdf8", ...GM, fontSize: 11, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 12 }}>
+            <p style={{ color: "#0078D4", ...GM, fontSize: 11, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 12 }}>
               Document Verification
             </p>
-            <h2 id="verification-heading" style={{ color: "white", ...GF, fontSize: "clamp(24px, 3.5vw, 38px)", fontWeight: 800, margin: 0, marginBottom: 16, letterSpacing: "-0.02em" }}>
+            <h2 id="verification-heading" style={{ color: "#07111F", ...GF, fontSize: "clamp(24px, 3.5vw, 38px)", fontWeight: 800, margin: 0, marginBottom: 16, letterSpacing: "-0.02em" }}>
               Anyone can verify a LAGDA document.
             </h2>
-            <p style={{ color: "#94a3b8", ...GF, fontSize: 16, lineHeight: 1.65, margin: 0, marginBottom: 20 }}>
+            <p style={{ color: "#334155", ...GF, fontSize: 16, lineHeight: 1.65, margin: 0, marginBottom: 20 }}>
               Every completed document receives a unique Verification ID and QR code. Recipients, counterparties, or third parties can verify the document's LAGDA status — no account required.
             </p>
-            <p style={{ color: "#94a3b8", ...GF, fontSize: 15, lineHeight: 1.65, margin: 0, marginBottom: 28 }}>
+            <p style={{ color: "#334155", ...GF, fontSize: 15, lineHeight: 1.65, margin: 0, marginBottom: 28 }}>
               LAGDA verification confirms that a document matches a specific transaction record. It does not substitute for legal advice or formal authentication required by law.
             </p>
 
             {/* State selector */}
             <div style={{ marginBottom: 8 }}>
-              <p style={{ color: "#8A9BAE", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", marginBottom: 8 }}>
+              <p style={{ color: "#64748B", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", marginBottom: 8 }}>
                 EXPLORE VERIFICATION STATES
               </p>
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
@@ -52,9 +52,9 @@ export function VerificationSection() {
                     style={{
                       all: "unset",
                       padding: "6px 14px", borderRadius: 999,
-                      background: s.id === activeId ? "rgba(0,120,212,0.15)" : "rgba(255,255,255,0.05)",
-                      border: `1px solid ${s.id === activeId ? "rgba(0,120,212,0.4)" : "rgba(255,255,255,0.1)"}`,
-                      color: s.id === activeId ? "#38bdf8" : "#94A3B8",
+                      background: s.id === activeId ? "rgba(0,120,212,0.1)" : "#ffffff",
+                      border: `1px solid ${s.id === activeId ? "rgba(0,120,212,0.35)" : "rgba(0,0,0,0.1)"}`,
+                      color: s.id === activeId ? "#0078D4" : "#334155",
                       ...GF, fontSize: 13, fontWeight: s.id === activeId ? 700 : 500,
                       cursor: "pointer", transition: "all 0.15s ease",
                     }}
@@ -69,22 +69,23 @@ export function VerificationSection() {
           {/* Right: mock verification result */}
           <div>
             <div style={{
-              background: "rgba(7,17,31,0.95)",
-              border: "1px solid rgba(0,120,212,0.2)",
+              background: "#ffffff",
+              border: "1px solid rgba(0,0,0,0.08)",
               borderRadius: 16,
               overflow: "hidden",
+              boxShadow: "0 4px 16px rgba(7,17,31,0.10), 0 1px 4px rgba(7,17,31,0.05)",
             }}>
               {/* Mock input bar */}
-              <div style={{ padding: "16px 20px", borderBottom: "1px solid rgba(255,255,255,0.06)", display: "flex", gap: 8, alignItems: "center" }}>
+              <div style={{ padding: "16px 20px", borderBottom: "1px solid rgba(0,0,0,0.07)", display: "flex", gap: 8, alignItems: "center" }}>
                 <div style={{
-                  flex: 1, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)",
+                  flex: 1, background: "#F8FAFB", border: "1px solid rgba(0,0,0,0.1)",
                   borderRadius: 8, padding: "8px 12px",
-                  ...GM, fontSize: 12, color: "#94A3B8",
+                  ...GM, fontSize: 12, color: "#64748B",
                 }}>
                   {active.fields[0]?.value ?? "Enter Verification ID"}
                 </div>
                 <div style={{
-                  background: "#0078D4", borderRadius: 8, padding: "8px 14px",
+                  background: "#07111F", borderRadius: 8, padding: "8px 14px",
                   ...GF, fontSize: 12, color: "white", fontWeight: 700, flexShrink: 0,
                 }}>
                   Verify
@@ -92,7 +93,7 @@ export function VerificationSection() {
               </div>
 
               {/* Status banner */}
-              <div style={{ padding: "16px 20px", borderBottom: "1px solid rgba(255,255,255,0.06)", background: active.statusBg }}>
+              <div style={{ padding: "16px 20px", borderBottom: "1px solid rgba(0,0,0,0.07)", background: active.statusBg }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                   <span style={{
                     width: 28, height: 28, borderRadius: "50%",
@@ -113,11 +114,11 @@ export function VerificationSection() {
                 {active.fields.map((f) => (
                   <div key={f.label} style={{
                     display: "flex", justifyContent: "space-between", alignItems: "flex-start",
-                    padding: "8px 0", borderBottom: "1px solid rgba(255,255,255,0.05)",
+                    padding: "8px 0", borderBottom: "1px solid rgba(0,0,0,0.06)",
                     gap: 16,
                   }}>
-                    <span style={{ color: "#8A9BAE", ...GM, fontSize: 11, flexShrink: 0 }}>{f.label}</span>
-                    <span style={{ color: "white", ...(f.mono ? GM : GF), fontSize: 12, fontWeight: f.mono ? 600 : 400, textAlign: "right", wordBreak: "break-word" }}>
+                    <span style={{ color: "#64748B", ...GM, fontSize: 11, flexShrink: 0 }}>{f.label}</span>
+                    <span style={{ color: "#07111F", ...(f.mono ? GM : GF), fontSize: 12, fontWeight: f.mono ? 600 : 400, textAlign: "right", wordBreak: "break-word" }}>
                       {f.value}
                     </span>
                   </div>
@@ -125,8 +126,8 @@ export function VerificationSection() {
               </div>
 
               {/* Legal footer */}
-              <div style={{ padding: "12px 20px", background: "rgba(0,0,0,0.2)" }}>
-                <p style={{ color: "#7C8DA4", ...GF, fontSize: 11, margin: 0, lineHeight: 1.5 }}>
+              <div style={{ padding: "12px 20px", background: "#F8FAFB" }}>
+                <p style={{ color: "#64748B", ...GF, fontSize: 11, margin: 0, lineHeight: 1.5 }}>
                   Verification confirms LAGDA transaction records only. For legal authentication or notarization, consult applicable requirements.
                 </p>
               </div>

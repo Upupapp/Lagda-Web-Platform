@@ -4,6 +4,7 @@
 // Burgundy (#67023B) is NEVER used. eNotary is NEVER mentioned.
 
 import React, { useEffect, useCallback, useState } from "react";
+import { Users } from "lucide-react";
 import { usePrepare } from "../../../context/PrepareContext";
 import {
   PREP_PARTICIPANT_ROLE_LABELS,
@@ -13,6 +14,7 @@ import {
   EMPTY_PARTICIPANT,
 } from "../../../models/prepare";
 import type { PrepParticipant, PrepParticipantRole, PrepPaxId } from "../../../models/prepare";
+import { StepBanner, StepTwoColumn, RailCard } from "../../../components/prepare/StepBanner";
 
 const GF     = { fontFamily: "'Geist', sans-serif" };
 const NAVY   = "#07111F";
@@ -187,7 +189,7 @@ function ParticipantEditor({
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
         <div>
           <label style={{ ...GF, fontSize: 12, fontWeight: 600, color: NAVY, display: "block", marginBottom: 4 }}>
-            Full name <span style={{ color: "#C0392B" }}>*</span>
+            Full name <span style={{ color: GOLD }}>*</span>
           </label>
           <input
             type="text"
@@ -201,7 +203,7 @@ function ParticipantEditor({
               width: "100%",
               padding: "8px 10px",
               borderRadius: 7,
-              border: `1px solid ${errors.name ? "#F5C6CB" : "#D1D9E0"}`,
+              border: `1px solid ${errors.name ? "#F0D07A" : "#D1D9E0"}`,
               background: "#FFFFFF",
               fontSize: 13,
               color: NAVY,
@@ -209,7 +211,7 @@ function ParticipantEditor({
             }}
           />
           {errors.name && (
-            <div id="pax-name-err" role="alert" style={{ ...GF, fontSize: 11, color: "#C0392B", marginTop: 3 }}>
+            <div id="pax-name-err" role="alert" style={{ ...GF, fontSize: 11, color: GOLD, marginTop: 3 }}>
               {errors.name}
             </div>
           )}
@@ -217,7 +219,7 @@ function ParticipantEditor({
 
         <div>
           <label style={{ ...GF, fontSize: 12, fontWeight: 600, color: NAVY, display: "block", marginBottom: 4 }}>
-            Email address <span style={{ color: "#C0392B" }}>*</span>
+            Email address <span style={{ color: GOLD }}>*</span>
           </label>
           <input
             type="email"
@@ -231,7 +233,7 @@ function ParticipantEditor({
               width: "100%",
               padding: "8px 10px",
               borderRadius: 7,
-              border: `1px solid ${errors.email ? "#F5C6CB" : "#D1D9E0"}`,
+              border: `1px solid ${errors.email ? "#F0D07A" : "#D1D9E0"}`,
               background: "#FFFFFF",
               fontSize: 13,
               color: NAVY,
@@ -239,7 +241,7 @@ function ParticipantEditor({
             }}
           />
           {errors.email && (
-            <div id="pax-email-err" role="alert" style={{ ...GF, fontSize: 11, color: "#C0392B", marginTop: 3 }}>
+            <div id="pax-email-err" role="alert" style={{ ...GF, fontSize: 11, color: GOLD, marginTop: 3 }}>
               {errors.email}
             </div>
           )}
@@ -249,7 +251,7 @@ function ParticipantEditor({
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 16 }}>
         <div>
           <label style={{ ...GF, fontSize: 12, fontWeight: 600, color: NAVY, display: "block", marginBottom: 4 }}>
-            Role <span style={{ color: "#C0392B" }}>*</span>
+            Role <span style={{ color: GOLD }}>*</span>
           </label>
           <select
             value={role}
@@ -485,7 +487,7 @@ function ParticipantCard({
           border: "none",
           borderRadius: 6,
           background: "transparent",
-          color: "#C0392B",
+          color: GOLD,
           cursor: "pointer",
           fontSize: 18,
           display: "flex", alignItems: "center", justifyContent: "center",
@@ -558,21 +560,11 @@ export function ParticipantsStep() {
 
   const hasBlockingRole = participants.some(p => PREP_ROLE_IS_BLOCKING[p.role]);
 
-  return (
-    <div style={{ ...GF, maxWidth: 640 }}>
-      <div style={{ marginBottom: 28 }}>
-        <h2 style={{ fontSize: 20, fontWeight: 800, color: NAVY, margin: "0 0 6px" }}>
-          Participants
-        </h2>
-        <p style={{ fontSize: 13, color: SILVER, margin: 0, lineHeight: 1.6 }}>
-          Add the people who will interact with this document. At least one signer, approver,
-          reviewer, or acknowledgment recipient is required.
-        </p>
-      </div>
-
+  const main = (
+    <div style={{ ...GF, width: "100%" }}>
       {/* Validation notices */}
       {paxErrors.length > 0 && (
-        <ul aria-live="polite" style={{ ...GF, listStyle: "none", margin: "0 0 16px", padding: "10px 14px", borderRadius: 8, border: "1px solid #F5C6CB", background: "#FFF5F5", fontSize: 13, color: "#C0392B" }}>
+        <ul aria-live="polite" style={{ ...GF, listStyle: "none", margin: "0 0 16px", padding: "10px 14px", borderRadius: 8, border: "1px solid #F0D07A", background: "#FEF9EC", fontSize: 13, color: GOLD }}>
           {paxErrors.map(e => <li key={e.id}>• {e.message}</li>)}
         </ul>
       )}
@@ -658,6 +650,58 @@ export function ParticipantsStep() {
         transmitted to any server in this frontend demonstration. No invitations are sent from
         this screen.
       </div>
+    </div>
+  );
+
+  const rail = (
+    <RailCard title="Participant roster">
+      {participants.length === 0 ? (
+        <p style={{ ...GF, fontSize: 12, color: SILVER, margin: 0 }}>
+          No participants added yet.
+        </p>
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          {participants.map((p, idx) => {
+            const badge = roleBadgeStyle(p.role);
+            return (
+              <div key={p.id} style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
+                <span style={{ ...GF, fontSize: 11, fontWeight: 700, color: SILVER, minWidth: 14, flexShrink: 0 }}>
+                  {idx + 1}
+                </span>
+                <div style={{ minWidth: 0, flex: 1 }}>
+                  <div style={{ ...GF, fontSize: 12, fontWeight: 700, color: NAVY, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    {p.name}
+                  </div>
+                  <div style={{ ...GF, fontSize: 11, color: SILVER, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    {p.email}
+                  </div>
+                </div>
+                <span
+                  style={{
+                    ...GF, fontSize: 10, fontWeight: 700, background: badge.bg, color: badge.color,
+                    padding: "2px 8px", borderRadius: 20, flexShrink: 0,
+                  }}
+                >
+                  {PREP_PARTICIPANT_ROLE_LABELS[p.role]}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </RailCard>
+  );
+
+  return (
+    <div style={GF}>
+      <StepBanner
+        icon={Users}
+        eyebrow="Step 2 of 7"
+        title="Participants"
+        description="Add the people who will interact with this document. At least one signer, approver, reviewer, or acknowledgment recipient is required."
+        meta={participants.length === 0 ? "No participants added" : `${participants.length} participant${participants.length !== 1 ? "s" : ""} added`}
+      />
+      <StepTwoColumn main={main} rail={rail} />
     </div>
   );
 }

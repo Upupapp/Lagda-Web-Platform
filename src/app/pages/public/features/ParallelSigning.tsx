@@ -23,8 +23,8 @@ function ParallelDiagram() {
     <div aria-hidden style={{ maxWidth: 440, width: "100%" }}>
       {/* Sender */}
       <div style={{ background: "rgba(0,120,212,0.1)", border: "1px solid rgba(0,120,212,0.25)", borderRadius: 10, padding: "10px 14px", marginBottom: 16, textAlign: "center" }}>
-        <p style={{ color: "#38bdf8", ...GM, fontSize: 10, fontWeight: 700, margin: 0, marginBottom: 2 }}>SENDER</p>
-        <p style={{ color: "white", ...GF, fontSize: 13, fontWeight: 600, margin: 0 }}>Mabini Legal Solutions</p>
+        <p style={{ color: "#0078D4", ...GM, fontSize: 10, fontWeight: 700, margin: 0, marginBottom: 2 }}>SENDER</p>
+        <p style={{ color: "#07111F", ...GF, fontSize: 13, fontWeight: 600, margin: 0 }}>Mabini Legal Solutions</p>
       </div>
       {/* Fork lines */}
       <div style={{ display: "flex", justifyContent: "center", marginBottom: 0 }}>
@@ -40,19 +40,19 @@ function ParallelDiagram() {
                 prev.includes(p.name) ? prev.filter((x) => x !== p.name) : [...prev, p.name]
               )}
               style={{
-                background: completed.includes(p.name) ? "rgba(34,197,94,0.12)" : "rgba(255,255,255,0.04)",
-                border: `1px solid ${completed.includes(p.name) ? "rgba(34,197,94,0.35)" : "rgba(255,255,255,0.12)"}`,
+                background: completed.includes(p.name) ? "rgba(34,197,94,0.12)" : "#f8fafb",
+                border: `1px solid ${completed.includes(p.name) ? "rgba(34,197,94,0.35)" : "rgba(0,0,0,0.1)"}`,
                 borderRadius: 10, padding: "10px 8px", cursor: "pointer", width: "90%",
                 transition: "all 0.2s ease",
               }}
             >
-              <div style={{ width: 28, height: 28, borderRadius: "50%", background: "rgba(0,120,212,0.2)", margin: "0 auto 6px", display: "flex", alignItems: "center", justifyContent: "center", ...GM, fontSize: 10, fontWeight: 700, color: "#38bdf8" }}>{p.avatar}</div>
-              <p style={{ color: "white", ...GF, fontSize: 11, fontWeight: 600, margin: 0 }}>{p.name}</p>
-              <p style={{ color: "#8A9BAE", ...GM, fontSize: 9, margin: "2px 0 0" }}>{p.role}</p>
+              <div style={{ width: 28, height: 28, borderRadius: "50%", background: "rgba(0,120,212,0.2)", margin: "0 auto 6px", display: "flex", alignItems: "center", justifyContent: "center", ...GM, fontSize: 10, fontWeight: 700, color: "#0078D4" }}>{p.avatar}</div>
+              <p style={{ color: "#07111F", ...GF, fontSize: 11, fontWeight: 600, margin: 0 }}>{p.name}</p>
+              <p style={{ color: "#64748B", ...GM, fontSize: 9, margin: "2px 0 0" }}>{p.role}</p>
               <div style={{ marginTop: 6, height: 20, display: "flex", alignItems: "center", justifyContent: "center" }}>
                 {completed.includes(p.name)
-                  ? <span style={{ color: "#22C55E", fontSize: 14 }}>✓</span>
-                  : <span style={{ color: "#8A9BAE", ...GM, fontSize: 9 }}>Waiting</span>
+                  ? <span style={{ color: "#178A4C", fontSize: 14 }}>✓</span>
+                  : <span style={{ color: "#64748B", ...GM, fontSize: 9 }}>Waiting</span>
                 }
               </div>
             </button>
@@ -75,15 +75,15 @@ function ParallelDiagram() {
       </div>
       {/* Completion */}
       <div style={{
-        background: allDone ? "rgba(34,197,94,0.1)" : "rgba(255,255,255,0.03)",
-        border: `1px solid ${allDone ? "rgba(34,197,94,0.3)" : "rgba(255,255,255,0.08)"}`,
+        background: allDone ? "rgba(34,197,94,0.1)" : "#f8fafb",
+        border: `1px solid ${allDone ? "rgba(34,197,94,0.3)" : "rgba(0,0,0,0.08)"}`,
         borderRadius: 10, padding: "10px 14px", textAlign: "center",
         transition: "all 0.3s ease",
       }}>
-        <p style={{ color: allDone ? "#22C55E" : "#8A9BAE", ...GM, fontSize: 10, fontWeight: 700, margin: 0, marginBottom: 2 }}>
+        <p style={{ color: allDone ? "#178A4C" : "#64748B", ...GM, fontSize: 10, fontWeight: 700, margin: 0, marginBottom: 2 }}>
           {allDone ? "COMPLETE" : "WAITING FOR ALL PARTICIPANTS"}
         </p>
-        <p style={{ color: allDone ? "white" : "#7C8DA4", ...GF, fontSize: 12, margin: 0 }}>
+        <p style={{ color: allDone ? "#178A4C" : "#64748B", ...GF, fontSize: 12, margin: 0 }}>
           {allDone ? "All required participants have acted." : `${completed.length} of ${participants.length} completed — click to simulate`}
         </p>
       </div>
@@ -114,12 +114,12 @@ export function ParallelSigning() {
                 "Parallel workflows may help reduce total completion time",
               ].map((item) => (
                 <div key={item} style={{ display: "flex", gap: 8 }}>
-                  <span style={{ color: "#38BDF8", fontWeight: 700, flexShrink: 0 }}>✓</span>
-                  <span style={{ color: "#94a3b8", ...GF, fontSize: 14, lineHeight: 1.5 }}>{item}</span>
+                  <span style={{ color: "#0078D4", fontWeight: 700, flexShrink: 0 }}>✓</span>
+                  <span style={{ color: "#334155", ...GF, fontSize: 14, lineHeight: 1.5 }}>{item}</span>
                 </div>
               ))}
             </div>
-            <p style={{ color: "#8A9BAE", ...GF, fontSize: 13, lineHeight: 1.6, margin: 0 }}>
+            <p style={{ color: "#64748B", ...GF, fontSize: 13, lineHeight: 1.6, margin: 0 }}>
               Use the diagram to simulate each participant completing their action. The transaction completes when all have acted.
             </p>
           </div>
@@ -139,9 +139,9 @@ export function ParallelSigning() {
             { title: "Simultaneous consent", desc: "Both parties to an agreement sign without one waiting for the other." },
             { title: "Bulk acceptance",   desc: "Multiple individuals from the same organization complete in parallel." },
           ].map((u) => (
-            <div key={u.title} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 12, padding: "14px 14px" }}>
-              <p style={{ color: "white", ...GF, fontSize: 13, fontWeight: 700, margin: 0, marginBottom: 4 }}>{u.title}</p>
-              <p style={{ color: "#94A3B8", ...GF, fontSize: 12, lineHeight: 1.5, margin: 0 }}>{u.desc}</p>
+            <div key={u.title} style={{ background: "#f8fafb", border: "1px solid rgba(0,0,0,0.08)", borderRadius: 12, padding: "14px 14px" }}>
+              <p style={{ color: "#07111F", ...GF, fontSize: 13, fontWeight: 700, margin: 0, marginBottom: 4 }}>{u.title}</p>
+              <p style={{ color: "#64748B", ...GF, fontSize: 12, lineHeight: 1.5, margin: 0 }}>{u.desc}</p>
             </div>
           ))}
         </div>
@@ -150,7 +150,7 @@ export function ParallelSigning() {
 
       <PageSection id="disclaimer" light bordered>
         <div style={{ maxWidth: 680, margin: "0 auto" }}>
-          <p style={{ color: "#94a3b8", ...GF, fontSize: 14, lineHeight: 1.7, margin: 0 }}>
+          <p style={{ color: "#334155", ...GF, fontSize: 14, lineHeight: 1.7, margin: 0 }}>
             Parallel signing may reduce total elapsed time compared to sequential workflows, but does not guarantee faster legal completion or execution. Legal requirements governing signature order — where they apply to a specific document — remain the responsibility of the parties and their counsel.
           </p>
         </div>

@@ -3,9 +3,10 @@
 
 import { useState, useCallback, useEffect, lazy, Suspense } from "react";
 import { useLocation } from "react-router";
-import { Search, HelpCircle } from "lucide-react";
+import { Search, HelpCircle, Compass } from "lucide-react";
 import { Link } from "react-router";
 import { NotificationMenu } from "./NotificationMenu";
+import { useTour } from "../../tour/TourContext";
 // Lazily loaded. The palette reaches the global search service, which builds
 // providers over every domain and therefore imports the transaction, template,
 // contact, workflow, collaboration and automation fixtures. Statically importing
@@ -17,7 +18,6 @@ const CommandPalette = lazy(() =>
 import { Z } from "../../utils/z-index";
 
 const GF    = { fontFamily: "'Geist', sans-serif" };
-const BORDER = "rgba(255,255,255,0.07)";
 
 interface PlatformHeaderProps {
   pageTitle?: string;
@@ -36,6 +36,7 @@ export function PlatformHeader({ pageTitle }: PlatformHeaderProps) {
   const { pathname } = useLocation();
   const [searchOpen, setSearchOpen] = useState(false);
   const title = pageTitle ?? deriveTitle(pathname);
+  const { restartTour } = useTour();
 
   const openSearch = useCallback(() => setSearchOpen(true), []);
   const closeSearch = useCallback(() => setSearchOpen(false), []);
@@ -99,6 +100,7 @@ export function PlatformHeader({ pageTitle }: PlatformHeaderProps) {
             minHeight: 44, minWidth: 44,
           }}
           className="header-search-btn"
+          data-guide="header-search-btn"
         >
           <Search size={14} aria-hidden />
           <span style={{ display: "none" }} className="search-label">Search…</span>
@@ -108,9 +110,26 @@ export function PlatformHeader({ pageTitle }: PlatformHeaderProps) {
         </button>
 
         {/* Notification bell */}
-        <div style={{ color: "#64748B" }}>
+        <div style={{ color: "#64748B" }} data-guide="header-notification-bell">
           <NotificationMenu align="right" />
         </div>
+
+        {/* Restart tour */}
+        <button
+          onClick={restartTour}
+          aria-label="Restart product tour"
+          title="Restart product tour"
+          style={{
+            display: "flex", alignItems: "center", justifyContent: "center",
+            width: 44, height: 44, borderRadius: 8,
+            background: "transparent", border: "none",
+            color: "#94A3B8", cursor: "pointer",
+          }}
+          className="header-help-btn"
+          data-guide="header-restart-tour-btn"
+        >
+          <Compass size={18} aria-hidden />
+        </button>
 
         {/* Help */}
         <Link
@@ -121,6 +140,7 @@ export function PlatformHeader({ pageTitle }: PlatformHeaderProps) {
           title="Help Center"
           style={{ color: "#94A3B8", display: "flex", alignItems: "center", justifyContent: "center", width: 44, height: 44, borderRadius: 8, textDecoration: "none" }}
           className="header-help-btn"
+          data-guide="header-help-link"
         >
           <HelpCircle size={18} aria-hidden />
         </Link>

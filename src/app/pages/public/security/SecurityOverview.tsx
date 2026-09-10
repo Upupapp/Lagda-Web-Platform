@@ -21,11 +21,11 @@ export function SecurityOverview() {
         <SectionHeading eyebrow="Security layers" id="sl-h2" heading="Seven overlapping layers — each one distinct." sub="Each layer addresses a different threat surface. Together, they support the trust requirements of digital document transactions." center />
         <div style={{ display: "flex", flexDirection: "column", gap: 10, maxWidth: 720, margin: "0 auto" }}>
           {SECURITY_LAYERS.map((l, i) => (
-            <div key={i} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 12, padding: "14px 16px", display: "flex", gap: 14, alignItems: "flex-start" }}>
-              <div style={{ width: 32, height: 32, borderRadius: 8, background: "rgba(0,120,212,0.12)", border: "1px solid rgba(0,120,212,0.2)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, flexShrink: 0 }}>{l.icon}</div>
+            <div key={i} style={{ background: "#ffffff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: 12, padding: "14px 16px", display: "flex", gap: 14, alignItems: "flex-start", boxShadow: "0 1px 4px rgba(7,17,31,0.07)" }}>
+              <div style={{ width: 32, height: 32, borderRadius: 8, background: "rgba(0,120,212,0.1)", border: "1px solid rgba(0,120,212,0.2)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, flexShrink: 0 }}>{l.icon}</div>
               <div>
-                <p style={{ color: "white", ...GF, fontSize: 14, fontWeight: 700, margin: 0, marginBottom: 3 }}>{l.layer}</p>
-                <p style={{ color: "#94A3B8", ...GF, fontSize: 13, lineHeight: 1.55, margin: 0 }}>{l.desc}</p>
+                <p style={{ color: "#07111F", ...GF, fontSize: 14, fontWeight: 700, margin: 0, marginBottom: 3 }}>{l.layer}</p>
+                <p style={{ color: "#64748B", ...GF, fontSize: 13, lineHeight: 1.55, margin: 0 }}>{l.desc}</p>
               </div>
             </div>
           ))}
@@ -47,10 +47,10 @@ export function SecurityOverview() {
             { path: "/security/trust-center",               label: "Trust Center",              desc: "Policies, legal documents, and security contacts." },
           ].map((item) => (
             <a key={item.path} href={item.path} style={{ textDecoration: "none" }}>
-              <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 12, padding: "14px 14px", height: "100%", transition: "border-color 0.15s ease" }}>
-                <p style={{ color: "#38BDF8", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.05em", margin: 0, marginBottom: 4 }}>→ {item.path.split("/security/")[1]?.toUpperCase() ?? "SECURITY"}</p>
-                <p style={{ color: "white", ...GF, fontSize: 13, fontWeight: 700, margin: 0, marginBottom: 4 }}>{item.label}</p>
-                <p style={{ color: "#94A3B8", ...GF, fontSize: 12, lineHeight: 1.5, margin: 0 }}>{item.desc}</p>
+              <div style={{ background: "#ffffff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: 12, padding: "14px 14px", height: "100%", transition: "border-color 0.15s ease", boxShadow: "0 1px 4px rgba(7,17,31,0.07)" }}>
+                <p style={{ color: "#0078D4", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.05em", margin: 0, marginBottom: 4 }}>→ {item.path.split("/security/")[1]?.toUpperCase() ?? "SECURITY"}</p>
+                <p style={{ color: "#07111F", ...GF, fontSize: 13, fontWeight: 700, margin: 0, marginBottom: 4 }}>{item.label}</p>
+                <p style={{ color: "#64748B", ...GF, fontSize: 12, lineHeight: 1.5, margin: 0 }}>{item.desc}</p>
               </div>
             </a>
           ))}
@@ -60,8 +60,8 @@ export function SecurityOverview() {
 
       <PageSection id="no-guarantees" light bordered>
         <div style={{ maxWidth: 680, margin: "0 auto" }}>
-          <p style={{ color: "#C9960C", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", marginBottom: 10 }}>A NOTE ON SECURITY CLAIMS</p>
-          <p style={{ color: "#94a3b8", ...GF, fontSize: 15, lineHeight: 1.7, margin: 0 }}>
+          <p style={{ color: "#B45309", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", marginBottom: 10 }}>A NOTE ON SECURITY CLAIMS</p>
+          <p style={{ color: "#64748B", ...GF, fontSize: 15, lineHeight: 1.7, margin: 0 }}>
             LAGDA does not claim that its features guarantee legal validity, perfect tamper resistance, or certified compliance. Digital document security involves platform controls, participant behavior, document type, and applicable law. Senders and their organizations remain responsible for determining which controls are appropriate for each transaction.
           </p>
         </div>

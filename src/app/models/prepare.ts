@@ -307,6 +307,63 @@ export const DEFAULT_ROUTING_CONFIG: PrepRoutingConfig = {
   groups: [],
 };
 
+// ── Routing group numbering — canonical invariant ─────────────────────────────
+// `stepNumber === array position + 1` must hold for every group, always. This
+// is the single place that enforces it — every mutation site (add/remove/
+// reorder/mode-change/default-generation/localStorage restore/participant
+// reconciliation) must funnel its result through this before it reaches
+// state, rather than each site renumbering by hand.
+export function normalizeRoutingGroups(groups: PrepRoutingGroup[]): PrepRoutingGroup[] {
+  return groups.map((g, i) => (g.stepNumber === i + 1 ? g : { ...g, stepNumber: i + 1 }));
+}
+
+// ── Approval-based routing — system-derived, not user-customizable ───────────
+// The "approval-based" mode description ("An Approver or Reviewer step must
+// complete before later signing... steps begin") and validateDraftState's
+// APPROVAL_STEP_MISSING check (which hard-assumes step 1 IS the approval
+// step) both establish this as a fixed two-phase structure derived entirely
+// from participant roles — not a freely reorderable/addable list of steps
+// like Sequential or Mixed. This function is the single source of truth for
+// that derivation, called both at mode-selection and whenever the
+// participant list changes, so the structure self-heals instead of drifting
+// out of sync with who's actually on the transaction.
+export function deriveApprovalBasedGroups(
+  participants: { id: PrepPaxId; role: PrepParticipantRole }[],
+  // Reused by id when re-deriving after a participant change, so React keys
+  // (and each group's completion-rule choice) stay stable instead of the
+  // group silently resetting every time someone edits a participant.
+  existingGroups: PrepRoutingGroup[] = [],
+): PrepRoutingGroup[] {
+  const blocking = participants.filter(p => PREP_ROLE_IS_BLOCKING[p.role]);
+  const approvers = blocking.filter(p => p.role === "approver" || p.role === "reviewer");
+  const signers = blocking.filter(p => p.role === "signer" || p.role === "acknowledgment-recipient");
+
+  const existingByLabel = new Map(existingGroups.map(g => [g.label, g]));
+
+  const groups: PrepRoutingGroup[] = [];
+  if (approvers.length > 0) {
+    const prior = existingByLabel.get("Approval");
+    groups.push({
+      id: prior?.id ?? `grp_${Date.now()}_appr`,
+      stepNumber: 0,
+      label: "Approval",
+      participantIds: approvers.map(p => p.id),
+      requiredCompletionRule: prior?.requiredCompletionRule ?? "all",
+    });
+  }
+  if (signers.length > 0) {
+    const prior = existingByLabel.get("Signing");
+    groups.push({
+      id: prior?.id ?? `grp_${Date.now()}_sign`,
+      stepNumber: 0,
+      label: "Signing",
+      participantIds: signers.map(p => p.id),
+      requiredCompletionRule: prior?.requiredCompletionRule ?? "all",
+    });
+  }
+  return normalizeRoutingGroups(groups);
+}
+
 // ── Authentication configuration ──────────────────────────────────────────────
 
 export interface PrepAuthConfig {
@@ -387,7 +444,8 @@ export type PrepSource =
   | "dashboard"
   | "documents"
   | "transaction-draft"
-  | "direct";
+  | "direct"
+  | "public-upload";
 
 export interface PrepSourceContext {
   source:        PrepSource;

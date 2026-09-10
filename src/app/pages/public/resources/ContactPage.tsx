@@ -46,7 +46,7 @@ function FieldError({ msg }: { msg?: string }) {
 
 function Label({ htmlFor, children, required }: { htmlFor: string; children: React.ReactNode; required?: boolean }) {
   return (
-    <label htmlFor={htmlFor} style={{ color: "#94a3b8", ...GF, fontSize: 13, fontWeight: 500, display: "block", marginBottom: 6 }}>
+    <label htmlFor={htmlFor} style={{ color: "#334155", ...GF, fontSize: 13, fontWeight: 500, display: "block", marginBottom: 6 }}>
       {children}{required && <span style={{ color: "#ef4444", marginLeft: 3 }} aria-hidden>*</span>}
     </label>
   );
@@ -63,12 +63,12 @@ function Input({ id, type = "text", value, onChange, placeholder, autocomplete }
       autoComplete={autocomplete}
       style={{
         width: "100%", boxSizing: "border-box",
-        background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)",
-        borderRadius: 8, padding: "11px 14px", color: "white", ...GF, fontSize: 14,
+        background: "#ffffff", border: "1px solid rgba(0,0,0,0.14)",
+        borderRadius: 8, padding: "11px 14px", color: "#07111F", ...GF, fontSize: 14,
         outline: "none", minHeight: 44,
       }}
       onFocus={e => (e.target as HTMLInputElement).style.borderColor = "#0078D4"}
-      onBlur={e => (e.target as HTMLInputElement).style.borderColor = "rgba(255,255,255,0.1)"}
+      onBlur={e => (e.target as HTMLInputElement).style.borderColor = "rgba(0,0,0,0.14)"}
     />
   );
 }
@@ -117,13 +117,13 @@ export function ContactPage() {
         <ResourcesSection id="success">
           <div style={{ maxWidth: 540, margin: "0 auto", textAlign: "center", padding: "40px 0" }}>
             <div style={{ fontSize: 40, marginBottom: 16 }}>✅</div>
-            <h1 style={{ color: "white", ...GF, fontSize: 28, fontWeight: 800, marginBottom: 12 }}>Message received.</h1>
-            <p style={{ color: "#94A3B8", ...GF, fontSize: 15, lineHeight: 1.65, marginBottom: 20 }}>
+            <h1 style={{ color: "#07111F", ...GF, fontSize: 28, fontWeight: 800, marginBottom: 12 }}>Message received.</h1>
+            <p style={{ color: "#64748B", ...GF, fontSize: 15, lineHeight: 1.65, marginBottom: 20 }}>
               Your message has been validated in this frontend demonstration. Live message delivery will be connected during backend integration.
             </p>
-            <div style={{ background: "rgba(0,120,212,0.08)", border: "1px solid rgba(0,120,212,0.2)", borderRadius: 10, padding: "14px 18px", marginBottom: 24 }}>
-              <p style={{ color: "#38bdf8", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", marginBottom: 4 }}>FRONTEND DEMONSTRATION</p>
-              <p style={{ color: "#94a3b8", ...GF, fontSize: 13, lineHeight: 1.6, margin: 0 }}>No message has been transmitted. Contact form delivery requires backend integration.</p>
+            <div style={{ background: "rgba(0,120,212,0.06)", border: "1px solid rgba(0,120,212,0.2)", borderRadius: 10, padding: "14px 18px", marginBottom: 24 }}>
+              <p style={{ color: "#0078D4", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", marginBottom: 4 }}>FRONTEND DEMONSTRATION</p>
+              <p style={{ color: "#334155", ...GF, fontSize: 13, lineHeight: 1.6, margin: 0 }}>No message has been transmitted. Contact form delivery requires backend integration.</p>
             </div>
             <button onClick={() => { setForm(EMPTY); setState("idle"); setSubmitted(false); }} style={{ background: "#0078D4", color: "white", ...GF, fontSize: 14, fontWeight: 700, padding: "11px 24px", borderRadius: 8, border: "none", cursor: "pointer", minHeight: 44 }}>Send another message</button>
           </div>
@@ -136,27 +136,27 @@ export function ContactPage() {
     <ResourcesPageShell>
       <section style={{ padding: "64px 24px 32px" }}>
         <div style={{ maxWidth: 680, margin: "0 auto" }}>
-          <p style={{ color: "#38bdf8", ...GM, fontSize: 11, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 12 }}>CONTACT</p>
-          <h1 style={{ color: "white", ...GF, fontSize: "clamp(26px, 4.5vw, 44px)", fontWeight: 900, lineHeight: 1.1, letterSpacing: "-0.02em", margin: "0 0 16px" }}>Contact LAGDA</h1>
-          <p style={{ color: "#94A3B8", ...GF, fontSize: 15, lineHeight: 1.65 }}>Sales, product questions, account support, and partnership inquiries.</p>
+          <p style={{ color: "#0078D4", ...GM, fontSize: 11, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 12 }}>CONTACT</p>
+          <h1 style={{ color: "#07111F", ...GF, fontSize: "clamp(26px, 4.5vw, 44px)", fontWeight: 900, lineHeight: 1.1, letterSpacing: "-0.02em", margin: "0 0 16px" }}>Contact LAGDA</h1>
+          <p style={{ color: "#64748B", ...GF, fontSize: 15, lineHeight: 1.65 }}>Sales, product questions, account support, and partnership inquiries.</p>
         </div>
       </section>
 
       <ResourcesSection id="form">
         <div style={{ maxWidth: 680, margin: "0 auto" }}>
           {/* Sensitive data warning */}
-          <div style={{ background: "rgba(201,150,12,0.08)", border: "1px solid rgba(201,150,12,0.2)", borderRadius: 10, padding: "12px 16px", marginBottom: 28 }}>
-            <p style={{ color: "#C9960C", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", marginBottom: 4 }}>SENSITIVE INFORMATION WARNING</p>
-            <p style={{ color: "#94a3b8", ...GF, fontSize: 13, lineHeight: 1.6, margin: 0 }}>
+          <div style={{ background: "rgba(180,83,9,0.06)", border: "1px solid rgba(180,83,9,0.2)", borderRadius: 10, padding: "12px 16px", marginBottom: 28 }}>
+            <p style={{ color: "#B45309", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", marginBottom: 4 }}>SENSITIVE INFORMATION WARNING</p>
+            <p style={{ color: "#334155", ...GF, fontSize: 13, lineHeight: 1.6, margin: 0 }}>
               Do not include passwords, one-time codes, government ID numbers, payment details, confidential document content, or other highly sensitive information in this form.
             </p>
           </div>
 
           {state === "error" && (
-            <div role="alert" style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: 10, padding: "12px 16px", marginBottom: 20 }}>
-              <p style={{ color: "#ef4444", ...GF, fontSize: 13, fontWeight: 600, margin: "0 0 4px" }}>Submission error</p>
-              <p style={{ color: "#94a3b8", ...GF, fontSize: 13, margin: 0 }}>Something went wrong. Please try again.</p>
-              <button onClick={() => setState("idle")} style={{ color: "#38bdf8", background: "none", border: "none", cursor: "pointer", ...GF, fontSize: 13, padding: 0, marginTop: 8 }}>Try again</button>
+            <div role="alert" style={{ background: "rgba(220,38,38,0.06)", border: "1px solid rgba(220,38,38,0.2)", borderRadius: 10, padding: "12px 16px", marginBottom: 20 }}>
+              <p style={{ color: "#DC2626", ...GF, fontSize: 13, fontWeight: 600, margin: "0 0 4px" }}>Submission error</p>
+              <p style={{ color: "#334155", ...GF, fontSize: 13, margin: 0 }}>Something went wrong. Please try again.</p>
+              <button onClick={() => setState("idle")} style={{ color: "#0078D4", background: "none", border: "none", cursor: "pointer", ...GF, fontSize: 13, padding: 0, marginTop: 8 }}>Try again</button>
             </div>
           )}
 
@@ -184,7 +184,7 @@ export function ContactPage() {
 
             <div>
               <Label htmlFor="c-category" required>Contact category</Label>
-              <select id="c-category" value={form.category} onChange={e => set("category")(e.target.value)} style={{ width: "100%", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, padding: "11px 14px", color: form.category ? "white" : "#94A3B8", ...GF, fontSize: 14, outline: "none", minHeight: 44 }}>
+              <select id="c-category" value={form.category} onChange={e => set("category")(e.target.value)} style={{ width: "100%", background: "#ffffff", border: "1px solid rgba(0,0,0,0.14)", borderRadius: 8, padding: "11px 14px", color: form.category ? "#07111F" : "#94A3B8", ...GF, fontSize: 14, outline: "none", minHeight: 44 }}>
                 <option value="">Select a category</option>
                 {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
               </select>
@@ -205,9 +205,9 @@ export function ContactPage() {
                 onChange={e => set("message")(e.target.value)}
                 rows={5}
                 placeholder="Describe your question or requirement…"
-                style={{ width: "100%", boxSizing: "border-box", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, padding: "11px 14px", color: "white", ...GF, fontSize: 14, outline: "none", resize: "vertical", minHeight: 120 }}
+                style={{ width: "100%", boxSizing: "border-box", background: "#ffffff", border: "1px solid rgba(0,0,0,0.14)", borderRadius: 8, padding: "11px 14px", color: "#07111F", ...GF, fontSize: 14, outline: "none", resize: "vertical", minHeight: 120 }}
                 onFocus={e => (e.target as HTMLTextAreaElement).style.borderColor = "#0078D4"}
-                onBlur={e => (e.target as HTMLTextAreaElement).style.borderColor = "rgba(255,255,255,0.1)"}
+                onBlur={e => (e.target as HTMLTextAreaElement).style.borderColor = "rgba(0,0,0,0.14)"}
               />
               <FieldError msg={errors.message} />
             </div>
@@ -226,7 +226,7 @@ export function ContactPage() {
                   onChange={e => set("consent")(e.target.checked)}
                   style={{ width: 18, height: 18, marginTop: 2, flexShrink: 0, accentColor: "#0078D4", cursor: "pointer" }}
                 />
-                <span style={{ color: "#94A3B8", ...GF, fontSize: 13, lineHeight: 1.55 }}>
+                <span style={{ color: "#64748B", ...GF, fontSize: 13, lineHeight: 1.55 }}>
                   I acknowledge that this form is a frontend demonstration. I understand no message will be delivered until backend integration is complete. I agree not to include sensitive personal or confidential information in this form.
                 </span>
               </label>
@@ -237,7 +237,7 @@ export function ContactPage() {
               <button
                 type="submit"
                 disabled={state === "submitting"}
-                style={{ background: state === "submitting" ? "#7C8DA4" : "#0078D4", color: "white", ...GF, fontSize: 15, fontWeight: 700, padding: "13px 32px", borderRadius: 8, border: "none", cursor: state === "submitting" ? "not-allowed" : "pointer", minHeight: 48, opacity: state === "submitting" ? 0.7 : 1, transition: "all 0.15s" }}
+                style={{ background: state === "submitting" ? "#94A3B8" : "#0078D4", color: "white", ...GF, fontSize: 15, fontWeight: 700, padding: "13px 32px", borderRadius: 8, border: "none", cursor: state === "submitting" ? "not-allowed" : "pointer", minHeight: 48, opacity: state === "submitting" ? 0.7 : 1, transition: "all 0.15s" }}
               >
                 {state === "submitting" ? "Submitting…" : "Send Message"}
               </button>

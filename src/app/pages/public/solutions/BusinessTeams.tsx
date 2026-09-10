@@ -14,42 +14,43 @@ function ApprovalFlowMockup() {
   const steps = [
     { label: "Operations", action: "Document prepared",    status: "DONE",    color: "#22C55E" },
     { label: "Legal",      action: "Review complete",      status: "DONE",    color: "#22C55E" },
-    { label: "Finance",    action: "Terms approved",       status: "ACTIVE",  color: "#38BDF8" },
-    { label: "Signatory",  action: "Awaiting turn",        status: "PENDING", color: "#7C8DA4" },
-    { label: "Vendor",     action: "Not yet reached",      status: "PENDING", color: "#7C8DA4" },
+    { label: "Finance",    action: "Terms approved",       status: "ACTIVE",  color: "#0078D4" },
+    { label: "Signatory",  action: "Awaiting turn",        status: "PENDING", color: "#94A3B8" },
+    { label: "Vendor",     action: "Not yet reached",      status: "PENDING", color: "#94A3B8" },
   ];
   return (
     <div aria-hidden style={{
-      background: "rgba(7,17,31,0.95)", border: "1px solid rgba(0,120,212,0.22)",
+      background: "#ffffff", border: "1px solid rgba(0,0,0,0.08)",
       borderRadius: 14, overflow: "hidden", maxWidth: 420, width: "100%",
+      boxShadow: "0 4px 16px rgba(7,17,31,0.10), 0 1px 4px rgba(7,17,31,0.05)",
     }}>
-      <div style={{ padding: "12px 16px", borderBottom: "1px solid rgba(255,255,255,0.07)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+      <div style={{ padding: "12px 16px", borderBottom: "1px solid rgba(0,0,0,0.08)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <div>
-          <p style={{ color: "white", ...GF, fontSize: 12, fontWeight: 700, margin: 0 }}>Vendor Service Agreement</p>
-          <p style={{ color: "#8A9BAE", ...GM, fontSize: 10, margin: "1px 0 0" }}>Multi-step approval · Bayani Business Services</p>
+          <p style={{ color: "#07111F", ...GF, fontSize: 12, fontWeight: 700, margin: 0 }}>Vendor Service Agreement</p>
+          <p style={{ color: "#64748B", ...GM, fontSize: 10, margin: "1px 0 0" }}>Multi-step approval · Bayani Business Services</p>
         </div>
-        <span style={{ background: "rgba(0,120,212,0.12)", color: "#38bdf8", ...GM, fontSize: 9, fontWeight: 700, padding: "2px 8px", borderRadius: 999, border: "1px solid rgba(0,120,212,0.25)" }}>IN PROGRESS</span>
+        <span style={{ background: "rgba(0,120,212,0.1)", color: "#0078D4", ...GM, fontSize: 9, fontWeight: 700, padding: "2px 8px", borderRadius: 999, border: "1px solid rgba(0,120,212,0.25)" }}>IN PROGRESS</span>
       </div>
       {steps.map((s, i) => (
-        <div key={i} style={{ padding: "9px 16px", borderBottom: i < steps.length - 1 ? "1px solid rgba(255,255,255,0.04)" : "none", display: "flex", gap: 10, alignItems: "center" }}>
+        <div key={i} style={{ padding: "9px 16px", borderBottom: i < steps.length - 1 ? "1px solid rgba(0,0,0,0.06)" : "none", display: "flex", gap: 10, alignItems: "center" }}>
           <div style={{
             width: 28, height: 28, borderRadius: "50%",
-            background: s.status === "DONE" ? "rgba(34,197,94,0.12)" : s.status === "ACTIVE" ? "rgba(0,120,212,0.15)" : "rgba(255,255,255,0.04)",
+            background: s.status === "DONE" ? "rgba(34,197,94,0.12)" : s.status === "ACTIVE" ? "rgba(0,120,212,0.12)" : "rgba(0,0,0,0.04)",
             display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, ...GM, fontSize: 9, fontWeight: 700,
             color: s.color, border: `1px solid ${s.color}33`,
           }}>
             {s.status === "DONE" ? "✓" : String(i + 1).padStart(2, "0")}
           </div>
           <div style={{ flex: 1 }}>
-            <p style={{ color: s.status === "PENDING" ? "#7C8DA4" : "white", ...GF, fontSize: 12, fontWeight: 600, margin: 0 }}>{s.label}</p>
-            <p style={{ color: "#8A9BAE", ...GM, fontSize: 10, margin: "1px 0 0" }}>{s.action}</p>
+            <p style={{ color: s.status === "PENDING" ? "#94A3B8" : "#07111F", ...GF, fontSize: 12, fontWeight: 600, margin: 0 }}>{s.label}</p>
+            <p style={{ color: "#64748B", ...GM, fontSize: 10, margin: "1px 0 0" }}>{s.action}</p>
           </div>
           <span style={{ color: s.color, ...GM, fontSize: 9, fontWeight: 700 }}>{s.status}</span>
         </div>
       ))}
-      <div style={{ padding: "10px 16px", background: "rgba(0,0,0,0.2)", display: "flex", justifyContent: "space-between" }}>
-        <span style={{ color: "#7C8DA4", ...GM, fontSize: 9 }}>LAGDA-VER-2026-002247</span>
-        <span style={{ color: "#22C55E", ...GM, fontSize: 9, fontWeight: 700 }}>2 of 5 complete</span>
+      <div style={{ padding: "10px 16px", background: "#f8fafb", display: "flex", justifyContent: "space-between" }}>
+        <span style={{ color: "#94A3B8", ...GM, fontSize: 9 }}>LAGDA-VER-2026-002247</span>
+        <span style={{ color: "#16A34A", ...GM, fontSize: 9, fontWeight: 700 }}>2 of 5 complete</span>
       </div>
     </div>
   );
@@ -106,7 +107,7 @@ export function BusinessTeams() {
             <ChallengeCards challenges={CHALLENGES} />
           </div>
           <div>
-            <p style={{ color: "#8A9BAE", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", marginBottom: 12 }}>MULTI-STEP APPROVAL</p>
+            <p style={{ color: "#64748B", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", marginBottom: 12 }}>MULTI-STEP APPROVAL</p>
             <ApprovalFlowMockup />
           </div>
         </div>

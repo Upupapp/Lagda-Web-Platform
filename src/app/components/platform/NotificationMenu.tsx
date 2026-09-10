@@ -13,7 +13,7 @@ import type { NotificationRecord, NotificationCategory, NotificationSeverity } f
 import { Z } from "../../utils/z-index";
 
 const GF    = { fontFamily: "'Geist', sans-serif" };
-const BORDER = "rgba(255,255,255,0.07)";
+const BORDER = "rgba(0,0,0,0.08)";
 
 const AZURE = "#0078D4";
 const AMBER = "#D97706";
@@ -68,8 +68,26 @@ interface NotificationMenuProps {
 export function NotificationMenu({ align = "right" }: NotificationMenuProps) {
   const { items, unreadCount, markRead, markAllRead } = useNotificationCenter();
   const [open, setOpen] = useState(false);
+  const [pos, setPos] = useState<{ top: number; right?: number; left?: number } | null>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const panelRef   = useRef<HTMLDivElement>(null);
+
+  // The panel used to anchor via CSS `right: 0` relative to this component's
+  // own (36px-wide) wrapper. On narrow phones that put the panel's right edge
+  // at the BUTTON's edge rather than the viewport's edge, so a ~380px-wide
+  // panel ran off the left side of the screen — the header text visibly
+  // clipped ("otifications" instead of "Notifications"). Measuring the
+  // trigger's real position and anchoring the panel to the viewport instead
+  // keeps it fully on-screen regardless of what sits next to the bell.
+  useEffect(() => {
+    if (!open || !triggerRef.current) { setPos(null); return; }
+    const r = triggerRef.current.getBoundingClientRect();
+    if (align === "left") {
+      setPos({ top: r.bottom + 8, left: Math.max(8, r.left) });
+    } else {
+      setPos({ top: r.bottom + 8, right: Math.max(8, window.innerWidth - r.right) });
+    }
+  }, [open, align]);
 
   useEffect(() => {
     if (!open) return;
@@ -90,6 +108,16 @@ export function NotificationMenu({ align = "right" }: NotificationMenuProps) {
     }
     document.addEventListener("keydown", handler);
     return () => document.removeEventListener("keydown", handler);
+  }, [open]);
+
+  // A resize (e.g. rotating the device) can invalidate the measured position;
+  // closing rather than re-measuring keeps this simple and avoids a stray
+  // resize-listener living for the lifetime of an open panel.
+  useEffect(() => {
+    if (!open) return;
+    function handler() { setOpen(false); }
+    window.addEventListener("resize", handler);
+    return () => window.removeEventListener("resize", handler);
   }, [open]);
 
   // Show 5 most recent non-dismissed notifications
@@ -114,7 +142,7 @@ export function NotificationMenu({ align = "right" }: NotificationMenuProps) {
         style={{
           position: "relative",
           background: "transparent", border: "none",
-          cursor: "pointer", color: "#64748b",
+          cursor: "pointer", color: "#64748B",
           width: 36, height: 36, display: "flex",
           alignItems: "center", justifyContent: "center",
           borderRadius: 8, padding: 0,
@@ -131,7 +159,7 @@ export function NotificationMenu({ align = "right" }: NotificationMenuProps) {
               borderRadius: "50%", width: 16, height: 16,
               display: "flex", alignItems: "center", justifyContent: "center",
               fontFamily: "'Geist Mono', monospace", fontSize: 9, fontWeight: 700,
-              border: "2px solid #07111F",
+              border: "2px solid #ffffff",
             }}
           >
             {unreadCount > 9 ? "9+" : unreadCount}
@@ -139,29 +167,29 @@ export function NotificationMenu({ align = "right" }: NotificationMenuProps) {
         )}
       </button>
 
-      {open && (
+      {open && pos && (
         <div
           ref={panelRef}
           role="dialog"
           aria-label="Recent notifications"
           aria-modal
           style={{
-            position: "absolute",
-            top: "calc(100% + 8px)",
-            [align]: 0,
+            position: "fixed",
+            top: pos.top,
+            ...(pos.right !== undefined ? { right: pos.right } : { left: pos.left }),
             width: 380,
             maxWidth: "calc(100vw - 16px)",
             zIndex: Z.dropdown,
-            background: "#0B1929",
+            background: "#ffffff",
             border: `1px solid ${BORDER}`,
             borderRadius: 12,
-            boxShadow: "0 16px 48px rgba(0,0,0,0.5)",
+            boxShadow: "0 16px 48px rgba(7,17,31,0.18)",
             overflow: "hidden",
           }}
         >
           {/* Header */}
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 14px", borderBottom: `1px solid ${BORDER}` }}>
-            <h2 style={{ color: "white", ...GF, fontSize: 14, fontWeight: 700, margin: 0 }}>
+            <h2 style={{ color: "#07111F", ...GF, fontSize: 14, fontWeight: 700, margin: 0 }}>
               Notifications
               {unreadCount > 0 && (
                 <span style={{ marginLeft: 8, fontFamily: "'Geist Mono', monospace", fontSize: 10, color: AZURE, background: "rgba(0,120,212,0.15)", borderRadius: 999, padding: "1px 7px" }}>
@@ -172,7 +200,7 @@ export function NotificationMenu({ align = "right" }: NotificationMenuProps) {
             {unreadCount > 0 && (
               <button
                 onClick={() => markAllRead()}
-                style={{ background: "none", border: "none", color: "#38bdf8", ...GF, fontSize: 12, cursor: "pointer", display: "flex", alignItems: "center", gap: 4 }}
+                style={{ background: "none", border: "none", color: "#0078D4", ...GF, fontSize: 12, cursor: "pointer", display: "flex", alignItems: "center", gap: 4 }}
                 aria-label="Mark all notifications as read"
               >
                 <CheckCheck size={13} aria-hidden />
@@ -184,7 +212,7 @@ export function NotificationMenu({ align = "right" }: NotificationMenuProps) {
           {/* Notification list */}
           <ul style={{ listStyle: "none", margin: 0, padding: "6px 0", maxHeight: 340, overflowY: "auto" }} role="list">
             {recent.length === 0 ? (
-              <li style={{ padding: "24px 14px", textAlign: "center", color: "#475569", ...GF, fontSize: 13 }}>
+              <li style={{ padding: "24px 14px", textAlign: "center", color: "#64748B", ...GF, fontSize: 13 }}>
                 No notifications yet.
               </li>
             ) : (
@@ -195,23 +223,23 @@ export function NotificationMenu({ align = "right" }: NotificationMenuProps) {
                     onClick={() => handleItemClick(n)}
                     style={{
                       display: "flex", gap: 10, padding: "10px 14px",
-                      background: n.status === "unread" ? "rgba(0,120,212,0.07)" : "transparent",
+                      background: n.status === "unread" ? "#EAF6FF" : "transparent",
                       textDecoration: "none",
                       borderBottom: `1px solid ${BORDER}`,
                     }}
                     className="notif-item-link"
                   >
-                    <div style={{ width: 28, height: 28, borderRadius: "50%", background: "rgba(255,255,255,0.06)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 1 }}>
+                    <div style={{ width: 28, height: 28, borderRadius: "50%", background: "#F1F5F9", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 1 }}>
                       {getCategoryIcon(n.category, n.severity)}
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <p style={{ color: n.status === "unread" ? "white" : "#64748b", ...GF, fontSize: 12, fontWeight: n.status === "unread" ? 600 : 400, margin: "0 0 2px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      <p style={{ color: n.status === "unread" ? "#07111F" : "#64748B", ...GF, fontSize: 12, fontWeight: n.status === "unread" ? 600 : 400, margin: "0 0 2px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                         {n.title}
                       </p>
-                      <p style={{ color: "#475569", ...GF, fontSize: 11, margin: "0 0 3px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      <p style={{ color: "#64748B", ...GF, fontSize: 11, margin: "0 0 3px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                         {n.body}
                       </p>
-                      <p style={{ color: "#334155", fontFamily: "'Geist Mono', monospace", fontSize: 10, margin: 0 }}>
+                      <p style={{ color: "#94A3B8", fontFamily: "'Geist Mono', monospace", fontSize: 10, margin: 0 }}>
                         {formatRelativeDate(n.createdAt)}
                       </p>
                     </div>
@@ -229,7 +257,7 @@ export function NotificationMenu({ align = "right" }: NotificationMenuProps) {
             <Link
               to="/app/notifications"
               onClick={() => setOpen(false)}
-              style={{ color: "#38bdf8", ...GF, fontSize: 12, textDecoration: "none", display: "block", textAlign: "center" }}
+              style={{ color: "#0078D4", ...GF, fontSize: 12, textDecoration: "none", display: "block", textAlign: "center" }}
             >
               View all notifications →
             </Link>
@@ -238,9 +266,9 @@ export function NotificationMenu({ align = "right" }: NotificationMenuProps) {
       )}
 
       <style>{`
-        .notif-trigger:hover, .notif-trigger:focus-visible { color: white !important; background: rgba(255,255,255,0.06) !important; }
+        .notif-trigger:hover, .notif-trigger:focus-visible { color: #0078D4 !important; background: #EAF6FF !important; }
         .notif-trigger:focus-visible { outline: 2px solid #0078D4; outline-offset: 2px; }
-        .notif-item-link:hover { background: rgba(255,255,255,0.04) !important; }
+        .notif-item-link:hover { background: #F1F5F9 !important; }
         .notif-item-link:focus-visible { outline: 2px solid #0078D4; outline-offset: -2px; }
       `}</style>
     </div>

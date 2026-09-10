@@ -50,7 +50,7 @@ export function RecoveryCodes() {
   return (
     <>
       <div style={{ textAlign: "center", marginBottom: 24 }}>
-        <h1 style={{ color: "white", ...GF, fontSize: 22, fontWeight: 900, letterSpacing: "-0.02em", margin: "0 0 6px" }}>Use a recovery code</h1>
+        <h1 style={{ color: "#07111F", ...GF, fontSize: 22, fontWeight: 900, letterSpacing: "-0.02em", margin: "0 0 6px" }}>Use a recovery code</h1>
         <p style={{ color: "#64748B", ...GF, fontSize: 13, lineHeight: 1.6 }}>
           If you have lost access to your authenticator app, enter one of your saved recovery codes.
         </p>
@@ -58,7 +58,7 @@ export function RecoveryCodes() {
 
       <div style={{ background: "rgba(0,120,212,0.06)", border: "1px solid rgba(0,120,212,0.15)", borderRadius: 10, padding: "12px 16px", marginBottom: 20 }}>
         <p style={{ color: "#C9960C", ...GM, fontSize: 9, fontWeight: 700, margin: "0 0 4px" }}>FRONTEND DEMONSTRATION</p>
-        <p style={{ color: "#475569", ...GF, fontSize: 12, margin: 0, lineHeight: 1.5 }}>
+        <p style={{ color: "#334155", ...GF, fontSize: 12, margin: 0, lineHeight: 1.5 }}>
           In this demonstration, any non-empty recovery code is accepted.
         </p>
       </div>
@@ -70,14 +70,14 @@ export function RecoveryCodes() {
       )}
 
       {status === "success" && (
-        <div role="status" aria-live="polite" style={{ textAlign: "center", marginBottom: 16, color: "#38BDF8", ...GF, fontSize: 14 }}>
+        <div role="status" aria-live="polite" style={{ textAlign: "center", marginBottom: 16, color: "#0078D4", ...GF, fontSize: 14 }}>
           Code accepted — signing you in…
         </div>
       )}
 
       <form onSubmit={handleSubmit} noValidate style={{ display: "flex", flexDirection: "column", gap: 16 }}>
         <div>
-          <label htmlFor="rc-code" style={{ display: "block", color: "#94A3B8", ...GF, fontSize: 12, fontWeight: 600, marginBottom: 6 }}>
+          <label htmlFor="rc-code" style={{ display: "block", color: "#64748B", ...GF, fontSize: 12, fontWeight: 600, marginBottom: 6 }}>
             Recovery code <span aria-hidden style={{ color: "#EF4444" }}>*</span>
           </label>
           <input
@@ -93,15 +93,15 @@ export function RecoveryCodes() {
             placeholder="DEMO-XXXX-XXXX"
             style={{
               width: "100%", boxSizing: "border-box",
-              background: "rgba(255,255,255,0.05)",
-              border: `1px solid ${status === "error" ? "rgba(239,68,68,0.4)" : "rgba(255,255,255,0.12)"}`,
-              borderRadius: 8, color: "white",
+              background: "#ffffff",
+              border: `1px solid ${status === "error" ? "rgba(239,68,68,0.4)" : "rgba(0,0,0,0.08)"}`,
+              borderRadius: 8, color: "#07111F",
               ...GM, fontSize: 15, fontWeight: 600,
               padding: "13px 14px", outline: "none",
               letterSpacing: "0.06em", textTransform: "uppercase",
             }}
           />
-          <p style={{ color: "#475569", ...GF, fontSize: 11, margin: "6px 0 0" }}>
+          <p style={{ color: "#64748B", ...GF, fontSize: 11, margin: "6px 0 0" }}>
             Recovery codes are 14 characters in the format XXXX-XXXX-XXXX.
           </p>
         </div>
@@ -126,9 +126,9 @@ export function RecoveryCodes() {
       </form>
 
       <div style={{ textAlign: "center", marginTop: 20 }}>
-        <Link to="/mfa" style={{ color: "#38BDF8", ...GF, fontSize: 13, textDecoration: "none" }}>Use authenticator app instead</Link>
-        <span style={{ color: "#334155", margin: "0 10px" }}>·</span>
-        <Link to="/sign-in" style={{ color: "#475569", ...GF, fontSize: 13, textDecoration: "none" }}>Back to Sign In</Link>
+        <Link to="/mfa" style={{ color: "#0078D4", ...GF, fontSize: 13, textDecoration: "none" }}>Use authenticator app instead</Link>
+        <span style={{ color: "#94A3B8", margin: "0 10px" }}>·</span>
+        <Link to="/sign-in" style={{ color: "#64748B", ...GF, fontSize: 13, textDecoration: "none" }}>Back to Sign In</Link>
       </div>
     </>
   );
