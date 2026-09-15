@@ -232,7 +232,7 @@ importers:
         specifier: ^0.4.16
         version: 0.4.26(eslint@9.39.5(jiti@2.7.0))
       eslint-plugin-testing-library:
-        specifier: ^7.1.1
+        specifier: ^7.16.2
         version: 7.16.2(eslint@9.39.5(jiti@2.7.0))(typescript@5.9.3)
       globals:
         specifier: ^15.14.0
