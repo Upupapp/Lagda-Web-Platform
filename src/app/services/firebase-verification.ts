@@ -58,6 +58,20 @@ export type FirebaseVerificationSendResult =
  * with Firebase's own mode/oobCode/apiKey/lang params — it MUST already be
  * a LAGDA-sanitized, allow-listed URL (see authReturnPath.ts) before it
  * reaches here; this function does not itself validate it.
+ *
+ * `handleCodeInApp: true` is deliberate, not a default left alone: without
+ * it, Firebase sends the visitor to ITS OWN generic hosted page first
+ * (`<project>.firebaseapp.com/__/auth/action`), which requires an extra,
+ * easy-to-miss "Continue" click to ever reach `continueUrl` at all — and if
+ * that project's own Console-level "Customize action URL" was never set
+ * (verify under Authentication → Templates), that hosted page has nowhere
+ * useful to send the visitor even if they do click through. Confirmed live
+ * in production: two real users clicked a real link, Firebase's own page
+ * said "Successfully Verified," and LAGDA's backend never heard about it —
+ * the finalize step that actually marks an account verified never fired.
+ * `handleCodeInApp: true` routes the visitor straight to `continueUrl`
+ * (this app's own `/firebase-auth/action` page) instead, which already
+ * correctly handles the resulting `mode=verifyEmail&oobCode=...` link.
  */
 export async function sendFirebaseVerificationEmail(
   customToken: string,
@@ -69,7 +83,7 @@ export async function sendFirebaseVerificationEmail(
   try {
     const credential = await signInWithCustomToken(auth, customToken);
     try {
-      await firebaseSendEmailVerification(credential.user, { url: continueUrl });
+      await firebaseSendEmailVerification(credential.user, { url: continueUrl, handleCodeInApp: true });
       return { outcome: "sent" };
     } finally {
       // Always sign out, success or failure — this Firebase session must
