@@ -46,7 +46,20 @@ export function FirebaseVerificationAction() {
     ran.current = true;
 
     void (async () => {
-      if (mode !== "verifyEmail" || !oobCode || !challengeId) {
+      // challengeId is the only thing this page actually needs. mode/oobCode
+      // are OPTIONAL, not required — confirmed in production: the real link
+      // Firebase emails opens ITS OWN hosted confirmation page first, which
+      // consumes the oobCode itself; the "Continue" button on THAT page is
+      // what lands here, carrying only whatever `continueUrl` was built
+      // with (challengeId + returnTo — see firebase-verification-send.ts's
+      // buildContinueUrl). mode/oobCode are never present on that arrival.
+      // Requiring them here unconditionally made this page reject every
+      // real click as "invalid" before ever attempting Step 2 below —
+      // this was the actual bug behind a confirmed-in-production failure
+      // where Firebase's own page said "verified" but this app never
+      // found out. mode/oobCode are still used OPPORTUNISTICALLY when
+      // present (e.g. a future flow that lands here directly).
+      if (!challengeId) {
         setState("invalid");
         return;
       }
@@ -54,13 +67,17 @@ export function FirebaseVerificationAction() {
       // Step 1: best-effort only. We try to apply Firebase's action code
       // ourselves, in case nothing else has yet — but we do NOT gate on the
       // outcome. A single-use oobCode can be consumed by something other
-      // than this exact page load (an email client's link-scanner/safe-
-      // browsing prefetch is a known, common cause) while Firebase's own
-      // server-side emailVerified flag still ends up correctly set. Treating
-      // "this browser's attempt to apply the code failed" as fatal would
-      // wrongly dead-end a real, already-verified user — so Step 1's result
-      // is informational only; Step 2 (below) is the actual source of truth.
-      await applyFirebaseVerificationAction(oobCode);
+      // than this exact page load (Firebase's own hosted confirmation page,
+      // per the comment above, is now the ORDINARY case, not just a
+      // fallback) while Firebase's own server-side emailVerified flag still
+      // ends up correctly set. Treating "this browser's attempt to apply
+      // the code failed" as fatal would wrongly dead-end a real,
+      // already-verified user — so Step 1's result is informational only;
+      // Step 2 (below) is the actual source of truth. Skipped entirely when
+      // oobCode is absent, which is the ordinary case now.
+      if (mode === "verifyEmail" && oobCode) {
+        await applyFirebaseVerificationAction(oobCode);
+      }
 
       // Step 2: LAGDA's own server-side confirmation. This is the ONLY call
       // that can mark the LAGDA account verified, and it independently
