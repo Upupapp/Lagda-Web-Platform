@@ -3,7 +3,6 @@
 // Follows the SESSION_MUTATIONS pattern used by contacts.service.ts.
 
 import type {
-  WorkspaceId,
   WorkspaceMemberId,
   WorkspaceInvitationId,
   WorkspaceTeamId,
@@ -27,7 +26,6 @@ import type {
   WorkspaceTeamCreateInput,
   WorkspaceRoleCreateInput,
 } from "../../models/workspace-admin";
-import { SYSTEM_ROLE_PERMISSIONS } from "../../models/workspace-admin";
 import {
   MOCK_WORKSPACE_ADMIN,
   OTHER_WORKSPACES,
@@ -38,7 +36,6 @@ import {
   FIXTURE_ACTIVITY,
   FIXTURE_ATTENTION_ITEMS,
   FIXTURE_WORKSPACE_SETTINGS,
-  ROLE_MEMBER,
 } from "../../data/mock/workspace-admin";
 
 // ── Session mutation stores (reset on reload) ─────────────────────────────────
@@ -56,7 +53,6 @@ let roleSeq     = 10;
 let invSeq      = 10;
 
 function nowIso() { return new Date().toISOString(); }
-function uid(prefix: string) { return `${prefix}_${Date.now()}_${Math.floor(Math.random()*9999)}`; }
 
 function resolveMembers(): WorkspaceMember[] {
   const base = FIXTURE_MEMBERS.filter(m => !SESSION_MEMBERS.has(m.id));

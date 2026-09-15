@@ -47,7 +47,7 @@ export function WorkflowReviewPage() {
     setBusy(false);
     if (result.ok) {
       announce("The signing workflow was created in frontend demonstration state.");
-      navigate(base, { state: { workflowJustCreated: String(result.data.id) }, replace: true });
+      void navigate(base, { state: { workflowJustCreated: String(result.data.id) }, replace: true });
     } else {
       setError(
         result.code === "INCOMPATIBLE_CONFIGURATION"

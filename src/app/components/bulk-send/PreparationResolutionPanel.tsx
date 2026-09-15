@@ -145,7 +145,9 @@ export function PreparationResolutionPanel({
                 checked={accepted.has(r.id)}
                 disabled={stale || applying || !canApply}
                 onToggle={() => setAccepted((s) => {
-                  const n = new Set(s); n.has(r.id) ? n.delete(r.id) : n.add(r.id); return n;
+                  const n = new Set(s);
+                  if (n.has(r.id)) n.delete(r.id); else n.add(r.id);
+                  return n;
                 })}
                 onDismiss={() => setDismissed((s) => new Set(s).add(r.id))} />
             ))}

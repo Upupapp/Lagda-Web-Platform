@@ -11,7 +11,7 @@ import {
   FilePlus, FileText, LayoutTemplate, ShieldCheck, Users,
   AlertCircle, Clock, CheckCircle2, XCircle, RefreshCw,
   ChevronRight, AlertTriangle, Send, FileEdit, Activity,
-  ArrowRight, Inbox, PenLine, ThumbsUp, Eye, FileCheck, Mail, Calendar, Bell, ShieldAlert,
+  ArrowRight, PenLine, ThumbsUp, Eye, FileCheck, Mail, Calendar, Bell, ShieldAlert,
 } from "lucide-react";
 import { inboxService } from "../../services/mock/inbox.service";
 import type { RecipientInboxItem } from "../../models/inbox";
@@ -44,7 +44,6 @@ import type { PreparationPlatformSummary } from "../../services/preparation-plat
 const GF    = { fontFamily: "'Geist', sans-serif" };
 const GM    = { fontFamily: "'Geist Mono', monospace" };
 const AZURE  = "#0078D4";
-const GOLD   = "#C9960C";
 const GREEN  = "#059669";
 const RED    = "#DC2626";
 const AMBER  = "#D97706";
@@ -1093,14 +1092,14 @@ export function PlatformDashboard() {
     }
   }, [scenario]);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => { void load(); }, [load]);
 
   // Reload when the active workspace changes (workspace switching).
   useEffect(() => {
     const id = currentWorkspace?.id ?? "";
     if (id && id !== workspaceKey) {
       setWorkspaceKey(id);
-      load();
+      void load();
     }
   }, [currentWorkspace?.id, workspaceKey, load]);
 

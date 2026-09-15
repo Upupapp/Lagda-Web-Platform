@@ -5,13 +5,15 @@
 import { useState, useRef } from "react";
 import { Link } from "react-router";
 import { mockAuthService } from "../../services/mock/auth.service";
+import { realAuthService } from "../../services/real/auth.service";
+import { USE_REAL_BACKEND } from "../../services/backend-flag";
 
 const GF    = { fontFamily: "'Geist', sans-serif" };
 const AZURE = "#0078D4";
 
 export function ForgotPassword() {
   const [email,     setEmail]     = useState("");
-  const [status,    setStatus]    = useState<"idle"|"submitting"|"sent">("idle");
+  const [status,    setStatus]    = useState<"idle"|"submitting"|"sent"|"error">("idle");
   const [emailErr,  setEmailErr]  = useState<string | null>(null);
   const successRef = useRef<HTMLDivElement>(null);
 
@@ -27,6 +29,23 @@ export function ForgotPassword() {
     if (err) { setEmailErr(err); return; }
     setEmailErr(null);
     setStatus("submitting");
+
+    if (USE_REAL_BACKEND) {
+      try {
+        // Email is NOT logged. The backend's own response is enumeration-safe
+        // — neutral whether or not an account exists (see reset-password.ts's
+        // "no challenge, no account created" comment) — so the frontend shows
+        // the exact same success state either way rather than branching on
+        // the result. Only a transport failure gets a different outcome.
+        await realAuthService.requestPasswordReset(email.trim());
+      } catch {
+        setStatus("error");
+        return;
+      }
+      setStatus("sent");
+      setTimeout(() => successRef.current?.focus(), 50);
+      return;
+    }
 
     // Email is NOT logged. Neutral response regardless of account existence.
     await mockAuthService.requestPasswordReset(email);
@@ -45,14 +64,18 @@ export function ForgotPassword() {
         }} aria-hidden>✉</div>
         <h1 style={{ color: "#07111F", ...GF, fontSize: 20, fontWeight: 900, margin: "0 0 10px" }}>Check your inbox</h1>
         <p style={{ color: "#64748B", ...GF, fontSize: 14, lineHeight: 1.7, margin: "0 0 20px" }}>
-          If an account exists for that address, a password reset link would be sent (this is a frontend demonstration — no email is actually sent).
+          {USE_REAL_BACKEND
+            ? "If an account exists for that address, a password reset email is on its way."
+            : "If an account exists for that address, a password reset link would be sent (this is a frontend demonstration — no email is actually sent)."}
         </p>
-        <div style={{ background: "rgba(0,120,212,0.06)", border: "1px solid rgba(0,120,212,0.15)", borderRadius: 10, padding: "12px 16px", marginBottom: 24, textAlign: "left" }}>
-          <p style={{ color: "#C9960C", fontFamily: "'Geist Mono', monospace", fontSize: 9, fontWeight: 700, margin: "0 0 4px" }}>FRONTEND DEMONSTRATION</p>
-          <p style={{ color: "#334155", ...GF, fontSize: 12, margin: 0, lineHeight: 1.5 }}>
-            To test the reset form, go to <strong style={{ color: "#07111F" }}>/reset-password?state=valid</strong> directly.
-          </p>
-        </div>
+        {!USE_REAL_BACKEND && (
+          <div style={{ background: "rgba(0,120,212,0.06)", border: "1px solid rgba(0,120,212,0.15)", borderRadius: 10, padding: "12px 16px", marginBottom: 24, textAlign: "left" }}>
+            <p style={{ color: "#C9960C", fontFamily: "'Geist Mono', monospace", fontSize: 9, fontWeight: 700, margin: "0 0 4px" }}>FRONTEND DEMONSTRATION</p>
+            <p style={{ color: "#334155", ...GF, fontSize: 12, margin: 0, lineHeight: 1.5 }}>
+              To test the reset form, go to <strong style={{ color: "#07111F" }}>/reset-password?state=valid</strong> directly.
+            </p>
+          </div>
+        )}
         <Link
           to="/sign-in"
           style={{ display: "block", background: AZURE, border: "none", borderRadius: 8, color: "white", ...GF, fontSize: 15, fontWeight: 700, padding: "14px", textAlign: "center", textDecoration: "none", minHeight: 48, lineHeight: "20px" }}
@@ -71,6 +94,14 @@ export function ForgotPassword() {
           Enter your email and we will send instructions to reset your password.
         </p>
       </div>
+
+      {status === "error" && (
+        <div role="alert" style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: 8, padding: "12px 14px", marginBottom: 16 }}>
+          <p style={{ color: "#EF4444", ...GF, fontSize: 13, margin: 0 }}>
+            Something went wrong sending that request. Please try again.
+          </p>
+        </div>
+      )}
 
       <form onSubmit={handleSubmit} noValidate style={{ display: "flex", flexDirection: "column", gap: 16 }}>
         <div>

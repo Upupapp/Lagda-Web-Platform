@@ -9,7 +9,6 @@ import type { WorkspaceBranding } from "../../../models/settings";
 
 const GF    = { fontFamily: "'Geist', sans-serif" };
 const NAVY  = "#07111F";
-const AZURE = "#0078D4";
 const SLATE = "#64748B";
 const GOLD  = "#C9960C";
 
@@ -80,7 +79,7 @@ export function BrandingPage() {
   const objRef  = useRef<string | null>(null);
 
   useEffect(() => {
-    mockBrandingSettingsService.getWorkspaceBranding().then(b => { setBranding(b); setForm({ ...b }); setLoading(false); });
+    void mockBrandingSettingsService.getWorkspaceBranding().then(b => { setBranding(b); setForm({ ...b }); setLoading(false); });
     return () => { if (objRef.current) URL.revokeObjectURL(objRef.current); };
   }, []);
 

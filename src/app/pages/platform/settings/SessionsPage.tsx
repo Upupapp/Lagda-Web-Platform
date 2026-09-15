@@ -43,7 +43,7 @@ export function SessionsPage() {
   const { confirm, confirmDialog } = useConfirm();
 
   useEffect(() => {
-    mockSecuritySettingsService.listActiveSessions().then(s => { setSessions(s); setLoading(false); });
+    void mockSecuritySettingsService.listActiveSessions().then(s => { setSessions(s); setLoading(false); });
   }, []);
 
   const active = sessions.filter(s => s.status === "active" && !s.isCurrent);

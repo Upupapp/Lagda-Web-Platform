@@ -7,9 +7,12 @@
 // Password is NEVER logged or stored.
 
 import { useState, useRef } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router";
+import { Link, useNavigate, useSearchParams, useParams } from "react-router";
 import { checkPassword, isPasswordAcceptable } from "../../models/auth";
 import { mockAuthService } from "../../services/mock/auth.service";
+import { realAuthService } from "../../services/real/auth.service";
+import { USE_REAL_BACKEND } from "../../services/backend-flag";
+import { ApiError } from "../../services/api-client";
 
 const GF    = { fontFamily: "'Geist', sans-serif" };
 const AZURE = "#0078D4";
@@ -81,7 +84,7 @@ function Req({ met, children }: { met: boolean; children: string }) {
 
 // ── Reset form ────────────────────────────────────────────────────────────────
 
-function ResetForm() {
+function ResetForm({ token, onInvalidToken }: { token: string | null; onInvalidToken: () => void }) {
   const navigate  = useNavigate();
   const [pw,       setPw]       = useState("");
   const [confirm,  setConfirm]  = useState("");
@@ -102,6 +105,26 @@ function ResetForm() {
     setFormErr(null);
     setStatus("submitting");
 
+    if (USE_REAL_BACKEND) {
+      // token is guaranteed non-null here — ResetPassword() only renders
+      // this form when one was present in the URL.
+      try {
+        await realAuthService.resetPassword(token as string, pw);
+      } catch (err) {
+        if (err instanceof ApiError && err.body?.code === "INVALID_OR_EXPIRED_RESET_TOKEN") {
+          onInvalidToken();
+          return;
+        }
+        setStatus("error");
+        setFormErr(err instanceof ApiError ? err.message : "Something went wrong. Please try again.");
+        return;
+      }
+      setStatus("success");
+      setTimeout(() => successRef.current?.focus(), 50);
+      setTimeout(() => navigate("/sign-in?notice=password-reset", { replace: true }), 1800);
+      return;
+    }
+
     // Password is NOT logged. Demo only.
     const result = await mockAuthService.resetPassword(pw);
     if (result.success) {
@@ -120,7 +143,9 @@ function ResetForm() {
         <div style={{ width: 52, height: 52, borderRadius: "50%", background: "rgba(0,120,212,0.12)", border: "1px solid rgba(0,120,212,0.25)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 18px", fontSize: 22 }} aria-hidden>✓</div>
         <h1 style={{ color: "#07111F", ...GF, fontSize: 20, fontWeight: 900, margin: "0 0 10px" }}>Password updated</h1>
         <p style={{ color: "#64748B", ...GF, fontSize: 14, lineHeight: 1.7, margin: "0 0 8px" }}>
-          Your password has been updated in this frontend demonstration. Redirecting to Sign In…
+          {USE_REAL_BACKEND
+            ? "Your password has been updated. Redirecting to Sign In…"
+            : "Your password has been updated in this frontend demonstration. Redirecting to Sign In…"}
         </p>
       </div>
     );
@@ -243,9 +268,19 @@ function ResetForm() {
 // ── Page entry point ───────────────────────────────────────────────────────────
 
 export function ResetPassword() {
-  const [params]    = useSearchParams();
-  const linkState   = getLinkState(params.get("state"));
+  const [params] = useSearchParams();
+  const { token } = useParams<{ token?: string }>();
+  // A submit-time INVALID_OR_EXPIRED_RESET_TOKEN response — the real backend
+  // has no way to tell us the link is dead before that, so this starts
+  // optimistic and only flips once the API says otherwise.
+  const [tokenRejected, setTokenRejected] = useState(false);
 
+  if (USE_REAL_BACKEND) {
+    if (!token || tokenRejected) return <LinkError linkState="invalid" />;
+    return <ResetForm token={token} onInvalidToken={() => setTokenRejected(true)} />;
+  }
+
+  const linkState = getLinkState(params.get("state"));
   if (linkState !== "valid") return <LinkError linkState={linkState} />;
-  return <ResetForm />;
+  return <ResetForm token={null} onInvalidToken={() => {}} />;
 }

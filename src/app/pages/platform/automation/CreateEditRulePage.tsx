@@ -229,7 +229,7 @@ export function CreateEditRulePage() {
     setSaving(false);
     if (r.ok) {
       setUnsaved(false);
-      navigate(`/app/automation/rules/${r.data.id}`);
+      void navigate(`/app/automation/rules/${r.data.id}`);
     } else {
       setToast({ msg: r.error.message, type: "error" });
       setTimeout(() => setToast(null), 4000);

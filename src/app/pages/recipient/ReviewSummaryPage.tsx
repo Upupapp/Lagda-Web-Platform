@@ -17,7 +17,7 @@ const RED    = "#C0392B";
 export function ReviewSummaryPage() {
   const {
     request, state, myFields, allRequiredComplete,
-    submitFinalAction, setStep, completionHeading,
+    submitFinalAction, setStep,
   } = useRecipient();
 
   if (!request) return null;

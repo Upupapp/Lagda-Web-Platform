@@ -310,7 +310,7 @@ export const mockIntegrationService = {
     return SESSION_INTEGRATIONS.find(i => i.id === id) ?? null;
   },
 
-  async beginConnectionDemonstration(id: IntegrationId): Promise<{ message: string }> {
+  async beginConnectionDemonstration(_id: IntegrationId): Promise<{ message: string }> {
     await delay(300);
     return { message: "Connection demonstration ready. Enter configuration values below." };
   },

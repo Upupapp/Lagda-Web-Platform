@@ -11,7 +11,6 @@ import type {
   PrepAuthConfig,
   PrepSettings,
   ResumableDraftSummary,
-  TransactionDetailsDraft,
 } from "../../models/prepare";
 import {
   DEFAULT_TRANSACTION_DETAILS,

@@ -38,6 +38,11 @@ const VerifyEmail = lazy(() =>
     default: m.VerifyEmail,
   })),
 );
+const FirebaseVerificationAction = lazy(() =>
+  import("./app/pages/auth/FirebaseVerificationAction").then((m) => ({
+    default: m.FirebaseVerificationAction,
+  })),
+);
 const ForgotPassword = lazy(() =>
   import("./app/pages/auth/ForgotPassword").then((m) => ({
     default: m.ForgotPassword,
@@ -1252,6 +1257,31 @@ export const router = createBrowserRouter([
     ),
   },
   {
+    // The real backend's emailed verification link carries the code as a
+    // path segment, not a query param — see Lagda-Backend's
+    // notifications/links.ts. Same page, an extra route so a real link
+    // resolves.
+    path: "/verify-email/:code",
+    errorElement: <PublicRouteError />,
+    element: (
+      <AuthPage>
+        <VerifyEmail />
+      </AuthPage>
+    ),
+  },
+  {
+    // Firebase-provider mode only — the action-handler URL configured in
+    // the Firebase Console (see the migration report's manual setup
+    // checklist). Public, no session — same reasoning as /verify-email.
+    path: "/firebase-auth/action",
+    errorElement: <PublicRouteError />,
+    element: (
+      <AuthPage>
+        <FirebaseVerificationAction />
+      </AuthPage>
+    ),
+  },
+  {
     path: "/forgot-password",
     errorElement: <PublicRouteError />,
     element: (
@@ -1262,6 +1292,17 @@ export const router = createBrowserRouter([
   },
   {
     path: "/reset-password",
+    errorElement: <PublicRouteError />,
+    element: (
+      <AuthPage>
+        <ResetPassword />
+      </AuthPage>
+    ),
+  },
+  {
+    // Real emailed reset links carry the token as a path segment, same as
+    // /verify-email/:code — see Lagda-Backend's notifications/links.ts.
+    path: "/reset-password/:token",
     errorElement: <PublicRouteError />,
     element: (
       <AuthPage>

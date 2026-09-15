@@ -9,7 +9,6 @@ import { usePrepare } from "../../../context/PrepareContext";
 import {
   DEFAULT_PREP_SETTINGS,
 } from "../../../models/prepare";
-import type { PrepSettings } from "../../../models/prepare";
 import { StepBanner, StepTwoColumn, RailCard, StepIssueList } from "../../../components/prepare/StepBanner";
 
 const GF     = { fontFamily: "'Geist', sans-serif" };

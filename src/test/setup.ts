@@ -5,7 +5,6 @@
 // state into the next test.
 
 import "@testing-library/jest-dom/vitest";
-import { cleanup } from "@testing-library/react";
 import { afterEach, beforeEach, vi, expect } from "vitest";
 
 import { resetAllTestServices } from "./reset-services";
@@ -79,7 +78,6 @@ beforeEach(() => {
 // this, a test that creates a batch changes the counts a later test asserts, and
 // suites pass or fail depending on order.
 afterEach(() => {
-  cleanup();
   resetAllTestServices();
   window.localStorage.clear();
   window.sessionStorage.clear();

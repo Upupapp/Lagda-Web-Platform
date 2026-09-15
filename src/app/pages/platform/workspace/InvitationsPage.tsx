@@ -14,7 +14,6 @@ const NAVY  = "#07111F";
 const AZURE = "#0078D4";
 const SLATE = "#64748B";
 const SILVER= "#8A9BAE";
-const LIGHT = "#F0F7FF";
 
 const STATUS_BADGE: Record<WorkspaceInvitationStatus, { bg: string; color: string }> = {
   "pending":  { bg: "#EBF4FC", color: "#0078D4" },
@@ -89,7 +88,7 @@ function InviteForm({ onDone }: { onDone: () => void }) {
 }
 
 function InvitationRow({ inv }: { inv: WorkspaceInvitation }) {
-  const { state, asyncResendInvitation, asyncRevokeInvitation, asyncLoadInvitations } = useWorkspaceAdmin();
+  const { asyncResendInvitation, asyncRevokeInvitation, asyncLoadInvitations } = useWorkspaceAdmin();
   const [acting, setActing] = useState(false);
   const badge = STATUS_BADGE[inv.status];
 
@@ -154,7 +153,7 @@ function InvitationsInner() {
   const [showForm, setShowForm] = useState(false);
   const [filter, setFilter] = useState<"all" | "pending" | "expired" | "revoked">("all");
 
-  useEffect(() => { asyncLoadInvitations(); }, [asyncLoadInvitations]);
+  useEffect(() => { void asyncLoadInvitations(); }, [asyncLoadInvitations]);
 
   const filtered = state.invitations.filter(i => filter === "all" || i.status === filter);
 

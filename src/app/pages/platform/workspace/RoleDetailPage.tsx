@@ -84,11 +84,11 @@ function RoleDetailInner() {
 
   useEffect(() => {
     if (!roleId) return;
-    asyncLoadRole(roleId as WorkspaceRoleId);
+    void asyncLoadRole(roleId as WorkspaceRoleId);
     return () => clearActiveRole();
   }, [roleId, asyncLoadRole, clearActiveRole]);
 
-  const reload = () => { if (roleId) asyncLoadRole(roleId as WorkspaceRoleId); };
+  const reload = () => { if (roleId) void asyncLoadRole(roleId as WorkspaceRoleId); };
 
   const handleSaveEdit = async (name: string, description: string, permissions: WorkspacePermission[]) => {
     if (!roleId) return;

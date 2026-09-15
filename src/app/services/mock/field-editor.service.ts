@@ -18,7 +18,7 @@ import {
   clampRect,
   buildRecipientFlowPreview,
 } from "../../models/field-editor";
-import type { PreparationDraft, PrepParticipantRole } from "../../models/prepare";
+import type { PreparationDraft } from "../../models/prepare";
 import { PREP_ROLE_IS_BLOCKING } from "../../models/prepare";
 import {
   buildEditorDocuments,
@@ -235,7 +235,7 @@ class MockFieldEditorService {
 
     // Participant coverage
     const coverageMap = new Map<string, ParticipantFieldCoverage>();
-    draft.participants.forEach((pax, i) => {
+    draft.participants.forEach((pax, _i) => {
       const paxFields    = fields.filter(f => f.participantId === pax.id);
       const hasSignature = paxFields.some(f => f.type === "signature");
       const issues:      FieldValidationIssue[] = [];

@@ -32,7 +32,7 @@ export function DataPrivacyPage() {
   const [confirmText, setConfirmText]   = useState("");
 
   useEffect(() => {
-    mockDataPrivacyService.getDataPrivacySettings().then(s => { setSettings(s); setLoading(false); });
+    void mockDataPrivacyService.getDataPrivacySettings().then(s => { setSettings(s); setLoading(false); });
   }, []);
 
   const handleExportRequest = async () => {

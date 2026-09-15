@@ -34,7 +34,6 @@ import type {
   RecipientOrderConversionPreview,
   SigningWorkflowActivityRecord,
   SigningWorkflowActivityType,
-  StageParticipantFieldReadiness,
 } from "../../models/signing-workflow";
 import {
   signingWorkflowId,

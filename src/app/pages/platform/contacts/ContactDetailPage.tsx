@@ -4,16 +4,15 @@
 // Burgundy never used. eNotary never referenced.
 
 import React, { useEffect, useState } from "react";
-import { useParams, useNavigate, Link } from "react-router";
+import { useParams, Link } from "react-router";
 import { ContactProvider, useContacts } from "../../../context/ContactContext";
-import type { ContactDuplicateCandidate, ContactUsageSummary, Contact, ContactTagId, ContactGroupId } from "../../../models/contacts";
+import type { ContactDuplicateCandidate, ContactUsageSummary, ContactTagId } from "../../../models/contacts";
 import { CONTACT_STATUS_LABELS, CONTACT_SCOPE_LABELS, CONTACT_SOURCE_LABELS, getContactTagById } from "../../../models/contacts";
 
 const GF    = { fontFamily: "'Geist', sans-serif" };
 const GM    = { fontFamily: "'Geist Mono', monospace" };
 const NAVY  = "#07111F";
 const AZURE = "#0078D4";
-const GOLD  = "#C9960C";
 const SLATE = "#64748B";
 const SILVER= "#8A9BAE";
 const LIGHT = "#F0F7FF";
@@ -155,7 +154,6 @@ function UsageSummaryCard({ usage }: { usage: ContactUsageSummary }) {
 
 function ContactDetail() {
   const { contactId } = useParams<{ contactId: string }>();
-  const navigate = useNavigate();
   const { state, asyncLoadContact, clearActiveContact, asyncArchive, asyncRestore } = useContacts();
   const [archiving, setArchiving] = useState(false);
 

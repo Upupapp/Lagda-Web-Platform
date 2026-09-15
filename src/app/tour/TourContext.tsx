@@ -127,7 +127,7 @@ function TourProviderInner({ children }: { children: ReactNode }) {
     if (!step) return;
 
     if (step.route && step.route !== location.pathname) {
-      navigate(step.route);
+      void navigate(step.route);
     }
 
     const target = effectiveTarget(step);

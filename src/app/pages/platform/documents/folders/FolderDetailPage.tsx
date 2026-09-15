@@ -97,7 +97,7 @@ export function FolderDetailPage() {
     }
   }, [folderId, userId]);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => { void load(); }, [load]);
   useEffect(() => {
     if (!toast) return;
     const t = setTimeout(() => setToast(null), 3500);
@@ -121,21 +121,21 @@ export function FolderDetailPage() {
   function handleArchive() {
     if (!folder) return;
     const r = documentOrganizationService.archiveFolder(folder.id);
-    if (r.ok) { load(); setToast({ msg: "Folder archived.", type: "success" }); }
+    if (r.ok) { void load(); setToast({ msg: "Folder archived.", type: "success" }); }
     else setToast({ msg: r.error.message, type: "error" });
   }
 
   function handleRestore() {
     if (!folder) return;
     const r = documentOrganizationService.restoreFolder(folder.id);
-    if (r.ok) { load(); setToast({ msg: "Folder restored.", type: "success" }); }
+    if (r.ok) { void load(); setToast({ msg: "Folder restored.", type: "success" }); }
     else setToast({ msg: r.error.message, type: "error" });
   }
 
   function handleRemove() {
     if (!folder) return;
     const r = documentOrganizationService.removeFolderDemonstration(folder.id);
-    if (r.ok) { navigate("/app/documents/folders"); }
+    if (r.ok) { void navigate("/app/documents/folders"); }
     else setToast({ msg: r.error.message, type: "error" });
   }
 

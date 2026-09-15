@@ -9,7 +9,6 @@ import type { UserPreferences, AppearanceMode, DateFormatPref, TimeFormatPref } 
 const GF    = { fontFamily: "'Geist', sans-serif" };
 const NAVY  = "#07111F";
 const AZURE = "#0078D4";
-const SLATE = "#64748B";
 
 const SELECT_STYLE: React.CSSProperties = {
   ...GF, fontSize: 13, padding: "9px 12px",
@@ -54,7 +53,6 @@ const APPEARANCES: { value: AppearanceMode; label: string }[] = [
 ];
 
 function formatDateExample(fmt: DateFormatPref): string {
-  const d = new Date(2026, 6, 16);
   if (fmt === "DD/MM/YYYY") return "16/07/2026";
   if (fmt === "MM/DD/YYYY") return "07/16/2026";
   return "2026-07-16";
@@ -69,7 +67,7 @@ export function PreferencesPage() {
   const [saved, setSaved]   = useState(false);
 
   useEffect(() => {
-    mockAccountSettingsService.getUserPreferences().then(p => {
+    void mockAccountSettingsService.getUserPreferences().then(p => {
       setPrefs(p);
       setForm({ ...p });
       setLoading(false);

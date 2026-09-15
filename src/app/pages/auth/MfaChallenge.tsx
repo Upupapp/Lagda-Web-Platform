@@ -5,6 +5,9 @@
 import { useState, useRef, useEffect } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router";
 import { mockAuthService } from "../../services/mock/auth.service";
+import { realAuthService } from "../../services/real/auth.service";
+import { USE_REAL_BACKEND } from "../../services/backend-flag";
+import { ApiError } from "../../services/api-client";
 import { usePlatform } from "../../context/PlatformContext";
 import { useOnboarding } from "../../context/OnboardingContext";
 import { createMockSignInPayload } from "../../context/PlatformContext";
@@ -37,6 +40,31 @@ export function MfaChallenge() {
     setStatus("submitting");
     setErrorMsg(null);
     setErrorCode(null);
+
+    if (USE_REAL_BACKEND) {
+      try {
+        await realAuthService.submitMfaChallenge(code);
+        setStatus("success");
+        // MFA is only ever challenged for an account that already completed
+        // sign-up (enrollment requires being authenticated already — see
+        // MfaSetup.tsx), so a real accessible workspace is expected here;
+        // refreshSessionFromBackend is still the one shared place that
+        // derives identity + workspace state, rather than duplicating it.
+        await platform.refreshSessionFromBackend();
+        setTimeout(() => navigate(sanitizeAppReturnTo(returnTo), { replace: true }), 800);
+      } catch (err) {
+        setStatus("error");
+        setErrorCode("invalid");
+        setErrorMsg(
+          err instanceof ApiError
+            ? err.message
+            : "That code is incorrect. Please try again.",
+        );
+        setCode("");
+        setTimeout(() => { errorRef.current?.focus(); inputRef.current?.focus(); }, 50);
+      }
+      return;
+    }
 
     const result = await mockAuthService.submitMfaChallenge(code);
     if (result.success) {
@@ -78,13 +106,15 @@ export function MfaChallenge() {
       </div>
 
       {/* Demo instruction */}
-      <div style={{ background: "rgba(0,120,212,0.06)", border: "1px solid rgba(0,120,212,0.15)", borderRadius: 10, padding: "12px 16px", marginBottom: 20 }}>
-        <p style={{ color: "#C9960C", ...GM, fontSize: 9, fontWeight: 700, margin: "0 0 4px" }}>FRONTEND DEMONSTRATION</p>
-        <p style={{ color: "#334155", ...GF, fontSize: 12, margin: 0, lineHeight: 1.5 }}>
-          Use code <strong style={{ color: "#07111F", ...GM }}>123456</strong> to succeed or{" "}
-          <strong style={{ color: "#07111F", ...GM }}>000000</strong> to test the lockout state.
-        </p>
-      </div>
+      {!USE_REAL_BACKEND && (
+        <div style={{ background: "rgba(0,120,212,0.06)", border: "1px solid rgba(0,120,212,0.15)", borderRadius: 10, padding: "12px 16px", marginBottom: 20 }}>
+          <p style={{ color: "#C9960C", ...GM, fontSize: 9, fontWeight: 700, margin: "0 0 4px" }}>FRONTEND DEMONSTRATION</p>
+          <p style={{ color: "#334155", ...GF, fontSize: 12, margin: 0, lineHeight: 1.5 }}>
+            Use code <strong style={{ color: "#07111F", ...GM }}>123456</strong> to succeed or{" "}
+            <strong style={{ color: "#07111F", ...GM }}>000000</strong> to test the lockout state.
+          </p>
+        </div>
+      )}
 
       {/* Error */}
       {errorMsg && (

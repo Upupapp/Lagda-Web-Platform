@@ -3,12 +3,12 @@
 // No backend, no storage. Privacy: single-user access only.
 
 import { useState, useEffect } from "react";
-import { Link, useParams, useNavigate } from "react-router";
+import { Link, useParams } from "react-router";
 import {
   ArrowLeft, PenLine, ThumbsUp, Eye, FileCheck, Mail,
-  AlertCircle, Clock, Calendar, CheckCircle2, Lock,
+  AlertCircle, Clock, CheckCircle2, Lock,
   BookOpen, Shield, FileText, Info, ChevronRight,
-  Building2, User,
+  User,
 } from "lucide-react";
 import { AppContent, PageHeader } from "../../../components/platform";
 import { inboxService } from "../../../services/mock/inbox.service";
@@ -23,7 +23,6 @@ const AZURE  = "#0078D4";
 const NAVY   = "#07111F";
 const SLATE  = "#64748B";
 const SILVER = "#8A9BAE";
-const GOLD   = "#C9960C";
 const GREEN  = "#16A34A";
 const RED    = "#DC2626";
 const AMBER  = "#D97706";
@@ -307,7 +306,6 @@ function PrimaryActionArea({ item }: { item: RecipientInboxItem }) {
 export function AssignmentDetailPage() {
   usePageMeta();
   const { requestId } = useParams<{ requestId: string }>();
-  const navigate = useNavigate();
 
   const [item, setItem]     = useState<RecipientInboxItem | null>(null);
   const [loading, setLoading] = useState(true);

@@ -89,13 +89,13 @@ export function WorkflowCreatePage() {
   }, [hasUnsavedBasics]);
 
   const leaveBuilder = useCallback((destination: string) => {
-    if (!hasUnsavedBasics) { navigate(destination); return; }
+    if (!hasUnsavedBasics) { void navigate(destination); return; }
     confirm({
       title: "Leave without creating this workflow?",
       body: "The workflow details you entered have not been created yet. They are temporary frontend state and will be cleared.",
       confirmLabel: "Leave and clear",
       destructive: true,
-      onConfirm: () => navigate(destination),
+      onConfirm: () => { void navigate(destination); },
     });
   }, [hasUnsavedBasics, confirm, navigate]);
 
@@ -125,7 +125,7 @@ export function WorkflowCreatePage() {
   useEffect(() => {
     if (!wantsRecipientConversion || data.workflow || conversionPreview) return;
     let cancelled = false;
-    signingWorkflowService
+    void signingWorkflowService
       .previewRecipientOrderConversion(data.documentId, data.txn, data.ctx)
       .then(result => { if (!cancelled && result.ok) setConversionPreview(result.data); });
     return () => { cancelled = true; };
@@ -156,7 +156,7 @@ export function WorkflowCreatePage() {
       body: "The stages created from the current recipient order will be removed and the draft workflow deleted. The document's own recipient order is not changed.",
       confirmLabel: "Undo and remove draft",
       destructive: true,
-      onConfirm: async () => {
+      onConfirm: () => { void (async () => {
         setBusy(true);
         const result = await signingWorkflowService.removeWorkflowDraftDemonstration(
           data.documentId, String(data.workflow!.id), data.ctx,
@@ -168,7 +168,7 @@ export function WorkflowCreatePage() {
           announce("The generated stages were removed. You can start again.");
           setStep("basics");
         }
-      },
+      })(); },
     });
   }, [data, announce, setStep, confirm]);
 
@@ -306,7 +306,7 @@ export function WorkflowCreatePage() {
 
   const openFieldPlacement = useCallback(() => {
     const returnTo = buildSafeReturnPath(location.pathname);
-    navigate(`/app/prepare/fields?returnTo=${encodeURIComponent(returnTo)}`);
+    void navigate(`/app/prepare/fields?returnTo=${encodeURIComponent(returnTo)}`);
   }, [navigate, location.pathname]);
 
   const selectedAssignment = useMemo(() => {

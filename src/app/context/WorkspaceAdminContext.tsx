@@ -10,7 +10,6 @@ import {
   type ReactNode,
 } from "react";
 import type {
-  WorkspaceId,
   WorkspaceMemberId,
   WorkspaceInvitationId,
   WorkspaceTeamId,
@@ -28,7 +27,6 @@ import type {
   WorkspaceSettings,
   WorkspaceMemberQuery,
   WorkspaceActivityQuery,
-  WorkspacePermission,
   WorkspaceInviteInput,
   WorkspaceTeamCreateInput,
   WorkspaceRoleCreateInput,

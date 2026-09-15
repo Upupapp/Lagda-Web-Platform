@@ -38,6 +38,18 @@ export const PUBLIC_ROUTES: RouteMeta[] = [
     status: "implemented",
     analyticsName: "home",
   },
+  {
+    path: "/home",
+    title: "LAGDA — Philippine Legal Document Automation",
+    description: "LAGDA eSignature helps Philippine professionals and organizations prepare, send, sign, track, verify, and securely manage documents online.",
+    breadcrumb: "Home",
+    layout: "public",
+    requiresAuth: false,
+    isPublic: true,
+    isIndexable: false,
+    status: "implemented",
+    analyticsName: "home_alias",
+  },
 
   // eSignature section
   {
@@ -329,6 +341,9 @@ export const AUTH_ROUTES: RouteMeta[] = [
   { path: "/auth/link-error",   title: "Link Problem — LAGDA",                breadcrumb: "Link Problem",      section: "auth", product: "shared", layout: "auth", requiresAuth: false, isPublic: false, isIndexable: false, status: "implemented", analyticsName: "link_error" },
   { path: "/mfa/setup",         title: "Set Up Two-Factor Authentication — LAGDA", breadcrumb: "Set Up MFA",   section: "auth", product: "shared", layout: "auth", requiresAuth: false, isPublic: false, isIndexable: false, status: "implemented", analyticsName: "mfa_setup" },
   { path: "/mfa/recovery",      title: "Recovery Codes — LAGDA",              breadcrumb: "Recovery Codes",    section: "auth", product: "shared", layout: "auth", requiresAuth: false, isPublic: false, isIndexable: false, status: "implemented", analyticsName: "mfa_recovery" },
+  { path: "/verify-email/:code",    title: "Verify Your Email — LAGDA",       breadcrumb: "Verify Email",      section: "auth", product: "shared", layout: "auth", requiresAuth: false, isPublic: false, isIndexable: false, status: "implemented", analyticsName: "verify_email_link" },
+  { path: "/reset-password/:token", title: "Reset Password — LAGDA",          breadcrumb: "Reset Password",    section: "auth", product: "shared", layout: "auth", requiresAuth: false, isPublic: false, isIndexable: false, status: "implemented", analyticsName: "reset_password_link" },
+  { path: "/firebase-auth/action",  title: "Verifying Your Email — LAGDA",    breadcrumb: "Verify Email",      section: "auth", product: "shared", layout: "auth", requiresAuth: false, isPublic: false, isIndexable: false, status: "implemented", analyticsName: "firebase_verification_action" },
   { path: "/onboarding/profile",       title: "Your Profile — LAGDA",         breadcrumb: "Profile",       section: "auth", product: "shared", layout: "auth", requiresAuth: true,  isPublic: false, isIndexable: false, status: "implemented", analyticsName: "onboarding_profile" },
   { path: "/onboarding/use-case",      title: "How You Will Use LAGDA",       breadcrumb: "Use Case",      section: "auth", product: "shared", layout: "auth", requiresAuth: true,  isPublic: false, isIndexable: false, status: "implemented", analyticsName: "onboarding_use_case" },
   { path: "/onboarding/workspace",     title: "Set Up Your Workspace — LAGDA", breadcrumb: "Workspace",    section: "auth", product: "shared", layout: "auth", requiresAuth: true,  isPublic: false, isIndexable: false, status: "implemented", analyticsName: "onboarding_workspace" },

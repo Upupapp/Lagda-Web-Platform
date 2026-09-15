@@ -107,10 +107,10 @@ export function MobileNav() {
     triggerRef.current?.focus();
   }, []);
 
-  const handleSignOut = useCallback(() => {
+  const handleSignOut = useCallback(async () => {
     setDrawerOpen(false);
-    signOut();
-    navigate("/sign-in");
+    await signOut();
+    void navigate("/sign-in");
   }, [signOut, navigate]);
 
   const openSearch = useCallback(() => {

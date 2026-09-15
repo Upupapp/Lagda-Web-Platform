@@ -3,11 +3,10 @@
 // All values clear on unmount, cancellation, and after successful simulation.
 
 import React, { useEffect, useRef, useState } from "react";
-import { SettingsPage, SSection, SField, BTN_PRIMARY, BTN_SECONDARY } from "./SettingsShell";
+import { SettingsPage, SSection, SField, BTN_SECONDARY } from "./SettingsShell";
 import { mockSecuritySettingsService } from "../../../services/mock/settings.service";
 
 const GF    = { fontFamily: "'Geist', sans-serif" };
-const NAVY  = "#07111F";
 const AZURE = "#0078D4";
 const SLATE = "#64748B";
 const RED   = "#DC2626";

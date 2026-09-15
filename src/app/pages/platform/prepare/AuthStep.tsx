@@ -14,6 +14,7 @@ import {
 } from "../../../models/prepare";
 import type { PrepAuthMethodId, PrepParticipant } from "../../../models/prepare";
 import { StepBanner, StepTwoColumn, RailCard } from "../../../components/prepare/StepBanner";
+import { USE_REAL_BACKEND } from "../../../services/backend-flag";
 
 const GF     = { fontFamily: "'Geist', sans-serif" };
 const NAVY   = "#07111F";
@@ -262,14 +263,22 @@ export function AuthStep() {
         </legend>
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           {PREP_AUTH_METHODS.map(m => {
-            const unavail = m.availability === "planned" || m.availability === "enterprise";
+            // Real-backend mode (P2 §7): only "none" is server-enforced —
+            // see isAuthMethodAvailableForParticipant's matching gate for
+            // the per-participant override list below. Checked as an
+            // independent OR here (not routed through that function) so
+            // mock-mode's existing plan/enterprise-only gating is unchanged.
+            const realBackendUnsupported = USE_REAL_BACKEND && m.id !== "none";
+            const unavail = m.availability === "planned" || m.availability === "enterprise" || realBackendUnsupported;
             return (
               <MethodCard
                 key={m.id}
                 methodId={m.id}
                 selected={auth.defaultMethod === m.id}
                 disabled={unavail}
-                disabledReason={unavail ? m.planNote : undefined}
+                disabledReason={realBackendUnsupported
+                  ? "Not yet supported for real sending — only the secure invitation link is enforced by the server today."
+                  : (unavail ? m.planNote : undefined)}
                 name="default-auth"
                 onChange={handleDefaultChange}
               />

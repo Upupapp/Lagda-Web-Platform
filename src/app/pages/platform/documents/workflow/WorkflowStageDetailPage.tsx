@@ -69,7 +69,7 @@ export function WorkflowStageDetailPage() {
 
   const openFieldPlacement = useCallback(() => {
     const returnTo = buildSafeReturnPath(location.pathname);
-    navigate(`/app/prepare/fields?returnTo=${encodeURIComponent(returnTo)}`);
+    void navigate(`/app/prepare/fields?returnTo=${encodeURIComponent(returnTo)}`);
   }, [navigate, location.pathname]);
 
   const applyParticipantChange = useCallback(async (input: UpdateStageParticipantInput) => {
@@ -328,7 +328,7 @@ export function WorkflowStageDetailPage() {
             emptyMessage="This stage has no outstanding issues."
             onRepair={(issue) => {
               if (issue.repairTarget === "field-placement") openFieldPlacement();
-              else navigate(`${base}/create`);
+              else void navigate(`${base}/create`);
             }}
           />
 

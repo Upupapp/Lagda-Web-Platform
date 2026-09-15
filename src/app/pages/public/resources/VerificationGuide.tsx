@@ -4,7 +4,6 @@ import {
 } from "../../../components/resources/ResourceComponents";
 
 const GF = { fontFamily: "'Geist', sans-serif" };
-const GM = { fontFamily: "'Geist Mono', monospace" };
 
 const RESULT_STATES = [
   { state: "Verified",                     color: "#16A34A", desc: "LAGDA found a completed transaction record. Where file comparison was performed, the supplied file matched the recorded document." },

@@ -4,7 +4,6 @@ import {
 } from "../../../components/resources/ResourceComponents";
 
 const GF = { fontFamily: "'Geist', sans-serif" };
-const GM = { fontFamily: "'Geist Mono', monospace" };
 
 export function SecurityGuide() {
   return (

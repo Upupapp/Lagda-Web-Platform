@@ -2,10 +2,10 @@
 // Search, filter by status/role/team, sort, multi-select bulk actions.
 // Frontend-only demonstration. No Burgundy. No eNotary.
 
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router";
 import { WorkspaceAdminProvider, useWorkspaceAdmin } from "../../../context/WorkspaceAdminContext";
-import type { WorkspaceMemberSummary, WorkspaceMemberStatus, WorkspaceRoleId, WorkspaceTeamId } from "../../../models/workspace-admin";
+import type { WorkspaceMemberSummary, WorkspaceMemberStatus } from "../../../models/workspace-admin";
 import { WORKSPACE_MEMBER_STATUS_LABELS } from "../../../models/workspace-admin";
 
 const GF    = { fontFamily: "'Geist', sans-serif" };
@@ -91,7 +91,7 @@ const SYSTEM_ROLES = [
 
 function MembersInner() {
   const { state, asyncLoadMembers } = useWorkspaceAdmin();
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
   const [search, setSearch] = useState(searchParams.get("search") ?? "");
   const [status, setStatus] = useState<string>(searchParams.get("status") ?? "all");
   const [roleId, setRoleId] = useState<string>(searchParams.get("role") ?? "all");
@@ -102,7 +102,7 @@ function MembersInner() {
   const debouncedSearch = useDebounce(search, 280);
 
   useEffect(() => {
-    asyncLoadMembers({
+    void asyncLoadMembers({
       search: debouncedSearch || undefined,
       status: status !== "all" ? (status as WorkspaceMemberStatus) : "all",
       roleId: roleId !== "all" ? roleId : undefined,

@@ -4,7 +4,7 @@
 // Burgundy never used. eNotary never referenced.
 
 import React, { useEffect, useState } from "react";
-import { useNavigate, Link } from "react-router";
+import { Link } from "react-router";
 import { ContactProvider, useContacts } from "../../../context/ContactContext";
 import type { ContactGroupSummary, ContactScope } from "../../../models/contacts";
 import { CONTACT_SCOPE_LABELS } from "../../../models/contacts";

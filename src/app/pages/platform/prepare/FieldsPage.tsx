@@ -16,7 +16,13 @@ import React, {
 } from "react";
 import { useNavigate } from "react-router";
 import { usePrepare } from "../../../context/PrepareContext";
+import { usePlatform } from "../../../context/PlatformContext";
 import { FieldEditorProvider, useFieldEditor } from "../../../context/FieldEditorContext";
+import { USE_REAL_BACKEND } from "../../../services/backend-flag";
+import { ApiError } from "../../../services/api-client";
+import { realPreparationService } from "../../../services/real/preparation.service";
+import { isBackendFieldType, toBackendFieldInput, fromBackendField } from "../../../services/prepare/field-sync";
+import { isDocumentSynced, markDocumentSynced } from "../../../services/prepare/sync-markers";
 import type {
   FieldId,
   FieldDefinition,
@@ -65,14 +71,6 @@ const WHITE  = "#FFFFFF";
 // A4 portrait base dimensions at 100% editor zoom
 const BASE_PAGE_WIDTH  = 595;
 const PAGE_RATIO       = 842 / 595; // height / width ≈ 1.415
-
-// ── Participant lookup helper ──────────────────────────────────────────────────
-function useParticipantById(participants: PrepParticipant[]) {
-  return useCallback((id: string | null) =>
-    id ? participants.find(p => p.id === id) ?? null : null,
-    [participants],
-  );
-}
 
 // ── Fictional page preview ────────────────────────────────────────────────────
 // Shows placeholder content; does not display any selected file content.
@@ -286,7 +284,7 @@ function PageCanvas({ participants }: PageCanvasProps) {
   const {
     currentDocumentId, currentPageId, currentPageFields, documents,
     selectedFieldIds, mode, pendingFieldType, zoom,
-    addField, moveField, resizeField, selectFields, clearSelection,
+    addField, moveField, selectFields, clearSelection,
     participantIdentities,
   } = useFieldEditor();
 
@@ -317,16 +315,6 @@ function PageCanvas({ participants }: PageCanvasProps) {
   );
 
   // Convert client coords to normalized page coords
-  const toNorm = useCallback((clientX: number, clientY: number) => {
-    const canvas = canvasRef.current;
-    if (!canvas) return { nx: 0, ny: 0 };
-    const b = canvas.getBoundingClientRect();
-    return {
-      nx: Math.max(0, Math.min(1, (clientX - b.left) / b.width)),
-      ny: Math.max(0, Math.min(1, (clientY - b.top)  / b.height)),
-    };
-  }, []);
-
   // Canvas click: place new field or clear selection
   const handleCanvasClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
     if (mode === "place-field" && pendingFieldType && currentDocumentId && currentPageId) {
@@ -698,13 +686,23 @@ function FieldPalettePanel() {
             const tier      = FIELD_PLAN_TIER[type];
             const isActive  = mode === "place-field" && pendingFieldType === type;
             const limited   = tier === "enterprise" || tier === "planned";
+            // TRUTHFUL PERSISTENCE (P1.5 §3): a field type the backend
+            // can't represent (multiline-text, radio-group, acknowledgment,
+            // sender-text) is still placeable — it's real, useful work for
+            // whoever is drafting — but must never look like it will be
+            // saved server-side when it can't be. Badge, not disable: the
+            // field editor's existing UX is preserved, the claim is just
+            // made honest.
+            const notPersisted = USE_REAL_BACKEND && !isBackendFieldType(type);
             return (
               <button
                 key={type}
                 onClick={() => setPendingField(isActive ? null : type)}
                 aria-pressed={isActive}
                 disabled={limited}
-                title={FIELD_TYPE_DESCRIPTIONS[type]}
+                title={notPersisted
+                  ? `${FIELD_TYPE_DESCRIPTIONS[type]} — not saved to the server yet; local to this session only.`
+                  : FIELD_TYPE_DESCRIPTIONS[type]}
                 style={{
                   ...GF,
                   display: "flex",
@@ -729,6 +727,7 @@ function FieldPalettePanel() {
                     {tier === "standard"   && <span style={{ fontSize: 9, marginLeft: 5, color: AZURE, fontWeight: 700 }}>PLAN</span>}
                     {tier === "enterprise" && <span style={{ fontSize: 9, marginLeft: 5, color: SILVER, fontWeight: 700 }}>ENTERPRISE</span>}
                     {tier === "planned"    && <span style={{ fontSize: 9, marginLeft: 5, color: SILVER, fontWeight: 700 }}>COMING SOON</span>}
+                    {notPersisted          && <span style={{ fontSize: 9, marginLeft: 5, color: "#B8720A", fontWeight: 700 }}>NOT SAVED</span>}
                   </div>
                   <div style={{ fontSize: 10, color: SILVER, lineHeight: 1.4, marginTop: 1 }}>
                     {FIELD_TYPE_DESCRIPTIONS[type]}
@@ -1326,7 +1325,9 @@ function KeyboardPlaceDialog({ participants, onClose }: KeyboardPlaceDialogProps
               style={{ ...GF, width: "100%", padding: "7px 10px", fontSize: 13, border: "1px solid #D1D9E0", borderRadius: 7, color: NAVY }}
             >
               {FIELD_TYPE_GROUPS.flatMap(g => g.types).map(t => (
-                <option key={t} value={t}>{FIELD_TYPE_LABELS[t]}</option>
+                <option key={t} value={t}>
+                  {FIELD_TYPE_LABELS[t]}{USE_REAL_BACKEND && !isBackendFieldType(t) ? " (not saved to server)" : ""}
+                </option>
               ))}
             </select>
           </div>
@@ -1435,7 +1436,7 @@ interface ToolbarProps {
   returnLabel:   string;
 }
 
-function EditorToolbar({ draftTitle, participants, draft, showKbDialog, setShowKbDialog, onContinue, returnTo, returnLabel }: ToolbarProps) {
+function EditorToolbar({ draftTitle, participants: _participants, draft, showKbDialog: _showKbDialog, setShowKbDialog, onContinue, returnTo, returnLabel }: ToolbarProps) {
   const {
     undo, redo, canUndo, canRedo,
     zoom, setZoom,
@@ -1443,7 +1444,7 @@ function EditorToolbar({ draftTitle, participants, draft, showKbDialog, setShowK
     showValidation, toggleValidation,
     saveState,
     validation, runValidation,
-    mode, setMode, pendingFieldType, setPendingField,
+    pendingFieldType,
     copySelected, paste, clipboard,
     fields,
   } = useFieldEditor();
@@ -1621,11 +1622,15 @@ function FieldsPageInner() {
   const returnLabel = returnTo ? "Signing Workflow" : "Review";
   const {
     loadState, errorMessage,
-    initialize, discard,
+    initialize, loadRealFields,
+    documents, fields,
     selectedField, showFieldList, showValidation, toggleValidation,
   } = useFieldEditor();
+  const platform = usePlatform();
 
   const [showKbDialog, setShowKbDialog] = useState(false);
+  const [fieldSyncError, setFieldSyncError] = useState<string | null>(null);
+  const [savingFields, setSavingFields] = useState(false);
 
   const participants = draft?.participants ?? [];
 
@@ -1636,6 +1641,137 @@ function FieldsPageInner() {
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [draft?.id]);
+
+  // Real backend document(s) this editor session covers — each EditorDocument
+  // maps back to the PrepFile it was built from (prepFileId), which is where
+  // upload already stashed the real backendDocumentId. A transaction with
+  // several files therefore has several real preparations, one per document
+  // — the backend has no single "preparation for the whole transaction"
+  // resource; see PreparationField living under one /documents/{id}/preparation.
+  const realDocumentIdByEditorDocId = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const doc of documents) {
+      const prepFile = draft?.files.find((f) => f.id === doc.prepFileId);
+      if (prepFile?.backendDocumentId) map.set(doc.id, prepFile.backendDocumentId);
+    }
+    return map;
+  }, [documents, draft?.files]);
+
+  // Last-known revision per real document, needed for optimistic
+  // concurrency on save() — populated by the load effect below and updated
+  // after every successful save, never guessed.
+  const revisionByDocumentIdRef = useRef(new Map<string, number>());
+
+  // Load once per distinct real-document set (refresh/resume) — not on
+  // every keystroke; field edits stay purely local (COMMIT_FIELDS) until
+  // the visitor continues.
+  const loadedForDraftIdRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!USE_REAL_BACKEND || !draft || !platform.currentWorkspace) return;
+    if (realDocumentIdByEditorDocId.size === 0) return;
+    if (loadedForDraftIdRef.current === draft.id) return;
+    loadedForDraftIdRef.current = draft.id;
+
+    const workspaceId = platform.currentWorkspace.id;
+    void (async () => {
+      const loaded: FieldDefinition[] = [];
+      // EMPTY-STATE RECONCILIATION (same reasoning as PrepareContext's
+      // participant load): a document with zero saved fields is only
+      // authoritative once THIS document has completed a save before —
+      // otherwise a brand-new real document's empty preparation would wipe
+      // fields the visitor just placed locally but hasn't saved yet.
+      let anyDocumentHadRealData = false;
+      for (const [editorDocId, backendDocId] of realDocumentIdByEditorDocId) {
+        try {
+          const prep = await realPreparationService.get(workspaceId, backendDocId);
+          revisionByDocumentIdRef.current.set(backendDocId, prep.revision);
+          if (prep.fields.length > 0) {
+            markDocumentSynced("fields", backendDocId);
+            anyDocumentHadRealData = true;
+          }
+          const doc = documents.find((d) => d.id === editorDocId);
+          const pageIdForNumber = (n: number) => doc?.pages.find((p) => p.pageNumber === n)?.id ?? null;
+          for (const f of prep.fields) {
+            const translated = fromBackendField(f, editorDocId, pageIdForNumber);
+            if (translated) loaded.push(translated);
+          }
+        } catch {
+          setFieldSyncError("Could not load previously saved fields. Your local changes are unaffected.");
+        }
+      }
+      const anyDocumentAlreadySynced = [...realDocumentIdByEditorDocId.values()]
+        .some((id) => isDocumentSynced("fields", id));
+      if (loaded.length > 0 || anyDocumentHadRealData || anyDocumentAlreadySynced) {
+        // A previously-synced document with a genuinely empty backend list
+        // must still clear whatever local fields are sitting in the editor
+        // (e.g. restored from localStorage before a refresh) — loadRealFields
+        // replaces the field set outright, same as a fresh load would.
+        loadRealFields(loaded);
+      }
+    })();
+  }, [draft, platform.currentWorkspace, realDocumentIdByEditorDocId, documents, loadRealFields]);
+
+  // Persists the CURRENT field set to every real document this editor
+  // covers, before continuing on. A field of a type the backend doesn't
+  // support (multiline-text, radio-group, acknowledgment, sender-text —
+  // see field-sync.ts) is skipped, not silently coerced into a type it
+  // isn't; it stays local/in-session only, same as it always has.
+  const [revisionConflict, setRevisionConflict] = useState(false);
+
+  const saveFieldsToBackend = useCallback(async (): Promise<boolean> => {
+    if (!USE_REAL_BACKEND || !platform.currentWorkspace || realDocumentIdByEditorDocId.size === 0) return true;
+    const workspaceId = platform.currentWorkspace.id;
+    setSavingFields(true);
+    let ok = true;
+    let conflict = false;
+    for (const [editorDocId, backendDocId] of realDocumentIdByEditorDocId) {
+      const doc = documents.find((d) => d.id === editorDocId);
+      const pageNumberOf = (pageId: string) => doc?.pages.find((p) => p.id === pageId)?.pageNumber ?? null;
+      const inputs = fields
+        .filter((f) => f.documentId === editorDocId && isBackendFieldType(f.type))
+        .map((f) => toBackendFieldInput(f, pageNumberOf))
+        .filter((f): f is NonNullable<typeof f> => f !== null);
+      const expectedRevision = revisionByDocumentIdRef.current.get(backendDocId) ?? 0;
+      try {
+        const saved = await realPreparationService.save(workspaceId, backendDocId, expectedRevision, inputs);
+        revisionByDocumentIdRef.current.set(backendDocId, saved.revision);
+        markDocumentSynced("fields", backendDocId);
+      } catch (err) {
+        ok = false;
+        if (err instanceof ApiError && err.status === 409) {
+          // REVISION CONFLICT: someone/something else saved this document's
+          // fields since we last read it. Never silently overwrite that
+          // newer state — refresh the revision number so a retry compares
+          // against the truth, but leave the visitor's local edits and
+          // navigation blocked until they explicitly choose to proceed.
+          conflict = true;
+          try {
+            const latest = await realPreparationService.get(workspaceId, backendDocId);
+            revisionByDocumentIdRef.current.set(backendDocId, latest.revision);
+          } catch {
+            // Revision refresh itself failed — surfaced via the generic
+            // message below; the visitor can retry Continue again.
+          }
+        } else {
+          setFieldSyncError(
+            err instanceof ApiError
+              ? err.message
+              : "Could not save your field placement. Please try again.",
+          );
+        }
+      }
+    }
+    setSavingFields(false);
+    setRevisionConflict(conflict);
+    if (conflict) {
+      setFieldSyncError(
+        "This document's fields were changed elsewhere since you loaded it. Your local placement is unchanged — review it, then press Continue again to save over the latest version.",
+      );
+    } else if (ok) {
+      setFieldSyncError(null);
+    }
+    return ok && !conflict;
+  }, [platform.currentWorkspace, realDocumentIdByEditorDocId, documents, fields]);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -1719,6 +1855,19 @@ function FieldsPageInner() {
         Place Document Fields — {draftTitle}
       </h1>
 
+      {fieldSyncError && (
+        <div
+          role="alert"
+          style={{
+            padding: "8px 16px", background: revisionConflict ? "#FFF4E5" : "#FDECEA",
+            color: revisionConflict ? "#7A4A00" : "#611A15",
+            fontSize: 13, borderBottom: `1px solid ${revisionConflict ? "#F5D9A8" : "#F5C6C0"}`, flexShrink: 0,
+          }}
+        >
+          {fieldSyncError}
+        </div>
+      )}
+
       {/* Toolbar */}
       <EditorToolbar
         draftTitle={draftTitle}
@@ -1726,7 +1875,13 @@ function FieldsPageInner() {
         draft={draft}
         showKbDialog={showKbDialog}
         setShowKbDialog={setShowKbDialog}
-        onContinue={() => navigate(returnTo ?? "/app/prepare/confirmation")}
+        onContinue={() => {
+          if (savingFields) return; // already saving — ignore a double click
+          void (async () => {
+            const ok = await saveFieldsToBackend();
+            if (ok) void navigate(returnTo ?? "/app/prepare/confirmation");
+          })();
+        }}
         returnTo={returnTo}
         returnLabel={returnLabel}
       />

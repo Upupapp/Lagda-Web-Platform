@@ -51,12 +51,11 @@ export function SettingsOverviewPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    Promise.all([
+    void Promise.all([
       mockSecuritySettingsService.getSecurityOverview(),
       mockBillingSettingsService.getBillingAccount(),
       mockUsageService.getUsageSummary(),
     ]).then(([sec, billing, usage]) => {
-      const membersMetric = usage.metrics.find(m => m.id === "members-active");
       setData({
         mfaStatus:    sec.mfaStatus,
         sessions:     sec.activeSessionCount,

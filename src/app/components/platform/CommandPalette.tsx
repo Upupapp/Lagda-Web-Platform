@@ -33,7 +33,6 @@ import { TabStrip } from "./TabStrip";
 
 // ── Design tokens ─────────────────────────────────────────────────────────────
 
-const NAVY   = "#07111F";
 const AZURE  = "#0078D4";
 const SLATE  = "#64748B";
 const SILVER = "#94A3B8";
@@ -789,7 +788,7 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
       globalSearchService.addRecentDestination(resultLabel, path);
     }
     onClose();
-    navigate(path);
+    void navigate(path);
   }
 
   function handleResultSelect(result: GlobalSearchResult) {
@@ -803,7 +802,7 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
     setRecentQueries(globalSearchService.getRecentQueries());
     setRecentDests(globalSearchService.getRecentDestinations());
     onClose();
-    navigate(result.destination.path);
+    void navigate(result.destination.path);
   }
 
   function handleCommandSelect(cmd: CommandPaletteCommand) {
@@ -1099,7 +1098,7 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
             <button
               onClick={() => {
                 onClose();
-                navigate(`/app/search${query ? `?q=${encodeURIComponent(query.trim())}` : ""}`);
+                void navigate(`/app/search${query ? `?q=${encodeURIComponent(query.trim())}` : ""}`);
               }}
               style={{
                 ...GF, fontSize: 11, color: AZURE,

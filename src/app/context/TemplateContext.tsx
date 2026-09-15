@@ -8,7 +8,6 @@ import React, {
   useCallback,
   useContext,
   useReducer,
-  useEffect,
   useRef,
 } from "react";
 import type {
@@ -246,14 +245,14 @@ export function TemplateProvider({ children }: { children: React.ReactNode }) {
     <TemplateContext.Provider value={{
       state,
       setQuery,
-      loadList,
-      loadTemplate,
+      loadList: q => { void loadList(q); },
+      loadTemplate: id => { void loadTemplate(id); },
       clearTemplate,
-      makeAvailable,
-      returnToDraft,
-      archive,
-      restore,
-      duplicate,
+      makeAvailable: id => { void makeAvailable(id); },
+      returnToDraft: id => { void returnToDraft(id); },
+      archive: id => { void archive(id); },
+      restore: id => { void restore(id); },
+      duplicate: (id, onDone) => { void duplicate(id, onDone); },
       clearOpMessage,
     }}>
       {children}

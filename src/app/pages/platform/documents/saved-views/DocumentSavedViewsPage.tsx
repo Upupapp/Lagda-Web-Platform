@@ -6,13 +6,13 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { Link } from "react-router";
 import {
-  BookOpen, Plus, Archive, RotateCcw, Pencil, Trash2, X,
+  BookOpen, Archive, RotateCcw, Pencil, Trash2, X,
   AlertCircle, RefreshCw, Info, Search, Copy, Star, AlertTriangle,
 } from "lucide-react";
 import { usePlatform } from "../../../../context/PlatformContext";
 import { AppContent, PageHeader, EmptyStateLayout, SkeletonBlock, SKELETON_STYLE } from "../../../../components/platform";
 import { documentOrganizationService } from "../../../../services/mock/document-organization.service";
-import type { OrgSavedView, OrgViewId, OrgViewStatus } from "../../../../models/document-organization";
+import type { OrgSavedView, OrgViewStatus } from "../../../../models/document-organization";
 import { usePageMeta } from "../../../../hooks/usePageMeta";
 import { Z } from "../../../../utils/z-index";
 
@@ -25,8 +25,6 @@ const SLATE2 = "#E2E8F0";
 const AMBER  = "#D97706";
 const GREEN  = "#16A34A";
 const RED    = "#DC2626";
-const GOLD   = "#C9960C";
-const VIOLET = "#7C3AED";
 
 const STYLES = SKELETON_STYLE + `
   .sv-grid {

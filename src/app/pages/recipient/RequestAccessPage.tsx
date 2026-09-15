@@ -13,7 +13,7 @@ const SILVER = "#8A9BAE";
 const WHITE  = "#FFFFFF";
 
 export function RequestAccessPage() {
-  const { request, setStep, state } = useRecipient();
+  const { request, setStep } = useRecipient();
 
   if (!request) return null;
 

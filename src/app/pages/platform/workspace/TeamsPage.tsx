@@ -5,7 +5,6 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router";
 import { WorkspaceAdminProvider, useWorkspaceAdmin } from "../../../context/WorkspaceAdminContext";
-import type { WorkspaceTeamCreateInput } from "../../../models/workspace-admin";
 import { Z } from "../../../utils/z-index";
 
 const GF    = { fontFamily: "'Geist', sans-serif" };
@@ -14,7 +13,6 @@ const NAVY  = "#07111F";
 const AZURE = "#0078D4";
 const SLATE = "#64748B";
 const SILVER= "#8A9BAE";
-const LIGHT = "#F0F7FF";
 
 function CreateTeamModal({ onDone, onCancel }: { onDone: () => void; onCancel: () => void }) {
   const { asyncCreateTeam, asyncLoadTeams } = useWorkspaceAdmin();
@@ -101,7 +99,7 @@ function TeamsInner() {
   const [showArchived, setShowArchived] = useState(false);
   const [showModal, setShowModal] = useState(false);
 
-  useEffect(() => { asyncLoadTeams(showArchived); }, [asyncLoadTeams, showArchived]);
+  useEffect(() => { void asyncLoadTeams(showArchived); }, [asyncLoadTeams, showArchived]);
 
   const active   = state.teams.filter(t => t.status === "active");
   const archived = state.teams.filter(t => t.status === "archived");

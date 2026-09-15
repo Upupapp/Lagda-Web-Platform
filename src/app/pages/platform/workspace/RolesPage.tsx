@@ -5,7 +5,7 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router";
 import { WorkspaceAdminProvider, useWorkspaceAdmin } from "../../../context/WorkspaceAdminContext";
-import type { WorkspaceRoleCreateInput, WorkspacePermission } from "../../../models/workspace-admin";
+import type { WorkspacePermission } from "../../../models/workspace-admin";
 import { ALL_PERMISSIONS } from "../../../models/workspace-admin";
 import { Z } from "../../../utils/z-index";
 
@@ -139,7 +139,7 @@ function RolesInner() {
   const [showArchived, setShowArchived] = useState(false);
   const [showModal, setShowModal] = useState(false);
 
-  useEffect(() => { asyncLoadRoles(showArchived); }, [asyncLoadRoles, showArchived]);
+  useEffect(() => { void asyncLoadRoles(showArchived); }, [asyncLoadRoles, showArchived]);
 
   const systemRoles = state.roles.filter(r => r.type === "system");
   const customActive = state.roles.filter(r => r.type === "custom" && r.status === "active");

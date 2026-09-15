@@ -13,8 +13,6 @@ import {
 
 const GF = { fontFamily: "'Geist', sans-serif" };
 
-const PH_TIMEZONES = ["Asia/Manila"] as const;
-
 // Representative subset of IANA timezones for display
 const TIMEZONE_OPTIONS: { value: string; label: string }[] = [
   { value: "Asia/Manila", label: "(UTC+8:00) Philippine Standard Time" },
@@ -70,7 +68,7 @@ export function OnboardingProfile() {
   function handleContinue() {
     if (!validate()) return;
     markStepDone("profile");
-    navigate("/onboarding/use-case");
+    void navigate("/onboarding/use-case");
   }
 
   return (

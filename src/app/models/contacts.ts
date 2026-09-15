@@ -309,9 +309,7 @@ export interface ContactCreateInput {
   note?:        string;
 }
 
-export interface ContactUpdateInput extends Partial<ContactCreateInput> {
-  // all fields optional
-}
+export type ContactUpdateInput = Partial<ContactCreateInput>;
 
 // ── Contact picker ────────────────────────────────────────────────────────────
 

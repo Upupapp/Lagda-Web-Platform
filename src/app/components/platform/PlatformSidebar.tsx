@@ -108,8 +108,8 @@ export function PlatformSidebar() {
   const isDashboard = useLocation().pathname === "/app/dashboard";
 
   const handleSignOut = useCallback(async () => {
-    signOut();
-    navigate("/sign-in");
+    await signOut();
+    void navigate("/sign-in");
   }, [signOut, navigate]);
 
   const sidebarWidth = collapsed ? 60 : 240;

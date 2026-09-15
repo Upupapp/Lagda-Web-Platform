@@ -92,7 +92,7 @@ export function renderWithAppProviders(
 
   const user = userEvent.setup();
 
-  const result = render(
+  const view = render(
     <MemoryRouter initialEntries={[route]}>
       <PlatformProvider>
         {authenticated ? (
@@ -105,7 +105,7 @@ export function renderWithAppProviders(
     rest,
   );
 
-  return { ...result, user };
+  return { ...view, user };
 }
 
 /**
@@ -120,7 +120,7 @@ export function renderWithRouter(
   const user = userEvent.setup();
   const router = createMemoryRouter(routes, { initialEntries: [route] });
 
-  const result = render(
+  const view = render(
     <PlatformProvider>
       {authenticated ? (
         <AutoSignIn>
@@ -132,7 +132,7 @@ export function renderWithRouter(
     </PlatformProvider>,
   );
 
-  return { ...result, user, router };
+  return { ...view, user, router };
 }
 
 /**

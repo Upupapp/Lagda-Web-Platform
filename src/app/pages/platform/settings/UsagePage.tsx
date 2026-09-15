@@ -93,7 +93,7 @@ export function UsagePage() {
     setLoading(false);
   };
 
-  useEffect(() => { load("current-month"); }, []);
+  useEffect(() => { void load("current-month"); }, []);
 
   const warnings = data?.metrics.filter(m => m.warningLevel === "approaching" || m.warningLevel === "exceeded") ?? [];
 
@@ -105,7 +105,7 @@ export function UsagePage() {
       <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 20, flexWrap: "wrap" }}>
         <span style={{ ...GF, fontSize: 13, color: SLATE }}>Period:</span>
         {PERIOD_OPTIONS.map(o => (
-          <button key={o.value} onClick={() => { setPeriod(o.value); load(o.value); }}
+          <button key={o.value} onClick={() => { setPeriod(o.value); void load(o.value); }}
             style={{ ...GF, fontSize: 13, fontWeight: period === o.value ? 700 : 400, padding: "6px 14px", border: `1.5px solid ${period === o.value ? AZURE : "#D1D9E0"}`, borderRadius: 8, background: period === o.value ? "#EBF5FB" : "#FFFFFF", color: period === o.value ? AZURE : SLATE, cursor: "pointer" }}>
             {o.label}
           </button>

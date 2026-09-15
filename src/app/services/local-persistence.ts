@@ -11,12 +11,16 @@
 //
 // TO REMOVE THIS LAYER LATER:
 //   1. Delete this file.
-//   2. In PlatformContext.tsx, PrepareContext.tsx, OnboardingContext.tsx:
-//      remove the `readJSON(...)` hydration call in each provider's mount
-//      effect, and the `writeJSON`/`removeKey` calls in their persist effects
-//      and reset/signOut/discard paths. Each call site is tagged
-//      `// LOCAL_PERSISTENCE` so they are grep-able:
+//   2. In PlatformContext.tsx, PrepareContext.tsx, OnboardingContext.tsx,
+//      PendingPreparationContext.tsx: remove the `readJSON(...)` hydration
+//      call in each provider's mount effect, and the `writeJSON`/`removeKey`
+//      calls in their persist effects and reset/signOut/discard paths. Each
+//      call site is tagged `// LOCAL_PERSISTENCE` so they are grep-able:
 //      `grep -rn LOCAL_PERSISTENCE src/app`.
+//      PendingPreparationContext retires differently from the other three:
+//      per-preparation, the moment each one is successfully handed to a real
+//      backend draft, rather than all at once — see that file's own note on
+//      the future database handoff.
 //   3. Delete this file's entry from session-lifecycle registrations if any
 //      remain.
 // Nothing outside those three providers should ever import this module
@@ -35,6 +39,19 @@ export const PERSISTENCE_KEYS = {
   onboardingState: `${NAMESPACE}onboarding-state`,
   prepareDraft: `${NAMESPACE}prepare-draft`,
   documentsStore: `${NAMESPACE}documents-store`,
+  pendingPreparation: `${NAMESPACE}pending-preparation`,
+  // A UX convenience ONLY — see PlatformContext's real-backend bootstrap.
+  // Never trusted as proof of workspace membership: every read is
+  // reconciled against the backend's own GET /workspaces before use, and a
+  // value that doesn't match a real accessible workspace is discarded.
+  activeWorkspaceId: `${NAMESPACE}active-workspace-id`,
+  // Marks which real backend documents have ALREADY completed at least one
+  // successful participant or field sync — see PrepareContext/FieldsPage's
+  // "empty-state reconciliation": a backend list of zero is only authoritative
+  // once we know this browser has actually pushed to it before; otherwise a
+  // zero-length GET on a brand-new document must not wipe not-yet-synced
+  // local edits. Never used as proof of anything else.
+  prepareSyncMarkers: `${NAMESPACE}prepare-sync-markers`,
 } as const;
 
 export type PersistenceKey = (typeof PERSISTENCE_KEYS)[keyof typeof PERSISTENCE_KEYS];

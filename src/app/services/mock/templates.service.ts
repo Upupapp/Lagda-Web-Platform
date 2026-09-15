@@ -9,7 +9,6 @@ import type {
   TemplateListQuery,
   TemplateView,
   TemplateSortField,
-  TemplateAction,
   TemplateActionAvailability,
   TemplateValidationResult,
   TemplateInstantiationResult,

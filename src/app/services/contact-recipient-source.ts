@@ -23,7 +23,7 @@
 //   - Private Contact fields (notes, phone, tags, history, owner) are never copied
 //     into a recipient row.
 
-import type { ContactGroupId, ContactId, ContactListItem } from "../models/contacts";
+import type { ContactGroupId, ContactListItem } from "../models/contacts";
 import { isValidEmailDirection, normalizeEmailForComparison } from "../utils/tabular-import";
 
 // ── Column headers ────────────────────────────────────────────────────────────

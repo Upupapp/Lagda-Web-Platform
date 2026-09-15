@@ -36,7 +36,6 @@ import {
   type CollaborationAnchorType,
   type CollaborationComment,
   type CollaborationMentionTarget,
-  type CollaborationThread,
   type CollaborationThreadCategory,
   type CollaborationThreadPriority,
   type CollaborationVisibility,
@@ -500,7 +499,7 @@ function MentionPicker({ documentId, threadId, visibility, teamId, selected, onC
   useEffect(() => {
     let live = true;
     setLoading(true);
-    documentCollaborationService
+    void documentCollaborationService
       .getMentionEligibility({ documentId, visibility, teamId, threadId }, { viewer })
       .then((r) => {
         if (!live) return;
@@ -614,7 +613,7 @@ export function CollaborationNewThreadPage() {
       },
     }, { viewer });
     setBusy(false);
-    if (result.ok) navigate(`${back}/${result.data.id}`, { replace: true });
+    if (result.ok) void navigate(`${back}/${result.data.id}`, { replace: true });
     else setError(result.message);
   }
 

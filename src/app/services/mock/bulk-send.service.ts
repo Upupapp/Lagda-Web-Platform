@@ -8,9 +8,9 @@
 // the single source of truth for transactions.
 
 import type {
-  BulkSendBatch, BulkSendBatchId, BulkSendBatchSummary, BulkSendQuery,
+  BulkSendBatch, BulkSendBatchSummary, BulkSendQuery,
   BulkSendRecipientRow, BulkSendRecipientRowId, BulkSendRoleMapping,
-  BulkSendVariableMapping, BulkSendSavedConfiguration, BulkSendSavedConfigurationId,
+  BulkSendVariableMapping, BulkSendSavedConfiguration,
   BulkSendImportPreview, BulkSendSourceColumn, BulkSendSourceSchema,
   BulkSendRecipientRowSource, BulkSendBulkCorrection, BulkSendCorrectionPreview,
   BulkSendRepresentativePreview, BulkSendBatchResultSummary, BulkSendProjectionResult,
@@ -21,7 +21,7 @@ import {
   bulkSendBatchId, bulkSendColumnId, bulkSendRowId, bulkSendProjectionId,
   bulkSendConfigId, isSafeBulkSendId, normalizeBulkSendText, normalizeHeader,
   BULK_SEND_BATCH_NAME_MAX, BULK_SEND_CONFIG_NAME_MAX, BULK_SEND_MAX_ROWS,
-  BULK_SEND_MAX_PREVIEW_ROWS, EMPTY_VALIDATION_SUMMARY, DEFAULT_BULK_SEND_QUERY,
+  BULK_SEND_MAX_PREVIEW_ROWS, EMPTY_VALIDATION_SUMMARY,
 } from "../../models/bulk-send";
 import {
   BULK_SEND_BATCH_FIXTURES, BULK_SEND_CONFIG_FIXTURES, BULK_SEND_DEMO_DATASETS,

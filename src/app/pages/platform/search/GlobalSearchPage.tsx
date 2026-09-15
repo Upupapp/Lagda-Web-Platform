@@ -4,8 +4,8 @@
 // No dangerouslySetInnerHTML. No localStorage. No eNotary scope or records.
 // Burgundy (#67023B) is NEVER used in this component.
 
-import { useState, useEffect, useCallback, useRef, type ReactNode } from "react";
-import { useSearchParams, useNavigate, Link } from "react-router";
+import { useState, useEffect, useRef, type ReactNode } from "react";
+import { useSearchParams, useNavigate } from "react-router";
 import {
   Search, X, AlertTriangle, Info, ChevronRight, ChevronDown,
   FileText, Inbox, Files, Users, ShieldCheck, Bell, BarChart2,
@@ -25,7 +25,6 @@ import { TabStrip } from "../../../components/platform/TabStrip";
 
 // ── Design tokens ─────────────────────────────────────────────────────────────
 
-const NAVY   = "#07111F";
 const AZURE  = "#0078D4";
 const SLATE  = "#64748B";
 const SILVER = "#8A9BAE";
@@ -610,7 +609,7 @@ export function GlobalSearchPage() {
 
   function handleNavigate(path: string, label: string) {
     globalSearchService.addRecentDestination(label, path);
-    navigate(path);
+    void navigate(path);
   }
 
   function handleScopeExpand(s: GlobalSearchScope) {

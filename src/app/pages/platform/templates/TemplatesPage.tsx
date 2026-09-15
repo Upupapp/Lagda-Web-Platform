@@ -3,25 +3,23 @@
 // Inline styles only. No Tailwind. No Burgundy.
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router";
+import { Link, useNavigate } from "react-router";
 import {
-  LayoutTemplate, Plus, Search, ChevronDown, Grid, List,
-  Clock, FileText, Users, GitBranch, Star, Archive,
-  AlertCircle, RefreshCw, Filter, X, ChevronRight,
-  Copy, CheckCircle2, PenLine, Eye, Zap,
+  LayoutTemplate, Plus, Search, Grid, List,
+  FileText, Users, GitBranch, Star,
+  AlertCircle, Filter,
 } from "lucide-react";
 import { TemplateProvider, useTemplates } from "../../../context/TemplateContext";
 import {
-  AppContent, EmptyStateLayout, SkeletonBlock, SKELETON_STYLE,
+  EmptyStateLayout, SkeletonBlock, SKELETON_STYLE,
 } from "../../../components/platform";
-import { PageHeader } from "../../../components/platform";
 import {
   TEMPLATE_VIEWS, TEMPLATE_CATEGORIES, TEMPLATE_STATUS_LABELS,
   TEMPLATE_STATUS_TONE, TEMPLATE_CATEGORY_LABELS, TEMPLATE_SCOPE_LABELS,
   DEFAULT_TEMPLATE_QUERY,
 } from "../../../models/templates";
 import type {
-  TemplateListItem, TemplateListQuery, TemplateView, TemplateSortField,
+  TemplateListItem, TemplateListQuery, TemplateSortField,
   TemplateCategory, TemplateStatus, TemplateScope,
 } from "../../../models/templates";
 import { usePageMeta } from "../../../hooks/usePageMeta";
@@ -34,14 +32,6 @@ const AZURE = "#0078D4";
 const GOLD  = "#C9960C";
 const GREEN = "#059669";
 const RED   = "#DC2626";
-
-const STATUS_COLOR: Record<string, string> = {
-  available:   GREEN,
-  draft:       GOLD,
-  archived:    "#94A3B8",
-  unavailable: "#94A3B8",
-  invalid:     RED,
-};
 
 const SORT_OPTIONS: { value: TemplateSortField; label: string }[] = [
   { value: "updatedAt",  label: "Last Updated" },
@@ -120,7 +110,7 @@ function TemplateCard({ item }: { item: TemplateListItem }) {
       tabIndex={0}
       role="button"
       aria-label={`Open template: ${item.name}`}
-      onKeyDown={e => { if (e.key === "Enter" || e.key === " ") navigate(`/app/templates/${item.id}`); }}
+      onKeyDown={e => { if (e.key === "Enter" || e.key === " ") void navigate(`/app/templates/${item.id}`); }}
       onMouseEnter={e => {
         (e.currentTarget as HTMLElement).style.boxShadow = "0 4px 16px rgba(0,0,0,0.08)";
         (e.currentTarget as HTMLElement).style.borderColor = "#CBD5E1";
@@ -263,7 +253,6 @@ function TemplatesInner() {
   const [showFilters, setShowFilters] = useState(false);
   const [localQ, setLocalQ] = useState("");
   const searchTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const navigate = useNavigate();
 
   // Initial load
   useEffect(() => {
@@ -513,7 +502,7 @@ function TemplatesInner() {
         {/* Loading */}
         {listLoading && viewMode === "grid" && (
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 16 }}>
-            {[...Array(6)].map((_, i) => <CardSkeleton key={i} />)}
+            {Array.from({ length: 6 }, (_, i) => <CardSkeleton key={i} />)}
           </div>
         )}
 

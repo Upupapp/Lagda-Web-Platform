@@ -15,16 +15,11 @@ import type {
   PrepValidationResult,
   PrepValidationIssue,
   PreparationStepId,
-  PrepParticipantRole,
   PrepSource,
   ResumableDraftSummary,
 } from "../../models/prepare";
 import {
   PREP_ROLE_IS_BLOCKING,
-  DEFAULT_TRANSACTION_DETAILS,
-  DEFAULT_ROUTING_CONFIG,
-  DEFAULT_AUTH_CONFIG,
-  DEFAULT_PREP_SETTINGS,
   getAuthMethodConfig,
 } from "../../models/prepare";
 import {

@@ -3,7 +3,7 @@
 // Frontend-only demonstration. No real persistence, sync, or identity verification.
 // Burgundy (#67023B) never used. eNotary never referenced.
 
-import React, { useEffect, useState, useRef, useCallback } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useNavigate, useSearchParams, Link } from "react-router";
 import { ContactProvider, useContacts } from "../../../context/ContactContext";
 import type { ContactListItem, ContactView, ContactSortField, ContactScope, ContactStatus, ContactTagId, ContactGroupId } from "../../../models/contacts";
@@ -19,7 +19,6 @@ const GF    = { fontFamily: "'Geist', sans-serif" };
 const GM    = { fontFamily: "'Geist Mono', monospace" };
 const NAVY  = "#07111F";
 const AZURE = "#0078D4";
-const GOLD  = "#C9960C";
 const SLATE = "#64748B";
 const SILVER= "#8A9BAE";
 const LIGHT = "#F0F7FF";
@@ -109,14 +108,13 @@ function Skeleton({ rows = 5 }: { rows?: number }) {
 // ── Inner library component ───────────────────────────────────────────────────
 
 function ContactsLibrary() {
-  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const { state, setQuery, asyncLoadList, asyncLoadGroups, asyncBulkArchive, asyncBulkRestore, asyncBulkAddTag, asyncBulkAddToGroup, clearPending } = useContacts();
+  const { state, setQuery, asyncLoadList, asyncLoadGroups, asyncBulkArchive, asyncBulkRestore, asyncBulkAddToGroup, clearPending } = useContacts();
 
   const [searchInput,   setSearchInput]   = useState(searchParams.get("q") ?? "");
   const [selectedIds,   setSelectedIds]   = useState<Set<string>>(new Set());
   const [showFilters,   setShowFilters]   = useState(false);
-  const [showBulkMenu,  setShowBulkMenu]  = useState(false);
+  const [, setShowBulkMenu] = useState(false);
   const [gridView,      setGridView]      = useState(false);
   const debouncedSearch = useDebounce(searchInput, 280);
 
@@ -159,10 +157,10 @@ function ContactsLibrary() {
   const activeFilterChips = [
     ...(searchInput.trim() ? [{ key: "q", label: `Search: "${searchInput.trim()}"` }] : []),
     ...(state.query.scopeFilter !== "all"
-      ? [{ key: "scope", label: `Scope: ${CONTACT_SCOPE_LABELS[state.query.scopeFilter as ContactScope] ?? state.query.scopeFilter}` }]
+      ? [{ key: "scope", label: `Scope: ${CONTACT_SCOPE_LABELS[state.query.scopeFilter] ?? state.query.scopeFilter}` }]
       : []),
     ...(state.query.statusFilter !== "all"
-      ? [{ key: "status", label: `Status: ${CONTACT_STATUS_LABELS[state.query.statusFilter as ContactStatus] ?? state.query.statusFilter}` }]
+      ? [{ key: "status", label: `Status: ${CONTACT_STATUS_LABELS[state.query.statusFilter] ?? state.query.statusFilter}` }]
       : []),
     ...state.query.tagFilter.map(tagId => ({
       key: `tag:${tagId}`,
@@ -185,7 +183,7 @@ function ContactsLibrary() {
     setQuery({ tagFilter: [], scopeFilter: "all", statusFilter: "all", page: 1 });
   };
 
-  const toggleSelect = (id: string) => setSelectedIds(prev => { const s = new Set(prev); s.has(id) ? s.delete(id) : s.add(id); return s; });
+  const toggleSelect = (id: string) => setSelectedIds(prev => { const s = new Set(prev); if (s.has(id)) { s.delete(id); } else { s.add(id); } return s; });
   const selectAll    = () => { if (!state.listResult) return; setSelectedIds(new Set(state.listResult.items.map(c => c.id))); };
   const clearSelect  = () => setSelectedIds(new Set());
 
@@ -560,8 +558,8 @@ function ContactRow({ contact: c, selected, onToggle }: { contact: ContactListIt
           </button>
           {menuOpen && (
             <div role="menu" style={{ position: "absolute", right: 0, top: "100%", zIndex: Z.dropdown, background: "#FFFFFF", border: "1.5px solid #E3E8EF", borderRadius: 10, boxShadow: "0 8px 24px rgba(0,0,0,0.12)", minWidth: 160, overflow: "hidden" }}>
-              <MenuItem label="View Contact"        onClick={() => { navigate(`/app/contacts/${c.id}`); setMenuOpen(false); }} />
-              {c.status === "active" && <MenuItem label="Edit"          onClick={() => { navigate(`/app/contacts/${c.id}/edit`); setMenuOpen(false); }} />}
+              <MenuItem label="View Contact"        onClick={() => { void navigate(`/app/contacts/${c.id}`); setMenuOpen(false); }} />
+              {c.status === "active" && <MenuItem label="Edit"          onClick={() => { void navigate(`/app/contacts/${c.id}/edit`); setMenuOpen(false); }} />}
               {c.status !== "archived" && <MenuItem label="Archive"    onClick={() => { setMenuOpen(false); }} />}
               {c.status === "archived" && <MenuItem label="Restore"    onClick={() => { setMenuOpen(false); }} />}
             </div>
@@ -660,10 +658,10 @@ function EmptyState({ view, hasSearch, hasFilters, onClear }: { view: ContactVie
     );
   }
   const configs: Record<ContactView, { icon: string; title: string; desc: string; action?: () => void; actionLabel?: string }> = {
-    all:        { icon: "👥", title: "No contacts yet", desc: "Add contacts to quickly add participants to future document workflows.", action: () => navigate("/app/contacts/new"), actionLabel: "Add First Contact" },
-    workspace:  { icon: "🏢", title: "No workspace contacts", desc: "Workspace contacts are visible to permitted team members.", action: () => navigate("/app/contacts/new"), actionLabel: "Add Workspace Contact" },
-    personal:   { icon: "👤", title: "No personal contacts", desc: "Personal contacts are visible only to you.", action: () => navigate("/app/contacts/new"), actionLabel: "Add Personal Contact" },
-    recent:     { icon: "🕐", title: "No recently used contacts", desc: "Contacts used in document workflows appear here.", action: () => navigate("/app/prepare"), actionLabel: "Prepare a Document" },
+    all:        { icon: "👥", title: "No contacts yet", desc: "Add contacts to quickly add participants to future document workflows.", action: () => { void navigate("/app/contacts/new"); }, actionLabel: "Add First Contact" },
+    workspace:  { icon: "🏢", title: "No workspace contacts", desc: "Workspace contacts are visible to permitted team members.", action: () => { void navigate("/app/contacts/new"); }, actionLabel: "Add Workspace Contact" },
+    personal:   { icon: "👤", title: "No personal contacts", desc: "Personal contacts are visible only to you.", action: () => { void navigate("/app/contacts/new"); }, actionLabel: "Add Personal Contact" },
+    recent:     { icon: "🕐", title: "No recently used contacts", desc: "Contacts used in document workflows appear here.", action: () => { void navigate("/app/prepare"); }, actionLabel: "Prepare a Document" },
     frequent:   { icon: "⭐", title: "No frequently used contacts", desc: "Frequently used contacts are based on demonstration activity data.", },
     duplicates: { icon: "✓",  title: "No potential duplicates", desc: "No contacts share the same email or appear similar." },
     archived:   { icon: "📁", title: "No archived contacts", desc: "Archived contacts are removed from normal pickers but retained here." },

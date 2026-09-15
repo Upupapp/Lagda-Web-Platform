@@ -20,7 +20,6 @@ const SLATE4 = "#94A3B8";
 const SLATE2 = "#E2E8F0";
 const RED    = "#DC2626";
 const GREEN  = "#16A34A";
-const AMBER  = "#D97706";
 
 function PolicyStatusBadge({ status }: { status: AutoPolicy["status"] }) {
   const map = {

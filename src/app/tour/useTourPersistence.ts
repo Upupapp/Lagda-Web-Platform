@@ -7,7 +7,7 @@
 // B's genuinely first sign-in — the tour is meant to trigger "only if new
 // user", which only holds if each account tracks its own status.
 
-import type { TourPersistedState, TourStatus } from "./types";
+import type { TourPersistedState } from "./types";
 
 const STORAGE_PREFIX = "lagda.productTour.v1";
 const TOUR_ID = "authenticated-platform";
@@ -38,7 +38,7 @@ export function readTourState(userId: string): TourPersistedState {
     return {
       tourId: TOUR_ID,
       tourVersion: TOUR_VERSION,
-      status: parsed.status as TourStatus,
+      status: parsed.status,
       lastStepId: parsed.lastStepId,
       completedAt: parsed.completedAt,
       skippedAt: parsed.skippedAt,

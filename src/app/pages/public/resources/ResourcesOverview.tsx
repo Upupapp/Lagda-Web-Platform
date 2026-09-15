@@ -2,7 +2,7 @@ import { Link } from "react-router";
 import {
   ResourcesPageShell, ResourcesSection, ResourcesHeading, ResourceCard, EduDisclaimer,
 } from "../../../components/resources/ResourceComponents";
-import { RESOURCE_CARDS, GUIDE_CATEGORIES, EDU_DISCLAIMER } from "./content";
+import { RESOURCE_CARDS, GUIDE_CATEGORIES } from "./content";
 
 const GF = { fontFamily: "'Geist', sans-serif" };
 const GM = { fontFamily: "'Geist Mono', monospace" };

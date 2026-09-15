@@ -12,7 +12,7 @@ import type {
   DashboardUsage,
   DashboardSectionErrors,
 } from "../../models/dashboard";
-import { MOCK_TRANSACTIONS, MOCK_TEMPLATES } from "../../data/mock";
+import { MOCK_TEMPLATES } from "../../data/mock";
 import { MOCK_SUBSCRIPTION } from "../../data/mock/workspaces";
 import { delay } from "./delay";
 

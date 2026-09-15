@@ -52,6 +52,13 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # This repo also keeps pnpm-lock.yaml (local dev). Nothing else keeps
+      # the two lockfiles in sync — `npm ci` above only checks package-lock's
+      # own specifiers, not pnpm's. Catches drift here instead of it later
+      # surfacing as an unrelated-looking Netlify deploy failure (#11).
+      - name: Check lockfile parity (npm vs pnpm)
+        run: node scripts/check-lockfile-parity.mjs
+
       - name: Type-check
         run: npm run typecheck
 

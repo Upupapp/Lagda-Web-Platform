@@ -10,7 +10,6 @@ import type {
   AutoConflict,
 } from "../../../models/workflow-automation";
 import {
-  AUTO_ACTIVITY_KIND_LABELS,
   AUTO_CONFLICT_KIND_LABELS,
 } from "../../../models/workflow-automation";
 import { Z } from "../../../utils/z-index";
@@ -24,7 +23,6 @@ const SLATE2 = "#E2E8F0";
 const AMBER  = "#D97706";
 const GREEN  = "#16A34A";
 const RED    = "#DC2626";
-const GOLD   = "#C9960C";
 
 function StatCard({ label, value, sub, color }: { label: string; value: number | string; sub?: string; color?: string }) {
   return (

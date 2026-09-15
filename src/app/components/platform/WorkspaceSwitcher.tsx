@@ -2,7 +2,7 @@
 // Frontend-only: switching updates in-memory context state only.
 
 import { useState, useRef, useEffect } from "react";
-import { ChevronDown, Check, Building2, Plus } from "lucide-react";
+import { ChevronDown, Check, Plus } from "lucide-react";
 import { usePlatform } from "../../context/PlatformContext";
 import { PLAN_LABELS } from "../../models";
 

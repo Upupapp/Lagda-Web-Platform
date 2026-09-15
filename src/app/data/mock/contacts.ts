@@ -44,7 +44,6 @@ const T_APPROVER   = "tag-approver"    as ContactTagId;
 const T_REVIEWER   = "tag-reviewer"    as ContactTagId;
 const T_SIGNER     = "tag-signer"      as ContactTagId;
 const T_ACK        = "tag-ack"         as ContactTagId;
-const T_PROCUREMENT = "tag-procurement" as ContactTagId;
 
 // ── Group IDs ─────────────────────────────────────────────────────────────────
 

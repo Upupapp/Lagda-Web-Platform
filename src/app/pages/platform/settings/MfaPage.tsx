@@ -44,7 +44,7 @@ export function MfaPage() {
   const isMounted = useRef(true);
 
   useEffect(() => {
-    mockSecuritySettingsService.listMfaMethods().then(m => { setMethods(m); setLoading(false); });
+    void mockSecuritySettingsService.listMfaMethods().then(m => { setMethods(m); setLoading(false); });
     return () => { isMounted.current = false; };
   }, []);
 

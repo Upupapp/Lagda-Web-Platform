@@ -15,8 +15,18 @@ import React, {
   useReducer,
   useCallback,
   useEffect,
+  useRef,
+  useState,
 } from "react";
 import { readJSON, writeJSON, removeKey, PERSISTENCE_KEYS } from "../services/local-persistence";
+import { clearAllFileRefs } from "../services/prepare/file-registry";
+import { USE_REAL_BACKEND } from "../services/backend-flag";
+import { usePlatform } from "./PlatformContext";
+import { realRecipientService } from "../services/real/recipient.service";
+import {
+  syncParticipants, syncRoutingOrder, isRealRecipientId, buildParticipantsAndRoutingFromRecipients,
+} from "../services/prepare/participant-sync";
+import { isDocumentSynced, markDocumentSynced } from "../services/prepare/sync-markers";
 import type {
   PreparationDraft,
   PrepDraftId,
@@ -32,8 +42,6 @@ import type {
   ResumableDraftSummary,
 } from "../models/prepare";
 import {
-  PREPARATION_STEPS,
-  PREP_ROLE_IS_BLOCKING,
   normalizeRoutingGroups,
 } from "../models/prepare";
 import {
@@ -50,7 +58,6 @@ function resolveStepStates(
   activeStepId: PreparationStepId | null,
 ): Record<PreparationStepId, PreparationStepState> {
   const unavail = (): PreparationStepState => "unavailable";
-  const avail   = (): PreparationStepState => "available";
 
   if (!draft) {
     return {
@@ -117,6 +124,12 @@ type PrepareAction =
   | { type: "LOAD_NOT_FOUND" }
   | { type: "SET_ACTIVE_STEP"; stepId: PreparationStepId | null }
   | { type: "UPDATE_DRAFT"; patch: Partial<PreparationDraft> }
+  // Swaps a locally-generated participant id for the real backend
+  // recipientId once creation is confirmed — applied to BOTH the
+  // participants array and every routing group's participantIds in one
+  // pass, so the two never drift out of sync with each other. See
+  // participant-sync.ts §IDENTITY.
+  | { type: "REPLACE_PARTICIPANT_IDS"; replacements: Map<string, string> }
   | { type: "DISCARD" }
   | { type: "SET_CONTACTS"; contacts: MockContact[] }
   | { type: "SET_TEMPLATES"; templates: MockTemplateSummary[] }
@@ -141,6 +154,23 @@ function prepareReducer(state: PrepareState, action: PrepareAction): PrepareStat
         draft: { ...state.draft, ...action.patch, updatedAt: new Date().toISOString() },
         isDirty: true,
       };
+    case "REPLACE_PARTICIPANT_IDS": {
+      if (!state.draft || action.replacements.size === 0) return state;
+      const replace = (id: string) => action.replacements.get(id) ?? id;
+      return {
+        ...state,
+        draft: {
+          ...state.draft,
+          participants: state.draft.participants.map((p) => ({ ...p, id: replace(p.id) })),
+          routing: {
+            ...state.draft.routing,
+            groups: state.draft.routing.groups.map((g) => ({
+              ...g, participantIds: g.participantIds.map(replace),
+            })),
+          },
+        },
+      };
+    }
     case "DISCARD":
       return { ...state, draft: null, loadState: "discarded", isDirty: false, errorMessage: null };
     case "SET_CONTACTS":
@@ -224,6 +254,16 @@ interface PrepareContextValue {
   draft:           PreparationDraft | null;
   loadState:       PrepareLoadState;
   errorMessage:    string | null;
+  /** Real-backend only: the most recent participant/routing save failure,
+   *  if any. Distinct from errorMessage (draft load/create failures) —
+   *  local edits are never lost when this is set; see updateParticipants. */
+  syncError:       string | null;
+  /** True when this draft has more than one file that has reached real
+   *  backend upload — see the MULTI-DOCUMENT SIGNING MODEL BACKEND GAP note
+   *  above hasMultiDocumentSigningGap(). Participants/routing only actually
+   *  sync against the FIRST such document; a real send must not be offered
+   *  as complete/correct while this is true. */
+  multiDocumentSigningGap: boolean;
   isDirty:         boolean;
   activeStepId:    PreparationStepId | null;
   stepStates:      Record<PreparationStepId, PreparationStepState>;
@@ -275,8 +315,80 @@ export function usePrepare(): PrepareContextValue {
 
 // ── Provider ──────────────────────────────────────────────────────────────────
 
+// Participants/routing are modeled per-TRANSACTION (one flat list on the
+// draft) but the backend scopes recipients per-DOCUMENT. Until a
+// transaction can carry more than one real backend document's worth of
+// recipients, the first file that has actually reached real upload is used
+// as "the" document for participant/routing sync — correct for the
+// common single-document case this phase targets; a multi-document
+// transaction only syncs participants against its first document.
+function getPrimaryBackendDocumentId(draft: PreparationDraft | null): string | undefined {
+  return draft?.files.find((f) => f.backendDocumentId)?.backendDocumentId;
+}
+
+// MULTI-DOCUMENT SIGNING MODEL BACKEND GAP — traced against
+// Lagda-Backend's schema (packages/db/src/migrations/018_preparation_recipients.ts,
+// 019_signing_requests.ts): every recipient row foreign-keys to exactly one
+// document's preparation/signing-request. There is no envelope/transaction
+// table grouping several documents under one shared recipient set. The
+// frontend's transaction-wide participants/routing model therefore cannot be
+// represented correctly for more than one real document — duplicating
+// recipients per document would silently fork a single visitor-authored
+// list into independently-editable copies with different backend ids,
+// which is not what "shared participants" means to the person configuring
+// it. Until the backend adds that abstraction, a transaction with more than
+// one real uploaded document is flagged, not silently synced against only
+// the first one and passed off as complete.
+function hasMultiDocumentSigningGap(draft: PreparationDraft | null): boolean {
+  const realDocCount = draft?.files.filter((f) => f.backendDocumentId).length ?? 0;
+  return realDocCount > 1;
+}
+
 export function PrepareProvider({ children }: { children: React.ReactNode }) {
   const [state, dispatch] = useReducer(prepareReducer, undefined, hydratedInitialState);
+  const platform = usePlatform();
+  const [syncError, setSyncError] = useState<string | null>(null);
+
+  // Mirrors state.draft so the real-backend sync calls below (which span an
+  // await, sometimes several) always diff against the truly-current
+  // participants list rather than whatever was in scope when the async
+  // function started.
+  const draftRef = useRef(state.draft);
+  useEffect(() => { draftRef.current = state.draft; }, [state.draft]);
+
+  // Reload/resume authority: once a real backend document exists for this
+  // draft, the backend's own recipient list — not whatever localStorage
+  // happened to have — is what repopulates Participants/Routing. Runs once
+  // per distinct real document (refresh, or resuming a draft that already
+  // reached upload in an earlier session), not on every local edit; a
+  // participant added seconds ago via updateParticipants is already
+  // reflected optimistically and does not need re-fetching.
+  const loadedRecipientsForDocumentRef = useRef<string | null>(null);
+  useEffect(() => {
+    const workspaceId = platform.currentWorkspace?.id;
+    const documentId = getPrimaryBackendDocumentId(state.draft);
+    if (!USE_REAL_BACKEND || !workspaceId || !documentId) return;
+    if (loadedRecipientsForDocumentRef.current === documentId) return;
+    loadedRecipientsForDocumentRef.current = documentId;
+
+    void realRecipientService.list(workspaceId, documentId).then((recipients) => {
+      // EMPTY-STATE RECONCILIATION: a zero-length list is only authoritative
+      // once this document has actually completed a sync before (marker set
+      // below, in updateParticipants, or here on first observed non-empty
+      // list). Before that, an empty GET on a freshly-uploaded document
+      // could just mean "nobody has pushed yet" — local, not-yet-synced
+      // participants must not be wiped in that case.
+      if (recipients.length === 0 && !isDocumentSynced("participants", documentId)) return;
+      if (recipients.length > 0) markDocumentSynced("participants", documentId);
+      const { participants, routing } = buildParticipantsAndRoutingFromRecipients(recipients);
+      dispatch({ type: "UPDATE_DRAFT", patch: { participants, routing } });
+    }).catch(() => {
+      // Non-fatal — the visitor keeps whatever local state they had
+      // (possibly none) and can still add participants, which retries
+      // against the backend on the next updateParticipants call.
+      setSyncError("Could not load previously saved participants. Your local changes are unaffected.");
+    });
+  }, [platform.currentWorkspace?.id, state.draft?.files]);
 
   // Derived step states
   const stepStates = resolveStepStates(state.draft, state.activeStepId);
@@ -301,7 +413,7 @@ export function PrepareProvider({ children }: { children: React.ReactNode }) {
       const draft = await prepareService.createDraft(opts);
       dispatch({ type: "LOAD_OK", draft });
       return draft.id;
-    } catch (e) {
+    } catch (_e) {
       dispatch({ type: "LOAD_ERROR", message: "Unable to create a preparation draft. Please try again." });
       return null;
     }
@@ -325,6 +437,14 @@ export function PrepareProvider({ children }: { children: React.ReactNode }) {
     if (state.draft) {
       await prepareService.discardDraft(state.draft.id).catch(() => {});
     }
+    // BACKEND DOCUMENT CLEANUP POLICY REQUIRED — Lagda-Backend has no
+    // document-deletion route (traced: GET/PATCH exist on
+    // /workspaces/{id}/documents/{id}, no DELETE). A discarded draft whose
+    // files already reached real backend document/upload state therefore
+    // leaves that document behind server-side; this only clears local
+    // draft state and the in-memory File registry, and does not pretend
+    // otherwise. Revisit once the backend defines one.
+    clearAllFileRefs();
     dispatch({ type: "DISCARD" });
   }, [state.draft]);
 
@@ -343,18 +463,99 @@ export function PrepareProvider({ children }: { children: React.ReactNode }) {
   }, [state.draft]);
 
   const updateParticipants = useCallback((participants: PrepParticipant[]) => {
-    dispatch({ type: "UPDATE_DRAFT", patch: { participants } });
+    const previous = draftRef.current?.participants ?? [];
+    // REMOVAL RECONCILIATION: a participant removed here but still
+    // referenced by a routing group (the caller — e.g. ParticipantsStep's
+    // handleRemove — only ever edits the participants list) would otherwise
+    // leave a stale id sitting in routing.groups[].participantIds until
+    // RoutingStep happened to remount and re-derive its groups. That stale
+    // id is exactly the kind of drift real backend sync must not paper
+    // over (it would try to push a routingOrder update for a recipient
+    // that no longer exists), so it is purged here, in the one place both
+    // collections change together.
+    const survivingIds = new Set(participants.map((p) => p.id));
+    const priorRouting = draftRef.current?.routing;
+    const reconciledRouting: PrepRoutingConfig | undefined =
+      priorRouting && priorRouting.groups.some((g) => g.participantIds.some((id) => !survivingIds.has(id)))
+        ? {
+            ...priorRouting,
+            groups: normalizeRoutingGroups(
+              priorRouting.groups.map((g) => ({
+                ...g,
+                participantIds: g.participantIds.filter((id) => survivingIds.has(id)),
+              })),
+            ),
+          }
+        : undefined;
+
+    // Optimistic, unchanged from before — the visitor's edit is never held
+    // up waiting on a network round trip.
+    dispatch({ type: "UPDATE_DRAFT", patch: { participants, ...(reconciledRouting ? { routing: reconciledRouting } : {}) } });
     if (state.draft) {
       prepareService.updateParticipants(state.draft.id, participants).catch(() => {});
+      if (reconciledRouting) {
+        prepareService.updateRouting(state.draft.id, reconciledRouting).catch(() => {});
+      }
     }
-  }, [state.draft]);
+
+    const workspaceId = platform.currentWorkspace?.id;
+    const documentId = getPrimaryBackendDocumentId(state.draft);
+    if (!USE_REAL_BACKEND || !workspaceId || !documentId) return;
+
+    void syncParticipants(workspaceId, documentId, previous, participants).then((result) => {
+      if (result.idReplacements.size > 0) {
+        dispatch({ type: "REPLACE_PARTICIPANT_IDS", replacements: result.idReplacements });
+      }
+      if (result.errors.size > 0) {
+        // Surfaced, not silent — but the local edit already applied above
+        // and is never rolled back on a transient failure (P1 §12). The
+        // visitor can retry the same edit, which re-diffs against whatever
+        // did or didn't make it through last time. The sync marker is
+        // deliberately NOT set on a partial failure — an empty backend GET
+        // must keep being treated as "not yet confirmed" until a full pass
+        // succeeds, so a stale/partially-synced local list is never wiped.
+        setSyncError([...result.errors.values()][0] ?? "Some participant changes could not be saved.");
+      } else {
+        setSyncError(null);
+        markDocumentSynced("participants", documentId);
+      }
+    });
+  }, [state.draft, platform.currentWorkspace]);
 
   const updateRouting = useCallback((routing: PrepRoutingConfig) => {
     dispatch({ type: "UPDATE_DRAFT", patch: { routing } });
     if (state.draft) {
       prepareService.updateRouting(state.draft.id, routing).catch(() => {});
     }
-  }, [state.draft]);
+
+    const workspaceId = platform.currentWorkspace?.id;
+    const documentId = getPrimaryBackendDocumentId(state.draft);
+    if (!USE_REAL_BACKEND || !workspaceId || !documentId) return;
+
+    // The backend has no separate "routing group" resource — a group's
+    // stepNumber IS each of its participants' routingOrder. Only
+    // already-real participants can carry one; a routing group referencing
+    // a still-local id is skipped here and picked up on the NEXT
+    // updateParticipants sync once that participant is real (routingOrder
+    // is also sent at creation time — see participant-sync.ts — so this
+    // mainly matters for a REORDER of already-real participants).
+    const orderByParticipantId = new Map<string, number>();
+    for (const group of routing.groups) {
+      for (const participantId of group.participantIds) {
+        orderByParticipantId.set(participantId, group.stepNumber);
+      }
+    }
+    const payload = [...orderByParticipantId.entries()]
+      .filter(([id]) => isRealRecipientId(id))
+      .map(([id, routingOrder]) => ({ id, routingOrder }));
+    if (payload.length === 0) return;
+
+    void syncRoutingOrder(workspaceId, documentId, payload).then((errors) => {
+      setSyncError(errors.size > 0
+        ? [...errors.values()][0] ?? "Some routing changes could not be saved."
+        : null);
+    });
+  }, [state.draft, platform.currentWorkspace]);
 
   const updateAuth = useCallback((auth: PrepAuthConfig) => {
     dispatch({ type: "UPDATE_DRAFT", patch: { auth } });
@@ -435,6 +636,8 @@ export function PrepareProvider({ children }: { children: React.ReactNode }) {
     draft:                   state.draft,
     loadState:               state.loadState,
     errorMessage:            state.errorMessage,
+    syncError,
+    multiDocumentSigningGap: hasMultiDocumentSigningGap(state.draft),
     isDirty:                 state.isDirty,
     activeStepId:            state.activeStepId,
     stepStates,

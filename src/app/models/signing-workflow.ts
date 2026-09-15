@@ -63,6 +63,7 @@ export const MAX_ASSIGNMENTS_PER_STAGE    = 20;
  */
 export function normalizeWorkflowText(input: string, maxLength: number): string {
   return input
+    // eslint-disable-next-line no-control-regex -- deliberately strips control characters from user input
     .replace(/[\u0000-\u001F\u007F]/g, " ")
     .replace(/\s+/g, " ")
     .trim()

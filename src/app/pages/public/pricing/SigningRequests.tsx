@@ -1,6 +1,6 @@
 import { Link } from "react-router";
 import {
-  PricingPageShell, PricingSection, PricingHeading, PricingNotice,
+  PricingPageShell, PricingSection, PricingNotice,
 } from "../../../components/pricing/PricingComponents";
 import { SIGNING_REQUEST_NOTES } from "./content";
 

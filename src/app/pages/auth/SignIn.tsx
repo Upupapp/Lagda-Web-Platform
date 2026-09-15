@@ -13,6 +13,9 @@ import {
 } from "../../context/PlatformContext";
 import { useOnboarding } from "../../context/OnboardingContext";
 import { mockAuthService } from "../../services/mock/auth.service";
+import { realAuthService } from "../../services/real/auth.service";
+import { USE_REAL_BACKEND } from "../../services/backend-flag";
+import { ApiError } from "../../services/api-client";
 import { sanitizeAppReturnTo, DEFAULT_RETURN_PATH } from "../../utils/authReturnPath";
 
 const GF = { fontFamily: "'Geist', sans-serif" };
@@ -67,6 +70,11 @@ export function SignIn() {
     setStatus("submitting");
     conversionTracker.track({ name: "sign_in_started" });
 
+    if (USE_REAL_BACKEND) {
+      await handleRealSubmit();
+      return;
+    }
+
     // Password is never logged — passed as unnamed arg to satisfy interface only.
     const result = await mockAuthService.signIn(email.trim(), password);
 
@@ -82,7 +90,7 @@ export function SignIn() {
     setPendingUser(user);
 
     switch (scenario) {
-      case "standard":
+      case "standard": {
         // Fully authenticated — go straight to platform
         const p = createMockSignInPayload();
         // The mock fixture always has a current workspace; guard so a missing one
@@ -96,11 +104,12 @@ export function SignIn() {
             p.subscription,
             p.notifications,
           );
-        navigate(redirectTo, { replace: true });
+        void navigate(redirectTo, { replace: true });
         break;
+      }
 
       case "mfa-challenge":
-        navigate(
+        void navigate(
           `/mfa${redirectTo !== "/app/dashboard" ? `?returnTo=${encodeURIComponent(redirectTo)}` : ""}`,
           { replace: true },
         );
@@ -118,18 +127,65 @@ export function SignIn() {
         // never persisted anywhere, so OnboardingComplete had nothing to
         // read and fell back to the dashboard.
         setReturnTo(redirectTo !== DEFAULT_RETURN_PATH ? redirectTo : null);
-        navigate("/verify-email", { replace: true });
+        void navigate("/verify-email", { replace: true });
         break;
 
       case "locked":
-        navigate("/auth/account-locked", { replace: true });
+        void navigate("/auth/account-locked", { replace: true });
         break;
 
       case "onboarding":
       default:
         setReturnTo(redirectTo !== DEFAULT_RETURN_PATH ? redirectTo : null);
-        navigate("/onboarding/profile", { replace: true });
+        void navigate("/onboarding/profile", { replace: true });
         break;
+    }
+  }
+
+  // Real-backend path. Kept separate from the mock's scenario switch — the
+  // real API has no "onboarding-required"/"locked" sign-in scenarios (those
+  // are frontend-only demo states); it only ever returns authenticated or
+  // mfa-required, or a 4xx the account/credentials were genuinely rejected
+  // with.
+  async function handleRealSubmit() {
+    try {
+      const result = await realAuthService.signIn(email.trim(), password);
+      if (result.status === "mfa-required") {
+        void navigate(
+          `/mfa${redirectTo !== "/app/dashboard" ? `?returnTo=${encodeURIComponent(redirectTo)}` : ""}`,
+          { replace: true },
+        );
+        return;
+      }
+      // "authenticated" — refreshSessionFromBackend is the one place that
+      // derives identity (GET /me) AND real accessible workspaces
+      // (GET /workspaces); see PlatformContext.
+      const refreshed = await platform.refreshSessionFromBackend();
+      if (refreshed.status === "unauthenticated") {
+        setStatus("error");
+        setServerError("Something went wrong signing you in. Please try again.");
+        setTimeout(() => errorRef.current?.focus(), 50);
+        return;
+      }
+      if (refreshed.workspaceStatus === "empty") {
+        // The real backend has no "onboarding-required" sign-in scenario —
+        // zero accessible workspaces is the signal a real account still
+        // needs first-workspace setup. Same pattern as the mock's
+        // "onboarding" case: stash the real destination and route through
+        // the wizard first.
+        setReturnTo(redirectTo !== DEFAULT_RETURN_PATH ? redirectTo : null);
+        void navigate("/onboarding/profile", { replace: true });
+        return;
+      }
+      void navigate(redirectTo, { replace: true });
+    } catch (err) {
+      setStatus("error");
+      setServerError(
+        err instanceof ApiError
+          ? err.message
+          : "Something went wrong signing you in. Please try again.",
+      );
+      setTimeout(() => errorRef.current?.focus(), 50);
     }
   }
 

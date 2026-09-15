@@ -9,6 +9,7 @@
 import { AlertCircle, X, ChevronRight } from "lucide-react";
 import type { PrepValidationIssue, PreparationStepId } from "../../models/prepare";
 import { PREPARATION_STEPS } from "../../models/prepare";
+import { Z } from "../../utils/z-index";
 
 const GF = { fontFamily: "'Geist', sans-serif" };
 const NAVY = "#07111F";
@@ -40,7 +41,7 @@ export function MissingItemsModal({
       role="presentation"
       onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}
       style={{
-        position: "fixed", inset: 0, zIndex: 3000,
+        position: "fixed", inset: 0, zIndex: Z.modal,
         background: "rgba(7,17,31,0.5)",
         display: "flex", alignItems: "center", justifyContent: "center",
         padding: 16,

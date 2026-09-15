@@ -11,7 +11,11 @@ import {
   DEMO_RECOVERY_CODES,
   mockAuthService,
 } from "../../services/mock/auth.service";
+import { realAuthService } from "../../services/real/auth.service";
+import { USE_REAL_BACKEND } from "../../services/backend-flag";
+import { ApiError } from "../../services/api-client";
 import { useOnboarding } from "../../context/OnboardingContext";
+import { usePlatform } from "../../context/PlatformContext";
 
 const GF    = { fontFamily: "'Geist', sans-serif" };
 const GM    = { fontFamily: "'Geist Mono', monospace" };
@@ -39,6 +43,7 @@ function KeyBlock({ value }: { value: string }) {
 export function MfaSetup() {
   const navigate    = useNavigate();
   const { setMfaSetupDone, updateSecurity } = useOnboarding();
+  const { user } = usePlatform();
   const [step,      setStep]      = useState<SetupStep>("intro");
   const [code,      setCode]      = useState("");
   const [status,    setStatus]    = useState<"idle"|"submitting"|"success"|"error">("idle");
@@ -47,16 +52,57 @@ export function MfaSetup() {
   const confirmRef  = useRef<HTMLInputElement>(null);
   const codesRef    = useRef<HTMLDivElement>(null);
 
+  // Real enrollment material (Lagda-Backend POST /auth/mfa/enrolments),
+  // fetched when the visitor opts in — see handleContinueToScan. Null until
+  // then, and while a fetch failed (beginError carries that message).
+  const [realSecret,        setRealSecret]        = useState<{ provisioningUri: string; secret: string } | null>(null);
+  const [realRecoveryCodes, setRealRecoveryCodes]  = useState<string[]>([]);
+  const [beginError,        setBeginError]         = useState<string | null>(null);
+  const [beginning,         setBeginning]          = useState(false);
+
   useEffect(() => {
     if (step === "confirm") setTimeout(() => confirmRef.current?.focus(), 100);
     if (step === "codes")   setTimeout(() => codesRef.current?.focus(), 100);
   }, [step]);
+
+  async function handleContinueToScan() {
+    if (!USE_REAL_BACKEND) { setStep("scan"); return; }
+    setBeginning(true);
+    setBeginError(null);
+    try {
+      const result = await realAuthService.beginMfaEnrolment();
+      setRealSecret(result);
+      setStep("scan");
+    } catch (err) {
+      setBeginError(
+        err instanceof ApiError ? err.message : "Could not start setup. Please try again.",
+      );
+    } finally {
+      setBeginning(false);
+    }
+  }
 
   async function handleConfirm(e: React.FormEvent) {
     e.preventDefault();
     if (!code.trim()) return;
     setStatus("submitting");
     setErrorMsg(null);
+
+    if (USE_REAL_BACKEND) {
+      try {
+        const result = await realAuthService.confirmMfaEnrolment(code);
+        setStatus("success");
+        setRealRecoveryCodes(result.recoveryCodes);
+        updateSecurity({ mfaEnabled: true });
+        setStep("codes");
+      } catch (err) {
+        setStatus("error");
+        setErrorMsg(err instanceof ApiError ? err.message : "That code is not valid. Please try again.");
+        setCode("");
+      }
+      return;
+    }
+
     const result = await mockAuthService.confirmMfaSetup(code);
     if (result.success) {
       setStatus("success");
@@ -71,11 +117,12 @@ export function MfaSetup() {
 
   function handleDone() {
     setMfaSetupDone(true);
-    navigate("/onboarding/notifications");
+    void navigate("/onboarding/notifications");
   }
 
   function handleCopyAll() {
-    navigator.clipboard?.writeText(DEMO_RECOVERY_CODES.join("\n")).catch(() => {});
+    const codes = USE_REAL_BACKEND ? realRecoveryCodes : DEMO_RECOVERY_CODES;
+    navigator.clipboard?.writeText(codes.join("\n")).catch(() => {});
     setCopiedAll(true);
     setTimeout(() => setCopiedAll(false), 2000);
   }
@@ -92,12 +139,20 @@ export function MfaSetup() {
           </p>
         </div>
 
-        <div style={{ background: "rgba(0,120,212,0.06)", border: "1px solid rgba(0,120,212,0.15)", borderRadius: 10, padding: "14px 16px", marginBottom: 20 }}>
-          <p style={{ color: "#C9960C", ...GM, fontSize: 9, fontWeight: 700, margin: "0 0 4px" }}>FRONTEND DEMONSTRATION</p>
-          <p style={{ color: "#334155", ...GF, fontSize: 12, margin: 0, lineHeight: 1.5 }}>
-            No real MFA enrollment occurs here. Keys and codes shown are fictional demonstration values.
-          </p>
-        </div>
+        {!USE_REAL_BACKEND && (
+          <div style={{ background: "rgba(0,120,212,0.06)", border: "1px solid rgba(0,120,212,0.15)", borderRadius: 10, padding: "14px 16px", marginBottom: 20 }}>
+            <p style={{ color: "#C9960C", ...GM, fontSize: 9, fontWeight: 700, margin: "0 0 4px" }}>FRONTEND DEMONSTRATION</p>
+            <p style={{ color: "#334155", ...GF, fontSize: 12, margin: 0, lineHeight: 1.5 }}>
+              No real MFA enrollment occurs here. Keys and codes shown are fictional demonstration values.
+            </p>
+          </div>
+        )}
+
+        {beginError && (
+          <div role="alert" style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: 8, padding: "12px 14px", marginBottom: 20 }}>
+            <p style={{ color: "#EF4444", ...GF, fontSize: 13, margin: 0 }}>{beginError}</p>
+          </div>
+        )}
 
         <div style={{ display: "flex", flexDirection: "column", gap: 14, marginBottom: 28 }}>
           {[
@@ -113,8 +168,13 @@ export function MfaSetup() {
           ))}
         </div>
 
-        <button onClick={() => setStep("scan")} style={{ width: "100%", background: AZURE, border: "none", borderRadius: 8, color: "white", ...GF, fontSize: 15, fontWeight: 700, padding: "14px", minHeight: 48, cursor: "pointer" }}>
-          Continue
+        <button
+          onClick={handleContinueToScan}
+          disabled={beginning}
+          aria-busy={beginning}
+          style={{ width: "100%", background: beginning ? "rgba(0,120,212,0.5)" : AZURE, border: "none", borderRadius: 8, color: "white", ...GF, fontSize: 15, fontWeight: 700, padding: "14px", minHeight: 48, cursor: beginning ? "not-allowed" : "pointer" }}
+        >
+          {beginning ? "Starting…" : "Continue"}
         </button>
         <div style={{ textAlign: "center", marginTop: 14 }}>
           <button onClick={() => navigate("/onboarding/notifications")} style={{ background: "none", border: "none", cursor: "pointer", color: "#64748B", ...GF, fontSize: 13 }}>
@@ -137,20 +197,32 @@ export function MfaSetup() {
           </p>
         </div>
 
-        {/* QR placeholder */}
+        {/* QR placeholder — no QR-rendering library is wired in yet, so the
+            real flow falls back to manual key/URI entry, which every
+            authenticator app supports just as well. */}
         <div style={{ background: "#f8fafb", border: "1px solid rgba(0,0,0,0.08)", borderRadius: 12, padding: 28, textAlign: "center", marginBottom: 20 }}>
           <div style={{ width: 120, height: 120, background: "#ffffff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: 8, margin: "0 auto 12px", display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 6 }}>
             <span style={{ fontSize: 32 }} aria-hidden>▦</span>
-            <span style={{ color: "#334155", ...GM, fontSize: 9 }}>DEMO QR</span>
+            <span style={{ color: "#334155", ...GM, fontSize: 9 }}>{USE_REAL_BACKEND ? "NO QR" : "DEMO QR"}</span>
           </div>
-          <p style={{ color: "#334155", ...GF, fontSize: 11, margin: 0 }}>This is a non-functional demonstration QR placeholder.</p>
+          <p style={{ color: "#334155", ...GF, fontSize: 11, margin: 0 }}>
+            {USE_REAL_BACKEND
+              ? "QR scanning isn't available yet — enter the setup key below manually in your app."
+              : "This is a non-functional demonstration QR placeholder."}
+          </p>
         </div>
 
         <div>
           <p style={{ color: "#64748B", ...GF, fontSize: 12, fontWeight: 600, margin: "0 0 4px" }}>Account</p>
-          <p style={{ color: "#07111F", ...GM, fontSize: 13, margin: "0 0 14px" }}>{DEMO_MFA_ACCOUNT}</p>
+          <p style={{ color: "#07111F", ...GM, fontSize: 13, margin: "0 0 14px" }}>{USE_REAL_BACKEND ? (user?.email ?? "") : DEMO_MFA_ACCOUNT}</p>
           <p style={{ color: "#64748B", ...GF, fontSize: 12, fontWeight: 600, margin: "0 0 0" }}>Setup key</p>
-          <KeyBlock value={DEMO_MFA_SETUP_KEY} />
+          <KeyBlock value={USE_REAL_BACKEND ? (realSecret?.secret ?? "") : DEMO_MFA_SETUP_KEY} />
+          {USE_REAL_BACKEND && realSecret && (
+            <>
+              <p style={{ color: "#64748B", ...GF, fontSize: 12, fontWeight: 600, margin: "14px 0 0" }}>Setup link (paste into apps that accept a URI)</p>
+              <KeyBlock value={realSecret.provisioningUri} />
+            </>
+          )}
         </div>
 
         <div style={{ display: "flex", gap: 10, marginTop: 24 }}>
@@ -173,11 +245,13 @@ export function MfaSetup() {
           </p>
         </div>
 
-        <div style={{ background: "rgba(0,120,212,0.06)", border: "1px solid rgba(0,120,212,0.15)", borderRadius: 10, padding: "12px 16px", marginBottom: 16 }}>
-          <p style={{ color: "#334155", ...GF, fontSize: 12, margin: 0, lineHeight: 1.5 }}>
-            <strong style={{ color: "#C9960C" }}>Demo:</strong> enter any 6-digit code starting with <strong style={{ color: "#07111F", ...GM }}>1</strong> to succeed.
-          </p>
-        </div>
+        {!USE_REAL_BACKEND && (
+          <div style={{ background: "rgba(0,120,212,0.06)", border: "1px solid rgba(0,120,212,0.15)", borderRadius: 10, padding: "12px 16px", marginBottom: 16 }}>
+            <p style={{ color: "#334155", ...GF, fontSize: 12, margin: 0, lineHeight: 1.5 }}>
+              <strong style={{ color: "#C9960C" }}>Demo:</strong> enter any 6-digit code starting with <strong style={{ color: "#07111F", ...GM }}>1</strong> to succeed.
+            </p>
+          </div>
+        )}
 
         {errorMsg && (
           <div role="alert" style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: 8, padding: "12px 14px", marginBottom: 16 }}>
@@ -238,9 +312,11 @@ export function MfaSetup() {
       </div>
 
       <div style={{ background: "#f8fafb", border: "1px solid rgba(0,0,0,0.08)", borderRadius: 10, padding: "18px 20px", marginBottom: 16 }}>
-        <p style={{ color: "#C9960C", ...GM, fontSize: 9, fontWeight: 700, margin: "0 0 12px" }}>DEMONSTRATION ONLY — THESE CODES ARE NOT FUNCTIONAL</p>
+        {!USE_REAL_BACKEND && (
+          <p style={{ color: "#C9960C", ...GM, fontSize: 9, fontWeight: 700, margin: "0 0 12px" }}>DEMONSTRATION ONLY — THESE CODES ARE NOT FUNCTIONAL</p>
+        )}
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-          {DEMO_RECOVERY_CODES.map((c) => (
+          {(USE_REAL_BACKEND ? realRecoveryCodes : DEMO_RECOVERY_CODES).map((c) => (
             <span key={c} style={{ ...GM, fontSize: 12, color: "#07111F" }}>{c}</span>
           ))}
         </div>

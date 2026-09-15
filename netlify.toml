@@ -4,6 +4,7 @@
 
 [build.environment]
   VITE_LAUNCH_PROFILE = "launch-default"
+  NODE_VERSION = "22"
 
 [[redirects]]
   from = "/*"

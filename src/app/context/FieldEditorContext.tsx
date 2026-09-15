@@ -108,7 +108,7 @@ const INITIAL: FieldEditorState = {
   future:            [],
 };
 
-function pushHistory(state: FieldEditorState, fields: FieldDefinition[]): Pick<FieldEditorState, "past" | "future"> {
+function pushHistory(state: FieldEditorState, _fields: FieldDefinition[]): Pick<FieldEditorState, "past" | "future"> {
   const past = [...state.past, state.fields].slice(-EDITOR_HISTORY_LIMIT);
   return { past, future: [] };
 }
@@ -325,6 +325,7 @@ interface FieldEditorContextValue {
 
   // Lifecycle
   initialize:  (draftId: string, draft: PreparationDraft) => void;
+  loadRealFields: (fields: FieldDefinition[]) => void;
   discard:     (draftId: string) => void;
 }
 
@@ -384,6 +385,16 @@ export function FieldEditorProvider({ children, participants }: ProviderProps) {
     } catch {
       dispatch({ type: "INIT_ERROR", message: "Unable to initialize the field editor." });
     }
+  }, []);
+
+  // Real-backend only: replaces the current field set with what was loaded
+  // from the backend (see FieldsPage.tsx). A full replace, like every other
+  // field mutation (COMMIT_FIELDS), but immediately marked "saved-in-session"
+  // rather than "unsaved-changes" — these fields did not just get edited,
+  // they're exactly what the backend already has.
+  const loadRealFields = useCallback((fields: FieldDefinition[]) => {
+    dispatch({ type: "COMMIT_FIELDS", fields, historyDesc: "Loaded from server" });
+    dispatch({ type: "SET_SAVE_STATE", saveState: fields.length > 0 ? "saved-in-session" : "idle" });
   }, []);
 
   const discard = useCallback((draftId: string) => {
@@ -589,6 +600,7 @@ export function FieldEditorProvider({ children, participants }: ProviderProps) {
     toggleFieldList,
     toggleValidation,
     initialize,
+    loadRealFields,
     discard,
   };
 

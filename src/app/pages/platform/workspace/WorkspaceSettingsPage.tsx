@@ -8,10 +8,8 @@ import { WorkspaceAdminProvider, useWorkspaceAdmin } from "../../../context/Work
 import type { WorkspaceSettings } from "../../../models/workspace-admin";
 
 const GF    = { fontFamily: "'Geist', sans-serif" };
-const GM    = { fontFamily: "'Geist Mono', monospace" };
 const NAVY  = "#07111F";
 const AZURE = "#0078D4";
-const GOLD  = "#C9960C";
 const SLATE = "#64748B";
 const SILVER= "#8A9BAE";
 
@@ -56,7 +54,7 @@ function SettingsInner() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
-  useEffect(() => { asyncLoadSettings(); }, [asyncLoadSettings]);
+  useEffect(() => { void asyncLoadSettings(); }, [asyncLoadSettings]);
 
   useEffect(() => {
     if (state.settings && Object.keys(form).length === 0) {

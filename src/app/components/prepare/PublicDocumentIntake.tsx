@@ -18,14 +18,16 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router";
 import { X, UploadCloud, FileText, FileType } from "lucide-react";
 import { usePlatform } from "../../context/PlatformContext";
+import { Z } from "../../utils/z-index";
 import { usePendingPreparation } from "../../context/PendingPreparationContext";
 import type { PrepFile } from "../../models/prepare";
 import {
-  classifyFiles,
+  classifyFilesWithRefs,
   humanFileSize,
   fileStateLabel,
   MAX_FILES_PER_TRANSACTION,
 } from "../../services/prepare/file-intake";
+import { setFileRef } from "../../services/prepare/file-registry";
 
 const GF = { fontFamily: "'Geist', sans-serif" };
 const GM = { fontFamily: "'Geist Mono', monospace" };
@@ -36,7 +38,7 @@ const SILVER = "#64748B";
 export function UploadDocumentModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   const navigate = useNavigate();
   const platform = usePlatform();
-  const { setPending, clearPending } = usePendingPreparation();
+  const { pending, setPending, clearPending } = usePendingPreparation();
 
   const [files, setFiles] = useState<PrepFile[]>([]);
   const [title, setTitle] = useState("");
@@ -62,8 +64,18 @@ export function UploadDocumentModal({ open, onClose }: { open: boolean; onClose:
   }, [open, onClose]);
 
   const addFiles = useCallback((fileList: FileList) => {
-    const newEntries = classifyFiles(Array.from(fileList), files);
-    if (newEntries.length > 0) setFiles((prev) => [...prev, ...newEntries]);
+    const classified = classifyFilesWithRefs(Array.from(fileList), files);
+    if (classified.length === 0) return;
+    // Retained in memory only (file-registry.ts), keyed by the same
+    // PrepFile.id that ends up in the persisted pending-preparation record
+    // below — never itself written to storage. If this SPA session is still
+    // alive by the time the visitor reaches the authenticated Prepare flow
+    // (same tab, no refresh), the real file upload can proceed without
+    // asking them to re-select it — see UploadStep.tsx.
+    for (const { prepFile, file } of classified) {
+      if (prepFile.fileState === "ready") setFileRef(prepFile.id, file);
+    }
+    setFiles((prev) => [...prev, ...classified.map((c) => c.prepFile)]);
   }, [files]);
 
   const removeFile = useCallback((id: string) => {
@@ -73,6 +85,22 @@ export function UploadDocumentModal({ open, onClose }: { open: boolean; onClose:
   const chooseAnother = useCallback(() => {
     setFiles([]);
     setTitle("");
+    clearPending();
+  }, [clearPending]);
+
+  // A pending selection can now survive a refresh/new tab (see
+  // PendingPreparationContext's LOCAL_PERSISTENCE durability), so reopening
+  // this modal with nothing chosen yet in THIS instance may still have one
+  // sitting in storage from earlier. Offer to pick it back up, or discard it
+  // explicitly — otherwise it would be invisible until something happened to
+  // overwrite it.
+  const resumePending = useCallback(() => {
+    if (!pending) return;
+    setFiles(pending.files);
+    setTitle(pending.title);
+  }, [pending]);
+
+  const discardPending = useCallback(() => {
     clearPending();
   }, [clearPending]);
 
@@ -88,7 +116,7 @@ export function UploadDocumentModal({ open, onClose }: { open: boolean; onClose:
     // PlatformLayout lets an authenticated visitor straight through, and
     // redirects everyone else to sign-in/create-account with this exact URL
     // preserved as `returnTo` — see authReturnPath.ts and PrepareEntryPage.
-    navigate(`/app/prepare?resumeId=${continuationId}`);
+    void navigate(`/app/prepare?resumeId=${continuationId}`);
   }, [files, title, setPending, navigate]);
 
   if (!open) return null;
@@ -100,7 +128,7 @@ export function UploadDocumentModal({ open, onClose }: { open: boolean; onClose:
       style={{
         position: "fixed",
         inset: 0,
-        zIndex: 2000,
+        zIndex: Z.modal,
         background: "rgba(7,17,31,0.55)",
         display: "flex",
         alignItems: "center",
@@ -176,6 +204,32 @@ export function UploadDocumentModal({ open, onClose }: { open: boolean; onClose:
 
         {/* Body — scrolls internally, header/footer stay put */}
         <div style={{ overflowY: "auto", padding: "24px", flex: 1 }}>
+          {files.length === 0 && pending && (
+            <div
+              style={{
+                display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap",
+                padding: "14px 16px", borderRadius: 10, marginBottom: 16,
+                border: "1px solid #DBEAFE", background: "#F0F7FF",
+              }}
+            >
+              <span style={{ flex: 1, minWidth: 200, ...GF, fontSize: 13, color: NAVY }}>
+                You have a document in progress: <strong>{pending.title || pending.files[0]?.fileName}</strong>
+              </span>
+              <button
+                onClick={resumePending}
+                style={{ ...GF, padding: "8px 14px", borderRadius: 8, border: "none", background: AZURE, color: "#FFFFFF", fontSize: 13, fontWeight: 700, cursor: "pointer" }}
+              >
+                Resume
+              </button>
+              <button
+                onClick={discardPending}
+                style={{ ...GF, padding: "8px 14px", borderRadius: 8, border: "1px solid rgba(0,0,0,0.14)", background: "#FFFFFF", color: NAVY, fontSize: 13, fontWeight: 600, cursor: "pointer" }}
+              >
+                Discard
+              </button>
+            </div>
+          )}
+
           {files.length === 0 && (
             <div
               onDragOver={(e) => { e.preventDefault(); setIsDragOver(true); }}

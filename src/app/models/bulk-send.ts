@@ -68,6 +68,7 @@ export const BULK_SEND_ROWS_PER_PAGE         = 25;
  */
 export function normalizeBulkSendText(input: string, maxLength: number): string {
   return input
+    // eslint-disable-next-line no-control-regex -- deliberately strips control chars from user input
     .replace(/[\u0000-\u001F\u007F]/g, " ")
     .replace(/\s+/g, " ")
     .trim()
@@ -877,9 +878,9 @@ export const VALID_BULK_SEND_SORTS: readonly BulkSendSortField[] = [
 export interface BulkSendQuery {
   q:            string;
   status:       BulkSendBatchStatus | "all";
-  templateId:   string | "all";
-  teamId:       string | "all";
-  senderId:     string | "all";
+  templateId:   string;
+  teamId:       string;
+  senderId:     string;
   hasWarnings:  boolean;
   hasExclusions: boolean;
   hasProjections: boolean;

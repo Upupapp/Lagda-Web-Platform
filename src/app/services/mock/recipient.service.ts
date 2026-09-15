@@ -138,7 +138,7 @@ export function validateAction(
   requiredFieldIds: string[],
   fieldValues: Map<string, string | boolean | null>,
   signatureAdopted: boolean,
-  initialsAdopted: boolean,
+  _initialsAdopted: boolean,
 ): ActionValidationResult {
   const missing: string[] = [];
 

@@ -196,7 +196,7 @@ export function SignatureDetailPage() {
   function handleRemove() {
     if (!entry) return;
     const result = signatureLibraryService.remove(entry.id);
-    if (result.ok) { navigate("/app/settings/signatures", { replace: true }); }
+    if (result.ok) { void navigate("/app/settings/signatures", { replace: true }); }
     else { setNotice("Could not remove entry."); setShowRemove(false); }
   }
 

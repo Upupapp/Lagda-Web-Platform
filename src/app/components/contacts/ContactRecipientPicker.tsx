@@ -15,7 +15,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router";
-import { AlertTriangle, Check, Search, Users, X } from "lucide-react";
+import { AlertTriangle, Search, Users, X } from "lucide-react";
 import type { ContactGroupId, ContactGroupSummary, ContactListItem } from "../../models/contacts";
 import { DEFAULT_CONTACT_QUERY } from "../../models/contacts";
 import { mockContactService } from "../../services/mock/contacts.service";
@@ -36,7 +36,7 @@ import {
 } from "../../services/contact-recipient-source";
 
 const GF = { fontFamily: "'Geist', 'Inter', system-ui, sans-serif" } as const;
-const NAVY = "#07111F", AZURE = "#0078D4", AZURE_DEEP = "#005EA2";
+const NAVY = "#07111F", AZURE = "#0078D4";
 const SLATE9 = "#0F172A", SLATE6 = "#475569", SLATE5 = "#64748B", SLATE4 = "#94A3B8";
 const SLATE3 = "#CBD5E1", SLATE2 = "#E2E8F0", SLATE1 = "#F1F5F9", SLATE0 = "#F8FAFC";
 const WHITE = "#FFFFFF";
@@ -192,7 +192,7 @@ export function ContactRecipientPicker({
   };
 
   const toggleContact = (id: string) => {
-    setPickedContactIds((s) => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n; });
+    setPickedContactIds((s) => { const n = new Set(s); if (n.has(id)) n.delete(id); else n.add(id); return n; });
   };
 
   // ── Expansion (the single source of truth for what will be added) ──────────
@@ -452,7 +452,8 @@ export function ContactRecipientPicker({
                 <PreviewRow key={String(e.contact.id)} entry={e}
                   onToggle={() => setExcludedIds((s) => {
                     const n = new Set(s); const id = String(e.contact.id);
-                    n.has(id) ? n.delete(id) : n.add(id); return n;
+                    if (n.has(id)) n.delete(id); else n.add(id);
+                    return n;
                   })} />
               ))}
             </ul>

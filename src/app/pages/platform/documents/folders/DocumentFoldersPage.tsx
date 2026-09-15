@@ -4,14 +4,14 @@
 // No eNotary folders. No Burgundy. No localStorage. No real mutation.
 
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
-import { Link, useNavigate } from "react-router";
+import { useNavigate } from "react-router";
 import {
   Folder, FolderOpen, FolderPlus, Archive, RotateCcw, Pencil,
   Trash2, X, Search, ChevronRight, ChevronDown, AlertCircle,
   RefreshCw, Info, Lock,
 } from "lucide-react";
 import { usePlatform } from "../../../../context/PlatformContext";
-import { AppContent, PageHeader, EmptyStateLayout, SkeletonBlock, SKELETON_STYLE } from "../../../../components/platform";
+import { AppContent, PageHeader, SkeletonBlock, SKELETON_STYLE } from "../../../../components/platform";
 import { documentOrganizationService } from "../../../../services/mock/document-organization.service";
 import type { OrgFolder, OrgFolderId, OrgFolderScope } from "../../../../models/document-organization";
 import { FOLDER_SCOPE_LABELS, MAX_FOLDER_DEPTH } from "../../../../models/document-organization";
@@ -24,7 +24,6 @@ const NAVY  = "#07111F";
 const SLATE6 = "#64748B";
 const SLATE4 = "#94A3B8";
 const SLATE2 = "#E2E8F0";
-const SLATE1 = "#F8FAFC";
 const AMBER = "#D97706";
 const GREEN = "#16A34A";
 const RED   = "#DC2626";

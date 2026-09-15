@@ -28,7 +28,6 @@ import {
   Clock,
   XCircle,
   Info,
-  Download,
   Copy,
   Archive,
   RotateCcw,
@@ -38,8 +37,6 @@ import {
   Tag,
   Bell,
   Calendar,
-  Eye,
-  ExternalLink,
   RefreshCw,
   ArrowLeft,
   Star,
@@ -55,7 +52,6 @@ import type {
   TransactionActionAvailability,
   ActivityEvent,
   ActivityEventCategory,
-  ActivityQuery,
   ReminderSettings,
   ExpirationSettings,
 } from "../../../models/transaction-detail";
@@ -485,7 +481,6 @@ export function OverviewTab() {
     );
   }
 
-  const chip = statusChip(txn.status);
   const isActive = ["sent","delivered","viewed","authentication-completed","awaiting-signature","awaiting-approval","partially-completed"].includes(txn.status);
   const needsAttention = txn.isMyAction;
 
@@ -815,7 +810,7 @@ export function ParticipantsTab() {
   function toggleExpand(id: string) {
     setExpanded(prev => {
       const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
+      if (next.has(id)) { next.delete(id); } else { next.add(id); }
       return next;
     });
   }
@@ -1065,8 +1060,6 @@ export function ActivityTab() {
   const safePage = Math.min(page, totalPages);
   const pageItems = sorted.slice((safePage - 1) * ACTIVITY_PAGE_SIZE, safePage * ACTIVITY_PAGE_SIZE);
 
-  const catCounts: Partial<Record<ActivityEventCategory | "all", number>> = { all: filtered.length };
-
   return (
     <AppContent>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, flexWrap: "wrap", gap: 10 }}>
@@ -1282,8 +1275,7 @@ export function EvidenceTab() {
 // ── SettingsTab ───────────────────────────────────────────────────────────────
 
 export function SettingsTab() {
-  const { txn, actions, canPrepare, reload } = useTxnContext();
-  const navigate = useNavigate();
+  const { txn, actions, reload } = useTxnContext();
 
   // Rename
   const [renaming, setRenaming] = useState(false);

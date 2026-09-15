@@ -21,7 +21,6 @@ import type {
   ContactValidationResult,
   ContactImportPreview,
   ContactView,
-  ContactPickerResult,
   ContactActionId,
 } from "../../models/contacts";
 import {
@@ -71,11 +70,6 @@ function resolveGroup(id: ContactGroupId): ContactGroup | undefined {
   return SESSION_GROUPS.get(id);
 }
 
-function resolveAllGroups(): ContactGroup[] {
-  ensureGroupsInit();
-  return Array.from(SESSION_GROUPS.values());
-}
-
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 function delay(ms: number): Promise<void> {
@@ -85,7 +79,6 @@ function delay(ms: number): Promise<void> {
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const WS_ID    = "ws_northbridge_001";
 const OWNER_ID = "user_ana_reyes_001";
-const PAGE_SIZE = 20;
 
 function normalizeEmail(email: string): string {
   return email.trim().toLowerCase();
@@ -165,7 +158,7 @@ function getContactActionAvailability(c: Contact): ContactActionAvailability[] {
 
 // ── Validation ────────────────────────────────────────────────────────────────
 
-function validateContactInput(input: Partial<ContactCreateInput>, existingId?: ContactId): ContactValidationResult {
+function validateContactInput(input: Partial<ContactCreateInput>, _existingId?: ContactId): ContactValidationResult {
   const issues: ContactValidationResult["issues"] = [];
 
   if (!input.name?.trim()) {

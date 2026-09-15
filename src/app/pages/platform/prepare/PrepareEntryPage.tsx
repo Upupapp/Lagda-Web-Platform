@@ -190,15 +190,17 @@ export function PrepareEntryPage() {
     }
     const claimed = claimPending(resumeId);
     if (!claimed) {
-      // In-memory only, by design (see PendingPreparationContext) — a hard
-      // refresh between the public upload and reaching this page loses it.
-      // That is expected, not an error; the visitor just re-selects the file.
+      // Persisted with a bounded lifetime (see PendingPreparationContext),
+      // but still not guaranteed: it may have expired, been claimed already,
+      // been discarded, or never existed on this browser at all (a
+      // different device, private browsing, cleared site data). Any of
+      // those is expected, not an error; the visitor just re-selects the file.
       setResumeFailed(true);
       setResuming(false);
       return;
     }
     let cancelled = false;
-    (async () => {
+    void (async () => {
       const draftId = await createDraft({
         source: "public-upload",
         initialFiles: claimed.files,
@@ -206,7 +208,7 @@ export function PrepareEntryPage() {
       });
       if (cancelled) return;
       if (draftId) {
-        navigate("/app/prepare/upload", { replace: true });
+        void navigate("/app/prepare/upload", { replace: true });
       } else {
         setResuming(false);
       }
@@ -219,28 +221,28 @@ export function PrepareEntryPage() {
 
   useEffect(() => {
     if (canPrepare && !resumeId) {
-      loadResumableDrafts();
-      loadTemplates();
+      void loadResumableDrafts();
+      void loadTemplates();
     }
   }, [canPrepare, resumeId, loadResumableDrafts, loadTemplates]);
 
   const handleStartNew = async () => {
     const draftId = await createDraft({ source: "new" });
     if (draftId) {
-      navigate("/app/prepare/upload");
+      void navigate("/app/prepare/upload");
     }
   };
 
   const handleUseTemplate = async (templateId: string) => {
     const draftId = await createDraft({ source: "template", templateId });
     if (draftId) {
-      navigate("/app/prepare/upload");
+      void navigate("/app/prepare/upload");
     }
   };
 
   const handleResumeDraft = async (draftId: string) => {
     await loadDraft(draftId);
-    navigate("/app/prepare/upload");
+    void navigate("/app/prepare/upload");
   };
 
   // ── Resuming a pre-auth document selection ──────────────────────────────────

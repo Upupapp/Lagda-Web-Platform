@@ -12,11 +12,8 @@ import type {
   ActivityEvent,
   EvidenceSection,
   DeviceNetworkSummary,
-  ReminderSettings,
-  ExpirationSettings,
   RoutingStep,
   CompletionRecord,
-  VerificationRecordSummary,
 } from "../../models/transaction-detail";
 import { DOCUMENT_TAGS } from "./documents";
 

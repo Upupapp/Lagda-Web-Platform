@@ -119,9 +119,9 @@ export interface CompareRow {
   id: string;
   label: string;
   desc?: string;
-  personal: AvailValue | string;
-  business: AvailValue | string;
-  enterprise: AvailValue | string;
+  personal: string;
+  business: string;
+  enterprise: string;
 }
 
 export interface CompareGroup {
