@@ -455,7 +455,7 @@ describe("applyCollaborationQuery / sortThreadSummaries", () => {
     const s2 = summary({ id: "b" as CollaborationThreadSummary["id"], title: "Signature block" });
     const query: CollaborationQuery = {
       q: "payment", status: "all", visibility: "all", category: "all",
-      priority: "all", anchorType: "all", mentionedMe: false, sort: "recently-updated",
+      priority: "all", anchorType: "all", reviewerId: "all", mentionedMe: false, sort: "recently-updated",
     };
     expect(applyCollaborationQuery([s1, s2], query).map((s) => s.id)).toEqual(["a"]);
   });
