@@ -11,7 +11,7 @@ import {
 import { usePlatform } from "../../../../context/PlatformContext";
 import { AppContent, PageHeader, EmptyStateLayout, SkeletonBlock, SKELETON_STYLE } from "../../../../components/platform";
 import { documentOrganizationService } from "../../../../services/mock/document-organization.service";
-import type { OrgTag, OrgTagId, OrgTagStyle } from "../../../../models/document-organization";
+import type { OrgTag, OrgTagStyle } from "../../../../models/document-organization";
 import { TAG_STYLE_COLORS, TAG_STYLE_LABELS, VALID_TAG_STYLES } from "../../../../models/document-organization";
 import { usePageMeta } from "../../../../hooks/usePageMeta";
 import { Z } from "../../../../utils/z-index";
@@ -266,7 +266,6 @@ function TagCard({
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const trigRef = useRef<HTMLButtonElement>(null);
-  const color = TAG_STYLE_COLORS[tag.style];
   const isArchived = tag.status === "archived";
 
   useEffect(() => {

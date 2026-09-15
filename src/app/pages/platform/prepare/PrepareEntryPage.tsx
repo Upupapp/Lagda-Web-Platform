@@ -200,7 +200,7 @@ export function PrepareEntryPage() {
       return;
     }
     let cancelled = false;
-    (async () => {
+    void (async () => {
       const draftId = await createDraft({
         source: "public-upload",
         initialFiles: claimed.files,
@@ -208,7 +208,7 @@ export function PrepareEntryPage() {
       });
       if (cancelled) return;
       if (draftId) {
-        navigate("/app/prepare/upload", { replace: true });
+        void navigate("/app/prepare/upload", { replace: true });
       } else {
         setResuming(false);
       }
@@ -221,28 +221,28 @@ export function PrepareEntryPage() {
 
   useEffect(() => {
     if (canPrepare && !resumeId) {
-      loadResumableDrafts();
-      loadTemplates();
+      void loadResumableDrafts();
+      void loadTemplates();
     }
   }, [canPrepare, resumeId, loadResumableDrafts, loadTemplates]);
 
   const handleStartNew = async () => {
     const draftId = await createDraft({ source: "new" });
     if (draftId) {
-      navigate("/app/prepare/upload");
+      void navigate("/app/prepare/upload");
     }
   };
 
   const handleUseTemplate = async (templateId: string) => {
     const draftId = await createDraft({ source: "template", templateId });
     if (draftId) {
-      navigate("/app/prepare/upload");
+      void navigate("/app/prepare/upload");
     }
   };
 
   const handleResumeDraft = async (draftId: string) => {
     await loadDraft(draftId);
-    navigate("/app/prepare/upload");
+    void navigate("/app/prepare/upload");
   };
 
   // ── Resuming a pre-auth document selection ──────────────────────────────────

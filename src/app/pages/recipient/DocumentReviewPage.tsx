@@ -64,8 +64,8 @@ function FieldOverlay({
   onInteract,
   signatureAdopted,
   initialsAdopted,
-  signatureDataUrl,
-  initialsDataUrl,
+  signatureDataUrl: _signatureDataUrl,
+  initialsDataUrl: _initialsDataUrl,
   signatureTypedText,
   initialsTypedText,
   signatureStyle,
@@ -243,7 +243,7 @@ function FieldOverlay({
 function FieldPanel({ activeField, onClose }: { activeField: RecipientField | null; onClose: () => void }) {
   const {
     state, setFieldValue, openSignatureDialog, goToSummary,
-    allRequiredComplete, remainingRequiredLabels, myFields, role, setStep,
+    allRequiredComplete, remainingRequiredLabels, myFields, role,
   } = useRecipient();
 
   if (!activeField) {
@@ -407,7 +407,7 @@ export function DocumentReviewPage() {
   const {
     request, state, currentDocument, currentPage,
     currentPageFields, setDocument, setPage, setStep,
-    openSignatureDialog, goToSummary, allRequiredComplete, remainingRequiredLabels,
+    openSignatureDialog, goToSummary, allRequiredComplete,
   } = useRecipient();
 
   const [activeField, setActiveField] = useState<RecipientField | null>(null);

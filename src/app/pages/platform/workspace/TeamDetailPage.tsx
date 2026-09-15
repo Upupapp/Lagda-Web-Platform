@@ -57,12 +57,12 @@ function TeamDetailInner() {
 
   useEffect(() => {
     if (!teamId) return;
-    asyncLoadTeam(teamId as WorkspaceTeamId);
-    asyncLoadMembers();
+    void asyncLoadTeam(teamId as WorkspaceTeamId);
+    void asyncLoadMembers();
     return () => clearActiveTeam();
   }, [teamId, asyncLoadTeam, asyncLoadMembers, clearActiveTeam]);
 
-  const reload = () => { if (teamId) { asyncLoadTeam(teamId as WorkspaceTeamId); asyncLoadMembers(); } };
+  const reload = () => { if (teamId) { void asyncLoadTeam(teamId as WorkspaceTeamId); void asyncLoadMembers(); } };
 
   const handleArchive = async () => {
     if (!teamId || !state.activeTeam) return;

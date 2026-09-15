@@ -1,6 +1,6 @@
 import { Link, useLocation } from "react-router";
 import { useState } from "react";
-import { LAGDA_PLANS, COMPARE_GROUPS, type LagdaPlan, type AvailValue } from "../../config/pricing.config";
+import { LAGDA_PLANS, COMPARE_GROUPS, type LagdaPlan } from "../../config/pricing.config";
 import { PRICING_SUBNAV } from "../../pages/public/pricing/content";
 import { Z } from "../../utils/z-index";
 import { TabStrip } from "../platform/TabStrip";
@@ -138,7 +138,7 @@ export function PlanCards() {
 }
 
 // ── Avail cell ────────────────────────────────────────────────────────────────
-function AvailCell({ value }: { value: AvailValue | string }) {
+function AvailCell({ value }: { value: string }) {
   if (value === "included")     return <span style={{ color: "#16A34A", fontSize: 15 }} title="Included">✓ <span style={{ ...GF, fontSize: 11, color: "#16A34A" }}>Included</span></span>;
   if (value === "not-included") return <span style={{ color: "#94A3B8", fontSize: 15 }} title="Not included">— <span style={{ ...GF, fontSize: 11, color: "#94A3B8" }}>Not included</span></span>;
   if (value === "enterprise")   return <span style={{ color: "#0078D4", ...GM, fontSize: 10, fontWeight: 700 }}>Enterprise</span>;

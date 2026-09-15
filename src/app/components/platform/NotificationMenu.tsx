@@ -5,7 +5,7 @@ import { useState, useRef, useEffect } from "react";
 import { Link } from "react-router";
 import {
   Bell, CheckCheck,
-  FileText, AlertTriangle, Clock, ShieldAlert, CreditCard,
+  FileText, ShieldAlert, CreditCard,
   BarChart2, Puzzle, Settings, Megaphone, Inbox,
 } from "lucide-react";
 import { useNotificationCenter } from "../../context/NotificationCenterContext";

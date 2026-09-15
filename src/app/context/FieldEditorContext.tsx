@@ -108,7 +108,7 @@ const INITIAL: FieldEditorState = {
   future:            [],
 };
 
-function pushHistory(state: FieldEditorState, fields: FieldDefinition[]): Pick<FieldEditorState, "past" | "future"> {
+function pushHistory(state: FieldEditorState, _fields: FieldDefinition[]): Pick<FieldEditorState, "past" | "future"> {
   const past = [...state.past, state.fields].slice(-EDITOR_HISTORY_LIMIT);
   return { past, future: [] };
 }

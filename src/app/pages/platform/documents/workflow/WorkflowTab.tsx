@@ -106,7 +106,7 @@ export function WorkflowTab() {
 
   const openFieldPlacement = useCallback(() => {
     const returnTo = buildSafeReturnPath(location.pathname);
-    navigate(`/app/prepare/fields?returnTo=${encodeURIComponent(returnTo)}`);
+    void navigate(`/app/prepare/fields?returnTo=${encodeURIComponent(returnTo)}`);
   }, [navigate, location.pathname]);
 
   const applyParticipantChange = useCallback(async (input: UpdateStageParticipantInput) => {
@@ -371,8 +371,8 @@ export function WorkflowTab() {
                     emptyMessage="This configuration has no outstanding issues."
                     onRepair={(issue) => {
                       if (issue.repairTarget === "field-placement") openFieldPlacement();
-                      else if (issue.stageId) navigate(`${base}/stages/${issue.stageId}`);
-                      else navigate(`${base}/create`);
+                      else if (issue.stageId) void navigate(`${base}/stages/${issue.stageId}`);
+                      else void navigate(`${base}/create`);
                     }}
                   />
                 )}

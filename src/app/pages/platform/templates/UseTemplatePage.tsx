@@ -5,17 +5,17 @@
 // Inline styles only. No Burgundy. No real backend.
 
 import { useEffect, useState } from "react";
-import { useParams, Link, useNavigate } from "react-router";
+import { useParams, Link } from "react-router";
 import {
   ChevronLeft, ChevronRight, Users, Type, Eye,
   CheckCircle2, AlertCircle, Zap, LayoutTemplate,
-  ArrowRight, Info, RotateCcw,
+  ArrowRight, Info,
 } from "lucide-react";
 import { TemplateProvider, useTemplates } from "../../../context/TemplateContext";
 import { SkeletonBlock, SKELETON_STYLE } from "../../../components/platform";
 import { asyncInstantiate } from "../../../services/mock/templates.service";
 import type {
-  DocumentTemplate, TemplateRoleMapping, TemplateVariableValues, TemplateRolePlaceholder,
+  DocumentTemplate, TemplateRoleMapping, TemplateVariableValues,
   TemplateVariable,
 } from "../../../models/templates";
 import { TEMPLATE_CATEGORY_LABELS, TEMPLATE_STATUS_LABELS } from "../../../models/templates";
@@ -76,7 +76,7 @@ function StepBar({ current }: { current: WizardStep }) {
 
 // ── Step 1: Map Roles ─────────────────────────────────────────────────────────
 function RoleMappingStep({
-  template, mappings, onChange,
+  template: _template, mappings, onChange,
 }: {
   template:  DocumentTemplate;
   mappings:  TemplateRoleMapping[];
@@ -361,7 +361,6 @@ function buildInitialVariables(template: DocumentTemplate): TemplateVariableValu
 function UseTemplateInner() {
   const { templateId } = useParams<{ templateId: string }>();
   const { state, loadTemplate } = useTemplates();
-  const navigate = useNavigate();
   const t = state.activeTemplate;
 
   const [step,     setStep]     = useState<WizardStep>("roles");

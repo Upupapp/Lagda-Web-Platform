@@ -16,7 +16,6 @@ import lagdaLogoFull from "../../../../brand elements/svg/LagdaLogoPrimaryHorizo
 const GF = { fontFamily: "'Geist', sans-serif" };
 const GM = { fontFamily: "'Geist Mono', monospace" };
 const AZURE = "#0078D4";
-const NAVY  = "#07111F";
 
 // ── Hero visual — logo + quick actions ────────────────────────────────────────
 function TryItNowPanel() {

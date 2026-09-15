@@ -18,6 +18,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router";
 import { X, UploadCloud, FileText, FileType } from "lucide-react";
 import { usePlatform } from "../../context/PlatformContext";
+import { Z } from "../../utils/z-index";
 import { usePendingPreparation } from "../../context/PendingPreparationContext";
 import type { PrepFile } from "../../models/prepare";
 import {
@@ -115,7 +116,7 @@ export function UploadDocumentModal({ open, onClose }: { open: boolean; onClose:
     // PlatformLayout lets an authenticated visitor straight through, and
     // redirects everyone else to sign-in/create-account with this exact URL
     // preserved as `returnTo` — see authReturnPath.ts and PrepareEntryPage.
-    navigate(`/app/prepare?resumeId=${continuationId}`);
+    void navigate(`/app/prepare?resumeId=${continuationId}`);
   }, [files, title, setPending, navigate]);
 
   if (!open) return null;
@@ -127,7 +128,7 @@ export function UploadDocumentModal({ open, onClose }: { open: boolean; onClose:
       style={{
         position: "fixed",
         inset: 0,
-        zIndex: 2000,
+        zIndex: Z.modal,
         background: "rgba(7,17,31,0.55)",
         display: "flex",
         alignItems: "center",

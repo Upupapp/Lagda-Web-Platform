@@ -234,15 +234,23 @@ export const FRONTEND_ONLY_NOTICE =
 
 // ── Value formatting ──────────────────────────────────────────────────────────
 
+/** Safe stringification for values typed `unknown` — never relies on Object's default toString. */
+function stringifyUnknownValue(value: unknown): string {
+  if (value === null || value === undefined) return "";
+  if (typeof value === "string") return value;
+  if (typeof value === "number" || typeof value === "boolean") return String(value);
+  return JSON.stringify(value);
+}
+
 export function formatDefaultValue(def: DefaultFieldDefinition, value: unknown): string {
   if (value === null || value === undefined || value === "") return "Not set";
   if (def.valueType === "boolean") return value ? "Required" : "Not required";
   if (def.valueType === "enum") {
-    const opt = def.options?.find((o) => o.value === String(value));
+    const opt = def.options?.find((o) => o.value === stringifyUnknownValue(value));
     // Never show a raw enum member to the user.
-    return opt ? opt.label : String(value).replace(/-/g, " ");
+    return opt ? opt.label : stringifyUnknownValue(value).replace(/-/g, " ");
   }
-  return String(value);
+  return stringifyUnknownValue(value);
 }
 
 export function readDefaultValue(defaults: BulkSendRequestDefaults, id: DefaultFieldId): unknown {
@@ -294,7 +302,7 @@ export function validateDefaultsDraft(
 
     if (def.valueType === "boolean") continue;
 
-    const text = typeof raw === "string" ? raw : raw === null ? "" : String(raw ?? "");
+    const text = typeof raw === "string" ? raw : raw === null ? "" : stringifyUnknownValue(raw);
     if (def.maxLength && text.length > def.maxLength) {
       issues.push({
         code: `defaults-too-long-${def.id}`, field: def.id, severity: "blocking",
@@ -376,7 +384,7 @@ export function buildChangePreview(
     if (!(def.id in draft)) continue;
     const current = readDefaultValue(resolved, def.id);
     const next = draft[def.id];
-    if (String(current ?? "") === String(next ?? "")) continue;
+    if (stringifyUnknownValue(current ?? "") === stringifyUnknownValue(next ?? "")) continue;
 
     out.push({
       field: def.id,
@@ -399,7 +407,7 @@ export function buildChangePreview(
 export function normalizeDefaultValue(def: DefaultFieldDefinition, value: unknown): unknown {
   if (def.valueType === "boolean") return !!value;
   if (def.valueType === "enum") return String(value);
-  const text = typeof value === "string" ? value : value === null ? "" : String(value ?? "");
+  const text = typeof value === "string" ? value : value === null ? "" : stringifyUnknownValue(value);
   const clean = normalizeBulkSendText(text, def.maxLength ?? 500);
   // These two are nullable in the model; an empty string is not the same as unset.
   if ((def.id === "dueDateDirection" || def.id === "expirationDirection"

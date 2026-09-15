@@ -93,7 +93,7 @@ function useServiceRead<T>(
     setState("loading");
     setError(null);
 
-    runRef.current({ viewer, signal: controller.signal }).then((result) => {
+    void runRef.current({ viewer, signal: controller.signal }).then((result) => {
       if (!live) return;
       if (result.ok) {
         setData(result.data);

@@ -6,8 +6,8 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router";
 import {
-  ChevronLeft, LayoutTemplate, Users, GitBranch, Shield,
-  FileText, Mail, Settings, AlertCircle, Zap,
+  ChevronLeft, Users, GitBranch,
+  Settings, AlertCircle, Zap,
 } from "lucide-react";
 import { TemplateProvider, useTemplates } from "../../../context/TemplateContext";
 import { SkeletonBlock, SKELETON_STYLE } from "../../../components/platform";
@@ -23,10 +23,8 @@ import { usePageMeta } from "../../../hooks/usePageMeta";
 const GF       = { fontFamily: "'Geist', sans-serif" };
 const AZURE    = "#0078D4";
 const GOLD     = "#C9960C";
-const GREEN    = "#059669";
 const BGCANVAS = "#DFE3E8";
 const BASE_W   = 595;
-const PAGE_H   = BASE_W * (842 / 595);
 
 // ── Fictional page ────────────────────────────────────────────────────────────
 function FictionalPageBg({ pageNumber }: { pageNumber: number }) {

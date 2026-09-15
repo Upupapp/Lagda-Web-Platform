@@ -48,7 +48,7 @@ export function IntegrationDetailPage() {
 
   useEffect(() => {
     if (!integrationId) { setNotFound(true); setLoading(false); return; }
-    mockIntegrationService.getIntegration(integrationId as IntegrationId).then(i => {
+    void mockIntegrationService.getIntegration(integrationId as IntegrationId).then(i => {
       if (!i) { setNotFound(true); } else { setIntegration(i); }
       setLoading(false);
     });

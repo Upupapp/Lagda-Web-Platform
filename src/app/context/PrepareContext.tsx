@@ -42,8 +42,6 @@ import type {
   ResumableDraftSummary,
 } from "../models/prepare";
 import {
-  PREPARATION_STEPS,
-  PREP_ROLE_IS_BLOCKING,
   normalizeRoutingGroups,
 } from "../models/prepare";
 import {
@@ -60,7 +58,6 @@ function resolveStepStates(
   activeStepId: PreparationStepId | null,
 ): Record<PreparationStepId, PreparationStepState> {
   const unavail = (): PreparationStepState => "unavailable";
-  const avail   = (): PreparationStepState => "available";
 
   if (!draft) {
     return {
@@ -416,7 +413,7 @@ export function PrepareProvider({ children }: { children: React.ReactNode }) {
       const draft = await prepareService.createDraft(opts);
       dispatch({ type: "LOAD_OK", draft });
       return draft.id;
-    } catch (e) {
+    } catch (_e) {
       dispatch({ type: "LOAD_ERROR", message: "Unable to create a preparation draft. Please try again." });
       return null;
     }

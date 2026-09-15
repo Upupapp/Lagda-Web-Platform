@@ -107,7 +107,7 @@ function ActivityInner() {
   const debouncedSearch = useDebounce(search, 280);
 
   useEffect(() => {
-    asyncLoadActivity({
+    void asyncLoadActivity({
       search: debouncedSearch || undefined,
       eventType: eventType !== "all" ? (eventType as WorkspaceActivityEventType) : "all",
     });

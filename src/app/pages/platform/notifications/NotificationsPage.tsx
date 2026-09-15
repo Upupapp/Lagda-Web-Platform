@@ -8,7 +8,7 @@ import {
   Bell, Search, CheckCheck, X,
   FileText, ShieldAlert, CreditCard, BarChart2,
   Puzzle, Settings, Megaphone, Inbox, AlertCircle,
-  ChevronRight, Eye, EyeOff, Trash2, RotateCcw,
+  ChevronRight, Eye, EyeOff, RotateCcw,
 } from "lucide-react";
 import { useNotificationCenter } from "../../../context/NotificationCenterContext";
 import type {
@@ -36,7 +36,6 @@ const SILVER= "#8A9BAE";
 const GREEN = "#16A34A";
 const RED   = "#DC2626";
 const AMBER = "#D97706";
-const GOLD  = "#C9960C";
 
 // ── Severity helpers ──────────────────────────────────────────────────────────
 function severityColor(s: NotificationRecord["severity"]): string {
@@ -89,10 +88,6 @@ function getDateGroup(iso: string): NotificationDateGroup {
   if (d >= yestStart)  return "yesterday";
   if (d >= weekStart)  return "this-week";
   return "earlier";
-}
-
-function formatTime(iso: string): string {
-  return new Date(iso).toLocaleTimeString("en-PH", { hour: "numeric", minute: "2-digit" });
 }
 
 function formatDate(iso: string): string {

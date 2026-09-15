@@ -7,7 +7,7 @@
 //   /app/bulk-send/:batchId/results
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Link, useNavigate, useParams, useSearchParams } from "react-router";
+import { Link, useNavigate, useParams } from "react-router";
 import { ArrowLeft, ArrowRight, FileText, Pencil, Sliders, Upload, UserRound, Users, UsersRound, Wand2 } from "lucide-react";
 import { ContactRecipientPicker } from "../../../components/contacts/ContactRecipientPicker";
 import {
@@ -145,7 +145,7 @@ export function BulkSendNewPage() {
     setBusy(false);
     if (result.ok) {
       announce("Batch created in frontend state.");
-      navigate(`/app/bulk-send/${result.data.id}/recipients`);
+      void navigate(`/app/bulk-send/${result.data.id}/recipients`);
     } else setError(result.message);
   };
 
@@ -561,9 +561,11 @@ export function BulkSendBatchPage() {
                     title: "Duplicate this batch?",
                     body: "The Template, mappings, and defaults are copied. Recipient rows and projection results are NOT copied, and the new batch starts as a Draft.",
                     confirmLabel: "Duplicate configuration",
-                    onConfirm: async () => {
-                      const r = await bulkSendService.duplicateBatch(batchId!, false, ctx);
-                      if (r.ok) navigate(`/app/bulk-send/${r.data.id}`);
+                    onConfirm: () => {
+                      void (async () => {
+                        const r = await bulkSendService.duplicateBatch(batchId!, false, ctx);
+                        if (r.ok) void navigate(`/app/bulk-send/${r.data.id}`);
+                      })();
                     },
                   })}>Duplicate</button>
                 <button type="button" className="bs-btn bs-btn-secondary bs-btn-sm"
@@ -571,7 +573,7 @@ export function BulkSendBatchPage() {
                     title: "Archive this batch?",
                     body: "The batch is removed from the active list but its configuration and frontend results are kept.",
                     confirmLabel: "Archive batch",
-                    onConfirm: async () => { await bulkSendService.archiveBatch(batchId!, ctx); reload(); },
+                    onConfirm: () => { void (async () => { await bulkSendService.archiveBatch(batchId!, ctx); reload(); })(); },
                   })}>Archive</button>
                 <button type="button" className="bs-btn bs-btn-danger bs-btn-sm"
                   onClick={() => confirm({
@@ -579,9 +581,11 @@ export function BulkSendBatchPage() {
                     body: "Only mutable frontend state is removed. Draft Projections already created stay in Documents, and no Contact or Document is deleted. This is not secure deletion.",
                     confirmLabel: "Remove from demonstration",
                     destructive: true,
-                    onConfirm: async () => {
-                      const r = await bulkSendService.removeBatchDemonstration(batchId!, ctx);
-                      if (r.ok) navigate("/app/bulk-send");
+                    onConfirm: () => {
+                      void (async () => {
+                        const r = await bulkSendService.removeBatchDemonstration(batchId!, ctx);
+                        if (r.ok) void navigate("/app/bulk-send");
+                      })();
                     },
                   })}>Remove from Demonstration</button>
               </div>
@@ -622,7 +626,7 @@ function LoadingShell({ label, title }: { label: string; title: string }) {
 export function BulkSendRecipientsPage() {
   const { batchId } = useParams<{ batchId: string }>();
   const { blocked } = useGuards();
-  const { batch, setBatch, state, reload, permissions, ctx } = useBatch(batchId);
+  const { batch, setBatch, state, permissions, ctx } = useBatch(batchId);
   const { announce, announcerNode } = useAnnouncer();
   const { confirm, confirmDialog } = useBulkSendConfirm();
 
@@ -875,16 +879,18 @@ export function BulkSendRecipientsPage() {
                         title: `Exclude ${selected.size} ${selected.size === 1 ? "row" : "rows"}?`,
                         body: "Excluded rows stay in the batch for review but cannot create Draft Projections. This does not delete anything.",
                         confirmLabel: "Exclude rows",
-                        onConfirm: async () => {
-                          const affected = new Set(selected);
-                          const r = await bulkSendService.excludeRows(batchId!, [...selected], "Excluded during review.", ctx);
-                          if (r.ok) {
-                            setBatch(r.data); setSelected(new Set()); announce("Rows excluded.");
-                            // The row being edited may have just been excluded.
-                            // Leaving the editor open on it would let the user keep
-                            // typing into a row that no longer participates.
-                            if (editor.state.rowId && affected.has(editor.state.rowId)) editor.close();
-                          }
+                        onConfirm: () => {
+                          void (async () => {
+                            const affected = new Set(selected);
+                            const r = await bulkSendService.excludeRows(batchId!, [...selected], "Excluded during review.", ctx);
+                            if (r.ok) {
+                              setBatch(r.data); setSelected(new Set()); announce("Rows excluded.");
+                              // The row being edited may have just been excluded.
+                              // Leaving the editor open on it would let the user keep
+                              // typing into a row that no longer participates.
+                              if (editor.state.rowId && affected.has(editor.state.rowId)) editor.close();
+                            }
+                          })();
                         },
                       })}>Exclude selected</button>
                     <button type="button" className="bs-btn bs-btn-secondary bs-btn-sm" disabled={busy || selected.size === 0}
@@ -1474,14 +1480,16 @@ export function BulkSendReviewPage() {
                 title: `Create ${eligibleCount} Draft ${eligibleCount === 1 ? "Projection" : "Projections"}?`,
                 body: "This creates frontend Draft records in Documents only. No request, invitation, email, SMS message, reminder, or recipient session is created or delivered, and no signature is applied.",
                 confirmLabel: "Create Draft Projections",
-                onConfirm: async () => {
-                  setBusy(true); setError(null);
-                  const r = await bulkSendService.createDraftProjections(
-                    batchId!, eligibility.summary.eligibleRowIds.map(String), ctx);
-                  setBusy(false);
-                  if (r.ok) { announce(`${r.data.draftProjectionsCreated} Draft Projections created.`); navigate(`/app/bulk-send/${batchId}/results`); }
-                  else setError(r.code === "INCOMPATIBLE_CONFIGURATION"
-                    ? "Resolve the blocking issues before creating Draft Projections." : r.message);
+                onConfirm: () => {
+                  void (async () => {
+                    setBusy(true); setError(null);
+                    const r = await bulkSendService.createDraftProjections(
+                      batchId!, eligibility.summary.eligibleRowIds.map(String), ctx);
+                    setBusy(false);
+                    if (r.ok) { announce(`${r.data.draftProjectionsCreated} Draft Projections created.`); void navigate(`/app/bulk-send/${batchId}/results`); }
+                    else setError(r.code === "INCOMPATIBLE_CONFIGURATION"
+                      ? "Resolve the blocking issues before creating Draft Projections." : r.message);
+                  })();
                 },
               })}>
               {busy ? "Working…" : "Create Draft Projections"}

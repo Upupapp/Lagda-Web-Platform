@@ -90,7 +90,7 @@ export function SignIn() {
     setPendingUser(user);
 
     switch (scenario) {
-      case "standard":
+      case "standard": {
         // Fully authenticated — go straight to platform
         const p = createMockSignInPayload();
         // The mock fixture always has a current workspace; guard so a missing one
@@ -104,11 +104,12 @@ export function SignIn() {
             p.subscription,
             p.notifications,
           );
-        navigate(redirectTo, { replace: true });
+        void navigate(redirectTo, { replace: true });
         break;
+      }
 
       case "mfa-challenge":
-        navigate(
+        void navigate(
           `/mfa${redirectTo !== "/app/dashboard" ? `?returnTo=${encodeURIComponent(redirectTo)}` : ""}`,
           { replace: true },
         );
@@ -126,17 +127,17 @@ export function SignIn() {
         // never persisted anywhere, so OnboardingComplete had nothing to
         // read and fell back to the dashboard.
         setReturnTo(redirectTo !== DEFAULT_RETURN_PATH ? redirectTo : null);
-        navigate("/verify-email", { replace: true });
+        void navigate("/verify-email", { replace: true });
         break;
 
       case "locked":
-        navigate("/auth/account-locked", { replace: true });
+        void navigate("/auth/account-locked", { replace: true });
         break;
 
       case "onboarding":
       default:
         setReturnTo(redirectTo !== DEFAULT_RETURN_PATH ? redirectTo : null);
-        navigate("/onboarding/profile", { replace: true });
+        void navigate("/onboarding/profile", { replace: true });
         break;
     }
   }

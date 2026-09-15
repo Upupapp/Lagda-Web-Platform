@@ -4,9 +4,9 @@
 // In-session saves only. No real PDF. No real backend. demonstrationOnly.
 // Inline styles only. No Burgundy.
 
-import React, { useEffect, useReducer, useCallback, useRef, useState, useMemo } from "react";
+import React, { useEffect, useReducer, useRef, useState } from "react";
 import { useParams, Link } from "react-router";
-import { ChevronLeft, AlertCircle, Save, CheckCircle2, Trash2, GripVertical } from "lucide-react";
+import { ChevronLeft, AlertCircle, Save, CheckCircle2 } from "lucide-react";
 import { TemplateProvider, useTemplates } from "../../../context/TemplateContext";
 import { SkeletonBlock, SKELETON_STYLE } from "../../../components/platform";
 import { saveTemplateFields } from "../../../services/mock/templates.service";
@@ -163,7 +163,7 @@ const HANDLE_POS: Record<ResizeHandle, React.CSSProperties> = {
 function PageCanvas({
   docId, pageId, pageNumber, fields, selected, dragging, pendingType, placeholders,
   onDragStart, onDragMove, onDragEnd, onDragCancel,
-  onSelect, onMoveField,
+  onSelect, onMoveField: _onMoveField,
 }: {
   docId: string; pageId: string; pageNumber: number;
   fields: LocalField[]; selected: string | null;

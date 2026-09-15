@@ -3,33 +3,31 @@
 // Tab-based layout. All mutations are in-session only. demonstrationOnly.
 // Inline styles only. No Burgundy.
 
-import { useEffect, useState, useCallback } from "react";
-import { useParams, Link, useNavigate } from "react-router";
+import { useEffect, useState } from "react";
+import { useParams, Link } from "react-router";
 import {
   ChevronLeft, AlertCircle, CheckCircle2, Save, Info,
-  Users, FileText, Settings, GitBranch, Mail, Type, Shield,
-  Plus, Trash2, GripVertical, AlertTriangle,
+  Users, FileText, Settings, GitBranch, Type, Shield,
+  Plus, GripVertical,
 } from "lucide-react";
 import { TemplateProvider, useTemplates } from "../../../context/TemplateContext";
 import { SkeletonBlock, SKELETON_STYLE } from "../../../components/platform";
 import {
-  TEMPLATE_STATUS_LABELS, TEMPLATE_CATEGORY_LABELS, TEMPLATE_SCOPE_LABELS,
-  TEMPLATE_CATEGORIES, TEMPLATE_STATUS_TONE,
+  TEMPLATE_CATEGORY_LABELS,
+  TEMPLATE_CATEGORIES,
 } from "../../../models/templates";
 import type {
-  DocumentTemplate, TemplateCategory, TemplateScope, TemplateRolePlaceholder,
-  TemplateVariable, TemplateVariableType, TEMPLATE_VARIABLE_TYPE_LABELS as TVTL,
+  DocumentTemplate, TemplateCategory, TemplateScope,
 } from "../../../models/templates";
 import { TEMPLATE_VARIABLE_TYPE_LABELS } from "../../../models/templates";
 import { PREP_PARTICIPANT_ROLE_LABELS } from "../../../models/prepare";
-import type { PrepParticipantRole, PrepAuthMethodId } from "../../../models/prepare";
+import type { PrepAuthMethodId } from "../../../models/prepare";
 import { PREP_AUTH_METHODS } from "../../../models/prepare";
 import { usePageMeta } from "../../../hooks/usePageMeta";
 
 // ── Design tokens ─────────────────────────────────────────────────────────────
 const GF    = { fontFamily: "'Geist', sans-serif" };
 const AZURE = "#0078D4";
-const GOLD  = "#C9960C";
 const GREEN = "#059669";
 const RED   = "#DC2626";
 
@@ -175,7 +173,6 @@ function DocumentsTab({ draft }: { draft: DocumentTemplate }) {
 
 // ── Tab panel: Role Placeholders ───────────────────────────────────────────────
 function PlaceholdersTab({ draft }: { draft: DocumentTemplate }) {
-  const ROLES: [PrepParticipantRole, string][] = Object.entries(PREP_PARTICIPANT_ROLE_LABELS) as [PrepParticipantRole, string][];
   return (
     <div>
       {draft.placeholders.length === 0 ? (
@@ -373,7 +370,6 @@ function SettingsTab({ draft, onChange }: { draft: DocumentTemplate; onChange: (
 
 // ── Tab panel: Variables ──────────────────────────────────────────────────────
 function VariablesTab({ draft }: { draft: DocumentTemplate }) {
-  const VAR_TYPES: [string, string][] = Object.entries(TEMPLATE_VARIABLE_TYPE_LABELS);
   return (
     <div>
       <p style={{ ...GF, fontSize: 13, color: "#64748B", marginBottom: 16 }}>
@@ -405,8 +401,7 @@ function VariablesTab({ draft }: { draft: DocumentTemplate }) {
 // ── Main page ─────────────────────────────────────────────────────────────────
 function TemplateEditInner() {
   const { templateId } = useParams<{ templateId: string }>();
-  const { state, loadTemplate, clearOpMessage } = useTemplates();
-  const navigate = useNavigate();
+  const { state, loadTemplate } = useTemplates();
   const [activeTab, setActiveTab] = useState<TabId>("details");
   const [draft, setDraft] = useState<DocumentTemplate | null>(null);
   const [saved, setSaved] = useState(false);

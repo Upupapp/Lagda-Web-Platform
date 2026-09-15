@@ -7,7 +7,6 @@ import { Link } from "react-router";
 import { workflowAutomationService } from "../../../services/mock/workflow-automation.service";
 import type {
   AutoConflict,
-  AutoConflictId,
   AutoConflictResolutionStrategy,
   AutoConflictListFilter,
 } from "../../../models/workflow-automation";
@@ -87,7 +86,6 @@ export function ConflictsPage() {
   }
 
   const active   = conflicts.filter(c => c.resolvedAt === null);
-  const resolved = conflicts.filter(c => c.resolvedAt !== null);
 
   return (
     <div style={{ ...GF, maxWidth: 820, padding: "32px 24px" }}>

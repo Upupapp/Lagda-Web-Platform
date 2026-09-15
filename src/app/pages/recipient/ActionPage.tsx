@@ -6,7 +6,7 @@
 
 import React from "react";
 import { useRecipient } from "../../context/RecipientContext";
-import { DECLINE_REASON_CATEGORIES, REJECTION_REASON_CATEGORIES } from "../../models/recipient";
+import { REJECTION_REASON_CATEGORIES } from "../../models/recipient";
 
 const GF     = { fontFamily: "'Geist', sans-serif" };
 const NAVY   = "#07111F";

@@ -47,7 +47,7 @@ export function AcceptInvitation() {
 
   useEffect(() => {
     let cancelled = false;
-    mockAuthService.getInvitation(invParam).then((inv) => {
+    void mockAuthService.getInvitation(invParam).then((inv) => {
       if (cancelled) return;
       setInvitation(inv);
       setPageState(inv.status === "valid" ? "valid" : "invalid");

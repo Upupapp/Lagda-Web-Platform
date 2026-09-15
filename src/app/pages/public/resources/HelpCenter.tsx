@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router";
 import {
-  ResourcesPageShell, ResourcesSection, ResourcesHeading,
+  ResourcesPageShell, ResourcesSection,
 } from "../../../components/resources/ResourceComponents";
 
 const GF = { fontFamily: "'Geist', sans-serif" };

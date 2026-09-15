@@ -3,7 +3,7 @@ import { useSearchParams } from "react-router";
 import {
   ResourcesPageShell, ResourcesSection,
 } from "../../../components/resources/ResourceComponents";
-import { parseContactCategory, CONTACT_CATEGORY_LABELS, type ContactCategory } from "../../../models/forms";
+import { parseContactCategory, CONTACT_CATEGORY_LABELS } from "../../../models/forms";
 
 const GF = { fontFamily: "'Geist', sans-serif" };
 const GM = { fontFamily: "'Geist Mono', monospace" };
@@ -21,9 +21,6 @@ interface ContactForm {
   phone: string;
   consent: boolean;
 }
-
-// Map ContactCategory IDs to human-readable labels for the existing form
-const CATEGORY_VALUES = Object.entries(CONTACT_CATEGORY_LABELS) as [ContactCategory, string][];
 
 const CATEGORIES = [
   "Sales",
@@ -94,7 +91,7 @@ export function ContactPage() {
   const [form, setForm]           = useState<ContactForm>({ ...EMPTY, category: preselectedCategory });
   const [errors, setErrors]       = useState<Partial<Record<keyof ContactForm, string>>>({});
   const [state, setState]         = useState<FormState>("idle");
-  const [submitted, setSubmitted] = useState(false);
+  const [_submitted, setSubmitted] = useState(false);
 
   const set = (key: keyof ContactForm) => (value: string | boolean) =>
     setForm(f => ({ ...f, [key]: value }));

@@ -13,7 +13,6 @@ import { TabStrip } from "../components/platform/TabStrip";
 import lagdaHeaderLogo from "../../brand elements/svg/LagdaLogoPrimaryHorizontalFullColor_Header.svg";
 
 const GF = { fontFamily: "'Geist', sans-serif" };
-const GM = { fontFamily: "'Geist Mono', monospace" };
 
 interface OnboardingLayoutProps {
   children: ReactNode;
@@ -112,14 +111,14 @@ export function OnboardingLayout({
       return key && !progress[key];
     });
     if (blocking) {
-      navigate(blocking.path, { replace: true });
+      void navigate(blocking.path, { replace: true });
     }
   }, [currentStepMeta, progress, navigate]);
 
   async function handleSignOut() {
     reset();
     await platformSignOut();
-    navigate("/sign-in", { replace: true });
+    void navigate("/sign-in", { replace: true });
   }
 
   return (

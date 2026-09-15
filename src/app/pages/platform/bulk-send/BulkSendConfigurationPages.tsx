@@ -59,7 +59,7 @@ export function BulkSendConfigurationsPage() {
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
-    bulkSendService.listSavedConfigurations(ctx).then(r => {
+    void bulkSendService.listSavedConfigurations(ctx).then(r => {
       if (cancelled) return;
       if (r.ok) setConfigs(r.data);
     }).finally(() => { if (!cancelled) setLoading(false); });
@@ -102,7 +102,7 @@ export function BulkSendConfigurationsPage() {
                 title: "Archive this configuration?",
                 body: "It is removed from the active list but kept for reference and can be restored.",
                 confirmLabel: "Archive",
-                onConfirm: async () => { await bulkSendService.archiveSavedConfiguration(String(c.id), ctx); reload(); announce("Configuration archived."); },
+                onConfirm: () => { void (async () => { await bulkSendService.archiveSavedConfiguration(String(c.id), ctx); reload(); announce("Configuration archived."); })(); },
               })}>Archive</button>
           )}
           {permissions.canManageSavedConfigurations && c.status === "archived" && (
@@ -271,14 +271,14 @@ export function BulkSendConfigurationDetailPage() {
                   <button type="button" className="bs-btn bs-btn-secondary bs-btn-sm"
                     onClick={async () => {
                       const r = await bulkSendService.duplicateSavedConfiguration(String(config.id), ctx);
-                      if (r.ok) { announce("Duplicated as a new configuration."); navigate(`/app/bulk-send/saved-configurations/${r.data.id}`); }
+                      if (r.ok) { announce("Duplicated as a new configuration."); void navigate(`/app/bulk-send/saved-configurations/${r.data.id}`); }
                     }}>Duplicate as New Configuration</button>
                   <button type="button" className="bs-btn bs-btn-secondary bs-btn-sm"
                     onClick={() => confirm({
                       title: "Archive this configuration?",
                       body: "It is kept for reference and can be restored later.",
                       confirmLabel: "Archive",
-                      onConfirm: async () => { await bulkSendService.archiveSavedConfiguration(String(config.id), ctx); navigate("/app/bulk-send/saved-configurations"); },
+                      onConfirm: () => { void (async () => { await bulkSendService.archiveSavedConfiguration(String(config.id), ctx); void navigate("/app/bulk-send/saved-configurations"); })(); },
                     })}>Archive</button>
                 </div>
               )}
@@ -333,7 +333,7 @@ export function BulkSendConfigurationDetailPage() {
                 <button type="button" className="bs-btn bs-btn-secondary bs-btn-sm"
                   onClick={async () => {
                     const r = await bulkSendService.duplicateSavedConfiguration(String(config.id), ctx);
-                    if (r.ok) navigate(`/app/bulk-send/saved-configurations/${r.data.id}`);
+                    if (r.ok) void navigate(`/app/bulk-send/saved-configurations/${r.data.id}`);
                   }}>Duplicate</button>
                 <button type="button" className="bs-btn bs-btn-danger bs-btn-sm"
                   onClick={() => confirm({
@@ -341,9 +341,11 @@ export function BulkSendConfigurationDetailPage() {
                     body: "Only mutable frontend state is removed. No batch, Document, Template, or Contact is deleted. This is not secure deletion.",
                     confirmLabel: "Remove from demonstration",
                     destructive: true,
-                    onConfirm: async () => {
-                      await bulkSendService.removeSavedConfigurationDemonstration(String(config.id), ctx);
-                      navigate("/app/bulk-send/saved-configurations");
+                    onConfirm: () => {
+                      void (async () => {
+                        await bulkSendService.removeSavedConfigurationDemonstration(String(config.id), ctx);
+                        void navigate("/app/bulk-send/saved-configurations");
+                      })();
                     },
                   })}>Remove from Demonstration</button>
               </div>

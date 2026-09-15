@@ -598,7 +598,6 @@ export function UploadStep() {
   }, [details, updateDetails]);
 
   const fileErrors = validation?.errors.filter(e => e.stepId === "upload") ?? [];
-  const hasReady = files.some(f => f.fileState === "ready");
   const atLimit  = files.length >= 10;
   const readyCount = files.filter(f => f.fileState === "ready").length;
   const totalBytes = files.reduce((sum, f) => sum + f.fileSizeBytes, 0);

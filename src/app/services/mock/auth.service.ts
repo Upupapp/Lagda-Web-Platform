@@ -4,7 +4,7 @@
 // Replace with RealAuthService at backend integration time.
 
 import type {
-  AuthResult, AuthScenarioResult, PendingAuthUser, MockInvitation,
+  AuthResult, AuthScenarioResult, MockInvitation,
 } from "../../models/auth";
 import { delay } from "./delay";
 

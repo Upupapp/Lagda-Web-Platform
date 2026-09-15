@@ -162,7 +162,7 @@ export function WorkflowBuilderPage() {
         })
       : await workflowService.createTemplate(payload);
     setSaving(false);
-    if (saved) navigate(`/app/workflow/templates/${saved.id}`);
+    if (saved) void navigate(`/app/workflow/templates/${saved.id}`);
   }
 
   if (!loaded) {
@@ -474,7 +474,7 @@ export function StartWorkflowPage() {
       assignments,
     });
     setStarting(false);
-    if (run) navigate(`/app/workflow/runs/${run.id}`);
+    if (run) void navigate(`/app/workflow/runs/${run.id}`);
   }
 
   return (

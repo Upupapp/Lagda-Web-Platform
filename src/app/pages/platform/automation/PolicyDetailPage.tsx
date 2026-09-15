@@ -2,7 +2,7 @@
 // Edit settings for a specific policy family.
 // Frontend demonstration only. No real execution. No Burgundy. No eNotary.
 
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState } from "react";
 import { useParams, Link } from "react-router";
 import { workflowAutomationService } from "../../../services/mock/workflow-automation.service";
 import type { AutoPolicy, AutoPolicyId, AutoPolicyStatus } from "../../../models/workflow-automation";
@@ -19,7 +19,6 @@ const SLATE6 = "#64748B";
 const SLATE4 = "#94A3B8";
 const SLATE2 = "#E2E8F0";
 const RED    = "#DC2626";
-const GREEN  = "#16A34A";
 const AMBER  = "#D97706";
 
 function inputStyle(): React.CSSProperties {

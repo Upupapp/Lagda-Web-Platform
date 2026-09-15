@@ -11,7 +11,7 @@ import {
   FileText, FilePlus, Search, MoreHorizontal, Archive, RotateCcw, Pencil,
   X, AlertCircle, ChevronLeft, ChevronRight, Tag, FolderOpen, Folder,
   ShieldCheck, Activity, Users, RefreshCw, Inbox, ArrowUpDown,
-  CheckSquare, Square, Star, Clock, ExternalLink, Move,
+  Star, Clock, ExternalLink,
   Eye, Bell, Ban, Shuffle, Shield, Info, Send,
 } from "lucide-react";
 import { usePlatform } from "../../../context/PlatformContext";
@@ -36,7 +36,7 @@ import {
   ORG_FILTERED_VIEWS,
 } from "../../../models/documents";
 import type {
-  OrgTag, OrgFolder as OrgFolderType, OrgFolderId, OrgTagId, OrgSavedView,
+  OrgTag, OrgFolder as OrgFolderType, OrgTagId, OrgSavedView,
 } from "../../../models/document-organization";
 import { TAG_STYLE_COLORS } from "../../../models/document-organization";
 import { usePageMeta } from "../../../hooks/usePageMeta";
@@ -52,11 +52,8 @@ const NAVY   = "#07111F";
 const SLATE6 = "#64748B";
 const SLATE4 = "#94A3B8";
 const SLATE2 = "#E2E8F0";
-const SLATE1 = "#F8FAFC";
 const RED    = "#DC2626";
 const AMBER  = "#D97706";
-const GREEN  = "#16A34A";
-const GOLD   = "#C9960C";
 
 // ── Responsive CSS ────────────────────────────────────────────────────────────
 
@@ -656,7 +653,7 @@ function OrgSidePanel({
 // Full C31 bulk action bar with org operations and preview actions.
 
 function OrgBulkBar({
-  count, total, items, orgTags, orgFolders, onSelectAll, onDeselectAll,
+  count, total, items: _items, orgTags, orgFolders: _orgFolders, onSelectAll, onDeselectAll,
   onBulkArchive, onBulkRestore, onBulkAddTag, onBulkRemoveTag,
   onBulkStar, onBulkUnstar,
   onPreviewExport, onPreviewReminders, onPreviewCancel,
@@ -891,7 +888,7 @@ function PreviewDialog({
 }
 
 // ── Legacy SelectionBar (kept for backward compat, unused in new flow) ─────────
-
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- retained for backward-compat reference, intentionally unused
 function SelectionBar({
   count, total, tags, onSelectAll, onDeselectAll, onBulkArchive, onBulkAddTag, bulkTagOpen, onToggleBulkTag,
 }: {
@@ -983,7 +980,7 @@ function SelectionBar({
 // ── RowActionMenu ─────────────────────────────────────────────────────────────
 
 function RowActionMenu({
-  item, isOpen, onToggle, onAction, onRename, canPrepare, canVerify, canArchive,
+  item, isOpen, onToggle, onAction, onRename, canPrepare, canVerify, canArchive: _canArchive,
 }: {
   item: DocumentListItem;
   isOpen: boolean;
@@ -1083,7 +1080,7 @@ function RowActionMenu({
 
 // ── Checkbox ──────────────────────────────────────────────────────────────────
 
-function DocCheckbox({ id, checked, onChange, label }: {
+function DocCheckbox({ id: _id, checked, onChange, label }: {
   id: string; checked: boolean;
   onChange: (c: boolean) => void; label: string;
 }) {
@@ -1722,7 +1719,7 @@ export function DocumentsPage() {
   const pageItems = result?.items ?? [];
 
   // Preview body content
-  function previewBody(type: typeof previewDialog) {
+  function previewBody(_type: typeof previewDialog) {
     const count = selectedIds.size;
     const docList = pageItems.filter(d => selectedIds.has(d.id));
     if (!count) return <p style={{ fontSize: 13, color: SLATE6, ...GF }}>No documents selected.</p>;

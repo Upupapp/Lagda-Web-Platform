@@ -72,14 +72,6 @@ const WHITE  = "#FFFFFF";
 const BASE_PAGE_WIDTH  = 595;
 const PAGE_RATIO       = 842 / 595; // height / width ≈ 1.415
 
-// ── Participant lookup helper ──────────────────────────────────────────────────
-function useParticipantById(participants: PrepParticipant[]) {
-  return useCallback((id: string | null) =>
-    id ? participants.find(p => p.id === id) ?? null : null,
-    [participants],
-  );
-}
-
 // ── Fictional page preview ────────────────────────────────────────────────────
 // Shows placeholder content; does not display any selected file content.
 function FictionPagePreview({ pageNumber }: { pageNumber: number }) {
@@ -292,7 +284,7 @@ function PageCanvas({ participants }: PageCanvasProps) {
   const {
     currentDocumentId, currentPageId, currentPageFields, documents,
     selectedFieldIds, mode, pendingFieldType, zoom,
-    addField, moveField, resizeField, selectFields, clearSelection,
+    addField, moveField, selectFields, clearSelection,
     participantIdentities,
   } = useFieldEditor();
 
@@ -323,16 +315,6 @@ function PageCanvas({ participants }: PageCanvasProps) {
   );
 
   // Convert client coords to normalized page coords
-  const toNorm = useCallback((clientX: number, clientY: number) => {
-    const canvas = canvasRef.current;
-    if (!canvas) return { nx: 0, ny: 0 };
-    const b = canvas.getBoundingClientRect();
-    return {
-      nx: Math.max(0, Math.min(1, (clientX - b.left) / b.width)),
-      ny: Math.max(0, Math.min(1, (clientY - b.top)  / b.height)),
-    };
-  }, []);
-
   // Canvas click: place new field or clear selection
   const handleCanvasClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
     if (mode === "place-field" && pendingFieldType && currentDocumentId && currentPageId) {
@@ -1454,7 +1436,7 @@ interface ToolbarProps {
   returnLabel:   string;
 }
 
-function EditorToolbar({ draftTitle, participants, draft, showKbDialog, setShowKbDialog, onContinue, returnTo, returnLabel }: ToolbarProps) {
+function EditorToolbar({ draftTitle, participants: _participants, draft, showKbDialog: _showKbDialog, setShowKbDialog, onContinue, returnTo, returnLabel }: ToolbarProps) {
   const {
     undo, redo, canUndo, canRedo,
     zoom, setZoom,
@@ -1462,7 +1444,7 @@ function EditorToolbar({ draftTitle, participants, draft, showKbDialog, setShowK
     showValidation, toggleValidation,
     saveState,
     validation, runValidation,
-    mode, setMode, pendingFieldType, setPendingField,
+    pendingFieldType,
     copySelected, paste, clipboard,
     fields,
   } = useFieldEditor();

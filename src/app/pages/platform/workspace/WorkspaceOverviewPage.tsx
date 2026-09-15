@@ -11,7 +11,6 @@ const GF    = { fontFamily: "'Geist', sans-serif" };
 const GM    = { fontFamily: "'Geist Mono', monospace" };
 const NAVY  = "#07111F";
 const AZURE = "#0078D4";
-const GOLD  = "#C9960C";
 const SLATE = "#64748B";
 const SILVER= "#8A9BAE";
 const LIGHT = "#F0F7FF";
@@ -71,7 +70,7 @@ function QuickLinkRow({ label, path, description }: { label: string; path: strin
 function WorkspaceOverviewInner() {
   const { state, asyncLoadOverview } = useWorkspaceAdmin();
 
-  useEffect(() => { asyncLoadOverview(); }, [asyncLoadOverview]);
+  useEffect(() => { void asyncLoadOverview(); }, [asyncLoadOverview]);
 
   if (state.overviewLoading) {
     return (

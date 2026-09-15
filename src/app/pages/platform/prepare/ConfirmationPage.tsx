@@ -161,7 +161,6 @@ function ConfirmationPageInner({ participants }: { participants: PrepParticipant
 
   const hasErrors    = (validation?.errors.length ?? 0) > 0;
   const canProceed   = !hasErrors;
-  const draftTitle   = draft.details.title || "Untitled Document";
   const participantCount = draft.participants.length;
 
   return (
@@ -399,7 +398,7 @@ function ConfirmationPageInner({ participants }: { participants: PrepParticipant
                 mapPreparationDraftToDocumentListItem(draft, user?.displayName ?? "You"),
               ]);
               void discardDraft();
-              navigate("/app/documents");
+              void navigate("/app/documents");
             }}
             aria-disabled={!canProceed || (USE_REAL_BACKEND && sending)}
             style={{

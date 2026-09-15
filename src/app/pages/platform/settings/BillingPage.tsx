@@ -4,9 +4,9 @@
 
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router";
-import { SettingsPage, SSection, SCard, SField, INPUT_STYLE, StatusBadge, Skeleton, DEMO_NOTICE } from "./SettingsShell";
+import { SettingsPage, SSection, SField, INPUT_STYLE, StatusBadge, Skeleton, DEMO_NOTICE } from "./SettingsShell";
 import { mockBillingSettingsService } from "../../../services/mock/settings.service";
-import type { BillingAccount, InvoiceSummary } from "../../../models/settings";
+import type { BillingAccount } from "../../../models/settings";
 import { LAGDA_PLANS, COMPARE_GROUPS } from "../../../config/pricing.config";
 import { Z } from "../../../utils/z-index";
 
@@ -45,7 +45,7 @@ export function BillingPage() {
   const [simResult, setSimResult]         = useState<string | null>(null);
 
   useEffect(() => {
-    mockBillingSettingsService.getBillingAccount().then(b => {
+    void mockBillingSettingsService.getBillingAccount().then(b => {
       setBilling(b);
       setContactForm({ name: b.billingContact.name, email: b.billingContact.email, poRef: b.billingContact.poRef });
       setLoading(false);

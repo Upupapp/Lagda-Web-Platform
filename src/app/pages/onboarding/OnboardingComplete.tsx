@@ -68,7 +68,7 @@ export function OnboardingComplete() {
     }
 
     reset(); // clear onboarding state
-    navigate(destination, { replace: true });
+    void navigate(destination, { replace: true });
   }
 
   return (

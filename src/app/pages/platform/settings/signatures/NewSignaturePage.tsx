@@ -182,7 +182,7 @@ export function NewSignaturePage() {
 
     setSaving(false);
     if (result.ok) {
-      navigate("/app/settings/signatures", { replace: false });
+      void navigate("/app/settings/signatures", { replace: false });
     } else {
       setGlobalError("Could not create entry. Please try again.");
     }

@@ -29,7 +29,7 @@ function InitialsAvatar({ name }: { name: string }) {
 
 function GroupDetail() {
   const { groupId } = useParams<{ groupId: string }>();
-  const { state, asyncLoadGroups, asyncAddContactsToGroup, asyncRemoveContactsFromGroup, asyncArchiveGroup, asyncRestoreGroup } = useContacts();
+  const { asyncRemoveContactsFromGroup, asyncArchiveGroup, asyncRestoreGroup } = useContacts();
   // getGroup returns the lighter list projection, not full Contact records.
   const [groupData, setGroupData] = useState<{ group: ContactGroup; members: ContactListItem[] } | null>(null);
   const [loading,   setLoading]   = useState(true);
@@ -38,7 +38,7 @@ function GroupDetail() {
 
   useEffect(() => {
     if (!groupId) return;
-    mockContactService.getGroup(groupId as ContactGroupId).then(res => {
+    void mockContactService.getGroup(groupId as ContactGroupId).then(res => {
       setGroupData(res);
       setLoading(false);
     });

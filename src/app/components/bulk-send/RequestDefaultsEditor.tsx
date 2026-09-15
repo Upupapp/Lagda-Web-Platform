@@ -364,6 +364,15 @@ export function RequestDefaultsEditor({
 
 // ── One field ─────────────────────────────────────────────────────────────────
 
+// `current` is unknown by construction (draft/effective values are untyped); the
+// field definitions only ever carry string/number/boolean, so stringify honestly
+// instead of risking "[object Object]" via a bare String() on a wider type.
+function stringifyFieldValue(v: unknown): string {
+  if (v === null || v === undefined) return "";
+  if (typeof v === "string" || typeof v === "number" || typeof v === "boolean") return String(v);
+  return JSON.stringify(v);
+}
+
 function DefaultFieldRow({
   def, effectiveValue, effectiveSource, draftValue, issue, disabled,
   onChange, onClearDraft, onRestore,
@@ -386,8 +395,8 @@ function DefaultFieldRow({
 
   const unsupportedCurrent =
     def.valueType === "enum"
-    && current !== null && current !== undefined && String(current) !== ""
-    && !(def.options ?? []).some((o) => o.value === String(current));
+    && current !== null && current !== undefined && stringifyFieldValue(current) !== ""
+    && !(def.options ?? []).some((o) => o.value === stringifyFieldValue(current));
 
   return (
     <div style={{ borderTop: `1px solid ${BS.slate2}`, paddingTop: 14 }}>
@@ -417,7 +426,7 @@ function DefaultFieldRow({
       ) : def.valueType === "enum" ? (
         <>
           <select id={id} className="bs-select" disabled={disabled}
-            value={String(current ?? "")}
+            value={stringifyFieldValue(current)}
             aria-invalid={issue ? true : undefined}
             aria-describedby={issue ? errId : undefined}
             onChange={(e) => onChange(e.target.value)}>
@@ -427,8 +436,8 @@ function DefaultFieldRow({
                 simply opening the editor and saving would change the setting
                 without the user asking. Surface the real value instead. */}
             {unsupportedCurrent && (
-              <option value={String(current)}>
-                {String(current).replace(/-/g, " ")} — not a supported option
+              <option value={stringifyFieldValue(current)}>
+                {stringifyFieldValue(current).replace(/-/g, " ")} — not a supported option
               </option>
             )}
             {def.options?.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
@@ -442,14 +451,14 @@ function DefaultFieldRow({
         </>
       ) : def.valueType === "long-text" ? (
         <textarea id={id} className="bs-textarea" disabled={disabled}
-          value={String(current ?? "")} maxLength={def.maxLength}
+          value={stringifyFieldValue(current)} maxLength={def.maxLength}
           aria-invalid={issue ? true : undefined}
           aria-describedby={issue ? errId : undefined}
           onChange={(e) => onChange(e.target.value)}
           style={{ fontFamily: "inherit", fontSize: 14, minHeight: 88 }} />
       ) : (
         <input id={id} type="text" className="bs-input" disabled={disabled}
-          value={String(current ?? "")} maxLength={def.maxLength}
+          value={stringifyFieldValue(current)} maxLength={def.maxLength}
           aria-invalid={issue ? true : undefined}
           aria-describedby={issue ? errId : undefined}
           onChange={(e) => onChange(e.target.value)} />

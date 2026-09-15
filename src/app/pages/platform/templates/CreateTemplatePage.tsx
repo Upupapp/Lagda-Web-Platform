@@ -4,7 +4,7 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router";
 import {
-  LayoutTemplate, FileText, FolderOpen, Copy, Sparkles,
+  LayoutTemplate, FileText, FolderOpen, Copy,
   ChevronLeft, CheckCircle2, AlertCircle,
 } from "lucide-react";
 import { asyncCreateBlank } from "../../../services/mock/templates.service";

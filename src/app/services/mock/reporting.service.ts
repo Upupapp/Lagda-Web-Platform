@@ -16,7 +16,6 @@ import type {
   ReportDistribution,
   ReportDistributionItem,
   ReportTimeSeries,
-  ReportTimeSeriesPoint,
   ReportTable,
   ReportTableColumn,
   ReportTableRow,
@@ -210,14 +209,6 @@ function buildWeeklyTrend(
 
 const docFixtures = DOCUMENT_FIXTURES;
 
-function countByStatus() {
-  const counts: Record<string, number> = {};
-  for (const d of docFixtures) {
-    counts[d.status] = (counts[d.status] ?? 0) + 1;
-  }
-  return counts;
-}
-
 function getCompletedDocs() {
   return docFixtures.filter(d => d.status === "completed");
 }
@@ -231,7 +222,6 @@ function getInProgressDocs() {
 // ── Document Operations report ─────────────────────────────────────────────────
 
 function buildDocumentOperationsReport(query: ReportQuery): DocumentOperationsData {
-  const statusCounts = countByStatus();
   const completed    = getCompletedDocs();
   const inProgress   = getInProgressDocs();
   const declined     = docFixtures.filter(d => d.status === "declined").length;

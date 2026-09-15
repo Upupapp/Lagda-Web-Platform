@@ -50,7 +50,6 @@ function nextId(prefix: string): string {
 }
 
 function ruleId():     AutoRuleId     { return nextId("rule") as AutoRuleId; }
-function policyId():   AutoPolicyId   { return nextId("pol")  as AutoPolicyId; }
 function conflictId(): AutoConflictId { return nextId("cfl")  as AutoConflictId; }
 function simId():      AutoSimId      { return nextId("sim")  as AutoSimId; }
 function actId():      AutoActivityId { return nextId("act")  as AutoActivityId; }

@@ -6,7 +6,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { Link, useParams, useNavigate } from "react-router";
 import {
-  BookOpen, FileText, AlertCircle, RefreshCw, Info,
+  FileText, AlertCircle, Info,
   AlertTriangle, Star, ArrowLeft, X, ChevronRight,
 } from "lucide-react";
 import { AppContent, PageHeader, EmptyStateLayout, SkeletonBlock, SKELETON_STYLE } from "../../../../components/platform";
@@ -125,7 +125,7 @@ export function SavedViewDetailPage() {
     }
   }, [viewId]);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => { void load(); }, [load]);
   useEffect(() => {
     if (!toast) return;
     const t = setTimeout(() => setToast(null), 3500);
@@ -147,7 +147,7 @@ export function SavedViewDetailPage() {
     if (view.definition.filters.tagIds?.[0])          params.set("tag", view.definition.filters.tagIds[0]);
     if (view.definition.sort !== "updated")           params.set("sort", view.definition.sort);
     if (view.definition.sortDir !== "desc")           params.set("dir", view.definition.sortDir);
-    navigate(`/app/documents?${params.toString()}`);
+    void navigate(`/app/documents?${params.toString()}`);
   }
 
   if (loading) {

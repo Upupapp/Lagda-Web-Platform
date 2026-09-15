@@ -110,7 +110,7 @@ export function MobileNav() {
   const handleSignOut = useCallback(async () => {
     setDrawerOpen(false);
     await signOut();
-    navigate("/sign-in");
+    void navigate("/sign-in");
   }, [signOut, navigate]);
 
   const openSearch = useCallback(() => {

@@ -6,7 +6,7 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { Link, useSearchParams } from "react-router";
 import {
-  SettingsPage, SCard, DEMO_NOTICE, BTN_PRIMARY, BTN_SECONDARY, BTN_DANGER,
+  SettingsPage, SCard, DEMO_NOTICE, BTN_PRIMARY, BTN_SECONDARY,
   Skeleton, StatusBadge,
 } from "../SettingsShell";
 import { signatureLibraryService } from "../../../../services/mock/signature-library.service";

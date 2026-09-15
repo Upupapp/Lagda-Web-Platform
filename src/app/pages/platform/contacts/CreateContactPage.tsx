@@ -7,7 +7,7 @@ import React, { useState, useCallback } from "react";
 import { useNavigate, Link } from "react-router";
 import { ContactProvider, useContacts } from "../../../context/ContactContext";
 import type { ContactCreateInput, ContactScope, ContactTagId, ContactGroupId, ContactDuplicateCandidate } from "../../../models/contacts";
-import { SYSTEM_CONTACT_TAGS, CONTACT_SCOPE_LABELS, getContactTagById } from "../../../models/contacts";
+import { SYSTEM_CONTACT_TAGS, CONTACT_SCOPE_LABELS } from "../../../models/contacts";
 import { Z } from "../../../utils/z-index";
 
 const GF    = { fontFamily: "'Geist', sans-serif" };
@@ -125,7 +125,7 @@ function CreateContactForm() {
   const [scope,  setScope]  = useState<ContactScope>("personal");
   const [note,   setNote]   = useState("");
   const [tagIds,    setTagIds]    = useState<ContactTagId[]>([]);
-  const [groupIds,  setGroupIds]  = useState<ContactGroupId[]>([]);
+  const [groupIds,  _setGroupIds]  = useState<ContactGroupId[]>([]);
   const [errors,    setErrors]    = useState<Record<string, string>>({});
   const [saving,    setSaving]    = useState(false);
   const [dupCandidates, setDupCandidates] = useState<ContactDuplicateCandidate[] | null>(null);
@@ -137,7 +137,7 @@ function CreateContactForm() {
   // Trigger duplicate check when name/email stabilise
   React.useEffect(() => {
     if (!debouncedEmail && !debouncedName) return;
-    asyncFindDuplicates(debouncedName, debouncedEmail).then(res => setDupCandidates(res.length ? res : null));
+    void asyncFindDuplicates(debouncedName, debouncedEmail).then(res => setDupCandidates(res.length ? res : null));
   }, [debouncedEmail, debouncedName, asyncFindDuplicates]);
 
   const toggleTag = (id: ContactTagId) =>
@@ -170,7 +170,7 @@ function CreateContactForm() {
         scope, tagIds, groupIds, note: note.trim() || undefined,
       };
       const contact = await asyncCreate(input);
-      navigate(`/app/contacts/${contact.id}`);
+      void navigate(`/app/contacts/${contact.id}`);
     } catch {
       setErrors({ _form: "Could not create contact. Please try again." });
       setSaving(false);
@@ -188,7 +188,7 @@ function CreateContactForm() {
         <DuplicateWarningModal
           candidates={dupCandidates}
           onContinue={() => { setDupChecked(false); void handleSubmit(true); }}
-          onReview={() => { if (firstDup) navigate(`/app/contacts/${firstDup.existingContactId}`); }}
+          onReview={() => { if (firstDup) void navigate(`/app/contacts/${firstDup.existingContactId}`); }}
           onCancel={() => setDupChecked(false)}
         />
       )}

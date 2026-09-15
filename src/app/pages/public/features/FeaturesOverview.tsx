@@ -3,7 +3,7 @@ import { FeaturesPageShell } from "../../../components/features/FeaturesSubNav";
 import {
   PageHero, PageSection, SectionHeading, RelatedPages, PageCTA, LegalNote,
 } from "../../../components/esignature/EsigPageShell";
-import { OVERVIEW_CAPABILITIES, FEATURES_LEGAL_NOTE, ENOTARY_NOTE } from "./content";
+import { OVERVIEW_CAPABILITIES } from "./content";
 
 const GF = { fontFamily: "'Geist', sans-serif" };
 const GM = { fontFamily: "'Geist Mono', monospace" };

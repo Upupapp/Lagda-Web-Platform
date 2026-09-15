@@ -442,11 +442,11 @@ export function EditSignaturePage() {
   }, [signatureId]);
 
   const navToDetail = useCallback(() => {
-    navigate(`/app/settings/signatures/${signatureId}`);
+    void navigate(`/app/settings/signatures/${signatureId}`);
   }, [navigate, signatureId]);
 
   const navToLib = useCallback(() => {
-    navigate("/app/settings/signatures");
+    void navigate("/app/settings/signatures");
   }, [navigate]);
 
   if (!loading && notFound) {

@@ -25,7 +25,6 @@ const SLATE4 = "#94A3B8";
 const SLATE2 = "#E2E8F0";
 const RED    = "#DC2626";
 const GREEN  = "#16A34A";
-const AMBER  = "#D97706";
 
 function StatusBadge({ status }: { status: AutoRule["status"] }) {
   return (
@@ -97,13 +96,13 @@ export function RuleDetailPage() {
 
   function handleDuplicate() {
     const r = workflowAutomationService.duplicateRule(ruleId as AutoRuleId);
-    if (r.ok) { showToast(`Duplicated as "${r.data.name}".`, "success"); navigate(`/app/automation/rules/${r.data.id}`); }
+    if (r.ok) { showToast(`Duplicated as "${r.data.name}".`, "success"); void navigate(`/app/automation/rules/${r.data.id}`); }
     else showToast(r.error.message, "error");
   }
 
   function handleRemove() {
     const r = workflowAutomationService.removeRule(ruleId as AutoRuleId);
-    if (r.ok) { navigate("/app/automation/rules"); }
+    if (r.ok) { void navigate("/app/automation/rules"); }
     else showToast(r.error.message, "error");
     setConfirmRemove(false);
   }

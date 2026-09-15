@@ -6,8 +6,8 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate, Link } from "react-router";
 import { ContactProvider, useContacts } from "../../../context/ContactContext";
-import type { ContactCreateInput, ContactScope, ContactTagId, Contact } from "../../../models/contacts";
-import { SYSTEM_CONTACT_TAGS, CONTACT_SCOPE_LABELS, getContactTagById } from "../../../models/contacts";
+import type { ContactCreateInput, ContactScope, ContactTagId } from "../../../models/contacts";
+import { SYSTEM_CONTACT_TAGS, CONTACT_SCOPE_LABELS } from "../../../models/contacts";
 
 const GF    = { fontFamily: "'Geist', sans-serif" };
 const GM    = { fontFamily: "'Geist Mono', monospace" };
@@ -38,7 +38,7 @@ function FormField({ label, required, children, error, hint }: { label: string; 
 function EditForm() {
   const { contactId } = useParams<{ contactId: string }>();
   const navigate = useNavigate();
-  const { state, asyncLoadContact, clearActiveContact, asyncUpdate, asyncValidate } = useContacts();
+  const { state, asyncLoadContact, clearActiveContact, asyncUpdate } = useContacts();
 
   const [name,   setName]   = useState("");
   const [email,  setEmail]  = useState("");
@@ -96,7 +96,7 @@ function EditForm() {
         scope, tagIds, groupIds: state.activeContact?.groupIds ?? [], note: note.trim() || undefined,
       };
       await asyncUpdate(contactId as ContactId, input);
-      navigate(`/app/contacts/${contactId}`);
+      void navigate(`/app/contacts/${contactId}`);
     } catch {
       setErrors({ _form: "Could not save changes. Please try again." });
       setSaving(false);

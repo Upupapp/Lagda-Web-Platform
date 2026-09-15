@@ -7,10 +7,6 @@
 import type {
   PrepParticipantRole,
   PrepAuthMethodId,
-  PrepRoutingConfig,
-  PrepAuthConfig,
-  PrepSettings,
-  PrepFile,
 } from "./prepare";
 import type { RoutingMode }     from "./transaction-detail";
 import type { FieldDefinition } from "./field-editor";

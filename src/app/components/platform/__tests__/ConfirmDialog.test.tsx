@@ -22,10 +22,10 @@ const BASE: ConfirmRequest = {
 function renderDialog(overrides: Partial<ConfirmRequest> = {}) {
   const onClose = vi.fn();
   const onConfirm = vi.fn();
-  const result = render(
+  const view = render(
     <ConfirmDialog request={{ ...BASE, onConfirm, ...overrides }} onClose={onClose} />,
   );
-  return { ...result, onClose, onConfirm, user: userEvent.setup() };
+  return { ...view, onClose, onConfirm, user: userEvent.setup() };
 }
 
 describe("ConfirmDialog", () => {

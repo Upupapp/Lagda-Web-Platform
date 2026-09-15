@@ -3,7 +3,7 @@
 // Transactional and promotional preferences are clearly separated.
 
 import React, { useEffect, useState } from "react";
-import { SettingsPage, SSection, SField, BTN_PRIMARY, BTN_SECONDARY, Skeleton, DEMO_NOTICE } from "./SettingsShell";
+import { SettingsPage, SSection, SField, BTN_SECONDARY, Skeleton, DEMO_NOTICE } from "./SettingsShell";
 import { mockNotificationSettingsService } from "../../../services/mock/settings.service";
 import type { NotificationPreferences, NotificationCategoryPreference, NotificationChannel, NotificationFrequency } from "../../../models/settings";
 
@@ -92,7 +92,7 @@ export function NotificationsPage() {
   const [saved, setSaved]   = useState(false);
 
   useEffect(() => {
-    mockNotificationSettingsService.getPersonalNotificationPreferences().then(p => { setPrefs(p); setLoading(false); });
+    void mockNotificationSettingsService.getPersonalNotificationPreferences().then(p => { setPrefs(p); setLoading(false); });
   }, []);
 
   const updateCategory = (categoryId: string, changes: Partial<NotificationCategoryPreference>) => {

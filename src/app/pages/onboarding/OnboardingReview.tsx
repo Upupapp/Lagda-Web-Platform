@@ -3,7 +3,7 @@
 // Completion calls platform.signIn() with mock payload — no real API.
 // NEVER claims account was created, workspace created, or subscription active.
 
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { User, Target, Building2, ShieldCheck, ChevronRight } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
@@ -99,9 +99,8 @@ export function OnboardingReview() {
   const { draft, markComplete } = useOnboarding();
   const platform = usePlatform();
   const [status, setStatus] = useState<"idle" | "submitting" | "done">("idle");
-  const doneRef = useRef<HTMLDivElement>(null);
 
-  const { profile, useCase, workspace, security, notifications } = draft;
+  const { profile, useCase, workspace, security } = draft;
 
   const orgTypeLabel = useCase.orgType
     ? ORG_TYPE_LABELS[useCase.orgType]

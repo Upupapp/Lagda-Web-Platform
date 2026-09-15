@@ -10,7 +10,6 @@ import { SIGN_IN_ACTIVITY_LABELS } from "../../../models/settings";
 
 const GF    = { fontFamily: "'Geist', sans-serif" };
 const NAVY  = "#07111F";
-const AZURE = "#0078D4";
 const SLATE = "#64748B";
 const SILVER= "#8A9BAE";
 const GREEN = "#16A34A";
@@ -47,7 +46,7 @@ export function SecurityActivityPage() {
   const [filter, setFilter]     = useState<string>("all");
 
   useEffect(() => {
-    mockSecuritySettingsService.listSignInActivity().then(a => { setActivity(a); setLoading(false); });
+    void mockSecuritySettingsService.listSignInActivity().then(a => { setActivity(a); setLoading(false); });
   }, []);
 
   const onFilterChange = async (value: string) => {

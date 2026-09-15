@@ -59,14 +59,14 @@ export function OnboardingUseCase() {
     setShowReminder(false);
   }
 
-  function handleBack()     { navigate("/onboarding/profile"); }
+  function handleBack()     { void navigate("/onboarding/profile"); }
   function handleContinue() {
     if (!hasAnySelection) {
       setShowReminder(true);
       return;
     }
     markStepDone("use-case");
-    navigate("/onboarding/workspace");
+    void navigate("/onboarding/workspace");
   }
 
   const orgTypeEntries = Object.entries(ORG_TYPE_LABELS) as [Exclude<OrgType, "">, string][];

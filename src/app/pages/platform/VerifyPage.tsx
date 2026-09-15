@@ -340,17 +340,17 @@ export function VerifyPage() {
   // History
   const [history, setHistory] = useState<VerificationHistoryItem[]>([]);
   const [demoOpen, setDemoOpen] = useState(false);
-  const [copiedAnnounce, setCopiedAnnounce] = useState("");
+  const [copiedAnnounce, _setCopiedAnnounce] = useState("");
 
   // Load history on mount
   useEffect(() => {
-    verificationService.getVerificationHistory({ limit: 5 }).then(r => setHistory(r.items));
+    void verificationService.getVerificationHistory({ limit: 5 }).then(r => setHistory(r.items));
   }, []);
 
   // Auto-trigger if we arrive with a pre-populated ID from a link
   useEffect(() => {
     if (initialId && VER_ID_RE.test(initialId.trim().toUpperCase())) {
-      performLookup(initialId);
+      void performLookup(initialId);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -404,7 +404,7 @@ export function VerifyPage() {
       setInputError("The ID entered does not match the expected format (e.g. LAGDA-VER-2026-004821).");
       return;
     }
-    performLookup(trimmed);
+    void performLookup(trimmed);
   }
 
   function handleReset() {
@@ -455,7 +455,7 @@ export function VerifyPage() {
   function handleDemoIdClick(id: string) {
     setIdInput(id);
     setInputError(null);
-    performLookup(id);
+    void performLookup(id);
   }
 
   // Effective file match: override from comparison run, else from record

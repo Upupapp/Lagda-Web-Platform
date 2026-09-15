@@ -6,12 +6,11 @@
 
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
-import { ClipboardCheck, Check, X, ChevronRight } from "lucide-react";
+import { ClipboardCheck, Check, ChevronRight } from "lucide-react";
 import { usePrepare } from "../../../context/PrepareContext";
 import {
   PREPARATION_STEPS,
   PREP_PARTICIPANT_ROLE_LABELS,
-  PREP_AUTH_METHODS,
   DEFAULT_PREP_SETTINGS,
   DEFAULT_ROUTING_CONFIG,
   DEFAULT_AUTH_CONFIG,
@@ -143,7 +142,7 @@ export function ReviewStep() {
 
   const goToStep = (id: PreparationStepId) => {
     const route = PREPARATION_STEPS.find(s => s.id === id)?.route;
-    if (route) navigate(route);
+    if (route) void navigate(route);
   };
 
   const validation = draft ? validate() : null;
@@ -163,7 +162,7 @@ export function ReviewStep() {
     const ok = await markReadyForFieldPlacement();
     setIsSubmitting(false);
     if (ok) {
-      navigate("/app/prepare/fields");
+      void navigate("/app/prepare/fields");
     }
   };
 
@@ -211,7 +210,7 @@ export function ReviewStep() {
           <span style={{ ...GF, fontSize: 13, color: GOLD, fontWeight: 600 }}>No participants added yet</span>
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            {participants.map((p, i) => (
+            {participants.map((p, _i) => (
               <div key={p.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                 <div>
                   <span style={{ ...GF, fontSize: 13, fontWeight: 600, color: NAVY }}>{p.name}</span>

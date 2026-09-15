@@ -117,7 +117,7 @@ export function MfaSetup() {
 
   function handleDone() {
     setMfaSetupDone(true);
-    navigate("/onboarding/notifications");
+    void navigate("/onboarding/notifications");
   }
 
   function handleCopyAll() {

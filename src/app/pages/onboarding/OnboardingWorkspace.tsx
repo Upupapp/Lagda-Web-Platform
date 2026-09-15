@@ -62,7 +62,7 @@ export function OnboardingWorkspace() {
   const scenario = draft.workspace.scenario;
 
   function handleBack() {
-    navigate("/onboarding/use-case");
+    void navigate("/onboarding/use-case");
   }
   function handleContinue() {
     if (scenario === "") {
@@ -74,7 +74,7 @@ export function OnboardingWorkspace() {
       return;
     }
     markStepDone("workspace");
-    navigate("/onboarding/security");
+    void navigate("/onboarding/security");
   }
 
   return (

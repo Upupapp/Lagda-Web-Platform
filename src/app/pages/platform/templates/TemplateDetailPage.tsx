@@ -5,17 +5,17 @@
 import { useEffect, useCallback } from "react";
 import { useParams, Link, useNavigate } from "react-router";
 import {
-  ChevronLeft, LayoutTemplate, Users, FileText, GitBranch, Star, Clock,
-  Edit2, Copy, Archive, RotateCcw, CheckCircle2, Play, Eye,
+  ChevronLeft, LayoutTemplate, FileText, Star,
+  Edit2, Copy, Archive, RotateCcw, CheckCircle2, Eye,
   AlertCircle, AlertTriangle, PenLine, Zap, RefreshCw,
 } from "lucide-react";
 import { TemplateProvider, useTemplates } from "../../../context/TemplateContext";
 import { SkeletonBlock, SKELETON_STYLE } from "../../../components/platform";
 import {
-  TEMPLATE_STATUS_LABELS, TEMPLATE_STATUS_TONE, TEMPLATE_CATEGORY_LABELS,
+  TEMPLATE_STATUS_LABELS, TEMPLATE_CATEGORY_LABELS,
   TEMPLATE_SCOPE_LABELS,
 } from "../../../models/templates";
-import type { DocumentTemplate, TemplateAction } from "../../../models/templates";
+import type { DocumentTemplate } from "../../../models/templates";
 import { PREP_PARTICIPANT_ROLE_LABELS } from "../../../models/prepare";
 import { usePageMeta } from "../../../hooks/usePageMeta";
 
@@ -197,7 +197,7 @@ function TemplateDetailInner() {
   const handleDuplicate = useCallback(() => {
     if (!t) return;
     duplicate(t.id, r => {
-      if (r.ok && r.newId) navigate(`/app/templates/${r.newId}`);
+      if (r.ok && r.newId) void navigate(`/app/templates/${r.newId}`);
     });
   }, [t, duplicate, navigate]);
 

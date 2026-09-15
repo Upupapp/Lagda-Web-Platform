@@ -76,7 +76,7 @@ export function IntegrationsPage() {
   const [availFilter, setAvailFilter]   = useState<IntegrationAvailability | "all">("all");
 
   useEffect(() => {
-    mockIntegrationService.listIntegrations().then(list => { setIntegrations(list); setLoading(false); });
+    void mockIntegrationService.listIntegrations().then(list => { setIntegrations(list); setLoading(false); });
   }, []);
 
   const categories = Array.from(new Set(integrations.map(i => i.category)));

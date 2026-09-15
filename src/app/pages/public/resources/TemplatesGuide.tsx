@@ -1,10 +1,9 @@
 import { Link } from "react-router";
 import {
-  ResourcesPageShell, GuideLayout, GuideHero, GuideSection, GuidePara, GuideCallout, GuideList, EduDisclaimer,
+  ResourcesPageShell, GuideLayout, GuideHero, GuideSection, GuidePara, GuideList, EduDisclaimer,
 } from "../../../components/resources/ResourceComponents";
 
 const GF = { fontFamily: "'Geist', sans-serif" };
-const GM = { fontFamily: "'Geist Mono', monospace" };
 
 export function TemplatesGuide() {
   return (

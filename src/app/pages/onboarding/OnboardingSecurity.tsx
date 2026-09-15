@@ -95,16 +95,16 @@ export function OnboardingSecurity() {
   const { draft, updateSecurity, markStepDone, mfaSetupDone } = useOnboarding();
 
   function handleBack() {
-    navigate("/onboarding/workspace");
+    void navigate("/onboarding/workspace");
   }
   function handleContinue() {
     markStepDone("security");
-    navigate("/onboarding/notifications");
+    void navigate("/onboarding/notifications");
   }
 
   function handleSetUpMfa() {
     updateSecurity({ mfaEnabled: true });
-    navigate("/mfa/setup");
+    void navigate("/mfa/setup");
   }
 
   return (

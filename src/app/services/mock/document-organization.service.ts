@@ -6,10 +6,10 @@
 // No dangerouslySetInnerHTML. No real file export, reminder, cancel, void, or transfer.
 
 import type {
-  OrgFolder, OrgFolderId, OrgFolderScope, OrgFolderStatus,
-  OrgTag, OrgTagId, OrgTagStyle, OrgTagStatus,
-  OrgSavedView, OrgViewId, OrgViewStatus, OrgViewScope,
-  OrgViewDefinition, OrgFavoriteItem, OrgRecentItem, OrgRecentId,
+  OrgFolder, OrgFolderId, OrgFolderStatus,
+  OrgTag, OrgTagId, OrgTagStatus,
+  OrgSavedView, OrgViewId, OrgViewStatus,
+  OrgFavoriteItem, OrgRecentItem, OrgRecentId,
   OrgBulkActionType, OrgBulkEligibility, OrgBulkEligibilityResult,
   OrgBulkActionResult, OrgTagAssignment,
   OrgExportPreview, OrgReminderPreview, OrgCancellationPreview,
@@ -223,8 +223,8 @@ const INITIAL_DOC_TAGS: Record<string, OrgTagId[]> = {
 let _folders: OrgFolder[] = JSON.parse(JSON.stringify(INITIAL_FOLDERS)) as OrgFolder[];
 let _tags:    OrgTag[]    = JSON.parse(JSON.stringify(INITIAL_TAGS)) as OrgTag[];
 let _views:   OrgSavedView[] = JSON.parse(JSON.stringify(INITIAL_SAVED_VIEWS)) as OrgSavedView[];
-let _docFolders: Record<string, OrgFolderId[]> = JSON.parse(JSON.stringify(INITIAL_DOC_FOLDERS));
-let _docTags:    Record<string, OrgTagId[]>    = JSON.parse(JSON.stringify(INITIAL_DOC_TAGS));
+let _docFolders: Record<string, OrgFolderId[]> = JSON.parse(JSON.stringify(INITIAL_DOC_FOLDERS)) as Record<string, OrgFolderId[]>;
+let _docTags:    Record<string, OrgTagId[]>    = JSON.parse(JSON.stringify(INITIAL_DOC_TAGS)) as Record<string, OrgTagId[]>;
 let _starred: OrgFavoriteItem[] = [
   { documentId: "txn_001", starredAt: "2026-07-10T09:00:00Z" },
   { documentId: "txn_003", starredAt: "2026-07-05T09:00:00Z" },
@@ -871,8 +871,8 @@ class DocumentOrganizationService {
     _folders    = JSON.parse(JSON.stringify(INITIAL_FOLDERS)) as OrgFolder[];
     _tags       = JSON.parse(JSON.stringify(INITIAL_TAGS)) as OrgTag[];
     _views      = JSON.parse(JSON.stringify(INITIAL_SAVED_VIEWS)) as OrgSavedView[];
-    _docFolders = JSON.parse(JSON.stringify(INITIAL_DOC_FOLDERS));
-    _docTags    = JSON.parse(JSON.stringify(INITIAL_DOC_TAGS));
+    _docFolders = JSON.parse(JSON.stringify(INITIAL_DOC_FOLDERS)) as Record<string, OrgFolderId[]>;
+    _docTags    = JSON.parse(JSON.stringify(INITIAL_DOC_TAGS)) as Record<string, OrgTagId[]>;
     _starred    = [
       { documentId: "txn_001", starredAt: "2026-07-10T09:00:00Z" },
       { documentId: "txn_003", starredAt: "2026-07-05T09:00:00Z" },

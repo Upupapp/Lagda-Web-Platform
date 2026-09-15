@@ -59,6 +59,7 @@ export function neutralizeCell(value: string, maxLength: number): { value: strin
   const neutralized = isFormulaLike(value);
 
   // Then strip control characters so nothing executable or invisible survives.
+  // eslint-disable-next-line no-control-regex -- deliberately strips control characters from user input
   const stripped = value.replace(/[\u0000-\u001F\u007F]/g, " ").replace(/\s+/g, " ").trim();
   if (stripped.length === 0) return { value: "", neutralized: false };
 

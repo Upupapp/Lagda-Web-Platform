@@ -281,7 +281,7 @@ function EmptyState({ view, hasQuery }: { view: InboxFilterView; hasQuery: boole
 
 export function InboxPage() {
   usePageMeta();
-  const { user } = usePlatform();
+  usePlatform();
   const [searchParams, setSearchParams] = useSearchParams();
 
   const activeView = (searchParams.get("view") ?? "all") as InboxFilterView;

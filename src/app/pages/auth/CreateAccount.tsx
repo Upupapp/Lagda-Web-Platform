@@ -302,7 +302,7 @@ export function CreateAccount() {
     setReturnTo(returnTo !== DEFAULT_RETURN_PATH ? returnTo : null);
 
     // Navigate to verify-email
-    navigate("/verify-email?returnTo=/onboarding/profile", { replace: true });
+    void navigate("/verify-email?returnTo=/onboarding/profile", { replace: true });
   }
 
   const planName = planId ? PLAN_DISPLAY_NAMES[planId] : null;

@@ -5,7 +5,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router";
 import { WorkspaceAdminProvider, useWorkspaceAdmin } from "../../../context/WorkspaceAdminContext";
-import type { WorkspaceMemberId, WorkspaceMemberStatus, WorkspaceRoleId, WorkspaceTeamId, WorkspacePermission } from "../../../models/workspace-admin";
+import type { WorkspaceMemberId, WorkspaceMemberStatus, WorkspaceRoleId } from "../../../models/workspace-admin";
 import { WORKSPACE_MEMBER_STATUS_LABELS, ALL_PERMISSIONS } from "../../../models/workspace-admin";
 import { mockWorkspaceAdminService } from "../../../services/mock/workspace-admin.service";
 import { Z } from "../../../utils/z-index";
@@ -14,7 +14,6 @@ const GF    = { fontFamily: "'Geist', sans-serif" };
 const GM    = { fontFamily: "'Geist Mono', monospace" };
 const NAVY  = "#07111F";
 const AZURE = "#0078D4";
-const GOLD  = "#C9960C";
 const SLATE = "#64748B";
 const SILVER= "#8A9BAE";
 const LIGHT = "#F0F7FF";
@@ -107,8 +106,8 @@ function MemberDetailInner() {
 
   useEffect(() => {
     if (!memberId) return;
-    asyncLoadMember(memberId as WorkspaceMemberId);
-    asyncLoadRoles();
+    void asyncLoadMember(memberId as WorkspaceMemberId);
+    void asyncLoadRoles();
     return () => clearActiveMember();
   }, [memberId, asyncLoadMember, asyncLoadRoles, clearActiveMember]);
 
@@ -140,7 +139,7 @@ function MemberDetailInner() {
     if (!memberId) return;
     setModal(null);
     await asyncRemoveMember(memberId as WorkspaceMemberId);
-    navigate("/app/workspace/members");
+    void navigate("/app/workspace/members");
   };
 
   const handleRoleChange = async () => {

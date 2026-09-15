@@ -52,13 +52,13 @@ export function SecurityOverviewPage() {
   const [loading, setLoading]   = useState(true);
 
   useEffect(() => {
-    mockSecuritySettingsService.getSecurityOverview().then(o => { setOverview(o); setLoading(false); });
+    void mockSecuritySettingsService.getSecurityOverview().then(o => { setOverview(o); setLoading(false); });
   }, []);
 
   const navigate = useNavigate();
   const handleAction = (id: string) => {
-    if (id === "password") navigate("/app/settings/security/password");
-    else                   navigate("/app/settings/security/mfa");
+    if (id === "password") void navigate("/app/settings/security/password");
+    else                   void navigate("/app/settings/security/mfa");
   };
 
   if (loading) return <SettingsPage title="Account Security" breadcrumb="Security"><Skeleton h={160} mb={16} /><Skeleton h={120} /></SettingsPage>;

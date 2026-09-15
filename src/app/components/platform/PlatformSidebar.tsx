@@ -109,7 +109,7 @@ export function PlatformSidebar() {
 
   const handleSignOut = useCallback(async () => {
     await signOut();
-    navigate("/sign-in");
+    void navigate("/sign-in");
   }, [signOut, navigate]);
 
   const sidebarWidth = collapsed ? 60 : 240;

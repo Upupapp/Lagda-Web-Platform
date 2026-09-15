@@ -3,7 +3,7 @@
 // manually by the user. Participants are assigned to groups here.
 // Burgundy (#67023B) is NEVER used. eNotary is NEVER mentioned.
 
-import React, { useEffect, useCallback, useState } from "react";
+import React, { useEffect, useCallback } from "react";
 import { Route } from "lucide-react";
 import { usePrepare } from "../../../context/PrepareContext";
 import {
@@ -89,7 +89,7 @@ function buildDefaultGroups(
 
 function GroupCard({
   group,
-  index,
+  index: _index,
   allParticipants,
   canRemove,
   onLabelChange,

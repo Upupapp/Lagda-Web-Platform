@@ -3,7 +3,7 @@
 // They are never written to localStorage, sessionStorage, or cookies.
 // Burgundy (#67023B) is NEVER used. eNotary is NEVER mentioned.
 
-import React, { useEffect, useCallback, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Users } from "lucide-react";
 import { usePrepare } from "../../../context/PrepareContext";
 import {
@@ -515,7 +515,7 @@ export function ParticipantsStep() {
 
   useEffect(() => {
     setStep("participants");
-    loadContacts();
+    void loadContacts();
   }, [setStep, loadContacts]);
 
   const participants = draft?.participants ?? [];
@@ -557,8 +557,6 @@ export function ParticipantsStep() {
   const handleRemove = (id: PrepPaxId) => {
     updateParticipants(participants.filter(p => p.id !== id));
   };
-
-  const hasBlockingRole = participants.some(p => PREP_ROLE_IS_BLOCKING[p.role]);
 
   const main = (
     <div style={{ ...GF, width: "100%" }}>

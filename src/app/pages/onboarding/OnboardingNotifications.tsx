@@ -95,11 +95,11 @@ export function OnboardingNotifications() {
   }
 
   function handleBack() {
-    navigate("/onboarding/security");
+    void navigate("/onboarding/security");
   }
   function handleContinue() {
     markStepDone("notifications");
-    navigate("/onboarding/review");
+    void navigate("/onboarding/review");
   }
 
   return (
