@@ -245,22 +245,28 @@ export function CreateAccount() {
     if (USE_REAL_BACKEND) {
       try {
         // Password is NOT logged — passed straight through to the request body.
-        await realAuthService.register({
+        const registerResult = await realAuthService.register({
           email, password, name,
           organization: fields.organization?.trim() || undefined,
           intendedUse: fields.intendedUse || undefined,
           consent: true,
         });
-        // register() only creates the account — it never sends mail itself
-        // (see Lagda-Backend's identity-composition.ts: only resend and
-        // password-reset schedule delivery). This is the actual first send.
-        const resendResult = await realAuthService.resendVerification(email);
-        // Firebase-provider mode only — absent (undefined) means the
-        // backend's own delivery pipeline already scheduled the email,
-        // same as before this migration; nothing else to do here.
-        if (resendResult.verificationHandoff !== undefined) {
+        // Firebase-provider mode only — register() itself creates the first
+        // verification challenge and returns the handoff needed to drive
+        // Firebase's own send directly. Absent (undefined) means the
+        // backend's own delivery pipeline already scheduled the email
+        // (default/Postmark mode), same as before this migration; nothing
+        // else to do here.
+        //
+        // Deliberately NOT a follow-up resendVerification() call: that
+        // would ask for a SECOND challenge moments after register() already
+        // created an active one, which Lagda-Backend's resendEmailVerification
+        // correctly refuses to rotate (its anti-spam guard against
+        // re-sending mail while a still-valid link exists) — so a follow-up
+        // call here would silently no-op and never actually drive a send.
+        if (registerResult.verificationHandoff !== undefined) {
           const { sent } = await driveFirebaseVerificationSend(
-            resendResult.verificationHandoff, "/onboarding/profile",
+            registerResult.verificationHandoff, "/onboarding/profile",
           );
           // A failed send never fails registration (mission §8) — the
           // account exists either way, and VerifyEmail.tsx's own "Resend
