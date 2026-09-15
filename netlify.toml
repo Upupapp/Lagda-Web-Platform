@@ -6,25 +6,10 @@
   VITE_LAUNCH_PROFILE = "launch-default"
   NODE_VERSION = "22"
 
-# Reverse-proxies the backend through this same Netlify origin, so the
-# browser never talks to 172-236-149-148.sslip.io directly. This makes every
-# API call same-origin instead of cross-site, which is what session cookies
-# actually need: SameSite=Lax cookies are stored fine on a cross-site
-# response, but a real browser won't reliably attach them to later cross-site
-# fetch()/XHR calls — confirmed live (a real sign-in returned 200 with a
-# valid Set-Cookie, then the very next request had no cookie at all, cookie
-# jar empty). Must come BEFORE the catch-all SPA rule below — Netlify
-# matches redirects in order, first match wins. `force = true` makes this a
-# true proxy rather than a client-visible redirect: the URL bar stays on
-# this domain and the backend's Set-Cookie (no explicit Domain attribute)
-# binds to THIS origin, making the cookie genuinely first-party.
-[[redirects]]
-  from = "/api/*"
-  to = "https://172-236-149-148.sslip.io/:splat"
-  status = 200
-  force = true
-
-[[redirects]]
-  from = "/*"
-  to = "/index.html"
-  status = 200
+# All redirect/proxy rules live in public/_redirects, not here — Netlify
+# processes that file's rules BEFORE this file's [[redirects]], so a rule
+# defined only here can be silently shadowed by that file's catch-all.
+# Confirmed the hard way: an /api/* proxy rule placed only in this file
+# never matched anything, because public/_redirects' `/* /index.html 200`
+# always won first. Keeping every rule in one file (that one) avoids two
+# sources of truth with different precedence.
