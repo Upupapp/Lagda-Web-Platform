@@ -268,7 +268,14 @@ export interface FieldDefinition {
   radioGroupId?: string;
   radioOptions?: RadioOption[];
   senderText?:   string;
-  demonstrationOnly: true;
+  // `true` for a field that only exists in this browser session (not yet
+  // saved to a real backend preparation, or the backend integration is
+  // off). `false` for a field that was just loaded FROM a real backend
+  // preparation — see field-sync.ts's fromBackendField(). Widened from a
+  // literal `true` (P1.5 §11) once real persistence made that literal
+  // inaccurate for backend-sourced fields; every existing call site that
+  // passed `true` still type-checks unchanged.
+  demonstrationOnly: boolean;
 }
 
 // ── Editor page and document ──────────────────────────────────────────────────

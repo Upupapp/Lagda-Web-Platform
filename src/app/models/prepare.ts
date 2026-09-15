@@ -7,6 +7,7 @@
 
 import type { RoutingMode } from "./transaction-detail";
 import type { DocumentFolder, DocumentTag } from "./documents";
+import { USE_REAL_BACKEND } from "../services/backend-flag";
 
 // Re-export for consumers who only import from prepare.ts
 export type { RoutingMode };
@@ -94,6 +95,10 @@ export const PREP_FILE_STATE_LABELS: Record<PrepFileState, string> = {
   "removed":                   "Removed",
 };
 
+// A real backend upload's truthful lifecycle — see UploadStep.tsx's
+// uploadFile(). Absent/undefined means "not yet attempted", not "failed".
+export type RealUploadStatus = "uploading" | "processing" | "uploaded" | "failed" | "needs-reselection";
+
 export interface PrepFile {
   id:            PrepFileId;
   fileName:      string;
@@ -102,6 +107,18 @@ export interface PrepFile {
   fileState:     PrepFileState;
   order:         number;
   demoPageCount?: number; // fixture-only; never derived by parsing
+
+  // ── Real backend artifact (P1 document/upload integration) ──────────────
+  // Everything below is a REAL backend fact once set, never fabricated —
+  // see file-intake's file-registry.ts and UploadStep.tsx. The rest of this
+  // draft (participants, routing, settings, etc.) stays local/demo-only
+  // (PreparationDraft.demonstrationOnly) until its own integration phase —
+  // this is the one part of a PrepFile that can be real ahead of that.
+  backendDocumentId?: string;
+  backendArtifactId?: string;
+  backendDigest?: string;
+  uploadStatus?: RealUploadStatus;
+  uploadError?: string;
 }
 
 // ── Transaction details draft ─────────────────────────────────────────────────
@@ -535,6 +552,14 @@ export function isAuthMethodAvailableForParticipant(
   participant: PrepParticipant,
 ): { available: boolean; reason?: string } {
   const method = getAuthMethodConfig(methodId);
+  // PRODUCTION V1 BOUNDARY (P2 §7): the backend only enforces "none" (secure
+  // invitation link) today — see the P1.5 capability matrix. In real-backend
+  // mode every other method must look genuinely unavailable, not merely a
+  // plan/enterprise upsell, or a real Send could imply a security promise
+  // (OTP, KBA, ID verification) nothing server-side actually checks.
+  if (USE_REAL_BACKEND && methodId !== "none") {
+    return { available: false, reason: "Not yet supported for real sending — only the secure invitation link is enforced by the server today." };
+  }
   if (method.availability === "planned") {
     return { available: false, reason: "This authentication method is not yet available." };
   }

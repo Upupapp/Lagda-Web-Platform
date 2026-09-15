@@ -116,9 +116,9 @@ export function OnboardingLayout({
     }
   }, [currentStepMeta, progress, navigate]);
 
-  function handleSignOut() {
+  async function handleSignOut() {
     reset();
-    platformSignOut();
+    await platformSignOut();
     navigate("/sign-in", { replace: true });
   }
 

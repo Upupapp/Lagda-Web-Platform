@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import { useOnboarding } from "../../context/OnboardingContext";
 import { usePlatform } from "../../context/PlatformContext";
+import { USE_REAL_BACKEND } from "../../services/backend-flag";
 import lagdaHeaderLogo from "../../../brand elements/svg/LagdaLogoPrimaryHorizontalFullColor_Header.svg";
 
 const GF = { fontFamily: "'Geist', sans-serif" };
@@ -21,10 +22,12 @@ const CHECKLIST = [
 
 export function OnboardingComplete() {
   const navigate = useNavigate();
-  const { reset, returnTo } = useOnboarding();
+  const { reset, returnTo, draft } = useOnboarding();
   const platform = usePlatform();
   const [visible, setVisible] = useState(0);
   const [ready, setReady] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [createError, setCreateError] = useState<string | null>(null);
 
   // Animate checklist items in
   useEffect(() => {
@@ -38,11 +41,32 @@ export function OnboardingComplete() {
     return () => timers.forEach(clearTimeout);
   }, []);
 
-  function goToDashboard() {
+  async function goToDashboard() {
     // Capture before reset() clears it — a visitor who started this account
     // from an expired /app link (or a pre-auth document upload) lands back
     // there, not the generic dashboard.
     const destination = returnTo ?? "/app/dashboard";
+
+    // Real backend, and this account doesn't already have a workspace
+    // (workspaceStatus is only "empty" for a genuinely zero-workspace
+    // account — see PlatformContext) — create the one this wizard's
+    // workspace step collected a name for. "invitation" scenario is
+    // deliberately skipped: that account doesn't own a workspace to create,
+    // membership arrives separately via accepting the actual invite.
+    if (USE_REAL_BACKEND && platform.workspaceStatus === "empty" && draft.workspace.scenario !== "invitation") {
+      setCreating(true);
+      setCreateError(null);
+      const name = draft.workspace.workspaceName.trim()
+        || `${platform.user?.displayName ?? "My"}'s Workspace`;
+      const result = await platform.createWorkspace(name);
+      setCreating(false);
+      if (!result.ok) {
+        setCreateError(result.error);
+        return; // Stay on this screen — do not fabricate success or proceed
+                // to a destination workspace-scoped pages will crash without.
+      }
+    }
+
     reset(); // clear onboarding state
     navigate(destination, { replace: true });
   }
@@ -193,13 +217,20 @@ export function OnboardingComplete() {
           ))}
         </div>
 
+        {createError && (
+          <div role="alert" style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: 8, padding: "12px 14px", marginBottom: 16, textAlign: "left" }}>
+            <p style={{ color: "#EF4444", ...GF, fontSize: 13, margin: 0 }}>{createError}</p>
+          </div>
+        )}
+
         {/* CTA — only enabled after animation */}
         <button
           onClick={goToDashboard}
-          disabled={!ready}
+          disabled={!ready || creating}
+          aria-busy={creating}
           style={{
             width: "100%",
-            background: ready ? "#0078D4" : "#B9D8F5",
+            background: ready && !creating ? "#0078D4" : "#B9D8F5",
             border: "none",
             borderRadius: 8,
             color: "white",
@@ -208,26 +239,27 @@ export function OnboardingComplete() {
             fontWeight: 700,
             padding: "16px",
             minHeight: 52,
-            cursor: ready ? "pointer" : "not-allowed",
-            boxShadow: ready ? "0 5px 14px rgba(0,120,212,0.20)" : "none",
+            cursor: ready && !creating ? "pointer" : "not-allowed",
+            boxShadow: ready && !creating ? "0 5px 14px rgba(0,120,212,0.20)" : "none",
             transition: "background 0.2s, box-shadow 0.2s, transform 0.2s",
           }}
           aria-label="Go to dashboard"
         >
-          Go to your dashboard
+          {creating ? "Setting up your workspace…" : "Go to your dashboard"}
         </button>
 
         {/* Skip wait link */}
         {!ready && (
           <button
             onClick={goToDashboard}
+            disabled={creating}
             style={{
               background: "none",
               border: "none",
               color: "#64748B",
               ...GF,
               fontSize: 12,
-              cursor: "pointer",
+              cursor: creating ? "not-allowed" : "pointer",
               marginTop: 14,
               textDecoration: "underline",
               textUnderlineOffset: 3,

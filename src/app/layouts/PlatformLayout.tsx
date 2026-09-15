@@ -4,9 +4,10 @@
 // Mobile (<768px): top bar + slide-in drawer (MobileNav).
 // Tablet (768-1023px): same as mobile.
 
-import { Suspense, useEffect, useRef } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { Outlet, Navigate, useLocation } from "react-router";
 import { usePlatform } from "../context/PlatformContext";
+import { USE_REAL_BACKEND } from "../services/backend-flag";
 import { NotificationCenterProvider } from "../context/NotificationCenterContext";
 import { PlatformSidebar } from "../components/platform/PlatformSidebar";
 import { MobileNav } from "../components/platform/MobileNav";
@@ -42,9 +43,124 @@ function SessionInitializing() {
   );
 }
 
+const SETUP_CARD_STYLE: React.CSSProperties = {
+  minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center",
+  background: "#F8FAFC", padding: 24,
+};
+const SETUP_PANEL_STYLE: React.CSSProperties = {
+  width: "100%", maxWidth: 420, background: "#FFFFFF", border: "1px solid #E2E8F0",
+  borderRadius: 16, padding: "32px 28px", boxShadow: "0 18px 50px rgba(7,17,31,0.08)",
+  fontFamily: "'Geist', sans-serif", textAlign: "center",
+};
+
+// A genuinely authenticated account with zero accessible workspaces — not an
+// error, and never papered over with a fabricated one (see PlatformContext's
+// WorkspaceStatus). Reached directly only when an existing account somehow
+// ends up with none (e.g. left its only workspace); a brand-new account is
+// normally routed here via onboarding instead — see OnboardingComplete.tsx.
+function WorkspaceSetupRequired() {
+  const { createWorkspace, user } = usePlatform();
+  const [name, setName] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    const trimmed = name.trim() || `${user?.displayName ?? "My"}'s Workspace`;
+    setSubmitting(true);
+    setError(null);
+    const result = await createWorkspace(trimmed);
+    setSubmitting(false);
+    if (!result.ok) setError(result.error);
+    // On success, workspaceStatus flips to "ready" and this component's
+    // parent re-renders into the normal authenticated shell — no navigation
+    // needed here.
+  }
+
+  return (
+    <div style={SETUP_CARD_STYLE}>
+      <div style={SETUP_PANEL_STYLE}>
+        <h1 style={{ color: "#07111F", fontSize: 20, fontWeight: 800, margin: "0 0 8px" }}>Create your workspace</h1>
+        <p style={{ color: "#64748B", fontSize: 13, lineHeight: 1.6, margin: "0 0 20px" }}>
+          You need a workspace before you can prepare or send documents.
+        </p>
+        {error && (
+          <div role="alert" style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: 8, padding: "10px 12px", marginBottom: 16, textAlign: "left" }}>
+            <p style={{ color: "#EF4444", fontSize: 13, margin: 0 }}>{error}</p>
+          </div>
+        )}
+        <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+          <input
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="e.g. My Documents"
+            aria-label="Workspace name"
+            disabled={submitting}
+            style={{
+              width: "100%", boxSizing: "border-box", padding: "11px 14px",
+              borderRadius: 8, border: "1px solid #CBD5E1", fontSize: 14, outline: "none",
+            }}
+          />
+          <button
+            type="submit"
+            disabled={submitting}
+            aria-busy={submitting}
+            style={{
+              background: submitting ? "rgba(0,120,212,0.5)" : "#0078D4", color: "white",
+              border: "none", borderRadius: 8, fontSize: 14, fontWeight: 700,
+              padding: "12px", minHeight: 44, cursor: submitting ? "not-allowed" : "pointer",
+            }}
+          >
+            {submitting ? "Creating…" : "Create workspace"}
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+// The workspace list itself could not be fetched (network/server error) —
+// recoverable, and deliberately distinct from WorkspaceSetupRequired: a
+// retry-and-succeed here must not have created a duplicate workspace, which
+// re-fetching (rather than re-creating) guarantees.
+function WorkspaceLoadError() {
+  const { refreshSessionFromBackend } = usePlatform();
+  const [retrying, setRetrying] = useState(false);
+
+  async function handleRetry() {
+    setRetrying(true);
+    await refreshSessionFromBackend();
+    setRetrying(false);
+  }
+
+  return (
+    <div style={SETUP_CARD_STYLE}>
+      <div style={SETUP_PANEL_STYLE}>
+        <h1 style={{ color: "#07111F", fontSize: 20, fontWeight: 800, margin: "0 0 8px" }}>Couldn't load your workspaces</h1>
+        <p style={{ color: "#64748B", fontSize: 13, lineHeight: 1.6, margin: "0 0 20px" }}>
+          Something went wrong reaching the server. Please try again.
+        </p>
+        <button
+          onClick={handleRetry}
+          disabled={retrying}
+          aria-busy={retrying}
+          style={{
+            background: retrying ? "rgba(0,120,212,0.5)" : "#0078D4", color: "white",
+            border: "none", borderRadius: 8, fontSize: 14, fontWeight: 700,
+            padding: "12px 20px", minHeight: 44, cursor: retrying ? "not-allowed" : "pointer",
+          }}
+        >
+          {retrying ? "Retrying…" : "Try again"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 // ── Platform shell ────────────────────────────────────────────────────────────
 export function PlatformLayout() {
-  const { sessionStatus } = usePlatform();
+  const { sessionStatus, workspaceStatus } = usePlatform();
   const location = useLocation();
   const mainRef  = useRef<HTMLElement>(null);
 
@@ -63,6 +179,16 @@ export function PlatformLayout() {
 
   if (sessionStatus !== "authenticated") {
     return <Navigate to={buildSignInUrl(location.pathname + location.search)} replace />;
+  }
+
+  // Identity is proven; workspace access is a separate backend fact (see
+  // PlatformContext's WorkspaceStatus). Mock-backend builds always resolve
+  // straight to "ready", so these branches are inert there.
+  if (USE_REAL_BACKEND && workspaceStatus === "empty") {
+    return <WorkspaceSetupRequired />;
+  }
+  if (USE_REAL_BACKEND && workspaceStatus === "error") {
+    return <WorkspaceLoadError />;
   }
 
   return (

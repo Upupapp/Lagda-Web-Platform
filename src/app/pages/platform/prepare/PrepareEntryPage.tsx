@@ -190,9 +190,11 @@ export function PrepareEntryPage() {
     }
     const claimed = claimPending(resumeId);
     if (!claimed) {
-      // In-memory only, by design (see PendingPreparationContext) — a hard
-      // refresh between the public upload and reaching this page loses it.
-      // That is expected, not an error; the visitor just re-selects the file.
+      // Persisted with a bounded lifetime (see PendingPreparationContext),
+      // but still not guaranteed: it may have expired, been claimed already,
+      // been discarded, or never existed on this browser at all (a
+      // different device, private browsing, cleared site data). Any of
+      // those is expected, not an error; the visitor just re-selects the file.
       setResumeFailed(true);
       setResuming(false);
       return;

@@ -62,33 +62,56 @@ export function generatePrepFileId(): string {
   return `pf_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 }
 
+export interface ClassifiedFile {
+  prepFile: PrepFile;
+  /** The actual browser File this entry was classified from. Callers that
+   *  need to upload real bytes (see UploadStep.tsx + file-registry.ts) keep
+   *  this; callers that only need metadata (the public pre-auth modal's
+   *  persisted state) simply don't retain it. */
+  file: File;
+}
+
 /**
  * Classifies a FileList/File[] into PrepFile metadata against an existing
- * selection, exactly as the authenticated Documents step does. The browser
- * File objects themselves are read synchronously for metadata only and are
- * never returned or retained by this function.
+ * selection, exactly as the authenticated Documents step does, and pairs
+ * each result with the actual File it came from — the raw File is never
+ * itself persisted anywhere; it's the caller's choice whether to hold it in
+ * memory (see file-registry.ts) or discard it.
  */
-export function classifyFiles(files: File[], existing: PrepFile[]): PrepFile[] {
+export function classifyFilesWithRefs(files: File[], existing: PrepFile[]): ClassifiedFile[] {
   const currentNames = new Set(existing.map((f) => f.fileName));
-  const newEntries: PrepFile[] = [];
+  const out: ClassifiedFile[] = [];
 
   files.forEach((file) => {
-    if (existing.length + newEntries.length >= MAX_FILES_PER_TRANSACTION) return;
+    if (existing.length + out.length >= MAX_FILES_PER_TRANSACTION) return;
     const state = classifyFile(file, currentNames);
     currentNames.add(file.name);
-    newEntries.push({
-      id: generatePrepFileId(),
-      fileName: file.name,
-      fileSizeBytes: file.size,
-      mimeType: file.type || "application/octet-stream",
-      fileState: state,
-      order: existing.length + newEntries.length,
-      demoPageCount:
-        file.type === "application/pdf"
-          ? Math.max(1, Math.floor(file.size / 40000))
-          : undefined,
+    out.push({
+      file,
+      prepFile: {
+        id: generatePrepFileId(),
+        fileName: file.name,
+        fileSizeBytes: file.size,
+        mimeType: file.type || "application/octet-stream",
+        fileState: state,
+        order: existing.length + out.length,
+        demoPageCount:
+          file.type === "application/pdf"
+            ? Math.max(1, Math.floor(file.size / 40000))
+            : undefined,
+      },
     });
   });
 
-  return newEntries;
+  return out;
+}
+
+/**
+ * Classifies a FileList/File[] into PrepFile metadata only — the browser
+ * File objects themselves are read synchronously for metadata and are never
+ * returned or retained by this function. Callers that also need the actual
+ * File (to upload it) should use classifyFilesWithRefs instead.
+ */
+export function classifyFiles(files: File[], existing: PrepFile[]): PrepFile[] {
+  return classifyFilesWithRefs(files, existing).map((c) => c.prepFile);
 }

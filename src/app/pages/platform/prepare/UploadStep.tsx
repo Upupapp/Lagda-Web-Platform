@@ -1,17 +1,24 @@
 // Step 1 of 7: Documents — file selection and transaction details.
 // PRIVACY / SECURITY:
-//   • browser File objects are NEVER passed to domain state.
-//   • only metadata (name, size, type) is stored in PrepFile.
-//   • no file contents are read, buffered, or hashed.
-//   • this is a frontend demonstration — no uploads occur.
+//   • browser File objects are NEVER put into PrepFile/draft state — that
+//     stays metadata-only (name, size, type), which IS what's persisted to
+//     localStorage as this step's local draft.
+//   • when USE_REAL_BACKEND, the actual File is instead held transiently in
+//     file-registry.ts (in-memory only, never serialized) and uploaded for
+//     real — see uploadFile() below. Mock builds still perform no upload.
 // Burgundy (#67023B) is NEVER used here. eNotary is NEVER mentioned.
 
 import React, { useRef, useEffect, useCallback, useState } from "react";
 import { FileText } from "lucide-react";
 import { usePrepare } from "../../../context/PrepareContext";
+import { usePlatform } from "../../../context/PlatformContext";
 import type { PrepFile } from "../../../models/prepare";
 import { DEFAULT_TRANSACTION_DETAILS } from "../../../models/prepare";
-import { classifyFiles, humanFileSize, fileStateLabel } from "../../../services/prepare/file-intake";
+import { classifyFilesWithRefs, humanFileSize, fileStateLabel } from "../../../services/prepare/file-intake";
+import { setFileRef, getFileRef, clearFileRef } from "../../../services/prepare/file-registry";
+import { realDocumentService } from "../../../services/real/document.service";
+import { USE_REAL_BACKEND } from "../../../services/backend-flag";
+import { ApiError } from "../../../services/api-client";
 import { StepBanner, StepTwoColumn, RailCard } from "../../../components/prepare/StepBanner";
 
 const GF     = { fontFamily: "'Geist', sans-serif" };
@@ -23,6 +30,63 @@ const humanSize = humanFileSize;
 
 // ── File row ──────────────────────────────────────────────────────────────────
 
+function UploadStatusLine({ file, onRetry, onReselect }: {
+  file: PrepFile;
+  onRetry: (id: string) => void;
+  onReselect: (id: string, files: FileList) => void;
+}) {
+  const reselectRef = useRef<HTMLInputElement>(null);
+
+  if (!USE_REAL_BACKEND || file.fileState !== "ready") return null;
+
+  switch (file.uploadStatus) {
+    case "uploading":
+      return <div style={{ ...GF, fontSize: 11.5, color: AZURE, marginTop: 3 }}>Uploading…</div>;
+    case "processing":
+      // Truthful, generic wording — the backend doesn't expose separate
+      // scan-progress stages, so no percentage/stage is fabricated here.
+      return <div style={{ ...GF, fontSize: 11.5, color: AZURE, marginTop: 3 }}>Securely processing your document…</div>;
+    case "uploaded":
+      return <div style={{ ...GF, fontSize: 11.5, color: "#2E7D32", marginTop: 3 }}>✓ Uploaded and verified</div>;
+    case "failed":
+      return (
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 3 }}>
+          <span style={{ ...GF, fontSize: 11.5, color: "#C0392B" }}>{file.uploadError ?? "Upload failed."}</span>
+          <button
+            onClick={() => onRetry(file.id)}
+            style={{ ...GF, fontSize: 11.5, color: AZURE, background: "none", border: "none", cursor: "pointer", padding: 0, textDecoration: "underline" }}
+          >
+            Retry
+          </button>
+        </div>
+      );
+    case "needs-reselection":
+      return (
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 3 }}>
+          <span style={{ ...GF, fontSize: 11.5, color: GOLD }}>
+            We restored your document setup. Please re-select "{file.fileName}" to continue.
+          </span>
+          <button
+            onClick={() => reselectRef.current?.click()}
+            style={{ ...GF, fontSize: 11.5, color: AZURE, background: "none", border: "none", cursor: "pointer", padding: 0, textDecoration: "underline", flexShrink: 0 }}
+          >
+            Select file
+          </button>
+          <input
+            ref={reselectRef}
+            type="file"
+            accept=".pdf,.doc,.docx"
+            aria-label={`Re-select file for "${file.fileName}"`}
+            style={{ display: "none" }}
+            onChange={(e) => { if (e.target.files) onReselect(file.id, e.target.files); e.target.value = ""; }}
+          />
+        </div>
+      );
+    default:
+      return null;
+  }
+}
+
 function FileRow({
   file,
   index,
@@ -30,6 +94,8 @@ function FileRow({
   onMoveUp,
   onMoveDown,
   onRemove,
+  onRetryUpload,
+  onReselect,
 }: {
   file: PrepFile;
   index: number;
@@ -37,6 +103,8 @@ function FileRow({
   onMoveUp: (id: string) => void;
   onMoveDown: (id: string) => void;
   onRemove: (id: string) => void;
+  onRetryUpload: (id: string) => void;
+  onReselect: (id: string, files: FileList) => void;
 }) {
   const { text: stateText, color: stateColor } = fileStateLabel(file.fileState);
   const isError = file.fileState === "unsupported-type" || file.fileState === "empty-file" || file.fileState === "unavailable";
@@ -85,6 +153,7 @@ function FileRow({
           {stateText} · {humanSize(file.fileSizeBytes)}
           {file.demoPageCount !== undefined && ` · ~${file.demoPageCount} pages`}
         </div>
+        <UploadStatusLine file={file} onRetry={onRetryUpload} onReselect={onReselect} />
       </div>
 
       {/* Reorder */}
@@ -331,9 +400,14 @@ export function UploadStep() {
     setStep,
     validate,
   } = usePrepare();
+  const { currentWorkspace } = usePlatform();
 
   const [isDragOver, setIsDragOver] = useState(false);
   const [titleError, setTitleError] = useState<string | null>(null);
+  // Which file's re-selection input just received a file that didn't match
+  // the expected metadata — holds both candidates until the visitor picks
+  // one (see ReselectMismatch below).
+  const [mismatch, setMismatch] = useState<{ prepFileId: string; candidate: File } | null>(null);
 
   useEffect(() => {
     setStep("upload");
@@ -344,14 +418,133 @@ export function UploadStep() {
   const details    = draft?.details ?? DEFAULT_TRANSACTION_DETAILS;
   const validation = draft ? validate() : null;
 
+  // Kept in sync with `files` so uploadFile()'s multi-step async patches
+  // (uploading → processing → uploaded/failed) always build on the latest
+  // known state rather than the stale closure from when the upload started —
+  // `files` itself only updates on the next render.
+  const filesRef = useRef(files);
+  useEffect(() => { filesRef.current = files; }, [files]);
+
+  const patchFile = useCallback((id: string, patch: Partial<PrepFile>) => {
+    const next = filesRef.current.map(f => f.id === id ? { ...f, ...patch } : f);
+    filesRef.current = next;
+    updateFiles(next);
+  }, [updateFiles]);
+
+  // Real backend document creation + upload for one file. Safe to call
+  // repeatedly for the same file (retry, or re-running after a refresh
+  // restored the draft) — it never re-creates a document once
+  // backendDocumentId is set, and never re-uploads once uploadStatus is
+  // "uploaded" or already in flight.
+  const uploadFile = useCallback(async (prepFileId: string) => {
+    if (!USE_REAL_BACKEND) return;
+    const pf = filesRef.current.find(f => f.id === prepFileId);
+    if (!pf || pf.fileState !== "ready") return;
+    if (pf.uploadStatus === "uploaded" || pf.uploadStatus === "uploading" || pf.uploadStatus === "processing") return;
+    if (!currentWorkspace) return; // PlatformLayout's gate should prevent this; defensive only.
+
+    const rawFile = getFileRef(pf.id);
+    if (!rawFile) {
+      patchFile(pf.id, { uploadStatus: "needs-reselection", uploadError: undefined });
+      return;
+    }
+
+    patchFile(pf.id, { uploadStatus: "uploading", uploadError: undefined });
+    try {
+      // Only created once per file, ever — backendDocumentId is persisted
+      // (via patchFile → updateFiles → the existing Prepare-draft
+      // LOCAL_PERSISTENCE write-through) the instant creation succeeds, so a
+      // retry after a failed upload — or resuming after a refresh with the
+      // File still in memory — reuses the same real document instead of
+      // minting a second one.
+      let documentId = filesRef.current.find(f => f.id === pf.id)?.backendDocumentId;
+      if (!documentId) {
+        const created = await realDocumentService.create(currentWorkspace.id, pf.fileName);
+        documentId = created.documentId;
+        patchFile(pf.id, { backendDocumentId: documentId });
+      }
+      patchFile(pf.id, { uploadStatus: "processing" });
+      const result = await realDocumentService.upload(currentWorkspace.id, documentId, rawFile);
+      patchFile(pf.id, {
+        uploadStatus: "uploaded",
+        backendArtifactId: result.artifactId,
+        backendDigest: result.digest,
+      });
+      // The backend now holds the bytes — no reason to keep them in memory.
+      clearFileRef(pf.id);
+    } catch (err) {
+      patchFile(pf.id, {
+        uploadStatus: "failed",
+        uploadError: err instanceof ApiError
+          ? err.message
+          : "Something went wrong uploading this file. Please try again.",
+      });
+    }
+  }, [currentWorkspace, patchFile]);
+
+  // Covers files that arrived via resume (PrepareEntryPage's claimPending →
+  // createDraft({initialFiles: ...})) rather than through addFiles() in
+  // THIS component instance — e.g. the pre-auth continuation flow. Each
+  // "ready" file with no uploadStatus yet gets one attempt: uploadFile()
+  // itself decides whether that means a real upload (the registry survived,
+  // "Case A") or "needs-reselection" (it didn't, "Case B") — this effect
+  // only has to ask.
+  useEffect(() => {
+    if (!USE_REAL_BACKEND) return;
+    for (const f of files) {
+      if (f.fileState === "ready" && f.uploadStatus === undefined) void uploadFile(f.id);
+    }
+    // Runs once per distinct file-id set landing in this draft, not on every
+    // patch uploadFile() itself makes to those same files.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [files.map(f => f.id).join(",")]);
+
   // ── File operations ─────────────────────────────────────────────────────────
 
   const addFiles = useCallback((fileList: FileList) => {
-    const newEntries: PrepFile[] = classifyFiles(Array.from(fileList), files);
-    if (newEntries.length > 0) {
-      updateFiles([...files, ...newEntries]);
+    const classified = classifyFilesWithRefs(Array.from(fileList), files);
+    if (classified.length === 0) return;
+    for (const { prepFile, file } of classified) {
+      if (prepFile.fileState === "ready") setFileRef(prepFile.id, file);
     }
-  }, [files, updateFiles]);
+    const newEntries = classified.map(c => c.prepFile);
+    updateFiles([...files, ...newEntries]);
+    filesRef.current = [...files, ...newEntries];
+    for (const entry of newEntries) {
+      if (entry.fileState === "ready") void uploadFile(entry.id);
+    }
+  }, [files, updateFiles, uploadFile]);
+
+  const handleReselect = useCallback((prepFileId: string, fileList: FileList) => {
+    const file = fileList[0];
+    if (!file) return;
+    const pf = filesRef.current.find(f => f.id === prepFileId);
+    if (!pf) return;
+    const matches = file.name === pf.fileName && file.size === pf.fileSizeBytes;
+    if (!matches) {
+      setMismatch({ prepFileId, candidate: file });
+      return;
+    }
+    setFileRef(prepFileId, file);
+    patchFile(prepFileId, { uploadStatus: undefined });
+    void uploadFile(prepFileId);
+  }, [patchFile, uploadFile]);
+
+  const confirmMismatch = useCallback((useCandidate: boolean) => {
+    if (!mismatch) return;
+    if (useCandidate) {
+      const { prepFileId, candidate } = mismatch;
+      setFileRef(prepFileId, candidate);
+      patchFile(prepFileId, {
+        fileName: candidate.name,
+        fileSizeBytes: candidate.size,
+        mimeType: candidate.type || "application/octet-stream",
+        uploadStatus: undefined,
+      });
+      void uploadFile(prepFileId);
+    }
+    setMismatch(null);
+  }, [mismatch, patchFile, uploadFile]);
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -387,6 +580,7 @@ export function UploadStep() {
   }, [files, updateFiles]);
 
   const handleRemove = useCallback((id: string) => {
+    clearFileRef(id); // drop any retained File — nothing left in this draft to upload it for
     updateFiles(files.filter(f => f.id !== id).map((f, i) => ({ ...f, order: i })));
   }, [files, updateFiles]);
 
@@ -454,8 +648,42 @@ export function UploadStep() {
               onMoveUp={handleMoveUp}
               onMoveDown={handleMoveDown}
               onRemove={handleRemove}
+              onRetryUpload={uploadFile}
+              onReselect={handleReselect}
             />
           ))}
+        </div>
+      )}
+
+      {/* A re-selected file that doesn't match the expected one — offer a
+          clear corrective path rather than silently substituting it. */}
+      {mismatch && (
+        <div
+          role="alertdialog"
+          aria-label="Selected file does not match"
+          style={{
+            ...GF, marginBottom: 20, padding: "14px 16px", borderRadius: 10,
+            background: "#FEF9EC", border: "1px solid #F0D07A",
+          }}
+        >
+          <p style={{ fontSize: 13, color: "#8A6A16", margin: "0 0 10px", lineHeight: 1.6 }}>
+            "{mismatch.candidate.name}" ({humanSize(mismatch.candidate.size)}) doesn't match the
+            document we expected. Use it anyway, or keep looking for the original file?
+          </p>
+          <div style={{ display: "flex", gap: 10 }}>
+            <button
+              onClick={() => confirmMismatch(true)}
+              style={{ ...GF, fontSize: 12.5, fontWeight: 600, color: "white", background: AZURE, border: "none", borderRadius: 6, padding: "7px 14px", cursor: "pointer" }}
+            >
+              Use this file
+            </button>
+            <button
+              onClick={() => confirmMismatch(false)}
+              style={{ ...GF, fontSize: 12.5, fontWeight: 600, color: NAVY, background: "#FFFFFF", border: "1px solid #D1D9E0", borderRadius: 6, padding: "7px 14px", cursor: "pointer" }}
+            >
+              Keep looking
+            </button>
+          </div>
         </div>
       )}
 
@@ -573,11 +801,23 @@ export function UploadStep() {
           lineHeight: 1.6,
         }}
       >
-        <strong style={{ color: "#4B5E70" }}>Frontend demonstration</strong>
-        <br />
-        No files are uploaded, read, or stored. Only the file name, size, and type are
-        used to validate your selection. Your documents remain on your device and are
-        not transmitted in this demonstration.
+        {USE_REAL_BACKEND ? (
+          <>
+            <strong style={{ color: "#4B5E70" }}>Your document is uploaded securely</strong>
+            <br />
+            Every file is scanned for malware before it's stored. Participants, routing, and
+            other setup below stays local to this browser until you finish preparing the
+            transaction.
+          </>
+        ) : (
+          <>
+            <strong style={{ color: "#4B5E70" }}>Frontend demonstration</strong>
+            <br />
+            No files are uploaded, read, or stored. Only the file name, size, and type are
+            used to validate your selection. Your documents remain on your device and are
+            not transmitted in this demonstration.
+          </>
+        )}
       </div>
     </div>
   );
