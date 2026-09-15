@@ -43,6 +43,19 @@ export class ApiError extends Error {
   }
 }
 
+/** Narrows an unknown parsed JSON body down to the `{ error: ApiErrorBody }`
+ *  envelope shape, without asserting anything about a response that isn't
+ *  actually shaped that way (a malformed/unexpected body just yields
+ *  `undefined`, never a false structured error). */
+export function extractErrorBody(payload: unknown): ApiErrorBody | undefined {
+  if (typeof payload !== "object" || payload === null || !("error" in payload)) return undefined;
+  const error = (payload as { error: unknown }).error;
+  if (typeof error !== "object" || error === null) return undefined;
+  const candidate = error as Partial<ApiErrorBody>;
+  if (typeof candidate.code !== "string" || typeof candidate.message !== "string") return undefined;
+  return candidate as ApiErrorBody;
+}
+
 function readCookie(name: string): string | null {
   const match = document.cookie
     .split("; ")
@@ -107,10 +120,10 @@ export async function apiRequest<T>(path: string, init: ApiRequestInit = {}): Pr
   if (response.status === 204) return undefined as T;
 
   const isJson = response.headers.get("content-type")?.includes("application/json");
-  const payload = isJson ? await response.json().catch(() => undefined) : undefined;
+  const payload: unknown = isJson ? await response.json().catch(() => undefined) : undefined;
 
   if (!response.ok) {
-    throw new ApiError(response.status, payload?.error, `Request failed with status ${response.status}.`);
+    throw new ApiError(response.status, extractErrorBody(payload), `Request failed with status ${response.status}.`);
   }
   return payload as T;
 }
@@ -146,10 +159,10 @@ export async function apiUpload<T>(path: string, formData: FormData, signal?: Ab
   }
 
   const isJson = response.headers.get("content-type")?.includes("application/json");
-  const payload = isJson ? await response.json().catch(() => undefined) : undefined;
+  const payload: unknown = isJson ? await response.json().catch(() => undefined) : undefined;
 
   if (!response.ok) {
-    throw new ApiError(response.status, payload?.error, `Upload failed with status ${response.status}.`);
+    throw new ApiError(response.status, extractErrorBody(payload), `Upload failed with status ${response.status}.`);
   }
   return payload as T;
 }

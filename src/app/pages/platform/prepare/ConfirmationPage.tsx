@@ -134,7 +134,7 @@ function ConfirmationPageInner({ participants }: { participants: PrepParticipant
       // (a different document, some other time) must never reuse these keys.
       pendingSendRef.current = null;
       await discardDraft();
-      navigate("/app/documents");
+      void navigate("/app/documents");
     } catch (err) {
       setSendError(
         err instanceof ApiError

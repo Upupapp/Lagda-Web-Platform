@@ -1640,7 +1640,7 @@ function FieldsPageInner() {
   const returnLabel = returnTo ? "Signing Workflow" : "Review";
   const {
     loadState, errorMessage,
-    initialize, loadRealFields, discard,
+    initialize, loadRealFields,
     documents, fields,
     selectedField, showFieldList, showValidation, toggleValidation,
   } = useFieldEditor();
@@ -1894,9 +1894,10 @@ function FieldsPageInner() {
         showKbDialog={showKbDialog}
         setShowKbDialog={setShowKbDialog}
         onContinue={() => {
+          if (savingFields) return; // already saving — ignore a double click
           void (async () => {
             const ok = await saveFieldsToBackend();
-            if (ok) navigate(returnTo ?? "/app/prepare/confirmation");
+            if (ok) void navigate(returnTo ?? "/app/prepare/confirmation");
           })();
         }}
         returnTo={returnTo}

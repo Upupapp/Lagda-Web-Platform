@@ -150,7 +150,7 @@ export function SignIn() {
     try {
       const result = await realAuthService.signIn(email.trim(), password);
       if (result.status === "mfa-required") {
-        navigate(
+        void navigate(
           `/mfa${redirectTo !== "/app/dashboard" ? `?returnTo=${encodeURIComponent(redirectTo)}` : ""}`,
           { replace: true },
         );
@@ -173,10 +173,10 @@ export function SignIn() {
         // "onboarding" case: stash the real destination and route through
         // the wizard first.
         setReturnTo(redirectTo !== DEFAULT_RETURN_PATH ? redirectTo : null);
-        navigate("/onboarding/profile", { replace: true });
+        void navigate("/onboarding/profile", { replace: true });
         return;
       }
-      navigate(redirectTo, { replace: true });
+      void navigate(redirectTo, { replace: true });
     } catch (err) {
       setStatus("error");
       setServerError(

@@ -11,7 +11,7 @@
 // for a sender/workspace call.
 
 import { API_BASE_URL } from "./backend-flag";
-import { ApiError, type ApiErrorBody } from "./api-client";
+import { ApiError, extractErrorBody } from "./api-client";
 
 const RECIPIENT_CSRF_COOKIE_NAME = "lagda_signing_csrf";
 
@@ -67,10 +67,10 @@ export async function recipientApiRequest<T>(path: string, init: RecipientApiReq
   if (response.status === 204) return undefined as T;
 
   const isJson = response.headers.get("content-type")?.includes("application/json");
-  const payload: { error?: ApiErrorBody } | undefined = isJson ? await response.json().catch(() => undefined) : undefined;
+  const payload: unknown = isJson ? await response.json().catch(() => undefined) : undefined;
 
   if (!response.ok) {
-    throw new ApiError(response.status, payload?.error, `Request failed with status ${response.status}.`);
+    throw new ApiError(response.status, extractErrorBody(payload), `Request failed with status ${response.status}.`);
   }
   return payload as T;
 }
