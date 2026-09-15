@@ -6,6 +6,8 @@
 import React, { useEffect } from "react";
 import { useParams, useNavigate } from "react-router";
 import { RecipientProvider, useRecipient } from "../../context/RecipientContext";
+import { USE_REAL_BACKEND } from "../../services/backend-flag";
+import { RealSigningPage } from "./RealSigningPage";
 
 import { RequestAccessPage   } from "./RequestAccessPage";
 import { AuthChallengePage   } from "./AuthChallengePage";
@@ -116,6 +118,13 @@ function RecipientFlowInner() {
 // ── Public export ─────────────────────────────────────────────────────────────
 
 export function RecipientRoot() {
+  // Real-backend mode is a completely separate, real-data-only flow (P2) —
+  // it never mounts RecipientProvider/mock/recipient.service.ts, so there is
+  // no path by which a real signer could fall back to a demo scenario.
+  if (USE_REAL_BACKEND) {
+    return <RealSigningPage />;
+  }
+
   return (
     <RecipientProvider>
       <RecipientFlowInner />
