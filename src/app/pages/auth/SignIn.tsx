@@ -3,7 +3,7 @@
 // locked → /auth/account-locked, onboarding (default) → /onboarding/profile.
 // Password is NEVER logged or stored.
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Link, Navigate, useSearchParams, useNavigate } from "react-router";
 import { type FormErrors } from "../../models/forms";
 import { conversionTracker } from "../../services/public";
@@ -16,11 +16,13 @@ import { mockAuthService } from "../../services/mock/auth.service";
 import { realAuthService } from "../../services/real/auth.service";
 import { USE_REAL_BACKEND } from "../../services/backend-flag";
 import { ApiError } from "../../services/api-client";
-import { sanitizeAppReturnTo, DEFAULT_RETURN_PATH } from "../../utils/authReturnPath";
+import { driveFirebaseVerificationSend } from "../../services/firebase-verification-send";
+import { sanitizeAppReturnTo, sanitizeOnboardingReturnTo, DEFAULT_RETURN_PATH } from "../../utils/authReturnPath";
 
 const GF = { fontFamily: "'Geist', sans-serif" };
 const AZURE = "#0078D4";
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const RESEND_COOLDOWN_SECONDS = 30;
 
 export function SignIn() {
   const [params] = useSearchParams();
@@ -37,7 +39,21 @@ export function SignIn() {
   const [errors, setErrors] = useState<FormErrors>({});
   const [status, setStatus] = useState<"idle" | "submitting" | "error">("idle");
   const [serverError, setServerError] = useState<string | null>(null);
+  // Real backend only: distinguishes "wrong password"/"account not found"
+  // (generic serverError above) from "this account exists and the password
+  // was right, it just isn't verified yet" — the one error where offering a
+  // resend right here, instead of just a dead-end message, is worth showing.
+  const [needsVerification, setNeedsVerification] = useState(false);
+  const [resendStatus, setResendStatus] = useState<"idle" | "sending" | "sent">("idle");
+  const [resendCooldown, setResendCooldown] = useState(0);
   const errorRef = useRef<HTMLDivElement>(null);
+
+  // Resend cooldown ticker — same pattern as VerifyEmail.tsx.
+  useEffect(() => {
+    if (resendCooldown <= 0) return;
+    const t = setTimeout(() => setResendCooldown((n) => n - 1), 1000);
+    return () => clearTimeout(t);
+  }, [resendCooldown]);
 
   // Already signed in — this is a continuation boundary, not a form to fill
   // out again. Send the visitor straight through to where they were headed.
@@ -67,6 +83,7 @@ export function SignIn() {
     }
     setErrors({});
     setServerError(null);
+    setNeedsVerification(false);
     setStatus("submitting");
     conversionTracker.track({ name: "sign_in_started" });
 
@@ -180,6 +197,9 @@ export function SignIn() {
       void navigate(redirectTo, { replace: true });
     } catch (err) {
       setStatus("error");
+      setNeedsVerification(
+        err instanceof ApiError && err.body?.code === "EMAIL_VERIFICATION_REQUIRED",
+      );
       setServerError(
         err instanceof ApiError
           ? err.message
@@ -187,6 +207,32 @@ export function SignIn() {
       );
       setTimeout(() => errorRef.current?.focus(), 50);
     }
+  }
+
+  // Resend for the EMAIL_VERIFICATION_REQUIRED case only — same pattern as
+  // VerifyEmail.tsx's own handleResend, offered right here so a real user
+  // who still has their password memorized is not forced back through
+  // Create Account to ask for a new link. The backend itself is the real
+  // guard against spamming a mailbox (resendEmailVerification refuses to
+  // rotate a still-valid challenge) — this cooldown is only a frontend
+  // courtesy on top of that.
+  async function handleResend() {
+    if (resendCooldown > 0 || resendStatus === "sending") return;
+    setResendStatus("sending");
+    const result = await realAuthService.resendVerification(email.trim());
+    // Firebase-provider mode only — absent means the backend's own delivery
+    // pipeline already handled it (or there was nothing new to send, e.g. a
+    // still-valid link exists), same disclosed shape resendVerification's
+    // own anti-enumeration design already relies on elsewhere.
+    if (result.verificationHandoff !== undefined) {
+      await driveFirebaseVerificationSend(
+        result.verificationHandoff,
+        sanitizeOnboardingReturnTo(redirectTo),
+      );
+    }
+    setResendStatus("sent");
+    setResendCooldown(RESEND_COOLDOWN_SECONDS);
+    setTimeout(() => setResendStatus("idle"), 3000);
   }
 
   return (
@@ -233,24 +279,53 @@ export function SignIn() {
               <p style={{ color: "#ef4444", ...GF, fontSize: 13, margin: 0 }}>
                 {serverError}
               </p>
-              <button
-                onClick={() => {
-                  setServerError(null);
-                  setStatus("idle");
-                }}
-                style={{
-                  color: "#0078D4",
-                  ...GF,
-                  fontSize: 12,
-                  background: "none",
-                  border: "none",
-                  cursor: "pointer",
-                  padding: "4px 0 0",
-                  display: "block",
-                }}
-              >
-                Try again
-              </button>
+              {needsVerification ? (
+                resendStatus === "sent" ? (
+                  <p aria-live="polite" style={{ color: "#64748B", ...GF, fontSize: 12, margin: "4px 0 0" }}>
+                    If that address still needs verifying, a link is on its way — check your inbox.
+                  </p>
+                ) : resendCooldown > 0 ? (
+                  <p aria-live="polite" style={{ color: "#64748B", ...GF, fontSize: 12, margin: "4px 0 0" }}>
+                    Resend available in {resendCooldown}s
+                  </p>
+                ) : (
+                  <button
+                    onClick={() => void handleResend()}
+                    disabled={resendStatus === "sending"}
+                    style={{
+                      color: "#0078D4",
+                      ...GF,
+                      fontSize: 12,
+                      background: "none",
+                      border: "none",
+                      cursor: resendStatus === "sending" ? "default" : "pointer",
+                      padding: "4px 0 0",
+                      display: "block",
+                    }}
+                  >
+                    {resendStatus === "sending" ? "Sending…" : "Resend verification email"}
+                  </button>
+                )
+              ) : (
+                <button
+                  onClick={() => {
+                    setServerError(null);
+                    setStatus("idle");
+                  }}
+                  style={{
+                    color: "#0078D4",
+                    ...GF,
+                    fontSize: 12,
+                    background: "none",
+                    border: "none",
+                    cursor: "pointer",
+                    padding: "4px 0 0",
+                    display: "block",
+                  }}
+                >
+                  Try again
+                </button>
+              )}
             </>
           ) : (
             <>
