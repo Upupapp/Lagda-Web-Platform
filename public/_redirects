@@ -1,1 +1,12 @@
-/* /index.html 200
+# Netlify processes THIS file's rules before netlify.toml's [[redirects]] —
+# so the actual proxy rule has to live here, not there, or its catch-all
+# below silently swallows everything first (confirmed: an /api/* rule in
+# netlify.toml alone never matched, because this file's catch-all always won).
+#
+# Proxies the backend through this same origin so session cookies are
+# genuinely first-party — see netlify.toml's own comment for the full
+# reasoning (cross-site SameSite=Lax cookies don't reliably survive a
+# fetch()/XHR round trip in a real browser, confirmed live in production).
+/api/*  https://172-236-149-148.sslip.io/:splat  200!
+
+/*  /index.html  200

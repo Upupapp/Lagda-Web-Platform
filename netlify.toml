@@ -6,7 +6,10 @@
   VITE_LAUNCH_PROFILE = "launch-default"
   NODE_VERSION = "22"
 
-[[redirects]]
-  from = "/*"
-  to = "/index.html"
-  status = 200
+# All redirect/proxy rules live in public/_redirects, not here — Netlify
+# processes that file's rules BEFORE this file's [[redirects]], so a rule
+# defined only here can be silently shadowed by that file's catch-all.
+# Confirmed the hard way: an /api/* proxy rule placed only in this file
+# never matched anything, because public/_redirects' `/* /index.html 200`
+# always won first. Keeping every rule in one file (that one) avoids two
+# sources of truth with different precedence.
