@@ -79,20 +79,23 @@ export default mergeConfig(
         // measured baseline so the suite cannot silently regress, and are meant
         // to be raised as coverage grows. Setting them higher today would force
         // exactly the superficial render-only tests this command forbids.
-        // Measured baseline on 2026-08-01: statements/lines 7.67%,
-        // branches 74.93%, functions 45.66%. Set just below each so the suite
-        // cannot regress, and raise them as coverage grows.
+        // Measured baseline on 2026-09-15: statements/lines 9.45%,
+        // branches 76.76%, functions 45.75% (raised from the 2026-08-01
+        // baseline of 45.66% after adding real coverage for the
+        // collaboration resolvers — see Lagda-Web-Platform#10). Set just
+        // below each so the suite cannot regress, and raise them as
+        // coverage grows.
         //
         // The low line percentage is expected and honest: this repository is
         // ~77k statements of largely presentational page code, and the suites
         // written here target the pure logic — resolvers, projections,
-        // validators, provider registries. Branch coverage at 75% is the number
-        // that actually reflects what is tested.
+        // validators, provider registries. Branch coverage at 75%+ is the
+        // number that actually reflects what is tested.
         thresholds: {
-          lines: 7.5,
-          functions: 45,
-          branches: 74,
-          statements: 7.5,
+          lines: 9,
+          functions: 45.5,
+          branches: 76,
+          statements: 9,
           // The modules this command is actually about: pure logic with real
           // branching, where meaningful coverage is achievable and valuable.
           "src/app/services/preparation-platform-projection.ts": {
