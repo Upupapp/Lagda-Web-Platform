@@ -16,6 +16,11 @@ import { useOnboarding } from "../../context/OnboardingContext";
 import { usePlatform } from "../../context/PlatformContext";
 import { checkPassword, isPasswordAcceptable } from "../../models/auth";
 import { sanitizeAppReturnTo, DEFAULT_RETURN_PATH } from "../../utils/authReturnPath";
+import { realAuthService } from "../../services/real/auth.service";
+import { USE_REAL_BACKEND } from "../../services/backend-flag";
+import { ApiError } from "../../services/api-client";
+import { driveFirebaseVerificationSend } from "../../services/firebase-verification-send";
+import { log } from "../../utils/logger";
 
 const GF = { fontFamily: "'Geist', sans-serif" };
 const GM = { fontFamily: "'Geist Mono', monospace" };
@@ -234,17 +239,58 @@ export function CreateAccount() {
       planId: planId ?? undefined,
     });
 
-    // Mock delay — password is NOT logged.
-    await new Promise((r) => setTimeout(r, 700));
+    const name = fields.name.trim();
+    const email = fields.email.trim().toLowerCase();
+
+    if (USE_REAL_BACKEND) {
+      try {
+        // Password is NOT logged — passed straight through to the request body.
+        await realAuthService.register({
+          email, password, name,
+          organization: fields.organization?.trim() || undefined,
+          intendedUse: fields.intendedUse || undefined,
+          consent: true,
+        });
+        // register() only creates the account — it never sends mail itself
+        // (see Lagda-Backend's identity-composition.ts: only resend and
+        // password-reset schedule delivery). This is the actual first send.
+        const resendResult = await realAuthService.resendVerification(email);
+        // Firebase-provider mode only — absent (undefined) means the
+        // backend's own delivery pipeline already scheduled the email,
+        // same as before this migration; nothing else to do here.
+        if (resendResult.verificationHandoff !== undefined) {
+          const { sent } = await driveFirebaseVerificationSend(
+            resendResult.verificationHandoff, "/onboarding/profile",
+          );
+          // A failed send never fails registration (mission §8) — the
+          // account exists either way, and VerifyEmail.tsx's own "Resend
+          // email" button (wired the same way) is the recovery path.
+          if (!sent) {
+            log.warn("create-account: Firebase verification email send failed; account created, resend available");
+          }
+        }
+      } catch (err) {
+        setStatus("error");
+        setServerError(
+          err instanceof ApiError
+            ? err.message
+            : "Something went wrong creating your account. Please try again.",
+        );
+        setTimeout(() => errorSummaryRef.current?.focus(), 50);
+        return;
+      }
+    } else {
+      // Mock delay — password is NOT logged.
+      await new Promise((r) => setTimeout(r, 700));
+    }
     conversionTracker.track({
       name: "create_account_mock_completed",
       planId: planId ?? undefined,
     });
 
     // Set pending user for the verification flow
-    const name = fields.name.trim();
     setPendingUser({
-      email: fields.email.trim().toLowerCase(),
+      email,
       displayName: name,
       authStatus: "email-verification-required",
     });
