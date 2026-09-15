@@ -3,7 +3,7 @@
 // CRITICAL BOUNDARY (P2 Firebase email-verification migration): this module
 // exists to do exactly two things — sign in with a short-lived, backend-
 // issued custom token just long enough to call sendEmailVerification(), and
-// later apply/check a Firebase email-action code on the /firebase-auth/action
+// later apply a Firebase email-action code on the /firebase-auth/action
 // page. It must NEVER become this app's authentication/session system.
 //
 //   - Real sign-in, session, and every authenticated request still go
@@ -25,7 +25,7 @@ import {
 } from "firebase/app";
 import {
   getAuth, signInWithCustomToken, sendEmailVerification as firebaseSendEmailVerification,
-  signOut, checkActionCode, applyActionCode, type Auth,
+  signOut, applyActionCode, type Auth,
 } from "firebase/auth";
 import { FIREBASE_WEB_CONFIG } from "./firebase-config";
 
@@ -80,27 +80,6 @@ export async function sendFirebaseVerificationEmail(
     // Never surface Firebase's internal exception text to the UI (mission
     // §13/§23) — the caller shows a generic, truthful retry message.
     return { outcome: "failed", message: "Could not send the verification email. Please try again." };
-  }
-}
-
-export type FirebaseActionCheckResult =
-  | { outcome: "valid-verify-email"; email: string }
-  | { outcome: "invalid" }
-  | { outcome: "unavailable" };
-
-/** Read-only — does NOT consume the code. Used by the action page to decide
- *  what to render before the visitor confirms anything. */
-export async function checkFirebaseVerificationAction(oobCode: string): Promise<FirebaseActionCheckResult> {
-  const auth = getVerificationAuth();
-  if (auth === null) return { outcome: "unavailable" };
-  try {
-    const info = await checkActionCode(auth, oobCode);
-    if (info.operation !== "VERIFY_EMAIL" || !info.data.email) {
-      return { outcome: "invalid" };
-    }
-    return { outcome: "valid-verify-email", email: info.data.email };
-  } catch {
-    return { outcome: "invalid" };
   }
 }
 

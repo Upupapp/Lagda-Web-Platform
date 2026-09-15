@@ -16,3 +16,7 @@ playwright-report/
 test-results/
 playwright/.cache/
 *.tsbuildinfo
+
+# QA subagent scratch output (screenshots, throwaway test scripts) —
+# see .claude/agents/quality-assurance-tester.md. Never committed.
+.qa-runs/

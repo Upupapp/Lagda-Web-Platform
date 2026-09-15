@@ -19,7 +19,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router";
 import {
-  checkFirebaseVerificationAction, applyFirebaseVerificationAction,
+  applyFirebaseVerificationAction,
 } from "../../services/firebase-verification";
 import { realAuthService } from "../../services/real/auth.service";
 import { sanitizeOnboardingReturnTo } from "../../utils/authReturnPath";
@@ -51,27 +51,22 @@ export function FirebaseVerificationAction() {
         return;
       }
 
-      // Step 1: read-only check first, so a malformed/expired link renders
-      // the right message before anything is consumed.
-      const check = await checkFirebaseVerificationAction(oobCode);
-      if (check.outcome === "unavailable") {
-        setState("temporary-failure");
-        return;
-      }
-      if (check.outcome === "invalid") {
-        setState("invalid");
-        return;
-      }
-
-      // Step 1, applied.
-      const applied = await applyFirebaseVerificationAction(oobCode);
-      if (applied !== "applied") {
-        setState("invalid");
-        return;
-      }
+      // Step 1: best-effort only. We try to apply Firebase's action code
+      // ourselves, in case nothing else has yet — but we do NOT gate on the
+      // outcome. A single-use oobCode can be consumed by something other
+      // than this exact page load (an email client's link-scanner/safe-
+      // browsing prefetch is a known, common cause) while Firebase's own
+      // server-side emailVerified flag still ends up correctly set. Treating
+      // "this browser's attempt to apply the code failed" as fatal would
+      // wrongly dead-end a real, already-verified user — so Step 1's result
+      // is informational only; Step 2 (below) is the actual source of truth.
+      await applyFirebaseVerificationAction(oobCode);
 
       // Step 2: LAGDA's own server-side confirmation. This is the ONLY call
-      // that can mark the LAGDA account verified — never step 1 alone.
+      // that can mark the LAGDA account verified, and it independently
+      // re-checks Firebase's own server-side state via the Admin SDK — it
+      // needs only `challengeId`, never the client's own oobCode outcome.
+      // So it is always attempted, even when Step 1 above reported failure.
       try {
         const result = await realAuthService.finalizeFirebaseVerification(challengeId);
         if (!result.verified) {
