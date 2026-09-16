@@ -36,6 +36,12 @@ vi.mock("../../../../context/PrepareContext", () => ({
   usePrepare: () => prepare,
 }));
 
+// Forced explicitly, not left to the ambient VITE_API_BASE_URL (set only in
+// a gitignored local .env, absent in CI) — this test targets the panel's
+// real-backend issue list (computeBackendFieldIssues), which only runs
+// under USE_REAL_BACKEND. Passed locally by accident, failed in CI.
+vi.mock("../../../../services/backend-flag", () => ({ USE_REAL_BACKEND: true }));
+
 import { ValidationPanel } from "../FieldsPage";
 
 function field(over: Partial<FieldDefinition> = {}): FieldDefinition {
