@@ -3,7 +3,15 @@
 // FieldsPage.tsx's handlers delegate to, but which is faster and more
 // reliable to exercise directly than through a full component render.
 
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, vi } from "vitest";
+
+// Forced explicitly, not left to the ambient VITE_API_BASE_URL (set only in
+// a gitignored local .env, absent in CI): initializeEditor auto-seeds demo
+// fields in mock mode for any draft with a participant + a file (see
+// MockFieldEditorService), which would silently pre-populate every session
+// these tests assume starts empty. Passed locally by accident, failed in CI.
+vi.mock("../../backend-flag", () => ({ USE_REAL_BACKEND: true }));
+
 import { fieldEditorService } from "../field-editor.service";
 import {
   DEFAULT_ROUTING_CONFIG, DEFAULT_AUTH_CONFIG, DEFAULT_PREP_SETTINGS, DEFAULT_TRANSACTION_DETAILS,

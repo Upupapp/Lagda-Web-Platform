@@ -28,6 +28,16 @@ vi.mock("../../../../context/PlatformContext", () => ({
   usePlatform: () => ({ currentWorkspace: { id: "ws_1" } }),
 }));
 
+// Forced explicitly, not left to the ambient VITE_API_BASE_URL (set only in
+// a gitignored local .env, absent in CI): in mock mode, initializeEditor
+// auto-seeds demo fields for any draft with a participant + a file (see
+// MockFieldEditorService), which would silently pre-populate the canvas
+// these tests assume starts empty. Real-backend mode starts empty (the test
+// draft's file has no backendDocumentId, so the real-field-load effect's
+// network call is skipped — see FieldsPage's own guard). Passed locally by
+// accident, failed in CI.
+vi.mock("../../../../services/backend-flag", () => ({ USE_REAL_BACKEND: true }));
+
 import { FieldsPage } from "../FieldsPage";
 
 function renderPage() {

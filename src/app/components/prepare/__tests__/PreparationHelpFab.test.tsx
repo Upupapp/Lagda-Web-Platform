@@ -18,6 +18,14 @@ vi.mock("../../../context/PrepareContext", () => ({
   usePrepare: () => usePrepareMock(),
 }));
 
+// Forced explicitly rather than left to the ambient VITE_API_BASE_URL — that
+// env var is set in a gitignored .env.local for local dev but NOT in CI, so
+// a test that implicitly depended on it passed locally and failed in CI
+// (the FAB silently took the other, unmocked code path). This test targets
+// the real-backend / computeSendReadiness path specifically; the ready/not-
+// ready assertions below only hold under that path.
+vi.mock("../../../services/backend-flag", () => ({ USE_REAL_BACKEND: true }));
+
 import { PreparationHelpFab } from "../PreparationHelpFab";
 import type { PreparationStepId, PreparationStepState } from "../../../models/prepare";
 
