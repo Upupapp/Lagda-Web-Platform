@@ -61,6 +61,15 @@ export function buildActionUrl(action: SendReadinessAction): string {
   if (action.groupId) {
     params.set("highlightGroupId", action.groupId);
   }
+  // Any blocker sending the visitor to Fields is, by definition, something
+  // the Validation panel explains and (usually) has a one-click fix for —
+  // selecting a field alone opens Field Properties instead, which has no
+  // idea why that field was flagged. Force the Validation panel open so the
+  // actual fix is what's on screen, not something the visitor has to know
+  // to go find.
+  if (action.route.startsWith("/app/prepare/fields")) {
+    params.set("showValidation", "1");
+  }
   const query = params.toString();
   return query ? `${action.route}?${query}` : action.route;
 }
