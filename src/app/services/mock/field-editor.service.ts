@@ -20,6 +20,7 @@ import {
 } from "../../models/field-editor";
 import type { PreparationDraft } from "../../models/prepare";
 import { PREP_ROLE_IS_BLOCKING } from "../../models/prepare";
+import { USE_REAL_BACKEND } from "../backend-flag";
 import {
   buildEditorDocuments,
   buildDemoFields,
@@ -45,12 +46,21 @@ class MockFieldEditorService {
     const documents = buildEditorDocuments(draft.files);
     const paxSlice  = draft.participants.map(p => ({ id: p.id, name: p.name, role: p.role }));
 
-    // Pre-populate fields for multi-file drafts or drafts with ≥2 participants
+    // Pre-populate demo fields — DEMO MODE ONLY. In real-backend mode the
+    // editor's field set is whatever the backend has (FieldsPage's load
+    // effect), and for a brand-new document that is nothing. Seeding here
+    // used to put a "Sender Text" field (demo_sender_1, an unsaveable type)
+    // plus demo signature/name fields into every real draft: the sender-text
+    // one could never be saved, so Review permanently reported "1 field with
+    // no backend representation" and "unsaved edits" against a field the
+    // visitor never placed and had no reason to look for (reported live).
     let fields: FieldDefinition[] = [];
-    if (documents.length >= 2 && paxSlice.length >= 1) {
-      fields = buildMultiFileFields(documents, paxSlice);
-    } else if (paxSlice.length >= 1 && documents.length >= 1) {
-      fields = buildDemoFields(documents, paxSlice);
+    if (!USE_REAL_BACKEND) {
+      if (documents.length >= 2 && paxSlice.length >= 1) {
+        fields = buildMultiFileFields(documents, paxSlice);
+      } else if (paxSlice.length >= 1 && documents.length >= 1) {
+        fields = buildDemoFields(documents, paxSlice);
+      }
     }
 
     const session: EditorSession = { documents, fields };
