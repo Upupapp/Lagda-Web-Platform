@@ -32,7 +32,6 @@ const GOLD   = "#C9960C";
 const AMBER_BG = "#FEF9EC";
 const AMBER_BORDER = "#F0D07A";
 const GREEN  = "#2E7D32";
-const GREEN_BG = "#E8F5E9";
 
 function stepRouteFor(id: PreparationStepId): string {
   return PREPARATION_STEPS.find((s) => s.id === id)?.route ?? "/app/prepare";
