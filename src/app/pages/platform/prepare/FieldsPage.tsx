@@ -1607,7 +1607,7 @@ function EditorToolbar({ draftTitle, participants: _participants, draft, showKbD
 // ── Main FieldsPage ────────────────────────────────────────────────────────────
 function FieldsPageInner() {
   const navigate = useNavigate();
-  const { draft, setStep } = usePrepare();
+  const { draft, setStep, setFieldsSnapshot } = usePrepare();
 
   // Command 37: the Signing Workflow can send the sender here to assign a
   // participant's own fields. Only an internal /app/... path is ever accepted, and
@@ -1625,7 +1625,33 @@ function FieldsPageInner() {
     initialize, loadRealFields,
     documents, fields,
     selectedField, showFieldList, showValidation, toggleValidation,
+    setDocument, setPage, selectFields,
   } = useFieldEditor();
+
+  // Review's "not ready to send" banner can deep-link straight here with the
+  // exact offending field(s) via ?focusFieldIds=a,b — so the sender lands on
+  // the right page/document with those fields already selected, instead of
+  // having to re-find them. Runs once, after fields have actually loaded
+  // (an empty/not-yet-loaded field list would silently select nothing).
+  const focusFieldIds = useMemo(() => {
+    const raw = new URLSearchParams(window.location.search).get("focusFieldIds");
+    return raw ? raw.split(",").filter(Boolean) : [];
+  }, []);
+  // Keeps the cross-step Help panel's readiness calculation current while
+  // this page is open — see PrepareContext's fieldsSnapshot doc comment.
+  useEffect(() => { setFieldsSnapshot(fields); }, [fields, setFieldsSnapshot]);
+
+  const focusedRef = useRef(false);
+  useEffect(() => {
+    if (focusedRef.current || focusFieldIds.length === 0 || loadState !== "ready") return;
+    const matches = fields.filter((f) => focusFieldIds.includes(f.id));
+    if (matches.length === 0) return;
+    focusedRef.current = true;
+    const first = matches[0]!;
+    setDocument(first.documentId);
+    setPage(first.pageId);
+    selectFields(matches.map((f) => f.id));
+  }, [focusFieldIds, fields, loadState, setDocument, setPage, selectFields]);
   const platform = usePlatform();
 
   const [showKbDialog, setShowKbDialog] = useState(false);

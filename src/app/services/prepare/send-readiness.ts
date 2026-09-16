@@ -10,9 +10,27 @@ import type { PreparationDraft } from "../../models/prepare";
 import { isRealRecipientId } from "./participant-sync";
 import { isBackendFieldType } from "./field-sync";
 
+// A blocker may point the sender at the exact step (and, for field-level
+// issues, the exact field(s)) that need attention — so the "not ready to
+// send" banner can offer a real fix-it link instead of just naming the
+// problem. Action-less blockers (e.g. an architectural gap with no UI fix)
+// simply render as plain text.
+export interface SendReadinessAction {
+  label: string;
+  route: string;
+  fieldIds?: string[];
+  participantId?: string;
+  groupId?: string;
+}
+
+export interface SendReadinessBlocker {
+  message: string;
+  action?: SendReadinessAction;
+}
+
 export interface SendReadinessResult {
   ready: boolean;
-  blockers: string[];
+  blockers: SendReadinessBlocker[];
 }
 
 export interface SendReadinessInput {
@@ -28,30 +46,63 @@ export interface SendReadinessInput {
   fields: FieldDefinition[] | null;
 }
 
+// Turns a blocker's action into the actual URL to navigate to — the one
+// place this querystring shape (focusFieldIds / highlightParticipantId) is
+// assembled, so ConfirmationPage's banner and the cross-step Help panel
+// (PreparationHelpFab) never drift into building it two different ways.
+export function buildActionUrl(action: SendReadinessAction): string {
+  const params = new URLSearchParams();
+  if (action.fieldIds && action.fieldIds.length > 0) {
+    params.set("focusFieldIds", action.fieldIds.join(","));
+  }
+  if (action.participantId) {
+    params.set("highlightParticipantId", action.participantId);
+  }
+  if (action.groupId) {
+    params.set("highlightGroupId", action.groupId);
+  }
+  const query = params.toString();
+  return query ? `${action.route}?${query}` : action.route;
+}
+
 export function computeSendReadiness(input: SendReadinessInput): SendReadinessResult {
   const { draft, multiDocumentSigningGap, syncError, fields } = input;
-  const blockers: string[] = [];
+  const blockers: SendReadinessBlocker[] = [];
 
   const realFiles = draft.files.filter((f) => f.backendDocumentId);
   if (realFiles.length === 0) {
-    blockers.push("No document in this preparation has reached real backend upload yet.");
+    blockers.push({
+      message: "No document in this preparation has reached real backend upload yet.",
+      action: { label: "Go to Upload", route: "/app/prepare/upload" },
+    });
   }
   if (multiDocumentSigningGap) {
-    blockers.push(
-      "MULTI-DOCUMENT SIGNING MODEL BACKEND GAP — this preparation has more than one real document; " +
-      "the backend has no shared-participant abstraction across documents, so a single accurate signing " +
-      "request cannot yet be constructed for all of them together.",
-    );
+    blockers.push({
+      message:
+        "MULTI-DOCUMENT SIGNING MODEL BACKEND GAP — this preparation has more than one real document; " +
+        "the backend has no shared-participant abstraction across documents, so a single accurate signing " +
+        "request cannot yet be constructed for all of them together.",
+      action: { label: "Manage documents", route: "/app/prepare/upload" },
+    });
   }
 
   if (draft.participants.length === 0) {
-    blockers.push("No participants have been added.");
+    blockers.push({
+      message: "No participants have been added.",
+      action: { label: "Add participants", route: "/app/prepare/participants" },
+    });
   } else if (draft.participants.some((p) => !isRealRecipientId(p.id))) {
-    blockers.push("One or more participants have not finished syncing to the backend.");
+    blockers.push({
+      message: "One or more participants have not finished syncing to the backend.",
+      action: { label: "Review participants", route: "/app/prepare/participants" },
+    });
   }
 
   if (syncError) {
-    blockers.push(`Unresolved participant/routing sync error: ${syncError}`);
+    blockers.push({
+      message: `Unresolved participant/routing sync error: ${syncError}`,
+      action: { label: "Review participants", route: "/app/prepare/participants" },
+    });
   }
 
   // Authentication: only the default "no extra auth, unique link" method
@@ -59,16 +110,19 @@ export function computeSendReadiness(input: SendReadinessInput): SendReadinessRe
   // capability matrix) — every other method is a frontend-only preference
   // that nothing server-side would actually enforce.
   if (draft.auth.defaultMethod !== "none") {
-    blockers.push(
-      `Default authentication method "${draft.auth.defaultMethod}" has no backend enforcement yet; ` +
-      `only "none" (secure invitation link) can be honored by a real send.`,
-    );
+    blockers.push({
+      message:
+        `Default authentication method "${draft.auth.defaultMethod}" has no backend enforcement yet; ` +
+        `only "none" (secure invitation link) can be honored by a real send.`,
+      action: { label: "Change authentication", route: "/app/prepare/authentication" },
+    });
   }
   for (const [participantId, methodId] of Object.entries(draft.auth.perParticipant)) {
     if (methodId !== "none") {
-      blockers.push(
-        `Participant ${participantId} has an authentication override ("${methodId}") that has no backend enforcement yet.`,
-      );
+      blockers.push({
+        message: `Participant ${participantId} has an authentication override ("${methodId}") that has no backend enforcement yet.`,
+        action: { label: "Change authentication", route: "/app/prepare/authentication", participantId },
+      });
     }
   }
 
@@ -76,17 +130,29 @@ export function computeSendReadiness(input: SendReadinessInput): SendReadinessRe
   // of a type the backend can't store both mean "not actually verified as
   // persisted" — never assumed ready by omission.
   if (fields === null) {
-    blockers.push("Field placement has not been loaded/verified this session.");
+    blockers.push({
+      message: "Field placement has not been loaded/verified this session.",
+      action: { label: "Go to field placement", route: "/app/prepare/fields" },
+    });
   } else {
     const unsupported = fields.filter((f) => !isBackendFieldType(f.type));
     if (unsupported.length > 0) {
-      blockers.push(
-        `${unsupported.length} placed field(s) use a type with no backend representation ` +
-        `(multiline-text, radio-group, acknowledgment, or sender-text) and will not be part of a real send.`,
-      );
+      blockers.push({
+        message:
+          `${unsupported.length} placed field(s) use a type with no backend representation ` +
+          `(multiline-text, radio-group, acknowledgment, or sender-text) and will not be part of a real send.`,
+        action: {
+          label: "Fix these fields",
+          route: "/app/prepare/fields",
+          fieldIds: unsupported.map((f) => f.id),
+        },
+      });
     }
     if (fields.some((f) => !f.id.startsWith("bf_"))) {
-      blockers.push("Field placement has local, unsaved edits — save before sending.");
+      blockers.push({
+        message: "Field placement has local, unsaved edits — save before sending.",
+        action: { label: "Go to field placement", route: "/app/prepare/fields" },
+      });
     }
   }
 

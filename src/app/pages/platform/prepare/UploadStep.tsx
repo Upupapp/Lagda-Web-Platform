@@ -428,6 +428,19 @@ export function UploadStep() {
     return () => {};
   }, [setStep]);
 
+  // Deep-link from the Prepare Help panel: ?highlightField=title focuses and
+  // scrolls to the title input so a "title is missing" item is actionable,
+  // not just informative. Runs once per mount.
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get("highlightField") !== "title") return;
+    const timer = window.setTimeout(() => {
+      const el = document.getElementById("prep-title");
+      el?.scrollIntoView({ behavior: "smooth", block: "center" });
+      (el as HTMLInputElement | null)?.focus();
+    }, 50);
+    return () => window.clearTimeout(timer);
+  }, []);
+
   useEffect(() => {
     if (!USE_REAL_BACKEND) return;
     let cancelled = false;

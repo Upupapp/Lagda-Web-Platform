@@ -27,6 +27,9 @@ export const Z = {
   shell: 30,
   /** Menus, popovers, comboboxes, tooltips — anything anchored to a trigger. */
   dropdown: 40,
+  /** Prepare wizard's floating Help FAB and its popover panel — above
+   *  in-page dropdowns, but must yield to a real drawer/modal on top of it. */
+  helpFab: 44,
   /** Mobile navigation and side panels. Their scrim uses `drawerScrim`. */
   drawerScrim: 49,
   drawer: 50,

@@ -15,6 +15,7 @@ import {
 } from "../../../models/prepare";
 import type { PrepParticipant, PrepParticipantRole, PrepPaxId } from "../../../models/prepare";
 import { StepBanner, StepTwoColumn, RailCard } from "../../../components/prepare/StepBanner";
+import { useHighlightTarget, htmlHighlightId } from "../../../hooks/useHighlightTarget";
 
 const GF     = { fontFamily: "'Geist', sans-serif" };
 const NAVY   = "#07111F";
@@ -348,6 +349,7 @@ function ParticipantCard({
   onMoveUp,
   onMoveDown,
   onRemove,
+  highlighted,
 }: {
   participant: PrepParticipant;
   index: number;
@@ -356,19 +358,23 @@ function ParticipantCard({
   onMoveUp: (id: PrepPaxId) => void;
   onMoveDown: (id: PrepPaxId) => void;
   onRemove: (id: PrepPaxId) => void;
+  highlighted?: boolean;
 }) {
   const badge = roleBadgeStyle(participant.role);
 
   return (
     <div
+      id={htmlHighlightId(participant.id)}
       style={{
         display: "flex",
         alignItems: "center",
         gap: 12,
         padding: "14px 16px",
         borderRadius: 10,
-        border: "1px solid #E3E8EF",
-        background: "#FAFBFC",
+        border: highlighted ? "1px solid #C9960C" : "1px solid #E3E8EF",
+        background: highlighted ? "#FEF9EC" : "#FAFBFC",
+        boxShadow: highlighted ? "0 0 0 3px rgba(201,150,12,0.25)" : "none",
+        transition: "background 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease",
       }}
     >
       {/* Order */}
@@ -512,6 +518,7 @@ export function ParticipantsStep() {
 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [addingNew, setAddingNew] = useState(false);
+  const { isHighlighted } = useHighlightTarget("highlightParticipantId");
 
   useEffect(() => {
     setStep("participants");
@@ -595,6 +602,7 @@ export function ParticipantsStep() {
                 onMoveUp={handleMoveUp}
                 onMoveDown={handleMoveDown}
                 onRemove={handleRemove}
+                highlighted={isHighlighted(p.id)}
               />
             )
           )}

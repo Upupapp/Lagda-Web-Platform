@@ -13,6 +13,7 @@ import type { PreparationStepId, PreparationStepState } from "../../../models/pr
 import { Z } from "../../../utils/z-index";
 import { buildSignInUrl } from "../../../utils/authReturnPath";
 import { MissingItemsModal } from "../../../components/prepare/MissingItemsModal";
+import { PreparationHelpFab } from "../../../components/prepare/PreparationHelpFab";
 
 const GF = { fontFamily: "'Geist', sans-serif" };
 const NAVY   = "#07111F";
@@ -648,6 +649,9 @@ export function PrepareLayout() {
           onConfirm={handleDiscardConfirm}
         />
       )}
+
+      {/* Persistent cross-step help — what's missing, how close to ready */}
+      <PreparationHelpFab />
     </div>
   );
 }

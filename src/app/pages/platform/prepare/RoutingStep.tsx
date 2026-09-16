@@ -23,6 +23,7 @@ import type {
   RoutingCompletionRule,
 } from "../../../models/prepare";
 import { StepBanner, StepTwoColumn, RailCard, StepIssueList } from "../../../components/prepare/StepBanner";
+import { useHighlightTarget, htmlHighlightId } from "../../../hooks/useHighlightTarget";
 
 const GF     = { fontFamily: "'Geist', sans-serif" };
 const NAVY   = "#07111F";
@@ -106,6 +107,7 @@ function GroupCard({
   // Mixed structure, so those controls are locked here rather than left
   // clickable and silently overwritten by the next reconciliation pass.
   isSystemManaged,
+  highlighted,
 }: {
   group: PrepRoutingGroup;
   index: number;
@@ -120,14 +122,18 @@ function GroupCard({
   isFirst: boolean;
   isLast:  boolean;
   isSystemManaged: boolean;
+  highlighted?: boolean;
 }) {
   return (
     <div
+      id={htmlHighlightId(group.id)}
       style={{
-        border: "1px solid #D1D9E0",
+        border: highlighted ? "1px solid #C9960C" : "1px solid #D1D9E0",
         borderRadius: 10,
         background: "#FAFBFC",
         overflow: "hidden",
+        boxShadow: highlighted ? "0 0 0 3px rgba(201,150,12,0.25)" : "none",
+        transition: "box-shadow 0.3s ease, border-color 0.3s ease",
       }}
     >
       {/* Group header */}
@@ -314,6 +320,7 @@ function GroupCard({
 
 export function RoutingStep() {
   const { draft, updateRouting, setStep, validate } = usePrepare();
+  const { isHighlighted } = useHighlightTarget("highlightGroupId");
 
   useEffect(() => { setStep("routing"); }, [setStep]);
 
@@ -552,6 +559,7 @@ export function RoutingStep() {
               onMoveDown={handleMoveDown}
               isFirst={idx === 0}
               isLast={idx === routing.groups.length - 1}
+              highlighted={isHighlighted(g.id)}
             />
           ))}
         </div>
