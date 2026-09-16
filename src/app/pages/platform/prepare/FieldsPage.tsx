@@ -42,6 +42,7 @@ import {
   FIELD_PLAN_TIER,
   FIELD_ELIGIBLE_ROLES,
   RESIZE_HANDLES,
+  SAFE_MARGIN,
   defaultFieldRect,
   applyResizeDelta,
 } from "../../../models/field-editor";
@@ -1142,8 +1143,9 @@ function ValidationPanel({
   onSaveNow: () => Promise<boolean>;
   saving: boolean;
 }) {
-  const { validation, setDocument, setPage, fields, selectFields, updateField, moveField, deleteFields } = useFieldEditor();
+  const { validation, setDocument, setPage, fields, selectFields, updateField, moveField, deleteFields, setParticipantFilter } = useFieldEditor();
   const { draft } = usePrepare();
+  const navigate = useNavigate();
   const participants = draft?.participants ?? [];
 
   // Real-backend-only checks that this page's own "Validate" previously
@@ -1210,6 +1212,108 @@ function ValidationPanel({
     goToField(fieldId);
   };
 
+  // Clamps a field's rect fully back onto the page — deterministic, never
+  // guesses a new position, just stops it extending past the 0–1 bounds.
+  const autoFixOutOfBounds = (fieldId: FieldId) => {
+    const field = fields.find(f => f.id === fieldId);
+    if (!field) return;
+    const width  = Math.min(1, field.rect.width);
+    const height = Math.min(1, field.rect.height);
+    const x = Math.min(Math.max(0, field.rect.x), 1 - width);
+    const y = Math.min(Math.max(0, field.rect.y), 1 - height);
+    moveField(fieldId, { x, y, width, height });
+    goToField(fieldId);
+  };
+
+  // Pushes a field back inside the same safe margin isNearPageEdge() checks
+  // against — guaranteed to actually clear the warning, not a guess.
+  const autoFixNearEdge = (fieldId: FieldId) => {
+    const field = fields.find(f => f.id === fieldId);
+    if (!field) return;
+    const maxX = 1 - SAFE_MARGIN - field.rect.width;
+    const maxY = 1 - SAFE_MARGIN - field.rect.height;
+    const x = Math.min(Math.max(SAFE_MARGIN, field.rect.x), Math.max(SAFE_MARGIN, maxX));
+    const y = Math.min(Math.max(SAFE_MARGIN, field.rect.y), Math.max(SAFE_MARGIN, maxY));
+    moveField(fieldId, { ...field.rect, x, y });
+    goToField(fieldId);
+  };
+
+  // A field assigned to a participant who's since been removed, or whose
+  // role can't have this field type — clearing the assignment is always
+  // safe (it becomes an ordinary "unassigned field", handled by the fix
+  // above); reassigning to a single eligible participant when one exists is
+  // more useful than just clearing it.
+  const autoFixBadAssignment = (fieldId: FieldId) => {
+    const field = fields.find(f => f.id === fieldId);
+    if (!field) return;
+    const eligible = participants.filter(p => FIELD_ELIGIBLE_ROLES[field.type].includes(p.role));
+    updateField(fieldId, { participantId: eligible.length === 1 ? eligible[0]!.id : null });
+    selectFields([fieldId]);
+  };
+
+  // A required field on a Viewer/Copy Recipient — those roles never take
+  // action, so a required field on them can never actually be completed.
+  // Making it optional is the direct, literal fix the suggestion describes.
+  const autoFixBlockingOnNonBlocking = (fieldId: FieldId) => {
+    updateField(fieldId, { required: false });
+    selectFields([fieldId]);
+  };
+
+  // Every issue's action row — one place for both Errors and Warnings, so
+  // adding a fix for a new code never means updating two near-identical JSX
+  // blocks. Not every issue has an unambiguous one-click fix (a participant
+  // missing a Signature field could go anywhere on the page — nothing here
+  // guesses where); those still get a real next step instead of nothing.
+  const renderIssueActions = (issue: FieldValidationIssue) => {
+    const fixButtonStyle = { ...GF, fontSize: 11, fontWeight: 700, color: "#2E7D32", background: "none", border: "none", cursor: "pointer", padding: 0, textDecoration: "underline" } as const;
+    const linkButtonStyle = { ...GF, fontSize: 11, color: AZURE, background: "none", border: "none", cursor: "pointer", padding: 0, textDecoration: "underline" } as const;
+    return (
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 12, marginTop: 5 }}>
+        {(issue.fieldId || issue.documentId) && (
+          <button onClick={() => goToField(issue.fieldId, issue.documentId, issue.pageId)} style={linkButtonStyle}>
+            Go to {issue.fieldId ? "field" : "document"}
+          </button>
+        )}
+        {issue.code === "NO_DOCUMENTS" && (
+          <button onClick={() => void navigate("/app/prepare/upload")} style={linkButtonStyle}>
+            Go to Documents step
+          </button>
+        )}
+        {(issue.code === "SIGNER_MISSING_SIGNATURE" || issue.code === "ACK_RECIPIENT_MISSING_ACK_FIELD") && issue.participantId && (
+          <button onClick={() => setParticipantFilter(issue.participantId!)} style={linkButtonStyle}>
+            Show their fields
+          </button>
+        )}
+        {issue.code === "UNASSIGNED_FIELD" && issue.fieldId && (
+          <button onClick={() => autoFixUnassigned(issue.fieldId!)} style={fixButtonStyle}>Fix it for me</button>
+        )}
+        {issue.code === "FIELD_OUT_OF_BOUNDS" && issue.fieldId && (
+          <button onClick={() => autoFixOutOfBounds(issue.fieldId!)} style={fixButtonStyle}>Fix it for me</button>
+        )}
+        {issue.code === "NEAR_PAGE_EDGE" && issue.fieldId && (
+          <button onClick={() => autoFixNearEdge(issue.fieldId!)} style={fixButtonStyle}>Fix it for me</button>
+        )}
+        {issue.code === "FIELD_OVERLAP" && issue.fieldId && (
+          <button onClick={() => autoFixOverlap(issue.fieldId!)} style={fixButtonStyle}>Fix it for me</button>
+        )}
+        {(issue.code === "UNKNOWN_PARTICIPANT" || issue.code === "INCOMPATIBLE_ROLE") && issue.fieldId && (
+          <button onClick={() => autoFixBadAssignment(issue.fieldId!)} style={fixButtonStyle}>Fix it for me</button>
+        )}
+        {issue.code === "BLOCKING_FIELD_ON_NON_BLOCKING_ROLE" && issue.fieldId && (
+          <button onClick={() => autoFixBlockingOnNonBlocking(issue.fieldId!)} style={fixButtonStyle}>Fix it for me</button>
+        )}
+        {issue.code === "UNSUPPORTED_BACKEND_TYPE" && issue.fieldId && (
+          <button onClick={() => deleteFields([issue.fieldId!])} style={fixButtonStyle}>Remove this field</button>
+        )}
+        {issue.code === "UNSAVED_EDITS" && (
+          <button onClick={() => void onSaveNow()} disabled={saving} style={{ ...fixButtonStyle, color: saving ? SILVER : "#2E7D32", cursor: saving ? "default" : "pointer" }}>
+            {saving ? "Saving…" : "Save now"}
+          </button>
+        )}
+      </div>
+    );
+  };
+
   if (!validation) {
     return (
       <div style={{ ...GF, padding: 16, color: SILVER, fontSize: 12 }}>
@@ -1258,41 +1362,7 @@ function ValidationPanel({
             <div key={issue.id} style={{ ...GF, padding: "8px 10px", borderRadius: 6, background: "#FFF5F5", border: "1px solid #F5C6CB", marginBottom: 5, fontSize: 12, color: "#C0392B" }}>
               <div style={{ fontWeight: 600 }}>✕ {issue.message}</div>
               {issue.suggestion && <div style={{ fontSize: 11, color: "#9B2335", marginTop: 3 }}>{issue.suggestion}</div>}
-              <div style={{ display: "flex", gap: 12, marginTop: 5 }}>
-                {(issue.fieldId || issue.documentId) && (
-                  <button
-                    onClick={() => goToField(issue.fieldId, issue.documentId, issue.pageId)}
-                    style={{ ...GF, fontSize: 11, color: AZURE, background: "none", border: "none", cursor: "pointer", padding: 0, textDecoration: "underline" }}
-                  >
-                    Go to {issue.fieldId ? "field" : "document"}
-                  </button>
-                )}
-                {issue.code === "UNASSIGNED_FIELD" && issue.fieldId && (
-                  <button
-                    onClick={() => autoFixUnassigned(issue.fieldId!)}
-                    style={{ ...GF, fontSize: 11, fontWeight: 700, color: "#2E7D32", background: "none", border: "none", cursor: "pointer", padding: 0, textDecoration: "underline" }}
-                  >
-                    Fix it for me
-                  </button>
-                )}
-                {issue.code === "UNSUPPORTED_BACKEND_TYPE" && issue.fieldId && (
-                  <button
-                    onClick={() => deleteFields([issue.fieldId!])}
-                    style={{ ...GF, fontSize: 11, fontWeight: 700, color: "#2E7D32", background: "none", border: "none", cursor: "pointer", padding: 0, textDecoration: "underline" }}
-                  >
-                    Remove this field
-                  </button>
-                )}
-                {issue.code === "UNSAVED_EDITS" && (
-                  <button
-                    onClick={() => void onSaveNow()}
-                    disabled={saving}
-                    style={{ ...GF, fontSize: 11, fontWeight: 700, color: saving ? SILVER : "#2E7D32", background: "none", border: "none", cursor: saving ? "default" : "pointer", padding: 0, textDecoration: "underline" }}
-                  >
-                    {saving ? "Saving…" : "Save now"}
-                  </button>
-                )}
-              </div>
+              {renderIssueActions(issue)}
             </div>
           ))}
         </div>
@@ -1308,24 +1378,7 @@ function ValidationPanel({
             <div key={issue.id} style={{ ...GF, padding: "8px 10px", borderRadius: 6, background: "#FEF9EC", border: "1px solid #F0D07A", marginBottom: 5, fontSize: 12, color: GOLD }}>
               <div style={{ fontWeight: 600 }}>⚠ {issue.message}</div>
               {issue.suggestion && <div style={{ fontSize: 11, color: "#856404", marginTop: 3 }}>{issue.suggestion}</div>}
-              <div style={{ display: "flex", gap: 12, marginTop: 5 }}>
-                {(issue.fieldId || issue.documentId) && (
-                  <button
-                    onClick={() => goToField(issue.fieldId, issue.documentId, issue.pageId)}
-                    style={{ ...GF, fontSize: 11, color: AZURE, background: "none", border: "none", cursor: "pointer", padding: 0, textDecoration: "underline" }}
-                  >
-                    Go to {issue.fieldId ? "field" : "document"}
-                  </button>
-                )}
-                {issue.code === "FIELD_OVERLAP" && issue.fieldId && (
-                  <button
-                    onClick={() => autoFixOverlap(issue.fieldId!)}
-                    style={{ ...GF, fontSize: 11, fontWeight: 700, color: "#2E7D32", background: "none", border: "none", cursor: "pointer", padding: 0, textDecoration: "underline" }}
-                  >
-                    Fix it for me
-                  </button>
-                )}
-              </div>
+              {renderIssueActions(issue)}
             </div>
           ))}
         </div>
