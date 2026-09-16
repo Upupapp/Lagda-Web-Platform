@@ -157,7 +157,10 @@ export function PreparationHelpFab() {
         style={{
           position: "fixed",
           right: "max(20px, env(safe-area-inset-right, 0px))",
-          bottom: "max(20px, env(safe-area-inset-bottom, 0px))",
+          // Cleared above the wizard's Previous/Continue nav bar (~73px tall
+          // on desktop; see PrepareLayout's .prep-nav-bar) rather than the
+          // viewport edge, so the FAB never sits on top of Continue.
+          bottom: "calc(96px + env(safe-area-inset-bottom, 0px))",
           zIndex: Z.helpFab,
           width: 52,
           height: 52,
@@ -212,7 +215,7 @@ export function PreparationHelpFab() {
             position: "fixed",
             zIndex: Z.helpFab,
             right: "max(20px, env(safe-area-inset-right, 0px))",
-            bottom: "calc(max(20px, env(safe-area-inset-bottom, 0px)) + 64px)",
+            bottom: "calc(96px + env(safe-area-inset-bottom, 0px) + 64px)",
             width: "min(360px, calc(100vw - 32px))",
             maxHeight: "min(70vh, 560px)",
             display: "flex",
@@ -326,14 +329,16 @@ export function PreparationHelpFab() {
             left: 12px !important;
             right: 12px !important;
             width: auto !important;
-            bottom: calc(max(16px, env(safe-area-inset-bottom, 0px)) + 60px) !important;
+            /* Mobile nav bar (.prep-nav-bar at max-width:768px) is shorter
+               (~65px) than desktop's, but still cleared above it. */
+            bottom: calc(80px + env(safe-area-inset-bottom, 0px) + 60px) !important;
             max-height: min(65vh, 520px) !important;
           }
           .prep-help-fab {
             width: 48px !important;
             height: 48px !important;
             right: max(16px, env(safe-area-inset-right, 0px)) !important;
-            bottom: max(16px, env(safe-area-inset-bottom, 0px)) !important;
+            bottom: calc(80px + env(safe-area-inset-bottom, 0px)) !important;
           }
         }
       `}</style>
