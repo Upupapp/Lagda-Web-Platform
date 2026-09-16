@@ -12,6 +12,7 @@ import { usePrepare } from "../../../context/PrepareContext";
 import { usePlatform } from "../../../context/PlatformContext";
 import { FieldEditorProvider, useFieldEditor } from "../../../context/FieldEditorContext";
 import { FIELD_TYPE_LABELS, FIELD_TYPE_ICONS } from "../../../models/field-editor";
+import type { FieldDefinition } from "../../../models/field-editor";
 import type { PrepParticipant } from "../../../models/prepare";
 import { Z } from "../../../utils/z-index";
 import { mockDocumentService } from "../../../services/mock/document.service";
@@ -19,6 +20,8 @@ import { mapPreparationDraftToDocumentListItem } from "../../../services/prepare
 import { USE_REAL_BACKEND } from "../../../services/backend-flag";
 import { ApiError } from "../../../services/api-client";
 import { realSigningRequestService } from "../../../services/real/signing-request.service";
+import { realPreparationService } from "../../../services/real/preparation.service";
+import { fromBackendField } from "../../../services/prepare/field-sync";
 import { computeSendReadiness, buildActionUrl } from "../../../services/prepare/send-readiness";
 
 // ── Design tokens ─────────────────────────────────────────────────────────────
@@ -34,7 +37,7 @@ function ConfirmationPageInner({ participants }: { participants: PrepParticipant
   const { draft, setStep, discardDraft, syncError, multiDocumentSigningGap, setFieldsSnapshot } = usePrepare();
   const { user, currentWorkspace } = usePlatform();
   const {
-    initialize, fields, documents, runValidation, validation,
+    initialize, fields, documents, runValidation, validation, loadRealFields,
   } = useFieldEditor();
 
   // Keeps the cross-step Help panel's readiness calculation current while
@@ -79,6 +82,42 @@ function ConfirmationPageInner({ participants }: { participants: PrepParticipant
     if (draft) initialize(draft.id, draft);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [draft?.id]);
+
+  // Real-backend field load. initialize() above seeds demo fields in mock
+  // mode only (see MockFieldEditorService) — in real mode it starts EMPTY,
+  // and unlike FieldsPage this page has no load effect of its own, so it
+  // used to render "0 fields placed" and a false "no Signature field" even
+  // when the backend genuinely had them (found by browser QA). Each page
+  // owns its own FieldEditor instance, so the summary/readiness here must
+  // fetch the real fields the same way FieldsPage does, translating them
+  // back with their `bf_` ids (so they read as already-saved).
+  const realFieldsLoadedRef = useRef(false);
+  useEffect(() => {
+    if (!USE_REAL_BACKEND || !draft || !currentWorkspace || documents.length === 0) return;
+    if (realFieldsLoadedRef.current) return;
+    realFieldsLoadedRef.current = true;
+    const workspaceId = currentWorkspace.id;
+    void (async () => {
+      const loaded: FieldDefinition[] = [];
+      for (const doc of documents) {
+        const backendDocId = draft.files.find((f) => f.id === doc.prepFileId)?.backendDocumentId;
+        if (!backendDocId) continue;
+        try {
+          const prep = await realPreparationService.get(workspaceId, backendDocId);
+          const pageIdForNumber = (n: number) => doc.pages.find((p) => p.pageNumber === n)?.id ?? null;
+          for (const f of prep.fields) {
+            const translated = fromBackendField(f, doc.id, pageIdForNumber);
+            if (translated) loaded.push(translated);
+          }
+        } catch {
+          // Non-fatal: the summary just shows what did load; the send call
+          // itself is still gated by the backend, never by this view.
+        }
+      }
+      loadRealFields(loaded);
+    })();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [draft?.id, currentWorkspace?.id, documents.length]);
 
   useEffect(() => {
     if (draft && fields.length >= 0) runValidation(draft);
