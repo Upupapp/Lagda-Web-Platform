@@ -19,7 +19,7 @@ import { mapPreparationDraftToDocumentListItem } from "../../../services/prepare
 import { USE_REAL_BACKEND } from "../../../services/backend-flag";
 import { ApiError } from "../../../services/api-client";
 import { realSigningRequestService } from "../../../services/real/signing-request.service";
-import { computeSendReadiness, buildActionUrl, type SendReadinessBlocker } from "../../../services/prepare/send-readiness";
+import { computeSendReadiness, buildActionUrl } from "../../../services/prepare/send-readiness";
 
 // ── Design tokens ─────────────────────────────────────────────────────────────
 const GF     = { fontFamily: "'Geist', sans-serif" };
@@ -43,7 +43,21 @@ function ConfirmationPageInner({ participants }: { participants: PrepParticipant
 
   const [sending, setSending] = useState(false);
   const [sendError, setSendError] = useState<string | null>(null);
-  const [sendBlockers, setSendBlockers] = useState<SendReadinessBlocker[]>([]);
+  // Whether to show the readiness banner at all — hidden on first arrival so
+  // the page doesn't flash "not ready" before the visitor has done anything,
+  // shown from the first Send attempt onward. The banner's CONTENT below is
+  // never a stale click-time snapshot — see `readiness`.
+  const [hasAttemptedSend, setHasAttemptedSend] = useState(false);
+
+  // Live readiness — recomputed on every render from current draft/fields
+  // state, never cached in useState. A stale snapshot here previously meant
+  // fixing a field on the Fields step and returning to Review still showed
+  // the OLD blocker list until Send was clicked again; this makes the
+  // banner (and the "ready to send" state generally) always reflect reality.
+  const readiness = useMemo(
+    () => (draft ? computeSendReadiness({ draft, multiDocumentSigningGap, syncError, fields }) : null),
+    [draft, multiDocumentSigningGap, syncError, fields],
+  );
 
   // NEW LOGICAL OPERATION → NEW KEY. RETRY OF THE SAME AMBIGUOUS OPERATION →
   // SAME KEY. SUCCESS → RETIRE. Same rule PlatformContext.createWorkspace
@@ -95,15 +109,11 @@ function ConfirmationPageInner({ participants }: { participants: PrepParticipant
     const workspaceId = currentWorkspace?.id;
     const documentId = draft.files.find((f) => f.backendDocumentId)?.backendDocumentId;
 
-    const readiness = computeSendReadiness({
-      draft, multiDocumentSigningGap, syncError, fields,
-    });
-    if (!readiness.ready) {
-      setSendBlockers(readiness.blockers);
+    setHasAttemptedSend(true);
+    if (!readiness || !readiness.ready) {
       setSendError(null);
       return;
     }
-    setSendBlockers([]);
 
     if (!workspaceId || !documentId) {
       setSendError("This document has not finished uploading to the server yet.");
@@ -236,7 +246,7 @@ function ConfirmationPageInner({ participants }: { participants: PrepParticipant
           </div>
         )}
 
-        {USE_REAL_BACKEND && sendBlockers.length > 0 && (
+        {USE_REAL_BACKEND && hasAttemptedSend && (readiness?.blockers.length ?? 0) > 0 && (
           <div style={{
             padding: "12px 18px", borderRadius: 10, background: "#FFF5F5",
             border: "1px solid #F5C6CB", marginBottom: 24,
@@ -245,7 +255,7 @@ function ConfirmationPageInner({ participants }: { participants: PrepParticipant
               This document is not ready to send
             </div>
             <ul style={{ ...GF, fontSize: 12, color: "#C0392B", margin: 0, paddingLeft: 18 }}>
-              {sendBlockers.map((b, i) => (
+              {readiness!.blockers.map((b, i) => (
                 <li
                   key={i}
                   style={{
