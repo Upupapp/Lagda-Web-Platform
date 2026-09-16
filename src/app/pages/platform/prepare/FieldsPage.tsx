@@ -1123,8 +1123,16 @@ function FieldListView({ participants }: FieldListProps) {
 }
 
 // ── Validation panel ──────────────────────────────────────────────────────────
+
+// "Fix it for me" below only appears for issue codes with an unambiguous,
+// safe fix (UNASSIGNED_FIELD, FIELD_OVERLAP) — sparing the visitor a manual
+// property-panel trip for the common case. Anything with more than one
+// reasonable fix (which participant? which field moves?) stays manual
+// rather than guessing.
 function ValidationPanel() {
-  const { validation, setDocument, setPage, fields, selectFields } = useFieldEditor();
+  const { validation, setDocument, setPage, fields, selectFields, updateField, moveField } = useFieldEditor();
+  const { draft } = usePrepare();
+  const participants = draft?.participants ?? [];
 
   const goToField = (fieldId?: FieldId, documentId?: string, pageId?: EditorPageId) => {
     const field = fieldId ? fields.find(f => f.id === fieldId) : null;
@@ -1133,6 +1141,29 @@ function ValidationPanel() {
     if (docId) setDocument(docId);
     if (pgId)  setPage(pgId);
     if (fieldId) selectFields([fieldId]);
+  };
+
+  // Assigns to the single eligible participant when there's exactly one —
+  // an ambiguous choice (2+ eligible participants) is never guessed at.
+  const autoFixUnassigned = (fieldId: FieldId) => {
+    const field = fields.find(f => f.id === fieldId);
+    if (!field) return;
+    const eligible = participants.filter(p => FIELD_ELIGIBLE_ROLES[field.type].includes(p.role));
+    if (eligible.length !== 1) { goToField(fieldId); return; }
+    updateField(fieldId, { participantId: eligible[0]!.id });
+    selectFields([fieldId]);
+  };
+
+  // Nudges the field down by a fixed, safe offset — enough to clear a
+  // same-position overlap, clamped so it can't be pushed off the page.
+  const autoFixOverlap = (fieldId: FieldId) => {
+    const field = fields.find(f => f.id === fieldId);
+    if (!field) return;
+    const OFFSET = 0.07;
+    const maxY = Math.max(0, 1 - field.rect.height);
+    const nextY = field.rect.y + OFFSET > maxY ? Math.max(0, field.rect.y - OFFSET) : field.rect.y + OFFSET;
+    moveField(fieldId, { ...field.rect, y: nextY });
+    goToField(fieldId);
   };
 
   if (!validation) {
@@ -1171,14 +1202,24 @@ function ValidationPanel() {
             <div key={issue.id} style={{ ...GF, padding: "8px 10px", borderRadius: 6, background: "#FFF5F5", border: "1px solid #F5C6CB", marginBottom: 5, fontSize: 12, color: "#C0392B" }}>
               <div style={{ fontWeight: 600 }}>✕ {issue.message}</div>
               {issue.suggestion && <div style={{ fontSize: 11, color: "#9B2335", marginTop: 3 }}>{issue.suggestion}</div>}
-              {(issue.fieldId || issue.documentId) && (
-                <button
-                  onClick={() => goToField(issue.fieldId, issue.documentId, issue.pageId)}
-                  style={{ ...GF, fontSize: 11, marginTop: 5, color: AZURE, background: "none", border: "none", cursor: "pointer", padding: 0, textDecoration: "underline" }}
-                >
-                  Go to {issue.fieldId ? "field" : "document"}
-                </button>
-              )}
+              <div style={{ display: "flex", gap: 12, marginTop: 5 }}>
+                {(issue.fieldId || issue.documentId) && (
+                  <button
+                    onClick={() => goToField(issue.fieldId, issue.documentId, issue.pageId)}
+                    style={{ ...GF, fontSize: 11, color: AZURE, background: "none", border: "none", cursor: "pointer", padding: 0, textDecoration: "underline" }}
+                  >
+                    Go to {issue.fieldId ? "field" : "document"}
+                  </button>
+                )}
+                {issue.code === "UNASSIGNED_FIELD" && issue.fieldId && (
+                  <button
+                    onClick={() => autoFixUnassigned(issue.fieldId!)}
+                    style={{ ...GF, fontSize: 11, fontWeight: 700, color: "#2E7D32", background: "none", border: "none", cursor: "pointer", padding: 0, textDecoration: "underline" }}
+                  >
+                    Fix it for me
+                  </button>
+                )}
+              </div>
             </div>
           ))}
         </div>
@@ -1194,14 +1235,24 @@ function ValidationPanel() {
             <div key={issue.id} style={{ ...GF, padding: "8px 10px", borderRadius: 6, background: "#FEF9EC", border: "1px solid #F0D07A", marginBottom: 5, fontSize: 12, color: GOLD }}>
               <div style={{ fontWeight: 600 }}>⚠ {issue.message}</div>
               {issue.suggestion && <div style={{ fontSize: 11, color: "#856404", marginTop: 3 }}>{issue.suggestion}</div>}
-              {(issue.fieldId || issue.documentId) && (
-                <button
-                  onClick={() => goToField(issue.fieldId, issue.documentId, issue.pageId)}
-                  style={{ ...GF, fontSize: 11, marginTop: 5, color: AZURE, background: "none", border: "none", cursor: "pointer", padding: 0, textDecoration: "underline" }}
-                >
-                  Go to {issue.fieldId ? "field" : "document"}
-                </button>
-              )}
+              <div style={{ display: "flex", gap: 12, marginTop: 5 }}>
+                {(issue.fieldId || issue.documentId) && (
+                  <button
+                    onClick={() => goToField(issue.fieldId, issue.documentId, issue.pageId)}
+                    style={{ ...GF, fontSize: 11, color: AZURE, background: "none", border: "none", cursor: "pointer", padding: 0, textDecoration: "underline" }}
+                  >
+                    Go to {issue.fieldId ? "field" : "document"}
+                  </button>
+                )}
+                {issue.code === "FIELD_OVERLAP" && issue.fieldId && (
+                  <button
+                    onClick={() => autoFixOverlap(issue.fieldId!)}
+                    style={{ ...GF, fontSize: 11, fontWeight: 700, color: "#2E7D32", background: "none", border: "none", cursor: "pointer", padding: 0, textDecoration: "underline" }}
+                  >
+                    Fix it for me
+                  </button>
+                )}
+              </div>
             </div>
           ))}
         </div>
