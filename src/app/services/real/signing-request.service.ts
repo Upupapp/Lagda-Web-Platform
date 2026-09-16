@@ -63,11 +63,18 @@ export interface SentResponse {
 class RealSigningRequestService {
   // The body is a deliberately empty/closed schema server-side (recipients
   // and fields are snapshotted from the already-saved preparation, never
-  // sent by the client) — so no body is passed here either.
+  // sent by the client) — but "empty schema" means the route's Typebox
+  // schema is `Type.Object({})`, which still requires an actual `{}` on the
+  // wire. Omitting the body entirely (as this used to) sends no body at
+  // all, which fails Ajv's root "must be object" check with a generic,
+  // undiagnosable 422 — reported live as "One or more fields contain
+  // invalid values. Expected a value of type object." with no field name,
+  // because the error is about the whole request, not a field. `body: {}`
+  // is the actual empty-but-present object the schema requires.
   async create(workspaceId: string, documentId: string, idempotencyKey: string): Promise<SigningRequestCreated> {
     return apiRequest<SigningRequestCreated>(
       `/workspaces/${encodeURIComponent(workspaceId)}/documents/${encodeURIComponent(documentId)}/signing-requests`,
-      { method: "POST", headers: { "Idempotency-Key": idempotencyKey } },
+      { method: "POST", headers: { "Idempotency-Key": idempotencyKey }, body: {} },
     );
   }
 
@@ -86,10 +93,12 @@ class RealSigningRequestService {
     );
   }
 
+  // Same reasoning as create() above — the route's schema is `Type.Object({})`,
+  // which requires an actual `{}` on the wire, not an absent body.
   async send(workspaceId: string, signingRequestId: string, idempotencyKey: string): Promise<SentResponse> {
     return apiRequest<SentResponse>(
       `/workspaces/${encodeURIComponent(workspaceId)}/signing-requests/${encodeURIComponent(signingRequestId)}/send`,
-      { method: "POST", headers: { "Idempotency-Key": idempotencyKey } },
+      { method: "POST", headers: { "Idempotency-Key": idempotencyKey }, body: {} },
     );
   }
 
