@@ -45,7 +45,14 @@ function ConfirmationPageInner({ participants }: { participants: PrepParticipant
   useEffect(() => { setFieldsSnapshot(fields); }, [fields, setFieldsSnapshot]);
 
   const [sending, setSending] = useState(false);
-  const [sendError, setSendError] = useState<string | null>(null);
+  // The backend wraps every schema-validation failure in one generic
+  // message ("One or more fields contain invalid values.") and puts the
+  // actual per-field specifics in `body.details` — see Lagda-Backend's
+  // validationFailed(). Discarding those and showing only the umbrella
+  // string is exactly why this banner was a dead end with nothing to act
+  // on (reported live). `detail` lines are shown verbatim; they're
+  // diagnostic text from the API, not something to reword.
+  const [sendError, setSendError] = useState<{ message: string; details: string[] } | null>(null);
   // Whether to show the readiness banner at all — hidden on first arrival so
   // the page doesn't flash "not ready" before the visitor has done anything,
   // shown from the first Send attempt onward. The banner's CONTENT below is
@@ -155,7 +162,7 @@ function ConfirmationPageInner({ participants }: { participants: PrepParticipant
     }
 
     if (!workspaceId || !documentId) {
-      setSendError("This document has not finished uploading to the server yet.");
+      setSendError({ message: "This document has not finished uploading to the server yet.", details: [] });
       return;
     }
 
@@ -189,11 +196,14 @@ function ConfirmationPageInner({ participants }: { participants: PrepParticipant
       await discardDraft();
       void navigate("/app/documents");
     } catch (err) {
-      setSendError(
-        err instanceof ApiError
-          ? err.message
-          : "Something went wrong sending this signing request. Please try again.",
-      );
+      if (err instanceof ApiError) {
+        setSendError({
+          message: err.message,
+          details: (err.body?.details ?? []).map((d) => (d.field ? `${d.field}: ${d.message}` : d.message)),
+        });
+      } else {
+        setSendError({ message: "Something went wrong sending this signing request. Please try again.", details: [] });
+      }
     } finally {
       setSending(false);
     }
@@ -328,7 +338,25 @@ function ConfirmationPageInner({ participants }: { participants: PrepParticipant
             padding: "12px 18px", borderRadius: 10, background: "#FFF5F5",
             border: "1px solid #F5C6CB", marginBottom: 24, ...GF, fontSize: 13, color: "#C0392B",
           }}>
-            {sendError}
+            <div style={{ fontWeight: 700, marginBottom: sendError.details.length > 0 ? 6 : 0 }}>
+              {sendError.message}
+            </div>
+            {sendError.details.length > 0 && (
+              <ul style={{ margin: "0 0 8px", paddingLeft: 18, fontSize: 12 }}>
+                {sendError.details.map((d, i) => <li key={i}>{d}</li>)}
+              </ul>
+            )}
+            <button
+              type="button"
+              onClick={() => void navigate("/app/prepare/fields")}
+              style={{
+                ...GF, fontSize: 12, fontWeight: 700, color: AZURE,
+                background: "none", border: "none", padding: 0,
+                cursor: "pointer", textDecoration: "underline",
+              }}
+            >
+              Go to field placement →
+            </button>
           </div>
         )}
 
