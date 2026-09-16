@@ -5,6 +5,7 @@
 // send-routes.ts.
 
 import { apiRequest } from "../api-client";
+import { API_BASE_URL } from "../backend-flag";
 
 export type SigningRequestState =
   | "draft" | "ready-to-send" | "sent" | "partially-completed"
@@ -100,6 +101,21 @@ class RealSigningRequestService {
       `/workspaces/${encodeURIComponent(workspaceId)}/signing-requests/${encodeURIComponent(signingRequestId)}/cancel`,
       { method: "POST", body: { reason } },
     );
+  }
+
+  // Phase 1-C. Not a JSON call — this URL is meant for a plain <a href> or
+  // window.open, so the browser handles the download natively (session
+  // cookie included automatically, same-origin via the Netlify /api/*
+  // proxy). Not yet called from any UI entry point: the page a completed
+  // document's status would naturally appear on (TransactionDetailPage) is
+  // still entirely mock-backed, and wiring a real download button onto
+  // fabricated transaction data would be incoherent — that page's own
+  // migration to real data is a separate, unstarted, undecided scope this
+  // does not assume. Included exactly like `cancel()` above, so the route is
+  // one call away for whichever future page actually needs it.
+  downloadUrl(workspaceId: string, signingRequestId: string): string {
+    return `${API_BASE_URL ?? ""}/workspaces/${encodeURIComponent(workspaceId)}`
+      + `/signing-requests/${encodeURIComponent(signingRequestId)}/completed-document`;
   }
 }
 
