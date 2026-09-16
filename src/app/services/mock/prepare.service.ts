@@ -62,6 +62,23 @@ function validateDraftState(draft: PreparationDraft): PrepValidationResult {
     invalidFiles.forEach(f =>
       issues.push(mk("upload", "error", "INVALID_FILE", `"${f.fileName}" is not in a ready state (${f.fileState}).`)),
     );
+    // fileState alone is a client-side selection classification, set the
+    // moment a file is picked — it says nothing about whether the real
+    // upload to the backend actually finished. uploadStatus is that signal
+    // and is undefined in mock mode (no real upload happens), so only gate
+    // on it when it's actually present.
+    draft.files.forEach(f => {
+      if (f.uploadStatus === "failed") {
+        issues.push(mk("upload", "error", "UPLOAD_FAILED",
+          `"${f.fileName}" failed to upload${f.uploadError ? `: ${f.uploadError}` : "."}`));
+      } else if (f.uploadStatus === "uploading" || f.uploadStatus === "processing") {
+        issues.push(mk("upload", "error", "UPLOAD_IN_PROGRESS",
+          `"${f.fileName}" is still uploading — wait for it to finish before continuing.`));
+      } else if (f.uploadStatus === "needs-reselection") {
+        issues.push(mk("upload", "error", "UPLOAD_NEEDS_RESELECTION",
+          `"${f.fileName}" needs to be re-selected before continuing.`));
+      }
+    });
     const names = draft.files.map(f => f.fileName);
     const dupes = names.filter((n, i) => names.indexOf(n) !== i);
     if (dupes.length > 0) {
