@@ -33,6 +33,7 @@ import type {
 import type { TransactionStatus } from "../../models";
 import { TRANSACTION_STATUS_LABELS } from "../../models";
 import { usePageMeta } from "../../hooks/usePageMeta";
+import { USE_REAL_BACKEND } from "../../services/backend-flag";
 import {
   buildPlatformSummaries, buildAttentionSummary,
   PREPARATION_LIST_ROUTE, PREPARATION_DEMONSTRATION_NOTICE,
@@ -1067,7 +1068,7 @@ function DemoNotice({ scenario }: { scenario: DashboardScenario }) {
 
 // ── Main Dashboard Component ──────────────────────────────────────────────────
 
-export function PlatformDashboard() {
+function PlatformDashboardMockDemo() {
   usePageMeta();
 
   const { user, currentWorkspace, role, hasPermission, resolveCapability } = usePlatform();
@@ -1342,4 +1343,44 @@ export function PlatformDashboard() {
       `}</style>
     </>
   );
+}
+
+// ── Real-backend mode ──────────────────────────────────────────────────────────
+// Same reasoning as DocumentsPage.tsx's real-mode split: this file's own
+// header says "No real analytics. No backend mutations" — every widget here
+// (attention items, activity feed, usage snapshot, template shortcuts) is
+// built on mock/demo data with no real-backend equivalent yet. Showing it
+// unconditionally meant a real/QA account saw fabricated dashboard numbers
+// that had nothing to do with their actual workspace.
+function PlatformDashboardRealMode() {
+  return (
+    <>
+      <PageHeader title="Dashboard" />
+      <AppContent>
+        <EmptyStateLayout
+          icon={<FileText size={28} />}
+          title="Your dashboard is still being built out"
+          description="Activity summaries, usage stats, and recent-document widgets aren't wired up to real accounts yet. Head to Documents to start preparing and sending a document — it's fully functional even though this overview isn't showing it yet."
+          action={
+            <Link
+              to="/app/prepare"
+              style={{
+                display: "inline-flex", alignItems: "center", gap: 6,
+                padding: "8px 16px", borderRadius: 8, fontSize: 13, fontWeight: 600,
+                background: AZURE, color: "#fff", textDecoration: "none",
+                fontFamily: "'Geist', sans-serif",
+              }}
+            >
+              <FilePlus size={15} aria-hidden />
+              Prepare Document
+            </Link>
+          }
+        />
+      </AppContent>
+    </>
+  );
+}
+
+export function PlatformDashboard() {
+  return USE_REAL_BACKEND ? <PlatformDashboardRealMode /> : <PlatformDashboardMockDemo />;
 }

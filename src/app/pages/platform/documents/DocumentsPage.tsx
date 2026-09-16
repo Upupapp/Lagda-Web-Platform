@@ -40,6 +40,7 @@ import type {
 } from "../../../models/document-organization";
 import { TAG_STYLE_COLORS } from "../../../models/document-organization";
 import { usePageMeta } from "../../../hooks/usePageMeta";
+import { USE_REAL_BACKEND } from "../../../services/backend-flag";
 import { preparationRoute } from "../../../services/preparation-platform-projection";
 import { Z } from "../../../utils/z-index";
 import { FilterChips } from "../../../components/platform/FilterChips";
@@ -1541,7 +1542,7 @@ function RenameDraftDialog({
 
 // ── DocumentsPage ─────────────────────────────────────────────────────────────
 
-export function DocumentsPage() {
+function DocumentsPageMockDemo() {
   usePageMeta();
   const { hasPermission, currentWorkspace, user } = usePlatform();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -1948,4 +1949,49 @@ export function DocumentsPage() {
       )}
     </>
   );
+}
+
+// ── Real-backend mode ──────────────────────────────────────────────────────────
+// The rich list above (status views, folders, tags, archive, bulk actions) is
+// built entirely around the mock/demo document model and is explicitly
+// scoped as demo-only (see this file's header comment: "No backend
+// mutations"). The real backend's document model has no status/participant
+// data to drive that UI yet (see real/document.service.ts's own header) —
+// that's a deliberately deferred, larger Documents-domain integration, not
+// something to fake here. Showing DOCUMENT_FIXTURES regardless of
+// USE_REAL_BACKEND previously meant a real/QA user saw sample documents that
+// had nothing to do with what they'd actually uploaded — this replaces that
+// with an honest placeholder instead of inventing a stripped-down real list.
+function DocumentsPageRealMode() {
+  return (
+    <>
+      <PageHeader
+        title="Documents"
+        primaryAction={
+          <Link
+            to="/app/prepare"
+            style={{
+              display: "inline-flex", alignItems: "center", gap: 6,
+              padding: "7px 14px", borderRadius: 8, fontSize: 13, fontWeight: 600,
+              background: AZURE, color: "#fff", textDecoration: "none", ...GF,
+            }}
+          >
+            <FilePlus size={15} aria-hidden />
+            Prepare Document
+          </Link>
+        }
+      />
+      <AppContent style={{ padding: "0 24px 32px" }}>
+        <EmptyStateLayout
+          icon={<FileText size={28} />}
+          title="Your documents will appear here"
+          description="This workspace's document list is still being built out for real accounts — status tracking, folders, and tags aren't wired up yet. Documents you upload and send through Prepare Document are saved and processed for real; this view just doesn't show them as a list yet. Use Prepare Document to start a new one."
+        />
+      </AppContent>
+    </>
+  );
+}
+
+export function DocumentsPage() {
+  return USE_REAL_BACKEND ? <DocumentsPageRealMode /> : <DocumentsPageMockDemo />;
 }
