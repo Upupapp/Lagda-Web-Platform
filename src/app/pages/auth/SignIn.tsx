@@ -57,7 +57,32 @@ export function SignIn() {
 
   // Already signed in — this is a continuation boundary, not a form to fill
   // out again. Send the visitor straight through to where they were headed.
+  //
+  // B2: this guard can commit before handleRealSubmit's own post-await
+  // continuation runs (refreshSessionFromBackend's state update and this
+  // component's re-render race independently of that continuation), so a
+  // freshly-authenticated, zero-workspace account could land here first and
+  // get sent to `redirectTo` (typically /app/dashboard) instead of
+  // onboarding — a destination PlatformLayout's own separate empty-workspace
+  // gate would then have to intercept a second time. Checking workspaceStatus
+  // here too means whichever path wins the race, the destination agrees.
+  // The returnTo stash is a side effect on a DIFFERENT component's state
+  // (OnboardingContext), so it has to happen in an effect, not during render.
+  const alreadyAuthenticatedNeedsOnboarding =
+    platform.sessionStatus === "authenticated" && USE_REAL_BACKEND && platform.workspaceStatus === "empty";
+
+  useEffect(() => {
+    if (alreadyAuthenticatedNeedsOnboarding) {
+      setReturnTo(redirectTo !== DEFAULT_RETURN_PATH ? redirectTo : null);
+    }
+    // Only the condition and its inputs matter — setReturnTo is stable.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [alreadyAuthenticatedNeedsOnboarding, redirectTo]);
+
   if (platform.sessionStatus === "authenticated") {
+    if (alreadyAuthenticatedNeedsOnboarding) {
+      return <Navigate to="/onboarding/profile" replace />;
+    }
     return <Navigate to={redirectTo} replace />;
   }
 

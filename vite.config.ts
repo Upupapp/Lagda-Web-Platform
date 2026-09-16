@@ -18,6 +18,28 @@ export default defineConfig({
     },
   },
 
+  server: {
+    proxy: {
+      // Mirrors production's own transport: Netlify's public/_redirects
+      // proxies /api/* to the backend, stripping the /api prefix, so the
+      // frontend never talks cross-origin and its session cookie is
+      // genuinely first-party (see that file's own comment for why that
+      // matters). VITE_API_BASE_URL=/api locally hits this same rule
+      // instead of a second, divergent "direct absolute URL" code path —
+      // one transport regime for both environments.
+      // Target must match Lagda-Backend's own .env API_PORT for whoever is
+      // running it locally — that repo's .env.example documents 8080 as the
+      // default, but a local override is common (this workspace's own
+      // Lagda-Backend/.env currently runs 8090). Override with
+      // VITE_DEV_API_PORT if your backend listens elsewhere.
+      '/api': {
+        target: `http://localhost:${process.env.VITE_DEV_API_PORT ?? '8090'}`,
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api/, ''),
+      },
+    },
+  },
+
   // File types to support raw imports. Never add .css, .tsx, or .ts files to this.
   assetsInclude: ['**/*.svg', '**/*.csv'],
 

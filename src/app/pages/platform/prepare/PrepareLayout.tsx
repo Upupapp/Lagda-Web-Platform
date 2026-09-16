@@ -464,9 +464,15 @@ export function PrepareLayout() {
 
   const prevId = prevStep(activeStepId);
   const nextId = nextStep(activeStepId);
-  const continueBlocked = nextId === "fields"
+  // Blocked when either the upcoming "fields" gate says so, or the CURRENT
+  // step itself has outstanding errors (e.g. an in-flight/failed upload) —
+  // previously only the "fields" arrival was checked, so Continue would
+  // silently advance past a step with real, unresolved errors.
+  const currentStepBlocked = activeStepId !== null
+    && validate().errors.some(issue => issue.stepId === activeStepId);
+  const continueBlocked = currentStepBlocked || (nextId === "fields"
     ? stepStates["fields"] === "blocked"
-    : false;
+    : false);
 
   const isFieldsStep = activeStepId === "fields";
 
