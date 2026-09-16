@@ -86,6 +86,18 @@ export default mergeConfig(
         // below each so the suite cannot regress, and raise them as
         // coverage grows.
         //
+        // 2026-09-16: the Prepare-flow feature work (readiness Help FAB,
+        // Fields validation auto-fixes, Confirmation real-field load) added
+        // new logic and diluted these thresholds. Rather than lower the bar,
+        // held it here two ways: the pure decision logic was extracted out
+        // of component closures into unit-tested modules (send-readiness.ts,
+        // field-autofix.ts, preparation-help.ts, useHighlightTarget), and
+        // FieldsPage/ValidationPanel's own presentational handlers got real
+        // interaction-behavior coverage (FieldsPage.render.test.tsx,
+        // ValidationPanel.test.tsx, PreparationHelpFab.test.tsx,
+        // field-editor.service.test.ts) — clicking actual buttons and
+        // asserting the resulting state, not render-only smoke tests.
+        //
         // The low line percentage is expected and honest: this repository is
         // ~77k statements of largely presentational page code, and the suites
         // written here target the pure logic — resolvers, projections,
