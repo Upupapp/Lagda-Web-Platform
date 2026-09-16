@@ -41,6 +41,7 @@ import type {
   PreparationStepState,
   ResumableDraftSummary,
 } from "../models/prepare";
+import type { FieldDefinition } from "../models/field-editor";
 import {
   normalizeRoutingGroups,
 } from "../models/prepare";
@@ -297,6 +298,18 @@ interface PrepareContextValue {
   // Field placement
   markReadyForFieldPlacement: () => Promise<boolean>;
 
+  /** Latest field-editor snapshot, pushed up by whichever step page currently
+   *  has FieldEditorContext mounted (FieldsPage, ConfirmationPage) — null
+   *  until the field editor has been visited this session. Lets the
+   *  cross-step Help panel (PreparationHelpFab) reuse computeSendReadiness()
+   *  even on steps that don't mount a field editor themselves, without
+   *  lifting FieldEditorProvider itself up to this layer. Never written by
+   *  more than one mounted page at a time in practice (only one prepare step
+   *  is visible at once), so a later write simply reflects the more recently
+   *  visited page. */
+  fieldsSnapshot: FieldDefinition[] | null;
+  setFieldsSnapshot: (fields: FieldDefinition[] | null) => void;
+
   // Support data loaders
   loadContacts:        () => Promise<void>;
   loadTemplates:       () => Promise<void>;
@@ -348,6 +361,7 @@ export function PrepareProvider({ children }: { children: React.ReactNode }) {
   const [state, dispatch] = useReducer(prepareReducer, undefined, hydratedInitialState);
   const platform = usePlatform();
   const [syncError, setSyncError] = useState<string | null>(null);
+  const [fieldsSnapshot, setFieldsSnapshot] = useState<FieldDefinition[] | null>(null);
 
   // Mirrors state.draft so the real-backend sync calls below (which span an
   // await, sometimes several) always diff against the truly-current
@@ -392,6 +406,10 @@ export function PrepareProvider({ children }: { children: React.ReactNode }) {
 
   // Derived step states
   const stepStates = resolveStepStates(state.draft, state.activeStepId);
+
+  // A field snapshot from a discarded/replaced draft must never leak into
+  // the next one's readiness calculation.
+  useEffect(() => { setFieldsSnapshot(null); }, [state.draft?.id]);
 
   // LOCAL_PERSISTENCE — real-time write-through on every draft change.
   useEffect(() => {
@@ -656,6 +674,8 @@ export function PrepareProvider({ children }: { children: React.ReactNode }) {
     validate,
     setStep,
     markReadyForFieldPlacement,
+    fieldsSnapshot,
+    setFieldsSnapshot,
     loadContacts,
     loadTemplates,
     loadResumableDrafts,

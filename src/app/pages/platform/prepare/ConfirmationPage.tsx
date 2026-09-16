@@ -19,7 +19,7 @@ import { mapPreparationDraftToDocumentListItem } from "../../../services/prepare
 import { USE_REAL_BACKEND } from "../../../services/backend-flag";
 import { ApiError } from "../../../services/api-client";
 import { realSigningRequestService } from "../../../services/real/signing-request.service";
-import { computeSendReadiness } from "../../../services/prepare/send-readiness";
+import { computeSendReadiness, buildActionUrl, type SendReadinessBlocker } from "../../../services/prepare/send-readiness";
 
 // ── Design tokens ─────────────────────────────────────────────────────────────
 const GF     = { fontFamily: "'Geist', sans-serif" };
@@ -31,15 +31,19 @@ const WHITE  = "#FFFFFF";
 // ── Inner component (needs FieldEditorContext) ────────────────────────────────
 function ConfirmationPageInner({ participants }: { participants: PrepParticipant[] }) {
   const navigate = useNavigate();
-  const { draft, setStep, discardDraft, syncError, multiDocumentSigningGap } = usePrepare();
+  const { draft, setStep, discardDraft, syncError, multiDocumentSigningGap, setFieldsSnapshot } = usePrepare();
   const { user, currentWorkspace } = usePlatform();
   const {
     initialize, fields, documents, runValidation, validation,
   } = useFieldEditor();
 
+  // Keeps the cross-step Help panel's readiness calculation current while
+  // this page is open — see PrepareContext's fieldsSnapshot doc comment.
+  useEffect(() => { setFieldsSnapshot(fields); }, [fields, setFieldsSnapshot]);
+
   const [sending, setSending] = useState(false);
   const [sendError, setSendError] = useState<string | null>(null);
-  const [sendBlockers, setSendBlockers] = useState<string[]>([]);
+  const [sendBlockers, setSendBlockers] = useState<SendReadinessBlocker[]>([]);
 
   // NEW LOGICAL OPERATION → NEW KEY. RETRY OF THE SAME AMBIGUOUS OPERATION →
   // SAME KEY. SUCCESS → RETIRE. Same rule PlatformContext.createWorkspace
@@ -241,7 +245,31 @@ function ConfirmationPageInner({ participants }: { participants: PrepParticipant
               This document is not ready to send
             </div>
             <ul style={{ ...GF, fontSize: 12, color: "#C0392B", margin: 0, paddingLeft: 18 }}>
-              {sendBlockers.map((b, i) => <li key={i}>{b}</li>)}
+              {sendBlockers.map((b, i) => (
+                <li
+                  key={i}
+                  style={{
+                    display: "flex", flexWrap: "wrap", alignItems: "center",
+                    justifyContent: "space-between", gap: 8, marginBottom: 6,
+                  }}
+                >
+                  <span style={{ flex: "1 1 220px" }}>{b.message}</span>
+                  {b.action && (
+                    <button
+                      type="button"
+                      onClick={() => void navigate(buildActionUrl(b.action!))}
+                      style={{
+                        ...GF, fontSize: 12, fontWeight: 700, color: AZURE,
+                        background: "none", border: "none", padding: "2px 0",
+                        cursor: "pointer", textDecoration: "underline",
+                        whiteSpace: "nowrap", flex: "0 0 auto",
+                      }}
+                    >
+                      {b.action.label} →
+                    </button>
+                  )}
+                </li>
+              ))}
             </ul>
           </div>
         )}
