@@ -236,32 +236,38 @@ function DropZone({
   onDragOver,
   onDragLeave,
   onDrop,
+  disabled = false,
 }: {
   onFilesSelected: (files: FileList) => void;
   isDragOver: boolean;
   onDragOver: (e: React.DragEvent) => void;
   onDragLeave: () => void;
   onDrop: (e: React.DragEvent) => void;
+  disabled?: boolean;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
 
   return (
     <div
-      onDragOver={onDragOver}
-      onDragLeave={onDragLeave}
-      onDrop={onDrop}
-      onClick={() => inputRef.current?.click()}
+      onDragOver={disabled ? undefined : onDragOver}
+      onDragLeave={disabled ? undefined : onDragLeave}
+      onDrop={disabled ? undefined : onDrop}
+      onClick={disabled ? undefined : () => inputRef.current?.click()}
       role="button"
-      tabIndex={0}
-      aria-label="Select files to add. Accepts PDF, DOC, or DOCX files."
-      onKeyDown={e => { if (e.key === "Enter" || e.key === " ") inputRef.current?.click(); }}
+      tabIndex={disabled ? -1 : 0}
+      aria-disabled={disabled}
+      aria-label={disabled
+        ? "Uploads are currently unavailable. See the notice above."
+        : "Select files to add. Accepts PDF, DOC, or DOCX files."}
+      onKeyDown={disabled ? undefined : e => { if (e.key === "Enter" || e.key === " ") inputRef.current?.click(); }}
       style={{
-        border: `2px dashed ${isDragOver ? AZURE : "#C8D3DC"}`,
+        border: `2px dashed ${isDragOver && !disabled ? AZURE : "#C8D3DC"}`,
         borderRadius: 12,
         padding: "40px 24px",
         textAlign: "center",
-        background: isDragOver ? "#F0F7FF" : "#FAFBFC",
-        cursor: "pointer",
+        background: disabled ? "#F1F3F5" : isDragOver ? "#F0F7FF" : "#FAFBFC",
+        cursor: disabled ? "not-allowed" : "pointer",
+        opacity: disabled ? 0.6 : 1,
         transition: "all 0.15s ease",
       }}
     >
@@ -270,13 +276,16 @@ function DropZone({
         type="file"
         accept=".pdf,.doc,.docx"
         multiple
+        disabled={disabled}
         aria-label="File input"
         style={{ display: "none" }}
         onChange={e => e.target.files && onFilesSelected(e.target.files)}
       />
-      <div aria-hidden="true" style={{ fontSize: 32, marginBottom: 12 }}>📂</div>
+      <div aria-hidden="true" style={{ fontSize: 32, marginBottom: 12 }}>
+        {disabled ? "🚫" : "📂"}
+      </div>
       <div style={{ ...GF, fontSize: 15, fontWeight: 700, color: NAVY, marginBottom: 6 }}>
-        Drop files here, or click to select
+        {disabled ? "Uploads temporarily unavailable" : "Drop files here, or click to select"}
       </div>
       <div style={{ ...GF, fontSize: 13, color: SILVER }}>
         PDF, DOC, or DOCX · Up to 20 MB per file (demonstration limit) · Up to 10 files
@@ -408,11 +417,28 @@ export function UploadStep() {
   // the expected metadata — holds both candidates until the visitor picks
   // one (see ReselectMismatch below).
   const [mismatch, setMismatch] = useState<{ prepFileId: string; candidate: File } | null>(null);
+  // Proactive: checked once on mount so the drop zone can be disabled BEFORE
+  // a visitor picks a file, rather than only ever finding out from a failed
+  // upload. `null` while unchecked (or on a mock build) — never treated as
+  // "unavailable", so a check that hasn't resolved yet never blocks the UI.
+  const [capacity, setCapacity] = useState<{ available: boolean; message?: string } | null>(null);
 
   useEffect(() => {
     setStep("upload");
     return () => {};
   }, [setStep]);
+
+  useEffect(() => {
+    if (!USE_REAL_BACKEND) return;
+    let cancelled = false;
+    void realDocumentService.checkUploadCapacity()
+      .then(status => { if (!cancelled) setCapacity(status); })
+      // A failed check is not itself a reason to block uploads — the real
+      // upload call is still the authoritative gate, and its own error
+      // surfaces normally if storage genuinely has no room.
+      .catch(() => { if (!cancelled) setCapacity(null); });
+    return () => { cancelled = true; };
+  }, []);
 
   const files      = draft?.files ?? [];
   const details    = draft?.details ?? DEFAULT_TRANSACTION_DETAILS;
@@ -602,9 +628,35 @@ export function UploadStep() {
   const readyCount = files.filter(f => f.fileState === "ready").length;
   const totalBytes = files.reduce((sum, f) => sum + f.fileSizeBytes, 0);
   const folderName = FOLDERS.find(f => f.id === details.folderId)?.name ?? null;
+  const uploadsDisabled = capacity?.available === false;
 
   const main = (
     <div style={{ ...GF, width: "100%" }}>
+      {/* Storage-capacity notice — only ever shown for a real, checked
+          "unavailable" answer, never for an unchecked or mock state. */}
+      {uploadsDisabled && (
+        <div
+          role="alert"
+          style={{
+            display: "flex", alignItems: "flex-start", gap: 10,
+            background: "#FEF2F2", border: "1px solid #FECACA", borderRadius: 10,
+            padding: "12px 16px", marginBottom: 16,
+          }}
+        >
+          <span aria-hidden="true" style={{ fontSize: 18, lineHeight: "20px" }}>⚠️</span>
+          <div>
+            <div style={{ ...GF, fontSize: 13.5, fontWeight: 700, color: "#991B1B" }}>
+              Document storage is currently full
+            </div>
+            <div style={{ ...GF, fontSize: 13, color: "#7F1D1D", marginTop: 2 }}>
+              {capacity?.message
+                ?? "Uploads are temporarily disabled until additional capacity is added. "
+                  + "Please try again later."}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Drop zone */}
       {!atLimit && (
         <div style={{ marginBottom: 20 }}>
@@ -614,6 +666,7 @@ export function UploadStep() {
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
+            disabled={uploadsDisabled}
           />
         </div>
       )}

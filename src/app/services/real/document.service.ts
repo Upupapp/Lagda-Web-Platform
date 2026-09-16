@@ -33,6 +33,11 @@ export interface RealUploadResult {
   digest: string;
 }
 
+export interface UploadCapacityStatus {
+  available: boolean;
+  message?: string;
+}
+
 class RealDocumentService {
   // POST /workspaces/{workspaceId}/documents — creates the document record.
   // Must succeed (and its id be kept) BEFORE any upload attempt: the upload
@@ -57,6 +62,17 @@ class RealDocumentService {
       `/workspaces/${encodeURIComponent(workspaceId)}/documents/${encodeURIComponent(documentId)}/upload`,
       formData,
     );
+  }
+
+  // GET /upload-capacity — proactive check, so the UI can disable the upload
+  // affordance BEFORE a user picks a file rather than only ever finding out
+  // from a failed POST. Not workspace-scoped on the backend (capacity is a
+  // fact about the deployment, not a tenant), so no workspaceId here either.
+  // The actual upload call is still the real gate — see UploadStep.tsx's own
+  // catch block, which already surfaces the backend's exact message on a
+  // real rejection regardless of what this check reported a moment earlier.
+  async checkUploadCapacity(): Promise<UploadCapacityStatus> {
+    return apiRequest<UploadCapacityStatus>("/upload-capacity");
   }
 }
 
