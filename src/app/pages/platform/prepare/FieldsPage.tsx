@@ -1779,7 +1779,7 @@ function FieldsPageInner() {
     initialize, loadRealFields,
     documents, fields,
     selectedField, showFieldList, showValidation, toggleValidation, runValidation,
-    setDocument, setPage, selectFields,
+    setDocument, setPage, selectFields, addField,
   } = useFieldEditor();
 
   // Review's "not ready to send" banner can deep-link straight here with the
@@ -1905,9 +1905,46 @@ function FieldsPageInner() {
         // (e.g. restored from localStorage before a refresh) — loadRealFields
         // replaces the field set outright, same as a fresh load would.
         loadRealFields(loaded);
+      } else {
+        // DEFAULT FIELDS — a document that has genuinely never had fields
+        // saved (not "empty because nothing loaded yet") starts with a
+        // blank canvas otherwise, and every signer needs a manually-added
+        // Signature field before Validate stops complaining. Reported live
+        // as a real source of user mistakes. Placed once, only the first
+        // time this document is opened (this whole effect runs once per
+        // draft — see loadedForDraftIdRef — and this branch only fires when
+        // nothing was ever saved), on page 1 of the first document, one per
+        // participant whose role has an unambiguous backend-supported
+        // default field. Never repeats the earlier phantom-field bug: only
+        // real, backend-storable types are used (signature/checkbox), and
+        // these are ordinary local fields the visitor can edit, move, or
+        // delete like anything they placed themselves.
+        const firstDoc = documents[0];
+        const firstPage = firstDoc?.pages[0];
+        if (firstDoc && firstPage) {
+          let offset = 0;
+          for (const p of draft.participants) {
+            const defaultType: FieldType | null =
+              p.role === "signer" ? "signature" :
+              p.role === "acknowledgment-recipient" ? "checkbox" :
+              null;
+            if (!defaultType) continue;
+            addField({
+              type: defaultType,
+              documentId: firstDoc.id,
+              pageId: firstPage.id,
+              rect: defaultFieldRect(defaultType, 0.1, 0.12 + offset * 0.1),
+              participantId: p.id,
+              label: FIELD_TYPE_LABELS[defaultType],
+              required: true,
+              demonstrationOnly: false,
+            });
+            offset += 1;
+          }
+        }
       }
     })();
-  }, [draft, platform.currentWorkspace, realDocumentIdByEditorDocId, documents, loadRealFields]);
+  }, [draft, platform.currentWorkspace, realDocumentIdByEditorDocId, documents, loadRealFields, addField]);
 
   // Persists the CURRENT field set to every real document this editor
   // covers, before continuing on. A field of a type the backend doesn't
