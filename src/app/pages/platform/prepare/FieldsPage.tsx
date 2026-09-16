@@ -31,6 +31,7 @@ import type {
   NormalizedRect,
   ParticipantEditorIdentity,
   EditorPageId,
+  FieldValidationIssue,
 } from "../../../models/field-editor";
 import {
   FIELD_TYPE_LABELS,
@@ -1129,10 +1130,53 @@ function FieldListView({ participants }: FieldListProps) {
 // property-panel trip for the common case. Anything with more than one
 // reasonable fix (which participant? which field moves?) stays manual
 // rather than guessing.
-function ValidationPanel() {
-  const { validation, setDocument, setPage, fields, selectFields, updateField, moveField } = useFieldEditor();
+function ValidationPanel({
+  onSaveNow,
+  saving,
+}: {
+  /** Runs the exact same save Continue uses — see saveFieldsToBackend in
+   *  FieldsPageInner. Lets "unsaved edits" be resolved right here instead
+   *  of requiring a full Continue click, which is easy to bypass (e.g. by
+   *  navigating away via the sidebar) and previously left Review showing a
+   *  "not ready" blocker that nothing on THIS page explained how to fix. */
+  onSaveNow: () => Promise<boolean>;
+  saving: boolean;
+}) {
+  const { validation, setDocument, setPage, fields, selectFields, updateField, moveField, deleteFields } = useFieldEditor();
   const { draft } = usePrepare();
   const participants = draft?.participants ?? [];
+
+  // Real-backend-only checks that this page's own "Validate" previously
+  // never ran — FieldPlacementValidation (above) only checks placement
+  // correctness (assignment, overlap, coverage), not backend persistability.
+  // computeSendReadiness (used by Review's banner) DOES check these, which
+  // is exactly why "Ready to continue" here could still be followed by
+  // "not ready to send" on Review with no visible reason on this page. These
+  // are now surfaced here too, so both pages agree.
+  const backendIssues = useMemo(() => {
+    if (!USE_REAL_BACKEND) return [];
+    const issues: FieldValidationIssue[] = [];
+    fields.filter((f) => !isBackendFieldType(f.type)).forEach((f) => {
+      issues.push({
+        id: `backend_unsupported_${f.id}`,
+        severity: "error",
+        code: "UNSUPPORTED_BACKEND_TYPE",
+        message: `The "${f.label}" field (${f.type}) can't be saved to the server — this field type isn't supported for a real send.`,
+        fieldId: f.id,
+        suggestion: "Remove this field, or replace it with a supported type (Signature, Initials, Full Name, Date Signed, Text, Checkbox, Email, Title, or Company).",
+      });
+    });
+    if (fields.some((f) => !f.id.startsWith("bf_"))) {
+      issues.push({
+        id: "backend_unsaved",
+        severity: "error",
+        code: "UNSAVED_EDITS",
+        message: "Field placement has local, unsaved changes.",
+        suggestion: "Save now, or press Continue — both save your current placement to the server.",
+      });
+    }
+    return issues;
+  }, [fields]);
 
   const goToField = (fieldId?: FieldId, documentId?: string, pageId?: EditorPageId) => {
     const field = fieldId ? fields.find(f => f.id === fieldId) : null;
@@ -1174,31 +1218,43 @@ function ValidationPanel() {
     );
   }
 
+  // Merged for display only — FieldEditorContext's own `validation` object
+  // (placement correctness) is never mutated; backendIssues is layered on
+  // top so this panel's "ready" state matches what Review's send-readiness
+  // banner will actually say, instead of the two silently disagreeing.
+  const allErrors = [...validation.errors, ...backendIssues];
+  const combinedIsValid = validation.isValid && backendIssues.length === 0;
+
   return (
     <div style={{ flex: 1, overflowY: "auto", padding: 12 }}>
       {/* Summary */}
       <div style={{
         padding: "10px 12px",
         borderRadius: 8,
-        background: validation.isValid ? "#F0FAF4" : "#FFF5F5",
-        border: `1px solid ${validation.isValid ? "#A8D5B5" : "#F5C6CB"}`,
+        background: combinedIsValid ? "#F0FAF4" : "#FFF5F5",
+        border: `1px solid ${combinedIsValid ? "#A8D5B5" : "#F5C6CB"}`,
         marginBottom: 12,
       }}>
-        <div style={{ ...GF, fontSize: 13, fontWeight: 700, color: validation.isValid ? "#2E7D32" : "#C0392B" }}>
-          {validation.isValid ? "Ready to continue" : `${validation.errors.length} error${validation.errors.length !== 1 ? "s" : ""} to resolve`}
+        <div style={{ ...GF, fontSize: 13, fontWeight: 700, color: combinedIsValid ? "#2E7D32" : "#C0392B" }}>
+          {combinedIsValid ? "Ready to continue" : `${allErrors.length} error${allErrors.length !== 1 ? "s" : ""} to resolve`}
         </div>
         <div style={{ ...GF, fontSize: 11, color: SILVER, marginTop: 3 }}>
           {validation.totalFieldCount} field{validation.totalFieldCount !== 1 ? "s" : ""} · {validation.warnings.length} warning{validation.warnings.length !== 1 ? "s" : ""}
         </div>
+        {USE_REAL_BACKEND && (
+          <div style={{ ...GF, fontSize: 10.5, color: SILVER, marginTop: 6, lineHeight: 1.5 }}>
+            Includes server-save checks, so this matches what Review will say.
+          </div>
+        )}
       </div>
 
       {/* Errors */}
-      {validation.errors.length > 0 && (
+      {allErrors.length > 0 && (
         <div style={{ marginBottom: 12 }}>
           <div style={{ ...GF, fontSize: 11, fontWeight: 700, color: "#C0392B", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 6 }}>
-            Errors ({validation.errors.length})
+            Errors ({allErrors.length})
           </div>
-          {validation.errors.map(issue => (
+          {allErrors.map(issue => (
             <div key={issue.id} style={{ ...GF, padding: "8px 10px", borderRadius: 6, background: "#FFF5F5", border: "1px solid #F5C6CB", marginBottom: 5, fontSize: 12, color: "#C0392B" }}>
               <div style={{ fontWeight: 600 }}>✕ {issue.message}</div>
               {issue.suggestion && <div style={{ fontSize: 11, color: "#9B2335", marginTop: 3 }}>{issue.suggestion}</div>}
@@ -1217,6 +1273,23 @@ function ValidationPanel() {
                     style={{ ...GF, fontSize: 11, fontWeight: 700, color: "#2E7D32", background: "none", border: "none", cursor: "pointer", padding: 0, textDecoration: "underline" }}
                   >
                     Fix it for me
+                  </button>
+                )}
+                {issue.code === "UNSUPPORTED_BACKEND_TYPE" && issue.fieldId && (
+                  <button
+                    onClick={() => deleteFields([issue.fieldId!])}
+                    style={{ ...GF, fontSize: 11, fontWeight: 700, color: "#2E7D32", background: "none", border: "none", cursor: "pointer", padding: 0, textDecoration: "underline" }}
+                  >
+                    Remove this field
+                  </button>
+                )}
+                {issue.code === "UNSAVED_EDITS" && (
+                  <button
+                    onClick={() => void onSaveNow()}
+                    disabled={saving}
+                    style={{ ...GF, fontSize: 11, fontWeight: 700, color: saving ? SILVER : "#2E7D32", background: "none", border: "none", cursor: saving ? "default" : "pointer", padding: 0, textDecoration: "underline" }}
+                  >
+                    {saving ? "Saving…" : "Save now"}
                   </button>
                 )}
               </div>
@@ -1997,7 +2070,7 @@ function FieldsPageInner() {
                 <span style={{ ...GF, fontSize: 12, fontWeight: 700, color: NAVY }}>Validation</span>
                 <button onClick={toggleValidation} aria-label="Close validation panel" style={{ ...GF, background: "none", border: "none", cursor: "pointer", color: SILVER, fontSize: 16, lineHeight: 1 }}>×</button>
               </div>
-              <ValidationPanel />
+              <ValidationPanel onSaveNow={saveFieldsToBackend} saving={savingFields} />
             </>
           ) : selectedField ? (
             <FieldPropertiesPanel field={selectedField} participants={participants} />
