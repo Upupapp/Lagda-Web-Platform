@@ -20,8 +20,10 @@ import { HelpCircle, X, ChevronRight, CheckCircle2 } from "lucide-react";
 import { usePrepare } from "../../context/PrepareContext";
 import { USE_REAL_BACKEND } from "../../services/backend-flag";
 import { computeSendReadiness, buildActionUrl, type SendReadinessAction } from "../../services/prepare/send-readiness";
-import { PREPARATION_STEPS } from "../../models/prepare";
-import type { PreparationStepId } from "../../models/prepare";
+import {
+  type HelpItem,
+  helpItemsFromReadiness, fieldsDoneFromReadiness, helpItemsFromValidation, completionPercent,
+} from "./preparation-help";
 import { Z } from "../../utils/z-index";
 
 const GF     = { fontFamily: "'Geist', sans-serif" };
@@ -32,28 +34,6 @@ const GOLD   = "#C9960C";
 const AMBER_BG = "#FEF9EC";
 const AMBER_BORDER = "#F0D07A";
 const GREEN  = "#2E7D32";
-
-function stepRouteFor(id: PreparationStepId): string {
-  return PREPARATION_STEPS.find((s) => s.id === id)?.route ?? "/app/prepare";
-}
-function stepLabelFor(id: PreparationStepId): string {
-  return PREPARATION_STEPS.find((s) => s.id === id)?.label ?? id;
-}
-
-interface HelpItem {
-  id: string;
-  stepLabel: string;
-  message: string;
-  action: SendReadinessAction;
-}
-
-// The 6 non-field steps validateDraftState actually gates, plus one unit for
-// field placement (see below) — a simple, honest "how much of this is done"
-// number. Not meant to be a precise weighted score, just an at-a-glance
-// signal that moves as the user makes progress.
-const PERCENT_STEP_UNITS: PreparationStepId[] = [
-  "upload", "participants", "routing", "authentication", "settings", "review",
-];
 
 export function PreparationHelpFab() {
   const navigate = useNavigate();
@@ -89,53 +69,25 @@ export function PreparationHelpFab() {
   const { items, ready, percent } = useMemo(() => {
     if (!draft) return { items: [] as HelpItem[], ready: false, percent: 0 };
 
-    let helpItems: HelpItem[];
-    let isReady: boolean;
-    let fieldsDone: boolean;
-
     if (USE_REAL_BACKEND) {
       const readiness = computeSendReadiness({
         draft, multiDocumentSigningGap, syncError, fields: fieldsSnapshot,
       });
-      helpItems = readiness.blockers.map((b, i) => ({
-        id: `sr_${i}`,
-        stepLabel: b.action ? stepLabelFromRoute(b.action.route) : "Preparation",
-        message: b.message,
-        action: b.action ?? { label: "Review", route: "/app/prepare/review" },
-      }));
-      isReady = readiness.ready;
-      // Fields count as "done" once no blocker points back at the fields
-      // step — mirrors exactly what actually gates a real send.
-      fieldsDone = !readiness.blockers.some((b) => b.action?.route === "/app/prepare/fields");
-    } else {
-      const validation = validate();
-      helpItems = validation.errors.map((issue) => ({
-        id: issue.id,
-        stepLabel: stepLabelFor(issue.stepId),
-        message: issue.message,
-        action: {
-          label: "Fix this",
-          route: stepRouteFor(issue.stepId),
-          ...(issue.participantId ? { participantId: issue.participantId } : {}),
-          ...(issue.groupId ? { groupId: issue.groupId } : {}),
-          ...(issue.code === "NO_TITLE" || issue.code === "TITLE_TOO_LONG" ? { route: "/app/prepare/upload?highlightField=title" } : {}),
-        },
-      }));
-      isReady = validation.errors.length === 0;
-      // Demo mode has no backend-verified field placement signal outside the
-      // field editor's own session state — a non-empty snapshot is the best
-      // available proxy once the visitor has actually opened Fields.
-      fieldsDone = (fieldsSnapshot?.length ?? 0) > 0;
+      return {
+        items: helpItemsFromReadiness(readiness),
+        ready: readiness.ready,
+        percent: completionPercent(stepStates, fieldsDoneFromReadiness(readiness)),
+      };
     }
-
-    const doneStepCount = PERCENT_STEP_UNITS.filter(
-      (id) => stepStates[id] === "complete" || stepStates[id] === "complete-with-warning",
-    ).length;
-    const totalUnits = PERCENT_STEP_UNITS.length + 1;
-    const doneUnits = doneStepCount + (fieldsDone ? 1 : 0);
-    const pct = Math.round((doneUnits / totalUnits) * 100);
-
-    return { items: helpItems, ready: isReady, percent: pct };
+    const validation = validate();
+    // Demo mode has no backend-verified field signal — a non-empty snapshot
+    // is the best proxy once the visitor has actually opened Fields.
+    const fieldsDone = (fieldsSnapshot?.length ?? 0) > 0;
+    return {
+      items: helpItemsFromValidation(validation.errors),
+      ready: validation.errors.length === 0,
+      percent: completionPercent(stepStates, fieldsDone),
+    };
   }, [draft, validate, stepStates, syncError, multiDocumentSigningGap, fieldsSnapshot]);
 
   if (!draft) return null;
@@ -343,12 +295,4 @@ export function PreparationHelpFab() {
       `}</style>
     </>
   );
-}
-
-// Best-effort label for a send-readiness blocker's target step, derived from
-// its route rather than a stepId (computeSendReadiness's blockers don't
-// carry one) — used only for the small uppercase kicker above each item.
-function stepLabelFromRoute(route: string): string {
-  const match = PREPARATION_STEPS.find((s) => route.startsWith(s.route));
-  return match?.label ?? "Preparation";
 }

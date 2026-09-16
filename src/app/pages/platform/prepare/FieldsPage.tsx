@@ -22,6 +22,10 @@ import { USE_REAL_BACKEND } from "../../../services/backend-flag";
 import { ApiError } from "../../../services/api-client";
 import { realPreparationService } from "../../../services/real/preparation.service";
 import { isBackendFieldType, toBackendFieldInput, fromBackendField } from "../../../services/prepare/field-sync";
+import {
+  clampRectOntoPage, pushInsideSafeMargin, nudgeOffOverlap,
+  eligibleParticipants, resolveAssignmentFor, computeBackendFieldIssues,
+} from "../../../services/prepare/field-autofix";
 import { isDocumentSynced, markDocumentSynced } from "../../../services/prepare/sync-markers";
 import type {
   FieldId,
@@ -42,7 +46,6 @@ import {
   FIELD_PLAN_TIER,
   FIELD_ELIGIBLE_ROLES,
   RESIZE_HANDLES,
-  SAFE_MARGIN,
   defaultFieldRect,
   applyResizeDelta,
 } from "../../../models/field-editor";
@@ -1131,7 +1134,9 @@ function FieldListView({ participants }: FieldListProps) {
 // property-panel trip for the common case. Anything with more than one
 // reasonable fix (which participant? which field moves?) stays manual
 // rather than guessing.
-function ValidationPanel({
+// Exported for its own behaviour test (the fix-button handlers here are the
+// bulk of the Validation panel's logic).
+export function ValidationPanel({
   onSaveNow,
   saving,
 }: {
@@ -1166,30 +1171,10 @@ function ValidationPanel({
   // is exactly why "Ready to continue" here could still be followed by
   // "not ready to send" on Review with no visible reason on this page. These
   // are now surfaced here too, so both pages agree.
-  const backendIssues = useMemo(() => {
-    if (!USE_REAL_BACKEND) return [];
-    const issues: FieldValidationIssue[] = [];
-    fields.filter((f) => !isBackendFieldType(f.type)).forEach((f) => {
-      issues.push({
-        id: `backend_unsupported_${f.id}`,
-        severity: "error",
-        code: "UNSUPPORTED_BACKEND_TYPE",
-        message: `The "${f.label}" field (${f.type}) can't be saved to the server — this field type isn't supported for a real send.`,
-        fieldId: f.id,
-        suggestion: "Remove this field, or replace it with a supported type (Signature, Initials, Full Name, Date Signed, Text, Checkbox, Email, Title, or Company).",
-      });
-    });
-    if (fields.some((f) => !f.id.startsWith("bf_"))) {
-      issues.push({
-        id: "backend_unsaved",
-        severity: "error",
-        code: "UNSAVED_EDITS",
-        message: "Field placement has local, unsaved changes.",
-        suggestion: "Save now, or press Continue — both save your current placement to the server.",
-      });
-    }
-    return issues;
-  }, [fields]);
+  const backendIssues = useMemo(
+    () => (USE_REAL_BACKEND ? computeBackendFieldIssues(fields) : []),
+    [fields],
+  );
 
   const goToField = (fieldId?: FieldId, documentId?: string, pageId?: EditorPageId) => {
     const field = fieldId ? fields.find(f => f.id === fieldId) : null;
@@ -1200,65 +1185,46 @@ function ValidationPanel({
     if (fieldId) selectFields([fieldId]);
   };
 
-  // Assigns to the single eligible participant when there's exactly one —
-  // an ambiguous choice (2+ eligible participants) is never guessed at.
+  // The auto-fix decision logic lives in ../services/prepare/field-autofix
+  // (pure + unit-tested); these thin handlers just apply the result via the
+  // field editor and reveal the field.
   const autoFixUnassigned = (fieldId: FieldId) => {
     const field = fields.find(f => f.id === fieldId);
     if (!field) return;
-    const eligible = participants.filter(p => FIELD_ELIGIBLE_ROLES[field.type].includes(p.role));
-    if (eligible.length !== 1) { goToField(fieldId); return; }
-    updateField(fieldId, { participantId: eligible[0]!.id });
+    // Ambiguous (2+ eligible) → don't guess; just reveal the field so the
+    // visitor picks in Field Properties.
+    if (eligibleParticipants(field.type, participants).length !== 1) { goToField(fieldId); return; }
+    updateField(fieldId, { participantId: resolveAssignmentFor(field.type, participants) });
     selectFields([fieldId]);
   };
 
-  // Nudges the field down by a fixed, safe offset — enough to clear a
-  // same-position overlap, clamped so it can't be pushed off the page.
   const autoFixOverlap = (fieldId: FieldId) => {
     const field = fields.find(f => f.id === fieldId);
     if (!field) return;
-    const OFFSET = 0.07;
-    const maxY = Math.max(0, 1 - field.rect.height);
-    const nextY = field.rect.y + OFFSET > maxY ? Math.max(0, field.rect.y - OFFSET) : field.rect.y + OFFSET;
-    moveField(fieldId, { ...field.rect, y: nextY });
+    moveField(fieldId, nudgeOffOverlap(field.rect));
     goToField(fieldId);
   };
 
-  // Clamps a field's rect fully back onto the page — deterministic, never
-  // guesses a new position, just stops it extending past the 0–1 bounds.
   const autoFixOutOfBounds = (fieldId: FieldId) => {
     const field = fields.find(f => f.id === fieldId);
     if (!field) return;
-    const width  = Math.min(1, field.rect.width);
-    const height = Math.min(1, field.rect.height);
-    const x = Math.min(Math.max(0, field.rect.x), 1 - width);
-    const y = Math.min(Math.max(0, field.rect.y), 1 - height);
-    moveField(fieldId, { x, y, width, height });
+    moveField(fieldId, clampRectOntoPage(field.rect));
     goToField(fieldId);
   };
 
-  // Pushes a field back inside the same safe margin isNearPageEdge() checks
-  // against — guaranteed to actually clear the warning, not a guess.
   const autoFixNearEdge = (fieldId: FieldId) => {
     const field = fields.find(f => f.id === fieldId);
     if (!field) return;
-    const maxX = 1 - SAFE_MARGIN - field.rect.width;
-    const maxY = 1 - SAFE_MARGIN - field.rect.height;
-    const x = Math.min(Math.max(SAFE_MARGIN, field.rect.x), Math.max(SAFE_MARGIN, maxX));
-    const y = Math.min(Math.max(SAFE_MARGIN, field.rect.y), Math.max(SAFE_MARGIN, maxY));
-    moveField(fieldId, { ...field.rect, x, y });
+    moveField(fieldId, pushInsideSafeMargin(field.rect));
     goToField(fieldId);
   };
 
-  // A field assigned to a participant who's since been removed, or whose
-  // role can't have this field type — clearing the assignment is always
-  // safe (it becomes an ordinary "unassigned field", handled by the fix
-  // above); reassigning to a single eligible participant when one exists is
-  // more useful than just clearing it.
+  // Assigned to a removed participant or a role-incompatible one: reassign to
+  // a single eligible participant if there is one, else clear it.
   const autoFixBadAssignment = (fieldId: FieldId) => {
     const field = fields.find(f => f.id === fieldId);
     if (!field) return;
-    const eligible = participants.filter(p => FIELD_ELIGIBLE_ROLES[field.type].includes(p.role));
-    updateField(fieldId, { participantId: eligible.length === 1 ? eligible[0]!.id : null });
+    updateField(fieldId, { participantId: resolveAssignmentFor(field.type, participants) });
     selectFields([fieldId]);
   };
 
