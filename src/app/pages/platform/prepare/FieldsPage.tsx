@@ -1143,10 +1143,21 @@ function ValidationPanel({
   onSaveNow: () => Promise<boolean>;
   saving: boolean;
 }) {
-  const { validation, setDocument, setPage, fields, selectFields, updateField, moveField, deleteFields, setParticipantFilter } = useFieldEditor();
+  const { validation, runValidation, setDocument, setPage, fields, selectFields, updateField, moveField, deleteFields, setParticipantFilter } = useFieldEditor();
   const { draft } = usePrepare();
   const navigate = useNavigate();
   const participants = draft?.participants ?? [];
+
+  // Keep the panel live. Every field mutation (COMMIT_FIELDS, undo/redo,
+  // paste, a server reload after Save) deliberately resets `validation` to
+  // null so a stale result is never shown — but while THIS panel is open,
+  // null just meant a blank "Run validation to see results." right after
+  // clicking a fix button, so it looked like the fix did nothing until the
+  // visitor pressed Validate again (reported live, and why the Review deep
+  // link landed on an empty panel). This panel only mounts while visible.
+  useEffect(() => {
+    if (validation === null && draft) runValidation(draft);
+  }, [validation, draft, runValidation]);
 
   // Real-backend-only checks that this page's own "Validate" previously
   // never ran — FieldPlacementValidation (above) only checks placement
@@ -1945,9 +1956,13 @@ function FieldsPageInner() {
     setSavingFields(true);
     let ok = true;
     let conflict = false;
+    // Backend-confirmed fields, per document, translated back to editor
+    // fields with their real `bf_` ids — see the merge after the loop.
+    const savedByDocument = new Map<string, FieldDefinition[]>();
     for (const [editorDocId, backendDocId] of realDocumentIdByEditorDocId) {
       const doc = documents.find((d) => d.id === editorDocId);
       const pageNumberOf = (pageId: string) => doc?.pages.find((p) => p.id === pageId)?.pageNumber ?? null;
+      const pageIdForNumber = (n: number) => doc?.pages.find((p) => p.pageNumber === n)?.id ?? null;
       const inputs = fields
         .filter((f) => f.documentId === editorDocId && isBackendFieldType(f.type))
         .map((f) => toBackendFieldInput(f, pageNumberOf))
@@ -1957,6 +1972,12 @@ function FieldsPageInner() {
         const saved = await realPreparationService.save(workspaceId, backendDocId, expectedRevision, inputs);
         revisionByDocumentIdRef.current.set(backendDocId, saved.revision);
         markDocumentSynced("fields", backendDocId);
+        savedByDocument.set(
+          editorDocId,
+          saved.fields
+            .map((f) => fromBackendField(f, editorDocId, pageIdForNumber))
+            .filter((f): f is FieldDefinition => f !== null),
+        );
       } catch (err) {
         ok = false;
         if (err instanceof ApiError && err.status === 409) {
@@ -1990,9 +2011,21 @@ function FieldsPageInner() {
       );
     } else if (ok) {
       setFieldSyncError(null);
+      // Adopt the backend's ids. A save used to leave the editor holding the
+      // same locally-generated ids it had before, so "is this saved?" (the
+      // `bf_` prefix check in send-readiness.ts and this page's own
+      // Validation panel) stayed false after a confirmed PUT 200 — "Save
+      // now" visibly did nothing (reported live). Fields of a type the
+      // backend can't store are kept as-is: they were never sent, so they
+      // are still local, and still (correctly) flagged as such.
+      if (savedByDocument.size > 0) {
+        const merged = fields.filter((f) => !savedByDocument.has(f.documentId) || !isBackendFieldType(f.type));
+        for (const savedFields of savedByDocument.values()) merged.push(...savedFields);
+        loadRealFields(merged);
+      }
     }
     return ok && !conflict;
-  }, [platform.currentWorkspace, realDocumentIdByEditorDocId, documents, fields]);
+  }, [platform.currentWorkspace, realDocumentIdByEditorDocId, documents, fields, loadRealFields]);
 
   // Keyboard shortcuts
   useEffect(() => {
