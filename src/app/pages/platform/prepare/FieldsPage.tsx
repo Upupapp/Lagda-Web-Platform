@@ -1801,7 +1801,7 @@ function FieldsPageInner() {
     loadState, errorMessage,
     initialize, loadRealFields,
     documents, fields,
-    selectedField, showFieldList, showValidation, toggleValidation,
+    selectedField, showFieldList, showValidation, toggleValidation, runValidation,
     setDocument, setPage, selectFields,
   } = useFieldEditor();
 
@@ -1829,6 +1829,24 @@ function FieldsPageInner() {
     setPage(first.pageId);
     selectFields(matches.map((f) => f.id));
   }, [focusFieldIds, fields, loadState, setDocument, setPage, selectFields]);
+
+  // Review's banner (and the Help FAB) send the visitor here with
+  // ?showValidation=1 whenever the blocker is something this page's
+  // Validation panel explains — see buildActionUrl(). Selecting a field
+  // alone (above) opens Field Properties instead, which has no idea why
+  // that field was flagged; this forces the panel that actually has the
+  // "Fix it for me" / "Remove this field" / "Save now" button front and
+  // center, instead of requiring the visitor to already know to click
+  // Validate themselves. Runs once fields have loaded, so the panel isn't
+  // forced open onto an empty/stale validation result.
+  const openedValidationRef = useRef(false);
+  useEffect(() => {
+    if (openedValidationRef.current || loadState !== "ready" || !draft) return;
+    if (new URLSearchParams(window.location.search).get("showValidation") !== "1") return;
+    openedValidationRef.current = true;
+    runValidation(draft);
+    if (!showValidation) toggleValidation();
+  }, [loadState, draft, runValidation, showValidation, toggleValidation]);
   const platform = usePlatform();
 
   const [showKbDialog, setShowKbDialog] = useState(false);
