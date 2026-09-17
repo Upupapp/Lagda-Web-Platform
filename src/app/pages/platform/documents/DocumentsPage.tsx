@@ -28,6 +28,7 @@ import {
 const DocumentArchiveViewer = lazy(() =>
   import("../../../components/documents/DocumentArchiveViewer")
     .then(m => ({ default: m.DocumentArchiveViewer })));
+import { SignatureRecordDialog } from "../../../components/documents/SignatureRecordDialog";
 import { documentOrganizationService } from "../../../services/mock/document-organization.service";
 import { isCapabilityInActiveProfile } from "../../../config/capability-resolver";
 import { TRANSACTION_STATUS_LABELS } from "../../../models";
@@ -1989,11 +1990,47 @@ const SIGNING_REQUEST_STATUS: Record<SigningRequestState, TransactionStatus> = {
   "expired": "expired",
 };
 
+// The signature affordance. Shown only once a request has actually been sent
+// — a draft has no signatures to record, and offering to open an empty
+// record would read as though something were missing.
+function SignatureLink({
+  item, onOpen, compact,
+}: {
+  item: SigningRequestListItem;
+  onOpen: (item: SigningRequestListItem) => void;
+  compact?: boolean;
+}) {
+  if (item.state === "draft" || item.state === "ready-to-send") {
+    return <ParticipantProgress done={item.completedParticipantCount} total={item.participantCount} />;
+  }
+  const allSigned = item.completedParticipantCount > 0
+    && item.completedParticipantCount >= item.participantCount;
+  return (
+    <button
+      onClick={e => { e.stopPropagation(); onOpen(item); }}
+      title="View signature record"
+      style={{
+        display: "inline-flex", alignItems: "center", gap: 6, background: "none",
+        border: "none", padding: 0, cursor: "pointer", ...GF,
+      }}
+    >
+      <ParticipantProgress done={item.completedParticipantCount} total={item.participantCount} />
+      <span style={{
+        fontSize: compact === true ? 11 : 12, color: allSigned ? "#059669" : AZURE,
+        fontWeight: 600, whiteSpace: "nowrap",
+      }}>
+        {allSigned ? "Signed" : "Details"}
+      </span>
+    </button>
+  );
+}
+
 function RealDocumentRow({
-  item, onView,
+  item, onView, onSignatures,
 }: {
   item: SigningRequestListItem;
   onView: (item: SigningRequestListItem) => void;
+  onSignatures: (item: SigningRequestListItem) => void;
 }) {
   return (
     <div role="row" className="doc-row">
@@ -2018,7 +2055,7 @@ function RealDocumentRow({
         <StatusBadge status={SIGNING_REQUEST_STATUS[item.state]} />
       </div>
       <div role="cell" style={{ padding: "8px 8px" }}>
-        <ParticipantProgress done={item.completedParticipantCount} total={item.participantCount} />
+        <SignatureLink item={item} onOpen={onSignatures} />
       </div>
       <div role="cell" className="doc-col-updated" style={{ padding: "8px 8px" }}>
         <span style={{ fontSize: 12, color: SLATE4, whiteSpace: "nowrap", ...GF }}>
@@ -2047,43 +2084,57 @@ function RealDocumentRow({
 // nothing at all: every real item still loaded, just with no surface to
 // render it on. Same fields as the desktop row, stacked top-to-bottom.
 function RealDocumentCard({
-  item, onView,
+  item, onView, onSignatures,
 }: {
   item: SigningRequestListItem;
   onView: (item: SigningRequestListItem) => void;
+  onSignatures: (item: SigningRequestListItem) => void;
 }) {
+  // A div, not a button: the signature affordance below is itself a button,
+  // and a button inside a button is invalid HTML that browsers resolve
+  // unpredictably. The title and the eye icon are the two real controls.
   return (
-    <button
-      onClick={() => onView(item)}
+    <div
       style={{
-        display: "block", width: "100%", textAlign: "left", background: "#fff",
-        border: `1px solid ${SLATE2}`, borderRadius: 10, padding: "12px 14px",
-        marginBottom: 10, cursor: "pointer", ...GF,
+        background: "#fff", border: `1px solid ${SLATE2}`, borderRadius: 10,
+        padding: "12px 14px", marginBottom: 10, ...GF,
       }}
     >
       <div style={{ display: "flex", alignItems: "flex-start", gap: 8 }}>
         <FileText size={16} aria-hidden style={{ flexShrink: 0, marginTop: 2, color: SLATE4 }} />
         <div style={{ minWidth: 0, flex: 1 }}>
-          <div
+          <button
+            onClick={() => onView(item)}
             title={item.documentTitle}
             style={{
-              fontSize: 14, fontWeight: 600, color: NAVY,
+              fontSize: 14, fontWeight: 600, color: NAVY, background: "none",
+              border: "none", padding: 0, textAlign: "left", cursor: "pointer",
+              display: "block", maxWidth: "100%", ...GF,
               overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
             }}
           >
             {item.documentTitle}
-          </div>
+          </button>
           <div style={{ marginTop: 8, display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
             <StatusBadge status={SIGNING_REQUEST_STATUS[item.state]} />
-            <ParticipantProgress done={item.completedParticipantCount} total={item.participantCount} />
+            <SignatureLink item={item} onOpen={onSignatures} compact />
           </div>
           <div style={{ marginTop: 6, fontSize: 12, color: SLATE4 }}>
             {fmtRelative(item.createdAt)}
           </div>
         </div>
-        <Eye size={16} aria-hidden style={{ flexShrink: 0, color: SLATE4, marginTop: 2 }} />
+        <button
+          onClick={() => onView(item)}
+          aria-label={`View ${item.documentTitle}`}
+          style={{
+            flexShrink: 0, background: "none", border: "none", padding: 2,
+            cursor: "pointer", color: SLATE4, marginTop: 2,
+          }}
+        >
+          <Eye size={16} aria-hidden />
+        </button>
       </div>
-    </button>
+    </div>
   );
 }
 
@@ -2127,6 +2178,7 @@ function DocumentsPageRealMode() {
   const [items, setItems] = useState<SigningRequestListItem[]>([]);
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
   const [viewing, setViewing] = useState<SigningRequestListItem | null>(null);
+  const [signaturesFor, setSignaturesFor] = useState<SigningRequestListItem | null>(null);
 
   useEffect(() => {
     if (!workspaceId) return;
@@ -2191,7 +2243,10 @@ function DocumentsPageRealMode() {
             </div>
             <div role="rowgroup">
               {items.map(item => (
-                <RealDocumentRow key={item.signingRequestId} item={item} onView={setViewing} />
+                <RealDocumentRow
+                  key={item.signingRequestId} item={item}
+                  onView={setViewing} onSignatures={setSignaturesFor}
+                />
               ))}
             </div>
           </div>
@@ -2199,13 +2254,24 @@ function DocumentsPageRealMode() {
         {status === "ready" && items.length > 0 && (
           <div className="doc-cards-mobile">
             {items.map(item => (
-              <RealDocumentCard key={item.signingRequestId} item={item} onView={setViewing} />
+              <RealDocumentCard
+                key={item.signingRequestId} item={item}
+                onView={setViewing} onSignatures={setSignaturesFor}
+              />
             ))}
           </div>
         )}
       </AppContent>
       {viewing && workspaceId && (
         <DocumentViewerDialog workspaceId={workspaceId} item={viewing} onClose={() => setViewing(null)} />
+      )}
+      {signaturesFor && workspaceId && (
+        <SignatureRecordDialog
+          workspaceId={workspaceId}
+          signingRequestId={signaturesFor.signingRequestId}
+          documentTitle={signaturesFor.documentTitle}
+          onClose={() => setSignaturesFor(null)}
+        />
       )}
     </>
   );

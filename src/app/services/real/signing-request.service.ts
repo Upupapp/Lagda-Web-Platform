@@ -77,6 +77,39 @@ export interface SigningRequestListItem {
   expiresAt: string | null;
 }
 
+// GET /workspaces/:id/signing-requests/:id/signatures — who signed, and when.
+//
+// A separate call from get() on purpose, mirroring the backend: that route
+// returns the immutable snapshot (who was named, where they sign) and
+// carries no ceremony state at all, so progress has its own surface. A
+// client is therefore always holding exactly one of "what was agreed" or
+// "what has happened since".
+export type RecipientWorkflowState = "waiting" | "active" | "signed" | "declined";
+
+export interface Signatory {
+  recipientId: string;
+  name: string;
+  email: string;
+  organization: string | null;
+  type: string;
+  isRequired: boolean;
+  routingOrder: number;
+  state: RecipientWorkflowState;
+  /** The instant they signed. Null unless `state` is "signed". */
+  signedAt: string | null;
+  declinedAt: string | null;
+  declineReason: string | null;
+}
+
+export interface SigningRequestSignatures {
+  signingRequestId: string;
+  state: SigningRequestState;
+  /** REQUIRED participants only — they are what the request waits on. */
+  signedCount: number;
+  requiredCount: number;
+  signatories: Signatory[];
+}
+
 export interface SigningRequestListResult {
   items: SigningRequestListItem[];
   total: number;
@@ -116,6 +149,12 @@ class RealSigningRequestService {
   async get(workspaceId: string, signingRequestId: string): Promise<SigningRequestDetail> {
     return apiRequest<SigningRequestDetail>(
       `/workspaces/${encodeURIComponent(workspaceId)}/signing-requests/${encodeURIComponent(signingRequestId)}`,
+    );
+  }
+
+  async signatures(workspaceId: string, signingRequestId: string): Promise<SigningRequestSignatures> {
+    return apiRequest<SigningRequestSignatures>(
+      `/workspaces/${encodeURIComponent(workspaceId)}/signing-requests/${encodeURIComponent(signingRequestId)}/signatures`,
     );
   }
 
