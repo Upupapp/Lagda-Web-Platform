@@ -2042,6 +2042,51 @@ function RealDocumentRow({
   );
 }
 
+// Mobile card — the `.doc-table-desktop` grid layout above is hidden below
+// 767px (DOC_STYLES), so without this a mobile visitor to /app/documents saw
+// nothing at all: every real item still loaded, just with no surface to
+// render it on. Same fields as the desktop row, stacked top-to-bottom.
+function RealDocumentCard({
+  item, onView,
+}: {
+  item: SigningRequestListItem;
+  onView: (item: SigningRequestListItem) => void;
+}) {
+  return (
+    <button
+      onClick={() => onView(item)}
+      style={{
+        display: "block", width: "100%", textAlign: "left", background: "#fff",
+        border: `1px solid ${SLATE2}`, borderRadius: 10, padding: "12px 14px",
+        marginBottom: 10, cursor: "pointer", ...GF,
+      }}
+    >
+      <div style={{ display: "flex", alignItems: "flex-start", gap: 8 }}>
+        <FileText size={16} aria-hidden style={{ flexShrink: 0, marginTop: 2, color: SLATE4 }} />
+        <div style={{ minWidth: 0, flex: 1 }}>
+          <div
+            title={item.documentTitle}
+            style={{
+              fontSize: 14, fontWeight: 600, color: NAVY,
+              overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+            }}
+          >
+            {item.documentTitle}
+          </div>
+          <div style={{ marginTop: 8, display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+            <StatusBadge status={SIGNING_REQUEST_STATUS[item.state]} />
+            <ParticipantProgress done={item.completedParticipantCount} total={item.participantCount} />
+          </div>
+          <div style={{ marginTop: 6, fontSize: 12, color: SLATE4 }}>
+            {fmtRelative(item.createdAt)}
+          </div>
+        </div>
+        <Eye size={16} aria-hidden style={{ flexShrink: 0, color: SLATE4, marginTop: 2 }} />
+      </div>
+    </button>
+  );
+}
+
 // The owner-facing document viewer: the "Digital Document Archive" reading
 // surface (see DocumentArchiveViewer.tsx for the rendering approach and why
 // an <iframe> was rejected). This wrapper only supplies WHAT to load — the
@@ -2149,6 +2194,13 @@ function DocumentsPageRealMode() {
                 <RealDocumentRow key={item.signingRequestId} item={item} onView={setViewing} />
               ))}
             </div>
+          </div>
+        )}
+        {status === "ready" && items.length > 0 && (
+          <div className="doc-cards-mobile">
+            {items.map(item => (
+              <RealDocumentCard key={item.signingRequestId} item={item} onView={setViewing} />
+            ))}
           </div>
         )}
       </AppContent>

@@ -398,6 +398,14 @@
 
 .lagda-page-enter {
   animation: lagda-page-enter 220ms cubic-bezier(0, 0, 0.2, 1) both;
+  /* Full height of its scrollable parent (`.platform-main`), with its own
+     scroll — a fixed-position overlay (like the document archive viewer)
+     escapes this by design, but in-flow full-height content (a file
+     preview embedded directly in the page rather than in a dialog) needs
+     this wrapper to actually stretch instead of collapsing to its content's
+     natural height. */
+  height: 100%;
+  overflow: auto;
 }
 
 @media (prefers-reduced-motion: reduce) {
