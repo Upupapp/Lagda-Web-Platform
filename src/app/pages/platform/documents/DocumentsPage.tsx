@@ -19,6 +19,10 @@ import {
   AppContent, EmptyStateLayout, SkeletonBlock, SKELETON_STYLE, PageHeader,
 } from "../../../components/platform";
 import { mockDocumentService } from "../../../services/mock/document.service";
+import {
+  realSigningRequestService,
+  type SigningRequestListItem, type SigningRequestState,
+} from "../../../services/real/signing-request.service";
 import { documentOrganizationService } from "../../../services/mock/document-organization.service";
 import { isCapabilityInActiveProfile } from "../../../config/capability-resolver";
 import { TRANSACTION_STATUS_LABELS } from "../../../models";
@@ -1952,17 +1956,176 @@ function DocumentsPageMockDemo() {
 }
 
 // ── Real-backend mode ──────────────────────────────────────────────────────────
-// The rich list above (status views, folders, tags, archive, bulk actions) is
-// built entirely around the mock/demo document model and is explicitly
-// scoped as demo-only (see this file's header comment: "No backend
-// mutations"). The real backend's document model has no status/participant
-// data to drive that UI yet (see real/document.service.ts's own header) —
-// that's a deliberately deferred, larger Documents-domain integration, not
-// something to fake here. Showing DOCUMENT_FIXTURES regardless of
-// USE_REAL_BACKEND previously meant a real/QA user saw sample documents that
-// had nothing to do with what they'd actually uploaded — this replaces that
-// with an honest placeholder instead of inventing a stripped-down real list.
+// The rich list above (folders, tags, archive, bulk actions, starred/recent
+// views) is built entirely around the mock/demo document model and stays
+// demo-only (see this file's header comment: "No backend mutations") — none
+// of that has backing schema on the real backend yet, and building it is a
+// separate, larger scope.
+//
+// The list ITSELF, however, is real: `GET /workspaces/:id/signing-requests`
+// (signing-request-routes.ts) already returns real status, participant
+// progress and timestamps for every document a user has prepared and sent —
+// it was simply never wired up here. `SigningRequestState` overlaps
+// `TransactionStatus` for 8 of its 9 values exactly (draft, ready-to-send,
+// sent, partially-completed, completed, declined, cancelled, expired); only
+// `completion-ready` has no matching label, mapped to `awaiting-signature`
+// below (an accurate description: recipients have all acted, the document
+// is not yet marked done). This reuses `StatusBadge`'s existing tone system
+// rather than inventing a second one.
+const SIGNING_REQUEST_STATUS: Record<SigningRequestState, TransactionStatus> = {
+  "draft": "draft",
+  "ready-to-send": "ready-to-send",
+  "sent": "sent",
+  "partially-completed": "partially-completed",
+  "completion-ready": "awaiting-signature",
+  "completed": "completed",
+  "declined": "declined",
+  "cancelled": "cancelled",
+  "expired": "expired",
+};
+
+function RealDocumentRow({
+  item, onView,
+}: {
+  item: SigningRequestListItem;
+  onView: (item: SigningRequestListItem) => void;
+}) {
+  return (
+    <div role="row" className="doc-row">
+      <div role="cell" />
+      <div role="cell" style={{ padding: "8px 8px", minWidth: 0 }}>
+        <div style={{ display: "flex", alignItems: "flex-start", gap: 8, minWidth: 0 }}>
+          <FileText size={15} aria-hidden style={{ flexShrink: 0, marginTop: 2, color: SLATE4 }} />
+          <button
+            onClick={() => onView(item)}
+            title={item.documentTitle}
+            style={{
+              fontSize: 13, fontWeight: 600, color: NAVY, background: "none", border: "none",
+              cursor: "pointer", padding: 0, textAlign: "left", overflow: "hidden",
+              textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "100%", ...GF,
+            }}
+          >
+            {item.documentTitle}
+          </button>
+        </div>
+      </div>
+      <div role="cell" style={{ padding: "8px 8px" }}>
+        <StatusBadge status={SIGNING_REQUEST_STATUS[item.state]} />
+      </div>
+      <div role="cell" style={{ padding: "8px 8px" }}>
+        <ParticipantProgress done={item.completedParticipantCount} total={item.participantCount} />
+      </div>
+      <div role="cell" className="doc-col-updated" style={{ padding: "8px 8px" }}>
+        <span style={{ fontSize: 12, color: SLATE4, whiteSpace: "nowrap", ...GF }}>
+          {fmtRelative(item.createdAt)}
+        </span>
+      </div>
+      <div role="cell" style={{ padding: "8px 4px" }}>
+        <button
+          onClick={() => onView(item)}
+          aria-label={`View ${item.documentTitle}`}
+          style={{
+            width: 32, height: 32, border: "none", background: "transparent",
+            cursor: "pointer", borderRadius: 6, display: "flex", alignItems: "center",
+            justifyContent: "center", color: SLATE4,
+          }}
+        >
+          <Eye size={15} aria-hidden />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// The owner-facing document viewer. Mirrors RealSigningPage.tsx's
+// recipient-facing one exactly: fetch a Blob over a credentialed session,
+// feed it to an <iframe> via a blob: object URL, revoke it on close/unmount
+// so the decoded bytes don't linger past the dialog's lifetime.
+function DocumentViewerDialog({
+  workspaceId, item, onClose,
+}: {
+  workspaceId: string;
+  item: SigningRequestListItem;
+  onClose: () => void;
+}) {
+  const [blobUrl, setBlobUrl] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    let url: string | null = null;
+    void realSigningRequestService.documentContentBlob(workspaceId, item.documentId)
+      .then(blob => {
+        if (cancelled) return;
+        url = URL.createObjectURL(blob);
+        setBlobUrl(url);
+      })
+      .catch(() => { if (!cancelled) setError("Could not load this document."); });
+    return () => {
+      cancelled = true;
+      if (url) URL.revokeObjectURL(url);
+    };
+  }, [workspaceId, item.documentId]);
+
+  useEffect(() => {
+    function h(e: KeyboardEvent) { if (e.key === "Escape") onClose(); }
+    document.addEventListener("keydown", h);
+    return () => document.removeEventListener("keydown", h);
+  }, [onClose]);
+
+  return (
+    <div
+      role="dialog" aria-modal="true" aria-label={item.documentTitle}
+      style={{ position: "fixed", inset: 0, zIndex: Z.modal, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(7,17,31,0.6)" }}
+      onClick={e => { if (e.target === e.currentTarget) onClose(); }}
+    >
+      <div style={{ background: "#fff", borderRadius: 12, width: "min(900px, calc(100vw - 32px))", height: "min(90vh, 1100px)", display: "flex", flexDirection: "column", boxShadow: "0 8px 32px rgba(0,0,0,0.25)" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 18px", borderBottom: `1px solid ${SLATE2}` }}>
+          <h2 style={{ fontSize: 14, fontWeight: 700, color: NAVY, margin: 0, ...GF, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            {item.documentTitle}
+          </h2>
+          <button onClick={onClose} aria-label="Close" style={{ background: "none", border: "none", cursor: "pointer", color: SLATE4, padding: 2, flexShrink: 0 }}>
+            <X size={18} aria-hidden />
+          </button>
+        </div>
+        <div style={{ flex: 1, minHeight: 0 }}>
+          {error && (
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%", color: SLATE6, fontSize: 13, ...GF }}>
+              {error}
+            </div>
+          )}
+          {!error && !blobUrl && (
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%", color: SLATE4, fontSize: 13, ...GF }}>
+              Loading…
+            </div>
+          )}
+          {!error && blobUrl && (
+            <iframe src={blobUrl} title={item.documentTitle} style={{ width: "100%", height: "100%", border: "none" }} />
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function DocumentsPageRealMode() {
+  const { currentWorkspace } = usePlatform();
+  const workspaceId = currentWorkspace?.id ?? null;
+
+  const [items, setItems] = useState<SigningRequestListItem[]>([]);
+  const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
+  const [viewing, setViewing] = useState<SigningRequestListItem | null>(null);
+
+  useEffect(() => {
+    if (!workspaceId) return;
+    let cancelled = false;
+    setStatus("loading");
+    void realSigningRequestService.list(workspaceId, { perPage: 50 })
+      .then(result => { if (!cancelled) { setItems(result.items); setStatus("ready"); } })
+      .catch(() => { if (!cancelled) setStatus("error"); });
+    return () => { cancelled = true; };
+  }, [workspaceId]);
+
   return (
     <>
       <PageHeader
@@ -1982,12 +2145,49 @@ function DocumentsPageRealMode() {
         }
       />
       <AppContent style={{ padding: "0 24px 32px" }}>
-        <EmptyStateLayout
-          icon={<FileText size={28} />}
-          title="Your documents will appear here"
-          description="This workspace's document list is still being built out for real accounts — status tracking, folders, and tags aren't wired up yet. Documents you upload and send through Prepare Document are saved and processed for real; this view just doesn't show them as a list yet. Use Prepare Document to start a new one."
-        />
+        <style>{DOC_STYLES}</style>
+        {status === "loading" && (
+          <div style={{ padding: "32px 0" }}>
+            <SkeletonBlock height={40} />
+          </div>
+        )}
+        {status === "error" && (
+          <EmptyStateLayout
+            icon={<FileText size={28} />}
+            title="Couldn't load your documents"
+            description="Something went wrong loading this workspace's documents. Try refreshing the page."
+          />
+        )}
+        {status === "ready" && items.length === 0 && (
+          <EmptyStateLayout
+            icon={<FileText size={28} />}
+            title="Your documents will appear here"
+            description="Documents you prepare and send for signing will show up in this list. Use Prepare Document to start one."
+          />
+        )}
+        {status === "ready" && items.length > 0 && (
+          <div className="doc-table-desktop" role="table" aria-label="Documents">
+            <div role="rowgroup">
+              <div role="row" className="doc-header">
+                <div role="columnheader" aria-label="Icon" />
+                <div role="columnheader" style={{ fontSize: 11, fontWeight: 700, color: SLATE4, textTransform: "uppercase", letterSpacing: "0.06em", padding: "0 8px", ...GF }}>Document</div>
+                <div role="columnheader" style={{ fontSize: 11, fontWeight: 700, color: SLATE4, textTransform: "uppercase", letterSpacing: "0.06em", padding: "0 8px", ...GF }}>Status</div>
+                <div role="columnheader" style={{ fontSize: 11, fontWeight: 700, color: SLATE4, textTransform: "uppercase", letterSpacing: "0.06em", padding: "0 8px", ...GF }}>Progress</div>
+                <div role="columnheader" className="doc-col-updated" style={{ fontSize: 11, fontWeight: 700, color: SLATE4, textTransform: "uppercase", letterSpacing: "0.06em", padding: "0 8px", ...GF }}>Created</div>
+                <div role="columnheader" aria-label="Actions" />
+              </div>
+            </div>
+            <div role="rowgroup">
+              {items.map(item => (
+                <RealDocumentRow key={item.signingRequestId} item={item} onView={setViewing} />
+              ))}
+            </div>
+          </div>
+        )}
       </AppContent>
+      {viewing && workspaceId && (
+        <DocumentViewerDialog workspaceId={workspaceId} item={viewing} onClose={() => setViewing(null)} />
+      )}
     </>
   );
 }

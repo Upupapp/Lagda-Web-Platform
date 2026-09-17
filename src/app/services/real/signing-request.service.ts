@@ -4,7 +4,7 @@
 // that exists today, nothing invented. See signing-request-routes.ts and
 // send-routes.ts.
 
-import { apiRequest } from "../api-client";
+import { apiRequest, ApiError } from "../api-client";
 import { API_BASE_URL } from "../backend-flag";
 
 export type SigningRequestState =
@@ -60,6 +60,31 @@ export interface SentResponse {
   waitingRecipientCount: number;
 }
 
+// GET /workspaces/:workspaceId/signing-requests — the workspace's own
+// documents list, backed by real data. Traced against
+// signing-request-routes.ts's `present`/list handler: exactly these fields,
+// with the same nullable-timestamp convention (null stays null, never "").
+export interface SigningRequestListItem {
+  signingRequestId: string;
+  documentId: string;
+  documentTitle: string;
+  state: SigningRequestState;
+  participantCount: number;
+  completedParticipantCount: number;
+  createdAt: string;
+  sentAt: string | null;
+  completedAt: string | null;
+  expiresAt: string | null;
+}
+
+export interface SigningRequestListResult {
+  items: SigningRequestListItem[];
+  total: number;
+  page: number;
+  perPage: number;
+  hasNextPage: boolean;
+}
+
 class RealSigningRequestService {
   // The body is a deliberately empty/closed schema server-side (recipients
   // and fields are snapshotted from the already-saved preparation, never
@@ -75,6 +100,16 @@ class RealSigningRequestService {
     return apiRequest<SigningRequestCreated>(
       `/workspaces/${encodeURIComponent(workspaceId)}/documents/${encodeURIComponent(documentId)}/signing-requests`,
       { method: "POST", headers: { "Idempotency-Key": idempotencyKey }, body: {} },
+    );
+  }
+
+  async list(workspaceId: string, params?: { page?: number; perPage?: number }): Promise<SigningRequestListResult> {
+    const query = new URLSearchParams();
+    if (params?.page !== undefined) query.set("page", String(params.page));
+    if (params?.perPage !== undefined) query.set("perPage", String(params.perPage));
+    const qs = query.toString();
+    return apiRequest<SigningRequestListResult>(
+      `/workspaces/${encodeURIComponent(workspaceId)}/signing-requests${qs ? `?${qs}` : ""}`,
     );
   }
 
@@ -125,6 +160,30 @@ class RealSigningRequestService {
   downloadUrl(workspaceId: string, signingRequestId: string): string {
     return `${API_BASE_URL ?? ""}/workspaces/${encodeURIComponent(workspaceId)}`
       + `/signing-requests/${encodeURIComponent(signingRequestId)}/completed-document`;
+  }
+
+  // Viewing a document's own bytes, at any state (not just completed) — the
+  // owner-facing counterpart to the recipient ceremony's
+  // fetchRecipientDocumentBlob(). Same reasoning: a Blob is what
+  // URL.createObjectURL()+<iframe> needs, and apiRequest() is JSON-only, so
+  // this bypasses it for a raw credentialed fetch. Backend route is
+  // GET /workspaces/:workspaceId/documents/:documentId/content
+  // (document-routes.ts) — absent (404) when no object storage is
+  // configured in this deployment, same "route doesn't exist" convention as
+  // the completed-document download above.
+  async documentContentBlob(workspaceId: string, documentId: string): Promise<Blob> {
+    if (!API_BASE_URL) {
+      throw new Error("documentContentBlob called with no VITE_API_BASE_URL configured.");
+    }
+    const response = await fetch(
+      `${API_BASE_URL}/workspaces/${encodeURIComponent(workspaceId)}`
+      + `/documents/${encodeURIComponent(documentId)}/content`,
+      { method: "GET", credentials: "include" },
+    );
+    if (!response.ok) {
+      throw new ApiError(response.status, undefined, "Could not load the document.");
+    }
+    return response.blob();
   }
 }
 
