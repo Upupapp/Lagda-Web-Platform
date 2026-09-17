@@ -5,7 +5,7 @@
 // No real document content in list. No private audit evidence displayed.
 // All participant names are fictional. No IP, device, location shown.
 
-import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef, lazy, Suspense } from "react";
 import { Link, useSearchParams } from "react-router";
 import {
   FileText, FilePlus, Search, MoreHorizontal, Archive, RotateCcw, Pencil,
@@ -23,6 +23,11 @@ import {
   realSigningRequestService,
   type SigningRequestListItem, type SigningRequestState,
 } from "../../../services/real/signing-request.service";
+// Lazy: pdf.js (~400KB) has no reason to load for every Documents page visit
+// — only once someone actually opens a document.
+const DocumentArchiveViewer = lazy(() =>
+  import("../../../components/documents/DocumentArchiveViewer")
+    .then(m => ({ default: m.DocumentArchiveViewer })));
 import { documentOrganizationService } from "../../../services/mock/document-organization.service";
 import { isCapabilityInActiveProfile } from "../../../config/capability-resolver";
 import { TRANSACTION_STATUS_LABELS } from "../../../models";
@@ -2037,10 +2042,11 @@ function RealDocumentRow({
   );
 }
 
-// The owner-facing document viewer. Mirrors RealSigningPage.tsx's
-// recipient-facing one exactly: fetch a Blob over a credentialed session,
-// feed it to an <iframe> via a blob: object URL, revoke it on close/unmount
-// so the decoded bytes don't linger past the dialog's lifetime.
+// The owner-facing document viewer: the "Digital Document Archive" reading
+// surface (see DocumentArchiveViewer.tsx for the rendering approach and why
+// an <iframe> was rejected). This wrapper only supplies WHAT to load — the
+// real stored bytes, via the same real backend route the rest of this page
+// already talks to — never how to render it.
 function DocumentViewerDialog({
   workspaceId, item, onClose,
 }: {
@@ -2048,63 +2054,24 @@ function DocumentViewerDialog({
   item: SigningRequestListItem;
   onClose: () => void;
 }) {
-  const [blobUrl, setBlobUrl] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    let cancelled = false;
-    let url: string | null = null;
-    void realSigningRequestService.documentContentBlob(workspaceId, item.documentId)
-      .then(blob => {
-        if (cancelled) return;
-        url = URL.createObjectURL(blob);
-        setBlobUrl(url);
-      })
-      .catch(() => { if (!cancelled) setError("Could not load this document."); });
-    return () => {
-      cancelled = true;
-      if (url) URL.revokeObjectURL(url);
-    };
-  }, [workspaceId, item.documentId]);
-
-  useEffect(() => {
-    function h(e: KeyboardEvent) { if (e.key === "Escape") onClose(); }
-    document.addEventListener("keydown", h);
-    return () => document.removeEventListener("keydown", h);
-  }, [onClose]);
-
+  const loadBlob = useCallback(
+    () => realSigningRequestService.documentContentBlob(workspaceId, item.documentId),
+    [workspaceId, item.documentId],
+  );
   return (
-    <div
-      role="dialog" aria-modal="true" aria-label={item.documentTitle}
-      style={{ position: "fixed", inset: 0, zIndex: Z.modal, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(7,17,31,0.6)" }}
-      onClick={e => { if (e.target === e.currentTarget) onClose(); }}
-    >
-      <div style={{ background: "#fff", borderRadius: 12, width: "min(900px, calc(100vw - 32px))", height: "min(90vh, 1100px)", display: "flex", flexDirection: "column", boxShadow: "0 8px 32px rgba(0,0,0,0.25)" }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 18px", borderBottom: `1px solid ${SLATE2}` }}>
-          <h2 style={{ fontSize: 14, fontWeight: 700, color: NAVY, margin: 0, ...GF, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-            {item.documentTitle}
-          </h2>
-          <button onClick={onClose} aria-label="Close" style={{ background: "none", border: "none", cursor: "pointer", color: SLATE4, padding: 2, flexShrink: 0 }}>
-            <X size={18} aria-hidden />
-          </button>
-        </div>
-        <div style={{ flex: 1, minHeight: 0 }}>
-          {error && (
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%", color: SLATE6, fontSize: 13, ...GF }}>
-              {error}
-            </div>
-          )}
-          {!error && !blobUrl && (
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%", color: SLATE4, fontSize: 13, ...GF }}>
-              Loading…
-            </div>
-          )}
-          {!error && blobUrl && (
-            <iframe src={blobUrl} title={item.documentTitle} style={{ width: "100%", height: "100%", border: "none" }} />
-          )}
-        </div>
+    <Suspense fallback={
+      <div
+        role="dialog" aria-modal="true" aria-label={item.documentTitle}
+        style={{
+          position: "fixed", inset: 0, zIndex: Z.modal, display: "flex",
+          alignItems: "center", justifyContent: "center", background: "#12100D",
+        }}
+      >
+        <FileText size={32} color="#C9A15A" aria-hidden />
       </div>
-    </div>
+    }>
+      <DocumentArchiveViewer title={item.documentTitle} loadBlob={loadBlob} onClose={onClose} />
+    </Suspense>
   );
 }
 
