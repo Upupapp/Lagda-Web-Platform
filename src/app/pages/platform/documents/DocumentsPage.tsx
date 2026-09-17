@@ -29,6 +29,8 @@ const DocumentArchiveViewer = lazy(() =>
   import("../../../components/documents/DocumentArchiveViewer")
     .then(m => ({ default: m.DocumentArchiveViewer })));
 import { SignatureRecordDialog } from "../../../components/documents/SignatureRecordDialog";
+import { realDocumentService } from "../../../services/real/document.service";
+import { iconForDocument } from "../../../services/documents/file-type-icon";
 import { documentOrganizationService } from "../../../services/mock/document-organization.service";
 import { isCapabilityInActiveProfile } from "../../../config/capability-resolver";
 import { TRANSACTION_STATUS_LABELS } from "../../../models";
@@ -98,16 +100,30 @@ const DOC_STYLES = SKELETON_STYLE + `
   .doc-org-view-btn.active { background: #EFF6FF18; color: #0078D4; border-left-color: #0078D4; font-weight: 600; }
   .doc-table-desktop { display: block; }
   .doc-cards-mobile  { display: none; }
-  .doc-row { display: grid; grid-template-columns: 40px 1fr 150px 100px 110px 48px; align-items: center; min-height: 52px; border-bottom: 1px solid #F1F5F9; }
+  /* Column widths are sized to their CONTENT, not guessed. The progress
+     column carries a 40px meter, a "1/1" count and a "Signed"/"Details"
+     label with gaps — around 128px at the platform's 12px body size — so
+     the old 100px track let it bleed over the Created column beside it.
+     150px holds it with headroom; \`column-gap\` then guarantees a visible
+     separation even if a future label runs long. */
+  .doc-row { display: grid; grid-template-columns: 40px minmax(0, 1fr) 150px 150px 116px 48px; column-gap: 8px; align-items: center; min-height: 52px; border-bottom: 1px solid #F1F5F9; }
   .doc-row:last-child { border-bottom: none; }
   .doc-row:hover { background: #F8FAFC; }
-  .doc-header { display: grid; grid-template-columns: 40px 1fr 150px 100px 110px 48px; align-items: center; padding: 8px 0; border-bottom: 1px solid #E2E8F0; }
+  .doc-header { display: grid; grid-template-columns: 40px minmax(0, 1fr) 150px 150px 116px 48px; column-gap: 8px; align-items: center; padding: 8px 0; border-bottom: 1px solid #E2E8F0; }
+  /* Every cell is its own containment context. Without this a long title or
+     a wide meter widens its track instead of truncating inside it, which is
+     what turns one overflowing cell into a shifted row. */
+  .doc-row > *, .doc-header > * { min-width: 0; overflow: hidden; }
   .doc-view-tabs { display: flex; gap: 0; border-bottom: 1px solid #E2E8F0; overflow-x: auto; scrollbar-width: none; -ms-overflow-style: none; }
   .doc-view-tabs::-webkit-scrollbar { display: none; }
   @media (max-width: 900px) {
     .doc-folder-panel { display: none; }
-    .doc-row { grid-template-columns: 40px 1fr 130px 88px 48px; }
-    .doc-header { grid-template-columns: 40px 1fr 130px 88px 48px; }
+    /* Created is dropped here, so five tracks. Progress keeps a real width
+       rather than the old 88px: the same meter and label still have to fit,
+       and squeezing the track is what produced the overlap in the first
+       place. */
+    .doc-row { grid-template-columns: 40px minmax(0, 1fr) 130px 140px 48px; }
+    .doc-header { grid-template-columns: 40px minmax(0, 1fr) 130px 140px 48px; }
     .doc-col-updated { display: none; }
   }
   @media (max-width: 767px) {
@@ -1990,6 +2006,19 @@ const SIGNING_REQUEST_STATUS: Record<SigningRequestState, TransactionStatus> = {
   "expired": "expired",
 };
 
+/**
+ * What the Documents page knows about a request's underlying FILE.
+ *
+ * Both nullable, and both genuinely absent in real states: a document
+ * created but not yet uploaded has no detected type, and one uploaded
+ * before the filename was recorded has no name. The icon helper treats
+ * either absence as "fall back", never as an error.
+ */
+interface DocumentFileFacts {
+  mediaType: string | null;
+  filename: string | null;
+}
+
 // The signature affordance. Shown only once a request has actually been sent
 // — a draft has no signatures to record, and offering to open an empty
 // record would read as though something were missing.
@@ -2026,18 +2055,20 @@ function SignatureLink({
 }
 
 function RealDocumentRow({
-  item, onView, onSignatures,
+  item, onView, onSignatures, file,
 }: {
   item: SigningRequestListItem;
   onView: (item: SigningRequestListItem) => void;
   onSignatures: (item: SigningRequestListItem) => void;
+  file: DocumentFileFacts | undefined;
 }) {
+  const FileGlyph = iconForDocument(file?.mediaType, file?.filename);
   return (
     <div role="row" className="doc-row">
       <div role="cell" />
       <div role="cell" style={{ padding: "8px 8px", minWidth: 0 }}>
         <div style={{ display: "flex", alignItems: "flex-start", gap: 8, minWidth: 0 }}>
-          <FileText size={15} aria-hidden style={{ flexShrink: 0, marginTop: 2, color: SLATE4 }} />
+          <FileGlyph size={15} aria-hidden style={{ flexShrink: 0, marginTop: 2, color: SLATE4 }} />
           <button
             onClick={() => onView(item)}
             title={item.documentTitle}
@@ -2084,12 +2115,14 @@ function RealDocumentRow({
 // nothing at all: every real item still loaded, just with no surface to
 // render it on. Same fields as the desktop row, stacked top-to-bottom.
 function RealDocumentCard({
-  item, onView, onSignatures,
+  item, onView, onSignatures, file,
 }: {
   item: SigningRequestListItem;
   onView: (item: SigningRequestListItem) => void;
   onSignatures: (item: SigningRequestListItem) => void;
+  file: DocumentFileFacts | undefined;
 }) {
+  const FileGlyph = iconForDocument(file?.mediaType, file?.filename);
   // A div, not a button: the signature affordance below is itself a button,
   // and a button inside a button is invalid HTML that browsers resolve
   // unpredictably. The title and the eye icon are the two real controls.
@@ -2101,7 +2134,7 @@ function RealDocumentCard({
       }}
     >
       <div style={{ display: "flex", alignItems: "flex-start", gap: 8 }}>
-        <FileText size={16} aria-hidden style={{ flexShrink: 0, marginTop: 2, color: SLATE4 }} />
+        <FileGlyph size={16} aria-hidden style={{ flexShrink: 0, marginTop: 2, color: SLATE4 }} />
         <div style={{ minWidth: 0, flex: 1 }}>
           <button
             onClick={() => onView(item)}
@@ -2179,14 +2212,32 @@ function DocumentsPageRealMode() {
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
   const [viewing, setViewing] = useState<SigningRequestListItem | null>(null);
   const [signaturesFor, setSignaturesFor] = useState<SigningRequestListItem | null>(null);
+  const [files, setFiles] = useState<Map<string, DocumentFileFacts>>(new Map());
 
   useEffect(() => {
     if (!workspaceId) return;
     let cancelled = false;
     setStatus("loading");
+
     void realSigningRequestService.list(workspaceId, { perPage: 50 })
       .then(result => { if (!cancelled) { setItems(result.items); setStatus("ready"); } })
       .catch(() => { if (!cancelled) setStatus("error"); });
+
+    // The file's TYPE, fetched alongside rather than as part of the list.
+    // A signing request is a workflow row and carries no file information;
+    // the document row is where the server's detected media type lives. A
+    // separate, non-blocking call so a failure here costs an accurate icon
+    // and never the list itself.
+    void realDocumentService.list(workspaceId, { perPage: 100 })
+      .then(result => {
+        if (cancelled) return;
+        setFiles(new Map(result.items.map(document => [
+          document.documentId,
+          { mediaType: document.source?.mediaType ?? null, filename: document.originalFilename },
+        ])));
+      })
+      .catch(() => { /* Icons fall back to the generic file glyph. */ });
+
     return () => { cancelled = true; };
   }, [workspaceId]);
 
@@ -2246,6 +2297,7 @@ function DocumentsPageRealMode() {
                 <RealDocumentRow
                   key={item.signingRequestId} item={item}
                   onView={setViewing} onSignatures={setSignaturesFor}
+                  file={files.get(item.documentId)}
                 />
               ))}
             </div>
@@ -2257,6 +2309,7 @@ function DocumentsPageRealMode() {
               <RealDocumentCard
                 key={item.signingRequestId} item={item}
                 onView={setViewing} onSignatures={setSignaturesFor}
+                file={files.get(item.documentId)}
               />
             ))}
           </div>

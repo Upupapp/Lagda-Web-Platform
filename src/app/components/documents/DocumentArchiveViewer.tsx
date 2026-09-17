@@ -176,9 +176,22 @@ function ArchivePage({
         border: `1px solid ${PAPER_EDGE}`,
       }}
     >
-      {rendered && (
-        <canvas ref={canvasRef} style={{ display: "block", width: cssWidth, height: cssHeight }} />
-      )}
+      {/* ALWAYS mounted, never gated on `rendered`.
+          pdf.js draws into this element, so the element has to exist before
+          the draw can start. Gating it on the flag the draw itself sets is a
+          deadlock: the effect reads `canvasRef.current`, finds null because
+          the canvas was not mounted, returns early, and therefore never sets
+          the flag that would have mounted it — so every page stayed blank.
+          `rendered` now controls only the overlay on top. */}
+      <canvas
+        ref={canvasRef}
+        style={{
+          display: "block", width: cssWidth, height: cssHeight,
+          // Hidden until there are real pixels in it, so a half-drawn or
+          // stale bitmap never flashes at the reader.
+          visibility: rendered ? "visible" : "hidden",
+        }}
+      />
       {!rendered && (
         <div style={{
           position: "absolute", inset: 0, display: "flex", alignItems: "center",
@@ -225,13 +238,31 @@ export function DocumentArchiveViewer({ title, loadBlob, onClose }: DocumentArch
       try {
         const blob = await loadBlob();
         if (cancelled) return;
-        if (blob.type !== "" && blob.type !== "application/pdf") {
-          setState({ status: "error", message: "This file type isn't supported by the document viewer yet." });
-          return;
-        }
+
+        // The BYTES decide, not the declared type. A proxy that rewrites or
+        // drops `Content-Type` would otherwise make a perfectly renderable
+        // document unopenable, so an unexpected type is a reason to warn
+        // after failing, never a reason not to try.
+        const declaredType = blob.type;
         const data = await blob.arrayBuffer();
         if (cancelled) return;
-        doc = await pdfjsLib.getDocument({ data }).promise;
+        try {
+          doc = await pdfjsLib.getDocument({ data }).promise;
+        } catch {
+          // Only now is the declared type worth reporting: it turns "this is
+          // broken" into "this is a .docx, which this viewer cannot draw".
+          // Returning rather than rethrowing, so the outer handler does not
+          // replace this specific explanation with its generic one.
+          if (!cancelled) {
+            setState({
+              status: "error",
+              message: declaredType !== "" && declaredType !== "application/pdf"
+                ? `This viewer displays PDF documents. This file is ${declaredType}, which it cannot draw.`
+                : "This document could not be opened. It may be damaged or still processing.",
+            });
+          }
+          return;
+        }
         if (cancelled) { void doc.destroy(); return; }
 
         // Geometry for every page, up front — cheap (page dictionary only,

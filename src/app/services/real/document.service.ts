@@ -11,6 +11,20 @@
 
 import { apiRequest, apiUpload } from "../api-client";
 
+/**
+ * The document's accepted bytes, or null before any upload has landed.
+ *
+ * `mediaType` is SERVER-DETECTED by content sniffing during the upload
+ * pipeline — never the type the browser claimed — so it is the only
+ * trustworthy answer to "what kind of file is this".
+ */
+export interface RealDocumentSource {
+  mediaType: string;
+  sizeBytes: number;
+  pageCount: number | null;
+  uploadedAt: string;
+}
+
 export interface RealDocument {
   documentId: string;
   title: string;
@@ -19,7 +33,15 @@ export interface RealDocument {
   folderId: string | null;
   createdAt: string;
   updatedAt: string;
-  source: unknown;
+  source: RealDocumentSource | null;
+}
+
+export interface RealDocumentListResult {
+  items: RealDocument[];
+  total: number;
+  page: number;
+  perPage: number;
+  hasNextPage: boolean;
 }
 
 export interface RealUploadResult {
@@ -45,6 +67,21 @@ class RealDocumentService {
   // one. Callers must persist the returned id immediately so a retry never
   // creates a second document for the same intended file (see
   // UploadStep.tsx's uploadFile()).
+  // GET /workspaces/{workspaceId}/documents — the workspace's documents,
+  // each with its server-detected `source.mediaType`. The signing-request
+  // list the Documents page is built on deliberately carries no file-type
+  // information (it is a workflow row, not a file row), so this is where a
+  // type-accurate icon has to come from.
+  async list(workspaceId: string, params?: { page?: number; perPage?: number }): Promise<RealDocumentListResult> {
+    const query = new URLSearchParams();
+    if (params?.page !== undefined) query.set("page", String(params.page));
+    if (params?.perPage !== undefined) query.set("perPage", String(params.perPage));
+    const qs = query.toString();
+    return apiRequest<RealDocumentListResult>(
+      `/workspaces/${encodeURIComponent(workspaceId)}/documents${qs ? `?${qs}` : ""}`,
+    );
+  }
+
   async create(workspaceId: string, title: string): Promise<RealDocument> {
     return apiRequest<RealDocument>(`/workspaces/${encodeURIComponent(workspaceId)}/documents`, {
       method: "POST",
