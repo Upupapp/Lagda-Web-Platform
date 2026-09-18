@@ -6,8 +6,8 @@
 // a step rail that never marks the current step, fails in a way no assertion
 // elsewhere would notice.
 
-import { describe, it, expect, afterEach } from "vitest";
-import { render, screen, cleanup, act } from "@testing-library/react";
+import { describe, it, expect } from "vitest";
+import { render, screen, act } from "@testing-library/react";
 import { ShieldCheck, Ban } from "lucide-react";
 import {
   PhaseBanner, Notice, ActionButton, ActionRow, StepRail, SignerCard,
@@ -25,7 +25,8 @@ function atWidth(width: number, ui: React.ReactElement) {
   return render(ui);
 }
 
-afterEach(() => { cleanup(); });
+// No manual cleanup: the test runner unmounts between tests already, and the
+// cases below that need two renders in one test unmount explicitly.
 
 describe("PhaseBanner", () => {
   it("renders the title as the page heading", () => {
