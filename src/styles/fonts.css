@@ -1,1 +1,6 @@
-@import url('https://fonts.googleapis.com/css2?family=Geist:wght@100..900&family=Geist+Mono:wght@100..900&family=Inter:wght@400;600;700;800&display=swap');
+/* Noto Sans ITALIC is not a brand face — it is the face the backend's sealing
+   package embeds and draws typed signatures in (`SIGNATURE_FACE`). The signing
+   ceremony previews a typed signature in it so what the signer sees is what
+   gets rendered into the sealed PDF. Loading a different face here would make
+   the preview a pleasant lie. */
+@import url('https://fonts.googleapis.com/css2?family=Geist:wght@100..900&family=Geist+Mono:wght@100..900&family=Inter:wght@400;600;700;800&family=Noto+Sans:ital,wght@1,400;1,600&display=swap');

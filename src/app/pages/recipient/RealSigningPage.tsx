@@ -25,6 +25,9 @@ import {
 import {
   realSigningSubmissionService, type SubmittedFieldValue, type SigningDeclineReason,
 } from "../../services/real/signing-submission.service";
+import {
+  SignatureCapture, type SignatureValue,
+} from "../../components/recipient/SignatureCapture";
 import { ApiError } from "../../services/api-client";
 import { DECLINE_REASON_CATEGORIES } from "../../models/recipient";
 
@@ -53,8 +56,11 @@ export function RealSigningPage() {
   const [view, setView] = useState<CeremonyView | null>(null);
   const [documentUrl, setDocumentUrl] = useState<string | null>(null);
   const [values, setValues] = useState<Record<string, string | boolean>>({});
-  const [signatureText, setSignatureText] = useState("");
-  const [initialsText, setInitialsText] = useState("");
+  // The ADOPTED representations, not raw text. A signature may now be drawn,
+  // typed or uploaded, and the first and last are not text at all — so the
+  // ceremony holds what will be submitted rather than what was typed.
+  const [signature, setSignature] = useState<SignatureValue | null>(null);
+  const [initials, setInitials] = useState<SignatureValue | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [declineReason, setDeclineReason] = useState<SigningDeclineReason>("not-agree");
 
@@ -141,8 +147,8 @@ export function RealSigningPage() {
 
   const missingRequired = assignedFields.filter((f) => {
     if (!f.required) return false;
-    if (f.type === "signature") return !signatureText.trim();
-    if (f.type === "initials")  return !initialsText.trim();
+    if (f.type === "signature") return signature === null;
+    if (f.type === "initials")  return initials === null;
     if (f.type === "checkbox")  return values[f.fieldId] !== true;
     return !values[f.fieldId] || String(values[f.fieldId]).trim() === "";
   });
@@ -159,13 +165,16 @@ export function RealSigningPage() {
       if (!submitKeyRef.current) submitKeyRef.current = crypto.randomUUID();
       await realSigningSubmissionService.submit({
         fieldValues: buildFieldValues(),
-        ...(needsSignature ? { signature: { method: "typed" as const, text: signatureText.trim(), styleIndex: 0 } } : {}),
-        ...(needsInitials  ? { initials:  { method: "typed" as const, text: initialsText.trim(),  styleIndex: 0 } } : {}),
+        // Sent exactly as captured. `missingRequired` above has already
+        // refused a null for a required field, so a non-null here is a
+        // representation the signer actually adopted.
+        ...(needsSignature && signature !== null ? { signature } : {}),
+        ...(needsInitials && initials !== null ? { initials } : {}),
       }, submitKeyRef.current);
       submitKeyRef.current = null; // confirmed — never reused
       setPhase("submitted");
     } catch (err) {
-      setErrorMessage(describeError(err));
+      setErrorMessage(describeSubmissionError(err));
     } finally {
       setSubmitting(false);
     }
@@ -336,24 +345,22 @@ export function RealSigningPage() {
             <p style={{ ...GF, fontSize: 13, color: SILVER }}>No fields are assigned to you on this document.</p>
           )}
           {needsSignature && (
-            <FieldRow label="Signature (required)">
-              <input
-                value={signatureText}
-                onChange={(e) => setSignatureText(e.target.value)}
-                placeholder="Type your full name to sign"
-                style={inputStyle}
-              />
-            </FieldRow>
+            <SignatureCapture
+              label="Signature (required)"
+              purpose="signature"
+              value={signature}
+              onChange={setSignature}
+              disabled={submitting}
+            />
           )}
           {needsInitials && (
-            <FieldRow label="Initials (required)">
-              <input
-                value={initialsText}
-                onChange={(e) => setInitialsText(e.target.value)}
-                placeholder="Type your initials"
-                style={inputStyle}
-              />
-            </FieldRow>
+            <SignatureCapture
+              label="Initials (required)"
+              purpose="initials"
+              value={initials}
+              onChange={setInitials}
+              disabled={submitting}
+            />
           )}
           {assignedFields.filter((f) => f.type !== "signature" && f.type !== "initials").map((f: CeremonyField) => (
             <FieldRow key={f.fieldId} label={`${f.label}${f.required ? " (required)" : ""}`}>
@@ -409,6 +416,32 @@ function FieldRow({ label, children }: { label: string; children: React.ReactNod
 const inputStyle: React.CSSProperties = {
   ...GF, width: "100%", padding: "8px 10px", fontSize: 13, border: "1px solid #D1D9E0", borderRadius: 7, color: NAVY,
 };
+
+/**
+ * The submit path's error wording.
+ *
+ * Separate from `describeError` because one refusal here has a remedy the
+ * signer can act on, and the generic envelope message does not mention it.
+ *
+ * The backend refuses a typed signature its renderer cannot draw — it checks
+ * while the signer is still present precisely so this can be said. A name with
+ * characters the embedded face has no glyphs for, or one in a script its
+ * shaper cannot lay out, is a hard stop for typing and completely fine for
+ * drawing. Saying only "could not be accepted" would leave the one group of
+ * signers affected by that check with no way forward.
+ */
+function describeSubmissionError(err: unknown): string {
+  if (err instanceof ApiError) {
+    const unrenderable = err.body?.details?.find(
+      (detail) => detail.code === "signature-unrenderable");
+    if (unrenderable) {
+      const control = unrenderable.field === "initials" ? "initials" : "signature";
+      return `Your typed ${control} can't be drawn into this document. `
+        + `Switch to Draw or Upload above, or try a different spelling.`;
+    }
+  }
+  return describeError(err);
+}
 
 function describeError(err: unknown): string {
   if (err instanceof ApiError) {
