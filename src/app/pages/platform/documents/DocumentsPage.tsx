@@ -12,7 +12,7 @@ import {
   X, AlertCircle, ChevronLeft, ChevronRight, Tag, FolderOpen, Folder,
   ShieldCheck, Activity, Users, RefreshCw, Inbox, ArrowUpDown,
   Star, Clock, ExternalLink,
-  Eye, Bell, Ban, Shuffle, Shield, Info, Send,
+  Eye, Bell, Ban, Shuffle, Shield, Info, Send, Download,
 } from "lucide-react";
 import { usePlatform } from "../../../context/PlatformContext";
 import {
@@ -2187,6 +2187,25 @@ function DocumentViewerDialog({
     () => realSigningRequestService.documentContentBlob(workspaceId, item.documentId),
     [workspaceId, item.documentId],
   );
+
+  // ── The signed version ────────────────────────────────────────────────────
+  //
+  // The viewer above draws the SOURCE document — the bytes as uploaded, which
+  // is what the recipient signed against and what stays byte-identical
+  // forever. The signature is not in those bytes and never will be: the merge
+  // draws it onto a SEPARATE sealed artifact at completion.
+  //
+  // So a sender looking at a completed request sees an unsigned-looking
+  // document and has no way, from here, to see the signed one. This is that
+  // way.
+  //
+  // Offered only for a `completed` request, because that is the only state in
+  // which a sealed artifact exists. A button that 404s is worse than no
+  // button.
+  const signedVersion = item.state === "completed"
+    ? realSigningRequestService.downloadUrl(workspaceId, item.signingRequestId)
+    : null;
+
   return (
     <Suspense fallback={
       <div
@@ -2199,7 +2218,40 @@ function DocumentViewerDialog({
         <FileText size={32} color="#C9A15A" aria-hidden />
       </div>
     }>
-      <DocumentArchiveViewer title={item.documentTitle} loadBlob={loadBlob} onClose={onClose} />
+      <DocumentArchiveViewer
+        title={item.documentTitle}
+        loadBlob={loadBlob}
+        onClose={onClose}
+        headerAction={signedVersion === null ? undefined : (
+          // A plain anchor, not `window.open` or a fetch-and-blob dance.
+          //
+          // `/api` is proxied through this same origin by `public/_redirects`
+          // — done precisely so the session cookie is first-party — so an
+          // ordinary same-origin navigation carries it. The route answers with
+          // `Content-Disposition: attachment`, so the browser downloads and
+          // the page never navigates away.
+          //
+          // `window.open` would risk a popup block and can leave a blank tab
+          // behind; fetching to a Blob would buffer a whole signed PDF in
+          // memory to reproduce what the browser already does natively.
+          <a
+            href={signedVersion}
+            download
+            style={{
+              display: "inline-flex", alignItems: "center", gap: 6,
+              padding: "6px 12px", borderRadius: 6, flexShrink: 0,
+              background: "rgba(201,161,90,0.16)",
+              border: "1px solid rgba(201,161,90,0.45)",
+              color: "#E8DCC4", fontSize: 12, fontWeight: 600,
+              textDecoration: "none", whiteSpace: "nowrap",
+              fontFamily: "'Geist', sans-serif",
+            }}
+          >
+            <Download size={14} aria-hidden />
+            Signed PDF
+          </a>
+        )}
+      />
     </Suspense>
   );
 }

@@ -24,7 +24,8 @@
 // memory stays bounded regardless of document length.
 
 import {
-  useState, useEffect, useRef, useCallback, useMemo, type CSSProperties,
+  useState, useEffect, useRef, useCallback, useMemo,
+  type CSSProperties, type ReactNode,
 } from "react";
 import {
   X, ChevronLeft, ZoomIn, ZoomOut, Maximize2, AlertCircle, FileText,
@@ -66,6 +67,18 @@ export interface DocumentArchiveViewerProps {
   /** Resolves the actual stored bytes. Called once per open. */
   loadBlob: () => Promise<Blob>;
   onClose: () => void;
+  /**
+   * An extra control for the toolbar, rendered beside the zoom cluster.
+   *
+   * A generic SLOT rather than a named prop, so the viewer stays ignorant of
+   * what the caller wants to offer. It draws archived bytes; whether those
+   * bytes also have a signed counterpart to download is the document page's
+   * knowledge, not this component's.
+   *
+   * Shown at every width, unlike the zoom controls: it is the only action here
+   * that a phone user cannot reach another way.
+   */
+  headerAction?: ReactNode;
 }
 
 /** True once the browser's viewport is at or below the phone breakpoint the
@@ -210,7 +223,9 @@ function ArchivePage({
   );
 }
 
-export function DocumentArchiveViewer({ title, loadBlob, onClose }: DocumentArchiveViewerProps) {
+export function DocumentArchiveViewer({
+  title, loadBlob, onClose, headerAction,
+}: DocumentArchiveViewerProps) {
   const isCompact = useIsCompact();
   const [state, setState] = useState<LoadState>({ status: "loading" });
   const [zoom, setZoom] = useState(1);
@@ -376,6 +391,12 @@ export function DocumentArchiveViewer({ title, loadBlob, onClose }: DocumentArch
             </div>
           )}
         </div>
+
+        {headerAction !== undefined && (
+          <div style={{ display: "flex", alignItems: "center", flexShrink: 0 }}>
+            {headerAction}
+          </div>
+        )}
 
         {state.status === "ready" && !isCompact && (
           <div style={{ display: "flex", alignItems: "center", gap: 2, flexShrink: 0 }}>
