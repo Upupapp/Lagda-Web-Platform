@@ -81,6 +81,11 @@ function Probe() {
               pageId: page.id,
               rect: { x: 0.1, y: 0.1, width: 0.2, height: 0.05 },
               participantId: "pax_1",
+              label: "Signature",
+              required: true,
+              // `true`, matching what clicking the canvas produces: a field
+              // placed locally and not yet saved to a backend preparation.
+              demonstrationOnly: true,
             });
           }
         }}
