@@ -195,12 +195,14 @@ describe("adopting a signature", () => {
       signature: { method: "drawn", base64: "aGVsbG8=" },
     });
 
-    const image = await screen.findByRole("presentation", { hidden: true })
-      .catch(() => null) as HTMLElement | null;
-    // `alt=""` makes it presentational; assert on the src directly instead.
-    const img = document.querySelector("img");
-    expect(img?.getAttribute("src")).toBe("data:image/png;base64,aGVsbG8=");
-    expect(image === null || image instanceof HTMLElement).toBe(true);
+    // `alt=""` deliberately — the mark is decorative beside the field's own
+    // accessible name, so there is no role to query. Assert the src, which is
+    // the part that has to be right: raw base64 wrapped into a data URL for
+    // DISPLAY only. What goes to the server stays prefix-free.
+    await waitFor(() => {
+      const image = document.querySelector("img");
+      expect(image?.getAttribute("src")).toBe("data:image/png;base64,aGVsbG8=");
+    });
   });
 
   it("previews a typed signature in the face the server draws with", async () => {
