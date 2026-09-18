@@ -30,25 +30,22 @@ import {
   PositionedSigningSurface,
 } from "../../components/recipient/PositionedSigningSurface";
 import { ApiError } from "../../services/api-client";
+import {
+  SignerCard, PhaseBanner, Notice, ActionButton, ActionRow, StepRail,
+  IdentityStrip, T, GF as SIGNER_GF,
+} from "../../components/recipient/signer-ui";
+import {
+  FileSignature, ShieldCheck, CheckCircle2, XCircle, Clock, AlertTriangle,
+  Ban, ArrowLeft, Send, Loader2,
+} from "lucide-react";
 import { DECLINE_REASON_CATEGORIES } from "../../models/recipient";
 
-const GF     = { fontFamily: "'Geist', sans-serif" };
-const NAVY   = "#07111F";
-const AZURE  = "#0078D4";
-const SILVER = "#8A9BAE";
-const WHITE  = "#FFFFFF";
+// The signer palette lives in `signer-ui`. Only the font alias survives the
+// redesign: every colour this page used is now applied by a primitive from
+// that module rather than inline here, which is the point of having it.
+const GF     = SIGNER_GF;
 
 type Phase = "loading" | "unavailable" | "consent" | "ceremony" | "submitted" | "declined" | "decline-form";
-
-function Card({ children }: { children: React.ReactNode }) {
-  return (
-    <div style={{ ...GF, display: "flex", alignItems: "center", justifyContent: "center", minHeight: "calc(100dvh - 102px)", padding: "40px 20px" }}>
-      <div style={{ maxWidth: 560, width: "100%", background: WHITE, borderRadius: 14, border: "1px solid #E3E8EF", padding: "36px 32px" }}>
-        {children}
-      </div>
-    </div>
-  );
-}
 
 export function RealSigningPage() {
   const { requestId: token } = useParams<{ requestId: string }>();
@@ -181,24 +178,37 @@ export function RealSigningPage() {
   };
 
   if (phase === "loading") {
-    return <Card><p style={{ ...GF, fontSize: 14, color: SILVER, textAlign: "center", margin: 0 }}>Loading your signing request…</p></Card>;
+    return (
+      <SignerCard>
+        <PhaseBanner
+          icon={Loader2}
+          tone="neutral"
+          title="Opening your document"
+          description="Checking your signing link and loading the document you were sent."
+        />
+      </SignerCard>
+    );
   }
 
   if (phase === "unavailable") {
     return (
-      <Card>
-        <h1 style={{ ...GF, fontSize: 20, fontWeight: 800, color: NAVY, margin: "0 0 10px" }}>This link can't be used</h1>
-        <p style={{ ...GF, fontSize: 14, color: SILVER, margin: 0, lineHeight: 1.6 }}>
-          {errorMessage ?? "This signing link is invalid or has expired. Contact the sender for a new link."}
-        </p>
-      </Card>
+      <SignerCard>
+        <PhaseBanner
+          icon={XCircle}
+          tone="danger"
+          badge="Link closed"
+          title="This link can't be used"
+          description={errorMessage
+            ?? "This signing link is invalid or has expired. Contact the sender for a new link."}
+        />
+      </SignerCard>
     );
   }
 
   if (phase === "submitted") {
     return (
-      <Card>
-        <h1 style={{ ...GF, fontSize: 20, fontWeight: 800, color: NAVY, margin: "0 0 10px" }}>Submitted</h1>
+      <SignerCard>
+        <StepRail current="done" />
         {/* Says only what the backend actually does.
 
             A completion notice was removed from this screen once, because the
@@ -219,25 +229,26 @@ export function RealSigningPage() {
               "automatically" rather than "has been" — the intent is durable
               and retried, but at this instant the email has not been sent,
               and claiming delivery is the same category of error as the
-              original copy.
-
-            The fallback line stays for the same reason: transport can
-            ultimately give up, and a signer who needs confirmation should
-            know they can ask. */}
-        <p style={{ ...GF, fontSize: 14, color: SILVER, margin: 0, lineHeight: 1.6 }}>
-          Your signature was received and recorded. You can close this page — nothing further is
-          needed from you. Once every required participant has completed their part, the sender is
-          notified automatically. If you need confirmation of the completed document, contact the
-          sender directly.
-        </p>
-      </Card>
+              original copy. */}
+        <PhaseBanner
+          icon={CheckCircle2}
+          tone="success"
+          badge="Complete"
+          title="Your signature was recorded"
+          description="You can close this page — nothing further is needed from you."
+        />
+        <Notice icon={ShieldCheck} tone="neutral">
+          Once every required participant has completed their part, the sender is
+          notified automatically. If you need confirmation of the completed
+          document, contact the sender directly.
+        </Notice>
+      </SignerCard>
     );
   }
 
   if (phase === "declined") {
     return (
-      <Card>
-        <h1 style={{ ...GF, fontSize: 20, fontWeight: 800, color: NAVY, margin: "0 0 10px" }}>Request declined</h1>
+      <SignerCard>
         {/* "The sender has been notified" is false here, and — unlike the
             submitted screen above — it is STILL false after BACKEND-38
             Phase 2. That phase added `SIGNING_COMPLETED` only. There is no
@@ -246,80 +257,154 @@ export function RealSigningPage() {
 
             The decline IS recorded — it ends the request for everyone and
             revokes every grant — so that is what this says instead. */}
-        <p style={{ ...GF, fontSize: 14, color: SILVER, margin: 0, lineHeight: 1.6 }}>
-          Your decline was recorded and this signing request is now closed. If you declined by
-          mistake, contact the sender — a new request would have to be sent.
-        </p>
-      </Card>
+        <PhaseBanner
+          icon={Ban}
+          tone="warn"
+          badge="Closed"
+          title="You declined this request"
+          description="Your decline was recorded and this signing request is now closed."
+        />
+        <Notice icon={AlertTriangle} tone="neutral">
+          If you declined by mistake, contact the sender — a new request would
+          have to be sent.
+        </Notice>
+      </SignerCard>
     );
   }
 
   if (phase === "consent" && view) {
     return (
-      <Card>
-        <h1 style={{ ...GF, fontSize: 20, fontWeight: 800, color: NAVY, margin: "0 0 12px" }}>Consent required</h1>
-        <p style={{ ...GF, fontSize: 13, color: SILVER, margin: "0 0 20px", lineHeight: 1.6 }}>
-          Before you can view "{view.request.documentTitle}", please confirm you consent to sign and be identified
-          electronically for this transaction.
-        </p>
-        {errorMessage && <p style={{ ...GF, fontSize: 12, color: "#C0392B", margin: "0 0 12px" }}>{errorMessage}</p>}
-        <button
-          onClick={() => void handleAcceptConsent()}
-          style={{ ...GF, padding: "10px 22px", borderRadius: 8, border: "none", background: AZURE, color: WHITE, fontSize: 14, fontWeight: 700, cursor: "pointer" }}
-        >
-          I consent — continue
-        </button>
-      </Card>
+      <SignerCard>
+        <StepRail current="consent" />
+        <PhaseBanner
+          icon={ShieldCheck}
+          tone="info"
+          badge="Required"
+          title="Consent to sign electronically"
+          description={`Before you can open "${view.request.documentTitle}", please confirm you consent to sign and be identified electronically for this transaction.`}
+        />
+        {errorMessage !== null && (
+          <Notice icon={AlertTriangle} tone="danger">{errorMessage}</Notice>
+        )}
+        <ActionRow>
+          <ActionButton
+            icon={ShieldCheck}
+            onClick={() => void handleAcceptConsent()}
+            full
+          >
+            I consent — continue
+          </ActionButton>
+        </ActionRow>
+      </SignerCard>
     );
   }
 
   if (phase === "decline-form" && view) {
     return (
-      <Card>
-        <h1 style={{ ...GF, fontSize: 20, fontWeight: 800, color: NAVY, margin: "0 0 14px" }}>Decline this request</h1>
-        {DECLINE_REASON_CATEGORIES.map((r) => (
-          <label key={r.id} style={{ ...GF, display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: NAVY, padding: "6px 0", cursor: "pointer" }}>
-            <input type="radio" name="decline-reason" checked={declineReason === r.id} onChange={() => setDeclineReason(r.id as SigningDeclineReason)} />
-            {r.label}
-          </label>
-        ))}
-        {errorMessage && <p style={{ ...GF, fontSize: 12, color: "#C0392B", margin: "12px 0 0" }}>{errorMessage}</p>}
-        <div style={{ display: "flex", gap: 10, marginTop: 20 }}>
-          <button onClick={() => setPhase("ceremony")} style={{ ...GF, padding: "10px 20px", borderRadius: 8, border: "1px solid #D1D9E0", background: WHITE, color: NAVY, fontSize: 14, fontWeight: 600, cursor: "pointer" }}>
-            Cancel
-          </button>
-          <button onClick={() => void handleDecline()} style={{ ...GF, padding: "10px 20px", borderRadius: 8, border: "none", background: "#C0392B", color: WHITE, fontSize: 14, fontWeight: 700, cursor: "pointer" }}>
+      <SignerCard>
+        <PhaseBanner
+          icon={Ban}
+          tone="warn"
+          title="Decline this request"
+          description="Tell the sender why, so they know what to do next. This closes the request for everyone."
+        />
+
+        <fieldset style={{ border: "none", margin: 0, padding: 0 }}>
+          <legend style={{
+            ...GF, fontSize: 12, fontWeight: 700, color: T.silver,
+            letterSpacing: "0.05em", textTransform: "uppercase", padding: 0,
+            marginBottom: 8,
+          }}>
+            Reason
+          </legend>
+          {DECLINE_REASON_CATEGORIES.map((r) => {
+            const selected = declineReason === r.id;
+            return (
+              <label
+                key={r.id}
+                style={{
+                  ...GF, display: "flex", alignItems: "center", gap: 10,
+                  // A full-width, 44px-tall target: a mis-tap here closes
+                  // somebody's contract for the wrong stated reason.
+                  minHeight: 44, padding: "8px 12px", marginBottom: 8,
+                  borderRadius: 10, cursor: "pointer",
+                  fontSize: "clamp(13px, 3.4vw, 14px)", color: T.ink,
+                  background: selected ? T.azureWash : T.surface,
+                  border: `1px solid ${selected ? "#B7DAF5" : T.border}`,
+                }}
+              >
+                <input
+                  type="radio" name="decline-reason" checked={selected}
+                  onChange={() => { setDeclineReason(r.id); }}
+                  style={{ width: 18, height: 18, flexShrink: 0, accentColor: T.azure }}
+                />
+                <span style={{ minWidth: 0 }}>{r.label}</span>
+              </label>
+            );
+          })}
+        </fieldset>
+
+        {errorMessage !== null && (
+          <Notice icon={AlertTriangle} tone="danger">{errorMessage}</Notice>
+        )}
+
+        <ActionRow>
+          <ActionButton
+            kind="danger" icon={Ban}
+            onClick={() => void handleDecline()} full
+          >
             Confirm decline
-          </button>
-        </div>
-      </Card>
+          </ActionButton>
+          <ActionButton
+            kind="secondary" icon={ArrowLeft}
+            onClick={() => { setPhase("ceremony"); }} full
+          >
+            Back to document
+          </ActionButton>
+        </ActionRow>
+      </SignerCard>
     );
   }
 
   if (phase === "ceremony" && view) {
     if (!view.access.mayProceedToInput) {
       return (
-        <Card>
-          <h1 style={{ ...GF, fontSize: 20, fontWeight: 800, color: NAVY, margin: "0 0 10px" }}>Not yet your turn</h1>
-          <p style={{ ...GF, fontSize: 14, color: SILVER, margin: 0, lineHeight: 1.6 }}>
-            This request isn't ready for your action yet — an earlier participant may still need to complete their
-            part, or the request isn't currently active. Check back later.
-          </p>
-        </Card>
+        <SignerCard>
+          <StepRail current="sign" />
+          <PhaseBanner
+            icon={Clock}
+            tone="warn"
+            badge="Waiting"
+            title="Not yet your turn"
+            description="An earlier participant may still need to complete their part, or the request isn't currently active. Check back later — your link stays valid."
+          />
+          <IdentityStrip
+            name={view.recipient.name}
+            role={view.recipient.type}
+            documentTitle={view.request.documentTitle}
+          />
+        </SignerCard>
       );
     }
 
     return (
-      <div style={{ ...GF, maxWidth: 720, margin: "0 auto", padding: "32px 20px 80px" }}>
-        <h1 style={{ ...GF, fontSize: 22, fontWeight: 800, color: NAVY, margin: "0 0 6px" }}>{view.request.documentTitle}</h1>
-        <p style={{ ...GF, fontSize: 13, color: SILVER, margin: "0 0 20px" }}>
-          Signing as {view.recipient.name} ({view.recipient.type})
-        </p>
+      <SignerCard wide>
+        <StepRail current="sign" />
+        <PhaseBanner
+          icon={FileSignature}
+          tone="info"
+          badge="Step 2 of 3"
+          title={view.request.documentTitle}
+          description="Read the document, then fill the highlighted fields. Tap a marked box to add your signature."
+        />
+        <IdentityStrip
+          name={view.recipient.name}
+          role={view.recipient.type}
+          documentTitle={view.request.documentTitle}
+        />
 
-        {errorMessage && (
-          <div style={{ padding: "10px 14px", borderRadius: 8, background: "#FFF5F5", border: "1px solid #F5C6CB", marginBottom: 16, fontSize: 12, color: "#C0392B" }}>
-            {errorMessage}
-          </div>
+        {errorMessage !== null && (
+          <Notice icon={AlertTriangle} tone="danger">{errorMessage}</Notice>
         )}
 
         {/* The document, with this signer's fields where the sender placed
@@ -353,22 +438,40 @@ export function RealSigningPage() {
             the page above, where its position is visible — a second copy of
             the same inputs would be two places to fill one value and two
             things to keep in step. */}
-        <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-          <button
-            onClick={() => void handleSubmit()}
-            disabled={submitting}
-            style={{ ...GF, padding: "10px 26px", borderRadius: 8, border: "none", background: submitting ? "#8AB8D8" : AZURE, color: WHITE, fontSize: 14, fontWeight: 700, cursor: submitting ? "not-allowed" : "pointer" }}
-          >
-            {submitting ? "Submitting…" : "Submit"}
-          </button>
-          <button
-            onClick={() => setPhase("decline-form")}
-            style={{ ...GF, padding: "10px 20px", borderRadius: 8, border: "1px solid #D1D9E0", background: WHITE, color: "#C0392B", fontSize: 14, fontWeight: 600, cursor: "pointer" }}
-          >
-            Decline
-          </button>
+
+        {/* The action bar STICKS to the bottom of the viewport.
+            A signer scrolled to page 9 of a contract should not have to scroll
+            back to find Submit, and on a phone the button would otherwise sit
+            below an unknown amount of document. */}
+        <div
+          style={{
+            position: "sticky", bottom: 0, zIndex: 1,
+            marginTop: 8, paddingTop: 12,
+            paddingBottom: "max(12px, env(safe-area-inset-bottom))",
+            background: "linear-gradient(to bottom, rgba(245,247,250,0), #F5F7FA 28%)",
+          }}
+        >
+          <ActionRow>
+            <ActionButton
+              icon={submitting ? Loader2 : Send}
+              onClick={() => void handleSubmit()}
+              disabled={submitting}
+              full
+            >
+              {submitting ? "Submitting…" : "Submit signature"}
+            </ActionButton>
+            <ActionButton
+              kind="secondary"
+              icon={Ban}
+              onClick={() => { setPhase("decline-form"); }}
+              disabled={submitting}
+              full
+            >
+              Decline
+            </ActionButton>
+          </ActionRow>
         </div>
-      </div>
+      </SignerCard>
     );
   }
 

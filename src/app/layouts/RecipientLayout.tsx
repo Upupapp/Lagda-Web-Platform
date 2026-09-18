@@ -15,6 +15,7 @@
 import React from "react";
 import { Outlet } from "react-router";
 import { USE_REAL_BACKEND } from "../services/backend-flag";
+import { ShieldCheck } from "lucide-react";
 
 const NAVY  = "#07111F";
 const AZURE = "#0078D4";
@@ -35,12 +36,19 @@ export function RecipientLayout() {
         style={{
           background:   "#FFFFFF",
           borderBottom: "1px solid #E3E8EF",
-          height:       52,
+          height:       56,
           display:      "flex",
           alignItems:   "center",
-          padding:      "0 24px",
+          justifyContent: "space-between",
+          // Fluid, so the brand is not jammed against the edge at 320px.
+          padding:      "0 clamp(12px, 4vw, 24px)",
           flexShrink:   0,
           gap:          10,
+          // Sticky: on a long contract the signer should always be able to
+          // see whose product they are signing in.
+          position:     "sticky",
+          top:          0,
+          zIndex:       5,
         }}
         role="banner"
       >
@@ -91,6 +99,24 @@ export function RecipientLayout() {
             eSignature
           </span>
         </div>
+
+        {/* A quiet trust marker. A signer arriving from an email has no other
+            signal that this page is the real thing and not a forwarded copy
+            of something. It claims only what is true — the session is
+            encrypted and scoped to their link — and nothing about the legal
+            weight of signing, which the consent step owns. */}
+        <span
+          style={{
+            display: "inline-flex", alignItems: "center", gap: 6,
+            fontSize: 11, fontWeight: 600, color: "#1E7F4F",
+            background: "#EAF7EF", border: "1px solid #B7E3CA",
+            borderRadius: 999, padding: "4px 10px", whiteSpace: "nowrap",
+            flexShrink: 0,
+          }}
+        >
+          <ShieldCheck size={13} aria-hidden />
+          Secure session
+        </span>
       </header>
 
       {/* Page content */}
@@ -123,7 +149,7 @@ export function RecipientLayout() {
           style={{
             borderTop:  "1px solid #E3E8EF",
             background: "#FFFFFF",
-            padding:    "10px 24px",
+            padding:    "10px clamp(12px, 4vw, 24px)",
             fontSize:   11,
             color:      "#8A9BAE",
             textAlign:  "center",

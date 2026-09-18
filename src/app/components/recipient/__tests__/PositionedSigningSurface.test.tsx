@@ -223,7 +223,7 @@ describe("what still needs doing", () => {
       field({ fieldId: "f_ini", type: "initials", pageNumber: 2, label: "Initials" }),
     ]);
 
-    expect(await screen.findByText("2 fields still need your input.")).toBeTruthy();
+    expect(await screen.findByText("2 fields still need your input")).toBeTruthy();
   });
 
   it("reports completion once everything is filled", async () => {
@@ -231,7 +231,7 @@ describe("what still needs doing", () => {
       signature: { method: "typed", text: "Maria", styleIndex: 0 },
     });
 
-    expect(await screen.findByText("All your fields are complete.")).toBeTruthy();
+    expect(await screen.findByText("All your fields are complete")).toBeTruthy();
   });
 
   it("does not count an OPTIONAL empty text field as outstanding", async () => {
@@ -240,6 +240,6 @@ describe("what still needs doing", () => {
       required: false, valueKind: "text",
     })]);
 
-    expect(await screen.findByText("All your fields are complete.")).toBeTruthy();
+    expect(await screen.findByText("All your fields are complete")).toBeTruthy();
   });
 });
