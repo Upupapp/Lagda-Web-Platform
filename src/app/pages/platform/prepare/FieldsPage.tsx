@@ -31,8 +31,9 @@ import {
 } from "../../../services/prepare/field-autofix";
 import { isDocumentSynced, markDocumentSynced } from "../../../services/prepare/sync-markers";
 import {
-  useRealDocument, RealDocumentPage,
-} from "../../../components/prepare/RealDocumentPage";
+  useRealDocument, DocumentPageSurface,
+} from "../../../components/pdf/DocumentPageSurface";
+import { realSigningRequestService } from "../../../services/real/signing-request.service";
 import type {
   FieldId,
   FieldDefinition,
@@ -330,7 +331,17 @@ function PageCanvas({
   const realDocumentId = currentDocumentId === null
     ? null
     : realDocumentIdByEditorDocId.get(currentDocumentId) ?? null;
-  const realDocument = useRealDocument(workspaceId, realDocumentId);
+
+  // Memoised on the two ids: `useRealDocument` re-runs when the loader's
+  // identity changes, so an inline closure would refetch the document on
+  // every render.
+  const loadDocument = useMemo(
+    () => (workspaceId === null || realDocumentId === null
+      ? null
+      : () => realSigningRequestService.documentContentBlob(workspaceId, realDocumentId)),
+    [workspaceId, realDocumentId],
+  );
+  const realDocument = useRealDocument(loadDocument);
 
   // The page list the editor was initialised with is a placeholder: the count
   // comes from `derivePageCount` and every page is assumed A4. Correct it as
@@ -563,7 +574,7 @@ function PageCanvas({
               is placed on a signature LINE, and a placeholder has none. */}
           {realDocument.status === "ready"
             ? (
-              <RealDocumentPage
+              <DocumentPageSurface
                 doc={realDocument.doc}
                 pageNumber={currentPage.pageNumber}
                 width={pageWidth}

@@ -17,17 +17,18 @@
 // in the backend yet (see the P1.5/master-audit findings on the unwired
 // completion pipeline).
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useParams } from "react-router";
 import {
-  realSigningAccessService, type CeremonyView, type CeremonyField,
+  realSigningAccessService, type CeremonyView,
 } from "../../services/real/signing-access.service";
 import {
   realSigningSubmissionService, type SubmittedFieldValue, type SigningDeclineReason,
 } from "../../services/real/signing-submission.service";
+import { type SignatureValue } from "../../components/recipient/SignatureCapture";
 import {
-  SignatureCapture, type SignatureValue,
-} from "../../components/recipient/SignatureCapture";
+  PositionedSigningSurface,
+} from "../../components/recipient/PositionedSigningSurface";
 import { ApiError } from "../../services/api-client";
 import { DECLINE_REASON_CATEGORIES } from "../../models/recipient";
 
@@ -54,7 +55,6 @@ export function RealSigningPage() {
   const [phase, setPhase] = useState<Phase>("loading");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [view, setView] = useState<CeremonyView | null>(null);
-  const [documentUrl, setDocumentUrl] = useState<string | null>(null);
   const [values, setValues] = useState<Record<string, string | boolean>>({});
   // The ADOPTED representations, not raw text. A signature may now be drawn,
   // typed or uploaded, and the first and last are not text at all — so the
@@ -67,14 +67,6 @@ export function RealSigningPage() {
   // Same NEW-KEY / RETRY-SAME-KEY / RETIRE-ON-SUCCESS rule as sender Send
   // (ConfirmationPage) — one submission per ceremony, in-memory only.
   const submitKeyRef = useRef<string | null>(null);
-
-  const documentUrlRef = useRef<string | null>(null);
-  useEffect(() => {
-    documentUrlRef.current = documentUrl;
-  }, [documentUrl]);
-  useEffect(() => () => {
-    if (documentUrlRef.current) URL.revokeObjectURL(documentUrlRef.current);
-  }, []);
 
   const enterCeremony = async () => {
     try {
@@ -93,15 +85,9 @@ export function RealSigningPage() {
       return;
     }
     setPhase("ceremony");
-    if (ceremony.access.mayViewDocument && !documentUrlRef.current) {
-      void realSigningAccessService.documentBlob().then((blob) => {
-        const url = URL.createObjectURL(blob);
-        setDocumentUrl(url);
-      }).catch(() => {
-        // Non-fatal — the recipient can still fill/sign assigned fields
-        // without an inline preview.
-      });
-    }
+    // The document is fetched by `PositionedSigningSurface`, which needs the
+    // BYTES for pdf.js rather than an object URL for an iframe. Prefetching
+    // here as well would download it twice.
   };
 
   useEffect(() => {
@@ -131,6 +117,11 @@ export function RealSigningPage() {
       setErrorMessage(describeError(err));
     }
   };
+
+  // Memoised: `useRealDocument` re-runs when the loader's identity changes,
+  // so an inline closure would refetch the PDF on every render.
+  const loadDocumentBlob = useCallback(
+    () => realSigningAccessService.documentBlob(), []);
 
   const assignedFields = view?.fields.filter((f) => f.valueAuthority === "RECIPIENT_SUPPLIED") ?? [];
   const needsSignature = assignedFields.some((f) => f.type === "signature");
@@ -331,57 +322,37 @@ export function RealSigningPage() {
           </div>
         )}
 
-        {documentUrl && (
-          <iframe
-            title="Document preview"
-            src={documentUrl}
-            style={{ width: "100%", height: 420, border: "1px solid #E3E8EF", borderRadius: 10, marginBottom: 24 }}
-          />
+        {/* The document, with this signer's fields where the sender placed
+            them. Replaces an `<iframe>` preview that sat beside an unrelated
+            list of inputs: the signer could read the document and could fill
+            fields, but nothing showed WHERE a signature would land.
+
+            The source PDF is never modified — field positions live in the
+            database as normalised rects and the merge draws them only at
+            completion. What is shown is the original document plus a
+            positioned overlay. */}
+        {view.access.mayViewDocument && (
+          <div style={{ marginBottom: 24 }}>
+            <PositionedSigningSurface
+              loadBlob={loadDocumentBlob}
+              fields={view.fields}
+              signature={signature}
+              initials={initials}
+              textValues={values}
+              onSignature={setSignature}
+              onInitials={setInitials}
+              onTextValue={(fieldId, value) => {
+                setValues(current => ({ ...current, [fieldId]: value }));
+              }}
+              disabled={submitting}
+            />
+          </div>
         )}
 
-        <section style={{ marginBottom: 24 }}>
-          <h2 style={{ ...GF, fontSize: 14, fontWeight: 700, color: NAVY, margin: "0 0 12px" }}>Your fields</h2>
-          {assignedFields.length === 0 && (
-            <p style={{ ...GF, fontSize: 13, color: SILVER }}>No fields are assigned to you on this document.</p>
-          )}
-          {needsSignature && (
-            <SignatureCapture
-              label="Signature (required)"
-              purpose="signature"
-              value={signature}
-              onChange={setSignature}
-              disabled={submitting}
-            />
-          )}
-          {needsInitials && (
-            <SignatureCapture
-              label="Initials (required)"
-              purpose="initials"
-              value={initials}
-              onChange={setInitials}
-              disabled={submitting}
-            />
-          )}
-          {assignedFields.filter((f) => f.type !== "signature" && f.type !== "initials").map((f: CeremonyField) => (
-            <FieldRow key={f.fieldId} label={`${f.label}${f.required ? " (required)" : ""}`}>
-              {f.type === "checkbox" ? (
-                <input
-                  type="checkbox"
-                  checked={values[f.fieldId] === true}
-                  onChange={(e) => setValues((v) => ({ ...v, [f.fieldId]: e.target.checked }))}
-                />
-              ) : (
-                <input
-                  value={typeof values[f.fieldId] === "string" ? (values[f.fieldId] as string) : ""}
-                  onChange={(e) => setValues((v) => ({ ...v, [f.fieldId]: e.target.value }))}
-                  maxLength={f.maxLength ?? undefined}
-                  style={inputStyle}
-                />
-              )}
-            </FieldRow>
-          ))}
-        </section>
-
+        {/* No separate field list. Every field this signer owns is filled on
+            the page above, where its position is visible — a second copy of
+            the same inputs would be two places to fill one value and two
+            things to keep in step. */}
         <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
           <button
             onClick={() => void handleSubmit()}
@@ -403,19 +374,6 @@ export function RealSigningPage() {
 
   return null;
 }
-
-function FieldRow({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div style={{ marginBottom: 14 }}>
-      <label style={{ ...GF, display: "block", fontSize: 12, fontWeight: 600, color: NAVY, marginBottom: 5 }}>{label}</label>
-      {children}
-    </div>
-  );
-}
-
-const inputStyle: React.CSSProperties = {
-  ...GF, width: "100%", padding: "8px 10px", fontSize: 13, border: "1px solid #D1D9E0", borderRadius: 7, color: NAVY,
-};
 
 /**
  * The submit path's error wording.
