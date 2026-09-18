@@ -39,6 +39,10 @@ import {
 import { SignatureCapture, type SignatureValue } from "./SignatureCapture";
 import type { CeremonyField } from "../../services/real/signing-access.service";
 import { Z } from "../../utils/z-index";
+import { T } from "./signer-ui";
+import {
+  CheckCircle2, ListChecks, FileText, AlertTriangle, Loader2, X,
+} from "lucide-react";
 
 const GF = { fontFamily: "'Geist', sans-serif" };
 const NAVY = "#07111F";
@@ -135,16 +139,26 @@ export function PositionedSigningSurface({
 
   if (document_.status === "loading" || document_.status === "idle") {
     return (
-      <p style={{ ...GF, fontSize: 13, color: SILVER, textAlign: "center", padding: 24 }}>
-        Loading your document…
-      </p>
+      <div style={{
+        ...GF, display: "flex", flexDirection: "column", alignItems: "center",
+        gap: 10, padding: "40px 20px", color: SILVER,
+      }}>
+        <Loader2 size={22} aria-hidden />
+        <span style={{ fontSize: 13 }}>Loading your document…</span>
+      </div>
     );
   }
   if (document_.status === "error") {
     return (
-      <p role="alert" style={{ ...GF, fontSize: 13, color: "#C0392B", padding: 16 }}>
-        {document_.message}
-      </p>
+      <div role="alert" style={{
+        ...GF, display: "flex", gap: 10, alignItems: "flex-start",
+        padding: "13px 15px", borderRadius: 12,
+        background: T.dangerWash, border: `1px solid #F3C4BF`,
+        color: T.danger, fontSize: 13, lineHeight: 1.5,
+      }}>
+        <AlertTriangle size={16} aria-hidden style={{ flexShrink: 0, marginTop: 1 }} />
+        <span>{document_.message}</span>
+      </div>
     );
   }
 
@@ -167,14 +181,25 @@ export function PositionedSigningSurface({
       <div
         aria-live="polite"
         style={{
-          ...GF, fontSize: 13, fontWeight: 600, marginBottom: 12, padding: "8px 12px",
-          borderRadius: 8, background: remaining === 0 ? "#EAF7EF" : "#FFF8E6",
-          color: remaining === 0 ? "#1E7F4F" : AMBER,
+          ...GF, display: "flex", alignItems: "center", gap: 10,
+          fontSize: "clamp(12.5px, 3.3vw, 13.5px)", fontWeight: 700,
+          marginBottom: 12, padding: "10px 13px", borderRadius: 12,
+          background: remaining === 0 ? T.successWash : T.warnWash,
+          border: `1px solid ${remaining === 0 ? "#B7E3CA" : "#EBD9A6"}`,
+          color: remaining === 0 ? T.success : "#9A6B00",
+          // Sticks under the header so the count follows the signer down a
+          // long document — the one number they need while scrolling.
+          position: "sticky", top: 56, zIndex: 2,
         }}
       >
         {remaining === 0
-          ? "All your fields are complete."
-          : `${String(remaining)} field${remaining === 1 ? "" : "s"} still need your input.`}
+          ? <CheckCircle2 size={17} aria-hidden style={{ flexShrink: 0 }} />
+          : <ListChecks size={17} aria-hidden style={{ flexShrink: 0 }} />}
+        <span style={{ minWidth: 0 }}>
+          {remaining === 0
+            ? "All your fields are complete"
+            : `${String(remaining)} field${remaining === 1 ? "" : "s"} still need your input`}
+        </span>
       </div>
 
       <div ref={wrapRef} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
@@ -187,7 +212,12 @@ export function PositionedSigningSurface({
 
           return (
             <div key={pageNumber}>
-              <p style={{ ...GF, fontSize: 11, color: SILVER, margin: "0 0 4px" }}>
+              <p style={{
+                ...GF, display: "inline-flex", alignItems: "center", gap: 5,
+                fontSize: 11, fontWeight: 700, letterSpacing: "0.04em",
+                textTransform: "uppercase", color: SILVER, margin: "0 0 5px",
+              }}>
+                <FileText size={12} aria-hidden />
                 Page {pageNumber} of {document_.pageCount}
               </p>
               <div
@@ -229,7 +259,12 @@ export function PositionedSigningSurface({
                         display: "flex", alignItems: "center", justifyContent: "center",
                         border: filled ? `1px solid ${AZURE}` : `2px dashed ${AMBER}`,
                         background: filled ? "rgba(0,120,212,0.06)" : "rgba(184,134,11,0.10)",
-                        borderRadius: 3, overflow: "hidden",
+                        borderRadius: 3,
+                        // NOT `overflow: hidden` — it would clip the expanded
+                        // tap target back to the visual box and undo the fix
+                        // above. The mark itself is constrained by its own
+                        // `object-fit`/`overflow` instead.
+                        overflow: "visible",
                       }}
                     >
                       {isMark
@@ -246,7 +281,23 @@ export function PositionedSigningSurface({
                                 : `Change your ${field.type} — ${field.label}`
                             }
                             style={{
-                              width: "100%", height: "100%", border: "none",
+                              // ── The tap target, expanded past the box ──
+                              //
+                              // A field is drawn at its TRUE size, because it
+                              // has to match what the merge will render. At
+                              // 320px a 8%-tall box on an A4 page is about
+                              // 35px — under the 44px a finger hits reliably.
+                              //
+                              // So the visual box stays exactly where the
+                              // sender put it, and the BUTTON grows around
+                              // its centre to reach 44px. The mark still
+                              // renders at the box's real size; only the
+                              // area that accepts a tap is larger.
+                              position: "absolute",
+                              left: "50%", top: "50%",
+                              transform: "translate(-50%, -50%)",
+                              width: "max(100%, 44px)", height: "max(100%, 44px)",
+                              border: "none",
                               background: "transparent", cursor: disabled ? "not-allowed" : "pointer",
                               display: "flex", alignItems: "center", justifyContent: "center",
                               padding: 2,
@@ -255,8 +306,12 @@ export function PositionedSigningSurface({
                             {mark === null
                               ? (
                                 <span style={{
-                                  ...GF, fontSize: "min(1.6vw, 12px)", fontWeight: 700,
-                                  color: AMBER, whiteSpace: "nowrap",
+                                  ...GF, fontWeight: 800, whiteSpace: "nowrap",
+                                  // A floor as well as a ceiling: `min(1.6vw, …)`
+                                  // alone renders ~5px at 320px, which is not
+                                  // a legible prompt.
+                                  fontSize: "clamp(9px, 1.9vw, 12px)",
+                                  color: AMBER, letterSpacing: "0.02em",
                                 }}>
                                   {field.type === "initials" ? "Initials" : "Sign"}
                                 </span>
@@ -316,9 +371,28 @@ export function PositionedSigningSurface({
           }}
         >
           <div style={{
-            background: "#FFFFFF", borderRadius: 12, padding: 20,
+            background: "#FFFFFF", borderRadius: 16,
+            padding: "clamp(14px, 4vw, 20px)",
             width: "100%", maxWidth: 460, maxHeight: "90dvh", overflowY: "auto",
+            boxShadow: "0 18px 48px rgba(7,17,31,0.28)",
           }}>
+            <div style={{
+              display: "flex", justifyContent: "flex-end", marginBottom: 2,
+            }}>
+              <button
+                type="button"
+                onClick={() => { setCapturing(null); }}
+                aria-label="Close"
+                style={{
+                  display: "grid", placeItems: "center",
+                  width: 36, height: 36, borderRadius: 999,
+                  border: "none", background: "transparent",
+                  color: T.silver, cursor: "pointer",
+                }}
+              >
+                <X size={18} aria-hidden />
+              </button>
+            </div>
             <SignatureCapture
               label={capturing === "initials" ? "Your initials" : "Your signature"}
               purpose={capturing}
@@ -330,11 +404,14 @@ export function PositionedSigningSurface({
               type="button"
               onClick={() => { setCapturing(null); }}
               style={{
-                ...GF, width: "100%", marginTop: 8, padding: "10px 0",
-                borderRadius: 8, border: "none", background: AZURE,
+                ...GF, display: "inline-flex", alignItems: "center",
+                justifyContent: "center", gap: 8,
+                width: "100%", marginTop: 10, minHeight: 44,
+                borderRadius: 10, border: "none", background: AZURE,
                 color: "#FFFFFF", fontSize: 14, fontWeight: 700, cursor: "pointer",
               }}
             >
+              <CheckCircle2 size={16} aria-hidden />
               Done
             </button>
           </div>

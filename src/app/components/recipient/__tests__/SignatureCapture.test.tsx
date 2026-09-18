@@ -46,13 +46,16 @@ function stubCanvas(): void {
     { configurable: true, get: () => 1, set: () => undefined });
 }
 
-function setup(purpose: "signature" | "initials" = "signature") {
+function setup(
+  purpose: "signature" | "initials" = "signature",
+  value: SignatureValue | null = null,
+) {
   const onChange = vi.fn<(value: SignatureValue | null) => void>();
   render(
     <SignatureCapture
       label="Signature (required)"
       purpose={purpose}
-      value={null}
+      value={value}
       onChange={onChange}
     />,
   );
@@ -216,6 +219,75 @@ describe("switching modes", () => {
     await user.click(screen.getByRole("button", { name: "Type" }));
 
     expect(onChange).not.toHaveBeenCalled();
+  });
+});
+
+describe("changing a signature already adopted", () => {
+  // Nothing is final until the submission is sent, and a signer who believes
+  // their first attempt is binding will not try to improve it. A wobbly
+  // signature they are stuck with is a worse outcome than one they redrew.
+
+  it("shows what was adopted instead of an empty pad", async () => {
+    setup("signature", { method: "typed", text: "Maria Santos", styleIndex: 0 });
+
+    expect(await screen.findByText("Maria Santos")).toBeTruthy();
+    // The picker is hidden: the sheet answers one question at a time.
+    expect(screen.queryByRole("button", { name: "Draw" })).toBeNull();
+  });
+
+  it("says the signature can still be changed", async () => {
+    setup("signature", { method: "drawn", base64: "aGVsbG8=" });
+
+    expect(await screen.findByText("You can change this until you submit."))
+      .toBeTruthy();
+  });
+
+  it("shows a DRAWN signature as the image it is", () => {
+    setup("signature", { method: "drawn", base64: "aGVsbG8=" });
+
+    const image = screen.getByAltText("Your adopted signature");
+    expect(image.getAttribute("src")).toBe("data:image/png;base64,aGVsbG8=");
+  });
+
+  it("reveals the picker on Change", async () => {
+    const { user } = setup("signature", {
+      method: "typed", text: "Maria Santos", styleIndex: 0,
+    });
+
+    await user.click(screen.getByRole("button", { name: /Change/ }));
+
+    expect(screen.getByRole("button", { name: "Draw" })).toBeTruthy();
+  });
+
+  it("restores the typed text so a change starts from what is there", async () => {
+    // A drawn mark is kept as a PNG, not as strokes, so it genuinely cannot
+    // be resumed — but a typed one is fully recoverable, and reopening it
+    // blank would read as having lost the signer's work.
+    const { user } = setup("signature", {
+      method: "typed", text: "Maria Santos", styleIndex: 0,
+    });
+
+    await user.click(screen.getByRole("button", { name: /Change/ }));
+
+    expect(screen.getByLabelText("Type your signature").getAttribute("value"))
+      .toBe("Maria Santos");
+  });
+
+  it("clears the adopted value on Remove", async () => {
+    const { onChange, user } = setup("signature", {
+      method: "typed", text: "Maria Santos", styleIndex: 0,
+    });
+
+    await user.click(screen.getByRole("button", { name: /Remove/ }));
+
+    expect(onChange).toHaveBeenCalledWith(null);
+  });
+
+  it("offers no Change or Remove when nothing is adopted yet", () => {
+    setup();
+
+    expect(screen.queryByRole("button", { name: /Change/ })).toBeNull();
+    expect(screen.queryByRole("button", { name: /Remove/ })).toBeNull();
   });
 });
 

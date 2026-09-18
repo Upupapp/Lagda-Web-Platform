@@ -34,6 +34,11 @@
 // honest the day the merger renders them differently, and not before.
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
+import {
+  PenTool, Type as TypeIcon, Upload as UploadIcon, Eraser, Check,
+  AlertTriangle, ImageUp, RefreshCw, Trash2, type LucideIcon,
+} from "lucide-react";
+import { T, GF as SIGNER_GF, useViewport } from "./signer-ui";
 
 // ── The server's bounds, restated ──────────────────────────────────────────
 /** `RASTER_SIGNATURE_MAX_BYTES` — 64 KiB of decoded PNG. */
@@ -50,11 +55,13 @@ const MAX_TYPED_LENGTH = 200;
  */
 const ONLY_STYLE_INDEX = 0;
 
-const GF = { fontFamily: "'Geist', sans-serif" };
-const NAVY = "#07111F";
-const AZURE = "#0078D4";
-const SILVER = "#8A9BAE";
-const BORDER = "#D1D9E0";
+// Aliases onto the shared signer palette, so this cannot drift from the
+// screens it appears on.
+const GF = SIGNER_GF;
+const NAVY = T.ink;
+const AZURE = T.azure;
+const SILVER = T.silver;
+const BORDER = T.borderStrong;
 
 export type SignatureValue =
   | { method: "typed"; text: string; styleIndex: number }
@@ -183,6 +190,21 @@ export function SignatureCapture({
   label, purpose, value, onChange, disabled = false,
 }: SignatureCaptureProps) {
   const [mode, setMode] = useState<Mode>("draw");
+  /**
+   * Whether the picker is showing, when a signature has already been adopted.
+   *
+   * ── Why a mark cannot simply be "reopened" ────────────────────────────
+   *
+   * A drawn signature is kept as a PNG, not as the strokes that made it, so
+   * the pad genuinely cannot resume where the signer left off. Pretending
+   * otherwise — opening an empty canvas over an adopted signature — reads as
+   * having lost their work.
+   *
+   * So an existing mark is SHOWN, with Replace and Remove beside it, and the
+   * picker appears only once they choose to replace. A typed signature is
+   * restored exactly, because for that one the text is the whole value.
+   */
+  const [replacing, setReplacing] = useState(false);
   const [typed, setTyped] = useState("");
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [hasInk, setHasInk] = useState(false);
@@ -190,8 +212,18 @@ export function SignatureCapture({
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const wrapRef = useRef<HTMLDivElement | null>(null);
   const drawing = useRef(false);
+  const { isMobileS } = useViewport();
 
   const noun = purpose === "initials" ? "initials" : "signature";
+
+  /**
+   * Whether the Draw/Type/Upload picker is showing.
+   *
+   * Hidden while an adopted signature is on screen, so the sheet answers one
+   * question at a time: first "here is what you signed with, keep it or
+   * change it", and only then "how do you want to sign".
+   */
+  const picking = value === null || replacing;
 
   // ── Canvas sizing ─────────────────────────────────────────────────────────
   //
@@ -233,6 +265,17 @@ export function SignatureCapture({
     window.addEventListener("resize", sizeCanvas);
     return () => { window.removeEventListener("resize", sizeCanvas); };
   }, [sizeCanvas, mode]);
+
+  // Reopening on a TYPED signature restores the text and the tab that made
+  // it, so "change my signature" starts from what is there rather than from
+  // nothing. A drawn one cannot be restored — see `replacing` — so it opens
+  // on the adopted view instead.
+  useEffect(() => {
+    if (value?.method === "typed") {
+      setMode("type");
+      setTyped(current => (current === "" ? value.text : current));
+    }
+  }, [value]);
 
   // ── Drawing ───────────────────────────────────────────────────────────────
 
@@ -332,38 +375,205 @@ export function SignatureCapture({
     onChange({ method: "drawn", base64 });
   };
 
-  const tab = (target: Mode, text: string) => (
-    <button
-      type="button"
-      onClick={() => { switchMode(target); }}
-      disabled={disabled}
-      aria-pressed={mode === target}
-      style={{
-        ...GF, flex: "1 1 0", minWidth: 72, padding: "8px 10px",
-        borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: disabled ? "not-allowed" : "pointer",
-        border: mode === target ? `1px solid ${AZURE}` : `1px solid ${BORDER}`,
-        background: mode === target ? "#EAF4FC" : "#FFFFFF",
-        color: mode === target ? AZURE : NAVY,
-      }}
-    >
-      {text}
-    </button>
-  );
+  /**
+   * One way to sign, as a card rather than a text tab.
+   *
+   * An icon above the label, because at Mobile S three text tabs either
+   * truncate or wrap into something unreadable — and because "draw" and
+   * "type" are genuinely different actions that a glyph distinguishes faster
+   * than a word.
+   *
+   * `aria-pressed` rather than a tablist: these are three toggles over one
+   * value, and a real tablist would promise arrow-key navigation between
+   * panels that do not behave like tabs.
+   */
+  const tab = (target: Mode, text: string, Icon: LucideIcon, hint: string) => {
+    const active = mode === target;
+    return (
+      <button
+        type="button"
+        onClick={() => { switchMode(target); }}
+        disabled={disabled}
+        aria-pressed={active}
+        title={hint}
+        style={{
+          ...GF,
+          flex: "1 1 0",
+          // Narrow enough for three across at 320px, tall enough to tap.
+          minWidth: 0, minHeight: 64,
+          display: "flex", flexDirection: "column",
+          alignItems: "center", justifyContent: "center", gap: 4,
+          padding: isMobileS ? "8px 4px" : "10px 8px",
+          borderRadius: 12,
+          fontSize: isMobileS ? 11 : 12.5, fontWeight: 700,
+          cursor: disabled ? "not-allowed" : "pointer",
+          border: `1px solid ${active ? AZURE : T.border}`,
+          background: active ? T.azureWash : T.surface,
+          color: active ? T.azureDeep : T.inkSoft,
+          boxShadow: active ? "0 1px 0 rgba(0,120,212,0.18)" : "none",
+          transition: "background 120ms ease, border-color 120ms ease",
+        }}
+      >
+        <Icon size={isMobileS ? 17 : 19} aria-hidden />
+        <span style={{ whiteSpace: "nowrap" }}>{text}</span>
+      </button>
+    );
+  };
 
   return (
     <div style={{ marginBottom: 18 }}>
-      <label style={{ ...GF, display: "block", fontSize: 13, fontWeight: 600, color: NAVY, marginBottom: 8 }}>
-        {label}
-      </label>
-
-      {/* Wraps at 320px rather than overflowing. */}
-      <div style={{ display: "flex", gap: 6, marginBottom: 10, flexWrap: "wrap" }}>
-        {tab("draw", "Draw")}
-        {tab("type", "Type")}
-        {tab("upload", "Upload")}
+      {/* A banner, not a bare label: this control is the consequential one on
+          the screen, and a 13px line of text above three buttons did not read
+          as the place where a signature gets made. */}
+      <div
+        style={{
+          ...GF, display: "flex", alignItems: "center", gap: 10,
+          padding: isMobileS ? "9px 11px" : "11px 14px",
+          borderRadius: 12, marginBottom: 10,
+          background: T.azureWash, border: `1px solid #B7DAF5`,
+        }}
+      >
+        <span
+          aria-hidden="true"
+          style={{
+            display: "grid", placeItems: "center", flexShrink: 0,
+            width: 30, height: 30, borderRadius: 9,
+            background: T.surface, border: `1px solid #B7DAF5`, color: T.azureDeep,
+          }}
+        >
+          <PenTool size={16} />
+        </span>
+        <span style={{ minWidth: 0 }}>
+          <span style={{
+            display: "block", fontSize: "clamp(13px, 3.5vw, 14px)",
+            fontWeight: 800, color: T.ink,
+          }}>
+            {label}
+          </span>
+          <span style={{ display: "block", fontSize: 11.5, color: T.inkSoft, marginTop: 1 }}>
+            Choose how you want to sign
+          </span>
+        </span>
       </div>
 
-      {mode === "draw" && (
+      {/* ── Already signed: show it, with a way to change it ──────────────
+          A signature can be changed at any point before the submission is
+          sent; nothing is final until then. Saying so matters — a signer who
+          believes their first attempt is binding will not try to improve it,
+          and a wobbly signature they are stuck with is a worse outcome than
+          one they redrew. */}
+      {value !== null && !replacing && (
+        <div>
+          <div
+            style={{
+              display: "flex", alignItems: "center", gap: 12,
+              padding: "12px 14px", borderRadius: 12, marginBottom: 10,
+              background: T.surface, border: `1px solid ${T.border}`,
+            }}
+          >
+            <span
+              aria-hidden="true"
+              style={{
+                display: "grid", placeItems: "center", flexShrink: 0,
+                width: 28, height: 28, borderRadius: 999,
+                background: T.successWash, border: `1px solid #B7E3CA`,
+                color: T.success,
+              }}
+            >
+              <Check size={15} />
+            </span>
+            <div style={{
+              flex: 1, minWidth: 0, minHeight: 44,
+              display: "flex", alignItems: "center", overflow: "hidden",
+            }}>
+              {value.method === "drawn"
+                ? (
+                  <img
+                    src={`data:image/png;base64,${value.base64}`}
+                    alt={`Your adopted ${noun}`}
+                    style={{ maxWidth: "100%", maxHeight: 56, objectFit: "contain" }}
+                  />
+                )
+                : (
+                  <span style={{
+                    fontFamily: "'Noto Sans', system-ui, sans-serif",
+                    fontStyle: "italic", fontSize: 24, color: T.ink,
+                    overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+                  }}>
+                    {value.text}
+                  </span>
+                )}
+            </div>
+          </div>
+
+          <p style={{
+            ...GF, fontSize: 11.5, color: SILVER, margin: "0 0 10px", lineHeight: 1.5,
+          }}>
+            You can change this until you submit.
+          </p>
+
+          <div style={{ display: "flex", gap: 8 }}>
+            <button
+              type="button"
+              disabled={disabled}
+              onClick={() => {
+                setReplacing(true);
+                // A drawn mark cannot be resumed, so replacing starts clean.
+                // A typed one keeps its text — the restore effect re-seeds it.
+                if (value.method === "drawn") { setHasInk(false); }
+              }}
+              style={{
+                ...GF, flex: 1, display: "inline-flex", alignItems: "center",
+                justifyContent: "center", gap: 7, minHeight: 44,
+                borderRadius: 10, fontSize: 13, fontWeight: 700,
+                border: `1px solid ${AZURE}`, background: T.azureWash,
+                color: T.azureDeep, cursor: disabled ? "not-allowed" : "pointer",
+              }}
+            >
+              <RefreshCw size={15} aria-hidden />
+              Change
+            </button>
+            <button
+              type="button"
+              disabled={disabled}
+              onClick={() => {
+                setReplacing(false);
+                setTyped("");
+                setHasInk(false);
+                clearCanvas();
+                onChange(null);
+              }}
+              style={{
+                ...GF, display: "inline-flex", alignItems: "center",
+                justifyContent: "center", gap: 7, minHeight: 44,
+                padding: "0 14px", borderRadius: 10, fontSize: 13, fontWeight: 700,
+                border: `1px solid ${T.border}`, background: T.surface,
+                color: T.danger, cursor: disabled ? "not-allowed" : "pointer",
+              }}
+            >
+              <Trash2 size={15} aria-hidden />
+              Remove
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Three across even at 320px — a grid rather than wrapping flex, so a
+          single card never drops alone onto a second row. */}
+      {picking && (
+      <div
+        style={{
+          display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+          gap: isMobileS ? 6 : 8, marginBottom: 12,
+        }}
+      >
+        {tab("draw", "Draw", PenTool, "Draw your signature with a finger, stylus or mouse")}
+        {tab("type", "Type", TypeIcon, "Type your name and we render it")}
+        {tab("upload", "Upload", UploadIcon, "Upload a photo or scan of your signature")}
+      </div>
+      )}
+
+      {picking && mode === "draw" && (
         <div ref={wrapRef}>
           <canvas
             ref={canvasRef}
@@ -373,36 +583,61 @@ export function SignatureCapture({
             onPointerCancel={endStroke}
             aria-label={`Draw your ${noun}`}
             style={{
-              width: "100%", display: "block", borderRadius: 8,
-              border: `1px dashed ${BORDER}`, background: "#FBFCFD",
+              width: "100%", display: "block", borderRadius: 12,
+              border: `2px dashed ${hasInk ? T.azure : "#C3CEDA"}`,
+              background: hasInk
+                ? "#FFFFFF"
+                // A faint ruled baseline, so the pad reads as somewhere to
+                // sign rather than an empty grey rectangle.
+                : "linear-gradient(to bottom, #FBFCFD 0%, #FBFCFD 72%, #E8EEF4 72%, #E8EEF4 calc(72% + 1px), #FBFCFD calc(72% + 1px))",
               // Without this a drag on a touch screen scrolls the page instead
               // of drawing, which makes the pad unusable on a phone.
               touchAction: "none",
               cursor: disabled ? "not-allowed" : "crosshair",
             }}
           />
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 6, gap: 8, flexWrap: "wrap" }}>
-            <span style={{ ...GF, fontSize: 12, color: SILVER }}>
-              {hasInk ? `Your ${noun} is ready.` : `Draw your ${noun} above.`}
+          <div style={{
+            display: "flex", justifyContent: "space-between", alignItems: "center",
+            marginTop: 8, gap: 8,
+          }}>
+            <span style={{
+              ...GF, display: "inline-flex", alignItems: "center", gap: 6,
+              fontSize: 12, fontWeight: 600, minWidth: 0,
+              color: hasInk ? T.success : SILVER,
+            }}>
+              {hasInk
+                ? <Check size={14} aria-hidden style={{ flexShrink: 0 }} />
+                : <PenTool size={14} aria-hidden style={{ flexShrink: 0 }} />}
+              <span style={{
+                overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+              }}>
+                {hasInk ? `Your ${noun} is ready` : `Draw your ${noun} above`}
+              </span>
             </span>
             <button
               type="button"
               onClick={clearCanvas}
               disabled={disabled || !hasInk}
               style={{
-                ...GF, padding: "6px 12px", borderRadius: 6, fontSize: 12, fontWeight: 600,
-                border: `1px solid ${BORDER}`, background: "#FFFFFF",
+                ...GF, display: "inline-flex", alignItems: "center", gap: 6,
+                // 44px: clearing is destructive, and a fat-finger miss beside
+                // a signature pad redraws over the mark.
+                minHeight: 44, padding: "0 14px", borderRadius: 10,
+                fontSize: 12.5, fontWeight: 700, flexShrink: 0,
+                border: `1px solid ${BORDER}`, background: T.surface,
                 color: hasInk ? NAVY : SILVER,
                 cursor: hasInk && !disabled ? "pointer" : "not-allowed",
+                opacity: hasInk ? 1 : 0.6,
               }}
             >
+              <Eraser size={14} aria-hidden />
               Clear
             </button>
           </div>
         </div>
       )}
 
-      {mode === "type" && (
+      {picking && mode === "type" && (
         <div>
           <input
             value={typed}
@@ -418,12 +653,20 @@ export function SignatureCapture({
           />
           {/* The preview uses the face the SERVER draws with, so this is what
               the sealed document will show — not a decorative approximation. */}
+          <p style={{
+            ...GF, display: "flex", alignItems: "center", gap: 6,
+            fontSize: 11, fontWeight: 700, letterSpacing: "0.05em",
+            textTransform: "uppercase", color: SILVER, margin: "12px 0 6px",
+          }}>
+            <TypeIcon size={12} aria-hidden />
+            Preview — this is how it will appear
+          </p>
           <div
             aria-hidden="true"
             style={{
-              marginTop: 8, minHeight: 56, display: "flex", alignItems: "center",
-              padding: "8px 12px", borderRadius: 8, background: "#FBFCFD",
-              border: `1px dashed ${BORDER}`,
+              minHeight: 64, display: "flex", alignItems: "center",
+              padding: "10px 14px", borderRadius: 12, background: T.surface,
+              border: `2px dashed ${typed.trim().length > 0 ? T.azure : "#C3CEDA"}`,
               fontFamily: "'Noto Sans', system-ui, sans-serif",
               fontStyle: "italic", fontSize: 26, color: NAVY,
               // A long name must not blow out the layout at 320px.
@@ -439,28 +682,62 @@ export function SignatureCapture({
         </div>
       )}
 
-      {mode === "upload" && (
+      {picking && mode === "upload" && (
         <div>
-          <input
-            type="file"
-            accept="image/png,image/jpeg"
-            disabled={disabled}
-            onChange={event => { void onUpload(event.target.files?.[0]); }}
-            aria-label={`Upload an image of your ${noun}`}
-            style={{ ...GF, fontSize: 13, color: NAVY, width: "100%" }}
-          />
-          <p style={{ ...GF, fontSize: 12, color: SILVER, margin: "8px 0 0" }}>
-            A photo or scan works. It is converted to a PNG and trimmed to your
-            mark before it is sent.
-          </p>
+          {/* The input is wrapped in its own label so the whole zone is the
+              target. A bare `<input type="file">` renders as a small,
+              inconsistently-styled native button that is hard to hit on a
+              phone and looks nothing like the rest of this control. */}
+          <label
+            style={{
+              ...GF, display: "flex", flexDirection: "column",
+              alignItems: "center", justifyContent: "center", gap: 6,
+              minHeight: 120, padding: "16px 12px", textAlign: "center",
+              position: "relative",
+              borderRadius: 12, border: `2px dashed #C3CEDA`,
+              background: "#FBFCFD",
+              cursor: disabled ? "not-allowed" : "pointer",
+            }}
+          >
+            <ImageUp size={22} aria-hidden style={{ color: T.azureDeep }} />
+            <span style={{ fontSize: 13, fontWeight: 700, color: NAVY }}>
+              Choose a photo or scan
+            </span>
+            <span style={{ fontSize: 11.5, color: SILVER, maxWidth: 260, lineHeight: 1.45 }}>
+              PNG or JPEG. It is converted to a PNG and trimmed to your mark
+              before it is sent.
+            </span>
+            <input
+              type="file"
+              accept="image/png,image/jpeg"
+              disabled={disabled}
+              onChange={event => { void onUpload(event.target.files?.[0]); }}
+              aria-label={`Upload an image of your ${noun}`}
+              // Visually hidden, still focusable and still labelled.
+              style={{
+                position: "absolute", width: 1, height: 1,
+                padding: 0, margin: -1, overflow: "hidden", clip: "rect(0 0 0 0)",
+                whiteSpace: "nowrap", border: 0,
+              }}
+            />
+          </label>
+
           {uploadError !== null && (
-            <p role="alert" style={{ ...GF, fontSize: 12, color: "#C0392B", margin: "6px 0 0" }}>
+            <p role="alert" style={{
+              ...GF, display: "flex", alignItems: "center", gap: 6,
+              fontSize: 12, color: T.danger, margin: "8px 0 0",
+            }}>
+              <AlertTriangle size={13} aria-hidden style={{ flexShrink: 0 }} />
               {uploadError}
             </p>
           )}
           {value?.method === "drawn" && uploadError === null && (
-            <p style={{ ...GF, fontSize: 12, color: "#1E7F4F", margin: "6px 0 0" }}>
-              Image ready.
+            <p style={{
+              ...GF, display: "flex", alignItems: "center", gap: 6,
+              fontSize: 12, fontWeight: 600, color: T.success, margin: "8px 0 0",
+            }}>
+              <Check size={13} aria-hidden style={{ flexShrink: 0 }} />
+              Image ready
             </p>
           )}
         </div>
