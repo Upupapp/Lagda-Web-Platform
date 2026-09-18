@@ -201,18 +201,34 @@ export function RealSigningPage() {
         <h1 style={{ ...GF, fontSize: 20, fontWeight: 800, color: NAVY, margin: "0 0 10px" }}>Submitted</h1>
         {/* Says only what the backend actually does.
 
-            This previously promised "the sender will be notified once every
-            required participant has completed their part" — a promise the
-            system cannot keep: `NOTIFICATION_TYPES` has four members
-            (ACCOUNT_EMAIL_VERIFICATION, PASSWORD_RESET,
-            WORKSPACE_INVITATION, SIGNING_INVITATION) and none of them is a
-            completion, so no producer exists and no completion email is ever
-            sent. Telling a signer somebody will be told, when nobody will,
-            is the kind of copy that stops a signer from following up. */}
+            A completion notice was removed from this screen once, because the
+            promise was false: `NOTIFICATION_TYPES` had four members and none
+            of them was a completion, so no producer existed and no completion
+            email was ever sent.
+
+            BACKEND-38 Phase 2 changed that. `SIGNING_COMPLETED` is a real
+            notification type with a real producer: the finalization
+            transaction that seals the document also writes the intent, and
+            transport delivers it to the sender. So the sentence below is
+            restored — but hedged exactly as far as the truth requires:
+
+              "once every required participant has completed" — because this
+              signer may not be the last one, and nothing is sent until the
+              request as a whole finishes and its final seal succeeds;
+
+              "automatically" rather than "has been" — the intent is durable
+              and retried, but at this instant the email has not been sent,
+              and claiming delivery is the same category of error as the
+              original copy.
+
+            The fallback line stays for the same reason: transport can
+            ultimately give up, and a signer who needs confirmation should
+            know they can ask. */}
         <p style={{ ...GF, fontSize: 14, color: SILVER, margin: 0, lineHeight: 1.6 }}>
           Your signature was received and recorded. You can close this page — nothing further is
-          needed from you. If you need confirmation of the completed document, contact the sender
-          directly.
+          needed from you. Once every required participant has completed their part, the sender is
+          notified automatically. If you need confirmation of the completed document, contact the
+          sender directly.
         </p>
       </Card>
     );
@@ -222,11 +238,14 @@ export function RealSigningPage() {
     return (
       <Card>
         <h1 style={{ ...GF, fontSize: 20, fontWeight: 800, color: NAVY, margin: "0 0 10px" }}>Request declined</h1>
-        {/* "The sender has been notified" was false for the same reason the
-            submitted screen's promise was: there is no decline notification
-            type and no producer. The decline IS recorded — it ends the
-            request for everyone and revokes every grant — so that is what
-            this says instead. */}
+        {/* "The sender has been notified" is false here, and — unlike the
+            submitted screen above — it is STILL false after BACKEND-38
+            Phase 2. That phase added `SIGNING_COMPLETED` only. There is no
+            decline notification type and no producer, so nothing tells the
+            sender this happened.
+
+            The decline IS recorded — it ends the request for everyone and
+            revokes every grant — so that is what this says instead. */}
         <p style={{ ...GF, fontSize: 14, color: SILVER, margin: 0, lineHeight: 1.6 }}>
           Your decline was recorded and this signing request is now closed. If you declined by
           mistake, contact the sender — a new request would have to be sent.
