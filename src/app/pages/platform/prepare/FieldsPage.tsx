@@ -5,7 +5,10 @@
 // No PDF parsing occurs. No documents are uploaded. All fields are in-memory only.
 // Burgundy (#67023B) is NEVER used here — eNotary-only color.
 // No notarial, seal, OTP, password, or biometric field types exist here.
-// Document pages shown are FICTIONAL PREVIEWS — not the selected files.
+// Document pages: the REAL uploaded file is rendered with pdf.js when this
+// is running against the real backend (see RealDocumentPage). The fictional
+// preview below is the DEMO-MODE fallback only — in demo mode there is no
+// uploaded file to show.
 
 import React, {
   useEffect,
@@ -27,6 +30,9 @@ import {
   eligibleParticipants, resolveAssignmentFor, computeBackendFieldIssues,
 } from "../../../services/prepare/field-autofix";
 import { isDocumentSynced, markDocumentSynced } from "../../../services/prepare/sync-markers";
+import {
+  useRealDocument, RealDocumentPage,
+} from "../../../components/prepare/RealDocumentPage";
 import type {
   FieldId,
   FieldDefinition,
@@ -283,14 +289,22 @@ function FieldElement({ field, isSelected, identity, isSender, onPointerDown, on
 // ── Page canvas ────────────────────────────────────────────────────────────────
 interface PageCanvasProps {
   participants: PrepParticipant[];
+  /**
+   * The workspace and real document behind the current editor document, when
+   * there is one. Absent in demo mode, where no file was ever uploaded.
+   */
+  workspaceId: string | null;
+  realDocumentIdByEditorDocId: Map<string, string>;
 }
 
-function PageCanvas({ participants }: PageCanvasProps) {
+function PageCanvas({
+  participants, workspaceId, realDocumentIdByEditorDocId,
+}: PageCanvasProps) {
   const {
     currentDocumentId, currentPageId, currentPageFields, documents,
     selectedFieldIds, mode, pendingFieldType, zoom,
     addField, moveField, selectFields, clearSelection,
-    participantIdentities,
+    participantIdentities, syncRealPages,
   } = useFieldEditor();
 
   const canvasRef  = useRef<HTMLDivElement>(null);
@@ -309,8 +323,39 @@ function PageCanvas({ participants }: PageCanvasProps) {
   const currentDoc  = documents.find(d => d.id === currentDocumentId);
   const currentPage = currentDoc?.pages.find(p => p.id === currentPageId);
 
+  // ── The real document ─────────────────────────────────────────────────────
+  //
+  // Loaded per editor document. `useRealDocument` returns `idle` when either
+  // id is absent, which is demo mode and the pre-upload state.
+  const realDocumentId = currentDocumentId === null
+    ? null
+    : realDocumentIdByEditorDocId.get(currentDocumentId) ?? null;
+  const realDocument = useRealDocument(workspaceId, realDocumentId);
+
+  // The page list the editor was initialised with is a placeholder: the count
+  // comes from `derivePageCount` and every page is assumed A4. Correct it as
+  // soon as the real file has been read.
+  useEffect(() => {
+    if (realDocument.status !== "ready" || currentDocumentId === null) return;
+    syncRealPages(
+      currentDocumentId,
+      realDocument.pageCount,
+      // WIDTH / HEIGHT, matching `EditorPage.aspectRatio` (A4 = 595/842).
+      realDocument.pageSizes.map(size => size.width / size.height),
+    );
+  }, [realDocument, currentDocumentId, syncRealPages]);
+
   const pageWidth  = (BASE_PAGE_WIDTH * zoom) / 100;
-  const pageHeight = pageWidth * PAGE_RATIO;
+  // The page's OWN shape, not a fixed A4 assumption. Fields are normalised
+  // against this box, so a wrong ratio puts every field at the wrong height —
+  // silently, since nothing errors.
+  //
+  // DIVIDED, because `EditorPage.aspectRatio` is WIDTH/HEIGHT (A4 = 595/842 =
+  // 0.707) while `PAGE_RATIO` is its reciprocal. Multiplying by one where the
+  // other is meant renders every page inside-out.
+  const pageHeight = currentPage === undefined
+    ? pageWidth * PAGE_RATIO
+    : pageWidth / currentPage.aspectRatio;
 
   const getIdentity = useCallback((participantId: string | null): ParticipantEditorIdentity | null =>
     participantId
@@ -514,8 +559,34 @@ function PageCanvas({ participants }: PageCanvasProps) {
             }
           }}
         >
-          {/* Fictional page content */}
-          <FictionPagePreview pageNumber={currentPage.pageNumber} />
+          {/* The page itself. The real file when there is one — a signature
+              is placed on a signature LINE, and a placeholder has none. */}
+          {realDocument.status === "ready"
+            ? (
+              <RealDocumentPage
+                doc={realDocument.doc}
+                pageNumber={currentPage.pageNumber}
+                width={pageWidth}
+                height={pageHeight}
+              />
+            )
+            : realDocumentId === null
+              ? <FictionPagePreview pageNumber={currentPage.pageNumber} />
+              : (
+                <div
+                  aria-live="polite"
+                  style={{
+                    position: "absolute", inset: 0, display: "flex",
+                    alignItems: "center", justifyContent: "center",
+                    padding: 24, textAlign: "center", pointerEvents: "none",
+                    fontSize: 13, color: "#8A9BAE",
+                  }}
+                >
+                  {realDocument.status === "error"
+                    ? realDocument.message
+                    : "Loading your document…"}
+                </div>
+              )}
 
           {/* Fields */}
           {currentPageFields.map(field => {
@@ -2157,7 +2228,11 @@ function FieldsPageInner() {
           {showFieldList ? (
             <FieldListView participants={participants} />
           ) : (
-            <PageCanvas participants={participants} />
+            <PageCanvas
+              participants={participants}
+              workspaceId={platform.currentWorkspace?.id ?? null}
+              realDocumentIdByEditorDocId={realDocumentIdByEditorDocId}
+            />
           )}
         </main>
 

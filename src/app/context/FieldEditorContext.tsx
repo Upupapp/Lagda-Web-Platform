@@ -83,7 +83,32 @@ type FieldEditorAction =
   | { type: "TOGGLE_LIST" }
   | { type: "TOGGLE_VALIDATION" }
   | { type: "SET_SAVE_STATE"; saveState: EditorSaveState }
-  | { type: "DISCARD" };
+  | { type: "DISCARD" }
+  /**
+   * Replaces a document's fabricated page list with the real one.
+   *
+   * The editor is initialised from `buildEditorDocuments`, whose page count
+   * comes from `derivePageCount` — an index into a hardcoded array — and whose
+   * every page is assumed A4. Both are placeholders for a document nobody has
+   * read yet. Once the real PDF is loaded, this corrects them.
+   *
+   * It is a correction rather than part of INIT because reading the PDF is
+   * async and the editor must be usable before it finishes.
+   */
+  | {
+      type: "SYNC_REAL_PAGES";
+      documentId: EditorDocumentId;
+      pageCount: number;
+      /**
+       * WIDTH / HEIGHT per page, matching `EditorPage.aspectRatio`.
+       *
+       * That direction is a trap worth naming: the model's `A4` is `595/842`
+       * (0.707), while `PAGE_RATIO` in the editor is `842/595` (1.415). They
+       * are reciprocals, and passing the wrong one shapes every page
+       * inside-out without failing anything.
+       */
+      aspectRatios: readonly number[];
+    };
 
 // ── Reducer ───────────────────────────────────────────────────────────────────
 
@@ -250,6 +275,58 @@ function reducer(state: FieldEditorState, action: FieldEditorAction): FieldEdito
     case "SET_SAVE_STATE":
       return { ...state, saveState: action.saveState };
 
+    case "SYNC_REAL_PAGES": {
+      const target = state.documents.find(doc => doc.id === action.documentId);
+      if (target === undefined) return state;
+
+      const sameCount = target.pageCount === action.pageCount;
+      const sameShape = target.pages.every(
+        (page, index) => page.aspectRatio === action.aspectRatios[index]);
+      // Identical is the COMMON case — every re-render of a loaded document
+      // reaches here. Returning the same state keeps React from looping.
+      if (sameCount && sameShape) return state;
+
+      // Ids are rebuilt with the same deterministic scheme the initial pages
+      // used, so a page that survives the correction keeps its id — and with
+      // it, every field already placed on that page and the current page
+      // selection. Only pages that genuinely no longer exist are lost.
+      const pages = Array.from({ length: action.pageCount }, (_, index) => ({
+        id: `epage_${action.documentId}_${String(index + 1)}`,
+        documentId: action.documentId,
+        pageNumber: index + 1,
+        aspectRatio: action.aspectRatios[index] ?? target.pages[index]?.aspectRatio ?? 595 / 842,
+        label: `Page ${String(index + 1)}`,
+      }));
+
+      const documents = state.documents.map(doc =>
+        doc.id === action.documentId
+          ? { ...doc, pageCount: action.pageCount, pages }
+          : doc);
+
+      // A field on a page the document does not have could never be saved —
+      // the backend validates `pageNumber` against the artifact's real page
+      // count and refuses it. Dropping it here is what turns an unexplainable
+      // save failure into a page that simply is not offered.
+      const livePageIds = new Set(pages.map(page => page.id));
+      const fields = state.fields.filter(
+        field => field.documentId !== action.documentId || livePageIds.has(field.pageId));
+
+      const currentPageStillExists =
+        state.currentPageId !== null && livePageIds.has(state.currentPageId);
+      const belongsToTarget = state.currentDocumentId === action.documentId;
+
+      return {
+        ...state,
+        documents,
+        fields,
+        selectedFieldIds: state.selectedFieldIds.filter(
+          id => fields.some(field => field.id === id)),
+        currentPageId: belongsToTarget && !currentPageStillExists
+          ? (pages[0]?.id ?? null)
+          : state.currentPageId,
+      };
+    }
+
     case "DISCARD":
       return { ...INITIAL, loadState: "ready" };
 
@@ -326,6 +403,18 @@ interface FieldEditorContextValue {
   // Lifecycle
   initialize:  (draftId: string, draft: PreparationDraft) => void;
   loadRealFields: (fields: FieldDefinition[]) => void;
+  /**
+   * Corrects a document's page list once the real PDF has been read.
+   *
+   * Safe to call on every render: identical input returns the same state, so
+   * it does not loop.
+   */
+  syncRealPages: (
+    documentId: EditorDocumentId,
+    pageCount: number,
+    /** WIDTH / HEIGHT per page — the same direction as `EditorPage.aspectRatio`. */
+    aspectRatios: readonly number[],
+  ) => void;
   discard:     (draftId: string) => void;
 }
 
@@ -376,6 +465,14 @@ export function FieldEditorProvider({ children, participants }: ProviderProps) {
   }, []);
 
   // ── Public API ────────────────────────────────────────────────────────────────
+
+  const syncRealPages = useCallback((
+    documentId: EditorDocumentId,
+    pageCount: number,
+    aspectRatios: readonly number[],
+  ) => {
+    dispatch({ type: "SYNC_REAL_PAGES", documentId, pageCount, aspectRatios });
+  }, []);
 
   const initialize = useCallback((draftId: string, draft: PreparationDraft) => {
     if (!draft) { dispatch({ type: "INIT_NO_DRAFT" }); return; }
@@ -600,6 +697,7 @@ export function FieldEditorProvider({ children, participants }: ProviderProps) {
     toggleFieldList,
     toggleValidation,
     initialize,
+    syncRealPages,
     loadRealFields,
     discard,
   };
