@@ -199,9 +199,20 @@ export function RealSigningPage() {
     return (
       <Card>
         <h1 style={{ ...GF, fontSize: 20, fontWeight: 800, color: NAVY, margin: "0 0 10px" }}>Submitted</h1>
+        {/* Says only what the backend actually does.
+
+            This previously promised "the sender will be notified once every
+            required participant has completed their part" — a promise the
+            system cannot keep: `NOTIFICATION_TYPES` has four members
+            (ACCOUNT_EMAIL_VERIFICATION, PASSWORD_RESET,
+            WORKSPACE_INVITATION, SIGNING_INVITATION) and none of them is a
+            completion, so no producer exists and no completion email is ever
+            sent. Telling a signer somebody will be told, when nobody will,
+            is the kind of copy that stops a signer from following up. */}
         <p style={{ ...GF, fontSize: 14, color: SILVER, margin: 0, lineHeight: 1.6 }}>
-          Your response was received by the server. The sender will be notified once every required participant
-          has completed their part of this signing request.
+          Your signature was received and recorded. You can close this page — nothing further is
+          needed from you. If you need confirmation of the completed document, contact the sender
+          directly.
         </p>
       </Card>
     );
@@ -211,8 +222,14 @@ export function RealSigningPage() {
     return (
       <Card>
         <h1 style={{ ...GF, fontSize: 20, fontWeight: 800, color: NAVY, margin: "0 0 10px" }}>Request declined</h1>
+        {/* "The sender has been notified" was false for the same reason the
+            submitted screen's promise was: there is no decline notification
+            type and no producer. The decline IS recorded — it ends the
+            request for everyone and revokes every grant — so that is what
+            this says instead. */}
         <p style={{ ...GF, fontSize: 14, color: SILVER, margin: 0, lineHeight: 1.6 }}>
-          You declined this signing request. The sender has been notified.
+          Your decline was recorded and this signing request is now closed. If you declined by
+          mistake, contact the sender — a new request would have to be sent.
         </p>
       </Card>
     );
