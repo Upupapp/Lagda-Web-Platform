@@ -14,6 +14,9 @@ import { Z } from "../../../utils/z-index";
 import { buildSignInUrl } from "../../../utils/authReturnPath";
 import { MissingItemsModal } from "../../../components/prepare/MissingItemsModal";
 import { PreparationHelpFab } from "../../../components/prepare/PreparationHelpFab";
+// Shared with the help FAB, which needs the same answer to "which step is
+// this". Two copies would be two places to update when a route moves.
+import { currentStepFromPath } from "../../../components/prepare/prep-step-guides";
 
 const GF = { fontFamily: "'Geist', sans-serif" };
 const NAVY   = "#07111F";
@@ -49,15 +52,6 @@ function stepStyle(s: PreparationStepState): { dot: string; label: string; icon:
 const STEP_ORDER: PreparationStepId[] = [
   "upload", "participants", "routing", "authentication", "settings", "review", "fields",
 ];
-
-function currentStepFromPath(pathname: string): PreparationStepId | null {
-  for (const step of PREPARATION_STEPS) {
-    if (pathname === step.route || pathname.startsWith(step.route + "?")) {
-      return step.id;
-    }
-  }
-  return null;
-}
 
 function prevStep(current: PreparationStepId | null): PreparationStepId | null {
   if (!current) return null;
