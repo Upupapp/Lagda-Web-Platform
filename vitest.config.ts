@@ -122,6 +122,13 @@ export default mergeConfig(
           "src/app/services/bulk-send-defaults.ts": {
             lines: 70, functions: 70, branches: 60, statements: 70,
           },
+          // The shared design system: every surface a person meets before
+          // they are fluent in the product renders through these, so a branch
+          // that stops working here breaks the signer ceremony, onboarding
+          // and the preparation guide at once. Set just below measured.
+          "src/app/components/system/design-system.tsx": {
+            branches: 90, functions: 85, lines: 85, statements: 85,
+          },
         },
       },
     },
