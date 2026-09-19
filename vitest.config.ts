@@ -103,10 +103,27 @@ export default mergeConfig(
         // written here target the pure logic — resolvers, projections,
         // validators, provider registries. Branch coverage at 75%+ is the
         // number that actually reflects what is tested.
+        //
+        // 2026-09-20: branches 76 -> 74.5, and the reason matters because it
+        // is NOT a coverage regression. Nothing that was tested became
+        // untested. `PlatformDashboard.realmode.test.tsx` renders the real
+        // dashboard to pin that a real account is never shown fabricated
+        // figures — and rendering it pulls PlatformDashboard.tsx (1.4k lines
+        // of demo widgets), PlatformContext and their import graph into the
+        // instrumented set for the first time. ~223 mostly-uncovered branches
+        // entered the DENOMINATOR in one step.
+        //
+        // The alternative was deleting the test that pins them, which is the
+        // wrong trade: the bug it covers (a real workspace shown invented
+        // documents and statistics) is one that actually reached a user.
+        //
+        // The dashboard is ratcheted individually below instead, which is the
+        // stronger guarantee — a global ratio can drift for reasons that have
+        // nothing to do with the code under test.
         thresholds: {
           lines: 9,
           functions: 45.5,
-          branches: 76,
+          branches: 74.5,
           statements: 9,
           // The modules this command is actually about: pure logic with real
           // branching, where meaningful coverage is achievable and valuable.
@@ -136,6 +153,13 @@ export default mergeConfig(
           },
           "src/app/components/prepare/PreparationHelpFab.tsx": {
             branches: 80, functions: 70, lines: 80, statements: 80,
+          },
+          // Pinned low deliberately. This is the large demo file the test
+          // above drags in, and ~42% is what rendering its real-mode branch
+          // actually reaches. The point of the ratchet is that the real/mock
+          // split stays covered, not that the demo widgets get tested.
+          "src/app/pages/platform/PlatformDashboard.tsx": {
+            branches: 40, functions: 20, lines: 20, statements: 20,
           },
         },
       },
