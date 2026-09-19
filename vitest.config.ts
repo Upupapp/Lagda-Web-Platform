@@ -129,6 +129,14 @@ export default mergeConfig(
           "src/app/components/system/design-system.tsx": {
             branches: 90, functions: 85, lines: 85, statements: 85,
           },
+          // The preparation guide: pure decision logic, plus the panel's own
+          // interaction behaviour. Set just below measured, same rule.
+          "src/app/components/prepare/preparation-help.ts": {
+            branches: 85, functions: 85, lines: 85, statements: 85,
+          },
+          "src/app/components/prepare/PreparationHelpFab.tsx": {
+            branches: 80, functions: 70, lines: 80, statements: 80,
+          },
         },
       },
     },

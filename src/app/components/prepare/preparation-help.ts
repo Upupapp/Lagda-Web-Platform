@@ -78,3 +78,38 @@ export function completionPercent(
   const doneUnits = doneStepCount + (fieldsDone ? 1 : 0);
   return Math.round((doneUnits / totalUnits) * 100);
 }
+
+// ── Scoping the panel to where you are ──────────────────────────────────────
+
+/**
+ * Splits blockers into "on this step" and "everywhere else".
+ *
+ * The panel used to list every blocker in the wizard at once, which is the
+ * right answer to "can I send yet" and the wrong one to "what do I do on
+ * this screen". Someone on Participants does not need to be told, four rows
+ * up, that Settings has an expiry in the past — they need the two rows about
+ * the participant they are looking at.
+ *
+ * The cross-step ones are not dropped, only moved behind a disclosure: they
+ * are still the answer to the other question, and MissingItemsModal (which
+ * answers exactly that when Continue is blocked) stays untouched.
+ *
+ * Matching is by ROUTE rather than by the item's `stepLabel`, because
+ * send-readiness blockers carry a route and derive their label from it — so
+ * the route is the fact and the label is already a derivation of it.
+ */
+export function partitionByStep(
+  items: readonly HelpItem[],
+  current: PreparationStepId | null,
+): { here: HelpItem[]; elsewhere: HelpItem[] } {
+  if (current === null) return { here: [], elsewhere: [...items] };
+
+  const route = stepRouteFor(current);
+  const here: HelpItem[] = [];
+  const elsewhere: HelpItem[] = [];
+
+  for (const item of items) {
+    (item.action.route.startsWith(route) ? here : elsewhere).push(item);
+  }
+  return { here, elsewhere };
+}

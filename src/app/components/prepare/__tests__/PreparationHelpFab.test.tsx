@@ -6,6 +6,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { MemoryRouter } from "react-router";
 
 const mockNavigate = vi.fn();
 vi.mock("react-router", async (orig) => ({
@@ -60,6 +61,24 @@ function setPrepare(over: Record<string, unknown> = {}) {
   });
 }
 
+/**
+ * Renders at a route, because the panel is now scoped to the step you are on.
+ *
+ * The FAB reads `useLocation()` to decide which guide to lead with and which
+ * blockers count as "here" — so a test that rendered it outside a router was
+ * not just unmounted, it had no step at all.
+ */
+function renderAt(path: string, extra?: React.ReactNode) {
+  return render(
+    <MemoryRouter initialEntries={[path]}>
+      {extra}
+      <PreparationHelpFab />
+    </MemoryRouter>,
+  );
+}
+
+const PARTICIPANTS = "/app/prepare/participants";
+
 beforeEach(() => {
   vi.clearAllMocks();
   setPrepare();
@@ -68,13 +87,13 @@ beforeEach(() => {
 describe("PreparationHelpFab", () => {
   it("renders nothing when there is no draft", () => {
     setPrepare({ draft: null });
-    render(<PreparationHelpFab />);
+    renderAt(PARTICIPANTS);
     expect(screen.queryByRole("button")).toBeNull();
   });
 
   it("opens the panel on FAB click and shows the blocker item", async () => {
     const user = userEvent.setup();
-    render(<PreparationHelpFab />);
+    renderAt(PARTICIPANTS);
     expect(screen.queryByRole("dialog")).toBeNull();
     await user.click(screen.getByRole("button", { name: /open preparation guide/i }));
     expect(screen.getByRole("dialog")).toBeInTheDocument();
@@ -83,7 +102,7 @@ describe("PreparationHelpFab", () => {
 
   it("closes when the FAB is clicked again", async () => {
     const user = userEvent.setup();
-    render(<PreparationHelpFab />);
+    renderAt(PARTICIPANTS);
     const fab = screen.getByRole("button", { name: /open preparation guide/i });
     await user.click(fab);
     expect(screen.getByRole("dialog")).toBeInTheDocument();
@@ -93,7 +112,7 @@ describe("PreparationHelpFab", () => {
 
   it("closes via the panel's close button", async () => {
     const user = userEvent.setup();
-    render(<PreparationHelpFab />);
+    renderAt(PARTICIPANTS);
     await user.click(screen.getByRole("button", { name: /open preparation guide/i }));
     await user.click(screen.getByRole("button", { name: "Close" }));
     expect(screen.queryByRole("dialog")).toBeNull();
@@ -101,7 +120,7 @@ describe("PreparationHelpFab", () => {
 
   it("closes on Escape", async () => {
     const user = userEvent.setup();
-    render(<PreparationHelpFab />);
+    renderAt(PARTICIPANTS);
     await user.click(screen.getByRole("button", { name: /open preparation guide/i }));
     await user.keyboard("{Escape}");
     expect(screen.queryByRole("dialog")).toBeNull();
@@ -109,7 +128,7 @@ describe("PreparationHelpFab", () => {
 
   it("closes on an outside click", async () => {
     const user = userEvent.setup();
-    render(<><div data-testid="outside">outside</div><PreparationHelpFab /></>);
+    renderAt(PARTICIPANTS, <div data-testid="outside">outside</div>);
     await user.click(screen.getByRole("button", { name: /open preparation guide/i }));
     expect(screen.getByRole("dialog")).toBeInTheDocument();
     await user.click(screen.getByTestId("outside"));
@@ -118,7 +137,7 @@ describe("PreparationHelpFab", () => {
 
   it("navigates and closes when an item is clicked", async () => {
     const user = userEvent.setup();
-    render(<PreparationHelpFab />);
+    renderAt(PARTICIPANTS);
     await user.click(screen.getByRole("button", { name: /open preparation guide/i }));
     await user.click(screen.getByText("No participants have been added."));
     expect(mockNavigate).toHaveBeenCalledWith("/app/prepare/participants");
@@ -128,8 +147,80 @@ describe("PreparationHelpFab", () => {
   it("shows the ready state when there are no blockers", async () => {
     setPrepare({ draft: makeDraft({ participants: [{ id: "rcp_1", role: "signer" }] }) });
     const user = userEvent.setup();
-    render(<PreparationHelpFab />);
+    renderAt(PARTICIPANTS);
     await user.click(screen.getByRole("button", { name: /open preparation guide/i }));
     expect(screen.getByText(/Ready for signing/i)).toBeInTheDocument();
+  });
+  // ── The step guide ────────────────────────────────────────────────────────
+  //
+  // The panel's reason for existing changed: it used to answer only "what is
+  // left before I can send", which is the wrong first answer for someone who
+  // has just arrived on a step they have never seen.
+
+  it("leads with the guide for the step you are actually on", async () => {
+    const user = userEvent.setup();
+    renderAt(PARTICIPANTS);
+    await user.click(screen.getByRole("button", { name: /open preparation guide/i }));
+
+    expect(screen.getByRole("heading", { name: "Participants" })).toBeInTheDocument();
+    expect(screen.getByText(/who receives this document/i)).toBeInTheDocument();
+  });
+
+  it("shows a different guide on a different step", async () => {
+    // The guide is keyed off the route, so this is the assertion that it is
+    // genuinely per-step rather than one fixed block of copy.
+    const user = userEvent.setup();
+    renderAt("/app/prepare/routing");
+    await user.click(screen.getByRole("button", { name: /open preparation guide/i }));
+
+    expect(screen.getByRole("heading", { name: "Routing" })).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Participants" })).toBeNull();
+  });
+
+  it("marks which of the step's requirements are required", async () => {
+    // The whole point of the checklist: a list of field names does not tell
+    // anyone which ones they must fill in.
+    const user = userEvent.setup();
+    renderAt(PARTICIPANTS);
+    await user.click(screen.getByRole("button", { name: /open preparation guide/i }));
+
+    expect(screen.getByText("Email address")).toBeInTheDocument();
+    expect(screen.getAllByText("Required").length).toBeGreaterThan(0);
+  });
+
+  it("still shows the guide when the step has nothing wrong with it", async () => {
+    // A guide that only appeared alongside an error would be back to
+    // speaking only to correct you.
+    setPrepare({ draft: makeDraft({ participants: [{ id: "rcp_1", role: "signer" }] }) });
+    const user = userEvent.setup();
+    renderAt(PARTICIPANTS);
+    await user.click(screen.getByRole("button", { name: /open preparation guide/i }));
+
+    expect(screen.getByRole("heading", { name: "Participants" })).toBeInTheDocument();
+  });
+
+  // ── Scoping ───────────────────────────────────────────────────────────────
+
+  it("keeps another step's blockers out of the way, without dropping them", async () => {
+    // On Settings, the missing-participants blocker belongs to a different
+    // question. It must still be REACHABLE — the panel is also how someone
+    // asks "can I send yet" — just not competing with this step's own guide.
+    const user = userEvent.setup();
+    renderAt("/app/prepare/settings");
+    await user.click(screen.getByRole("button", { name: /open preparation guide/i }));
+
+    expect(screen.queryByText("No participants have been added.")).toBeNull();
+
+    await user.click(screen.getByRole("button", { name: /1 item on another step/i }));
+    expect(screen.getByText("No participants have been added.")).toBeInTheDocument();
+  });
+
+  it("shows this step's own blockers without making you expand anything", async () => {
+    const user = userEvent.setup();
+    renderAt(PARTICIPANTS);
+    await user.click(screen.getByRole("button", { name: /open preparation guide/i }));
+
+    expect(screen.getByText("No participants have been added.")).toBeInTheDocument();
+    expect(screen.getByText(/needs attention on this step/i)).toBeInTheDocument();
   });
 });
