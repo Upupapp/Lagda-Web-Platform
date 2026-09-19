@@ -327,6 +327,25 @@ export function PositionedSigningSurface({
                               aria-label={field.label}
                               checked={textValues[field.fieldId] === true}
                               onChange={event => { onTextValue(field.fieldId, event.target.checked); }}
+                              style={{
+                                // The same reasoning as the signature button
+                                // above, which this had been left out of. A
+                                // checkbox rect on an A4 page is often ~14px
+                                // at 320px — a browser default checkbox is
+                                // ~13px and the box around it does not help.
+                                //
+                                // The INPUT grows to 44px around the centre
+                                // while the visual field box stays exactly
+                                // where the sender placed it, so what is
+                                // tappable is larger than what is drawn.
+                                position: "absolute",
+                                left: "50%", top: "50%",
+                                transform: "translate(-50%, -50%)",
+                                width: "max(100%, 44px)",
+                                height: "max(100%, 44px)",
+                                margin: 0,
+                                cursor: disabled ? "not-allowed" : "pointer",
+                              }}
                             />
                           )
                           : (
@@ -340,7 +359,13 @@ export function PositionedSigningSurface({
                               style={{
                                 ...GF, width: "100%", height: "100%", border: "none",
                                 background: "transparent", padding: "0 4px",
-                                fontSize: "min(1.6vw, 13px)", color: NAVY,
+                                // A FLOOR as well as a ceiling. `min(1.6vw,
+                                // 13px)` alone computes to ~5px at 320px,
+                                // which is not readable — the signature
+                                // prompt above already carries a clamp for
+                                // exactly this reason and this input was
+                                // simply missed.
+                                fontSize: "clamp(11px, 1.6vw, 13px)", color: NAVY,
                               }}
                             />
                           )}
