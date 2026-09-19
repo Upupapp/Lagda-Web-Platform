@@ -5,6 +5,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router";
 import { useOnboarding } from "../../context/OnboardingContext";
+import { UserRound } from "lucide-react";
 import {
   OnboardingLayout,
   OnboardingCard,
@@ -74,6 +75,7 @@ export function OnboardingProfile() {
   return (
     <OnboardingLayout>
       <OnboardingCard
+        icon={UserRound}
         title="Tell us about yourself"
         description="This information will appear on documents you send and within your workspace."
       >

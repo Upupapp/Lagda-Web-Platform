@@ -5,6 +5,7 @@
 import { useNavigate } from "react-router";
 import { useOnboarding } from "../../context/OnboardingContext";
 import type { NotificationsDraft } from "../../models/auth";
+import { Bell } from "lucide-react";
 import {
   OnboardingLayout,
   OnboardingCard,
@@ -105,6 +106,7 @@ export function OnboardingNotifications() {
   return (
     <OnboardingLayout>
       <OnboardingCard
+        icon={Bell}
         title="Notification preferences"
         description="Choose which notifications you want to receive. You can update these in Account Settings at any time."
       >
