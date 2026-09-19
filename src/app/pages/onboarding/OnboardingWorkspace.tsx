@@ -11,6 +11,7 @@ import {
   OnboardingActions,
 } from "../../layouts/OnboardingLayout";
 import type { WorkspaceScenario } from "../../models/auth";
+import { Building2 } from "lucide-react";
 
 const GF = { fontFamily: "'Geist', sans-serif" };
 
@@ -80,6 +81,7 @@ export function OnboardingWorkspace() {
   return (
     <OnboardingLayout>
       <OnboardingCard
+        icon={Building2}
         title="Set up your workspace"
         description="Choose how you will use LAGDA. You can create additional workspaces later."
       >

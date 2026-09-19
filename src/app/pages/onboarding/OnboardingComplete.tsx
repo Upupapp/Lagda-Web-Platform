@@ -80,7 +80,7 @@ export function OnboardingComplete() {
         flexDirection: "column",
         alignItems: "center",
         justifyContent: "center",
-        padding: "32px 16px",
+        padding: "clamp(20px, 5vw, 32px) clamp(12px, 4vw, 16px)",
         fontFamily: "'Geist', sans-serif",
       }}
     >
@@ -92,7 +92,7 @@ export function OnboardingComplete() {
           background: "#FFFFFF",
           border: "1px solid #DBEAFE",
           borderRadius: 18,
-          padding: "36px 32px 32px",
+          padding: "clamp(24px, 6vw, 36px) clamp(16px, 5vw, 32px) clamp(22px, 5vw, 32px)",
           boxShadow: "0 18px 50px rgba(7,17,31,0.08)",
         }}
       >
@@ -101,8 +101,8 @@ export function OnboardingComplete() {
           alt="LAGDA"
           style={{
             display: "block",
-            width: 190,
-            height: 58,
+            width: "min(190px, 62vw)",
+            height: "auto",
             objectFit: "contain",
             margin: "0 auto 24px",
           }}
@@ -144,7 +144,7 @@ export function OnboardingComplete() {
           style={{
             color: "#07111F",
             ...GF,
-            fontSize: 28,
+            fontSize: "clamp(21px, 6.4vw, 28px)",
             fontWeight: 800,
             letterSpacing: "-0.03em",
             margin: "0 0 10px",

@@ -45,7 +45,7 @@ function ReviewGroup({
       <div
         style={{
           display: "flex", alignItems: "center", gap: 12,
-          padding: "12px 18px",
+          padding: "12px clamp(12px, 4vw, 18px)",
           background: "linear-gradient(135deg, #F0F7FF 0%, #F8FAFB 100%)",
           borderBottom: "1px solid #EAF1F8",
         }}
@@ -68,7 +68,7 @@ function ReviewGroup({
           Edit <ChevronRight size={13} />
         </Link>
       </div>
-      <div style={{ padding: "6px 18px" }}>{children}</div>
+      <div style={{ padding: "6px clamp(12px, 4vw, 18px)" }}>{children}</div>
     </div>
   );
 }
@@ -155,7 +155,7 @@ export function OnboardingReview() {
             style={{
               color: "#07111F",
               ...GF,
-              fontSize: 26,
+              fontSize: "clamp(20px, 6vw, 26px)",
               fontWeight: 800,
               letterSpacing: "-0.03em",
               margin: "0 0 8px",

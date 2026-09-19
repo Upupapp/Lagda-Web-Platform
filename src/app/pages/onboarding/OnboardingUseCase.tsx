@@ -4,7 +4,7 @@
 
 import { useState } from "react";
 import { useNavigate } from "react-router";
-import { CheckCircle2 } from "lucide-react";
+import { CheckCircle2, Target } from "lucide-react";
 import { useOnboarding } from "../../context/OnboardingContext";
 import { OnboardingLayout, OnboardingCard, OnboardingActions } from "../../layouts/OnboardingLayout";
 import { ORG_TYPE_LABELS, PRIMARY_GOAL_LABELS, type OrgType, type PrimaryGoal } from "../../models/auth";
@@ -75,6 +75,7 @@ export function OnboardingUseCase() {
   return (
     <OnboardingLayout>
       <OnboardingCard
+        icon={Target}
         title="How will you use LAGDA?"
         description="This helps us tailor your experience — pick whichever fits, you can change it later."
       >
