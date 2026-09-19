@@ -4,6 +4,7 @@
 
 import { useNavigate } from "react-router";
 import { useOnboarding } from "../../context/OnboardingContext";
+import { ShieldCheck } from "lucide-react";
 import {
   OnboardingLayout,
   OnboardingCard,
@@ -110,6 +111,7 @@ export function OnboardingSecurity() {
   return (
     <OnboardingLayout>
       <OnboardingCard
+        icon={ShieldCheck}
         title="Secure your account"
         description="Choose how you want to protect access to your LAGDA account."
       >

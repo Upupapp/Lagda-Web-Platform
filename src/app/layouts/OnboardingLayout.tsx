@@ -4,13 +4,19 @@
 
 import { useEffect, type ReactNode } from "react";
 import { Link, useLocation, useNavigate } from "react-router";
-import { LogOut } from "lucide-react";
+import { LogOut, type LucideIcon } from "lucide-react";
 import { ONBOARDING_STEPS, type OnboardingProgress, type OnboardingStepId } from "../models/auth";
 import { useOnboarding } from "../context/OnboardingContext";
 import { usePlatform } from "../context/PlatformContext";
 import { Z } from "../utils/z-index";
-import { TabStrip } from "../components/platform/TabStrip";
 import lagdaHeaderLogo from "../../brand elements/svg/LagdaLogoPrimaryHorizontalFullColor_Header.svg";
+// The shared design system, rather than this file's own hex constants. See
+// components/system/design-system.tsx for why onboarding and the signer are
+// deliberately on one palette.
+import {
+  T, PhaseBanner, ActionButton, ProgressRail, useViewport,
+  type RailStep,
+} from "../components/system/design-system";
 
 const GF = { fontFamily: "'Geist', sans-serif" };
 
@@ -34,48 +40,19 @@ const SR_ONLY: React.CSSProperties = {
   border: 0,
 };
 
-function StepDot({
-  step,
-  isCurrent,
-  isDone,
-}: {
-  step: number;
-  isCurrent: boolean;
-  isDone: boolean;
-  label: string;
-}) {
-  const bg = isDone ? "#0078D4" : isCurrent ? "#07111F" : "#EAF6FF";
-  const border = isDone ? "#0078D4" : isCurrent ? "#0078D4" : "#BAE0FA";
-  const color = isDone ? "white" : isCurrent ? "white" : "#64748B";
-
-  return (
-    <div
-      style={{
-        width: 28,
-        height: 28,
-        borderRadius: "50%",
-        background: bg,
-        border: `2px solid ${border}`,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        color,
-        fontFamily: "'Geist Mono', monospace",
-        fontSize: 11,
-        fontWeight: 700,
-        flexShrink: 0,
-        transition: "background 0.2s, border-color 0.2s",
-      }}
-      aria-hidden
-    >
-      {isDone ? "✓" : step}
-    </div>
-  );
-}
-
 // Fallback-URL guard: which progress flag must be true before a step is
 // reachable. "review" has no flag of its own — it requires every step
 // before it. Maps 1:1 with ONBOARDING_STEPS order in models/auth.ts.
+/**
+ * The rail's view of the steps, derived from `ONBOARDING_STEPS` rather than
+ * written out again — a second list is a second thing to forget to update.
+ */
+const RAIL_STEPS: readonly RailStep[] = ONBOARDING_STEPS.map(step => ({
+  id: step.id,
+  label: step.label,
+  short: String(step.stepNumber),
+}));
+
 const PROGRESS_KEY_BY_STEP: Partial<Record<OnboardingStepId, keyof OnboardingProgress>> = {
   profile: "profile",
   "use-case": "useCase",
@@ -181,76 +158,26 @@ export function OnboardingLayout({
 
       {/* Progress indicator */}
       {showProgress && currentStepNumber > 0 && (
-        <nav aria-label="Onboarding progress">
-          {/* The dots are aria-hidden and each label carries aria-current, so a
-              screen reader hears WHICH step is current but not how many remain.
-              The count is the part that tells someone whether to keep going. */}
+        <nav
+          aria-label="Onboarding progress"
+          style={{
+            display: "flex", justifyContent: "center",
+            padding: "20px clamp(12px, 4vw, 24px) 0",
+          }}
+        >
+          {/* The rail marks the current step with `aria-current`, but not how
+              many remain — and the count is the part that tells someone
+              whether to keep going. */}
           <p style={SR_ONLY}>
             Step {currentStepNumber} of {ONBOARDING_STEPS.length}
           </p>
-          <TabStrip
-            as="scroller"
-            className="onboarding-progress-strip"
-            label="Onboarding progress"
-            activeKey={pathname}
-            style={{ justifyContent: "center", padding: "20px 24px 0" }}
-          >
-            {ONBOARDING_STEPS.map((step, i) => {
-              const isDone = step.stepNumber < currentStepNumber;
-              const isCurrent = step.stepNumber === currentStepNumber;
-              return (
-                <div
-                  key={step.id}
-                  style={{ display: "flex", alignItems: "center" }}
-                >
-                  {i > 0 && (
-                    <div
-                      style={{
-                        width: 32,
-                        height: 2,
-                        background:
-                          isDone || isCurrent
-                            ? "rgba(0,120,212,0.4)"
-                            : "#DBEAFE",
-                        flexShrink: 0,
-                      }}
-                    />
-                  )}
-                  <div
-                    style={{
-                      display: "flex",
-                      flexDirection: "column",
-                      alignItems: "center",
-                      gap: 4,
-                    }}
-                  >
-                    <StepDot
-                      step={step.stepNumber}
-                      isCurrent={isCurrent}
-                      isDone={isDone}
-                      label={step.label}
-                    />
-                    <span
-                      style={{
-                        color: isCurrent
-                          ? "#07111F"
-                          : isDone
-                            ? "#64748B"
-                            : "#94A3B8",
-                        ...GF,
-                        fontSize: 10,
-                        fontWeight: isCurrent ? 700 : 500,
-                        whiteSpace: "nowrap",
-                      }}
-                      aria-current={isCurrent ? "step" : undefined}
-                    >
-                      {step.label}
-                    </span>
-                  </div>
-                </div>
-              );
-            })}
-          </TabStrip>
+          <div style={{ width: "100%", maxWidth: 520 }}>
+            <ProgressRail
+              steps={RAIL_STEPS}
+              current={currentStepMeta?.id ?? ""}
+              label="Onboarding progress"
+            />
+          </div>
         </nav>
       )}
 
@@ -377,70 +304,42 @@ export function OnboardingActions({
   disabled = false,
   showBack = true,
 }: OnboardingActionsProps) {
+  const { isCompact } = useViewport();
+
+  // Primary FIRST in the DOM, so a keyboard and a screen reader reach
+  // Continue before Back — then visually reversed on a wide screen, where
+  // Back-on-the-left is the convention people expect. On a phone the row
+  // stacks and Continue stays on top, which is also where a thumb is.
   return (
     <div
       style={{
         display: "flex",
+        flexDirection: isCompact ? "column" : "row-reverse",
         gap: 10,
         marginTop: 28,
-        alignItems: "center",
+        alignItems: "stretch",
         justifyContent: showBack ? "space-between" : "flex-end",
       }}
     >
-      {showBack && onBack && (
-        <button
-          type="button"
-          onClick={onBack}
-          style={{
-            background: "#FFFFFF",
-            border: "1px solid #CBD5E1",
-            borderRadius: 8,
-            color: "#475569",
-            ...GF,
-            fontSize: 14,
-            fontWeight: 600,
-            padding: "11px 20px",
-            cursor: "pointer",
-            minHeight: 44,
-          }}
-          className="ob-back-btn"
-          disabled={submitting}
-        >
-          {backLabel}
-        </button>
-      )}
       {onContinue && (
-        <button
-          type="button"
+        <ActionButton
           onClick={onContinue}
           disabled={disabled || submitting}
-          aria-busy={submitting}
-          style={{
-            background:
-              disabled || submitting ? "rgba(0,120,212,0.4)" : "#0078D4",
-            border: "none",
-            borderRadius: 8,
-            color: "white",
-            ...GF,
-            fontSize: 14,
-            fontWeight: 700,
-            padding: "11px 24px",
-            cursor: disabled || submitting ? "not-allowed" : "pointer",
-            minHeight: 44,
-            flex: showBack ? undefined : 1,
-            transition: "background 0.15s",
-          }}
-          className="ob-continue-btn"
+          full={isCompact || !showBack}
         >
           {submitting ? "Saving…" : continueLabel}
-        </button>
+        </ActionButton>
       )}
-      <style>{`
-        .ob-back-btn:hover:not(:disabled) { border-color: #94A3B8 !important; color: #07111F !important; background: #F8FBFF !important; }
-        .ob-back-btn:active:not(:disabled) { background: #EAF6FF !important; transform: translateY(1px); }
-        .ob-continue-btn:hover:not(:disabled) { background: #006BBE !important; box-shadow: 0 5px 12px rgba(0,120,212,0.22); transform: translateY(-1px); }
-        .ob-continue-btn:active:not(:disabled) { background: #005BA9 !important; transform: translateY(1px); box-shadow: none; }
-      `}</style>
+      {showBack && onBack && (
+        <ActionButton
+          kind="secondary"
+          onClick={onBack}
+          disabled={submitting}
+          full={isCompact}
+        >
+          {backLabel}
+        </ActionButton>
+      )}
     </div>
   );
 }
@@ -448,12 +347,31 @@ export function OnboardingActions({
 // ── Shared onboarding card ────────────────────────────────────────────────────
 
 interface OnboardingCardProps {
+  /**
+   * The step's icon. Optional only so this component cannot break a caller
+   * that has not been given one yet; every onboarding step passes one.
+   */
+  icon?: LucideIcon;
   title: string;
   description?: string;
   children: ReactNode;
 }
 
+/**
+ * The surface each onboarding step sits on.
+ *
+ * The title used to be a bare `<h1>` over a paragraph. It is a BANNER now —
+ * icon, wash, and the description inside it — for the same reason the signer
+ * screens are: someone three steps into a wizard reads the shape of a screen
+ * before they read its sentence, and an icon plus a tone says "this is the
+ * security step" faster than the word "Security" does.
+ *
+ * `PhaseBanner` renders an `h2` here rather than its default `h1`: the page
+ * already has a heading structure, and two `h1`s on one screen is a real
+ * accessibility defect rather than a stylistic preference.
+ */
 export function OnboardingCard({
+  icon,
   title,
   description,
   children,
@@ -461,37 +379,52 @@ export function OnboardingCard({
   return (
     <div
       style={{
-        background: "#FFFFFF",
-        border: "1px solid #DBEAFE",
+        background: T.surface,
+        border: `1px solid ${T.border}`,
         borderRadius: 16,
-        padding: "32px 28px",
+        // Fluid: 28px of side padding at 320px leaves under 260px of usable
+        // width, which is what made the workspace step's inputs feel boxed in.
+        padding: "clamp(20px, 5vw, 32px) clamp(16px, 4.5vw, 28px)",
       }}
     >
-      <h1
-        style={{
-          color: "#07111F",
-          ...GF,
-          fontSize: 20,
-          fontWeight: 800,
-          margin: "0 0 6px",
-          letterSpacing: "-0.02em",
-        }}
-      >
-        {title}
-      </h1>
-      {description && (
-        <p
-          style={{
-            color: "#475569",
-            ...GF,
-            fontSize: 14,
-            margin: "0 0 24px",
-            lineHeight: 1.6,
-          }}
-        >
-          {description}
-        </p>
-      )}
+      {icon
+        ? (
+          <PhaseBanner
+            as="h2"
+            icon={icon}
+            title={title}
+            {...(description === undefined ? {} : { description })}
+          />
+        )
+        : (
+          <>
+            <h2
+              style={{
+                color: T.ink,
+                ...GF,
+                fontSize: "clamp(18px, 4.6vw, 20px)",
+                fontWeight: 800,
+                margin: "0 0 6px",
+                letterSpacing: "-0.02em",
+              }}
+            >
+              {title}
+            </h2>
+            {description && (
+              <p
+                style={{
+                  color: T.inkSoft,
+                  ...GF,
+                  fontSize: "clamp(13px, 3.4vw, 14px)",
+                  margin: "0 0 24px",
+                  lineHeight: 1.6,
+                }}
+              >
+                {description}
+              </p>
+            )}
+          </>
+        )}
       {children}
     </div>
   );

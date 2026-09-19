@@ -11,7 +11,7 @@ import {
   fieldsDoneFromReadiness,
   helpItemsFromValidation,
   completionPercent,
-  PERCENT_STEP_UNITS,
+  PERCENT_STEP_UNITS, partitionByStep,
 } from "../preparation-help";
 import type { SendReadinessResult } from "../../../services/prepare/send-readiness";
 import type { PreparationStepId, PreparationStepState, PrepValidationIssue } from "../../../models/prepare";
@@ -98,5 +98,50 @@ describe("completionPercent", () => {
   });
   it("counts only the fields unit when steps are incomplete", () => {
     expect(completionPercent(allState("available"), true)).toBe(Math.round((1 / (PERCENT_STEP_UNITS.length + 1)) * 100));
+  });
+});
+
+describe("partitionByStep", () => {
+  const item = (id: string, route: string) => ({
+    id, stepLabel: "x", message: `m_${id}`,
+    action: { label: "Fix", route },
+  });
+
+  it("puts this step's blockers first, and the rest aside", () => {
+    const { here, elsewhere } = partitionByStep([
+      item("a", "/app/prepare/participants"),
+      item("b", "/app/prepare/settings"),
+    ], "participants");
+
+    expect(here.map(i => i.id)).toEqual(["a"]);
+    expect(elsewhere.map(i => i.id)).toEqual(["b"]);
+  });
+
+  it("keeps a blocker whose route carries a query", () => {
+    // send-readiness builds routes like `/app/prepare/upload?highlightField=title`.
+    // Matching on equality rather than prefix would file those under the
+    // wrong step — and silently, since they would simply appear in the
+    // collapsed list instead of the open one.
+    const { here } = partitionByStep(
+      [item("a", "/app/prepare/upload?highlightField=title")], "upload");
+
+    expect(here.map(i => i.id)).toEqual(["a"]);
+  });
+
+  it("treats everything as elsewhere when the route is not a step", () => {
+    // The FAB is mounted across the whole wizard shell, which includes routes
+    // that are not one of the seven steps. Guessing a step there would put
+    // an unrelated guide in front of someone.
+    const { here, elsewhere } = partitionByStep(
+      [item("a", "/app/prepare/participants")], null);
+
+    expect(here).toEqual([]);
+    expect(elsewhere.map(i => i.id)).toEqual(["a"]);
+  });
+
+  it("returns both empty for no blockers", () => {
+    const { here, elsewhere } = partitionByStep([], "routing");
+    expect(here).toEqual([]);
+    expect(elsewhere).toEqual([]);
   });
 });

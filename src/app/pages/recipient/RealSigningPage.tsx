@@ -105,6 +105,42 @@ export function RealSigningPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 
+  // ── Waiting for an earlier signer ─────────────────────────────────────────
+  //
+  // A document routed in sequence leaves later signers on "Not yet your turn"
+  // until the person ahead of them finishes. Nothing pushed that change, so
+  // the screen said "check back later" and meant it literally: the signer had
+  // to reload by hand, and someone who does not think to will simply sit on a
+  // stale page while their turn passes.
+  //
+  // `read()` rather than `enter()` — `enter()` records a first-entry
+  // timestamp, which is a real, one-time side effect and must not be repeated
+  // on a timer (the service's own comment says so).
+  //
+  // Polling, not a socket: there is no push infrastructure here, and adding
+  // one for this would be far more machinery than the problem needs. 15s is
+  // slow enough to be negligible traffic and fast enough that a signer who is
+  // waiting notices their turn arriving.
+  useEffect(() => {
+    if (phase !== "ceremony" || view === null) return;
+    if (view.access.mayProceedToInput) return;   // already their turn
+
+    let cancelled = false;
+    const timer = setInterval(() => {
+      void (async () => {
+        try {
+          const fresh = await realSigningAccessService.read();
+          // A failed poll is ignored on purpose: the signer is not waiting on
+          // this request and an error banner over "not yet your turn" would
+          // report a problem they cannot act on.
+          if (!cancelled) setView(fresh);
+        } catch { /* transient — the next tick tries again */ }
+      })();
+    }, 15000);
+
+    return () => { cancelled = true; clearInterval(timer); };
+  }, [phase, view]);
+
   const handleAcceptConsent = async () => {
     if (!view) return;
     try {
