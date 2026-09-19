@@ -267,12 +267,6 @@ export function OnboardingLayout({
         #onboarding-main:focus { outline: none; }
         @media (max-width: 480px) {
           .onboarding-brand img { width: 155px; height: 48px; }
-          .onboarding-progress-strip { display: grid !important; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 0 !important; overflow: visible; padding: 12px 4px 0 !important; mask-image: none; -webkit-mask-image: none; }
-          .onboarding-progress-strip > div { min-width: 0 !important; flex-shrink: 1 !important; justify-content: center; }
-          .onboarding-progress-strip > div > div:first-child { display: none; }
-          .onboarding-progress-strip > div > div:last-child { min-width: 0; width: 100%; }
-          .onboarding-progress-strip > div > div:last-child > span { max-width: 100%; white-space: normal !important; overflow-wrap: anywhere; font-size: 8px !important; line-height: 1.15; text-align: center; }
-          .onboarding-progress-strip > div > div:last-child > div { width: 24px; height: 24px; font-size: 9px; }
           .onboarding-footer { padding: 24px 16px 16px !important; }
           .onboarding-footer-logo { width: 189px; height: 60px; top: 17px; }
           .onboarding-footer-links { gap: 12px 18px; }
