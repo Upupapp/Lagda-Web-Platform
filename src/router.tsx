@@ -910,6 +910,11 @@ const SettingsDataPrivacyPage = lazy(() =>
 );
 
 // Signature Library (Command 26)
+const LinkSigningPage = lazy(() =>
+  import("./app/pages/platform/LinkSigningPage").then((m) => ({
+    default: m.LinkSigningPage,
+  })),
+);
 const SignaturesPage = lazy(() =>
   import("./app/pages/platform/settings/signatures/SignaturesPage").then((m) => ({
     default: m.SignaturesPage,
@@ -1993,6 +1998,19 @@ export const router = createBrowserRouter([
         element: (
           <Suspense fallback={null}>
             <VerifyPage />
+          </Suspense>
+        ),
+      },
+
+      // The workspace half of the signing account handoff. Nothing links
+      // here; the signing tab opens it. It lives under /app so the existing
+      // auth gate sends an unauthenticated visitor through sign-in and back,
+      // with the code still in the URL.
+      {
+        path: "link-signing",
+        element: (
+          <Suspense fallback={null}>
+            <LinkSigningPage />
           </Suspense>
         ),
       },

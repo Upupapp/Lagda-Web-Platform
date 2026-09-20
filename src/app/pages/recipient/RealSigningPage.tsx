@@ -17,6 +17,8 @@
 // in the backend yet (see the P1.5/master-audit findings on the unwired
 // completion pipeline).
 import { useProcessing } from "../../services/processing.service";
+import { realSigningAccountLinkService }
+  from "../../services/real/signing-account-link.service";
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useParams } from "react-router";
@@ -60,6 +62,7 @@ export function RealSigningPage() {
   const [signature, setSignature] = useState<SignatureValue | null>(null);
   const [initials, setInitials] = useState<SignatureValue | null>(null);
   const { run } = useProcessing();
+  const [linkError, setLinkError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [declineReason, setDeclineReason] = useState<SigningDeclineReason>("not-agree");
 
@@ -153,6 +156,44 @@ export function RealSigningPage() {
 
     return () => { cancelled = true; clearInterval(timer); };
   }, [phase, view]);
+
+  /**
+   * Opens the workspace realm in a NEW TAB and stays put.
+   *
+   * This tab's URL still carries the 43-character access credential. The
+   * backend sets `Referrer-Policy: no-referrer` precisely so that URL cannot
+   * leak, and navigating away to sign in would put the credential into
+   * history, into a `returnTo` parameter, and into whatever the destination
+   * logs. So the signing tab never moves.
+   *
+   * `window.open` is called BEFORE the await. A popup opened after an await
+   * is no longer attributable to the click that started it and browsers block
+   * it — so the tab is opened first and pointed somewhere once the code
+   * exists.
+   */
+  const handleSignInToConfirm = () => {
+    setLinkError(null);
+    const tab = window.open("", "_blank", "noopener,noreferrer");
+    void (async () => {
+      try {
+        const minted = await realSigningAccountLinkService.mintHandoff();
+        const target = `/app/link-signing?code=${encodeURIComponent(minted.code)}`;
+        if (tab === null) {
+          // Popup blocked. Say so rather than silently doing nothing — and do
+          // not fall back to navigating this tab, which is the one thing the
+          // whole approach exists to avoid.
+          setLinkError(
+            "Your browser blocked the new tab. Allow pop-ups for this site and try again.",
+          );
+          return;
+        }
+        tab.location.replace(target);
+      } catch {
+        tab?.close();
+        setLinkError("That could not be started. Please try again.");
+      }
+    })();
+  };
 
   const handleAcceptConsent = async () => {
     if (!view) return;
@@ -362,6 +403,42 @@ export function RealSigningPage() {
             I consent — continue
           </ActionButton>
         </ActionRow>
+
+        {/* Signing in is entirely optional and changes nothing about this
+            ceremony — it records that the account and this recipient are the
+            same person. Placed after the primary action, and worded so that
+            not doing it reads as a normal choice rather than a lesser one. */}
+        {view.accountLink === undefined ? (
+          <div style={{ marginTop: 4 }}>
+            <button
+              type="button"
+              onClick={handleSignInToConfirm}
+              style={{
+                ...GF, minHeight: 44, width: "100%", borderRadius: 10,
+                border: `1px solid ${T.border}`, background: "transparent",
+                color: T.inkSoft, fontSize: "clamp(12.5px, 3.3vw, 13px)",
+                cursor: "pointer", lineHeight: 1.5, padding: "8px 12px",
+              }}
+            >
+              Have a LAGDA account? Sign in to confirm it&rsquo;s you
+            </button>
+            {linkError !== null && (
+              <p role="alert" style={{
+                ...GF, margin: "8px 0 0", fontSize: 12, color: T.danger,
+                lineHeight: 1.5,
+              }}>
+                {linkError}
+              </p>
+            )}
+          </div>
+        ) : (
+          <p style={{
+            ...GF, margin: "4px 0 0", fontSize: 12, color: T.success,
+            lineHeight: 1.5, textAlign: "center",
+          }}>
+            Signed in as {view.accountLink.maskedEmail}
+          </p>
+        )}
       </SignerCard>
     );
   }

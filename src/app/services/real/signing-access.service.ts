@@ -37,6 +37,8 @@ export interface CeremonyField {
 export interface CeremonyView {
   request: { signingRequestId: string; documentTitle: string };
   recipient: { recipientId: string; name: string; email: string; type: string };
+  /** Present only once an account has been bound. The address is masked. */
+  accountLink?: { maskedEmail: string };
   access: {
     mayEnter: boolean;
     mayViewDocument: boolean;
