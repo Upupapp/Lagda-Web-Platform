@@ -33,8 +33,8 @@ import { realDocumentService } from "../../../services/real/document.service";
 import { iconForDocument } from "../../../services/documents/file-type-icon";
 import { documentOrganizationService } from "../../../services/mock/document-organization.service";
 import { isCapabilityInActiveProfile } from "../../../config/capability-resolver";
-import { TRANSACTION_STATUS_LABELS } from "../../../models";
 import { SIGNING_REQUEST_STATUS } from "../../../services/signing-request-status";
+import { StatusBadge } from "../../../components/documents/StatusBadge";
 import type { TransactionStatus } from "../../../models";
 import type {
   DocumentView, DocumentListQuery, DocumentListItem, DocumentListResult,
@@ -44,7 +44,6 @@ import type {
 import {
   VALID_DOCUMENT_VIEWS, VIEW_LABELS, DEFAULT_QUERY,
   VALID_SORT_FIELDS, SORT_LABELS,
-  DOCUMENT_STATUS_TONE, STATUS_TONE_CSS,
   VALID_DOC_SCENARIOS,
   ORG_FILTERED_VIEWS,
 } from "../../../models/documents";
@@ -234,22 +233,8 @@ function getDocActions(
 }
 
 // ── StatusBadge ───────────────────────────────────────────────────────────────
-
-function StatusBadge({ status }: { status: TransactionStatus }) {
-  const tone = DOCUMENT_STATUS_TONE[status];
-  const css  = STATUS_TONE_CSS[tone];
-  return (
-    <span style={{
-      display: "inline-flex", alignItems: "center",
-      padding: "2px 7px", borderRadius: 4, fontSize: 11, fontWeight: 600,
-      letterSpacing: "0.02em", whiteSpace: "nowrap",
-      background: css.bg, color: css.text, border: `1px solid ${css.border}`,
-      ...GF,
-    }}>
-      {TRANSACTION_STATUS_LABELS[status]}
-    </span>
-  );
-}
+// Lives in components/documents/StatusBadge.tsx now, shared with the
+// dashboard. Same markup, same tone and label maps.
 
 // ── ParticipantProgress ───────────────────────────────────────────────────────
 
