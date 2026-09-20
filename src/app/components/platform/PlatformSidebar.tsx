@@ -2,8 +2,8 @@
 // Collapses to icon-only mode via a toggle button.
 // Hidden on mobile — MobileNav handles that breakpoint.
 
-import { useState, useCallback } from "react";
-import { NavLink, useNavigate, useLocation } from "react-router";
+import { useState } from "react";
+import { NavLink, useLocation } from "react-router";
 import {
   LayoutDashboard, FileText, Files, Users, ShieldCheck,
   Bell, Users2, Settings, FilePlus, ChevronLeft, ChevronRight,
@@ -21,6 +21,8 @@ import { PRIMARY_NAV, UTILITY_NAV, PREPARE_ACTION } from "../../config/platform.
 import { WorkspaceSwitcher } from "./WorkspaceSwitcher";
 import { UserMenu } from "./UserMenu";
 import { Z } from "../../utils/z-index";
+import { useSignOutFlow } from "../../hooks/useSignOutFlow";
+import { usePrepareLaunch } from "../../hooks/usePrepareLaunch";
 
 const BORDER = "rgba(0,0,0,0.08)";
 const GF     = { fontFamily: "'Geist', sans-serif" };
@@ -100,17 +102,16 @@ function SidebarItem({ to, icon, label, badge, collapsed }: SidebarItemProps) {
 
 export function PlatformSidebar() {
   const [collapsed, setCollapsed] = useState(false);
-  const { hasPermission, hasFlag, signOut } = usePlatform();
+  const { hasPermission, hasFlag } = usePlatform();
   const { unreadCount } = useNotificationCenter();
-  const navigate = useNavigate();
   // The dashboard route gets its own brand-mark asset; every other platform
   // page keeps the standard LagdaLogo component.
   const isDashboard = useLocation().pathname === "/app/dashboard";
 
-  const handleSignOut = useCallback(async () => {
-    await signOut();
-    void navigate("/sign-in");
-  }, [signOut, navigate]);
+  // Confirmation + the branded modal now live in one hook, shared with the
+  // mobile drawer and the onboarding header.
+  const { requestSignOut, confirmDialog } = useSignOutFlow();
+  const { onPrepareClick } = usePrepareLaunch();
 
   const sidebarWidth = collapsed ? 60 : 240;
 
@@ -198,6 +199,7 @@ export function PlatformSidebar() {
         {canPrepare ? (
           <NavLink
             to={PREPARE_ACTION.path}
+            onClick={onPrepareClick(PREPARE_ACTION.path)}
             style={{
               display: "flex",
               alignItems: "center",
@@ -310,8 +312,9 @@ export function PlatformSidebar() {
 
       {/* ── User footer ───────────────────────────────────────────── */}
       <div style={{ borderTop: `1px solid ${BORDER}`, flexShrink: 0 }}>
-        <UserMenu collapsed={collapsed} onSignOut={handleSignOut} />
+        <UserMenu collapsed={collapsed} onSignOut={requestSignOut} />
       </div>
+      {confirmDialog}
 
       <style>{`
         .platform-sidebar::-webkit-scrollbar { width: 4px; }

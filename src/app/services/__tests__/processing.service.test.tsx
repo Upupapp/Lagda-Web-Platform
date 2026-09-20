@@ -30,7 +30,7 @@ function mount() {
 }
 
 const APPEAR = 180;
-const MIN_DISPLAY = 450;
+const MIN_DISPLAY = 1400;
 
 describe("run", () => {
   it("shows the modal for work that takes longer than the appear delay", async () => {
@@ -108,6 +108,94 @@ describe("run", () => {
 
     await act(async () => { vi.advanceTimersByTime(MIN_DISPLAY + 1000); });
     expect(screen.queryByRole("alertdialog")).toBeNull();
+  });
+});
+
+describe("the longer display does not delay the application", () => {
+  // The whole point of raising MIN_DISPLAY to 1.4s is that it is a VISUAL
+  // dwell. If it ever starts gating callers, every navigation in the product
+  // gets 1.4s slower and nobody will connect the two.
+  it("resolves run() as soon as the work does, not when the modal lifts", async () => {
+    const api = mount();
+    let release!: () => void;
+    const work = new Promise<void>(resolve => { release = resolve; });
+    let resolvedAt: number | null = null;
+
+    act(() => { vi.setSystemTime(0); });
+    act(() => {
+      void api().run({ message: "Working" }, () => work).then(() => { resolvedAt = Date.now(); });
+    });
+    act(() => { vi.advanceTimersByTime(APPEAR); });
+
+    // Work completes at 200ms. The modal will stay up far longer.
+    act(() => { vi.setSystemTime(200); });
+    await act(async () => { release(); });
+
+    expect(resolvedAt).toBe(200);
+    // Still visible — the caller has already moved on underneath it.
+    expect(screen.getByRole("alertdialog")).toBeTruthy();
+  });
+
+  it("still lifts the modal on its own schedule afterwards", async () => {
+    const api = mount();
+    let release!: () => void;
+    const work = new Promise<void>(resolve => { release = resolve; });
+
+    act(() => { void api().run({ message: "Working" }, () => work); });
+    // Let it become visible first, or this would assert on a modal that never
+    // appeared and pass for the wrong reason.
+    act(() => { vi.advanceTimersByTime(APPEAR); });
+    expect(screen.getByRole("alertdialog")).toBeTruthy();
+
+    await act(async () => { release(); });
+    await act(async () => { vi.advanceTimersByTime(MIN_DISPLAY + 500); });
+
+    expect(screen.queryByRole("alertdialog")).toBeNull();
+  });
+});
+
+describe("minDuration", () => {
+  it("holds the caller for the full duration when the work is instant", async () => {
+    // "Prepare Document" does no work worth waiting for; the modal IS the
+    // point, so the route must not change before it has been seen.
+    const api = mount();
+    let done = false;
+
+    act(() => { void api().run({ message: "Opening", minDuration: 1000 }, async () => "x").then(() => { done = true; }); });
+
+    await act(async () => { vi.advanceTimersByTime(500); });
+    expect(done).toBe(false);
+
+    await act(async () => { vi.advanceTimersByTime(600); });
+    expect(done).toBe(true);
+  });
+
+  it("does not add time when the work already took longer", async () => {
+    const api = mount();
+    let release!: () => void;
+    const work = new Promise<void>(resolve => { release = resolve; });
+    let done = false;
+
+    act(() => { vi.setSystemTime(0); });
+    act(() => { void api().run({ message: "x", minDuration: 500 }, () => work).then(() => { done = true; }); });
+
+    act(() => { vi.setSystemTime(900); });
+    await act(async () => { release(); });
+
+    expect(done).toBe(true);
+  });
+
+  it("reports a failure immediately rather than making the user wait for it", async () => {
+    const api = mount();
+    let caught: unknown;
+
+    await act(async () => {
+      await api().run({ message: "x", minDuration: 5000 }, async () => { throw new Error("nope"); })
+        .catch((e: unknown) => { caught = e; });
+    });
+
+    // No timer advanced: the rejection did not sit behind minDuration.
+    expect(caught).toBeInstanceOf(Error);
   });
 });
 

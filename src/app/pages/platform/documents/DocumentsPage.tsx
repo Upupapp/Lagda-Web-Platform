@@ -57,6 +57,7 @@ import { USE_REAL_BACKEND } from "../../../services/backend-flag";
 import { preparationRoute } from "../../../services/preparation-platform-projection";
 import { Z } from "../../../utils/z-index";
 import { FilterChips } from "../../../components/platform/FilterChips";
+import { usePrepareLaunch } from "../../../hooks/usePrepareLaunch";
 
 // ── Design tokens (inline styles only — no Tailwind in JSX) ──────────────────
 
@@ -1370,6 +1371,7 @@ function DocEmptyView({
   canPrepare: boolean;
   onClearFilters: () => void;
 }) {
+  const { onPrepareClick } = usePrepareLaunch();
   if (hasFilters) {
     return (
       <EmptyStateLayout
@@ -1424,6 +1426,7 @@ function DocEmptyView({
         canPrepare ? (
           <Link
             to="/app/prepare"
+            onClick={onPrepareClick()}
             style={{
               display: "inline-flex", alignItems: "center", gap: 6, padding: "8px 16px",
               borderRadius: 8, background: AZURE, color: "#fff", textDecoration: "none",
@@ -1557,6 +1560,7 @@ function RenameDraftDialog({
 
 function DocumentsPageMockDemo() {
   usePageMeta();
+  const { onPrepareClick } = usePrepareLaunch();
   const { hasPermission, currentWorkspace, user } = usePlatform();
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -1786,6 +1790,7 @@ function DocumentsPageMockDemo() {
           canPrepare ? (
             <Link
               to="/app/prepare"
+              onClick={onPrepareClick()}
               style={{
                 display: "inline-flex", alignItems: "center", gap: 6,
                 padding: "7px 14px", borderRadius: 8, fontSize: 13, fontWeight: 600,
@@ -2243,6 +2248,7 @@ function DocumentViewerDialog({
 }
 
 function DocumentsPageRealMode() {
+  const { onPrepareClick } = usePrepareLaunch();
   const { currentWorkspace } = usePlatform();
   const workspaceId = currentWorkspace?.id ?? null;
 
@@ -2287,6 +2293,7 @@ function DocumentsPageRealMode() {
         primaryAction={
           <Link
             to="/app/prepare"
+            onClick={onPrepareClick()}
             style={{
               display: "inline-flex", alignItems: "center", gap: 6,
               padding: "7px 14px", borderRadius: 8, fontSize: 13, fontWeight: 600,

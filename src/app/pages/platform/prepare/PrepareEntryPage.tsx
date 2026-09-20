@@ -10,6 +10,7 @@ import { usePlatform } from "../../../context/PlatformContext";
 import { usePendingPreparation } from "../../../context/PendingPreparationContext";
 import type { ResumableDraftSummary, PreparationStepId } from "../../../models/prepare";
 import { PREPARATION_STEPS } from "../../../models/prepare";
+import { useProcessing } from "../../../services/processing.service";
 
 const GF     = { fontFamily: "'Geist', sans-serif" };
 const NAVY   = "#07111F";
@@ -176,6 +177,7 @@ export function PrepareEntryPage() {
 
   const canPrepare = hasFlag("prepareFlowEnabled");
   const resumeId = params.get("resumeId");
+  const { run: runProcessing } = useProcessing();
   const [resuming, setResuming] = useState(!!resumeId);
   const [resumeFailed, setResumeFailed] = useState(false);
 
@@ -227,21 +229,30 @@ export function PrepareEntryPage() {
   }, [canPrepare, resumeId, loadResumableDrafts, loadTemplates]);
 
   const handleStartNew = async () => {
-    const draftId = await createDraft({ source: "new" });
+    const draftId = await runProcessing(
+      { message: "Starting a new preparation", detail: "Creating your draft." },
+      async () => createDraft({ source: "new" }),
+    );
     if (draftId) {
       void navigate("/app/prepare/upload");
     }
   };
 
   const handleUseTemplate = async (templateId: string) => {
-    const draftId = await createDraft({ source: "template", templateId });
+    const draftId = await runProcessing(
+      { message: "Preparing from template", detail: "Copying the template into a new draft." },
+      async () => createDraft({ source: "template", templateId }),
+    );
     if (draftId) {
       void navigate("/app/prepare/upload");
     }
   };
 
   const handleResumeDraft = async (draftId: string) => {
-    await loadDraft(draftId);
+    await runProcessing(
+      { message: "Resuming your draft", detail: "Loading your documents and fields." },
+      async () => { await loadDraft(draftId); },
+    );
     void navigate("/app/prepare/upload");
   };
 

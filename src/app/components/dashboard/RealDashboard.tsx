@@ -43,6 +43,7 @@ import { SIGNING_REQUEST_STATUS } from "../../services/signing-request-status";
 import { StatusBadge } from "../documents/StatusBadge";
 import { SignatureRecordDialog } from "../documents/SignatureRecordDialog";
 import { AuditTrailDialog } from "../documents/AuditTrailDialog";
+import { usePrepareLaunch } from "../../hooks/usePrepareLaunch";
 
 const GF: CSSProperties = { fontFamily: "'Geist', sans-serif" };
 const NAVY   = "#07111F";
@@ -115,9 +116,11 @@ function SectionTitle({ children, count }: { children: string; count?: number })
 }
 
 function PrepareLink({ label = "Prepare Document" }: { label?: string }) {
+  const { onPrepareClick } = usePrepareLaunch();
   return (
     <Link
       to="/app/prepare"
+      onClick={onPrepareClick()}
       style={{
         display: "inline-flex", alignItems: "center", gap: 6,
         padding: "8px 16px", borderRadius: 8, fontSize: 13, fontWeight: 600,

@@ -18,6 +18,7 @@ import { PreparationHelpFab } from "../../../components/prepare/PreparationHelpF
 // this". Two copies would be two places to update when a route moves.
 import { currentStepFromPath } from "../../../components/prepare/prep-step-guides";
 import { PrepareBreadcrumb, PrepareNavBar } from "../../../components/prepare/PrepareChrome";
+import { useProcessing } from "../../../services/processing.service";
 
 const GF = { fontFamily: "'Geist', sans-serif" };
 const NAVY   = "#07111F";
@@ -405,6 +406,7 @@ export function PrepareLayout() {
     validate,
   } = usePrepare();
 
+  const { run: runProcessing } = useProcessing();
   const [showDiscard, setShowDiscard] = useState(false);
   const [showMissing, setShowMissing] = useState(false);
 
@@ -444,9 +446,18 @@ export function PrepareLayout() {
 
   const handleDiscardConfirm = useCallback(async () => {
     setShowDiscard(false);
-    await discardDraft();
+    // Discarding deletes uploaded files and local state. It is short, but it
+    // is destructive and irreversible, so it should visibly happen rather
+    // than the dialog blinking out and the page changing.
+    await runProcessing(
+      {
+        message: "Discarding this preparation",
+        detail: "Removing the draft and its uploaded files.",
+      },
+      async () => { await discardDraft(); },
+    );
     await navigate("/app/prepare");
-  }, [discardDraft, navigate]);
+  }, [discardDraft, navigate, runProcessing]);
 
   const handleDiscardCancel = useCallback(() => {
     setShowDiscard(false);

@@ -14,6 +14,7 @@ import {
 import { Z } from "../../../utils/z-index";
 import { TabStrip } from "../../../components/platform/TabStrip";
 import { FilterChips } from "../../../components/platform/FilterChips";
+import { useProcessing } from "../../../services/processing.service";
 
 const GF    = { fontFamily: "'Geist', sans-serif" };
 const GM    = { fontFamily: "'Geist Mono', monospace" };
@@ -645,6 +646,18 @@ function pageBtnStyle(disabled: boolean): React.CSSProperties {
 
 function EmptyState({ view, hasSearch, hasFilters, onClear }: { view: ContactView; hasSearch: boolean; hasFilters: boolean; onClear: () => void }) {
   const navigate = useNavigate();
+  const { run } = useProcessing();
+  const launchPrepare = async () => {
+    await run(
+      {
+        message: "Opening document preparation",
+        detail: "Getting your workspace ready.",
+        minDuration: 1000,
+      },
+      async () => undefined,
+    );
+    void navigate("/app/prepare");
+  };
   if (hasSearch || hasFilters) {
     return (
       <div style={{ textAlign: "center", padding: "48px 24px", ...GF }}>
@@ -661,7 +674,7 @@ function EmptyState({ view, hasSearch, hasFilters, onClear }: { view: ContactVie
     all:        { icon: "👥", title: "No contacts yet", desc: "Add contacts to quickly add participants to future document workflows.", action: () => { void navigate("/app/contacts/new"); }, actionLabel: "Add First Contact" },
     workspace:  { icon: "🏢", title: "No workspace contacts", desc: "Workspace contacts are visible to permitted team members.", action: () => { void navigate("/app/contacts/new"); }, actionLabel: "Add Workspace Contact" },
     personal:   { icon: "👤", title: "No personal contacts", desc: "Personal contacts are visible only to you.", action: () => { void navigate("/app/contacts/new"); }, actionLabel: "Add Personal Contact" },
-    recent:     { icon: "🕐", title: "No recently used contacts", desc: "Contacts used in document workflows appear here.", action: () => { void navigate("/app/prepare"); }, actionLabel: "Prepare a Document" },
+    recent:     { icon: "🕐", title: "No recently used contacts", desc: "Contacts used in document workflows appear here.", action: () => { void launchPrepare(); }, actionLabel: "Prepare a Document" },
     frequent:   { icon: "⭐", title: "No frequently used contacts", desc: "Frequently used contacts are based on demonstration activity data.", },
     duplicates: { icon: "✓",  title: "No potential duplicates", desc: "No contacts share the same email or appear similar." },
     archived:   { icon: "📁", title: "No archived contacts", desc: "Archived contacts are removed from normal pickers but retained here." },

@@ -7,7 +7,6 @@ import { Link, useLocation, useNavigate } from "react-router";
 import { LogOut, type LucideIcon } from "lucide-react";
 import { ONBOARDING_STEPS, type OnboardingProgress, type OnboardingStepId } from "../models/auth";
 import { useOnboarding } from "../context/OnboardingContext";
-import { usePlatform } from "../context/PlatformContext";
 import { Z } from "../utils/z-index";
 import lagdaHeaderLogo from "../../brand elements/svg/LagdaLogoPrimaryHorizontalFullColor_Header.svg";
 // The shared design system, rather than this file's own hex constants. See
@@ -17,6 +16,7 @@ import {
   T, PhaseBanner, ActionButton, ProgressRail, useViewport,
   type RailStep,
 } from "../components/system/design-system";
+import { useSignOutFlow } from "../hooks/useSignOutFlow";
 
 const GF = { fontFamily: "'Geist', sans-serif" };
 
@@ -68,7 +68,6 @@ export function OnboardingLayout({
   const { pathname } = useLocation();
   const navigate = useNavigate();
   const { pendingUser, progress, reset } = useOnboarding();
-  const { signOut: platformSignOut } = usePlatform();
 
   // Determine current step
   const currentStepMeta = ONBOARDING_STEPS.find((s) =>
@@ -92,11 +91,8 @@ export function OnboardingLayout({
     }
   }, [currentStepMeta, progress, navigate]);
 
-  async function handleSignOut() {
-    reset();
-    await platformSignOut();
-    void navigate("/sign-in", { replace: true });
-  }
+  const { requestSignOut, confirmDialog } = useSignOutFlow(() => { reset(); });
+  const handleSignOut = requestSignOut;
 
   return (
     <div
@@ -196,6 +192,8 @@ export function OnboardingLayout({
       >
         <div style={{ width: "100%", maxWidth: 520 }}>{children}</div>
       </main>
+
+      {confirmDialog}
 
       {/* Footer */}
       <footer
