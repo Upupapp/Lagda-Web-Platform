@@ -13,6 +13,7 @@ import {
 } from "../../../components/esignature/EsigPageShell";
 import { OVERVIEW_FEATURES, LIFECYCLE_STEPS, TRANSACTION_STATUSES } from "./content";
 import lagdaLogoFull from "../../../../brand elements/svg/LagdaLogoPrimaryHorizontalFullColor.svg";
+import { ON_LIGHT } from "../../../utils/on-light";
 
 const GF = { fontFamily: "'Geist', sans-serif" };
 const GM = { fontFamily: "'Geist Mono', monospace" };
@@ -43,10 +44,10 @@ const ORBIT_ICONS: {
   floatDuration: string;
 }[] = [
   { Icon: FileText,   label: "Prepare",  top: "4%",  left: "-6%", color: "#07111F", bg: "#ffffff", border: "rgba(7,17,31,0.1)",   depth: 14, floatDelay: "0s",    floatDuration: "4.5s" },
-  { Icon: PenLine,    label: "Sign",     top: "-8%", left: "58%", color: "#0078D4", bg: "#ffffff", border: "rgba(0,120,212,0.22)", depth: 20, floatDelay: "0.6s",  floatDuration: "5.2s" },
-  { Icon: ShieldCheck,label: "Verify",   top: "62%", left: "70%", color: "#16A34A", bg: "#ffffff", border: "rgba(22,163,74,0.22)", depth: 16, floatDelay: "1.1s",  floatDuration: "4.8s" },
-  { Icon: Clock,      label: "Track",    top: "74%", left: "-4%", color: "#C9960C", bg: "#ffffff", border: "rgba(201,150,12,0.25)",depth: 12, floatDelay: "0.3s",  floatDuration: "5.6s" },
-  { Icon: QrCode,     label: "Verification ID", top: "22%", left: "84%", color: "#0078D4", bg: "#ffffff", border: "rgba(0,120,212,0.22)", depth: 18, floatDelay: "1.6s", floatDuration: "5s" },
+  { Icon: PenLine,    label: "Sign",     top: "-8%", left: "58%", color: ON_LIGHT.azure, bg: "#ffffff", border: "rgba(0,120,212,0.22)", depth: 20, floatDelay: "0.6s",  floatDuration: "5.2s" },
+  { Icon: ShieldCheck,label: "Verify",   top: "62%", left: "70%", color: ON_LIGHT.success, bg: "#ffffff", border: "rgba(22,163,74,0.22)", depth: 16, floatDelay: "1.1s",  floatDuration: "4.8s" },
+  { Icon: Clock,      label: "Track",    top: "74%", left: "-4%", color: ON_LIGHT.gold, bg: "#ffffff", border: "rgba(201,150,12,0.25)",depth: 12, floatDelay: "0.3s",  floatDuration: "5.6s" },
+  { Icon: QrCode,     label: "Verification ID", top: "22%", left: "84%", color: ON_LIGHT.azure, bg: "#ffffff", border: "rgba(0,120,212,0.22)", depth: 18, floatDelay: "1.6s", floatDuration: "5s" },
 ];
 
 function InteractiveLogo() {
@@ -228,7 +229,7 @@ function DashboardMockup() {
       {/* Header bar */}
       <div style={{ padding: "14px 20px", borderBottom: "1px solid rgba(0,0,0,0.07)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <span style={{ color: "#07111F", ...GF, fontSize: 13, fontWeight: 700 }}>My Documents</span>
-        <span style={{ background: "rgba(0,120,212,0.1)", color: "#0078D4", border: "1px solid rgba(0,120,212,0.25)", borderRadius: 999, padding: "2px 10px", ...GM, fontSize: 10, fontWeight: 700 }}>
+        <span style={{ background: "rgba(0,120,212,0.1)", color: ON_LIGHT.azure, border: "1px solid rgba(0,120,212,0.25)", borderRadius: 999, padding: "2px 10px", ...GM, fontSize: 10, fontWeight: 700 }}>
           3 active
         </span>
       </div>
@@ -240,7 +241,7 @@ function DashboardMockup() {
             <p style={{ color: "#07111F", ...GF, fontSize: 12, fontWeight: 600, margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
               {doc.name}
             </p>
-            <p style={{ color: "#64748B", ...GM, fontSize: 10, margin: "3px 0 0" }}>{doc.updated}</p>
+            <p style={{ color: ON_LIGHT.slate, ...GM, fontSize: 10, margin: "3px 0 0" }}>{doc.updated}</p>
           </div>
           <span style={{ ...GM, fontSize: 10, fontWeight: 700, color: doc.statusColor, flexShrink: 0, background: `${doc.statusColor}18`, padding: "2px 8px", borderRadius: 999 }}>
             {doc.status}
@@ -250,11 +251,11 @@ function DashboardMockup() {
 
       {/* Audit event preview */}
       <div style={{ padding: "12px 20px", background: "rgba(0,120,212,0.04)" }}>
-        <p style={{ color: "#64748B", ...GM, fontSize: 10, fontWeight: 600, letterSpacing: "0.06em", marginBottom: 8 }}>LATEST EVENT</p>
+        <p style={{ color: ON_LIGHT.slate, ...GM, fontSize: 10, fontWeight: 600, letterSpacing: "0.06em", marginBottom: 8 }}>LATEST EVENT</p>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#F59E0B", flexShrink: 0 }} />
           <span style={{ color: "#334155", ...GF, fontSize: 12 }}>Marco Santos viewed the document</span>
-          <span style={{ color: "#94A3B8", ...GM, fontSize: 10, marginLeft: "auto", flexShrink: 0 }}>2m ago</span>
+          <span style={{ color: ON_LIGHT.muted, ...GM, fontSize: 10, marginLeft: "auto", flexShrink: 0 }}>2m ago</span>
         </div>
       </div>
     </div>
@@ -272,7 +273,7 @@ function LifecycleStrip() {
           border: `1px solid ${s.role === "recipient" ? "rgba(201,150,12,0.2)" : "rgba(0,120,212,0.2)"}`,
           borderRadius: 8, padding: "6px 12px",
         }}>
-          <span style={{ color: s.role === "recipient" ? "#9A7208" : "#0078D4", ...GM, fontSize: 10, fontWeight: 700 }}>
+          <span style={{ color: s.role === "recipient" ? ON_LIGHT.gold : ON_LIGHT.azure, ...GM, fontSize: 10, fontWeight: 700 }}>
             {String(s.num).padStart(2, "0")}
           </span>
           <span style={{ color: "#07111F", ...GF, fontSize: 12, fontWeight: 600 }}>{s.title}</span>
@@ -310,8 +311,8 @@ function SenderRecipientSection() {
     <PageSection id="sender-recipient" bordered>
       <SectionHeading eyebrow="Two experiences" id="sr-heading" heading="Designed differently for senders and recipients." sub="The sender configures and tracks. The recipient signs in a clean, guided experience — no LAGDA account required." center />
       <div style={{ display: "grid", gap: 24 }} className="sr-grid">
-        {[{ title: "Sender", color: "#0078D4", bg: "rgba(0,120,212,0.06)", border: "rgba(0,120,212,0.2)", steps: SENDER },
-          { title: "Recipient", color: "#9A7208", bg: "rgba(201,150,12,0.06)", border: "rgba(201,150,12,0.2)", steps: RECIPIENT }].map((col) => (
+        {[{ title: "Sender", color: ON_LIGHT.azure, bg: "rgba(0,120,212,0.06)", border: "rgba(0,120,212,0.2)", steps: SENDER },
+          { title: "Recipient", color: ON_LIGHT.gold, bg: "rgba(201,150,12,0.06)", border: "rgba(201,150,12,0.2)", steps: RECIPIENT }].map((col) => (
           <div key={col.title} style={{
             background: col.bg, border: `1px solid ${col.border}`,
             borderRadius: 14, padding: "24px 20px",
@@ -375,7 +376,7 @@ export function EsigOverview() {
           >
             See How It Works
           </Link>
-          <Link to="/verify" style={{ color: "#64748B", padding: "13px 8px", ...GF, fontSize: 14, fontWeight: 500, textDecoration: "none", display: "inline-flex", alignItems: "center", transition: "color 0.15s ease", minHeight: 44 }}
+          <Link to="/verify" style={{ color: ON_LIGHT.slate, padding: "13px 8px", ...GF, fontSize: 14, fontWeight: 500, textDecoration: "none", display: "inline-flex", alignItems: "center", transition: "color 0.15s ease", minHeight: 44 }}
             onMouseEnter={(e) => { e.currentTarget.style.color = "#07111F"; }}
             onMouseLeave={(e) => { e.currentTarget.style.color = "#64748B"; }}
           >
@@ -385,7 +386,7 @@ export function EsigOverview() {
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           {["eSignature Available Now", "Identity-Aware Signing", "Audit-Ready Records", "Document Verification", "Built for Philippine Workflows"].map((badge) => (
             <span key={badge} style={{
-              background: "rgba(0,120,212,0.1)", color: "#0078D4",
+              background: "rgba(0,120,212,0.1)", color: ON_LIGHT.azure,
               border: "1px solid rgba(0,120,212,0.2)", borderRadius: 999,
               padding: "3px 10px", ...GM, fontSize: 10, fontWeight: 700,
             }}>
@@ -403,9 +404,9 @@ export function EsigOverview() {
             <LifecycleStrip />
             <div style={{ marginTop: 20, display: "flex", gap: 8 }}>
               <div style={{ width: 10, height: 10, borderRadius: "50%", background: "#0078D4", marginTop: 2, flexShrink: 0 }} />
-              <span style={{ color: "#64748B", ...GF, fontSize: 13 }}>Blue = Sender actions</span>
+              <span style={{ color: ON_LIGHT.slate, ...GF, fontSize: 13 }}>Blue = Sender actions</span>
               <div style={{ width: 10, height: 10, borderRadius: "50%", background: "#C9960C", marginTop: 2, flexShrink: 0, marginLeft: 12 }} />
-              <span style={{ color: "#64748B", ...GF, fontSize: 13 }}>Gold = Recipient actions</span>
+              <span style={{ color: ON_LIGHT.slate, ...GF, fontSize: 13 }}>Gold = Recipient actions</span>
             </div>
           </div>
           <div className="overview-mockup-col">
