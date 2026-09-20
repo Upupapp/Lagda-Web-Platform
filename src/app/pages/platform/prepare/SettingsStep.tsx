@@ -115,9 +115,14 @@ function NumberInput({
   onChange: (v: number) => void;
   disabled?: boolean;
 }) {
+  // Wraps, and the label may shrink. A `minWidth: 180` label plus a 70px
+  // input and two gaps was ~270px that could not compress — inside a 288px
+  // step area at 320px, that overflowed and pushed the unit past the edge.
+  // 180px becomes a flex BASIS rather than a floor, so wide screens still
+  // line the labels up.
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
-      <label htmlFor={id} style={{ ...GF, fontSize: 13, color: disabled ? SILVER : NAVY, fontWeight: 500, minWidth: 180 }}>
+    <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12, flexWrap: "wrap" }}>
+      <label htmlFor={id} style={{ ...GF, fontSize: 13, color: disabled ? SILVER : NAVY, fontWeight: 500, flex: "1 1 180px", minWidth: 0 }}>
         {label}
       </label>
       <input
