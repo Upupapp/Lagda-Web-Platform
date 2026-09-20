@@ -271,7 +271,10 @@ export function PlatformSidebar() {
         {/* Utility nav */}
         {!collapsed && (
           <div style={{ marginTop: 8, paddingTop: 8, borderTop: `1px solid ${BORDER}` }}>
-            <p style={{ ...GM, fontSize: 9, fontWeight: 600, color: "#94A3B8", letterSpacing: "0.08em", padding: "0 10px 4px" }}>
+            {/* #5B6776 at 5.76:1, was #94A3B8 at 2.56:1. Nine-pixel
+                letter-spaced text is already at the edge of legible; at
+                2.56:1 on white it was effectively decoration. */}
+            <p style={{ ...GM, fontSize: 9, fontWeight: 600, color: "#5B6776", letterSpacing: "0.08em", padding: "0 10px 4px" }}>
               WORKSPACE
             </p>
           </div>

@@ -104,7 +104,12 @@ export function PlatformHeader({ pageTitle }: PlatformHeaderProps) {
         >
           <Search size={14} aria-hidden />
           <span style={{ display: "none" }} className="search-label">Search…</span>
-          <kbd style={{ fontFamily: "'Geist Mono', monospace", fontSize: 10, color: "#94A3B8", display: "none" }} className="search-kbd">
+          {/* #5B6776, not #94A3B8. The muted slate is correct on the dark
+              navy sidebar (7.39:1) and quietly wrong on this light control:
+              #94A3B8 on #F1F5F9 is 2.34:1, which fails AA even for large
+              text, and this is 10px. #5B6776 is 5.26:1 and still reads as a
+              hint rather than as a label. */}
+          <kbd style={{ fontFamily: "'Geist Mono', monospace", fontSize: 10, color: "#5B6776", display: "none" }} className="search-kbd">
             ⌘K
           </kbd>
         </button>
