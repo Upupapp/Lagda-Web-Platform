@@ -32,8 +32,9 @@
 // four styles would be a control that changes nothing about the document — so
 // the typed mode sends style 0 and says nothing about styles. A picker becomes
 // honest the day the merger renders them differently, and not before.
+import { removeOpaqueBackground } from "./signature-background";
 
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useId, useRef, useState } from "react";
 import {
   PenTool, Type as TypeIcon, Upload as UploadIcon, Eraser, Check,
   AlertTriangle, ImageUp, RefreshCw, Trash2, type LucideIcon,
@@ -45,6 +46,15 @@ import { T, GF as SIGNER_GF, useViewport } from "./signer-ui";
 const MAX_BYTES = 64 * 1024;
 /** `RASTER_SIGNATURE_MAX_DIMENSION` — longest side, in pixels. */
 const MAX_DIMENSION = 512;
+
+/**
+ * Largest source image the background estimator will look at.
+ *
+ * Deliberately far above MAX_DIMENSION: the trim crops to the ink and then
+ * scales, so starting from more detail than the final 512px gives a cleaner
+ * result than pre-shrinking to the output size would.
+ */
+const MAX_SOURCE_DIMENSION = 1600;
 /** `RASTER_SIGNATURE_MAX_TRANSPORT_CHARS` — base64 inflates by 4/3. */
 const MAX_TRANSPORT_CHARS = Math.ceil((MAX_BYTES * 4) / 3) + 128;
 /** `TYPED_SIGNATURE_MAX_LENGTH`. */
@@ -153,7 +163,7 @@ function trimmedPng(source: HTMLCanvasElement): string | null {
 }
 
 /** Re-encodes an uploaded image as a bounded PNG. */
-async function pngFromFile(file: File): Promise<string | null> {
+async function pngFromFile(file: File, sensitivity: number): Promise<string | null> {
   const dataUrl = await new Promise<string | null>(resolve => {
     const reader = new FileReader();
     reader.onload = () => resolve(typeof reader.result === "string" ? reader.result : null);
@@ -174,12 +184,31 @@ async function pngFromFile(file: File): Promise<string | null> {
   // guarantees the bytes are a PNG the server's magic-byte check will accept,
   // whatever the file claimed to be, and it drops any metadata the original
   // carried — a photo of a signature should not ship its GPS tags.
+  // A 12-megapixel phone photo is 12 million pixels through two passes of the
+  // background estimator. Capped on the way in, not after — the cost is in the
+  // decode as much as the arithmetic. Well above MAX_DIMENSION, so the trim
+  // still has detail to work with.
+  const scale = Math.min(1, MAX_SOURCE_DIMENSION / Math.max(image.width, image.height));
   const canvas = document.createElement("canvas");
-  canvas.width = image.width;
-  canvas.height = image.height;
+  canvas.width = Math.max(1, Math.round(image.width * scale));
+  canvas.height = Math.max(1, Math.round(image.height * scale));
   const context = canvas.getContext("2d");
   if (context === null) return null;
-  context.drawImage(image, 0, 0);
+  context.drawImage(image, 0, 0, canvas.width, canvas.height);
+
+  // Lift the signature off its paper BEFORE the trim, because the trim finds
+  // the mark by looking for transparent pixels and a photograph has none. Skip
+  // silently if the pixels cannot be read — a browser that refuses
+  // getImageData still gets the old behaviour rather than no upload at all.
+  try {
+    const pixels = context.getImageData(0, 0, canvas.width, canvas.height);
+    const result = removeOpaqueBackground(
+      pixels.data, canvas.width, canvas.height, { sensitivity },
+    );
+    if (result.changed) context.putImageData(pixels, 0, 0);
+  } catch {
+    /* Tainted or unavailable: fall through with the original pixels. */
+  }
 
   return trimmedPng(canvas);
 }
@@ -207,6 +236,11 @@ export function SignatureCapture({
   const [replacing, setReplacing] = useState(false);
   const [typed, setTyped] = useState("");
   const [uploadError, setUploadError] = useState<string | null>(null);
+  // Kept so the sensitivity slider can re-process the same image without
+  // making the signer find the file again.
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const [sensitivity, setSensitivity] = useState(0.5);
+  const sensitivityId = useId();
   const [hasInk, setHasInk] = useState(false);
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -363,16 +397,29 @@ export function SignatureCapture({
       : { method: "typed", text: trimmed, styleIndex: ONLY_STYLE_INDEX });
   };
 
-  const onUpload = async (file: File | undefined) => {
+  const onUpload = async (file: File | undefined, nextSensitivity = sensitivity) => {
     setUploadError(null);
     if (file === undefined) return;
-    const base64 = await pngFromFile(file);
+    setUploadedFile(file);
+    const base64 = await pngFromFile(file, nextSensitivity);
     if (base64 === null) {
-      setUploadError("That image could not be read. Try a PNG or JPEG of your signature.");
+      // Distinguishable from an unreadable file: a photo of a blank sheet
+      // trims to nothing, and "try a PNG" would be baffling advice for it.
+      setUploadError(
+        "No signature was found in that image. Try a clearer photo, or move the slider.",
+      );
       onChange(null);
       return;
     }
     onChange({ method: "drawn", base64 });
+  };
+
+  // Re-runs the last upload at a new sensitivity. Auto-detection genuinely
+  // fails on faint pencil and dark paper, and re-picking the file to try again
+  // would be a miserable way to find that out.
+  const onSensitivityChange = (next: number) => {
+    setSensitivity(next);
+    if (uploadedFile !== null) void onUpload(uploadedFile, next);
   };
 
   /**
@@ -721,6 +768,36 @@ export function SignatureCapture({
               }}
             />
           </label>
+
+          {uploadedFile !== null && uploadError === null && (
+            <div style={{ width: "100%", maxWidth: 300, marginTop: 4 }}>
+              <label
+                htmlFor={sensitivityId}
+                style={{ ...GF, display: "block", fontSize: 11.5, color: SILVER, marginBottom: 6 }}
+              >
+                Background removal
+              </label>
+              <input
+                id={sensitivityId}
+                type="range"
+                min={0}
+                max={1}
+                step={0.1}
+                value={sensitivity}
+                disabled={disabled}
+                onChange={event => { onSensitivityChange(Number(event.target.value)); }}
+                aria-describedby={`${sensitivityId}-hint`}
+                style={{ width: "100%" }}
+              />
+              <p
+                id={`${sensitivityId}-hint`}
+                style={{ ...GF, margin: "4px 0 0", fontSize: 11, color: SILVER, lineHeight: 1.45 }}
+              >
+                Move right if part of your signature is missing, left if some of
+                the paper is still showing.
+              </p>
+            </div>
+          )}
 
           {uploadError !== null && (
             <p role="alert" style={{
