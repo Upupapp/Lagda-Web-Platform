@@ -235,4 +235,104 @@ describe("FieldsPage (full editor render)", () => {
     await user.click(await screen.findByRole("button", { name: "Close" }));
     expect(screen.queryByRole("dialog", { name: /add field/i })).toBeNull();
   });
+  // ── Keyboard shortcuts, through the real reducer ──────────────────────────
+  //
+  // `useFieldEditorShortcuts` has its own suite covering which key reaches
+  // which operation. What THOSE cannot show is the wiring: that Ctrl+V lands
+  // a field on this page, that Ctrl+Z walks the same history the toolbar
+  // button does, that Ctrl+A selects from the current page rather than the
+  // whole document. This mounts the real provider and presses real keys.
+  //
+  // It replaces a handler that matched Ctrl+Z, called preventDefault(), and
+  // then ran nothing — so the key did strictly less than being unbound,
+  // while the toolbar advertised it in a tooltip.
+
+  /** Places one field through the keyboard dialog. */
+  async function placeOneField(user: ReturnType<typeof userEvent.setup>) {
+    await user.click(screen.getByRole("button", { name: /add field using keyboard placement/i }));
+    await user.click(screen.getByRole("button", { name: /place field/i }));
+  }
+
+  /**
+   * Field boxes on the canvas.
+   *
+   * Matched on the trailing ", required" / ", optional" rather than on the
+   * word "field", because the documents rail renders a page thumbnail
+   * labelled "Page 1, 1 field, current page" — which the looser pattern
+   * counted as a field. Worse, that label changes to "2 fields" as soon as
+   * one is pasted, so it dropped OUT of the count at the same moment a real
+   * field entered it, and the total sat still at exactly the wrong moment.
+   * The assertion failed while the feature worked.
+   */
+  function canvasFieldCount(): number {
+    return screen.queryAllByRole("button", { name: /,\s*(required|optional)$/ }).length;
+  }
+
+  it("copies and pastes a field with Ctrl+C and Ctrl+V", { timeout: 30_000 }, async () => {
+    const user = userEvent.setup();
+    renderPage();
+    await placeOneField(user);
+    const before = canvasFieldCount();
+    expect(before).toBeGreaterThan(0);
+
+    await user.keyboard("{Control>}a{/Control}");
+    await user.keyboard("{Control>}c{/Control}");
+    await user.keyboard("{Control>}v{/Control}");
+
+    expect(canvasFieldCount()).toBeGreaterThan(before);
+  });
+
+  it("undoes with Ctrl+Z and redoes with Ctrl+Y", { timeout: 30_000 }, async () => {
+    // Ctrl+Y specifically: the Windows redo convention. The toolbar only
+    // ever advertised Ctrl+Shift+Z, so this is the one most likely to be
+    // left unbound.
+    const user = userEvent.setup();
+    renderPage();
+    await placeOneField(user);
+    const placed = canvasFieldCount();
+
+    await user.keyboard("{Control>}a{/Control}");
+    await user.keyboard("{Control>}c{/Control}");
+    await user.keyboard("{Control>}v{/Control}");
+    const pasted = canvasFieldCount();
+    expect(pasted).toBeGreaterThan(placed);
+
+    await user.keyboard("{Control>}z{/Control}");
+    expect(canvasFieldCount()).toBe(placed);
+
+    await user.keyboard("{Control>}y{/Control}");
+    expect(canvasFieldCount()).toBe(pasted);
+  });
+
+  it("deletes the selection with the Delete key, and Ctrl+Z brings it back", { timeout: 30_000 }, async () => {
+    const user = userEvent.setup();
+    renderPage();
+    await placeOneField(user);
+    const placed = canvasFieldCount();
+
+    await user.keyboard("{Control>}a{/Control}");
+    await user.keyboard("{Delete}");
+    expect(canvasFieldCount()).toBe(0);
+
+    await user.keyboard("{Control>}z{/Control}");
+    expect(canvasFieldCount()).toBe(placed);
+  });
+
+  it("leaves the canvas alone when Ctrl+A is pressed inside the Label box", { timeout: 30_000 }, async () => {
+    // The guard that matters most. The properties panel is full of text
+    // inputs; selecting every field on the page because somebody wanted to
+    // select their own text — and then deleting them — is the destructive
+    // version of this feature.
+    const user = userEvent.setup();
+    renderPage();
+    await placeOneField(user);
+    const placed = canvasFieldCount();
+
+    const label = screen.getByRole("textbox", { name: /field label/i });
+    await user.click(label);
+    await user.keyboard("{Control>}a{/Control}");
+    await user.keyboard("{Delete}");
+
+    expect(canvasFieldCount()).toBe(placed);
+  });
 });
