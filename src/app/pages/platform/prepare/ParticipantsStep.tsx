@@ -187,7 +187,11 @@ function ParticipantEditor({
       )}
 
       {/* Fields */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
+      {/* `auto-fit` with a 180px floor, not a hard `1fr 1fr`. At 320px the
+          fixed two-up left each input about 120px for a placeholder like
+          "juan@example.com"; this drops to one column exactly when that
+          would happen, and stays two-up everywhere it fits. */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 12, marginBottom: 12 }}>
         <div>
           <label style={{ ...GF, fontSize: 12, fontWeight: 600, color: NAVY, display: "block", marginBottom: 4 }}>
             Full name <span style={{ color: GOLD }}>*</span>
@@ -249,7 +253,7 @@ function ParticipantEditor({
         </div>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 16 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 12, marginBottom: 16 }}>
         <div>
           <label style={{ ...GF, fontSize: 12, fontWeight: 600, color: NAVY, display: "block", marginBottom: 4 }}>
             Role <span style={{ color: GOLD }}>*</span>

@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import lagdaLogoFull from "../../../brand elements/svg/LagdaLogoPrimaryHorizontalFullColor.svg";
 import { FOOTER_COLUMNS } from "@/app/config/nav.config";
+import { ON_LIGHT } from "../../utils/on-light";
 
 // ── Icon system ──────────────────────────────────────────────────────────────
 // The footer's link config (nav.config.ts) is shared with the header mega-menu
@@ -134,14 +135,14 @@ function FooterLinkRow({ label, path, isComingSoon }: { label: string; path: str
             width: 24, height: 24, borderRadius: "50%", flexShrink: 0,
             display: "flex", alignItems: "center", justifyContent: "center",
             background: isComingSoon ? "rgba(148,163,184,0.14)" : "rgba(0,120,212,0.1)",
-            color: isComingSoon ? "#94A3B8" : "#0078D4",
+            color: isComingSoon ? ON_LIGHT.muted : ON_LIGHT.azure,
             transition: "background 0.15s ease, color 0.15s ease",
           }}
         >
           {Icon ? <Icon size={13} strokeWidth={2.25} /> : <span style={{ width: 4, height: 4, borderRadius: "50%", background: "currentColor" }} />}
         </span>
         <span style={{
-          color: isComingSoon ? "#94A3B8" : "#334155",
+          color: isComingSoon ? ON_LIGHT.muted : "#334155",
           ...GF, fontSize: 13, flex: 1, minWidth: 0,
           overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
         }}>
@@ -215,7 +216,7 @@ export function PublicFooter() {
       }}>
         <p style={{
           margin: 0,
-          color: "#64748B",
+          color: ON_LIGHT.slate,
           fontFamily: "'Geist Mono', monospace",
           fontSize: 11,
           letterSpacing: "0.02em",
@@ -264,7 +265,7 @@ export function PublicFooter() {
             The Philippine-first electronic signature and document verification platform for legal, business, and institutional workflows.
           </p>
           <p style={{
-            color: "#64748B", ...GF, fontSize: 12, lineHeight: 1.5, margin: 0,
+            color: ON_LIGHT.slate, ...GF, fontSize: 12, lineHeight: 1.5, margin: 0,
           }}>
             A product of{" "}
             <span style={{ color: "#334155", fontWeight: 600 }}>UpUp Technologies</span>
@@ -282,7 +283,7 @@ export function PublicFooter() {
           flexWrap: "wrap",
           gap: 12,
         }}>
-          <p style={{ margin: 0, color: "#64748B", ...GF, fontSize: 12 }}>
+          <p style={{ margin: 0, color: ON_LIGHT.slate, ...GF, fontSize: 12 }}>
             © {year} UpUp Technologies. LAGDA and the LAGDA shield mark are trademarks of UpUp Technologies.
           </p>
           <div style={{ display: "flex", gap: 20 }}>
@@ -296,7 +297,7 @@ export function PublicFooter() {
                 key={l.label}
                 to={l.path}
                 style={{
-                  color: "#64748B", ...GF, fontSize: 12, textDecoration: "none",
+                  color: ON_LIGHT.slate, ...GF, fontSize: 12, textDecoration: "none",
                   transition: "color 0.18s ease",
                 }}
                 onMouseEnter={(e) => { e.currentTarget.style.color = "#07111F"; }}

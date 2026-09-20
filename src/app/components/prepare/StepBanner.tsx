@@ -63,7 +63,9 @@ export function StepBanner({
           <p style={{ ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: AZURE, margin: "2px 0 4px" }}>
             {eyebrow}
           </p>
-          <h2 style={{ ...GF, fontSize: 20, fontWeight: 800, color: NAVY, margin: 0, letterSpacing: "-0.01em" }}>
+          <h2 style={{ ...GF, // Fluid: a 20px title had ~180px of room at 320px, after the
+        // 44px icon tile, its gap and the banner padding.
+        fontSize: "clamp(16px, 4.6vw, 20px)", fontWeight: 800, color: NAVY, margin: 0, letterSpacing: "-0.01em" }}>
             {title}
           </h2>
           {description && (

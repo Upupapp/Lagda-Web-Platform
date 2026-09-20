@@ -6,6 +6,7 @@ import { Z } from "../../utils/z-index";
 import { TabStrip } from "../platform/TabStrip";
 import { PublicSection, PublicHeading } from "../public/PublicKit";
 import type { PublicSectionProps, PublicHeadingProps } from "../public/PublicKit";
+import { ON_LIGHT } from "../../utils/on-light";
 
 const GF = { fontFamily: "'Geist', sans-serif" };
 const GM = { fontFamily: "'Geist Mono', monospace" };
@@ -30,7 +31,7 @@ export function PricingSubNav() {
               borderBottom: active ? "2px solid #0078D4" : "2px solid transparent",
               transition: "border-color 0.15s ease",
             }}>
-              <span style={{ ...GF, fontSize: 13, fontWeight: active ? 700 : 500, color: active ? "#07111F" : "#64748B", whiteSpace: "nowrap", transition: "color 0.15s ease" }}>
+              <span style={{ ...GF, fontSize: 13, fontWeight: active ? 700 : 500, color: active ? "#07111F" : ON_LIGHT.slate, whiteSpace: "nowrap", transition: "color 0.15s ease" }}>
                 {label}
               </span>
             </Link>
@@ -69,11 +70,11 @@ export function PlanCard({ plan }: { plan: LagdaPlan }) {
           letterSpacing: "0.1em", padding: "3px 12px", borderRadius: 999, whiteSpace: "nowrap",
         }}>RECOMMENDED FOR TEAMS</div>
       )}
-      <p style={{ color: "#0078D4", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", marginBottom: 6 }}>
+      <p style={{ color: ON_LIGHT.azure, ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", marginBottom: 6 }}>
         {plan.name.toUpperCase()}
       </p>
       <p style={{ color: "#07111F", ...GF, fontSize: 20, fontWeight: 800, margin: 0, marginBottom: 4 }}>{plan.name}</p>
-      <p style={{ color: "#64748B", ...GF, fontSize: 13, lineHeight: 1.5, marginBottom: 20 }}>{plan.tagline}</p>
+      <p style={{ color: ON_LIGHT.slate, ...GF, fontSize: 13, lineHeight: 1.5, marginBottom: 20 }}>{plan.tagline}</p>
 
       {/* Price */}
       <div style={{ marginBottom: 20, padding: "14px 0", borderTop: "1px solid rgba(0,0,0,0.08)", borderBottom: "1px solid rgba(0,0,0,0.08)" }}>
@@ -81,8 +82,8 @@ export function PlanCard({ plan }: { plan: LagdaPlan }) {
           <p style={{ color: "#07111F", ...GF, fontSize: 18, fontWeight: 700, margin: 0 }}>Contact Sales</p>
         ) : (
           <>
-            <p style={{ color: "#64748B", ...GM, fontSize: 11, margin: "0 0 4px" }}>PRICING</p>
-            <p style={{ color: "#64748B", ...GF, fontSize: 13, margin: 0 }}>To be confirmed at launch</p>
+            <p style={{ color: ON_LIGHT.slate, ...GM, fontSize: 11, margin: "0 0 4px" }}>PRICING</p>
+            <p style={{ color: ON_LIGHT.slate, ...GF, fontSize: 13, margin: 0 }}>To be confirmed at launch</p>
           </>
         )}
       </div>
@@ -91,7 +92,7 @@ export function PlanCard({ plan }: { plan: LagdaPlan }) {
       <ul style={{ listStyle: "none", margin: "0 0 24px", padding: 0, display: "flex", flexDirection: "column", gap: 8 }}>
         {plan.highlights.map((h) => (
           <li key={h} style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
-            <span style={{ color: "#16A34A", flexShrink: 0, fontSize: 12, marginTop: 2 }}>✓</span>
+            <span style={{ color: ON_LIGHT.success, flexShrink: 0, fontSize: 12, marginTop: 2 }}>✓</span>
             <span style={{ color: "#334155", ...GF, fontSize: 13, lineHeight: 1.45 }}>{h}</span>
           </li>
         ))}
@@ -110,13 +111,13 @@ export function PlanCard({ plan }: { plan: LagdaPlan }) {
         {plan.secondaryCtaLabel && plan.secondaryCtaPath && (
           <Link to={plan.secondaryCtaPath} style={{
             display: "flex", alignItems: "center", justifyContent: "center",
-            color: "#64748B", borderRadius: 8, padding: "10px 20px", textDecoration: "none",
+            color: ON_LIGHT.slate, borderRadius: 8, padding: "10px 20px", textDecoration: "none",
             ...GF, fontSize: 13, fontWeight: 500, minHeight: 44,
           }}>{plan.secondaryCtaLabel}</Link>
         )}
       </div>
       {plan.note && (
-        <p style={{ color: "#94A3B8", ...GM, fontSize: 9, marginTop: 12, lineHeight: 1.5, textAlign: "center" }}>{plan.note}</p>
+        <p style={{ color: ON_LIGHT.muted, ...GM, fontSize: 9, marginTop: 12, lineHeight: 1.5, textAlign: "center" }}>{plan.note}</p>
       )}
     </div>
   );
@@ -138,13 +139,20 @@ export function PlanCards() {
 }
 
 // ── Avail cell ────────────────────────────────────────────────────────────────
+//
+// Every colour here comes from ON_LIGHT. This one function produced the
+// largest single block of contrast failures on the public site — the compare
+// table repeats it once per feature per plan, so a 2.79:1 tick became
+// sixty-eight failing nodes on /pricing alone. The table's own background is
+// #ffffff and rgba(0,120,212,0.04) over it, both light; the values it used
+// were the navy ramp's.
 function AvailCell({ value }: { value: string }) {
-  if (value === "included")     return <span style={{ color: "#16A34A", fontSize: 15 }} title="Included">✓ <span style={{ ...GF, fontSize: 11, color: "#16A34A" }}>Included</span></span>;
-  if (value === "not-included") return <span style={{ color: "#94A3B8", fontSize: 15 }} title="Not included">— <span style={{ ...GF, fontSize: 11, color: "#94A3B8" }}>Not included</span></span>;
-  if (value === "enterprise")   return <span style={{ color: "#0078D4", ...GM, fontSize: 10, fontWeight: 700 }}>Enterprise</span>;
-  if (value === "pending")      return <span style={{ color: "#C9960C", ...GM, fontSize: 10 }}>Planned</span>;
-  if (value === "varies")       return <span style={{ color: "#64748B", ...GF, fontSize: 12 }}>Varies by plan</span>;
-  return <span style={{ color: "#64748B", ...GF, fontSize: 12 }}>{value}</span>;
+  if (value === "included")     return <span style={{ color: ON_LIGHT.success, fontSize: 15 }} title="Included">✓ <span style={{ ...GF, fontSize: 11, color: ON_LIGHT.success }}>Included</span></span>;
+  if (value === "not-included") return <span style={{ color: ON_LIGHT.muted, fontSize: 15 }} title="Not included">— <span style={{ ...GF, fontSize: 11, color: ON_LIGHT.muted }}>Not included</span></span>;
+  if (value === "enterprise")   return <span style={{ color: ON_LIGHT.azure, ...GM, fontSize: 10, fontWeight: 700 }}>Enterprise</span>;
+  if (value === "pending")      return <span style={{ color: ON_LIGHT.gold, ...GM, fontSize: 10 }}>Planned</span>;
+  if (value === "varies")       return <span style={{ color: ON_LIGHT.slate, ...GF, fontSize: 12 }}>Varies by plan</span>;
+  return <span style={{ color: ON_LIGHT.slate, ...GF, fontSize: 12 }}>{value}</span>;
 }
 
 // ── Compare table (desktop) ────────────────────────────────────────────────────
@@ -159,14 +167,14 @@ export function CompareTable() {
   return (
     <div style={{ overflowX: "auto" }}>
       <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 620 }} aria-label="LAGDA plan comparison">
-        <caption style={{ ...GM, fontSize: 10, color: "#64748B", textAlign: "left", padding: "0 0 12px", letterSpacing: "0.08em" }}>
+        <caption style={{ ...GM, fontSize: 10, color: ON_LIGHT.slate, textAlign: "left", padding: "0 0 12px", letterSpacing: "0.08em" }}>
           LAGDA ESIGNATURE PLAN COMPARISON · LAGDA ENOTARY IS A SEPARATE FUTURE PRODUCT NOT INCLUDED IN ANY PLAN
         </caption>
         <thead>
           <tr style={{ borderBottom: "1px solid rgba(0,0,0,0.1)" }}>
-            <th style={{ textAlign: "left", padding: "12px 16px 12px 0", color: "#64748B", ...GF, fontSize: 13, fontWeight: 600, width: "40%" }}>Feature</th>
+            <th style={{ textAlign: "left", padding: "12px 16px 12px 0", color: ON_LIGHT.slate, ...GF, fontSize: 13, fontWeight: 600, width: "40%" }}>Feature</th>
             {LAGDA_PLANS.map(p => (
-              <th key={p.id} style={{ textAlign: "center", padding: "12px 16px", color: p.featured ? "#0078D4" : "#07111F", ...GF, fontSize: 13, fontWeight: 700 }}>
+              <th key={p.id} style={{ textAlign: "center", padding: "12px 16px", color: p.featured ? ON_LIGHT.azure : "#07111F", ...GF, fontSize: 13, fontWeight: 700 }}>
                 {p.name}
               </th>
             ))}
@@ -183,7 +191,7 @@ export function CompareTable() {
                     style={{
                       background: "none", border: "none", cursor: "pointer",
                       display: "flex", alignItems: "center", gap: 8,
-                      color: "#0078D4", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.1em",
+                      color: ON_LIGHT.azure, ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.1em",
                     }}
                   >
                     <span style={{ fontSize: 10, transform: openGroups.has(group.id) ? "rotate(90deg)" : "none", transition: "transform 0.2s", display: "inline-block" }}>▶</span>
@@ -224,9 +232,9 @@ export function PricingHero({ heading, sub }: { heading: string; sub: string }) 
   return (
     <section style={{ padding: "80px 24px 64px", textAlign: "center", background: "radial-gradient(ellipse 80% 50% at 50% 0%, rgba(0,120,212,0.12) 0%, transparent 70%)" }}>
       <div style={{ maxWidth: 720, margin: "0 auto" }}>
-        <p style={{ color: "#0078D4", ...GM, fontSize: 11, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 14 }}>LAGDA ESIGNATURE</p>
+        <p style={{ color: ON_LIGHT.azure, ...GM, fontSize: 11, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 14 }}>LAGDA ESIGNATURE</p>
         <h1 style={{ color: "#07111F", ...GF, fontSize: "clamp(28px, 5vw, 52px)", fontWeight: 900, lineHeight: 1.1, letterSpacing: "-0.03em", margin: "0 0 20px" }}>{heading}</h1>
-        <p style={{ color: "#64748B", ...GF, fontSize: 17, lineHeight: 1.65, margin: "0 auto" }}>{sub}</p>
+        <p style={{ color: ON_LIGHT.slate, ...GF, fontSize: 17, lineHeight: 1.65, margin: "0 auto" }}>{sub}</p>
       </div>
     </section>
   );
