@@ -91,7 +91,7 @@ export function RealSigningPage() {
 
   useEffect(() => {
     if (!token) {
-      setErrorMessage("This signing link is missing its access token.");
+      setErrorMessage(LINK_UNUSABLE);
       setPhase("unavailable");
       return;
     }
@@ -99,8 +99,19 @@ export function RealSigningPage() {
       try {
         await realSigningAccessService.bootstrap(token);
         await enterCeremony();
-      } catch (err) {
-        setErrorMessage(describeError(err));
+      } catch {
+        // ONE message for every bootstrap failure, deliberately.
+        //
+        // `describeError` used to surface the server's own text here, which in
+        // production meant a signer met "One or more fields contain invalid
+        // values" — a form-validation string, on a page with no form, telling
+        // them nothing they could act on.
+        //
+        // It also leaked. The backend collapses expired, revoked, already-
+        // completed and never-existed into a single error precisely so that
+        // holding a link cannot be used to learn which of those is true. Echoing
+        // its status codes back would have re-opened that by the side door.
+        setErrorMessage(LINK_UNUSABLE);
         setPhase("unavailable");
       }
     })();
@@ -559,6 +570,16 @@ function describeSubmissionError(err: unknown): string {
   }
   return describeError(err);
 }
+
+/**
+ * What a signer is told when a link will not open, whatever the reason.
+ *
+ * Says what to do next, names no cause, and is identical for every failure.
+ */
+const LINK_UNUSABLE =
+  "This signing link can no longer be opened. It may have expired, already "
+  + "been used, or been replaced by a newer one. Ask the sender to send you a "
+  + "new link.";
 
 function describeError(err: unknown): string {
   if (err instanceof ApiError) {
