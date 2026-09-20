@@ -30,6 +30,7 @@ import {
   eligibleParticipants, resolveAssignmentFor, computeBackendFieldIssues,
 } from "../../../services/prepare/field-autofix";
 import { isDocumentSynced, markDocumentSynced } from "../../../services/prepare/sync-markers";
+import { useFieldEditorShortcuts } from "../../../hooks/useFieldEditorShortcuts";
 import {
   useRealDocument, DocumentPageSurface,
 } from "../../../components/pdf/DocumentPageSurface";
@@ -1762,13 +1763,13 @@ function EditorToolbar({ draftTitle, participants: _participants, draft, showKbD
 
       {/* Undo/Redo */}
       <button onClick={undo} disabled={!canUndo} aria-label="Undo" title="Undo (Ctrl+Z)" style={{ ...btnBase, opacity: canUndo ? 1 : 0.4 }}>↩ Undo</button>
-      <button onClick={redo} disabled={!canRedo} aria-label="Redo" title="Redo (Ctrl+Shift+Z)" style={{ ...btnBase, opacity: canRedo ? 1 : 0.4 }}>↪ Redo</button>
+      <button onClick={redo} disabled={!canRedo} aria-label="Redo" title="Redo (Ctrl+Y or Ctrl+Shift+Z)" style={{ ...btnBase, opacity: canRedo ? 1 : 0.4 }}>↪ Redo</button>
 
       <div style={{ width: 1, height: 24, background: "#E2E8F0", flexShrink: 0 }} role="separator" />
 
       {/* Clipboard */}
-      <button onClick={copySelected} aria-label="Copy selected fields" style={btnBase}>Copy</button>
-      <button onClick={paste} disabled={clipboard.length === 0} aria-label="Paste copied fields" style={{ ...btnBase, opacity: clipboard.length > 0 ? 1 : 0.4 }}>Paste</button>
+      <button onClick={copySelected} aria-label="Copy selected fields" title="Copy (Ctrl+C)" style={btnBase}>Copy</button>
+      <button onClick={paste} disabled={clipboard.length === 0} aria-label="Paste copied fields" title="Paste (Ctrl+V)" style={{ ...btnBase, opacity: clipboard.length > 0 ? 1 : 0.4 }}>Paste</button>
 
       <div style={{ width: 1, height: 24, background: "#E2E8F0", flexShrink: 0 }} role="separator" />
 
@@ -1862,7 +1863,21 @@ function FieldsPageInner() {
     documents, fields,
     selectedField, showFieldList, showValidation, toggleValidation, runValidation,
     setDocument, setPage, selectFields, addField,
+    // Keyboard shortcuts. Every one of these already existed — see
+    // useFieldEditorShortcuts for what was and was not wired up before.
+    selectedFieldIds, currentPageFields, clipboard, mode,
+    copySelected, paste, undo, redo, duplicateField, deleteFields,
+    clearSelection, setPendingField,
   } = useFieldEditor();
+
+  /**
+   * The last thing a shortcut did, for the canvas's live region.
+   *
+   * Copy, cut, paste, undo and delete all change the document without moving
+   * focus or showing a dialog, so without this they are silent: three fields
+   * can disappear on Delete with nothing said about it.
+   */
+  const [shortcutMessage, setShortcutMessage] = useState("");
 
   // Review's "not ready to send" banner can deep-link straight here with the
   // exact offending field(s) via ?focusFieldIds=a,b — so the sender lands on
@@ -2112,22 +2127,36 @@ function FieldsPageInner() {
     return ok && !conflict;
   }, [platform.currentWorkspace, realDocumentIdByEditorDocId, documents, fields, loadRealFields]);
 
-  // Keyboard shortcuts
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      const isInput = document.activeElement instanceof HTMLInputElement ||
-                      document.activeElement instanceof HTMLTextAreaElement ||
-                      document.activeElement instanceof HTMLSelectElement;
-      if (isInput) return;
-
-      if ((e.ctrlKey || e.metaKey) && e.key === "z" && !e.shiftKey) {
-        e.preventDefault();
-        // undo handled by context
-      }
-    };
-    document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
-  }, []);
+  // Keyboard shortcuts.
+  //
+  // This replaces a stub that matched Ctrl+Z, called preventDefault(), and
+  // then did nothing — suppressing the browser's undo without running the
+  // editor's, while the toolbar advertised the shortcut in its tooltip.
+  useFieldEditorShortcuts({
+    copy: copySelected,
+    paste,
+    undo,
+    redo,
+    duplicate: useCallback(() => {
+      const first = selectedFieldIds[0];
+      if (first !== undefined) duplicateField(first);
+    }, [selectedFieldIds, duplicateField]),
+    deleteSelected: useCallback(() => {
+      deleteFields(selectedFieldIds);
+    }, [selectedFieldIds, deleteFields]),
+    selectAll: useCallback(() => {
+      selectFields(currentPageFields.map(f => f.id));
+    }, [currentPageFields, selectFields]),
+    escape: useCallback(() => {
+      // A pending placement is the more urgent thing to escape from: the
+      // canvas is armed and the next click would drop a field.
+      if (mode === "place-field") setPendingField(null);
+      else clearSelection();
+    }, [mode, setPendingField, clearSelection]),
+    hasSelection: selectedFieldIds.length > 0,
+    hasClipboard: clipboard.length > 0,
+    announce: setShortcutMessage,
+  });
 
   if (!draft) {
     return (
@@ -2193,6 +2222,17 @@ function FieldsPageInner() {
       <h1 style={{ position: "absolute", width: 1, height: 1, overflow: "hidden", clip: "rect(0,0,0,0)" }}>
         Place Document Fields — {draftTitle}
       </h1>
+
+      {/* What the last keyboard shortcut did.
+          Copy, cut, paste, undo and delete change the document without
+          moving focus or opening anything, so they are otherwise silent —
+          fields can vanish on Delete with nothing said about it. */}
+      <div
+        aria-live="polite"
+        style={{ position: "absolute", width: 1, height: 1, overflow: "hidden", clip: "rect(0,0,0,0)" }}
+      >
+        {shortcutMessage}
+      </div>
 
       {fieldSyncError && (
         <div
