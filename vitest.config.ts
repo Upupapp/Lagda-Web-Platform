@@ -154,6 +154,13 @@ export default mergeConfig(
           "src/app/components/prepare/PreparationHelpFab.tsx": {
             branches: 80, functions: 70, lines: 80, statements: 80,
           },
+          // The session boundary: the only place identity enters the app, and
+          // the one file where confusing "this account has no workspace" with
+          // "we could not find out" sends somebody into creating a duplicate
+          // tenant. Set just below measured.
+          "src/app/context/PlatformContext.tsx": {
+            branches: 60, functions: 45, lines: 55, statements: 55,
+          },
           // Pinned low deliberately. This is the large demo file the test
           // above drags in, and ~42% is what rendering its real-mode branch
           // actually reaches. The point of the ratchet is that the real/mock
