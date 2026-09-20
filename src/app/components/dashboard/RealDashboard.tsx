@@ -26,7 +26,7 @@ import { useState, useEffect, type CSSProperties } from "react";
 import { Link } from "react-router";
 import {
   FilePlus, FileText, XCircle, Clock, AlertTriangle, FileEdit,
-  CheckCircle2, Send, ChevronRight, PenLine,
+  CheckCircle2, Send, ChevronRight, PenLine, History,
 } from "lucide-react";
 import { usePlatform } from "../../context/PlatformContext";
 import {
@@ -42,6 +42,7 @@ import {
 import { SIGNING_REQUEST_STATUS } from "../../services/signing-request-status";
 import { StatusBadge } from "../documents/StatusBadge";
 import { SignatureRecordDialog } from "../documents/SignatureRecordDialog";
+import { AuditTrailDialog } from "../documents/AuditTrailDialog";
 
 const GF: CSSProperties = { fontFamily: "'Geist', sans-serif" };
 const NAVY   = "#07111F";
@@ -176,8 +177,44 @@ function SignaturesButton({ onClick, title }: { onClick: () => void; title: stri
   );
 }
 
-function AttentionRow({ entry, onSignatures }: {
-  entry: AttentionEntry; onSignatures: (item: SigningRequestListItem) => void;
+function ActivityButton({ onClick, title }: { onClick: () => void; title: string }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={`Activity for ${title}`}
+      title="Audit trail"
+      style={{
+        ...GF, display: "inline-flex", alignItems: "center", gap: 4,
+        fontSize: 12, fontWeight: 600, color: SLATE6, background: "none",
+        border: `1px solid ${SLATE2}`, borderRadius: 6, padding: "6px 10px",
+        cursor: "pointer", whiteSpace: "nowrap", minHeight: 32,
+      }}
+    >
+      <History size={13} aria-hidden />
+      Activity
+    </button>
+  );
+}
+
+/** The two drill-downs every real row offers: who signed, and what happened. */
+function RowActions({ item, onSignatures, onAudit }: {
+  item: SigningRequestListItem;
+  onSignatures: (item: SigningRequestListItem) => void;
+  onAudit: (item: SigningRequestListItem) => void;
+}) {
+  return (
+    <div style={{ display: "flex", gap: 6, flexShrink: 0, flexWrap: "wrap", justifyContent: "flex-end" }}>
+      <SignaturesButton title={item.documentTitle} onClick={() => onSignatures(item)} />
+      <ActivityButton title={item.documentTitle} onClick={() => onAudit(item)} />
+    </div>
+  );
+}
+
+function AttentionRow({ entry, onSignatures, onAudit }: {
+  entry: AttentionEntry;
+  onSignatures: (item: SigningRequestListItem) => void;
+  onAudit: (item: SigningRequestListItem) => void;
 }) {
   const meta = ATTENTION[entry.kind];
   const Icon = meta.icon;
@@ -192,7 +229,7 @@ function AttentionRow({ entry, onSignatures }: {
         </div>
       </div>
       {drillable
-        ? <SignaturesButton title={entry.item.documentTitle} onClick={() => onSignatures(entry.item)} />
+        ? <RowActions item={entry.item} onSignatures={onSignatures} onAudit={onAudit} />
         : (
           <Link to="/app/documents" style={{ ...GF, fontSize: 12, fontWeight: 600, color: AZURE, textDecoration: "none", whiteSpace: "nowrap" }}>
             Open <ChevronRight size={13} aria-hidden style={{ verticalAlign: "-2px" }} />
@@ -228,6 +265,7 @@ export function RealDashboard() {
   const [total, setTotal] = useState(0);
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
   const [signaturesFor, setSignaturesFor] = useState<SigningRequestListItem | null>(null);
+  const [auditFor, setAuditFor] = useState<SigningRequestListItem | null>(null);
 
   useEffect(() => {
     if (!workspaceId) return;
@@ -299,7 +337,10 @@ export function RealDashboard() {
                 : (
                   <ul style={{ margin: 0, padding: 0 }}>
                     {attention.map(entry => (
-                      <AttentionRow key={entry.item.signingRequestId} entry={entry} onSignatures={setSignaturesFor} />
+                      <AttentionRow
+                        key={entry.item.signingRequestId} entry={entry}
+                        onSignatures={setSignaturesFor} onAudit={setAuditFor}
+                      />
                     ))}
                   </ul>
                 )}
@@ -339,7 +380,7 @@ export function RealDashboard() {
                           )}
                         </div>
                       </div>
-                      <SignaturesButton title={item.documentTitle} onClick={() => setSignaturesFor(item)} />
+                      <RowActions item={item} onSignatures={setSignaturesFor} onAudit={setAuditFor} />
                     </RowShell>
                   ))}
                 </ul>
@@ -360,7 +401,7 @@ export function RealDashboard() {
                           completed {item.completedAt === null ? "" : fmtRelative(item.completedAt, now)}
                         </div>
                       </div>
-                      <SignaturesButton title={item.documentTitle} onClick={() => setSignaturesFor(item)} />
+                      <RowActions item={item} onSignatures={setSignaturesFor} onAudit={setAuditFor} />
                     </RowShell>
                   ))}
                 </ul>
@@ -381,6 +422,14 @@ export function RealDashboard() {
           signingRequestId={signaturesFor.signingRequestId}
           documentTitle={signaturesFor.documentTitle}
           onClose={() => setSignaturesFor(null)}
+        />
+      )}
+      {auditFor && workspaceId && (
+        <AuditTrailDialog
+          workspaceId={workspaceId}
+          signingRequestId={auditFor.signingRequestId}
+          documentTitle={auditFor.documentTitle}
+          onClose={() => setAuditFor(null)}
         />
       )}
     </>
