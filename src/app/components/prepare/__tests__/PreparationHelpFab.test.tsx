@@ -223,4 +223,33 @@ describe("PreparationHelpFab", () => {
     expect(screen.getByText("No participants have been added.")).toBeInTheDocument();
     expect(screen.getByText(/needs attention on this step/i)).toBeInTheDocument();
   });
+  // ── Clearance above the nav bar ────────────────────────────────────────────
+
+  it("clears the nav bar by its measured height, not a guess", async () => {
+    // The old constants were 80/96px. At 320px the bar reached 131px on two
+    // steps, and the FAB sat on top of Continue. jsdom has no layout, so the
+    // bar's height is stubbed; what is asserted is that the FAB READS it.
+    const bar = document.createElement("div");
+    bar.className = "prep-nav-bar";
+    Object.defineProperty(bar, "getBoundingClientRect", {
+      value: () => ({ height: 131, width: 320, top: 0, left: 0, right: 320, bottom: 131, x: 0, y: 0, toJSON: () => ({}) }),
+    });
+    document.body.appendChild(bar);
+    try {
+      renderAt(PARTICIPANTS);
+      const fab = screen.getByRole("button", { name: /open preparation guide/i });
+      await new Promise(resolve => setTimeout(resolve, 0));
+      // 131px bar + 16px gap.
+      expect(fab.style.bottom).toContain("147px");
+    } finally {
+      bar.remove();
+    }
+  });
+
+  it("falls back to a fixed clearance when there is no nav bar", () => {
+    // The Fields step hides the bar entirely.
+    renderAt(PARTICIPANTS);
+    const fab = screen.getByRole("button", { name: /open preparation guide/i });
+    expect(fab.style.bottom).toMatch(/calc\((96|80)px/);
+  });
 });
