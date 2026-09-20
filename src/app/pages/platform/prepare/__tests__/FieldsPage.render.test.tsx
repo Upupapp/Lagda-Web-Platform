@@ -135,7 +135,20 @@ describe("FieldsPage (full editor render)", () => {
     expect(screen.getByText(/no fields match/i)).toBeInTheDocument();
   });
 
-  it("exercises the Field Properties panel's controls end to end", async () => {
+  // 30s, not the 5s default. This case drives sixteen separate `userEvent`
+  // interactions — including a twelve-character `type()`, which is twelve
+  // dispatches — against a full editor render, and `userEvent` is
+  // deliberately slow: it waits for React to settle between events rather
+  // than firing them synchronously.
+  //
+  // It measured ~13.5s in isolation and timed out at 5s under parallel load,
+  // passing and failing across runs of IDENTICAL code. That is a budget
+  // problem, not a flaky assertion — every expectation here is deterministic.
+  //
+  // Raised for this test alone rather than globally: a global `testTimeout`
+  // would hide the next genuinely-slow test instead of surfacing it. If more
+  // cases need this, they get their own budget the same way.
+  it("exercises the Field Properties panel's controls end to end", { timeout: 30_000 }, async () => {
     const user = userEvent.setup();
     renderPage();
     await user.click(screen.getByRole("button", { name: /add field using keyboard placement/i }));
