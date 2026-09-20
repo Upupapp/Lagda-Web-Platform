@@ -60,8 +60,8 @@ describe("FeatureGuard", () => {
 
   it("asks about the flag it was given, not some other one", () => {
     hasFlag.mockReturnValue(false);
-    renderAt("/app/settings/signatures", "signatureLibraryEnabled");
-    expect(hasFlag).toHaveBeenCalledWith("signatureLibraryEnabled");
+    renderAt("/app/reports", "reportsEnabled");
+    expect(hasFlag).toHaveBeenCalledWith("reportsEnabled");
   });
 
   it("honours a custom fallback", () => {
