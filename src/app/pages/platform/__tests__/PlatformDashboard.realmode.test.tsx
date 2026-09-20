@@ -51,8 +51,31 @@ const FIXTURE_MARKERS = [
  * account data to show — so wrapping it would start a real session bootstrap
  * (a `/me` fetch) inside a test that is not about sessions.
  */
+// The real dashboard reads the workspace from PlatformContext and the list
+// from the signing-request service. Both are stubbed so this file stays about
+// one thing: the real/mock gate, and what each side of it is allowed to show.
+const listMock = vi.fn();
+vi.mock("../../../services/real/signing-request.service", () => ({
+  realSigningRequestService: {
+    list: (...args: unknown[]) => listMock(...args),
+    signatures: vi.fn(),
+  },
+}));
+
 async function renderDashboard({ withProvider = false } = {}) {
-  // Imported AFTER the flag is stubbed: the module reads it at load time.
+  if (!withProvider) {
+    // Real mode: a stubbed context, not the provider — the provider would
+    // start a real session bootstrap, which is not what this test is about.
+    // Stubbed BEFORE the page is imported: the page's module graph pulls the
+    // context in at load time, and a mock registered after that import is
+    // never seen by the already-evaluated module.
+    vi.doMock("../../../context/PlatformContext", () => ({
+      usePlatform: () => ({ currentWorkspace: { id: "ws_1" }, user: { displayName: "Ana Reyes" } }),
+    }));
+  }
+
+  // Imported AFTER the flag (and, in real mode, the context) is stubbed: the
+  // module reads the flag at load time.
   const { PlatformDashboard } = await import("../PlatformDashboard");
   const tree = <PlatformDashboard />;
 
@@ -81,6 +104,7 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.doUnmock("../../../services/backend-flag");
+  vi.doUnmock("../../../context/PlatformContext");
 });
 
 describe("the dashboard in real-backend mode", () => {
@@ -92,7 +116,9 @@ describe("the dashboard in real-backend mode", () => {
   });
 
   it("shows no fabricated content to a real account", async () => {
+    listMock.mockResolvedValue({ items: [], total: 0, page: 1, perPage: 100, hasNextPage: false });
     await renderDashboard();
+    await screen.findByText("Send your first document");
 
     const text = document.body.textContent ?? "";
     for (const marker of FIXTURE_MARKERS) {
@@ -101,22 +127,33 @@ describe("the dashboard in real-backend mode", () => {
     }
   });
 
-  it("says plainly that the overview is not built yet", async () => {
-    // The honest alternative to invented numbers. Asserted because "shows
-    // nothing" would also satisfy the test above, and a blank dashboard
-    // reads as broken rather than as unfinished.
+  it("renders the real dashboard from the list endpoint", async () => {
+    // Was "says plainly that the overview is not built yet". The overview
+    // is built now, from the signing-request list, so the assertion is that
+    // real rows reach the page — not that an apology does.
+    listMock.mockResolvedValue({
+      items: [{
+        signingRequestId: "sr_1", documentId: "doc_1", documentTitle: "Lease Agreement",
+        state: "declined", participantCount: 2, completedParticipantCount: 0,
+        createdAt: new Date().toISOString(), sentAt: new Date().toISOString(),
+        completedAt: null, expiresAt: null,
+      }],
+      total: 1, page: 1, perPage: 100, hasNextPage: false,
+    });
     await renderDashboard();
 
-    expect(await screen.findByText(/still being built out/i)).toBeTruthy();
+    const attention = await screen.findByRole("region", { name: "Needs attention" });
+    expect(attention.textContent).toContain("Lease Agreement");
+    expect(screen.queryByText(/still being built out/i)).toBeNull();
   });
 
   it("points somewhere that actually works", async () => {
-    // The part of the product that IS wired to a real backend. An empty
-    // state that only apologises leaves someone with nothing to do.
+    listMock.mockResolvedValue({ items: [], total: 0, page: 1, perPage: 100, hasNextPage: false });
     await renderDashboard();
+    await screen.findByText("Send your first document");
 
-    const link = screen.getByRole("link", { name: /prepare document/i });
-    expect(link.getAttribute("href")).toBe("/app/prepare");
+    const links = screen.getAllByRole("link", { name: /prepare/i });
+    expect(links.some(l => l.getAttribute("href") === "/app/prepare")).toBe(true);
   });
 });
 
