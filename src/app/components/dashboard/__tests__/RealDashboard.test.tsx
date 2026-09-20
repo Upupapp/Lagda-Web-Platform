@@ -15,6 +15,7 @@ vi.mock("../../../services/real/signing-request.service", () => ({
   realSigningRequestService: {
     list: (...args: unknown[]) => list(...args),
     signatures: vi.fn(),
+    audit: vi.fn(),
   },
 }));
 
@@ -129,6 +130,24 @@ describe("with signing requests", () => {
     });
     renderPage();
     expect(await screen.findByRole("button", { name: "Signatures for Refused" })).toBeTruthy();
+  });
+
+  it("offers the audit trail on every row that has one", async () => {
+    // The trail is the product's evidentiary claim, and it was reachable
+    // over HTTP with nothing in the interface using it. Every real row —
+    // attention, in flight, completed — now opens it.
+    list.mockResolvedValue({
+      items: [
+        req({ state: "declined", documentTitle: "Refused" }),
+        req({ documentTitle: "Flying" }),
+        req({ state: "completed", completedAt: ago(1), documentTitle: "Done" }),
+      ],
+      total: 3, page: 1, perPage: 100, hasNextPage: false,
+    });
+    renderPage();
+    expect(await screen.findByRole("button", { name: "Activity for Refused" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Activity for Flying" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Activity for Done" })).toBeTruthy();
   });
 });
 

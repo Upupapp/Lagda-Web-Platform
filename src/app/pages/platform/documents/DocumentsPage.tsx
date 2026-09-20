@@ -12,7 +12,7 @@ import {
   X, AlertCircle, ChevronLeft, ChevronRight, Tag, FolderOpen, Folder,
   ShieldCheck, Activity, Users, RefreshCw, Inbox, ArrowUpDown,
   Star, Clock, ExternalLink,
-  Eye, Bell, Ban, Shuffle, Shield, Info, Send, Download,
+  Eye, Bell, Ban, Shuffle, Shield, Info, Send, Download, History
 } from "lucide-react";
 import { usePlatform } from "../../../context/PlatformContext";
 import {
@@ -35,6 +35,7 @@ import { documentOrganizationService } from "../../../services/mock/document-org
 import { isCapabilityInActiveProfile } from "../../../config/capability-resolver";
 import { SIGNING_REQUEST_STATUS } from "../../../services/signing-request-status";
 import { StatusBadge } from "../../../components/documents/StatusBadge";
+import { AuditTrailDialog } from "../../../components/documents/AuditTrailDialog";
 import type { TransactionStatus } from "../../../models";
 import type {
   DocumentView, DocumentListQuery, DocumentListItem, DocumentListResult,
@@ -2015,11 +2016,12 @@ function SignatureLink({
 }
 
 function RealDocumentRow({
-  item, onView, onSignatures, file,
+  item, onView, onSignatures, onAudit, file,
 }: {
   item: SigningRequestListItem;
   onView: (item: SigningRequestListItem) => void;
   onSignatures: (item: SigningRequestListItem) => void;
+  onAudit: (item: SigningRequestListItem) => void;
   file: DocumentFileFacts | undefined;
 }) {
   const FileGlyph = iconForDocument(file?.mediaType, file?.filename);
@@ -2053,7 +2055,19 @@ function RealDocumentRow({
           {fmtRelative(item.createdAt)}
         </span>
       </div>
-      <div role="cell" style={{ padding: "8px 4px" }}>
+      <div role="cell" style={{ padding: "8px 4px", display: "flex", gap: 2 }}>
+        <button
+          onClick={() => onAudit(item)}
+          aria-label={`Audit trail for ${item.documentTitle}`}
+          title="Audit trail"
+          style={{
+            width: 32, height: 32, border: "none", background: "transparent",
+            cursor: "pointer", borderRadius: 6, display: "flex", alignItems: "center",
+            justifyContent: "center", color: SLATE4,
+          }}
+        >
+          <History size={15} aria-hidden />
+        </button>
         <button
           onClick={() => onView(item)}
           aria-label={`View ${item.documentTitle}`}
@@ -2075,11 +2089,12 @@ function RealDocumentRow({
 // nothing at all: every real item still loaded, just with no surface to
 // render it on. Same fields as the desktop row, stacked top-to-bottom.
 function RealDocumentCard({
-  item, onView, onSignatures, file,
+  item, onView, onSignatures, onAudit, file,
 }: {
   item: SigningRequestListItem;
   onView: (item: SigningRequestListItem) => void;
   onSignatures: (item: SigningRequestListItem) => void;
+  onAudit: (item: SigningRequestListItem) => void;
   file: DocumentFileFacts | undefined;
 }) {
   const FileGlyph = iconForDocument(file?.mediaType, file?.filename);
@@ -2116,6 +2131,17 @@ function RealDocumentCard({
             {fmtRelative(item.createdAt)}
           </div>
         </div>
+        <button
+          onClick={() => onAudit(item)}
+          aria-label={`Audit trail for ${item.documentTitle}`}
+          title="Audit trail"
+          style={{
+            flexShrink: 0, background: "none", border: "none", padding: 2,
+            cursor: "pointer", color: SLATE4, marginTop: 2, marginRight: 4,
+          }}
+        >
+          <History size={16} aria-hidden />
+        </button>
         <button
           onClick={() => onView(item)}
           aria-label={`View ${item.documentTitle}`}
@@ -2224,6 +2250,7 @@ function DocumentsPageRealMode() {
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
   const [viewing, setViewing] = useState<SigningRequestListItem | null>(null);
   const [signaturesFor, setSignaturesFor] = useState<SigningRequestListItem | null>(null);
+  const [auditFor, setAuditFor] = useState<SigningRequestListItem | null>(null);
   const [files, setFiles] = useState<Map<string, DocumentFileFacts>>(new Map());
 
   useEffect(() => {
@@ -2308,7 +2335,7 @@ function DocumentsPageRealMode() {
               {items.map(item => (
                 <RealDocumentRow
                   key={item.signingRequestId} item={item}
-                  onView={setViewing} onSignatures={setSignaturesFor}
+                  onView={setViewing} onSignatures={setSignaturesFor} onAudit={setAuditFor}
                   file={files.get(item.documentId)}
                 />
               ))}
@@ -2320,7 +2347,7 @@ function DocumentsPageRealMode() {
             {items.map(item => (
               <RealDocumentCard
                 key={item.signingRequestId} item={item}
-                onView={setViewing} onSignatures={setSignaturesFor}
+                onView={setViewing} onSignatures={setSignaturesFor} onAudit={setAuditFor}
                 file={files.get(item.documentId)}
               />
             ))}
@@ -2336,6 +2363,14 @@ function DocumentsPageRealMode() {
           signingRequestId={signaturesFor.signingRequestId}
           documentTitle={signaturesFor.documentTitle}
           onClose={() => setSignaturesFor(null)}
+        />
+      )}
+      {auditFor && workspaceId && (
+        <AuditTrailDialog
+          workspaceId={workspaceId}
+          signingRequestId={auditFor.signingRequestId}
+          documentTitle={auditFor.documentTitle}
+          onClose={() => setAuditFor(null)}
         />
       )}
     </>

@@ -118,6 +118,47 @@ export interface SigningRequestListResult {
   hasNextPage: boolean;
 }
 
+// ── Audit trail ──────────────────────────────────────────────────────────────
+// GET .../signing-requests/:id/audit. Read-only by construction — the backend
+// route file forbids ever adding a write verb — and keyed by ONE request: there
+// is no workspace-wide event feed, so a page wanting "recent activity" across
+// documents would need one call per document, and does not get one here.
+//
+// Mirrors the closed response schema in audit-routes.ts. The actor carries a
+// recipientId only for recipients; a workspace user's id is deliberately never
+// on the wire.
+
+export type AuditActorType = "workspace-user" | "recipient" | "system";
+
+export interface AuditActor {
+  type: AuditActorType;
+  displayName: string;
+  recipientId?: string;
+}
+
+export type AuditDetails =
+  | { kind: "authentication"; method: string }
+  | { kind: "consent"; consentType: string; consentVersion: string }
+  | { kind: "none" };
+
+export interface AuditEntry {
+  id: string;
+  type: string;
+  eventVersion: number;
+  /** ISO-8601. */
+  occurredAt: string;
+  actor: AuditActor;
+  description: string;
+  details: AuditDetails;
+}
+
+export interface AuditTrail {
+  signingRequestId: string;
+  state: string;
+  /** Chronological, as the backend emits it. */
+  entries: AuditEntry[];
+}
+
 class RealSigningRequestService {
   // The body is a deliberately empty/closed schema server-side (recipients
   // and fields are snapshotted from the already-saved preparation, never
@@ -149,6 +190,12 @@ class RealSigningRequestService {
   async get(workspaceId: string, signingRequestId: string): Promise<SigningRequestDetail> {
     return apiRequest<SigningRequestDetail>(
       `/workspaces/${encodeURIComponent(workspaceId)}/signing-requests/${encodeURIComponent(signingRequestId)}`,
+    );
+  }
+
+  async audit(workspaceId: string, signingRequestId: string): Promise<AuditTrail> {
+    return apiRequest<AuditTrail>(
+      `/workspaces/${encodeURIComponent(workspaceId)}/signing-requests/${encodeURIComponent(signingRequestId)}/audit`,
     );
   }
 
