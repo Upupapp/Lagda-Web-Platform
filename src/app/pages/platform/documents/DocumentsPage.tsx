@@ -21,7 +21,7 @@ import {
 import { mockDocumentService } from "../../../services/mock/document.service";
 import {
   realSigningRequestService,
-  type SigningRequestListItem, type SigningRequestState,
+  type SigningRequestListItem,
 } from "../../../services/real/signing-request.service";
 // Lazy: pdf.js (~400KB) has no reason to load for every Documents page visit
 // — only once someone actually opens a document.
@@ -34,6 +34,7 @@ import { iconForDocument } from "../../../services/documents/file-type-icon";
 import { documentOrganizationService } from "../../../services/mock/document-organization.service";
 import { isCapabilityInActiveProfile } from "../../../config/capability-resolver";
 import { TRANSACTION_STATUS_LABELS } from "../../../models";
+import { SIGNING_REQUEST_STATUS } from "../../../services/signing-request-status";
 import type { TransactionStatus } from "../../../models";
 import type {
   DocumentView, DocumentListQuery, DocumentListItem, DocumentListResult,
@@ -1977,34 +1978,8 @@ function DocumentsPageMockDemo() {
   );
 }
 
-// ── Real-backend mode ──────────────────────────────────────────────────────────
-// The rich list above (folders, tags, archive, bulk actions, starred/recent
-// views) is built entirely around the mock/demo document model and stays
-// demo-only (see this file's header comment: "No backend mutations") — none
-// of that has backing schema on the real backend yet, and building it is a
-// separate, larger scope.
-//
-// The list ITSELF, however, is real: `GET /workspaces/:id/signing-requests`
-// (signing-request-routes.ts) already returns real status, participant
-// progress and timestamps for every document a user has prepared and sent —
-// it was simply never wired up here. `SigningRequestState` overlaps
-// `TransactionStatus` for 8 of its 9 values exactly (draft, ready-to-send,
-// sent, partially-completed, completed, declined, cancelled, expired); only
-// `completion-ready` has no matching label, mapped to `awaiting-signature`
-// below (an accurate description: recipients have all acted, the document
-// is not yet marked done). This reuses `StatusBadge`'s existing tone system
-// rather than inventing a second one.
-const SIGNING_REQUEST_STATUS: Record<SigningRequestState, TransactionStatus> = {
-  "draft": "draft",
-  "ready-to-send": "ready-to-send",
-  "sent": "sent",
-  "partially-completed": "partially-completed",
-  "completion-ready": "awaiting-signature",
-  "completed": "completed",
-  "declined": "declined",
-  "cancelled": "cancelled",
-  "expired": "expired",
-};
+// `SIGNING_REQUEST_STATUS` lives in services/signing-request-status.ts now,
+// shared with the dashboard. See that file for the mapping and why.
 
 /**
  * What the Documents page knows about a request's underlying FILE.
