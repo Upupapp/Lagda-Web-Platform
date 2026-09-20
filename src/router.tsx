@@ -8,6 +8,7 @@ import { RecipientLayout } from "./app/layouts/RecipientLayout";
 import { NotFound } from "./app/pages/public/NotFound";
 import { DevPlaceholder } from "./app/pages/shared/DevPlaceholder";
 import { CapabilityGuard } from "./app/components/platform/CapabilityUnavailable";
+import { FeatureGuard } from "./app/components/platform/FeatureGuard";
 // Route-level error boundaries. Every top-level route root carries one, so a
 // thrown render or lazy-chunk error can never reach react-router's default
 // screen (which prints the raw error outside the LAGDA shell). See
@@ -2015,17 +2016,21 @@ export const router = createBrowserRouter([
       {
         path: "inbox",
         element: (
-          <Suspense fallback={null}>
-            <InboxPage />
-          </Suspense>
+          <FeatureGuard flag="recipientInboxEnabled">
+            <Suspense fallback={null}>
+              <InboxPage />
+            </Suspense>
+          </FeatureGuard>
         ),
       },
       {
         path: "inbox/:requestId",
         element: (
-          <Suspense fallback={null}>
-            <AssignmentDetailPage />
-          </Suspense>
+          <FeatureGuard flag="recipientInboxEnabled">
+            <Suspense fallback={null}>
+              <AssignmentDetailPage />
+            </Suspense>
+          </FeatureGuard>
         ),
       },
 
@@ -2437,33 +2442,41 @@ export const router = createBrowserRouter([
       {
         path: "settings/signatures",
         element: (
-          <Suspense fallback={null}>
-            <SignaturesLibraryPage />
-          </Suspense>
+          <FeatureGuard flag="signatureLibraryEnabled">
+            <Suspense fallback={null}>
+              <SignaturesLibraryPage />
+            </Suspense>
+          </FeatureGuard>
         ),
       },
       {
         path: "settings/signatures/new",
         element: (
-          <Suspense fallback={null}>
-            <NewSignaturePage />
-          </Suspense>
+          <FeatureGuard flag="signatureLibraryEnabled">
+            <Suspense fallback={null}>
+              <NewSignaturePage />
+            </Suspense>
+          </FeatureGuard>
         ),
       },
       {
         path: "settings/signatures/:signatureId",
         element: (
-          <Suspense fallback={null}>
-            <SignatureDetailPage />
-          </Suspense>
+          <FeatureGuard flag="signatureLibraryEnabled">
+            <Suspense fallback={null}>
+              <SignatureDetailPage />
+            </Suspense>
+          </FeatureGuard>
         ),
       },
       {
         path: "settings/signatures/:signatureId/edit",
         element: (
-          <Suspense fallback={null}>
-            <EditSignaturePage />
-          </Suspense>
+          <FeatureGuard flag="signatureLibraryEnabled">
+            <Suspense fallback={null}>
+              <EditSignaturePage />
+            </Suspense>
+          </FeatureGuard>
         ),
       },
       {

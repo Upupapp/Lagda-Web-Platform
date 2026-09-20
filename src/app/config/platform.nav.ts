@@ -131,6 +131,10 @@ export const PRIMARY_NAV: PlatformNavItem[] = [
     showBadge: true,
     showOnMobile: true,
     description: "Document requests assigned to you",
+    // This was the only navigation entry with neither a permission nor a
+    // feature flag, which is how a demonstration surface stayed reachable in
+    // production long after everything around it had been gated.
+    featureFlag: "recipientInboxEnabled",
   },
   {
     id: "reports",

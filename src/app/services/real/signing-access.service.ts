@@ -57,11 +57,52 @@ export interface CeremonyView {
   firstEnteredAt: string | null;
 }
 
+/**
+ * Is this path segment shaped like a bootstrap credential at all?
+ *
+ * The backend's schema pins the token to EXACTLY 43 characters
+ * (`minLength: 43, maxLength: 43`) — base64url over 32 bytes. This mirrors
+ * that bound and nothing stricter: a client rule the server does not share is
+ * a rule that silently breaks the day the server's format changes.
+ *
+ * Length alone is the effective check. The mock scenario ids are 20-30
+ * characters, and although they happen to use only base64url-legal
+ * characters, none of them is 43 long.
+ */
+export function isSigningAccessToken(value: string): boolean {
+  return value.length === SIGNING_TOKEN_LENGTH;
+}
+
+/** Thrown before any request leaves the browser. */
+export class NotASigningTokenError extends Error {
+  constructor() {
+    // Deliberately identical in wording to a token the server rejects. A
+    // caller must not be able to tell "this is not a token" from "this token
+    // is not valid" — that difference is an oracle, and the backend collapses
+    // every bootstrap failure into one error for exactly this reason.
+    super("This signing link is not valid. Please open the link from your email again.");
+    this.name = "NotASigningTokenError";
+  }
+}
+
+const SIGNING_TOKEN_LENGTH = 43;
+
 class RealSigningAccessService {
   // `token` is the 43-char opaque credential taken from the /sign/:token
   // path segment of the emailed link — never sent as a query param, per the
   // backend's link builder (security/signing-delivery.ts).
+  //
+  // The shape is checked HERE rather than at the call site, because this is
+  // the single place every caller must pass through. The demonstration inbox
+  // used to hand its fixture ids straight to this method as though they were
+  // credentials; with a real backend that produced a 422 and a signer staring
+  // at "One or more fields contain invalid values". Guarding the call site
+  // would have fixed that one caller. Guarding here fixes every caller there
+  // will ever be.
   async bootstrap(token: string): Promise<BootstrapResult> {
+    if (!isSigningAccessToken(token)) {
+      throw new NotASigningTokenError();
+    }
     return recipientApiRequest<BootstrapResult>("/signing-access/bootstrap", {
       method: "POST",
       body: { token },
