@@ -31,6 +31,8 @@ import {
 } from "../../../services/prepare/field-autofix";
 import { isDocumentSynced, markDocumentSynced } from "../../../services/prepare/sync-markers";
 import { useFieldEditorShortcuts } from "../../../hooks/useFieldEditorShortcuts";
+import { ToolbarOverflow, type ToolbarItem } from "../../../components/prepare/ToolbarOverflow";
+import { useViewport } from "../../../components/system/design-system";
 import {
   useRealDocument, DocumentPageSurface,
 } from "../../../components/pdf/DocumentPageSurface";
@@ -1674,6 +1676,7 @@ interface ToolbarProps {
 }
 
 function EditorToolbar({ draftTitle, participants: _participants, draft, showKbDialog: _showKbDialog, setShowKbDialog, onContinue, returnTo, returnLabel }: ToolbarProps) {
+  const { isCompact } = useViewport();
   const {
     undo, redo, canUndo, canRedo,
     zoom, setZoom,
@@ -1719,6 +1722,34 @@ function EditorToolbar({ draftTitle, participants: _participants, draft, showKbD
     whiteSpace:   "nowrap",
   };
 
+  // ── What stays visible when the screen is narrow ──────────────────────────
+  //
+  // Fourteen buttons, six separators and two labels in one non-wrapping row
+  // has an intrinsic width over 900px. The container set `overflowX: auto`,
+  // but every child is shrinkable by default and the `flex: 1` spacer
+  // collapses first, so the children squeezed instead of the row scrolling —
+  // and at 320px Copy, Paste, "+ Add Field" and List sat past the right edge
+  // of a clipping ancestor: unreachable, not merely off-screen.
+  //
+  // So on a narrow screen the row carries only what the task needs — go back,
+  // place a field, see whether it is valid, continue — and the rest moves
+  // into one menu. The secondary controls are declared ONCE below and
+  // rendered either inline or inside that menu, so the two cannot drift.
+  const secondary: ToolbarItem[] = [
+    { id: "undo", label: "Undo", glyph: "↩", title: "Undo (Ctrl+Z)", onClick: undo, disabled: !canUndo },
+    { id: "redo", label: "Redo", glyph: "↪", title: "Redo (Ctrl+Y or Ctrl+Shift+Z)", onClick: redo, disabled: !canRedo },
+    { id: "copy", label: "Copy", title: "Copy (Ctrl+C)", onClick: copySelected, disabled: false },
+    { id: "paste", label: "Paste", title: "Paste (Ctrl+V)", onClick: paste, disabled: clipboard.length === 0 },
+    { id: "view", label: showFieldList ? "Canvas view" : "Field list", title: "Switch view", onClick: toggleFieldList, disabled: false },
+    { id: "zoom-out", label: "Zoom out", title: "Zoom out", onClick: () => { setZoom(zoom - 10); }, disabled: zoom <= 50 },
+    { id: "zoom-in", label: "Zoom in", title: "Zoom in", onClick: () => { setZoom(zoom + 10); }, disabled: zoom >= 200 },
+    { id: "fit", label: "Fit page", title: "Reset zoom to 100%", onClick: () => { setZoom(100); }, disabled: false },
+  ];
+
+  const separator = (key: string) => (
+    <div key={key} style={{ width: 1, height: 24, background: "#E2E8F0", flexShrink: 0 }} role="separator" />
+  );
+
   return (
     <div
       role="toolbar"
@@ -1727,10 +1758,11 @@ function EditorToolbar({ draftTitle, participants: _participants, draft, showKbD
         display:     "flex",
         alignItems:  "center",
         gap:         6,
-        padding:     "6px 12px",
+        padding:     isCompact ? "6px 8px" : "6px 12px",
         background:  WHITE,
         borderBottom: "1px solid #E2E8F0",
         flexShrink:  0,
+        // Kept as a backstop, but nothing should need it now.
         overflowX:   "auto",
         minHeight:   50,
       }}
@@ -1739,92 +1771,114 @@ function EditorToolbar({ draftTitle, participants: _participants, draft, showKbD
       <button
         onClick={() => navigate(returnTo ?? "/app/prepare/review")}
         aria-label={returnTo ? `Back to ${returnLabel}` : "Back to Review step"}
-        style={{ ...btnBase, border: "1px solid #D1D9E0", background: "transparent", color: "#334155" }}
+        style={{ ...btnBase, flexShrink: 0, border: "1px solid #D1D9E0", background: "transparent", color: "#334155" }}
       >
-        ← {returnLabel}
+        {isCompact ? "←" : `← ${returnLabel}`}
       </button>
 
-      <div style={{ width: 1, height: 24, background: "#E2E8F0", flexShrink: 0 }} role="separator" />
+      {!isCompact && separator("s1")}
 
-      {/* Draft title */}
-      <span style={{ ...GF, fontSize: 12, color: "#334155", maxWidth: 180, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-        {draftTitle}
-      </span>
-      <span style={{ ...GF, fontSize: 10, color: SILVER }}>— Place Fields</span>
+      {/* The document's name and where you are. Dropped when narrow: the
+          breadcrumb above already names it, and this is the row that has to
+          fit. */}
+      {!isCompact && (
+        <>
+          <span style={{ ...GF, fontSize: 12, color: "#334155", maxWidth: 180, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            {draftTitle}
+          </span>
+          <span style={{ ...GF, fontSize: 10, color: SILVER }}>— Place Fields</span>
+        </>
+      )}
 
-      <div style={{ flex: 1, minWidth: 12 }} />
+      <div style={{ flex: 1, minWidth: 8 }} />
 
-      {/* Save state */}
-      <div style={{ display: "flex", alignItems: "center" }}>
-        <SaveStateLabel state={saveState} />
-      </div>
+      {!isCompact && (
+        <>
+          <div style={{ display: "flex", alignItems: "center" }}>
+            <SaveStateLabel state={saveState} />
+          </div>
+          {separator("s2")}
+        </>
+      )}
 
-      <div style={{ width: 1, height: 24, background: "#E2E8F0", flexShrink: 0 }} role="separator" />
+      {isCompact
+        ? <ToolbarOverflow items={secondary} zoom={zoom} />
+        : (
+          <>
+            {secondary.slice(0, 2).map(item => (
+              <button
+                key={item.id} onClick={item.onClick} disabled={item.disabled}
+                aria-label={item.label} title={item.title}
+                style={{ ...btnBase, flexShrink: 0, opacity: item.disabled ? 0.4 : 1 }}
+              >
+                {item.glyph} {item.label}
+              </button>
+            ))}
+            {separator("s3")}
+            {secondary.slice(2, 4).map(item => (
+              <button
+                key={item.id} onClick={item.onClick} disabled={item.disabled}
+                aria-label={item.id === "copy" ? "Copy selected fields" : "Paste copied fields"}
+                title={item.title}
+                style={{ ...btnBase, flexShrink: 0, opacity: item.disabled ? 0.4 : 1 }}
+              >
+                {item.label}
+              </button>
+            ))}
+            {separator("s4")}
+          </>
+        )}
 
-      {/* Undo/Redo */}
-      <button onClick={undo} disabled={!canUndo} aria-label="Undo" title="Undo (Ctrl+Z)" style={{ ...btnBase, opacity: canUndo ? 1 : 0.4 }}>↩ Undo</button>
-      <button onClick={redo} disabled={!canRedo} aria-label="Redo" title="Redo (Ctrl+Y or Ctrl+Shift+Z)" style={{ ...btnBase, opacity: canRedo ? 1 : 0.4 }}>↪ Redo</button>
-
-      <div style={{ width: 1, height: 24, background: "#E2E8F0", flexShrink: 0 }} role="separator" />
-
-      {/* Clipboard */}
-      <button onClick={copySelected} aria-label="Copy selected fields" title="Copy (Ctrl+C)" style={btnBase}>Copy</button>
-      <button onClick={paste} disabled={clipboard.length === 0} aria-label="Paste copied fields" title="Paste (Ctrl+V)" style={{ ...btnBase, opacity: clipboard.length > 0 ? 1 : 0.4 }}>Paste</button>
-
-      <div style={{ width: 1, height: 24, background: "#E2E8F0", flexShrink: 0 }} role="separator" />
-
-      {/* Add field keyboard */}
+      {/* The primary task. Visible at every width. */}
       <button
         onClick={() => setShowKbDialog(true)}
         aria-label="Add field using keyboard placement"
-        style={{ ...btnBase, background: pendingFieldType ? "#EBF4FC" : WHITE, color: AZURE, border: `1px solid ${AZURE}` }}
+        style={{ ...btnBase, flexShrink: 0, background: pendingFieldType ? "#EBF4FC" : WHITE, color: AZURE, border: `1px solid ${AZURE}` }}
       >
-        + Add Field
+        {isCompact ? "+ Add" : "+ Add Field"}
       </button>
 
-      {/* Field list toggle */}
-      <button
-        onClick={toggleFieldList}
-        aria-pressed={showFieldList}
-        aria-label={showFieldList ? "Show canvas view" : "Show field list"}
-        style={{ ...btnBase, background: showFieldList ? "#EBF4FC" : WHITE, color: showFieldList ? AZURE : NAVY }}
-      >
-        {showFieldList ? "Canvas" : "List"}
-      </button>
+      {!isCompact && (
+        <>
+          <button
+            onClick={toggleFieldList}
+            aria-pressed={showFieldList}
+            aria-label={showFieldList ? "Show canvas view" : "Show field list"}
+            style={{ ...btnBase, flexShrink: 0, background: showFieldList ? "#EBF4FC" : WHITE, color: showFieldList ? AZURE : NAVY }}
+          >
+            {showFieldList ? "Canvas" : "List"}
+          </button>
+          {separator("s5")}
+          <button onClick={() => { setZoom(zoom - 10); }} disabled={zoom <= 50} aria-label="Zoom out" style={{ ...btnBase, flexShrink: 0, padding: "0 8px", opacity: zoom > 50 ? 1 : 0.4 }}>−</button>
+          <span style={{ ...GF, fontSize: 11, color: "#334155", minWidth: 40, textAlign: "center", flexShrink: 0 }} aria-live="polite" aria-label={`Zoom ${zoom}%`}>{zoom}%</span>
+          <button onClick={() => { setZoom(zoom + 10); }} disabled={zoom >= 200} aria-label="Zoom in" style={{ ...btnBase, flexShrink: 0, padding: "0 8px", opacity: zoom < 200 ? 1 : 0.4 }}>+</button>
+          <button onClick={() => { setZoom(100); }} aria-label="Fit page — reset zoom to 100%" style={{ ...btnBase, flexShrink: 0 }}>Fit</button>
+          {separator("s6")}
+        </>
+      )}
 
-      <div style={{ width: 1, height: 24, background: "#E2E8F0", flexShrink: 0 }} role="separator" />
-
-      {/* Zoom */}
-      <button onClick={() => setZoom(zoom - 10)} disabled={zoom <= 50} aria-label="Zoom out" style={{ ...btnBase, padding: "0 8px", opacity: zoom > 50 ? 1 : 0.4 }}>−</button>
-      <span style={{ ...GF, fontSize: 11, color: "#334155", minWidth: 40, textAlign: "center" }} aria-live="polite" aria-label={`Zoom ${zoom}%`}>{zoom}%</span>
-      <button onClick={() => setZoom(zoom + 10)} disabled={zoom >= 200} aria-label="Zoom in"  style={{ ...btnBase, padding: "0 8px", opacity: zoom < 200 ? 1 : 0.4 }}>+</button>
-      <button onClick={() => setZoom(100)} aria-label="Fit page — reset zoom to 100%" style={{ ...btnBase }}>Fit</button>
-
-      <div style={{ width: 1, height: 24, background: "#E2E8F0", flexShrink: 0 }} role="separator" />
-
-      {/* Validate */}
       <button
         onClick={handleValidate}
         aria-pressed={showValidation}
         aria-label="Validate field placement"
         style={{
           ...btnBase,
+          flexShrink: 0,
           background: showValidation ? "#EBF4FC" : WHITE,
           color: validation?.isValid === false ? "#C0392B" : validation?.isValid ? "#2E7D32" : NAVY,
           borderColor: validation?.isValid === false ? "#F5C6CB" : validation?.isValid ? "#A8D5B5" : "#D1D9E0",
         }}
       >
-        ✓ Validate{validation && ` (${validation.errors.length})`}
+        {isCompact ? "✓" : "✓ Validate"}{validation && ` (${validation.errors.length})`}
       </button>
 
-      {/* Continue */}
       <button
         onClick={handleContinue}
         aria-label="Continue to final review"
         style={{
           ...GF,
           height:       34,
-          padding:      "0 18px",
+          padding:      isCompact ? "0 12px" : "0 18px",
           borderRadius: 6,
           border:       "none",
           background:   fields.length > 0 ? AZURE : "#5A7A9A",
@@ -1833,9 +1887,10 @@ function EditorToolbar({ draftTitle, participants: _participants, draft, showKbD
           fontWeight:   700,
           cursor:       "pointer",
           whiteSpace:   "nowrap",
+          flexShrink:   0,
         }}
       >
-        Continue →
+        {isCompact ? "Continue" : "Continue →"}
       </button>
     </div>
   );
