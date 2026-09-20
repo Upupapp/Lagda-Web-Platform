@@ -32,6 +32,7 @@ import {
 import { isDocumentSynced, markDocumentSynced } from "../../../services/prepare/sync-markers";
 import { useFieldEditorShortcuts } from "../../../hooks/useFieldEditorShortcuts";
 import { ToolbarOverflow, type ToolbarItem } from "../../../components/prepare/ToolbarOverflow";
+import { EditorDrawer, EditorSheet } from "../../../components/prepare/EditorMobileChrome";
 import { useViewport } from "../../../components/system/design-system";
 import {
   useRealDocument, DocumentPageSurface,
@@ -1670,13 +1671,15 @@ interface ToolbarProps {
   showKbDialog:  boolean;
   setShowKbDialog: (v: boolean) => void;
   onContinue:    () => void;
+  /** Compact only: opens the document/page rail, which is a drawer there. */
+  onOpenDocuments?: () => void;
   /** Validated internal path to return to (Command 37 workflow round-trip). */
   returnTo:      string | null;
   returnLabel:   string;
 }
 
-function EditorToolbar({ draftTitle, participants: _participants, draft, showKbDialog: _showKbDialog, setShowKbDialog, onContinue, returnTo, returnLabel }: ToolbarProps) {
-  const { isCompact } = useViewport();
+function EditorToolbar({ draftTitle, participants: _participants, draft, showKbDialog: _showKbDialog, setShowKbDialog, onContinue, returnTo, returnLabel, onOpenDocuments }: ToolbarProps) {
+  const { isCompact, isMobileS } = useViewport();
   const {
     undo, redo, canUndo, canRedo,
     zoom, setZoom,
@@ -1775,6 +1778,17 @@ function EditorToolbar({ draftTitle, participants: _participants, draft, showKbD
       >
         {isCompact ? "←" : `← ${returnLabel}`}
       </button>
+
+      {isCompact && onOpenDocuments && (
+        <button
+          onClick={onOpenDocuments}
+          aria-label="Show documents and pages"
+          title="Documents and pages"
+          style={{ ...btnBase, flexShrink: 0, padding: isMobileS ? "0 8px" : "0 10px" }}
+        >
+          {isMobileS ? "☰" : "Pages"}
+        </button>
+      )}
 
       {!isCompact && separator("s1")}
 
@@ -1890,7 +1904,7 @@ function EditorToolbar({ draftTitle, participants: _participants, draft, showKbD
           flexShrink:   0,
         }}
       >
-        {isCompact ? "Continue" : "Continue →"}
+        {isMobileS ? "Next" : isCompact ? "Continue" : "Continue →"}
       </button>
     </div>
   );
@@ -1912,6 +1926,10 @@ function FieldsPageInner() {
     return raw.slice(0, 200);
   }, []);
   const returnLabel = returnTo ? "Signing Workflow" : "Review";
+  const { isCompact } = useViewport();
+  // The document rail is a drawer on a phone, so it needs an open state that
+  // the desktop column never had.
+  const [showDocuments, setShowDocuments] = useState(false);
   const {
     loadState, errorMessage,
     initialize, loadRealFields,
@@ -2226,6 +2244,35 @@ function FieldsPageInner() {
     );
   }
 
+  // The right-hand content, declared once and rendered either as the desktop
+  // column or inside the phone's bottom sheet. Two copies of this would be
+  // two things to keep in step.
+  const sidePanel = showValidation ? (
+    <>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 14px 8px", borderBottom: "1px solid #F0F2F5" }}>
+        <span style={{ ...GF, fontSize: 12, fontWeight: 700, color: NAVY }}>Validation</span>
+        <button onClick={toggleValidation} aria-label="Close validation panel" style={{ ...GF, background: "none", border: "none", cursor: "pointer", color: SILVER, fontSize: 16, lineHeight: 1 }}>×</button>
+      </div>
+      <ValidationPanel onSaveNow={saveFieldsToBackend} saving={savingFields} />
+    </>
+  ) : selectedField ? (
+    <FieldPropertiesPanel field={selectedField} participants={participants} />
+  ) : (
+    <FieldPalettePanel />
+  );
+
+  // The sheet is not a thing you open; it is what having a selection or an
+  // open validation run LOOKS like on a phone. Closing it therefore has to
+  // undo the state that summoned it, or it would reappear immediately.
+  const sheetOpen = isCompact && (showValidation || selectedField !== null);
+  const sheetTitle = showValidation
+    ? "Validation"
+    : selectedField !== null ? "Field properties" : "Field types";
+  const closeSheet = () => {
+    if (showValidation) toggleValidation();
+    else clearSelection();
+  };
+
   if (loadState === "initializing") {
     return (
       <div style={{ ...GF, display: "flex", alignItems: "center", justifyContent: "center", height: "100vh", background: "#F5F7FA" }}>
@@ -2318,18 +2365,23 @@ function FieldsPageInner() {
         }}
         returnTo={returnTo}
         returnLabel={returnLabel}
+        onOpenDocuments={() => { setShowDocuments(true); }}
       />
 
-      {/* Body */}
+      {/* Body.
+          On a phone the two side panels become a drawer and a sheet — see
+          EditorMobileChrome for the arithmetic. 200px + 272px of fixed
+          chrome is 152px more than a 320px viewport holds, so the canvas
+          used to collapse to nothing and the right panel was pushed outside
+          a clipping root entirely. */}
       <div style={{ flex: 1, display: "flex", overflow: "hidden" }}>
-        {/* Left panel: document/page nav */}
-        <DocumentPanel />
+        {!isCompact && <DocumentPanel />}
 
-        {/* Center: canvas or field list */}
+        {/* Center: canvas or field list. Full width when compact. */}
         <main
           id="editor-main"
           aria-label="Document editing area"
-          style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}
+          style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", minWidth: 0 }}
         >
           {showFieldList ? (
             <FieldListView participants={participants} />
@@ -2342,31 +2394,41 @@ function FieldsPageInner() {
           )}
         </main>
 
-        {/* Right panel */}
-        <div style={{
-          width:        272,
-          background:   WHITE,
-          borderLeft:   "1px solid #E3E8EF",
-          display:      "flex",
-          flexDirection: "column",
-          overflow:     "hidden",
-          flexShrink:   0,
-        }}>
-          {showValidation ? (
-            <>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 14px 8px", borderBottom: "1px solid #F0F2F5" }}>
-                <span style={{ ...GF, fontSize: 12, fontWeight: 700, color: NAVY }}>Validation</span>
-                <button onClick={toggleValidation} aria-label="Close validation panel" style={{ ...GF, background: "none", border: "none", cursor: "pointer", color: SILVER, fontSize: 16, lineHeight: 1 }}>×</button>
-              </div>
-              <ValidationPanel onSaveNow={saveFieldsToBackend} saving={savingFields} />
-            </>
-          ) : selectedField ? (
-            <FieldPropertiesPanel field={selectedField} participants={participants} />
-          ) : (
-            <FieldPalettePanel />
-          )}
-        </div>
+        {!isCompact && (
+          <div style={{
+            width:        272,
+            background:   WHITE,
+            borderLeft:   "1px solid #E3E8EF",
+            display:      "flex",
+            flexDirection: "column",
+            overflow:     "hidden",
+            flexShrink:   0,
+          }}>
+            {sidePanel}
+          </div>
+        )}
       </div>
+
+      {/* Compact: the same two panels, summoned rather than resident. */}
+      {isCompact && (
+        <>
+          <EditorDrawer
+            open={showDocuments}
+            title="Documents and pages"
+            onClose={() => { setShowDocuments(false); }}
+          >
+            <DocumentPanel />
+          </EditorDrawer>
+
+          <EditorSheet
+            open={sheetOpen}
+            title={sheetTitle}
+            onClose={closeSheet}
+          >
+            {sidePanel}
+          </EditorSheet>
+        </>
+      )}
 
       {/* Keyboard placement dialog */}
       {showKbDialog && (
