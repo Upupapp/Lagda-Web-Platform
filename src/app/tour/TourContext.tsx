@@ -238,13 +238,33 @@ function TourProviderInner({ children }: { children: ReactNode }) {
     if (platform.sessionStatus !== "authenticated") return;
     if (!platform.user?.id) return;
     if (location.pathname !== "/app/dashboard" && location.pathname !== "/app/documents") return;
+
+    // Not on top of a destination the visitor explicitly asked for.
+    //
+    // The note above is honest about the cost: the first step carries
+    // `route: "/app/dashboard"`, so auto-starting anywhere else navigates
+    // away before the first coachmark renders. That is fine for an organic
+    // landing — the tour is taking them somewhere on purpose.
+    //
+    // It is NOT fine when they asked to be here. Someone who deep-linked to
+    // /app/documents, hit the sign-in wall and authenticated had their
+    // destination discarded and was put on the dashboard instead, with no
+    // explanation and nothing to click back to. SignIn marks those
+    // navigations (see `returnToState` there); a plain sign-in carries no
+    // state, so the organic first visit is unchanged.
+    //
+    // `autoStartChecked` is deliberately NOT set here: this is a "not now",
+    // not a "never". Reaching a landing point later in the session — by
+    // finishing a document, or from the sidebar — still offers the tour.
+    if ((location.state as { viaReturnTo?: boolean } | null)?.viaReturnTo) return;
+
     setAutoStartChecked(true);
     const stored = readTourState(platform.user.id);
     if (stored.status === "not_started") {
       start();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [platform.sessionStatus, platform.user?.id, location.pathname, autoStartChecked]);
+  }, [platform.sessionStatus, platform.user?.id, location.pathname, location.state, autoStartChecked]);
 
   const currentStep = isActive ? eligibleSteps[stepIndex] ?? null : null;
 

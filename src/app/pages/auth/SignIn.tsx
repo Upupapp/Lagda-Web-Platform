@@ -68,6 +68,22 @@ export function SignIn() {
   // here too means whichever path wins the race, the destination agrees.
   // The returnTo stash is a side effect on a DIFFERENT component's state
   // (OnboardingContext), so it has to happen in an effect, not during render.
+  /**
+   * Marks a navigation that is honouring a destination the visitor ASKED for.
+   *
+   * Read by the product tour, which auto-starts for a first-time account and
+   * whose first step carries `route: "/app/dashboard"`. Starting it on top of
+   * an explicit `returnTo` pulled the visitor to the dashboard instead of the
+   * page they were trying to reach — see TourContext's auto-start effect.
+   *
+   * Carried on the navigation rather than stored: it describes THIS
+   * transition and should not outlive it. A plain sign-in with no `returnTo`
+   * sends nothing, so the tour behaves exactly as before for the organic
+   * first visit it was built for.
+   */
+  const returnToState =
+    redirectTo === DEFAULT_RETURN_PATH ? undefined : { viaReturnTo: true };
+
   const alreadyAuthenticatedNeedsOnboarding =
     platform.sessionStatus === "authenticated" && USE_REAL_BACKEND && platform.workspaceStatus === "empty";
 
@@ -83,7 +99,7 @@ export function SignIn() {
     if (alreadyAuthenticatedNeedsOnboarding) {
       return <Navigate to="/onboarding/profile" replace />;
     }
-    return <Navigate to={redirectTo} replace />;
+    return <Navigate to={redirectTo} replace state={returnToState} />;
   }
 
   function validate(): FormErrors {
@@ -146,7 +162,7 @@ export function SignIn() {
             p.subscription,
             p.notifications,
           );
-        void navigate(redirectTo, { replace: true });
+        void navigate(redirectTo, { replace: true, state: returnToState });
         break;
       }
 
@@ -219,7 +235,7 @@ export function SignIn() {
         void navigate("/onboarding/profile", { replace: true });
         return;
       }
-      void navigate(redirectTo, { replace: true });
+      void navigate(redirectTo, { replace: true, state: returnToState });
     } catch (err) {
       setStatus("error");
       setNeedsVerification(
