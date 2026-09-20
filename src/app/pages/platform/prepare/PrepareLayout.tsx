@@ -5,7 +5,7 @@
 // eNotary content is NEVER shown here. Burgundy (#67023B) is NEVER used.
 
 import React, { useState, useCallback } from "react";
-import { Outlet, Navigate, useNavigate, useLocation, Link } from "react-router";
+import { Outlet, Navigate, useNavigate, useLocation } from "react-router";
 import { PrepareProvider, usePrepare } from "../../../context/PrepareContext";
 import { usePlatform } from "../../../context/PlatformContext";
 import { PREPARATION_STEPS } from "../../../models/prepare";
@@ -17,6 +17,7 @@ import { PreparationHelpFab } from "../../../components/prepare/PreparationHelpF
 // Shared with the help FAB, which needs the same answer to "which step is
 // this". Two copies would be two places to update when a route moves.
 import { currentStepFromPath } from "../../../components/prepare/prep-step-guides";
+import { PrepareBreadcrumb, PrepareNavBar } from "../../../components/prepare/PrepareChrome";
 
 const GF = { fontFamily: "'Geist', sans-serif" };
 const NAVY   = "#07111F";
@@ -282,7 +283,9 @@ function StepperTopBar({
       style={{
         background: "#F5F7FA",
         borderBottom: "1px solid #E3E8EF",
-        padding: "12px 20px",
+        // 16px, matching .prep-step-area and .prep-nav-bar at this width —
+        // this was the one element on the mobile shell with a 20px gutter.
+        padding: "12px 16px",
       }}
     >
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
@@ -475,68 +478,13 @@ export function PrepareLayout() {
     <div className="prep-layout-root">
       <style>{LAYOUT_STYLES}</style>
 
-      {/* Top header with breadcrumb */}
-      <div
-        className="prep-breadcrumb"
-        style={{
-          ...GF,
-          borderBottom: "1px solid #E3E8EF",
-          padding: "0 40px",
-          height: 56,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          flexShrink: 0,
-          background: "#FFFFFF",
-        }}
-      >
-        <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: SILVER }}>
-          <Link
-            to="/app/documents"
-            style={{ color: SILVER, textDecoration: "none", fontWeight: 500 }}
-          >
-            Documents
-          </Link>
-          <span aria-hidden="true">›</span>
-          <span style={{ color: NAVY, fontWeight: 600 }}>Prepare Document</span>
-          {draft?.details.title && (
-            <>
-              <span aria-hidden="true">›</span>
-              <span
-                style={{
-                  color: NAVY,
-                  fontWeight: 400,
-                  maxWidth: 200,
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  whiteSpace: "nowrap",
-                }}
-              >
-                {draft.details.title}
-              </span>
-            </>
-          )}
-        </div>
-
-        {(isDirty || draft) && (
-          <button
-            onClick={handleDiscardRequest}
-            style={{
-              ...GF,
-              background: "none",
-              border: "none",
-              color: "#C0392B",
-              fontSize: 13,
-              fontWeight: 600,
-              cursor: "pointer",
-              padding: "6px 12px",
-              borderRadius: 6,
-            }}
-          >
-            Discard draft
-          </button>
-        )}
-      </div>
+      {/* Top header with breadcrumb — see components/prepare/PrepareChrome.tsx
+          for why it is one back-link on a phone. */}
+      <PrepareBreadcrumb
+        title={draft?.details.title ?? null}
+        showDiscard={Boolean(isDirty || draft)}
+        onDiscard={handleDiscardRequest}
+      />
 
       <div className="prep-layout-body">
         {/* Desktop sidebar */}
@@ -561,69 +509,14 @@ export function PrepareLayout() {
 
           {/* Previous / Continue navigation */}
           {!isFieldsStep && (
-            <div className="prep-nav-bar">
-              <div>
-                {prevId !== null && (
-                  <button
-                    onClick={handlePrevious}
-                    style={{
-                      ...GF,
-                      padding: "10px 20px",
-                      borderRadius: 8,
-                      border: `1px solid #D1D9E0`,
-                      background: "#FFFFFF",
-                      color: NAVY,
-                      fontSize: 14,
-                      fontWeight: 600,
-                      cursor: "pointer",
-                    }}
-                  >
-                    ← Previous
-                  </button>
-                )}
-              </div>
-
-              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                {continueBlocked && (
-                  <button
-                    type="button"
-                    onClick={() => setShowMissing(true)}
-                    style={{
-                      ...GF, fontSize: 12.5, fontWeight: 600, color: GOLD,
-                      background: "none", border: "none", cursor: "pointer",
-                      padding: "6px 4px", textDecoration: "underline", textUnderlineOffset: 2,
-                    }}
-                  >
-                    A few things still need attention — see what's left
-                  </button>
-                )}
-                {nextId && !isFieldsStep && (
-                  <button
-                    // Clicking while blocked opens the friendly reminder instead of
-                    // doing nothing — a disabled button with no explanation reads
-                    // as broken, not as "not ready yet".
-                    onClick={continueBlocked ? () => setShowMissing(true) : handleContinue}
-                    aria-disabled={continueBlocked}
-                    style={{
-                      ...GF,
-                      padding: "10px 24px",
-                      borderRadius: 8,
-                      border: "none",
-                      background: continueBlocked ? "#FEF9EC" : AZURE,
-                      color: continueBlocked ? GOLD : "#FFFFFF",
-                      ...(continueBlocked ? { boxShadow: "inset 0 0 0 1px #F0D07A" } : {}),
-                      fontSize: 14,
-                      fontWeight: 600,
-                      cursor: "pointer",
-                    }}
-                  >
-                    {continueBlocked
-                      ? "Not ready yet →"
-                      : nextId === "fields" ? "Continue to Place Fields →" : "Continue →"}
-                  </button>
-                )}
-              </div>
-            </div>
+            <PrepareNavBar
+              prevId={prevId}
+              nextId={nextId}
+              continueBlocked={continueBlocked}
+              onPrevious={handlePrevious}
+              onContinue={handleContinue}
+              onShowMissing={() => setShowMissing(true)}
+            />
           )}
         </div>
       </div>

@@ -48,6 +48,35 @@ import { PREP_STEP_GUIDES, currentStepFromPath } from "./prep-step-guides";
 import { T, GF, TONE, TAP, useViewport, InfoRow } from "../system/design-system";
 import { Z } from "../../utils/z-index";
 
+/**
+ * The height of `.prep-nav-bar` plus a gap, or the fallback when there is no
+ * bar (the Fields step hides it). Re-measured on resize and, where the
+ * browser has it, whenever the bar itself changes size — its height depends
+ * on whether a blocker is showing, which changes without the window moving.
+ */
+function useNavBarClearance(fallback: number): number {
+  const [clearance, setClearance] = useState(fallback);
+
+  useEffect(() => {
+    const GAP = 16;
+    const bar = document.querySelector<HTMLElement>(".prep-nav-bar");
+    if (!bar) { setClearance(fallback); return; }
+
+    const measure = () => { setClearance(Math.round(bar.getBoundingClientRect().height) + GAP); };
+    measure();
+
+    window.addEventListener("resize", measure);
+    const observer = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(measure);
+    observer?.observe(bar);
+    return () => {
+      window.removeEventListener("resize", measure);
+      observer?.disconnect();
+    };
+  }, [fallback]);
+
+  return clearance;
+}
+
 export function PreparationHelpFab() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -70,7 +99,14 @@ export function PreparationHelpFab() {
   // (the panel sits a fixed gap above the FAB) instead of being three
   // hand-kept numbers that silently disagree after an edit.
   const fabSize = isCompact ? 48 : 52;
-  const navBarClearance = isCompact ? 80 : 96;
+
+  // Clearance above the wizard's Previous/Continue bar is MEASURED, not
+  // assumed. The previous constants (80/96px) were calibrated against a bar
+  // that, at 320px, actually reached 131px on two steps — so the FAB sat on
+  // top of Continue at exactly the widths it was meant to clear. The bar is
+  // shorter now, but the lesson is that a fixed number here is a guess about
+  // someone else's layout; measuring it is the only version that stays true.
+  const navBarClearance = useNavBarClearance(isCompact ? 80 : 96);
 
   // Close on outside click.
   useEffect(() => {

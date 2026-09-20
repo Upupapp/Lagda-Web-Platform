@@ -12,7 +12,7 @@ import {
   X, AlertCircle, ChevronLeft, ChevronRight, Tag, FolderOpen, Folder,
   ShieldCheck, Activity, Users, RefreshCw, Inbox, ArrowUpDown,
   Star, Clock, ExternalLink,
-  Eye, Bell, Ban, Shuffle, Shield, Info, Send, Download,
+  Eye, Bell, Ban, Shuffle, Shield, Info, Send, Download, History
 } from "lucide-react";
 import { usePlatform } from "../../../context/PlatformContext";
 import {
@@ -21,7 +21,7 @@ import {
 import { mockDocumentService } from "../../../services/mock/document.service";
 import {
   realSigningRequestService,
-  type SigningRequestListItem, type SigningRequestState,
+  type SigningRequestListItem,
 } from "../../../services/real/signing-request.service";
 // Lazy: pdf.js (~400KB) has no reason to load for every Documents page visit
 // — only once someone actually opens a document.
@@ -33,7 +33,9 @@ import { realDocumentService } from "../../../services/real/document.service";
 import { iconForDocument } from "../../../services/documents/file-type-icon";
 import { documentOrganizationService } from "../../../services/mock/document-organization.service";
 import { isCapabilityInActiveProfile } from "../../../config/capability-resolver";
-import { TRANSACTION_STATUS_LABELS } from "../../../models";
+import { SIGNING_REQUEST_STATUS } from "../../../services/signing-request-status";
+import { StatusBadge } from "../../../components/documents/StatusBadge";
+import { AuditTrailDialog } from "../../../components/documents/AuditTrailDialog";
 import type { TransactionStatus } from "../../../models";
 import type {
   DocumentView, DocumentListQuery, DocumentListItem, DocumentListResult,
@@ -43,7 +45,6 @@ import type {
 import {
   VALID_DOCUMENT_VIEWS, VIEW_LABELS, DEFAULT_QUERY,
   VALID_SORT_FIELDS, SORT_LABELS,
-  DOCUMENT_STATUS_TONE, STATUS_TONE_CSS,
   VALID_DOC_SCENARIOS,
   ORG_FILTERED_VIEWS,
 } from "../../../models/documents";
@@ -233,22 +234,8 @@ function getDocActions(
 }
 
 // ── StatusBadge ───────────────────────────────────────────────────────────────
-
-function StatusBadge({ status }: { status: TransactionStatus }) {
-  const tone = DOCUMENT_STATUS_TONE[status];
-  const css  = STATUS_TONE_CSS[tone];
-  return (
-    <span style={{
-      display: "inline-flex", alignItems: "center",
-      padding: "2px 7px", borderRadius: 4, fontSize: 11, fontWeight: 600,
-      letterSpacing: "0.02em", whiteSpace: "nowrap",
-      background: css.bg, color: css.text, border: `1px solid ${css.border}`,
-      ...GF,
-    }}>
-      {TRANSACTION_STATUS_LABELS[status]}
-    </span>
-  );
-}
+// Lives in components/documents/StatusBadge.tsx now, shared with the
+// dashboard. Same markup, same tone and label maps.
 
 // ── ParticipantProgress ───────────────────────────────────────────────────────
 
@@ -1977,34 +1964,8 @@ function DocumentsPageMockDemo() {
   );
 }
 
-// ── Real-backend mode ──────────────────────────────────────────────────────────
-// The rich list above (folders, tags, archive, bulk actions, starred/recent
-// views) is built entirely around the mock/demo document model and stays
-// demo-only (see this file's header comment: "No backend mutations") — none
-// of that has backing schema on the real backend yet, and building it is a
-// separate, larger scope.
-//
-// The list ITSELF, however, is real: `GET /workspaces/:id/signing-requests`
-// (signing-request-routes.ts) already returns real status, participant
-// progress and timestamps for every document a user has prepared and sent —
-// it was simply never wired up here. `SigningRequestState` overlaps
-// `TransactionStatus` for 8 of its 9 values exactly (draft, ready-to-send,
-// sent, partially-completed, completed, declined, cancelled, expired); only
-// `completion-ready` has no matching label, mapped to `awaiting-signature`
-// below (an accurate description: recipients have all acted, the document
-// is not yet marked done). This reuses `StatusBadge`'s existing tone system
-// rather than inventing a second one.
-const SIGNING_REQUEST_STATUS: Record<SigningRequestState, TransactionStatus> = {
-  "draft": "draft",
-  "ready-to-send": "ready-to-send",
-  "sent": "sent",
-  "partially-completed": "partially-completed",
-  "completion-ready": "awaiting-signature",
-  "completed": "completed",
-  "declined": "declined",
-  "cancelled": "cancelled",
-  "expired": "expired",
-};
+// `SIGNING_REQUEST_STATUS` lives in services/signing-request-status.ts now,
+// shared with the dashboard. See that file for the mapping and why.
 
 /**
  * What the Documents page knows about a request's underlying FILE.
@@ -2055,11 +2016,12 @@ function SignatureLink({
 }
 
 function RealDocumentRow({
-  item, onView, onSignatures, file,
+  item, onView, onSignatures, onAudit, file,
 }: {
   item: SigningRequestListItem;
   onView: (item: SigningRequestListItem) => void;
   onSignatures: (item: SigningRequestListItem) => void;
+  onAudit: (item: SigningRequestListItem) => void;
   file: DocumentFileFacts | undefined;
 }) {
   const FileGlyph = iconForDocument(file?.mediaType, file?.filename);
@@ -2093,7 +2055,19 @@ function RealDocumentRow({
           {fmtRelative(item.createdAt)}
         </span>
       </div>
-      <div role="cell" style={{ padding: "8px 4px" }}>
+      <div role="cell" style={{ padding: "8px 4px", display: "flex", gap: 2 }}>
+        <button
+          onClick={() => onAudit(item)}
+          aria-label={`Audit trail for ${item.documentTitle}`}
+          title="Audit trail"
+          style={{
+            width: 32, height: 32, border: "none", background: "transparent",
+            cursor: "pointer", borderRadius: 6, display: "flex", alignItems: "center",
+            justifyContent: "center", color: SLATE4,
+          }}
+        >
+          <History size={15} aria-hidden />
+        </button>
         <button
           onClick={() => onView(item)}
           aria-label={`View ${item.documentTitle}`}
@@ -2115,11 +2089,12 @@ function RealDocumentRow({
 // nothing at all: every real item still loaded, just with no surface to
 // render it on. Same fields as the desktop row, stacked top-to-bottom.
 function RealDocumentCard({
-  item, onView, onSignatures, file,
+  item, onView, onSignatures, onAudit, file,
 }: {
   item: SigningRequestListItem;
   onView: (item: SigningRequestListItem) => void;
   onSignatures: (item: SigningRequestListItem) => void;
+  onAudit: (item: SigningRequestListItem) => void;
   file: DocumentFileFacts | undefined;
 }) {
   const FileGlyph = iconForDocument(file?.mediaType, file?.filename);
@@ -2156,6 +2131,17 @@ function RealDocumentCard({
             {fmtRelative(item.createdAt)}
           </div>
         </div>
+        <button
+          onClick={() => onAudit(item)}
+          aria-label={`Audit trail for ${item.documentTitle}`}
+          title="Audit trail"
+          style={{
+            flexShrink: 0, background: "none", border: "none", padding: 2,
+            cursor: "pointer", color: SLATE4, marginTop: 2, marginRight: 4,
+          }}
+        >
+          <History size={16} aria-hidden />
+        </button>
         <button
           onClick={() => onView(item)}
           aria-label={`View ${item.documentTitle}`}
@@ -2264,6 +2250,7 @@ function DocumentsPageRealMode() {
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
   const [viewing, setViewing] = useState<SigningRequestListItem | null>(null);
   const [signaturesFor, setSignaturesFor] = useState<SigningRequestListItem | null>(null);
+  const [auditFor, setAuditFor] = useState<SigningRequestListItem | null>(null);
   const [files, setFiles] = useState<Map<string, DocumentFileFacts>>(new Map());
 
   useEffect(() => {
@@ -2348,7 +2335,7 @@ function DocumentsPageRealMode() {
               {items.map(item => (
                 <RealDocumentRow
                   key={item.signingRequestId} item={item}
-                  onView={setViewing} onSignatures={setSignaturesFor}
+                  onView={setViewing} onSignatures={setSignaturesFor} onAudit={setAuditFor}
                   file={files.get(item.documentId)}
                 />
               ))}
@@ -2360,7 +2347,7 @@ function DocumentsPageRealMode() {
             {items.map(item => (
               <RealDocumentCard
                 key={item.signingRequestId} item={item}
-                onView={setViewing} onSignatures={setSignaturesFor}
+                onView={setViewing} onSignatures={setSignaturesFor} onAudit={setAuditFor}
                 file={files.get(item.documentId)}
               />
             ))}
@@ -2376,6 +2363,14 @@ function DocumentsPageRealMode() {
           signingRequestId={signaturesFor.signingRequestId}
           documentTitle={signaturesFor.documentTitle}
           onClose={() => setSignaturesFor(null)}
+        />
+      )}
+      {auditFor && workspaceId && (
+        <AuditTrailDialog
+          workspaceId={workspaceId}
+          signingRequestId={auditFor.signingRequestId}
+          documentTitle={auditFor.documentTitle}
+          onClose={() => setAuditFor(null)}
         />
       )}
     </>
