@@ -1,5 +1,5 @@
 {
-  // Solution-style root config (Gap Closure Command 6).
+  // Browser application source, plus the entry point for the full check.
   //
   // Three projects, because they run in genuinely different environments and must
   // not share globals:
@@ -9,10 +9,31 @@
   //
   // Keeping them separate is what stops Node globals leaking into browser code and
   // stops test globals (describe/it/expect) being visible to production source.
-  "files": [],
-  "references": [
-    { "path": "./tsconfig.app.json" },
-    { "path": "./tsconfig.node.json" },
-    { "path": "./tsconfig.test.json" }
-  ]
+  // That separation is unchanged.
+  //
+  // ── Why this is no longer `"files": []` ──────────────────────────────────
+  //
+  // It used to be a pure solution-style root: no inputs, three references. That
+  // is the documented shape, and its consequence was not documented — a root
+  // with no inputs gives `tsc --noEmit` nothing to check, so it exits 0 no
+  // matter what is broken. Not a subtle failure: a type-check that ALWAYS
+  // passes. It hid six real errors until a deliberately broken file was used to
+  // probe it.
+  //
+  // So the root now extends the app project and has real inputs. `tsc` and
+  // `tsc --noEmit` — the invocations a person or an agent reaches for — check
+  // browser source instead of nothing.
+  //
+  // The other two projects are NOT `references` here. They are `noEmit` and
+  // non-composite, which a root with its own inputs may not reference (TS6306 /
+  // TS6310), and making them composite would mean emitting declaration output
+  // for config files and tests that nothing consumes. Instead `npm run
+  // typecheck` names all three projects explicitly, which is the complete check
+  // and the one CI runs.
+  "extends": "./tsconfig.app.json",
+  "compilerOptions": {
+    // Must differ from the app project's, or the two share a build-info file and
+    // each invocation invalidates the other's incremental state.
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.root.tsbuildinfo"
+  }
 }

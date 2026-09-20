@@ -8,7 +8,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "typecheck": "tsc --build --force",
+    "typecheck": "tsc --build --force tsconfig.app.json tsconfig.node.json tsconfig.test.json",
     "typecheck:watch": "tsc --build --watch",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",

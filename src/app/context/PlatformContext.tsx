@@ -81,6 +81,29 @@ export const DEFAULT_PLATFORM_FLAGS: PlatformFlags = {
   // capability system exists to prevent.
   automationEnabled:          ACTIVE_LAUNCH_PROFILE !== "launch-default",
   developmentPlaceholdersEnabled: true,
+
+  // ── Demonstration-only surfaces, off in production ──────────────────────
+  //
+  // Both of these are reachable, look finished, and do nothing. They are
+  // gated the same way `automationEnabled` is — derived from the active
+  // profile rather than hardcoded — so they stay available in development
+  // and enterprise-preview builds where demonstrating them is the point.
+  //
+  // My Actions (/app/inbox): twelve hardcoded fixtures with NO user matching
+  // of any kind — `listAssignments` never reads the session, so every signed-in
+  // user sees the same assignments addressed to the same fictional people,
+  // under a footer claiming the opposite. Its "Sign Document" button links to
+  // /sign/<fixture id>, and with a real backend that ID is submitted to the
+  // signing-access bootstrap as though it were an access token, which returns
+  // 422. That is observed in production, not theorised.
+  recipientInboxEnabled:      ACTIVE_LAUNCH_PROFILE !== "launch-default",
+
+  // Settings -> Signatures: an in-memory signature library that never reaches
+  // a backend, resets on reload, and is not wired to the real signing
+  // ceremony at all. It does say so on screen, which is why it is the less
+  // severe of the two — but a signature someone carefully draws and names
+  // still evaporates.
+  signatureLibraryEnabled:    ACTIVE_LAUNCH_PROFILE !== "launch-default",
 };
 
 // ── Context shape ─────────────────────────────────────────────────────────────
