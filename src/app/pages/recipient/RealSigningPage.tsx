@@ -16,6 +16,7 @@
 // "completed" or shows a final/sealed document — that state does not exist
 // in the backend yet (see the P1.5/master-audit findings on the unwired
 // completion pipeline).
+import { useProcessing } from "../../services/processing.service";
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useParams } from "react-router";
@@ -58,6 +59,7 @@ export function RealSigningPage() {
   // ceremony holds what will be submitted rather than what was typed.
   const [signature, setSignature] = useState<SignatureValue | null>(null);
   const [initials, setInitials] = useState<SignatureValue | null>(null);
+  const { run } = useProcessing();
   const [submitting, setSubmitting] = useState(false);
   const [declineReason, setDeclineReason] = useState<SigningDeclineReason>("not-agree");
 
@@ -186,6 +188,15 @@ export function RealSigningPage() {
     setSubmitting(true);
     setErrorMessage(null);
     try {
+      // The signer's last act. It is also the slowest request in the ceremony
+      // — the server seals the document and writes the audit trail — and the
+      // one where a signer who sees nothing happening will click again.
+      await run(
+        {
+          message: "Finalising your signature",
+          detail: "Sealing the document and recording the audit trail.",
+        },
+        async () => {
       if (!submitKeyRef.current) submitKeyRef.current = crypto.randomUUID();
       await realSigningSubmissionService.submit({
         fieldValues: buildFieldValues(),
@@ -197,6 +208,8 @@ export function RealSigningPage() {
       }, submitKeyRef.current);
       submitKeyRef.current = null; // confirmed — never reused
       setPhase("submitted");
+        },
+      );
     } catch (err) {
       setErrorMessage(describeSubmissionError(err));
     } finally {
@@ -205,11 +218,18 @@ export function RealSigningPage() {
   };
 
   const handleDecline = async () => {
+    // This had no in-flight guard at all: a second click sent a second decline.
+    if (submitting) return;
+    setSubmitting(true);
     try {
-      await realSigningSubmissionService.decline(declineReason);
-      setPhase("declined");
+      await run({ message: "Recording your decision" }, async () => {
+        await realSigningSubmissionService.decline(declineReason);
+        setPhase("declined");
+      });
     } catch (err) {
       setErrorMessage(describeError(err));
+    } finally {
+      setSubmitting(false);
     }
   };
 

@@ -62,6 +62,7 @@ import {
 } from "../../../models/field-editor";
 import type { PrepParticipant } from "../../../models/prepare";
 import { Z } from "../../../utils/z-index";
+import { useProcessing } from "../../../services/processing.service";
 
 // Stacking INSIDE the field-placement canvas. Deliberately not part of the
 // global `Z` ladder: these order a field's own furniture against each other
@@ -1998,6 +1999,7 @@ function FieldsPageInner() {
 
   const [showKbDialog, setShowKbDialog] = useState(false);
   const [fieldSyncError, setFieldSyncError] = useState<string | null>(null);
+  const { run: runProcessing } = useProcessing();
   const [savingFields, setSavingFields] = useState(false);
 
   const participants = draft?.participants ?? [];
@@ -2127,6 +2129,12 @@ function FieldsPageInner() {
     if (!USE_REAL_BACKEND || !platform.currentWorkspace || realDocumentIdByEditorDocId.size === 0) return true;
     const workspaceId = platform.currentWorkspace.id;
     setSavingFields(true);
+    return runProcessing(
+      {
+        message: "Checking your fields",
+        detail: "Saving every field and confirming it is placed correctly.",
+      },
+      async () => {
     let ok = true;
     let conflict = false;
     // Backend-confirmed fields, per document, translated back to editor
@@ -2198,7 +2206,9 @@ function FieldsPageInner() {
       }
     }
     return ok && !conflict;
-  }, [platform.currentWorkspace, realDocumentIdByEditorDocId, documents, fields, loadRealFields]);
+      },
+    );
+  }, [platform.currentWorkspace, realDocumentIdByEditorDocId, documents, fields, loadRealFields, runProcessing]);
 
   // Keyboard shortcuts.
   //

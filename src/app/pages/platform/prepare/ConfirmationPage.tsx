@@ -19,6 +19,7 @@ import { mockDocumentService } from "../../../services/mock/document.service";
 import { mapPreparationDraftToDocumentListItem } from "../../../services/prepare/draft-to-document";
 import { USE_REAL_BACKEND } from "../../../services/backend-flag";
 import { ApiError } from "../../../services/api-client";
+import { useProcessing, buildSteps } from "../../../services/processing.service";
 import { realSigningRequestService } from "../../../services/real/signing-request.service";
 import { realPreparationService } from "../../../services/real/preparation.service";
 import { fromBackendField } from "../../../services/prepare/field-sync";
@@ -44,6 +45,7 @@ function ConfirmationPageInner({ participants }: { participants: PrepParticipant
   // this page is open — see PrepareContext's fieldsSnapshot doc comment.
   useEffect(() => { setFieldsSnapshot(fields); }, [fields, setFieldsSnapshot]);
 
+  const { run } = useProcessing();
   const [sending, setSending] = useState(false);
   // The backend wraps every schema-validation failure in one generic
   // message ("One or more fields contain invalid values.") and puts the
@@ -150,6 +152,15 @@ function ConfirmationPageInner({ participants }: { participants: PrepParticipant
   // re-derives its rules. STOPS at a backend-confirmed "sent" signing
   // request; never claims "completed" (unreachable — see P2 mission §17) and
   // never discards the draft until the backend has actually confirmed send.
+  // Sending is three sequential requests, and a failure in the third leaves a
+  // signing request already created on the server. The checklist exists so a
+  // user who hits that error knows how far it got.
+  const SEND_STAGES = [
+    { id: "create",   label: "Creating the signing request" },
+    { id: "recipients", label: "Confirming recipients and fields" },
+    { id: "deliver",  label: "Delivering to signers" },
+  ];
+
   const handleRealSend = async () => {
     if (!draft || sending) return;
     const workspaceId = currentWorkspace?.id;
@@ -169,6 +180,13 @@ function ConfirmationPageInner({ participants }: { participants: PrepParticipant
     setSending(true);
     setSendError(null);
     try {
+      await run(
+        {
+          message: "Sending for signature",
+          detail: "Do not close this tab.",
+          steps: buildSteps(SEND_STAGES, "create"),
+        },
+        async ({ update }) => {
       let pending = pendingSendRef.current;
       if (!pending || pending.documentId !== documentId) {
         pending = { documentId, createKey: crypto.randomUUID(), signingRequestId: null, sendKey: null };
@@ -182,9 +200,12 @@ function ConfirmationPageInner({ participants }: { participants: PrepParticipant
         pending.signingRequestId = signingRequestId;
         pendingSendRef.current = pending;
         if (created.state === "draft") {
+          update({ steps: buildSteps(SEND_STAGES, "recipients") });
           await realSigningRequestService.markReadyToSend(workspaceId, signingRequestId);
         }
       }
+
+      update({ steps: buildSteps(SEND_STAGES, "deliver") });
 
       if (!pending.sendKey) pending.sendKey = crypto.randomUUID();
       pendingSendRef.current = pending;
@@ -195,6 +216,8 @@ function ConfirmationPageInner({ participants }: { participants: PrepParticipant
       pendingSendRef.current = null;
       await discardDraft();
       void navigate("/app/documents");
+        },
+      );
     } catch (err) {
       if (err instanceof ApiError) {
         setSendError({
