@@ -3,7 +3,7 @@
 // Focus-trapped while open. Escape closes. Scroll locked.
 
 import { useState, useRef, useEffect, useCallback, lazy, Suspense } from "react";
-import { NavLink, useNavigate, useLocation, Link } from "react-router";
+import { NavLink, useLocation, Link } from "react-router";
 import {
   Menu, X, LayoutDashboard, FileText, Files, Users, ShieldCheck,
   Bell, Users2, Settings, FilePlus, Inbox, HelpCircle, GitBranch, BarChart2, Zap,
@@ -21,6 +21,8 @@ import { Z } from "../../utils/z-index";
 const CommandPalette = lazy(() =>
   import("./CommandPalette").then(m => ({ default: m.CommandPalette })),
 );
+import { useSignOutFlow } from "../../hooks/useSignOutFlow";
+import { usePrepareLaunch } from "../../hooks/usePrepareLaunch";
 
 const BORDER = "rgba(0,0,0,0.08)";
 const GF     = { fontFamily: "'Geist', sans-serif" };
@@ -48,11 +50,10 @@ function getInitials(name: string): string {
 export function MobileNav() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
-  const { user, currentWorkspace, unreadCount, hasPermission, hasFlag, signOut } = usePlatform();
+  const { user, currentWorkspace, unreadCount, hasPermission, hasFlag } = usePlatform();
   const { restartTour } = useTour();
   const drawerRef    = useRef<HTMLDivElement>(null);
   const triggerRef   = useRef<HTMLButtonElement>(null);
-  const navigate     = useNavigate();
   // The dashboard route gets its own brand-mark asset; every other platform
   // page keeps the standard LagdaLogo component.
   const isDashboard  = useLocation().pathname === "/app/dashboard";
@@ -107,11 +108,10 @@ export function MobileNav() {
     triggerRef.current?.focus();
   }, []);
 
-  const handleSignOut = useCallback(async () => {
-    setDrawerOpen(false);
-    await signOut();
-    void navigate("/sign-in");
-  }, [signOut, navigate]);
+  // The drawer closes first so the confirmation is not stacked behind it.
+  const { requestSignOut, confirmDialog } = useSignOutFlow(() => { setDrawerOpen(false); });
+  const { onPrepareClick } = usePrepareLaunch();
+  const handleSignOut = requestSignOut;
 
   const openSearch = useCallback(() => {
     setDrawerOpen(false);
@@ -241,7 +241,13 @@ export function MobileNav() {
           <div style={{ padding: "12px 12px 0", flexShrink: 0 }}>
             <NavLink
               to={PREPARE_ACTION.path}
-              onClick={closeAndNavigate}
+              onClick={(event) => {
+                // The drawer has to close either way: the modal is about to
+                // cover the screen, and a drawer left open behind it would
+                // still be there when the route changes.
+                closeAndNavigate();
+                onPrepareClick(PREPARE_ACTION.path)(event);
+              }}
               style={{ display: "flex", alignItems: "center", gap: 8, background: "#07111F", color: "white", borderRadius: 8, padding: "10px 14px", textDecoration: "none", ...GF, fontSize: 14, fontWeight: 600 }}
             >
               <FilePlus size={16} aria-hidden />
@@ -410,6 +416,7 @@ export function MobileNav() {
           #mobile-nav-drawer { transition: none !important; }
         }
       `}</style>
+      {confirmDialog}
     </>
   );
 }

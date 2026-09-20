@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { useSearchParams, Link } from "react-router";
 import type { DemoVerificationResult, DemoVerificationOutcome, VerificationInputType, FormErrors } from "../../../models/forms";
 import { publicVerificationService, VER_ID_RE, conversionTracker } from "../../../services/public";
+import { useProcessing } from "../../../services/processing.service";
 
 const GF = { fontFamily: "'Geist', sans-serif" };
 const GM = { fontFamily: "'Geist Mono', monospace" };
@@ -108,6 +109,7 @@ export function VerifyDocument() {
   const [fileName, setFileName] = useState<string | null>(null);
   const [fileSize, setFileSize] = useState<number | null>(null);
   const [errors, setErrors] = useState<FormErrors>({});
+  const { run } = useProcessing();
   const [state, setState] = useState<VerifyState>("idle");
   const [result, setResult] = useState<DemoVerificationResult | null>(null);
   const [serverError, setServerError] = useState<string | null>(null);
@@ -157,12 +159,21 @@ export function VerifyDocument() {
     setServerError(null);
     setState("submitting");
     try {
-      const res = await publicVerificationService.verify({
+      // A verification lookup is the one thing a stranger does on this site,
+      // often with a document in front of them and a reason to care about
+      // the answer. It deserves more than a button that says "Checking…".
+      const res = await run(
+        {
+          message: "Looking up the verification record",
+          detail: "Checking this ID against the signing register.",
+        },
+        async () => publicVerificationService.verify({
         inputType,
         verificationId: verificationId.trim().toUpperCase(),
         fileName: fileName ?? undefined,
         fileSize: fileSize ?? undefined,
-      });
+        }),
+      );
       setResult(res);
       setState("result");
       conversionTracker.track({ name: "verification_demo_completed", demoResultType: res.outcome });

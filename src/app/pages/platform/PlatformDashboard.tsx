@@ -40,6 +40,7 @@ import {
   PREPARATION_LIST_ROUTE, PREPARATION_DEMONSTRATION_NOTICE,
 } from "../../services/preparation-platform-projection";
 import type { PreparationPlatformSummary } from "../../services/preparation-platform-projection";
+import { usePrepareLaunch } from "../../hooks/usePrepareLaunch";
 
 // ── Design tokens (inline-style only — no Tailwind in JSX) ───────────────────
 
@@ -232,6 +233,7 @@ interface QuickAction {
 function QuickActionsSection({ canPrepare, canTemplate, canVerify, canInvite }: {
   canPrepare: boolean; canTemplate: boolean; canVerify: boolean; canInvite: boolean;
 }) {
+  const { onPrepareClick } = usePrepareLaunch();
   const actions: QuickAction[] = [
     { icon: <FilePlus size={20} aria-hidden />, label: "Prepare a Document", sub: "Upload and request signatures", to: "/app/prepare", accent: AZURE, bg: "rgba(0,120,212,0.08)", permission: canPrepare },
     { icon: <FileText size={20} aria-hidden />, label: "My Documents", sub: "View and manage documents", to: "/app/documents", accent: NAVY, bg: "#F8FAFC", permission: true },
@@ -250,6 +252,7 @@ function QuickActionsSection({ canPrepare, canTemplate, canVerify, canInvite }: 
           <Link
             key={a.to}
             to={a.to}
+            onClick={a.to === "/app/prepare" ? onPrepareClick() : undefined}
             className="dashboard-quick-action-card"
             aria-label={a.label}
             style={{ display: "flex", alignItems: "flex-start", gap: 10, padding: "14px 16px", background: "white", border: `1px solid ${SLATE2}`, borderRadius: 12, textDecoration: "none" }}
@@ -390,6 +393,7 @@ function StatusSummarySection({ counts, hasError, isLoading, onRetry }: {
 function RecentDocumentsSection({ docs, hasError, isLoading, onRetry }: {
   docs: DashboardDocument[]; hasError: boolean; isLoading: boolean; onRetry: () => void;
 }) {
+  const { onPrepareClick } = usePrepareLaunch();
   return (
     <section aria-label="Recent documents" data-guide="dashboard-recent-documents" style={{ marginBottom: 24 }}>
       <SectionHeader label="Recent Documents" to="/app/documents" linkLabel="View all" />
@@ -404,7 +408,7 @@ function RecentDocumentsSection({ docs, hasError, isLoading, onRetry }: {
             title="No documents yet"
             description="Prepare your first document to request signatures."
             action={
-              <Link to="/app/prepare" style={{ display: "inline-flex", alignItems: "center", gap: 6, background: AZURE, color: "white", ...GF, fontSize: 13, fontWeight: 600, padding: "10px 16px", borderRadius: 8, textDecoration: "none" }}>
+              <Link to="/app/prepare" onClick={onPrepareClick()} style={{ display: "inline-flex", alignItems: "center", gap: 6, background: AZURE, color: "white", ...GF, fontSize: 13, fontWeight: 600, padding: "10px 16px", borderRadius: 8, textDecoration: "none" }}>
                 <FilePlus size={15} aria-hidden /> Prepare a Document
               </Link>
             }
@@ -1029,6 +1033,7 @@ function FullErrorState({ onRetry }: { onRetry: () => void }) {
 // ── New-user empty state (shown when all counts are 0) ────────────────────────
 
 function NewUserWelcome({ canPrepare }: { canPrepare: boolean }) {
+  const { onPrepareClick } = usePrepareLaunch();
   return (
     <section aria-label="Getting started" style={{ marginBottom: 24 }}>
       <Card style={{ padding: "32px 24px", textAlign: "center" }}>
@@ -1042,6 +1047,7 @@ function NewUserWelcome({ canPrepare }: { canPrepare: boolean }) {
         {canPrepare && (
           <Link
             to="/app/prepare"
+            onClick={onPrepareClick()}
             style={{ display: "inline-flex", alignItems: "center", gap: 8, background: AZURE, color: "white", ...GF, fontSize: 14, fontWeight: 700, padding: "12px 20px", borderRadius: 8, textDecoration: "none" }}
           >
             <FilePlus size={16} aria-hidden /> Prepare your first document

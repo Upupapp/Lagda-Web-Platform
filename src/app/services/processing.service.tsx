@@ -51,6 +51,18 @@ export interface ProcessingOptions {
   detail?: string;
   /** Optional phase checklist for multi-stage work. */
   steps?: ProcessingStep[];
+  /**
+   * Hold the CALLER for at least this long, even if the work finishes sooner.
+   *
+   * This is the one setting here that deliberately delays the application, so
+   * it is opt-in and never a default. It exists for transitions where the
+   * modal is the point — clicking "Prepare Document" should show what is
+   * starting before the route changes underneath it.
+   *
+   * It applies only when the work succeeds. A failure is reported at once:
+   * making someone wait to be told something went wrong is just rude.
+   */
+  minDuration?: number;
 }
 
 /** Handed to the body of `run` so it can narrate its own progress. */
@@ -83,7 +95,19 @@ const ProcessingContext = createContext<ProcessingContextValue>({
 });
 
 const APPEAR_DELAY_MS = 180;
-const MIN_DISPLAY_MS = 450;
+
+/**
+ * How long the modal stays up once it has appeared.
+ *
+ * Raised from 450ms so the mark completes a full pass of its animation rather
+ * than being cut off mid-sweep. This is purely how long the MODAL lingers —
+ * `run` still resolves the moment the work does, so nothing downstream waits
+ * on it. Navigation, state updates and error handling all proceed at their
+ * own speed while the modal fades out over the top; a test pins that.
+ *
+ * The one exception is an explicit `minDuration`, which is opt-in per call.
+ */
+const MIN_DISPLAY_MS = 1400;
 
 export function ProcessingProvider({ children }: { children: ReactNode }) {
   const [visible, setVisible] = useState(false);
@@ -149,8 +173,16 @@ export function ProcessingProvider({ children }: { children: ReactNode }) {
       work: (controller: ProcessingController) => Promise<T>,
     ): Promise<T> => {
       show(opts);
+      const startedAt = Date.now();
       try {
-        return await work({ update });
+        const result = await work({ update });
+        if (opts.minDuration !== undefined) {
+          const remaining = opts.minDuration - (Date.now() - startedAt);
+          if (remaining > 0) {
+            await new Promise<void>(resolve => setTimeout(resolve, remaining));
+          }
+        }
+        return result;
       } finally {
         hide();
       }
