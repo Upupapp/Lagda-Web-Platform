@@ -417,8 +417,7 @@ export type PlatformFeatureFlag =
   // Two surfaces that exist only as frontend demonstrations. Both are OFF in
   // the default launch profile — see DEFAULT_PLATFORM_FLAGS for why each one
   // is not merely unfinished but actively misleading while it is reachable.
-  | "recipientInboxEnabled"
-  | "signatureLibraryEnabled";
+  | "recipientInboxEnabled";
 
 export interface PlatformFlags {
   dashboardEnabled: boolean;
@@ -437,7 +436,6 @@ export interface PlatformFlags {
   automationEnabled: boolean;
   developmentPlaceholdersEnabled: boolean;
   recipientInboxEnabled: boolean;
-  signatureLibraryEnabled: boolean;
 }
 
 // Legacy narrow search result — kept for backward compatibility.

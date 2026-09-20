@@ -97,13 +97,6 @@ export const DEFAULT_PLATFORM_FLAGS: PlatformFlags = {
   // signing-access bootstrap as though it were an access token, which returns
   // 422. That is observed in production, not theorised.
   recipientInboxEnabled:      ACTIVE_LAUNCH_PROFILE !== "launch-default",
-
-  // Settings -> Signatures: an in-memory signature library that never reaches
-  // a backend, resets on reload, and is not wired to the real signing
-  // ceremony at all. It does say so on screen, which is why it is the less
-  // severe of the two — but a signature someone carefully draws and names
-  // still evaporates.
-  signatureLibraryEnabled:    ACTIVE_LAUNCH_PROFILE !== "launch-default",
 };
 
 // ── Context shape ─────────────────────────────────────────────────────────────

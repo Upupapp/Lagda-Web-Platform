@@ -33,9 +33,12 @@ describe("demonstration surfaces are off in the production profile", () => {
     expect(DEFAULT_PLATFORM_FLAGS.recipientInboxEnabled).toBe(false);
   });
 
-  it("the signature library is off", () => {
-    // In-memory, resets on reload, never reaches the signing ceremony.
-    expect(DEFAULT_PLATFORM_FLAGS.signatureLibraryEnabled).toBe(false);
+  it("the signature library flag is gone, because the library is real now", () => {
+    // It was a lever for hiding a mock that reset on reload. The mock is
+    // deleted and /app/settings/signatures talks to /me/signatures, so the
+    // lever has nothing to pull. A flag with no consumer is worse than no
+    // flag: it reads as a control that someone could still switch.
+    expect("signatureLibraryEnabled" in DEFAULT_PLATFORM_FLAGS).toBe(false);
   });
 
   it("genuinely shipped features are untouched", () => {
@@ -58,13 +61,11 @@ describe("the My Actions navigation entry", () => {
 });
 
 describe("every demonstration route is guarded", () => {
+  // Only the inbox now. The four signature routes became one real route
+  // backed by a real endpoint, so there is nothing left to hide there.
   const guarded = [
     "inbox",
     "inbox/:requestId",
-    "settings/signatures",
-    "settings/signatures/new",
-    "settings/signatures/:signatureId",
-    "settings/signatures/:signatureId/edit",
   ];
 
   for (const path of guarded) {
@@ -79,7 +80,7 @@ describe("every demonstration route is guarded", () => {
     });
   }
 
-  it("guards exactly the six demonstration routes and nothing else", () => {
+  it("guards exactly the demonstration routes and nothing else", () => {
     const count = (routerSource.match(/<FeatureGuard flag=/g) ?? []).length;
     expect(count).toBe(guarded.length);
   });

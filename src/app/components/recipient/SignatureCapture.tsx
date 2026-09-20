@@ -197,17 +197,25 @@ async function pngFromFile(file: File, sensitivity: number): Promise<string | nu
   context.drawImage(image, 0, 0, canvas.width, canvas.height);
 
   // Lift the signature off its paper BEFORE the trim, because the trim finds
-  // the mark by looking for transparent pixels and a photograph has none. Skip
-  // silently if the pixels cannot be read — a browser that refuses
-  // getImageData still gets the old behaviour rather than no upload at all.
+  // the mark by looking for transparent pixels and a photograph has none.
+  //
+  // This used to fall through silently when the pixels could not be read,
+  // reasoning that the old behaviour was better than no upload. The old
+  // behaviour is a fully opaque PNG — and the sealer embeds signature images
+  // with no compositing control, so an opaque one paints a WHITE BOX over
+  // whatever it lands on in the finished document. Silently shipping that is
+  // worse than refusing, because the signer cannot see it happen: the preview
+  // shows their signature, and the box only appears in the sealed PDF.
+  //
+  // Same-origin data URL, so a throw here is close to unreachable in practice.
+  // It is handled as a refusal rather than a fallback because of what the
+  // fallback would produce, not because it is likely.
   try {
     const pixels = context.getImageData(0, 0, canvas.width, canvas.height);
-    const result = removeOpaqueBackground(
-      pixels.data, canvas.width, canvas.height, { sensitivity },
-    );
-    if (result.changed) context.putImageData(pixels, 0, 0);
+    removeOpaqueBackground(pixels.data, canvas.width, canvas.height, { sensitivity });
+    context.putImageData(pixels, 0, 0);
   } catch {
-    /* Tainted or unavailable: fall through with the original pixels. */
+    return null;
   }
 
   return trimmedPng(canvas);

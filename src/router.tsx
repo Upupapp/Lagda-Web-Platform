@@ -910,25 +910,10 @@ const SettingsDataPrivacyPage = lazy(() =>
 );
 
 // Signature Library (Command 26)
-const SignaturesLibraryPage = lazy(() =>
-  import("./app/pages/platform/settings/signatures/SignaturesLibraryPage").then(
-    (m) => ({ default: m.SignaturesLibraryPage }),
-  ),
-);
-const NewSignaturePage = lazy(() =>
-  import("./app/pages/platform/settings/signatures/NewSignaturePage").then(
-    (m) => ({ default: m.NewSignaturePage }),
-  ),
-);
-const SignatureDetailPage = lazy(() =>
-  import("./app/pages/platform/settings/signatures/SignatureDetailPage").then(
-    (m) => ({ default: m.SignatureDetailPage }),
-  ),
-);
-const EditSignaturePage = lazy(() =>
-  import("./app/pages/platform/settings/signatures/EditSignaturePage").then(
-    (m) => ({ default: m.EditSignaturePage }),
-  ),
+const SignaturesPage = lazy(() =>
+  import("./app/pages/platform/settings/signatures/SignaturesPage").then((m) => ({
+    default: m.SignaturesPage,
+  })),
 );
 
 // Recipient Inbox (Command 27)
@@ -2439,44 +2424,14 @@ export const router = createBrowserRouter([
         ),
       },
       // Signature Library (Command 26) — static paths before parametric
+      // No FeatureGuard: this one is real. The flag existed to hide a mock
+      // library that reset on reload and was never wired to signing.
       {
         path: "settings/signatures",
         element: (
-          <FeatureGuard flag="signatureLibraryEnabled">
-            <Suspense fallback={null}>
-              <SignaturesLibraryPage />
-            </Suspense>
-          </FeatureGuard>
-        ),
-      },
-      {
-        path: "settings/signatures/new",
-        element: (
-          <FeatureGuard flag="signatureLibraryEnabled">
-            <Suspense fallback={null}>
-              <NewSignaturePage />
-            </Suspense>
-          </FeatureGuard>
-        ),
-      },
-      {
-        path: "settings/signatures/:signatureId",
-        element: (
-          <FeatureGuard flag="signatureLibraryEnabled">
-            <Suspense fallback={null}>
-              <SignatureDetailPage />
-            </Suspense>
-          </FeatureGuard>
-        ),
-      },
-      {
-        path: "settings/signatures/:signatureId/edit",
-        element: (
-          <FeatureGuard flag="signatureLibraryEnabled">
-            <Suspense fallback={null}>
-              <EditSignaturePage />
-            </Suspense>
-          </FeatureGuard>
+          <Suspense fallback={null}>
+            <SignaturesPage />
+          </Suspense>
         ),
       },
       {
