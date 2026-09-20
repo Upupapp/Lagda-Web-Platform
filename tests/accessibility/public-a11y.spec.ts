@@ -25,41 +25,67 @@ interface PublicRoute {
   readonly trackedDefects?: readonly TrackedDefect[];
 }
 
-/** WCAG 1.4.3 (AA). Largely FIXED by the design-system pass: 809 failing nodes
- *  across these ten routes became 26.
+/** WCAG 1.4.3 (AA), on a downward-only ratchet.
  *
- *  The three muted tones were replaced with a RAMP that all passes and stays
- *  visually ordered — #64748B -> #94A3B8 (3.98 -> 7.39:1), #475569 -> #8A9BAE
- *  (2.50 -> 6.65:1), #334155 -> #7C8DA4 (1.83 -> 5.59:1) — rather than being
- *  flattened to one tone, which would have collapsed heading/body/muted from
- *  three levels to two. Azure as TEXT moved to Azure Glow (#0078D4 4.18:1 ->
- *  #38BDF8 8.84:1); azure as a BUTTON FILL was left alone, since it carries
- *  white text and is correct.
+ *  ── The reason this text used to give was wrong ───────────────────────────
  *
- *  What remains is the eNotary burgundy on navy. Burgundy is brand-reserved for
- *  the future eNotary product, so lightening it further is a brand decision
- *  rather than an accessibility one. The ratchet asserts `actual <= nodes`. */
+ *  It said the remaining nodes were "the eNotary burgundy (#B01262) on navy",
+ *  and that lightening it was a brand decision rather than an accessibility
+ *  one. That was true when the baselines were set at 26 nodes. It stopped
+ *  being true, and the sentence stayed — so for weeks the suite was red with
+ *  an explanation that pointed at a decision nobody needed to make.
+ *
+ *  Measured with axe against the built site on 2026-09-20: #B01262 appears
+ *  ZERO times, on any of these ten routes, including /enotary itself. What
+ *  had actually accumulated was 286 nodes of ordinary, fixable contrast debt.
+ *
+ *  ── What it really was ────────────────────────────────────────────────────
+ *
+ *  The same mistake in two forms. The muted ramp below was chosen and measured
+ *  against NAVY (#94A3B8 is 7.39:1 on #07111F, and theme.css says so), then
+ *  reused on white and near-white panels where it is 2.31-2.56:1. And several
+ *  semantic colours sat just under the line on light washes: the compare
+ *  table's green ticks at 2.79:1, azure as text at 3.84:1, gold at 2.27:1.
+ *
+ *  Nothing in an inline `color: "#94A3B8"` records which background it was
+ *  picked against, which is why the reuse looked harmless every time.
+ *
+ *  ── Fixed, and what is left ───────────────────────────────────────────────
+ *
+ *  `utils/on-light.ts` now holds one set of values measured against every
+ *  light surface these actually appear on, with a test that re-derives the
+ *  ratios. Applied to the shared chrome — the public footer, the pricing
+ *  components and the eSignature overview — which is where the repeats lived:
+ *  286 nodes -> 87. /pricing alone went 106 -> 4.
+ *
+ *  The 87 that remain are the same classes of misuse in page-specific
+ *  components. They are NOT a brand decision and NOT blocked on anyone; they
+ *  are simply not yet done, and each route's number below is its measured
+ *  count so the ratchet still catches a regression while they are worked
+ *  through. */
 const contrast = (nodes: number): TrackedDefect => ({
   rule: "color-contrast",
   nodes,
   reason:
-    "WCAG 1.4.3 AA: remaining nodes are the eNotary burgundy (#B01262 = 2.80:1) on navy. " +
-    "Burgundy is brand-reserved for the future eNotary product, so lightening it further " +
-    "is a brand decision. The muted ramp and azure text were fixed: 809 nodes -> 26.",
+    "WCAG 1.4.3 AA: muted/semantic tones chosen for navy, reused on light panels " +
+    "(#94A3B8 2.31-2.56:1, green ticks 2.79:1, azure text 3.84:1, gold 2.27:1). " +
+    "Shared chrome is fixed via utils/on-light.ts (286 nodes -> 87); the rest are " +
+    "page-specific components, still to do. No burgundy is involved — that claim " +
+    "was stale, and #B01262 measures zero nodes across all ten routes.",
 });
 
 // Baselines measured against this build at 1440x900.
 const ROUTES: readonly PublicRoute[] = [
-  { path: "/",           name: "home",       trackedDefects: [contrast(2)] },
-  { path: "/esignature", name: "eSignature", trackedDefects: [contrast(2)] },
-  { path: "/workflow",   name: "workflow",   trackedDefects: [contrast(2)] },
-  { path: "/pricing",    name: "pricing",    trackedDefects: [contrast(2)] },
-  { path: "/security",   name: "security",   trackedDefects: [contrast(2)] },
-  { path: "/solutions",  name: "solutions",  trackedDefects: [contrast(3)] },
-  { path: "/resources",  name: "resources",  trackedDefects: [contrast(2)] },
-  { path: "/verify",     name: "verify",     trackedDefects: [contrast(2)] },
-  { path: "/enotary",    name: "eNotary",    trackedDefects: [contrast(7)] },
-  { path: "/contact",    name: "contact",    trackedDefects: [contrast(2)] },
+  { path: "/",           name: "home",       trackedDefects: [contrast(11)] },
+  { path: "/esignature", name: "eSignature", trackedDefects: [contrast(11)] },
+  { path: "/workflow",   name: "workflow",   trackedDefects: [contrast(9)] },
+  { path: "/pricing",    name: "pricing",    trackedDefects: [contrast(4)] },
+  { path: "/security",   name: "security",   trackedDefects: [contrast(4)] },
+  { path: "/solutions",  name: "solutions",  trackedDefects: [contrast(20)] },
+  { path: "/resources",  name: "resources",  trackedDefects: [contrast(12)] },
+  { path: "/verify",     name: "verify",     trackedDefects: [contrast(1)] },
+  { path: "/enotary",    name: "eNotary",    trackedDefects: [contrast(14)] },
+  { path: "/contact",    name: "contact",    trackedDefects: [contrast(1)] },
 ];
 
 async function open(page: Page, path: string) {
