@@ -20,6 +20,7 @@ import { realDocumentService } from "../../../services/real/document.service";
 import { USE_REAL_BACKEND } from "../../../services/backend-flag";
 import { ApiError } from "../../../services/api-client";
 import { StepBanner, StepTwoColumn, RailCard } from "../../../components/prepare/StepBanner";
+import { useProcessing, buildSteps } from "../../../services/processing.service";
 
 const GF     = { fontFamily: "'Geist', sans-serif" };
 const NAVY   = "#07111F";
@@ -410,6 +411,7 @@ export function UploadStep() {
     validate,
   } = usePrepare();
   const { currentWorkspace } = usePlatform();
+  const { run } = useProcessing();
 
   const [isDragOver, setIsDragOver] = useState(false);
   const [titleError, setTitleError] = useState<string | null>(null);
@@ -475,6 +477,12 @@ export function UploadStep() {
   // restored the draft) — it never re-creates a document once
   // backendDocumentId is set, and never re-uploads once uploadStatus is
   // "uploaded" or already in flight.
+  // Named for what the visitor is waiting on, not for the two HTTP calls.
+  const UPLOAD_STAGES = [
+    { id: "transfer", label: "Transferring your file" },
+    { id: "process",  label: "Securing and preparing it" },
+  ];
+
   const uploadFile = useCallback(async (prepFileId: string) => {
     if (!USE_REAL_BACKEND) return;
     const pf = filesRef.current.find(f => f.id === prepFileId);
@@ -490,6 +498,15 @@ export function UploadStep() {
 
     patchFile(pf.id, { uploadStatus: "uploading", uploadError: undefined });
     try {
+      // Ref-counted, so dropping four files shows one modal that lifts when
+      // the last of them lands rather than four fighting over the screen.
+      await run(
+        {
+          message: `Uploading ${pf.fileName}`,
+          detail: "Large documents can take a moment.",
+          steps: buildSteps(UPLOAD_STAGES, "transfer"),
+        },
+        async ({ update }) => {
       // Only created once per file, ever — backendDocumentId is persisted
       // (via patchFile → updateFiles → the existing Prepare-draft
       // LOCAL_PERSISTENCE write-through) the instant creation succeeds, so a
@@ -503,6 +520,7 @@ export function UploadStep() {
         patchFile(pf.id, { backendDocumentId: documentId });
       }
       patchFile(pf.id, { uploadStatus: "processing" });
+      update({ steps: buildSteps(UPLOAD_STAGES, "process") });
       const result = await realDocumentService.upload(currentWorkspace.id, documentId, rawFile);
       patchFile(pf.id, {
         uploadStatus: "uploaded",
@@ -511,6 +529,8 @@ export function UploadStep() {
       });
       // The backend now holds the bytes — no reason to keep them in memory.
       clearFileRef(pf.id);
+        },
+      );
     } catch (err) {
       patchFile(pf.id, {
         uploadStatus: "failed",
@@ -519,7 +539,7 @@ export function UploadStep() {
           : "Something went wrong uploading this file. Please try again.",
       });
     }
-  }, [currentWorkspace, patchFile]);
+  }, [currentWorkspace, patchFile, run]);
 
   // Covers files that arrived via resume (PrepareEntryPage's claimPending →
   // createDraft({initialFiles: ...})) rather than through addFiles() in
