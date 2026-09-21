@@ -89,9 +89,28 @@ export type CaptureProvenance = "typed-live" | "drawn-live" | "uploaded-live";
 
 export type SignatureValue =
   | { method: "typed"; text: string; styleIndex: number; provenance?: CaptureProvenance }
-  | { method: "drawn"; base64: string; provenance?: CaptureProvenance };
+  | { method: "drawn"; base64: string; provenance?: CaptureProvenance }
+  /**
+   * "Use the mark the server was handed."
+   *
+   * Carries no content on purpose. The server already holds what was prepared
+   * for this session, and a client that could supply the bytes could claim
+   * `applied-from-saved` for anything — the absence of a payload is what makes
+   * that provenance a fact rather than an assertion. It carries no
+   * `provenance` either, for the same reason: the server decides that one.
+   */
+  | { method: "saved" };
 
 type Mode = "draw" | "type" | "upload";
+
+/** A mark already prepared for this session, ready to apply. */
+export interface PreparedMark {
+  purpose: "signature" | "initials";
+  method: "typed" | "drawn";
+  text?: string;
+  styleIndex?: number;
+  base64?: string;
+}
 
 export interface SignatureCaptureProps {
   /** Shown above the control, e.g. "Signature (required)". */
@@ -101,6 +120,15 @@ export interface SignatureCaptureProps {
   readonly value: SignatureValue | null;
   readonly onChange: (value: SignatureValue | null) => void;
   readonly disabled?: boolean;
+  /**
+   * A mark the server already holds for this session, if any.
+   *
+   * Shown as a preview with an explicit confirm — never applied silently.
+   * Applying a signature the signer has not looked at is the one thing this
+   * feature must not do, and an extra tap is a small price for the signer
+   * having seen what their name is going onto.
+   */
+  readonly prepared?: PreparedMark | null;
 }
 
 // ── Raster helpers ───────────────────────────────────────────────────────────
@@ -238,7 +266,7 @@ async function pngFromFile(file: File, sensitivity: number): Promise<string | nu
 // ── The component ────────────────────────────────────────────────────────────
 
 export function SignatureCapture({
-  label, purpose, value, onChange, disabled = false,
+  label, purpose, value, onChange, disabled = false, prepared = null,
 }: SignatureCaptureProps) {
   const [mode, setMode] = useState<Mode>("draw");
   /**
@@ -492,6 +520,59 @@ export function SignatureCapture({
     );
   };
 
+  // ── The prepared mark ─────────────────────────────────────────────────
+  //
+  // Offered ABOVE the three ways to make a new one, because for someone who
+  // saved a signature this is the whole point — and dismissible, because a
+  // saved mark is a convenience and not an obligation.
+  const preparedPreview = prepared == null ? null : (
+    <div style={{
+      border: `1px solid ${T.border}`, borderRadius: 12,
+      padding: "clamp(10px, 3vw, 14px)", marginBottom: 12,
+      display: "flex", flexDirection: "column", gap: 10,
+    }}>
+      <span style={{ ...GF, fontSize: 12, fontWeight: 700, color: T.ink }}>
+        Your saved {prepared.purpose === "initials" ? "initials" : "signature"}
+      </span>
+      <div style={{
+        display: "grid", placeItems: "center",
+        minHeight: "clamp(56px, 14vw, 80px)",
+        borderRadius: 8, background: T.canvas,
+        padding: "clamp(6px, 2vw, 10px)",
+      }}>
+        {prepared.method === "drawn" && prepared.base64 !== undefined ? (
+          <img
+            src={`data:image/png;base64,${prepared.base64}`}
+            alt={`Your saved ${prepared.purpose}`}
+            style={{ maxWidth: "100%", maxHeight: "clamp(44px, 11vw, 64px)", objectFit: "contain" }}
+          />
+        ) : (
+          <span style={{
+            ...GF, fontSize: "clamp(16px, 5vw, 22px)", fontStyle: "italic",
+            color: T.ink, textAlign: "center", wordBreak: "break-word",
+          }}>
+            {prepared.text ?? ""}
+          </span>
+        )}
+      </div>
+      <button
+        type="button"
+        disabled={disabled}
+        onClick={() => { onChange({ method: "saved" }); }}
+        style={{
+          ...GF, minHeight: 44, borderRadius: 8, border: "none",
+          background: T.azure, color: "#fff", fontSize: 13, fontWeight: 700,
+          cursor: disabled ? "not-allowed" : "pointer",
+        }}
+      >
+        Use this {prepared.purpose === "initials" ? "initials" : "signature"}
+      </button>
+      <span style={{ ...GF, fontSize: 11.5, color: T.silver, textAlign: "center" }}>
+        or make a new one below
+      </span>
+    </div>
+  );
+
   return (
     <div style={{ marginBottom: 18 }}>
       {/* A banner, not a bare label: this control is the consequential one on
@@ -572,7 +653,7 @@ export function SignatureCapture({
                     fontStyle: "italic", fontSize: 24, color: T.ink,
                     overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
                   }}>
-                    {value.text}
+                    {value.method === "typed" ? value.text : ""}
                   </span>
                 )}
             </div>
@@ -629,6 +710,10 @@ export function SignatureCapture({
           </div>
         </div>
       )}
+
+      {/* The saved mark, above the three ways to make a new one — for someone
+          who saved one, this is the whole point of having done so. */}
+      {picking && preparedPreview}
 
       {/* Three across even at 320px — a grid rather than wrapping flex, so a
           single card never drops alone onto a second row. */}

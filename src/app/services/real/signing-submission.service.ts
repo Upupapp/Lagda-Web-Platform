@@ -12,7 +12,15 @@ export type SubmittedFieldValue =
 
 export type SignatureRepresentation =
   | { method: "typed"; text: string; styleIndex: number }
-  | { method: "drawn"; base64: string };
+  | { method: "drawn"; base64: string }
+  /**
+   * "Use the mark the server was handed for this session."
+   *
+   * No content, deliberately. The server already holds what was prepared, and
+   * a client able to supply the bytes could claim `applied-from-saved` for
+   * anything — the absent payload is what makes that provenance a fact.
+   */
+  | { method: "saved" };
 
 export interface SubmitSigningInput {
   fieldValues: SubmittedFieldValue[];

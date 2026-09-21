@@ -28,6 +28,8 @@ export interface MintedHandoff {
 export interface ClaimedHandoff {
   signingRequestId: string;
   recipientId: string;
+  /** How many saved marks were handed to that ceremony. Zero is ordinary. */
+  preparedCount: number;
 }
 
 class RealSigningAccountLinkService {
@@ -51,10 +53,16 @@ class RealSigningAccountLinkService {
    * Grants nothing: no ceremony opens and no document becomes readable. The
    * ceremony remains gated by the credential from the emailed link.
    */
-  async claimHandoff(code: string): Promise<ClaimedHandoff> {
+  /**
+   * @param currentPassword Re-proved at the moment the capability is granted.
+   *   A session alone is not enough: claiming hands a stored signature to a
+   *   ceremony, and from then on one confirmation applies someone's
+   *   handwriting to a binding document.
+   */
+  async claimHandoff(code: string, currentPassword: string): Promise<ClaimedHandoff> {
     return apiRequest<ClaimedHandoff>("/me/signing-links", {
       method: "POST",
-      body: { code },
+      body: { code, currentPassword },
     });
   }
 }
