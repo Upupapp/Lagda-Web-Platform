@@ -157,6 +157,28 @@ export function RealSigningPage() {
     return () => { cancelled = true; clearInterval(timer); };
   }, [phase, view]);
 
+  // Refetch when this tab comes back to the front.
+  //
+  // Confirming an account happens in ANOTHER tab, and the poll below only
+  // runs while waiting for an earlier signer — so without this, someone who
+  // confirmed came back to a ceremony that still offered them the sign-in
+  // button and no saved signature, and had to work out that a reload was
+  // needed. Focus is the one moment we know something may have changed
+  // elsewhere.
+  useEffect(() => {
+    if (phase !== "ceremony" && phase !== "consent") return;
+    const onFocus = () => {
+      void (async () => {
+        try {
+          const fresh = await realSigningAccessService.read();
+          setView(fresh);
+        } catch { /* transient; the signer can still act on what is shown */ }
+      })();
+    };
+    window.addEventListener("focus", onFocus);
+    return () => { window.removeEventListener("focus", onFocus); };
+  }, [phase]);
+
   /**
    * Opens the workspace realm in a NEW TAB and stays put.
    *
@@ -576,6 +598,7 @@ export function RealSigningPage() {
           <div style={{ marginBottom: 24 }}>
             <PositionedSigningSurface
               loadBlob={loadDocumentBlob}
+              prepared={view.preparedSignatures}
               fields={view.fields}
               signature={signature}
               initials={initials}

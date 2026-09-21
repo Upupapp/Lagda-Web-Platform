@@ -18,6 +18,8 @@ vi.mock("../../recipient-api-client", () => ({
   recipientApiRequest: (...args: unknown[]) => recipientApiRequest(...args) as unknown,
 }));
 
+const PASSWORD = "correct horse battery staple";
+
 const { realSigningAccountLinkService } =
   await import("../signing-account-link.service");
 
@@ -51,24 +53,26 @@ describe("claiming", () => {
   it("goes through the WORKSPACE client", async () => {
     apiRequest.mockResolvedValue({ signingRequestId: "sr_1", recipientId: "rcp_1" });
 
-    await realSigningAccountLinkService.claimHandoff("abc");
+    await realSigningAccountLinkService.claimHandoff("abc", PASSWORD);
 
     expect(apiRequest).toHaveBeenCalledWith(
-      "/me/signing-links", { method: "POST", body: { code: "abc" } });
+      "/me/signing-links",
+      { method: "POST", body: { code: "abc", currentPassword: PASSWORD } });
     expect(recipientApiRequest).not.toHaveBeenCalled();
   });
 
-  it("sends the code and nothing else", async () => {
-    // The contract is closed; an extra property is a 400. It also must not
-    // carry an address or an id — the server resolves both from the code.
+  it("sends the code and the password, and nothing else", async () => {
+    // The contract is closed; an extra property is a 400. It carries no
+    // address and no id — the server resolves both from the code, so a client
+    // cannot steer which recipient it is claiming.
     apiRequest.mockResolvedValue({ signingRequestId: "sr_1", recipientId: "rcp_1" });
-    await realSigningAccountLinkService.claimHandoff("abc");
+    await realSigningAccountLinkService.claimHandoff("abc", PASSWORD);
     const [, init] = apiRequest.mock.calls[0] as [string, { body: unknown }];
-    expect(init.body).toEqual({ code: "abc" });
+    expect(init.body).toEqual({ code: "abc", currentPassword: PASSWORD });
   });
 
   it("lets the caller see a refusal", async () => {
     apiRequest.mockRejectedValue(new Error("nope"));
-    await expect(realSigningAccountLinkService.claimHandoff("abc")).rejects.toThrow();
+    await expect(realSigningAccountLinkService.claimHandoff("abc", PASSWORD)).rejects.toThrow();
   });
 });

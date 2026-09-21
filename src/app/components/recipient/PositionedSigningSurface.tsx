@@ -36,7 +36,9 @@ import React, { useMemo, useRef, useState } from "react";
 import {
   useRealDocument, DocumentPageSurface,
 } from "../pdf/DocumentPageSurface";
-import { SignatureCapture, type SignatureValue } from "./SignatureCapture";
+import {
+  SignatureCapture, type SignatureValue, type PreparedMark,
+} from "./SignatureCapture";
 import type { CeremonyField } from "../../services/real/signing-access.service";
 import { Z } from "../../utils/z-index";
 import { T } from "./signer-ui";
@@ -62,10 +64,30 @@ export interface PositionedSigningSurfaceProps {
   readonly onInitials: (value: SignatureValue | null) => void;
   readonly onTextValue: (fieldId: string, value: string | boolean) => void;
   readonly disabled?: boolean;
+  /** Marks the server holds for this session, offered before the three ways. */
+  readonly prepared?: readonly PreparedMark[];
 }
 
 /** What a field box shows when it has been filled. */
-function FilledMark({ value }: { value: SignatureValue }) {
+function FilledMark({ value, prepared }: {
+  value: SignatureValue;
+  /** The mark the server holds, so "saved" can be previewed like any other. */
+  prepared?: PreparedMark | null;
+}) {
+  // A saved mark carries no content — the server has it. Rendering it means
+  // rendering what was prepared, so the box shows the same thing the document
+  // will, rather than a placeholder that says nothing.
+  const shown: SignatureValue | null = value.method !== "saved"
+    ? value
+    : prepared == null
+      ? null
+      : prepared.method === "drawn" && prepared.base64 !== undefined
+        ? { method: "drawn", base64: prepared.base64 }
+        : { method: "typed", text: prepared.text ?? "", styleIndex: prepared.styleIndex ?? 0 };
+
+  if (shown === null) return null;
+  value = shown;
+
   if (value.method === "drawn") {
     return (
       <img
@@ -88,14 +110,14 @@ function FilledMark({ value }: { value: SignatureValue }) {
         overflow: "hidden",
       }}
     >
-      {value.text}
+      {value.method === "typed" ? value.text : ""}
     </span>
   );
 }
 
 export function PositionedSigningSurface({
   loadBlob, fields, signature, initials, textValues,
-  onSignature, onInitials, onTextValue, disabled = false,
+  onSignature, onInitials, onTextValue, disabled = false, prepared,
 }: PositionedSigningSurfaceProps) {
   const document_ = useRealDocument(loadBlob);
   const wrapRef = useRef<HTMLDivElement | null>(null);
@@ -316,7 +338,15 @@ export function PositionedSigningSurface({
                                   {field.type === "initials" ? "Initials" : "Sign"}
                                 </span>
                               )
-                              : <FilledMark value={mark} />}
+                              : (
+                                <FilledMark
+                                  value={mark}
+                                  prepared={prepared?.find(
+                                    entry => entry.purpose === (
+                                      field.type === "initials" ? "initials" : "signature"
+                                    )) ?? null}
+                                />
+                              )}
                           </button>
                         )
                         : field.type === "checkbox"
@@ -424,6 +454,7 @@ export function PositionedSigningSurface({
               value={capturing === "initials" ? initials : signature}
               onChange={capturing === "initials" ? onInitials : onSignature}
               disabled={disabled}
+              prepared={prepared?.find(mark => mark.purpose === capturing) ?? null}
             />
             <button
               type="button"

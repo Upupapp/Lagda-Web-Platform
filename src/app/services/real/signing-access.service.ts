@@ -39,6 +39,21 @@ export interface CeremonyView {
   recipient: { recipientId: string; name: string; email: string; type: string };
   /** Present only once an account has been bound. The address is masked. */
   accountLink?: { maskedEmail: string };
+  /**
+   * Marks handed to THIS session at claim time, ready to apply.
+   *
+   * Session-scoped server-side: a forwarded link cannot reach a mark prepared
+   * for the browser that was actually verified.
+   */
+  preparedSignatures?: {
+    purpose: "signature" | "initials";
+    method: "typed" | "drawn";
+    text?: string;
+    styleIndex?: number;
+    base64?: string;
+    width?: number;
+    height?: number;
+  }[];
   access: {
     mayEnter: boolean;
     mayViewDocument: boolean;
