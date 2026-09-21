@@ -21,7 +21,9 @@
 // philosophy, and the whole page is usable at 320px.
 
 import { useCallback, useEffect, useState } from "react";
-import { Trash2, PenLine, Check } from "lucide-react";
+import { Link } from "react-router";
+import { Trash2, PenLine, Check, ArrowLeft } from "lucide-react";
+import { SettingsPage } from "../SettingsShell";
 import {
   realUserSignatureService, toPreviewDataUrl,
   type SavedSignature, type SignaturePurpose,
@@ -324,23 +326,35 @@ export function SignaturesPage() {
     saved.find(entry => entry.purpose === purpose) ?? null;
 
   return (
+    <SettingsPage title="Signatures & Initials" breadcrumb="Signatures & Initials">
     <div style={{
       display: "flex",
       flexDirection: "column",
       gap: "clamp(18px, 4vw, 28px)",
-      // The page had no horizontal padding, so on a phone the cards ran into
-      // both edges of the screen and the heading sat flush against the glass.
-      // 16px is the floor because that is the gutter the rest of the product
-      // uses at Mobile S; it grows with the viewport rather than switching.
-      padding: "clamp(16px, 4vw, 32px) clamp(16px, 4vw, 28px) clamp(40px, 8vw, 64px)",
-      // Capped and centred. Two cards stretched across an ultrawide monitor
-      // read as a banner rather than a form, and the measure below keeps the
-      // prose legible at the same time.
-      maxWidth: 880,
+      // Horizontal gutters and the width cap now come from the settings
+      // shell, which this page sits inside. Restating them here would double
+      // the padding — the original bug was the opposite, no gutters at all,
+      // because the page rendered outside the shell entirely.
+      paddingBottom: "clamp(16px, 4vw, 32px)",
       width: "100%",
-      marginInline: "auto",
+      minWidth: 0,
       boxSizing: "border-box",
     }}>
+      {/* This page used to render outside the settings shell entirely, so it
+          had no sidebar and no breadcrumb — once here, the only way back was
+          the browser button. The shell now provides both; this is the
+          explicit one, for anyone who arrived from a deep link. */}
+      <Link
+        to="/app/settings/profile"
+        style={{
+          ...GF, display: "inline-flex", alignItems: "center", gap: 6,
+          alignSelf: "flex-start", minHeight: TAP, paddingRight: 8,
+          fontSize: 13, color: T.azure, textDecoration: "none", fontWeight: 600,
+        }}
+      >
+        <ArrowLeft size={15} aria-hidden /> Back to Profile settings
+      </Link>
+
       <header style={{
         paddingBottom: "clamp(4px, 1.5vw, 10px)",
         borderBottom: `1px solid ${T.border}`,
@@ -422,6 +436,7 @@ export function SignaturesPage() {
 
       {confirmDialog}
     </div>
+    </SettingsPage>
   );
 }
 
