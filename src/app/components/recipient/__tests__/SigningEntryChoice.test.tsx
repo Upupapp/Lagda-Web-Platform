@@ -98,6 +98,26 @@ describe("SigningEntryChoice", () => {
     expect(text).not.toMatch(/legally binding|more valid|fully binding/i);
   });
 
+  // ── Layout ──────────────────────────────────────────────────────────────
+  //
+  // These panels shipped stacked on a 1440px screen, because the card they
+  // sit in caps at 560px by default: inner width ~512px against the 578px two
+  // columns need. The grid did exactly what it was told and the container was
+  // wrong, which is the failure mode worth pinning — nothing errors, the
+  // layout just quietly reads as one column everywhere.
+  it("asks for a reflowing two-column grid rather than a fixed one", () => {
+    const { container } = setup();
+    // A grid template is a style, not a role or a label. Testing Library has
+    // no query for it, and asserting on it is the whole point of this test.
+    // eslint-disable-next-line testing-library/no-node-access
+    const grid = container.querySelector("[style*='grid-template-columns']");
+    const columns = (grid as HTMLElement | null)?.style.gridTemplateColumns ?? "";
+    // auto-fit + a percentage floor is what makes it collapse on a narrow
+    // screen instead of overflowing it.
+    expect(columns).toContain("auto-fit");
+    expect(columns).toContain("100%");
+  });
+
   it("does not make an account sound required", () => {
     const { container } = setup();
     expect(container.textContent ?? "").not.toMatch(

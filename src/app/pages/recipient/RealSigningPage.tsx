@@ -448,7 +448,12 @@ export function RealSigningPage() {
 
   if (phase === "choose" && view) {
     return (
-      <SignerCard>
+      // `wide` (860px) rather than the default 560px, and it is load-bearing
+      // rather than cosmetic. The panels ask for a 280px minimum column; at
+      // 560px the card's inner width is ~512px, so two columns plus the gap
+      // (578px) never fit and the grid silently collapsed to one. This is the
+      // only ceremony screen showing two things side by side.
+      <SignerCard wide>
         <SigningEntryChoice
           documentTitle={view.request.documentTitle}
           maskedEmail={maskRecipientEmail(view.recipient.email)}

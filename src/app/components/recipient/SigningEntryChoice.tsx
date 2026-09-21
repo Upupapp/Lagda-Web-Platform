@@ -203,7 +203,10 @@ export function SigningEntryChoice({
             display: "flex", alignItems: "center", justifyContent: "space-between",
             gap: 10, flexWrap: "wrap",
           }}>
-            <LagdaLogo variant="white-horizontal" size={isCompact ? "sm" : "md"} decorative />
+            {/* Deliberately the largest logo in the ceremony. This is the
+                only panel doing brand work rather than instructing, and at
+                `md` it read as a favicon stranded in the corner. */}
+            <LagdaLogo variant="white-horizontal" size={isCompact ? "lg" : "xl"} decorative />
             <span style={{
               ...GF, fontSize: 10.5, fontWeight: 700, color: "#7FD1FF",
               letterSpacing: "0.12em", textTransform: "uppercase",
