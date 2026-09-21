@@ -28,7 +28,7 @@
 // rather than a banner. Every size is fluid, and it is usable at 320px.
 
 import { ShieldCheck, PenLine, History, UserPlus, ArrowRight, Mail } from "lucide-react";
-import { LagdaLogo } from "../brand/LagdaLogo";
+import lagdaHeaderLogo from "../../../brand elements/svg/LagdaLogoPrimaryHorizontalFullColor_Header.svg";
 import { GF, T, TAP, useViewport } from "../system/design-system";
 
 export interface SigningEntryChoiceProps {
@@ -93,7 +93,26 @@ export function SigningEntryChoice({
           boxShadow: "0 10px 30px rgba(7,17,31,0.18)",
         }}
       >
-        <LagdaLogo variant="white-horizontal" size={isCompact ? "lg" : "xl"} decorative />
+        {/* The brand SVG. It is full colour — navy lettering — and there is
+            no white SVG, so it sits on a white chip rather than directly on
+            the dark gradient, where the wordmark would all but disappear. */}
+        <div aria-hidden style={{
+          alignSelf: "flex-start", background: "#FFFFFF", borderRadius: 10,
+          padding: "4px 10px", lineHeight: 0,
+        }}>
+          <img
+            src={lagdaHeaderLogo}
+            alt=""
+            style={{
+              display: "block",
+              width: isCompact ? 132 : 168,
+              aspectRatio: "200 / 58",
+              height: "auto",
+              objectFit: "cover",
+              objectPosition: "left center",
+            }}
+          />
+        </div>
 
         <h2 id="signin-required" style={{
           ...GF, margin: 0, fontSize: "clamp(16px, 4.2vw, 18px)",

@@ -16,9 +16,7 @@ import React from "react";
 import { Outlet } from "react-router";
 import { USE_REAL_BACKEND } from "../services/backend-flag";
 import { ShieldCheck } from "lucide-react";
-
-const NAVY  = "#07111F";
-const AZURE = "#0078D4";
+import lagdaHeaderLogo from "../../brand elements/svg/LagdaLogoPrimaryHorizontalFullColor_Header.svg";
 
 export function RecipientLayout() {
   return (
@@ -52,52 +50,22 @@ export function RecipientLayout() {
         }}
         role="banner"
       >
-        <div
-          aria-label="LAGDA eSignature"
-          style={{
-            display:    "flex",
-            alignItems: "center",
-            gap:        8,
-          }}
-        >
-          {/* Azure square logo mark */}
-          <div
-            aria-hidden="true"
+        {/* The brand SVG, cropped exactly as the onboarding header crops it:
+            the file's canvas carries whitespace around the wordmark, and
+            object-fit cover at this ratio frames just the wordmark. */}
+        <div aria-label="LAGDA eSignature" style={{ display: "flex", alignItems: "center", minWidth: 0 }}>
+          <img
+            src={lagdaHeaderLogo}
+            alt="LAGDA"
             style={{
-              width:        28,
-              height:       28,
-              borderRadius: 6,
-              background:   AZURE,
-              display:      "flex",
-              alignItems:   "center",
-              justifyContent: "center",
-              color:        "#FFFFFF",
-              fontWeight:   800,
-              fontSize:     14,
-              letterSpacing: "-0.5px",
+              display: "block",
+              width: "clamp(118px, 30vw, 152px)",
+              aspectRatio: "200 / 58",
+              height: "auto",
+              objectFit: "cover",
+              objectPosition: "left center",
             }}
-          >
-            L
-          </div>
-          <span
-            style={{
-              fontSize:   15,
-              fontWeight: 700,
-              color:      NAVY,
-              letterSpacing: "-0.3px",
-            }}
-          >
-            LAGDA
-          </span>
-          <span
-            style={{
-              fontSize:   12,
-              color:      "#8A9BAE",
-              marginLeft: 2,
-            }}
-          >
-            eSignature
-          </span>
+          />
         </div>
 
         {/* A quiet trust marker. A signer arriving from an email has no other
