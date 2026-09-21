@@ -13,7 +13,7 @@
 // this file actually makes, which are about what leaves the component.
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { SignatureCapture, type SignatureValue } from "../SignatureCapture";
 
@@ -102,6 +102,11 @@ describe("typed signatures", () => {
 
     expect(lastValue(onChange)).toEqual({
       method: "typed", text: "Maria Santos", styleIndex: 0,
+      // The value gained a provenance field: this component is the only place
+      // that knows a typed mark was typed HERE rather than replayed from a
+      // stored entry. Kept as an exact-equality assertion so a future field
+      // cannot slip into the submission unnoticed.
+      provenance: "typed-live",
     });
   });
 
@@ -296,5 +301,61 @@ describe("wording follows the purpose", () => {
     const { user } = setup("initials");
     await user.click(screen.getByRole("button", { name: "Type" }));
     expect(screen.getByLabelText("Type your initials")).toBeTruthy();
+  });
+});
+
+// ── Capture provenance ─────────────────────────────────────────────────────
+//
+// This component is the only place that knows whether a PNG was drawn or
+// uploaded. By the time the bytes reach the server the two are identical, so
+// if this does not report it, nobody can ever tell them apart.
+
+describe("reporting how a mark was made", () => {
+  it("says a typed signature was typed here", async () => {
+    stubCanvas();
+    const onChange = vi.fn();
+    const user = userEvent.setup();
+    render(
+      <SignatureCapture
+        label="Signature" purpose="signature" value={null} onChange={onChange}
+      />,
+    );
+
+    await user.click(screen.getByRole("button", { name: /type/i }));
+    await user.type(screen.getByRole("textbox"), "Real User");
+
+    expect(onChange).toHaveBeenLastCalledWith(
+      expect.objectContaining({ method: "typed", provenance: "typed-live" }),
+    );
+  });
+
+  it("distinguishes an upload from a drawing", async () => {
+    // Both arrive as `method: "drawn"` — that is the whole problem. Until
+    // now an image made last year in front of a different document was filed
+    // as though the signer had drawn it here, in this moment.
+    stubCanvas();
+    const onChange = vi.fn();
+    const user = userEvent.setup();
+    render(
+      <SignatureCapture
+        label="Signature" purpose="signature" value={null} onChange={onChange}
+      />,
+    );
+
+    await user.click(screen.getByRole("button", { name: /upload/i }));
+    const input = screen.getByLabelText(/upload an image of your signature/i);
+    await user.upload(
+      input,
+      new File([new Uint8Array([1, 2, 3])], "sig.png", { type: "image/png" }),
+    );
+
+    await waitFor(() => {
+      expect(onChange).toHaveBeenCalled();
+    });
+    const emitted = onChange.mock.calls.at(-1)?.[0] as
+      { method: string; provenance?: string } | null;
+    if (emitted !== null) {
+      expect(emitted.provenance).toBe("uploaded-live");
+    }
   });
 });

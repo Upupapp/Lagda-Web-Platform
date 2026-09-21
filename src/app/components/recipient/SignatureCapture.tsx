@@ -73,9 +73,23 @@ const AZURE = T.azure;
 const SILVER = T.silver;
 const BORDER = T.borderStrong;
 
+/**
+ * How the signer produced a mark, reported alongside it.
+ *
+ * This component is the only place that knows the difference. Once an upload
+ * has been through the background removal it is a PNG exactly like a drawn
+ * one, and by the time the bytes reach the server nothing can tell them
+ * apart — so if this does not say, nobody ever can.
+ *
+ * Until now they were both submitted as "drawn", which filed a picture made
+ * last year in front of a different document as though the signer had drawn
+ * it here, in this moment. That is the distinction a dispute turns on.
+ */
+export type CaptureProvenance = "typed-live" | "drawn-live" | "uploaded-live";
+
 export type SignatureValue =
-  | { method: "typed"; text: string; styleIndex: number }
-  | { method: "drawn"; base64: string };
+  | { method: "typed"; text: string; styleIndex: number; provenance?: CaptureProvenance }
+  | { method: "drawn"; base64: string; provenance?: CaptureProvenance };
 
 type Mode = "draw" | "type" | "upload";
 
@@ -371,7 +385,7 @@ export function SignatureCapture({
     const canvas = canvasRef.current;
     if (canvas === null) return;
     const base64 = trimmedPng(canvas);
-    onChange(base64 === null ? null : { method: "drawn", base64 });
+    onChange(base64 === null ? null : { method: "drawn", base64, provenance: "drawn-live" });
   };
 
   const clearCanvas = () => {
@@ -402,7 +416,10 @@ export function SignatureCapture({
     const trimmed = text.trim();
     onChange(trimmed.length === 0
       ? null
-      : { method: "typed", text: trimmed, styleIndex: ONLY_STYLE_INDEX });
+      : {
+          method: "typed", text: trimmed, styleIndex: ONLY_STYLE_INDEX,
+          provenance: "typed-live",
+        });
   };
 
   const onUpload = async (file: File | undefined, nextSensitivity = sensitivity) => {
@@ -419,7 +436,7 @@ export function SignatureCapture({
       onChange(null);
       return;
     }
-    onChange({ method: "drawn", base64 });
+    onChange({ method: "drawn", base64, provenance: "uploaded-live" });
   };
 
   // Re-runs the last upload at a new sensitivity. Auto-detection genuinely
