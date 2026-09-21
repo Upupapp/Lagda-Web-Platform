@@ -87,6 +87,23 @@ const WHITE  = "#FFFFFF";
 
 // A4 portrait base dimensions at 100% editor zoom
 const BASE_PAGE_WIDTH  = 595;
+
+/**
+ * The zoom at which a page fits the width available to it.
+ *
+ * "Fit" used to mean `setZoom(100)`, which is not a fit — it is a reset, and
+ * on a phone it reset to the very width that did not fit. 595px of page in a
+ * 375px viewport is what made the editor unusable there.
+ *
+ * Clamped to the reducer's own 50-200 range so the button can never request
+ * a zoom the state will silently refuse.
+ */
+function fitWidthZoom(availableWidth: number): number {
+  // The canvas pads 16px each side; the page needs to fit what is left.
+  const usable = Math.max(0, availableWidth - 32);
+  const raw = Math.round((usable / BASE_PAGE_WIDTH) * 100);
+  return Math.max(50, Math.min(200, raw));
+}
 const PAGE_RATIO       = 842 / 595; // height / width ≈ 1.415
 
 // ── Fictional page preview ────────────────────────────────────────────────────
@@ -183,6 +200,7 @@ function FieldElement({ field, isSelected, identity, isSender, onPointerDown, on
   return (
     <div
       role="button"
+      data-field-id={field.id}
       aria-label={`${FIELD_TYPE_LABELS[field.type]} field${identity ? ` assigned to ${identity.displayName}` : ""}${field.required ? ", required" : ", optional"}`}
       tabIndex={0}
       style={{
@@ -301,19 +319,58 @@ interface PageCanvasProps {
    */
   workspaceId: string | null;
   realDocumentIdByEditorDocId: Map<string, string>;
+  /** The scroll container, so the page can measure it to fit and to pinch. */
+  scrollRef: React.RefObject<HTMLDivElement>;
 }
 
 function PageCanvas({
-  participants, workspaceId, realDocumentIdByEditorDocId,
+  participants, workspaceId, realDocumentIdByEditorDocId, scrollRef,
 }: PageCanvasProps) {
   const {
     currentDocumentId, currentPageId, currentPageFields, documents,
-    selectedFieldIds, mode, pendingFieldType, zoom,
+    selectedFieldIds, mode, pendingFieldType, zoom, setZoom,
     addField, moveField, selectFields, clearSelection,
     participantIdentities, syncRealPages,
   } = useFieldEditor();
 
   const canvasRef  = useRef<HTMLDivElement>(null);
+
+  // ── Pinch to zoom ───────────────────────────────────────────────────────
+  //
+  // The gesture anyone reaches for on a document, and the reason the toolbar
+  // buttons are not enough on their own: placing a field means looking
+  // closely at one spot, and stepping there 10% at a time through a button is
+  // not the same interaction.
+  //
+  // Only two-finger gestures are touched. A single finger still pans and
+  // still drags a field, so this adds a gesture rather than replacing any.
+  const pinchStart = useRef<{ distance: number; zoom: number } | null>(null);
+
+  const touchDistance = (touches: React.TouchList): number => {
+    const a = touches[0];
+    const b = touches[1];
+    if (a === undefined || b === undefined) return 0;
+    return Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY);
+  };
+
+  const onPinchStart = (e: React.TouchEvent<HTMLDivElement>) => {
+    if (e.touches.length !== 2) return;
+    pinchStart.current = { distance: touchDistance(e.touches), zoom };
+  };
+
+  const onPinchMove = (e: React.TouchEvent<HTMLDivElement>) => {
+    const start = pinchStart.current;
+    if (start === null || e.touches.length !== 2) return;
+    const distance = touchDistance(e.touches);
+    if (distance === 0 || start.distance === 0) return;
+    // Proportional to how far the fingers have moved apart, which is what
+    // makes it feel attached to the gesture rather than stepped.
+    const next = Math.round(start.zoom * (distance / start.distance));
+    const clamped = Math.max(50, Math.min(200, next));
+    if (clamped !== zoom) setZoom(clamped);
+  };
+
+  const onPinchEnd = () => { pinchStart.current = null; };
   const dragRef    = useRef<{
     type:         "move" | "resize";
     fieldId:      FieldId;
@@ -524,29 +581,54 @@ function PageCanvas({
 
   return (
     <div
+      ref={scrollRef}
+      onTouchStart={onPinchStart}
+      onTouchMove={onPinchMove}
+      onTouchEnd={onPinchEnd}
       style={{
         flex: 1,
         overflow: "auto",
         background: BGCANVAS,
         display: "flex",
         alignItems: "flex-start",
-        justifyContent: "center",
+        // NOT `justifyContent: center`, and this cost the left edge of every
+        // page on a phone.
+        //
+        // A centred flex child that is WIDER than its scroll container gets
+        // pushed to a negative offset, and a scroll container cannot scroll
+        // past its own origin — so the overflowing left side is not merely
+        // off-screen, it is unreachable. The document read "OYMENT AGREEMENT"
+        // and no amount of swiping recovered the rest.
+        //
+        // `margin: auto` on the child centres it while it fits and collapses
+        // to zero once it does not, which keeps the whole page reachable.
+        justifyContent: "flex-start",
         padding: "24px 16px",
       }}
     >
       {/* Page container */}
-      <div style={{ position: "relative" }}>
-        {/* Fictional preview notice */}
-        <div style={{
-          ...GF,
-          fontSize: 10,
-          color: SILVER,
-          textAlign: "center",
-          marginBottom: 6,
-          lineHeight: 1.4,
-        }}>
-          Document pages shown are fictional previews — selected files are not parsed or rendered.
-        </div>
+      <div style={{ position: "relative", margin: "auto" }}>
+        {/* Shown only when the page really IS a placeholder.
+            *
+            * This notice used to render unconditionally, including while
+            * `DocumentPageSurface` was displaying the signer's actual PDF
+            * directly beneath it. Someone placing a signature on a real
+            * signature line was being told their file was not parsed or
+            * rendered — false, and alarming in the one place where being sure
+            * the document is real matters most. */}
+        {realDocumentId === null && (
+          <div style={{
+            ...GF,
+            fontSize: 10,
+            color: SILVER,
+            textAlign: "center",
+            marginBottom: 6,
+            lineHeight: 1.4,
+          }}>
+            No file was uploaded for this document, so the page below is a
+            placeholder. Field positions are still saved.
+          </div>
+        )}
 
         {/* Page */}
         <div
@@ -851,8 +933,63 @@ interface FieldPropertiesProps {
   participants: PrepParticipant[];
 }
 
+/**
+ * Nudge a field a precise amount, for fingers.
+ *
+ * At a fit-to-width zoom of about 55%, one screen pixel is nearly two
+ * document pixels, and a fingertip covers roughly forty of them. Dragging is
+ * fine for getting a field roughly where it belongs and hopeless for landing
+ * it ON a signature line — which is the only placement that matters.
+ *
+ * The step is expressed in NORMALIZED units because that is what the rect
+ * stores, so a nudge means the same distance at every zoom rather than
+ * getting coarser as you zoom out to see more of the page.
+ */
+function NudgePad({ field }: { field: FieldDefinition }) {
+  const { moveField } = useFieldEditor();
+  // 0.002 of the page: sub-millimetre on A4, and small enough that holding a
+  // direction walks the field rather than throwing it.
+  const STEP = 0.002;
+
+  const nudge = (dx: number, dy: number) => {
+    moveField(field.id, {
+      ...field.rect,
+      // Clamped so a field cannot be walked off the page and lost.
+      x: Math.max(0, Math.min(1 - field.rect.width, field.rect.x + dx)),
+      y: Math.max(0, Math.min(1 - field.rect.height, field.rect.y + dy)),
+    });
+  };
+
+  const key = {
+    ...GF, width: 40, height: 36, borderRadius: 8,
+    border: "1px solid #D1D9E0", background: "#FFFFFF",
+    color: NAVY, fontSize: 15, cursor: "pointer",
+    display: "flex", alignItems: "center", justifyContent: "center",
+  } as const;
+
+  return (
+    <div style={{ padding: "10px 14px", borderBottom: "1px solid #F0F2F5" }}>
+      <div style={{ ...GF, fontSize: 10, fontWeight: 700, color: SILVER, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 8 }}>
+        Nudge
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 40px)", gap: 6, justifyContent: "center" }}>
+        <span />
+        <button type="button" style={key} aria-label="Nudge field up" onClick={() => { nudge(0, -STEP); }}>↑</button>
+        <span />
+        <button type="button" style={key} aria-label="Nudge field left" onClick={() => { nudge(-STEP, 0); }}>←</button>
+        <span />
+        <button type="button" style={key} aria-label="Nudge field right" onClick={() => { nudge(STEP, 0); }}>→</button>
+        <span />
+        <button type="button" style={key} aria-label="Nudge field down" onClick={() => { nudge(0, STEP); }}>↓</button>
+        <span />
+      </div>
+    </div>
+  );
+}
+
 function FieldPropertiesPanel({ field, participants }: FieldPropertiesProps) {
   const { updateField, deleteFields, duplicateField, reorderLayer, participantIdentities } = useFieldEditor();
+  const { isCompact } = useViewport();
   const [confirmDelete, setConfirmDelete] = useState(false);
 
   const eligible = participants.filter(p => FIELD_ELIGIBLE_ROLES[field.type].includes(p.role));
@@ -873,6 +1010,10 @@ function FieldPropertiesPanel({ field, participants }: FieldPropertiesProps) {
           {identity ? `Assigned: ${identity.displayName} (${identity.role})` : isSender ? "Sender field" : "Unassigned"}
         </div>
       </div>
+
+      {/* Touch only. A mouse already has pixel precision, and the arrow keys
+          already nudge — this is the same capability for a finger. */}
+      {isCompact && <NudgePad field={field} />}
 
       <div style={{ flex: 1, overflowY: "auto", padding: "10px 14px" }}>
 
@@ -1677,9 +1818,11 @@ interface ToolbarProps {
   /** Validated internal path to return to (Command 37 workflow round-trip). */
   returnTo:      string | null;
   returnLabel:   string;
+  /** Sets zoom so a page fits the canvas width. Measured, not assumed. */
+  onFitWidth:    () => void;
 }
 
-function EditorToolbar({ draftTitle, participants: _participants, draft, showKbDialog: _showKbDialog, setShowKbDialog, onContinue, returnTo, returnLabel, onOpenDocuments }: ToolbarProps) {
+function EditorToolbar({ draftTitle, participants: _participants, draft, showKbDialog: _showKbDialog, setShowKbDialog, onContinue, returnTo, returnLabel, onOpenDocuments, onFitWidth }: ToolbarProps) {
   const { isCompact, isMobileS } = useViewport();
   const {
     undo, redo, canUndo, canRedo,
@@ -1747,7 +1890,7 @@ function EditorToolbar({ draftTitle, participants: _participants, draft, showKbD
     { id: "view", label: showFieldList ? "Canvas view" : "Field list", title: "Switch view", onClick: toggleFieldList, disabled: false },
     { id: "zoom-out", label: "Zoom out", title: "Zoom out", onClick: () => { setZoom(zoom - 10); }, disabled: zoom <= 50 },
     { id: "zoom-in", label: "Zoom in", title: "Zoom in", onClick: () => { setZoom(zoom + 10); }, disabled: zoom >= 200 },
-    { id: "fit", label: "Fit page", title: "Reset zoom to 100%", onClick: () => { setZoom(100); }, disabled: false },
+    { id: "fit", label: "Fit width", title: "Fit the page to the width of the screen", onClick: onFitWidth, disabled: false },
   ];
 
   const separator = (key: string) => (
@@ -1864,13 +2007,27 @@ function EditorToolbar({ draftTitle, participants: _participants, draft, showKbD
             {showFieldList ? "Canvas" : "List"}
           </button>
           {separator("s5")}
-          <button onClick={() => { setZoom(zoom - 10); }} disabled={zoom <= 50} aria-label="Zoom out" style={{ ...btnBase, flexShrink: 0, padding: "0 8px", opacity: zoom > 50 ? 1 : 0.4 }}>−</button>
-          <span style={{ ...GF, fontSize: 11, color: "#334155", minWidth: 40, textAlign: "center", flexShrink: 0 }} aria-live="polite" aria-label={`Zoom ${zoom}%`}>{zoom}%</span>
-          <button onClick={() => { setZoom(zoom + 10); }} disabled={zoom >= 200} aria-label="Zoom in" style={{ ...btnBase, flexShrink: 0, padding: "0 8px", opacity: zoom < 200 ? 1 : 0.4 }}>+</button>
-          <button onClick={() => { setZoom(100); }} aria-label="Fit page — reset zoom to 100%" style={{ ...btnBase, flexShrink: 0 }}>Fit</button>
-          {separator("s6")}
         </>
       )}
+
+      {/* Zoom, on every viewport.
+          *
+          * This block used to be inside the `!isCompact` guard above, so the
+          * one viewport that cannot read a 595px page at 100% was the only
+          * one with no way to change it. */}
+      <button onClick={() => { setZoom(zoom - 10); }} disabled={zoom <= 50} aria-label="Zoom out" style={{ ...btnBase, flexShrink: 0, padding: "0 10px", opacity: zoom > 50 ? 1 : 0.4 }}>−</button>
+      {!isMobileS && (
+        <span style={{ ...GF, fontSize: 11, color: "#334155", minWidth: 40, textAlign: "center", flexShrink: 0 }} aria-live="polite" aria-label={`Zoom ${zoom}%`}>{zoom}%</span>
+      )}
+      <button onClick={() => { setZoom(zoom + 10); }} disabled={zoom >= 200} aria-label="Zoom in" style={{ ...btnBase, flexShrink: 0, padding: "0 10px", opacity: zoom < 200 ? 1 : 0.4 }}>+</button>
+      <button
+        onClick={onFitWidth}
+        aria-label="Fit the page to the width of the screen"
+        style={{ ...btnBase, flexShrink: 0 }}
+      >
+        Fit
+      </button>
+      {separator("s6")}
 
       <button
         onClick={handleValidate}
@@ -1931,6 +2088,10 @@ function FieldsPageInner() {
   // The document rail is a drawer on a phone, so it needs an open state that
   // the desktop column never had.
   const [showDocuments, setShowDocuments] = useState(false);
+  // The scroll container the page sits in. Fit measures it rather than
+  // assuming a width, so it is correct with the rail open, closed, on a
+  // phone, and on a monitor.
+  const canvasScrollRef = useRef<HTMLDivElement>(null);
   const {
     loadState, errorMessage,
     initialize, loadRealFields,
@@ -1942,7 +2103,31 @@ function FieldsPageInner() {
     selectedFieldIds, currentPageFields, clipboard, mode,
     copySelected, paste, undo, redo, duplicateField, deleteFields,
     clearSelection, setPendingField,
+    // `setZoom` only: the page SETS zoom (fit, auto-fit) but never reads it.
+    // The toolbar and the canvas read it where they need it.
+    setZoom,
   } = useFieldEditor();
+
+  const fitToWidth = useCallback(() => {
+    const width = canvasScrollRef.current?.clientWidth;
+    if (width === undefined || width === 0) return;
+    setZoom(fitWidthZoom(width));
+  }, [setZoom]);
+
+  // Open at a zoom that fits, on the viewports where 100% does not.
+  //
+  // Only once, and only on a phone or tablet: re-fitting on every resize
+  // would fight a user who has deliberately zoomed in to place a field, and
+  // on a desktop 100% already fits, so imposing a fit there would override a
+  // sensible default with a computed one.
+  const didAutoFit = useRef(false);
+  useEffect(() => {
+    if (didAutoFit.current || !isCompact) return;
+    const width = canvasScrollRef.current?.clientWidth;
+    if (width === undefined || width === 0) return;
+    didAutoFit.current = true;
+    setZoom(fitWidthZoom(width));
+  }, [isCompact, setZoom, loadState]);
 
   /**
    * The last thing a shortcut did, for the canvas's live region.
@@ -2241,6 +2426,35 @@ function FieldsPageInner() {
     announce: setShortcutMessage,
   });
 
+  // Bring the selected field out from under the sheet.
+  //
+  // The properties sheet rises from the bottom and can take 70% of a short
+  // screen, so selecting a field in the lower half opened an editor for
+  // something the editor itself was covering. Changing a field's properties
+  // while unable to see the field is not editing, it is guessing.
+  //
+  // Declared HERE, above every early return. Placed after `if (!draft)` it
+  // ran on some renders and not others, which changes hook order — the one
+  // thing React cannot tolerate. The sheet condition is recomputed inside
+  // rather than read from a binding that does not exist yet.
+  useEffect(() => {
+    const open = isCompact && (showValidation || selectedField !== null);
+    if (!open || selectedField === null) return;
+    const scroller = canvasScrollRef.current;
+    if (scroller === null) return;
+    const element = scroller.querySelector(`[data-field-id="${selectedField.id}"]`);
+    if (!(element instanceof HTMLElement)) return;
+
+    const scrollerBox = scroller.getBoundingClientRect();
+    const fieldBox = element.getBoundingClientRect();
+    // A comfortable margin below the top of the canvas — the band the sheet
+    // never reaches.
+    const delta = fieldBox.top - (scrollerBox.top + 24);
+    // Already in the safe band; moving would be motion for its own sake.
+    if (Math.abs(delta) < 8) return;
+    scroller.scrollBy({ top: delta, behavior: "smooth" });
+  }, [isCompact, showValidation, selectedField]);
+
   if (!draft) {
     return (
       <div style={{ ...GF, display: "flex", alignItems: "center", justifyContent: "center", height: "100vh", background: "#F5F7FA" }}>
@@ -2275,6 +2489,8 @@ function FieldsPageInner() {
   // open validation run LOOKS like on a phone. Closing it therefore has to
   // undo the state that summoned it, or it would reappear immediately.
   const sheetOpen = isCompact && (showValidation || selectedField !== null);
+
+
   const sheetTitle = showValidation
     ? "Validation"
     : selectedField !== null ? "Field properties" : "Field types";
@@ -2376,6 +2592,7 @@ function FieldsPageInner() {
         returnTo={returnTo}
         returnLabel={returnLabel}
         onOpenDocuments={() => { setShowDocuments(true); }}
+        onFitWidth={fitToWidth}
       />
 
       {/* Body.
@@ -2400,6 +2617,7 @@ function FieldsPageInner() {
               participants={participants}
               workspaceId={platform.currentWorkspace?.id ?? null}
               realDocumentIdByEditorDocId={realDocumentIdByEditorDocId}
+              scrollRef={canvasScrollRef}
             />
           )}
         </main>

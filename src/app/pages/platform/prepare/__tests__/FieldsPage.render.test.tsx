@@ -90,7 +90,7 @@ describe("FieldsPage (full editor render)", () => {
     expect(screen.getByRole("button", { name: /show field list/i })).toBeInTheDocument();
   });
 
-  it("zooms in, out, and resets via Fit", async () => {
+  it("zooms in and out in 10% steps", async () => {
     const user = userEvent.setup();
     renderPage();
     expect(screen.getByLabelText(/zoom 100%/i)).toBeInTheDocument();
@@ -99,8 +99,29 @@ describe("FieldsPage (full editor render)", () => {
     await user.click(screen.getByRole("button", { name: /zoom out/i }));
     await user.click(screen.getByRole("button", { name: /zoom out/i }));
     expect(screen.getByLabelText(/zoom 90%/i)).toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: /^fit page/i }));
-    expect(screen.getByLabelText(/zoom 100%/i)).toBeInTheDocument();
+  });
+
+  // Fit used to call setZoom(100), which is a RESET, not a fit — and on a
+  // phone it reset to the exact width that did not fit. The old test asserted
+  // that behaviour and so could never have caught it.
+  //
+  // This one measures: the container is 361px wide, the canvas pads 16px each
+  // side, and an A4 page is 595px at 100% — so a fit is 329/595 = 55%.
+  it("fits the page to the measured width of the canvas", async () => {
+    const widthSpy = vi
+      .spyOn(HTMLElement.prototype, "clientWidth", "get")
+      .mockReturnValue(361);
+    try {
+      const user = userEvent.setup();
+      renderPage();
+      await user.click(screen.getByRole("button", { name: /zoom in/i }));
+      expect(screen.getByLabelText(/zoom 110%/i)).toBeInTheDocument();
+
+      await user.click(screen.getByRole("button", { name: /fit the page to the width/i }));
+      expect(screen.getByLabelText(/zoom 55%/i)).toBeInTheDocument();
+    } finally {
+      widthSpy.mockRestore();
+    }
   });
 
   it("places a field, copies it, and undoes the placement", async () => {

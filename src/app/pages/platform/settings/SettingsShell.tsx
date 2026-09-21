@@ -27,8 +27,15 @@ const SILVER= "#8A9BAE";
 
 /** Same tier as the platform's own fixed bars. See components/system z-index. */
 const Z_SHELL = 30;
-/** Bar height plus its padding — what the content column must clear. */
-const BOTTOM_NAV_CLEARANCE = 72;
+/**
+ * Bar height plus its padding — what the content column must clear.
+ *
+ * 44px pill + 8px padding top and bottom = 60, plus the 1px border, rounded
+ * up. Derived rather than guessed: when the pill height changed from 40 to
+ * 44 this had to move with it, and a magic number would have quietly left
+ * the last control under the bar.
+ */
+const BOTTOM_NAV_CLEARANCE = 62;
 
 export const DEMO_NOTICE = (
   <div role="note" style={{ background: "#FFFBEB", border: "1px solid #FDE68A", borderRadius: 8, padding: "8px 14px", marginBottom: 18, ...GF, fontSize: 12, color: "#92400E" }}>
@@ -246,13 +253,22 @@ function SettingsBottomNav() {
         // Clears the iOS home indicator. Zero everywhere it does not apply.
         paddingBottom: "env(safe-area-inset-bottom, 0px)",
         boxShadow: "0 -2px 10px rgba(7,17,31,0.06)",
+        // Fade the two ends so the strip reads as "there is more this way"
+        // rather than as a list that happens to stop at the screen edge. The
+        // mask is the affordance; without it a scroller looks truncated.
+        WebkitMaskImage:
+          "linear-gradient(to right, transparent 0, #000 16px, #000 calc(100% - 16px), transparent 100%)",
+        maskImage:
+          "linear-gradient(to right, transparent 0, #000 16px, #000 calc(100% - 16px), transparent 100%)",
       }}
     >
       <ul
         style={{
           display: "flex", gap: 6, listStyle: "none", margin: 0,
-          padding: "8px 12px", overflowX: "auto", overflowY: "hidden",
+          padding: "8px 16px", overflowX: "auto", overflowY: "hidden",
           scrollbarWidth: "none", WebkitOverflowScrolling: "touch",
+          // Each pill settles under the thumb rather than half-off the edge.
+          scrollSnapType: "x proximity",
         }}
       >
         {items.map(item => (
@@ -290,7 +306,11 @@ function BottomEntry({ item, activeRef }: {
         aria-current={selected ? "page" : undefined}
         style={{
           display: "inline-flex", alignItems: "center", justifyContent: "center",
-          minHeight: 40, padding: "0 14px", borderRadius: 999,
+          // 44px: the product's minimum comfortable touch target. This bar is
+          // operated by a thumb at the bottom of a phone, which is the worst
+          // place to be a few pixels short.
+          minHeight: 44, padding: "0 16px", borderRadius: 999,
+          scrollSnapAlign: "center",
           textDecoration: "none", whiteSpace: "nowrap",
           ...GF, fontSize: 13, fontWeight: selected ? 700 : 500,
           color: selected ? "#FFFFFF" : NAVY,
