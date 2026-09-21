@@ -52,14 +52,27 @@ export type PreparationStepId =
   | "review"
   | "fields";
 
+/**
+ * The order of preparation, and the order the stepper renders.
+ *
+ * Authentication is LAST by design. It asks how a signer proves who they are,
+ * which is a decision about people — so it belongs after the people, their
+ * order, the document and its fields are all settled. Asked fourth, as it was,
+ * it interrupted the document work to ask a question whose answer depends on
+ * the very participants the sender was still adding.
+ *
+ * `resolveStepStates` in PrepareContext derives the unlock chain from this
+ * intent. The two must be read together: changing this array without changing
+ * that function leaves a step reachable before its prerequisites exist.
+ */
 export const PREPARATION_STEPS: { id: PreparationStepId; label: string; shortLabel: string; route: string }[] = [
   { id: "upload",         label: "Documents",                  shortLabel: "Docs",     route: "/app/prepare/upload"         },
   { id: "participants",   label: "Participants",                shortLabel: "Pax",      route: "/app/prepare/participants"   },
   { id: "routing",        label: "Routing",                    shortLabel: "Route",    route: "/app/prepare/routing"        },
-  { id: "authentication", label: "Authentication",             shortLabel: "Auth",     route: "/app/prepare/authentication" },
   { id: "settings",       label: "Settings",                   shortLabel: "Settings", route: "/app/prepare/settings"       },
-  { id: "review",         label: "Review",                     shortLabel: "Review",   route: "/app/prepare/review"         },
   { id: "fields",         label: "Place Fields",               shortLabel: "Fields",   route: "/app/prepare/fields"         },
+  { id: "review",         label: "Review",                     shortLabel: "Review",   route: "/app/prepare/review"         },
+  { id: "authentication", label: "Authentication",             shortLabel: "Auth",     route: "/app/prepare/authentication" },
 ];
 
 // ── Preparation step state ────────────────────────────────────────────────────

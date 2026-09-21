@@ -61,14 +61,17 @@ function resolveStepStates(
   const unavail = (): PreparationStepState => "unavailable";
 
   if (!draft) {
+    // No draft yet: only the first step is reachable, and every later one is
+    // locked. Listed in the running order so this reads against
+    // PREPARATION_STEPS rather than against the old sequence.
     return {
       upload:         "available",
       participants:   unavail(),
       routing:        unavail(),
-      authentication: unavail(),
       settings:       unavail(),
-      review:         unavail(),
       fields:         "blocked",
+      review:         unavail(),
+      authentication: unavail(),
     };
   }
 
@@ -92,14 +95,36 @@ function resolveStepStates(
     return "available";
   };
 
+  // The unlock chain, in the order PREPARATION_STEPS now declares:
+  //
+  //   Documents -> Participants -> Routing -> Settings -> Fields -> Review
+  //                                                            -> Authentication
+  //
+  // Each step opens only once the one before it is VALID, not merely visited.
+  // "Visited" would unlock the next step for someone who opened a step and
+  // left it empty, which is the state this gating exists to prevent.
+  //
+  // Settings no longer bypasses the chain. It used to open as soon as files
+  // existed, which was harmless when it sat fourth but would now let someone
+  // skip Participants and Routing entirely.
+  //
+  // Authentication is last and needs everything before it: it asks how each
+  // signer proves who they are, and there are no signers to ask about until
+  // participants and routing are settled.
+  const beforeFields  = filesOk && participantsOk && routingOk && settingsOk;
+  const beforeReview  = beforeFields && allOk;
+  const beforeAuth    = beforeReview && v.isValid;
+
   return {
     upload:         stepState("upload", true, filesOk),
     participants:   stepState("participants", filesOk, participantsOk),
     routing:        stepState("routing", participantsOk, routingOk),
-    authentication: stepState("authentication", routingOk, authOk),
-    settings:       stepState("settings", filesOk, settingsOk), // settings always open once files done
-    review:         stepState("review", filesOk && participantsOk && routingOk, v.isValid),
-    fields:         allOk ? (activeStepId === "fields" ? "current" : "available") : "blocked",
+    settings:       stepState("settings", routingOk, settingsOk),
+    fields:         beforeFields
+      ? (activeStepId === "fields" ? "current" : "available")
+      : "blocked",
+    review:         stepState("review", beforeReview, v.isValid),
+    authentication: stepState("authentication", beforeAuth, authOk),
   };
 }
 

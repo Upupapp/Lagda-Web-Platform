@@ -4,7 +4,7 @@
 // Each step renders via <Outlet />. The layout is NOT responsible for step business logic.
 // eNotary content is NEVER shown here. Burgundy (#67023B) is NEVER used.
 
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useRef, useEffect } from "react";
 import { Outlet, Navigate, useNavigate, useLocation } from "react-router";
 import { PrepareProvider, usePrepare } from "../../../context/PrepareContext";
 import { usePlatform } from "../../../context/PlatformContext";
@@ -267,59 +267,114 @@ function StepperSidebar({
   );
 }
 
-// ── Mobile top stepper bar ────────────────────────────────────────────────────
+// ── Mobile horizontal stepper ─────────────────────────────────────────────────
+//
+// Replaces a label, a "Step 2 of 7" counter and a progress line. Those told
+// you where you were and nothing else: not what came next, not what was
+// already done, and not what was still locked. On a phone that bar WAS the
+// navigation, so the sequence was invisible for the whole of preparation.
+//
+// A horizontal strip of steps instead. Reachable steps are buttons; locked
+// ones are visibly locked rather than absent, because "why can I not get to
+// Fields yet" is answered by seeing it sit there greyed after Routing.
+//
+// The wide-screen rail is untouched — it already shows the whole sequence
+// down the side, and rebuilding it would be churn for no gain.
 
 function StepperTopBar({
-  activeStepId,
+  activeStepId, stepStates, onStepClick,
 }: {
   activeStepId: PreparationStepId | null;
+  stepStates: Record<PreparationStepId, PreparationStepState>;
+  onStepClick: (id: PreparationStepId) => void;
 }) {
   const totalSteps = PREPARATION_STEPS.length;
   const activeIdx  = activeStepId ? STEP_ORDER.indexOf(activeStepId) + 1 : 1;
-  const step = PREPARATION_STEPS.find(s => s.id === activeStepId);
-  const progressPct = ((activeIdx - 1) / (totalSteps - 1)) * 100;
+  const activeRef  = useRef<HTMLButtonElement | null>(null);
+
+  // Open showing where you are. A strip that starts at step one while you are
+  // on step six is a strip that has to be explored before it can be read.
+  useEffect(() => {
+    activeRef.current?.scrollIntoView({ block: "nearest", inline: "center" });
+  }, [activeStepId]);
 
   return (
     <div
       style={{
         background: "#F5F7FA",
         borderBottom: "1px solid #E3E8EF",
-        // 16px, matching .prep-step-area and .prep-nav-bar at this width —
-        // this was the one element on the mobile shell with a 20px gutter.
-        padding: "12px 16px",
+        padding: "10px 0 10px",
       }}
     >
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-        <span style={{ ...GF, fontSize: 12, fontWeight: 600, color: NAVY }}>
-          {step?.label ?? "Prepare Document"}
+      <div style={{
+        ...GF, display: "flex", justifyContent: "space-between",
+        alignItems: "center", padding: "0 16px 8px",
+      }}>
+        <span style={{ fontSize: 12, fontWeight: 700, color: NAVY }}>
+          Prepare Document
         </span>
-        <span style={{ ...GF, fontSize: 11, color: SILVER }}>
+        <span style={{ fontSize: 11, color: SILVER }}>
           Step {activeIdx} of {totalSteps}
         </span>
       </div>
-      <div
-        role="progressbar"
-        aria-valuenow={progressPct}
-        aria-valuemin={0}
-        aria-valuemax={100}
-        aria-label={`Preparation progress: step ${activeIdx} of ${totalSteps}`}
+
+      <ol
+        aria-label="Preparation steps"
         style={{
-          height: 4,
-          background: "#E3E8EF",
-          borderRadius: 4,
-          overflow: "hidden",
+          display: "flex", alignItems: "center", gap: 6,
+          listStyle: "none", margin: 0, padding: "0 16px",
+          overflowX: "auto", scrollbarWidth: "none",
+          WebkitOverflowScrolling: "touch",
         }}
       >
-        <div
-          style={{
-            height: "100%",
-            width: `${progressPct}%`,
-            background: AZURE,
-            borderRadius: 4,
-            transition: "width 0.3s ease",
-          }}
-        />
-      </div>
+        {PREPARATION_STEPS.map((step, idx) => {
+          const state = stepStates[step.id];
+          const isActive = step.id === activeStepId;
+          const locked = state === "unavailable" || state === "blocked";
+          const done = state === "complete" || state === "complete-with-warning";
+
+          return (
+            <li key={step.id} style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
+              <button
+                type="button"
+                ref={isActive ? activeRef : undefined}
+                onClick={() => { if (!locked) onStepClick(step.id); }}
+                disabled={locked}
+                aria-current={isActive ? "step" : undefined}
+                // Says WHY it cannot be opened, rather than being inert.
+                title={locked ? `${step.label} — finish the earlier steps first` : step.label}
+                style={{
+                  ...GF, display: "inline-flex", alignItems: "center", gap: 6,
+                  minHeight: 36, padding: "0 12px", borderRadius: 999,
+                  border: isActive ? `1px solid ${AZURE}` : "1px solid #E3E8EF",
+                  background: isActive ? "#EBF4FC" : locked ? "#F1F5F9" : "#FFFFFF",
+                  color: locked ? SILVER : isActive ? AZURE : NAVY,
+                  fontSize: 12.5, fontWeight: isActive ? 700 : 600,
+                  whiteSpace: "nowrap",
+                  cursor: locked ? "not-allowed" : "pointer",
+                }}
+              >
+                <span
+                  aria-hidden
+                  style={{
+                    width: 18, height: 18, borderRadius: "50%", flexShrink: 0,
+                    display: "inline-flex", alignItems: "center", justifyContent: "center",
+                    fontSize: 10, fontWeight: 700,
+                    background: done ? AZURE : isActive ? AZURE : "#E3E8EF",
+                    color: done || isActive ? "#FFFFFF" : SILVER,
+                  }}
+                >
+                  {done ? "✓" : idx + 1}
+                </span>
+                {step.shortLabel}
+              </button>
+              {idx < PREPARATION_STEPS.length - 1 && (
+                <span aria-hidden style={{ width: 10, height: 1, background: "#D1D9E0", flexShrink: 0 }} />
+              )}
+            </li>
+          );
+        })}
+      </ol>
     </div>
   );
 }
@@ -510,7 +565,11 @@ export function PrepareLayout() {
         <div className="prep-content">
           {/* Mobile top bar */}
           <div className="prep-topbar">
-            <StepperTopBar activeStepId={activeStepId} />
+            <StepperTopBar
+              activeStepId={activeStepId}
+              stepStates={stepStates}
+              onStepClick={handleStepClick}
+            />
           </div>
 
           {/* Step content */}

@@ -784,6 +784,12 @@ const RoleDetailPage = lazy(() =>
     default: m.RoleDetailPage,
   })),
 );
+const SignedDocumentsPage = lazy(() =>
+  import("./app/pages/platform/workspace/SignedDocumentsPage").then((m) => ({
+    default: m.SignedDocumentsPage,
+  })),
+);
+
 const ActivityPage = lazy(() =>
   import("./app/pages/platform/workspace/ActivityPage").then((m) => ({
     default: m.ActivityPage,
@@ -2334,6 +2340,14 @@ export const router = createBrowserRouter([
         element: (
           <Suspense fallback={null}>
             <RolesPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: "workspace/documents",
+        element: (
+          <Suspense fallback={null}>
+            <SignedDocumentsPage />
           </Suspense>
         ),
       },
