@@ -239,7 +239,7 @@ function QuickActionsSection({ canPrepare, canTemplate, canVerify, canInvite }: 
     { icon: <FileText size={20} aria-hidden />, label: "My Documents", sub: "View and manage documents", to: "/app/documents", accent: NAVY, bg: "#F8FAFC", permission: true },
     { icon: <LayoutTemplate size={20} aria-hidden />, label: "Use a Template", sub: "Start from a saved template", to: "/app/templates", accent: NAVY, bg: "#F8FAFC", permission: canTemplate },
     { icon: <ShieldCheck size={20} aria-hidden />, label: "Verify a Document", sub: "Check a document's authenticity", to: "/app/verify", accent: NAVY, bg: "#F8FAFC", permission: canVerify },
-    { icon: <Users size={20} aria-hidden />, label: "Invite Team Member", sub: "Add someone to this workspace", to: "/app/team/invitations", accent: NAVY, bg: "#F8FAFC", permission: canInvite },
+    { icon: <Users size={20} aria-hidden />, label: "Invite Team Member", sub: "Add someone to this workspace", to: "/app/workspace/invitations", accent: NAVY, bg: "#F8FAFC", permission: canInvite },
   ].filter((a) => a.permission);
 
   if (actions.length === 0) return null;
@@ -670,7 +670,7 @@ function WorkspaceTeamSummary({ memberCount, workspaceName, planLabel, isLoading
 }) {
   return (
     <section aria-label="Workspace and team summary" data-guide="dashboard-team" style={{ marginBottom: 20 }}>
-      <SectionHeader label="Team" to="/app/team" linkLabel="Manage" />
+      <SectionHeader label="Team" to="/app/workspace/members" linkLabel="Manage" />
       <Card style={{ padding: "16px" }}>
         {isLoading ? (
           <>
@@ -694,7 +694,7 @@ function WorkspaceTeamSummary({ memberCount, workspaceName, planLabel, isLoading
               <span style={{ color: "#0F172A", ...GF, fontSize: 12, fontWeight: 700 }}>{memberCount}</span>
             </div>
             <Link
-              to="/app/team/invitations"
+              to="/app/workspace/invitations"
               style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, marginTop: 12, padding: "9px", background: "rgba(0,120,212,0.06)", borderRadius: 8, color: AZURE, ...GF, fontSize: 13, fontWeight: 600, textDecoration: "none" }}
               className="dashboard-invite-link"
             >
