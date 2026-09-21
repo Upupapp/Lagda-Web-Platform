@@ -1,9 +1,15 @@
 // Notification Center context — single source of truth for C28 notification state.
 // Wraps PlatformLayout so sidebar, header, and all platform pages share the same state.
 
-import { createContext, useContext, useState, useCallback, type ReactNode } from "react";
+import {
+  createContext, useContext, useState, useCallback, useEffect, type ReactNode,
+} from "react";
 import type { NotificationRecord } from "../models/notifications";
-import { notificationCenterService } from "../services/mock/notification-center.service";
+import {
+  notificationCenterService, hydrate,
+} from "../services/mock/notification-center.service";
+import { realNotificationFeedService } from "../services/real/notification-feed.service";
+import { USE_REAL_BACKEND } from "../services/backend-flag";
 
 interface NotificationCenterContextValue {
   items: NotificationRecord[];
@@ -29,6 +35,34 @@ export function NotificationCenterProvider({ children }: { children: ReactNode }
 
   const reload = useCallback(() => {
     setItems([...loadAll()]);
+  }, []);
+
+  // Real notifications, when there is a backend to ask.
+  //
+  // Fetched once on mount and again whenever the tab is brought back to the
+  // front, which is the cheap approximation of "live" that the rest of the
+  // product uses. A failure is swallowed deliberately: an empty or stale feed
+  // is a far smaller problem than a platform shell that will not render.
+  useEffect(() => {
+    if (!USE_REAL_BACKEND) return;
+    let cancelled = false;
+    const load = () => {
+      void (async () => {
+        try {
+          const fetched = await realNotificationFeedService.list();
+          if (cancelled) return;
+          hydrate(fetched);
+          setItems([...notificationCenterService.getAllItems()]);
+        } catch { /* leave whatever is already shown */ }
+      })();
+    };
+    load();
+    const onFocus = () => { load(); };
+    window.addEventListener("focus", onFocus);
+    return () => {
+      cancelled = true;
+      window.removeEventListener("focus", onFocus);
+    };
   }, []);
 
   const markRead = useCallback((id: string) => {

@@ -204,9 +204,12 @@ const preparationResults = () => preparationResultsFrom(surfaces.search.globalSe
 const preparationCommands = () =>
   surfaces.search.globalSearchService.listCommands().filter((c) => c.id.startsWith("cmd_prep_"));
 
+// The FIXTURES, not the live store. With a backend configured the store
+// starts empty on purpose — real users must never be shown invented
+// notifications — but these assertions are about whether the demo fixtures
+// are coherent, which is true either way.
 const preparationNotifications = () =>
-  surfaces.notifications.notificationCenterService
-    .getAllItems()
+  surfaces.notifications.demoFixtures()
     .filter((n) => n.id.startsWith("notif-prep-"));
 
 function tableCellStrings(table: ReportTable): string[] {
@@ -539,9 +542,13 @@ describe("provider registration", () => {
     ).toHaveLength(3);
     // First call, no warm-up.
     expect(preparationResultsFrom(fresh.search.globalSearchService).length).toBeGreaterThan(0);
+    // The FIXTURES, for the same reason as `preparationNotifications` above:
+    // this test is about registration happening at import rather than at
+    // first page visit, and the fixtures are built at import either way. The
+    // live store is deliberately empty when a backend is configured, which
+    // says nothing about whether registration ran.
     expect(
-      fresh.notifications.notificationCenterService
-        .getAllItems()
+      fresh.notifications.demoFixtures()
         .filter((n) => n.id.startsWith("notif-prep-")),
     ).toHaveLength(2);
     expect(

@@ -1,11 +1,28 @@
 // /app/settings/profile — Personal profile.
-// Frontend-only demonstration. No Burgundy. No eNotary.
+//
+// Real against the backend when one is configured: reads GET /me and writes
+// PATCH /me/profile. Falls back to the mock only when there is no backend, so
+// the demo build still renders.
+//
+// Saving also refreshes the platform session, because the name shown here is
+// the name shown in the header, the avatar and the sender line. Without that
+// refresh a signer renamed themselves and kept seeing the old name everywhere
+// until a reload — the save had worked and looked like it had not.
+//
 // Do not collect passwords, OTPs, government IDs, or identity documents.
 
 import React, { useEffect, useState, useRef } from "react";
 import { SettingsPage, SSection, SField, INPUT_STYLE, BTN_PRIMARY, BTN_SECONDARY, Skeleton, DEMO_NOTICE } from "./SettingsShell";
 import { mockAccountSettingsService } from "../../../services/mock/settings.service";
+import { realAccountSettingsService } from "../../../services/real/account-settings.service";
+import { USE_REAL_BACKEND } from "../../../services/backend-flag";
+import { usePlatform } from "../../../context/PlatformContext";
 import type { UserProfile } from "../../../models/settings";
+
+/** One switch, read once, rather than a conditional at each call site. */
+const settingsService = USE_REAL_BACKEND
+  ? realAccountSettingsService
+  : mockAccountSettingsService;
 
 const GF    = { fontFamily: "'Geist', sans-serif" };
 const NAVY  = "#07111F";
@@ -26,11 +43,12 @@ export function ProfilePage() {
   const [validErr, setValidErr] = useState<Record<string, string>>({});
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [avatarErr, setAvatarErr] = useState<string | null>(null);
+  const { refreshSessionFromBackend } = usePlatform();
   const fileRef = useRef<HTMLInputElement>(null);
   const avatarObjRef = useRef<string | null>(null);
 
   useEffect(() => {
-    mockAccountSettingsService.getUserProfile().then(p => {
+    settingsService.getUserProfile().then(p => {
       setProfile(p);
       setForm({ fullName: p.fullName, displayName: p.displayName, jobTitle: p.jobTitle, department: p.department, preferredSenderName: p.preferredSenderName });
       setLoading(false);
@@ -60,7 +78,7 @@ export function ProfilePage() {
     if (!validate()) return;
     setSaving(true);
     try {
-      const updated = await mockAccountSettingsService.updateUserProfile({
+      const updated = await settingsService.updateUserProfile({
         fullName: form.fullName?.trim(),
         displayName: form.displayName?.trim() || form.fullName?.trim(),
         jobTitle: form.jobTitle?.trim() || "",
@@ -70,6 +88,14 @@ export function ProfilePage() {
       setProfile(updated);
       setDirty(false);
       setSaved(true);
+      // The header, avatar and sender line all read the platform session, not
+      // this form. Refreshing it is what makes the change visible everywhere
+      // at once instead of only on this page until the next reload.
+      //
+      // Deliberately not awaited before showing success: the save HAS already
+      // succeeded, and a slow refresh should not make it look otherwise. A
+      // failed refresh leaves a stale header, which the next navigation fixes.
+      if (USE_REAL_BACKEND) void refreshSessionFromBackend();
       setTimeout(() => setSaved(false), 2500);
     } catch {
       setError("Profile update failed. Please try again.");

@@ -15,6 +15,7 @@ import { ok, fail } from "../../models/errors";
 import type { ServiceResult } from "../../models/errors";
 import { isCapabilityInActiveProfile } from "../../config/capability-resolver";
 import { registerSessionCleanup } from "../session-lifecycle";
+import { USE_REAL_BACKEND } from "../backend-flag";
 
 // ── Fixtures ──────────────────────────────────────────────────────────────────
 
@@ -442,7 +443,42 @@ function buildInitialItems(): NotificationRecord[] {
     .map((f) => ({ ...f }));
 }
 
-let _items: NotificationRecord[] = buildInitialItems();
+// Empty when a backend is configured.
+//
+// The fixtures are a demo of a notification centre, not data. Seeding them
+// behind a real backend would put invented documents and invented workspace
+// events in front of someone reading their actual mail, and there is no way
+// for them to tell which is which — so the real build starts empty and is
+// filled by `hydrate` from `/me/notifications`.
+let _items: NotificationRecord[] = USE_REAL_BACKEND ? [] : buildInitialItems();
+
+/**
+ * The demo fixtures, regardless of which mode the store is in.
+ *
+ * Exported for the tests that check the fixtures are internally coherent —
+ * that every action path points at a batch that exists, and that none of them
+ * claims a send or a signature. Those assertions are about the FIXTURES, so
+ * they must not depend on whether the store happens to be holding them: with
+ * a backend configured it deliberately is not.
+ */
+export function demoFixtures(): NotificationRecord[] {
+  return buildInitialItems();
+}
+
+/**
+ * Replaces the feed with rows fetched from the backend.
+ *
+ * Read and dismissed state is per-session and lives only here, so a refetch
+ * would otherwise mark everything unread again. Existing state is carried
+ * across by id; anything genuinely new arrives unread, which is correct.
+ */
+export function hydrate(incoming: NotificationRecord[]): void {
+  const previous = new Map(_items.map(item => [item.id, item.status]));
+  _items = incoming.map(item => {
+    const status = previous.get(item.id);
+    return status === undefined ? item : { ...item, status };
+  });
+}
 
 // ── Filtering helpers ─────────────────────────────────────────────────────────
 
