@@ -3,14 +3,13 @@
 // Focus-trapped while open. Escape closes. Scroll locked.
 
 import { useState, useRef, useEffect, useCallback, lazy, Suspense } from "react";
-import { NavLink, useLocation, Link } from "react-router";
+import { NavLink, Link } from "react-router";
 import {
   Menu, X, LayoutDashboard, FileText, Files, Users, ShieldCheck,
   Bell, Users2, Settings, Settings2, FilePlus, Inbox, HelpCircle, GitBranch, BarChart2, Zap,
   Search, Compass,
 } from "lucide-react";
-import { LagdaLogo } from "../brand/LagdaLogo";
-import lagdaLogoFull from "../../../brand elements/svg/LagdaLogoPrimaryHorizontalFullColor.svg";
+import lagdaHeaderLogo from "../../../brand elements/svg/LagdaLogoPrimaryHorizontalFullColor_Header.svg";
 import { usePlatform } from "../../context/PlatformContext";
 import { PRIMARY_NAV, UTILITY_NAV, PREPARE_ACTION } from "../../config/platform.nav";
 import { NotificationMenu } from "./NotificationMenu";
@@ -54,9 +53,6 @@ export function MobileNav() {
   const { restartTour } = useTour();
   const drawerRef    = useRef<HTMLDivElement>(null);
   const triggerRef   = useRef<HTMLButtonElement>(null);
-  // The dashboard route gets its own brand-mark asset; every other platform
-  // page keeps the standard LagdaLogo component.
-  const isDashboard  = useLocation().pathname === "/app/dashboard";
 
   // Lock body scroll when drawer is open
   useEffect(() => {
@@ -155,11 +151,11 @@ export function MobileNav() {
 
         {/* Logo */}
         <NavLink to="/app/dashboard" style={{ display: "flex", alignItems: "center", textDecoration: "none", flex: 1, paddingLeft: 4 }} aria-label="LAGDA — Dashboard">
-          {isDashboard ? (
-            <img src={lagdaLogoFull} alt="LAGDA" style={{ display: "block", width: 104, height: "auto", objectFit: "contain", objectPosition: "left center" }} />
-          ) : (
-            <LagdaLogo variant="colored-horizontal" size="xs" decorative />
-          )}
+          {/* The cropped header SVG, as the onboarding header uses: the full
+              file's canvas is mostly whitespace, so at phone widths its
+              wordmark rendered tiny. Cropped, the wordmark fills the width.
+              Same on every page, not just the dashboard. */}
+          <img src={lagdaHeaderLogo} alt="LAGDA" style={{ display: "block", width: "clamp(136px, 40vw, 168px)", aspectRatio: "200 / 58", height: "auto", objectFit: "cover", objectPosition: "left center" }} />
         </NavLink>
 
         {/* Right actions */}
@@ -207,11 +203,7 @@ export function MobileNav() {
       >
         {/* Drawer header */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 16px", borderBottom: `1px solid ${BORDER}`, flexShrink: 0 }}>
-          {isDashboard ? (
-            <img src={lagdaLogoFull} alt="LAGDA" style={{ display: "block", width: 128, height: "auto", objectFit: "contain", objectPosition: "left center" }} />
-          ) : (
-            <LagdaLogo variant="colored-horizontal" size="sm" decorative />
-          )}
+          <img src={lagdaHeaderLogo} alt="LAGDA" style={{ display: "block", width: 172, aspectRatio: "200 / 58", height: "auto", objectFit: "cover", objectPosition: "left center" }} />
           <button
             onClick={() => { setDrawerOpen(false); triggerRef.current?.focus(); }}
             aria-label="Close navigation"
