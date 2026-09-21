@@ -25,6 +25,11 @@ const AZURE = "#0078D4";
 const SLATE = "#64748B";
 const SILVER= "#8A9BAE";
 
+/** Same tier as the platform's own fixed bars. See components/system z-index. */
+const Z_SHELL = 30;
+/** Bar height plus its padding — what the content column must clear. */
+const BOTTOM_NAV_CLEARANCE = 72;
+
 export const DEMO_NOTICE = (
   <div role="note" style={{ background: "#FFFBEB", border: "1px solid #FDE68A", borderRadius: 8, padding: "8px 14px", marginBottom: 18, ...GF, fontSize: 12, color: "#92400E" }}>
     Frontend demonstration — all changes are session-local and reset on page reload. No backend services are connected.
@@ -190,6 +195,115 @@ export function SettingsSidebar() {
   );
 }
 
+// ── Bottom navigation, for anything narrower than a desktop ────────────────
+//
+// ── Why 1024 and not 768 ──────────────────────────────────────────────────
+//
+// The platform's own breakpoint is 768: at 767 and below it swaps its sidebar
+// for a top bar and drawer. But at 768-1023 it shows the FULL desktop
+// sidebar, and settings then added a second 220px rail beside it. On a 768px
+// tablet that is most of the width spent on navigation before any content.
+//
+// So settings moves to the bottom at 1024, which covers phones and the whole
+// tablet range, and leaves the desktop layout exactly as it was.
+//
+// ── Why a scroller rather than a fitted bar ───────────────────────────────
+//
+// There are eleven top-level entries with labels like "Signatures & Initials".
+// They do not fit across a phone, and the usual answers — truncating to
+// icons, or hiding half behind "More" — either lose the labels that make the
+// sections findable or bury the ones that lost a coin toss.
+//
+// A scroller keeps every label. What makes it usable rather than a place
+// things hide is that the current item is scrolled into view on arrival, so
+// the bar always opens showing you where you are.
+
+function SettingsBottomNav() {
+  const loc = useLocation();
+  const activeRef = React.useRef<HTMLAnchorElement | null>(null);
+
+  React.useEffect(() => {
+    // `nearest` on the inline axis moves the strip only as far as it must,
+    // and `block: "nearest"` stops the browser scrolling the PAGE to reach a
+    // bar that is already fixed to the bottom of it.
+    activeRef.current?.scrollIntoView({ block: "nearest", inline: "center" });
+  }, [loc.pathname]);
+
+  const items = SETTINGS_NAV;
+  // `.at(-1)` is ES2022 and this project's lib predates it, so plain indexing.
+  const personal = items.filter(i => i.group === "personal");
+  const lastPersonal = personal.length > 0
+    ? personal[personal.length - 1]?.path
+    : undefined;
+
+  return (
+    <nav
+      aria-label="Settings navigation"
+      className="settings-bottom-nav"
+      style={{
+        position: "fixed", left: 0, right: 0, bottom: 0, zIndex: Z_SHELL,
+        background: "#FFFFFF", borderTop: "1px solid #E3E8EF",
+        // Clears the iOS home indicator. Zero everywhere it does not apply.
+        paddingBottom: "env(safe-area-inset-bottom, 0px)",
+        boxShadow: "0 -2px 10px rgba(7,17,31,0.06)",
+      }}
+    >
+      <ul
+        style={{
+          display: "flex", gap: 6, listStyle: "none", margin: 0,
+          padding: "8px 12px", overflowX: "auto", overflowY: "hidden",
+          scrollbarWidth: "none", WebkitOverflowScrolling: "touch",
+        }}
+      >
+        {items.map(item => (
+          <React.Fragment key={item.path}>
+            <BottomEntry item={item} activeRef={activeRef} />
+            {item.path === lastPersonal && (
+              // The grouping is carried by headings in the sidebar. A bar has
+              // no room for those, so the boundary becomes a rule — without
+              // it, "Data & Privacy" and "Branding" read as one flat list.
+              <li aria-hidden style={{
+                flex: "0 0 auto", width: 1, alignSelf: "stretch",
+                background: "#E3E8EF", margin: "2px 4px",
+              }} />
+            )}
+          </React.Fragment>
+        ))}
+      </ul>
+    </nav>
+  );
+}
+
+function BottomEntry({ item, activeRef }: {
+  item: SettingsNavItem;
+  activeRef: React.MutableRefObject<HTMLAnchorElement | null>;
+}) {
+  const loc = useLocation();
+  const selected = loc.pathname === item.path
+    || (item.path !== "/app/settings" && loc.pathname.startsWith(item.path));
+
+  return (
+    <li style={{ flex: "0 0 auto" }}>
+      <Link
+        to={item.path}
+        ref={selected ? activeRef : undefined}
+        aria-current={selected ? "page" : undefined}
+        style={{
+          display: "inline-flex", alignItems: "center", justifyContent: "center",
+          minHeight: 40, padding: "0 14px", borderRadius: 999,
+          textDecoration: "none", whiteSpace: "nowrap",
+          ...GF, fontSize: 13, fontWeight: selected ? 700 : 500,
+          color: selected ? "#FFFFFF" : NAVY,
+          background: selected ? AZURE : "#F1F5F9",
+          transition: "background 120ms ease, color 120ms ease",
+        }}
+      >
+        {item.label}
+      </Link>
+    </li>
+  );
+}
+
 interface SettingsPageProps {
   title:       string;
   breadcrumb?: string;
@@ -250,7 +364,7 @@ export function SettingsLayout() {
   return (
     <HeadingContext.Provider value={publish}>
       <div style={{ minHeight: "100vh", background: "#F8FAFC" }}>
-        <header style={{ background: "#FFFFFF", borderBottom: "1px solid #E3E8EF", padding: "16px 24px" }}>
+        <header className="settings-header" style={{ background: "#FFFFFF", borderBottom: "1px solid #E3E8EF", padding: "16px 24px" }}>
           {heading.breadcrumb && (
             <nav aria-label="Breadcrumb" style={{ marginBottom: 6 }}>
               <ol style={{ display: "flex", gap: 6, listStyle: "none", margin: 0, padding: 0, ...GF, fontSize: 12, color: SILVER }}>
@@ -270,7 +384,9 @@ export function SettingsLayout() {
         </header>
 
         <div style={{ display: "flex", gap: 0, maxWidth: 1100, margin: "0 auto" }}>
-          <div style={{ padding: "24px 0 24px 24px", display: "flex" }}>
+          {/* Unchanged at >=1024. Hidden below it, where the bottom bar takes
+              over — the markup and styles here are exactly what shipped. */}
+          <div className="settings-side-nav" style={{ padding: "24px 0 24px 24px", display: "flex" }}>
             <div style={{ width: 220, flexShrink: 0, background: "#FFFFFF", border: "1.5px solid #E3E8EF", borderRadius: 12, padding: "16px 8px", alignSelf: "flex-start", position: "sticky", top: 24 }}>
               <SettingsSidebar />
             </div>
@@ -278,12 +394,38 @@ export function SettingsLayout() {
 
           {/* Only this column suspends. The sidebar and header above never
               unmount, which is the whole point of the layout route. */}
-          <main id="main-content" style={{ flex: 1, padding: "24px 24px 48px", minWidth: 0 }}>
+          <main id="main-content" className="settings-main" style={{ flex: 1, minWidth: 0 }}>
             <Suspense fallback={<ContentFallback />}>
               <Outlet />
             </Suspense>
           </main>
         </div>
+
+        <SettingsBottomNav />
+
+        <style>{`
+          /* Desktop and up: the sidebar, exactly as before. */
+          @media (min-width: 1024px) {
+            .settings-side-nav   { display: flex !important; }
+            .settings-bottom-nav { display: none !important; }
+            .settings-main       { padding: 24px 24px 48px !important; }
+          }
+          /* Phones and tablets: bottom bar, and the rail steps aside. */
+          @media (max-width: 1023px) {
+            .settings-side-nav   { display: none !important; }
+            .settings-bottom-nav { display: block !important; }
+            .settings-main {
+              /* Gutters shrink with the viewport; the bottom clears the fixed
+                 bar AND the home indicator, so the last control is reachable
+                 rather than sitting under either. */
+              padding: 16px clamp(12px, 4vw, 24px)
+                       calc(${BOTTOM_NAV_CLEARANCE}px + env(safe-area-inset-bottom, 0px) + 24px) !important;
+            }
+            .settings-header { padding: 12px clamp(12px, 4vw, 24px) !important; }
+          }
+          /* The strip scrolls; it should not advertise it with a scrollbar. */
+          .settings-bottom-nav ul::-webkit-scrollbar { display: none; }
+        `}</style>
       </div>
     </HeadingContext.Provider>
   );
