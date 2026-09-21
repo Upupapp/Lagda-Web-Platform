@@ -25,6 +25,9 @@ function req(over: Partial<SigningRequestListItem> = {}): SigningRequestListItem
     state: "sent",
     participantCount: 2,
     completedParticipantCount: 0,
+    // Null rather than a sender: nothing here turns on who sent the request,
+    // and a name would imply these tests exercise attribution.
+    initiator: null,
     createdAt: daysAgo(10),
     sentAt: daysAgo(1),
     completedAt: null,

@@ -40,6 +40,9 @@ function req(over: Partial<SigningRequestListItem> = {}): SigningRequestListItem
     signingRequestId: `sr_${seq}`, documentId: `doc_${seq}`,
     documentTitle: `Document ${seq}`, state: "sent",
     participantCount: 3, completedParticipantCount: 1,
+    // Null rather than a sender: nothing in these tests is about who sent
+    // the request, and a name here would suggest otherwise.
+    initiator: null,
     createdAt: ago(10), sentAt: ago(1), completedAt: null, expiresAt: null,
     ...over,
   };
