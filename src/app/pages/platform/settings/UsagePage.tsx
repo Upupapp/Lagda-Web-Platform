@@ -2,7 +2,7 @@
 // Frontend-only demonstration data. No real metering, export, or billing events.
 
 import React, { useEffect, useState } from "react";
-import { SettingsPage, SSection, Skeleton, DEMO_NOTICE } from "./SettingsShell";
+import { SettingsPage, SSection, Skeleton } from "./SettingsShell";
 import { mockUsageService } from "../../../services/mock/settings.service";
 import type { UsageSummaryData, UsageMetric, UsagePeriod } from "../../../models/settings";
 
@@ -99,7 +99,6 @@ export function UsagePage() {
 
   return (
     <SettingsPage title="Usage" breadcrumb="Usage">
-      {DEMO_NOTICE}
 
       {/* Period selector */}
       <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 20, flexWrap: "wrap" }}>

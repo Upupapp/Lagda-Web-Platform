@@ -459,11 +459,35 @@ export function PrepareLayout() {
     setStep,
     draft,
     validate,
+    resumeBackendDraft,
   } = usePrepare();
 
   const { run: runProcessing } = useProcessing();
   const [showDiscard, setShowDiscard] = useState(false);
   const [showMissing, setShowMissing] = useState(false);
+
+  // Reopening a draft from the Documents list.
+  //
+  // The link arrives as ?resumeDocumentId=<backend document id>. It is handled
+  // HERE rather than on the Documents page because rebuilding the draft needs
+  // PrepareProvider, which only wraps /app/prepare/*.
+  //
+  // Runs at most once per document id: `resumedRef` is checked and set before
+  // the await, so a re-render mid-flight cannot start a second rebuild that
+  // would create a second local draft against the same backend document.
+  const resumeDocumentId = new URLSearchParams(location.search).get("resumeDocumentId");
+  const resumedRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (resumeDocumentId === null || resumedRef.current === resumeDocumentId) return;
+    resumedRef.current = resumeDocumentId;
+    void (async () => {
+      await resumeBackendDraft(resumeDocumentId);
+      // The id is dropped from the URL either way. On success it has done its
+      // work; on failure the error is already on screen, and leaving it would
+      // retry the same broken rebuild on every reload.
+      void navigate(location.pathname, { replace: true });
+    })();
+  }, [resumeDocumentId, resumeBackendDraft, navigate, location.pathname]);
 
   const activeStepId = currentStepFromPath(location.pathname);
 

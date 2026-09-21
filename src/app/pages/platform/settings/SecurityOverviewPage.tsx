@@ -3,7 +3,7 @@
 
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router";
-import { SettingsPage, SCard, SSection, StatusBadge, Skeleton, DEMO_NOTICE } from "./SettingsShell";
+import { SettingsPage, SCard, SSection, StatusBadge, Skeleton } from "./SettingsShell";
 import { mockSecuritySettingsService } from "../../../services/mock/settings.service";
 import type { SecurityOverview } from "../../../models/settings";
 
@@ -65,7 +65,6 @@ export function SecurityOverviewPage() {
 
   return (
     <SettingsPage title="Account Security" breadcrumb="Security">
-      {DEMO_NOTICE}
 
       {/* Status summary */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: 10, marginBottom: 20 }}>

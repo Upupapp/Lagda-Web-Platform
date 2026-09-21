@@ -12,10 +12,11 @@
 // Do not collect passwords, OTPs, government IDs, or identity documents.
 
 import React, { useEffect, useState, useRef } from "react";
-// DEMO_NOTICE is deliberately NOT imported. It says "no backend services are
-// connected", which stopped being true when this page moved to GET /me and
-// PATCH /me/profile — leaving it would tell people their saved name is about
-// to be discarded, which is the opposite of what now happens.
+// This page is listed in LIVE_SETTINGS_PATHS, so the shell shows it no preview
+// note. That listing is the single place the decision is made — it replaced a
+// banner each page imported for itself, which is how this page ended up with
+// the banner removed but a success message still reading "updated in this
+// frontend demonstration" long after it had started really saving.
 import { SettingsPage, SSection, SField, INPUT_STYLE, BTN_PRIMARY, BTN_SECONDARY, Skeleton } from "./SettingsShell";
 import { mockAccountSettingsService } from "../../../services/mock/settings.service";
 import { realAccountSettingsService } from "../../../services/real/account-settings.service";
@@ -216,7 +217,7 @@ export function ProfilePage() {
             <button type="button" onClick={() => { setForm({ fullName: profile?.fullName, displayName: profile?.displayName, jobTitle: profile?.jobTitle, department: profile?.department, preferredSenderName: profile?.preferredSenderName }); setDirty(false); setValidErr({}); }}
               style={BTN_SECONDARY}>Discard</button>
           )}
-          {saved && <span role="status" style={{ ...GF, fontSize: 13, color: "#16A34A" }}>Profile updated in this frontend demonstration.</span>}
+          {saved && <span role="status" style={{ ...GF, fontSize: 13, color: "#16A34A" }}>Profile updated.</span>}
           {dirty && !saving && <span style={{ ...GF, fontSize: 12, color: SLATE }}>Unsaved changes.</span>}
         </div>
       </form>

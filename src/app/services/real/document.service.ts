@@ -82,6 +82,19 @@ class RealDocumentService {
     );
   }
 
+  /**
+   * One document, by id.
+   *
+   * The list endpoint is paged at 100, so finding a document by scanning it
+   * works until a workspace has more than that and then quietly stops. This
+   * asks for the one that is wanted.
+   */
+  async get(workspaceId: string, documentId: string): Promise<RealDocument> {
+    return apiRequest<RealDocument>(
+      `/workspaces/${encodeURIComponent(workspaceId)}/documents/${encodeURIComponent(documentId)}`,
+    );
+  }
+
   async create(workspaceId: string, title: string): Promise<RealDocument> {
     return apiRequest<RealDocument>(`/workspaces/${encodeURIComponent(workspaceId)}/documents`, {
       method: "POST",

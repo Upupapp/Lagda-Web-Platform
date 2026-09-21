@@ -3,7 +3,7 @@
 // Transactional and promotional preferences are clearly separated.
 
 import React, { useEffect, useState } from "react";
-import { SettingsPage, SSection, SField, BTN_SECONDARY, Skeleton, DEMO_NOTICE } from "./SettingsShell";
+import { SettingsPage, SSection, SField, BTN_SECONDARY, Skeleton } from "./SettingsShell";
 import { mockNotificationSettingsService } from "../../../services/mock/settings.service";
 import type { NotificationPreferences, NotificationCategoryPreference, NotificationChannel, NotificationFrequency } from "../../../models/settings";
 
@@ -126,7 +126,6 @@ export function NotificationsPage() {
 
   return (
     <SettingsPage title="Notification Preferences" breadcrumb="Notifications">
-      {DEMO_NOTICE}
       <form onSubmit={handleSave} noValidate>
         <SSection title="Transactional Notifications">
           <p style={{ ...GF, fontSize: 12, color: SLATE, margin: "0 0 12px" }}>

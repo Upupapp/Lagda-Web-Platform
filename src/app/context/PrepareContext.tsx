@@ -19,6 +19,7 @@ import React, {
   useState,
 } from "react";
 import { readJSON, writeJSON, removeKey, PERSISTENCE_KEYS } from "../services/local-persistence";
+import { loadResumableDraft } from "../services/real/resume-draft.service";
 import { clearAllFileRefs } from "../services/prepare/file-registry";
 import { USE_REAL_BACKEND } from "../services/backend-flag";
 import { usePlatform } from "./PlatformContext";
@@ -306,6 +307,15 @@ interface PrepareContextValue {
     initialTitle?: string;
   }) => Promise<PrepDraftId | null>;
   loadDraft:    (draftId: PrepDraftId) => Promise<void>;
+  /**
+   * Rebuilds a draft from a backend document and re-enters preparation.
+   *
+   * For a signing request still in `draft` state: its document, recipients
+   * and field placement are all on the server, so the work is recoverable on
+   * any device even though the LOCAL draft never left the browser that
+   * started it.
+   */
+  resumeBackendDraft: (documentId: string) => Promise<boolean>;
   discardDraft: () => Promise<void>;
 
   // Draft mutations (update local state immediately, persist via service)
@@ -461,6 +471,34 @@ export function PrepareProvider({ children }: { children: React.ReactNode }) {
       return null;
     }
   }, []);
+
+  const resumeBackendDraft = useCallback(async (documentId: string) => {
+    const workspaceId = platform.currentWorkspace?.id;
+    if (workspaceId === undefined) return false;
+    dispatch({ type: "LOAD_START" });
+    try {
+      const resumable = await loadResumableDraft(workspaceId, documentId);
+      const draft = await prepareService.createDraft({
+        source: "resumed-backend-draft",
+        initialFiles: resumable.files,
+        initialTitle: resumable.title,
+      });
+      // Participants are applied AFTER the draft exists, through the service
+      // that owns persisting them. Assigning them onto the returned object
+      // would update this render and store nothing.
+      const withParticipants = resumable.participants.length === 0
+        ? draft
+        : await prepareService.updateParticipants(draft.id, resumable.participants);
+      dispatch({ type: "LOAD_OK", draft: withParticipants });
+      return true;
+    } catch {
+      dispatch({
+        type: "LOAD_ERROR",
+        message: "This draft could not be reopened. Its document may have been removed.",
+      });
+      return false;
+    }
+  }, [platform.currentWorkspace?.id]);
 
   const loadDraft = useCallback(async (draftId: PrepDraftId) => {
     dispatch({ type: "LOAD_START" });
@@ -689,6 +727,7 @@ export function PrepareProvider({ children }: { children: React.ReactNode }) {
     resumableDrafts:         state.resumableDrafts,
     createDraft,
     loadDraft,
+    resumeBackendDraft,
     discardDraft,
     updateFiles,
     updateDetails,

@@ -3,7 +3,7 @@
 // Account closure demonstration is blocked for workspace owners.
 
 import React, { useEffect, useState } from "react";
-import { SettingsPage, SSection, Skeleton, DEMO_NOTICE } from "./SettingsShell";
+import { SettingsPage, SSection, Skeleton } from "./SettingsShell";
 import { mockDataPrivacyService } from "../../../services/mock/settings.service";
 import type { DataPrivacySettings } from "../../../models/settings";
 
@@ -69,7 +69,6 @@ export function DataPrivacyPage() {
 
   return (
     <SettingsPage title="Data & Privacy" breadcrumb="Data & Privacy">
-      {DEMO_NOTICE}
 
       {/* Data you can access */}
       <SSection title="Your Data in LAGDA">

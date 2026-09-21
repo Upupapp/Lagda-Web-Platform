@@ -3,7 +3,7 @@
 
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router";
-import { SettingsPage, SSection, StatusBadge, Skeleton, DEMO_NOTICE } from "./SettingsShell";
+import { SettingsPage, SSection, StatusBadge, Skeleton } from "./SettingsShell";
 import { mockIntegrationService } from "../../../services/mock/settings.service";
 import type {
   IntegrationDefinition,
@@ -92,7 +92,6 @@ export function IntegrationsPage() {
 
   return (
     <SettingsPage title="Integrations" breadcrumb="Integrations">
-      {DEMO_NOTICE}
 
       {/* Search + filters */}
       <div style={{ display: "flex", gap: 10, marginBottom: 20, flexWrap: "wrap", alignItems: "center" }}>

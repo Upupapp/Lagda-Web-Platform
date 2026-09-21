@@ -3,7 +3,7 @@
 
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router";
-import { SettingsPage, SCard, StatusBadge, Skeleton, DEMO_NOTICE } from "./SettingsShell";
+import { SettingsPage, SCard, StatusBadge, Skeleton } from "./SettingsShell";
 import { mockSecuritySettingsService } from "../../../services/mock/settings.service";
 import { mockBillingSettingsService } from "../../../services/mock/settings.service";
 import { mockUsageService } from "../../../services/mock/settings.service";
@@ -75,7 +75,6 @@ export function SettingsOverviewPage() {
 
   return (
     <SettingsPage title="Settings">
-      {DEMO_NOTICE}
 
       {loading ? (
         <SCard><Skeleton h={80} mb={8} /><Skeleton h={80} mb={8} /><Skeleton h={80} /></SCard>
