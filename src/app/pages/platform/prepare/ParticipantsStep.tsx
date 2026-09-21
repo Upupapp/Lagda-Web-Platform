@@ -16,6 +16,7 @@ import {
 import type { PrepParticipant, PrepParticipantRole, PrepPaxId } from "../../../models/prepare";
 import { StepBanner, StepTwoColumn, RailCard } from "../../../components/prepare/StepBanner";
 import { useHighlightTarget, htmlHighlightId } from "../../../hooks/useHighlightTarget";
+import { useViewport } from "../../../components/system/design-system";
 
 const GF     = { fontFamily: "'Geist', sans-serif" };
 const NAVY   = "#07111F";
@@ -365,14 +366,24 @@ function ParticipantCard({
   highlighted?: boolean;
 }) {
   const badge = roleBadgeStyle(participant.role);
+  // The one decision here that cannot be fluid: a row of fixed furniture
+  // either fits beside the name or it does not.
+  //
+  // The row carries an avatar, a role badge, two reorder buttons, an edit and
+  // a delete — around 200px that never shrinks. On a phone that left the name
+  // and email a sliver: "James Reid" wrapped onto two lines and collided with
+  // the vertically-centred badge, and the email truncated to a single
+  // character. Both are the identifying details, so both were gone.
+  const { isCompact } = useViewport();
 
   return (
     <div
       id={htmlHighlightId(participant.id)}
       style={{
         display: "flex",
-        alignItems: "center",
-        gap: 12,
+        alignItems: isCompact ? "stretch" : "center",
+        flexDirection: isCompact ? "column" : "row",
+        gap: isCompact ? 10 : 12,
         padding: "14px 16px",
         borderRadius: 10,
         border: highlighted ? "1px solid #C9960C" : "1px solid #E3E8EF",
@@ -381,8 +392,10 @@ function ParticipantCard({
         transition: "background 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease",
       }}
     >
+      {/* Identity — stays one horizontal group in both layouts. */}
+      <div style={{ display: "flex", alignItems: "center", gap: 12, minWidth: 0, flex: 1 }}>
       {/* Order */}
-      <span style={{ ...GF, fontSize: 11, fontWeight: 700, color: SILVER, minWidth: 18, textAlign: "center" }}>
+      <span style={{ ...GF, fontSize: 11, fontWeight: 700, color: SILVER, minWidth: 18, textAlign: "center", flexShrink: 0 }}>
         {index + 1}
       </span>
 
@@ -408,33 +421,53 @@ function ParticipantCard({
 
       {/* Info */}
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ ...GF, fontSize: 14, fontWeight: 700, color: NAVY, marginBottom: 3 }}>
-          {participant.name}
+        {/* Name and badge on one wrapping line. The badge used to be a
+            separate centred flex child, so a name that wrapped to two lines
+            ran straight through it. In the flow it can only ever sit after
+            the name or below it. */}
+        <div style={{
+          display: "flex", alignItems: "center", gap: 8,
+          flexWrap: "wrap", marginBottom: 3,
+        }}>
+          <span style={{ ...GF, fontSize: 14, fontWeight: 700, color: NAVY, minWidth: 0, wordBreak: "break-word" }}>
+            {participant.name}
+          </span>
+          <span
+            style={{
+              ...GF,
+              fontSize: 11,
+              fontWeight: 700,
+              background: badge.bg,
+              color: badge.color,
+              padding: "3px 10px",
+              borderRadius: 20,
+              flexShrink: 0,
+              whiteSpace: "nowrap",
+            }}
+          >
+            {PREP_PARTICIPANT_ROLE_LABELS[participant.role]}
+          </span>
         </div>
-        <div style={{ ...GF, fontSize: 12, color: SILVER, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+        {/* The email now has the row's full width to truncate within, rather
+            than whatever was left after the badge and four buttons. */}
+        <div
+          title={participant.email}
+          style={{ ...GF, fontSize: 12, color: SILVER, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
+        >
           {participant.email}
           {participant.organization && ` · ${participant.organization}`}
         </div>
       </div>
+      </div>
 
-      {/* Role badge */}
-      <span
-        style={{
-          ...GF,
-          fontSize: 11,
-          fontWeight: 700,
-          background: badge.bg,
-          color: badge.color,
-          padding: "3px 10px",
-          borderRadius: 20,
-          flexShrink: 0,
-        }}
-      >
-        {PREP_PARTICIPANT_ROLE_LABELS[participant.role]}
-      </span>
-
-      {/* Reorder */}
-      <div style={{ display: "flex", gap: 4, flexShrink: 0 }}>
+      {/* Actions — their own line on a phone, so they compete with nothing. */}
+      <div style={{
+        display: "flex", gap: 4, flexShrink: 0,
+        justifyContent: isCompact ? "flex-end" : undefined,
+        alignItems: "center",
+        borderTop: isCompact ? "1px solid #E3E8EF" : undefined,
+        paddingTop: isCompact ? 10 : undefined,
+      }}>
         <button
           onClick={() => onMoveUp(participant.id)}
           disabled={index === 0}
@@ -467,7 +500,6 @@ function ParticipantCard({
             display: "flex", alignItems: "center", justifyContent: "center",
           }}
         >↓</button>
-      </div>
 
       {/* Edit */}
       <button
@@ -475,7 +507,7 @@ function ParticipantCard({
         aria-label={`Edit ${participant.name}`}
         style={{
           ...GF,
-          width: 28, height: 28,
+          width: 34, height: 34,
           border: "1px solid #D1D9E0",
           borderRadius: 6,
           background: "#FFFFFF",
@@ -493,7 +525,7 @@ function ParticipantCard({
         aria-label={`Remove ${participant.name}`}
         style={{
           ...GF,
-          width: 28, height: 28,
+          width: 34, height: 34,
           border: "none",
           borderRadius: 6,
           background: "transparent",
@@ -504,6 +536,7 @@ function ParticipantCard({
           flexShrink: 0,
         }}
       >×</button>
+      </div>
     </div>
   );
 }

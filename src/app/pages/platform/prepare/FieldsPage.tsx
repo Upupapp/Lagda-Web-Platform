@@ -87,6 +87,23 @@ const WHITE  = "#FFFFFF";
 
 // A4 portrait base dimensions at 100% editor zoom
 const BASE_PAGE_WIDTH  = 595;
+
+/**
+ * The zoom at which a page fits the width available to it.
+ *
+ * "Fit" used to mean `setZoom(100)`, which is not a fit — it is a reset, and
+ * on a phone it reset to the very width that did not fit. 595px of page in a
+ * 375px viewport is what made the editor unusable there.
+ *
+ * Clamped to the reducer's own 50-200 range so the button can never request
+ * a zoom the state will silently refuse.
+ */
+function fitWidthZoom(availableWidth: number): number {
+  // The canvas pads 16px each side; the page needs to fit what is left.
+  const usable = Math.max(0, availableWidth - 32);
+  const raw = Math.round((usable / BASE_PAGE_WIDTH) * 100);
+  return Math.max(50, Math.min(200, raw));
+}
 const PAGE_RATIO       = 842 / 595; // height / width ≈ 1.415
 
 // ── Fictional page preview ────────────────────────────────────────────────────
@@ -301,19 +318,58 @@ interface PageCanvasProps {
    */
   workspaceId: string | null;
   realDocumentIdByEditorDocId: Map<string, string>;
+  /** The scroll container, so the page can measure it to fit and to pinch. */
+  scrollRef: React.RefObject<HTMLDivElement>;
 }
 
 function PageCanvas({
-  participants, workspaceId, realDocumentIdByEditorDocId,
+  participants, workspaceId, realDocumentIdByEditorDocId, scrollRef,
 }: PageCanvasProps) {
   const {
     currentDocumentId, currentPageId, currentPageFields, documents,
-    selectedFieldIds, mode, pendingFieldType, zoom,
+    selectedFieldIds, mode, pendingFieldType, zoom, setZoom,
     addField, moveField, selectFields, clearSelection,
     participantIdentities, syncRealPages,
   } = useFieldEditor();
 
   const canvasRef  = useRef<HTMLDivElement>(null);
+
+  // ── Pinch to zoom ───────────────────────────────────────────────────────
+  //
+  // The gesture anyone reaches for on a document, and the reason the toolbar
+  // buttons are not enough on their own: placing a field means looking
+  // closely at one spot, and stepping there 10% at a time through a button is
+  // not the same interaction.
+  //
+  // Only two-finger gestures are touched. A single finger still pans and
+  // still drags a field, so this adds a gesture rather than replacing any.
+  const pinchStart = useRef<{ distance: number; zoom: number } | null>(null);
+
+  const touchDistance = (touches: React.TouchList): number => {
+    const a = touches[0];
+    const b = touches[1];
+    if (a === undefined || b === undefined) return 0;
+    return Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY);
+  };
+
+  const onPinchStart = (e: React.TouchEvent<HTMLDivElement>) => {
+    if (e.touches.length !== 2) return;
+    pinchStart.current = { distance: touchDistance(e.touches), zoom };
+  };
+
+  const onPinchMove = (e: React.TouchEvent<HTMLDivElement>) => {
+    const start = pinchStart.current;
+    if (start === null || e.touches.length !== 2) return;
+    const distance = touchDistance(e.touches);
+    if (distance === 0 || start.distance === 0) return;
+    // Proportional to how far the fingers have moved apart, which is what
+    // makes it feel attached to the gesture rather than stepped.
+    const next = Math.round(start.zoom * (distance / start.distance));
+    const clamped = Math.max(50, Math.min(200, next));
+    if (clamped !== zoom) setZoom(clamped);
+  };
+
+  const onPinchEnd = () => { pinchStart.current = null; };
   const dragRef    = useRef<{
     type:         "move" | "resize";
     fieldId:      FieldId;
@@ -524,18 +580,33 @@ function PageCanvas({
 
   return (
     <div
+      ref={scrollRef}
+      onTouchStart={onPinchStart}
+      onTouchMove={onPinchMove}
+      onTouchEnd={onPinchEnd}
       style={{
         flex: 1,
         overflow: "auto",
         background: BGCANVAS,
         display: "flex",
         alignItems: "flex-start",
-        justifyContent: "center",
+        // NOT `justifyContent: center`, and this cost the left edge of every
+        // page on a phone.
+        //
+        // A centred flex child that is WIDER than its scroll container gets
+        // pushed to a negative offset, and a scroll container cannot scroll
+        // past its own origin — so the overflowing left side is not merely
+        // off-screen, it is unreachable. The document read "OYMENT AGREEMENT"
+        // and no amount of swiping recovered the rest.
+        //
+        // `margin: auto` on the child centres it while it fits and collapses
+        // to zero once it does not, which keeps the whole page reachable.
+        justifyContent: "flex-start",
         padding: "24px 16px",
       }}
     >
       {/* Page container */}
-      <div style={{ position: "relative" }}>
+      <div style={{ position: "relative", margin: "auto" }}>
         {/* Fictional preview notice */}
         <div style={{
           ...GF,
@@ -1677,9 +1748,11 @@ interface ToolbarProps {
   /** Validated internal path to return to (Command 37 workflow round-trip). */
   returnTo:      string | null;
   returnLabel:   string;
+  /** Sets zoom so a page fits the canvas width. Measured, not assumed. */
+  onFitWidth:    () => void;
 }
 
-function EditorToolbar({ draftTitle, participants: _participants, draft, showKbDialog: _showKbDialog, setShowKbDialog, onContinue, returnTo, returnLabel, onOpenDocuments }: ToolbarProps) {
+function EditorToolbar({ draftTitle, participants: _participants, draft, showKbDialog: _showKbDialog, setShowKbDialog, onContinue, returnTo, returnLabel, onOpenDocuments, onFitWidth }: ToolbarProps) {
   const { isCompact, isMobileS } = useViewport();
   const {
     undo, redo, canUndo, canRedo,
@@ -1747,7 +1820,7 @@ function EditorToolbar({ draftTitle, participants: _participants, draft, showKbD
     { id: "view", label: showFieldList ? "Canvas view" : "Field list", title: "Switch view", onClick: toggleFieldList, disabled: false },
     { id: "zoom-out", label: "Zoom out", title: "Zoom out", onClick: () => { setZoom(zoom - 10); }, disabled: zoom <= 50 },
     { id: "zoom-in", label: "Zoom in", title: "Zoom in", onClick: () => { setZoom(zoom + 10); }, disabled: zoom >= 200 },
-    { id: "fit", label: "Fit page", title: "Reset zoom to 100%", onClick: () => { setZoom(100); }, disabled: false },
+    { id: "fit", label: "Fit width", title: "Fit the page to the width of the screen", onClick: onFitWidth, disabled: false },
   ];
 
   const separator = (key: string) => (
@@ -1864,13 +1937,27 @@ function EditorToolbar({ draftTitle, participants: _participants, draft, showKbD
             {showFieldList ? "Canvas" : "List"}
           </button>
           {separator("s5")}
-          <button onClick={() => { setZoom(zoom - 10); }} disabled={zoom <= 50} aria-label="Zoom out" style={{ ...btnBase, flexShrink: 0, padding: "0 8px", opacity: zoom > 50 ? 1 : 0.4 }}>−</button>
-          <span style={{ ...GF, fontSize: 11, color: "#334155", minWidth: 40, textAlign: "center", flexShrink: 0 }} aria-live="polite" aria-label={`Zoom ${zoom}%`}>{zoom}%</span>
-          <button onClick={() => { setZoom(zoom + 10); }} disabled={zoom >= 200} aria-label="Zoom in" style={{ ...btnBase, flexShrink: 0, padding: "0 8px", opacity: zoom < 200 ? 1 : 0.4 }}>+</button>
-          <button onClick={() => { setZoom(100); }} aria-label="Fit page — reset zoom to 100%" style={{ ...btnBase, flexShrink: 0 }}>Fit</button>
-          {separator("s6")}
         </>
       )}
+
+      {/* Zoom, on every viewport.
+          *
+          * This block used to be inside the `!isCompact` guard above, so the
+          * one viewport that cannot read a 595px page at 100% was the only
+          * one with no way to change it. */}
+      <button onClick={() => { setZoom(zoom - 10); }} disabled={zoom <= 50} aria-label="Zoom out" style={{ ...btnBase, flexShrink: 0, padding: "0 10px", opacity: zoom > 50 ? 1 : 0.4 }}>−</button>
+      {!isMobileS && (
+        <span style={{ ...GF, fontSize: 11, color: "#334155", minWidth: 40, textAlign: "center", flexShrink: 0 }} aria-live="polite" aria-label={`Zoom ${zoom}%`}>{zoom}%</span>
+      )}
+      <button onClick={() => { setZoom(zoom + 10); }} disabled={zoom >= 200} aria-label="Zoom in" style={{ ...btnBase, flexShrink: 0, padding: "0 10px", opacity: zoom < 200 ? 1 : 0.4 }}>+</button>
+      <button
+        onClick={onFitWidth}
+        aria-label="Fit the page to the width of the screen"
+        style={{ ...btnBase, flexShrink: 0 }}
+      >
+        Fit
+      </button>
+      {separator("s6")}
 
       <button
         onClick={handleValidate}
@@ -1931,6 +2018,10 @@ function FieldsPageInner() {
   // The document rail is a drawer on a phone, so it needs an open state that
   // the desktop column never had.
   const [showDocuments, setShowDocuments] = useState(false);
+  // The scroll container the page sits in. Fit measures it rather than
+  // assuming a width, so it is correct with the rail open, closed, on a
+  // phone, and on a monitor.
+  const canvasScrollRef = useRef<HTMLDivElement>(null);
   const {
     loadState, errorMessage,
     initialize, loadRealFields,
@@ -1942,7 +2033,31 @@ function FieldsPageInner() {
     selectedFieldIds, currentPageFields, clipboard, mode,
     copySelected, paste, undo, redo, duplicateField, deleteFields,
     clearSelection, setPendingField,
+    // `setZoom` only: the page SETS zoom (fit, auto-fit) but never reads it.
+    // The toolbar and the canvas read it where they need it.
+    setZoom,
   } = useFieldEditor();
+
+  const fitToWidth = useCallback(() => {
+    const width = canvasScrollRef.current?.clientWidth;
+    if (width === undefined || width === 0) return;
+    setZoom(fitWidthZoom(width));
+  }, [setZoom]);
+
+  // Open at a zoom that fits, on the viewports where 100% does not.
+  //
+  // Only once, and only on a phone or tablet: re-fitting on every resize
+  // would fight a user who has deliberately zoomed in to place a field, and
+  // on a desktop 100% already fits, so imposing a fit there would override a
+  // sensible default with a computed one.
+  const didAutoFit = useRef(false);
+  useEffect(() => {
+    if (didAutoFit.current || !isCompact) return;
+    const width = canvasScrollRef.current?.clientWidth;
+    if (width === undefined || width === 0) return;
+    didAutoFit.current = true;
+    setZoom(fitWidthZoom(width));
+  }, [isCompact, setZoom, loadState]);
 
   /**
    * The last thing a shortcut did, for the canvas's live region.
@@ -2376,6 +2491,7 @@ function FieldsPageInner() {
         returnTo={returnTo}
         returnLabel={returnLabel}
         onOpenDocuments={() => { setShowDocuments(true); }}
+        onFitWidth={fitToWidth}
       />
 
       {/* Body.
@@ -2400,6 +2516,7 @@ function FieldsPageInner() {
               participants={participants}
               workspaceId={platform.currentWorkspace?.id ?? null}
               realDocumentIdByEditorDocId={realDocumentIdByEditorDocId}
+              scrollRef={canvasScrollRef}
             />
           )}
         </main>
