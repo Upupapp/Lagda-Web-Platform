@@ -173,7 +173,19 @@ export function RealSigningPage() {
    */
   const handleSignInToConfirm = () => {
     setLinkError(null);
-    const tab = window.open("", "_blank", "noopener,noreferrer");
+    // NO `noopener` here, deliberately, and it cost a live bug to learn why.
+    //
+    // `window.open` with `noopener` returns null BY SPECIFICATION — the
+    // browser severs the handle. So the blank tab opened, this code read null,
+    // concluded the popup had been blocked, and left an orphaned blank tab
+    // sitting there while telling the signer to allow pop-ups. Both halves of
+    // that were wrong.
+    //
+    // Without it the handle comes back and the tab can be pointed somewhere.
+    // The opener reference that creates is severed by the child itself on
+    // mount: it is our own page on our own origin, and it disowns its opener
+    // in its first effect.
+    const tab = window.open("", "_blank");
     void (async () => {
       try {
         const minted = await realSigningAccountLinkService.mintHandoff();
