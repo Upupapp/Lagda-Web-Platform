@@ -1,6 +1,8 @@
 // C13 — Onboarding step 6: Review & complete.
 // Shows summary of all draft choices. Edit links go back to each step.
-// Completion calls platform.signIn() with mock payload — no real API.
+// Completion, with a real backend, re-reads the session FROM the backend.
+// Only the demo build (no VITE_API_BASE_URL) still signs in with the mock
+// payload — see handleComplete for why that distinction is the whole bug.
 // NEVER claims account was created, workspace created, or subscription active.
 
 import { useState } from "react";
@@ -13,6 +15,7 @@ import { createMockSignInPayload } from "../../context/PlatformContext";
 import { OnboardingLayout } from "../../layouts/OnboardingLayout";
 import { ORG_TYPE_LABELS, PRIMARY_GOAL_LABELS } from "../../models/auth";
 import { delay } from "../../services/mock/delay";
+import { USE_REAL_BACKEND } from "../../services/backend-flag";
 
 const GF = { fontFamily: "'Geist', sans-serif" };
 const AZURE = "#0078D4";
@@ -125,18 +128,41 @@ export function OnboardingReview() {
     setStatus("submitting");
     await delay(800);
     markComplete();
-    const payload = createMockSignInPayload();
-    // The mock fixture always has a current workspace; guard so a missing one
-    // never enters the session as an undefined workspace.
-    const ws = payload.currentWorkspace ?? payload.workspaces[0];
-    if (ws)
-      platform.signIn(
-        payload.user,
-        payload.workspaces,
-        ws,
-        payload.subscription,
-        payload.notifications,
-      );
+
+    if (USE_REAL_BACKEND) {
+      // Ask the backend who this is. Do NOT invent it.
+      //
+      // This used to call platform.signIn() with createMockSignInPayload()
+      // unconditionally — a fixture user, "Ana Reyes", in a fixture workspace,
+      // "Mabini Legal Solutions". On a real deployment that replaced the
+      // freshly created account's session with somebody else's. The dashboard
+      // then asked the API for the fixture workspace's documents, the API
+      // correctly refused a workspace that does not exist, and a brand-new
+      // user's first screen was "Couldn't load your dashboard" under another
+      // person's name.
+      //
+      // A refresh fixed it — which is how the cause shows itself. Reloading
+      // re-reads the session from the backend, which knew all along that this
+      // is a new account with no workspace yet, and routes to "Create your
+      // workspace". That is exactly the screen a new user should reach first;
+      // this does on purpose what the reload was doing by accident.
+      await platform.refreshSessionFromBackend();
+    } else {
+      // Demo build only: there is no backend to ask, and the fixture IS the
+      // session. Unchanged.
+      const payload = createMockSignInPayload();
+      // The mock fixture always has a current workspace; guard so a missing
+      // one never enters the session as an undefined workspace.
+      const ws = payload.currentWorkspace ?? payload.workspaces[0];
+      if (ws)
+        platform.signIn(
+          payload.user,
+          payload.workspaces,
+          ws,
+          payload.subscription,
+          payload.notifications,
+        );
+    }
     setStatus("done");
     setTimeout(() => navigate("/onboarding/complete", { replace: true }), 400);
   }

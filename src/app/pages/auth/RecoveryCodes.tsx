@@ -6,6 +6,9 @@ import { Link, useNavigate, useSearchParams } from "react-router";
 import { usePlatform } from "../../context/PlatformContext";
 import { createMockSignInPayload } from "../../context/PlatformContext";
 import { delay } from "../../services/mock/delay";
+import { USE_REAL_BACKEND } from "../../services/backend-flag";
+import { realAuthService } from "../../services/real/auth.service";
+import { ApiError } from "../../services/api-client";
 
 const GF    = { fontFamily: "'Geist', sans-serif" };
 const GM    = { fontFamily: "'Geist Mono', monospace" };
@@ -31,7 +34,35 @@ export function RecoveryCodes() {
     setStatus("submitting");
     setErrorMsg(null);
 
-    // Demo: any non-empty code works. Never logs the value.
+    // A real recovery code, checked by the server.
+    //
+    // This page had no real path at all. On a live deployment it accepted ANY
+    // non-empty text as a recovery code and then installed a fixture session
+    // — "Ana Reyes" in "Mabini Legal Solutions" — telling somebody half-way
+    // through an MFA sign-in that a code they had made up had worked.
+    //
+    // The server's MFA verification already accepts both a 6-digit
+    // authenticator code and a recovery code on the same endpoint, and burns a
+    // recovery code once used. So this is the call MfaChallenge makes, and the
+    // session afterwards is the one the server says exists.
+    if (USE_REAL_BACKEND) {
+      try {
+        await realAuthService.submitMfaChallenge(trimmed);
+        setStatus("success");
+        await platform.refreshSessionFromBackend();
+        setTimeout(() => navigate(safeReturnTo(returnTo), { replace: true }), 800);
+      } catch (err) {
+        setStatus("error");
+        // The server's own message where it has one. It is deliberately the
+        // same for a wrong code and a used one, so neither leaks which.
+        setErrorMsg(err instanceof ApiError
+          ? err.message
+          : "That recovery code was not accepted. Check it and try again.");
+      }
+      return;
+    }
+
+    // Demo build only: any non-empty code works. Never logs the value.
     await delay(500);
     if (trimmed.length > 0) {
       setStatus("success");

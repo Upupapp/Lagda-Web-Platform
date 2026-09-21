@@ -7,6 +7,7 @@ import { useState, useEffect, useRef } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router";
 import { mockAuthService } from "../../services/mock/auth.service";
 import { usePlatform } from "../../context/PlatformContext";
+import { USE_REAL_BACKEND } from "../../services/backend-flag";
 import { createMockSignInPayload } from "../../context/PlatformContext";
 import type { MockInvitation } from "../../models/auth";
 
@@ -59,12 +60,28 @@ export function AcceptInvitation() {
     if (!invitation || submitting) return;
     setSubmitting(true);
     await mockAuthService.acceptInvitation(invitation.id);
-    // Sign into the platform session with mock payload
-    const payload = createMockSignInPayload();
-    // The mock fixture always has a current workspace; guard so a missing one
-    // never enters the session as an undefined workspace.
-    const ws = payload.currentWorkspace ?? payload.workspaces[0];
-    if (ws) platform.signIn(payload.user, payload.workspaces, ws, payload.subscription, payload.notifications);
+    if (USE_REAL_BACKEND) {
+      // Never install the fixture session on a real deployment.
+      //
+      // The mock accept above changes nothing on the server, and signing in
+      // with createMockSignInPayload() made the app believe the visitor was
+      // "Ana Reyes" of "Mabini Legal Solutions" — the same fault that broke
+      // the dashboard after onboarding. Reading the session back from the
+      // server at least leaves the app describing the account that exists.
+      //
+      // KNOWN GAP, not fixed here: real workspace invitations are not wired.
+      // The backend's email links to /invitations/<token>, which has no
+      // route, and this page never calls /invitations/accept. Accepting a
+      // real invitation needs its own route and service.
+      await platform.refreshSessionFromBackend();
+    } else {
+      // Demo build: the fixture is the session.
+      const payload = createMockSignInPayload();
+      // The mock fixture always has a current workspace; guard so a missing
+      // one never enters the session as an undefined workspace.
+      const ws = payload.currentWorkspace ?? payload.workspaces[0];
+      if (ws) platform.signIn(payload.user, payload.workspaces, ws, payload.subscription, payload.notifications);
+    }
     setPageState("accepted");
     // Tracked so leaving the page cancels it. An uncancelled timer would
     // navigate the user away from wherever they went next.
