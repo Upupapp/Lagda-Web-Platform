@@ -392,18 +392,44 @@
    Applied via .lagda-page-enter class on the route content wrapper.
    Subtle upward fade-in on each navigation so pages feel intentional.     */
 @keyframes lagda-page-enter {
-  from { opacity: 0; transform: translateY(4px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; translate: 0 4px; }
+  to   { opacity: 1; translate: 0 0; }
 }
 
+/* ── `backwards`, not `both`, and it is load-bearing ──────────────────────
+   *
+   * This wrapper broke every modal in the app. A transform-like value other
+   * than `none` makes an element the containing block for its
+   * `position: fixed` descendants — and the final frame here is an offset of
+   * zero, which is still a value. `both` retains that final frame forever, so
+   * long after the 220ms animation ended the wrapper was still trapping every
+   * dialog rendered inside a routed page.
+   *
+   * The symptom: modals positioned against the page content instead of the
+   * viewport, so on a phone you had to scroll down to find the dialog you had
+   * just opened. /app/prepare was unaffected only because it routes outside
+   * this layout.
+   *
+   * `backwards` fills only BEFORE the animation, so once it finishes the
+   * element carries no offset at all and stops being a containing block.
+   * Nothing flashes, because the natural state and the final frame are the
+   * same. The 220ms while it runs still traps a dialog, which no interaction
+   * can reach: the animation plays on navigation, and a modal is opened by a
+   * click that comes after it.
+   *
+   * Deliberately NOT relying on `translate` being exempt from the
+   * containing-block rule. The individual transform properties are specified
+   * to contribute to the transform, so they very likely are not exempt —
+   * this fix does not depend on the answer either way. */
 .lagda-page-enter {
-  animation: lagda-page-enter 220ms cubic-bezier(0, 0, 0.2, 1) both;
+  animation: lagda-page-enter 220ms cubic-bezier(0, 0, 0.2, 1) backwards;
   /* Full height of its scrollable parent (`.platform-main`), with its own
-     scroll — a fixed-position overlay (like the document archive viewer)
-     escapes this by design, but in-flow full-height content (a file
-     preview embedded directly in the page rather than in a dialog) needs
-     this wrapper to actually stretch instead of collapsing to its content's
-     natural height. */
+     scroll, so in-flow full-height content (a file preview embedded directly
+     in the page rather than in a dialog) stretches instead of collapsing to
+     its content's natural height.
+     *
+     * This comment used to claim a fixed-position overlay "escapes this by
+     * design". It did not — see the keyframes above. It does now. */
   height: 100%;
   overflow: auto;
 }
