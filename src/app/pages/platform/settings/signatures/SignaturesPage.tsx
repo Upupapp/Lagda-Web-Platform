@@ -54,10 +54,10 @@ function Preview({ saved }: { saved: SavedSignature }) {
     placeItems: "center",
     // Fluid rather than fixed: at 320px a 120px-tall box is a third of the
     // viewport, and at desktop width a small one looks lost.
-    minHeight: "clamp(72px, 18vw, 104px)",
-    padding: "clamp(8px, 3vw, 14px)",
+    minHeight: "clamp(96px, 22vw, 132px)",
+    padding: "clamp(14px, 4vw, 20px)",
     border: `1px solid ${T.border}`,
-    borderRadius: 10,
+    borderRadius: 12,
     background: T.canvas,
   } as const;
 
@@ -67,7 +67,7 @@ function Preview({ saved }: { saved: SavedSignature }) {
         <img
           src={dataUrl}
           alt={`Your saved ${saved.purpose}`}
-          style={{ maxWidth: "100%", maxHeight: "clamp(56px, 14vw, 84px)", objectFit: "contain" }}
+          style={{ maxWidth: "100%", maxHeight: "clamp(68px, 17vw, 100px)", objectFit: "contain" }}
         />
       </div>
     );
@@ -109,16 +109,20 @@ function SlotCard({
       aria-labelledby={`slot-${purpose}`}
       style={{
         border: `1px solid ${T.border}`,
-        borderRadius: 14,
+        borderRadius: 16,
         background: T.surface,
-        padding: "clamp(14px, 4vw, 20px)",
+        // Was clamp(14px, 4vw, 20px) — tight enough that the preview and the
+        // buttons sat almost against the card edge. The two slots are the
+        // whole page; they can afford the room.
+        padding: "clamp(18px, 4.5vw, 26px)",
         display: "flex",
         flexDirection: "column",
-        gap: "clamp(10px, 2.5vw, 14px)",
+        gap: "clamp(12px, 3vw, 16px)",
         minWidth: 0,
+        boxShadow: "0 1px 2px rgba(7,17,31,0.04)",
       }}
     >
-      <div style={{ minWidth: 0 }}>
+      <div style={{ minWidth: 0, paddingBottom: 2 }}>
         <h2 id={`slot-${purpose}`} style={{
           ...GF, margin: 0, fontSize: "clamp(14px, 3.8vw, 16px)",
           fontWeight: 700, color: T.ink,
@@ -225,9 +229,9 @@ function SlotCard({
         <>
           <div style={{
             display: "grid", placeItems: "center",
-            minHeight: "clamp(72px, 18vw, 104px)",
-            border: `1px dashed ${T.borderStrong}`, borderRadius: 10,
-            padding: "clamp(8px, 3vw, 14px)",
+            minHeight: "clamp(96px, 22vw, 132px)",
+            border: `1px dashed ${T.borderStrong}`, borderRadius: 12,
+            padding: "clamp(14px, 4vw, 20px)",
           }}>
             <span style={{ ...GF, fontSize: 12, color: T.silver, textAlign: "center" }}>
               Nothing saved yet
@@ -320,8 +324,27 @@ export function SignaturesPage() {
     saved.find(entry => entry.purpose === purpose) ?? null;
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "clamp(14px, 3.5vw, 20px)" }}>
-      <header>
+    <div style={{
+      display: "flex",
+      flexDirection: "column",
+      gap: "clamp(18px, 4vw, 28px)",
+      // The page had no horizontal padding, so on a phone the cards ran into
+      // both edges of the screen and the heading sat flush against the glass.
+      // 16px is the floor because that is the gutter the rest of the product
+      // uses at Mobile S; it grows with the viewport rather than switching.
+      padding: "clamp(16px, 4vw, 32px) clamp(16px, 4vw, 28px) clamp(40px, 8vw, 64px)",
+      // Capped and centred. Two cards stretched across an ultrawide monitor
+      // read as a banner rather than a form, and the measure below keeps the
+      // prose legible at the same time.
+      maxWidth: 880,
+      width: "100%",
+      marginInline: "auto",
+      boxSizing: "border-box",
+    }}>
+      <header style={{
+        paddingBottom: "clamp(4px, 1.5vw, 10px)",
+        borderBottom: `1px solid ${T.border}`,
+      }}>
         <h1 style={{
           ...GF, margin: 0, fontSize: "clamp(18px, 5vw, 22px)",
           fontWeight: 800, color: T.ink,
@@ -380,7 +403,8 @@ export function SignaturesPage() {
           display: "grid",
           // Reflows when the content needs it, not at a guessed breakpoint.
           gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 260px), 1fr))",
-          gap: "clamp(12px, 3vw, 18px)",
+          gap: "clamp(14px, 3.5vw, 22px)",
+          alignItems: "stretch",
         }}>
           {SLOTS.map(slot => (
             <SlotCard
