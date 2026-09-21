@@ -1,19 +1,17 @@
-// What this screen must never become.
+// The signer's sign-in step.
 //
-// It is the one place in the product that makes an offer rather than carries
-// out an instruction, and it is shown to someone who did not choose to be
-// here — they were sent a contract. That combination is exactly where a
-// signing product starts nudging, and a nudge here is not a growth tactic but
-// pressure applied to someone mid-way through a legal act.
+// Signing now requires a LAGDA account, so this screen is a single required
+// step rather than a choice between two. These tests pin what a REQUIRED step
+// owes someone who was sent a contract and did not ask to create an account:
 //
-// So these tests guard the SHAPE of the choice, not the wording:
+//   - there is exactly one way forward, and it is signing in
+//   - the address to sign in with is stated before they type anything
+//   - creating an account is presented as possible and free, not as a wall
+//   - nothing claims signing in makes the signature legally stronger, which
+//     would be untrue
 //
-//   - both paths reachable, in one interaction, from the first screen
-//   - the no-account path stated as complete, never as a lesser fallback
-//   - no claim that signing without an account is less secure or less binding
-//
-// The copy can be rewritten freely. What it may not do is start ranking the
-// two paths on safety or legality, because that would be untrue.
+// The copy can be rewritten freely. What it may not do is offer a path that
+// no longer exists, or promise something the account does not deliver.
 
 import { describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
@@ -21,106 +19,74 @@ import userEvent from "@testing-library/user-event";
 import { SigningEntryChoice } from "../SigningEntryChoice";
 
 function setup(overrides: Partial<Parameters<typeof SigningEntryChoice>[0]> = {}) {
-  const onContinueWithoutAccount = vi.fn();
   const onContinueWithAccount = vi.fn();
   const view = render(
     <SigningEntryChoice
       documentTitle="Engagement Letter"
       maskedEmail="bud•••@example.com"
-      onContinueWithoutAccount={onContinueWithoutAccount}
       onContinueWithAccount={onContinueWithAccount}
       {...overrides}
     />,
   );
-  return { onContinueWithoutAccount, onContinueWithAccount, container: view.container };
+  return { onContinueWithAccount, container: view.container };
 }
 
 describe("SigningEntryChoice", () => {
-  it("offers both ways to sign as labelled regions", () => {
+  it("offers exactly one way forward, and it is signing in", () => {
     setup();
-    expect(screen.getByRole("region", { name: /without a LAGDA account/i })).toBeInTheDocument();
-    expect(screen.getByRole("region", { name: /with your LAGDA account/i })).toBeInTheDocument();
+    const buttons = screen.getAllByRole("button");
+    expect(buttons).toHaveLength(1);
+    expect(buttons[0]).toHaveAccessibleName(/sign in & continue/i);
   });
 
-  it("names the document and the address it was sent to", () => {
+  it("no longer offers to sign without an account", () => {
+    // The panel this replaced was a choice. Leaving a way round the sign-in
+    // on screen would make the requirement decorative.
+    const { container } = setup();
+    expect(container.textContent ?? "").not.toMatch(/without an account/i);
+    expect(screen.queryByRole("button", { name: /without an account/i })).toBeNull();
+  });
+
+  it("signs in on a single click", async () => {
+    const { onContinueWithAccount } = setup();
+    await userEvent.click(screen.getByRole("button", { name: /sign in & continue/i }));
+    expect(onContinueWithAccount).toHaveBeenCalledTimes(1);
+  });
+
+  it("honours `disabled`, so it cannot be pressed mid-flight", async () => {
+    const { onContinueWithAccount } = setup({ disabled: true });
+    const button = screen.getByRole("button", { name: /sign in & continue/i });
+    expect(button).toBeDisabled();
+    await userEvent.click(button);
+    expect(onContinueWithAccount).not.toHaveBeenCalled();
+  });
+
+  it("names the document and the address to sign in with", () => {
+    // A different account is refused, so the address comes BEFORE the
+    // password — not as an error after it.
     setup();
     expect(screen.getByText("Engagement Letter")).toBeInTheDocument();
     expect(screen.getByText(/bud•••@example\.com/)).toBeInTheDocument();
   });
 
-  it("reaches the no-account path in a single click", async () => {
-    const { onContinueWithoutAccount, onContinueWithAccount } = setup();
-    await userEvent.click(screen.getByRole("button", { name: /continue without an account/i }));
-    expect(onContinueWithoutAccount).toHaveBeenCalledTimes(1);
-    expect(onContinueWithAccount).not.toHaveBeenCalled();
-  });
-
-  it("reaches the account path in a single click", async () => {
-    const { onContinueWithoutAccount, onContinueWithAccount } = setup();
-    await userEvent.click(screen.getByRole("button", { name: /sign in & continue/i }));
-    expect(onContinueWithAccount).toHaveBeenCalledTimes(1);
-    expect(onContinueWithoutAccount).not.toHaveBeenCalled();
-  });
-
-  it("honours `disabled` on both paths, so neither can be clicked mid-flight", async () => {
-    const { onContinueWithoutAccount, onContinueWithAccount } = setup({ disabled: true });
-    for (const name of [/continue without an account/i, /sign in & continue/i]) {
-      const button = screen.getByRole("button", { name });
-      expect(button).toBeDisabled();
-      await userEvent.click(button);
-    }
-    expect(onContinueWithoutAccount).not.toHaveBeenCalled();
-    expect(onContinueWithAccount).not.toHaveBeenCalled();
-  });
-
-  // ── The anti-coercion guards ────────────────────────────────────────────
-
-  it("states that both paths are equally binding", () => {
-    setup();
-    expect(screen.getByText(/same legally\s+binding signature/i)).toBeInTheDocument();
-  });
-
-  it("carries the secure-session assurance on the no-account panel", () => {
-    setup();
-    const guest = screen.getByRole("region", { name: /without a LAGDA account/i });
-    expect(guest).toHaveTextContent(/secure session/i);
-    expect(guest).toHaveTextContent(/encrypted in transit/i);
-    expect(guest).toHaveTextContent(/audit trail/i);
-  });
-
-  it("never suggests the no-account path is less secure or less valid", () => {
-    setup();
-    const account = screen.getByRole("region", { name: /with your LAGDA account/i });
-    const text = account.textContent ?? "";
-    // The account panel may sell convenience. It may not sell safety it does
-    // not uniquely have — the other path is encrypted and audited too.
-    expect(text).not.toMatch(/more secure|safer|less secure|not secure|insecure/i);
-    expect(text).not.toMatch(/legally binding|more valid|fully binding/i);
-  });
-
-  // ── Layout ──────────────────────────────────────────────────────────────
-  //
-  // These panels shipped stacked on a 1440px screen, because the card they
-  // sit in caps at 560px by default: inner width ~512px against the 578px two
-  // columns need. The grid did exactly what it was told and the container was
-  // wrong, which is the failure mode worth pinning — nothing errors, the
-  // layout just quietly reads as one column everywhere.
-  it("asks for a reflowing two-column grid rather than a fixed one", () => {
+  it("tells someone without an account that they can create one, free", () => {
     const { container } = setup();
-    // A grid template is a style, not a role or a label. Testing Library has
-    // no query for it, and asserting on it is the whole point of this test.
-    // eslint-disable-next-line testing-library/no-node-access
-    const grid = container.querySelector("[style*='grid-template-columns']");
-    const columns = (grid as HTMLElement | null)?.style.gridTemplateColumns ?? "";
-    // auto-fit + a percentage floor is what makes it collapse on a narrow
-    // screen instead of overflowing it.
-    expect(columns).toContain("auto-fit");
-    expect(columns).toContain("100%");
+    expect(container.textContent ?? "").toMatch(/create one free/i);
   });
 
-  it("does not make an account sound required", () => {
+  it("does not claim signing in makes the signature stronger or more valid", () => {
+    // The signing link is what proves the document is yours to sign; the
+    // account confirms who you are. Claiming more would be untrue on the one
+    // screen where somebody decides whether to trust the product.
     const { container } = setup();
-    expect(container.textContent ?? "").not.toMatch(
-      /you must (sign in|create an account)|required to sign in/i);
+    const text = container.textContent ?? "";
+    expect(text).not.toMatch(/legally (stronger|binding)|more valid|more secure|safer/i);
+  });
+
+  it("warns that signing in opens a second tab", () => {
+    // The ceremony stays in THIS tab and continues on its own. Somebody who
+    // closes it thinking the new tab replaced it loses their place.
+    const { container } = setup();
+    expect(container.textContent ?? "").toMatch(/opens a new tab/i);
   });
 });

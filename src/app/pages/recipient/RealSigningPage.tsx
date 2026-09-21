@@ -78,6 +78,11 @@ type Phase = "loading" | "unavailable" | "choose" | "consent" | "ceremony" | "su
 export function RealSigningPage() {
   const { requestId: token } = useParams<{ requestId: string }>();
   const [phase, setPhase] = useState<Phase>("loading");
+  // The focus handler is registered once per phase change but runs later,
+  // after an await. It reads the CURRENT phase through this rather than the
+  // one captured when it was created.
+  const phaseRef = useRef<Phase>("loading");
+  phaseRef.current = phase;
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [view, setView] = useState<CeremonyView | null>(null);
   const [values, setValues] = useState<Record<string, string | boolean>>({});
@@ -107,10 +112,24 @@ export function RealSigningPage() {
 
   const applyView = (ceremony: CeremonyView) => {
     setView(ceremony);
+    // Signing requires a signed-in LAGDA account. Nothing past this screen is
+    // reachable until the ceremony reports an account link.
+    //
+    // The gate is checked BEFORE consent rather than inside it. It used to
+    // live on the consent branch only, so a signer whose consent was already
+    // accepted — someone returning to a link they had opened before — went
+    // straight to the ceremony and never met it at all.
+    //
+    // FRONTEND ONLY, and it matters to say so: the ceremony endpoints still
+    // accept a submission from an unlinked recipient. This makes signing in
+    // the only path the product offers; it does not make it the only path the
+    // server permits.
+    if (ceremony.accountLink === undefined) {
+      setPhase("choose");
+      return;
+    }
     if (ceremony.consent.required && !ceremony.consent.accepted && ceremony.access.mayAcceptConsent) {
-      // Already linked means the question has been answered. Asking again
-      // would offer a choice that no longer exists.
-      setPhase(ceremony.accountLink === undefined ? "choose" : "consent");
+      setPhase("consent");
       return;
     }
     setPhase("ceremony");
@@ -201,8 +220,8 @@ export function RealSigningPage() {
           setView(fresh);
           // They went to confirm and came back confirmed. Move on rather
           // than leaving them staring at a choice they have just made.
-          if (fresh.accountLink !== undefined) {
-            setPhase(current => (current === "choose" ? "consent" : current));
+          if (fresh.accountLink !== undefined && phaseRef.current === "choose") {
+            applyView(fresh);
           }
         } catch { /* transient; the signer can still act on what is shown */ }
       })();
@@ -465,12 +484,12 @@ export function RealSigningPage() {
       // rather than cosmetic. The panels ask for a 280px minimum column; at
       // 560px the card's inner width is ~512px, so two columns plus the gap
       // (578px) never fit and the grid silently collapsed to one. This is the
-      // only ceremony screen showing two things side by side.
+      // only ceremony screen with a wide card — kept wide now that it is a
+      // single panel so the explanation reads as a paragraph, not a column.
       <SignerCard wide>
         <SigningEntryChoice
           documentTitle={view.request.documentTitle}
           maskedEmail={maskRecipientEmail(view.recipient.email)}
-          onContinueWithoutAccount={() => { setPhase("consent"); }}
           onContinueWithAccount={handleSignInToConfirm}
         />
         {linkError !== null && (
@@ -481,15 +500,6 @@ export function RealSigningPage() {
             {linkError}
           </p>
         )}
-        {/* Said here because the sign-in happens in another tab, and a tab
-            that opens behind the current one is easy to miss entirely. */}
-        <p style={{
-          ...GF, margin: "10px 0 0", fontSize: 11.5, color: T.silver,
-          lineHeight: 1.55, textAlign: "center",
-        }}>
-          Signing in opens a new tab. This one stays where it is — come back
-          to it when you&rsquo;re done.
-        </p>
       </SignerCard>
     );
   }
