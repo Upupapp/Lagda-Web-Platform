@@ -833,6 +833,16 @@ const ContactImportPage = lazy(() =>
 );
 
 // Settings (Command 24)
+// The shell. Lazy like everything else here, which costs one loader on the
+// way INTO settings — the same one any section costs. What matters is that it
+// then stays mounted: moving between sections resolves only the child chunk,
+// and that suspends inside the layout's own boundary rather than this one.
+const SettingsLayout = lazy(() =>
+  import("./app/pages/platform/settings/SettingsShell").then((m) => ({
+    default: m.SettingsLayout,
+  })),
+);
+
 const SettingsOverviewPage = lazy(() =>
   import("./app/pages/platform/settings/SettingsOverviewPage").then((m) => ({
     default: m.SettingsOverviewPage,
@@ -2367,145 +2377,122 @@ export const router = createBrowserRouter([
           </Suspense>
         ),
       },
-
-      // Settings (Command 24) — 15 canonical routes; static paths before parametric
+      // Settings (Command 24) — ONE layout route, sixteen children.
+      //
+      // These were sixteen sibling routes, each rendering its own copy of the
+      // settings shell. Changing section therefore tore down the sidebar and
+      // built a new one, and because every page is a separate lazy chunk the
+      // `fallback={null}` in between showed as a blank flash of the whole
+      // area. It read as a full page load because structurally it was one.
+      //
+      // As a layout route the shell mounts once and stays mounted. Only the
+      // content column suspends, and `SettingsLayout` gives that column its
+      // own quiet fallback instead of blanking the page.
       {
         path: "settings",
-        element: (
-          <Suspense fallback={null}>
-            <SettingsOverviewPage />
-          </Suspense>
-        ),
-      },
-      {
-        path: "settings/profile",
-        element: (
-          <Suspense fallback={null}>
-            <SettingsProfilePage />
-          </Suspense>
-        ),
-      },
-      {
-        path: "settings/preferences",
-        element: (
-          <Suspense fallback={null}>
-            <SettingsPreferencesPage />
-          </Suspense>
-        ),
-      },
-      {
-        path: "settings/security",
-        element: (
-          <Suspense fallback={null}>
-            <SettingsSecurityOverviewPage />
-          </Suspense>
-        ),
-      },
-      {
-        path: "settings/security/password",
-        element: (
-          <Suspense fallback={null}>
-            <SettingsPasswordPage />
-          </Suspense>
-        ),
-      },
-      {
-        path: "settings/security/mfa",
-        element: (
-          <Suspense fallback={null}>
-            <SettingsMfaPage />
-          </Suspense>
-        ),
-      },
-      {
-        path: "settings/security/sessions",
-        element: (
-          <Suspense fallback={null}>
-            <SettingsSessionsPage />
-          </Suspense>
-        ),
-      },
-      {
-        path: "settings/security/activity",
-        element: (
-          <Suspense fallback={null}>
-            <SettingsSecurityActivityPage />
-          </Suspense>
-        ),
-      },
-      {
-        path: "settings/notifications",
-        element: (
-          <Suspense fallback={null}>
-            <SettingsNotificationsPage />
-          </Suspense>
-        ),
-      },
-      // Signature Library (Command 26) — static paths before parametric
-      // No FeatureGuard: this one is real. The flag existed to hide a mock
-      // library that reset on reload and was never wired to signing.
-      {
-        path: "settings/signatures",
-        element: (
-          <Suspense fallback={null}>
-            <SignaturesPage />
-          </Suspense>
-        ),
-      },
-      {
-        path: "settings/branding",
-        element: (
-          <Suspense fallback={null}>
-            <SettingsBrandingPage />
-          </Suspense>
-        ),
-      },
-      {
-        path: "settings/billing",
-        element: (
-          <Suspense fallback={null}>
-            <SettingsBillingPage />
-          </Suspense>
-        ),
-      },
-      {
-        path: "settings/usage",
-        element: (
-          <Suspense fallback={null}>
-            <SettingsUsagePage />
-          </Suspense>
-        ),
-      },
-      // Integrations is post-launch. No Integration executes anything in this
-      // frontend, so exposing it in the launch profile would advertise a capability
-      // the product does not have.
-      {
-        path: "settings/integrations",
-        element: (
-          <CapabilityGuard capabilityId="integrations">
-            <Suspense fallback={null}>
+        element: <SettingsLayout />,
+        children: [
+          {
+            index: true,
+            element: (
+              <SettingsOverviewPage />
+            ),
+          },
+          {
+            path: "profile",
+            element: (
+              <SettingsProfilePage />
+            ),
+          },
+          {
+            path: "preferences",
+            element: (
+              <SettingsPreferencesPage />
+            ),
+          },
+          {
+            path: "security",
+            element: (
+              <SettingsSecurityOverviewPage />
+            ),
+          },
+          {
+            path: "security/password",
+            element: (
+              <SettingsPasswordPage />
+            ),
+          },
+          {
+            path: "security/mfa",
+            element: (
+              <SettingsMfaPage />
+            ),
+          },
+          {
+            path: "security/sessions",
+            element: (
+              <SettingsSessionsPage />
+            ),
+          },
+          {
+            path: "security/activity",
+            element: (
+              <SettingsSecurityActivityPage />
+            ),
+          },
+          {
+            path: "notifications",
+            element: (
+              <SettingsNotificationsPage />
+            ),
+          },
+          {
+            path: "signatures",
+            element: (
+              <SignaturesPage />
+            ),
+          },
+          {
+            path: "branding",
+            element: (
+              <SettingsBrandingPage />
+            ),
+          },
+          {
+            path: "billing",
+            element: (
+              <SettingsBillingPage />
+            ),
+          },
+          {
+            path: "usage",
+            element: (
+              <SettingsUsagePage />
+            ),
+          },
+          {
+            path: "integrations",
+            element: (
+              <CapabilityGuard capabilityId="integrations">
               <SettingsIntegrationsPage />
-            </Suspense>
-          </CapabilityGuard>
-        ),
-      },
-      {
-        path: "settings/integrations/:integrationId",
-        element: (
-          <CapabilityGuard capabilityId="integrations">
-            <Suspense fallback={null}>
+            </CapabilityGuard>
+            ),
+          },
+          {
+            path: "integrations/:integrationId",
+            element: (
+              <CapabilityGuard capabilityId="integrations">
               <SettingsIntegrationDetailPage />
-            </Suspense>
-          </CapabilityGuard>
-        ),
-      },
-      {
-        path: "settings/data-and-privacy",
-        element: (
-          <Suspense fallback={null}>
-            <SettingsDataPrivacyPage />
-          </Suspense>
-        ),
+            </CapabilityGuard>
+            ),
+          },
+          {
+            path: "data-and-privacy",
+            element: (
+              <SettingsDataPrivacyPage />
+            ),
+          },
+        ],
       },
 
       // Permission / session error states

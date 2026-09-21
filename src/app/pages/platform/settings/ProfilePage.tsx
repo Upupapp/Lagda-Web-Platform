@@ -12,7 +12,11 @@
 // Do not collect passwords, OTPs, government IDs, or identity documents.
 
 import React, { useEffect, useState, useRef } from "react";
-import { SettingsPage, SSection, SField, INPUT_STYLE, BTN_PRIMARY, BTN_SECONDARY, Skeleton, DEMO_NOTICE } from "./SettingsShell";
+// DEMO_NOTICE is deliberately NOT imported. It says "no backend services are
+// connected", which stopped being true when this page moved to GET /me and
+// PATCH /me/profile — leaving it would tell people their saved name is about
+// to be discarded, which is the opposite of what now happens.
+import { SettingsPage, SSection, SField, INPUT_STYLE, BTN_PRIMARY, BTN_SECONDARY, Skeleton } from "./SettingsShell";
 import { mockAccountSettingsService } from "../../../services/mock/settings.service";
 import { realAccountSettingsService } from "../../../services/real/account-settings.service";
 import { USE_REAL_BACKEND } from "../../../services/backend-flag";
@@ -142,7 +146,6 @@ export function ProfilePage() {
 
   return (
     <SettingsPage title="Profile" breadcrumb="Profile">
-      {DEMO_NOTICE}
       <form onSubmit={handleSave} noValidate>
         {/* Avatar */}
         <SSection title="Profile Photo">
