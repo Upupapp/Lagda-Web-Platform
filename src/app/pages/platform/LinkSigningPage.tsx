@@ -65,6 +65,11 @@ export function LinkSigningPage() {
   const [password, setPassword] = useState("");
   const [preparedCount, setPreparedCount] = useState(0);
   const [mismatch, setMismatch] = useState(false);
+  // `window.close()` is permitted here because this tab was script-opened,
+  // but a signer who pasted the URL by hand opened it themselves and the
+  // call is silently refused. We cannot detect that up front, so the button
+  // tries and falls back to telling them what to do.
+  const [closeRefused, setCloseRefused] = useState(false);
   const passwordId = useId();
   // A code may be claimed exactly once, and a REFUSED attempt spends it too —
   // that is what stops a stolen code being retried against account after
@@ -201,6 +206,38 @@ export function LinkSigningPage() {
             <p style={{ ...GF, margin: 0, fontSize: 12, color: T.silver, lineHeight: 1.6 }}>
               You have no saved signature yet. You can still sign by drawing,
               typing or uploading one.
+            </p>
+          )}
+
+          {/* Closing, rather than a link back to the ceremony.
+              *
+              * This tab has no idea where the signing tab is, and must not:
+              * that URL carries the access credential, which is the whole
+              * reason the signing tab never navigates. Closing gets the signer
+              * to the same place — focus returns to the tab underneath, which
+              * refetches and moves itself on to the consent step. */}
+          <button
+            type="button"
+            onClick={() => {
+              window.close();
+              // Still here a moment later means the browser refused.
+              window.setTimeout(() => { setCloseRefused(true); }, 250);
+            }}
+            style={{
+              ...GF, minHeight: TAP, marginTop: 4, padding: "0 20px",
+              borderRadius: 8, border: "none", background: T.azure,
+              color: "#fff", fontSize: 13, fontWeight: 700, cursor: "pointer",
+            }}
+          >
+            Close this tab &amp; continue signing
+          </button>
+          {closeRefused && (
+            <p role="status" style={{
+              ...GF, margin: 0, fontSize: 12, color: T.inkSoft, lineHeight: 1.6,
+            }}>
+              Your browser wouldn&rsquo;t close this tab automatically. Close it
+              yourself and return to your signing tab — it will pick up from
+              where you left off.
             </p>
           )}
         </div>

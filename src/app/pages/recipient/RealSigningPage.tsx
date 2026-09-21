@@ -207,8 +207,21 @@ export function RealSigningPage() {
         } catch { /* transient; the signer can still act on what is shown */ }
       })();
     };
+    // Both, because neither alone covers every way a signer comes back.
+    //
+    // `focus` misses the case where the signing tab was already the focused
+    // tab of its window — closing the sign-in tab then reveals it without
+    // refocusing it. `visibilitychange` catches that, and also covers a phone
+    // returning from the background. Together they double-fire on the common
+    // path, which costs one cheap refetch and is the right trade: a missed
+    // event strands the signer on a screen that has silently gone stale.
+    const onVisible = () => { if (!document.hidden) onFocus(); };
     window.addEventListener("focus", onFocus);
-    return () => { window.removeEventListener("focus", onFocus); };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
   }, [phase]);
 
   /**
