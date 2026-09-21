@@ -114,14 +114,21 @@ const DOC_STYLES = SKELETON_STYLE + `
      eight rows on a laptop and about four on a phone, which is the right
      proportion in both cases, while the px ceiling stops it becoming
      absurd on a very tall monitor. */
-  .doc-list-scroll {
-    max-height: min(60vh, 620px);
-    overflow-y: auto;
-    overscroll-behavior: contain;
+  /* Space above the whole table, not between its header and its rows —
+     doc-list-scroll is the row group, and a margin there would open a gap
+     under the column headings. The mobile card list has no header, so it
+     carries its own. */
+  .doc-cards-mobile { margin-top: 45px; }
+  @media (max-width: 767px) {
+    .doc-list-scroll {
+      max-height: 62vh;
+      overflow-y: auto;
+      overscroll-behavior: contain;
+    }
   }
   /* The header must NOT scroll with the rows — a column header that
      disappears takes the meaning of every cell with it. */
-  .doc-list-head { position: sticky; top: 0; z-index: 1; background: #FFFFFF; }
+  .doc-list-head { position: sticky; top: 0; z-index: 1; background: #FFFFFF; margin-top: 45px; }
 
   /* The actions wrap onto their own line rather than squeezing the title. */
   .doc-action { flex-shrink: 0; }
@@ -139,10 +146,10 @@ const DOC_STYLES = SKELETON_STYLE + `
      the old 100px track let it bleed over the Created column beside it.
      150px holds it with headroom; \`column-gap\` then guarantees a visible
      separation even if a future label runs long. */
-  .doc-row { display: grid; grid-template-columns: 40px minmax(0, 1fr) 150px 150px 116px 48px; column-gap: 8px; align-items: center; min-height: 52px; border-bottom: 1px solid #F1F5F9; }
+  .doc-row { display: grid; grid-template-columns: 40px minmax(0, 1fr) 150px 150px 116px auto; column-gap: 8px; align-items: center; min-height: 52px; border-bottom: 1px solid #F1F5F9; }
   .doc-row:last-child { border-bottom: none; }
   .doc-row:hover { background: #F8FAFC; }
-  .doc-header { display: grid; grid-template-columns: 40px minmax(0, 1fr) 150px 150px 116px 48px; column-gap: 8px; align-items: center; padding: 8px 0; border-bottom: 1px solid #E2E8F0; }
+  .doc-header { display: grid; grid-template-columns: 40px minmax(0, 1fr) 150px 150px 116px auto; column-gap: 8px; align-items: center; padding: 8px 0; border-bottom: 1px solid #E2E8F0; }
   /* Every cell is its own containment context. Without this a long title or
      a wide meter widens its track instead of truncating inside it, which is
      what turns one overflowing cell into a shifted row. */
@@ -155,8 +162,8 @@ const DOC_STYLES = SKELETON_STYLE + `
        rather than the old 88px: the same meter and label still have to fit,
        and squeezing the track is what produced the overlap in the first
        place. */
-    .doc-row { grid-template-columns: 40px minmax(0, 1fr) 130px 140px 48px; }
-    .doc-header { grid-template-columns: 40px minmax(0, 1fr) 130px 140px 48px; }
+    .doc-row { grid-template-columns: 40px minmax(0, 1fr) 130px 140px auto; }
+    .doc-header { grid-template-columns: 40px minmax(0, 1fr) 130px 140px auto; }
     .doc-col-updated { display: none; }
   }
   @media (max-width: 767px) {

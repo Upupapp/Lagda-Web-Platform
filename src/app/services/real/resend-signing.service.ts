@@ -24,12 +24,14 @@
 // the UI. What it does NOT touch is any request already created: those hold
 // their own copies, which is precisely the property that makes this safe.
 //
-// ── Order matters ─────────────────────────────────────────────────────────
+// ── One transaction for the recipient change ───────────────────────────
 //
-// Add the new recipients BEFORE removing the old ones. A document with zero
-// recipients is a state the preparation validator can reject, and a failure
-// halfway through a remove-then-add would leave the document unsendable with
-// nothing to show for it. Add-then-remove is never empty in between.
+// The recipient list is replaced by a single PUT that the server applies
+// atomically: the list becomes exactly what was sent, or nothing changes.
+// Creating and sending the request follow as two more calls. A failure
+// there leaves a DRAFT request on a correctly configured document — visible,
+// resumable and safe — rather than a document pointing at a recipient list
+// nobody chose.
 
 import { realRecipientService } from "./recipient.service";
 import { realSigningRequestService } from "./signing-request.service";
@@ -110,21 +112,28 @@ class ResendSigningService {
       throw new Error(`A single send is limited to ${MAX_RESEND_RECIPIENTS} recipients.`);
     }
 
-    const existing = await realRecipientService.list(workspaceId, documentId);
-
-    // Add first — see the header. The list is never empty in between.
-    for (const recipient of recipients) {
-      await realRecipientService.add(workspaceId, documentId, {
+    // One call, one transaction. This replaced list-then-add-then-remove —
+    // four separately committing requests that failed in two ways on any
+    // real document:
+    //
+    //   "already has a recipient with that email address" — the add ran
+    //   before the remove, so re-sending to the same person collided with
+    //   that person.
+    //
+    //   "Remove this recipient's fields before removing them" — every sent
+    //   document has a signature field, and a signer who owns fields cannot be
+    //   deleted. So no re-send could ever remove the previous signer.
+    //
+    // The server now keeps anybody already listed and hands a departing
+    // signer's fields to their replacement, so the fields already placed are
+    // kept and nobody has to place them again.
+    await realRecipientService.replaceAll(workspaceId, documentId,
+      recipients.map(recipient => ({
         name: recipient.name.trim().length > 0 ? recipient.name.trim() : nameFor(recipient.email),
         email: recipient.email.trim(),
-        type: "signer",
+        type: "signer" as const,
         isRequired: true,
-      });
-    }
-
-    for (const previous of existing) {
-      await realRecipientService.remove(workspaceId, documentId, previous.recipientId);
-    }
+      })));
 
     const created = await realSigningRequestService.create(
       workspaceId, documentId, crypto.randomUUID());
