@@ -185,10 +185,25 @@ class RealSigningRequestService {
     );
   }
 
-  async list(workspaceId: string, params?: { page?: number; perPage?: number }): Promise<SigningRequestListResult> {
+  /**
+   * The workspace's signing requests, newest first.
+   *
+   * `q`, `states` and `signer` are matched on the SERVER, across every
+   * request rather than the page in hand, and `total` counts the matches.
+   * `signer` filters by recipient name or email without returning either.
+   */
+  async list(workspaceId: string, params?: {
+    page?: number; perPage?: number;
+    q?: string; states?: readonly SigningRequestState[]; signer?: string;
+  }): Promise<SigningRequestListResult> {
     const query = new URLSearchParams();
     if (params?.page !== undefined) query.set("page", String(params.page));
     if (params?.perPage !== undefined) query.set("perPage", String(params.perPage));
+    const q = params?.q?.trim();
+    if (q) query.set("q", q);
+    if (params?.states !== undefined && params.states.length > 0) query.set("state", params.states.join(","));
+    const signer = params?.signer?.trim();
+    if (signer) query.set("signer", signer);
     const qs = query.toString();
     return apiRequest<SigningRequestListResult>(
       `/workspaces/${encodeURIComponent(workspaceId)}/signing-requests${qs ? `?${qs}` : ""}`,

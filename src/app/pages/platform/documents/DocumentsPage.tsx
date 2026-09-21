@@ -22,6 +22,7 @@ import { mockDocumentService } from "../../../services/mock/document.service";
 import {
   realSigningRequestService,
   type SigningRequestListItem,
+  type SigningRequestState,
 } from "../../../services/real/signing-request.service";
 // Lazy: pdf.js (~400KB) has no reason to load for every Documents page visit
 // — only once someone actually opens a document.
@@ -59,6 +60,7 @@ import { preparationRoute } from "../../../services/preparation-platform-project
 import { Z } from "../../../utils/z-index";
 import { FilterChips } from "../../../components/platform/FilterChips";
 import { usePrepareLaunch } from "../../../hooks/usePrepareLaunch";
+import { isSearchFocusShortcut } from "../../../utils/keyboard-shortcuts";
 
 // ── Design tokens (inline styles only — no Tailwind in JSX) ──────────────────
 
@@ -170,6 +172,58 @@ const DOC_STYLES = SKELETON_STYLE + `
     .doc-table-desktop { display: none; }
     .doc-cards-mobile  { display: block; }
   }
+  /* The live table's own tracks.
+
+     The header and the rows are SEPARATE grids: the header must stay put
+     while the rows scroll beneath it. Separate grids only line up when every
+     track has the same width in both, and the actions track used to be auto.
+     In a row, auto grew to fit four labelled buttons, about 430px. In the
+     header, whose actions cell is empty, it was 0px. The difference went to
+     the title track, so every heading to its right (Status, Progress,
+     Created) sat several hundred pixels right of its data.
+
+     Fixed tracks throughout, so both grids resolve identically. The actions
+     track is sized for the widest row (Send again, Signers, History, View);
+     narrower screens stack the buttons two by two rather than dropping
+     their labels. */
+  .doc-row.doc-grid-real, .doc-header.doc-grid-real {
+    grid-template-columns: 40px minmax(0, 1fr) 130px 150px 96px 448px;
+  }
+  .doc-actions-cell { display: flex; flex-wrap: wrap; gap: 4px; justify-content: flex-end; }
+  @media (max-width: 1440px) {
+    .doc-row.doc-grid-real, .doc-header.doc-grid-real {
+      grid-template-columns: 40px minmax(0, 1fr) 120px 140px 90px 248px;
+    }
+  }
+  @media (max-width: 1180px) {
+    .doc-row.doc-grid-real, .doc-header.doc-grid-real {
+      grid-template-columns: 40px minmax(0, 1fr) 116px 136px 248px;
+    }
+    .doc-grid-real > .doc-col-updated { display: none; }
+  }
+
+  /* Search and filters above the live table. */
+  .doc-filter-bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 16px; }
+  .doc-filter-field { position: relative; flex: 1 1 220px; max-width: 340px; }
+  .doc-filter-field input, .doc-filter-select {
+    width: 100%; box-sizing: border-box; height: 36px; border: 1px solid #E2E8F0;
+    border-radius: 8px; font-size: 13px; color: #07111F; background: #FFFFFF;
+    font-family: 'Geist', sans-serif; outline: none;
+  }
+  .doc-filter-field input { padding: 0 34px 0 32px; }
+  .doc-filter-field input:focus, .doc-filter-select:focus { border-color: #0078D4; box-shadow: 0 0 0 3px rgba(0,120,212,0.12); }
+  .doc-filter-select { flex: 0 1 190px; width: auto; min-width: 150px; padding: 0 10px; cursor: pointer; }
+  .doc-filter-kbd {
+    position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
+    font-family: 'Geist Mono', monospace; font-size: 11px; color: #5B6776;
+    border: 1px solid #E2E8F0; border-radius: 4px; padding: 0 5px; line-height: 18px;
+    background: #F8FAFC; pointer-events: none;
+  }
+  @media (max-width: 767px) {
+    .doc-filter-field, .doc-filter-select { flex: 1 1 100%; max-width: none; }
+    .doc-filter-kbd { display: none; }
+  }
+
   @media (prefers-reduced-motion: reduce) {
     .doc-row { transition: none !important; }
   }
@@ -2112,7 +2166,7 @@ function RealDocumentRow({
   const FileGlyph = iconForDocument(file?.mediaType, file?.filename);
   const navigate = useNavigate();
   return (
-    <div role="row" className="doc-row">
+    <div role="row" className="doc-row doc-grid-real">
       <div role="cell" />
       <div role="cell" style={{ padding: "8px 8px", minWidth: 0 }}>
         <div style={{ display: "flex", alignItems: "flex-start", gap: 8, minWidth: 0 }}>
@@ -2141,7 +2195,7 @@ function RealDocumentRow({
           {fmtRelative(item.createdAt)}
         </span>
       </div>
-      <div role="cell" style={{ padding: "8px 4px", display: "flex", gap: 2 }}>
+      <div role="cell" className="doc-actions-cell" style={{ padding: "8px 4px" }}>
         {/* Signers, as an action rather than a hidden affordance.
             *
             * The signature record was already reachable — by clicking the
@@ -2322,6 +2376,86 @@ function DocumentViewerDialog({
   );
 }
 
+// ── Live search and filters ──────────────────────────────────────────────────
+//
+// Matched on the SERVER (the signing-request list's q, state and signer
+// filters). Filtering the rows already in the browser would search only the
+// first page, and a list row carries no signer data to match against.
+
+/**
+ * Status choices, grouped the way a sender thinks about them rather than one
+ * per lifecycle state. Each group matches the badge its rows show:
+ * completion-ready displays as "Awaiting signature", so it belongs with the
+ * requests still in progress, not with Completed.
+ */
+const REAL_STATUS_FILTERS: readonly {
+  readonly key: string; readonly label: string; readonly states: readonly SigningRequestState[];
+}[] = [
+  { key: "",            label: "All statuses", states: [] },
+  { key: "draft",       label: "Draft",        states: ["draft", "ready-to-send"] },
+  { key: "in-progress", label: "In progress",  states: ["sent", "partially-completed", "completion-ready"] },
+  { key: "completed",   label: "Completed",    states: ["completed"] },
+  { key: "declined",    label: "Declined",     states: ["declined"] },
+  { key: "cancelled",   label: "Cancelled",    states: ["cancelled"] },
+  { key: "expired",     label: "Expired",      states: ["expired"] },
+];
+
+/** The value once it has stopped changing for ms: one request per pause, not per keystroke. */
+function useDebouncedValue<T>(value: T, ms: number): T {
+  const [settled, setSettled] = useState(value);
+  useEffect(() => {
+    const timer = setTimeout(() => setSettled(value), ms);
+    return () => clearTimeout(timer);
+  }, [value, ms]);
+  return settled;
+}
+
+function FilterField({
+  id, label, placeholder, value, onChange, inputRef, shortcutHint,
+}: {
+  id: string; label: string; placeholder: string; value: string;
+  onChange: (value: string) => void;
+  inputRef?: React.RefObject<HTMLInputElement>;
+  shortcutHint?: string;
+}) {
+  return (
+    <div className="doc-filter-field">
+      <label htmlFor={id} style={{ position: "absolute", width: 1, height: 1, overflow: "hidden", clip: "rect(0,0,0,0)" }}>
+        {label}
+      </label>
+      <Search size={14} aria-hidden style={{ position: "absolute", left: 11, top: "50%", transform: "translateY(-50%)", color: SLATE4, pointerEvents: "none" }} />
+      <input
+        id={id}
+        ref={inputRef}
+        type="text"
+        value={value}
+        placeholder={placeholder}
+        autoComplete="off"
+        spellCheck={false}
+        aria-keyshortcuts={shortcutHint}
+        onChange={e => onChange(e.target.value)}
+        onKeyDown={e => {
+          // Esc clears; a second Esc leaves the field.
+          if (e.key !== "Escape") return;
+          if (value !== "") { e.preventDefault(); onChange(""); } else { e.currentTarget.blur(); }
+        }}
+      />
+      {value !== "" ? (
+        <button
+          type="button"
+          onClick={() => onChange("")}
+          aria-label={`Clear ${label.toLowerCase()}`}
+          style={{ position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: SLATE4, padding: 2, lineHeight: 1 }}
+        >
+          <X size={13} aria-hidden />
+        </button>
+      ) : shortcutHint !== undefined ? (
+        <kbd className="doc-filter-kbd" aria-hidden>{shortcutHint}</kbd>
+      ) : null}
+    </div>
+  );
+}
+
 function DocumentsPageRealMode() {
   const { onPrepareClick } = usePrepareLaunch();
   const { currentWorkspace } = usePlatform();
@@ -2337,15 +2471,93 @@ function DocumentsPageRealMode() {
   // Bumped after a re-send. That produces an additional signing request, so
   // the list gains a row — there is nothing in place to patch.
   const [refreshKey, setRefreshKey] = useState(0);
+  const [total, setTotal] = useState(0);
+  // A refetch for a new filter keeps the rows on screen. Blanking the table
+  // to a skeleton on every search would make the search feel broken.
+  const [fetching, setFetching] = useState(false);
+
+  // The filters live in the URL, so a filtered list survives a reload, can be
+  // shared, and can be opened directly from the command palette.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const urlQ = searchParams.get("q") ?? "";
+  const urlSigner = searchParams.get("signer") ?? "";
+  const rawStatus = searchParams.get("status") ?? "";
+  const statusKey = REAL_STATUS_FILTERS.some(f => f.key === rawStatus) ? rawStatus : "";
+
+  const [nameInput, setNameInput] = useState(urlQ);
+  const [signerInput, setSignerInput] = useState(urlSigner);
+  const q = useDebouncedValue(nameInput.trim(), 300);
+  const signer = useDebouncedValue(signerInput.trim(), 300);
+  const filtering = q !== "" || signer !== "" || statusKey !== "";
+  const nameRef = useRef<HTMLInputElement>(null);
+
+  // Settled text goes to the URL.
+  useEffect(() => {
+    setSearchParams(prev => {
+      const next = new URLSearchParams(prev);
+      if (q) next.set("q", q); else next.delete("q");
+      if (signer) next.set("signer", signer); else next.delete("signer");
+      return next;
+    }, { replace: true });
+  }, [q, signer, setSearchParams]);
+
+  // A URL changed from OUTSIDE (the command palette, Back) comes back to the
+  // fields. After this page's own write the two already agree, so a field is
+  // never overwritten while somebody is typing in it.
+  const settledRef = useRef({ q, signer });
+  settledRef.current = { q, signer };
+  useEffect(() => {
+    if (urlQ !== settledRef.current.q) setNameInput(urlQ);
+    if (urlSigner !== settledRef.current.signer) setSignerInput(urlSigner);
+  }, [urlQ, urlSigner]);
+
+  const setStatusFilter = (key: string) => {
+    setSearchParams(prev => {
+      const next = new URLSearchParams(prev);
+      if (key) next.set("status", key); else next.delete("status");
+      return next;
+    }, { replace: true });
+  };
+  const clearFilters = () => {
+    setNameInput("");
+    setSignerInput("");
+    setStatusFilter("");
+  };
+
+  // "/" jumps to the search field, as on most sites that have one.
+  useEffect(() => {
+    function onKey(event: KeyboardEvent) {
+      if (!isSearchFocusShortcut(event)) return;
+      event.preventDefault();
+      nameRef.current?.focus();
+      nameRef.current?.select();
+    }
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, []);
 
   useEffect(() => {
     if (!workspaceId) return;
     let cancelled = false;
-    setStatus("loading");
+    setFetching(true);
+    const states = REAL_STATUS_FILTERS.find(f => f.key === statusKey)?.states ?? [];
 
-    void realSigningRequestService.list(workspaceId, { perPage: 50 })
-      .then(result => { if (!cancelled) { setItems(result.items); setStatus("ready"); } })
-      .catch(() => { if (!cancelled) setStatus("error"); });
+    void realSigningRequestService.list(workspaceId, { perPage: 50, q, signer, states })
+      .then(result => {
+        if (cancelled) return;
+        setItems(result.items);
+        setTotal(result.total);
+        setStatus("ready");
+        setFetching(false);
+      })
+      .catch(() => { if (!cancelled) { setStatus("error"); setFetching(false); } });
+
+    return () => { cancelled = true; };
+  }, [workspaceId, refreshKey, q, signer, statusKey]);
+
+  useEffect(() => {
+    if (!workspaceId) return;
+    let cancelled = false;
 
     // The file's TYPE, fetched alongside rather than as part of the list.
     // A signing request is a workflow row and carries no file information;
@@ -2398,23 +2610,74 @@ function DocumentsPageRealMode() {
             description="Something went wrong loading this workspace's documents. Try refreshing the page."
           />
         )}
-        {status === "ready" && items.length === 0 && (
+        {/* Shown once the list has loaded, and kept while filters are active
+            even when nothing matches: hiding the controls on an empty result
+            would leave no way to change the search that emptied it. */}
+        {status === "ready" && (items.length > 0 || filtering) && (
+          <div className="doc-filter-bar" role="search" aria-label="Search and filter documents">
+            <FilterField
+              id="doc-filter-name" label="Search by document name" placeholder="Search by name"
+              value={nameInput} onChange={setNameInput} inputRef={nameRef} shortcutHint="/"
+            />
+            <FilterField
+              id="doc-filter-signer" label="Filter by signer" placeholder="Signer name or email"
+              value={signerInput} onChange={setSignerInput}
+            />
+            <label htmlFor="doc-filter-status" style={{ position: "absolute", width: 1, height: 1, overflow: "hidden", clip: "rect(0,0,0,0)" }}>
+              Filter by status
+            </label>
+            <select
+              id="doc-filter-status"
+              className="doc-filter-select"
+              value={statusKey}
+              onChange={e => setStatusFilter(e.target.value)}
+            >
+              {REAL_STATUS_FILTERS.map(f => <option key={f.key} value={f.key}>{f.label}</option>)}
+            </select>
+            {filtering && (
+              <button
+                type="button"
+                onClick={clearFilters}
+                style={{ ...GF, height: 36, padding: "0 12px", borderRadius: 8, border: `1px solid ${SLATE2}`, background: "#fff", color: SLATE6, fontSize: 13, cursor: "pointer" }}
+              >
+                Clear filters
+              </button>
+            )}
+            <span aria-live="polite" style={{ ...GF, fontSize: 12, color: SLATE4, marginLeft: "auto", whiteSpace: "nowrap" }}>
+              {fetching
+                ? "Searching…"
+                : total > items.length
+                  ? `Showing the latest ${items.length} of ${total}`
+                  : `${total} ${total === 1 ? "document" : "documents"}`}
+            </span>
+          </div>
+        )}
+        {status === "ready" && items.length === 0 && !filtering && (
           <EmptyStateLayout
             icon={<FileText size={28} />}
             title="Your documents will appear here"
             description="Documents you prepare and send for signing will show up in this list. Use Prepare Document to start one."
           />
         )}
+        {status === "ready" && items.length === 0 && filtering && !fetching && (
+          <EmptyStateLayout
+            icon={<Search size={26} />}
+            title="No documents match"
+            description="Nothing in this workspace matches the current search and filters. Try a shorter name, a different signer, or another status."
+          />
+        )}
         {status === "ready" && items.length > 0 && (
           <div className="doc-table-desktop doc-list-frame" role="table" aria-label="Documents">
             <div role="rowgroup" className="doc-list-head">
-              <div role="row" className="doc-header">
+              <div role="row" className="doc-header doc-grid-real">
                 <div role="columnheader" aria-label="Icon" />
                 <div role="columnheader" style={{ fontSize: 11, fontWeight: 700, color: SLATE4, textTransform: "uppercase", letterSpacing: "0.06em", padding: "0 8px", ...GF }}>Document</div>
                 <div role="columnheader" style={{ fontSize: 11, fontWeight: 700, color: SLATE4, textTransform: "uppercase", letterSpacing: "0.06em", padding: "0 8px", ...GF }}>Status</div>
                 <div role="columnheader" style={{ fontSize: 11, fontWeight: 700, color: SLATE4, textTransform: "uppercase", letterSpacing: "0.06em", padding: "0 8px", ...GF }}>Progress</div>
                 <div role="columnheader" className="doc-col-updated" style={{ fontSize: 11, fontWeight: 700, color: SLATE4, textTransform: "uppercase", letterSpacing: "0.06em", padding: "0 8px", ...GF }}>Created</div>
-                <div role="columnheader" aria-label="Actions" />
+                {/* A visible heading, not just an aria-label: the column is the
+                    widest in the table, and an unlabelled one reads as a gap. */}
+                <div role="columnheader" style={{ fontSize: 11, fontWeight: 700, color: SLATE4, textTransform: "uppercase", letterSpacing: "0.06em", padding: "0 8px", textAlign: "right", ...GF }}>Actions</div>
               </div>
             </div>
             <div role="rowgroup" className="doc-list-scroll">

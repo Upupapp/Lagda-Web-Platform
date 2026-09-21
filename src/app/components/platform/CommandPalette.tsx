@@ -28,6 +28,9 @@ import type {
 } from "../../models/search";
 import { SEARCH_SCOPE_LABELS, VALID_SEARCH_SCOPES } from "../../models/search";
 import { globalSearchService } from "../../services/mock/global-search.service";
+import { USE_REAL_BACKEND } from "../../services/backend-flag";
+import { searchPaletteReal, REAL_PALETTE_SCOPES } from "../../services/real/palette-search";
+import { usePlatform } from "../../context/PlatformContext";
 import { Z } from "../../utils/z-index";
 import { TabStrip } from "./TabStrip";
 
@@ -622,6 +625,11 @@ interface CommandPaletteProps {
 
 export function CommandPalette({ open, onClose }: CommandPaletteProps) {
   const navigate   = useNavigate();
+  const { currentWorkspace } = usePlatform();
+  const workspaceId = currentWorkspace?.id ?? null;
+  // Real mode offers only the scopes that have a truthful source. The rest
+  // would be fixture data presented as the user's own.
+  const scopes = USE_REAL_BACKEND ? REAL_PALETTE_SCOPES : VALID_SEARCH_SCOPES;
   const dialogId   = useId();
   const inputId    = `${dialogId}-input`;
   const listboxId  = `${dialogId}-listbox`;
@@ -687,14 +695,24 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
       return;
     }
     setIsSearching(true);
+    // Guards the async path: a slow response to "empl" must not overwrite
+    // the answer to "employment" that arrived before it.
+    let cancelled = false;
     const timer = setTimeout(() => {
-      const res = globalSearchService.search({ query: query.trim(), scope, maxPerGroup: 5 });
-      setResponse(res);
-      setIsSearching(false);
-      setActiveIndex(-1);
-    }, 180);
-    return () => clearTimeout(timer);
-  }, [query, scope, isQuerying]);
+      const apply = (res: GlobalSearchResponse) => {
+        if (cancelled) return;
+        setResponse(res);
+        setIsSearching(false);
+        setActiveIndex(-1);
+      };
+      if (USE_REAL_BACKEND) {
+        void searchPaletteReal(workspaceId, query.trim(), scope).then(apply);
+      } else {
+        apply(globalSearchService.search({ query: query.trim(), scope, maxPerGroup: 5 }));
+      }
+    }, USE_REAL_BACKEND ? 250 : 180);
+    return () => { cancelled = true; clearTimeout(timer); };
+  }, [query, scope, isQuerying, workspaceId]);
 
   // ── Build flat items list for keyboard nav ────────────────────────────────
 
@@ -965,7 +983,7 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
                 borderBottom: "1px solid rgba(0,0,0,0.06)",
               }}
             >
-              {VALID_SEARCH_SCOPES.map((sc) => (
+              {scopes.map((sc) => (
                 <button
                   key={sc}
                   role="tab"
@@ -987,8 +1005,9 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
             </TabStrip>
           )}
 
-          {/* Demo notice — always shown */}
-          <DemoNotice />
+          {/* Demo notice — demonstration mode only. In real mode the document
+              results are live, and the notice would call them projections. */}
+          {!USE_REAL_BACKEND && <DemoNotice />}
 
           {/* Results body */}
           <div
