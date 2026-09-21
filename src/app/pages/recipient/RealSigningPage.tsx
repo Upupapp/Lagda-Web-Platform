@@ -42,13 +42,38 @@ import {
   Ban, ArrowLeft, Send, Loader2,
 } from "lucide-react";
 import { DECLINE_REASON_CATEGORIES } from "../../models/recipient";
+import { SigningEntryChoice } from "../../components/recipient/SigningEntryChoice";
 
 // The signer palette lives in `signer-ui`. Only the font alias survives the
 // redesign: every colour this page used is now applied by a primitive from
 // that module rather than inline here, which is the point of having it.
 const GF     = SIGNER_GF;
 
-type Phase = "loading" | "unavailable" | "consent" | "ceremony" | "submitted" | "declined" | "decline-form";
+/**
+ * Masks the address this document was sent to.
+ *
+ * The signer knows their own address, so this is not for them — it is for the
+ * case where a link has been forwarded. Whoever is holding it can see WHICH
+ * mailbox was addressed well enough to recognise their own, without the page
+ * handing a full address to someone the sender never wrote to.
+ *
+ * Fails closed: anything that does not look like an address is replaced
+ * wholesale rather than partially revealed.
+ */
+function maskRecipientEmail(email: string): string {
+  const at = email.lastIndexOf("@");
+  if (at < 1) return "your email address";
+  const local = email.slice(0, at);
+  const domain = email.slice(at);
+  const kept = local.slice(0, Math.min(3, local.length));
+  return `${kept}${"•".repeat(3)}${domain}`;
+}
+
+// "choose" sits in front of "consent": how you sign is asked before what
+// you agree to, because signing in changes what the consent screen can
+// offer. It is skipped once an account is already linked — there is no
+// choice left to make at that point.
+type Phase = "loading" | "unavailable" | "choose" | "consent" | "ceremony" | "submitted" | "declined" | "decline-form";
 
 export function RealSigningPage() {
   const { requestId: token } = useParams<{ requestId: string }>();
@@ -83,7 +108,9 @@ export function RealSigningPage() {
   const applyView = (ceremony: CeremonyView) => {
     setView(ceremony);
     if (ceremony.consent.required && !ceremony.consent.accepted && ceremony.access.mayAcceptConsent) {
-      setPhase("consent");
+      // Already linked means the question has been answered. Asking again
+      // would offer a choice that no longer exists.
+      setPhase(ceremony.accountLink === undefined ? "choose" : "consent");
       return;
     }
     setPhase("ceremony");
@@ -166,12 +193,17 @@ export function RealSigningPage() {
   // needed. Focus is the one moment we know something may have changed
   // elsewhere.
   useEffect(() => {
-    if (phase !== "ceremony" && phase !== "consent") return;
+    if (phase !== "ceremony" && phase !== "consent" && phase !== "choose") return;
     const onFocus = () => {
       void (async () => {
         try {
           const fresh = await realSigningAccessService.read();
           setView(fresh);
+          // They went to confirm and came back confirmed. Move on rather
+          // than leaving them staring at a choice they have just made.
+          if (fresh.accountLink !== undefined) {
+            setPhase(current => (current === "choose" ? "consent" : current));
+          }
         } catch { /* transient; the signer can still act on what is shown */ }
       })();
     };
@@ -410,6 +442,41 @@ export function RealSigningPage() {
           If you declined by mistake, contact the sender — a new request would
           have to be sent.
         </Notice>
+      </SignerCard>
+    );
+  }
+
+  if (phase === "choose" && view) {
+    return (
+      // `wide` (860px) rather than the default 560px, and it is load-bearing
+      // rather than cosmetic. The panels ask for a 280px minimum column; at
+      // 560px the card's inner width is ~512px, so two columns plus the gap
+      // (578px) never fit and the grid silently collapsed to one. This is the
+      // only ceremony screen showing two things side by side.
+      <SignerCard wide>
+        <SigningEntryChoice
+          documentTitle={view.request.documentTitle}
+          maskedEmail={maskRecipientEmail(view.recipient.email)}
+          onContinueWithoutAccount={() => { setPhase("consent"); }}
+          onContinueWithAccount={handleSignInToConfirm}
+        />
+        {linkError !== null && (
+          <p role="alert" style={{
+            ...GF, margin: "10px 0 0", fontSize: 12.5, color: T.danger,
+            lineHeight: 1.5, textAlign: "center",
+          }}>
+            {linkError}
+          </p>
+        )}
+        {/* Said here because the sign-in happens in another tab, and a tab
+            that opens behind the current one is easy to miss entirely. */}
+        <p style={{
+          ...GF, margin: "10px 0 0", fontSize: 11.5, color: T.silver,
+          lineHeight: 1.55, textAlign: "center",
+        }}>
+          Signing in opens a new tab. This one stays where it is — come back
+          to it when you&rsquo;re done.
+        </p>
       </SignerCard>
     );
   }

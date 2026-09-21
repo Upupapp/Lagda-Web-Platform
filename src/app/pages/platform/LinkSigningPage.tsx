@@ -38,9 +38,25 @@ import { useSearchParams } from "react-router";
 import { CheckCircle2, AlertCircle, Lock } from "lucide-react";
 import { realSigningAccountLinkService }
   from "../../services/real/signing-account-link.service";
+import { ApiError } from "../../services/api-client";
 import { GF, T, TAP } from "../../components/system/design-system";
 
 type Phase = "asking" | "claiming" | "done" | "failed" | "missing";
+
+/**
+ * The one claim failure allowed to be specific.
+ *
+ * Every other refusal is collapsed into a single message so that holding a
+ * code cannot be used to learn whether an address has an account here. This
+ * one is different: by the time it is returned the caller has already proved
+ * they hold this account's password, so telling them the document was
+ * addressed elsewhere reveals nothing they could not establish anyway — and
+ * withholding it leaves a person who did everything right staring at a blank
+ * refusal with no idea what to do next.
+ *
+ * It names no address. It says only that this one is not the right one.
+ */
+const ADDRESSED_ELSEWHERE = "SIGNING_LINK_ADDRESSED_ELSEWHERE";
 
 export function LinkSigningPage() {
   const [params] = useSearchParams();
@@ -48,6 +64,7 @@ export function LinkSigningPage() {
   const [phase, setPhase] = useState<Phase>(code === null ? "missing" : "asking");
   const [password, setPassword] = useState("");
   const [preparedCount, setPreparedCount] = useState(0);
+  const [mismatch, setMismatch] = useState(false);
   const passwordId = useId();
   // A code may be claimed exactly once, and a REFUSED attempt spends it too —
   // that is what stops a stolen code being retried against account after
@@ -63,7 +80,10 @@ export function LinkSigningPage() {
       const result = await realSigningAccountLinkService.claimHandoff(value, secret);
       setPreparedCount(result.preparedCount);
       setPhase("done");
-    } catch {
+    } catch (err) {
+      if (err instanceof ApiError && err.body?.code === ADDRESSED_ELSEWHERE) {
+        setMismatch(true);
+      }
       setPhase("failed");
     } finally {
       claiming.current = false;
@@ -188,13 +208,18 @@ export function LinkSigningPage() {
     );
   }
 
-  // `missing` and `failed` say the same thing, and deliberately.
+  // `missing` and `failed` say the same thing, with ONE exception.
   //
-  // A code can fail because it is unknown, expired, already used, or belongs
-  // to a different account. Telling the visitor which would let someone
-  // holding a code learn that a particular address has an account here — the
-  // backend collapses all of those into one refusal for that reason, and a
-  // page that helpfully expanded it would undo the whole precaution.
+  // A code can fail because it is unknown, expired, already used, or
+  // addressed to a different account. Telling the visitor which would let
+  // someone holding a code learn that a particular address has an account
+  // here — the backend collapses all of those into one refusal for that
+  // reason, and a page that helpfully expanded it would undo the precaution.
+  //
+  // The exception is `mismatch`, and it is safe precisely because it is
+  // reached only after the password check has passed. At that point the
+  // visitor has proved the account is theirs, so naming the reason tells them
+  // nothing about anyone else. See ADDRESSED_ELSEWHERE above.
   return (
     <div style={frame}>
       <div style={card}>
@@ -203,12 +228,23 @@ export function LinkSigningPage() {
           ...GF, margin: 0, fontSize: "clamp(17px, 4.6vw, 20px)",
           fontWeight: 800, color: T.ink,
         }}>
-          This link can&rsquo;t be used
+          {mismatch
+            ? "This document was sent to a different address"
+            : "This link can’t be used"}
         </h1>
         <p style={{ ...GF, margin: 0, fontSize: 13.5, color: T.inkSoft, lineHeight: 1.6 }}>
-          Sign-in links are only good for a couple of minutes and can be used
-          once. Go back to your signing tab and choose to sign in again.
+          {mismatch
+            ? "You’re signed in, but this signing request was addressed to another email address. Sign in with the account that address belongs to, or ask the sender to re-issue it — then try again."
+            : "Sign-in links are only good for a couple of minutes and can be used once. Go back to your signing tab and choose to sign in again."}
         </p>
+        {mismatch && (
+          // The path that is always open, said plainly. Someone who cannot
+          // resolve the mismatch should not be left thinking they are stuck.
+          <p style={{ ...GF, margin: 0, fontSize: 12, color: T.silver, lineHeight: 1.6 }}>
+            You can still sign this document without an account. Go back to
+            your signing tab and choose to continue without signing in.
+          </p>
+        )}
         <a
           href="/app/dashboard"
           style={{
