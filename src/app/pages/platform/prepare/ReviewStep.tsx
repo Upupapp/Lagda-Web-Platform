@@ -1,6 +1,9 @@
 // Step 6 of 7: Review — full summary before proceeding to field placement.
 // Shows all draft data, validation status, and field-placement readiness.
-// The "Continue to Place Fields" CTA calls markReadyForFieldPlacement() and navigates to /fields.
+// The "Continue to Authorization" CTA calls markReadyForFieldPlacement() and
+// navigates to /authorization — the last step before anyone is emailed.
+// Fields now come BEFORE Review in the sequence, so by the time somebody
+// reaches this screen the placement they are reviewing already exists.
 // Burgundy (#67023B) is NEVER used. eNotary is NEVER mentioned.
 // Legal limitation notice is required before the CTA.
 
@@ -162,7 +165,7 @@ export function ReviewStep() {
     const ok = await markReadyForFieldPlacement();
     setIsSubmitting(false);
     if (ok) {
-      void navigate("/app/prepare/fields");
+      void navigate("/app/prepare/authorization");
     }
   };
 
@@ -351,7 +354,7 @@ export function ReviewStep() {
             cursor: isSubmitting ? "not-allowed" : "pointer",
           }}
         >
-          {isSubmitting ? "Preparing…" : isReady ? "Continue to Place Fields →" : "Not ready yet →"}
+          {isSubmitting ? "Preparing…" : isReady ? "Continue to Authorization →" : "Not ready yet →"}
         </button>
         {!isReady && (
           <button

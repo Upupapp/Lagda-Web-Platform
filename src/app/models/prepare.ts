@@ -50,7 +50,8 @@ export type PreparationStepId =
   | "authentication"
   | "settings"
   | "review"
-  | "fields";
+  | "fields"
+  | "authorization";
 
 /**
  * The order of preparation, and the order the stepper renders.
@@ -65,14 +66,21 @@ export type PreparationStepId =
  * intent. The two must be read together: changing this array without changing
  * that function leaves a step reachable before its prerequisites exist.
  */
-export const PREPARATION_STEPS: { id: PreparationStepId; label: string; shortLabel: string; route: string }[] = [
-  { id: "upload",         label: "Documents",                  shortLabel: "Docs",     route: "/app/prepare/upload"         },
-  { id: "participants",   label: "Participants",                shortLabel: "Pax",      route: "/app/prepare/participants"   },
-  { id: "routing",        label: "Routing",                    shortLabel: "Route",    route: "/app/prepare/routing"        },
-  { id: "settings",       label: "Settings",                   shortLabel: "Settings", route: "/app/prepare/settings"       },
-  { id: "fields",         label: "Place Fields",               shortLabel: "Fields",   route: "/app/prepare/fields"         },
-  { id: "review",         label: "Review",                     shortLabel: "Review",   route: "/app/prepare/review"         },
-  { id: "authentication", label: "Authentication",             shortLabel: "Auth",     route: "/app/prepare/authentication" },
+export const PREPARATION_STEPS: {
+  id: PreparationStepId; label: string; shortLabel: string; route: string;
+  /** Lucide icon name. The stepper renders cards, and a card needs a face. */
+  icon: string;
+  /** One line, shown on the card. Says what the step is FOR, not what it is called. */
+  blurb: string;
+}[] = [
+  { id: "upload",         label: "Documents",      shortLabel: "Docs",     route: "/app/prepare/upload",         icon: "FileText",   blurb: "The file everyone will sign" },
+  { id: "participants",   label: "Signers",        shortLabel: "Signers",  route: "/app/prepare/participants",   icon: "Users",      blurb: "Who needs to sign it" },
+  { id: "routing",        label: "Order",          shortLabel: "Order",    route: "/app/prepare/routing",        icon: "ListOrdered", blurb: "What order they sign in" },
+  { id: "settings",       label: "Settings",       shortLabel: "Settings", route: "/app/prepare/settings",       icon: "SlidersHorizontal", blurb: "Reminders and expiry" },
+  { id: "fields",         label: "Place Fields",   shortLabel: "Fields",   route: "/app/prepare/fields",         icon: "PenLine",    blurb: "Where each signature goes" },
+  { id: "authentication", label: "Authentication", shortLabel: "Auth",     route: "/app/prepare/authentication", icon: "ShieldCheck", blurb: "How signers prove who they are" },
+  { id: "review",         label: "Review",         shortLabel: "Review",   route: "/app/prepare/review",         icon: "ClipboardCheck", blurb: "Check everything before sending" },
+  { id: "authorization",  label: "Authorization",  shortLabel: "Authorize", route: "/app/prepare/authorization", icon: "BadgeCheck", blurb: "Confirm you are authorised to send" },
 ];
 
 // ── Preparation step state ────────────────────────────────────────────────────

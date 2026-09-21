@@ -2592,7 +2592,14 @@ function FieldsPageInner() {
     }
     void (async () => {
       const ok = await saveFieldsToBackend();
-      if (ok) void navigate(returnTo ?? "/app/prepare/confirmation");
+      // Authentication, not confirmation. Fields now sit mid-sequence rather
+      // than at the end, so continuing moves to the next STEP instead of
+      // jumping past Authentication, Review and Authorization to the send.
+      //
+      // `returnTo` still wins when set: that is the Signing Workflow sending
+      // the sender here to assign one participant's fields, and it owns where
+      // they go back to.
+      if (ok) void navigate(returnTo ?? "/app/prepare/authentication");
     })();
   };
 

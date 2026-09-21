@@ -71,8 +71,9 @@ function resolveStepStates(
       routing:        unavail(),
       settings:       unavail(),
       fields:         "blocked",
-      review:         unavail(),
       authentication: unavail(),
+      review:         unavail(),
+      authorization:  unavail(),
     };
   }
 
@@ -112,9 +113,24 @@ function resolveStepStates(
   // Authentication is last and needs everything before it: it asks how each
   // signer proves who they are, and there are no signers to ask about until
   // participants and routing are settled.
-  const beforeFields  = filesOk && participantsOk && routingOk && settingsOk;
-  const beforeReview  = beforeFields && allOk;
-  const beforeAuth    = beforeReview && v.isValid;
+  // The chain, in the order PREPARATION_STEPS declares:
+  //
+  //   Documents -> Signers -> Order -> Settings -> Place Fields
+  //             -> Authentication -> Review -> Authorization
+  //
+  // Each step opens only once the one before it is VALID, never merely
+  // visited. "Visited" would unlock the next step for somebody who opened a
+  // step and left it empty, which is the state this gating exists to prevent.
+  //
+  // Nothing is pre-selected and nothing defaults to done: an unvisited step
+  // with satisfiable prerequisites reads "available", not "complete".
+  const beforeFields = filesOk && participantsOk && routingOk && settingsOk;
+  const beforeAuth   = beforeFields && allOk;
+  const beforeReview = beforeAuth && authOk;
+  // Authorization is the last gate and needs the whole draft valid. It is the
+  // step that releases the document to real people, so it may not open on a
+  // draft that Review itself would refuse.
+  const beforeAuthorization = beforeReview && v.isValid;
 
   return {
     upload:         stepState("upload", true, filesOk),
@@ -124,8 +140,9 @@ function resolveStepStates(
     fields:         beforeFields
       ? (activeStepId === "fields" ? "current" : "available")
       : "blocked",
-    review:         stepState("review", beforeReview, v.isValid),
     authentication: stepState("authentication", beforeAuth, authOk),
+    review:         stepState("review", beforeReview, v.isValid),
+    authorization:  stepState("authorization", beforeAuthorization, false),
   };
 }
 
@@ -660,7 +677,7 @@ export function PrepareProvider({ children }: { children: React.ReactNode }) {
         errors: [{ id: "vi_no_draft", stepId: "upload", severity: "error", code: "NO_DRAFT", message: "No active draft." }],
         warnings: [],
         readyForFieldPlacement: false,
-        stepValidity: { upload: false, participants: false, routing: false, authentication: false, settings: false, review: false, fields: false },
+        stepValidity: { upload: false, participants: false, routing: false, authentication: false, settings: false, review: false, fields: false, authorization: false },
       };
     }
     return validateDraftState(state.draft);

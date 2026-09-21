@@ -2,7 +2,7 @@
 // Separate from AuthLayout: shows step progress, branding, and nav chrome.
 // Used by all /onboarding/* routes.
 
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 import { Link, useLocation, useNavigate } from "react-router";
 import { LogOut, type LucideIcon } from "lucide-react";
 import { ONBOARDING_STEPS, type OnboardingProgress, type OnboardingStepId } from "../models/auth";
@@ -13,8 +13,7 @@ import lagdaHeaderLogo from "../../brand elements/svg/LagdaLogoPrimaryHorizontal
 // components/system/design-system.tsx for why onboarding and the signer are
 // deliberately on one palette.
 import {
-  T, PhaseBanner, ActionButton, ProgressRail, useViewport,
-  type RailStep,
+  T, PhaseBanner, ActionButton, useViewport,
 } from "../components/system/design-system";
 import { useSignOutFlow } from "../hooks/useSignOutFlow";
 
@@ -47,11 +46,6 @@ const SR_ONLY: React.CSSProperties = {
  * The rail's view of the steps, derived from `ONBOARDING_STEPS` rather than
  * written out again — a second list is a second thing to forget to update.
  */
-const RAIL_STEPS: readonly RailStep[] = ONBOARDING_STEPS.map(step => ({
-  id: step.id,
-  label: step.label,
-  short: String(step.stepNumber),
-}));
 
 const PROGRESS_KEY_BY_STEP: Partial<Record<OnboardingStepId, keyof OnboardingProgress>> = {
   profile: "profile",
@@ -70,6 +64,15 @@ export function OnboardingLayout({
   const { pendingUser, progress, reset } = useOnboarding();
 
   // Determine current step
+  // Keeps the current card in view when the strip scrolls. A strip that
+  // opens at step one while you are on step four has to be explored before
+  // it can be read.
+  const currentCardRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    currentCardRef.current?.scrollIntoView({ block: "nearest", inline: "center" });
+  });
+
   const currentStepMeta = ONBOARDING_STEPS.find((s) =>
     pathname.startsWith(s.path),
   );
@@ -118,13 +121,28 @@ export function OnboardingLayout({
           background: "#FFFFFF",
         }}
       >
-        <div className="onboarding-brand" aria-label="LAGDA">
+        {/* The logo shrinks rather than holding its desktop size. It is the
+            least useful thing in this header on a phone — the person is
+            already inside the product and knows whose it is. */}
+        <div className="onboarding-brand" aria-label="LAGDA" style={{ flexShrink: 0 }}>
           <img src={lagdaHeaderLogo} alt="LAGDA" />
         </div>
 
-        <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+        {/* minWidth: 0 is what stops the email pushing Sign out off the
+            screen. A flex item defaults to min-width:auto, so a long address
+            refuses to shrink and shoves its siblings out of the row instead
+            of truncating. That is why the button was unreachable on a phone. */}
+        <div style={{ display: "flex", alignItems: "center", gap: 12, minWidth: 0, flex: 1, justifyContent: "flex-end" }}>
           {pendingUser && (
-            <span style={{ color: "#64748B", ...GF, fontSize: 12 }}>
+            <span
+              title={pendingUser.email}
+              className="ob-header-email"
+              style={{
+                color: "#64748B", ...GF, fontSize: 12,
+                overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+                minWidth: 0,
+              }}
+            >
               {pendingUser.email}
             </span>
           )}
@@ -146,8 +164,10 @@ export function OnboardingLayout({
             className="ob-signout-btn"
             aria-label="Sign out"
           >
-            <LogOut size={14} aria-hidden />
-            Sign out
+            <LogOut size={14} aria-hidden style={{ flexShrink: 0 }} />
+            {/* The label drops below 480px, where the address and a labelled
+                button cannot both fit. aria-label carries the meaning. */}
+            <span className="ob-signout-label">Sign out</span>
           </button>
         </div>
       </header>
@@ -158,7 +178,7 @@ export function OnboardingLayout({
           aria-label="Onboarding progress"
           style={{
             display: "flex", justifyContent: "center",
-            padding: "20px clamp(12px, 4vw, 24px) 0",
+            padding: "16px clamp(12px, 4vw, 24px) 0",
           }}
         >
           {/* The rail marks the current step with `aria-current`, but not how
@@ -167,13 +187,66 @@ export function OnboardingLayout({
           <p style={SR_ONLY}>
             Step {currentStepNumber} of {ONBOARDING_STEPS.length}
           </p>
-          <div style={{ width: "100%", maxWidth: 520 }}>
-            <ProgressRail
-              steps={RAIL_STEPS}
-              current={currentStepMeta?.id ?? ""}
-              label="Onboarding progress"
-            />
-          </div>
+          {/* Cards rather than a rail of dots.
+              *
+              * The rail showed position and nothing else: six numbered dots
+              * say "you are on the fourth of six" and leave what the fourth
+              * one IS to be discovered by arriving at it. A card carries the
+              * step's name, so the sequence can be read before it is walked —
+              * which is the difference between knowing how much is left and
+              * knowing what is left.
+              *
+              * The same strip on both breakpoints, scrolling when six cards
+              * do not fit, with the current one centred on arrival. */}
+          <ol
+            className="ob-step-cards"
+            style={{
+              display: "flex", alignItems: "stretch", gap: 8,
+              listStyle: "none", margin: 0, padding: "0 0 4px",
+              overflowX: "auto", scrollbarWidth: "none", width: "100%",
+            }}
+          >
+            {ONBOARDING_STEPS.map(step => {
+              const isCurrent = step.id === currentStepMeta?.id;
+              const isDone = currentStepMeta !== undefined
+                && step.stepNumber < currentStepMeta.stepNumber;
+              return (
+                <li key={step.id} style={{ flexShrink: 0 }}>
+                  <div
+                    ref={isCurrent ? currentCardRef : undefined}
+                    aria-current={isCurrent ? "step" : undefined}
+                    style={{
+                      ...GF, display: "flex", alignItems: "center", gap: 8,
+                      minWidth: 132, padding: "9px 12px", borderRadius: 10,
+                      border: isCurrent ? "1.5px solid #0078D4" : "1px solid #E3E8EF",
+                      background: isCurrent ? "#EBF4FC" : "#FFFFFF",
+                    }}
+                  >
+                    <span
+                      aria-hidden
+                      style={{
+                        width: 22, height: 22, borderRadius: "50%", flexShrink: 0,
+                        display: "inline-flex", alignItems: "center", justifyContent: "center",
+                        fontSize: 11, fontWeight: 700,
+                        background: isDone || isCurrent ? "#0078D4" : "#EEF2F6",
+                        color: isDone || isCurrent ? "#FFFFFF" : "#8A9BAE",
+                      }}
+                    >
+                      {isDone ? "✓" : step.stepNumber}
+                    </span>
+                    <span style={{
+                      fontSize: 12.5,
+                      fontWeight: isCurrent ? 700 : 600,
+                      color: isCurrent ? "#0078D4" : isDone ? "#07111F" : "#8A9BAE",
+                      whiteSpace: "nowrap",
+                    }}>
+                      {step.label}
+                    </span>
+                  </div>
+                </li>
+              );
+            })}
+          </ol>
         </nav>
       )}
 
@@ -253,6 +326,19 @@ export function OnboardingLayout({
         .ob-signout-btn:hover { color: #0078D4 !important; background: #EAF6FF !important; }
         .onboarding-brand { display: flex; align-items: center; flex-shrink: 0; }
         .onboarding-brand img { display: block; width: 200px; height: 58px; object-fit: cover; object-position: left center; }
+        .ob-header-email { max-width: 34ch; }
+
+        /* Below 640px the header has room for a mark, an address and a
+           button — but not a 200px wordmark and a labelled button. The logo
+           halves and the button keeps its icon only. */
+        @media (max-width: 640px) {
+          .onboarding-brand img { width: 118px; height: 34px; }
+          .ob-header-email { max-width: 22ch; font-size: 11px; }
+        }
+        @media (max-width: 480px) {
+          .ob-signout-label { display: none; }
+          .ob-header-email  { max-width: 16ch; }
+        }
         .onboarding-footer-logo { display: block; width: 205px; height: 65px; object-fit: cover; margin-bottom: 3px; position: relative; top: 13px; }
         .onboarding-footer p { max-width: 680px; margin: 0; line-height: 1.55; }
         .onboarding-footer-description { color: #334155; font-size: 12px; }

@@ -242,6 +242,10 @@ function validateDraftState(draft: PreparationDraft): PrepValidationResult {
     settings:       errors.filter(i => i.stepId === "settings").length === 0,
     review:         errors.length === 0,
     fields:         false, // determined by markReadyForFieldPlacement
+    // Authorization is an ACT, not a configuration. There is no field to
+    // fill, so it is never "valid" in the sense the other steps are — it is
+    // done by pressing Authorize, which leaves the draft entirely.
+    authorization:  false,
   };
 
   const readyForFieldPlacement = errors.length === 0 && draft.participants.length > 0 && draft.files.length > 0 && !!titleTrimmed;
@@ -424,7 +428,7 @@ class MockPrepareDocumentService implements IPrepareDocumentService {
         errors: [{ id: "vi_notfound", stepId: "upload", severity: "error", code: "DRAFT_NOT_FOUND", message: "Draft not found." }],
         warnings: [],
         readyForFieldPlacement: false,
-        stepValidity: { upload: false, participants: false, routing: false, authentication: false, settings: false, review: false, fields: false },
+        stepValidity: { upload: false, participants: false, routing: false, authentication: false, settings: false, review: false, fields: false, authorization: false },
       };
     }
     return validateDraftState(draft);

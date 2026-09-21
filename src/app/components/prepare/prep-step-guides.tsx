@@ -24,6 +24,7 @@
 
 import type { LucideIcon } from "lucide-react";
 import {
+  BadgeCheck,
   FileText, Users, Route, ShieldCheck, SlidersHorizontal, ClipboardCheck,
   PenLine,
 } from "lucide-react";
@@ -200,6 +201,25 @@ export const PREP_STEP_GUIDES: Record<PreparationStepId, StepGuide> = {
       },
     ],
   },
+  authorization: {
+    banner: "Authorization",
+    icon: BadgeCheck,
+    description:
+      "The last step before anyone is emailed. Confirm you are authorised to send this document on behalf of your organisation.",
+    requirements: [
+      {
+        label: "Everything before this is complete",
+        info: "Authorization is the release, not a place to fix things. Any step still incomplete has to be finished first.",
+        required: true,
+      },
+      {
+        label: "You are authorised to send it",
+        info: "Pressing Authorize emails a real signing link to every participant. It cannot be recalled once sent.",
+        required: true,
+      },
+    ],
+  },
+
 };
 
 /**
