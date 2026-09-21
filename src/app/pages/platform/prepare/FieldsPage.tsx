@@ -200,6 +200,7 @@ function FieldElement({ field, isSelected, identity, isSender, onPointerDown, on
   return (
     <div
       role="button"
+      data-field-id={field.id}
       aria-label={`${FIELD_TYPE_LABELS[field.type]} field${identity ? ` assigned to ${identity.displayName}` : ""}${field.required ? ", required" : ", optional"}`}
       tabIndex={0}
       style={{
@@ -607,17 +608,27 @@ function PageCanvas({
     >
       {/* Page container */}
       <div style={{ position: "relative", margin: "auto" }}>
-        {/* Fictional preview notice */}
-        <div style={{
-          ...GF,
-          fontSize: 10,
-          color: SILVER,
-          textAlign: "center",
-          marginBottom: 6,
-          lineHeight: 1.4,
-        }}>
-          Document pages shown are fictional previews — selected files are not parsed or rendered.
-        </div>
+        {/* Shown only when the page really IS a placeholder.
+            *
+            * This notice used to render unconditionally, including while
+            * `DocumentPageSurface` was displaying the signer's actual PDF
+            * directly beneath it. Someone placing a signature on a real
+            * signature line was being told their file was not parsed or
+            * rendered — false, and alarming in the one place where being sure
+            * the document is real matters most. */}
+        {realDocumentId === null && (
+          <div style={{
+            ...GF,
+            fontSize: 10,
+            color: SILVER,
+            textAlign: "center",
+            marginBottom: 6,
+            lineHeight: 1.4,
+          }}>
+            No file was uploaded for this document, so the page below is a
+            placeholder. Field positions are still saved.
+          </div>
+        )}
 
         {/* Page */}
         <div
@@ -922,8 +933,63 @@ interface FieldPropertiesProps {
   participants: PrepParticipant[];
 }
 
+/**
+ * Nudge a field a precise amount, for fingers.
+ *
+ * At a fit-to-width zoom of about 55%, one screen pixel is nearly two
+ * document pixels, and a fingertip covers roughly forty of them. Dragging is
+ * fine for getting a field roughly where it belongs and hopeless for landing
+ * it ON a signature line — which is the only placement that matters.
+ *
+ * The step is expressed in NORMALIZED units because that is what the rect
+ * stores, so a nudge means the same distance at every zoom rather than
+ * getting coarser as you zoom out to see more of the page.
+ */
+function NudgePad({ field }: { field: FieldDefinition }) {
+  const { moveField } = useFieldEditor();
+  // 0.002 of the page: sub-millimetre on A4, and small enough that holding a
+  // direction walks the field rather than throwing it.
+  const STEP = 0.002;
+
+  const nudge = (dx: number, dy: number) => {
+    moveField(field.id, {
+      ...field.rect,
+      // Clamped so a field cannot be walked off the page and lost.
+      x: Math.max(0, Math.min(1 - field.rect.width, field.rect.x + dx)),
+      y: Math.max(0, Math.min(1 - field.rect.height, field.rect.y + dy)),
+    });
+  };
+
+  const key = {
+    ...GF, width: 40, height: 36, borderRadius: 8,
+    border: "1px solid #D1D9E0", background: "#FFFFFF",
+    color: NAVY, fontSize: 15, cursor: "pointer",
+    display: "flex", alignItems: "center", justifyContent: "center",
+  } as const;
+
+  return (
+    <div style={{ padding: "10px 14px", borderBottom: "1px solid #F0F2F5" }}>
+      <div style={{ ...GF, fontSize: 10, fontWeight: 700, color: SILVER, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 8 }}>
+        Nudge
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 40px)", gap: 6, justifyContent: "center" }}>
+        <span />
+        <button type="button" style={key} aria-label="Nudge field up" onClick={() => { nudge(0, -STEP); }}>↑</button>
+        <span />
+        <button type="button" style={key} aria-label="Nudge field left" onClick={() => { nudge(-STEP, 0); }}>←</button>
+        <span />
+        <button type="button" style={key} aria-label="Nudge field right" onClick={() => { nudge(STEP, 0); }}>→</button>
+        <span />
+        <button type="button" style={key} aria-label="Nudge field down" onClick={() => { nudge(0, STEP); }}>↓</button>
+        <span />
+      </div>
+    </div>
+  );
+}
+
 function FieldPropertiesPanel({ field, participants }: FieldPropertiesProps) {
   const { updateField, deleteFields, duplicateField, reorderLayer, participantIdentities } = useFieldEditor();
+  const { isCompact } = useViewport();
   const [confirmDelete, setConfirmDelete] = useState(false);
 
   const eligible = participants.filter(p => FIELD_ELIGIBLE_ROLES[field.type].includes(p.role));
@@ -944,6 +1010,10 @@ function FieldPropertiesPanel({ field, participants }: FieldPropertiesProps) {
           {identity ? `Assigned: ${identity.displayName} (${identity.role})` : isSender ? "Sender field" : "Unassigned"}
         </div>
       </div>
+
+      {/* Touch only. A mouse already has pixel precision, and the arrow keys
+          already nudge — this is the same capability for a finger. */}
+      {isCompact && <NudgePad field={field} />}
 
       <div style={{ flex: 1, overflowY: "auto", padding: "10px 14px" }}>
 
@@ -2356,6 +2426,35 @@ function FieldsPageInner() {
     announce: setShortcutMessage,
   });
 
+  // Bring the selected field out from under the sheet.
+  //
+  // The properties sheet rises from the bottom and can take 70% of a short
+  // screen, so selecting a field in the lower half opened an editor for
+  // something the editor itself was covering. Changing a field's properties
+  // while unable to see the field is not editing, it is guessing.
+  //
+  // Declared HERE, above every early return. Placed after `if (!draft)` it
+  // ran on some renders and not others, which changes hook order — the one
+  // thing React cannot tolerate. The sheet condition is recomputed inside
+  // rather than read from a binding that does not exist yet.
+  useEffect(() => {
+    const open = isCompact && (showValidation || selectedField !== null);
+    if (!open || selectedField === null) return;
+    const scroller = canvasScrollRef.current;
+    if (scroller === null) return;
+    const element = scroller.querySelector(`[data-field-id="${selectedField.id}"]`);
+    if (!(element instanceof HTMLElement)) return;
+
+    const scrollerBox = scroller.getBoundingClientRect();
+    const fieldBox = element.getBoundingClientRect();
+    // A comfortable margin below the top of the canvas — the band the sheet
+    // never reaches.
+    const delta = fieldBox.top - (scrollerBox.top + 24);
+    // Already in the safe band; moving would be motion for its own sake.
+    if (Math.abs(delta) < 8) return;
+    scroller.scrollBy({ top: delta, behavior: "smooth" });
+  }, [isCompact, showValidation, selectedField]);
+
   if (!draft) {
     return (
       <div style={{ ...GF, display: "flex", alignItems: "center", justifyContent: "center", height: "100vh", background: "#F5F7FA" }}>
@@ -2390,6 +2489,8 @@ function FieldsPageInner() {
   // open validation run LOOKS like on a phone. Closing it therefore has to
   // undo the state that summoned it, or it would reappear immediately.
   const sheetOpen = isCompact && (showValidation || selectedField !== null);
+
+
   const sheetTitle = showValidation
     ? "Validation"
     : selectedField !== null ? "Field properties" : "Field types";
