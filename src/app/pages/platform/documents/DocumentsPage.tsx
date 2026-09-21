@@ -103,6 +103,36 @@ const DOC_STYLES = SKELETON_STYLE + `
   .doc-org-view-btn.active { background: #EFF6FF18; color: #0078D4; border-left-color: #0078D4; font-weight: 600; }
   .doc-table-desktop { display: block; }
   .doc-cards-mobile  { display: none; }
+
+  /* ── A bounded list ───────────────────────────────────────────────────
+     The list grew without limit, so a workspace with eighty documents
+     pushed the page footer — and every control below the table — an
+     unreachable distance down. Capping it keeps the page a fixed shape
+     whatever it contains.
+
+     min() against vh rather than a fixed pixel height: 60vh is about
+     eight rows on a laptop and about four on a phone, which is the right
+     proportion in both cases, while the px ceiling stops it becoming
+     absurd on a very tall monitor. */
+  .doc-list-scroll {
+    max-height: min(60vh, 620px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+  /* The header must NOT scroll with the rows — a column header that
+     disappears takes the meaning of every cell with it. */
+  .doc-list-head { position: sticky; top: 0; z-index: 1; background: #FFFFFF; }
+
+  /* The actions wrap onto their own line rather than squeezing the title. */
+  .doc-action { flex-shrink: 0; }
+  @media (max-width: 400px) {
+    .doc-action-label { display: none; }
+    .doc-action { padding: 0 8px; }
+  }
+
+  .doc-list-scroll::-webkit-scrollbar       { width: 8px; }
+  .doc-list-scroll::-webkit-scrollbar-track { background: transparent; }
+  .doc-list-scroll::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 4px; }
   /* Column widths are sized to their CONTENT, not guessed. The progress
      column carries a 40px meter, a "1/1" count and a "Signed"/"Details"
      label with gaps — around 128px at the platform's 12px body size — so
@@ -2021,6 +2051,47 @@ function SignatureLink({
   );
 }
 
+/**
+ * A row action: icon AND label.
+ *
+ * The actions used to be four 32px icon-only buttons in a row. An icon is a
+ * reminder for someone who already knows the action, not an explanation for
+ * someone meeting it — a pencil reads as "edit" or "sign" depending on what
+ * you already believe, and a paper plane as "send" or "send again".
+ *
+ * On a phone the label sits beside the icon, because that is where the guess
+ * is most expensive and where a 32px target was already too small. Below
+ * 400px the labels drop and `title`/`aria-label` carry the meaning, which is
+ * the point at which four labelled buttons genuinely cannot fit.
+ */
+function DocAction({ icon: Icon, label, onClick, tone }: {
+  icon: typeof Eye;
+  label: string;
+  onClick: () => void;
+  tone?: "default" | "primary";
+}) {
+  return (
+    <button
+      onClick={onClick}
+      aria-label={label}
+      title={label}
+      className="doc-action"
+      style={{
+        ...GF,
+        display: "inline-flex", alignItems: "center", gap: 6,
+        minHeight: 34, padding: "0 10px", borderRadius: 7,
+        border: "1px solid #E3E8EF", background: "#FFFFFF",
+        color: tone === "primary" ? AZURE : SLATE4,
+        fontSize: 12.5, fontWeight: 600, cursor: "pointer",
+        whiteSpace: "nowrap",
+      }}
+    >
+      <Icon size={15} aria-hidden />
+      <span className="doc-action-label">{label}</span>
+    </button>
+  );
+}
+
 function RealDocumentRow({
   item, onView, onSignatures, onAudit, onResend, file,
 }: {
@@ -2074,73 +2145,17 @@ function RealDocumentRow({
             promise editing of something already in front of its recipients —
             and for a completed one, of evidence. */}
         {item.state === "draft" && (
-          <button
-            onClick={() => {
-              void navigate(
-                `/app/prepare/upload?resumeDocumentId=${encodeURIComponent(item.documentId)}`);
-            }}
-            aria-label={`Continue preparing ${item.documentTitle}`}
-            title="Continue preparing"
-            style={{
-              width: 32, height: 32, border: "none", background: "transparent",
-              cursor: "pointer", borderRadius: 6, display: "flex", alignItems: "center",
-              justifyContent: "center", color: AZURE,
-            }}
-          >
-            <Pencil size={15} aria-hidden />
-          </button>
+          <DocAction icon={Pencil} label="Continue" tone="primary"
+            onClick={() => { void navigate(`/app/prepare/upload?resumeDocumentId=${encodeURIComponent(item.documentId)}`); }} />
         )}
         {item.state !== "draft" && item.state !== "ready-to-send" && (
-          <button
-            onClick={() => onResend(item)}
-            aria-label={`Send ${item.documentTitle} for signing again`}
-            title="Send for signing again"
-            style={{
-              width: 32, height: 32, border: "none", background: "transparent",
-              cursor: "pointer", borderRadius: 6, display: "flex", alignItems: "center",
-              justifyContent: "center", color: SLATE4,
-            }}
-          >
-            <Send size={15} aria-hidden />
-          </button>
+          <DocAction icon={Send} label="Send again" onClick={() => onResend(item)} />
         )}
         {item.state !== "draft" && item.state !== "ready-to-send" && (
-          <button
-            onClick={() => onSignatures(item)}
-            aria-label={`Signers of ${item.documentTitle}`}
-            title="Who signed"
-            style={{
-              width: 32, height: 32, border: "none", background: "transparent",
-              cursor: "pointer", borderRadius: 6, display: "flex", alignItems: "center",
-              justifyContent: "center", color: SLATE4,
-            }}
-          >
-            <Users size={15} aria-hidden />
-          </button>
+          <DocAction icon={Users} label="Signers" onClick={() => onSignatures(item)} />
         )}
-        <button
-          onClick={() => onAudit(item)}
-          aria-label={`Audit trail for ${item.documentTitle}`}
-          title="Audit trail"
-          style={{
-            width: 32, height: 32, border: "none", background: "transparent",
-            cursor: "pointer", borderRadius: 6, display: "flex", alignItems: "center",
-            justifyContent: "center", color: SLATE4,
-          }}
-        >
-          <History size={15} aria-hidden />
-        </button>
-        <button
-          onClick={() => onView(item)}
-          aria-label={`View ${item.documentTitle}`}
-          style={{
-            width: 32, height: 32, border: "none", background: "transparent",
-            cursor: "pointer", borderRadius: 6, display: "flex", alignItems: "center",
-            justifyContent: "center", color: SLATE4,
-          }}
-        >
-          <Eye size={15} aria-hidden />
-        </button>
+        <DocAction icon={History} label="History" onClick={() => onAudit(item)} />
+        <DocAction icon={Eye} label="View" onClick={() => onView(item)} />
       </div>
     </div>
   );
@@ -2199,71 +2214,17 @@ function RealDocumentCard({
             promise editing of something already in front of its recipients —
             and for a completed one, of evidence. */}
         {item.state === "draft" && (
-          <button
-            onClick={() => {
-              void navigate(
-                `/app/prepare/upload?resumeDocumentId=${encodeURIComponent(item.documentId)}`);
-            }}
-            aria-label={`Continue preparing ${item.documentTitle}`}
-            title="Continue preparing"
-            style={{
-              width: 32, height: 32, border: "none", background: "transparent",
-              cursor: "pointer", borderRadius: 6, display: "flex", alignItems: "center",
-              justifyContent: "center", color: AZURE,
-            }}
-          >
-            <Pencil size={15} aria-hidden />
-          </button>
+          <DocAction icon={Pencil} label="Continue" tone="primary"
+            onClick={() => { void navigate(`/app/prepare/upload?resumeDocumentId=${encodeURIComponent(item.documentId)}`); }} />
         )}
         {item.state !== "draft" && item.state !== "ready-to-send" && (
-          <button
-            onClick={() => onResend(item)}
-            aria-label={`Send ${item.documentTitle} for signing again`}
-            title="Send for signing again"
-            style={{
-              width: 32, height: 32, border: "none", background: "transparent",
-              cursor: "pointer", borderRadius: 6, display: "flex", alignItems: "center",
-              justifyContent: "center", color: SLATE4,
-            }}
-          >
-            <Send size={15} aria-hidden />
-          </button>
+          <DocAction icon={Send} label="Send again" onClick={() => onResend(item)} />
         )}
         {item.state !== "draft" && item.state !== "ready-to-send" && (
-          <button
-            onClick={() => onSignatures(item)}
-            aria-label={`Signers of ${item.documentTitle}`}
-            title="Who signed"
-            style={{
-              width: 34, height: 34, border: "none", background: "transparent",
-              cursor: "pointer", borderRadius: 6, display: "flex", alignItems: "center",
-              justifyContent: "center", color: SLATE4,
-            }}
-          >
-            <Users size={16} aria-hidden />
-          </button>
+          <DocAction icon={Users} label="Signers" onClick={() => onSignatures(item)} />
         )}
-        <button
-          onClick={() => onAudit(item)}
-          aria-label={`Audit trail for ${item.documentTitle}`}
-          title="Audit trail"
-          style={{
-            flexShrink: 0, background: "none", border: "none", padding: 2,
-            cursor: "pointer", color: SLATE4, marginTop: 2, marginRight: 4,
-          }}
-        >
-          <History size={16} aria-hidden />
-        </button>
-        <button
-          onClick={() => onView(item)}
-          aria-label={`View ${item.documentTitle}`}
-          style={{
-            flexShrink: 0, background: "none", border: "none", padding: 2,
-            cursor: "pointer", color: SLATE4, marginTop: 2,
-          }}
-        >
-          <Eye size={16} aria-hidden />
-        </button>
+        <DocAction icon={History} label="History" onClick={() => onAudit(item)} />
+        <DocAction icon={Eye} label="View" onClick={() => onView(item)} />
       </div>
     </div>
   );
@@ -2438,8 +2399,8 @@ function DocumentsPageRealMode() {
           />
         )}
         {status === "ready" && items.length > 0 && (
-          <div className="doc-table-desktop" role="table" aria-label="Documents">
-            <div role="rowgroup">
+          <div className="doc-table-desktop doc-list-frame" role="table" aria-label="Documents">
+            <div role="rowgroup" className="doc-list-head">
               <div role="row" className="doc-header">
                 <div role="columnheader" aria-label="Icon" />
                 <div role="columnheader" style={{ fontSize: 11, fontWeight: 700, color: SLATE4, textTransform: "uppercase", letterSpacing: "0.06em", padding: "0 8px", ...GF }}>Document</div>
@@ -2449,7 +2410,7 @@ function DocumentsPageRealMode() {
                 <div role="columnheader" aria-label="Actions" />
               </div>
             </div>
-            <div role="rowgroup">
+            <div role="rowgroup" className="doc-list-scroll">
               {items.map(item => (
                 <RealDocumentRow
                   key={item.signingRequestId} item={item}
@@ -2462,7 +2423,7 @@ function DocumentsPageRealMode() {
           </div>
         )}
         {status === "ready" && items.length > 0 && (
-          <div className="doc-cards-mobile">
+          <div className="doc-cards-mobile doc-list-frame doc-list-scroll">
             {items.map(item => (
               <RealDocumentCard
                 key={item.signingRequestId} item={item}
