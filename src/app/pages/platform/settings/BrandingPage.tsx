@@ -2,7 +2,7 @@
 // Frontend-only. Logo stays in memory, not uploaded. No Burgundy. No eNotary.
 
 import React, { useEffect, useRef, useState } from "react";
-import { SettingsPage, SSection, SField, INPUT_STYLE, BTN_PRIMARY, BTN_SECONDARY, Skeleton, DEMO_NOTICE, StatusBadge } from "./SettingsShell";
+import { SettingsPage, SSection, SField, INPUT_STYLE, BTN_PRIMARY, BTN_SECONDARY, Skeleton, StatusBadge, PreviewSaved } from "./SettingsShell";
 import { mockBrandingSettingsService } from "../../../services/mock/settings.service";
 import { useConfirm } from "../../../components/platform/ConfirmDialog";
 import type { WorkspaceBranding } from "../../../models/settings";
@@ -159,7 +159,6 @@ export function BrandingPage() {
   return (
     <SettingsPage title="Workspace Branding" breadcrumb="Branding">
       {confirmDialog}
-      {DEMO_NOTICE}
 
       <div style={{ marginBottom: 16 }}>
         <StatusBadge label="Business Plan Feature" color={GOLD} />
@@ -237,7 +236,7 @@ export function BrandingPage() {
           </button>
           {dirty && !saving && <button type="button" onClick={() => { setForm({ ...branding }); setDirty(false); }} style={BTN_SECONDARY}>Discard</button>}
           <button type="button" onClick={handleReset} style={{ ...GF, fontSize: 13, padding: "9px 16px", border: "1.5px solid #D1D9E0", borderRadius: 8, background: "#FFFFFF", color: SLATE, cursor: "pointer" }}>Reset to defaults</button>
-          {saved && <span role="status" style={{ ...GF, fontSize: 13, color: "#16A34A" }}>Branding updated in this frontend demonstration.</span>}
+          {saved && <PreviewSaved />}
         </div>
       </form>
     </SettingsPage>

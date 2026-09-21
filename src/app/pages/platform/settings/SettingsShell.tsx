@@ -37,11 +37,90 @@ const Z_SHELL = 30;
  */
 const BOTTOM_NAV_CLEARANCE = 62;
 
-export const DEMO_NOTICE = (
-  <div role="note" style={{ background: "#FFFBEB", border: "1px solid #FDE68A", borderRadius: 8, padding: "8px 14px", marginBottom: 18, ...GF, fontSize: 12, color: "#92400E" }}>
-    Frontend demonstration — all changes are session-local and reset on page reload. No backend services are connected.
-  </div>
-);
+/**
+ * Which settings sections are backed by a real API.
+ *
+ * ── Why a list here, rather than a banner each page imports ───────────────
+ *
+ * Every unwired page used to render a shared `DEMO_NOTICE` itself, which made
+ * "is this section live?" a fact each page asserted about itself. Wiring a
+ * section then meant remembering to delete two lines in it — and that is
+ * exactly what went wrong: Profile was connected to GET /me and PATCH
+ * /me/profile, the banner was removed, and a success message reading "Profile
+ * updated in this frontend demonstration" was left behind, telling people
+ * their saved name had been discarded when it had not.
+ *
+ * With the list, wiring a section is adding its path here. The preview note
+ * then disappears everywhere it appeared, for that section, at once.
+ */
+const LIVE_SETTINGS_PATHS = [
+  "/app/settings/profile",
+  "/app/settings/signatures",
+];
+
+export function isLiveSettingsPath(pathname: string): boolean {
+  return LIVE_SETTINGS_PATHS.some(
+    live => pathname === live || pathname.startsWith(`${live}/`));
+}
+
+/**
+ * The preview note, in place of the old bordered yellow block.
+ *
+ * ── Why smaller is MORE honest here ───────────────────────────────────────
+ *
+ * The unwired pages already disclose at the point of action, thoroughly —
+ * "Password update simulated. No real credential was changed.", "Session
+ * revocation simulated. No production session was invalidated.", and so on,
+ * around thirty-five such lines. Those appear when somebody acts.
+ *
+ * The block at the top was the least load-bearing of those disclosures and
+ * the most expensive: it was also the one that had scrolled off the screen by
+ * the time anyone pressed Save. Shrinking it costs nothing that was doing
+ * work, and returns roughly 40-55px above the fold on every settings page at
+ * phone width.
+ *
+ * What it must never become is a hint. The clause that does the honest work —
+ * nothing is saved, changes are gone when you reload — is stated plainly, and
+ * is never behind a tooltip or a "learn more".
+ */
+function PreviewNote({ overview }: { overview: boolean }) {
+  return (
+    <p style={{
+      ...GF, margin: "8px 0 0", display: "flex", gap: 7, alignItems: "baseline",
+      fontSize: "clamp(11.5px, 3vw, 12.5px)", lineHeight: 1.55,
+      color: "#92400E", maxWidth: "62ch",
+    }}>
+      <span aria-hidden style={{
+        flexShrink: 0, width: 6, height: 6, borderRadius: "50%",
+        background: "#D97706", transform: "translateY(-1px)",
+      }} />
+      <span>
+        <strong style={{ fontWeight: 700 }}>Preview.</strong>{" "}
+        {overview
+          // The overview has no controls of its own, so "nothing is saved"
+          // would describe a page that never claimed to save anything.
+          ? "The figures below are sample data, and most sections here do not save changes yet. Profile and Signatures & Initials are live."
+          : "You can try these controls, but nothing on this page is saved — your changes are gone when you reload."}
+      </span>
+    </p>
+  );
+}
+
+/**
+ * The save confirmation for a section that does not save.
+ *
+ * Replaces four separately-worded variants that said the same thing four
+ * ways. Pages whose bespoke message names a specific simulated side effect —
+ * a credential not changed, a session not revoked — keep theirs: those are
+ * more informative than anything generic.
+ */
+export function PreviewSaved() {
+  return (
+    <span role="status" style={{ ...GF, fontSize: 13, color: "#16A34A" }}>
+      Applied for this visit only — not saved to your account.
+    </span>
+  );
+}
 
 interface SettingsNavItem {
   path:     string;
@@ -401,6 +480,11 @@ export function SettingsLayout() {
           <h1 style={{ ...GF, fontSize: 22, fontWeight: 800, color: NAVY, margin: 0 }}>
             {heading.title}
           </h1>
+          {/* Decided once, here, from the route — not asserted by each page
+              about itself. See LIVE_SETTINGS_PATHS. */}
+          {!isLiveSettingsPath(location.pathname) && (
+            <PreviewNote overview={location.pathname === "/app/settings"} />
+          )}
         </header>
 
         <div style={{ display: "flex", gap: 0, maxWidth: 1100, margin: "0 auto" }}>

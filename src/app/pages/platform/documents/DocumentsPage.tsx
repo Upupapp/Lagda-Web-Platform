@@ -6,7 +6,7 @@
 // All participant names are fictional. No IP, device, location shown.
 
 import { useState, useEffect, useCallback, useMemo, useRef, lazy, Suspense } from "react";
-import { Link, useSearchParams } from "react-router";
+import { Link, useSearchParams, useNavigate } from "react-router";
 import {
   FileText, FilePlus, Search, MoreHorizontal, Archive, RotateCcw, Pencil,
   X, AlertCircle, ChevronLeft, ChevronRight, Tag, FolderOpen, Folder,
@@ -2032,6 +2032,7 @@ function RealDocumentRow({
   file: DocumentFileFacts | undefined;
 }) {
   const FileGlyph = iconForDocument(file?.mediaType, file?.filename);
+  const navigate = useNavigate();
   return (
     <div role="row" className="doc-row">
       <div role="cell" />
@@ -2069,6 +2070,26 @@ function RealDocumentRow({
             * "2/3" progress indicator, which reads as a status label, not a
             * button. The capability existed and nobody could find it. Drafts
             * have no signers yet, so it appears once a request has been sent. */}
+        {/* Drafts only. "Continue" on a sent or completed request would
+            promise editing of something already in front of its recipients —
+            and for a completed one, of evidence. */}
+        {item.state === "draft" && (
+          <button
+            onClick={() => {
+              void navigate(
+                `/app/prepare/upload?resumeDocumentId=${encodeURIComponent(item.documentId)}`);
+            }}
+            aria-label={`Continue preparing ${item.documentTitle}`}
+            title="Continue preparing"
+            style={{
+              width: 32, height: 32, border: "none", background: "transparent",
+              cursor: "pointer", borderRadius: 6, display: "flex", alignItems: "center",
+              justifyContent: "center", color: AZURE,
+            }}
+          >
+            <Pencil size={15} aria-hidden />
+          </button>
+        )}
         {item.state !== "draft" && item.state !== "ready-to-send" && (
           <button
             onClick={() => onResend(item)}
@@ -2140,6 +2161,7 @@ function RealDocumentCard({
   file: DocumentFileFacts | undefined;
 }) {
   const FileGlyph = iconForDocument(file?.mediaType, file?.filename);
+  const navigate = useNavigate();
   // A div, not a button: the signature affordance below is itself a button,
   // and a button inside a button is invalid HTML that browsers resolve
   // unpredictably. The title and the eye icon are the two real controls.
@@ -2173,6 +2195,26 @@ function RealDocumentCard({
             {fmtRelative(item.createdAt)}
           </div>
         </div>
+        {/* Drafts only. "Continue" on a sent or completed request would
+            promise editing of something already in front of its recipients —
+            and for a completed one, of evidence. */}
+        {item.state === "draft" && (
+          <button
+            onClick={() => {
+              void navigate(
+                `/app/prepare/upload?resumeDocumentId=${encodeURIComponent(item.documentId)}`);
+            }}
+            aria-label={`Continue preparing ${item.documentTitle}`}
+            title="Continue preparing"
+            style={{
+              width: 32, height: 32, border: "none", background: "transparent",
+              cursor: "pointer", borderRadius: 6, display: "flex", alignItems: "center",
+              justifyContent: "center", color: AZURE,
+            }}
+          >
+            <Pencil size={15} aria-hidden />
+          </button>
+        )}
         {item.state !== "draft" && item.state !== "ready-to-send" && (
           <button
             onClick={() => onResend(item)}

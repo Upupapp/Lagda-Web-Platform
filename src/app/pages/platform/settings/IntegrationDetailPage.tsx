@@ -3,7 +3,7 @@
 
 import React, { useEffect, useState } from "react";
 import { Link, useParams } from "react-router";
-import { SettingsPage, SSection, SField, INPUT_STYLE, StatusBadge, Skeleton, DEMO_NOTICE } from "./SettingsShell";
+import { SettingsPage, SSection, SField, INPUT_STYLE, StatusBadge, Skeleton } from "./SettingsShell";
 import { mockIntegrationService } from "../../../services/mock/settings.service";
 import { useConfirm } from "../../../components/platform/ConfirmDialog";
 import type { IntegrationDefinition, IntegrationId } from "../../../models/settings";
@@ -118,7 +118,6 @@ export function IntegrationDetailPage() {
   return (
     <SettingsPage title={integration.name} breadcrumb={`Integrations › ${integration.name}`}>
       {confirmDialog}
-      {DEMO_NOTICE}
 
       {/* Header */}
       <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, flexWrap: "wrap", marginBottom: 16 }}>

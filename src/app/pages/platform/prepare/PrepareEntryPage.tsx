@@ -8,172 +8,48 @@ import { useNavigate, useSearchParams, Link } from "react-router";
 import { usePrepare } from "../../../context/PrepareContext";
 import { usePlatform } from "../../../context/PlatformContext";
 import { usePendingPreparation } from "../../../context/PendingPreparationContext";
-import type { ResumableDraftSummary, PreparationStepId } from "../../../models/prepare";
-import { PREPARATION_STEPS } from "../../../models/prepare";
 import { useProcessing } from "../../../services/processing.service";
+import {
+  realSigningRequestService, type SigningRequestListItem,
+} from "../../../services/real/signing-request.service";
 
 const GF     = { fontFamily: "'Geist', sans-serif" };
 const NAVY   = "#07111F";
 const AZURE  = "#0078D4";
 const SILVER = "#8A9BAE";
-const GOLD   = "#C9960C";
 
-function formatRelativeDate(iso: string): string {
-  const d = new Date(iso);
-  const now = new Date();
-  const diffMs = now.getTime() - d.getTime();
-  const diffDays = Math.floor(diffMs / 86400000);
-  if (diffDays === 0) return "Today";
-  if (diffDays === 1) return "Yesterday";
-  if (diffDays < 7)   return `${diffDays} days ago`;
-  return d.toLocaleDateString("en-PH", { month: "short", day: "numeric" });
-}
-
-function stepLabel(id: PreparationStepId): string {
-  return PREPARATION_STEPS.find(s => s.id === id)?.label ?? id;
-}
-
-function DraftCard({ draft, onResume }: { draft: ResumableDraftSummary; onResume: (id: string) => void }) {
-  return (
-    <div
-      style={{
-        border: "1px solid #E3E8EF",
-        borderRadius: 10,
-        padding: "16px 20px",
-        background: "#FAFBFC",
-        display: "flex",
-        alignItems: "flex-start",
-        justifyContent: "space-between",
-        gap: 16,
-      }}
-    >
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div
-          style={{
-            ...GF,
-            fontSize: 14,
-            fontWeight: 700,
-            color: NAVY,
-            marginBottom: 4,
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap",
-          }}
-        >
-          {draft.title}
-        </div>
-        <div style={{ ...GF, fontSize: 12, color: SILVER, marginBottom: 8 }}>
-          {formatRelativeDate(draft.updatedAt)} · {draft.fileCount} file{draft.fileCount !== 1 ? "s" : ""}
-          {draft.participantCount > 0 && ` · ${draft.participantCount} participant${draft.participantCount !== 1 ? "s" : ""}`}
-        </div>
-        <div
-          style={{
-            ...GF,
-            display: "inline-flex",
-            alignItems: "center",
-            gap: 4,
-            fontSize: 11,
-            fontWeight: 600,
-            color: GOLD,
-            background: "#FEF9EC",
-            border: "1px solid #F0D07A",
-            borderRadius: 6,
-            padding: "2px 8px",
-          }}
-        >
-          Next: {stepLabel(draft.nextStep)}
-        </div>
-      </div>
-      <button
-        onClick={() => onResume(draft.id)}
-        style={{
-          ...GF,
-          padding: "8px 16px",
-          borderRadius: 8,
-          border: `1px solid ${AZURE}`,
-          background: "#FFFFFF",
-          color: AZURE,
-          fontSize: 13,
-          fontWeight: 600,
-          cursor: "pointer",
-          flexShrink: 0,
-          whiteSpace: "nowrap",
-        }}
-      >
-        Resume →
-      </button>
-    </div>
-  );
-}
-
-function TemplateCard({
-  template,
-  onUse,
-}: {
-  // Mirrors MockTemplateSummary. A template summary carries participant roles and
-  // files only — it has no usage history to report.
-  template: { id: string; name: string; description: string; roleCount: number; fileCount: number };
-  onUse: (id: string) => void;
-}) {
-  return (
-    <div
-      style={{
-        border: "1px solid #E3E8EF",
-        borderRadius: 10,
-        padding: "16px 20px",
-        background: "#FAFBFC",
-        display: "flex",
-        alignItems: "flex-start",
-        justifyContent: "space-between",
-        gap: 16,
-      }}
-    >
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ ...GF, fontSize: 14, fontWeight: 700, color: NAVY, marginBottom: 4 }}>
-          {template.name}
-        </div>
-        <div style={{ ...GF, fontSize: 12, color: SILVER, marginBottom: 4 }}>
-          {template.description}
-        </div>
-        <div style={{ ...GF, fontSize: 11, color: SILVER }}>
-          {template.roleCount} participant{template.roleCount !== 1 ? "s" : ""}
-        </div>
-      </div>
-      <button
-        onClick={() => onUse(template.id)}
-        style={{
-          ...GF,
-          padding: "8px 16px",
-          borderRadius: 8,
-          border: `1px solid ${AZURE}`,
-          background: "#FFFFFF",
-          color: AZURE,
-          fontSize: 13,
-          fontWeight: 600,
-          cursor: "pointer",
-          flexShrink: 0,
-          whiteSpace: "nowrap",
-        }}
-      >
-        Use template
-      </button>
-    </div>
-  );
-}
-
+// DraftCard and TemplateCard removed with the fixtures they rendered. Real
+// drafts are listed inline below, straight from the signing-request list.
 export function PrepareEntryPage() {
   const navigate  = useNavigate();
   const [params]  = useSearchParams();
-  const { hasFlag } = usePlatform();
+  const platform = usePlatform();
+  const { hasFlag } = platform;
   const { claimPending } = usePendingPreparation();
-  const {
-    createDraft,
-    loadDraft,
-    loadResumableDrafts,
-    loadTemplates,
-    resumableDrafts,
-    templates,
-  } = usePrepare();
+  const { createDraft } = usePrepare();
+
+  // Real drafts: signing requests the server still holds in `draft` state.
+  //
+  // These used to be three fixtures with invented titles and dates. Fetched
+  // here rather than through PrepareContext because this is the only page
+  // that lists them — the context's own draft is the one being prepared, not
+  // a directory of everything unfinished.
+  const [realDrafts, setRealDrafts] = useState<SigningRequestListItem[]>([]);
+  useEffect(() => {
+    const workspaceId = platform.currentWorkspace?.id;
+    if (workspaceId === undefined) return;
+    let cancelled = false;
+    void realSigningRequestService.list(workspaceId, { perPage: 50 })
+      .then(result => {
+        if (cancelled) return;
+        setRealDrafts(result.items.filter(item => item.state === "draft"));
+      })
+      // An empty list is the right fallback. Showing nothing is honest, and
+      // an error about drafts would bury this page's actual purpose, which is
+      // starting a new one.
+      .catch(() => { /* leave the list empty */ });
+    return () => { cancelled = true; };
+  }, [platform.currentWorkspace?.id]);
 
   const canPrepare = hasFlag("prepareFlowEnabled");
   const resumeId = params.get("resumeId");
@@ -221,13 +97,6 @@ export function PrepareEntryPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [canPrepare, resumeId]);
 
-  useEffect(() => {
-    if (canPrepare && !resumeId) {
-      void loadResumableDrafts();
-      void loadTemplates();
-    }
-  }, [canPrepare, resumeId, loadResumableDrafts, loadTemplates]);
-
   const handleStartNew = async () => {
     const draftId = await runProcessing(
       { message: "Starting a new preparation", detail: "Creating your draft." },
@@ -236,24 +105,6 @@ export function PrepareEntryPage() {
     if (draftId) {
       void navigate("/app/prepare/upload");
     }
-  };
-
-  const handleUseTemplate = async (templateId: string) => {
-    const draftId = await runProcessing(
-      { message: "Preparing from template", detail: "Copying the template into a new draft." },
-      async () => createDraft({ source: "template", templateId }),
-    );
-    if (draftId) {
-      void navigate("/app/prepare/upload");
-    }
-  };
-
-  const handleResumeDraft = async (draftId: string) => {
-    await runProcessing(
-      { message: "Resuming your draft", detail: "Loading your documents and fields." },
-      async () => { await loadDraft(draftId); },
-    );
-    void navigate("/app/prepare/upload");
   };
 
   // ── Resuming a pre-auth document selection ──────────────────────────────────
@@ -387,37 +238,58 @@ export function PrepareEntryPage() {
         </div>
       </div>
 
-      {/* Templates */}
-      {templates.length > 0 && (
-        <section style={{ marginBottom: 36 }}>
-          <h2 style={{ fontSize: 15, fontWeight: 700, color: NAVY, margin: "0 0 14px" }}>
-            Use a template
-          </h2>
-          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            {templates.map(t => (
-              <TemplateCard
-                key={t.id}
-                template={t}
-                onUse={handleUseTemplate}
-              />
-            ))}
-          </div>
-        </section>
-      )}
+      {/* Templates removed with their fixtures.
+          *
+          * They offered "Use template" for templates that exist on no server.
+          * On a page that now really uploads files and really sends
+          * invitations, an invented starting point is no longer a harmless
+          * placeholder. They return when a template API is behind them. */}
 
-      {/* Resume drafts */}
-      {resumableDrafts.length > 0 && (
+      {/* Resume a draft — real signing requests still in `draft` state.
+          *
+          * Resuming reopens preparation against that same backend document
+          * rather than starting a second one beside it. */}
+      {realDrafts.length > 0 && (
         <section style={{ marginBottom: 36 }}>
           <h2 style={{ fontSize: 15, fontWeight: 700, color: NAVY, margin: "0 0 14px" }}>
             Resume a draft
           </h2>
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            {resumableDrafts.map(d => (
-              <DraftCard
-                key={d.id}
-                draft={d}
-                onResume={handleResumeDraft}
-              />
+            {realDrafts.map(item => (
+              <div
+                key={item.signingRequestId}
+                style={{
+                  display: "flex", alignItems: "center", justifyContent: "space-between",
+                  gap: 14, flexWrap: "wrap",
+                  padding: "14px 16px", borderRadius: 10,
+                  border: "1px solid #E3E8EF", background: "#FAFBFC",
+                }}
+              >
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ ...GF, fontSize: 14, fontWeight: 700, color: NAVY }}>
+                    {item.documentTitle}
+                  </div>
+                  <div style={{ ...GF, fontSize: 12, color: SILVER, marginTop: 3 }}>
+                    {item.participantCount === 1
+                      ? "1 participant"
+                      : `${item.participantCount} participants`}
+                  </div>
+                </div>
+                <button
+                  onClick={() => {
+                    void navigate(
+                      `/app/prepare/upload?resumeDocumentId=${encodeURIComponent(item.documentId)}`);
+                  }}
+                  style={{
+                    ...GF, minHeight: 38, padding: "0 16px", borderRadius: 8,
+                    border: `1px solid ${AZURE}`, background: "#FFFFFF",
+                    color: AZURE, fontSize: 13, fontWeight: 700, cursor: "pointer",
+                    flexShrink: 0,
+                  }}
+                >
+                  Resume &rarr;
+                </button>
+              </div>
             ))}
           </div>
         </section>
@@ -436,9 +308,10 @@ export function PrepareEntryPage() {
       >
         <strong style={{ color: "#4B5E70" }}>About LAGDA eSignature</strong>
         <br />
-        This is a frontend demonstration of the LAGDA document preparation workflow. No files are
-        uploaded or stored. No invitations are sent. Transactions prepared here exist as in-browser
-        drafts only and are not persisted to a server in this demonstration.
+        Documents you add here are uploaded to your workspace and stored there.
+        Sending a transaction emails a real signing link to each participant.
+        Drafts are kept on the server, so you can finish one later or on
+        another device.
       </div>
     </div>
   );

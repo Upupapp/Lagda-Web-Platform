@@ -3,7 +3,7 @@
 // All revocations are frontend demonstrations only.
 
 import React, { useEffect, useState } from "react";
-import { SettingsPage, SSection, StatusBadge, Skeleton, DEMO_NOTICE } from "./SettingsShell";
+import { SettingsPage, SSection, StatusBadge, Skeleton } from "./SettingsShell";
 import { mockSecuritySettingsService } from "../../../services/mock/settings.service";
 import { useConfirm } from "../../../components/platform/ConfirmDialog";
 import type { ActiveSession, ActiveSessionId } from "../../../models/settings";
@@ -83,7 +83,6 @@ export function SessionsPage() {
   return (
     <SettingsPage title="Active Sessions" breadcrumb="Security › Active Sessions">
       {confirmDialog}
-      {DEMO_NOTICE}
 
       {feedback && (
         <div role="status" style={{ background: "#F0FDF4", border: "1px solid #BBF7D0", borderRadius: 8, padding: "10px 14px", marginBottom: 16, ...GF, fontSize: 13, color: "#166534" }}>

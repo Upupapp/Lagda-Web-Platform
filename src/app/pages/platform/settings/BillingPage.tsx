@@ -4,7 +4,7 @@
 
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router";
-import { SettingsPage, SSection, SField, INPUT_STYLE, StatusBadge, Skeleton, DEMO_NOTICE } from "./SettingsShell";
+import { SettingsPage, SSection, SField, INPUT_STYLE, StatusBadge, Skeleton, PreviewSaved } from "./SettingsShell";
 import { mockBillingSettingsService } from "../../../services/mock/settings.service";
 import type { BillingAccount } from "../../../models/settings";
 import { LAGDA_PLANS, COMPARE_GROUPS } from "../../../config/pricing.config";
@@ -78,7 +78,6 @@ export function BillingPage() {
 
   return (
     <SettingsPage title="Billing & Plan" breadcrumb="Billing & Plan">
-      {DEMO_NOTICE}
 
       {simResult && (
         <div role="status" style={{ background: "#F0FDF4", border: "1px solid #BBF7D0", borderRadius: 8, padding: "10px 14px", marginBottom: 16, ...GF, fontSize: 13, color: "#166534" }}>
@@ -173,7 +172,7 @@ export function BillingPage() {
                 <div style={{ ...GF, fontSize: 13, color: SLATE, marginBottom: 2 }}>{billing.billingContact.email}</div>
                 {billing.billingContact.poRef && <div style={{ ...GF, fontSize: 12, color: SLATE }}>PO: {billing.billingContact.poRef}</div>}
                 <button onClick={() => setEditContact(true)} style={{ ...GF, fontSize: 13, color: AZURE, background: "none", border: "none", cursor: "pointer", padding: 0, marginTop: 10 }}>Edit billing contact</button>
-                {contactSaved && <span role="status" style={{ ...GF, fontSize: 12, color: GREEN, marginLeft: 12 }}>Saved (demonstration).</span>}
+                {contactSaved && <span style={{ marginLeft: 12 }}><PreviewSaved /></span>}
               </div>
             )}
           </SSection>

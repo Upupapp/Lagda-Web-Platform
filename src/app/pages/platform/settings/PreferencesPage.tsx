@@ -2,7 +2,7 @@
 // Frontend-only demonstration. No Burgundy. No eNotary.
 
 import React, { useEffect, useState } from "react";
-import { SettingsPage, SSection, SField, BTN_PRIMARY, BTN_SECONDARY, Skeleton, DEMO_NOTICE } from "./SettingsShell";
+import { SettingsPage, SSection, SField, BTN_PRIMARY, BTN_SECONDARY, Skeleton } from "./SettingsShell";
 import { mockAccountSettingsService } from "../../../services/mock/settings.service";
 import type { UserPreferences, AppearanceMode, DateFormatPref, TimeFormatPref } from "../../../models/settings";
 
@@ -99,7 +99,6 @@ export function PreferencesPage() {
 
   return (
     <SettingsPage title="Preferences" breadcrumb="Preferences">
-      {DEMO_NOTICE}
       <form onSubmit={handleSave} noValidate>
         <SSection title="Language & Region">
           <SField label="Language" help="Interface language.">
