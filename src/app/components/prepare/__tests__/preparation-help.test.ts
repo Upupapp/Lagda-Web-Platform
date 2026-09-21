@@ -19,7 +19,7 @@ import type { PreparationStepId, PreparationStepState, PrepValidationIssue } fro
 describe("step label / route helpers", () => {
   it("resolves a known step's route and label", () => {
     expect(stepRouteFor("participants")).toBe("/app/prepare/participants");
-    expect(stepLabelFor("participants")).toBe("Participants");
+    expect(stepLabelFor("participants")).toBe("Signers");
   });
   it("labels a route by its prefix", () => {
     expect(stepLabelFromRoute("/app/prepare/fields?showValidation=1")).toBe("Place Fields");
@@ -83,6 +83,7 @@ describe("helpItemsFromValidation", () => {
 describe("completionPercent", () => {
   const allState = (s: PreparationStepState): Record<PreparationStepId, PreparationStepState> => ({
     upload: s, participants: s, routing: s, authentication: s, settings: s, review: s, fields: s,
+    authorization: s,
   });
 
   it("is 0 when nothing is complete and fields aren't done", () => {

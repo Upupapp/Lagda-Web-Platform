@@ -32,7 +32,7 @@ import type { PreparationStepId, PreparationStepState } from "../../../models/pr
 
 const ALL_AVAILABLE: Record<PreparationStepId, PreparationStepState> = {
   upload: "available", participants: "available", routing: "available",
-  authentication: "available", settings: "available", review: "available", fields: "available",
+  authentication: "available", settings: "available", review: "available", fields: "available", authorization: "available",
 };
 
 // Tests run with USE_REAL_BACKEND true (VITE_API_BASE_URL is set), so the FAB

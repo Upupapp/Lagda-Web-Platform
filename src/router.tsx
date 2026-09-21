@@ -588,6 +588,12 @@ const SettingsStep = lazy(() =>
     default: m.SettingsStep,
   })),
 );
+const AuthorizationStep = lazy(() =>
+  import("./app/pages/platform/prepare/AuthorizationStep").then((m) => ({
+    default: m.AuthorizationStep,
+  })),
+);
+
 const ReviewStep = lazy(() =>
   import("./app/pages/platform/prepare/ReviewStep").then((m) => ({
     default: m.ReviewStep,
@@ -2613,6 +2619,16 @@ export const router = createBrowserRouter([
         element: (
           <Suspense fallback={null}>
             <FieldsPage />
+          </Suspense>
+        ),
+      },
+      {
+        // The last step before anyone is emailed. Frontend confirmation only
+        // — see the page's own header for what it does and does not do.
+        path: "authorization",
+        element: (
+          <Suspense fallback={null}>
+            <AuthorizationStep />
           </Suspense>
         ),
       },

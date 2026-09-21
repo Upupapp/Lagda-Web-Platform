@@ -10,10 +10,26 @@ import { PrepareProvider, usePrepare } from "../../../context/PrepareContext";
 import { usePlatform } from "../../../context/PlatformContext";
 import { PREPARATION_STEPS } from "../../../models/prepare";
 import type { PreparationStepId, PreparationStepState } from "../../../models/prepare";
+import {
+  FileText, Users, ListOrdered, SlidersHorizontal, PenLine,
+  ShieldCheck, ClipboardCheck, BadgeCheck, Check,
+} from "lucide-react";
 import { Z } from "../../../utils/z-index";
+
+/**
+ * Icon name to component.
+ *
+ * The step model carries a NAME rather than a component so `models/prepare`
+ * stays free of React imports — it is read by services and tests that have no
+ * business pulling in an icon library.
+ */
+const STEP_ICONS: Record<string, typeof FileText> = {
+  FileText, Users, ListOrdered, SlidersHorizontal, PenLine,
+  ShieldCheck, ClipboardCheck, BadgeCheck,
+};
 import { buildSignInUrl } from "../../../utils/authReturnPath";
 import { MissingItemsModal } from "../../../components/prepare/MissingItemsModal";
-import { PreparationHelpFab } from "../../../components/prepare/PreparationHelpFab";
+import { PreparationHelpFab, nudgePreparationHelp } from "../../../components/prepare/PreparationHelpFab";
 // Shared with the help FAB, which needs the same answer to "which step is
 // this". Two copies would be two places to update when a route moves.
 import { currentStepFromPath } from "../../../components/prepare/prep-step-guides";
@@ -23,31 +39,10 @@ import { useProcessing } from "../../../services/processing.service";
 const GF = { fontFamily: "'Geist', sans-serif" };
 const NAVY   = "#07111F";
 const AZURE  = "#0078D4";
-const GOLD   = "#C9960C";
 const SILVER = "#8A9BAE";
 
 // ── Stepper step state → visual style ────────────────────────────────────────
 
-function stepStyle(s: PreparationStepState): { dot: string; label: string; icon: string } {
-  switch (s) {
-    case "complete":
-    case "complete-with-warning":
-      return { dot: AZURE, label: AZURE, icon: "✓" };
-    case "current":
-      return { dot: NAVY, label: NAVY, icon: "" };
-    case "invalid":
-      return { dot: "#C0392B", label: "#C0392B", icon: "!" };
-    case "incomplete":
-      return { dot: GOLD, label: GOLD, icon: "·" };
-    case "blocked":
-      return { dot: SILVER, label: SILVER, icon: "🔒" };
-    case "unavailable":
-      return { dot: "#D1D9E0", label: "#9AACBC", icon: "" };
-    case "available":
-    default:
-      return { dot: SILVER, label: SILVER, icon: "" };
-  }
-}
 
 // ── Step ordering for Previous/Continue logic ─────────────────────────────────
 
@@ -162,110 +157,112 @@ function DiscardDialog({
 
 // ── Desktop stepper sidebar ───────────────────────────────────────────────────
 
-function StepperSidebar({
-  activeStepId,
-  stepStates,
-  onStepClick,
+// ── The sequence as cards ───────────────────────────────────────────────────
+//
+// Each step is a card with an icon, its name, and one line saying what it is
+// FOR — "Who needs to sign it", not "Participants". A name alone tells
+// somebody who already knows the product which step they are on; the line
+// tells somebody who does not what the step is asking of them.
+//
+// Locked cards stay VISIBLE and are visibly locked. Hiding them would make
+// the sequence look shorter than it is, and the question "why can I not get
+// to Place Fields yet" is answered by seeing it sit there, dimmed, after
+// Settings.
+//
+// Nothing is pre-selected and nothing defaults to done: a step with its
+// prerequisites met but never visited reads "available", not "complete".
+
+function StepperCards({
+  activeStepId, stepStates, onStepClick,
 }: {
   activeStepId: PreparationStepId | null;
   stepStates: Record<PreparationStepId, PreparationStepState>;
   onStepClick: (id: PreparationStepId) => void;
 }) {
+  const activeRef = useRef<HTMLButtonElement | null>(null);
+
+  // Keep the current card in view. The strip scrolls when eight cards do not
+  // fit, and a strip that opens at step one while you are on step six has to
+  // be explored before it can be read.
+  useEffect(() => {
+    activeRef.current?.scrollIntoView({ block: "nearest", inline: "center" });
+  }, [activeStepId]);
+
   return (
-    <nav
+    <ol
       aria-label="Preparation steps"
       style={{
-        width: 220,
-        flexShrink: 0,
-        background: "#F5F7FA",
-        borderRight: "1px solid #E3E8EF",
-        padding: "32px 0",
-        display: "flex",
-        flexDirection: "column",
-        gap: 0,
+        display: "flex", alignItems: "stretch", gap: 8,
+        listStyle: "none", margin: 0, padding: "12px 20px",
+        overflowX: "auto", scrollbarWidth: "none",
       }}
     >
-      <div
-        style={{
-          padding: "0 20px 24px",
-          borderBottom: "1px solid #E3E8EF",
-          marginBottom: 16,
-        }}
-      >
-        <span style={{ ...GF, fontSize: 11, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: SILVER }}>
-          Prepare Document
-        </span>
-      </div>
       {PREPARATION_STEPS.map((step, idx) => {
         const state = stepStates[step.id];
-        const style = stepStyle(state);
         const isActive = step.id === activeStepId;
-        const isClickable = state !== "unavailable" && state !== "blocked";
-
-        const isFilled = state === "complete" || state === "complete-with-warning";
+        const locked = state === "unavailable" || state === "blocked";
+        const done = state === "complete" || state === "complete-with-warning";
+        const Icon = STEP_ICONS[step.icon] ?? FileText;
 
         return (
-          <button
-            key={step.id}
-            className="prep-step-row"
-            onClick={() => isClickable && onStepClick(step.id)}
-            disabled={!isClickable}
-            aria-current={isActive ? "step" : undefined}
-            title={isClickable && !isActive ? `Go to ${step.label}` : undefined}
-            style={{
-              ...GF,
-              display: "flex",
-              alignItems: "center",
-              gap: 12,
-              padding: "10px 20px",
-              background: isActive ? "#EBF4FC" : "transparent",
-              border: "none",
-              borderLeft: isActive ? `3px solid ${AZURE}` : "3px solid transparent",
-              cursor: isClickable ? "pointer" : "default",
-              textAlign: "left",
-              width: "100%",
-            }}
-          >
-            <span
-              aria-hidden="true"
+          <li key={step.id} style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+            <button
+              type="button"
+              ref={isActive ? activeRef : undefined}
+              onClick={() => { if (!locked) onStepClick(step.id); }}
+              disabled={locked}
+              aria-current={isActive ? "step" : undefined}
+              title={locked ? `${step.label} — finish the earlier steps first` : step.label}
               style={{
-                width: 24,
-                height: 24,
-                borderRadius: "50%",
-                border: `2px solid ${style.dot}`,
-                background: isFilled ? style.dot : "transparent",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                flexShrink: 0,
-                fontSize: 11,
-                fontWeight: 700,
-                // White only reads against the solid-filled "complete" badge —
-                // every other state leaves the circle transparent against the
-                // light sidebar background. The state color itself (SILVER,
-                // or near-white for "unavailable") is too low-contrast for
-                // text, so the digit/icon stays a plain dark color there
-                // instead of disappearing (see reported screenshot).
-                color: isFilled ? "#FFFFFF" : NAVY,
+                ...GF, display: "flex", alignItems: "flex-start", gap: 9,
+                width: 186, textAlign: "left",
+                padding: "10px 12px", borderRadius: 10,
+                border: isActive ? `1.5px solid ${AZURE}` : "1px solid #E3E8EF",
+                background: isActive ? "#EBF4FC" : locked ? "#F8FAFC" : "#FFFFFF",
+                cursor: locked ? "not-allowed" : "pointer",
+                opacity: locked ? 0.72 : 1,
+                transition: "background 120ms ease, border-color 120ms ease",
               }}
             >
-              {style.icon || (state === "complete" ? "✓" : `${idx + 1}`)}
-            </span>
-            <span
-              style={{
-                fontSize: 13,
-                fontWeight: isActive ? 700 : 500,
-                color: isActive ? NAVY : style.label,
-              }}
-            >
-              {step.label}
-            </span>
-          </button>
+              <span
+                aria-hidden
+                style={{
+                  width: 26, height: 26, borderRadius: 7, flexShrink: 0,
+                  display: "inline-flex", alignItems: "center", justifyContent: "center",
+                  background: done ? AZURE : isActive ? AZURE : "#EEF2F6",
+                  color: done || isActive ? "#FFFFFF" : SILVER,
+                }}
+              >
+                {done ? <Check size={14} /> : <Icon size={14} />}
+              </span>
+              <span style={{ minWidth: 0 }}>
+                <span style={{
+                  display: "block", fontSize: 12.5,
+                  fontWeight: isActive ? 700 : 600,
+                  color: locked ? SILVER : isActive ? AZURE : NAVY,
+                }}>
+                  {idx + 1}. {step.label}
+                </span>
+                <span style={{
+                  display: "block", fontSize: 11, color: SILVER,
+                  marginTop: 2, lineHeight: 1.4,
+                }}>
+                  {step.blurb}
+                </span>
+              </span>
+            </button>
+            {idx < PREPARATION_STEPS.length - 1 && (
+              <span aria-hidden style={{ width: 12, height: 1, background: "#D1D9E0", flexShrink: 0 }} />
+            )}
+          </li>
         );
       })}
-    </nav>
+    </ol>
   );
 }
+
+// StepperSidebar removed with the vertical rail it drew. The sequence is
+// now StepperCards above (desktop) and StepperTopBar below (mobile).
 
 // ── Mobile horizontal stepper ─────────────────────────────────────────────────
 //
@@ -400,6 +397,16 @@ const LAYOUT_STYLES = `
     flex: 1;
     min-height: 0;
   }
+  /* The horizontal card strip. Desktop only — below 769px the existing
+     mobile pill bar takes over, unchanged. */
+  .prep-steprail {
+    display: block;
+    background: #FFFFFF;
+    border-bottom: 1px solid #E3E8EF;
+    flex-shrink: 0;
+  }
+  .prep-steprail ol::-webkit-scrollbar { display: none; }
+
   .prep-sidebar {
     display: flex;
     overflow-y: auto;
@@ -441,8 +448,9 @@ const LAYOUT_STYLES = `
   }
   @media (max-width: 768px) {
     .prep-layout-root { height: 100dvh; }
-    .prep-sidebar { display: none; }
-    .prep-topbar  { display: block; }
+    .prep-sidebar  { display: none; }
+    .prep-steprail { display: none; }
+    .prep-topbar   { display: block; }
     .prep-step-area { padding: 20px 16px 32px; }
     .prep-nav-bar   { padding: 12px 16px; }
     .prep-breadcrumb { padding: 0 16px !important; }
@@ -492,9 +500,17 @@ export function PrepareLayout() {
   const activeStepId = currentStepFromPath(location.pathname);
 
   const handleStepClick = useCallback((id: PreparationStepId) => {
+    // The cards and the mobile bar both disable locked steps, so this is the
+    // belt to their braces — a disabled button is a presentation choice and
+    // this is the rule.
+    const state = stepStates[id];
+    if (state === "unavailable" || state === "blocked") {
+      nudgePreparationHelp();
+      return;
+    }
     setStep(id);
     void navigate(stepRoute(id));
-  }, [navigate, setStep]);
+  }, [navigate, setStep, stepStates]);
 
   const goToStepFromReminder = useCallback((id: PreparationStepId) => {
     setStep(id);
@@ -513,11 +529,25 @@ export function PrepareLayout() {
 
   const handleContinue = useCallback(() => {
     const next = nextStep(activeStepId);
-    if (next) {
-      setStep(next);
-      void navigate(stepRoute(next));
+    if (!next) return;
+
+    // The gate. Continue used to navigate unconditionally, so the sequence
+    // was an arrangement rather than a rule — somebody could walk past a step
+    // they had not filled in and meet the consequence several screens later.
+    //
+    // A refusal on its own is a dead button, which is worse than no gate at
+    // all: nothing happens and nothing explains why. So a blocked attempt
+    // nudges the help FAB, which shakes for a second and opens the panel
+    // listing exactly what is outstanding on this step.
+    const nextState = stepStates[next];
+    if (nextState === "unavailable" || nextState === "blocked") {
+      nudgePreparationHelp();
+      return;
     }
-  }, [activeStepId, navigate, setStep]);
+
+    setStep(next);
+    void navigate(stepRoute(next));
+  }, [activeStepId, navigate, setStep, stepStates]);
 
   const handleDiscardRequest = useCallback(() => {
     setShowDiscard(true);
@@ -576,16 +606,23 @@ export function PrepareLayout() {
         onDiscard={handleDiscardRequest}
       />
 
-      <div className="prep-layout-body">
-        {/* Desktop sidebar */}
-        <div className="prep-sidebar">
-          <StepperSidebar
-            activeStepId={activeStepId}
-            stepStates={stepStates}
-            onStepClick={handleStepClick}
-          />
-        </div>
+      {/* The sequence, as cards, directly under the header.
+          *
+          * It was a 220px vertical rail down the left. Eight steps read
+          * top-to-bottom there while the work itself reads left-to-right,
+          * and the rail took a fifth of the width on every screen for
+          * something consulted between steps rather than during them.
+          *
+          * Desktop only — the mobile strip below is unchanged. */}
+      <div className="prep-steprail">
+        <StepperCards
+          activeStepId={activeStepId}
+          stepStates={stepStates}
+          onStepClick={handleStepClick}
+        />
+      </div>
 
+      <div className="prep-layout-body">
         <div className="prep-content">
           {/* Mobile top bar */}
           <div className="prep-topbar">

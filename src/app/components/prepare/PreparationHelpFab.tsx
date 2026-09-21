@@ -77,6 +77,22 @@ function useNavBarClearance(fallback: number): number {
   return clearance;
 }
 
+/**
+ * How a blocked action asks the FAB for attention.
+ *
+ * A DOM event rather than context, deliberately: the callers are scattered
+ * across step pages that have no relationship to this component, and threading
+ * a callback through every one of them would put a prop about help panels into
+ * files that are otherwise about routing and fields.
+ *
+ * Exported as a function so no caller has to remember the event name.
+ */
+export function nudgePreparationHelp(): void {
+  window.dispatchEvent(new CustomEvent(PREP_HELP_NUDGE));
+}
+
+const PREP_HELP_NUDGE = "lagda:prep-help-nudge";
+
 export function PreparationHelpFab() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -86,6 +102,24 @@ export function PreparationHelpFab() {
   } = usePrepare();
 
   const [open, setOpen] = useState(false);
+  // Drives the 1s shake. Cleared by a timer so the class can be re-applied on
+  // the next blocked attempt — an animation that is never removed plays once
+  // and then never again.
+  const [nudging, setNudging] = useState(false);
+
+  // Shake, then show. The order matters: opening first would cover the FAB
+  // with the very panel the shake is pointing at.
+  useEffect(() => {
+    const onNudge = () => {
+      setNudging(true);
+      window.setTimeout(() => { setNudging(false); }, 1000);
+      // Long enough for the movement to register as coming FROM the button,
+      // short enough that it still feels like one action.
+      window.setTimeout(() => { setOpen(true); }, 420);
+    };
+    window.addEventListener(PREP_HELP_NUDGE, onNudge);
+    return () => { window.removeEventListener(PREP_HELP_NUDGE, onNudge); };
+  }, []);
   const [showOthers, setShowOthers] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
   const fabRef = useRef<HTMLButtonElement>(null);
@@ -237,7 +271,7 @@ export function PreparationHelpFab() {
           cursor: "pointer",
           boxShadow: "0 6px 20px rgba(7,17,31,0.28)",
         }}
-        className="prep-help-fab"
+        className={`prep-help-fab${nudging ? " prep-help-fab--nudge" : ""}`}
       >
         {open ? <X size={22} strokeWidth={2.25} /> : <HelpCircle size={24} strokeWidth={2} />}
         {!open && !ready && items.length > 0 && (
@@ -481,6 +515,35 @@ export function PreparationHelpFab() {
           used to live here is now derived from `useViewport` above. */}
       <style>{`
         .prep-help-fab:hover { filter: brightness(1.08); }
+
+        /* The nudge, when somebody tries to move on with work outstanding.
+           *
+           * A shake is an interruption, so it has to be worth one: it fires
+           * only on a blocked attempt to advance, never on arrival at a step
+           * and never on a timer. One second, once per attempt.
+           *
+           * prefers-reduced-motion turns the movement off entirely and
+           * keeps the ring. Shaking is exactly the motion that makes a
+           * vestibular disorder worse, and the guide panel opens either way —
+           * the animation is the pointer, not the message. */
+        @keyframes prep-fab-wiggle {
+          0%, 100% { rotate: 0deg; }
+          15%      { rotate: -11deg; }
+          30%      { rotate: 9deg; }
+          45%      { rotate: -7deg; }
+          60%      { rotate: 5deg; }
+          75%      { rotate: -3deg; }
+        }
+        @keyframes prep-fab-ring {
+          0%   { box-shadow: 0 0 0 0 rgba(0,120,212,0.45); }
+          100% { box-shadow: 0 0 0 14px rgba(0,120,212,0); }
+        }
+        .prep-help-fab--nudge {
+          animation: prep-fab-wiggle 1s ease-in-out, prep-fab-ring 1s ease-out;
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .prep-help-fab--nudge { animation: prep-fab-ring 1s ease-out; }
+        }
         .prep-help-item:hover { filter: brightness(0.98); }
       `}</style>
     </>
