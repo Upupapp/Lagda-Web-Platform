@@ -11,14 +11,20 @@ export interface BootstrapResult {
   documentTitle: string;
   recipientName: string;
   maskedEmail: string;
-  authenticationMethod: "link-only";
+  /**
+   * How THIS session was authenticated: the emailed link, or a signed-in
+   * account that re-entered its password to continue from the app.
+   */
+  authenticationMethod: RecipientAuthenticationMethod;
   authenticatedAt: string;
 }
+
+export type RecipientAuthenticationMethod = "link-only" | "account-password";
 
 export interface SigningContext {
   authenticated: true;
   signingRequestId: string;
-  authenticationMethod: "link-only";
+  authenticationMethod: RecipientAuthenticationMethod;
 }
 
 export interface CeremonyField {
@@ -123,6 +129,21 @@ class RealSigningAccessService {
     return recipientApiRequest<BootstrapResult>("/signing-access/bootstrap", {
       method: "POST",
       body: { token },
+    });
+  }
+
+  /**
+   * Opens the ceremony from a code minted by "Continue signing" in the app.
+   *
+   * The code proves the signed-in account re-entered its password; the
+   * server then bootstraps from the recipient's own grant, so every check
+   * the emailed link passes applies here unchanged. Single use, two minutes.
+   */
+  async continueFromApp(code: string): Promise<BootstrapResult> {
+    if (!/^[A-Za-z0-9_-]{22}$/.test(code)) throw new NotASigningTokenError();
+    return recipientApiRequest<BootstrapResult>("/signing-access/continue", {
+      method: "POST",
+      body: { code },
     });
   }
 

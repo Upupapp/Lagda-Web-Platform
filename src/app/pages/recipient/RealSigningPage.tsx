@@ -75,6 +75,27 @@ function maskRecipientEmail(email: string): string {
 // choice left to make at that point.
 type Phase = "loading" | "unavailable" | "choose" | "consent" | "ceremony" | "submitted" | "declined" | "decline-form";
 
+// ── Continuing from the app ───────────────────────────────────────────────
+//
+// "Continue signing" in Documents lands on /sign/continue#<code>. The code is
+// in the FRAGMENT, which a browser never sends to a server or puts in a
+// Referer. It is read once and the fragment is cleared at once, so a reload,
+// the history entry or a copied address cannot replay it; the server burns it
+// on first use anyway.
+const CONTINUE_SEGMENT = "continue";
+let takenAppCode: string | null | undefined;
+function takeAppCode(): string | null {
+  if (takenAppCode !== undefined) return takenAppCode;
+  const raw = window.location.hash.replace(/^#/, "");
+  takenAppCode = raw === "" ? null : decodeURIComponent(raw);
+  window.history.replaceState(null, "", window.location.pathname + window.location.search);
+  return takenAppCode;
+}
+
+const APP_CODE_UNUSABLE =
+  "This signing session could not be opened. Go back to Documents and choose "
+  + "Continue signing again. The step expires after two minutes.";
+
 export function RealSigningPage() {
   const { requestId: token } = useParams<{ requestId: string }>();
   const [phase, setPhase] = useState<Phase>("loading");
@@ -144,11 +165,23 @@ export function RealSigningPage() {
       setPhase("unavailable");
       return;
     }
+    const fromApp = token === CONTINUE_SEGMENT;
     void (async () => {
       try {
-        await realSigningAccessService.bootstrap(token);
+        if (fromApp) {
+          const code = takeAppCode();
+          if (code === null) throw new Error("no code");
+          await realSigningAccessService.continueFromApp(code);
+        } else {
+          await realSigningAccessService.bootstrap(token);
+        }
         await enterCeremony();
       } catch {
+        if (fromApp) {
+          setErrorMessage(APP_CODE_UNUSABLE);
+          setPhase("unavailable");
+          return;
+        }
         // ONE message for every bootstrap failure, deliberately.
         //
         // `describeError` used to surface the server's own text here, which in

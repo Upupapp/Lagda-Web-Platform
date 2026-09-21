@@ -12,7 +12,7 @@ import {
   X, AlertCircle, ChevronLeft, ChevronRight, Tag, FolderOpen, Folder,
   ShieldCheck, Activity, Users, RefreshCw, Inbox, ArrowUpDown,
   Star, Clock, ExternalLink,
-  Eye, Bell, Ban, Shuffle, Shield, Info, Send, Download, History
+  Eye, Bell, Ban, Shuffle, Shield, Info, Send, Download, History, PenLine, FileCheck2
 } from "lucide-react";
 import { usePlatform } from "../../../context/PlatformContext";
 import {
@@ -61,6 +61,8 @@ import { Z } from "../../../utils/z-index";
 import { FilterChips } from "../../../components/platform/FilterChips";
 import { usePrepareLaunch } from "../../../hooks/usePrepareLaunch";
 import { isSearchFocusShortcut } from "../../../utils/keyboard-shortcuts";
+import { DocumentsToSignSection, SignedByMeSection } from "./MySigningSections";
+import { realMySigningService } from "../../../services/real/my-signing.service";
 
 // ── Design tokens (inline styles only — no Tailwind in JSX) ──────────────────
 
@@ -170,7 +172,10 @@ const DOC_STYLES = SKELETON_STYLE + `
   }
   @media (max-width: 767px) {
     .doc-table-desktop { display: none; }
-    .doc-cards-mobile  { display: block; }
+    /* contents, not block: on a phone the card list takes no box of its own,
+       so its cards sit directly in the page flow rather than inside a
+       separately scrolling frame. */
+    .doc-cards-mobile  { display: contents; }
   }
   /* The live table's own tracks.
 
@@ -219,9 +224,43 @@ const DOC_STYLES = SKELETON_STYLE + `
     border: 1px solid #E2E8F0; border-radius: 4px; padding: 0 5px; line-height: 18px;
     background: #F8FAFC; pointer-events: none;
   }
+  /* Phones. Two faults, both fixed here.
+
+     The inputs were 13px, and iOS zooms the whole page when a field under
+     16px takes focus, which is what threw the list and its cards out of
+     place. 16px on phones stops the zoom.
+
+     And every control took its own full-width row, four rows deep, pushing
+     the list half a screen down. Now it is a grid: the name search spans
+     the width, signer and status share the next row, and the count and
+     Clear sit on one line beneath. */
   @media (max-width: 767px) {
-    .doc-filter-field, .doc-filter-select { flex: 1 1 100%; max-width: none; }
+    .doc-filter-bar {
+      display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 8px; align-items: stretch;
+    }
+    .doc-filter-bar > .doc-filter-field:first-of-type { grid-column: 1 / -1; }
+    .doc-filter-field, .doc-filter-select { max-width: none; min-width: 0; width: 100%; }
+    .doc-filter-field input, .doc-filter-select { font-size: 16px; height: 42px; }
+    .doc-filter-meta { grid-column: 1 / -1; }
     .doc-filter-kbd { display: none; }
+    .doc-cards-mobile { margin-top: 16px; }
+  }
+
+  /* The three lists: what this workspace sent, and what was sent to me. */
+  .doc-list-tabs { display: flex; gap: 4px; margin-top: 16px; border-bottom: 1px solid #E2E8F0; overflow-x: auto; scrollbar-width: none; }
+  .doc-list-tabs::-webkit-scrollbar { display: none; }
+  .doc-list-tab {
+    display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;
+    padding: 10px 12px; font-family: 'Geist', sans-serif; font-size: 13px; font-weight: 600;
+    color: #64748B; background: none; border: none; border-bottom: 2px solid transparent;
+    cursor: pointer; margin-bottom: -1px;
+  }
+  .doc-list-tab[aria-selected="true"] { color: #0078D4; border-bottom-color: #0078D4; }
+  .doc-list-count {
+    min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; font-size: 11px;
+    display: inline-flex; align-items: center; justify-content: center;
+    background: #0078D4; color: #FFFFFF;
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -2484,6 +2523,27 @@ function DocumentsPageRealMode() {
   const rawStatus = searchParams.get("status") ?? "";
   const statusKey = REAL_STATUS_FILTERS.some(f => f.key === rawStatus) ? rawStatus : "";
 
+  // Which list: this workspace's sent documents, or documents sent TO me.
+  const rawList = searchParams.get("list");
+  const list: "sent" | "to-sign" | "signed" =
+    rawList === "to-sign" || rawList === "signed" ? rawList : "sent";
+  const [toSignCount, setToSignCount] = useState<number | null>(null);
+  const setList = (next: typeof list) => {
+    setSearchParams(prev => {
+      const params = new URLSearchParams(prev);
+      if (next === "sent") params.delete("list"); else params.set("list", next);
+      return params;
+    }, { replace: true });
+  };
+  // The badge on "I must sign" is known before that list is opened.
+  useEffect(() => {
+    let cancelled = false;
+    void realMySigningService.documentsToSign()
+      .then(entries => { if (!cancelled) setToSignCount(entries.length); })
+      .catch(() => { /* The badge is a convenience; the list reports its own failure. */ });
+    return () => { cancelled = true; };
+  }, []);
+
   const [nameInput, setNameInput] = useState(urlQ);
   const [signerInput, setSignerInput] = useState(urlSigner);
   const q = useDebouncedValue(nameInput.trim(), 300);
@@ -2598,6 +2658,23 @@ function DocumentsPageRealMode() {
       />
       <AppContent style={{ padding: "0 24px 32px" }}>
         <style>{DOC_STYLES}</style>
+        <div className="doc-list-tabs" role="tablist" aria-label="Document lists">
+          <button type="button" role="tab" className="doc-list-tab" aria-selected={list === "sent"} onClick={() => setList("sent")}>
+            <Send size={14} aria-hidden /> Sent
+          </button>
+          <button type="button" role="tab" className="doc-list-tab" aria-selected={list === "to-sign"} onClick={() => setList("to-sign")}>
+            <PenLine size={14} aria-hidden /> I must sign
+            {toSignCount !== null && toSignCount > 0 && (
+              <span className="doc-list-count" aria-label={`${toSignCount} waiting`}>{toSignCount}</span>
+            )}
+          </button>
+          <button type="button" role="tab" className="doc-list-tab" aria-selected={list === "signed"} onClick={() => setList("signed")}>
+            <FileCheck2 size={14} aria-hidden /> Signed by me
+          </button>
+        </div>
+        {list === "to-sign" && <DocumentsToSignSection onCount={setToSignCount} />}
+        {list === "signed" && <SignedByMeSection />}
+        {list === "sent" && (<>
         {status === "loading" && (
           <div style={{ padding: "32px 0" }}>
             <SkeletonBlock height={40} />
@@ -2614,7 +2691,7 @@ function DocumentsPageRealMode() {
             even when nothing matches: hiding the controls on an empty result
             would leave no way to change the search that emptied it. */}
         {status === "ready" && (items.length > 0 || filtering) && (
-          <div className="doc-filter-bar" role="search" aria-label="Search and filter documents">
+          <div className="doc-filter-bar" role="search" aria-label="Search and filter documents" style={{ position: "relative" }}>
             <FilterField
               id="doc-filter-name" label="Search by document name" placeholder="Search by name"
               value={nameInput} onChange={setNameInput} inputRef={nameRef} shortcutHint="/"
@@ -2634,22 +2711,24 @@ function DocumentsPageRealMode() {
             >
               {REAL_STATUS_FILTERS.map(f => <option key={f.key} value={f.key}>{f.label}</option>)}
             </select>
-            {filtering && (
-              <button
-                type="button"
-                onClick={clearFilters}
-                style={{ ...GF, height: 36, padding: "0 12px", borderRadius: 8, border: `1px solid ${SLATE2}`, background: "#fff", color: SLATE6, fontSize: 13, cursor: "pointer" }}
-              >
-                Clear filters
-              </button>
-            )}
-            <span aria-live="polite" style={{ ...GF, fontSize: 12, color: SLATE4, marginLeft: "auto", whiteSpace: "nowrap" }}>
-              {fetching
-                ? "Searching…"
-                : total > items.length
-                  ? `Showing the latest ${items.length} of ${total}`
-                  : `${total} ${total === 1 ? "document" : "documents"}`}
-            </span>
+            <div className="doc-filter-meta" style={{ display: "flex", alignItems: "center", gap: 8, marginLeft: "auto", minWidth: 0 }}>
+              {filtering && (
+                <button
+                  type="button"
+                  onClick={clearFilters}
+                  style={{ ...GF, height: 36, padding: "0 12px", borderRadius: 8, border: `1px solid ${SLATE2}`, background: "#fff", color: SLATE6, fontSize: 13, cursor: "pointer", flexShrink: 0 }}
+                >
+                  Clear filters
+                </button>
+              )}
+              <span aria-live="polite" style={{ ...GF, fontSize: 12, color: SLATE4, marginLeft: "auto", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                {fetching
+                  ? "Searching…"
+                  : total > items.length
+                    ? `Showing the latest ${items.length} of ${total}`
+                    : `${total} ${total === 1 ? "document" : "documents"}`}
+              </span>
+            </div>
           </div>
         )}
         {status === "ready" && items.length === 0 && !filtering && (
@@ -2704,6 +2783,7 @@ function DocumentsPageRealMode() {
             ))}
           </div>
         )}
+        </>)}
       </AppContent>
       {viewing && workspaceId && (
         <DocumentViewerDialog workspaceId={workspaceId} item={viewing} onClose={() => setViewing(null)} />
