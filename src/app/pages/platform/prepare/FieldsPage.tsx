@@ -212,7 +212,11 @@ function FieldElement({ field, isSelected, identity, isSender, onPointerDown, on
         background:  bg,
         border:      `${isSelected ? 2 : 1}px solid ${borderColor}`,
         borderRadius: 3,
-        cursor:      "pointer",
+        // `grab`, not `pointer`: this is a thing you pick up and move, and the
+        // cursor is the only hint that says so before you try. `grabbing`
+        // while it is actually moving — `overrideRect` is set only for the
+        // field currently under the pointer, so it is the honest signal.
+        cursor:      overrideRect ? "grabbing" : "grab",
         zIndex:      field.layer + (isSelected ? 100 : 0),
         display:     "flex",
         alignItems:  "center",
@@ -221,6 +225,18 @@ function FieldElement({ field, isSelected, identity, isSender, onPointerDown, on
         boxSizing:   "border-box",
         overflow:    "hidden",
         userSelect:  "none",
+        // Why a finger could not move a field.
+        //
+        // The drag is built on pointer events, which DO cover touch — but
+        // without this the browser claims a one-finger drag as a pan, fires
+        // `pointercancel`, and the drag dies mid-gesture. The field simply
+        // refused to move, which read as "you cannot grab this".
+        //
+        // `none` says this element handles its own gestures. The cost is that
+        // a swipe STARTING on a field no longer scrolls the canvas — correct,
+        // because touching a field is how you say you mean to move it.
+        touchAction: "none",
+        // The cursor half of the same idea, for a mouse.
         outline:     isSelected ? `2px solid ${AZURE}` : "none",
         outlineOffset: isSelected ? "1px" : "0",
         transition:  "border-color 0.1s",
@@ -279,12 +295,18 @@ function FieldElement({ field, isSelected, identity, isSender, onPointerDown, on
           aria-hidden="true"
           style={{
             position:  "absolute",
+            // 9px is a mouse target. A fingertip is around 40px, so the hit
+            // area is widened with a transparent inset border rather than by
+            // growing the visible dot, which would swamp a small field.
             width:     9,
             height:    9,
             background: AZURE,
             border:    "1px solid #fff",
             borderRadius: 2,
             cursor:    HANDLE_CURSORS[handle],
+            // Same reason as the field itself: without it a touch-resize is
+            // claimed by the browser as a pan and cancelled.
+            touchAction: "none",
             zIndex:    CANVAS_Z.resizeHandle,
             ...HANDLE_POSITIONS[handle],
           }}
@@ -1820,9 +1842,13 @@ interface ToolbarProps {
   returnLabel:   string;
   /** Sets zoom so a page fits the canvas width. Measured, not assumed. */
   onFitWidth:    () => void;
+  /** Reopens the properties/palette sheet. Compact only — see onOpenPanel. */
+  onOpenPanel:   () => void;
+  /** Whether a field is selected, so the menu can name what it will show. */
+  hasSelection:  boolean;
 }
 
-function EditorToolbar({ draftTitle, participants: _participants, draft, showKbDialog: _showKbDialog, setShowKbDialog, onContinue, returnTo, returnLabel, onOpenDocuments, onFitWidth }: ToolbarProps) {
+function EditorToolbar({ draftTitle, participants: _participants, draft, showKbDialog: _showKbDialog, setShowKbDialog, onContinue, returnTo, returnLabel, onOpenDocuments, onFitWidth, onOpenPanel, hasSelection }: ToolbarProps) {
   const { isCompact, isMobileS } = useViewport();
   const {
     undo, redo, canUndo, canRedo,
@@ -1891,6 +1917,24 @@ function EditorToolbar({ draftTitle, participants: _participants, draft, showKbD
     { id: "zoom-out", label: "Zoom out", title: "Zoom out", onClick: () => { setZoom(zoom - 10); }, disabled: zoom <= 50 },
     { id: "zoom-in", label: "Zoom in", title: "Zoom in", onClick: () => { setZoom(zoom + 10); }, disabled: zoom >= 200 },
     { id: "fit", label: "Fit width", title: "Fit the page to the width of the screen", onClick: onFitWidth, disabled: false },
+    // The way back to the sheet.
+    //
+    // On a phone the panel IS the sheet, and closing it necessarily clears
+    // the selection that summoned it — so once dismissed, the only way back
+    // was to find and tap the field again, and for the field palette there
+    // was no way back at all. This is that route, and it names what it will
+    // show rather than saying "Panel" and leaving you to find out.
+    ...(isCompact
+      ? [{
+          id: "panel",
+          label: hasSelection ? "Field properties" : "Field types",
+          title: hasSelection
+            ? "Show properties for the selected field"
+            : "Show the field types you can place",
+          onClick: onOpenPanel,
+          disabled: false,
+        }]
+      : []),
   ];
 
   const separator = (key: string) => (
@@ -2088,6 +2132,17 @@ function FieldsPageInner() {
   // The document rail is a drawer on a phone, so it needs an open state that
   // the desktop column never had.
   const [showDocuments, setShowDocuments] = useState(false);
+  // The sheet used to be purely derived: it existed because something was
+  // selected. That made it impossible to reopen — dismissing it cleared the
+  // selection, and with nothing selected there was no state left to imply it.
+  //
+  // `panelOpen` is the explicit half: the overflow menu can ask for the sheet
+  // without a selection to justify it.
+  //
+  // Declared here with the other state, above every early return. Hooks after
+  // `if (!draft) return` run on some renders and not others, which changes
+  // hook ORDER — the second time that trap caught me in this file.
+  const [panelOpen, setPanelOpen] = useState(false);
   // The scroll container the page sits in. Fit measures it rather than
   // assuming a width, so it is correct with the rail open, closed, on a
   // phone, and on a monitor.
@@ -2488,13 +2543,16 @@ function FieldsPageInner() {
   // The sheet is not a thing you open; it is what having a selection or an
   // open validation run LOOKS like on a phone. Closing it therefore has to
   // undo the state that summoned it, or it would reappear immediately.
-  const sheetOpen = isCompact && (showValidation || selectedField !== null);
+  const sheetOpen = isCompact && (showValidation || selectedField !== null || panelOpen);
 
 
   const sheetTitle = showValidation
     ? "Validation"
     : selectedField !== null ? "Field properties" : "Field types";
   const closeSheet = () => {
+    // Dismiss means dismiss: clear every reason the sheet is showing, or it
+    // reappears on the next render from whichever one was left standing.
+    setPanelOpen(false);
     if (showValidation) toggleValidation();
     else clearSelection();
   };
@@ -2593,6 +2651,8 @@ function FieldsPageInner() {
         returnLabel={returnLabel}
         onOpenDocuments={() => { setShowDocuments(true); }}
         onFitWidth={fitToWidth}
+        onOpenPanel={() => { setPanelOpen(true); }}
+        hasSelection={selectedField !== null}
       />
 
       {/* Body.
