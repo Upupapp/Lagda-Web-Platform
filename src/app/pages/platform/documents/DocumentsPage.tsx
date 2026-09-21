@@ -31,7 +31,7 @@ const DocumentArchiveViewer = lazy(() =>
     .then(m => ({ default: m.DocumentArchiveViewer })));
 import { SignatureRecordDialog } from "../../../components/documents/SignatureRecordDialog";
 import { ResendSigningDialog } from "../../../components/documents/ResendSigningDialog";
-import { realDocumentService } from "../../../services/real/document.service";
+import { realDocumentService, type RealDocument } from "../../../services/real/document.service";
 import { iconForDocument } from "../../../services/documents/file-type-icon";
 import { documentOrganizationService } from "../../../services/mock/document-organization.service";
 import { isCapabilityInActiveProfile } from "../../../config/capability-resolver";
@@ -2192,6 +2192,37 @@ function DocAction({ icon: Icon, label, onClick, tone }: {
   );
 }
 
+// ── Unsent drafts ────────────────────────────────────────────────────────────
+//
+// A signing request is created only at the final Send step. A document that
+// was uploaded and prepared but never sent therefore has NO request -- and the
+// sent list, built from requests, used to leave it out entirely, so a draft
+// seemed to vanish until you remembered to reopen it. It is shown as a Draft
+// row built from the document itself, marked so the actions a request would
+// have (history, signers, send again) are not offered for it.
+
+const UNSENT_DRAFT_PREFIX = "unsent-draft:";
+
+function isUnsentDraft(item: SigningRequestListItem): boolean {
+  return item.signingRequestId.startsWith(UNSENT_DRAFT_PREFIX);
+}
+
+function unsentDraftRow(document: RealDocument): SigningRequestListItem {
+  return {
+    signingRequestId: `${UNSENT_DRAFT_PREFIX}${document.documentId}`,
+    documentId: document.documentId,
+    documentTitle: document.title,
+    state: "draft",
+    participantCount: 0,
+    completedParticipantCount: 0,
+    initiator: null,
+    createdAt: document.createdAt,
+    sentAt: null,
+    completedAt: null,
+    expiresAt: null,
+  };
+}
+
 function RealDocumentRow({
   item, onView, onSignatures, onAudit, onResend, file,
 }: {
@@ -2254,8 +2285,14 @@ function RealDocumentRow({
         {item.state !== "draft" && item.state !== "ready-to-send" && (
           <DocAction icon={Users} label="Signers" onClick={() => onSignatures(item)} />
         )}
-        <DocAction icon={History} label="History" onClick={() => onAudit(item)} />
-        <DocAction icon={Eye} label="View" onClick={() => onView(item)} />
+        {/* An unsent draft has no signing request, so no history exists for
+            it yet; and it can be viewed only once a file was uploaded. */}
+        {!isUnsentDraft(item) && (
+          <DocAction icon={History} label="History" onClick={() => onAudit(item)} />
+        )}
+        {(!isUnsentDraft(item) || file?.mediaType != null) && (
+          <DocAction icon={Eye} label="View" onClick={() => onView(item)} />
+        )}
       </div>
     </div>
   );
@@ -2323,8 +2360,14 @@ function RealDocumentCard({
         {item.state !== "draft" && item.state !== "ready-to-send" && (
           <DocAction icon={Users} label="Signers" onClick={() => onSignatures(item)} />
         )}
-        <DocAction icon={History} label="History" onClick={() => onAudit(item)} />
-        <DocAction icon={Eye} label="View" onClick={() => onView(item)} />
+        {/* An unsent draft has no signing request, so no history exists for
+            it yet; and it can be viewed only once a file was uploaded. */}
+        {!isUnsentDraft(item) && (
+          <DocAction icon={History} label="History" onClick={() => onAudit(item)} />
+        )}
+        {(!isUnsentDraft(item) || file?.mediaType != null) && (
+          <DocAction icon={Eye} label="View" onClick={() => onView(item)} />
+        )}
       </div>
     </div>
   );
@@ -2507,6 +2550,10 @@ function DocumentsPageRealMode() {
   const [resendFor, setResendFor] = useState<SigningRequestListItem | null>(null);
   const [auditFor, setAuditFor] = useState<SigningRequestListItem | null>(null);
   const [files, setFiles] = useState<Map<string, DocumentFileFacts>>(new Map());
+  const [documents, setDocuments] = useState<RealDocument[]>([]);
+  // Which documents have EVER had a signing request, read unfiltered. Null
+  // until known, so no document is briefly shown as a draft while loading.
+  const [requestedDocumentIds, setRequestedDocumentIds] = useState<Set<string> | null>(null);
   // Bumped after a re-send. That produces an additional signing request, so
   // the list gains a row — there is nothing in place to patch.
   const [refreshKey, setRefreshKey] = useState(0);
@@ -2631,11 +2678,39 @@ function DocumentsPageRealMode() {
           document.documentId,
           { mediaType: document.source?.mediaType ?? null, filename: document.originalFilename },
         ])));
+        setDocuments(result.items);
       })
-      .catch(() => { /* Icons fall back to the generic file glyph. */ });
+      .catch(() => { /* Icons fall back to the generic file glyph; drafts are not listed. */ });
+
+    // Unfiltered, so a search or status filter on the sent list cannot make a
+    // SENT document look like an unsent draft.
+    void realSigningRequestService.list(workspaceId, { perPage: 100 })
+      .then(result => {
+        if (!cancelled) setRequestedDocumentIds(new Set(result.items.map(r => r.documentId)));
+      })
+      .catch(() => { /* Without this, drafts are not listed rather than guessed. */ });
 
     return () => { cancelled = true; };
   }, [workspaceId, refreshKey]);
+
+  // Unsent drafts, filtered the way the server filters requests: by name,
+  // and only when the status filter allows drafts. They have no signers yet,
+  // so a signer filter excludes them.
+  const drafts = useMemo(() => {
+    if (requestedDocumentIds === null) return [];
+    if (signer !== "" || (statusKey !== "" && statusKey !== "draft")) return [];
+    const needle = q.toLowerCase();
+    return documents
+      .filter(d => !requestedDocumentIds.has(d.documentId))
+      .filter(d => needle === "" || d.title.toLowerCase().includes(needle))
+      .map(unsentDraftRow);
+  }, [documents, requestedDocumentIds, q, signer, statusKey]);
+
+  // Newest first across both kinds.
+  const rows = useMemo(
+    () => [...drafts, ...items].sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
+    [drafts, items]);
+  const rowTotal = total + drafts.length;
 
   return (
     <>
@@ -2690,7 +2765,7 @@ function DocumentsPageRealMode() {
         {/* Shown once the list has loaded, and kept while filters are active
             even when nothing matches: hiding the controls on an empty result
             would leave no way to change the search that emptied it. */}
-        {status === "ready" && (items.length > 0 || filtering) && (
+        {status === "ready" && (rows.length > 0 || filtering) && (
           <div className="doc-filter-bar" role="search" aria-label="Search and filter documents" style={{ position: "relative" }}>
             <FilterField
               id="doc-filter-name" label="Search by document name" placeholder="Search by name"
@@ -2725,27 +2800,27 @@ function DocumentsPageRealMode() {
                 {fetching
                   ? "Searching…"
                   : total > items.length
-                    ? `Showing the latest ${items.length} of ${total}`
-                    : `${total} ${total === 1 ? "document" : "documents"}`}
+                    ? `Showing the latest ${rows.length} of ${rowTotal}`
+                    : `${rowTotal} ${rowTotal === 1 ? "document" : "documents"}`}
               </span>
             </div>
           </div>
         )}
-        {status === "ready" && items.length === 0 && !filtering && (
+        {status === "ready" && rows.length === 0 && !filtering && (
           <EmptyStateLayout
             icon={<FileText size={28} />}
             title="Your documents will appear here"
             description="Documents you prepare and send for signing will show up in this list. Use Prepare Document to start one."
           />
         )}
-        {status === "ready" && items.length === 0 && filtering && !fetching && (
+        {status === "ready" && rows.length === 0 && filtering && !fetching && (
           <EmptyStateLayout
             icon={<Search size={26} />}
             title="No documents match"
             description="Nothing in this workspace matches the current search and filters. Try a shorter name, a different signer, or another status."
           />
         )}
-        {status === "ready" && items.length > 0 && (
+        {status === "ready" && rows.length > 0 && (
           <div className="doc-table-desktop doc-list-frame" role="table" aria-label="Documents">
             <div role="rowgroup" className="doc-list-head">
               <div role="row" className="doc-header doc-grid-real">
@@ -2760,7 +2835,7 @@ function DocumentsPageRealMode() {
               </div>
             </div>
             <div role="rowgroup" className="doc-list-scroll">
-              {items.map(item => (
+              {rows.map(item => (
                 <RealDocumentRow
                   key={item.signingRequestId} item={item}
                   onView={setViewing} onSignatures={setSignaturesFor} onAudit={setAuditFor}
@@ -2771,9 +2846,9 @@ function DocumentsPageRealMode() {
             </div>
           </div>
         )}
-        {status === "ready" && items.length > 0 && (
+        {status === "ready" && rows.length > 0 && (
           <div className="doc-cards-mobile doc-list-frame doc-list-scroll">
-            {items.map(item => (
+            {rows.map(item => (
               <RealDocumentCard
                 key={item.signingRequestId} item={item}
                 onView={setViewing} onSignatures={setSignaturesFor} onAudit={setAuditFor}
