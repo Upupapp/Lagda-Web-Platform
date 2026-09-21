@@ -16,6 +16,7 @@ const CommandPalette = lazy(() =>
   import("./CommandPalette").then(m => ({ default: m.CommandPalette })),
 );
 import { Z } from "../../utils/z-index";
+import { isPaletteShortcut, paletteShortcutLabel } from "../../utils/keyboard-shortcuts";
 
 const GF    = { fontFamily: "'Geist', sans-serif" };
 
@@ -41,10 +42,12 @@ export function PlatformHeader({ pageTitle }: PlatformHeaderProps) {
   const openSearch = useCallback(() => setSearchOpen(true), []);
   const closeSearch = useCallback(() => setSearchOpen(false), []);
 
-  // Keyboard shortcut: Ctrl+K / Cmd+K opens search
+  // Ctrl+K / ⌘K toggles the palette. See utils/keyboard-shortcuts for why
+  // the comparison is case-insensitive.
+  const shortcut = paletteShortcutLabel();
   useEffect(() => {
     function handler(e: KeyboardEvent) {
-      if ((e.ctrlKey || e.metaKey) && e.key === "k") {
+      if (isPaletteShortcut(e)) {
         e.preventDefault();
         setSearchOpen((o) => !o);
       }
@@ -89,8 +92,9 @@ export function PlatformHeader({ pageTitle }: PlatformHeaderProps) {
         {/* Search button */}
         <button
           onClick={openSearch}
-          aria-label="Open search (Ctrl+K)"
-          title="Search (Ctrl+K)"
+          aria-label={`Open search (${shortcut})`}
+          title={`Search (${shortcut})`}
+          aria-keyshortcuts="Control+K Meta+K"
           style={{
             display: "flex", alignItems: "center", gap: 8,
             background: "#F1F5F9", border: "1px solid #E2E8F0",
@@ -110,7 +114,7 @@ export function PlatformHeader({ pageTitle }: PlatformHeaderProps) {
               text, and this is 10px. #5B6776 is 5.26:1 and still reads as a
               hint rather than as a label. */}
           <kbd style={{ fontFamily: "'Geist Mono', monospace", fontSize: 10, color: "#5B6776", display: "none" }} className="search-kbd">
-            ⌘K
+            {shortcut}
           </kbd>
         </button>
 
