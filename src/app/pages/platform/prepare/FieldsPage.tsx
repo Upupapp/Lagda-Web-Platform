@@ -1869,14 +1869,11 @@ function EditorToolbar({ draftTitle, participants: _participants, draft, showKbD
     if (!showValidation) toggleValidation();
   };
 
-  const handleContinue = () => {
-    const result = runValidation(draft);
-    if (!result.isValid) {
-      if (!showValidation) toggleValidation();
-      return;
-    }
-    onContinue();
-  };
+  // The validation gate now lives on the PAGE, because the floating Continue
+  // on a phone needs the identical check. Two copies of "may this document
+  // proceed" would drift, and the copy that drifted would be the one letting
+  // an invalid document through.
+  const handleContinue = onContinue;
 
   const btnBase: React.CSSProperties = {
     ...GF,
@@ -1898,11 +1895,14 @@ function EditorToolbar({ draftTitle, participants: _participants, draft, showKbD
   // ── What stays visible when the screen is narrow ──────────────────────────
   //
   // Fourteen buttons, six separators and two labels in one non-wrapping row
-  // has an intrinsic width over 900px. The container set `overflowX: auto`,
-  // but every child is shrinkable by default and the `flex: 1` spacer
+  // has an intrinsic width over 900px. The container once set `overflowX:
+  // auto`, but every child is shrinkable by default and the `flex: 1` spacer
   // collapses first, so the children squeezed instead of the row scrolling —
   // and at 320px Copy, Paste, "+ Add Field" and List sat past the right edge
   // of a clipping ancestor: unreachable, not merely off-screen.
+  //
+  // That `overflowX` is gone now, and its removal is itself a fix: see the
+  // toolbar's own style below for what it was doing to the overflow menu.
   //
   // So on a narrow screen the row carries only what the task needs — go back,
   // place a field, see whether it is valid, continue — and the rest moves
@@ -1953,9 +1953,23 @@ function EditorToolbar({ draftTitle, participants: _participants, draft, showKbD
         background:  WHITE,
         borderBottom: "1px solid #E2E8F0",
         flexShrink:  0,
-        // Kept as a backstop, but nothing should need it now.
-        overflowX:   "auto",
+        // NOT `overflowX: auto`, and this is why the "…" button did nothing.
+        //
+        // `overflow-x: auto` makes the element a scroll container, and a
+        // scroll container clips on BOTH axes — `overflow-y` can no longer be
+        // visible. The overflow menu is positioned below the toolbar with
+        // `top: calc(100% + 6px)`, which is outside that box, so it opened
+        // correctly and was clipped to nothing. Every tap toggled state that
+        // could never be seen.
+        //
+        // It was a backstop from when this row scrolled, left in place after
+        // the menu removed the need for it — where it then broke the very
+        // control that replaced it. The row no longer overflows: everything
+        // that is not the task itself lives in the menu.
         minHeight:   50,
+        // Guards the wrap instead. If a future control does not fit, the row
+        // grows rather than hiding it behind a gesture with no affordance.
+        flexWrap:    "wrap",
       }}
     >
       {/* Back — returns to the caller when a validated internal returnTo was supplied */}
@@ -2088,13 +2102,17 @@ function EditorToolbar({ draftTitle, participants: _participants, draft, showKbD
         {isCompact ? "✓" : "✓ Validate"}{validation && ` (${validation.errors.length})`}
       </button>
 
+      {/* Desktop only. On a phone this is a floating control at the bottom
+          right of the canvas — see the editor main — because the toolbar is
+          at the top of the screen and Continue is a thumb action. */}
+      {!isCompact && (
       <button
         onClick={handleContinue}
         aria-label="Continue to final review"
         style={{
           ...GF,
           height:       34,
-          padding:      isCompact ? "0 12px" : "0 18px",
+          padding:      "0 18px",
           borderRadius: 6,
           border:       "none",
           background:   fields.length > 0 ? AZURE : "#5A7A9A",
@@ -2106,8 +2124,9 @@ function EditorToolbar({ draftTitle, participants: _participants, draft, showKbD
           flexShrink:   0,
         }}
       >
-        {isMobileS ? "Next" : isCompact ? "Continue" : "Continue →"}
+        Continue &rarr;
       </button>
+      )}
     </div>
   );
 }
@@ -2543,12 +2562,40 @@ function FieldsPageInner() {
   // The sheet is not a thing you open; it is what having a selection or an
   // open validation run LOOKS like on a phone. Closing it therefore has to
   // undo the state that summoned it, or it would reappear immediately.
-  const sheetOpen = isCompact && (showValidation || selectedField !== null || panelOpen);
+  // Selecting a field deliberately does NOT open the sheet.
+  //
+  // It used to. But on a phone selecting IS how you grab a field to move it,
+  // so every drag threw a 70%-tall sheet over the page you were working on,
+  // and the field you had just picked up went under it. The panel became
+  // something to dismiss rather than something to use.
+  //
+  // Opening it is now an explicit act: the Properties button over the canvas,
+  // or the overflow menu. Validation still summons it on its own, because
+  // that IS a result you asked to see.
+  const sheetOpen = isCompact && (showValidation || panelOpen);
 
 
   const sheetTitle = showValidation
     ? "Validation"
     : selectedField !== null ? "Field properties" : "Field types";
+  // The one definition of "may this document proceed".
+  //
+  // Validation first: continuing past an invalid layout is the failure this
+  // guards, and it opens the validation panel so the reason is visible rather
+  // than the button appearing to do nothing.
+  const guardedContinue = () => {
+    if (savingFields) return; // already saving — ignore a double press
+    const result = runValidation(draft);
+    if (!result.isValid) {
+      if (!showValidation) toggleValidation();
+      return;
+    }
+    void (async () => {
+      const ok = await saveFieldsToBackend();
+      if (ok) void navigate(returnTo ?? "/app/prepare/confirmation");
+    })();
+  };
+
   const closeSheet = () => {
     // Dismiss means dismiss: clear every reason the sheet is showing, or it
     // reappears on the next render from whichever one was left standing.
@@ -2640,13 +2687,7 @@ function FieldsPageInner() {
         draft={draft}
         showKbDialog={showKbDialog}
         setShowKbDialog={setShowKbDialog}
-        onContinue={() => {
-          if (savingFields) return; // already saving — ignore a double click
-          void (async () => {
-            const ok = await saveFieldsToBackend();
-            if (ok) void navigate(returnTo ?? "/app/prepare/confirmation");
-          })();
-        }}
+        onContinue={guardedContinue}
         returnTo={returnTo}
         returnLabel={returnLabel}
         onOpenDocuments={() => { setShowDocuments(true); }}
@@ -2668,8 +2709,65 @@ function FieldsPageInner() {
         <main
           id="editor-main"
           aria-label="Document editing area"
-          style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", minWidth: 0 }}
+          style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", minWidth: 0, position: "relative" }}
         >
+          {/* The two thumb controls, phone only.
+              *
+              * Continue moved off the toolbar because the toolbar is at the
+              * TOP of the screen and continuing is the last thing you do —
+              * a reach across the whole device for the most-used action.
+              *
+              * Properties left, Continue right: the dominant thumb lands
+              * bottom-right, and that belongs to the action that moves the
+              * work forward. Properties is the occasional one.
+              *
+              * Both hide while the sheet is open, so neither can sit on top
+              * of the panel it summoned. */}
+          {isCompact && !sheetOpen && (
+            <>
+              {selectedField !== null && (
+                <button
+                  type="button"
+                  onClick={() => { setPanelOpen(true); }}
+                  aria-label="Show properties for the selected field"
+                  style={{
+                    ...GF,
+                    position: "absolute",
+                    left: 14,
+                    bottom: "calc(14px + env(safe-area-inset-bottom, 0px))",
+                    zIndex: CANVAS_Z.resizeHandle + 1,
+                    minHeight: 40, padding: "0 16px", borderRadius: 999,
+                    border: "1px solid #D1D9E0", background: WHITE, color: AZURE,
+                    fontSize: 13, fontWeight: 700, cursor: "pointer",
+                    boxShadow: "0 2px 10px rgba(7,17,31,0.16)",
+                  }}
+                >
+                  Properties
+                </button>
+              )}
+
+              <button
+                type="button"
+                onClick={guardedContinue}
+                aria-label="Continue to final review"
+                style={{
+                  ...GF,
+                  position: "absolute",
+                  right: 14,
+                  bottom: "calc(14px + env(safe-area-inset-bottom, 0px))",
+                  zIndex: CANVAS_Z.resizeHandle + 1,
+                  minHeight: 44, padding: "0 20px", borderRadius: 999,
+                  border: "none",
+                  background: fields.length > 0 ? AZURE : "#5A7A9A",
+                  color: WHITE, fontSize: 14, fontWeight: 700, cursor: "pointer",
+                  boxShadow: "0 4px 14px rgba(0,120,212,0.32)",
+                }}
+              >
+                Continue &rarr;
+              </button>
+            </>
+          )}
+
           {showFieldList ? (
             <FieldListView participants={participants} />
           ) : (
