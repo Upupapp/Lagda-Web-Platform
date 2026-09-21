@@ -108,6 +108,14 @@ export function OnboardingLayout({
       }}
     >
       {/* Top bar */}
+      {/* Header and step cards stick TOGETHER.
+          *
+          * Two separately sticky elements need the second one's top offset to
+          * equal the first one's height — a number that changes with the logo
+          * size at each breakpoint, and with the email wrapping. Get it wrong
+          * and the cards slide under the header or float below it. One sticky
+          * wrapper has no offset to keep in sync. */}
+      <div style={{ position: "sticky", top: 0, zIndex: Z.sticky, background: "#F5F9FF" }}>
       <header
         style={{
           display: "flex",
@@ -115,9 +123,6 @@ export function OnboardingLayout({
           justifyContent: "space-between",
           padding: "16px 24px",
           borderBottom: "1px solid #DBEAFE",
-          position: "sticky",
-          top: 0,
-          zIndex: Z.sticky,
           background: "#FFFFFF",
         }}
       >
@@ -177,8 +182,9 @@ export function OnboardingLayout({
         <nav
           aria-label="Onboarding progress"
           style={{
-            display: "flex", justifyContent: "center",
-            padding: "16px clamp(12px, 4vw, 24px) 0",
+            display: "flex",
+            padding: "14px clamp(12px, 4vw, 24px) 14px",
+            borderBottom: "1px solid #E3EDF7",
           }}
         >
           {/* The rail marks the current step with `aria-current`, but not how
@@ -206,18 +212,40 @@ export function OnboardingLayout({
               overflowX: "auto", scrollbarWidth: "none", width: "100%",
             }}
           >
-            {ONBOARDING_STEPS.map(step => {
+            {ONBOARDING_STEPS.map((step, i) => {
               const isCurrent = step.id === currentStepMeta?.id;
               const isDone = currentStepMeta !== undefined
                 && step.stepNumber < currentStepMeta.stepNumber;
+              // Centred by AUTO MARGINS on the first and last card, not by
+              // justify-content: center on the row.
+              //
+              // The row scrolls when six cards do not fit, and a centred flex
+              // child wider than its scroll container is pushed to a NEGATIVE
+              // offset — which a scroller cannot reach. On a phone the first
+              // card, Profile, would sit permanently off the left edge. That
+              // is the same bug that made "OYMENT AGREEMENT" unreachable in
+              // the field editor.
+              //
+              // Auto margins centre while there is room and collapse to zero
+              // when there is not, so the strip is centred on a monitor and
+              // scrolls from its true start on a phone.
+              const edge = i === 0
+                ? { marginLeft: "auto" }
+                : i === ONBOARDING_STEPS.length - 1 ? { marginRight: "auto" } : {};
               return (
-                <li key={step.id} style={{ flexShrink: 0 }}>
+                <li key={step.id} style={{ flexShrink: 0, ...edge }}>
                   <div
                     ref={isCurrent ? currentCardRef : undefined}
                     aria-current={isCurrent ? "step" : undefined}
                     style={{
-                      ...GF, display: "flex", alignItems: "center", gap: 8,
-                      minWidth: 132, padding: "9px 12px", borderRadius: 10,
+                      ...GF, display: "flex", alignItems: "center",
+                      gap: "clamp(8px, 1.4vw, 12px)",
+                      // Sized to the reference: roughly 190px across and 60px
+                      // tall on a monitor, shrinking fluidly on a phone rather
+                      // than switching at a breakpoint.
+                      minWidth: "clamp(128px, 14vw, 190px)",
+                      minHeight: "clamp(46px, 5vw, 60px)",
+                      padding: "0 clamp(12px, 1.6vw, 18px)", borderRadius: 12,
                       border: isCurrent ? "1.5px solid #0078D4" : "1px solid #E3E8EF",
                       background: isCurrent ? "#EBF4FC" : "#FFFFFF",
                     }}
@@ -225,9 +253,10 @@ export function OnboardingLayout({
                     <span
                       aria-hidden
                       style={{
-                        width: 22, height: 22, borderRadius: "50%", flexShrink: 0,
+                        width: "clamp(24px, 2.4vw, 32px)", height: "clamp(24px, 2.4vw, 32px)",
+                        borderRadius: "50%", flexShrink: 0,
                         display: "inline-flex", alignItems: "center", justifyContent: "center",
-                        fontSize: 11, fontWeight: 700,
+                        fontSize: "clamp(11px, 1.1vw, 14px)", fontWeight: 700,
                         background: isDone || isCurrent ? "#0078D4" : "#EEF2F6",
                         color: isDone || isCurrent ? "#FFFFFF" : "#8A9BAE",
                       }}
@@ -235,7 +264,7 @@ export function OnboardingLayout({
                       {isDone ? "✓" : step.stepNumber}
                     </span>
                     <span style={{
-                      fontSize: 12.5,
+                      fontSize: "clamp(12.5px, 1.25vw, 16px)",
                       fontWeight: isCurrent ? 700 : 600,
                       color: isCurrent ? "#0078D4" : isDone ? "#07111F" : "#8A9BAE",
                       whiteSpace: "nowrap",
@@ -249,6 +278,7 @@ export function OnboardingLayout({
           </ol>
         </nav>
       )}
+      </div>
 
       {/* Content */}
       <main

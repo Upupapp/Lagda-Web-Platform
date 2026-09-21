@@ -67,6 +67,26 @@ class RealRecipientService {
     );
   }
 
+  /**
+   * Replaces the whole recipient list in ONE transaction.
+   *
+   * Somebody already on the document is kept — with their fields — and a
+   * departing signer's fields pass to their replacement rather than blocking
+   * the change. Either the list becomes exactly this, or nothing changes.
+   */
+  async replaceAll(
+    workspaceId: string, documentId: string, recipients: AddRecipientInput[],
+  ): Promise<RealRecipient[]> {
+    const result = await apiRequest<{ recipients: RealRecipient[] }>(
+      `/workspaces/${encodeURIComponent(workspaceId)}/documents/${encodeURIComponent(documentId)}/recipients`,
+      {
+        method: "PUT",
+        body: { recipients: recipients.map(r => ({ source: "manual", ...r })) },
+      },
+    );
+    return result.recipients;
+  }
+
   async remove(workspaceId: string, documentId: string, recipientId: string): Promise<void> {
     await apiRequest<void>(
       `/workspaces/${encodeURIComponent(workspaceId)}/documents/${encodeURIComponent(documentId)}/recipients/${encodeURIComponent(recipientId)}`,
