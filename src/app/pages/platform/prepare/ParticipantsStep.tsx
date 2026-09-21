@@ -689,9 +689,10 @@ export function ParticipantsStep() {
       <div style={{ ...GF, marginTop: 24, padding: "12px 14px", borderRadius: 8, background: "#F5F7FA", border: "1px solid #E3E8EF", fontSize: 12, color: SILVER, lineHeight: 1.6 }}>
         <strong style={{ color: "#4B5E70" }}>Privacy notice</strong>
         <br />
-        Participant names and email addresses are stored only in this browser session and are not
-        transmitted to any server in this frontend demonstration. No invitations are sent from
-        this screen.
+        Participant names and email addresses are saved to your workspace so
+        this transaction can be prepared and sent. Nobody is emailed from this
+        screen — invitations go out only when you send the transaction, on the
+        final step.
       </div>
     </div>
   );

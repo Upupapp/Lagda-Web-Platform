@@ -215,8 +215,8 @@ export function PrepareEntryPage() {
               Start with files from your computer
             </h2>
             <p style={{ fontSize: 13, color: "#4B5E70", margin: "0 0 16px", lineHeight: 1.6 }}>
-              Select one or more PDF or Word documents. No files are uploaded in this frontend
-              demonstration — only file metadata is used.
+              Select one or more PDF or Word documents. They are uploaded to
+              your workspace and scanned before anyone is invited to sign.
             </p>
             <button
               onClick={handleStartNew}

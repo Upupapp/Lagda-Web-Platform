@@ -323,11 +323,11 @@ export function ReviewStep() {
       >
         <strong style={{ color: "#4B5E70" }}>Legal notice</strong>
         <br />
-        LAGDA eSignature is a frontend demonstration. Proceeding to field placement does not create
-        a legally binding document, does not send invitations, and does not produce a digital
-        signature. The preparation workflow shown here illustrates the intended user experience
-        for a future production system. No documents are uploaded, no participants are contacted,
-        and no transaction records are created outside this browser session.
+        Proceeding to field placement does not send invitations and does not
+        produce a signature — nobody is contacted until you send the
+        transaction on the final step. Your document and its participants are
+        already saved to your workspace, so the work is kept if you leave and
+        come back.
         <br /><br />
         The legal validity of electronic signatures in the Philippines is governed by the Electronic
         Commerce Act (Republic Act No. 8792) and its implementing rules. LAGDA does not guarantee
