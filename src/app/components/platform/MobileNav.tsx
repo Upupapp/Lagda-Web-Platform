@@ -6,7 +6,7 @@ import { useState, useRef, useEffect, useCallback, lazy, Suspense } from "react"
 import { NavLink, useLocation, Link } from "react-router";
 import {
   Menu, X, LayoutDashboard, FileText, Files, Users, ShieldCheck,
-  Bell, Users2, Settings, FilePlus, Inbox, HelpCircle, GitBranch, BarChart2, Zap,
+  Bell, Users2, Settings, Settings2, FilePlus, Inbox, HelpCircle, GitBranch, BarChart2, Zap,
   Search, Compass,
 } from "lucide-react";
 import { LagdaLogo } from "../brand/LagdaLogo";
@@ -31,7 +31,7 @@ const GM     = { fontFamily: "'Geist Mono', monospace" };
 // Must cover the same names as PlatformSidebar's map. It did not: Inbox and
 // HelpCircle were absent, so "My Actions" rendered with no icon on mobile only.
 const ICON_MAP: Record<string, React.ElementType> = {
-  LayoutDashboard, FileText, Files, Users, ShieldCheck, Bell, Users2, Settings, FilePlus,
+  LayoutDashboard, FileText, Files, Users, ShieldCheck, Bell, Users2, Settings, Settings2, FilePlus,
   Inbox, HelpCircle, GitBranch, BarChart2, Zap,
 };
 function NavIcon({ name, size = 18 }: { name: string; size?: number }) {

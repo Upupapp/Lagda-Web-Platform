@@ -6,7 +6,7 @@ import { useState } from "react";
 import { NavLink, useLocation } from "react-router";
 import {
   LayoutDashboard, FileText, Files, Users, ShieldCheck,
-  Bell, Users2, Settings, FilePlus, ChevronLeft, ChevronRight,
+  Bell, Users2, Settings, Settings2, FilePlus, ChevronLeft, ChevronRight,
   HelpCircle, Inbox,
   GitBranch,
   BarChart2,
@@ -33,7 +33,7 @@ const GM     = { fontFamily: "'Geist Mono', monospace" };
 // every navigation item resolves in BOTH this map and MobileNav's.
 const ICON_MAP: Record<string, React.ElementType> = {
   LayoutDashboard, FileText, Files, Users, ShieldCheck,
-  Bell, Users2, Settings, FilePlus, HelpCircle, Inbox, GitBranch,
+  Bell, Users2, Settings, Settings2, FilePlus, HelpCircle, Inbox, GitBranch,
   BarChart2, Zap,
 };
 

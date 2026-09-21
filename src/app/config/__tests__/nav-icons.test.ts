@@ -79,10 +79,40 @@ describe("navigation icons", () => {
     }
   });
 
-  it("includes Workflow as a primary navigation area", () => {
-    const workflow = PRIMARY_NAV.find(i => i.id === "workflow");
-    expect(workflow, "Workflow must be a primary product area, not nested").toBeDefined();
-    expect(workflow?.path).toBe("/app/workflow");
-    expect(workflow?.permission).toBe("view_workflow");
+  // Workflow is no longer a primary row, and that reverses what this test
+  // used to assert. The route still exists and still works; it is reached
+  // from Manage as "Signing routes".
+  //
+  // The reason is naming, not importance. "Workflow" meant three different
+  // things at once — reusable routing, one document's signing order, and the
+  // automation rules engine — and this section's own second tab was also
+  // called "Workflows", so the navigation read "Workflow › Workflows".
+  it("does not put Workflow in the primary rail", () => {
+    expect(PRIMARY_NAV.find(i => i.id === "workflow")).toBeUndefined();
+  });
+
+  // The rail is short enough to read at a glance. Eleven rows was the
+  // complaint; this is the number that replaced it, pinned so it cannot creep
+  // back one well-meaning addition at a time.
+  it("keeps the primary rail short", () => {
+    expect(PRIMARY_NAV.length).toBeLessThanOrEqual(7);
+  });
+
+  // Manage is the ONLY way into workspace administration from navigation.
+  // Before it existed, /app/workspace was linked only from the settings side
+  // rail, which is display:none below 1024px — so Members, Teams, Roles and
+  // Invitations were unreachable on a phone.
+  it("gives workspace administration a navigation entry", () => {
+    const manage = UTILITY_NAV.find(i => i.id === "manage");
+    expect(manage, "workspace admin must be reachable from navigation").toBeDefined();
+    expect(manage?.path).toBe("/app/workspace");
+    expect(manage?.showOnMobile).toBe(true);
+  });
+
+  // /app/team/* render <PlatformPlaceholder /> and always did.
+  it("never points navigation at the team placeholders", () => {
+    for (const item of [...PRIMARY_NAV, ...UTILITY_NAV]) {
+      expect(item.path.startsWith("/app/team"), `${item.label} -> ${item.path}`).toBe(false);
+    }
   });
 });

@@ -52,7 +52,7 @@ export interface PlatformNavItem {
 export const PRIMARY_NAV: PlatformNavItem[] = [
   {
     id: "dashboard",
-    label: "Dashboard",
+    label: "Home",
     path: "/app/dashboard",
     icon: "LayoutDashboard",
     group: "primary",
@@ -72,22 +72,6 @@ export const PRIMARY_NAV: PlatformNavItem[] = [
     showBadge: true,
     showOnMobile: true,
     description: "All document transactions",
-  },
-  {
-    // Workflow sits between Documents and Templates deliberately. It is a
-    // primary product area, not a feature of either: a workflow is designed
-    // once and started many times, which is neither a document nor a document
-    // template. Burying it under either would hide the thing the product is
-    // sold on.
-    id: "workflow",
-    label: "Workflow",
-    path: "/app/workflow",
-    icon: "GitBranch",
-    group: "primary",
-    permission: "view_workflow",
-    featureFlag: "documentsEnabled",
-    showOnMobile: true,
-    description: "Reusable workflows and active runs",
   },
   {
     id: "templates",
@@ -113,7 +97,7 @@ export const PRIMARY_NAV: PlatformNavItem[] = [
   },
   {
     id: "verify",
-    label: "Verify Document",
+    label: "Check a Document",
     path: "/app/verify",
     icon: "ShieldCheck",
     group: "primary",
@@ -124,7 +108,7 @@ export const PRIMARY_NAV: PlatformNavItem[] = [
   },
   {
     id: "inbox",
-    label: "My Actions",
+    label: "Needs your signature",
     path: "/app/inbox",
     icon: "Inbox",
     group: "primary",
@@ -135,17 +119,6 @@ export const PRIMARY_NAV: PlatformNavItem[] = [
     // feature flag, which is how a demonstration surface stayed reachable in
     // production long after everything around it had been gated.
     featureFlag: "recipientInboxEnabled",
-  },
-  {
-    id: "reports",
-    label: "Reports",
-    path: "/app/reports",
-    icon: "BarChart2",
-    group: "primary",
-    permission: "view_reports",
-    featureFlag: "reportsEnabled",
-    showOnMobile: false,
-    description: "Operational insights and analytics",
   },
   {
     id: "automation",
@@ -163,32 +136,35 @@ export const PRIMARY_NAV: PlatformNavItem[] = [
 // Utility navigation — shown below primary nav (or bottom of sidebar)
 export const UTILITY_NAV: PlatformNavItem[] = [
   {
-    id: "notifications",
-    label: "Notifications",
-    path: "/app/notifications",
-    icon: "Bell",
-    group: "utility",
-    featureFlag: "notificationsEnabled",
-    showBadge: true,
-    showOnMobile: true,
-    description: "Activity alerts and updates",
-  },
-  {
-    id: "team",
-    label: "Team",
-    path: "/app/team",
-    icon: "Users2",
+    // ONE row for everything administrative, and it opens a PAGE.
+    //
+    // It replaces a "Team" row that pointed at /app/team — four routes that
+    // render `<PlatformPlaceholder />` and always did (router.tsx calls them
+    // "legacy placeholders"). Real member management lives under
+    // /app/workspace, which until now was linked ONLY from the settings side
+    // rail — and that rail is display:none below 1024px, so Members, Teams,
+    // Roles and Invitations were unreachable by navigation on any phone.
+    //
+    // A page rather than a flyout because a page can carry a line of
+    // explanation under each link ("Members — who is in this workspace"),
+    // which a 13px sidebar row cannot. Someone intimidated by the product
+    // reads one word and decides it is not for them today, instead of
+    // deciding that eleven times before their first send.
+    id: "manage",
+    label: "Manage",
+    path: "/app/workspace",
+    icon: "Settings2",
     group: "utility",
     permission: "manage_team",
     featureFlag: "teamEnabled",
-    showOnMobile: false,
-    description: "Manage workspace members",
+    showOnMobile: true,
+    description: "People, oversight and workspace settings",
   },
 ];
 
 // Prepare Document CTA — primary action, always visible
 export const PREPARE_ACTION = {
-  label: "Prepare Document",
+  label: "New Document",
   path: "/app/prepare",
   icon: "FilePlus",
   permission: "prepare_documents" as PlatformPermission,

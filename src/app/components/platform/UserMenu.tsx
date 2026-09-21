@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Link } from "react-router";
-import { CircleUser, Lock, CreditCard, HelpCircle, LogOut, ChevronUp, Settings, Sparkles } from "lucide-react";
+import { CircleUser, Lock, HelpCircle, LogOut, ChevronUp, Settings, Sparkles } from "lucide-react";
 import { usePlatform } from "../../context/PlatformContext";
 import { PLATFORM_ROLE_LABELS } from "../../models";
 import { Z } from "../../utils/z-index";
@@ -131,10 +131,19 @@ export function UserMenu({ collapsed, onSignOut }: UserMenuProps) {
 
           {/* Menu items */}
           <div style={{ padding: "6px 6px" }}>
-            <MenuItem to="/app/settings/profile" icon={<CircleUser size={14} aria-hidden />} label="Profile" onClose={() => setOpen(false)} />
-            <MenuItem to="/app/settings/security" icon={<Lock size={14} aria-hidden />} label="Security" onClose={() => setOpen(false)} />
-            <MenuItem to="/app/settings/billing" icon={<CreditCard size={14} aria-hidden />} label="Billing & Usage" onClose={() => setOpen(false)} />
-            <MenuItem to="/app/settings/profile" icon={<Settings size={14} aria-hidden />} label="Workspace Settings" onClose={() => setOpen(false)} />
+            {/* Three rows, and none of them a duplicate.
+                *
+                * "Profile" and "Workspace Settings" both pointed at
+                * /app/settings/profile — the same page under two names, one of
+                * which promised workspace administration and delivered a
+                * personal profile form. Workspace settings are their own page
+                * and are reached through Manage.
+                *
+                * Billing moved to Manage with the other workspace-level
+                * concerns; it was never personal. */}
+            <MenuItem to="/app/settings/profile" icon={<CircleUser size={14} aria-hidden />} label="Your profile" onClose={() => setOpen(false)} />
+            <MenuItem to="/app/settings/security" icon={<Lock size={14} aria-hidden />} label="Sign-in & security" onClose={() => setOpen(false)} />
+            <MenuItem to="/app/settings" icon={<Settings size={14} aria-hidden />} label="Settings" onClose={() => setOpen(false)} />
 
             <div style={{ borderTop: `1px solid ${BORDER}`, margin: "4px 0" }} />
 

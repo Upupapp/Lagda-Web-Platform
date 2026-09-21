@@ -140,20 +140,48 @@ function WorkspaceOverviewInner() {
             </section>
           )}
 
-          {/* Quick navigation */}
+          {/* The Manage hub.
+              *
+              * Grouped by what someone is trying to do, not by which service
+              * owns the page. Three headings a non-expert can choose between
+              * without knowing the product: who is here, what is happening,
+              * and how the workspace itself is set up.
+              *
+              * Reports and Signing routes are DEMOTED here from the sidebar.
+              * Neither is on the path to sending a document, and both sat as
+              * peers of Documents for a first-time sender whose whole job is
+              * one PDF and one signer. */}
           <section style={{ background: "#FFFFFF", border: "1.5px solid #E3E8EF", borderRadius: 12, padding: "4px 20px 4px" }}>
             <h2 style={{ ...GF, fontSize: 12, fontWeight: 700, color: SLATE, textTransform: "uppercase", letterSpacing: "0.06em", margin: "14px 0 2px" }}>
-              Administration
+              People
             </h2>
-            <QuickLinkRow label="Member Directory"      path="/app/workspace/members"     description="View, search, and manage workspace members" />
-            <QuickLinkRow label="Invitations"           path="/app/workspace/invitations" description="Pending and expired membership invitations" />
-            <QuickLinkRow label="Teams"                 path="/app/workspace/teams"       description="Organize members into functional teams" />
-            <QuickLinkRow label="Roles & Permissions"   path="/app/workspace/roles"       description="System and custom permission role definitions" />
-            <QuickLinkRow label="Signed Documents"       path="/app/workspace/documents" description="Every document sent for signing, who sent it, and who has signed" />
-            <QuickLinkRow label="Administrative Activity" path="/app/workspace/activity"  description="Audit trail of workspace administration actions" />
+            <QuickLinkRow label="Members"          path="/app/workspace/members"     description="Who is in this workspace" />
+            <QuickLinkRow label="Invitations"      path="/app/workspace/invitations" description="People invited but not yet joined" />
+            <QuickLinkRow label="Teams"            path="/app/workspace/teams"       description="Group members by department or function" />
+            {/* "Roles & Permissions" was two abstract nouns. This asks the
+                question the page answers. */}
+            <QuickLinkRow label="Who can do what"  path="/app/workspace/roles"       description="What each kind of member is allowed to do" />
+
+            <h2 style={{ ...GF, fontSize: 12, fontWeight: 700, color: SLATE, textTransform: "uppercase", letterSpacing: "0.06em", margin: "18px 0 2px" }}>
+              Oversight
+            </h2>
+            <QuickLinkRow label="All workspace documents" path="/app/workspace/documents" description="Every document sent for signing, and who sent it" />
+            <QuickLinkRow label="Reports"                 path="/app/reports"            description="Volume, turnaround and completion figures" />
+            <QuickLinkRow label="Activity log"            path="/app/workspace/activity" description="A record of administrative changes" />
+
+            <h2 style={{ ...GF, fontSize: 12, fontWeight: 700, color: SLATE, textTransform: "uppercase", letterSpacing: "0.06em", margin: "18px 0 2px" }}>
+              Workspace
+            </h2>
+            {/* Signing routes were the top-level "Workflow" section. The name
+                collided with two other meanings — a document's signing order,
+                and the automation rules engine — and the section's own tab was
+                also called "Workflows", so the nav read "Workflow › Workflows". */}
+            <QuickLinkRow label="Signing routes"   path="/app/workflow"           description="Reusable signing orders for documents with several signers" />
+            <QuickLinkRow label="Logo & colours"   path="/app/settings/branding"  description="How your documents and emails look to signers" />
+            <QuickLinkRow label="Plan & billing"   path="/app/settings/billing"   description="Your plan, invoices and usage" />
             <div style={{ borderBottom: "none", padding: "12px 0 2px" }}>
               <Link to="/app/workspace/settings" style={{ ...GF, fontSize: 13, fontWeight: 600, color: AZURE, textDecoration: "none" }}>
-                Workspace Settings →
+                Workspace settings &amp; sign-in policy →
               </Link>
             </div>
           </section>
