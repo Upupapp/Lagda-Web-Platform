@@ -149,6 +149,7 @@ function WorkspaceOverviewInner() {
             <QuickLinkRow label="Invitations"           path="/app/workspace/invitations" description="Pending and expired membership invitations" />
             <QuickLinkRow label="Teams"                 path="/app/workspace/teams"       description="Organize members into functional teams" />
             <QuickLinkRow label="Roles & Permissions"   path="/app/workspace/roles"       description="System and custom permission role definitions" />
+            <QuickLinkRow label="Signed Documents"       path="/app/workspace/documents" description="Every document sent for signing, who sent it, and who has signed" />
             <QuickLinkRow label="Administrative Activity" path="/app/workspace/activity"  description="Audit trail of workspace administration actions" />
             <div style={{ borderBottom: "none", padding: "12px 0 2px" }}>
               <Link to="/app/workspace/settings" style={{ ...GF, fontSize: 13, fontWeight: 600, color: AZURE, textDecoration: "none" }}>

@@ -71,6 +71,14 @@ export interface SigningRequestListItem {
   state: SigningRequestState;
   participantCount: number;
   completedParticipantCount: number;
+  /**
+   * Who sent it — a workspace member, not a recipient.
+   *
+   * Null when that account has since been removed: the request is the
+   * workspace's record and outlives its sender, so the row stays and only the
+   * attribution degrades.
+   */
+  initiator: { name: string; email: string } | null;
   createdAt: string;
   sentAt: string | null;
   completedAt: string | null;

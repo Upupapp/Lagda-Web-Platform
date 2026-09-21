@@ -29,6 +29,7 @@ const DocumentArchiveViewer = lazy(() =>
   import("../../../components/documents/DocumentArchiveViewer")
     .then(m => ({ default: m.DocumentArchiveViewer })));
 import { SignatureRecordDialog } from "../../../components/documents/SignatureRecordDialog";
+import { ResendSigningDialog } from "../../../components/documents/ResendSigningDialog";
 import { realDocumentService } from "../../../services/real/document.service";
 import { iconForDocument } from "../../../services/documents/file-type-icon";
 import { documentOrganizationService } from "../../../services/mock/document-organization.service";
@@ -2021,12 +2022,13 @@ function SignatureLink({
 }
 
 function RealDocumentRow({
-  item, onView, onSignatures, onAudit, file,
+  item, onView, onSignatures, onAudit, onResend, file,
 }: {
   item: SigningRequestListItem;
   onView: (item: SigningRequestListItem) => void;
   onSignatures: (item: SigningRequestListItem) => void;
   onAudit: (item: SigningRequestListItem) => void;
+  onResend: (item: SigningRequestListItem) => void;
   file: DocumentFileFacts | undefined;
 }) {
   const FileGlyph = iconForDocument(file?.mediaType, file?.filename);
@@ -2061,6 +2063,40 @@ function RealDocumentRow({
         </span>
       </div>
       <div role="cell" style={{ padding: "8px 4px", display: "flex", gap: 2 }}>
+        {/* Signers, as an action rather than a hidden affordance.
+            *
+            * The signature record was already reachable — by clicking the
+            * "2/3" progress indicator, which reads as a status label, not a
+            * button. The capability existed and nobody could find it. Drafts
+            * have no signers yet, so it appears once a request has been sent. */}
+        {item.state !== "draft" && item.state !== "ready-to-send" && (
+          <button
+            onClick={() => onResend(item)}
+            aria-label={`Send ${item.documentTitle} for signing again`}
+            title="Send for signing again"
+            style={{
+              width: 32, height: 32, border: "none", background: "transparent",
+              cursor: "pointer", borderRadius: 6, display: "flex", alignItems: "center",
+              justifyContent: "center", color: SLATE4,
+            }}
+          >
+            <Send size={15} aria-hidden />
+          </button>
+        )}
+        {item.state !== "draft" && item.state !== "ready-to-send" && (
+          <button
+            onClick={() => onSignatures(item)}
+            aria-label={`Signers of ${item.documentTitle}`}
+            title="Who signed"
+            style={{
+              width: 32, height: 32, border: "none", background: "transparent",
+              cursor: "pointer", borderRadius: 6, display: "flex", alignItems: "center",
+              justifyContent: "center", color: SLATE4,
+            }}
+          >
+            <Users size={15} aria-hidden />
+          </button>
+        )}
         <button
           onClick={() => onAudit(item)}
           aria-label={`Audit trail for ${item.documentTitle}`}
@@ -2094,12 +2130,13 @@ function RealDocumentRow({
 // nothing at all: every real item still loaded, just with no surface to
 // render it on. Same fields as the desktop row, stacked top-to-bottom.
 function RealDocumentCard({
-  item, onView, onSignatures, onAudit, file,
+  item, onView, onSignatures, onAudit, onResend, file,
 }: {
   item: SigningRequestListItem;
   onView: (item: SigningRequestListItem) => void;
   onSignatures: (item: SigningRequestListItem) => void;
   onAudit: (item: SigningRequestListItem) => void;
+  onResend: (item: SigningRequestListItem) => void;
   file: DocumentFileFacts | undefined;
 }) {
   const FileGlyph = iconForDocument(file?.mediaType, file?.filename);
@@ -2136,6 +2173,34 @@ function RealDocumentCard({
             {fmtRelative(item.createdAt)}
           </div>
         </div>
+        {item.state !== "draft" && item.state !== "ready-to-send" && (
+          <button
+            onClick={() => onResend(item)}
+            aria-label={`Send ${item.documentTitle} for signing again`}
+            title="Send for signing again"
+            style={{
+              width: 32, height: 32, border: "none", background: "transparent",
+              cursor: "pointer", borderRadius: 6, display: "flex", alignItems: "center",
+              justifyContent: "center", color: SLATE4,
+            }}
+          >
+            <Send size={15} aria-hidden />
+          </button>
+        )}
+        {item.state !== "draft" && item.state !== "ready-to-send" && (
+          <button
+            onClick={() => onSignatures(item)}
+            aria-label={`Signers of ${item.documentTitle}`}
+            title="Who signed"
+            style={{
+              width: 34, height: 34, border: "none", background: "transparent",
+              cursor: "pointer", borderRadius: 6, display: "flex", alignItems: "center",
+              justifyContent: "center", color: SLATE4,
+            }}
+          >
+            <Users size={16} aria-hidden />
+          </button>
+        )}
         <button
           onClick={() => onAudit(item)}
           aria-label={`Audit trail for ${item.documentTitle}`}
@@ -2256,8 +2321,12 @@ function DocumentsPageRealMode() {
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
   const [viewing, setViewing] = useState<SigningRequestListItem | null>(null);
   const [signaturesFor, setSignaturesFor] = useState<SigningRequestListItem | null>(null);
+  const [resendFor, setResendFor] = useState<SigningRequestListItem | null>(null);
   const [auditFor, setAuditFor] = useState<SigningRequestListItem | null>(null);
   const [files, setFiles] = useState<Map<string, DocumentFileFacts>>(new Map());
+  // Bumped after a re-send. That produces an additional signing request, so
+  // the list gains a row — there is nothing in place to patch.
+  const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
     if (!workspaceId) return;
@@ -2284,7 +2353,7 @@ function DocumentsPageRealMode() {
       .catch(() => { /* Icons fall back to the generic file glyph. */ });
 
     return () => { cancelled = true; };
-  }, [workspaceId]);
+  }, [workspaceId, refreshKey]);
 
   return (
     <>
@@ -2343,6 +2412,7 @@ function DocumentsPageRealMode() {
                 <RealDocumentRow
                   key={item.signingRequestId} item={item}
                   onView={setViewing} onSignatures={setSignaturesFor} onAudit={setAuditFor}
+                  onResend={setResendFor}
                   file={files.get(item.documentId)}
                 />
               ))}
@@ -2355,6 +2425,7 @@ function DocumentsPageRealMode() {
               <RealDocumentCard
                 key={item.signingRequestId} item={item}
                 onView={setViewing} onSignatures={setSignaturesFor} onAudit={setAuditFor}
+                onResend={setResendFor}
                 file={files.get(item.documentId)}
               />
             ))}
@@ -2363,6 +2434,20 @@ function DocumentsPageRealMode() {
       </AppContent>
       {viewing && workspaceId && (
         <DocumentViewerDialog workspaceId={workspaceId} item={viewing} onClose={() => setViewing(null)} />
+      )}
+      {resendFor && workspaceId && (
+        <ResendSigningDialog
+          workspaceId={workspaceId}
+          documentId={resendFor.documentId}
+          documentTitle={resendFor.documentTitle}
+          onClose={() => { setResendFor(null); }}
+          onSent={() => {
+            setResendFor(null);
+            // Refetch rather than patching the row: the send produced a NEW
+            // request, so the list has an extra entry, not an edited one.
+            setRefreshKey(k => k + 1);
+          }}
+        />
       )}
       {signaturesFor && workspaceId && (
         <SignatureRecordDialog
