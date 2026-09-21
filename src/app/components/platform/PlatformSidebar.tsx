@@ -3,7 +3,7 @@
 // Hidden on mobile — MobileNav handles that breakpoint.
 
 import { useState } from "react";
-import { NavLink, useLocation } from "react-router";
+import { NavLink } from "react-router";
 import {
   LayoutDashboard, FileText, Files, Users, ShieldCheck,
   Bell, Users2, Settings, Settings2, FilePlus, ChevronLeft, ChevronRight,
@@ -12,7 +12,6 @@ import {
   BarChart2,
   Zap,
 } from "lucide-react";
-import { LagdaLogo } from "../brand/LagdaLogo";
 import lagdaLogoFull from "../../../brand elements/svg/LagdaLogoPrimaryHorizontalFullColor.svg";
 import lagdaLogoSmall from "../../../brand elements/svg/LagdaLogoPrimaryHorizontalFullColor_Header_small.svg";
 import { usePlatform } from "../../context/PlatformContext";
@@ -104,9 +103,6 @@ export function PlatformSidebar() {
   const [collapsed, setCollapsed] = useState(false);
   const { hasPermission, hasFlag } = usePlatform();
   const { unreadCount } = useNotificationCenter();
-  // The dashboard route gets its own brand-mark asset; every other platform
-  // page keeps the standard LagdaLogo component.
-  const isDashboard = useLocation().pathname === "/app/dashboard";
 
   // Confirmation + the branded modal now live in one hook, shared with the
   // mobile drawer and the onboarding header.
@@ -150,19 +146,14 @@ export function PlatformSidebar() {
       }}>
         {!collapsed ? (
           <NavLink to="/app/dashboard" style={{ textDecoration: "none", display: "flex", alignItems: "center", minWidth: 0 }} aria-label="LAGDA — Go to Dashboard">
-            {isDashboard ? (
-              <img src={lagdaLogoFull} alt="LAGDA" style={{ display: "block", width: 156, maxWidth: "100%", height: "auto", objectFit: "contain", objectPosition: "left center" }} />
-            ) : (
-              <LagdaLogo variant="colored-horizontal" size="sm" decorative />
-            )}
+            {/* The same SVG at the same size on every page. It used to be
+                the SVG on the dashboard only, and a much smaller PNG
+                everywhere else, so the logo shrank the moment you left Home. */}
+            <img src={lagdaLogoFull} alt="LAGDA" style={{ display: "block", width: 156, maxWidth: "100%", height: "auto", objectFit: "contain", objectPosition: "left center" }} />
           </NavLink>
         ) : (
           <NavLink to="/app/dashboard" style={{ textDecoration: "none", display: "flex", justifyContent: "center" }} aria-label="LAGDA — Go to Dashboard">
-            {isDashboard ? (
-              <img src={lagdaLogoSmall} alt="LAGDA" style={{ display: "block", width: 34, height: "auto", objectFit: "contain" }} />
-            ) : (
-              <LagdaLogo variant="colored-icon" size="xs" decorative />
-            )}
+            <img src={lagdaLogoSmall} alt="LAGDA" style={{ display: "block", width: 34, height: "auto", objectFit: "contain" }} />
           </NavLink>
         )}
         <button
