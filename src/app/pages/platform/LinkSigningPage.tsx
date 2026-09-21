@@ -51,6 +51,18 @@ export function LinkSigningPage() {
     }
   }, []);
 
+  // Disown the opener, immediately.
+  //
+  // The signing tab has to keep a handle to point this tab somewhere —
+  // `window.open` with `noopener` returns null and cannot be navigated. That
+  // handle leaves this page able to reach back and navigate the signing tab,
+  // which still carries the access credential in its URL. This page has no
+  // reason to do that, so it gives up the ability in its first effect rather
+  // than relying on never using it.
+  useEffect(() => {
+    try { window.opener = null; } catch { /* already severed */ }
+  }, []);
+
   useEffect(() => {
     if (code !== null) void claim(code);
   }, [code, claim]);
