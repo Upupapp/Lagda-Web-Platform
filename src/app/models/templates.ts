@@ -7,6 +7,8 @@
 import type {
   PrepParticipantRole,
   PrepAuthMethodId,
+  PrepParticipant,
+  PrepRoutingConfig,
 } from "./prepare";
 import type { RoutingMode }     from "./transaction-detail";
 import type { FieldDefinition } from "./field-editor";
@@ -338,6 +340,19 @@ export const DEFAULT_TEMPLATE_QUERY: TemplateListQuery = {
 
 // ── Use-template flow ─────────────────────────────────────────────────────────
 
+/**
+ * What applying a template produces: a self-contained participants + routing
+ * snapshot, with no link of any kind back to the template it came from.
+ *
+ * Declared here, in the model layer, rather than in the service that builds it
+ * — `services/prepare/template-apply.ts` — so that neither models nor the
+ * result type has to import from `services/`.
+ */
+export interface TemplateApplication {
+  participants: PrepParticipant[];
+  routing:      PrepRoutingConfig;
+}
+
 export interface TemplateRoleMapping {
   placeholderId: TemplateRolePlaceholderId;
   placeholderLabel: string;
@@ -356,6 +371,18 @@ export interface TemplateVariableValues {
 
 export interface TemplateInstantiationResult {
   ok:              boolean;
+  /**
+   * The resolved participants and routing, SNAPSHOTTED at the moment of
+   * application — see services/prepare/template-apply.ts for why this carries
+   * no template id and no placeholder id. A draft built from it is
+   * self-contained, and editing or deleting the template afterwards cannot
+   * change it.
+   *
+   * Present only when `ok`.
+   */
+  application?:    TemplateApplication;
+  /** Copied, not referenced, for the same reason. */
+  variableValues?: TemplateVariableValues;
   prepDraftId?:    string;
   prepStartRoute?: string;
   errorMessage?:   string;

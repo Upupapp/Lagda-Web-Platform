@@ -14,6 +14,9 @@ import {
 import { TemplateProvider, useTemplates } from "../../../context/TemplateContext";
 import { SkeletonBlock, SKELETON_STYLE } from "../../../components/platform";
 import { asyncInstantiate } from "../../../services/mock/templates.service";
+import {
+  handOffTemplateToPrepare, TEMPLATE_HANDOFF_ROUTE,
+} from "../../../services/prepare/template-handoff";
 import type {
   DocumentTemplate, TemplateRoleMapping, TemplateVariableValues,
   TemplateVariable,
@@ -370,6 +373,9 @@ function UseTemplateInner() {
   const [error,    setError]    = useState<string | null>(null);
   const [launched, setLaunched] = useState(false);
   const [launchDraftId, setLaunchDraftId] = useState<string | null>(null);
+  const [launchRoute, setLaunchRoute] = useState<string>(TEMPLATE_HANDOFF_ROUTE);
+  const [launchParticipantCount, setLaunchParticipantCount] = useState(0);
+  const [launchStepCount, setLaunchStepCount] = useState(0);
 
   useEffect(() => {
     if (templateId) loadTemplate(templateId);
@@ -421,13 +427,28 @@ function UseTemplateInner() {
     setLaunching(true);
     setError(null);
     try {
+      // Resolves the template's roles and this visitor's mappings into real
+      // participants + routing. Returns a reason instead of a draft when the
+      // template is malformed or a required role was left unmapped — never a
+      // half-filled draft.
       const result = await asyncInstantiate(t.id, mappings, varValues);
-      if (result.ok && result.prepDraftId) {
-        setLaunchDraftId(result.prepDraftId);
-        setLaunched(true);
-      } else {
-        setError(result.errorMessage ?? "Launch failed.");
+      if (!result.ok || !result.application) {
+        setError(result.errorMessage ?? "This template could not be applied.");
+        return;
       }
+
+      // The snapshot goes into a real draft, staged for the Prepare flow.
+      const handoff = await handOffTemplateToPrepare(t.id, result.application);
+      if (!handoff.ok || !handoff.draft) {
+        setError(handoff.errorMessage ?? "The draft could not be created.");
+        return;
+      }
+
+      setLaunchDraftId(handoff.draft.id);
+      setLaunchRoute(handoff.route ?? TEMPLATE_HANDOFF_ROUTE);
+      setLaunchParticipantCount(handoff.draft.participants.length);
+      setLaunchStepCount(handoff.draft.routing.groups.length);
+      setLaunched(true);
     } catch {
       setError("An unexpected error occurred.");
     } finally {
@@ -477,14 +498,25 @@ function UseTemplateInner() {
             Draft Created
           </h2>
           <p style={{ ...GF, fontSize: 14, color: "#64748B", margin: "0 0 6px" }}>
-            A signing request draft has been created from <strong>{t.name}</strong>.
+            A signing request draft has been created from <strong>{t.name}</strong>,
+            with {launchParticipantCount} {launchParticipantCount === 1 ? "participant" : "participants"} across{" "}
+            {launchStepCount} {launchStepCount === 1 ? "routing step" : "routing steps"}.
           </p>
+          <p style={{ ...GF, fontSize: 12, color: "#94A3B8", margin: "0 0 10px" }}>
+            Nothing has been sent yet. Choose the document on the next step, then review
+            everything before sending.
+          </p>
+          {/* Says plainly that the draft is now independent of the template.
+              Someone who edits the template afterwards should not have to guess
+              whether this draft changes with it. It does not. */}
           <p style={{ ...GF, fontSize: 12, color: "#94A3B8", margin: "0 0 28px" }}>
-            This is a demonstration — no real request was sent. Draft ID: <code style={{ background: "#F1F5F9", padding: "1px 5px", borderRadius: 4 }}>{launchDraftId}</code>
+            This draft now has its own copy of the roles and routing — later changes to
+            the template will not affect it. Draft ID:{" "}
+            <code style={{ background: "#F1F5F9", padding: "1px 5px", borderRadius: 4 }}>{launchDraftId}</code>
           </p>
           <div style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap" }}>
             <Link
-              to={`/app/prepare/${launchDraftId}`}
+              to={launchRoute}
               style={{ display: "inline-flex", alignItems: "center", gap: 7, padding: "11px 20px", background: AZURE, color: "white", borderRadius: 8, ...GF, fontSize: 13, fontWeight: 700, textDecoration: "none" }}
             >
               <ArrowRight size={14} />
