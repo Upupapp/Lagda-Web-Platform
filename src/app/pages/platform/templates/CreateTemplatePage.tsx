@@ -5,7 +5,7 @@ import { useState } from "react";
 import { useNavigate, Link } from "react-router";
 import {
   LayoutTemplate, FileText, FolderOpen, Copy,
-  ChevronLeft, CheckCircle2, AlertCircle,
+  ChevronLeft, CheckCircle2, AlertCircle, X,
 } from "lucide-react";
 import { asyncCreateBlank } from "../../../services/mock/templates.service";
 import { createTemplate, realTemplatesAvailable } from "../../../services/templates-source";
@@ -39,6 +39,8 @@ import {
 } from "../../../models/templates";
 import type { TemplateCategory } from "../../../models/templates";
 import { usePageMeta } from "../../../hooks/usePageMeta";
+import { useViewport } from "../../../hooks/useViewport";
+import { Z } from "../../../utils/z-index";
 
 // ── Design tokens ─────────────────────────────────────────────────────────────
 const GF    = { fontFamily: "'Geist', sans-serif" };
@@ -343,6 +345,7 @@ export function CreateTemplatePage() {
   usePageMeta();
   const navigate = useNavigate();
   const [selected, setSelected] = useState<string | null>(null);
+  const { isNarrow } = useViewport();
 
   return (
     <div style={{ background: "#F8FAFC", minHeight: "100%", ...GF }}>
@@ -365,7 +368,14 @@ export function CreateTemplatePage() {
         </p>
 
         {/* Source selection */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 12 }}>
+        {/* Flex-wrap rather than a grid: `auto-fill` leaves phantom columns and
+            left-aligns a short row, so four cards on a wide screen and two on a
+            tablet both sat off-centre. A basis with wrap centres every row at
+            every width, and the cards keep one size instead of stretching. */}
+        <div style={{
+          display: "flex", flexWrap: "wrap", gap: 14,
+          justifyContent: "center", alignItems: "stretch",
+        }}>
           {SOURCES.map(s => (
             <button
               key={s.id}
@@ -373,6 +383,11 @@ export function CreateTemplatePage() {
               disabled={!s.available}
               aria-pressed={selected === s.id}
               style={{
+                flex:          "1 1 230px",
+                maxWidth:      300,
+                minWidth:      0,
+                display:       "flex",
+                flexDirection: "column",
                 textAlign:     "left",
                 padding:       "18px 16px",
                 border:        `2px solid ${selected === s.id ? AZURE : "#E2E8F0"}`,
@@ -399,12 +414,82 @@ export function CreateTemplatePage() {
           ))}
         </div>
 
-        {/* Detail form for selected source */}
+        {/* ── Template Details, as a modal ───────────────────────────────
+            Inline, it pushed the source cards off the top of a phone the
+            moment "Start from Blank" was tapped, and the roles editor made
+            the page several screens long with the choice you had just made
+            scrolled out of sight. A panel keeps the form in one place, gives
+            it its own scroll, and leaves the cards where they were. */}
         {selected === "blank" && (
-          <div style={{ marginTop: 28, background: "white", border: "1px solid #E2E8F0", borderRadius: 12, padding: "22px 24px" }}>
-            <h3 style={{ ...GF, fontSize: 15, fontWeight: 700, color: "#0F172A", margin: "0 0 4px" }}>Template Details</h3>
-            <p style={{ ...GF, fontSize: 12, color: "#94A3B8", margin: "0 0 0" }}>Name your template before adding documents and roles.</p>
-            <BlankForm onCreated={id => navigate(`/app/templates/${id}/edit`)} />
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-label="Template details"
+            onClick={() => setSelected(null)}
+            style={{
+              position: "fixed", inset: 0, zIndex: Z.modalScrim,
+              background: "rgba(15, 23, 42, 0.45)",
+              display: "flex",
+              // Bottom-sheet on a phone, centred panel above it. `flex-end`
+              // puts the sheet within thumb reach instead of under the notch.
+              alignItems: isNarrow ? "flex-end" : "center",
+              justifyContent: "center",
+              padding: isNarrow ? 0 : 24,
+              overflowY: "auto",
+            }}
+          >
+            <div
+              onClick={e => e.stopPropagation()}
+              style={{
+                background: "white",
+                borderRadius: isNarrow ? "16px 16px 0 0" : 14,
+                width: "100%",
+                maxWidth: 560,
+                // Never taller than the viewport; the form scrolls inside.
+                maxHeight: isNarrow ? "92vh" : "88vh",
+                display: "flex",
+                flexDirection: "column",
+                boxShadow: "0 20px 50px rgba(0,0,0,0.25)",
+                position: "relative",
+                zIndex: Z.modal,
+              }}
+            >
+              <div style={{
+                display: "flex", alignItems: "flex-start", gap: 12,
+                padding: isNarrow ? "18px 18px 12px" : "22px 24px 14px",
+                borderBottom: "1px solid #F1F5F9", flexShrink: 0,
+              }}>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <h3 style={{ ...GF, fontSize: 16, fontWeight: 800, color: "#0F172A", margin: "0 0 4px", letterSpacing: "-0.01em" }}>
+                    Template Details
+                  </h3>
+                  <p style={{ ...GF, fontSize: 12.5, color: "#64748B", margin: 0, lineHeight: 1.5 }}>
+                    Name the workflow and the roles it routes through.
+                  </p>
+                </div>
+                <button
+                  onClick={() => setSelected(null)}
+                  aria-label="Close"
+                  style={{
+                    background: "none", border: "none", cursor: "pointer",
+                    color: "#94A3B8", padding: 4, lineHeight: 0, flexShrink: 0,
+                    // 44px hit area even though the glyph is small.
+                    margin: -4, width: 32, height: 32,
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                  }}
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              <div style={{
+                overflowY: "auto", flex: 1,
+                padding: isNarrow ? "0 18px 18px" : "0 24px 24px",
+                WebkitOverflowScrolling: "touch",
+              }}>
+                <BlankForm onCreated={id => navigate(`/app/templates/${id}/edit`)} />
+              </div>
+            </div>
           </div>
         )}
       </div>

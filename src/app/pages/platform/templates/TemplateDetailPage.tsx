@@ -18,6 +18,7 @@ import {
 import type { DocumentTemplate } from "../../../models/templates";
 import { PREP_PARTICIPANT_ROLE_LABELS } from "../../../models/prepare";
 import { usePageMeta } from "../../../hooks/usePageMeta";
+import { useViewport } from "../../../hooks/useViewport";
 
 // ── Design tokens ─────────────────────────────────────────────────────────────
 const GF    = { fontFamily: "'Geist', sans-serif" };
@@ -181,6 +182,7 @@ function ActionStrip({ template, onMakeAvailable, onReturnToDraft, onArchive, on
 
 // ── Detail page inner ─────────────────────────────────────────────────────────
 function TemplateDetailInner() {
+  const { isNarrow } = useViewport();
   const { templateId } = useParams<{ templateId: string }>();
   const { state, loadTemplate, makeAvailable, returnToDraft, archive, restore, duplicate, clearOpMessage } = useTemplates();
   const navigate = useNavigate();
@@ -216,7 +218,7 @@ function TemplateDetailInner() {
   // Not found / error
   if (state.activeError || !t) {
     return (
-      <div style={{ padding: "40px 24px", textAlign: "center" }}>
+      <div style={{ padding: isNarrow ? "40px 16px" : "40px 24px", textAlign: "center" }}>
         <AlertCircle size={32} color={RED} style={{ marginBottom: 12 }} />
         <p style={{ ...GF, fontSize: 15, color: "#0F172A", fontWeight: 600 }}>Template Not Found</p>
         <p style={{ ...GF, fontSize: 13, color: "#64748B", marginBottom: 16 }}>{state.activeError ?? "The requested template does not exist."}</p>
@@ -235,7 +237,7 @@ function TemplateDetailInner() {
   return (
     <div style={{ background: "#F8FAFC", minHeight: "100%", ...GF }}>
       {/* Breadcrumb header */}
-      <div style={{ background: "white", borderBottom: "1px solid #E2E8F0", padding: "18px 24px" }}>
+      <div style={{ background: "white", borderBottom: "1px solid #E2E8F0", padding: isNarrow ? "18px 16px" : "18px 24px" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14 }}>
           <Link to="/app/templates" style={{ ...GF, fontSize: 12, color: "#64748B", textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 4 }}>
             <ChevronLeft size={13} />
@@ -292,7 +294,7 @@ function TemplateDetailInner() {
       </div>
 
       {/* Body */}
-      <div style={{ padding: "20px 24px", display: "grid", gridTemplateColumns: "1fr 300px", gap: 16, alignItems: "start" }}>
+      <div style={{ padding: isNarrow ? "20px 16px" : "20px 24px", display: "grid", gridTemplateColumns: "1fr 300px", gap: 16, alignItems: "start" }}>
 
         {/* Main column */}
         <div>

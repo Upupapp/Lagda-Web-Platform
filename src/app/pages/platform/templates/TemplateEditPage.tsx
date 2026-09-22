@@ -11,6 +11,11 @@ import {
   Plus, GripVertical,
 } from "lucide-react";
 import { TemplateProvider, useTemplates } from "../../../context/TemplateContext";
+import { usePlatform } from "../../../context/PlatformContext";
+import { updateTemplate, realTemplatesAvailable } from "../../../services/templates-source";
+import { VALID_PREP_PARTICIPANT_ROLES } from "../../../models/prepare";
+import type { PrepParticipantRole } from "../../../models/prepare";
+import type { TemplateRolePlaceholder } from "../../../models/templates";
 import { SkeletonBlock, SKELETON_STYLE } from "../../../components/platform";
 import {
   TEMPLATE_CATEGORY_LABELS,
@@ -24,6 +29,7 @@ import { PREP_PARTICIPANT_ROLE_LABELS } from "../../../models/prepare";
 import type { PrepAuthMethodId } from "../../../models/prepare";
 import { PREP_AUTH_METHODS } from "../../../models/prepare";
 import { usePageMeta } from "../../../hooks/usePageMeta";
+import { useViewport } from "../../../hooks/useViewport";
 
 // ── Design tokens ─────────────────────────────────────────────────────────────
 const GF    = { fontFamily: "'Geist', sans-serif" };
@@ -172,49 +178,118 @@ function DocumentsTab({ draft }: { draft: DocumentTemplate }) {
 }
 
 // ── Tab panel: Role Placeholders ───────────────────────────────────────────────
-function PlaceholdersTab({ draft }: { draft: DocumentTemplate }) {
+function PlaceholdersTab({ draft, onChange }: {
+  draft: DocumentTemplate;
+  onChange: (patch: Partial<DocumentTemplate>) => void;
+}) {
+  const slots = draft.placeholders;
+
+  const patch = (id: string, p: Partial<TemplateRolePlaceholder>) =>
+    onChange({ placeholders: slots.map(s2 => (s2.id === id ? { ...s2, ...p } : s2)) });
+
+  const add = () =>
+    onChange({
+      placeholders: [...slots, {
+        id: `slot-new-${String(Date.now())}`,
+        label: "", role: "signer", required: true,
+        routingStep: slots.length + 1, defaultAuthMethod: "none",
+        description: "", mustMapToParticipant: true,
+      }],
+    });
+
+  // Renumbered contiguously from 1. The backend refuses a template whose
+  // routing steps skip a number, so a form that could produce one would fail
+  // at save with a message about data the person never saw.
+  const remove = (id: string) =>
+    onChange({
+      placeholders: slots.filter(s2 => s2.id !== id)
+        .map((s2, i) => ({ ...s2, routingStep: Math.min(s2.routingStep, i + 1) })),
+    });
+
   return (
     <div>
-      {draft.placeholders.length === 0 ? (
-        <p style={{ ...GF, fontSize: 13, color: "#94A3B8" }}>No role placeholders defined.</p>
+      <p style={{ ...GF, fontSize: 12.5, color: "#64748B", margin: "0 0 14px", lineHeight: 1.6 }}>
+        Name the roles, not the people. You choose who fills each one every time
+        you use this template.
+      </p>
+
+      {slots.length === 0 ? (
+        <p style={{ ...GF, fontSize: 13, color: "#94A3B8" }}>No roles yet. Add the first one below.</p>
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-          {draft.placeholders.map((ph, idx) => (
+          {slots.map(ph => (
             <div key={ph.id} style={{ padding: "14px 16px", background: "white", border: "1px solid #E2E8F0", borderRadius: 10 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
-                <div style={{ width: 24, height: 24, borderRadius: 6, background: "#EEF4FB", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  <span style={{ ...GF, fontSize: 10, fontWeight: 700, color: AZURE }}>{idx + 1}</span>
-                </div>
-                <span style={{ ...GF, fontSize: 13, fontWeight: 700, color: "#0F172A" }}>{ph.label}</span>
-                {!ph.required && <span style={{ ...GF, fontSize: 10, color: "#94A3B8", background: "#F1F5F9", padding: "2px 6px", borderRadius: 99 }}>Optional</span>}
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+                <span style={{ ...GF, fontSize: 11, fontWeight: 700, color: "#94A3B8" }}>
+                  STEP {ph.routingStep}
+                </span>
+                {slots.length > 1 && (
+                  <button
+                    onClick={() => remove(ph.id)}
+                    style={{ ...GF, marginLeft: "auto", fontSize: 12, color: "#DC2626", background: "none", border: "none", cursor: "pointer", padding: 0 }}
+                  >
+                    Remove
+                  </button>
+                )}
               </div>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-                <div>
-                  <div style={{ ...GF, fontSize: 10, fontWeight: 700, color: "#94A3B8", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 4 }}>Role</div>
-                  <div style={{ ...GF, fontSize: 12, color: "#334155" }}>{PREP_PARTICIPANT_ROLE_LABELS[ph.role] ?? ph.role}</div>
-                </div>
-                <div>
-                  <div style={{ ...GF, fontSize: 10, fontWeight: 700, color: "#94A3B8", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 4 }}>Routing Step</div>
-                  <div style={{ ...GF, fontSize: 12, color: "#334155" }}>Step {ph.routingStep}</div>
-                </div>
-                <div>
-                  <div style={{ ...GF, fontSize: 10, fontWeight: 700, color: "#94A3B8", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 4 }}>Default Auth</div>
-                  <div style={{ ...GF, fontSize: 12, color: "#334155" }}>{ph.defaultAuthMethod.replace(/-/g, " ")}</div>
-                </div>
-                <div>
-                  <div style={{ ...GF, fontSize: 10, fontWeight: 700, color: "#94A3B8", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 4 }}>Description</div>
-                  <div style={{ ...GF, fontSize: 12, color: "#334155", lineHeight: 1.4 }}>{ph.description}</div>
-                </div>
+
+              <input
+                type="text"
+                value={ph.label}
+                onChange={e => patch(ph.id, { label: e.target.value })}
+                placeholder="e.g. Department Head"
+                style={{ width: "100%", height: 38, padding: "0 12px", border: "1px solid #E2E8F0", borderRadius: 8, ...GF, fontSize: 13, color: "#0F172A", boxSizing: "border-box", outline: "none", marginBottom: 8 }}
+              />
+
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 8 }}>
+                <select
+                  value={ph.role}
+                  onChange={e => patch(ph.id, { role: e.target.value as PrepParticipantRole })}
+                  style={{ ...GF, fontSize: 12.5, color: "#0F172A", border: "1px solid #E2E8F0", borderRadius: 8, padding: "8px 10px", background: "white", cursor: "pointer", minWidth: 0 }}
+                >
+                  {VALID_PREP_PARTICIPANT_ROLES.map(r => (
+                    <option key={r} value={r}>{PREP_PARTICIPANT_ROLE_LABELS[r]}</option>
+                  ))}
+                </select>
+                <select
+                  value={String(ph.routingStep)}
+                  onChange={e => patch(ph.id, { routingStep: Number(e.target.value) })}
+                  style={{ ...GF, fontSize: 12.5, color: "#0F172A", border: "1px solid #E2E8F0", borderRadius: 8, padding: "8px 10px", background: "white", cursor: "pointer", minWidth: 0 }}
+                >
+                  {slots.map((_, i) => (
+                    <option key={i} value={String(i + 1)}>Step {i + 1}</option>
+                  ))}
+                </select>
               </div>
+
+              <label style={{ display: "flex", alignItems: "center", gap: 7, marginTop: 9, cursor: "pointer" }}>
+                <input
+                  type="checkbox"
+                  checked={ph.required}
+                  onChange={e => patch(ph.id, { required: e.target.checked })}
+                  style={{ accentColor: AZURE, width: 14, height: 14, flexShrink: 0 }}
+                />
+                <span style={{ ...GF, fontSize: 12.5, color: "#475569" }}>
+                  Must act before later steps begin
+                </span>
+              </label>
+              {!ph.required && (
+                <p style={{ ...GF, fontSize: 11.5, color: "#94A3B8", margin: "6px 0 0 21px", lineHeight: 1.5 }}>
+                  They will still receive the document at the same time as the
+                  next step — it just will not wait for them.
+                </p>
+              )}
             </div>
           ))}
         </div>
       )}
-      <div style={{ marginTop: 12, padding: "10px 14px", background: "#F8FAFC", border: "1px solid #E2E8F0", borderRadius: 8 }}>
-        <p style={{ ...GF, fontSize: 12, color: "#94A3B8", margin: 0 }}>
-          Role placeholder editing is available in the full implementation. Displayed here as read-only for this demonstration.
-        </p>
-      </div>
+
+      <button
+        onClick={add}
+        style={{ ...GF, marginTop: 10, fontSize: 13, fontWeight: 600, color: AZURE, background: "none", border: "1px dashed #C8E1F5", borderRadius: 8, padding: "9px 14px", cursor: "pointer", width: "100%" }}
+      >
+        + Add a role
+      </button>
     </div>
   );
 }
@@ -303,6 +378,7 @@ function AuthTab({ draft, onChange }: { draft: DocumentTemplate; onChange: (patc
 
 // ── Tab panel: Settings ────────────────────────────────────────────────────────
 function SettingsTab({ draft, onChange }: { draft: DocumentTemplate; onChange: (patch: Partial<DocumentTemplate>) => void }) {
+  const { isNarrow } = useViewport();
   const s = draft.settings;
   const patchSettings = (p: Partial<typeof s>) => onChange({ settings: { ...s, ...p } });
   return (
@@ -313,7 +389,7 @@ function SettingsTab({ draft, onChange }: { draft: DocumentTemplate; onChange: (
       <FormField label="Invitation Message" hint="You may use {{variable}} tokens.">
         <Input value={s.invitationMessage} onChange={v => patchSettings({ invitationMessage: v })} multiline rows={5} placeholder="Message body…" />
       </FormField>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+      <div style={{ display: "grid", gridTemplateColumns: isNarrow ? "1fr" : "1fr 1fr", gap: 14 }}>
         <div>
           <div style={{ ...GF, fontSize: 12, fontWeight: 600, color: "#64748B", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.05em" }}>Reminders</div>
           <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }}>
@@ -400,6 +476,7 @@ function VariablesTab({ draft }: { draft: DocumentTemplate }) {
 
 // ── Main page ─────────────────────────────────────────────────────────────────
 function TemplateEditInner() {
+  const { isNarrow } = useViewport();
   const { templateId } = useParams<{ templateId: string }>();
   const { state, loadTemplate } = useTemplates();
   const [activeTab, setActiveTab] = useState<TabId>("details");
@@ -419,10 +496,48 @@ function TemplateEditInner() {
 
   usePageMeta();
 
-  const handleSave = () => {
-    // In-memory only — no real persistence
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2500);
+  const platform = usePlatform();
+  const workspaceId = platform.currentWorkspace?.id;
+  const canWrite = realTemplatesAvailable(workspaceId);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+
+  const handleSave = async () => {
+    if (!draft) return;
+    setSaveError(null);
+
+    if (!canWrite) {
+      setSaveError("Open a workspace to save changes to a template.");
+      return;
+    }
+    if (draft.name.trim() === "") {
+      setSaveError("Template name is required.");
+      return;
+    }
+    if (draft.placeholders.some(p => p.label.trim() === "")) {
+      setSaveError("Every role needs a name.");
+      return;
+    }
+
+    setSaving(true);
+    try {
+      await updateTemplate(workspaceId, draft.id, {
+        name: draft.name,
+        routingMode: draft.routing.mode,
+        placeholders: draft.placeholders,
+        notifySenderOnComplete: draft.settings.completionCopySender,
+      });
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2500);
+    } catch (err) {
+      // The server's own reason where it gave one — a duplicate name or a
+      // malformed slot is actionable, and "something went wrong" is not.
+      setSaveError(err instanceof Error && err.message !== ""
+        ? err.message
+        : "The template could not be saved.");
+    } finally {
+      setSaving(false);
+    }
   };
 
   if (state.activeLoading || !draft) {
@@ -436,7 +551,7 @@ function TemplateEditInner() {
   return (
     <div style={{ background: "#F8FAFC", minHeight: "100%", ...GF }}>
       {/* Header */}
-      <div style={{ background: "white", borderBottom: "1px solid #E2E8F0", padding: "16px 24px" }}>
+      <div style={{ background: "white", borderBottom: "1px solid #E2E8F0", padding: isNarrow ? "16px 16px" : "16px 24px" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
           <Link to={`/app/templates/${templateId}`} style={{ ...GF, fontSize: 12, color: "#64748B", textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 4 }}>
             <ChevronLeft size={13} />
@@ -448,19 +563,30 @@ function TemplateEditInner() {
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <h1 style={{ ...GF, fontSize: 18, fontWeight: 800, color: "#0F172A", margin: 0, flex: 1 }}>Edit Template</h1>
           {saved && (
-            <div style={{ display: "flex", alignItems: "center", gap: 6, ...GF, fontSize: 12, color: GREEN }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, ...GF, fontSize: 12, color: GREEN, whiteSpace: "nowrap" }}>
               <CheckCircle2 size={13} />
-              Saved (demo — in memory only)
+              Saved
             </div>
           )}
-          <button
-            onClick={handleSave}
-            style={{ display: "inline-flex", alignItems: "center", gap: 7, padding: "9px 18px", background: AZURE, color: "white", border: "none", borderRadius: 8, ...GF, fontSize: 13, fontWeight: 700, cursor: "pointer" }}
-          >
-            <Save size={14} />
-            Save Changes
-          </button>
+          {/* Offered only where a save can succeed. In fixture mode there is
+              no workspace to write to, and a button that can only fail reads
+              as a broken feature rather than an unavailable one. */}
+          {canWrite && (
+            <button
+              onClick={() => { void handleSave(); }}
+              disabled={saving}
+              style={{ display: "inline-flex", alignItems: "center", gap: 7, padding: "9px 18px", background: saving ? "#93C5FD" : AZURE, color: "white", border: "none", borderRadius: 8, ...GF, fontSize: 13, fontWeight: 700, cursor: saving ? "default" : "pointer", whiteSpace: "nowrap" }}
+            >
+              <Save size={14} />
+              {saving ? "Saving…" : "Save Changes"}
+            </button>
+          )}
         </div>
+        {saveError !== null && (
+          <div style={{ ...GF, marginTop: 10, padding: "10px 13px", borderRadius: 8, background: "#FEF2F2", border: "1px solid #FECACA", fontSize: 12.5, color: "#B91C1C" }}>
+            {saveError}
+          </div>
+        )}
       </div>
 
       {/* Tabs */}
@@ -494,7 +620,7 @@ function TemplateEditInner() {
       <div style={{ padding: "24px", maxWidth: 640 }}>
         {activeTab === "details"      && <DetailsTab      draft={draft} onChange={p => setDraft(d => d ? { ...d, ...p } : d)} />}
         {activeTab === "documents"    && <DocumentsTab    draft={draft} />}
-        {activeTab === "placeholders" && <PlaceholdersTab draft={draft} />}
+        {activeTab === "placeholders" && <PlaceholdersTab draft={draft} onChange={p => setDraft(d => d ? { ...d, ...p } : d)} />}
         {activeTab === "routing"      && <RoutingTab      draft={draft} onChange={p => setDraft(d => d ? { ...d, ...p } : d)} />}
         {activeTab === "auth"         && <AuthTab         draft={draft} onChange={p => setDraft(d => d ? { ...d, ...p } : d)} />}
         {activeTab === "settings"     && <SettingsTab     draft={draft} onChange={p => setDraft(d => d ? { ...d, ...p } : d)} />}

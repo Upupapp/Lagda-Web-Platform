@@ -23,6 +23,7 @@ import type {
   TemplateCategory, TemplateStatus, TemplateScope,
 } from "../../../models/templates";
 import { usePageMeta } from "../../../hooks/usePageMeta";
+import { useViewport } from "../../../hooks/useViewport";
 import { FilterChips } from "../../../components/platform/FilterChips";
 import { TabStrip } from "../../../components/platform/TabStrip";
 
@@ -249,6 +250,7 @@ function CardSkeleton() {
 function TemplatesInner() {
   usePageMeta();
   const { state, setQuery, loadList, canWrite } = useTemplates();
+  const { isNarrow } = useViewport();
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [showFilters, setShowFilters] = useState(false);
   const [localQ, setLocalQ] = useState("");
@@ -291,8 +293,17 @@ function TemplatesInner() {
   return (
     <div style={{ background: "#F8FAFC", minHeight: "100%", ...GF }}>
       {/* Header */}
-      <div style={{ background: "white", borderBottom: "1px solid #E2E8F0", padding: "20px 24px" }}>
-        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 16 }}>
+      <div style={{ background: "white", borderBottom: "1px solid #E2E8F0", padding: isNarrow ? "16px 16px" : "20px 24px" }}>
+        {/* Stacked on a phone. Side by side, the title truncated to a few
+            characters and the action button shrank below a comfortable tap
+            target; neither is worth preserving at that width. */}
+        <div style={{
+          display: "flex",
+          flexDirection: isNarrow ? "column" : "row",
+          alignItems: isNarrow ? "stretch" : "flex-start",
+          justifyContent: "space-between",
+          gap: isNarrow ? 12 : 16,
+        }}>
           <div>
             <h1 style={{ ...GF, fontSize: 22, fontWeight: 800, color: "#0F172A", margin: 0, letterSpacing: "-0.02em" }}>
               Templates
@@ -312,7 +323,7 @@ function TemplatesInner() {
                 display:     "inline-flex",
                 alignItems:  "center",
                 gap:         7,
-                padding:     "10px 18px",
+                padding:     isNarrow ? "12px 18px" : "10px 18px",
                 background:  AZURE,
                 color:       "white",
                 borderRadius:8,
@@ -321,6 +332,7 @@ function TemplatesInner() {
                 fontWeight:  700,
                 textDecoration:"none",
                 flexShrink:  0,
+                justifyContent: isNarrow ? "center" : undefined,
               }}
             >
               <Plus size={15} />
@@ -389,9 +401,9 @@ function TemplatesInner() {
       </div>
 
       {/* Toolbar */}
-      <div style={{ background: "white", borderBottom: "1px solid #F1F5F9", padding: "12px 24px", display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+      <div style={{ background: "white", borderBottom: "1px solid #F1F5F9", padding: isNarrow ? "12px 16px" : "12px 24px", display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
         {/* Search */}
-        <div style={{ position: "relative", flex: 1, minWidth: 200, maxWidth: 340 }}>
+        <div style={{ position: "relative", flex: 1, minWidth: isNarrow ? 0 : 200, maxWidth: isNarrow ? "100%" : 340 }}>
           <Search size={14} style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: "#94A3B8" }} />
           <input
             type="search"
@@ -479,7 +491,7 @@ function TemplatesInner() {
 
       {/* Filter panel */}
       {showFilters && (
-        <div style={{ background: "white", borderBottom: "1px solid #F1F5F9", padding: "12px 24px", display: "flex", gap: 12, flexWrap: "wrap" }}>
+        <div style={{ background: "white", borderBottom: "1px solid #F1F5F9", padding: isNarrow ? "12px 16px" : "12px 24px", display: "flex", gap: 12, flexWrap: "wrap" }}>
           <FilterSelect
             label="Status"
             value={state.query.status ?? ""}
@@ -530,7 +542,7 @@ function TemplatesInner() {
 
         {/* Loading */}
         {listLoading && viewMode === "grid" && (
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 16 }}>
+          <div style={{ display: "grid", gridTemplateColumns: isNarrow ? "1fr" : "repeat(auto-fill, minmax(260px, 1fr))", gap: 16 }}>
             {Array.from({ length: 6 }, (_, i) => <CardSkeleton key={i} />)}
           </div>
         )}
@@ -546,7 +558,7 @@ function TemplatesInner() {
 
         {/* Grid view */}
         {!listLoading && viewMode === "grid" && items.length > 0 && (
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 16 }}>
+          <div style={{ display: "grid", gridTemplateColumns: isNarrow ? "1fr" : "repeat(auto-fill, minmax(260px, 1fr))", gap: 16 }}>
             {items.map(item => <TemplateCard key={item.id} item={item} />)}
           </div>
         )}
