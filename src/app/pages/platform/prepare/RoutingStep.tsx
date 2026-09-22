@@ -111,7 +111,11 @@ function GroupCard({
 }: {
   group: PrepRoutingGroup;
   index: number;
-  allParticipants: { id: PrepPaxId; name: string; role: PrepParticipantRole }[];
+  // `isRequired` is read here to tell a step that GATES the next one from a
+  // step that merely runs beside it. Both look identical on screen otherwise.
+  allParticipants: {
+    id: PrepPaxId; name: string; role: PrepParticipantRole; isRequired: boolean;
+  }[];
   canRemove: boolean;
   onLabelChange:        (groupId: PrepGroupId, label: string) => void;
   onRuleChange:         (groupId: PrepGroupId, rule: RoutingCompletionRule) => void;
@@ -243,6 +247,22 @@ function GroupCard({
         <div style={{ ...GF, fontSize: 12, fontWeight: 600, color: SILVER, marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.06em" }}>
           Participants in this step
         </div>
+        {/* A step nobody is REQUIRED in does not gate the next one. The engine
+            activates it and keeps walking (planWorkflowAdvance breaks only on
+            a required member), so it runs alongside what follows. Shown here
+            because the Routing step is where someone reads the order off the
+            screen and believes it. */}
+        {allParticipants.length > 0
+          && group.participantIds.length > 0
+          && group.participantIds.every(id => {
+            const p = allParticipants.find(x => x.id === id);
+            return p !== undefined && !p.isRequired;
+          }) && (
+          <div style={{ ...GF, fontSize: 11.5, color: "#8A6D1F", background: "#FDF8EC", border: "1px solid #EBD79A", borderRadius: 8, padding: "7px 10px", marginBottom: 10 }}>
+            Nobody in this step has to act, so it does not hold up the next one
+            — both are asked at the same time.
+          </div>
+        )}
         {isSystemManaged && (
           <div style={{ ...GF, fontSize: 11.5, color: SILVER, marginBottom: 10, fontStyle: "italic" }}>
             Assigned automatically based on each participant's role.

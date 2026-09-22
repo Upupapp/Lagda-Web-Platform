@@ -276,6 +276,18 @@ function BlankForm({ onCreated }: { onCreated: (id: string) => void }) {
                       Must act before later steps begin
                     </span>
                   </label>
+                  {/* Said at the moment the choice is made. Unticking this is
+                      commonly read as "skip this person unless needed", and it
+                      is not — the engine activates a non-blocking cohort
+                      ALONGSIDE the next one (planWorkflowAdvance only breaks
+                      on a required member). They are still asked; the document
+                      simply never waits. */}
+                  {!sl.required && (
+                    <p style={{ ...GF, fontSize: 11.5, color: "#94A3B8", margin: "6px 0 0 21px", lineHeight: 1.5 }}>
+                      They will still receive the document at the same time as
+                      the next step — it just will not wait for them.
+                    </p>
+                  )}
                 </div>
               ))}
             </div>
