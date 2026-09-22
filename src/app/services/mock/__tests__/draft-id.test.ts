@@ -118,10 +118,15 @@ describe("createDraft applies initialTitle", () => {
   });
 
   it("leaves the default title alone when none is given", async () => {
+    // Both halves asserted: the title lands when supplied AND the default
+    // survives when it is not. Checking only the second would pass against a
+    // createDraft that ignored initialTitle entirely.
     const withTitle = await prepareService.createDraft({
       source: "new", initialTitle: "Named",
     });
     const without = await prepareService.createDraft({ source: "new" });
+
+    expect(withTitle.details.title).toBe("Named");
     expect(without.details.title).not.toBe("Named");
   });
 });
