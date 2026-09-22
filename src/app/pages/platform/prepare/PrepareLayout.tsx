@@ -45,18 +45,25 @@ const SILVER = "#8A9BAE";
 
 
 // ── Step ordering for Previous/Continue logic ─────────────────────────────────
+//
+// Derived from PREPARATION_STEPS rather than a second, hand-written list.
+// It used to be one: "upload, participants, routing, authentication,
+// settings, review, fields" -- authentication in the wrong slot (right after
+// routing, instead of after fields) and "authorization" missing entirely.
+// Continuing from Order landed on Authentication instead of Settings, and
+// Continue from Fields had no next step at all, so Authorization was
+// unreachable through the button that is supposed to lead to it. Deriving
+// this from the one array the step cards, the unlock chain and the stepper
+// count all already read means the two cannot drift apart again.
+export const STEP_ORDER: readonly PreparationStepId[] = PREPARATION_STEPS.map(step => step.id);
 
-const STEP_ORDER: PreparationStepId[] = [
-  "upload", "participants", "routing", "authentication", "settings", "review", "fields",
-];
-
-function prevStep(current: PreparationStepId | null): PreparationStepId | null {
+export function prevStep(current: PreparationStepId | null): PreparationStepId | null {
   if (!current) return null;
   const idx = STEP_ORDER.indexOf(current);
   return idx > 0 ? STEP_ORDER[idx - 1]! : null;
 }
 
-function nextStep(current: PreparationStepId | null): PreparationStepId | null {
+export function nextStep(current: PreparationStepId | null): PreparationStepId | null {
   if (!current) return null;
   const idx = STEP_ORDER.indexOf(current);
   return idx >= 0 && idx < STEP_ORDER.length - 1 ? STEP_ORDER[idx + 1]! : null;

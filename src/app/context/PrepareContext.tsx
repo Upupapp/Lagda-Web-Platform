@@ -97,22 +97,10 @@ function resolveStepStates(
     return "available";
   };
 
-  // The unlock chain, in the order PREPARATION_STEPS now declares:
-  //
-  //   Documents -> Participants -> Routing -> Settings -> Fields -> Review
-  //                                                            -> Authentication
-  //
-  // Each step opens only once the one before it is VALID, not merely visited.
-  // "Visited" would unlock the next step for someone who opened a step and
-  // left it empty, which is the state this gating exists to prevent.
-  //
   // Settings no longer bypasses the chain. It used to open as soon as files
   // existed, which was harmless when it sat fourth but would now let someone
   // skip Participants and Routing entirely.
   //
-  // Authentication is last and needs everything before it: it asks how each
-  // signer proves who they are, and there are no signers to ask about until
-  // participants and routing are settled.
   // The chain, in the order PREPARATION_STEPS declares:
   //
   //   Documents -> Signers -> Order -> Settings -> Place Fields
