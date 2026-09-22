@@ -36,6 +36,7 @@
 // recoverable; that is not.
 
 import type {
+  PrepAuthMethodId,
   PrepParticipant,
   PrepParticipantRole,
   PrepRoutingConfig,
@@ -47,6 +48,7 @@ import {
   VALID_PREP_PARTICIPANT_ROLES,
   deriveApprovalBasedGroups,
   normalizeRoutingGroups,
+  isAuthMethodAvailableForParticipant,
 } from "../../models/prepare";
 import type {
   TemplateRolePlaceholder, TemplateRoleMapping, TemplateApplication,
@@ -84,9 +86,20 @@ export interface TemplateApplicationFailure {
   message: string;
 }
 
+/** A role whose requested authentication method the server cannot enforce,
+ *  and which therefore fell back to the secure invitation link. */
+export interface AuthMethodDowngrade {
+  label: string;
+  requested: PrepAuthMethodId;
+}
+
 export interface TemplateApplicationSuccess {
   ok: true;
   application: TemplateApplication;
+  /** Empty when every requested method was honoured. Non-empty means the
+   *  caller SHOULD tell the sender, rather than let them believe a stronger
+   *  check is in place than the server performs. */
+  authDowngrades: AuthMethodDowngrade[];
 }
 
 export type { TemplateApplication };
@@ -102,6 +115,9 @@ export interface ResolveTemplateInput {
   /** Injectable so tests get stable ids. Production uses the same generator
    *  the Participants step does. */
   newId?: () => string;
+  /** Injectable so a test can exercise the real-backend restriction without
+   *  reaching into import.meta.env. Production uses the real gate. */
+  isAuthAvailable?: (method: PrepAuthMethodId, participant: PrepParticipant) => boolean;
 }
 
 const fail = (
@@ -228,6 +244,11 @@ export function resolveTemplateApplication(
 ): TemplateApplicationResult {
   const { placeholders, roleMappings, routingMode } = input;
   const newId = input.newId ?? defaultNewId;
+  const authAvailable = input.isAuthAvailable
+    ?? ((method, participant) =>
+      isAuthMethodAvailableForParticipant(method, participant).available);
+
+  const authDowngrades: AuthMethodDowngrade[] = [];
 
   if (!VALID_ROUTING_MODES.includes(routingMode)) {
     return fail("ROUTING_MODE_UNKNOWN",
@@ -263,7 +284,7 @@ export function resolveTemplateApplication(
     }
 
     const id = newId();
-    participants.push({
+    const participant: PrepParticipant = {
       id,
       name,
       email,
@@ -272,11 +293,37 @@ export function resolveTemplateApplication(
       isRequired: slot.required,
       // Filled in below, once the groups exist.
       routingGroupId: null,
-      // The slot's default, unless the visitor chose otherwise while mapping.
-      // This is what makes the template's `default_auth_method` a real setting
-      // rather than a column nothing reads.
-      authMethodOverride: mapping?.authMethod ?? slot.defaultAuthMethod ?? null,
-    });
+      // Set just below, once it has been checked against what the server
+      // actually enforces. Never assigned straight from the slot.
+      authMethodOverride: null,
+    };
+
+    // ── The template may ASK for an auth method; it does not get to impose one
+    //
+    // A slot carries `defaultAuthMethod`, and the visitor can pick one while
+    // mapping. Neither may be written onto the participant unchecked.
+    //
+    // isAuthMethodAvailableForParticipant is the single gate on that, and its
+    // reason is worth restating: in real-backend mode the server enforces only
+    // the secure invitation link. Writing "email-otp" onto a recipient would
+    // put a security promise in front of the sender — a code the signer must
+    // enter — that nothing server-side checks. Two of the shipped templates
+    // specify exactly that method, so this is a live path, not a hypothetical.
+    //
+    // When the asked-for method is unavailable the participant falls back to
+    // `null`, meaning "use the draft's default", which is the invitation link.
+    // The downgrade is REPORTED rather than swallowed, so the caller can say
+    // so; silently weakening an authentication setting is its own defect.
+    const asked = mapping?.authMethod ?? slot.defaultAuthMethod ?? "none";
+    if (asked !== "none") {
+      if (authAvailable(asked, participant)) {
+        participant.authMethodOverride = asked;
+      } else {
+        authDowngrades.push({ label: slot.label, requested: asked });
+      }
+    }
+
+    participants.push(participant);
     stepByParticipantId.set(id, slot.routingStep);
   }
 
@@ -300,7 +347,7 @@ export function resolveTemplateApplication(
     participant.routingGroupId = groupIdByParticipantId.get(participant.id) ?? null;
   }
 
-  return { ok: true, application: { participants, routing } };
+  return { ok: true, application: { participants, routing }, authDowngrades };
 }
 
 /**

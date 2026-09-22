@@ -376,6 +376,8 @@ function UseTemplateInner() {
   const [launchRoute, setLaunchRoute] = useState<string>(TEMPLATE_HANDOFF_ROUTE);
   const [launchParticipantCount, setLaunchParticipantCount] = useState(0);
   const [launchStepCount, setLaunchStepCount] = useState(0);
+  const [authDowngrades, setAuthDowngrades] =
+    useState<{ label: string; requested: PrepAuthMethodId }[]>([]);
 
   useEffect(() => {
     if (templateId) loadTemplate(templateId);
@@ -447,6 +449,7 @@ function UseTemplateInner() {
       setLaunchDraftId(handoff.draft.id);
       setLaunchRoute(handoff.route ?? TEMPLATE_HANDOFF_ROUTE);
       setLaunchParticipantCount(handoff.draft.participants.length);
+      setAuthDowngrades(result.authDowngrades ?? []);
       setLaunchStepCount(handoff.draft.routing.groups.length);
       setLaunched(true);
     } catch {
@@ -514,6 +517,22 @@ function UseTemplateInner() {
             the template will not affect it. Draft ID:{" "}
             <code style={{ background: "#F1F5F9", padding: "1px 5px", borderRadius: 4 }}>{launchDraftId}</code>
           </p>
+          {authDowngrades.length > 0 && (
+            /* Told, not swallowed. This template asks for an identity check
+               the server does not perform yet, so the sender must not be left
+               believing one is in place. */
+            <div style={{ textAlign: "left", background: "#FDF8EC", border: "1px solid #EBD79A", borderRadius: 10, padding: "12px 14px", margin: "0 0 22px" }}>
+              <p style={{ ...GF, fontSize: 12.5, fontWeight: 700, color: "#0F172A", margin: "0 0 4px" }}>
+                Authentication was not applied for {authDowngrades.length === 1 ? "one role" : `${authDowngrades.length} roles`}
+              </p>
+              <p style={{ ...GF, fontSize: 12, color: "#64748B", margin: 0, lineHeight: 1.6 }}>
+                {authDowngrades.map(d => d.label).join(", ")} — this template asks for a
+                stronger check that is not enforced yet. {authDowngrades.length === 1 ? "That recipient" : "Those recipients"} will
+                receive a secure invitation link instead. You can review this on the
+                Authentication step.
+              </p>
+            </div>
+          )}
           <div style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap" }}>
             <Link
               to={launchRoute}

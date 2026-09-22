@@ -343,6 +343,10 @@ export function instantiateTemplate(
     // A SNAPSHOT. No template id travels with it, so nothing downstream can
     // follow it back and re-read the template later.
     application: resolved.application,
+    // Roles whose template-specified authentication the server cannot enforce.
+    // Passed up so the sender is TOLD, not left assuming a check that will
+    // not happen.
+    authDowngrades: resolved.authDowngrades,
     variableValues: { ...variableValues },
     demonstrationOnly: true,
   };

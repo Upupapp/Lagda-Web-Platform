@@ -383,6 +383,14 @@ export interface TemplateInstantiationResult {
   application?:    TemplateApplication;
   /** Copied, not referenced, for the same reason. */
   variableValues?: TemplateVariableValues;
+  /**
+   * Roles whose template-specified authentication method the server does not
+   * enforce, and which therefore fell back to the secure invitation link.
+   *
+   * Present and possibly empty when `ok`. A caller that ignores this shows the
+   * sender a workflow implying a stronger identity check than will occur.
+   */
+  authDowngrades?: { label: string; requested: PrepAuthMethodId }[];
   prepDraftId?:    string;
   prepStartRoute?: string;
   errorMessage?:   string;

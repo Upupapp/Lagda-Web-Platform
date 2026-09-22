@@ -127,12 +127,80 @@ describe("a template produces a real pre-filled draft", () => {
     }
   });
 
+  // ── The server-enforcement gate ──────────────────────────────────────────
+  //
+  // models/prepare's isAuthMethodAvailableForParticipant exists because the
+  // backend enforces ONLY the secure invitation link today. A template that
+  // could write "email-otp" onto a recipient would put a security promise in
+  // front of the sender that nothing server-side checks — and two of the
+  // shipped templates specify exactly that method.
+
+  it("does NOT apply an auth method the server cannot enforce", () => {
+    const result = resolve({
+      placeholders: [slot({ defaultAuthMethod: "email-otp" })],
+      // The page seeds each mapping from the slot default
+      // (buildInitialMappings), so the fixture must too — otherwise the
+      // mapping's "none" masks the slot and this passes for the wrong reason.
+      roleMappings: [mapping({ authMethod: "email-otp" })],
+      // Stands in for real-backend mode, where only "none" is available.
+      isAuthAvailable: (method) => method === "none",
+    });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+
+    // Falls back to the draft default — the invitation link — not to a
+    // setting nobody honours.
+    expect(result.application.participants[0]!.authMethodOverride).toBeNull();
+  });
+
+  it("REPORTS the downgrade rather than swallowing it", () => {
+    // Silently weakening an authentication setting is its own defect. The
+    // caller has to be able to tell the sender.
+    const result = resolve({
+      placeholders: [slot({ label: "Client Signer", defaultAuthMethod: "email-otp" })],
+      roleMappings: [mapping({ authMethod: "email-otp" })],
+      isAuthAvailable: (method) => method === "none",
+    });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+
+    expect(result.authDowngrades).toEqual([
+      { label: "Client Signer", requested: "email-otp" },
+    ]);
+  });
+
+  it("reports nothing when every requested method is honoured", () => {
+    const result = resolve({
+      placeholders: [slot({ defaultAuthMethod: "email-otp" })],
+      roleMappings: [mapping({ authMethod: "email-otp" })],
+      isAuthAvailable: () => true,
+    });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.authDowngrades).toEqual([]);
+    expect(result.application.participants[0]!.authMethodOverride).toBe("email-otp");
+  });
+
+  it("does not report a downgrade for a slot that asked for nothing", () => {
+    // "none" is not a downgrade; it is the default. Reporting it would train
+    // senders to ignore the notice.
+    const result = resolve({
+      placeholders: [slot({ defaultAuthMethod: "none" })],
+      isAuthAvailable: (method) => method === "none",
+    });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.authDowngrades).toEqual([]);
+    expect(result.application.participants[0]!.authMethodOverride).toBeNull();
+  });
+
   it("applies the slot's default auth method when the visitor chose nothing", () => {
     // Otherwise `default_auth_method` is a column the template stores and
     // nothing ever reads.
     const result = resolve({
       placeholders: [slot({ defaultAuthMethod: "email-otp" })],
       roleMappings: [mapping({ authMethod: undefined as never })],
+      isAuthAvailable: () => true,
     });
     expect(result.ok).toBe(true);
     if (!result.ok) return;
@@ -143,6 +211,7 @@ describe("a template produces a real pre-filled draft", () => {
     const result = resolve({
       placeholders: [slot({ defaultAuthMethod: "email-otp" })],
       roleMappings: [mapping({ authMethod: "sms-otp" })],
+      isAuthAvailable: () => true,
     });
     expect(result.ok).toBe(true);
     if (!result.ok) return;
