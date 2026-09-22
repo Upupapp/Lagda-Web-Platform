@@ -56,6 +56,7 @@ const BOTTOM_NAV_CLEARANCE = 62;
 const LIVE_SETTINGS_PATHS = [
   "/app/settings/profile",
   "/app/settings/signatures",
+  "/app/settings/organization",
 ];
 
 export function isLiveSettingsPath(pathname: string): boolean {
@@ -148,6 +149,7 @@ const ALL_SETTINGS_NAV: SettingsNavItem[] = [
   { path: "/app/settings/branding",      label: "Branding",          group: "workspace" },
   { path: "/app/settings/billing",       label: "Billing & Plan",    group: "workspace" },
   { path: "/app/settings/usage",         label: "Usage",             group: "workspace" },
+  { path: "/app/settings/organization",  label: "Organization Units", group: "workspace" },
   // Integrations is post-launch and its route is capability-guarded. Linking to it
   // from the launch profile would produce a dead end.
   { path: "/app/settings/integrations",  label: "Integrations",      group: "workspace", capability: "integrations" },

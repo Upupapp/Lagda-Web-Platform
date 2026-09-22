@@ -17,6 +17,8 @@ import {
   updateTemplate, realTemplatesAvailable, attachTemplateDocument, detachTemplateDocument,
 } from "../../../services/templates-source";
 import { realDocumentService } from "../../../services/real/document.service";
+import { realOrganizationService } from "../../../services/real/organization.service";
+import type { OrganizationUnit } from "../../../models/organization";
 import { ApiError } from "../../../services/api-client";
 import { VALID_PREP_PARTICIPANT_ROLES } from "../../../models/prepare";
 import type { PrepParticipantRole } from "../../../models/prepare";
@@ -292,12 +294,100 @@ function DocumentsTab({
   );
 }
 
+// ── One slot's resolution (061) ────────────────────────────────────────────
+//
+// Manual (the default, unchanged from before this existed) or automatic —
+// "whoever currently holds [a title] in [a unit]", resolved live every
+// time the template is applied. `units` is `null` while loading, `[]` once
+// loaded with none (or in fixture mode, which has no unit concept at all).
+function RoleResolutionField({ placeholder, units, onChange }: {
+  placeholder: TemplateRolePlaceholder;
+  units: OrganizationUnit[] | null;
+  onChange: (patch: Partial<TemplateRolePlaceholder>) => void;
+}) {
+  const automatic = placeholder.resolution !== undefined;
+
+  const setAutomatic = (on: boolean) => {
+    if (!on) { onChange({ resolution: undefined }); return; }
+    onChange({
+      resolution: { mode: "unit-title", unitId: units?.[0]?.unitId ?? "", title: "" },
+    });
+  };
+
+  if (units !== null && units.length === 0) {
+    // No units exist yet in this workspace (or none loaded) — nothing to
+    // resolve against. Shown as a quiet note rather than an empty toggle
+    // that turns on to a picker with nothing in it.
+    return (
+      <p style={{ ...GF, fontSize: 11.5, color: "#94A3B8", margin: "8px 0 0", lineHeight: 1.5 }}>
+        This role is filled by hand each time. Create an{" "}
+        <Link to="/app/settings/organization" style={{ color: AZURE }}>organization unit</Link>{" "}
+        to route it automatically by title instead.
+      </p>
+    );
+  }
+
+  return (
+    <div style={{ marginTop: 10, paddingTop: 10, borderTop: "1px dashed #E2E8F0" }}>
+      <label style={{ display: "flex", alignItems: "center", gap: 7, cursor: "pointer" }}>
+        <input
+          type="checkbox"
+          checked={automatic}
+          onChange={e => { setAutomatic(e.target.checked); }}
+          style={{ accentColor: AZURE, width: 14, height: 14, flexShrink: 0 }}
+        />
+        <span style={{ ...GF, fontSize: 12.5, color: "#475569" }}>
+          Assign automatically, by title
+        </span>
+      </label>
+
+      {automatic && (
+        units === null ? (
+          <p style={{ ...GF, fontSize: 11.5, color: "#94A3B8", margin: "8px 0 0" }}>Loading units…</p>
+        ) : (
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 8, marginTop: 8 }}>
+            <select
+              value={placeholder.resolution?.unitId ?? ""}
+              onChange={e => onChange({
+                resolution: { mode: "unit-title", unitId: e.target.value, title: placeholder.resolution?.title ?? "" },
+              })}
+              style={{ ...GF, fontSize: 12.5, color: "#0F172A", border: "1px solid #E2E8F0", borderRadius: 8, padding: "8px 10px", background: "white", cursor: "pointer", minWidth: 0 }}
+            >
+              {units.map(u => <option key={u.unitId} value={u.unitId}>{u.name}</option>)}
+            </select>
+            <input
+              type="text"
+              value={placeholder.resolution?.title ?? ""}
+              onChange={e => onChange({
+                resolution: { mode: "unit-title", unitId: placeholder.resolution?.unitId ?? "", title: e.target.value },
+              })}
+              placeholder="e.g. Department Head"
+              style={{ ...GF, fontSize: 12.5, color: "#0F172A", border: "1px solid #E2E8F0", borderRadius: 8, padding: "8px 10px", background: "white", minWidth: 0, boxSizing: "border-box" }}
+            />
+          </div>
+        )
+      )}
+    </div>
+  );
+}
+
 // ── Tab panel: Role Placeholders ───────────────────────────────────────────────
-function PlaceholdersTab({ draft, onChange }: {
+function PlaceholdersTab({ draft, workspaceId, onChange }: {
   draft: DocumentTemplate;
+  workspaceId: string | undefined;
   onChange: (patch: Partial<DocumentTemplate>) => void;
 }) {
   const slots = draft.placeholders;
+  const [units, setUnits] = useState<OrganizationUnit[] | null>(null);
+
+  useEffect(() => {
+    if (!realTemplatesAvailable(workspaceId)) { setUnits([]); return; }
+    let cancelled = false;
+    realOrganizationService.listUnits(workspaceId!)
+      .then(list => { if (!cancelled) setUnits(list.filter(u => u.archivedAt === null)); })
+      .catch(() => { if (!cancelled) setUnits([]); });
+    return () => { cancelled = true; };
+  }, [workspaceId]);
 
   const patch = (id: string, p: Partial<TemplateRolePlaceholder>) =>
     onChange({ placeholders: slots.map(s2 => (s2.id === id ? { ...s2, ...p } : s2)) });
@@ -394,6 +484,12 @@ function PlaceholdersTab({ draft, onChange }: {
                   next step — it just will not wait for them.
                 </p>
               )}
+
+              <RoleResolutionField
+                placeholder={ph}
+                units={units}
+                onChange={patch2 => patch(ph.id, patch2)}
+              />
             </div>
           ))}
         </div>
@@ -739,7 +835,7 @@ function TemplateEditInner() {
       <div style={{ padding: "24px", maxWidth: 640 }}>
         {activeTab === "details"      && <DetailsTab      draft={draft} onChange={p => setDraft(d => d ? { ...d, ...p } : d)} />}
         {activeTab === "documents"    && <DocumentsTab    draft={draft} workspaceId={workspaceId} canWrite={canWrite} onChange={setDraft} />}
-        {activeTab === "placeholders" && <PlaceholdersTab draft={draft} onChange={p => setDraft(d => d ? { ...d, ...p } : d)} />}
+        {activeTab === "placeholders" && <PlaceholdersTab draft={draft} workspaceId={workspaceId} onChange={p => setDraft(d => d ? { ...d, ...p } : d)} />}
         {activeTab === "routing"      && <RoutingTab      draft={draft} onChange={p => setDraft(d => d ? { ...d, ...p } : d)} />}
         {activeTab === "auth"         && <AuthTab         draft={draft} onChange={p => setDraft(d => d ? { ...d, ...p } : d)} />}
         {activeTab === "settings"     && <SettingsTab     draft={draft} onChange={p => setDraft(d => d ? { ...d, ...p } : d)} />}

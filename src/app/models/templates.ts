@@ -104,6 +104,31 @@ export const TEMPLATE_CATEGORIES: TemplateCategory[] = [
 
 // ── Role placeholder ──────────────────────────────────────────────────────────
 
+/**
+ * How a slot's PERSON is found automatically (061), instead of a sender
+ * typing a name and email at apply time. One strategy today: whoever
+ * CURRENTLY holds a title inside an organization unit — "the Department
+ * Head of Records" — resolved live every time the template is applied, not
+ * pinned to whoever held it when the template was authored.
+ */
+export interface TemplateRoleResolution {
+  mode: "unit-title";
+  unitId: string;
+  title: string;
+}
+
+/** What a slot with a `resolution` means RIGHT NOW (061) — read fresh at
+ *  apply time, never cached. Three states rather than a nullable person:
+ *  "manual" (no resolution on this slot), "unresolved" (configured, but
+ *  nobody currently holds the title), "resolved" (exactly one person). */
+export type TemplateRoleAssignment =
+  | { placeholderId: TemplateRolePlaceholderId; status: "manual" }
+  | { placeholderId: TemplateRolePlaceholderId; status: "unresolved" }
+  | {
+      placeholderId: TemplateRolePlaceholderId; status: "resolved";
+      userId: string; displayName: string; email: string;
+    };
+
 export interface TemplateRolePlaceholder {
   id:                  TemplateRolePlaceholderId;
   label:               string;               // e.g. "Client Signer"
@@ -118,6 +143,9 @@ export interface TemplateRolePlaceholder {
    *  placements endpoint (keyed by slot, not by this object's positional
    *  `id`) and round-tripped on save so a field survives an edit. */
   backendSlotId?:      string;
+  /** 061. Absent means MANUAL — a sender types a name and email when the
+   *  template is used, exactly as every slot worked before this existed. */
+  resolution?:         TemplateRoleResolution;
 }
 
 // ── Template document ─────────────────────────────────────────────────────────
