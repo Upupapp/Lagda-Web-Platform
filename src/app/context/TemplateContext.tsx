@@ -26,8 +26,6 @@ import {
 } from "../services/templates-source";
 import { usePlatform } from "./PlatformContext";
 import {
-  asyncListTemplates,
-  asyncGetTemplateById,
   asyncMakeAvailable,
   asyncReturnToDraft,
   asyncArchive,
