@@ -12,7 +12,7 @@
 // invitation went to, and the exact instant their submission was accepted.
 
 import { useState, useEffect, type CSSProperties } from "react";
-import { X, CheckCircle2, Clock, XCircle, MinusCircle } from "lucide-react";
+import { X, CheckCircle2, Clock, XCircle, MinusCircle, ShieldCheck } from "lucide-react";
 import {
   realSigningRequestService,
   type SigningRequestSignatures, type Signatory, type RecipientWorkflowState,
@@ -28,6 +28,7 @@ const SLATE2 = "#E2E8F0";
 const GREEN  = "#059669";
 const AMBER  = "#B45309";
 const RED    = "#DC2626";
+const AZURE  = "#0078D4";
 
 /** Absolute, with the timezone shown — an evidentiary timestamp is useless
  *  as "2 days ago", and ambiguous without an offset. */
@@ -50,6 +51,20 @@ const STATE_PRESENTATION: Record<RecipientWorkflowState, {
   declined: { label: "Declined",     color: RED,    icon: XCircle },
 };
 
+/** A single labeled fact. Every field the record shows is named explicitly. */
+function Detail({ label, value }: { label: string; value: string }) {
+  return (
+    <div style={{ marginTop: 6 }}>
+      <span style={{ fontSize: 10.5, fontWeight: 700, color: SLATE4, textTransform: "uppercase", letterSpacing: "0.05em", ...GF }}>
+        {label}
+      </span>
+      <span style={{ fontSize: 12.5, color: NAVY, marginLeft: 6, ...GF, wordBreak: "break-word" }}>
+        {value}
+      </span>
+    </div>
+  );
+}
+
 function SignatoryRow({ signatory }: { signatory: Signatory }) {
   const presentation = STATE_PRESENTATION[signatory.state];
   const Icon = presentation.icon;
@@ -63,6 +78,9 @@ function SignatoryRow({ signatory }: { signatory: Signatory }) {
             <span style={{ fontSize: 14, fontWeight: 600, color: NAVY, ...GF }}>
               {signatory.name}
             </span>
+            <span style={{ fontSize: 10, fontWeight: 400, color: SLATE4, ...GF }}>
+              (name in document)
+            </span>
             <span style={{ fontSize: 12, fontWeight: 600, color: presentation.color, ...GF }}>
               {presentation.label}
             </span>
@@ -71,10 +89,29 @@ function SignatoryRow({ signatory }: { signatory: Signatory }) {
             )}
           </div>
 
-          <div style={{ fontSize: 12, color: SLATE6, marginTop: 2, ...GF, wordBreak: "break-word" }}>
-            {signatory.email}
-            {signatory.organization !== null && ` · ${signatory.organization}`}
-          </div>
+          {/* Every remaining field named, per its origin: what the SENDER
+              wrote when preparing the document, distinct from the LAGDA
+              account the person actually signed in with, if any -- the two
+              can differ, and for a legal record that difference is the
+              point. */}
+          <Detail label="Email in document" value={signatory.email} />
+          <Detail label="Company" value={signatory.organization ?? "Not provided"} />
+
+          {(signatory.linkedAccountName !== null || signatory.linkedAccountEmail !== null) && (
+            <div style={{
+              marginTop: 8, padding: "8px 10px", borderRadius: 8,
+              background: "#EFF6FF", border: `1px solid #BFDBFE`,
+            }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                <ShieldCheck size={13} aria-hidden style={{ color: AZURE, flexShrink: 0 }} />
+                <span style={{ fontSize: 11, fontWeight: 700, color: AZURE, ...GF }}>
+                  Signed in with a LAGDA account
+                </span>
+              </div>
+              <Detail label="Account name" value={signatory.linkedAccountName ?? "Not available"} />
+              <Detail label="Account email" value={signatory.linkedAccountEmail ?? "Not available"} />
+            </div>
+          )}
 
           {/* The evidentiary line. Only ever rendered from a real instant —
               there is no "signed (date unknown)" state to represent. */}
