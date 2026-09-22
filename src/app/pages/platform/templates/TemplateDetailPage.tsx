@@ -2,12 +2,12 @@
 // Shows status, summary, placeholder list, routing, documents, usage, and action buttons.
 // Inline styles only. No Burgundy. demonstrationOnly.
 
-import { useEffect, useCallback } from "react";
+import { useEffect, useCallback, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router";
 import {
   ChevronLeft, LayoutTemplate, FileText, Star,
   Edit2, Copy, Archive, RotateCcw, CheckCircle2, Eye,
-  AlertCircle, AlertTriangle, PenLine, Zap, RefreshCw,
+  AlertCircle, AlertTriangle, PenLine, Zap, RefreshCw, Info, X,
 } from "lucide-react";
 import { TemplateProvider, useTemplates } from "../../../context/TemplateContext";
 import { SkeletonBlock, SKELETON_STYLE } from "../../../components/platform";
@@ -19,6 +19,7 @@ import type { DocumentTemplate } from "../../../models/templates";
 import { PREP_PARTICIPANT_ROLE_LABELS } from "../../../models/prepare";
 import { usePageMeta } from "../../../hooks/usePageMeta";
 import { useViewport } from "../../../hooks/useViewport";
+import { Z } from "../../../utils/z-index";
 
 // ── Design tokens ─────────────────────────────────────────────────────────────
 const GF    = { fontFamily: "'Geist', sans-serif" };
@@ -74,16 +75,41 @@ function ActionStrip({ template, onMakeAvailable, onReturnToDraft, onArchive, on
   onDuplicate:     () => void;
   pendingOp:       string;
 }) {
+  const { isNarrow } = useViewport();
   const { id, status } = template;
   const busy = pendingOp !== "none";
 
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+    /* ── One horizontal row on a phone, scrolled ────────────────────────
+       Wrapping produced four ragged rows of different widths that pushed
+       the content below off the fold, and the primary action ended up
+       visually level with Archive. A single row keeps the order meaningful
+       — Use Template first, destructive last — and costs a swipe instead of
+       a third of the screen.
+
+       `WebkitOverflowScrolling` for momentum on iOS; the negative margin
+       plus padding lets the row bleed to the screen edge so it reads as
+       scrollable rather than clipped. */
+    <div style={{
+      display: "flex",
+      alignItems: "center",
+      gap: 8,
+      ...(isNarrow
+        ? {
+            flexWrap: "nowrap" as const,
+            overflowX: "auto" as const,
+            WebkitOverflowScrolling: "touch" as const,
+            scrollbarWidth: "none" as const,
+            margin: "0 -16px",
+            padding: "2px 16px 6px",
+          }
+        : { flexWrap: "wrap" as const }),
+    }}>
       {/* Primary: Use (available only) */}
       {status === "available" && (
         <Link
           to={`/app/templates/${id}/use`}
-          style={{ display: "inline-flex", alignItems: "center", gap: 7, padding: "9px 18px", background: AZURE, color: "white", borderRadius: 8, ...GF, fontSize: 13, fontWeight: 700, textDecoration: "none" }}
+          style={{ display: "inline-flex", alignItems: "center", gap: 7, padding: "9px 18px", background: AZURE, color: "white", borderRadius: 8, ...GF, fontSize: 13, fontWeight: 700, textDecoration: "none", flexShrink: 0, whiteSpace: "nowrap" }}
         >
           <Zap size={14} />
           Use Template
@@ -93,7 +119,7 @@ function ActionStrip({ template, onMakeAvailable, onReturnToDraft, onArchive, on
       {/* Preview */}
       <Link
         to={`/app/templates/${id}/preview`}
-        style={{ display: "inline-flex", alignItems: "center", gap: 7, padding: "9px 16px", background: "#F1F5F9", color: "#0F172A", borderRadius: 8, ...GF, fontSize: 13, fontWeight: 600, textDecoration: "none" }}
+        style={{ display: "inline-flex", alignItems: "center", gap: 7, padding: "9px 16px", background: "#F1F5F9", color: "#0F172A", borderRadius: 8, ...GF, fontSize: 13, fontWeight: 600, textDecoration: "none", flexShrink: 0, whiteSpace: "nowrap" }}
       >
         <Eye size={14} />
         Preview
@@ -103,7 +129,7 @@ function ActionStrip({ template, onMakeAvailable, onReturnToDraft, onArchive, on
       {status !== "archived" && (
         <Link
           to={`/app/templates/${id}/edit`}
-          style={{ display: "inline-flex", alignItems: "center", gap: 7, padding: "9px 16px", background: "#F1F5F9", color: "#0F172A", borderRadius: 8, ...GF, fontSize: 13, fontWeight: 600, textDecoration: "none" }}
+          style={{ display: "inline-flex", alignItems: "center", gap: 7, padding: "9px 16px", background: "#F1F5F9", color: "#0F172A", borderRadius: 8, ...GF, fontSize: 13, fontWeight: 600, textDecoration: "none", flexShrink: 0, whiteSpace: "nowrap" }}
         >
           <Edit2 size={14} />
           Edit
@@ -114,7 +140,7 @@ function ActionStrip({ template, onMakeAvailable, onReturnToDraft, onArchive, on
       {status !== "archived" && (
         <Link
           to={`/app/templates/${id}/fields`}
-          style={{ display: "inline-flex", alignItems: "center", gap: 7, padding: "9px 16px", background: "#F1F5F9", color: "#0F172A", borderRadius: 8, ...GF, fontSize: 13, fontWeight: 600, textDecoration: "none" }}
+          style={{ display: "inline-flex", alignItems: "center", gap: 7, padding: "9px 16px", background: "#F1F5F9", color: "#0F172A", borderRadius: 8, ...GF, fontSize: 13, fontWeight: 600, textDecoration: "none", flexShrink: 0, whiteSpace: "nowrap" }}
         >
           <PenLine size={14} />
           Fields
@@ -183,6 +209,7 @@ function ActionStrip({ template, onMakeAvailable, onReturnToDraft, onArchive, on
 // ── Detail page inner ─────────────────────────────────────────────────────────
 function TemplateDetailInner() {
   const { isNarrow } = useViewport();
+  const [panelOpen, setPanelOpen] = useState(false);
   const { templateId } = useParams<{ templateId: string }>();
   const { state, loadTemplate, makeAvailable, returnToDraft, archive, restore, duplicate, clearOpMessage } = useTemplates();
   const navigate = useNavigate();
@@ -294,7 +321,11 @@ function TemplateDetailInner() {
       </div>
 
       {/* Body */}
-      <div style={{ padding: isNarrow ? "20px 16px" : "20px 24px", display: "grid", gridTemplateColumns: "1fr 300px", gap: 16, alignItems: "start" }}>
+      <div style={{ padding: isNarrow ? "20px 16px" : "20px 24px", display: "grid",
+        // Top to bottom on a phone: a 300px sidebar next to a 1fr column left
+        // the main content about 40px wide and pushed everything sideways.
+        gridTemplateColumns: isNarrow ? "1fr" : "1fr 300px",
+        gap: 16, alignItems: "start" }}>
 
         {/* Main column */}
         <div>
@@ -410,8 +441,67 @@ function TemplateDetailInner() {
           )}
         </div>
 
-        {/* Side panel */}
-        <div>
+        {/* ── Side panel ───────────────────────────────────────────────
+            On a phone it is a sheet behind a toggle rather than a third
+            screen of scrolling between the roles list and the footer.
+            Details and Usage are reference, not the reason the page was
+            opened — they should be reachable, not in the way. */}
+        {isNarrow && !panelOpen && (
+          <button
+            onClick={() => setPanelOpen(true)}
+            style={{
+              ...GF, display: "flex", alignItems: "center", justifyContent: "center",
+              gap: 7, width: "100%", padding: "11px 16px", borderRadius: 10,
+              background: "white", border: "1px solid #E2E8F0",
+              fontSize: 13, fontWeight: 600, color: "#334155", cursor: "pointer",
+            }}
+          >
+            <Info size={14} />
+            Details &amp; usage
+          </button>
+        )}
+
+        <div
+          style={isNarrow ? {
+            position: "fixed", inset: 0, zIndex: Z.modalScrim,
+            background: "rgba(15, 23, 42, 0.45)",
+            display: panelOpen ? "flex" : "none",
+            alignItems: "flex-end", justifyContent: "center",
+          } : undefined}
+          onClick={isNarrow ? () => setPanelOpen(false) : undefined}
+        >
+        <div
+          onClick={isNarrow ? e => e.stopPropagation() : undefined}
+          style={isNarrow ? {
+            position: "relative", zIndex: Z.modal,
+            background: "#F8FAFC", width: "100%",
+            borderRadius: "16px 16px 0 0", maxHeight: "85vh",
+            overflowY: "auto", WebkitOverflowScrolling: "touch",
+            padding: "16px 16px 24px",
+          } : undefined}
+        >
+          {isNarrow && (
+            <div style={{
+              display: "flex", alignItems: "center", gap: 10,
+              marginBottom: 14, position: "sticky", top: 0,
+              background: "#F8FAFC", paddingBottom: 8, zIndex: 1,
+            }}>
+              <h2 style={{ ...GF, fontSize: 15, fontWeight: 800, color: "#0F172A", margin: 0, flex: 1 }}>
+                Details &amp; usage
+              </h2>
+              <button
+                onClick={() => setPanelOpen(false)}
+                aria-label="Close"
+                style={{
+                  background: "none", border: "none", cursor: "pointer",
+                  color: "#94A3B8", width: 32, height: 32, display: "flex",
+                  alignItems: "center", justifyContent: "center", flexShrink: 0,
+                }}
+              >
+                <X size={18} />
+              </button>
+            </div>
+          )}
           {/* Details card */}
           <div style={{ background: "white", border: "1px solid #E2E8F0", borderRadius: 12, padding: "16px 18px", marginBottom: 14 }}>
             <h3 style={{ ...GF, fontSize: 12, fontWeight: 700, color: "#64748B", textTransform: "uppercase", letterSpacing: "0.06em", margin: "0 0 14px" }}>Details</h3>
@@ -441,6 +531,7 @@ function TemplateDetailInner() {
               </p>
             )}
           </div>
+        </div>
         </div>
       </div>
     </div>
