@@ -386,14 +386,22 @@ class MockPrepareDocumentService implements IPrepareDocumentService {
     // Hand off a document selected before authentication — see
     // PendingPreparationContext.claimPending(). Files were already validated
     // by the same classifyFiles() the authenticated Documents step uses.
-    if (context?.initialFiles && context.initialFiles.length > 0) {
+    // The title is applied INDEPENDENTLY of the files.
+    //
+    // It used to live inside the `initialFiles` branch, so a caller that
+    // passed a title and no files had it silently dropped. Nobody hit it —
+    // both callers always pass at least one file — but it is a trap for the
+    // next one, and the most likely next one is a resume path for a backend
+    // draft whose upload has not happened yet, where an empty file list is
+    // exactly right and losing the title would be exactly wrong.
+    if (context?.initialTitle) {
       base = {
         ...base,
-        files: context.initialFiles,
-        details: context.initialTitle
-          ? { ...base.details, title: context.initialTitle }
-          : base.details,
+        details: { ...base.details, title: context.initialTitle },
       };
+    }
+    if (context?.initialFiles && context.initialFiles.length > 0) {
+      base = { ...base, files: context.initialFiles };
     }
 
     this.drafts.set(id, base);
