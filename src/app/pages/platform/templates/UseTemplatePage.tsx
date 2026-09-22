@@ -27,6 +27,7 @@ import { PREP_AUTH_METHODS } from "../../../models/prepare";
 import type { PrepAuthMethodId } from "../../../models/prepare";
 import { PARTICIPANT_ACCENT_COLORS } from "../../../models/field-editor";
 import { usePageMeta } from "../../../hooks/usePageMeta";
+import { useViewport } from "../../../hooks/useViewport";
 
 // ── Design tokens ─────────────────────────────────────────────────────────────
 const GF    = { fontFamily: "'Geist', sans-serif" };
@@ -85,6 +86,7 @@ function RoleMappingStep({
   mappings:  TemplateRoleMapping[];
   onChange:  (idx: number, patch: Partial<TemplateRoleMapping>) => void;
 }) {
+  const { isNarrow } = useViewport();
   const AUTH_OPTIONS = PREP_AUTH_METHODS.map(m => ({ value: m.id, label: m.label }));
 
   return (
@@ -108,7 +110,7 @@ function RoleMappingStep({
                   </div>
                 </div>
               </div>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+              <div style={{ display: "grid", gridTemplateColumns: isNarrow ? "1fr" : "1fr 1fr", gap: 10 }}>
                 <FormField label="Full Name" required={m.required}>
                   <input
                     type="text"
@@ -362,6 +364,7 @@ function buildInitialVariables(template: DocumentTemplate): TemplateVariableValu
 
 // ── Main page ─────────────────────────────────────────────────────────────────
 function UseTemplateInner() {
+  const { isNarrow } = useViewport();
   const { templateId } = useParams<{ templateId: string }>();
   const { state, loadTemplate } = useTemplates();
   const t = state.activeTemplate;
@@ -467,7 +470,7 @@ function UseTemplateInner() {
   // Not found
   if (state.activeError || !t) {
     return (
-      <div style={{ padding: "40px 24px", textAlign: "center" }}>
+      <div style={{ padding: isNarrow ? "40px 16px" : "40px 24px", textAlign: "center" }}>
         <AlertCircle size={32} color={RED} />
         <p style={{ ...GF, fontSize: 14, color: "#0F172A" }}>{state.activeError ?? "Template not found"}</p>
         <Link to="/app/templates" style={{ color: AZURE }}>← Templates</Link>
@@ -478,7 +481,7 @@ function UseTemplateInner() {
   // Template not available
   if (t.status !== "available") {
     return (
-      <div style={{ padding: "40px 24px", textAlign: "center" }}>
+      <div style={{ padding: isNarrow ? "40px 16px" : "40px 24px", textAlign: "center" }}>
         <AlertCircle size={32} color={GOLD} />
         <p style={{ ...GF, fontSize: 14, color: "#0F172A", fontWeight: 600, marginBottom: 6 }}>Template Not Available</p>
         <p style={{ ...GF, fontSize: 13, color: "#64748B" }}>This template is currently {TEMPLATE_STATUS_LABELS[t.status]}.</p>
@@ -493,7 +496,7 @@ function UseTemplateInner() {
   if (launched) {
     return (
       <div style={{ background: "#F8FAFC", minHeight: "100%", ...GF }}>
-        <div style={{ maxWidth: 480, margin: "0 auto", padding: "60px 24px", textAlign: "center" }}>
+        <div style={{ maxWidth: 480, margin: "0 auto", padding: isNarrow ? "60px 16px" : "60px 24px", textAlign: "center" }}>
           <div style={{ width: 60, height: 60, borderRadius: "50%", background: "#E6F4EA", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" }}>
             <CheckCircle2 size={28} color={GREEN} />
           </div>
@@ -558,7 +561,7 @@ function UseTemplateInner() {
   return (
     <div style={{ background: "#F8FAFC", minHeight: "100%", ...GF }}>
       {/* Header */}
-      <div style={{ background: "white", borderBottom: "1px solid #E2E8F0", padding: "16px 24px" }}>
+      <div style={{ background: "white", borderBottom: "1px solid #E2E8F0", padding: isNarrow ? "16px 16px" : "16px 24px" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
           <Link to={`/app/templates/${templateId}`} style={{ ...GF, fontSize: 12, color: "#64748B", textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 4 }}>
             <ChevronLeft size={13} />
