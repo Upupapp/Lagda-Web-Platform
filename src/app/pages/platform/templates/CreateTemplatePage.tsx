@@ -40,6 +40,7 @@ import {
 import type { TemplateCategory } from "../../../models/templates";
 import { usePageMeta } from "../../../hooks/usePageMeta";
 import { useViewport } from "../../../hooks/useViewport";
+import { useProcessing } from "../../../services/processing.service";
 import { Z } from "../../../utils/z-index";
 
 // ── Design tokens ─────────────────────────────────────────────────────────────
@@ -90,6 +91,7 @@ function BlankForm({ onCreated }: { onCreated: (id: string) => void }) {
   const [error,    setError]    = useState<string | null>(null);
 
   const platform = usePlatform();
+  const { run: runProcessing } = useProcessing();
   const workspaceId = platform.currentWorkspace?.id;
   // Whether this form can SAVE a workflow, or is only naming a fixture.
   const canSave = realTemplatesAvailable(workspaceId);
@@ -120,14 +122,19 @@ function BlankForm({ onCreated }: { onCreated: (id: string) => void }) {
           setError("Every role needs a name.");
           return;
         }
-        const created = await createTemplate(workspaceId, {
-          name,
-          routingMode,
-          placeholders: slots.map(sl => ({
-            ...sl, description: "", mustMapToParticipant: sl.required,
-          })),
-          notifySenderOnComplete: notifySender,
-        });
+        // The shared panel covers the navigation that follows, so the person
+        // is not left on a form that looks unchanged while the route swaps.
+        const created = await runProcessing(
+          { message: "Saving the template", detail: "Storing its roles and routing." },
+          () => createTemplate(workspaceId, {
+            name,
+            routingMode,
+            placeholders: slots.map(sl => ({
+              ...sl, description: "", mustMapToParticipant: sl.required,
+            })),
+            notifySenderOnComplete: notifySender,
+          }),
+        );
         onCreated(created.id);
         return;
       }
