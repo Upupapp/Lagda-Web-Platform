@@ -8,6 +8,32 @@ import {
   ChevronLeft, CheckCircle2, AlertCircle,
 } from "lucide-react";
 import { asyncCreateBlank } from "../../../services/mock/templates.service";
+import { createTemplate, realTemplatesAvailable } from "../../../services/templates-source";
+import { usePlatform } from "../../../context/PlatformContext";
+import {
+  PREP_PARTICIPANT_ROLE_LABELS, VALID_PREP_PARTICIPANT_ROLES,
+} from "../../../models/prepare";
+import type { PrepParticipantRole } from "../../../models/prepare";
+import { ROUTING_MODE_LABELS } from "../../../models/transaction-detail";
+import type { RoutingMode } from "../../../models/transaction-detail";
+import type { TemplateRolePlaceholder } from "../../../models/templates";
+
+/** A row in the role editor. `description` and `mustMapToParticipant` are not
+ *  collected: the backend's slot schema is `additionalProperties: false` and
+ *  has no column for either, so a field for them would capture input that the
+ *  server refuses. */
+type SlotRow = Pick<
+  TemplateRolePlaceholder,
+  "id" | "label" | "role" | "required" | "routingStep" | "defaultAuthMethod"
+>;
+
+const newSlot = (step: number): SlotRow => ({
+  id: `slot-${String(Date.now())}-${String(step)}`,
+  label: "", role: "signer", required: true,
+  routingStep: step, defaultAuthMethod: "none",
+});
+
+const ROUTING_MODES: RoutingMode[] = ["sequential", "parallel", "mixed", "approval-based"];
 import {
   TEMPLATE_CATEGORIES, TEMPLATE_CATEGORY_LABELS,
 } from "../../../models/templates";
@@ -61,19 +87,61 @@ function BlankForm({ onCreated }: { onCreated: (id: string) => void }) {
   const [loading,  setLoading]  = useState(false);
   const [error,    setError]    = useState<string | null>(null);
 
+  const platform = usePlatform();
+  const workspaceId = platform.currentWorkspace?.id;
+  // Whether this form can SAVE a workflow, or is only naming a fixture.
+  const canSave = realTemplatesAvailable(workspaceId);
+
+  const [routingMode, setRoutingMode] = useState<RoutingMode>("sequential");
+  const [slots, setSlots] = useState<SlotRow[]>([newSlot(1), newSlot(2)]);
+  const [notifySender, setNotifySender] = useState(true);
+
+  const patchSlot = (id: string, patch: Partial<SlotRow>) =>
+    setSlots(rows => rows.map(r => (r.id === id ? { ...r, ...patch } : r)));
+  const addSlot = () =>
+    setSlots(rows => [...rows, newSlot(rows.length + 1)]);
+  const removeSlot = (id: string) =>
+    // Renumbered so the steps stay contiguous from 1. The backend refuses a
+    // template whose steps skip a number, and a form that could produce one
+    // would fail at save with a message about data the person never saw.
+    setSlots(rows => rows.filter(r => r.id !== id)
+      .map((r, i) => ({ ...r, routingStep: Math.min(r.routingStep, i + 1) })));
+
   const handleCreate = async () => {
     if (!name.trim()) { setError("Template name is required."); return; }
     setError(null);
     setLoading(true);
     try {
+      if (canSave) {
+        const blank = slots.find(sl => sl.label.trim() === "");
+        if (blank) {
+          setError("Every role needs a name.");
+          return;
+        }
+        const created = await createTemplate(workspaceId, {
+          name,
+          routingMode,
+          placeholders: slots.map(sl => ({
+            ...sl, description: "", mustMapToParticipant: sl.required,
+          })),
+          notifySenderOnComplete: notifySender,
+        });
+        onCreated(created.id);
+        return;
+      }
+
       const r = await asyncCreateBlank(name.trim(), category);
       if (r.ok && r.newId) {
         onCreated(r.newId);
       } else {
         setError(r.reason ?? "Create failed.");
       }
-    } catch {
-      setError("An unexpected error occurred.");
+    } catch (err) {
+      // The server's own reason, where it gave one — a malformed slot or a
+      // duplicate name is actionable, and "unexpected error" is not.
+      setError(err instanceof Error && err.message !== ""
+        ? err.message
+        : "An unexpected error occurred.");
     } finally {
       setLoading(false);
     }
@@ -126,6 +194,113 @@ function BlankForm({ onCreated }: { onCreated: (id: string) => void }) {
           ))}
         </select>
       </div>
+
+      {canSave && (
+        <>
+          <div style={{ marginBottom: 20 }}>
+            <label style={{ ...GF, fontSize: 12, fontWeight: 600, color: "#64748B", display: "block", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.05em" }}>
+              Routing Mode
+            </label>
+            <select
+              value={routingMode}
+              onChange={e => setRoutingMode(e.target.value as RoutingMode)}
+              style={{ ...GF, fontSize: 13, color: "#0F172A", border: "1px solid #E2E8F0", borderRadius: 8, padding: "10px 14px", background: "white", cursor: "pointer", width: "100%" }}
+            >
+              {ROUTING_MODES.map(m => (
+                <option key={m} value={m}>{ROUTING_MODE_LABELS[m]}</option>
+              ))}
+            </select>
+          </div>
+
+          <div style={{ marginBottom: 20 }}>
+            <label style={{ ...GF, fontSize: 12, fontWeight: 600, color: "#64748B", display: "block", marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.05em" }}>
+              Roles <span style={{ color: RED }}>*</span>
+            </label>
+            <p style={{ ...GF, fontSize: 12, color: "#94A3B8", margin: "0 0 10px", lineHeight: 1.5 }}>
+              Name the roles, not the people. You choose who fills each one every time you use this template.
+            </p>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              {slots.map((sl, idx) => (
+                <div key={sl.id} style={{ border: "1px solid #E2E8F0", borderRadius: 10, padding: "12px 14px", background: "white" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+                    <span style={{ ...GF, fontSize: 11, fontWeight: 700, color: "#94A3B8" }}>
+                      STEP {sl.routingStep}
+                    </span>
+                    {slots.length > 1 && (
+                      <button
+                        onClick={() => removeSlot(sl.id)}
+                        style={{ ...GF, marginLeft: "auto", fontSize: 12, color: RED, background: "none", border: "none", cursor: "pointer", padding: 0 }}
+                      >
+                        Remove
+                      </button>
+                    )}
+                  </div>
+                  <input
+                    type="text"
+                    value={sl.label}
+                    onChange={e => { patchSlot(sl.id, { label: e.target.value }); setError(null); }}
+                    placeholder={idx === 0 ? "e.g. Department Head" : "e.g. Employee"}
+                    style={{ width: "100%", height: 38, padding: "0 12px", border: "1px solid #E2E8F0", borderRadius: 8, ...GF, fontSize: 13, color: "#0F172A", boxSizing: "border-box", outline: "none", marginBottom: 8 }}
+                  />
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                    <select
+                      value={sl.role}
+                      onChange={e => patchSlot(sl.id, { role: e.target.value as PrepParticipantRole })}
+                      style={{ ...GF, fontSize: 12.5, color: "#0F172A", border: "1px solid #E2E8F0", borderRadius: 8, padding: "8px 10px", background: "white", cursor: "pointer" }}
+                    >
+                      {VALID_PREP_PARTICIPANT_ROLES.map(r => (
+                        <option key={r} value={r}>{PREP_PARTICIPANT_ROLE_LABELS[r]}</option>
+                      ))}
+                    </select>
+                    <select
+                      value={String(sl.routingStep)}
+                      onChange={e => patchSlot(sl.id, { routingStep: Number(e.target.value) })}
+                      style={{ ...GF, fontSize: 12.5, color: "#0F172A", border: "1px solid #E2E8F0", borderRadius: 8, padding: "8px 10px", background: "white", cursor: "pointer" }}
+                    >
+                      {slots.map((_, i) => (
+                        <option key={i} value={String(i + 1)}>
+                          Step {i + 1}{i + 1 === sl.routingStep ? "" : ""}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <label style={{ display: "flex", alignItems: "center", gap: 7, marginTop: 9, cursor: "pointer" }}>
+                    <input
+                      type="checkbox"
+                      checked={sl.required}
+                      onChange={e => patchSlot(sl.id, { required: e.target.checked })}
+                      style={{ accentColor: AZURE, width: 14, height: 14 }}
+                    />
+                    <span style={{ ...GF, fontSize: 12.5, color: "#475569" }}>
+                      Must act before later steps begin
+                    </span>
+                  </label>
+                </div>
+              ))}
+            </div>
+
+            <button
+              onClick={addSlot}
+              style={{ ...GF, marginTop: 10, fontSize: 13, fontWeight: 600, color: AZURE, background: "none", border: "1px dashed #C8E1F5", borderRadius: 8, padding: "9px 14px", cursor: "pointer", width: "100%" }}
+            >
+              + Add a role
+            </button>
+          </div>
+
+          <label style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 22, cursor: "pointer" }}>
+            <input
+              type="checkbox"
+              checked={notifySender}
+              onChange={e => setNotifySender(e.target.checked)}
+              style={{ accentColor: AZURE, width: 15, height: 15 }}
+            />
+            <span style={{ ...GF, fontSize: 13, color: "#475569" }}>
+              Email me when a document from this template is completed
+            </span>
+          </label>
+        </>
+      )}
 
       <button
         onClick={handleCreate}
