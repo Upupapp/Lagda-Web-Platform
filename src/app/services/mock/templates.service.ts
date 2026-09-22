@@ -16,6 +16,7 @@ import type {
   TemplateVariableValues,
 } from "../../models/templates";
 import { getMockTemplate, getAllMockTemplates } from "../../data/mock/templates";
+import { resolveTemplateApplication } from "../prepare/template-apply";
 
 // ── Session-local mutation store ──────────────────────────────────────────────
 // Stores overwritten templates (status changes, edits, duplicates) for this session.
@@ -299,17 +300,50 @@ export function saveTemplateFields(
 // ── Instantiation (Use Template → Prepare flow) ───────────────────────────────
 
 export function instantiateTemplate(
-  _id: DocumentTemplateId,
-  _roleMappings: TemplateRoleMapping[],
-  _variableValues: TemplateVariableValues
+  id: DocumentTemplateId,
+  roleMappings: TemplateRoleMapping[],
+  variableValues: TemplateVariableValues
 ): TemplateInstantiationResult {
-  // Frontend-only. Simulates handing off to the Command 18 Prepare flow.
-  // In a real system this would create a draft transaction from the template.
-  const draftId     = `draft-from-tpl-${Date.now()}`;
+  // This used to discard all three arguments, invent a draft id, and hand back
+  // `/app/prepare/<id>` — a route that does not exist (the prepare flow uses
+  // fixed step paths and keeps the draft in PrepareContext). So "Use Template"
+  // produced a dead link and threw away everything the visitor had just typed.
+  //
+  // It now resolves the template's role slots and the visitor's mappings into
+  // the participants and routing a real draft needs, and hands that to the
+  // caller. The caller creates the draft; this function does no I/O.
+  const template = getTemplate(id);
+  if (!template) {
+    return {
+      ok: false,
+      errorMessage: "This template could not be found.",
+      demonstrationOnly: true,
+    };
+  }
+
+  const resolved = resolveTemplateApplication({
+    placeholders: template.placeholders,
+    roleMappings,
+    routingMode: template.routing.mode,
+  });
+
+  // A malformed template or an unmapped required role stops here, with the
+  // reason. It never degrades into a draft that routes to some of the people
+  // it names and silently to none of the rest.
+  if (!resolved.ok) {
+    return {
+      ok: false,
+      errorMessage: resolved.message,
+      demonstrationOnly: true,
+    };
+  }
+
   return {
-    ok:              true,
-    prepDraftId:     draftId,
-    prepStartRoute:  `/app/prepare/${draftId}`,
+    ok: true,
+    // A SNAPSHOT. No template id travels with it, so nothing downstream can
+    // follow it back and re-read the template later.
+    application: resolved.application,
+    variableValues: { ...variableValues },
     demonstrationOnly: true,
   };
 }

@@ -31,6 +31,7 @@ import {
   type MockContact,
   type MockTemplateSummary,
 } from "../../data/mock/prepare";
+import type { TemplateApplication } from "../../models/templates";
 import { delay } from "./delay";
 
 // ── Validation helpers ────────────────────────────────────────────────────────
@@ -265,7 +266,14 @@ function validateDraftState(draft: PreparationDraft): PrepValidationResult {
 export interface IPrepareDocumentService {
   createDraft(context?: {
     source?: string;
+    /** Provenance only. Never a key anything resolves routing or participants
+     *  through — see the createDraft implementation. */
     templateId?: string;
+    /** The resolved participants + routing snapshot produced by
+     *  services/prepare/template-apply.ts. Self-contained: it carries no link
+     *  back to the template, so a later edit to that template cannot reach
+     *  the draft built from it. */
+    templateApplication?: TemplateApplication;
     /** Pre-populates the new draft's files — used to hand off a document
      *  selected before authentication (see PendingPreparationContext). */
     initialFiles?: PrepFile[];
@@ -314,6 +322,7 @@ class MockPrepareDocumentService implements IPrepareDocumentService {
   async createDraft(context?: {
     source?: string;
     templateId?: string;
+    templateApplication?: TemplateApplication;
     initialFiles?: PrepFile[];
     initialTitle?: string;
   }): Promise<PreparationDraft> {
@@ -326,12 +335,42 @@ class MockPrepareDocumentService implements IPrepareDocumentService {
     const id: PrepDraftId = `draft_session_${Date.now()}_${++draftSequence}`;
     let base: PreparationDraft;
 
-    if (context?.templateId && MOCK_TEMPLATES.find(t => t.id === context.templateId)) {
-      // Template-based: use a pre-seeded draft
+    if (context?.templateApplication) {
+      // ── A template was applied ────────────────────────────────────────────
+      //
+      // This branch used to return `{ ...DRAFT_BLANK }` with nothing but a
+      // sourceContext set — so "Use Template" landed the visitor on an empty
+      // Participants step, having discarded the roles they had just filled in.
+      //
+      // It now seeds the participants and routing that template-apply
+      // resolved. What arrives here is already a SNAPSHOT: plain arrays with
+      // no template id inside them. They are COPIED again on the way in, so
+      // the caller cannot keep a handle on the draft's arrays and mutate them
+      // afterwards either.
+      const { participants, routing } = context.templateApplication;
+      base = {
+        ...DRAFT_BLANK,
+        id,
+        participants: participants.map(p => ({ ...p })),
+        routing: { mode: routing.mode, groups: routing.groups.map(g => ({ ...g, participantIds: [...g.participantIds] })) },
+        // `templateId` is recorded for PROVENANCE ONLY — "this draft began
+        // from that template" — and nothing reads it to resolve routing or
+        // participants. It must never become a lookup key: the moment
+        // something re-reads the template through it, editing that template
+        // starts changing drafts already made from it.
+        sourceContext: { source: "template", templateId: context.templateId },
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+    } else if (context?.templateId && MOCK_TEMPLATES.find(t => t.id === context.templateId)) {
+      // A template id with no resolved application. Nothing to pre-fill from,
+      // so this stays a blank draft rather than guessing — the roles have not
+      // been mapped to real people yet.
       base = {
         ...DRAFT_BLANK,
         id,
         sourceContext: { source: "template", templateId: context.templateId },
+        createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
     } else {

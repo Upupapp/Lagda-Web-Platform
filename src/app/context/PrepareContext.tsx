@@ -43,6 +43,7 @@ import type {
   ResumableDraftSummary,
 } from "../models/prepare";
 import type { FieldDefinition } from "../models/field-editor";
+import type { TemplateApplication } from "../models/templates";
 import {
   normalizeRoutingGroups,
 } from "../models/prepare";
@@ -307,6 +308,9 @@ interface PrepareContextValue {
   createDraft:  (opts?: {
     source?: string;
     templateId?: string;
+    /** Resolved participants + routing from an applied template. A snapshot:
+     *  it holds no link back to the template. */
+    templateApplication?: TemplateApplication;
     /** Hands off a document selected before authentication. */
     initialFiles?: PrepFile[];
     initialTitle?: string;
@@ -463,6 +467,7 @@ export function PrepareProvider({ children }: { children: React.ReactNode }) {
   const createDraft = useCallback(async (opts?: {
     source?: string;
     templateId?: string;
+    templateApplication?: TemplateApplication;
     initialFiles?: PrepFile[];
     initialTitle?: string;
   }) => {

@@ -537,6 +537,44 @@ export function RoutingStep() {
         </div>
       </fieldset>
 
+      {/* ── Approval-Based: what it does and does not mean ──────────────────
+          ⚠️ DRAFT WORDING — PENDING PRODUCT / LEGAL SIGN-OFF. ⚠️
+
+          Not final copy. It is here because shipping the mode with NO
+          explanation is the worse option: "Approval-Based" reads like a
+          distinct approval of record, and it is not one.
+
+          What the system actually does is ORDER the steps — an approver or
+          reviewer is asked first, and signing opens once they are done. There
+          is no separate "approved" state, no approval table, and no audit
+          entry that says "X approved this". The backend's recipient states are
+          waiting / active / signed / declined, with no `approved` among them,
+          and the workflow engine never branches on recipient type.
+
+          So this notice must keep saying, in whatever words legal settles on,
+          that this is SEQUENCING and not a legal or audit record of approval.
+          Do not quietly delete it; replace it with the approved wording. */}
+      {isApprovalBased && (
+        <div
+          style={{
+            ...GF, marginBottom: 24, padding: "14px 16px", borderRadius: 10,
+            border: "1px solid #EBD79A", background: "#FDF8EC",
+          }}
+          role="note"
+        >
+          <p style={{ fontSize: 13, fontWeight: 700, color: NAVY, margin: "0 0 4px" }}>
+            This controls the order people are asked — not a formal approval
+          </p>
+          <p style={{ fontSize: 12.5, color: SILVER, margin: 0, lineHeight: 1.6 }}>
+            Approvers and reviewers are asked first; signing opens only once they have
+            finished. Their completion is recorded the same way any other participant's
+            is — LAGDA does not record a separate legal or audit approval, and does not
+            certify that the document was “approved”. If you need a formal approval on
+            record, capture it in the document itself.
+          </p>
+        </div>
+      )}
+
       {/* Routing groups */}
       <div>
         <div style={{ ...GF, fontSize: 13, fontWeight: 700, color: NAVY, marginBottom: 12 }}>
