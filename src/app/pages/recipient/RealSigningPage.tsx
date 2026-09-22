@@ -96,6 +96,34 @@ const APP_CODE_UNUSABLE =
   "This signing session could not be opened. Go back to Documents and choose "
   + "Continue signing again. The step expires after two minutes.";
 
+/**
+ * "Go to Documents", shown only on /sign/continue.
+ *
+ * Every other /sign/:token route is the emailed link, reachable by someone
+ * with no LAGDA session at all -- a button back into the authenticated app
+ * would be a dead end for them. /sign/continue is reachable ONLY from
+ * Documents -> Continue signing, which already required a signed-in
+ * session a moment earlier, so sending them back there is always right.
+ *
+ * A plain navigation, not a react-router Link: this page's security header
+ * forbids importing anything from the workspace/sender realm, and a full
+ * navigation is what actually crosses from the recipient route into the
+ * authenticated app rather than something a client-side router could route
+ * around.
+ */
+function GoToDocumentsButton() {
+  return (
+    <ActionRow>
+      <ActionButton
+        kind="secondary"
+        onClick={() => { window.location.assign("/app/documents"); }}
+      >
+        Go to Documents
+      </ActionButton>
+    </ActionRow>
+  );
+}
+
 export function RealSigningPage() {
   const { requestId: token } = useParams<{ requestId: string }>();
   const [phase, setPhase] = useState<Phase>("loading");
@@ -440,6 +468,7 @@ export function RealSigningPage() {
           description={errorMessage
             ?? "This signing link is invalid or has expired. Contact the sender for a new link."}
         />
+        {token === CONTINUE_SEGMENT && <GoToDocumentsButton />}
       </SignerCard>
     );
   }
