@@ -1,17 +1,20 @@
 // Real workflow-template service — talks to Lagda-Backend's workspace-scoped
-// workflow-template routes (migration 058).
+// workflow-template routes (migration 058, extended by 059 and 060).
 //
 // ── What a stored template is, and is not ──────────────────────────────────
 //
-// It is a WORKFLOW SHAPE: named role slots and a routing mode. It holds no
-// people, no document and no file. Applying it to a draft is a separate step
-// that lives in services/prepare/template-apply.ts and stays there — this
-// file does CRUD and nothing else.
+// It is a WORKFLOW SHAPE: named role slots and a routing mode, optionally a
+// document (059) and field placements per role (060). Applying it to a draft
+// is a separate step that lives in services/prepare/template-apply.ts and
+// stays there — this file does CRUD and nothing else.
 //
 // ── The wire shape is NARROWER than the frontend's model ───────────────────
 //
 // `WorkflowRoleSlotSchema` is declared `additionalProperties: false` and has
-// exactly five fields: label, role, required, routingStep, defaultAuthMethod.
+// exactly six fields on READ (slotId, label, role, required, routingStep,
+// defaultAuthMethod) — slotId is the one field the WRITE schema makes
+// optional, so a round trip can preserve it without every caller having to
+// supply one for a brand-new slot.
 //
 // The frontend's `TemplateRolePlaceholder` carries two more — `description`
 // and `mustMapToParticipant` — and there is NO column for either. Sending
@@ -30,14 +33,56 @@ import type {
 } from "../../models/templates";
 import type { PrepParticipantRole, PrepAuthMethodId } from "../../models/prepare";
 import type { RoutingMode } from "../../models/transaction-detail";
+import type { BackendFieldType, BackendRect } from "./preparation.service";
 
-/** Exactly the five fields `WorkflowRoleSlotSchema` accepts. */
+/** The six fields `WorkflowRoleSlotSchema` returns on a READ. */
 export interface WireRoleSlot {
+  slotId: string;
   label: string;
   role: PrepParticipantRole;
   required: boolean;
   routingStep: number;
   defaultAuthMethod: PrepAuthMethodId;
+}
+
+/** The write shape of a slot — `slotId` OPTIONAL, the one difference from
+ *  `WireRoleSlot`. Omitted for a new slot; supplied (round-tripped from a
+ *  slot this page already loaded) to keep the same slot's identity across
+ *  an edit, which is what lets a field already placed "for" that role
+ *  survive the edit too — see `WorkflowRoleSlotWriteSchema`'s own header. */
+export interface WireRoleSlotWrite {
+  slotId?: string;
+  label: string;
+  role: PrepParticipantRole;
+  required: boolean;
+  routingStep: number;
+  defaultAuthMethod: PrepAuthMethodId;
+}
+
+/** A field placement — geometry for one ROLE, not one person. Mirrors
+ *  `BackendPreparationField`/`Input` from preparation.service.ts exactly
+ *  (same type union, same rect shape), with `slotId` where that one has
+ *  `recipientId`: a template field is FOR A ROLE, not a resolved person. */
+export interface WireField {
+  fieldId: string;
+  slotId: string;
+  type: BackendFieldType;
+  pageNumber: number;
+  rect: BackendRect;
+  required: boolean;
+  label: string;
+  layer: number;
+}
+
+export interface WireFieldInput {
+  fieldId?: string;
+  slotId: string;
+  type: BackendFieldType;
+  pageNumber: number;
+  rect: BackendRect;
+  required: boolean;
+  label: string;
+  layer: number;
 }
 
 export interface WireTemplate {
@@ -64,7 +109,7 @@ export interface WireTemplate {
 export interface WireTemplateWrite {
   name: string;
   routingMode: RoutingMode;
-  roleSlots: WireRoleSlot[];
+  roleSlots: WireRoleSlotWrite[];
   completionSettings: { notifySenderOnComplete: boolean };
 }
 
@@ -130,6 +175,26 @@ class RealTemplatesService {
       { method: "DELETE" },
     );
   }
+
+  /** A template's field layout (060), in deterministic order. */
+  async getFields(workspaceId: string, templateId: string): Promise<WireField[]> {
+    const result = await apiRequest<{ items: WireField[] }>(
+      `${base(workspaceId)}/${encodeURIComponent(templateId)}/fields`,
+    );
+    return result.items;
+  }
+
+  /** Whole-layout replace — the backend has no per-field endpoint, the same
+   *  reason a real document preparation's fields are saved this way. */
+  async saveFields(
+    workspaceId: string, templateId: string, fields: WireFieldInput[],
+  ): Promise<WireField[]> {
+    const result = await apiRequest<{ items: WireField[] }>(
+      `${base(workspaceId)}/${encodeURIComponent(templateId)}/fields`,
+      { method: "PUT", body: { fields } },
+    );
+    return result.items;
+  }
 }
 
 export const realTemplatesService = new RealTemplatesService();
@@ -147,10 +212,16 @@ export const realTemplatesService = new RealTemplatesService();
  */
 function toPlaceholder(slot: WireRoleSlot, index: number): TemplateRolePlaceholder {
   return {
-    // Positional, because the backend stores no slot id. Stable for a given
-    // stored template because the array order is preserved, which the
-    // repository's round-trip test pins.
+    // Positional — this id is a presentational key for the templates UI's
+    // own lists and forms, unrelated to identity on the backend. `slotId`
+    // below is what actually round-trips.
     id: `slot-${String(index + 1)}`,
+    // 060. The backend's own stable id for this slot — round-tripped on
+    // save (see `toWireWrite`) so a field already placed "for" this role
+    // survives an edit that renames or reorders it, and used by
+    // `TemplateFieldsPage` to address the fields endpoint, which is keyed
+    // by slotId, never by this object's positional `id`.
+    backendSlotId: slot.slotId,
     label: slot.label,
     role: slot.role,
     required: slot.required,
@@ -274,9 +345,13 @@ export function toWireWrite(input: {
   return {
     name: input.name.trim(),
     routingMode: input.routingMode,
-    // ONLY the five fields the schema accepts. `description` and
-    // `mustMapToParticipant` are dropped deliberately — see the header.
+    // `description` and `mustMapToParticipant` are dropped deliberately —
+    // see the header. `slotId` is round-tripped WHEN this placeholder came
+    // from a stored slot (`backendSlotId` set by `toPlaceholder`); omitted
+    // for one the editor added locally, which is exactly "new slot, no id
+    // yet" — the write schema mints one.
     roleSlots: input.placeholders.map(p => ({
+      ...(p.backendSlotId !== undefined ? { slotId: p.backendSlotId } : {}),
       label: p.label.trim(),
       role: p.role,
       required: p.required,

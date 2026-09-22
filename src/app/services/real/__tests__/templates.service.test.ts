@@ -22,11 +22,11 @@ const WIRE: WireTemplate = {
   routingMode: "sequential",
   roleSlots: [
     {
-      label: "HR Approver", role: "approver",
+      slotId: "wfs_1", label: "HR Approver", role: "approver",
       required: true, routingStep: 1, defaultAuthMethod: "email-otp",
     },
     {
-      label: "New Employee", role: "signer",
+      slotId: "wfs_2", label: "New Employee", role: "signer",
       required: true, routingStep: 2, defaultAuthMethod: "none",
     },
   ],
@@ -77,6 +77,26 @@ describe("toWireWrite sends exactly what the schema accepts", () => {
 
     expect(JSON.stringify(body)).not.toContain("SHOULD NOT TRAVEL");
     expect(JSON.stringify(body)).not.toContain("mustMapToParticipant");
+  });
+
+  it("round-trips slotId when the placeholder has one (an existing slot)", () => {
+    const body = toWireWrite({
+      name: "Onboarding",
+      routingMode: "sequential",
+      placeholders: [slot({ backendSlotId: "wfs_1" })],
+      notifySenderOnComplete: true,
+    });
+    expect(body.roleSlots[0]!.slotId).toBe("wfs_1");
+  });
+
+  it("omits slotId for a placeholder with none (a new slot)", () => {
+    const body = toWireWrite({
+      name: "Onboarding",
+      routingMode: "sequential",
+      placeholders: [slot()],
+      notifySenderOnComplete: true,
+    });
+    expect("slotId" in body.roleSlots[0]!).toBe(false);
   });
 
   it("trims the name and every label", () => {
@@ -130,6 +150,11 @@ describe("toDocumentTemplate reads a stored template honestly", () => {
     expect(t.placeholders.map(p => p.routingStep)).toEqual([1, 2]);
     expect(t.placeholders[0]!.role).toBe("approver");
     expect(t.placeholders[0]!.defaultAuthMethod).toBe("email-otp");
+  });
+
+  it("carries each slot's backend id through as backendSlotId", () => {
+    const t = toDocumentTemplate(WIRE);
+    expect(t.placeholders.map(p => p.backendSlotId)).toEqual(["wfs_1", "wfs_2"]);
   });
 
   it("leaves description EMPTY rather than inventing one", () => {
