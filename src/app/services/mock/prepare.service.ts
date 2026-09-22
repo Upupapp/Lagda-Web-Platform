@@ -303,6 +303,10 @@ function toPrepSource(value: string | undefined): PrepSource {
   return PREP_SOURCES.find((s) => s === value) ?? "new";
 }
 
+// Monotonic within the session, so two drafts created in the same millisecond
+// still get distinct ids. See createDraft.
+let draftSequence = 0;
+
 class MockPrepareDocumentService implements IPrepareDocumentService {
 
   private drafts: Map<PrepDraftId, PreparationDraft> = new Map();
@@ -314,7 +318,12 @@ class MockPrepareDocumentService implements IPrepareDocumentService {
     initialTitle?: string;
   }): Promise<PreparationDraft> {
     await delay(600);
-    const id: PrepDraftId = `draft_session_${Date.now()}`;
+    // A bare Date.now() collided: two drafts created within the same
+    // millisecond got the SAME id, and the second silently overwrote the first
+    // in the drafts map — one draft ceased to exist, with no error anywhere.
+    // The counter makes the id unique regardless of clock resolution; nothing
+    // parses this string, so its shape is free.
+    const id: PrepDraftId = `draft_session_${Date.now()}_${++draftSequence}`;
     let base: PreparationDraft;
 
     if (context?.templateId && MOCK_TEMPLATES.find(t => t.id === context.templateId)) {
