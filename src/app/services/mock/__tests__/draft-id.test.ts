@@ -88,3 +88,45 @@ describe("draft ids", () => {
     expect(new Set(drafts.map(d => d.id)).size).toBe(25);
   });
 });
+
+// ── initialTitle, independent of initialFiles ───────────────────────────────
+//
+// The title used to be applied only inside the `initialFiles` branch, so a
+// caller passing a title and no files had it silently discarded. Both current
+// callers always pass a file, which is why nobody hit it — and why it would
+// have waited for the next one.
+
+describe("createDraft applies initialTitle", () => {
+  it("applies it WITHOUT initialFiles", async () => {
+    const draft = await prepareService.createDraft({
+      source: "new", initialTitle: "Quarterly Vendor Review",
+    });
+    expect(draft.details.title).toBe("Quarterly Vendor Review");
+  });
+
+  it("still applies it alongside initialFiles", async () => {
+    const draft = await prepareService.createDraft({
+      source: "new",
+      initialTitle: "With A File",
+      initialFiles: [{
+        id: "f1", fileName: "a.pdf", sizeBytes: 10,
+        mimeType: "application/pdf", fileState: "ready", pageCount: 1,
+      } as never],
+    });
+    expect(draft.details.title).toBe("With A File");
+    expect(draft.files).toHaveLength(1);
+  });
+
+  it("leaves the default title alone when none is given", async () => {
+    // Both halves asserted: the title lands when supplied AND the default
+    // survives when it is not. Checking only the second would pass against a
+    // createDraft that ignored initialTitle entirely.
+    const withTitle = await prepareService.createDraft({
+      source: "new", initialTitle: "Named",
+    });
+    const without = await prepareService.createDraft({ source: "new" });
+
+    expect(withTitle.details.title).toBe("Named");
+    expect(without.details.title).not.toBe("Named");
+  });
+});
