@@ -162,6 +162,17 @@ function VariablesStep({
   values:    TemplateVariableValues;
   onChange:  (key: string, val: string | boolean | null) => void;
 }) {
+  // ── These values are COLLECTED and not applied ──────────────────────────
+  //
+  // Nothing downstream consumes them: no merge step substitutes them into the
+  // document, and the backend has no variable concept at all — a stored
+  // template's `variables` is always empty, which is why this step shows "No
+  // Variables Required" for anything a workspace actually saved.
+  //
+  // So the only templates that reach the branch below are the demonstration
+  // fixtures. Saying so is the honest option: asking for a client name and a
+  // date and then discarding them, with no indication, is the same defect
+  // class as a control that silently does nothing.
   if (variables.length === 0) {
     return (
       <div style={{ textAlign: "center", padding: "32px 0" }}>
@@ -177,6 +188,13 @@ function VariablesStep({
   return (
     <div>
       <h2 style={{ ...GF, fontSize: 16, fontWeight: 700, color: "#0F172A", margin: "0 0 6px" }}>Enter Variable Values</h2>
+      <div style={{ ...GF, background: "#FDF8EC", border: "1px solid #EBD79A", borderRadius: 10, padding: "11px 14px", margin: "0 0 16px" }} role="note">
+        <p style={{ fontSize: 12.5, color: "#64748B", margin: 0, lineHeight: 1.6 }}>
+          These values are not inserted into the document in this version. They
+          are shown on the review step so you can check them, and are not saved.
+          Only the example templates define variables.
+        </p>
+      </div>
       <p style={{ ...GF, fontSize: 13, color: "#64748B", margin: "0 0 20px" }}>
         These values will be used to customize the invitation message and document content.
       </p>
