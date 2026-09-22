@@ -13,10 +13,11 @@ import {
 } from "lucide-react";
 import { TemplateProvider, useTemplates } from "../../../context/TemplateContext";
 import { SkeletonBlock, SKELETON_STYLE } from "../../../components/platform";
-import { asyncInstantiate } from "../../../services/mock/templates.service";
+import { resolveTemplateApplication } from "../../../services/prepare/template-apply";
 import {
   handOffTemplateToPrepare, TEMPLATE_HANDOFF_ROUTE,
 } from "../../../services/prepare/template-handoff";
+import type { PrepFile } from "../../../models/prepare";
 import type {
   DocumentTemplate, TemplateRoleMapping, TemplateVariableValues,
   TemplateVariable,
@@ -380,6 +381,33 @@ function buildInitialVariables(template: DocumentTemplate): TemplateVariableValu
   return vals;
 }
 
+/**
+ * Pre-fills the Upload step from the template's own attached document
+ * (059), when there is one. `isPlaceholder` still `true`, or no
+ * `backendDocumentId`/`backendArtifactId`, means every fixture template and
+ * any real template nobody has attached a document to yet — both leave the
+ * Upload step exactly as empty as before, since there is no real file to
+ * seed it with.
+ */
+function initialFilesFor(template: DocumentTemplate): PrepFile[] | undefined {
+  const doc = template.documents[0];
+  if (!doc || doc.isPlaceholder || !doc.backendDocumentId || !doc.backendArtifactId) return undefined;
+  return [{
+    id: `pf_template_${doc.backendDocumentId}`,
+    fileName: doc.displayName,
+    fileSizeBytes: doc.sizeBytes ?? 0,
+    mimeType: doc.mimeType ?? "application/octet-stream",
+    fileState: "ready",
+    order: 1,
+    backendDocumentId: doc.backendDocumentId,
+    backendArtifactId: doc.backendArtifactId,
+    // Already uploaded — this is the fact `uploadFile()` in UploadStep.tsx
+    // checks before attempting any upload of its own, so seeding it this
+    // way is what skips the transfer rather than a flag it has to notice.
+    uploadStatus: "uploaded",
+  }];
+}
+
 // ── Main page ─────────────────────────────────────────────────────────────────
 function UseTemplateInner() {
   const { isNarrow } = useViewport();
@@ -454,14 +482,26 @@ function UseTemplateInner() {
       // participants + routing. Returns a reason instead of a draft when the
       // template is malformed or a required role was left unmapped — never a
       // half-filled draft.
-      const result = await asyncInstantiate(t.id, mappings, varValues);
-      if (!result.ok || !result.application) {
-        setError(result.errorMessage ?? "This template could not be applied.");
+      //
+      // Resolved directly from `t` — the template this page already loaded,
+      // real or fixture — rather than through a second lookup by id. A
+      // second lookup that only knew the fixture catalogue used to silently
+      // fail "This template could not be found" for every real, backend-
+      // stored template, because its id was never in that catalogue.
+      const result = resolveTemplateApplication({
+        placeholders: t.placeholders,
+        roleMappings: mappings,
+        routingMode: t.routing.mode,
+      });
+      if (!result.ok) {
+        setError(result.message);
         return;
       }
 
       // The snapshot goes into a real draft, staged for the Prepare flow.
-      const handoff = await handOffTemplateToPrepare(t.id, result.application);
+      const handoff = await handOffTemplateToPrepare(
+        t.id, result.application, initialFilesFor(t),
+      );
       if (!handoff.ok || !handoff.draft) {
         setError(handoff.errorMessage ?? "The draft could not be created.");
         return;

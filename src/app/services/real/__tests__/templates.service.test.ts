@@ -31,6 +31,8 @@ const WIRE: WireTemplate = {
     },
   ],
   completionSettings: { notifySenderOnComplete: true },
+  documentId: null,
+  sourceArtifactId: null,
   createdAt: "2026-09-22T09:00:00.000Z",
   updatedAt: "2026-09-22T10:00:00.000Z",
 };
@@ -149,11 +151,28 @@ describe("toDocumentTemplate reads a stored template honestly", () => {
     expect(t.placeholders.map(p => p.mustMapToParticipant)).toEqual([true, false]);
   });
 
-  it("reports NO document and NO fields, because a template holds neither", () => {
+  it("reports NO document and NO fields, when a template holds neither", () => {
     const t = toDocumentTemplate(WIRE);
     expect(t.documents).toEqual([]);
     expect(t.fields).toEqual([]);
     expect(t.variables).toEqual([]);
+  });
+
+  it("reports a bare document reference when one is attached (059)", () => {
+    // Bare — no filename or page count. `toDocumentTemplate` does no I/O;
+    // enrichment is `templates-source.ts`'s job, exercised separately.
+    const t = toDocumentTemplate({
+      ...WIRE, documentId: "doc_1", sourceArtifactId: "art_1",
+    });
+    expect(t.documents).toEqual([{
+      id: "doc_1",
+      displayName: "Attached document",
+      pageCount: 0,
+      order: 1,
+      isPlaceholder: false,
+      backendDocumentId: "doc_1",
+      backendArtifactId: "art_1",
+    }]);
   });
 
   it("round-trips notifySenderOnComplete and nothing else from settings", () => {

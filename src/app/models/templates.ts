@@ -122,7 +122,25 @@ export interface TemplateDocument {
   displayName: string;
   pageCount:   number;
   order:       number;
-  isPlaceholder: true;
+  /**
+   * `true` for every fixture template — there is no file behind the name.
+   *
+   * `false` only for a document a workspace has genuinely attached (backend
+   * migration 059): a real document and a real artifact, uploaded through
+   * the ordinary path and merely referenced by the template. Applying such a
+   * template pre-fills the Upload step instead of leaving it empty.
+   */
+  isPlaceholder: boolean;
+  /** Present only when `isPlaceholder` is `false` — the ids the apply path
+   *  needs to seed a draft's Upload step without asking the sender to
+   *  re-upload a file the template already has. */
+  backendDocumentId?: string;
+  backendArtifactId?: string;
+  /** Also present only when `isPlaceholder` is `false` — carried alongside
+   *  the ids so the apply path can build a truthful `PrepFile` (real size,
+   *  real media type) rather than a guessed one. */
+  sizeBytes?: number;
+  mimeType?: string;
 }
 
 // ── Template variable ─────────────────────────────────────────────────────────
