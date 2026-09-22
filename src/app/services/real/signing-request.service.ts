@@ -107,6 +107,9 @@ export interface Signatory {
   signedAt: string | null;
   declinedAt: string | null;
   declineReason: string | null;
+  /** The name/email of the LAGDA account this recipient signed in as, if any. */
+  linkedAccountName: string | null;
+  linkedAccountEmail: string | null;
 }
 
 export interface SigningRequestSignatures {
