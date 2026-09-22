@@ -248,7 +248,7 @@ function CardSkeleton() {
 // ── Main inner component ──────────────────────────────────────────────────────
 function TemplatesInner() {
   usePageMeta();
-  const { state, setQuery, loadList } = useTemplates();
+  const { state, setQuery, loadList, canWrite } = useTemplates();
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [showFilters, setShowFilters] = useState(false);
   const [localQ, setLocalQ] = useState("");
@@ -301,27 +301,56 @@ function TemplatesInner() {
               Reusable document workflows for your team
             </p>
           </div>
-          <Link
-            to="/app/templates/new"
-            style={{
-              display:     "inline-flex",
-              alignItems:  "center",
-              gap:         7,
-              padding:     "10px 18px",
-              background:  AZURE,
-              color:       "white",
-              borderRadius:8,
-              ...GF,
-              fontSize:    13,
-              fontWeight:  700,
-              textDecoration:"none",
-              flexShrink:  0,
-            }}
-          >
-            <Plus size={15} />
-            New Template
-          </Link>
+          {/* Offered only when a template can actually be SAVED. In fixture
+              mode the save would refuse, and a button that cannot succeed is
+              worse than no button — it reads as a broken feature rather than
+              an unavailable one. */}
+          {canWrite && (
+            <Link
+              to="/app/templates/new"
+              style={{
+                display:     "inline-flex",
+                alignItems:  "center",
+                gap:         7,
+                padding:     "10px 18px",
+                background:  AZURE,
+                color:       "white",
+                borderRadius:8,
+                ...GF,
+                fontSize:    13,
+                fontWeight:  700,
+                textDecoration:"none",
+                flexShrink:  0,
+              }}
+            >
+              <Plus size={15} />
+              New Template
+            </Link>
+          )}
         </div>
+
+        {/* ── Say WHICH templates these are ─────────────────────────────
+            Without this, someone who saved a template and later sees the
+            four examples would reasonably conclude their work was lost. The
+            fallback is legitimate — there is no workspace to read from — but
+            silence about it is not. */}
+        {!canWrite && (
+          <div
+            style={{
+              ...GF, margin: "0 0 20px", padding: "12px 15px",
+              borderRadius: 10, border: "1px solid #C8E1F5", background: "#F0F9FF",
+            }}
+            role="note"
+          >
+            <p style={{ fontSize: 13, fontWeight: 700, color: "#0F172A", margin: "0 0 3px" }}>
+              Showing example templates
+            </p>
+            <p style={{ fontSize: 12.5, color: "#64748B", margin: 0, lineHeight: 1.6 }}>
+              These are samples, not your workspace&apos;s own. Open a workspace to
+              see the templates your team has saved and to create new ones.
+            </p>
+          </div>
+        )}
 
         {/* View tabs.
             Was a plain flex row with no overflow handling, so at 390px the last
