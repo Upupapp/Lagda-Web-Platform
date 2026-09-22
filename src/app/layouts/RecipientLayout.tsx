@@ -13,9 +13,9 @@
 // signing ceremony that does transmit, sign and store.
 
 import React from "react";
-import { Outlet } from "react-router";
+import { Outlet, Link } from "react-router";
 import { USE_REAL_BACKEND } from "../services/backend-flag";
-import { ShieldCheck } from "lucide-react";
+import { ShieldCheck, ArrowLeft } from "lucide-react";
 import lagdaHeaderLogo from "../../brand elements/svg/LagdaLogoPrimaryHorizontalFullColor_Header.svg";
 
 export function RecipientLayout() {
@@ -86,6 +86,37 @@ export function RecipientLayout() {
           Secure session
         </span>
       </header>
+
+      {/* A default way back to Documents, on its own row.
+          Deliberately NOT squeezed into the header beside the logo and the
+          secure-session badge: those two already use most of the width at
+          320px, and a third element there would be exactly the crowding a
+          narrow phone cannot afford. A full-width row never competes with a
+          neighbor for space, so it never needs its own breakpoint.
+          Shown on every /sign/* page, signed in or not — for an anonymous
+          emailed-link recipient this simply leads to the sign-in wall, the
+          same place any other authenticated-app link would. */}
+      <div
+        style={{
+          background: "#FFFFFF",
+          borderBottom: "1px solid #E3E8EF",
+          padding: "8px clamp(12px, 4vw, 24px)",
+          flexShrink: 0,
+        }}
+      >
+        <Link
+          to="/app/documents"
+          style={{
+            display: "inline-flex", alignItems: "center", gap: 6,
+            fontFamily: "'Geist', sans-serif", fontSize: 13, fontWeight: 600,
+            color: "#0078D4", textDecoration: "none",
+            minHeight: 28,
+          }}
+        >
+          <ArrowLeft size={15} aria-hidden />
+          Back to Documents
+        </Link>
+      </div>
 
       {/* Page content */}
       <main
