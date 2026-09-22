@@ -1,15 +1,21 @@
 // /app/templates/:templateId/fields — Template field editor.
 // Self-contained local-state field editor (does not use PrepDraft-specific FieldEditorContext).
 // Reuses field type labels/icons/constants from field-editor.ts.
-// In-session saves only. No real PDF. No real backend. demonstrationOnly.
+// Saves to the real backend when a workspace and a stored template are in
+// scope (060); falls back to the in-session mock save otherwise.
 // Inline styles only. No Burgundy.
 
 import React, { useEffect, useReducer, useRef, useState } from "react";
 import { useParams, Link } from "react-router";
-import { ChevronLeft, AlertCircle, Save, CheckCircle2 } from "lucide-react";
+import { ChevronLeft, AlertCircle, Info, Save, CheckCircle2 } from "lucide-react";
 import { TemplateProvider, useTemplates } from "../../../context/TemplateContext";
+import { usePlatform } from "../../../context/PlatformContext";
 import { SkeletonBlock, SKELETON_STYLE } from "../../../components/platform";
-import { saveTemplateFields } from "../../../services/mock/templates.service";
+import { useProcessing } from "../../../services/processing.service";
+import { saveTemplateFields as mockSaveTemplateFields } from "../../../services/mock/templates.service";
+import {
+  saveTemplateFields as realSaveTemplateFields, realTemplatesAvailable,
+} from "../../../services/templates-source";
 import type { DocumentTemplate, TemplateField, TemplateRolePlaceholder } from "../../../models/templates";
 import type { FieldType, ResizeHandle, NormalizedRect } from "../../../models/field-editor";
 import {
@@ -394,13 +400,28 @@ function RightPanel({
 // ── Fields editor inner ───────────────────────────────────────────────────────
 function FieldsEditorInner({ template }: { template: DocumentTemplate }) {
   usePageMeta();
+  const platform = usePlatform();
+  const { run } = useProcessing();
+  const workspaceId = platform.currentWorkspace?.id;
+  const isReal = realTemplatesAvailable(workspaceId);
+
   const [edState, edDispatch] = useReducer(editorReducer, INITIAL_STATE);
   const [saved, setSaved]     = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
   const [pendingType, setPendingType] = useState<FieldType | null>(null);
   const [activePlaceholder, setActivePlaceholder] = useState<string | null>(
     template.placeholders[0]?.id ?? null
   );
   const [activeDocIdx, setActiveDocIdx] = useState(0);
+
+  // A REAL template with nothing attached has no page to place a field
+  // against — the fictional 3-page fallback below exists for the mock
+  // catalogue, where every template is its own fiction and there is
+  // nothing to save to. Placing is blocked on it in real mode instead of
+  // letting someone draw a layout the next save can only refuse.
+  const hasRealDocument = template.documents.some(d => !d.isPlaceholder);
+  const canPlaceFields = !isReal || hasRealDocument;
 
   const docs = template.documents.length > 0
     ? template.documents
@@ -414,15 +435,43 @@ function FieldsEditorInner({ template }: { template: DocumentTemplate }) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [template.id]);
 
-  const handleSave = () => {
+  const handleSave = async () => {
     const tplFields: TemplateField[] = edState.fields.map(f => {
       const { _localId, ...rest } = f;
       return rest;
     });
-    saveTemplateFields(template.id, tplFields);
-    edDispatch({ type: "MARK_SAVED" });
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2500);
+
+    if (!isReal || !workspaceId) {
+      mockSaveTemplateFields(template.id, tplFields);
+      edDispatch({ type: "MARK_SAVED" });
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2500);
+      return;
+    }
+
+    setSaveError(null);
+    setSaving(true);
+    try {
+      const result = await run(
+        { message: "Saving field layout", detail: "Applying to the template." },
+        () => realSaveTemplateFields(workspaceId, template.id, tplFields, template.placeholders),
+      );
+      edDispatch({ type: "LOAD", fields: result.fields.map(f => ({ ...f, _localId: mkId() })) });
+      if (result.skipped > 0) {
+        setSaveError(
+          `${String(result.skipped)} field${result.skipped === 1 ? "" : "s"} could not be saved `
+          + "— a Sender Prefill field has no role to attach to on a stored template.");
+      } else {
+        setSaved(true);
+        setTimeout(() => setSaved(false), 2500);
+      }
+    } catch (err) {
+      setSaveError(err instanceof Error && err.message !== ""
+        ? err.message
+        : "The field layout could not be saved.");
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleDragStart = (docId: string, pageId: string) => (sx: number, sy: number) => {
@@ -450,20 +499,34 @@ function FieldsEditorInner({ template }: { template: DocumentTemplate }) {
           <span style={{ ...GF, fontSize: 11, color: SILVER, background: "#F1F5F9", padding: "2px 7px", borderRadius: 99 }}>Unsaved changes</span>
         )}
         <div style={{ flex: 1 }} />
+        {saveError !== null && (
+          <span style={{ ...GF, fontSize: 11.5, color: "#B91C1C", maxWidth: 340 }}>{saveError}</span>
+        )}
         {saved && (
           <div style={{ display: "flex", alignItems: "center", gap: 6, color: "#34D399", ...GF, fontSize: 12 }}>
             <CheckCircle2 size={12} />
-            Saved (in-session)
+            {isReal ? "Saved" : "Saved (in-session)"}
           </div>
         )}
         <button
-          onClick={handleSave}
-          style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "7px 14px", background: AZURE, color: "white", border: "none", borderRadius: 7, ...GF, fontSize: 12, fontWeight: 700, cursor: "pointer" }}
+          onClick={() => { void handleSave(); }}
+          disabled={saving}
+          style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "7px 14px", background: saving ? "#93C5FD" : AZURE, color: "white", border: "none", borderRadius: 7, ...GF, fontSize: 12, fontWeight: 700, cursor: saving ? "default" : "pointer" }}
         >
           <Save size={13} />
-          Save Fields
+          {saving ? "Saving…" : "Save Fields"}
         </button>
       </div>
+
+      {isReal && !canPlaceFields && (
+        <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "9px 16px", background: "#FDF8EC", borderBottom: "1px solid #EBD79A", flexShrink: 0 }}>
+          <Info size={13} color="#B45309" />
+          <span style={{ ...GF, fontSize: 12, color: "#78350F" }}>
+            Attach a document to this template before placing fields —
+            {" "}<Link to={`/app/templates/${template.id}/edit`} style={{ color: "#B45309" }}>go to Documents</Link>.
+          </span>
+        </div>
+      )}
 
       {/* Assign-to role bar + doc tabs */}
       <div style={{ background: "#f8fafb", borderBottom: "1px solid rgba(0,0,0,0.08)", padding: "8px 16px", display: "flex", alignItems: "center", gap: 16, flexShrink: 0 }}>
@@ -536,7 +599,7 @@ function FieldsEditorInner({ template }: { template: DocumentTemplate }) {
           fields={edState.fields}
           selected={edState.selected}
           pendingType={pendingType}
-          onSetPending={setPendingType}
+          onSetPending={canPlaceFields ? setPendingType : () => {}}
           onUpdateField={(id, patch) => edDispatch({ type: "UPDATE", id, patch })}
           onDeleteField={id => edDispatch({ type: "DELETE", id })}
           onDeselectAll={() => edDispatch({ type: "SELECT", id: null })}

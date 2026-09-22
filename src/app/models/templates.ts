@@ -113,6 +113,11 @@ export interface TemplateRolePlaceholder {
   defaultAuthMethod:   PrepAuthMethodId;
   description:         string;               // shown during role mapping
   mustMapToParticipant:boolean;              // false = optional placeholder
+  /** 060. Present only for a slot that came from a REAL stored template —
+   *  the backend's own stable id for this role, used to address the field
+   *  placements endpoint (keyed by slot, not by this object's positional
+   *  `id`) and round-tripped on save so a field survives an edit. */
+  backendSlotId?:      string;
 }
 
 // ── Template document ─────────────────────────────────────────────────────────

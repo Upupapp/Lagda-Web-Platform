@@ -27,8 +27,10 @@
 import { USE_REAL_BACKEND } from "./backend-flag";
 import {
   realTemplatesService, toDocumentTemplate, toWireWrite,
+  type WireFieldInput,
 } from "./real/templates.service";
 import { realDocumentService } from "./real/document.service";
+import { isBackendFieldType } from "./prepare/field-sync";
 import {
   asyncListTemplates as mockList,
   asyncGetTemplateById as mockGet,
@@ -86,7 +88,8 @@ export async function getTemplate(
   if (!realTemplatesAvailable(workspaceId)) return mockGet(id);
   try {
     const wire = await realTemplatesService.get(workspaceId!, id);
-    return await enrichWithDocument(workspaceId!, toDocumentTemplate(wire));
+    const withDocument = await enrichWithDocument(workspaceId!, toDocumentTemplate(wire));
+    return await enrichWithFields(workspaceId!, withDocument);
   } catch {
     return null;
   }
@@ -120,6 +123,55 @@ async function enrichWithDocument(
         mimeType: doc.source?.mediaType,
       }],
     };
+  } catch {
+    return template;
+  }
+}
+
+/**
+ * Replaces `toDocumentTemplate`'s permanent `fields: []` (the backend has
+ * no field-storage endpoint for a template's SHAPE object — 060 gave it a
+ * separate one, `GET .../fields`) with the template's real field layout,
+ * mapped from backend `slotId`s to this template's own placeholder ids via
+ * each placeholder's `backendSlotId`.
+ *
+ * A field whose slotId names no CURRENT placeholder is dropped rather than
+ * shown pointing at nothing — this can happen only for a moment between an
+ * edit that removed a slot and 060's own orphan cleanup, never for long.
+ */
+async function enrichWithFields(
+  workspaceId: string, template: DocumentTemplate,
+): Promise<DocumentTemplate> {
+  try {
+    const wire = await realTemplatesService.getFields(workspaceId, template.id);
+    if (wire.length === 0) return template;
+
+    const placeholderIdBySlot = new Map(
+      template.placeholders
+        .filter(p => p.backendSlotId !== undefined)
+        .map(p => [p.backendSlotId!, p.id]));
+    const documentId = template.documents[0]?.id ?? "doc-1";
+
+    const fields = wire
+      .map((f): DocumentTemplate["fields"][number] | null => {
+        const placeholderId = placeholderIdBySlot.get(f.slotId);
+        if (placeholderId === undefined) return null;
+        return {
+          id: f.fieldId,
+          type: f.type,
+          documentId,
+          pageId: `page-${String(f.pageNumber)}`,
+          rect: f.rect,
+          placeholderId,
+          label: f.label,
+          required: f.required,
+          layer: f.layer,
+          demonstrationOnly: false,
+        };
+      })
+      .filter((f): f is DocumentTemplate["fields"][number] => f !== null);
+
+    return { ...template, fields };
   } catch {
     return template;
   }
@@ -190,6 +242,92 @@ export async function detachTemplateDocument(
   if (!realTemplatesAvailable(workspaceId)) throw new TemplatesNotWritableError();
   const wire = await realTemplatesService.detachDocument(workspaceId!, id);
   return toDocumentTemplate(wire);
+}
+
+export interface SaveTemplateFieldsResult {
+  fields: DocumentTemplate["fields"];
+  /**
+   * How many of the fields handed in were NOT sent to the backend, because
+   * they cannot be: a "Sender Prefill" field (`placeholderId: null`) has no
+   * role to attach to — the backend's field is FOR A SLOT, always — or a
+   * type the backend does not persist (`isBackendFieldType`'s boundary,
+   * the same one `field-sync.ts` draws for a real preparation). The caller
+   * tells the sender rather than silently dropping their work.
+   */
+  skipped: number;
+}
+
+/**
+ * Replaces a template's WHOLE field layout — the backend has no per-field
+ * endpoint, the same one-atomic-write model a real document preparation
+ * uses and for the same reason (the editor autosaves a drag-and-drop
+ * canvas).
+ *
+ * `placeholders` is the template's CURRENT slots, needed to translate each
+ * field's `placeholderId` to the backend's `slotId` it actually stores —
+ * the inverse of `enrichWithFields`'s slotId-to-placeholderId map.
+ */
+export async function saveTemplateFields(
+  workspaceId: string | undefined, id: DocumentTemplateId,
+  fields: readonly DocumentTemplate["fields"][number][],
+  placeholders: readonly TemplateRolePlaceholder[],
+): Promise<SaveTemplateFieldsResult> {
+  if (!realTemplatesAvailable(workspaceId)) throw new TemplatesNotWritableError();
+
+  const slotByPlaceholder = new Map(
+    placeholders
+      .filter(p => p.backendSlotId !== undefined)
+      .map(p => [p.id, p.backendSlotId!]));
+
+  const inputs: WireFieldInput[] = [];
+  let skipped = 0;
+  for (const f of fields) {
+    const slotId = f.placeholderId === null ? undefined : slotByPlaceholder.get(f.placeholderId);
+    if (slotId === undefined || !isBackendFieldType(f.type)) { skipped++; continue; }
+    const pageNumber = Number(f.pageId.replace(/^page-/, ""));
+    inputs.push({
+      // Backend-issued ids from `enrichWithFields` pass through unprefixed;
+      // an editor-local id the sender just created is never sent back —
+      // the write schema mints a fresh one, exactly "this is new".
+      ...(f.id.startsWith("wff_") ? { fieldId: f.id } : {}),
+      slotId,
+      type: f.type,
+      pageNumber,
+      rect: { x: f.rect.x, y: f.rect.y, width: f.rect.width, height: f.rect.height },
+      required: f.required,
+      label: f.label,
+      layer: f.layer,
+    });
+  }
+
+  const wire = await realTemplatesService.saveFields(workspaceId!, id, inputs);
+  const placeholderBySlot = new Map(
+    placeholders
+      .filter(p => p.backendSlotId !== undefined)
+      .map(p => [p.backendSlotId!, p.id]));
+  const documentId = f0DocumentId(fields);
+
+  return {
+    skipped,
+    fields: wire.map(w => ({
+      id: w.fieldId,
+      type: w.type,
+      documentId,
+      pageId: `page-${String(w.pageNumber)}`,
+      rect: w.rect,
+      placeholderId: placeholderBySlot.get(w.slotId) ?? null,
+      label: w.label,
+      required: w.required,
+      layer: w.layer,
+      demonstrationOnly: false,
+    })),
+  };
+}
+
+/** The editor-local documentId every field in this save shares — there is
+ *  exactly one document per template (060), so any field's carries it. */
+function f0DocumentId(fields: readonly DocumentTemplate["fields"][number][]): string {
+  return fields[0]?.documentId ?? "doc-1";
 }
 
 // ── Client-side query ───────────────────────────────────────────────────────
