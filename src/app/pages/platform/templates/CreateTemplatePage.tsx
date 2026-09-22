@@ -40,6 +40,7 @@ import {
 import type { TemplateCategory } from "../../../models/templates";
 import { usePageMeta } from "../../../hooks/usePageMeta";
 import { useViewport } from "../../../hooks/useViewport";
+import { Z } from "../../../utils/z-index";
 
 // ── Design tokens ─────────────────────────────────────────────────────────────
 const GF    = { fontFamily: "'Geist', sans-serif" };
@@ -414,7 +415,7 @@ export function CreateTemplatePage() {
             aria-label="Template details"
             onClick={() => setSelected(null)}
             style={{
-              position: "fixed", inset: 0, zIndex: 1000,
+              position: "fixed", inset: 0, zIndex: Z.modalScrim,
               background: "rgba(15, 23, 42, 0.45)",
               display: "flex",
               // Bottom-sheet on a phone, centred panel above it. `flex-end`
@@ -437,6 +438,8 @@ export function CreateTemplatePage() {
                 display: "flex",
                 flexDirection: "column",
                 boxShadow: "0 20px 50px rgba(0,0,0,0.25)",
+                position: "relative",
+                zIndex: Z.modal,
               }}
             >
               <div style={{
