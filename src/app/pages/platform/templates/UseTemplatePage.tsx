@@ -12,14 +12,16 @@ import {
   ArrowRight, Info,
 } from "lucide-react";
 import { TemplateProvider, useTemplates } from "../../../context/TemplateContext";
+import { usePlatform } from "../../../context/PlatformContext";
 import { SkeletonBlock, SKELETON_STYLE } from "../../../components/platform";
 import { resolveTemplateApplication } from "../../../services/prepare/template-apply";
+import { getTemplateRoleAssignments } from "../../../services/templates-source";
 import {
   handOffTemplateToPrepare, TEMPLATE_HANDOFF_ROUTE,
 } from "../../../services/prepare/template-handoff";
 import type { PrepFile } from "../../../models/prepare";
 import type {
-  DocumentTemplate, TemplateRoleMapping, TemplateVariableValues,
+  DocumentTemplate, TemplateRoleMapping, TemplateRoleAssignment, TemplateVariableValues,
   TemplateVariable,
 } from "../../../models/templates";
 import { TEMPLATE_CATEGORY_LABELS, TEMPLATE_STATUS_LABELS } from "../../../models/templates";
@@ -81,10 +83,12 @@ function StepBar({ current }: { current: WizardStep }) {
 
 // ── Step 1: Map Roles ─────────────────────────────────────────────────────────
 function RoleMappingStep({
-  template: _template, mappings, onChange,
+  template: _template, mappings, assignments, onChange,
 }: {
   template:  DocumentTemplate;
   mappings:  TemplateRoleMapping[];
+  /** 061. `null` while still loading. */
+  assignments: TemplateRoleAssignment[] | null;
   onChange:  (idx: number, patch: Partial<TemplateRoleMapping>) => void;
 }) {
   const { isNarrow } = useViewport();
@@ -99,17 +103,28 @@ function RoleMappingStep({
       <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
         {mappings.map((m, idx) => {
           const color = PARTICIPANT_ACCENT_COLORS[idx % PARTICIPANT_ACCENT_COLORS.length] ?? AZURE;
+          const assignment = assignments?.find(a => a.placeholderId === m.placeholderId) ?? null;
           return (
             <div key={m.placeholderId} style={{ background: "white", border: "1px solid #E2E8F0", borderRadius: 12, padding: "16px 18px" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
                 <div style={{ width: 10, height: 10, borderRadius: "50%", background: color, flexShrink: 0 }} />
-                <div>
+                <div style={{ flex: 1 }}>
                   <div style={{ ...GF, fontSize: 13, fontWeight: 700, color: "#0F172A" }}>{m.placeholderLabel}</div>
                   <div style={{ ...GF, fontSize: 11, color: "#94A3B8" }}>
                     {PREP_PARTICIPANT_ROLE_LABELS[m.role] ?? m.role}
                     {!m.required && " · Optional"}
                   </div>
                 </div>
+                {assignment?.status === "resolved" && (
+                  <span style={{ ...GF, fontSize: 10.5, fontWeight: 700, color: "#166534", background: "#DCFCE7", padding: "3px 8px", borderRadius: 999 }}>
+                    Auto-assigned
+                  </span>
+                )}
+                {assignment?.status === "unresolved" && (
+                  <span style={{ ...GF, fontSize: 10.5, fontWeight: 700, color: "#92400E", background: "#FEF3C7", padding: "3px 8px", borderRadius: 999 }}>
+                    Nobody currently holds this title
+                  </span>
+                )}
               </div>
               <div style={{ display: "grid", gridTemplateColumns: isNarrow ? "1fr" : "1fr 1fr", gap: 10 }}>
                 <FormField label="Full Name" required={m.required}>
@@ -413,10 +428,13 @@ function UseTemplateInner() {
   const { isNarrow } = useViewport();
   const { templateId } = useParams<{ templateId: string }>();
   const { state, loadTemplate } = useTemplates();
+  const platform = usePlatform();
+  const workspaceId = platform.currentWorkspace?.id;
   const t = state.activeTemplate;
 
   const [step,     setStep]     = useState<WizardStep>("roles");
   const [mappings, setMappings] = useState<TemplateRoleMapping[]>([]);
+  const [assignments, setAssignments] = useState<TemplateRoleAssignment[] | null>(null);
   const [varValues,setVarValues]= useState<TemplateVariableValues>({});
   const [launching,setLaunching]= useState(false);
   const [error,    setError]    = useState<string | null>(null);
@@ -437,8 +455,33 @@ function UseTemplateInner() {
     if (t) {
       setMappings(buildInitialMappings(t));
       setVarValues(buildInitialVariables(t));
+      setAssignments(null);
     }
   }, [t?.id]);
+
+  // 061. Fetched once the template is loaded, separately from the mappings
+  // above — a resolution failure must not block the ordinary manual-entry
+  // path (`getTemplateRoleAssignments` itself falls back to "manual" for
+  // every slot on error, so this can only ever ADD information, never
+  // remove the ability to type a name by hand).
+  useEffect(() => {
+    if (!t) return;
+    let cancelled = false;
+    getTemplateRoleAssignments(workspaceId, t).then(resolved => {
+      if (cancelled) return;
+      setAssignments(resolved);
+      // Pre-fills a RESOLVED slot's name and email. Never overwrites what
+      // a sender has already typed — this only runs once, right after the
+      // mappings above are freshly built to their empty defaults.
+      setMappings(current => current.map(m => {
+        const a = resolved.find(x => x.placeholderId === m.placeholderId);
+        if (a?.status !== "resolved") return m;
+        return { ...m, displayName: a.displayName, email: a.email };
+      }));
+    }).catch(() => { if (!cancelled) setAssignments([]); });
+    return () => { cancelled = true; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [t?.id, workspaceId]);
 
   usePageMeta();
 
@@ -640,7 +683,7 @@ function UseTemplateInner() {
           </div>
         )}
 
-        {step === "roles"     && <RoleMappingStep template={t} mappings={mappings} onChange={handleMappingChange} />}
+        {step === "roles"     && <RoleMappingStep template={t} mappings={mappings} assignments={assignments} onChange={handleMappingChange} />}
         {step === "variables" && <VariablesStep variables={t.variables} values={varValues} onChange={(key, val) => setVarValues(v => ({ ...v, [key]: val }))} />}
         {step === "review"    && <ReviewStep template={t} mappings={mappings} variableValues={varValues} />}
 

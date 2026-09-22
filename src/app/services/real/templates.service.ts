@@ -30,12 +30,16 @@ import type {
   DocumentTemplate,
   TemplateRolePlaceholder,
   TemplateRequestSettings,
+  TemplateRoleResolution,
 } from "../../models/templates";
 import type { PrepParticipantRole, PrepAuthMethodId } from "../../models/prepare";
 import type { RoutingMode } from "../../models/transaction-detail";
 import type { BackendFieldType, BackendRect } from "./preparation.service";
 
-/** The six fields `WorkflowRoleSlotSchema` returns on a READ. */
+/** The seven fields `WorkflowRoleSlotSchema` returns on a READ. `resolution`
+ *  (061) is the identical shape on read and write — there is no
+ *  server-assigned part to it the way there is for `slotId`, so it reuses
+ *  the frontend's own `TemplateRoleResolution` rather than a duplicate. */
 export interface WireRoleSlot {
   slotId: string;
   label: string;
@@ -43,6 +47,7 @@ export interface WireRoleSlot {
   required: boolean;
   routingStep: number;
   defaultAuthMethod: PrepAuthMethodId;
+  resolution?: TemplateRoleResolution;
 }
 
 /** The write shape of a slot — `slotId` OPTIONAL, the one difference from
@@ -57,6 +62,7 @@ export interface WireRoleSlotWrite {
   required: boolean;
   routingStep: number;
   defaultAuthMethod: PrepAuthMethodId;
+  resolution?: TemplateRoleResolution;
 }
 
 /** A field placement — geometry for one ROLE, not one person. Mirrors
@@ -83,6 +89,21 @@ export interface WireFieldInput {
   required: boolean;
   label: string;
   layer: number;
+}
+
+/**
+ * A slot's resolved assignment (061) — three states, not a nullable
+ * person: "manual" means no `resolution` is configured; "unresolved" means
+ * one is, but nobody currently holds that title; "resolved" carries who
+ * does. `userId`/`displayName`/`email` are present ONLY when `status` is
+ * `"resolved"`, matching the backend's own schema exactly.
+ */
+export interface WireRoleAssignment {
+  slotId: string;
+  status: "manual" | "resolved" | "unresolved";
+  userId?: string;
+  displayName?: string;
+  email?: string;
 }
 
 export interface WireTemplate {
@@ -195,6 +216,19 @@ class RealTemplatesService {
     );
     return result.items;
   }
+
+  /**
+   * What every resolved slot means RIGHT NOW (061). Read fresh on every
+   * call — never cached — since the whole point is that a title change
+   * (someone new becomes Department Head) is reflected without editing the
+   * template.
+   */
+  async getRoleAssignments(workspaceId: string, templateId: string): Promise<WireRoleAssignment[]> {
+    const result = await apiRequest<{ items: WireRoleAssignment[] }>(
+      `${base(workspaceId)}/${encodeURIComponent(templateId)}/role-assignments`,
+    );
+    return result.items;
+  }
 }
 
 export const realTemplatesService = new RealTemplatesService();
@@ -229,6 +263,7 @@ function toPlaceholder(slot: WireRoleSlot, index: number): TemplateRolePlacehold
     defaultAuthMethod: slot.defaultAuthMethod,
     description: "",
     mustMapToParticipant: slot.required,
+    ...(slot.resolution === undefined ? {} : { resolution: slot.resolution }),
   };
 }
 
@@ -357,6 +392,10 @@ export function toWireWrite(input: {
       required: p.required,
       routingStep: p.routingStep,
       defaultAuthMethod: p.defaultAuthMethod,
+      // 061. Sent through untouched WHEN present — the write schema
+      // validates the unit still exists and is live; this file trusts that
+      // rather than re-checking it.
+      ...(p.resolution === undefined ? {} : { resolution: p.resolution }),
     })),
     completionSettings: { notifySenderOnComplete: input.notifySenderOnComplete },
   };

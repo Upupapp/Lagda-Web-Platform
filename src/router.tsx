@@ -865,6 +865,11 @@ const SettingsProfilePage = lazy(() =>
     default: m.ProfilePage,
   })),
 );
+const SettingsOrganizationUnitsPage = lazy(() =>
+  import("./app/pages/platform/settings/organization/OrganizationUnitsPage").then((m) => ({
+    default: m.OrganizationUnitsPage,
+  })),
+);
 const SettingsPreferencesPage = lazy(() =>
   import("./app/pages/platform/settings/PreferencesPage").then((m) => ({
     default: m.PreferencesPage,
@@ -2488,6 +2493,12 @@ export const router = createBrowserRouter([
             path: "usage",
             element: (
               <SettingsUsagePage />
+            ),
+          },
+          {
+            path: "organization",
+            element: (
+              <SettingsOrganizationUnitsPage />
             ),
           },
           {

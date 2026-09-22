@@ -38,7 +38,7 @@ import {
 } from "./mock/templates.service";
 import type {
   DocumentTemplate, DocumentTemplateId, TemplateListQuery,
-  TemplateListItem, TemplateRolePlaceholder,
+  TemplateListItem, TemplateRolePlaceholder, TemplateRoleAssignment,
 } from "../models/templates";
 import type { RoutingMode } from "../models/transaction-detail";
 
@@ -382,4 +382,52 @@ function toListItem(t: DocumentTemplate): TemplateListItem {
     hasErrors: false,
     hasWarnings: false,
   };
+}
+
+// ── Role resolution (061) ───────────────────────────────────────────────────
+
+/**
+ * What every resolved slot means RIGHT NOW, mapped from the backend's
+ * slotId to this template's own placeholder ids — the same slotId lookup
+ * `enrichWithFields` performs for field placements, for the same reason:
+ * the UI addresses a role by the placeholder it already renders, never by
+ * the backend's internal id.
+ *
+ * Fixture mode has no resolution concept at all (mock templates predate
+ * 061), so every slot there is reported "manual" — the honest answer for a
+ * template with no server to ask.
+ */
+export async function getTemplateRoleAssignments(
+  workspaceId: string | undefined, template: DocumentTemplate,
+): Promise<TemplateRoleAssignment[]> {
+  const manual: TemplateRoleAssignment[] = template.placeholders.map(p =>
+    ({ placeholderId: p.id, status: "manual" }));
+  if (!realTemplatesAvailable(workspaceId)) return manual;
+
+  try {
+    const wire = await realTemplatesService.getRoleAssignments(workspaceId!, template.id);
+    const placeholderIdBySlot = new Map(
+      template.placeholders
+        .filter(p => p.backendSlotId !== undefined)
+        .map(p => [p.backendSlotId!, p.id]));
+
+    return wire
+      .map((a): TemplateRoleAssignment | null => {
+        const placeholderId = placeholderIdBySlot.get(a.slotId);
+        if (placeholderId === undefined) return null;
+        if (a.status === "resolved") {
+          return {
+            placeholderId, status: "resolved",
+            userId: a.userId!, displayName: a.displayName!, email: a.email!,
+          };
+        }
+        return { placeholderId, status: a.status };
+      })
+      .filter((a): a is NonNullable<typeof a> => a !== null);
+  } catch {
+    // A failed read falls back to "manual" for every slot rather than
+    // blocking the page — the sender can still type a name and email by
+    // hand, which is exactly what every slot did before this existed.
+    return manual;
+  }
 }
