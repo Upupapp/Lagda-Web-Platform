@@ -20,6 +20,12 @@ import type {
 import { DEFAULT_TEMPLATE_QUERY } from "../models/templates";
 import type { TemplateListResult, TemplateStatusMutationResult, TemplateDuplicateResult } from "../services/mock/templates.service";
 import {
+  listTemplates as sourceList,
+  getTemplate as sourceGet,
+  realTemplatesAvailable,
+} from "../services/templates-source";
+import { usePlatform } from "./PlatformContext";
+import {
   asyncListTemplates,
   asyncGetTemplateById,
   asyncMakeAvailable,
@@ -134,6 +140,9 @@ interface TemplateContextValue {
   loadList:      (q?: TemplateListQuery) => void;
   // Active template
   loadTemplate:  (id: DocumentTemplateId) => void;
+  /** True when templates are the workspace's own records and can be saved.
+   *  False in fixture mode, where an authoring control would only refuse. */
+  canWrite:      boolean;
   clearTemplate: () => void;
   // Actions
   makeAvailable: (id: DocumentTemplateId) => void;
@@ -150,6 +159,10 @@ const TemplateContext = createContext<TemplateContextValue | null>(null);
 
 export function TemplateProvider({ children }: { children: React.ReactNode }) {
   const [state, dispatch] = useReducer(reducer, INITIAL_STATE);
+  // Every template route is workspace-scoped, so with no workspace in scope
+  // there is no URL to call and the façade falls back to the fixtures.
+  const platform = usePlatform();
+  const workspaceId = platform.currentWorkspace?.id;
   const latestQuery = useRef(state.query);
   latestQuery.current = state.query;
 
@@ -157,12 +170,12 @@ export function TemplateProvider({ children }: { children: React.ReactNode }) {
     const query = q ?? latestQuery.current;
     dispatch({ type: "LIST_LOADING" });
     try {
-      const result = await asyncListTemplates(query);
+      const result = await sourceList(workspaceId, query);
       dispatch({ type: "LIST_SUCCESS", result });
     } catch {
       dispatch({ type: "LIST_ERROR", error: "Unable to load templates." });
     }
-  }, []);
+  }, [workspaceId]);
 
   const setQuery = useCallback((q: TemplateListQuery) => {
     dispatch({ type: "SET_QUERY", query: q });
@@ -171,7 +184,7 @@ export function TemplateProvider({ children }: { children: React.ReactNode }) {
   const loadTemplate = useCallback(async (id: DocumentTemplateId) => {
     dispatch({ type: "ACTIVE_LOADING" });
     try {
-      const template = await asyncGetTemplateById(id);
+      const template = await sourceGet(workspaceId, id);
       if (template) {
         dispatch({ type: "ACTIVE_SUCCESS", template });
       } else {
@@ -180,7 +193,7 @@ export function TemplateProvider({ children }: { children: React.ReactNode }) {
     } catch {
       dispatch({ type: "ACTIVE_ERROR", error: "Unable to load template." });
     }
-  }, []);
+  }, [workspaceId]);
 
   const clearTemplate = useCallback(() => {
     dispatch({ type: "ACTIVE_CLEAR" });
@@ -247,6 +260,7 @@ export function TemplateProvider({ children }: { children: React.ReactNode }) {
       setQuery,
       loadList: q => { void loadList(q); },
       loadTemplate: id => { void loadTemplate(id); },
+      canWrite: realTemplatesAvailable(workspaceId),
       clearTemplate,
       makeAvailable: id => { void makeAvailable(id); },
       returnToDraft: id => { void returnToDraft(id); },
