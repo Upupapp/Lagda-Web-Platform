@@ -46,6 +46,14 @@ export interface WireTemplate {
   routingMode: RoutingMode;
   roleSlots: WireRoleSlot[];
   completionSettings: { notifySenderOnComplete: boolean };
+  /**
+   * 059. `null` until attached. Bare ids only — no filename, page count or
+   * size travels on this object; `templates-source.ts` fetches those from
+   * the document itself, through the same real document service every other
+   * page uses, rather than this route duplicating that read.
+   */
+  documentId: string | null;
+  sourceArtifactId: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -96,6 +104,32 @@ class RealTemplatesService {
       { method: "DELETE" },
     );
   }
+
+  /**
+   * Points the template at an ALREADY-uploaded document and artifact.
+   *
+   * Takes ids, never a file — the caller uploads through the ordinary
+   * document create-then-upload path first (see `attachTemplateDocument` in
+   * `templates-source.ts`) and hands the resulting pair here. This method
+   * does no uploading of its own, matching the backend route it calls.
+   */
+  async attachDocument(
+    workspaceId: string, templateId: string,
+    document: { documentId: string; artifactId: string },
+  ): Promise<WireTemplate> {
+    return apiRequest<WireTemplate>(
+      `${base(workspaceId)}/${encodeURIComponent(templateId)}/document`,
+      { method: "PUT", body: document },
+    );
+  }
+
+  /** Clears the reference. The document and its artifact are untouched. */
+  async detachDocument(workspaceId: string, templateId: string): Promise<WireTemplate> {
+    return apiRequest<WireTemplate>(
+      `${base(workspaceId)}/${encodeURIComponent(templateId)}/document`,
+      { method: "DELETE" },
+    );
+  }
 }
 
 export const realTemplatesService = new RealTemplatesService();
@@ -142,10 +176,22 @@ export function toDocumentTemplate(wire: WireTemplate): DocumentTemplate {
     ownerLabel: "",
     workspaceLabel: "",
     tags: [],
-    // A stored template carries no file — the backend's own description says
-    // "Holds no people, no document and no file." The sender supplies the
-    // document when they apply it.
-    documents: [],
+    // A bare reference only. `toDocumentTemplate` does no I/O, so it cannot
+    // fetch the filename or page count that make this genuinely useful on
+    // screen — `templates-source.ts`'s `getTemplate` does that enrichment
+    // (one document read, only when a reference is present) and replaces
+    // this entry with a fuller one before a page ever renders it.
+    documents: wire.documentId !== null && wire.sourceArtifactId !== null
+      ? [{
+          id: wire.documentId,
+          displayName: "Attached document",
+          pageCount: 0,
+          order: 1,
+          isPlaceholder: false,
+          backendDocumentId: wire.documentId,
+          backendArtifactId: wire.sourceArtifactId,
+        }]
+      : [],
     placeholders,
     routing: {
       mode: wire.routingMode,

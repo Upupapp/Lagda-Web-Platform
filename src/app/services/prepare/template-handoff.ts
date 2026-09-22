@@ -16,14 +16,21 @@
 // one key, navigate. The provider picks it up on mount exactly as it picks up
 // a reloaded draft.
 
-import type { PreparationDraft } from "../../models/prepare";
+import type { PreparationDraft, PrepFile } from "../../models/prepare";
 import type { TemplateApplication } from "../../models/templates";
 import { prepareService } from "../mock/prepare.service";
 import { writeJSON, PERSISTENCE_KEYS } from "../local-persistence";
 
-/** Where the Prepare flow begins. A template supplies who and in what order,
- *  never the file itself — the templates in this build carry placeholder
- *  documents, so the visitor still chooses the real one. */
+/**
+ * Where the Prepare flow begins.
+ *
+ * A template usually supplies who and in what order, never the file itself —
+ * most templates in this build carry no document, so the visitor chooses the
+ * real one at this step. A template with a genuinely attached document
+ * (059's `document_id`/`source_artifact_id` pair, not a fixture placeholder)
+ * is the one case that skips asking: see `initialFiles` below, which pre-fills
+ * this very step with it.
+ */
 export const TEMPLATE_HANDOFF_ROUTE = "/app/prepare/upload";
 
 export interface TemplateHandoffResult {
@@ -44,6 +51,11 @@ export interface TemplateHandoffResult {
 export async function handOffTemplateToPrepare(
   templateId: string,
   application: TemplateApplication,
+  /** The template's own attached document, already uploaded — see
+   *  `DocumentsTab`'s attach flow and `TemplateDocument.backendDocumentId`'s
+   *  header. Omitted (or undefined) for the ordinary case of a template with
+   *  no document, which leaves the Upload step exactly as empty as before. */
+  initialFiles?: PrepFile[],
 ): Promise<TemplateHandoffResult> {
   try {
     const draft = await prepareService.createDraft({
@@ -51,6 +63,7 @@ export async function handOffTemplateToPrepare(
       // Provenance only — nothing resolves participants or routing through it.
       templateId,
       templateApplication: application,
+      initialFiles,
     });
 
     writeJSON(PERSISTENCE_KEYS.prepareDraft, draft);

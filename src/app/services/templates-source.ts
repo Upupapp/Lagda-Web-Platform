@@ -28,6 +28,7 @@ import { USE_REAL_BACKEND } from "./backend-flag";
 import {
   realTemplatesService, toDocumentTemplate, toWireWrite,
 } from "./real/templates.service";
+import { realDocumentService } from "./real/document.service";
 import {
   asyncListTemplates as mockList,
   asyncGetTemplateById as mockGet,
@@ -84,9 +85,43 @@ export async function getTemplate(
 ): Promise<DocumentTemplate | null> {
   if (!realTemplatesAvailable(workspaceId)) return mockGet(id);
   try {
-    return toDocumentTemplate(await realTemplatesService.get(workspaceId!, id));
+    const wire = await realTemplatesService.get(workspaceId!, id);
+    return await enrichWithDocument(workspaceId!, toDocumentTemplate(wire));
   } catch {
     return null;
+  }
+}
+
+/**
+ * Replaces the bare-reference placeholder `toDocumentTemplate` produces
+ * (id and backend ids only) with the document's real filename and page
+ * count, read through the same `realDocumentService` every other page
+ * uses. One extra read, only when a reference is present — a template with
+ * no document does no extra work.
+ *
+ * A failed read leaves the bare reference in place rather than dropping it:
+ * the template DOES have a document attached, and saying otherwise would be
+ * wrong even if today this page cannot describe it further.
+ */
+async function enrichWithDocument(
+  workspaceId: string, template: DocumentTemplate,
+): Promise<DocumentTemplate> {
+  const ref = template.documents[0];
+  if (!ref || ref.backendDocumentId === undefined) return template;
+  try {
+    const doc = await realDocumentService.get(workspaceId, ref.backendDocumentId);
+    return {
+      ...template,
+      documents: [{
+        ...ref,
+        displayName: doc.originalFilename ?? doc.title,
+        pageCount: doc.source?.pageCount ?? 0,
+        sizeBytes: doc.source?.sizeBytes,
+        mimeType: doc.source?.mediaType,
+      }],
+    };
+  } catch {
+    return template;
   }
 }
 
@@ -132,6 +167,31 @@ export async function deleteTemplate(
   await realTemplatesService.remove(workspaceId!, id);
 }
 
+/**
+ * Attaches an ALREADY-uploaded document to a template.
+ *
+ * Takes ids, never a file — the caller uploads through
+ * `realDocumentService.create` + `.upload` first (mirroring the Prepare
+ * flow's own upload sequence) and hands the resulting pair here.
+ */
+export async function attachTemplateDocument(
+  workspaceId: string | undefined, id: DocumentTemplateId,
+  document: { documentId: string; artifactId: string },
+): Promise<DocumentTemplate> {
+  if (!realTemplatesAvailable(workspaceId)) throw new TemplatesNotWritableError();
+  const wire = await realTemplatesService.attachDocument(workspaceId!, id, document);
+  return enrichWithDocument(workspaceId!, toDocumentTemplate(wire));
+}
+
+/** Clears the reference. The document and its artifact are untouched. */
+export async function detachTemplateDocument(
+  workspaceId: string | undefined, id: DocumentTemplateId,
+): Promise<DocumentTemplate> {
+  if (!realTemplatesAvailable(workspaceId)) throw new TemplatesNotWritableError();
+  const wire = await realTemplatesService.detachDocument(workspaceId!, id);
+  return toDocumentTemplate(wire);
+}
+
 // ── Client-side query ───────────────────────────────────────────────────────
 
 function applyQuery(
@@ -171,9 +231,8 @@ function toListItem(t: DocumentTemplate): TemplateListItem {
     ownerLabel: t.ownerLabel,
     placeholderCount: t.placeholders.length,
     routingMode: t.routing.mode,
-    // A stored template holds no document and no fields — the backend's own
-    // description says so. Zero here is the fact, not a missing value.
-    documentCount: 0,
+    // A stored template holds at most one document (059) and no fields yet.
+    documentCount: t.documents.length,
     fieldCount: 0,
     variableCount: 0,
     lastUsedDate: t.usageSummary.lastUsedDate,

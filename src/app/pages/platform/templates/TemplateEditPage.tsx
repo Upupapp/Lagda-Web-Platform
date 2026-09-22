@@ -3,17 +3,21 @@
 // Tab-based layout. All mutations are in-session only. demonstrationOnly.
 // Inline styles only. No Burgundy.
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams, Link } from "react-router";
 import {
   ChevronLeft, AlertCircle, CheckCircle2, Save, Info,
   Users, FileText, Settings, GitBranch, Type, Shield,
-  Plus, GripVertical,
+  Plus, Trash2,
 } from "lucide-react";
 import { TemplateProvider, useTemplates } from "../../../context/TemplateContext";
 import { usePlatform } from "../../../context/PlatformContext";
-import { useProcessing } from "../../../services/processing.service";
-import { updateTemplate, realTemplatesAvailable } from "../../../services/templates-source";
+import { useProcessing, buildSteps } from "../../../services/processing.service";
+import {
+  updateTemplate, realTemplatesAvailable, attachTemplateDocument, detachTemplateDocument,
+} from "../../../services/templates-source";
+import { realDocumentService } from "../../../services/real/document.service";
+import { ApiError } from "../../../services/api-client";
 import { VALID_PREP_PARTICIPANT_ROLES } from "../../../models/prepare";
 import type { PrepParticipantRole } from "../../../models/prepare";
 import type { TemplateRolePlaceholder } from "../../../models/templates";
@@ -129,51 +133,161 @@ function DetailsTab({ draft, onChange }: { draft: DocumentTemplate; onChange: (p
 }
 
 // ── Tab panel: Documents ──────────────────────────────────────────────────────
-function DocumentsTab({ draft }: { draft: DocumentTemplate }) {
+//
+// A stored template holds AT MOST ONE document (059's `document_id` +
+// `source_artifact_id` pair). Adding one goes through the same two calls
+// every upload in this platform makes — `realDocumentService.create` then
+// `.upload` — followed by the one call unique to a template:
+// `attachTemplateDocument`, which points the template at the result.
+// Removing clears the reference only; the document and its bytes are
+// untouched (see `detachTemplateDocument`'s own header).
+function DocumentsTab({
+  draft, workspaceId, canWrite, onChange,
+}: {
+  draft: DocumentTemplate;
+  workspaceId: string | undefined;
+  canWrite: boolean;
+  onChange: (next: DocumentTemplate) => void;
+}) {
+  const { run } = useProcessing();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  const doc = draft.documents[0];
+
+  const UPLOAD_STAGES = [
+    { id: "transfer", label: "Transferring your file" },
+    { id: "process",  label: "Securing and preparing it" },
+    { id: "attach",   label: "Attaching it to the template" },
+  ];
+
+  const handleFile = async (file: File) => {
+    if (!workspaceId) return;
+    setError(null);
+    setBusy(true);
+    try {
+      const capacity = await realDocumentService.checkUploadCapacity();
+      if (!capacity.available) {
+        setError(capacity.message ?? "Uploads are temporarily unavailable.");
+        return;
+      }
+      const updated = await run(
+        {
+          message: `Uploading ${file.name}`,
+          detail: "Large documents can take a moment.",
+          steps: buildSteps(UPLOAD_STAGES, "transfer"),
+        },
+        async ({ update }) => {
+          const created = await realDocumentService.create(workspaceId, file.name);
+          update({ steps: buildSteps(UPLOAD_STAGES, "process") });
+          const result = await realDocumentService.upload(workspaceId, created.documentId, file);
+          update({ steps: buildSteps(UPLOAD_STAGES, "attach") });
+          return attachTemplateDocument(workspaceId, draft.id, {
+            documentId: created.documentId, artifactId: result.artifactId,
+          });
+        },
+      );
+      onChange(updated);
+    } catch (err) {
+      setError(err instanceof ApiError
+        ? err.message
+        : "Something went wrong uploading this file. Please try again.");
+    } finally {
+      setBusy(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
+  const handleRemove = async () => {
+    if (!workspaceId) return;
+    setError(null);
+    setBusy(true);
+    try {
+      const updated = await run(
+        { message: "Removing document", detail: "The document itself is not deleted." },
+        () => detachTemplateDocument(workspaceId, draft.id),
+      );
+      onChange(updated);
+    } catch (err) {
+      setError(err instanceof ApiError
+        ? err.message
+        : "Something went wrong removing this document. Please try again.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
   return (
     <div>
       <div style={{ padding: "14px 16px", background: "#F8FAFC", border: "1px solid #E2E8F0", borderRadius: 10, marginBottom: 16, display: "flex", gap: 8 }}>
         <Info size={14} color={AZURE} style={{ flexShrink: 0, marginTop: 1 }} />
         <p style={{ ...GF, fontSize: 12, color: "#334155", margin: 0, lineHeight: 1.6 }}>
-          In this demonstration, documents are shown as placeholders. In a live workspace, you would upload real PDF files here.
+          Attach the document senders will use every time this template is applied.
+          Applying the template pre-fills the Upload step with it, ready to send as-is.
         </p>
       </div>
-      {draft.documents.length === 0 ? (
-        <p style={{ ...GF, fontSize: 13, color: "#94A3B8" }}>No documents attached to this template.</p>
-      ) : (
-        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-          {draft.documents.map(doc => (
-            <div key={doc.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 14px", background: "white", border: "1px solid #E2E8F0", borderRadius: 9 }}>
-              <GripVertical size={14} color="#CBD5E1" />
-              <FileText size={15} color="#64748B" />
-              <div style={{ flex: 1 }}>
-                <div style={{ ...GF, fontSize: 13, fontWeight: 600, color: "#0F172A" }}>{doc.displayName}</div>
-                <div style={{ ...GF, fontSize: 11, color: "#94A3B8" }}>{doc.pageCount} page{doc.pageCount !== 1 ? "s" : ""} · Placeholder</div>
-              </div>
-              <span style={{ ...GF, fontSize: 11, color: "#94A3B8", fontStyle: "italic" }}>Demo document</span>
-            </div>
-          ))}
+
+      {error !== null && (
+        <div style={{ ...GF, marginBottom: 12, padding: "10px 13px", borderRadius: 8, background: "#FEF2F2", border: "1px solid #FECACA", fontSize: 12.5, color: "#B91C1C" }}>
+          {error}
         </div>
       )}
-      {/* This control used to look live and answer with a browser alert once
-          clicked. A disabled button carrying its own reason tells the user the
-          same thing before they spend the click, and matches the rule applied
-          everywhere else in the platform: a control is never disabled without
-          saying why. */}
-      <div style={{ marginTop: 12 }}>
-        <button
-          type="button"
-          disabled
-          aria-describedby="tpl-upload-reason"
-          style={{ display: "inline-flex", alignItems: "center", gap: 7, padding: "8px 14px", border: "1px dashed #CBD5E1", borderRadius: 8, background: "#F8FAFC", color: "#94A3B8", ...GF, fontSize: 12, fontWeight: 600, cursor: "not-allowed", minHeight: 44 }}
-        >
-          <Plus size={13} />
-          Add document
-        </button>
-        <p id="tpl-upload-reason" style={{ ...GF, fontSize: 12, color: "#94A3B8", margin: "6px 0 0", lineHeight: 1.5 }}>
-          Uploading is not available in this frontend demonstration. The documents above are placeholders.
+
+      {doc === undefined ? (
+        <p style={{ ...GF, fontSize: 13, color: "#94A3B8" }}>No document attached to this template.</p>
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 12 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 14px", background: "white", border: "1px solid #E2E8F0", borderRadius: 9 }}>
+            <FileText size={15} color="#64748B" />
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ ...GF, fontSize: 13, fontWeight: 600, color: "#0F172A", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{doc.displayName}</div>
+              <div style={{ ...GF, fontSize: 11, color: "#94A3B8" }}>{doc.pageCount} page{doc.pageCount !== 1 ? "s" : ""}</div>
+            </div>
+            {canWrite && (
+              <button
+                type="button"
+                onClick={() => { void handleRemove(); }}
+                disabled={busy}
+                title="Remove document"
+                style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 30, height: 30, border: "none", borderRadius: 7, background: "none", color: busy ? "#CBD5E1" : "#DC2626", cursor: busy ? "default" : "pointer", flexShrink: 0 }}
+              >
+                <Trash2 size={14} />
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
+      {canWrite && doc === undefined && (
+        <div style={{ marginTop: 12 }}>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".pdf,.doc,.docx"
+            style={{ display: "none" }}
+            onChange={e => {
+              const file = e.target.files?.[0];
+              if (file) void handleFile(file);
+            }}
+          />
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={busy}
+            style={{ display: "inline-flex", alignItems: "center", gap: 7, padding: "8px 14px", border: "1px dashed #C8E1F5", borderRadius: 8, background: "#F8FAFC", color: busy ? "#94A3B8" : AZURE, ...GF, fontSize: 12, fontWeight: 600, cursor: busy ? "default" : "pointer", minHeight: 44 }}
+          >
+            <Plus size={13} />
+            Add document
+          </button>
+        </div>
+      )}
+
+      {!canWrite && (
+        <p style={{ ...GF, fontSize: 12, color: "#94A3B8", margin: "6px 0 0", lineHeight: 1.5 }}>
+          Open a workspace to attach or remove a document.
         </p>
-      </div>
+      )}
     </div>
   );
 }
@@ -624,7 +738,7 @@ function TemplateEditInner() {
       {/* Tab content */}
       <div style={{ padding: "24px", maxWidth: 640 }}>
         {activeTab === "details"      && <DetailsTab      draft={draft} onChange={p => setDraft(d => d ? { ...d, ...p } : d)} />}
-        {activeTab === "documents"    && <DocumentsTab    draft={draft} />}
+        {activeTab === "documents"    && <DocumentsTab    draft={draft} workspaceId={workspaceId} canWrite={canWrite} onChange={setDraft} />}
         {activeTab === "placeholders" && <PlaceholdersTab draft={draft} onChange={p => setDraft(d => d ? { ...d, ...p } : d)} />}
         {activeTab === "routing"      && <RoutingTab      draft={draft} onChange={p => setDraft(d => d ? { ...d, ...p } : d)} />}
         {activeTab === "auth"         && <AuthTab         draft={draft} onChange={p => setDraft(d => d ? { ...d, ...p } : d)} />}
