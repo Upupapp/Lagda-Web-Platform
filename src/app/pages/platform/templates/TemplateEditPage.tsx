@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { TemplateProvider, useTemplates } from "../../../context/TemplateContext";
 import { usePlatform } from "../../../context/PlatformContext";
+import { useProcessing } from "../../../services/processing.service";
 import { updateTemplate, realTemplatesAvailable } from "../../../services/templates-source";
 import { VALID_PREP_PARTICIPANT_ROLES } from "../../../models/prepare";
 import type { PrepParticipantRole } from "../../../models/prepare";
@@ -497,6 +498,7 @@ function TemplateEditInner() {
   usePageMeta();
 
   const platform = usePlatform();
+  const { run: runProcessing } = useProcessing();
   const workspaceId = platform.currentWorkspace?.id;
   const canWrite = realTemplatesAvailable(workspaceId);
   const [saving, setSaving] = useState(false);
@@ -521,12 +523,15 @@ function TemplateEditInner() {
 
     setSaving(true);
     try {
-      await updateTemplate(workspaceId, draft.id, {
-        name: draft.name,
-        routingMode: draft.routing.mode,
-        placeholders: draft.placeholders,
-        notifySenderOnComplete: draft.settings.completionCopySender,
-      });
+      await runProcessing(
+        { message: "Saving your changes", detail: "Updating the template's roles and routing." },
+        () => updateTemplate(workspaceId, draft.id, {
+          name: draft.name,
+          routingMode: draft.routing.mode,
+          placeholders: draft.placeholders,
+          notifySenderOnComplete: draft.settings.completionCopySender,
+        }),
+      );
       setSaved(true);
       setTimeout(() => setSaved(false), 2500);
     } catch (err) {

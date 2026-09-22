@@ -7,7 +7,7 @@ import { useParams, Link, useNavigate } from "react-router";
 import {
   ChevronLeft, LayoutTemplate, FileText, Star,
   Edit2, Copy, Archive, RotateCcw, CheckCircle2, Eye,
-  AlertCircle, AlertTriangle, PenLine, Zap, RefreshCw, Info, X,
+  AlertCircle, AlertTriangle, PenLine, Zap, RefreshCw, Info, X, Trash2,
 } from "lucide-react";
 import { TemplateProvider, useTemplates } from "../../../context/TemplateContext";
 import { SkeletonBlock, SKELETON_STYLE } from "../../../components/platform";
@@ -20,6 +20,10 @@ import { PREP_PARTICIPANT_ROLE_LABELS } from "../../../models/prepare";
 import { usePageMeta } from "../../../hooks/usePageMeta";
 import { useViewport } from "../../../hooks/useViewport";
 import { Z } from "../../../utils/z-index";
+import { ConfirmDeleteTemplate } from "../../../components/templates/ConfirmDeleteTemplate";
+import { deleteTemplate } from "../../../services/templates-source";
+import { usePlatform } from "../../../context/PlatformContext";
+import { useProcessing } from "../../../services/processing.service";
 
 // ── Design tokens ─────────────────────────────────────────────────────────────
 const GF    = { fontFamily: "'Geist', sans-serif" };
@@ -66,13 +70,17 @@ function SectionCard({ title, children }: { title: string; children: React.React
 }
 
 // ── Action button strip ───────────────────────────────────────────────────────
-function ActionStrip({ template, onMakeAvailable, onReturnToDraft, onArchive, onRestore, onDuplicate, pendingOp }: {
+function ActionStrip({ template, onMakeAvailable, onReturnToDraft, onArchive, onRestore, onDuplicate, onDelete, canDelete, pendingOp }: {
   template:        DocumentTemplate;
   onMakeAvailable: () => void;
   onReturnToDraft: () => void;
   onArchive:       () => void;
   onRestore:       () => void;
   onDuplicate:     () => void;
+  onDelete:        () => void;
+  /** Only where a delete can actually succeed. Fixtures have nowhere to
+   *  delete from, and a destructive button that refuses is worse than none. */
+  canDelete:       boolean;
   pendingOp:       string;
 }) {
   const { isNarrow } = useViewport();
@@ -202,6 +210,21 @@ function ActionStrip({ template, onMakeAvailable, onReturnToDraft, onArchive, on
           {pendingOp === "restore" ? "Restoring…" : "Restore to Draft"}
         </button>
       )}
+
+      {/* Delete — LAST in the row, and the only one tinted red. In a
+          horizontally scrolling strip the order is what conveys severity,
+          so the irreversible action sits furthest from the thumb's resting
+          position rather than beside "Use Template". */}
+      {canDelete && (
+        <button
+          onClick={onDelete}
+          disabled={busy}
+          style={{ display: "inline-flex", alignItems: "center", gap: 7, padding: "9px 16px", background: "#FEF2F2", color: "#B91C1C", borderRadius: 8, ...GF, fontSize: 13, fontWeight: 600, border: "none", cursor: busy ? "default" : "pointer", opacity: busy ? 0.55 : 1, flexShrink: 0, whiteSpace: "nowrap" }}
+        >
+          <Trash2 size={14} />
+          Delete
+        </button>
+      )}
     </div>
   );
 }
@@ -210,8 +233,36 @@ function ActionStrip({ template, onMakeAvailable, onReturnToDraft, onArchive, on
 function TemplateDetailInner() {
   const { isNarrow } = useViewport();
   const [panelOpen, setPanelOpen] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const platform = usePlatform();
+  const { run: runProcessing } = useProcessing();
+
+  const handleDelete = async () => {
+    if (!t) return;
+    setDeleteError(null);
+    try {
+      // The shared processing panel rather than a local spinner: it covers
+      // the route change too, so the person is not returned to a list that
+      // still shows the template they just removed.
+      await runProcessing(
+        {
+          message: "Deleting the template",
+          detail: "Documents already sent from it are not affected.",
+        },
+        () => deleteTemplate(platform.currentWorkspace?.id, t.id),
+      );
+      setConfirmDelete(false);
+      void navigate("/app/templates");
+    } catch (err) {
+      setConfirmDelete(false);
+      setDeleteError(err instanceof Error && err.message !== ""
+        ? err.message
+        : "The template could not be deleted.");
+    }
+  };
   const { templateId } = useParams<{ templateId: string }>();
-  const { state, loadTemplate, makeAvailable, returnToDraft, archive, restore, duplicate, clearOpMessage } = useTemplates();
+  const { state, loadTemplate, makeAvailable, returnToDraft, archive, restore, duplicate, clearOpMessage, canWrite } = useTemplates();
   const navigate = useNavigate();
   const t = state.activeTemplate;
 
@@ -316,8 +367,15 @@ function TemplateDetailInner() {
           onArchive={() => archive(t.id)}
           onRestore={() => restore(t.id)}
           onDuplicate={handleDuplicate}
+          onDelete={() => { setConfirmDelete(true); }}
+          canDelete={canWrite}
           pendingOp={state.pendingOp}
         />
+        {deleteError !== null && (
+          <div style={{ ...GF, marginTop: 10, padding: "10px 13px", borderRadius: 8, background: "#FEF2F2", border: "1px solid #FECACA", fontSize: 12.5, color: "#B91C1C" }}>
+            {deleteError}
+          </div>
+        )}
       </div>
 
       {/* Body */}
@@ -534,6 +592,14 @@ function TemplateDetailInner() {
         </div>
         </div>
       </div>
+
+      {confirmDelete && (
+        <ConfirmDeleteTemplate
+          templateName={t.name}
+          onCancel={() => { setConfirmDelete(false); }}
+          onConfirm={() => { void handleDelete(); }}
+        />
+      )}
     </div>
   );
 }
