@@ -131,35 +131,30 @@ export function MobileNav() {
           position: "fixed", top: 0, left: 0, right: 0, zIndex: Z.shell,
           height: 56, background: "#ffffff",
           borderBottom: `1px solid ${BORDER}`,
-          display: "flex", alignItems: "center", gap: 0,
-          paddingLeft: 4, paddingRight: 8,
+          display: "flex", alignItems: "center",
+          // The logo pinned to the very left edge and the hamburger to the
+          // very right, with nothing stretching either toward the middle —
+          // `justify-content: space-between` on the two end groups, and
+          // everything between them (bell, avatar) kept close to the
+          // hamburger rather than centered in the free space.
+          justifyContent: "space-between",
+          paddingLeft: 10, paddingRight: 6,
         }}
         aria-label="Mobile navigation bar"
       >
-        {/* Hamburger */}
-        <button
-          ref={triggerRef}
-          onClick={() => setDrawerOpen(true)}
-          aria-label="Open navigation"
-          aria-expanded={drawerOpen}
-          aria-controls="mobile-nav-drawer"
-          style={{ width: 44, height: 44, display: "flex", alignItems: "center", justifyContent: "center", background: "none", border: "none", color: "#64748B", cursor: "pointer", borderRadius: 8, flexShrink: 0 }}
-          className="mobile-nav-btn"
-        >
-          <Menu size={20} aria-hidden />
-        </button>
-
-        {/* Logo */}
-        <NavLink to="/app/dashboard" style={{ display: "flex", alignItems: "center", textDecoration: "none", flex: 1, paddingLeft: 4 }} aria-label="LAGDA — Dashboard">
+        {/* Logo — far left, and the largest it can be without crowding the
+            actions on the narrowest phones this still has to fit. */}
+        <NavLink to="/app/dashboard" style={{ display: "flex", alignItems: "center", textDecoration: "none", flexShrink: 0, minWidth: 0 }} aria-label="LAGDA — Dashboard">
           {/* The cropped header SVG, as the onboarding header uses: the full
               file's canvas is mostly whitespace, so at phone widths its
               wordmark rendered tiny. Cropped, the wordmark fills the width.
               Same on every page, not just the dashboard. */}
-          <img src={lagdaHeaderLogo} alt="LAGDA" style={{ display: "block", width: "clamp(136px, 40vw, 168px)", aspectRatio: "200 / 58", height: "auto", objectFit: "cover", objectPosition: "left center" }} />
+          <img src={lagdaHeaderLogo} alt="LAGDA" style={{ display: "block", width: "clamp(150px, 46vw, 200px)", maxWidth: "100%", aspectRatio: "200 / 58", height: "auto", objectFit: "cover", objectPosition: "left center" }} />
         </NavLink>
 
-        {/* Right actions */}
-        <div style={{ display: "flex", alignItems: "center", gap: 2 }}>
+        {/* Right actions: bell, avatar, then the hamburger last — at the
+            very right edge, where a nav trigger is expected. */}
+        <div style={{ display: "flex", alignItems: "center", gap: 2, flexShrink: 0 }}>
           <span data-guide="mobile-notification-bell" style={{ display: "flex" }}>
             <NotificationMenu align="right" />
           </span>
@@ -171,6 +166,17 @@ export function MobileNav() {
           }}>
             {userInitials}
           </div>
+          <button
+            ref={triggerRef}
+            onClick={() => setDrawerOpen(true)}
+            aria-label="Open navigation"
+            aria-expanded={drawerOpen}
+            aria-controls="mobile-nav-drawer"
+            style={{ width: 44, height: 44, display: "flex", alignItems: "center", justifyContent: "center", background: "none", border: "none", color: "#64748B", cursor: "pointer", borderRadius: 8, flexShrink: 0 }}
+            className="mobile-nav-btn"
+          >
+            <Menu size={20} aria-hidden />
+          </button>
         </div>
       </header>
 
