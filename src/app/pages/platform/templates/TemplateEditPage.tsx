@@ -260,6 +260,24 @@ function DocumentsTab({
 
       {doc === undefined ? (
         <p style={{ ...GF, fontSize: 13, color: "#94A3B8" }}>No document attached to this template.</p>
+      ) : draft.contentPageCount > 0 ? (
+        <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 12 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 14px", background: "white", border: "1px solid #E2E8F0", borderRadius: 9 }}>
+            <FileText size={15} color="#64748B" />
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ ...GF, fontSize: 13, fontWeight: 600, color: "#0F172A", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{doc.displayName}</div>
+              <div style={{ ...GF, fontSize: 11, color: "#94A3B8" }}>Authored in-app — {draft.contentPageCount} page{draft.contentPageCount !== 1 ? "s" : ""}</div>
+            </div>
+            {canWrite && (
+              <Link
+                to={`/app/templates/${draft.id}/author`}
+                style={{ ...GF, fontSize: 12, fontWeight: 600, color: AZURE, textDecoration: "none", flexShrink: 0 }}
+              >
+                Edit content
+              </Link>
+            )}
+          </div>
+        </div>
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 12 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 14px", background: "white", border: "1px solid #E2E8F0", borderRadius: 9 }}>
@@ -311,7 +329,7 @@ function DocumentsTab({
       )}
 
       {canWrite && doc === undefined && (
-        <div style={{ marginTop: 12 }}>
+        <div style={{ marginTop: 12, display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
           <input
             ref={fileInputRef}
             type="file"
@@ -331,6 +349,14 @@ function DocumentsTab({
             <Plus size={13} />
             Add document
           </button>
+          <span style={{ ...GF, fontSize: 12, color: "#94A3B8" }}>or</span>
+          <Link
+            to={`/app/templates/${draft.id}/author`}
+            style={{ display: "inline-flex", alignItems: "center", gap: 7, padding: "8px 14px", border: "1px solid #E2E8F0", borderRadius: 8, background: "white", color: "#0F172A", ...GF, fontSize: 12, fontWeight: 600, textDecoration: "none", minHeight: 44, boxSizing: "border-box" }}
+          >
+            <Type size={13} />
+            Author a document instead
+          </Link>
         </div>
       )}
 

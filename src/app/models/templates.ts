@@ -11,7 +11,7 @@ import type {
   PrepRoutingConfig,
 } from "./prepare";
 import type { RoutingMode }     from "./transaction-detail";
-import type { FieldDefinition } from "./field-editor";
+import type { FieldDefinition, NormalizedRect } from "./field-editor";
 
 // ── Re-exports for consumers ──────────────────────────────────────────────────
 export type { PrepParticipantRole, PrepAuthMethodId, RoutingMode };
@@ -176,6 +176,26 @@ export interface TemplateDocument {
   mimeType?: string;
 }
 
+// ── Authored document content (066) ───────────────────────────────────────────
+//
+// The alternative to attaching an uploaded document: fixed-position text
+// blocks on blank pages, in the SAME normalized-rectangle geometry as
+// `TemplateField`/`FieldDefinition` — this mirrors "Place Fields" exactly,
+// just drawing text into a box instead of reading a value out of one.
+// Saving calls generate-document, which renders these into a real PDF and
+// attaches it to the template the same way an upload does.
+
+export type TemplateContentBlockAlign = "left" | "center" | "right";
+
+export interface TemplateContentBlock {
+  pageNumber: number;
+  rect:       NormalizedRect;
+  text:       string;
+  fontSize?:  number;
+  bold?:      boolean;
+  align?:     TemplateContentBlockAlign;
+}
+
 // ── Template variable ─────────────────────────────────────────────────────────
 
 export type TemplateVariableType =
@@ -337,6 +357,11 @@ export interface DocumentTemplate {
   settings:       TemplateRequestSettings;
   variables:      TemplateVariable[];
   fields:         TemplateField[];
+  /** 066. Empty for a template with nothing authored — including every
+   *  template with an UPLOADED document instead, which has no content
+   *  blocks of its own. */
+  contentBlocks:      TemplateContentBlock[];
+  contentPageCount:   number;
   usageSummary:   TemplateUsageSummary;
   validation?:    TemplateValidationResult;
   createdAt:      string;

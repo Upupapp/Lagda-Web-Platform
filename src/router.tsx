@@ -738,6 +738,11 @@ const TemplateFieldsPage = lazy(() =>
     default: m.TemplateFieldsPage,
   })),
 );
+const TemplateAuthorPage = lazy(() =>
+  import("./app/pages/platform/templates/TemplateAuthorPage").then((m) => ({
+    default: m.TemplateAuthorPage,
+  })),
+);
 const TemplatePreviewPage = lazy(() =>
   import("./app/pages/platform/templates/TemplatePreviewPage").then((m) => ({
     default: m.TemplatePreviewPage,
@@ -1960,6 +1965,7 @@ export const router = createBrowserRouter([
         ),
       },
       // templates/:templateId/fields — full-screen editor, registered as top-level route below
+      // templates/:templateId/author — full-screen editor, registered as top-level route below
 
       // Contacts (Command 22) — static paths before :contactId to prevent shadowing
       {
@@ -2662,6 +2668,17 @@ export const router = createBrowserRouter([
     element: (
       <Suspense fallback={null}>
         <TemplateFieldsPage />
+      </Suspense>
+    ),
+  },
+  // ── Template document authoring (066) — full-screen, outside PlatformLayout ─
+  // The alternative to uploading a document: author one from blank pages.
+  {
+    path: "/app/templates/:templateId/author",
+    errorElement: <PlatformRouteError />,
+    element: (
+      <Suspense fallback={null}>
+        <TemplateAuthorPage />
       </Suspense>
     ),
   },

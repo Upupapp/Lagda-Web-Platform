@@ -392,6 +392,8 @@ export function createBlankTemplate(name: string, category: DocumentTemplate["ca
     },
     variables:    [],
     fields:       [],
+    contentBlocks:    [],
+    contentPageCount: 0,
     usageSummary: { timesUsed: 0, lastUsedDate: null, recentDraftStarts: 0, relatedFixtureIds: [], demonstrationOnly: true },
     createdAt:    new Date().toISOString(),
     updatedAt:    new Date().toISOString(),
