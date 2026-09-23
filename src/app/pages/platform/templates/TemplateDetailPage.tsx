@@ -321,11 +321,17 @@ function TemplateDetailInner() {
     );
   }
 
+  // "Approval-based" on its own overstates what happens: there is no
+  // distinct approval record anywhere in the system, and an approver's act
+  // is stored exactly as a signature is (see the backend contract's own
+  // WorkflowRoutingModeSchema comment). The qualifier is what RoutingStep.tsx
+  // and TemplateEditPage.tsx already say for the same mode; this was the one
+  // remaining spot that dropped it.
   const routingLabelMap: Record<string, string> = {
     sequential:     "Sequential",
     parallel:       "Parallel (everyone at once)",
     mixed:          "Mixed",
-    "approval-based":"Approval-based",
+    "approval-based":"Approval-based — approver goes first, a decline ends the request",
   };
 
   return (
