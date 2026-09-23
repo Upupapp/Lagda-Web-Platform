@@ -16,7 +16,9 @@ import { describe, it, expect } from "vitest";
 import {
   resolveTemplateApplication, routingOrdersFor,
 } from "../template-apply";
-import type { TemplateRolePlaceholder, TemplateRoleMapping } from "../../../models/templates";
+import type {
+  TemplateRolePlaceholder, TemplateRoleMapping, TemplateField,
+} from "../../../models/templates";
 
 // Stable ids, so a test can assert on them without matching a timestamp.
 function sequentialIds(): () => string {
@@ -73,6 +75,22 @@ const resolve = (
   newId: sequentialIds(),
   ...input,
 });
+
+function field(over: Partial<TemplateField> = {}): TemplateField {
+  return {
+    id: "tf_1",
+    type: "signature",
+    documentId: "doc-1",
+    pageId: "page-1",
+    rect: { x: 0.1, y: 0.2, width: 0.3, height: 0.05 },
+    placeholderId: "ph_1",
+    label: "Signature",
+    required: true,
+    layer: 0,
+    demonstrationOnly: false,
+    ...over,
+  };
+}
 
 // ── 1. A real pre-filled draft ──────────────────────────────────────────────
 
@@ -544,5 +562,101 @@ describe("malformed role-slot data is refused outright", () => {
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     expect(result.application.participants).toHaveLength(1);
+  });
+});
+
+// ── Field resolution ─────────────────────────────────────────────────────────
+
+describe("a template's field layout is resolved to the mapped participants", () => {
+  it("resolves a field's placeholderId to the real participant id", () => {
+    const result = resolve({ fields: [field({ placeholderId: "ph_1" })] });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.application.fields).toEqual([
+      expect.objectContaining({ participantId: "pax_1", pageNumber: 1 }),
+    ]);
+  });
+
+  it("carries the geometry through untouched", () => {
+    const rect = { x: 0.15, y: 0.42, width: 0.25, height: 0.08 };
+    const result = resolve({
+      fields: [field({ rect, type: "checkbox", label: "Agree", required: false, layer: 3 })],
+    });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.application.fields?.[0]).toMatchObject({
+      rect, type: "checkbox", label: "Agree", required: false, layer: 3,
+    });
+  });
+
+  it("parses the page number out of the synthetic pageId", () => {
+    const result = resolve({ fields: [field({ pageId: "page-3" })] });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.application.fields?.[0]?.pageNumber).toBe(3);
+  });
+
+  it("drops a field whose placeholder was left unmapped (an optional slot skipped)", () => {
+    const result = resolve({
+      placeholders: [
+        slot({ id: "s", label: "Signer", role: "signer" }),
+        slot({ id: "o", label: "Optional", role: "signer", mustMapToParticipant: false }),
+      ],
+      roleMappings: [mapping({ placeholderId: "s", displayName: "S", email: "s@x.test" })],
+      fields: [
+        field({ placeholderId: "s" }),
+        field({ placeholderId: "o", id: "tf_2" }),
+      ],
+    });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    // Only the mapped slot's field survives — an unassigned field has no
+    // recipient the backend could ever save it against.
+    expect(result.application.fields).toHaveLength(1);
+    expect(result.application.fields?.[0]?.participantId)
+      .toBe(result.application.participants[0]?.id);
+  });
+
+  it("drops a sender-prefill field (no placeholder at all)", () => {
+    const result = resolve({ fields: [field({ placeholderId: null })] });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.application.fields ?? []).toEqual([]);
+  });
+
+  it("drops a field whose pageId is not the expected synthetic format", () => {
+    const result = resolve({ fields: [field({ pageId: "bf_something_else" })] });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.application.fields ?? []).toEqual([]);
+  });
+
+  it("omits `fields` entirely for a template with no field layout", () => {
+    const result = resolve({});
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.application.fields).toBeUndefined();
+  });
+
+  it("resolves several fields across several roles", () => {
+    const result = resolve({
+      placeholders: [
+        slot({ id: "ph_appr", label: "HR Approver", role: "approver", routingStep: 1 }),
+        slot({ id: "ph_sign", label: "New Employee", role: "signer", routingStep: 2 }),
+      ],
+      roleMappings: [
+        mapping({ placeholderId: "ph_appr", displayName: "Ana", email: "ana@x.test" }),
+        mapping({ placeholderId: "ph_sign", displayName: "Ben", email: "ben@x.test" }),
+      ],
+      fields: [
+        field({ id: "tf_appr", placeholderId: "ph_appr", type: "initials" }),
+        field({ id: "tf_sign", placeholderId: "ph_sign", type: "signature" }),
+      ],
+    });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    const byType = new Map(result.application.fields?.map(f => [f.type, f.participantId]));
+    expect(byType.get("initials")).toBe(result.application.participants[0]?.id);
+    expect(byType.get("signature")).toBe(result.application.participants[1]?.id);
   });
 });
