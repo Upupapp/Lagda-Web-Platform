@@ -12,6 +12,48 @@
 // No real credentials exist in this application. The fixture identity is
 // imported from tests/support/app.ts rather than restated here, so there is one
 // definition of the demonstration account in the browser suite.
+//
+// ── INTENDED RELOAD / SESSION BEHAVIOUR (the spec these tests assert) ────────
+//
+// Written down deliberately. The reload assertion below was inverted once to
+// match the product; a test that only mirrors current behaviour cannot catch
+// the product drifting. This is the intended contract, and the tests assert
+// THIS — if the product stops matching it, the product is wrong, not the test.
+//
+// 1. An ORDINARY SESSION survives a reload in the same tab. Reloading any
+//    /app/* route keeps the viewer signed in and on the page they were on.
+//    Rationale: losing a half-finished document to an accidental F5 is worse
+//    than the marginal risk of a session that outlives a page load.
+//
+// 2. A COLD BROWSER CONTEXT (no stored session) is gated on EVERY /app/*
+//    route, and the requested path survives the bounce as `returnTo`. Only an
+//    internal path may survive it.
+//
+// 3. NOTHING STRONGER THAN AN ORDINARY SESSION MAY PERSIST. Specifically, none
+//    of these may survive a reload such that the viewer skips the check:
+//      - a completed MFA challenge treated as a step-up grant,
+//      - a "recently re-authenticated" window for sensitive actions,
+//      - an unlocked signing or notarisation session,
+//      - elevated, delegated or impersonated permissions.
+//    Sensitive actions (disable MFA, continue signing, claim a signing
+//    handoff) re-prove the password AT THE MOMENT OF THE ACTION. They must
+//    never consult a persisted "already verified" flag.
+//
+// 4. SIGNING OUT clears the session and re-gates /app/*.
+//
+// 5. Persistence is MOCK-BUILD ONLY. Against a real backend the session is
+//    re-derived from GET /me on every load and nothing in client storage is
+//    trusted as proof of identity, role or permission.
+//
+// Audited against the code on 2026-09-23: the persisted record is
+// {user, workspaces, currentWorkspace, subscription, role, notifications} and
+// carries no MFA, step-up, re-auth, unlock or elevation flag, so (3) holds.
+// Two deviations from (2) are known and tracked, NOT accepted:
+//   - /app/templates/:templateId/fields is registered outside PlatformLayout
+//     and has no session guard (PrepareRoot is the pattern it should follow).
+//   - The recipient signing-session cookie is server-issued in a separate
+//     realm; its lifetime is set server-side and is not verifiable from this
+//     repository.
 
 import { test, expect } from "@playwright/test";
 import type { Page } from "@playwright/test";
