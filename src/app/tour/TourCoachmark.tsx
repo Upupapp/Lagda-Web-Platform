@@ -1,6 +1,8 @@
 // The tour's coach-mark card: title, description, Next/Back/Skip, step
 // counter. Positioned near its target with a fallback order
-// (below → above → side → centered bottom sheet on narrow viewports).
+// (below → above → side → centered).
+// With no anchor it centres: a centered card on wide viewports, a bottom
+// sheet only on narrow ones.
 // role="dialog" / aria-modal="false" — this is explain-only (the target is
 // never interactive during a step), so the card is focusable and
 // Escape-dismissable without trapping focus away from the rest of the page.
@@ -8,15 +10,23 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { X } from "lucide-react";
 import type { GuideStep } from "./types";
+import { TOUR_MOBILE_BREAKPOINT } from "./tourConfig";
 import { Z } from "../utils/z-index";
 
 const GF = { fontFamily: "'Geist', sans-serif" };
 const CARD_WIDTH = 340;
 const GAP = 14;
-const MOBILE_BREAKPOINT = 640;
 
 interface TourCoachmarkProps {
   step: GuideStep;
+  /**
+   * The `data-guide` value actually spotlighted by TourOverlay — `step.target`
+   * or `step.mobileTarget`, resolved by TourContext at the current width. The
+   * card must anchor to the same node the spotlight cuts out; anchoring to
+   * `step.target` instead pointed the card at a `display:none` desktop header
+   * button (a zero-size rect at 0,0) whenever a mobile step was showing.
+   */
+  resolvedTarget: string | undefined;
   stepNumber: number;
   stepCount: number;
   canGoBack: boolean;
@@ -41,10 +51,10 @@ function usePrefersReducedMotion(): boolean {
 
 function useIsNarrowViewport(): boolean {
   const [narrow, setNarrow] = useState(
-    typeof window !== "undefined" ? window.innerWidth < MOBILE_BREAKPOINT : false,
+    typeof window !== "undefined" ? window.innerWidth < TOUR_MOBILE_BREAKPOINT : false,
   );
   useEffect(() => {
-    function handler() { setNarrow(window.innerWidth < MOBILE_BREAKPOINT); }
+    function handler() { setNarrow(window.innerWidth < TOUR_MOBILE_BREAKPOINT); }
     window.addEventListener("resize", handler);
     return () => window.removeEventListener("resize", handler);
   }, []);
@@ -68,6 +78,12 @@ function computePosition(target: string | undefined, preferred: GuideStep["place
   if (!el) return { placement: "center" };
 
   const r = el.getBoundingClientRect();
+  // A `display:none` node still matches the selector and reports an all-zero
+  // rect, which would anchor the card to the top-left corner. `platform-sidebar-nav`
+  // is present twice (desktop aside + mobile drawer) and only one is ever laid
+  // out, so this is reachable on any viewport — treat it as unanchored.
+  if (r.width === 0 && r.height === 0) return { placement: "center" };
+
   const vw = window.innerWidth;
   const vh = window.innerHeight;
 
@@ -94,12 +110,12 @@ function computePosition(target: string | undefined, preferred: GuideStep["place
     }
   }
 
-  // Nothing fit — centered bottom sheet fallback.
+  // Nothing fit — centered fallback.
   return { placement: "center" };
 }
 
 export function TourCoachmark({
-  step, stepNumber, stepCount, canGoBack, isLastStep, onNext, onBack, onSkip,
+  step, resolvedTarget, stepNumber, stepCount, canGoBack, isLastStep, onNext, onBack, onSkip,
 }: TourCoachmarkProps) {
   const cardRef = useRef<HTMLDivElement>(null);
   const nextRef = useRef<HTMLButtonElement>(null);
@@ -108,8 +124,8 @@ export function TourCoachmark({
   const [position, setPosition] = useState<Position>({ placement: "center" });
 
   const recompute = useCallback(() => {
-    setPosition(computePosition(step.target, step.placement));
-  }, [step.target, step.placement]);
+    setPosition(computePosition(resolvedTarget, step.placement));
+  }, [resolvedTarget, step.placement]);
 
   useEffect(() => {
     recompute();
@@ -133,6 +149,10 @@ export function TourCoachmark({
     return () => clearTimeout(t);
   }, [step.id, reducedMotion]);
 
+  // Focus on the way OUT is restored by TourContext.endTour, which owns the
+  // "what had focus before the tour started" reference. Deliberately not
+  // duplicated here.
+
   // Escape closes and persists as skipped.
   useEffect(() => {
     function handler(e: KeyboardEvent) {
@@ -145,9 +165,12 @@ export function TourCoachmark({
     return () => document.removeEventListener("keydown", handler, true);
   }, [onSkip]);
 
-  const useBottomSheet = isNarrow || position.placement === "center";
-
-  const style: React.CSSProperties = useBottomSheet
+  // The bottom sheet is a narrow-viewport treatment ONLY. A wide viewport with
+  // no anchor (placement "center") gets a centered card of the same width as an
+  // anchored one — a full-bleed sheet across a 1440px window sits on top of the
+  // sidebar footer and the account menu, which breaks the explain-only contract
+  // in the header comment (the rest of the page must stay operable).
+  const style: React.CSSProperties = isNarrow
     ? {
         position: "fixed",
         left: 0,
@@ -157,16 +180,27 @@ export function TourCoachmark({
         maxHeight: "70vh",
         borderRadius: "16px 16px 0 0",
       }
-    : {
-        position: "fixed",
-        top: position.top,
-        left: position.left,
-        bottom: position.bottom,
-        right: position.right,
-        width: CARD_WIDTH,
-        maxWidth: "calc(100vw - 24px)",
-        borderRadius: 14,
-      };
+    : position.placement === "center"
+      ? {
+          position: "fixed",
+          top: "50%",
+          left: "50%",
+          transform: "translate(-50%, -50%)",
+          width: CARD_WIDTH,
+          maxWidth: "calc(100vw - 24px)",
+          maxHeight: "80vh",
+          borderRadius: 14,
+        }
+      : {
+          position: "fixed",
+          top: position.top,
+          left: position.left,
+          bottom: position.bottom,
+          right: position.right,
+          width: CARD_WIDTH,
+          maxWidth: "calc(100vw - 24px)",
+          borderRadius: 14,
+        };
 
   return (
     <div
@@ -175,6 +209,7 @@ export function TourCoachmark({
       aria-modal="false"
       aria-labelledby="tour-coachmark-title"
       aria-describedby="tour-coachmark-desc"
+      className="tour-card"
       style={{
         ...style,
         zIndex: Z.tourCoachmark,
@@ -258,8 +293,23 @@ export function TourCoachmark({
         .tour-next-btn:focus-visible { outline: 2px solid #0078D4; outline-offset: 2px; }
         .tour-back-btn:hover { background: #F8FAFC; }
         .tour-next-btn:hover { background: #0B63AD; }
+        /* SCOPED to the coach-mark. This used to be a bare \`*\` with
+           \`!important\`, which is a component-local stylesheet rewriting
+           motion for the WHOLE DOCUMENT: while the tour was mounted — and it
+           auto-starts on every new account's first dashboard visit — every
+           animation and transition on the page collapsed to none.
+
+           That is not what reduced motion means here. theme.css deliberately
+           CLAMPS instead (0.01ms duration, iteration-count 1), so an animation
+           still runs and still completes; obliterating animation-name broke
+           the dashboard refresh spinner outright, and the effect depended on
+           whether the tour happened to be open. */
         @media (prefers-reduced-motion: reduce) {
-          * { transition: none !important; animation: none !important; }
+          .tour-card, .tour-card *,
+          .tour-icon-btn, .tour-text-btn, .tour-back-btn, .tour-next-btn {
+            transition: none !important;
+            animation: none !important;
+          }
         }
       `}</style>
     </div>

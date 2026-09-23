@@ -20,6 +20,12 @@
 
 import type { GuideStep } from "./types";
 
+// Mirrors PlatformLayout.tsx's desktop/mobile chrome breakpoint. Defined once
+// here and imported by both TourContext (which picks `target` vs
+// `mobileTarget`) and TourCoachmark (which picks the bottom-sheet treatment),
+// so the card can never render a desktop layout against mobile chrome.
+export const TOUR_MOBILE_BREAKPOINT = 768;
+
 function hasGuideTarget(target: string): boolean {
   if (typeof document === "undefined") return false;
   return document.querySelector(`[data-guide="${target}"]`) !== null;

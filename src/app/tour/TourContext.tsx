@@ -9,7 +9,7 @@ import {
 } from "react";
 import { useNavigate, useLocation } from "react-router";
 import { usePlatform } from "../context/PlatformContext";
-import { TOUR_STEPS } from "./tourConfig";
+import { TOUR_STEPS, TOUR_MOBILE_BREAKPOINT } from "./tourConfig";
 import type { GuideStep, TourStatus } from "./types";
 import { readTourState, writeTourState } from "./useTourPersistence";
 import { ENABLE_PRODUCT_TOUR } from "./featureFlag";
@@ -19,15 +19,12 @@ import { TourCoachmark } from "./TourCoachmark";
 const DEFAULT_TARGET_TIMEOUT_MS = 3000;
 const SETTLE_POLL_INTERVAL_MS = 150;
 const SETTLE_POLL_MAX_MS = 1500;
-// Mirrors PlatformLayout.tsx's 768px desktop/mobile chrome breakpoint. Both
-// the desktop header and the mobile nav drawer are always mounted (CSS
+// Both the desktop header and the mobile nav drawer are always mounted (CSS
 // display:none hides the inactive one), so a step whose target lives in one
 // but not the other needs to pick the right `data-guide` value for whichever
 // chrome is actually visible at the current width.
-const MOBILE_BREAKPOINT = 768;
-
 function isMobileViewport(): boolean {
-  return typeof window !== "undefined" && window.innerWidth < MOBILE_BREAKPOINT;
+  return typeof window !== "undefined" && window.innerWidth < TOUR_MOBILE_BREAKPOINT;
 }
 
 function effectiveTarget(step: GuideStep): string | undefined {
@@ -52,6 +49,13 @@ const TourContext = createContext<TourContextValue | null>(null);
 function hasGuideTarget(target: string): boolean {
   if (typeof document === "undefined") return false;
   return document.querySelector(`[data-guide="${target}"]`) !== null;
+}
+
+/** A focus target worth returning to — still attached, and not the page itself. */
+function isRestorable(el: HTMLElement | null): el is HTMLElement {
+  if (!el) return false;
+  if (el === document.body || el === document.documentElement) return false;
+  return document.contains(el);
 }
 
 function sleep(ms: number): Promise<void> {
@@ -114,11 +118,24 @@ function TourProviderInner({ children }: { children: ReactNode }) {
       });
     }
     // Restore focus to whatever had it before the tour started.
-    const el = previouslyFocused.current;
+    //
+    // The opener is usually gone or never existed: the tour auto-starts right
+    // after a sign-in redirect, so `document.activeElement` at that moment is
+    // <body>. Restoring THAT is the same as dropping focus — a keyboard user
+    // who presses Escape lands nowhere and has to Tab from the top of the
+    // page. Fall back to the control that reopens the tour, then to the page
+    // heading, so focus always ends on something that explains where it is.
+    const opener = previouslyFocused.current;
     previouslyFocused.current = null;
-    if (el && document.contains(el)) {
-      try { el.focus(); } catch { /* ignore */ }
+    const el = isRestorable(opener)
+      ? opener
+      : (document.querySelector<HTMLElement>('[data-guide="header-restart-tour-btn"]')
+        ?? document.querySelector<HTMLElement>("main h1"));
+    if (!el) return;
+    if (!el.hasAttribute("tabindex") && el.tabIndex < 0) {
+      el.setAttribute("tabindex", "-1");
     }
+    try { el.focus(); } catch { /* a detached or hidden node — leave focus alone */ }
   }, [platform.user?.id]);
 
   const goToStep = useCallback(async (index: number, steps: GuideStep[]) => {
@@ -289,6 +306,7 @@ function TourProviderInner({ children }: { children: ReactNode }) {
           <TourOverlay target={effectiveTarget(currentStep)} />
           <TourCoachmark
             step={currentStep}
+            resolvedTarget={effectiveTarget(currentStep)}
             stepNumber={stepIndex + 1}
             stepCount={eligibleSteps.length}
             canGoBack={stepIndex > 0}

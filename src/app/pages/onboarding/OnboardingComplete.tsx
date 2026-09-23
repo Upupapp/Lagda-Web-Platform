@@ -270,7 +270,7 @@ export function OnboardingComplete() {
         )}
       </div>
 
-      <style>{`@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }`}</style>
+      {/* No local reduced-motion rule: theme.css clamps motion document-wide. */}
     </div>
   );
 }

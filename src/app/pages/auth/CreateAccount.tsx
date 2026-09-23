@@ -783,7 +783,6 @@ export function CreateAccount() {
         @media (max-width: 680px) {
           .create-account-field-grid { grid-template-columns: 1fr; gap: 16px; }
         }
-        @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
       `}</style>
     </>
   );

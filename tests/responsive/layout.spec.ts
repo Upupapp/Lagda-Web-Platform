@@ -288,22 +288,14 @@ for (const route of ROUTES) {
     test("keeps every keyboard-reachable control in the content region visible", async ({ page }) => {
       const width = page.viewportSize()?.width ?? 0;
 
-      // KNOWN DEFECT — LAGDA-RESP-1 (reported, not patched here).
-      // PlatformDashboard's `.dashboard-layout` uses `grid-template-columns: 1fr`.
-      // A `1fr` track floors at min-content, and a `white-space: nowrap`
-      // document title inside it forces that floor to ~533px, so the whole main
-      // column overflows any viewport narrower than that. `.platform-main` has
-      // `overflow-x: hidden`, so the surplus is clipped away rather than
-      // scrollable — yet the links inside it ("All documents", "View all",
-      // "Manage", "Open Bulk Send", ...) stay in the tab order at x >= 427.
-      // Fix is `grid-template-columns: minmax(0, 1fr)` in PlatformDashboard.tsx.
-      // 500px is used as the threshold rather than the measured 533px so the
-      // condition does not straddle the failure point on a machine with
-      // slightly different font metrics.
-      test.fail(
-        route.path === "/app/dashboard" && width < 500,
-        "LAGDA-RESP-1: dashboard main column overflows and is clipped below ~533px",
-      );
+      // LAGDA-RESP-1 — FIXED, and this is now the regression guard.
+      //
+      // `.dashboard-layout` used `grid-template-columns: 1fr`. A `1fr` track's
+      // minimum is `auto`, so it floors at min-content — and a nowrap document
+      // title forced that floor to ~533px. The main column overflowed every
+      // narrower viewport, and `.platform-main`'s `overflow-x: hidden` clipped
+      // the surplus rather than making it scrollable, leaving links tabbable at
+      // x >= 427 with no way to reach them. Now `minmax(0, 1fr)`.
 
       const result = await scanForHiddenTabbables(page, { within: "#plat-main" });
 
@@ -392,18 +384,14 @@ test.describe("platform shell", () => {
       "the drawer only exists below the 768px breakpoint",
     );
 
-    // KNOWN DEFECT — LAGDA-RESP-2 (reported, not patched here).
-    // MobileNav renders #mobile-nav-drawer unconditionally and hides it with
-    // `transform: translateX(-100%)` alone. Transform does not remove anything
-    // from the tab order, so all 14 drawer controls (Prepare Document,
-    // Dashboard ... Settings, Sign Out, Close navigation) stay tabbable while
-    // the drawer is shut, sitting at x -270..-11. A keyboard user tabbing off
-    // the hamburger disappears into an invisible menu. The element also carries
-    // role="dialog" + aria-modal permanently.
-    // Fix: gate rendering on `drawerOpen`, or add `inert` / `visibility: hidden`
-    // while closed. Remove this annotation once fixed — Playwright then reports
-    // the unexpected pass and forces the update.
-    test.fail(true, "LAGDA-RESP-2: closed mobile drawer keeps 14 controls in the tab order");
+    // LAGDA-RESP-2 — FIXED, and this is now the regression guard.
+    //
+    // The drawer used to be hidden by `transform: translateX(-100%)` alone,
+    // which moves it off-screen and changes nothing else: all 14 controls
+    // stayed tabbable at x -270..-11, so a keyboard user tabbing off the
+    // hamburger vanished into an invisible menu, and `role="dialog"` +
+    // `aria-modal` were announced permanently. MobileNav now sets `inert`,
+    // `visibility: hidden`, and applies the dialog role only while open.
 
     await expect(page.getByRole("button", { name: /open navigation/i })).toHaveAttribute(
       "aria-expanded",

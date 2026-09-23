@@ -266,7 +266,10 @@ export function BookADemo() {
         </div>
       </div>
 
-      <style>{`@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }`}</style>
+      {/* No local reduced-motion rule. theme.css already clamps every
+          animation and transition document-wide under
+          `prefers-reduced-motion: reduce`; a component-local `*` rule with
+          `!important` adds nothing here and leaks to the whole page. */}
     </div>
   );
 }

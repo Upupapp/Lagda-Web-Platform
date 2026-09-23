@@ -1279,14 +1279,24 @@ function PlatformDashboardMockDemo() {
 
       <style>{`
         /* Two-column layout */
+        /* LAGDA-RESP-1. Always minmax(0, 1fr), never a bare 1fr.
+           A 1fr track's minimum is auto, so it floors at the content's
+           min-content width - and a white-space:nowrap document title in here
+           forced that floor to ~533px. The column then overflowed every
+           narrower viewport, and because .platform-main sets overflow-x:hidden
+           the surplus was CLIPPED rather than scrollable: links stayed in the
+           tab order at x >= 427 with no way to reach them.
+           minmax(0, 1fr) lets the track shrink below its content.
+           NOTE: no backticks in this comment - it lives inside a JS template
+           literal, and one would terminate it. */
         .dashboard-layout {
           display: grid;
-          grid-template-columns: 1fr;
+          grid-template-columns: minmax(0, 1fr);
           gap: 0;
         }
         @media (min-width: 900px) {
           .dashboard-layout {
-            grid-template-columns: 1fr 320px;
+            grid-template-columns: minmax(0, 1fr) 320px;
             gap: 24px;
             align-items: start;
           }

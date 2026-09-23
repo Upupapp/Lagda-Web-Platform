@@ -33,6 +33,22 @@ export const Z = {
   /** Mobile navigation and side panels. Their scrim uses `drawerScrim`. */
   drawerScrim: 49,
   drawer: 50,
+  /**
+   * Product Tour spotlight backdrop. Must sit above the shell, in-page
+   * dropdowns AND the mobile nav drawer, because tour steps spotlight targets
+   * inside all three.
+   *
+   * It must sit BELOW `modalScrim`/`modal`. The tour is explain-only and
+   * `aria-modal="false"`; a real dialog is `aria-modal="true"` and is asking
+   * the viewer for a decision, so it wins. When the tour outranked modals
+   * (it was at 95/96, above everything but the skip link) the coach-mark
+   * covered the centred sign-out confirmation and made signing out impossible
+   * for as long as the tour was open — `<p id="tour-coachmark-desc">`
+   * intercepted the click on the confirm button.
+   */
+  tourOverlay: 51,
+  /** Product Tour coach-mark card — above its own overlay, below a real dialog. */
+  tourCoachmark: 52,
   /** Dialogs, sheets and confirmations. Their scrim uses `modalScrim`. */
   modalScrim: 59,
   modal: 60,
@@ -42,10 +58,6 @@ export const Z = {
   toast: 80,
   /** Full-screen branded loading sequence. */
   loader: 90,
-  /** Product Tour spotlight backdrop — must sit above the shell and page content it dims. */
-  tourOverlay: 95,
-  /** Product Tour coach-mark card — above its own overlay. */
-  tourCoachmark: 96,
   /** Skip link — the keyboard escape hatch outranks everything. */
   skipLink: 100,
 } as const;

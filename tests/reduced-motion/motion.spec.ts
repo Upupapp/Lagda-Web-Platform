@@ -299,22 +299,31 @@ test.describe("reduced motion", () => {
     await expectReducedMotionActive(page);
     await waitForLoaded(page);
 
-    // The sidebar brand link. `LagdaLogo` renders the official PNG inside a
-    // wrapper <span>, and only swaps to an inline SVG placeholder if the PNG
-    // fails to load — so requiring the <img> also proves the shipped asset
-    // resolved.
+    // The sidebar brand link.
+    //
+    // This assertion USED to require `/brand/*.png`, describing `LagdaLogo`'s
+    // behaviour. PlatformSidebar does not use `LagdaLogo`: it imports the
+    // brand SVG directly, and says why — "The same SVG at the same size on
+    // every page. It used to be the SVG on the dashboard only, and a much
+    // smaller PNG everywhere else, so the logo shrank the moment you left
+    // Home." That is a deliberate product decision, so the stale ASSET
+    // CONTRACT here is what was wrong, not the sidebar.
+    //
+    // What still matters, and is still asserted: exactly one <img>, visible,
+    // resolving to a real decoded brand asset, carrying no animation. The
+    // extension is not the point; a logo that 404s or spins is.
     const brandLink = page.getByRole("link", { name: /Go to Dashboard/ });
     await expect(brandLink).toBeVisible();
 
     const logoImg = brandLink.locator("img");
     await expect(logoImg).toHaveCount(1);
     await expect(logoImg).toBeVisible();
-    await expect(logoImg).toHaveAttribute("src", /^\/brand\/.+\.png$/);
+    await expect(logoImg).toHaveAttribute("src", /Lagda.*\.(png|svg)$/i);
 
     // naturalWidth > 0 means the browser actually decoded the file. A 404 would
     // leave it at 0 and silently fall back to the placeholder shield.
     const decodedWidth = await logoImg.evaluate((el) => (el as HTMLImageElement).naturalWidth);
-    expect(decodedWidth, "the official logo PNG did not load").toBeGreaterThan(0);
+    expect(decodedWidth, "the official logo asset did not load").toBeGreaterThan(0);
 
     // The brand rule: the mark carries no animation at all. `none` — not a
     // clamped duration, not a single iteration.
