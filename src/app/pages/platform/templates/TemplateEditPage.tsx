@@ -155,6 +155,9 @@ function DocumentsTab({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  // Set only when the detach would actually lose something — see
+  // handleRemoveClick. Confirmed once, then handleRemove runs for real.
+  const [confirmDetach, setConfirmDetach] = useState(false);
 
   const doc = draft.documents[0];
 
@@ -204,6 +207,7 @@ function DocumentsTab({
   const handleRemove = async () => {
     if (!workspaceId) return;
     setError(null);
+    setConfirmDetach(false);
     setBusy(true);
     try {
       const updated = await run(
@@ -218,6 +222,22 @@ function DocumentsTab({
     } finally {
       setBusy(false);
     }
+  };
+
+  /**
+   * Detaching clears the WHOLE field layout — `detachWorkflowTemplateDocument`
+   * wipes it unconditionally, because a field's geometry is meaningless
+   * without the page count it was placed against. That is the right backend
+   * behaviour; what was missing was telling the person about it before it
+   * happens rather than after. A template with nothing placed loses nothing,
+   * so it detaches immediately — the same one-click behaviour as before.
+   */
+  const handleRemoveClick = () => {
+    if (draft.fields.length > 0) {
+      setConfirmDetach(true);
+      return;
+    }
+    void handleRemove();
   };
 
   return (
@@ -249,7 +269,7 @@ function DocumentsTab({
             {canWrite && (
               <button
                 type="button"
-                onClick={() => { void handleRemove(); }}
+                onClick={handleRemoveClick}
                 disabled={busy}
                 title="Remove document"
                 style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 30, height: 30, border: "none", borderRadius: 7, background: "none", color: busy ? "#CBD5E1" : "#DC2626", cursor: busy ? "default" : "pointer", flexShrink: 0 }}
@@ -258,6 +278,33 @@ function DocumentsTab({
               </button>
             )}
           </div>
+          {confirmDetach && (
+            <div style={{ padding: "12px 14px", background: "#FFFBEB", border: "1px solid #FDE68A", borderRadius: 9 }}>
+              <p style={{ ...GF, fontSize: 12.5, color: "#92400E", margin: "0 0 10px", lineHeight: 1.55 }}>
+                This will also remove all {draft.fields.length} placed field{draft.fields.length !== 1 ? "s" : ""} — a field's
+                position is meaningless without this document's page count, and there
+                is no undo.
+              </p>
+              <div style={{ display: "flex", gap: 8 }}>
+                <button
+                  type="button"
+                  onClick={() => { setConfirmDetach(false); }}
+                  disabled={busy}
+                  style={{ ...GF, padding: "7px 14px", borderRadius: 7, background: "white", border: "1px solid #FDE68A", color: "#92400E", fontSize: 12.5, fontWeight: 600, cursor: busy ? "default" : "pointer" }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { void handleRemove(); }}
+                  disabled={busy}
+                  style={{ ...GF, padding: "7px 14px", borderRadius: 7, background: "#DC2626", border: "none", color: "white", fontSize: 12.5, fontWeight: 700, cursor: busy ? "default" : "pointer" }}
+                >
+                  {busy ? "Removing…" : "Remove document and fields"}
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -588,12 +635,37 @@ function AuthTab({ draft, onChange }: { draft: DocumentTemplate; onChange: (patc
 }
 
 // ── Tab panel: Settings ────────────────────────────────────────────────────────
-function SettingsTab({ draft, onChange }: { draft: DocumentTemplate; onChange: (patch: Partial<DocumentTemplate>) => void }) {
+function SettingsTab({
+  draft, canWrite, onChange,
+}: {
+  draft: DocumentTemplate;
+  /** Whether this is a real, backend-stored template. Only
+   *  `completionCopySender` has a real producer there (`notifySenderOnComplete`
+   *  — see real/templates.service.ts's `defaultSettings`); every other
+   *  control below is disabled for one rather than accepting input that
+   *  looks saved and is discarded on reload. Fixture templates are
+   *  unaffected — the mock service genuinely holds whatever is typed here. */
+  canWrite: boolean;
+  onChange: (patch: Partial<DocumentTemplate>) => void;
+}) {
   const { isNarrow } = useViewport();
   const s = draft.settings;
   const patchSettings = (p: Partial<typeof s>) => onChange({ settings: { ...s, ...p } });
+  // Only for a REAL template — see this component's own `canWrite` doc.
+  const readOnly = canWrite;
   return (
     <div>
+      {readOnly && (
+        <div style={{ marginBottom: 16, padding: "10px 14px", background: "#F8FAFC", border: "1px solid #E2E8F0", borderRadius: 8 }}>
+          <p style={{ ...GF, fontSize: 12, color: "#94A3B8", margin: 0 }}>
+            Only “Send completion copy to sender” is saved today. The rest of
+            this tab describes behaviour the backend does not have yet, and is
+            shown read-only rather than accepting input that would be
+            discarded on reload.
+          </p>
+        </div>
+      )}
+      <fieldset disabled={readOnly} style={{ border: "none", padding: 0, margin: 0, opacity: readOnly ? 0.6 : 1 }}>
       <FormField label="Invitation Email Subject">
         <Input value={s.invitationSubject} onChange={v => patchSettings({ invitationSubject: v })} placeholder="Subject line…" />
       </FormField>
@@ -640,14 +712,15 @@ function SettingsTab({ draft, onChange }: { draft: DocumentTemplate; onChange: (
           )}
         </div>
       </div>
+      </fieldset>
       <div style={{ marginTop: 14 }}>
         <div style={{ ...GF, fontSize: 12, fontWeight: 600, color: "#64748B", marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.05em" }}>Completion Options</div>
         <label style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8, cursor: "pointer" }}>
           <input type="checkbox" checked={s.completionCopySender} onChange={e => patchSettings({ completionCopySender: e.target.checked })} />
           <span style={{ ...GF, fontSize: 13 }}>Send completion copy to sender</span>
         </label>
-        <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }}>
-          <input type="checkbox" checked={s.completionCopyParticipants} onChange={e => patchSettings({ completionCopyParticipants: e.target.checked })} />
+        <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: readOnly ? "default" : "pointer", opacity: readOnly ? 0.6 : 1 }}>
+          <input type="checkbox" checked={s.completionCopyParticipants} disabled={readOnly} onChange={e => patchSettings({ completionCopyParticipants: e.target.checked })} />
           <span style={{ ...GF, fontSize: 13 }}>Send completion copy to all participants</span>
         </label>
       </div>
@@ -713,24 +786,13 @@ function TemplateEditInner() {
   const canWrite = realTemplatesAvailable(workspaceId);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  // Set only when this save would orphan field placements — see handleSave.
+  // Confirming re-invokes performSave directly, bypassing the check.
+  const [confirmOrphanCount, setConfirmOrphanCount] = useState<number | null>(null);
 
-  const handleSave = async () => {
+  const performSave = async () => {
     if (!draft) return;
-    setSaveError(null);
-
-    if (!canWrite) {
-      setSaveError("Open a workspace to save changes to a template.");
-      return;
-    }
-    if (draft.name.trim() === "") {
-      setSaveError("Template name is required.");
-      return;
-    }
-    if (draft.placeholders.some(p => p.label.trim() === "")) {
-      setSaveError("Every role needs a name.");
-      return;
-    }
-
+    setConfirmOrphanCount(null);
     setSaving(true);
     try {
       await runProcessing(
@@ -753,6 +815,40 @@ function TemplateEditInner() {
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleSave = async () => {
+    if (!draft) return;
+    setSaveError(null);
+
+    if (!canWrite) {
+      setSaveError("Open a workspace to save changes to a template.");
+      return;
+    }
+    if (draft.name.trim() === "") {
+      setSaveError("Template name is required.");
+      return;
+    }
+    if (draft.placeholders.some(p => p.label.trim() === "")) {
+      setSaveError("Every role needs a name.");
+      return;
+    }
+
+    // A role removed from the draft leaves any field placed FOR it with a
+    // placeholderId nothing here names any more — updateWorkflowTemplate
+    // deletes exactly those, silently and correctly (an orphaned slot
+    // reference cannot be kept), but the sender who spent time placing them
+    // deserves to know before that happens, not after.
+    const currentPlaceholderIds = new Set(draft.placeholders.map(p => p.id));
+    const orphanCount = draft.fields
+      .filter(f => f.placeholderId !== null && !currentPlaceholderIds.has(f.placeholderId))
+      .length;
+    if (orphanCount > 0) {
+      setConfirmOrphanCount(orphanCount);
+      return;
+    }
+
+    await performSave();
   };
 
   if (state.activeLoading || !draft) {
@@ -802,6 +898,31 @@ function TemplateEditInner() {
             {saveError}
           </div>
         )}
+        {confirmOrphanCount !== null && (
+          <div style={{ ...GF, marginTop: 10, padding: "12px 14px", borderRadius: 8, background: "#FFFBEB", border: "1px solid #FDE68A" }}>
+            <p style={{ fontSize: 12.5, color: "#92400E", margin: "0 0 10px", lineHeight: 1.55 }}>
+              Removing {confirmOrphanCount === 1 ? "a role that has a field" : `roles that have ${confirmOrphanCount} fields`} placed
+              for {confirmOrphanCount === 1 ? "it" : "them"} will also remove {confirmOrphanCount === 1 ? "that field" : "those fields"} — a
+              field with no role to belong to cannot be kept. There is no undo.
+            </p>
+            <div style={{ display: "flex", gap: 8 }}>
+              <button
+                onClick={() => { setConfirmOrphanCount(null); }}
+                disabled={saving}
+                style={{ ...GF, padding: "7px 14px", borderRadius: 7, background: "white", border: "1px solid #FDE68A", color: "#92400E", fontSize: 12.5, fontWeight: 600, cursor: saving ? "default" : "pointer" }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => { void performSave(); }}
+                disabled={saving}
+                style={{ ...GF, padding: "7px 14px", borderRadius: 7, background: "#DC2626", border: "none", color: "white", fontSize: 12.5, fontWeight: 700, cursor: saving ? "default" : "pointer" }}
+              >
+                {saving ? "Saving…" : "Save and remove those fields"}
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Tabs */}
@@ -838,7 +959,7 @@ function TemplateEditInner() {
         {activeTab === "placeholders" && <PlaceholdersTab draft={draft} workspaceId={workspaceId} onChange={p => setDraft(d => d ? { ...d, ...p } : d)} />}
         {activeTab === "routing"      && <RoutingTab      draft={draft} onChange={p => setDraft(d => d ? { ...d, ...p } : d)} />}
         {activeTab === "auth"         && <AuthTab         draft={draft} onChange={p => setDraft(d => d ? { ...d, ...p } : d)} />}
-        {activeTab === "settings"     && <SettingsTab     draft={draft} onChange={p => setDraft(d => d ? { ...d, ...p } : d)} />}
+        {activeTab === "settings"     && <SettingsTab     draft={draft} canWrite={canWrite} onChange={p => setDraft(d => d ? { ...d, ...p } : d)} />}
         {activeTab === "variables"    && <VariablesTab    draft={draft} />}
       </div>
     </div>
