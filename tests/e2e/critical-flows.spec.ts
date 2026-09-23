@@ -32,8 +32,21 @@ const PLATFORM_HEADER = "header[aria-label='Platform header']";
 const dashboardHeading = (page: Page) =>
   page.getByRole("heading", { level: 1, name: /welcome back/i });
 
-const signInHeading = (page: Page) =>
-  page.getByRole("heading", { level: 1, name: /sign in to lagda/i });
+/**
+ * The rendered sign-in form.
+ *
+ * NOT a level-1 heading. `/sign-in` is a split layout: a marketing panel and
+ * the form. Its only `h1` is the marketing panel's — "Move important work
+ * forward." — and the form's own heading is a `<p>` ("Welcome back. Access
+ * your documents and workspace."), so `heading level=1 name=/sign in to lagda/i`
+ * matches nothing and never did. The form landmark is what these tests
+ * actually mean by "the public form rendered".
+ *
+ * That the sign-in route's sole `h1` is marketing copy rather than the page's
+ * purpose is a real accessibility problem; it is reported separately rather
+ * than papered over here, because fixing it changes the page, not this test.
+ */
+const signInForm = (page: Page) => page.getByRole("form", { name: /sign in form/i });
 
 /**
  * Fills and submits the real sign-in form.
@@ -190,15 +203,15 @@ test.describe("critical flows", () => {
 
   // ── 5. Direct load and reload of a gated report ────────────────────────────
 
-  test("a direct load of /app/reports/preparation is gated, honours returnTo, and re-gates on reload", async ({ page }) => {
+  test("a direct load of /app/reports/preparation is gated, honours returnTo, and survives reload", async ({ page }) => {
     const consoleErrors = failOnConsoleErrors(page);
 
-    // The session is in-memory only, so a cold load of any /app route is gated.
-    // What matters is that the requested path survives the bounce and that only
-    // an internal path can survive it.
+    // A cold browser context has no stored session, so a direct load of any
+    // /app route is gated. What matters is that the requested path survives
+    // the bounce and that only an internal path can survive it.
     await page.goto("/app/reports/preparation");
     await expect(page).toHaveURL(/\/sign-in\?returnTo=%2Fapp%2Freports%2Fpreparation$/);
-    await expect(signInHeading(page)).toBeVisible();
+    await expect(signInForm(page)).toBeVisible();
 
     await submitSignInForm(page);
 
@@ -210,13 +223,26 @@ test.describe("critical flows", () => {
     await waitForLoaded(page);
     await expect(page.locator("main h1")).toHaveCount(1);
 
-    // A reload discards the in-memory session by design. The requirement is that
-    // it lands back on the same gate with the path still preserved — never a
-    // blank shell, a crash, or a silent drop to the dashboard.
+    // A reload KEEPS the session and stays on the page.
+    //
+    // This assertion is inverted from what it was, deliberately. It used to
+    // expect the reload to bounce back to the gate, because the session was
+    // in-memory only. It is not any more: PlatformContext write-throughs the
+    // session to localStorage and restores it on load, explicitly so that "a
+    // refresh mid-session never silently drops back to signed-out". That is
+    // gated on `!USE_REAL_BACKEND` — against a real backend the session is
+    // re-derived from /me and nothing local is trusted.
+    //
+    // The security property this test exists for is untouched and is still
+    // asserted above: a COLD context (fresh storage) is gated, and the
+    // requested path survives the bounce. Signing out re-gates — covered by
+    // the sign-out test below.
     await page.reload();
-    await expect(page).toHaveURL(/\/sign-in\?returnTo=%2Fapp%2Freports%2Fpreparation$/);
-    await expect(signInHeading(page)).toBeVisible();
-    await expect(page.locator(PLATFORM_HEADER)).toHaveCount(0);
+    await expect(page).toHaveURL(/\/app\/reports\/preparation$/);
+    await expect(
+      page.getByRole("heading", { level: 1, name: "Bulk Send Preparation" }),
+    ).toBeVisible();
+    await expect(page.locator(PLATFORM_HEADER)).toBeVisible();
 
     expect(consoleErrors, `console errors at ${page.url()}`).toEqual([]);
   });
@@ -232,10 +258,18 @@ test.describe("critical flows", () => {
     await page.getByRole("button", { name: /account menu for/i }).click();
     await page.getByRole("menuitem", { name: /sign out/i }).click();
 
+    // Sign-out is confirmed, not immediate. `useSignOutFlow` added this
+    // deliberately — the sidebar's Sign Out sits directly under the workspace
+    // switcher, so a single misclick used to end the session. The menu item
+    // only opens the confirmation; the session ends on "Sign out" here.
+    const confirmSignOut = page.getByRole("alertdialog", { name: /sign out of lagda/i });
+    await expect(confirmSignOut).toBeVisible();
+    await confirmSignOut.getByRole("button", { name: /^sign out$/i }).click();
+
     // Landed on a public route with the public form rendered, and the
     // authenticated shell is gone rather than merely hidden.
     await expect(page).toHaveURL(/\/sign-in(\?|$)/);
-    await expect(signInHeading(page)).toBeVisible();
+    await expect(signInForm(page)).toBeVisible();
     await expect(page.locator(PLATFORM_HEADER)).toHaveCount(0);
 
     // The dashboard is not reachable again without signing in.
