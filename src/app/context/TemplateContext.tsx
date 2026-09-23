@@ -22,6 +22,7 @@ import type { TemplateListResult, TemplateStatusMutationResult, TemplateDuplicat
 import {
   listTemplates as sourceList,
   getTemplate as sourceGet,
+  duplicateTemplate as sourceDuplicate,
   realTemplatesAvailable,
 } from "../services/templates-source";
 import { usePlatform } from "./PlatformContext";
@@ -239,6 +240,26 @@ export function TemplateProvider({ children }: { children: React.ReactNode }) {
 
   const duplicate = useCallback(async (id: DocumentTemplateId, onDone?: (r: TemplateDuplicateResult) => void) => {
     dispatch({ type: "OP_START", op: "duplicate" });
+
+    if (realTemplatesAvailable(workspaceId)) {
+      // The source is whatever this session already loaded — Duplicate is
+      // only ever clicked from a page that has it, and a second fetch would
+      // just be the same read twice.
+      const source = state.activeTemplate;
+      if (source === null || source.id !== id) {
+        dispatch({ type: "OP_ERROR", error: "Duplicate failed." });
+        return;
+      }
+      try {
+        const created = await sourceDuplicate(workspaceId, source);
+        dispatch({ type: "OP_SUCCESS", message: `"${created.name}" created.` });
+        onDone?.({ ok: true, newId: created.id, template: created, demonstrationOnly: true });
+      } catch {
+        dispatch({ type: "OP_ERROR", error: "The template could not be duplicated." });
+      }
+      return;
+    }
+
     const r = await asyncDuplicate(id);
     if (r.ok) {
       dispatch({ type: "OP_SUCCESS", message: `"${r.template?.name}" created as a draft.` });
@@ -246,7 +267,7 @@ export function TemplateProvider({ children }: { children: React.ReactNode }) {
     } else {
       dispatch({ type: "OP_ERROR", error: r.reason ?? "Duplicate failed." });
     }
-  }, []);
+  }, [workspaceId, state.activeTemplate]);
 
   const clearOpMessage = useCallback(() => {
     dispatch({ type: "OP_CLEAR" });

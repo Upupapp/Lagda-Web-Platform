@@ -220,6 +220,58 @@ export async function deleteTemplate(
 }
 
 /**
+ * Creates a new, independent template with the same shape.
+ *
+ * Copies name (suffixed), routing mode, role slots (as fresh slots — never
+ * carrying the source's `backendSlotId`, or this would try to overwrite the
+ * ORIGINAL template's roles) and completion settings. Also re-attaches the
+ * source's document, when it has one — a document is a reference, not
+ * bytes, so pointing two templates at the same one costs nothing and is
+ * exactly what a sender duplicating "the same contract, different roles"
+ * wants.
+ *
+ * Deliberately does NOT copy the field layout. A field belongs to a slot id
+ * that no longer exists on the new template the moment `createTemplate`
+ * mints fresh ones, and remapping old-slot geometry onto new slots by
+ * position is a real feature with its own edge cases (slots added, removed
+ * or reordered since the last field save) — scoped out of this first cut
+ * rather than guessed at. The new template opens exactly like any other
+ * newly created one: shaped, with fields still to place.
+ */
+export async function duplicateTemplate(
+  workspaceId: string | undefined, source: DocumentTemplate,
+): Promise<DocumentTemplate> {
+  if (!realTemplatesAvailable(workspaceId)) throw new TemplatesNotWritableError();
+
+  const created = await createTemplate(workspaceId, {
+    name: `${source.name} (Copy)`,
+    routingMode: source.routing.mode,
+    placeholders: source.placeholders.map(p => ({
+      ...p,
+      backendSlotId: undefined,
+    })),
+    // The only completion flag with a real backend producer — see
+    // real/templates.service.ts's defaultSettings for why the rest don't
+    // round-trip at all.
+    notifySenderOnComplete: source.settings.completionCopySender,
+  });
+
+  const doc = source.documents[0];
+  if (doc && !doc.isPlaceholder && doc.backendDocumentId && doc.backendArtifactId) {
+    try {
+      return await attachTemplateDocument(workspaceId, created.id, {
+        documentId: doc.backendDocumentId, artifactId: doc.backendArtifactId,
+      });
+    } catch {
+      // The COPY already exists and is usable without its document — a
+      // failed attach here must not look like a failed duplicate.
+      return created;
+    }
+  }
+  return created;
+}
+
+/**
  * Attaches an ALREADY-uploaded document to a template.
  *
  * Takes ids, never a file — the caller uploads through

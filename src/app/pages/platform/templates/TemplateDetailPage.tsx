@@ -70,7 +70,10 @@ function SectionCard({ title, children }: { title: string; children: React.React
 }
 
 // ── Action button strip ───────────────────────────────────────────────────────
-function ActionStrip({ template, onMakeAvailable, onReturnToDraft, onArchive, onRestore, onDuplicate, onDelete, canDelete, pendingOp }: {
+function ActionStrip({
+  template, onMakeAvailable, onReturnToDraft, onArchive, onRestore, onDuplicate, onDelete,
+  canDelete, hasStatusLifecycle, pendingOp,
+}: {
   template:        DocumentTemplate;
   onMakeAvailable: () => void;
   onReturnToDraft: () => void;
@@ -81,6 +84,19 @@ function ActionStrip({ template, onMakeAvailable, onReturnToDraft, onArchive, on
   /** Only where a delete can actually succeed. Fixtures have nowhere to
    *  delete from, and a destructive button that refuses is worse than none. */
   canDelete:       boolean;
+  /**
+   * Whether Make Available / Return to Draft / Archive / Restore mean
+   * anything for this template. `true` for a fixture, whose in-memory
+   * status these buttons genuinely change; `false` for a real, backend-
+   * stored template — the backend has no status column at all (§ GAP 2.1),
+   * so these buttons were previously rendered anyway and either silently
+   * failed against a real id or "succeeded" against a session-local
+   * fixture that was never the template being viewed. Hidden rather than
+   * disabled: a disabled button with no visible reason is its own kind of
+   * confusing, and there is no reason to show here that would not just be
+   * restating this comment.
+   */
+  hasStatusLifecycle: boolean;
   pendingOp:       string;
 }) {
   const { isNarrow } = useViewport();
@@ -166,7 +182,7 @@ function ActionStrip({ template, onMakeAvailable, onReturnToDraft, onArchive, on
       </button>
 
       {/* Make Available / Return to Draft */}
-      {status === "draft" && (
+      {hasStatusLifecycle && status === "draft" && (
         <button
           onClick={onMakeAvailable}
           disabled={busy || !!(template.validation && !template.validation.canMakeAvailable)}
@@ -178,7 +194,7 @@ function ActionStrip({ template, onMakeAvailable, onReturnToDraft, onArchive, on
         </button>
       )}
 
-      {status === "available" && (
+      {hasStatusLifecycle && status === "available" && (
         <button
           onClick={onReturnToDraft}
           disabled={busy}
@@ -190,7 +206,7 @@ function ActionStrip({ template, onMakeAvailable, onReturnToDraft, onArchive, on
       )}
 
       {/* Archive / Restore */}
-      {status !== "archived" && (
+      {hasStatusLifecycle && status !== "archived" && (
         <button
           onClick={onArchive}
           disabled={busy}
@@ -200,7 +216,7 @@ function ActionStrip({ template, onMakeAvailable, onReturnToDraft, onArchive, on
           {pendingOp === "archive" ? "Archiving…" : "Archive"}
         </button>
       )}
-      {status === "archived" && (
+      {hasStatusLifecycle && status === "archived" && (
         <button
           onClick={onRestore}
           disabled={busy}
@@ -369,6 +385,7 @@ function TemplateDetailInner() {
           onDuplicate={handleDuplicate}
           onDelete={() => { setConfirmDelete(true); }}
           canDelete={canWrite}
+          hasStatusLifecycle={!canWrite}
           pendingOp={state.pendingOp}
         />
         {deleteError !== null && (
