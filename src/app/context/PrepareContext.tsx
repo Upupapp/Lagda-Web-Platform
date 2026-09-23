@@ -26,6 +26,7 @@ import { usePlatform } from "./PlatformContext";
 import { realRecipientService } from "../services/real/recipient.service";
 import {
   syncParticipants, syncRoutingOrder, isRealRecipientId, buildParticipantsAndRoutingFromRecipients,
+  needsInitialParticipantPush,
 } from "../services/prepare/participant-sync";
 import { isDocumentSynced, markDocumentSynced } from "../services/prepare/sync-markers";
 import type {
@@ -436,7 +437,40 @@ export function PrepareProvider({ children }: { children: React.ReactNode }) {
       // list). Before that, an empty GET on a freshly-uploaded document
       // could just mean "nobody has pushed yet" — local, not-yet-synced
       // participants must not be wiped in that case.
-      if (recipients.length === 0 && !isDocumentSynced("participants", documentId)) return;
+      if (recipients.length === 0 && !isDocumentSynced("participants", documentId)) {
+        // PUSH THE OTHER WAY. Local participants that have never been sent.
+        //
+        // `syncParticipants` only ever ran from `updateParticipants` — an
+        // EDIT. A draft whose participants arrive wholesale never edits them,
+        // so nothing created them on the backend: a template handoff writes
+        // the finished draft straight to localStorage (see
+        // template-handoff.ts) and PrepareProvider rehydrates it. The
+        // Participants step then looked correct while the backend had no
+        // recipients at all, and the Fields step's save referenced recipient
+        // ids that did not exist — rejected 422, with nothing on screen
+        // explaining why.
+        //
+        // Creating them here closes that gap for every such path, not just
+        // templates. Guarded by the same once-per-document ref above, so it
+        // cannot run twice and double-create.
+        const local = draftRef.current?.participants ?? [];
+        if (!needsInitialParticipantPush(recipients.length, local, false)) return;
+        void syncParticipants(workspaceId, documentId, [], local).then((result) => {
+          if (result.idReplacements.size > 0) {
+            dispatch({ type: "REPLACE_PARTICIPANT_IDS", replacements: result.idReplacements });
+          }
+          if (result.errors.size > 0) {
+            setSyncError([...result.errors.values()][0]
+              ?? "Some participants could not be saved.");
+          } else {
+            setSyncError(null);
+            markDocumentSynced("participants", documentId);
+          }
+        }).catch(() => {
+          setSyncError("Could not save this document's participants. Your local changes are unaffected.");
+        });
+        return;
+      }
       if (recipients.length > 0) markDocumentSynced("participants", documentId);
       const { participants, routing } = buildParticipantsAndRoutingFromRecipients(recipients);
       dispatch({ type: "UPDATE_DRAFT", patch: { participants, routing } });

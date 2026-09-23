@@ -129,6 +129,31 @@ export async function syncRoutingOrder(
 export { isRealRecipientId };
 
 /**
+ * Whether this document's local participants have never reached the backend
+ * and must be created before anything can reference them.
+ *
+ * `syncParticipants` only ever ran from an EDIT, so a draft whose
+ * participants arrive wholesale — a template handoff writes the finished
+ * draft straight to localStorage — had none of them created. The
+ * Participants step looked correct while the backend held no recipients at
+ * all, and the Fields save then referenced recipient ids that did not exist
+ * and was refused (422).
+ *
+ * True only when the backend genuinely has none AND this document has never
+ * completed a sync: an empty list on a document that HAS synced is
+ * authoritative (everyone was removed), and re-pushing there would resurrect
+ * deleted recipients.
+ */
+export function needsInitialParticipantPush(
+  backendRecipientCount: number,
+  localParticipants: readonly { id: string }[],
+  alreadySynced: boolean,
+): boolean {
+  if (backendRecipientCount > 0 || alreadySynced) return false;
+  return localParticipants.some(p => !isRealRecipientId(p.id));
+}
+
+/**
  * Reconstructs frontend participants + routing groups from a flat real
  * recipient list — used on resume (reload) so the backend, not localStorage,
  * is what repopulates these two steps once they've been persisted for real.
