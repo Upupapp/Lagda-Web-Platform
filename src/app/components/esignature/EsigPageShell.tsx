@@ -395,7 +395,13 @@ export function PageHero({
           margin: "0 auto",
           padding: "64px 24px 48px",
           ...(visual
-            ? { display: "grid", gridTemplateColumns: "1fr auto", gap: "40px 56px", alignItems: "center" }
+            // minmax(0, 1fr), never a bare 1fr: a 1fr track's minimum is auto,
+            // so it floors at the content's min-content width and the hero
+            // overflows. The section sets overflow:hidden, so that surplus is
+            // CLIPPED rather than scrollable — which is how a 153px-wide
+            // "Verify a Document" link ended up at x 210..363 on a 320px
+            // viewport, visible to the tab order and to nobody else.
+            ? { display: "grid", gridTemplateColumns: "minmax(0, 1fr) auto", gap: "40px 56px", alignItems: "center" }
             : {}),
         }}
       >
@@ -453,7 +459,9 @@ export function PageHero({
       {visual && (
         <style>{`
           @media (max-width: 860px) {
-            .esig-hero-grid { grid-template-columns: 1fr !important; }
+            /* Same rule as above: the single stacked column must also be
+               allowed to shrink below its content. */
+            .esig-hero-grid { grid-template-columns: minmax(0, 1fr) !important; }
             .esig-hero-visual { justify-self: center; }
           }
         `}</style>
