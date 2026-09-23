@@ -116,22 +116,42 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      # Chromium only. The critical-flow suite, the accessibility project and the
-      # responsive projects all run on Chromium; downloading Firefox and WebKit
-      # for every commit would triple the install cost for little added signal.
-      - name: Install Playwright Chromium
-        run: npx playwright install --with-deps chromium
+      # Chromium AND WebKit.
+      #
+      # The previous comment here claimed "the critical-flow suite, the
+      # accessibility project and the responsive projects all run on Chromium".
+      # That was wrong, and it hid a whole suite:
+      #
+      #   devices["iPhone 13"].defaultBrowserType    === "webkit"   (mobile-390)
+      #   devices["iPad (gen 7)"].defaultBrowserType === "webkit"   (tablet-portrait)
+      #
+      # Two of the four responsive projects are WebKit. Installing Chromium
+      # alone meant every test in them failed in 6-9ms with a missing browser.
+      # Firefox is still not installed — no project uses it.
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium webkit
 
+      # Every suite runs and reports, even when an earlier one fails.
+      #
+      # Without `if: ${{ !cancelled() }}` these four steps short-circuit: the
+      # first failure skips the rest, so a red critical-flow suite silently
+      # hid the accessibility, responsive and reduced-motion results. They had
+      # never once executed on `main`. A failing step still fails the job — the
+      # point is to see ALL of the damage in one run, not to tolerate any of it.
       - name: Critical browser flows
+        if: ${{ !cancelled() }}
         run: npm run test:e2e
 
       - name: Accessibility (axe)
+        if: ${{ !cancelled() }}
         run: npm run test:a11y
 
       - name: Responsive viewports
+        if: ${{ !cancelled() }}
         run: npm run test:responsive
 
       - name: Reduced motion
+        if: ${{ !cancelled() }}
         run: npm run test:reduced-motion
 
       # Failure artifacts. Traces and screenshots render FICTIONAL fixture data
