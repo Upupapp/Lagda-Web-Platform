@@ -19,6 +19,7 @@ import { useNotificationCenter } from "../../context/NotificationCenterContext";
 import { PRIMARY_NAV, UTILITY_NAV, PREPARE_ACTION } from "../../config/platform.nav";
 import { WorkspaceSwitcher } from "./WorkspaceSwitcher";
 import { UserMenu } from "./UserMenu";
+import { NotificationMenu } from "./NotificationMenu";
 import { Z } from "../../utils/z-index";
 import { useSignOutFlow } from "../../hooks/useSignOutFlow";
 import { usePrepareLaunch } from "../../hooks/usePrepareLaunch";
@@ -99,10 +100,64 @@ function SidebarItem({ to, icon, label, badge, collapsed }: SidebarItemProps) {
   );
 }
 
+// The Documents row alone gets a bell instead of a plain numeric pill —
+// clicking it opens a document-scoped notification pop-up right there,
+// rather than only linking through to the full inbox. The bell is a SIBLING
+// of the NavLink, not nested inside it: a <button> inside an <a> is invalid
+// HTML and breaks screen-reader/keyboard semantics, so the row becomes a
+// small flex container instead of SidebarItem's single anchor.
+function DocumentsNavItem({
+  to, icon, label, collapsed, docsUnreadCount,
+}: {
+  to: string; icon: string; label: string; collapsed: boolean; docsUnreadCount: number;
+}) {
+  if (collapsed) {
+    // No room for a separate bell button in icon-only mode — the existing
+    // dot-badge convention carries the "something's unread" signal instead,
+    // exactly like every other collapsed row.
+    return <SidebarItem to={to} icon={icon} label={label} badge={docsUnreadCount} collapsed />;
+  }
+  return (
+    <li style={{ display: "flex", alignItems: "center", gap: 2 }}>
+      <NavLink
+        to={to}
+        style={({ isActive }) => ({
+          display: "flex",
+          alignItems: "center",
+          gap: 10,
+          padding: "8px 10px",
+          flex: 1,
+          minWidth: 0,
+          borderRadius: 8,
+          textDecoration: "none",
+          background: isActive ? "rgba(0,120,212,0.14)" : "transparent",
+          border: isActive ? "1px solid rgba(0,120,212,0.22)" : "1px solid transparent",
+          color: isActive ? "#0078D4" : "#64748B",
+          transition: "background 0.12s, color 0.12s",
+          minHeight: 36,
+        })}
+      >
+        {({ isActive }) => (
+          <>
+            <span aria-hidden style={{ flexShrink: 0, color: isActive ? "#0078D4" : "#64748B", display: "flex", alignItems: "center" }}>
+              <NavIcon name={icon} />
+            </span>
+            <span style={{ ...GF, fontSize: 13, fontWeight: isActive ? 600 : 400, flex: 1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+              {label}
+            </span>
+          </>
+        )}
+      </NavLink>
+      <NotificationMenu category="documents" align="left" heading="Document Notifications" size={30} iconSize={15} />
+    </li>
+  );
+}
+
 export function PlatformSidebar() {
   const [collapsed, setCollapsed] = useState(false);
   const { hasPermission, hasFlag } = usePlatform();
-  const { unreadCount } = useNotificationCenter();
+  const { items, unreadCount } = useNotificationCenter();
+  const docsUnreadCount = items.filter((n) => n.category === "documents" && n.status === "unread").length;
 
   // Confirmation + the branded modal now live in one hook, shared with the
   // mobile drawer and the onboarding header.
@@ -247,6 +302,18 @@ export function PlatformSidebar() {
             const allowed = !item.permission || hasPermission(item.permission);
             const enabled = !item.featureFlag || hasFlag(item.featureFlag);
             if (!allowed || !enabled) return null;
+            if (item.id === "documents") {
+              return (
+                <DocumentsNavItem
+                  key={item.id}
+                  to={item.path}
+                  icon={item.icon}
+                  label={item.label}
+                  collapsed={collapsed}
+                  docsUnreadCount={docsUnreadCount}
+                />
+              );
+            }
             const badge = item.showBadge && item.id === "inbox" ? unreadCount : null;
             return (
               <SidebarItem

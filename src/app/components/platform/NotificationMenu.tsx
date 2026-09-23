@@ -63,11 +63,37 @@ function formatRelativeDate(iso: string): string {
 
 interface NotificationMenuProps {
   align?: "right" | "left";
+  /** Restricts the bell to one category's notifications — its own badge
+   *  count, its own "recent 5" list, and its own "mark all read" (which
+   *  marks only THIS category, never the whole inbox). Omitted = every
+   *  category, the original header-bell behaviour. */
+  category?: NotificationCategory;
+  /** Panel header title. Defaults to "Notifications"; a scoped bell (e.g.
+   *  the Documents sidebar row) wants something more specific. */
+  heading?: string;
+  /** Trigger button box size in px. Defaults to 36 (header bell); a bell
+   *  inline in a sidebar row wants something smaller. */
+  size?: number;
+  /** Bell glyph size in px. Defaults to 18. */
+  iconSize?: number;
 }
 
-export function NotificationMenu({ align = "right" }: NotificationMenuProps) {
-  const { items, unreadCount, markRead, markAllRead } = useNotificationCenter();
+export function NotificationMenu({
+  align = "right", category, heading = "Notifications", size = 36, iconSize = 18,
+}: NotificationMenuProps) {
+  const { items, markRead, markAllRead: markAllReadGlobal } = useNotificationCenter();
   const [open, setOpen] = useState(false);
+
+  const scoped = category === undefined ? items : items.filter((n) => n.category === category);
+  const unreadCount = scoped.filter((n) => n.status === "unread").length;
+
+  // A category-scoped bell must only mark ITS OWN notifications read — the
+  // context's markAllRead has no category concept, so scoped use loops
+  // markRead over exactly the unread items this bell is showing a count for.
+  function handleMarkAllRead() {
+    if (category === undefined) { markAllReadGlobal(); return; }
+    for (const n of scoped) { if (n.status === "unread") markRead(n.id); }
+  }
   const [pos, setPos] = useState<{
     top: number; right?: number; left?: number; width: number | "auto";
   } | null>(null);
@@ -146,7 +172,7 @@ export function NotificationMenu({ align = "right" }: NotificationMenuProps) {
   }, [open]);
 
   // Show 5 most recent non-dismissed notifications
-  const recent = [...items]
+  const recent = [...scoped]
     .filter((n) => n.status !== "dismissed")
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
     .slice(0, 5);
@@ -161,25 +187,25 @@ export function NotificationMenu({ align = "right" }: NotificationMenuProps) {
       <button
         ref={triggerRef}
         onClick={() => setOpen((o) => !o)}
-        aria-label={`Notifications${unreadCount > 0 ? ` — ${unreadCount} unread` : ""}`}
+        aria-label={`${heading}${unreadCount > 0 ? ` — ${unreadCount} unread` : ""}`}
         aria-expanded={open}
         aria-haspopup="dialog"
         style={{
           position: "relative",
           background: "transparent", border: "none",
           cursor: "pointer", color: "#64748B",
-          width: 36, height: 36, display: "flex",
+          width: size, height: size, display: "flex",
           alignItems: "center", justifyContent: "center",
           borderRadius: 8, padding: 0,
         }}
         className="notif-trigger"
       >
-        <Bell size={18} aria-hidden />
+        <Bell size={iconSize} aria-hidden />
         {unreadCount > 0 && (
           <span
             aria-hidden
             style={{
-              position: "absolute", top: 4, right: 4,
+              position: "absolute", top: 2, right: 2,
               background: AZURE, color: "white",
               borderRadius: "50%", width: 16, height: 16,
               display: "flex", alignItems: "center", justifyContent: "center",
@@ -227,7 +253,7 @@ export function NotificationMenu({ align = "right" }: NotificationMenuProps) {
               the action cannot touch at 320px. */}
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, padding: "12px 14px", borderBottom: `1px solid ${BORDER}`, flexShrink: 0 }}>
             <h2 style={{ color: "#07111F", ...GF, fontSize: 14, fontWeight: 700, margin: 0, minWidth: 0, whiteSpace: "nowrap" }}>
-              Notifications
+              {heading}
               {unreadCount > 0 && (
                 <span style={{ marginLeft: 8, fontFamily: "'Geist Mono', monospace", fontSize: 10, color: AZURE, background: "rgba(0,120,212,0.15)", borderRadius: 999, padding: "1px 7px" }}>
                   {unreadCount}
@@ -236,7 +262,7 @@ export function NotificationMenu({ align = "right" }: NotificationMenuProps) {
             </h2>
             {unreadCount > 0 && (
               <button
-                onClick={() => markAllRead()}
+                onClick={handleMarkAllRead}
                 // `flexShrink: 0` + `nowrap`: without them this wraps to two
                 // lines at 320px and drags the header's height with it. The
                 // LABEL is what collapses on the narrowest screens, not the
@@ -307,7 +333,7 @@ export function NotificationMenu({ align = "right" }: NotificationMenuProps) {
           {/* Footer */}
           <div style={{ padding: "10px 14px", borderTop: `1px solid ${BORDER}` }}>
             <Link
-              to="/app/notifications"
+              to={category === "documents" ? "/app/notifications?view=documents" : "/app/notifications"}
               onClick={() => setOpen(false)}
               style={{ color: "#0078D4", ...GF, fontSize: 12, textDecoration: "none", display: "block", textAlign: "center" }}
             >
