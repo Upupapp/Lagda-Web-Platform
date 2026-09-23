@@ -794,9 +794,10 @@ function VariablesTab({
       </p>
       <div style={{ marginBottom: 16, padding: "10px 14px", background: "#F8FAFC", border: "1px solid #E2E8F0", borderRadius: 8 }}>
         <p style={{ ...GF, fontSize: 12, color: "#94A3B8", margin: 0 }}>
-          Variables are saved with the template, but nothing yet inserts a
-          sender's typed value into an invitation or a document field —
-          that connection is a later piece of work.
+          To make a variable appear in the document, open Field Placement and
+          set a field's &ldquo;Filled by&rdquo; to that variable. A variable
+          with no field placed for it is collected when the template is used,
+          but has nowhere to appear.
         </p>
       </div>
 
