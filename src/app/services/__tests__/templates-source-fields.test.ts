@@ -51,6 +51,7 @@ const WIRE = {
     { slotId: "wfs_witness", label: "Witness", role: "signer" as const, required: false, routingStep: 2, defaultAuthMethod: "none" as const },
   ],
   completionSettings: { notifySenderOnComplete: true },
+  variables: [],
   documentId: "doc_1",
   sourceArtifactId: "art_1",
   createdAt: "2026-09-22T09:00:00.000Z",

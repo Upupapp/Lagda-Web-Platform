@@ -133,6 +133,9 @@ function BlankForm({ onCreated }: { onCreated: (id: string) => void }) {
               ...sl, description: "", mustMapToParticipant: sl.required,
             })),
             notifySenderOnComplete: notifySender,
+            // No variable-authoring UI at creation time — added afterwards,
+            // in the template's own Variables tab.
+            variables: [],
           }),
         );
         onCreated(created.id);

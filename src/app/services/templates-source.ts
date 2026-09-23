@@ -38,7 +38,7 @@ import {
 } from "./mock/templates.service";
 import type {
   DocumentTemplate, DocumentTemplateId, TemplateListQuery,
-  TemplateListItem, TemplateRolePlaceholder, TemplateRoleAssignment,
+  TemplateListItem, TemplateRolePlaceholder, TemplateRoleAssignment, TemplateVariable,
 } from "../models/templates";
 import type { RoutingMode } from "../models/transaction-detail";
 
@@ -194,6 +194,7 @@ export interface TemplateDraft {
   routingMode: RoutingMode;
   placeholders: readonly TemplateRolePlaceholder[];
   notifySenderOnComplete: boolean;
+  variables: readonly TemplateVariable[];
 }
 
 export async function createTemplate(
@@ -254,6 +255,10 @@ export async function duplicateTemplate(
     // real/templates.service.ts's defaultSettings for why the rest don't
     // round-trip at all.
     notifySenderOnComplete: source.settings.completionCopySender,
+    // Variables have no slot-remapping problem the way fields do — a key is
+    // unique per TEMPLATE, not globally, so reusing the source's keys on a
+    // brand-new template is safe. Copied plainly.
+    variables: source.variables,
   });
 
   const doc = source.documents[0];

@@ -31,6 +31,8 @@ import type {
   TemplateRolePlaceholder,
   TemplateRequestSettings,
   TemplateRoleResolution,
+  TemplateVariable,
+  TemplateVariableType,
 } from "../../models/templates";
 import type { PrepParticipantRole, PrepAuthMethodId } from "../../models/prepare";
 import type { RoutingMode } from "../../models/transaction-detail";
@@ -106,12 +108,31 @@ export interface WireRoleAssignment {
   email?: string;
 }
 
+/**
+ * A variable DEFINITION (063) — what backend `WorkflowTemplateVariable`
+ * returns, unchanged. Five types only: the backend has no `select` (it would
+ * need an `options` list the schema does not carry) and no `multiline-text`
+ * distinction beyond the type name itself — both are exactly what the
+ * backend's closed set says, not a frontend narrowing.
+ */
+export type WireVariableType = "short-text" | "multiline-text" | "date" | "number" | "yes-no";
+
+export interface WireVariable {
+  key: string;
+  label: string;
+  type: WireVariableType;
+  required: boolean;
+}
+
 export interface WireTemplate {
   workflowTemplateId: string;
   name: string;
   routingMode: RoutingMode;
   roleSlots: WireRoleSlot[];
   completionSettings: { notifySenderOnComplete: boolean };
+  /** 063. Definitions only — see `WireVariable`'s own header for what a
+   *  variable does and does not connect to yet. */
+  variables: WireVariable[];
   /**
    * 059. `null` until attached. Bare ids only — no filename, page count or
    * size travels on this object; `templates-source.ts` fetches those from
@@ -132,6 +153,7 @@ export interface WireTemplateWrite {
   routingMode: RoutingMode;
   roleSlots: WireRoleSlotWrite[];
   completionSettings: { notifySenderOnComplete: boolean };
+  variables: WireVariable[];
 }
 
 const base = (workspaceId: string) =>
@@ -268,6 +290,21 @@ function toPlaceholder(slot: WireRoleSlot, index: number): TemplateRolePlacehold
 }
 
 /** A stored template, widened to the shape the templates pages render. */
+/** A stored variable, as the templates UI wants to see it. `id` and
+ *  `internalKey` are both the backend's `key` — nothing else is unique per
+ *  template the way this needs. */
+function toTemplateVariable(wire: WireVariable): TemplateVariable {
+  return {
+    id: wire.key,
+    internalKey: wire.key,
+    label: wire.label,
+    type: wire.type,
+    required: wire.required,
+    helpText: "",
+    placeholder: "",
+  };
+}
+
 export function toDocumentTemplate(wire: WireTemplate): DocumentTemplate {
   const placeholders = wire.roleSlots.map(toPlaceholder);
 
@@ -313,7 +350,7 @@ export function toDocumentTemplate(wire: WireTemplate): DocumentTemplate {
       ),
     },
     settings: defaultSettings(wire.completionSettings.notifySenderOnComplete),
-    variables: [],
+    variables: wire.variables.map(toTemplateVariable),
     fields: [],
     usageSummary: {
       timesUsed: 0, lastUsedDate: null, recentDraftStarts: 0,
@@ -370,12 +407,40 @@ function defaultSettings(
   };
 }
 
+const WIRE_VARIABLE_TYPES: readonly TemplateVariableType[] =
+  ["short-text", "multiline-text", "date", "number", "yes-no"];
+
+function isWireVariableType(type: TemplateVariableType): type is WireVariableType {
+  return WIRE_VARIABLE_TYPES.includes(type);
+}
+
+/**
+ * A template variable, for the write body. Throws on `type: "select"` —
+ * the one frontend type the backend has no column for (it would need an
+ * `options` list `WorkflowTemplateVariableSchema` does not carry). The
+ * Variables tab that calls this never offers `select` as a choice, so this
+ * is a defensive check on data that should not exist, not a real UI path.
+ */
+function toWireVariable(v: TemplateVariable): WireVariable {
+  if (!isWireVariableType(v.type)) {
+    throw new TemplateVariableTypeUnsupportedError(v.type);
+  }
+  return { key: v.internalKey, label: v.label, type: v.type, required: v.required };
+}
+
+export class TemplateVariableTypeUnsupportedError extends Error {
+  constructor(readonly type: string) {
+    super(`The "${type}" variable type is not saved by this version.`);
+  }
+}
+
 /** The write body, built from what the editor holds. */
 export function toWireWrite(input: {
   name: string;
   routingMode: RoutingMode;
   placeholders: readonly TemplateRolePlaceholder[];
   notifySenderOnComplete: boolean;
+  variables: readonly TemplateVariable[];
 }): WireTemplateWrite {
   return {
     name: input.name.trim(),
@@ -398,5 +463,6 @@ export function toWireWrite(input: {
       ...(p.resolution === undefined ? {} : { resolution: p.resolution }),
     })),
     completionSettings: { notifySenderOnComplete: input.notifySenderOnComplete },
+    variables: input.variables.map(toWireVariable),
   };
 }
