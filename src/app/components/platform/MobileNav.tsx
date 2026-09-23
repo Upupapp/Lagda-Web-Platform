@@ -190,12 +190,43 @@ export function MobileNav() {
       )}
 
       {/* ── Drawer ──────────────────────────────────────────────── */}
+      {/*
+        LAGDA-RESP-2. The drawer stays MOUNTED so it can slide, but while it is
+        closed it must be genuinely gone — not merely moved off-screen.
+
+        `transform: translateX(-100%)` alone hides it visually and changes
+        nothing else: all 14 controls (Prepare Document, Dashboard ... Settings,
+        Sign Out, Close navigation) stayed in the tab order at x -270..-11, so a
+        keyboard user tabbing off the hamburger vanished into an invisible menu.
+        It also announced `role="dialog"` with `aria-modal` permanently, which
+        tells a screen reader a modal is open when none is.
+
+        Three things fix it together, and each covers a gap the others leave:
+
+          inert            removes the subtree from the tab order, from hit
+                           testing and from the accessibility tree. One
+                           attribute, and it is the one that actually matters.
+          visibility       the fallback for browsers without `inert`. Unlike
+                           `display: none` it still animates, which is why the
+                           transition below also carries `visibility`.
+          role/aria-modal  applied only while open, so nothing claims a modal
+                           exists when the drawer is shut.
+
+        `visibility` is deliberately part of the transition: without it the
+        drawer would become invisible instantly and the slide-out would not be
+        seen. `0s 0.22s` delays hiding until the slide finishes; opening applies
+        it immediately.
+      */}
       <div
         id="mobile-nav-drawer"
         ref={drawerRef}
-        role="dialog"
+        {...(drawerOpen ? { role: "dialog", "aria-modal": true } : {})}
         aria-label="Navigation"
-        aria-modal
+        // `inert` is a real HTML attribute but @types/react 18 has no typing
+        // for it (React 19 adds one). Spread as an attribute rather than
+        // dropped: the runtime honours it today, and this is the line that
+        // actually removes the closed drawer from the tab order.
+        {...({ inert: drawerOpen ? undefined : "" } as { inert?: string })}
         style={{
           position: "fixed", top: 0, left: 0, bottom: 0, zIndex: Z.drawer,
           width: 280,
@@ -203,7 +234,10 @@ export function MobileNav() {
           borderRight: `1px solid ${BORDER}`,
           display: "flex", flexDirection: "column",
           transform: drawerOpen ? "translateX(0)" : "translateX(-100%)",
-          transition: "transform 0.22s ease",
+          visibility: drawerOpen ? "visible" : "hidden",
+          transition: drawerOpen
+            ? "transform 0.22s ease, visibility 0s"
+            : "transform 0.22s ease, visibility 0s 0.22s",
           overflowY: "auto",
         }}
       >
