@@ -41,6 +41,7 @@ const WIRE = {
     { slotId: "wfs_hire", label: "New Hire", role: "signer" as const, required: true, routingStep: 2, defaultAuthMethod: "none" as const },
   ],
   completionSettings: { notifySenderOnComplete: true },
+  variables: [],
   documentId: null,
   sourceArtifactId: null,
   createdAt: "2026-09-22T09:00:00.000Z",

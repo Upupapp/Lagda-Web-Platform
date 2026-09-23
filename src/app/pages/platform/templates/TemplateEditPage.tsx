@@ -22,7 +22,9 @@ import type { OrganizationUnit } from "../../../models/organization";
 import { ApiError } from "../../../services/api-client";
 import { VALID_PREP_PARTICIPANT_ROLES } from "../../../models/prepare";
 import type { PrepParticipantRole } from "../../../models/prepare";
-import type { TemplateRolePlaceholder } from "../../../models/templates";
+import type {
+  TemplateRolePlaceholder, TemplateVariable, TemplateVariableType,
+} from "../../../models/templates";
 import { SkeletonBlock, SKELETON_STYLE } from "../../../components/platform";
 import {
   TEMPLATE_CATEGORY_LABELS,
@@ -729,31 +731,132 @@ function SettingsTab({
 }
 
 // ── Tab panel: Variables ──────────────────────────────────────────────────────
-function VariablesTab({ draft }: { draft: DocumentTemplate }) {
+/** The five variable types the backend actually stores — `select` needs an
+ *  `options` list `WorkflowTemplateVariableSchema` has no column for, so it
+ *  is not offered here (see real/templates.service.ts's `toWireVariable`). */
+const BACKEND_VARIABLE_TYPES: TemplateVariableType[] =
+  ["short-text", "multiline-text", "date", "number", "yes-no"];
+
+/** Lowercase letters, digits and underscores, starting with a letter —
+ *  mirrors the backend's own `VARIABLE_KEY_PATTERN` exactly, so a key this
+ *  accepts is never rejected on save. */
+const VARIABLE_KEY_PATTERN = /^[a-z][a-z0-9_]*$/;
+
+function VariablesTab({
+  draft, onChange,
+}: {
+  draft: DocumentTemplate;
+  onChange: (patch: Partial<DocumentTemplate>) => void;
+}) {
+  const vars = draft.variables;
+
+  const patch = (id: string, p: Partial<TemplateVariable>) =>
+    onChange({ variables: vars.map(v => (v.id === id ? { ...v, ...p } : v)) });
+
+  const add = () => {
+    const id = `var-new-${String(Date.now())}`;
+    onChange({
+      variables: [...vars, {
+        id, internalKey: "", label: "", type: "short-text", required: false,
+        helpText: "", placeholder: "",
+      }],
+    });
+  };
+
+  const remove = (id: string) =>
+    onChange({ variables: vars.filter(v => v.id !== id) });
+
+  // Duplicate and malformed keys are flagged here so the sender sees the
+  // exact same problem Save would otherwise report only after a round trip
+  // to the server — matching the backend's own two rules for a key
+  // (validateVariables in workflow-templates.ts): the pattern, and
+  // uniqueness case-insensitively.
+  const keyCounts = new Map<string, number>();
+  for (const v of vars) {
+    const k = v.internalKey.trim().toLowerCase();
+    if (k === "") continue;
+    keyCounts.set(k, (keyCounts.get(k) ?? 0) + 1);
+  }
+  const keyIssue = (v: TemplateVariable): string | null => {
+    const k = v.internalKey.trim();
+    if (k === "") return "A key is required.";
+    if (!VARIABLE_KEY_PATTERN.test(k)) {
+      return "Lowercase letters, digits and underscores only, starting with a letter.";
+    }
+    if ((keyCounts.get(k.toLowerCase()) ?? 0) > 1) return "This key is used by another variable.";
+    return null;
+  };
+
   return (
     <div>
-      <p style={{ ...GF, fontSize: 13, color: "#64748B", marginBottom: 16 }}>
-        Variables allow senders to customize invitation messages and document content when using this template. Use <code>{`{{variable_key}}`}</code> tokens in invitation text.
+      <p style={{ ...GF, fontSize: 12.5, color: "#64748B", margin: "0 0 14px", lineHeight: 1.6 }}>
+        Name a value a sender will fill in once, when they use this template.
       </p>
-      {draft.variables.length === 0 ? (
-        <p style={{ ...GF, fontSize: 13, color: "#94A3B8" }}>No variables defined.</p>
+      <div style={{ marginBottom: 16, padding: "10px 14px", background: "#F8FAFC", border: "1px solid #E2E8F0", borderRadius: 8 }}>
+        <p style={{ ...GF, fontSize: 12, color: "#94A3B8", margin: 0 }}>
+          Variables are saved with the template, but nothing yet inserts a
+          sender's typed value into an invitation or a document field —
+          that connection is a later piece of work.
+        </p>
+      </div>
+
+      {vars.length === 0 ? (
+        <p style={{ ...GF, fontSize: 13, color: "#94A3B8" }}>No variables yet. Add the first one below.</p>
       ) : (
-        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-          {draft.variables.map(v => (
-            <div key={v.id} style={{ padding: "12px 14px", background: "white", border: "1px solid #E2E8F0", borderRadius: 10 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
-                <code style={{ ...GF, fontSize: 11, background: "#EEF4FB", color: AZURE, padding: "2px 7px", borderRadius: 5 }}>{`{{${v.internalKey}}}`}</code>
-                <span style={{ ...GF, fontSize: 13, fontWeight: 600, color: "#0F172A" }}>{v.label}</span>
-                <span style={{ ...GF, fontSize: 11, color: "#94A3B8", marginLeft: "auto" }}>{TEMPLATE_VARIABLE_TYPE_LABELS[v.type]}{v.required ? " · Required" : " · Optional"}</span>
+        <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 14 }}>
+          {vars.map(v => {
+            const issue = keyIssue(v);
+            return (
+              <div key={v.id} style={{ padding: "14px 16px", background: "white", border: "1px solid #E2E8F0", borderRadius: 10 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+                  <code style={{ ...GF, fontSize: 11, background: "#EEF4FB", color: AZURE, padding: "2px 7px", borderRadius: 5 }}>
+                    {`{{${v.internalKey.trim() || "key"}}}`}
+                  </code>
+                  <button
+                    onClick={() => remove(v.id)}
+                    style={{ ...GF, marginLeft: "auto", fontSize: 12, color: "#DC2626", background: "none", border: "none", cursor: "pointer", padding: 0 }}
+                  >
+                    Remove
+                  </button>
+                </div>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 10 }}>
+                  <FormField label="Label" required>
+                    <Input value={v.label} onChange={val => patch(v.id, { label: val })} placeholder="e.g. Client Name" />
+                  </FormField>
+                  <FormField label="Key" required hint={issue ?? "Used as {{this_key}}."}>
+                    <Input
+                      value={v.internalKey}
+                      onChange={val => patch(v.id, { internalKey: val.toLowerCase() })}
+                      placeholder="e.g. client_name"
+                    />
+                  </FormField>
+                </div>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 10, alignItems: "end" }}>
+                  <FormField label="Type">
+                    <Select
+                      value={v.type}
+                      onChange={val => patch(v.id, { type: val as TemplateVariableType })}
+                      options={BACKEND_VARIABLE_TYPES.map(t => [t, TEMPLATE_VARIABLE_TYPE_LABELS[t]])}
+                    />
+                  </FormField>
+                  <label style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 18, cursor: "pointer", whiteSpace: "nowrap" }}>
+                    <input type="checkbox" checked={v.required} onChange={e => patch(v.id, { required: e.target.checked })} />
+                    <span style={{ ...GF, fontSize: 13 }}>Required</span>
+                  </label>
+                </div>
               </div>
-              {v.helpText && <p style={{ ...GF, fontSize: 12, color: "#64748B", margin: 0, lineHeight: 1.5 }}>{v.helpText}</p>}
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
-      <div style={{ marginTop: 12, padding: "10px 14px", background: "#F8FAFC", border: "1px solid #E2E8F0", borderRadius: 8 }}>
-        <p style={{ ...GF, fontSize: 12, color: "#94A3B8", margin: 0 }}>Variable editing is available in the full implementation. Displayed here as read-only for this demonstration.</p>
-      </div>
+
+      <button
+        onClick={add}
+        style={{ display: "inline-flex", alignItems: "center", gap: 6, ...GF, fontSize: 13, fontWeight: 600, color: AZURE, background: "none", border: "none", cursor: "pointer", padding: 0 }}
+      >
+        <Plus size={14} />
+        Add variable
+      </button>
     </div>
   );
 }
@@ -802,6 +905,7 @@ function TemplateEditInner() {
           routingMode: draft.routing.mode,
           placeholders: draft.placeholders,
           notifySenderOnComplete: draft.settings.completionCopySender,
+          variables: draft.variables,
         }),
       );
       setSaved(true);
@@ -832,6 +936,17 @@ function TemplateEditInner() {
     if (draft.placeholders.some(p => p.label.trim() === "")) {
       setSaveError("Every role needs a name.");
       return;
+    }
+    if (draft.variables.some(v => v.label.trim() === "" || !VARIABLE_KEY_PATTERN.test(v.internalKey.trim()))) {
+      setSaveError("Every variable needs a label and a valid key.");
+      return;
+    }
+    {
+      const keys = draft.variables.map(v => v.internalKey.trim().toLowerCase());
+      if (new Set(keys).size !== keys.length) {
+        setSaveError("Two variables cannot share the same key.");
+        return;
+      }
     }
 
     // A role removed from the draft leaves any field placed FOR it with a
@@ -960,7 +1075,7 @@ function TemplateEditInner() {
         {activeTab === "routing"      && <RoutingTab      draft={draft} onChange={p => setDraft(d => d ? { ...d, ...p } : d)} />}
         {activeTab === "auth"         && <AuthTab         draft={draft} onChange={p => setDraft(d => d ? { ...d, ...p } : d)} />}
         {activeTab === "settings"     && <SettingsTab     draft={draft} canWrite={canWrite} onChange={p => setDraft(d => d ? { ...d, ...p } : d)} />}
-        {activeTab === "variables"    && <VariablesTab    draft={draft} />}
+        {activeTab === "variables"    && <VariablesTab    draft={draft} onChange={p => setDraft(d => d ? { ...d, ...p } : d)} />}
       </div>
     </div>
   );

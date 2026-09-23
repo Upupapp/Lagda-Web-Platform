@@ -31,6 +31,7 @@ const WIRE: WireTemplate = {
     },
   ],
   completionSettings: { notifySenderOnComplete: true },
+  variables: [],
   documentId: null,
   sourceArtifactId: null,
   createdAt: "2026-09-22T09:00:00.000Z",
@@ -60,6 +61,7 @@ describe("toWireWrite sends exactly what the schema accepts", () => {
       routingMode: "sequential",
       placeholders: [slot({ description: "an internal note", mustMapToParticipant: false })],
       notifySenderOnComplete: true,
+      variables: [],
     });
 
     expect(Object.keys(body.roleSlots[0]!).sort()).toEqual([
@@ -73,6 +75,7 @@ describe("toWireWrite sends exactly what the schema accepts", () => {
       routingMode: "sequential",
       placeholders: [slot({ description: "SHOULD NOT TRAVEL" })],
       notifySenderOnComplete: false,
+      variables: [],
     });
 
     expect(JSON.stringify(body)).not.toContain("SHOULD NOT TRAVEL");
@@ -85,6 +88,7 @@ describe("toWireWrite sends exactly what the schema accepts", () => {
       routingMode: "sequential",
       placeholders: [slot({ backendSlotId: "wfs_1" })],
       notifySenderOnComplete: true,
+      variables: [],
     });
     expect(body.roleSlots[0]!.slotId).toBe("wfs_1");
   });
@@ -95,6 +99,7 @@ describe("toWireWrite sends exactly what the schema accepts", () => {
       routingMode: "sequential",
       placeholders: [slot()],
       notifySenderOnComplete: true,
+      variables: [],
     });
     expect("slotId" in body.roleSlots[0]!).toBe(false);
   });
@@ -107,6 +112,7 @@ describe("toWireWrite sends exactly what the schema accepts", () => {
       routingMode: "parallel",
       placeholders: [slot({ label: "  HR Approver  " })],
       notifySenderOnComplete: true,
+      variables: [],
     });
 
     expect(body.name).toBe("Onboarding");
@@ -122,6 +128,7 @@ describe("toWireWrite sends exactly what the schema accepts", () => {
         slot({ id: "slot-2", label: "Second", routingStep: 2 }),
       ],
       notifySenderOnComplete: true,
+      variables: [],
     });
 
     expect(body.roleSlots.map(s => s.label)).toEqual(["First", "Second"]);
@@ -131,6 +138,7 @@ describe("toWireWrite sends exactly what the schema accepts", () => {
     const body = toWireWrite({
       name: "Onboarding", routingMode: "sequential",
       placeholders: [slot()], notifySenderOnComplete: true,
+      variables: [],
     });
 
     expect(Object.keys(body.completionSettings)).toEqual(["notifySenderOnComplete"]);
@@ -242,6 +250,7 @@ describe("a stored template survives a read-then-write cycle", () => {
       routingMode: loaded.routing.mode,
       placeholders: loaded.placeholders,
       notifySenderOnComplete: loaded.settings.completionCopySender,
+      variables: loaded.variables,
     });
 
     expect(written).toEqual({
@@ -249,6 +258,7 @@ describe("a stored template survives a read-then-write cycle", () => {
       routingMode: WIRE.routingMode,
       roleSlots: WIRE.roleSlots,
       completionSettings: WIRE.completionSettings,
+      variables: WIRE.variables,
     });
   });
 });
