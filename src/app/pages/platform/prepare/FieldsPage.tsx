@@ -2365,6 +2365,11 @@ function FieldsPageInner() {
               pageId,
               rect: { ...f.rect },
               participantId: f.participantId,
+              // 064. A field the template bound to a variable arrives with
+              // the sender's typed value and NO participant. It renders as
+              // already-filled and is excluded from every recipient's
+              // obligations, which is exactly what `static_value` means.
+              ...(f.staticValue === null ? {} : { staticValue: f.staticValue }),
               label: f.label,
               required: f.required,
               demonstrationOnly: false,

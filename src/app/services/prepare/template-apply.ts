@@ -52,7 +52,7 @@ import {
 } from "../../models/prepare";
 import type {
   TemplateRolePlaceholder, TemplateRoleMapping, TemplateApplication,
-  TemplateField, ResolvedTemplateField,
+  TemplateField, ResolvedTemplateField, TemplateVariableValues,
 } from "../../models/templates";
 
 // Same shape the Participants step generates for a hand-added participant. It
@@ -117,6 +117,11 @@ export interface ResolveTemplateInput {
    *  `templates-source.ts`'s `enrichWithFields`. Omitted or empty for a
    *  template with no field layout. */
   fields?: TemplateField[];
+  /** 064. What the sender typed for each variable, keyed by internalKey.
+   *  Used to fill any field bound to a variable; omitted means none were
+   *  collected, and variable-bound fields are then dropped rather than
+   *  rendered blank. */
+  variableValues?: TemplateVariableValues;
   /** Injectable so tests get stable ids. Production uses the same generator
    *  the Participants step does. */
   newId?: () => string;
@@ -145,16 +150,48 @@ function pageNumberFromSyntheticId(pageId: string): number | undefined {
 function resolveFields(
   templateFields: TemplateField[],
   participantIdByPlaceholderId: Map<string, string>,
+  variableValues: TemplateVariableValues,
 ): ResolvedTemplateField[] {
   const resolved: ResolvedTemplateField[] = [];
   for (const field of templateFields) {
+    const pageNumber = pageNumberFromSyntheticId(field.pageId);
+    if (pageNumber === undefined) continue;
+
+    // 064. A variable-bound field carries the sender's typed value instead of
+    // a participant. Before this, every field with no placeholder was dropped
+    // here — which is why the values collected by the apply wizard could never
+    // reach a document no matter what the sender typed.
+    const variableKey = field.placeholderId === null ? field.variableRef : undefined;
+    if (variableKey !== undefined) {
+      // `TemplateVariableValues` is `string | boolean | null` because the mock
+      // model has a yes/no type. Rendered text is what a static value IS, so
+      // booleans become Yes/No here rather than "true"/"false".
+      const raw = variableValues[variableKey];
+      const value = typeof raw === "boolean" ? (raw ? "Yes" : "No") : raw;
+      // An EMPTY value is dropped, not rendered blank. A required variable is
+      // already refused by the wizard; an optional one the sender left empty
+      // means "no text here", and a zero-length static value would fail the
+      // backend's own non-empty rule.
+      if (value === undefined || value === null || value.trim() === "") continue;
+      resolved.push({
+        participantId: null,
+        staticValue: value,
+        type: field.type,
+        pageNumber,
+        rect: field.rect,
+        label: field.label,
+        required: field.required,
+        layer: field.layer,
+      });
+      continue;
+    }
+
     if (field.placeholderId === null) continue;
     const participantId = participantIdByPlaceholderId.get(field.placeholderId);
     if (participantId === undefined) continue;
-    const pageNumber = pageNumberFromSyntheticId(field.pageId);
-    if (pageNumber === undefined) continue;
     resolved.push({
       participantId,
+      staticValue: null,
       type: field.type,
       pageNumber,
       rect: field.rect,
@@ -396,7 +433,7 @@ export function resolveTemplateApplication(
   }
 
   const resolvedFields = input.fields && input.fields.length > 0
-    ? resolveFields(input.fields, participantIdByPlaceholderId)
+    ? resolveFields(input.fields, participantIdByPlaceholderId, input.variableValues ?? {})
     : undefined;
 
   return {

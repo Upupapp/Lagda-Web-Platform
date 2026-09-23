@@ -16,7 +16,9 @@ import { saveTemplateFields as mockSaveTemplateFields } from "../../../services/
 import {
   saveTemplateFields as realSaveTemplateFields, realTemplatesAvailable,
 } from "../../../services/templates-source";
-import type { DocumentTemplate, TemplateField, TemplateRolePlaceholder } from "../../../models/templates";
+import type {
+  DocumentTemplate, TemplateField, TemplateRolePlaceholder, TemplateVariable,
+} from "../../../models/templates";
 import type { FieldType, ResizeHandle, NormalizedRect } from "../../../models/field-editor";
 import {
   FIELD_TYPE_LABELS, FIELD_TYPE_ICONS, FIELD_TYPE_GROUPS,
@@ -301,9 +303,10 @@ function PageCanvas({
 
 // ── Right panel ───────────────────────────────────────────────────────────────
 function RightPanel({
-  placeholders, fields, selected, pendingType, onSetPending, onUpdateField, onDeleteField, onDeselectAll,
+  placeholders, variables, fields, selected, pendingType, onSetPending, onUpdateField, onDeleteField, onDeselectAll,
 }: {
   placeholders:   TemplateRolePlaceholder[];
+  variables:      TemplateVariable[];
   fields:         LocalField[];
   selected:       string | null;
   pendingType:    FieldType | null;
@@ -330,15 +333,68 @@ function RightPanel({
             onChange={e => onUpdateField(sel._localId, { label: e.target.value })}
             style={{ width: "100%", background: "#F8FAFC", border: "1px solid #CBD5E1", borderRadius: 6, color: NAVY, ...GF, fontSize: 12, padding: "5px 8px", boxSizing: "border-box", marginBottom: 10 }}
           />
-          <div style={{ color: "#94A3B8", ...GF, fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 4 }}>Assign to Role</div>
+          {/*
+            ONE control for the field's target, not two.
+
+            A field is signed by a role OR filled from a variable — the
+            backend enforces exactly-one with a CHECK constraint, so offering
+            two independent pickers would let the editor build a state the
+            save can only reject. A single list makes the exclusivity obvious
+            and unrepresentable-wrong.
+
+            "Sender Prefill" with no variable chosen was the old meaning of
+            `placeholderId: null`, and those fields were SILENTLY DROPPED on
+            save. It is kept as an explicit option, and now warns.
+          */}
+          <div style={{ color: "#94A3B8", ...GF, fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 4 }}>Filled by</div>
           <select
-            value={sel.placeholderId ?? ""}
-            onChange={e => onUpdateField(sel._localId, { placeholderId: e.target.value || null, isSenderText: !e.target.value })}
-            style={{ width: "100%", background: "#F8FAFC", border: "1px solid #CBD5E1", borderRadius: 6, color: NAVY, ...GF, fontSize: 12, padding: "5px 8px", marginBottom: 10 }}
+            value={
+              sel.variableRef !== undefined && sel.variableRef !== ""
+                ? `var:${sel.variableRef}`
+                : sel.placeholderId ?? ""
+            }
+            onChange={e => {
+              const v = e.target.value;
+              if (v.startsWith("var:")) {
+                onUpdateField(sel._localId, {
+                  placeholderId: null, isSenderText: true, variableRef: v.slice(4),
+                });
+                return;
+              }
+              onUpdateField(sel._localId, {
+                placeholderId: v || null, isSenderText: !v, variableRef: undefined,
+              });
+            }}
+            style={{ width: "100%", background: "#F8FAFC", border: "1px solid #CBD5E1", borderRadius: 6, color: NAVY, ...GF, fontSize: 12, padding: "5px 8px", marginBottom: 6 }}
           >
-            <option value="">— Sender Prefill —</option>
-            {placeholders.map(ph => <option key={ph.id} value={ph.id}>{ph.label}</option>)}
+            <option value="">— Sender Prefill (not saved) —</option>
+            {placeholders.length > 0 && (
+              <optgroup label="Signed by a role">
+                {placeholders.map(ph => <option key={ph.id} value={ph.id}>{ph.label}</option>)}
+              </optgroup>
+            )}
+            {variables.length > 0 && (
+              <optgroup label="Filled from a variable">
+                {variables.map(v => (
+                  <option key={v.internalKey} value={`var:${v.internalKey}`}>
+                    {v.label} {`{{${v.internalKey}}}`}
+                  </option>
+                ))}
+              </optgroup>
+            )}
           </select>
+          {sel.placeholderId === null && (sel.variableRef ?? "") === "" && (
+            <p style={{ ...GF, fontSize: 10, color: "#B45309", margin: "0 0 10px", lineHeight: 1.45 }}>
+              This field names no target, so it will not be saved. Pick a role
+              or a variable.
+            </p>
+          )}
+          {variables.length === 0 && (
+            <p style={{ ...GF, fontSize: 10, color: "#64748B", margin: "0 0 10px", lineHeight: 1.45 }}>
+              No variables declared yet — add them in the template's Variables
+              tab to fill a field from one.
+            </p>
+          )}
           <label style={{ display: "flex", alignItems: "center", gap: 7, cursor: "pointer", marginBottom: 12 }}>
             <input type="checkbox" checked={sel.required} onChange={e => onUpdateField(sel._localId, { required: e.target.checked })} />
             <span style={{ ...GF, fontSize: 11, color: NAVY }}>Required</span>
@@ -596,6 +652,7 @@ function FieldsEditorInner({ template }: { template: DocumentTemplate }) {
         {/* Right panel */}
         <RightPanel
           placeholders={template.placeholders}
+          variables={template.variables}
           fields={edState.fields}
           selected={edState.selected}
           pendingType={pendingType}

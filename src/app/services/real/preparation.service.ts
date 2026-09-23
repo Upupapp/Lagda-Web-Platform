@@ -32,6 +32,9 @@ export interface BackendPreparationField {
   label: string;
   layer: number;
   recipientId: string | null;
+  /** 062. Set when the sender supplied the value; null when a recipient
+   *  fills it. Exactly one of the two. */
+  staticValue: string | null;
 }
 
 export interface BackendPreparationFieldInput {
@@ -43,6 +46,17 @@ export interface BackendPreparationFieldInput {
   label: string;
   layer: number;
   recipientId?: string | null;
+  /**
+   * A value the SENDER supplied, rendered into the document without
+   * pretending a recipient typed it — migration 062's `static_value`.
+   *
+   * Mutually exclusive with `recipientId`: a field is either signed by
+   * somebody or filled in advance, and the backend refuses both-set and
+   * neither-set. This is how a template variable's value reaches a real
+   * preparation; before this existed the frontend had no vocabulary for
+   * static values at all, so the column had a destination and no producer.
+   */
+  staticValue?: string | null;
 }
 
 export interface RealPreparation {

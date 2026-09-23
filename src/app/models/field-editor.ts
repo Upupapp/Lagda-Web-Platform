@@ -259,6 +259,14 @@ export interface FieldDefinition {
   pageId:        EditorPageId;
   rect:          NormalizedRect;
   participantId: string | null;   // null = sender field or unassigned
+  /**
+   * 062/064. A value the SENDER supplied, rendered into the document without
+   * pretending a recipient typed it.
+   *
+   * Set when the field came from a template variable. Mutually exclusive with
+   * `participantId`: the backend refuses a field that has both or neither.
+   */
+  staticValue?: string | null;
   label:         string;
   required:      boolean;
   layer:         number;          // z-order; higher = on top

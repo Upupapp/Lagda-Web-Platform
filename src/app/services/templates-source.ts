@@ -60,6 +60,18 @@ export function realTemplatesAvailable(workspaceId: string | undefined): boolean
  * list costs nothing and avoids inventing a server contract that does not
  * exist.
  */
+/** A field's variable binding, or undefined.
+ *
+ *  Checked as a non-empty STRING rather than `!== null`: a response from a
+ *  backend older than 064 omits the key entirely, and `undefined !== null` is
+ *  true — which would treat every role-bound field as variable-bound and drop
+ *  its placeholder. Found by a test fixture that predates the field. */
+function variableBindingOf(field: { variableKey?: string | null }): string | undefined {
+  return typeof field.variableKey === "string" && field.variableKey !== ""
+    ? field.variableKey
+    : undefined;
+}
+
 export async function listTemplates(
   workspaceId: string | undefined, query: TemplateListQuery,
 ): Promise<TemplateListResult> {
@@ -154,7 +166,30 @@ async function enrichWithFields(
 
     const fields = wire
       .map((f): DocumentTemplate["fields"][number] | null => {
-        const placeholderId = placeholderIdBySlot.get(f.slotId);
+        // 064. A field targets a role OR a variable. A variable-bound field
+        // has no placeholder — that is what `placeholderId: null` has always
+        // meant in this model ("sender-prefill"), and `variableRef` says WHICH
+        // variable fills it. Before 064 that pairing existed in the type and
+        // nothing ever set it.
+        const boundVariable = variableBindingOf(f);
+        if (boundVariable !== undefined) {
+          return {
+            id: f.fieldId,
+            type: f.type,
+            documentId,
+            pageId: `page-${String(f.pageNumber)}`,
+            rect: f.rect,
+            placeholderId: null,
+            variableRef: boundVariable,
+            label: f.label,
+            required: f.required,
+            layer: f.layer,
+            demonstrationOnly: false,
+          };
+        }
+        const placeholderId = f.slotId === null
+          ? undefined
+          : placeholderIdBySlot.get(f.slotId);
         if (placeholderId === undefined) return null;
         return {
           id: f.fieldId,
@@ -339,15 +374,29 @@ export async function saveTemplateFields(
   const inputs: WireFieldInput[] = [];
   let skipped = 0;
   for (const f of fields) {
-    const slotId = f.placeholderId === null ? undefined : slotByPlaceholder.get(f.placeholderId);
-    if (slotId === undefined || !isBackendFieldType(f.type)) { skipped++; continue; }
+    if (!isBackendFieldType(f.type)) { skipped++; continue; }
+
+    // 064. A field bound to a VARIABLE is sent as such. Until this existed,
+    // every field with no placeholder was counted into `skipped` and silently
+    // dropped — the editor let you place one and the save discarded it.
+    const variableKey = f.placeholderId === null ? f.variableRef : undefined;
+    const slotId = f.placeholderId === null
+      ? undefined
+      : slotByPlaceholder.get(f.placeholderId);
+
+    // Still skipped: a field with no placeholder AND no variable. It names no
+    // target, and the backend refuses it by CHECK constraint. Counted rather
+    // than sent so the caller can report "n fields were not saved".
+    if (slotId === undefined && variableKey === undefined) { skipped++; continue; }
     const pageNumber = Number(f.pageId.replace(/^page-/, ""));
     inputs.push({
       // Backend-issued ids from `enrichWithFields` pass through unprefixed;
       // an editor-local id the sender just created is never sent back —
       // the write schema mints a fresh one, exactly "this is new".
       ...(f.id.startsWith("wff_") ? { fieldId: f.id } : {}),
-      slotId,
+      // Exactly one, never both — the backend rejects both-set outright.
+      ...(slotId === undefined ? {} : { slotId }),
+      ...(variableKey === undefined ? {} : { variableKey }),
       type: f.type,
       pageNumber,
       rect: { x: f.rect.x, y: f.rect.y, width: f.rect.width, height: f.rect.height },
@@ -372,7 +421,10 @@ export async function saveTemplateFields(
       documentId,
       pageId: `page-${String(w.pageNumber)}`,
       rect: w.rect,
-      placeholderId: placeholderBySlot.get(w.slotId) ?? null,
+      placeholderId: w.slotId === null || w.slotId === undefined
+        ? null
+        : (placeholderBySlot.get(w.slotId) ?? null),
+      ...(variableBindingOf(w) === undefined ? {} : { variableRef: variableBindingOf(w) }),
       label: w.label,
       required: w.required,
       layer: w.layer,

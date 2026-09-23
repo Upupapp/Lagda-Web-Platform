@@ -230,9 +230,24 @@ export interface TemplateField extends Omit<FieldDefinition, "participantId"> {
  * template-seeding effect).
  */
 export interface ResolvedTemplateField {
-  /** Always a real, resolved participant — a field whose placeholder was
-   *  never mapped to anyone is dropped before this type is built. */
-  participantId: string;
+  /**
+   * The participant who signs this field, or NULL when the field is filled
+   * from a variable instead — see `staticValue`.
+   *
+   * A field whose placeholder was never mapped to anyone is still dropped
+   * before this type is built; null here means "deliberately nobody", not
+   * "unresolved".
+   */
+  participantId: string | null;
+  /**
+   * 064. The value the sender typed for this field's variable, carried
+   * through to the preparation's `static_value`.
+   *
+   * Null when a participant signs the field. Exactly one of `participantId`
+   * and `staticValue` is set — the same exclusivity the backend enforces with
+   * a CHECK constraint.
+   */
+  staticValue:   string | null;
   type:          FieldDefinition["type"];
   pageNumber:    number;
   rect:          FieldDefinition["rect"];
@@ -436,6 +451,7 @@ export interface TemplateApplication {
    */
   fields?: ResolvedTemplateField[];
 }
+
 
 export interface TemplateRoleMapping {
   placeholderId: TemplateRolePlaceholderId;

@@ -43,7 +43,12 @@ export function toBackendFieldInput(
     required: field.required,
     label: field.label,
     layer: field.layer,
-    recipientId: field.participantId,
+    // EXACTLY ONE. A static value means nobody signs this field — sending
+    // both is refused by the backend's completeness CHECK (062), and sending
+    // neither leaves a field no one can fill.
+    ...(field.staticValue !== undefined && field.staticValue !== null
+      ? { staticValue: field.staticValue, recipientId: null }
+      : { recipientId: field.participantId }),
   };
 }
 
@@ -65,6 +70,7 @@ export function fromBackendField(
     pageId,
     rect: { x: field.rect.x, y: field.rect.y, width: field.rect.width, height: field.rect.height },
     participantId: field.recipientId,
+    staticValue: field.staticValue,
     label: field.label,
     required: field.required,
     layer: field.layer,

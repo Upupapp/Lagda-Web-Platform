@@ -536,6 +536,11 @@ function UseTemplateInner() {
         roleMappings: mappings,
         routingMode: t.routing.mode,
         fields: t.fields,
+        // 064. What the sender typed on the Variables step. These were
+        // collected and then DISCARDED — the page said so in a banner — because
+        // nothing downstream could accept them. A field bound to a variable now
+        // carries its value through to the preparation's static_value.
+        variableValues: varValues,
       });
       if (!result.ok) {
         setError(result.message);
