@@ -73,7 +73,11 @@ export interface WireRoleSlotWrite {
  *  `recipientId`: a template field is FOR A ROLE, not a resolved person. */
 export interface WireField {
   fieldId: string;
-  slotId: string;
+  /** Null when the field is filled from a variable instead (064). */
+  slotId: string | null;
+  /** 064. One of the template's own `variables[].key` values, or null when a
+   *  role signs it. Exactly one of the two is set. */
+  variableKey: string | null;
   type: BackendFieldType;
   pageNumber: number;
   rect: BackendRect;
@@ -84,7 +88,10 @@ export interface WireField {
 
 export interface WireFieldInput {
   fieldId?: string;
-  slotId: string;
+  /** EXACTLY ONE of `slotId` / `variableKey`. The backend rejects both-set
+   *  and neither-set with a named error. */
+  slotId?: string;
+  variableKey?: string;
   type: BackendFieldType;
   pageNumber: number;
   rect: BackendRect;
