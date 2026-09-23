@@ -135,7 +135,17 @@ export default defineConfig({
     url: BASE_URL,
     reuseExistingServer: false,
     timeout: 180_000,
-    env: { VITE_LAUNCH_PROFILE: "enterprise-preview" },
+    env: {
+      VITE_LAUNCH_PROFILE: "enterprise-preview",
+      // PINNED EMPTY, deliberately. `VITE_API_BASE_URL` decides USE_REAL_BACKEND
+      // (services/backend-flag.ts), it is baked in at BUILD time, and a
+      // gitignored `.env.local` sets it for normal development. Without this
+      // line the browser suite silently builds a real-backend bundle on a
+      // developer's machine, sign-in 500s against `vite preview`, and EVERY
+      // spec fails at the sign-in helper for a reason that has nothing to do
+      // with the code under test. CI has no `.env.local`, so the two disagreed.
+      VITE_API_BASE_URL: "",
+    },
     stdout: "ignore",
     stderr: "pipe",
   },

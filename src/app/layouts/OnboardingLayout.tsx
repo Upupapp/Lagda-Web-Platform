@@ -377,7 +377,6 @@ export function OnboardingLayout({
         .onboarding-footer-links { display: flex; justify-content: center; flex-wrap: wrap; gap: 20px; margin-top: 6px; }
         .onboarding-footer-links a { color: #64748B; font-size: 11px; text-decoration: none; }
         .onboarding-footer-links a:hover { color: #0078D4; }
-        @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
         #onboarding-main:focus { outline: none; }
         @media (max-width: 480px) {
           .onboarding-brand img { width: 155px; height: 48px; }

@@ -209,6 +209,7 @@ export function TourCoachmark({
       aria-modal="false"
       aria-labelledby="tour-coachmark-title"
       aria-describedby="tour-coachmark-desc"
+      className="tour-card"
       style={{
         ...style,
         zIndex: Z.tourCoachmark,
@@ -292,8 +293,23 @@ export function TourCoachmark({
         .tour-next-btn:focus-visible { outline: 2px solid #0078D4; outline-offset: 2px; }
         .tour-back-btn:hover { background: #F8FAFC; }
         .tour-next-btn:hover { background: #0B63AD; }
+        /* SCOPED to the coach-mark. This used to be a bare \`*\` with
+           \`!important\`, which is a component-local stylesheet rewriting
+           motion for the WHOLE DOCUMENT: while the tour was mounted — and it
+           auto-starts on every new account's first dashboard visit — every
+           animation and transition on the page collapsed to none.
+
+           That is not what reduced motion means here. theme.css deliberately
+           CLAMPS instead (0.01ms duration, iteration-count 1), so an animation
+           still runs and still completes; obliterating animation-name broke
+           the dashboard refresh spinner outright, and the effect depended on
+           whether the tour happened to be open. */
         @media (prefers-reduced-motion: reduce) {
-          * { transition: none !important; animation: none !important; }
+          .tour-card, .tour-card *,
+          .tour-icon-btn, .tour-text-btn, .tour-back-btn, .tour-next-btn {
+            transition: none !important;
+            animation: none !important;
+          }
         }
       `}</style>
     </div>
