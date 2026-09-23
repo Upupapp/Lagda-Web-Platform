@@ -5,7 +5,7 @@
 // scope (060); falls back to the in-session mock save otherwise.
 // Inline styles only. No Burgundy.
 
-import React, { useEffect, useReducer, useRef, useState } from "react";
+import React, { useEffect, useMemo, useReducer, useRef, useState } from "react";
 import { useParams, Link } from "react-router";
 import { ChevronLeft, AlertCircle, Info, Save, CheckCircle2 } from "lucide-react";
 import { TemplateProvider, useTemplates } from "../../../context/TemplateContext";
@@ -23,9 +23,14 @@ import type { FieldType, ResizeHandle, NormalizedRect } from "../../../models/fi
 import {
   FIELD_TYPE_LABELS, FIELD_TYPE_ICONS, FIELD_TYPE_GROUPS,
   FIELD_SIZE_CONSTRAINTS, RESIZE_HANDLES, defaultFieldRect,
-  PARTICIPANT_ACCENT_COLORS,
+  PARTICIPANT_ACCENT_COLORS, clampRect as clampFieldRect, clampMoveRect,
 } from "../../../models/field-editor";
+import {
+  useRealDocument, DocumentPageSurface,
+} from "../../../components/pdf/DocumentPageSurface";
+import { realSigningRequestService } from "../../../services/real/signing-request.service";
 import { usePageMeta } from "../../../hooks/usePageMeta";
+import type * as pdfjsLib from "pdfjs-dist";
 
 // ── Design tokens ─────────────────────────────────────────────────────────────
 const GF           = { fontFamily: "'Geist', sans-serif" };
@@ -167,17 +172,50 @@ const HANDLE_POS: Record<ResizeHandle, React.CSSProperties> = {
   sw: { bottom: -4, left: -4,  cursor: "sw-resize" },
 };
 
+/**
+ * Applies one resize-handle drag to a rect. `dx`/`dy` are normalized deltas.
+ * A handle moves the edges it names and leaves the others alone; the caller
+ * clamps the result against the field type's own size constraints.
+ */
+function resizeByHandle(
+  orig: NormalizedRect, handle: ResizeHandle, dx: number, dy: number,
+): NormalizedRect {
+  let { x, y, width, height } = orig;
+  if (handle.includes("n")) { y = orig.y + dy; height = orig.height - dy; }
+  if (handle.includes("s")) { height = orig.height + dy; }
+  if (handle.includes("w")) { x = orig.x + dx; width = orig.width - dx; }
+  if (handle.includes("e")) { width = orig.width + dx; }
+  return { x, y, width, height };
+}
+
+/** An in-progress move or resize of an EXISTING field, held locally so the
+ *  reducer sees finished rects rather than one action per pointer event. */
+interface Interaction {
+  readonly kind: "move" | "resize";
+  readonly handle?: ResizeHandle;
+  readonly localId: string;
+  readonly type: FieldType;
+  readonly startX: number;
+  readonly startY: number;
+  readonly origRect: NormalizedRect;
+}
+
 // ── Page canvas ───────────────────────────────────────────────────────────────
 function PageCanvas({
   docId, pageId, pageNumber, fields, selected, dragging, pendingType, placeholders,
+  realDoc, realPageSize,
   onDragStart, onDragMove, onDragEnd, onDragCancel,
-  onSelect, onMoveField: _onMoveField,
+  onSelect, onMoveField,
 }: {
   docId: string; pageId: string; pageNumber: number;
   fields: LocalField[]; selected: string | null;
   dragging: EditorState["dragging"];
   pendingType: FieldType | null;
   placeholders: TemplateRolePlaceholder[];
+  /** The real PDF, when one has loaded. Null keeps the fictional placeholder,
+   *  which is all a fixture template has behind it. */
+  realDoc: pdfjsLib.PDFDocumentProxy | null;
+  realPageSize: { width: number; height: number } | null;
   onDragStart: (sx: number, sy: number) => void;
   onDragMove:  (x: number, y: number) => void;
   onDragEnd:   (x: number, y: number) => void;
@@ -187,6 +225,7 @@ function PageCanvas({
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const [canvasW, setCanvasW] = useState(BASE_PAGE_W);
+  const [interaction, setInteraction] = useState<Interaction | null>(null);
 
   useEffect(() => {
     const obs = new ResizeObserver(entries => {
@@ -197,7 +236,13 @@ function PageCanvas({
     return () => obs.disconnect();
   }, []);
 
-  const h = canvasW * PAGE_RATIO;
+  // The real page's own aspect ratio where it is known — an uploaded document
+  // is not necessarily A4, and assuming it puts every field somewhere other
+  // than where it was placed.
+  const ratio = realPageSize !== null && realPageSize.width > 0
+    ? realPageSize.height / realPageSize.width
+    : PAGE_RATIO;
+  const h = canvasW * ratio;
   const pageFields = fields.filter(f => f.documentId === docId && f.pageId === pageId);
 
   const pos = (e: React.PointerEvent): [number, number] => {
@@ -213,20 +258,58 @@ function PageCanvas({
   };
 
   const handleMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    // An in-progress move/resize of an existing field takes precedence over
+    // the draw-a-new-one drag; they can never both be live.
+    if (interaction !== null) {
+      const [x, y] = pos(e);
+      const dx = x - interaction.startX;
+      const dy = y - interaction.startY;
+      const next = interaction.kind === "move"
+        ? clampMoveRect({
+            ...interaction.origRect,
+            x: interaction.origRect.x + dx,
+            y: interaction.origRect.y + dy,
+          })
+        : clampFieldRect(
+            resizeByHandle(interaction.origRect, interaction.handle!, dx, dy),
+            interaction.type);
+      onMoveField(interaction.localId, next);
+      return;
+    }
     if (!dragging) return;
     const [x, y] = pos(e);
     onDragMove(x, y);
   };
 
   const handleUp = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (interaction !== null) { setInteraction(null); return; }
     if (!dragging) return;
     const [x, y] = pos(e);
     onDragEnd(x, y);
   };
 
+  /** Starts a move or resize. Stops propagation so the canvas's own
+   *  draw-a-new-field handler does not also fire for the same press. */
+  const beginInteraction = (
+    e: React.PointerEvent, f: LocalField, kind: "move" | "resize", handle?: ResizeHandle,
+  ) => {
+    if (e.button !== 0 || pendingType) return;
+    e.stopPropagation();
+    onSelect(f._localId);
+    const surface = ref.current?.querySelector(`[data-page-surface="${pageId}"]`);
+    const r = (surface ?? e.currentTarget).getBoundingClientRect();
+    setInteraction({
+      kind, handle, localId: f._localId, type: f.type,
+      startX: (e.clientX - r.left) / canvasW,
+      startY: (e.clientY - r.top) / h,
+      origRect: f.rect,
+    });
+  };
+
   return (
     <div ref={ref} style={{ flex: 1, overflowY: "auto", background: BGCANVAS, padding: "24px", display: "flex", flexDirection: "column", alignItems: "center", gap: 24 }}>
       <div
+        data-page-surface={pageId}
         style={{
           position:   "relative",
           width:      canvasW,
@@ -240,10 +323,19 @@ function PageCanvas({
         onPointerDown={handleDown}
         onPointerMove={handleMove}
         onPointerUp={handleUp}
-        onPointerCancel={onDragCancel}
+        onPointerCancel={() => { setInteraction(null); onDragCancel(); }}
         onClick={e => { if (e.target === e.currentTarget) onSelect(null); }}
       >
-        <FictionalPage pageNumber={pageNumber} />
+        {/* The REAL document where there is one. The fictional placeholder is
+            the fallback for a fixture template, which has no file behind it —
+            it used to be shown unconditionally, so a template with a genuine
+            document (uploaded or authored) still showed grey bars, and fields
+            were placed against a page nobody could see. */}
+        {realDoc !== null ? (
+          <DocumentPageSurface doc={realDoc} pageNumber={pageNumber} width={canvasW} height={h} />
+        ) : (
+          <FictionalPage pageNumber={pageNumber} />
+        )}
 
         {/* Drag preview */}
         {dragging && dragging.docId === docId && dragging.pageId === pageId && (() => {
@@ -271,6 +363,7 @@ function PageCanvas({
             <div
               key={f._localId}
               onClick={e => { e.stopPropagation(); onSelect(f._localId); }}
+              onPointerDown={e => beginInteraction(e, f, "move")}
               style={{
                 position:   "absolute",
                 left:       `${f.rect.x * 100}%`,
@@ -281,17 +374,21 @@ function PageCanvas({
                 background: sel ? `${AZURE}22` : `${color}18`,
                 borderRadius: 4,
                 boxSizing:  "border-box",
-                cursor:     "pointer",
+                cursor:     pendingType ? "crosshair" : "move",
                 display:    "flex",
                 alignItems: "center",
-                overflow:   "hidden",
+                overflow:   "visible",
               }}
             >
               <span style={{ ...GF, fontSize: 10, fontWeight: 700, color: sel ? AZURE : color, paddingLeft: 4, overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis" }}>
                 {FIELD_TYPE_ICONS[f.type]} {f.label}
               </span>
               {sel && RESIZE_HANDLES.map(hdl => (
-                <div key={hdl} style={{ position: "absolute", width: 8, height: 8, borderRadius: 2, background: AZURE, ...HANDLE_POS[hdl] }} />
+                <div
+                  key={hdl}
+                  onPointerDown={e => beginInteraction(e, f, "resize", hdl)}
+                  style={{ position: "absolute", width: 10, height: 10, borderRadius: 2, background: AZURE, border: "1px solid #ffffff", ...HANDLE_POS[hdl] }}
+                />
               ))}
             </div>
           );
@@ -484,6 +581,30 @@ function FieldsEditorInner({ template }: { template: DocumentTemplate }) {
     : [{ id: "doc-1", displayName: "Document 1", pageCount: 3, order: 1, isPlaceholder: true as const }];
   const activeDoc = docs[activeDocIdx] ?? docs[0]!;
 
+  // ── The real document ─────────────────────────────────────────────────────
+  //
+  // The same loader the preparation editor uses, for the same reason: fields
+  // are placed against the page a person is looking at, so that page has to
+  // be the real one. Memoised on the two ids — `useRealDocument` re-runs when
+  // the loader's identity changes, so an inline closure would refetch on
+  // every render.
+  const realDocumentId = activeDoc.backendDocumentId ?? null;
+  const loadDocument = useMemo(
+    () => (workspaceId === undefined || realDocumentId === null
+      ? null
+      : () => realSigningRequestService.documentContentBlob(workspaceId, realDocumentId)),
+    [workspaceId, realDocumentId],
+  );
+  const realDocument = useRealDocument(loadDocument);
+  const realDoc = realDocument.status === "ready" ? realDocument.doc : null;
+
+  // The real file is the authority on how many pages there are. The stored
+  // page count is a cache of it and can lag (an authored document is
+  // regenerated with a different page count, say), so prefer the file.
+  const pageCount = realDocument.status === "ready"
+    ? realDocument.pageCount
+    : Math.max(activeDoc.pageCount, 1);
+
   // Load existing template fields on mount
   useEffect(() => {
     const converted: LocalField[] = template.fields.map(f => ({ ...f, _localId: mkId() }));
@@ -584,6 +705,25 @@ function FieldsEditorInner({ template }: { template: DocumentTemplate }) {
         </div>
       )}
 
+      {/* The document's own load state. Silence here was the defect: a page
+          that failed to load looked identical to a blank one, and fields were
+          placed against nothing. */}
+      {realDocument.status === "loading" && (
+        <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "9px 16px", background: "#F8FAFC", borderBottom: "1px solid rgba(0,0,0,0.08)", flexShrink: 0 }}>
+          <Info size={13} color={SILVER} />
+          <span style={{ ...GF, fontSize: 12, color: SILVER }}>Loading the document…</span>
+        </div>
+      )}
+      {realDocument.status === "error" && (
+        <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "9px 16px", background: "#FEF2F2", borderBottom: "1px solid #FECACA", flexShrink: 0 }}>
+          <AlertCircle size={13} color="#B91C1C" />
+          <span style={{ ...GF, fontSize: 12, color: "#B91C1C" }}>
+            {realDocument.message} Field positions are still saved, but they are
+            being placed against a blank page.
+          </span>
+        </div>
+      )}
+
       {/* Assign-to role bar + doc tabs */}
       <div style={{ background: "#f8fafb", borderBottom: "1px solid rgba(0,0,0,0.08)", padding: "8px 16px", display: "flex", alignItems: "center", gap: 16, flexShrink: 0 }}>
         {template.placeholders.length > 0 && (
@@ -625,7 +765,7 @@ function FieldsEditorInner({ template }: { template: DocumentTemplate }) {
       <div style={{ flex: 1, display: "flex", overflow: "hidden" }}>
         {/* Pages column */}
         <div style={{ flex: 1, overflowY: "auto", background: BGCANVAS, display: "flex", flexDirection: "column", alignItems: "center", gap: 24, padding: 24 }}>
-          {Array.from({ length: activeDoc.pageCount }, (_, i) => {
+          {Array.from({ length: pageCount }, (_, i) => {
             const pageId = `page-${i + 1}`;
             return (
               <PageCanvas
@@ -638,6 +778,8 @@ function FieldsEditorInner({ template }: { template: DocumentTemplate }) {
                 dragging={edState.dragging}
                 pendingType={pendingType}
                 placeholders={template.placeholders}
+                realDoc={realDoc}
+                realPageSize={realDocument.status === "ready" ? realDocument.pageSizes[i] ?? null : null}
                 onDragStart={handleDragStart(activeDoc.id, pageId)}
                 onDragMove={(x, y) => edDispatch({ type: "UPDATE_DRAG", x, y })}
                 onDragEnd={handleDragEnd(activeDoc.id, pageId)}
