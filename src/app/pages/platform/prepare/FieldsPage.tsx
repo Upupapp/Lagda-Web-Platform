@@ -1398,7 +1398,7 @@ export function ValidationPanel({
   onSaveNow: () => Promise<boolean>;
   saving: boolean;
 }) {
-  const { validation, runValidation, setDocument, setPage, fields, selectFields, updateField, moveField, deleteFields, setParticipantFilter } = useFieldEditor();
+  const { validation, runValidation, setDocument, setPage, fields, selectFields, updateField, moveField, deleteFields, setParticipantFilter, addField, currentDocumentId, currentPageId } = useFieldEditor();
   const { draft } = usePrepare();
   const navigate = useNavigate();
   const participants = draft?.participants ?? [];
@@ -1486,11 +1486,43 @@ export function ValidationPanel({
     selectFields([fieldId]);
   };
 
+  /**
+   * A participant with no Signature (or no acknowledgement) field.
+   *
+   * This was the one error deliberately left without a fix, on the grounds
+   * that nothing can know WHERE the field belongs. That reasoning produced a
+   * worse outcome than guessing: the only action offered was "Show their
+   * fields", which for a participant with no fields reveals an empty list and
+   * moves nothing forward.
+   *
+   * Placing it dead-centre on the CURRENT page is an honest answer to that —
+   * the position is deliberate, visible and obviously provisional, and the
+   * visitor drags it where it really goes. The field is created assigned and
+   * selected, so the next thing they do is position it, not hunt for it.
+   */
+  const autoFixMissingParticipantField = (issue: FieldValidationIssue) => {
+    const participantId = issue.participantId;
+    if (!participantId || !currentDocumentId || !currentPageId) return;
+    const type: FieldType = issue.code === "SIGNER_MISSING_SIGNATURE"
+      ? "signature"
+      : "checkbox";
+    const created = addField({
+      type,
+      documentId:    currentDocumentId,
+      pageId:        currentPageId,
+      rect:          defaultFieldRect(type, 0.5, 0.5),
+      participantId,
+      label:         FIELD_TYPE_LABELS[type],
+      required:      true,
+      demonstrationOnly: true,
+    });
+    goToField(created.id, currentDocumentId, currentPageId);
+  };
+
   // Every issue's action row — one place for both Errors and Warnings, so
   // adding a fix for a new code never means updating two near-identical JSX
-  // blocks. Not every issue has an unambiguous one-click fix (a participant
-  // missing a Signature field could go anywhere on the page — nothing here
-  // guesses where); those still get a real next step instead of nothing.
+  // blocks. Every issue that can be fixed offers a fix; the rest still get a
+  // real next step instead of nothing.
   const renderIssueActions = (issue: FieldValidationIssue) => {
     const fixButtonStyle = { ...GF, fontSize: 11, fontWeight: 700, color: "#2E7D32", background: "none", border: "none", cursor: "pointer", padding: 0, textDecoration: "underline" } as const;
     const linkButtonStyle = { ...GF, fontSize: 11, color: AZURE, background: "none", border: "none", cursor: "pointer", padding: 0, textDecoration: "underline" } as const;
@@ -1507,9 +1539,19 @@ export function ValidationPanel({
           </button>
         )}
         {(issue.code === "SIGNER_MISSING_SIGNATURE" || issue.code === "ACK_RECIPIENT_MISSING_ACK_FIELD") && issue.participantId && (
-          <button onClick={() => setParticipantFilter(issue.participantId!)} style={linkButtonStyle}>
-            Show their fields
-          </button>
+          <>
+            <button onClick={() => autoFixMissingParticipantField(issue)} style={fixButtonStyle}>
+              Auto-Fix
+            </button>
+            {/* Only where it has something to reveal. For a participant with
+                no fields at all this was the ONLY action offered, and it
+                opened an empty list. */}
+            {fields.some(f => f.participantId === issue.participantId) && (
+              <button onClick={() => setParticipantFilter(issue.participantId!)} style={linkButtonStyle}>
+                Show their fields
+              </button>
+            )}
+          </>
         )}
         {issue.code === "UNASSIGNED_FIELD" && issue.fieldId && (
           <button onClick={() => autoFixUnassigned(issue.fieldId!)} style={fixButtonStyle}>Fix it for me</button>
