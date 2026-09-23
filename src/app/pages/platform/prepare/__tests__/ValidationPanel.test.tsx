@@ -24,6 +24,11 @@ const editor = {
   moveField: vi.fn(),
   deleteFields: vi.fn(),
   setParticipantFilter: vi.fn(),
+  addField: vi.fn((partial: Omit<FieldDefinition, "id" | "layer">) => ({
+    ...partial, id: "new_1", layer: 9,
+  })),
+  currentDocumentId: "d1" as string | null,
+  currentPageId: "p1" as string | null,
   fields: [] as FieldDefinition[],
 };
 vi.mock("../../../../context/FieldEditorContext", () => ({
@@ -110,5 +115,36 @@ describe("ValidationPanel action wiring", () => {
     editor.validation = null;
     render(<ValidationPanel onSaveNow={vi.fn()} saving={false} />);
     expect(editor.runValidation).toHaveBeenCalled();
+  });
+});
+
+describe("missing-signature auto-fix", () => {
+  it("creates a Signature field for that participant, centred on the current page", async () => {
+    const user = userEvent.setup();
+    render(<ValidationPanel onSaveNow={vi.fn().mockResolvedValue(true)} saving={false} />);
+
+    await user.click(screen.getByRole("button", { name: /auto-fix/i }));
+
+    expect(editor.addField).toHaveBeenCalledTimes(1);
+    const created = editor.addField.mock.calls[0]![0];
+    expect(created.type).toBe("signature");
+    expect(created.participantId).toBe("rcp_1");
+    expect(created.documentId).toBe("d1");
+    expect(created.pageId).toBe("p1");
+    // Centred, whatever the type's default size happens to be.
+    expect(created.rect.x + created.rect.width / 2).toBeCloseTo(0.5, 5);
+    expect(created.rect.y + created.rect.height / 2).toBeCloseTo(0.5, 5);
+    // Created selected, so positioning it is the next thing that happens.
+    expect(editor.selectFields).toHaveBeenCalledWith(["new_1"]);
+  });
+
+  it("does NOT offer 'Show their fields' when the participant has none", () => {
+    // The defect this replaced: it was the only action offered, and it
+    // revealed an empty list.
+    editor.fields = [field({ id: "local_ml", type: "multiline-text", participantId: null })];
+    render(<ValidationPanel onSaveNow={vi.fn().mockResolvedValue(true)} saving={false} />);
+
+    expect(screen.getByRole("button", { name: /auto-fix/i })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /show their fields/i })).not.toBeInTheDocument();
   });
 });
