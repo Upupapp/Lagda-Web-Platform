@@ -52,6 +52,7 @@ import {
 } from "../../models/prepare";
 import type {
   TemplateRolePlaceholder, TemplateRoleMapping, TemplateApplication,
+  TemplateField, ResolvedTemplateField,
 } from "../../models/templates";
 
 // Same shape the Participants step generates for a hand-added participant. It
@@ -112,12 +113,57 @@ export interface ResolveTemplateInput {
   placeholders: TemplateRolePlaceholder[];
   roleMappings: TemplateRoleMapping[];
   routingMode: RoutingMode;
+  /** The template's field placements (placeholder-keyed), already loaded by
+   *  `templates-source.ts`'s `enrichWithFields`. Omitted or empty for a
+   *  template with no field layout. */
+  fields?: TemplateField[];
   /** Injectable so tests get stable ids. Production uses the same generator
    *  the Participants step does. */
   newId?: () => string;
   /** Injectable so a test can exercise the real-backend restriction without
    *  reaching into import.meta.env. Production uses the real gate. */
   isAuthAvailable?: (method: PrepAuthMethodId, participant: PrepParticipant) => boolean;
+}
+
+/** `enrichWithFields`'s synthetic id, reversed. `undefined` for anything else
+ *  — a field whose page cannot be recovered is dropped rather than guessed
+ *  onto page 1, which would silently misplace it. */
+function pageNumberFromSyntheticId(pageId: string): number | undefined {
+  const match = /^page-(\d+)$/.exec(pageId);
+  if (!match) return undefined;
+  const n = Number(match[1]);
+  return Number.isInteger(n) && n >= 1 ? n : undefined;
+}
+
+/**
+ * Resolves a template's placeholder-keyed fields to the participants just
+ * built. A field whose placeholder was never mapped to a participant (an
+ * optional slot the visitor left blank, or a sender-prefill field with no
+ * placeholder at all) is dropped — there is no one to assign it to, and an
+ * unassigned field would need a recipient the backend has no way to invent.
+ */
+function resolveFields(
+  templateFields: TemplateField[],
+  participantIdByPlaceholderId: Map<string, string>,
+): ResolvedTemplateField[] {
+  const resolved: ResolvedTemplateField[] = [];
+  for (const field of templateFields) {
+    if (field.placeholderId === null) continue;
+    const participantId = participantIdByPlaceholderId.get(field.placeholderId);
+    if (participantId === undefined) continue;
+    const pageNumber = pageNumberFromSyntheticId(field.pageId);
+    if (pageNumber === undefined) continue;
+    resolved.push({
+      participantId,
+      type: field.type,
+      pageNumber,
+      rect: field.rect,
+      label: field.label,
+      required: field.required,
+      layer: field.layer,
+    });
+  }
+  return resolved;
 }
 
 const fail = (
@@ -262,6 +308,7 @@ export function resolveTemplateApplication(
 
   const participants: PrepParticipant[] = [];
   const stepByParticipantId = new Map<string, number>();
+  const participantIdByPlaceholderId = new Map<string, string>();
 
   for (const slot of placeholders) {
     const mapping = mappingByPlaceholder.get(slot.id);
@@ -325,6 +372,7 @@ export function resolveTemplateApplication(
 
     participants.push(participant);
     stepByParticipantId.set(id, slot.routingStep);
+    participantIdByPlaceholderId.set(slot.id, id);
   }
 
   // Re-checked AFTER mapping, not just on the slots. A template can be
@@ -347,7 +395,18 @@ export function resolveTemplateApplication(
     participant.routingGroupId = groupIdByParticipantId.get(participant.id) ?? null;
   }
 
-  return { ok: true, application: { participants, routing }, authDowngrades };
+  const resolvedFields = input.fields && input.fields.length > 0
+    ? resolveFields(input.fields, participantIdByPlaceholderId)
+    : undefined;
+
+  return {
+    ok: true,
+    application: {
+      participants, routing,
+      ...(resolvedFields && resolvedFields.length > 0 ? { fields: resolvedFields } : {}),
+    },
+    authDowngrades,
+  };
 }
 
 /**

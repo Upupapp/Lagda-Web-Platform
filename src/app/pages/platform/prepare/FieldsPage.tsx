@@ -2336,6 +2336,41 @@ function FieldsPageInner() {
         // (e.g. restored from localStorage before a refresh) — loadRealFields
         // replaces the field set outright, same as a fresh load would.
         loadRealFields(loaded);
+      } else if (draft.templateFields && draft.templateFields.length > 0) {
+        // TEMPLATE FIELDS — the document has never had a real preparation
+        // saved (this is the very first time it is being prepared), and the
+        // draft carries the template's own field layout, already resolved to
+        // this draft's participants by template-apply.ts. Seeded once, the
+        // same way DEFAULT FIELDS below is — the visitor can then move,
+        // resize or delete any of them like fields they placed themselves.
+        //
+        // Page numbers are the TEMPLATE's own document's, which is safe only
+        // because `initialFilesFor` (UseTemplatePage.tsx) seeds this exact
+        // draft's file from the template's own backendDocumentId/artifactId
+        // — the same bytes, the same pages, the same numbering.
+        const firstDoc = documents[0];
+        if (firstDoc) {
+          const pageIdForNumber = (n: number) =>
+            firstDoc.pages.find((p) => p.pageNumber === n)?.id ?? null;
+          // Ascending layer, so `addField`'s own auto-assigned z-order
+          // (append-and-increment — it does not accept a caller-chosen
+          // layer) reproduces the template's relative stacking order.
+          const inLayerOrder = [...draft.templateFields].sort((a, b) => a.layer - b.layer);
+          for (const f of inLayerOrder) {
+            const pageId = pageIdForNumber(f.pageNumber);
+            if (!pageId) continue;
+            addField({
+              type: f.type,
+              documentId: firstDoc.id,
+              pageId,
+              rect: { ...f.rect },
+              participantId: f.participantId,
+              label: f.label,
+              required: f.required,
+              demonstrationOnly: false,
+            });
+          }
+        }
       } else {
         // DEFAULT FIELDS — a document that has genuinely never had fields
         // saved (not "empty because nothing loaded yet") starts with a

@@ -63,6 +63,9 @@ export async function handOffTemplateToPrepare(
       // Provenance only — nothing resolves participants or routing through it.
       templateId,
       templateApplication: application,
+      // The resolved field geometry, if the template had any — copied again
+      // on the way into the draft (see createDraft's own reasoning for why).
+      templateFields: application.fields,
       initialFiles,
     });
 

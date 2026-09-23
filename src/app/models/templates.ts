@@ -215,6 +215,32 @@ export interface TemplateField extends Omit<FieldDefinition, "participantId"> {
   variableRef?:  string;                            // internalKey of a template variable
 }
 
+/**
+ * A template field, resolved to a real participant at APPLY time — the
+ * counterpart to `TemplateApplication`'s participants/routing for field
+ * geometry. Built by `services/prepare/template-apply.ts` from a template's
+ * `TemplateField[]` (placeholder-keyed) plus the placeholder→participant
+ * mapping the same apply pass already computes.
+ *
+ * `pageNumber`, not `pageId`: a template field's placeholder-id-keyed pageId
+ * (`enrichWithFields`'s synthetic `page-${n}`) names a page of the
+ * TEMPLATE's document, not of any editor session — the plain number is what
+ * survives the handoff, and the Fields step resolves it against the real
+ * `EditorPage`s of the document it actually opened (see FieldsPage.tsx's
+ * template-seeding effect).
+ */
+export interface ResolvedTemplateField {
+  /** Always a real, resolved participant — a field whose placeholder was
+   *  never mapped to anyone is dropped before this type is built. */
+  participantId: string;
+  type:          FieldDefinition["type"];
+  pageNumber:    number;
+  rect:          FieldDefinition["rect"];
+  label:         string;
+  required:      boolean;
+  layer:         number;
+}
+
 // ── Routing configuration ─────────────────────────────────────────────────────
 
 export interface TemplateRoutingConfiguration {
@@ -402,6 +428,13 @@ export const DEFAULT_TEMPLATE_QUERY: TemplateListQuery = {
 export interface TemplateApplication {
   participants: PrepParticipant[];
   routing:      PrepRoutingConfig;
+  /**
+   * The template's field geometry, resolved to the participants above.
+   * Absent (or empty) for a template with no field placements — the ordinary
+   * case before an admin has used TemplateFieldsPage — which leaves the
+   * Fields step exactly as blank as it always was.
+   */
+  fields?: ResolvedTemplateField[];
 }
 
 export interface TemplateRoleMapping {

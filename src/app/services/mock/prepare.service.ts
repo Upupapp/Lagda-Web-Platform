@@ -31,7 +31,7 @@ import {
   type MockContact,
   type MockTemplateSummary,
 } from "../../data/mock/prepare";
-import type { TemplateApplication } from "../../models/templates";
+import type { TemplateApplication, ResolvedTemplateField } from "../../models/templates";
 import { delay } from "./delay";
 
 // ── Validation helpers ────────────────────────────────────────────────────────
@@ -274,6 +274,9 @@ export interface IPrepareDocumentService {
      *  back to the template, so a later edit to that template cannot reach
      *  the draft built from it. */
     templateApplication?: TemplateApplication;
+    /** The template's field geometry, resolved to the same participants —
+     *  see `PreparationDraft.templateFields`'s own header. */
+    templateFields?: ResolvedTemplateField[];
     /** Pre-populates the new draft's files — used to hand off a document
      *  selected before authentication (see PendingPreparationContext). */
     initialFiles?: PrepFile[];
@@ -323,6 +326,7 @@ class MockPrepareDocumentService implements IPrepareDocumentService {
     source?: string;
     templateId?: string;
     templateApplication?: TemplateApplication;
+    templateFields?: ResolvedTemplateField[];
     initialFiles?: PrepFile[];
     initialTitle?: string;
   }): Promise<PreparationDraft> {
@@ -361,6 +365,11 @@ class MockPrepareDocumentService implements IPrepareDocumentService {
         sourceContext: { source: "template", templateId: context.templateId },
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
+        // Copied again on the way in, for the same reason participants and
+        // routing are — see this branch's own header.
+        ...(context.templateFields && context.templateFields.length > 0
+          ? { templateFields: context.templateFields.map(f => ({ ...f, rect: { ...f.rect } })) }
+          : {}),
       };
     } else if (context?.templateId && MOCK_TEMPLATES.find(t => t.id === context.templateId)) {
       // A template id with no resolved application. Nothing to pre-fill from,

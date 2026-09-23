@@ -7,6 +7,7 @@
 
 import type { RoutingMode } from "./transaction-detail";
 import type { DocumentFolder, DocumentTag } from "./documents";
+import type { ResolvedTemplateField } from "./templates";
 import { USE_REAL_BACKEND } from "../services/backend-flag";
 
 // Re-export for consumers who only import from prepare.ts
@@ -507,6 +508,15 @@ export interface PreparationDraft {
   auth:          PrepAuthConfig;
   settings:      PrepSettings;
   demonstrationOnly: true;
+  /**
+   * A template's field geometry, resolved to this draft's participants at
+   * apply time (see services/prepare/template-apply.ts). Consumed exactly
+   * once — by FieldsPage's template-seeding effect, the first time the
+   * Fields step opens for this draft — and never round-tripped anywhere
+   * else. Absent for every draft that did not begin from a template with a
+   * field layout.
+   */
+  templateFields?: ResolvedTemplateField[];
 }
 
 // ── Validation ────────────────────────────────────────────────────────────────

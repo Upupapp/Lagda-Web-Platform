@@ -535,6 +535,7 @@ function UseTemplateInner() {
         placeholders: t.placeholders,
         roleMappings: mappings,
         routingMode: t.routing.mode,
+        fields: t.fields,
       });
       if (!result.ok) {
         setError(result.message);
