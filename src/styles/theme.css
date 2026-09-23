@@ -191,6 +191,8 @@
   --lagda-z-shell:          30;   /* platform header, sidebar, mobile top bar */
   --lagda-z-dropdown:       40;   /* menus, popovers, comboboxes, tooltips    */
   --lagda-z-drawer:         50;   /* mobile nav + side panels (scrim at -1)   */
+  --lagda-z-tour-overlay:   51;   /* product tour dim — over shell and drawer */
+  --lagda-z-tour-coachmark: 52;   /* tour card — but UNDER a real dialog      */
   --lagda-z-modal:          60;   /* dialogs, sheets, confirmations           */
   --lagda-z-palette:        70;   /* command palette — sits over a dialog     */
   --lagda-z-toast:          80;   /* must outrank a modal to be readable      */

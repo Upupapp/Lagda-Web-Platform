@@ -15,6 +15,7 @@
 // multi-factor authentication" that is not an acceptable last line of defence.
 
 import { useEffect, useRef, useState, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { Z } from "../../utils/z-index";
 
 const GF = { fontFamily: "'Geist', sans-serif" };
@@ -130,7 +131,21 @@ export function ConfirmDialog({
     }
   }
 
-  return (
+  // Portalled to <body>, NOT rendered where the caller put it.
+  //
+  // `zIndex: Z.modal` only means "60" if the dialog is in the root stacking
+  // context. Two of the eighteen call sites render `confirmDialog` inside the
+  // platform sidebar's <aside>, which is `position: sticky; z-index: Z.shell`
+  // — a stacking context of its own. The dialog's 60 was therefore scoped
+  // inside a context at 30, so every root-level overlay above 30 covered it:
+  // the product tour, the command palette (70), toasts (80) and the
+  // full-screen loader (90). Signing out from the sidebar while the tour was
+  // open was impossible for exactly this reason — the confirm button could
+  // not be clicked.
+  //
+  // A portal is the fix rather than raising the number, because no value works
+  // from inside a nested stacking context.
+  return createPortal(
     <div
       role="alertdialog"
       aria-modal="true"
@@ -234,6 +249,7 @@ export function ConfirmDialog({
           @keyframes lagda-confirm-in { from { opacity: 0 } to { opacity: 1 } }
         }
       `}</style>
-    </div>
+    </div>,
+    document.body,
   );
 }

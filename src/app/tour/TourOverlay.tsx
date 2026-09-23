@@ -1,9 +1,9 @@
 // Dimmed backdrop with a spotlight cutout over the current tour target.
 // Plain CSS trick: a full-viewport fixed div sized/positioned to the
 // target's getBoundingClientRect(), using a huge box-shadow as the dim layer
-// so the cutout itself stays fully transparent (and thus not click-blocking
-// in a way that traps the user — clicks on the dimmed area still just do
-// nothing, this is an explain-only tour).
+// so the cutout itself stays fully transparent. Both branches set
+// pointerEvents: "none" — this is an explain-only tour, so the dim is purely
+// visual and every click goes through to the page underneath.
 
 import { useEffect, useState } from "react";
 import { Z } from "../utils/z-index";
@@ -34,6 +34,14 @@ export function TourOverlay({ target }: { target?: string }) {
         return;
       }
       const r = el.getBoundingClientRect();
+      // A `display:none` node matches the selector but has an all-zero rect —
+      // cutting a hole there paints a stray 16x16 square in the corner. Fall
+      // back to the uniform dim instead. (`platform-sidebar-nav` exists twice:
+      // desktop aside and mobile drawer, only one laid out at a time.)
+      if (r.width === 0 && r.height === 0) {
+        setRect(null);
+        return;
+      }
       setRect({
         top: r.top - PADDING,
         left: r.left - PADDING,
@@ -68,6 +76,10 @@ export function TourOverlay({ target }: { target?: string }) {
           inset: 0,
           zIndex: Z.tourOverlay,
           background: "rgba(7,17,31,0.6)",
+          // Matches the anchored branch below. Without it this full-viewport
+          // div swallows every click on the page, which an explain-only tour
+          // must not do.
+          pointerEvents: "none",
         }}
       />
     );
