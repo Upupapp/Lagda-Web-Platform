@@ -50,6 +50,7 @@ const RED   = "#DC2626";
 const TABS = [
   { id: "details",      label: "Details",    icon: <Info size={13} />     },
   { id: "documents",    label: "Documents",  icon: <FileText size={13} /> },
+  { id: "author",       label: "Author",     icon: <Type size={13} />     },
   { id: "placeholders", label: "Roles",      icon: <Users size={13} />    },
   { id: "routing",      label: "Routing",    icon: <GitBranch size={13} />},
   { id: "auth",         label: "Auth",       icon: <Shield size={13} />   },
@@ -363,6 +364,74 @@ function DocumentsTab({
       {!canWrite && (
         <p style={{ ...GF, fontSize: 12, color: "#94A3B8", margin: "6px 0 0", lineHeight: 1.5 }}>
           Open a workspace to attach or remove a document.
+        </p>
+      )}
+    </div>
+  );
+}
+
+// ── Tab panel: Author (066) ───────────────────────────────────────────────────
+//
+// The authoring editor is a full-screen canvas on its own route, the same
+// shape as Place Fields — this tab is the way in, and a summary of what has
+// been authored so far. It stays visible whatever the document state is:
+// burying the entry point inside the Documents tab (and only when nothing was
+// attached) made a shipped feature effectively unreachable.
+function AuthorTab({ draft, canWrite }: { draft: DocumentTemplate; canWrite: boolean }) {
+  const authored = draft.contentPageCount > 0;
+  const hasUploaded = draft.documents.length > 0 && !authored;
+
+  return (
+    <div>
+      <div style={{ padding: "14px 16px", background: "#F8FAFC", border: "1px solid #E2E8F0", borderRadius: 10, marginBottom: 16, display: "flex", gap: 8 }}>
+        <Info size={14} color={AZURE} style={{ flexShrink: 0, marginTop: 1 }} />
+        <p style={{ ...GF, fontSize: 12, color: "#334155", margin: 0, lineHeight: 1.6 }}>
+          Write the document here instead of uploading a file. Place text on
+          blank pages the same way you place signing fields, and LAGDA renders
+          it into a PDF attached to this template.
+        </p>
+      </div>
+
+      {authored ? (
+        <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 14px", background: "white", border: "1px solid #E2E8F0", borderRadius: 9, marginBottom: 14 }}>
+          <Type size={15} color="#64748B" />
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ ...GF, fontSize: 13, fontWeight: 600, color: "#0F172A" }}>
+              Authored in this workspace
+            </div>
+            <div style={{ ...GF, fontSize: 11, color: "#94A3B8" }}>
+              {draft.contentPageCount} page{draft.contentPageCount !== 1 ? "s" : ""}
+              {" · "}
+              {draft.contentBlocks.length} text block{draft.contentBlocks.length !== 1 ? "s" : ""}
+            </div>
+          </div>
+        </div>
+      ) : (
+        <p style={{ ...GF, fontSize: 13, color: "#94A3B8", margin: "0 0 14px" }}>
+          Nothing authored yet.
+        </p>
+      )}
+
+      {hasUploaded && (
+        <div style={{ padding: "12px 14px", background: "#FFFBEB", border: "1px solid #FDE68A", borderRadius: 9, marginBottom: 14 }}>
+          <p style={{ ...GF, fontSize: 12.5, color: "#92400E", margin: 0, lineHeight: 1.55 }}>
+            This template already has an uploaded document. Authoring one here
+            will replace it.
+          </p>
+        </div>
+      )}
+
+      {canWrite ? (
+        <Link
+          to={`/app/templates/${draft.id}/author`}
+          style={{ display: "inline-flex", alignItems: "center", gap: 7, padding: "9px 16px", borderRadius: 8, background: AZURE, color: "white", ...GF, fontSize: 13, fontWeight: 700, textDecoration: "none", minHeight: 40, boxSizing: "border-box" }}
+        >
+          <Type size={14} />
+          {authored ? "Edit the document" : "Author a document"}
+        </Link>
+      ) : (
+        <p style={{ ...GF, fontSize: 12, color: "#94A3B8", margin: 0, lineHeight: 1.5 }}>
+          Open a workspace to author a document for this template.
         </p>
       )}
     </div>
@@ -1098,6 +1167,7 @@ function TemplateEditInner() {
       <div style={{ padding: "24px", maxWidth: 640 }}>
         {activeTab === "details"      && <DetailsTab      draft={draft} onChange={p => setDraft(d => d ? { ...d, ...p } : d)} />}
         {activeTab === "documents"    && <DocumentsTab    draft={draft} workspaceId={workspaceId} canWrite={canWrite} onChange={setDraft} />}
+        {activeTab === "author"       && <AuthorTab       draft={draft} canWrite={canWrite} />}
         {activeTab === "placeholders" && <PlaceholdersTab draft={draft} workspaceId={workspaceId} onChange={p => setDraft(d => d ? { ...d, ...p } : d)} />}
         {activeTab === "routing"      && <RoutingTab      draft={draft} onChange={p => setDraft(d => d ? { ...d, ...p } : d)} />}
         {activeTab === "auth"         && <AuthTab         draft={draft} onChange={p => setDraft(d => d ? { ...d, ...p } : d)} />}

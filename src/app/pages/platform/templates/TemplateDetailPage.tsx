@@ -8,6 +8,7 @@ import {
   ChevronLeft, LayoutTemplate, FileText, Star,
   Edit2, Copy, Archive, RotateCcw, CheckCircle2, Eye,
   AlertCircle, AlertTriangle, PenLine, Zap, RefreshCw, Info, X, Trash2,
+  Type,
 } from "lucide-react";
 import { TemplateProvider, useTemplates } from "../../../context/TemplateContext";
 import { SkeletonBlock, SKELETON_STYLE } from "../../../components/platform";
@@ -168,6 +169,19 @@ function ActionStrip({
         >
           <PenLine size={14} />
           Fields
+        </Link>
+      )}
+
+      {/* Author the document (066) — a peer of Fields, not something buried in
+          the Documents tab. Offered whatever the template's document state is:
+          the editor itself warns before replacing one that was uploaded. */}
+      {status !== "archived" && (
+        <Link
+          to={`/app/templates/${id}/author`}
+          style={{ display: "inline-flex", alignItems: "center", gap: 7, padding: "9px 16px", background: "#F1F5F9", color: "#0F172A", borderRadius: 8, ...GF, fontSize: 13, fontWeight: 600, textDecoration: "none", flexShrink: 0, whiteSpace: "nowrap" }}
+        >
+          <Type size={14} />
+          Author
         </Link>
       )}
 
