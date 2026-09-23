@@ -893,7 +893,6 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
         id={dialogId}
         aria-label="Command palette"
         aria-modal
-        onKeyDown={handleKeyDown}
         style={{
           position: "fixed", zIndex: Z.palette + 1,
           top: 0, left: 0, right: 0, bottom: 0,
@@ -935,14 +934,7 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
               aria-label="Search or navigate"
               value={query}
               onChange={(e) => { setQuery(e.target.value); setActiveIndex(-1); }}
-              onKeyDown={(e) => {
-                if (e.key === "ArrowDown" && flatItems.length > 0) {
-                  e.preventDefault();
-                  setActiveIndex(0);
-                } else {
-                  handleKeyDown(e);
-                }
-              }}
+              onKeyDown={handleKeyDown}
               placeholder="Search documents, contacts, settings…"
               autoComplete="off"
               spellCheck={false}
