@@ -33,6 +33,7 @@ import type {
   TemplateRoleResolution,
   TemplateVariable,
   TemplateVariableType,
+  TemplateContentBlock,
 } from "../../models/templates";
 import type { PrepParticipantRole, PrepAuthMethodId } from "../../models/prepare";
 import type { RoutingMode } from "../../models/transaction-detail";
@@ -131,6 +132,12 @@ export interface WireVariable {
   required: boolean;
 }
 
+/** A content block (066) — text at a fixed normalized rect on a page, exactly
+ *  the frontend's own `TemplateContentBlock` shape (the backend's read/write
+ *  schemas are identical to it field-for-field, unlike `WireField`/
+ *  `TemplateField`, so no separate write interface is needed). */
+export type WireContentBlock = TemplateContentBlock;
+
 export interface WireTemplate {
   workflowTemplateId: string;
   name: string;
@@ -148,8 +155,19 @@ export interface WireTemplate {
    */
   documentId: string | null;
   sourceArtifactId: string | null;
+  /** 066. The authored content that PRODUCED the attached document, when the
+   *  document was generated rather than uploaded. Empty for an uploaded
+   *  document, or for a template with nothing attached at all. */
+  contentBlocks: WireContentBlock[];
+  contentPageCount: number;
   createdAt: string;
   updatedAt: string;
+}
+
+/** The body of `POST .../generate-document`. */
+export interface WireGenerateDocumentInput {
+  pageCount: number;
+  blocks: WireContentBlock[];
 }
 
 /** The body both POST and PUT take. PUT replaces wholesale — the backend has
@@ -244,6 +262,22 @@ class RealTemplatesService {
       { method: "PUT", body: { fields } },
     );
     return result.items;
+  }
+
+  /**
+   * Renders the given content into a PDF and attaches it to the template —
+   * the authoring alternative to `attachDocument`'s "point at an already-
+   * uploaded file". Whole-content replace, same one-atomic-write model as
+   * `saveFields`: there is no per-block endpoint, and regenerating replaces
+   * the previously attached document (and its content) rather than merging.
+   */
+  async generateDocument(
+    workspaceId: string, templateId: string, input: WireGenerateDocumentInput,
+  ): Promise<WireTemplate> {
+    return apiRequest<WireTemplate>(
+      `${base(workspaceId)}/${encodeURIComponent(templateId)}/generate-document`,
+      { method: "POST", body: input },
+    );
   }
 
   /**
@@ -359,6 +393,8 @@ export function toDocumentTemplate(wire: WireTemplate): DocumentTemplate {
     settings: defaultSettings(wire.completionSettings.notifySenderOnComplete),
     variables: wire.variables.map(toTemplateVariable),
     fields: [],
+    contentBlocks: wire.contentBlocks,
+    contentPageCount: wire.contentPageCount,
     usageSummary: {
       timesUsed: 0, lastUsedDate: null, recentDraftStarts: 0,
       relatedFixtureIds: [], demonstrationOnly: true,

@@ -27,7 +27,7 @@
 import { USE_REAL_BACKEND } from "./backend-flag";
 import {
   realTemplatesService, toDocumentTemplate, toWireWrite,
-  type WireFieldInput,
+  type WireFieldInput, type WireContentBlock,
 } from "./real/templates.service";
 import { realDocumentService } from "./real/document.service";
 import { isBackendFieldType } from "./prepare/field-sync";
@@ -334,6 +334,23 @@ export async function detachTemplateDocument(
   if (!realTemplatesAvailable(workspaceId)) throw new TemplatesNotWritableError();
   const wire = await realTemplatesService.detachDocument(workspaceId!, id);
   return toDocumentTemplate(wire);
+}
+
+/**
+ * Renders authored content into a PDF and attaches it to the template — the
+ * authoring alternative to `attachTemplateDocument`'s "point at an already-
+ * uploaded file". Regenerating REPLACES: the template ends up pointing at
+ * the newly rendered document, same as re-uploading would.
+ */
+export async function generateTemplateDocument(
+  workspaceId: string | undefined, id: DocumentTemplateId,
+  input: { pageCount: number; blocks: readonly WireContentBlock[] },
+): Promise<DocumentTemplate> {
+  if (!realTemplatesAvailable(workspaceId)) throw new TemplatesNotWritableError();
+  const wire = await realTemplatesService.generateDocument(workspaceId!, id, {
+    pageCount: input.pageCount, blocks: [...input.blocks],
+  });
+  return enrichWithDocument(workspaceId!, toDocumentTemplate(wire));
 }
 
 export interface SaveTemplateFieldsResult {
