@@ -79,7 +79,16 @@ export const PRIMARY_NAV: PlatformNavItem[] = [
     path: "/app/templates",
     icon: "Files",
     group: "primary",
-    permission: "manage_templates",
+    // Not `manage_templates`: that gates AUTHORING one, and this is the entry
+    // point to the whole library, including reading and applying an existing
+    // template — a `sender`'s act, per the backend's own template.view
+    // capability (core/src/authorization/index.ts). Gating navigation to
+    // `manage_templates` meant a sender could never reach this page at all,
+    // even though the backend already lets them use it once they're on it.
+    // `view_workflow` is the permission `sender` already holds for exactly
+    // this reason. Individual write actions (Create, Edit, Delete, ...) keep
+    // their own `manage_templates` checks inside the pages themselves.
+    permission: "view_workflow",
     featureFlag: "templatesEnabled",
     showOnMobile: true,
     description: "Reusable document templates",

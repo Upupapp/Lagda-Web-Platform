@@ -1118,7 +1118,10 @@ function PlatformDashboardMockDemo() {
 
   const canViewDocs  = hasPermission("view_documents");
   const canPrepare   = hasPermission("prepare_documents");
-  const canTemplate  = hasPermission("manage_templates");
+  // Gates the "Use a Template" quick action below — reading and applying an
+  // existing template, not authoring one. See platform.nav.ts's templates
+  // entry for the full reasoning; this is the same fix for the same reason.
+  const canTemplate  = hasPermission("view_workflow");
   const canVerify    = hasPermission("verify_documents");
   const canInvite    = hasPermission("manage_team");
   const canBilling    = hasPermission("view_billing") || hasPermission("view_usage");
