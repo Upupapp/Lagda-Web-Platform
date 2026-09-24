@@ -82,7 +82,13 @@ export const NOTIFICATION_CATEGORY_LABELS: Record<NotificationCategory, string> 
 
 export interface NotificationRecord {
   readonly id: NotificationId;
-  readonly demonstrationOnly: true;
+  /**
+   * `boolean`, not the literal `true` it used to be. Real rows now reach
+   * this store — document status changes projected from backend evidence —
+   * and a type that can only say "demonstration" forced those to claim
+   * something untrue about themselves.
+   */
+  readonly demonstrationOnly: boolean;
   readonly category: NotificationCategory;
   readonly severity: NotificationSeverity;
   readonly priority: NotificationPriority;
