@@ -350,6 +350,11 @@ export function RoutingStep() {
   const routeErrors  = validation?.errors.filter(e => e.stepId === "routing") ?? [];
   const routeWarnings = validation?.warnings.filter(e => e.stepId === "routing") ?? [];
   const isApprovalBased = routing.mode === "approval-based";
+  // An approver's whole point is to be asked before signing opens — the only
+  // mode that guarantees that ordering is Approval-based, so once one is on
+  // the transaction the other three modes stop being valid choices, not just
+  // discouraged ones.
+  const hasApprover = participants.some(p => p.role === "approver");
 
   // ── Mode change: rebuild groups ─────────────────────────────────────────────
 
@@ -359,6 +364,16 @@ export function RoutingStep() {
       : buildDefaultGroups(mode, participants);
     updateRouting({ mode, groups });
   }, [participants, updateRouting]);
+
+  // An approver added while some other mode is active forces the switch —
+  // this runs on its own effect, separate from participant reconciliation
+  // below, because it changes the MODE itself, not just a mode's groups.
+  useEffect(() => {
+    if (hasApprover && routingRef.current.mode !== "approval-based") {
+      handleModeChange("approval-based");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasApprover]);
 
   // ── Participant reconciliation ──────────────────────────────────────────────
   // Runs whenever who's on the transaction (or their role) changes — not on
@@ -520,6 +535,7 @@ export function RoutingStep() {
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           {ROUTING_MODES.map(m => {
             const active = routing.mode === m.id;
+            const locked = hasApprover && m.id !== "approval-based";
             return (
               <label
                 key={m.id}
@@ -531,8 +547,9 @@ export function RoutingStep() {
                   padding: "12px 16px",
                   borderRadius: 10,
                   border: `1px solid ${active ? AZURE : "#D1D9E0"}`,
-                  background: active ? "#EBF4FC" : "#FFFFFF",
-                  cursor: "pointer",
+                  background: locked ? "#F5F7FA" : active ? "#EBF4FC" : "#FFFFFF",
+                  cursor: locked ? "not-allowed" : "pointer",
+                  opacity: locked ? 0.6 : 1,
                 }}
               >
                 <input
@@ -540,15 +557,18 @@ export function RoutingStep() {
                   name="routing-mode"
                   value={m.id}
                   checked={active}
+                  disabled={locked}
                   onChange={() => handleModeChange(m.id)}
-                  style={{ accentColor: AZURE, marginTop: 2 }}
+                  style={{ accentColor: AZURE, marginTop: 2, cursor: locked ? "not-allowed" : "pointer" }}
                 />
                 <div>
-                  <div style={{ fontSize: 14, fontWeight: active ? 700 : 500, color: NAVY }}>
+                  <div style={{ fontSize: 14, fontWeight: active ? 700 : 500, color: locked ? SILVER : NAVY }}>
                     {m.label}
                   </div>
                   <div style={{ fontSize: 12, color: SILVER, marginTop: 3, lineHeight: 1.5 }}>
-                    {ROUTING_MODE_DESCRIPTIONS[m.id]}
+                    {locked
+                      ? "Unavailable — an approver is on this transaction, so signing can only open after they act."
+                      : ROUTING_MODE_DESCRIPTIONS[m.id]}
                   </div>
                 </div>
               </label>
