@@ -176,24 +176,141 @@ export interface TemplateDocument {
   mimeType?: string;
 }
 
-// ── Authored document content (066) ───────────────────────────────────────────
+// ── Authored document content (071) ───────────────────────────────────────────
 //
-// The alternative to attaching an uploaded document: fixed-position text
-// blocks on blank pages, in the SAME normalized-rectangle geometry as
-// `TemplateField`/`FieldDefinition` — this mirrors "Place Fields" exactly,
-// just drawing text into a box instead of reading a value out of one.
-// Saving calls generate-document, which renders these into a real PDF and
-// attaches it to the template the same way an upload does.
+// A template's source document, typed directly rather than uploaded — the
+// same flowing-document model the backend's `FlowDocument` contract defines
+// (`packages/contracts/src/workflow-templates/index.ts`). An ordered tree of
+// blocks; each block carries runs of styled inline content. Nothing here
+// owns a page or a rectangle — where content lands is computed by the
+// backend's layout engine at generate time, exactly the way word-processor
+// pagination works. Mirrors the backend shape field-for-field so the wire
+// layer (`services/real/templates.service.ts`) needs no translation beyond
+// JSON round-tripping.
+//
+// A `fieldAnchor` run is the one place this model touches field placement:
+// typed inline ("Signed: [Employer Signature]"), it becomes a real
+// `TemplateField` once `generate-document`'s response resolves where the
+// layout engine placed it — see `templates-source.ts#generateTemplateDocument`.
 
-export type TemplateContentBlockAlign = "left" | "center" | "right";
+export type DocumentFontFamily = "times" | "georgia" | "helvetica" | "calibri" | "courier";
 
-export interface TemplateContentBlock {
-  pageNumber: number;
-  rect:       NormalizedRect;
-  text:       string;
-  fontSize?:  number;
-  bold?:      boolean;
-  align?:     TemplateContentBlockAlign;
+export const DOCUMENT_FONT_FAMILY_LABELS: Record<DocumentFontFamily, string> = {
+  times:     "Times New Roman",
+  georgia:   "Georgia",
+  helvetica: "Helvetica",
+  calibri:   "Calibri",
+  courier:   "Courier New",
+};
+
+export type DocumentBlockAlign = "left" | "center" | "right" | "justify";
+
+export type DocumentTextMark =
+  | { kind: "bold" }
+  | { kind: "italic" }
+  | { kind: "underline" }
+  | { kind: "fontFamily"; family: DocumentFontFamily }
+  | { kind: "fontSize"; size: number };
+
+export interface DocumentTextRun {
+  kind:  "text";
+  text:  string;
+  marks?: DocumentTextMark[];
+}
+
+/** A dropped-in reference to `variables[].key` — renders as `[Label]` until
+ *  bound; never substitutes text in place. */
+export interface DocumentVariableRun {
+  kind:  "variable";
+  key:   string;
+  label: string;
+}
+
+/** A dropped-in signature/date/initials placement, typed inline. Exactly
+ *  one of `slotId` / `variableKey` — enforced by the author UI, not just
+ *  the schema, since it is impossible to type both by construction here. */
+export interface DocumentFieldAnchorRun {
+  kind:        "fieldAnchor";
+  fieldType:   FieldAnchorType;
+  slotId?:     string;
+  variableKey?: string;
+  required:    boolean;
+  label:       string;
+}
+
+/** The 9 field kinds a template may place — the same closed set
+ *  `PreparationFieldTypeSchema` defines backend-side. A subset of
+ *  `FieldType` (no `multiline-text`, `radio-group`, `acknowledgment` or
+ *  `sender-text` — those exist for live preparation but not for an
+ *  anchor typed into authored text). */
+export type FieldAnchorType =
+  | "signature" | "initials" | "date-signed" | "text"
+  | "checkbox" | "full-name" | "email" | "title" | "company";
+
+export const FIELD_ANCHOR_TYPE_LABELS: Record<FieldAnchorType, string> = {
+  signature:    "Signature",
+  initials:     "Initials",
+  "date-signed":"Date Signed",
+  text:         "Text",
+  checkbox:     "Checkbox",
+  "full-name":  "Full Name",
+  email:        "Email",
+  title:        "Title",
+  company:      "Company",
+};
+
+export type DocumentInlineContent = (DocumentTextRun | DocumentVariableRun | DocumentFieldAnchorRun)[];
+
+export type DocumentHeadingLevel = 1 | 2 | 3;
+
+export interface DocumentParagraph {
+  kind:    "paragraph";
+  align?:  DocumentBlockAlign;
+  content: DocumentInlineContent;
+}
+
+export interface DocumentHeading {
+  kind:    "heading";
+  level:   DocumentHeadingLevel;
+  align?:  DocumentBlockAlign;
+  content: DocumentInlineContent;
+}
+
+export interface DocumentPageBreak {
+  kind: "pageBreak";
+}
+
+export interface DocumentListItem {
+  kind:    "listItem";
+  content: (DocumentParagraph | DocumentOrderedList)[];
+}
+
+export interface DocumentOrderedList {
+  kind:    "orderedList";
+  content: DocumentListItem[];
+}
+
+export type DocumentBlock = DocumentParagraph | DocumentHeading | DocumentOrderedList | DocumentPageBreak;
+
+export interface FlowDocument {
+  kind:    "flowDocument";
+  content: DocumentBlock[];
+}
+
+export const EMPTY_FLOW_DOCUMENT: FlowDocument = { kind: "flowDocument", content: [] };
+
+/** A `fieldAnchor` run resolved to where the layout engine actually placed
+ *  it, returned by `generate-document` and written straight through to
+ *  `saveTemplateFields` — see that function's own header for why this
+ *  round-trip exists instead of the author placing fields by hand. */
+export interface ResolvedFieldAnchor {
+  fieldType:    FieldAnchorType;
+  slotId?:      string;
+  variableKey?: string;
+  required:     boolean;
+  label:        string;
+  pageNumber:   number;
+  rect:         NormalizedRect;
 }
 
 // ── Template variable ─────────────────────────────────────────────────────────
@@ -372,10 +489,9 @@ export interface DocumentTemplate {
   settings:       TemplateRequestSettings;
   variables:      TemplateVariable[];
   fields:         TemplateField[];
-  /** 066. Empty for a template with nothing authored — including every
-   *  template with an UPLOADED document instead, which has no content
-   *  blocks of its own. */
-  contentBlocks:      TemplateContentBlock[];
+  /** 071. The empty `FlowDocument` for a template with nothing authored
+   *  yet. */
+  content:            FlowDocument;
   contentPageCount:   number;
   usageSummary:   TemplateUsageSummary;
   validation?:    TemplateValidationResult;

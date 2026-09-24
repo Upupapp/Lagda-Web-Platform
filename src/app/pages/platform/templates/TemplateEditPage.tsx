@@ -3,23 +3,21 @@
 // Tab-based layout. All mutations are in-session only. demonstrationOnly.
 // Inline styles only. No Burgundy.
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router";
 import {
   ChevronLeft, AlertCircle, CheckCircle2, Save, Info,
   Users, FileText, Settings, GitBranch, Type, Shield,
-  Plus, Trash2,
+  Plus,
 } from "lucide-react";
 import { TemplateProvider, useTemplates } from "../../../context/TemplateContext";
 import { usePlatform } from "../../../context/PlatformContext";
-import { useProcessing, buildSteps } from "../../../services/processing.service";
+import { useProcessing } from "../../../services/processing.service";
 import {
-  updateTemplate, realTemplatesAvailable, attachTemplateDocument, detachTemplateDocument,
+  updateTemplate, realTemplatesAvailable,
 } from "../../../services/templates-source";
-import { realDocumentService } from "../../../services/real/document.service";
 import { realOrganizationService } from "../../../services/real/organization.service";
 import type { OrganizationUnit } from "../../../models/organization";
-import { ApiError } from "../../../services/api-client";
 import { VALID_PREP_PARTICIPANT_ROLES } from "../../../models/prepare";
 import type { PrepParticipantRole } from "../../../models/prepare";
 import type {
@@ -49,8 +47,7 @@ const RED   = "#DC2626";
 // ── Tab definition ────────────────────────────────────────────────────────────
 const TABS = [
   { id: "details",      label: "Details",    icon: <Info size={13} />     },
-  { id: "documents",    label: "Documents",  icon: <FileText size={13} /> },
-  { id: "author",       label: "Author",     icon: <Type size={13} />     },
+  { id: "author",       label: "Document",   icon: <FileText size={13} /> },
   { id: "placeholders", label: "Roles",      icon: <Users size={13} />    },
   { id: "routing",      label: "Routing",    icon: <GitBranch size={13} />},
   { id: "auth",         label: "Auth",       icon: <Shield size={13} />   },
@@ -137,258 +134,24 @@ function DetailsTab({ draft, onChange }: { draft: DocumentTemplate; onChange: (p
   );
 }
 
-// ── Tab panel: Documents ──────────────────────────────────────────────────────
+// ── Tab panel: Document (071) ─────────────────────────────────────────────────
 //
-// A stored template holds AT MOST ONE document (059's `document_id` +
-// `source_artifact_id` pair). Adding one goes through the same two calls
-// every upload in this platform makes — `realDocumentService.create` then
-// `.upload` — followed by the one call unique to a template:
-// `attachTemplateDocument`, which points the template at the result.
-// Removing clears the reference only; the document and its bytes are
-// untouched (see `detachTemplateDocument`'s own header).
-function DocumentsTab({
-  draft, workspaceId, canWrite, onChange,
-}: {
-  draft: DocumentTemplate;
-  workspaceId: string | undefined;
-  canWrite: boolean;
-  onChange: (next: DocumentTemplate) => void;
-}) {
-  const { run } = useProcessing();
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
-  // Set only when the detach would actually lose something — see
-  // handleRemoveClick. Confirmed once, then handleRemove runs for real.
-  const [confirmDetach, setConfirmDetach] = useState(false);
-
-  const doc = draft.documents[0];
-
-  const UPLOAD_STAGES = [
-    { id: "transfer", label: "Transferring your file" },
-    { id: "process",  label: "Securing and preparing it" },
-    { id: "attach",   label: "Attaching it to the template" },
-  ];
-
-  const handleFile = async (file: File) => {
-    if (!workspaceId) return;
-    setError(null);
-    setBusy(true);
-    try {
-      const capacity = await realDocumentService.checkUploadCapacity();
-      if (!capacity.available) {
-        setError(capacity.message ?? "Uploads are temporarily unavailable.");
-        return;
-      }
-      const updated = await run(
-        {
-          message: `Uploading ${file.name}`,
-          detail: "Large documents can take a moment.",
-          steps: buildSteps(UPLOAD_STAGES, "transfer"),
-        },
-        async ({ update }) => {
-          const created = await realDocumentService.create(workspaceId, file.name);
-          update({ steps: buildSteps(UPLOAD_STAGES, "process") });
-          const result = await realDocumentService.upload(workspaceId, created.documentId, file);
-          update({ steps: buildSteps(UPLOAD_STAGES, "attach") });
-          return attachTemplateDocument(workspaceId, draft.id, {
-            documentId: created.documentId, artifactId: result.artifactId,
-          });
-        },
-      );
-      onChange(updated);
-    } catch (err) {
-      setError(err instanceof ApiError
-        ? err.message
-        : "Something went wrong uploading this file. Please try again.");
-    } finally {
-      setBusy(false);
-      if (fileInputRef.current) fileInputRef.current.value = "";
-    }
-  };
-
-  const handleRemove = async () => {
-    if (!workspaceId) return;
-    setError(null);
-    setConfirmDetach(false);
-    setBusy(true);
-    try {
-      const updated = await run(
-        { message: "Removing document", detail: "The document itself is not deleted." },
-        () => detachTemplateDocument(workspaceId, draft.id),
-      );
-      onChange(updated);
-    } catch (err) {
-      setError(err instanceof ApiError
-        ? err.message
-        : "Something went wrong removing this document. Please try again.");
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  /**
-   * Detaching clears the WHOLE field layout — `detachWorkflowTemplateDocument`
-   * wipes it unconditionally, because a field's geometry is meaningless
-   * without the page count it was placed against. That is the right backend
-   * behaviour; what was missing was telling the person about it before it
-   * happens rather than after. A template with nothing placed loses nothing,
-   * so it detaches immediately — the same one-click behaviour as before.
-   */
-  const handleRemoveClick = () => {
-    if (draft.fields.length > 0) {
-      setConfirmDetach(true);
-      return;
-    }
-    void handleRemove();
-  };
-
-  return (
-    <div>
-      <div style={{ padding: "14px 16px", background: "#F8FAFC", border: "1px solid #E2E8F0", borderRadius: 10, marginBottom: 16, display: "flex", gap: 8 }}>
-        <Info size={14} color={AZURE} style={{ flexShrink: 0, marginTop: 1 }} />
-        <p style={{ ...GF, fontSize: 12, color: "#334155", margin: 0, lineHeight: 1.6 }}>
-          Attach the document senders will use every time this template is applied.
-          Applying the template pre-fills the Upload step with it, ready to send as-is.
-        </p>
-      </div>
-
-      {error !== null && (
-        <div style={{ ...GF, marginBottom: 12, padding: "10px 13px", borderRadius: 8, background: "#FEF2F2", border: "1px solid #FECACA", fontSize: 12.5, color: "#B91C1C" }}>
-          {error}
-        </div>
-      )}
-
-      {doc === undefined ? (
-        <p style={{ ...GF, fontSize: 13, color: "#94A3B8" }}>No document attached to this template.</p>
-      ) : draft.contentPageCount > 0 ? (
-        <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 12 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 14px", background: "white", border: "1px solid #E2E8F0", borderRadius: 9 }}>
-            <FileText size={15} color="#64748B" />
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ ...GF, fontSize: 13, fontWeight: 600, color: "#0F172A", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{doc.displayName}</div>
-              <div style={{ ...GF, fontSize: 11, color: "#94A3B8" }}>Authored in-app — {draft.contentPageCount} page{draft.contentPageCount !== 1 ? "s" : ""}</div>
-            </div>
-            {canWrite && (
-              <Link
-                to={`/app/templates/${draft.id}/author`}
-                style={{ ...GF, fontSize: 12, fontWeight: 600, color: AZURE, textDecoration: "none", flexShrink: 0 }}
-              >
-                Edit content
-              </Link>
-            )}
-          </div>
-        </div>
-      ) : (
-        <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 12 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 14px", background: "white", border: "1px solid #E2E8F0", borderRadius: 9 }}>
-            <FileText size={15} color="#64748B" />
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ ...GF, fontSize: 13, fontWeight: 600, color: "#0F172A", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{doc.displayName}</div>
-              <div style={{ ...GF, fontSize: 11, color: "#94A3B8" }}>{doc.pageCount} page{doc.pageCount !== 1 ? "s" : ""}</div>
-            </div>
-            {canWrite && (
-              <button
-                type="button"
-                onClick={handleRemoveClick}
-                disabled={busy}
-                title="Remove document"
-                style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 30, height: 30, border: "none", borderRadius: 7, background: "none", color: busy ? "#CBD5E1" : "#DC2626", cursor: busy ? "default" : "pointer", flexShrink: 0 }}
-              >
-                <Trash2 size={14} />
-              </button>
-            )}
-          </div>
-          {confirmDetach && (
-            <div style={{ padding: "12px 14px", background: "#FFFBEB", border: "1px solid #FDE68A", borderRadius: 9 }}>
-              <p style={{ ...GF, fontSize: 12.5, color: "#92400E", margin: "0 0 10px", lineHeight: 1.55 }}>
-                This will also remove all {draft.fields.length} placed field{draft.fields.length !== 1 ? "s" : ""} — a field's
-                position is meaningless without this document's page count, and there
-                is no undo.
-              </p>
-              <div style={{ display: "flex", gap: 8 }}>
-                <button
-                  type="button"
-                  onClick={() => { setConfirmDetach(false); }}
-                  disabled={busy}
-                  style={{ ...GF, padding: "7px 14px", borderRadius: 7, background: "white", border: "1px solid #FDE68A", color: "#92400E", fontSize: 12.5, fontWeight: 600, cursor: busy ? "default" : "pointer" }}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  onClick={() => { void handleRemove(); }}
-                  disabled={busy}
-                  style={{ ...GF, padding: "7px 14px", borderRadius: 7, background: "#DC2626", border: "none", color: "white", fontSize: 12.5, fontWeight: 700, cursor: busy ? "default" : "pointer" }}
-                >
-                  {busy ? "Removing…" : "Remove document and fields"}
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-
-      {canWrite && doc === undefined && (
-        <div style={{ marginTop: 12, display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".pdf,.doc,.docx"
-            style={{ display: "none" }}
-            onChange={e => {
-              const file = e.target.files?.[0];
-              if (file) void handleFile(file);
-            }}
-          />
-          <button
-            type="button"
-            onClick={() => fileInputRef.current?.click()}
-            disabled={busy}
-            style={{ display: "inline-flex", alignItems: "center", gap: 7, padding: "8px 14px", border: "1px dashed #C8E1F5", borderRadius: 8, background: "#F8FAFC", color: busy ? "#94A3B8" : AZURE, ...GF, fontSize: 12, fontWeight: 600, cursor: busy ? "default" : "pointer", minHeight: 44 }}
-          >
-            <Plus size={13} />
-            Add document
-          </button>
-          <span style={{ ...GF, fontSize: 12, color: "#94A3B8" }}>or</span>
-          <Link
-            to={`/app/templates/${draft.id}/author`}
-            style={{ display: "inline-flex", alignItems: "center", gap: 7, padding: "8px 14px", border: "1px solid #E2E8F0", borderRadius: 8, background: "white", color: "#0F172A", ...GF, fontSize: 12, fontWeight: 600, textDecoration: "none", minHeight: 44, boxSizing: "border-box" }}
-          >
-            <Type size={13} />
-            Author a document instead
-          </Link>
-        </div>
-      )}
-
-      {!canWrite && (
-        <p style={{ ...GF, fontSize: 12, color: "#94A3B8", margin: "6px 0 0", lineHeight: 1.5 }}>
-          Open a workspace to attach or remove a document.
-        </p>
-      )}
-    </div>
-  );
-}
-
-// ── Tab panel: Author (066) ───────────────────────────────────────────────────
-//
-// The authoring editor is a full-screen canvas on its own route, the same
-// shape as Place Fields — this tab is the way in, and a summary of what has
-// been authored so far. It stays visible whatever the document state is:
-// burying the entry point inside the Documents tab (and only when nothing was
-// attached) made a shipped feature effectively unreachable.
+// The only way a template gets a document: typed here, never uploaded — see
+// `services/templates-source.ts`'s own header on why Templates stopped
+// accepting a file. The authoring editor is a full-screen surface on its own
+// route, the same shape as Place Fields; this tab is the way in, and a
+// summary of what has been authored so far.
 function AuthorTab({ draft, canWrite }: { draft: DocumentTemplate; canWrite: boolean }) {
   const authored = draft.contentPageCount > 0;
-  const hasUploaded = draft.documents.length > 0 && !authored;
 
   return (
     <div>
       <div style={{ padding: "14px 16px", background: "#F8FAFC", border: "1px solid #E2E8F0", borderRadius: 10, marginBottom: 16, display: "flex", gap: 8 }}>
         <Info size={14} color={AZURE} style={{ flexShrink: 0, marginTop: 1 }} />
         <p style={{ ...GF, fontSize: 12, color: "#334155", margin: 0, lineHeight: 1.6 }}>
-          Write the document here instead of uploading a file. Place text on
-          blank pages the same way you place signing fields, and LAGDA renders
-          it into a PDF attached to this template.
+          Write the document here — an alternative to Word for a document that
+          will be sent for signature. LAGDA renders what you type into a real
+          PDF and attaches it to this template.
         </p>
       </div>
 
@@ -401,8 +164,6 @@ function AuthorTab({ draft, canWrite }: { draft: DocumentTemplate; canWrite: boo
             </div>
             <div style={{ ...GF, fontSize: 11, color: "#94A3B8" }}>
               {draft.contentPageCount} page{draft.contentPageCount !== 1 ? "s" : ""}
-              {" · "}
-              {draft.contentBlocks.length} text block{draft.contentBlocks.length !== 1 ? "s" : ""}
             </div>
           </div>
         </div>
@@ -410,15 +171,6 @@ function AuthorTab({ draft, canWrite }: { draft: DocumentTemplate; canWrite: boo
         <p style={{ ...GF, fontSize: 13, color: "#94A3B8", margin: "0 0 14px" }}>
           Nothing authored yet.
         </p>
-      )}
-
-      {hasUploaded && (
-        <div style={{ padding: "12px 14px", background: "#FFFBEB", border: "1px solid #FDE68A", borderRadius: 9, marginBottom: 14 }}>
-          <p style={{ ...GF, fontSize: 12.5, color: "#92400E", margin: 0, lineHeight: 1.55 }}>
-            This template already has an uploaded document. Authoring one here
-            will replace it.
-          </p>
-        </div>
       )}
 
       {canWrite ? (
@@ -1166,7 +918,6 @@ function TemplateEditInner() {
       {/* Tab content */}
       <div style={{ padding: "24px", maxWidth: 640 }}>
         {activeTab === "details"      && <DetailsTab      draft={draft} onChange={p => setDraft(d => d ? { ...d, ...p } : d)} />}
-        {activeTab === "documents"    && <DocumentsTab    draft={draft} workspaceId={workspaceId} canWrite={canWrite} onChange={setDraft} />}
         {activeTab === "author"       && <AuthorTab       draft={draft} canWrite={canWrite} />}
         {activeTab === "placeholders" && <PlaceholdersTab draft={draft} workspaceId={workspaceId} onChange={p => setDraft(d => d ? { ...d, ...p } : d)} />}
         {activeTab === "routing"      && <RoutingTab      draft={draft} onChange={p => setDraft(d => d ? { ...d, ...p } : d)} />}

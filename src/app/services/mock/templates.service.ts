@@ -392,7 +392,7 @@ export function createBlankTemplate(name: string, category: DocumentTemplate["ca
     },
     variables:    [],
     fields:       [],
-    contentBlocks:    [],
+    content:          { kind: "flowDocument", content: [] },
     contentPageCount: 0,
     usageSummary: { timesUsed: 0, lastUsedDate: null, recentDraftStarts: 0, relatedFixtureIds: [], demonstrationOnly: true },
     createdAt:    new Date().toISOString(),
