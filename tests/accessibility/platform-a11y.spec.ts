@@ -210,9 +210,10 @@ const ROUTES: readonly RouteUnderTest[] = [
     path: "/app/contacts",
     shellHeading: /^Contacts$/,
     assertLoaded: async (page) => {
-      await expect(page.getByRole("table", { name: "Contacts" })).toBeVisible();
-      // 1 header row + 8 fixture contacts.
-      await expect(page.getByRole("row")).toHaveCount(9);
+      // A card grid, not a table: the list was redesigned away from the
+      // table this used to wait for. One card per fixture contact, each
+      // carrying its own actions-menu trigger, so the count is the list.
+      await expect(page.getByRole("button", { name: /^Actions for / })).toHaveCount(8);
     },
     trackedDefects: [contrast(25)],
     h1Baseline: 2,

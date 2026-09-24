@@ -530,7 +530,10 @@ function ContactCard({ contact: c, selected, onToggle }: { contact: ContactListI
             {c.name}
           </Link>
           <p style={{ ...GM, color: SLATE, fontSize: 11, margin: "2px 0 0", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.email}</p>
-          {c.organization && <p style={{ ...GF, color: SILVER, fontSize: 11, margin: "1px 0 0", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.organization}</p>}
+          {/* SLATE, not SILVER: this sits on a white card, where #8A9BAE is
+              2.7:1 and fails WCAG AA. The a11y suite tracks the palette's
+              contrast defect and fails when it spreads to new nodes. */}
+          {c.organization && <p style={{ ...GF, color: SLATE, fontSize: 11, margin: "1px 0 0", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.organization}</p>}
         </div>
 
         {/* The one visible control: everything else (View/Edit/Archive) hides
@@ -570,7 +573,7 @@ function ContactCard({ contact: c, selected, onToggle }: { contact: ContactListI
       )}
 
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 12, paddingTop: 10, borderTop: "1px solid #F0F2F5" }}>
-        <span style={{ ...GF, fontSize: 11, color: SILVER }}>Last used</span>
+        <span style={{ ...GF, fontSize: 11, color: SLATE }}>Last used</span>
         <RelativeDate iso={c.lastUsedAt} />
       </div>
     </div>
