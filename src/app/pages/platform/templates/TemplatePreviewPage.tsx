@@ -1,16 +1,23 @@
 // /app/templates/:templateId/preview — Read-only template preview.
-// Shows simulated document pages with field overlays, role placeholder summary,
-// routing diagram, and settings snapshot. Not a real document viewer.
-// Inline styles only. No Burgundy. demonstrationOnly.
+// Renders the template's REAL document where it has one — uploaded or
+// authored — with field overlays on top, plus role placeholder summary,
+// routing diagram, and settings snapshot.
+// Inline styles only. No Burgundy.
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams, Link } from "react-router";
 import {
   ChevronLeft, Users, GitBranch,
-  Settings, AlertCircle, Zap,
+  Settings, AlertCircle, Zap, PenLine,
 } from "lucide-react";
 import { TemplateProvider, useTemplates } from "../../../context/TemplateContext";
+import { usePlatform } from "../../../context/PlatformContext";
 import { SkeletonBlock, SKELETON_STYLE } from "../../../components/platform";
+import {
+  useRealDocument, DocumentPageSurface,
+} from "../../../components/pdf/DocumentPageSurface";
+import { realSigningRequestService } from "../../../services/real/signing-request.service";
+import { realTemplatesAvailable } from "../../../services/templates-source";
 import {
   TEMPLATE_STATUS_LABELS, TEMPLATE_CATEGORY_LABELS,
 } from "../../../models/templates";
@@ -25,6 +32,9 @@ const AZURE    = "#0078D4";
 const GOLD     = "#C9960C";
 const BGCANVAS = "#DFE3E8";
 const BASE_W   = 595;
+/** One rendered page, at A4 proportions. */
+const PAGE_W   = Math.min(500, BASE_W);
+const PAGE_H   = PAGE_W * (842 / 595);
 
 // ── Fictional page ────────────────────────────────────────────────────────────
 function FictionalPageBg({ pageNumber }: { pageNumber: number }) {
@@ -125,6 +135,8 @@ function RoutingDiagram({ template, placeholderColors }: {
 function TemplatePreviewInner() {
   const { templateId } = useParams<{ templateId: string }>();
   const { state, loadTemplate } = useTemplates();
+  const platform = usePlatform();
+  const workspaceId = platform.currentWorkspace?.id;
   const t = state.activeTemplate;
   const [activeDocIdx, setActiveDocIdx] = useState(0);
 
@@ -134,6 +146,27 @@ function TemplatePreviewInner() {
   }, [templateId]);
 
   usePageMeta();
+
+  // ── The real document ─────────────────────────────────────────────────────
+  //
+  // The same loader the field editor and the preparation editor use. This
+  // page used to draw grey bars unconditionally, so a template with a genuine
+  // document — uploaded, or authored through /author and rendered to a PDF —
+  // previewed as a fictional placeholder and the banner below called it one.
+  //
+  // Hooks run before the early returns, so they are read from the template
+  // defensively: `t` is null while loading and on the error path.
+  const previewDocs = t?.documents ?? [];
+  const previewDoc = previewDocs[activeDocIdx] ?? previewDocs[0];
+  const realDocumentId = previewDoc?.backendDocumentId ?? null;
+  const loadDocument = useMemo(
+    () => (workspaceId === undefined || realDocumentId === null
+      ? null
+      : () => realSigningRequestService.documentContentBlob(workspaceId, realDocumentId)),
+    [workspaceId, realDocumentId],
+  );
+  const realDocument = useRealDocument(loadDocument);
+  const realDoc = realDocument.status === "ready" ? realDocument.doc : null;
 
   if (state.activeLoading || (!t && !state.activeError)) {
     return <div style={{ padding: 24 }}><style>{SKELETON_STYLE}</style><SkeletonBlock height={20} width={200} /><div style={{ marginTop: 14 }}><SkeletonBlock height={400} /></div></div>;
@@ -151,8 +184,20 @@ function TemplatePreviewInner() {
 
   const docs = t.documents.length > 0
     ? t.documents
-    : [{ id: "doc-1", displayName: "Document 1", pageCount: 3, order: 1, isPlaceholder: true as const }];
+    : [{ id: "doc-1", displayName: "Document 1", pageCount: 1, order: 1, isPlaceholder: true as const }];
   const activeDoc = docs[activeDocIdx] ?? docs[0]!;
+
+  // The real file is the authority on how many pages there are; the stored
+  // count is a cache of it and can lag when an authored document is
+  // regenerated at a different length. Same rule the field editor follows.
+  const pageCount = realDocument.status === "ready"
+    ? realDocument.pageCount
+    : Math.max(activeDoc.pageCount, 1);
+
+  // Whether this preview is showing a genuine document. Drives both the page
+  // surface below and whether the "no real document" notice appears at all.
+  const isRealPreview = realDoc !== null;
+  const canAuthor = realTemplatesAvailable(workspaceId);
 
   const placeholderColors: Record<string, string> = {};
   t.placeholders.forEach((ph, idx) => {
@@ -180,25 +225,44 @@ function TemplatePreviewInner() {
               Template Preview · {TEMPLATE_CATEGORY_LABELS[t.category]} · {TEMPLATE_STATUS_LABELS[t.status]}
             </p>
           </div>
-          {t.status === "available" && (
-            <Link
-              to={`/app/templates/${t.id}/use`}
-              style={{ marginLeft: "auto", display: "inline-flex", alignItems: "center", gap: 7, padding: "9px 16px", background: AZURE, color: "white", borderRadius: 8, ...GF, fontSize: 13, fontWeight: 700, textDecoration: "none" }}
-            >
-              <Zap size={13} />
-              Use Template
-            </Link>
-          )}
+          <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 8 }}>
+            {/* Preview had no route to the authoring editor, so a template
+                whose content needed writing looked like a dead end. */}
+            {canAuthor && (
+              <Link
+                to={`/app/templates/${t.id}/author`}
+                style={{ display: "inline-flex", alignItems: "center", gap: 7, padding: "9px 16px", background: "white", color: AZURE, border: `1.5px solid ${AZURE}`, borderRadius: 8, ...GF, fontSize: 13, fontWeight: 600, textDecoration: "none" }}
+              >
+                <PenLine size={13} />
+                {isRealPreview ? "Edit content" : "Author content"}
+              </Link>
+            )}
+            {t.status === "available" && (
+              <Link
+                to={`/app/templates/${t.id}/use`}
+                style={{ display: "inline-flex", alignItems: "center", gap: 7, padding: "9px 16px", background: AZURE, color: "white", borderRadius: 8, ...GF, fontSize: 13, fontWeight: 700, textDecoration: "none" }}
+              >
+                <Zap size={13} />
+                Use Template
+              </Link>
+            )}
+          </div>
         </div>
       </div>
 
-      {/* Demo notice */}
-      <div style={{ background: "#FEF9E7", borderBottom: "1px solid #FEF3C7", padding: "8px 24px", display: "flex", alignItems: "center", gap: 8 }}>
-        <AlertCircle size={13} color={GOLD} />
-        <span style={{ ...GF, fontSize: 12, color: "#78350F" }}>
-          This is a fictional document preview. No real documents are stored or displayed.
-        </span>
-      </div>
+      {/* Shown only when there is genuinely nothing to render. This used to
+          be unconditional and claimed every preview was fictional, including
+          templates with a real uploaded or authored document behind them. */}
+      {!isRealPreview && realDocument.status !== "loading" && (
+        <div style={{ background: "#FEF9E7", borderBottom: "1px solid #FEF3C7", padding: "8px 24px", display: "flex", alignItems: "center", gap: 8 }}>
+          <AlertCircle size={13} color={GOLD} />
+          <span style={{ ...GF, fontSize: 12, color: "#78350F" }}>
+            {realDocument.status === "error"
+              ? "This template's document could not be loaded. The layout below is a placeholder."
+              : "This template has no document yet — the layout below is a placeholder. Author or upload one to see the real pages."}
+          </span>
+        </div>
+      )}
 
       <div style={{ padding: "20px 24px", display: "grid", gridTemplateColumns: "1fr 300px", gap: 20, alignItems: "start" }}>
 
@@ -221,21 +285,37 @@ function TemplatePreviewInner() {
 
           {/* Pages */}
           <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 20, background: BGCANVAS, padding: 24, borderRadius: 12 }}>
-            {Array.from({ length: activeDoc.pageCount }, (_, i) => {
+            {realDocument.status === "loading" && (
+              <div style={{ width: PAGE_W, height: PAGE_H, background: "white", boxShadow: "0 4px 20px rgba(0,0,0,0.12)", display: "flex", alignItems: "center", justifyContent: "center", ...GF, fontSize: 12, color: "#94A3B8" }}>
+                Loading document…
+              </div>
+            )}
+            {realDocument.status !== "loading" && Array.from({ length: pageCount }, (_, i) => {
               const pageId = `page-${i + 1}`;
               return (
                 <div
                   key={pageId}
                   style={{
                     position:   "relative",
-                    width:      Math.min(500, BASE_W),
-                    height:     Math.min(500, BASE_W) * (842 / 595),
+                    width:      PAGE_W,
+                    height:     PAGE_H,
                     background: "white",
                     boxShadow:  "0 4px 20px rgba(0,0,0,0.12)",
                     flexShrink: 0,
                   }}
                 >
-                  <FictionalPageBg pageNumber={i + 1} />
+                  {/* The REAL page where there is one. The placeholder is the
+                      fallback for a template with no document behind it. */}
+                  {realDoc !== null ? (
+                    <DocumentPageSurface
+                      doc={realDoc}
+                      pageNumber={i + 1}
+                      width={PAGE_W}
+                      height={PAGE_H}
+                    />
+                  ) : (
+                    <FictionalPageBg pageNumber={i + 1} />
+                  )}
                   <PreviewFieldOverlay
                     template={t}
                     docId={activeDoc.id}
