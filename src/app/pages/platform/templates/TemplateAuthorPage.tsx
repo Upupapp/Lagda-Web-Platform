@@ -7,11 +7,38 @@
 // clauses, and inline "field anchor" placeholders for where a signature,
 // date or initials will render — the same alternative-to-Word framing the
 // feature was built for. Inline styles only. No Burgundy.
+//
+// ── The layout, and what a phone forced ────────────────────────────────────
+//
+// The first cut put the breadcrumb, the unsaved-changes pill, the error text
+// and "Generate & Save" in ONE 52px row. On a phone that row has ~340px to
+// spend and wants ~520px, so the pieces ran into each other and the error
+// message was clipped at 340px even on a desktop.
+//
+// Three structural fixes, rather than shrinking type until it fit:
+//
+//   THE ACTION LEFT THE HEADER. "Generate & Save" is a floating action at the
+//   bottom-right — the single most important control on the page, in the
+//   corner a thumb already rests on, and no longer competing for header width.
+//
+//   STATUS GOT ITS OWN ROW on a phone. Unsaved/saved/error are announcements,
+//   not navigation; giving them their own strip means they can never collide
+//   with the title and an error can wrap to as many lines as it needs.
+//
+//   THE RIBBON BECAME SUMMONABLE on a phone. Fourteen controls wrapped to
+//   three rows ate half the viewport before a word was typed, so it collapses
+//   behind a toggle at the top-left and the document keeps the screen.
+//
+// Plus a focus mode: the document maximizes to fill the viewport, dropping
+// the page-count strip and the starter bar, for writing rather than fiddling.
 
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router";
 import { useEditor, EditorContent } from "@tiptap/react";
-import { ChevronLeft, AlertCircle, Info, Save, CheckCircle2, FileText } from "lucide-react";
+import {
+  ChevronLeft, AlertCircle, Info, Save, CheckCircle2, FileText,
+  SlidersHorizontal, X, Maximize2, Minimize2, Sparkles,
+} from "lucide-react";
 import { TemplateProvider, useTemplates } from "../../../context/TemplateContext";
 import { usePlatform } from "../../../context/PlatformContext";
 import { SkeletonBlock, SKELETON_STYLE } from "../../../components/platform";
@@ -21,6 +48,8 @@ import {
 } from "../../../services/templates-source";
 import type { DocumentTemplate } from "../../../models/templates";
 import { usePageMeta } from "../../../hooks/usePageMeta";
+import { useViewport } from "../../../hooks/useViewport";
+import { Z } from "../../../utils/z-index";
 import { flowDocumentExtensions } from "./author/extensions";
 import { flowDocumentToJSON, jsonToFlowDocument } from "./author/converter";
 import { RibbonToolbar } from "./author/RibbonToolbar";
@@ -32,8 +61,14 @@ const AZURE  = "#0078D4";
 const NAVY   = "#07111F";
 const SILVER = "#64748B";
 const BGCANVAS = "#DFE3E8";
+const HAIRLINE = "1px solid rgba(0,0,0,0.08)";
 const PAGE_W = 720;
+/** Focus mode earns a wider measure — the chrome around it is gone. */
+const PAGE_W_MAX = 860;
 
+// The editor's own internals are a real stylesheet, so they use real media
+// queries: 72px of page margin is right on A4 and absurd on a 360px phone,
+// and that is a property of the rendered page, not of the React tree.
 const EDITOR_CSS = `
 .flow-doc-editor .ProseMirror {
   outline: none;
@@ -62,13 +97,57 @@ const EDITOR_CSS = `
   background: #ECFDF5; color: #047857; border-radius: 3px; padding: 1px 3px;
   text-decoration: underline; text-decoration-style: dotted;
 }
+@media (max-width: 767px) {
+  .flow-doc-editor .ProseMirror {
+    min-height: 68vh;
+    padding: 30px 22px;
+    /* 16px is the smallest size iOS will not zoom the viewport for on focus.
+       11pt reads as ~14.6px, and the zoom-on-tap it triggered threw the whole
+       layout sideways on every tap into the document. */
+    font-size: 16px;
+  }
+  .flow-doc-editor .ProseMirror h1 { font-size: 24px; }
+  .flow-doc-editor .ProseMirror h2 { font-size: 20px; }
+  .flow-doc-editor .ProseMirror h3 { font-size: 17px; }
+  .flow-doc-editor .ProseMirror ol { padding-left: 20px; }
+}
 `;
+
+/** A header control: 40px on a phone (thumb), 32px on a pointer. */
+function IconControl({
+  label, onClick, active, large, children,
+}: {
+  label: string; onClick: () => void; active?: boolean; large: boolean; children: React.ReactNode;
+}) {
+  const size = large ? 40 : 32;
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={label}
+      title={label}
+      aria-pressed={active ?? false}
+      style={{
+        display: "inline-flex", alignItems: "center", justifyContent: "center",
+        width: size, height: size, flexShrink: 0,
+        borderRadius: 9,
+        border: active ? `1px solid ${AZURE}55` : "1px solid #E2E8F0",
+        background: active ? `${AZURE}14` : "#FFFFFF",
+        color: active ? AZURE : SILVER,
+        cursor: "pointer",
+      }}
+    >
+      {children}
+    </button>
+  );
+}
 
 // ── Editor surface ───────────────────────────────────────────────────────────
 function AuthorEditorInner({ template }: { template: DocumentTemplate }) {
   usePageMeta();
   const platform = usePlatform();
   const { run } = useProcessing();
+  const { isNarrow } = useViewport();
   const workspaceId = platform.currentWorkspace?.id;
   const isReal = realTemplatesAvailable(workspaceId);
 
@@ -77,6 +156,10 @@ function AuthorEditorInner({ template }: { template: DocumentTemplate }) {
   const [saving, setSaving] = useState(false);
   const [changed, setChanged] = useState(false);
   const [pageCount, setPageCount] = useState(template.contentPageCount);
+  // Phone only. On a pointer the ribbon is always up — there is room for it,
+  // and hiding a toolbar nobody asked to hide is its own annoyance.
+  const [ribbonOpen, setRibbonOpen] = useState(false);
+  const [maximized, setMaximized] = useState(false);
 
   const editor = useEditor({
     extensions: flowDocumentExtensions(),
@@ -85,6 +168,8 @@ function AuthorEditorInner({ template }: { template: DocumentTemplate }) {
   });
 
   const isEmpty = template.content.content.length === 0 && !changed;
+  const ribbonVisible = editor !== null && (!isNarrow || ribbonOpen);
+  const showStarters = isEmpty && !maximized;
 
   const applyStarter = (build: (typeof STARTER_TEMPLATES)[number]["build"]) => {
     if (!editor) return;
@@ -121,75 +206,167 @@ function AuthorEditorInner({ template }: { template: DocumentTemplate }) {
     }
   };
 
+  const statusPill = changed
+    ? { text: "Unsaved changes", fg: "#92400E", bg: "#FEF3C7", border: "#FDE68A" }
+    : saved
+      ? { text: "Saved", fg: "#065F46", bg: "#D1FAE5", border: "#A7F3D0" }
+      : null;
+
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "100dvh", background: "#ffffff", ...GF }}>
+    <div style={{ display: "flex", flexDirection: "column", height: "100dvh", background: "#ffffff", ...GF, overflow: "hidden" }}>
       <style>{EDITOR_CSS}</style>
 
-      {/* Top bar */}
-      <div style={{ height: 52, background: "#ffffff", borderBottom: "1px solid rgba(0,0,0,0.08)", display: "flex", alignItems: "center", padding: "0 16px", gap: 10, flexShrink: 0 }}>
-        <Link to={`/app/templates/${template.id}`} style={{ display: "inline-flex", alignItems: "center", gap: 5, color: SILVER, ...GF, fontSize: 12, textDecoration: "none" }}>
-          <ChevronLeft size={13} />
-          {template.name}
-        </Link>
-        <span style={{ color: "#CBD5E1" }}>/</span>
-        <span style={{ color: NAVY, ...GF, fontSize: 12 }}>Author Document</span>
-        {changed && (
-          <span style={{ ...GF, fontSize: 11, color: SILVER, background: "#F1F5F9", padding: "2px 7px", borderRadius: 99 }}>Unsaved changes</span>
-        )}
-        <div style={{ flex: 1 }} />
-        {saveError !== null && (
-          <span style={{ ...GF, fontSize: 11.5, color: "#B91C1C", maxWidth: 340 }}>{saveError}</span>
-        )}
-        {saved && (
-          <div style={{ display: "flex", alignItems: "center", gap: 6, color: "#34D399", ...GF, fontSize: 12 }}>
-            <CheckCircle2 size={12} />
-            Saved
-          </div>
-        )}
-        {isReal && (
-          <button
-            onClick={() => { void handleSave(); }}
-            disabled={saving}
-            style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "7px 14px", background: saving ? "#93C5FD" : AZURE, color: "white", border: "none", borderRadius: 7, ...GF, fontSize: 12, fontWeight: 700, cursor: saving ? "default" : "pointer" }}
+      {/* ── Header: navigation and view controls only ───────────────────── */}
+      <header style={{
+        background: "#ffffff", borderBottom: HAIRLINE, flexShrink: 0,
+        display: "flex", alignItems: "center", gap: 10,
+        padding: isNarrow ? "8px 12px" : "0 16px",
+        minHeight: isNarrow ? 56 : 52,
+      }}>
+        {/* Upper-LEFT: the ribbon toggle, phone only. */}
+        {isNarrow && (
+          <IconControl
+            label={ribbonOpen ? "Hide formatting toolbar" : "Show formatting toolbar"}
+            active={ribbonOpen}
+            large
+            onClick={() => setRibbonOpen(o => !o)}
           >
-            <Save size={13} />
-            {saving ? "Generating…" : "Generate & Save"}
-          </button>
+            {ribbonOpen ? <X size={17} /> : <SlidersHorizontal size={17} />}
+          </IconControl>
         )}
-      </div>
+
+        {/* Title block. `minWidth: 0` is what actually lets the name truncate
+            instead of shoving the controls off the right edge. */}
+        <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 1 }}>
+          <Link
+            to={`/app/templates/${template.id}`}
+            style={{
+              display: "inline-flex", alignItems: "center", gap: 4, minWidth: 0,
+              color: NAVY, ...GF, fontSize: isNarrow ? 13 : 13.5, fontWeight: 600,
+              textDecoration: "none",
+            }}
+          >
+            <ChevronLeft size={14} color={SILVER} style={{ flexShrink: 0 }} />
+            <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              {template.name}
+            </span>
+          </Link>
+          <span style={{ ...GF, fontSize: 10.5, color: SILVER, letterSpacing: "0.02em", paddingLeft: 18 }}>
+            Author Document
+          </span>
+        </div>
+
+        {/* Status, inline on a pointer where there is room for it. */}
+        {!isNarrow && statusPill && (
+          <span style={{
+            ...GF, fontSize: 11, fontWeight: 600, color: statusPill.fg,
+            background: statusPill.bg, border: `1px solid ${statusPill.border}`,
+            padding: "3px 9px", borderRadius: 99, flexShrink: 0,
+          }}>
+            {statusPill.text}
+          </span>
+        )}
+
+        <IconControl
+          label={maximized ? "Exit focus mode" : "Maximize the document"}
+          active={maximized}
+          large={isNarrow}
+          onClick={() => setMaximized(m => !m)}
+        >
+          {maximized ? <Minimize2 size={isNarrow ? 17 : 15} /> : <Maximize2 size={isNarrow ? 17 : 15} />}
+        </IconControl>
+      </header>
+
+      {/* Status strip — phone only, and only when there is something to say,
+          so an empty bar never steals a row from the document. */}
+      {isNarrow && statusPill && (
+        <div style={{
+          flexShrink: 0, padding: "6px 12px", background: statusPill.bg,
+          borderBottom: `1px solid ${statusPill.border}`,
+          display: "flex", alignItems: "center", gap: 6,
+        }}>
+          {saved && !changed && <CheckCircle2 size={12} color={statusPill.fg} />}
+          <span style={{ ...GF, fontSize: 11.5, fontWeight: 600, color: statusPill.fg }}>
+            {statusPill.text}
+          </span>
+        </div>
+      )}
+
+      {/* An error is a full-width banner that WRAPS. The old inline version
+          was capped at 340px and truncated mid-sentence. */}
+      {saveError !== null && (
+        <div style={{
+          flexShrink: 0, display: "flex", alignItems: "flex-start", gap: 8,
+          padding: "10px 14px", background: "#FEF2F2", borderBottom: "1px solid #FECACA",
+        }}>
+          <AlertCircle size={14} color="#B91C1C" style={{ flexShrink: 0, marginTop: 1 }} />
+          <span style={{ ...GF, fontSize: 12, color: "#B91C1C", lineHeight: 1.5, flex: 1, minWidth: 0 }}>
+            {saveError}
+          </span>
+          <button
+            type="button"
+            onClick={() => setSaveError(null)}
+            aria-label="Dismiss the error"
+            style={{ border: "none", background: "none", color: "#B91C1C", cursor: "pointer", padding: 0, flexShrink: 0 }}
+          >
+            <X size={14} />
+          </button>
+        </div>
+      )}
 
       {!isReal && (
-        <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "9px 16px", background: "#FDF8EC", borderBottom: "1px solid #EBD79A", flexShrink: 0 }}>
-          <Info size={13} color="#B45309" />
+        <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "9px 14px", background: "#FDF8EC", borderBottom: "1px solid #EBD79A", flexShrink: 0 }}>
+          <Info size={13} color="#B45309" style={{ flexShrink: 0 }} />
           <span style={{ ...GF, fontSize: 12, color: "#78350F" }}>Open a workspace to author and save a document.</span>
         </div>
       )}
 
-      {/* Page count */}
-      <div style={{ background: "#f8fafb", borderBottom: "1px solid rgba(0,0,0,0.08)", padding: "6px 16px", display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
-        <FileText size={13} color={SILVER} />
-        <span style={{ ...GF, fontSize: 11, color: SILVER }}>
-          {pageCount > 0
-            ? `${String(pageCount)} page${pageCount !== 1 ? "s" : ""} in the last generated document`
-            : "Not generated yet — pages are computed when you save"}
-        </span>
-      </div>
-
-      {/* Ribbon */}
-      {editor && (
-        <RibbonToolbar editor={editor} variables={template.variables} placeholders={template.placeholders} />
+      {/* Page count — the first thing focus mode drops. */}
+      {!maximized && (
+        <div style={{ background: "#f8fafb", borderBottom: HAIRLINE, padding: "6px 14px", display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+          <FileText size={13} color={SILVER} style={{ flexShrink: 0 }} />
+          <span style={{ ...GF, fontSize: 11, color: SILVER }}>
+            {pageCount > 0
+              ? `${String(pageCount)} page${pageCount !== 1 ? "s" : ""} in the last generated document`
+              : isNarrow ? "Pages are computed when you save" : "Not generated yet — pages are computed when you save"}
+          </span>
+        </div>
       )}
 
-      {isEmpty && (
-        <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", padding: "9px 16px", background: "#EFF6FF", borderBottom: "1px solid #BFDBFE", flexShrink: 0 }}>
-          <span style={{ ...GF, fontSize: 12, color: "#1E40AF" }}>Start from a ready-made template:</span>
+      {/* Ribbon. Capped and scrollable on a phone: wrapped to three rows it
+          would otherwise take half the viewport. */}
+      {ribbonVisible && editor && (
+        <div style={{ flexShrink: 0, maxHeight: isNarrow ? "38vh" : undefined, overflowY: isNarrow ? "auto" : undefined }}>
+          <RibbonToolbar
+            editor={editor}
+            variables={template.variables}
+            placeholders={template.placeholders}
+            compact={isNarrow}
+          />
+        </div>
+      )}
+
+      {showStarters && (
+        <div style={{
+          display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap",
+          padding: "9px 14px", background: "#EFF6FF", borderBottom: "1px solid #BFDBFE", flexShrink: 0,
+        }}>
+          <Sparkles size={13} color="#1E40AF" style={{ flexShrink: 0 }} />
+          <span style={{ ...GF, fontSize: 12, color: "#1E40AF" }}>
+            {isNarrow ? "Start from:" : "Start from a ready-made template:"}
+          </span>
           {STARTER_TEMPLATES.map(s => (
             <button
               key={s.id}
               type="button"
               title={s.description}
               onClick={() => applyStarter(s.build)}
-              style={{ ...GF, fontSize: 12, fontWeight: 600, color: AZURE, background: "white", border: "1px solid #BFDBFE", borderRadius: 7, padding: "5px 10px", cursor: "pointer" }}
+              style={{
+                ...GF, fontSize: 12, fontWeight: 600, color: AZURE, background: "white",
+                border: "1px solid #BFDBFE", borderRadius: 7,
+                padding: isNarrow ? "7px 12px" : "5px 10px",
+                minHeight: isNarrow ? 36 : undefined, cursor: "pointer",
+              }}
             >
               {s.label}
             </button>
@@ -197,12 +374,53 @@ function AuthorEditorInner({ template }: { template: DocumentTemplate }) {
         </div>
       )}
 
-      {/* Page surface */}
-      <div style={{ flex: 1, overflowY: "auto", background: BGCANVAS, display: "flex", justifyContent: "center", padding: "24px 24px 80px" }}>
-        <div style={{ width: PAGE_W, background: "white", boxShadow: "0 4px 24px rgba(0,0,0,0.18)", flexShrink: 0 }} className="flow-doc-editor">
+      {/* ── The document ────────────────────────────────────────────────── */}
+      <div style={{
+        flex: 1, minHeight: 0, overflowY: "auto", background: BGCANVAS,
+        // Bottom room for the floating action, plus the phone's home bar.
+        padding: isNarrow
+          ? "12px 10px calc(104px + env(safe-area-inset-bottom, 0px))"
+          : "24px 24px 104px",
+      }}>
+        <div
+          className="flow-doc-editor"
+          style={{
+            width: "100%",
+            maxWidth: maximized ? PAGE_W_MAX : PAGE_W,
+            margin: "0 auto",
+            background: "white",
+            borderRadius: isNarrow ? 8 : 0,
+            boxShadow: "0 4px 24px rgba(0,0,0,0.18)",
+          }}
+        >
           <EditorContent editor={editor} />
         </div>
       </div>
+
+      {/* ── Generate & Save: the lower-right corner ─────────────────────── */}
+      {isReal && (
+        <button
+          onClick={() => { void handleSave(); }}
+          disabled={saving}
+          style={{
+            position: "fixed",
+            right: isNarrow ? 14 : 24,
+            bottom: `calc(${isNarrow ? "16px" : "24px"} + env(safe-area-inset-bottom, 0px))`,
+            zIndex: Z.sticky,
+            display: "inline-flex", alignItems: "center", gap: 8,
+            padding: isNarrow ? "13px 18px" : "12px 20px",
+            minHeight: 48,
+            background: saving ? "#93C5FD" : AZURE,
+            color: "white", border: "none", borderRadius: 99,
+            ...GF, fontSize: 13, fontWeight: 700,
+            boxShadow: "0 6px 20px rgba(0,120,212,0.38)",
+            cursor: saving ? "default" : "pointer",
+          }}
+        >
+          {saving ? <Save size={15} /> : saved ? <CheckCircle2 size={15} /> : <Save size={15} />}
+          {saving ? "Generating…" : saved ? "Saved" : "Generate & Save"}
+        </button>
+      )}
     </div>
   );
 }
