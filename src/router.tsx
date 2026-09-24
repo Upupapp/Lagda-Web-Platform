@@ -743,6 +743,11 @@ const TemplateAuthorPage = lazy(() =>
     default: m.TemplateAuthorPage,
   })),
 );
+const UploadRequestsPage = lazy(() =>
+  import("./app/pages/platform/upload-requests/UploadRequestsPage").then((m) => ({
+    default: m.UploadRequestsPage,
+  })),
+);
 const TemplatePreviewPage = lazy(() =>
   import("./app/pages/platform/templates/TemplatePreviewPage").then((m) => ({
     default: m.TemplatePreviewPage,
@@ -1964,6 +1969,15 @@ export const router = createBrowserRouter([
           </Suspense>
         ),
       },
+      {
+        path: "upload-requests",
+        element: (
+          <Suspense fallback={null}>
+            <UploadRequestsPage />
+          </Suspense>
+        ),
+      },
+
       // templates/:templateId/fields — full-screen editor, registered as top-level route below
       // templates/:templateId/author — full-screen editor, registered as top-level route below
 
