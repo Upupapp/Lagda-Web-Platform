@@ -33,7 +33,8 @@ import type {
   TemplateRoleResolution,
   TemplateVariable,
   TemplateVariableType,
-  TemplateContentBlock,
+  FlowDocument,
+  ResolvedFieldAnchor,
 } from "../../models/templates";
 import type { PrepParticipantRole, PrepAuthMethodId } from "../../models/prepare";
 import type { RoutingMode } from "../../models/transaction-detail";
@@ -132,12 +133,6 @@ export interface WireVariable {
   required: boolean;
 }
 
-/** A content block (066) — text at a fixed normalized rect on a page, exactly
- *  the frontend's own `TemplateContentBlock` shape (the backend's read/write
- *  schemas are identical to it field-for-field, unlike `WireField`/
- *  `TemplateField`, so no separate write interface is needed). */
-export type WireContentBlock = TemplateContentBlock;
-
 export interface WireTemplate {
   workflowTemplateId: string;
   name: string;
@@ -155,19 +150,28 @@ export interface WireTemplate {
    */
   documentId: string | null;
   sourceArtifactId: string | null;
-  /** 066. The authored content that PRODUCED the attached document, when the
-   *  document was generated rather than uploaded. Empty for an uploaded
-   *  document, or for a template with nothing attached at all. */
-  contentBlocks: WireContentBlock[];
+  /** 071. The authored flowing document that PRODUCED the attached document,
+   *  when the document was generated rather than uploaded. Empty for a
+   *  template with nothing authored yet. */
+  content: FlowDocument;
   contentPageCount: number;
   createdAt: string;
   updatedAt: string;
 }
 
-/** The body of `POST .../generate-document`. */
+/** The body of `POST .../generate-document`. No `pageCount` — the layout
+ *  engine computes how many pages result, it is never declared up front. */
 export interface WireGenerateDocumentInput {
-  pageCount: number;
-  blocks: WireContentBlock[];
+  content: FlowDocument;
+}
+
+/** One `fieldAnchor` run, resolved to where the layout engine actually
+ *  placed it — returned alongside the regenerated template. */
+export type WireResolvedFieldAnchor = ResolvedFieldAnchor;
+
+export interface WireGenerateDocumentResult {
+  template: WireTemplate;
+  resolvedAnchors: WireResolvedFieldAnchor[];
 }
 
 /** The body both POST and PUT take. PUT replaces wholesale — the backend has
@@ -218,32 +222,6 @@ class RealTemplatesService {
     );
   }
 
-  /**
-   * Points the template at an ALREADY-uploaded document and artifact.
-   *
-   * Takes ids, never a file — the caller uploads through the ordinary
-   * document create-then-upload path first (see `attachTemplateDocument` in
-   * `templates-source.ts`) and hands the resulting pair here. This method
-   * does no uploading of its own, matching the backend route it calls.
-   */
-  async attachDocument(
-    workspaceId: string, templateId: string,
-    document: { documentId: string; artifactId: string },
-  ): Promise<WireTemplate> {
-    return apiRequest<WireTemplate>(
-      `${base(workspaceId)}/${encodeURIComponent(templateId)}/document`,
-      { method: "PUT", body: document },
-    );
-  }
-
-  /** Clears the reference. The document and its artifact are untouched. */
-  async detachDocument(workspaceId: string, templateId: string): Promise<WireTemplate> {
-    return apiRequest<WireTemplate>(
-      `${base(workspaceId)}/${encodeURIComponent(templateId)}/document`,
-      { method: "DELETE" },
-    );
-  }
-
   /** A template's field layout (060), in deterministic order. */
   async getFields(workspaceId: string, templateId: string): Promise<WireField[]> {
     const result = await apiRequest<{ items: WireField[] }>(
@@ -273,8 +251,8 @@ class RealTemplatesService {
    */
   async generateDocument(
     workspaceId: string, templateId: string, input: WireGenerateDocumentInput,
-  ): Promise<WireTemplate> {
-    return apiRequest<WireTemplate>(
+  ): Promise<WireGenerateDocumentResult> {
+    return apiRequest<WireGenerateDocumentResult>(
       `${base(workspaceId)}/${encodeURIComponent(templateId)}/generate-document`,
       { method: "POST", body: input },
     );
@@ -393,7 +371,7 @@ export function toDocumentTemplate(wire: WireTemplate): DocumentTemplate {
     settings: defaultSettings(wire.completionSettings.notifySenderOnComplete),
     variables: wire.variables.map(toTemplateVariable),
     fields: [],
-    contentBlocks: wire.contentBlocks,
+    content: wire.content,
     contentPageCount: wire.contentPageCount,
     usageSummary: {
       timesUsed: 0, lastUsedDate: null, recentDraftStarts: 0,

@@ -27,7 +27,7 @@
 import { USE_REAL_BACKEND } from "./backend-flag";
 import {
   realTemplatesService, toDocumentTemplate, toWireWrite,
-  type WireFieldInput, type WireContentBlock,
+  type WireFieldInput,
 } from "./real/templates.service";
 import { realDocumentService } from "./real/document.service";
 import { isBackendFieldType } from "./prepare/field-sync";
@@ -39,6 +39,7 @@ import {
 import type {
   DocumentTemplate, DocumentTemplateId, TemplateListQuery,
   TemplateListItem, TemplateRolePlaceholder, TemplateRoleAssignment, TemplateVariable,
+  FlowDocument, ResolvedFieldAnchor,
 } from "../models/templates";
 import type { RoutingMode } from "../models/transaction-detail";
 
@@ -260,11 +261,11 @@ export async function deleteTemplate(
  *
  * Copies name (suffixed), routing mode, role slots (as fresh slots — never
  * carrying the source's `backendSlotId`, or this would try to overwrite the
- * ORIGINAL template's roles) and completion settings. Also re-attaches the
- * source's document, when it has one — a document is a reference, not
- * bytes, so pointing two templates at the same one costs nothing and is
- * exactly what a sender duplicating "the same contract, different roles"
- * wants.
+ * ORIGINAL template's roles) and completion settings. Also re-runs
+ * generate-document against the source's own authored `content` — a
+ * template's document is never an upload any more (see this file's own
+ * header on the removal of the attach/detach path), so re-authoring the
+ * copy's document means re-rendering, not re-pointing a reference.
  *
  * Deliberately does NOT copy the field layout. A field belongs to a slot id
  * that no longer exists on the new template the moment `createTemplate`
@@ -296,61 +297,120 @@ export async function duplicateTemplate(
     variables: source.variables,
   });
 
-  const doc = source.documents[0];
-  if (doc && !doc.isPlaceholder && doc.backendDocumentId && doc.backendArtifactId) {
-    try {
-      return await attachTemplateDocument(workspaceId, created.id, {
-        documentId: doc.backendDocumentId, artifactId: doc.backendArtifactId,
-      });
-    } catch {
-      // The COPY already exists and is usable without its document — a
-      // failed attach here must not look like a failed duplicate.
-      return created;
-    }
+  if (source.content.content.length === 0) return created;
+
+  try {
+    // The copy's fresh role slots have new slotIds, so any `fieldAnchor`
+    // bound to a `slotId` in the source content would resolve to nothing on
+    // the copy. Rebinding by POSITION (same index into `source.placeholders`
+    // as into `created.placeholders`) is the same trade duplication already
+    // makes for the role slots themselves — good enough for "same shape,
+    // different instance," not a guarantee for a template whose slots were
+    // reordered since.
+    const slotIdMap = new Map(
+      source.placeholders.map((p, i) => [p.backendSlotId, created.placeholders[i]?.backendSlotId])
+        .filter((entry): entry is [string, string] => entry[0] !== undefined && entry[1] !== undefined));
+    const rebound = rebindFieldAnchors(source.content, slotIdMap);
+    const { template } = await generateTemplateDocument(workspaceId, created.id, { content: rebound });
+    return template;
+  } catch {
+    // The COPY already exists and is usable without its document — a
+    // failed regenerate here must not look like a failed duplicate.
+    return created;
   }
-  return created;
+}
+
+interface InlineRunLike { readonly kind: string; readonly slotId?: string; readonly label?: string }
+interface BlockLike {
+  readonly kind: string;
+  readonly content?: readonly (InlineRunLike | BlockLike)[];
+}
+
+/** Rewrites every `fieldAnchor`'s `slotId` through `slotIdMap`, dropping the
+ *  anchor down to a plain text run (its label, in brackets) when the source
+ *  slot has no mapped counterpart rather than silently pointing at a slot
+ *  that belongs to a different template. Untyped internally for the same
+ *  reason the backend's own `validateFieldAnchorTargets` walk is: the tree
+ *  shape differs by nesting depth, and only runtime shape matters here —
+ *  the result is round-tripped straight back through the same `FlowDocument`
+ *  schema the author UI already produces. */
+function rebindFieldAnchors(doc: FlowDocument, slotIdMap: ReadonlyMap<string, string>): FlowDocument {
+  const rebindBlock = (block: BlockLike): BlockLike => {
+    if (block.kind === "fieldAnchor" || block.kind === "text" || block.kind === "variable") {
+      const run = block as InlineRunLike;
+      if (run.kind !== "fieldAnchor" || run.slotId === undefined) return block;
+      const mapped = slotIdMap.get(run.slotId);
+      return mapped === undefined
+        ? ({ kind: "text", text: `[${run.label ?? ""}]` } as BlockLike)
+        : ({ ...block, slotId: mapped } as BlockLike);
+    }
+    if (block.content === undefined) return block;
+    return { ...block, content: block.content.map(rebindBlock) };
+  };
+
+  return { kind: "flowDocument", content: doc.content.map(b => rebindBlock(b as BlockLike) as never) };
 }
 
 /**
- * Attaches an ALREADY-uploaded document to a template.
- *
- * Takes ids, never a file — the caller uploads through
- * `realDocumentService.create` + `.upload` first (mirroring the Prepare
- * flow's own upload sequence) and hands the resulting pair here.
- */
-export async function attachTemplateDocument(
-  workspaceId: string | undefined, id: DocumentTemplateId,
-  document: { documentId: string; artifactId: string },
-): Promise<DocumentTemplate> {
-  if (!realTemplatesAvailable(workspaceId)) throw new TemplatesNotWritableError();
-  const wire = await realTemplatesService.attachDocument(workspaceId!, id, document);
-  return enrichWithDocument(workspaceId!, toDocumentTemplate(wire));
-}
-
-/** Clears the reference. The document and its artifact are untouched. */
-export async function detachTemplateDocument(
-  workspaceId: string | undefined, id: DocumentTemplateId,
-): Promise<DocumentTemplate> {
-  if (!realTemplatesAvailable(workspaceId)) throw new TemplatesNotWritableError();
-  const wire = await realTemplatesService.detachDocument(workspaceId!, id);
-  return toDocumentTemplate(wire);
-}
-
-/**
- * Renders authored content into a PDF and attaches it to the template — the
- * authoring alternative to `attachTemplateDocument`'s "point at an already-
- * uploaded file". Regenerating REPLACES: the template ends up pointing at
- * the newly rendered document, same as re-uploading would.
+ * Renders authored content into a PDF and attaches it to the template —
+ * the ONLY way a template gets a document (Templates never accept an
+ * upload — see this file's own header). Regenerating REPLACES: the
+ * template ends up pointing at the newly rendered document, and
+ * `resolvedAnchors` reports where every `fieldAnchor` run landed, in the
+ * SAME order the caller typed them, so a caller can zip them against its
+ * own local anchor list without matching by content.
  */
 export async function generateTemplateDocument(
   workspaceId: string | undefined, id: DocumentTemplateId,
-  input: { pageCount: number; blocks: readonly WireContentBlock[] },
-): Promise<DocumentTemplate> {
+  input: { content: FlowDocument },
+): Promise<{ template: DocumentTemplate; resolvedAnchors: ResolvedFieldAnchor[] }> {
   if (!realTemplatesAvailable(workspaceId)) throw new TemplatesNotWritableError();
-  const wire = await realTemplatesService.generateDocument(workspaceId!, id, {
-    pageCount: input.pageCount, blocks: [...input.blocks],
+  const result = await realTemplatesService.generateDocument(workspaceId!, id, {
+    content: input.content,
   });
-  return enrichWithDocument(workspaceId!, toDocumentTemplate(wire));
+  const template = await enrichWithDocument(workspaceId!, toDocumentTemplate(result.template));
+  return { template, resolvedAnchors: result.resolvedAnchors };
+}
+
+/**
+ * Writes every resolved `fieldAnchor` straight through to the template's
+ * field layout — the second half of the generate→resolve→save flow
+ * `generateTemplateDocument`'s own header describes. A WHOLE-layout
+ * replace, same as `saveTemplateFields`: every anchor typed into the
+ * document this generate produced, and nothing else, since the document
+ * itself is the only source of a template's fields now that authoring is
+ * the only way to get one.
+ */
+export async function saveResolvedFieldAnchors(
+  workspaceId: string | undefined, id: DocumentTemplateId,
+  anchors: readonly ResolvedFieldAnchor[],
+): Promise<DocumentTemplate["fields"]> {
+  if (!realTemplatesAvailable(workspaceId)) throw new TemplatesNotWritableError();
+
+  const inputs: WireFieldInput[] = anchors.map(a => ({
+    ...(a.slotId === undefined ? {} : { slotId: a.slotId }),
+    ...(a.variableKey === undefined ? {} : { variableKey: a.variableKey }),
+    type: a.fieldType,
+    pageNumber: a.pageNumber,
+    rect: a.rect,
+    required: a.required,
+    label: a.label,
+    layer: 0,
+  }));
+
+  const wire = await realTemplatesService.saveFields(workspaceId!, id, inputs);
+  return wire.map(w => ({
+    id: w.fieldId,
+    type: w.type,
+    documentId: "doc-1",
+    pageId: `page-${String(w.pageNumber)}`,
+    rect: w.rect,
+    placeholderId: null,
+    label: w.label,
+    required: w.required,
+    layer: w.layer,
+    demonstrationOnly: false,
+  }));
 }
 
 export interface SaveTemplateFieldsResult {

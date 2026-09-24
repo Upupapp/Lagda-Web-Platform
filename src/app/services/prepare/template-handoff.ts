@@ -51,10 +51,10 @@ export interface TemplateHandoffResult {
 export async function handOffTemplateToPrepare(
   templateId: string,
   application: TemplateApplication,
-  /** The template's own attached document, already uploaded — see
-   *  `DocumentsTab`'s attach flow and `TemplateDocument.backendDocumentId`'s
-   *  header. Omitted (or undefined) for the ordinary case of a template with
-   *  no document, which leaves the Upload step exactly as empty as before. */
+  /** The template's own document — authored in-app (071), never uploaded —
+   *  see `TemplateDocument.backendDocumentId`'s header. Omitted (or
+   *  undefined) for the ordinary case of a template with no document, which
+   *  leaves the Upload step exactly as empty as before. */
   initialFiles?: PrepFile[],
 ): Promise<TemplateHandoffResult> {
   try {

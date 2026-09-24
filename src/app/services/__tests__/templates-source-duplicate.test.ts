@@ -1,21 +1,23 @@
 // templates-source.ts's duplicateTemplate: a real copy of a real template's
 // shape, never carrying the source's slot ids onto the new one (GAP 2.1 —
 // this used to run against the mock service and silently do nothing to a
-// real template).
+// real template). 071: a template's document is never an upload, so
+// duplicating one with authored content means re-running generate-document
+// against a copy of that content, not re-attaching a reference.
 
 vi.mock("../backend-flag", () => ({ USE_REAL_BACKEND: true }));
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { getTemplate, duplicateTemplate, TemplatesNotWritableError } from "../templates-source";
-import type { DocumentTemplate } from "../../models/templates";
+import type { DocumentTemplate, FlowDocument } from "../../models/templates";
 
 const {
-  mockGet, mockGetFields, mockCreate, mockAttachDocument, mockDocumentGet,
+  mockGet, mockGetFields, mockCreate, mockGenerateDocument, mockDocumentGet,
 } = vi.hoisted(() => ({
   mockGet: vi.fn(),
   mockGetFields: vi.fn(),
   mockCreate: vi.fn(),
-  mockAttachDocument: vi.fn(),
+  mockGenerateDocument: vi.fn(),
   mockDocumentGet: vi.fn(),
 }));
 
@@ -28,7 +30,7 @@ vi.mock("../real/templates.service", async () => {
       get: mockGet,
       getFields: mockGetFields,
       create: mockCreate,
-      attachDocument: mockAttachDocument,
+      generateDocument: mockGenerateDocument,
     },
   };
 });
@@ -39,6 +41,19 @@ vi.mock("../real/document.service", () => ({
 
 const WORKSPACE = "ws_1";
 const TEMPLATE_ID = "wft_1";
+
+const AUTHORED: FlowDocument = {
+  kind: "flowDocument",
+  content: [
+    {
+      kind: "paragraph",
+      content: [
+        { kind: "text", text: "Signed: " },
+        { kind: "fieldAnchor", fieldType: "signature", slotId: "wfs_client", required: true, label: "Client" },
+      ],
+    },
+  ],
+};
 
 const WIRE = {
   workflowTemplateId: TEMPLATE_ID,
@@ -51,6 +66,8 @@ const WIRE = {
   variables: [],
   documentId: "doc_1",
   sourceArtifactId: "art_1",
+  content: AUTHORED,
+  contentPageCount: 1,
   createdAt: "2026-09-22T09:00:00.000Z",
   updatedAt: "2026-09-22T09:00:00.000Z",
 };
@@ -66,6 +83,8 @@ const CREATED = {
   variables: [],
   documentId: null,
   sourceArtifactId: null,
+  content: { kind: "flowDocument" as const, content: [] },
+  contentPageCount: 0,
   createdAt: "2026-09-22T10:00:00.000Z",
   updatedAt: "2026-09-22T10:00:00.000Z",
 };
@@ -104,29 +123,46 @@ describe("duplicateTemplate", () => {
     expect(sent.roleSlots[0]).not.toHaveProperty("slotId");
   });
 
-  it("re-attaches the source's document to the new template", async () => {
-    mockAttachDocument.mockResolvedValue({ ...CREATED, documentId: "doc_1", sourceArtifactId: "art_1" });
+  it("re-generates the copy's document from the source's authored content", async () => {
+    mockGenerateDocument.mockResolvedValue({
+      template: { ...CREATED, content: AUTHORED, contentPageCount: 1, documentId: "doc_2", sourceArtifactId: "art_2" },
+      resolvedAnchors: [],
+    });
     const source = await getTemplate(WORKSPACE, TEMPLATE_ID) as DocumentTemplate;
     await duplicateTemplate(WORKSPACE, source);
 
-    expect(mockAttachDocument).toHaveBeenCalledWith(
-      WORKSPACE, "wft_2", { documentId: "doc_1", artifactId: "art_1" });
+    expect(mockGenerateDocument).toHaveBeenCalledWith(
+      WORKSPACE, "wft_2", expect.objectContaining({ content: expect.any(Object) }));
   });
 
-  it("returns the copy without a document when the source has none", async () => {
-    const noDocWire = { ...WIRE, documentId: null, sourceArtifactId: null };
-    mockGet.mockResolvedValue(noDocWire);
+  it("rebinds a field anchor's slotId to the COPY's own fresh slot, by position", async () => {
+    mockGenerateDocument.mockResolvedValue({
+      template: { ...CREATED, content: AUTHORED, contentPageCount: 1 },
+      resolvedAnchors: [],
+    });
+    const source = await getTemplate(WORKSPACE, TEMPLATE_ID) as DocumentTemplate;
+    await duplicateTemplate(WORKSPACE, source);
+
+    const sentContent = mockGenerateDocument.mock.calls[0]![2].content as FlowDocument;
+    const paragraph = sentContent.content[0] as { content: { kind: string; slotId?: string }[] };
+    const anchor = paragraph.content.find(r => r.kind === "fieldAnchor");
+    expect(anchor?.slotId).toBe("wfs_client_2");
+  });
+
+  it("returns the copy without regenerating when the source has nothing authored", async () => {
+    const noContentWire = { ...WIRE, content: { kind: "flowDocument" as const, content: [] }, contentPageCount: 0 };
+    mockGet.mockResolvedValue(noContentWire);
     const source = await getTemplate(WORKSPACE, TEMPLATE_ID) as DocumentTemplate;
 
     const result = await duplicateTemplate(WORKSPACE, source);
-    expect(mockAttachDocument).not.toHaveBeenCalled();
+    expect(mockGenerateDocument).not.toHaveBeenCalled();
     expect(result.id).toBe("wft_2");
   });
 
-  it("still returns the created copy when re-attaching its document fails", async () => {
-    // The copy already exists and is usable — a failed attach must not look
-    // like a failed duplicate.
-    mockAttachDocument.mockRejectedValue(new Error("network error"));
+  it("still returns the created copy when regenerating its document fails", async () => {
+    // The copy already exists and is usable — a failed regenerate must not
+    // look like a failed duplicate.
+    mockGenerateDocument.mockRejectedValue(new Error("network error"));
     const source = await getTemplate(WORKSPACE, TEMPLATE_ID) as DocumentTemplate;
 
     const result = await duplicateTemplate(WORKSPACE, source);
