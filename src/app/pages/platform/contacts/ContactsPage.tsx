@@ -123,7 +123,14 @@ function Skeleton({ rows = 5 }: { rows?: number }) {
 
 function ContactsLibrary() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const { state, setQuery, asyncLoadList, asyncLoadGroups, asyncBulkArchive, asyncBulkRestore, asyncBulkAddToGroup, clearPending } = useContacts();
+  const { state, isReal, setQuery, asyncLoadList, asyncLoadGroups, asyncBulkArchive, asyncBulkRestore, asyncBulkAddToGroup, clearPending } = useContacts();
+
+  // "My Contacts" and "Frequently Used" have nothing real behind them — no
+  // ownership column, no usage column — so a real address book doesn't
+  // offer them at all, rather than show a tab whose count can never match
+  // what clicking it reveals. Fixture mode keeps every view, since the mock
+  // service genuinely tracks both.
+  const visibleViews = isReal ? CONTACT_VIEWS.filter(v => v !== "personal" && v !== "frequent") : CONTACT_VIEWS;
 
   const [searchInput,   setSearchInput]   = useState(searchParams.get("q") ?? "");
   const [selectedIds,   setSelectedIds]   = useState<Set<string>>(new Set());
@@ -152,6 +159,20 @@ function ContactsLibrary() {
 
   // Clear selection on view change
   useEffect(() => { setSelectedIds(new Set()); }, [currentView]);
+
+  // A stale/shared link to a view this workspace no longer offers (e.g.
+  // "My Contacts" against a real address book) falls back to "All Contacts"
+  // rather than silently rendering a tab strip with nothing selected.
+  useEffect(() => {
+    if (visibleViews.includes(currentView)) return;
+    setSearchParams(prev => {
+      const next = new URLSearchParams(prev);
+      next.delete("view");
+      next.delete("page");
+      return next;
+    }, { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isReal, currentView]);
 
   // Clear pending feedback after delay
   useEffect(() => {
@@ -238,7 +259,7 @@ function ContactsLibrary() {
 
         {/* Views bar */}
         <TabStrip label="Contact views" activeKey={currentView} className="contacts-viewstrip">
-          {CONTACT_VIEWS.map(v => (
+          {visibleViews.map(v => (
             <button
               key={v}
               onClick={() => setView(v)}

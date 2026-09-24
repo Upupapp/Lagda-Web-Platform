@@ -197,6 +197,10 @@ function reducer(state: ContactState, action: ContactAction): ContactState {
 
 interface ContactContextValue {
   state: ContactState;
+  // Whether this workspace has a real address book. Pages use it to hide
+  // views the backend has no data for at all ("My Contacts", "Frequently
+  // Used") instead of showing a tab whose count and content can never agree.
+  isReal: boolean;
 
   // Query
   setQuery:        (q: Partial<ContactListQuery>) => void;
@@ -523,6 +527,7 @@ export function ContactProvider({ children }: { children: ReactNode }) {
 
   const value: ContactContextValue = {
     state,
+    isReal,
     setQuery,
     asyncLoadList,
     asyncLoadGroups,

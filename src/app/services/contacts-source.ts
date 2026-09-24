@@ -125,27 +125,78 @@ function toWireWrite(input: ContactCreateInput | ContactUpdateInput) {
 
 // ── Reading ─────────────────────────────────────────────────────────────────
 
+/** How many active contacts to pull back for the "Potential Duplicates" scan.
+ *  There is no backend duplicate-detection endpoint, so this module does the
+ *  comparison itself over one bounded page — the backend's own maximum
+ *  (`MAX_PER_PAGE`, contracts/api/pagination) — rather than paging through
+ *  the whole book. A workspace with more active contacts than this misses
+ *  duplicates past the first page; that is a real, disclosed limitation, not
+ *  a silent one — see the comment on `findDuplicateContactIds`. */
+const DUPLICATE_SCAN_SIZE = 100;
+
+/** Two contacts collide when their emails match case-insensitively — the
+ *  same identity check the backend itself uses for its own duplicate
+ *  warning on create/update (`WireDuplicateWarning`). Returns the ids of
+ *  every contact that shares its email with at least one other. */
+function findDuplicateContactIds(items: readonly WireContact[]): Set<string> {
+  const byEmail = new Map<string, string[]>();
+  for (const item of items) {
+    const key = item.email.trim().toLowerCase();
+    const bucket = byEmail.get(key);
+    if (bucket) bucket.push(item.contactId); else byEmail.set(key, [item.contactId]);
+  }
+  const duplicateIds = new Set<string>();
+  for (const ids of byEmail.values()) {
+    if (ids.length > 1) for (const id of ids) duplicateIds.add(id);
+  }
+  return duplicateIds;
+}
+
 /**
  * The backend paginates, searches and sorts; the view filter is applied on
  * top of what it returns.
  *
- * `archived` maps to the backend's `state` filter, which is a real query
- * parameter. The other views (`recent`, `frequent`, `duplicates`) rest on
- * usage data the backend does not keep, so they return the active book
- * rather than silently showing an empty list that looks like a bug.
+ * `archived` maps to the backend's `state` filter, a real query parameter.
+ * `recent` is real too, just not a separate dataset — the backend keeps no
+ * `lastUsedAt`, so "recent" is honestly answered by re-sorting the same
+ * active book by `updatedAt` descending (the closest true signal for "which
+ * of these did I touch last"), overriding whatever sort the toolbar has
+ * selected while this view is active.
+ * `duplicates` is answered by `findDuplicateContactIds` above, scanning a
+ * bounded page rather than the whole book (see `DUPLICATE_SCAN_SIZE`).
+ * `personal`/`frequent` have no backing data at all — no ownership column,
+ * no usage column — so ContactsPage does not offer them in real-backend
+ * mode; this function still answers them honestly (empty) if ever called.
  */
 export async function listContacts(
   workspaceId: string | undefined, query: ContactListQuery,
 ): Promise<ContactListResult> {
   if (!realContactsAvailable(workspaceId)) return mockContactService.listContacts(query);
 
+  if (query.view === "duplicates") {
+    const scan = await realContactService.list(workspaceId!, {
+      state: "active", sort: "updatedAt", direction: "desc", page: 1, perPage: DUPLICATE_SCAN_SIZE,
+    });
+    const duplicateIds = findDuplicateContactIds(scan.items);
+    const items = scan.items.filter(wire => duplicateIds.has(wire.contactId)).map(wire => toListItem(wire, workspaceId!));
+    return {
+      items, total: items.length, page: 1, perPage: DUPLICATE_SCAN_SIZE,
+      hasNextPage: false, hasPrevPage: false,
+      viewCounts: {
+        all: 0, workspace: 0, personal: 0, recent: 0, frequent: 0,
+        duplicates: items.length, archived: 0,
+      },
+    };
+  }
+
   const wireQuery: WireContactListQuery = {
     ...(query.search.trim() === "" ? {} : { search: query.search.trim() }),
     state: query.view === "archived" || query.statusFilter === "archived"
       ? "archived"
       : "active",
-    sort: toWireSort(query.sort),
-    direction: query.direction,
+    ...(query.view === "recent"
+      ? { sort: "updatedAt" as const, direction: "desc" as const }
+      : { sort: toWireSort(query.sort), direction: query.direction }),
     page: query.page,
     perPage: query.perPage,
   };
@@ -160,12 +211,12 @@ export async function listContacts(
     perPage: page.perPage,
     hasNextPage: page.hasNextPage,
     hasPrevPage: page.page > 1,
-    // Counts for the views the backend can actually answer. The rest are
-    // reported as the totals they filter from rather than as zero, which
-    // would read as "you have none" instead of "this view is not stored".
+    // Counts for the views the backend can actually answer. `personal` and
+    // `frequent` stay 0 — ContactsPage hides both tabs in real mode, so
+    // these values are never shown, only kept honest for callers that don't.
     viewCounts: {
       all: page.total, workspace: page.total, personal: 0,
-      recent: page.total, frequent: page.total, duplicates: 0,
+      recent: page.total, frequent: 0, duplicates: 0,
       archived: query.view === "archived" ? page.total : 0,
     },
   };
