@@ -19,7 +19,6 @@ import { useNotificationCenter } from "../../context/NotificationCenterContext";
 import { PRIMARY_NAV, UTILITY_NAV, PREPARE_ACTION } from "../../config/platform.nav";
 import { WorkspaceSwitcher } from "./WorkspaceSwitcher";
 import { UserMenu } from "./UserMenu";
-import { NotificationMenu } from "./NotificationMenu";
 import { Z } from "../../utils/z-index";
 import { useSignOutFlow } from "../../hooks/useSignOutFlow";
 import { usePrepareLaunch } from "../../hooks/usePrepareLaunch";
@@ -148,7 +147,6 @@ function DocumentsNavItem({
           </>
         )}
       </NavLink>
-      <NotificationMenu category="documents" align="left" heading="Document Notifications" size={30} iconSize={15} />
     </li>
   );
 }

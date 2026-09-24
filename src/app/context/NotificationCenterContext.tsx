@@ -9,7 +9,9 @@ import {
   notificationCenterService, hydrate,
 } from "../services/mock/notification-center.service";
 import { realNotificationFeedService } from "../services/real/notification-feed.service";
+import { realDocumentFeedService } from "../services/real/document-feed.service";
 import { USE_REAL_BACKEND } from "../services/backend-flag";
+import { usePlatform } from "./PlatformContext";
 
 interface NotificationCenterContextValue {
   items: NotificationRecord[];
@@ -30,6 +32,9 @@ function loadAll(): NotificationRecord[] {
 
 export function NotificationCenterProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<NotificationRecord[]>(() => loadAll());
+  const platform = usePlatform();
+  const workspaceId = platform.currentWorkspace?.id;
+  const workspaceName = platform.currentWorkspace?.name ?? "";
 
   const unreadCount = items.filter((n) => n.status === "unread").length;
 
@@ -39,23 +44,41 @@ export function NotificationCenterProvider({ children }: { children: ReactNode }
 
   // Real notifications, when there is a backend to ask.
   //
-  // Fetched once on mount and again whenever the tab is brought back to the
-  // front, which is the cheap approximation of "live" that the rest of the
-  // product uses. A failure is swallowed deliberately: an empty or stale feed
-  // is a far smaller problem than a platform shell that will not render.
+  // TWO sources, because they answer different questions and neither alone
+  // fills the bell:
+  //
+  //   `/me/notifications` is the EMAIL substrate — messages this account was
+  //   sent. A signing invitation is addressed to a recipient and a workspace
+  //   invitation to an invitee, so a member's own row there is nearly always
+  //   empty, and no status transition writes one at all.
+  //
+  //   `/workspaces/:id/document-notifications` is the evidence projection —
+  //   what actually happened to this workspace's documents. This is what
+  //   makes the bell render anything.
+  //
+  // Re-fetched when the tab regains focus, the same cheap approximation of
+  // "live" the rest of the product uses. Each source fails independently: a
+  // dead account feed must not blank the document feed, and neither may take
+  // down the platform shell.
   useEffect(() => {
     if (!USE_REAL_BACKEND) return;
     let cancelled = false;
+
     const load = () => {
       void (async () => {
-        try {
-          const fetched = await realNotificationFeedService.list();
-          if (cancelled) return;
-          hydrate(fetched);
-          setItems([...notificationCenterService.getAllItems()]);
-        } catch { /* leave whatever is already shown */ }
+        const [account, documents] = await Promise.all([
+          realNotificationFeedService.list().catch(() => []),
+          workspaceId === undefined
+            ? Promise.resolve([])
+            : realDocumentFeedService.list(workspaceId, workspaceName).catch(() => []),
+        ]);
+        if (cancelled) return;
+        if (account.length === 0 && documents.length === 0) return;
+        hydrate([...account, ...documents]);
+        setItems([...notificationCenterService.getAllItems()]);
       })();
     };
+
     load();
     const onFocus = () => { load(); };
     window.addEventListener("focus", onFocus);
@@ -63,7 +86,7 @@ export function NotificationCenterProvider({ children }: { children: ReactNode }
       cancelled = true;
       window.removeEventListener("focus", onFocus);
     };
-  }, []);
+  }, [workspaceId, workspaceName]);
 
   const markRead = useCallback((id: string) => {
     notificationCenterService.markRead(id);
