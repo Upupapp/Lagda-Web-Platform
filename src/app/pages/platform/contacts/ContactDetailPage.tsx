@@ -8,6 +8,9 @@ import { useParams, Link } from "react-router";
 import { ContactProvider, useContacts } from "../../../context/ContactContext";
 import type { ContactDuplicateCandidate, ContactUsageSummary, ContactTagId } from "../../../models/contacts";
 import { CONTACT_STATUS_LABELS, CONTACT_SCOPE_LABELS, CONTACT_SOURCE_LABELS, getContactTagById } from "../../../models/contacts";
+import { usePlatform } from "../../../context/PlatformContext";
+import { uploadRequestsAvailable } from "../../../services/upload-requests-source";
+import { RequestDocumentDialog } from "../../../components/contacts/RequestDocumentDialog";
 
 const GF    = { fontFamily: "'Geist', sans-serif" };
 const GM    = { fontFamily: "'Geist Mono', monospace" };
@@ -156,6 +159,10 @@ function ContactDetail() {
   const { contactId } = useParams<{ contactId: string }>();
   const { state, asyncLoadContact, clearActiveContact, asyncArchive, asyncRestore } = useContacts();
   const [archiving, setArchiving] = useState(false);
+  const [requestOpen, setRequestOpen] = useState(false);
+  const platform = usePlatform();
+  const workspaceId = platform.currentWorkspace?.id;
+  const canRequest = uploadRequestsAvailable(workspaceId);
 
   useEffect(() => {
     if (contactId) void asyncLoadContact(contactId as ContactId);
@@ -233,6 +240,16 @@ function ContactDetail() {
 
           {/* Actions */}
           <div style={{ display: "flex", gap: 8, flexShrink: 0, flexWrap: "wrap" }}>
+            {/* 067. Asking this person for a document. Offered only on an
+                ACTIVE contact and only where there is a real backend to ask
+                through — a request names a colleague and sends a real email,
+                so there is no demonstration version of it. */}
+            {contact.status === "active" && canRequest && (
+              <button onClick={() => { setRequestOpen(true); }}
+                style={{ ...GF, fontSize: 13, color: "#FFFFFF", border: "none", borderRadius: 8, padding: "8px 16px", background: AZURE, cursor: "pointer", fontWeight: 700 }}>
+                Request a document
+              </button>
+            )}
             {contact.status === "active" && (
               <Link to={`/app/contacts/${contact.id}/edit`}
                 style={{ ...GF, fontSize: 13, color: AZURE, border: `1.5px solid ${AZURE}`, borderRadius: 8, padding: "8px 16px", textDecoration: "none", fontWeight: 600 }}>
@@ -344,6 +361,16 @@ function ContactDetail() {
           ))}
         </div>
       </div>
+
+      {requestOpen && (
+        <RequestDocumentDialog
+          workspaceId={workspaceId}
+          contactId={contact.id}
+          contactName={contact.name}
+          contactEmail={contact.email}
+          onClose={() => { setRequestOpen(false); }}
+        />
+      )}
     </div>
   );
 }
