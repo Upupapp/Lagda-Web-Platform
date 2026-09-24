@@ -1,6 +1,15 @@
 // Contact context — useReducer-based state management for the Contacts module.
-// Frontend-only. No backend calls, no persistence, no real sync.
-// All mutations go through the mock service SESSION_MUTATIONS store.
+//
+// PART real, part fixture, and the split is not arbitrary: it is exactly what
+// the backend has columns for. Listing, reading, creating, updating,
+// archiving and restoring a contact go through `contacts-source`, which
+// writes to the workspace's real address book whenever one is open.
+//
+// Tags, groups, merge, import and usage history have NO backend at all, so
+// they still go through the mock service's in-session store and are lost on
+// reload. Both services are imported here for that reason — this file is
+// where the boundary between them lives, rather than being spread across
+// every page that touches a contact.
 
 import {
   createContext,
@@ -29,6 +38,21 @@ import type {
 } from "../models/contacts";
 import { DEFAULT_CONTACT_QUERY } from "../models/contacts";
 import { mockContactService } from "../services/mock/contacts.service";
+import { usePlatform } from "./PlatformContext";
+// The workspace's real address book where one is open. Only the six
+// operations the backend actually has go through here — list, get, create,
+// update, archive, restore. Tags, groups, merge, import and usage history
+// have no backend at all and stay on the fixture service, which is why both
+// imports coexist rather than one replacing the other.
+import {
+  listContacts as sourceListContacts,
+  getContact as sourceGetContact,
+  createContact as sourceCreateContact,
+  updateContact as sourceUpdateContact,
+  archiveContact as sourceArchiveContact,
+  restoreContact as sourceRestoreContact,
+  realContactsAvailable,
+} from "../services/contacts-source";
 
 // ── State ─────────────────────────────────────────────────────────────────────
 
@@ -227,6 +251,9 @@ const ContactCtx = createContext<ContactContextValue | null>(null);
 
 export function ContactProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(reducer, INITIAL_STATE);
+  const platform = usePlatform();
+  const workspaceId = platform.currentWorkspace?.id;
+  const isReal = realContactsAvailable(workspaceId);
 
   const setQuery = useCallback((q: Partial<ContactListQuery>) => {
     dispatch({ type: "SET_QUERY", payload: q });
@@ -236,12 +263,12 @@ export function ContactProvider({ children }: { children: ReactNode }) {
     dispatch({ type: "LIST_LOADING" });
     try {
       // Use current state via closure — note: we need to read latest query from state
-      const result = await mockContactService.listContacts(state.query);
+      const result = await sourceListContacts(workspaceId, state.query);
       dispatch({ type: "LIST_SUCCESS", payload: result });
     } catch {
       dispatch({ type: "LIST_ERROR", payload: "Could not load contacts. Please try again." });
     }
-  }, [state.query]);
+  }, [state.query, workspaceId]);
 
   const asyncLoadGroups = useCallback(async () => {
     dispatch({ type: "GROUPS_LOADING" });
@@ -256,8 +283,11 @@ export function ContactProvider({ children }: { children: ReactNode }) {
   const asyncLoadContact = useCallback(async (id: ContactId) => {
     dispatch({ type: "ACTIVE_LOADING" });
     try {
+      // The contact itself is real where a workspace is open; the three
+      // panels beside it (available actions, usage history, duplicate
+      // candidates) are derived from fixture data the backend does not keep.
       const [contact, actions, usage, duplicates] = await Promise.all([
-        mockContactService.getContact(id),
+        sourceGetContact(workspaceId, id),
         mockContactService.getContactActionAvailability(id),
         mockContactService.getUsageSummary(id),
         mockContactService.getDuplicateCandidates(id),
@@ -270,7 +300,7 @@ export function ContactProvider({ children }: { children: ReactNode }) {
     } catch {
       dispatch({ type: "ACTIVE_ERROR", payload: "Could not load contact details." });
     }
-  }, []);
+  }, [workspaceId]);
 
   const clearActiveContact = useCallback(() => {
     dispatch({ type: "ACTIVE_CLEAR" });
@@ -279,46 +309,46 @@ export function ContactProvider({ children }: { children: ReactNode }) {
   const asyncCreate = useCallback(async (input: ContactCreateInput): Promise<Contact> => {
     dispatch({ type: "PENDING_START", payload: "create" });
     try {
-      const contact = await mockContactService.createContact(input);
-      dispatch({ type: "PENDING_SUCCESS", payload: { contact, message: "Contact added in this frontend session." } });
+      const contact = await sourceCreateContact(workspaceId, input);
+      dispatch({ type: "PENDING_SUCCESS", payload: { contact, message: isReal ? "Contact added." : "Contact added in this frontend session." } });
       return contact;
     } catch (e: unknown) {
       dispatch({ type: "PENDING_ERROR", payload: "Could not create contact." });
       throw e;
     }
-  }, []);
+  }, [workspaceId, isReal]);
 
   const asyncUpdate = useCallback(async (id: ContactId, input: ContactUpdateInput): Promise<Contact> => {
     dispatch({ type: "PENDING_START", payload: "update" });
     try {
-      const contact = await mockContactService.updateContact(id, input);
-      dispatch({ type: "PENDING_SUCCESS", payload: { contact, message: "Contact updated in this frontend session." } });
+      const contact = await sourceUpdateContact(workspaceId, id, input);
+      dispatch({ type: "PENDING_SUCCESS", payload: { contact, message: isReal ? "Contact updated." : "Contact updated in this frontend session." } });
       return contact;
     } catch (e: unknown) {
       dispatch({ type: "PENDING_ERROR", payload: "Could not update contact." });
       throw e;
     }
-  }, []);
+  }, [workspaceId, isReal]);
 
   const asyncArchive = useCallback(async (id: ContactId) => {
     dispatch({ type: "PENDING_START", payload: "archive" });
     try {
-      const contact = await mockContactService.archiveContact(id);
-      dispatch({ type: "PENDING_SUCCESS", payload: { contact, message: "Contact archived in this frontend session." } });
+      const contact = await sourceArchiveContact(workspaceId, id);
+      dispatch({ type: "PENDING_SUCCESS", payload: { contact, message: isReal ? "Contact archived." : "Contact archived in this frontend session." } });
     } catch {
       dispatch({ type: "PENDING_ERROR", payload: "Could not archive contact." });
     }
-  }, []);
+  }, [workspaceId, isReal]);
 
   const asyncRestore = useCallback(async (id: ContactId) => {
     dispatch({ type: "PENDING_START", payload: "restore" });
     try {
-      const contact = await mockContactService.restoreContact(id);
-      dispatch({ type: "PENDING_SUCCESS", payload: { contact, message: "Contact restored in this frontend session." } });
+      const contact = await sourceRestoreContact(workspaceId, id);
+      dispatch({ type: "PENDING_SUCCESS", payload: { contact, message: isReal ? "Contact restored." : "Contact restored in this frontend session." } });
     } catch {
       dispatch({ type: "PENDING_ERROR", payload: "Could not restore contact." });
     }
-  }, []);
+  }, [workspaceId, isReal]);
 
   const asyncAddTag = useCallback(async (id: ContactId, tagId: ContactTagId) => {
     try {
