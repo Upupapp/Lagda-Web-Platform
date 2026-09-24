@@ -2465,22 +2465,18 @@ function DocumentViewerDialog({
 // first page, and a list row carries no signer data to match against.
 
 /**
- * Status choices, grouped the way a sender thinks about them rather than one
- * per lifecycle state. Each group matches the badge its rows show:
- * completion-ready displays as "Awaiting signature", so it belongs with the
- * requests still in progress, not with Completed.
+ * Which lifecycle states each SECTION queries for. Sections replaced the old
+ * status-filter dropdown: a sender no longer chooses a status inside "Sent",
+ * they instead click the section that already means that status. Cancelled
+ * and expired requests have no section of their own — they stay visible in
+ * Sent, since either one still needs a sender's attention, not a signer's.
  */
-const REAL_STATUS_FILTERS: readonly {
-  readonly key: string; readonly label: string; readonly states: readonly SigningRequestState[];
-}[] = [
-  { key: "",            label: "All statuses", states: [] },
-  { key: "draft",       label: "Draft",        states: ["draft", "ready-to-send"] },
-  { key: "in-progress", label: "In progress",  states: ["sent", "partially-completed", "completion-ready"] },
-  { key: "completed",   label: "Completed",    states: ["completed"] },
-  { key: "declined",    label: "Declined",     states: ["declined"] },
-  { key: "cancelled",   label: "Cancelled",    states: ["cancelled"] },
-  { key: "expired",     label: "Expired",      states: ["expired"] },
-];
+const LIST_STATES: Readonly<Record<"sent" | "completed" | "draft" | "declined", readonly SigningRequestState[]>> = {
+  sent:      ["sent", "partially-completed", "completion-ready", "cancelled", "expired"],
+  completed: ["completed"],
+  draft:     ["draft", "ready-to-send"],
+  declined:  ["declined"],
+};
 
 /** The value once it has stopped changing for ms: one request per pause, not per keystroke. */
 function useDebouncedValue<T>(value: T, ms: number): T {
@@ -2567,13 +2563,12 @@ function DocumentsPageRealMode() {
   const [searchParams, setSearchParams] = useSearchParams();
   const urlQ = searchParams.get("q") ?? "";
   const urlSigner = searchParams.get("signer") ?? "";
-  const rawStatus = searchParams.get("status") ?? "";
-  const statusKey = REAL_STATUS_FILTERS.some(f => f.key === rawStatus) ? rawStatus : "";
 
-  // Which list: this workspace's sent documents, or documents sent TO me.
+  // Which list: this workspace's own sections, or documents sent TO me.
   const rawList = searchParams.get("list");
-  const list: "sent" | "to-sign" | "signed" =
-    rawList === "to-sign" || rawList === "signed" ? rawList : "sent";
+  const list: "sent" | "to-sign" | "signed" | "completed" | "draft" | "declined" =
+    rawList === "to-sign" || rawList === "signed" || rawList === "completed"
+      || rawList === "draft" || rawList === "declined" ? rawList : "sent";
   const [toSignCount, setToSignCount] = useState<number | null>(null);
   const setList = (next: typeof list) => {
     setSearchParams(prev => {
@@ -2595,7 +2590,7 @@ function DocumentsPageRealMode() {
   const [signerInput, setSignerInput] = useState(urlSigner);
   const q = useDebouncedValue(nameInput.trim(), 300);
   const signer = useDebouncedValue(signerInput.trim(), 300);
-  const filtering = q !== "" || signer !== "" || statusKey !== "";
+  const filtering = q !== "" || signer !== "";
   const nameRef = useRef<HTMLInputElement>(null);
 
   // Settled text goes to the URL.
@@ -2618,17 +2613,9 @@ function DocumentsPageRealMode() {
     if (urlSigner !== settledRef.current.signer) setSignerInput(urlSigner);
   }, [urlQ, urlSigner]);
 
-  const setStatusFilter = (key: string) => {
-    setSearchParams(prev => {
-      const next = new URLSearchParams(prev);
-      if (key) next.set("status", key); else next.delete("status");
-      return next;
-    }, { replace: true });
-  };
   const clearFilters = () => {
     setNameInput("");
     setSignerInput("");
-    setStatusFilter("");
   };
 
   // "/" jumps to the search field, as on most sites that have one.
@@ -2645,9 +2632,10 @@ function DocumentsPageRealMode() {
 
   useEffect(() => {
     if (!workspaceId) return;
+    if (list === "to-sign" || list === "signed") return;
     let cancelled = false;
     setFetching(true);
-    const states = REAL_STATUS_FILTERS.find(f => f.key === statusKey)?.states ?? [];
+    const states = LIST_STATES[list];
 
     void realSigningRequestService.list(workspaceId, { perPage: 50, q, signer, states })
       .then(result => {
@@ -2660,7 +2648,7 @@ function DocumentsPageRealMode() {
       .catch(() => { if (!cancelled) { setStatus("error"); setFetching(false); } });
 
     return () => { cancelled = true; };
-  }, [workspaceId, refreshKey, q, signer, statusKey]);
+  }, [workspaceId, refreshKey, q, signer, list]);
 
   useEffect(() => {
     if (!workspaceId) return;
@@ -2693,18 +2681,18 @@ function DocumentsPageRealMode() {
     return () => { cancelled = true; };
   }, [workspaceId, refreshKey]);
 
-  // Unsent drafts, filtered the way the server filters requests: by name,
-  // and only when the status filter allows drafts. They have no signers yet,
-  // so a signer filter excludes them.
+  // Unsent drafts, filtered the way the server filters requests: by name.
+  // They have no signers yet, so a signer filter excludes them, and they
+  // only ever belong in the Draft section.
   const drafts = useMemo(() => {
     if (requestedDocumentIds === null) return [];
-    if (signer !== "" || (statusKey !== "" && statusKey !== "draft")) return [];
+    if (list !== "draft" || signer !== "") return [];
     const needle = q.toLowerCase();
     return documents
       .filter(d => !requestedDocumentIds.has(d.documentId))
       .filter(d => needle === "" || d.title.toLowerCase().includes(needle))
       .map(unsentDraftRow);
-  }, [documents, requestedDocumentIds, q, signer, statusKey]);
+  }, [documents, requestedDocumentIds, q, signer, list]);
 
   // Newest first across both kinds.
   const rows = useMemo(
@@ -2746,10 +2734,19 @@ function DocumentsPageRealMode() {
           <button type="button" role="tab" className="doc-list-tab" aria-selected={list === "signed"} onClick={() => setList("signed")}>
             <FileCheck2 size={14} aria-hidden /> Signed by me
           </button>
+          <button type="button" role="tab" className="doc-list-tab" aria-selected={list === "completed"} onClick={() => setList("completed")}>
+            <FileCheck2 size={14} aria-hidden /> Completed
+          </button>
+          <button type="button" role="tab" className="doc-list-tab" aria-selected={list === "draft"} onClick={() => setList("draft")}>
+            <FileText size={14} aria-hidden /> Draft
+          </button>
+          <button type="button" role="tab" className="doc-list-tab" aria-selected={list === "declined"} onClick={() => setList("declined")}>
+            <FileText size={14} aria-hidden /> Declined
+          </button>
         </div>
         {list === "to-sign" && <DocumentsToSignSection onCount={setToSignCount} />}
         {list === "signed" && <SignedByMeSection />}
-        {list === "sent" && (<>
+        {(list === "sent" || list === "completed" || list === "draft" || list === "declined") && (<>
         {status === "loading" && (
           <div style={{ padding: "32px 0" }}>
             <SkeletonBlock height={40} />
@@ -2775,17 +2772,6 @@ function DocumentsPageRealMode() {
               id="doc-filter-signer" label="Filter by signer" placeholder="Signer name or email"
               value={signerInput} onChange={setSignerInput}
             />
-            <label htmlFor="doc-filter-status" style={{ position: "absolute", width: 1, height: 1, overflow: "hidden", clip: "rect(0,0,0,0)" }}>
-              Filter by status
-            </label>
-            <select
-              id="doc-filter-status"
-              className="doc-filter-select"
-              value={statusKey}
-              onChange={e => setStatusFilter(e.target.value)}
-            >
-              {REAL_STATUS_FILTERS.map(f => <option key={f.key} value={f.key}>{f.label}</option>)}
-            </select>
             <div className="doc-filter-meta" style={{ display: "flex", alignItems: "center", gap: 8, marginLeft: "auto", minWidth: 0 }}>
               {filtering && (
                 <button

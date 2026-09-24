@@ -5,6 +5,7 @@
 
 import React, { useEffect, useState, useRef } from "react";
 import { useNavigate, useSearchParams, Link } from "react-router";
+import { User as BlankPersonIcon, MoreVertical } from "lucide-react";
 import { ContactProvider, useContacts } from "../../../context/ContactContext";
 import type { ContactListItem, ContactView, ContactSortField, ContactScope, ContactStatus, ContactTagId, ContactGroupId } from "../../../models/contacts";
 import {
@@ -67,15 +68,27 @@ function TagChip({ tagId }: { tagId: ContactTagId }) {
   );
 }
 
-function InitialsAvatar({ name }: { name: string }) {
-  const initials = name.split(" ").map(w => w[0]).slice(0, 2).join("").toUpperCase();
+/**
+ * A real profile picture when this contact is tied to a registered LAGDA
+ * account (`avatarUrl` set), otherwise a blank default person — never
+ * initials. An address-book entry is not a verified identity (see
+ * services/real/contact.service.ts), so guessing a face from a name's
+ * initials would overstate what's actually known about most rows here.
+ */
+function ContactAvatar({ name, avatarUrl, size = 40 }: { name: string; avatarUrl?: string; size?: number }) {
+  const [failed, setFailed] = useState(false);
+  const showImage = !!avatarUrl && !failed;
   return (
     <div style={{
-      width: 32, height: 32, borderRadius: "50%",
-      background: "#EBF4FC", display: "flex", alignItems: "center", justifyContent: "center",
-      ...GM, fontSize: 11, fontWeight: 700, color: AZURE, flexShrink: 0, userSelect: "none",
+      width: size, height: size, borderRadius: "50%", flexShrink: 0, overflow: "hidden",
+      background: showImage ? "transparent" : "#EEF2F6",
+      display: "flex", alignItems: "center", justifyContent: "center",
+      border: "1px solid #E3E8EF",
     }}>
-      {initials}
+      {showImage
+        ? <img src={avatarUrl} alt="" onError={() => setFailed(true)} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+        : <BlankPersonIcon size={Math.round(size * 0.55)} color={SILVER} aria-label={`${name}'s profile picture is not set`} strokeWidth={1.75} />
+      }
     </div>
   );
 }
@@ -116,7 +129,6 @@ function ContactsLibrary() {
   const [selectedIds,   setSelectedIds]   = useState<Set<string>>(new Set());
   const [showFilters,   setShowFilters]   = useState(false);
   const [, setShowBulkMenu] = useState(false);
-  const [gridView,      setGridView]      = useState(false);
   const debouncedSearch = useDebounce(searchInput, 280);
 
   const currentView = (searchParams.get("view") as ContactView) ?? "all";
@@ -301,15 +313,6 @@ function ContactsLibrary() {
         >
           {state.query.direction === "asc" ? "↑" : "↓"}
         </button>
-
-        {/* Grid/list toggle */}
-        <button
-          onClick={() => setGridView(v => !v)}
-          aria-label={gridView ? "Switch to list view" : "Switch to grid view"}
-          style={{ ...GF, fontSize: 13, color: SLATE, background: "none", border: "1.5px solid #D1D9E0", borderRadius: 8, padding: "7px 10px", cursor: "pointer" }}
-        >
-          {gridView ? "☰" : "⊞"}
-        </button>
       </div>
 
       {/* Filter panel */}
@@ -448,41 +451,9 @@ function ContactsLibrary() {
               <span style={{ ...GF, fontSize: 12, color: SILVER }}>{total} contact{total !== 1 ? "s" : ""}</span>
             </div>
 
-            {gridView
-              ? (
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 12 }}>
-                  {items.map(c => <ContactCard key={c.id} contact={c} selected={selectedIds.has(c.id)} onToggle={toggleSelect} />)}
-                </div>
-              )
-              : (
-                /* Desktop table — accessible */
-                <>
-                  <div style={{ overflowX: "auto" }}>
-                    <table role="table" aria-label="Contacts" style={{ width: "100%", borderCollapse: "collapse", ...GF, fontSize: 13 }}>
-                      <thead>
-                        <tr style={{ borderBottom: "2px solid #E3E8EF" }}>
-                          <Th style={{ width: 40 }}><span style={{ position: "absolute", left: -9999 }}>Select</span></Th>
-                          <Th>Contact</Th>
-                          <Th hideSmall>Organization</Th>
-                          <Th hideSmall>Scope</Th>
-                          <Th hideSmall>Tags</Th>
-                          <Th>Status</Th>
-                          <Th hideSmall>Last Used</Th>
-                          <Th style={{ width: 80 }}>Actions</Th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {items.map(c => <ContactRow key={c.id} contact={c} selected={selectedIds.has(c.id)} onToggle={toggleSelect} />)}
-                      </tbody>
-                    </table>
-                  </div>
-                  {/* Mobile cards */}
-                  <div className="contacts-mobile-cards">
-                    {items.map(c => <ContactCard key={c.id} contact={c} selected={selectedIds.has(c.id)} onToggle={toggleSelect} />)}
-                  </div>
-                </>
-              )
-            }
+            <div className="contact-card-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(268px, 1fr))", gap: 12 }}>
+              {items.map(c => <ContactCard key={c.id} contact={c} selected={selectedIds.has(c.id)} onToggle={toggleSelect} />)}
+            </div>
 
             {/* Pagination */}
             {(hasNext || hasPrev) && (
@@ -499,24 +470,15 @@ function ContactsLibrary() {
       </main>
 
       <style>{`
-        @media (min-width: 640px) { .contacts-mobile-cards { display: none !important; } }
-        @media (max-width: 639px)  { .contacts-mobile-cards { display: grid !important; gap: 10px; } table[role="table"] { display: none; } }
+        @media (max-width: 480px) { .contact-card-grid { grid-template-columns: 1fr !important; } }
       `}</style>
     </div>
   );
 }
 
-// ── Table components ──────────────────────────────────────────────────────────
+// ── Contact card ──────────────────────────────────────────────────────────────
 
-function Th({ children, style, hideSmall }: { children?: React.ReactNode; style?: React.CSSProperties; hideSmall?: boolean }) {
-  return (
-    <th scope="col" style={{ ...GF, fontSize: 11, fontWeight: 700, color: SLATE, textTransform: "uppercase", letterSpacing: "0.05em", padding: "8px 10px", textAlign: "left", whiteSpace: "nowrap", ...(hideSmall ? {} : {}), ...style }}>
-      {children}
-    </th>
-  );
-}
-
-function ContactRow({ contact: c, selected, onToggle }: { contact: ContactListItem; selected: boolean; onToggle: (id: string) => void }) {
+function ContactCard({ contact: c, selected, onToggle }: { contact: ContactListItem; selected: boolean; onToggle: (id: string) => void }) {
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -529,79 +491,66 @@ function ContactRow({ contact: c, selected, onToggle }: { contact: ContactListIt
   }, [menuOpen]);
 
   return (
-    <tr style={{ borderBottom: "1px solid #F0F2F5", background: selected ? LIGHT : "transparent" }}>
-      <td style={{ padding: "10px 10px", width: 40 }}>
-        <input type="checkbox" checked={selected} onChange={() => onToggle(c.id)} aria-label={`Select ${c.name}`} style={{ accentColor: AZURE }} />
-      </td>
-      <td style={{ padding: "10px 10px" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <InitialsAvatar name={c.name} />
-          <div style={{ minWidth: 0 }}>
-            <Link to={`/app/contacts/${c.id}`} style={{ ...GF, color: NAVY, fontWeight: 600, textDecoration: "none", fontSize: 13, display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-              {c.name}
-            </Link>
-            <span style={{ ...GM, fontSize: 11, color: SLATE, display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.email}</span>
-          </div>
+    <div
+      style={{
+        background: "#FFFFFF", border: selected ? `2px solid ${AZURE}` : "1.5px solid #E3E8EF",
+        borderRadius: 14, padding: "16px", position: "relative",
+        boxShadow: selected ? "0 4px 14px rgba(0,120,212,0.12)" : "0 1px 2px rgba(7,17,31,0.04)",
+        transition: "box-shadow 0.15s, border-color 0.15s",
+      }}
+    >
+      {/* Select + 3-dot actions share the top-right corner with the avatar/name */}
+      <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
+        <input type="checkbox" checked={selected} onChange={() => onToggle(c.id)} aria-label={`Select ${c.name}`}
+          style={{ accentColor: AZURE, marginTop: 12 }} />
+        <ContactAvatar name={c.name} avatarUrl={c.avatarUrl} size={44} />
+        <div style={{ flex: 1, minWidth: 0, paddingTop: 1 }}>
+          <Link to={`/app/contacts/${c.id}`} style={{ ...GF, color: NAVY, fontWeight: 700, fontSize: 14, textDecoration: "none", display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            {c.name}
+          </Link>
+          <p style={{ ...GM, color: SLATE, fontSize: 11, margin: "2px 0 0", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.email}</p>
+          {c.organization && <p style={{ ...GF, color: SILVER, fontSize: 11, margin: "1px 0 0", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.organization}</p>}
         </div>
-      </td>
-      <td style={{ padding: "10px 10px", color: SLATE, fontSize: 12, whiteSpace: "nowrap" }}>{c.organization ?? "—"}</td>
-      <td style={{ padding: "10px 10px" }}><ScopeBadge scope={c.scope} /></td>
-      <td style={{ padding: "10px 10px" }}>
-        <div style={{ display: "flex", gap: 4, flexWrap: "nowrap" }}>{c.tagIds.slice(0, 2).map(t => <TagChip key={t} tagId={t} />)}</div>
-      </td>
-      <td style={{ padding: "10px 10px" }}><StatusBadge status={c.status} /></td>
-      <td style={{ padding: "10px 10px" }}><RelativeDate iso={c.lastUsedAt} /></td>
-      <td style={{ padding: "10px 10px", position: "relative" }}>
-        <div ref={menuRef} style={{ display: "inline-block" }}>
-          <button onClick={() => setMenuOpen(v => !v)} aria-label={`Actions for ${c.name}`} aria-expanded={menuOpen} aria-haspopup="menu"
-            style={{ ...GF, fontSize: 18, color: SLATE, background: "none", border: "none", cursor: "pointer", padding: "2px 6px", borderRadius: 6 }}>
-            ⋮
+
+        {/* The one visible control: everything else (View/Edit/Archive) hides
+            behind it, so a card full of data doesn't also read as a toolbar. */}
+        <div ref={menuRef} style={{ position: "relative", flexShrink: 0 }}>
+          <button
+            onClick={() => setMenuOpen(v => !v)}
+            aria-label={`Actions for ${c.name}`} aria-expanded={menuOpen} aria-haspopup="menu"
+            style={{
+              display: "flex", alignItems: "center", justifyContent: "center",
+              width: 28, height: 28, color: menuOpen ? AZURE : SLATE,
+              background: menuOpen ? LIGHT : "transparent", border: "none", borderRadius: 7, cursor: "pointer",
+            }}
+          >
+            <MoreVertical size={16} aria-hidden />
           </button>
           {menuOpen && (
-            <div role="menu" style={{ position: "absolute", right: 0, top: "100%", zIndex: Z.dropdown, background: "#FFFFFF", border: "1.5px solid #E3E8EF", borderRadius: 10, boxShadow: "0 8px 24px rgba(0,0,0,0.12)", minWidth: 160, overflow: "hidden" }}>
-              <MenuItem label="View Contact"        onClick={() => { void navigate(`/app/contacts/${c.id}`); setMenuOpen(false); }} />
-              {c.status === "active" && <MenuItem label="Edit"          onClick={() => { void navigate(`/app/contacts/${c.id}/edit`); setMenuOpen(false); }} />}
-              {c.status !== "archived" && <MenuItem label="Archive"    onClick={() => { setMenuOpen(false); }} />}
-              {c.status === "archived" && <MenuItem label="Restore"    onClick={() => { setMenuOpen(false); }} />}
+            <div role="menu" style={{ position: "absolute", right: 0, top: "calc(100% + 4px)", zIndex: Z.dropdown, background: "#FFFFFF", border: "1.5px solid #E3E8EF", borderRadius: 10, boxShadow: "0 8px 24px rgba(0,0,0,0.12)", minWidth: 160, overflow: "hidden" }}>
+              <MenuItem label="View Contact"     onClick={() => { void navigate(`/app/contacts/${c.id}`); setMenuOpen(false); }} />
+              {c.status === "active"    && <MenuItem label="Edit"    onClick={() => { void navigate(`/app/contacts/${c.id}/edit`); setMenuOpen(false); }} />}
+              {c.status !== "archived"  && <MenuItem label="Archive" onClick={() => { setMenuOpen(false); }} />}
+              {c.status === "archived"  && <MenuItem label="Restore" onClick={() => { setMenuOpen(false); }} />}
             </div>
           )}
         </div>
-      </td>
-    </tr>
-  );
-}
+      </div>
 
-function ContactCard({ contact: c, selected, onToggle }: { contact: ContactListItem; selected: boolean; onToggle: (id: string) => void }) {
-  const navigate = useNavigate();
-  return (
-    <div style={{ background: "#FFFFFF", border: selected ? `2px solid ${AZURE}` : "1.5px solid #E3E8EF", borderRadius: 12, padding: "14px 16px" }}>
-      <div style={{ display: "flex", alignItems: "flex-start", gap: 10, marginBottom: 8 }}>
-        <input type="checkbox" checked={selected} onChange={() => onToggle(c.id)} aria-label={`Select ${c.name}`} style={{ accentColor: AZURE, marginTop: 8 }} />
-        <InitialsAvatar name={c.name} />
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <p style={{ ...GF, color: NAVY, fontWeight: 700, fontSize: 14, margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.name}</p>
-          <p style={{ ...GM, color: SLATE, fontSize: 11, margin: "2px 0 0", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.email}</p>
-          {c.organization && <p style={{ ...GF, color: SILVER, fontSize: 11, margin: "1px 0 0" }}>{c.organization}</p>}
-        </div>
-        <div style={{ display: "flex", gap: 4, flexShrink: 0 }}>
-          <ScopeBadge scope={c.scope} />
-          <StatusBadge status={c.status} />
-        </div>
+      <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap", margin: "12px 0 0" }}>
+        <ScopeBadge scope={c.scope} />
+        <StatusBadge status={c.status} />
       </div>
-      <div style={{ display: "flex", gap: 4, flexWrap: "wrap", marginBottom: 10 }}>
-        {c.tagIds.slice(0, 3).map(t => <TagChip key={t} tagId={t} />)}
-      </div>
-      <div style={{ display: "flex", gap: 8 }}>
-        <button onClick={() => navigate(`/app/contacts/${c.id}`)}
-          style={{ ...GF, flex: 1, fontSize: 12, color: AZURE, background: LIGHT, border: "none", borderRadius: 8, padding: "7px 0", cursor: "pointer", fontWeight: 600 }}>
-          View
-        </button>
-        {c.status === "active" && (
-          <button onClick={() => navigate(`/app/contacts/${c.id}/edit`)}
-            style={{ ...GF, flex: 1, fontSize: 12, color: SLATE, background: "#F8FAFC", border: "1.5px solid #E3E8EF", borderRadius: 8, padding: "7px 0", cursor: "pointer", fontWeight: 600 }}>
-            Edit
-          </button>
-        )}
+
+      {c.tagIds.length > 0 && (
+        <div style={{ display: "flex", gap: 4, flexWrap: "wrap", marginTop: 10 }}>
+          {c.tagIds.slice(0, 3).map(t => <TagChip key={t} tagId={t} />)}
+        </div>
+      )}
+
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 12, paddingTop: 10, borderTop: "1px solid #F0F2F5" }}>
+        <span style={{ ...GF, fontSize: 11, color: SILVER }}>Last used</span>
+        <RelativeDate iso={c.lastUsedAt} />
       </div>
     </div>
   );

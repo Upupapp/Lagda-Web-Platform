@@ -137,6 +137,11 @@ export interface Contact {
   phone?:       string;   // optional, never implies SMS auth capability
   organization?: string;
   title?:       string;
+  // Set only when this contact's email matches a real, registered LAGDA
+  // account — the account's own picture, never something attached to the
+  // address-book entry itself. Absent (not merely empty) for every other
+  // contact, which the UI renders as a blank default person, not initials.
+  avatarUrl?:   string;
 
   // Organization
   tagIds:       ContactTagId[];
@@ -167,6 +172,7 @@ export interface ContactListItem {
   phone?:       string;
   organization?: string;
   title?:       string;
+  avatarUrl?:   string;
   tagIds:       ContactTagId[];
   groupIds:     ContactGroupId[];
   lastUsedAt?:  string;
