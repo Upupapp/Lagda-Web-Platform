@@ -39,7 +39,7 @@ import {
 } from "../../components/recipient/signer-ui";
 import {
   FileSignature, ShieldCheck, CheckCircle2, XCircle, Clock, AlertTriangle,
-  Ban, ArrowLeft, Send, Loader2,
+  Ban, ArrowLeft, Send, Loader2, SkipForward,
 } from "lucide-react";
 import { DECLINE_REASON_CATEGORIES } from "../../models/recipient";
 import { SigningEntryChoice } from "../../components/recipient/SigningEntryChoice";
@@ -73,7 +73,7 @@ function maskRecipientEmail(email: string): string {
 // you agree to, because signing in changes what the consent screen can
 // offer. It is skipped once an account is already linked — there is no
 // choice left to make at that point.
-type Phase = "loading" | "unavailable" | "choose" | "consent" | "ceremony" | "submitted" | "declined" | "decline-form";
+type Phase = "loading" | "unavailable" | "choose" | "consent" | "ceremony" | "submitted" | "declined" | "decline-form" | "skipped";
 
 // ── Continuing from the app ───────────────────────────────────────────────
 //
@@ -428,6 +428,25 @@ export function RealSigningPage() {
     }
   };
 
+  // 069. An approver passes on approving: the request moves on without them.
+  // Their counterpart to a signer's decline, which the backend refuses from
+  // an approver.
+  const handleSkip = async () => {
+    if (submitting) return;
+    setSubmitting(true);
+    setErrorMessage(null);
+    try {
+      await run({ message: "Recording your decision" }, async () => {
+        await realSigningSubmissionService.skip();
+        setPhase("skipped");
+      });
+    } catch (err) {
+      setErrorMessage(describeError(err));
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const handleDecline = async () => {
     // This had no in-flight guard at all: a second click sent a second decline.
     if (submitting) return;
@@ -502,7 +521,7 @@ export function RealSigningPage() {
           icon={CheckCircle2}
           tone="success"
           badge="Complete"
-          title="Your signature was recorded"
+          title={view?.recipient.type === "approver" ? "Your approval was recorded" : "Your signature was recorded"}
           description="You can close this page — nothing further is needed from you."
         />
         <Notice icon={ShieldCheck} tone="neutral">
@@ -510,6 +529,21 @@ export function RealSigningPage() {
           notified automatically. If you need confirmation of the completed
           document, contact the sender directly.
         </Notice>
+      </SignerCard>
+    );
+  }
+
+  if (phase === "skipped") {
+    return (
+      <SignerCard>
+        <StepRail current="done" />
+        <PhaseBanner
+          icon={CheckCircle2}
+          tone="neutral"
+          badge="Skipped"
+          title="You skipped this approval"
+          description="The request continues to the next participant. Nothing further is needed from you."
+        />
       </SignerCard>
     );
   }
@@ -717,6 +751,7 @@ export function RealSigningPage() {
       );
     }
 
+    const isApprover = view.recipient.type === "approver";
     return (
       <SignerCard wide>
         <StepRail current="sign" />
@@ -725,7 +760,9 @@ export function RealSigningPage() {
           tone="info"
           badge="Step 2 of 3"
           title={view.request.documentTitle}
-          description="Read the document, then fill the highlighted fields. Tap a marked box to add your signature."
+          description={isApprover
+            ? "Review the document and fill any highlighted fields, then approve it — or skip if you don't need to approve."
+            : "Read the document, then fill the highlighted fields. Tap a marked box to add your signature."}
         />
         <IdentityStrip
           name={view.recipient.name}
@@ -789,17 +826,31 @@ export function RealSigningPage() {
               disabled={submitting}
               full
             >
-              {submitting ? "Submitting…" : "Submit signature"}
+              {submitting ? "Submitting…" : isApprover ? "Approve" : "Submit signature"}
             </ActionButton>
-            <ActionButton
-              kind="secondary"
-              icon={Ban}
-              onClick={() => { setPhase("decline-form"); }}
-              disabled={submitting}
-              full
-            >
-              Decline
-            </ActionButton>
+            {isApprover ? (
+              // Approvers cannot decline — the backend refuses it (069). Their
+              // alternative to approving is skipping.
+              <ActionButton
+                kind="secondary"
+                icon={SkipForward}
+                onClick={() => void handleSkip()}
+                disabled={submitting}
+                full
+              >
+                Skip
+              </ActionButton>
+            ) : (
+              <ActionButton
+                kind="secondary"
+                icon={Ban}
+                onClick={() => { setPhase("decline-form"); }}
+                disabled={submitting}
+                full
+              >
+                Decline
+              </ActionButton>
+            )}
           </ActionRow>
         </div>
       </SignerCard>

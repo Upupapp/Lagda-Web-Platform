@@ -179,7 +179,11 @@ export const FIELD_TYPE_GROUPS: { label: string; types: FieldType[] }[] = [
 // sender-text is not assigned to participants — it is sender-only.
 
 export const FIELD_ELIGIBLE_ROLES: Record<FieldType, PrepParticipantRole[]> = {
-  "signature":      ["signer"],
+  // Approvers and reviewers may carry a signature too — the backend has
+  // always accepted one (`canHoldFields`), and refusing it here was what sent
+  // an approver's signature to a signer, or into an unfixable loop. Neither
+  // is REQUIRED: an approver completes by approving, with or without fields.
+  "signature":      ["signer", "approver", "reviewer"],
   "initials":       ["signer", "approver"],
   "full-name":      ["signer", "approver", "reviewer", "acknowledgment-recipient"],
   "date-signed":    ["signer", "approver"],

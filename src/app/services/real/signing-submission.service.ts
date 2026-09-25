@@ -61,6 +61,19 @@ class RealSigningSubmissionService {
       body: { reason },
     });
   }
+
+  /**
+   * 069. An APPROVER passes on approving. The backend records the approver as
+   * skipped and the request moves on to the next step — the approver's
+   * counterpart to a signer's decline, which approvers may not do. Empty
+   * body, naturally idempotent like decline.
+   */
+  async skip(): Promise<{ skippedAt: number; applied: boolean }> {
+    return recipientApiRequest<{ skippedAt: number; applied: boolean }>("/signing/skip", {
+      method: "POST",
+      body: {},
+    });
+  }
 }
 
 export const realSigningSubmissionService = new RealSigningSubmissionService();

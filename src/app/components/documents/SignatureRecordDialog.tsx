@@ -1,4 +1,5 @@
-// The signature record for one signing request: who signed, and when.
+// The participant record for one signing request: everyone who takes part —
+// signers, approvers, reviewers — what each has done, and when.
 //
 // Reads GET /workspaces/:id/signing-requests/:id/signatures — a surface
 // separate from the request's own detail route on purpose. That one returns
@@ -12,7 +13,7 @@
 // invitation went to, and the exact instant their submission was accepted.
 
 import { useState, useEffect, type CSSProperties } from "react";
-import { X, CheckCircle2, Clock, XCircle, MinusCircle, ShieldCheck } from "lucide-react";
+import { X, CheckCircle2, Clock, XCircle, MinusCircle, ShieldCheck, SkipForward, BadgeCheck } from "lucide-react";
 import {
   realSigningRequestService,
   type SigningRequestSignatures, type Signatory, type RecipientWorkflowState,
@@ -44,11 +45,24 @@ const STATE_PRESENTATION: Record<RecipientWorkflowState, {
   label: string; color: string; icon: typeof CheckCircle2;
 }> = {
   signed:   { label: "Signed",       color: GREEN,  icon: CheckCircle2 },
+  approved: { label: "Approved",     color: GREEN,  icon: BadgeCheck },
+  skipped:  { label: "Skipped",      color: SLATE6, icon: SkipForward },
   active:   { label: "Awaiting",     color: AMBER,  icon: Clock },
   // "Not yet their turn" — a real and different thing from "we are waiting
   // on them", which is what `active` means.
   waiting:  { label: "Not yet due",  color: SLATE4, icon: MinusCircle },
   declined: { label: "Declined",     color: RED,    icon: XCircle },
+};
+
+/** What each participant IS, so a reader can tell who signed from who
+ *  approved. The row never said, so everyone read as a signer. */
+const ROLE_LABELS: Record<string, string> = {
+  signer: "Signer",
+  approver: "Approver",
+  reviewer: "Reviewer",
+  "acknowledgment-recipient": "Acknowledges",
+  viewer: "Viewer",
+  "carbon-copy": "Receives a copy",
 };
 
 /** A single labeled fact. Every field the record shows is named explicitly. */
@@ -66,8 +80,12 @@ function Detail({ label, value }: { label: string; value: string }) {
 }
 
 function SignatoryRow({ signatory }: { signatory: Signatory }) {
-  const presentation = STATE_PRESENTATION[signatory.state];
+  // Falls back rather than crashing if a newer backend sends a state this
+  // build does not know yet — the defect this used to have.
+  const presentation = STATE_PRESENTATION[signatory.state]
+    ?? { label: signatory.state, color: SLATE6, icon: MinusCircle };
   const Icon = presentation.icon;
+  const role = ROLE_LABELS[signatory.type] ?? signatory.type;
 
   return (
     <li style={{ padding: "14px 0", borderBottom: `1px solid #F1F5F9`, listStyle: "none" }}>
@@ -80,6 +98,12 @@ function SignatoryRow({ signatory }: { signatory: Signatory }) {
             </span>
             <span style={{ fontSize: 10, fontWeight: 400, color: SLATE4, ...GF }}>
               (name in document)
+            </span>
+            <span style={{
+              fontSize: 10.5, fontWeight: 700, color: SLATE6, ...GF,
+              background: "#F1F5F9", borderRadius: 99, padding: "1px 7px",
+            }}>
+              {role}
             </span>
             <span style={{ fontSize: 12, fontWeight: 600, color: presentation.color, ...GF }}>
               {presentation.label}
@@ -118,6 +142,16 @@ function SignatoryRow({ signatory }: { signatory: Signatory }) {
           {signatory.signedAt !== null && (
             <div style={{ fontSize: 12, color: NAVY, marginTop: 6, ...GF }}>
               Signed {fmtAbsolute(signatory.signedAt)}
+            </div>
+          )}
+          {signatory.approvedAt != null && (
+            <div style={{ fontSize: 12, color: NAVY, marginTop: 6, ...GF }}>
+              Approved {fmtAbsolute(signatory.approvedAt)}
+            </div>
+          )}
+          {signatory.skippedAt != null && (
+            <div style={{ fontSize: 12, color: SLATE6, marginTop: 6, ...GF }}>
+              Skipped {fmtAbsolute(signatory.skippedAt)}
             </div>
           )}
           {signatory.declinedAt !== null && (
@@ -167,7 +201,7 @@ export function SignatureRecordDialog({
 
   return (
     <div
-      role="dialog" aria-modal="true" aria-label={`Signature record for ${documentTitle}`}
+      role="dialog" aria-modal="true" aria-label={`Participants for ${documentTitle}`}
       style={{
         position: "fixed", inset: 0, zIndex: Z.modal, display: "flex",
         alignItems: "center", justifyContent: "center",
@@ -186,7 +220,7 @@ export function SignatureRecordDialog({
         }}>
           <div style={{ minWidth: 0 }}>
             <h2 style={{ fontSize: 15, fontWeight: 700, color: NAVY, margin: 0, ...GF }}>
-              Signature record
+              Participants
             </h2>
             <p
               title={documentTitle}
@@ -213,7 +247,7 @@ export function SignatureRecordDialog({
         <div style={{ overflowY: "auto", padding: "4px 18px 18px" }}>
           {failed && (
             <p style={{ fontSize: 13, color: SLATE6, padding: "24px 0", ...GF }}>
-              This document&apos;s signature record could not be loaded.
+              This document&apos;s participants could not be loaded.
             </p>
           )}
 
@@ -229,7 +263,7 @@ export function SignatureRecordDialog({
                 <strong style={{ color: NAVY }}>
                   {data.signedCount} of {data.requiredCount}
                 </strong>
-                {" "}required {data.requiredCount === 1 ? "signature" : "signatures"} completed
+                {" "}required {data.requiredCount === 1 ? "participant has" : "participants have"} completed their part
               </p>
               <ul style={{ margin: "8px 0 0", padding: 0 }}>
                 {data.signatories.map(signatory => (

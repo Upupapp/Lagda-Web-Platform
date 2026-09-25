@@ -92,7 +92,11 @@ export interface SigningRequestListItem {
 // carries no ceremony state at all, so progress has its own surface. A
 // client is therefore always holding exactly one of "what was agreed" or
 // "what has happened since".
-export type RecipientWorkflowState = "waiting" | "active" | "signed" | "declined";
+// `approved` / `skipped` are an APPROVER's outcomes (backend 069). Leaving
+// them out of this union made the participants dialog crash the moment an
+// approver acted — it looked up a presentation that did not exist.
+export type RecipientWorkflowState =
+  | "waiting" | "active" | "signed" | "approved" | "skipped" | "declined";
 
 export interface Signatory {
   recipientId: string;
@@ -105,6 +109,10 @@ export interface Signatory {
   state: RecipientWorkflowState;
   /** The instant they signed. Null unless `state` is "signed". */
   signedAt: string | null;
+  /** 069. When an approver approved / was skipped. May be absent from an
+   *  older backend, hence optional. */
+  approvedAt?: string | null;
+  skippedAt?: string | null;
   declinedAt: string | null;
   declineReason: string | null;
   /** The name/email of the LAGDA account this recipient signed in as, if any. */
@@ -115,7 +123,8 @@ export interface Signatory {
 export interface SigningRequestSignatures {
   signingRequestId: string;
   state: SigningRequestState;
-  /** REQUIRED participants only — they are what the request waits on. */
+  /** REQUIRED participants only — they are what the request waits on.
+   *  Counts everyone whose part is DONE: signed, approved or skipped. */
   signedCount: number;
   requiredCount: number;
   signatories: Signatory[];
