@@ -27,6 +27,9 @@ interface LagdaLoaderProps {
   size?: number;
   ariaLabel?: string;
   className?: string;
+  /** fullscreen only: an orbiting ring around the mark, for waits that
+   *  may run past the brand sequence. */
+  spinner?: boolean;
 }
 
 const SHIELD_PATH =
@@ -80,7 +83,27 @@ const LOADER_STYLES = `
   100% { opacity: 0; transform: scale(0.98); }
 }
 
+@keyframes lagda-orbit-spin {
+  0%   { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes lagda-orbit-dot {
+  0%, 80%, 100% { opacity: 0.25; transform: translateY(0); }
+  40%           { opacity: 1;    transform: translateY(-3px); }
+}
+
+.lagda-splash { padding: 0 16px; text-align: center; }
+.lagda-splash-mark { transform: scale(1); }
+@media (max-width: 480px) {
+  .lagda-splash { gap: 20px !important; }
+  .lagda-splash-mark { transform: scale(0.85); }
+  .lagda-splash-msg { font-size: 12px !important; }
+}
+
 @media (prefers-reduced-motion: reduce) {
+  @keyframes lagda-orbit-spin        { 0%, 100% { transform: rotate(0deg); } }
+  @keyframes lagda-orbit-dot         { 0%, 100% { opacity: 0.6; transform: none; } }
   @keyframes lagda-icon-entrance     { 0%, 100% { opacity: 1; transform: scale(1); } }
   @keyframes lagda-gold-sweep        { 0%, 100% { opacity: 0; } }
   @keyframes lagda-azure-pulse       { 0%, 100% { opacity: 0; } }
@@ -160,7 +183,8 @@ function FullscreenLoader({
   theme = "dark",
   ariaLabel,
   isExiting = false,
-}: Pick<LagdaLoaderProps, "message" | "showWordmark" | "theme" | "ariaLabel" | "isExiting">) {
+  spinner = false,
+}: Pick<LagdaLoaderProps, "message" | "showWordmark" | "theme" | "ariaLabel" | "isExiting" | "spinner">) {
   const [wordmarkVisible, setWordmarkVisible] = useState(false);
   const [iconImgErr, setIconImgErr] = useState(false);
 
@@ -189,6 +213,7 @@ function FullscreenLoader({
       role="status"
       aria-label={ariaLabel ?? "Loading LAGDA"}
       aria-live="polite"
+      className="lagda-splash"
       style={{
         position: "fixed",
         inset: 0,
@@ -206,7 +231,27 @@ function FullscreenLoader({
       <style>{LOADER_STYLES}</style>
 
       {/* Icon with animation layers */}
-      <div style={{ position: "relative", width: 64, height: 64 }} aria-hidden="true">
+      <div className="lagda-splash-mark" style={{ position: "relative", width: 64, height: 64, margin: spinner ? 14 : 0 }} aria-hidden="true">
+        {/* Orbit: a faint track, an azure arc and a gold arc turning at
+            different speeds, so the wait reads as progress, not a stall. */}
+        {spinner && (
+          <>
+            <div style={{
+              position: "absolute", inset: -14, borderRadius: "50%",
+              border: `2px solid ${theme === "dark" ? "rgba(255,255,255,0.08)" : "rgba(0,120,212,0.10)"}`,
+            }} />
+            <div style={{
+              position: "absolute", inset: -14, borderRadius: "50%",
+              border: "2px solid transparent", borderTopColor: "#0078D4", borderRightColor: "#0078D4",
+              animation: "lagda-orbit-spin 1s cubic-bezier(0.5,0.1,0.5,0.9) infinite",
+            }} />
+            <div style={{
+              position: "absolute", inset: -8, borderRadius: "50%",
+              border: "1.5px solid transparent", borderBottomColor: "#C9960C",
+              animation: "lagda-orbit-spin 1.6s linear infinite reverse",
+            }} />
+          </>
+        )}
         {/* Base icon — entrance animation */}
         <div style={{ animation: "lagda-icon-entrance 0.8s cubic-bezier(0.4,0,0.2,1) both" }}>
           {!iconImgErr ? (
@@ -339,8 +384,19 @@ function FullscreenLoader({
             transition: "opacity 0.5s ease 0.2s",
           }}
           aria-live="polite"
+          className="lagda-splash-msg"
         >
           {message}
+          {spinner && (
+            <span aria-hidden="true" style={{ display: "inline-flex", gap: 3, marginLeft: 4 }}>
+              {[0, 1, 2].map(i => (
+                <span key={i} style={{
+                  display: "inline-block", width: 3, height: 3, borderRadius: "50%", background: "#0078D4",
+                  animation: `lagda-orbit-dot 1.2s ease-in-out ${i * 0.15}s infinite`,
+                }} />
+              ))}
+            </span>
+          )}
         </p>
       )}
 
@@ -360,6 +416,7 @@ export function LagdaLoader({
   size,
   ariaLabel,
   className,
+  spinner = false,
 }: LagdaLoaderProps) {
   if (mode === "button") return <ButtonLoader theme={theme} ariaLabel={ariaLabel} />;
   if (mode === "fullscreen") {
@@ -370,6 +427,7 @@ export function LagdaLoader({
         theme={theme}
         ariaLabel={ariaLabel}
         isExiting={isExiting}
+        spinner={spinner}
       />
     );
   }
