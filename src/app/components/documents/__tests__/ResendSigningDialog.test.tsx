@@ -69,6 +69,6 @@ describe("ResendSigningDialog", () => {
     await userEvent.click(await screen.findByRole("checkbox", { name: "Include Ana" }));
     await userEvent.click(screen.getByRole("checkbox", { name: "Include Ben" }));
     expect(screen.getByText(/Keep at least one person who signs/)).toBeTruthy();
-    expect((screen.getByRole("button", { name: /Send links/ })).disabled).toBe(true);
+    expect(screen.getByRole("button", { name: /Send links/ }).hasAttribute("disabled")).toBe(true);
   });
 });
