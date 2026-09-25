@@ -45,6 +45,7 @@ import { DECLINE_REASON_CATEGORIES } from "../../models/recipient";
 import { SigningEntryChoice } from "../../components/recipient/SigningEntryChoice";
 import { LagdaLoader } from "../../components/brand/LagdaLoader";
 import { useMinimumSplash } from "../../hooks/useMinimumSplash";
+import { ceremonyWording } from "../../services/participant-wording";
 
 // The signer palette lives in `signer-ui`. Only the font alias survives the
 // redesign: every colour this page used is now applied by a primitive from
@@ -555,7 +556,7 @@ export function RealSigningPage() {
           icon={CheckCircle2}
           tone="success"
           badge="Complete"
-          title={view?.recipient.type === "approver" ? "Your approval was recorded" : "Your signature was recorded"}
+          title={ceremonyWording(view?.recipient.type ?? "signer").doneTitle}
           description="You can close this page — nothing further is needed from you."
         />
         <Notice icon={ShieldCheck} tone="neutral">
@@ -786,6 +787,7 @@ export function RealSigningPage() {
     }
 
     const isApprover = view.recipient.type === "approver";
+    const wording = ceremonyWording(view.recipient.type);
     return (
       <SignerCard wide>
         <StepRail current="sign" />
@@ -794,9 +796,7 @@ export function RealSigningPage() {
           tone="info"
           badge="Step 2 of 3"
           title={view.request.documentTitle}
-          description={isApprover
-            ? "Review the document, then approve it — or skip it. Filling any highlighted field is optional; your signature spots will read APPROVED or SKIPPED on the final document."
-            : "Read the document, then fill the highlighted fields. Tap a marked box to add your signature."}
+          description={wording.description}
         />
         <IdentityStrip
           name={view.recipient.name}
@@ -860,7 +860,7 @@ export function RealSigningPage() {
               disabled={submitting}
               full
             >
-              {submitting ? "Submitting…" : isApprover ? "Approve" : "Submit signature"}
+              {submitting ? "Submitting…" : wording.action}
             </ActionButton>
             {isApprover ? (
               // Approvers cannot decline — the backend refuses it (069). Their
