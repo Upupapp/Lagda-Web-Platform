@@ -366,10 +366,17 @@ export interface RailStep {
  * the tab.
  */
 export function ProgressRail({
-  steps, current, label = "Progress",
-}: { steps: readonly RailStep[]; current: string; label?: string }) {
-  const { isMobileS } = useViewport();
+  steps, current, label = "Progress", scrollOnMobile = false,
+}: {
+  steps: readonly RailStep[]; current: string; label?: string;
+  /** On a phone, keep the rail on ONE line and let it scroll sideways
+   *  instead of wrapping — for short rails (the signing ceremony's three
+   *  steps) where a wrapped second row reads as a separate list. */
+  scrollOnMobile?: boolean;
+}) {
+  const { isMobileS, isCompact } = useViewport();
   const index = steps.findIndex(step => step.id === current);
+  const oneLine = scrollOnMobile && isCompact;
 
   return (
     <ol
@@ -379,8 +386,11 @@ export function ProgressRail({
         listStyle: "none", margin: "0 0 18px", padding: 0,
         // A seven-step onboarding rail does not fit 320px even with the
         // labels dropped. Wrapping keeps every dot reachable rather than
-        // pushing the last ones off-screen.
-        flexWrap: "wrap", rowGap: 6,
+        // pushing the last ones off-screen. A rail that opts into one line
+        // scrolls sideways instead, so every step stays reachable that way.
+        ...(oneLine
+          ? { flexWrap: "nowrap", overflowX: "auto", WebkitOverflowScrolling: "touch", paddingBottom: 2 }
+          : { flexWrap: "wrap", rowGap: 6 }),
       }}
     >
       {steps.map((step, position) => {
@@ -389,7 +399,7 @@ export function ProgressRail({
         const fg = done || active ? T.azureDeep : T.silver;
 
         return (
-          <li key={step.id} style={{ display: "flex", alignItems: "center", gap: isMobileS ? 4 : 8, minWidth: 0 }}>
+          <li key={step.id} style={{ display: "flex", alignItems: "center", gap: isMobileS ? 4 : 8, minWidth: 0, ...(oneLine ? { flexShrink: 0 } : {}) }}>
             <span
               aria-current={active ? "step" : undefined}
               style={{

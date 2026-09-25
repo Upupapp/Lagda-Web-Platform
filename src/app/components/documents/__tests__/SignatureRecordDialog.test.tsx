@@ -147,6 +147,19 @@ describe("SignatureRecordDialog", () => {
     expect(screen.queryByText("Not yet due")).toBeNull();
   });
 
+  it("shows why a signer declined, in the words they chose", async () => {
+    signatures.mockResolvedValue({
+      ...noLinkedAccount,
+      signatories: [{
+        ...noLinkedAccount.signatories[0]!, state: "declined", signedAt: null,
+        declinedAt: "2026-09-22T05:00:00.000Z", declineReason: "needs-correction",
+      }],
+    });
+    renderDialog();
+    expect(await screen.findByText("Reason for declining")).toBeTruthy();
+    expect(screen.getByText("The document requires correction")).toBeTruthy();
+  });
+
   it("is titled Participants, not Signature record", async () => {
     signatures.mockResolvedValue(noLinkedAccount);
     renderDialog();

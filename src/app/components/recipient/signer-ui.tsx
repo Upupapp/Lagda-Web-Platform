@@ -87,5 +87,5 @@ const STEPS: readonly RailStep[] = [
  * steps, which mean nothing to any other flow.
  */
 export function StepRail({ current }: { current: SignerStep }) {
-  return <ProgressRail steps={STEPS} current={current} label="Signing progress" />;
+  return <ProgressRail steps={STEPS} current={current} label="Signing progress" scrollOnMobile />;
 }

@@ -20,6 +20,7 @@ import {
 } from "../../services/real/signing-request.service";
 import { Z } from "../../utils/z-index";
 import { completedWord } from "../../services/participant-wording";
+import { DECLINE_REASON_CATEGORIES } from "../../models/recipient";
 
 const GF: CSSProperties = { fontFamily: "'Geist', sans-serif" };
 
@@ -78,6 +79,12 @@ function Detail({ label, value }: { label: string; value: string }) {
       </span>
     </div>
   );
+}
+
+/** The reason a signer picked, as they saw it; an unknown code still reads. */
+function declineReasonLabel(reason: string): string {
+  return DECLINE_REASON_CATEGORIES.find(category => category.id === reason)?.label
+    ?? reason.replace(/-/g, " ");
 }
 
 function SignatoryRow({ signatory }: { signatory: Signatory }) {
@@ -167,7 +174,21 @@ function SignatoryRow({ signatory }: { signatory: Signatory }) {
           {signatory.declinedAt !== null && (
             <div style={{ fontSize: 12, color: RED, marginTop: 6, ...GF }}>
               Declined {fmtAbsolute(signatory.declinedAt)}
-              {signatory.declineReason !== null && ` · ${signatory.declineReason.replace(/-/g, " ")}`}
+            </div>
+          )}
+          {/* The signer's stated reason, in the words they chose from. Only
+              the category is recorded — there is no free-text note to show. */}
+          {signatory.declinedAt !== null && signatory.declineReason !== null && (
+            <div style={{
+              marginTop: 8, padding: "8px 10px", borderRadius: 8,
+              background: "#FEF2F2", border: "1px solid #FECACA",
+            }}>
+              <span style={{ display: "block", fontSize: 10.5, fontWeight: 700, color: RED, textTransform: "uppercase", letterSpacing: "0.05em", ...GF }}>
+                Reason for declining
+              </span>
+              <span style={{ display: "block", fontSize: 13, color: NAVY, marginTop: 2, ...GF }}>
+                {declineReasonLabel(signatory.declineReason)}
+              </span>
             </div>
           )}
         </div>
