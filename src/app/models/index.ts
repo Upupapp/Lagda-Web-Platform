@@ -109,6 +109,7 @@ export type TransactionStatus =
   | "awaiting-signature"
   | "awaiting-approval"
   | "partially-completed"
+  | "finalizing"
   | "completed"
   | "declined"
   | "cancelled"
@@ -126,6 +127,7 @@ export const TRANSACTION_STATUS_LABELS: Record<TransactionStatus, string> = {
   "viewed":                   "Viewed",
   "authentication-completed": "Authentication Completed",
   "awaiting-signature":       "Awaiting Signature",
+  "finalizing":               "Finalizing",
   "awaiting-approval":        "Awaiting Approval",
   "partially-completed":      "Partially Completed",
   "completed":                "Completed",

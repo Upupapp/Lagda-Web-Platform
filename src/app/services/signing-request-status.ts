@@ -3,8 +3,9 @@
 // `SigningRequestState` (what the API returns) and `TransactionStatus` (what
 // `StatusBadge`, its tones and its labels are keyed by) overlap for eight of
 // the nine values exactly. Only `completion-ready` has no matching label; it
-// maps to `awaiting-signature`, which is an accurate description — every
-// recipient has acted and the document is not yet marked done.
+// maps to `finalizing` — every required participant has acted and the signed
+// document is being produced. (It once mapped to `awaiting-signature`, which
+// told a sender whose document had stalled that it was still out for signing.)
 //
 // This used to be a private constant inside DocumentsPage. It is shared now
 // because the dashboard renders the same rows with the same badge, and two
@@ -19,7 +20,7 @@ export const SIGNING_REQUEST_STATUS: Record<SigningRequestState, TransactionStat
   "ready-to-send": "ready-to-send",
   "sent": "sent",
   "partially-completed": "partially-completed",
-  "completion-ready": "awaiting-signature",
+  "completion-ready": "finalizing",
   "completed": "completed",
   "declined": "declined",
   "cancelled": "cancelled",

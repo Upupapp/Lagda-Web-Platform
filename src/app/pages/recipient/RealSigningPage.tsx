@@ -378,17 +378,28 @@ export function RealSigningPage() {
   const loadDocumentBlob = useCallback(
     () => realSigningAccessService.documentBlob(), []);
 
-  const assignedFields = view?.fields.filter((f) => f.valueAuthority === "RECIPIENT_SUPPLIED") ?? [];
+  // An approver approves or skips (069). Their signature and initials boxes
+  // are never asked for — the final document draws APPROVED / SKIPPED there
+  // — and their other fields are optional, so only what they fill is sent.
+  const approverCeremony = view?.recipient.type === "approver";
+  const isOutcomeLabelled = (f: { type: string }) =>
+    approverCeremony && (f.type === "signature" || f.type === "initials");
+  const surfaceFields = view?.fields.filter((f) => !isOutcomeLabelled(f)) ?? [];
+  const assignedFields = surfaceFields.filter((f) => f.valueAuthority === "RECIPIENT_SUPPLIED");
   const needsSignature = assignedFields.some((f) => f.type === "signature");
   const needsInitials  = assignedFields.some((f) => f.type === "initials");
 
   const buildFieldValues = (): SubmittedFieldValue[] => {
-    return assignedFields.map((f): SubmittedFieldValue => {
+    const all = assignedFields.map((f): SubmittedFieldValue => {
       if (f.type === "signature") return { kind: "signature", fieldId: f.fieldId };
       if (f.type === "initials")  return { kind: "initials", fieldId: f.fieldId };
       if (f.type === "checkbox")  return { kind: "checkbox", fieldId: f.fieldId, checked: values[f.fieldId] === true };
       return { kind: "text", fieldId: f.fieldId, text: typeof values[f.fieldId] === "string" ? (values[f.fieldId] as string) : "" };
     });
+    if (!approverCeremony) return all;
+    // Left empty by an approver: not sent, so the outcome label is drawn.
+    return all.filter((v) => v.kind === "checkbox" ? v.checked
+      : v.kind === "text" ? v.text.trim() !== "" : true);
   };
 
   const missingRequired = assignedFields.filter((f) => {
@@ -784,7 +795,7 @@ export function RealSigningPage() {
           badge="Step 2 of 3"
           title={view.request.documentTitle}
           description={isApprover
-            ? "Review the document and fill any highlighted fields, then approve it — or skip if you don't need to approve."
+            ? "Review the document, then approve it — or skip it. Filling any highlighted field is optional; your signature spots will read APPROVED or SKIPPED on the final document."
             : "Read the document, then fill the highlighted fields. Tap a marked box to add your signature."}
         />
         <IdentityStrip
@@ -811,7 +822,7 @@ export function RealSigningPage() {
             <PositionedSigningSurface
               loadBlob={loadDocumentBlob}
               prepared={view.preparedSignatures}
-              fields={view.fields}
+              fields={surfaceFields}
               signature={signature}
               initials={initials}
               textValues={values}
