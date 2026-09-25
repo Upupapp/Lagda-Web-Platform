@@ -44,6 +44,7 @@ import {
 import { DECLINE_REASON_CATEGORIES } from "../../models/recipient";
 import { SigningEntryChoice } from "../../components/recipient/SigningEntryChoice";
 import { LagdaLoader } from "../../components/brand/LagdaLoader";
+import { useMinimumSplash } from "../../hooks/useMinimumSplash";
 
 // The signer palette lives in `signer-ui`. Only the font alias survives the
 // redesign: every colour this page used is now applied by a primitive from
@@ -139,18 +140,7 @@ export function RealSigningPage() {
   // Branded splash: at least SPLASH_MIN_MS on every arrival (email link or
   // the Documents button), longer if the link is still being checked, then
   // a short fade so the page underneath never flashes in.
-  const [splashMinDone, setSplashMinDone] = useState(false);
-  const [splash, setSplash] = useState<"showing" | "exiting" | "gone">("showing");
-  useEffect(() => {
-    const t = setTimeout(() => { setSplashMinDone(true); }, SPLASH_MIN_MS);
-    return () => { clearTimeout(t); };
-  }, []);
-  useEffect(() => {
-    if (splash !== "showing" || !splashMinDone || phase === "loading") return;
-    setSplash("exiting");
-    const t = setTimeout(() => { setSplash("gone"); }, SPLASH_EXIT_MS);
-    return () => { clearTimeout(t); };
-  }, [splash, splashMinDone, phase]);
+  const splash = useMinimumSplash(phase !== "loading", SPLASH_MIN_MS, SPLASH_EXIT_MS);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [view, setView] = useState<CeremonyView | null>(null);
   const [values, setValues] = useState<Record<string, string | boolean>>({});
