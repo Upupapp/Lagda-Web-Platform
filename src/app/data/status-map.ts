@@ -92,6 +92,15 @@ export const DOCUMENT_STATUS_MAP: Record<TransactionStatus, StatusPresentation> 
     icon: "clock",
     description: "Waiting for one or more recipients to sign.",
   },
+  "finalizing": {
+    label: "Finalizing",
+    tone: "info",
+    bgColor: "#EAF6FF",
+    textColor: "#005BA9",
+    borderColor: "#BAE0FA",
+    icon: "clock",
+    description: "Everyone has completed their part; the signed document is being prepared.",
+  },
   "awaiting-approval": {
     label: "Awaiting Approval",
     tone: "warning",

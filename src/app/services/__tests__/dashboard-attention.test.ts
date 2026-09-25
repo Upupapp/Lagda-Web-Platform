@@ -171,6 +171,7 @@ describe("SIGNING_REQUEST_STATUS", () => {
       "completed", "declined", "cancelled", "expired",
     ];
     for (const state of states) expect(SIGNING_REQUEST_STATUS[state]).toBeTruthy();
-    expect(SIGNING_REQUEST_STATUS["completion-ready"]).toBe("awaiting-signature");
+    // Everyone has acted; the signed PDF is being produced — not "awaiting".
+    expect(SIGNING_REQUEST_STATUS["completion-ready"]).toBe("finalizing");
   });
 });

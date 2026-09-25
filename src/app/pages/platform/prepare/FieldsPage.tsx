@@ -24,7 +24,7 @@ import { FieldEditorProvider, useFieldEditor } from "../../../context/FieldEdito
 import { USE_REAL_BACKEND } from "../../../services/backend-flag";
 import { ApiError } from "../../../services/api-client";
 import { realPreparationService } from "../../../services/real/preparation.service";
-import { isBackendFieldType, toBackendFieldInput, fromBackendField } from "../../../services/prepare/field-sync";
+import { isBackendFieldType, placeableFieldTypeGroups, toBackendFieldInput, fromBackendField } from "../../../services/prepare/field-sync";
 import {
   clampRectOntoPage, pushInsideSafeMargin, nudgeOffOverlap,
   resolveAssignmentFor, computeBackendFieldIssues, preferredAssignee,
@@ -864,6 +864,11 @@ function DocumentPanel() {
 }
 
 // ── Field Palette ─────────────────────────────────────────────────────────────
+// On the live system, only the types the server can store are offered. A type
+// it can't store (multiline-text, radio-group, acknowledgment) could be placed
+// but never sent, and no fix could resolve it — so it isn't offered at all.
+const PLACEABLE_TYPE_GROUPS = placeableFieldTypeGroups(FIELD_TYPE_GROUPS, USE_REAL_BACKEND);
+
 function FieldPalettePanel() {
   const { mode, pendingFieldType, setPendingField } = useFieldEditor();
 
@@ -872,7 +877,7 @@ function FieldPalettePanel() {
       <div style={{ ...GF, fontSize: 12, fontWeight: 700, color: SILVER, padding: "10px 14px 6px", textTransform: "uppercase", letterSpacing: "0.05em" }}>
         Field Types
       </div>
-      {FIELD_TYPE_GROUPS.map(group => (
+      {PLACEABLE_TYPE_GROUPS.map(group => (
         <div key={group.label} style={{ marginBottom: 12 }}>
           <div style={{ ...GF, fontSize: 10, fontWeight: 700, color: SILVER, padding: "4px 14px", textTransform: "uppercase", letterSpacing: "0.06em" }}>
             {group.label}
@@ -1015,6 +1020,9 @@ function FieldPropertiesPanel({ field, participants }: FieldPropertiesProps) {
 
   const eligible = participants.filter(p => FIELD_ELIGIBLE_ROLES[field.type].includes(p.role));
   const isSender = field.type === "sender-text";
+  // An approver approves or skips; their fields are never required, and one
+  // left empty is drawn on the final document as APPROVED / SKIPPED (069).
+  const forApprover = participants.find(p => p.id === field.participantId)?.role === "approver";
 
   const identity = field.participantId
     ? participantIdentities.find(i => i.participantId === field.participantId)
@@ -1103,8 +1111,16 @@ function FieldPropertiesPanel({ field, participants }: FieldPropertiesProps) {
           </div>
         )}
 
+        {/* Approver fields: optional, with the outcome label */}
+        {forApprover && (
+          <div role="note" style={{ ...GF, marginBottom: 12, padding: "8px 10px", fontSize: 12, lineHeight: 1.45, color: NAVY, background: "#EAF6FF", border: "1px solid #B8DDF7", borderRadius: 7 }}>
+            Optional for approvers. The approver chooses <strong>Approve</strong> or <strong>Skip</strong>;
+            if this field is left empty, the signed document shows <strong>APPROVED</strong> or <strong>SKIPPED</strong> with the date here.
+          </div>
+        )}
+
         {/* Required toggle */}
-        {!isSender && (
+        {!isSender && !forApprover && (
           <div style={{ marginBottom: 12 }}>
             <label style={{ ...GF, fontSize: 11, fontWeight: 700, color: SILVER, textTransform: "uppercase", letterSpacing: "0.05em", display: "block", marginBottom: 5 }}>
               Required
@@ -1770,9 +1786,9 @@ function KeyboardPlaceDialog({ participants, onClose }: KeyboardPlaceDialogProps
               onChange={e => { setFieldType(e.target.value as FieldType); setParticipantId(""); }}
               style={{ ...GF, width: "100%", padding: "7px 10px", fontSize: 13, border: "1px solid #D1D9E0", borderRadius: 7, color: NAVY }}
             >
-              {FIELD_TYPE_GROUPS.flatMap(g => g.types).map(t => (
+              {PLACEABLE_TYPE_GROUPS.flatMap(g => g.types).map(t => (
                 <option key={t} value={t}>
-                  {FIELD_TYPE_LABELS[t]}{USE_REAL_BACKEND && !isBackendFieldType(t) ? " (not saved to server)" : ""}
+                  {FIELD_TYPE_LABELS[t]}
                 </option>
               ))}
             </select>

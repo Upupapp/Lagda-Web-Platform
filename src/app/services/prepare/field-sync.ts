@@ -19,6 +19,22 @@ export function isBackendFieldType(type: FieldType): type is BackendFieldType {
 }
 
 /**
+ * The palette's field-type groups, with the types the server can't store
+ * removed on the live system (and any group left empty dropped). A type that
+ * can be placed but never sent is a trap no fix can resolve, so it isn't
+ * offered at all. The demo keeps every type.
+ */
+export function placeableFieldTypeGroups<G extends { readonly types: readonly FieldType[] }>(
+  groups: readonly G[],
+  realBackend: boolean,
+): G[] {
+  if (!realBackend) return [...groups];
+  return groups
+    .map(group => ({ ...group, types: group.types.filter(isBackendFieldType) }))
+    .filter(group => group.types.length > 0);
+}
+
+/**
  * Real recipient id required — a field assigned to a not-yet-persisted
  * local participant id cannot be saved to the backend (it would reference a
  * recipient the backend has never heard of); the caller filters those out

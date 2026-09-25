@@ -55,7 +55,7 @@ export const ORG_FILTERED_VIEWS: readonly DocumentView[] = [
 
 export const ACTIVE_TRANSACTION_STATUSES: TransactionStatus[] = [
   "sent", "delivered", "viewed", "authentication-completed",
-  "awaiting-signature", "awaiting-approval", "partially-completed",
+  "awaiting-signature", "awaiting-approval", "partially-completed", "finalizing",
 ];
 
 // Statuses included by each view (undefined = computed differently, e.g. expiring or all)
@@ -213,6 +213,7 @@ export const DOCUMENT_STATUS_TONE: Record<TransactionStatus, StatusTone> = {
   "viewed":                   "info",
   "authentication-completed": "info",
   "awaiting-signature":       "warning",
+  "finalizing":               "info",
   "awaiting-approval":        "warning",
   "partially-completed":      "warning",
   "completed":                "success",
