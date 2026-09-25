@@ -22,6 +22,7 @@ const CommandPalette = lazy(() =>
 );
 import { useSignOutFlow } from "../../hooks/useSignOutFlow";
 import { usePrepareLaunch } from "../../hooks/usePrepareLaunch";
+import { UserAvatar } from "./UserAvatar";
 
 const BORDER = "rgba(0,0,0,0.08)";
 const GF     = { fontFamily: "'Geist', sans-serif" };
@@ -37,13 +38,6 @@ function NavIcon({ name, size = 18 }: { name: string; size?: number }) {
   const Comp = ICON_MAP[name];
   if (!Comp) return null;
   return <Comp size={size} aria-hidden />;
-}
-
-function getInitials(name: string): string {
-  const parts = name.trim().split(" ");
-  const first = parts[0] ?? "", last = parts[parts.length - 1] ?? "";
-  if (parts.length >= 2) return (first.charAt(0) + last.charAt(0)).toUpperCase();
-  return name.slice(0, 2).toUpperCase();
 }
 
 export function MobileNav() {
@@ -121,7 +115,6 @@ export function MobileNav() {
   }, [restartTour]);
 
   const canPrepare = hasPermission("prepare_documents") && hasFlag("prepareFlowEnabled");
-  const userInitials = user ? getInitials(user.displayName) : "?";
 
   return (
     <>
@@ -158,14 +151,7 @@ export function MobileNav() {
           <span data-guide="mobile-notification-bell" style={{ display: "flex" }}>
             <NotificationMenu align="right" />
           </span>
-          <div style={{
-            width: 32, height: 32, borderRadius: "50%",
-            background: "#EAF6FF",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            fontFamily: "'Geist Mono', monospace", fontSize: 10, color: "#0078D4", fontWeight: 700,
-          }}>
-            {userInitials}
-          </div>
+          {user ? <UserAvatar user={user} size={32} fontSize={10} /> : null}
           <button
             ref={triggerRef}
             onClick={() => setDrawerOpen(true)}
@@ -417,12 +403,15 @@ export function MobileNav() {
         {user && (
           <div style={{ borderTop: `1px solid ${BORDER}`, padding: "12px 14px", flexShrink: 0 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
-              <div style={{ width: 32, height: 32, borderRadius: "50%", background: "#EAF6FF", display: "flex", alignItems: "center", justifyContent: "center", ...GM, fontSize: 11, color: "#0078D4", fontWeight: 700 }}>
-                {userInitials}
-              </div>
+              <UserAvatar user={user} size={32} fontSize={11} />
               <div>
                 <p style={{ color: "#07111F", ...GF, fontSize: 13, fontWeight: 600, margin: 0 }}>{user.displayName}</p>
                 <p style={{ color: "#64748B", ...GM, fontSize: 10, margin: 0 }}>{user.email}</p>
+            {(user.jobTitle || user.department) && (
+              <p style={{ color: "#64748B", fontFamily: "'Geist', sans-serif", fontSize: 11, margin: "3px 0 0" }}>
+                {[user.jobTitle, user.department].filter(Boolean).join(" · ")}
+              </p>
+            )}
               </div>
             </div>
             <button

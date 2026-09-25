@@ -7,6 +7,7 @@ import { usePlatform } from "../../context/PlatformContext";
 import { PLATFORM_ROLE_LABELS } from "../../models";
 import { Z } from "../../utils/z-index";
 import { useTour } from "../../tour/TourContext";
+import { UserAvatar } from "./UserAvatar";
 
 const GF   = { fontFamily: "'Geist', sans-serif" };
 const GM   = { fontFamily: "'Geist Mono', monospace" };
@@ -15,13 +16,6 @@ const BORDER = "rgba(0,0,0,0.08)";
 interface UserMenuProps {
   collapsed: boolean;
   onSignOut: () => void;
-}
-
-function getInitials(name: string): string {
-  const parts = name.trim().split(" ");
-  const first = parts[0] ?? "", last = parts[parts.length - 1] ?? "";
-  if (parts.length >= 2) return (first.charAt(0) + last.charAt(0)).toUpperCase();
-  return name.slice(0, 2).toUpperCase();
 }
 
 export function UserMenu({ collapsed, onSignOut }: UserMenuProps) {
@@ -63,7 +57,6 @@ export function UserMenu({ collapsed, onSignOut }: UserMenuProps) {
   }, [restartTour]);
 
   if (!user) return null;
-  const initials  = getInitials(user.displayName);
   const roleLabel = role ? PLATFORM_ROLE_LABELS[role] : "";
 
   return (
@@ -83,14 +76,7 @@ export function UserMenu({ collapsed, onSignOut }: UserMenuProps) {
           textAlign: "left",
         }}
       >
-        <div style={{
-          width: 30, height: 30, borderRadius: "50%",
-          background: "#EAF6FF",
-          display: "flex", alignItems: "center", justifyContent: "center",
-          ...GM, fontSize: 11, color: "#0078D4", fontWeight: 700, flexShrink: 0,
-        }}>
-          {initials}
-        </div>
+        <UserAvatar user={user} size={30} fontSize={11} />
         {!collapsed && (
           <>
             <div style={{ flex: 1, minWidth: 0 }}>
@@ -127,6 +113,11 @@ export function UserMenu({ collapsed, onSignOut }: UserMenuProps) {
           <div style={{ padding: "12px 14px", borderBottom: `1px solid ${BORDER}` }}>
             <p style={{ color: "#07111F", ...GF, fontSize: 13, fontWeight: 600, margin: "0 0 2px" }}>{user.displayName}</p>
             <p style={{ color: "#64748B", ...GM, fontSize: 10, margin: 0 }}>{user.email}</p>
+            {(user.jobTitle || user.department) && (
+              <p style={{ color: "#64748B", fontFamily: "'Geist', sans-serif", fontSize: 11, margin: "3px 0 0" }}>
+                {[user.jobTitle, user.department].filter(Boolean).join(" · ")}
+              </p>
+            )}
           </div>
 
           {/* Menu items */}

@@ -51,6 +51,9 @@ export interface MeProfile {
     department: string | null;
     preferredSenderName: string | null;
   };
+  /** 072. The profile photo's version, or null. The image itself is
+   *  `GET /me/avatar?v=<version>`. */
+  avatar: { version: string } | null;
   createdAt: string;
 }
 

@@ -101,6 +101,23 @@ class RealAccountSettingsService {
       body: update,
     }));
   }
+
+  /**
+   * 072. Stores the profile photo: a PNG, base64 WITHOUT the `data:` prefix —
+   * the server checks the bytes themselves and would refuse a prefix. Returns
+   * the new version, which is also the new image URL's `?v=`.
+   */
+  async uploadAvatar(pngBase64: string): Promise<string> {
+    const result = await apiRequest<{ version: string }>("/me/avatar", {
+      method: "PUT", body: { image: pngBase64 },
+    });
+    return result.version;
+  }
+
+  /** 072. Removes the profile photo; initials are shown again. */
+  async removeAvatar(): Promise<void> {
+    await apiRequest<void>("/me/avatar", { method: "DELETE" });
+  }
 }
 
 export const realAccountSettingsService = new RealAccountSettingsService();

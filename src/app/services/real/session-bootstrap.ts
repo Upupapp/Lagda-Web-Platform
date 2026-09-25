@@ -13,6 +13,7 @@ import type {
   UserSummary, PlatformWorkspace, SubscriptionSummary, NotificationSummary, PlatformRole,
 } from "../../models";
 import type { MeProfile } from "./auth.service";
+import { API_BASE_URL } from "../backend-flag";
 import type { RealWorkspaceSummary, BackendWorkspaceRole } from "./workspace.service";
 
 function initialsFrom(name: string): string {
@@ -44,7 +45,22 @@ export function mapWorkspaceRole(role: BackendWorkspaceRole): PlatformRole {
 
 export function buildRealUser(me: MeProfile): UserSummary {
   const displayName = me.profile.displayName || me.profile.fullName || me.email;
-  return { id: me.userId, email: me.email, displayName, role: "owner" };
+  const fullName = me.profile.fullName ?? displayName;
+  return {
+    id: me.userId, email: me.email, displayName, role: "owner",
+    fullName,
+    ...(me.profile.jobTitle ? { jobTitle: me.profile.jobTitle } : {}),
+    ...(me.profile.department ? { department: me.profile.department } : {}),
+    // The backend defaults the sender name to the full name; mirror that so
+    // "what recipients see" is never blank.
+    preferredSenderName: me.profile.preferredSenderName ?? fullName,
+    // `?v=` is the digest: a new photo is a different URL, so the browser
+    // never shows a cached old one. Same origin (the /api proxy), so the
+    // session cookie authorizes it.
+    ...(me.avatar === null || me.avatar === undefined || API_BASE_URL === null
+      ? {}
+      : { avatarUrl: `${API_BASE_URL}/me/avatar?v=${encodeURIComponent(me.avatar.version)}` }),
+  };
 }
 
 // Cosmetic-only fields (plan, memberCount) are placeholders — no billing or
