@@ -19,6 +19,7 @@ import {
   type SigningRequestSignatures, type Signatory, type RecipientWorkflowState,
 } from "../../services/real/signing-request.service";
 import { Z } from "../../utils/z-index";
+import { completedWord } from "../../services/participant-wording";
 
 const GF: CSSProperties = { fontFamily: "'Geist', sans-serif" };
 
@@ -86,6 +87,9 @@ function SignatoryRow({ signatory }: { signatory: Signatory }) {
     ?? { label: signatory.state, color: SLATE6, icon: MinusCircle };
   const Icon = presentation.icon;
   const role = ROLE_LABELS[signatory.type] ?? signatory.type;
+  // A reviewer or acknowledgment recipient ends `signed` like a signer does;
+  // say what they actually did.
+  const stateLabel = signatory.state === "signed" ? completedWord(signatory.type) : presentation.label;
 
   return (
     <li style={{ padding: "14px 0", borderBottom: `1px solid #F1F5F9`, listStyle: "none" }}>
@@ -106,7 +110,7 @@ function SignatoryRow({ signatory }: { signatory: Signatory }) {
               {role}
             </span>
             <span style={{ fontSize: 12, fontWeight: 600, color: presentation.color, ...GF }}>
-              {presentation.label}
+              {stateLabel}
             </span>
             {!signatory.isRequired && (
               <span style={{ fontSize: 11, color: SLATE4, ...GF }}>optional</span>
@@ -139,9 +143,11 @@ function SignatoryRow({ signatory }: { signatory: Signatory }) {
 
           {/* The evidentiary line. Only ever rendered from a real instant —
               there is no "signed (date unknown)" state to represent. */}
-          {signatory.signedAt !== null && (
+          {/* An approval shares its submission instant with `signedAt`; it is
+              stated once, as "Approved", below. */}
+          {signatory.signedAt !== null && signatory.approvedAt == null && (
             <div style={{ fontSize: 12, color: NAVY, marginTop: 6, ...GF }}>
-              Signed {fmtAbsolute(signatory.signedAt)}
+              {completedWord(signatory.type)} {fmtAbsolute(signatory.signedAt)}
             </div>
           )}
           {signatory.approvedAt != null && (

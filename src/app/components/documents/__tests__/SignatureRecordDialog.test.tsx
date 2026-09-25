@@ -112,6 +112,23 @@ describe("SignatureRecordDialog", () => {
     expect(screen.getByText(/^Approved .+/)).toBeTruthy();
   });
 
+  it("says Reviewed and Acknowledged, not Signed, for those roles", async () => {
+    signatures.mockResolvedValue({
+      ...noLinkedAccount,
+      signatories: [
+        { ...noLinkedAccount.signatories[0]!, recipientId: "srr_r", name: "Rey Dela", type: "reviewer" },
+        { ...noLinkedAccount.signatories[0]!, recipientId: "srr_k", name: "Kim Uy", type: "acknowledgment-recipient" },
+      ],
+    });
+    renderDialog();
+
+    expect(await screen.findByText("Reviewed")).toBeTruthy();
+    expect(screen.getByText("Acknowledged")).toBeTruthy();
+    expect(screen.getByText(/^Reviewed .+/)).toBeTruthy();
+    expect(screen.getByText(/^Acknowledged .+/)).toBeTruthy();
+    expect(screen.queryByText(/^Signed/)).toBeNull();
+  });
+
   it("is titled Participants, not Signature record", async () => {
     signatures.mockResolvedValue(noLinkedAccount);
     renderDialog();

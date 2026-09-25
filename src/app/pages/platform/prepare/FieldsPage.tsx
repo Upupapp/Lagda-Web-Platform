@@ -1022,7 +1022,13 @@ function FieldPropertiesPanel({ field, participants }: FieldPropertiesProps) {
   const isSender = field.type === "sender-text";
   // An approver approves or skips; their fields are never required, and one
   // left empty is drawn on the final document as APPROVED / SKIPPED (069).
-  const forApprover = participants.find(p => p.id === field.participantId)?.role === "approver";
+  const assigneeRole = participants.find(p => p.id === field.participantId)?.role;
+  const forApprover = assigneeRole === "approver";
+  const roleNote = assigneeRole === "reviewer"
+    ? "Completed by a reviewer, who finishes by choosing Mark as reviewed."
+    : assigneeRole === "acknowledgment-recipient"
+      ? "Completed by an acknowledgment recipient, who finishes by choosing Acknowledge. A checkbox is the usual way to confirm receipt."
+      : null;
 
   const identity = field.participantId
     ? participantIdentities.find(i => i.participantId === field.participantId)
@@ -1116,6 +1122,12 @@ function FieldPropertiesPanel({ field, participants }: FieldPropertiesProps) {
           <div role="note" style={{ ...GF, marginBottom: 12, padding: "8px 10px", fontSize: 12, lineHeight: 1.45, color: NAVY, background: "#EAF6FF", border: "1px solid #B8DDF7", borderRadius: 7 }}>
             Optional for approvers. The approver chooses <strong>Approve</strong> or <strong>Skip</strong>;
             if this field is left empty, the signed document shows <strong>APPROVED</strong> or <strong>SKIPPED</strong> with the date here.
+          </div>
+        )}
+
+        {roleNote !== null && (
+          <div role="note" style={{ ...GF, marginBottom: 12, padding: "8px 10px", fontSize: 12, lineHeight: 1.45, color: NAVY, background: "#F1F5F9", border: "1px solid #E2E8F0", borderRadius: 7 }}>
+            {roleNote}
           </div>
         )}
 
