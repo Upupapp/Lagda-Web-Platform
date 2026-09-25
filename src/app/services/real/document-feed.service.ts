@@ -17,6 +17,15 @@
 //
 // Workspace-scoped, because the capability behind it (`signing-request.view`)
 // is held per workspace.
+//
+// ── One row per document, and state that survives a reload (071) ──────────
+//
+// The backend returns each document's CURRENT state, not every event — three
+// completed documents are three rows, where they used to be sixteen. Each row
+// carries this reader's own `read` and `dismissed` state, persisted
+// server-side, so marking something read or dismissing it lasts past the
+// page it was done on. `scope` narrows to the reader's own documents (sent by
+// them, or ones they take part in) or widens to the whole workspace.
 
 import { apiRequest } from "../api-client";
 import type {
@@ -36,7 +45,11 @@ interface FeedRow {
   readonly documentTitle: string;
   readonly recipientName: string | null;
   readonly occurredAt: number;
+  readonly read: boolean;
+  readonly dismissed: boolean;
 }
+
+export type DocumentFeedScope = "mine" | "workspace";
 
 interface FeedResponse { readonly notifications: readonly FeedRow[] }
 
@@ -84,23 +97,40 @@ function toRecord(row: FeedRow, workspaceId: string, workspaceName: string): Not
     isDismissible: true,
     hasAction: true,
     actionLabel: "View document",
-    actionPath: "/app/documents",
+    // The same deep link real-mode search uses: the documents list, filtered
+    // to this document. Every row used to open the unfiltered list.
+    actionPath: `/app/documents?q=${encodeURIComponent(row.documentTitle)}`,
     whyReceivedReason: whyReceived(row),
-    // Read state is per-session: the backend records no per-user marker, so
-    // there is nothing truer to report than "unread".
-    status: "unread",
+    // The reader's own state, persisted server-side (071).
+    status: row.dismissed ? "dismissed" : row.read ? "read" : "unread",
   };
 }
 
 class RealDocumentFeedService {
   async list(
-    workspaceId: string, workspaceName: string, limit = 50,
+    workspaceId: string, workspaceName: string,
+    scope: DocumentFeedScope = "mine", limit = 50,
   ): Promise<NotificationRecord[]> {
     const response = await apiRequest<FeedResponse>(
       `/workspaces/${encodeURIComponent(workspaceId)}/document-notifications`
-      + `?limit=${String(limit)}`,
+      + `?limit=${String(limit)}&scope=${scope}`,
     );
     return response.notifications.map(row => toRecord(row, workspaceId, workspaceName));
+  }
+
+  /**
+   * Persists this reader's state for the given rows. An absent key leaves that
+   * half alone: `{ read: true }` marks read without touching dismissal.
+   */
+  async setState(
+    workspaceId: string, ids: readonly string[],
+    change: { read?: boolean; dismissed?: boolean },
+  ): Promise<void> {
+    if (ids.length === 0) return;
+    await apiRequest<{ updated: number }>(
+      `/workspaces/${encodeURIComponent(workspaceId)}/document-notifications/state`,
+      { method: "POST", body: { ids: [...ids], ...change } },
+    );
   }
 }
 

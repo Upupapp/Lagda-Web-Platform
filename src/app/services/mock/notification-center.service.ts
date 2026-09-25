@@ -472,9 +472,21 @@ export function demoFixtures(): NotificationRecord[] {
  * would otherwise mark everything unread again. Existing state is carried
  * across by id; anything genuinely new arrives unread, which is correct.
  */
-export function hydrate(incoming: NotificationRecord[]): void {
+/**
+ * Replaces the item list, keeping this session's status for items the server
+ * does not track.
+ *
+ * `serverStateIds` names items whose status the SERVER persists (the
+ * document feed, since 071): for those the incoming status is the truth and
+ * wins. Everything else keeps the status this session already gave it, which
+ * is the only read state it has.
+ */
+export function hydrate(
+  incoming: NotificationRecord[], serverStateIds: ReadonlySet<string> = new Set(),
+): void {
   const previous = new Map(_items.map(item => [item.id, item.status]));
   _items = incoming.map(item => {
+    if (serverStateIds.has(item.id)) return item;
     const status = previous.get(item.id);
     return status === undefined ? item : { ...item, status };
   });

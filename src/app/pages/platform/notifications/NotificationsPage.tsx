@@ -273,7 +273,10 @@ function NotifCard({ notification: n, onMarkRead, onMarkUnread, onDismiss, onRes
 // ── Main page ─────────────────────────────────────────────────────────────────
 
 export function NotificationsPage() {
-  const { items, unreadCount, markRead, markUnread, markAllRead, dismiss, restore } = useNotificationCenter();
+  const {
+    items, unreadCount, markRead, markUnread, markAllRead, dismiss, restore,
+    scope, setScope, scopeAvailable,
+  } = useNotificationCenter();
 
   const [searchParams, setSearchParams] = useSearchParams();
   const [q, setQ] = useState("");
@@ -344,8 +347,9 @@ export function NotificationsPage() {
           Review updates, alerts, and action-related information across your LAGDA account and permitted Workspaces.
         </p>
 
-        {/* Demo notice */}
-        <div
+        {/* Demo notice — only where it is true. With a backend, read and
+            dismissed state are saved to the account (071). */}
+        {!scopeAvailable && <div
           role="note"
           aria-label="Demonstration data notice"
           style={{ display: "flex", gap: 8, padding: "10px 12px", background: "#F8FAFC", border: "1px solid #E2E8F0", borderRadius: 8, marginBottom: 20 }}
@@ -354,7 +358,7 @@ export function NotificationsPage() {
           <p style={{ ...GF, fontSize: 12, color: SLATE, margin: 0 }}>
             These notifications and read states are fictional frontend demonstration data. No notification, reminder, email, SMS, push message, or real-time event is delivered or synchronized.
           </p>
-        </div>
+        </div>}
 
         {/* Controls */}
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 4 }}>
@@ -371,6 +375,27 @@ export function NotificationsPage() {
               className="notif-search"
             />
           </div>
+
+          {/* Whose documents — the reader's own, or the whole workspace. */}
+          {scopeAvailable && (
+            <div role="radiogroup" aria-label="Show notifications for"
+              style={{ display: "flex", height: 36, border: "1px solid #E2E8F0", borderRadius: 8, overflow: "hidden", flexShrink: 0 }}>
+              {([["mine", "My documents"], ["workspace", "Whole workspace"]] as const).map(([value, label]) => {
+                const active = scope === value;
+                return (
+                  <button key={value} type="button" role="radio" aria-checked={active}
+                    onClick={() => setScope(value)}
+                    style={{
+                      ...GF, fontSize: 13, padding: "0 12px", border: "none",
+                      background: active ? NAVY : "white", color: active ? "white" : SLATE,
+                      fontWeight: active ? 600 : 400, cursor: "pointer",
+                    }}>
+                    {label}
+                  </button>
+                );
+              })}
+            </div>
+          )}
 
           {/* Sort */}
           <select
