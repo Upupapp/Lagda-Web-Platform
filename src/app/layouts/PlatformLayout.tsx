@@ -195,7 +195,13 @@ export function PlatformLayout() {
   return (
     <NotificationCenterProvider>
     <TourProvider>
-      <div style={{ display: "flex", minHeight: "100vh", background: "#F8FAFC" }}>
+      {/* Exactly the viewport's height, so `.platform-main` below is the one
+          scroll container. With `minHeight` the shell grew to its content and
+          every page scrolled the WINDOW instead — which stops working the
+          moment anything locks body scroll, leaving long pages (Edit Contact)
+          with their lower half unreachable. `dvh` so a phone's collapsing
+          address bar cannot hide the bottom of the page. */}
+      <div style={{ display: "flex", height: "100dvh", background: "#F8FAFC" }}>
         {/* ── Desktop sidebar (hidden <768px via CSS) ─────────────── */}
         <div className="platform-desktop-nav" aria-hidden={undefined}>
           <PlatformSidebar />

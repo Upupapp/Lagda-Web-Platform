@@ -616,6 +616,12 @@ const RecipientRoot = lazy(() =>
     default: m.RecipientRoot,
   })),
 );
+// A participant's copy of a finished document (073).
+const FinalCopyPage = lazy(() =>
+  import("./app/pages/recipient/FinalCopyPage").then((m) => ({
+    default: m.FinalCopyPage,
+  })),
+);
 
 // Transaction detail (Command 16)
 const TransactionDetailLayout = lazy(() =>
@@ -2722,6 +2728,18 @@ export const router = createBrowserRouter([
           </Suspense>
         ),
       },
+    ],
+  },
+
+  // /copy/:token — a participant's final signed copy (073). Same shell as
+  // /sign; the link is the only authority.
+  {
+    path: "/copy",
+    errorElement: <RecipientRouteError />,
+    element: <RecipientLayout />,
+    children: [
+      { index: true, element: <Suspense fallback={null}><FinalCopyPage /></Suspense> },
+      { path: ":token", element: <Suspense fallback={null}><FinalCopyPage /></Suspense> },
     ],
   },
 

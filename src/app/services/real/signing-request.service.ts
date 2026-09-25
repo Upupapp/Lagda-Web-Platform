@@ -249,12 +249,19 @@ class RealSigningRequestService {
     );
   }
 
-  // Same reasoning as create() above — the route's schema is `Type.Object({})`,
-  // which requires an actual `{}` on the wire, not an absent body.
-  async send(workspaceId: string, signingRequestId: string, idempotencyKey: string): Promise<SentResponse> {
+  // Always a body object (the route requires one). `shareFinalCopy` (073):
+  // email every participant the final signed copy on completion — the
+  // server's default is yes, so only an explicit `false` changes anything.
+  async send(
+    workspaceId: string, signingRequestId: string, idempotencyKey: string,
+    options: { shareFinalCopy?: boolean } = {},
+  ): Promise<SentResponse> {
     return apiRequest<SentResponse>(
       `/workspaces/${encodeURIComponent(workspaceId)}/signing-requests/${encodeURIComponent(signingRequestId)}/send`,
-      { method: "POST", headers: { "Idempotency-Key": idempotencyKey }, body: {} },
+      {
+        method: "POST", headers: { "Idempotency-Key": idempotencyKey },
+        body: options.shareFinalCopy === false ? { shareFinalCopy: false } : {},
+      },
     );
   }
 
