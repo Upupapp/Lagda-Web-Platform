@@ -16,14 +16,17 @@
 // Real, round-tripped through PATCH /me/profile:
 //   fullName, displayName, jobTitle, department, preferredSenderName
 //
+// PATCH /me/profile is a true PATCH: a field left out of the body is left
+// alone. (It was once a full replace, so any caller sending fewer than all
+// five fields cleared the rest. This page always sends all five.)
+//
 // Derived on read, never sent:
 //   initials — computed from the display name
 //
-// NOT persisted by this endpoint. The backend has no column for them, so they
-// are surfaced as the neutral values below rather than invented:
-//   timezone, locale, language
-//
-// A later migration can add them; until then this is the honest report.
+// Not read or written HERE: timezone, locale, language. The backend DOES store
+// them — they are preferences, served under `/me`'s `preferences` block and
+// written by PATCH /me/preferences — but the Preferences page is not wired to
+// the backend yet. They are surfaced as neutral values rather than invented.
 
 import { apiRequest } from "../api-client";
 import type { MeProfile } from "./auth.service";
@@ -61,11 +64,14 @@ function toUserProfile(me: MeProfile): UserProfile {
     department: me.profile.department ?? "",
     initials: initialsFrom(me.profile.fullName ?? displayName, me.email),
     preferredSenderName: me.profile.preferredSenderName ?? displayName,
-    // Not backed by any column — see the header. Shown as neutral defaults so
-    // the settings UI renders, and deliberately not editable through here.
+    // Preferences, not profile — see the header. Neutral defaults so the
+    // settings UI renders, and deliberately not editable through here.
     timezone: "",
     locale: "",
     language: "",
+    // The shared `UserProfile` type requires the literal. This record is NOT
+    // a demonstration — it is the account's own data, read from `/me` — and
+    // nothing reads the flag for a profile.
     demonstrationOnly: true,
   };
 }

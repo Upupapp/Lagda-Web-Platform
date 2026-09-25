@@ -45,6 +45,11 @@ export function ProfilePage() {
   const [saving, setSaving]     = useState(false);
   const [saved, setSaved]       = useState(false);
   const [error, setError]       = useState<string | null>(null);
+  // A failed SAVE, kept apart from a failed LOAD. They shared one state, and
+  // the only place it rendered was the load-failure screen — which is never
+  // shown once a profile has loaded — so a save that failed said nothing at
+  // all: the button re-enabled and the edits sat there looking unsaved.
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [validErr, setValidErr] = useState<Record<string, string>>({});
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [avatarErr, setAvatarErr] = useState<string | null>(null);
@@ -67,6 +72,7 @@ export function ProfilePage() {
     setForm(prev => ({ ...prev, [key]: value }));
     setDirty(true);
     setSaved(false);
+    setSaveError(null);
     setValidErr(prev => { const n = { ...prev }; delete n[key]; return n; });
   };
 
@@ -82,6 +88,7 @@ export function ProfilePage() {
     e.preventDefault();
     if (!validate()) return;
     setSaving(true);
+    setSaveError(null);
     try {
       const updated = await settingsService.updateUserProfile({
         fullName: form.fullName?.trim(),
@@ -102,8 +109,11 @@ export function ProfilePage() {
       // failed refresh leaves a stale header, which the next navigation fixes.
       if (USE_REAL_BACKEND) void refreshSessionFromBackend();
       setTimeout(() => setSaved(false), 2500);
-    } catch {
-      setError("Profile update failed. Please try again.");
+    } catch (err) {
+      // The server's own message where there is one: it knows whether a name
+      // was too short or held a character it refuses.
+      const message = err instanceof Error && err.message.trim() !== "" ? err.message : null;
+      setSaveError(message ?? "Your changes could not be saved. Please try again.");
     } finally {
       setSaving(false);
     }
@@ -218,6 +228,9 @@ export function ProfilePage() {
               style={BTN_SECONDARY}>Discard</button>
           )}
           {saved && <span role="status" style={{ ...GF, fontSize: 13, color: "#16A34A" }}>Profile updated.</span>}
+          {saveError !== null && (
+            <span role="alert" style={{ ...GF, fontSize: 13, color: "#DC2626" }}>{saveError}</span>
+          )}
           {dirty && !saving && <span style={{ ...GF, fontSize: 12, color: SLATE }}>Unsaved changes.</span>}
         </div>
       </form>
