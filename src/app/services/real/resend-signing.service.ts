@@ -33,7 +33,7 @@
 // resumable and safe — rather than a document pointing at a recipient list
 // nobody chose.
 
-import { realRecipientService } from "./recipient.service";
+import { realRecipientService, type RealRecipient } from "./recipient.service";
 import { realSigningRequestService } from "./signing-request.service";
 
 export interface ResendRecipient {
@@ -91,7 +91,58 @@ function nameFor(email: string): string {
   return local.length > 0 ? local : email;
 }
 
+/** Roles that can act — a re-send needs at least one of them to go anywhere. */
+const ACTING_TYPES = new Set(["signer", "approver", "reviewer", "acknowledgment-recipient"]);
+
+export function canResendTo(participants: readonly { type: string }[]): boolean {
+  return participants.some(participant => ACTING_TYPES.has(participant.type));
+}
+
 class ResendSigningService {
+  /** Who the document currently goes to — the people a re-send would reach. */
+  async currentParticipants(workspaceId: string, documentId: string): Promise<RealRecipient[]> {
+    return realRecipientService.list(workspaceId, documentId);
+  }
+
+  /**
+   * Sends a fresh request to the SAME participants, minus any the sender left
+   * out. Each keeps their role, routing step and placed fields; a left-out
+   * person's fields are REMOVED rather than handed to someone else.
+   */
+  async resendToSame(
+    workspaceId: string,
+    documentId: string,
+    keep: readonly RealRecipient[],
+  ): Promise<ResendResult> {
+    if (!canResendTo(keep)) {
+      throw new Error("Keep at least one person who signs, approves, reviews or acknowledges.");
+    }
+    await realRecipientService.replaceAll(workspaceId, documentId,
+      keep.map(participant => ({
+        name: participant.name,
+        email: participant.email,
+        organization: participant.organization,
+        type: participant.type,
+        isRequired: participant.isRequired,
+        routingOrder: participant.routingOrder,
+      })),
+      { departingFields: "remove" });
+    return this.sendCurrent(workspaceId, documentId, keep.length);
+  }
+
+  private async sendCurrent(
+    workspaceId: string, documentId: string, count: number,
+  ): Promise<ResendResult> {
+    const created = await realSigningRequestService.create(
+      workspaceId, documentId, crypto.randomUUID());
+    if (created.state === "draft") {
+      await realSigningRequestService.markReadyToSend(workspaceId, created.signingRequestId);
+    }
+    await realSigningRequestService.send(
+      workspaceId, created.signingRequestId, crypto.randomUUID());
+    return { signingRequestId: created.signingRequestId, sentTo: count };
+  }
+
   /**
    * Points the document at these recipients and sends a fresh request.
    *

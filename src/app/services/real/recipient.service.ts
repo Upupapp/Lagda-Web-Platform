@@ -74,14 +74,22 @@ class RealRecipientService {
    * departing signer's fields pass to their replacement rather than blocking
    * the change. Either the list becomes exactly this, or nothing changes.
    */
+  // `departingFields`: what happens to the fields of anyone NOT in the new
+  // list. "reassign" (server default) hands them to a newcomer — one person
+  // replacing another. "remove" deletes them — somebody deliberately left
+  // out of a re-send, whose boxes must not become someone else's.
   async replaceAll(
     workspaceId: string, documentId: string, recipients: AddRecipientInput[],
+    options: { departingFields?: "reassign" | "remove" } = {},
   ): Promise<RealRecipient[]> {
     const result = await apiRequest<{ recipients: RealRecipient[] }>(
       `/workspaces/${encodeURIComponent(workspaceId)}/documents/${encodeURIComponent(documentId)}/recipients`,
       {
         method: "PUT",
-        body: { recipients: recipients.map(r => ({ source: "manual", ...r })) },
+        body: {
+          recipients: recipients.map(r => ({ source: "manual", ...r })),
+          ...(options.departingFields === undefined ? {} : { departingFields: options.departingFields }),
+        },
       },
     );
     return result.recipients;
