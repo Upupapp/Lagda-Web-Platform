@@ -89,4 +89,32 @@ describe("SignatureRecordDialog", () => {
     expect(screen.queryByText("Signed in with a LAGDA account")).toBeNull();
     expect(screen.queryByText("Account name")).toBeNull();
   });
+
+  // Approvers used to crash this dialog: `approved`/`skipped` had no
+  // presentation, and the row read a property of undefined.
+  it("shows an approver who approved and one who was skipped, with their roles", async () => {
+    signatures.mockResolvedValue({
+      ...noLinkedAccount,
+      signatories: [
+        { ...noLinkedAccount.signatories[0]!, recipientId: "srr_a", name: "Ben Cruz",
+          type: "approver", state: "approved", signedAt: null,
+          approvedAt: "2026-09-22T04:00:00.000Z" },
+        { ...noLinkedAccount.signatories[0]!, recipientId: "srr_b", name: "Lia Tan",
+          type: "approver", state: "skipped", signedAt: null,
+          skippedAt: "2026-09-22T05:00:00.000Z" },
+      ],
+    });
+    renderDialog();
+
+    expect(await screen.findByText("Approved")).toBeTruthy();
+    expect(screen.getByText("Skipped")).toBeTruthy();
+    expect(screen.getAllByText("Approver")).toHaveLength(2);
+    expect(screen.getByText(/^Approved .+/)).toBeTruthy();
+  });
+
+  it("is titled Participants, not Signature record", async () => {
+    signatures.mockResolvedValue(noLinkedAccount);
+    renderDialog();
+    expect(await screen.findByRole("heading", { name: "Participants" })).toBeTruthy();
+  });
 });

@@ -2134,7 +2134,7 @@ function SignatureLink({
   return (
     <button
       onClick={e => { e.stopPropagation(); onOpen(item); }}
-      title="View signature record"
+      title="View participants"
       style={{
         display: "inline-flex", alignItems: "center", gap: 6, background: "none",
         border: "none", padding: 0, cursor: "pointer", ...GF,
@@ -2283,7 +2283,7 @@ function RealDocumentRow({
           <DocAction icon={Send} label="Send again" onClick={() => onResend(item)} />
         )}
         {item.state !== "draft" && item.state !== "ready-to-send" && (
-          <DocAction icon={Users} label="Signers" onClick={() => onSignatures(item)} />
+          <DocAction icon={Users} label="Participants" onClick={() => onSignatures(item)} />
         )}
         {/* An unsent draft has no signing request, so no history exists for
             it yet; and it can be viewed only once a file was uploaded. */}
@@ -2358,7 +2358,7 @@ function RealDocumentCard({
           <DocAction icon={Send} label="Send again" onClick={() => onResend(item)} />
         )}
         {item.state !== "draft" && item.state !== "ready-to-send" && (
-          <DocAction icon={Users} label="Signers" onClick={() => onSignatures(item)} />
+          <DocAction icon={Users} label="Participants" onClick={() => onSignatures(item)} />
         )}
         {/* An unsent draft has no signing request, so no history exists for
             it yet; and it can be viewed only once a file was uploaded. */}

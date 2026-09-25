@@ -58,12 +58,24 @@ function Fact({ icon: Icon, label, value }: {
   );
 }
 
+const ACTING_ROLES: ReadonlySet<string> = new Set([
+  "signer", "approver", "reviewer", "acknowledgment-recipient",
+]);
+
+const ROLE_NAMES: Record<string, string> = {
+  signer: "Signer", approver: "Approver", reviewer: "Reviewer",
+  "acknowledgment-recipient": "Acknowledges",
+};
+
 export function AuthorizationStep() {
   const navigate = useNavigate();
   const { draft } = usePrepare();
   const { run: runProcessing } = useProcessing();
 
-  const signers = draft?.participants.filter(p => p.role === "signer") ?? [];
+  // Everyone who ACTS — approvers and reviewers are emailed a link too, and
+  // listing only signers told the sender fewer people would be contacted
+  // than actually are. Viewers and copy recipients do not act on it.
+  const actors = draft?.participants.filter(p => ACTING_ROLES.has(p.role)) ?? [];
   const title = draft?.details.title?.trim();
 
   const authorize = () => {
@@ -102,22 +114,23 @@ export function AuthorizationStep() {
           What you are about to send
         </h2>
         <p style={{ ...GF, margin: "0 0 10px", fontSize: 12.5, color: SLATE, lineHeight: 1.6 }}>
-          Read this back. Once you authorize, every signer below is emailed a
-          link that can sign this document, and it cannot be recalled.
+          Read this back. Once you authorize, every participant below is
+          emailed a link to sign, approve or review this document, in routing
+          order, and it cannot be recalled.
         </p>
 
         <Fact icon={FileText} label="Document" value={title && title.length > 0 ? title : "Untitled document"} />
         <Fact
           icon={Users}
-          label="Signers"
-          value={signers.length === 0
-            ? "No signers"
-            : signers.map(s => s.name.trim().length > 0 ? s.name : s.email).join(", ")}
+          label="Participants"
+          value={actors.length === 0
+            ? "No participants"
+            : actors.map(p => `${p.name.trim().length > 0 ? p.name : p.email} (${ROLE_NAMES[p.role] ?? p.role})`).join(", ")}
         />
         <Fact
           icon={Mail}
           label="Will be emailed"
-          value={signers.length === 1 ? "1 person" : `${signers.length} people`}
+          value={actors.length === 1 ? "1 person" : `${actors.length} people`}
         />
       </div>
 

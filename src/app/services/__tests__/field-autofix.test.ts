@@ -11,6 +11,7 @@ import {
   resolveAssignment,
   resolveAssignmentFor,
   computeBackendFieldIssues,
+  preferredAssignee,
 } from "../prepare/field-autofix";
 import { SAFE_MARGIN } from "../../models/field-editor";
 import type { FieldDefinition } from "../../models/field-editor";
@@ -113,5 +114,30 @@ describe("computeBackendFieldIssues", () => {
   it("reports both an unsupported type and unsaved edits together", () => {
     const issues = computeBackendFieldIssues([makeField({ id: "local_ml", type: "radio-group" })]);
     expect(issues.map((i) => i.code).sort()).toEqual(["UNSAVED_EDITS", "UNSUPPORTED_BACKEND_TYPE"]);
+  });
+});
+
+// ── Approvers and reviewers may hold a signature ───────────────────────────
+describe("preferredAssignee", () => {
+  const signer   = { id: "p_signer", role: "signer" as const };
+  const approver = { id: "p_approver", role: "approver" as const };
+  const reviewer = { id: "p_reviewer", role: "reviewer" as const };
+
+  it("still gives a signature to the only signer when an approver is also present", () => {
+    // The everyday document. Allowing approvers a signature must not stop it
+    // auto-assigning the way it always has.
+    expect(preferredAssignee("signature", [signer, approver])).toBe("p_signer");
+  });
+
+  it("gives a signature to the only approver when there is no signer", () => {
+    expect(preferredAssignee("signature", [approver])).toBe("p_approver");
+  });
+
+  it("does not guess between two signers", () => {
+    expect(preferredAssignee("signature", [signer, { id: "p_s2", role: "signer" as const }, approver])).toBeNull();
+  });
+
+  it("leaves a non-signature field ambiguous when several may hold it", () => {
+    expect(preferredAssignee("checkbox", [signer, reviewer])).toBeNull();
   });
 });

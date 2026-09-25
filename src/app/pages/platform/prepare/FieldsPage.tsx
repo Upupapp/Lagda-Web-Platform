@@ -27,7 +27,7 @@ import { realPreparationService } from "../../../services/real/preparation.servi
 import { isBackendFieldType, toBackendFieldInput, fromBackendField } from "../../../services/prepare/field-sync";
 import {
   clampRectOntoPage, pushInsideSafeMargin, nudgeOffOverlap,
-  eligibleParticipants, resolveAssignmentFor, computeBackendFieldIssues,
+  resolveAssignmentFor, computeBackendFieldIssues, preferredAssignee,
 } from "../../../services/prepare/field-autofix";
 import { isDocumentSynced, markDocumentSynced } from "../../../services/prepare/sync-markers";
 import { useFieldEditorShortcuts } from "../../../hooks/useFieldEditorShortcuts";
@@ -468,9 +468,8 @@ function PageCanvas({
       const nx = (e.clientX - b.left) / b.width;
       const ny = (e.clientY - b.top)  / b.height;
 
-      // Auto-assign first eligible participant if exactly one eligible
-      const eligible = participants.filter(p => FIELD_ELIGIBLE_ROLES[pendingFieldType].includes(p.role));
-      const autoAssign = eligible.length === 1 ? eligible[0]!.id : null;
+      // Auto-assign when there is one obvious participant (see preferredAssignee).
+      const autoAssign = preferredAssignee(pendingFieldType, participants);
 
       addField({
         type:          pendingFieldType,
@@ -1443,8 +1442,9 @@ export function ValidationPanel({
     if (!field) return;
     // Ambiguous (2+ eligible) → don't guess; just reveal the field so the
     // visitor picks in Field Properties.
-    if (eligibleParticipants(field.type, participants).length !== 1) { goToField(fieldId); return; }
-    updateField(fieldId, { participantId: resolveAssignmentFor(field.type, participants) });
+    const assignee = preferredAssignee(field.type, participants);
+    if (assignee === null) { goToField(fieldId); return; }
+    updateField(fieldId, { participantId: assignee });
     selectFields([fieldId]);
   };
 

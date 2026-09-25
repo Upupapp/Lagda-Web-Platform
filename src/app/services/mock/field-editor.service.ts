@@ -230,7 +230,7 @@ class MockFieldEditorService {
       }
       if (!isRoleEligibleForField(pax.role, f.type)) {
         errors.push({ id: id(), severity: "error", code: "INCOMPATIBLE_ROLE",
-          message: `A "${f.type}" field cannot be assigned to a ${pax.role} (${pax.name}).`,
+          message: `A "${f.type}" field cannot be assigned to ${/^[aeiou]/i.test(pax.role) ? "an" : "a"} ${pax.role} (${pax.name}).`,
           fieldId: f.id, participantId: f.participantId,
           suggestion: `Remove this field or change ${pax.name}'s role.` });
       }

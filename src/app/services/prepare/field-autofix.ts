@@ -61,8 +61,30 @@ export function resolveAssignment(
   fieldType: FieldType,
   participants: readonly { id: string; role: PrepParticipantRole }[],
 ): string | null {
+  return preferredAssignee(fieldType, participants);
+}
+
+/**
+ * The one participant a new or fixed field should go to, or null to leave it
+ * for the sender to choose.
+ *
+ * Exactly one eligible participant: that one. Otherwise, for a SIGNATURE,
+ * exactly one SIGNER — a signature is primarily a signer's field, and
+ * letting approvers hold one too must not stop the everyday "one signer, one
+ * approver" document from auto-assigning its signature the way it always has.
+ * Never a guess among several.
+ */
+export function preferredAssignee(
+  fieldType: FieldType,
+  participants: readonly { id: string; role: PrepParticipantRole }[],
+): string | null {
   const eligible = eligibleParticipants(fieldType, participants);
-  return eligible.length === 1 ? eligible[0]!.id : null;
+  if (eligible.length === 1) return eligible[0]!.id;
+  if (fieldType === "signature") {
+    const signers = eligible.filter((p) => p.role === "signer");
+    if (signers.length === 1) return signers[0]!.id;
+  }
+  return null;
 }
 
 /** Real-backend field issues the placement validator itself doesn't check:
