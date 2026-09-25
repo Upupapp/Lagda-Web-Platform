@@ -39,6 +39,7 @@ function SessionInitializing() {
       theme="light"
       message="Preparing your secure workspace"
       showWordmark
+      spinner
     />
   );
 }

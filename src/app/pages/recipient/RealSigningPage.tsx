@@ -43,6 +43,7 @@ import {
 } from "lucide-react";
 import { DECLINE_REASON_CATEGORIES } from "../../models/recipient";
 import { SigningEntryChoice } from "../../components/recipient/SigningEntryChoice";
+import { LagdaLoader } from "../../components/brand/LagdaLoader";
 
 // The signer palette lives in `signer-ui`. Only the font alias survives the
 // redesign: every colour this page used is now applied by a primitive from
@@ -124,6 +125,9 @@ function GoToDocumentsButton() {
   );
 }
 
+const SPLASH_MIN_MS = 1500;
+const SPLASH_EXIT_MS = 240;
+
 export function RealSigningPage() {
   const { requestId: token } = useParams<{ requestId: string }>();
   const [phase, setPhase] = useState<Phase>("loading");
@@ -132,6 +136,21 @@ export function RealSigningPage() {
   // one captured when it was created.
   const phaseRef = useRef<Phase>("loading");
   phaseRef.current = phase;
+  // Branded splash: at least SPLASH_MIN_MS on every arrival (email link or
+  // the Documents button), longer if the link is still being checked, then
+  // a short fade so the page underneath never flashes in.
+  const [splashMinDone, setSplashMinDone] = useState(false);
+  const [splash, setSplash] = useState<"showing" | "exiting" | "gone">("showing");
+  useEffect(() => {
+    const t = setTimeout(() => { setSplashMinDone(true); }, SPLASH_MIN_MS);
+    return () => { clearTimeout(t); };
+  }, []);
+  useEffect(() => {
+    if (splash !== "showing" || !splashMinDone || phase === "loading") return;
+    setSplash("exiting");
+    const t = setTimeout(() => { setSplash("gone"); }, SPLASH_EXIT_MS);
+    return () => { clearTimeout(t); };
+  }, [splash, splashMinDone, phase]);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [view, setView] = useState<CeremonyView | null>(null);
   const [values, setValues] = useState<Record<string, string | boolean>>({});
@@ -462,6 +481,20 @@ export function RealSigningPage() {
       setSubmitting(false);
     }
   };
+
+  if (splash !== "gone") {
+    return (
+      <LagdaLoader
+        mode="fullscreen"
+        theme="light"
+        message="Opening your document securely"
+        ariaLabel="Opening your document"
+        showWordmark
+        spinner
+        isExiting={splash === "exiting"}
+      />
+    );
+  }
 
   if (phase === "loading") {
     return (
