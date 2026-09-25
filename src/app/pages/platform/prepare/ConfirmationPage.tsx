@@ -35,7 +35,7 @@ const WHITE  = "#FFFFFF";
 // ── Inner component (needs FieldEditorContext) ────────────────────────────────
 function ConfirmationPageInner({ participants }: { participants: PrepParticipant[] }) {
   const navigate = useNavigate();
-  const { draft, setStep, discardDraft, syncError, multiDocumentSigningGap, setFieldsSnapshot } = usePrepare();
+  const { draft, setStep, discardDraft, syncError, multiDocumentSigningGap, setFieldsSnapshot, updateSettings } = usePrepare();
   const { user, currentWorkspace } = usePlatform();
   const {
     initialize, fields, documents, runValidation, validation, loadRealFields,
@@ -209,7 +209,9 @@ function ConfirmationPageInner({ participants }: { participants: PrepParticipant
 
       if (!pending.sendKey) pending.sendKey = crypto.randomUUID();
       pendingSendRef.current = pending;
-      await realSigningRequestService.send(workspaceId, signingRequestId, pending.sendKey);
+      await realSigningRequestService.send(workspaceId, signingRequestId, pending.sendKey, {
+        shareFinalCopy: draft.settings.completion.sendCompletionCopyToParticipants,
+      });
 
       // Backend-confirmed. This logical attempt is over — the next Send
       // (a different document, some other time) must never reuse these keys.
@@ -501,6 +503,37 @@ function ConfirmationPageInner({ participants }: { participants: PrepParticipant
             <p style={{ ...GF, fontSize: 13, color: SILVER }}>No fields placed.</p>
           )}
         </section>
+
+        {/* 073. Every participant's copy of the finished document. On by
+            default; off for a sensitive document. One switch for signers,
+            approvers, reviewers and copy recipients alike (viewers never
+            receive one). */}
+        <label style={{ ...GF, display: "flex", alignItems: "flex-start", gap: 10, marginBottom: 16, padding: "12px 14px", borderRadius: 10, border: "1px solid #E3E8EF", background: WHITE, cursor: "pointer" }}>
+          <input
+            type="checkbox"
+            checked={draft.settings.completion.sendCompletionCopyToParticipants}
+            onChange={e => {
+              const on = e.target.checked;
+              updateSettings({
+                ...draft.settings,
+                completion: {
+                  ...draft.settings.completion,
+                  sendCompletionCopyToParticipants: on,
+                  sendCompletionCopyToCCRecipients: on,
+                },
+              });
+            }}
+            style={{ marginTop: 2 }}
+          />
+          <span>
+            <span style={{ display: "block", fontSize: 14, fontWeight: 600, color: NAVY }}>
+              Send everyone the final copy
+            </span>
+            <span style={{ display: "block", fontSize: 12.5, color: SILVER, marginTop: 2, lineHeight: 1.45 }}>
+              When the document is completed, each participant and copy recipient is emailed a personal link to download the signed PDF. Turn off for sensitive documents.
+            </span>
+          </span>
+        </label>
 
         {/* Actions */}
         <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>

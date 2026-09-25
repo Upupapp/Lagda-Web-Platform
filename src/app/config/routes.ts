@@ -527,6 +527,8 @@ export type RecipientLayoutType = "recipient";
 export const RECIPIENT_ROUTES: RouteMeta[] = [
   { path: "/sign/:requestId", title: "Document Request — LAGDA eSignature", breadcrumb: "Document Request", section: "recipient", product: "esignature", layout: "platform", requiresAuth: false, isPublic: false, isIndexable: false, status: "implemented", analyticsName: "recipient_access"   },
   { path: "/sign",            title: "Document Request — LAGDA eSignature", breadcrumb: "Document Request", section: "recipient", product: "esignature", layout: "platform", requiresAuth: false, isPublic: false, isIndexable: false, status: "implemented", analyticsName: "recipient_root"     },
+  { path: "/copy/:token",     title: "Your Signed Document — LAGDA eSignature", breadcrumb: "Signed Document", section: "recipient", product: "esignature", layout: "platform", requiresAuth: false, isPublic: false, isIndexable: false, status: "implemented", analyticsName: "final_copy" },
+  { path: "/copy",            title: "Your Signed Document — LAGDA eSignature", breadcrumb: "Signed Document", section: "recipient", product: "esignature", layout: "platform", requiresAuth: false, isPublic: false, isIndexable: false, status: "implemented", analyticsName: "final_copy_root" },
 ];
 
 // ── Utility helpers ────────────────────────────────────────────────────────────

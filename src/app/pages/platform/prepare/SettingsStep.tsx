@@ -376,17 +376,12 @@ export function SettingsStep() {
           />
           <Toggle
             id="copy-participants"
-            label="Send completed copy to signers"
-            description="Participants who completed required actions receive a copy of the signed document."
+            label="Send everyone the final copy"
+            description="When completed, each participant and copy recipient is emailed a personal link to the signed PDF. Viewers are not."
             checked={settings.completion.sendCompletionCopyToParticipants}
-            onChange={v => updateCompletion({ sendCompletionCopyToParticipants: v })}
-          />
-          <Toggle
-            id="copy-cc"
-            label="Send completed copy to copy recipients"
-            description="Carbon-copy recipients receive a copy of the signed document upon completion."
-            checked={settings.completion.sendCompletionCopyToCCRecipients}
-            onChange={v => updateCompletion({ sendCompletionCopyToCCRecipients: v })}
+            onChange={v => updateCompletion({
+              sendCompletionCopyToParticipants: v, sendCompletionCopyToCCRecipients: v,
+            })}
           />
           <Toggle
             id="allow-download"
@@ -417,8 +412,7 @@ export function SettingsStep() {
 
   const completionFlags: { label: string; on: boolean }[] = [
     { label: "Notify sender on complete", on: settings.completion.notifySenderOnComplete },
-    { label: "Copy to signers", on: settings.completion.sendCompletionCopyToParticipants },
-    { label: "Copy to CC recipients", on: settings.completion.sendCompletionCopyToCCRecipients },
+    { label: "Final copy to everyone", on: settings.completion.sendCompletionCopyToParticipants },
     { label: "Participant download allowed", on: settings.completion.allowParticipantDownload },
     { label: "Verification record created", on: settings.completion.createVerificationRecord },
   ];
