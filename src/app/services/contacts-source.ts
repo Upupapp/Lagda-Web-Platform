@@ -13,27 +13,34 @@
 // So this module answers one question — real or fixtures — and returns the
 // SAME shape either way.
 //
-// ── What genuinely round-trips, and what does not ──────────────────────────
+// ── What genuinely round-trips, and what does not (074) ─────────────────────────────────────
 //
-// Round-trips: name, email, phone, organization, title, archived-or-not.
-// Does NOT: tags, groups, note, scope, usage counts. Those have no column.
-// They are filled below with defaults that are TRUE of a stored contact
-// rather than invented — empty lists, zero counts — so nothing on screen
-// claims a value the next reload will contradict.
+// Round-trips: name, email, phone, organization, title, archived-or-not,
+// SCOPE, NOTE and TAGS. The Edit Contact form showed the last three and
+// silently dropped every one of them on save -- reported as a bug, fixed
+// by 074's migration and this file no longer defaulting them away.
 //
-// Group membership, tagging, merging and usage history remain fixture-only
-// for the same reason: there is no backend for them yet, and a façade cannot
+// Still does NOT round-trip: groups, a source beyond "manual", usage
+// counts. Those genuinely have no column. They are filled below with
+// defaults that are TRUE of a stored contact rather than invented --
+// empty lists, zero counts -- so nothing on screen claims a value the
+// next reload will contradict.
+//
+// Group membership, merging and usage history remain fixture-only for
+// the same reason: there is no backend for them yet, and a facade cannot
 // invent one.
 
 import { USE_REAL_BACKEND } from "./backend-flag";
 import {
   realContactService,
   type WireContact, type WireContactListQuery, type WireContactSort,
+  type WireContactWrite, type WireContactCreate, type WireContactScope,
+  type WireContactTagId,
 } from "./real/contact.service";
 import { mockContactService } from "./mock/contacts.service";
 import type {
   Contact, ContactId, ContactListItem, ContactListQuery, ContactListResult,
-  ContactCreateInput, ContactUpdateInput,
+  ContactCreateInput, ContactUpdateInput, ContactTagId,
 } from "../models/contacts";
 
 /** Not a React hook despite the shape of the question — a plain predicate,
@@ -62,27 +69,28 @@ function toWireSort(sort: ContactListQuery["sort"]): WireContactSort {
 
 function toContact(wire: WireContact, workspaceId: string): Contact {
   return {
-    // The backend mints `cnt_…`; `ContactId` is a branded string and this is
-    // the one place a raw wire id crosses into it.
+    // The backend mints `cnt_...`; `ContactId` is a branded string and this
+    // is the one place a raw wire id crosses into it.
     id: wire.contactId as ContactId,
     status: wire.state,
-    // No column. Every stored contact belongs to the WORKSPACE that owns the
-    // route it was read through — "personal" is a fixture-only distinction.
-    scope: "workspace",
+    scope: wire.scope,
     source: "manually-created",
     workspaceId,
-    ownerId: "",
+    // The caller's own account when personal; no column for it otherwise --
+    // "" is what an ownerless workspace contact has always meant here.
+    ownerId: wire.ownerUserId ?? "",
     name: wire.name,
     email: wire.email,
     ...(wire.phone === null ? {} : { phone: wire.phone }),
     ...(wire.organization === null ? {} : { organization: wire.organization }),
     ...(wire.title === null ? {} : { title: wire.title }),
-    tagIds: [],
+    ...(wire.note === null ? {} : { note: wire.note }),
+    tagIds: wire.tagIds as ContactTagId[],
     groupIds: [],
     createdAt: wire.createdAt,
     updatedAt: wire.updatedAt,
     usageCount: 0,
-    // A STORED contact is not a demonstration — it is the workspace's own
+    // A STORED contact is not a demonstration -- it is the workspace's own
     // data, round-tripped through the real API.
     demonstrationOnly: false,
   };
@@ -99,7 +107,7 @@ function toListItem(wire: WireContact, workspaceId: string): ContactListItem {
     ...(contact.phone === undefined ? {} : { phone: contact.phone }),
     ...(contact.organization === undefined ? {} : { organization: contact.organization }),
     ...(contact.title === undefined ? {} : { title: contact.title }),
-    tagIds: [],
+    tagIds: contact.tagIds,
     groupIds: [],
     usageCount: 0,
     updatedAt: contact.updatedAt,
@@ -108,10 +116,12 @@ function toListItem(wire: WireContact, workspaceId: string): ContactListItem {
   };
 }
 
-/** The write body. Tags, groups, note and scope are dropped deliberately —
- *  see the header. An empty optional string is sent as `null` ("clear it")
- *  rather than as `""`, which the backend would store literally. */
-function toWireWrite(input: ContactCreateInput | ContactUpdateInput) {
+/**
+ * The write body. Groups are dropped deliberately -- no column, see the
+ * header. An empty optional string is sent as `null` ("clear it") rather
+ * than as `""`, which the backend would store literally.
+ */
+function toWireWrite(input: ContactCreateInput | ContactUpdateInput): WireContactWrite {
   const optional = (value: string | undefined) =>
     value === undefined ? undefined : (value.trim() === "" ? null : value.trim());
   return {
@@ -120,10 +130,19 @@ function toWireWrite(input: ContactCreateInput | ContactUpdateInput) {
     ...(input.phone === undefined ? {} : { phone: optional(input.phone) }),
     ...(input.organization === undefined ? {} : { organization: optional(input.organization) }),
     ...(input.title === undefined ? {} : { title: optional(input.title) }),
+    ...(input.note === undefined ? {} : { note: optional(input.note) }),
+    ...(input.tagIds === undefined ? {} : { tagIds: input.tagIds as WireContactTagId[] }),
   };
 }
 
-// ── Reading ─────────────────────────────────────────────────────────────────
+/** CREATE only: also carries `scope`, refused by the PUT schema. Absent
+ *  means workspace-shared, matching `ContactCreateInput.scope`'s own
+ *  required-with-a-product-default shape. */
+function toWireCreate(input: ContactCreateInput): WireContactCreate {
+  return { ...toWireWrite(input), scope: input.scope as WireContactScope };
+}
+
+// // ── Reading ─────────────────────────────────────────────────────────────────
 
 /** How many active contacts to pull back for the "Potential Duplicates" scan.
  *  There is no backend duplicate-detection endpoint, so this module does the
@@ -244,7 +263,7 @@ export async function createContact(
   workspaceId: string | undefined, input: ContactCreateInput,
 ): Promise<Contact> {
   if (!realContactsAvailable(workspaceId)) throw new ContactsNotWritableError();
-  const result = await realContactService.create(workspaceId!, toWireWrite(input));
+  const result = await realContactService.create(workspaceId!, toWireCreate(input));
   return toContact(result.contact, workspaceId!);
 }
 

@@ -8,20 +8,28 @@
 // nothing about it has been verified — the backend's own `ContactSchema` says
 // so in its description. Selecting one grants nobody access to anything.
 //
-// ── The wire shape is NARROWER than the frontend's model ───────────────────
+// ── The wire shape is NARROWER than the frontend's model, but less than it
+//    used to be (074) ────────────────────────────────────────────────────
 //
 // `Contact` in models/contacts.ts carries tags, groups, notes, a scope, an
-// owner, a source and usage counters. The backend has columns for none of
-// them: `ContactSchema` is declared `additionalProperties: false` with
-// exactly nine fields, so sending an extra one is REFUSED, not ignored.
-//
-// Those extras are therefore presentational — they survive in the session and
-// are lost on reload. `contacts-source.ts` fills them with honest defaults
-// rather than pretending a round trip preserved them.
+// owner, a source and usage counters. As of 074 the backend persists SCOPE,
+// NOTE and TAGS for real — `ContactSchema` grew those three fields. It still
+// has no column for GROUPS, a SOURCE beyond "manual", or usage counters
+// (`lastUsedAt`/`usageCount`): those stay presentational, filled with honest
+// defaults in `contacts-source.ts` rather than pretending a round trip
+// preserved them. Reported as a bug once already — the Edit Contact form
+// showed Tags, Visibility and Note and silently dropped every one of them on
+// save. This file is the fix.
 
 import { apiRequest } from "../api-client";
 
 /** The nine fields `ContactSchema` returns on a READ. */
+export type WireContactScope = "personal" | "workspace";
+export type WireContactTagId =
+  | "tag-client" | "tag-vendor" | "tag-internal" | "tag-legal" | "tag-hr"
+  | "tag-finance" | "tag-approver" | "tag-reviewer" | "tag-signer" | "tag-ack"
+  | "tag-procurement";
+
 export interface WireContact {
   contactId: string;
   name: string;
@@ -33,6 +41,11 @@ export interface WireContact {
   createdAt: string;
   updatedAt: string;
   archivedAt: string | null;
+  scope: WireContactScope;
+  /** Present only when `scope` is `personal` — and only ever the caller's own. */
+  ownerUserId: string | null;
+  note: string | null;
+  tagIds: WireContactTagId[];
 }
 
 /**
@@ -48,6 +61,14 @@ export interface WireContactWrite {
   phone?: string | null;
   organization?: string | null;
   title?: string | null;
+  note?: string | null;
+  tagIds?: WireContactTagId[];
+}
+
+/** CREATE-only: `scope` is refused on the PUT (replace) schema — a contact's
+ *  visibility is chosen once, not edited into place. */
+export interface WireContactCreate extends WireContactWrite {
+  scope?: WireContactScope;
 }
 
 /**
@@ -112,7 +133,7 @@ class RealContactService {
     );
   }
 
-  async create(workspaceId: string, input: WireContactWrite): Promise<WireContactWriteResult> {
+  async create(workspaceId: string, input: WireContactCreate): Promise<WireContactWriteResult> {
     return apiRequest<WireContactWriteResult>(base(workspaceId), {
       method: "POST", body: input,
     });

@@ -29,7 +29,12 @@ export type WorkspaceInvitationStatus =
   | "accepted"
   | "expired"
   | "revoked"
-  | "bounced";
+  | "bounced"
+  // The two the real backend distinguishes that the demo never needed:
+  // "declined" (the invitee said no) and "superseded" (a newer invitation to
+  // the same address replaced this one).
+  | "declined"
+  | "superseded";
 
 export type WorkspaceTeamStatus  = "active" | "archived";
 export type WorkspaceRoleStatus  = "active" | "archived";
@@ -212,7 +217,7 @@ export interface WorkspaceMember {
   suspendedReason?: string;
   deactivatedAt?:   string;
   isOwner:          boolean;
-  demonstrationOnly: true;
+  demonstrationOnly: boolean;
 }
 
 export interface WorkspaceMemberSummary {
@@ -226,7 +231,10 @@ export interface WorkspaceMemberSummary {
   isOwner:        boolean;
   joinedAt:       string;
   lastActiveAt?:  string;
-  demonstrationOnly: true;
+  // `true` on every demo fixture; `false` on a real record. Nothing renders
+  // this field — it exists so a reader can tell which kind of row they are
+  // looking at in a debugger, not as a UI flag.
+  demonstrationOnly: boolean;
 }
 
 export interface WorkspaceInvitation {
@@ -241,7 +249,7 @@ export interface WorkspaceInvitation {
   invitedByName:   string;
   acceptedAt?:     string;
   revokedAt?:      string;
-  demonstrationOnly: true;
+  demonstrationOnly: boolean;
 }
 
 export interface WorkspaceTeam {
@@ -393,6 +401,8 @@ export const WORKSPACE_INVITATION_STATUS_LABELS: Record<WorkspaceInvitationStatu
   "expired":  "Expired",
   "revoked":  "Revoked",
   "bounced":  "Bounced",
+  "declined": "Declined",
+  "superseded": "Replaced",
 };
 
 export const WORKSPACE_ROLE_TYPE_LABELS: Record<WorkspaceRoleType, string> = {

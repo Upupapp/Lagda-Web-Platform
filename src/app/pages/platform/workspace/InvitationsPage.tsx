@@ -7,6 +7,8 @@ import { Link } from "react-router";
 import { WorkspaceAdminProvider, useWorkspaceAdmin } from "../../../context/WorkspaceAdminContext";
 import type { WorkspaceInvitation, WorkspaceInvitationStatus, WorkspaceRoleId } from "../../../models/workspace-admin";
 import { WORKSPACE_INVITATION_STATUS_LABELS } from "../../../models/workspace-admin";
+import { USE_REAL_BACKEND } from "../../../services/backend-flag";
+import { ASSIGNABLE_ROLES, REAL_ROLE_LABELS } from "../../../services/real/workspace-admin.service";
 
 const GF    = { fontFamily: "'Geist', sans-serif" };
 const GM    = { fontFamily: "'Geist Mono', monospace" };
@@ -21,6 +23,8 @@ const STATUS_BADGE: Record<WorkspaceInvitationStatus, { bg: string; color: strin
   "expired":  { bg: "#F1F5F9", color: "#475569" },
   "revoked":  { bg: "#FEF2F2", color: "#991B1B" },
   "bounced":  { bg: "#FFF3E0", color: "#E65100" },
+  "declined": { bg: "#FEF2F2", color: "#991B1B" },
+  "superseded": { bg: "#F1F5F9", color: "#475569" },
 };
 
 const SYSTEM_ROLES = [
@@ -33,10 +37,17 @@ const SYSTEM_ROLES = [
   { id: "role_contact_manager",  name: "Contact Manager" },
 ];
 
+// The real backend's seven roles, minus "owner" — ownership transfers by its
+// own separate mechanism, not by invitation.
+const INVITE_ROLE_OPTIONS = USE_REAL_BACKEND
+  ? ASSIGNABLE_ROLES.map(id => ({ id, name: REAL_ROLE_LABELS[id] }))
+  : SYSTEM_ROLES;
+
 function InviteForm({ onDone }: { onDone: () => void }) {
   const { asyncSendInvitation, asyncLoadInvitations } = useWorkspaceAdmin();
   const [email, setEmail] = useState("");
-  const [roleId, setRoleId] = useState<string>("role_member");
+  const [roleId, setRoleId] = useState<string>(
+    USE_REAL_BACKEND ? "member" : "role_member");
   const [sending, setSending] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
@@ -71,7 +82,7 @@ function InviteForm({ onDone }: { onDone: () => void }) {
           <label style={{ ...GM, fontSize: 10, color: SLATE, textTransform: "uppercase", letterSpacing: "0.05em", display: "block", marginBottom: 5 }}>Role</label>
           <select value={roleId} onChange={e => setRoleId(e.target.value)}
             style={{ ...GF, fontSize: 13, padding: "9px 12px", border: "1.5px solid #D1D9E0", borderRadius: 8, background: "#FFFFFF", width: "100%", cursor: "pointer" }}>
-            {SYSTEM_ROLES.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
+            {INVITE_ROLE_OPTIONS.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
           </select>
         </div>
         <button type="submit" disabled={sending}

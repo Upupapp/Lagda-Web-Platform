@@ -32,6 +32,13 @@ import type {
   WorkspaceRoleCreateInput,
 } from "../models/workspace-admin";
 import { mockWorkspaceAdminService } from "../services/mock/workspace-admin.service";
+// Real members and invitations (074). Everything else in this context stays
+// mock-backed — see the real service's own header for exactly why.
+import {
+  realWorkspaceAdminService, type BackendWorkspaceRole,
+} from "../services/real/workspace-admin.service";
+import { USE_REAL_BACKEND } from "../services/backend-flag";
+import { usePlatform } from "./PlatformContext";
 
 // ── State ─────────────────────────────────────────────────────────────────────
 
@@ -247,10 +254,56 @@ interface WorkspaceAdminContextValue {
 
 // ── Context ───────────────────────────────────────────────────────────────────
 
+/**
+ * Mirrors `mockWorkspaceAdminService.listMembers`'s filter/sort exactly —
+ * the REAL API has none of its own (an unpaginated roster, same reasoning
+ * as the backend's own "list is bounded by headcount" comment), and
+ * `MembersPage` trusts `state.members` to already be the filtered, sorted
+ * result whichever service produced it.
+ */
+function filterAndSortMembers(
+  all: WorkspaceMemberSummary[], query: WorkspaceMemberQuery,
+): WorkspaceMemberSummary[] {
+  let list = all;
+  if (query.status && query.status !== "all") list = list.filter(m => m.status === query.status);
+  if (query.roleId && query.roleId !== "all") list = list.filter(m => m.roleId === query.roleId);
+  // No `teamId` filter: a real member carries no team assignment in this
+  // batch (see the real service's header) — the filter matches nothing.
+  if (query.search) {
+    const q = query.search.toLowerCase();
+    list = list.filter(m =>
+      m.displayName.toLowerCase().includes(q) || m.email.toLowerCase().includes(q));
+  }
+
+  const sort = query.sort ?? "name";
+  const dir = query.dir ?? "asc";
+  return [...list].sort((a, b) => {
+    const va = sort === "email" ? a.email
+      : sort === "role" ? a.roleName
+      : sort === "status" ? a.status
+      : sort === "joinedAt" ? a.joinedAt
+      : sort === "lastActive" ? (a.lastActiveAt ?? "")
+      : a.displayName;
+    const vb = sort === "email" ? b.email
+      : sort === "role" ? b.roleName
+      : sort === "status" ? b.status
+      : sort === "joinedAt" ? b.joinedAt
+      : sort === "lastActive" ? (b.lastActiveAt ?? "")
+      : b.displayName;
+    return dir === "asc" ? va.localeCompare(vb) : vb.localeCompare(va);
+  });
+}
+
 const WorkspaceAdminContext = createContext<WorkspaceAdminContextValue | null>(null);
 
 export function WorkspaceAdminProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(reducer, INITIAL);
+  const platform = usePlatform();
+  // Real members/invitations need a real workspace id. Absent (still
+  // bootstrapping, or the demo has none) falls back to the mock path below,
+  // which needs no id at all.
+  const workspaceId = platform.currentWorkspace?.id;
+  const isReal = USE_REAL_BACKEND && workspaceId !== undefined;
 
   const asyncLoadOverview = useCallback(async () => {
     dispatch({ type: "OVERVIEW_LOADING" });
@@ -263,19 +316,37 @@ export function WorkspaceAdminProvider({ children }: { children: ReactNode }) {
   const asyncLoadMembers = useCallback(async (query: WorkspaceMemberQuery = {}) => {
     dispatch({ type: "MEMBERS_LOADING", query });
     try {
+      if (isReal) {
+        const all = await realWorkspaceAdminService.listMembers(workspaceId);
+        // The real service has no server-side filter/sort — the roster is
+        // bounded by headcount, same reasoning the backend's own "no
+        // pagination" comment gives. Applied here so the SAME query object
+        // the mock path honours still narrows what the page shows.
+        dispatch({ type: "MEMBERS_LOADED", members: filterAndSortMembers(all, query) });
+        return;
+      }
       const members = await mockWorkspaceAdminService.listMembers(query);
       dispatch({ type: "MEMBERS_LOADED", members });
     } catch { dispatch({ type: "MEMBERS_ERROR", error: "Failed to load members." }); }
-  }, []);
+  }, [isReal, workspaceId]);
 
   const asyncLoadMember = useCallback(async (id: WorkspaceMemberId) => {
     dispatch({ type: "MEMBER_LOADING" });
     try {
+      if (isReal) {
+        // No single-member GET on the real API; the roster is small enough
+        // that a list-and-find costs nothing a dedicated route would save.
+        const all = await realWorkspaceAdminService.listMembers(workspaceId);
+        const member = all.find(m => m.id === id);
+        if (!member) { dispatch({ type: "MEMBER_ERROR", error: "Member not found." }); return; }
+        dispatch({ type: "MEMBER_LOADED", member: { ...member, workspaceId: workspaceId as never, userId: "", teamIds: [], demonstrationOnly: false } });
+        return;
+      }
       const member = await mockWorkspaceAdminService.getMember(id);
       if (!member) { dispatch({ type: "MEMBER_ERROR", error: "Member not found." }); return; }
       dispatch({ type: "MEMBER_LOADED", member });
     } catch { dispatch({ type: "MEMBER_ERROR", error: "Failed to load member." }); }
-  }, []);
+  }, [isReal, workspaceId]);
 
   const asyncSuspendMember = useCallback(async (id: WorkspaceMemberId, reason: string) => {
     dispatch({ type: "ACTION_LOADING" });
@@ -304,18 +375,27 @@ export function WorkspaceAdminProvider({ children }: { children: ReactNode }) {
   const asyncRemoveMember = useCallback(async (id: WorkspaceMemberId) => {
     dispatch({ type: "ACTION_LOADING" });
     try {
-      await mockWorkspaceAdminService.removeMember(id);
+      if (isReal) {
+        await realWorkspaceAdminService.removeMember(workspaceId, id);
+      } else {
+        await mockWorkspaceAdminService.removeMember(id);
+      }
       dispatch({ type: "ACTION_DONE" });
     } catch { dispatch({ type: "ACTION_ERROR", error: "Failed to remove member." }); }
-  }, []);
+  }, [isReal, workspaceId]);
 
   const asyncUpdateMemberRole = useCallback(async (id: WorkspaceMemberId, roleId: WorkspaceRoleId, roleName: string) => {
     dispatch({ type: "ACTION_LOADING" });
     try {
-      await mockWorkspaceAdminService.updateMemberRole(id, roleId, roleName);
+      if (isReal) {
+        await realWorkspaceAdminService.changeMemberRole(
+          workspaceId, id, roleId as unknown as BackendWorkspaceRole);
+      } else {
+        await mockWorkspaceAdminService.updateMemberRole(id, roleId, roleName);
+      }
       dispatch({ type: "ACTION_DONE" });
     } catch { dispatch({ type: "ACTION_ERROR", error: "Failed to update role." }); }
-  }, []);
+  }, [isReal, workspaceId]);
 
   const asyncUpdateMemberTeams = useCallback(async (id: WorkspaceMemberId, teamIds: WorkspaceTeamId[]) => {
     dispatch({ type: "ACTION_LOADING" });
@@ -328,34 +408,50 @@ export function WorkspaceAdminProvider({ children }: { children: ReactNode }) {
   const asyncLoadInvitations = useCallback(async () => {
     dispatch({ type: "INVITATIONS_LOADING" });
     try {
-      const invitations = await mockWorkspaceAdminService.listInvitations();
+      const invitations = isReal
+        ? await realWorkspaceAdminService.listInvitations(workspaceId)
+        : await mockWorkspaceAdminService.listInvitations();
       dispatch({ type: "INVITATIONS_LOADED", invitations });
     } catch { dispatch({ type: "INVITATIONS_ERROR", error: "Failed to load invitations." }); }
-  }, []);
+  }, [isReal, workspaceId]);
 
   const asyncSendInvitation = useCallback(async (input: WorkspaceInviteInput) => {
     dispatch({ type: "ACTION_LOADING" });
     try {
-      await mockWorkspaceAdminService.sendInvitation(input);
+      if (isReal) {
+        // Required by the backend, not optional — a lost response must not
+        // re-invite the same address on retry. One key per logical send.
+        await realWorkspaceAdminService.sendInvitation(workspaceId, input, crypto.randomUUID());
+      } else {
+        await mockWorkspaceAdminService.sendInvitation(input);
+      }
       dispatch({ type: "ACTION_DONE" });
     } catch { dispatch({ type: "ACTION_ERROR", error: "Failed to send invitation." }); }
-  }, []);
+  }, [isReal, workspaceId]);
 
   const asyncResendInvitation = useCallback(async (id: WorkspaceInvitationId) => {
     dispatch({ type: "ACTION_LOADING" });
     try {
-      await mockWorkspaceAdminService.resendInvitation(id);
+      if (isReal) {
+        await realWorkspaceAdminService.resendInvitation(workspaceId, id, crypto.randomUUID());
+      } else {
+        await mockWorkspaceAdminService.resendInvitation(id);
+      }
       dispatch({ type: "ACTION_DONE" });
     } catch { dispatch({ type: "ACTION_ERROR", error: "Failed to resend invitation." }); }
-  }, []);
+  }, [isReal, workspaceId]);
 
   const asyncRevokeInvitation = useCallback(async (id: WorkspaceInvitationId) => {
     dispatch({ type: "ACTION_LOADING" });
     try {
-      await mockWorkspaceAdminService.revokeInvitation(id);
+      if (isReal) {
+        await realWorkspaceAdminService.revokeInvitation(workspaceId, id);
+      } else {
+        await mockWorkspaceAdminService.revokeInvitation(id);
+      }
       dispatch({ type: "ACTION_DONE" });
     } catch { dispatch({ type: "ACTION_ERROR", error: "Failed to revoke invitation." }); }
-  }, []);
+  }, [isReal, workspaceId]);
 
   const asyncLoadTeams = useCallback(async (includeArchived = false) => {
     dispatch({ type: "TEAMS_LOADING" });

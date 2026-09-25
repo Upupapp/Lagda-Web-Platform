@@ -8,6 +8,8 @@ import { WorkspaceAdminProvider, useWorkspaceAdmin } from "../../../context/Work
 import type { WorkspaceMemberId, WorkspaceMemberStatus, WorkspaceRoleId } from "../../../models/workspace-admin";
 import { WORKSPACE_MEMBER_STATUS_LABELS, ALL_PERMISSIONS } from "../../../models/workspace-admin";
 import { mockWorkspaceAdminService } from "../../../services/mock/workspace-admin.service";
+import { USE_REAL_BACKEND } from "../../../services/backend-flag";
+import { ASSIGNABLE_ROLES, REAL_ROLE_LABELS } from "../../../services/real/workspace-admin.service";
 import { Z } from "../../../utils/z-index";
 
 const GF    = { fontFamily: "'Geist', sans-serif" };
@@ -173,17 +175,23 @@ function MemberDetailInner() {
 
   const m = state.activeMember;
   const badge = STATUS_BADGE[m.status] ?? STATUS_BADGE["active"];
-  const perms = mockWorkspaceAdminService.resolveEffectivePermissions(m);
+  // Effective-permission resolution and the demo's team/status lifecycle
+  // have no real backend yet (074's exploration: no custom roles, no
+  // suspend/deactivate, teams live separately at Settings → Organization) —
+  // both stay demo-only and are simply not computed for a real member.
+  const perms = USE_REAL_BACKEND ? null : mockWorkspaceAdminService.resolveEffectivePermissions(m);
   const permByCategory = ALL_PERMISSIONS.reduce<Record<string, typeof ALL_PERMISSIONS>>((acc, p) => {
     const bucket = acc[p.category] ?? [];
     bucket.push(p);
     acc[p.category] = bucket;
     return acc;
   }, {});
-  const allRoles = [
-    ...SYSTEM_ROLES,
-    ...state.roles.filter(r => r.type === "custom" && r.status === "active").map(r => ({ id: r.id, name: r.name })),
-  ];
+  const allRoles = USE_REAL_BACKEND
+    ? ASSIGNABLE_ROLES.map(id => ({ id, name: REAL_ROLE_LABELS[id] }))
+    : [
+      ...SYSTEM_ROLES,
+      ...state.roles.filter(r => r.type === "custom" && r.status === "active").map(r => ({ id: r.id, name: r.name })),
+    ];
 
   return (
     <div style={{ minHeight: "100vh", background: "#F8FAFC", padding: "0 0 48px" }}>
@@ -231,30 +239,30 @@ function MemberDetailInner() {
           </div>
           {!m.isOwner && (
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-              {m.status === "active" && (
+              {/* Suspend/Reactivate/Deactivate: no real backend equivalent
+                  (074's exploration). A membership exists or it does not. */}
+              {!USE_REAL_BACKEND && m.status === "active" && (
                 <button onClick={() => setModal("suspend")}
                   style={{ ...GF, fontSize: 13, padding: "8px 16px", border: "1.5px solid #FDE68A", borderRadius: 8, background: "#FFFBEB", color: "#92400E", cursor: "pointer" }}>
                   Suspend
                 </button>
               )}
-              {m.status === "suspended" && (
+              {!USE_REAL_BACKEND && m.status === "suspended" && (
                 <button onClick={handleReactivate}
                   style={{ ...GF, fontSize: 13, padding: "8px 16px", border: "1.5px solid #BBF7D0", borderRadius: 8, background: "#F0FDF4", color: "#14532D", cursor: "pointer" }}>
                   Reactivate
                 </button>
               )}
-              {m.status !== "deactivated" && (
-                <>
-                  <button onClick={() => setModal("deactivate")}
-                    style={{ ...GF, fontSize: 13, padding: "8px 16px", border: "1.5px solid #FECACA", borderRadius: 8, background: "#FEF2F2", color: "#991B1B", cursor: "pointer" }}>
-                    Deactivate
-                  </button>
-                  <button onClick={() => setModal("remove")}
-                    style={{ ...GF, fontSize: 13, padding: "8px 16px", border: "1.5px solid #FECACA", borderRadius: 8, background: "#FEF2F2", color: "#991B1B", cursor: "pointer" }}>
-                    Remove
-                  </button>
-                </>
+              {!USE_REAL_BACKEND && m.status !== "deactivated" && (
+                <button onClick={() => setModal("deactivate")}
+                  style={{ ...GF, fontSize: 13, padding: "8px 16px", border: "1.5px solid #FECACA", borderRadius: 8, background: "#FEF2F2", color: "#991B1B", cursor: "pointer" }}>
+                  Deactivate
+                </button>
               )}
+              <button onClick={() => setModal("remove")}
+                style={{ ...GF, fontSize: 13, padding: "8px 16px", border: "1.5px solid #FECACA", borderRadius: 8, background: "#FEF2F2", color: "#991B1B", cursor: "pointer" }}>
+                Remove
+              </button>
             </div>
           )}
         </div>
@@ -264,7 +272,7 @@ function MemberDetailInner() {
         {/* Left: role + teams */}
         <div style={{ flex: "1 1 460px", minWidth: 0, display: "flex", flexDirection: "column", gap: 16 }}>
           {/* Suspension notice */}
-          {m.status === "suspended" && m.suspendedReason && (
+          {!USE_REAL_BACKEND && m.status === "suspended" && m.suspendedReason && (
             <div style={{ background: "#FFFBEB", border: "1.5px solid #FDE68A", borderRadius: 10, padding: "12px 16px" }}>
               <div style={{ ...GF, fontSize: 12, fontWeight: 700, color: "#92400E", marginBottom: 4 }}>Suspended</div>
               <div style={{ ...GF, fontSize: 12, color: "#78350F" }}>{m.suspendedReason}</div>
@@ -291,22 +299,26 @@ function MemberDetailInner() {
             </section>
           )}
 
-          {/* Team memberships */}
-          <section style={{ background: "#FFFFFF", border: "1.5px solid #E3E8EF", borderRadius: 12, padding: "18px 20px" }}>
-            <h2 style={{ ...GF, fontSize: 13, fontWeight: 700, color: NAVY, margin: "0 0 12px", textTransform: "uppercase", letterSpacing: "0.05em" }}>Teams</h2>
-            {m.teamIds.length === 0 ? (
-              <p style={{ ...GF, fontSize: 13, color: SLATE, margin: 0 }}>Not assigned to any teams.</p>
-            ) : (
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-                {m.teamIds.map(tid => (
-                  <Link key={tid} to={`/app/workspace/teams/${tid}`}
-                    style={{ ...GF, fontSize: 12, fontWeight: 600, padding: "4px 12px", background: LIGHT, color: AZURE, borderRadius: 999, textDecoration: "none", border: "1px solid #BAD7F5" }}>
-                    {tid}
-                  </Link>
-                ))}
-              </div>
-            )}
-          </section>
+          {/* Team memberships: demo-only. Real team assignment lives at
+              Settings -> Organization's units, a separate real feature not
+              yet unified with this page (see the real service's header). */}
+          {!USE_REAL_BACKEND && (
+            <section style={{ background: "#FFFFFF", border: "1.5px solid #E3E8EF", borderRadius: 12, padding: "18px 20px" }}>
+              <h2 style={{ ...GF, fontSize: 13, fontWeight: 700, color: NAVY, margin: "0 0 12px", textTransform: "uppercase", letterSpacing: "0.05em" }}>Teams</h2>
+              {m.teamIds.length === 0 ? (
+                <p style={{ ...GF, fontSize: 13, color: SLATE, margin: 0 }}>Not assigned to any teams.</p>
+              ) : (
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                  {m.teamIds.map(tid => (
+                    <Link key={tid} to={`/app/workspace/teams/${tid}`}
+                      style={{ ...GF, fontSize: 12, fontWeight: 600, padding: "4px 12px", background: LIGHT, color: AZURE, borderRadius: 999, textDecoration: "none", border: "1px solid #BAD7F5" }}>
+                      {tid}
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </section>
+          )}
 
           {/* Member info */}
           <section style={{ background: "#FFFFFF", border: "1.5px solid #E3E8EF", borderRadius: 12, padding: "18px 20px" }}>
@@ -327,27 +339,31 @@ function MemberDetailInner() {
           </section>
         </div>
 
-        {/* Right: effective permissions */}
-        <div style={{ flex: "0 0 300px", minWidth: 240 }}>
-          <section style={{ background: "#FFFFFF", border: "1.5px solid #E3E8EF", borderRadius: 12, padding: "18px 20px" }}>
-            <h2 style={{ ...GF, fontSize: 13, fontWeight: 700, color: NAVY, margin: "0 0 4px", textTransform: "uppercase", letterSpacing: "0.05em" }}>Effective permissions</h2>
-            <p style={{ ...GM, fontSize: 11, color: SLATE, margin: "0 0 14px" }}>via {perms.roleName}</p>
-            {Object.entries(permByCategory).map(([cat, defs]) => (
-              <div key={cat} style={{ marginBottom: 14 }}>
-                <div style={{ ...GM, fontSize: 10, color: SILVER, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 5 }}>{cat}</div>
-                {defs.map(d => {
-                  const has = perms.permissions.includes(d.permission);
-                  return (
-                    <div key={d.permission} style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 4 }}>
-                      <span style={{ fontSize: 11, color: has ? "#1B5E20" : "#CBD5E1" }}>{has ? "✓" : "—"}</span>
-                      <span style={{ ...GF, fontSize: 12, color: has ? NAVY : "#CBD5E1" }}>{d.label}</span>
-                    </div>
-                  );
-                })}
-              </div>
-            ))}
-          </section>
-        </div>
+        {/* Right: effective permissions -- demo-only (no real custom-role
+            permission matrix yet; the real backend's 7 roles have fixed,
+            undocumented-in-the-UI capabilities). */}
+        {perms !== null && (
+          <div style={{ flex: "0 0 300px", minWidth: 240 }}>
+            <section style={{ background: "#FFFFFF", border: "1.5px solid #E3E8EF", borderRadius: 12, padding: "18px 20px" }}>
+              <h2 style={{ ...GF, fontSize: 13, fontWeight: 700, color: NAVY, margin: "0 0 4px", textTransform: "uppercase", letterSpacing: "0.05em" }}>Effective permissions</h2>
+              <p style={{ ...GM, fontSize: 11, color: SLATE, margin: "0 0 14px" }}>via {perms.roleName}</p>
+              {Object.entries(permByCategory).map(([cat, defs]) => (
+                <div key={cat} style={{ marginBottom: 14 }}>
+                  <div style={{ ...GM, fontSize: 10, color: SILVER, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 5 }}>{cat}</div>
+                  {defs.map(d => {
+                    const has = perms.permissions.includes(d.permission);
+                    return (
+                      <div key={d.permission} style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 4 }}>
+                        <span style={{ fontSize: 11, color: has ? "#1B5E20" : "#CBD5E1" }}>{has ? "✓" : "—"}</span>
+                        <span style={{ ...GF, fontSize: 12, color: has ? NAVY : "#CBD5E1" }}>{d.label}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              ))}
+            </section>
+          </div>
+        )}
       </div>
     </div>
   );

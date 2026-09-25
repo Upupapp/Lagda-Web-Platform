@@ -3,6 +3,8 @@ import { useSearchParams, Link } from "react-router";
 import type { DemoVerificationResult, DemoVerificationOutcome, VerificationInputType, FormErrors } from "../../../models/forms";
 import { publicVerificationService, VER_ID_RE, conversionTracker } from "../../../services/public";
 import { useProcessing } from "../../../services/processing.service";
+import { USE_REAL_BACKEND } from "../../../services/backend-flag";
+import { RealVerifyDocument } from "./RealVerifyDocument";
 
 const GF = { fontFamily: "'Geist', sans-serif" };
 const GM = { fontFamily: "'Geist Mono', monospace" };
@@ -102,6 +104,11 @@ function Row({ label, value, mono }: { label: string; value: string; mono?: bool
 }
 
 export function VerifyDocument() {
+  if (USE_REAL_BACKEND) return <RealVerifyDocument />;
+  return <DemoVerifyDocument />;
+}
+
+function DemoVerifyDocument() {
   const [params] = useSearchParams();
   const idFromUrl = params.get("id") ?? "";
   const [inputType, setInputType] = useState<VerificationInputType>("id");
