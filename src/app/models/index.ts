@@ -65,7 +65,16 @@ export interface UserSummary {
   id: string;
   email: string;
   displayName: string;
+  /** Versioned photo URL (072) — a new photo is a new URL, so every place
+   *  that renders it updates. Absent when there is no photo. */
   avatarUrl?: string;
+  /** The rest of the profile, carried on the session so every page that
+   *  shows it reads ONE source and updates when the profile is saved. */
+  fullName?: string;
+  jobTitle?: string;
+  department?: string;
+  /** What recipients see as the sender of your documents. */
+  preferredSenderName?: string;
   role: UserRole;
   workspaceId?: string;
 }

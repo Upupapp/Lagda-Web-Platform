@@ -47,6 +47,21 @@ import { ApiError } from "../services/api-client";
 // two different backend calls, and conflating them either flashes protected
 // content before access is confirmed, or bounces a genuinely-authenticated
 // zero-workspace account back to sign-in as if it weren't signed in at all.
+
+const PROFILE_CHANNEL = "lagda-profile";
+
+/**
+ * Tells every OTHER open tab that this account's profile changed, so each
+ * re-reads it. The tab that saved refreshes itself directly.
+ */
+export function announceProfileChanged(): void {
+  if (typeof BroadcastChannel === "undefined") return;
+  try {
+    const channel = new BroadcastChannel(PROFILE_CHANNEL);
+    channel.postMessage("changed");
+    channel.close();
+  } catch { /* a browser without it simply updates on the next load */ }
+}
 export type WorkspaceStatus = "initializing" | "ready" | "empty" | "error";
 
 export type RefreshSessionResult =
@@ -283,6 +298,16 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
     // re-render of whatever identity it closes over.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Another tab saved the profile (name, sender name, photo): re-read it
+  // here too, so every open tab shows the same person — not just the one
+  // the save happened in.
+  useEffect(() => {
+    if (!USE_REAL_BACKEND || typeof BroadcastChannel === "undefined") return;
+    const channel = new BroadcastChannel(PROFILE_CHANNEL);
+    channel.onmessage = () => { void refreshSessionFromBackend(); };
+    return () => { channel.close(); };
+  }, [refreshSessionFromBackend]);
 
   // LOCAL_PERSISTENCE — mock-backend only. Restores a session saved before a
   // refresh, in place of the normal "resolves to unauthenticated"

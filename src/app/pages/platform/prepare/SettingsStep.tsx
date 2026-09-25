@@ -6,6 +6,7 @@
 import React, { useEffect, useCallback } from "react";
 import { SlidersHorizontal } from "lucide-react";
 import { usePrepare } from "../../../context/PrepareContext";
+import { usePlatform } from "../../../context/PlatformContext";
 import {
   DEFAULT_PREP_SETTINGS,
 } from "../../../models/prepare";
@@ -153,6 +154,7 @@ function NumberInput({
 // ── Main step ─────────────────────────────────────────────────────────────────
 
 export function SettingsStep() {
+  const { user } = usePlatform();
   const { draft, updateSettings, setStep, validate } = usePrepare();
 
   useEffect(() => { setStep("settings"); }, [setStep]);
@@ -259,7 +261,7 @@ export function SettingsStep() {
             value={settings.invitation.senderDisplayName}
             onChange={e => updateInvitation({ senderDisplayName: e.target.value })}
             maxLength={100}
-            placeholder="Your name or team name"
+            placeholder={user?.preferredSenderName ?? "Your name or team name"}
             style={{
               ...GF,
               width: "100%",
@@ -272,6 +274,12 @@ export function SettingsStep() {
               boxSizing: "border-box",
             }}
           />
+          {user?.preferredSenderName && (
+            <p style={{ ...GF, fontSize: 11.5, color: SILVER, margin: "5px 0 0" }}>
+              Recipients see <strong style={{ color: NAVY }}>{user.preferredSenderName}</strong> as
+              the sender — your profile&apos;s Sender Display. Change it in Settings › Profile.
+            </p>
+          )}
         </div>
       </div>
 
