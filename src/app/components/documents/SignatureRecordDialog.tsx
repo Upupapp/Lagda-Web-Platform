@@ -89,7 +89,11 @@ function SignatoryRow({ signatory }: { signatory: Signatory }) {
   const role = ROLE_LABELS[signatory.type] ?? signatory.type;
   // A reviewer or acknowledgment recipient ends `signed` like a signer does;
   // say what they actually did.
-  const stateLabel = signatory.state === "signed" ? completedWord(signatory.type) : presentation.label;
+  // Nothing is ever expected of a viewer or a copy recipient, so "Awaiting"
+  // or "Not yet due" would misstate them; say what they receive instead.
+  const stateLabel = signatory.type === "viewer" ? "View only"
+    : signatory.type === "carbon-copy" ? "Gets the final copy"
+    : signatory.state === "signed" ? completedWord(signatory.type) : presentation.label;
 
   return (
     <li style={{ padding: "14px 0", borderBottom: `1px solid #F1F5F9`, listStyle: "none" }}>

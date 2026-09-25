@@ -39,7 +39,7 @@ import {
 } from "../../components/recipient/signer-ui";
 import {
   FileSignature, ShieldCheck, CheckCircle2, XCircle, Clock, AlertTriangle,
-  Ban, ArrowLeft, Send, Loader2, SkipForward,
+  Ban, ArrowLeft, Send, Loader2, SkipForward, Eye,
 } from "lucide-react";
 import { DECLINE_REASON_CATEGORIES } from "../../models/recipient";
 import { SigningEntryChoice } from "../../components/recipient/SigningEntryChoice";
@@ -76,7 +76,7 @@ function maskRecipientEmail(email: string): string {
 // you agree to, because signing in changes what the consent screen can
 // offer. It is skipped once an account is already linked — there is no
 // choice left to make at that point.
-type Phase = "loading" | "unavailable" | "choose" | "consent" | "ceremony" | "submitted" | "declined" | "decline-form" | "skipped";
+type Phase = "loading" | "unavailable" | "choose" | "consent" | "ceremony" | "submitted" | "declined" | "decline-form" | "skipped" | "view";
 
 // ── Continuing from the app ───────────────────────────────────────────────
 //
@@ -171,6 +171,13 @@ export function RealSigningPage() {
 
   const applyView = (ceremony: CeremonyView) => {
     setView(ceremony);
+    // A viewer (OD-135) only reads. Their link is never bound to an account
+    // and they are asked for nothing, so they skip the account and consent
+    // screens and go straight to a read-only document.
+    if (ceremony.recipient.type === "viewer") {
+      setPhase("view");
+      return;
+    }
     // Signing requires a signed-in LAGDA account. Nothing past this screen is
     // reachable until the ceremony reports an account link.
     //
@@ -761,6 +768,41 @@ export function RealSigningPage() {
             Back to document
           </ActionButton>
         </ActionRow>
+      </SignerCard>
+    );
+  }
+
+  if (phase === "view" && view) {
+    return (
+      <SignerCard>
+        <PhaseBanner
+          icon={Eye}
+          tone="neutral"
+          badge="View only"
+          title={view.request.documentTitle}
+          description="You've been given access to view this document while it is being signed. Nothing is needed from you."
+        />
+        <IdentityStrip
+          name={view.recipient.name}
+          role={view.recipient.type}
+          documentTitle={view.request.documentTitle}
+        />
+        {view.access.mayViewDocument && (
+          <div style={{ marginBottom: 24 }}>
+            <PositionedSigningSurface
+              loadBlob={loadDocumentBlob}
+              prepared={view.preparedSignatures}
+              fields={[]}
+              signature={null}
+              initials={null}
+              textValues={{}}
+              onSignature={() => undefined}
+              onInitials={() => undefined}
+              onTextValue={() => undefined}
+              disabled
+            />
+          </div>
+        )}
       </SignerCard>
     );
   }

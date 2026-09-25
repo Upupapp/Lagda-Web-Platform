@@ -129,6 +129,24 @@ describe("SignatureRecordDialog", () => {
     expect(screen.queryByText(/^Signed/)).toBeNull();
   });
 
+  it("says what a viewer and a copy recipient get, never Awaiting", async () => {
+    signatures.mockResolvedValue({
+      ...noLinkedAccount,
+      signatories: [
+        { ...noLinkedAccount.signatories[0]!, recipientId: "srr_v", name: "Val Ong",
+          type: "viewer", state: "active", signedAt: null },
+        { ...noLinkedAccount.signatories[0]!, recipientId: "srr_c", name: "Cy Lim",
+          type: "carbon-copy", state: "waiting", signedAt: null },
+      ],
+    });
+    renderDialog();
+
+    expect(await screen.findByText("View only")).toBeTruthy();
+    expect(screen.getByText("Gets the final copy")).toBeTruthy();
+    expect(screen.queryByText("Awaiting")).toBeNull();
+    expect(screen.queryByText("Not yet due")).toBeNull();
+  });
+
   it("is titled Participants, not Signature record", async () => {
     signatures.mockResolvedValue(noLinkedAccount);
     renderDialog();
