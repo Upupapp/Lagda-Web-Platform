@@ -395,12 +395,13 @@ export function RealSigningPage() {
     approverCeremony && (f.type === "signature" || f.type === "initials");
   const surfaceFields = view?.fields.filter((f) => !isOutcomeLabelled(f)) ?? [];
   const assignedFields = surfaceFields.filter((f) => f.valueAuthority === "RECIPIENT_SUPPLIED");
-  const needsSignature = assignedFields.some((f) => f.type === "signature");
+  const isSignatureMark = (type: string) => type === "signature" || type === "signature-block";
+  const needsSignature = assignedFields.some((f) => isSignatureMark(f.type));
   const needsInitials  = assignedFields.some((f) => f.type === "initials");
 
   const buildFieldValues = (): SubmittedFieldValue[] => {
     const all = assignedFields.map((f): SubmittedFieldValue => {
-      if (f.type === "signature") return { kind: "signature", fieldId: f.fieldId };
+      if (isSignatureMark(f.type)) return { kind: "signature", fieldId: f.fieldId };
       if (f.type === "initials")  return { kind: "initials", fieldId: f.fieldId };
       if (f.type === "checkbox")  return { kind: "checkbox", fieldId: f.fieldId, checked: values[f.fieldId] === true };
       return { kind: "text", fieldId: f.fieldId, text: typeof values[f.fieldId] === "string" ? (values[f.fieldId] as string) : "" };
@@ -413,7 +414,7 @@ export function RealSigningPage() {
 
   const missingRequired = assignedFields.filter((f) => {
     if (!f.required) return false;
-    if (f.type === "signature") return signature === null;
+    if (isSignatureMark(f.type)) return signature === null;
     if (f.type === "initials")  return initials === null;
     if (f.type === "checkbox")  return values[f.fieldId] !== true;
     return !values[f.fieldId] || String(values[f.fieldId]).trim() === "";
@@ -872,6 +873,7 @@ export function RealSigningPage() {
               loadBlob={loadDocumentBlob}
               prepared={view.preparedSignatures}
               fields={surfaceFields}
+              signerName={view.recipient.name}
               signature={signature}
               initials={initials}
               textValues={values}

@@ -376,13 +376,27 @@ function PageCanvas({
                 boxSizing:  "border-box",
                 cursor:     pendingType ? "crosshair" : "move",
                 display:    "flex",
-                alignItems: "center",
+                alignItems: f.type === "signature-block" ? "flex-start" : "center",
+                paddingTop: f.type === "signature-block" ? 3 : undefined,
                 overflow:   "visible",
               }}
             >
               <span style={{ ...GF, fontSize: 10, fontWeight: 700, color: sel ? AZURE : color, paddingLeft: 4, overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis" }}>
                 {FIELD_TYPE_ICONS[f.type]} {f.label}
               </span>
+              {f.type === "signature-block" && (
+                <>
+                  {/* The rule and the printed name, as the sealed page draws them. */}
+                  <span aria-hidden="true" style={{ position: "absolute", left: "6%", right: "6%", top: "66%", borderTop: `1px solid ${color}`, pointerEvents: "none" }} />
+                  <span aria-hidden="true" style={{
+                    position: "absolute", left: "4%", right: "4%", top: "calc(66% + 2px)", textAlign: "center",
+                    fontFamily: "Tinos, 'Times New Roman', Times, serif", fontSize: 11, lineHeight: 1.15, color: NAVY,
+                    whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", pointerEvents: "none",
+                  }}>
+                    {placeholders.find(p => p.id === f.placeholderId)?.label ?? "Signer"}&apos;s full name
+                  </span>
+                </>
+              )}
               {sel && RESIZE_HANDLES.map(hdl => (
                 <div
                   key={hdl}

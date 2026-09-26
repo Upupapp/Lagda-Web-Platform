@@ -61,8 +61,8 @@ import { Z } from "../../../utils/z-index";
 import { FilterChips } from "../../../components/platform/FilterChips";
 import { usePrepareLaunch } from "../../../hooks/usePrepareLaunch";
 import { isSearchFocusShortcut } from "../../../utils/keyboard-shortcuts";
-import { DocumentsToSignSection, SignedByMeSection } from "./MySigningSections";
-import { realMySigningService } from "../../../services/real/my-signing.service";
+import { DocumentsToSignSection, SignedByMeSection, OthersSection } from "./MySigningSections";
+import { realMySigningService, isSignerEntry } from "../../../services/real/my-signing.service";
 
 // ── Design tokens (inline styles only — no Tailwind in JSX) ──────────────────
 
@@ -2566,10 +2566,11 @@ function DocumentsPageRealMode() {
 
   // Which list: this workspace's own sections, or documents sent TO me.
   const rawList = searchParams.get("list");
-  const list: "sent" | "to-sign" | "signed" | "completed" | "draft" | "declined" =
-    rawList === "to-sign" || rawList === "signed" || rawList === "completed"
+  const list: "sent" | "to-sign" | "signed" | "others" | "completed" | "draft" | "declined" =
+    rawList === "to-sign" || rawList === "signed" || rawList === "others" || rawList === "completed"
       || rawList === "draft" || rawList === "declined" ? rawList : "sent";
   const [toSignCount, setToSignCount] = useState<number | null>(null);
+  const [othersCount, setOthersCount] = useState<number | null>(null);
   const setList = (next: typeof list) => {
     setSearchParams(prev => {
       const params = new URLSearchParams(prev);
@@ -2581,7 +2582,12 @@ function DocumentsPageRealMode() {
   useEffect(() => {
     let cancelled = false;
     void realMySigningService.documentsToSign()
-      .then(entries => { if (!cancelled) setToSignCount(entries.length); })
+      .then(entries => {
+        if (cancelled) return;
+        const signing = entries.filter(isSignerEntry).length;
+        setToSignCount(signing);
+        setOthersCount(entries.length - signing);
+      })
       .catch(() => { /* The badge is a convenience; the list reports its own failure. */ });
     return () => { cancelled = true; };
   }, []);
@@ -2632,7 +2638,7 @@ function DocumentsPageRealMode() {
 
   useEffect(() => {
     if (!workspaceId) return;
-    if (list === "to-sign" || list === "signed") return;
+    if (list === "to-sign" || list === "signed" || list === "others") return;
     let cancelled = false;
     setFetching(true);
     const states = LIST_STATES[list];
@@ -2734,6 +2740,12 @@ function DocumentsPageRealMode() {
           <button type="button" role="tab" className="doc-list-tab" aria-selected={list === "signed"} onClick={() => setList("signed")}>
             <FileCheck2 size={14} aria-hidden /> Signed by me
           </button>
+          <button type="button" role="tab" className="doc-list-tab" aria-selected={list === "others"} onClick={() => setList("others")}>
+            <Users size={14} aria-hidden /> Others
+            {othersCount !== null && othersCount > 0 && (
+              <span className="doc-list-count" aria-label={`${String(othersCount)} to look at`}>{othersCount}</span>
+            )}
+          </button>
           <button type="button" role="tab" className="doc-list-tab" aria-selected={list === "completed"} onClick={() => setList("completed")}>
             <FileCheck2 size={14} aria-hidden /> Completed
           </button>
@@ -2746,6 +2758,7 @@ function DocumentsPageRealMode() {
         </div>
         {list === "to-sign" && <DocumentsToSignSection onCount={setToSignCount} />}
         {list === "signed" && <SignedByMeSection />}
+        {list === "others" && <OthersSection onCount={setOthersCount} />}
         {(list === "sent" || list === "completed" || list === "draft" || list === "declined") && (<>
         {status === "loading" && (
           <div style={{ padding: "32px 0" }}>

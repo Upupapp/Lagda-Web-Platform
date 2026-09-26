@@ -22,9 +22,21 @@ import {
 import { Z } from "../../../utils/z-index";
 import { ApiError } from "../../../services/api-client";
 import {
-  realMySigningService, continueSigningPath,
+  realMySigningService, continueSigningPath, isSignerEntry, canContinueFromApp,
   type DocumentToSign, type SignedDocument,
 } from "../../../services/real/my-signing.service";
+
+/** What a non-signer is asked to do, in the words the list and dialog use. */
+const ROLE_WORDING: Record<string, { label: string; action: string; verb: string }> = {
+  approver: { label: "Approver", action: "Continue to approve", verb: "approve it" },
+  reviewer: { label: "Reviewer", action: "Continue reviewing", verb: "review it" },
+  "acknowledgment-recipient": { label: "Acknowledgment", action: "Continue to acknowledge", verb: "acknowledge it" },
+  viewer: { label: "Viewer", action: "", verb: "" },
+  "carbon-copy": { label: "Copy recipient", action: "", verb: "" },
+};
+const SIGNER_WORDING = { label: "Signer", action: "Continue signing", verb: "sign it" };
+const wordingFor = (item: Pick<DocumentToSign, "recipientType">) =>
+  (isSignerEntry(item) ? SIGNER_WORDING : ROLE_WORDING[item.recipientType ?? ""]) ?? SIGNER_WORDING;
 
 const GF = { fontFamily: "'Geist', sans-serif" } as const;
 const NAVY = "#07111F";
@@ -226,14 +238,17 @@ function ContinueSigningDialog({ item, onClose }: { item: DocumentToSign; onClos
   };
 
   return (
-    <DialogFrame title="Continue signing" subtitle={item.documentTitle} onClose={onClose}>
+    <DialogFrame title={wordingFor(item).action} subtitle={item.documentTitle} onClose={onClose}>
       {state !== "verified" ? (
         <form onSubmit={e => { e.preventDefault(); void verify(); }}>
           <div style={{ display: "flex", gap: 10, alignItems: "flex-start", marginBottom: 14 }}>
             <Lock size={18} aria-hidden style={{ color: AZURE, flexShrink: 0, marginTop: 2 }} />
             <p style={{ ...GF, margin: 0, fontSize: 13, color: NAVY, lineHeight: 1.6 }}>
-              Confirm it&rsquo;s you before signing. Enter your LAGDA account password
-              &mdash; your signature will be applied to a binding document.
+              {isSignerEntry(item)
+                ? <>Confirm it&rsquo;s you before signing. Enter your LAGDA account password
+                  &mdash; your signature will be applied to a binding document.</>
+                : <>Confirm it&rsquo;s you before you {wordingFor(item).verb}. Enter your LAGDA
+                  account password &mdash; what you do is recorded against this document.</>}
             </p>
           </div>
           <label htmlFor="continue-signing-password" style={{ ...GF, display: "block", fontSize: 12, fontWeight: 600, color: SLATE6, marginBottom: 6 }}>
@@ -287,7 +302,7 @@ function ContinueSigningDialog({ item, onClose }: { item: DocumentToSign; onClos
           }}>
             <ShieldCheck size={18} aria-hidden style={{ color: GREEN, flexShrink: 0, marginTop: 1 }} />
             <p style={{ ...GF, margin: 0, fontSize: 13, color: "#065F46", lineHeight: 1.6 }}>
-              Verified. You can now go to the document and sign it. This step is
+              Verified. You can now go to the document and {wordingFor(item).verb}. This step is
               valid for two minutes.
             </p>
           </div>
@@ -300,7 +315,7 @@ function ContinueSigningDialog({ item, onClose }: { item: DocumentToSign; onClos
               display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8,
             }}
           >
-            Proceed to signing <ArrowRight size={16} aria-hidden />
+            {isSignerEntry(item) ? "Proceed to signing" : "Proceed to the document"} <ArrowRight size={16} aria-hidden />
           </button>
         </div>
       )}
@@ -352,7 +367,9 @@ function EmptyOrError({ status, icon: Icon, emptyTitle, emptyBody, onRetry }: {
   );
 }
 
-const loadToSign = () => realMySigningService.documentsToSign();
+const loadToSign = () => realMySigningService.documentsToSign().then(items => items.filter(isSignerEntry));
+const loadOthers = () => realMySigningService.documentsToSign()
+  .then(items => items.filter(item => !isSignerEntry(item)));
 const loadSigned = () => realMySigningService.signedDocuments();
 
 // ── Documents I must sign ───────────────────────────────────────────────────
@@ -417,6 +434,105 @@ export function DocumentsToSignSection({ onCount }: { onCount?: (count: number) 
                 <div style={{ display: "flex", gap: 8, marginTop: 10, flexWrap: "wrap" }}>
                   <RowButton icon={UserRound} label="See the sender" onClick={() => setSenderFor(item)} />
                   <RowButton icon={PenLine} label="Continue signing" primary onClick={() => setContinueFor(item)} />
+                </div>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+      {senderFor !== null && <SenderDialog item={senderFor} onClose={() => setSenderFor(null)} />}
+      {continueFor !== null && <ContinueSigningDialog item={continueFor} onClose={() => setContinueFor(null)} />}
+    </section>
+  );
+}
+
+// ── Others: documents where this account takes part without signing ────────
+
+function RoleBadge({ item }: { item: DocumentToSign }) {
+  return (
+    <span style={{
+      ...GF, fontSize: 11, fontWeight: 700, color: "#1E40AF", background: "#EFF6FF",
+      border: "1px solid #BFDBFE", borderRadius: 999, padding: "2px 8px", whiteSpace: "nowrap",
+    }}>
+      {wordingFor(item).label}
+    </span>
+  );
+}
+
+function OtherAction({ item, onContinue }: { item: DocumentToSign; onContinue: () => void }) {
+  if (canContinueFromApp(item)) {
+    return <RowButton icon={ArrowRight} label={wordingFor(item).action} primary onClick={onContinue} />;
+  }
+  // Nothing to do in the app: a viewer's access is the emailed link, and a
+  // copy recipient is sent the finished document.
+  return (
+    <span style={{ ...GF, fontSize: 12, color: SLATE6, lineHeight: 1.4 }}>
+      {item.recipientType === "viewer" ? "Open it from your email link" : "You’ll get the completed copy by email"}
+    </span>
+  );
+}
+
+export function OthersSection({ onCount }: { onCount?: (count: number) => void }) {
+  const { items, status, reload } = useList(loadOthers);
+  const [senderFor, setSenderFor] = useState<DocumentToSign | null>(null);
+  const [continueFor, setContinueFor] = useState<DocumentToSign | null>(null);
+
+  useEffect(() => { if (status === "ready") onCount?.(items.length); }, [status, items.length, onCount]);
+
+  return (
+    <section aria-label="Other documents I take part in" style={{ marginTop: 20 }}>
+      <style>{STYLES}</style>
+      {status !== "ready" || items.length === 0 ? (
+        <EmptyOrError
+          status={status} icon={Inbox} onRetry={reload}
+          emptyTitle="Nothing here yet"
+          emptyBody="Documents where you are an approver, reviewer, viewer, copy recipient or acknowledgment recipient will appear here."
+        />
+      ) : (
+        <>
+          <div className="mysign-table" role="table" aria-label="Other documents I take part in">
+            <div role="row" className="mysign-row mysign-head">
+              <div role="columnheader">Document</div>
+              <div role="columnheader">Sent by</div>
+              <div role="columnheader" className="mysign-when">Your role</div>
+              <div role="columnheader" style={{ textAlign: "right" }}>Actions</div>
+            </div>
+            {items.map(item => (
+              <div role="row" className="mysign-row" key={`${item.signingRequestId}:${item.recipientId}`}>
+                <div role="cell" style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                  <FileText size={15} aria-hidden style={{ color: SLATE4, flexShrink: 0 }} />
+                  <span title={item.documentTitle} style={{
+                    ...GF, fontSize: 13, fontWeight: 600, color: NAVY,
+                    overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+                  }}>
+                    {item.documentTitle}
+                  </span>
+                </div>
+                <div role="cell" style={{ ...GF, fontSize: 12.5, color: SLATE6, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }} title={senderLine(item)}>
+                  {senderLine(item)}
+                </div>
+                <div role="cell" className="mysign-when"><RoleBadge item={item} /></div>
+                <div role="cell" className="mysign-actions" style={{ alignItems: "center" }}>
+                  <RowButton icon={UserRound} label="See the sender" onClick={() => setSenderFor(item)} />
+                  <OtherAction item={item} onContinue={() => setContinueFor(item)} />
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="mysign-cards">
+            {items.map(item => (
+              <div key={`${item.signingRequestId}:${item.recipientId}`} style={{
+                border: `1px solid ${SLATE2}`, borderRadius: 10, padding: "12px 14px", marginBottom: 10, background: "#fff",
+              }}>
+                <div style={{ display: "flex", gap: 8, alignItems: "flex-start", justifyContent: "space-between" }}>
+                  <div style={{ ...GF, fontSize: 14, fontWeight: 600, color: NAVY, wordBreak: "break-word", minWidth: 0 }}>{item.documentTitle}</div>
+                  <RoleBadge item={item} />
+                </div>
+                <div style={{ ...GF, fontSize: 12.5, color: SLATE6, marginTop: 4 }}>{senderLine(item)}</div>
+                <div style={{ ...GF, fontSize: 12, color: SLATE4, marginTop: 2 }}>Received {fmtDate(item.invitedAt)}</div>
+                <div style={{ display: "flex", gap: 8, marginTop: 10, flexWrap: "wrap", alignItems: "center" }}>
+                  <RowButton icon={UserRound} label="See the sender" onClick={() => setSenderFor(item)} />
+                  <OtherAction item={item} onContinue={() => setContinueFor(item)} />
                 </div>
               </div>
             ))}

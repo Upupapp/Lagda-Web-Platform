@@ -15,6 +15,8 @@ export interface DocumentToSign {
   signingRequestId: string;
   recipientId: string;
   documentTitle: string;
+  /** The role on the request. Null only for an entry from before the role was recorded — a signer's. */
+  recipientType: string | null;
   senderName: string | null;
   senderEmail: string | null;
   workspaceName: string | null;
@@ -65,6 +67,17 @@ class RealMySigningService {
 }
 
 export const realMySigningService = new RealMySigningService();
+
+/** "I must sign" is a signer's list; every other role is listed under "Others". */
+export function isSignerEntry(item: Pick<DocumentToSign, "recipientType">): boolean {
+  return item.recipientType === null || item.recipientType === "signer";
+}
+
+/** Roles that act in the ceremony and so can continue from the app. */
+export function canContinueFromApp(item: Pick<DocumentToSign, "recipientType">): boolean {
+  return item.recipientType === "approver" || item.recipientType === "reviewer"
+    || item.recipientType === "acknowledgment-recipient" || isSignerEntry(item);
+}
 
 /** Where "Proceed to signing" goes. The code rides in the fragment, never sent to a server. */
 export function continueSigningPath(code: string): string {

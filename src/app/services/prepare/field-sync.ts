@@ -11,7 +11,7 @@ import type { BackendFieldType, BackendPreparationField, BackendPreparationField
 
 const BACKEND_FIELD_TYPES = new Set<FieldType>([
   "signature", "initials", "date-signed", "text",
-  "checkbox", "full-name", "email", "title", "company",
+  "checkbox", "full-name", "email", "title", "company", "signature-block",
 ]);
 
 export function isBackendFieldType(type: FieldType): type is BackendFieldType {

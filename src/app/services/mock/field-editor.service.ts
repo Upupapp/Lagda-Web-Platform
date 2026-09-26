@@ -247,7 +247,7 @@ class MockFieldEditorService {
     const coverageMap = new Map<string, ParticipantFieldCoverage>();
     draft.participants.forEach((pax, _i) => {
       const paxFields    = fields.filter(f => f.participantId === pax.id);
-      const hasSignature = paxFields.some(f => f.type === "signature");
+      const hasSignature = paxFields.some(f => f.type === "signature" || f.type === "signature-block");
       const issues:      FieldValidationIssue[] = [];
 
       if (pax.role === "signer" && !hasSignature) {

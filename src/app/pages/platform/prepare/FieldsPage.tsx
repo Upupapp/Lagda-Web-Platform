@@ -169,6 +169,27 @@ const HANDLE_CURSORS: Record<ResizeHandle, string> = {
   sw: "nesw-resize", s: "ns-resize",   se: "nwse-resize",
 };
 
+// ── Signature over name ───────────────────────────────────────────────────────
+// The rule and the printed name, positioned as the sealed page will draw them.
+function SignatureBlockPreview({ name, color }: { name: string; color: string }) {
+  return (
+    <>
+      <span aria-hidden="true" style={{
+        position: "absolute", left: "6%", right: "6%", top: "66%",
+        borderTop: `1px solid ${color}`, pointerEvents: "none",
+      }} />
+      <span aria-hidden="true" style={{
+        position: "absolute", left: "4%", right: "4%", top: "calc(66% + 2px)",
+        textAlign: "center", fontFamily: "Tinos, 'Times New Roman', Times, serif",
+        fontSize: "min(11px, 1.8vw)", lineHeight: 1.15, color: "#0F172A",
+        whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", pointerEvents: "none",
+      }}>
+        {name || "Signer's full name"}
+      </span>
+    </>
+  );
+}
+
 // ── FieldElement ──────────────────────────────────────────────────────────────
 interface FieldElementProps {
   field:       FieldDefinition;
@@ -183,6 +204,7 @@ interface FieldElementProps {
 function FieldElement({ field, isSelected, identity, isSender, onPointerDown, onResizeDown, overrideRect }: FieldElementProps) {
   const rect     = overrideRect ?? field.rect;
   const canResize = FIELD_SIZE_CONSTRAINTS[field.type].resizable;
+  const isBlock  = field.type === "signature-block";
 
   const bg = isSender
     ? "#FFF9EC"
@@ -219,9 +241,10 @@ function FieldElement({ field, isSelected, identity, isSender, onPointerDown, on
         cursor:      overrideRect ? "grabbing" : "grab",
         zIndex:      field.layer + (isSelected ? 100 : 0),
         display:     "flex",
-        alignItems:  "center",
+        // A signature block keeps its label in the signing area, above the rule.
+        alignItems:  isBlock ? "flex-start" : "center",
         justifyContent: "space-between",
-        padding:     "0 6%",
+        padding:     isBlock ? "3% 6% 0" : "0 6%",
         boxSizing:   "border-box",
         overflow:    "hidden",
         userSelect:  "none",
@@ -258,6 +281,8 @@ function FieldElement({ field, isSelected, identity, isSender, onPointerDown, on
         <span style={{ marginRight: 3 }} aria-hidden="true">{FIELD_TYPE_ICONS[field.type]}</span>
         {field.label}
       </span>
+
+      {isBlock && <SignatureBlockPreview name={identity?.displayName ?? ""} color={identity?.colorHex ?? "#4B5E70"} />}
 
       {/* Participant badge */}
       {identity && !isSender && (

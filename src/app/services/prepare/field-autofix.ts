@@ -80,7 +80,7 @@ export function preferredAssignee(
 ): string | null {
   const eligible = eligibleParticipants(fieldType, participants);
   if (eligible.length === 1) return eligible[0]!.id;
-  if (fieldType === "signature") {
+  if (fieldType === "signature" || fieldType === "signature-block") {
     const signers = eligible.filter((p) => p.role === "signer");
     if (signers.length === 1) return signers[0]!.id;
   }

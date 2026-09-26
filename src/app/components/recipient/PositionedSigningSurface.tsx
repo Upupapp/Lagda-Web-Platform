@@ -66,7 +66,14 @@ export interface PositionedSigningSurfaceProps {
   readonly disabled?: boolean;
   /** Marks the server holds for this session, offered before the three ways. */
   readonly prepared?: readonly PreparedMark[];
+  /** Printed under a signature-over-name field, as the sealed page will. */
+  readonly signerName?: string;
 }
+
+/** Where the rule sits in a signature-over-name box, matching the sealer. */
+const BLOCK_RULE_AT = 0.66;
+/** The printed name's size on the sealed page, in points. */
+const BLOCK_NAME_PT = 11;
 
 /** What a field box shows when it has been filled. */
 function FilledMark({ value, prepared }: {
@@ -117,7 +124,7 @@ function FilledMark({ value, prepared }: {
 
 export function PositionedSigningSurface({
   loadBlob, fields, signature, initials, textValues,
-  onSignature, onInitials, onTextValue, disabled = false, prepared,
+  onSignature, onInitials, onTextValue, disabled = false, prepared, signerName = "",
 }: PositionedSigningSurfaceProps) {
   const document_ = useRealDocument(loadBlob);
   const wrapRef = useRef<HTMLDivElement | null>(null);
@@ -188,7 +195,7 @@ export function PositionedSigningSurface({
     field.type === "initials" ? initials : signature;
 
   const remaining = mine.filter(field => {
-    if (field.type === "signature") return signature === null;
+    if (field.type === "signature" || field.type === "signature-block") return signature === null;
     if (field.type === "initials") return initials === null;
     if (!field.required) return false;
     if (field.type === "checkbox") return textValues[field.fieldId] !== true;
@@ -257,7 +264,8 @@ export function PositionedSigningSurface({
                 />
 
                 {onPage.map(field => {
-                  const isMark = field.type === "signature" || field.type === "initials";
+                  const isBlock = field.type === "signature-block";
+                  const isMark = field.type === "signature" || field.type === "initials" || isBlock;
                   const mark = isMark ? valueFor(field) : null;
                   const filled = isMark
                     ? mark !== null
@@ -290,7 +298,87 @@ export function PositionedSigningSurface({
                       }}
                     >
                       {isMark
-                        ? (
+                        ? isBlock
+                          ? (
+                            <>
+                              <div style={{ position: "absolute", left: 0, right: 0, top: 0, height: `${String(BLOCK_RULE_AT * 100)}%` }}>
+                                <button
+                              type="button"
+                              disabled={disabled}
+                              onClick={() => {
+                                setCapturing(field.type === "initials" ? "initials" : "signature");
+                              }}
+                              aria-label={
+                                mark === null
+                                  ? `Add your ${field.type === "initials" ? "initials" : "signature"} — ${field.label}`
+                                  : `Change your ${field.type === "initials" ? "initials" : "signature"} — ${field.label}`
+                              }
+                              style={{
+                                // ── The tap target, expanded past the box ──
+                                //
+                                // A field is drawn at its TRUE size, because it
+                                // has to match what the merge will render. At
+                                // 320px a 8%-tall box on an A4 page is about
+                                // 35px — under the 44px a finger hits reliably.
+                                //
+                                // So the visual box stays exactly where the
+                                // sender put it, and the BUTTON grows around
+                                // its centre to reach 44px. The mark still
+                                // renders at the box's real size; only the
+                                // area that accepts a tap is larger.
+                                position: "absolute",
+                                left: "50%", top: "50%",
+                                transform: "translate(-50%, -50%)",
+                                width: "max(100%, 44px)", height: "max(100%, 44px)",
+                                border: "none",
+                                background: "transparent", cursor: disabled ? "not-allowed" : "pointer",
+                                display: "flex", alignItems: "center", justifyContent: "center",
+                                padding: 2,
+                              }}
+                            >
+                              {mark === null
+                                ? (
+                                  <span style={{
+                                    ...GF, fontWeight: 800, whiteSpace: "nowrap",
+                                    // A floor as well as a ceiling: `min(1.6vw, …)`
+                                    // alone renders ~5px at 320px, which is not
+                                    // a legible prompt.
+                                    fontSize: "clamp(9px, 1.9vw, 12px)",
+                                    color: AMBER, letterSpacing: "0.02em",
+                                  }}>
+                                    {field.type === "initials" ? "Initials" : "Sign"}
+                                  </span>
+                                )
+                                : (
+                                  <FilledMark
+                                    value={mark}
+                                    prepared={prepared?.find(
+                                      entry => entry.purpose === (
+                                        field.type === "initials" ? "initials" : "signature"
+                                      )) ?? null}
+                                  />
+                                )}
+                            </button>
+                              </div>
+                              <div aria-hidden style={{
+                                position: "absolute", left: "6%", right: "6%",
+                                top: `${String(BLOCK_RULE_AT * 100)}%`, borderTop: `1px solid ${NAVY}`,
+                              }} />
+                              <div style={{
+                                position: "absolute", left: 0, right: 0,
+                                top: `calc(${String(BLOCK_RULE_AT * 100)}% + 2px)`,
+                                textAlign: "center", color: NAVY, lineHeight: 1.1,
+                                // The face and size the sealed page prints the name in.
+                                fontFamily: "Tinos, 'Times New Roman', Times, serif",
+                                fontSize: `${String(width * (BLOCK_NAME_PT / size.width))}px`,
+                                whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
+                                pointerEvents: "none",
+                              }}>
+                                {signerName}
+                              </div>
+                            </>
+                          )
+                          : (
                           <button
                             type="button"
                             disabled={disabled}
@@ -299,8 +387,8 @@ export function PositionedSigningSurface({
                             }}
                             aria-label={
                               mark === null
-                                ? `Add your ${field.type} — ${field.label}`
-                                : `Change your ${field.type} — ${field.label}`
+                                ? `Add your ${field.type === "initials" ? "initials" : "signature"} — ${field.label}`
+                                : `Change your ${field.type === "initials" ? "initials" : "signature"} — ${field.label}`
                             }
                             style={{
                               // ── The tap target, expanded past the box ──

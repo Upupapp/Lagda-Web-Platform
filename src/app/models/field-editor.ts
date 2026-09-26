@@ -20,6 +20,7 @@ export function makeFieldId(): FieldId {
 
 export type FieldType =
   | "signature"
+  | "signature-block"
   | "initials"
   | "full-name"
   | "date-signed"
@@ -85,6 +86,8 @@ export interface FieldSizeConstraints {
 // checkbox 24×24px → w=24/595≈0.040, h=24/842≈0.028
 export const FIELD_SIZE_CONSTRAINTS: Record<FieldType, FieldSizeConstraints> = {
   "signature":      { defaultWidth: 0.302, defaultHeight: 0.059, minWidth: 0.10,  minHeight: 0.030, maxWidth: 0.65, maxHeight: 0.130, resizable: true  },
+  // Tall enough for the mark, the rule and an 11pt name beneath it.
+  "signature-block":{ defaultWidth: 0.336, defaultHeight: 0.095, minWidth: 0.20,  minHeight: 0.070, maxWidth: 0.65, maxHeight: 0.180, resizable: true  },
   "initials":       { defaultWidth: 0.118, defaultHeight: 0.047, minWidth: 0.060, minHeight: 0.030, maxWidth: 0.25, maxHeight: 0.090, resizable: true  },
   "full-name":      { defaultWidth: 0.336, defaultHeight: 0.036, minWidth: 0.15,  minHeight: 0.024, maxWidth: 0.75, maxHeight: 0.060, resizable: true  },
   "date-signed":    { defaultWidth: 0.218, defaultHeight: 0.036, minWidth: 0.12,  minHeight: 0.024, maxWidth: 0.42, maxHeight: 0.060, resizable: true  },
@@ -103,6 +106,7 @@ export const FIELD_SIZE_CONSTRAINTS: Record<FieldType, FieldSizeConstraints> = {
 
 export const FIELD_TYPE_LABELS: Record<FieldType, string> = {
   "signature":      "Signature",
+  "signature-block":"Signature over Name",
   "initials":       "Initials",
   "full-name":      "Full Name",
   "date-signed":    "Date Signed",
@@ -119,6 +123,7 @@ export const FIELD_TYPE_LABELS: Record<FieldType, string> = {
 
 export const FIELD_TYPE_ICONS: Record<FieldType, string> = {
   "signature":      "✍",
+  "signature-block":"✍",
   "initials":       "Ii",
   "full-name":      "Aa",
   "date-signed":    "📅",
@@ -135,6 +140,7 @@ export const FIELD_TYPE_ICONS: Record<FieldType, string> = {
 
 export const FIELD_TYPE_DESCRIPTIONS: Record<FieldType, string> = {
   "signature":      "Participant handwritten or typed signature",
+  "signature-block":"Signature with the participant's full name printed beneath it — they only sign",
   "initials":       "Participant initials on a page",
   "full-name":      "Participant's legal full name",
   "date-signed":    "Date recorded when participant completes this field",
@@ -153,6 +159,7 @@ export const FIELD_TYPE_DESCRIPTIONS: Record<FieldType, string> = {
 export type FieldPlanTier = "all" | "standard" | "enterprise" | "planned";
 export const FIELD_PLAN_TIER: Record<FieldType, FieldPlanTier> = {
   "signature":      "all",
+  "signature-block":"all",
   "initials":       "all",
   "full-name":      "all",
   "date-signed":    "all",
@@ -168,7 +175,7 @@ export const FIELD_PLAN_TIER: Record<FieldType, FieldPlanTier> = {
 };
 
 export const FIELD_TYPE_GROUPS: { label: string; types: FieldType[] }[] = [
-  { label: "Signature & Identity",  types: ["signature", "initials", "full-name", "date-signed"] },
+  { label: "Signature & Identity",  types: ["signature", "signature-block", "initials", "full-name", "date-signed"] },
   { label: "Data Entry",            types: ["text", "multiline-text", "checkbox", "radio-group"] },
   { label: "Participant Details",   types: ["email", "title", "company"] },
   { label: "Acknowledgment",        types: ["acknowledgment"] },
@@ -184,6 +191,9 @@ export const FIELD_ELIGIBLE_ROLES: Record<FieldType, PrepParticipantRole[]> = {
   // an approver's signature to a signer, or into an unfixable loop. Neither
   // is REQUIRED: an approver completes by approving, with or without fields.
   "signature":      ["signer", "approver", "reviewer"],
+  // Signers only: an approver's signature boxes are stamped with the approval
+  // outcome instead, and a printed name under that stamp would misstate it.
+  "signature-block":["signer"],
   "initials":       ["signer", "approver"],
   "full-name":      ["signer", "approver", "reviewer", "acknowledgment-recipient"],
   "date-signed":    ["signer", "approver"],

@@ -14,7 +14,7 @@ import { apiRequest } from "../api-client";
 // boundary between what can be persisted and what stays local-only.
 export type BackendFieldType =
   | "signature" | "initials" | "date-signed" | "text"
-  | "checkbox" | "full-name" | "email" | "title" | "company";
+  | "checkbox" | "full-name" | "email" | "title" | "company" | "signature-block";
 
 export interface BackendRect {
   x: number;

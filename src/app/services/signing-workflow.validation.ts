@@ -91,7 +91,7 @@ export function computeFieldReadiness(
   }
 
   const ownFields = presentFields.filter(f => f.ownerAssignmentId === assignment.id);
-  const hasOwnSignature = ownFields.some(f => f.fieldType === "signature");
+  const hasOwnSignature = ownFields.some(f => f.fieldType === "signature" || f.fieldType === "signature-block");
   const hasOwnInitials  = ownFields.some(f => f.fieldType === "initials");
 
   const missingFieldTypes: StageParticipantFieldReadiness["missingFieldTypes"] = [];
