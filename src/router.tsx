@@ -495,6 +495,11 @@ const BookADemo = lazy(() =>
     default: m.BookADemo,
   })),
 );
+const VerifyRecord = lazy(() =>
+  import("./app/pages/public/verify/VerifyRecord").then((m) => ({
+    default: m.VerifyRecord,
+  })),
+);
 const VerifyDocument = lazy(() =>
   import("./app/pages/public/verify/VerifyDocument").then((m) => ({
     default: m.VerifyDocument,
@@ -541,6 +546,11 @@ const SessionExpired = lazy(() =>
 );
 
 // Verify (Command 17)
+const VerifyRecordPage = lazy(() =>
+  import("./app/pages/platform/verify/RealPlatformVerify").then((m) => ({
+    default: m.VerifyRecordPage,
+  })),
+);
 const VerifyPage = lazy(() =>
   import("./app/pages/platform/VerifyPage").then((m) => ({
     default: m.VerifyPage,
@@ -2108,6 +2118,14 @@ export const router = createBrowserRouter([
           </Suspense>
         ),
       },
+      {
+        path: "verify/:verificationId",
+        element: (
+          <Suspense fallback={null}>
+            <VerifyRecordPage />
+          </Suspense>
+        ),
+      },
 
       // The workspace half of the signing account handoff. Nothing links
       // here; the signing tab opens it. It lives under /app so the existing
@@ -2848,6 +2866,7 @@ export const router = createBrowserRouter([
       // ── Conversion flows (Command 10) ─────────────────────────────────────
       { path: "book-a-demo", element: <BookADemo /> },
       { path: "verify", element: <VerifyDocument /> },
+      { path: "verify/:verificationId", element: <VerifyRecord /> },
 
       // ── Features pages ────────────────────────────────────────────────────
       { path: "features", element: <FeaturesOverview /> },

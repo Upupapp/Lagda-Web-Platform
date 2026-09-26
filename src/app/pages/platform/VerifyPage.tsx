@@ -12,6 +12,8 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useSearchParams, Link } from "react-router";
 import { usePlatform } from "../../context/PlatformContext";
+import { USE_REAL_BACKEND } from "../../services/backend-flag";
+import { RealPlatformVerify } from "./verify/RealPlatformVerify";
 import { PageHeader } from "../../components/platform";
 import { verificationService } from "../../services/mock/verification.service";
 import { DEMO_VERIFICATION_IDS } from "../../data/mock/verification";
@@ -313,6 +315,11 @@ function CopyButton({ text, label }: { text: string; label: string }) {
 // ── Main component ────────────────────────────────────────────────────────────
 
 export function VerifyPage() {
+  if (USE_REAL_BACKEND) return <RealPlatformVerify />;
+  return <DemoVerifyPage />;
+}
+
+function DemoVerifyPage() {
   const { hasPermission } = usePlatform();
   const canVerify = hasPermission("verify_documents");
 

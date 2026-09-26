@@ -34,6 +34,8 @@ export interface RealDocument {
   createdAt: string;
   updatedAt: string;
   source: RealDocumentSource | null;
+  /** The Verification ID of the latest sealed completion, or null. */
+  verificationId?: string | null;
 }
 
 export interface RealDocumentListResult {
