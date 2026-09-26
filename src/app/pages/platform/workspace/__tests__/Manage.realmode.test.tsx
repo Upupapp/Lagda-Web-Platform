@@ -5,7 +5,7 @@
 // and suspend / deactivate never appear.
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, within, waitFor } from "@testing-library/react";
+import { render, screen, within, waitFor, act } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Routes, Route } from "react-router";
 
@@ -35,6 +35,8 @@ import { ActivityPage } from "../ActivityPage";
 import { MemberDetailPage } from "../MemberDetailPage";
 import { EMPTY_ACTIVITY_MESSAGE } from "../real/RealActivityPage";
 import { ROLE_CAPABILITIES } from "../../../../models/workspace-role-policy";
+import { resetWorkspaceBrandingStore, setWorkspaceBrandingSnapshot } from "../../../../hooks/workspace-branding-store";
+import { publishWorkspaceBranding } from "../../../../hooks/useWorkspaceBrandingSync";
 
 function json(status: number, body: unknown): Response {
   return new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json" } });
@@ -159,7 +161,58 @@ describe("Manage overview — real backend", () => {
     expect(screen.queryByText(/Billing email/)).toBeNull();
     expect(screen.queryByText(/Plan/)).toBeNull();
     expect(screen.getByTestId("your-role")).toHaveTextContent("Owner");
-    expect(screen.getByTestId("workspace-facts")).toHaveTextContent("January 15, 2026");
+    // The old "This workspace" panel is gone; its facts live in the brand card.
+    expect(screen.queryByTestId("workspace-facts")).toBeNull();
+    expect(screen.queryByRole("heading", { name: "This workspace" })).toBeNull();
+    await waitFor(() => expect(screen.getByTestId("brand-card-created")).toHaveTextContent("January 15, 2026"));
+  });
+
+  it("puts the branded card first, with sender, created date, role and an edit link for owners", async () => {
+    resetWorkspaceBrandingStore();
+    setWorkspaceBrandingSnapshot("ws_1", {
+      displayName: "Reyes Law Office", senderDisplayName: null, footerTagline: null, primaryColor: null, logoUrl: null, canEdit: true,
+    });
+    renderAt("/app/workspace");
+    const card = await screen.findByTestId("workspace-brand-card");
+    expect(within(card).getByTestId("brand-card-name")).toHaveTextContent("Reyes Law Office");
+    expect(card).toHaveTextContent("Workspace overview");
+    expect(within(card).getByTestId("brand-card-sender")).toHaveTextContent("Each sender's own name");
+    expect(within(card).getByTestId("your-privileges")).toHaveTextContent("Both privileges come with your role.");
+    expect(within(card).getByRole("link", { name: "What your role can do →" })).toHaveAttribute("href", "/app/workspace/roles");
+    expect(within(card).getByTestId("edit-branding-link")).toHaveAttribute("href", "/app/settings/branding");
+    expect(card).toHaveTextContent("Powered by LAGDA");
+    // Nothing customised yet: an owner is invited to add a logo and colours.
+    expect(within(card).getByTestId("brand-card-prompt")).toHaveTextContent("Add your logo and colours");
+    // First in the section: before the count tiles.
+    const stats = await screen.findByTestId("overview-stats");
+    expect(card.compareDocumentPosition(stats) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it("updates the card at once when branding is published after a save", async () => {
+    resetWorkspaceBrandingStore();
+    renderAt("/app/workspace");
+    const card = await screen.findByTestId("workspace-brand-card");
+    act(() => {
+      publishWorkspaceBranding("ws_1", {
+        displayName: "Reyes & Partners", senderDisplayName: "Reyes Legal Desk", footerTagline: "Trusted since 1990",
+        primaryColor: "#7C3AED", logo: { version: "v2", width: 200, height: 80 }, updatedAt: NOW, canEdit: true,
+      }, { applyWorkspaceBranding: vi.fn(), applyWorkspaceRename: vi.fn(), currentWorkspace: platform.currentWorkspace } as never);
+    });
+    expect(within(card).getByTestId("brand-card-name")).toHaveTextContent("Reyes & Partners");
+    expect(within(card).getByTestId("brand-card-sender")).toHaveTextContent("Reyes Legal Desk");
+    expect(card).toHaveTextContent("Trusted since 1990");
+    expect(within(card).getByRole("img", { name: "Reyes & Partners logo" })).toHaveAttribute("src", expect.stringContaining("/workspaces/ws_1/branding/logo?v=v2"));
+    expect(within(card).queryByTestId("brand-card-prompt")).toBeNull();
+  });
+
+  it("hides the edit link from a member", async () => {
+    resetWorkspaceBrandingStore();
+    accessRole = "member";
+    platform.role = "member";
+    renderAt("/app/workspace");
+    const card = await screen.findByTestId("workspace-brand-card");
+    await waitFor(() => expect(within(card).queryByTestId("edit-branding-link")).toBeNull());
+    expect(within(card).queryByTestId("brand-card-prompt")).toBeNull();
   });
 
   it("builds Needs attention from pending join requests and invitations about to expire", async () => {

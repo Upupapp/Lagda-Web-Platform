@@ -15,6 +15,7 @@ import { useWorkspaceMode } from "./useWorkspaceAccess";
 import {
   realWorkspaceBrandingService, workspaceLogoUrl, type RealWorkspaceBranding,
 } from "../services/real/workspace-branding.service";
+import { setWorkspaceBrandingSnapshot } from "./workspace-branding-store";
 
 const CHANNEL = "lagda.workspace-branding";
 export const BRANDING_POLL_MS = 60_000;
@@ -39,9 +40,16 @@ function apply(
   workspaceId: string, branding: RealWorkspaceBranding,
   applyBranding: ApplyFn, applyRename: RenameFn, currentName: string | undefined,
 ): void {
-  applyBranding(workspaceId, {
-    brandColor: branding.primaryColor,
-    logoUrl: branding.logo === null ? null : workspaceLogoUrl(workspaceId, branding.logo.version),
+  const logoUrl = branding.logo === null ? null : workspaceLogoUrl(workspaceId, branding.logo.version);
+  applyBranding(workspaceId, { brandColor: branding.primaryColor, logoUrl });
+  // The full branding, for the Overview card and anything else that shows it.
+  setWorkspaceBrandingSnapshot(workspaceId, {
+    displayName: branding.displayName,
+    senderDisplayName: branding.senderDisplayName,
+    footerTagline: branding.footerTagline,
+    primaryColor: branding.primaryColor,
+    logoUrl,
+    canEdit: branding.canEdit,
   });
   if (currentName !== undefined && currentName !== branding.displayName) {
     applyRename(workspaceId, branding.displayName);

@@ -10,6 +10,7 @@ import type { WorkspaceBranding } from "../../../models/settings";
 import { useWorkspaceMode } from "../../../hooks/useWorkspaceAccess";
 import { RealBrandingPage } from "./RealBrandingPage";
 import { BrandPreview, contrastRatio } from "./branding-preview";
+import { publishDemoBranding } from "../../../hooks/workspace-branding-store";
 
 const GF    = { fontFamily: "'Geist', sans-serif" };
 const NAVY  = "#07111F";
@@ -78,6 +79,7 @@ function DemoBrandingPage() {
       footerTagline:     form.footerTagline,
     });
     setBranding(updated);
+    publishDemoBranding(updated);
     setSaving(false);
     setDirty(false);
     setSaved(true);
@@ -97,6 +99,7 @@ function DemoBrandingPage() {
   const performReset = async () => {
     const reset = await mockBrandingSettingsService.resetBrandingDemonstration();
     setBranding(reset);
+    publishDemoBranding(reset);
     setForm({ ...reset });
     if (objRef.current) { URL.revokeObjectURL(objRef.current); objRef.current = null; }
     if (fileRef.current) fileRef.current.value = "";

@@ -16,6 +16,7 @@ const CommandPalette = lazy(() =>
   import("./CommandPalette").then(m => ({ default: m.CommandPalette })),
 );
 import { Z } from "../../utils/z-index";
+import lagdaLogoFull from "../../../brand elements/svg/LagdaLogoPrimaryHorizontalFullColor.svg";
 import { isPaletteShortcut, paletteShortcutLabel } from "../../utils/keyboard-shortcuts";
 
 const GF    = { fontFamily: "'Geist', sans-serif" };
@@ -74,6 +75,24 @@ export function PlatformHeader({ pageTitle }: PlatformHeaderProps) {
           padding: "0 20px", gap: 12,
         }}
       >
+        {/* LAGDA logo — moved here from the sidebar top. The SVG canvas has
+            generous padding around the wordmark, so the image is scaled up
+            and cropped to the wordmark inside a fixed 120px box. */}
+        <Link
+          to="/app/dashboard"
+          aria-label="LAGDA — Go to Dashboard"
+          className="header-logo-link"
+          data-testid="header-logo"
+          style={{ flexShrink: 0, display: "block", width: 120, height: 32, overflow: "hidden", borderRadius: 4 }}
+        >
+          <img
+            src={lagdaLogoFull}
+            alt="LAGDA"
+            style={{ display: "block", width: 143, height: 107, maxWidth: "none", margin: "-35px 0 0 -12px" }}
+          />
+        </Link>
+        <span aria-hidden style={{ flexShrink: 0, width: 1, height: 22, background: "#CBD5E1" }} />
+
         {/* Page title / breadcrumb */}
         <div style={{ flex: 1, minWidth: 0 }}>
           <h1
@@ -169,6 +188,7 @@ export function PlatformHeader({ pageTitle }: PlatformHeaderProps) {
         .header-search-btn:hover { background: #E2E8F0 !important; }
         .header-search-btn:focus-visible { outline: 2px solid #0078D4; outline-offset: 2px; }
         .header-help-btn:hover { color: #0078D4 !important; background: rgba(0,120,212,0.08) !important; }
+        .header-logo-link:focus-visible { outline: 2px solid #0078D4; outline-offset: 2px; }
         .header-help-btn:focus-visible { outline: 2px solid #0078D4; outline-offset: 2px; }
         @media (min-width: 640px) {
           .search-label { display: inline !important; }
