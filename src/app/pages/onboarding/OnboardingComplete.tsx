@@ -1,7 +1,14 @@
 // C13 — Onboarding completion screen.
-// NEVER says "Account created", "Workspace created", or "Subscription active".
-// Uses frontend-demo language for all success messaging.
-// Redirects to /app/dashboard after a short celebration.
+//
+// The checklist claims only what actually happened during onboarding:
+//   "Profile saved"                      — always (step 1 cannot be skipped)
+//   "Workspace ready" / "Join request sent to …"
+//   "Two-step verification on"           — only when it is
+//
+// The workspace is created on the Workspace step now, not here. This screen
+// keeps a SAFETY NET only: with a real backend, if the account still has no
+// workspace and the person chose personal/team, it creates the named one
+// before opening the dashboard (as this screen used to do for everyone).
 
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
@@ -13,47 +20,50 @@ import lagdaHeaderLogo from "../../../brand elements/svg/LagdaLogoPrimaryHorizon
 const GF = { fontFamily: "'Geist', sans-serif" };
 const GM = { fontFamily: "'Geist Mono', monospace" };
 
-const CHECKLIST = [
-  "Profile information saved",
-  "Notification preferences applied",
-  "Security preferences saved",
-  "Workspace configuration recorded",
-];
-
 export function OnboardingComplete() {
   const navigate = useNavigate();
-  const { reset, returnTo, draft } = useOnboarding();
+  const { reset, returnTo, draft, mfaSetupDone } = useOnboarding();
   const platform = usePlatform();
   const [visible, setVisible] = useState(0);
   const [ready, setReady] = useState(false);
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
 
+  const joining = draft.workspace.scenario === "join" && draft.workspace.joinRequest !== null;
+  const CHECKLIST = [
+    "Profile saved",
+    joining
+      ? `Join request sent to ${draft.workspace.joinRequest?.workspaceName ?? "the workspace"}`
+      : "Workspace ready",
+    ...(draft.security.mfaEnabled || mfaSetupDone ? ["Two-step verification on"] : []),
+  ];
+  const checklistLength = CHECKLIST.length;
+
   // Animate checklist items in
   useEffect(() => {
     const timers: ReturnType<typeof setTimeout>[] = [];
-    CHECKLIST.forEach((_, i) => {
+    for (let i = 0; i < checklistLength; i++) {
       timers.push(setTimeout(() => setVisible(i + 1), 300 + i * 280));
-    });
+    }
     timers.push(
-      setTimeout(() => setReady(true), 300 + CHECKLIST.length * 280 + 200),
+      setTimeout(() => setReady(true), 300 + checklistLength * 280 + 200),
     );
     return () => timers.forEach(clearTimeout);
-  }, []);
+  }, [checklistLength]);
 
   async function goToDashboard() {
     // Capture before reset() clears it — a visitor who started this account
-    // from an expired /app link (or a pre-auth document upload) lands back
-    // there, not the generic dashboard.
+    // from an expired /app link lands back there, not the generic dashboard.
     const destination = returnTo ?? "/app/dashboard";
 
-    // Real backend, and this account doesn't already have a workspace
-    // (workspaceStatus is only "empty" for a genuinely zero-workspace
-    // account — see PlatformContext) — create the one this wizard's
-    // workspace step collected a name for. "invitation" scenario is
-    // deliberately skipped: that account doesn't own a workspace to create,
-    // membership arrives separately via accepting the actual invite.
-    if (USE_REAL_BACKEND && platform.workspaceStatus === "empty" && draft.workspace.scenario !== "invitation") {
+    // Safety net — see the header. Joining is deliberately skipped: a join
+    // request creates no workspace, and a zero-workspace account reaches the
+    // dashboard's "create your workspace" state, which is correct.
+    const scenario = draft.workspace.scenario;
+    if (
+      USE_REAL_BACKEND && platform.workspaceStatus === "empty"
+      && (scenario === "personal" || scenario === "team")
+    ) {
       setCreating(true);
       setCreateError(null);
       const name = draft.workspace.workspaceName.trim()
@@ -62,8 +72,7 @@ export function OnboardingComplete() {
       setCreating(false);
       if (!result.ok) {
         setCreateError(result.error);
-        return; // Stay on this screen — do not fabricate success or proceed
-                // to a destination workspace-scoped pages will crash without.
+        return; // Stay on this screen — do not fabricate success.
       }
     }
 
@@ -161,8 +170,9 @@ export function OnboardingComplete() {
             margin: "0 0 28px",
           }}
         >
-          Your setup preferences are saved. Continue to your workspace when you
-          are ready.
+          {joining
+            ? "Your profile is saved and your join request is waiting for approval. You can look around in the meantime."
+            : "Your profile and workspace are saved. Continue to your dashboard when you are ready."}
         </p>
 
         {/* Animated checklist */}

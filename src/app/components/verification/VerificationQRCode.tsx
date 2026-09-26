@@ -9,7 +9,7 @@
 import { useEffect, useState } from "react";
 import QRCode from "qrcode";
 
-export function VerificationQRCode({ url, size = 128 }: { url: string; size?: number }) {
+export function VerificationQRCode({ url, size = 128, alt }: { url: string; size?: number; alt?: string }) {
   const [dataUrl, setDataUrl] = useState<string | null>(null);
 
   useEffect(() => {
@@ -31,7 +31,7 @@ export function VerificationQRCode({ url, size = 128 }: { url: string; size?: nu
       src={dataUrl}
       width={size}
       height={size}
-      alt={`QR code linking to the verification page for ${url}`}
+      alt={alt ?? `QR code linking to the verification page for ${url}`}
       style={{ borderRadius: 8, border: "1px solid rgba(0,0,0,0.08)" }}
     />
   );

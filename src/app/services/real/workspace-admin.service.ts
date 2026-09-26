@@ -45,7 +45,9 @@ export const REAL_ROLE_LABELS: Record<BackendWorkspaceRole, string> = {
   sender: "Sender",
   reviewer: "Reviewer",
   auditor: "Auditor",
-  member: "Member",
+  // 078: an approved join request becomes a `member`; the product calls
+  // them "New Comers" until an owner or administrator types a title.
+  member: "New Comer",
 };
 
 /** A role a caller may ASSIGN. Ownership transfers by its own, separate
@@ -62,6 +64,10 @@ interface WireMember {
   role: BackendWorkspaceRole;
   joinedAt: number;
   isCurrentUser: boolean;
+  /** 078 — absent from an older backend; treated as "none granted". */
+  roleTitle?: string | null;
+  canRequestDocuments?: boolean;
+  canAssignSigners?: boolean;
 }
 
 interface WireInvitation {
@@ -92,6 +98,9 @@ function toSummary(member: WireMember): WorkspaceMemberSummary {
     isOwner: member.role === "owner",
     joinedAt: iso(member.joinedAt),
     demonstrationOnly: false,
+    roleTitle: member.roleTitle ?? null,
+    canRequestDocuments: member.canRequestDocuments === true,
+    canAssignSigners: member.canAssignSigners === true,
   };
 }
 

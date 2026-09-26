@@ -8,11 +8,26 @@
 
 export const DEFAULT_RETURN_PATH = "/app/dashboard";
 
-/** Validates a `returnTo`/`redirect` query value. Only /app paths are safe. */
+// The two credential pages a signed-out visitor is sent away from and must
+// come back to (078): a join link (`/join/<token>`) and an emailed workspace
+// invitation (`/invitations/accept?token=<token>`). Matched exactly — one
+// token of URL-safe characters, nothing after it — so neither can carry an
+// open redirect.
+const JOIN_RETURN = /^\/join\/[A-Za-z0-9._~-]{6,512}$/;
+const INVITATION_RETURN = /^\/invitations\/accept\?token=[A-Za-z0-9._~-]{6,512}$/;
+
+/** Whether a path is one of the credential pages above. */
+export function isCredentialReturnPath(path: string): boolean {
+  return JOIN_RETURN.test(path) || INVITATION_RETURN.test(path);
+}
+
+/** Validates a `returnTo`/`redirect` query value. Only /app paths (and the
+ *  two credential pages above) are safe. */
 export function sanitizeAppReturnTo(raw: string | null | undefined): string {
   if (!raw) return DEFAULT_RETURN_PATH;
   try {
     const decoded = decodeURIComponent(raw);
+    if (isCredentialReturnPath(decoded)) return decoded;
     return decoded.startsWith("/app") ? decoded : DEFAULT_RETURN_PATH;
   } catch {
     return DEFAULT_RETURN_PATH;

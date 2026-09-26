@@ -1,12 +1,26 @@
 // /app/workspace/members — Member directory.
 // Search, filter by status/role/team, sort, multi-select bulk actions.
-// Frontend-only demonstration. No Burgundy. No eNotary.
+//
+// 078: owners and administrators also see Join requests (approve / decline)
+// and Join links (Sent / Withdrawn / Draft), and can edit a member's role
+// title and privileges. An approved person with no title shows as
+// "New Comer". No Burgundy. No eNotary.
 
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router";
 import { WorkspaceAdminProvider, useWorkspaceAdmin } from "../../../context/WorkspaceAdminContext";
+import { usePlatform } from "../../../context/PlatformContext";
+import { useViewport } from "../../../hooks/useViewport";
+import { USE_REAL_BACKEND } from "../../../services/backend-flag";
 import type { WorkspaceMemberSummary, WorkspaceMemberStatus } from "../../../models/workspace-admin";
-import { WORKSPACE_MEMBER_STATUS_LABELS } from "../../../models/workspace-admin";
+import {
+  WORKSPACE_MEMBER_STATUS_LABELS, memberRoleLabel, effectivePrivileges, isOwnerOrAdministratorRole,
+} from "../../../models/workspace-admin";
+import { updateMemberAccess, JoinActionError } from "../../../services/real/workspace-join.service";
+import { JoinLinksSection } from "./join/JoinLinksSection";
+import { JoinRequestsSection } from "./join/JoinRequestsSection";
+import { AccessEditor, Dialog, ErrorNote, PrivilegeChips, type AccessDraft } from "./join/join-ui";
+import { buttonStyle } from "./join/join-styles";
 
 const GF    = { fontFamily: "'Geist', sans-serif" };
 const GM    = { fontFamily: "'Geist Mono', monospace" };
@@ -38,7 +52,21 @@ function Avatar({ name }: { name: string }) {
   );
 }
 
-function MemberRow({ member, selected, onToggle }: { member: WorkspaceMemberSummary; selected: boolean; onToggle: () => void }) {
+function RoleCell({ member }: { member: WorkspaceMemberSummary }) {
+  const privileges = effectivePrivileges(member);
+  return (
+    <div data-testid={`member-access-${member.id}`}>
+      <span data-testid={`member-role-${member.id}`} style={{ ...GF, fontSize: 13, color: SLATE, overflowWrap: "anywhere" }}>
+        {memberRoleLabel(member)}
+      </span>
+      <PrivilegeChips privileges={privileges} inherent={privileges.inherent} />
+    </div>
+  );
+}
+
+function MemberRow({ member, selected, onToggle, onEditAccess }: {
+  member: WorkspaceMemberSummary; selected: boolean; onToggle: () => void; onEditAccess?: () => void;
+}) {
   const badge = STATUS_BADGE[member.status];
   return (
     <tr style={{ borderBottom: "1px solid #F0F2F5", background: selected ? "#F0F7FF" : undefined }}>
@@ -49,31 +77,109 @@ function MemberRow({ member, selected, onToggle }: { member: WorkspaceMemberSumm
       <td style={{ padding: "10px 12px" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <Avatar name={member.displayName} />
-          <div>
+          <div style={{ minWidth: 0 }}>
             <Link to={`/app/workspace/members/${member.id}`} style={{ ...GF, fontSize: 13, fontWeight: 600, color: NAVY, textDecoration: "none" }}>
               {member.displayName}
               {member.isOwner && <span style={{ ...GM, fontSize: 10, marginLeft: 6, color: AZURE }}>OWNER</span>}
             </Link>
-            <div style={{ ...GM, fontSize: 11, color: SLATE }}>{member.email}</div>
+            <div style={{ ...GM, fontSize: 11, color: SLATE, overflowWrap: "anywhere" }}>{member.email}</div>
           </div>
         </div>
       </td>
       <td style={{ padding: "10px 12px" }}>
-        <span style={{ ...GM, fontSize: 11, padding: "3px 9px", borderRadius: 999, background: badge.bg, color: badge.color }}>
+        <span style={{ ...GM, fontSize: 11, padding: "3px 9px", borderRadius: 999, background: badge.bg, color: badge.color, whiteSpace: "nowrap" }}>
           {WORKSPACE_MEMBER_STATUS_LABELS[member.status]}
         </span>
       </td>
-      <td style={{ padding: "10px 12px", ...GF, fontSize: 13, color: SLATE }}>{member.roleName}</td>
-      <td style={{ padding: "10px 12px", ...GM, fontSize: 11, color: SILVER }}>
+      <td style={{ padding: "10px 12px", maxWidth: 240 }}><RoleCell member={member} /></td>
+      <td style={{ padding: "10px 12px", ...GM, fontSize: 11, color: SILVER, whiteSpace: "nowrap" }}>
         {member.joinedAt ? new Date(member.joinedAt).toLocaleDateString("en-PH") : "—"}
       </td>
-      <td style={{ padding: "10px 12px" }}>
+      <td style={{ padding: "10px 12px", whiteSpace: "nowrap", textAlign: "right" }}>
+        {onEditAccess && (
+          <button type="button" onClick={onEditAccess} aria-label={`Edit access for ${member.displayName}`}
+            style={{ ...GF, fontSize: 12, fontWeight: 600, color: AZURE, background: "none", border: "none", cursor: "pointer", padding: "4px 8px" }}>
+            Edit access
+          </button>
+        )}
         <Link to={`/app/workspace/members/${member.id}`}
-          style={{ ...GF, fontSize: 12, fontWeight: 600, color: AZURE, textDecoration: "none" }}>
+          style={{ ...GF, fontSize: 12, fontWeight: 600, color: AZURE, textDecoration: "none", padding: "4px 0 4px 8px" }}>
           View →
         </Link>
       </td>
     </tr>
+  );
+}
+
+function MemberCard({ member, onEditAccess }: { member: WorkspaceMemberSummary; onEditAccess?: () => void }) {
+  const badge = STATUS_BADGE[member.status];
+  return (
+    <li style={{ borderBottom: "1px solid #F0F2F5", padding: "12px 14px", display: "flex", flexDirection: "column", gap: 8 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
+        <Avatar name={member.displayName} />
+        <div style={{ minWidth: 0, flex: 1 }}>
+          <Link to={`/app/workspace/members/${member.id}`} style={{ ...GF, fontSize: 14, fontWeight: 600, color: NAVY, textDecoration: "none", overflowWrap: "anywhere" }}>
+            {member.displayName}
+            {member.isOwner && <span style={{ ...GM, fontSize: 10, marginLeft: 6, color: AZURE }}>OWNER</span>}
+          </Link>
+          <div style={{ ...GM, fontSize: 11, color: SLATE, overflowWrap: "anywhere" }}>{member.email}</div>
+        </div>
+        <span style={{ ...GM, fontSize: 10, padding: "3px 8px", borderRadius: 999, background: badge.bg, color: badge.color, whiteSpace: "nowrap" }}>
+          {WORKSPACE_MEMBER_STATUS_LABELS[member.status]}
+        </span>
+      </div>
+      <RoleCell member={member} />
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+        {onEditAccess && (
+          <button type="button" onClick={onEditAccess} aria-label={`Edit access for ${member.displayName}`} style={buttonStyle("secondary")}>
+            Edit access
+          </button>
+        )}
+        <Link to={`/app/workspace/members/${member.id}`} style={{ ...GF, fontSize: 13, fontWeight: 600, color: AZURE, textDecoration: "none", padding: "8px 4px" }}>
+          View →
+        </Link>
+      </div>
+    </li>
+  );
+}
+
+function EditAccessDialog({ member, workspaceId, onClose, onSaved }: {
+  member: WorkspaceMemberSummary; workspaceId: string; onClose: () => void; onSaved: () => void;
+}) {
+  const inherent = isOwnerOrAdministratorRole(member.roleId);
+  const [draft, setDraft] = useState<AccessDraft>({
+    roleTitle: member.roleTitle ?? "",
+    canRequestDocuments: member.canRequestDocuments === true,
+    canAssignSigners: member.canAssignSigners === true,
+  });
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  async function save() {
+    setBusy(true);
+    setError(null);
+    try {
+      await updateMemberAccess(workspaceId, member.id, inherent
+        ? { roleTitle: draft.roleTitle }
+        : { roleTitle: draft.roleTitle, canRequestDocuments: draft.canRequestDocuments, canAssignSigners: draft.canAssignSigners });
+      onSaved();
+    } catch (err) {
+      setError(err instanceof JoinActionError ? err.message : "We couldn't update this member's access.");
+      setBusy(false);
+    }
+  }
+
+  return (
+    <Dialog title={`Edit access — ${member.displayName}`} onClose={onClose}
+      footer={<>
+        <button type="button" onClick={onClose} style={buttonStyle("secondary")}>Cancel</button>
+        <button type="button" onClick={() => void save()} disabled={busy} style={buttonStyle("primary", busy)}>
+          {busy ? "Saving…" : "Save"}
+        </button>
+      </>}>
+      {error && <ErrorNote>{error}</ErrorNote>}
+      <AccessEditor value={draft} onChange={setDraft} privilegesInherent={inherent} />
+    </Dialog>
   );
 }
 
@@ -91,6 +197,16 @@ const SYSTEM_ROLES = [
 
 function MembersInner() {
   const { state, asyncLoadMembers } = useWorkspaceAdmin();
+  const platform = usePlatform();
+  const { isNarrow } = useViewport();
+  // Join links, join requests and member access are for owners and
+  // administrators only; the backend refuses everyone else regardless.
+  const canManageJoin = platform.role === "owner" || platform.role === "administrator";
+  // The demo build has no real workspace id; its join service ignores it.
+  const workspaceId = platform.currentWorkspace?.id ?? (USE_REAL_BACKEND ? null : "demo");
+  const [editing, setEditing] = useState<WorkspaceMemberSummary | null>(null);
+  const [pendingCount, setPendingCount] = useState(0);
+  const [requestsKey, setRequestsKey] = useState(0);
   const [searchParams] = useSearchParams();
   const [search, setSearch] = useState(searchParams.get("search") ?? "");
   const [status, setStatus] = useState<string>(searchParams.get("status") ?? "all");
@@ -110,6 +226,12 @@ function MembersInner() {
       dir,
     });
   }, [asyncLoadMembers, debouncedSearch, status, roleId, sort, dir]);
+
+  const reloadMembers = useCallback(() => {
+    void asyncLoadMembers(state.memberQuery);
+  }, [asyncLoadMembers, state.memberQuery]);
+  const editAccessFor = (m: WorkspaceMemberSummary) =>
+    canManageJoin && workspaceId !== null && !m.isOwner ? () => setEditing(m) : undefined;
 
   const allIds = state.members.map(m => m.id);
   const allSelected = allIds.length > 0 && allIds.every(id => selected.has(id));
@@ -132,7 +254,7 @@ function MembersInner() {
 
   return (
     <div style={{ minHeight: "100vh", background: "#F8FAFC", padding: "0 0 48px" }}>
-      <header style={{ background: "#FFFFFF", borderBottom: "1px solid #E3E8EF", padding: "20px 24px" }}>
+      <header style={{ background: "#FFFFFF", borderBottom: "1px solid #E3E8EF", padding: isNarrow ? "16px" : "20px 24px" }}>
         <nav aria-label="Breadcrumb" style={{ marginBottom: 10 }}>
           <ol style={{ display: "flex", gap: 6, listStyle: "none", margin: 0, padding: 0, ...GF, fontSize: 12, color: SILVER }}>
             <li><Link to="/app/workspace" style={{ color: AZURE, textDecoration: "none" }}>Workspace</Link></li>
@@ -141,7 +263,15 @@ function MembersInner() {
           </ol>
         </nav>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
-          <h1 style={{ ...GF, fontSize: 22, fontWeight: 800, color: NAVY, margin: 0 }}>Member Directory</h1>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+            <h1 style={{ ...GF, fontSize: 22, fontWeight: 800, color: NAVY, margin: 0 }}>Member Directory</h1>
+            {canManageJoin && pendingCount > 0 && (
+              <a href="#join-requests" data-testid="pending-requests-badge"
+                style={{ ...GF, fontSize: 12, fontWeight: 700, color: "#8A5A00", background: "#FFF8E1", border: "1px solid #F5D98B", borderRadius: 999, padding: "3px 10px", textDecoration: "none" }}>
+                {pendingCount} pending request{pendingCount === 1 ? "" : "s"}
+              </a>
+            )}
+          </div>
           <Link to="/app/workspace/invitations"
             style={{ ...GF, fontSize: 13, fontWeight: 600, background: AZURE, color: "#FFFFFF", border: "none", borderRadius: 8, padding: "9px 18px", textDecoration: "none", cursor: "pointer" }}>
             + Invite Member
@@ -149,7 +279,7 @@ function MembersInner() {
         </div>
       </header>
 
-      <div style={{ maxWidth: 1060, margin: "24px auto 0", padding: "0 24px" }}>
+      <div style={{ maxWidth: 1060, margin: "24px auto 0", padding: isNarrow ? "0 16px" : "0 24px", boxSizing: "border-box" }}>
         {/* Filters */}
         <div style={{ display: "flex", gap: 10, marginBottom: 16, flexWrap: "wrap" }}>
           <input type="search" placeholder="Search name or email…" value={search} onChange={e => setSearch(e.target.value)}
@@ -193,6 +323,10 @@ function MembersInner() {
                 Clear filters
               </button>
             </div>
+          ) : isNarrow ? (
+            <ul aria-label="Members" style={{ listStyle: "none", margin: 0, padding: 0 }}>
+              {state.members.map(m => <MemberCard key={m.id} member={m} onEditAccess={editAccessFor(m)} />)}
+            </ul>
           ) : (
             <div style={{ overflowX: "auto" }}>
               <table role="table" style={{ width: "100%", borderCollapse: "collapse" }}>
@@ -210,7 +344,8 @@ function MembersInner() {
                 </thead>
                 <tbody>
                   {state.members.map(m => (
-                    <MemberRow key={m.id} member={m} selected={selected.has(m.id)} onToggle={() => toggleOne(m.id)} />
+                    <MemberRow key={m.id} member={m} selected={selected.has(m.id)} onToggle={() => toggleOne(m.id)}
+                      onEditAccess={editAccessFor(m)} />
                   ))}
                 </tbody>
               </table>
@@ -223,7 +358,21 @@ function MembersInner() {
             {state.members.length} member{state.members.length !== 1 ? "s" : ""}
           </p>
         )}
+
+        {canManageJoin && workspaceId !== null && (
+          <>
+            <JoinRequestsSection workspaceId={workspaceId} refreshKey={requestsKey}
+              onPendingCount={setPendingCount} onDecided={reloadMembers} />
+            <JoinLinksSection workspaceId={workspaceId} onChanged={() => setRequestsKey(k => k + 1)} />
+          </>
+        )}
       </div>
+
+      {editing && workspaceId !== null && (
+        <EditAccessDialog member={editing} workspaceId={workspaceId}
+          onClose={() => setEditing(null)}
+          onSaved={() => { setEditing(null); reloadMembers(); }} />
+      )}
     </div>
   );
 }

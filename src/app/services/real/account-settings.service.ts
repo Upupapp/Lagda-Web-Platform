@@ -79,14 +79,41 @@ function toUserProfile(me: MeProfile): UserProfile {
 export interface ProfileUpdate {
   readonly fullName?: string;
   readonly displayName?: string;
-  readonly jobTitle?: string;
-  readonly department?: string;
-  readonly preferredSenderName?: string;
+  /** null clears the field (the backend's NullableName). */
+  readonly jobTitle?: string | null;
+  readonly department?: string | null;
+  readonly preferredSenderName?: string | null;
+}
+
+/**
+ * The subset of PATCH /me/preferences onboarding writes. The backend's schema
+ * is closed (additionalProperties: false) and accepts these among others:
+ * timezone (string, max 64, or null), dateFormat and timeFormat (the literal
+ * unions below, or null). A key left out is left alone.
+ */
+export interface PreferencesUpdate {
+  readonly timezone?: string | null;
+  readonly dateFormat?: "MM/DD/YYYY" | "DD/MM/YYYY" | "YYYY-MM-DD" | null;
+  readonly timeFormat?: "12h" | "24h" | null;
 }
 
 class RealAccountSettingsService {
   async getUserProfile(): Promise<UserProfile> {
     return toUserProfile(await apiRequest<MeProfile>("/me"));
+  }
+
+  /**
+   * `/me` as the backend sends it, preferences and security summary
+   * included. Onboarding needs both (to prefill the time zone and to know
+   * whether two-step verification is already on), which `UserProfile` drops.
+   */
+  async getAccount(): Promise<MeProfile> {
+    return apiRequest<MeProfile>("/me");
+  }
+
+  /** PATCH /me/preferences — only the keys given are changed. */
+  async updatePreferences(update: PreferencesUpdate): Promise<void> {
+    await apiRequest<unknown>("/me/preferences", { method: "PATCH", body: update });
   }
 
   /**

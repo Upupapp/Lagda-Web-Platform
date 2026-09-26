@@ -55,6 +55,18 @@ class RealWorkspaceService {
       headers: { "Idempotency-Key": idempotencyKey },
     });
   }
+
+  // PATCH /workspaces/:workspaceId {name} — renames a workspace the caller
+  // may administer. No Idempotency-Key: an absolute PATCH is already
+  // idempotent (see the backend's workspace-routes.ts). Onboarding uses this
+  // when the person revisits the Workspace step, so going Back and changing
+  // the name never creates a second workspace.
+  async rename(workspaceId: string, name: string): Promise<{ workspaceId: string; name: string }> {
+    return apiRequest<{ workspaceId: string; name: string }>(
+      `/workspaces/${encodeURIComponent(workspaceId)}`,
+      { method: "PATCH", body: { name } },
+    );
+  }
 }
 
 export const realWorkspaceService = new RealWorkspaceService();

@@ -23,6 +23,10 @@ const AZURE = "#0078D4";
 
 type SetupStep = "intro" | "scan" | "confirm" | "codes";
 
+// Where both "done" and "Skip for now" return: the onboarding Security step,
+// which then shows "✓ Two-step verification is on" (or the choice again).
+const ONBOARDING_SECURITY_PATH = "/onboarding/security";
+
 function KeyBlock({ value }: { value: string }) {
   const [copied, setCopied] = useState(false);
   function doCopy() {
@@ -117,7 +121,7 @@ export function MfaSetup() {
 
   function handleDone() {
     setMfaSetupDone(true);
-    void navigate("/onboarding/notifications");
+    void navigate(ONBOARDING_SECURITY_PATH);
   }
 
   function handleCopyAll() {
@@ -177,7 +181,7 @@ export function MfaSetup() {
           {beginning ? "Starting…" : "Continue"}
         </button>
         <div style={{ textAlign: "center", marginTop: 14 }}>
-          <button onClick={() => navigate("/onboarding/notifications")} style={{ background: "none", border: "none", cursor: "pointer", color: "#64748B", ...GF, fontSize: 13 }}>
+          <button onClick={() => navigate(ONBOARDING_SECURITY_PATH)} style={{ background: "none", border: "none", cursor: "pointer", color: "#64748B", ...GF, fontSize: 13 }}>
             Skip for now
           </button>
         </div>

@@ -235,6 +235,48 @@ export interface WorkspaceMemberSummary {
   // this field — it exists so a reader can tell which kind of row they are
   // looking at in a debugger, not as a UI flag.
   demonstrationOnly: boolean;
+  /** 078 — a free-text title an owner or administrator typed, e.g.
+   *  "Finance Associate". Null/absent: a `member` shows as "New Comer". */
+  roleTitle?:           string | null;
+  /** 078 — may ask other people for documents. Owners/administrators
+   *  always may, whatever this says. */
+  canRequestDocuments?: boolean;
+  /** 078 — may assign someone to sign a document. Same inheritance. */
+  canAssignSigners?:    boolean;
+}
+
+/** Owners and administrators hold both join privileges inherently. */
+export function isOwnerOrAdministratorRole(roleId: string): boolean {
+  return roleId === "owner" || roleId === "administrator"
+    || roleId === "role_owner" || roleId === "role_administrator";
+}
+
+/** The plain "member" role — what an approved join request becomes. */
+export function isPlainMemberRole(roleId: string): boolean {
+  return roleId === "member" || roleId === "role_member";
+}
+
+/** What the member list shows as someone's role: the typed title first,
+ *  "New Comer" for a plain member with none, otherwise the role's name. */
+export function memberRoleLabel(member: Pick<WorkspaceMemberSummary, "roleId" | "roleName" | "roleTitle">): string {
+  const title = member.roleTitle?.trim();
+  if (title) return title;
+  if (isPlainMemberRole(member.roleId)) return "New Comer";
+  return member.roleName;
+}
+
+/** The two join privileges, as they actually apply (owners/admins: both). */
+export function effectivePrivileges(member: Pick<WorkspaceMemberSummary, "roleId" | "canRequestDocuments" | "canAssignSigners">): {
+  canRequestDocuments: boolean; canAssignSigners: boolean; inherent: boolean;
+} {
+  if (isOwnerOrAdministratorRole(member.roleId)) {
+    return { canRequestDocuments: true, canAssignSigners: true, inherent: true };
+  }
+  return {
+    canRequestDocuments: member.canRequestDocuments === true,
+    canAssignSigners: member.canAssignSigners === true,
+    inherent: false,
+  };
 }
 
 export interface WorkspaceInvitation {

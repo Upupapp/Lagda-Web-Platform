@@ -16,13 +16,16 @@ export type AuthStatus =
   | "error";
 
 // ── Onboarding progress ───────────────────────────────────────────────────────
+//
+// Four steps. "Intended use" and "Notifications" were removed from the flow:
+// the first collected answers nothing read, the second duplicated Settings →
+// Notifications with defaults that are already the recommended ones. Their old
+// URLs redirect (see router.tsx) so a bookmarked link never dead-ends.
 
 export type OnboardingStepId =
   | "profile"
-  | "use-case"
   | "workspace"
   | "security"
-  | "notifications"
   | "review";
 
 export interface OnboardingStepMeta {
@@ -33,30 +36,24 @@ export interface OnboardingStepMeta {
 }
 
 export const ONBOARDING_STEPS: OnboardingStepMeta[] = [
-  { id: "profile",       label: "Profile",       path: "/onboarding/profile",       stepNumber: 1 },
-  { id: "use-case",      label: "Intended Use",  path: "/onboarding/use-case",      stepNumber: 2 },
-  { id: "workspace",     label: "Workspace",     path: "/onboarding/workspace",     stepNumber: 3 },
-  { id: "security",      label: "Security",      path: "/onboarding/security",      stepNumber: 4 },
-  { id: "notifications", label: "Notifications", path: "/onboarding/notifications", stepNumber: 5 },
-  { id: "review",        label: "Review",        path: "/onboarding/review",        stepNumber: 6 },
+  { id: "profile",   label: "Profile",   path: "/onboarding/profile",   stepNumber: 1 },
+  { id: "workspace", label: "Workspace", path: "/onboarding/workspace", stepNumber: 2 },
+  { id: "security",  label: "Security",  path: "/onboarding/security",  stepNumber: 3 },
+  { id: "review",    label: "Review",    path: "/onboarding/review",    stepNumber: 4 },
 ];
 
 export interface OnboardingProgress {
-  profile:       boolean;
-  useCase:       boolean;
-  workspace:     boolean;
-  security:      boolean;
-  notifications: boolean;
-  complete:      boolean;
+  profile:   boolean;
+  workspace: boolean;
+  security:  boolean;
+  complete:  boolean;
 }
 
 export const EMPTY_ONBOARDING_PROGRESS: OnboardingProgress = {
-  profile:       false,
-  useCase:       false,
-  workspace:     false,
-  security:      false,
-  notifications: false,
-  complete:      false,
+  profile:   false,
+  workspace: false,
+  security:  false,
+  complete:  false,
 };
 
 // ── Pending auth user (pre-platform-session) ──────────────────────────────────
@@ -145,107 +142,104 @@ export function isPasswordAcceptable(pw: string): boolean {
 
 // ── Onboarding draft types ────────────────────────────────────────────────────
 
+/** Mirrors Lagda-Backend's DATE_FORMATS / TIME_FORMATS preference literals.
+ *  "" means "not chosen" and is sent as null. */
+export type DateFormatPreference = "" | "MM/DD/YYYY" | "DD/MM/YYYY" | "YYYY-MM-DD";
+export type TimeFormatPreference = "" | "12h" | "24h";
+
 export interface ProfileDraft {
-  displayName: string;
-  jobTitle:    string;
-  timeZone:    string;
+  fullName:            string;
+  displayName:         string;
+  /** True once the person typed in Display name themselves — until then it
+   *  follows Full name as they type. */
+  displayNameEdited:   boolean;
+  timeZone:            string;
+  jobTitle:            string;
+  department:          string;
+  preferredSenderName: string;
+  dateFormat:          DateFormatPreference;
+  timeFormat:          TimeFormatPreference;
 }
 
-export type OrgType =
-  | "" | "individual" | "lawyer" | "law-firm" | "business"
-  | "government" | "real-estate" | "hr-recruitment" | "finance"
-  | "procurement" | "education" | "healthcare" | "other";
+export type WorkspaceScenario = "" | "personal" | "team" | "join";
 
-export const ORG_TYPE_LABELS: Record<Exclude<OrgType, "">, string> = {
-  individual:      "Individual professional",
-  lawyer:          "Lawyer",
-  "law-firm":      "Law firm",
-  business:        "Business",
-  government:      "Government or LGU",
-  "real-estate":   "Real estate",
-  "hr-recruitment":"HR and recruitment",
-  finance:         "Finance or accounting",
-  procurement:     "Procurement",
-  education:       "Education",
-  healthcare:      "Healthcare or wellness",
-  other:           "Other",
-};
-
-export type PrimaryGoal =
-  | "prepare-send"
-  | "collect-signatures"
-  | "route-approvals"
-  | "verify-documents"
-  | "build-templates"
-  | "manage-team";
-
-export const PRIMARY_GOAL_LABELS: Record<PrimaryGoal, string> = {
-  "prepare-send":      "Prepare and send documents",
-  "collect-signatures":"Collect signatures",
-  "route-approvals":   "Route document approvals",
-  "verify-documents":  "Verify completed documents",
-  "build-templates":   "Build reusable templates",
-  "manage-team":       "Manage a team or workspace",
-};
-
-export interface UseCaseDraft {
-  orgType:             OrgType;
-  primaryGoals:        PrimaryGoal[];
-  enotaryUpdates:      boolean; // never pre-selected
+export interface JoinRequestRecord {
+  workspaceName: string;
+  /** "sent" — created by this onboarding; "pending" — one already existed. */
+  state: "sent" | "pending";
 }
-
-export type WorkspaceScenario = "" | "personal" | "organization" | "invitation";
 
 export interface WorkspaceDraft {
-  scenario:      WorkspaceScenario;
-  workspaceName: string;
-  orgName:       string;
-  teamSize:      string;
+  scenario:           WorkspaceScenario;
+  workspaceName:      string;
+  /** The workspace THIS onboarding created (real backend), so revisiting the
+   *  step renames it instead of creating a second one. */
+  createdWorkspaceId: string | null;
+  /** The name last saved to the backend — a Continue with no change is not a
+   *  rename. */
+  savedName:          string;
+  /** The account already had a workspace before onboarding; nothing was
+   *  created. */
+  usedExistingWorkspace: boolean;
+  joinLink:           string;
+  joinReason:         string;
+  joinRequest:        JoinRequestRecord | null;
+  /** Team workspace: join links to create once the workspace exists (078).
+   *  Optional so a draft saved by an earlier version still loads. */
+  teamInvites?:       TeamInviteDraft[];
+}
+
+/** One teammate to invite from onboarding with a single-use join link. */
+export interface TeamInviteDraft {
+  id:        string;
+  label:     string;
+  email:     string | null;
+  /** Email the link to `email`. Without an email the link is saved as a draft. */
+  sendEmail: boolean;
+  status:    "queued" | "done" | "failed";
+  /** Set once the link exists, so a retry never creates a second one. */
+  ticketId?: string;
+  error?:    string;
 }
 
 export interface SecurityDraft {
-  mfaEnabled:        boolean;
-  loginAlertsEnabled:boolean;
-}
-
-export interface NotificationsDraft {
-  // Transaction (may be recommended-on)
-  docViewed:           boolean;
-  signatureCompleted:  boolean;
-  approvalCompleted:   boolean;
-  participantDeclined: boolean;
-  deliveryFailed:      boolean;
-  requestExpiring:     boolean;
-  requestCompleted:    boolean;
-  // Account & security (may be recommended-on)
-  newSignIn:           boolean;
-  securityAlert:       boolean;
-  workspaceInvitation: boolean;
-  roleChanged:         boolean;
-  // Product marketing — never pre-selected
-  productUpdates:      boolean;
-  guidesEducation:     boolean;
-  enotaryUpdates:      boolean; // separate from transaction/account
+  /** The person's answer to "Two-step verification". */
+  mfaChoice:  "" | "now" | "later";
+  /** MFA enrollment actually completed (set by MfaSetup on success). */
+  mfaEnabled: boolean;
 }
 
 export interface OnboardingDraft {
-  profile:       ProfileDraft;
-  useCase:       UseCaseDraft;
-  workspace:     WorkspaceDraft;
-  security:      SecurityDraft;
-  notifications: NotificationsDraft;
+  profile:   ProfileDraft;
+  workspace: WorkspaceDraft;
+  security:  SecurityDraft;
 }
 
-export const DEFAULT_ONBOARDING_DRAFT: OnboardingDraft = {
-  profile: { displayName: "", jobTitle: "", timeZone: "Asia/Manila" },
-  useCase: { orgType: "", primaryGoals: [], enotaryUpdates: false },
-  workspace: { scenario: "", workspaceName: "", orgName: "", teamSize: "" },
-  security: { mfaEnabled: false, loginAlertsEnabled: true },
-  notifications: {
-    docViewed: true, signatureCompleted: true, approvalCompleted: true,
-    participantDeclined: true, deliveryFailed: true, requestExpiring: true,
-    requestCompleted: true,
-    newSignIn: true, securityAlert: true, workspaceInvitation: true, roleChanged: true,
-    productUpdates: false, guidesEducation: false, enotaryUpdates: false,
-  },
-};
+export const FALLBACK_TIME_ZONE = "Asia/Manila";
+
+export function detectTimeZone(): string {
+  try {
+    return Intl.DateTimeFormat().resolvedOptions().timeZone || FALLBACK_TIME_ZONE;
+  } catch {
+    return FALLBACK_TIME_ZONE;
+  }
+}
+
+export function createDefaultOnboardingDraft(): OnboardingDraft {
+  return {
+    profile: {
+      fullName: "", displayName: "", displayNameEdited: false,
+      timeZone: detectTimeZone(),
+      jobTitle: "", department: "", preferredSenderName: "",
+      dateFormat: "", timeFormat: "",
+    },
+    workspace: {
+      scenario: "", workspaceName: "", createdWorkspaceId: null, savedName: "",
+      usedExistingWorkspace: false,
+      joinLink: "", joinReason: "", joinRequest: null, teamInvites: [],
+    },
+    security: { mfaChoice: "", mfaEnabled: false },
+  };
+}
+
+export const DEFAULT_ONBOARDING_DRAFT: OnboardingDraft = createDefaultOnboardingDraft();

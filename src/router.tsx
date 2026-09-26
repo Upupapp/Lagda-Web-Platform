@@ -72,6 +72,11 @@ const AcceptInvitation = lazy(() =>
     default: m.AcceptInvitation,
   })),
 );
+const JoinWorkspace = lazy(() =>
+  import("./app/pages/auth/JoinWorkspace").then((m) => ({
+    default: m.JoinWorkspace,
+  })),
+);
 const AccountLocked = lazy(() =>
   import("./app/pages/auth/AccountLocked").then((m) => ({
     default: m.AccountLocked,
@@ -87,11 +92,6 @@ const OnboardingProfile = lazy(() =>
     default: m.OnboardingProfile,
   })),
 );
-const OnboardingUseCase = lazy(() =>
-  import("./app/pages/onboarding/OnboardingUseCase").then((m) => ({
-    default: m.OnboardingUseCase,
-  })),
-);
 const OnboardingWorkspace = lazy(() =>
   import("./app/pages/onboarding/OnboardingWorkspace").then((m) => ({
     default: m.OnboardingWorkspace,
@@ -100,11 +100,6 @@ const OnboardingWorkspace = lazy(() =>
 const OnboardingSecurity = lazy(() =>
   import("./app/pages/onboarding/OnboardingSecurity").then((m) => ({
     default: m.OnboardingSecurity,
-  })),
-);
-const OnboardingNotifications = lazy(() =>
-  import("./app/pages/onboarding/OnboardingNotifications").then((m) => ({
-    default: m.OnboardingNotifications,
   })),
 );
 const OnboardingReview = lazy(() =>
@@ -1390,6 +1385,30 @@ export const router = createBrowserRouter([
       </AuthPage>
     ),
   },
+  // The link a workspace invitation email carries
+  // (`/invitations/accept?token=…`, built by the backend). Same page as the
+  // demo's /accept-invitation; the token switches it to the real flow.
+  {
+    path: "/invitations/accept",
+    errorElement: <PublicRouteError />,
+    element: (
+      <AuthPage>
+        <AcceptInvitation />
+      </AuthPage>
+    ),
+  },
+  // Join a workspace with a single-use join link (078). Public — the page
+  // itself sends a signed-out visitor through sign-in and back. Full-screen,
+  // with its own minimal header, like the signer page.
+  {
+    path: "/join/:token",
+    errorElement: <PublicRouteError />,
+    element: (
+      <Suspense fallback={null}>
+        <JoinWorkspace />
+      </Suspense>
+    ),
+  },
   {
     path: "/auth/account-locked",
     errorElement: <PublicRouteError />,
@@ -1429,14 +1448,12 @@ export const router = createBrowserRouter([
       </Suspense>
     ),
   },
+  // Removed steps (onboarding went from six steps to four). Redirected so a
+  // bookmark or an old email link never dead-ends.
   {
     path: "/onboarding/use-case",
     errorElement: <PublicRouteError />,
-    element: (
-      <Suspense fallback={<AuthPageLoader />}>
-        <OnboardingUseCase />
-      </Suspense>
-    ),
+    element: <Navigate to="/onboarding/profile" replace />,
   },
   {
     path: "/onboarding/workspace",
@@ -1459,11 +1476,7 @@ export const router = createBrowserRouter([
   {
     path: "/onboarding/notifications",
     errorElement: <PublicRouteError />,
-    element: (
-      <Suspense fallback={<AuthPageLoader />}>
-        <OnboardingNotifications />
-      </Suspense>
-    ),
+    element: <Navigate to="/onboarding/review" replace />,
   },
   {
     path: "/onboarding/review",

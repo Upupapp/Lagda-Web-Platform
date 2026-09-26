@@ -54,6 +54,18 @@ export interface MeProfile {
   /** 072. The profile photo's version, or null. The image itself is
    *  `GET /me/avatar?v=<version>`. */
   avatar: { version: string } | null;
+  /** Personal preferences (PATCH /me/preferences). Optional here only so older
+   *  fixtures that predate it still type-check; the backend always sends it. */
+  preferences?: {
+    timezone: string | null;
+    dateFormat: "MM/DD/YYYY" | "DD/MM/YYYY" | "YYYY-MM-DD" | null;
+    timeFormat: "12h" | "24h" | null;
+  };
+  /** A summary only — whether a second factor exists. Optional for the same
+   *  reason as `preferences`. */
+  security?: {
+    mfaEnabled: boolean;
+  };
   createdAt: string;
 }
 

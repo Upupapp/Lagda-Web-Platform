@@ -1,360 +1,414 @@
-// C13 — Onboarding step 3: Workspace.
-// Three scenarios: personal, organization, invitation (join existing).
-// Never creates a real workspace. All success messaging is frontend-demo language.
+// C13 — Onboarding step 2 of 4: Workspace.
+//
+// Three choices:
+//   personal / team — name a workspace. With a real backend, Continue CREATES
+//                     it now (POST /workspaces via platform.createWorkspace).
+//                     Coming back and continuing again RENAMES that same
+//                     workspace (PATCH /workspaces/:id) — never a second one.
+//                     An account that already had a workspace before
+//                     onboarding keeps it; nothing new is created.
+//   join            — paste a join link. It is checked as you type
+//                     (POST /workspace-join/preview) and Continue sends a join
+//                     request (POST /workspace-join/requests). Joining creates
+//                     no workspace; membership starts when an owner or admin
+//                     approves.
+//
+// Demo build (no VITE_API_BASE_URL): answers are kept in the onboarding draft
+// and the join calls answer from a deterministic stand-in.
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router";
+import { Building2 } from "lucide-react";
 import { useOnboarding } from "../../context/OnboardingContext";
+import { usePlatform, type WorkspaceStatus } from "../../context/PlatformContext";
 import {
   OnboardingLayout,
   OnboardingCard,
   OnboardingActions,
 } from "../../layouts/OnboardingLayout";
 import type { WorkspaceScenario } from "../../models/auth";
-import { Building2 } from "lucide-react";
+import { USE_REAL_BACKEND } from "../../services/backend-flag";
+import { ApiError } from "../../services/api-client";
+import { realWorkspaceService } from "../../services/real/workspace.service";
+import {
+  extractJoinToken, previewJoinLink, submitJoinRequest, JOIN_MESSAGES,
+} from "../../services/real/workspace-join.service";
+import { Field, FieldError, FieldGroup, Notice, RadioCard } from "./onboarding-ui";
+import { describedBy, inputStyle, GF, NAVY } from "./onboarding-form";
+import { TeamInvitesSlot } from "./TeamInvitesSlot";
+import { sendTeamInvites } from "./team-invites";
 
-const GF = { fontFamily: "'Geist', sans-serif" };
+/** Onboarding's cap. The backend allows up to 200 code points
+ *  (WORKSPACE_NAME_MAX_LENGTH in Lagda-Backend/packages/contracts); 100 is
+ *  plenty for a name that has to fit the workspace switcher. */
+const WORKSPACE_NAME_MAX = 100;
+const JOIN_REASON_MAX = 500;
+const PREVIEW_DEBOUNCE_MS = 400;
+/** How long the "Request sent" note stays up before moving on. */
+const JOIN_SENT_PAUSE_MS = 1500;
 
-const INPUT_STYLE: React.CSSProperties = {
-  width: "100%",
-  boxSizing: "border-box",
-  background: "#FFFFFF",
-  border: "1px solid #CBD5E1",
-  borderRadius: 8,
-  color: "#07111F",
-  fontFamily: "'Geist', sans-serif",
-  fontSize: 15,
-  padding: "12px 14px",
-  outline: "none",
-};
-
-const SCENARIOS: { id: WorkspaceScenario; title: string; desc: string }[] = [
-  {
-    id: "personal",
-    title: "Personal workspace",
-    desc: "For individual use — manage your own documents.",
-  },
-  {
-    id: "organization",
-    title: "Team workspace",
-    desc: "Collaborate with colleagues under a shared workspace.",
-  },
-  {
-    id: "invitation",
-    title: "Join via invitation",
-    desc: "You have an invitation link to join an existing workspace.",
-  },
+const SCENARIOS: { id: Exclude<WorkspaceScenario, "">; title: string; desc: string }[] = [
+  { id: "personal", title: "Just me — a personal workspace", desc: "Your own documents, templates and contacts." },
+  { id: "team", title: "With a team — invite colleagues", desc: "A shared workspace you can invite people into." },
+  { id: "join", title: "Join an existing workspace", desc: "You have a join link from a workspace owner or admin." },
 ];
 
-const TEAM_SIZES = [
-  { value: "", label: "Select team size" },
-  { value: "1", label: "Just me" },
-  { value: "2-10", label: "2–10 people" },
-  { value: "11-50", label: "11–50 people" },
-  { value: "51-200", label: "51–200 people" },
-  { value: "201+", label: "201+ people" },
-];
+type Preview =
+  | { status: "idle" }
+  | { status: "checking" }
+  | { status: "ok"; workspaceName: string; invitedByName: string | null }
+  | { status: "bad"; message: string };
+
+function firstNameOf(...candidates: (string | undefined | null)[]): string | null {
+  for (const c of candidates) {
+    const first = c?.trim().split(/\s+/)[0];
+    if (first) return first;
+  }
+  return null;
+}
 
 export function OnboardingWorkspace() {
   const navigate = useNavigate();
+  const platform = usePlatform();
   const { draft, updateWorkspace, markStepDone } = useOnboarding();
-  const [reminder, setReminder] = useState<string | null>(null);
+  const ws = draft.workspace;
+  const scenario = ws.scenario;
 
-  const scenario = draft.workspace.scenario;
+  const [scenarioError, setScenarioError] = useState<string | null>(null);
+  const [nameError, setNameError] = useState<string | null>(null);
+  const [joinError, setJoinError] = useState<string | null>(null);
+  const [serverError, setServerError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [joinNote, setJoinNote] = useState<{ tone: "success" | "info"; text: string } | null>(null);
+  const [preview, setPreview] = useState<Preview>({ status: "idle" });
+  // A request already sent in an earlier visit counts until the link is edited.
+  const [linkEdited, setLinkEdited] = useState(false);
+  const leaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  function handleBack() {
-    void navigate("/onboarding/use-case");
+  useEffect(() => () => { if (leaveTimer.current) clearTimeout(leaveTimer.current); }, []);
+
+  function defaultName(): string {
+    const first = firstNameOf(draft.profile.fullName, platform.user?.fullName, platform.user?.displayName);
+    return first ? `${first}'s Workspace` : "My Workspace";
   }
-  function handleContinue() {
-    if (scenario === "") {
-      setReminder("Choose how you'll use LAGDA before continuing.");
+
+  function chooseScenario(next: WorkspaceScenario) {
+    const patch: Partial<typeof ws> = { scenario: next };
+    if ((next === "personal" || next === "team") && ws.workspaceName.trim() === "") {
+      patch.workspaceName = defaultName();
+    }
+    updateWorkspace(patch);
+    setScenarioError(null);
+    setServerError(null);
+    setJoinError(null);
+  }
+
+  // ── Join link: check it as it is typed or pasted (debounced) ────────────────
+  useEffect(() => {
+    if (scenario !== "join") return;
+    const raw = ws.joinLink.trim();
+    if (raw === "") {
+      setPreview({ status: "idle" });
       return;
     }
-    if (scenario === "organization" && !draft.workspace.workspaceName.trim()) {
-      setReminder("Give your team workspace a name before continuing.");
-      return;
-    }
+    let stale = false;
+    setPreview({ status: "checking" });
+    const handle = setTimeout(() => {
+      const token = extractJoinToken(raw);
+      if (!token) {
+        setPreview({ status: "bad", message: JOIN_MESSAGES.invalid });
+        return;
+      }
+      void previewJoinLink(token).then((result) => {
+        if (stale) return;
+        switch (result.kind) {
+          case "ok":
+            setPreview({ status: "ok", workspaceName: result.workspaceName, invitedByName: result.invitedByName });
+            break;
+          case "used":
+            setPreview({ status: "bad", message: JOIN_MESSAGES.used });
+            break;
+          case "invalid":
+            setPreview({ status: "bad", message: JOIN_MESSAGES.invalid });
+            break;
+          default:
+            setPreview({ status: "bad", message: JOIN_MESSAGES.error });
+        }
+      });
+    }, PREVIEW_DEBOUNCE_MS);
+    return () => { stale = true; clearTimeout(handle); };
+  }, [scenario, ws.joinLink]);
+
+  function finish() {
     markStepDone("workspace");
     void navigate("/onboarding/security");
   }
+
+  /** Team workspace: create (and, where asked, email) the join links queued
+   *  in TeamInvitesSlot. False keeps the person on this step to fix them. */
+  async function sendQueuedInvites(workspaceId: string | null): Promise<boolean> {
+    const invites = ws.teamInvites ?? [];
+    if (scenario !== "team" || invites.every((i) => i.status === "done")) return true;
+    if (workspaceId === null) {
+      setServerError("We couldn't find your workspace to create the join links. Try again, or remove them and add them later from Workspace → Members.");
+      return false;
+    }
+    const updated = await sendTeamInvites(workspaceId, invites);
+    updateWorkspace({ teamInvites: updated });
+    if (updated.some((i) => i.status === "failed")) {
+      setServerError("Some join links couldn't be created. Try again, or remove them and add them later from Workspace → Members.");
+      return false;
+    }
+    return true;
+  }
+
+  // ── Continue: personal / team ───────────────────────────────────────────────
+  async function continueWithWorkspace() {
+    const name = ws.workspaceName.trim();
+    if (!name) { setNameError("Give your workspace a name."); focus("ws-name"); return; }
+    if (name.length > WORKSPACE_NAME_MAX) {
+      setNameError(`Workspace name can be at most ${WORKSPACE_NAME_MAX} characters.`);
+      focus("ws-name");
+      return;
+    }
+
+    if (!USE_REAL_BACKEND) {
+      updateWorkspace({ workspaceName: name, savedName: name });
+      setSaving(true);
+      const invitesSent = await sendQueuedInvites("demo");
+      setSaving(false);
+      if (invitesSent) finish();
+      return;
+    }
+
+    setSaving(true);
+    // The workspace the queued join links belong to, once it is known.
+    let workspaceId: string | null = ws.createdWorkspaceId
+      ?? (ws.usedExistingWorkspace ? platform.currentWorkspace?.id ?? null : null);
+    try {
+      if (ws.createdWorkspaceId) {
+        // Revisit: the workspace already exists — rename it, don't make another.
+        if (name !== ws.savedName) await realWorkspaceService.rename(ws.createdWorkspaceId, name);
+      } else if (!ws.usedExistingWorkspace) {
+        let status: WorkspaceStatus = platform.workspaceStatus;
+        if (status === "initializing" || status === "error") {
+          const refreshed = await platform.refreshSessionFromBackend();
+          status = refreshed.status === "authenticated" ? refreshed.workspaceStatus : "error";
+        }
+        if (status === "empty") {
+          const created = await platform.createWorkspace(name);
+          if (!created.ok) {
+            setServerError(created.error);
+            setSaving(false);
+            return;
+          }
+          updateWorkspace({ createdWorkspaceId: created.workspace.id });
+          workspaceId = created.workspace.id;
+        } else if (status === "ready") {
+          // The account already has a workspace (e.g. it was set up before
+          // this onboarding). Use it; creating a second one is not what
+          // anyone pressing Continue here expects.
+          updateWorkspace({ usedExistingWorkspace: true });
+          workspaceId = platform.currentWorkspace?.id ?? null;
+        } else {
+          setServerError("We couldn't check your workspaces right now. Please try again.");
+          setSaving(false);
+          return;
+        }
+      }
+    } catch (err) {
+      setServerError(err instanceof ApiError ? err.message : "We couldn't save your workspace. Please try again.");
+      setSaving(false);
+      return;
+    }
+    updateWorkspace({ workspaceName: name, savedName: name });
+    const invitesSent = await sendQueuedInvites(workspaceId);
+    setSaving(false);
+    if (invitesSent) finish();
+  }
+
+  // ── Continue: join ──────────────────────────────────────────────────────────
+  async function continueWithJoin() {
+    if (ws.joinRequest && !linkEdited) { finish(); return; }
+    const token = extractJoinToken(ws.joinLink);
+    if (!token || preview.status !== "ok") {
+      setJoinError(ws.joinLink.trim() === "" ? "Paste your join link to continue." : JOIN_MESSAGES.invalid);
+      focus("ws-join-link");
+      return;
+    }
+    const reason = ws.joinReason.trim();
+    if (reason.length > JOIN_REASON_MAX) {
+      setJoinError(`Keep the reason under ${JOIN_REASON_MAX} characters.`);
+      return;
+    }
+    const fullName = draft.profile.fullName.trim()
+      || platform.user?.fullName || platform.user?.displayName || "";
+
+    setSaving(true);
+    const result = await submitJoinRequest(token, { fullName, reason: reason === "" ? null : reason });
+    setSaving(false);
+    switch (result.kind) {
+      case "sent":
+        updateWorkspace({ joinRequest: { workspaceName: result.workspaceName, state: "sent" } });
+        setJoinNote({ tone: "success", text: "Request sent — you'll be notified when an owner or admin approves." });
+        break;
+      case "pending":
+        updateWorkspace({ joinRequest: { workspaceName: preview.workspaceName, state: "pending" } });
+        setJoinNote({ tone: "info", text: JOIN_MESSAGES.pending });
+        break;
+      case "used":
+        setPreview({ status: "bad", message: JOIN_MESSAGES.used });
+        setJoinError(JOIN_MESSAGES.used);
+        return;
+      case "invalid":
+        setPreview({ status: "bad", message: JOIN_MESSAGES.invalid });
+        setJoinError(JOIN_MESSAGES.invalid);
+        return;
+      case "already-member":
+        setJoinError(JOIN_MESSAGES.alreadyMember);
+        return;
+      default:
+        setServerError(result.message);
+        return;
+    }
+    setLinkEdited(false);
+    markStepDone("workspace");
+    leaveTimer.current = setTimeout(() => { void navigate("/onboarding/security"); }, JOIN_SENT_PAUSE_MS);
+  }
+
+  function focus(id: string) {
+    setTimeout(() => document.getElementById(id)?.focus(), 0);
+  }
+
+  async function handleContinue() {
+    if (saving || joinNote) return;
+    setServerError(null);
+    if (scenario === "") {
+      setScenarioError("Choose how you'll use LAGDA.");
+      return;
+    }
+    if (scenario === "join") await continueWithJoin();
+    else await continueWithWorkspace();
+  }
+
+  const joinReady = ws.joinRequest !== null && !linkEdited ? true : preview.status === "ok";
+  const continueDisabled = scenario === "join" && !joinReady;
 
   return (
     <OnboardingLayout>
       <OnboardingCard
         icon={Building2}
         title="Set up your workspace"
-        description="Choose how you will use LAGDA. You can create additional workspaces later."
+        description="Your documents, templates and contacts live here."
       >
-        {reminder && (
-          <div
-            role="status"
-            style={{
-              ...GF, display: "flex", alignItems: "center", gap: 10,
-              marginBottom: 20, padding: "12px 16px", borderRadius: 10,
-              background: "#FEF9EC", border: "1px solid #F0D07A", color: "#8A6A16", fontSize: 13,
-            }}
-          >
-            <span aria-hidden="true" style={{ fontSize: 15 }}>💡</span>
-            {reminder}
-          </div>
-        )}
-        <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
-          {/* Scenario selector */}
-          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            {SCENARIOS.map(({ id, title, desc }) => {
-              const selected = scenario === id;
-              return (
-                <button
-                  key={id}
-                  type="button"
-                  onClick={() => {
-                    updateWorkspace({ scenario: selected ? "" : id });
-                    setReminder(null);
-                  }}
-                  role="radio"
-                  aria-checked={selected}
-                  style={{
-                    display: "flex",
-                    gap: 14,
-                    alignItems: "flex-start",
-                    textAlign: "left",
-                    background: selected ? "#EAF6FF" : "#FFFFFF",
-                    border: `1px solid ${selected ? "#76BDF2" : "#E2E8F0"}`,
-                    borderRadius: 10,
-                    padding: "14px 16px",
-                    cursor: "pointer",
-                    transition: "background 0.15s, border-color 0.15s",
-                  }}
-                >
-                  <div
-                    style={{
-                      width: 18,
-                      height: 18,
-                      borderRadius: "50%",
-                      flexShrink: 0,
-                      marginTop: 2,
-                      border: `2px solid ${selected ? "#0078D4" : "#CBD5E1"}`,
-                      background: selected ? "#0078D4" : "transparent",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                    }}
-                  >
-                    {selected && (
-                      <div
-                        style={{
-                          width: 6,
-                          height: 6,
-                          borderRadius: "50%",
-                          background: "white",
-                        }}
-                      />
-                    )}
-                  </div>
-                  <div>
-                    <p
-                      style={{
-                        color: "#07111F",
-                        ...GF,
-                        fontSize: 14,
-                        fontWeight: 700,
-                        margin: "0 0 3px",
-                      }}
-                    >
-                      {title}
-                    </p>
-                    <p
-                      style={{
-                        color: "#475569",
-                        ...GF,
-                        fontSize: 12,
-                        margin: 0,
-                        lineHeight: 1.5,
-                      }}
-                    >
-                      {desc}
-                    </p>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
+        <FieldGroup>
+          {serverError && <Notice tone="error">{serverError}</Notice>}
 
-          {/* Personal: optional name */}
-          {scenario === "personal" && (
-            <div>
-              <label
-                htmlFor="ws-name-p"
-                style={{
-                  display: "block",
-                  color: "#94A3B8",
-                  ...GF,
-                  fontSize: 12,
-                  fontWeight: 600,
-                  marginBottom: 6,
-                }}
-              >
-                Workspace name{" "}
-                <span style={{ color: "#334155", fontWeight: 400 }}>
-                  (optional)
-                </span>
-              </label>
-              <input
-                id="ws-name-p"
-                type="text"
-                value={draft.workspace.workspaceName}
-                onChange={(e) =>
-                  updateWorkspace({ workspaceName: e.target.value })
-                }
-                placeholder="My Documents"
-                style={INPUT_STYLE}
-              />
+          <fieldset style={{ border: "none", margin: 0, padding: 0, minWidth: 0 }}
+            aria-describedby={scenarioError ? "ws-scenario-err" : undefined}>
+            <legend style={{ ...GF, color: NAVY, fontSize: 15, fontWeight: 700, marginBottom: 10, padding: 0 }}>
+              How will you use LAGDA? <span aria-hidden style={{ color: "#0078D4" }}>*</span>
+            </legend>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {SCENARIOS.map((s) => (
+                <RadioCard
+                  key={s.id}
+                  name="ws-scenario"
+                  value={s.id}
+                  checked={scenario === s.id}
+                  onChange={(v) => chooseScenario(v as WorkspaceScenario)}
+                  title={s.title}
+                  description={s.desc}
+                />
+              ))}
             </div>
-          )}
+            {scenarioError && <FieldError id="ws-scenario-err">{scenarioError}</FieldError>}
+          </fieldset>
 
-          {/* Organization: name + org name + team size */}
-          {scenario === "organization" && (
-            <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-              <div>
-                <label
-                  htmlFor="ws-name"
-                  style={{
-                    display: "block",
-                    color: "#94A3B8",
-                    ...GF,
-                    fontSize: 12,
-                    fontWeight: 600,
-                    marginBottom: 6,
-                  }}
-                >
-                  Workspace name{" "}
-                  <span aria-hidden style={{ color: "#0078D4" }}>
-                    *
-                  </span>
-                </label>
+          {(scenario === "personal" || scenario === "team") && (
+            <>
+              <Field id="ws-name" label="Workspace name" required error={nameError ?? undefined}
+                hint="You can rename it later.">
                 <input
                   id="ws-name"
                   type="text"
-                  value={draft.workspace.workspaceName}
-                  onChange={(e) => {
-                    updateWorkspace({ workspaceName: e.target.value });
-                    if (e.target.value.trim()) setReminder(null);
-                  }}
+                  value={ws.workspaceName}
+                  onChange={(e) => { updateWorkspace({ workspaceName: e.target.value }); setNameError(null); }}
+                  maxLength={WORKSPACE_NAME_MAX}
+                  aria-required
+                  aria-invalid={!!nameError}
+                  aria-describedby={describedBy("ws-name", nameError ?? undefined, true)}
                   placeholder="Mabini Legal Solutions"
-                  style={{
-                    ...INPUT_STYLE,
-                    borderColor: reminder && !draft.workspace.workspaceName.trim() ? "#F0D07A" : "#CBD5E1",
-                    background: reminder && !draft.workspace.workspaceName.trim() ? "#FEF9EC" : "#FFFFFF",
-                  }}
+                  style={inputStyle(!!nameError)}
                 />
-              </div>
-              <div>
-                <label
-                  htmlFor="ws-org"
-                  style={{
-                    display: "block",
-                    color: "#94A3B8",
-                    ...GF,
-                    fontSize: 12,
-                    fontWeight: 600,
-                    marginBottom: 6,
-                  }}
-                >
-                  Organisation name{" "}
-                  <span style={{ color: "#334155", fontWeight: 400 }}>
-                    (optional)
-                  </span>
-                </label>
-                <input
-                  id="ws-org"
-                  type="text"
-                  value={draft.workspace.orgName}
-                  onChange={(e) => updateWorkspace({ orgName: e.target.value })}
-                  placeholder="Mabini Legal Solutions, Inc."
-                  style={INPUT_STYLE}
-                />
-              </div>
-              <div>
-                <label
-                  htmlFor="ws-size"
-                  style={{
-                    display: "block",
-                    color: "#94A3B8",
-                    ...GF,
-                    fontSize: 12,
-                    fontWeight: 600,
-                    marginBottom: 6,
-                  }}
-                >
-                  Team size
-                </label>
-                <select
-                  id="ws-size"
-                  value={draft.workspace.teamSize}
-                  onChange={(e) =>
-                    updateWorkspace({ teamSize: e.target.value })
-                  }
-                  style={{
-                    ...INPUT_STYLE,
-                    appearance: "none",
-                    cursor: "pointer",
-                  }}
-                >
-                  {TEAM_SIZES.map(({ value, label }) => (
-                    <option
-                      key={value}
-                      value={value}
-                      style={{ background: "#FFFFFF", color: "#07111F" }}
-                    >
-                      {label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
+              </Field>
+              {scenario === "team" && <TeamInvitesSlot />}
+            </>
           )}
 
-          {/* Invitation: guidance only (actual acceptance is on /accept-invitation) */}
-          {scenario === "invitation" && (
-            <div
-              style={{
-                background: "#F0F7FF",
-                border: "1px solid #BAE0FA",
-                borderRadius: 10,
-                padding: "16px",
-              }}
-            >
-              <p
-                style={{
-                  color: "#07111F",
-                  ...GF,
-                  fontSize: 13,
-                  fontWeight: 700,
-                  margin: "0 0 8px",
-                }}
-              >
-                Using an invitation link
-              </p>
-              <p
-                style={{
-                  color: "#475569",
-                  ...GF,
-                  fontSize: 13,
-                  margin: 0,
-                  lineHeight: 1.6,
-                }}
-              >
-                Your invitation link will take you directly to the workspace. If
-                you have a link, open it in your browser and sign in with this
-                account to join.
-              </p>
-            </div>
+          {scenario === "join" && (
+            <>
+              <Field id="ws-join-link" label="Paste your join link" required error={joinError ?? undefined}>
+                <input
+                  id="ws-join-link"
+                  type="text"
+                  inputMode="url"
+                  autoComplete="off"
+                  autoCapitalize="off"
+                  spellCheck={false}
+                  value={ws.joinLink}
+                  onChange={(e) => {
+                    updateWorkspace({ joinLink: e.target.value });
+                    setLinkEdited(true);
+                    setJoinError(null);
+                  }}
+                  aria-required
+                  aria-invalid={!!joinError || preview.status === "bad"}
+                  aria-describedby={joinError ? "ws-join-link-err" : "ws-join-status"}
+                  placeholder="https://lagda.ph/join/…"
+                  style={inputStyle(!!joinError)}
+                />
+              </Field>
+              <div id="ws-join-status" aria-live="polite" style={{ ...GF, fontSize: 14, marginTop: -8, minHeight: 20 }}>
+                {preview.status === "checking" && <span style={{ color: "#64748B" }}>Checking link…</span>}
+                {preview.status === "ok" && (
+                  <span style={{ color: "#1E6B41", fontWeight: 600 }}>
+                    ✓ {preview.workspaceName}
+                    {preview.invitedByName ? ` — invited by ${preview.invitedByName}` : ""}
+                  </span>
+                )}
+                {preview.status === "bad" && !joinError && (
+                  <span style={{ color: "#B42318", fontWeight: 600 }}>✗ {preview.message}</span>
+                )}
+              </div>
+              <Field id="ws-join-reason" label="Reason for joining" optional
+                hint="Helps the owner recognise your request.">
+                <textarea
+                  id="ws-join-reason"
+                  value={ws.joinReason}
+                  onChange={(e) => updateWorkspace({ joinReason: e.target.value })}
+                  maxLength={JOIN_REASON_MAX}
+                  rows={3}
+                  aria-describedby="ws-join-reason-hint"
+                  placeholder="I'm joining the litigation team."
+                  style={{ ...inputStyle(false), resize: "vertical", lineHeight: 1.5 }}
+                />
+              </Field>
+              {ws.joinRequest && !linkEdited && !joinNote && (
+                <Notice tone="success">
+                  Join request sent to {ws.joinRequest.workspaceName} — waiting for approval.
+                </Notice>
+              )}
+              {joinNote && <Notice tone={joinNote.tone} live>{joinNote.text}</Notice>}
+            </>
           )}
-        </div>
+        </FieldGroup>
 
         <OnboardingActions
-          onBack={handleBack}
-          onContinue={handleContinue}
+          onBack={() => { void navigate("/onboarding/profile"); }}
+          onContinue={() => { void handleContinue(); }}
+          submitting={saving}
+          disabled={continueDisabled || joinNote !== null}
           continueLabel="Continue"
         />
       </OnboardingCard>

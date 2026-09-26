@@ -38,6 +38,7 @@ import {
   realWorkspaceAdminService, type BackendWorkspaceRole,
 } from "../services/real/workspace-admin.service";
 import { USE_REAL_BACKEND } from "../services/backend-flag";
+import { getDemoMemberAccess } from "../services/real/workspace-join.service";
 import { usePlatform } from "./PlatformContext";
 
 // ── State ─────────────────────────────────────────────────────────────────────
@@ -326,7 +327,15 @@ export function WorkspaceAdminProvider({ children }: { children: ReactNode }) {
         return;
       }
       const members = await mockWorkspaceAdminService.listMembers(query);
-      dispatch({ type: "MEMBERS_LOADED", members });
+      // Demo build: a title or privileges granted from the Members page
+      // (078) live in the join service's stand-in — overlay them here.
+      dispatch({
+        type: "MEMBERS_LOADED",
+        members: members.map(m => {
+          const access = getDemoMemberAccess(m.id);
+          return access ? { ...m, ...access } : m;
+        }),
+      });
     } catch { dispatch({ type: "MEMBERS_ERROR", error: "Failed to load members." }); }
   }, [isReal, workspaceId]);
 

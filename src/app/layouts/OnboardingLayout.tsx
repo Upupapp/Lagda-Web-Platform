@@ -1,8 +1,8 @@
 // C13 — Onboarding layout shell.
 // Separate from AuthLayout: shows step progress, branding, and nav chrome.
-// Used by all /onboarding/* routes.
+// Used by the four /onboarding/* steps (Profile · Workspace · Security · Review).
 
-import { useEffect, useRef, type ReactNode } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { Link, useLocation, useNavigate } from "react-router";
 import { LogOut, type LucideIcon } from "lucide-react";
 import { ONBOARDING_STEPS, type OnboardingProgress, type OnboardingStepId } from "../models/auth";
@@ -16,12 +16,14 @@ import {
   T, PhaseBanner, ActionButton, useViewport,
 } from "../components/system/design-system";
 import { useSignOutFlow } from "../hooks/useSignOutFlow";
+import { ONBOARDING_HELP } from "../pages/onboarding/onboarding-help";
+import { OnboardingInfoFab, INFO_PANEL_WIDTH } from "./OnboardingInfoFab";
 
 const GF = { fontFamily: "'Geist', sans-serif" };
 
 interface OnboardingLayoutProps {
   children: ReactNode;
-  /** Override to hide the progress bar (used on /onboarding/complete) */
+  /** Override to hide the progress bar */
   showProgress?: boolean;
 }
 
@@ -42,18 +44,24 @@ const SR_ONLY: React.CSSProperties = {
 // Fallback-URL guard: which progress flag must be true before a step is
 // reachable. "review" has no flag of its own — it requires every step
 // before it. Maps 1:1 with ONBOARDING_STEPS order in models/auth.ts.
-/**
- * The rail's view of the steps, derived from `ONBOARDING_STEPS` rather than
- * written out again — a second list is a second thing to forget to update.
- */
-
 const PROGRESS_KEY_BY_STEP: Partial<Record<OnboardingStepId, keyof OnboardingProgress>> = {
   profile: "profile",
-  "use-case": "useCase",
   workspace: "workspace",
   security: "security",
-  notifications: "notifications",
 };
+
+/** At or below this width the stepper collapses to "Step N of 4" and the
+ *  action bar is pinned to the bottom of the screen. */
+const NARROW_MAX = 639;
+/** At and above this width the info button opens a docked side panel. */
+const PANEL_MIN = 900;
+/** Height of the pinned phone action bar, excluding the safe-area inset. */
+const ACTION_BAR_HEIGHT = 68;
+
+function isStepDone(id: OnboardingStepId, progress: OnboardingProgress): boolean {
+  const key = PROGRESS_KEY_BY_STEP[id];
+  return key ? progress[key] : false;
+}
 
 export function OnboardingLayout({
   children,
@@ -62,26 +70,53 @@ export function OnboardingLayout({
   const { pathname } = useLocation();
   const navigate = useNavigate();
   const { pendingUser, progress, reset } = useOnboarding();
+  const { width } = useViewport();
+  const isNarrow = width <= NARROW_MAX;
+  const isWide = width >= PANEL_MIN;
+  const [infoOpen, setInfoOpen] = useState(false);
 
-  // Determine current step
-  // Keeps the current card in view when the strip scrolls. A strip that
-  // opens at step one while you are on step four has to be explored before
-  // it can be read.
+  // Keeps the current card in view when the strip scrolls.
   const currentCardRef = useRef<HTMLDivElement | null>(null);
-
   useEffect(() => {
     currentCardRef.current?.scrollIntoView({ block: "nearest", inline: "center" });
   });
+
+  // A new step starts at the top. Continue sits at the bottom of a long form,
+  // and the router keeps the scroll position across the navigation, so the
+  // next step would otherwise open scrolled past its own heading.
+  useEffect(() => {
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+  }, [pathname]);
+
+  // The docked info panel starts where the sticky header + stepper ends. That
+  // height changes with the breakpoint and with the email wrapping, so it is
+  // measured rather than written down.
+  const stickyRef = useRef<HTMLDivElement | null>(null);
+  const [stickyHeight, setStickyHeight] = useState(0);
+  useLayoutEffect(() => {
+    const el = stickyRef.current;
+    if (!el) return;
+    const measure = () => setStickyHeight(el.getBoundingClientRect().height);
+    measure();
+    if (typeof ResizeObserver === "undefined") return;
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
 
   const currentStepMeta = ONBOARDING_STEPS.find((s) =>
     pathname.startsWith(s.path),
   );
   const currentStepNumber = currentStepMeta?.stepNumber ?? 0;
+  // Never on /mfa/setup (it does not use this layout; the guard keeps that
+  // true if it ever does).
+  const showInfo = currentStepMeta !== undefined && !pathname.startsWith("/mfa");
+  const panelOpen = showInfo && infoOpen && isWide;
 
-  // Fallback URL: a visitor who deep-links (bookmark, typed URL, browser
-  // back/forward, or a refresh that lost in-memory progress) past a step
-  // they haven't actually completed lands back on the earliest step that
-  // still needs attention, instead of a broken or misleadingly-empty page.
+  // Fallback URL: a visitor who deep-links past a step they haven't actually
+  // completed lands back on the earliest step that still needs attention,
+  // instead of a broken or misleadingly-empty page.
   useEffect(() => {
     if (!currentStepMeta) return;
     const requiredBefore = ONBOARDING_STEPS.filter((s) => s.stepNumber < currentStepMeta.stepNumber);
@@ -105,17 +140,16 @@ export function OnboardingLayout({
         display: "flex",
         flexDirection: "column",
         fontFamily: "'Geist', sans-serif",
+        // Room for the pinned phone action bar, so the footer's last line is
+        // never underneath it.
+        paddingBottom: isNarrow && showInfo
+          ? `calc(${ACTION_BAR_HEIGHT}px + env(safe-area-inset-bottom))`
+          : 0,
       }}
     >
-      {/* Top bar */}
-      {/* Header and step cards stick TOGETHER.
-          *
-          * Two separately sticky elements need the second one's top offset to
-          * equal the first one's height — a number that changes with the logo
-          * size at each breakpoint, and with the email wrapping. Get it wrong
-          * and the cards slide under the header or float below it. One sticky
-          * wrapper has no offset to keep in sync. */}
-      <div style={{ position: "sticky", top: 0, zIndex: Z.sticky, background: "#F5F9FF" }}>
+      {/* Header and step cards stick TOGETHER — one sticky wrapper has no
+          second top offset to keep in sync with the first one's height. */}
+      <div ref={stickyRef} style={{ position: "sticky", top: 0, zIndex: Z.sticky, background: "#F5F9FF" }}>
       <header
         style={{
           display: "flex",
@@ -126,17 +160,12 @@ export function OnboardingLayout({
           background: "#FFFFFF",
         }}
       >
-        {/* The logo shrinks rather than holding its desktop size. It is the
-            least useful thing in this header on a phone — the person is
-            already inside the product and knows whose it is. */}
         <div className="onboarding-brand" aria-label="LAGDA" style={{ flexShrink: 0 }}>
           <img src={lagdaHeaderLogo} alt="LAGDA" />
         </div>
 
         {/* minWidth: 0 is what stops the email pushing Sign out off the
-            screen. A flex item defaults to min-width:auto, so a long address
-            refuses to shrink and shoves its siblings out of the row instead
-            of truncating. That is why the button was unreachable on a phone. */}
+            screen. */}
         <div style={{ display: "flex", alignItems: "center", gap: 12, minWidth: 0, flex: 1, justifyContent: "flex-end" }}>
           {pendingUser && (
             <span
@@ -164,118 +193,143 @@ export function OnboardingLayout({
               ...GF,
               fontSize: 12,
               padding: "6px 10px",
+              minHeight: 44,
               borderRadius: 6,
             }}
             className="ob-signout-btn"
             aria-label="Sign out"
           >
             <LogOut size={14} aria-hidden style={{ flexShrink: 0 }} />
-            {/* The label drops below 480px, where the address and a labelled
-                button cannot both fit. aria-label carries the meaning. */}
             <span className="ob-signout-label">Sign out</span>
           </button>
         </div>
       </header>
 
       {/* Progress indicator */}
-      {showProgress && currentStepNumber > 0 && (
+      {showProgress && currentStepMeta && (
         <nav
           aria-label="Onboarding progress"
           style={{
             display: "flex",
-            padding: "14px clamp(12px, 4vw, 24px) 14px",
+            padding: isNarrow ? "10px 16px 12px" : "14px clamp(12px, 4vw, 24px) 14px",
             borderBottom: "1px solid #E3EDF7",
           }}
         >
-          {/* The rail marks the current step with `aria-current`, but not how
-              many remain — and the count is the part that tells someone
-              whether to keep going. */}
-          <p style={SR_ONLY}>
-            Step {currentStepNumber} of {ONBOARDING_STEPS.length}
-          </p>
-          {/* Cards rather than a rail of dots.
-              *
-              * The rail showed position and nothing else: six numbered dots
-              * say "you are on the fourth of six" and leave what the fourth
-              * one IS to be discovered by arriving at it. A card carries the
-              * step's name, so the sequence can be read before it is walked —
-              * which is the difference between knowing how much is left and
-              * knowing what is left.
-              *
-              * The same strip on both breakpoints, scrolling when six cards
-              * do not fit, with the current one centred on arrival. */}
-          <ol
-            className="ob-step-cards"
-            style={{
-              display: "flex", alignItems: "stretch", gap: 8,
-              listStyle: "none", margin: 0, padding: "0 0 4px",
-              overflowX: "auto", scrollbarWidth: "none", width: "100%",
-            }}
-          >
-            {ONBOARDING_STEPS.map((step, i) => {
-              const isCurrent = step.id === currentStepMeta?.id;
-              const isDone = currentStepMeta !== undefined
-                && step.stepNumber < currentStepMeta.stepNumber;
-              // Centred by AUTO MARGINS on the first and last card, not by
-              // justify-content: center on the row.
-              //
-              // The row scrolls when six cards do not fit, and a centred flex
-              // child wider than its scroll container is pushed to a NEGATIVE
-              // offset — which a scroller cannot reach. On a phone the first
-              // card, Profile, would sit permanently off the left edge. That
-              // is the same bug that made "OYMENT AGREEMENT" unreachable in
-              // the field editor.
-              //
-              // Auto margins centre while there is room and collapse to zero
-              // when there is not, so the strip is centred on a monitor and
-              // scrolls from its true start on a phone.
-              const edge = i === 0
-                ? { marginLeft: "auto" }
-                : i === ONBOARDING_STEPS.length - 1 ? { marginRight: "auto" } : {};
-              return (
-                <li key={step.id} style={{ flexShrink: 0, ...edge }}>
-                  <div
-                    ref={isCurrent ? currentCardRef : undefined}
-                    aria-current={isCurrent ? "step" : undefined}
-                    style={{
-                      ...GF, display: "flex", alignItems: "center",
-                      gap: "clamp(8px, 1.4vw, 12px)",
-                      // Sized to the reference: roughly 190px across and 60px
-                      // tall on a monitor, shrinking fluidly on a phone rather
-                      // than switching at a breakpoint.
-                      minWidth: "clamp(128px, 14vw, 190px)",
-                      minHeight: "clamp(46px, 5vw, 60px)",
-                      padding: "0 clamp(12px, 1.6vw, 18px)", borderRadius: 12,
-                      border: isCurrent ? "1.5px solid #0078D4" : "1px solid #E3E8EF",
-                      background: isCurrent ? "#EBF4FC" : "#FFFFFF",
-                    }}
-                  >
-                    <span
-                      aria-hidden
-                      style={{
-                        width: "clamp(24px, 2.4vw, 32px)", height: "clamp(24px, 2.4vw, 32px)",
-                        borderRadius: "50%", flexShrink: 0,
-                        display: "inline-flex", alignItems: "center", justifyContent: "center",
-                        fontSize: "clamp(11px, 1.1vw, 14px)", fontWeight: 700,
-                        background: isDone || isCurrent ? "#0078D4" : "#EEF2F6",
-                        color: isDone || isCurrent ? "#FFFFFF" : "#8A9BAE",
-                      }}
-                    >
-                      {isDone ? "✓" : step.stepNumber}
-                    </span>
-                    <span style={{
-                      fontSize: "clamp(12.5px, 1.25vw, 16px)",
-                      fontWeight: isCurrent ? 700 : 600,
-                      color: isCurrent ? "#0078D4" : isDone ? "#07111F" : "#8A9BAE",
-                      whiteSpace: "nowrap",
-                    }}>
-                      {step.label}
-                    </span>
-                  </div>
-                </li>
-              );
-            })}
-          </ol>
+          {isNarrow ? (
+            // A phone has no room for four cards: one line says where you
+            // are, the bar says how far along.
+            <div style={{ width: "100%" }}>
+              <p style={{ ...GF, margin: "0 0 8px", fontSize: 14, fontWeight: 700, color: "#07111F" }}>
+                Step {currentStepNumber} of {ONBOARDING_STEPS.length}
+                <span style={{ color: "#64748B", fontWeight: 600 }}> · {currentStepMeta.label}</span>
+              </p>
+              <div
+                role="progressbar"
+                aria-label={`Step ${currentStepNumber} of ${ONBOARDING_STEPS.length}`}
+                aria-valuemin={0}
+                aria-valuemax={ONBOARDING_STEPS.length}
+                aria-valuenow={currentStepNumber}
+                style={{ height: 6, borderRadius: 3, background: "#E3EDF7", overflow: "hidden" }}
+              >
+                <div
+                  className="ob-progress-fill"
+                  style={{
+                    height: "100%", borderRadius: 3, background: "#0078D4",
+                    width: `${(currentStepNumber / ONBOARDING_STEPS.length) * 100}%`,
+                    transition: "width 200ms ease",
+                  }}
+                />
+              </div>
+            </div>
+          ) : (
+            <>
+              <p style={SR_ONLY}>
+                Step {currentStepNumber} of {ONBOARDING_STEPS.length}
+              </p>
+              {/* Cards, each carrying the step's name. A done step shows ✓ and
+                  links back so it can be edited; a later step stays inert
+                  until every step before it is saved. */}
+              <ol
+                className="ob-step-cards"
+                style={{
+                  display: "flex", alignItems: "stretch", gap: 8,
+                  listStyle: "none", margin: 0, padding: "0 0 4px",
+                  overflowX: "auto", scrollbarWidth: "none", width: "100%",
+                }}
+              >
+                {ONBOARDING_STEPS.map((step, i) => {
+                  const isCurrent = step.id === currentStepMeta.id;
+                  const isDone = isStepDone(step.id, progress);
+                  const reachable = ONBOARDING_STEPS
+                    .filter((s) => s.stepNumber < step.stepNumber)
+                    .every((s) => isStepDone(s.id, progress));
+                  const clickable = !isCurrent && (isDone || reachable);
+                  // Auto margins centre the strip while there is room and
+                  // collapse to zero when it scrolls, so the first card is
+                  // never pushed out of reach.
+                  const edge = i === 0
+                    ? { marginLeft: "auto" }
+                    : i === ONBOARDING_STEPS.length - 1 ? { marginRight: "auto" } : {};
+                  const cardStyle: React.CSSProperties = {
+                    ...GF, display: "flex", alignItems: "center",
+                    gap: "clamp(8px, 1.4vw, 12px)",
+                    minWidth: "clamp(128px, 14vw, 190px)",
+                    minHeight: "clamp(46px, 5vw, 60px)",
+                    padding: "0 clamp(12px, 1.6vw, 18px)", borderRadius: 12,
+                    border: isCurrent ? "1.5px solid #0078D4" : "1px solid #E3E8EF",
+                    background: isCurrent ? "#EBF4FC" : "#FFFFFF",
+                    textDecoration: "none",
+                    boxSizing: "border-box",
+                  };
+                  const showCheck = isDone && !isCurrent;
+                  const inner = (
+                    <>
+                      <span
+                        aria-hidden
+                        style={{
+                          width: "clamp(24px, 2.4vw, 32px)", height: "clamp(24px, 2.4vw, 32px)",
+                          borderRadius: "50%", flexShrink: 0,
+                          display: "inline-flex", alignItems: "center", justifyContent: "center",
+                          fontSize: "clamp(11px, 1.1vw, 14px)", fontWeight: 700,
+                          background: isDone || isCurrent ? "#0078D4" : "#EEF2F6",
+                          color: isDone || isCurrent ? "#FFFFFF" : "#8A9BAE",
+                        }}
+                      >
+                        {showCheck ? "✓" : step.stepNumber}
+                      </span>
+                      <span style={{
+                        fontSize: "clamp(12.5px, 1.25vw, 16px)",
+                        fontWeight: isCurrent ? 700 : 600,
+                        color: isCurrent ? "#0078D4" : isDone || clickable ? "#07111F" : "#8A9BAE",
+                        whiteSpace: "nowrap",
+                      }}>
+                        {step.label}
+                        {showCheck && <span style={SR_ONLY}> (done)</span>}
+                      </span>
+                    </>
+                  );
+                  return (
+                    <li key={step.id} style={{ flexShrink: 0, ...edge }}>
+                      {clickable ? (
+                        <Link to={step.path} className="ob-step-link" style={cardStyle}>
+                          {inner}
+                        </Link>
+                      ) : (
+                        <div
+                          ref={isCurrent ? currentCardRef : undefined}
+                          aria-current={isCurrent ? "step" : undefined}
+                          aria-disabled={isCurrent ? undefined : true}
+                          style={cardStyle}
+                        >
+                          {inner}
+                        </div>
+                      )}
+                    </li>
+                  );
+                })}
+              </ol>
+            </>
+          )}
         </nav>
       )}
       </div>
@@ -289,12 +343,36 @@ export function OnboardingLayout({
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
-          padding: "32px 16px 48px",
+          paddingTop: isNarrow ? 20 : 32,
+          paddingBottom: isNarrow ? 32 : 48,
+          paddingLeft: 16,
+          // The docked info panel takes the right-hand 340px: the column
+          // narrows and the card re-centres in what is left, so the panel
+          // never covers it. Between 640 and 900 the round button floats at
+          // the right edge, so the column keeps clear of that too.
+          paddingRight: panelOpen
+            ? INFO_PANEL_WIDTH + 16
+            : showInfo && !isNarrow && !isWide ? 76 : 16,
+          transition: "padding-right 180ms ease",
           outline: "none",
+          minWidth: 0,
         }}
       >
-        <div style={{ width: "100%", maxWidth: 520 }}>{children}</div>
+        <div style={{ width: "100%", maxWidth: 560 }}>{children}</div>
       </main>
+
+      {showInfo && currentStepMeta && (
+        <OnboardingInfoFab
+          help={ONBOARDING_HELP[currentStepMeta.id]}
+          open={infoOpen}
+          onOpenChange={setInfoOpen}
+          mode={isWide ? "panel" : "sheet"}
+          panelTop={stickyHeight}
+          fabBottom={isNarrow
+            ? `calc(${ACTION_BAR_HEIGHT + 12}px + env(safe-area-inset-bottom))`
+            : "24px"}
+        />
+      )}
 
       {confirmDialog}
 
@@ -357,10 +435,9 @@ export function OnboardingLayout({
         .onboarding-brand { display: flex; align-items: center; flex-shrink: 0; }
         .onboarding-brand img { display: block; width: 200px; height: 58px; object-fit: cover; object-position: left center; }
         .ob-header-email { max-width: 34ch; }
+        .ob-step-link:hover { border-color: #76BDF2 !important; }
+        .ob-step-link:focus-visible { outline: 3px solid #9CCBF2; outline-offset: 2px; }
 
-        /* Below 640px the header has room for a mark, an address and a
-           button — but not a 200px wordmark and a labelled button. The logo
-           halves and the button keeps its icon only. */
         @media (max-width: 640px) {
           .onboarding-brand img { width: 118px; height: 34px; }
           .ob-header-email { max-width: 22ch; font-size: 11px; }
@@ -383,7 +460,9 @@ export function OnboardingLayout({
           .onboarding-footer { padding: 24px 16px 16px !important; }
           .onboarding-footer-logo { width: 189px; height: 60px; top: 17px; }
           .onboarding-footer-links { gap: 12px 18px; }
-          nav[aria-label="Onboarding progress"] { gap: 0; padding: 16px 12px 0; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          #onboarding-main, .ob-progress-fill { transition: none !important; }
         }
       `}</style>
     </div>
@@ -411,42 +490,65 @@ export function OnboardingActions({
   disabled = false,
   showBack = true,
 }: OnboardingActionsProps) {
-  const { isCompact } = useViewport();
+  const { width } = useViewport();
+  const isNarrow = width <= NARROW_MAX;
+
+  const continueButton = onContinue && (
+    <ActionButton
+      onClick={onContinue}
+      disabled={disabled || submitting}
+      full={isNarrow || !showBack}
+    >
+      {submitting ? "Saving…" : continueLabel}
+    </ActionButton>
+  );
+  const backButton = showBack && onBack && (
+    <ActionButton kind="secondary" onClick={onBack} disabled={submitting} full={isNarrow}>
+      {backLabel}
+    </ActionButton>
+  );
 
   // Primary FIRST in the DOM, so a keyboard and a screen reader reach
-  // Continue before Back — then visually reversed on a wide screen, where
-  // Back-on-the-left is the convention people expect. On a phone the row
-  // stacks and Continue stays on top, which is also where a thumb is.
+  // Continue before Back — then visually reversed, where Back-on-the-left is
+  // the convention people expect.
+  if (isNarrow) {
+    // Phones: pinned to the bottom of the screen, within thumb reach and
+    // clear of the home indicator. OnboardingLayout pads the page so nothing
+    // ends up underneath it, and lifts the info button above it.
+    return (
+      <div
+        className="ob-actions ob-actions--bar"
+        data-testid="onboarding-actions"
+        style={{
+          position: "fixed", left: 0, right: 0, bottom: 0, zIndex: Z.sticky,
+          display: "flex", flexDirection: "row-reverse", gap: 10,
+          padding: "12px 16px calc(12px + env(safe-area-inset-bottom))",
+          background: "#FFFFFF", borderTop: "1px solid #DBEAFE",
+          boxShadow: "0 -6px 18px rgba(7,17,31,0.06)",
+          boxSizing: "border-box",
+        }}
+      >
+        {continueButton && <div style={{ flex: 2, minWidth: 0, display: "flex" }}>{continueButton}</div>}
+        {backButton && <div style={{ flex: 1, minWidth: 0, display: "flex" }}>{backButton}</div>}
+      </div>
+    );
+  }
+
   return (
     <div
+      className="ob-actions"
+      data-testid="onboarding-actions"
       style={{
         display: "flex",
-        flexDirection: isCompact ? "column" : "row-reverse",
+        flexDirection: "row-reverse",
         gap: 10,
         marginTop: 28,
         alignItems: "stretch",
         justifyContent: showBack ? "space-between" : "flex-end",
       }}
     >
-      {onContinue && (
-        <ActionButton
-          onClick={onContinue}
-          disabled={disabled || submitting}
-          full={isCompact || !showBack}
-        >
-          {submitting ? "Saving…" : continueLabel}
-        </ActionButton>
-      )}
-      {showBack && onBack && (
-        <ActionButton
-          kind="secondary"
-          onClick={onBack}
-          disabled={submitting}
-          full={isCompact}
-        >
-          {backLabel}
-        </ActionButton>
-      )}
+      {continueButton}
+      {backButton}
     </div>
   );
 }
@@ -465,17 +567,8 @@ interface OnboardingCardProps {
 }
 
 /**
- * The surface each onboarding step sits on.
- *
- * The title used to be a bare `<h1>` over a paragraph. It is a BANNER now —
- * icon, wash, and the description inside it — for the same reason the signer
- * screens are: someone three steps into a wizard reads the shape of a screen
- * before they read its sentence, and an icon plus a tone says "this is the
- * security step" faster than the word "Security" does.
- *
- * `PhaseBanner` renders an `h2` here rather than its default `h1`: the page
- * already has a heading structure, and two `h1`s on one screen is a real
- * accessibility defect rather than a stylistic preference.
+ * The surface each onboarding step sits on: an icon banner (PhaseBanner, as
+ * an h2 — the page's heading structure is the layout's) over the form.
  */
 export function OnboardingCard({
   icon,
@@ -489,9 +582,8 @@ export function OnboardingCard({
         background: T.surface,
         border: `1px solid ${T.border}`,
         borderRadius: 16,
-        // Fluid: 28px of side padding at 320px leaves under 260px of usable
-        // width, which is what made the workspace step's inputs feel boxed in.
         padding: "clamp(20px, 5vw, 32px) clamp(16px, 4.5vw, 28px)",
+        minWidth: 0,
       }}
     >
       {icon
