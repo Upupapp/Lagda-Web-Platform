@@ -2,6 +2,7 @@
 // Replaces the sidebar at <768px.
 // Focus-trapped while open. Escape closes. Scroll locked.
 
+import { WorkspaceBadge } from "./WorkspaceBadge";
 import { useState, useRef, useEffect, useCallback, lazy, Suspense } from "react";
 import { NavLink, Link } from "react-router";
 import {
@@ -243,9 +244,7 @@ export function MobileNav() {
         {currentWorkspace && (
           <div style={{ padding: "12px 14px", borderBottom: `1px solid ${BORDER}`, flexShrink: 0 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <div style={{ width: 28, height: 28, borderRadius: 7, background: currentWorkspace.accentColor, display: "flex", alignItems: "center", justifyContent: "center", ...GM, fontSize: 10, color: "white", fontWeight: 700 }}>
-                {currentWorkspace.initials}
-              </div>
+              <WorkspaceBadge workspace={currentWorkspace} size={28} radius={7} fontSize={10} />
               <div>
                 <p style={{ color: "#07111F", ...GF, fontSize: 13, fontWeight: 600, margin: 0 }}>{currentWorkspace.name}</p>
                 <p style={{ color: "#64748B", ...GM, fontSize: 10, margin: 0 }}>{currentWorkspace.plan}</p>

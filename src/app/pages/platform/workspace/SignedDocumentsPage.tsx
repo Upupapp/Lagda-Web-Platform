@@ -21,13 +21,13 @@
 // counterparty the workspace deals with to anyone who can load the page.
 
 import { useEffect, useMemo, useState, type CSSProperties } from "react";
-import { Link } from "react-router";
 import { Users, RefreshCw } from "lucide-react";
 import { usePlatform } from "../../../context/PlatformContext";
 import {
   realSigningRequestService, type SigningRequestListItem,
 } from "../../../services/real/signing-request.service";
 import { SignatureRecordDialog } from "../../../components/documents/SignatureRecordDialog";
+import { ManagePage } from "./real/manage-ui";
 
 const GF: CSSProperties = { fontFamily: "'Geist', sans-serif" };
 const NAVY = "#07111F";
@@ -99,38 +99,26 @@ export function SignedDocumentsPage() {
   };
 
   return (
-    <div style={{ minHeight: "100vh", background: "#F8FAFC", padding: "0 0 48px" }}>
-      <header style={{ background: "#FFFFFF", borderBottom: "1px solid #E3E8EF", padding: "20px 24px" }}>
-        <nav aria-label="Breadcrumb" style={{ marginBottom: 10 }}>
-          <ol style={{ display: "flex", gap: 6, listStyle: "none", margin: 0, padding: 0, ...GF, fontSize: 12, color: SILVER }}>
-            <li><Link to="/app/workspace" style={{ color: AZURE, textDecoration: "none" }}>Workspace</Link></li>
-            <li aria-hidden>›</li>
-            <li style={{ color: SLATE }}>Signed Documents</li>
-          </ol>
-        </nav>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
-          <h1 style={{ ...GF, fontSize: 22, fontWeight: 800, color: NAVY, margin: 0 }}>
-            Signed Documents
-          </h1>
-          <button
-            onClick={() => { setRefreshKey(k => k + 1); }}
-            style={{
-              ...GF, display: "inline-flex", alignItems: "center", gap: 6,
-              minHeight: 36, padding: "0 14px", borderRadius: 8,
-              border: "1px solid #D1D9E0", background: "#FFFFFF", color: NAVY,
-              fontSize: 13, fontWeight: 600, cursor: "pointer",
-            }}
-          >
-            <RefreshCw size={14} aria-hidden /> Refresh
-          </button>
-        </div>
-        <p style={{ ...GF, margin: "6px 0 0", fontSize: 12.5, color: SLATE, maxWidth: "70ch", lineHeight: 1.6 }}>
+    <ManagePage crumbs={[{ label: "Manage", to: "/app/workspace" }, { label: "All workspace documents" }]} title="All workspace documents" maxWidth={1000}
+      subtitle={
+        <span style={{ display: "block", maxWidth: "70ch" }}>
           Every document this workspace has sent for signing, and who sent it.
           Open a row&rsquo;s signers to see who has signed and when.
-        </p>
-      </header>
-
-      <div style={{ maxWidth: 1000, margin: "24px auto 0", padding: "0 24px" }}>
+        </span>
+      }
+      actions={
+        <button
+          onClick={() => { setRefreshKey(k => k + 1); }}
+          style={{
+            ...GF, display: "inline-flex", alignItems: "center", gap: 6,
+            minHeight: 36, padding: "0 14px", borderRadius: 8,
+            border: "1px solid #D1D9E0", background: "#FFFFFF", color: NAVY,
+            fontSize: 13, fontWeight: 600, cursor: "pointer",
+          }}
+        >
+          <RefreshCw size={14} aria-hidden /> Refresh
+        </button>
+      }>
         {status === "loading" && (
           <p style={{ ...GF, fontSize: 13, color: SILVER }}>Loading…</p>
         )}
@@ -219,7 +207,6 @@ export function SignedDocumentsPage() {
             </table>
           </div>
         )}
-      </div>
 
       {signaturesFor && workspaceId !== null && (
         <SignatureRecordDialog
@@ -229,6 +216,6 @@ export function SignedDocumentsPage() {
           onClose={() => { setSignaturesFor(null); }}
         />
       )}
-    </div>
+    </ManagePage>
   );
 }

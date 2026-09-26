@@ -80,6 +80,95 @@ function isTypingTarget(target: EventTarget | null): boolean {
     || active instanceof HTMLSelectElement;
 }
 
+// ── The one shortcut table ─────────────────────────────────────────────────
+//
+// The handler below and the in-editor Help panel both READ this list. The
+// panel used to be something a person would have written by hand, and a
+// hand-written list of shortcuts is a list that drifts: a binding changes
+// here and the help keeps advertising the old one. Now there is nothing to
+// keep in step — a row in the panel IS a row the handler matches.
+
+export type ShortcutAction =
+  | "escape" | "deleteSelected" | "copy" | "cut" | "paste"
+  | "undo" | "redo" | "duplicate" | "selectAll";
+
+export interface ShortcutBinding {
+  /** Stable id, unique across the table. */
+  readonly id: string;
+  readonly action: ShortcutAction;
+  /** `event.key`, lower-cased. */
+  readonly key: string;
+  /** Ctrl on Windows/Linux, ⌘ on a Mac — either is accepted. */
+  readonly mod: boolean;
+  /** true / false require that Shift state; undefined accepts either. */
+  readonly shift?: boolean;
+  /** What must be true for the binding to act (else the key is left alone). */
+  readonly requires?: "selection" | "clipboard";
+  /** The keys as shown to a person, e.g. ["Ctrl", "Shift", "Z"]. */
+  readonly display: readonly string[];
+  /** What it does, in the Help panel's words. */
+  readonly description: string;
+  /** Said to a screen reader after it runs. */
+  readonly announcement?: string;
+}
+
+export const FIELD_EDITOR_SHORTCUTS: readonly ShortcutBinding[] = [
+  { id: "escape", action: "escape", key: "escape", mod: false,
+    display: ["Esc"], description: "Cancel placing a field, or clear the selection" },
+  // Delete and Backspace both, because which one removes things is a
+  // keyboard-layout argument nobody should have to win.
+  { id: "delete", action: "deleteSelected", key: "delete", mod: false, requires: "selection",
+    display: ["Delete"], description: "Delete the selected fields", announcement: "Deleted the selected fields." },
+  { id: "backspace", action: "deleteSelected", key: "backspace", mod: false, requires: "selection",
+    display: ["Backspace"], description: "Delete the selected fields", announcement: "Deleted the selected fields." },
+  { id: "copy", action: "copy", key: "c", mod: true, requires: "selection",
+    display: ["Ctrl", "C"], description: "Copy the selected fields", announcement: "Copied the selected fields." },
+  // Cut is copy-then-delete rather than its own reducer action: the
+  // clipboard has to hold the fields AFTER they leave the page, and
+  // composing the two existing operations keeps one definition of each.
+  { id: "cut", action: "cut", key: "x", mod: true, requires: "selection",
+    display: ["Ctrl", "X"], description: "Cut the selected fields", announcement: "Cut the selected fields." },
+  { id: "paste", action: "paste", key: "v", mod: true, requires: "clipboard",
+    display: ["Ctrl", "V"], description: "Paste copied fields onto this page", announcement: "Pasted fields onto this page." },
+  // Ctrl+Shift+Z is redo, not undo — the Mac and Adobe convention. Listed
+  // before plain Ctrl+Z so the more specific binding matches first.
+  { id: "redo-shift-z", action: "redo", key: "z", mod: true, shift: true,
+    display: ["Ctrl", "Shift", "Z"], description: "Redo the last change", announcement: "Redid the last change." },
+  { id: "undo", action: "undo", key: "z", mod: true, shift: false,
+    display: ["Ctrl", "Z"], description: "Undo the last change", announcement: "Undid the last change." },
+  { id: "redo-y", action: "redo", key: "y", mod: true,
+    display: ["Ctrl", "Y"], description: "Redo the last change", announcement: "Redid the last change." },
+  { id: "duplicate", action: "duplicate", key: "d", mod: true, requires: "selection",
+    display: ["Ctrl", "D"], description: "Duplicate the selected field", announcement: "Duplicated the selected field." },
+  { id: "select-all", action: "selectAll", key: "a", mod: true,
+    display: ["Ctrl", "A"], description: "Select every field on this page", announcement: "Selected every field on this page." },
+];
+
+/**
+ * Arrow-key nudges, handled by the canvas itself (they only make sense
+ * while the page has focus). Kept beside the table above so the Help panel
+ * lists them from the same source the canvas reads its step sizes from.
+ */
+export const CANVAS_NUDGE_STEP = 0.005;
+export const CANVAS_NUDGE_STEP_LARGE = 0.02;
+
+export const CANVAS_NUDGE_SHORTCUTS: readonly { readonly id: string; readonly display: readonly string[]; readonly description: string }[] = [
+  { id: "nudge", display: ["←", "↑", "→", "↓"], description: "Nudge the selected fields (canvas focused)" },
+  { id: "nudge-large", display: ["Shift", "Arrow"], description: "Nudge the selected fields four times further" },
+];
+
+/** The binding a keystroke matches, or null. Pure — exported for tests. */
+export function matchShortcut(event: Pick<KeyboardEvent, "key" | "ctrlKey" | "metaKey" | "shiftKey">): ShortcutBinding | null {
+  const mod = event.ctrlKey || event.metaKey;
+  const key = event.key.toLowerCase();
+  for (const binding of FIELD_EDITOR_SHORTCUTS) {
+    if (binding.key !== key || binding.mod !== mod) continue;
+    if (binding.shift !== undefined && binding.shift !== event.shiftKey) continue;
+    return binding;
+  }
+  return null;
+}
+
 export function useFieldEditorShortcuts(handlers: FieldShortcutHandlers): void {
   /**
    * The listener reads through a ref, and is bound once.
@@ -104,103 +193,32 @@ export function useFieldEditorShortcuts(handlers: FieldShortcutHandlers): void {
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
-      const {
-        copy, paste, undo, redo, duplicate, deleteSelected, selectAll, escape,
-        hasSelection, hasClipboard, announce, enabled = true,
-      } = ref.current;
+      const h = ref.current;
+      if (h.enabled === false) return;
 
-      if (!enabled) return;
-
-      // Escape is the one key that must work while typing: it is how you get
-      // out. Everything below this line is for the canvas only.
-      if (event.key === "Escape") {
-        if (isTypingTarget(event.target)) return;
-        event.preventDefault();
-        escape();
-        return;
-      }
-
+      // Every binding is for the canvas, not for whatever is being typed in
+      // — including Escape, which inside a text box belongs to that box.
+      // Everything else (Ctrl+S, Ctrl+R, Ctrl+F) belongs to the browser:
+      // swallowing unrecognised combinations is how an editor breaks Find.
       if (isTypingTarget(event.target)) return;
+      const binding = matchShortcut(event);
+      if (binding === null) return;
+      if (binding.requires === "selection" && !h.hasSelection) return;
+      if (binding.requires === "clipboard" && !h.hasClipboard) return;
 
-      const mod = event.ctrlKey || event.metaKey;
-      const key = event.key.toLowerCase();
-
-      if (!mod) {
-        // Delete and Backspace both, because which one removes things is a
-        // keyboard-layout argument nobody should have to win.
-        if (key === "delete" || key === "backspace") {
-          if (!hasSelection) return;
-          event.preventDefault();
-          deleteSelected();
-          announce?.("Deleted the selected fields.");
-        }
-        return;
+      event.preventDefault();
+      switch (binding.action) {
+        case "escape": h.escape(); break;
+        case "deleteSelected": h.deleteSelected(); break;
+        case "copy": h.copy(); break;
+        case "cut": h.copy(); h.deleteSelected(); break;
+        case "paste": h.paste(); break;
+        case "undo": h.undo(); break;
+        case "redo": h.redo(); break;
+        case "duplicate": h.duplicate(); break;
+        case "selectAll": h.selectAll(); break;
       }
-
-      switch (key) {
-        case "c":
-          if (!hasSelection) return;
-          event.preventDefault();
-          copy();
-          announce?.("Copied the selected fields.");
-          return;
-
-        case "x":
-          // Cut is copy-then-delete rather than its own reducer action: the
-          // clipboard has to hold the fields AFTER they leave the page, and
-          // composing the two existing operations keeps one definition of
-          // each instead of a third that can drift from both.
-          if (!hasSelection) return;
-          event.preventDefault();
-          copy();
-          deleteSelected();
-          announce?.("Cut the selected fields.");
-          return;
-
-        case "v":
-          if (!hasClipboard) return;
-          event.preventDefault();
-          paste();
-          announce?.("Pasted fields onto this page.");
-          return;
-
-        case "z":
-          event.preventDefault();
-          // Ctrl+Shift+Z is redo, not undo — the Mac and Adobe convention.
-          if (event.shiftKey) {
-            redo();
-            announce?.("Redid the last change.");
-          } else {
-            undo();
-            announce?.("Undid the last change.");
-          }
-          return;
-
-        case "y":
-          event.preventDefault();
-          redo();
-          announce?.("Redid the last change.");
-          return;
-
-        case "d":
-          if (!hasSelection) return;
-          event.preventDefault();
-          duplicate();
-          announce?.("Duplicated the selected field.");
-          return;
-
-        case "a":
-          event.preventDefault();
-          selectAll();
-          announce?.("Selected every field on this page.");
-          return;
-
-        default:
-          // Everything else — Ctrl+S, Ctrl+R, Ctrl+F — belongs to the
-          // browser. Swallowing unrecognised combinations is how an editor
-          // ends up breaking Find.
-          return;
-      }
+      if (binding.announcement) h.announce?.(binding.announcement);
     };
 
     document.addEventListener("keydown", onKey);

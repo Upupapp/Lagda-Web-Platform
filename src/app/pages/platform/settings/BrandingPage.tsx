@@ -1,11 +1,15 @@
 // /app/settings/branding — Workspace branding and recipient-facing presentation.
-// Frontend-only. Logo stays in memory, not uploaded. No Burgundy. No eNotary.
+// Real backend (082): RealBrandingPage, saved to the current workspace.
+// Demo build: the mock below — logo stays in memory, nothing is stored.
 
 import React, { useEffect, useRef, useState } from "react";
 import { SettingsPage, SSection, SField, INPUT_STYLE, BTN_PRIMARY, BTN_SECONDARY, Skeleton, StatusBadge, PreviewSaved } from "./SettingsShell";
 import { mockBrandingSettingsService } from "../../../services/mock/settings.service";
 import { useConfirm } from "../../../components/platform/ConfirmDialog";
 import type { WorkspaceBranding } from "../../../models/settings";
+import { useWorkspaceMode } from "../../../hooks/useWorkspaceAccess";
+import { RealBrandingPage } from "./RealBrandingPage";
+import { BrandPreview, contrastRatio } from "./branding-preview";
 
 const GF    = { fontFamily: "'Geist', sans-serif" };
 const NAVY  = "#07111F";
@@ -15,58 +19,7 @@ const GOLD  = "#C9960C";
 const SAFE_BRAND_TYPES = ["image/png", "image/jpeg", "image/jpg"];
 const MAX_LOGO_SIZE = 2 * 1024 * 1024;
 
-function hexToRgb(hex: string): { r: number; g: number; b: number } | null {
-  const digits = /^#([A-Fa-f0-9]{6})$/.exec(hex)?.[1];
-  if (!digits) return null;
-  return { r: parseInt(digits.slice(0, 2), 16), g: parseInt(digits.slice(2, 4), 16), b: parseInt(digits.slice(4, 6), 16) };
-}
-
-function relativeLuminance({ r, g, b }: { r: number; g: number; b: number }): number {
-  const f = (v: number) => { const s = v / 255; return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4); };
-  return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b);
-}
-
-function contrastRatio(hex: string): { ratio: number; onWhite: number; warning: boolean } {
-  const rgb = hexToRgb(hex);
-  if (!rgb) return { ratio: 0, onWhite: 0, warning: false };
-  const L = relativeLuminance(rgb);
-  const onWhite = (1 + 0.05) / (L + 0.05);
-  const warning = onWhite < 3;
-  return { ratio: onWhite, onWhite, warning };
-}
-
-function BrandPreview({ branding }: { branding: WorkspaceBranding }) {
-  const initials = branding.displayName.split(/\s+/).map(w => w[0]).join("").slice(0, 2).toUpperCase();
-  return (
-    <div style={{ border: "1.5px solid #E3E8EF", borderRadius: 10, overflow: "hidden", maxWidth: 420 }}>
-      {/* Header */}
-      <div style={{ background: branding.primaryColor, padding: "14px 20px", display: "flex", alignItems: "center", gap: 12 }}>
-        {branding.logoPreviewUrl
-          ? <img src={branding.logoPreviewUrl} alt="Workspace logo preview" style={{ height: 32, objectFit: "contain" }} />
-          : <div style={{ width: 36, height: 36, borderRadius: 6, background: "rgba(255,255,255,0.25)", display: "flex", alignItems: "center", justifyContent: "center", ...GF, fontSize: 15, fontWeight: 800, color: "#FFFFFF" }}>{initials}</div>
-        }
-        <div>
-          <div style={{ ...GF, fontSize: 14, fontWeight: 700, color: "#FFFFFF" }}>{branding.displayName}</div>
-          <div style={{ ...GF, fontSize: 11, color: "rgba(255,255,255,0.8)" }}>Signing request</div>
-        </div>
-      </div>
-      {/* Body */}
-      <div style={{ padding: "18px 20px", background: "#FFFFFF" }}>
-        <div style={{ ...GF, fontSize: 13, color: NAVY, marginBottom: 8 }}>Sender: <strong>{branding.senderDisplayName}</strong></div>
-        <div style={{ height: 8, background: "#E2E8F0", borderRadius: 4, marginBottom: 8 }} />
-        <div style={{ height: 8, background: "#E2E8F0", borderRadius: 4, width: "70%", marginBottom: 8 }} />
-        <div style={{ height: 8, background: "#E2E8F0", borderRadius: 4, width: "50%" }} />
-      </div>
-      {/* Footer */}
-      <div style={{ background: "#F8FAFC", borderTop: "1px solid #E3E8EF", padding: "8px 20px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <span style={{ ...GF, fontSize: 11, color: SLATE }}>{branding.footerTagline}</span>
-        <span style={{ ...GF, fontSize: 11, color: SLATE }}>Powered by LAGDA</span>
-      </div>
-    </div>
-  );
-}
-
-export function BrandingPage() {
+function DemoBrandingPage() {
   const [branding, setBranding] = useState<WorkspaceBranding | null>(null);
   const [loading, setLoading]   = useState(true);
   const [form, setForm]         = useState<Partial<WorkspaceBranding>>({});
@@ -241,4 +194,11 @@ export function BrandingPage() {
       </form>
     </SettingsPage>
   );
+}
+
+/** The real page for a real workspace; the demonstration otherwise. */
+export function BrandingPage() {
+  const { isReal, workspaceId } = useWorkspaceMode();
+  if (isReal && workspaceId !== null) return <RealBrandingPage key={workspaceId} workspaceId={workspaceId} />;
+  return <DemoBrandingPage />;
 }

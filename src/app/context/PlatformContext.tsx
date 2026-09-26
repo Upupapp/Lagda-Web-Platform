@@ -159,6 +159,8 @@ export interface PlatformContextValue {
    * sidebar and switcher show the new name without a full refresh.
    */
   applyWorkspaceRename:       (workspaceId: string, name: string) => void;
+  /** 082. Puts a workspace's saved branding on its badge everywhere, at once. */
+  applyWorkspaceBranding:     (workspaceId: string, branding: { brandColor: string | null; logoUrl: string | null }) => void;
   markNotificationRead:       (id: string) => void;
   markAllNotificationsRead:   () => void;
   expireSession:              () => void;
@@ -493,6 +495,18 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
     setCurrentWorkspace((cw) => (cw ? rename(cw) : cw));
   }, []);
 
+  const applyWorkspaceBranding = useCallback((
+    workspaceId: string, branding: { brandColor: string | null; logoUrl: string | null },
+  ) => {
+    const apply = (w: PlatformWorkspace): PlatformWorkspace => (
+      w.id !== workspaceId || (w.brandColor === branding.brandColor && (w.logoUrl ?? null) === branding.logoUrl)
+        ? w
+        : { ...w, brandColor: branding.brandColor, logoUrl: branding.logoUrl ?? undefined }
+    );
+    setWorkspaces((list) => list.map(apply));
+    setCurrentWorkspace((cw) => (cw ? apply(cw) : cw));
+  }, []);
+
   const markNotificationRead = useCallback((id: string) => {
     setNotifications((ns) => ns.map((n) => n.id === id ? { ...n, isRead: true } : n));
   }, []);
@@ -530,7 +544,7 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
       notifications, unreadCount, flags,
       activeLaunchProfile: ACTIVE_LAUNCH_PROFILE,
       resolveCapability: resolveCapabilityFn,
-      signIn, refreshSessionFromBackend, createWorkspace, signOut, switchWorkspace, applyWorkspaceRename,
+      signIn, refreshSessionFromBackend, createWorkspace, signOut, switchWorkspace, applyWorkspaceRename, applyWorkspaceBranding,
       markNotificationRead, markAllNotificationsRead,
       expireSession, hasPermission, hasFlag,
     }}>

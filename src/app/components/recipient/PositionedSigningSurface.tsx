@@ -41,6 +41,7 @@ import {
 } from "./SignatureCapture";
 import type { CeremonyField } from "../../services/real/signing-access.service";
 import { Z } from "../../utils/z-index";
+import { isServerStampedType } from "../../models/field-editor";
 import { T } from "./signer-ui";
 import {
   CheckCircle2, ListChecks, FileText, AlertTriangle, Loader2, X,
@@ -135,8 +136,17 @@ export function PositionedSigningSurface({
   // Only the signer's own fields are shown as fillable. Server-derived ones
   // (`date-signed`, `full-name`, `email`) are filled by LAGDA and a client
   // cannot express a value for them at all.
+  //
+  // Review and approval stamps are never the recipient's to fill, whatever
+  // authority the server reports for them: LAGDA stamps them at completion.
+  // They are shown read-only (below) so the recipient sees where their
+  // outcome will be recorded.
   const mine = useMemo(
-    () => fields.filter(field => field.valueAuthority === "RECIPIENT_SUPPLIED"),
+    () => fields.filter(field => field.valueAuthority === "RECIPIENT_SUPPLIED" && !isServerStampedType(field.type)),
+    [fields],
+  );
+  const stamps = useMemo(
+    () => fields.filter(field => isServerStampedType(field.type)),
     [fields],
   );
 
@@ -262,6 +272,49 @@ export function PositionedSigningSurface({
                   width={width}
                   height={height}
                 />
+
+                {stamps.filter(field => field.pageNumber === pageNumber).map(field => (
+                  <div
+                    key={field.fieldId}
+                    data-stamp-field={field.type}
+                    role="note"
+                    aria-label={`${field.label}: ${field.type === "review-block" ? "Filled in when you complete" : "Stamped with your approval"}`}
+                    style={{
+                      position: "absolute",
+                      left: `${String(field.x * 100)}%`,
+                      top: `${String(field.y * 100)}%`,
+                      width: `${String(field.width * 100)}%`,
+                      height: `${String(field.height * 100)}%`,
+                      border: `1px dashed ${SILVER}`,
+                      background: "rgba(138,155,174,0.08)",
+                      borderRadius: 3,
+                      pointerEvents: "none",
+                    }}
+                  >
+                    <div style={{
+                      ...GF, position: "absolute", left: "4%", right: "4%", top: "18%",
+                      textAlign: "center", fontWeight: 700, color: SILVER, letterSpacing: "0.02em",
+                      fontSize: "clamp(8px, 1.7vw, 11px)", lineHeight: 1.2,
+                      whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
+                    }}>
+                      {field.type === "review-block" ? "Filled in when you complete" : "Stamped with your approval"}
+                    </div>
+                    <div aria-hidden style={{
+                      position: "absolute", left: "6%", right: "6%",
+                      top: `${String(BLOCK_RULE_AT * 100)}%`, borderTop: `1px solid ${NAVY}`,
+                    }} />
+                    <div style={{
+                      position: "absolute", left: 0, right: 0,
+                      top: `calc(${String(BLOCK_RULE_AT * 100)}% + 2px)`,
+                      textAlign: "center", color: NAVY, lineHeight: 1.1,
+                      fontFamily: "Tinos, 'Times New Roman', Times, serif",
+                      fontSize: `${String(width * (BLOCK_NAME_PT / size.width))}px`,
+                      whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
+                    }}>
+                      {signerName}
+                    </div>
+                  </div>
+                ))}
 
                 {onPage.map(field => {
                   const isBlock = field.type === "signature-block";

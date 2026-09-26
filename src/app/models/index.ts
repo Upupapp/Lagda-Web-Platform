@@ -407,6 +407,8 @@ export interface PlatformWorkspace extends WorkspaceSummary {
   memberCount: number;
   initials: string;
   accentColor: string;
+  /** 082. The workspace's saved brand colour; shown instead of accentColor when set. */
+  brandColor?: string | null;
 }
 
 export type PlatformFeatureFlag =

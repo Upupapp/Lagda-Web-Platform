@@ -306,7 +306,10 @@ class RealSigningRequestService {
     const response = await fetch(
       `${API_BASE_URL}/workspaces/${encodeURIComponent(workspaceId)}`
       + `/documents/${encodeURIComponent(documentId)}/content`,
-      { method: "GET", credentials: "include" },
+      // The same URL serves whatever file is CURRENTLY behind the document,
+      // and a replaced file keeps its document id. Never let a browser or
+      // proxy cache answer with the previous upload's bytes.
+      { method: "GET", credentials: "include", cache: "no-store" },
     );
     if (!response.ok) {
       throw new ApiError(response.status, undefined, "Could not load the document.");

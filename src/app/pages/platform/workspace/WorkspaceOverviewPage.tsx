@@ -12,6 +12,8 @@ import { WorkspaceAdminProvider, useWorkspaceAdmin } from "../../../context/Work
 import type { WorkspaceAttentionItem } from "../../../models/workspace-admin";
 import { useWorkspaceMode } from "../../../hooks/useWorkspaceAccess";
 import { RealWorkspaceOverview } from "./real/RealWorkspaceOverview";
+import { ManagePage } from "./real/manage-ui";
+import { useWorkspaceShell } from "./shell/workspace-shell-context";
 
 const GF    = { fontFamily: "'Geist', sans-serif" };
 const GM    = { fontFamily: "'Geist Mono', monospace" };
@@ -73,19 +75,46 @@ function QuickLinkRow({ label, path, description }: { label: string; path: strin
   );
 }
 
+/**
+ * Inside the workspace shell the section banners ARE the People / Oversight
+ * list, so the hub keeps only what the banners do not reach: pages that
+ * live elsewhere in the product but belong to running the workspace.
+ */
+function MoreForThisWorkspace() {
+  return (
+    <section aria-labelledby="more-for-workspace" style={{ background: "#FFFFFF", border: "1.5px solid #E3E8EF", borderRadius: 12, padding: "4px 20px 4px" }}>
+      <h2 id="more-for-workspace" style={{ ...GF, fontSize: 12, fontWeight: 700, color: SLATE, textTransform: "uppercase", letterSpacing: "0.06em", margin: "14px 0 2px" }}>
+        More for this workspace
+      </h2>
+      <QuickLinkRow label="Reports"          path="/app/reports"           description="Volume, turnaround and completion figures" />
+      <QuickLinkRow label="Signing routes"   path="/app/workflow"          description="Reusable signing orders for documents with several signers" />
+      <QuickLinkRow label="Logo & colours"   path="/app/settings/branding" description="How your documents and emails look to signers" />
+      <QuickLinkRow label="Plan & billing"   path="/app/settings/billing"  description="Your plan, invoices and usage" />
+      <div style={{ height: 8 }} />
+    </section>
+  );
+}
+
+const OVERVIEW_CRUMBS = [{ label: "Manage", to: "/app/workspace" }, { label: "Overview" }];
+
 function WorkspaceOverviewInner() {
   const { state, asyncLoadOverview } = useWorkspaceAdmin();
+  const shell = useWorkspaceShell();
 
   useEffect(() => { void asyncLoadOverview(); }, [asyncLoadOverview]);
 
   if (state.overviewLoading) {
+    const blocks = (
+      <>
+        {[80, 120, 200].map((h, i) => (
+          <div key={i} className="lagda-skeleton" style={{ height: h, background: "#E2E8F0", borderRadius: 12, marginBottom: 16 }} />
+        ))}
+      </>
+    );
+    if (shell) return <ManagePage crumbs={OVERVIEW_CRUMBS} title="Overview"><div aria-busy="true">{blocks}</div></ManagePage>;
     return (
       <div style={{ minHeight: "100vh", background: "#F8FAFC", padding: "32px 24px" }}>
-        <div style={{ maxWidth: 960, margin: "0 auto" }}>
-          {[80, 120, 200].map((h, i) => (
-            <div key={i} style={{ height: h, background: "#E2E8F0", borderRadius: 12, marginBottom: 16 }} />
-          ))}
-        </div>
+        <div style={{ maxWidth: 960, margin: "0 auto" }}>{blocks}</div>
       </div>
     );
   }
@@ -93,70 +122,63 @@ function WorkspaceOverviewInner() {
   const { workspace, attentionItems } = state;
   if (!workspace) return null;
 
-  return (
-    <div style={{ minHeight: "100vh", background: "#F8FAFC", padding: "0 0 48px" }}>
-      {/* Header */}
-      <header style={{ background: "#FFFFFF", borderBottom: "1px solid #E3E8EF", padding: "24px 24px 20px" }}>
-        <div style={{ maxWidth: 960, margin: "0 auto" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
-            <div style={{ width: 44, height: 44, borderRadius: 10, background: LIGHT, display: "flex", alignItems: "center", justifyContent: "center", ...GM, fontSize: 14, fontWeight: 700, color: AZURE, flexShrink: 0, border: "1.5px solid #BAD7F5" }}>
-              {workspace.initials}
-            </div>
-            <div>
-              <h1 style={{ ...GF, fontSize: 22, fontWeight: 800, color: NAVY, margin: 0 }}>{workspace.name}</h1>
-              <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 3, flexWrap: "wrap" }}>
-                <span style={{ ...GM, fontSize: 11, color: SLATE }}>/{workspace.slug}</span>
-                <span style={{ ...GM, fontSize: 10, padding: "2px 8px", borderRadius: 999, background: "#E8F5E9", color: "#1B5E20", fontWeight: 600 }}>
-                  {workspace.status.toUpperCase()}
-                </span>
-                <span style={{ ...GM, fontSize: 10, padding: "2px 8px", borderRadius: 999, background: LIGHT, color: AZURE }}>
-                  {workspace.plan}
-                </span>
-              </div>
-            </div>
-          </div>
-          {/* Demo notice */}
-          <div style={{ marginTop: 14, padding: "8px 14px", background: "#FFFBEB", border: "1px solid #FDE68A", borderRadius: 8, ...GF, fontSize: 11, color: "#92400E" }}>
-            Demonstration workspace — all data is fictional and session-local.
-          </div>
+  const pills = (
+    <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 3, flexWrap: "wrap" }}>
+      <span style={{ ...GM, fontSize: 11, color: SLATE }}>/{workspace.slug}</span>
+      <span style={{ ...GM, fontSize: 10, padding: "2px 8px", borderRadius: 999, background: "#E8F5E9", color: "#1B5E20", fontWeight: 600 }}>
+        {workspace.status.toUpperCase()}
+      </span>
+      <span style={{ ...GM, fontSize: 10, padding: "2px 8px", borderRadius: 999, background: LIGHT, color: AZURE }}>
+        {workspace.plan}
+      </span>
+    </div>
+  );
+
+  const notice = (
+    <div style={{ marginTop: shell ? 0 : 14, marginBottom: shell ? 18 : 0, padding: "8px 14px", background: "#FFFBEB", border: "1px solid #FDE68A", borderRadius: 8, ...GF, fontSize: 11, color: "#92400E" }}>
+      Demonstration workspace — all data is fictional and session-local.
+    </div>
+  );
+
+  const body = (
+    <div style={shell
+      ? { display: "flex", gap: 24, flexWrap: "wrap" }
+      : { maxWidth: 960, margin: "24px auto 0", padding: "0 24px", display: "flex", gap: 24, flexWrap: "wrap" }}>
+      {/* Main column */}
+      <div style={{ flex: "999 1 580px", minWidth: 0 }}>
+        {/* Stats */}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(160px, 100%), 1fr))", gap: 12, marginBottom: 24 }}>
+          <StatCard label="Active Members"      value={workspace.activeMembers}      path="/app/workspace/members" />
+          <StatCard label="Suspended"           value={workspace.suspendedMembers}   path="/app/workspace/members?status=suspended" />
+          <StatCard label="Pending Invitations" value={workspace.pendingInvitations} path="/app/workspace/invitations" />
+          <StatCard label="Active Teams"        value={workspace.teamCount}          path="/app/workspace/teams" />
+          <StatCard label="Custom Roles"        value={workspace.customRoleCount}    path="/app/workspace/roles" />
         </div>
-      </header>
 
-      <div style={{ maxWidth: 960, margin: "24px auto 0", padding: "0 24px", display: "flex", gap: 24, flexWrap: "wrap" }}>
-        {/* Main column */}
-        <div style={{ flex: "1 1 580px", minWidth: 0 }}>
-          {/* Stats */}
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: 12, marginBottom: 24 }}>
-            <StatCard label="Active Members"      value={workspace.activeMembers}      path="/app/workspace/members" />
-            <StatCard label="Suspended"           value={workspace.suspendedMembers}   path="/app/workspace/members?status=suspended" />
-            <StatCard label="Pending Invitations" value={workspace.pendingInvitations} path="/app/workspace/invitations" />
-            <StatCard label="Active Teams"        value={workspace.teamCount}          path="/app/workspace/teams" />
-            <StatCard label="Custom Roles"        value={workspace.customRoleCount}    path="/app/workspace/roles" />
-          </div>
+        {/* Attention items */}
+        {attentionItems.length > 0 && (
+          <section style={{ marginBottom: 24 }}>
+            <h2 style={{ ...GF, fontSize: 12, fontWeight: 700, color: SLATE, textTransform: "uppercase", letterSpacing: "0.06em", margin: "0 0 10px" }}>
+              Needs attention
+            </h2>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {attentionItems.map(item => <AttentionCard key={item.id} item={item} />)}
+            </div>
+          </section>
+        )}
 
-          {/* Attention items */}
-          {attentionItems.length > 0 && (
-            <section style={{ marginBottom: 24 }}>
-              <h2 style={{ ...GF, fontSize: 12, fontWeight: 700, color: SLATE, textTransform: "uppercase", letterSpacing: "0.06em", margin: "0 0 10px" }}>
-                Needs attention
-              </h2>
-              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                {attentionItems.map(item => <AttentionCard key={item.id} item={item} />)}
-              </div>
-            </section>
-          )}
-
-          {/* The Manage hub.
-              *
-              * Grouped by what someone is trying to do, not by which service
-              * owns the page. Three headings a non-expert can choose between
-              * without knowing the product: who is here, what is happening,
-              * and how the workspace itself is set up.
-              *
-              * Reports and Signing routes are DEMOTED here from the sidebar.
-              * Neither is on the path to sending a document, and both sat as
-              * peers of Documents for a first-time sender whose whole job is
-              * one PDF and one signer. */}
+        {/* The Manage hub.
+            *
+            * Grouped by what someone is trying to do, not by which service
+            * owns the page. Three headings a non-expert can choose between
+            * without knowing the product: who is here, what is happening,
+            * and how the workspace itself is set up.
+            *
+            * Reports and Signing routes are DEMOTED here from the sidebar.
+            * Neither is on the path to sending a document, and both sat as
+            * peers of Documents for a first-time sender whose whole job is
+            * one PDF and one signer. */}
+        {shell ? <MoreForThisWorkspace /> : (
           <section style={{ background: "#FFFFFF", border: "1.5px solid #E3E8EF", borderRadius: 12, padding: "4px 20px 4px" }}>
             <h2 style={{ ...GF, fontSize: 12, fontWeight: 700, color: SLATE, textTransform: "uppercase", letterSpacing: "0.06em", margin: "14px 0 2px" }}>
               People
@@ -193,39 +215,71 @@ function WorkspaceOverviewInner() {
               </Link>
             </div>
           </section>
+        )}
+      </div>
+
+      {/* Side column */}
+      <div style={{ flex: "1 0 240px", minWidth: 0 }}>
+        <div style={{ background: "#FFFFFF", border: "1.5px solid #E3E8EF", borderRadius: 12, padding: "16px 20px" }}>
+          <h2 style={{ ...GF, fontSize: 12, fontWeight: 700, color: SLATE, textTransform: "uppercase", letterSpacing: "0.06em", margin: "0 0 12px" }}>
+            Workspace details
+          </h2>
+          <dl style={{ margin: 0, display: "flex", flexDirection: "column", gap: 10 }}>
+            {[
+              { label: "Type",   value: workspace.type.charAt(0).toUpperCase() + workspace.type.slice(1) },
+              { label: "Plan",   value: workspace.plan },
+              { label: "Created", value: new Date(workspace.createdAt).toLocaleDateString("en-PH", { year: "numeric", month: "long", day: "numeric" }) },
+              { label: "Billing email", value: workspace.billingEmail ?? "—" },
+            ].map(({ label, value }) => (
+              <div key={label}>
+                <dt style={{ ...GM, fontSize: 10, color: SILVER, textTransform: "uppercase", letterSpacing: "0.05em" }}>{label}</dt>
+                <dd style={{ ...GF, fontSize: 13, color: NAVY, margin: "2px 0 0", fontWeight: 500, overflowWrap: "anywhere" }}>{value}</dd>
+              </div>
+            ))}
+          </dl>
         </div>
 
-        {/* Side column */}
-        <div style={{ flex: "0 0 240px", minWidth: 200 }}>
-          <div style={{ background: "#FFFFFF", border: "1.5px solid #E3E8EF", borderRadius: 12, padding: "16px 20px" }}>
-            <h2 style={{ ...GF, fontSize: 12, fontWeight: 700, color: SLATE, textTransform: "uppercase", letterSpacing: "0.06em", margin: "0 0 12px" }}>
-              Workspace details
-            </h2>
-            <dl style={{ margin: 0, display: "flex", flexDirection: "column", gap: 10 }}>
-              {[
-                { label: "Type",   value: workspace.type.charAt(0).toUpperCase() + workspace.type.slice(1) },
-                { label: "Plan",   value: workspace.plan },
-                { label: "Created", value: new Date(workspace.createdAt).toLocaleDateString("en-PH", { year: "numeric", month: "long", day: "numeric" }) },
-                { label: "Billing email", value: workspace.billingEmail ?? "—" },
-              ].map(({ label, value }) => (
-                <div key={label}>
-                  <dt style={{ ...GM, fontSize: 10, color: SILVER, textTransform: "uppercase", letterSpacing: "0.05em" }}>{label}</dt>
-                  <dd style={{ ...GF, fontSize: 13, color: NAVY, margin: "2px 0 0", fontWeight: 500 }}>{value}</dd>
-                </div>
-              ))}
-            </dl>
-          </div>
-
-          <div style={{ marginTop: 12, background: "#FFFFFF", border: "1.5px solid #E3E8EF", borderRadius: 12, padding: "16px 20px" }}>
-            <h2 style={{ ...GF, fontSize: 12, fontWeight: 700, color: SLATE, textTransform: "uppercase", letterSpacing: "0.06em", margin: "0 0 10px" }}>
-              Other workspaces
-            </h2>
-            <p style={{ ...GF, fontSize: 12, color: SLATE, margin: 0 }}>
-              Workspace switching is available in the sidebar. This demonstration is scoped to Mabini Legal Solutions.
-            </p>
-          </div>
+        <div style={{ marginTop: 12, background: "#FFFFFF", border: "1.5px solid #E3E8EF", borderRadius: 12, padding: "16px 20px" }}>
+          <h2 style={{ ...GF, fontSize: 12, fontWeight: 700, color: SLATE, textTransform: "uppercase", letterSpacing: "0.06em", margin: "0 0 10px" }}>
+            Other workspaces
+          </h2>
+          <p style={{ ...GF, fontSize: 12, color: SLATE, margin: 0 }}>
+            Workspace switching is available in the sidebar. This demonstration is scoped to Mabini Legal Solutions.
+          </p>
         </div>
       </div>
+    </div>
+  );
+
+  // In the shell the workspace's name and initials are already in its
+  // header; the section carries the facts only the demo has.
+  if (shell) {
+    return (
+      <ManagePage crumbs={OVERVIEW_CRUMBS} title="Overview" subtitle={pills}>
+        {notice}
+        {body}
+      </ManagePage>
+    );
+  }
+
+  return (
+    <div style={{ minHeight: "100vh", background: "#F8FAFC", padding: "0 0 48px" }}>
+      {/* Header */}
+      <header style={{ background: "#FFFFFF", borderBottom: "1px solid #E3E8EF", padding: "24px 24px 20px" }}>
+        <div style={{ maxWidth: 960, margin: "0 auto" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
+            <div style={{ width: 44, height: 44, borderRadius: 10, background: LIGHT, display: "flex", alignItems: "center", justifyContent: "center", ...GM, fontSize: 14, fontWeight: 700, color: AZURE, flexShrink: 0, border: "1.5px solid #BAD7F5" }}>
+              {workspace.initials}
+            </div>
+            <div>
+              <h1 style={{ ...GF, fontSize: 22, fontWeight: 800, color: NAVY, margin: 0 }}>{workspace.name}</h1>
+              {pills}
+            </div>
+          </div>
+          {notice}
+        </div>
+      </header>
+      {body}
     </div>
   );
 }

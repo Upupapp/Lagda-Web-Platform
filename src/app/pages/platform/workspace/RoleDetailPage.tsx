@@ -11,6 +11,9 @@ import { ALL_PERMISSIONS, WORKSPACE_ROLE_TYPE_LABELS } from "../../../models/wor
 import { Z } from "../../../utils/z-index";
 import { useWorkspaceMode } from "../../../hooks/useWorkspaceAccess";
 import { RealRoleDetailPage } from "./real/RealRolesPages";
+import { ManagePage } from "./real/manage-ui";
+
+const CRUMBS = [{ label: "Manage", to: "/app/workspace" }, { label: "Roles", to: "/app/workspace/roles" }];
 
 const GF    = { fontFamily: "'Geist', sans-serif" };
 const GM    = { fontFamily: "'Geist Mono', monospace" };
@@ -114,19 +117,19 @@ function RoleDetailInner() {
 
   if (state.roleLoading) {
     return (
-      <div style={{ minHeight: "100vh", background: "#F8FAFC", padding: "32px 24px" }}>
-        <div style={{ maxWidth: 720, margin: "0 auto" }}>
-          {[60, 200, 300].map((h, i) => <div key={i} style={{ height: h, background: "#E2E8F0", borderRadius: 12, marginBottom: 16 }} />)}
+      <ManagePage crumbs={[...CRUMBS, { label: "Role" }]} title="Role" maxWidth={860}>
+        <div aria-busy="true">
+          {[200, 300].map((h, i) => <div key={i} className="lagda-skeleton" style={{ height: h, background: "#E2E8F0", borderRadius: 12, marginBottom: 16 }} />)}
         </div>
-      </div>
+      </ManagePage>
     );
   }
 
   if (state.roleError || !state.activeRole) {
     return (
-      <div style={{ minHeight: "100vh", background: "#F8FAFC", display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <ManagePage crumbs={[...CRUMBS, { label: "Role" }]} title="Role not found" maxWidth={860}>
         <p style={{ ...GF, color: SLATE }}>Role not found. <Link to="/app/workspace/roles" style={{ color: AZURE }}>Back to Roles</Link></p>
-      </div>
+      </ManagePage>
     );
   }
 
@@ -139,7 +142,36 @@ function RoleDetailInner() {
   }, {});
 
   return (
-    <div style={{ minHeight: "100vh", background: "#F8FAFC", padding: "0 0 48px" }}>
+    <ManagePage crumbs={[...CRUMBS, { label: role.name }]} title={role.name} maxWidth={860}
+      badge={
+        <>
+          <span style={{ ...GM, fontSize: 10, padding: "2px 8px", borderRadius: 999, background: role.type === "system" ? "#EBF4FC" : "#F0FDF4", color: role.type === "system" ? AZURE : "#166534" }}>
+            {WORKSPACE_ROLE_TYPE_LABELS[role.type]}
+          </span>
+          {role.status === "archived" && (
+            <span style={{ ...GM, fontSize: 10, padding: "2px 8px", borderRadius: 999, background: "#F1F5F9", color: "#475569" }}>Archived</span>
+          )}
+        </>
+      }
+      subtitle={role.description}
+      actions={role.isEditable ? (
+        <>
+          {role.status === "active" && (
+            <button onClick={() => setEditing(true)}
+              style={{ ...GF, fontSize: 13, padding: "8px 16px", border: "1.5px solid #D1D9E0", borderRadius: 8, background: "#FFFFFF", cursor: "pointer", color: SLATE }}>
+              Edit
+            </button>
+          )}
+          <button onClick={handleArchiveToggle} disabled={acting}
+            style={{ ...GF, fontSize: 13, padding: "8px 16px", border: "1.5px solid #D1D9E0", borderRadius: 8, background: "#FFFFFF", cursor: acting ? "not-allowed" : "pointer", color: SLATE }}>
+            {acting ? "…" : role.status === "archived" ? "Restore" : "Archive"}
+          </button>
+        </>
+      ) : (
+        <span style={{ ...GM, fontSize: 11, color: SILVER, padding: "8px 14px", border: "1.5px solid #E3E8EF", borderRadius: 8, background: "#F8FAFC" }}>
+          System roles cannot be edited
+        </span>
+      )}>
       {editing && (
         <EditRoleModal
           name={role.name} description={role.description}
@@ -147,52 +179,7 @@ function RoleDetailInner() {
           onSave={handleSaveEdit} onCancel={() => setEditing(false)} />
       )}
 
-      <header style={{ background: "#FFFFFF", borderBottom: "1px solid #E3E8EF", padding: "20px 24px" }}>
-        <nav aria-label="Breadcrumb" style={{ marginBottom: 10 }}>
-          <ol style={{ display: "flex", gap: 6, listStyle: "none", margin: 0, padding: 0, ...GF, fontSize: 12, color: SILVER }}>
-            <li><Link to="/app/workspace" style={{ color: AZURE, textDecoration: "none" }}>Workspace</Link></li>
-            <li aria-hidden>›</li>
-            <li><Link to="/app/workspace/roles" style={{ color: AZURE, textDecoration: "none" }}>Roles</Link></li>
-            <li aria-hidden>›</li>
-            <li style={{ color: SLATE }}>{role.name}</li>
-          </ol>
-        </nav>
-        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
-          <div>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-              <h1 style={{ ...GF, fontSize: 20, fontWeight: 800, color: NAVY, margin: 0 }}>{role.name}</h1>
-              <span style={{ ...GM, fontSize: 10, padding: "2px 8px", borderRadius: 999, background: role.type === "system" ? "#EBF4FC" : "#F0FDF4", color: role.type === "system" ? AZURE : "#166534" }}>
-                {WORKSPACE_ROLE_TYPE_LABELS[role.type]}
-              </span>
-              {role.status === "archived" && (
-                <span style={{ ...GM, fontSize: 10, padding: "2px 8px", borderRadius: 999, background: "#F1F5F9", color: "#475569" }}>Archived</span>
-              )}
-            </div>
-            <p style={{ ...GF, fontSize: 13, color: SLATE, margin: "5px 0 0" }}>{role.description}</p>
-          </div>
-          {role.isEditable && (
-            <div style={{ display: "flex", gap: 8 }}>
-              {role.status === "active" && (
-                <button onClick={() => setEditing(true)}
-                  style={{ ...GF, fontSize: 13, padding: "8px 16px", border: "1.5px solid #D1D9E0", borderRadius: 8, background: "#FFFFFF", cursor: "pointer", color: SLATE }}>
-                  Edit
-                </button>
-              )}
-              <button onClick={handleArchiveToggle} disabled={acting}
-                style={{ ...GF, fontSize: 13, padding: "8px 16px", border: "1.5px solid #D1D9E0", borderRadius: 8, background: "#FFFFFF", cursor: acting ? "not-allowed" : "pointer", color: SLATE }}>
-                {acting ? "…" : role.status === "archived" ? "Restore" : "Archive"}
-              </button>
-            </div>
-          )}
-          {!role.isEditable && (
-            <span style={{ ...GM, fontSize: 11, color: SILVER, padding: "8px 14px", border: "1.5px solid #E3E8EF", borderRadius: 8, background: "#F8FAFC" }}>
-              System roles cannot be edited
-            </span>
-          )}
-        </div>
-      </header>
-
-      <div style={{ maxWidth: 860, margin: "24px auto 0", padding: "0 24px", display: "flex", gap: 24, flexWrap: "wrap" }}>
+      <div style={{ display: "flex", gap: 24, flexWrap: "wrap" }}>
         {/* Permission matrix */}
         <div style={{ flex: "1 1 460px", minWidth: 0 }}>
           <section style={{ background: "#FFFFFF", border: "1.5px solid #E3E8EF", borderRadius: 12, padding: "18px 20px" }}>
@@ -254,7 +241,7 @@ function RoleDetailInner() {
           )}
         </div>
       </div>
-    </div>
+    </ManagePage>
   );
 }
 

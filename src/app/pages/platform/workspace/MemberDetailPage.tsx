@@ -17,6 +17,9 @@ import { ASSIGNABLE_ROLES, REAL_ROLE_LABELS } from "../../../services/real/works
 import { Z } from "../../../utils/z-index";
 import { useWorkspaceMode } from "../../../hooks/useWorkspaceAccess";
 import { RealMemberAbilities, RealMemberTeams } from "./real/RealMemberSections";
+import { ManagePage } from "./real/manage-ui";
+
+const CRUMBS = [{ label: "Manage", to: "/app/workspace" }, { label: "Members", to: "/app/workspace/members" }];
 
 const GF    = { fontFamily: "'Geist', sans-serif" };
 const GM    = { fontFamily: "'Geist Mono', monospace" };
@@ -162,21 +165,21 @@ function MemberDetailInner() {
 
   if (state.memberLoading) {
     return (
-      <div style={{ minHeight: "100vh", background: "#F8FAFC", padding: "32px 24px" }}>
-        <div style={{ maxWidth: 720, margin: "0 auto" }}>
-          {[60, 180, 300].map((h, i) => <div key={i} style={{ height: h, background: "#E2E8F0", borderRadius: 12, marginBottom: 16 }} />)}
+      <ManagePage crumbs={[...CRUMBS, { label: "Member" }]} title="Member" maxWidth={860}>
+        <div aria-busy="true">
+          {[180, 300].map((h, i) => <div key={i} className="lagda-skeleton" style={{ height: h, background: "#E2E8F0", borderRadius: 12, marginBottom: 16 }} />)}
         </div>
-      </div>
+      </ManagePage>
     );
   }
 
   if (state.memberError || !state.activeMember) {
     return (
-      <div style={{ minHeight: "100vh", background: "#F8FAFC", display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <ManagePage crumbs={[...CRUMBS, { label: "Member" }]} title="Member not found" maxWidth={860}>
         <p style={{ ...GF, fontSize: 14, color: SLATE }}>
           Member not found. <Link to="/app/workspace/members" style={{ color: AZURE }}>Back to Members</Link>
         </p>
-      </div>
+      </ManagePage>
     );
   }
 
@@ -201,7 +204,49 @@ function MemberDetailInner() {
     ];
 
   return (
-    <div style={{ minHeight: "100vh", background: "#F8FAFC", padding: "0 0 48px" }}>
+    <ManagePage crumbs={[...CRUMBS, { label: m.displayName }]} title={m.displayName} maxWidth={860}
+      leading={
+        <div aria-hidden style={{ width: 48, height: 48, borderRadius: "50%", background: LIGHT, display: "flex", alignItems: "center", justifyContent: "center", ...GM, fontSize: 16, fontWeight: 700, color: AZURE, border: "1.5px solid #BAD7F5", flexShrink: 0 }}>
+          {m.avatarInitials}
+        </div>
+      }
+      badge={
+        <>
+          {m.isOwner && <span style={{ ...GM, fontSize: 10, padding: "2px 8px", borderRadius: 999, background: LIGHT, color: AZURE }}>OWNER</span>}
+          <span style={{ ...GM, fontSize: 10, padding: "3px 9px", borderRadius: 999, background: badge.bg, color: badge.color }}>
+            {WORKSPACE_MEMBER_STATUS_LABELS[m.status]}
+          </span>
+        </>
+      }
+      subtitle={<span style={{ ...GM, fontSize: 12 }}>{m.email}</span>}
+      actions={m.isOwner ? undefined : (
+        <>
+          {/* Suspend/Reactivate/Deactivate: no real backend equivalent
+              (074's exploration). A membership exists or it does not. */}
+          {!USE_REAL_BACKEND && m.status === "active" && (
+            <button onClick={() => setModal("suspend")}
+              style={{ ...GF, fontSize: 13, padding: "8px 16px", border: "1.5px solid #FDE68A", borderRadius: 8, background: "#FFFBEB", color: "#92400E", cursor: "pointer" }}>
+              Suspend
+            </button>
+          )}
+          {!USE_REAL_BACKEND && m.status === "suspended" && (
+            <button onClick={handleReactivate}
+              style={{ ...GF, fontSize: 13, padding: "8px 16px", border: "1.5px solid #BBF7D0", borderRadius: 8, background: "#F0FDF4", color: "#14532D", cursor: "pointer" }}>
+              Reactivate
+            </button>
+          )}
+          {!USE_REAL_BACKEND && m.status !== "deactivated" && (
+            <button onClick={() => setModal("deactivate")}
+              style={{ ...GF, fontSize: 13, padding: "8px 16px", border: "1.5px solid #FECACA", borderRadius: 8, background: "#FEF2F2", color: "#991B1B", cursor: "pointer" }}>
+              Deactivate
+            </button>
+          )}
+          <button onClick={() => setModal("remove")}
+            style={{ ...GF, fontSize: 13, padding: "8px 16px", border: "1.5px solid #FECACA", borderRadius: 8, background: "#FEF2F2", color: "#991B1B", cursor: "pointer" }}>
+            Remove
+          </button>
+        </>
+      )}>
       {modal === "suspend" && <SuspendModal onConfirm={handleSuspend} onCancel={() => setModal(null)} />}
       {modal === "deactivate" && (
         <ConfirmModal
@@ -218,64 +263,7 @@ function MemberDetailInner() {
           onConfirm={handleRemove} onCancel={() => setModal(null)} />
       )}
 
-      <header style={{ background: "#FFFFFF", borderBottom: "1px solid #E3E8EF", padding: "20px 24px" }}>
-        <nav aria-label="Breadcrumb" style={{ marginBottom: 10 }}>
-          <ol style={{ display: "flex", gap: 6, listStyle: "none", margin: 0, padding: 0, ...GF, fontSize: 12, color: SILVER }}>
-            <li><Link to="/app/workspace" style={{ color: AZURE, textDecoration: "none" }}>Workspace</Link></li>
-            <li aria-hidden>›</li>
-            <li><Link to="/app/workspace/members" style={{ color: AZURE, textDecoration: "none" }}>Members</Link></li>
-            <li aria-hidden>›</li>
-            <li style={{ color: SLATE }}>{m.displayName}</li>
-          </ol>
-        </nav>
-        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-            <div style={{ width: 48, height: 48, borderRadius: "50%", background: LIGHT, display: "flex", alignItems: "center", justifyContent: "center", ...GM, fontSize: 16, fontWeight: 700, color: AZURE, border: "1.5px solid #BAD7F5" }}>
-              {m.avatarInitials}
-            </div>
-            <div>
-              <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-                <h1 style={{ ...GF, fontSize: 20, fontWeight: 800, color: NAVY, margin: 0 }}>{m.displayName}</h1>
-                {m.isOwner && <span style={{ ...GM, fontSize: 10, padding: "2px 8px", borderRadius: 999, background: LIGHT, color: AZURE }}>OWNER</span>}
-                <span style={{ ...GM, fontSize: 10, padding: "3px 9px", borderRadius: 999, background: badge.bg, color: badge.color }}>
-                  {WORKSPACE_MEMBER_STATUS_LABELS[m.status]}
-                </span>
-              </div>
-              <div style={{ ...GM, fontSize: 12, color: SLATE, marginTop: 3 }}>{m.email}</div>
-            </div>
-          </div>
-          {!m.isOwner && (
-            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-              {/* Suspend/Reactivate/Deactivate: no real backend equivalent
-                  (074's exploration). A membership exists or it does not. */}
-              {!USE_REAL_BACKEND && m.status === "active" && (
-                <button onClick={() => setModal("suspend")}
-                  style={{ ...GF, fontSize: 13, padding: "8px 16px", border: "1.5px solid #FDE68A", borderRadius: 8, background: "#FFFBEB", color: "#92400E", cursor: "pointer" }}>
-                  Suspend
-                </button>
-              )}
-              {!USE_REAL_BACKEND && m.status === "suspended" && (
-                <button onClick={handleReactivate}
-                  style={{ ...GF, fontSize: 13, padding: "8px 16px", border: "1.5px solid #BBF7D0", borderRadius: 8, background: "#F0FDF4", color: "#14532D", cursor: "pointer" }}>
-                  Reactivate
-                </button>
-              )}
-              {!USE_REAL_BACKEND && m.status !== "deactivated" && (
-                <button onClick={() => setModal("deactivate")}
-                  style={{ ...GF, fontSize: 13, padding: "8px 16px", border: "1.5px solid #FECACA", borderRadius: 8, background: "#FEF2F2", color: "#991B1B", cursor: "pointer" }}>
-                  Deactivate
-                </button>
-              )}
-              <button onClick={() => setModal("remove")}
-                style={{ ...GF, fontSize: 13, padding: "8px 16px", border: "1.5px solid #FECACA", borderRadius: 8, background: "#FEF2F2", color: "#991B1B", cursor: "pointer" }}>
-                Remove
-              </button>
-            </div>
-          )}
-        </div>
-      </header>
-
-      <div style={{ maxWidth: 860, margin: "24px auto 0", padding: "0 24px", display: "flex", gap: 24, flexWrap: "wrap" }}>
+      <div style={{ display: "flex", gap: 24, flexWrap: "wrap" }}>
         {/* Left: role + teams */}
         <div style={{ flex: "1 1 460px", minWidth: 0, display: "flex", flexDirection: "column", gap: 16 }}>
           {/* Suspension notice */}
@@ -387,7 +375,7 @@ function MemberDetailInner() {
           </div>
         )}
       </div>
-    </div>
+    </ManagePage>
   );
 }
 

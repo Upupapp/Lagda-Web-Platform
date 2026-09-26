@@ -19,8 +19,25 @@
 export const Z = {
   /** Default flow. */
   base: 0,
+  /**
+   * The Place Fields page canvas (its scroll container). It is given its own
+   * stacking context (`isolation: isolate`) at this level, so EVERYTHING
+   * painted inside it — a selected field (`layer + 100`), its resize
+   * handles, selection outline, "?" badges and their bubbles — is ordered
+   * only against other canvas content and can never rise above
+   * `editorControls` or the properties sheet (`drawer`) that sit over it.
+   * Before this the selected field's 100–500 values competed directly with
+   * the sheet's 50 and painted through it on phones.
+   */
+  editorCanvas: 1,
   /** Lifted off the page but still in flow — hover cards, focused rows. */
   raised: 10,
+  /**
+   * Floating controls over the Place Fields canvas: the phone's Properties /
+   * Continue buttons, the editor Help FAB and the auto-placement notice.
+   * Above the canvas; below the sheet, drawer and dialogs that cover them.
+   */
+  editorControls: 12,
   /** In-page sticky toolbars and table headers. Must NOT cover the shell. */
   sticky: 20,
   /** Platform header, sidebar, mobile top bar. Above page content, below menus. */

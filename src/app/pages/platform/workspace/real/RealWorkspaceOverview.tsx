@@ -6,49 +6,31 @@
 // the backend would refuse with its hidden 404 is never made. Owners and
 // administrators see the full hub; everyone else sees their own access, the
 // pages their role reaches, and their other workspaces.
+//
+// Inside the workspace shell this is the Overview section: the shell's
+// header already names the workspace and the viewer's role, its banners
+// already list the pages, and it already loaded the figures — so this reads
+// the shell's copy rather than asking the backend a second time.
 
-import { useCallback, useEffect, useState, type ReactNode } from "react";
+import type { ReactNode } from "react";
 import { Link } from "react-router";
 import { usePlatform } from "../../../../context/PlatformContext";
 import { useViewport } from "../../../../hooks/useViewport";
 import { useWorkspaceAccess } from "../../../../hooks/useWorkspaceAccess";
-import { realWorkspaceService } from "../../../../services/real/workspace.service";
-import { realWorkspaceAdminService, REAL_ROLE_LABELS } from "../../../../services/real/workspace-admin.service";
-import { realOrganizationService } from "../../../../services/real/organization.service";
-import { listJoinRequests, listJoinTickets, type JoinRequest } from "../../../../services/real/workspace-join.service";
-import { memberRoleLabel, type WorkspaceMemberSummary, type WorkspaceInvitation } from "../../../../models/workspace-admin";
+import { REAL_ROLE_LABELS } from "../../../../services/real/workspace-admin.service";
+import { memberRoleLabel } from "../../../../models/workspace-admin";
 import { PRIVILEGE_LABELS } from "../../../../models/workspace-role-policy";
 import { buttonStyle } from "../join/join-styles";
-import { GF, GM, NAVY, AZURE, SLATE, SILVER, BORDER } from "./manage-ui";
+import { ManagePage, GF, GM, NAVY, AZURE, SLATE, SILVER, BORDER } from "./manage-ui";
 import { cardStyle, sectionHeadingStyle, LIGHT } from "./manage-styles";
 import { formatDate } from "./manage-format";
+import {
+  useRealOverviewData, overviewGates, pendingInvitationsOf, pendingRequestsOf, initialsOf, type Count,
+} from "./overview-data";
+import { useWorkspaceShell } from "../shell/workspace-shell-context";
 
 const EXPIRING_WITHIN_MS = 3 * 24 * 60 * 60 * 1000;
 const ATTENTION_REQUEST_LIMIT = 5;
-
-/** A number that failed to load reads "—", never a made-up zero. */
-type Count = number | null | "error";
-
-interface OverviewData {
-  name: string | null;
-  createdAt: number | null;
-  me: WorkspaceMemberSummary | null;
-  members: Count;
-  pendingRequests: JoinRequest[] | null | "error";
-  invitations: WorkspaceInvitation[] | null | "error";
-  activeLinks: Count;
-  teams: Count;
-}
-
-const EMPTY: OverviewData = {
-  name: null, createdAt: null, me: null, members: null, pendingRequests: null,
-  invitations: null, activeLinks: null, teams: null,
-};
-
-function initialsOf(name: string): string {
-  const parts = name.trim().split(/\s+/).filter(Boolean);
-  return ((parts[0]?.[0] ?? "?") + (parts.length > 1 ? parts[parts.length - 1]?.[0] ?? "" : "")).toUpperCase();
-}
 
 function StatCard({ label, value, path, testId }: { label: string; value: Count; path: string; testId: string }) {
   const shown = value === null ? "…" : value === "error" ? "—" : String(value);
@@ -152,51 +134,16 @@ export function RealWorkspaceOverview({ workspaceId }: { workspaceId: string }) 
   const platform = usePlatform();
   const access = useWorkspaceAccess();
   const { isNarrow, isMedium } = useViewport();
-  const [data, setData] = useState<OverviewData>(EMPTY);
+  const shell = useWorkspaceShell();
+  const gates = overviewGates(access);
+  // In the shell the figures are already loaded; this loads only on its own.
+  const own = useRealOverviewData(workspaceId, gates, shell?.realOverview == null);
+  const data = shell?.realOverview ?? own;
 
-  const canMembers = access.can("membership.view");
-  const canManageMembers = access.can("membership.role.change");
-  const canInvitations = access.can("invitation.view");
-  const canTeams = access.can("unit.view");
-
-  const load = useCallback(async (signal: { cancelled: boolean }) => {
-    const set = (patch: Partial<OverviewData>) => { if (!signal.cancelled) setData(d => ({ ...d, ...patch })); };
-    const jobs: Promise<void>[] = [];
-    jobs.push(realWorkspaceService.get(workspaceId)
-      .then(ws => set({ name: ws.name, createdAt: ws.createdAt }))
-      .catch(() => { /* the session's name stands in */ }));
-    if (canMembers) {
-      jobs.push(realWorkspaceAdminService.listMembers(workspaceId)
-        .then(list => set({ members: list.length, me: list.find(m => m.isCurrentUser) ?? null }))
-        .catch(() => set({ members: "error" })));
-    }
-    if (canManageMembers) {
-      jobs.push(listJoinRequests(workspaceId, "pending")
-        .then(list => set({ pendingRequests: list.filter(r => r.state === "pending").sort((a, b) => a.createdAt - b.createdAt) }))
-        .catch(() => set({ pendingRequests: "error" })));
-    }
-    if (canInvitations) {
-      jobs.push(realWorkspaceAdminService.listInvitations(workspaceId)
-        .then(list => set({ invitations: list }))
-        .catch(() => set({ invitations: "error" })));
-      jobs.push(listJoinTickets(workspaceId)
-        .then(list => set({ activeLinks: list.filter(t => t.state === "sent" && t.usedAt === null && t.request === null).length }))
-        .catch(() => set({ activeLinks: "error" })));
-    }
-    if (canTeams) {
-      jobs.push(realOrganizationService.listUnits(workspaceId)
-        .then(list => set({ teams: list.filter(u => u.archivedAt === null).length }))
-        .catch(() => set({ teams: "error" })));
-    }
-    await Promise.all(jobs);
-  }, [workspaceId, canMembers, canManageMembers, canInvitations, canTeams]);
-
-  useEffect(() => {
-    const signal = { cancelled: false };
-    setData(EMPTY);
-    void load(signal);
-    return () => { signal.cancelled = true; };
-  }, [load]);
+  const canMembers = gates.members;
+  const canManageMembers = gates.manageMembers;
+  const canInvitations = gates.invitations;
+  const canTeams = gates.teams;
 
   const name = data.name ?? platform.currentWorkspace?.name ?? "Workspace";
   const role = access.role;
@@ -209,13 +156,13 @@ export function RealWorkspaceOverview({ workspaceId }: { workspaceId: string }) 
     ? { requestDocuments: data.me.canRequestDocuments === true, assignSigners: data.me.canAssignSigners === true }
     : { requestDocuments: access.can("upload-request.create"), assignSigners: access.can("signing-request.send") };
 
-  const pendingInvitations = Array.isArray(data.invitations) ? data.invitations.filter(i => i.status === "pending") : [];
+  const pendingInvitations = pendingInvitationsOf(data);
   const now = Date.now();
   const expiringSoon = pendingInvitations.filter(i => {
     const t = new Date(i.expiresAt).getTime();
     return t > now && t - now <= EXPIRING_WITHIN_MS;
   });
-  const pendingRequests = Array.isArray(data.pendingRequests) ? data.pendingRequests : [];
+  const pendingRequests = pendingRequestsOf(data);
   const pendingCount = pendingRequests.length;
 
   const stats: { key: string; label: string; value: Count; path: string }[] = [];
@@ -267,6 +214,128 @@ export function RealWorkspaceOverview({ workspaceId }: { workspaceId: string }) 
   const padX = isNarrow ? 16 : 24;
   const isAdmin = canManageMembers;
 
+  // The hub. In the shell the banners already list every Manage page, so
+  // only what lives elsewhere in the product stays here.
+  const hub = shell ? (
+    access.can("workspace.update") ? (
+      <section aria-labelledby="more-for-workspace" style={{ ...cardStyle, padding: "4px 20px" }}>
+        <h2 id="more-for-workspace" style={{ ...sectionHeadingStyle, margin: "14px 0 2px" }}>More for this workspace</h2>
+        <HubLink label="Signing routes" path="/app/workflow" description="Reusable signing orders for documents with several signers" />
+        <HubLink label="Logo & colours" path="/app/settings/branding" description="How your documents and emails look to signers" />
+        <div style={{ height: 8 }} />
+      </section>
+    ) : null
+  ) : (
+    <section style={{ ...cardStyle, padding: "4px 20px" }}>
+      <h2 style={{ ...sectionHeadingStyle, margin: "14px 0 2px" }}>People</h2>
+      {canMembers && <HubLink label="Members" path="/app/workspace/members" description="Who is in this workspace, their roles and privileges" />}
+      {canManageMembers && (
+        <HubLink label="Join requests" path="/app/workspace/join-requests" description="People waiting for you to approve or decline them"
+          badge={pendingCount > 0 ? <CountBadge count={pendingCount} label={`${String(pendingCount)} waiting`} /> : undefined} />
+      )}
+      {canInvitations && <HubLink label="Join links" path="/app/workspace/join-links" description="Single-use links that let someone ask to join" />}
+      {canInvitations && <HubLink label="Invitations" path="/app/workspace/invitations" description="People invited by email who have not joined yet" />}
+      {canTeams && <HubLink label="Teams" path="/app/workspace/teams" description="Departments, offices and other groups of members" />}
+      <HubLink label="Who can do what" path="/app/workspace/roles" description="What each role in this workspace is allowed to do" />
+
+      {(access.can("document.view") || access.can("activity.view")) && (
+        <h2 style={{ ...sectionHeadingStyle, margin: "18px 0 2px" }}>Oversight</h2>
+      )}
+      {access.can("document.view") && isAdmin && (
+        <HubLink label="All workspace documents" path="/app/workspace/documents" description="Every document sent for signing, and who sent it" />
+      )}
+      {access.can("activity.view") && (
+        <HubLink label="Activity log" path="/app/workspace/activity" description="Changes to members, links, teams and settings" />
+      )}
+
+      {access.can("workspace.update") && (
+        <>
+          <h2 style={{ ...sectionHeadingStyle, margin: "18px 0 2px" }}>Workspace</h2>
+          <HubLink label="Workspace settings" path="/app/workspace/settings" description="The workspace's name" />
+          <HubLink label="Signing routes" path="/app/workflow" description="Reusable signing orders for documents with several signers" />
+          <HubLink label="Logo & colours" path="/app/settings/branding" description="How your documents and emails look to signers" />
+        </>
+      )}
+      <div style={{ height: 8 }} />
+    </section>
+  );
+
+  const body = (
+    <div style={{
+      ...(shell ? {} : { maxWidth: 960, margin: "24px auto 0", padding: `0 ${String(padX)}px` }),
+      boxSizing: "border-box", display: "flex", gap: 24, flexDirection: stacked ? "column" : "row", alignItems: "flex-start",
+    }}>
+      <div style={{ flex: "1 1 0", minWidth: 0, width: stacked ? "100%" : undefined }}>
+        {stats.length > 0 && (
+          <div data-testid="overview-stats" style={{ display: "grid", gridTemplateColumns: `repeat(auto-fill, minmax(${isNarrow ? 128 : 150}px, 1fr))`, gap: 12, marginBottom: 24 }}>
+            {stats.map(s => <StatCard key={s.key} testId={`stat-${s.key}`} label={s.label} value={s.value} path={s.path} />)}
+          </div>
+        )}
+
+        {attention.length > 0 && (
+          <section aria-labelledby="needs-attention" data-testid="needs-attention" style={{ marginBottom: 24 }}>
+            <h2 id="needs-attention" style={sectionHeadingStyle}>Needs attention</h2>
+            <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: 8 }}>{attention}</ul>
+          </section>
+        )}
+
+        {hub}
+      </div>
+
+      <aside style={{ flex: stacked ? "1 1 auto" : "0 0 280px", width: stacked ? "100%" : 280, minWidth: 0, display: "flex", flexDirection: "column", gap: 12 }}>
+        <section aria-labelledby="about-workspace" data-testid="workspace-facts" style={{ ...cardStyle, padding: "16px 20px" }}>
+          <h2 id="about-workspace" style={sectionHeadingStyle}>This workspace</h2>
+          <dl style={{ margin: 0, display: "flex", flexDirection: "column", gap: 10 }}>
+            <div>
+              <dt style={{ ...GM, fontSize: 10, color: SILVER, textTransform: "uppercase", letterSpacing: "0.05em" }}>Name</dt>
+              <dd style={{ ...GF, fontSize: 13, color: NAVY, margin: "2px 0 0", fontWeight: 500, overflowWrap: "anywhere" }}>{name}</dd>
+            </div>
+            {data.createdAt !== null && (
+              <div>
+                <dt style={{ ...GM, fontSize: 10, color: SILVER, textTransform: "uppercase", letterSpacing: "0.05em" }}>Created</dt>
+                <dd style={{ ...GF, fontSize: 13, color: NAVY, margin: "2px 0 0", fontWeight: 500 }}>{formatDate(data.createdAt)}</dd>
+              </div>
+            )}
+            <div>
+              <dt style={{ ...GM, fontSize: 10, color: SILVER, textTransform: "uppercase", letterSpacing: "0.05em" }}>Your role</dt>
+              <dd style={{ ...GF, fontSize: 13, color: NAVY, margin: "2px 0 0", fontWeight: 500 }}>
+                {roleLabel}
+                {myTitle && role && role !== "member" && (
+                  <span style={{ color: SLATE }}> ({REAL_ROLE_LABELS[role]})</span>
+                )}
+              </dd>
+            </div>
+            <div>
+              <dt style={{ ...GM, fontSize: 10, color: SILVER, textTransform: "uppercase", letterSpacing: "0.05em" }}>Your privileges</dt>
+              <dd data-testid="your-privileges" style={{ ...GF, fontSize: 13, color: NAVY, margin: "2px 0 0", lineHeight: 1.5 }}>
+                {inherentPrivileges
+                  ? "Both privileges come with your role."
+                  : (myPrivileges.requestDocuments || myPrivileges.assignSigners)
+                    ? [myPrivileges.requestDocuments && PRIVILEGE_LABELS.requestDocuments, myPrivileges.assignSigners && PRIVILEGE_LABELS.assignSigners].filter(Boolean).join(" · ")
+                    : "None granted yet."}
+              </dd>
+            </div>
+          </dl>
+          <Link to="/app/workspace/roles" style={{ ...GF, fontSize: 12, fontWeight: 600, color: AZURE, textDecoration: "none", display: "inline-block", marginTop: 12 }}>
+            What your role can do →
+          </Link>
+        </section>
+
+        <WorkspacesPanel />
+      </aside>
+    </div>
+  );
+
+  // In the shell, its header already names the workspace and your role.
+  if (shell) {
+    return (
+      <ManagePage crumbs={[{ label: "Manage", to: "/app/workspace" }, { label: "Overview" }]} title="Overview"
+        subtitle="What needs your attention, and what your role can do here.">
+        {body}
+      </ManagePage>
+    );
+  }
+
   return (
     <div style={{ minHeight: "100vh", background: "#F8FAFC", padding: "0 0 48px", overflowX: "hidden" }}>
       <header style={{ background: "#FFFFFF", borderBottom: `1px solid ${BORDER}`, padding: `${isNarrow ? 16 : 24}px ${String(padX)}px 20px` }}>
@@ -282,98 +351,7 @@ export function RealWorkspaceOverview({ workspaceId }: { workspaceId: string }) 
           </div>
         </div>
       </header>
-
-      <div style={{ maxWidth: 960, margin: "24px auto 0", padding: `0 ${String(padX)}px`, boxSizing: "border-box", display: "flex", gap: 24, flexDirection: stacked ? "column" : "row", alignItems: "flex-start" }}>
-        <div style={{ flex: "1 1 0", minWidth: 0, width: stacked ? "100%" : undefined }}>
-          {stats.length > 0 && (
-            <div data-testid="overview-stats" style={{ display: "grid", gridTemplateColumns: `repeat(auto-fill, minmax(${isNarrow ? 128 : 150}px, 1fr))`, gap: 12, marginBottom: 24 }}>
-              {stats.map(s => <StatCard key={s.key} testId={`stat-${s.key}`} label={s.label} value={s.value} path={s.path} />)}
-            </div>
-          )}
-
-          {attention.length > 0 && (
-            <section aria-labelledby="needs-attention" data-testid="needs-attention" style={{ marginBottom: 24 }}>
-              <h2 id="needs-attention" style={sectionHeadingStyle}>Needs attention</h2>
-              <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: 8 }}>{attention}</ul>
-            </section>
-          )}
-
-          <section style={{ ...cardStyle, padding: "4px 20px" }}>
-            <h2 style={{ ...sectionHeadingStyle, margin: "14px 0 2px" }}>People</h2>
-            {canMembers && <HubLink label="Members" path="/app/workspace/members" description="Who is in this workspace, their roles and privileges" />}
-            {canManageMembers && (
-              <HubLink label="Join requests" path="/app/workspace/join-requests" description="People waiting for you to approve or decline them"
-                badge={pendingCount > 0 ? <CountBadge count={pendingCount} label={`${String(pendingCount)} waiting`} /> : undefined} />
-            )}
-            {canInvitations && <HubLink label="Join links" path="/app/workspace/join-links" description="Single-use links that let someone ask to join" />}
-            {canInvitations && <HubLink label="Invitations" path="/app/workspace/invitations" description="People invited by email who have not joined yet" />}
-            {canTeams && <HubLink label="Teams" path="/app/workspace/teams" description="Departments, offices and other groups of members" />}
-            <HubLink label="Who can do what" path="/app/workspace/roles" description="What each role in this workspace is allowed to do" />
-
-            {(access.can("document.view") || access.can("activity.view")) && (
-              <h2 style={{ ...sectionHeadingStyle, margin: "18px 0 2px" }}>Oversight</h2>
-            )}
-            {access.can("document.view") && isAdmin && (
-              <HubLink label="All workspace documents" path="/app/workspace/documents" description="Every document sent for signing, and who sent it" />
-            )}
-            {access.can("activity.view") && (
-              <HubLink label="Activity log" path="/app/workspace/activity" description="Changes to members, links, teams and settings" />
-            )}
-
-            {access.can("workspace.update") && (
-              <>
-                <h2 style={{ ...sectionHeadingStyle, margin: "18px 0 2px" }}>Workspace</h2>
-                <HubLink label="Workspace settings" path="/app/workspace/settings" description="The workspace's name" />
-                <HubLink label="Signing routes" path="/app/workflow" description="Reusable signing orders for documents with several signers" />
-                <HubLink label="Logo & colours" path="/app/settings/branding" description="How your documents and emails look to signers" />
-              </>
-            )}
-            <div style={{ height: 8 }} />
-          </section>
-        </div>
-
-        <aside style={{ flex: stacked ? "1 1 auto" : "0 0 280px", width: stacked ? "100%" : 280, minWidth: 0, display: "flex", flexDirection: "column", gap: 12 }}>
-          <section aria-labelledby="about-workspace" data-testid="workspace-facts" style={{ ...cardStyle, padding: "16px 20px" }}>
-            <h2 id="about-workspace" style={sectionHeadingStyle}>This workspace</h2>
-            <dl style={{ margin: 0, display: "flex", flexDirection: "column", gap: 10 }}>
-              <div>
-                <dt style={{ ...GM, fontSize: 10, color: SILVER, textTransform: "uppercase", letterSpacing: "0.05em" }}>Name</dt>
-                <dd style={{ ...GF, fontSize: 13, color: NAVY, margin: "2px 0 0", fontWeight: 500, overflowWrap: "anywhere" }}>{name}</dd>
-              </div>
-              {data.createdAt !== null && (
-                <div>
-                  <dt style={{ ...GM, fontSize: 10, color: SILVER, textTransform: "uppercase", letterSpacing: "0.05em" }}>Created</dt>
-                  <dd style={{ ...GF, fontSize: 13, color: NAVY, margin: "2px 0 0", fontWeight: 500 }}>{formatDate(data.createdAt)}</dd>
-                </div>
-              )}
-              <div>
-                <dt style={{ ...GM, fontSize: 10, color: SILVER, textTransform: "uppercase", letterSpacing: "0.05em" }}>Your role</dt>
-                <dd style={{ ...GF, fontSize: 13, color: NAVY, margin: "2px 0 0", fontWeight: 500 }}>
-                  {roleLabel}
-                  {myTitle && role && role !== "member" && (
-                    <span style={{ color: SLATE }}> ({REAL_ROLE_LABELS[role]})</span>
-                  )}
-                </dd>
-              </div>
-              <div>
-                <dt style={{ ...GM, fontSize: 10, color: SILVER, textTransform: "uppercase", letterSpacing: "0.05em" }}>Your privileges</dt>
-                <dd data-testid="your-privileges" style={{ ...GF, fontSize: 13, color: NAVY, margin: "2px 0 0", lineHeight: 1.5 }}>
-                  {inherentPrivileges
-                    ? "Both privileges come with your role."
-                    : (myPrivileges.requestDocuments || myPrivileges.assignSigners)
-                      ? [myPrivileges.requestDocuments && PRIVILEGE_LABELS.requestDocuments, myPrivileges.assignSigners && PRIVILEGE_LABELS.assignSigners].filter(Boolean).join(" · ")
-                      : "None granted yet."}
-                </dd>
-              </div>
-            </dl>
-            <Link to="/app/workspace/roles" style={{ ...GF, fontSize: 12, fontWeight: 600, color: AZURE, textDecoration: "none", display: "inline-block", marginTop: 12 }}>
-              What your role can do →
-            </Link>
-          </section>
-
-          <WorkspacesPanel />
-        </aside>
-      </div>
+      {body}
     </div>
   );
 }

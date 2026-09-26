@@ -5,17 +5,18 @@
 // real/RealWorkspaceSettingsPage.tsx. No Burgundy. No eNotary.
 
 import React, { useEffect, useState } from "react";
-import { Link } from "react-router";
 import { WorkspaceAdminProvider, useWorkspaceAdmin } from "../../../context/WorkspaceAdminContext";
 import type { WorkspaceSettings } from "../../../models/workspace-admin";
 import { useWorkspaceMode } from "../../../hooks/useWorkspaceAccess";
 import { RealWorkspaceSettingsPage } from "./real/RealWorkspaceSettingsPage";
+import { ManagePage } from "./real/manage-ui";
+
+const SETTINGS_CRUMBS = [{ label: "Manage", to: "/app/workspace" }, { label: "Settings" }];
 
 const GF    = { fontFamily: "'Geist', sans-serif" };
 const NAVY  = "#07111F";
 const AZURE = "#0078D4";
 const SLATE = "#64748B";
-const SILVER= "#8A9BAE";
 
 function SettingsSection({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -93,11 +94,11 @@ function SettingsInner() {
 
   if (state.settingsLoading) {
     return (
-      <div style={{ minHeight: "100vh", background: "#F8FAFC", padding: "32px 24px" }}>
-        <div style={{ maxWidth: 700, margin: "0 auto" }}>
-          {[60, 200, 200].map((h, i) => <div key={i} style={{ height: h, background: "#E2E8F0", borderRadius: 12, marginBottom: 16 }} />)}
+      <ManagePage crumbs={SETTINGS_CRUMBS} title="Workspace Settings" maxWidth={700}>
+        <div aria-busy="true">
+          {[200, 200].map((h, i) => <div key={i} className="lagda-skeleton" style={{ height: h, background: "#E2E8F0", borderRadius: 12, marginBottom: 16 }} />)}
         </div>
-      </div>
+      </ManagePage>
     );
   }
 
@@ -113,19 +114,7 @@ function SettingsInner() {
   });
 
   return (
-    <div style={{ minHeight: "100vh", background: "#F8FAFC", padding: "0 0 48px" }}>
-      <header style={{ background: "#FFFFFF", borderBottom: "1px solid #E3E8EF", padding: "20px 24px" }}>
-        <nav aria-label="Breadcrumb" style={{ marginBottom: 10 }}>
-          <ol style={{ display: "flex", gap: 6, listStyle: "none", margin: 0, padding: 0, ...GF, fontSize: 12, color: SILVER }}>
-            <li><Link to="/app/workspace" style={{ color: AZURE, textDecoration: "none" }}>Workspace</Link></li>
-            <li aria-hidden>›</li>
-            <li style={{ color: SLATE }}>Settings</li>
-          </ol>
-        </nav>
-        <h1 style={{ ...GF, fontSize: 22, fontWeight: 800, color: NAVY, margin: 0 }}>Workspace Settings</h1>
-      </header>
-
-      <div style={{ maxWidth: 700, margin: "24px auto 0", padding: "0 24px" }}>
+    <ManagePage crumbs={SETTINGS_CRUMBS} title="Workspace Settings" maxWidth={700}>
         <div style={{ background: "#FFFBEB", border: "1px solid #FDE68A", borderRadius: 8, padding: "10px 16px", marginBottom: 18, ...GF, fontSize: 12, color: "#92400E" }}>
           Demonstration mode — all changes are session-local and reset on page reload. No real data is updated.
         </div>
@@ -211,8 +200,7 @@ function SettingsInner() {
             Transfer ownership (demonstration only)
           </button>
         </div>
-      </div>
-    </div>
+    </ManagePage>
   );
 }
 

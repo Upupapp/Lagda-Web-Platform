@@ -10,6 +10,7 @@ import { usePlatform } from "../../../context/PlatformContext";
 import { USE_REAL_BACKEND } from "../../../services/backend-flag";
 import { JoinRequestsSection } from "./join/JoinRequestsSection";
 import { ManagePage, NotAvailable, GF, AZURE } from "./real/manage-ui";
+import { useWorkspaceShell } from "./shell/workspace-shell-context";
 
 const CRUMBS = [{ label: "Manage", to: "/app/workspace" }, { label: "Join requests" }];
 
@@ -19,6 +20,8 @@ export function JoinRequestsPage() {
   // The demo build has no real workspace id; its join service ignores it.
   const workspaceId = platform.currentWorkspace?.id ?? (USE_REAL_BACKEND ? null : "demo");
   const [pending, setPending] = useState(0);
+  // A decision changes the banner count; the shell re-reads it.
+  const shell = useWorkspaceShell();
 
   if (!canManageJoin || workspaceId === null) {
     return <NotAvailable crumbs={CRUMBS} title="Join requests"
@@ -33,7 +36,7 @@ export function JoinRequestsPage() {
         </span>
       ) : undefined}
       actions={<Link to="/app/workspace/join-links" style={{ ...GF, fontSize: 13, fontWeight: 600, color: AZURE, textDecoration: "none", padding: "8px 0" }}>Join links →</Link>}>
-      <JoinRequestsSection workspaceId={workspaceId} onPendingCount={setPending} flush />
+      <JoinRequestsSection workspaceId={workspaceId} onPendingCount={setPending} onDecided={shell?.refreshCounts} flush />
     </ManagePage>
   );
 }

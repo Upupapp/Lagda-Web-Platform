@@ -30,7 +30,17 @@ import {
   resolveAssignmentFor, computeBackendFieldIssues, preferredAssignee,
 } from "../../../services/prepare/field-autofix";
 import { isDocumentSynced, markDocumentSynced } from "../../../services/prepare/sync-markers";
-import { useFieldEditorShortcuts } from "../../../hooks/useFieldEditorShortcuts";
+import {
+  useFieldEditorShortcuts, CANVAS_NUDGE_STEP, CANVAS_NUDGE_STEP_LARGE,
+} from "../../../hooks/useFieldEditorShortcuts";
+import {
+  planRequests, planPlacement, toFieldPartials, placementTargetDocument,
+} from "../../../services/prepare/auto-placement";
+import { hasAutoPlaced, markAutoPlaced } from "../../../services/prepare/auto-placement-marker";
+import { filesSignature } from "../../../services/mock/field-editor.service";
+import { FieldStatusBadge, fieldBadgeStatus, autoOpenBubbleFor } from "../../../components/prepare/FieldStatusBadge";
+import { FieldsHelpPanel, FIELDS_HELP_SIDE_MIN_WIDTH } from "../../../components/prepare/FieldsHelpPanel";
+import { FIELD_ISSUE_GUIDE } from "../../../components/prepare/field-issue-guide";
 import { ToolbarOverflow, type ToolbarItem } from "../../../components/prepare/ToolbarOverflow";
 import { EditorDrawer, EditorSheet } from "../../../components/prepare/EditorMobileChrome";
 import { useViewport } from "../../../components/system/design-system";
@@ -59,6 +69,9 @@ import {
   RESIZE_HANDLES,
   defaultFieldRect,
   applyResizeDelta,
+  defaultRequiredFor,
+  fieldRequiredPolicy,
+  isNameBlockType,
 } from "../../../models/field-editor";
 import type { PrepParticipant } from "../../../models/prepare";
 import { Z } from "../../../utils/z-index";
@@ -74,7 +87,14 @@ const CANVAS_Z = {
   resizeHandle:   200,
   /** The dashed selection outline sits above handles so it is never clipped. */
   selectionOutline: 500,
+  /** The "?" status badges sit above every field, handle and outline. */
+  statusBadge: 600,
+  /** An open badge note sits above the badges. */
+  statusBubble: 700,
 } as const;
+// None of these can escape the canvas: its scroll container is an isolated
+// stacking context at Z.editorCanvas, below the editor's floating controls
+// and the properties sheet (Z.drawer). See PageCanvas.
 
 // ── Design tokens ─────────────────────────────────────────────────────────────
 const GF     = { fontFamily: "'Geist', sans-serif" };
@@ -171,9 +191,24 @@ const HANDLE_CURSORS: Record<ResizeHandle, string> = {
 
 // ── Signature over name ───────────────────────────────────────────────────────
 // The rule and the printed name, positioned as the sealed page will draw them.
-function SignatureBlockPreview({ name, color }: { name: string; color: string }) {
+function SignatureBlockPreview({ name, color, stamp, fallbackName }: {
+  name: string; color: string;
+  /** Review/approval blocks: what the server stamps above the rule. */
+  stamp?: string;
+  fallbackName: string;
+}) {
   return (
     <>
+      {stamp !== undefined && (
+        <span aria-hidden="true" style={{
+          position: "absolute", left: "4%", right: "4%", top: "38%",
+          textAlign: "center", ...GF, fontSize: "min(10px, 1.6vw)", fontWeight: 700,
+          letterSpacing: "0.08em", textTransform: "uppercase", color: SILVER,
+          whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", pointerEvents: "none",
+        }}>
+          {stamp}
+        </span>
+      )}
       <span aria-hidden="true" style={{
         position: "absolute", left: "6%", right: "6%", top: "66%",
         borderTop: `1px solid ${color}`, pointerEvents: "none",
@@ -184,7 +219,7 @@ function SignatureBlockPreview({ name, color }: { name: string; color: string })
         fontSize: "min(11px, 1.8vw)", lineHeight: 1.15, color: "#0F172A",
         whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", pointerEvents: "none",
       }}>
-        {name || "Signer's full name"}
+        {name || fallbackName}
       </span>
     </>
   );
@@ -199,12 +234,14 @@ interface FieldElementProps {
   onPointerDown: (fieldId: FieldId, e: React.PointerEvent<HTMLDivElement>) => void;
   onResizeDown:  (fieldId: FieldId, handle: ResizeHandle, e: React.PointerEvent<HTMLDivElement>) => void;
   overrideRect?: NormalizedRect;
+  /** The box's rendered height in CSS px — decides whether a stamp preview fits. */
+  heightPx: number;
 }
 
-function FieldElement({ field, isSelected, identity, isSender, onPointerDown, onResizeDown, overrideRect }: FieldElementProps) {
+function FieldElement({ field, isSelected, identity, isSender, onPointerDown, onResizeDown, overrideRect, heightPx }: FieldElementProps) {
   const rect     = overrideRect ?? field.rect;
   const canResize = FIELD_SIZE_CONSTRAINTS[field.type].resizable;
-  const isBlock  = field.type === "signature-block";
+  const isBlock  = isNameBlockType(field.type);
 
   const bg = isSender
     ? "#FFF9EC"
@@ -282,7 +319,18 @@ function FieldElement({ field, isSelected, identity, isSender, onPointerDown, on
         {field.label}
       </span>
 
-      {isBlock && <SignatureBlockPreview name={identity?.displayName ?? ""} color={identity?.colorHex ?? "#4B5E70"} />}
+      {isBlock && (
+        <SignatureBlockPreview
+          name={identity?.displayName ?? ""}
+          color={identity?.colorHex ?? "#4B5E70"}
+          // Only where there is room between the label row and the rule; at
+          // phone zoom the box is ~50px and the preview would collide.
+          stamp={heightPx < 70 ? undefined
+            : field.type === "review-block" ? "Reviewed · date"
+              : field.type === "approval-block" ? "Approved · date" : undefined}
+          fallbackName={field.type === "review-block" ? "Reviewer's full name" : field.type === "approval-block" ? "Approver's full name" : "Signer's full name"}
+        />
+      )}
 
       {/* Participant badge */}
       {identity && !isSender && (
@@ -357,6 +405,48 @@ function FieldElement({ field, isSelected, identity, isSender, onPointerDown, on
   );
 }
 
+// ── Document load failure ───────────────────────────────────────────────────
+// Shown in place of the page when the file (or its pages) could not be read.
+// A placeholder page here would invite the sender to place fields on a
+// document they cannot see, so the page is replaced by a clear statement and
+// one way forward: a reload of this same route.
+export function DocumentLoadFailure({ detail }: { detail?: string }) {
+  return (
+    <div
+      role="alert"
+      style={{
+        position: "absolute", inset: 0, display: "flex", flexDirection: "column",
+        alignItems: "center", justifyContent: "center", gap: 10,
+        padding: 24, textAlign: "center", background: "#FBFCFD",
+      }}
+    >
+      <div style={{ ...GF, fontSize: 15, fontWeight: 800, color: NAVY }}>
+        The document could not be loaded
+      </div>
+      <p style={{ ...GF, margin: 0, maxWidth: 360, fontSize: 12.5, lineHeight: 1.55, color: "#4B5E70" }}>
+        Its pages could not be displayed, so fields cannot be placed on it yet.
+        Your field placement is unaffected. Reload the document to try again.
+      </p>
+      {detail !== undefined && detail !== "" && (
+        <p style={{ ...GF, margin: 0, maxWidth: 360, fontSize: 11.5, color: SILVER }}>{detail}</p>
+      )}
+      <button
+        type="button"
+        // A reload of the page itself, which keeps the route (and its query)
+        // exactly as it is — the sender lands back here, not at the start.
+        onClick={() => { window.location.reload(); }}
+        style={{
+          ...GF, marginTop: 4, minHeight: 40, padding: "0 18px", borderRadius: 8,
+          border: "none", background: AZURE, color: WHITE,
+          fontSize: 13, fontWeight: 700, cursor: "pointer",
+        }}
+      >
+        Reload document
+      </button>
+    </div>
+  );
+}
+
 // ── Page canvas ────────────────────────────────────────────────────────────────
 interface PageCanvasProps {
   participants: PrepParticipant[];
@@ -366,19 +456,36 @@ interface PageCanvasProps {
    */
   workspaceId: string | null;
   realDocumentIdByEditorDocId: Map<string, string>;
+  /**
+   * Per editor document, what identifies the BYTES currently behind it —
+   * the backend document id plus the uploaded artifact id. A replaced file
+   * keeps its document id and gets a new artifact, and the page must refetch
+   * when that happens; keying the loader on the document id alone is what let
+   * a stale page survive a file change.
+   */
+  realDocumentKeyByEditorDocId: Map<string, string>;
   /** The scroll container, so the page can measure it to fit and to pinch. */
   scrollRef: React.RefObject<HTMLDivElement>;
 }
 
 function PageCanvas({
-  participants, workspaceId, realDocumentIdByEditorDocId, scrollRef,
+  participants, workspaceId, realDocumentIdByEditorDocId, realDocumentKeyByEditorDocId, scrollRef,
 }: PageCanvasProps) {
   const {
     currentDocumentId, currentPageId, currentPageFields, documents,
     selectedFieldIds, mode, pendingFieldType, zoom, setZoom,
-    addField, moveField, selectFields, clearSelection,
+    addField, moveField, updateField, selectFields, clearSelection,
     participantIdentities, syncRealPages,
   } = useFieldEditor();
+
+  // ── Status badges ─────────────────────────────────────────────────────
+  // One bubble at most. `openBubbleId` is what the sender explicitly
+  // toggled; otherwise the rule in autoOpenBubbleFor picks the selected
+  // field if it is red, else the first red field — and a bubble the sender
+  // closed stays closed for that field.
+  const [openBubbleId, setOpenBubbleId] = useState<FieldId | null>(null);
+  const [dismissedBubbles, setDismissedBubbles] = useState<ReadonlySet<string>>(() => new Set());
+  const [layoutTick, setLayoutTick] = useState(0);
 
   const canvasRef  = useRef<HTMLDivElement>(null);
 
@@ -444,12 +551,18 @@ function PageCanvas({
   // Memoised on the two ids: `useRealDocument` re-runs when the loader's
   // identity changes, so an inline closure would refetch the document on
   // every render.
-  const loadDocument = useMemo(
-    () => (workspaceId === null || realDocumentId === null
-      ? null
-      : () => realSigningRequestService.documentContentBlob(workspaceId, realDocumentId)),
-    [workspaceId, realDocumentId],
-  );
+  const realDocumentKey = currentDocumentId === null
+    ? null
+    : realDocumentKeyByEditorDocId.get(currentDocumentId) ?? null;
+  // Keyed on `realDocumentKey` ("<documentId>:<artifactId>"), not the id
+  // alone, so the loader's identity — and therefore the fetch — changes when
+  // a new upload lands behind the same document.
+  const loadDocument = useMemo(() => {
+    if (workspaceId === null || realDocumentKey === null) return null;
+    const documentId = realDocumentKey.split(":")[0] ?? "";
+    if (documentId === "") return null;
+    return () => realSigningRequestService.documentContentBlob(workspaceId, documentId);
+  }, [workspaceId, realDocumentKey]);
   const realDocument = useRealDocument(loadDocument);
 
   // The page list the editor was initialised with is a placeholder: the count
@@ -503,7 +616,7 @@ function PageCanvas({
         rect:          defaultFieldRect(pendingFieldType, nx, ny),
         participantId: pendingFieldType === "sender-text" ? null : autoAssign,
         label:         FIELD_TYPE_LABELS[pendingFieldType],
-        required:      pendingFieldType !== "sender-text",
+        required:      defaultRequiredFor(pendingFieldType),
         placeholder:   undefined,
         demonstrationOnly: true,
       });
@@ -596,7 +709,8 @@ function PageCanvas({
     if (!["ArrowLeft","ArrowRight","ArrowUp","ArrowDown"].includes(e.key)) return;
     e.preventDefault();
 
-    const step  = e.shiftKey ? 0.02 : 0.005;
+    // The same step sizes the Help panel's shortcut list is generated from.
+    const step  = e.shiftKey ? CANVAS_NUDGE_STEP_LARGE : CANVAS_NUDGE_STEP;
     const dxMap: Record<string, number> = { ArrowLeft: -step, ArrowRight: step, ArrowUp: 0, ArrowDown: 0 };
     const dyMap: Record<string, number> = { ArrowLeft: 0,     ArrowRight: 0,    ArrowUp: -step, ArrowDown: step };
     const dx = dxMap[e.key] ?? 0;
@@ -613,6 +727,28 @@ function PageCanvas({
     });
   }, [selectedFieldIds, currentPageFields, moveField]);
 
+  // Which single bubble is showing, if any. Hidden entirely while a field is
+  // being dragged or resized — a note pinned to a moving box is noise.
+  const bubbleFieldId = dragging !== null
+    ? null
+    : openBubbleId !== null && currentPageFields.some(f => f.id === openBubbleId)
+      ? openBubbleId
+      : autoOpenBubbleFor(
+          currentPageFields,
+          selectedFieldIds.length === 1 ? selectedFieldIds[0]! : null,
+          participants,
+          dismissedBubbles,
+        );
+
+  const closeBubble = useCallback((fieldId: FieldId) => {
+    setOpenBubbleId(null);
+    setDismissedBubbles(prev => new Set([...prev, fieldId]));
+  }, []);
+
+  // An open bubble is `position: fixed`; it re-measures its badge when the
+  // page scrolls or zooms underneath it.
+  useEffect(() => { setLayoutTick(t => t + 1); }, [zoom, currentPageId]);
+
   if (!currentPage) {
     return (
       <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", background: BGCANVAS }}>
@@ -628,11 +764,25 @@ function PageCanvas({
   return (
     <div
       ref={scrollRef}
+      data-testid="fields-canvas-scroller"
       onTouchStart={onPinchStart}
       onTouchMove={onPinchMove}
       onTouchEnd={onPinchEnd}
+      onScroll={() => { if (bubbleFieldId !== null) setLayoutTick(t => t + 1); }}
       style={{
         flex: 1,
+        // THE STACKING FIX for "the field shows through the properties
+        // panel" on phones. A selected field is `layer + 100`, its handles
+        // 200 and its outline 500 — numbers that, with no stacking context
+        // around them, were compared directly against the bottom sheet's
+        // Z.drawer (50) inside the editor root, and won. `isolation` plus a
+        // positioned z-index from the ladder makes this scroller its own
+        // context at Z.editorCanvas: everything in here is ordered among
+        // itself only, and the sheet, drawer, controls and dialogs above it
+        // always cover every field and all of its furniture.
+        position: "relative",
+        zIndex: Z.editorCanvas,
+        isolation: "isolate",
         overflow: "auto",
         background: BGCANVAS,
         display: "flex",
@@ -716,21 +866,21 @@ function PageCanvas({
             )
             : realDocumentId === null
               ? <FictionPagePreview pageNumber={currentPage.pageNumber} />
-              : (
-                <div
-                  aria-live="polite"
-                  style={{
-                    position: "absolute", inset: 0, display: "flex",
-                    alignItems: "center", justifyContent: "center",
-                    padding: 24, textAlign: "center", pointerEvents: "none",
-                    fontSize: 13, color: "#8A9BAE",
-                  }}
-                >
-                  {realDocument.status === "error"
-                    ? realDocument.message
-                    : "Loading your document…"}
-                </div>
-              )}
+              : realDocument.status === "error"
+                ? <DocumentLoadFailure detail={realDocument.message} />
+                : (
+                  <div
+                    aria-live="polite"
+                    style={{
+                      position: "absolute", inset: 0, display: "flex",
+                      alignItems: "center", justifyContent: "center",
+                      padding: 24, textAlign: "center", pointerEvents: "none",
+                      fontSize: 13, color: "#8A9BAE",
+                    }}
+                  >
+                    Loading your document…
+                  </div>
+                )}
 
           {/* Fields */}
           {currentPageFields.map(field => {
@@ -749,7 +899,37 @@ function PageCanvas({
                 onPointerDown={handleFieldPointerDown}
                 onResizeDown={handleResizePointerDown}
                 overrideRect={overrideRect}
+                heightPx={(overrideRect ?? field.rect).height * pageHeight}
               />
+            );
+          })}
+
+          {/* "?" status badges, one per field, and at most one open note. */}
+          {currentPageFields.map(field => {
+            if (dragging?.fieldId === field.id) return null;
+            const status = fieldBadgeStatus(field, participants);
+            return (
+                  <FieldStatusBadge
+                    key={`badge_${field.id}`}
+                    zBadge={CANVAS_Z.statusBadge}
+                    zBubble={CANVAS_Z.statusBubble}
+                    field={field}
+                    status={status}
+                    identity={getIdentity(field.participantId)}
+                    participants={participants}
+                    fieldPx={{ width: field.rect.width * pageWidth, height: field.rect.height * pageHeight }}
+                    open={bubbleFieldId === field.id}
+                    layoutTick={layoutTick}
+                    onToggle={() => {
+                      if (bubbleFieldId === field.id) closeBubble(field.id);
+                      else setOpenBubbleId(field.id);
+                    }}
+                    onClose={() => { closeBubble(field.id); }}
+                    onAssign={pid => {
+                      updateField(field.id, { participantId: pid });
+                      setOpenBubbleId(null);
+                    }}
+                  />
             );
           })}
 
@@ -1156,8 +1336,18 @@ function FieldPropertiesPanel({ field, participants }: FieldPropertiesProps) {
           </div>
         )}
 
+        {/* Fixed by the field type itself: a review stamp is how the review is
+            recorded, an approval stamp is optional by nature. */}
+        {fieldRequiredPolicy(field.type) !== "choice" && !isSender && (
+          <div role="note" style={{ ...GF, marginBottom: 12, padding: "8px 10px", fontSize: 12, lineHeight: 1.45, color: NAVY, background: "#F1F5F9", border: "1px solid #E2E8F0", borderRadius: 7 }}>
+            {fieldRequiredPolicy(field.type) === "always"
+              ? "Always required. Filled in by LAGDA when the reviewer completes — the reviewer never types into it."
+              : "Always optional. Stamped by LAGDA with the approval outcome and date — the approver never types into it."}
+          </div>
+        )}
+
         {/* Required toggle */}
-        {!isSender && !forApprover && (
+        {!isSender && !forApprover && fieldRequiredPolicy(field.type) === "choice" && (
           <div style={{ marginBottom: 12 }}>
             <label style={{ ...GF, fontSize: 11, fontWeight: 700, color: SILVER, textTransform: "uppercase", letterSpacing: "0.05em", display: "block", marginBottom: 5 }}>
               Required
@@ -1436,6 +1626,24 @@ function FieldListView({ participants }: FieldListProps) {
 // property-panel trip for the common case. Anything with more than one
 // reasonable fix (which participant? which field moves?) stays manual
 // rather than guessing.
+/**
+ * Places each listed participant's missing completion block — the one
+ * implementation behind first-arrival auto-placement, "Place fields for
+ * everyone" and the Validation panel's Auto-Fix. See auto-placement.ts.
+ */
+export function useAutoPlacer() {
+  const { documents, fields, addFields } = useFieldEditor();
+  const { draft } = usePrepare();
+  return useCallback((opts: { includeApprovers: boolean; onlyParticipantIds?: readonly string[] }): FieldDefinition[] => {
+    const target = placementTargetDocument(documents);
+    if (!target || !draft) return [];
+    const requests = planRequests(draft.participants, draft.routing, fields, opts);
+    if (requests.length === 0) return [];
+    const plan = planPlacement(requests, target, fields);
+    return addFields(toFieldPartials(plan, target.id));
+  }, [documents, fields, addFields, draft]);
+}
+
 // Exported for its own behaviour test (the fix-button handlers here are the
 // bulk of the Validation panel's logic).
 export function ValidationPanel({
@@ -1454,6 +1662,7 @@ export function ValidationPanel({
   const { draft } = usePrepare();
   const navigate = useNavigate();
   const participants = draft?.participants ?? [];
+  const placeBlocks = useAutoPlacer();
 
   // Keep the panel live. Every field mutation (COMMIT_FIELDS, undo/redo,
   // paste, a server reload after Save) deliberately resets `validation` to
@@ -1540,25 +1749,33 @@ export function ValidationPanel({
   };
 
   /**
-   * A participant with no Signature (or no acknowledgement) field.
+   * A participant with no completion field.
    *
-   * This was the one error deliberately left without a fix, on the grounds
-   * that nothing can know WHERE the field belongs. That reasoning produced a
-   * worse outcome than guessing: the only action offered was "Show their
-   * fields", which for a participant with no fields reveals an empty list and
-   * moves nothing forward.
-   *
-   * Placing it dead-centre on the CURRENT page is an honest answer to that —
-   * the position is deliberate, visible and obviously provisional, and the
-   * visitor drags it where it really goes. The field is created assigned and
-   * selected, so the next thing they do is position it, not hunt for it.
+   * A signer without a signature, or a reviewer without a review stamp, gets
+   * their block from the SAME placer first-arrival auto-placement uses: a
+   * Signature over Name / Reviewed over Name in the bottom row of the last
+   * page, beside whatever blocks are already there and clear of every
+   * existing field. It used to be a plain Signature dropped dead-centre on
+   * whatever page was open, which then had to be dragged into the row by
+   * hand. The field is revealed and selected, so the sender sees it land.
+   */
+  const autoFixMissingBlock = (issue: FieldValidationIssue) => {
+    const participantId = issue.participantId;
+    if (!participantId) return;
+    const [created] = placeBlocks({ includeApprovers: false, onlyParticipantIds: [participantId] });
+    if (!created) return;
+    goToField(created.id, created.documentId, created.pageId);
+  };
+
+  /**
+   * An acknowledgment recipient with nothing to tick. No row convention
+   * applies to a checkbox, so it is placed centred on the current page,
+   * assigned and selected, for the sender to position.
    */
   const autoFixMissingParticipantField = (issue: FieldValidationIssue) => {
     const participantId = issue.participantId;
     if (!participantId || !currentDocumentId || !currentPageId) return;
-    const type: FieldType = issue.code === "SIGNER_MISSING_SIGNATURE"
-      ? "signature"
-      : "checkbox";
+    const type: FieldType = "checkbox";
     const created = addField({
       type,
       documentId:    currentDocumentId,
@@ -1588,13 +1805,20 @@ export function ValidationPanel({
         )}
         {issue.code === "NO_DOCUMENTS" && (
           <button onClick={() => void navigate("/app/prepare/upload")} style={linkButtonStyle}>
-            Go to Documents step
+            {FIELD_ISSUE_GUIDE.NO_DOCUMENTS.fixLabel}
           </button>
         )}
-        {(issue.code === "SIGNER_MISSING_SIGNATURE" || issue.code === "ACK_RECIPIENT_MISSING_ACK_FIELD") && issue.participantId && (
+        {(issue.code === "SIGNER_MISSING_SIGNATURE" || issue.code === "REVIEWER_MISSING_REVIEW_BLOCK" || issue.code === "ACK_RECIPIENT_MISSING_ACK_FIELD") && issue.participantId && (
           <>
-            <button onClick={() => autoFixMissingParticipantField(issue)} style={fixButtonStyle}>
-              Auto-Fix
+            <button
+              onClick={() => {
+                if (issue.code === "ACK_RECIPIENT_MISSING_ACK_FIELD") autoFixMissingParticipantField(issue);
+                else autoFixMissingBlock(issue);
+              }}
+              title={FIELD_ISSUE_GUIDE[issue.code].fixDoes ?? undefined}
+              style={fixButtonStyle}
+            >
+              {FIELD_ISSUE_GUIDE[issue.code].fixLabel}
             </button>
             {/* Only where it has something to reveal. For a participant with
                 no fields at all this was the ONLY action offered, and it
@@ -1607,29 +1831,29 @@ export function ValidationPanel({
           </>
         )}
         {issue.code === "UNASSIGNED_FIELD" && issue.fieldId && (
-          <button onClick={() => autoFixUnassigned(issue.fieldId!)} style={fixButtonStyle}>Fix it for me</button>
+          <button onClick={() => autoFixUnassigned(issue.fieldId!)} style={fixButtonStyle}>{FIELD_ISSUE_GUIDE[issue.code].fixLabel}</button>
         )}
         {issue.code === "FIELD_OUT_OF_BOUNDS" && issue.fieldId && (
-          <button onClick={() => autoFixOutOfBounds(issue.fieldId!)} style={fixButtonStyle}>Fix it for me</button>
+          <button onClick={() => autoFixOutOfBounds(issue.fieldId!)} style={fixButtonStyle}>{FIELD_ISSUE_GUIDE[issue.code].fixLabel}</button>
         )}
         {issue.code === "NEAR_PAGE_EDGE" && issue.fieldId && (
-          <button onClick={() => autoFixNearEdge(issue.fieldId!)} style={fixButtonStyle}>Fix it for me</button>
+          <button onClick={() => autoFixNearEdge(issue.fieldId!)} style={fixButtonStyle}>{FIELD_ISSUE_GUIDE[issue.code].fixLabel}</button>
         )}
         {issue.code === "FIELD_OVERLAP" && issue.fieldId && (
-          <button onClick={() => autoFixOverlap(issue.fieldId!)} style={fixButtonStyle}>Fix it for me</button>
+          <button onClick={() => autoFixOverlap(issue.fieldId!)} style={fixButtonStyle}>{FIELD_ISSUE_GUIDE[issue.code].fixLabel}</button>
         )}
         {(issue.code === "UNKNOWN_PARTICIPANT" || issue.code === "INCOMPATIBLE_ROLE") && issue.fieldId && (
-          <button onClick={() => autoFixBadAssignment(issue.fieldId!)} style={fixButtonStyle}>Fix it for me</button>
+          <button onClick={() => autoFixBadAssignment(issue.fieldId!)} style={fixButtonStyle}>{FIELD_ISSUE_GUIDE[issue.code].fixLabel}</button>
         )}
         {issue.code === "BLOCKING_FIELD_ON_NON_BLOCKING_ROLE" && issue.fieldId && (
-          <button onClick={() => autoFixBlockingOnNonBlocking(issue.fieldId!)} style={fixButtonStyle}>Fix it for me</button>
+          <button onClick={() => autoFixBlockingOnNonBlocking(issue.fieldId!)} style={fixButtonStyle}>{FIELD_ISSUE_GUIDE[issue.code].fixLabel}</button>
         )}
         {issue.code === "UNSUPPORTED_BACKEND_TYPE" && issue.fieldId && (
-          <button onClick={() => deleteFields([issue.fieldId!])} style={fixButtonStyle}>Remove this field</button>
+          <button onClick={() => deleteFields([issue.fieldId!])} style={fixButtonStyle}>{FIELD_ISSUE_GUIDE.UNSUPPORTED_BACKEND_TYPE.fixLabel}</button>
         )}
         {issue.code === "UNSAVED_EDITS" && (
           <button onClick={() => void onSaveNow()} disabled={saving} style={{ ...fixButtonStyle, color: saving ? SILVER : "#2E7D32", cursor: saving ? "default" : "pointer" }}>
-            {saving ? "Saving…" : "Save now"}
+            {saving ? "Saving…" : FIELD_ISSUE_GUIDE.UNSAVED_EDITS.fixLabel}
           </button>
         )}
       </div>
@@ -1774,7 +1998,7 @@ function KeyboardPlaceDialog({ participants, onClose }: KeyboardPlaceDialogProps
       rect:          defaultFieldRect(fieldType, selRegion.x, selRegion.y),
       participantId: isSender ? null : (participantId || null),
       label:         FIELD_TYPE_LABELS[fieldType],
-      required:      !isSender,
+      required:      defaultRequiredFor(fieldType),
       demonstrationOnly: true,
     });
     selectFields([field.id]);
@@ -1913,6 +2137,100 @@ function KeyboardPlaceDialog({ participants, onClose }: KeyboardPlaceDialogProps
   );
 }
 
+// ── "Place fields for everyone" confirmation ─────────────────────────────────
+export function PlaceForEveryoneDialog({
+  participants, routing, fields, includeApprovers, onIncludeApproversChange, onConfirm, onClose,
+}: {
+  participants: PrepParticipant[];
+  routing: import("../../../models/prepare").PrepRoutingConfig;
+  fields: FieldDefinition[];
+  includeApprovers: boolean;
+  onIncludeApproversChange: (v: boolean) => void;
+  onConfirm: () => void;
+  onClose: () => void;
+}) {
+  const requests = planRequests(participants, routing, fields, { includeApprovers });
+  const hasApprovers = participants.some(p => p.role === "approver");
+  const confirmRef = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    confirmRef.current?.focus();
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      e.stopPropagation();
+      onClose();
+    };
+    window.addEventListener("keydown", onKey, true);
+    return () => { window.removeEventListener("keydown", onKey, true); };
+  }, [onClose]);
+
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="place-everyone-title"
+      onClick={e => { if (e.target === e.currentTarget) onClose(); }}
+      style={{
+        position: "fixed", inset: 0, zIndex: Z.modal,
+        background: "rgba(7,17,31,0.5)",
+        display: "flex", alignItems: "center", justifyContent: "center",
+        padding: 16,
+      }}
+    >
+      <div style={{ ...GF, background: WHITE, borderRadius: 12, width: "100%", maxWidth: 440, maxHeight: "85vh", overflowY: "auto", boxShadow: "0 8px 32px rgba(0,0,0,0.25)" }}>
+        <div style={{ padding: "16px 20px 12px", borderBottom: "1px solid #E3E8EF" }}>
+          <h2 id="place-everyone-title" style={{ ...GF, fontSize: 16, fontWeight: 800, color: NAVY, margin: 0 }}>
+            Place fields for everyone
+          </h2>
+        </div>
+        <div style={{ padding: "14px 20px", display: "flex", flexDirection: "column", gap: 12, fontSize: 13, color: "#33414F", lineHeight: 1.5 }}>
+          <p style={{ margin: 0 }}>
+            Adds a <strong>Signature over Name</strong> for each signer and a <strong>Reviewed over Name</strong> for
+            each reviewer who does not have one yet, side by side at the bottom of the last page. Existing fields are
+            never moved or covered.
+          </p>
+          {hasApprovers && (
+            <label style={{ display: "flex", alignItems: "flex-start", gap: 9, cursor: "pointer", padding: "9px 11px", borderRadius: 8, border: "1px solid #E3E8EF", background: "#F8FAFC" }}>
+              <input
+                type="checkbox"
+                checked={includeApprovers}
+                onChange={e => { onIncludeApproversChange(e.target.checked); }}
+                style={{ marginTop: 3 }}
+              />
+              <span>
+                Also add an <strong>Approved over Name</strong> for approvers
+                <span style={{ display: "block", fontSize: 12, color: SILVER }}>Optional for the approver; stamped Approved (or Skipped) with the date.</span>
+              </span>
+            </label>
+          )}
+          <p role="status" style={{ margin: 0, fontWeight: 600, color: requests.length > 0 ? NAVY : "#2E7D32" }}>
+            {requests.length > 0
+              ? `${requests.length} field${requests.length !== 1 ? "s" : ""} will be placed.`
+              : "Everyone already has their field."}
+          </p>
+        </div>
+        <div style={{ padding: "12px 20px 16px", borderTop: "1px solid #E3E8EF", display: "flex", gap: 8, flexWrap: "wrap" }}>
+          <button
+            ref={confirmRef}
+            type="button"
+            onClick={onConfirm}
+            disabled={requests.length === 0}
+            style={{ ...GF, flex: 1, minWidth: 140, minHeight: 40, padding: "0 16px", borderRadius: 7, border: "none", background: requests.length > 0 ? AZURE : "#9FB3C8", color: WHITE, fontSize: 14, fontWeight: 700, cursor: requests.length > 0 ? "pointer" : "not-allowed" }}
+          >
+            Place fields
+          </button>
+          <button
+            type="button"
+            onClick={onClose}
+            style={{ ...GF, minHeight: 40, padding: "0 16px", borderRadius: 7, border: "1px solid #D1D9E0", background: WHITE, color: NAVY, fontSize: 14, cursor: "pointer" }}
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── Save state label ──────────────────────────────────────────────────────────
 function SaveStateLabel({ state }: { state: string }) {
   if (state === "idle")               return null;
@@ -1941,9 +2259,11 @@ interface ToolbarProps {
   onOpenPanel:   () => void;
   /** Whether a field is selected, so the menu can name what it will show. */
   hasSelection:  boolean;
+  /** Opens the "Place fields for everyone" confirmation. */
+  onPlaceForEveryone: () => void;
 }
 
-function EditorToolbar({ draftTitle, participants: _participants, draft, showKbDialog: _showKbDialog, setShowKbDialog, onContinue, returnTo, returnLabel, onOpenDocuments, onFitWidth, onOpenPanel, hasSelection }: ToolbarProps) {
+function EditorToolbar({ draftTitle, participants: _participants, draft, showKbDialog: _showKbDialog, setShowKbDialog, onContinue, returnTo, returnLabel, onOpenDocuments, onFitWidth, onOpenPanel, hasSelection, onPlaceForEveryone }: ToolbarProps) {
   const { isCompact, isMobileS } = useViewport();
   const {
     undo, redo, canUndo, canRedo,
@@ -2012,6 +2332,7 @@ function EditorToolbar({ draftTitle, participants: _participants, draft, showKbD
     { id: "zoom-out", label: "Zoom out", title: "Zoom out", onClick: () => { setZoom(zoom - 10); }, disabled: zoom <= 50 },
     { id: "zoom-in", label: "Zoom in", title: "Zoom in", onClick: () => { setZoom(zoom + 10); }, disabled: zoom >= 200 },
     { id: "fit", label: "Fit width", title: "Fit the page to the width of the screen", onClick: onFitWidth, disabled: false },
+    { id: "place-everyone", label: "Place fields for everyone", title: "Add the missing Signature over Name / Reviewed over Name fields", onClick: onPlaceForEveryone, disabled: false },
     // The way back to the sheet.
     //
     // On a phone the panel IS the sheet, and closing it necessarily clears
@@ -2149,6 +2470,18 @@ function EditorToolbar({ draftTitle, participants: _participants, draft, showKbD
         {isCompact ? "+ Add" : "+ Add Field"}
       </button>
 
+      {/* On a phone it lives in the overflow menu (see `secondary`). */}
+      {!isCompact && (
+        <button
+          onClick={onPlaceForEveryone}
+          aria-label="Place fields for everyone"
+          title="Add the missing Signature over Name / Reviewed over Name fields at the bottom of the last page"
+          style={{ ...btnBase, flexShrink: 0 }}
+        >
+          Place for everyone
+        </button>
+      )}
+
       {!isCompact && (
         <>
           <button
@@ -2266,7 +2599,8 @@ function FieldsPageInner() {
     initialize, loadRealFields,
     documents, fields,
     selectedField, showFieldList, showValidation, toggleValidation, runValidation,
-    setDocument, setPage, selectFields, addField,
+    setDocument, setPage, selectFields, addFields, syncDocuments, syncRealPages,
+    verifiedDocumentIds, currentDocumentId, currentPageId, toggleFieldList,
     // Keyboard shortcuts. Every one of these already existed — see
     // useFieldEditorShortcuts for what was and was not wired up before.
     selectedFieldIds, currentPageFields, clipboard, mode,
@@ -2366,6 +2700,22 @@ function FieldsPageInner() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [draft?.id]);
 
+  // The file set can also change WHILE this page is mounted (an upload
+  // finishing, a draft update from another step's effect). Re-derive the
+  // documents without resetting the editor's own fields — see
+  // SYNC_DOCUMENTS and filesSignature() for the stale-document bug this
+  // closes.
+  const filesKey = draft ? filesSignature(draft.files) : "";
+  const syncedFilesKeyRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!draft) return;
+    if (syncedFilesKeyRef.current === null) { syncedFilesKeyRef.current = filesKey; return; }
+    if (syncedFilesKeyRef.current === filesKey) return;
+    syncedFilesKeyRef.current = filesKey;
+    syncDocuments(draft.id, draft);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filesKey]);
+
   // Real backend document(s) this editor session covers — each EditorDocument
   // maps back to the PrepFile it was built from (prepFileId), which is where
   // upload already stashed the real backendDocumentId. A transaction with
@@ -2381,6 +2731,25 @@ function FieldsPageInner() {
     return map;
   }, [documents, draft?.files]);
 
+  // "<backendDocumentId>:<backendArtifactId>" per editor document — what the
+  // canvas keys its PDF load on, so new bytes behind the same document id
+  // are fetched instead of the old page staying on screen.
+  const realDocumentKeyByEditorDocId = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const doc of documents) {
+      const prepFile = draft?.files.find((f) => f.id === doc.prepFileId);
+      if (prepFile?.backendDocumentId) {
+        map.set(doc.id, `${prepFile.backendDocumentId}:${prepFile.backendArtifactId ?? ""}`);
+      }
+    }
+    return map;
+  }, [documents, draft?.files]);
+
+  // Whether the saved-field load (real backend) has settled, and whether the
+  // server already held fields — first-arrival auto-placement waits for the
+  // first and stands down on the second.
+  const [savedFieldsLoad, setSavedFieldsLoad] = useState<"pending" | "empty" | "had-fields">("pending");
+
   // Last-known revision per real document, needed for optimistic
   // concurrency on save() — populated by the load effect below and updated
   // after every successful save, never guessed.
@@ -2389,12 +2758,17 @@ function FieldsPageInner() {
   // Load once per distinct real-document set (refresh/resume) — not on
   // every keystroke; field edits stay purely local (COMMIT_FIELDS) until
   // the visitor continues.
-  const loadedForDraftIdRef = useRef<string | null>(null);
+  //
+  // Keyed on the draft AND its real document ids, not the draft id alone: a
+  // document swapped in on the Documents step is a different preparation,
+  // and its saved fields must be read rather than assumed empty.
+  const loadedForKeyRef = useRef<string | null>(null);
   useEffect(() => {
     if (!USE_REAL_BACKEND || !draft || !platform.currentWorkspace) return;
     if (realDocumentIdByEditorDocId.size === 0) return;
-    if (loadedForDraftIdRef.current === draft.id) return;
-    loadedForDraftIdRef.current = draft.id;
+    const loadKey = `${draft.id}|${[...realDocumentIdByEditorDocId.values()].join(",")}`;
+    if (loadedForKeyRef.current === loadKey) return;
+    loadedForKeyRef.current = loadKey;
 
     const workspaceId = platform.currentWorkspace.id;
     void (async () => {
@@ -2431,6 +2805,7 @@ function FieldsPageInner() {
         // (e.g. restored from localStorage before a refresh) — loadRealFields
         // replaces the field set outright, same as a fresh load would.
         loadRealFields(loaded);
+        setSavedFieldsLoad(loaded.length > 0 || anyDocumentHadRealData ? "had-fields" : "empty");
       } else if (draft.templateFields && draft.templateFields.length > 0) {
         // TEMPLATE FIELDS — the document has never had a real preparation
         // saved (this is the very first time it is being prepared), and the
@@ -2447,14 +2822,19 @@ function FieldsPageInner() {
         if (firstDoc) {
           const pageIdForNumber = (n: number) =>
             firstDoc.pages.find((p) => p.pageNumber === n)?.id ?? null;
-          // Ascending layer, so `addField`'s own auto-assigned z-order
+          // Ascending layer, so `addFields`' own auto-assigned z-order
           // (append-and-increment — it does not accept a caller-chosen
           // layer) reproduces the template's relative stacking order.
+          //
+          // ONE batch. `addField` in a loop closed over the same field list
+          // on every call, so each commit replaced the last and only the
+          // final template field survived.
           const inLayerOrder = [...draft.templateFields].sort((a, b) => a.layer - b.layer);
+          const seeded: Omit<FieldDefinition, "id" | "layer">[] = [];
           for (const f of inLayerOrder) {
             const pageId = pageIdForNumber(f.pageNumber);
             if (!pageId) continue;
-            addField({
+            seeded.push({
               type: f.type,
               documentId: firstDoc.id,
               pageId,
@@ -2470,47 +2850,116 @@ function FieldsPageInner() {
               demonstrationOnly: false,
             });
           }
+          addFields(seeded);
         }
+        setSavedFieldsLoad("empty");
       } else {
         // DEFAULT FIELDS — a document that has genuinely never had fields
-        // saved (not "empty because nothing loaded yet") starts with a
-        // blank canvas otherwise, and every signer needs a manually-added
-        // Signature field before Validate stops complaining. Reported live
-        // as a real source of user mistakes. Placed once, only the first
-        // time this document is opened (this whole effect runs once per
-        // draft — see loadedForDraftIdRef — and this branch only fires when
-        // nothing was ever saved), on page 1 of the first document, one per
-        // participant whose role has an unambiguous backend-supported
-        // default field. Never repeats the earlier phantom-field bug: only
-        // real, backend-storable types are used (signature/checkbox), and
-        // these are ordinary local fields the visitor can edit, move, or
-        // delete like anything they placed themselves.
-        const firstDoc = documents[0];
-        const firstPage = firstDoc?.pages[0];
-        if (firstDoc && firstPage) {
-          let offset = 0;
-          for (const p of draft.participants) {
-            const defaultType: FieldType | null =
-              p.role === "signer" ? "signature" :
-              p.role === "acknowledgment-recipient" ? "checkbox" :
-              null;
-            if (!defaultType) continue;
-            addField({
-              type: defaultType,
-              documentId: firstDoc.id,
-              pageId: firstPage.id,
-              rect: defaultFieldRect(defaultType, 0.1, 0.12 + offset * 0.1),
-              participantId: p.id,
-              label: FIELD_TYPE_LABELS[defaultType],
-              required: true,
-              demonstrationOnly: false,
-            });
-            offset += 1;
-          }
-        }
+        // saved starts from a blank canvas here; the first-arrival
+        // AUTO-PLACEMENT below then gives every signer a Signature over Name
+        // and every reviewer a Reviewed over Name, laid out at the bottom of
+        // the last page. (This used to drop plain Signatures on page 1 one
+        // `addField` at a time — which, closing over one field list, kept
+        // only the last of them.)
+        setSavedFieldsLoad("empty");
       }
     })();
-  }, [draft, platform.currentWorkspace, realDocumentIdByEditorDocId, documents, loadRealFields, addField]);
+  }, [draft, platform.currentWorkspace, realDocumentIdByEditorDocId, documents, loadRealFields, addFields]);
+
+  // ── First-arrival auto-placement ──────────────────────────────────────────
+  //
+  // Once per draft (persisted — see auto-placement-marker), the first time
+  // Place Fields has everything it needs: every signer without a signature
+  // gets a Signature over Name and every reviewer without one a Reviewed over
+  // Name, in rows at the bottom of the last page. Never again after that, so
+  // a block the sender deletes stays deleted. It stands down entirely when
+  // the server already held fields for this document — that preparation was
+  // done somewhere else, deliberately.
+  //
+  // "Everything it needs" in real mode is (a) the saved-field load settled,
+  // and (b) the target document's REAL page list — placed against the
+  // placeholder page count, a block on "page 3" of a one-page file would be
+  // silently dropped the moment the true count arrived.
+  const placeBlocks = useAutoPlacer();
+  const [placementNotice, setPlacementNotice] = useState<{
+    fieldIds: FieldId[]; participantCount: number; documentId: string; pageId: string;
+  } | null>(null);
+  const [showPlaceDialog, setShowPlaceDialog] = useState(false);
+  const [placeIncludeApprovers, setPlaceIncludeApprovers] = useState(false);
+  const placementTarget = placementTargetDocument(documents);
+  const targetRealKey = placementTarget === null
+    ? null
+    : realDocumentKeyByEditorDocId.get(placementTarget.id) ?? null;
+  const targetVerified = placementTarget !== null && verifiedDocumentIds.includes(placementTarget.id);
+  const waitsForSavedFields = USE_REAL_BACKEND
+    && realDocumentIdByEditorDocId.size > 0
+    && !!platform.currentWorkspace;
+  const autoPlacePending = !!draft && !hasAutoPlaced(draft.id);
+
+  // The canvas reads (and verifies) only the document on screen. When the
+  // target is another document — or the list view is showing — read its
+  // pages here, once, just for placement.
+  const workspaceIdForTarget = platform.currentWorkspace?.id ?? null;
+  const needsOwnTargetLoad = autoPlacePending && targetRealKey !== null && !targetVerified
+    && (showFieldList || placementTarget?.id !== currentDocumentId);
+  const targetLoader = useMemo(() => {
+    if (!needsOwnTargetLoad || workspaceIdForTarget === null || targetRealKey === null) return null;
+    const documentId = targetRealKey.split(":")[0] ?? "";
+    return documentId === "" ? null : () => realSigningRequestService.documentContentBlob(workspaceIdForTarget, documentId);
+  }, [needsOwnTargetLoad, workspaceIdForTarget, targetRealKey]);
+  const targetDocument = useRealDocument(targetLoader);
+  const placementTargetId = placementTarget?.id ?? null;
+  useEffect(() => {
+    if (targetDocument.status !== "ready" || placementTargetId === null) return;
+    syncRealPages(placementTargetId, targetDocument.pageCount, targetDocument.pageSizes.map(p => p.width / p.height));
+  }, [targetDocument, placementTargetId, syncRealPages]);
+
+  useEffect(() => {
+    if (!draft || loadState !== "ready" || placementTarget === null) return;
+    if (hasAutoPlaced(draft.id)) return;
+    if (waitsForSavedFields && savedFieldsLoad === "pending") return;
+    if (targetRealKey !== null && !targetVerified) return;
+    markAutoPlaced(draft.id);
+    if (savedFieldsLoad === "had-fields") return;
+    const created = placeBlocks({ includeApprovers: false });
+    if (created.length === 0) return;
+    setPlacementNotice({
+      fieldIds: created.map(f => f.id),
+      participantCount: new Set(created.map(f => f.participantId)).size,
+      documentId: created[0]!.documentId,
+      pageId: created[0]!.pageId,
+    });
+  }, [draft, loadState, placementTarget, waitsForSavedFields, savedFieldsLoad, targetRealKey, targetVerified, placeBlocks]);
+
+  // The notice goes once its fields do — an Undo that removes nothing
+  // would be a lie.
+  useEffect(() => {
+    if (placementNotice === null) return;
+    if (!placementNotice.fieldIds.some(id => fields.some(f => f.id === id))) setPlacementNotice(null);
+  }, [fields, placementNotice]);
+
+  const undoPlacement = () => {
+    if (placementNotice === null) return;
+    const live = placementNotice.fieldIds.filter(id => fields.some(f => f.id === id));
+    if (live.length > 0) deleteFields(live);
+    setPlacementNotice(null);
+    setShortcutMessage("Removed the automatically placed fields.");
+  };
+
+  const placeForEveryone = () => {
+    const created = placeBlocks({ includeApprovers: placeIncludeApprovers });
+    setShowPlaceDialog(false);
+    if (created.length === 0) return;
+    setPlacementNotice({
+      fieldIds: created.map(f => f.id),
+      participantCount: new Set(created.map(f => f.participantId)).size,
+      documentId: created[0]!.documentId,
+      pageId: created[0]!.pageId,
+    });
+  };
+
+  const [helpOpen, setHelpOpen] = useState(false);
+  const { width: viewportWidth } = useViewport();
 
   // Persists the CURRENT field set to every real document this editor
   // covers, before continuing on. A field of a type the backend doesn't
@@ -2836,6 +3285,7 @@ function FieldsPageInner() {
         onFitWidth={fitToWidth}
         onOpenPanel={() => { setPanelOpen(true); }}
         hasSelection={selectedField !== null}
+        onPlaceForEveryone={() => { setShowPlaceDialog(true); }}
       />
 
       {/* Body.
@@ -2877,7 +3327,7 @@ function FieldsPageInner() {
                     position: "absolute",
                     left: 14,
                     bottom: "calc(14px + env(safe-area-inset-bottom, 0px))",
-                    zIndex: CANVAS_Z.resizeHandle + 1,
+                    zIndex: Z.editorControls,
                     minHeight: 40, padding: "0 16px", borderRadius: 999,
                     border: "1px solid #D1D9E0", background: WHITE, color: AZURE,
                     fontSize: 13, fontWeight: 700, cursor: "pointer",
@@ -2897,7 +3347,7 @@ function FieldsPageInner() {
                   position: "absolute",
                   right: 14,
                   bottom: "calc(14px + env(safe-area-inset-bottom, 0px))",
-                  zIndex: CANVAS_Z.resizeHandle + 1,
+                  zIndex: Z.editorControls,
                   minHeight: 44, padding: "0 20px", borderRadius: 999,
                   border: "none",
                   background: fields.length > 0 ? AZURE : "#5A7A9A",
@@ -2910,6 +3360,70 @@ function FieldsPageInner() {
             </>
           )}
 
+          {/* Non-blocking: says what auto-placement did and offers to take
+              exactly those fields back. */}
+          {placementNotice !== null && (
+            <div
+              role="status"
+              data-testid="placement-notice"
+              style={{
+                ...GF,
+                position: "absolute", top: 10, left: "50%", transform: "translateX(-50%)",
+                zIndex: Z.editorControls,
+                width: "max-content", maxWidth: "calc(100% - 24px)", boxSizing: "border-box",
+                display: "flex", alignItems: "center", flexWrap: "wrap", gap: "4px 10px",
+                padding: "8px 8px 8px 14px", borderRadius: 10,
+                background: NAVY, color: WHITE, fontSize: 12.5, lineHeight: 1.4,
+                boxShadow: "0 6px 20px rgba(7,17,31,0.28)",
+              }}
+            >
+              <span style={{ minWidth: 0 }}>
+                Placed {placementNotice.fieldIds.length} field{placementNotice.fieldIds.length !== 1 ? "s" : ""} for {placementNotice.participantCount} participant{placementNotice.participantCount !== 1 ? "s" : ""}
+              </span>
+              <span style={{ display: "inline-flex", alignItems: "center", gap: 2 }}>
+                {(placementNotice.pageId !== currentPageId || showFieldList) && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (showFieldList) toggleFieldList();
+                      setDocument(placementNotice.documentId);
+                      setPage(placementNotice.pageId);
+                    }}
+                    style={{ ...GF, minHeight: 30, padding: "0 10px", borderRadius: 7, border: "none", background: "transparent", color: "#9CCBF2", fontSize: 12.5, fontWeight: 700, cursor: "pointer" }}
+                  >
+                    Show
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={undoPlacement}
+                  style={{ ...GF, minHeight: 30, padding: "0 10px", borderRadius: 7, border: "1px solid rgba(255,255,255,0.35)", background: "transparent", color: WHITE, fontSize: 12.5, fontWeight: 700, cursor: "pointer" }}
+                >
+                  Undo
+                </button>
+                <button
+                  type="button"
+                  aria-label="Dismiss"
+                  onClick={() => { setPlacementNotice(null); }}
+                  style={{ ...GF, width: 30, height: 30, border: "none", background: "transparent", color: "#C5D0DC", fontSize: 16, lineHeight: 1, cursor: "pointer" }}
+                >×</button>
+              </span>
+            </div>
+          )}
+
+          {/* Help — bottom right of the working area. On a phone it rides
+              above Continue, and it steps aside while the sheet is open so
+              it can never sit on the panel. */}
+          <FieldsHelpPanel
+            open={helpOpen}
+            onOpenChange={setHelpOpen}
+            mode={viewportWidth >= FIELDS_HELP_SIDE_MIN_WIDTH ? "side" : "sheet"}
+            fabHidden={sheetOpen}
+            fabStyle={isCompact
+              ? { right: 14, bottom: "calc(70px + env(safe-area-inset-bottom, 0px))" }
+              : { right: 18, bottom: 18 }}
+          />
+
           {showFieldList ? (
             <FieldListView participants={participants} />
           ) : (
@@ -2917,6 +3431,7 @@ function FieldsPageInner() {
               participants={participants}
               workspaceId={platform.currentWorkspace?.id ?? null}
               realDocumentIdByEditorDocId={realDocumentIdByEditorDocId}
+              realDocumentKeyByEditorDocId={realDocumentKeyByEditorDocId}
               scrollRef={canvasScrollRef}
             />
           )}
@@ -2956,6 +3471,18 @@ function FieldsPageInner() {
             {sidePanel}
           </EditorSheet>
         </>
+      )}
+
+      {showPlaceDialog && (
+        <PlaceForEveryoneDialog
+          participants={participants}
+          routing={draft.routing}
+          fields={fields}
+          includeApprovers={placeIncludeApprovers}
+          onIncludeApproversChange={setPlaceIncludeApprovers}
+          onConfirm={placeForEveryone}
+          onClose={() => { setShowPlaceDialog(false); }}
+        />
       )}
 
       {/* Keyboard placement dialog */}

@@ -186,7 +186,9 @@
      Layers are spaced by 10 so a one-off can slot between two without a
      renumbering. Consume these from `utils/z-index.ts` in TSX, never a literal. */
   --lagda-z-base:            0;
+  --lagda-z-editor-canvas:   1;   /* Place Fields canvas — isolated context   */
   --lagda-z-raised:         10;
+  --lagda-z-editor-controls: 12;  /* floating controls over the fields canvas */
   --lagda-z-sticky:         20;   /* in-page sticky toolbars, table headers   */
   --lagda-z-shell:          30;   /* platform header, sidebar, mobile top bar */
   --lagda-z-dropdown:       40;   /* menus, popovers, comboboxes, tooltips    */

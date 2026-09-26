@@ -27,6 +27,15 @@ const editor = {
   addField: vi.fn((partial: Omit<FieldDefinition, "id" | "layer">) => ({
     ...partial, id: "new_1", layer: 9,
   })),
+  addFields: vi.fn((partials: Omit<FieldDefinition, "id" | "layer">[]) =>
+    partials.map((p, i) => ({ ...p, id: `placed_${i}`, layer: 9 }))),
+  documents: [{
+    id: "d1", prepFileId: "f1", displayName: "contract.pdf", pageCount: 2,
+    pages: [
+      { id: "p1", documentId: "d1", pageNumber: 1, aspectRatio: 595 / 842, label: "Page 1" },
+      { id: "p2", documentId: "d1", pageNumber: 2, aspectRatio: 595 / 842, label: "Page 2" },
+    ],
+  }],
   currentDocumentId: "d1" as string | null,
   currentPageId: "p1" as string | null,
   fields: [] as FieldDefinition[],
@@ -36,7 +45,13 @@ vi.mock("../../../../context/FieldEditorContext", () => ({
   FieldEditorProvider: ({ children }: { children: unknown }) => children,
 }));
 
-const prepare = { draft: { participants: [{ id: "rcp_1", role: "signer" }] } };
+const prepare = { draft: {
+  participants: [
+    { id: "rcp_1", name: "Signer One", role: "signer" },
+    { id: "rcp_rev", name: "Reviewer One", role: "reviewer" },
+  ],
+  routing: { mode: "sequential", groups: [] },
+} };
 vi.mock("../../../../context/PrepareContext", () => ({
   usePrepare: () => prepare,
 }));
@@ -119,23 +134,46 @@ describe("ValidationPanel action wiring", () => {
 });
 
 describe("missing-signature auto-fix", () => {
-  it("creates a Signature field for that participant, centred on the current page", async () => {
+  it("places a Signature over Name for that signer in the bottom row of the LAST page", async () => {
+    // As the issue says: the signer holds no signature-type field.
+    editor.fields = [field({ id: "local_ml", type: "multiline-text", participantId: null })];
     const user = userEvent.setup();
     render(<ValidationPanel onSaveNow={vi.fn().mockResolvedValue(true)} saving={false} />);
 
     await user.click(screen.getByRole("button", { name: /auto-fix/i }));
 
-    expect(editor.addField).toHaveBeenCalledTimes(1);
-    const created = editor.addField.mock.calls[0]![0];
-    expect(created.type).toBe("signature");
+    // The shared placer, not a centred plain Signature.
+    expect(editor.addField).not.toHaveBeenCalled();
+    expect(editor.addFields).toHaveBeenCalledTimes(1);
+    const partials = editor.addFields.mock.calls[0]![0];
+    expect(partials).toHaveLength(1);
+    const created = partials[0]!;
+    expect(created.type).toBe("signature-block");
     expect(created.participantId).toBe("rcp_1");
+    expect(created.required).toBe(true);
     expect(created.documentId).toBe("d1");
-    expect(created.pageId).toBe("p1");
-    // Centred, whatever the type's default size happens to be.
-    expect(created.rect.x + created.rect.width / 2).toBeCloseTo(0.5, 5);
-    expect(created.rect.y + created.rect.height / 2).toBeCloseTo(0.5, 5);
-    // Created selected, so positioning it is the next thing that happens.
-    expect(editor.selectFields).toHaveBeenCalledWith(["new_1"]);
+    expect(created.pageId).toBe("p2");
+    // Bottom band, inside the margins.
+    expect(created.rect.y + created.rect.height).toBeGreaterThan(0.85);
+    expect(created.rect.y + created.rect.height).toBeLessThanOrEqual(0.97);
+    // Revealed and selected, so the sender sees it land.
+    expect(editor.setPage).toHaveBeenCalledWith("p2");
+    expect(editor.selectFields).toHaveBeenCalledWith(["placed_0"]);
+  });
+
+  it("offers the same fix for a reviewer without a review stamp", async () => {
+    editor.validation = {
+      ...editor.validation!,
+      errors: [],
+      warnings: [issue({ id: "w_rev", severity: "warning", code: "REVIEWER_MISSING_REVIEW_BLOCK", participantId: "rcp_rev" })],
+    };
+    const user = userEvent.setup();
+    render(<ValidationPanel onSaveNow={vi.fn().mockResolvedValue(true)} saving={false} />);
+    await user.click(screen.getByRole("button", { name: /auto-fix/i }));
+    const created = editor.addFields.mock.calls[0]![0][0]!;
+    expect(created.type).toBe("review-block");
+    expect(created.participantId).toBe("rcp_rev");
+    expect(created.required).toBe(true);
   });
 
   it("does NOT offer 'Show their fields' when the participant has none", () => {

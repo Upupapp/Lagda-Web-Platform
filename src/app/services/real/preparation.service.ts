@@ -14,7 +14,10 @@ import { apiRequest } from "../api-client";
 // boundary between what can be persisted and what stays local-only.
 export type BackendFieldType =
   | "signature" | "initials" | "date-signed" | "text"
-  | "checkbox" | "full-name" | "email" | "title" | "company" | "signature-block";
+  | "checkbox" | "full-name" | "email" | "title" | "company" | "signature-block"
+  // Server-stamped outcome blocks, filled by the backend at completion:
+  // "Reviewed" (reviewer only) and "Approved"/"Skipped" (approver only).
+  | "review-block" | "approval-block";
 
 export interface BackendRect {
   x: number;

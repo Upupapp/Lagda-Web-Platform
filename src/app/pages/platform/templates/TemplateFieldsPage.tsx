@@ -21,7 +21,7 @@ import type {
 } from "../../../models/templates";
 import type { FieldType, ResizeHandle, NormalizedRect } from "../../../models/field-editor";
 import {
-  FIELD_TYPE_LABELS, FIELD_TYPE_ICONS, FIELD_TYPE_GROUPS,
+  FIELD_TYPE_LABELS, FIELD_TYPE_ICONS, FIELD_TYPE_GROUPS, isNameBlockType,
   FIELD_SIZE_CONSTRAINTS, RESIZE_HANDLES, defaultFieldRect,
   PARTICIPANT_ACCENT_COLORS, clampRect as clampFieldRect, clampMoveRect,
 } from "../../../models/field-editor";
@@ -376,15 +376,15 @@ function PageCanvas({
                 boxSizing:  "border-box",
                 cursor:     pendingType ? "crosshair" : "move",
                 display:    "flex",
-                alignItems: f.type === "signature-block" ? "flex-start" : "center",
-                paddingTop: f.type === "signature-block" ? 3 : undefined,
+                alignItems: isNameBlockType(f.type) ? "flex-start" : "center",
+                paddingTop: isNameBlockType(f.type) ? 3 : undefined,
                 overflow:   "visible",
               }}
             >
               <span style={{ ...GF, fontSize: 10, fontWeight: 700, color: sel ? AZURE : color, paddingLeft: 4, overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis" }}>
                 {FIELD_TYPE_ICONS[f.type]} {f.label}
               </span>
-              {f.type === "signature-block" && (
+              {isNameBlockType(f.type) && (
                 <>
                   {/* The rule and the printed name, as the sealed page draws them. */}
                   <span aria-hidden="true" style={{ position: "absolute", left: "6%", right: "6%", top: "66%", borderTop: `1px solid ${color}`, pointerEvents: "none" }} />
@@ -393,7 +393,7 @@ function PageCanvas({
                     fontFamily: "Tinos, 'Times New Roman', Times, serif", fontSize: 11, lineHeight: 1.15, color: NAVY,
                     whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", pointerEvents: "none",
                   }}>
-                    {placeholders.find(p => p.id === f.placeholderId)?.label ?? "Signer"}&apos;s full name
+                    {placeholders.find(p => p.id === f.placeholderId)?.label ?? (f.type === "review-block" ? "Reviewer" : f.type === "approval-block" ? "Approver" : "Signer")}&apos;s full name
                   </span>
                 </>
               )}

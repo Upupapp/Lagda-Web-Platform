@@ -42,6 +42,7 @@ import {
   Ban, ArrowLeft, Send, Loader2, SkipForward, Eye,
 } from "lucide-react";
 import { DECLINE_REASON_CATEGORIES } from "../../models/recipient";
+import { isServerStampedType } from "../../models/field-editor";
 import { SigningEntryChoice } from "../../components/recipient/SigningEntryChoice";
 import { SaveSignaturePrompt } from "../../components/recipient/SaveSignaturePrompt";
 import { LagdaLoader } from "../../components/brand/LagdaLoader";
@@ -394,7 +395,9 @@ export function RealSigningPage() {
   const isOutcomeLabelled = (f: { type: string }) =>
     approverCeremony && (f.type === "signature" || f.type === "initials");
   const surfaceFields = view?.fields.filter((f) => !isOutcomeLabelled(f)) ?? [];
-  const assignedFields = surfaceFields.filter((f) => f.valueAuthority === "RECIPIENT_SUPPLIED");
+  // Review/approval stamps are filled by the server at completion and never
+  // submitted, even if reported as the recipient's (see isServerStampedType).
+  const assignedFields = surfaceFields.filter((f) => f.valueAuthority === "RECIPIENT_SUPPLIED" && !isServerStampedType(f.type));
   const isSignatureMark = (type: string) => type === "signature" || type === "signature-block";
   const needsSignature = assignedFields.some((f) => isSignatureMark(f.type));
   const needsInitials  = assignedFields.some((f) => f.type === "initials");

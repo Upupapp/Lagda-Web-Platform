@@ -5,6 +5,7 @@ import { useState, useRef, useEffect } from "react";
 import { ChevronDown, Check, Plus } from "lucide-react";
 import { usePlatform } from "../../context/PlatformContext";
 import { PLAN_LABELS } from "../../models";
+import { WorkspaceBadge } from "./WorkspaceBadge";
 
 const GF   = { fontFamily: "'Geist', sans-serif" };
 const GM   = { fontFamily: "'Geist Mono', monospace" };
@@ -47,7 +48,6 @@ export function WorkspaceSwitcher({ collapsed }: WorkspaceSwitcherProps) {
 
   if (!currentWorkspace) return null;
 
-  const initials = currentWorkspace.initials;
   const planLabel = PLAN_LABELS[currentWorkspace.plan];
 
   if (collapsed) {
@@ -58,15 +58,15 @@ export function WorkspaceSwitcher({ collapsed }: WorkspaceSwitcherProps) {
           aria-label={`Current workspace: ${currentWorkspace.name}. Click to switch.`}
           aria-expanded={open}
           style={{
-            width: 32, height: 32, borderRadius: 8,
-            background: currentWorkspace.accentColor,
+            width: 32, height: 32, borderRadius: 8, padding: 0,
+            background: "transparent",
             border: "none", color: "white",
             ...GM, fontSize: 11, fontWeight: 700,
             cursor: "pointer", display: "flex",
             alignItems: "center", justifyContent: "center",
           }}
         >
-          {initials}
+          <WorkspaceBadge workspace={currentWorkspace} size={32} radius={8} fontSize={11} />
         </button>
         {open && (
           <WorkspaceMenu
@@ -98,14 +98,7 @@ export function WorkspaceSwitcher({ collapsed }: WorkspaceSwitcherProps) {
           textAlign: "left",
         }}
       >
-        <div style={{
-          width: 26, height: 26, borderRadius: 6,
-          background: currentWorkspace.accentColor,
-          display: "flex", alignItems: "center", justifyContent: "center",
-          ...GM, fontSize: 10, color: "white", fontWeight: 700, flexShrink: 0,
-        }}>
-          {initials}
-        </div>
+        <WorkspaceBadge workspace={currentWorkspace} size={26} radius={6} fontSize={10} />
         <div style={{ flex: 1, minWidth: 0 }}>
           <p style={{ color: "#07111F", ...GF, fontSize: 12, fontWeight: 600, margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
             {currentWorkspace.name}
@@ -175,14 +168,7 @@ const WorkspaceMenu = forwardRef<HTMLDivElement, WorkspaceMenuProps>(
               textAlign: "left", color: "#07111F",
             }}
           >
-            <div style={{
-              width: 26, height: 26, borderRadius: 6,
-              background: ws.accentColor,
-              display: "flex", alignItems: "center", justifyContent: "center",
-              ...GM, fontSize: 10, color: "white", fontWeight: 700, flexShrink: 0,
-            }}>
-              {ws.initials}
-            </div>
+            <WorkspaceBadge workspace={ws} size={26} radius={6} fontSize={10} />
             <div style={{ flex: 1, minWidth: 0 }}>
               <p style={{ ...GF, fontSize: 12, fontWeight: 600, margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                 {ws.name}

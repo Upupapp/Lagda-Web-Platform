@@ -12,6 +12,7 @@ import { ALL_PERMISSIONS } from "../../../models/workspace-admin";
 import { Z } from "../../../utils/z-index";
 import { useWorkspaceMode } from "../../../hooks/useWorkspaceAccess";
 import { RealRolesPage } from "./real/RealRolesPages";
+import { ManagePage } from "./real/manage-ui";
 
 const GF    = { fontFamily: "'Geist', sans-serif" };
 const GM    = { fontFamily: "'Geist Mono', monospace" };
@@ -150,33 +151,20 @@ function RolesInner() {
   const customArchived = state.roles.filter(r => r.type === "custom" && r.status === "archived");
 
   return (
-    <div style={{ minHeight: "100vh", background: "#F8FAFC", padding: "0 0 48px" }}>
+    <ManagePage crumbs={[{ label: "Manage", to: "/app/workspace" }, { label: "Who can do what" }]} title="Who can do what" maxWidth={900}
+      actions={
+        <>
+          <label style={{ display: "flex", alignItems: "center", gap: 6, cursor: "pointer", ...GF, fontSize: 12, color: SLATE }}>
+            <input type="checkbox" checked={showArchived} onChange={e => setShowArchived(e.target.checked)} />
+            Show archived
+          </label>
+          <button onClick={() => setShowModal(true)}
+            style={{ ...GF, fontSize: 13, fontWeight: 600, background: AZURE, color: "#FFFFFF", border: "none", borderRadius: 8, padding: "9px 18px", cursor: "pointer" }}>
+            + Create Custom Role
+          </button>
+        </>
+      }>
       {showModal && <CreateRoleModal onDone={() => setShowModal(false)} onCancel={() => setShowModal(false)} />}
-
-      <header style={{ background: "#FFFFFF", borderBottom: "1px solid #E3E8EF", padding: "20px 24px" }}>
-        <nav aria-label="Breadcrumb" style={{ marginBottom: 10 }}>
-          <ol style={{ display: "flex", gap: 6, listStyle: "none", margin: 0, padding: 0, ...GF, fontSize: 12, color: SILVER }}>
-            <li><Link to="/app/workspace" style={{ color: AZURE, textDecoration: "none" }}>Workspace</Link></li>
-            <li aria-hidden>›</li>
-            <li style={{ color: SLATE }}>Roles</li>
-          </ol>
-        </nav>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
-          <h1 style={{ ...GF, fontSize: 22, fontWeight: 800, color: NAVY, margin: 0 }}>Roles & Permissions</h1>
-          <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-            <label style={{ display: "flex", alignItems: "center", gap: 6, cursor: "pointer", ...GF, fontSize: 12, color: SLATE }}>
-              <input type="checkbox" checked={showArchived} onChange={e => setShowArchived(e.target.checked)} />
-              Show archived
-            </label>
-            <button onClick={() => setShowModal(true)}
-              style={{ ...GF, fontSize: 13, fontWeight: 600, background: AZURE, color: "#FFFFFF", border: "none", borderRadius: 8, padding: "9px 18px", cursor: "pointer" }}>
-              + Create Custom Role
-            </button>
-          </div>
-        </div>
-      </header>
-
-      <div style={{ maxWidth: 900, margin: "24px auto 0", padding: "0 24px" }}>
         {state.rolesLoading ? (
           <div aria-busy="true" style={{ textAlign: "center", padding: "48px", ...GF, fontSize: 13, color: SLATE }}>Loading roles…</div>
         ) : (
@@ -213,8 +201,7 @@ function RolesInner() {
             )}
           </>
         )}
-      </div>
-    </div>
+    </ManagePage>
   );
 }
 

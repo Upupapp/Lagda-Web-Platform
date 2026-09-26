@@ -58,6 +58,13 @@ interface FieldEditorState {
   participantFilter: string | null;            // filter by participantId
   past:              FieldDefinition[][];      // undo stack
   future:            FieldDefinition[][];      // redo stack
+  /**
+   * Documents whose page list has been checked against the REAL file (see
+   * SYNC_REAL_PAGES). Until then a document's pages are a placeholder guess,
+   * and anything positioned on "the last page" could land on a page the file
+   * does not have — and be dropped the moment the real count arrives.
+   */
+  verifiedDocumentIds: EditorDocumentId[];
 }
 
 // ── Actions ───────────────────────────────────────────────────────────────────
@@ -84,6 +91,22 @@ type FieldEditorAction =
   | { type: "TOGGLE_VALIDATION" }
   | { type: "SET_SAVE_STATE"; saveState: EditorSaveState }
   | { type: "DISCARD" }
+  /**
+   * The draft's file set changed while (or before) this editor was open —
+   * a file replaced, removed or added on the Documents step. Swaps in the
+   * rebuilt document list while KEEPING the editor's own fields (and undo
+   * history) for every document and page that still exists. INIT_OK would
+   * reset the field set to the service's snapshot and lose local edits.
+   */
+  | { type: "SYNC_DOCUMENTS"; documents: EditorDocument[] }
+  /**
+   * Several fields in ONE history entry, layered against the CURRENT state.
+   *
+   * Calling `addField` in a loop does not work: each call closes over the
+   * same `state.fields`, so every commit replaced the previous one and only
+   * the last field survived. The reducer sees the true current list.
+   */
+  | { type: "ADD_FIELDS"; fields: FieldDefinition[]; select: boolean }
   /**
    * Replaces a document's fabricated page list with the real one.
    *
@@ -131,6 +154,7 @@ const INITIAL: FieldEditorState = {
   participantFilter: null,
   past:              [],
   future:            [],
+  verifiedDocumentIds: [],
 };
 
 function pushHistory(state: FieldEditorState, _fields: FieldDefinition[]): Pick<FieldEditorState, "past" | "future"> {
@@ -282,9 +306,15 @@ function reducer(state: FieldEditorState, action: FieldEditorAction): FieldEdito
       const sameCount = target.pageCount === action.pageCount;
       const sameShape = target.pages.every(
         (page, index) => page.aspectRatio === action.aspectRatios[index]);
+      const alreadyVerified = state.verifiedDocumentIds.includes(action.documentId);
+      const verifiedDocumentIds = alreadyVerified
+        ? state.verifiedDocumentIds
+        : [...state.verifiedDocumentIds, action.documentId];
       // Identical is the COMMON case — every re-render of a loaded document
       // reaches here. Returning the same state keeps React from looping.
-      if (sameCount && sameShape) return state;
+      if (sameCount && sameShape) {
+        return alreadyVerified ? state : { ...state, verifiedDocumentIds };
+      }
 
       // Ids are rebuilt with the same deterministic scheme the initial pages
       // used, so a page that survives the correction keeps its id — and with
@@ -319,11 +349,51 @@ function reducer(state: FieldEditorState, action: FieldEditorAction): FieldEdito
         ...state,
         documents,
         fields,
+        verifiedDocumentIds,
         selectedFieldIds: state.selectedFieldIds.filter(
           id => fields.some(field => field.id === id)),
         currentPageId: belongsToTarget && !currentPageStillExists
           ? (pages[0]?.id ?? null)
           : state.currentPageId,
+      };
+    }
+
+    case "ADD_FIELDS": {
+      if (action.fields.length === 0) return state;
+      const next = [...state.fields];
+      for (const f of action.fields) {
+        const maxLayer = next
+          .filter(o => o.documentId === f.documentId && o.pageId === f.pageId)
+          .reduce((m, o) => Math.max(m, o.layer), 0);
+        next.push({ ...f, layer: maxLayer + 1 });
+      }
+      return {
+        ...state,
+        ...pushHistory(state, next),
+        fields: next,
+        saveState: "unsaved-changes",
+        validation: null,
+        selectedFieldIds: action.select ? action.fields.map(f => f.id) : state.selectedFieldIds,
+      };
+    }
+
+    case "SYNC_DOCUMENTS": {
+      const documents = action.documents;
+      const livePages = new Set(documents.flatMap(d => d.pages.map(p => `${d.id}__${p.id}`)));
+      const fields = state.fields.filter(f => livePages.has(`${f.documentId}__${f.pageId}`));
+      const docStillThere = documents.find(d => d.id === state.currentDocumentId);
+      const currentDoc = docStillThere ?? documents[0] ?? null;
+      const pageStillThere = docStillThere?.pages.some(p => p.id === state.currentPageId) ?? false;
+      return {
+        ...state,
+        documents,
+        fields,
+        // A replaced file must be re-read before its page list is trusted.
+        verifiedDocumentIds: [],
+        currentDocumentId: currentDoc?.id ?? null,
+        currentPageId: pageStillThere ? state.currentPageId : (currentDoc?.pages[0]?.id ?? null),
+        selectedFieldIds: state.selectedFieldIds.filter(id => fields.some(f => f.id === id)),
+        validation: null,
       };
     }
 
@@ -376,6 +446,12 @@ interface FieldEditorContextValue {
 
   // Field operations (all create undo entries)
   addField:       (partial: Omit<FieldDefinition, "id" | "layer">) => FieldDefinition;
+  /** Adds several fields as one undoable change. Safe to call with many. */
+  addFields:      (partials: Omit<FieldDefinition, "id" | "layer">[], opts?: { select?: boolean }) => FieldDefinition[];
+  /** Documents whose page list has been read from the real file. */
+  verifiedDocumentIds: EditorDocumentId[];
+  /** Re-derives the document list after the draft's files changed. */
+  syncDocuments: (draftId: string, draft: PreparationDraft) => void;
   moveField:      (fieldId: FieldId, rect: NormalizedRect)         => void;
   resizeField:    (fieldId: FieldId, handle: ResizeHandle, dx: number, dy: number) => void;
   updateField:    (fieldId: FieldId, patch: Partial<FieldDefinition>) => void;
@@ -533,6 +609,30 @@ export function FieldEditorProvider({ children, participants }: ProviderProps) {
     return field;
   }, [state.fields, commitFields]);
 
+  const addFields = useCallback((
+    partials: Omit<FieldDefinition, "id" | "layer">[],
+    opts?: { select?: boolean },
+  ): FieldDefinition[] => {
+    const built: FieldDefinition[] = partials.map(p => ({
+      ...p,
+      id:    makeFieldId(),
+      // Provisional; the reducer layers each one against the live state.
+      layer: 0,
+      rect:  clampRect(p.rect, p.type),
+    }));
+    dispatch({ type: "ADD_FIELDS", fields: built, select: opts?.select ?? false });
+    return built;
+  }, []);
+
+  const syncDocuments = useCallback((draftId: string, draft: PreparationDraft) => {
+    try {
+      const session = fieldEditorService.initializeEditor(draftId, draft);
+      dispatch({ type: "SYNC_DOCUMENTS", documents: session.documents });
+    } catch {
+      dispatch({ type: "INIT_ERROR", message: "Unable to refresh the documents in the field editor." });
+    }
+  }, []);
+
   const moveField = useCallback((fieldId: FieldId, newRect: NormalizedRect) => {
     const field = state.fields.find(f => f.id === fieldId);
     if (!field) return;
@@ -681,6 +781,9 @@ export function FieldEditorProvider({ children, participants }: ProviderProps) {
     selectFields,
     clearSelection,
     addField,
+    addFields,
+    verifiedDocumentIds:  state.verifiedDocumentIds,
+    syncDocuments,
     moveField,
     resizeField,
     updateField,

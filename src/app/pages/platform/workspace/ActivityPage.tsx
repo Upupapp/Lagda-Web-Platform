@@ -5,12 +5,12 @@
 // No Burgundy. No eNotary.
 
 import React, { useEffect, useState } from "react";
-import { Link } from "react-router";
 import { WorkspaceAdminProvider, useWorkspaceAdmin } from "../../../context/WorkspaceAdminContext";
 import type { WorkspaceActivityEventType } from "../../../models/workspace-admin";
 import { WORKSPACE_ACTIVITY_EVENT_LABELS } from "../../../models/workspace-admin";
 import { useWorkspaceMode } from "../../../hooks/useWorkspaceAccess";
 import { RealActivityPage } from "./real/RealActivityPage";
+import { ManagePage } from "./real/manage-ui";
 
 const GF    = { fontFamily: "'Geist', sans-serif" };
 const GM    = { fontFamily: "'Geist Mono', monospace" };
@@ -118,19 +118,7 @@ function ActivityInner() {
   }, [asyncLoadActivity, debouncedSearch, eventType]);
 
   return (
-    <div style={{ minHeight: "100vh", background: "#F8FAFC", padding: "0 0 48px" }}>
-      <header style={{ background: "#FFFFFF", borderBottom: "1px solid #E3E8EF", padding: "20px 24px" }}>
-        <nav aria-label="Breadcrumb" style={{ marginBottom: 10 }}>
-          <ol style={{ display: "flex", gap: 6, listStyle: "none", margin: 0, padding: 0, ...GF, fontSize: 12, color: SILVER }}>
-            <li><Link to="/app/workspace" style={{ color: AZURE, textDecoration: "none" }}>Workspace</Link></li>
-            <li aria-hidden>›</li>
-            <li style={{ color: SLATE }}>Activity</li>
-          </ol>
-        </nav>
-        <h1 style={{ ...GF, fontSize: 22, fontWeight: 800, color: NAVY, margin: 0 }}>Administrative Activity</h1>
-      </header>
-
-      <div style={{ maxWidth: 900, margin: "24px auto 0", padding: "0 24px" }}>
+    <ManagePage crumbs={[{ label: "Manage", to: "/app/workspace" }, { label: "Activity" }]} title="Administrative Activity" maxWidth={900}>
         {/* Filters */}
         <div style={{ display: "flex", gap: 10, marginBottom: 16, flexWrap: "wrap" }}>
           <input type="search" placeholder="Search actor, target, event…" value={search} onChange={e => setSearch(e.target.value)}
@@ -183,8 +171,7 @@ function ActivityInner() {
         <p style={{ ...GF, fontSize: 12, color: SLATE, marginTop: 16, padding: "10px 16px", background: "#FFFBEB", border: "1px solid #FDE68A", borderRadius: 8 }}>
           Activity log is session-local. New events appear as you interact with members, teams, roles, and invitations.
         </p>
-      </div>
-    </div>
+    </ManagePage>
   );
 }
 

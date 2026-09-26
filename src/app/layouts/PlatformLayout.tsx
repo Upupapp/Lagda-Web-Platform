@@ -4,6 +4,7 @@
 // Mobile (<768px): top bar + slide-in drawer (MobileNav).
 // Tablet (768-1023px): same as mobile.
 
+import { useWorkspaceBrandingSync } from "../hooks/useWorkspaceBrandingSync";
 import { Suspense, useEffect, useRef, useState } from "react";
 import { Outlet, Navigate, useLocation } from "react-router";
 import { usePlatform } from "../context/PlatformContext";
@@ -159,9 +160,27 @@ function WorkspaceLoadError() {
   );
 }
 
+/**
+ * What the page wrapper below is keyed by.
+ *
+ * Keying by the full path remounts the page on every navigation, which is
+ * what plays the entrance animation. A section family with its own route
+ * layout must not be remounted by moving inside it — Manage keeps its
+ * header and banner row mounted across /app/workspace/* and animates only
+ * its own content area — so the family shares one key.
+ */
+const PERSISTENT_LAYOUT_ROOTS = ["/app/workspace"];
+
+function pageKeyFor(pathname: string): string {
+  const root = PERSISTENT_LAYOUT_ROOTS.find(r => pathname === r || pathname.startsWith(`${r}/`));
+  return root ?? pathname;
+}
+
 // ── Platform shell ────────────────────────────────────────────────────────────
 export function PlatformLayout() {
   const { sessionStatus, workspaceStatus } = usePlatform();
+  // 082. The current workspace's saved branding, kept current on its badge.
+  useWorkspaceBrandingSync();
   const location = useLocation();
   const mainRef  = useRef<HTMLElement>(null);
 
@@ -227,21 +246,21 @@ export function PlatformLayout() {
             }}
             className="platform-skip-link"
             onFocus={(e) => {
-              (e.target as HTMLAnchorElement).style.left = "8px";
-              (e.target as HTMLAnchorElement).style.top = "8px";
-              (e.target as HTMLAnchorElement).style.width = "auto";
-              (e.target as HTMLAnchorElement).style.height = "auto";
-              (e.target as HTMLAnchorElement).style.zIndex = "9999";
-              (e.target as HTMLAnchorElement).style.background = "#0078D4";
-              (e.target as HTMLAnchorElement).style.color = "white";
-              (e.target as HTMLAnchorElement).style.padding = "8px 16px";
-              (e.target as HTMLAnchorElement).style.borderRadius = "6px";
-              (e.target as HTMLAnchorElement).style.textDecoration = "none";
-              (e.target as HTMLAnchorElement).style.fontFamily = "'Geist', sans-serif";
-              (e.target as HTMLAnchorElement).style.fontSize = "13px";
+              e.currentTarget.style.left = "8px";
+              e.currentTarget.style.top = "8px";
+              e.currentTarget.style.width = "auto";
+              e.currentTarget.style.height = "auto";
+              e.currentTarget.style.zIndex = "9999";
+              e.currentTarget.style.background = "#0078D4";
+              e.currentTarget.style.color = "white";
+              e.currentTarget.style.padding = "8px 16px";
+              e.currentTarget.style.borderRadius = "6px";
+              e.currentTarget.style.textDecoration = "none";
+              e.currentTarget.style.fontFamily = "'Geist', sans-serif";
+              e.currentTarget.style.fontSize = "13px";
             }}
             onBlur={(e) => {
-              (e.target as HTMLAnchorElement).style.left = "-9999px";
+              e.currentTarget.style.left = "-9999px";
             }}
           >
             Skip to main content
@@ -260,7 +279,7 @@ export function PlatformLayout() {
             className="platform-main"
           >
             <Suspense fallback={<PlatformPageLoader />}>
-              <div key={location.pathname} className="lagda-page-enter">
+              <div key={pageKeyFor(location.pathname)} className="lagda-page-enter">
                 <Outlet />
               </div>
             </Suspense>

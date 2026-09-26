@@ -52,6 +52,11 @@ export const PERSISTENCE_KEYS = {
   // zero-length GET on a brand-new document must not wipe not-yet-synced
   // local edits. Never used as proof of anything else.
   prepareSyncMarkers: `${NAMESPACE}prepare-sync-markers`,
+  // Draft ids for which Place Fields has already run its first-arrival
+  // auto-placement — see services/prepare/auto-placement-marker.ts. It must
+  // run ONCE per draft: re-running it would re-add a block the sender
+  // deliberately deleted.
+  prepareAutoPlacement: `${NAMESPACE}prepare-auto-placement`,
 } as const;
 
 export type PersistenceKey = (typeof PERSISTENCE_KEYS)[keyof typeof PERSISTENCE_KEYS];

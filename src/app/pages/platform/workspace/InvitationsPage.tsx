@@ -5,13 +5,13 @@
 // On phones the table becomes a list of cards. No Burgundy. No eNotary.
 
 import React, { useEffect, useState } from "react";
-import { Link } from "react-router";
 import { WorkspaceAdminProvider, useWorkspaceAdmin } from "../../../context/WorkspaceAdminContext";
 import type { WorkspaceInvitation, WorkspaceInvitationStatus, WorkspaceRoleId } from "../../../models/workspace-admin";
 import { WORKSPACE_INVITATION_STATUS_LABELS } from "../../../models/workspace-admin";
 import { USE_REAL_BACKEND } from "../../../services/backend-flag";
 import { ASSIGNABLE_ROLES, REAL_ROLE_LABELS } from "../../../services/real/workspace-admin.service";
 import { useViewport } from "../../../hooks/useViewport";
+import { ManagePage } from "./real/manage-ui";
 
 const GF    = { fontFamily: "'Geist', sans-serif" };
 const GM    = { fontFamily: "'Geist Mono', monospace" };
@@ -196,25 +196,13 @@ function InvitationsInner() {
   const filtered = state.invitations.filter(i => filter === "all" || i.status === filter);
 
   return (
-    <div style={{ minHeight: "100vh", background: "#F8FAFC", padding: "0 0 48px" }}>
-      <header style={{ background: "#FFFFFF", borderBottom: "1px solid #E3E8EF", padding: "20px 24px" }}>
-        <nav aria-label="Breadcrumb" style={{ marginBottom: 10 }}>
-          <ol style={{ display: "flex", gap: 6, listStyle: "none", margin: 0, padding: 0, ...GF, fontSize: 12, color: SILVER }}>
-            <li><Link to="/app/workspace" style={{ color: AZURE, textDecoration: "none" }}>Workspace</Link></li>
-            <li aria-hidden>›</li>
-            <li style={{ color: SLATE }}>Invitations</li>
-          </ol>
-        </nav>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
-          <h1 style={{ ...GF, fontSize: 22, fontWeight: 800, color: NAVY, margin: 0 }}>Invitations</h1>
-          <button onClick={() => setShowForm(v => !v)}
-            style={{ ...GF, fontSize: 13, fontWeight: 600, background: AZURE, color: "#FFFFFF", border: "none", borderRadius: 8, padding: "9px 18px", cursor: "pointer" }}>
-            {showForm ? "Cancel" : "+ Invite Member"}
-          </button>
-        </div>
-      </header>
-
-      <div style={{ maxWidth: 900, margin: "24px auto 0", padding: isNarrow ? "0 16px" : "0 24px" }}>
+    <ManagePage crumbs={[{ label: "Manage", to: "/app/workspace" }, { label: "Invitations" }]} title="Invitations" maxWidth={900}
+      actions={
+        <button onClick={() => setShowForm(v => !v)}
+          style={{ ...GF, fontSize: 13, fontWeight: 600, background: AZURE, color: "#FFFFFF", border: "none", borderRadius: 8, padding: "9px 18px", cursor: "pointer" }}>
+          {showForm ? "Cancel" : "+ Invite Member"}
+        </button>
+      }>
         {showForm && <InviteForm onDone={() => setShowForm(false)} />}
 
         {/* Filter tabs */}
@@ -272,8 +260,7 @@ function InvitationsInner() {
             Status changes are session-local and reset on reload.
           </p>
         )}
-      </div>
-    </div>
+    </ManagePage>
   );
 }
 

@@ -21,6 +21,11 @@ export function makeFieldId(): FieldId {
 export type FieldType =
   | "signature"
   | "signature-block"
+  // Server-stamped outcome blocks (the backend fills them, never the
+  // recipient): "Reviewed" / "Approved" (or "Skipped") with the date, and the
+  // participant's printed name beneath the rule, like a signature-block.
+  | "review-block"
+  | "approval-block"
   | "initials"
   | "full-name"
   | "date-signed"
@@ -88,6 +93,9 @@ export const FIELD_SIZE_CONSTRAINTS: Record<FieldType, FieldSizeConstraints> = {
   "signature":      { defaultWidth: 0.302, defaultHeight: 0.059, minWidth: 0.10,  minHeight: 0.030, maxWidth: 0.65, maxHeight: 0.130, resizable: true  },
   // Tall enough for the mark, the rule and an 11pt name beneath it.
   "signature-block":{ defaultWidth: 0.336, defaultHeight: 0.095, minWidth: 0.20,  minHeight: 0.070, maxWidth: 0.65, maxHeight: 0.180, resizable: true  },
+  // Same box as a signature-block: stamp above the rule, the name beneath.
+  "review-block":   { defaultWidth: 0.336, defaultHeight: 0.095, minWidth: 0.20,  minHeight: 0.070, maxWidth: 0.65, maxHeight: 0.180, resizable: true  },
+  "approval-block": { defaultWidth: 0.336, defaultHeight: 0.095, minWidth: 0.20,  minHeight: 0.070, maxWidth: 0.65, maxHeight: 0.180, resizable: true  },
   "initials":       { defaultWidth: 0.118, defaultHeight: 0.047, minWidth: 0.060, minHeight: 0.030, maxWidth: 0.25, maxHeight: 0.090, resizable: true  },
   "full-name":      { defaultWidth: 0.336, defaultHeight: 0.036, minWidth: 0.15,  minHeight: 0.024, maxWidth: 0.75, maxHeight: 0.060, resizable: true  },
   "date-signed":    { defaultWidth: 0.218, defaultHeight: 0.036, minWidth: 0.12,  minHeight: 0.024, maxWidth: 0.42, maxHeight: 0.060, resizable: true  },
@@ -107,6 +115,8 @@ export const FIELD_SIZE_CONSTRAINTS: Record<FieldType, FieldSizeConstraints> = {
 export const FIELD_TYPE_LABELS: Record<FieldType, string> = {
   "signature":      "Signature",
   "signature-block":"Signature over Name",
+  "review-block":   "Reviewed over Name",
+  "approval-block": "Approved over Name",
   "initials":       "Initials",
   "full-name":      "Full Name",
   "date-signed":    "Date Signed",
@@ -124,6 +134,8 @@ export const FIELD_TYPE_LABELS: Record<FieldType, string> = {
 export const FIELD_TYPE_ICONS: Record<FieldType, string> = {
   "signature":      "✍",
   "signature-block":"✍",
+  "review-block":   "✔",
+  "approval-block": "✪",
   "initials":       "Ii",
   "full-name":      "Aa",
   "date-signed":    "📅",
@@ -141,6 +153,8 @@ export const FIELD_TYPE_ICONS: Record<FieldType, string> = {
 export const FIELD_TYPE_DESCRIPTIONS: Record<FieldType, string> = {
   "signature":      "Participant handwritten or typed signature",
   "signature-block":"Signature with the participant's full name printed beneath it — they only sign",
+  "review-block":   "Stamped 'Reviewed' with the date when the reviewer completes, with their name printed beneath",
+  "approval-block": "Stamped 'Approved' (or 'Skipped') with the date, name beneath",
   "initials":       "Participant initials on a page",
   "full-name":      "Participant's legal full name",
   "date-signed":    "Date recorded when participant completes this field",
@@ -160,6 +174,8 @@ export type FieldPlanTier = "all" | "standard" | "enterprise" | "planned";
 export const FIELD_PLAN_TIER: Record<FieldType, FieldPlanTier> = {
   "signature":      "all",
   "signature-block":"all",
+  "review-block":   "all",
+  "approval-block": "all",
   "initials":       "all",
   "full-name":      "all",
   "date-signed":    "all",
@@ -175,7 +191,7 @@ export const FIELD_PLAN_TIER: Record<FieldType, FieldPlanTier> = {
 };
 
 export const FIELD_TYPE_GROUPS: { label: string; types: FieldType[] }[] = [
-  { label: "Signature & Identity",  types: ["signature", "signature-block", "initials", "full-name", "date-signed"] },
+  { label: "Signature & Identity",  types: ["signature", "signature-block", "review-block", "approval-block", "initials", "full-name", "date-signed"] },
   { label: "Data Entry",            types: ["text", "multiline-text", "checkbox", "radio-group"] },
   { label: "Participant Details",   types: ["email", "title", "company"] },
   { label: "Acknowledgment",        types: ["acknowledgment"] },
@@ -194,6 +210,9 @@ export const FIELD_ELIGIBLE_ROLES: Record<FieldType, PrepParticipantRole[]> = {
   // Signers only: an approver's signature boxes are stamped with the approval
   // outcome instead, and a printed name under that stamp would misstate it.
   "signature-block":["signer"],
+  // Reviewer-only / approver-only: the stamp states THEIR outcome.
+  "review-block":   ["reviewer"],
+  "approval-block": ["approver"],
   "initials":       ["signer", "approver"],
   "full-name":      ["signer", "approver", "reviewer", "acknowledgment-recipient"],
   "date-signed":    ["signer", "approver"],
@@ -210,6 +229,41 @@ export const FIELD_ELIGIBLE_ROLES: Record<FieldType, PrepParticipantRole[]> = {
 
 export function isRoleEligibleForField(role: PrepParticipantRole, type: FieldType): boolean {
   return FIELD_ELIGIBLE_ROLES[type].includes(role);
+}
+
+/**
+ * Whether the sender may choose if a field is required.
+ *
+ *   "always" — a review-block is how a reviewer's completion is recorded, so
+ *              it is inherently required.
+ *   "never"  — an approval-block is optional by nature (an approver may skip,
+ *              and the stamp then says so); sender text is not completed by
+ *              anybody.
+ *   "choice" — everything else: the Required toggle decides.
+ */
+export type FieldRequiredPolicy = "always" | "never" | "choice";
+
+export function fieldRequiredPolicy(type: FieldType): FieldRequiredPolicy {
+  if (type === "review-block") return "always";
+  if (type === "approval-block" || type === "sender-text") return "never";
+  return "choice";
+}
+
+/** The `required` a newly placed field of this type starts with. */
+export function defaultRequiredFor(type: FieldType): boolean {
+  return fieldRequiredPolicy(type) !== "never";
+}
+
+/** Blocks drawn as a mark/stamp above a rule with the participant's name beneath. */
+export const NAME_BLOCK_FIELD_TYPES: readonly FieldType[] = ["signature-block", "review-block", "approval-block"];
+
+export function isNameBlockType(type: FieldType): boolean {
+  return NAME_BLOCK_FIELD_TYPES.includes(type);
+}
+
+/** Filled by the server at completion; the recipient never enters a value. */
+export function isServerStampedType(type: string): boolean {
+  return type === "review-block" || type === "approval-block";
 }
 
 // ── Participant visual identity ───────────────────────────────────────────────
@@ -328,6 +382,31 @@ export interface EditorHistoryEntry {
 export const EDITOR_HISTORY_LIMIT = 50;
 
 // ── Validation ─────────────────────────────────────────────────────────────────
+
+/**
+ * Every issue code the Place Fields step can raise — the placement validator
+ * (mock/field-editor.service) plus the real-backend persistability checks
+ * (prepare/field-autofix). The in-editor guide is keyed on this list, so a
+ * code added here without an explanation fails to type-check.
+ */
+export const FIELD_ISSUE_CODES = [
+  "NO_DOCUMENTS",
+  "UNASSIGNED_FIELD",
+  "FIELD_OUT_OF_BOUNDS",
+  "UNKNOWN_PARTICIPANT",
+  "INCOMPATIBLE_ROLE",
+  "BLOCKING_FIELD_ON_NON_BLOCKING_ROLE",
+  "SIGNER_MISSING_SIGNATURE",
+  "REVIEWER_MISSING_REVIEW_BLOCK",
+  "ACK_RECIPIENT_MISSING_ACK_FIELD",
+  "FIELD_OVERLAP",
+  "NEAR_PAGE_EDGE",
+  "DOCUMENT_NO_PARTICIPANT_FIELDS",
+  "UNSUPPORTED_BACKEND_TYPE",
+  "UNSAVED_EDITS",
+] as const;
+
+export type FieldIssueCode = (typeof FIELD_ISSUE_CODES)[number];
 
 export interface FieldValidationIssue {
   id:            string;

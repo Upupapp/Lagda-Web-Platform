@@ -31,6 +31,37 @@ import type { RecipientFlowPreview } from "../../models/field-editor";
 interface EditorSession {
   documents: EditorDocument[];
   fields:    FieldDefinition[];
+  /** The file set the documents were built from — see filesSignature(). */
+  filesKey:  string;
+}
+
+/**
+ * Everything about a draft's files that changes what the editor must show.
+ *
+ * WHY THIS EXISTS — the "stale document after changing the file" bug. This
+ * service is a module singleton, so its sessions outlive a route change and
+ * die only on a full page refresh. `initializeEditor` used to return the
+ * cached session for a draft id unconditionally, so after the sender
+ * replaced or swapped the file on the Documents step, Place Fields kept the
+ * documents it had built from the OLD file list — old name, old page count,
+ * and a `prepFileId` that no longer resolves to the new upload — until a
+ * refresh cleared the cache. The artifact id is included because a
+ * re-selected file keeps its PrepFile id but receives new bytes.
+ */
+export function filesSignature(files: PreparationDraft["files"]): string {
+  return files
+    .filter(f => f.fileState === "ready")
+    .map(f => [
+      f.id, f.fileName, f.fileSizeBytes, f.backendDocumentId ?? "",
+      f.backendArtifactId ?? "", f.demoPageCount ?? "",
+    ].join("|"))
+    .join("||");
+}
+
+/** Fields whose document and page still exist in `documents`. */
+export function retainFieldsOn(documents: EditorDocument[], fields: FieldDefinition[]): FieldDefinition[] {
+  const livePages = new Set(documents.flatMap(d => d.pages.map(p => `${d.id}__${p.id}`)));
+  return fields.filter(f => livePages.has(`${f.documentId}__${f.pageId}`));
 }
 
 class MockFieldEditorService {
@@ -39,8 +70,23 @@ class MockFieldEditorService {
   // ── Session lifecycle ────────────────────────────────────────────────────────
 
   initializeEditor(draftId: string, draft: PreparationDraft): EditorSession {
-    if (this.sessions.has(draftId)) {
-      return this.sessions.get(draftId)!;
+    const filesKey = filesSignature(draft.files);
+    const existing = this.sessions.get(draftId);
+    if (existing && existing.filesKey === filesKey) {
+      return existing;
+    }
+    if (existing) {
+      // The file set changed since this session was built: rebuild the
+      // documents from the CURRENT files, keeping only the fields that still
+      // sit on a document and page that exists.
+      const documents = buildEditorDocuments(draft.files);
+      const refreshed: EditorSession = {
+        documents,
+        fields: retainFieldsOn(documents, existing.fields),
+        filesKey,
+      };
+      this.sessions.set(draftId, refreshed);
+      return refreshed;
     }
 
     const documents = buildEditorDocuments(draft.files);
@@ -63,7 +109,7 @@ class MockFieldEditorService {
       }
     }
 
-    const session: EditorSession = { documents, fields };
+    const session: EditorSession = { documents, fields, filesKey };
     this.sessions.set(draftId, session);
     return session;
   }
@@ -259,6 +305,21 @@ class MockFieldEditorService {
         };
         issues.push(issue);
         errors.push(issue);
+      }
+
+      // A reviewer completes by marking the document reviewed; the
+      // review-block is where that outcome is stamped on the page. Without
+      // one the review still counts, but leaves no visible mark — a warning,
+      // not a blocker.
+      if (pax.role === "reviewer" && !paxFields.some(f => f.type === "review-block")) {
+        const issue: FieldValidationIssue = {
+          id: id(), severity: "warning", code: "REVIEWER_MISSING_REVIEW_BLOCK",
+          message: `${pax.name} (Reviewer) has no Reviewed over Name field, so their review will not be stamped on the document.`,
+          participantId: pax.id,
+          suggestion: "Add a Reviewed over Name field for this reviewer.",
+        };
+        issues.push(issue);
+        warnings.push(issue);
       }
 
       if (pax.role === "acknowledgment-recipient") {

@@ -5,7 +5,7 @@
 // usePrepare/usePlatform are mocked; the file has no backendDocumentId so the
 // real-backend load effect is skipped (no network).
 
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
@@ -39,6 +39,14 @@ vi.mock("../../../../context/PlatformContext", () => ({
 vi.mock("../../../../services/backend-flag", () => ({ USE_REAL_BACKEND: true }));
 
 import { FieldsPage } from "../FieldsPage";
+import { PERSISTENCE_KEYS } from "../../../../services/local-persistence";
+
+// These tests exercise the editor's own controls against an EMPTY canvas, so
+// first-arrival auto-placement is marked as already done for this draft.
+// It has its own suite (FieldsPage.autoPlacement.test.tsx).
+beforeEach(() => {
+  window.localStorage.setItem(PERSISTENCE_KEYS.prepareAutoPlacement, JSON.stringify(["d1"]));
+});
 
 function renderPage() {
   return render(
@@ -75,7 +83,7 @@ describe("FieldsPage (full editor render)", () => {
     await user.click(screen.getByRole("button", { name: /add field using keyboard placement/i }));
     expect(await screen.findByRole("dialog", { name: /add field/i })).toBeInTheDocument();
     // Field type select defaults to Signature; region defaults to Middle Left.
-    await user.click(screen.getByRole("button", { name: /place field/i }));
+    await user.click(screen.getByRole("button", { name: /^place field$/i }));
     // Dialog closes once the field is placed.
     expect(screen.queryByRole("dialog", { name: /add field/i })).toBeNull();
   });
@@ -128,7 +136,7 @@ describe("FieldsPage (full editor render)", () => {
     const user = userEvent.setup();
     renderPage();
     await user.click(screen.getByRole("button", { name: /add field using keyboard placement/i }));
-    await user.click(screen.getByRole("button", { name: /place field/i }));
+    await user.click(screen.getByRole("button", { name: /^place field$/i }));
 
     const copyBtn = screen.getByRole("button", { name: /copy selected fields/i });
     expect(copyBtn).toBeEnabled();
@@ -143,7 +151,7 @@ describe("FieldsPage (full editor render)", () => {
     const user = userEvent.setup();
     renderPage();
     await user.click(screen.getByRole("button", { name: /add field using keyboard placement/i }));
-    await user.click(screen.getByRole("button", { name: /place field/i }));
+    await user.click(screen.getByRole("button", { name: /^place field$/i }));
 
     await user.click(screen.getByRole("button", { name: /show field list/i }));
     expect(screen.getByRole("table", { name: /field list/i })).toBeInTheDocument();
@@ -173,7 +181,7 @@ describe("FieldsPage (full editor render)", () => {
     const user = userEvent.setup();
     renderPage();
     await user.click(screen.getByRole("button", { name: /add field using keyboard placement/i }));
-    await user.click(screen.getByRole("button", { name: /place field/i }));
+    await user.click(screen.getByRole("button", { name: /^place field$/i }));
 
     // Required checkbox toggle.
     const required = screen.getByRole("checkbox", { name: /field is required/i });
@@ -208,7 +216,7 @@ describe("FieldsPage (full editor render)", () => {
     const user = userEvent.setup();
     renderPage();
     await user.click(screen.getByRole("button", { name: /add field using keyboard placement/i }));
-    await user.click(screen.getByRole("button", { name: /place field/i }));
+    await user.click(screen.getByRole("button", { name: /^place field$/i }));
 
     const select = screen.getByRole("combobox", { name: /assign participant/i });
     await user.selectOptions(select, "pax_1");
@@ -246,7 +254,7 @@ describe("FieldsPage (full editor render)", () => {
     const user = userEvent.setup();
     renderPage();
     await user.click(screen.getByRole("button", { name: /add field using keyboard placement/i }));
-    await user.click(screen.getByRole("button", { name: /place field/i }));
+    await user.click(screen.getByRole("button", { name: /^place field$/i }));
     await user.click(screen.getByRole("button", { name: /show field list/i }));
 
     await user.selectOptions(screen.getByRole("combobox", { name: /filter by participant/i }), "pax_1");
@@ -284,7 +292,7 @@ describe("FieldsPage (full editor render)", () => {
   /** Places one field through the keyboard dialog. */
   async function placeOneField(user: ReturnType<typeof userEvent.setup>) {
     await user.click(screen.getByRole("button", { name: /add field using keyboard placement/i }));
-    await user.click(screen.getByRole("button", { name: /place field/i }));
+    await user.click(screen.getByRole("button", { name: /^place field$/i }));
   }
 
   /**

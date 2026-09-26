@@ -25,6 +25,7 @@ import { REAL_WORKSPACE_ROLES, REAL_ROLE_LABELS } from "../../../services/real/w
 import { useWorkspaceMode } from "../../../hooks/useWorkspaceAccess";
 import { AccessEditor, Dialog, ErrorNote, PrivilegeChips, type AccessDraft } from "./join/join-ui";
 import { buttonStyle } from "./join/join-styles";
+import { ManagePage } from "./real/manage-ui";
 
 const GF    = { fontFamily: "'Geist', sans-serif" };
 const GM    = { fontFamily: "'Geist Mono', monospace" };
@@ -298,33 +299,19 @@ function MembersInner() {
   );
 
   return (
-    <div style={{ minHeight: "100vh", background: "#F8FAFC", padding: "0 0 48px" }}>
-      <header style={{ background: "#FFFFFF", borderBottom: "1px solid #E3E8EF", padding: isNarrow ? "16px" : "20px 24px" }}>
-        <nav aria-label="Breadcrumb" style={{ marginBottom: 10 }}>
-          <ol style={{ display: "flex", gap: 6, listStyle: "none", margin: 0, padding: 0, ...GF, fontSize: 12, color: SILVER }}>
-            <li><Link to="/app/workspace" style={{ color: AZURE, textDecoration: "none" }}>Workspace</Link></li>
-            <li aria-hidden>›</li>
-            <li style={{ color: SLATE }}>Members</li>
-          </ol>
-        </nav>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-            <h1 style={{ ...GF, fontSize: 22, fontWeight: 800, color: NAVY, margin: 0 }}>Member Directory</h1>
-            {canManageJoin && pendingCount > 0 && (
-              <Link to="/app/workspace/join-requests" data-testid="pending-requests-badge"
-                style={{ ...GF, fontSize: 12, fontWeight: 700, color: "#8A5A00", background: "#FFF8E1", border: "1px solid #F5D98B", borderRadius: 999, padding: "3px 10px", textDecoration: "none" }}>
-                {pendingCount} pending request{pendingCount === 1 ? "" : "s"}
-              </Link>
-            )}
-          </div>
-          <Link to="/app/workspace/invitations"
-            style={{ ...GF, fontSize: 13, fontWeight: 600, background: AZURE, color: "#FFFFFF", border: "none", borderRadius: 8, padding: "9px 18px", textDecoration: "none", cursor: "pointer" }}>
-            + Invite Member
-          </Link>
-        </div>
-      </header>
-
-      <div style={{ maxWidth: 1060, margin: "24px auto 0", padding: isNarrow ? "0 16px" : "0 24px", boxSizing: "border-box" }}>
+    <ManagePage crumbs={[{ label: "Manage", to: "/app/workspace" }, { label: "Members" }]} title="Member Directory" maxWidth={1060}
+      badge={canManageJoin && pendingCount > 0 ? (
+        <Link to="/app/workspace/join-requests" data-testid="pending-requests-badge"
+          style={{ ...GF, fontSize: 12, fontWeight: 700, color: "#8A5A00", background: "#FFF8E1", border: "1px solid #F5D98B", borderRadius: 999, padding: "3px 10px", textDecoration: "none" }}>
+          {pendingCount} pending request{pendingCount === 1 ? "" : "s"}
+        </Link>
+      ) : undefined}
+      actions={
+        <Link to="/app/workspace/invitations"
+          style={{ ...GF, fontSize: 13, fontWeight: 600, background: AZURE, color: "#FFFFFF", border: "none", borderRadius: 8, padding: "9px 18px", textDecoration: "none", cursor: "pointer" }}>
+          + Invite Member
+        </Link>
+      }>
         {/* Filters */}
         <div style={{ display: "flex", gap: 10, marginBottom: 16, flexWrap: "wrap" }}>
           <input type="search" placeholder="Search name or email…" value={search} onChange={e => setSearch(e.target.value)}
@@ -411,14 +398,13 @@ function MembersInner() {
         {canManageJoin && workspaceId !== null && (
           <JoinSummaryCard workspaceId={workspaceId} onPendingCount={setPendingCount} />
         )}
-      </div>
 
       {editing && workspaceId !== null && (
         <EditAccessDialog member={editing} workspaceId={workspaceId}
           onClose={() => setEditing(null)}
           onSaved={() => { setEditing(null); reloadMembers(); }} />
       )}
-    </div>
+    </ManagePage>
   );
 }
 

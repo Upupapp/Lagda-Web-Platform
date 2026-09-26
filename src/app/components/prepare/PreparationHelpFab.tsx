@@ -195,6 +195,10 @@ export function PreparationHelpFab() {
     () => partitionByStep(items, stepId), [items, stepId]);
 
   if (!draft) return null;
+  // The Place Fields editor is a full-screen surface above this FAB, and it
+  // carries its own Help button and guide (FieldsHelpPanel). Rendering this
+  // one too would put a second, invisible Help button under it.
+  if (stepId === "fields") return null;
 
   const guide = stepId === null ? null : PREP_STEP_GUIDES[stepId];
 

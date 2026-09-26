@@ -11,6 +11,9 @@ import type { WorkspaceTeamId, WorkspaceMemberId } from "../../../models/workspa
 import { Z } from "../../../utils/z-index";
 import { useWorkspaceMode } from "../../../hooks/useWorkspaceAccess";
 import { RealTeamDetailPage } from "./real/RealTeamDetailPage";
+import { ManagePage } from "./real/manage-ui";
+
+const CRUMBS = [{ label: "Manage", to: "/app/workspace" }, { label: "Teams", to: "/app/workspace/teams" }];
 
 const GF    = { fontFamily: "'Geist', sans-serif" };
 const GM    = { fontFamily: "'Geist Mono', monospace" };
@@ -97,68 +100,50 @@ function TeamDetailInner() {
 
   if (state.teamLoading) {
     return (
-      <div style={{ minHeight: "100vh", background: "#F8FAFC", padding: "32px 24px" }}>
-        <div style={{ maxWidth: 720, margin: "0 auto" }}>
-          {[60, 200, 300].map((h, i) => <div key={i} style={{ height: h, background: "#E2E8F0", borderRadius: 12, marginBottom: 16 }} />)}
+      <ManagePage crumbs={[...CRUMBS, { label: "Team" }]} title="Team" maxWidth={720}>
+        <div aria-busy="true">
+          {[200, 300].map((h, i) => <div key={i} className="lagda-skeleton" style={{ height: h, background: "#E2E8F0", borderRadius: 12, marginBottom: 16 }} />)}
         </div>
-      </div>
+      </ManagePage>
     );
   }
 
   if (state.teamError || !state.activeTeam) {
     return (
-      <div style={{ minHeight: "100vh", background: "#F8FAFC", display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <ManagePage crumbs={[...CRUMBS, { label: "Team" }]} title="Team not found" maxWidth={720}>
         <p style={{ ...GF, color: SLATE }}>Team not found. <Link to="/app/workspace/teams" style={{ color: AZURE }}>Back to Teams</Link></p>
-      </div>
+      </ManagePage>
     );
   }
 
   const { team, members } = state.activeTeam;
 
   return (
-    <div style={{ minHeight: "100vh", background: "#F8FAFC", padding: "0 0 48px" }}>
+    <ManagePage crumbs={[...CRUMBS, { label: team.name }]} title={team.name} maxWidth={720}
+      badge={team.status === "archived" ? (
+        <span style={{ ...GM, fontSize: 10, padding: "2px 8px", borderRadius: 999, background: "#F1F5F9", color: "#475569" }}>Archived</span>
+      ) : undefined}
+      subtitle={team.description || undefined}
+      actions={
+        <>
+          {team.status === "active" && (
+            <button onClick={() => setEditing(true)}
+              style={{ ...GF, fontSize: 13, padding: "8px 16px", border: "1.5px solid #D1D9E0", borderRadius: 8, background: "#FFFFFF", cursor: "pointer", color: SLATE }}>
+              Edit
+            </button>
+          )}
+          <button onClick={handleArchive} disabled={archiving}
+            style={{ ...GF, fontSize: 13, padding: "8px 16px", border: "1.5px solid #D1D9E0", borderRadius: 8, background: "#FFFFFF", cursor: archiving ? "not-allowed" : "pointer", color: SLATE }}>
+            {archiving ? "…" : team.status === "archived" ? "Restore" : "Archive"}
+          </button>
+        </>
+      }>
       {editing && (
         <EditTeamModal
           name={team.name} description={team.description ?? ""}
           onSave={handleSaveEdit} onCancel={() => setEditing(false)} />
       )}
 
-      <header style={{ background: "#FFFFFF", borderBottom: "1px solid #E3E8EF", padding: "20px 24px" }}>
-        <nav aria-label="Breadcrumb" style={{ marginBottom: 10 }}>
-          <ol style={{ display: "flex", gap: 6, listStyle: "none", margin: 0, padding: 0, ...GF, fontSize: 12, color: SILVER }}>
-            <li><Link to="/app/workspace" style={{ color: AZURE, textDecoration: "none" }}>Workspace</Link></li>
-            <li aria-hidden>›</li>
-            <li><Link to="/app/workspace/teams" style={{ color: AZURE, textDecoration: "none" }}>Teams</Link></li>
-            <li aria-hidden>›</li>
-            <li style={{ color: SLATE }}>{team.name}</li>
-          </ol>
-        </nav>
-        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
-          <div>
-            <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-              <h1 style={{ ...GF, fontSize: 20, fontWeight: 800, color: NAVY, margin: 0 }}>{team.name}</h1>
-              {team.status === "archived" && (
-                <span style={{ ...GM, fontSize: 10, padding: "2px 8px", borderRadius: 999, background: "#F1F5F9", color: "#475569" }}>Archived</span>
-              )}
-            </div>
-            {team.description && <p style={{ ...GF, fontSize: 13, color: SLATE, margin: "4px 0 0" }}>{team.description}</p>}
-          </div>
-          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-            {team.status === "active" && (
-              <button onClick={() => setEditing(true)}
-                style={{ ...GF, fontSize: 13, padding: "8px 16px", border: "1.5px solid #D1D9E0", borderRadius: 8, background: "#FFFFFF", cursor: "pointer", color: SLATE }}>
-                Edit
-              </button>
-            )}
-            <button onClick={handleArchive} disabled={archiving}
-              style={{ ...GF, fontSize: 13, padding: "8px 16px", border: "1.5px solid #D1D9E0", borderRadius: 8, background: "#FFFFFF", cursor: archiving ? "not-allowed" : "pointer", color: SLATE }}>
-              {archiving ? "…" : team.status === "archived" ? "Restore" : "Archive"}
-            </button>
-          </div>
-        </div>
-      </header>
-
-      <div style={{ maxWidth: 720, margin: "24px auto 0", padding: "0 24px" }}>
         {/* Members */}
         <section style={{ background: "#FFFFFF", border: "1.5px solid #E3E8EF", borderRadius: 12, overflow: "hidden" }}>
           <div style={{ padding: "14px 20px", borderBottom: "1px solid #F0F2F5", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
@@ -216,8 +201,7 @@ function TeamDetailInner() {
             ))}
           </dl>
         </section>
-      </div>
-    </div>
+    </ManagePage>
   );
 }
 

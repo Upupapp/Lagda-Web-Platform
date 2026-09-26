@@ -771,6 +771,11 @@ const UseTemplatePage = lazy(() =>
 );
 
 // Workspace Administration (Command 23)
+const WorkspaceShell = lazy(() =>
+  import("./app/pages/platform/workspace/shell/WorkspaceShell").then((m) => ({
+    default: m.WorkspaceShell,
+  })),
+);
 const WorkspaceOverviewPage = lazy(() =>
   import("./app/pages/platform/workspace/WorkspaceOverviewPage").then((m) => ({
     default: m.WorkspaceOverviewPage,
@@ -2388,110 +2393,31 @@ export const router = createBrowserRouter([
         ),
       },
 
-      // Workspace Administration (Command 23) — static paths before parametric
+      // Workspace Administration (Command 23) — ONE layout route.
+      //
+      // WorkspaceShell renders the workspace header and the row of section
+      // banners once; each page below renders inside its content area, which
+      // owns the only Suspense boundary, so switching sections never blanks
+      // the header or the banners. Paths are unchanged: every deep link,
+      // reload and back/forward lands exactly where it did before.
       {
         path: "workspace",
-        element: (
-          <Suspense fallback={null}>
-            <WorkspaceOverviewPage />
-          </Suspense>
-        ),
-      },
-      {
-        path: "workspace/members",
-        element: (
-          <Suspense fallback={null}>
-            <MembersPage />
-          </Suspense>
-        ),
-      },
-      {
-        path: "workspace/join-requests",
-        element: (
-          <Suspense fallback={null}>
-            <JoinRequestsPage />
-          </Suspense>
-        ),
-      },
-      {
-        path: "workspace/join-links",
-        element: (
-          <Suspense fallback={null}>
-            <JoinLinksPage />
-          </Suspense>
-        ),
-      },
-      {
-        path: "workspace/invitations",
-        element: (
-          <Suspense fallback={null}>
-            <InvitationsPage />
-          </Suspense>
-        ),
-      },
-      {
-        path: "workspace/teams",
-        element: (
-          <Suspense fallback={null}>
-            <TeamsPage />
-          </Suspense>
-        ),
-      },
-      {
-        path: "workspace/roles",
-        element: (
-          <Suspense fallback={null}>
-            <RolesPage />
-          </Suspense>
-        ),
-      },
-      {
-        path: "workspace/documents",
-        element: (
-          <Suspense fallback={null}>
-            <SignedDocumentsPage />
-          </Suspense>
-        ),
-      },
-      {
-        path: "workspace/activity",
-        element: (
-          <Suspense fallback={null}>
-            <ActivityPage />
-          </Suspense>
-        ),
-      },
-      {
-        path: "workspace/settings",
-        element: (
-          <Suspense fallback={null}>
-            <WorkspaceSettingsPage />
-          </Suspense>
-        ),
-      },
-      {
-        path: "workspace/members/:memberId",
-        element: (
-          <Suspense fallback={null}>
-            <MemberDetailPage />
-          </Suspense>
-        ),
-      },
-      {
-        path: "workspace/teams/:teamId",
-        element: (
-          <Suspense fallback={null}>
-            <TeamDetailPage />
-          </Suspense>
-        ),
-      },
-      {
-        path: "workspace/roles/:roleId",
-        element: (
-          <Suspense fallback={null}>
-            <RoleDetailPage />
-          </Suspense>
-        ),
+        element: <WorkspaceShell />,
+        children: [
+          { index: true, element: <WorkspaceOverviewPage /> },
+          { path: "members", element: <MembersPage /> },
+          { path: "join-requests", element: <JoinRequestsPage /> },
+          { path: "join-links", element: <JoinLinksPage /> },
+          { path: "invitations", element: <InvitationsPage /> },
+          { path: "teams", element: <TeamsPage /> },
+          { path: "roles", element: <RolesPage /> },
+          { path: "documents", element: <SignedDocumentsPage /> },
+          { path: "activity", element: <ActivityPage /> },
+          { path: "settings", element: <WorkspaceSettingsPage /> },
+          { path: "members/:memberId", element: <MemberDetailPage /> },
+          { path: "teams/:teamId", element: <TeamDetailPage /> },
+          { path: "roles/:roleId", element: <RoleDetailPage /> },
+        ],
       },
       // Settings (Command 24) — ONE layout route, sixteen children.
       //

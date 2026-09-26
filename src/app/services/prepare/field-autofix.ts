@@ -102,7 +102,7 @@ export function computeBackendFieldIssues(fields: readonly FieldDefinition[]): F
         code: "UNSUPPORTED_BACKEND_TYPE",
         message: `The "${f.label}" field (${f.type}) can't be saved to the server — this field type isn't supported for a real send.`,
         fieldId: f.id,
-        suggestion: "Remove this field, or replace it with a supported type (Signature, Initials, Full Name, Date Signed, Text, Checkbox, Email, Title, or Company).",
+        suggestion: "Remove this field, or replace it with a supported type (Signature, Signature over Name, Reviewed over Name, Approved over Name, Initials, Full Name, Date Signed, Text, Checkbox, Email, Title, or Company).",
       });
     }
   }
