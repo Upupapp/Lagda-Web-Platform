@@ -2,7 +2,7 @@
 // before, now with Join requests and Join links in the People section.
 
 import { describe, it, expect, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 
 vi.setConfig({ testTimeout: 15_000 });
@@ -24,5 +24,16 @@ describe("Manage overview — demo build", () => {
     expect(screen.getByRole("link", { name: /Join links/ })).toHaveAttribute("href", "/app/workspace/join-links");
     expect(screen.getByText("Suspended")).toBeInTheDocument();
     expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it("opens with the branded card built from the mock branding service", async () => {
+    vi.stubGlobal("fetch", vi.fn());
+    render(<MemoryRouter><WorkspaceOverviewPage /></MemoryRouter>);
+    const card = await screen.findByTestId("workspace-brand-card");
+    await waitFor(() => expect(card).toHaveTextContent("Professional legal document management"));
+    expect(within(card).getByTestId("brand-card-name")).toHaveTextContent("Mabini Legal Solutions");
+    expect(within(card).getByTestId("brand-card-sender")).toHaveTextContent("Mabini Legal Solutions");
+    expect(within(card).getByTestId("edit-branding-link")).toHaveAttribute("href", "/app/settings/branding");
+    expect(card).toHaveTextContent("Powered by LAGDA");
   });
 });

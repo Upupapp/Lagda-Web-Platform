@@ -12,8 +12,6 @@ import {
   BarChart2,
   Zap,
 } from "lucide-react";
-import lagdaLogoFull from "../../../brand elements/svg/LagdaLogoPrimaryHorizontalFullColor.svg";
-import lagdaLogoSmall from "../../../brand elements/svg/LagdaLogoPrimaryHorizontalFullColor_Header_small.svg";
 import { usePlatform } from "../../context/PlatformContext";
 import { useNotificationCenter } from "../../context/NotificationCenterContext";
 import { PRIMARY_NAV, UTILITY_NAV, PREPARE_ACTION } from "../../config/platform.nav";
@@ -186,29 +184,21 @@ export function PlatformSidebar() {
       }}
       className="platform-sidebar"
     >
-      {/* ── Logo + collapse toggle ─────────────────────────────────── */}
-      <div style={{
-        padding: collapsed ? "20px 8px 16px" : "20px 18px 16px",
+      {/* ── Workspace switcher + collapse toggle ────────────────────────
+          The LAGDA logo lives at the far left of PlatformHeader now, so the
+          switcher sits at the very top of the sidebar beside the toggle. */}
+      <div data-testid="sidebar-top-row" style={{
+        padding: collapsed ? "12px 8px" : "12px 10px 12px 14px",
         borderBottom: `1px solid ${BORDER}`,
         display: "flex",
         alignItems: "center",
-        flexDirection: collapsed ? "column" : "row",
-        justifyContent: collapsed ? "center" : "space-between",
-        gap: collapsed ? 12 : 8,
+        flexDirection: collapsed ? "column-reverse" : "row",
+        gap: collapsed ? 10 : 6,
         flexShrink: 0,
       }}>
-        {!collapsed ? (
-          <NavLink to="/app/dashboard" style={{ textDecoration: "none", display: "flex", alignItems: "center", minWidth: 0 }} aria-label="LAGDA — Go to Dashboard">
-            {/* The same SVG at the same size on every page. It used to be
-                the SVG on the dashboard only, and a much smaller PNG
-                everywhere else, so the logo shrank the moment you left Home. */}
-            <img src={lagdaLogoFull} alt="LAGDA" style={{ display: "block", width: 156, maxWidth: "100%", height: "auto", objectFit: "contain", objectPosition: "left center" }} />
-          </NavLink>
-        ) : (
-          <NavLink to="/app/dashboard" style={{ textDecoration: "none", display: "flex", justifyContent: "center" }} aria-label="LAGDA — Go to Dashboard">
-            <img src={lagdaLogoSmall} alt="LAGDA" style={{ display: "block", width: 34, height: "auto", objectFit: "contain" }} />
-          </NavLink>
-        )}
+        <div style={{ flex: collapsed ? "0 0 auto" : 1, minWidth: 0, width: collapsed ? "100%" : undefined }}>
+          <WorkspaceSwitcher collapsed={collapsed} />
+        </div>
         <button
           onClick={() => setCollapsed((c) => !c)}
           aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
@@ -231,11 +221,6 @@ export function PlatformSidebar() {
         >
           {collapsed ? <ChevronRight size={14} aria-hidden /> : <ChevronLeft size={14} aria-hidden />}
         </button>
-      </div>
-
-      {/* ── Workspace switcher ─────────────────────────────────────── */}
-      <div style={{ padding: collapsed ? "12px 8px" : "12px 14px", borderBottom: `1px solid ${BORDER}`, flexShrink: 0 }}>
-        <WorkspaceSwitcher collapsed={collapsed} />
       </div>
 
       {/* ── Prepare Document CTA ───────────────────────────────────── */}

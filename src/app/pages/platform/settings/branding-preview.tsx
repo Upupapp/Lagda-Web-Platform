@@ -35,34 +35,61 @@ export function contrastRatio(hex: string): { ratio: number; onWhite: number; wa
   return { ratio: onWhite, onWhite, warning };
 }
 
-export function BrandPreview({ branding }: { branding: BrandPreviewInput }) {
-  const initials = branding.displayName.split(/\s+/).map(w => w[0]).join("").slice(0, 2).toUpperCase();
+export interface BrandPreviewProps {
+  branding: BrandPreviewInput;
+  /**
+   * "preview" (default) is the Settings mock-up of a signing request;
+   * "card" is the full-width Manage → Overview card with a larger logo.
+   */
+  variant?: "preview" | "card";
+  /** The line under the name in the header band. */
+  subtitle?: string;
+  /** Replaces the mock signing-request body. */
+  children?: React.ReactNode;
+  /** Shown at the right of the header band (e.g. an "Edit branding" link). */
+  headerAside?: React.ReactNode;
+  /** Wraps the footer on narrow screens instead of keeping it on one line. */
+  compact?: boolean;
+  testId?: string;
+}
+
+export function BrandPreview({
+  branding, variant = "preview", subtitle = "Signing request", children, headerAside, compact = false, testId,
+}: BrandPreviewProps) {
+  const initials = branding.displayName.split(/\s+/).filter(w => /^[\p{L}\p{N}]/u.test(w)).map(w => w[0]).join("").slice(0, 2).toUpperCase();
+  const card = variant === "card";
+  const logoHeight = card ? (compact ? 36 : 48) : 32;
   return (
-    <div style={{ border: "1.5px solid #E3E8EF", borderRadius: 10, overflow: "hidden", maxWidth: 420, width: "100%", boxSizing: "border-box" }}>
+    <div data-testid={testId} data-variant={variant}
+      style={{ border: "1.5px solid #E3E8EF", borderRadius: card ? 12 : 10, overflow: "hidden", maxWidth: card ? "none" : 420, width: "100%", boxSizing: "border-box", background: "#FFFFFF" }}>
       {/* Header */}
-      <div style={{ background: branding.primaryColor, padding: "14px 20px", display: "flex", alignItems: "center", gap: 12 }}>
+      <div style={{ background: branding.primaryColor, padding: card ? (compact ? "14px 16px" : "18px 24px") : "14px 20px", display: "flex", alignItems: "center", gap: card ? 14 : 12, minWidth: 0 }}>
         {branding.logoPreviewUrl
-          ? <img src={branding.logoPreviewUrl} alt="Workspace logo preview" style={{ height: 32, maxWidth: 140, objectFit: "contain", background: "#FFFFFF", borderRadius: 4, padding: 2 }} />
-          : <div style={{ width: 36, height: 36, borderRadius: 6, background: "rgba(255,255,255,0.25)", display: "flex", alignItems: "center", justifyContent: "center", ...GF, fontSize: 15, fontWeight: 800, color: "#FFFFFF" }}>{initials}</div>
+          ? <img src={branding.logoPreviewUrl} alt={card ? `${branding.displayName} logo` : "Workspace logo preview"} style={{ height: logoHeight, maxWidth: card ? 180 : 140, objectFit: "contain", background: "#FFFFFF", borderRadius: 4, padding: 2, flexShrink: 0 }} />
+          : <div aria-hidden={card || undefined} style={{ width: logoHeight + 4, height: logoHeight + 4, borderRadius: card ? 8 : 6, background: "rgba(255,255,255,0.25)", display: "flex", alignItems: "center", justifyContent: "center", ...GF, fontSize: card ? 17 : 15, fontWeight: 800, color: "#FFFFFF", flexShrink: 0 }}>{initials}</div>
         }
-        <div style={{ minWidth: 0 }}>
-          <div style={{ ...GF, fontSize: 14, fontWeight: 700, color: "#FFFFFF", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{branding.displayName}</div>
-          <div style={{ ...GF, fontSize: 11, color: "rgba(255,255,255,0.8)" }}>Signing request</div>
+        <div style={{ minWidth: 0, flex: 1 }}>
+          <div data-testid={testId ? `${testId}-name` : undefined} style={{ ...GF, fontSize: card ? (compact ? 16 : 18) : 14, fontWeight: 700, color: "#FFFFFF", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{branding.displayName}</div>
+          <div style={{ ...GF, fontSize: card ? 12 : 11, color: "rgba(255,255,255,0.85)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{subtitle}</div>
         </div>
+        {headerAside}
       </div>
       {/* Body */}
-      <div style={{ padding: "18px 20px", background: "#FFFFFF" }}>
-        <div style={{ ...GF, fontSize: 13, color: NAVY, marginBottom: 8 }}>Sender: <strong>{branding.senderDisplayName}</strong></div>
-        <div style={{ height: 8, background: "#E2E8F0", borderRadius: 4, marginBottom: 8 }} />
-        <div style={{ height: 8, background: "#E2E8F0", borderRadius: 4, width: "70%", marginBottom: 8 }} />
-        <div style={{ height: 8, background: "#E2E8F0", borderRadius: 4, width: "50%" }} />
-      </div>
+      {children !== undefined ? (
+        <div style={{ padding: card ? (compact ? "14px 16px" : "18px 24px") : "18px 20px", background: "#FFFFFF" }}>{children}</div>
+      ) : (
+        <div style={{ padding: "18px 20px", background: "#FFFFFF" }}>
+          <div style={{ ...GF, fontSize: 13, color: NAVY, marginBottom: 8 }}>Sender: <strong>{branding.senderDisplayName}</strong></div>
+          <div style={{ height: 8, background: "#E2E8F0", borderRadius: 4, marginBottom: 8 }} />
+          <div style={{ height: 8, background: "#E2E8F0", borderRadius: 4, width: "70%", marginBottom: 8 }} />
+          <div style={{ height: 8, background: "#E2E8F0", borderRadius: 4, width: "50%" }} />
+        </div>
+      )}
       {/* Footer */}
-      <div style={{ background: "#F8FAFC", borderTop: "1px solid #E3E8EF", padding: "8px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, flexWrap: "wrap" }}>
-        <span style={{ ...GF, fontSize: 11, color: SLATE, minWidth: 0, overflowWrap: "anywhere" }}>{branding.footerTagline}</span>
-        <span style={{ ...GF, fontSize: 11, color: SLATE }}>Powered by LAGDA</span>
+      <div style={{ background: "#F8FAFC", borderTop: "1px solid #E3E8EF", padding: card ? (compact ? "8px 16px" : "10px 24px") : "8px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, flexWrap: "wrap" }}>
+        <span style={{ ...GF, fontSize: 11, color: SLATE, minWidth: 0, flex: compact ? "1 1 100%" : undefined, overflowWrap: "anywhere" }}>{branding.footerTagline}</span>
+        <span style={{ ...GF, fontSize: 11, color: SLATE, marginLeft: "auto" }}>Powered by LAGDA</span>
       </div>
     </div>
   );
 }
-

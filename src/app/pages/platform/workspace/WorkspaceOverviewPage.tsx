@@ -14,6 +14,13 @@ import { useWorkspaceMode } from "../../../hooks/useWorkspaceAccess";
 import { RealWorkspaceOverview } from "./real/RealWorkspaceOverview";
 import { ManagePage } from "./real/manage-ui";
 import { useWorkspaceShell } from "./shell/workspace-shell-context";
+import { usePlatform } from "../../../context/PlatformContext";
+import { useViewport } from "../../../hooks/useViewport";
+import { mockBrandingSettingsService } from "../../../services/mock/settings.service";
+import {
+  DEMO_BRANDING_KEY, getWorkspaceBrandingSnapshot, publishDemoBranding, useWorkspaceBrandingSnapshot,
+} from "../../../hooks/workspace-branding-store";
+import { WorkspaceBrandCard } from "./real/WorkspaceBrandCard";
 
 const GF    = { fontFamily: "'Geist', sans-serif" };
 const GM    = { fontFamily: "'Geist Mono', monospace" };
@@ -103,6 +110,18 @@ function WorkspaceOverviewInner() {
 
   useEffect(() => { void asyncLoadOverview(); }, [asyncLoadOverview]);
 
+  // The demo's branding comes from the mock branding service; the Branding
+  // page republishes it after a save, so the card follows straight away.
+  const branding = useWorkspaceBrandingSnapshot(DEMO_BRANDING_KEY);
+  const platform = usePlatform();
+  const { isNarrow } = useViewport();
+  useEffect(() => {
+    if (getWorkspaceBrandingSnapshot(DEMO_BRANDING_KEY) !== null) return;
+    let cancelled = false;
+    void mockBrandingSettingsService.getWorkspaceBranding().then(b => { if (!cancelled) publishDemoBranding(b); });
+    return () => { cancelled = true; };
+  }, []);
+
   if (state.overviewLoading) {
     const blocks = (
       <>
@@ -140,10 +159,26 @@ function WorkspaceOverviewInner() {
     </div>
   );
 
+  const role = platform.role ?? platform.currentWorkspace?.role;
+  const isAdmin = role === "owner" || role === "administrator";
+  const createdLabel = new Date(workspace.createdAt).toLocaleDateString("en-PH", { year: "numeric", month: "long", day: "numeric" });
+  const brandCard = (
+    <WorkspaceBrandCard
+      branding={branding}
+      fallbackName={workspace.name}
+      createdAt={createdLabel}
+      roleLabel={role ? (role.charAt(0).toUpperCase() + role.slice(1)).replace(/_/g, " ") : "Member"}
+      privilegesLine={isAdmin ? "Both privileges come with your role." : "Granted by an owner or administrator."}
+      canEdit={isAdmin}
+      compact={isNarrow}
+    />
+  );
+
   const body = (
     <div style={shell
       ? { display: "flex", gap: 24, flexWrap: "wrap" }
       : { maxWidth: 960, margin: "24px auto 0", padding: "0 24px", display: "flex", gap: 24, flexWrap: "wrap" }}>
+      <div style={{ flex: "1 1 100%", minWidth: 0, marginBottom: -24 }}>{brandCard}</div>
       {/* Main column */}
       <div style={{ flex: "999 1 580px", minWidth: 0 }}>
         {/* Stats */}
@@ -228,7 +263,6 @@ function WorkspaceOverviewInner() {
             {[
               { label: "Type",   value: workspace.type.charAt(0).toUpperCase() + workspace.type.slice(1) },
               { label: "Plan",   value: workspace.plan },
-              { label: "Created", value: new Date(workspace.createdAt).toLocaleDateString("en-PH", { year: "numeric", month: "long", day: "numeric" }) },
               { label: "Billing email", value: workspace.billingEmail ?? "—" },
             ].map(({ label, value }) => (
               <div key={label}>

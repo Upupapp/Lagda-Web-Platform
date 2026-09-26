@@ -28,6 +28,8 @@ import {
   useRealOverviewData, overviewGates, pendingInvitationsOf, pendingRequestsOf, initialsOf, type Count,
 } from "./overview-data";
 import { useWorkspaceShell } from "../shell/workspace-shell-context";
+import { useWorkspaceBrandingSnapshot } from "../../../../hooks/workspace-branding-store";
+import { WorkspaceBrandCard } from "./WorkspaceBrandCard";
 
 const EXPIRING_WITHIN_MS = 3 * 24 * 60 * 60 * 1000;
 const ATTENTION_REQUEST_LIMIT = 5;
@@ -145,6 +147,7 @@ export function RealWorkspaceOverview({ workspaceId }: { workspaceId: string }) 
   const canInvitations = gates.invitations;
   const canTeams = gates.teams;
 
+  const branding = useWorkspaceBrandingSnapshot(workspaceId);
   const name = data.name ?? platform.currentWorkspace?.name ?? "Workspace";
   const role = access.role;
   // A member who cannot read the roster still gets their own title from /access.
@@ -260,11 +263,39 @@ export function RealWorkspaceOverview({ workspaceId }: { workspaceId: string }) 
     </section>
   );
 
+  const privilegesLine = inherentPrivileges
+    ? "Both privileges come with your role."
+    : (myPrivileges.requestDocuments || myPrivileges.assignSigners)
+      ? [myPrivileges.requestDocuments && PRIVILEGE_LABELS.requestDocuments, myPrivileges.assignSigners && PRIVILEGE_LABELS.assignSigners].filter(Boolean).join(" · ")
+      : "None granted yet.";
+
+  // The branded card replaces the old "This workspace" panel: name, sender,
+  // created date and your role, in the workspace's own colours.
+  const brandCard = (
+    <WorkspaceBrandCard
+      branding={branding}
+      fallbackName={name}
+      fallbackColor={platform.currentWorkspace?.brandColor ?? undefined}
+      createdAt={data.createdAt !== null ? formatDate(data.createdAt) : null}
+      roleLabel={<>
+        {roleLabel}
+        {myTitle && role && role !== "member" && (
+          <span style={{ color: SLATE }}> ({REAL_ROLE_LABELS[role]})</span>
+        )}
+      </>}
+      privilegesLine={privilegesLine}
+      canEdit={inherentPrivileges || access.can("workspace.update")}
+      compact={isNarrow}
+    />
+  );
+
   const body = (
     <div style={{
       ...(shell ? {} : { maxWidth: 960, margin: "24px auto 0", padding: `0 ${String(padX)}px` }),
-      boxSizing: "border-box", display: "flex", gap: 24, flexDirection: stacked ? "column" : "row", alignItems: "flex-start",
+      boxSizing: "border-box",
     }}>
+    {brandCard}
+    <div style={{ display: "flex", gap: 24, flexDirection: stacked ? "column" : "row", alignItems: "flex-start" }}>
       <div style={{ flex: "1 1 0", minWidth: 0, width: stacked ? "100%" : undefined }}>
         {stats.length > 0 && (
           <div data-testid="overview-stats" style={{ display: "grid", gridTemplateColumns: `repeat(auto-fill, minmax(${isNarrow ? 128 : 150}px, 1fr))`, gap: 12, marginBottom: 24 }}>
@@ -283,46 +314,9 @@ export function RealWorkspaceOverview({ workspaceId }: { workspaceId: string }) 
       </div>
 
       <aside style={{ flex: stacked ? "1 1 auto" : "0 0 280px", width: stacked ? "100%" : 280, minWidth: 0, display: "flex", flexDirection: "column", gap: 12 }}>
-        <section aria-labelledby="about-workspace" data-testid="workspace-facts" style={{ ...cardStyle, padding: "16px 20px" }}>
-          <h2 id="about-workspace" style={sectionHeadingStyle}>This workspace</h2>
-          <dl style={{ margin: 0, display: "flex", flexDirection: "column", gap: 10 }}>
-            <div>
-              <dt style={{ ...GM, fontSize: 10, color: SILVER, textTransform: "uppercase", letterSpacing: "0.05em" }}>Name</dt>
-              <dd style={{ ...GF, fontSize: 13, color: NAVY, margin: "2px 0 0", fontWeight: 500, overflowWrap: "anywhere" }}>{name}</dd>
-            </div>
-            {data.createdAt !== null && (
-              <div>
-                <dt style={{ ...GM, fontSize: 10, color: SILVER, textTransform: "uppercase", letterSpacing: "0.05em" }}>Created</dt>
-                <dd style={{ ...GF, fontSize: 13, color: NAVY, margin: "2px 0 0", fontWeight: 500 }}>{formatDate(data.createdAt)}</dd>
-              </div>
-            )}
-            <div>
-              <dt style={{ ...GM, fontSize: 10, color: SILVER, textTransform: "uppercase", letterSpacing: "0.05em" }}>Your role</dt>
-              <dd style={{ ...GF, fontSize: 13, color: NAVY, margin: "2px 0 0", fontWeight: 500 }}>
-                {roleLabel}
-                {myTitle && role && role !== "member" && (
-                  <span style={{ color: SLATE }}> ({REAL_ROLE_LABELS[role]})</span>
-                )}
-              </dd>
-            </div>
-            <div>
-              <dt style={{ ...GM, fontSize: 10, color: SILVER, textTransform: "uppercase", letterSpacing: "0.05em" }}>Your privileges</dt>
-              <dd data-testid="your-privileges" style={{ ...GF, fontSize: 13, color: NAVY, margin: "2px 0 0", lineHeight: 1.5 }}>
-                {inherentPrivileges
-                  ? "Both privileges come with your role."
-                  : (myPrivileges.requestDocuments || myPrivileges.assignSigners)
-                    ? [myPrivileges.requestDocuments && PRIVILEGE_LABELS.requestDocuments, myPrivileges.assignSigners && PRIVILEGE_LABELS.assignSigners].filter(Boolean).join(" · ")
-                    : "None granted yet."}
-              </dd>
-            </div>
-          </dl>
-          <Link to="/app/workspace/roles" style={{ ...GF, fontSize: 12, fontWeight: 600, color: AZURE, textDecoration: "none", display: "inline-block", marginTop: 12 }}>
-            What your role can do →
-          </Link>
-        </section>
-
         <WorkspacesPanel />
       </aside>
+    </div>
     </div>
   );
 
