@@ -3,11 +3,13 @@
 
 import { useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router";
-import { ChevronLeft, LayoutTemplate, Search, Sparkles, Users, X } from "lucide-react";
+import { ChevronLeft, Search, Sparkles, Users, X } from "lucide-react";
 import {
   READY_MADE_CATEGORIES, READY_MADE_TEMPLATES, searchReadyMadeTemplates,
   type ReadyMadeTemplate,
 } from "../../../services/ready-made-templates";
+import { categoryBanner } from "../../../services/ready-made-banners";
+import { readyMadeIcon } from "../../../services/ready-made-icons";
 import { PREP_PARTICIPANT_ROLE_LABELS } from "../../../models/prepare";
 import { usePageMeta } from "../../../hooks/usePageMeta";
 import { useViewport } from "../../../hooks/useViewport";
@@ -21,6 +23,8 @@ function ReadyMadeCard({ template }: { template: ReadyMadeTemplate }) {
   const open = () => { void navigate(`/app/templates/gallery/${template.id}`); };
   const shown = template.roles.slice(0, MAX_ROLE_CHIPS);
   const hidden = template.roles.length - shown.length;
+  const banner = categoryBanner(template.category);
+  const Icon = readyMadeIcon(template.title);
 
   return (
     <article
@@ -32,27 +36,45 @@ function ReadyMadeCard({ template }: { template: ReadyMadeTemplate }) {
       className="rmt-card"
       style={{
         background: "white", border: "1px solid #E2E8F0", borderRadius: 12,
-        padding: "18px 20px", cursor: "pointer", display: "flex", flexDirection: "column",
-        minWidth: 0,
+        cursor: "pointer", display: "flex", flexDirection: "column",
+        minWidth: 0, height: "100%", boxSizing: "border-box",
       }}
     >
-      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
-        <div style={{
-          width: 36, height: 36, borderRadius: 9, background: "#EEF4FB", flexShrink: 0,
-          display: "flex", alignItems: "center", justifyContent: "center",
+      <div style={{ position: "relative" }}>
+        <div className="rmt-banner" style={{
+          aspectRatio: "16 / 5", background: "#E2E8F0", overflow: "hidden",
+          borderTopLeftRadius: 11, borderTopRightRadius: 11,
         }}>
-          <LayoutTemplate size={17} color={AZURE} />
+          {banner && (
+            <img
+              src={banner.card} alt="" aria-hidden loading="lazy" decoding="async"
+              width={800} height={250}
+              style={{ display: "block", width: "100%", height: "100%", objectFit: "cover" }}
+            />
+          )}
         </div>
         <span style={{
-          ...GF, fontSize: 11, fontWeight: 600, color: "#1E40AF", background: "#EFF6FF",
-          border: "1px solid #BFDBFE", borderRadius: 999, padding: "2px 9px",
-          whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", minWidth: 0,
+          ...GF, position: "absolute", left: 64, right: 10, bottom: 8, width: "fit-content", maxWidth: "calc(100% - 74px)",
+          boxSizing: "border-box", fontSize: 11, fontWeight: 600, color: "#0F172A", background: "white",
+          borderRadius: 999, padding: "2px 9px", boxShadow: "0 1px 2px rgba(15,23,42,0.12)",
+          whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
         }}>
           {template.category}
         </span>
+        <div aria-hidden style={{
+          position: "absolute", left: 16, bottom: -20, width: 40, height: 40, borderRadius: "50%",
+          background: "white", border: "1px solid #E2E8F0", boxShadow: "0 1px 3px rgba(15,23,42,0.10)",
+          display: "flex", alignItems: "center", justifyContent: "center", boxSizing: "border-box",
+        }}>
+          <Icon size={18} color={AZURE} />
+        </div>
       </div>
 
-      <h3 style={{ ...GF, fontSize: 14, fontWeight: 700, color: "#0F172A", margin: "0 0 4px", lineHeight: 1.35, overflowWrap: "anywhere" }}>
+      <div style={{ padding: "30px 18px 16px", display: "flex", flexDirection: "column", flex: 1, minWidth: 0 }}>
+      <h3 style={{
+        ...GF, fontSize: 14, fontWeight: 700, color: "#0F172A", margin: "0 0 4px", lineHeight: 1.35, overflowWrap: "anywhere",
+        display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden", minHeight: "2.7em",
+      }} title={template.title}>
         {template.title}
       </h3>
       <p style={{ ...GF, fontSize: 12, color: "#64748B", margin: "0 0 14px", lineHeight: 1.5, overflowWrap: "anywhere" }}>
@@ -72,6 +94,7 @@ function ReadyMadeCard({ template }: { template: ReadyMadeTemplate }) {
         {hidden > 0 && (
           <span style={{ ...GF, fontSize: 11, color: "#64748B" }}>+{hidden} more</span>
         )}
+      </div>
       </div>
     </article>
   );
@@ -113,9 +136,15 @@ export function ReadyMadeGalleryPage() {
   return (
     <div style={{ background: "#F8FAFC", minHeight: "100%", ...GF }}>
       <style>{`
-        .rmt-card { transition: box-shadow .15s, border-color .15s; outline: none; }
-        .rmt-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.08); border-color: #CBD5E1; }
-        .rmt-card:focus-visible { box-shadow: 0 0 0 3px rgba(0,120,212,0.35); border-color: ${AZURE}; }
+        .rmt-card { transition: box-shadow .18s, border-color .18s, transform .18s; outline: none; }
+        .rmt-card img { transition: transform .35s ease; }
+        .rmt-card:hover { box-shadow: 0 6px 20px rgba(15,23,42,0.10); border-color: #CBD5E1; transform: translateY(-2px); }
+        .rmt-card:hover img { transform: scale(1.04); }
+        .rmt-card:focus-visible { box-shadow: 0 0 0 3px white, 0 0 0 5px ${AZURE}; border-color: ${AZURE}; }
+        @media (prefers-reduced-motion: reduce) {
+          .rmt-card, .rmt-card img { transition: none; }
+          .rmt-card:hover, .rmt-card:hover img { transform: none; }
+        }
       `}</style>
 
       <div style={{ background: "white", borderBottom: "1px solid #E2E8F0", padding: isNarrow ? "16px 16px" : "20px 24px" }}>
@@ -192,7 +221,7 @@ export function ReadyMadeGalleryPage() {
               {category}
               <span style={{ ...GF, fontSize: 11, fontWeight: 500, color: "#94A3B8" }}>{items.length}</span>
             </h2>
-            <div style={{ display: "grid", gridTemplateColumns: isNarrow ? "1fr" : "repeat(auto-fill, minmax(260px, 1fr))", gap: 16 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 220px), 1fr))", gap: 16 }}>
               {items.map(t => <ReadyMadeCard key={t.id} template={t} />)}
             </div>
           </section>

@@ -1,0 +1,81 @@
+// One dedicated icon per ready-made template, keyed by template title.
+// A title that is missing falls back to FileText (the coverage test fails
+// first, so a new template in the JSON gets an icon picked for it).
+
+import {
+  Award, BadgeCheck, Banknote, BookCheck, Briefcase, Building, Building2, Calculator,
+  ClipboardCheck, ClipboardList, Cloud, Code, DatabaseZap, FileBadge, FileCheck2, FileHeart,
+  FileSearch, FileSignature, FileText, Fingerprint, FlaskConical, Gauge, Gavel, GraduationCap,
+  Handshake, HardHat, HeartHandshake, House, KeyRound, Landmark, Laptop, Leaf, Lightbulb, Lock, LockKeyhole,
+  Megaphone, Microscope, Network, PackageCheck, PieChart, Receipt, RefreshCcw, Repeat, Scale,
+  School, ShieldAlert, ShieldCheck, ShieldQuestion, Ship, ShoppingCart, Stamp, Stethoscope,
+  Truck, TrendingUp, UserCheck, Wrench, Tv, Hammer, Warehouse,
+  type LucideIcon,
+} from "lucide-react";
+
+export const READY_MADE_ICONS: Readonly<Record<string, LucideIcon>> = {
+  "Employment Offer Letter and Contract Agreement": Briefcase,
+  "Non-Disclosure Agreement (NDA)": Lock,
+  "Employee Handbook Policy Acknowledgment Form": BookCheck,
+  "Remote Employee Onboarding Form": Laptop,
+  "Sales Contract and Purchase Order Agreement": ShoppingCart,
+  "Subscription Services Agreement": Repeat,
+  "Service Level Agreement (SLA)": Gauge,
+  "Licensing Agreement": FileBadge,
+  "Vendor Service Agreement": Handshake,
+  "Supplier Agreement": Warehouse,
+  "Purchase Requisition and Approval Form": Receipt,
+  "Delivery Confirmation and Acceptance Form": PackageCheck,
+  "Loan Agreement and Credit Application": Banknote,
+  "Investment Agreement": TrendingUp,
+  "Audit Confirmation Letter": FileSearch,
+  "Legal Settlement Agreement": Scale,
+  "Board Resolution Document": Gavel,
+  "Shareholder Agreement": PieChart,
+  "Partnership Agreement": HeartHandshake,
+  "Corporate Confidentiality Agreement": Building2,
+  "Property Lease Agreement": KeyRound,
+  "Property Sale and Purchase Agreement": Building,
+  "Rental Application Form": House,
+  "Mortgage Loan Agreement": Landmark,
+  "Patient Informed Consent Form": Stethoscope,
+  "Insurance Claim Form": ShieldQuestion,
+  "Medical Record Release Authorization Form": FileHeart,
+  "Student Enrollment Agreement": School,
+  "Scholarship Agreement": GraduationCap,
+  "Internship Agreement": UserCheck,
+  "Software License Agreement": Code,
+  "Data Processing Agreement (DPA)": DatabaseZap,
+  "Cloud Service Agreement": Cloud,
+  "Confidentiality and System Access Control Agreement": Fingerprint,
+  "Influencer Collaboration Agreement": Megaphone,
+  "Advertising Services Agreement": Tv,
+  "Sponsorship Agreement": Award,
+  "Co-Marketing Memorandum of Understanding (MOU)": FileSignature,
+  "Facility Rental Agreement": Hammer,
+  "Equipment Lease Agreement": Wrench,
+  "Maintenance and Service Agreement": ClipboardCheck,
+  "Internal Budget Approval and Authorization Form": Calculator,
+  "Regulatory Filing Document": FileCheck2,
+  "Safety Compliance Acknowledgment Form": HardHat,
+  "Risk Assessment Approval Form": ShieldAlert,
+  "Environmental Permit Application and Approval": Leaf,
+  "Product Warranty Agreement": BadgeCheck,
+  "Service Repair Authorization Form": ClipboardList,
+  "Customer Consent and Data Usage Form": ShieldCheck,
+  "Refund and Return Approval Form": RefreshCcw,
+  "Joint Research Agreement": Microscope,
+  "Patent Filing and Intellectual Property Transfer Agreement": Lightbulb,
+  "Prototype Testing Approval Form": FlaskConical,
+  "Product Development Confidentiality Agreement": LockKeyhole,
+  "Freight and Shipping Agreement": Ship,
+  "Customs Declaration and Documentation Form": Stamp,
+  "Delivery Acceptance Form": Truck,
+  "Distributor Agreement": Network,
+};
+
+export const READY_MADE_FALLBACK_ICON: LucideIcon = FileText;
+
+export function readyMadeIcon(title: string): LucideIcon {
+  return READY_MADE_ICONS[title] ?? READY_MADE_FALLBACK_ICON;
+}

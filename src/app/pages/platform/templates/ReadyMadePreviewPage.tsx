@@ -8,6 +8,8 @@ import { AlertCircle, ArrowRight, ChevronLeft, GitBranch, PenLine, Users } from 
 import {
   findReadyMadeTemplate, readyMadePlaceholders, type ReadyMadeTemplate,
 } from "../../../services/ready-made-templates";
+import { categoryBanner } from "../../../services/ready-made-banners";
+import { readyMadeIcon } from "../../../services/ready-made-icons";
 import { copyReadyMadeTemplate } from "../../../services/ready-made-create";
 import { realTemplatesAvailable } from "../../../services/templates-source";
 import { useProcessing } from "../../../services/processing.service";
@@ -82,6 +84,8 @@ export function ReadyMadePreviewPage() {
   const canUse = realTemplatesAvailable(workspaceId);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const banner = template ? categoryBanner(template.category) : undefined;
+  const Icon = readyMadeIcon(template?.title ?? "");
 
   if (!template) {
     return (
@@ -129,6 +133,14 @@ export function ReadyMadePreviewPage() {
 
   return (
     <div style={{ background: "#F8FAFC", minHeight: "100%", ...GF }}>
+      {banner && (
+        <div aria-hidden style={{ height: isNarrow ? 64 : 96, background: "#E2E8F0", overflow: "hidden" }}>
+          <img
+            src={banner.full} alt="" decoding="async"
+            style={{ display: "block", width: "100%", height: "100%", objectFit: "cover" }}
+          />
+        </div>
+      )}
       <div style={{ background: "white", borderBottom: "1px solid #E2E8F0", padding: isNarrow ? "16px 16px" : "20px 24px" }}>
         <Link to="/app/templates/gallery" style={{ ...GF, fontSize: 12, color: "#64748B", textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 4, marginBottom: 10 }}>
           <ChevronLeft size={13} /> Ready-made Templates
@@ -137,7 +149,14 @@ export function ReadyMadePreviewPage() {
           display: "flex", flexDirection: isNarrow ? "column" : "row",
           alignItems: isNarrow ? "stretch" : "flex-start", justifyContent: "space-between", gap: isNarrow ? 12 : 16,
         }}>
-          <div style={{ minWidth: 0 }}>
+          <div style={{ minWidth: 0, display: "flex", gap: 12, alignItems: "flex-start" }}>
+            <div aria-hidden style={{
+              width: 40, height: 40, borderRadius: "50%", background: "white", border: "1px solid #E2E8F0",
+              flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", boxSizing: "border-box",
+            }}>
+              <Icon size={18} color={AZURE} />
+            </div>
+            <div style={{ minWidth: 0 }}>
             <p style={{ ...GF, fontSize: 11, fontWeight: 700, color: AZURE, margin: "0 0 4px", textTransform: "uppercase", letterSpacing: "0.06em" }}>
               {template.category}
             </p>
@@ -145,6 +164,7 @@ export function ReadyMadePreviewPage() {
               {template.title}
             </h1>
             <p style={{ ...GF, fontSize: 13, color: "#64748B", margin: "4px 0 0" }}>{template.documentType}</p>
+            </div>
           </div>
           {useButton}
         </div>
