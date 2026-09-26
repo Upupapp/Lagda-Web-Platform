@@ -43,6 +43,7 @@ import {
 } from "lucide-react";
 import { DECLINE_REASON_CATEGORIES } from "../../models/recipient";
 import { SigningEntryChoice } from "../../components/recipient/SigningEntryChoice";
+import { SaveSignaturePrompt } from "../../components/recipient/SaveSignaturePrompt";
 import { LagdaLoader } from "../../components/brand/LagdaLoader";
 import { useMinimumSplash } from "../../hooks/useMinimumSplash";
 import { ceremonyWording } from "../../services/participant-wording";
@@ -571,6 +572,12 @@ export function RealSigningPage() {
           notified automatically. If you need confirmation of the completed
           document, contact the sender directly.
         </Notice>
+        {/* Only a linked account has a Settings library to save into. */}
+        <SaveSignaturePrompt
+          eligible={view?.accountLink !== undefined && needsSignature}
+          signature={signature}
+          initials={needsInitials ? initials : null}
+        />
       </SignerCard>
     );
   }

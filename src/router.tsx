@@ -744,6 +744,16 @@ const TemplateFieldsPage = lazy(() =>
     default: m.TemplateFieldsPage,
   })),
 );
+const ReadyMadeGalleryPage = lazy(() =>
+  import("./app/pages/platform/templates/ReadyMadeGalleryPage").then((m) => ({
+    default: m.ReadyMadeGalleryPage,
+  })),
+);
+const ReadyMadePreviewPage = lazy(() =>
+  import("./app/pages/platform/templates/ReadyMadePreviewPage").then((m) => ({
+    default: m.ReadyMadePreviewPage,
+  })),
+);
 const TemplateAuthorPage = lazy(() =>
   import("./app/pages/platform/templates/TemplateAuthorPage").then((m) => ({
     default: m.TemplateAuthorPage,
@@ -1940,6 +1950,22 @@ export const router = createBrowserRouter([
         element: (
           <Suspense fallback={null}>
             <CreateTemplatePage />
+          </Suspense>
+        ),
+      },
+      {
+        path: "templates/gallery",
+        element: (
+          <Suspense fallback={null}>
+            <ReadyMadeGalleryPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: "templates/gallery/:readyId",
+        element: (
+          <Suspense fallback={null}>
+            <ReadyMadePreviewPage />
           </Suspense>
         ),
       },

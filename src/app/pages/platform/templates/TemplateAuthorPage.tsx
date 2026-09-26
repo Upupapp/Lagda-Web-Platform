@@ -32,12 +32,12 @@
 // Plus a focus mode: the document maximizes to fill the viewport, dropping
 // the page-count strip and the starter bar, for writing rather than fiddling.
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams, Link } from "react-router";
 import { useEditor, EditorContent } from "@tiptap/react";
 import {
   ChevronLeft, AlertCircle, Info, Save, CheckCircle2, FileText,
-  SlidersHorizontal, X, Maximize2, Minimize2, Sparkles,
+  SlidersHorizontal, X, Maximize2, Minimize2,
 } from "lucide-react";
 import { TemplateProvider, useTemplates } from "../../../context/TemplateContext";
 import { usePlatform } from "../../../context/PlatformContext";
@@ -53,7 +53,15 @@ import { Z } from "../../../utils/z-index";
 import { flowDocumentExtensions } from "./author/extensions";
 import { flowDocumentToJSON, jsonToFlowDocument } from "./author/converter";
 import { RibbonToolbar } from "./author/RibbonToolbar";
-import { STARTER_TEMPLATES } from "./author/starterTemplates";
+import { STARTER_TEMPLATES, type StarterTemplate } from "./author/starterTemplates";
+import { PurposePicker } from "./author/PurposePicker";
+import {
+  readyMadeTypingFrame, readyMadeTypingLength, type ReadyMadeTemplate,
+} from "../../../services/ready-made-templates";
+
+/** Roughly how long the typed reveal takes, however long the text. */
+const TYPING_FRAMES = 45;
+const TYPING_FRAME_MS = 22;
 
 // ── Design tokens ─────────────────────────────────────────────────────────────
 const GF     = { fontFamily: "'Geist', sans-serif" };
@@ -167,17 +175,47 @@ function AuthorEditorInner({ template }: { template: DocumentTemplate }) {
     onUpdate: () => setChanged(true),
   });
 
+  const [typing, setTyping] = useState(false);
+  const typingTimer = useRef<ReturnType<typeof setInterval> | null>(null);
+  useEffect(() => () => { if (typingTimer.current) clearInterval(typingTimer.current); }, []);
   const isEmpty = template.content.content.length === 0 && !changed;
   const ribbonVisible = editor !== null && (!isNarrow || ribbonOpen);
-  const showStarters = isEmpty && !maximized;
+  const showStarters = (isEmpty || typing) && !maximized;
 
-  const applyStarter = (build: (typeof STARTER_TEMPLATES)[number]["build"]) => {
+  const applyStarter = (starter: StarterTemplate) => {
     if (!editor) return;
-    editor.commands.setContent(flowDocumentToJSON(build(template.placeholders)));
+    editor.commands.setContent(flowDocumentToJSON(starter.build(template.placeholders)));
     setChanged(true);
   };
 
+  // Written in as if typed, then settles on the full document — signature
+  // lines bound to this template's own signer roles where it has them.
+  const writeFromPurpose = (source: ReadyMadeTemplate) => {
+    if (!editor || typing) return;
+    const total = readyMadeTypingLength(source);
+    const show = (chars: number) =>
+      editor.commands.setContent(flowDocumentToJSON(readyMadeTypingFrame(source, template.placeholders, chars)));
+    setChanged(true);
+    const reduced = typeof window !== "undefined"
+      && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    if (reduced) { show(total); return; }
+
+    const step = Math.max(1, Math.ceil(total / TYPING_FRAMES));
+    let written = 0;
+    setTyping(true);
+    typingTimer.current = setInterval(() => {
+      written = Math.min(total, written + step);
+      show(written);
+      if (written >= total) {
+        if (typingTimer.current) clearInterval(typingTimer.current);
+        typingTimer.current = null;
+        setTyping(false);
+      }
+    }, TYPING_FRAME_MS);
+  };
+
   const handleSave = async () => {
+    if (typing) return;
     if (!editor || !isReal || !workspaceId) {
       setSaveError("Open a workspace to author and save a document.");
       return;
@@ -347,31 +385,13 @@ function AuthorEditorInner({ template }: { template: DocumentTemplate }) {
       )}
 
       {showStarters && (
-        <div style={{
-          display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap",
-          padding: "9px 14px", background: "#EFF6FF", borderBottom: "1px solid #BFDBFE", flexShrink: 0,
-        }}>
-          <Sparkles size={13} color="#1E40AF" style={{ flexShrink: 0 }} />
-          <span style={{ ...GF, fontSize: 12, color: "#1E40AF" }}>
-            {isNarrow ? "Start from:" : "Start from a ready-made template:"}
-          </span>
-          {STARTER_TEMPLATES.map(s => (
-            <button
-              key={s.id}
-              type="button"
-              title={s.description}
-              onClick={() => applyStarter(s.build)}
-              style={{
-                ...GF, fontSize: 12, fontWeight: 600, color: AZURE, background: "white",
-                border: "1px solid #BFDBFE", borderRadius: 7,
-                padding: isNarrow ? "7px 12px" : "5px 10px",
-                minHeight: isNarrow ? 36 : undefined, cursor: "pointer",
-              }}
-            >
-              {s.label}
-            </button>
-          ))}
-        </div>
+        <PurposePicker
+          compact={isNarrow}
+          busy={typing}
+          onWrite={writeFromPurpose}
+          starters={STARTER_TEMPLATES}
+          onStarter={applyStarter}
+        />
       )}
 
       {/* ── The document ────────────────────────────────────────────────── */}

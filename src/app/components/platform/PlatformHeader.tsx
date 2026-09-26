@@ -28,6 +28,10 @@ interface PlatformHeaderProps {
 function deriveTitle(pathname: string): string {
   const parts = pathname.replace(/^\/app\/?/, "").split("/").filter(Boolean);
   if (parts.length === 0) return "Dashboard";
+  // A ready-made template's id is a long slug; spelling it out reads as noise.
+  if (parts[0] === "templates" && parts[1] === "gallery") {
+    return parts.length > 2 ? "Templates › Ready-made › Preview" : "Templates › Ready-made";
+  }
   return parts
     .map((p) => p.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()))
     .join(" › ");

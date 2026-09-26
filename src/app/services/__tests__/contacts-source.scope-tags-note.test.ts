@@ -11,7 +11,9 @@ const { apiRequest } = vi.hoisted(() => ({ apiRequest: vi.fn() }));
 vi.mock("../api-client", () => ({ apiRequest }));
 
 import { createContact, updateContact, getContact } from "../contacts-source";
-import type { ContactCreateInput, ContactId } from "../../models/contacts";
+import type { ContactCreateInput, ContactId, ContactTagId } from "../../models/contacts";
+
+const tag = (id: string) => id as ContactTagId;
 
 const WS = "ws_1";
 const wireContact = (over: Record<string, unknown> = {}) => ({
@@ -26,7 +28,7 @@ beforeEach(() => { apiRequest.mockReset(); });
 
 const CREATE_INPUT: ContactCreateInput = {
   name: "Maria Santos", email: "maria@example.com",
-  scope: "personal", tagIds: ["tag-legal", "tag-signer"], groupIds: [],
+  scope: "personal", tagIds: [tag("tag-legal"), tag("tag-signer")], groupIds: [],
   note: "Handles renewals.",
 };
 
@@ -60,7 +62,7 @@ describe("createContact sends scope, note and tags — not just name/email", () 
     apiRequest.mockResolvedValue({ contact: wireContact(), duplicates: [] });
     await updateContact(WS, "cnt_1" as ContactId, {
       name: "Maria Santos", email: "maria@example.com",
-      note: "Updated note.", tagIds: ["tag-hr"],
+      note: "Updated note.", tagIds: [tag("tag-hr")],
     });
 
     const [, init] = apiRequest.mock.calls[0]! as [string, { body: Record<string, unknown> }];

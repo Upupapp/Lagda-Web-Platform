@@ -7,8 +7,9 @@ import { Link, useNavigate } from "react-router";
 import {
   LayoutTemplate, Plus, Search, Grid, List,
   FileText, Users, GitBranch, Star,
-  AlertCircle, Filter,
+  AlertCircle, Filter, Sparkles, ArrowRight,
 } from "lucide-react";
+import { READY_MADE_TEMPLATES, READY_MADE_CATEGORIES } from "../../../services/ready-made-templates";
 import { TemplateProvider, useTemplates } from "../../../context/TemplateContext";
 import {
   EmptyStateLayout, SkeletonBlock, SKELETON_STYLE,
@@ -363,6 +364,38 @@ function TemplatesInner() {
             </p>
           </div>
         )}
+
+        <Link
+          to="/app/templates/gallery"
+          className="tpl-ready-banner"
+          style={{
+            display: "flex", alignItems: "center", gap: 12, marginTop: 16,
+            padding: isNarrow ? "12px 14px" : "12px 16px", borderRadius: 10,
+            border: "1px solid #BFDBFE", background: "linear-gradient(90deg, #EFF6FF 0%, #F8FBFF 100%)",
+            textDecoration: "none", color: "inherit",
+          }}
+        >
+          <span style={{
+            width: 36, height: 36, borderRadius: 9, background: "white", border: "1px solid #BFDBFE",
+            display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+          }}>
+            <Sparkles size={17} color={AZURE} />
+          </span>
+          <span style={{ flex: 1, minWidth: 0 }}>
+            <span style={{ ...GF, display: "block", fontSize: 13, fontWeight: 700, color: "#0F172A" }}>
+              Start faster with {READY_MADE_TEMPLATES.length} ready-made templates
+            </span>
+            <span style={{ ...GF, display: "block", fontSize: 12, color: "#475569", marginTop: 2, lineHeight: 1.45 }}>
+              {isNarrow
+                ? "Roles and signing order already set up."
+                : `Across ${String(READY_MADE_CATEGORIES.length)} purposes — Recruitment, Sales, Procurement, Finance and more — with roles and signing order already set up.`}
+            </span>
+          </span>
+          <span style={{ ...GF, display: "inline-flex", alignItems: "center", gap: 5, fontSize: 12.5, fontWeight: 700, color: AZURE, flexShrink: 0 }}>
+            {isNarrow ? null : "Browse"} <ArrowRight size={14} />
+          </span>
+        </Link>
+        <style>{`.tpl-ready-banner { transition: box-shadow .15s, border-color .15s; } .tpl-ready-banner:hover, .tpl-ready-banner:focus-visible { border-color: ${AZURE}; box-shadow: 0 2px 10px rgba(0,120,212,0.12); outline: none; }`}</style>
 
         {/* View tabs.
             Was a plain flex row with no overflow handling, so at 390px the last

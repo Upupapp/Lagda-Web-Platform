@@ -31,6 +31,9 @@ import type { PrepAuthMethodId } from "../../../models/prepare";
 import { PARTICIPANT_ACCENT_COLORS } from "../../../models/field-editor";
 import { usePageMeta } from "../../../hooks/usePageMeta";
 import { useViewport } from "../../../hooks/useViewport";
+import {
+  MAP_ROLES_AUTH_METHOD, mapRolesOrganization, withMapRolesDefaults,
+} from "./map-roles-defaults";
 
 // ── Design tokens ─────────────────────────────────────────────────────────────
 const GF    = { fontFamily: "'Geist', sans-serif" };
@@ -83,16 +86,19 @@ function StepBar({ current }: { current: WizardStep }) {
 
 // ── Step 1: Map Roles ─────────────────────────────────────────────────────────
 function RoleMappingStep({
-  template: _template, mappings, assignments, onChange,
+  template: _template, mappings, assignments, organization, onChange,
 }: {
   template:  DocumentTemplate;
   mappings:  TemplateRoleMapping[];
+  /** The sender's workspace — shown, never typed. */
+  organization: string;
   /** 061. `null` while still loading. */
   assignments: TemplateRoleAssignment[] | null;
   onChange:  (idx: number, patch: Partial<TemplateRoleMapping>) => void;
 }) {
   const { isNarrow } = useViewport();
-  const AUTH_OPTIONS = PREP_AUTH_METHODS.map(m => ({ value: m.id, label: m.label }));
+  const authLabel = PREP_AUTH_METHODS.find(m => m.id === MAP_ROLES_AUTH_METHOD)?.label
+    ?? "Secure Invitation Link";
 
   return (
     <div>
@@ -148,19 +154,16 @@ function RoleMappingStep({
                 <FormField label="Organization" required={false}>
                   <input
                     type="text"
-                    value={m.organization ?? ""}
-                    onChange={e => onChange(idx, { organization: e.target.value })}
-                    placeholder="Optional"
-                    style={inputStyle}
+                    value={organization}
+                    readOnly
+                    aria-readonly="true"
+                    title="Set from your workspace"
+                    style={readOnlyInputStyle}
                   />
                 </FormField>
                 <FormField label="Authentication">
-                  <select
-                    value={m.authMethod}
-                    onChange={e => onChange(idx, { authMethod: e.target.value as PrepAuthMethodId })}
-                    style={selectStyle}
-                  >
-                    {AUTH_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                  <select value={MAP_ROLES_AUTH_METHOD} disabled style={readOnlyInputStyle}>
+                    <option value={MAP_ROLES_AUTH_METHOD}>{authLabel}</option>
                   </select>
                 </FormField>
               </div>
@@ -358,6 +361,9 @@ const inputStyle: React.CSSProperties = {
   fontFamily: "'Geist', sans-serif", fontSize: 13, color: "#0F172A",
   background: "white", boxSizing: "border-box",
 };
+const readOnlyInputStyle: React.CSSProperties = {
+  ...inputStyle, background: "#F8FAFC", color: "#475569", cursor: "default",
+};
 const selectStyle: React.CSSProperties = {
   ...inputStyle, cursor: "pointer",
 };
@@ -387,7 +393,7 @@ function buildInitialMappings(template: DocumentTemplate): TemplateRoleMapping[]
     displayName:      "",
     email:            "",
     organization:     "",
-    authMethod:       ph.defaultAuthMethod,
+    authMethod:       MAP_ROLES_AUTH_METHOD,
   }));
 }
 
@@ -431,6 +437,7 @@ function UseTemplateInner() {
   const { state, loadTemplate } = useTemplates();
   const platform = usePlatform();
   const workspaceId = platform.currentWorkspace?.id;
+  const organization = mapRolesOrganization(platform.currentWorkspace?.name);
   const t = state.activeTemplate;
 
   const [step,     setStep]     = useState<WizardStep>("roles");
@@ -534,7 +541,7 @@ function UseTemplateInner() {
       // stored template, because its id was never in that catalogue.
       const result = resolveTemplateApplication({
         placeholders: t.placeholders,
-        roleMappings: mappings,
+        roleMappings: withMapRolesDefaults(mappings, platform.currentWorkspace?.name),
         routingMode: t.routing.mode,
         fields: t.fields,
         // 064. What the sender typed on the Variables step. These were
@@ -690,7 +697,7 @@ function UseTemplateInner() {
           </div>
         )}
 
-        {step === "roles"     && <RoleMappingStep template={t} mappings={mappings} assignments={assignments} onChange={handleMappingChange} />}
+        {step === "roles"     && <RoleMappingStep template={t} mappings={mappings} assignments={assignments} organization={organization} onChange={handleMappingChange} />}
         {step === "variables" && <VariablesStep variables={t.variables} values={varValues} onChange={(key, val) => setVarValues(v => ({ ...v, [key]: val }))} />}
         {step === "review"    && <ReviewStep template={t} mappings={mappings} variableValues={varValues} />}
 

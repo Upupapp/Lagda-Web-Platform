@@ -5,8 +5,9 @@ import { useState } from "react";
 import { useNavigate, Link } from "react-router";
 import {
   LayoutTemplate, FileText, FolderOpen, Copy,
-  ChevronLeft, CheckCircle2, AlertCircle, X,
+  ChevronLeft, CheckCircle2, AlertCircle, X, Sparkles, ArrowRight,
 } from "lucide-react";
+import { READY_MADE_TEMPLATES, READY_MADE_CATEGORIES } from "../../../services/ready-made-templates";
 import { asyncCreateBlank } from "../../../services/mock/templates.service";
 import { createTemplate, realTemplatesAvailable } from "../../../services/templates-source";
 import { usePlatform } from "../../../context/PlatformContext";
@@ -376,6 +377,54 @@ export function CreateTemplatePage() {
         <p style={{ ...GF, fontSize: 13, color: "#64748B", margin: "0 0 24px" }}>
           Choose how you'd like to start building your new template.
         </p>
+
+        {/* The faster start, above building from scratch. */}
+        <Link
+          to="/app/templates/gallery"
+          className="ct-ready-card"
+          style={{
+            display: "flex", flexDirection: isNarrow ? "column" : "row",
+            alignItems: isNarrow ? "flex-start" : "center", gap: isNarrow ? 12 : 16,
+            margin: "0 0 20px", padding: isNarrow ? "16px" : "18px 20px",
+            borderRadius: 12, border: `2px solid ${AZURE}`, background: "linear-gradient(90deg, #EFF6FF 0%, #FFFFFF 100%)",
+            textDecoration: "none", color: "inherit", boxSizing: "border-box",
+          }}
+        >
+          <span style={{
+            width: 44, height: 44, borderRadius: 11, background: AZURE, flexShrink: 0,
+            display: "flex", alignItems: "center", justifyContent: "center",
+          }}>
+            <Sparkles size={21} color="white" />
+          </span>
+          <span style={{ flex: 1, minWidth: 0 }}>
+            <span style={{ ...GF, display: "block", fontSize: 15, fontWeight: 800, color: "#0F172A" }}>
+              Start from a ready-made template
+            </span>
+            <span style={{ ...GF, display: "block", fontSize: 12.5, color: "#475569", margin: "3px 0 8px", lineHeight: 1.5 }}>
+              {READY_MADE_TEMPLATES.length} templates with roles and signing order already set up — just edit and send.
+            </span>
+            <span style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+              {READY_MADE_CATEGORIES.slice(0, isNarrow ? 3 : 6).map(c => (
+                <span key={c.id} style={{
+                  ...GF, fontSize: 11, color: "#1E40AF", background: "white", border: "1px solid #BFDBFE",
+                  borderRadius: 999, padding: "2px 9px", whiteSpace: "nowrap",
+                }}>{c.label}</span>
+              ))}
+              <span style={{ ...GF, fontSize: 11, color: "#64748B", padding: "2px 2px" }}>
+                +{Math.max(0, READY_MADE_CATEGORIES.length - (isNarrow ? 3 : 6))} more
+              </span>
+            </span>
+          </span>
+          <span style={{
+            ...GF, display: "inline-flex", alignItems: "center", gap: 6, flexShrink: 0,
+            fontSize: 13, fontWeight: 700, color: "white", background: AZURE,
+            padding: "9px 16px", borderRadius: 8, alignSelf: isNarrow ? "stretch" : undefined,
+            justifyContent: "center",
+          }}>
+            Browse templates <ArrowRight size={14} />
+          </span>
+        </Link>
+        <style>{`.ct-ready-card { transition: box-shadow .15s; } .ct-ready-card:hover, .ct-ready-card:focus-visible { box-shadow: 0 4px 16px rgba(0,120,212,0.18); outline: none; }`}</style>
 
         {/* Source selection */}
         {/* Flex-wrap rather than a grid: `auto-fill` leaves phantom columns and
