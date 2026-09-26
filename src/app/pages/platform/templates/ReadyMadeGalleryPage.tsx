@@ -54,9 +54,9 @@ function ReadyMadeCard({ template }: { template: ReadyMadeTemplate }) {
           )}
         </div>
         <span style={{
-          ...GF, position: "absolute", left: 64, right: 10, bottom: 8, width: "fit-content", maxWidth: "calc(100% - 74px)",
-          boxSizing: "border-box", fontSize: 11, fontWeight: 600, color: "#0F172A", background: "white",
-          borderRadius: 999, padding: "2px 9px", boxShadow: "0 1px 2px rgba(15,23,42,0.12)",
+          ...GF, position: "absolute", left: 0, top: 0, width: "fit-content", maxWidth: "calc(100% - 74px)",
+          boxSizing: "border-box", fontSize: 11, fontWeight: 600, color: "#0F172A", background: "#9DCBFF",
+          borderRadius: 0, borderBottomRightRadius: 5, padding: "2px 9px", boxShadow: "0 1px 2px rgba(15,23,42,0.12)",
           whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
         }}>
           {template.category}

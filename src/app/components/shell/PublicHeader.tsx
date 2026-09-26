@@ -8,8 +8,34 @@ import {
 } from "@/app/config/nav.config";
 import { haptic } from "@/app/utils/haptic";
 import { Z } from "../../utils/z-index";
+import { usePlatform } from "../../context/PlatformContext";
+import { UserAvatar } from "../platform/UserAvatar";
 
 // ── Chevron icon ──────────────────────────────────────────────────────────────
+/** Signed in: the account's avatar, linking to the dashboard. */
+function DashboardButton({ block, onNavigate }: { block?: boolean; onNavigate?: () => void }) {
+  const { user } = usePlatform();
+  if (!user) return null;
+  return (
+    <Link
+      to="/app/dashboard"
+      onClick={onNavigate}
+      aria-label={`Go to dashboard, signed in as ${user.displayName}`}
+      title="Go to dashboard"
+      style={{
+        display: block ? "flex" : "inline-flex", alignItems: "center", justifyContent: "center", gap: 8,
+        padding: block ? "10px 16px" : "4px 12px 4px 4px", minHeight: 36, borderRadius: block ? 10 : 999,
+        border: "1px solid #D7DEE8", background: "#FFFFFF", color: "#07111F", textDecoration: "none",
+        fontFamily: "'Geist', sans-serif", fontSize: 13, fontWeight: 600, whiteSpace: "nowrap",
+        boxShadow: "0 2px 6px rgba(7,17,31,0.06)",
+      }}
+    >
+      <UserAvatar user={user} size={28} fontSize={11} />
+      <span>Dashboard</span>
+    </Link>
+  );
+}
+
 function Chevron({ open }: { open: boolean }) {
   return (
     <svg
@@ -233,6 +259,7 @@ function MegaPanel({
 
 // ── Mobile drawer ─────────────────────────────────────────────────────────────
 function MobileDrawer({ onClose }: { onClose: () => void }) {
+  const { sessionStatus } = usePlatform();
   const [openSection, setOpenSection] = useState<string | null>(null);
 
   // Body scroll lock
@@ -344,6 +371,10 @@ function MobileDrawer({ onClose }: { onClose: () => void }) {
             gap: 8,
           }}
         >
+          {sessionStatus === "authenticated" ? (
+            <DashboardButton block onNavigate={onClose} />
+          ) : sessionStatus === "unauthenticated" ? (
+            <>
           <Link
             to="/create-account"
             onClick={() => {
@@ -384,6 +415,8 @@ function MobileDrawer({ onClose }: { onClose: () => void }) {
           >
             Sign In
           </Link>
+            </>
+          ) : null}
         </div>
 
         {/* Accordion nav */}
@@ -601,6 +634,7 @@ function MobileDrawer({ onClose }: { onClose: () => void }) {
 
 // ── Public header ─────────────────────────────────────────────────────────────
 export function PublicHeader() {
+  const { sessionStatus } = usePlatform();
   const { pathname } = useLocation();
   const [scrolled, setScrolled] = useState(false);
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
@@ -863,6 +897,10 @@ export function PublicHeader() {
                   flexShrink: 0,
                 }}
               >
+                {sessionStatus === "authenticated" ? (
+                  <DashboardButton />
+                ) : sessionStatus === "unauthenticated" ? (
+                  <>
                 {/* Sign In — desktop */}
                 <Link
                   to="/sign-in"
@@ -939,6 +977,9 @@ export function PublicHeader() {
                 >
                   Create Free Account
                 </Link>
+
+                  </>
+                ) : null}
 
                 {/* Hamburger — mobile/tablet */}
                 <button

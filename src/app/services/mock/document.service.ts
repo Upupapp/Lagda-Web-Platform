@@ -127,7 +127,8 @@ function matchesSearch(item: DocumentListItem, q: string): boolean {
   // Search title and owner name only — never document content
   return (
     item.title.toLowerCase().includes(lower) ||
-    item.ownerName.toLowerCase().includes(lower)
+    item.ownerName.toLowerCase().includes(lower) ||
+    (item.status === "completed" && !!item.verificationId && item.verificationId.toLowerCase().includes(lower))
   );
 }
 

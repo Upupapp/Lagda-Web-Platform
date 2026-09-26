@@ -37,6 +37,7 @@ import { documentOrganizationService } from "../../../services/mock/document-org
 import { isCapabilityInActiveProfile } from "../../../config/capability-resolver";
 import { SIGNING_REQUEST_STATUS } from "../../../services/signing-request-status";
 import { StatusBadge } from "../../../components/documents/StatusBadge";
+import { VerificationIdActions } from "../../../components/documents/VerificationIdActions";
 import { AuditTrailDialog } from "../../../components/documents/AuditTrailDialog";
 import type { TransactionStatus } from "../../../models";
 import type {
@@ -150,16 +151,25 @@ const DOC_STYLES = SKELETON_STYLE + `
      the old 100px track let it bleed over the Created column beside it.
      150px holds it with headroom; \`column-gap\` then guarantees a visible
      separation even if a future label runs long. */
-  .doc-row { display: grid; grid-template-columns: 40px minmax(0, 1fr) 150px 150px 116px auto; column-gap: 8px; align-items: center; min-height: 52px; border-bottom: 1px solid #F1F5F9; }
+  .doc-row { display: grid; grid-template-columns: 40px minmax(0, 1fr) 150px 164px 150px 116px auto; column-gap: 8px; align-items: center; min-height: 52px; border-bottom: 1px solid #F1F5F9; }
   .doc-row:last-child { border-bottom: none; }
   .doc-row:hover { background: #F8FAFC; }
-  .doc-header { display: grid; grid-template-columns: 40px minmax(0, 1fr) 150px 150px 116px auto; column-gap: 8px; align-items: center; padding: 8px 0; border-bottom: 1px solid #E2E8F0; }
+  .doc-header { display: grid; grid-template-columns: 40px minmax(0, 1fr) 150px 164px 150px 116px auto; column-gap: 8px; align-items: center; padding: 8px 0; border-bottom: 1px solid #E2E8F0; }
   /* Every cell is its own containment context. Without this a long title or
      a wide meter widens its track instead of truncating inside it, which is
      what turns one overflowing cell into a shifted row. */
   .doc-row > *, .doc-header > * { min-width: 0; overflow: hidden; }
   .doc-view-tabs { display: flex; gap: 0; border-bottom: 1px solid #E2E8F0; overflow-x: auto; scrollbar-width: none; -ms-overflow-style: none; }
   .doc-view-tabs::-webkit-scrollbar { display: none; }
+  /* Verification ID: its own column from 1024px; below that the id moves
+     into the row's title cell (tablet) or the card (phone). */
+  .doc-vid-tablet { display: none; }
+  @media (max-width: 1023px) {
+    .doc-row { grid-template-columns: 40px minmax(0, 1fr) 150px 150px 116px auto; }
+    .doc-header { grid-template-columns: 40px minmax(0, 1fr) 150px 150px 116px auto; }
+    .doc-col-vid { display: none; }
+    .doc-vid-tablet { display: block; margin-top: 4px; }
+  }
   @media (max-width: 900px) {
     .doc-folder-panel { display: none; }
     /* Created is dropped here, so five tracks. Progress keeps a real width
@@ -192,19 +202,37 @@ const DOC_STYLES = SKELETON_STYLE + `
      narrower screens stack the buttons two by two rather than dropping
      their labels. */
   .doc-row.doc-grid-real, .doc-header.doc-grid-real {
-    grid-template-columns: 40px minmax(0, 1fr) 130px 150px 96px 448px;
+    grid-template-columns: 40px minmax(0, 1fr) 130px 164px 150px 96px 448px;
   }
   .doc-actions-cell { display: flex; flex-wrap: wrap; gap: 4px; justify-content: flex-end; }
   @media (max-width: 1440px) {
     .doc-row.doc-grid-real, .doc-header.doc-grid-real {
-      grid-template-columns: 40px minmax(0, 1fr) 120px 140px 90px 248px;
+      grid-template-columns: 40px minmax(0, 1fr) 120px 156px 140px 90px 248px;
     }
   }
   @media (max-width: 1180px) {
     .doc-row.doc-grid-real, .doc-header.doc-grid-real {
-      grid-template-columns: 40px minmax(0, 1fr) 116px 136px 248px;
+      grid-template-columns: 40px minmax(0, 1fr) 110px 156px 128px 160px;
     }
     .doc-grid-real > .doc-col-updated { display: none; }
+    /* Icon-only actions here (each keeps its aria-label and tooltip): with
+       labels the four buttons took 248px and left the title no room. */
+    .doc-grid-real .doc-action-label { display: none; }
+    .doc-grid-real .doc-action { padding: 0 9px !important; }
+  }
+  /* Tablet: the sidebar leaves about 480px, too little for a title track
+     beside four fixed ones (it resolved to ~16px). The title takes a line of
+     its own across the row — with the Verification ID beneath it — and
+     Status, Progress and the actions sit on the line below, under their
+     headings. */
+  @media (max-width: 1023px) {
+    .doc-row.doc-grid-real, .doc-header.doc-grid-real {
+      grid-template-columns: 110px 128px minmax(0, 1fr);
+    }
+    .doc-grid-real > :first-child { display: none; }
+    .doc-row.doc-grid-real > :nth-child(2) { grid-column: 1 / -1; padding-top: 10px !important; padding-bottom: 0 !important; }
+    .doc-header.doc-grid-real > :nth-child(2) { display: none; }
+    .doc-row.doc-grid-real { padding-bottom: 6px; }
   }
 
   /* Search and filters above the live table. */
@@ -363,6 +391,11 @@ function getDocActions(
     acts.push({ id: "archive", label: "Archive" });
   }
   return acts;
+}
+
+/** The Verification ID shown in the list: only a completed document has one to show. */
+function completedVerificationId(item: DocumentListItem): string | null {
+  return item.status === "completed" && item.verificationId ? item.verificationId : null;
 }
 
 // ── StatusBadge ───────────────────────────────────────────────────────────────
@@ -1268,6 +1301,7 @@ function DocumentTable({
           <div role="columnheader" aria-label="Select" style={{ padding: "0 4px" }} />
           <div role="columnheader" style={{ fontSize: 11, fontWeight: 700, color: SLATE4, textTransform: "uppercase", letterSpacing: "0.06em", padding: "0 8px", ...GF }}>Document</div>
           <div role="columnheader" style={{ fontSize: 11, fontWeight: 700, color: SLATE4, textTransform: "uppercase", letterSpacing: "0.06em", padding: "0 8px", ...GF }}>Status</div>
+          <div role="columnheader" className="doc-col-vid" style={{ fontSize: 11, fontWeight: 700, color: SLATE4, textTransform: "uppercase", letterSpacing: "0.06em", padding: "0 8px", whiteSpace: "nowrap", ...GF }}>Verification ID</div>
           <div role="columnheader" style={{ fontSize: 11, fontWeight: 700, color: SLATE4, textTransform: "uppercase", letterSpacing: "0.06em", padding: "0 8px", ...GF }}>Progress</div>
           <div role="columnheader" className="doc-col-updated" style={{ fontSize: 11, fontWeight: 700, color: SLATE4, textTransform: "uppercase", letterSpacing: "0.06em", padding: "0 8px", ...GF }}>Updated</div>
           <div role="columnheader" aria-label="Actions" />
@@ -1315,12 +1349,21 @@ function DocumentTable({
                     <PreparationBadge source={item.bulkSendSource} />
                     {item.tags.slice(0, 2).map(t => <TagChip key={t.id} tag={t} />)}
                   </div>
+                  {completedVerificationId(item) && (
+                    <div className="doc-vid-tablet">
+                      <VerificationIdActions id={completedVerificationId(item)} variant="line" label="Verification ID" />
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
             {/* Status */}
             <div role="cell" style={{ padding: "8px 8px" }}>
               <StatusBadge status={item.status} />
+            </div>
+            {/* Verification ID */}
+            <div role="cell" className="doc-col-vid" style={{ padding: "8px 8px" }}>
+              <VerificationIdActions id={completedVerificationId(item)} />
             </div>
             {/* Progress */}
             <div role="cell" style={{ padding: "8px 8px" }}>
@@ -1402,6 +1445,11 @@ function DocumentCardList({
                 <StatusBadge status={item.status} />
                 <ParticipantProgress done={item.completedParticipantCount} total={item.participantCount} />
               </div>
+              {completedVerificationId(item) && (
+                <div style={{ marginTop: 6 }}>
+                  <VerificationIdActions id={completedVerificationId(item)} variant="line" label="Verification ID" />
+                </div>
+              )}
               <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 4, flexWrap: "wrap" }}>
                 <span style={{ fontSize: 11, color: SLATE4, ...GF }}>{fmtRelative(item.updatedAt)}</span>
                 {item.expiresAt && item.status !== "archived" && item.status !== "completed" && (
@@ -1733,7 +1781,7 @@ function DocumentsPageMockDemo() {
     const tagsResult = documentOrganizationService.listTags({});
     if (tagsResult.ok) setOrgTags(tagsResult.data.filter(t => t.status === "active"));
 
-    const foldersResult = documentOrganizationService.listFolders({} as never, userId);
+    const foldersResult = documentOrganizationService.listFolders({}, userId);
     if (foldersResult.ok) setOrgFolders(foldersResult.data.filter(f => f.status === "active"));
 
     const viewsResult = documentOrganizationService.listSavedViews(userId);
@@ -2224,7 +2272,7 @@ function unsentDraftRow(document: RealDocument): SigningRequestListItem {
 }
 
 function RealDocumentRow({
-  item, onView, onSignatures, onAudit, onResend, file,
+  item, onView, onSignatures, onAudit, onResend, file, verificationId,
 }: {
   item: SigningRequestListItem;
   onView: (item: SigningRequestListItem) => void;
@@ -2232,6 +2280,7 @@ function RealDocumentRow({
   onAudit: (item: SigningRequestListItem) => void;
   onResend: (item: SigningRequestListItem) => void;
   file: DocumentFileFacts | undefined;
+  verificationId?: string | null;
 }) {
   const FileGlyph = iconForDocument(file?.mediaType, file?.filename);
   const navigate = useNavigate();
@@ -2253,9 +2302,17 @@ function RealDocumentRow({
             {item.documentTitle}
           </button>
         </div>
+        {item.state === "completed" && verificationId && (
+          <div className="doc-vid-tablet" style={{ paddingLeft: 23 }}>
+            <VerificationIdActions id={verificationId} variant="line" label="Verification ID" />
+          </div>
+        )}
       </div>
       <div role="cell" style={{ padding: "8px 8px" }}>
         <StatusBadge status={SIGNING_REQUEST_STATUS[item.state]} />
+      </div>
+      <div role="cell" className="doc-col-vid" style={{ padding: "8px 8px" }}>
+        <VerificationIdActions id={item.state === "completed" ? verificationId : null} />
       </div>
       <div role="cell" style={{ padding: "8px 8px" }}>
         <SignatureLink item={item} onOpen={onSignatures} />
@@ -2303,7 +2360,7 @@ function RealDocumentRow({
 // nothing at all: every real item still loaded, just with no surface to
 // render it on. Same fields as the desktop row, stacked top-to-bottom.
 function RealDocumentCard({
-  item, onView, onSignatures, onAudit, onResend, file,
+  item, onView, onSignatures, onAudit, onResend, file, verificationId,
 }: {
   item: SigningRequestListItem;
   onView: (item: SigningRequestListItem) => void;
@@ -2311,6 +2368,7 @@ function RealDocumentCard({
   onAudit: (item: SigningRequestListItem) => void;
   onResend: (item: SigningRequestListItem) => void;
   file: DocumentFileFacts | undefined;
+  verificationId?: string | null;
 }) {
   const FileGlyph = iconForDocument(file?.mediaType, file?.filename);
   const navigate = useNavigate();
@@ -2369,6 +2427,13 @@ function RealDocumentCard({
           <DocAction icon={Eye} label="View" onClick={() => onView(item)} />
         )}
       </div>
+      {/* Full card width, not the title column: beside the action buttons
+          that column is too narrow on a phone to show the id at all. */}
+      {item.state === "completed" && verificationId && (
+        <div style={{ marginTop: 8, paddingLeft: 24 }}>
+          <VerificationIdActions id={verificationId} variant="line" label="Verification ID" />
+        </div>
+      )}
     </div>
   );
 }
@@ -2550,6 +2615,9 @@ function DocumentsPageRealMode() {
   // Which documents have EVER had a signing request, read unfiltered. Null
   // until known, so no document is briefly shown as a draft while loading.
   const [requestedDocumentIds, setRequestedDocumentIds] = useState<Set<string> | null>(null);
+  // Every loaded request, unfiltered: the pool a Verification ID search is
+  // matched against, since the server's q searches names only.
+  const [allRequests, setAllRequests] = useState<SigningRequestListItem[]>([]);
   // Bumped after a re-send. That produces an additional signing request, so
   // the list gains a row — there is nothing in place to patch.
   const [refreshKey, setRefreshKey] = useState(0);
@@ -2680,7 +2748,9 @@ function DocumentsPageRealMode() {
     // SENT document look like an unsent draft.
     void realSigningRequestService.list(workspaceId, { perPage: 100 })
       .then(result => {
-        if (!cancelled) setRequestedDocumentIds(new Set(result.items.map(r => r.documentId)));
+        if (cancelled) return;
+        setRequestedDocumentIds(new Set(result.items.map(r => r.documentId)));
+        setAllRequests(result.items);
       })
       .catch(() => { /* Without this, drafts are not listed rather than guessed. */ });
 
@@ -2700,11 +2770,30 @@ function DocumentsPageRealMode() {
       .map(unsentDraftRow);
   }, [documents, requestedDocumentIds, q, signer, list]);
 
+  const verificationIds = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const d of documents) if (d.verificationId) map.set(d.documentId, d.verificationId);
+    return map;
+  }, [documents]);
+
+  // A Verification ID typed or pasted into the name search. The server's q
+  // matches names only, so completed requests whose document's id contains
+  // the text are added from the rows already loaded.
+  const byVerificationId = useMemo(() => {
+    const needle = q.toLowerCase();
+    if (needle === "" || signer !== "" || list === "draft" || list === "declined") return [];
+    const states: readonly SigningRequestState[] = list === "completed" ? LIST_STATES.completed : ["completed"];
+    const shown = new Set(items.map(r => r.signingRequestId));
+    return allRequests.filter(r =>
+      r.state === "completed" && states.includes(r.state) && !shown.has(r.signingRequestId)
+      && (verificationIds.get(r.documentId) ?? "").toLowerCase().includes(needle));
+  }, [allRequests, items, verificationIds, q, signer, list]);
+
   // Newest first across both kinds.
   const rows = useMemo(
-    () => [...drafts, ...items].sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
-    [drafts, items]);
-  const rowTotal = total + drafts.length;
+    () => [...drafts, ...items, ...byVerificationId].sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
+    [drafts, items, byVerificationId]);
+  const rowTotal = total + drafts.length + byVerificationId.length;
 
   return (
     <>
@@ -2778,7 +2867,7 @@ function DocumentsPageRealMode() {
         {status === "ready" && (rows.length > 0 || filtering) && (
           <div className="doc-filter-bar" role="search" aria-label="Search and filter documents" style={{ position: "relative" }}>
             <FilterField
-              id="doc-filter-name" label="Search by document name" placeholder="Search by name"
+              id="doc-filter-name" label="Search by document name or Verification ID" placeholder="Search by name or Verification ID"
               value={nameInput} onChange={setNameInput} inputRef={nameRef} shortcutHint="/"
             />
             <FilterField
@@ -2826,6 +2915,7 @@ function DocumentsPageRealMode() {
                 <div role="columnheader" aria-label="Icon" />
                 <div role="columnheader" style={{ fontSize: 11, fontWeight: 700, color: SLATE4, textTransform: "uppercase", letterSpacing: "0.06em", padding: "0 8px", ...GF }}>Document</div>
                 <div role="columnheader" style={{ fontSize: 11, fontWeight: 700, color: SLATE4, textTransform: "uppercase", letterSpacing: "0.06em", padding: "0 8px", ...GF }}>Status</div>
+                <div role="columnheader" className="doc-col-vid" style={{ fontSize: 11, fontWeight: 700, color: SLATE4, textTransform: "uppercase", letterSpacing: "0.06em", padding: "0 8px", whiteSpace: "nowrap", ...GF }}>Verification ID</div>
                 <div role="columnheader" style={{ fontSize: 11, fontWeight: 700, color: SLATE4, textTransform: "uppercase", letterSpacing: "0.06em", padding: "0 8px", ...GF }}>Progress</div>
                 <div role="columnheader" className="doc-col-updated" style={{ fontSize: 11, fontWeight: 700, color: SLATE4, textTransform: "uppercase", letterSpacing: "0.06em", padding: "0 8px", ...GF }}>Created</div>
                 {/* A visible heading, not just an aria-label: the column is the
@@ -2840,6 +2930,7 @@ function DocumentsPageRealMode() {
                   onView={setViewing} onSignatures={setSignaturesFor} onAudit={setAuditFor}
                   onResend={setResendFor}
                   file={files.get(item.documentId)}
+                verificationId={verificationIds.get(item.documentId) ?? null}
                 />
               ))}
             </div>
@@ -2853,6 +2944,7 @@ function DocumentsPageRealMode() {
                 onView={setViewing} onSignatures={setSignaturesFor} onAudit={setAuditFor}
                 onResend={setResendFor}
                 file={files.get(item.documentId)}
+                verificationId={verificationIds.get(item.documentId) ?? null}
               />
             ))}
           </div>
