@@ -786,6 +786,16 @@ const MemberDetailPage = lazy(() =>
     default: m.MemberDetailPage,
   })),
 );
+const JoinRequestsPage = lazy(() =>
+  import("./app/pages/platform/workspace/JoinRequestsPage").then((m) => ({
+    default: m.JoinRequestsPage,
+  })),
+);
+const JoinLinksPage = lazy(() =>
+  import("./app/pages/platform/workspace/JoinLinksPage").then((m) => ({
+    default: m.JoinLinksPage,
+  })),
+);
 const InvitationsPage = lazy(() =>
   import("./app/pages/platform/workspace/InvitationsPage").then((m) => ({
     default: m.InvitationsPage,
@@ -2392,6 +2402,22 @@ export const router = createBrowserRouter([
         element: (
           <Suspense fallback={null}>
             <MembersPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: "workspace/join-requests",
+        element: (
+          <Suspense fallback={null}>
+            <JoinRequestsPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: "workspace/join-links",
+        element: (
+          <Suspense fallback={null}>
+            <JoinLinksPage />
           </Suspense>
         ),
       },

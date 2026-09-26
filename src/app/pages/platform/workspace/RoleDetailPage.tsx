@@ -1,6 +1,7 @@
 // /app/workspace/roles/:roleId — Role detail.
 // Shows role info, permission matrix, member count, edit/archive for custom roles.
-// Frontend-only demonstration. No Burgundy. No eNotary.
+// Demo build: fictional roles with edit/archive. With a real backend the
+// page is read-only — see real/RealRolesPages.tsx. No Burgundy. No eNotary.
 
 import React, { useEffect, useState } from "react";
 import { useParams, Link } from "react-router";
@@ -8,6 +9,8 @@ import { WorkspaceAdminProvider, useWorkspaceAdmin } from "../../../context/Work
 import type { WorkspaceRoleId, WorkspacePermission } from "../../../models/workspace-admin";
 import { ALL_PERMISSIONS, WORKSPACE_ROLE_TYPE_LABELS } from "../../../models/workspace-admin";
 import { Z } from "../../../utils/z-index";
+import { useWorkspaceMode } from "../../../hooks/useWorkspaceAccess";
+import { RealRoleDetailPage } from "./real/RealRolesPages";
 
 const GF    = { fontFamily: "'Geist', sans-serif" };
 const GM    = { fontFamily: "'Geist Mono', monospace" };
@@ -256,6 +259,11 @@ function RoleDetailInner() {
 }
 
 export function RoleDetailPage() {
+  const { roleId } = useParams<{ roleId: string }>();
+  const { isReal, workspaceId } = useWorkspaceMode();
+  if (isReal && workspaceId !== null) {
+    return <RealRoleDetailPage key={`${workspaceId}:${roleId ?? ""}`} workspaceId={workspaceId} roleId={roleId ?? ""} />;
+  }
   return (
     <WorkspaceAdminProvider>
       <RoleDetailInner />

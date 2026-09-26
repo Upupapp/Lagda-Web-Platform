@@ -218,6 +218,10 @@ export interface WorkspaceMember {
   deactivatedAt?:   string;
   isOwner:          boolean;
   demonstrationOnly: boolean;
+  /** Real backend only (078) — carried over from the member list row. */
+  roleTitle?:           string | null;
+  canRequestDocuments?: boolean;
+  canAssignSigners?:    boolean;
 }
 
 export interface WorkspaceMemberSummary {
@@ -243,6 +247,10 @@ export interface WorkspaceMemberSummary {
   canRequestDocuments?: boolean;
   /** 078 — may assign someone to sign a document. Same inheritance. */
   canAssignSigners?:    boolean;
+  /** Real backend only: the account behind the membership (team membership
+   *  is keyed by it), and whether this row is the signed-in person. */
+  userId?:              string;
+  isCurrentUser?:       boolean;
 }
 
 /** Owners and administrators hold both join privileges inherently. */

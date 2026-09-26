@@ -221,7 +221,8 @@ interface WorkspaceAdminContextValue {
 
   // Invitations
   asyncLoadInvitations:   () => Promise<void>;
-  asyncSendInvitation:    (input: WorkspaceInviteInput) => Promise<void>;
+  /** Resolves true when the invitation was sent. */
+  asyncSendInvitation:    (input: WorkspaceInviteInput) => Promise<boolean>;
   asyncResendInvitation:  (id: WorkspaceInvitationId) => Promise<void>;
   asyncRevokeInvitation:  (id: WorkspaceInvitationId) => Promise<void>;
 
@@ -348,7 +349,9 @@ export function WorkspaceAdminProvider({ children }: { children: ReactNode }) {
         const all = await realWorkspaceAdminService.listMembers(workspaceId);
         const member = all.find(m => m.id === id);
         if (!member) { dispatch({ type: "MEMBER_ERROR", error: "Member not found." }); return; }
-        dispatch({ type: "MEMBER_LOADED", member: { ...member, workspaceId: workspaceId as never, userId: "", teamIds: [], demonstrationOnly: false } });
+        // Team membership is read and changed on the Member page itself
+        // (organization units, keyed by userId) — not through `teamIds`.
+        dispatch({ type: "MEMBER_LOADED", member: { ...member, workspaceId: workspaceId as never, userId: member.userId ?? "", teamIds: [], demonstrationOnly: false } });
         return;
       }
       const member = await mockWorkspaceAdminService.getMember(id);
@@ -424,7 +427,7 @@ export function WorkspaceAdminProvider({ children }: { children: ReactNode }) {
     } catch { dispatch({ type: "INVITATIONS_ERROR", error: "Failed to load invitations." }); }
   }, [isReal, workspaceId]);
 
-  const asyncSendInvitation = useCallback(async (input: WorkspaceInviteInput) => {
+  const asyncSendInvitation = useCallback(async (input: WorkspaceInviteInput): Promise<boolean> => {
     dispatch({ type: "ACTION_LOADING" });
     try {
       if (isReal) {
@@ -435,7 +438,11 @@ export function WorkspaceAdminProvider({ children }: { children: ReactNode }) {
         await mockWorkspaceAdminService.sendInvitation(input);
       }
       dispatch({ type: "ACTION_DONE" });
-    } catch { dispatch({ type: "ACTION_ERROR", error: "Failed to send invitation." }); }
+      return true;
+    } catch {
+      dispatch({ type: "ACTION_ERROR", error: "Failed to send invitation." });
+      return false;
+    }
   }, [isReal, workspaceId]);
 
   const asyncResendInvitation = useCallback(async (id: WorkspaceInvitationId) => {

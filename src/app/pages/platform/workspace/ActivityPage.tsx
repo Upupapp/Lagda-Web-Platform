@@ -1,12 +1,16 @@
 // /app/workspace/activity — Administrative activity log.
 // Shows chronological workspace events with search and filter.
-// Frontend-only demonstration. No Burgundy. No eNotary.
+// Demo build: the session-local fictional log below. With a real backend the
+// page is the workspace activity log — see real/RealActivityPage.tsx.
+// No Burgundy. No eNotary.
 
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router";
 import { WorkspaceAdminProvider, useWorkspaceAdmin } from "../../../context/WorkspaceAdminContext";
 import type { WorkspaceActivityEventType } from "../../../models/workspace-admin";
 import { WORKSPACE_ACTIVITY_EVENT_LABELS } from "../../../models/workspace-admin";
+import { useWorkspaceMode } from "../../../hooks/useWorkspaceAccess";
+import { RealActivityPage } from "./real/RealActivityPage";
 
 const GF    = { fontFamily: "'Geist', sans-serif" };
 const GM    = { fontFamily: "'Geist Mono', monospace" };
@@ -185,6 +189,8 @@ function ActivityInner() {
 }
 
 export function ActivityPage() {
+  const { isReal, workspaceId } = useWorkspaceMode();
+  if (isReal && workspaceId !== null) return <RealActivityPage key={workspaceId} workspaceId={workspaceId} />;
   return (
     <WorkspaceAdminProvider>
       <ActivityInner />

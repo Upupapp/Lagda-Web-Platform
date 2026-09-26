@@ -1,10 +1,14 @@
 // /app/workspace/members — Member directory.
 // Search, filter by status/role/team, sort, multi-select bulk actions.
 //
-// 078: owners and administrators also see Join requests (approve / decline)
-// and Join links (Sent / Withdrawn / Draft), and can edit a member's role
-// title and privileges. An approved person with no title shows as
-// "New Comer". No Burgundy. No eNotary.
+// 078: owners and administrators can edit a member's role title and
+// privileges, and see a short summary of join requests and join links that
+// leads to their own pages (/app/workspace/join-requests, /join-links). An
+// approved person with no title shows as "New Comer".
+//
+// With a real backend there is no suspend or deactivate (a membership exists
+// or it does not), no bulk action, and the role filter speaks the backend's
+// seven roles. No Burgundy. No eNotary.
 
 import React, { useCallback, useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router";
@@ -16,9 +20,9 @@ import type { WorkspaceMemberSummary, WorkspaceMemberStatus } from "../../../mod
 import {
   WORKSPACE_MEMBER_STATUS_LABELS, memberRoleLabel, effectivePrivileges, isOwnerOrAdministratorRole,
 } from "../../../models/workspace-admin";
-import { updateMemberAccess, JoinActionError } from "../../../services/real/workspace-join.service";
-import { JoinLinksSection } from "./join/JoinLinksSection";
-import { JoinRequestsSection } from "./join/JoinRequestsSection";
+import { updateMemberAccess, listJoinRequests, JoinActionError } from "../../../services/real/workspace-join.service";
+import { REAL_WORKSPACE_ROLES, REAL_ROLE_LABELS } from "../../../services/real/workspace-admin.service";
+import { useWorkspaceMode } from "../../../hooks/useWorkspaceAccess";
 import { AccessEditor, Dialog, ErrorNote, PrivilegeChips, type AccessDraft } from "./join/join-ui";
 import { buttonStyle } from "./join/join-styles";
 
@@ -65,15 +69,17 @@ function RoleCell({ member }: { member: WorkspaceMemberSummary }) {
 }
 
 function MemberRow({ member, selected, onToggle, onEditAccess }: {
-  member: WorkspaceMemberSummary; selected: boolean; onToggle: () => void; onEditAccess?: () => void;
+  member: WorkspaceMemberSummary; selected: boolean; onToggle?: () => void; onEditAccess?: () => void;
 }) {
   const badge = STATUS_BADGE[member.status];
   return (
     <tr style={{ borderBottom: "1px solid #F0F2F5", background: selected ? "#F0F7FF" : undefined }}>
-      <td style={{ padding: "10px 12px 10px 16px", width: 40 }}>
-        <input type="checkbox" checked={selected} onChange={onToggle} aria-label={`Select ${member.displayName}`}
-          style={{ cursor: "pointer" }} />
-      </td>
+      {onToggle && (
+        <td style={{ padding: "10px 12px 10px 16px", width: 40 }}>
+          <input type="checkbox" checked={selected} onChange={onToggle} aria-label={`Select ${member.displayName}`}
+            style={{ cursor: "pointer" }} />
+        </td>
+      )}
       <td style={{ padding: "10px 12px" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <Avatar name={member.displayName} />
@@ -183,6 +189,41 @@ function EditAccessDialog({ member, workspaceId, onClose, onSaved }: {
   );
 }
 
+/** Owner / administrator: how many people are waiting, and where to act. */
+function JoinSummaryCard({ workspaceId, onPendingCount }: { workspaceId: string; onPendingCount: (n: number) => void }) {
+  const [pending, setPending] = useState<number | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    listJoinRequests(workspaceId, "pending")
+      .then(list => {
+        if (cancelled) return;
+        const n = list.filter(r => r.state === "pending").length;
+        setPending(n);
+        onPendingCount(n);
+      })
+      .catch(() => { if (!cancelled) setPending(null); });
+    return () => { cancelled = true; };
+  }, [workspaceId, onPendingCount]);
+
+  const link = { ...GF, fontSize: 13, fontWeight: 600, color: AZURE, textDecoration: "none", padding: "8px 0", display: "inline-block" } as const;
+  let summary = "People join by a single-use join link or an email invitation, and only after you approve them.";
+  if (pending === 0) summary = "No one is waiting for approval.";
+  else if (pending !== null) summary = `${String(pending)} ${pending === 1 ? "person is" : "people are"} waiting for approval.`;
+  return (
+    <section aria-labelledby="joining-heading" data-testid="join-summary"
+      style={{ background: "#FFFFFF", border: "1.5px solid #E3E8EF", borderRadius: 12, marginTop: 24, padding: "16px 20px", display: "flex", gap: 16, flexWrap: "wrap", alignItems: "center", justifyContent: "space-between" }}>
+      <div style={{ flex: "1 1 240px", minWidth: 0 }}>
+        <h2 id="joining-heading" style={{ ...GF, fontSize: 15, fontWeight: 800, color: NAVY, margin: 0 }}>Joining this workspace</h2>
+        <p style={{ ...GF, fontSize: 13, color: SLATE, margin: "4px 0 0", lineHeight: 1.5 }}>{summary}</p>
+      </div>
+      <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
+        <Link to="/app/workspace/join-requests" style={link}>Review join requests →</Link>
+        <Link to="/app/workspace/join-links" style={link}>Join links →</Link>
+      </div>
+    </section>
+  );
+}
+
 const SYSTEM_ROLES = [
   { id: "role_owner",            name: "Owner" },
   { id: "role_administrator",    name: "Administrator" },
@@ -199,6 +240,10 @@ function MembersInner() {
   const { state, asyncLoadMembers } = useWorkspaceAdmin();
   const platform = usePlatform();
   const { isNarrow } = useViewport();
+  const { isReal } = useWorkspaceMode();
+  const roleOptions = isReal
+    ? REAL_WORKSPACE_ROLES.map(id => ({ id, name: REAL_ROLE_LABELS[id] }))
+    : SYSTEM_ROLES;
   // Join links, join requests and member access are for owners and
   // administrators only; the backend refuses everyone else regardless.
   const canManageJoin = platform.role === "owner" || platform.role === "administrator";
@@ -206,10 +251,10 @@ function MembersInner() {
   const workspaceId = platform.currentWorkspace?.id ?? (USE_REAL_BACKEND ? null : "demo");
   const [editing, setEditing] = useState<WorkspaceMemberSummary | null>(null);
   const [pendingCount, setPendingCount] = useState(0);
-  const [requestsKey, setRequestsKey] = useState(0);
   const [searchParams] = useSearchParams();
   const [search, setSearch] = useState(searchParams.get("search") ?? "");
-  const [status, setStatus] = useState<string>(searchParams.get("status") ?? "all");
+  // A real membership is always active: no suspended or deactivated filter.
+  const [status, setStatus] = useState<string>(isReal ? "all" : searchParams.get("status") ?? "all");
   const [roleId, setRoleId] = useState<string>(searchParams.get("role") ?? "all");
   const [sort, setSort] = useState<string>("name");
   const [dir, setDir] = useState<"asc" | "desc">("asc");
@@ -266,10 +311,10 @@ function MembersInner() {
           <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
             <h1 style={{ ...GF, fontSize: 22, fontWeight: 800, color: NAVY, margin: 0 }}>Member Directory</h1>
             {canManageJoin && pendingCount > 0 && (
-              <a href="#join-requests" data-testid="pending-requests-badge"
+              <Link to="/app/workspace/join-requests" data-testid="pending-requests-badge"
                 style={{ ...GF, fontSize: 12, fontWeight: 700, color: "#8A5A00", background: "#FFF8E1", border: "1px solid #F5D98B", borderRadius: 999, padding: "3px 10px", textDecoration: "none" }}>
                 {pendingCount} pending request{pendingCount === 1 ? "" : "s"}
-              </a>
+              </Link>
             )}
           </div>
           <Link to="/app/workspace/invitations"
@@ -285,24 +330,26 @@ function MembersInner() {
           <input type="search" placeholder="Search name or email…" value={search} onChange={e => setSearch(e.target.value)}
             style={{ ...GF, fontSize: 13, padding: "8px 14px", border: "1.5px solid #D1D9E0", borderRadius: 8, flex: "1 1 220px", minWidth: 160, outline: "none" }}
             aria-label="Search members" />
-          <select value={status} onChange={e => setStatus(e.target.value)}
-            style={{ ...GF, fontSize: 13, padding: "8px 12px", border: "1.5px solid #D1D9E0", borderRadius: 8, background: "#FFFFFF", cursor: "pointer" }}
-            aria-label="Filter by status">
-            <option value="all">All statuses</option>
-            <option value="active">Active</option>
-            <option value="suspended">Suspended</option>
-            <option value="deactivated">Deactivated</option>
-          </select>
+          {!isReal && (
+            <select value={status} onChange={e => setStatus(e.target.value)}
+              style={{ ...GF, fontSize: 13, padding: "8px 12px", border: "1.5px solid #D1D9E0", borderRadius: 8, background: "#FFFFFF", cursor: "pointer" }}
+              aria-label="Filter by status">
+              <option value="all">All statuses</option>
+              <option value="active">Active</option>
+              <option value="suspended">Suspended</option>
+              <option value="deactivated">Deactivated</option>
+            </select>
+          )}
           <select value={roleId} onChange={e => setRoleId(e.target.value)}
             style={{ ...GF, fontSize: 13, padding: "8px 12px", border: "1.5px solid #D1D9E0", borderRadius: 8, background: "#FFFFFF", cursor: "pointer" }}
             aria-label="Filter by role">
             <option value="all">All roles</option>
-            {SYSTEM_ROLES.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
+            {roleOptions.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
           </select>
         </div>
 
         {/* Bulk bar */}
-        {selected.size > 0 && (
+        {!isReal && selected.size > 0 && (
           <div role="toolbar" aria-label="Bulk actions" style={{ background: NAVY, borderRadius: 10, padding: "10px 18px", marginBottom: 12, display: "flex", alignItems: "center", gap: 16 }}>
             <span style={{ ...GF, fontSize: 13, color: "#FFFFFF", fontWeight: 600 }}>{selected.size} selected</span>
             <span style={{ ...GF, fontSize: 12, color: "#94A3B8", cursor: "pointer" }} onClick={() => setSelected(new Set())}>Clear</span>
@@ -332,9 +379,11 @@ function MembersInner() {
               <table role="table" style={{ width: "100%", borderCollapse: "collapse" }}>
                 <thead style={{ borderBottom: "2px solid #E3E8EF", background: "#F8FAFC" }}>
                   <tr>
-                    <th style={{ padding: "10px 12px 10px 16px", width: 40 }}>
-                      <input type="checkbox" checked={allSelected} onChange={toggleAll} aria-label="Select all members" />
-                    </th>
+                    {!isReal && (
+                      <th style={{ padding: "10px 12px 10px 16px", width: 40 }}>
+                        <input type="checkbox" checked={allSelected} onChange={toggleAll} aria-label="Select all members" />
+                      </th>
+                    )}
                     {sortHeader("name",       "Member")}
                     {sortHeader("status",     "Status")}
                     {sortHeader("role",       "Role")}
@@ -344,7 +393,7 @@ function MembersInner() {
                 </thead>
                 <tbody>
                   {state.members.map(m => (
-                    <MemberRow key={m.id} member={m} selected={selected.has(m.id)} onToggle={() => toggleOne(m.id)}
+                    <MemberRow key={m.id} member={m} selected={selected.has(m.id)} onToggle={isReal ? undefined : () => toggleOne(m.id)}
                       onEditAccess={editAccessFor(m)} />
                   ))}
                 </tbody>
@@ -360,11 +409,7 @@ function MembersInner() {
         )}
 
         {canManageJoin && workspaceId !== null && (
-          <>
-            <JoinRequestsSection workspaceId={workspaceId} refreshKey={requestsKey}
-              onPendingCount={setPendingCount} onDecided={reloadMembers} />
-            <JoinLinksSection workspaceId={workspaceId} onChanged={() => setRequestsKey(k => k + 1)} />
-          </>
+          <JoinSummaryCard workspaceId={workspaceId} onPendingCount={setPendingCount} />
         )}
       </div>
 

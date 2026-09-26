@@ -1,6 +1,8 @@
 // /app/workspace/invitations — Invitations management.
 // List pending/expired invitations, resend, revoke, send new invitation.
-// Frontend-only demonstration. No Burgundy. No eNotary.
+// Demo build: session-local, no email is sent. With a real backend the
+// invitation is real and emailed, and no demonstration notice is shown.
+// On phones the table becomes a list of cards. No Burgundy. No eNotary.
 
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router";
@@ -9,6 +11,7 @@ import type { WorkspaceInvitation, WorkspaceInvitationStatus, WorkspaceRoleId } 
 import { WORKSPACE_INVITATION_STATUS_LABELS } from "../../../models/workspace-admin";
 import { USE_REAL_BACKEND } from "../../../services/backend-flag";
 import { ASSIGNABLE_ROLES, REAL_ROLE_LABELS } from "../../../services/real/workspace-admin.service";
+import { useViewport } from "../../../hooks/useViewport";
 
 const GF    = { fontFamily: "'Geist', sans-serif" };
 const GM    = { fontFamily: "'Geist Mono', monospace" };
@@ -60,11 +63,12 @@ function InviteForm({ onDone }: { onDone: () => void }) {
       return;
     }
     setSending(true);
-    await asyncSendInvitation({ email: email.trim(), roleId: roleId as WorkspaceRoleId });
+    const ok = await asyncSendInvitation({ email: email.trim(), roleId: roleId as WorkspaceRoleId });
     await asyncLoadInvitations();
     setSending(false);
+    if (!ok) { setError("We couldn't send the invitation. Check the address and try again."); return; }
     setSuccess(true);
-    setEmail(""); setRoleId("role_member");
+    setEmail(""); setRoleId(USE_REAL_BACKEND ? "member" : "role_member");
     setTimeout(() => { setSuccess(false); onDone(); }, 1500);
   };
 
@@ -93,12 +97,16 @@ function InviteForm({ onDone }: { onDone: () => void }) {
       {error   && <p role="alert" style={{ ...GF, fontSize: 12, color: "#DC2626", margin: "8px 0 0" }}>{error}</p>}
       {/* No invitation email is sent. Saying "Invitation sent." would claim a
           delivery that did not happen. */}
-      {success && <p role="status" style={{ ...GF, fontSize: 12, color: "#16A34A", margin: "8px 0 0" }}>Invitation added to this demonstration. No email was sent.</p>}
+      {success && (
+        <p role="status" style={{ ...GF, fontSize: 12, color: "#16A34A", margin: "8px 0 0" }}>
+          {USE_REAL_BACKEND ? "Invitation sent." : "Invitation added to this demonstration. No email was sent."}
+        </p>
+      )}
     </div>
   );
 }
 
-function InvitationRow({ inv }: { inv: WorkspaceInvitation }) {
+function InvitationRow({ inv, asCard = false }: { inv: WorkspaceInvitation; asCard?: boolean }) {
   const { asyncResendInvitation, asyncRevokeInvitation, asyncLoadInvitations } = useWorkspaceAdmin();
   const [acting, setActing] = useState(false);
   const badge = STATUS_BADGE[inv.status];
@@ -117,12 +125,49 @@ function InvitationRow({ inv }: { inv: WorkspaceInvitation }) {
   };
 
   const isExpiring = inv.status === "pending" && new Date(inv.expiresAt) < new Date(Date.now() + 2 * 24 * 60 * 60 * 1000);
+  const when = inv.status === "pending"
+    ? `Expires ${new Date(inv.expiresAt).toLocaleDateString("en-PH")}`
+    : new Date(inv.sentAt).toLocaleDateString("en-PH");
+  const actions = (
+    <>
+      {(inv.status === "pending" || inv.status === "expired") && (
+        <button onClick={resend} disabled={acting} aria-label={`Resend invitation to ${inv.email}`}
+          style={{ ...GF, fontSize: 12, fontWeight: 600, color: AZURE, background: "none", border: "1.5px solid #BAD7F5", borderRadius: 6, padding: "6px 12px", minHeight: 32, cursor: acting ? "not-allowed" : "pointer", opacity: acting ? 0.5 : 1 }}>
+          Resend
+        </button>
+      )}
+      {inv.status === "pending" && (
+        <button onClick={revoke} disabled={acting} aria-label={`Revoke invitation to ${inv.email}`}
+          style={{ ...GF, fontSize: 12, color: "#DC2626", background: "none", border: "1.5px solid #FECACA", borderRadius: 6, padding: "6px 12px", minHeight: 32, cursor: acting ? "not-allowed" : "pointer", opacity: acting ? 0.5 : 1 }}>
+          Revoke
+        </button>
+      )}
+    </>
+  );
+
+  if (asCard) {
+    return (
+      <li data-testid={`invitation-${inv.id}`} style={{ borderBottom: "1px solid #F0F2F5", padding: "12px 14px", display: "flex", flexDirection: "column", gap: 6 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+          <span style={{ ...GF, fontSize: 14, fontWeight: 600, color: NAVY, overflowWrap: "anywhere", flex: "1 1 160px", minWidth: 0 }}>{inv.email}</span>
+          <span style={{ ...GM, fontSize: 10, padding: "3px 9px", borderRadius: 999, background: badge.bg, color: badge.color }}>
+            {WORKSPACE_INVITATION_STATUS_LABELS[inv.status]}
+          </span>
+        </div>
+        <div style={{ ...GF, fontSize: 12, color: SLATE }}>
+          {inv.roleName} · <span style={{ color: isExpiring ? "#E65100" : SILVER }}>{when}</span>
+        </div>
+        {inv.invitedByName && <div style={{ ...GM, fontSize: 11, color: SILVER }}>Invited by {inv.invitedByName}</div>}
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>{actions}</div>
+      </li>
+    );
+  }
 
   return (
     <tr style={{ borderBottom: "1px solid #F0F2F5" }}>
       <td style={{ padding: "12px 16px" }}>
-        <div style={{ ...GF, fontSize: 13, fontWeight: 600, color: NAVY }}>{inv.email}</div>
-        <div style={{ ...GM, fontSize: 11, color: SILVER }}>Invited by {inv.invitedByName}</div>
+        <div style={{ ...GF, fontSize: 13, fontWeight: 600, color: NAVY, overflowWrap: "anywhere" }}>{inv.email}</div>
+        {inv.invitedByName && <div style={{ ...GM, fontSize: 11, color: SILVER }}>Invited by {inv.invitedByName}</div>}
       </td>
       <td style={{ padding: "12px 12px", ...GF, fontSize: 13, color: SLATE }}>{inv.roleName}</td>
       <td style={{ padding: "12px 12px" }}>
@@ -131,29 +176,10 @@ function InvitationRow({ inv }: { inv: WorkspaceInvitation }) {
         </span>
       </td>
       <td style={{ padding: "12px 12px", ...GM, fontSize: 11, color: isExpiring ? "#E65100" : SILVER }}>
-        {inv.status === "pending"
-          ? `Expires ${new Date(inv.expiresAt).toLocaleDateString("en-PH")}`
-          : new Date(inv.sentAt).toLocaleDateString("en-PH")}
+        {when}
       </td>
       <td style={{ padding: "12px 16px" }}>
-        {inv.status === "pending" && (
-          <div style={{ display: "flex", gap: 8 }}>
-            <button onClick={resend} disabled={acting}
-              style={{ ...GF, fontSize: 12, fontWeight: 600, color: AZURE, background: "none", border: "1.5px solid #BAD7F5", borderRadius: 6, padding: "4px 12px", cursor: acting ? "not-allowed" : "pointer", opacity: acting ? 0.5 : 1 }}>
-              Resend
-            </button>
-            <button onClick={revoke} disabled={acting}
-              style={{ ...GF, fontSize: 12, color: "#DC2626", background: "none", border: "1.5px solid #FECACA", borderRadius: 6, padding: "4px 12px", cursor: acting ? "not-allowed" : "pointer", opacity: acting ? 0.5 : 1 }}>
-              Revoke
-            </button>
-          </div>
-        )}
-        {inv.status === "expired" && (
-          <button onClick={resend} disabled={acting}
-            style={{ ...GF, fontSize: 12, fontWeight: 600, color: AZURE, background: "none", border: "1.5px solid #BAD7F5", borderRadius: 6, padding: "4px 12px", cursor: acting ? "not-allowed" : "pointer" }}>
-            Resend
-          </button>
-        )}
+        <div style={{ display: "flex", gap: 8 }}>{actions}</div>
       </td>
     </tr>
   );
@@ -161,6 +187,7 @@ function InvitationRow({ inv }: { inv: WorkspaceInvitation }) {
 
 function InvitationsInner() {
   const { state, asyncLoadInvitations } = useWorkspaceAdmin();
+  const { isNarrow } = useViewport();
   const [showForm, setShowForm] = useState(false);
   const [filter, setFilter] = useState<"all" | "pending" | "expired" | "revoked">("all");
 
@@ -187,11 +214,11 @@ function InvitationsInner() {
         </div>
       </header>
 
-      <div style={{ maxWidth: 900, margin: "24px auto 0", padding: "0 24px" }}>
+      <div style={{ maxWidth: 900, margin: "24px auto 0", padding: isNarrow ? "0 16px" : "0 24px" }}>
         {showForm && <InviteForm onDone={() => setShowForm(false)} />}
 
         {/* Filter tabs */}
-        <div style={{ display: "flex", gap: 4, marginBottom: 14 }}>
+        <div style={{ display: "flex", gap: 4, marginBottom: 14, flexWrap: "wrap" }}>
           {(["all", "pending", "expired", "revoked"] as const).map(f => (
             <button key={f} onClick={() => setFilter(f)}
               style={{ ...GF, fontSize: 12, fontWeight: 600, padding: "5px 14px", borderRadius: 999, border: "none", cursor: "pointer",
@@ -215,6 +242,10 @@ function InvitationsInner() {
                 </button>
               )}
             </div>
+          ) : isNarrow ? (
+            <ul aria-label="Invitations" style={{ listStyle: "none", margin: 0, padding: 0 }}>
+              {filtered.map(inv => <InvitationRow key={inv.id} inv={inv} asCard />)}
+            </ul>
           ) : (
             <div style={{ overflowX: "auto" }}>
               <table role="table" style={{ width: "100%", borderCollapse: "collapse" }}>
@@ -235,10 +266,12 @@ function InvitationsInner() {
           )}
         </div>
 
-        <p style={{ ...GF, fontSize: 12, color: SLATE, marginTop: 16, padding: "10px 16px", background: "#FFFBEB", border: "1px solid #FDE68A", borderRadius: 8 }}>
-          Invitation emails are not actually sent in this demonstration.
-          Status changes are session-local and reset on reload.
-        </p>
+        {!USE_REAL_BACKEND && (
+          <p style={{ ...GF, fontSize: 12, color: SLATE, marginTop: 16, padding: "10px 16px", background: "#FFFBEB", border: "1px solid #FDE68A", borderRadius: 8 }}>
+            Invitation emails are not actually sent in this demonstration.
+            Status changes are session-local and reset on reload.
+          </p>
+        )}
       </div>
     </div>
   );

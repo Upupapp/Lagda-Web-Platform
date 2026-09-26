@@ -67,6 +67,37 @@ class RealWorkspaceService {
       { method: "PATCH", body: { name } },
     );
   }
+
+  // GET /workspaces/:workspaceId — the workspace's current name, the
+  // caller's role in it, and when it was created. Any member may read it.
+  async get(workspaceId: string): Promise<RealWorkspaceDetail> {
+    return apiRequest<RealWorkspaceDetail>(`/workspaces/${encodeURIComponent(workspaceId)}`);
+  }
+
+  // GET /workspaces/:workspaceId/access — what the CALLER may do here: their
+  // role and the capabilities it and any granted privileges add up to. Any
+  // member may ask about themselves (the backend's own comment: a member who
+  // could not discover their own authority could not render a usable
+  // interface). Informational only — every mutation is re-checked server-side.
+  async getAccess(workspaceId: string): Promise<RealWorkspaceAccess> {
+    return apiRequest<RealWorkspaceAccess>(`/workspaces/${encodeURIComponent(workspaceId)}/access`);
+  }
+}
+
+export interface RealWorkspaceDetail {
+  workspaceId: string;
+  name: string;
+  role: BackendWorkspaceRole;
+  createdAt: number;
+}
+
+export interface RealWorkspaceAccess {
+  workspaceId: string;
+  membershipId: string;
+  role: BackendWorkspaceRole;
+  capabilities: string[];
+  /** The caller's own typed title; null means the role's name ("New Comer" for member). */
+  roleTitle?: string | null;
 }
 
 export const realWorkspaceService = new RealWorkspaceService();

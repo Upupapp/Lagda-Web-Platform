@@ -1,11 +1,17 @@
 // /app/workspace — Workspace administration overview.
 // Shows workspace identity, health summary, attention items, quick stats.
-// Frontend-only demonstration. No Burgundy. No eNotary references.
+//
+// Two builds, one route: with a real backend and an active workspace the
+// page is RealWorkspaceOverview (real counts, no demonstration notice, no
+// invented facts). The demo build keeps the fictional overview below.
+// No Burgundy. No eNotary references.
 
 import React, { useEffect } from "react";
 import { Link } from "react-router";
 import { WorkspaceAdminProvider, useWorkspaceAdmin } from "../../../context/WorkspaceAdminContext";
 import type { WorkspaceAttentionItem } from "../../../models/workspace-admin";
+import { useWorkspaceMode } from "../../../hooks/useWorkspaceAccess";
+import { RealWorkspaceOverview } from "./real/RealWorkspaceOverview";
 
 const GF    = { fontFamily: "'Geist', sans-serif" };
 const GM    = { fontFamily: "'Geist Mono', monospace" };
@@ -156,6 +162,8 @@ function WorkspaceOverviewInner() {
               People
             </h2>
             <QuickLinkRow label="Members"          path="/app/workspace/members"     description="Who is in this workspace" />
+            <QuickLinkRow label="Join requests"    path="/app/workspace/join-requests" description="People waiting for you to approve or decline them" />
+            <QuickLinkRow label="Join links"       path="/app/workspace/join-links"  description="Single-use links that let someone ask to join" />
             <QuickLinkRow label="Invitations"      path="/app/workspace/invitations" description="People invited but not yet joined" />
             <QuickLinkRow label="Teams"            path="/app/workspace/teams"       description="Group members by department or function" />
             {/* "Roles & Permissions" was two abstract nouns. This asks the
@@ -223,6 +231,8 @@ function WorkspaceOverviewInner() {
 }
 
 export function WorkspaceOverviewPage() {
+  const { isReal, workspaceId } = useWorkspaceMode();
+  if (isReal && workspaceId !== null) return <RealWorkspaceOverview key={workspaceId} workspaceId={workspaceId} />;
   return (
     <WorkspaceAdminProvider>
       <WorkspaceOverviewInner />

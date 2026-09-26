@@ -27,8 +27,10 @@ function message(err: unknown): string {
 
 type Modal = { kind: "approve"; request: JoinRequest } | { kind: "decline"; request: JoinRequest } | null;
 
-export function JoinRequestsSection({ workspaceId, refreshKey = 0, onDecided, onPendingCount }: {
+export function JoinRequestsSection({ workspaceId, refreshKey = 0, onDecided, onPendingCount, flush = false }: {
   workspaceId: string;
+  /** On its own page: no top margin. */
+  flush?: boolean;
   /** Bumped by the page when something else (a used link) may have added one. */
   refreshKey?: number;
   onDecided?: () => void;
@@ -68,7 +70,7 @@ export function JoinRequestsSection({ workspaceId, refreshKey = 0, onDecided, on
 
   return (
     <section id="join-requests" aria-labelledby={headingId} data-testid="join-requests-section"
-      style={{ background: "#FFFFFF", border: `1.5px solid ${BORDER}`, borderRadius: 12, marginTop: 24, overflow: "hidden" }}>
+      style={{ background: "#FFFFFF", border: `1.5px solid ${BORDER}`, borderRadius: 12, marginTop: flush ? 0 : 24, overflow: "hidden" }}>
       <div style={{ padding: isNarrow ? 16 : "18px 20px", borderBottom: `1px solid ${BORDER}` }}>
         <h2 id={headingId} style={{ ...GF, fontSize: 16, fontWeight: 800, color: NAVY, margin: 0, display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
           Join requests

@@ -1,6 +1,10 @@
 // /app/workspace/members/:memberId — Member detail.
 // Shows profile, effective permissions, role/team assignment, lifecycle actions.
-// Frontend-only demonstration. No Burgundy. No eNotary.
+// Demo build: fictional lifecycle (suspend / reactivate / deactivate) and
+// effective permissions. With a real backend: role change, remove, teams
+// (organization units) and what the role and privileges allow — there is no
+// suspend or deactivate, since a real membership exists or it does not.
+// No Burgundy. No eNotary.
 
 import React, { useEffect, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router";
@@ -11,6 +15,8 @@ import { mockWorkspaceAdminService } from "../../../services/mock/workspace-admi
 import { USE_REAL_BACKEND } from "../../../services/backend-flag";
 import { ASSIGNABLE_ROLES, REAL_ROLE_LABELS } from "../../../services/real/workspace-admin.service";
 import { Z } from "../../../utils/z-index";
+import { useWorkspaceMode } from "../../../hooks/useWorkspaceAccess";
+import { RealMemberAbilities, RealMemberTeams } from "./real/RealMemberSections";
 
 const GF    = { fontFamily: "'Geist', sans-serif" };
 const GM    = { fontFamily: "'Geist Mono', monospace" };
@@ -102,6 +108,7 @@ function MemberDetailInner() {
     asyncUpdateMemberRole, asyncLoadRoles,
   } = useWorkspaceAdmin();
 
+  const { isReal, workspaceId } = useWorkspaceMode();
   const [modal, setModal] = useState<"suspend" | "deactivate" | "remove" | null>(null);
   const [newRoleId, setNewRoleId] = useState<string>("");
   const [roleUpdating, setRoleUpdating] = useState(false);
@@ -320,24 +327,39 @@ function MemberDetailInner() {
             </section>
           )}
 
+          {isReal && workspaceId !== null && <RealMemberTeams workspaceId={workspaceId} userId={m.userId} />}
+
           {/* Member info */}
           <section style={{ background: "#FFFFFF", border: "1.5px solid #E3E8EF", borderRadius: 12, padding: "18px 20px" }}>
             <h2 style={{ ...GF, fontSize: 13, fontWeight: 700, color: NAVY, margin: "0 0 12px", textTransform: "uppercase", letterSpacing: "0.05em" }}>Details</h2>
-            <dl style={{ margin: 0, display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px 20px" }}>
-              {[
-                { label: "Joined",        value: new Date(m.joinedAt).toLocaleDateString("en-PH") },
-                { label: "Last active",   value: m.lastActiveAt ? new Date(m.lastActiveAt).toLocaleDateString("en-PH") : "—" },
-                { label: "Invited by",    value: m.invitedByName ?? "—" },
-                { label: "User ID",       value: m.userId },
-              ].map(({ label, value }) => (
+            <dl style={{ margin: 0, display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(160px, 100%), 1fr))", gap: "10px 20px" }}>
+              {(isReal
+                ? [
+                  { label: "Joined",      value: new Date(m.joinedAt).toLocaleDateString("en-PH") },
+                  { label: "Email",       value: m.email },
+                ]
+                : [
+                  { label: "Joined",        value: new Date(m.joinedAt).toLocaleDateString("en-PH") },
+                  { label: "Last active",   value: m.lastActiveAt ? new Date(m.lastActiveAt).toLocaleDateString("en-PH") : "—" },
+                  { label: "Invited by",    value: m.invitedByName ?? "—" },
+                  { label: "User ID",       value: m.userId },
+                ]
+              ).map(({ label, value }) => (
                 <div key={label}>
                   <dt style={{ ...GM, fontSize: 10, color: SILVER, textTransform: "uppercase", letterSpacing: "0.05em" }}>{label}</dt>
-                  <dd style={{ ...GF, fontSize: 13, color: NAVY, margin: "2px 0 0" }}>{value}</dd>
+                  <dd style={{ ...GF, fontSize: 13, color: NAVY, margin: "2px 0 0", overflowWrap: "anywhere" }}>{value}</dd>
                 </div>
               ))}
             </dl>
           </section>
         </div>
+
+        {isReal && (
+          <div style={{ flex: "1 1 300px", minWidth: 0 }}>
+            <RealMemberAbilities roleId={m.roleId}
+              canRequestDocuments={m.canRequestDocuments === true} canAssignSigners={m.canAssignSigners === true} />
+          </div>
+        )}
 
         {/* Right: effective permissions -- demo-only (no real custom-role
             permission matrix yet; the real backend's 7 roles have fixed,

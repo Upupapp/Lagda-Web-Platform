@@ -70,7 +70,7 @@ interface WireMember {
   canAssignSigners?: boolean;
 }
 
-interface WireInvitation {
+export interface WireInvitation {
   invitationId: string;
   email: string;
   role: BackendWorkspaceRole;
@@ -101,6 +101,8 @@ function toSummary(member: WireMember): WorkspaceMemberSummary {
     roleTitle: member.roleTitle ?? null,
     canRequestDocuments: member.canRequestDocuments === true,
     canAssignSigners: member.canAssignSigners === true,
+    userId: member.userId,
+    isCurrentUser: member.isCurrentUser,
   };
 }
 

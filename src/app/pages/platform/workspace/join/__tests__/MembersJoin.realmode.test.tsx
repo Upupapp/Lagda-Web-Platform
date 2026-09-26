@@ -1,6 +1,7 @@
-// Members page with a real backend (078): join requests (approve sends the
-// typed title and chosen privileges), "New Comer" labelling, Edit access,
-// and the owner/administrator gate.
+// Members and Join requests pages with a real backend (078): join requests
+// (approve sends the typed title and chosen privileges) on their own page,
+// the Members page's summary card, "New Comer" labelling, Edit access, and
+// the owner/administrator gate.
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, within } from "@testing-library/react";
@@ -15,6 +16,7 @@ const platform = { role: "owner" as string | null, currentWorkspace: { id: "ws_1
 vi.mock("../../../../../context/PlatformContext", () => ({ usePlatform: () => platform }));
 
 import { MembersPage } from "../../MembersPage";
+import { JoinRequestsPage } from "../../JoinRequestsPage";
 import { memberRoleLabel, type WorkspaceRoleId } from "../../../../../models/workspace-admin";
 
 const role = (id: string) => id as WorkspaceRoleId;
@@ -42,7 +44,7 @@ beforeEach(() => {
   platform.role = "owner";
   vi.stubGlobal("fetch", vi.fn((url: string, init?: RequestInit) => {
     const method = init?.method ?? "GET";
-    const path = url.replace("http://api.test", "");
+    const path = url.replace("http://api.test", "").replace(/\?.*$/, "");
     const body: unknown = init?.body ? JSON.parse(init.body as string) : undefined;
     calls.push({ method, path, body });
     if (method === "GET" && path === "/workspaces/ws_1/members") return Promise.resolve(json(200, { members: MEMBERS }));
@@ -57,6 +59,10 @@ beforeEach(() => {
 
 function renderPage() {
   return render(<MemoryRouter initialEntries={["/app/workspace/members"]}><MembersPage /></MemoryRouter>);
+}
+
+function renderRequests() {
+  return render(<MemoryRouter initialEntries={["/app/workspace/join-requests"]}><JoinRequestsPage /></MemoryRouter>);
 }
 
 describe("memberRoleLabel", () => {
@@ -82,20 +88,32 @@ describe("Members page — join requests and access", () => {
     expect(screen.getByRole("button", { name: "Edit access for Maria Santos" })).toBeInTheDocument();
   });
 
-  it("lists pending requests first with source, and a pending badge", async () => {
+  it("summarises waiting requests on the Members page and links to their pages", async () => {
     renderPage();
+    expect(await screen.findByTestId("pending-requests-badge")).toHaveTextContent("2 pending requests");
+    const summary = screen.getByTestId("join-summary");
+    expect(summary).toHaveTextContent("2 people are waiting for approval.");
+    expect(within(summary).getByRole("link", { name: /Review join requests/ })).toHaveAttribute("href", "/app/workspace/join-requests");
+    expect(within(summary).getByRole("link", { name: /Join links/ })).toHaveAttribute("href", "/app/workspace/join-links");
+    // The full lists live on their own pages now.
+    expect(screen.queryByTestId("join-requests-section")).toBeNull();
+    expect(screen.queryByTestId("join-links-section")).toBeNull();
+  });
+
+  it("lists pending requests first with source, and a waiting badge", async () => {
+    renderRequests();
     const liza = await screen.findByTestId("join-request-jr_1");
     expect(liza).toHaveTextContent("liza@example.com");
     expect(liza).toHaveTextContent("Client intake");
     expect(liza).toHaveTextContent("Join link: Front desk");
     expect(screen.getByTestId("join-request-jr_2")).toHaveTextContent("Email invitation");
     expect(screen.queryByTestId("join-request-jr_3")).toBeNull(); // history collapsed
-    expect(await screen.findByTestId("pending-requests-badge")).toHaveTextContent("2 pending requests");
+    expect(await screen.findByTestId("pending-requests-badge")).toHaveTextContent("2 waiting");
   });
 
   it("approve sends the typed role title and the chosen privileges", async () => {
     const user = userEvent.setup();
-    renderPage();
+    renderRequests();
     await user.click(await screen.findByRole("button", { name: "Approve Liza Tan" }));
     const dialog = screen.getByRole("dialog", { name: "Approve Liza Tan" });
     expect(dialog).toHaveTextContent('Without a role title, they appear as "New Comer"');
@@ -110,12 +128,12 @@ describe("Members page — join requests and access", () => {
     const approve = calls.find((c) => c.path === "/workspaces/ws_1/join-requests/jr_1/approve");
     expect(approve?.method).toBe("POST");
     expect(approve?.body).toEqual({ roleTitle: "Finance Associate", canRequestDocuments: true, canAssignSigners: false });
-    expect(await screen.findByTestId("pending-requests-badge")).toHaveTextContent("1 pending request");
+    expect(await screen.findByTestId("pending-requests-badge")).toHaveTextContent("1 waiting");
   });
 
   it("approve with no title sends roleTitle null", async () => {
     const user = userEvent.setup();
-    renderPage();
+    renderRequests();
     await user.click(await screen.findByRole("button", { name: "Approve Liza Tan" }));
     await user.click(within(screen.getByRole("dialog")).getByRole("button", { name: "Approve" }));
     expect(calls.find((c) => c.path.endsWith("/jr_1/approve"))?.body).toEqual({
@@ -125,7 +143,7 @@ describe("Members page — join requests and access", () => {
 
   it("decline asks for confirmation", async () => {
     const user = userEvent.setup();
-    renderPage();
+    renderRequests();
     await user.click(await screen.findByRole("button", { name: "Decline Ramon Diaz" }));
     expect(calls.some((c) => c.path.endsWith("/decline"))).toBe(false);
     await user.click(within(screen.getByRole("dialog")).getByRole("button", { name: "Decline request" }));
@@ -151,9 +169,26 @@ describe("Members page — join requests and access", () => {
     platform.role = "sender";
     renderPage();
     await screen.findByTestId("member-role-m_new");
-    expect(screen.queryByTestId("join-links-section")).toBeNull();
-    expect(screen.queryByTestId("join-requests-section")).toBeNull();
+    expect(screen.queryByTestId("join-summary")).toBeNull();
     expect(screen.queryByRole("button", { name: /Edit access/ })).toBeNull();
     expect(calls.some((c) => c.path.includes("join-"))).toBe(false);
+  });
+
+  it("the Join requests page says so to non-administrators and asks nothing", async () => {
+    platform.role = "sender";
+    renderRequests();
+    expect(await screen.findByText(/Only the workspace's owner and administrators can review join requests/)).toBeInTheDocument();
+    expect(screen.queryByTestId("join-requests-section")).toBeNull();
+    expect(calls.some((c) => c.path.includes("join-"))).toBe(false);
+  });
+
+  it("hides suspend-era filters and bulk selection with a real backend", async () => {
+    renderPage();
+    await screen.findByTestId("member-role-m_new");
+    expect(screen.queryByLabelText("Filter by status")).toBeNull();
+    expect(screen.queryByLabelText("Select all members")).toBeNull();
+    const roleFilter = screen.getByLabelText("Filter by role");
+    expect(within(roleFilter).getByRole("option", { name: "New Comer" })).toHaveValue("member");
+    expect(within(roleFilter).queryByRole("option", { name: "Billing Admin" })).toBeNull();
   });
 });

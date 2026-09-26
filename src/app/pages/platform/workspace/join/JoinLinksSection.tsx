@@ -42,7 +42,11 @@ type Modal =
   | { kind: "qr"; ticket: JoinTicket }
   | null;
 
-export function JoinLinksSection({ workspaceId, onChanged }: { workspaceId: string; onChanged?: () => void }) {
+export function JoinLinksSection({ workspaceId, onChanged, flush = false }: {
+  workspaceId: string; onChanged?: () => void;
+  /** On its own page: no top margin. */
+  flush?: boolean;
+}) {
   const { isNarrow } = useViewport();
   const [tickets, setTickets] = useState<JoinTicket[] | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -88,7 +92,7 @@ export function JoinLinksSection({ workspaceId, onChanged }: { workspaceId: stri
 
   return (
     <section aria-labelledby={headingId} data-testid="join-links-section"
-      style={{ background: "#FFFFFF", border: `1.5px solid ${BORDER}`, borderRadius: 12, marginTop: 24, overflow: "hidden" }}>
+      style={{ background: "#FFFFFF", border: `1.5px solid ${BORDER}`, borderRadius: 12, marginTop: flush ? 0 : 24, overflow: "hidden" }}>
       <div style={{ padding: isNarrow ? "16px" : "18px 20px", display: "flex", gap: 12, alignItems: isNarrow ? "stretch" : "center", justifyContent: "space-between", flexDirection: isNarrow ? "column" : "row" }}>
         <div>
           <h2 id={headingId} style={{ ...GF, fontSize: 16, fontWeight: 800, color: NAVY, margin: 0 }}>Join links</h2>

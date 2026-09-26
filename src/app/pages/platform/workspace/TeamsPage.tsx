@@ -1,11 +1,15 @@
 // /app/workspace/teams — Teams directory.
 // List active/archived teams, create team, quick stats.
-// Frontend-only demonstration. No Burgundy. No eNotary.
+// Demo build: the fictional teams below. With a real backend, teams are the
+// backend's organization units — see real/RealTeamsPage.tsx.
+// No Burgundy. No eNotary.
 
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router";
 import { WorkspaceAdminProvider, useWorkspaceAdmin } from "../../../context/WorkspaceAdminContext";
 import { Z } from "../../../utils/z-index";
+import { useWorkspaceMode } from "../../../hooks/useWorkspaceAccess";
+import { RealTeamsPage } from "./real/RealTeamsPage";
 
 const GF    = { fontFamily: "'Geist', sans-serif" };
 const GM    = { fontFamily: "'Geist Mono', monospace" };
@@ -167,6 +171,8 @@ function TeamsInner() {
 }
 
 export function TeamsPage() {
+  const { isReal, workspaceId } = useWorkspaceMode();
+  if (isReal && workspaceId !== null) return <RealTeamsPage key={workspaceId} workspaceId={workspaceId} />;
   return (
     <WorkspaceAdminProvider>
       <TeamsInner />

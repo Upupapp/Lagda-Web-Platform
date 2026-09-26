@@ -153,6 +153,12 @@ export interface PlatformContextValue {
   createWorkspace: (name: string) => Promise<{ ok: true; workspace: PlatformWorkspace } | { ok: false; error: string }>;
   signOut: () => Promise<void>;
   switchWorkspace:            (workspaceId: string) => void;
+  /**
+   * Applies a rename the backend has ALREADY confirmed (PATCH
+   * /workspaces/:id succeeded) to the session's workspace list, so the
+   * sidebar and switcher show the new name without a full refresh.
+   */
+  applyWorkspaceRename:       (workspaceId: string, name: string) => void;
   markNotificationRead:       (id: string) => void;
   markAllNotificationsRead:   () => void;
   expireSession:              () => void;
@@ -476,6 +482,17 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
     // For demo, keep existing notifications.
   }, [workspaces]);
 
+  const applyWorkspaceRename = useCallback((workspaceId: string, name: string) => {
+    const rename = (w: PlatformWorkspace): PlatformWorkspace => {
+      if (w.id !== workspaceId) return w;
+      const parts = name.trim().split(/\s+/).filter(Boolean);
+      const initials = ((parts[0]?.[0] ?? "") + (parts.length > 1 ? parts[parts.length - 1]?.[0] ?? "" : "")).toUpperCase();
+      return { ...w, name, initials: initials || w.initials };
+    };
+    setWorkspaces((list) => list.map(rename));
+    setCurrentWorkspace((cw) => (cw ? rename(cw) : cw));
+  }, []);
+
   const markNotificationRead = useCallback((id: string) => {
     setNotifications((ns) => ns.map((n) => n.id === id ? { ...n, isRead: true } : n));
   }, []);
@@ -513,7 +530,7 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
       notifications, unreadCount, flags,
       activeLaunchProfile: ACTIVE_LAUNCH_PROFILE,
       resolveCapability: resolveCapabilityFn,
-      signIn, refreshSessionFromBackend, createWorkspace, signOut, switchWorkspace,
+      signIn, refreshSessionFromBackend, createWorkspace, signOut, switchWorkspace, applyWorkspaceRename,
       markNotificationRead, markAllNotificationsRead,
       expireSession, hasPermission, hasFlag,
     }}>

@@ -1,11 +1,15 @@
 // /app/workspace/settings — Workspace settings.
 // Workspace identity, default role, security settings, session policy.
-// Frontend-only demonstration. No Burgundy. No eNotary.
+// Demo build: the session-local settings below. With a real backend only
+// what the backend stores (the name) is shown — see
+// real/RealWorkspaceSettingsPage.tsx. No Burgundy. No eNotary.
 
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router";
 import { WorkspaceAdminProvider, useWorkspaceAdmin } from "../../../context/WorkspaceAdminContext";
 import type { WorkspaceSettings } from "../../../models/workspace-admin";
+import { useWorkspaceMode } from "../../../hooks/useWorkspaceAccess";
+import { RealWorkspaceSettingsPage } from "./real/RealWorkspaceSettingsPage";
 
 const GF    = { fontFamily: "'Geist', sans-serif" };
 const NAVY  = "#07111F";
@@ -213,6 +217,8 @@ function SettingsInner() {
 }
 
 export function WorkspaceSettingsPage() {
+  const { isReal, workspaceId } = useWorkspaceMode();
+  if (isReal && workspaceId !== null) return <RealWorkspaceSettingsPage key={workspaceId} workspaceId={workspaceId} />;
   return (
     <WorkspaceAdminProvider>
       <SettingsInner />

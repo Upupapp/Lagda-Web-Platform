@@ -1,6 +1,8 @@
 // /app/workspace/roles — Roles directory.
 // System roles (read-only) and custom roles (editable). Create new custom role.
-// Frontend-only demonstration. No Burgundy. No eNotary.
+// Demo build: fictional system and custom roles. With a real backend the
+// page is the read-only matrix of the seven fixed roles — see
+// real/RealRolesPages.tsx. No Burgundy. No eNotary.
 
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router";
@@ -8,6 +10,8 @@ import { WorkspaceAdminProvider, useWorkspaceAdmin } from "../../../context/Work
 import type { WorkspacePermission } from "../../../models/workspace-admin";
 import { ALL_PERMISSIONS } from "../../../models/workspace-admin";
 import { Z } from "../../../utils/z-index";
+import { useWorkspaceMode } from "../../../hooks/useWorkspaceAccess";
+import { RealRolesPage } from "./real/RealRolesPages";
 
 const GF    = { fontFamily: "'Geist', sans-serif" };
 const GM    = { fontFamily: "'Geist Mono', monospace" };
@@ -215,6 +219,8 @@ function RolesInner() {
 }
 
 export function RolesPage() {
+  const { isReal, workspaceId } = useWorkspaceMode();
+  if (isReal && workspaceId !== null) return <RealRolesPage key={workspaceId} workspaceId={workspaceId} />;
   return (
     <WorkspaceAdminProvider>
       <RolesInner />

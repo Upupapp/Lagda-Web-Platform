@@ -1,12 +1,16 @@
 // /app/workspace/teams/:teamId — Team detail.
 // Shows team info, member list, add/remove members, archive/restore.
-// Frontend-only demonstration. No Burgundy. No eNotary.
+// Demo build: the fictional team below. With a real backend, a team is one
+// organization unit — see real/RealTeamDetailPage.tsx.
+// No Burgundy. No eNotary.
 
 import React, { useEffect, useState } from "react";
 import { useParams, Link } from "react-router";
 import { WorkspaceAdminProvider, useWorkspaceAdmin } from "../../../context/WorkspaceAdminContext";
 import type { WorkspaceTeamId, WorkspaceMemberId } from "../../../models/workspace-admin";
 import { Z } from "../../../utils/z-index";
+import { useWorkspaceMode } from "../../../hooks/useWorkspaceAccess";
+import { RealTeamDetailPage } from "./real/RealTeamDetailPage";
 
 const GF    = { fontFamily: "'Geist', sans-serif" };
 const GM    = { fontFamily: "'Geist Mono', monospace" };
@@ -218,6 +222,11 @@ function TeamDetailInner() {
 }
 
 export function TeamDetailPage() {
+  const { teamId } = useParams<{ teamId: string }>();
+  const { isReal, workspaceId } = useWorkspaceMode();
+  if (isReal && workspaceId !== null && teamId) {
+    return <RealTeamDetailPage key={`${workspaceId}:${teamId}`} workspaceId={workspaceId} teamId={teamId} />;
+  }
   return (
     <WorkspaceAdminProvider>
       <TeamDetailInner />
