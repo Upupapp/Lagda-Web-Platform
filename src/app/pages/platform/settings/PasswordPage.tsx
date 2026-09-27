@@ -1,187 +1,158 @@
-// /app/settings/security/password — Password-update demonstration.
-// Frontend-only. Values are NOT logged, persisted, or validated against a server.
-// All values clear on unmount, cancellation, and after successful simulation.
+// /app/settings/security/password — change your password.
+//
+// With a backend: POST /me/password { currentPassword, newPassword }. A wrong
+// current password is a 401 INVALID_CREDENTIALS and a rejected new one a 422
+// INVALID_PASSWORD; both are shown against the field they are about. On
+// success the backend keeps THIS session and signs out every other one, and
+// the page says how many. Demo build: nothing is changed, and it says so.
+//
+// Values live only in this component's state and are cleared on success,
+// on Clear and on unmount. They are never logged or stored.
 
 import React, { useEffect, useRef, useState } from "react";
-import { SettingsPage, SSection, SField, BTN_SECONDARY } from "./SettingsShell";
-import { mockSecuritySettingsService } from "../../../services/mock/settings.service";
+import { Eye, EyeOff, KeyRound, ListChecks, CircleCheck } from "lucide-react";
+import { SettingsPage, SSection, SField, BTN_PRIMARY, BTN_SECONDARY, INPUT_STYLE, Notice, SET } from "./SettingsShell";
+import { securityData, IS_LIVE } from "./settings-data";
+import { PASSWORD_MIN_LENGTH } from "../../../services/real/security-settings.service";
 
-const GF    = { fontFamily: "'Geist', sans-serif" };
-const AZURE = "#0078D4";
-const SLATE = "#64748B";
-const RED   = "#DC2626";
+const GF = { fontFamily: SET.FONT };
 
 const COMMON_PATTERNS = ["password", "123456", "qwerty", "lagda", "letmein", "welcome"];
 
-function strengthLabel(pwd: string): { label: string; color: string; width: number } {
+function strengthOf(pwd: string): { label: string; color: string; width: number } {
   if (pwd.length === 0) return { label: "", color: "#E2E8F0", width: 0 };
   let score = 0;
-  if (pwd.length >= 8) score++;
+  if (pwd.length >= PASSWORD_MIN_LENGTH) score++;
   if (pwd.length >= 12) score++;
-  if (/[A-Z]/.test(pwd)) score++;
+  if (/[A-Z]/.test(pwd) && /[a-z]/.test(pwd)) score++;
   if (/[0-9]/.test(pwd)) score++;
   if (/[^a-zA-Z0-9]/.test(pwd)) score++;
   if (COMMON_PATTERNS.some(p => pwd.toLowerCase().includes(p))) score = Math.max(0, score - 2);
-  if (score <= 1) return { label: "Weak", color: RED, width: 25 };
-  if (score <= 2) return { label: "Fair", color: "#D97706", width: 50 };
-  if (score <= 3) return { label: "Good", color: "#16A34A", width: 75 };
-  return { label: "Strong", color: "#15803D", width: 100 };
+  if (score <= 1) return { label: "Weak", color: "#B91C1C", width: 25 };
+  if (score <= 2) return { label: "Fair", color: "#B45309", width: 50 };
+  if (score <= 3) return { label: "Good", color: "#15803D", width: 75 };
+  return { label: "Strong", color: "#166534", width: 100 };
+}
+
+function PasswordInput({ id, value, onChange, show, onToggle, autoComplete, invalid, describedBy, toggleLabel }: {
+  id: string; value: string; onChange: (v: string) => void; show: boolean; onToggle: () => void;
+  autoComplete: string; invalid: boolean; describedBy?: string; toggleLabel: string;
+}) {
+  return (
+    <div style={{ position: "relative" }}>
+      <input id={id} type={show ? "text" : "password"} autoComplete={autoComplete} value={value}
+        onChange={e => { onChange(e.target.value); }} aria-invalid={invalid} aria-describedby={describedBy}
+        style={{ ...INPUT_STYLE, paddingRight: 44, borderColor: invalid ? SET.DANGER : "#CBD5E1" }} />
+      <button type="button" onClick={onToggle} aria-label={show ? `Hide ${toggleLabel}` : `Show ${toggleLabel}`} aria-pressed={show}
+        style={{ position: "absolute", right: 4, top: "50%", transform: "translateY(-50%)", width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center", background: "none", border: "none", borderRadius: 6, cursor: "pointer", color: SET.SLATE }}>
+        {show ? <EyeOff size={16} aria-hidden /> : <Eye size={16} aria-hidden />}
+      </button>
+    </div>
+  );
 }
 
 export function PasswordPage() {
-  const [current, setCurrent]     = useState("");
-  const [newPwd, setNewPwd]       = useState("");
-  const [confirm, setConfirm]     = useState("");
-  const [showCurr, setShowCurr]   = useState(false);
-  const [showNew, setShowNew]     = useState(false);
-  const [showConf, setShowConf]   = useState(false);
+  const [current, setCurrent] = useState("");
+  const [next, setNext] = useState("");
+  const [confirm, setConfirm] = useState("");
+  const [show, setShow] = useState({ current: false, next: false, confirm: false });
   const [submitting, setSubmitting] = useState(false);
-  const [done, setDone]           = useState(false);
-  const [errors, setErrors]       = useState<Record<string, string>>({});
-  const isMounted = useRef(true);
+  const [errors, setErrors] = useState<{ current?: string; next?: string; confirm?: string; form?: string }>({});
+  const [done, setDone] = useState<string | null>(null);
+  const mounted = useRef(true);
 
-  // Clear all values on unmount
-  useEffect(() => {
-    return () => {
-      isMounted.current = false;
-      setCurrent("");
-      setNewPwd("");
-      setConfirm("");
-    };
-  }, []);
+  useEffect(() => () => { mounted.current = false; }, []);
 
-  const clear = () => { setCurrent(""); setNewPwd(""); setConfirm(""); setErrors({}); };
+  const clear = () => { setCurrent(""); setNext(""); setConfirm(""); setErrors({}); };
 
   const validate = (): boolean => {
-    const e: Record<string, string> = {};
-    if (!current) e.current = "Required.";
-    if (newPwd.length < 8) e.newPwd = "Must be at least 8 characters.";
-    if (newPwd === current && current) e.newPwd = "New value must differ from current value.";
-    if (confirm !== newPwd) e.confirm = "Values do not match.";
+    const e: typeof errors = {};
+    if (!current) e.current = "Enter your current password.";
+    if (next.length < PASSWORD_MIN_LENGTH) e.next = `Use at least ${String(PASSWORD_MIN_LENGTH)} characters.`;
+    else if (next === current) e.next = "Choose a password different from your current one.";
+    if (confirm !== next) e.confirm = "The passwords do not match.";
     setErrors(e);
     return Object.keys(e).length === 0;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setDone(null);
     if (!validate()) return;
     setSubmitting(true);
-    const result = await mockSecuritySettingsService.validatePasswordUpdateDemonstration(current, newPwd);
-    if (!result.valid) {
-      if (isMounted.current) { setErrors({ current: result.reason ?? "Demonstration validation failed." }); setSubmitting(false); }
-      return;
-    }
-    await mockSecuritySettingsService.simulatePasswordUpdate();
-    if (isMounted.current) {
+    const result = await securityData.changePassword(current, next);
+    if (!mounted.current) return;
+    setSubmitting(false);
+    if (result.ok) {
       clear();
-      setDone(true);
-      setSubmitting(false);
-      setTimeout(() => { if (isMounted.current) setDone(false); }, 4000);
+      const others = result.otherSessionsRevoked;
+      setDone(IS_LIVE
+        ? `Password changed. ${others === 0 ? "You stay signed in here." : `You stay signed in here, and ${String(others)} other session${others === 1 ? " was" : "s were"} signed out.`}`
+        : "Demo build — no password was changed.");
+    } else if (result.field === "current") {
+      setErrors({ current: result.message });
+    } else if (result.field === "new") {
+      setErrors({ next: result.message });
+    } else {
+      setErrors({ form: result.message });
     }
   };
 
-  const strength = strengthLabel(newPwd);
+  const strength = strengthOf(next);
 
   return (
-    <SettingsPage title="Password Settings" breadcrumb="Security › Password">
-      {/* Critical warning — always visible */}
-      <div role="note" style={{ background: "#FEF2F2", border: "1.5px solid #FECACA", borderRadius: 8, padding: "12px 16px", marginBottom: 20, ...GF, fontSize: 13, color: "#991B1B", fontWeight: 600 }}>
-        ⚠ Do not enter a real password. This frontend demonstration does not validate or update account credentials.
-      </div>
+    <SettingsPage title="Password" breadcrumb="Security › Password" description="Change the password you use to sign in to LAGDA.">
+      {done && <Notice tone="success" icon={CircleCheck} role="status">{done}</Notice>}
+      {errors.form && <Notice tone="danger" role="alert">{errors.form}</Notice>}
 
-      <SSection title="Update Password Demonstration">
-        <form onSubmit={handleSubmit} noValidate>
-          <SField label="Current demonstration value" required help="Enter any demonstration value. This is not validated against a real password.">
-            <div style={{ position: "relative" }}>
-              <input
-                id="pwd-current"
-                type={showCurr ? "text" : "password"}
-                autoComplete="current-password"
-                value={current}
-                onChange={e => { setCurrent(e.target.value); setErrors(prev => { const n = { ...prev }; delete n.current; return n; }); }}
-                style={{ ...{ fontFamily: "'Geist', sans-serif", fontSize: 13, padding: "9px 40px 9px 12px", border: `1.5px solid ${errors.current ? RED : "#D1D9E0"}`, borderRadius: 8, width: "100%", outline: "none", boxSizing: "border-box" as const } }}
-                aria-invalid={!!errors.current} aria-describedby={errors.current ? "pwd-curr-err" : "pwd-warn"}
-              />
-              <button type="button" onClick={() => setShowCurr(!showCurr)} aria-label={showCurr ? "Hide current value" : "Show current value"}
-                style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: SLATE, ...GF, fontSize: 12 }}>
-                {showCurr ? "Hide" : "Show"}
-              </button>
-            </div>
-            {errors.current && <div id="pwd-curr-err" role="alert" style={{ ...GF, fontSize: 12, color: RED, marginTop: 4 }}>{errors.current}</div>}
-            <div id="pwd-warn" style={{ ...GF, fontSize: 12, color: SLATE, marginTop: 4 }}>Do not enter a real password in this field.</div>
+      <SSection title="Change password" icon={KeyRound}
+        description={IS_LIVE ? "You stay signed in on this device. Every other session is signed out." : "Demo build — use any values; nothing is changed."}>
+        <form onSubmit={e => { void handleSubmit(e); }} noValidate>
+          <SField label="Current password" htmlFor="pwd-current" required>
+            <PasswordInput id="pwd-current" value={current} onChange={v => { setCurrent(v); setErrors(p => ({ ...p, current: undefined, form: undefined })); }}
+              show={show.current} onToggle={() => { setShow(s => ({ ...s, current: !s.current })); }} autoComplete="current-password"
+              invalid={!!errors.current} describedBy={errors.current ? "pwd-current-err" : undefined} toggleLabel="current password" />
+            {errors.current && <div id="pwd-current-err" role="alert" style={{ ...GF, fontSize: 12.5, color: SET.DANGER, marginTop: 5 }}>{errors.current}</div>}
           </SField>
 
-          <SField label="New demonstration value" required help="Minimum 8 characters.">
-            <div style={{ position: "relative", marginBottom: 6 }}>
-              <input
-                id="pwd-new"
-                type={showNew ? "text" : "password"}
-                autoComplete="new-password"
-                value={newPwd}
-                onChange={e => { setNewPwd(e.target.value); setErrors(prev => { const n = { ...prev }; delete n.newPwd; return n; }); }}
-                style={{ ...{ fontFamily: "'Geist', sans-serif", fontSize: 13, padding: "9px 40px 9px 12px", border: `1.5px solid ${errors.newPwd ? RED : "#D1D9E0"}`, borderRadius: 8, width: "100%", outline: "none", boxSizing: "border-box" as const } }}
-                aria-invalid={!!errors.newPwd}
-              />
-              <button type="button" onClick={() => setShowNew(!showNew)} aria-label={showNew ? "Hide new value" : "Show new value"}
-                style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: SLATE, ...GF, fontSize: 12 }}>
-                {showNew ? "Hide" : "Show"}
-              </button>
-            </div>
-            {newPwd.length > 0 && (
-              <div style={{ marginBottom: 6 }}>
-                <div style={{ height: 4, borderRadius: 2, background: "#E2E8F0", overflow: "hidden" }}>
-                  <div style={{ height: "100%", width: `${strength.width}%`, background: strength.color, transition: "width 0.2s" }} />
+          <SField label="New password" htmlFor="pwd-new" required help={`At least ${String(PASSWORD_MIN_LENGTH)} characters.`}>
+            <PasswordInput id="pwd-new" value={next} onChange={v => { setNext(v); setErrors(p => ({ ...p, next: undefined, form: undefined })); }}
+              show={show.next} onToggle={() => { setShow(s => ({ ...s, next: !s.next })); }} autoComplete="new-password"
+              invalid={!!errors.next} describedBy={errors.next ? "pwd-new-err" : "pwd-strength"} toggleLabel="new password" />
+            {next.length > 0 && (
+              <div id="pwd-strength" style={{ marginTop: 7 }}>
+                <div style={{ height: 5, borderRadius: 3, background: "#E2E8F0", overflow: "hidden" }}>
+                  <div style={{ height: "100%", width: `${String(strength.width)}%`, background: strength.color, transition: "width 0.2s" }} />
                 </div>
-                <div style={{ ...GF, fontSize: 11, color: strength.color, marginTop: 3 }}>{strength.label}</div>
+                <div style={{ ...GF, fontSize: 12, fontWeight: 600, color: strength.color, marginTop: 4 }}>Strength: {strength.label}</div>
               </div>
             )}
-            {errors.newPwd && <div role="alert" style={{ ...GF, fontSize: 12, color: RED, marginTop: 4 }}>{errors.newPwd}</div>}
+            {errors.next && <div id="pwd-new-err" role="alert" style={{ ...GF, fontSize: 12.5, color: SET.DANGER, marginTop: 5 }}>{errors.next}</div>}
           </SField>
 
-          <SField label="Confirm new value" required>
-            <div style={{ position: "relative" }}>
-              <input
-                id="pwd-confirm"
-                type={showConf ? "text" : "password"}
-                autoComplete="new-password"
-                value={confirm}
-                onChange={e => { setConfirm(e.target.value); setErrors(prev => { const n = { ...prev }; delete n.confirm; return n; }); }}
-                style={{ ...{ fontFamily: "'Geist', sans-serif", fontSize: 13, padding: "9px 40px 9px 12px", border: `1.5px solid ${errors.confirm ? RED : "#D1D9E0"}`, borderRadius: 8, width: "100%", outline: "none", boxSizing: "border-box" as const } }}
-                aria-invalid={!!errors.confirm}
-              />
-              <button type="button" onClick={() => setShowConf(!showConf)} aria-label={showConf ? "Hide confirmation" : "Show confirmation"}
-                style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: SLATE, ...GF, fontSize: 12 }}>
-                {showConf ? "Hide" : "Show"}
-              </button>
-            </div>
-            {errors.confirm && <div role="alert" style={{ ...GF, fontSize: 12, color: RED, marginTop: 4 }}>{errors.confirm}</div>}
+          <SField label="Confirm new password" htmlFor="pwd-confirm" required>
+            <PasswordInput id="pwd-confirm" value={confirm} onChange={v => { setConfirm(v); setErrors(p => ({ ...p, confirm: undefined })); }}
+              show={show.confirm} onToggle={() => { setShow(s => ({ ...s, confirm: !s.confirm })); }} autoComplete="new-password"
+              invalid={!!errors.confirm} describedBy={errors.confirm ? "pwd-confirm-err" : undefined} toggleLabel="confirmation" />
+            {errors.confirm && <div id="pwd-confirm-err" role="alert" style={{ ...GF, fontSize: 12.5, color: SET.DANGER, marginTop: 5 }}>{errors.confirm}</div>}
           </SField>
 
-          <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap", marginTop: 8 }}>
-            <button type="submit" disabled={submitting} style={{ ...GF, fontSize: 13, fontWeight: 600, padding: "9px 20px", border: "none", borderRadius: 8, background: AZURE, color: "#FFFFFF", cursor: submitting ? "not-allowed" : "pointer", opacity: submitting ? 0.7 : 1 }}>
-              {submitting ? "Simulating…" : "Simulate password update"}
+          <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginTop: 4 }}>
+            <button type="submit" disabled={submitting} style={{ ...BTN_PRIMARY, opacity: submitting ? 0.7 : 1, cursor: submitting ? "not-allowed" : "pointer" }}>
+              {submitting ? "Changing…" : "Change password"}
             </button>
             <button type="button" onClick={clear} style={BTN_SECONDARY}>Clear</button>
           </div>
-
-          {done && (
-            <div role="status" style={{ marginTop: 14, padding: "10px 14px", background: "#F0FDF4", border: "1px solid #BBF7D0", borderRadius: 8, ...GF, fontSize: 13, color: "#166534" }}>
-              Password update simulated. No real credential was changed.
-            </div>
-          )}
         </form>
       </SSection>
 
-      <SSection title="Password Requirements">
-        <ul style={{ margin: 0, padding: "0 0 0 20px", ...GF, fontSize: 13, color: SLATE, lineHeight: 2 }}>
-          <li>At least 8 characters (demonstration minimum)</li>
-          <li>Mix of uppercase, lowercase, numbers, and symbols improves strength</li>
-          <li>Must differ from current demonstration value</li>
-          <li>Avoid common words or patterns</li>
+      <SSection title="A good password" icon={ListChecks}>
+        <ul style={{ margin: 0, padding: "0 0 0 20px", ...GF, fontSize: 13.5, color: SET.SLATE, lineHeight: 1.9 }}>
+          <li>At least {PASSWORD_MIN_LENGTH} characters — longer is stronger</li>
+          <li>A mix of upper and lower case letters, numbers and symbols</li>
+          <li>Not used for any other account</li>
+          <li>No common words or patterns such as “password” or “123456”</li>
         </ul>
-        <p style={{ ...GF, fontSize: 12, color: SLATE, marginTop: 12, fontStyle: "italic" }}>
-          These are frontend demonstration requirements only. Production password policies are enforced by backend services.
-        </p>
       </SSection>
     </SettingsPage>
   );

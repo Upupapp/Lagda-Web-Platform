@@ -38,6 +38,7 @@ import { isCapabilityInActiveProfile } from "../../../config/capability-resolver
 import { SIGNING_REQUEST_STATUS } from "../../../services/signing-request-status";
 import { StatusBadge } from "../../../components/documents/StatusBadge";
 import { VerificationIdActions } from "../../../components/documents/VerificationIdActions";
+import { CompletedDocumentGrid, type CompletedCardData } from "./CompletedDocumentCards";
 import { AuditTrailDialog } from "../../../components/documents/AuditTrailDialog";
 import type { TransactionStatus } from "../../../models";
 import type {
@@ -2085,6 +2086,26 @@ function DocumentsPageMockDemo() {
                   onClearFilters={() => updateQuery({ q: "", folderId: null, tagId: null })}
                 />
               ) : (
+                query.view === "completed" ? (
+                  <CompletedDocumentGrid cards={pageItems.map((item): CompletedCardData => ({
+                    key: item.id,
+                    title: item.title,
+                    verificationId: completedVerificationId(item),
+                    done: item.completedParticipantCount,
+                    total: item.participantCount,
+                    createdAt: item.createdAt,
+                    actions: getDocActions(item, canPrepare, canVerify).map(act => ({
+                      id: act.id, label: act.label,
+                      icon: act.id === "view" ? Eye : act.id === "view-activity" ? History : act.id === "view-participants" ? Users
+                        : act.id === "view-evidence" ? ShieldCheck : act.id === "archive" ? Archive : act.id === "restore" ? RotateCcw : undefined,
+                      href: act.href,
+                      onSelect: act.href ? undefined : () => {
+                        if (act.id === "rename-draft") { setRenameItem(item); return; }
+                        void handleRowAction(act.id, item);
+                      },
+                    })),
+                  }))} />
+                ) : (
                 <>
                   <DocumentTable
                     className="doc-table-desktop"
@@ -2121,6 +2142,7 @@ function DocumentsPageMockDemo() {
                     />
                   )}
                 </>
+                )
               )
             )}
           </main>
@@ -2835,14 +2857,15 @@ function DocumentsPageRealMode() {
               <span className="doc-list-count" aria-label={`${String(othersCount)} to look at`}>{othersCount}</span>
             )}
           </button>
-          <button type="button" role="tab" className="doc-list-tab" aria-selected={list === "completed"} onClick={() => setList("completed")}>
-            <FileCheck2 size={14} aria-hidden /> Completed
-          </button>
           <button type="button" role="tab" className="doc-list-tab" aria-selected={list === "draft"} onClick={() => setList("draft")}>
             <FileText size={14} aria-hidden /> Draft
           </button>
           <button type="button" role="tab" className="doc-list-tab" aria-selected={list === "declined"} onClick={() => setList("declined")}>
             <FileText size={14} aria-hidden /> Declined
+          </button>
+          {/* Last, after Declined: the finished work, shown as branded cards. */}
+          <button type="button" role="tab" className="doc-list-tab" aria-selected={list === "completed"} onClick={() => setList("completed")}>
+            <FileCheck2 size={14} aria-hidden /> Completed
           </button>
         </div>
         {list === "to-sign" && <DocumentsToSignSection onCount={setToSignCount} />}
@@ -2908,7 +2931,23 @@ function DocumentsPageRealMode() {
             description="Nothing in this workspace matches the current search and filters. Try a shorter name, a different signer, or another status."
           />
         )}
-        {status === "ready" && rows.length > 0 && (
+        {status === "ready" && rows.length > 0 && list === "completed" && (
+          <CompletedDocumentGrid cards={rows.map((item): CompletedCardData => ({
+            key: item.signingRequestId,
+            title: item.documentTitle,
+            verificationId: verificationIds.get(item.documentId) ?? null,
+            done: item.completedParticipantCount,
+            total: item.participantCount,
+            createdAt: item.createdAt,
+            actions: [
+              { id: "view", label: "View", icon: Eye, onSelect: () => { setViewing(item); } },
+              { id: "participants", label: "Participants", icon: Users, onSelect: () => { setSignaturesFor(item); } },
+              { id: "history", label: "History", icon: History, onSelect: () => { setAuditFor(item); } },
+              { id: "send-again", label: "Send again", icon: Send, onSelect: () => { setResendFor(item); } },
+            ],
+          }))} />
+        )}
+        {status === "ready" && rows.length > 0 && list !== "completed" && (
           <div className="doc-table-desktop doc-list-frame" role="table" aria-label="Documents">
             <div role="rowgroup" className="doc-list-head">
               <div role="row" className="doc-header doc-grid-real">
@@ -2936,7 +2975,7 @@ function DocumentsPageRealMode() {
             </div>
           </div>
         )}
-        {status === "ready" && rows.length > 0 && (
+        {status === "ready" && rows.length > 0 && list !== "completed" && (
           <div className="doc-cards-mobile doc-list-frame doc-list-scroll">
             {rows.map(item => (
               <RealDocumentCard

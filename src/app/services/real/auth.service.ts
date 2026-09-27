@@ -60,11 +60,21 @@ export interface MeProfile {
     timezone: string | null;
     dateFormat: "MM/DD/YYYY" | "DD/MM/YYYY" | "YYYY-MM-DD" | null;
     timeFormat: "12h" | "24h" | null;
+    // The rest of the backend's preference block. Optional so fixtures that
+    // predate them still type-check.
+    locale?: string | null;
+    language?: string | null;
+    numberFormat?: "comma-dot" | "dot-comma" | "space-dot" | null;
+    appearance?: "system" | "light" | "dark" | null;
+    density?: "comfortable" | "compact" | null;
+    documentListView?: "table" | "grid" | null;
   };
   /** A summary only — whether a second factor exists. Optional for the same
    *  reason as `preferences`. */
   security?: {
     mfaEnabled: boolean;
+    mfaFactor?: "TOTP" | null;
+    recoveryCodesRemaining?: number | null;
   };
   createdAt: string;
 }

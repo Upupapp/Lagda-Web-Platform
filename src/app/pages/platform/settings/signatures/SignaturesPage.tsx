@@ -235,7 +235,7 @@ function SlotCard({
             border: `1px dashed ${T.borderStrong}`, borderRadius: 12,
             padding: "clamp(14px, 4vw, 20px)",
           }}>
-            <span style={{ ...GF, fontSize: 12, color: T.silver, textAlign: "center" }}>
+            <span style={{ ...GF, fontSize: 12, color: T.inkSoft, textAlign: "center" }}>
               Nothing saved yet
             </span>
           </div>
@@ -349,7 +349,7 @@ export function SignaturesPage() {
         style={{
           ...GF, display: "inline-flex", alignItems: "center", gap: 6,
           alignSelf: "flex-start", minHeight: TAP, paddingRight: 8,
-          fontSize: 13, color: T.azure, textDecoration: "none", fontWeight: 600,
+          fontSize: 13, color: "#005A9E", textDecoration: "none", fontWeight: 600,
         }}
       >
         <ArrowLeft size={15} aria-hidden /> Back to Profile settings
@@ -396,7 +396,7 @@ export function SignaturesPage() {
       )}
 
       {loadState === "loading" ? (
-        <p style={{ ...GF, fontSize: 13, color: T.silver }}>Loading your signatures…</p>
+        <p style={{ ...GF, fontSize: 13, color: T.inkSoft }}>Loading your signatures…</p>
       ) : loadState === "error" ? (
         <div role="alert" style={{ ...GF, fontSize: 13, color: T.inkSoft }}>
           <p style={{ margin: "0 0 8px" }}>Your saved signatures could not be loaded.</p>

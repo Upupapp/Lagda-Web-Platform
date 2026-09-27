@@ -220,7 +220,7 @@ export function ProfilePage() {
   );
 
   return (
-    <SettingsPage title="Profile" breadcrumb="Profile">
+    <SettingsPage title="Profile" breadcrumb="Profile" description="Your name, photo and how you appear to the people you send documents to.">
       <form onSubmit={handleSave} noValidate>
         {/* Avatar */}
         <SSection title="Profile Photo">
@@ -297,7 +297,7 @@ export function ProfilePage() {
           {hasChanges && !saving && (
             <button type="button" onClick={discard} style={BTN_SECONDARY}>Discard</button>
           )}
-          {saved && <span role="status" style={{ ...GF, fontSize: 13, color: "#16A34A" }}>Profile updated.</span>}
+          {saved && <span role="status" style={{ ...GF, fontSize: 13, color: "#15803D" }}>Profile updated.</span>}
           {saveError !== null && (
             <span role="alert" style={{ ...GF, fontSize: 13, color: "#DC2626" }}>{saveError}</span>
           )}

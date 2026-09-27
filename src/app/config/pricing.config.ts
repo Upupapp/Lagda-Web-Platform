@@ -1,5 +1,7 @@
 // Canonical LAGDA pricing configuration.
-// No approved numeric prices exist — monthlyPrice/annualPrice are null.
+// No approved numeric prices exist — monthlyPrice/annualPrice are null on the
+// PUBLIC plans below. The in-app catalogue at the end of this file carries
+// SAMPLE prices, shown only inside the app and always labelled as samples.
 // Never substitute competitor prices or invent limits.
 // LAGDA eNotary is NOT included in any plan below — it is a separate future product.
 
@@ -205,3 +207,213 @@ export const COMPARE_GROUPS: CompareGroup[] = [
     ],
   },
 ];
+
+// ═════════════════════════════════════════════════════════════════════════════
+// In-app plan catalogue — SAMPLE prices and limits.
+//
+// The single source for Settings › Billing & Plan (plan cards, comparison
+// table, sample invoice) and Settings › Usage (plan limits). The figures are
+// SAMPLES shown inside the signed-in app only, always under the
+// SAMPLE_PRICING_NOTICE; final prices are confirmed at launch.
+//
+// The PUBLIC pricing pages do not read this block. They keep LAGDA_PLANS and
+// COMPARE_GROUPS above, which carry no prices, so the marketing site does not
+// start quoting numbers.
+// ═════════════════════════════════════════════════════════════════════════════
+
+export type CatalogPlanId = "free" | PlanId;
+
+export const SAMPLE_PRICING_NOTICE = "SAMPLE PRICING — FINAL PRICES CONFIRMED AT LAUNCH";
+
+/** A plan limit: a number the product can compare against, or a label only. */
+export interface PlanLimit {
+  /** null when the limit is unlimited or arranged per customer. */
+  readonly value: number | null;
+  readonly label: string;
+}
+
+export interface SamplePlanPrice {
+  /** Pesos per month (per user when `perUser`). */
+  readonly monthly: number;
+  /** Pesos per year (per user when `perUser`). */
+  readonly annual: number;
+  readonly perUser: boolean;
+}
+
+export interface SamplePlan {
+  readonly id: CatalogPlanId;
+  readonly name: string;
+  readonly tagline: string;
+  /** null for Enterprise (custom pricing). Free is `{ monthly: 0, annual: 0 }`. */
+  readonly price: SamplePlanPrice | null;
+  readonly mostPopular: boolean;
+  readonly limits: {
+    readonly signingRequestsPerMonth: PlanLimit;
+    readonly users: PlanLimit;
+    readonly storageBytes: PlanLimit;
+    readonly templates: PlanLimit;
+  };
+  readonly signerAuthentication: string;
+  readonly branding: boolean;
+  readonly teamControls: boolean;
+  readonly activityLog: boolean;
+  readonly support: string;
+  /** "14 days", "Demo", or null for none. */
+  readonly trial: string | null;
+  readonly highlights: readonly string[];
+}
+
+const MB = 1_000_000;
+const GB = 1_000_000_000;
+
+export const SAMPLE_PLANS: readonly SamplePlan[] = [
+  {
+    id: "free", name: "Free", tagline: "Try LAGDA for occasional signing",
+    price: { monthly: 0, annual: 0, perUser: false }, mostPopular: false,
+    limits: {
+      signingRequestsPerMonth: { value: 5, label: "5" },
+      users: { value: 1, label: "1" },
+      storageBytes: { value: 500 * MB, label: "500 MB" },
+      templates: { value: 3, label: "3" },
+    },
+    signerAuthentication: "Secure link + email code",
+    branding: false, teamControls: false, activityLog: false,
+    support: "Help Center", trial: null,
+    highlights: ["5 signing requests a month", "Secure link and email code", "Audit trail and Verification", "Help Center support"],
+  },
+  {
+    id: "personal", name: "Personal", tagline: "For individuals and solo practitioners",
+    price: { monthly: 299, annual: 2990, perUser: false }, mostPopular: false,
+    limits: {
+      signingRequestsPerMonth: { value: 50, label: "50" },
+      users: { value: 1, label: "1" },
+      storageBytes: { value: 5 * GB, label: "5 GB" },
+      templates: { value: 25, label: "25" },
+    },
+    signerAuthentication: "+ SMS code",
+    branding: false, teamControls: false, activityLog: false,
+    support: "Email", trial: "14 days",
+    highlights: ["50 signing requests a month", "SMS code for signers", "25 templates, 5 GB storage", "Email support"],
+  },
+  {
+    id: "business", name: "Business", tagline: "For teams and growing organizations",
+    price: { monthly: 799, annual: 7990, perUser: true }, mostPopular: true,
+    limits: {
+      signingRequestsPerMonth: { value: 200, label: "200 per user" },
+      users: { value: 50, label: "Up to 50" },
+      storageBytes: { value: 50 * GB, label: "50 GB shared" },
+      templates: { value: null, label: "Unlimited shared" },
+    },
+    signerAuthentication: "+ Authenticator app",
+    branding: true, teamControls: true, activityLog: true,
+    support: "Priority email", trial: "14 days",
+    highlights: ["200 signing requests per user a month", "Company branding", "Join links, approvals and roles", "Workspace activity log"],
+  },
+  {
+    id: "enterprise", name: "Enterprise", tagline: "For large organizations and institutions",
+    price: null, mostPopular: false,
+    limits: {
+      signingRequestsPerMonth: { value: null, label: "Custom" },
+      users: { value: null, label: "Unlimited" },
+      storageBytes: { value: null, label: "Custom" },
+      templates: { value: null, label: "Unlimited" },
+    },
+    signerAuthentication: "+ SSO",
+    branding: true, teamControls: true, activityLog: true,
+    support: "Dedicated", trial: "Demo",
+    highlights: ["Custom volume and storage", "Single sign-on (SSO)", "Everything in Business", "Dedicated support"],
+  },
+];
+
+/** A cell of the comparison table: a tick, a dash, or text. */
+export type CompareCell = boolean | string;
+
+export interface CatalogCompareRow {
+  readonly id: string;
+  readonly label: string;
+  readonly cell: (plan: SamplePlan) => CompareCell;
+}
+
+export interface CatalogCompareGroup {
+  readonly id: string;
+  readonly title: string;
+  readonly rows: readonly CatalogCompareRow[];
+}
+
+/** The full comparison, derived from SAMPLE_PLANS so the two cannot drift. */
+export const SAMPLE_COMPARE_GROUPS: readonly CatalogCompareGroup[] = [
+  {
+    id: "price", title: "Price",
+    rows: [
+      { id: "monthly", label: "Monthly", cell: p => p.price === null ? "Custom" : p.price.monthly === 0 ? formatPeso(0) : `${formatPeso(p.price.monthly)}${p.price.perUser ? " per user" : ""}` },
+      { id: "annual", label: "Annual", cell: p => p.price === null ? "Custom" : p.price.annual === 0 ? formatPeso(0) : `${formatPeso(p.price.annual)}${p.price.perUser ? " per user" : ""}` },
+    ],
+  },
+  {
+    id: "limits", title: "Limits",
+    rows: [
+      { id: "signing-requests", label: "Signing requests per month", cell: p => p.limits.signingRequestsPerMonth.label },
+      { id: "users", label: "Users", cell: p => p.limits.users.label },
+      { id: "storage", label: "Storage", cell: p => p.limits.storageBytes.label },
+      { id: "templates", label: "Templates", cell: p => p.limits.templates.label },
+    ],
+  },
+  {
+    id: "signing", title: "Signing and trust",
+    rows: [
+      { id: "signer-auth", label: "Signer authentication", cell: p => p.signerAuthentication },
+      { id: "audit", label: "Audit trail and completion report", cell: () => true },
+      { id: "verification", label: "Document Verification", cell: () => true },
+    ],
+  },
+  {
+    id: "workspace", title: "Workspace",
+    rows: [
+      { id: "branding", label: "Company branding", cell: p => p.branding },
+      { id: "team", label: "Join links, approvals and roles", cell: p => p.teamControls },
+      { id: "activity", label: "Workspace activity log", cell: p => p.activityLog },
+    ],
+  },
+  {
+    id: "support", title: "Support",
+    rows: [
+      { id: "support", label: "Support", cell: p => p.support },
+      { id: "trial", label: "Free trial", cell: p => p.trial ?? false },
+    ],
+  },
+];
+
+/**
+ * What this workspace is on today. Early Access includes every Business
+ * feature, bills nothing, and applies no limits.
+ */
+export const CURRENT_PLAN: {
+  readonly id: "early-access";
+  readonly name: string;
+  readonly includesPlanId: CatalogPlanId;
+  readonly limitsApplied: boolean;
+  readonly summary: string;
+} = {
+  id: "early-access",
+  name: "Early Access",
+  includesPlanId: "business",
+  limitsApplied: false,
+  summary: "Includes all Business features at no charge while LAGDA is in early access. Nothing is billed.",
+};
+
+/** The limits Usage compares against, or null while none is applied. */
+export function currentPlanLimits(): SamplePlan["limits"] | null {
+  if (!CURRENT_PLAN.limitsApplied) return null;
+  return SAMPLE_PLANS.find(p => p.id === CURRENT_PLAN.includesPlanId)?.limits ?? null;
+}
+
+export function formatPeso(amount: number, decimals = false): string {
+  return `₱${amount.toLocaleString("en-PH", decimals
+    ? { minimumFractionDigits: 2, maximumFractionDigits: 2 }
+    : { maximumFractionDigits: 0 })}`;
+}
+
+/** Pesos saved by paying annually (per user when the plan is per user). */
+export function annualSaving(price: SamplePlanPrice): number {
+  return Math.max(0, price.monthly * 12 - price.annual);
+}

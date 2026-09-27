@@ -169,7 +169,7 @@ function WorkspaceLoadError() {
  * header and banner row mounted across /app/workspace/* and animates only
  * its own content area — so the family shares one key.
  */
-const PERSISTENT_LAYOUT_ROOTS = ["/app/workspace"];
+const PERSISTENT_LAYOUT_ROOTS = ["/app/workspace", "/app/settings"];
 
 function pageKeyFor(pathname: string): string {
   const root = PERSISTENT_LAYOUT_ROOTS.find(r => pathname === r || pathname.startsWith(`${r}/`));

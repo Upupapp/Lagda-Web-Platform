@@ -1,161 +1,168 @@
-// /app/settings/usage — Current-period usage metrics for the workspace.
-// Frontend-only demonstration data. No real metering, export, or billing events.
+// /app/settings/usage — this workspace's usage for the current month.
+//
+// With a backend every figure is GET /workspaces/:id/usage — a new workspace
+// shows zeros, not samples. Limits come from the plan in config/pricing.config
+// (the same source Billing & Plan uses); during Early Access none is applied,
+// and each figure says "No limit applied". Demo build: sample figures.
 
-import React, { useEffect, useState } from "react";
-import { SettingsPage, SSection, Skeleton } from "./SettingsShell";
-import { mockUsageService } from "../../../services/mock/settings.service";
-import type { UsageSummaryData, UsageMetric, UsagePeriod } from "../../../models/settings";
+import { Link } from "react-router";
+import {
+  Send, CircleCheck, Hourglass, FileText, Upload, HardDrive, Users, LayoutTemplate, BookUser, ScanSearch,
+  RefreshCw, TriangleAlert, Sparkles, ArrowRight,
+} from "lucide-react";
+import type { LucideIcon } from "lucide-react";
+import { SettingsPage, SSection, Skeleton, Notice, BTN_SECONDARY, Badge, SET, TONES } from "./SettingsShell";
+import { useWorkspaceUsage, formatBytes, formatDate, IS_LIVE } from "./settings-data";
+import { useWorkspaceMode } from "../../../hooks/useWorkspaceAccess";
+import { CURRENT_PLAN, currentPlanLimits, type PlanLimit } from "../../../config/pricing.config";
 
-const GF    = { fontFamily: "'Geist', sans-serif" };
-const GM    = { fontFamily: "'Geist Mono', monospace" };
-const NAVY  = "#07111F";
-const AZURE = "#0078D4";
-const SLATE = "#64748B";
-const SILVER= "#8A9BAE";
-const GREEN = "#16A34A";
-const AMBER = "#D97706";
-const RED   = "#DC2626";
+const GF = { fontFamily: SET.FONT };
+const GM = { fontFamily: SET.MONO };
 
-function barColor(level: UsageMetric["warningLevel"]) {
-  if (level === "exceeded")    return RED;
-  if (level === "approaching") return AMBER;
-  return AZURE;
+interface Metric {
+  id: string;
+  label: string;
+  value: number;
+  display?: string;
+  icon: LucideIcon;
+  /** The plan limit this figure counts against, when it has one. */
+  limit?: PlanLimit | null;
+  limited?: boolean;
+  note?: string;
 }
 
-function textColor(level: UsageMetric["warningLevel"]) {
-  if (level === "exceeded")    return RED;
-  if (level === "approaching") return AMBER;
-  if (level === "none")        return GREEN;
-  return SILVER;
+function level(m: Metric): "none" | "approaching" | "exceeded" {
+  if (!m.limit || m.limit.value === null) return "none";
+  if (m.value >= m.limit.value) return "exceeded";
+  if (m.value >= m.limit.value * 0.8) return "approaching";
+  return "none";
 }
 
-function warningLabel(level: UsageMetric["warningLevel"]) {
-  if (level === "exceeded")    return "Exceeded";
-  if (level === "approaching") return "Approaching limit";
-  return "";
-}
-
-function MetricCard({ metric }: { metric: UsageMetric }) {
-  const numericLimit = typeof metric.limit === "number" ? metric.limit : null;
-  const pct = numericLimit != null ? Math.min((metric.value / numericLimit) * 100, 100) : null;
-  const bColor = barColor(metric.warningLevel);
-  const tColor = textColor(metric.warningLevel);
-  const hasWarning = metric.warningLevel === "approaching" || metric.warningLevel === "exceeded";
-
+function MetricCard({ metric }: { metric: Metric }) {
+  const Icon = metric.icon;
+  const lv = level(metric);
+  const limitValue = metric.limit?.value ?? null;
+  const pct = limitValue !== null && limitValue > 0 ? Math.min(100, (metric.value / limitValue) * 100) : null;
+  const tone = lv === "exceeded" ? TONES.danger : lv === "approaching" ? TONES.warning : null;
   return (
-    <div style={{ border: `1.5px solid ${hasWarning ? `${tColor}55` : "#E3E8EF"}`, borderRadius: 10, padding: "16px 18px", background: metric.warningLevel === "exceeded" ? "#FEF2F2" : metric.warningLevel === "approaching" ? "#FFFBEB" : "#FFFFFF" }}>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8, gap: 8, flexWrap: "wrap" }}>
-        <div style={{ ...GF, fontSize: 13, fontWeight: 600, color: NAVY }}>{metric.label}</div>
-        {hasWarning && (
-          <span style={{ ...GF, fontSize: 11, fontWeight: 700, color: tColor, background: `${tColor}18`, padding: "2px 8px", borderRadius: 999 }}>
-            {warningLabel(metric.warningLevel)}
-          </span>
+    <div data-testid={`usage-metric-${metric.id}`} style={{
+      border: `1px solid ${tone ? tone.border : SET.BORDER}`, background: tone ? tone.bg : "#FFFFFF",
+      borderRadius: 10, padding: "14px 16px", minWidth: 0,
+    }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, justifyContent: "space-between" }}>
+        <span style={{ display: "inline-flex", alignItems: "center", gap: 7, ...GF, fontSize: 13, fontWeight: 600, color: SET.INK, minWidth: 0 }}>
+          <Icon size={15} aria-hidden color={SET.AZURE_TEXT} style={{ flexShrink: 0 }} />
+          <span style={{ overflowWrap: "anywhere" }}>{metric.label}</span>
+        </span>
+        {lv !== "none" && <Badge tone={lv === "exceeded" ? "danger" : "warning"}>{lv === "exceeded" ? "Limit reached" : "Nearing limit"}</Badge>}
+      </div>
+      <div style={{ display: "flex", alignItems: "baseline", gap: 6, marginTop: 8, flexWrap: "wrap" }}>
+        <span data-testid={`usage-value-${metric.id}`} style={{ ...GM, fontSize: 24, fontWeight: 700, color: SET.NAVY, lineHeight: 1.1 }}>
+          {metric.display ?? metric.value.toLocaleString("en-PH")}
+        </span>
+        {metric.limit && metric.limit.value !== null && (
+          <span style={{ ...GM, fontSize: 13, color: SET.SLATE }}>of {metric.limit.label}</span>
         )}
       </div>
-      <div style={{ display: "flex", alignItems: "baseline", gap: 6, marginBottom: pct != null ? 10 : 6 }}>
-        <span style={{ ...GM, fontSize: 24, fontWeight: 800, color: NAVY }}>{metric.value.toLocaleString()}</span>
-        {numericLimit != null && <span style={{ ...GM, fontSize: 14, color: SLATE }}>/ {numericLimit.toLocaleString()}</span>}
-        <span style={{ ...GF, fontSize: 12, color: SLATE }}>{metric.unit}</span>
-      </div>
-      {pct != null && (
-        <div style={{ marginBottom: 6 }}>
-          <div style={{ height: 6, background: "#E3E8EF", borderRadius: 999, overflow: "hidden" }}>
-            <div style={{ height: "100%", width: `${pct}%`, background: bColor, borderRadius: 999, transition: "width 0.4s" }}
-              role="progressbar" aria-valuenow={Math.round(pct)} aria-valuemin={0} aria-valuemax={100}
-              aria-label={`${metric.label} usage: ${Math.round(pct)}%`} />
-          </div>
-          <div style={{ ...GF, fontSize: 11, color: SLATE, marginTop: 4, textAlign: "right" }}>{Math.round(pct)}%</div>
+      {pct !== null && (
+        <div role="progressbar" aria-valuenow={Math.round(pct)} aria-valuemin={0} aria-valuemax={100} aria-label={`${metric.label}: ${String(Math.round(pct))}% of the plan limit`}
+          style={{ height: 6, background: "#E2E8F0", borderRadius: 999, overflow: "hidden", marginTop: 10 }}>
+          <div style={{ height: "100%", width: `${String(pct)}%`, background: tone ? tone.dot : SET.AZURE, borderRadius: 999 }} />
         </div>
       )}
-      {metric.limit === "varies" && (
-        <div style={{ ...GF, fontSize: 11, color: SLATE, fontStyle: "italic" }}>{metric.limitLabel}</div>
+      {(metric.limited || metric.note) && (
+        <div style={{ ...GF, fontSize: 12, color: SET.SLATE, marginTop: 6 }}>
+          {metric.limited && (metric.limit === null || metric.limit === undefined) ? "No limit applied" : metric.note}
+        </div>
       )}
     </div>
   );
 }
 
-const PERIOD_OPTIONS: { value: UsagePeriod; label: string }[] = [
-  { value: "current-month",  label: "Current month" },
-  { value: "previous-month", label: "Previous month" },
-  { value: "last-90-days",   label: "Last 90 days" },
-  { value: "current-year",   label: "Current year" },
-];
+function MetricGrid({ metrics }: { metrics: Metric[] }) {
+  return (
+    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 210px), 1fr))", gap: 12 }}>
+      {metrics.map(m => <MetricCard key={m.id} metric={m} />)}
+    </div>
+  );
+}
 
 export function UsagePage() {
-  const [data, setData]       = useState<UsageSummaryData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [period, setPeriod]   = useState<UsagePeriod>("current-month");
+  const { workspaceId } = useWorkspaceMode();
+  const { usage, error, reload } = useWorkspaceUsage(workspaceId);
+  const limits = currentPlanLimits();
+  const heading = { title: "Usage", breadcrumb: "Usage", description: "What this workspace has used this month, and in total." };
 
-  const load = async (p: UsagePeriod) => {
-    setLoading(true);
-    const d = await mockUsageService.getUsageSummary(p);
-    setData(d);
-    setLoading(false);
-  };
+  if (error) return (
+    <SettingsPage {...heading}>
+      <Notice tone="danger" role="alert">Usage could not be loaded.</Notice>
+      <button type="button" onClick={reload} style={BTN_SECONDARY}>Try again</button>
+    </SettingsPage>
+  );
+  if (!usage) return (
+    <SettingsPage {...heading}>
+      <Skeleton h={60} mb={16} />
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 210px), 1fr))", gap: 12 }}>
+        {[0, 1, 2, 3, 4, 5].map(i => <Skeleton key={i} h={104} mb={0} />)}
+      </div>
+    </SettingsPage>
+  );
 
-  useEffect(() => { void load("current-month"); }, []);
-
-  const warnings = data?.metrics.filter(m => m.warningLevel === "approaching" || m.warningLevel === "exceeded") ?? [];
+  const sr = usage.signingRequests;
+  const signing: Metric[] = [
+    { id: "sent-month", label: "Sent this month", value: sr.sentThisMonth, icon: Send, limit: limits?.signingRequestsPerMonth ?? null, limited: true },
+    { id: "completed-month", label: "Completed this month", value: sr.completedThisMonth, icon: CircleCheck },
+    { id: "in-progress", label: "In progress now", value: sr.inProgress, icon: Hourglass, note: "Sent and still waiting on someone" },
+    { id: "sent-total", label: "Sent in total", value: sr.sentTotal, icon: Send },
+    { id: "completed-total", label: "Completed in total", value: sr.completedTotal, icon: CircleCheck },
+  ];
+  const documents: Metric[] = [
+    { id: "uploaded-month", label: "Uploaded this month", value: usage.documents.uploadedThisMonth, icon: Upload },
+    { id: "documents-total", label: "Documents in total", value: usage.documents.total, icon: FileText },
+    { id: "storage", label: "Storage used", value: usage.storageBytes, display: formatBytes(usage.storageBytes), icon: HardDrive, limit: limits?.storageBytes ?? null, limited: true },
+  ];
+  const workspace: Metric[] = [
+    { id: "members", label: "Members", value: usage.members, icon: Users, limit: limits?.users ?? null, limited: true },
+    { id: "templates", label: "Templates", value: usage.templates, icon: LayoutTemplate, limit: limits?.templates ?? null, limited: true },
+    { id: "contacts", label: "Saved contacts", value: usage.contacts, icon: BookUser },
+  ];
+  const verification: Metric[] = [
+    { id: "verifications", label: "Verification checks this month", value: usage.verificationsThisMonth, icon: ScanSearch, note: "Times a document was checked on the Verify page" },
+  ];
+  const warnings = [...signing, ...documents, ...workspace].filter(m => level(m) !== "none");
+  const periodLabel = new Date(usage.period.start).toLocaleDateString("en-PH", { month: "long", year: "numeric" });
 
   return (
-    <SettingsPage title="Usage" breadcrumb="Usage">
-
-      {/* Period selector */}
-      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 20, flexWrap: "wrap" }}>
-        <span style={{ ...GF, fontSize: 13, color: SLATE }}>Period:</span>
-        {PERIOD_OPTIONS.map(o => (
-          <button key={o.value} onClick={() => { setPeriod(o.value); void load(o.value); }}
-            style={{ ...GF, fontSize: 13, fontWeight: period === o.value ? 700 : 400, padding: "6px 14px", border: `1.5px solid ${period === o.value ? AZURE : "#D1D9E0"}`, borderRadius: 8, background: period === o.value ? "#EBF5FB" : "#FFFFFF", color: period === o.value ? AZURE : SLATE, cursor: "pointer" }}>
-            {o.label}
-          </button>
-        ))}
-        {data && !loading && (
-          <span style={{ ...GF, fontSize: 11, color: SILVER, marginLeft: "auto" }}>
-            Refreshed: {new Date(data.refreshedAt).toLocaleString("en-PH", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })} (demo)
-          </span>
-        )}
+    <SettingsPage {...heading} actions={<button type="button" onClick={reload} style={BTN_SECONDARY}><RefreshCw size={15} aria-hidden /> Refresh</button>}>
+      <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap", justifyContent: "space-between", background: "#FFFFFF", border: `1px solid ${SET.BORDER}`, borderRadius: 12, padding: "12px 16px", marginBottom: 16 }}>
+        <div style={{ minWidth: 0 }}>
+          <div style={{ ...GM, fontSize: 10.5, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: SET.MUTED }}>This period</div>
+          <div data-testid="usage-period" style={{ ...GF, fontSize: 16, fontWeight: 700, color: SET.NAVY }}>{periodLabel}</div>
+          <div style={{ ...GF, fontSize: 12.5, color: SET.SLATE }}>{formatDate(usage.period.start)} – {formatDate(usage.period.end - 1)}</div>
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+          <Badge tone="accent" icon={Sparkles}>{CURRENT_PLAN.name}</Badge>
+          <span style={{ ...GF, fontSize: 13, color: SET.SLATE }}>{limits ? "Plan limits apply" : "No limits applied"}</span>
+          <Link to="/app/settings/billing" style={{ ...GF, fontSize: 13, fontWeight: 600, color: SET.AZURE_TEXT, textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 4 }}>
+            Plans <ArrowRight size={14} aria-hidden />
+          </Link>
+        </div>
       </div>
 
-      {/* Warnings banner */}
-      {warnings.length > 0 && !loading && (
-        <div role="alert" style={{ background: "#FFFBEB", border: "1.5px solid #FDE68A", borderRadius: 8, padding: "12px 16px", marginBottom: 18, ...GF, fontSize: 13, color: "#92400E" }}>
-          <strong>Attention:</strong>{" "}
-          {warnings.map((w, i) => (
-            <span key={w.id}>{i > 0 ? " · " : ""}<strong>{w.label}</strong> ({warningLabel(w.warningLevel)})</span>
-          ))}.{" "}
-          Review your plan for additional capacity.
-        </div>
+      {warnings.length > 0 && (
+        <Notice tone="warning" icon={TriangleAlert} role="alert">
+          <strong>Nearing your plan limits:</strong> {warnings.map(w => w.label).join(", ")}.
+        </Notice>
       )}
 
-      {/* Period label */}
-      {data && !loading && (
-        <div style={{ ...GF, fontSize: 13, fontWeight: 700, color: NAVY, marginBottom: 14 }}>
-          {data.periodLabel}
-        </div>
-      )}
+      <SSection title="Signing requests" icon={Send}><MetricGrid metrics={signing} /></SSection>
+      <SSection title="Documents and storage" icon={FileText}><MetricGrid metrics={documents} /></SSection>
+      <SSection title="Workspace" icon={Users}><MetricGrid metrics={workspace} /></SSection>
+      <SSection title="Verification" icon={ScanSearch}><MetricGrid metrics={verification} /></SSection>
 
-      {/* Metrics grid */}
-      {loading ? (
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))", gap: 14 }}>
-          {Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} h={110} />)}
-        </div>
-      ) : (
-        <SSection title="Metrics">
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))", gap: 14 }}>
-            {data?.metrics.map(m => <MetricCard key={m.id} metric={m} />)}
-          </div>
-        </SSection>
-      )}
-
-      <div style={{ marginTop: 20, background: "#F8FAFC", border: "1px solid #E3E8EF", borderRadius: 8, padding: "12px 16px", ...GF, fontSize: 12, color: SLATE }}>
-        Usage data is fictional frontend demonstration data. No real metering, overage calculation, or export occurs. Contact your workspace administrator for actual usage reporting.
-      </div>
-
-      <div style={{ marginTop: 10 }}>
-        <button disabled style={{ ...GF, fontSize: 13, color: SLATE, background: "#F8FAFC", border: "1.5px solid #E3E8EF", borderRadius: 8, padding: "8px 16px", cursor: "not-allowed" }}>
-          Export usage data (demonstration only — no file generated)
-        </button>
-      </div>
+      <p style={{ ...GF, fontSize: 12.5, color: SET.SLATE, margin: 0 }}>
+        {IS_LIVE ? "Counted from this workspace’s own records. Monthly figures start again at the beginning of each calendar month." : "Demo build — these are sample figures."}
+      </p>
     </SettingsPage>
   );
 }

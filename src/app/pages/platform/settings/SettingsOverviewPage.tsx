@@ -1,133 +1,163 @@
-// /app/settings — Settings overview and navigation.
-// Frontend-only demonstration. No Burgundy. No eNotary.
+// /app/settings — the overview: who you are, how your account is protected,
+// the plan, and this month's usage at a glance. Every figure comes from the
+// same sources as its own section (the session, /me, /me/sessions and the
+// workspace usage endpoint); the demo build shows its sample figures.
 
-import React, { useEffect, useState } from "react";
+import type { ReactNode } from "react";
 import { Link } from "react-router";
-import { SettingsPage, SCard, StatusBadge, Skeleton } from "./SettingsShell";
-import { mockSecuritySettingsService } from "../../../services/mock/settings.service";
-import { mockBillingSettingsService } from "../../../services/mock/settings.service";
-import { mockUsageService } from "../../../services/mock/settings.service";
-import { isCapabilityInActiveProfile } from "../../../config/capability-resolver";
+import {
+  ArrowRight, ShieldCheck, ShieldAlert, MonitorSmartphone, KeyRound, Sparkles, Send, FileText, Users, HardDrive,
+  Network, ShieldQuestion, SlidersHorizontal,
+} from "lucide-react";
+import { SettingsPage, SCard, Badge, StatTile, Skeleton, SET } from "./SettingsShell";
+import { usePlatform } from "../../../context/PlatformContext";
+import { UserAvatar } from "../../../components/platform/UserAvatar";
+import { useWorkspaceMode } from "../../../hooks/useWorkspaceAccess";
+import { useSecuritySummary, useWorkspaceUsage, formatBytes } from "./settings-data";
+import { CURRENT_PLAN } from "../../../config/pricing.config";
 
-const GF    = { fontFamily: "'Geist', sans-serif" };
-const NAVY  = "#07111F";
-const AZURE = "#0078D4";
-const GOLD  = "#C9960C";
-const SLATE = "#64748B";
-const AMBER = "#D97706";
+const GF = { fontFamily: SET.FONT };
 
-interface OverviewData {
-  mfaStatus:    string;
-  sessions:     number;
-  planName:     string;
-  membersUsed:  number;
-  seatAlloc:    number;
-  warningCount: number;
-}
-
-function QuickLinkCard({ to, title, description, badge }: { to: string; title: string; description: string; badge?: string }) {
+function CardHeading({ children, to, linkLabel }: { children: ReactNode; to: string; linkLabel: string }) {
   return (
-    <Link to={to} style={{ display: "block", textDecoration: "none", border: "1.5px solid #E3E8EF", borderRadius: 10, padding: "14px 16px", background: "#FFFFFF", transition: "border-color 0.15s" }}>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
-        <div style={{ ...GF, fontSize: 14, fontWeight: 700, color: NAVY }}>{title}</div>
-        {badge && <StatusBadge label={badge} color={AMBER} />}
-      </div>
-      <div style={{ ...GF, fontSize: 12, color: SLATE, marginTop: 4 }}>{description}</div>
-    </Link>
-  );
-}
-
-function AttentionItem({ message, to }: { message: string; to: string }) {
-  return (
-    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 14px", background: "#FFFBEB", border: "1px solid #FDE68A", borderRadius: 8, marginBottom: 8 }}>
-      <span style={{ ...GF, fontSize: 13, color: "#92400E" }}>⚠ {message}</span>
-      <Link to={to} style={{ ...GF, fontSize: 12, fontWeight: 600, color: AZURE, textDecoration: "none", whiteSpace: "nowrap", marginLeft: 16 }}>Review →</Link>
+    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, flexWrap: "wrap", marginBottom: 14 }}>
+      <h3 style={{ ...GF, fontSize: 15, fontWeight: 700, color: SET.NAVY, margin: 0 }}>{children}</h3>
+      <Link to={to} style={{ ...GF, fontSize: 13, fontWeight: 600, color: SET.AZURE_TEXT, textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 4, minHeight: 32 }}>
+        {linkLabel} <ArrowRight size={14} aria-hidden />
+      </Link>
     </div>
   );
 }
 
-export function SettingsOverviewPage() {
-  const [data, setData] = useState<OverviewData | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    void Promise.all([
-      mockSecuritySettingsService.getSecurityOverview(),
-      mockBillingSettingsService.getBillingAccount(),
-      mockUsageService.getUsageSummary(),
-    ]).then(([sec, billing, usage]) => {
-      setData({
-        mfaStatus:    sec.mfaStatus,
-        sessions:     sec.activeSessionCount,
-        planName:     billing.planName,
-        membersUsed:  billing.activeMembers,
-        seatAlloc:    billing.seatAllocation,
-        warningCount: usage.metrics.filter(m => m.warningLevel !== "none").length,
-      });
-      setLoading(false);
-    });
-  }, []);
-
-  const attentionItems: { msg: string; to: string }[] = [];
-  if (data?.mfaStatus === "not-enabled") attentionItems.push({ msg: "Multi-factor authentication is not enabled.", to: "/app/settings/security/mfa" });
-  if (data && data.membersUsed >= data.seatAlloc * 0.8) attentionItems.push({ msg: `Seat usage is approaching allocation (${data.membersUsed} of ${data.seatAlloc}).`, to: "/app/settings/usage" });
-  if (data && data.warningCount > 0) attentionItems.push({ msg: `${data.warningCount} usage metric${data.warningCount > 1 ? "s" : ""} approaching allocation.`, to: "/app/settings/usage" });
-
+function ProfileCard() {
+  const { user } = usePlatform();
+  const detail = [user?.jobTitle, user?.department].filter(v => v !== undefined && v.trim() !== "").join(" · ");
   return (
-    <SettingsPage title="Settings">
+    <SCard style={{ marginBottom: 0 }}>
+      <CardHeading to="/app/settings/profile" linkLabel="Edit profile">Your profile</CardHeading>
+      {user ? (
+        <div style={{ display: "flex", alignItems: "center", gap: 14, minWidth: 0 }}>
+          <UserAvatar user={user} size={52} fontSize={18} />
+          <div style={{ minWidth: 0 }}>
+            <div data-testid="overview-profile-name" style={{ ...GF, fontSize: 15, fontWeight: 700, color: SET.NAVY, overflowWrap: "anywhere" }}>{user.fullName ?? user.displayName}</div>
+            <div style={{ ...GF, fontSize: 13, color: SET.SLATE, overflowWrap: "anywhere" }}>{user.email}</div>
+            {detail && <div style={{ ...GF, fontSize: 12.5, color: SET.SLATE, marginTop: 2 }}>{detail}</div>}
+          </div>
+        </div>
+      ) : <Skeleton h={52} mb={0} />}
+    </SCard>
+  );
+}
 
-      {loading ? (
-        <SCard><Skeleton h={80} mb={8} /><Skeleton h={80} mb={8} /><Skeleton h={80} /></SCard>
+function SecurityCard() {
+  const { mfa, sessions, error } = useSecuritySummary();
+  const loading = !error && (mfa === null || sessions === null);
+  return (
+    <SCard style={{ marginBottom: 0 }}>
+      <CardHeading to="/app/settings/security" linkLabel="Review security">Security</CardHeading>
+      {loading ? <Skeleton h={80} mb={0} /> : error ? (
+        <p style={{ ...GF, fontSize: 13, color: SET.DANGER, margin: 0 }}>Security details could not be loaded.</p>
       ) : (
-        <>
-          {attentionItems.length > 0 && (
-            <SCard style={{ border: "1.5px solid #FDE68A" }}>
-              <h2 style={{ ...GF, fontSize: 13, fontWeight: 700, color: "#92400E", margin: "0 0 10px", textTransform: "uppercase", letterSpacing: "0.06em" }}>Attention</h2>
-              {attentionItems.map((a, i) => <AttentionItem key={i} message={a.msg} to={a.to} />)}
-            </SCard>
-          )}
-
-          <SCard>
-            <h2 style={{ ...GF, fontSize: 13, fontWeight: 700, color: NAVY, margin: "0 0 14px", textTransform: "uppercase", letterSpacing: "0.06em" }}>Personal</h2>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 10 }}>
-              <QuickLinkCard to="/app/settings/profile"     title="Profile"       description="Name, job title, display preferences" />
-              <QuickLinkCard to="/app/settings/preferences" title="Preferences"   description="Language, timezone, appearance" />
-              <QuickLinkCard to="/app/settings/security"    title="Security"      description={`MFA: ${data?.mfaStatus === "demonstration-enabled" ? "Enabled" : "Not enabled"} · ${data?.sessions ?? 0} session${data?.sessions !== 1 ? "s" : ""}`} badge={data?.mfaStatus === "not-enabled" ? "Review" : undefined} />
-              <QuickLinkCard to="/app/settings/notifications" title="Notifications" description="Email, in-app, and digest preferences" />
-              <QuickLinkCard to="/app/settings/signatures"    title="Signatures & Initials" description="Manage your reusable signature and initials library" />
-              <QuickLinkCard to="/app/settings/data-and-privacy" title="Data & Privacy" description="Export and account closure direction" />
-            </div>
-          </SCard>
-
-          <SCard>
-            <h2 style={{ ...GF, fontSize: 13, fontWeight: 700, color: NAVY, margin: "0 0 14px", textTransform: "uppercase", letterSpacing: "0.06em" }}>Workspace</h2>
-            <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 12, alignItems: "center" }}>
-              <span style={{ ...GF, fontSize: 12, color: SLATE }}>Current plan:</span>
-              <StatusBadge label={data?.planName ?? "—"} color={GOLD} />
-              <span style={{ ...GF, fontSize: 12, color: SLATE }}>{data?.membersUsed ?? 0} of {data?.seatAlloc ?? 0} seats used</span>
-            </div>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 10 }}>
-              <QuickLinkCard to="/app/settings/branding"      title="Branding"       description="Workspace logo, colors, and sender display" />
-              <QuickLinkCard to="/app/settings/billing"       title="Billing & Plan" description="Plan, seats, invoices, and payment method" />
-              <QuickLinkCard to="/app/settings/usage"         title="Usage"          description="Signing requests, storage, and member usage" badge={data && data.warningCount > 0 ? `${data.warningCount} alerts` : undefined} />
-              {/* Integrations is post-launch; its route is capability-guarded, so the
-                  card is omitted rather than linking to an unavailable page. */}
-              {isCapabilityInActiveProfile("integrations") && (
-                <QuickLinkCard to="/app/settings/integrations"  title="Integrations"   description="Cloud storage, identity, CRM, and developer tools" />
-              )}
-            </div>
-          </SCard>
-
-          <SCard>
-            <h2 style={{ ...GF, fontSize: 13, fontWeight: 700, color: NAVY, margin: "0 0 10px", textTransform: "uppercase", letterSpacing: "0.06em" }}>Administrative</h2>
-            <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-              <Link to="/app/workspace" style={{ ...GF, fontSize: 13, color: AZURE, textDecoration: "none" }}>Workspace Members & Teams →</Link>
-              <Link to="/app/workspace/roles" style={{ ...GF, fontSize: 13, color: AZURE, textDecoration: "none" }}>Roles & Permissions →</Link>
-              <Link to="/app/workspace/settings" style={{ ...GF, fontSize: 13, color: AZURE, textDecoration: "none" }}>Workspace Identity & Security →</Link>
-            </div>
-          </SCard>
-        </>
+        <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "grid", gap: 10 }}>
+          <li style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, flexWrap: "wrap" }}>
+            <span style={{ ...GF, fontSize: 13.5, color: SET.INK, display: "inline-flex", alignItems: "center", gap: 8 }}>
+              {mfa?.enabled ? <ShieldCheck size={16} aria-hidden color={SET.SUCCESS} /> : <ShieldAlert size={16} aria-hidden color="#B45309" />}
+              Two-step verification
+            </span>
+            <span data-testid="overview-mfa">{mfa?.enabled ? <Badge tone="success" dot>On</Badge> : <Badge tone="warning" dot>Off</Badge>}</span>
+          </li>
+          <li style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, flexWrap: "wrap" }}>
+            <span style={{ ...GF, fontSize: 13.5, color: SET.INK, display: "inline-flex", alignItems: "center", gap: 8 }}>
+              <MonitorSmartphone size={16} aria-hidden color={SET.SLATE} /> Signed-in sessions
+            </span>
+            <span data-testid="overview-sessions" style={{ fontFamily: SET.MONO, fontSize: 13.5, fontWeight: 700, color: SET.NAVY }}>{sessions?.length ?? 0}</span>
+          </li>
+          <li style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, flexWrap: "wrap" }}>
+            <span style={{ ...GF, fontSize: 13.5, color: SET.INK, display: "inline-flex", alignItems: "center", gap: 8 }}>
+              <KeyRound size={16} aria-hidden color={SET.SLATE} /> Password
+            </span>
+            <Link to="/app/settings/security/password" style={{ ...GF, fontSize: 13, fontWeight: 600, color: SET.AZURE_TEXT, textDecoration: "none" }}>Change</Link>
+          </li>
+        </ul>
       )}
+    </SCard>
+  );
+}
+
+function PlanCard() {
+  return (
+    <SCard style={{ marginBottom: 0 }}>
+      <CardHeading to="/app/settings/billing" linkLabel="Billing & Plan">Plan</CardHeading>
+      <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 8 }}>
+        <span style={{ display: "inline-flex", alignItems: "center", gap: 7, fontFamily: SET.MONO, fontSize: 13, fontWeight: 700, letterSpacing: "0.08em", color: SET.NAVY }}>
+          <Sparkles size={15} aria-hidden color="#A16207" /> {CURRENT_PLAN.name.toUpperCase()}
+        </span>
+        <Badge tone="success" dot>Active</Badge>
+      </div>
+      <p style={{ ...GF, fontSize: 13, color: SET.SLATE, margin: 0, lineHeight: 1.55 }}>{CURRENT_PLAN.summary}</p>
+    </SCard>
+  );
+}
+
+function UsageGlance() {
+  const { workspaceId } = useWorkspaceMode();
+  const { usage, error } = useWorkspaceUsage(workspaceId);
+  return (
+    <SCard>
+      <CardHeading to="/app/settings/usage" linkLabel="View usage">Usage this month</CardHeading>
+      {error ? (
+        <p style={{ ...GF, fontSize: 13, color: SET.DANGER, margin: 0 }}>Usage could not be loaded.</p>
+      ) : usage === null ? (
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 10 }}>
+          {[0, 1, 2, 3].map(i => <Skeleton key={i} h={84} mb={0} />)}
+        </div>
+      ) : (
+        <div data-testid="overview-usage" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 10 }}>
+          <StatTile icon={Send} tone="info" label="Signing requests sent" value={usage.signingRequests.sentThisMonth.toLocaleString("en-PH")} note="No limit applied" />
+          <StatTile icon={FileText} tone="info" label="Documents" value={usage.documents.total.toLocaleString("en-PH")} note={`${usage.documents.uploadedThisMonth.toLocaleString("en-PH")} uploaded this month`} />
+          <StatTile icon={Users} tone="teal" label="Members" value={usage.members.toLocaleString("en-PH")} />
+          <StatTile icon={HardDrive} tone="teal" label="Storage used" value={formatBytes(usage.storageBytes)} />
+        </div>
+      )}
+    </SCard>
+  );
+}
+
+function AdminLinks() {
+  const links = [
+    { to: "/app/workspace/members", label: "Members & teams", icon: Users },
+    { to: "/app/workspace/roles", label: "Roles & permissions", icon: ShieldQuestion },
+    { to: "/app/workspace/settings", label: "Workspace name & sign-in policy", icon: SlidersHorizontal },
+    { to: "/app/settings/organization", label: "Organization units", icon: Network },
+  ];
+  return (
+    <SCard>
+      <h3 style={{ ...GF, fontSize: 15, fontWeight: 700, color: SET.NAVY, margin: "0 0 12px" }}>Workspace administration</h3>
+      <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 8 }}>
+        {links.map(l => (
+          <li key={l.to}>
+            <Link to={l.to} style={{ display: "flex", alignItems: "center", gap: 10, minHeight: 44, padding: "8px 12px", border: `1px solid ${SET.BORDER}`, borderRadius: 10, textDecoration: "none", ...GF, fontSize: 13.5, fontWeight: 600, color: SET.INK }}>
+              <l.icon size={16} aria-hidden color={SET.TEAL_TEXT} />
+              <span style={{ flex: 1, minWidth: 0 }}>{l.label}</span>
+              <ArrowRight size={14} aria-hidden color={SET.SLATE} />
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </SCard>
+  );
+}
+
+export function SettingsOverviewPage() {
+  return (
+    <SettingsPage title="Overview" description="Your account, how it is protected, and your workspace's plan and usage.">
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 300px), 1fr))", gap: 16, marginBottom: 16 }}>
+        <ProfileCard />
+        <SecurityCard />
+        <PlanCard />
+      </div>
+      <UsageGlance />
+      <AdminLinks />
     </SettingsPage>
   );
 }
