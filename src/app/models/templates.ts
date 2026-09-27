@@ -493,6 +493,16 @@ export interface DocumentTemplate {
    *  yet. */
   content:            FlowDocument;
   contentPageCount:   number;
+  /** Draft autosave. The server's revision of `content`, sent back as
+   *  `baseRevision` so a save from a stale tab is refused rather than
+   *  overwriting newer work. Absent in fixture mode and from a backend that
+   *  predates autosave. */
+  contentRevision?:   number;
+  /** When `content` was last saved (ISO-8601), or null when never. */
+  contentSavedAt?:    string | null;
+  /** Whether the attached PDF was generated from exactly this `content` —
+   *  false once the draft has moved on since the last Generate & Save. */
+  contentGenerated?:  boolean;
   usageSummary:   TemplateUsageSummary;
   validation?:    TemplateValidationResult;
   createdAt:      string;

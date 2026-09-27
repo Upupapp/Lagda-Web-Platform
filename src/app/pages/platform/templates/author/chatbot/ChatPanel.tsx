@@ -15,7 +15,8 @@ import { UserAvatar } from "../../../../../components/platform/UserAvatar";
 import { Z } from "../../../../../utils/z-index";
 import { BotAvatar, OrbitLoader } from "./chatbot-ui";
 import {
-  AZURE, BLUE_DEEP, FIRST_THINK_MS, GF, HAIR, LOADER_MS, LOADER_MS_REDUCED, NAVY, SILVER, streamMsPerChar, thinkingMs,
+  AZURE, BLUE_DEEP, FIRST_THINK_MS, GF, HAIR, LOADER_MS, LOADER_MS_REDUCED, NAVY, OPENING_BOT_IMAGE, SILVER,
+  streamMsPerChar, thinkingMs,
 } from "./chatbot-theme";
 import {
   greetingReplies, hasUserTurns, initialState, respond, type BotReply, type Chip, type EngineContext,
@@ -385,7 +386,7 @@ export function ChatPanel({ templateId, variant, width = 380, user, ctx, reduced
         {/* Body */}
         {phase !== "ready" ? (
           <div style={{ flex: 1, minHeight: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <OrbitLoader caption="Getting your assistant ready" reduced={reduced} morphing={phase === "morph"} testId="chat-loader" />
+            <OrbitLoader caption="Getting your assistant ready" reduced={reduced} morphing={phase === "morph"} testId="chat-loader" image={OPENING_BOT_IMAGE} />
           </div>
         ) : (
           <div

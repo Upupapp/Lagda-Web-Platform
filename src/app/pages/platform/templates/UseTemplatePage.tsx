@@ -11,7 +11,7 @@ import {
   CheckCircle2, AlertCircle, Zap, LayoutTemplate,
   ArrowRight, Info,
 } from "lucide-react";
-import { TemplateProvider, useTemplates } from "../../../context/TemplateContext";
+import { TemplateProvider, useTemplates, useActiveTemplateLoader } from "../../../context/TemplateContext";
 import { usePlatform } from "../../../context/PlatformContext";
 import { SkeletonBlock, SKELETON_STYLE } from "../../../components/platform";
 import { resolveTemplateApplication } from "../../../services/prepare/template-apply";
@@ -434,7 +434,7 @@ function initialFilesFor(template: DocumentTemplate): PrepFile[] | undefined {
 function UseTemplateInner() {
   const { isNarrow } = useViewport();
   const { templateId } = useParams<{ templateId: string }>();
-  const { state, loadTemplate } = useTemplates();
+  const { state } = useTemplates();
   const platform = usePlatform();
   const workspaceId = platform.currentWorkspace?.id;
   const organization = mapRolesOrganization(platform.currentWorkspace?.name);
@@ -454,10 +454,8 @@ function UseTemplateInner() {
   const [authDowngrades, setAuthDowngrades] =
     useState<{ label: string; requested: PrepAuthMethodId }[]>([]);
 
-  useEffect(() => {
-    if (templateId) loadTemplate(templateId);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [templateId]);
+  // Waits for the session bootstrap, and re-reads on a workspace change.
+  useActiveTemplateLoader(templateId);
 
   useEffect(() => {
     if (t) {

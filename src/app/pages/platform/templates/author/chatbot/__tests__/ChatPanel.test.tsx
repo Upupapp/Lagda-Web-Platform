@@ -56,6 +56,19 @@ describe("opening", () => {
     expect(log()).toHaveTextContent(/Hi Ana! I'm LAGDA Chatbot/);
   });
 
+  it("the opening loader — and only it — shows the new bot artwork", async () => {
+    setup();
+    const loaderImage = within(screen.getByTestId("chat-loader")).getByTestId("orbit-loader-image");
+    expect(loaderImage.getAttribute("src")).toMatch(/lagda-bot-2\.webp$/);
+    await ready();
+    // Once greeted, every bot image in the panel (header, message avatars)
+    // is the usual one.
+    const panel = screen.getByTestId("lagda-chatbot-panel");
+    const srcs = Array.from(panel.querySelectorAll("img")).map(i => i.getAttribute("src") ?? "");
+    expect(srcs.length).toBeGreaterThan(0);
+    for (const src of srcs) expect(src).toMatch(/lagda-bot\.webp$/);
+  });
+
   it("reduced motion: about a second, and no morph", async () => {
     setup({ reduced: true });
     await tick(1000);

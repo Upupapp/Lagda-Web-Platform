@@ -49,7 +49,7 @@ export class ApiError extends Error {
  *  `undefined`, never a false structured error). */
 export function extractErrorBody(payload: unknown): ApiErrorBody | undefined {
   if (typeof payload !== "object" || payload === null || !("error" in payload)) return undefined;
-  const error = (payload as { error: unknown }).error;
+  const error = payload.error;
   if (typeof error !== "object" || error === null) return undefined;
   const candidate = error as Partial<ApiErrorBody>;
   if (typeof candidate.code !== "string" || typeof candidate.message !== "string") return undefined;
@@ -80,7 +80,17 @@ export interface ApiRequestInit {
    * standard headers.
    */
   headers?: Record<string, string>;
+  /**
+   * Lets the request outlive the page (a save sent from `pagehide`). Browsers
+   * cap a keepalive body at 64 KiB and REJECT a larger one outright, so a
+   * body over the cap is sent as an ordinary request instead — it may still
+   * complete, where a keepalive one would certainly fail.
+   */
+  keepalive?: boolean;
 }
+
+/** Just under the browsers' 64 KiB keepalive budget, for the headers. */
+const KEEPALIVE_BODY_LIMIT = 60_000;
 
 // Low-level request. Domain services build on this rather than calling
 // fetch directly, so the auth/CSRF/error-shape handling lives in one place.
@@ -104,14 +114,19 @@ export async function apiRequest<T>(path: string, init: ApiRequestInit = {}): Pr
     }
   }
 
+  const body = init.body !== undefined ? JSON.stringify(init.body) : undefined;
+  const keepalive = init.keepalive === true
+    && (body === undefined || new TextEncoder().encode(body).length <= KEEPALIVE_BODY_LIMIT);
+
   let response: Response;
   try {
     response = await fetch(`${API_BASE_URL}${path}`, {
       method,
       headers,
       credentials: "include",
-      body: init.body !== undefined ? JSON.stringify(init.body) : undefined,
+      body,
       signal: init.signal,
+      ...(keepalive ? { keepalive: true } : {}),
     });
   } catch {
     throw new ApiError(0, undefined, "Could not reach the server. Check your connection and try again.");

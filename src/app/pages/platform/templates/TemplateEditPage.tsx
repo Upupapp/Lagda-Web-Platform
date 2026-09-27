@@ -10,7 +10,7 @@ import {
   Users, FileText, Settings, GitBranch, Type, Shield,
   Plus,
 } from "lucide-react";
-import { TemplateProvider, useTemplates } from "../../../context/TemplateContext";
+import { TemplateProvider, useTemplates, useActiveTemplateLoader } from "../../../context/TemplateContext";
 import { usePlatform } from "../../../context/PlatformContext";
 import { useProcessing } from "../../../services/processing.service";
 import {
@@ -717,15 +717,13 @@ function VariablesTab({
 function TemplateEditInner() {
   const { isNarrow } = useViewport();
   const { templateId } = useParams<{ templateId: string }>();
-  const { state, loadTemplate } = useTemplates();
+  const { state } = useTemplates();
   const [activeTab, setActiveTab] = useState<TabId>("details");
   const [draft, setDraft] = useState<DocumentTemplate | null>(null);
   const [saved, setSaved] = useState(false);
 
-  useEffect(() => {
-    if (templateId) loadTemplate(templateId);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [templateId]);
+  // Waits for the session bootstrap, and re-reads on a workspace change.
+  useActiveTemplateLoader(templateId);
 
   useEffect(() => {
     if (state.activeTemplate && !draft) {

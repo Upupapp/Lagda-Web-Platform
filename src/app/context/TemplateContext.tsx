@@ -7,9 +7,12 @@ import React, {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useReducer,
   useRef,
 } from "react";
+import { USE_REAL_BACKEND } from "../services/backend-flag";
+import type { PlatformContextValue } from "./PlatformContext";
 import type {
   DocumentTemplate,
   DocumentTemplateId,
@@ -130,10 +133,61 @@ function reducer(state: TemplateState, action: TemplateAction): TemplateState {
   }
 }
 
+// ── Workspace scope ────────────────────────────────────────────────────────────
+//
+// Why this exists: `/app/templates/:id/author` and `/fields` are full-screen
+// routes OUTSIDE PlatformLayout, so nothing holds them back while the session
+// bootstrap (GET /me, then GET /workspaces) is still in flight. On a refresh
+// the page mounted with no workspace in scope, `getTemplate(undefined, id)`
+// fell back to the FIXTURES, found nothing, and showed "Template not found" —
+// and because the load ran once per templateId, it never ran again when the
+// workspace arrived a moment later.
+//
+// So a template read waits until the scope is KNOWN, and re-runs whenever the
+// workspace it is scoped to changes.
+
+export type TemplateScopeStatus =
+  /** Still bootstrapping — reading now would ask the wrong source. */
+  | "pending"
+  /** Known: a workspace (real mode), or fixture mode. Safe to read. */
+  | "ready"
+  /** Real mode, and nobody is signed in. */
+  | "signed-out";
+
+export interface TemplateScope {
+  status: TemplateScopeStatus;
+  /** The workspace reads are scoped to, or "" when none (fixture mode). */
+  workspaceId: string;
+}
+
+type ScopeInputs = Pick<PlatformContextValue, "sessionStatus" | "workspaceStatus" | "currentWorkspace">;
+
+export function templateScopeOf(platform: ScopeInputs, realBackend: boolean = USE_REAL_BACKEND): TemplateScope {
+  const workspaceId = platform.currentWorkspace?.id ?? "";
+  // Fixture mode never calls a server, so the workspace changes nothing
+  // about what a read returns — there is nothing to wait for.
+  if (!realBackend) return { status: "ready", workspaceId };
+
+  const { sessionStatus, workspaceStatus } = platform;
+  if (sessionStatus === "unauthenticated" || sessionStatus === "expired") {
+    return { status: "signed-out", workspaceId };
+  }
+  if (sessionStatus !== "authenticated") return { status: "pending", workspaceId };
+  // Authenticated. "ready" promises a current workspace — wait for it, even
+  // for the render in which the status and the workspace arrive apart.
+  if (workspaceStatus === "initializing") return { status: "pending", workspaceId };
+  if (workspaceStatus === "ready" && workspaceId === "") return { status: "pending", workspaceId };
+  // "empty" / "error": the bootstrap is finished and there is no workspace
+  // to wait for.
+  return { status: "ready", workspaceId };
+}
+
 // ── Context interface ──────────────────────────────────────────────────────────
 
 interface TemplateContextValue {
   state: TemplateState;
+  /** Whether reads can run yet, and which workspace they are scoped to. */
+  scope: TemplateScope;
   // Library
   setQuery:      (q: TemplateListQuery) => void;
   loadList:      (q?: TemplateListQuery) => void;
@@ -162,8 +216,13 @@ export function TemplateProvider({ children }: { children: React.ReactNode }) {
   // there is no URL to call and the façade falls back to the fixtures.
   const platform = usePlatform();
   const workspaceId = platform.currentWorkspace?.id;
+  const scope = templateScopeOf(platform);
   const latestQuery = useRef(state.query);
   latestQuery.current = state.query;
+  // Only the LATEST template read may land. A read started for the previous
+  // workspace (or a previous id) can finish after the current one and would
+  // otherwise overwrite it.
+  const activeRequest = useRef(0);
 
   const loadList = useCallback(async (q?: TemplateListQuery) => {
     const query = q ?? latestQuery.current;
@@ -181,15 +240,18 @@ export function TemplateProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const loadTemplate = useCallback(async (id: DocumentTemplateId) => {
+    const request = ++activeRequest.current;
     dispatch({ type: "ACTIVE_LOADING" });
     try {
       const template = await sourceGet(workspaceId, id);
+      if (request !== activeRequest.current) return;
       if (template) {
         dispatch({ type: "ACTIVE_SUCCESS", template });
       } else {
         dispatch({ type: "ACTIVE_ERROR", error: "Template not found." });
       }
     } catch {
+      if (request !== activeRequest.current) return;
       dispatch({ type: "ACTIVE_ERROR", error: "Unable to load template." });
     }
   }, [workspaceId]);
@@ -276,6 +338,7 @@ export function TemplateProvider({ children }: { children: React.ReactNode }) {
   return (
     <TemplateContext.Provider value={{
       state,
+      scope,
       setQuery,
       loadList: q => { void loadList(q); },
       loadTemplate: id => { void loadTemplate(id); },
@@ -299,4 +362,25 @@ export function useTemplates(): TemplateContextValue {
   const ctx = useContext(TemplateContext);
   if (!ctx) throw new Error("useTemplates must be used inside <TemplateProvider>");
   return ctx;
+}
+
+/**
+ * Loads `templateId` into `state.activeTemplate` once the workspace scope is
+ * known, and again whenever the workspace changes — the one way every
+ * template page loads its template, so none of them can read before the
+ * session bootstrap has finished (see `templateScopeOf`).
+ *
+ * Until then `state.activeTemplate` stays null with no error, which every
+ * consumer already renders as its loading skeleton.
+ */
+export function useActiveTemplateLoader(templateId: DocumentTemplateId | undefined): TemplateScope {
+  const { scope, loadTemplate } = useTemplates();
+  const load = useRef(loadTemplate);
+  load.current = loadTemplate;
+  const ready = scope.status === "ready";
+  useEffect(() => {
+    if (!templateId || !ready) return;
+    load.current(templateId);
+  }, [templateId, ready, scope.workspaceId]);
+  return scope;
 }

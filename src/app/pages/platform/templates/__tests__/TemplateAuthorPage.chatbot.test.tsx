@@ -18,6 +18,7 @@ const template = {
 vi.mock("../../../../context/TemplateContext", () => ({
   TemplateProvider: ({ children }: { children: React.ReactNode }) => children,
   useTemplates: () => ({ state: { activeTemplate: template, activeLoading: false, activeError: null }, loadTemplate: () => undefined }),
+  useActiveTemplateLoader: () => ({ status: "ready", workspaceId: "ws_1" }),
 }));
 vi.mock("../../../../context/PlatformContext", () => ({
   usePlatform: () => ({ currentWorkspace: { id: "ws_1" }, user: { id: "u1", email: "ana@example.com", displayName: "Ana Reyes" } }),
@@ -28,11 +29,15 @@ vi.mock("../../../../services/processing.service", () => ({
 }));
 const generateTemplateDocument = vi.fn();
 const updateTemplate = vi.fn();
+const saveTemplateContent = vi.fn();
 vi.mock("../../../../services/templates-source", () => ({
   realTemplatesAvailable: () => true,
   generateTemplateDocument: (...a: unknown[]) => generateTemplateDocument(...a),
   saveResolvedFieldAnchors: () => Promise.resolve(),
   updateTemplate: (...a: unknown[]) => updateTemplate(...a),
+  saveTemplateContent: (...a: unknown[]) => saveTemplateContent(...a),
+  isTemplateContentConflict: () => false,
+  conflictRevisionOf: () => undefined,
 }));
 
 import { TemplateAuthorPage, LEAVE_WARNING, SAVE_WARNING } from "../TemplateAuthorPage";
@@ -95,7 +100,9 @@ beforeEach(() => {
   resetChatStore();
   generateTemplateDocument.mockReset();
   updateTemplate.mockReset();
+  saveTemplateContent.mockReset();
   generateTemplateDocument.mockResolvedValue({ template: { ...template, contentPageCount: 1 }, resolvedAnchors: [] });
+  saveTemplateContent.mockResolvedValue({ contentRevision: 2, contentSavedAt: "2027-03-01T02:05:00.000Z", contentGenerated: false });
 });
 afterEach(() => { vi.useRealTimers(); });
 
@@ -104,7 +111,11 @@ describe("the author page and LAGDA Chatbot", () => {
     mountPage();
     expect(screen.queryByText(/Start from a purpose/)).toBeNull();
     expect(screen.queryByRole("button", { name: "Write it for me" })).toBeNull();
-    expect(screen.getByRole("button", { name: "Open LAGDA Chatbot" })).toBeTruthy();
+    const toggle = screen.getByRole("button", { name: "Open LAGDA Chatbot" });
+    // The toggle keeps the usual bot.
+    for (const img of Array.from(toggle.querySelectorAll("img"))) {
+      expect(img.getAttribute("src")).toMatch(/lagda-bot\.webp$/);
+    }
   });
 
   it("the button opens the side panel, and closing returns focus to it", async () => {
@@ -217,8 +228,10 @@ describe("the author page and LAGDA Chatbot", () => {
       expect(hasChatSession("tpl_1")).toBe(false);
       expect(getChatSession("tpl_1").messages).toEqual([]);
       expect(screen.queryByTestId("lagda-chatbot-panel")).toBeNull();
-      // The same orbit loader, over the page.
-      expect(screen.getByTestId("draft-loader")).toBeTruthy();
+      // The same orbit loader, over the page — with the usual bot, not the
+      // opening loader's artwork.
+      expect(within(screen.getByTestId("draft-loader")).getByTestId("orbit-loader-image").getAttribute("src"))
+        .toMatch(/lagda-bot\.webp$/);
       expect(screen.queryByRole("button", { name: "Open LAGDA Chatbot" })).toBeNull();
 
       // The template's roles match the conversation's participants.
@@ -243,6 +256,15 @@ describe("the author page and LAGDA Chatbot", () => {
       expect(page.textContent).toContain("Approved by:");
       // Bound to the roles that were just saved.
       expect(page.querySelectorAll(".flow-field-anchor").length).toBeGreaterThanOrEqual(2);
+
+      // Autosaved ONCE, straight away, with the finished draft — not frame
+      // by frame while it was typed, and without waiting for the debounce.
+      await vi.waitFor(() => { expect(saveTemplateContent).toHaveBeenCalledTimes(1); });
+      const [ws, id, body] = saveTemplateContent.mock.calls[0]! as [string, string, { content: { content: unknown[] } }];
+      expect([ws, id]).toEqual(["ws_1", "tpl_1"]);
+      expect(JSON.stringify(body.content)).toContain("Juan Dela Cruz");
+      await tick(5000);
+      expect(saveTemplateContent).toHaveBeenCalledTimes(1);
     });
   });
 });

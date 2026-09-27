@@ -6,9 +6,10 @@
 // Inline styles only. No Burgundy.
 
 import React, { useEffect, useMemo, useReducer, useRef, useState } from "react";
-import { useParams, Link } from "react-router";
+import { useParams, Link, Navigate, useLocation } from "react-router";
+import { buildSignInUrl } from "../../../utils/authReturnPath";
 import { ChevronLeft, AlertCircle, Info, Save, CheckCircle2 } from "lucide-react";
-import { TemplateProvider, useTemplates } from "../../../context/TemplateContext";
+import { TemplateProvider, useTemplates, useActiveTemplateLoader } from "../../../context/TemplateContext";
 import { usePlatform } from "../../../context/PlatformContext";
 import { SkeletonBlock, SKELETON_STYLE } from "../../../components/platform";
 import { useProcessing } from "../../../services/processing.service";
@@ -825,14 +826,18 @@ function FieldsEditorInner({ template }: { template: DocumentTemplate }) {
 // ── Root loader ───────────────────────────────────────────────────────────────
 function TemplateFieldsInner() {
   const { templateId } = useParams<{ templateId: string }>();
-  const { state, loadTemplate } = useTemplates();
+  const { state } = useTemplates();
 
-  useEffect(() => {
-    if (templateId) loadTemplate(templateId);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [templateId]);
+  // Waits for the session bootstrap, and re-reads on a workspace change.
+  const scope = useActiveTemplateLoader(templateId);
+  const location = useLocation();
 
   const t = state.activeTemplate;
+
+  // Outside PlatformLayout, so its sign-in gate is this page's own.
+  if (scope.status === "signed-out") {
+    return <Navigate to={buildSignInUrl(location.pathname + location.search)} replace />;
+  }
 
   if (state.activeLoading || (!t && !state.activeError)) {
     return <div style={{ padding: 24, background: "#ffffff", minHeight: "100vh" }}><style>{SKELETON_STYLE}</style><SkeletonBlock height={20} width={200} /></div>;

@@ -40,15 +40,31 @@
 // questions and then types the draft into this editor. Its conversation is
 // kept while the page is open and deleted when it writes, on save, and on
 // leaving — the page warns before the last two.
+//
+// ── Autosave (real mode) ───────────────────────────────────────────────────
+//
+// The draft saves itself (`author/autosave.ts` has the rules): debounced
+// while typing, at least every 30s during a long burst, when the page is
+// hidden, and right after the chatbot finishes typing a draft. The header
+// pill says where it stands. Generate & Save is still the FINISH action — it
+// renders the PDF and places the field anchors; autosave only keeps the words
+// safe. The leave prompts fire only when something would actually be lost: a
+// save still pending or failed, or (as before) a chatbot conversation.
+//
+// A refresh restores the draft from the server. Nothing is kept in
+// localStorage/sessionStorage — document text is private.
 
 import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useParams, Link, useBlocker } from "react-router";
+import { useParams, Link, Navigate, useBlocker, useLocation } from "react-router";
 import { useEditor, EditorContent } from "@tiptap/react";
 import {
   ChevronLeft, AlertCircle, Info, Save, CheckCircle2, FileText,
-  SlidersHorizontal, X, Maximize2, Minimize2, FastForward,
+  SlidersHorizontal, X, Maximize2, Minimize2, FastForward, CloudOff, Loader2, RefreshCw,
 } from "lucide-react";
-import { TemplateProvider, useTemplates } from "../../../context/TemplateContext";
+import { TemplateProvider, useTemplates, useActiveTemplateLoader } from "../../../context/TemplateContext";
+import { buildSignInUrl } from "../../../utils/authReturnPath";
+import { useTemplateAutosave } from "./author/useTemplateAutosave";
+import { formatSavedTime, type AutosaveState } from "./author/autosave";
 import { usePlatform } from "../../../context/PlatformContext";
 import { SkeletonBlock, SKELETON_STYLE } from "../../../components/platform";
 import { ConfirmDialog, useConfirm, type ConfirmRequest } from "../../../components/platform/ConfirmDialog";
@@ -65,7 +81,7 @@ import { flowDocumentToJSON, jsonToFlowDocument } from "./author/converter";
 import { RibbonToolbar } from "./author/RibbonToolbar";
 import { ChatToggle } from "./author/chatbot/ChatToggle";
 import { OrbitLoader } from "./author/chatbot/chatbot-ui";
-import { CHATBOT_CSS, BOT_IMAGE, useReducedMotion } from "./author/chatbot/chatbot-theme";
+import { CHATBOT_CSS, BOT_IMAGE, OPENING_BOT_IMAGE, useReducedMotion } from "./author/chatbot/chatbot-theme";
 import { useChatSession } from "./author/chatbot/chat-store";
 import type { EngineContext, WritePlan } from "./author/chatbot/engine";
 import { hasUserTurns } from "./author/chatbot/session";
@@ -93,6 +109,36 @@ const DONE_TOAST_MS = 6500;
 export const LEAVE_WARNING = "Leaving this page will delete your conversation with LAGDA Chatbot.";
 export const SAVE_WARNING = "Saving will finish this template and delete your conversation with LAGDA Chatbot.";
 export const DRAFT_DONE = "Draft written. Review and edit anything you like.";
+export const UNSAVED_LEAVE_WARNING = "Your latest changes haven't been saved yet. If you leave now, they may be lost.";
+export const CONFLICT_MESSAGE = "This template changed in another tab";
+
+interface PillTone { fg: string; bg: string; border: string }
+const TONE_NEUTRAL: PillTone = { fg: "#334155", bg: "#F1F5F9", border: "#E2E8F0" };
+const TONE_OK: PillTone = { fg: "#065F46", bg: "#D1FAE5", border: "#A7F3D0" };
+const TONE_WARN: PillTone = { fg: "#92400E", bg: "#FEF3C7", border: "#FDE68A" };
+const TONE_BAD: PillTone = { fg: "#991B1B", bg: "#FEE2E2", border: "#FECACA" };
+
+type StatusPill = PillTone & { text: string; kind: "saving" | "saved" | "warn" | "bad" };
+
+/** The header pill for the autosave, or null when there is nothing to say. */
+function autosavePill(state: AutosaveState): StatusPill | null {
+  switch (state.status) {
+    case "pending":
+    case "saving":
+      return { text: "Saving…", kind: "saving", ...TONE_NEUTRAL };
+    case "error":
+      return { text: "Couldn't save — retrying", kind: "warn", ...TONE_WARN };
+    case "offline":
+      return { text: "Offline — will save when you reconnect", kind: "warn", ...TONE_WARN };
+    case "conflict":
+      return { text: "Not saved — changed in another tab", kind: "bad", ...TONE_BAD };
+    case "idle":
+    case "saved": {
+      const at = formatSavedTime(state.savedAt);
+      return at === null ? null : { text: `All changes saved · ${at}`, kind: "saved", ...TONE_OK };
+    }
+  }
+}
 
 // The editor's own internals are a real stylesheet, so they use real media
 // queries: 72px of page margin is right on A4 and absurd on a 360px phone,
@@ -149,7 +195,7 @@ const EDITOR_CSS = `
 function PanelFallback({ width, reduced }: { width: number; reduced: boolean }) {
   return (
     <div aria-hidden style={{ width, flexShrink: 0, height: "100%", borderLeft: HAIRLINE, background: "#F8FAFC", display: "flex", alignItems: "center", justifyContent: "center" }}>
-      <OrbitLoader caption="Getting your assistant ready" reduced={reduced} />
+      <OrbitLoader caption="Getting your assistant ready" reduced={reduced} image={OPENING_BOT_IMAGE} />
     </div>
   );
 }
@@ -184,7 +230,7 @@ function IconControl({
 }
 
 // ── Editor surface ───────────────────────────────────────────────────────────
-function AuthorEditorInner({ template }: { template: DocumentTemplate }) {
+function AuthorEditorInner({ template, onReload }: { template: DocumentTemplate; onReload: () => void }) {
   usePageMeta();
   const platform = usePlatform();
   const { run } = useProcessing();
@@ -205,12 +251,34 @@ function AuthorEditorInner({ template }: { template: DocumentTemplate }) {
   // The template's role slots — the chatbot can add to them, so they are
   // held here rather than read from the (stale) loaded template.
   const [placeholders, setPlaceholders] = useState<TemplateRolePlaceholder[]>(template.placeholders);
+  const [contentGenerated, setContentGenerated] = useState<boolean | undefined>(template.contentGenerated);
+
+  // Autosave hears about edits through refs: the editor is created before
+  // the autosave (which needs it), and the typewriter's frames are not edits
+  // — the finished draft is saved once, when it is done.
+  const autosaveChange = useRef<() => void>(() => undefined);
+  const typingRef = useRef(false);
 
   const editor = useEditor({
     extensions: flowDocumentExtensions(),
     content: flowDocumentToJSON(template.content),
-    onUpdate: () => setChanged(true),
+    onUpdate: () => {
+      setChanged(true);
+      if (!typingRef.current) autosaveChange.current();
+    },
   });
+
+  const autosave = useTemplateAutosave({
+    enabled: isReal,
+    editor,
+    workspaceId,
+    templateId: template.id,
+    initialRevision: template.contentRevision,
+    initialSavedAt: template.contentSavedAt,
+    onSaved: r => setContentGenerated(r.contentGenerated),
+  });
+  useEffect(() => { autosaveChange.current = autosave.change; }, [autosave.change]);
+  const conflict = autosave.state.status === "conflict";
 
   const [docEmpty, setDocEmpty] = useState(template.content.content.length === 0);
   useEffect(() => {
@@ -235,6 +303,7 @@ function AuthorEditorInner({ template }: { template: DocumentTemplate }) {
   const wasOpen = useRef(false);
   const typewriter = useDraftTypewriter({ editor, scrollRef, badgeHostRef: pageRef, badgeRef, reduced });
   const typing = typewriter.busy;
+  useEffect(() => { typingRef.current = typing; }, [typing]);
   const panelSide = !isNarrow;
   const panelWidth = isMedium ? PANEL_W_MEDIUM : PANEL_W;
 
@@ -260,32 +329,67 @@ function AuthorEditorInner({ template }: { template: DocumentTemplate }) {
     return () => clearTimeout(t);
   }, [doneNote]);
 
-  // A browser refresh or tab close loses an in-memory chat: ask first.
+  // A browser refresh or tab close loses an in-memory chat, or a draft save
+  // that has not landed yet: ask first. Nothing to lose, no prompt.
+  const unsaved = autosave.unsaved;
   useEffect(() => {
-    if (!hasChat) return;
+    if (!hasChat && !unsaved) return;
     const onBeforeUnload = (e: BeforeUnloadEvent) => { e.preventDefault(); e.returnValue = ""; };
     window.addEventListener("beforeunload", onBeforeUnload);
     return () => window.removeEventListener("beforeunload", onBeforeUnload);
-  }, [hasChat]);
+  }, [hasChat, unsaved]);
 
-  // Back, or any other in-app navigation, with a conversation in progress.
+  // Back, or any other in-app navigation, with a conversation in progress or
+  // changes not yet saved.
   const blocker = useBlocker(({ currentLocation, nextLocation }) =>
-    hasChat && currentLocation.pathname !== nextLocation.pathname);
+    (hasChat || unsaved) && currentLocation.pathname !== nextLocation.pathname);
   const leaving = useRef(false);
-  const leaveRequest: ConfirmRequest | null = blocker.state === "blocked"
-    ? {
-        title: "Leave this page?",
-        body: LEAVE_WARNING,
-        confirmLabel: "Leave and delete",
-        cancelLabel: "Stay",
-        destructive: true,
-        onConfirm: () => {
-          leaving.current = true;
-          chat.clear();
-          blocker.proceed?.();
-        },
-      }
-    : null;
+  const blockedForChat = useRef(false);
+  if (blocker.state !== "blocked") blockedForChat.current = hasChat;
+
+  // Blocked ONLY by a save still on its way: send it now, and when it lands
+  // the navigation simply continues — the prompt is for work that would be
+  // lost, and a save that succeeds loses nothing.
+  const blockerRef = useRef(blocker);
+  blockerRef.current = blocker;
+  const autosaveFlush = autosave.flush;
+  const autosaveMark = autosave.change;
+  useEffect(() => {
+    if (blocker.state !== "blocked" || blockedForChat.current) return;
+    let cancelled = false;
+    void autosaveFlush().then(ok => {
+      if (cancelled || !ok || blockerRef.current.state !== "blocked") return;
+      blockerRef.current.proceed?.();
+    });
+    return () => { cancelled = true; };
+  }, [blocker.state, autosaveFlush]);
+
+  const leaveRequest: ConfirmRequest | null = blocker.state !== "blocked"
+    ? null
+    : blockedForChat.current
+      ? {
+          title: "Leave this page?",
+          body: unsaved ? `${LEAVE_WARNING} ${UNSAVED_LEAVE_WARNING}` : LEAVE_WARNING,
+          confirmLabel: "Leave and delete",
+          cancelLabel: "Stay",
+          destructive: true,
+          onConfirm: () => {
+            leaving.current = true;
+            chat.clear();
+            blocker.proceed?.();
+          },
+        }
+      : {
+          title: "Leave without saving?",
+          body: UNSAVED_LEAVE_WARNING,
+          confirmLabel: "Leave anyway",
+          cancelLabel: "Stay",
+          destructive: true,
+          onConfirm: () => {
+            leaving.current = true;
+            blocker.proceed?.();
+          },
+        };
   const closeLeave = () => {
     if (!leaving.current && blocker.state === "blocked") blocker.reset?.();
     leaving.current = false;
@@ -336,11 +440,18 @@ function AuthorEditorInner({ template }: { template: DocumentTemplate }) {
       }
       return buildDraft(plan, slots);
     };
+    // The typed frames are not edits to autosave; the finished draft is.
+    typingRef.current = true;
     typewriter.start(prepare, plan.placement, () => {
+      typingRef.current = false;
       setChanged(true);
       setDoneNote(rolesNote === null ? DRAFT_DONE : `${DRAFT_DONE} ${rolesNote}`);
+      // Saved the moment it is written — a whole draft is too much to leave
+      // to the debounce.
+      autosaveMark();
+      void autosaveFlush();
     });
-  }, [editor, chat, placeholders, isReal, workspaceId, template, typewriter]);
+  }, [editor, chat, placeholders, isReal, workspaceId, template, typewriter, autosaveMark, autosaveFlush]);
 
   const handleSave = async () => {
     if (typing) return;
@@ -348,9 +459,21 @@ function AuthorEditorInner({ template }: { template: DocumentTemplate }) {
       setSaveError("Open a workspace to author and save a document.");
       return;
     }
+    if (conflict) {
+      setSaveError(`${CONFLICT_MESSAGE}. Reload to get the latest version before saving.`);
+      return;
+    }
     setSaveError(null);
     setSaving(true);
     try {
+      // The draft first, so the words are safe even if rendering fails. A
+      // failed autosave does not stop the finish — the generate carries the
+      // same content — but a conflict found here does.
+      await autosave.flush();
+      if (autosave.getStatus() === "conflict") {
+        setSaveError(`${CONFLICT_MESSAGE}. Reload to get the latest version before saving.`);
+        return;
+      }
       const content = jsonToFlowDocument(editor.getJSON());
       const { template: updated, resolvedAnchors } = await run(
         { message: "Generating your document", detail: "Rendering the content into a PDF." },
@@ -359,6 +482,8 @@ function AuthorEditorInner({ template }: { template: DocumentTemplate }) {
       if (resolvedAnchors.length > 0) {
         await saveResolvedFieldAnchors(workspaceId, template.id, resolvedAnchors);
       }
+      autosave.adoptRevision(updated.contentRevision, updated.contentSavedAt);
+      setContentGenerated(true);
       setPageCount(updated.contentPageCount);
       setChanged(false);
       setSaved(true);
@@ -385,11 +510,20 @@ function AuthorEditorInner({ template }: { template: DocumentTemplate }) {
     });
   };
 
-  const statusPill = changed
-    ? { text: "Unsaved changes", fg: "#92400E", bg: "#FEF3C7", border: "#FDE68A" }
-    : saved
-      ? { text: "Saved", fg: "#065F46", bg: "#D1FAE5", border: "#A7F3D0" }
-      : null;
+  // Real mode: where the autosave stands. Fixture mode keeps the draft in
+  // memory, so its pill is still just "you have changed something".
+  const statusPill: StatusPill | null = isReal
+    ? autosavePill(autosave.state)
+    : changed
+      ? { text: "Unsaved changes", kind: "warn", ...TONE_WARN }
+      : saved
+        ? { text: "Saved", kind: "saved", ...TONE_OK }
+        : null;
+  const pillIcon = (size: number) => statusPill === null ? null
+    : statusPill.kind === "saving" ? <Loader2 size={size} aria-hidden className={reduced ? undefined : "lagda-cb-spin"} />
+      : statusPill.kind === "saved" ? <CheckCircle2 size={size} aria-hidden />
+        : statusPill.text.startsWith("Offline") ? <CloudOff size={size} aria-hidden />
+          : <AlertCircle size={size} aria-hidden />;
 
   const ribbonVisible = editor !== null && (!isNarrow || ribbonOpen);
   const sidePanelOpen = chatOpen && panelSide;
@@ -446,11 +580,13 @@ function AuthorEditorInner({ template }: { template: DocumentTemplate }) {
 
         {/* Status, inline on a pointer where there is room for it. */}
         {!isNarrow && statusPill && (
-          <span style={{
+          <span role="status" data-testid="save-status" style={{
             ...GF, fontSize: 11, fontWeight: 600, color: statusPill.fg,
             background: statusPill.bg, border: `1px solid ${statusPill.border}`,
             padding: "3px 9px", borderRadius: 99, flexShrink: 0,
+            display: "inline-flex", alignItems: "center", gap: 5, whiteSpace: "nowrap",
           }}>
+            {isReal && pillIcon(11)}
             {statusPill.text}
           </span>
         )}
@@ -468,15 +604,40 @@ function AuthorEditorInner({ template }: { template: DocumentTemplate }) {
       {/* Status strip — phone only, and only when there is something to say,
           so an empty bar never steals a row from the document. */}
       {isNarrow && statusPill && (
-        <div style={{
+        <div role="status" data-testid="save-status" style={{
           flexShrink: 0, padding: "6px 12px", background: statusPill.bg,
           borderBottom: `1px solid ${statusPill.border}`,
-          display: "flex", alignItems: "center", gap: 6,
+          display: "flex", alignItems: "center", gap: 6, color: statusPill.fg,
         }}>
-          {saved && !changed && <CheckCircle2 size={12} color={statusPill.fg} />}
+          {isReal ? pillIcon(12) : saved && !changed && <CheckCircle2 size={12} color={statusPill.fg} />}
           <span style={{ ...GF, fontSize: 11.5, fontWeight: 600, color: statusPill.fg }}>
             {statusPill.text}
           </span>
+        </div>
+      )}
+
+      {/* Another tab saved a newer revision: nothing more is sent from here
+          until the page is reloaded onto it. */}
+      {conflict && (
+        <div role="alert" data-testid="save-conflict" style={{
+          flexShrink: 0, display: "flex", alignItems: "center", flexWrap: "wrap", gap: 8,
+          padding: "10px 14px", background: "#FEF2F2", borderBottom: "1px solid #FECACA",
+        }}>
+          <AlertCircle size={14} color="#B91C1C" style={{ flexShrink: 0 }} aria-hidden />
+          <span style={{ ...GF, fontSize: 12, color: "#991B1B", lineHeight: 1.5, flex: 1, minWidth: 180 }}>
+            <strong>{CONFLICT_MESSAGE}.</strong> Reload to get the latest version. Changes made here since then can't be saved.
+          </span>
+          <button
+            type="button"
+            onClick={onReload}
+            style={{
+              ...GF, display: "inline-flex", alignItems: "center", gap: 6, flexShrink: 0,
+              border: "1px solid #FCA5A5", background: "#FFFFFF", color: "#991B1B", borderRadius: 8,
+              fontSize: 12, fontWeight: 700, padding: "6px 12px", minHeight: 32, cursor: "pointer",
+            }}
+          >
+            <RefreshCw size={13} aria-hidden /> Reload
+          </button>
         </div>
       )}
 
@@ -515,7 +676,8 @@ function AuthorEditorInner({ template }: { template: DocumentTemplate }) {
           <FileText size={13} color={SILVER} style={{ flexShrink: 0 }} />
           <span style={{ ...GF, fontSize: 11, color: SILVER }}>
             {pageCount > 0
-              ? `${String(pageCount)} page${pageCount !== 1 ? "s" : ""} in the last generated document`
+              ? `${String(pageCount)} page${pageCount !== 1 ? "s" : ""} in the last generated document${
+                  isReal && contentGenerated === false ? " · Generate & Save to update it" : ""}`
               : isNarrow ? "Pages are computed when you save" : "Not generated yet — pages are computed when you save"}
           </span>
         </div>
@@ -725,13 +887,19 @@ function AuthorEditorInner({ template }: { template: DocumentTemplate }) {
 function TemplateAuthorInner() {
   const { templateId } = useParams<{ templateId: string }>();
   const { state, loadTemplate } = useTemplates();
+  const location = useLocation();
 
-  useEffect(() => {
-    if (templateId) loadTemplate(templateId);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [templateId]);
+  // NOT a plain [templateId] effect: this route sits outside PlatformLayout,
+  // so on a refresh it mounts before the session bootstrap has produced a
+  // workspace. Reading then asked the fixtures and showed "Template not
+  // found", and nothing ever read again once the workspace arrived.
+  const scope = useActiveTemplateLoader(templateId);
 
   const t = state.activeTemplate;
+
+  if (scope.status === "signed-out") {
+    return <Navigate to={buildSignInUrl(location.pathname + location.search)} replace />;
+  }
 
   if (state.activeLoading || (!t && !state.activeError)) {
     return <div style={{ padding: 24, background: "#ffffff", minHeight: "100vh" }}><style>{SKELETON_STYLE}</style><SkeletonBlock height={20} width={200} /></div>;
@@ -747,7 +915,13 @@ function TemplateAuthorInner() {
     );
   }
 
-  return <AuthorEditorInner template={t} key={t.id} />;
+  return (
+    <AuthorEditorInner
+      template={t}
+      key={t.id}
+      onReload={() => { if (templateId) loadTemplate(templateId); }}
+    />
+  );
 }
 
 export function TemplateAuthorPage() {

@@ -33,8 +33,8 @@ const ORBITS = [
  * spinner ring. `morphing` plays the hand-off into the greeting avatar.
  */
 export function OrbitLoader({
-  caption, reduced, size = 96, morphing = false, testId,
-}: { caption: string; reduced: boolean; size?: number; morphing?: boolean; testId?: string }) {
+  caption, reduced, size = 96, morphing = false, testId, image = BOT_IMAGE,
+}: { caption: string; reduced: boolean; size?: number; morphing?: boolean; testId?: string; image?: string }) {
   const ring = size + 56;
   return (
     <div
@@ -67,7 +67,8 @@ export function OrbitLoader({
           </>
         )}
         <img
-          src={BOT_IMAGE} alt="" aria-hidden width={size} height={size} draggable={false}
+          src={image} alt="" aria-hidden width={size} height={size} draggable={false}
+          data-testid="orbit-loader-image"
           className={reduced ? undefined : "lagda-cb-pulse"}
           style={{ position: "absolute", left: (ring - size) / 2, top: (ring - size) / 2, width: size, height: size, objectFit: "contain" }}
         />

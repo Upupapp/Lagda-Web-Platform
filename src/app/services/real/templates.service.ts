@@ -155,9 +155,30 @@ export interface WireTemplate {
    *  template with nothing authored yet. */
   content: FlowDocument;
   contentPageCount: number;
+  /** Draft autosave. Optional on read so a backend that predates autosave
+   *  still maps — the author page then simply has no revision to send. */
+  contentRevision?: number;
+  contentSavedAt?: string | null;
+  contentGenerated?: boolean;
   createdAt: string;
   updatedAt: string;
 }
+
+/** The body of `PUT .../content` — the draft autosave. `baseRevision` is the
+ *  revision this tab last saw; a stale one is refused with 409
+ *  `template_content_conflict` instead of overwriting newer work. */
+export interface WireSaveContentInput {
+  content: FlowDocument;
+  baseRevision?: number;
+}
+
+export interface WireSaveContentResult {
+  contentRevision: number;
+  contentSavedAt: string;
+  contentGenerated: boolean;
+}
+
+export const TEMPLATE_CONTENT_CONFLICT = "template_content_conflict";
 
 /** The body of `POST .../generate-document`. No `pageCount` — the layout
  *  engine computes how many pages result, it is never declared up front. */
@@ -255,6 +276,24 @@ class RealTemplatesService {
     return apiRequest<WireGenerateDocumentResult>(
       `${base(workspaceId)}/${encodeURIComponent(templateId)}/generate-document`,
       { method: "POST", body: input },
+    );
+  }
+
+  /**
+   * Saves the authored draft without rendering it — the autosave behind the
+   * author page. Generate & Save stays the separate finishing step that
+   * renders the PDF and places the field anchors.
+   *
+   * `keepalive` lets the last save of a page that is being hidden or closed
+   * outlive the page itself.
+   */
+  async saveContent(
+    workspaceId: string, templateId: string, input: WireSaveContentInput,
+    options: { keepalive?: boolean } = {},
+  ): Promise<WireSaveContentResult> {
+    return apiRequest<WireSaveContentResult>(
+      `${base(workspaceId)}/${encodeURIComponent(templateId)}/content`,
+      { method: "PUT", body: input, keepalive: options.keepalive === true },
     );
   }
 
@@ -373,6 +412,9 @@ export function toDocumentTemplate(wire: WireTemplate): DocumentTemplate {
     fields: [],
     content: wire.content,
     contentPageCount: wire.contentPageCount,
+    ...(typeof wire.contentRevision === "number" ? { contentRevision: wire.contentRevision } : {}),
+    ...(wire.contentSavedAt === undefined ? {} : { contentSavedAt: wire.contentSavedAt }),
+    ...(typeof wire.contentGenerated === "boolean" ? { contentGenerated: wire.contentGenerated } : {}),
     usageSummary: {
       timesUsed: 0, lastUsedDate: null, recentDraftStarts: 0,
       relatedFixtureIds: [], demonstrationOnly: true,

@@ -6,8 +6,12 @@
 
 import { useEffect, useState } from "react";
 import botImage from "../../../../../../assets/chatbot/lagda-bot.webp";
+import openingBotImage from "../../../../../../assets/chatbot/lagda-bot-2.webp";
 
+/** The bot everywhere: toggle, avatars, typing badge, the draft loader. */
 export const BOT_IMAGE = botImage;
+/** The panel's first-open loader ("Getting your assistant ready") only. */
+export const OPENING_BOT_IMAGE = openingBotImage;
 
 export const GF = { fontFamily: "'Geist', sans-serif" } as const;
 export const AZURE = "#0078D4";

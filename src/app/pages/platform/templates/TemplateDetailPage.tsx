@@ -2,7 +2,7 @@
 // Shows status, summary, placeholder list, routing, documents, usage, and action buttons.
 // Inline styles only. No Burgundy. demonstrationOnly.
 
-import { useEffect, useCallback, useState } from "react";
+import { useCallback, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router";
 import {
   ChevronLeft, LayoutTemplate, FileText, Star,
@@ -10,7 +10,7 @@ import {
   AlertCircle, AlertTriangle, PenLine, Zap, RefreshCw, Info, X, Trash2,
   Type,
 } from "lucide-react";
-import { TemplateProvider, useTemplates } from "../../../context/TemplateContext";
+import { TemplateProvider, useTemplates, useActiveTemplateLoader } from "../../../context/TemplateContext";
 import { SkeletonBlock, SKELETON_STYLE } from "../../../components/platform";
 import {
   TEMPLATE_STATUS_LABELS, TEMPLATE_CATEGORY_LABELS,
@@ -292,15 +292,12 @@ function TemplateDetailInner() {
     }
   };
   const { templateId } = useParams<{ templateId: string }>();
-  const { state, loadTemplate, makeAvailable, returnToDraft, archive, restore, duplicate, clearOpMessage, canWrite } = useTemplates();
+  const { state, makeAvailable, returnToDraft, archive, restore, duplicate, clearOpMessage, canWrite } = useTemplates();
   const navigate = useNavigate();
   const t = state.activeTemplate;
 
-  useEffect(() => {
-    if (templateId) loadTemplate(templateId);
-    return () => {};
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [templateId]);
+  // Waits for the session bootstrap, and re-reads on a workspace change.
+  useActiveTemplateLoader(templateId);
 
   usePageMeta();
 
@@ -311,8 +308,9 @@ function TemplateDetailInner() {
     });
   }, [t, duplicate, navigate]);
 
-  // Loading
-  if (state.activeLoading) {
+  // Loading — including the moment before the workspace is known, when no
+  // read has started yet. Showing "Not Found" there flashed it on a refresh.
+  if (state.activeLoading || (!t && !state.activeError)) {
     return (
       <div style={{ padding: "24px", ...GF }}>
         <style>{SKELETON_STYLE}</style>

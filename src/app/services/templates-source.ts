@@ -26,9 +26,10 @@
 
 import { USE_REAL_BACKEND } from "./backend-flag";
 import {
-  realTemplatesService, toDocumentTemplate, toWireWrite,
+  realTemplatesService, toDocumentTemplate, toWireWrite, TEMPLATE_CONTENT_CONFLICT,
   type WireFieldInput,
 } from "./real/templates.service";
+import { ApiError } from "./api-client";
 import { realDocumentService } from "./real/document.service";
 import { isBackendFieldType } from "./prepare/field-sync";
 import {
@@ -370,6 +371,53 @@ export async function generateTemplateDocument(
   });
   const template = await enrichWithDocument(workspaceId!, toDocumentTemplate(result.template));
   return { template, resolvedAnchors: result.resolvedAnchors };
+}
+
+export interface SavedTemplateContent {
+  contentRevision: number;
+  contentSavedAt: string;
+  contentGenerated: boolean;
+}
+
+/**
+ * The author page's draft autosave: stores the content as typed, without
+ * rendering it. Generate & Save (`generateTemplateDocument`) stays the
+ * finishing step. Real mode only — fixture mode keeps the draft in memory,
+ * and this refuses there exactly as every other write does.
+ */
+export async function saveTemplateContent(
+  workspaceId: string | undefined, id: DocumentTemplateId,
+  input: { content: FlowDocument; baseRevision?: number | undefined },
+  options: { keepalive?: boolean } = {},
+): Promise<SavedTemplateContent> {
+  if (!realTemplatesAvailable(workspaceId)) throw new TemplatesNotWritableError();
+  return realTemplatesService.saveContent(workspaceId!, id, {
+    content: input.content,
+    ...(input.baseRevision === undefined ? {} : { baseRevision: input.baseRevision }),
+  }, options);
+}
+
+/** True for the 409 a save from a stale tab gets. */
+export function isTemplateContentConflict(err: unknown): boolean {
+  return err instanceof ApiError && err.status === 409
+    && (err.body?.code === undefined || err.body.code === TEMPLATE_CONTENT_CONFLICT);
+}
+
+/** The server's current revision, when the 409 says what it is. Read from
+ *  the error body or its details, whichever the backend puts it in. */
+export function conflictRevisionOf(err: unknown): number | undefined {
+  if (!(err instanceof ApiError) || err.body === undefined) return undefined;
+  const body = err.body as unknown as Record<string, unknown>;
+  for (const key of ["currentRevision", "contentRevision"]) {
+    if (typeof body[key] === "number") return body[key];
+  }
+  for (const d of err.body.details ?? []) {
+    const detail = d as unknown as Record<string, unknown>;
+    for (const key of ["currentRevision", "contentRevision"]) {
+      if (typeof detail[key] === "number") return detail[key];
+    }
+  }
+  return undefined;
 }
 
 /**

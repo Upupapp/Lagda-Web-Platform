@@ -4,13 +4,13 @@
 // routing diagram, and settings snapshot.
 // Inline styles only. No Burgundy.
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useParams, Link } from "react-router";
 import {
   ChevronLeft, Users, GitBranch,
   Settings, AlertCircle, Zap, PenLine,
 } from "lucide-react";
-import { TemplateProvider, useTemplates } from "../../../context/TemplateContext";
+import { TemplateProvider, useTemplates, useActiveTemplateLoader } from "../../../context/TemplateContext";
 import { usePlatform } from "../../../context/PlatformContext";
 import { SkeletonBlock, SKELETON_STYLE } from "../../../components/platform";
 import {
@@ -134,16 +134,14 @@ function RoutingDiagram({ template, placeholderColors }: {
 // ── Main preview ──────────────────────────────────────────────────────────────
 function TemplatePreviewInner() {
   const { templateId } = useParams<{ templateId: string }>();
-  const { state, loadTemplate } = useTemplates();
+  const { state } = useTemplates();
   const platform = usePlatform();
   const workspaceId = platform.currentWorkspace?.id;
   const t = state.activeTemplate;
   const [activeDocIdx, setActiveDocIdx] = useState(0);
 
-  useEffect(() => {
-    if (templateId) loadTemplate(templateId);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [templateId]);
+  // Waits for the session bootstrap, and re-reads on a workspace change.
+  useActiveTemplateLoader(templateId);
 
   usePageMeta();
 
