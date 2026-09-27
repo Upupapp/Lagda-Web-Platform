@@ -95,7 +95,18 @@ export interface PreferencesUpdate {
   readonly timezone?: string | null;
   readonly dateFormat?: "MM/DD/YYYY" | "DD/MM/YYYY" | "YYYY-MM-DD" | null;
   readonly timeFormat?: "12h" | "24h" | null;
+  // The Preferences page writes these too (same closed schema, max 35 chars
+  // for language/locale).
+  readonly language?: string | null;
+  readonly locale?: string | null;
+  readonly numberFormat?: "comma-dot" | "dot-comma" | "space-dot" | null;
+  readonly appearance?: "system" | "light" | "dark" | null;
+  readonly density?: "comfortable" | "compact" | null;
+  readonly documentListView?: "table" | "grid" | null;
 }
+
+/** The whole preference block as `/me` sends it; every field may be null. */
+export type AccountPreferences = NonNullable<MeProfile["preferences"]>;
 
 class RealAccountSettingsService {
   async getUserProfile(): Promise<UserProfile> {
@@ -114,6 +125,16 @@ class RealAccountSettingsService {
   /** PATCH /me/preferences — only the keys given are changed. */
   async updatePreferences(update: PreferencesUpdate): Promise<void> {
     await apiRequest<unknown>("/me/preferences", { method: "PATCH", body: update });
+  }
+
+  /**
+   * PATCH /me/preferences, returning what the backend actually stored (the
+   * response is the whole user), so the page shows the saved values rather
+   * than the ones it sent.
+   */
+  async savePreferences(update: PreferencesUpdate): Promise<AccountPreferences | null> {
+    const me = await apiRequest<MeProfile | undefined>("/me/preferences", { method: "PATCH", body: update });
+    return me?.preferences ?? null;
   }
 
   /**

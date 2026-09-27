@@ -4,7 +4,7 @@
 // Never claims real MFA is enrolled. All codes/keys are demonstration values.
 
 import { useState, useRef, useEffect } from "react";
-import { useNavigate } from "react-router";
+import { useNavigate, useSearchParams } from "react-router";
 import {
   DEMO_MFA_SETUP_KEY,
   DEMO_MFA_ACCOUNT,
@@ -26,6 +26,10 @@ type SetupStep = "intro" | "scan" | "confirm" | "codes";
 // Where both "done" and "Skip for now" return: the onboarding Security step,
 // which then shows "✓ Two-step verification is on" (or the choice again).
 const ONBOARDING_SECURITY_PATH = "/onboarding/security";
+// Settings › Security › Two-step verification opens this page with
+// `?from=settings`, and is where it returns. An allowlist, never a URL taken
+// from the query string, so this cannot be turned into an open redirect.
+const SETTINGS_MFA_PATH = "/app/settings/security/mfa";
 
 function KeyBlock({ value }: { value: string }) {
   const [copied, setCopied] = useState(false);
@@ -46,6 +50,8 @@ function KeyBlock({ value }: { value: string }) {
 
 export function MfaSetup() {
   const navigate    = useNavigate();
+  const [searchParams] = useSearchParams();
+  const returnPath = searchParams.get("from") === "settings" ? SETTINGS_MFA_PATH : ONBOARDING_SECURITY_PATH;
   const { setMfaSetupDone, updateSecurity } = useOnboarding();
   const { user } = usePlatform();
   const [step,      setStep]      = useState<SetupStep>("intro");
@@ -121,7 +127,7 @@ export function MfaSetup() {
 
   function handleDone() {
     setMfaSetupDone(true);
-    void navigate(ONBOARDING_SECURITY_PATH);
+    void navigate(returnPath);
   }
 
   function handleCopyAll() {
@@ -181,7 +187,7 @@ export function MfaSetup() {
           {beginning ? "Starting…" : "Continue"}
         </button>
         <div style={{ textAlign: "center", marginTop: 14 }}>
-          <button onClick={() => navigate(ONBOARDING_SECURITY_PATH)} style={{ background: "none", border: "none", cursor: "pointer", color: "#64748B", ...GF, fontSize: 13 }}>
+          <button onClick={() => navigate(returnPath)} style={{ background: "none", border: "none", cursor: "pointer", color: "#64748B", ...GF, fontSize: 13 }}>
             Skip for now
           </button>
         </div>

@@ -1,138 +1,76 @@
-// /app/settings/security — Account security overview.
-// Frontend-only demonstration. No Burgundy. No eNotary.
+// /app/settings/security — how your account is protected, at a glance.
+// Built from the same calls as the sub-pages: `/me`'s security summary and
+// GET /me/sessions. Sign-in history is not recorded yet, and says so.
 
-import React, { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router";
-import { SettingsPage, SCard, SSection, StatusBadge, Skeleton } from "./SettingsShell";
-import { mockSecuritySettingsService } from "../../../services/mock/settings.service";
-import type { SecurityOverview } from "../../../models/settings";
+import type { ReactNode } from "react";
+import { Link } from "react-router";
+import { KeyRound, Smartphone, Monitor, History, ArrowRight, ShieldAlert } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
+import { SettingsPage, SCard, Badge, Skeleton, Notice, BTN_SECONDARY, SET } from "./SettingsShell";
+import { useSecuritySummary } from "./settings-data";
 
-const GF    = { fontFamily: "'Geist', sans-serif" };
-const NAVY  = "#07111F";
-const AZURE = "#0078D4";
-const SLATE = "#64748B";
-const GREEN = "#16A34A";
-const AMBER = "#D97706";
+const GF = { fontFamily: SET.FONT };
 
-function statusBadgeColor(status: string): string {
-  if (status === "enabled" || status === "demonstration-enabled") return GREEN;
-  if (status === "not-enabled") return AMBER;
-  return SLATE;
-}
-
-function statusLabel(status: string): string {
-  if (status === "enabled")               return "Enabled";
-  if (status === "demonstration-enabled") return "Enabled (Demo)";
-  if (status === "not-enabled")           return "Not Enabled";
-  return "Not Available";
-}
-
-function MethodRow({ method, onAction }: { method: { id: string; label: string; status: string; description: string }; onAction: (id: string) => void }) {
-  const color = statusBadgeColor(method.status);
+function Row({ icon: Icon, title, detail, status, to, linkLabel, testId }: {
+  icon: LucideIcon; title: string; detail: string; status: ReactNode; to: string; linkLabel: string; testId: string;
+}) {
   return (
-    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 0", borderBottom: "1px solid #F0F2F5", gap: 12, flexWrap: "wrap" }}>
-      <div style={{ flex: 1, minWidth: 180 }}>
-        <div style={{ ...GF, fontSize: 13, fontWeight: 600, color: NAVY }}>{method.label}</div>
-        <div style={{ ...GF, fontSize: 12, color: SLATE, marginTop: 2 }}>{method.description}</div>
+    <li data-testid={testId} style={{ display: "flex", alignItems: "center", gap: 14, padding: "14px 0", borderTop: `1px solid ${SET.BORDER}`, flexWrap: "wrap" }}>
+      <span aria-hidden style={{ width: 38, height: 38, borderRadius: 10, background: "#EFF6FD", border: "1px solid #BAD7F5", color: SET.AZURE_TEXT, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+        <Icon size={18} />
+      </span>
+      <div style={{ flex: "1 1 200px", minWidth: 0 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+          <span style={{ ...GF, fontSize: 14, fontWeight: 700, color: SET.NAVY }}>{title}</span>
+          {status}
+        </div>
+        <div style={{ ...GF, fontSize: 13, color: SET.SLATE, marginTop: 2, lineHeight: 1.5 }}>{detail}</div>
       </div>
-      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-        <StatusBadge label={statusLabel(method.status)} color={color} />
-        {method.status !== "not-available" && (
-          <button onClick={() => onAction(method.id)} style={{ ...GF, fontSize: 12, fontWeight: 600, padding: "5px 12px", border: `1.5px solid ${AZURE}`, borderRadius: 6, background: "#FFFFFF", color: AZURE, cursor: "pointer" }}>
-            {method.status.includes("enabled") ? "Manage →" : "Set up →"}
-          </button>
-        )}
-      </div>
-    </div>
+      <Link to={to} style={{ ...BTN_SECONDARY, minHeight: 36, padding: "6px 14px", fontSize: 13 }}>
+        {linkLabel} <ArrowRight size={14} aria-hidden />
+      </Link>
+    </li>
   );
 }
 
 export function SecurityOverviewPage() {
-  const [overview, setOverview] = useState<SecurityOverview | null>(null);
-  const [loading, setLoading]   = useState(true);
+  const { mfa, sessions, error, reload } = useSecuritySummary();
+  const heading = { title: "Security overview", breadcrumb: "Security › Overview", description: "Your password, two-step verification and signed-in sessions." };
 
-  useEffect(() => {
-    void mockSecuritySettingsService.getSecurityOverview().then(o => { setOverview(o); setLoading(false); });
-  }, []);
+  if (error) return (
+    <SettingsPage {...heading}>
+      <Notice tone="danger" role="alert">Your security details could not be loaded.</Notice>
+      <button type="button" onClick={reload} style={BTN_SECONDARY}>Try again</button>
+    </SettingsPage>
+  );
+  if (mfa === null || sessions === null) return <SettingsPage {...heading}><Skeleton h={260} /></SettingsPage>;
 
-  const navigate = useNavigate();
-  const handleAction = (id: string) => {
-    if (id === "password") void navigate("/app/settings/security/password");
-    else                   void navigate("/app/settings/security/mfa");
-  };
-
-  if (loading) return <SettingsPage title="Account Security" breadcrumb="Security"><Skeleton h={160} mb={16} /><Skeleton h={120} /></SettingsPage>;
-
+  const count = sessions.length;
   return (
-    <SettingsPage title="Account Security" breadcrumb="Security">
-
-      {/* Status summary */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: 10, marginBottom: 20 }}>
-        {[
-          { label: "Password", value: overview?.passwordConfigured ? "Configured" : "Not set", color: overview?.passwordConfigured ? GREEN : AMBER },
-          { label: "MFA Status", value: statusLabel(overview?.mfaStatus ?? "not-enabled"), color: statusBadgeColor(overview?.mfaStatus ?? "not-enabled") },
-          { label: "Active Sessions", value: String(overview?.activeSessionCount ?? 0), color: NAVY },
-          { label: "Recovery", value: overview?.recoveryConfigured ? "Configured" : "Not configured", color: overview?.recoveryConfigured ? GREEN : AMBER },
-        ].map(s => (
-          <div key={s.label} style={{ background: "#FFFFFF", border: "1.5px solid #E3E8EF", borderRadius: 10, padding: "12px 16px" }}>
-            <div style={{ ...GF, fontSize: 11, color: SLATE, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6 }}>{s.label}</div>
-            <div style={{ ...GF, fontSize: 15, fontWeight: 700, color: s.color }}>{s.value}</div>
-          </div>
-        ))}
-      </div>
-
-      {/* Attention */}
-      {overview?.mfaStatus === "not-enabled" && (
-        <div style={{ background: "#FFFBEB", border: "1px solid #FDE68A", borderRadius: 8, padding: "10px 16px", marginBottom: 16, display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 10 }}>
-          <span style={{ ...GF, fontSize: 13, color: "#92400E" }}>⚠ Multi-factor authentication is not enabled. Consider enabling it for additional account security.</span>
-          <Link to="/app/settings/security/mfa" style={{ ...GF, fontSize: 12, fontWeight: 600, color: AZURE, textDecoration: "none", whiteSpace: "nowrap" }}>Set up MFA →</Link>
-        </div>
+    <SettingsPage {...heading}>
+      {!mfa.enabled && (
+        <Notice tone="warning" icon={ShieldAlert}>
+          Two-step verification is off. Turn it on so a stolen password alone cannot open your account.{" "}
+          <Link to="/app/settings/security/mfa" style={{ color: "#78350F", fontWeight: 700 }}>Set it up</Link>
+        </Notice>
       )}
-
-      {/* Authentication methods */}
-      <SSection title="Authentication Methods">
-        {overview?.methods.map(m => (
-          <MethodRow key={m.id} method={m} onAction={handleAction} />
-        ))}
-      </SSection>
-
-      {/* Sessions */}
       <SCard>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
-          <h2 style={{ ...GF, fontSize: 13, fontWeight: 700, color: NAVY, textTransform: "uppercase", letterSpacing: "0.06em", margin: 0 }}>Active Sessions</h2>
-          <Link to="/app/settings/security/sessions" style={{ ...GF, fontSize: 13, color: AZURE, textDecoration: "none", fontWeight: 600 }}>View all →</Link>
-        </div>
-        <p style={{ ...GF, fontSize: 13, color: SLATE, margin: 0 }}>
-          {overview?.activeSessionCount ?? 0} active session{(overview?.activeSessionCount ?? 0) !== 1 ? "s" : ""} — fictional demonstration data.
-        </p>
+        <ul style={{ listStyle: "none", margin: "-14px 0 0", padding: 0 }}>
+          <Row testId="security-row-password" icon={KeyRound} title="Password" status={<Badge tone="success" dot>Set</Badge>}
+            detail="Change it any time. Other sessions are signed out when you do." to="/app/settings/security/password" linkLabel="Change" />
+          <Row testId="security-row-mfa" icon={Smartphone} title="Two-step verification"
+            status={mfa.enabled ? <Badge tone="success" dot>On</Badge> : <Badge tone="warning" dot>Off</Badge>}
+            detail={mfa.enabled ? "A code from your authenticator app is asked for at sign-in." : "Only your password protects your account."}
+            to="/app/settings/security/mfa" linkLabel={mfa.enabled ? "Review" : "Set up"} />
+          <Row testId="security-row-sessions" icon={Monitor} title="Sessions"
+            status={<Badge tone="info">{count} signed in</Badge>}
+            detail={`${String(count)} browser${count === 1 ? " is" : "s are"} signed in to your account, including this one.`}
+            to="/app/settings/security/sessions" linkLabel="Manage" />
+          <Row testId="security-row-activity" icon={History} title="Sign-in history"
+            status={<Badge tone="neutral">Not recorded yet</Badge>}
+            detail="LAGDA does not keep a sign-in history yet." to="/app/settings/security/activity" linkLabel="Details" />
+        </ul>
       </SCard>
-
-      {/* Recovery */}
-      <SCard>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
-          <h2 style={{ ...GF, fontSize: 13, fontWeight: 700, color: NAVY, textTransform: "uppercase", letterSpacing: "0.06em", margin: 0 }}>Recovery</h2>
-          <Link to="/app/settings/security/mfa" style={{ ...GF, fontSize: 13, color: AZURE, textDecoration: "none", fontWeight: 600 }}>Review →</Link>
-        </div>
-        <p style={{ ...GF, fontSize: 13, color: SLATE, margin: 0 }}>
-          Recovery codes and alternative contact direction. Production recovery requires backend identity safeguards.
-        </p>
-      </SCard>
-
-      {/* Recent activity */}
-      <SCard>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
-          <h2 style={{ ...GF, fontSize: 13, fontWeight: 700, color: NAVY, textTransform: "uppercase", letterSpacing: "0.06em", margin: 0 }}>Recent Security Activity</h2>
-          <Link to="/app/settings/security/activity" style={{ ...GF, fontSize: 13, color: AZURE, textDecoration: "none", fontWeight: 600 }}>View all →</Link>
-        </div>
-        <p style={{ ...GF, fontSize: 13, color: SLATE, margin: 0 }}>
-          Sign-in history and account security events. All data is fictional frontend demonstration data.
-        </p>
-      </SCard>
-
-      {/* Notice */}
-      <div style={{ background: "#EBF5FB", border: "1px solid #BAE0FD", borderRadius: 8, padding: "12px 16px", ...GF, fontSize: 12, color: "#0369A1" }}>
-        These settings are a frontend demonstration. They do not enforce production security controls. Real account security requires backend authentication, identity verification, and access management services.
-      </div>
     </SettingsPage>
   );
 }

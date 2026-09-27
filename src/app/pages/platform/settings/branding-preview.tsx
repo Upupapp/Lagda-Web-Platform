@@ -53,27 +53,49 @@ export interface BrandPreviewProps {
   testId?: string;
 }
 
-export function BrandPreview({
-  branding, variant = "preview", subtitle = "Signing request", children, headerAside, compact = false, testId,
-}: BrandPreviewProps) {
+/**
+ * The header band on its own: brand colour, logo (or initials) and the
+ * workspace name. BrandPreview draws it at the top of the preview and the
+ * Manage card; the Completed document cards use it as their banner.
+ */
+export function BrandBand({
+  branding, variant = "preview", subtitle = "Signing request", headerAside, compact = false, testId, style,
+}: {
+  branding: Pick<BrandPreviewInput, "displayName" | "primaryColor" | "logoPreviewUrl">;
+  variant?: "preview" | "card";
+  subtitle?: string;
+  headerAside?: React.ReactNode;
+  compact?: boolean;
+  testId?: string;
+  style?: React.CSSProperties;
+}) {
   const initials = branding.displayName.split(/\s+/).filter(w => /^[\p{L}\p{N}]/u.test(w)).map(w => w[0]).join("").slice(0, 2).toUpperCase();
   const card = variant === "card";
   const logoHeight = card ? (compact ? 36 : 48) : 32;
   return (
+    <div data-testid={testId ? `${testId}-band` : undefined} style={{ background: branding.primaryColor, padding: card ? (compact ? "14px 16px" : "18px 24px") : "14px 20px", display: "flex", alignItems: "center", gap: card ? 14 : 12, minWidth: 0, ...style }}>
+      {branding.logoPreviewUrl
+        ? <img src={branding.logoPreviewUrl} alt={card ? `${branding.displayName} logo` : "Workspace logo preview"} style={{ height: logoHeight, maxWidth: card ? 180 : 140, objectFit: "contain", background: "#FFFFFF", borderRadius: 4, padding: 2, flexShrink: 0 }} />
+        : <div aria-hidden={card || undefined} style={{ width: logoHeight + 4, height: logoHeight + 4, borderRadius: card ? 8 : 6, background: "rgba(7,17,31,0.22)", display: "flex", alignItems: "center", justifyContent: "center", ...GF, fontSize: card ? 17 : 15, fontWeight: 800, color: "#FFFFFF", flexShrink: 0 }}>{initials}</div>
+      }
+      <div style={{ minWidth: 0, flex: 1 }}>
+        <div data-testid={testId ? `${testId}-name` : undefined} style={{ ...GF, fontSize: card ? (compact ? 16 : 18) : 14, fontWeight: 700, color: "#FFFFFF", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{branding.displayName}</div>
+        <div style={{ ...GF, fontSize: card ? 12 : 11, color: "#FFFFFF", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{subtitle}</div>
+      </div>
+      {headerAside}
+    </div>
+  );
+}
+
+export function BrandPreview({
+  branding, variant = "preview", subtitle = "Signing request", children, headerAside, compact = false, testId,
+}: BrandPreviewProps) {
+  const card = variant === "card";
+  return (
     <div data-testid={testId} data-variant={variant}
       style={{ border: "1.5px solid #E3E8EF", borderRadius: card ? 12 : 10, overflow: "hidden", maxWidth: card ? "none" : 420, width: "100%", boxSizing: "border-box", background: "#FFFFFF" }}>
       {/* Header */}
-      <div style={{ background: branding.primaryColor, padding: card ? (compact ? "14px 16px" : "18px 24px") : "14px 20px", display: "flex", alignItems: "center", gap: card ? 14 : 12, minWidth: 0 }}>
-        {branding.logoPreviewUrl
-          ? <img src={branding.logoPreviewUrl} alt={card ? `${branding.displayName} logo` : "Workspace logo preview"} style={{ height: logoHeight, maxWidth: card ? 180 : 140, objectFit: "contain", background: "#FFFFFF", borderRadius: 4, padding: 2, flexShrink: 0 }} />
-          : <div aria-hidden={card || undefined} style={{ width: logoHeight + 4, height: logoHeight + 4, borderRadius: card ? 8 : 6, background: "rgba(255,255,255,0.25)", display: "flex", alignItems: "center", justifyContent: "center", ...GF, fontSize: card ? 17 : 15, fontWeight: 800, color: "#FFFFFF", flexShrink: 0 }}>{initials}</div>
-        }
-        <div style={{ minWidth: 0, flex: 1 }}>
-          <div data-testid={testId ? `${testId}-name` : undefined} style={{ ...GF, fontSize: card ? (compact ? 16 : 18) : 14, fontWeight: 700, color: "#FFFFFF", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{branding.displayName}</div>
-          <div style={{ ...GF, fontSize: card ? 12 : 11, color: "rgba(255,255,255,0.85)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{subtitle}</div>
-        </div>
-        {headerAside}
-      </div>
+      <BrandBand branding={branding} variant={variant} subtitle={subtitle} headerAside={headerAside} compact={compact} testId={testId} />
       {/* Body */}
       {children !== undefined ? (
         <div style={{ padding: card ? (compact ? "14px 16px" : "18px 24px") : "18px 20px", background: "#FFFFFF" }}>{children}</div>

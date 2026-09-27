@@ -50,7 +50,7 @@ export function VerificationIdActions({
       style={{ display: "flex", alignItems: "center", gap: 4, minWidth: 0, maxWidth: "100%", flexWrap: "wrap", rowGap: 4 }}
     >
       {label && (
-        <span style={{ fontSize: 11, color: "#94A3B8", flexShrink: 0, fontFamily: "'Geist', sans-serif" }}>{label}</span>
+        <span style={{ fontSize: 11, color: "#64748B", flexShrink: 0, fontFamily: "'Geist', sans-serif" }}>{label}</span>
       )}
       <code
         title={id}

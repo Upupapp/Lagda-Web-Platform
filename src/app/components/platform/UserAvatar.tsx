@@ -43,7 +43,7 @@ export function UserAvatar({ user, size, fontSize }: {
     <div aria-hidden style={{
       ...circle, background: "#EAF6FF",
       display: "flex", alignItems: "center", justifyContent: "center",
-      fontFamily: "'Geist Mono', monospace", fontSize, color: "#0078D4", fontWeight: 700,
+      fontFamily: "'Geist Mono', monospace", fontSize, color: "#005A9E", fontWeight: 700,
     }}>
       {initialsOf(user.displayName)}
     </div>

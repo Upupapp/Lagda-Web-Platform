@@ -1,287 +1,330 @@
-// /app/settings/billing — Current plan, billing account, invoices, and plan direction.
-// Frontend-only. No payment processing, subscription changes, or card collection.
-// All billing data is fictional demonstration data.
+// /app/settings/billing — the plan, sample pricing and the sample invoice.
+//
+// Nothing on this page takes or asks for payment. The workspace is on Early
+// Access, which bills nothing; the plan cards show SAMPLE prices from
+// config/pricing.config under a notice saying so, and their buttons explain
+// that paid plans open at launch rather than starting a checkout. The one
+// invoice is a SAMPLE, labelled as such everywhere it appears.
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useId, useRef, useState } from "react";
 import { Link } from "react-router";
-import { SettingsPage, SSection, SField, INPUT_STYLE, StatusBadge, Skeleton, PreviewSaved } from "./SettingsShell";
-import { mockBillingSettingsService } from "../../../services/mock/settings.service";
-import type { BillingAccount } from "../../../models/settings";
-import { LAGDA_PLANS, COMPARE_GROUPS } from "../../../config/pricing.config";
+import {
+  Sparkles, CalendarClock, ReceiptText, Star, Check, Minus, ChevronDown, Info, ArrowRight, X, BadgeCheck, Gauge,
+} from "lucide-react";
+import { SettingsPage, SSection, SCard, Badge, BTN_PRIMARY, BTN_SECONDARY, Notice, SET, TONES } from "./SettingsShell";
+import {
+  SAMPLE_PLANS, SAMPLE_COMPARE_GROUPS, SAMPLE_PRICING_NOTICE, CURRENT_PLAN, currentPlanLimits,
+  formatPeso, annualSaving, type SamplePlan, type CompareCell,
+} from "../../../config/pricing.config";
+import { useWorkspaceMode } from "../../../hooks/useWorkspaceAccess";
+import { useWorkspaceUsage, formatBytes } from "./settings-data";
+import { VerificationQRCode } from "../../../components/verification/VerificationQRCode";
+import {
+  SAMPLE_INVOICE_ID, SAMPLE_INVOICE_PATH, SAMPLE_INVOICE_BANNER, SAMPLE_INVOICE_TOTAL, useInvoiceBilledTo,
+} from "./billing/sample-invoice";
 import { Z } from "../../../utils/z-index";
 
-const GF    = { fontFamily: "'Geist', sans-serif" };
-const NAVY  = "#07111F";
-const AZURE = "#0078D4";
-const GOLD  = "#C9960C";
-const SLATE = "#64748B";
-const SILVER= "#8A9BAE";
-const GREEN = "#16A34A";
+const GF = { fontFamily: SET.FONT };
+const GM = { fontFamily: SET.MONO };
 
-function invoiceStatusColor(status: string) {
-  if (status === "demonstration-paid") return GREEN;
-  if (status === "demonstration-open") return GOLD;
-  return SLATE;
-}
+type Cycle = "monthly" | "annual";
 
-function invoiceStatusLabel(status: string) {
-  if (status === "demonstration-paid")   return "Paid (Demo)";
-  if (status === "demonstration-open")   return "Open (Demo)";
-  return "Voided (Demo)";
-}
+// ── Overview ───────────────────────────────────────────────────────────────
 
-type Tab = "overview" | "invoices" | "comparison";
-
-export function BillingPage() {
-  const [billing, setBilling] = useState<BillingAccount | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [tab, setTab]         = useState<Tab>("overview");
-  const [editContact, setEditContact] = useState(false);
-  const [contactForm, setContactForm] = useState({ name: "", email: "", poRef: "" });
-  const [savingContact, setSavingContact] = useState(false);
-  const [contactSaved, setContactSaved]   = useState(false);
-  const [planPreview, setPlanPreview]     = useState<string | null>(null);
-  const [simulating, setSimulating]       = useState(false);
-  const [simResult, setSimResult]         = useState<string | null>(null);
-
-  useEffect(() => {
-    void mockBillingSettingsService.getBillingAccount().then(b => {
-      setBilling(b);
-      setContactForm({ name: b.billingContact.name, email: b.billingContact.email, poRef: b.billingContact.poRef });
-      setLoading(false);
-    });
-  }, []);
-
-  const handleSaveContact = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setSavingContact(true);
-    const updated = await mockBillingSettingsService.updateBillingContact(contactForm);
-    setBilling(updated);
-    setSavingContact(false);
-    setContactSaved(true);
-    setEditContact(false);
-    setTimeout(() => setContactSaved(false), 2500);
-  };
-
-  const handleSimulatePlan = async (planId: string, planName: string) => {
-    setSimulating(true);
-    const res = await mockBillingSettingsService.simulatePlanChange(planId, planName);
-    const updated = await mockBillingSettingsService.getBillingAccount();
-    setBilling(updated);
-    setSimulating(false);
-    setPlanPreview(null);
-    setSimResult(res.message);
-    setTimeout(() => setSimResult(null), 4000);
-  };
-
-  if (loading) return <SettingsPage title="Billing & Plan" breadcrumb="Billing & Plan"><Skeleton h={120} mb={16} /><Skeleton h={120} /></SettingsPage>;
+function OverviewCard() {
+  const { workspaceId } = useWorkspaceMode();
+  const { usage } = useWorkspaceUsage(workspaceId);
+  const limits = currentPlanLimits();
+  const suffix = limits ? "" : " (no limit applied)";
+  const lines = usage ? [
+    { label: "Signing requests this month", value: usage.signingRequests.sentThisMonth.toLocaleString("en-PH") },
+    { label: "Members", value: usage.members.toLocaleString("en-PH") },
+    { label: "Templates", value: usage.templates.toLocaleString("en-PH") },
+    { label: "Storage", value: formatBytes(usage.storageBytes) },
+  ] : null;
 
   return (
-    <SettingsPage title="Billing & Plan" breadcrumb="Billing & Plan">
-
-      {simResult && (
-        <div role="status" style={{ background: "#F0FDF4", border: "1px solid #BBF7D0", borderRadius: 8, padding: "10px 14px", marginBottom: 16, ...GF, fontSize: 13, color: "#166534" }}>
-          {simResult}
+    <SCard style={{ borderTop: `3px solid #CA8A04` }}>
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
+        <div style={{ minWidth: 0, flex: "1 1 300px" }}>
+          <div style={{ ...GM, fontSize: 10.5, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: SET.MUTED }}>Current plan</div>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginTop: 4 }}>
+            <span data-testid="billing-current-plan" style={{ ...GM, fontSize: 20, fontWeight: 800, letterSpacing: "0.06em", color: SET.NAVY, display: "inline-flex", alignItems: "center", gap: 8 }}>
+              <Sparkles size={18} aria-hidden color="#A16207" /> {CURRENT_PLAN.name.toUpperCase()}
+            </span>
+            <Badge tone="success" dot>Active</Badge>
+          </div>
+          <p style={{ ...GF, fontSize: 13.5, color: SET.INK, margin: "8px 0 0", lineHeight: 1.6, maxWidth: "62ch" }}>{CURRENT_PLAN.summary}</p>
         </div>
-      )}
-
-      {/* Tabs */}
-      <div style={{ display: "flex", gap: 0, borderBottom: "2px solid #E3E8EF", marginBottom: 20 }}>
-        {(["overview", "invoices", "comparison"] as Tab[]).map(t => (
-          <button key={t} onClick={() => setTab(t)} style={{ ...GF, fontSize: 13, fontWeight: tab === t ? 700 : 400, color: tab === t ? AZURE : SLATE, background: "none", border: "none", borderBottom: `2px solid ${tab === t ? AZURE : "transparent"}`, padding: "8px 16px", cursor: "pointer", marginBottom: -2, textTransform: "capitalize" }}>
-            {t === "comparison" ? "Plan Comparison" : t.charAt(0).toUpperCase() + t.slice(1)}
-          </button>
-        ))}
+        <dl style={{ margin: 0, display: "grid", gridTemplateColumns: "auto auto", gap: "6px 18px", ...GF, fontSize: 13.5 }}>
+          <dt style={{ color: SET.SLATE, display: "inline-flex", alignItems: "center", gap: 6 }}><CalendarClock size={14} aria-hidden /> Billing cycle</dt>
+          <dd data-testid="billing-cycle" style={{ margin: 0, color: SET.NAVY, fontWeight: 700 }}>—</dd>
+          <dt style={{ color: SET.SLATE, display: "inline-flex", alignItems: "center", gap: 6 }}><ReceiptText size={14} aria-hidden /> Next invoice</dt>
+          <dd data-testid="billing-next-invoice" style={{ margin: 0, color: SET.NAVY, fontWeight: 700 }}>None</dd>
+        </dl>
       </div>
 
-      {/* Overview tab */}
-      {tab === "overview" && billing && (
-        <>
-          <SSection title="Current Plan">
-            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16, flexWrap: "wrap" }}>
-              <StatusBadge label={billing.planName} color={GOLD} />
-              <StatusBadge label={billing.status === "active" ? "Active" : billing.status} color={billing.status === "active" ? GREEN : SLATE} />
-              <span style={{ ...GF, fontSize: 12, color: SLATE }}>{billing.billingCycle === "annual" ? "Annual" : "Monthly"} billing</span>
-            </div>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: 12, marginBottom: 14 }}>
-              {[
-                { label: "Active Members", value: String(billing.activeMembers) },
-                { label: "Seat Allocation", value: String(billing.seatAllocation) },
-                { label: "Pending Invites", value: String(billing.pendingInvites) },
-                { label: "Renewal Direction", value: billing.nextReviewDate },
-              ].map(s => (
-                <div key={s.label} style={{ background: "#F8FAFC", border: "1px solid #E3E8EF", borderRadius: 8, padding: "10px 14px" }}>
-                  <div style={{ ...GF, fontSize: 11, color: SLATE, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 4 }}>{s.label}</div>
-                  <div style={{ ...GF, fontSize: 15, fontWeight: 700, color: NAVY }}>{s.value}</div>
-                </div>
-              ))}
-            </div>
-            {billing.activeMembers >= billing.seatAllocation * 0.8 && (
-              <div style={{ background: "#FFFBEB", border: "1px solid #FDE68A", borderRadius: 6, padding: "8px 12px", ...GF, fontSize: 12, color: "#92400E" }}>
-                ⚠ Seat usage is approaching allocation. Review your plan or contact sales.
-              </div>
-            )}
-            <Link to="/app/workspace/members" style={{ ...GF, fontSize: 13, color: AZURE, textDecoration: "none" }}>View Members →</Link>
-          </SSection>
+      <div style={{ borderTop: `1px solid ${SET.BORDER}`, marginTop: 16, paddingTop: 14 }}>
+        <div style={{ ...GF, fontSize: 13, fontWeight: 700, color: SET.NAVY, display: "flex", alignItems: "center", gap: 6, marginBottom: 8 }}>
+          <Gauge size={15} aria-hidden color={SET.AZURE_TEXT} /> Usage this month
+        </div>
+        {lines === null ? (
+          <div style={{ ...GF, fontSize: 13, color: SET.SLATE }}>Loading usage…</div>
+        ) : (
+          <ul data-testid="billing-usage-lines" style={{ listStyle: "none", margin: 0, padding: 0, display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 320px), 1fr))", gap: "6px 24px" }}>
+            {lines.map(l => (
+              <li key={l.label} style={{ ...GF, fontSize: 13.5, color: SET.INK, display: "flex", justifyContent: "space-between", gap: 10, borderBottom: `1px dashed ${SET.BORDER}`, padding: "5px 0" }}>
+                <span style={{ color: SET.SLATE }}>{l.label}</span>
+                <span><strong style={{ ...GM, color: SET.NAVY }}>{l.value}</strong><span style={{ color: SET.SLATE }}>{suffix}</span></span>
+              </li>
+            ))}
+          </ul>
+        )}
+        <Link to="/app/settings/usage" style={{ ...GF, fontSize: 13, fontWeight: 600, color: SET.AZURE_TEXT, textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 4, marginTop: 10 }}>
+          All usage <ArrowRight size={14} aria-hidden />
+        </Link>
+      </div>
+    </SCard>
+  );
+}
 
-          {/* Payment method */}
-          <SSection title="Payment Method">
-            <div role="note" style={{ ...GF, fontSize: 12, color: SLATE, marginBottom: 12, fontStyle: "italic" }}>
-              Fictional demonstration data. Do not enter real card information in this frontend.
-            </div>
-            {billing.paymentMethod && (
-              <div style={{ display: "flex", alignItems: "center", gap: 14, padding: "12px 16px", border: "1.5px solid #E3E8EF", borderRadius: 8, marginBottom: 12, flexWrap: "wrap" }}>
-                <div style={{ ...GF, fontSize: 22, fontWeight: 800, color: NAVY, minWidth: 32 }}>▪</div>
-                <div>
-                  <div style={{ ...GF, fontSize: 13, fontWeight: 700, color: NAVY }}>
-                    {billing.paymentMethod.cardBrand} •••• {billing.paymentMethod.lastFour}
-                  </div>
-                  <div style={{ ...GF, fontSize: 12, color: SLATE }}>
-                    Expires {billing.paymentMethod.expiryMonth}/{billing.paymentMethod.expiryYear} · {billing.paymentMethod.billingName}
-                  </div>
-                </div>
-                <StatusBadge label={billing.paymentMethod.status === "active" ? "Active" : billing.paymentMethod.status} color={billing.paymentMethod.status === "active" ? GREEN : GOLD} />
-              </div>
-            )}
-            <button disabled style={{ ...GF, fontSize: 13, fontWeight: 600, padding: "8px 14px", border: "1.5px solid #D1D9E0", borderRadius: 8, color: SLATE, background: "#F8FAFC", cursor: "not-allowed" }}>
-              Update payment method (demonstration only)
-            </button>
-          </SSection>
+// ── Plans ──────────────────────────────────────────────────────────────────
 
-          {/* Billing contact */}
-          <SSection title="Billing Contact">
-            {editContact ? (
-              <form onSubmit={handleSaveContact} noValidate>
-                <SField label="Contact name">
-                  <input type="text" value={contactForm.name} onChange={e => setContactForm(p => ({ ...p, name: e.target.value }))} style={INPUT_STYLE} />
-                </SField>
-                <SField label="Billing email" help="Read-only in production. Change via account settings.">
-                  <input type="email" value={contactForm.email} onChange={e => setContactForm(p => ({ ...p, email: e.target.value }))} style={INPUT_STYLE} />
-                </SField>
-                <SField label="Purchase order ref.">
-                  <input type="text" value={contactForm.poRef} onChange={e => setContactForm(p => ({ ...p, poRef: e.target.value }))} style={INPUT_STYLE} />
-                </SField>
-                <div style={{ display: "flex", gap: 10 }}>
-                  <button type="submit" disabled={savingContact} style={{ ...GF, fontSize: 13, fontWeight: 600, padding: "8px 16px", border: "none", borderRadius: 8, background: AZURE, color: "#FFFFFF", cursor: "pointer" }}>{savingContact ? "Saving…" : "Save"}</button>
-                  <button type="button" onClick={() => setEditContact(false)} style={{ ...GF, fontSize: 13, padding: "8px 14px", border: "1.5px solid #D1D9E0", borderRadius: 8, background: "#FFFFFF", color: SLATE, cursor: "pointer" }}>Cancel</button>
-                </div>
-              </form>
-            ) : (
-              <div>
-                <div style={{ ...GF, fontSize: 13, color: NAVY, marginBottom: 4 }}><strong>{billing.billingContact.name}</strong></div>
-                <div style={{ ...GF, fontSize: 13, color: SLATE, marginBottom: 2 }}>{billing.billingContact.email}</div>
-                {billing.billingContact.poRef && <div style={{ ...GF, fontSize: 12, color: SLATE }}>PO: {billing.billingContact.poRef}</div>}
-                <button onClick={() => setEditContact(true)} style={{ ...GF, fontSize: 13, color: AZURE, background: "none", border: "none", cursor: "pointer", padding: 0, marginTop: 10 }}>Edit billing contact</button>
-                {contactSaved && <span style={{ marginLeft: 12 }}><PreviewSaved /></span>}
-              </div>
-            )}
-          </SSection>
-        </>
-      )}
+function CycleToggle({ cycle, onChange }: { cycle: Cycle; onChange: (c: Cycle) => void }) {
+  const option = (value: Cycle, label: React.ReactNode) => {
+    const on = cycle === value;
+    return (
+      <button type="button" role="radio" aria-checked={on} onClick={() => { onChange(value); }}
+        style={{ ...GF, fontSize: 13, fontWeight: 700, minHeight: 36, padding: "0 14px", borderRadius: 7, border: "none", cursor: "pointer",
+          background: on ? "#FFFFFF" : "transparent", color: on ? SET.NAVY : SET.SLATE,
+          boxShadow: on ? "0 1px 2px rgba(7,17,31,0.12)" : "none", display: "inline-flex", alignItems: "center", gap: 6 }}>
+        {label}
+      </button>
+    );
+  };
+  return (
+    <div role="radiogroup" aria-label="Billing cycle" style={{ display: "inline-flex", gap: 2, padding: 3, background: "#EEF2F6", border: `1px solid ${SET.BORDER}`, borderRadius: 9 }}>
+      {option("monthly", "Monthly")}
+      {option("annual", <>Annual <span style={{ ...GF, fontSize: 11, fontWeight: 700, color: TONES.success.fg, background: TONES.success.bg, border: `1px solid ${TONES.success.border}`, borderRadius: 999, padding: "1px 7px" }}>2 months free</span></>)}
+    </div>
+  );
+}
 
-      {/* Invoices tab */}
-      {tab === "invoices" && billing && (
-        <SSection title="Invoice History">
-          <p style={{ ...GF, fontSize: 12, color: SLATE, margin: "0 0 14px", fontStyle: "italic" }}>
-            All invoices below are fictional demonstration records. No financial data is real.
-          </p>
-          <div style={{ overflowX: "auto" }}>
-            <table role="table" style={{ width: "100%", borderCollapse: "collapse" }}>
-              <thead style={{ borderBottom: "2px solid #E3E8EF", background: "#F8FAFC" }}>
-                <tr>
-                  {["Invoice", "Period", "Date", "Amount", "Status", "Action"].map(h => (
-                    <th key={h} style={{ ...GF, fontSize: 11, fontWeight: 700, color: SILVER, textTransform: "uppercase", letterSpacing: "0.05em", padding: "8px 12px", textAlign: "left" }}>{h}</th>
+function PriceBlock({ plan, cycle }: { plan: SamplePlan; cycle: Cycle }) {
+  if (plan.price === null) {
+    return (
+      <div>
+        <div style={{ ...GF, fontSize: 26, fontWeight: 800, color: SET.NAVY, lineHeight: 1.1 }}>Custom</div>
+        <div style={{ ...GF, fontSize: 12.5, color: SET.SLATE, marginTop: 4 }}>Priced for your organization</div>
+      </div>
+    );
+  }
+  const amount = cycle === "monthly" ? plan.price.monthly : plan.price.annual;
+  const unit = `${plan.price.perUser ? "/user" : ""}/${cycle === "monthly" ? "mo" : "yr"}`;
+  const saving = annualSaving(plan.price);
+  return (
+    <div>
+      <div style={{ display: "flex", alignItems: "baseline", gap: 4, flexWrap: "wrap" }}>
+        <span data-testid={`plan-price-${plan.id}`} style={{ ...GF, fontSize: 26, fontWeight: 800, color: SET.NAVY, lineHeight: 1.1 }}>{formatPeso(amount)}</span>
+        {amount > 0 && <span style={{ ...GF, fontSize: 13, color: SET.SLATE }}>{unit}</span>}
+      </div>
+      <div data-testid={`plan-saving-${plan.id}`} style={{ ...GF, fontSize: 12.5, color: saving > 0 ? TONES.success.fg : SET.SLATE, marginTop: 4, fontWeight: saving > 0 ? 600 : 500 }}>
+        {amount === 0 ? "Free, always"
+          : cycle === "annual" ? `Save ${formatPeso(saving)}${plan.price.perUser ? " per user" : ""} a year`
+          : `Or ${formatPeso(plan.price.annual)}${plan.price.perUser ? "/user" : ""}/yr — save ${formatPeso(saving)}`}
+      </div>
+    </div>
+  );
+}
+
+function PlanCard({ plan, cycle, onChoose }: { plan: SamplePlan; cycle: Cycle; onChoose: (plan: SamplePlan) => void }) {
+  const current = plan.id === CURRENT_PLAN.includesPlanId;
+  return (
+    <div data-testid={`plan-card-${plan.id}`} style={{
+      position: "relative", display: "flex", flexDirection: "column", gap: 14, minWidth: 0,
+      background: "#FFFFFF", borderRadius: 12, padding: "18px 18px 16px",
+      border: plan.mostPopular ? `2px solid ${SET.AZURE}` : `1px solid ${SET.BORDER}`,
+      boxShadow: plan.mostPopular ? "0 8px 22px -12px rgba(0,120,212,0.45)" : "0 1px 2px rgba(7,17,31,0.04)",
+    }}>
+      <div style={{ display: "flex", gap: 6, flexWrap: "wrap", minHeight: 22 }}>
+        {plan.mostPopular && <Badge tone="info" icon={Star}>Most popular</Badge>}
+        {current && <Badge tone="success" icon={BadgeCheck}>Your current features</Badge>}
+      </div>
+      <div>
+        <h4 style={{ ...GF, fontSize: 17, fontWeight: 800, color: SET.NAVY, margin: 0 }}>{plan.name}</h4>
+        <p style={{ ...GF, fontSize: 13, color: SET.SLATE, margin: "3px 0 0", lineHeight: 1.45 }}>{plan.tagline}</p>
+      </div>
+      <PriceBlock plan={plan} cycle={cycle} />
+      <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "grid", gap: 7, flex: 1, alignContent: "start" }}>
+        {plan.highlights.map(h => (
+          <li key={h} style={{ display: "flex", gap: 8, alignItems: "flex-start", ...GF, fontSize: 13, color: SET.INK, lineHeight: 1.45 }}>
+            <Check size={15} aria-hidden color={SET.SUCCESS} style={{ flexShrink: 0, marginTop: 2 }} /> {h}
+          </li>
+        ))}
+      </ul>
+      <button type="button" onClick={() => { onChoose(plan); }}
+        style={{ ...(plan.mostPopular ? BTN_PRIMARY : BTN_SECONDARY), width: "100%" }}>
+        {plan.price === null ? "Contact sales" : `Choose ${plan.name}`}
+      </button>
+    </div>
+  );
+}
+
+function CellValue({ value }: { value: CompareCell }) {
+  if (value === true) return <span style={{ display: "inline-flex", alignItems: "center", gap: 4, color: SET.SUCCESS, fontWeight: 700 }}><Check size={16} aria-hidden /><span className="st-visually-hidden">Included</span></span>;
+  if (value === false) return <span style={{ display: "inline-flex", alignItems: "center", color: "#64748B" }}><Minus size={16} aria-hidden /><span className="st-visually-hidden">Not included</span></span>;
+  return <span>{value}</span>;
+}
+
+function CompareTable() {
+  return (
+    <div data-testid="plan-compare" style={{ position: "relative", overflowX: "auto", border: `1px solid ${SET.BORDER}`, borderRadius: 12, marginTop: 14, background: "#FFFFFF" }}>
+      <table style={{ width: "100%", minWidth: 640, borderCollapse: "collapse", ...GF, fontSize: 13 }}>
+        <caption className="st-visually-hidden">Plan comparison — sample pricing</caption>
+        <thead>
+          <tr style={{ background: "#F8FAFC" }}>
+            <th scope="col" style={{ textAlign: "left", padding: "12px 14px", color: SET.SLATE, fontWeight: 600, position: "sticky", left: 0, background: "#F8FAFC", minWidth: 170 }}>Feature</th>
+            {SAMPLE_PLANS.map(p => (
+              <th key={p.id} scope="col" style={{ textAlign: "center", padding: "12px 10px", color: p.mostPopular ? SET.AZURE_TEXT : SET.NAVY, fontWeight: 800, background: p.mostPopular ? "#EFF6FD" : undefined }}>
+                {p.name}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {SAMPLE_COMPARE_GROUPS.map(group => (
+            <React.Fragment key={group.id}>
+              <tr>
+                <th scope="colgroup" colSpan={SAMPLE_PLANS.length + 1} style={{ textAlign: "left", padding: "10px 14px 6px", ...GM, fontSize: 10.5, letterSpacing: "0.1em", textTransform: "uppercase", color: SET.MUTED, borderTop: `1px solid ${SET.BORDER}`, background: "#FFFFFF" }}>
+                  {group.title}
+                </th>
+              </tr>
+              {group.rows.map(row => (
+                <tr key={row.id} style={{ borderTop: "1px solid #EEF2F6" }}>
+                  <th scope="row" style={{ textAlign: "left", padding: "9px 14px", color: SET.INK, fontWeight: 500, position: "sticky", left: 0, background: "#FFFFFF" }}>{row.label}</th>
+                  {SAMPLE_PLANS.map(p => (
+                    <td key={p.id} style={{ textAlign: "center", padding: "9px 10px", color: SET.INK, background: p.mostPopular ? "#F7FBFE" : undefined }}>
+                      <CellValue value={row.cell(p)} />
+                    </td>
                   ))}
                 </tr>
-              </thead>
-              <tbody>
-                {billing.invoices.map(inv => (
-                  <tr key={inv.id} style={{ borderBottom: "1px solid #F0F2F5" }}>
-                    <td style={{ ...{ fontFamily: "'Geist Mono', monospace" }, fontSize: 12, color: NAVY, padding: "10px 12px" }}>{inv.id}</td>
-                    <td style={{ ...GF, fontSize: 13, color: SLATE, padding: "10px 12px" }}>{inv.billingPeriod}</td>
-                    <td style={{ ...GF, fontSize: 13, color: SLATE, padding: "10px 12px" }}>{new Date(inv.date).toLocaleDateString("en-PH", { year: "numeric", month: "short" })}</td>
-                    <td style={{ ...GF, fontSize: 13, color: SLATE, padding: "10px 12px" }}>{inv.amountLabel}</td>
-                    <td style={{ padding: "10px 12px" }}><StatusBadge label={invoiceStatusLabel(inv.status)} color={invoiceStatusColor(inv.status)} /></td>
-                    <td style={{ padding: "10px 12px" }}>
-                      <button disabled style={{ ...GF, fontSize: 12, color: SLATE, background: "none", border: "none", cursor: "not-allowed" }}>Download unavailable</button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </SSection>
-      )}
+              ))}
+            </React.Fragment>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
 
-      {/* Plan comparison tab */}
-      {tab === "comparison" && (
-        <div>
-          <p style={{ ...GF, fontSize: 13, color: SLATE, marginBottom: 16 }}>
-            Compare plan features. Plan-change simulations do not alter any subscription, payment, or feature entitlement.
-          </p>
-          <div style={{ display: "grid", gridTemplateColumns: `200px repeat(${LAGDA_PLANS.length}, 1fr)`, gap: 0, border: "1.5px solid #E3E8EF", borderRadius: 10, overflow: "hidden", overflowX: "auto" }}>
-            {/* Header */}
-            <div style={{ background: "#F8FAFC", padding: "12px 16px", borderBottom: "2px solid #E3E8EF" }} />
-            {LAGDA_PLANS.map(p => (
-              <div key={p.id} style={{ background: p.featured ? "#EBF5FB" : "#F8FAFC", padding: "12px 16px", borderBottom: "2px solid #E3E8EF", borderLeft: "1px solid #E3E8EF", textAlign: "center" }}>
-                <div style={{ ...GF, fontSize: 14, fontWeight: 800, color: p.featured ? AZURE : NAVY }}>{p.name}</div>
-                {p.featured && <div style={{ ...GF, fontSize: 11, color: AZURE }}>Most popular</div>}
-                {billing && p.id !== billing.planId && (
-                  <button onClick={() => setPlanPreview(p.id)} style={{ ...GF, fontSize: 12, fontWeight: 600, padding: "5px 12px", border: `1.5px solid ${AZURE}`, borderRadius: 6, color: AZURE, background: "#FFFFFF", cursor: "pointer", marginTop: 8 }}>
-                    {p.contactSales ? "Contact Sales" : "Preview change →"}
-                  </button>
-                )}
-                {billing && p.id === billing.planId && <div style={{ ...GF, fontSize: 12, color: GREEN, marginTop: 8, fontWeight: 600 }}>Current plan</div>}
-              </div>
-            ))}
-
-            {/* Feature rows */}
-            {COMPARE_GROUPS.map(group => (
-              <React.Fragment key={group.id}>
-                <div style={{ gridColumn: `span ${LAGDA_PLANS.length + 1}`, background: "#F8FAFC", padding: "8px 16px", borderTop: "1px solid #E3E8EF", ...GF, fontSize: 11, fontWeight: 700, color: SLATE, textTransform: "uppercase", letterSpacing: "0.06em" }}>
-                  {group.title}
-                </div>
-                {group.rows.map(row => [
-                  <div key={`label-${row.id}`} style={{ padding: "10px 16px", borderTop: "1px solid #F0F2F5", ...GF, fontSize: 13, color: NAVY }}>{row.label}</div>,
-                  ...LAGDA_PLANS.map(p => {
-                    const planVals: Record<string, string> = { personal: row.personal, business: row.business, enterprise: row.enterprise };
-                    const val = planVals[p.id] ?? "";
-                    const icon = val === "included" ? "✓" : val === "not-included" ? "—" : val === "enterprise" ? "E" : val === "varies" ? "~" : val === "pending" ? "·" : val;
-                    const color = val === "included" ? GREEN : val === "not-included" ? "#CBD5E1" : val === "enterprise" ? GOLD : SLATE;
-                    return (
-                      <div key={`${row.id}-${p.id}`} style={{ padding: "10px 12px", borderTop: "1px solid #F0F2F5", borderLeft: "1px solid #E3E8EF", textAlign: "center", background: p.featured ? "#F8FBFF" : "#FFFFFF" }}>
-                        <span style={{ ...GF, fontSize: 13, fontWeight: val === "included" ? 700 : 400, color }}>{icon}</span>
-                      </div>
-                    );
-                  }),
-                ])}
-              </React.Fragment>
-            ))}
-          </div>
-
-          {/* Plan change preview dialog */}
-          {planPreview && (
-            <div role="dialog" aria-modal="true" aria-label="Plan change preview" style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.4)", zIndex: Z.modal, display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
-              <div style={{ background: "#FFFFFF", borderRadius: 14, padding: 28, maxWidth: 460, width: "100%" }}>
-                <h2 style={{ ...GF, fontSize: 18, fontWeight: 800, color: NAVY, margin: "0 0 12px" }}>Plan Change Preview</h2>
-                <p style={{ ...GF, fontSize: 13, color: SLATE, margin: "0 0 14px" }}>
-                  Switch to <strong>{LAGDA_PLANS.find(p => p.id === planPreview)?.name}</strong>? This is a frontend simulation only.
-                </p>
-                <div role="note" style={{ background: "#FFFBEB", border: "1px solid #FDE68A", borderRadius: 8, padding: "10px 14px", marginBottom: 18, ...GF, fontSize: 12, color: "#92400E" }}>
-                  This plan change is simulated in frontend state. No subscription, invoice, payment, seat allocation, or feature entitlement is changed by a backend.
-                </div>
-                <div style={{ display: "flex", gap: 10 }}>
-                  <button onClick={() => handleSimulatePlan(planPreview, LAGDA_PLANS.find(p => p.id === planPreview)?.name ?? planPreview)} disabled={simulating}
-                    style={{ ...GF, fontSize: 13, fontWeight: 600, padding: "9px 18px", border: "none", borderRadius: 8, background: AZURE, color: "#FFFFFF", cursor: "pointer" }}>
-                    {simulating ? "Simulating…" : "Confirm simulation"}
-                  </button>
-                  <button onClick={() => setPlanPreview(null)} style={{ ...GF, fontSize: 13, padding: "9px 16px", border: "1.5px solid #D1D9E0", borderRadius: 8, background: "#FFFFFF", color: SLATE, cursor: "pointer" }}>Cancel</button>
-                </div>
-              </div>
-            </div>
-          )}
+function LaunchNoticeDialog({ plan, onClose }: { plan: SamplePlan; onClose: () => void }) {
+  const titleId = useId();
+  const closeRef = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    const previous = document.activeElement as HTMLElement | null;
+    closeRef.current?.focus();
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    document.addEventListener("keydown", onKey);
+    return () => { document.removeEventListener("keydown", onKey); previous?.focus?.(); };
+  }, [onClose]);
+  return (
+    <div role="presentation" onClick={onClose} style={{ position: "fixed", inset: 0, zIndex: Z.modal, background: "rgba(7,17,31,0.45)", display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
+      <div role="dialog" aria-modal="true" aria-labelledby={titleId} onClick={e => { e.stopPropagation(); }}
+        style={{ background: "#FFFFFF", borderRadius: 14, padding: 24, width: "100%", maxWidth: 440, boxShadow: "0 24px 60px -20px rgba(7,17,31,0.45)" }}>
+        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12 }}>
+          <h3 id={titleId} style={{ ...GF, fontSize: 18, fontWeight: 800, color: SET.NAVY, margin: 0 }}>Paid plans open at launch</h3>
+          <button type="button" onClick={onClose} aria-label="Close" style={{ background: "none", border: "none", cursor: "pointer", color: SET.SLATE, padding: 4, borderRadius: 6 }}><X size={18} aria-hidden /></button>
         </div>
-      )}
+        <p style={{ ...GF, fontSize: 13.5, color: SET.INK, lineHeight: 1.6, margin: "12px 0 0" }}>
+          {plan.price === null
+            ? "Enterprise is arranged with each organization. Plans, including Enterprise, open when LAGDA launches."
+            : `You can’t switch to ${plan.name} yet — plans open when LAGDA launches.`}{" "}
+          Until then your workspace stays on Early Access, with every Business feature and nothing to pay.
+        </p>
+        <p style={{ ...GF, fontSize: 12.5, color: SET.SLATE, lineHeight: 1.55, margin: "10px 0 0" }}>The prices shown are samples; final prices are confirmed at launch.</p>
+        <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 18 }}>
+          <button ref={closeRef} type="button" onClick={onClose} style={BTN_PRIMARY}>Got it</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function PlanShowcase() {
+  const [cycle, setCycle] = useState<Cycle>("monthly");
+  const [compare, setCompare] = useState(false);
+  const [chosen, setChosen] = useState<SamplePlan | null>(null);
+  const compareId = useId();
+  return (
+    <SSection title="Plans" icon={Star}
+      actions={<CycleToggle cycle={cycle} onChange={setCycle} />}
+      description="What each plan will include when paid plans open.">
+      <div data-testid="sample-pricing-notice" style={{ ...GM, fontSize: 11, fontWeight: 700, letterSpacing: "0.08em", color: TONES.warning.fg, background: TONES.warning.bg, border: `1px solid ${TONES.warning.border}`, borderRadius: 8, padding: "8px 12px", marginBottom: 14, display: "flex", alignItems: "center", gap: 8 }}>
+        <Info size={14} aria-hidden style={{ flexShrink: 0 }} /> {SAMPLE_PRICING_NOTICE}
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 220px), 1fr))", gap: 14 }}>
+        {SAMPLE_PLANS.map(p => <PlanCard key={p.id} plan={p} cycle={cycle} onChoose={setChosen} />)}
+      </div>
+      <div style={{ marginTop: 14 }}>
+        <button type="button" aria-expanded={compare} aria-controls={compareId} onClick={() => { setCompare(c => !c); }} style={BTN_SECONDARY}>
+          {compare ? "Hide comparison" : "Compare all features"}
+          <ChevronDown size={15} aria-hidden style={{ transform: compare ? "rotate(180deg)" : "none", transition: "transform 150ms ease" }} />
+        </button>
+      </div>
+      <div id={compareId} hidden={!compare}>{compare && <CompareTable />}</div>
+      {chosen && <LaunchNoticeDialog plan={chosen} onClose={() => { setChosen(null); }} />}
+    </SSection>
+  );
+}
+
+// ── Invoices ───────────────────────────────────────────────────────────────
+
+function InvoicesSection() {
+  const billedTo = useInvoiceBilledTo();
+  const url = typeof window !== "undefined" ? `${window.location.origin}${SAMPLE_INVOICE_PATH}` : SAMPLE_INVOICE_PATH;
+  return (
+    <SSection title="Invoices" icon={ReceiptText} description="Early Access is not billed, so there are no real invoices. This sample shows what one will look like.">
+      <div data-testid="sample-invoice-card" style={{ border: `1px solid ${SET.BORDER}`, borderRadius: 12, overflow: "hidden" }}>
+        <div style={{ ...GM, fontSize: 11, fontWeight: 700, letterSpacing: "0.08em", color: TONES.warning.fg, background: TONES.warning.bg, borderBottom: `1px solid ${TONES.warning.border}`, padding: "8px 14px" }}>
+          {SAMPLE_INVOICE_BANNER}
+        </div>
+        <div style={{ display: "flex", gap: 18, padding: 16, flexWrap: "wrap", alignItems: "center" }}>
+          <div style={{ flex: "1 1 260px", minWidth: 0 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+              <span style={{ ...GM, fontSize: 14, fontWeight: 700, color: SET.NAVY }}>{SAMPLE_INVOICE_ID}</span>
+              <Badge tone="neutral">Sample — not paid</Badge>
+            </div>
+            <div style={{ display: "flex", alignItems: "baseline", gap: 10, flexWrap: "wrap", marginTop: 6 }}>
+              <span style={{ ...GF, fontSize: 14, color: SET.INK }}>Business (annual)</span>
+              <span style={{ ...GF, fontSize: 20, fontWeight: 800, color: SET.NAVY }}>{formatPeso(SAMPLE_INVOICE_TOTAL)}</span>
+            </div>
+            <div style={{ ...GF, fontSize: 13, color: SET.SLATE, marginTop: 10, lineHeight: 1.55 }}>
+              <div style={{ ...GM, fontSize: 10.5, letterSpacing: "0.1em", textTransform: "uppercase", color: SET.MUTED }}>Billed to</div>
+              <div data-testid="invoice-billed-name" style={{ color: SET.NAVY, fontWeight: 600 }}>{billedTo.name}</div>
+              {billedTo.email && <div style={{ overflowWrap: "anywhere" }}>{billedTo.email}</div>}
+              <div>{billedTo.workspace}</div>
+            </div>
+            <Link to={SAMPLE_INVOICE_PATH} data-testid="view-sample-invoice" style={{ ...BTN_SECONDARY, marginTop: 14 }}>
+              View invoice <ArrowRight size={14} aria-hidden />
+            </Link>
+          </div>
+          <div style={{ textAlign: "center", flexShrink: 0 }}>
+            <VerificationQRCode url={url} size={112} alt={`QR code linking to sample invoice ${SAMPLE_INVOICE_ID}`} />
+            <div style={{ ...GF, fontSize: 11.5, color: SET.SLATE, marginTop: 4 }}>Scan to open</div>
+          </div>
+        </div>
+      </div>
+    </SSection>
+  );
+}
+
+export function BillingPage() {
+  return (
+    <SettingsPage title="Billing & Plan" breadcrumb="Billing & Plan" description="Your workspace’s plan, what plans will cost, and your invoices.">
+      <Notice tone="info" icon={Sparkles}>Nothing is billed during Early Access. No card is needed and none is stored.</Notice>
+      <OverviewCard />
+      <PlanShowcase />
+      <InvoicesSection />
     </SettingsPage>
   );
 }

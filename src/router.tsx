@@ -976,6 +976,11 @@ const SettingsIntegrationDetailPage = lazy(() =>
     default: m.IntegrationDetailPage,
   })),
 );
+const SettingsInvoicePage = lazy(() =>
+  import("./app/pages/platform/settings/billing/InvoicePage").then((m) => ({
+    default: m.InvoicePage,
+  })),
+);
 const SettingsDataPrivacyPage = lazy(() =>
   import("./app/pages/platform/settings/DataPrivacyPage").then((m) => ({
     default: m.DataPrivacyPage,
@@ -2522,6 +2527,12 @@ export const router = createBrowserRouter([
             path: "billing",
             element: (
               <SettingsBillingPage />
+            ),
+          },
+          {
+            path: "billing/invoices/:invoiceId",
+            element: (
+              <SettingsInvoicePage />
             ),
           },
           {

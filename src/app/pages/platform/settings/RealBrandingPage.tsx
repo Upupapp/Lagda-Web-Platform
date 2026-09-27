@@ -176,7 +176,7 @@ export function RealBrandingPage({ workspaceId }: { workspaceId: string }) {
   const disabledStyle = canEdit ? {} : { background: "#F5F7FA", color: SLATE, cursor: "not-allowed" };
 
   return (
-    <SettingsPage title="Workspace Branding" breadcrumb="Branding">
+    <SettingsPage title="Workspace Branding" breadcrumb="Branding" description="The logo, colour and sender name for this workspace.">
       {confirmDialog}
 
       <div style={{ background: "#F0F7FF", border: "1px solid #BAD7F5", borderRadius: 8, padding: "10px 14px", marginBottom: 16, ...GF, fontSize: 12, color: NAVY }}>

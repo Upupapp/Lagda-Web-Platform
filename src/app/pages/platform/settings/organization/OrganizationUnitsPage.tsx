@@ -17,10 +17,10 @@
 // easier to keyboard-navigate than a collapsible tree for that size.
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { AlertCircle, Plus, Trash2, X } from "lucide-react";
+import { AlertCircle, Plus, Trash2, X, Network, Users, FolderTree } from "lucide-react";
 import {
   SettingsPage, SCard, SField, INPUT_STYLE, BTN_PRIMARY, BTN_SECONDARY,
-  BTN_DANGER, Skeleton, StatusBadge,
+  BTN_DANGER, Skeleton, Badge, SET,
 } from "../SettingsShell";
 import { usePlatform } from "../../../../context/PlatformContext";
 import { USE_REAL_BACKEND } from "../../../../services/backend-flag";
@@ -33,11 +33,12 @@ import {
   type OrganizationUnit, type OrganizationUnitMember, type WorkspaceMemberOption,
 } from "../../../../models/organization";
 
-const GF = { fontFamily: "'Geist', sans-serif" };
-const NAVY = "#07111F";
-const AZURE = "#0078D4";
-const SLATE = "#64748B";
-const SILVER = "#8A9BAE";
+const GF = { fontFamily: SET.FONT };
+const NAVY = SET.NAVY;
+const AZURE = SET.TEAL_TEXT;
+const SLATE = SET.SLATE;
+// Text-safe muted grey (the old #8A9BAE read at under 3:1 on white).
+const SILVER = SET.MUTED;
 
 // ── Tree ordering ────────────────────────────────────────────────────────
 
@@ -180,14 +181,14 @@ function UnitList({ rows, selectedId, onSelect }: {
                 display: "flex", alignItems: "center", gap: 8, width: "100%",
                 textAlign: "left", padding: "8px 10px", paddingLeft: 10 + depth * 16,
                 border: "none", borderRadius: 8, cursor: "pointer",
-                background: selected ? "#EBF5FB" : "transparent",
+                background: selected ? "#EFFBF8" : "transparent",
+                boxShadow: selected ? `inset 3px 0 0 ${SET.TEAL}` : "none", minHeight: 40,
                 ...GF, fontSize: 13, fontWeight: selected ? 700 : 500,
                 color: selected ? AZURE : unit.archivedAt !== null ? SILVER : NAVY,
-                opacity: unit.archivedAt !== null ? 0.75 : 1,
               }}
             >
               <span style={{ flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{unit.name}</span>
-              {unit.archivedAt !== null && <StatusBadge label="Archived" color={SILVER} />}
+              {unit.archivedAt !== null && <Badge tone="neutral">Archived</Badge>}
             </button>
           </li>
         );
@@ -432,8 +433,9 @@ function UnitDetail({ workspaceId, unit, units, onUnitChanged, onUnitArchived }:
     <>
       <SCard>
         <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
-          <h2 style={{ ...GF, fontSize: 16, fontWeight: 800, color: NAVY, margin: 0, flex: 1 }}>{unit.name}</h2>
-          {unit.archivedAt !== null && <StatusBadge label="Archived" color={SILVER} />}
+          <FolderTree size={18} aria-hidden color={SET.TEAL_TEXT} />
+          <h3 style={{ ...GF, fontSize: 16, fontWeight: 800, color: NAVY, margin: 0, flex: 1, minWidth: 0, overflowWrap: "anywhere" }}>{unit.name}</h3>
+          {unit.archivedAt !== null && <Badge tone="neutral">Archived</Badge>}
         </div>
 
         {unit.archivedAt === null && (
@@ -469,8 +471,8 @@ function UnitDetail({ workspaceId, unit, units, onUnitChanged, onUnitArchived }:
       </SCard>
 
       <SCard>
-        <h3 style={{ ...GF, fontSize: 13, fontWeight: 700, color: NAVY, textTransform: "uppercase", letterSpacing: "0.06em", margin: "0 0 14px" }}>
-          Roster
+        <h3 style={{ ...GF, fontSize: 15, fontWeight: 700, color: NAVY, margin: "0 0 14px", display: "flex", alignItems: "center", gap: 8 }}>
+          <Users size={17} aria-hidden color={SET.TEAL_TEXT} /> Roster
         </h3>
         {members === null ? (
           <Skeleton h={80} mb={0} />
@@ -481,7 +483,8 @@ function UnitDetail({ workspaceId, unit, units, onUnitChanged, onUnitArchived }:
             {members.length === 0 ? (
               <p style={{ ...GF, fontSize: 13, color: SILVER, margin: "0 0 14px" }}>No members yet.</p>
             ) : (
-              <table style={{ width: "100%", borderCollapse: "collapse", marginBottom: 14 }}>
+              <div style={{ overflowX: "auto", marginBottom: 14 }}>
+              <table style={{ width: "100%", minWidth: 420, borderCollapse: "collapse" }}>
                 <thead>
                   <tr style={{ borderBottom: "1.5px solid #E3E8EF" }}>
                     <th style={{ ...GF, fontSize: 11, fontWeight: 700, color: SLATE, textAlign: "left", padding: "0 8px 8px", textTransform: "uppercase", letterSpacing: "0.05em" }}>Person</th>
@@ -495,6 +498,7 @@ function UnitDetail({ workspaceId, unit, units, onUnitChanged, onUnitArchived }:
                   ))}
                 </tbody>
               </table>
+              </div>
             )}
             {unit.archivedAt === null && (
               <AddMemberForm
@@ -544,8 +548,11 @@ function OrganizationUnitsInner({ workspaceId }: { workspaceId: string }) {
   }
 
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "260px 1fr", gap: 16, alignItems: "flex-start" }}>
+    <div className="org-grid" style={{ display: "grid", gap: 16, alignItems: "flex-start" }}>
+      <style>{`.org-grid { grid-template-columns: minmax(0, 280px) minmax(0, 1fr); }
+        @media (max-width: 900px) { .org-grid { grid-template-columns: minmax(0, 1fr); } }`}</style>
       <SCard style={{ marginBottom: 0 }}>
+        <div style={{ ...GF, fontSize: 12, fontWeight: 700, color: SET.MUTED, textTransform: "uppercase", letterSpacing: "0.08em", fontFamily: SET.MONO, margin: "0 0 8px 4px" }}>Units</div>
         {units === null ? (
           <Skeleton h={160} mb={12} />
         ) : (
@@ -559,6 +566,7 @@ function OrganizationUnitsInner({ workspaceId }: { workspaceId: string }) {
         </div>
       </SCard>
 
+      <div style={{ minWidth: 0 }}>
       {selectedUnit === null ? (
         <SCard><p style={{ ...GF, fontSize: 13, color: SILVER }}>Choose a unit, or create the first one.</p></SCard>
       ) : (
@@ -572,6 +580,7 @@ function OrganizationUnitsInner({ workspaceId }: { workspaceId: string }) {
           }}
         />
       )}
+      </div>
     </div>
   );
 }
@@ -581,13 +590,8 @@ export function OrganizationUnitsPage() {
   const workspaceId = platform.currentWorkspace?.id;
 
   return (
-    <SettingsPage title="Organization Units" breadcrumb="Organization Units">
-      <p style={{ ...GF, fontSize: 13, color: SLATE, margin: "0 0 16px", maxWidth: "62ch", lineHeight: 1.55 }}>
-        Departments, offices and teams — for routing and reporting only. A
-        member's title here (like "Department Head") lets a template slot
-        resolve to whoever currently holds it, instead of naming a specific
-        person.
-      </p>
+    <SettingsPage title="Organization Units" breadcrumb="Organization Units" icon={Network}
+      description={<>Departments, offices and teams — for routing and reporting only. A member’s title here (like “Department Head”) lets a template slot resolve to whoever currently holds it, instead of naming a specific person.</>}>
       {!USE_REAL_BACKEND || !workspaceId ? (
         <SCard>
           <p style={{ ...GF, fontSize: 13, color: SLATE }}>Open a workspace to manage its organization chart.</p>

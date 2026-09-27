@@ -1,199 +1,204 @@
-// /app/settings/preferences — Personal language, locale, timezone, appearance preferences.
-// Frontend-only demonstration. No Burgundy. No eNotary.
+// /app/settings/preferences — time zone, formats, appearance and default view.
+//
+// With a backend: read from GET /me (its `preferences` block) and saved with
+// PATCH /me/preferences, sending only what changed; the page then shows what
+// the backend stored. Demo build: kept in memory for the visit.
+//
+// Only preferences the backend stores are offered. Language and theme are
+// saved, and the help text says plainly that the interface is English and
+// light for now.
 
-import React, { useEffect, useState } from "react";
-import { SettingsPage, SSection, SField, BTN_PRIMARY, BTN_SECONDARY, Skeleton } from "./SettingsShell";
-import { mockAccountSettingsService } from "../../../services/mock/settings.service";
-import type { UserPreferences, AppearanceMode, DateFormatPref, TimeFormatPref } from "../../../models/settings";
+import React, { useEffect, useMemo, useState } from "react";
+import { Globe2, CalendarClock, Palette, LayoutList, Save } from "lucide-react";
+import { SettingsPage, SSection, SField, BTN_PRIMARY, BTN_SECONDARY, Skeleton, SET, INPUT_STYLE } from "./SettingsShell";
+import { preferencesData, IS_LIVE, type PreferenceValues } from "./settings-data";
+import type { PreferencesUpdate } from "../../../services/real/account-settings.service";
+import { ApiError } from "../../../services/api-client";
 
-const GF    = { fontFamily: "'Geist', sans-serif" };
-const NAVY  = "#07111F";
-const AZURE = "#0078D4";
-
-const SELECT_STYLE: React.CSSProperties = {
-  ...GF, fontSize: 13, padding: "9px 12px",
-  border: "1.5px solid #D1D9E0", borderRadius: 8, background: "#FFFFFF",
-  width: "100%", cursor: "pointer",
-};
+const GF = { fontFamily: SET.FONT };
+const SELECT_STYLE: React.CSSProperties = { ...INPUT_STYLE, cursor: "pointer" };
 
 const LANGUAGES = [
-  { value: "en",    label: "English" },
-  { value: "fil",   label: "Filipino" },
-  { value: "es",    label: "Español" },
-  { value: "zh",    label: "中文" },
+  { value: "en", label: "English" },
+  { value: "fil", label: "Filipino" },
 ];
 
 const TIMEZONES = [
-  { value: "Asia/Manila",           label: "(UTC+8) Manila, Philippines" },
-  { value: "Asia/Singapore",        label: "(UTC+8) Singapore" },
-  { value: "Asia/Tokyo",            label: "(UTC+9) Tokyo, Japan" },
-  { value: "Asia/Shanghai",         label: "(UTC+8) Shanghai, China" },
-  { value: "America/New_York",      label: "(UTC-5) New York, USA" },
-  { value: "America/Los_Angeles",   label: "(UTC-8) Los Angeles, USA" },
-  { value: "Europe/London",         label: "(UTC+0) London, UK" },
-  { value: "Europe/Paris",          label: "(UTC+1) Paris, France" },
-  { value: "UTC",                   label: "(UTC+0) Universal Time" },
+  { value: "Asia/Manila", label: "(UTC+8) Manila, Philippines" },
+  { value: "Asia/Singapore", label: "(UTC+8) Singapore" },
+  { value: "Asia/Hong_Kong", label: "(UTC+8) Hong Kong" },
+  { value: "Asia/Tokyo", label: "(UTC+9) Tokyo, Japan" },
+  { value: "Asia/Dubai", label: "(UTC+4) Dubai, UAE" },
+  { value: "Europe/London", label: "(UTC+0) London, UK" },
+  { value: "America/New_York", label: "(UTC-5) New York, USA" },
+  { value: "America/Los_Angeles", label: "(UTC-8) Los Angeles, USA" },
+  { value: "UTC", label: "(UTC+0) Coordinated Universal Time" },
 ];
 
-const DATE_FORMATS: { value: DateFormatPref; label: string }[] = [
-  { value: "DD/MM/YYYY",  label: "DD/MM/YYYY (e.g. 16/07/2026)" },
-  { value: "MM/DD/YYYY",  label: "MM/DD/YYYY (e.g. 07/16/2026)" },
-  { value: "YYYY-MM-DD",  label: "YYYY-MM-DD (e.g. 2026-07-16)" },
+const DATE_FORMATS: { value: PreferenceValues["dateFormat"]; label: string }[] = [
+  { value: "MM/DD/YYYY", label: "MM/DD/YYYY — 09/27/2026" },
+  { value: "DD/MM/YYYY", label: "DD/MM/YYYY — 27/09/2026" },
+  { value: "YYYY-MM-DD", label: "YYYY-MM-DD — 2026-09-27" },
 ];
 
-const TIME_FORMATS: { value: TimeFormatPref; label: string }[] = [
-  { value: "12h", label: "12-hour (e.g. 3:45 PM)" },
-  { value: "24h", label: "24-hour (e.g. 15:45)" },
+const TIME_FORMATS: { value: PreferenceValues["timeFormat"]; label: string }[] = [
+  { value: "12h", label: "12-hour — 3:45 PM" },
+  { value: "24h", label: "24-hour — 15:45" },
 ];
 
-const APPEARANCES: { value: AppearanceMode; label: string }[] = [
-  { value: "system", label: "Follow system" },
-  { value: "light",  label: "Light" },
-  { value: "dark",   label: "Dark" },
+const NUMBER_FORMATS: { value: PreferenceValues["numberFormat"]; label: string }[] = [
+  { value: "comma-dot", label: "1,234.56" },
+  { value: "dot-comma", label: "1.234,56" },
+  { value: "space-dot", label: "1 234.56" },
 ];
 
-function formatDateExample(fmt: DateFormatPref): string {
-  if (fmt === "DD/MM/YYYY") return "16/07/2026";
-  if (fmt === "MM/DD/YYYY") return "07/16/2026";
-  return "2026-07-16";
+function RadioRow<T extends string>({ name, value, options, onChange, labelledBy }: {
+  name: string; value: T; options: { value: T; label: string }[]; onChange: (v: T) => void; labelledBy?: string;
+}) {
+  return (
+    <div role="radiogroup" aria-labelledby={labelledBy} style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+      {options.map(o => {
+        const checked = value === o.value;
+        return (
+          <label key={o.value} style={{
+            display: "inline-flex", alignItems: "center", gap: 8, cursor: "pointer", ...GF, fontSize: 13.5,
+            color: checked ? SET.AZURE_TEXT : SET.INK, fontWeight: checked ? 600 : 500,
+            border: `1.5px solid ${checked ? SET.AZURE : "#CBD5E1"}`, background: checked ? "#EFF6FD" : "#FFFFFF",
+            borderRadius: 8, padding: "8px 12px", minHeight: 40, boxSizing: "border-box",
+          }}>
+            <input type="radio" name={name} value={o.value} checked={checked} onChange={() => { onChange(o.value); }} style={{ accentColor: SET.AZURE, margin: 0 }} />
+            {o.label}
+          </label>
+        );
+      })}
+    </div>
+  );
 }
 
 export function PreferencesPage() {
-  const [prefs, setPrefs]   = useState<UserPreferences | null>(null);
-  const [form, setForm]     = useState<Partial<UserPreferences>>({});
-  const [loading, setLoading] = useState(true);
-  const [dirty, setDirty]   = useState(false);
+  const [saved, setSaved] = useState<PreferenceValues | null>(null);
+  const [form, setForm] = useState<PreferenceValues | null>(null);
+  const [loadError, setLoadError] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [saved, setSaved]   = useState(false);
+  const [message, setMessage] = useState<{ tone: "ok" | "error"; text: string } | null>(null);
 
   useEffect(() => {
-    void mockAccountSettingsService.getUserPreferences().then(p => {
-      setPrefs(p);
-      setForm({ ...p });
-      setLoading(false);
-    });
+    let cancelled = false;
+    preferencesData.get()
+      .then(p => { if (!cancelled) { setSaved(p); setForm(p); } })
+      .catch(() => { if (!cancelled) setLoadError(true); });
+    return () => { cancelled = true; };
   }, []);
 
-  const update = <K extends keyof UserPreferences>(key: K, value: UserPreferences[K]) => {
-    setForm(prev => ({ ...prev, [key]: value }));
-    setDirty(true);
-    setSaved(false);
+  const changes = useMemo<PreferencesUpdate>(() => {
+    if (!saved || !form) return {};
+    const out: Record<string, string> = {};
+    for (const key of Object.keys(form) as (keyof PreferenceValues)[]) {
+      if (form[key] !== saved[key]) out[key] = form[key];
+    }
+    return out;
+  }, [saved, form]);
+  const dirty = Object.keys(changes).length > 0;
+
+  const update = <K extends keyof PreferenceValues>(key: K, value: PreferenceValues[K]) => {
+    setForm(prev => (prev ? { ...prev, [key]: value } : prev));
+    setMessage(null);
   };
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!dirty) return;
     setSaving(true);
-    const updated = await mockAccountSettingsService.updateUserPreferences(form as UserPreferences);
-    setPrefs(updated);
-    setDirty(false);
-    setSaved(true);
-    setSaving(false);
-    setTimeout(() => setSaved(false), 2500);
+    setMessage(null);
+    try {
+      const stored = await preferencesData.save(changes);
+      setSaved(stored);
+      setForm(stored);
+      setMessage({ tone: "ok", text: IS_LIVE ? "Preferences saved." : "Applied for this visit only — not saved to an account." });
+    } catch (err) {
+      setMessage({ tone: "error", text: err instanceof ApiError && err.message.trim() !== "" ? err.message : "Your preferences could not be saved. Please try again." });
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const handleDiscard = () => {
-    if (prefs) { setForm({ ...prefs }); setDirty(false); }
-  };
+  const heading = { title: "Preferences", breadcrumb: "Preferences", description: "How dates, times and numbers are shown to you, and your default views." };
 
-  if (loading) return <SettingsPage title="Preferences" breadcrumb="Preferences"><Skeleton h={200} mb={16} /><Skeleton h={160} /></SettingsPage>;
+  if (loadError) return (
+    <SettingsPage {...heading}>
+      <SSection title="Preferences could not be loaded">
+        <button type="button" onClick={() => { location.reload(); }} style={BTN_SECONDARY}>Reload</button>
+      </SSection>
+    </SettingsPage>
+  );
+  if (!form) return <SettingsPage {...heading}><Skeleton h={220} mb={16} /><Skeleton h={160} /></SettingsPage>;
 
   return (
-    <SettingsPage title="Preferences" breadcrumb="Preferences">
-      <form onSubmit={handleSave} noValidate>
-        <SSection title="Language & Region">
-          <SField label="Language" help="Interface language.">
-            <select value={form.language ?? "en"} onChange={e => update("language", e.target.value)} style={SELECT_STYLE} aria-label="Language">
+    <SettingsPage {...heading}>
+      <form onSubmit={e => { void handleSave(e); }} noValidate>
+        <SSection title="Language and region" icon={Globe2}>
+          <SField label="Language" htmlFor="pref-language" help="LAGDA is in English for now. Your choice is saved for when other languages are added.">
+            <select id="pref-language" value={form.language} onChange={e => { update("language", e.target.value); }} style={SELECT_STYLE}>
               {LANGUAGES.map(l => <option key={l.value} value={l.value}>{l.label}</option>)}
             </select>
           </SField>
-          <SField label="Time zone" help="Used for date and time display across the platform.">
-            <select value={form.timezone ?? "Asia/Manila"} onChange={e => update("timezone", e.target.value)} style={SELECT_STYLE} aria-label="Time zone">
+          <SField label="Time zone" htmlFor="pref-timezone" help="Used when showing dates and times to you.">
+            <select id="pref-timezone" value={form.timezone} onChange={e => { update("timezone", e.target.value); }} style={SELECT_STYLE}>
+              {!TIMEZONES.some(z => z.value === form.timezone) && <option value={form.timezone}>{form.timezone}</option>}
               {TIMEZONES.map(z => <option key={z.value} value={z.value}>{z.label}</option>)}
             </select>
           </SField>
-          <SField label="Date format" help={`Preview: ${formatDateExample((form.dateFormat ?? "DD/MM/YYYY"))}`}>
-            <select value={form.dateFormat ?? "DD/MM/YYYY"} onChange={e => update("dateFormat", e.target.value as DateFormatPref)} style={SELECT_STYLE} aria-label="Date format">
+        </SSection>
+
+        <SSection title="Dates, times and numbers" icon={CalendarClock}>
+          <SField label="Date format" htmlFor="pref-date">
+            <select id="pref-date" value={form.dateFormat} onChange={e => { update("dateFormat", e.target.value as PreferenceValues["dateFormat"]); }} style={SELECT_STYLE}>
               {DATE_FORMATS.map(f => <option key={f.value} value={f.value}>{f.label}</option>)}
             </select>
           </SField>
-          <SField label="Time format">
-            <select value={form.timeFormat ?? "12h"} onChange={e => update("timeFormat", e.target.value as TimeFormatPref)} style={SELECT_STYLE} aria-label="Time format">
+          <SField label="Time format" htmlFor="pref-time">
+            <select id="pref-time" value={form.timeFormat} onChange={e => { update("timeFormat", e.target.value as PreferenceValues["timeFormat"]); }} style={SELECT_STYLE}>
               {TIME_FORMATS.map(f => <option key={f.value} value={f.value}>{f.label}</option>)}
             </select>
           </SField>
-        </SSection>
-
-        <SSection title="Appearance">
-          <SField label="Theme" help="Applies to this frontend demonstration. Follows system preference by default.">
-            <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-              {APPEARANCES.map(a => (
-                <label key={a.value} style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", ...GF, fontSize: 13, color: NAVY }}>
-                  <input type="radio" name="appearance" value={a.value} checked={form.appearance === a.value} onChange={() => update("appearance", a.value)} style={{ accentColor: AZURE }} />
-                  {a.label}
-                </label>
-              ))}
-            </div>
-          </SField>
-
-          <SField label="Interface density">
-            <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-              {(["comfortable", "compact"] as const).map(d => (
-                <label key={d} style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", ...GF, fontSize: 13, color: NAVY }}>
-                  <input type="radio" name="density" value={d} checked={form.density === d} onChange={() => update("density", d)} style={{ accentColor: AZURE }} />
-                  {d.charAt(0).toUpperCase() + d.slice(1)}
-                </label>
-              ))}
-            </div>
-          </SField>
-
-          <SField label="Reduce motion" help="Controls transitions and animations. 'Follow system' respects prefers-reduced-motion.">
-            <select value={form.reduceMotion ?? "system"} onChange={e => update("reduceMotion", e.target.value as UserPreferences["reduceMotion"])} style={{ ...SELECT_STYLE, width: "auto", minWidth: 180 }} aria-label="Reduce motion">
-              <option value="system">Follow system</option>
-              <option value="on">Always reduce</option>
-              <option value="off">No reduction</option>
+          <SField label="Number format" htmlFor="pref-number">
+            <select id="pref-number" value={form.numberFormat} onChange={e => { update("numberFormat", e.target.value as PreferenceValues["numberFormat"]); }} style={SELECT_STYLE}>
+              {NUMBER_FORMATS.map(f => <option key={f.value} value={f.value}>{f.label}</option>)}
             </select>
           </SField>
         </SSection>
 
-        <SSection title="Default Views">
-          <SField label="Documents list view">
-            <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-              {(["table", "grid"] as const).map(v => (
-                <label key={v} style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", ...GF, fontSize: 13, color: NAVY }}>
-                  <input type="radio" name="defaultDocumentView" value={v} checked={form.defaultDocumentView === v} onChange={() => update("defaultDocumentView", v)} style={{ accentColor: AZURE }} />
-                  {v.charAt(0).toUpperCase() + v.slice(1)}
-                </label>
-              ))}
-            </div>
+        <SSection title="Appearance" icon={Palette}>
+          <SField label="Theme" help="LAGDA uses the light theme for now. Your choice is saved for when other themes are added.">
+            <RadioRow name="appearance" value={form.appearance} onChange={v => { update("appearance", v); }}
+              options={[{ value: "system", label: "Follow system" }, { value: "light", label: "Light" }, { value: "dark", label: "Dark" }]} />
           </SField>
-          <SField label="Templates view">
-            <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-              {(["table", "grid"] as const).map(v => (
-                <label key={v} style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", ...GF, fontSize: 13, color: NAVY }}>
-                  <input type="radio" name="defaultTemplateView" value={v} checked={form.defaultTemplateView === v} onChange={() => update("defaultTemplateView", v)} style={{ accentColor: AZURE }} />
-                  {v.charAt(0).toUpperCase() + v.slice(1)}
-                </label>
-              ))}
-            </div>
+          <SField label="Density">
+            <RadioRow name="density" value={form.density} onChange={v => { update("density", v); }}
+              options={[{ value: "comfortable", label: "Comfortable" }, { value: "compact", label: "Compact" }]} />
           </SField>
-          <SField label="Contacts view">
-            <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-              {(["table", "grid"] as const).map(v => (
-                <label key={v} style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", ...GF, fontSize: 13, color: NAVY }}>
-                  <input type="radio" name="defaultContactView" value={v} checked={form.defaultContactView === v} onChange={() => update("defaultContactView", v)} style={{ accentColor: AZURE }} />
-                  {v.charAt(0).toUpperCase() + v.slice(1)}
-                </label>
-              ))}
-            </div>
+        </SSection>
+
+        <SSection title="Default view" icon={LayoutList}>
+          <SField label="Documents list" help="How the Documents list opens.">
+            <RadioRow name="documentListView" value={form.documentListView} onChange={v => { update("documentListView", v); }}
+              options={[{ value: "table", label: "Table" }, { value: "grid", label: "Grid" }]} />
           </SField>
         </SSection>
 
         <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
-          <button type="submit" disabled={!dirty || saving} style={{ ...BTN_PRIMARY, opacity: (!dirty || saving) ? 0.6 : 1, cursor: (!dirty || saving) ? "not-allowed" : "pointer" }}>
-            {saving ? "Saving…" : "Save preferences"}
+          <button type="submit" disabled={!dirty || saving} style={{ ...BTN_PRIMARY, opacity: !dirty || saving ? 0.6 : 1, cursor: !dirty || saving ? "not-allowed" : "pointer" }}>
+            <Save size={15} aria-hidden /> {saving ? "Saving…" : "Save preferences"}
           </button>
-          {dirty && !saving && <button type="button" onClick={handleDiscard} style={BTN_SECONDARY}>Discard</button>}
-          {saved && <span role="status" style={{ ...GF, fontSize: 13, color: "#16A34A" }}>Preferences retained for this session.</span>}
+          {dirty && !saving && (
+            <button type="button" onClick={() => { setForm(saved); setMessage(null); }} style={BTN_SECONDARY}>Discard</button>
+          )}
+          {message && (
+            <span role={message.tone === "ok" ? "status" : "alert"} style={{ ...GF, fontSize: 13, color: message.tone === "ok" ? SET.SUCCESS : SET.DANGER }}>
+              {message.text}
+            </span>
+          )}
+          {dirty && !saving && !message && <span style={{ ...GF, fontSize: 12.5, color: SET.SLATE }}>Unsaved changes.</span>}
         </div>
       </form>
     </SettingsPage>
