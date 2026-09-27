@@ -2,7 +2,12 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, fireEvent, act } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
-import { AuthCarousel, AUTH_CAROUSEL_DURATIONS } from "../AuthCarousel";
+import {
+  AuthCarousel,
+  AUTH_CAROUSEL_DURATIONS,
+  AUTH_CAROUSEL_EXIT_MS,
+  AUTH_CAROUSEL_LEAD,
+} from "../AuthCarousel";
 import { AuthLayout } from "../../../layouts/AuthLayout";
 
 function mockReducedMotion(matches: boolean) {
@@ -124,12 +129,106 @@ describe("AuthCarousel", () => {
     expect(currentSlide()).toBe(1);
   });
 
+  it("shows short LAGDA context above the slides, outside the moving area", () => {
+    render(<AuthCarousel />);
+    const lead = screen.getByTestId("auth-carousel-lead");
+    expect(lead).toHaveTextContent(AUTH_CAROUSEL_LEAD.kicker);
+    expect(lead).toHaveTextContent(AUTH_CAROUSEL_LEAD.text);
+    const viewport = screen.getByTestId("auth-carousel-viewport");
+    expect(viewport.contains(lead)).toBe(false);
+    // The lead precedes the viewport in document order.
+    expect(lead.compareDocumentPosition(viewport) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    advance(20_000);
+    expect(lead).toBeVisible();
+  });
+
+  it("keeps the lead copy factual: no absolute legal or security claim", () => {
+    const copy = `${AUTH_CAROUSEL_LEAD.kicker} ${AUTH_CAROUSEL_LEAD.text}`;
+    expect(copy).not.toMatch(/legally binding|legally valid|fully compliant|tamper-?proof|bank-grade|military-grade|100% secure|guaranteed|court-admissible/i);
+  });
+
+  it("renders the laptop as a drop-in slide and the three steps as step slides", () => {
+    render(<AuthCarousel />);
+    const slides = screen.getAllByRole("group", { hidden: true });
+    expect(slides[0]).toHaveClass("auth-carousel-slide--intro");
+    expect(slides[1]).toHaveClass("auth-carousel-slide--drop");
+    slides.slice(2).forEach(s => expect(s).toHaveClass("auth-carousel-slide--step"));
+    expect(slides[2]).toHaveTextContent("01");
+    expect(slides[3]).toHaveTextContent("02");
+    expect(slides[4]).toHaveTextContent("03");
+  });
+
+  it("marks only the current slide active and keeps the previous one for its exit animation", () => {
+    render(<AuthCarousel />);
+    const slides = () => screen.getAllByRole("group", { hidden: true });
+    expect(slides()[0]).toHaveAttribute("data-state", "active");
+    expect(slides()[0]).not.toHaveAttribute("aria-hidden");
+    advance(AUTH_CAROUSEL_DURATIONS[0]);
+    expect(slides()[1]).toHaveAttribute("data-state", "active");
+    expect(slides()[0]).toHaveAttribute("data-state", "leaving");
+    expect(slides()[0]).toHaveAttribute("aria-hidden", "true");
+    advance(AUTH_CAROUSEL_EXIT_MS);
+    expect(slides()[0]).toHaveAttribute("data-state", "idle");
+    expect(slides().filter(s => s.getAttribute("data-state") !== "idle")).toHaveLength(1);
+  });
+
+  it("records the travel direction so transitions mirror going back", async () => {
+    const u = user();
+    render(<AuthCarousel />);
+    const viewport = screen.getByTestId("auth-carousel-viewport");
+    await u.click(screen.getByRole("button", { name: "Next slide" }));
+    expect(viewport).toHaveAttribute("data-direction", "forward");
+    await u.click(screen.getByRole("button", { name: "Previous slide" }));
+    expect(viewport).toHaveAttribute("data-direction", "back");
+    await u.click(screen.getByRole("button", { name: "Go to slide 5" }));
+    expect(viewport).toHaveAttribute("data-direction", "forward");
+    await u.click(screen.getByRole("button", { name: "Go to slide 2" }));
+    expect(viewport).toHaveAttribute("data-direction", "back");
+  });
+
+  it("swaps instantly under prefers-reduced-motion (no leaving slide)", async () => {
+    const u = user();
+    mockReducedMotion(true);
+    render(<AuthCarousel />);
+    expect(screen.getByTestId("auth-carousel-viewport")).toHaveAttribute("data-motion", "reduced");
+    await u.click(screen.getByRole("button", { name: "Next slide" }));
+    const states = screen.getAllByRole("group", { hidden: true }).map(s => s.getAttribute("data-state"));
+    expect(states).toEqual(["idle", "active", "idle", "idle", "idle"]);
+  });
+
+  it("puts no border, shadow or card background on the intro items or image holders", () => {
+    render(<AuthCarousel />);
+    const css = Array.from(document.querySelectorAll("style")).map(s => s.textContent ?? "").join("\n");
+    // Body of the top-level rule whose selector is exactly `selector`.
+    const rule = (selector: string) => {
+      const start = css.indexOf(`\n${selector} {`);
+      if (start === -1) return "";
+      const open = css.indexOf("{", start);
+      return css.slice(open + 1, css.indexOf("}", open));
+    };
+    expect(rule(".auth-carousel-media")).not.toBe("");
+    const item = rule(".auth-carousel-slide .auth-proof-item");
+    expect(item).toMatch(/border:\s*0/);
+    expect(item).toMatch(/box-shadow:\s*none/);
+    expect(item).toMatch(/background:\s*none/);
+    const media = rule(".auth-carousel-media");
+    expect(media).toMatch(/border:\s*0/);
+    expect(media).toMatch(/box-shadow:\s*none/);
+    expect(media).toMatch(/background:\s*none/);
+    expect(rule(".auth-carousel-viewport")).not.toMatch(/border|box-shadow|background/);
+  });
+
   it("gives every image slide descriptive alt text once loaded", () => {
     render(<AuthCarousel />);
     advance(1500);
     const imgs = screen.getAllByRole("img", { hidden: true });
     expect(imgs.length).toBe(4);
-    imgs.forEach(img => expect((img.getAttribute("alt") ?? "").length).toBeGreaterThan(20));
+    imgs.forEach(img => {
+      expect((img.getAttribute("alt") ?? "").length).toBeGreaterThan(20);
+      // Intrinsic size reserves space, so a late image never shifts layout.
+      expect(Number(img.getAttribute("width"))).toBeGreaterThan(0);
+      expect(Number(img.getAttribute("height"))).toBeGreaterThan(0);
+    });
   });
 });
 
@@ -175,6 +274,7 @@ describe("AuthLayout", () => {
     renderLayout();
     advance(3000);
     expect(screen.queryByRole("region", { name: "How LAGDA works" })).toBeNull();
+    expect(screen.queryByTestId("auth-carousel-lead")).toBeNull();
     expect(screen.queryAllByRole("img", { hidden: true }).filter(i => /auth-carousel|webp/.test(i.getAttribute("src") ?? ""))).toHaveLength(0);
     // Shown by the phone media query (jsdom does not apply it).
     await u.click(screen.getByRole("button", { name: "How LAGDA works", hidden: true }));
