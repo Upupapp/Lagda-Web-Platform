@@ -74,6 +74,19 @@ export const PRIMARY_NAV: PlatformNavItem[] = [
     description: "All document transactions",
   },
   {
+    // Directly below Documents: completed documents shared by and with me
+    // (087). Its own path, so the Documents row is not also highlighted here.
+    id: "shared-documents",
+    label: "Shared Documents",
+    path: "/app/shared-documents",
+    icon: "Share2",
+    group: "primary",
+    permission: "view_documents",
+    featureFlag: "documentsEnabled",
+    showOnMobile: true,
+    description: "Documents shared by you and with you",
+  },
+  {
     id: "templates",
     label: "Templates",
     path: "/app/templates",
@@ -103,6 +116,17 @@ export const PRIMARY_NAV: PlatformNavItem[] = [
     featureFlag: "contactsEnabled",
     showOnMobile: true,
     description: "Signing participants and contacts",
+  },
+  {
+    id: "verify",
+    label: "Check a Document",
+    path: "/app/verify",
+    icon: "ShieldCheck",
+    group: "primary",
+    permission: "verify_documents",
+    featureFlag: "verificationEnabled",
+    showOnMobile: true,
+    description: "Check document authenticity",
   },
   {
     id: "inbox",

@@ -25,6 +25,7 @@
 // a notification.
 
 import { apiRequest } from "../api-client";
+import { sharedByMePath, sharedWithMePath } from "./document-sharing.service";
 import type {
   NotificationRecord, NotificationId, NotificationCategory,
   NotificationSeverity, NotificationPriority,
@@ -199,6 +200,80 @@ function present(row: FeedRow): Presentation {
         actionLabel: "View request",
         actionPath: contactRequestPath("requests-sent", row.sourceId),
         why: "You were sent this because you asked a contact for something and they answered.",
+        inAppOnly: true,
+      };
+    }
+
+    // ── 087. Document sharing — all six are in-app only (no email). ─────────
+    case "DOCUMENT_SHARE_RECEIVED": {
+      const sharer = str(row.templateInput, "sharerDisplayName") ?? "Someone";
+      const where = workspaceName === null ? "" : ` (${workspaceName})`;
+      return {
+        category: "documents", severity: "info", priority: "high",
+        title: documentTitle === null
+          ? `${sharer} shared a completed document with you`
+          : `${sharer} shared “${documentTitle}” with you`,
+        body: `${sharer}${where} shared a completed document with you. Accept it in Shared With Me to open it.`,
+        actionLabel: "Open Shared With Me",
+        actionPath: sharedWithMePath("pending"),
+        why: "You were sent this because a completed document was shared with your email address. It was not emailed.",
+        inAppOnly: true,
+      };
+    }
+
+    case "DOCUMENT_SHARE_ACCEPTED":
+    case "DOCUMENT_SHARE_REJECTED": {
+      const responder = str(row.templateInput, "responderDisplayName") ?? "The recipient";
+      const accepted = row.type === "DOCUMENT_SHARE_ACCEPTED";
+      const subject = documentTitle === null ? "the document you shared" : `“${documentTitle}”`;
+      return {
+        category: "documents",
+        severity: accepted ? "success" : "info",
+        priority: "normal",
+        title: `${responder} ${accepted ? "accepted" : "rejected"} ${subject}`,
+        body: accepted
+          ? `${responder} can now open ${subject}.`
+          : `${responder} rejected ${subject}. They do not have access.`,
+        actionLabel: "Open Shared By Me",
+        actionPath: sharedByMePath("approved"),
+        why: "You were sent this because someone answered a document you shared. It was not emailed.",
+        inAppOnly: true,
+      };
+    }
+
+    case "DOCUMENT_ACCESS_REQUESTED": {
+      const requester = str(row.templateInput, "requesterDisplayName") ?? "Someone";
+      const email = str(row.templateInput, "requesterEmail");
+      const note = str(row.templateInput, "note");
+      const subject = documentTitle === null ? "a completed document" : `“${documentTitle}”`;
+      return {
+        category: "my-actions", severity: "info", priority: "high",
+        title: `${requester} asked for access to ${subject}`,
+        body: `${requester}${email === null ? "" : ` (${email})`} asked for access to ${subject}.${note === null ? "" : ` Their note: “${note}”`}`,
+        actionLabel: "Review the request",
+        actionPath: sharedByMePath("pending"),
+        why: "You were sent this because someone asked to open a completed document you can share. It was not emailed.",
+        inAppOnly: true,
+      };
+    }
+
+    case "DOCUMENT_ACCESS_APPROVED":
+    case "DOCUMENT_ACCESS_REJECTED": {
+      const approved = row.type === "DOCUMENT_ACCESS_APPROVED";
+      const subject = documentTitle === null ? "a completed document" : `“${documentTitle}”`;
+      return {
+        category: "documents",
+        severity: approved ? "success" : "info",
+        priority: "normal",
+        title: approved
+          ? `Your access request for ${subject} was approved`
+          : `Your access request for ${subject} was not approved`,
+        body: approved
+          ? `You can now open ${subject} in Shared With Me.`
+          : `The owner did not approve your request for ${subject}.`,
+        actionLabel: "Open Shared With Me",
+        actionPath: sharedWithMePath(approved ? "accepted" : "rejected"),
+        why: "You were sent this because you asked for access to a completed document. It was not emailed.",
         inAppOnly: true,
       };
     }

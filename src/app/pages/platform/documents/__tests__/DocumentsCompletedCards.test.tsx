@@ -73,7 +73,7 @@ describe("Documents › Completed", () => {
     expect(within(card).getByText("Completed")).toBeInTheDocument();
     await waitFor(() => expect(within(card).getByText("LAGDA-VER-2026-004821")).toBeInTheDocument());
     expect(within(card).getByRole("button", { name: "Copy Verification ID" })).toBeInTheDocument();
-    expect(within(card).queryByRole("link", { name: "Verify document" })).toBeNull();
+    expect(within(card).getByRole("link", { name: "Verify document" })).toHaveAttribute("href", "/app/verify/LAGDA-VER-2026-004821");
     expect(within(card).getByTestId("completed-card-progress")).toHaveTextContent("3 of 3 signed");
     expect(within(card).getByText(/Created/)).toBeInTheDocument();
     // No table for this section.
@@ -128,6 +128,28 @@ describe("Documents › Completed", () => {
     expect(menu).toBeVisible();
     await user.click(document.body);
     expect(menu).not.toBeVisible();
+  });
+
+  it("has a Share button at the card's bottom-right that opens the share panel for that document", async () => {
+    const user = userEvent.setup();
+    const calls: string[] = [];
+    vi.stubGlobal("fetch", vi.fn((url: string, init: RequestInit = {}) => {
+      calls.push(`${init.method ?? "GET"} ${url}`);
+      const body = url.includes("/shares") ? { document: {}, shares: [] } : { items: [] };
+      return Promise.resolve(new Response(JSON.stringify(body), { status: 200, headers: { "Content-Type": "application/json" } }));
+    }));
+    renderCompleted();
+    const card = await screen.findByTestId("completed-card");
+    const share = within(card).getByRole("button", { name: "Share Lease Agreement" });
+    // The last control in the card: nothing follows it in the tab order.
+    const focusables = within(card).getAllByRole("button");
+    expect(focusables[focusables.length - 1]).toBe(share);
+    await user.click(share);
+    const dialog = await screen.findByRole("dialog", { name: "Share document" });
+    expect(within(dialog).getByText("Lease Agreement")).toBeInTheDocument();
+    expect(within(dialog).getByLabelText(/Email address/)).toHaveFocus();
+    expect(within(dialog).getByText(/No email is sent/)).toBeInTheDocument();
+    await waitFor(() => expect(calls).toContain("GET http://api.test/workspaces/ws_1/documents/doc_a/shares"));
   });
 
   it("runs an action from the menu and closes it", async () => {

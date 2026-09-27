@@ -94,8 +94,18 @@ describe("navigation icons", () => {
   // The rail is short enough to read at a glance. Eleven rows was the
   // complaint; this is the number that replaced it, pinned so it cannot creep
   // back one well-meaning addition at a time.
+  // Raised from 7 to 8 for Shared Documents (087), a confirmed product
+  // decision: it sits directly below Documents as its own section.
   it("keeps the primary rail short", () => {
-    expect(PRIMARY_NAV.length).toBeLessThanOrEqual(7);
+    expect(PRIMARY_NAV.length).toBeLessThanOrEqual(8);
+  });
+
+  it("puts Shared Documents directly below Documents", () => {
+    const ids = PRIMARY_NAV.map(i => i.id);
+    expect(ids.indexOf("shared-documents")).toBe(ids.indexOf("documents") + 1);
+    const item = PRIMARY_NAV.find(i => i.id === "shared-documents");
+    expect(item?.path).toBe("/app/shared-documents");
+    expect(item?.showOnMobile).toBe(true);
   });
 
   // Manage is the ONLY way into workspace administration from navigation.

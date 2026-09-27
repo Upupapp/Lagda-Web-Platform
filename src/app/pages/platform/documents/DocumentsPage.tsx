@@ -40,6 +40,7 @@ import { StatusBadge } from "../../../components/documents/StatusBadge";
 import { VerificationIdActions } from "../../../components/documents/VerificationIdActions";
 import { CompletedDocumentGrid, type CompletedCardData } from "./CompletedDocumentCards";
 import { AuditTrailDialog } from "../../../components/documents/AuditTrailDialog";
+import { ShareDocumentDialog } from "../../../components/document-sharing/ShareDocumentDialog";
 import type { TransactionStatus } from "../../../models";
 import type {
   DocumentView, DocumentListQuery, DocumentListItem, DocumentListResult,
@@ -2634,6 +2635,7 @@ function DocumentsPageRealMode() {
   const [signaturesFor, setSignaturesFor] = useState<SigningRequestListItem | null>(null);
   const [resendFor, setResendFor] = useState<SigningRequestListItem | null>(null);
   const [auditFor, setAuditFor] = useState<SigningRequestListItem | null>(null);
+  const [shareFor, setShareFor] = useState<SigningRequestListItem | null>(null);
   const [files, setFiles] = useState<Map<string, DocumentFileFacts>>(new Map());
   const [documents, setDocuments] = useState<RealDocument[]>([]);
   // Which documents have EVER had a signing request, read unfiltered. Null
@@ -2959,6 +2961,7 @@ function DocumentsPageRealMode() {
               { id: "history", label: "History", icon: History, onSelect: () => { setAuditFor(item); } },
               { id: "send-again", label: "Send again", icon: Send, onSelect: () => { setResendFor(item); } },
             ],
+            onShare: () => { setShareFor(item); },
           }))} />
         )}
         {status === "ready" && rows.length > 0 && list !== "completed" && (
@@ -3035,6 +3038,13 @@ function DocumentsPageRealMode() {
           signingRequestId={auditFor.signingRequestId}
           documentTitle={auditFor.documentTitle}
           onClose={() => setAuditFor(null)}
+        />
+      )}
+      {shareFor && workspaceId && (
+        <ShareDocumentDialog
+          workspaceId={workspaceId}
+          target={{ documentId: shareFor.documentId, title: shareFor.documentTitle }}
+          onClose={() => setShareFor(null)}
         />
       )}
     </>

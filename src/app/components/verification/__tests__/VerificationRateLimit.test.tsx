@@ -63,7 +63,7 @@ describe("requesting a code while rate limited", () => {
     renderRecord();
     await screen.findByText("Completed record found");
     const u = user();
-    await u.type(screen.getByLabelText("Participant email"), "someone@example.com");
+    await u.type(screen.getByLabelText("Email address"), "someone@example.com");
     await u.click(screen.getByRole("button", { name: "Send code" }));
 
     expect(await screen.findByText("Please wait 3 seconds before requesting a new code.", { selector: "span[aria-hidden]" })).toBeTruthy();
@@ -81,7 +81,7 @@ describe("requesting a code while rate limited", () => {
     const again = screen.getByRole("button", { name: "Send code" });
     expect(again).toHaveProperty("disabled", false);
     await u.click(again);
-    expect(await screen.findByText(/If that email is a participant, we’ve sent a code\./)).toBeTruthy();
+    expect(await screen.findByText(/If this email has access, we've sent a 6-digit code\./)).toBeTruthy();
   });
 
   it("words a long wait in hours and never mentions the address", async () => {
@@ -89,7 +89,7 @@ describe("requesting a code while rate limited", () => {
     renderRecord();
     await screen.findByText("Completed record found");
     const u = user();
-    await u.type(screen.getByLabelText("Participant email"), "someone@example.com");
+    await u.type(screen.getByLabelText("Email address"), "someone@example.com");
     await u.click(screen.getByRole("button", { name: "Send code" }));
     const notice = await screen.findByTestId("rate-limit-notice");
     expect(notice.textContent).toContain("Too many attempts. Try again in about 1 hour.");
@@ -102,7 +102,7 @@ describe("requesting a code while rate limited", () => {
     renderRecord();
     await screen.findByText("Completed record found");
     const u = user();
-    await u.type(screen.getByLabelText("Participant email"), "someone@example.com");
+    await u.type(screen.getByLabelText("Email address"), "someone@example.com");
     await u.click(screen.getByRole("button", { name: "Send code" }));
     expect(await screen.findByText(/Please wait a few minutes/)).toBeTruthy();
     expect(screen.getByRole("button", { name: "Send code" })).toHaveProperty("disabled", false);
@@ -116,7 +116,7 @@ describe("code entry and resend while rate limited", () => {
     renderRecord();
     await screen.findByText("Completed record found");
     const u = user();
-    await u.type(screen.getByLabelText("Participant email"), "someone@example.com");
+    await u.type(screen.getByLabelText("Email address"), "someone@example.com");
     await u.click(screen.getByRole("button", { name: "Send code" }));
     await u.click(await screen.findByLabelText("Digit 1 of 6"));
     await u.paste("123456");

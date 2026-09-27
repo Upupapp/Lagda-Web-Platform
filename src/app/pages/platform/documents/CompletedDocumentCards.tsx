@@ -9,11 +9,15 @@
 //
 // Below the banner: the name, a Completed badge, the Verification ID with its
 // Copy / Verify actions, signing progress and when it was created. The card's
-// other actions live behind a menu button in the banner's top-right corner.
+// other actions live behind a menu button in the banner's top-right corner;
+// a card given `onShare` also has a Share button in its bottom-right corner.
+//
+// Shared Documents (087) reuses the same card: Shared By Me with the current
+// workspace's branding, Shared With Me with the OWNER workspace's (`branding`).
 
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { Link } from "react-router";
-import { Menu, X, CircleCheck } from "lucide-react";
+import { Menu, X, CircleCheck, Share2 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { BrandBand } from "../settings/branding-preview";
 import { VerificationIdActions } from "../../../components/documents/VerificationIdActions";
@@ -76,6 +80,16 @@ export interface CompletedCardData {
   /** ISO date-time. */
   createdAt: string;
   actions: CardAction[];
+  /** Shows a "Share" button in the card's bottom-right corner. */
+  onShare?: () => void;
+  /** Another workspace's branding (a document shared WITH me); defaults to the current workspace's. */
+  branding?: CardBranding;
+  /** The banner's second line. Defaults to "Completed document". */
+  bannerSubtitle?: string;
+  /** The label before the date. Defaults to "Created". */
+  dateLabel?: string;
+  /** Extra lines under the progress bar (who it is shared with, and so on). */
+  extra?: React.ReactNode;
 }
 
 function formatCreated(iso: string): string {
@@ -168,8 +182,9 @@ function ActionsMenu({ title, actions }: { title: string; actions: CardAction[] 
   );
 }
 
-export function CompletedDocumentCard({ card, branding }: { card: CompletedCardData; branding: CardBranding }) {
+export function CompletedDocumentCard({ card, branding: workspaceBranding }: { card: CompletedCardData; branding: CardBranding }) {
   const pct = card.total > 0 ? Math.round((card.done / card.total) * 100) : 0;
+  const branding = card.branding ?? workspaceBranding;
   return (
     <li className="doc-completed-card" data-testid="completed-card" style={{
       position: "relative", listStyle: "none", minWidth: 0, display: "flex", flexDirection: "column",
@@ -177,7 +192,7 @@ export function CompletedDocumentCard({ card, branding }: { card: CompletedCardD
       boxShadow: "0 1px 2px rgba(7,17,31,0.05)",
     }}>
       <div style={{ borderRadius: "12px 12px 0 0", overflow: "hidden" }}>
-        <BrandBand variant="card" compact testId="completed-card-banner" subtitle="Completed document"
+        <BrandBand variant="card" compact testId="completed-card-banner" subtitle={card.bannerSubtitle ?? "Completed document"}
           branding={{ displayName: branding.displayName, primaryColor: branding.primaryColor, logoPreviewUrl: branding.logoUrl }}
           style={{ paddingRight: 56 }} />
       </div>
@@ -212,19 +227,33 @@ export function CompletedDocumentCard({ card, branding }: { card: CompletedCardD
             <div style={{ width: `${String(pct)}%`, height: "100%", background: pct === 100 ? "#15803D" : DEFAULT_COLOR, borderRadius: 999 }} />
           </div>
         </div>
-        <div style={{ ...GF, fontSize: 12.5, color: SLATE, marginTop: "auto" }}>
-          Created <time dateTime={card.createdAt}>{formatCreated(card.createdAt)}</time>
+        {card.extra}
+        <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 10, flexWrap: "wrap", marginTop: "auto" }}>
+          <div style={{ ...GF, fontSize: 12.5, color: SLATE }}>
+            {card.dateLabel ?? "Created"} <time dateTime={card.createdAt}>{formatCreated(card.createdAt)}</time>
+          </div>
+          {card.onShare && (
+            <button type="button" className="doc-card-share-btn" onClick={card.onShare}
+              aria-label={`Share ${card.title}`} data-testid="completed-card-share"
+              style={{
+                ...GF, marginLeft: "auto", display: "inline-flex", alignItems: "center", gap: 6, minHeight: 36, padding: "0 14px",
+                borderRadius: 8, border: "1px solid #0078D4", background: "#FFFFFF", color: "#005A9E",
+                fontSize: 13, fontWeight: 600, cursor: "pointer",
+              }}>
+              <Share2 size={14} aria-hidden /> Share
+            </button>
+          )}
         </div>
       </div>
     </li>
   );
 }
 
-export function CompletedDocumentGrid({ cards }: { cards: CompletedCardData[] }) {
+export function CompletedDocumentGrid({ cards, label = "Completed documents" }: { cards: CompletedCardData[]; label?: string }) {
   const branding = useDocumentCardBranding();
   return (
     <>
-      <ul className="doc-completed-grid" data-testid="completed-grid" aria-label="Completed documents" style={{ margin: "12px 0 0", padding: 0 }}>
+      <ul className="doc-completed-grid" data-testid="completed-grid" aria-label={label} style={{ margin: "12px 0 0", padding: 0 }}>
         {cards.map(c => <CompletedDocumentCard key={c.key} card={c} branding={branding} />)}
       </ul>
       <style>{`
@@ -234,6 +263,8 @@ export function CompletedDocumentGrid({ cards }: { cards: CompletedCardData[] })
         @media (min-width: 1500px) { .doc-completed-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
         .doc-card-menu-btn:focus-visible { outline: 3px solid #FFFFFF; outline-offset: 1px; box-shadow: 0 0 0 5px rgba(0,120,212,0.7) !important; }
         .doc-card-menu-item:hover, .doc-card-menu-item:focus { background: #F1F5F9 !important; outline: none; }
+        .doc-card-share-btn:hover { background: #EFF6FF !important; }
+        .doc-card-share-btn:focus-visible { outline: 2px solid #0078D4; outline-offset: 2px; }
       `}</style>
     </>
   );

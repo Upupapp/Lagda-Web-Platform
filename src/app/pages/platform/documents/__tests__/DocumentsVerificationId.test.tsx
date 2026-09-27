@@ -80,14 +80,13 @@ describe("VerificationIdActions", () => {
     expect(screen.queryByRole("button", { name: "Copy Verification ID" })).toBeNull();
   });
 
-  it("copies the id and announces it, with no in-app Verify link", async () => {
+  it("copies the id and announces it, and links Verify to /app/verify/<id>", async () => {
     const user = userEvent.setup();
     const writeText = vi.fn().mockResolvedValue(undefined);
     Object.defineProperty(navigator, "clipboard", { value: { writeText }, configurable: true });
     render(<MemoryRouter><VerificationIdActions id="LAGDA-VER-2026-004821" /></MemoryRouter>);
     expect(screen.getByText("LAGDA-VER-2026-004821")).toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: "Verify document" })).toBeNull();
-    expect(screen.queryByRole("link")).toBeNull();
+    expect(screen.getByRole("link", { name: "Verify document" })).toHaveAttribute("href", "/app/verify/LAGDA-VER-2026-004821");
     await user.click(screen.getByRole("button", { name: "Copy Verification ID" }));
     expect(writeText).toHaveBeenCalledWith("LAGDA-VER-2026-004821");
     expect(await screen.findByText("Copied")).toBeInTheDocument();
@@ -104,14 +103,11 @@ describe("Documents list — Verification ID (real mode)", () => {
     const draftRow = rows.find(r => within(r).queryByText("Draft NDA"))!;
     expect(within(draftRow).getByText("—")).toBeInTheDocument();
     // Desktop column visible; the tablet line and phone card carry the same
-    // Copy action but are hidden by the page CSS at this (default) width.
-    // None of them links to an in-app Verify page.
-    expect(screen.getAllByRole("button", { name: "Copy Verification ID" })).toHaveLength(1);
-    expect(screen.getAllByRole("button", { name: "Copy Verification ID", hidden: true })).toHaveLength(3);
-    expect(screen.queryAllByRole("link", { name: "Verify document", hidden: true })).toHaveLength(0);
-    for (const link of screen.queryAllByRole("link", { hidden: true })) {
-      expect(link.getAttribute("href") ?? "").not.toMatch(/^\/app\/verify/);
-    }
+    // actions but are hidden by the page CSS at this (default) width.
+    expect(screen.getAllByRole("link", { name: "Verify document" })).toHaveLength(1);
+    const all = screen.getAllByRole("link", { name: "Verify document", hidden: true });
+    expect(all).toHaveLength(3);
+    for (const link of all) expect(link).toHaveAttribute("href", "/app/verify/LAGDA-VER-2026-004821");
   });
 
   it("finds a document by its Verification ID although the server search does not", async () => {

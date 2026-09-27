@@ -8,6 +8,13 @@ describe("sanitizeAppReturnTo", () => {
     expect(sanitizeAppReturnTo(null)).toBe("/app/dashboard");
   });
 
+  it("returns a public /verify/:id visitor to the in-app record after sign-in (087)", () => {
+    expect(sanitizeAppReturnTo("/app/verify/LAGDA-VER-2026-004821")).toBe("/app/verify/LAGDA-VER-2026-004821");
+    // As the public page's links send it: encoded once in the query string.
+    const query = new URLSearchParams(`returnTo=${encodeURIComponent("/app/verify/LAGDA-VER-2026-004821")}`);
+    expect(sanitizeAppReturnTo(query.get("returnTo"))).toBe("/app/verify/LAGDA-VER-2026-004821");
+  });
+
   it("allows returning to a join link or an invitation link, exactly", () => {
     expect(sanitizeAppReturnTo("/join/abcDEF123_-xyz")).toBe("/join/abcDEF123_-xyz");
     expect(sanitizeAppReturnTo(encodeURIComponent("/join/abcDEF123"))).toBe("/join/abcDEF123");

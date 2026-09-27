@@ -1,6 +1,5 @@
-// The real verification flow used by the public pages (/verify,
-// /verify/:verificationId). The former in-app pages (/app/verify,
-// /app/verify/:id) now redirect there.
+// The real verification flow, shared by the public pages (/verify,
+// /verify/:verificationId) and the in-app pages (/app/verify, /app/verify/:id).
 //
 // LEGAL WORDING CONSTRAINTS (carried over from the demonstration pages):
 //   - A found record is not a matching file.
@@ -19,6 +18,11 @@ import {
   type RealVerificationRecord, type VerificationGrant, type VerificationDetails,
   type WireTime, type FileCheckResult,
 } from "../../services/real/public-verification.service";
+import {
+  documentSharingService, sharingErrorMessage, sharedWithMePath,
+  UNLOCKING_RELATIONS, MAX_NOTE_LENGTH, type MyDocumentAccess,
+} from "../../services/real/document-sharing.service";
+import { ApiError } from "../../services/api-client";
 import { VerificationQRCode } from "./VerificationQRCode";
 import { OtpInput } from "./OtpInput";
 
@@ -38,6 +42,9 @@ const RESEND_COOLDOWN_SECONDS = 60;
 const MSG_RATE_LIMITED = "Too many attempts. Please wait a few minutes before trying again.";
 const MSG_NETWORK = "We could not reach LAGDA. Check your connection and try again.";
 const MSG_EXPIRED = "Your access to this document has expired. Enter your email to request a new code.";
+/** The same reply for every address, whether or not it has access. */
+export const MSG_CODE_SENT = "If this email has access, we've sent a 6-digit code.";
+const MSG_CODE_RESENT = "If this email has access, we've sent a new 6-digit code.";
 
 function formatTime(value: WireTime | null | undefined): string {
   if (value === null || value === undefined || value === "") return "—";
@@ -309,6 +316,7 @@ export function VerificationSearch({ basePath, initialId = "" }: { basePath: str
 
 type Stage =
   | { s: "member-checking" }
+  | { s: "status"; access: MyDocumentAccess }
   | { s: "email" }
   | { s: "code"; email: string; expiresInSeconds: number }
   | { s: "unlocked"; grant: VerificationGrant };
@@ -385,14 +393,26 @@ function AccessSection({ verificationId, memberAccess }: { verificationId: strin
     headingRef.current?.focus();
   }, [stage.s]);
 
+  // Signed in: ask the backend how THIS account relates to the document, then
+  // unlock without a code when it may (owner, admin, participant, accepted
+  // share or approved request), or say honestly where things stand.
   useEffect(() => {
     if (!memberAccess) return;
     let cancelled = false;
-    void requestMemberAccess(verificationId).then((result) => {
+    const unlockOr = (fallback: Stage) => requestMemberAccess(verificationId).then((result) => {
       if (cancelled) return;
       if (result.kind === "granted") setStage({ s: "unlocked", grant: result.grant });
-      else setStage({ s: "email" });
+      else setStage(fallback);
     });
+    documentSharingService.myAccess(verificationId)
+      .then((access) => {
+        if (cancelled) return;
+        if (UNLOCKING_RELATIONS.includes(access.relation)) { void unlockOr({ s: "email" }); return; }
+        if (access.relation === "none" && !access.canRequestAccess) { setStage({ s: "email" }); return; }
+        setStage({ s: "status", access });
+      })
+      // An older backend without /my-access: the member-access unlock alone.
+      .catch(() => { if (!cancelled) void unlockOr({ s: "email" }); });
     return () => { cancelled = true; };
   }, [memberAccess, verificationId]);
 
@@ -416,7 +436,7 @@ function AccessSection({ verificationId, memberAccess }: { verificationId: strin
 
   return (
     <section aria-labelledby="vr-access-heading" style={cardStyle}>
-      <Eyebrow>Participant access</Eyebrow>
+      <Eyebrow>Document access</Eyebrow>
       <h2 id="vr-access-heading" ref={headingRef} tabIndex={-1} style={{ color: NAVY, ...GF, fontSize: 19, fontWeight: 800, margin: "0 0 6px", outline: "none" }}>
         {heading}
       </h2>
@@ -425,12 +445,17 @@ function AccessSection({ verificationId, memberAccess }: { verificationId: strin
       </div>
 
       {stage.s === "member-checking" && (
-        <p role="status" style={{ color: MUTED, ...GF, fontSize: 14, margin: "8px 0 0" }}>Checking whether your account is a participant…</p>
+        <p role="status" style={{ color: MUTED, ...GF, fontSize: 14, margin: "8px 0 0" }}>Checking your access to this document…</p>
+      )}
+      {stage.s === "status" && (
+        <AccessStatusPanel verificationId={verificationId} access={stage.access}
+          onChange={(access) => setStage({ s: "status", access })}
+          onUseCode={() => { setNotice(null); setStage({ s: "email" }); }} />
       )}
       {stage.s === "email" && (
         <EmailStep verificationId={verificationId} wait={wait}
           onSent={(email, expiresInSeconds) => {
-            setNotice({ tone: "info", text: "If that email is a participant, we’ve sent a code." });
+            setNotice({ tone: "info", text: MSG_CODE_SENT });
             setStage({ s: "code", email, expiresInSeconds });
           }}
           onError={(text) => setNotice({ tone: "error", text })}
@@ -446,7 +471,133 @@ function AccessSection({ verificationId, memberAccess }: { verificationId: strin
         <UnlockedView verificationId={verificationId} grant={stage.grant} onExpired={expire}
           onLock={() => { setNotice({ tone: "info", text: "Document view closed." }); setStage({ s: "email" }); }} />
       )}
+      {!memberAccess && stage.s !== "unlocked" && <RequestAccessLinks verificationId={verificationId} />}
     </section>
+  );
+}
+
+// ── Public page: the way in for someone who is not on the access list ────────
+
+/** Sign-in / create-account links that come back to the in-app record page. */
+export function RequestAccessLinks({ verificationId }: { verificationId: string }) {
+  const returnTo = encodeURIComponent(`/app/verify/${encodeURIComponent(verificationId)}`);
+  const link: React.CSSProperties = { color: "#005A9E", ...GF, fontSize: 14, fontWeight: 600, textDecoration: "underline", textUnderlineOffset: 3 };
+  return (
+    <div data-testid="request-access-links" style={{ marginTop: 18, paddingTop: 14, borderTop: "1px solid rgba(0,0,0,0.08)", display: "flex", flexDirection: "column", gap: 8 }}>
+      <p style={{ color: SLATE, ...GF, fontSize: 14, lineHeight: 1.6, margin: 0 }}>
+        Don’t have access to this document?{" "}
+        <Link to={`/sign-in?returnTo=${returnTo}`} style={link}>Sign in to request access</Link>
+      </p>
+      <p style={{ color: SLATE, ...GF, fontSize: 14, lineHeight: 1.6, margin: 0 }}>
+        No account yet?{" "}
+        <Link to={`/create-account?returnTo=${returnTo}`} style={link}>Create an account</Link>
+      </p>
+    </div>
+  );
+}
+
+// ── In app: the signed-in caller's own relation, stated plainly ──────────────
+
+function AccessStatusPanel({ verificationId, access, onChange, onUseCode }: {
+  verificationId: string;
+  access: MyDocumentAccess;
+  onChange: (access: MyDocumentAccess) => void;
+  onUseCode: () => void;
+}) {
+  const [note, setNote] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [sent, setSent] = useState(false);
+  const noteId = useId();
+  const tooLong = note.trim().length > MAX_NOTE_LENGTH;
+  const linkStyle: React.CSSProperties = { color: "#005A9E", fontWeight: 600, textDecoration: "underline", textUnderlineOffset: 3 };
+
+  async function request(e: React.FormEvent) {
+    e.preventDefault();
+    if (busy || tooLong) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const created = await documentSharingService.requestAccess(verificationId, note);
+      setSent(true);
+      onChange({ ...access, relation: "request-pending", requestId: created.requestId, canRequestAccess: false });
+    } catch (err) {
+      const code = err instanceof ApiError ? err.body?.code : undefined;
+      if (code === "document_access_already_pending") {
+        onChange({ ...access, relation: "request-pending", canRequestAccess: false });
+      } else {
+        setError(sharingErrorMessage(err, "request"));
+      }
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  let body: React.ReactNode;
+  switch (access.relation) {
+    case "shared-pending":
+      body = (
+        <Notice tone="info">
+          This document was shared with you. Accept it in{" "}
+          <Link to={sharedWithMePath("pending")} style={linkStyle}>Shared With Me</Link> to open it here.
+        </Notice>
+      );
+      break;
+    case "request-pending":
+      body = (
+        <Notice tone={sent ? "success" : "info"}>
+          {sent ? "Request sent. " : ""}Your request is waiting for the owner’s approval. You will be notified when they decide.
+        </Notice>
+      );
+      break;
+    case "request-rejected":
+    case "shared-rejected":
+      body = (
+        <Notice tone="info">
+          Access to this document was not approved for this account.{" "}
+          <Link to={sharedWithMePath("rejected")} style={linkStyle}>View Shared With Me</Link>
+        </Notice>
+      );
+      break;
+    default:
+      body = access.canRequestAccess ? (
+        <form noValidate onSubmit={(e) => { void request(e); }} aria-label="Request access to this document"
+          style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          <p style={{ color: SLATE, ...GF, fontSize: 14, lineHeight: 1.6, margin: 0 }}>
+            Your account does not have access to this document. You can ask its owner for access; they decide whether to approve it.
+          </p>
+          <label htmlFor={noteId} style={{ color: SLATE, ...GF, fontSize: 13, fontWeight: 600 }}>
+            Note to the owner <span style={{ fontWeight: 400 }}>(optional)</span>
+          </label>
+          <textarea id={noteId} value={note} rows={3} onChange={(e) => setNote(e.target.value)}
+            aria-invalid={tooLong ? true : undefined} aria-describedby={`${noteId}-count`}
+            style={{ width: "100%", boxSizing: "border-box", padding: "10px 12px", borderRadius: 8, border: `1px solid ${tooLong ? "rgba(220,38,38,0.6)" : "rgba(0,0,0,0.25)"}`, color: NAVY, ...GF, fontSize: 14, resize: "vertical" }} />
+          <p id={`${noteId}-count`} style={{ color: tooLong ? RED : MUTED, ...GF, fontSize: 12, margin: 0 }}>
+            {note.trim().length} / {MAX_NOTE_LENGTH} characters{tooLong ? " — shorten the note to send it" : ""}
+          </p>
+          {error && <div role="alert"><Notice tone="error">{error}</Notice></div>}
+          <div>
+            <button type="submit" disabled={busy || tooLong} style={buttonStyle("primary", busy || tooLong)}>
+              {busy ? "Sending request…" : "Request access"}
+            </button>
+          </div>
+        </form>
+      ) : (
+        <Notice tone="info">Your account does not have access to this document.</Notice>
+      );
+  }
+
+  return (
+    <div data-testid="access-status" style={{ display: "flex", flexDirection: "column", gap: 12, marginTop: 8 }}>
+      <div aria-live="polite">{body}</div>
+      <p style={{ color: MUTED, ...GF, fontSize: 13, margin: 0 }}>
+        Took part with a different email address?{" "}
+        <button type="button" onClick={onUseCode}
+          style={{ ...GF, fontSize: 13, color: "#005A9E", fontWeight: 600, background: "none", border: "none", padding: "8px 2px", cursor: "pointer", textDecoration: "underline", textUnderlineOffset: 3, minHeight: 36 }}>
+          Use an emailed code
+        </button>
+      </p>
+    </div>
   );
 }
 
@@ -481,9 +632,9 @@ function EmailStep({ verificationId, wait, onSent, onError, clearNotice }: {
   return (
     <form noValidate onSubmit={(e) => { void submit(e); }} aria-label="Request an access code" style={{ display: "flex", flexDirection: "column", gap: 10 }}>
       <p style={{ color: SLATE, ...GF, fontSize: 14, lineHeight: 1.6, margin: "0 0 4px" }}>
-        If you took part in this transaction, enter the email address it was sent to. We will email a 6-digit code to that address if it belongs to a participant.
+        If you took part in this transaction or it was shared with you, enter your email address. We will email a 6-digit code to that address if it has access.
       </p>
-      <label htmlFor={id} style={{ color: SLATE, ...GF, fontSize: 13, fontWeight: 600 }}>Participant email</label>
+      <label htmlFor={id} style={{ color: SLATE, ...GF, fontSize: 13, fontWeight: 600 }}>Email address</label>
       <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
         <input id={id} type="email" inputMode="email" autoComplete="email" value={email}
           onChange={(e) => setEmail(e.target.value)}
@@ -543,7 +694,7 @@ function CodeStep({ verificationId, email, expiresInSeconds, wait, onGranted, on
     if (wait.active) return;
     setCooldown(RESEND_COOLDOWN_SECONDS);
     const result = await requestAccessCode(verificationId, email);
-    if (result.kind === "sent") onNotice({ tone: "info", text: "If that email is a participant, we’ve sent a new code." });
+    if (result.kind === "sent") onNotice({ tone: "info", text: MSG_CODE_RESENT });
     else if (result.kind === "rate-limited" && result.retryAfterSeconds !== undefined) {
       onNotice(null);
       wait.start(result.retryAfterSeconds);

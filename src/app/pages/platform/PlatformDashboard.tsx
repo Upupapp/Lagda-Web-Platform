@@ -8,7 +8,7 @@
 import { useState, useEffect, useCallback, useId } from "react";
 import { Link, useSearchParams } from "react-router";
 import {
-  FilePlus, FileText, LayoutTemplate, Users,
+  FilePlus, FileText, LayoutTemplate, ShieldCheck, Users,
   AlertCircle, Clock, CheckCircle2, XCircle, RefreshCw,
   ChevronRight, AlertTriangle, Send, FileEdit, Activity,
   ArrowRight, PenLine, ThumbsUp, Eye, FileCheck, Mail, Calendar, Bell, ShieldAlert,
@@ -230,14 +230,15 @@ interface QuickAction {
   permission: boolean;
 }
 
-function QuickActionsSection({ canPrepare, canTemplate, canInvite }: {
-  canPrepare: boolean; canTemplate: boolean; canInvite: boolean;
+function QuickActionsSection({ canPrepare, canTemplate, canVerify, canInvite }: {
+  canPrepare: boolean; canTemplate: boolean; canVerify: boolean; canInvite: boolean;
 }) {
   const { onPrepareClick } = usePrepareLaunch();
   const actions: QuickAction[] = [
     { icon: <FilePlus size={20} aria-hidden />, label: "Prepare a Document", sub: "Upload and request signatures", to: "/app/prepare", accent: AZURE, bg: "rgba(0,120,212,0.08)", permission: canPrepare },
     { icon: <FileText size={20} aria-hidden />, label: "My Documents", sub: "View and manage documents", to: "/app/documents", accent: NAVY, bg: "#F8FAFC", permission: true },
     { icon: <LayoutTemplate size={20} aria-hidden />, label: "Use a Template", sub: "Start from a saved template", to: "/app/templates", accent: NAVY, bg: "#F8FAFC", permission: canTemplate },
+    { icon: <ShieldCheck size={20} aria-hidden />, label: "Verify a Document", sub: "Check a document's authenticity", to: "/app/verify", accent: NAVY, bg: "#F8FAFC", permission: canVerify },
     { icon: <Users size={20} aria-hidden />, label: "Invite Team Member", sub: "Add someone to this workspace", to: "/app/workspace/invitations", accent: NAVY, bg: "#F8FAFC", permission: canInvite },
   ].filter((a) => a.permission);
 
@@ -546,6 +547,30 @@ function TemplateShortcuts({ isLoading }: { isLoading: boolean }) {
           </ul>
         )}
       </Card>
+    </section>
+  );
+}
+
+// ── Document Verification Access ──────────────────────────────────────────────
+
+function VerificationAccessCard() {
+  return (
+    <section aria-label="Document Verification" data-guide="dashboard-verify" style={{ marginBottom: 20 }}>
+      <Link
+        to="/app/verify"
+        className="dashboard-verify-card"
+        aria-label="Verify a document — Check the authenticity of a LAGDA-signed document"
+        style={{ display: "flex", alignItems: "center", gap: 14, padding: "16px", background: "white", border: `1px solid ${SLATE2}`, borderRadius: 12, textDecoration: "none" }}
+      >
+        <div style={{ width: 40, height: 40, borderRadius: 10, background: "rgba(5,150,105,0.08)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+          <ShieldCheck size={20} color={GREEN} aria-hidden />
+        </div>
+        <div style={{ flex: 1 }}>
+          <p style={{ color: "#0F172A", ...GF, fontSize: 13, fontWeight: 700, margin: "0 0 2px" }}>Verify a Document</p>
+          <p style={{ color: SLATE6, ...GF, fontSize: 12, margin: 0 }}>Check the authenticity of a LAGDA-signed document</p>
+        </div>
+        <ArrowRight size={16} color={SLATE4} aria-hidden />
+      </Link>
     </section>
   );
 }
@@ -1097,6 +1122,7 @@ function PlatformDashboardMockDemo() {
   // existing template, not authoring one. See platform.nav.ts's templates
   // entry for the full reasoning; this is the same fix for the same reason.
   const canTemplate  = hasPermission("view_workflow");
+  const canVerify    = hasPermission("verify_documents");
   const canInvite    = hasPermission("manage_team");
   const canBilling    = hasPermission("view_billing") || hasPermission("view_usage");
   const canAudit      = hasPermission("view_audit");
@@ -1157,6 +1183,7 @@ function PlatformDashboardMockDemo() {
         <QuickActionsSection
           canPrepare={canPrepare}
           canTemplate={canTemplate}
+          canVerify={canVerify}
           canInvite={canInvite}
         />
 
@@ -1225,6 +1252,10 @@ function PlatformDashboardMockDemo() {
 
             {canTemplate && (
               <TemplateShortcuts isLoading={isLoading} />
+            )}
+
+            {canVerify && (
+              <VerificationAccessCard />
             )}
 
             {canBilling && (
@@ -1310,6 +1341,8 @@ function PlatformDashboardMockDemo() {
         .dashboard-template-row:focus-visible { outline: 2px solid ${AZURE}; outline-offset: -2px; }
         .dashboard-stat-link:focus-visible { outline: 2px solid ${AZURE}; outline-offset: 2px; border-radius: 12px; }
         .dashboard-stat-link:hover > div { box-shadow: 0 4px 12px rgba(0,0,0,0.06); }
+        .dashboard-verify-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.06); border-color: #CBD5E1 !important; }
+        .dashboard-verify-card:focus-visible { outline: 2px solid ${AZURE}; outline-offset: 2px; }
         .dashboard-invite-link:hover { background: rgba(0,120,212,0.1) !important; }
         .dashboard-inbox-link:hover { background: #F8FAFC; }
         .dashboard-inbox-link:focus-visible { outline: 2px solid ${AZURE}; outline-offset: -2px; }

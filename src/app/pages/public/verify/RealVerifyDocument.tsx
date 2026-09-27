@@ -54,7 +54,7 @@ export function RealVerifyRecord() {
   const { verificationId = "" } = useParams();
   return (
     <PublicVerifyShell title="Verification record"
-      intro="The record below is LAGDA’s completion record for this Verification ID. Participants can confirm their email to view and download the signed document.">
+      intro="The record below is LAGDA’s completion record for this Verification ID. Participants, and people it was shared with, can confirm their email to view and download the signed document.">
       <nav aria-label="Breadcrumb" style={{ marginBottom: 16 }}>
         <Link to="/verify" style={{ color: AZURE, ...GF, fontSize: 13, textDecoration: "none" }}>← Verify another document</Link>
       </nav>

@@ -8,7 +8,7 @@ import { NavLink, Link } from "react-router";
 import {
   Menu, X, LayoutDashboard, FileText, Files, Users, ShieldCheck,
   Bell, Users2, Settings, Settings2, FilePlus, Inbox, HelpCircle, GitBranch, BarChart2, Zap,
-  Search, Compass,
+  Search, Compass, Share2,
 } from "lucide-react";
 import lagdaHeaderLogo from "../../../brand elements/svg/LagdaLogoPrimaryHorizontalFullColor_Header.svg";
 import { usePlatform } from "../../context/PlatformContext";
@@ -33,7 +33,7 @@ const GM     = { fontFamily: "'Geist Mono', monospace" };
 // HelpCircle were absent, so "My Actions" rendered with no icon on mobile only.
 const ICON_MAP: Record<string, React.ElementType> = {
   LayoutDashboard, FileText, Files, Users, ShieldCheck, Bell, Users2, Settings, Settings2, FilePlus,
-  Inbox, HelpCircle, GitBranch, BarChart2, Zap,
+  Inbox, HelpCircle, GitBranch, BarChart2, Zap, Share2,
 };
 function NavIcon({ name, size = 18 }: { name: string; size?: number }) {
   const Comp = ICON_MAP[name];

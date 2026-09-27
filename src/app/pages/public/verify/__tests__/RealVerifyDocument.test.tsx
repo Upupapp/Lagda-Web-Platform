@@ -75,9 +75,9 @@ async function reachCodeStep() {
   requestAccessCode.mockResolvedValue({ kind: "sent", expiresInSeconds: 600 });
   renderRecord();
   await screen.findByText("Completed record found");
-  await userEvent.type(screen.getByLabelText("Participant email"), "maria@example.com");
+  await userEvent.type(screen.getByLabelText("Email address"), "maria@example.com");
   await userEvent.click(screen.getByRole("button", { name: "Send code" }));
-  await screen.findByText(/If that email is a participant, we’ve sent a code\./);
+  await screen.findByText(/If this email has access, we've sent a 6-digit code\./);
 }
 
 async function typeCode(code = "123456") {
@@ -184,7 +184,7 @@ describe("/verify/:id access flow", () => {
     requestAccessCode.mockResolvedValueOnce({ kind: "rate-limited" }).mockResolvedValueOnce({ kind: "error" });
     renderRecord();
     await screen.findByText("Completed record found");
-    await userEvent.type(screen.getByLabelText("Participant email"), "maria@example.com");
+    await userEvent.type(screen.getByLabelText("Email address"), "maria@example.com");
     await userEvent.click(screen.getByRole("button", { name: "Send code" }));
     expect(await screen.findByText(/Too many attempts/)).toBeTruthy();
     await userEvent.click(screen.getByRole("button", { name: "Send code" }));
@@ -198,7 +198,7 @@ describe("/verify/:id access flow", () => {
     await typeCode();
     await userEvent.click(screen.getByRole("button", { name: "Verify code" }));
     expect(await screen.findByText(/Your access to this document has expired/)).toBeTruthy();
-    expect(screen.getByLabelText("Participant email")).toBeTruthy();
+    expect(screen.getByLabelText("Email address")).toBeTruthy();
   });
 
   it("the grant expiry time itself returns to the email step", async () => {
@@ -253,5 +253,26 @@ describe("Check a file", () => {
     await user.upload(screen.getByLabelText("PDF file to check"), new File(["x"], "a.txt", { type: "text/plain" }));
     expect(screen.getByText("Choose a PDF file.")).toBeTruthy();
     expect(screen.getByRole("button", { name: "Check file" })).toHaveProperty("disabled", true);
+  });
+});
+
+describe("/verify/:id for someone without access (087)", () => {
+  it("always shows sign-in and create-account links that come back to the in-app record", async () => {
+    lookupVerification.mockResolvedValue({ kind: "found", record: RECORD });
+    renderRecord("LAGDA-VER-2026-004821");
+    await screen.findByText("Completed record found");
+    const block = screen.getByTestId("request-access-links");
+    expect(block).toHaveTextContent(/Don.t have access to this document\?/);
+    expect(block).toHaveTextContent(/No account yet\?/);
+    const returnTo = encodeURIComponent("/app/verify/LAGDA-VER-2026-004821");
+    expect(screen.getByRole("link", { name: "Sign in to request access" })).toHaveAttribute("href", `/sign-in?returnTo=${returnTo}`);
+    expect(screen.getByRole("link", { name: "Create an account" })).toHaveAttribute("href", `/create-account?returnTo=${returnTo}`);
+    // The public page never asks the signed-in endpoints anything.
+    expect(requestMemberAccess).not.toHaveBeenCalled();
+  });
+
+  it("keeps the links on the code step and gives every address the same reply", async () => {
+    await reachCodeStep();
+    expect(screen.getByTestId("request-access-links")).toBeInTheDocument();
   });
 });

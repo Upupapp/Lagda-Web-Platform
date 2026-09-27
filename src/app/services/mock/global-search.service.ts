@@ -564,7 +564,7 @@ function buildVerificationResults(query: string): GlobalSearchResult[] {
         { field: "description", label: "Document",        text: v.docTitle },
       ]),
       matchScore:       computeScore(query, v.refId, v.docTitle),
-      destination:      { type: "internal-route", path: `/verify?id=${encodeURIComponent(v.refId)}` },
+      destination:      { type: "platform-route", path: `/app/verify`, requiresPermission: "verify_documents" },
       availability:     v.status === "expired" ? "unavailable" : "available",
       demonstrationOnly: true,
     }));
@@ -952,6 +952,7 @@ const ALL_COMMANDS: CommandPaletteCommand[] = [
   { id: "cmd_myactions"     as CommandPaletteCommandId, label: "Open My Actions",            group: "Navigate", type: "my-work",      icon: "Inbox",           isPinnable: true,  aliases: ["inbox", "assignments"],      destination: { type: "platform-route", path: "/app/inbox" } },
   { id: "cmd_templates"     as CommandPaletteCommandId, label: "Open Templates",             group: "Navigate", type: "navigate",     icon: "Files",           isPinnable: true,  requiresPermission: "manage_templates", destination: { type: "platform-route", path: "/app/templates" } },
   { id: "cmd_contacts"      as CommandPaletteCommandId, label: "Open Contacts",              group: "Navigate", type: "navigate",     icon: "Users",           isPinnable: true,  requiresPermission: "manage_contacts",  destination: { type: "platform-route", path: "/app/contacts" } },
+  { id: "cmd_verify"        as CommandPaletteCommandId, label: "Open Verification",          group: "Navigate", type: "navigate",     icon: "ShieldCheck",     isPinnable: true,  requiresPermission: "verify_documents", destination: { type: "platform-route", path: "/app/verify" } },
   { id: "cmd_notifications" as CommandPaletteCommandId, label: "Open Notifications",         group: "Navigate", type: "my-work",      icon: "Bell",            isPinnable: false, destination: { type: "platform-route", path: "/app/notifications" } },
   { id: "cmd_reports"       as CommandPaletteCommandId, label: "Open Reports",               group: "Reports",  type: "navigate",     icon: "BarChart2",       isPinnable: true,  requiresPermission: "view_reports",           destination: { type: "platform-route", path: "/app/reports" } },
 

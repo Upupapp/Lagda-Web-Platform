@@ -1,6 +1,5 @@
 import { lazy, Suspense } from "react";
 import { createBrowserRouter, Navigate } from "react-router";
-import { LegacyAppVerifyRedirect } from "./app/components/verification/LegacyAppVerifyRedirect";
 import { PublicLayout } from "./app/layouts/PublicLayout";
 import { AuthLayout } from "./app/layouts/AuthLayout";
 import { CreateAccountLayout } from "./app/layouts/CreateAccountLayout";
@@ -525,6 +524,17 @@ const DocumentsPage = lazy(() =>
     default: m.DocumentsPage,
   })),
 );
+// Shared Documents (087)
+const SharedDocumentsPage = lazy(() =>
+  import("./app/pages/platform/shared-documents/SharedDocumentsPage").then((m) => ({
+    default: m.SharedDocumentsPage,
+  })),
+);
+const LegacySharedRedirect = lazy(() =>
+  import("./app/pages/platform/shared-documents/SharedDocumentsPage").then((m) => ({
+    default: m.LegacySharedRedirect,
+  })),
+);
 const PlatformPlaceholder = lazy(() =>
   import("./app/pages/platform/PlatformPlaceholder").then((m) => ({
     default: m.PlatformPlaceholder,
@@ -543,6 +553,18 @@ const PermissionDenied = lazy(() =>
 const SessionExpired = lazy(() =>
   import("./app/pages/platform/SessionExpired").then((m) => ({
     default: m.SessionExpired,
+  })),
+);
+
+// Verify (Command 17)
+const VerifyRecordPage = lazy(() =>
+  import("./app/pages/platform/verify/RealPlatformVerify").then((m) => ({
+    default: m.VerifyRecordPage,
+  })),
+);
+const VerifyPage = lazy(() =>
+  import("./app/pages/platform/VerifyPage").then((m) => ({
+    default: m.VerifyPage,
   })),
 );
 
@@ -1551,6 +1573,41 @@ export const router = createBrowserRouter([
         path: "documents/new",
         element: <Navigate to="/app/prepare" replace />,
       },
+      // The backend's sharing notices link to these two; the section lives at
+      // /app/shared-documents. Static paths, so they win over :transactionId.
+      {
+        path: "documents/shared-by-me",
+        element: (
+          <Suspense fallback={null}>
+            <LegacySharedRedirect to="by-me" />
+          </Suspense>
+        ),
+      },
+      {
+        path: "documents/shared-with-me",
+        element: (
+          <Suspense fallback={null}>
+            <LegacySharedRedirect to="with-me" />
+          </Suspense>
+        ),
+      },
+      // Shared Documents (087): Shared By Me / Shared With Me.
+      {
+        path: "shared-documents",
+        element: (
+          <Suspense fallback={null}>
+            <SharedDocumentsPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: "shared-documents/:tab",
+        element: (
+          <Suspense fallback={null}>
+            <SharedDocumentsPage />
+          </Suspense>
+        ),
+      },
 
       // Document Organization (Command 31) — static paths BEFORE :transactionId
       {
@@ -2103,10 +2160,23 @@ export const router = createBrowserRouter([
         ),
       },
 
-      // There is no in-app "Check a Document" page. Old /app/verify links
-      // (bookmarks, emails) land on the public verification page instead.
-      { path: "verify", element: <LegacyAppVerifyRedirect /> },
-      { path: "verify/:verificationId", element: <LegacyAppVerifyRedirect /> },
+      // Verify (within platform) — Command 17
+      {
+        path: "verify",
+        element: (
+          <Suspense fallback={null}>
+            <VerifyPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: "verify/:verificationId",
+        element: (
+          <Suspense fallback={null}>
+            <VerifyRecordPage />
+          </Suspense>
+        ),
+      },
 
       // The workspace half of the signing account handoff. Nothing links
       // here; the signing tab opens it. It lives under /app so the existing

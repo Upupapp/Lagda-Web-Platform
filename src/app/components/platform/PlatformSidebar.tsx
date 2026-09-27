@@ -7,7 +7,7 @@ import { NavLink } from "react-router";
 import {
   LayoutDashboard, FileText, Files, Users, ShieldCheck,
   Bell, Users2, Settings, Settings2, FilePlus, ChevronLeft, ChevronRight,
-  HelpCircle, Inbox,
+  HelpCircle, Inbox, Share2,
   GitBranch,
   BarChart2,
   Zap,
@@ -31,7 +31,7 @@ const GM     = { fontFamily: "'Geist Mono', monospace" };
 const ICON_MAP: Record<string, React.ElementType> = {
   LayoutDashboard, FileText, Files, Users, ShieldCheck,
   Bell, Users2, Settings, Settings2, FilePlus, HelpCircle, Inbox, GitBranch,
-  BarChart2, Zap,
+  BarChart2, Zap, Share2,
 };
 
 function NavIcon({ name, size = 16 }: { name: string; size?: number }) {
