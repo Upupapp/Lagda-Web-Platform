@@ -12,7 +12,8 @@ import uploadImage from "../../../assets/auth-carousel/upload.webp";
 import signImage from "../../../assets/auth-carousel/sign.webp";
 import sendImage from "../../../assets/auth-carousel/send.webp";
 
-// Sign-in carousel shown beside the auth form on wide screens (>800px).
+// Sign-in carousel shown beside the auth form on wide screens (>800px), and
+// inside the "How LAGDA works" modal on phones (variant "modal").
 // Images are web-optimised WebP copies of the brand SVGs in
 // src/brand elements (the originals embed multi-megabyte bitmaps). The step
 // images have their near-white backdrop matched to the page background and
@@ -106,8 +107,20 @@ export const AUTH_CAROUSEL_SLIDES: readonly Slide[] = [
   },
 ];
 
-/** Display time per slide, in milliseconds. */
-export const AUTH_CAROUSEL_DURATIONS = [6000, 4000, 4000, 4000, 4000] as const;
+/** Length of the laptop's drop-in landing animation, in milliseconds. */
+export const AUTH_CAROUSEL_DROP_MS = 1150;
+
+/**
+ * Display time per slide, in milliseconds: intro 3s; laptop 1s after its
+ * drop-in has fully landed; Upload 1s; Signature 1s; Send 3s; then loop.
+ */
+export const AUTH_CAROUSEL_DURATIONS = [
+  3000,
+  AUTH_CAROUSEL_DROP_MS + 1000,
+  1000,
+  1000,
+  3000,
+] as const;
 
 /** How long a leaving slide stays visible while its exit animation plays. */
 export const AUTH_CAROUSEL_EXIT_MS = 700;
@@ -133,19 +146,23 @@ interface CarouselState {
 }
 
 interface AuthCarouselProps {
-  /** Pause autoplay (e.g. while the user is typing in the auth form). */
-  paused?: boolean;
+  /**
+   * "page" sits beside the auth form on wide screens; "modal" is the compact
+   * layout used inside the phone "How LAGDA works" modal.
+   */
+  variant?: "page" | "modal";
 }
 
-export function AuthCarousel({ paused = false }: AuthCarouselProps) {
+// Autoplay always runs: it never pauses for hover, focus or typing. It only
+// stops while the tab is hidden (or the carousel is unmounted, e.g. the phone
+// modal is closed), and never starts under prefers-reduced-motion.
+export function AuthCarousel({ variant = "page" }: AuthCarouselProps) {
   const [state, setState] = useState<CarouselState>({
     index: 0,
     leaving: null,
     direction: "forward",
   });
   const { index, leaving, direction } = state;
-  const [hovered, setHovered] = useState(false);
-  const [focusWithin, setFocusWithin] = useState(false);
   const [hidden, setHidden] = useState(
     () => typeof document !== "undefined" && document.hidden,
   );
@@ -218,7 +235,7 @@ export function AuthCarousel({ paused = false }: AuthCarouselProps) {
     return () => window.clearTimeout(timer);
   }, [leaving, index]);
 
-  const isPaused = paused || hovered || focusWithin || hidden || reducedMotion;
+  const isPaused = hidden || reducedMotion;
 
   useEffect(() => {
     if (isPaused) return;
@@ -263,24 +280,18 @@ export function AuthCarousel({ paused = false }: AuthCarouselProps) {
 
   return (
     <section
-      className="auth-carousel"
+      className={`auth-carousel auth-carousel--${variant}`}
       aria-roledescription="carousel"
       aria-label="How LAGDA works"
       data-paused={isPaused ? "true" : "false"}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-      onFocus={() => setFocusWithin(true)}
-      onBlur={(event) => {
-        if (!event.currentTarget.contains(event.relatedTarget)) {
-          setFocusWithin(false);
-        }
-      }}
       onKeyDown={onKeyDown}
     >
-      <div className="auth-carousel-lead" data-testid="auth-carousel-lead">
-        <p className="auth-carousel-lead-kicker">{AUTH_CAROUSEL_LEAD.kicker}</p>
-        <p className="auth-carousel-lead-text">{AUTH_CAROUSEL_LEAD.text}</p>
-      </div>
+      {variant === "page" && (
+        <div className="auth-carousel-lead" data-testid="auth-carousel-lead">
+          <p className="auth-carousel-lead-kicker">{AUTH_CAROUSEL_LEAD.kicker}</p>
+          <p className="auth-carousel-lead-text">{AUTH_CAROUSEL_LEAD.text}</p>
+        </div>
+      )}
 
       <div
         className="auth-carousel-viewport"
@@ -488,6 +499,27 @@ const AUTH_CAROUSEL_CSS = `
 }
 
 .auth-carousel-controls { display: flex; align-items: center; gap: 12px; margin-top: 16px; }
+
+/* ── Phone modal variant ───────────────────────────────────────────────── */
+/* Fits a panel of at most 455px wide and 100dvh - 24px tall: the slide area
+   takes what the modal header, padding and controls leave, and each image
+   shrinks to the space its caption leaves. The intro drops its step
+   descriptions so it fits the same height. */
+.auth-carousel--modal { width: 100%; }
+.auth-carousel--modal .auth-carousel-viewport { height: clamp(260px, calc(100dvh - 150px), 460px); }
+.auth-carousel--modal .auth-carousel-figure { gap: 10px; }
+.auth-carousel--modal .auth-carousel-media,
+.auth-carousel--modal .auth-carousel-slide--drop .auth-carousel-media { flex: 1 1 auto; height: auto; min-height: 0; }
+.auth-carousel--modal .auth-carousel-title { font-size: 18px; }
+.auth-carousel--modal .auth-carousel-description { font-size: 13px; line-height: 1.45; }
+.auth-carousel--modal .auth-kicker { font-size: 9px; margin-bottom: 10px; }
+.auth-carousel--modal .auth-intro h1 { font-size: clamp(24px, 8.5cqi, 34px); margin-bottom: 10px; }
+.auth-carousel--modal .auth-intro-copy { font-size: 13px; line-height: 1.5; }
+.auth-carousel--modal .auth-proof-list { gap: 10px; margin-top: 16px; }
+.auth-carousel--modal .auth-proof-item { grid-template-columns: 28px 1fr; gap: 8px; }
+.auth-carousel--modal .auth-proof-item h2 { font-size: 13px; margin: 0; }
+.auth-carousel--modal .auth-proof-item p { display: none; }
+.auth-carousel--modal .auth-carousel-controls { justify-content: center; margin-top: 12px; }
 .auth-carousel-dots { display: flex; align-items: center; gap: 6px; }
 .auth-carousel-dot { width: 8px; height: 8px; padding: 0; border: 0; border-radius: 999px; background: #bfd6ee; cursor: pointer; transition: width .3s cubic-bezier(.22,1,.36,1), background .3s ease; }
 .auth-carousel-dot[aria-current="true"] { width: 22px; background: #0078d4; }
@@ -499,7 +531,7 @@ const AUTH_CAROUSEL_CSS = `
 .auth-carousel-slide.is-active .auth-anim { animation: auth-rise .7s cubic-bezier(.22,1,.36,1) both; animation-delay: calc(var(--i, 0) * 70ms + 120ms); }
 .auth-carousel-slide--step.is-active .auth-carousel-media img { animation: auth-glide .85s cubic-bezier(.22,1,.36,1) both; }
 .auth-carousel-slide--step.is-active figcaption .auth-anim { animation-name: auth-glide-caption; animation-duration: .75s; animation-delay: calc(var(--i, 0) * 80ms + 200ms); }
-.auth-carousel-slide--drop.is-active .auth-carousel-media img { transform-origin: 50% 100%; animation: auth-drop 1.15s cubic-bezier(.33,0,.2,1) both; }
+.auth-carousel-slide--drop.is-active .auth-carousel-media img { transform-origin: 50% 100%; animation: auth-drop ${AUTH_CAROUSEL_DROP_MS}ms cubic-bezier(.33,0,.2,1) both; }
 .auth-carousel-slide--drop.is-active figcaption .auth-anim { animation-delay: 700ms; }
 
 /* ── Exits ─────────────────────────────────────────────────────────────── */

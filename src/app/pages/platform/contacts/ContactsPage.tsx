@@ -16,6 +16,14 @@ import { Z } from "../../../utils/z-index";
 import { TabStrip } from "../../../components/platform/TabStrip";
 import { FilterChips } from "../../../components/platform/FilterChips";
 import { useProcessing } from "../../../services/processing.service";
+import { usePlatform } from "../../../context/PlatformContext";
+import { useWorkspaceAccess } from "../../../hooks/useWorkspaceAccess";
+import { contactRequestsAvailable } from "../../../services/real/contact-request.service";
+import { ContactRequestDialog } from "../../../components/contact-requests/ContactRequestDialog";
+import {
+  MembershipBadge, CONTACT_REQUEST_KINDS, requestAvailability,
+} from "../../../components/contact-requests/ContactRequestControls";
+import { CONTACT_REQUEST_KIND_LABELS, type ContactRequestKind } from "../../../models/contact-requests";
 
 const GF    = { fontFamily: "'Geist', sans-serif" };
 const GM    = { fontFamily: "'Geist Mono', monospace" };
@@ -137,6 +145,19 @@ function ContactsLibrary() {
   const [showFilters,   setShowFilters]   = useState(false);
   const [, setShowBulkMenu] = useState(false);
   const debouncedSearch = useDebounce(searchInput, 280);
+
+  // 086. Asking a contact for something. Offered only against a real
+  // workspace (a request names a real person and may send a real email), and
+  // hidden once the server has confirmed this account lacks the privilege.
+  const platform = usePlatform();
+  const access = useWorkspaceAccess();
+  const workspaceId = platform.currentWorkspace?.id;
+  const canSendRequests = contactRequestsAvailable(workspaceId)
+    && (!access.confirmed || access.can("upload-request.create"));
+  const [requestFor, setRequestFor] = useState<{ contact: ContactListItem; kind: ContactRequestKind } | null>(null);
+  const cardRequests = canSendRequests
+    ? { currentUserId: platform.user?.id, onChoose: (contact: ContactListItem, kind: ContactRequestKind) => { setRequestFor({ contact, kind }); } }
+    : undefined;
 
   const currentView = (searchParams.get("view") as ContactView) ?? "all";
 
@@ -473,7 +494,7 @@ function ContactsLibrary() {
             </div>
 
             <div className="contact-card-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(268px, 1fr))", gap: 12 }}>
-              {items.map(c => <ContactCard key={c.id} contact={c} selected={selectedIds.has(c.id)} onToggle={toggleSelect} />)}
+              {items.map(c => <ContactCard key={c.id} contact={c} selected={selectedIds.has(c.id)} onToggle={toggleSelect} requests={cardRequests} />)}
             </div>
 
             {/* Pagination */}
@@ -490,6 +511,15 @@ function ContactsLibrary() {
         )}
       </main>
 
+      {requestFor !== null && workspaceId !== undefined && (
+        <ContactRequestDialog
+          workspaceId={workspaceId}
+          kind={requestFor.kind}
+          contact={requestFor.contact}
+          onClose={() => { setRequestFor(null); }}
+        />
+      )}
+
       <style>{`
         @media (max-width: 480px) { .contact-card-grid { grid-template-columns: 1fr !important; } }
       `}</style>
@@ -499,7 +529,11 @@ function ContactsLibrary() {
 
 // ── Contact card ──────────────────────────────────────────────────────────────
 
-function ContactCard({ contact: c, selected, onToggle }: { contact: ContactListItem; selected: boolean; onToggle: (id: string) => void }) {
+function ContactCard({ contact: c, selected, onToggle, requests }: {
+  contact: ContactListItem; selected: boolean; onToggle: (id: string) => void;
+  /** Present when this workspace can send contact requests (086). */
+  requests?: { currentUserId: string | undefined; onChoose: (contact: ContactListItem, kind: ContactRequestKind) => void };
+}) {
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -551,9 +585,21 @@ function ContactCard({ contact: c, selected, onToggle }: { contact: ContactListI
             <MoreVertical size={16} aria-hidden />
           </button>
           {menuOpen && (
-            <div role="menu" style={{ position: "absolute", right: 0, top: "calc(100% + 4px)", zIndex: Z.dropdown, background: "#FFFFFF", border: "1.5px solid #E3E8EF", borderRadius: 10, boxShadow: "0 8px 24px rgba(0,0,0,0.12)", minWidth: 160, overflow: "hidden" }}>
+            <div role="menu" aria-label={`Actions for ${c.name}`} style={{ position: "absolute", right: 0, top: "calc(100% + 4px)", zIndex: Z.dropdown, background: "#FFFFFF", border: "1.5px solid #E3E8EF", borderRadius: 10, boxShadow: "0 8px 24px rgba(0,0,0,0.12)", minWidth: 160, width: "max-content", maxWidth: "min(280px, calc(100vw - 48px))", overflow: "hidden" }}>
               <MenuItem label="View Contact"     onClick={() => { void navigate(`/app/contacts/${c.id}`); setMenuOpen(false); }} />
               {c.status === "active"    && <MenuItem label="Edit"    onClick={() => { void navigate(`/app/contacts/${c.id}/edit`); setMenuOpen(false); }} />}
+              {requests !== undefined && c.status === "active" && CONTACT_REQUEST_KINDS.map(kind => {
+                const availability = requestAvailability(c, kind, requests.currentUserId);
+                return (
+                  <MenuItem
+                    key={kind}
+                    label={CONTACT_REQUEST_KIND_LABELS[kind].action}
+                    disabled={!availability.enabled}
+                    hint={availability.reason}
+                    onClick={() => { setMenuOpen(false); requests.onChoose(c, kind); }}
+                  />
+                );
+              })}
               {c.status !== "archived"  && <MenuItem label="Archive" onClick={() => { setMenuOpen(false); }} />}
               {c.status === "archived"  && <MenuItem label="Restore" onClick={() => { setMenuOpen(false); }} />}
             </div>
@@ -564,6 +610,7 @@ function ContactCard({ contact: c, selected, onToggle }: { contact: ContactListI
       <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap", margin: "12px 0 0" }}>
         <ScopeBadge scope={c.scope} />
         <StatusBadge status={c.status} />
+        <MembershipBadge member={c.workspaceMember} />
       </div>
 
       {c.tagIds.length > 0 && (
@@ -580,13 +627,18 @@ function ContactCard({ contact: c, selected, onToggle }: { contact: ContactListI
   );
 }
 
-function MenuItem({ label, onClick }: { label: string; onClick: () => void }) {
+function MenuItem({ label, onClick, disabled = false, hint }: { label: string; onClick: () => void; disabled?: boolean; hint?: string }) {
   return (
-    <button role="menuitem" onClick={onClick}
-      style={{ ...GF, display: "block", width: "100%", padding: "10px 14px", border: "none", borderBottom: "1px solid #F8FAFC", background: "#FFFFFF", textAlign: "left", cursor: "pointer", fontSize: 13, color: NAVY }}
+    <button role="menuitem" onClick={() => { if (!disabled) onClick(); }}
+      aria-disabled={disabled || undefined}
+      title={hint}
+      style={{ ...GF, display: "block", width: "100%", padding: "10px 14px", border: "none", borderBottom: "1px solid #F8FAFC", background: "#FFFFFF", textAlign: "left", cursor: disabled ? "not-allowed" : "pointer", fontSize: 13, color: disabled ? "#475569" : NAVY }}
       onMouseEnter={e => (e.currentTarget.style.background = "#F8FAFC")}
       onMouseLeave={e => (e.currentTarget.style.background = "#FFFFFF")}>
       {label}
+      {disabled && hint && (
+        <span style={{ display: "block", fontSize: 11, color: "#475569", marginTop: 2, lineHeight: 1.35, whiteSpace: "normal" }}>{hint}</span>
+      )}
     </button>
   );
 }

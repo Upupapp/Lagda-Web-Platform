@@ -73,7 +73,7 @@ describe("Documents › Completed", () => {
     expect(within(card).getByText("Completed")).toBeInTheDocument();
     await waitFor(() => expect(within(card).getByText("LAGDA-VER-2026-004821")).toBeInTheDocument());
     expect(within(card).getByRole("button", { name: "Copy Verification ID" })).toBeInTheDocument();
-    expect(within(card).getByRole("link", { name: "Verify document" })).toHaveAttribute("href", "/app/verify/LAGDA-VER-2026-004821");
+    expect(within(card).queryByRole("link", { name: "Verify document" })).toBeNull();
     expect(within(card).getByTestId("completed-card-progress")).toHaveTextContent("3 of 3 signed");
     expect(within(card).getByText(/Created/)).toBeInTheDocument();
     // No table for this section.

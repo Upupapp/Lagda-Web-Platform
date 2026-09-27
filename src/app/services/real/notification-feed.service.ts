@@ -58,6 +58,27 @@ interface Presentation {
   readonly actionLabel: string | null;
   readonly actionPath: string | null;
   readonly why: string;
+  /** Defaults to email-and-in-app; the in-app-only types say so. */
+  readonly inAppOnly?: boolean;
+}
+
+/** How a contact request's kind reads inside a sentence. */
+const REQUEST_KIND_PHRASE: Record<string, { asked: string; noun: string }> = {
+  "signed-document": { asked: "asked you for a signed document", noun: "a signed document" },
+  upload: { asked: "asked you to upload a document", noun: "a document upload" },
+  preparation: { asked: "assigned you to prepare a document", noun: "a document's preparation" },
+};
+
+function formatDue(iso: string | null): string | null {
+  if (iso === null) return null;
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return null;
+  return date.toLocaleDateString("en-PH", { month: "short", day: "numeric", year: "numeric" });
+}
+
+/** The Documents list a contact-request notice opens, focused on the request. */
+export function contactRequestPath(list: "others" | "requests-sent", requestId: string): string {
+  return `/app/documents?list=${list}&request=${encodeURIComponent(requestId)}`;
 }
 
 /**
@@ -129,6 +150,59 @@ function present(row: FeedRow): Presentation {
         why: "You were sent this because a sign-in to your account required a one-time code.",
       };
 
+    // ── 086. Contact requests — all three are in-app only (no email). ──────
+    case "CONTACT_REQUEST_RECEIVED": {
+      const input = row.templateInput;
+      const requester = str(input, "requesterDisplayName") ?? "A colleague";
+      const requestTitle = str(input, "requestTitle");
+      const kind = REQUEST_KIND_PHRASE[str(input, "requestKind") ?? ""];
+      const due = formatDue(str(input, "dueAt"));
+      const docTitle = str(input, "documentTitle");
+      const message = str(input, "message");
+      const where = workspaceName === null ? "" : ` in ${workspaceName}`;
+      const parts = [
+        requestTitle === null ? null : `“${requestTitle}”${where}.`,
+        docTitle === null ? null : `Document: ${docTitle}.`,
+        due === null ? null : `Due ${due}.`,
+        message === null ? null : `“${message}”`,
+      ].filter((part): part is string => part !== null);
+      return {
+        category: "my-actions", severity: "info", priority: "high",
+        title: `${requester} ${kind?.asked ?? "sent you a request"}`,
+        body: parts.length > 0 ? parts.join(" ") : `Open it in Documents → Others${where}.`,
+        actionLabel: "Open in Others",
+        actionPath: contactRequestPath("others", row.sourceId),
+        why: "You were sent this because a member of your workspace asked something of you. "
+          + "It was not emailed.",
+        inAppOnly: true,
+      };
+    }
+
+    case "CONTACT_REQUEST_COMPLETED":
+    case "CONTACT_REQUEST_DECLINED": {
+      const input = row.templateInput;
+      const responder = str(input, "responderDisplayName") ?? "Your contact";
+      const requestTitle = str(input, "requestTitle");
+      const kind = REQUEST_KIND_PHRASE[str(input, "requestKind") ?? ""];
+      const reason = str(input, "reason");
+      const completed = row.type === "CONTACT_REQUEST_COMPLETED";
+      const subject = requestTitle === null ? "your request" : `“${requestTitle}”`;
+      const where = workspaceName === null ? "" : ` in ${workspaceName}`;
+      return {
+        category: "my-actions",
+        severity: completed ? "success" : "warning",
+        priority: "normal",
+        title: completed ? `${responder} completed ${subject}` : `${responder} declined ${subject}`,
+        body: completed
+          ? `Your request for ${kind?.noun ?? "a document"}${where} is complete.`
+          : `Your request for ${kind?.noun ?? "a document"}${where} was declined.${reason === null ? "" : ` Reason: “${reason}”`}`,
+        actionLabel: "View request",
+        actionPath: contactRequestPath("requests-sent", row.sourceId),
+        why: "You were sent this because you asked a contact for something and they answered.",
+        inAppOnly: true,
+      };
+    }
+
     default:
       // Truthful about what it does not know, rather than guessing.
       return {
@@ -161,7 +235,7 @@ function toRecord(row: FeedRow): NotificationRecord {
     workspaceName: str(row.templateInput, "workspaceName") ?? "",
     // True of these rows: they were sent as email, and this is the in-app
     // rendering of that same message.
-    deliveryClass: "email-and-in-app",
+    deliveryClass: p.inAppOnly === true ? "in-app-only" : "email-and-in-app",
     isDismissible: true,
     hasAction: p.actionPath !== null,
     actionLabel: p.actionLabel,

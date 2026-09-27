@@ -123,7 +123,16 @@ export function getContactTagById(id: ContactTagId): ContactTag | undefined {
 
 // ── Core contact record ───────────────────────────────────────────────────────
 
+/** 086. The workspace member a contact's address belongs to. `null` means
+ *  the server checked and found none (External); absent means unknown
+ *  (fixture data, or an older backend). */
+export interface ContactWorkspaceMember {
+  userId:      string;
+  displayName: string;
+}
+
 export interface Contact {
+  workspaceMember?: ContactWorkspaceMember | null;
   id:           ContactId;
   status:       ContactStatus;
   scope:        ContactScope;
@@ -164,6 +173,7 @@ export interface Contact {
 // ── List item (lighter) ───────────────────────────────────────────────────────
 
 export interface ContactListItem {
+  workspaceMember?: ContactWorkspaceMember | null;
   id:           ContactId;
   status:       ContactStatus;
   scope:        ContactScope;

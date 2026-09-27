@@ -622,11 +622,11 @@ function buildVerificationReport(_query: ReportQuery): VerificationReportData {
   ];
 
   const detailRows: ReportTableRow[] = [
-    { id: "vr1", cells: { id: "VRF-2026-NBL-001", outcome: "Record Found — Completed", fileMatch: "Match" }, linkTo: "/app/verify" },
-    { id: "vr2", cells: { id: "VRF-2026-NBL-002", outcome: "Record Found — Completed", fileMatch: "Match" }, linkTo: "/app/verify" },
-    { id: "vr3", cells: { id: "VRF-2026-NBL-003", outcome: "Record Found — In Progress", fileMatch: "File Not Provided" }, linkTo: "/app/verify" },
-    { id: "vr4", cells: { id: "VRF-2026-NBL-004", outcome: "Record Found — Expired", fileMatch: "Comparison Unavailable" }, linkTo: "/app/verify" },
-    { id: "vr5", cells: { id: "VRF-2026-NBL-005", outcome: "No Record", fileMatch: "File Not Provided" }, linkTo: "/app/verify" },
+    { id: "vr1", cells: { id: "VRF-2026-NBL-001", outcome: "Record Found — Completed", fileMatch: "Match" }, linkTo: "/verify" },
+    { id: "vr2", cells: { id: "VRF-2026-NBL-002", outcome: "Record Found — Completed", fileMatch: "Match" }, linkTo: "/verify" },
+    { id: "vr3", cells: { id: "VRF-2026-NBL-003", outcome: "Record Found — In Progress", fileMatch: "File Not Provided" }, linkTo: "/verify" },
+    { id: "vr4", cells: { id: "VRF-2026-NBL-004", outcome: "Record Found — Expired", fileMatch: "Comparison Unavailable" }, linkTo: "/verify" },
+    { id: "vr5", cells: { id: "VRF-2026-NBL-005", outcome: "No Record", fileMatch: "File Not Provided" }, linkTo: "/verify" },
   ];
 
   return {
@@ -1079,7 +1079,7 @@ function getDataQualityNotices(family: ReportFamily): ReportDataQualityNotice[] 
       level: "info",
       message: "No file hashing or real verification was performed.",
       detail: "File match direction is a simulated demonstration output. No document content was analyzed.",
-      linkTo: "/app/verify",
+      linkTo: "/verify",
     });
   }
   if (family === "preparation") {

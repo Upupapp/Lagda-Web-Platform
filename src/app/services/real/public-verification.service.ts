@@ -58,21 +58,32 @@ export interface VerificationGrant {
   readonly details: VerificationDetails;
 }
 
+/**
+ * A 429. `retryAfterSeconds` is present only when the server said how long
+ * to wait — `error.retryAfterSeconds` on `verification_rate_limited`, else
+ * the `Retry-After` header. It describes the caller's own attempts, never
+ * whether any email address took part.
+ */
+export interface RateLimited {
+  readonly kind: "rate-limited";
+  readonly retryAfterSeconds?: number;
+}
+
 export type LookupResult =
   | { readonly kind: "found"; readonly record: RealVerificationRecord }
   | { readonly kind: "not-found" }
-  | { readonly kind: "rate-limited" }
+  | RateLimited
   | { readonly kind: "error" };
 
 export type SendCodeResult =
   | { readonly kind: "sent"; readonly expiresInSeconds: number }
-  | { readonly kind: "rate-limited" }
+  | RateLimited
   | { readonly kind: "error" };
 
 export type AccessResult =
   | { readonly kind: "granted"; readonly grant: VerificationGrant }
   | { readonly kind: "denied" }
-  | { readonly kind: "rate-limited" }
+  | RateLimited
   | { readonly kind: "error" };
 
 export type DetailsResult =
@@ -119,6 +130,31 @@ async function readJson<T>(response: Response): Promise<T | null> {
   return await response.json().catch(() => null) as T | null;
 }
 
+/** A positive whole number of seconds, or undefined. */
+function seconds(value: unknown): number | undefined {
+  const n = typeof value === "number" ? value : typeof value === "string" && value.trim() !== "" ? Number(value) : NaN;
+  return Number.isFinite(n) && n > 0 ? Math.ceil(n) : undefined;
+}
+
+/**
+ * Reads how long a 429 asks the caller to wait: the body's
+ * `error.retryAfterSeconds` first (`verification_rate_limited`), then the
+ * `Retry-After` header (seconds, or an HTTP date).
+ */
+export async function rateLimitedFrom(response: Response): Promise<RateLimited> {
+  const body = await readJson<{ error?: { code?: unknown; retryAfterSeconds?: unknown } }>(response);
+  let wait = seconds(body?.error?.retryAfterSeconds);
+  if (wait === undefined) {
+    const header = response.headers.get("Retry-After");
+    wait = seconds(header);
+    if (wait === undefined && header !== null) {
+      const at = Date.parse(header);
+      if (!Number.isNaN(at)) wait = seconds((at - Date.now()) / 1000);
+    }
+  }
+  return wait === undefined ? { kind: "rate-limited" } : { kind: "rate-limited", retryAfterSeconds: wait };
+}
+
 export async function lookupVerification(verificationId: string): Promise<LookupResult> {
   if (API_BASE_URL === null) return { kind: "error" };
   let response: Response;
@@ -128,7 +164,7 @@ export async function lookupVerification(verificationId: string): Promise<Lookup
     return { kind: "error" };
   }
   if (response.status === 404) return { kind: "not-found" };
-  if (response.status === 429) return { kind: "rate-limited" };
+  if (response.status === 429) return rateLimitedFrom(response);
   if (!response.ok) return { kind: "error" };
   const record = await readJson<RealVerificationRecord>(response);
   if (record === null) return { kind: "error" };
@@ -144,7 +180,7 @@ export async function requestAccessCode(verificationId: string, email: string): 
   if (API_BASE_URL === null) return { kind: "error" };
   const response = await postJson(url(verificationId, "/access-code"), { email });
   if (response === null) return { kind: "error" };
-  if (response.status === 429) return { kind: "rate-limited" };
+  if (response.status === 429) return rateLimitedFrom(response);
   if (!response.ok) return { kind: "error" };
   const body = await readJson<{ expiresInSeconds?: number }>(response);
   return { kind: "sent", expiresInSeconds: body?.expiresInSeconds ?? 600 };
@@ -163,7 +199,7 @@ export async function submitAccessCode(
   const response = await postJson(url(verificationId, "/access"), { email, code });
   if (response === null) return { kind: "error" };
   if (response.status === 401) return { kind: "denied" };
-  if (response.status === 429) return { kind: "rate-limited" };
+  if (response.status === 429) return rateLimitedFrom(response);
   if (!response.ok) return { kind: "error" };
   const body = await readJson<unknown>(response);
   if (!isGrant(body)) return { kind: "error" };

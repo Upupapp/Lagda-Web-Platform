@@ -11,7 +11,6 @@ import type {
   GlobalSearchResult,
   GlobalSearchResultId,
   GlobalSearchResultGroup,
-  GlobalSearchResultType,
   GlobalSearchScope,
   GlobalSearchRequest,
   GlobalSearchResponse,
@@ -122,7 +121,7 @@ function buildPreparationResults(query: string): GlobalSearchResult[] {
     .slice(0, 5)
     .map((i): GlobalSearchResult => ({
       id:               `sr_prep_${i.batchId}` as GlobalSearchResultId,
-      type:             "navigation-command" as GlobalSearchResultType,
+      type:             "navigation-command",
       title:            `Bulk Send — ${i.title}`,
       description:      `${i.statusLabel} · ${i.includedRows} ${i.includedRows === 1 ? "recipient row" : "recipient rows"}`,
       workspaceContext: SESSION_WORKSPACE_NAME,
@@ -219,7 +218,7 @@ function buildDocumentResults(query: string): GlobalSearchResult[] {
     .slice(0, 8)
     .map((t): GlobalSearchResult => ({
       id:               `sr_doc_${t.id}` as GlobalSearchResultId,
-      type:             (t.status === "draft" ? "document-draft" : "document") as GlobalSearchResultType,
+      type:             (t.status === "draft" ? "document-draft" : "document"),
       title:            t.title,
       description:      t.status.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
       workspaceContext: "Northbridge Legal",
@@ -257,7 +256,7 @@ function buildSigningWorkflowResults(query: string): GlobalSearchResult[] {
     .slice(0, 5)
     .map((t): GlobalSearchResult => ({
       id:               `sr_wf_${t.id}` as GlobalSearchResultId,
-      type:             "navigation-command" as GlobalSearchResultType,
+      type:             "navigation-command",
       title:            `Signing Workflow — ${t.title}`,
       description:      "Stages, people, and required actions for this document",
       workspaceContext: "Northbridge Legal",
@@ -298,7 +297,7 @@ function buildCollaborationResults(query: string): GlobalSearchResult[] {
     .slice(0, 5)
     .map((t): GlobalSearchResult => ({
       id:               `sr_collab_${t.id}` as GlobalSearchResultId,
-      type:             "navigation-command" as GlobalSearchResultType,
+      type:             "navigation-command",
       title:            `Discussion — ${t.title}`,
       description:      "Internal discussion. Opening it does not grant access to anything new.",
       workspaceContext: "Northbridge Legal",
@@ -320,7 +319,7 @@ function buildCollaborationResults(query: string): GlobalSearchResult[] {
   return [
     {
       id:               "sr_collab_center" as GlobalSearchResultId,
-      type:             "navigation-command" as GlobalSearchResultType,
+      type:             "navigation-command",
       title:            "Collaboration Center",
       description:      "Internal review work across documents you already have access to",
       workspaceContext: "Northbridge Legal",
@@ -332,7 +331,7 @@ function buildCollaborationResults(query: string): GlobalSearchResult[] {
     },
     {
       id:               "sr_collab_mentions" as GlobalSearchResultId,
-      type:             "navigation-command" as GlobalSearchResultType,
+      type:             "navigation-command",
       title:            "My Mentions",
       description:      "Comments where someone mentioned you. A mention never grants access.",
       workspaceContext: "Northbridge Legal",
@@ -565,7 +564,7 @@ function buildVerificationResults(query: string): GlobalSearchResult[] {
         { field: "description", label: "Document",        text: v.docTitle },
       ]),
       matchScore:       computeScore(query, v.refId, v.docTitle),
-      destination:      { type: "platform-route", path: `/app/verify`, requiresPermission: "verify_documents" },
+      destination:      { type: "internal-route", path: `/verify?id=${encodeURIComponent(v.refId)}` },
       availability:     v.status === "expired" ? "unavailable" : "available",
       demonstrationOnly: true,
     }));
@@ -738,7 +737,7 @@ function buildFolderResults(query: string): GlobalSearchResult[] {
     .slice(0, 4)
     .map((f): GlobalSearchResult => ({
       id:               `sr_folder_${f.id}` as GlobalSearchResultId,
-      type:             "document" as GlobalSearchResultType,
+      type:             "document",
       title:            f.name,
       description:      f.scope === "workspace" ? "Workspace folder" : "Personal folder",
       workspaceContext: "Northbridge Legal",
@@ -758,7 +757,7 @@ function buildOrgTagResults(query: string): GlobalSearchResult[] {
     .slice(0, 4)
     .map((t): GlobalSearchResult => ({
       id:               `sr_orgtag_${t.id}` as GlobalSearchResultId,
-      type:             "document" as GlobalSearchResultType,
+      type:             "document",
       title:            t.name,
       description:      "Document tag",
       workspaceContext: "Northbridge Legal",
@@ -782,7 +781,7 @@ function buildOrgSavedViewResults(query: string): GlobalSearchResult[] {
     .slice(0, 4)
     .map((v): GlobalSearchResult => ({
       id:               `sr_orgview_${v.id}` as GlobalSearchResultId,
-      type:             "document" as GlobalSearchResultType,
+      type:             "document",
       title:            v.name,
       description:      v.isDefault ? "Saved document view · Default" : "Saved document view",
       workspaceContext: "Northbridge Legal",
@@ -826,7 +825,7 @@ function buildAutomationResults(query: string): GlobalSearchResult[] {
       if (!tokenMatch(query, rule.name)) continue;
       results.push({
         id: `sr_auto_rule_${rule.id}` as GlobalSearchResultId,
-        type: "navigation-command" as GlobalSearchResultType,
+        type: "navigation-command",
         title: rule.name,
         description: `Rule · ${rule.status}`,
         workspaceContext: "Northbridge Legal",
@@ -847,7 +846,7 @@ function buildAutomationResults(query: string): GlobalSearchResult[] {
       if (!tokenMatch(query, policy.name)) continue;
       results.push({
         id: `sr_auto_pol_${policy.id}` as GlobalSearchResultId,
-        type: "navigation-command" as GlobalSearchResultType,
+        type: "navigation-command",
         title: policy.name,
         description: `Policy · ${policy.family}`,
         workspaceContext: "Northbridge Legal",
@@ -953,7 +952,6 @@ const ALL_COMMANDS: CommandPaletteCommand[] = [
   { id: "cmd_myactions"     as CommandPaletteCommandId, label: "Open My Actions",            group: "Navigate", type: "my-work",      icon: "Inbox",           isPinnable: true,  aliases: ["inbox", "assignments"],      destination: { type: "platform-route", path: "/app/inbox" } },
   { id: "cmd_templates"     as CommandPaletteCommandId, label: "Open Templates",             group: "Navigate", type: "navigate",     icon: "Files",           isPinnable: true,  requiresPermission: "manage_templates", destination: { type: "platform-route", path: "/app/templates" } },
   { id: "cmd_contacts"      as CommandPaletteCommandId, label: "Open Contacts",              group: "Navigate", type: "navigate",     icon: "Users",           isPinnable: true,  requiresPermission: "manage_contacts",  destination: { type: "platform-route", path: "/app/contacts" } },
-  { id: "cmd_verify"        as CommandPaletteCommandId, label: "Open Verification",          group: "Navigate", type: "navigate",     icon: "ShieldCheck",     isPinnable: true,  requiresPermission: "verify_documents", destination: { type: "platform-route", path: "/app/verify" } },
   { id: "cmd_notifications" as CommandPaletteCommandId, label: "Open Notifications",         group: "Navigate", type: "my-work",      icon: "Bell",            isPinnable: false, destination: { type: "platform-route", path: "/app/notifications" } },
   { id: "cmd_reports"       as CommandPaletteCommandId, label: "Open Reports",               group: "Reports",  type: "navigate",     icon: "BarChart2",       isPinnable: true,  requiresPermission: "view_reports",           destination: { type: "platform-route", path: "/app/reports" } },
 

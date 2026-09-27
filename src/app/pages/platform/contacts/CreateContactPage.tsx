@@ -9,6 +9,7 @@ import { ContactProvider, useContacts } from "../../../context/ContactContext";
 import type { ContactCreateInput, ContactScope, ContactTagId, ContactGroupId, ContactDuplicateCandidate } from "../../../models/contacts";
 import { SYSTEM_CONTACT_TAGS, CONTACT_SCOPE_LABELS } from "../../../models/contacts";
 import { Z } from "../../../utils/z-index";
+import { usePlatform } from "../../../context/PlatformContext";
 
 const GF    = { fontFamily: "'Geist', sans-serif" };
 const GM    = { fontFamily: "'Geist Mono', monospace" };
@@ -116,11 +117,20 @@ function DuplicateWarningModal({ candidates, onContinue, onReview, onCancel }: {
 function CreateContactForm() {
   const navigate = useNavigate();
   const { asyncCreate, asyncFindDuplicates } = useContacts();
+  // The Organization field starts as the current workspace's name — most
+  // contacts added from inside a workspace belong to it — and stays editable.
+  const workspaceName = usePlatform().currentWorkspace?.name ?? "";
 
   const [name,   setName]   = useState("");
   const [email,  setEmail]  = useState("");
   const [phone,  setPhone]  = useState("");
-  const [org,    setOrg]    = useState("");
+  const [org,    setOrg]    = useState(workspaceName);
+  const orgTouched = React.useRef(false);
+  // The workspace can arrive after first paint (session bootstrap); fill it
+  // in then, but never over something the person typed or cleared.
+  React.useEffect(() => {
+    if (!orgTouched.current && workspaceName !== "") setOrg(workspaceName);
+  }, [workspaceName]);
   const [title,  setTitle]  = useState("");
   const [scope,  setScope]  = useState<ContactScope>("personal");
   const [note,   setNote]   = useState("");
@@ -268,9 +278,9 @@ function CreateContactForm() {
               />
             </FormField>
 
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-              <FormField label="Organization" error={errors.org}>
-                <input type="text" value={org} onChange={e => setOrg(e.target.value)} placeholder="Company / Agency" style={inputStyle(!!errors.org)} />
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 200px), 1fr))", gap: "0 16px" }}>
+              <FormField label="Organization" error={errors.org} hint={workspaceName !== "" && org === workspaceName ? "Defaults to this workspace. Change it if they're from elsewhere." : undefined}>
+                <input type="text" value={org} aria-label="Organization" onChange={e => { orgTouched.current = true; setOrg(e.target.value); }} placeholder="Company / Agency" style={inputStyle(!!errors.org)} />
               </FormField>
               <FormField label="Title / Role" error={errors.title} hint="Job title or role.">
                 <input type="text" value={title} onChange={e => setTitle(e.target.value)} placeholder="e.g. Legal Counsel" style={inputStyle(!!errors.title)} />

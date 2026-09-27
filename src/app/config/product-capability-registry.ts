@@ -367,14 +367,17 @@ const REGISTRY: ProductCapability[] = [
     frontendReady:            "complete-demonstration",
     backendReady:             "service-required",
     publicLaunchReady:        true,
-    navigationVisibility:     true,
+    // No in-app "Check a Document" surface: /app/verify redirects to the
+    // public /verify page, so there is no nav item, palette command or
+    // dashboard card for it.
+    navigationVisibility:     false,
     searchVisibility:         true,
-    commandPaletteVisibility: true,
-    dashboardVisibility:      true,
+    commandPaletteVisibility: false,
+    dashboardVisibility:      false,
     permissionRequirements:   ["verify_documents"],
     planRequirements:         [],
     featureRequirements:      ["verificationEnabled"],
-    routeIds:                 ["app-verify","public-verify"],
+    routeIds:                 ["public-verify"],
     unavailableReason:        "",
     previewNotice:            "",
     safeFallbackRoute:        "/app/dashboard",

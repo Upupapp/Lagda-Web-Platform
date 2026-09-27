@@ -1,14 +1,16 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, screen, fireEvent, act } from "@testing-library/react";
+import { render, screen, fireEvent, act, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
 import {
   AuthCarousel,
+  AUTH_CAROUSEL_DROP_MS,
   AUTH_CAROUSEL_DURATIONS,
   AUTH_CAROUSEL_EXIT_MS,
   AUTH_CAROUSEL_LEAD,
 } from "../AuthCarousel";
 import { AuthLayout } from "../../../layouts/AuthLayout";
+import authLayoutSource from "../../../layouts/AuthLayout.tsx?raw";
 
 function mockReducedMotion(matches: boolean) {
   vi.stubGlobal("matchMedia", (query: string) => ({
@@ -55,43 +57,78 @@ describe("AuthCarousel", () => {
     expect(screen.getByText("Move important work forward.")).toBeInTheDocument();
   });
 
-  it("shows the intro for 6s, then each image slide for 4s, and loops", () => {
+  it("uses the timing intro 3s, laptop 1s after landing, Upload 1s, Signature 1s, Send 3s", () => {
+    expect(AUTH_CAROUSEL_DURATIONS).toEqual([3000, AUTH_CAROUSEL_DROP_MS + 1000, 1000, 1000, 3000]);
+    render(<AuthCarousel />);
+    // The drop-in length in the CSS matches the constant, so the laptop
+    // dwells a full second after it has landed.
+    const css = Array.from(document.querySelectorAll("style")).map(s => s.textContent ?? "").join("\n");
+    expect(css).toContain(`auth-drop ${AUTH_CAROUSEL_DROP_MS}ms`);
+  });
+
+  it("steps through every slide on its own timer and loops back to the intro", () => {
     render(<AuthCarousel />);
     expect(currentSlide()).toBe(1);
-    advance(AUTH_CAROUSEL_DURATIONS[0] - 200);
+    advance(2800);
     expect(currentSlide()).toBe(1);
     advance(200);
     expect(currentSlide()).toBe(2);
-    advance(3800);
+    advance(AUTH_CAROUSEL_DROP_MS + 1000 - 200);
     expect(currentSlide()).toBe(2);
     advance(200);
     expect(currentSlide()).toBe(3);
-    advance(4000);
-    advance(4000);
-    advance(4000);
+    advance(1000);
+    expect(currentSlide()).toBe(4);
+    advance(1000);
+    expect(currentSlide()).toBe(5);
+    advance(2800);
+    expect(currentSlide()).toBe(5);
+    advance(200);
     expect(currentSlide()).toBe(1);
   });
 
-  it("pauses on hover and resumes on leave", async () => {
+  it("keeps sliding on hover and while focus is inside", async () => {
     const u = user();
     render(<AuthCarousel />);
     const region = screen.getByRole("region", { name: "How LAGDA works" });
     await u.hover(region);
-    advance(20_000);
-    expect(currentSlide()).toBe(1);
-    await u.unhover(region);
-    advance(6000);
+    fireEvent.focus(screen.getByRole("button", { name: "Next slide" }));
+    advance(3000);
     expect(currentSlide()).toBe(2);
+    expect(region).toHaveAttribute("data-paused", "false");
   });
 
-  it("pauses while focus is inside and while the paused prop is set", () => {
-    const { rerender } = render(<AuthCarousel paused />);
+  it("stops while the tab is hidden and resumes when it is visible again", () => {
+    render(<AuthCarousel />);
+    const hidden = vi.spyOn(document, "hidden", "get").mockReturnValue(true);
+    act(() => { document.dispatchEvent(new Event("visibilitychange")); });
     advance(20_000);
     expect(currentSlide()).toBe(1);
-    rerender(<AuthCarousel />);
-    fireEvent.focus(screen.getByRole("button", { name: "Next slide" }));
-    advance(20_000);
+    hidden.mockReturnValue(false);
+    act(() => { document.dispatchEvent(new Event("visibilitychange")); });
+    advance(3000);
+    expect(currentSlide()).toBe(2);
+    hidden.mockRestore();
+  });
+
+  it("moves at once on prev/next/dot clicks and keeps looping from there", async () => {
+    const u = user();
+    render(<AuthCarousel />);
+    await u.click(screen.getByRole("button", { name: "Next slide" }));
+    expect(currentSlide()).toBe(2);
+    // Laptop slide gets its full dwell, then autoplay carries on.
+    advance(AUTH_CAROUSEL_DROP_MS + 1000);
+    expect(currentSlide()).toBe(3);
+    await u.click(screen.getByRole("button", { name: "Go to slide 5" }));
+    expect(currentSlide()).toBe(5);
+    advance(3000);
     expect(currentSlide()).toBe(1);
+    await u.click(screen.getByRole("button", { name: "Previous slide" }));
+    expect(currentSlide()).toBe(5);
+    advance(3000);
+    expect(currentSlide()).toBe(1);
+    advance(3000);
+    expect(currentSlide()).toBe(2);
   });
 
   it("does not autoplay under prefers-reduced-motion", async () => {
@@ -106,6 +143,7 @@ describe("AuthCarousel", () => {
 
   it("moves with dots, prev/next, arrow keys and swipe; announces only user moves", async () => {
     const u = user();
+    mockReducedMotion(true); // no autoplay, so only user moves change slides
     render(<AuthCarousel />);
     const track = screen.getByTestId("auth-carousel-track");
     expect(track).toHaveAttribute("aria-live", "off");
@@ -119,9 +157,8 @@ describe("AuthCarousel", () => {
     expect(currentSlide()).toBe(4);
     await u.keyboard("{ArrowLeft}");
     expect(currentSlide()).toBe(3);
-    await u.click(screen.getByRole("button", { name: "Previous slide" }));
-    await u.click(screen.getByRole("button", { name: "Previous slide" }));
-    await u.click(screen.getByRole("button", { name: "Previous slide" }));
+    await u.click(screen.getByRole("button", { name: "Next slide" }));
+    await u.click(screen.getByRole("button", { name: "Next slide" }));
     expect(currentSlide()).toBe(5);
     const viewport = screen.getByTestId("auth-carousel-viewport");
     fireEvent.touchStart(viewport, { touches: [{ clientX: 200 }] });
@@ -256,28 +293,86 @@ describe("AuthLayout", () => {
     vi.unstubAllGlobals();
   });
 
-  it("on wide screens shows the carousel and pauses it while the form is in use", async () => {
+  it("on wide screens shows the carousel and keeps it sliding while the form is in use", async () => {
     mockViewport(true);
+    const u = user();
     renderLayout();
     expect(await screen.findByRole("region", { name: "How LAGDA works" })).toHaveAttribute("aria-roledescription", "carousel");
-    fireEvent.focus(screen.getByLabelText("Email"));
-    advance(20_000);
+    // Focus and typing in the form take well under the intro's 3s.
+    await u.click(screen.getByLabelText("Email"));
+    await u.type(screen.getByLabelText("Email"), "a");
     expect(currentSlide()).toBe(1);
-    fireEvent.blur(screen.getByLabelText("Email"));
-    advance(6000);
+    advance(3000);
     expect(currentSlide()).toBe(2);
   });
 
-  it("on phones keeps the info button and modal, and never mounts the carousel or its images", async () => {
+  it("on phones loads nothing of the carousel until the info modal is opened", () => {
+    mockViewport(false);
+    renderLayout();
+    advance(3000);
+    expect(screen.queryByRole("region", { name: "How LAGDA works", hidden: true })).toBeNull();
+    expect(screen.queryByTestId("auth-carousel-track")).toBeNull();
+    expect(screen.queryAllByRole("img", { hidden: true }).filter(i => /auth-carousel|webp/.test(i.getAttribute("src") ?? ""))).toHaveLength(0);
+    // The layout reaches the carousel only through a lazy dynamic import, so
+    // its code and images are not part of the phone page load.
+    expect(authLayoutSource).not.toMatch(/^import[^;]*AuthCarousel/m);
+    expect(authLayoutSource).toMatch(/lazy\(\(\) =>\s*import\("\.\.\/components\/auth\/AuthCarousel"\)/);
+  });
+
+  it("on phones shows the sliding carousel inside the How LAGDA works modal, and stops it on close", async () => {
     mockViewport(false);
     const u = user();
     renderLayout();
-    advance(3000);
-    expect(screen.queryByRole("region", { name: "How LAGDA works" })).toBeNull();
-    expect(screen.queryByTestId("auth-carousel-lead")).toBeNull();
-    expect(screen.queryAllByRole("img", { hidden: true }).filter(i => /auth-carousel|webp/.test(i.getAttribute("src") ?? ""))).toHaveLength(0);
     // Shown by the phone media query (jsdom does not apply it).
     await u.click(screen.getByRole("button", { name: "How LAGDA works", hidden: true }));
-    expect(screen.getByRole("dialog", { hidden: true })).toHaveTextContent("Move important work forward.");
+    const dialog = screen.getByRole("dialog", { hidden: true });
+    expect(dialog).toHaveAttribute("aria-modal", "true");
+    const carousel = await within(dialog).findByRole("region", { name: "How LAGDA works", hidden: true });
+    expect(carousel).toHaveClass("auth-carousel--modal");
+    expect(within(carousel).getAllByRole("group", { hidden: true })).toHaveLength(5);
+    expect(within(carousel).getByText("Move important work forward.")).toBeInTheDocument();
+    expect(within(carousel).getByRole("button", { name: "Previous slide", hidden: true })).toBeInTheDocument();
+    expect(within(carousel).getByRole("button", { name: "Next slide", hidden: true })).toBeInTheDocument();
+    const slide = () => within(carousel).getAllByRole("button", { name: /Go to slide/, hidden: true })
+      .findIndex(d => d.getAttribute("aria-current") === "true") + 1;
+    expect(slide()).toBe(1);
+    advance(AUTH_CAROUSEL_DURATIONS[0]);
+    expect(slide()).toBe(2);
+    await u.click(within(carousel).getByRole("button", { name: "Next slide", hidden: true }));
+    expect(slide()).toBe(3);
+    // Closing unmounts it, so autoplay stops with the modal.
+    await u.keyboard("{Escape}");
+    expect(screen.queryByRole("dialog", { hidden: true })).toBeNull();
+    expect(screen.queryByRole("region", { name: "How LAGDA works", hidden: true })).toBeNull();
+    // Reopening starts again from the intro.
+    await u.click(screen.getByRole("button", { name: "How LAGDA works", hidden: true }));
+    const again = await screen.findByRole("region", { name: "How LAGDA works", hidden: true });
+    expect(within(again).getByRole("button", { name: "Go to slide 1", hidden: true })).toHaveAttribute("aria-current", "true");
+    await u.click(within(screen.getByRole("dialog", { hidden: true })).getByRole("button", { name: "Close LAGDA information", hidden: true }));
+    expect(screen.queryByRole("dialog", { hidden: true })).toBeNull();
+  });
+
+  it("does not autoplay the phone modal carousel under prefers-reduced-motion", async () => {
+    vi.stubGlobal("matchMedia", (query: string) => ({
+      matches: query.includes("reduce"),
+      media: query, onchange: null,
+      addEventListener: vi.fn(), removeEventListener: vi.fn(),
+      addListener: vi.fn(), removeListener: vi.fn(), dispatchEvent: vi.fn(),
+    }));
+    const u = user();
+    renderLayout();
+    await u.click(screen.getByRole("button", { name: "How LAGDA works", hidden: true }));
+    const carousel = await screen.findByRole("region", { name: "How LAGDA works", hidden: true });
+    advance(20_000);
+    expect(within(carousel).getByRole("button", { name: "Go to slide 1", hidden: true })).toHaveAttribute("aria-current", "true");
+  });
+
+  it("gives the phone modal carousel no borders or shadows on image holders", () => {
+    render(<AuthCarousel variant="modal" />);
+    const css = Array.from(document.querySelectorAll("style")).map(s => s.textContent ?? "").join("\n");
+    const modalMedia = css.match(/\.auth-carousel--modal \.auth-carousel-media[^{]*\{([^}]*)\}/);
+    expect(modalMedia).not.toBeNull();
+    expect(modalMedia![1]).not.toMatch(/border|box-shadow|background/);
+    expect(screen.queryByTestId("auth-carousel-lead")).toBeNull();
   });
 });

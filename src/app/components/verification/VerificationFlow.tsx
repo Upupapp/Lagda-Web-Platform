@@ -1,5 +1,6 @@
-// The real verification flow, shared by the public pages (/verify,
-// /verify/:verificationId) and the in-app pages (/app/verify, /app/verify/:id).
+// The real verification flow used by the public pages (/verify,
+// /verify/:verificationId). The former in-app pages (/app/verify,
+// /app/verify/:id) now redirect there.
 //
 // LEGAL WORDING CONSTRAINTS (carried over from the demonstration pages):
 //   - A found record is not a matching file.
@@ -108,6 +109,84 @@ function Notice({ tone, children }: { tone: "error" | "info" | "success"; childr
   );
 }
 
+// ── Rate limiting: say how long, count it down, and never say why ─────────
+//
+// A 429 (`verification_rate_limited`) carries `retryAfterSeconds`. The wait
+// is about THIS browser's attempts; the wording never mentions the email
+// address or whether it took part, so it reveals nothing about participation.
+
+const SHORT_WAIT_SECONDS = 120;
+
+/** "Please wait 42 seconds before requesting a new code." for a short wait;
+ *  "Too many attempts. Try again in about 1 hour." for a long one. */
+export function rateLimitText(seconds: number, action: "code" | "retry" = "code"): string {
+  const s = Math.max(1, Math.ceil(seconds));
+  if (s <= SHORT_WAIT_SECONDS) {
+    return `Please wait ${s} ${s === 1 ? "second" : "seconds"} before ${action === "code" ? "requesting a new code" : "trying again"}.`;
+  }
+  if (s < 3600) {
+    const minutes = Math.ceil(s / 60);
+    return `Too many attempts. Try again in about ${minutes} ${minutes === 1 ? "minute" : "minutes"}.`;
+  }
+  const hours = Math.max(1, Math.round(s / 3600));
+  return `Too many attempts. Try again in about ${hours} ${hours === 1 ? "hour" : "hours"}.`;
+}
+
+/** A compact countdown for a button label: "42s", "5 min", "1 hr". */
+function waitLabel(seconds: number): string {
+  if (seconds <= SHORT_WAIT_SECONDS) return `${seconds}s`;
+  if (seconds < 3600) return `${Math.ceil(seconds / 60)} min`;
+  return `${Math.max(1, Math.round(seconds / 3600))} hr`;
+}
+
+export interface RetryCountdown {
+  /** Whole seconds left; 0 when not waiting. */
+  readonly remaining: number;
+  /** What the wait was when it started — for the one-time announcement. */
+  readonly started: number;
+  readonly active: boolean;
+  readonly start: (seconds: number) => void;
+}
+
+export function useRetryCountdown(): RetryCountdown {
+  const [until, setUntil] = useState<number | null>(null);
+  const [started, setStarted] = useState(0);
+  const [now, setNow] = useState(() => Date.now());
+
+  useEffect(() => {
+    if (until === null) return;
+    const timer = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(timer);
+  }, [until]);
+
+  const remaining = until === null ? 0 : Math.max(0, Math.ceil((until - now) / 1000));
+  useEffect(() => { if (until !== null && remaining === 0) setUntil(null); }, [until, remaining]);
+
+  const start = useCallback((seconds: number) => {
+    const whole = Math.max(1, Math.ceil(seconds));
+    const at = Date.now();
+    setNow(at);
+    setStarted(whole);
+    setUntil(at + whole * 1000);
+  }, []);
+
+  return { remaining, started, active: remaining > 0, start };
+}
+
+/** The visible text counts down; screen readers hear it once, when it starts,
+ *  rather than every second. */
+function RateLimitNotice({ wait, action = "code" }: { wait: RetryCountdown; action?: "code" | "retry" }) {
+  if (!wait.active) return null;
+  return (
+    <div data-testid="rate-limit-notice">
+      <Notice tone="error"><span aria-hidden>{rateLimitText(wait.remaining, action)}</span></Notice>
+      <span role="status" style={{ position: "absolute", width: 1, height: 1, overflow: "hidden", clip: "rect(0 0 0 0)", whiteSpace: "nowrap" }}>
+        {rateLimitText(wait.started, action)}
+      </span>
+    </div>
+  );
+}
+
 function Caveat({ children }: { children: React.ReactNode }) {
   return <p style={{ color: MUTED, ...GF, fontSize: 12, lineHeight: 1.6, margin: "12px 0 0" }}>{children}</p>;
 }
@@ -148,7 +227,7 @@ export function RecordSummary({ record, action }: { record: RealVerificationReco
 
 type LookupState =
   | { s: "idle" } | { s: "loading" } | { s: "found"; record: RealVerificationRecord }
-  | { s: "not-found" } | { s: "rate-limited" } | { s: "error" };
+  | { s: "not-found" } | { s: "rate-limited"; timed?: boolean } | { s: "error" };
 
 export function VerificationSearch({ basePath, initialId = "" }: { basePath: string; initialId?: string }) {
   const [idInput, setIdInput] = useState(initialId);
@@ -156,6 +235,8 @@ export function VerificationSearch({ basePath, initialId = "" }: { basePath: str
   const [state, setState] = useState<LookupState>({ s: "idle" });
   const resultRef = useRef<HTMLDivElement>(null);
   const inputId = useId();
+  const wait = useRetryCountdown();
+  const startWait = wait.start;
 
   const run = useCallback(async (raw: string) => {
     const id = raw.trim();
@@ -166,10 +247,15 @@ export function VerificationSearch({ basePath, initialId = "" }: { basePath: str
     if (result.kind === "found") {
       setState({ s: "found", record: result.record });
       setTimeout(() => resultRef.current?.focus(), 0);
+    } else if (result.kind === "rate-limited") {
+      const timed = result.retryAfterSeconds !== undefined;
+      if (result.retryAfterSeconds !== undefined) startWait(result.retryAfterSeconds);
+      setState({ s: "rate-limited", timed });
     } else {
       setState({ s: result.kind });
     }
-  }, []);
+  }, [startWait]);
+  const blocked = state.s === "loading" || wait.active;
 
   useEffect(() => {
     if (initialId) void run(initialId);
@@ -190,8 +276,8 @@ export function VerificationSearch({ basePath, initialId = "" }: { basePath: str
             aria-invalid={idError ? true : undefined}
             aria-describedby={idError ? `${inputId}-err` : undefined}
             style={{ flex: "1 1 220px", minWidth: 0, boxSizing: "border-box", minHeight: 46, padding: "10px 14px", border: `1px solid ${idError ? "rgba(220,38,38,0.45)" : "rgba(0,0,0,0.18)"}`, borderRadius: 8, color: NAVY, ...GM, fontSize: 14 }} />
-          <button type="submit" disabled={state.s === "loading"} style={{ ...buttonStyle("primary", state.s === "loading"), flex: "0 0 auto" }}>
-            {state.s === "loading" ? "Checking…" : "Check record"}
+          <button type="submit" disabled={blocked} style={{ ...buttonStyle("primary", blocked), flex: "0 0 auto" }}>
+            {state.s === "loading" ? "Checking…" : wait.active ? `Check record (${waitLabel(wait.remaining)})` : "Check record"}
           </button>
         </div>
         {idError && <p id={`${inputId}-err`} role="alert" style={{ color: RED, ...GF, fontSize: 12, margin: 0 }}>{idError}</p>}
@@ -201,7 +287,9 @@ export function VerificationSearch({ basePath, initialId = "" }: { basePath: str
         {state.s === "not-found" && (
           <Notice tone="error">No completed LAGDA verification record was found for this ID. Check that it was entered exactly as printed.</Notice>
         )}
-        {state.s === "rate-limited" && <Notice tone="error">{MSG_RATE_LIMITED}</Notice>}
+        {state.s === "rate-limited" && (state.timed === true
+          ? <RateLimitNotice wait={wait} action="retry" />
+          : <Notice tone="error">{MSG_RATE_LIMITED}</Notice>)}
         {state.s === "error" && <Notice tone="error">{MSG_NETWORK}</Notice>}
         {found && (
           <div ref={resultRef} tabIndex={-1} style={{ outline: "none" }}>
@@ -229,16 +317,23 @@ export function VerificationRecordView({ verificationId, basePath, memberAccess 
   verificationId: string; basePath: string; memberAccess?: boolean;
 }) {
   const [lookup, setLookup] = useState<LookupState>({ s: "loading" });
+  const lookupWait = useRetryCountdown();
+  const startLookupWait = lookupWait.start;
 
   useEffect(() => {
     let cancelled = false;
     setLookup({ s: "loading" });
     void lookupVerification(verificationId).then((result) => {
       if (cancelled) return;
+      if (result.kind === "rate-limited" && result.retryAfterSeconds !== undefined) {
+        startLookupWait(result.retryAfterSeconds);
+        setLookup({ s: "rate-limited", timed: true });
+        return;
+      }
       setLookup(result.kind === "found" ? { s: "found", record: result.record } : { s: result.kind });
     });
     return () => { cancelled = true; };
-  }, [verificationId]);
+  }, [verificationId, startLookupWait]);
 
   if (lookup.s === "loading" || lookup.s === "idle") {
     return <div role="status" aria-live="polite" style={{ ...cardStyle, color: MUTED, ...GF, fontSize: 14 }}>Looking up verification record…</div>;
@@ -246,6 +341,11 @@ export function VerificationRecordView({ verificationId, basePath, memberAccess 
   if (lookup.s !== "found") {
     return (
       <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+        {lookup.s === "rate-limited" && lookup.timed === true ? (
+          lookupWait.active
+            ? <RateLimitNotice wait={lookupWait} action="retry" />
+            : <Link to={`${basePath}/${encodeURIComponent(verificationId)}`} reloadDocument style={{ ...buttonStyle("primary"), alignSelf: "flex-start" }}>Try again</Link>
+        ) : (
         <div role="alert">
           <Notice tone="error">
             {lookup.s === "not-found"
@@ -253,6 +353,7 @@ export function VerificationRecordView({ verificationId, basePath, memberAccess 
               : lookup.s === "rate-limited" ? MSG_RATE_LIMITED : MSG_NETWORK}
           </Notice>
         </div>
+        )}
         <Link to={basePath} style={{ ...buttonStyle("secondary"), alignSelf: "flex-start" }}>Search another Verification ID</Link>
       </div>
     );
@@ -274,6 +375,9 @@ function AccessSection({ verificationId, memberAccess }: { verificationId: strin
   const [notice, setNotice] = useState<{ tone: "error" | "info" | "success"; text: string } | null>(null);
   const headingRef = useRef<HTMLHeadingElement>(null);
   const firstRender = useRef(true);
+  // One wait for the whole access flow: changing the email address does not
+  // reset a limit the server applies to this browser's attempts.
+  const wait = useRetryCountdown();
 
   // Move focus to the heading of each new step (not on first paint).
   useEffect(() => {
@@ -324,7 +428,7 @@ function AccessSection({ verificationId, memberAccess }: { verificationId: strin
         <p role="status" style={{ color: MUTED, ...GF, fontSize: 14, margin: "8px 0 0" }}>Checking whether your account is a participant…</p>
       )}
       {stage.s === "email" && (
-        <EmailStep verificationId={verificationId}
+        <EmailStep verificationId={verificationId} wait={wait}
           onSent={(email, expiresInSeconds) => {
             setNotice({ tone: "info", text: "If that email is a participant, we’ve sent a code." });
             setStage({ s: "code", email, expiresInSeconds });
@@ -333,7 +437,7 @@ function AccessSection({ verificationId, memberAccess }: { verificationId: strin
           clearNotice={() => setNotice(null)} />
       )}
       {stage.s === "code" && (
-        <CodeStep verificationId={verificationId} email={stage.email} expiresInSeconds={stage.expiresInSeconds}
+        <CodeStep verificationId={verificationId} email={stage.email} expiresInSeconds={stage.expiresInSeconds} wait={wait}
           onGranted={(grant) => { setNotice(null); setStage({ s: "unlocked", grant }); }}
           onNotice={setNotice}
           onChangeEmail={() => { setNotice(null); setStage({ s: "email" }); }} />
@@ -346,8 +450,9 @@ function AccessSection({ verificationId, memberAccess }: { verificationId: strin
   );
 }
 
-function EmailStep({ verificationId, onSent, onError, clearNotice }: {
+function EmailStep({ verificationId, wait, onSent, onError, clearNotice }: {
   verificationId: string;
+  wait: RetryCountdown;
   onSent: (email: string, expiresInSeconds: number) => void;
   onError: (text: string) => void;
   clearNotice: () => void;
@@ -356,9 +461,11 @@ function EmailStep({ verificationId, onSent, onError, clearNotice }: {
   const [fieldError, setFieldError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const id = useId();
+  const blocked = busy || wait.active;
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
+    if (blocked) return;
     const trimmed = email.trim();
     if (!isValidEmail(trimmed)) { setFieldError("Enter a valid email address."); return; }
     setFieldError(null);
@@ -367,6 +474,7 @@ function EmailStep({ verificationId, onSent, onError, clearNotice }: {
     const result = await requestAccessCode(verificationId, trimmed);
     setBusy(false);
     if (result.kind === "sent") onSent(trimmed, result.expiresInSeconds);
+    else if (result.kind === "rate-limited" && result.retryAfterSeconds !== undefined) wait.start(result.retryAfterSeconds);
     else onError(result.kind === "rate-limited" ? MSG_RATE_LIMITED : MSG_NETWORK);
   }
 
@@ -382,17 +490,18 @@ function EmailStep({ verificationId, onSent, onError, clearNotice }: {
           aria-invalid={fieldError ? true : undefined}
           aria-describedby={fieldError ? `${id}-err` : undefined}
           style={{ flex: "1 1 220px", minWidth: 0, boxSizing: "border-box", minHeight: 46, padding: "10px 14px", border: `1px solid ${fieldError ? "rgba(220,38,38,0.45)" : "rgba(0,0,0,0.18)"}`, borderRadius: 8, color: NAVY, ...GF, fontSize: 14 }} />
-        <button type="submit" disabled={busy} style={{ ...buttonStyle("primary", busy), flex: "0 0 auto" }}>
-          {busy ? "Sending…" : "Send code"}
+        <button type="submit" disabled={blocked} style={{ ...buttonStyle("primary", blocked), flex: "0 0 auto" }}>
+          {busy ? "Sending…" : wait.active ? `Send code (${waitLabel(wait.remaining)})` : "Send code"}
         </button>
       </div>
       {fieldError && <p id={`${id}-err`} role="alert" style={{ color: RED, ...GF, fontSize: 12, margin: 0 }}>{fieldError}</p>}
+      <RateLimitNotice wait={wait} />
     </form>
   );
 }
 
-function CodeStep({ verificationId, email, expiresInSeconds, onGranted, onNotice, onChangeEmail }: {
-  verificationId: string; email: string; expiresInSeconds: number;
+function CodeStep({ verificationId, email, expiresInSeconds, wait, onGranted, onNotice, onChangeEmail }: {
+  verificationId: string; email: string; expiresInSeconds: number; wait: RetryCountdown;
   onGranted: (grant: VerificationGrant) => void;
   onNotice: (n: { tone: "error" | "info" | "success"; text: string } | null) => void;
   onChangeEmail: () => void;
@@ -422,17 +531,28 @@ function CodeStep({ verificationId, email, expiresInSeconds, onGranted, onNotice
       setInvalid(true);
       setCode("");
       onNotice({ tone: "error", text: "That code is not valid or has expired. Check the code, or request a new one." });
+    } else if (result.kind === "rate-limited" && result.retryAfterSeconds !== undefined) {
+      onNotice(null);
+      wait.start(result.retryAfterSeconds);
     } else {
       onNotice({ tone: "error", text: result.kind === "rate-limited" ? MSG_RATE_LIMITED : MSG_NETWORK });
     }
   }
 
   async function resend() {
+    if (wait.active) return;
     setCooldown(RESEND_COOLDOWN_SECONDS);
     const result = await requestAccessCode(verificationId, email);
     if (result.kind === "sent") onNotice({ tone: "info", text: "If that email is a participant, we’ve sent a new code." });
-    else onNotice({ tone: "error", text: result.kind === "rate-limited" ? MSG_RATE_LIMITED : MSG_NETWORK });
+    else if (result.kind === "rate-limited" && result.retryAfterSeconds !== undefined) {
+      onNotice(null);
+      wait.start(result.retryAfterSeconds);
+    } else onNotice({ tone: "error", text: result.kind === "rate-limited" ? MSG_RATE_LIMITED : MSG_NETWORK });
   }
+
+  // The server's wait wins over the local cooldown whenever it is longer.
+  const resendWait = Math.max(cooldown, wait.remaining);
+  const verifyBlocked = busy || code.length !== 6 || wait.active;
 
   return (
     <form noValidate onSubmit={(e) => { void submit(e); }} aria-label="Enter your access code" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
@@ -442,19 +562,20 @@ function CodeStep({ verificationId, email, expiresInSeconds, onGranted, onNotice
       <OtpInput label="6-digit access code" describedBy={hintId} value={code} autoFocus
         onChange={(v) => { setCode(v); setInvalid(false); }} disabled={busy} invalid={invalid} />
       <div style={{ display: "flex", flexWrap: "wrap", gap: 10, alignItems: "center" }}>
-        <button type="submit" disabled={busy || code.length !== 6} style={buttonStyle("primary", busy || code.length !== 6)}>
+        <button type="submit" disabled={verifyBlocked} style={buttonStyle("primary", verifyBlocked)}>
           {busy ? "Verifying…" : "Verify code"}
         </button>
-        <button type="button" onClick={() => { void resend(); }} disabled={cooldown > 0}
-          style={buttonStyle("secondary", cooldown > 0)} aria-describedby={cooldown > 0 ? `${hintId}-cd` : undefined}>
-          {cooldown > 0 ? `Resend code (${cooldown}s)` : "Resend code"}
+        <button type="button" onClick={() => { void resend(); }} disabled={resendWait > 0}
+          style={buttonStyle("secondary", resendWait > 0)} aria-describedby={cooldown > 0 && !wait.active ? `${hintId}-cd` : undefined}>
+          {resendWait > 0 ? `Resend code (${waitLabel(resendWait)})` : "Resend code"}
         </button>
         <button type="button" onClick={onChangeEmail}
           style={{ ...GF, fontSize: 13, color: AZURE, background: "none", border: "none", cursor: "pointer", padding: "10px 4px", minHeight: 44 }}>
           Use a different email
         </button>
       </div>
-      {cooldown > 0 && <span id={`${hintId}-cd`} style={{ position: "absolute", width: 1, height: 1, overflow: "hidden", clip: "rect(0 0 0 0)" }}>You can request another code in {cooldown} seconds.</span>}
+      {cooldown > 0 && !wait.active && <span id={`${hintId}-cd`} style={{ position: "absolute", width: 1, height: 1, overflow: "hidden", clip: "rect(0 0 0 0)" }}>You can request another code in {cooldown} seconds.</span>}
+      <RateLimitNotice wait={wait} />
     </form>
   );
 }

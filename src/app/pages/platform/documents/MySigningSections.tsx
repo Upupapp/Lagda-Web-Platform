@@ -25,6 +25,7 @@ import {
   realMySigningService, continueSigningPath, isSignerEntry, canContinueFromApp,
   type DocumentToSign, type SignedDocument,
 } from "../../../services/real/my-signing.service";
+import { ReceivedContactRequests } from "./ContactRequestSections";
 
 /** What a non-signer is asked to do, in the words the list and dialog use. */
 const ROLE_WORDING: Record<string, { label: string; action: string; verb: string }> = {
@@ -472,22 +473,44 @@ function OtherAction({ item, onContinue }: { item: DocumentToSign; onContinue: (
   );
 }
 
-export function OthersSection({ onCount }: { onCount?: (count: number) => void }) {
+export function OthersSection({ onCount, highlightRequestId }: {
+  onCount?: (count: number) => void;
+  /** 086. A contact request to scroll to — the target of a notification. */
+  highlightRequestId?: string | null;
+}) {
   const { items, status, reload } = useList(loadOthers);
   const [senderFor, setSenderFor] = useState<DocumentToSign | null>(null);
   const [continueFor, setContinueFor] = useState<DocumentToSign | null>(null);
+  // Requests colleagues sent this account (086), merged in above the
+  // documents it takes part in. Pending ones count towards the tab badge.
+  const [pendingRequests, setPendingRequests] = useState<number | null>(null);
+  const [requestTotal, setRequestTotal] = useState(0);
 
-  useEffect(() => { if (status === "ready") onCount?.(items.length); }, [status, items.length, onCount]);
+  // Reported as soon as the documents are in, and again once the requests
+  // arrive — a slow request list never holds back the badge.
+  useEffect(() => {
+    if (status === "ready") onCount?.(items.length + (pendingRequests ?? 0));
+  }, [status, items.length, pendingRequests, onCount]);
 
   return (
     <section aria-label="Other documents I take part in" style={{ marginTop: 20 }}>
       <style>{STYLES}</style>
+      <ReceivedContactRequests
+        highlightId={highlightRequestId}
+        onCount={setPendingRequests}
+        onLoaded={setRequestTotal}
+      />
+      {status === "ready" && items.length > 0 && requestTotal > 0 && (
+        <h2 style={{ ...GF, fontSize: 15, fontWeight: 700, color: NAVY, margin: "0 0 10px" }}>Documents you take part in</h2>
+      )}
       {status !== "ready" || items.length === 0 ? (
+        status === "ready" && requestTotal > 0 ? null : (
         <EmptyOrError
           status={status} icon={Inbox} onRetry={reload}
           emptyTitle="Nothing here yet"
-          emptyBody="Documents where you are an approver, reviewer, viewer, copy recipient or acknowledgment recipient will appear here."
+          emptyBody="Requests colleagues send you, and documents where you are an approver, reviewer, viewer, copy recipient or acknowledgment recipient, will appear here."
         />
+        )
       ) : (
         <>
           <div className="mysign-table" role="table" aria-label="Other documents I take part in">

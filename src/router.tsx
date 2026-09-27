@@ -1,5 +1,6 @@
 import { lazy, Suspense } from "react";
 import { createBrowserRouter, Navigate } from "react-router";
+import { LegacyAppVerifyRedirect } from "./app/components/verification/LegacyAppVerifyRedirect";
 import { PublicLayout } from "./app/layouts/PublicLayout";
 import { AuthLayout } from "./app/layouts/AuthLayout";
 import { CreateAccountLayout } from "./app/layouts/CreateAccountLayout";
@@ -542,18 +543,6 @@ const PermissionDenied = lazy(() =>
 const SessionExpired = lazy(() =>
   import("./app/pages/platform/SessionExpired").then((m) => ({
     default: m.SessionExpired,
-  })),
-);
-
-// Verify (Command 17)
-const VerifyRecordPage = lazy(() =>
-  import("./app/pages/platform/verify/RealPlatformVerify").then((m) => ({
-    default: m.VerifyRecordPage,
-  })),
-);
-const VerifyPage = lazy(() =>
-  import("./app/pages/platform/VerifyPage").then((m) => ({
-    default: m.VerifyPage,
   })),
 );
 
@@ -2114,23 +2103,10 @@ export const router = createBrowserRouter([
         ),
       },
 
-      // Verify (within platform) — Command 17
-      {
-        path: "verify",
-        element: (
-          <Suspense fallback={null}>
-            <VerifyPage />
-          </Suspense>
-        ),
-      },
-      {
-        path: "verify/:verificationId",
-        element: (
-          <Suspense fallback={null}>
-            <VerifyRecordPage />
-          </Suspense>
-        ),
-      },
+      // There is no in-app "Check a Document" page. Old /app/verify links
+      // (bookmarks, emails) land on the public verification page instead.
+      { path: "verify", element: <LegacyAppVerifyRedirect /> },
+      { path: "verify/:verificationId", element: <LegacyAppVerifyRedirect /> },
 
       // The workspace half of the signing account handoff. Nothing links
       // here; the signing tab opens it. It lives under /app so the existing

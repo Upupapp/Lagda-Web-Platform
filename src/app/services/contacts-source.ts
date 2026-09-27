@@ -34,7 +34,7 @@ import { USE_REAL_BACKEND } from "./backend-flag";
 import {
   realContactService,
   type WireContact, type WireContactListQuery, type WireContactSort,
-  type WireContactWrite, type WireContactCreate, type WireContactScope,
+  type WireContactWrite, type WireContactCreate,
   type WireContactTagId,
 } from "./real/contact.service";
 import { mockContactService } from "./mock/contacts.service";
@@ -93,6 +93,9 @@ function toContact(wire: WireContact, workspaceId: string): Contact {
     // A STORED contact is not a demonstration -- it is the workspace's own
     // data, round-tripped through the real API.
     demonstrationOnly: false,
+    // Only set when the server said: an older backend leaves it unknown
+    // rather than claiming every contact is External.
+    ...(wire.workspaceMember === undefined ? {} : { workspaceMember: wire.workspaceMember }),
   };
 }
 
@@ -113,6 +116,7 @@ function toListItem(wire: WireContact, workspaceId: string): ContactListItem {
     updatedAt: contact.updatedAt,
     workspaceId,
     demonstrationOnly: false,
+    ...(contact.workspaceMember === undefined ? {} : { workspaceMember: contact.workspaceMember }),
   };
 }
 
@@ -139,7 +143,7 @@ function toWireWrite(input: ContactCreateInput | ContactUpdateInput): WireContac
  *  means workspace-shared, matching `ContactCreateInput.scope`'s own
  *  required-with-a-product-default shape. */
 function toWireCreate(input: ContactCreateInput): WireContactCreate {
-  return { ...toWireWrite(input), scope: input.scope as WireContactScope };
+  return { ...toWireWrite(input), scope: input.scope };
 }
 
 // // ── Reading ─────────────────────────────────────────────────────────────────

@@ -105,17 +105,6 @@ export const PRIMARY_NAV: PlatformNavItem[] = [
     description: "Signing participants and contacts",
   },
   {
-    id: "verify",
-    label: "Check a Document",
-    path: "/app/verify",
-    icon: "ShieldCheck",
-    group: "primary",
-    permission: "verify_documents",
-    featureFlag: "verificationEnabled",
-    showOnMobile: true,
-    description: "Check document authenticity",
-  },
-  {
     id: "inbox",
     label: "Needs your signature",
     path: "/app/inbox",

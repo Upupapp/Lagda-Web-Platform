@@ -114,7 +114,7 @@ export function ReportsVerificationPage() {
         <SectionDivider label="Verification Records" />
         <ReportTable table={data.detailTable} />
         <p style={{ ...GF, fontSize: 11, color: SLATE, marginTop: 8 }}>
-          <a href="/app/verify" style={{ color: "#0078D4" }}>Open Verification page</a> to check individual document authenticity.
+          <a href="/verify" style={{ color: "#0078D4" }}>Open the Verification page</a> to check individual document authenticity.
         </p>
       </SectionCard>
     </main>

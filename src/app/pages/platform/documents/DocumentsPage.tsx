@@ -12,7 +12,7 @@ import {
   X, AlertCircle, ChevronLeft, ChevronRight, Tag, FolderOpen, Folder,
   ShieldCheck, Activity, Users, RefreshCw, Inbox, ArrowUpDown,
   Star, Clock, ExternalLink,
-  Eye, Bell, Ban, Shuffle, Shield, Info, Send, Download, History, PenLine, FileCheck2
+  Eye, Bell, Ban, Shuffle, Shield, Info, Send, Download, History, PenLine, FileCheck2, ClipboardList,
 } from "lucide-react";
 import { usePlatform } from "../../../context/PlatformContext";
 import {
@@ -65,6 +65,8 @@ import { usePrepareLaunch } from "../../../hooks/usePrepareLaunch";
 import { isSearchFocusShortcut } from "../../../utils/keyboard-shortcuts";
 import { DocumentsToSignSection, SignedByMeSection, OthersSection } from "./MySigningSections";
 import { realMySigningService, isSignerEntry } from "../../../services/real/my-signing.service";
+import { realContactRequestService } from "../../../services/real/contact-request.service";
+import { SentContactRequestsSection } from "./ContactRequestSections";
 
 // ── Design tokens (inline styles only — no Tailwind in JSX) ──────────────────
 
@@ -2656,9 +2658,11 @@ function DocumentsPageRealMode() {
 
   // Which list: this workspace's own sections, or documents sent TO me.
   const rawList = searchParams.get("list");
-  const list: "sent" | "to-sign" | "signed" | "others" | "completed" | "draft" | "declined" =
+  const list: "sent" | "to-sign" | "signed" | "others" | "requests-sent" | "completed" | "draft" | "declined" =
     rawList === "to-sign" || rawList === "signed" || rawList === "others" || rawList === "completed"
-      || rawList === "draft" || rawList === "declined" ? rawList : "sent";
+      || rawList === "draft" || rawList === "declined" || rawList === "requests-sent" ? rawList : "sent";
+  // 086. A notification about a contact request links here with its id.
+  const highlightRequestId = searchParams.get("request");
   const [toSignCount, setToSignCount] = useState<number | null>(null);
   const [othersCount, setOthersCount] = useState<number | null>(null);
   const setList = (next: typeof list) => {
@@ -2671,12 +2675,18 @@ function DocumentsPageRealMode() {
   // The badge on "I must sign" is known before that list is opened.
   useEffect(() => {
     let cancelled = false;
+    // Pending contact requests (086) count towards Others too. Their failure
+    // costs only that part of the badge, never the signing counts.
+    const pendingRequests = USE_REAL_BACKEND
+      ? realContactRequestService.listReceived("pending").then(items => items.length).catch(() => 0)
+      : Promise.resolve(0);
     void realMySigningService.documentsToSign()
-      .then(entries => {
+      .then(async entries => {
+        const requests = await pendingRequests;
         if (cancelled) return;
         const signing = entries.filter(isSignerEntry).length;
         setToSignCount(signing);
-        setOthersCount(entries.length - signing);
+        setOthersCount(entries.length - signing + requests);
       })
       .catch(() => { /* The badge is a convenience; the list reports its own failure. */ });
     return () => { cancelled = true; };
@@ -2728,7 +2738,7 @@ function DocumentsPageRealMode() {
 
   useEffect(() => {
     if (!workspaceId) return;
-    if (list === "to-sign" || list === "signed" || list === "others") return;
+    if (list === "to-sign" || list === "signed" || list === "others" || list === "requests-sent") return;
     let cancelled = false;
     setFetching(true);
     const states = LIST_STATES[list];
@@ -2857,6 +2867,9 @@ function DocumentsPageRealMode() {
               <span className="doc-list-count" aria-label={`${String(othersCount)} to look at`}>{othersCount}</span>
             )}
           </button>
+          <button type="button" role="tab" className="doc-list-tab" aria-selected={list === "requests-sent"} onClick={() => setList("requests-sent")}>
+            <ClipboardList size={14} aria-hidden /> Requests you sent
+          </button>
           <button type="button" role="tab" className="doc-list-tab" aria-selected={list === "draft"} onClick={() => setList("draft")}>
             <FileText size={14} aria-hidden /> Draft
           </button>
@@ -2870,7 +2883,8 @@ function DocumentsPageRealMode() {
         </div>
         {list === "to-sign" && <DocumentsToSignSection onCount={setToSignCount} />}
         {list === "signed" && <SignedByMeSection />}
-        {list === "others" && <OthersSection onCount={setOthersCount} />}
+        {list === "others" && <OthersSection onCount={setOthersCount} highlightRequestId={highlightRequestId} />}
+        {list === "requests-sent" && <SentContactRequestsSection highlightId={highlightRequestId} />}
         {(list === "sent" || list === "completed" || list === "draft" || list === "declined") && (<>
         {status === "loading" && (
           <div style={{ padding: "32px 0" }}>

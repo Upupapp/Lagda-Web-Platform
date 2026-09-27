@@ -9,8 +9,13 @@ import { ContactProvider, useContacts } from "../../../context/ContactContext";
 import type { ContactDuplicateCandidate, ContactUsageSummary, ContactTagId } from "../../../models/contacts";
 import { CONTACT_STATUS_LABELS, CONTACT_SCOPE_LABELS, CONTACT_SOURCE_LABELS, getContactTagById } from "../../../models/contacts";
 import { usePlatform } from "../../../context/PlatformContext";
-import { uploadRequestsAvailable } from "../../../services/upload-requests-source";
-import { RequestDocumentDialog } from "../../../components/contacts/RequestDocumentDialog";
+import { useWorkspaceAccess } from "../../../hooks/useWorkspaceAccess";
+import { contactRequestsAvailable } from "../../../services/real/contact-request.service";
+import { ContactRequestDialog, DELIVERY_COPY } from "../../../components/contact-requests/ContactRequestDialog";
+import {
+  MembershipBadge, ContactRequestButtons, ContactRequestHistory,
+} from "../../../components/contact-requests/ContactRequestControls";
+import type { ContactRequestKind } from "../../../models/contact-requests";
 
 const GF    = { fontFamily: "'Geist', sans-serif" };
 const GM    = { fontFamily: "'Geist Mono', monospace" };
@@ -159,10 +164,15 @@ function ContactDetail() {
   const { contactId } = useParams<{ contactId: string }>();
   const { state, asyncLoadContact, clearActiveContact, asyncArchive, asyncRestore } = useContacts();
   const [archiving, setArchiving] = useState(false);
-  const [requestOpen, setRequestOpen] = useState(false);
+  const [requestKind, setRequestKind] = useState<ContactRequestKind | null>(null);
+  const [historyKey, setHistoryKey] = useState(0);
   const platform = usePlatform();
+  const access = useWorkspaceAccess();
   const workspaceId = platform.currentWorkspace?.id;
-  const canRequest = uploadRequestsAvailable(workspaceId);
+  // 086. Real workspaces only — a request names a real person and may send a
+  // real email — and hidden once the server confirms the privilege is missing.
+  const canRequest = contactRequestsAvailable(workspaceId)
+    && (!access.confirmed || access.can("upload-request.create"));
 
   useEffect(() => {
     if (contactId) void asyncLoadContact(contactId as ContactId);
@@ -233,6 +243,7 @@ function ContactDetail() {
               <span style={{ ...GM, fontSize: 10, padding: "3px 9px", borderRadius: 999, background: contact.scope === "workspace" ? "#EBF4FC" : "#F8FAFC", color: contact.scope === "workspace" ? AZURE : SLATE }}>
                 {CONTACT_SCOPE_LABELS[contact.scope]}
               </span>
+              <MembershipBadge member={contact.workspaceMember} />
             </div>
             <p style={{ ...GM, fontSize: 13, color: SLATE, margin: "0 0 4px" }}>{contact.email}</p>
             {contact.phone && <p style={{ ...GM, fontSize: 12, color: SILVER, margin: 0 }}>{contact.phone}</p>}
@@ -240,16 +251,6 @@ function ContactDetail() {
 
           {/* Actions */}
           <div style={{ display: "flex", gap: 8, flexShrink: 0, flexWrap: "wrap" }}>
-            {/* 067. Asking this person for a document. Offered only on an
-                ACTIVE contact and only where there is a real backend to ask
-                through — a request names a colleague and sends a real email,
-                so there is no demonstration version of it. */}
-            {contact.status === "active" && canRequest && (
-              <button onClick={() => { setRequestOpen(true); }}
-                style={{ ...GF, fontSize: 13, color: "#FFFFFF", border: "none", borderRadius: 8, padding: "8px 16px", background: AZURE, cursor: "pointer", fontWeight: 700 }}>
-                Request a document
-              </button>
-            )}
             {contact.status === "active" && (
               <Link to={`/app/contacts/${contact.id}/edit`}
                 style={{ ...GF, fontSize: 13, color: AZURE, border: `1.5px solid ${AZURE}`, borderRadius: 8, padding: "8px 16px", textDecoration: "none", fontWeight: 600 }}>
@@ -312,6 +313,28 @@ function ContactDetail() {
           )}
         </SectionCard>
 
+        {/* 086. Requests: what can be asked of this contact, and what has been. */}
+        {canRequest && workspaceId !== undefined && (
+          <SectionCard title="Requests">
+            {contact.workspaceMember !== undefined && (
+              <p style={{ ...GF, fontSize: 13, color: "#334155", margin: "0 0 12px", lineHeight: 1.55 }}>
+                {contact.workspaceMember === null
+                  ? <><strong>External contact.</strong> {DELIVERY_COPY.external}</>
+                  : <><strong>Workspace member ({contact.workspaceMember.displayName}).</strong> {DELIVERY_COPY.member}</>}
+              </p>
+            )}
+            <ContactRequestButtons
+              contact={contact}
+              currentUserId={platform.user?.id}
+              onChoose={kind => { setRequestKind(kind); }}
+            />
+            <h3 style={{ ...GF, fontSize: 12, fontWeight: 700, color: "#334155", textTransform: "uppercase", letterSpacing: "0.05em", margin: "18px 0 10px" }}>
+              Request history
+            </h3>
+            <ContactRequestHistory workspaceId={workspaceId} contactId={contact.id} refreshKey={historyKey} />
+          </SectionCard>
+        )}
+
         {/* Groups */}
         {contact.groupIds.length > 0 && (
           <SectionCard title="Contact Groups">
@@ -362,13 +385,13 @@ function ContactDetail() {
         </div>
       </div>
 
-      {requestOpen && (
-        <RequestDocumentDialog
+      {requestKind !== null && workspaceId !== undefined && (
+        <ContactRequestDialog
           workspaceId={workspaceId}
-          contactId={contact.id}
-          contactName={contact.name}
-          contactEmail={contact.email}
-          onClose={() => { setRequestOpen(false); }}
+          kind={requestKind}
+          contact={contact}
+          onClose={() => { setRequestKind(null); }}
+          onCreated={() => { setHistoryKey(k => k + 1); }}
         />
       )}
     </div>

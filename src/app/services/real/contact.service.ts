@@ -46,6 +46,9 @@ export interface WireContact {
   ownerUserId: string | null;
   note: string | null;
   tagIds: WireContactTagId[];
+  /** 086. The workspace member this contact's address belongs to right now,
+   *  or null for an external contact. Resolved by the server on every read. */
+  workspaceMember?: { userId: string; displayName: string } | null;
 }
 
 /**
