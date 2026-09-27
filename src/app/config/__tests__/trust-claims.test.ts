@@ -46,7 +46,8 @@ function userFacingFiles(): string[] {
       }
     }
   };
-  for (const dir of ["pages", "components", "data", "config", "models", "services"]) {
+  // "layouts" holds the auth shell copy (sign-in intro, phone info modal).
+  for (const dir of ["pages", "components", "layouts", "data", "config", "models", "services"]) {
     walk(path.join(APP_ROOT, dir));
   }
   return out;
@@ -142,6 +143,14 @@ describe("trust invariants", () => {
       }
     }
     expect(offenders).toEqual([]);
+  });
+
+  it("scans the sign-in shell and carousel copy", () => {
+    // The carousel lead and intro are the first words a signed-out user reads;
+    // make sure the walk above actually reaches them.
+    const names = FILES.map(rel);
+    expect(names).toContain("layouts/AuthLayout.tsx");
+    expect(names).toContain("components/auth/AuthCarousel.tsx");
   });
 
   // ── Disclaimer integrity ───────────────────────────────────────────────────
