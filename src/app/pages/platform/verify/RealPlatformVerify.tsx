@@ -15,7 +15,7 @@
 
 import { Navigate, Link, useParams, useSearchParams } from "react-router";
 import { usePlatform } from "../../../context/PlatformContext";
-import { PageHeader } from "../../../components/platform";
+import { PageHeader, CenteredColumn, CONTENT_MAX_WIDTH } from "../../../components/platform";
 import { USE_REAL_BACKEND } from "../../../services/backend-flag";
 import { VerificationSearch, VerificationRecordView } from "../../../components/verification/VerificationFlow";
 import { MyVerifiableDocuments } from "./MyVerifiableDocuments";
@@ -30,10 +30,14 @@ function NoPermission() {
   );
 }
 
+// The column the header and the body share. Centred on a wide screen; on a
+// phone it is narrower than the max, so nothing moves.
+const COLUMN = CONTENT_MAX_WIDTH.form;
+
 function Body({ children }: { children: React.ReactNode }) {
   return (
-    <div style={{ padding: "20px clamp(12px, 3vw, 24px) 48px", maxWidth: 960, boxSizing: "border-box", minWidth: 0 }}>
-      {children}
+    <div style={{ padding: "20px clamp(12px, 3vw, 24px) 48px", boxSizing: "border-box", minWidth: 0 }}>
+      <CenteredColumn max={COLUMN}>{children}</CenteredColumn>
     </div>
   );
 }
@@ -44,7 +48,7 @@ export function RealPlatformVerify() {
   const initialId = params.get("verificationId") ?? params.get("id") ?? "";
   return (
     <div style={{ minWidth: 0, overflowX: "hidden" }}>
-      <PageHeader title="Verify a Document" compact
+      <PageHeader title="Verify a Document" compact maxWidth={COLUMN}
         description="Look up a completed LAGDA record by Verification ID, view the signed document if you are a participant, or check a file against the sealed original." />
       {hasPermission("verify_documents")
         ? <Body>
@@ -61,7 +65,7 @@ export function RealPlatformVerifyRecord() {
   const { verificationId = "" } = useParams();
   return (
     <div style={{ minWidth: 0, overflowX: "hidden" }}>
-      <PageHeader title="Verification record" compact
+      <PageHeader title="Verification record" compact maxWidth={COLUMN}
         breadcrumbs={[{ label: "Verify", to: "/app/verify" }, { label: verificationId }]}
         description="LAGDA’s completion record for this Verification ID." />
       {hasPermission("verify_documents")

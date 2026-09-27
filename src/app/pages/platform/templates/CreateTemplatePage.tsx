@@ -43,11 +43,32 @@ import { usePageMeta } from "../../../hooks/usePageMeta";
 import { useViewport } from "../../../hooks/useViewport";
 import { useProcessing } from "../../../services/processing.service";
 import { Z } from "../../../utils/z-index";
+import { CenteredColumn, CONTENT_MAX_WIDTH } from "../../../components/platform";
 
 // ── Design tokens ─────────────────────────────────────────────────────────────
 const GF    = { fontFamily: "'Geist', sans-serif" };
 const AZURE = "#0078D4";
 const RED   = "#DC2626";
+
+// One centred column for the header crumb, the ready-made card and the
+// option grid, so all three share a left and a right edge on a wide screen.
+const COLUMN = CONTENT_MAX_WIDTH.form;
+
+// Phone (<768): the original centred flex-wrap, unchanged. Tablet and up: an
+// explicit grid, so the options fill the column edge to edge. Four across
+// only once the column can give each card ~210px; two before that, never an
+// uneven three-and-one.
+const SOURCE_GRID_CSS = `
+.ct-sources { display: flex; flex-wrap: wrap; gap: 14px; justify-content: center; align-items: stretch; }
+.ct-source { flex: 1 1 230px; max-width: 300px; min-width: 0; }
+@media (min-width: 768px) {
+  .ct-sources { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .ct-source { max-width: none; }
+}
+@media (min-width: 1200px) {
+  .ct-sources { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+`;
 
 // ── Source options ────────────────────────────────────────────────────────────
 const SOURCES = [
@@ -85,7 +106,14 @@ const SOURCES = [
 ] as const;
 
 // ── Blank template form ───────────────────────────────────────────────────────
-function BlankForm({ onCreated }: { onCreated: (id: string) => void }) {
+/** Renders the modal's scrolling body AND its footer, so the primary action
+ *  sits in a fixed row at the panel's lower right instead of at the end of a
+ *  form that may be scrolled out of view. The parent is a flex column. */
+function BlankForm({ onCreated, onCancel, isNarrow }: {
+  onCreated: (id: string) => void;
+  onCancel: () => void;
+  isNarrow: boolean;
+}) {
   const [name,     setName]     = useState("");
   const [category, setCategory] = useState<TemplateCategory>("legal-services");
   const [loading,  setLoading]  = useState(false);
@@ -161,6 +189,15 @@ function BlankForm({ onCreated }: { onCreated: (id: string) => void }) {
   };
 
   return (
+    <>
+    <div
+      data-modal-body
+      style={{
+        overflowY: "auto", flex: 1, minHeight: 0,
+        padding: isNarrow ? "0 18px 18px" : "0 24px 24px",
+        WebkitOverflowScrolling: "touch",
+      }}
+    >
     <div style={{ maxWidth: 520, marginTop: 24 }}>
       <div style={{ marginBottom: 18 }}>
         <label style={{ ...GF, fontSize: 12, fontWeight: 600, color: "#64748B", display: "block", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.05em" }}>
@@ -313,7 +350,7 @@ function BlankForm({ onCreated }: { onCreated: (id: string) => void }) {
             </button>
           </div>
 
-          <label style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 22, cursor: "pointer" }}>
+          <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }}>
             <input
               type="checkbox"
               checked={notifySender}
@@ -326,9 +363,32 @@ function BlankForm({ onCreated }: { onCreated: (id: string) => void }) {
           </label>
         </>
       )}
+    </div>
+    </div>
 
+    {/* Footer: outside the scrolling body, so it stays pinned to the bottom
+        of the panel however long the roles list grows. */}
+    <div style={{
+      display: "flex", justifyContent: "flex-end", alignItems: "center", gap: 10,
+      padding: isNarrow ? "12px 18px calc(12px + env(safe-area-inset-bottom, 0px))" : "14px 24px",
+      borderTop: "1px solid #F1F5F9", background: "white", flexShrink: 0,
+      borderRadius: isNarrow ? 0 : "0 0 14px 14px",
+    }}>
       <button
-        onClick={handleCreate}
+        type="button"
+        onClick={onCancel}
+        disabled={loading}
+        style={{
+          padding: "11px 18px", background: "white", color: "#334155",
+          border: "1px solid #CBD5E1", borderRadius: 8, ...GF,
+          fontSize: 14, fontWeight: 600, cursor: loading ? "default" : "pointer",
+        }}
+      >
+        Cancel
+      </button>
+      <button
+        type="button"
+        onClick={() => { void handleCreate(); }}
         disabled={loading}
         style={{
           display:     "inline-flex",
@@ -348,6 +408,7 @@ function BlankForm({ onCreated }: { onCreated: (id: string) => void }) {
         {loading ? "Creating…" : "Create Template"}
       </button>
     </div>
+    </>
   );
 }
 
@@ -361,16 +422,19 @@ export function CreateTemplatePage() {
   return (
     <div style={{ background: "#F8FAFC", minHeight: "100%", ...GF }}>
       {/* Header */}
-      <div style={{ background: "white", borderBottom: "1px solid #E2E8F0", padding: "18px 24px", display: "flex", alignItems: "center", gap: 12 }}>
+      <div style={{ background: "white", borderBottom: "1px solid #E2E8F0", padding: "18px 24px" }}>
+      <CenteredColumn max={COLUMN} style={{ display: "flex", alignItems: "center", gap: 12 }}>
         <Link to="/app/templates" style={{ display: "inline-flex", alignItems: "center", gap: 6, color: "#64748B", textDecoration: "none", ...GF, fontSize: 13 }}>
           <ChevronLeft size={15} />
           Templates
         </Link>
         <span style={{ color: "#CBD5E1" }}>/</span>
         <span style={{ ...GF, fontSize: 13, color: "#0F172A", fontWeight: 600 }}>New Template</span>
+      </CenteredColumn>
       </div>
 
-      <div style={{ padding: "28px 24px", maxWidth: 760 }}>
+      <div style={{ padding: "28px 24px" }}>
+      <CenteredColumn max={COLUMN}>
         <h2 style={{ ...GF, fontSize: 20, fontWeight: 800, color: "#0F172A", margin: "0 0 6px", letterSpacing: "-0.02em" }}>
           Create a New Template
         </h2>
@@ -427,24 +491,21 @@ export function CreateTemplatePage() {
         <style>{`.ct-ready-card { transition: box-shadow .15s; } .ct-ready-card:hover, .ct-ready-card:focus-visible { box-shadow: 0 4px 16px rgba(0,120,212,0.18); outline: none; }`}</style>
 
         {/* Source selection */}
-        {/* Flex-wrap rather than a grid: `auto-fill` leaves phantom columns and
-            left-aligns a short row, so four cards on a wide screen and two on a
-            tablet both sat off-centre. A basis with wrap centres every row at
-            every width, and the cards keep one size instead of stretching. */}
-        <div style={{
-          display: "flex", flexWrap: "wrap", gap: 14,
-          justifyContent: "center", alignItems: "stretch",
-        }}>
+        {/* A phone keeps the centred flex-wrap (one card per row). From a
+            tablet up it is an explicit grid — two, then four, equal columns —
+            so the row spans exactly the ready-made card's width above it. The
+            capped flex basis it replaces left two 300px cards floating in a
+            wider row, indented from the card above. See SOURCE_GRID_CSS. */}
+        <style>{SOURCE_GRID_CSS}</style>
+        <div className="ct-sources">
           {SOURCES.map(s => (
             <button
               key={s.id}
               onClick={() => s.available && setSelected(s.id)}
               disabled={!s.available}
               aria-pressed={selected === s.id}
+              className="ct-source"
               style={{
-                flex:          "1 1 230px",
-                maxWidth:      300,
-                minWidth:      0,
                 display:       "flex",
                 flexDirection: "column",
                 textAlign:     "left",
@@ -541,16 +602,15 @@ export function CreateTemplatePage() {
                 </button>
               </div>
 
-              <div style={{
-                overflowY: "auto", flex: 1,
-                padding: isNarrow ? "0 18px 18px" : "0 24px 24px",
-                WebkitOverflowScrolling: "touch",
-              }}>
-                <BlankForm onCreated={id => navigate(`/app/templates/${id}/edit`)} />
-              </div>
+              <BlankForm
+                isNarrow={isNarrow}
+                onCancel={() => setSelected(null)}
+                onCreated={id => { void navigate(`/app/templates/${id}/edit`); }}
+              />
             </div>
           </div>
         )}
+      </CenteredColumn>
       </div>
     </div>
   );

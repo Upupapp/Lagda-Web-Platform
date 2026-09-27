@@ -12,6 +12,39 @@ export function AppContent({ children, style }: { children: React.ReactNode; sty
   );
 }
 
+// ── Centred column ─────────────────────────────────────────────────────────
+// Content widths shared by the platform pages that centre their column on a
+// wide screen. PAGE matches the Settings/Manage shells (`.st-inner`,
+// `.ws-shell-inner`); FORM is for a single form or lookup column, where 1120px
+// of input would read as stretched rather than roomy.
+export const CONTENT_MAX_WIDTH = { page: 1120, form: 960 } as const;
+
+// Centres its children within the parent once the parent is wider than `max`.
+// It adds no padding of its own: every page keeps the gutter it already had,
+// so below `max` (every phone and most tablets) nothing moves. Put it INSIDE a
+// full-bleed band (a white header, a toolbar) so the band's background still
+// spans the viewport while its content lines up with the column beneath it.
+export function CenteredColumn({
+  children,
+  max = CONTENT_MAX_WIDTH.page,
+  style,
+  className,
+}: {
+  children: React.ReactNode;
+  max?: number;
+  style?: React.CSSProperties;
+  className?: string;
+}) {
+  return (
+    <div
+      className={className}
+      style={{ width: "100%", maxWidth: max, marginInline: "auto", boxSizing: "border-box", minWidth: 0, ...style }}
+    >
+      {children}
+    </div>
+  );
+}
+
 // Full-width workspace (no horizontal padding constraint)
 export function AppContentFull({ children }: { children: React.ReactNode }) {
   return (

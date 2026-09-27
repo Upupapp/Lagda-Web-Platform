@@ -24,6 +24,10 @@ export interface PageHeaderProps {
   status?: React.ReactNode;
   tabs?: React.ReactNode;
   compact?: boolean;
+  /** Centre the header's content in a column this wide (see CenteredColumn),
+   *  so it lines up with a centred page body. The white band stays full-bleed.
+   *  Omitted: the content runs the full width, as before. */
+  maxWidth?: number;
 }
 
 export function PageHeader({
@@ -35,10 +39,15 @@ export function PageHeader({
   status,
   tabs,
   compact = false,
+  maxWidth,
 }: PageHeaderProps) {
+  const column: React.CSSProperties | undefined = maxWidth === undefined
+    ? undefined
+    : { width: "100%", maxWidth, marginInline: "auto", boxSizing: "border-box", minWidth: 0 };
   return (
     <div style={{ background: "white", borderBottom: "1px solid #E2E8F0" }}>
       <div style={{ padding: compact ? "16px 24px 12px" : "20px 24px 0" }}>
+        <div style={column}>
         {/* Breadcrumbs */}
         {breadcrumbs && breadcrumbs.length > 0 && (
           <nav aria-label="Breadcrumb" style={{ marginBottom: 6 }}>
@@ -85,12 +94,13 @@ export function PageHeader({
             {description}
           </p>
         )}
+        </div>
       </div>
 
       {/* Tabs */}
       {tabs && (
         <div style={{ padding: "0 24px" }}>
-          {tabs}
+          <div style={column}>{tabs}</div>
         </div>
       )}
 

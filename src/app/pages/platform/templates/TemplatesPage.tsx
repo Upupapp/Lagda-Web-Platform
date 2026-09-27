@@ -12,7 +12,7 @@ import {
 import { READY_MADE_TEMPLATES, READY_MADE_CATEGORIES } from "../../../services/ready-made-templates";
 import { TemplateProvider, useTemplates } from "../../../context/TemplateContext";
 import {
-  EmptyStateLayout, SkeletonBlock, SKELETON_STYLE,
+  EmptyStateLayout, SkeletonBlock, SKELETON_STYLE, CenteredColumn,
 } from "../../../components/platform";
 import {
   TEMPLATE_VIEWS, TEMPLATE_CATEGORIES, TEMPLATE_STATUS_LABELS,
@@ -114,12 +114,12 @@ function TemplateCard({ item }: { item: TemplateListItem }) {
       aria-label={`Open template: ${item.name}`}
       onKeyDown={e => { if (e.key === "Enter" || e.key === " ") void navigate(`/app/templates/${item.id}`); }}
       onMouseEnter={e => {
-        (e.currentTarget as HTMLElement).style.boxShadow = "0 4px 16px rgba(0,0,0,0.08)";
-        (e.currentTarget as HTMLElement).style.borderColor = "#CBD5E1";
+        e.currentTarget.style.boxShadow = "0 4px 16px rgba(0,0,0,0.08)";
+        e.currentTarget.style.borderColor = "#CBD5E1";
       }}
       onMouseLeave={e => {
-        (e.currentTarget as HTMLElement).style.boxShadow = "";
-        (e.currentTarget as HTMLElement).style.borderColor = "#E2E8F0";
+        e.currentTarget.style.boxShadow = "";
+        e.currentTarget.style.borderColor = "#E2E8F0";
       }}
     >
       {/* Header row */}
@@ -295,6 +295,10 @@ function TemplatesInner() {
     <div style={{ background: "#F8FAFC", minHeight: "100%", ...GF }}>
       {/* Header */}
       <div style={{ background: "white", borderBottom: "1px solid #E2E8F0", padding: isNarrow ? "16px 16px" : "20px 24px" }}>
+        {/* Each full-bleed band centres its content in the same column as the
+            list below, so a wide screen does not leave everything pinned
+            left. The column is wider than any phone, so phones are unchanged. */}
+        <CenteredColumn>
         {/* Stacked on a phone. Side by side, the title truncated to a few
             characters and the action button shrank below a comfortable tap
             target; neither is worth preserving at that width. */}
@@ -431,10 +435,12 @@ function TemplatesInner() {
             </button>
           ))}
         </TabStrip>
+        </CenteredColumn>
       </div>
 
       {/* Toolbar */}
-      <div style={{ background: "white", borderBottom: "1px solid #F1F5F9", padding: isNarrow ? "12px 16px" : "12px 24px", display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+      <div style={{ background: "white", borderBottom: "1px solid #F1F5F9", padding: isNarrow ? "12px 16px" : "12px 24px" }}>
+      <CenteredColumn style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
         {/* Search */}
         <div style={{ position: "relative", flex: 1, minWidth: isNarrow ? 0 : 200, maxWidth: isNarrow ? "100%" : 340 }}>
           <Search size={14} style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: "#94A3B8" }} />
@@ -520,11 +526,13 @@ function TemplatesInner() {
             </button>
           </div>
         </div>
+      </CenteredColumn>
       </div>
 
       {/* Filter panel */}
       {showFilters && (
-        <div style={{ background: "white", borderBottom: "1px solid #F1F5F9", padding: isNarrow ? "12px 16px" : "12px 24px", display: "flex", gap: 12, flexWrap: "wrap" }}>
+        <div style={{ background: "white", borderBottom: "1px solid #F1F5F9", padding: isNarrow ? "12px 16px" : "12px 24px" }}>
+        <CenteredColumn style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
           <FilterSelect
             label="Status"
             value={state.query.status ?? ""}
@@ -551,11 +559,13 @@ function TemplatesInner() {
               Clear Filters
             </button>
           )}
+        </CenteredColumn>
         </div>
       )}
 
       {/* Content */}
       <div style={{ padding: "20px 24px" }}>
+      <CenteredColumn>
         {/* Active filters, ALWAYS visible. Status, scope and category live in
             the panel above, which is collapsed by default — so a filtered list
             could look like the whole library with nothing saying otherwise. */}
@@ -662,6 +672,7 @@ function TemplatesInner() {
             </button>
           </div>
         )}
+      </CenteredColumn>
       </div>
     </div>
   );

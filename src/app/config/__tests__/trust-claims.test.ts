@@ -50,6 +50,15 @@ function userFacingFiles(): string[] {
   for (const dir of ["pages", "components", "layouts", "data", "config", "models", "services"]) {
     walk(path.join(APP_ROOT, dir));
   }
+  // The LAGDA Chatbot says whatever its knowledge base says: every reply,
+  // clause and fallback lives in JSON, not in a .tsx file, so it is scanned
+  // explicitly. Its UI copy is already covered by the "pages" walk.
+  const chatbotAssets = path.join(APP_ROOT, "..", "assets", "chatbot");
+  if (fs.existsSync(chatbotAssets)) {
+    for (const entry of fs.readdirSync(chatbotAssets)) {
+      if (entry.endsWith(".json")) out.push(path.join(chatbotAssets, entry));
+    }
+  }
   return out;
 }
 
@@ -143,6 +152,15 @@ describe("trust invariants", () => {
       }
     }
     expect(offenders).toEqual([]);
+  });
+
+  it("scans the LAGDA Chatbot's knowledge base and its UI copy", () => {
+    // Its replies and clauses are generated drafting text — exactly where an
+    // unhedged "legally binding" could slip in.
+    const names = FILES.map(rel);
+    expect(names).toContain("../assets/chatbot/lagda-chatbot.json");
+    expect(names).toContain("pages/platform/templates/author/chatbot/ChatPanel.tsx");
+    expect(names).toContain("pages/platform/templates/author/chatbot/engine.ts");
   });
 
   it("scans the sign-in shell and carousel copy", () => {

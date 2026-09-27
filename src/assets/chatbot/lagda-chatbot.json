@@ -1,0 +1,7378 @@
+{
+ "version": 1,
+ "bot": {
+  "name": "LAGDA Chatbot",
+  "subtitle": "writing assistant",
+  "privacyNote": "LAGDA Chatbot uses built-in templates and rules. Nothing you type leaves your browser.",
+  "greeting": [
+   "Hi {name}! I'm LAGDA Chatbot. Tell me what you'd like to write — for example “an NDA between Acme Inc. and Juan Dela Cruz” — or pick a starting point below."
+  ],
+  "disclaimer": "I draft wording from templates; I can't give legal advice. Have a lawyer review important documents before anyone signs."
+ },
+ "synonyms": {
+  "non disclosure": "nda",
+  "nondisclosure": "nda",
+  "non-disclosure": "nda",
+  "confidentiality agreement": "nda",
+  "contract": "agreement",
+  "contracts": "agreement",
+  "agreements": "agreement",
+  "kontrata": "agreement",
+  "employment": "employment",
+  "job": "employment",
+  "hiring": "employment",
+  "trabaho": "employment",
+  "rental": "lease",
+  "rent": "lease",
+  "renting": "lease",
+  "upa": "lease",
+  "licence": "license",
+  "licensing": "license",
+  "authorisation": "authorization",
+  "enrolment": "enrollment",
+  "acknowledgement": "acknowledgment",
+  "moa": "mou",
+  "sla": "sla"
+ },
+ "vocabulary": [
+  "a",
+  "about",
+  "above",
+  "add",
+  "added",
+  "after",
+  "again",
+  "agreement",
+  "all",
+  "also",
+  "am",
+  "an",
+  "and",
+  "any",
+  "anything",
+  "are",
+  "as",
+  "ask",
+  "at",
+  "back",
+  "be",
+  "because",
+  "been",
+  "before",
+  "being",
+  "between",
+  "both",
+  "but",
+  "by",
+  "can",
+  "change",
+  "clause",
+  "company",
+  "contract",
+  "could",
+  "create",
+  "day",
+  "details",
+  "did",
+  "do",
+  "document",
+  "does",
+  "doing",
+  "done",
+  "draft",
+  "each",
+  "easy",
+  "either",
+  "else",
+  "end",
+  "every",
+  "example",
+  "few",
+  "file",
+  "find",
+  "first",
+  "for",
+  "form",
+  "from",
+  "get",
+  "give",
+  "go",
+  "good",
+  "great",
+  "has",
+  "have",
+  "he",
+  "her",
+  "here",
+  "him",
+  "his",
+  "how",
+  "i",
+  "if",
+  "in",
+  "into",
+  "is",
+  "it",
+  "its",
+  "just",
+  "keep",
+  "kind",
+  "know",
+  "last",
+  "leave",
+  "less",
+  "let",
+  "like",
+  "make",
+  "many",
+  "may",
+  "me",
+  "more",
+  "most",
+  "much",
+  "my",
+  "name",
+  "need",
+  "new",
+  "next",
+  "no",
+  "not",
+  "now",
+  "of",
+  "off",
+  "on",
+  "one",
+  "only",
+  "or",
+  "other",
+  "our",
+  "out",
+  "over",
+  "own",
+  "page",
+  "people",
+  "person",
+  "please",
+  "put",
+  "quick",
+  "ready",
+  "really",
+  "right",
+  "same",
+  "say",
+  "see",
+  "send",
+  "set",
+  "she",
+  "should",
+  "show",
+  "sign",
+  "simple",
+  "so",
+  "some",
+  "something",
+  "start",
+  "still",
+  "such",
+  "sure",
+  "take",
+  "tell",
+  "than",
+  "thank",
+  "that",
+  "the",
+  "their",
+  "them",
+  "then",
+  "there",
+  "these",
+  "they",
+  "thing",
+  "think",
+  "this",
+  "those",
+  "to",
+  "today",
+  "too",
+  "try",
+  "two",
+  "up",
+  "us",
+  "use",
+  "very",
+  "want",
+  "was",
+  "way",
+  "we",
+  "well",
+  "were",
+  "what",
+  "when",
+  "where",
+  "which",
+  "while",
+  "who",
+  "why",
+  "will",
+  "with",
+  "without",
+  "word",
+  "words",
+  "work",
+  "would",
+  "write",
+  "yes",
+  "yet",
+  "you",
+  "your",
+  "january",
+  "february",
+  "march",
+  "april",
+  "may",
+  "june",
+  "july",
+  "august",
+  "september",
+  "october",
+  "november",
+  "december",
+  "monday",
+  "tuesday",
+  "wednesday",
+  "thursday",
+  "friday",
+  "saturday",
+  "sunday",
+  "month",
+  "months",
+  "year",
+  "years",
+  "week",
+  "weeks",
+  "days",
+  "pesos",
+  "peso",
+  "php",
+  "between",
+  "with",
+  "for",
+  "named",
+  "called",
+  "our",
+  "my",
+  "their",
+  "his",
+  "her",
+  "company",
+  "corporation",
+  "inc",
+  "corp",
+  "llc",
+  "ltd"
+ ],
+ "participants": {
+  "roles": [
+   {
+    "role": "signer",
+    "label": "Signer",
+    "prefix": [
+     "to be signed by",
+     "signed by",
+     "signature of",
+     "signatures of",
+     "for signature of",
+     "for signature by",
+     "for signing by",
+     "executed by",
+     "signatory is",
+     "signatories are",
+     "signers are",
+     "signer is",
+     "signed and dated by",
+     "sign by"
+    ],
+    "verbs": [
+     "will also sign",
+     "to also sign",
+     "also signs",
+     "also sign",
+     "will sign",
+     "to sign",
+     "should sign",
+     "must sign",
+     "shall sign",
+     "signs",
+     "sign"
+    ],
+    "nouns": [
+     "signing party",
+     "signatories",
+     "signatory",
+     "signers",
+     "signer",
+     "sign"
+    ]
+   },
+   {
+    "role": "signer",
+    "label": "Witness",
+    "prefix": [
+     "witnessed by",
+     "witnesses are",
+     "witness is",
+     "with witnesses",
+     "with witness"
+    ],
+    "verbs": [
+     "will witness",
+     "to witness",
+     "witnesses",
+     "witness"
+    ],
+    "nouns": [
+     "witnesses",
+     "witness"
+    ]
+   },
+   {
+    "role": "approver",
+    "label": "Approver",
+    "prefix": [
+     "approved or skipped by",
+     "approve or skip by",
+     "approved or rejected by",
+     "approved by",
+     "approval of",
+     "approval by",
+     "for approval by",
+     "for approval of",
+     "endorsed by",
+     "approver is",
+     "approvers are"
+    ],
+    "verbs": [
+     "will approve or skip",
+     "to approve or skip",
+     "approves or skips",
+     "approve or skip",
+     "will also approve",
+     "also approve",
+     "will approve",
+     "to approve",
+     "should approve",
+     "must approve",
+     "approves",
+     "approve"
+    ],
+    "nouns": [
+     "approvers",
+     "approver",
+     "approval",
+     "approve"
+    ]
+   },
+   {
+    "role": "reviewer",
+    "label": "Reviewer",
+    "prefix": [
+     "reviewed by",
+     "review by",
+     "checked by",
+     "vetted by",
+     "reviewer is",
+     "reviewers are"
+    ],
+    "verbs": [
+     "will also review",
+     "also review",
+     "will review",
+     "to review",
+     "should review",
+     "must review",
+     "reviews",
+     "review"
+    ],
+    "nouns": [
+     "reviewers",
+     "reviewer",
+     "review"
+    ]
+   },
+   {
+    "role": "acknowledgment-recipient",
+    "label": "Acknowledgment Recipient",
+    "prefix": [
+     "for acknowledgment of",
+     "for acknowledgment by",
+     "for acknowledgement of",
+     "for acknowledgement by",
+     "acknowledged by",
+     "acknowledgment by",
+     "acknowledgement by",
+     "noted by",
+     "received by"
+    ],
+    "verbs": [
+     "will acknowledge",
+     "to acknowledge",
+     "should acknowledge",
+     "must acknowledge",
+     "acknowledges",
+     "acknowledge"
+    ],
+    "nouns": [
+     "acknowledgment recipient",
+     "acknowledgement recipient",
+     "acknowledger",
+     "acknowledgment",
+     "acknowledgement",
+     "acknowledge"
+    ]
+   },
+   {
+    "role": "carbon-copy",
+    "label": "Copy Recipient",
+    "prefix": [
+     "carbon copy to",
+     "send a copy to",
+     "with a copy to",
+     "copy furnished to",
+     "copy furnished",
+     "a copy for",
+     "copy for",
+     "copied to",
+     "copy to",
+     "cc'd to",
+     "ccd to",
+     "cc to",
+     "carbon copy",
+     "cc"
+    ],
+    "verbs": [
+     "will get a copy",
+     "should get a copy",
+     "gets a copy",
+     "get a copy",
+     "receives a copy",
+     "receive a copy",
+     "is cc'd",
+     "are cc'd"
+    ],
+    "nouns": [
+     "copy recipients",
+     "copy recipient",
+     "carbon copy",
+     "cc",
+     "copy"
+    ]
+   },
+   {
+    "role": "viewer",
+    "label": "Viewer",
+    "prefix": [
+     "viewed by",
+     "visible to",
+     "view only for",
+     "viewers are",
+     "viewer is"
+    ],
+    "verbs": [
+     "can view",
+     "will view",
+     "may view",
+     "view it"
+    ],
+    "nouns": [
+     "viewers",
+     "viewer",
+     "view only"
+    ]
+   }
+  ],
+  "parallel": [
+   "at the same time",
+   "simultaneously",
+   "in parallel",
+   "all at once",
+   "in any order",
+   "any order",
+   "together"
+  ],
+  "bothParties": [
+   "both parties sign",
+   "both parties will sign",
+   "both parties to sign",
+   "both parties",
+   "all parties sign",
+   "each party signs",
+   "each party will sign"
+  ],
+  "approvalFirst": [
+   "approval first",
+   "approve first",
+   "approved first",
+   "approve before signing",
+   "approved before signing",
+   "approval before signing",
+   "approval before signature",
+   "before anyone signs",
+   "before signing",
+   "before it is signed"
+  ],
+  "approvalLast": [
+   "approval last",
+   "approve after signing",
+   "approved after signing",
+   "approval after signing",
+   "after signing",
+   "after they sign",
+   "after it is signed",
+   "after the signing"
+  ],
+  "honorifics": [
+   "mr.",
+   "mrs.",
+   "ms.",
+   "dr.",
+   "atty.",
+   "engr.",
+   "arch.",
+   "hon.",
+   "prof.",
+   "mr",
+   "mrs",
+   "ms",
+   "dr",
+   "atty",
+   "engr",
+   "miss"
+  ],
+  "particles": [
+   "de",
+   "del",
+   "dela",
+   "della",
+   "de la",
+   "de los",
+   "de las",
+   "delos",
+   "delas",
+   "san",
+   "sta.",
+   "sto.",
+   "sta",
+   "sto",
+   "y",
+   "van",
+   "von",
+   "da",
+   "dos",
+   "di",
+   "bin",
+   "binti"
+  ],
+  "givenPrefixes": [
+   "ma.",
+   "ma",
+   "jo",
+   "mary"
+  ],
+  "suffixes": [
+   "jr.",
+   "jr",
+   "sr.",
+   "sr",
+   "ii",
+   "iii",
+   "iv",
+   "v",
+   "vi"
+  ],
+  "determiners": [
+   "the",
+   "our",
+   "my",
+   "his",
+   "her",
+   "their",
+   "a",
+   "an",
+   "your",
+   "its"
+  ],
+  "stopWords": [
+   "for",
+   "as",
+   "to",
+   "and",
+   "with",
+   "on",
+   "in",
+   "at",
+   "of",
+   "but",
+   "then",
+   "who",
+   "will",
+   "should",
+   "must",
+   "is",
+   "are",
+   "was",
+   "be",
+   "been",
+   "before",
+   "after",
+   "please",
+   "while",
+   "so",
+   "that",
+   "which",
+   "if",
+   "or",
+   "by",
+   "also",
+   "only",
+   "first",
+   "next",
+   "finally",
+   "lastly",
+   "later",
+   "sign",
+   "signs",
+   "signed",
+   "signing",
+   "approve",
+   "approves",
+   "approved",
+   "review",
+   "reviews",
+   "reviewed",
+   "acknowledge",
+   "acknowledged",
+   "cc",
+   "copy",
+   "both",
+   "each",
+   "all",
+   "it",
+   "this",
+   "them",
+   "him",
+   "me",
+   "us",
+   "you",
+   "we",
+   "they",
+   "i",
+   "he",
+   "she",
+   "can",
+   "may",
+   "would",
+   "could",
+   "shall",
+   "skip",
+   "skipped",
+   "reject",
+   "rejected",
+   "from",
+   "into",
+   "about",
+   "under",
+   "starting",
+   "effective",
+   "dated",
+   "salary",
+   "position",
+   "employment",
+   "agreement",
+   "contract",
+   "document",
+   "form",
+   "letter",
+   "nda",
+   "lease",
+   "create",
+   "write",
+   "draft",
+   "make",
+   "need",
+   "want",
+   "an",
+   "a",
+   "the",
+   "as",
+   "per",
+   "via",
+   "when",
+   "where",
+   "since",
+   "until",
+   "because",
+   "instead",
+   "too",
+   "now"
+  ],
+  "roleWords": {
+   "signer": [
+    "signatories",
+    "signatory",
+    "signers",
+    "signer",
+    "signing",
+    "signature",
+    "signs",
+    "sign"
+   ],
+   "approver": [
+    "approvers",
+    "approver",
+    "approval",
+    "approves",
+    "approve"
+   ],
+   "reviewer": [
+    "reviewers",
+    "reviewer",
+    "reviews",
+    "review"
+   ],
+   "acknowledgment-recipient": [
+    "acknowledgment recipient",
+    "acknowledgement recipient",
+    "acknowledger",
+    "acknowledgment",
+    "acknowledgement",
+    "acknowledges",
+    "acknowledge"
+   ],
+   "carbon-copy": [
+    "copy recipient",
+    "carbon copy",
+    "copied",
+    "copy",
+    "cc"
+   ],
+   "viewer": [
+    "view only",
+    "viewers",
+    "viewer",
+    "view"
+   ],
+   "witness": [
+    "witnesses",
+    "witness"
+   ]
+  },
+  "edits": {
+   "remove": [
+    "remove",
+    "delete",
+    "drop",
+    "take out",
+    "take off",
+    "exclude",
+    "no need for",
+    "get rid of",
+    "don't include",
+    "do not include"
+   ],
+   "change": [
+    "change",
+    "make",
+    "switch",
+    "set",
+    "move",
+    "turn",
+    "convert"
+   ],
+   "add": [
+    "also add",
+    "add",
+    "include",
+    "plus"
+   ]
+  },
+  "replies": {
+   "captured": [
+    "I noted {count}: {list}."
+   ],
+   "askName": [
+    "What is the {label}'s name? (Or say “skip” to leave it blank.)"
+   ],
+   "askRole": [
+    "Should {name} {first}, or also {second}?"
+   ],
+   "removed": [
+    "Removed {name}."
+   ],
+   "changed": [
+    "Okay — {name} is now the {roleLabel}."
+   ],
+   "added": [
+    "Added {name} as the {roleLabel}."
+   ],
+   "notFound": [
+    "I couldn't find “{name}” among the participants. They are: {list}."
+   ],
+   "rolesNote": "I'll set these up as the template's roles, in this order. Templates store roles, not people — the names go into the document text only.",
+   "rolesNoteOffline": "Open a workspace to save roles. I'll still name everyone in the document text."
+  }
+ },
+ "categories": [
+  {
+   "id": "recruitment-and-hr",
+   "label": "Recruitment & HR",
+   "keywords": [
+    "hr",
+    "recruitment",
+    "hiring",
+    "human resources",
+    "employees",
+    "staff"
+   ]
+  },
+  {
+   "id": "sales-and-customer-agreements",
+   "label": "Sales & Customer Agreements",
+   "keywords": [
+    "sales",
+    "customers",
+    "customer agreements",
+    "selling"
+   ]
+  },
+  {
+   "id": "procurement-and-supply-chain",
+   "label": "Procurement & Supply Chain",
+   "keywords": [
+    "procurement",
+    "supply chain",
+    "purchasing",
+    "suppliers"
+   ]
+  },
+  {
+   "id": "finance-and-legal",
+   "label": "Finance & Legal",
+   "keywords": [
+    "finance",
+    "financial",
+    "legal",
+    "money",
+    "loans"
+   ]
+  },
+  {
+   "id": "corporate-governance",
+   "label": "Corporate Governance",
+   "keywords": [
+    "governance",
+    "corporate",
+    "board",
+    "shareholders"
+   ]
+  },
+  {
+   "id": "real-estate-and-property",
+   "label": "Real Estate & Property",
+   "keywords": [
+    "real estate",
+    "property",
+    "properties",
+    "housing",
+    "rent"
+   ]
+  },
+  {
+   "id": "healthcare",
+   "label": "Healthcare",
+   "keywords": [
+    "healthcare",
+    "health",
+    "medical",
+    "hospital",
+    "clinic",
+    "patients"
+   ]
+  },
+  {
+   "id": "education",
+   "label": "Education",
+   "keywords": [
+    "education",
+    "school",
+    "students",
+    "university",
+    "academic"
+   ]
+  },
+  {
+   "id": "it-and-data-security",
+   "label": "IT & Data Security",
+   "keywords": [
+    "it",
+    "data security",
+    "tech",
+    "technology",
+    "software",
+    "cybersecurity"
+   ]
+  },
+  {
+   "id": "marketing-and-partnerships",
+   "label": "Marketing & Partnerships",
+   "keywords": [
+    "marketing",
+    "partnerships",
+    "brand",
+    "advertising"
+   ]
+  },
+  {
+   "id": "operations-and-administration",
+   "label": "Operations & Administration",
+   "keywords": [
+    "operations",
+    "administration",
+    "admin",
+    "facilities"
+   ]
+  },
+  {
+   "id": "compliance-and-risk-management",
+   "label": "Compliance & Risk Management",
+   "keywords": [
+    "compliance",
+    "risk",
+    "regulatory",
+    "safety"
+   ]
+  },
+  {
+   "id": "customer-service-and-support",
+   "label": "Customer Service & Support",
+   "keywords": [
+    "customer service",
+    "support",
+    "after sales",
+    "warranty"
+   ]
+  },
+  {
+   "id": "r-and-d-and-innovation",
+   "label": "R&D & Innovation",
+   "keywords": [
+    "r&d",
+    "research",
+    "innovation",
+    "development",
+    "patents"
+   ]
+  },
+  {
+   "id": "logistics-and-distribution",
+   "label": "Logistics & Distribution",
+   "keywords": [
+    "logistics",
+    "distribution",
+    "shipping",
+    "freight",
+    "delivery"
+   ]
+  }
+ ],
+ "starterChips": [
+  {
+   "label": "NDA",
+   "doc": "Non-Disclosure Agreement (NDA)"
+  },
+  {
+   "label": "Employment offer (detailed)",
+   "doc": "starter:employment-offer-letter"
+  },
+  {
+   "label": "Lease agreement",
+   "doc": "Property Lease Agreement"
+  },
+  {
+   "label": "Service agreement",
+   "doc": "Vendor Service Agreement"
+  },
+  {
+   "label": "Browse categories",
+   "intent": "browse"
+  },
+  {
+   "label": "Add a clause",
+   "intent": "list-clauses"
+  }
+ ],
+ "clauseChips": [
+  "confidentiality",
+  "termination",
+  "payment-terms",
+  "governing-law",
+  "dispute-resolution",
+  "force-majeure",
+  "data-privacy",
+  "non-compete",
+  "indemnity",
+  "signature-block",
+  "witness-block"
+ ],
+ "intents": [
+  {
+   "id": "greeting",
+   "examples": [
+    "hi",
+    "hello",
+    "hey",
+    "good morning",
+    "good afternoon",
+    "good evening",
+    "hi there",
+    "hello there",
+    "kumusta",
+    "musta"
+   ],
+   "keywords": [
+    "hi",
+    "hello",
+    "hey",
+    "morning",
+    "afternoon",
+    "evening",
+    "kumusta",
+    "greetings",
+    "yo"
+   ],
+   "replies": [
+    "Hi {name}! What would you like to write today?",
+    "Hello {name}! Tell me what the document is for and I'll draft it with you.",
+    "Hey {name}! Which document can I help you write?"
+   ],
+   "chips": "starter"
+  },
+  {
+   "id": "thanks",
+   "examples": [
+    "thanks",
+    "thank you",
+    "thank you so much",
+    "salamat",
+    "thanks a lot",
+    "ty",
+    "much appreciated"
+   ],
+   "keywords": [
+    "thanks",
+    "thank",
+    "salamat",
+    "appreciated",
+    "appreciate",
+    "ty"
+   ],
+   "replies": [
+    "You're welcome! Anything else you'd like to add?",
+    "Happy to help. Want to add a clause or adjust the tone?",
+    "Anytime! Let me know if you want to change anything."
+   ]
+  },
+  {
+   "id": "bye",
+   "examples": [
+    "bye",
+    "goodbye",
+    "see you",
+    "that's all",
+    "that is all",
+    "i'm done",
+    "no more"
+   ],
+   "keywords": [
+    "bye",
+    "goodbye",
+    "later",
+    "done"
+   ],
+   "replies": [
+    "Goodbye! Your conversation stays here until you save, leave or I write the draft.",
+    "See you! Close this panel any time — I'll keep our chat until you save or leave."
+   ]
+  },
+  {
+   "id": "help",
+   "examples": [
+    "help",
+    "help me",
+    "what can you do",
+    "how does this work",
+    "how do i use this",
+    "what do you do",
+    "options",
+    "menu",
+    "i need help",
+    "can you help me"
+   ],
+   "keywords": [
+    "help",
+    "options",
+    "menu",
+    "guide",
+    "assist",
+    "capabilities"
+   ],
+   "replies": [
+    "I can draft any of LAGDA's ready-made documents for you — just name one (for example “an NDA between Acme and Juan Dela Cruz”). I'll ask two or three quick questions, then write it into the page. I can also add standard clauses, or make the wording more formal, plainer, shorter, or split into headings."
+   ],
+   "chips": "help"
+  },
+  {
+   "id": "identity",
+   "examples": [
+    "who are you",
+    "what are you",
+    "are you a bot",
+    "are you human",
+    "are you ai",
+    "are you chatgpt",
+    "what is your name"
+   ],
+   "keywords": [
+    "bot",
+    "human",
+    "robot",
+    "chatgpt"
+   ],
+   "replies": [
+    "I'm LAGDA Chatbot, a writing assistant built into this page. I work from built-in templates and rules — I'm not a person and I'm not a general AI, so I stick to drafting documents."
+   ]
+  },
+  {
+   "id": "privacy",
+   "examples": [
+    "do you store my data",
+    "where does my data go",
+    "is this private",
+    "do you save my messages",
+    "who can see this chat",
+    "is my data safe"
+   ],
+   "keywords": [
+    "private",
+    "stored",
+    "store"
+   ],
+   "replies": [
+    "Nothing you type leaves your browser — I run entirely on this page with built-in templates and rules. The chat is deleted when I write your draft, when you save, or when you leave this page."
+   ]
+  },
+  {
+   "id": "browse",
+   "examples": [
+    "show me templates",
+    "what documents can you write",
+    "list documents",
+    "browse categories",
+    "show categories",
+    "what templates do you have",
+    "show all",
+    "list templates"
+   ],
+   "keywords": [
+    "browse",
+    "categories",
+    "category",
+    "list",
+    "templates",
+    "documents",
+    "catalog",
+    "catalogue",
+    "types"
+   ],
+   "replies": [
+    "Here are the kinds of documents I can write. Pick a category:"
+   ],
+   "chips": "categories"
+  },
+  {
+   "id": "list-clauses",
+   "examples": [
+    "what clauses do you have",
+    "show clauses",
+    "list clauses",
+    "clause library",
+    "add a clause",
+    "add clause",
+    "i want to add a clause",
+    "insert a clause"
+   ],
+   "keywords": [
+    "clause",
+    "clauses",
+    "provision",
+    "provisions",
+    "section"
+   ],
+   "replies": [
+    "Which clause would you like? Here are some common ones — or type one, like “add a force majeure clause”."
+   ],
+   "chips": "clauses"
+  },
+  {
+   "id": "start-over",
+   "examples": [
+    "start over",
+    "restart",
+    "reset",
+    "cancel",
+    "never mind",
+    "nevermind",
+    "something else",
+    "different document",
+    "change document",
+    "go back"
+   ],
+   "keywords": [
+    "restart",
+    "reset",
+    "cancel",
+    "nevermind",
+    "over",
+    "scratch"
+   ],
+   "replies": [
+    "No problem — let's start fresh. What would you like to write?"
+   ],
+   "chips": "starter"
+  },
+  {
+   "id": "write-now",
+   "examples": [
+    "write it",
+    "write it now",
+    "draft it",
+    "go ahead",
+    "just write it",
+    "that's all write it",
+    "write the draft",
+    "generate it",
+    "make it",
+    "proceed",
+    "looks good",
+    "done write"
+   ],
+   "keywords": [
+    "write",
+    "draft",
+    "generate",
+    "proceed",
+    "go"
+   ],
+   "replies": [
+    "All right."
+   ]
+  },
+  {
+   "id": "affirm",
+   "examples": [
+    "yes",
+    "yeah",
+    "yep",
+    "sure",
+    "ok",
+    "okay",
+    "correct",
+    "right",
+    "oo",
+    "sige",
+    "yes please"
+   ],
+   "keywords": [
+    "yes",
+    "yeah",
+    "yep",
+    "sure",
+    "ok",
+    "okay",
+    "correct",
+    "oo",
+    "sige"
+   ],
+   "replies": [
+    "Great."
+   ]
+  },
+  {
+   "id": "deny",
+   "examples": [
+    "no",
+    "nope",
+    "not yet",
+    "nah",
+    "hindi",
+    "wait",
+    "not now"
+   ],
+   "keywords": [
+    "no",
+    "nope",
+    "nah",
+    "hindi",
+    "wait"
+   ],
+   "replies": [
+    "Okay."
+   ]
+  },
+  {
+   "id": "skip",
+   "examples": [
+    "skip",
+    "skip this",
+    "leave it blank",
+    "i don't know",
+    "not sure",
+    "later",
+    "leave blank",
+    "n/a",
+    "none"
+   ],
+   "keywords": [
+    "skip",
+    "blank",
+    "unsure",
+    "unknown",
+    "na"
+   ],
+   "replies": [
+    "No problem — I'll leave a placeholder you can fill in later."
+   ]
+  }
+ ],
+ "editRules": [
+  {
+   "id": "formal",
+   "label": "More formal",
+   "examples": [
+    "make it formal",
+    "more formal",
+    "formal tone",
+    "sound professional",
+    "make it professional",
+    "legal tone"
+   ],
+   "keywords": [
+    "formal",
+    "professional",
+    "legalese",
+    "official"
+   ],
+   "reply": "Got it — I'll use formal wording and spell out contractions.",
+   "replacements": {
+    "don't": "do not",
+    "won't": "will not",
+    "can't": "cannot",
+    "isn't": "is not",
+    "aren't": "are not",
+    "doesn't": "does not",
+    "it's": "it is",
+    "we'll": "we will",
+    "you'll": "you will",
+    "will ": "shall ",
+    "Each side": "Each party",
+    "each side": "each party",
+    "the other side": "the other party"
+   }
+  },
+  {
+   "id": "plain",
+   "label": "Plain language",
+   "examples": [
+    "plain language",
+    "simple words",
+    "make it simpler",
+    "easy to understand",
+    "plain english",
+    "less legalese",
+    "simplify"
+   ],
+   "keywords": [
+    "plain",
+    "simple",
+    "simpler",
+    "simplify",
+    "easy",
+    "readable",
+    "understand"
+   ],
+   "reply": "Sure — I'll use plain, everyday wording where I have it.",
+   "replacements": {
+    "hereinafter": "from now on",
+    "shall": "will",
+    "pursuant to": "under",
+    "prior to": "before",
+    "in accordance with": "under",
+    "construed": "read",
+    "notwithstanding": "despite",
+    "thereof": "of it",
+    "herein": "in this document",
+    "commence": "start",
+    "terminate": "end",
+    "remuneration": "pay",
+    "forthwith": "immediately"
+   }
+  },
+  {
+   "id": "shorter",
+   "label": "Shorter",
+   "examples": [
+    "make it shorter",
+    "shorter",
+    "shorten it",
+    "keep it brief",
+    "short version",
+    "less text",
+    "concise"
+   ],
+   "keywords": [
+    "shorter",
+    "short",
+    "shorten",
+    "brief",
+    "concise",
+    "condense"
+   ],
+   "reply": "Okay — I'll keep only the essential clauses so the draft stays short."
+  },
+  {
+   "id": "headings",
+   "label": "Use headings",
+   "examples": [
+    "add headings",
+    "use headings",
+    "with headings",
+    "section headings",
+    "headers",
+    "make sections"
+   ],
+   "keywords": [
+    "headings",
+    "heading",
+    "headers",
+    "sections",
+    "titles"
+   ],
+   "reply": "Will do — each clause will get its own heading instead of a numbered list."
+  }
+ ],
+ "fallbacks": {
+  "gibberish": [
+   "Hmm, I couldn't make sense of that. Could you rephrase? For example: “write a lease agreement”.",
+   "Sorry, that didn't look like words I know. Try telling me the kind of document you need.",
+   "I didn't catch that. Try something like “an NDA between two companies”."
+  ],
+  "noMatch": [
+   "I'm not sure I understood. I can write documents like NDAs, employment contracts, leases and service agreements — which one do you need?",
+   "Sorry, I didn't quite get that. Try naming the document you want, or browse the categories.",
+   "I couldn't match that to a document yet. Could you describe it differently?"
+  ],
+  "clarify": [
+   "Did you mean one of these?",
+   "Just to be sure — which of these did you mean?",
+   "I found a few close matches. Which one?"
+  ],
+  "offTopic": {
+   "keywords": [
+    "weather",
+    "rain",
+    "joke",
+    "jokes",
+    "funny",
+    "song",
+    "music",
+    "movie",
+    "movies",
+    "recipe",
+    "cook",
+    "food",
+    "code",
+    "coding",
+    "python",
+    "javascript",
+    "java",
+    "program",
+    "programming",
+    "bitcoin",
+    "crypto",
+    "stocks",
+    "football",
+    "basketball",
+    "nba",
+    "game",
+    "games",
+    "homework",
+    "math",
+    "poem",
+    "story",
+    "news",
+    "president",
+    "election",
+    "dating",
+    "horoscope",
+    "lotto",
+    "travel"
+   ],
+   "examples": [
+    "what's the weather",
+    "tell me a joke",
+    "write me a poem",
+    "write python code",
+    "who won the game",
+    "what's the news today",
+    "sing a song"
+   ],
+   "replies": [
+    "That's outside what I can help with — I only draft documents on this page. What would you like to write?",
+    "I'm just a document-writing assistant, so I can't help with that. Shall we draft something?",
+    "I'd love to, but I only know about documents and clauses. Which document do you need?"
+   ]
+  },
+  "rude": {
+   "keywords": [
+    "stupid",
+    "idiot",
+    "dumb",
+    "useless",
+    "shut up",
+    "hate you",
+    "suck",
+    "sucks",
+    "trash",
+    "garbage",
+    "moron",
+    "fuck",
+    "fucking",
+    "shit",
+    "bullshit",
+    "damn you",
+    "bobo",
+    "tanga",
+    "gago",
+    "ulol",
+    "putang"
+   ],
+   "replies": [
+    "I'm sorry I'm not getting it right. Let's try again — tell me which document you need and I'll do my best.",
+    "Sorry for the frustration. I work best with short requests like “write an NDA”. Want to try one?"
+   ]
+  },
+  "legalAdvice": {
+   "patterns": [
+    "legal advice",
+    "should i sign",
+    "is this legal",
+    "is it legal",
+    "is this enforceable",
+    "is it enforceable",
+    "can i sue",
+    "will i win",
+    "am i liable",
+    "is this valid",
+    "is it valid",
+    "my rights",
+    "what are my rights",
+    "can they sue",
+    "is this binding",
+    "is it binding",
+    "will this hold up in court",
+    "do i need a lawyer",
+    "should i hire a lawyer",
+    "is this allowed",
+    "can i be sued"
+   ],
+   "replies": [
+    "I can't give legal advice — I only help with wording. For a question like that, please have a lawyer review your document and situation. I'm happy to keep drafting in the meantime.",
+    "That needs a lawyer, not a writing assistant. I can't tell you what the law requires or whether a document will hold up — please have a qualified lawyer review it. Want to continue with the draft?"
+   ]
+  },
+  "empty": [
+   "Type a message or pick one of the options below."
+  ]
+ },
+ "placeholderLabels": {
+  "effectiveDate": "Effective Date",
+  "term": "Term",
+  "noticePeriod": "thirty (30) days'",
+  "venue": "[City], Philippines",
+  "restrictionPeriod": "one (1) year",
+  "territory": "[Territory]",
+  "deposit": "[Deposit Amount]",
+  "amount": "[Amount]",
+  "uptime": "[Service Level]",
+  "deliveryDate": "[Delivery Date]",
+  "interest": "[Interest Rate]",
+  "purpose": "[Purpose]",
+  "exclusivity": "non-exclusive"
+ },
+ "replies": {
+  "docChosen": [
+   "Great — let's write the {title}.",
+   "Sure — {title} it is.",
+   "Okay, drafting the {title}."
+  ],
+  "captured": [
+   "Got it: {summary}.",
+   "Noted — {summary}."
+  ],
+  "confirmTitle": "Ready to write “{title}”?",
+  "confirmWarning": "This conversation will be cleared once I start writing.",
+  "placementQuestion": "Your page already has content. Should I add the draft below it, or replace everything?",
+  "notYet": [
+   "No problem. You can add a clause, change the tone, or correct any detail — just tell me.",
+   "Sure, take your time. Want to add a clause or change the wording style?"
+  ],
+  "clauseAdded": [
+   "Added the {clause} clause.",
+   "Okay, I'll include {clause}."
+  ],
+  "clauseOnly": [
+   "I'll write a {clause} clause for you."
+  ],
+  "ruleApplied": [
+   "{reply}"
+  ],
+  "slotRetry": [
+   "Sorry, I didn't catch that. {question} (Or say “skip”.)"
+  ],
+  "moreHelp": [
+   "Anything else? You can add a clause, change the tone, or say “write it”."
+  ],
+  "category": [
+   "Here are the {category} documents I can write:"
+  ]
+ },
+ "documents": [
+  {
+   "id": "recruitment-and-hr--employment-offer-letter-and-contract-agreement",
+   "title": "Employment Offer Letter and Contract Agreement",
+   "category": "Recruitment & HR",
+   "source": {
+    "readyMadeTitle": "Employment Offer Letter and Contract Agreement",
+    "readyMadeId": "recruitment-and-hr--employment-offer-letter-and-contract-agreement",
+    "inGallery": true
+   },
+   "parties": [
+    "Employer",
+    "Candidate"
+   ],
+   "aliases": [
+    "employment contract",
+    "employment agreement",
+    "offer letter",
+    "job offer",
+    "employment offer",
+    "work contract",
+    "hiring contract",
+    "contract of employment"
+   ],
+   "keywords": [
+    "employment",
+    "offer",
+    "job",
+    "hire",
+    "hiring",
+    "employee",
+    "candidate",
+    "salary",
+    "position",
+    "work"
+   ],
+   "slots": [
+    {
+     "key": "partyA",
+     "type": "company",
+     "label": "Employer",
+     "question": "What is the employer's company name?"
+    },
+    {
+     "key": "partyB",
+     "type": "name",
+     "label": "Candidate",
+     "question": "What is the candidate's full name?"
+    },
+    {
+     "key": "jobTitle",
+     "type": "job",
+     "label": "Position",
+     "question": "What position are you offering?"
+    },
+    {
+     "key": "startDate",
+     "type": "date",
+     "label": "Start Date",
+     "question": "What is the start date?",
+     "chips": [
+      "Today",
+      "Skip"
+     ],
+     "ask": false
+    },
+    {
+     "key": "amount",
+     "type": "amount",
+     "label": "Monthly Salary",
+     "ask": false
+    }
+   ],
+   "intro": "This {title} is made on {effectiveDate} between {partyA} (the “Employer”) and {partyB} (the “Employee”). The Employer offers the Employee the position of {jobTitle}, starting on {startDate}, at a monthly salary of {amount}.",
+   "clauses": [
+    "probationary-period",
+    "working-hours",
+    "compensation-benefits",
+    "confidentiality",
+    "data-privacy",
+    "termination",
+    "governing-law",
+    "entire-agreement"
+   ],
+   "roleLabels": {
+    "signer": [
+     "Employee",
+     "Candidate"
+    ],
+    "approver": [
+     "HR Approver",
+     "HR Director"
+    ],
+    "reviewer": [
+     "Hiring Manager"
+    ],
+    "acknowledgment-recipient": [],
+    "viewer": [],
+    "carbon-copy": [
+     "HR Records"
+    ]
+   }
+  },
+  {
+   "id": "recruitment-and-hr--non-disclosure-agreement-nda",
+   "title": "Non-Disclosure Agreement (NDA)",
+   "category": "Recruitment & HR",
+   "source": {
+    "readyMadeTitle": "Non-Disclosure Agreement (NDA)",
+    "readyMadeId": "recruitment-and-hr--non-disclosure-agreement-nda",
+    "inGallery": true
+   },
+   "parties": [
+    "Disclosing Party",
+    "Receiving Party"
+   ],
+   "aliases": [
+    "nda",
+    "non disclosure agreement",
+    "non-disclosure agreement",
+    "nondisclosure agreement",
+    "confidentiality agreement",
+    "secrecy agreement",
+    "non disclosure"
+   ],
+   "keywords": [
+    "nda",
+    "nondisclosure",
+    "disclosure",
+    "confidential",
+    "confidentiality",
+    "secret",
+    "secrets",
+    "secrecy"
+   ],
+   "slots": [
+    {
+     "key": "partyA",
+     "type": "company",
+     "label": "Disclosing Party",
+     "question": "Who is sharing the confidential information (person or company)?"
+    },
+    {
+     "key": "partyB",
+     "type": "name",
+     "label": "Receiving Party",
+     "question": "Who is receiving the information?"
+    },
+    {
+     "key": "scope",
+     "type": "choice",
+     "label": "Scope",
+     "question": "Should confidentiality be mutual (both sides protect each other's information) or one-way?",
+     "options": [
+      {
+       "value": "mutual",
+       "label": "Mutual",
+       "keywords": [
+        "mutual",
+        "both",
+        "two-way",
+        "two way",
+        "bilateral",
+        "each other"
+       ],
+       "text": "Both parties will protect each other's confidential information."
+      },
+      {
+       "value": "one-way",
+       "label": "One-way",
+       "keywords": [
+        "one-way",
+        "one way",
+        "unilateral",
+        "only",
+        "single"
+       ],
+       "text": "{partyB} will protect the confidential information that {partyA} shares."
+      }
+     ]
+    },
+    {
+     "key": "term",
+     "type": "term",
+     "label": "Confidentiality Period",
+     "question": "How long should confidentiality last?",
+     "chips": [
+      "6 months",
+      "1 year",
+      "2 years",
+      "Skip"
+     ],
+     "ask": false
+    }
+   ],
+   "intro": "This {title} is made on {effectiveDate} between {partyA} (the “Disclosing Party”) and {partyB} (the “Receiving Party”). {scope} Confidentiality lasts for {term} after the relationship ends.",
+   "clauses": [
+    "confidentiality",
+    "confidentiality-exclusions",
+    "return-of-materials",
+    "data-privacy",
+    "term",
+    "governing-law",
+    "dispute-resolution",
+    "entire-agreement"
+   ],
+   "roleLabels": {
+    "signer": [
+     "Employee or Candidate"
+    ],
+    "approver": [
+     "HR Manager"
+    ],
+    "reviewer": [
+     "Legal Counsel"
+    ],
+    "acknowledgment-recipient": [],
+    "viewer": [],
+    "carbon-copy": [
+     "HR Records"
+    ]
+   }
+  },
+  {
+   "id": "recruitment-and-hr--employee-handbook-policy-acknowledgment-form",
+   "title": "Employee Handbook Policy Acknowledgment Form",
+   "category": "Recruitment & HR",
+   "source": {
+    "readyMadeTitle": "Employee Handbook Policy Acknowledgment Form",
+    "readyMadeId": "recruitment-and-hr--employee-handbook-policy-acknowledgment-form",
+    "inGallery": true
+   },
+   "parties": [
+    "Employee"
+   ],
+   "aliases": [
+    "handbook acknowledgment",
+    "policy acknowledgment",
+    "handbook acknowledgement",
+    "policy acknowledgement",
+    "employee handbook",
+    "code of conduct acknowledgment"
+   ],
+   "keywords": [
+    "handbook",
+    "policy",
+    "policies",
+    "acknowledgment",
+    "acknowledgement",
+    "acknowledge",
+    "conduct"
+   ],
+   "slots": [
+    {
+     "key": "partyA",
+     "type": "company",
+     "label": "Company",
+     "question": "What is the company's company or organisation name?"
+    },
+    {
+     "key": "partyB",
+     "type": "name",
+     "label": "Employee",
+     "question": "What is the employee's full name?"
+    },
+    {
+     "key": "policyVersion",
+     "type": "text",
+     "label": "Handbook Version",
+     "question": "Which handbook or policy version is this for (for example “2027 Edition”)?",
+     "chips": [
+      "Skip"
+     ]
+    }
+   ],
+   "intro": "I, {partyB}, acknowledge that I have received, read and understood the {policyVersion} Employee Handbook of {partyA}, dated {effectiveDate}.",
+   "clauses": [
+    "compliance-with-laws",
+    "data-privacy",
+    "amendments",
+    "acknowledgment-block"
+   ],
+   "roleLabels": {
+    "signer": [
+     "Employee"
+    ],
+    "approver": [],
+    "reviewer": [
+     "HR Manager"
+    ],
+    "acknowledgment-recipient": [],
+    "viewer": [],
+    "carbon-copy": [
+     "HR Records"
+    ]
+   }
+  },
+  {
+   "id": "recruitment-and-hr--remote-employee-onboarding-form",
+   "title": "Remote Employee Onboarding Form",
+   "category": "Recruitment & HR",
+   "source": {
+    "readyMadeTitle": "Remote Employee Onboarding Form",
+    "readyMadeId": "recruitment-and-hr--remote-employee-onboarding-form",
+    "inGallery": true
+   },
+   "parties": [
+    "New Employee"
+   ],
+   "aliases": [
+    "remote onboarding",
+    "onboarding form",
+    "work from home onboarding",
+    "wfh onboarding",
+    "remote work form"
+   ],
+   "keywords": [
+    "remote",
+    "onboarding",
+    "onboard",
+    "wfh",
+    "home",
+    "equipment",
+    "laptop"
+   ],
+   "slots": [
+    {
+     "key": "partyA",
+     "type": "company",
+     "label": "Company",
+     "question": "What is the company's company or organisation name?"
+    },
+    {
+     "key": "partyB",
+     "type": "name",
+     "label": "New Employee",
+     "question": "What is the new employee's full name?"
+    },
+    {
+     "key": "startDate",
+     "type": "date",
+     "label": "Start Date",
+     "question": "When does the new employee start?",
+     "chips": [
+      "Today",
+      "Skip"
+     ]
+    }
+   ],
+   "intro": "This {title} records the onboarding of {partyB} as a remote employee of {partyA}, starting on {startDate}.",
+   "clauses": [
+    "equipment-use",
+    "confidentiality",
+    "data-privacy",
+    "acknowledgment-block"
+   ],
+   "roleLabels": {
+    "signer": [
+     "New Employee"
+    ],
+    "approver": [
+     "HR Manager"
+    ],
+    "reviewer": [
+     "IT Department"
+    ],
+    "acknowledgment-recipient": [],
+    "viewer": [],
+    "carbon-copy": [
+     "HR Records"
+    ]
+   }
+  },
+  {
+   "id": "sales-and-customer-agreements--sales-contract-and-purchase-order-agreement",
+   "title": "Sales Contract and Purchase Order Agreement",
+   "category": "Sales & Customer Agreements",
+   "source": {
+    "readyMadeTitle": "Sales Contract and Purchase Order Agreement",
+    "readyMadeId": "sales-and-customer-agreements--sales-contract-and-purchase-order-agreement",
+    "inGallery": true
+   },
+   "parties": [
+    "Seller",
+    "Customer"
+   ],
+   "aliases": [
+    "sales contract",
+    "purchase order",
+    "sales agreement",
+    "po agreement",
+    "contract of sale",
+    "sale of goods"
+   ],
+   "keywords": [
+    "sales",
+    "sale",
+    "sell",
+    "purchase",
+    "order",
+    "po",
+    "goods",
+    "customer",
+    "buyer"
+   ],
+   "slots": [
+    {
+     "key": "partyA",
+     "type": "company",
+     "label": "Seller",
+     "question": "What is the seller's company or organisation name?"
+    },
+    {
+     "key": "partyB",
+     "type": "company",
+     "label": "Customer",
+     "question": "What is the customer's company or organisation name?"
+    },
+    {
+     "key": "amount",
+     "type": "amount",
+     "label": "Total Price",
+     "question": "What is the total price (for example ₱150,000)?"
+    },
+    {
+     "key": "deliveryDate",
+     "type": "date",
+     "label": "Delivery Date",
+     "question": "What is the delivery date?",
+     "chips": [
+      "Today",
+      "Skip"
+     ],
+     "ask": false
+    }
+   ],
+   "intro": "This {title} is made on {effectiveDate} between {partyA} (the “Seller”) and {partyB} (the “Customer”) for goods at a total price of {amount}, for delivery on {deliveryDate}.",
+   "clauses": [
+    "delivery",
+    "acceptance",
+    "payment-terms",
+    "warranties",
+    "limitation-of-liability",
+    "force-majeure",
+    "governing-law",
+    "entire-agreement"
+   ],
+   "roleLabels": {
+    "signer": [
+     "Customer"
+    ],
+    "approver": [
+     "Finance Officer"
+    ],
+    "reviewer": [
+     "Sales Manager"
+    ],
+    "acknowledgment-recipient": [],
+    "viewer": [],
+    "carbon-copy": [
+     "Sales Administration"
+    ]
+   }
+  },
+  {
+   "id": "sales-and-customer-agreements--subscription-services-agreement",
+   "title": "Subscription Services Agreement",
+   "category": "Sales & Customer Agreements",
+   "source": {
+    "readyMadeTitle": "Subscription Services Agreement",
+    "readyMadeId": "sales-and-customer-agreements--subscription-services-agreement",
+    "inGallery": true
+   },
+   "parties": [
+    "Provider",
+    "Customer"
+   ],
+   "aliases": [
+    "subscription agreement",
+    "subscription contract",
+    "saas agreement",
+    "subscription services",
+    "membership agreement"
+   ],
+   "keywords": [
+    "subscription",
+    "subscribe",
+    "saas",
+    "recurring",
+    "plan",
+    "membership",
+    "renewal"
+   ],
+   "slots": [
+    {
+     "key": "partyA",
+     "type": "company",
+     "label": "Provider",
+     "question": "What is the provider's company or organisation name?"
+    },
+    {
+     "key": "partyB",
+     "type": "company",
+     "label": "Customer",
+     "question": "What is the customer's company or organisation name?"
+    },
+    {
+     "key": "amount",
+     "type": "amount",
+     "label": "Subscription Fee",
+     "question": "What is the subscription fee, and how often (for example ₱2,500 per month)?"
+    },
+    {
+     "key": "term",
+     "type": "term",
+     "label": "Subscription Term",
+     "question": "How long is the subscription term?",
+     "chips": [
+      "6 months",
+      "1 year",
+      "2 years",
+      "Skip"
+     ],
+     "ask": false
+    }
+   ],
+   "intro": "This {title} is made on {effectiveDate} between {partyA} (the “Provider”) and {partyB} (the “Customer”). The Customer subscribes to the Provider's services for {term} at a fee of {amount}.",
+   "clauses": [
+    "term",
+    "payment-terms",
+    "service-levels",
+    "data-privacy",
+    "limitation-of-liability",
+    "termination",
+    "governing-law",
+    "entire-agreement"
+   ],
+   "roleLabels": {
+    "signer": [
+     "Customer"
+    ],
+    "approver": [
+     "Sales Director"
+    ],
+    "reviewer": [
+     "Legal Counsel"
+    ],
+    "acknowledgment-recipient": [],
+    "viewer": [],
+    "carbon-copy": [
+     "Customer Success Team"
+    ]
+   }
+  },
+  {
+   "id": "sales-and-customer-agreements--service-level-agreement-sla",
+   "title": "Service Level Agreement (SLA)",
+   "category": "Sales & Customer Agreements",
+   "source": {
+    "readyMadeTitle": "Service Level Agreement (SLA)",
+    "readyMadeId": "sales-and-customer-agreements--service-level-agreement-sla",
+    "inGallery": true
+   },
+   "parties": [
+    "Service Provider",
+    "Client"
+   ],
+   "aliases": [
+    "sla",
+    "service level agreement",
+    "uptime agreement",
+    "service levels"
+   ],
+   "keywords": [
+    "sla",
+    "uptime",
+    "availability",
+    "response",
+    "service",
+    "level",
+    "levels",
+    "support"
+   ],
+   "slots": [
+    {
+     "key": "partyA",
+     "type": "company",
+     "label": "Service Provider",
+     "question": "What is the service provider's company or organisation name?"
+    },
+    {
+     "key": "partyB",
+     "type": "company",
+     "label": "Client",
+     "question": "What is the client's company or organisation name?"
+    },
+    {
+     "key": "uptime",
+     "type": "text",
+     "label": "Uptime Target",
+     "question": "What service level should you commit to (for example 99.5% uptime)?",
+     "chips": [
+      "99.5% uptime",
+      "99.9% uptime",
+      "Skip"
+     ]
+    }
+   ],
+   "intro": "This {title} is made on {effectiveDate} between {partyA} (the “Service Provider”) and {partyB} (the “Client”). The Service Provider commits to {uptime}.",
+   "clauses": [
+    "service-levels",
+    "payment-terms",
+    "limitation-of-liability",
+    "force-majeure",
+    "term",
+    "governing-law",
+    "entire-agreement"
+   ],
+   "roleLabels": {
+    "signer": [
+     "Client Representative"
+    ],
+    "approver": [
+     "Legal Counsel"
+    ],
+    "reviewer": [
+     "Operations Manager"
+    ],
+    "acknowledgment-recipient": [],
+    "viewer": [],
+    "carbon-copy": [
+     "Contracts Administration"
+    ]
+   }
+  },
+  {
+   "id": "sales-and-customer-agreements--licensing-agreement",
+   "title": "Licensing Agreement",
+   "category": "Sales & Customer Agreements",
+   "source": {
+    "readyMadeTitle": "Licensing Agreement",
+    "readyMadeId": "sales-and-customer-agreements--licensing-agreement",
+    "inGallery": true
+   },
+   "parties": [
+    "Licensor",
+    "Licensee"
+   ],
+   "aliases": [
+    "license agreement",
+    "licence agreement",
+    "licensing deal",
+    "brand license",
+    "trademark license"
+   ],
+   "keywords": [
+    "license",
+    "licence",
+    "licensing",
+    "licensor",
+    "licensee",
+    "royalty",
+    "royalties",
+    "trademark"
+   ],
+   "slots": [
+    {
+     "key": "partyA",
+     "type": "company",
+     "label": "Licensor",
+     "question": "What is the licensor's company or organisation name?"
+    },
+    {
+     "key": "partyB",
+     "type": "company",
+     "label": "Licensee",
+     "question": "What is the licensee's company or organisation name?"
+    },
+    {
+     "key": "amount",
+     "type": "amount",
+     "label": "License Fee or Royalty",
+     "question": "What is the license fee or royalty (for example 5% of net sales)?"
+    },
+    {
+     "key": "term",
+     "type": "term",
+     "label": "License Term",
+     "question": "How long does the license run?",
+     "chips": [
+      "6 months",
+      "1 year",
+      "2 years",
+      "Skip"
+     ],
+     "ask": false
+    }
+   ],
+   "intro": "This {title} is made on {effectiveDate} between {partyA} (the “Licensor”) and {partyB} (the “Licensee”) for a license running {term}, in exchange for {amount}.",
+   "clauses": [
+    "license-grant",
+    "intellectual-property",
+    "payment-terms",
+    "confidentiality",
+    "termination",
+    "governing-law",
+    "entire-agreement"
+   ],
+   "roleLabels": {
+    "signer": [
+     "Licensee"
+    ],
+    "approver": [
+     "Executive Director"
+    ],
+    "reviewer": [
+     "Legal Counsel"
+    ],
+    "acknowledgment-recipient": [],
+    "viewer": [],
+    "carbon-copy": [
+     "Legal Department"
+    ]
+   }
+  },
+  {
+   "id": "procurement-and-supply-chain--vendor-service-agreement",
+   "title": "Vendor Service Agreement",
+   "category": "Procurement & Supply Chain",
+   "source": {
+    "readyMadeTitle": "Vendor Service Agreement",
+    "readyMadeId": "procurement-and-supply-chain--vendor-service-agreement",
+    "inGallery": true
+   },
+   "parties": [
+    "Company",
+    "Vendor"
+   ],
+   "aliases": [
+    "vendor agreement",
+    "vendor contract",
+    "service agreement",
+    "services agreement",
+    "contractor agreement",
+    "service contract"
+   ],
+   "keywords": [
+    "vendor",
+    "vendors",
+    "services",
+    "service",
+    "contractor",
+    "provider"
+   ],
+   "slots": [
+    {
+     "key": "partyA",
+     "type": "company",
+     "label": "Company",
+     "question": "What is the company's company or organisation name?"
+    },
+    {
+     "key": "partyB",
+     "type": "company",
+     "label": "Vendor",
+     "question": "What is the vendor's company or organisation name?"
+    },
+    {
+     "key": "amount",
+     "type": "amount",
+     "label": "Service Fee",
+     "question": "What is the fee for the services?"
+    },
+    {
+     "key": "term",
+     "type": "term",
+     "label": "Term",
+     "question": "How long should the agreement run?",
+     "chips": [
+      "6 months",
+      "1 year",
+      "2 years",
+      "Skip"
+     ],
+     "ask": false
+    }
+   ],
+   "intro": "This {title} is made on {effectiveDate} between {partyA} (the “Company”) and {partyB} (the “Vendor”). The Vendor will provide the services described below for a fee of {amount}, for {term}.",
+   "clauses": [
+    "scope-of-services",
+    "payment-terms",
+    "independent-contractor",
+    "confidentiality",
+    "warranties",
+    "indemnity",
+    "termination",
+    "governing-law"
+   ],
+   "roleLabels": {
+    "signer": [
+     "Vendor Representative"
+    ],
+    "approver": [
+     "Finance or Legal Officer"
+    ],
+    "reviewer": [
+     "Procurement Manager"
+    ],
+    "acknowledgment-recipient": [],
+    "viewer": [],
+    "carbon-copy": [
+     "Procurement Department"
+    ]
+   }
+  },
+  {
+   "id": "procurement-and-supply-chain--supplier-agreement",
+   "title": "Supplier Agreement",
+   "category": "Procurement & Supply Chain",
+   "source": {
+    "readyMadeTitle": "Supplier Agreement",
+    "readyMadeId": "procurement-and-supply-chain--supplier-agreement",
+    "inGallery": true
+   },
+   "parties": [
+    "Buyer",
+    "Supplier"
+   ],
+   "aliases": [
+    "supplier contract",
+    "supply agreement",
+    "supply contract",
+    "supplier deal"
+   ],
+   "keywords": [
+    "supplier",
+    "supply",
+    "supplies",
+    "materials",
+    "stock"
+   ],
+   "slots": [
+    {
+     "key": "partyA",
+     "type": "company",
+     "label": "Buyer",
+     "question": "What is the buyer's company or organisation name?"
+    },
+    {
+     "key": "partyB",
+     "type": "company",
+     "label": "Supplier",
+     "question": "What is the supplier's company or organisation name?"
+    },
+    {
+     "key": "goods",
+     "type": "text",
+     "label": "Goods Supplied",
+     "question": "What goods or materials will be supplied?",
+     "chips": [
+      "Skip"
+     ]
+    }
+   ],
+   "intro": "This {title} is made on {effectiveDate} between {partyA} (the “Buyer”) and {partyB} (the “Supplier”) for the supply of {goods}.",
+   "clauses": [
+    "delivery",
+    "acceptance",
+    "payment-terms",
+    "warranties",
+    "force-majeure",
+    "termination",
+    "governing-law",
+    "entire-agreement"
+   ],
+   "roleLabels": {
+    "signer": [
+     "Supplier Representative"
+    ],
+    "approver": [
+     "Finance Officer"
+    ],
+    "reviewer": [
+     "Procurement Manager"
+    ],
+    "acknowledgment-recipient": [],
+    "viewer": [],
+    "carbon-copy": [
+     "Procurement Department"
+    ]
+   }
+  },
+  {
+   "id": "procurement-and-supply-chain--purchase-requisition-and-approval-form",
+   "title": "Purchase Requisition and Approval Form",
+   "category": "Procurement & Supply Chain",
+   "source": {
+    "readyMadeTitle": "Purchase Requisition and Approval Form",
+    "readyMadeId": "procurement-and-supply-chain--purchase-requisition-and-approval-form",
+    "inGallery": false
+   },
+   "parties": [
+    "Requesting Employee",
+    "Department Head"
+   ],
+   "aliases": [
+    "purchase requisition",
+    "requisition form",
+    "purchase request",
+    "pr form",
+    "procurement request"
+   ],
+   "keywords": [
+    "requisition",
+    "request",
+    "purchase",
+    "procure",
+    "procurement",
+    "buy"
+   ],
+   "slots": [
+    {
+     "key": "partyA",
+     "type": "name",
+     "label": "Requesting Employee",
+     "question": "What is the requesting employee's full name?"
+    },
+    {
+     "key": "item",
+     "type": "text",
+     "label": "Item or Service",
+     "question": "What item or service is being requested?"
+    },
+    {
+     "key": "amount",
+     "type": "amount",
+     "label": "Estimated Cost",
+     "question": "What is the estimated cost?"
+    }
+   ],
+   "intro": "Requested by {partyA} on {effectiveDate}: {item}, at an estimated cost of {amount}.",
+   "clauses": [
+    "budget-justification",
+    "approval-block"
+   ],
+   "roleLabels": {
+    "signer": [],
+    "approver": [
+     "Finance Officer"
+    ],
+    "reviewer": [
+     "Department Head",
+     "Procurement Manager"
+    ],
+    "acknowledgment-recipient": [],
+    "viewer": [],
+    "carbon-copy": [
+     "Procurement Department"
+    ]
+   }
+  },
+  {
+   "id": "procurement-and-supply-chain--delivery-confirmation-and-acceptance-form",
+   "title": "Delivery Confirmation and Acceptance Form",
+   "category": "Procurement & Supply Chain",
+   "source": {
+    "readyMadeTitle": "Delivery Confirmation and Acceptance Form",
+    "readyMadeId": "procurement-and-supply-chain--delivery-confirmation-and-acceptance-form",
+    "inGallery": true
+   },
+   "parties": [
+    "Receiving Officer"
+   ],
+   "aliases": [
+    "delivery confirmation",
+    "proof of delivery",
+    "delivery receipt",
+    "goods received form",
+    "receiving report"
+   ],
+   "keywords": [
+    "delivery",
+    "delivered",
+    "received",
+    "receipt",
+    "confirmation",
+    "pod"
+   ],
+   "slots": [
+    {
+     "key": "partyA",
+     "type": "company",
+     "label": "Supplier or Carrier",
+     "question": "What is the supplier or carrier's company or organisation name?"
+    },
+    {
+     "key": "partyB",
+     "type": "name",
+     "label": "Receiving Officer",
+     "question": "What is the receiving officer's full name?"
+    },
+    {
+     "key": "deliveryDate",
+     "type": "date",
+     "label": "Delivery Date",
+     "question": "When were the goods delivered?",
+     "chips": [
+      "Today",
+      "Skip"
+     ]
+    }
+   ],
+   "intro": "This {title} confirms that goods from {partyA} were received by {partyB} on {deliveryDate}.",
+   "clauses": [
+    "acceptance",
+    "acknowledgment-block"
+   ],
+   "roleLabels": {
+    "signer": [
+     "Receiving Officer"
+    ],
+    "approver": [
+     "Procurement Officer"
+    ],
+    "reviewer": [
+     "Warehouse Supervisor"
+    ],
+    "acknowledgment-recipient": [],
+    "viewer": [],
+    "carbon-copy": [
+     "Procurement Department"
+    ]
+   }
+  },
+  {
+   "id": "finance-and-legal--loan-agreement-and-credit-application",
+   "title": "Loan Agreement and Credit Application",
+   "category": "Finance & Legal",
+   "source": {
+    "readyMadeTitle": "Loan Agreement and Credit Application",
+    "readyMadeId": "finance-and-legal--loan-agreement-and-credit-application",
+    "inGallery": false
+   },
+   "parties": [
+    "Lender",
+    "Borrower"
+   ],
+   "aliases": [
+    "loan agreement",
+    "credit application",
+    "loan contract",
+    "promissory note",
+    "personal loan"
+   ],
+   "keywords": [
+    "loan",
+    "lend",
+    "lender",
+    "borrow",
+    "borrower",
+    "credit",
+    "interest",
+    "repay",
+    "repayment"
+   ],
+   "slots": [
+    {
+     "key": "partyA",
+     "type": "company",
+     "label": "Lender",
+     "question": "What is the lender's company or organisation name?"
+    },
+    {
+     "key": "partyB",
+     "type": "name",
+     "label": "Borrower",
+     "question": "What is the borrower's full name?"
+    },
+    {
+     "key": "amount",
+     "type": "amount",
+     "label": "Loan Amount",
+     "question": "How much is being borrowed?"
+    },
+    {
+     "key": "interest",
+     "type": "text",
+     "label": "Interest Rate",
+     "question": "What is the interest rate?",
+     "ask": false
+    }
+   ],
+   "intro": "This {title} is made on {effectiveDate} between {partyA} (the “Lender”) and {partyB} (the “Borrower”) for a loan of {amount} at an interest rate of {interest}.",
+   "clauses": [
+    "repayment",
+    "late-payment",
+    "data-privacy",
+    "governing-law",
+    "dispute-resolution",
+    "entire-agreement"
+   ],
+   "roleLabels": {
+    "signer": [],
+    "approver": [
+     "Finance Manager"
+    ],
+    "reviewer": [
+     "Credit Analyst",
+     "Legal Counsel"
+    ],
+    "acknowledgment-recipient": [],
+    "viewer": [],
+    "carbon-copy": [
+     "Finance Department"
+    ]
+   }
+  },
+  {
+   "id": "finance-and-legal--investment-agreement",
+   "title": "Investment Agreement",
+   "category": "Finance & Legal",
+   "source": {
+    "readyMadeTitle": "Investment Agreement",
+    "readyMadeId": "finance-and-legal--investment-agreement",
+    "inGallery": true
+   },
+   "parties": [
+    "Company",
+    "Investor"
+   ],
+   "aliases": [
+    "investment contract",
+    "investor agreement",
+    "funding agreement",
+    "subscription for shares"
+   ],
+   "keywords": [
+    "investment",
+    "invest",
+    "investor",
+    "investors",
+    "funding",
+    "equity",
+    "shares",
+    "capital"
+   ],
+   "slots": [
+    {
+     "key": "partyA",
+     "type": "company",
+     "label": "Company",
+     "question": "What is the company's company or organisation name?"
+    },
+    {
+     "key": "partyB",
+     "type": "name",
+     "label": "Investor",
+     "question": "What is the investor's full name?"
+    },
+    {
+     "key": "amount",
+     "type": "amount",
+     "label": "Investment Amount",
+     "question": "How much is being invested?"
+    }
+   ],
+   "intro": "This {title} is made on {effectiveDate} between {partyA} (the “Company”) and {partyB} (the “Investor”). The Investor will invest {amount} in the Company on the terms below.",
+   "clauses": [
+    "use-of-funds",
+    "warranties",
+    "confidentiality",
+    "governing-law",
+    "dispute-resolution",
+    "entire-agreement"
+   ],
+   "roleLabels": {
+    "signer": [
+     "Investor"
+    ],
+    "approver": [
+     "Chief Financial Officer"
+    ],
+    "reviewer": [
+     "Legal Counsel"
+    ],
+    "acknowledgment-recipient": [],
+    "viewer": [],
+    "carbon-copy": [
+     "Finance Department"
+    ]
+   }
+  },
+  {
+   "id": "finance-and-legal--audit-confirmation-letter",
+   "title": "Audit Confirmation Letter",
+   "category": "Finance & Legal",
+   "source": {
+    "readyMadeTitle": "Audit Confirmation Letter",
+    "readyMadeId": "finance-and-legal--audit-confirmation-letter",
+    "inGallery": true
+   },
+   "parties": [
+    "Finance Officer"
+   ],
+   "aliases": [
+    "audit confirmation",
+    "audit letter",
+    "balance confirmation",
+    "bank confirmation letter"
+   ],
+   "keywords": [
+    "audit",
+    "auditor",
+    "auditors",
+    "confirmation",
+    "balance",
+    "balances"
+   ],
+   "slots": [
+    {
+     "key": "partyA",
+     "type": "company",
+     "label": "Audit Firm",
+     "question": "What is the audit firm's company or organisation name?"
+    },
+    {
+     "key": "partyB",
+     "type": "company",
+     "label": "Company Being Audited",
+     "question": "What is the company being audited's company or organisation name?"
+    },
+    {
+     "key": "periodEnd",
+     "type": "date",
+     "label": "Period End Date",
+     "question": "What period-end date does the confirmation cover?",
+     "chips": [
+      "Today",
+      "Skip"
+     ]
+    }
+   ],
+   "intro": "To {partyA}: In connection with your audit of {partyB} for the period ending {periodEnd}, we confirm the information below.",
+   "clauses": [
+    "confidentiality",
+    "signature-block"
+   ],
+   "roleLabels": {
+    "signer": [
+     "Finance Officer"
+    ],
+    "approver": [
+     "External Audit Partner"
+    ],
+    "reviewer": [
+     "Audit Manager"
+    ],
+    "acknowledgment-recipient": [],
+    "viewer": [],
+    "carbon-copy": [
+     "Finance and Audit Records"
+    ]
+   }
+  },
+  {
+   "id": "finance-and-legal--legal-settlement-agreement",
+   "title": "Legal Settlement Agreement",
+   "category": "Finance & Legal",
+   "source": {
+    "readyMadeTitle": "Legal Settlement Agreement",
+    "readyMadeId": "finance-and-legal--legal-settlement-agreement",
+    "inGallery": true
+   },
+   "parties": [
+    "First Party",
+    "Second Party"
+   ],
+   "aliases": [
+    "settlement agreement",
+    "compromise agreement",
+    "release and settlement",
+    "settlement"
+   ],
+   "keywords": [
+    "settlement",
+    "settle",
+    "dispute",
+    "compromise",
+    "release",
+    "claim",
+    "claims"
+   ],
+   "slots": [
+    {
+     "key": "partyA",
+     "type": "name",
+     "label": "First Party",
+     "question": "What is the first party's full name?"
+    },
+    {
+     "key": "partyB",
+     "type": "name",
+     "label": "Second Party",
+     "question": "What is the second party's full name?"
+    },
+    {
+     "key": "amount",
+     "type": "amount",
+     "label": "Settlement Amount",
+     "question": "What is the settlement amount, if any?"
+    }
+   ],
+   "intro": "This {title} is made on {effectiveDate} between {partyA} and {partyB}, who wish to settle their dispute on the terms below, including a settlement payment of {amount}.",
+   "clauses": [
+    "release-of-claims",
+    "payment-terms",
+    "confidentiality",
+    "no-admission",
+    "governing-law",
+    "entire-agreement"
+   ],
+   "roleLabels": {
+    "signer": [
+     "Involved Parties"
+    ],
+    "approver": [
+     "Executive Management"
+    ],
+    "reviewer": [
+     "Senior Legal Counsel"
+    ],
+    "acknowledgment-recipient": [],
+    "viewer": [],
+    "carbon-copy": [
+     "Legal Department"
+    ]
+   }
+  },
+  {
+   "id": "corporate-governance--board-resolution-document",
+   "title": "Board Resolution Document",
+   "category": "Corporate Governance",
+   "source": {
+    "readyMadeTitle": "Board Resolution Document",
+    "readyMadeId": "corporate-governance--board-resolution-document",
+    "inGallery": true
+   },
+   "parties": [
+    "Corporate Secretary",
+    "Board Members"
+   ],
+   "aliases": [
+    "board resolution",
+    "secretary's certificate",
+    "corporate resolution",
+    "resolution of the board"
+   ],
+   "keywords": [
+    "board",
+    "resolution",
+    "resolved",
+    "directors",
+    "secretary",
+    "corporate"
+   ],
+   "slots": [
+    {
+     "key": "partyA",
+     "type": "company",
+     "label": "Corporation",
+     "question": "What is the corporation's company or organisation name?"
+    },
+    {
+     "key": "meetingDate",
+     "type": "date",
+     "label": "Meeting Date",
+     "question": "On what date was the board meeting held?",
+     "chips": [
+      "Today",
+      "Skip"
+     ]
+    },
+    {
+     "key": "resolution",
+     "type": "text",
+     "label": "Resolution",
+     "question": "In one line, what did the board resolve (for example “to open a bank account with BDO”)?"
+    }
+   ],
+   "intro": "At a meeting of the Board of Directors of {partyA} held on {meetingDate}, a quorum being present, the Board resolved {resolution}.",
+   "clauses": [
+    "certification-block",
+    "signature-block"
+   ],
+   "roleLabels": {
+    "signer": [
+     "Board Members"
+    ],
+    "approver": [
+     "Board of Directors"
+    ],
+    "reviewer": [
+     "Board Chairperson"
+    ],
+    "acknowledgment-recipient": [],
+    "viewer": [],
+    "carbon-copy": [
+     "Corporate Secretary"
+    ]
+   }
+  },
+  {
+   "id": "corporate-governance--shareholder-agreement",
+   "title": "Shareholder Agreement",
+   "category": "Corporate Governance",
+   "source": {
+    "readyMadeTitle": "Shareholder Agreement",
+    "readyMadeId": "corporate-governance--shareholder-agreement",
+    "inGallery": true
+   },
+   "parties": [
+    "Shareholders"
+   ],
+   "aliases": [
+    "shareholders agreement",
+    "shareholders' agreement",
+    "stockholders agreement",
+    "founders agreement"
+   ],
+   "keywords": [
+    "shareholder",
+    "shareholders",
+    "stockholder",
+    "stockholders",
+    "founders",
+    "shares",
+    "equity"
+   ],
+   "slots": [
+    {
+     "key": "partyA",
+     "type": "company",
+     "label": "Company",
+     "question": "What is the company's company or organisation name?"
+    },
+    {
+     "key": "shareholders",
+     "type": "text",
+     "label": "Shareholders",
+     "question": "Who are the shareholders? (List their names.)"
+    },
+    {
+     "key": "shareSplit",
+     "type": "text",
+     "label": "Shareholding",
+     "question": "How are the shares split?",
+     "ask": false
+    }
+   ],
+   "intro": "This {title} is made on {effectiveDate} among the shareholders of {partyA}: {shareholders}.",
+   "clauses": [
+    "share-transfer",
+    "confidentiality",
+    "non-compete",
+    "dispute-resolution",
+    "governing-law",
+    "entire-agreement"
+   ],
+   "roleLabels": {
+    "signer": [
+     "Shareholders"
+    ],
+    "approver": [
+     "Board of Directors"
+    ],
+    "reviewer": [
+     "Corporate Secretary"
+    ],
+    "acknowledgment-recipient": [],
+    "viewer": [],
+    "carbon-copy": [
+     "Legal Department"
+    ]
+   }
+  },
+  {
+   "id": "corporate-governance--partnership-agreement",
+   "title": "Partnership Agreement",
+   "category": "Corporate Governance",
+   "source": {
+    "readyMadeTitle": "Partnership Agreement",
+    "readyMadeId": "corporate-governance--partnership-agreement",
+    "inGallery": true
+   },
+   "parties": [
+    "Partners"
+   ],
+   "aliases": [
+    "partnership contract",
+    "articles of partnership",
+    "business partnership",
+    "joint venture agreement",
+    "jv agreement"
+   ],
+   "keywords": [
+    "partnership",
+    "partner",
+    "partners",
+    "joint",
+    "venture"
+   ],
+   "slots": [
+    {
+     "key": "partners",
+     "type": "text",
+     "label": "Partners",
+     "question": "Who are the partners? (List their names.)"
+    },
+    {
+     "key": "partyA",
+     "type": "company",
+     "label": "Partnership Name",
+     "question": "What is the partnership's business name?"
+    },
+    {
+     "key": "amount",
+     "type": "amount",
+     "label": "Capital Contribution",
+     "question": "What capital will each partner contribute?"
+    }
+   ],
+   "intro": "This {title} is made on {effectiveDate} by {partners}, who agree to carry on business together as {partyA}, each contributing {amount}.",
+   "clauses": [
+    "profit-sharing",
+    "confidentiality",
+    "non-compete",
+    "dispute-resolution",
+    "termination",
+    "governing-law",
+    "entire-agreement"
+   ],
+   "roleLabels": {
+    "signer": [
+     "Partners"
+    ],
+    "approver": [
+     "Executive or Board"
+    ],
+    "reviewer": [
+     "Senior Management"
+    ],
+    "acknowledgment-recipient": [],
+    "viewer": [],
+    "carbon-copy": [
+     "Legal Department"
+    ]
+   }
+  },
+  {
+   "id": "corporate-governance--corporate-confidentiality-agreement",
+   "title": "Corporate Confidentiality Agreement",
+   "category": "Corporate Governance",
+   "source": {
+    "readyMadeTitle": "Corporate Confidentiality Agreement",
+    "readyMadeId": "corporate-governance--corporate-confidentiality-agreement",
+    "inGallery": true
+   },
+   "parties": [
+    "Company",
+    "Involved Party"
+   ],
+   "aliases": [
+    "corporate nda",
+    "company confidentiality agreement",
+    "board confidentiality agreement"
+   ],
+   "keywords": [
+    "corporate",
+    "confidentiality",
+    "confidential",
+    "company",
+    "board"
+   ],
+   "slots": [
+    {
+     "key": "partyA",
+     "type": "company",
+     "label": "Company",
+     "question": "What is the company's company or organisation name?"
+    },
+    {
+     "key": "partyB",
+     "type": "name",
+     "label": "Involved Party",
+     "question": "Who is bound by the confidentiality obligations?"
+    },
+    {
+     "key": "term",
+     "type": "term",
+     "label": "Confidentiality Period",
+     "chips": [
+      "6 months",
+      "1 year",
+      "2 years",
+      "Skip"
+     ],
+     "ask": false
+    }
+   ],
+   "intro": "This {title} is made on {effectiveDate} between {partyA} and {partyB}, who will keep the Company's corporate information confidential for {term}.",
+   "clauses": [
+    "confidentiality",
+    "confidentiality-exclusions",
+    "return-of-materials",
+    "data-privacy",
+    "governing-law",
+    "entire-agreement"
+   ],
+   "roleLabels": {
+    "signer": [
+     "Involved Parties"
+    ],
+    "approver": [
+     "Executive Management"
+    ],
+    "reviewer": [
+     "Senior Legal Counsel"
+    ],
+    "acknowledgment-recipient": [],
+    "viewer": [],
+    "carbon-copy": [
+     "Legal Department"
+    ]
+   }
+  },
+  {
+   "id": "real-estate-and-property--property-lease-agreement",
+   "title": "Property Lease Agreement",
+   "category": "Real Estate & Property",
+   "source": {
+    "readyMadeTitle": "Property Lease Agreement",
+    "readyMadeId": "real-estate-and-property--property-lease-agreement",
+    "inGallery": true
+   },
+   "parties": [
+    "Lessor",
+    "Lessee"
+   ],
+   "aliases": [
+    "lease agreement",
+    "lease contract",
+    "contract of lease",
+    "rental agreement",
+    "tenancy agreement",
+    "rent agreement",
+    "apartment lease",
+    "house lease"
+   ],
+   "keywords": [
+    "lease",
+    "rent",
+    "rental",
+    "tenant",
+    "landlord",
+    "lessor",
+    "lessee",
+    "apartment",
+    "condo",
+    "house",
+    "unit"
+   ],
+   "slots": [
+    {
+     "key": "partyA",
+     "type": "name",
+     "label": "Lessor",
+     "question": "Who is the lessor (the owner or landlord)?"
+    },
+    {
+     "key": "partyB",
+     "type": "name",
+     "label": "Lessee",
+     "question": "Who is the lessee (the tenant)?"
+    },
+    {
+     "key": "amount",
+     "type": "amount",
+     "label": "Monthly Rent",
+     "question": "What is the monthly rent?"
+    },
+    {
+     "key": "property",
+     "type": "text",
+     "label": "Property Address",
+     "question": "What is the property's address?",
+     "ask": false
+    },
+    {
+     "key": "term",
+     "type": "term",
+     "label": "Lease Term",
+     "chips": [
+      "6 months",
+      "1 year",
+      "2 years",
+      "Skip"
+     ],
+     "ask": false
+    }
+   ],
+   "intro": "This {title} is made on {effectiveDate} between {partyA} (the “Lessor”) and {partyB} (the “Lessee”) for the property at {property}, for {term}, at a monthly rent of {amount}.",
+   "clauses": [
+    "rent-payment",
+    "security-deposit",
+    "maintenance-repairs",
+    "use-of-property",
+    "termination",
+    "governing-law",
+    "entire-agreement"
+   ],
+   "roleLabels": {
+    "signer": [
+     "Tenant"
+    ],
+    "approver": [
+     "Property Owner"
+    ],
+    "reviewer": [
+     "Legal Counsel"
+    ],
+    "acknowledgment-recipient": [],
+    "viewer": [],
+    "carbon-copy": [
+     "Property Records"
+    ]
+   }
+  },
+  {
+   "id": "real-estate-and-property--property-sale-and-purchase-agreement",
+   "title": "Property Sale and Purchase Agreement",
+   "category": "Real Estate & Property",
+   "source": {
+    "readyMadeTitle": "Property Sale and Purchase Agreement",
+    "readyMadeId": "real-estate-and-property--property-sale-and-purchase-agreement",
+    "inGallery": true
+   },
+   "parties": [
+    "Seller",
+    "Buyer"
+   ],
+   "aliases": [
+    "deed of sale",
+    "property sale",
+    "contract to sell",
+    "sale and purchase agreement",
+    "house sale",
+    "lot sale",
+    "real estate sale"
+   ],
+   "keywords": [
+    "property",
+    "sale",
+    "deed",
+    "lot",
+    "land",
+    "house",
+    "buyer",
+    "seller",
+    "title"
+   ],
+   "slots": [
+    {
+     "key": "partyA",
+     "type": "name",
+     "label": "Seller",
+     "question": "What is the seller's full name?"
+    },
+    {
+     "key": "partyB",
+     "type": "name",
+     "label": "Buyer",
+     "question": "What is the buyer's full name?"
+    },
+    {
+     "key": "amount",
+     "type": "amount",
+     "label": "Purchase Price",
+     "question": "What is the purchase price?"
+    },
+    {
+     "key": "property",
+     "type": "text",
+     "label": "Property Address",
+     "ask": false
+    }
+   ],
+   "intro": "This {title} is made on {effectiveDate} between {partyA} (the “Seller”) and {partyB} (the “Buyer”) for the property at {property}, at a purchase price of {amount}.",
+   "clauses": [
+    "payment-terms",
+    "title-transfer",
+    "taxes-and-fees",
+    "warranties",
+    "governing-law",
+    "entire-agreement"
+   ],
+   "roleLabels": {
+    "signer": [
+     "Buyer and Seller"
+    ],
+    "approver": [
+     "Title or Escrow Officer"
+    ],
+    "reviewer": [
+     "Legal Counsel or Notary"
+    ],
+    "acknowledgment-recipient": [],
+    "viewer": [],
+    "carbon-copy": [
+     "Property Records Office"
+    ]
+   }
+  },
+  {
+   "id": "real-estate-and-property--rental-application-form",
+   "title": "Rental Application Form",
+   "category": "Real Estate & Property",
+   "source": {
+    "readyMadeTitle": "Rental Application Form",
+    "readyMadeId": "real-estate-and-property--rental-application-form",
+    "inGallery": false
+   },
+   "parties": [
+    "Applicant"
+   ],
+   "aliases": [
+    "rental application",
+    "tenant application",
+    "apartment application",
+    "lease application"
+   ],
+   "keywords": [
+    "application",
+    "apply",
+    "applicant",
+    "rental",
+    "tenant"
+   ],
+   "slots": [
+    {
+     "key": "partyA",
+     "type": "name",
+     "label": "Applicant",
+     "question": "What is the applicant's full name?"
+    },
+    {
+     "key": "property",
+     "type": "text",
+     "label": "Property Applied For",
+     "question": "Which property or unit is the application for?"
+    },
+    {
+     "key": "moveInDate",
+     "type": "date",
+     "label": "Move-in Date",
+     "question": "When would the applicant like to move in?",
+     "chips": [
+      "Today",
+      "Skip"
+     ]
+    }
+   ],
+   "intro": "Rental application by {partyA} for {property}, with a preferred move-in date of {moveInDate}.",
+   "clauses": [
+    "applicant-declaration",
+    "data-privacy",
+    "acknowledgment-block"
+   ],
+   "roleLabels": {
+    "signer": [],
+    "approver": [
+     "Property Owner"
+    ],
+    "reviewer": [
+     "Property Manager"
+    ],
+    "acknowledgment-recipient": [],
+    "viewer": [],
+    "carbon-copy": [
+     "Leasing Office"
+    ]
+   }
+  },
+  {
+   "id": "real-estate-and-property--mortgage-loan-agreement",
+   "title": "Mortgage Loan Agreement",
+   "category": "Real Estate & Property",
+   "source": {
+    "readyMadeTitle": "Mortgage Loan Agreement",
+    "readyMadeId": "real-estate-and-property--mortgage-loan-agreement",
+    "inGallery": true
+   },
+   "parties": [
+    "Lender",
+    "Borrower"
+   ],
+   "aliases": [
+    "mortgage",
+    "real estate mortgage",
+    "home loan",
+    "housing loan",
+    "mortgage agreement"
+   ],
+   "keywords": [
+    "mortgage",
+    "home",
+    "housing",
+    "collateral",
+    "lender",
+    "borrower"
+   ],
+   "slots": [
+    {
+     "key": "partyA",
+     "type": "company",
+     "label": "Lender",
+     "question": "What is the lender's company or organisation name?"
+    },
+    {
+     "key": "partyB",
+     "type": "name",
+     "label": "Borrower",
+     "question": "What is the borrower's full name?"
+    },
+    {
+     "key": "amount",
+     "type": "amount",
+     "label": "Loan Amount",
+     "question": "How much is the mortgage loan?"
+    }
+   ],
+   "intro": "This {title} is made on {effectiveDate} between {partyA} (the “Lender”) and {partyB} (the “Borrower”) for a loan of {amount}, secured by the property described below.",
+   "clauses": [
+    "repayment",
+    "collateral",
+    "late-payment",
+    "insurance",
+    "governing-law",
+    "entire-agreement"
+   ],
+   "roleLabels": {
+    "signer": [
+     "Borrower"
+    ],
+    "approver": [
+     "Lending Approval Committee"
+    ],
+    "reviewer": [
+     "Underwriter"
+    ],
+    "acknowledgment-recipient": [],
+    "viewer": [],
+    "carbon-copy": [
+     "Records and Legal Department"
+    ]
+   }
+  },
+  {
+   "id": "healthcare--patient-informed-consent-form",
+   "title": "Patient Informed Consent Form",
+   "category": "Healthcare",
+   "source": {
+    "readyMadeTitle": "Patient Informed Consent Form",
+    "readyMadeId": "healthcare--patient-informed-consent-form",
+    "inGallery": true
+   },
+   "parties": [
+    "Patient or Guardian"
+   ],
+   "aliases": [
+    "informed consent",
+    "consent form",
+    "patient consent",
+    "medical consent",
+    "procedure consent"
+   ],
+   "keywords": [
+    "patient",
+    "consent",
+    "procedure",
+    "treatment",
+    "surgery",
+    "medical",
+    "doctor",
+    "hospital",
+    "clinic"
+   ],
+   "slots": [
+    {
+     "key": "partyA",
+     "type": "name",
+     "label": "Patient",
+     "question": "What is the patient's full name?"
+    },
+    {
+     "key": "procedure",
+     "type": "text",
+     "label": "Procedure",
+     "question": "What procedure or treatment is the consent for?"
+    },
+    {
+     "key": "provider",
+     "type": "company",
+     "label": "Healthcare Provider",
+     "question": "Which clinic or hospital is providing it?"
+    }
+   ],
+   "intro": "I, {partyA}, consent to {procedure} to be performed by {provider}. The nature, benefits and risks of the procedure have been explained to me.",
+   "clauses": [
+    "patient-rights",
+    "data-privacy",
+    "acknowledgment-block",
+    "witness-block"
+   ],
+   "roleLabels": {
+    "signer": [
+     "Patient or Guardian"
+    ],
+    "approver": [],
+    "reviewer": [
+     "Attending Physician"
+    ],
+    "acknowledgment-recipient": [],
+    "viewer": [],
+    "carbon-copy": [
+     "Medical Records Department"
+    ]
+   }
+  },
+  {
+   "id": "healthcare--insurance-claim-form",
+   "title": "Insurance Claim Form",
+   "category": "Healthcare",
+   "source": {
+    "readyMadeTitle": "Insurance Claim Form",
+    "readyMadeId": "healthcare--insurance-claim-form",
+    "inGallery": false
+   },
+   "parties": [
+    "Claimant"
+   ],
+   "aliases": [
+    "insurance claim",
+    "claim form",
+    "health insurance claim",
+    "hmo claim"
+   ],
+   "keywords": [
+    "insurance",
+    "claim",
+    "claims",
+    "insurer",
+    "hmo",
+    "reimbursement"
+   ],
+   "slots": [
+    {
+     "key": "partyA",
+     "type": "name",
+     "label": "Claimant",
+     "question": "What is the claimant's full name?"
+    },
+    {
+     "key": "policyNumber",
+     "type": "text",
+     "label": "Policy Number",
+     "question": "What is the policy number?",
+     "chips": [
+      "Skip"
+     ]
+    },
+    {
+     "key": "amount",
+     "type": "amount",
+     "label": "Amount Claimed",
+     "question": "How much is being claimed?"
+    }
+   ],
+   "intro": "Claim by {partyA} under policy number {policyNumber}, for {amount}.",
+   "clauses": [
+    "applicant-declaration",
+    "data-privacy",
+    "acknowledgment-block"
+   ],
+   "roleLabels": {
+    "signer": [],
+    "approver": [
+     "Insurance Adjuster"
+    ],
+    "reviewer": [
+     "Healthcare Provider"
+    ],
+    "acknowledgment-recipient": [],
+    "viewer": [],
+    "carbon-copy": [
+     "Claims Department"
+    ]
+   }
+  },
+  {
+   "id": "healthcare--medical-record-release-authorization-form",
+   "title": "Medical Record Release Authorization Form",
+   "category": "Healthcare",
+   "source": {
+    "readyMadeTitle": "Medical Record Release Authorization Form",
+    "readyMadeId": "healthcare--medical-record-release-authorization-form",
+    "inGallery": false
+   },
+   "parties": [
+    "Patient"
+   ],
+   "aliases": [
+    "medical records release",
+    "records release",
+    "release of information",
+    "hipaa release",
+    "medical authorization"
+   ],
+   "keywords": [
+    "records",
+    "record",
+    "release",
+    "authorization",
+    "authorisation",
+    "medical",
+    "health"
+   ],
+   "slots": [
+    {
+     "key": "partyA",
+     "type": "name",
+     "label": "Patient",
+     "question": "What is the patient's full name?"
+    },
+    {
+     "key": "recipient",
+     "type": "company",
+     "label": "Recipient",
+     "question": "Who should receive the medical records?"
+    },
+    {
+     "key": "expiryDate",
+     "type": "date",
+     "label": "Expiry Date",
+     "question": "What is the expiry date?",
+     "chips": [
+      "Today",
+      "Skip"
+     ],
+     "ask": false
+    }
+   ],
+   "intro": "I, {partyA}, authorise the release of my medical records to {recipient}. This authorisation is valid until {expiryDate} unless I revoke it in writing.",
+   "clauses": [
+    "data-privacy",
+    "revocation",
+    "acknowledgment-block"
+   ],
+   "roleLabels": {
+    "signer": [],
+    "approver": [
+     "Privacy Officer"
+    ],
+    "reviewer": [
+     "Health Information Manager"
+    ],
+    "acknowledgment-recipient": [],
+    "viewer": [],
+    "carbon-copy": [
+     "Medical Records Department"
+    ]
+   }
+  },
+  {
+   "id": "education--student-enrollment-agreement",
+   "title": "Student Enrollment Agreement",
+   "category": "Education",
+   "source": {
+    "readyMadeTitle": "Student Enrollment Agreement",
+    "readyMadeId": "education--student-enrollment-agreement",
+    "inGallery": true
+   },
+   "parties": [
+    "School",
+    "Student or Guardian"
+   ],
+   "aliases": [
+    "enrollment agreement",
+    "enrolment agreement",
+    "school enrollment",
+    "admission agreement",
+    "tuition agreement"
+   ],
+   "keywords": [
+    "enrollment",
+    "enrolment",
+    "enroll",
+    "student",
+    "school",
+    "tuition",
+    "admission"
+   ],
+   "slots": [
+    {
+     "key": "partyA",
+     "type": "company",
+     "label": "School",
+     "question": "What is the school's company or organisation name?"
+    },
+    {
+     "key": "partyB",
+     "type": "name",
+     "label": "Student",
+     "question": "What is the student's full name?"
+    },
+    {
+     "key": "amount",
+     "type": "amount",
+     "label": "Tuition Fee",
+     "question": "What is the tuition fee for the term or school year?"
+    }
+   ],
+   "intro": "This {title} is made on {effectiveDate} between {partyA} (the “School”) and {partyB} (the “Student”). The Student enrols for the school year at a tuition fee of {amount}.",
+   "clauses": [
+    "payment-terms",
+    "code-of-conduct",
+    "data-privacy",
+    "termination",
+    "governing-law"
+   ],
+   "roleLabels": {
+    "signer": [
+     "Student or Guardian"
+    ],
+    "approver": [
+     "Academic Dean"
+    ],
+    "reviewer": [
+     "Registrar"
+    ],
+    "acknowledgment-recipient": [],
+    "viewer": [],
+    "carbon-copy": [
+     "Records Office"
+    ]
+   }
+  },
+  {
+   "id": "education--scholarship-agreement",
+   "title": "Scholarship Agreement",
+   "category": "Education",
+   "source": {
+    "readyMadeTitle": "Scholarship Agreement",
+    "readyMadeId": "education--scholarship-agreement",
+    "inGallery": true
+   },
+   "parties": [
+    "Grantor",
+    "Scholar"
+   ],
+   "aliases": [
+    "scholarship contract",
+    "scholarship grant",
+    "study grant",
+    "grant agreement"
+   ],
+   "keywords": [
+    "scholarship",
+    "scholar",
+    "grant",
+    "stipend",
+    "study",
+    "studies"
+   ],
+   "slots": [
+    {
+     "key": "partyA",
+     "type": "company",
+     "label": "Grantor",
+     "question": "What is the grantor's company or organisation name?"
+    },
+    {
+     "key": "partyB",
+     "type": "name",
+     "label": "Scholar",
+     "question": "What is the scholar's full name?"
+    },
+    {
+     "key": "amount",
+     "type": "amount",
+     "label": "Scholarship Amount",
+     "question": "What does the scholarship cover (amount per term or year)?"
+    }
+   ],
+   "intro": "This {title} is made on {effectiveDate} between {partyA} (the “Grantor”) and {partyB} (the “Scholar”). The Grantor awards a scholarship of {amount} on the conditions below.",
+   "clauses": [
+    "scholarship-conditions",
+    "return-service",
+    "data-privacy",
+    "termination",
+    "governing-law"
+   ],
+   "roleLabels": {
+    "signer": [
+     "Student"
+    ],
+    "approver": [
+     "Academic Dean"
+    ],
+    "reviewer": [
+     "Scholarship Committee"
+    ],
+    "acknowledgment-recipient": [],
+    "viewer": [],
+    "carbon-copy": [
+     "Financial Aid Office"
+    ]
+   }
+  },
+  {
+   "id": "education--internship-agreement",
+   "title": "Internship Agreement",
+   "category": "Education",
+   "source": {
+    "readyMadeTitle": "Internship Agreement",
+    "readyMadeId": "education--internship-agreement",
+    "inGallery": true
+   },
+   "parties": [
+    "Host Company",
+    "Intern"
+   ],
+   "aliases": [
+    "internship contract",
+    "ojt agreement",
+    "on the job training agreement",
+    "intern agreement",
+    "practicum agreement"
+   ],
+   "keywords": [
+    "internship",
+    "intern",
+    "interns",
+    "ojt",
+    "practicum",
+    "trainee",
+    "training"
+   ],
+   "slots": [
+    {
+     "key": "partyA",
+     "type": "company",
+     "label": "Host Company",
+     "question": "What is the host company's company or organisation name?"
+    },
+    {
+     "key": "partyB",
+     "type": "name",
+     "label": "Intern",
+     "question": "What is the intern's full name?"
+    },
+    {
+     "key": "term",
+     "type": "term",
+     "label": "Internship Period",
+     "question": "How long is the internship?",
+     "chips": [
+      "3 months",
+      "6 months",
+      "Skip"
+     ]
+    },
+    {
+     "key": "amount",
+     "type": "amount",
+     "label": "Allowance",
+     "ask": false
+    }
+   ],
+   "intro": "This {title} is made on {effectiveDate} between {partyA} (the “Host Company”) and {partyB} (the “Intern”) for an internship lasting {term}, with an allowance of {amount}.",
+   "clauses": [
+    "training-plan",
+    "confidentiality",
+    "data-privacy",
+    "termination",
+    "governing-law"
+   ],
+   "roleLabels": {
+    "signer": [
+     "Intern"
+    ],
+    "approver": [
+     "Academic Coordinator"
+    ],
+    "reviewer": [
+     "Host Supervisor"
+    ],
+    "acknowledgment-recipient": [],
+    "viewer": [],
+    "carbon-copy": [
+     "HR or Records Office"
+    ]
+   }
+  },
+  {
+   "id": "it-and-data-security--software-license-agreement",
+   "title": "Software License Agreement",
+   "category": "IT & Data Security",
+   "source": {
+    "readyMadeTitle": "Software License Agreement",
+    "readyMadeId": "it-and-data-security--software-license-agreement",
+    "inGallery": true
+   },
+   "parties": [
+    "Licensor",
+    "Licensee"
+   ],
+   "aliases": [
+    "software license",
+    "software licence",
+    "eula",
+    "end user license agreement",
+    "app license"
+   ],
+   "keywords": [
+    "software",
+    "app",
+    "application",
+    "eula",
+    "license",
+    "licence",
+    "program"
+   ],
+   "slots": [
+    {
+     "key": "partyA",
+     "type": "company",
+     "label": "Licensor",
+     "question": "What is the licensor's company or organisation name?"
+    },
+    {
+     "key": "partyB",
+     "type": "company",
+     "label": "Licensee",
+     "question": "What is the licensee's company or organisation name?"
+    },
+    {
+     "key": "software",
+     "type": "text",
+     "label": "Software",
+     "question": "What is the software called?"
+    },
+    {
+     "key": "amount",
+     "type": "amount",
+     "label": "License Fee",
+     "ask": false
+    }
+   ],
+   "intro": "This {title} is made on {effectiveDate} between {partyA} (the “Licensor”) and {partyB} (the “Licensee”) for the use of {software}, for a license fee of {amount}.",
+   "clauses": [
+    "license-grant",
+    "intellectual-property",
+    "warranties",
+    "limitation-of-liability",
+    "termination",
+    "governing-law",
+    "entire-agreement"
+   ],
+   "roleLabels": {
+    "signer": [
+     "Licensee or Client"
+    ],
+    "approver": [
+     "IT Director"
+    ],
+    "reviewer": [
+     "Legal Counsel"
+    ],
+    "acknowledgment-recipient": [],
+    "viewer": [],
+    "carbon-copy": [
+     "IT and Legal Records"
+    ]
+   }
+  },
+  {
+   "id": "it-and-data-security--data-processing-agreement-dpa",
+   "title": "Data Processing Agreement (DPA)",
+   "category": "IT & Data Security",
+   "source": {
+    "readyMadeTitle": "Data Processing Agreement (DPA)",
+    "readyMadeId": "it-and-data-security--data-processing-agreement-dpa",
+    "inGallery": true
+   },
+   "parties": [
+    "Controller",
+    "Processor"
+   ],
+   "aliases": [
+    "dpa",
+    "data processing agreement",
+    "data sharing agreement",
+    "personal information controller agreement",
+    "gdpr agreement"
+   ],
+   "keywords": [
+    "dpa",
+    "processing",
+    "processor",
+    "controller",
+    "personal",
+    "privacy",
+    "gdpr",
+    "data"
+   ],
+   "slots": [
+    {
+     "key": "partyA",
+     "type": "company",
+     "label": "Personal Information Controller",
+     "question": "Who is the personal information controller (the company that owns the data)?"
+    },
+    {
+     "key": "partyB",
+     "type": "company",
+     "label": "Personal Information Processor",
+     "question": "Who will process the data on its behalf?"
+    },
+    {
+     "key": "purpose",
+     "type": "text",
+     "label": "Processing Purpose",
+     "question": "What will the data be processed for (for example payroll)?"
+    }
+   ],
+   "intro": "This {title} is made on {effectiveDate} between {partyA} (the “Controller”) and {partyB} (the “Processor”), who will process personal data only for {purpose}.",
+   "clauses": [
+    "data-privacy",
+    "security-measures",
+    "breach-notification",
+    "confidentiality",
+    "return-of-materials",
+    "governing-law"
+   ],
+   "roleLabels": {
+    "signer": [
+     "Data Processor or Vendor"
+    ],
+    "approver": [
+     "Compliance Officer"
+    ],
+    "reviewer": [
+     "Legal Counsel"
+    ],
+    "acknowledgment-recipient": [],
+    "viewer": [],
+    "carbon-copy": [
+     "Compliance Department"
+    ]
+   }
+  },
+  {
+   "id": "it-and-data-security--cloud-service-agreement",
+   "title": "Cloud Service Agreement",
+   "category": "IT & Data Security",
+   "source": {
+    "readyMadeTitle": "Cloud Service Agreement",
+    "readyMadeId": "it-and-data-security--cloud-service-agreement",
+    "inGallery": true
+   },
+   "parties": [
+    "Provider",
+    "Customer"
+   ],
+   "aliases": [
+    "cloud agreement",
+    "cloud contract",
+    "hosting agreement",
+    "cloud hosting",
+    "iaas agreement"
+   ],
+   "keywords": [
+    "cloud",
+    "hosting",
+    "server",
+    "servers",
+    "storage",
+    "aws",
+    "azure"
+   ],
+   "slots": [
+    {
+     "key": "partyA",
+     "type": "company",
+     "label": "Cloud Provider",
+     "question": "What is the cloud provider's company or organisation name?"
+    },
+    {
+     "key": "partyB",
+     "type": "company",
+     "label": "Customer",
+     "question": "What is the customer's company or organisation name?"
+    },
+    {
+     "key": "amount",
+     "type": "amount",
+     "label": "Service Fee",
+     "question": "What is the service fee?"
+    }
+   ],
+   "intro": "This {title} is made on {effectiveDate} between {partyA} (the “Provider”) and {partyB} (the “Customer”) for cloud services at a fee of {amount}.",
+   "clauses": [
+    "service-levels",
+    "security-measures",
+    "data-privacy",
+    "payment-terms",
+    "limitation-of-liability",
+    "termination",
+    "governing-law"
+   ],
+   "roleLabels": {
+    "signer": [
+     "Service Provider Representative"
+    ],
+    "approver": [
+     "Chief Information Officer"
+    ],
+    "reviewer": [
+     "IT Security Officer"
+    ],
+    "acknowledgment-recipient": [],
+    "viewer": [],
+    "carbon-copy": [
+     "IT Department"
+    ]
+   }
+  },
+  {
+   "id": "it-and-data-security--confidentiality-and-system-access-control-agreement",
+   "title": "Confidentiality and System Access Control Agreement",
+   "category": "IT & Data Security",
+   "source": {
+    "readyMadeTitle": "Confidentiality and System Access Control Agreement",
+    "readyMadeId": "it-and-data-security--confidentiality-and-system-access-control-agreement",
+    "inGallery": true
+   },
+   "parties": [
+    "Company",
+    "User"
+   ],
+   "aliases": [
+    "system access agreement",
+    "access control agreement",
+    "it access form",
+    "acceptable use agreement",
+    "account access agreement"
+   ],
+   "keywords": [
+    "access",
+    "system",
+    "systems",
+    "account",
+    "password",
+    "credentials",
+    "acceptable"
+   ],
+   "slots": [
+    {
+     "key": "partyA",
+     "type": "company",
+     "label": "Company",
+     "question": "What is the company's company or organisation name?"
+    },
+    {
+     "key": "partyB",
+     "type": "name",
+     "label": "Employee or Contractor",
+     "question": "What is the employee or contractor's full name?"
+    },
+    {
+     "key": "systems",
+     "type": "text",
+     "label": "Systems Covered",
+     "question": "Which systems will they get access to?",
+     "chips": [
+      "Skip"
+     ]
+    }
+   ],
+   "intro": "This {title} is made on {effectiveDate} between {partyA} and {partyB}, who is given access to {systems} on the conditions below.",
+   "clauses": [
+    "acceptable-use",
+    "confidentiality",
+    "security-measures",
+    "data-privacy",
+    "termination",
+    "acknowledgment-block"
+   ],
+   "roleLabels": {
+    "signer": [
+     "Employee or Contractor"
+    ],
+    "approver": [
+     "Chief Security Officer"
+    ],
+    "reviewer": [
+     "IT Manager"
+    ],
+    "acknowledgment-recipient": [],
+    "viewer": [],
+    "carbon-copy": [
+     "IT Security Department"
+    ]
+   }
+  },
+  {
+   "id": "marketing-and-partnerships--influencer-collaboration-agreement",
+   "title": "Influencer Collaboration Agreement",
+   "category": "Marketing & Partnerships",
+   "source": {
+    "readyMadeTitle": "Influencer Collaboration Agreement",
+    "readyMadeId": "marketing-and-partnerships--influencer-collaboration-agreement",
+    "inGallery": true
+   },
+   "parties": [
+    "Brand",
+    "Influencer"
+   ],
+   "aliases": [
+    "influencer agreement",
+    "influencer contract",
+    "brand collaboration",
+    "content creator agreement",
+    "kol agreement"
+   ],
+   "keywords": [
+    "influencer",
+    "creator",
+    "collab",
+    "collaboration",
+    "brand",
+    "content",
+    "kol",
+    "tiktok",
+    "instagram"
+   ],
+   "slots": [
+    {
+     "key": "partyA",
+     "type": "company",
+     "label": "Brand",
+     "question": "What is the brand's company or organisation name?"
+    },
+    {
+     "key": "partyB",
+     "type": "name",
+     "label": "Influencer",
+     "question": "What is the influencer's full name?"
+    },
+    {
+     "key": "amount",
+     "type": "amount",
+     "label": "Fee",
+     "question": "What is the influencer's fee?"
+    },
+    {
+     "key": "deliverables",
+     "type": "text",
+     "label": "Deliverables",
+     "ask": false
+    }
+   ],
+   "intro": "This {title} is made on {effectiveDate} between {partyA} (the “Brand”) and {partyB} (the “Influencer”), who will create {deliverables} for a fee of {amount}.",
+   "clauses": [
+    "deliverables",
+    "intellectual-property",
+    "disclosure-of-sponsorship",
+    "payment-terms",
+    "termination",
+    "governing-law"
+   ],
+   "roleLabels": {
+    "signer": [
+     "Collaborating Individual"
+    ],
+    "approver": [
+     "Marketing Director"
+    ],
+    "reviewer": [
+     "Legal Counsel"
+    ],
+    "acknowledgment-recipient": [],
+    "viewer": [],
+    "carbon-copy": [
+     "Marketing Department"
+    ]
+   }
+  },
+  {
+   "id": "marketing-and-partnerships--advertising-services-agreement",
+   "title": "Advertising Services Agreement",
+   "category": "Marketing & Partnerships",
+   "source": {
+    "readyMadeTitle": "Advertising Services Agreement",
+    "readyMadeId": "marketing-and-partnerships--advertising-services-agreement",
+    "inGallery": true
+   },
+   "parties": [
+    "Agency",
+    "Client"
+   ],
+   "aliases": [
+    "advertising agreement",
+    "ad agency agreement",
+    "media services agreement",
+    "advertising contract"
+   ],
+   "keywords": [
+    "advertising",
+    "ads",
+    "ad",
+    "agency",
+    "media",
+    "campaign"
+   ],
+   "slots": [
+    {
+     "key": "partyA",
+     "type": "company",
+     "label": "Agency",
+     "question": "What is the agency's company or organisation name?"
+    },
+    {
+     "key": "partyB",
+     "type": "company",
+     "label": "Client",
+     "question": "What is the client's company or organisation name?"
+    },
+    {
+     "key": "amount",
+     "type": "amount",
+     "label": "Fee",
+     "question": "What is the agency fee or campaign budget?"
+    }
+   ],
+   "intro": "This {title} is made on {effectiveDate} between {partyA} (the “Agency”) and {partyB} (the “Client”) for advertising services at a fee of {amount}.",
+   "clauses": [
+    "scope-of-services",
+    "intellectual-property",
+    "payment-terms",
+    "confidentiality",
+    "termination",
+    "governing-law"
+   ],
+   "roleLabels": {
+    "signer": [
+     "Client Representative"
+    ],
+    "approver": [
+     "Marketing Director"
+    ],
+    "reviewer": [
+     "Legal Counsel"
+    ],
+    "acknowledgment-recipient": [],
+    "viewer": [],
+    "carbon-copy": [
+     "Marketing Department"
+    ]
+   }
+  },
+  {
+   "id": "marketing-and-partnerships--sponsorship-agreement",
+   "title": "Sponsorship Agreement",
+   "category": "Marketing & Partnerships",
+   "source": {
+    "readyMadeTitle": "Sponsorship Agreement",
+    "readyMadeId": "marketing-and-partnerships--sponsorship-agreement",
+    "inGallery": true
+   },
+   "parties": [
+    "Sponsor",
+    "Organizer"
+   ],
+   "aliases": [
+    "sponsorship contract",
+    "event sponsorship",
+    "sponsor agreement",
+    "sponsorship deal"
+   ],
+   "keywords": [
+    "sponsorship",
+    "sponsor",
+    "sponsors",
+    "event",
+    "sponsored"
+   ],
+   "slots": [
+    {
+     "key": "partyA",
+     "type": "company",
+     "label": "Sponsor",
+     "question": "What is the sponsor's company or organisation name?"
+    },
+    {
+     "key": "partyB",
+     "type": "company",
+     "label": "Organizer",
+     "question": "What is the organizer's company or organisation name?"
+    },
+    {
+     "key": "amount",
+     "type": "amount",
+     "label": "Sponsorship Amount",
+     "question": "What is the sponsorship amount?"
+    },
+    {
+     "key": "event",
+     "type": "text",
+     "label": "Event",
+     "ask": false
+    }
+   ],
+   "intro": "This {title} is made on {effectiveDate} between {partyA} (the “Sponsor”) and {partyB} (the “Organizer”) for the sponsorship of {event}, in the amount of {amount}.",
+   "clauses": [
+    "sponsor-benefits",
+    "intellectual-property",
+    "payment-terms",
+    "termination",
+    "governing-law"
+   ],
+   "roleLabels": {
+    "signer": [
+     "Sponsor Representative"
+    ],
+    "approver": [
+     "Marketing Director"
+    ],
+    "reviewer": [
+     "Legal Counsel"
+    ],
+    "acknowledgment-recipient": [],
+    "viewer": [],
+    "carbon-copy": [
+     "Partnerships Department"
+    ]
+   }
+  },
+  {
+   "id": "marketing-and-partnerships--co-marketing-memorandum-of-understanding-mou",
+   "title": "Co-Marketing Memorandum of Understanding (MOU)",
+   "category": "Marketing & Partnerships",
+   "source": {
+    "readyMadeTitle": "Co-Marketing Memorandum of Understanding (MOU)",
+    "readyMadeId": "marketing-and-partnerships--co-marketing-memorandum-of-understanding-mou",
+    "inGallery": true
+   },
+   "parties": [
+    "First Partner",
+    "Second Partner"
+   ],
+   "aliases": [
+    "mou",
+    "memorandum of understanding",
+    "memorandum of agreement",
+    "moa",
+    "co-marketing agreement",
+    "co marketing"
+   ],
+   "keywords": [
+    "mou",
+    "moa",
+    "memorandum",
+    "understanding",
+    "comarketing",
+    "co-marketing",
+    "partnership"
+   ],
+   "slots": [
+    {
+     "key": "partyA",
+     "type": "company",
+     "label": "First Partner",
+     "question": "What is the first partner's company or organisation name?"
+    },
+    {
+     "key": "partyB",
+     "type": "company",
+     "label": "Second Partner",
+     "question": "What is the second partner's company or organisation name?"
+    },
+    {
+     "key": "purpose",
+     "type": "text",
+     "label": "Purpose",
+     "question": "In one line, what will you promote together?"
+    }
+   ],
+   "intro": "This {title} is made on {effectiveDate} between {partyA} and {partyB}, who intend to work together on {purpose}.",
+   "clauses": [
+    "non-binding-nature",
+    "intellectual-property",
+    "confidentiality",
+    "term",
+    "governing-law"
+   ],
+   "roleLabels": {
+    "signer": [
+     "Partner Organization Representative"
+    ],
+    "approver": [
+     "Marketing Director"
+    ],
+    "reviewer": [
+     "Legal Counsel"
+    ],
+    "acknowledgment-recipient": [],
+    "viewer": [],
+    "carbon-copy": [
+     "Marketing Department"
+    ]
+   }
+  },
+  {
+   "id": "operations-and-administration--facility-rental-agreement",
+   "title": "Facility Rental Agreement",
+   "category": "Operations & Administration",
+   "source": {
+    "readyMadeTitle": "Facility Rental Agreement",
+    "readyMadeId": "operations-and-administration--facility-rental-agreement",
+    "inGallery": true
+   },
+   "parties": [
+    "Owner",
+    "Renter"
+   ],
+   "aliases": [
+    "venue rental",
+    "facility rental",
+    "hall rental",
+    "event venue agreement",
+    "space rental"
+   ],
+   "keywords": [
+    "facility",
+    "venue",
+    "hall",
+    "space",
+    "rental",
+    "event"
+   ],
+   "slots": [
+    {
+     "key": "partyA",
+     "type": "company",
+     "label": "Facility Owner",
+     "question": "What is the facility owner's company or organisation name?"
+    },
+    {
+     "key": "partyB",
+     "type": "name",
+     "label": "Renter",
+     "question": "What is the renter's full name?"
+    },
+    {
+     "key": "eventDate",
+     "type": "date",
+     "label": "Rental Date",
+     "question": "On what date(s) will the facility be used?",
+     "chips": [
+      "Today",
+      "Skip"
+     ]
+    },
+    {
+     "key": "amount",
+     "type": "amount",
+     "label": "Rental Fee",
+     "ask": false
+    }
+   ],
+   "intro": "This {title} is made on {effectiveDate} between {partyA} (the “Owner”) and {partyB} (the “Renter”) for the use of the facility on {eventDate}, for a fee of {amount}.",
+   "clauses": [
+    "use-of-property",
+    "security-deposit",
+    "payment-terms",
+    "indemnity",
+    "force-majeure",
+    "governing-law"
+   ],
+   "roleLabels": {
+    "signer": [
+     "Renting Party"
+    ],
+    "approver": [
+     "Operations Director"
+    ],
+    "reviewer": [
+     "Legal Counsel"
+    ],
+    "acknowledgment-recipient": [],
+    "viewer": [],
+    "carbon-copy": [
+     "Facilities Department"
+    ]
+   }
+  },
+  {
+   "id": "operations-and-administration--equipment-lease-agreement",
+   "title": "Equipment Lease Agreement",
+   "category": "Operations & Administration",
+   "source": {
+    "readyMadeTitle": "Equipment Lease Agreement",
+    "readyMadeId": "operations-and-administration--equipment-lease-agreement",
+    "inGallery": true
+   },
+   "parties": [
+    "Lessor",
+    "Lessee"
+   ],
+   "aliases": [
+    "equipment lease",
+    "equipment rental",
+    "machine rental",
+    "equipment hire"
+   ],
+   "keywords": [
+    "equipment",
+    "machine",
+    "machinery",
+    "vehicle",
+    "lease",
+    "rental"
+   ],
+   "slots": [
+    {
+     "key": "partyA",
+     "type": "company",
+     "label": "Lessor",
+     "question": "What is the lessor's company or organisation name?"
+    },
+    {
+     "key": "partyB",
+     "type": "company",
+     "label": "Lessee",
+     "question": "What is the lessee's company or organisation name?"
+    },
+    {
+     "key": "equipment",
+     "type": "text",
+     "label": "Equipment",
+     "question": "What equipment is being leased?"
+    },
+    {
+     "key": "amount",
+     "type": "amount",
+     "label": "Rent",
+     "ask": false
+    }
+   ],
+   "intro": "This {title} is made on {effectiveDate} between {partyA} (the “Lessor”) and {partyB} (the “Lessee”) for the lease of {equipment}, at a rent of {amount}.",
+   "clauses": [
+    "maintenance-repairs",
+    "insurance",
+    "payment-terms",
+    "return-of-materials",
+    "termination",
+    "governing-law"
+   ],
+   "roleLabels": {
+    "signer": [
+     "Lessee"
+    ],
+    "approver": [
+     "Operations Director"
+    ],
+    "reviewer": [
+     "Finance Manager"
+    ],
+    "acknowledgment-recipient": [],
+    "viewer": [],
+    "carbon-copy": [
+     "Operations Department"
+    ]
+   }
+  },
+  {
+   "id": "operations-and-administration--maintenance-and-service-agreement",
+   "title": "Maintenance and Service Agreement",
+   "category": "Operations & Administration",
+   "source": {
+    "readyMadeTitle": "Maintenance and Service Agreement",
+    "readyMadeId": "operations-and-administration--maintenance-and-service-agreement",
+    "inGallery": true
+   },
+   "parties": [
+    "Client",
+    "Service Provider"
+   ],
+   "aliases": [
+    "maintenance agreement",
+    "maintenance contract",
+    "service and maintenance",
+    "repair and maintenance agreement",
+    "preventive maintenance"
+   ],
+   "keywords": [
+    "maintenance",
+    "repair",
+    "repairs",
+    "servicing",
+    "preventive",
+    "aircon",
+    "elevator"
+   ],
+   "slots": [
+    {
+     "key": "partyA",
+     "type": "company",
+     "label": "Client",
+     "question": "What is the client's company or organisation name?"
+    },
+    {
+     "key": "partyB",
+     "type": "company",
+     "label": "Service Provider",
+     "question": "What is the service provider's company or organisation name?"
+    },
+    {
+     "key": "frequency",
+     "type": "text",
+     "label": "Service Schedule",
+     "question": "How often will maintenance be done?",
+     "chips": [
+      "Monthly",
+      "Quarterly",
+      "Skip"
+     ]
+    }
+   ],
+   "intro": "This {title} is made on {effectiveDate} between {partyA} (the “Client”) and {partyB} (the “Service Provider”), who will carry out maintenance {frequency}.",
+   "clauses": [
+    "scope-of-services",
+    "service-levels",
+    "payment-terms",
+    "warranties",
+    "termination",
+    "governing-law"
+   ],
+   "roleLabels": {
+    "signer": [
+     "Service Provider"
+    ],
+    "approver": [
+     "Facilities Director"
+    ],
+    "reviewer": [
+     "Operations Manager"
+    ],
+    "acknowledgment-recipient": [],
+    "viewer": [],
+    "carbon-copy": [
+     "Operations Department"
+    ]
+   }
+  },
+  {
+   "id": "operations-and-administration--internal-budget-approval-and-authorization-form",
+   "title": "Internal Budget Approval and Authorization Form",
+   "category": "Operations & Administration",
+   "source": {
+    "readyMadeTitle": "Internal Budget Approval and Authorization Form",
+    "readyMadeId": "operations-and-administration--internal-budget-approval-and-authorization-form",
+    "inGallery": false
+   },
+   "parties": [
+    "Requesting Department"
+   ],
+   "aliases": [
+    "budget approval",
+    "budget request",
+    "budget authorization",
+    "project authorization",
+    "capex approval"
+   ],
+   "keywords": [
+    "budget",
+    "approval",
+    "authorization",
+    "authorisation",
+    "capex",
+    "expense",
+    "project"
+   ],
+   "slots": [
+    {
+     "key": "partyA",
+     "type": "text",
+     "label": "Requesting Department",
+     "question": "Which department is requesting the budget?"
+    },
+    {
+     "key": "amount",
+     "type": "amount",
+     "label": "Budget Amount",
+     "question": "How much budget is requested?"
+    },
+    {
+     "key": "purpose",
+     "type": "text",
+     "label": "Purpose",
+     "question": "What is the budget for?"
+    }
+   ],
+   "intro": "Budget request from {partyA} dated {effectiveDate}: {amount} for {purpose}.",
+   "clauses": [
+    "budget-justification",
+    "approval-block"
+   ],
+   "roleLabels": {
+    "signer": [],
+    "approver": [
+     "Chief Financial Officer"
+    ],
+    "reviewer": [
+     "Department Head",
+     "Finance Manager"
+    ],
+    "acknowledgment-recipient": [],
+    "viewer": [],
+    "carbon-copy": [
+     "Finance Department"
+    ]
+   }
+  },
+  {
+   "id": "compliance-and-risk-management--regulatory-filing-document",
+   "title": "Regulatory Filing Document",
+   "category": "Compliance & Risk Management",
+   "source": {
+    "readyMadeTitle": "Regulatory Filing Document",
+    "readyMadeId": "compliance-and-risk-management--regulatory-filing-document",
+    "inGallery": false
+   },
+   "parties": [
+    "Compliance Officer"
+   ],
+   "aliases": [
+    "regulatory filing",
+    "compliance filing",
+    "regulatory report",
+    "sec filing",
+    "government filing"
+   ],
+   "keywords": [
+    "regulatory",
+    "regulator",
+    "filing",
+    "file",
+    "sec",
+    "bir",
+    "compliance",
+    "report"
+   ],
+   "slots": [
+    {
+     "key": "partyA",
+     "type": "company",
+     "label": "Filing Company",
+     "question": "What is the filing company's company or organisation name?"
+    },
+    {
+     "key": "agency",
+     "type": "company",
+     "label": "Regulatory Agency",
+     "question": "Which agency is this filed with?"
+    },
+    {
+     "key": "deadline",
+     "type": "date",
+     "label": "Filing Deadline",
+     "question": "What is the filing deadline?",
+     "chips": [
+      "Today",
+      "Skip"
+     ]
+    }
+   ],
+   "intro": "{partyA} submits this {title} to {agency}, due on {deadline}.",
+   "clauses": [
+    "certification-block",
+    "approval-block"
+   ],
+   "roleLabels": {
+    "signer": [],
+    "approver": [
+     "Compliance Director"
+    ],
+    "reviewer": [
+     "Department Head",
+     "Legal Counsel"
+    ],
+    "acknowledgment-recipient": [],
+    "viewer": [],
+    "carbon-copy": [
+     "Compliance Department"
+    ]
+   }
+  },
+  {
+   "id": "compliance-and-risk-management--safety-compliance-acknowledgment-form",
+   "title": "Safety Compliance Acknowledgment Form",
+   "category": "Compliance & Risk Management",
+   "source": {
+    "readyMadeTitle": "Safety Compliance Acknowledgment Form",
+    "readyMadeId": "compliance-and-risk-management--safety-compliance-acknowledgment-form",
+    "inGallery": true
+   },
+   "parties": [
+    "Employee"
+   ],
+   "aliases": [
+    "safety acknowledgment",
+    "safety acknowledgement",
+    "osh acknowledgment",
+    "safety briefing form",
+    "ppe acknowledgment"
+   ],
+   "keywords": [
+    "safety",
+    "osh",
+    "ppe",
+    "hazard",
+    "hazards",
+    "briefing"
+   ],
+   "slots": [
+    {
+     "key": "partyA",
+     "type": "company",
+     "label": "Company",
+     "question": "What is the company's company or organisation name?"
+    },
+    {
+     "key": "partyB",
+     "type": "name",
+     "label": "Employee",
+     "question": "What is the employee's full name?"
+    },
+    {
+     "key": "area",
+     "type": "text",
+     "label": "Work Area",
+     "question": "Which site or work area does this cover?",
+     "chips": [
+      "Skip"
+     ]
+    }
+   ],
+   "intro": "I, {partyB}, acknowledge that I have received safety training from {partyA} for {area} and will follow its safety rules.",
+   "clauses": [
+    "compliance-with-laws",
+    "acknowledgment-block"
+   ],
+   "roleLabels": {
+    "signer": [
+     "Employee"
+    ],
+    "approver": [
+     "Safety Manager"
+    ],
+    "reviewer": [
+     "Supervisor"
+    ],
+    "acknowledgment-recipient": [],
+    "viewer": [],
+    "carbon-copy": [
+     "HR and Safety Department"
+    ]
+   }
+  },
+  {
+   "id": "compliance-and-risk-management--risk-assessment-approval-form",
+   "title": "Risk Assessment Approval Form",
+   "category": "Compliance & Risk Management",
+   "source": {
+    "readyMadeTitle": "Risk Assessment Approval Form",
+    "readyMadeId": "compliance-and-risk-management--risk-assessment-approval-form",
+    "inGallery": false
+   },
+   "parties": [
+    "Risk Analyst"
+   ],
+   "aliases": [
+    "risk assessment",
+    "risk approval",
+    "risk register approval",
+    "hazard assessment"
+   ],
+   "keywords": [
+    "risk",
+    "risks",
+    "assessment",
+    "mitigation",
+    "hazard"
+   ],
+   "slots": [
+    {
+     "key": "partyA",
+     "type": "name",
+     "label": "Risk Analyst",
+     "question": "What is the risk analyst's full name?"
+    },
+    {
+     "key": "activity",
+     "type": "text",
+     "label": "Activity Assessed",
+     "question": "What activity or project was assessed?"
+    },
+    {
+     "key": "rating",
+     "type": "choice",
+     "label": "Risk Rating",
+     "question": "What is the overall risk rating?",
+     "options": [
+      {
+       "value": "low",
+       "label": "Low",
+       "keywords": [
+        "low"
+       ],
+       "text": "Low"
+      },
+      {
+       "value": "medium",
+       "label": "Medium",
+       "keywords": [
+        "medium",
+        "moderate"
+       ],
+       "text": "Medium"
+      },
+      {
+       "value": "high",
+       "label": "High",
+       "keywords": [
+        "high",
+        "severe"
+       ],
+       "text": "High"
+      }
+     ]
+    }
+   ],
+   "intro": "Risk assessment prepared by {partyA} on {effectiveDate} for {activity}. Overall risk rating: {rating}.",
+   "clauses": [
+    "mitigation-plan",
+    "approval-block"
+   ],
+   "roleLabels": {
+    "signer": [],
+    "approver": [
+     "Compliance Director"
+    ],
+    "reviewer": [
+     "Department Head",
+     "Risk Manager"
+    ],
+    "acknowledgment-recipient": [],
+    "viewer": [],
+    "carbon-copy": [
+     "Risk Management Department"
+    ]
+   }
+  },
+  {
+   "id": "compliance-and-risk-management--environmental-permit-application-and-approval",
+   "title": "Environmental Permit Application and Approval",
+   "category": "Compliance & Risk Management",
+   "source": {
+    "readyMadeTitle": "Environmental Permit Application and Approval",
+    "readyMadeId": "compliance-and-risk-management--environmental-permit-application-and-approval",
+    "inGallery": false
+   },
+   "parties": [
+    "Environmental Officer"
+   ],
+   "aliases": [
+    "environmental permit",
+    "ecc application",
+    "environmental compliance certificate",
+    "permit application"
+   ],
+   "keywords": [
+    "environmental",
+    "environment",
+    "permit",
+    "ecc",
+    "denr",
+    "emissions"
+   ],
+   "slots": [
+    {
+     "key": "partyA",
+     "type": "company",
+     "label": "Applicant Company",
+     "question": "What is the applicant company's company or organisation name?"
+    },
+    {
+     "key": "facility",
+     "type": "text",
+     "label": "Facility",
+     "question": "Which facility or project is the permit for?"
+    },
+    {
+     "key": "agency",
+     "type": "company",
+     "label": "Regulatory Agency",
+     "question": "Which agency will review it?"
+    }
+   ],
+   "intro": "{partyA} applies to {agency} for an environmental permit for {facility}.",
+   "clauses": [
+    "compliance-with-laws",
+    "certification-block",
+    "approval-block"
+   ],
+   "roleLabels": {
+    "signer": [],
+    "approver": [
+     "Regulatory Authority"
+    ],
+    "reviewer": [
+     "Facility Manager"
+    ],
+    "acknowledgment-recipient": [],
+    "viewer": [],
+    "carbon-copy": [
+     "Compliance Department"
+    ]
+   }
+  },
+  {
+   "id": "customer-service-and-support--product-warranty-agreement",
+   "title": "Product Warranty Agreement",
+   "category": "Customer Service & Support",
+   "source": {
+    "readyMadeTitle": "Product Warranty Agreement",
+    "readyMadeId": "customer-service-and-support--product-warranty-agreement",
+    "inGallery": true
+   },
+   "parties": [
+    "Seller",
+    "Customer"
+   ],
+   "aliases": [
+    "warranty agreement",
+    "product warranty",
+    "warranty certificate",
+    "guarantee card"
+   ],
+   "keywords": [
+    "warranty",
+    "warranties",
+    "guarantee",
+    "defect",
+    "defects",
+    "product"
+   ],
+   "slots": [
+    {
+     "key": "partyA",
+     "type": "company",
+     "label": "Seller",
+     "question": "What is the seller's company or organisation name?"
+    },
+    {
+     "key": "partyB",
+     "type": "name",
+     "label": "Customer",
+     "question": "What is the customer's full name?"
+    },
+    {
+     "key": "term",
+     "type": "term",
+     "label": "Warranty Period",
+     "question": "How long is the warranty?",
+     "chips": [
+      "6 months",
+      "1 year",
+      "Skip"
+     ]
+    }
+   ],
+   "intro": "{partyA} gives {partyB} this {title}, covering defects for {term} from the date of purchase.",
+   "clauses": [
+    "warranties",
+    "warranty-exclusions",
+    "limitation-of-liability",
+    "governing-law"
+   ],
+   "roleLabels": {
+    "signer": [
+     "Customer"
+    ],
+    "approver": [
+     "Customer Service Director"
+    ],
+    "reviewer": [
+     "Service Manager"
+    ],
+    "acknowledgment-recipient": [],
+    "viewer": [],
+    "carbon-copy": [
+     "Customer Service Department"
+    ]
+   }
+  },
+  {
+   "id": "customer-service-and-support--service-repair-authorization-form",
+   "title": "Service Repair Authorization Form",
+   "category": "Customer Service & Support",
+   "source": {
+    "readyMadeTitle": "Service Repair Authorization Form",
+    "readyMadeId": "customer-service-and-support--service-repair-authorization-form",
+    "inGallery": false
+   },
+   "parties": [
+    "Customer"
+   ],
+   "aliases": [
+    "repair authorization",
+    "repair form",
+    "job order",
+    "service order",
+    "repair request"
+   ],
+   "keywords": [
+    "repair",
+    "repairs",
+    "fix",
+    "authorization",
+    "job",
+    "technician"
+   ],
+   "slots": [
+    {
+     "key": "partyA",
+     "type": "name",
+     "label": "Customer",
+     "question": "What is the customer's full name?"
+    },
+    {
+     "key": "item",
+     "type": "text",
+     "label": "Item for Repair",
+     "question": "What item is being repaired?"
+    },
+    {
+     "key": "amount",
+     "type": "amount",
+     "label": "Estimated Cost",
+     "question": "What is the estimated repair cost?"
+    }
+   ],
+   "intro": "I, {partyA}, authorise repair of {item} at an estimated cost of {amount}.",
+   "clauses": [
+    "repair-terms",
+    "acknowledgment-block"
+   ],
+   "roleLabels": {
+    "signer": [],
+    "approver": [
+     "Service Manager"
+    ],
+    "reviewer": [
+     "Service Technician"
+    ],
+    "acknowledgment-recipient": [],
+    "viewer": [],
+    "carbon-copy": [
+     "Service Department"
+    ]
+   }
+  },
+  {
+   "id": "customer-service-and-support--customer-consent-and-data-usage-form",
+   "title": "Customer Consent and Data Usage Form",
+   "category": "Customer Service & Support",
+   "source": {
+    "readyMadeTitle": "Customer Consent and Data Usage Form",
+    "readyMadeId": "customer-service-and-support--customer-consent-and-data-usage-form",
+    "inGallery": true
+   },
+   "parties": [
+    "Customer"
+   ],
+   "aliases": [
+    "data consent",
+    "privacy consent",
+    "marketing consent",
+    "data usage consent",
+    "consent to process personal data"
+   ],
+   "keywords": [
+    "consent",
+    "data",
+    "privacy",
+    "marketing",
+    "usage",
+    "personal"
+   ],
+   "slots": [
+    {
+     "key": "partyA",
+     "type": "company",
+     "label": "Company",
+     "question": "What is the company's company or organisation name?"
+    },
+    {
+     "key": "partyB",
+     "type": "name",
+     "label": "Customer",
+     "question": "What is the customer's full name?"
+    },
+    {
+     "key": "purpose",
+     "type": "text",
+     "label": "Purpose",
+     "question": "What will the customer's data be used for?",
+     "chips": [
+      "Marketing updates",
+      "Service delivery",
+      "Skip"
+     ]
+    }
+   ],
+   "intro": "I, {partyB}, consent to {partyA} collecting and using my personal data for {purpose}.",
+   "clauses": [
+    "data-privacy",
+    "revocation",
+    "acknowledgment-block"
+   ],
+   "roleLabels": {
+    "signer": [
+     "Customer"
+    ],
+    "approver": [
+     "Customer Service Manager"
+    ],
+    "reviewer": [
+     "Compliance Officer"
+    ],
+    "acknowledgment-recipient": [],
+    "viewer": [],
+    "carbon-copy": [
+     "Customer Service Department"
+    ]
+   }
+  },
+  {
+   "id": "customer-service-and-support--refund-and-return-approval-form",
+   "title": "Refund and Return Approval Form",
+   "category": "Customer Service & Support",
+   "source": {
+    "readyMadeTitle": "Refund and Return Approval Form",
+    "readyMadeId": "customer-service-and-support--refund-and-return-approval-form",
+    "inGallery": false
+   },
+   "parties": [
+    "Customer"
+   ],
+   "aliases": [
+    "refund form",
+    "return form",
+    "refund request",
+    "return authorization",
+    "rma form"
+   ],
+   "keywords": [
+    "refund",
+    "refunds",
+    "return",
+    "returns",
+    "rma",
+    "exchange"
+   ],
+   "slots": [
+    {
+     "key": "partyA",
+     "type": "name",
+     "label": "Customer",
+     "question": "What is the customer's full name?"
+    },
+    {
+     "key": "item",
+     "type": "text",
+     "label": "Item Returned",
+     "question": "What item is being returned?"
+    },
+    {
+     "key": "amount",
+     "type": "amount",
+     "label": "Refund Amount",
+     "question": "How much is the refund?"
+    }
+   ],
+   "intro": "Refund request by {partyA} for {item}, in the amount of {amount}.",
+   "clauses": [
+    "refund-terms",
+    "approval-block"
+   ],
+   "roleLabels": {
+    "signer": [],
+    "approver": [
+     "Finance or Accounting Officer"
+    ],
+    "reviewer": [
+     "Customer Service Representative"
+    ],
+    "acknowledgment-recipient": [],
+    "viewer": [],
+    "carbon-copy": [
+     "Customer Service Department"
+    ]
+   }
+  },
+  {
+   "id": "r-and-d-and-innovation--joint-research-agreement",
+   "title": "Joint Research Agreement",
+   "category": "R&D & Innovation",
+   "source": {
+    "readyMadeTitle": "Joint Research Agreement",
+    "readyMadeId": "r-and-d-and-innovation--joint-research-agreement",
+    "inGallery": true
+   },
+   "parties": [
+    "First Party",
+    "Partner Institution"
+   ],
+   "aliases": [
+    "research agreement",
+    "research collaboration",
+    "joint research",
+    "research partnership",
+    "cooperative research"
+   ],
+   "keywords": [
+    "research",
+    "study",
+    "collaboration",
+    "university",
+    "institution",
+    "joint"
+   ],
+   "slots": [
+    {
+     "key": "partyA",
+     "type": "company",
+     "label": "First Party",
+     "question": "What is the first party's company or organisation name?"
+    },
+    {
+     "key": "partyB",
+     "type": "company",
+     "label": "Partner Institution",
+     "question": "What is the partner institution's company or organisation name?"
+    },
+    {
+     "key": "project",
+     "type": "text",
+     "label": "Research Project",
+     "question": "What is the research project about?"
+    }
+   ],
+   "intro": "This {title} is made on {effectiveDate} between {partyA} and {partyB}, who will jointly carry out research on {project}.",
+   "clauses": [
+    "intellectual-property",
+    "publication",
+    "confidentiality",
+    "term",
+    "governing-law",
+    "entire-agreement"
+   ],
+   "roleLabels": {
+    "signer": [
+     "Partner Institution Representative"
+    ],
+    "approver": [
+     "R&D Director"
+    ],
+    "reviewer": [
+     "Legal Counsel"
+    ],
+    "acknowledgment-recipient": [],
+    "viewer": [],
+    "carbon-copy": [
+     "R&D Department"
+    ]
+   }
+  },
+  {
+   "id": "r-and-d-and-innovation--patent-filing-and-intellectual-property-transfer-agreement",
+   "title": "Patent Filing and Intellectual Property Transfer Agreement",
+   "category": "R&D & Innovation",
+   "source": {
+    "readyMadeTitle": "Patent Filing and Intellectual Property Transfer Agreement",
+    "readyMadeId": "r-and-d-and-innovation--patent-filing-and-intellectual-property-transfer-agreement",
+    "inGallery": true
+   },
+   "parties": [
+    "Assignor",
+    "Assignee"
+   ],
+   "aliases": [
+    "ip assignment",
+    "patent assignment",
+    "ip transfer",
+    "intellectual property assignment",
+    "invention assignment",
+    "deed of assignment"
+   ],
+   "keywords": [
+    "patent",
+    "patents",
+    "invention",
+    "ip",
+    "intellectual",
+    "assignment",
+    "assign",
+    "transfer"
+   ],
+   "slots": [
+    {
+     "key": "partyA",
+     "type": "name",
+     "label": "Inventor or Assignor",
+     "question": "What is the inventor or assignor's full name?"
+    },
+    {
+     "key": "partyB",
+     "type": "company",
+     "label": "Assignee",
+     "question": "What is the assignee's company or organisation name?"
+    },
+    {
+     "key": "invention",
+     "type": "text",
+     "label": "Invention",
+     "question": "What is the invention called?"
+    }
+   ],
+   "intro": "This {title} is made on {effectiveDate} between {partyA} (the “Assignor”) and {partyB} (the “Assignee”) for the invention known as {invention}.",
+   "clauses": [
+    "ip-assignment",
+    "further-assurances",
+    "warranties",
+    "confidentiality",
+    "governing-law",
+    "entire-agreement"
+   ],
+   "roleLabels": {
+    "signer": [
+     "Inventor or Assignee"
+    ],
+    "approver": [
+     "IP or Legal Director"
+    ],
+    "reviewer": [
+     "Legal Counsel"
+    ],
+    "acknowledgment-recipient": [],
+    "viewer": [],
+    "carbon-copy": [
+     "Legal Department"
+    ]
+   }
+  },
+  {
+   "id": "r-and-d-and-innovation--prototype-testing-approval-form",
+   "title": "Prototype Testing Approval Form",
+   "category": "R&D & Innovation",
+   "source": {
+    "readyMadeTitle": "Prototype Testing Approval Form",
+    "readyMadeId": "r-and-d-and-innovation--prototype-testing-approval-form",
+    "inGallery": false
+   },
+   "parties": [
+    "R&D Engineer"
+   ],
+   "aliases": [
+    "prototype approval",
+    "prototype test",
+    "test approval",
+    "pilot test approval"
+   ],
+   "keywords": [
+    "prototype",
+    "testing",
+    "test",
+    "pilot",
+    "qa"
+   ],
+   "slots": [
+    {
+     "key": "partyA",
+     "type": "name",
+     "label": "R&D Engineer",
+     "question": "What is the r&d engineer's full name?"
+    },
+    {
+     "key": "prototype",
+     "type": "text",
+     "label": "Prototype",
+     "question": "What prototype is being tested?"
+    },
+    {
+     "key": "testDate",
+     "type": "date",
+     "label": "Test Date",
+     "question": "When will testing take place?",
+     "chips": [
+      "Today",
+      "Skip"
+     ]
+    }
+   ],
+   "intro": "Testing request by {partyA} for {prototype}, scheduled on {testDate}.",
+   "clauses": [
+    "test-plan",
+    "confidentiality",
+    "approval-block"
+   ],
+   "roleLabels": {
+    "signer": [],
+    "approver": [
+     "R&D Director"
+    ],
+    "reviewer": [
+     "Quality Assurance Officer",
+     "R&D Manager"
+    ],
+    "acknowledgment-recipient": [],
+    "viewer": [],
+    "carbon-copy": [
+     "R&D Department"
+    ]
+   }
+  },
+  {
+   "id": "r-and-d-and-innovation--product-development-confidentiality-agreement",
+   "title": "Product Development Confidentiality Agreement",
+   "category": "R&D & Innovation",
+   "source": {
+    "readyMadeTitle": "Product Development Confidentiality Agreement",
+    "readyMadeId": "r-and-d-and-innovation--product-development-confidentiality-agreement",
+    "inGallery": true
+   },
+   "parties": [
+    "Company",
+    "Involved Party"
+   ],
+   "aliases": [
+    "product nda",
+    "development nda",
+    "r&d confidentiality",
+    "product confidentiality"
+   ],
+   "keywords": [
+    "product",
+    "development",
+    "prototype",
+    "confidentiality",
+    "r&d"
+   ],
+   "slots": [
+    {
+     "key": "partyA",
+     "type": "company",
+     "label": "Company",
+     "question": "What is the company's company or organisation name?"
+    },
+    {
+     "key": "partyB",
+     "type": "name",
+     "label": "Involved Party",
+     "question": "Who will receive the product information?"
+    },
+    {
+     "key": "term",
+     "type": "term",
+     "label": "Confidentiality Period",
+     "chips": [
+      "6 months",
+      "1 year",
+      "2 years",
+      "Skip"
+     ],
+     "ask": false
+    }
+   ],
+   "intro": "This {title} is made on {effectiveDate} between {partyA} and {partyB}, who will keep product development information confidential for {term}.",
+   "clauses": [
+    "confidentiality",
+    "confidentiality-exclusions",
+    "intellectual-property",
+    "return-of-materials",
+    "governing-law"
+   ],
+   "roleLabels": {
+    "signer": [
+     "Involved Parties"
+    ],
+    "approver": [
+     "R&D Director"
+    ],
+    "reviewer": [
+     "Legal Counsel"
+    ],
+    "acknowledgment-recipient": [],
+    "viewer": [],
+    "carbon-copy": [
+     "Legal Department"
+    ]
+   }
+  },
+  {
+   "id": "logistics-and-distribution--freight-and-shipping-agreement",
+   "title": "Freight and Shipping Agreement",
+   "category": "Logistics & Distribution",
+   "source": {
+    "readyMadeTitle": "Freight and Shipping Agreement",
+    "readyMadeId": "logistics-and-distribution--freight-and-shipping-agreement",
+    "inGallery": true
+   },
+   "parties": [
+    "Shipper",
+    "Carrier"
+   ],
+   "aliases": [
+    "shipping agreement",
+    "freight agreement",
+    "trucking agreement",
+    "hauling contract",
+    "courier agreement",
+    "logistics agreement"
+   ],
+   "keywords": [
+    "freight",
+    "shipping",
+    "ship",
+    "carrier",
+    "trucking",
+    "hauling",
+    "courier",
+    "logistics"
+   ],
+   "slots": [
+    {
+     "key": "partyA",
+     "type": "company",
+     "label": "Shipper",
+     "question": "What is the shipper's company or organisation name?"
+    },
+    {
+     "key": "partyB",
+     "type": "company",
+     "label": "Carrier",
+     "question": "What is the carrier's company or organisation name?"
+    },
+    {
+     "key": "amount",
+     "type": "amount",
+     "label": "Freight Rate",
+     "question": "What is the freight rate (per trip, per kilo, etc.)?"
+    }
+   ],
+   "intro": "This {title} is made on {effectiveDate} between {partyA} (the “Shipper”) and {partyB} (the “Carrier”) at a freight rate of {amount}.",
+   "clauses": [
+    "delivery",
+    "insurance",
+    "limitation-of-liability",
+    "payment-terms",
+    "force-majeure",
+    "governing-law"
+   ],
+   "roleLabels": {
+    "signer": [
+     "Carrier or Freight Provider"
+    ],
+    "approver": [
+     "Operations Director"
+    ],
+    "reviewer": [
+     "Logistics Manager"
+    ],
+    "acknowledgment-recipient": [],
+    "viewer": [],
+    "carbon-copy": [
+     "Logistics Department"
+    ]
+   }
+  },
+  {
+   "id": "logistics-and-distribution--customs-declaration-and-documentation-form",
+   "title": "Customs Declaration and Documentation Form",
+   "category": "Logistics & Distribution",
+   "source": {
+    "readyMadeTitle": "Customs Declaration and Documentation Form",
+    "readyMadeId": "logistics-and-distribution--customs-declaration-and-documentation-form",
+    "inGallery": true
+   },
+   "parties": [
+    "Shipper or Exporter"
+   ],
+   "aliases": [
+    "customs declaration",
+    "customs form",
+    "export declaration",
+    "import declaration",
+    "customs documentation"
+   ],
+   "keywords": [
+    "customs",
+    "export",
+    "import",
+    "declaration",
+    "boc",
+    "shipment"
+   ],
+   "slots": [
+    {
+     "key": "partyA",
+     "type": "company",
+     "label": "Shipper or Exporter",
+     "question": "What is the shipper or exporter's company or organisation name?"
+    },
+    {
+     "key": "goods",
+     "type": "text",
+     "label": "Goods",
+     "question": "What goods are being declared?"
+    },
+    {
+     "key": "amount",
+     "type": "amount",
+     "label": "Declared Value",
+     "question": "What is the declared value?"
+    }
+   ],
+   "intro": "{partyA} declares the following goods for customs purposes: {goods}, with a declared value of {amount}.",
+   "clauses": [
+    "applicant-declaration",
+    "certification-block"
+   ],
+   "roleLabels": {
+    "signer": [
+     "Shipper or Exporter"
+    ],
+    "approver": [
+     "Regulatory Authority"
+    ],
+    "reviewer": [
+     "Customs Officer"
+    ],
+    "acknowledgment-recipient": [],
+    "viewer": [],
+    "carbon-copy": [
+     "Logistics Department"
+    ]
+   }
+  },
+  {
+   "id": "logistics-and-distribution--delivery-acceptance-form",
+   "title": "Delivery Acceptance Form",
+   "category": "Logistics & Distribution",
+   "source": {
+    "readyMadeTitle": "Delivery Acceptance Form",
+    "readyMadeId": "logistics-and-distribution--delivery-acceptance-form",
+    "inGallery": true
+   },
+   "parties": [
+    "Receiving Officer"
+   ],
+   "aliases": [
+    "delivery acceptance",
+    "acceptance form",
+    "delivery sign off",
+    "goods acceptance"
+   ],
+   "keywords": [
+    "delivery",
+    "acceptance",
+    "accept",
+    "received",
+    "goods"
+   ],
+   "slots": [
+    {
+     "key": "partyA",
+     "type": "company",
+     "label": "Carrier",
+     "question": "What is the carrier's company or organisation name?"
+    },
+    {
+     "key": "partyB",
+     "type": "name",
+     "label": "Receiving Officer",
+     "question": "What is the receiving officer's full name?"
+    },
+    {
+     "key": "deliveryDate",
+     "type": "date",
+     "label": "Delivery Date",
+     "question": "When was the delivery made?",
+     "chips": [
+      "Today",
+      "Skip"
+     ]
+    }
+   ],
+   "intro": "{partyB} accepts the delivery made by {partyA} on {deliveryDate}, subject to the notes below.",
+   "clauses": [
+    "acceptance",
+    "acknowledgment-block"
+   ],
+   "roleLabels": {
+    "signer": [
+     "Receiving Officer"
+    ],
+    "approver": [],
+    "reviewer": [
+     "Warehouse Manager"
+    ],
+    "acknowledgment-recipient": [],
+    "viewer": [],
+    "carbon-copy": [
+     "Logistics Department"
+    ]
+   }
+  },
+  {
+   "id": "logistics-and-distribution--distributor-agreement",
+   "title": "Distributor Agreement",
+   "category": "Logistics & Distribution",
+   "source": {
+    "readyMadeTitle": "Distributor Agreement",
+    "readyMadeId": "logistics-and-distribution--distributor-agreement",
+    "inGallery": true
+   },
+   "parties": [
+    "Supplier",
+    "Distributor"
+   ],
+   "aliases": [
+    "distribution agreement",
+    "distributorship",
+    "dealer agreement",
+    "reseller agreement",
+    "distributor contract"
+   ],
+   "keywords": [
+    "distributor",
+    "distribution",
+    "dealer",
+    "reseller",
+    "territory",
+    "exclusive"
+   ],
+   "slots": [
+    {
+     "key": "partyA",
+     "type": "company",
+     "label": "Supplier",
+     "question": "What is the supplier's company or organisation name?"
+    },
+    {
+     "key": "partyB",
+     "type": "company",
+     "label": "Distributor",
+     "question": "What is the distributor's company or organisation name?"
+    },
+    {
+     "key": "territory",
+     "type": "text",
+     "label": "Territory",
+     "question": "Which territory will the distributor cover?"
+    },
+    {
+     "key": "exclusivity",
+     "type": "choice",
+     "label": "Exclusivity",
+     "question": "Is it exclusive?",
+     "options": [
+      {
+       "value": "exclusive",
+       "label": "Exclusive",
+       "keywords": [
+        "exclusive"
+       ],
+       "text": "exclusive"
+      },
+      {
+       "value": "non-exclusive",
+       "label": "Non-exclusive",
+       "keywords": [
+        "non-exclusive",
+        "nonexclusive",
+        "non exclusive"
+       ],
+       "text": "non-exclusive"
+      }
+     ],
+     "ask": false
+    }
+   ],
+   "intro": "This {title} is made on {effectiveDate} between {partyA} (the “Supplier”) and {partyB} (the “Distributor”), appointed as a {exclusivity} distributor for {territory}.",
+   "clauses": [
+    "appointment",
+    "payment-terms",
+    "intellectual-property",
+    "non-compete",
+    "termination",
+    "governing-law",
+    "entire-agreement"
+   ],
+   "roleLabels": {
+    "signer": [
+     "Distributor"
+    ],
+    "approver": [
+     "Sales Director"
+    ],
+    "reviewer": [
+     "Legal Counsel"
+    ],
+    "acknowledgment-recipient": [],
+    "viewer": [],
+    "carbon-copy": [
+     "Legal Department"
+    ]
+   }
+  },
+  {
+   "id": "starter:employment-offer-letter",
+   "title": "Employment Offer Letter",
+   "category": "Recruitment & HR",
+   "source": {
+    "starter": "employment-offer-letter"
+   },
+   "parties": [
+    "Employer",
+    "Employee"
+   ],
+   "aliases": [
+    "detailed offer letter",
+    "detailed employment offer",
+    "employment offer letter detailed",
+    "offer letter detailed",
+    "detailed draft"
+   ],
+   "keywords": [
+    "detailed",
+    "offer",
+    "letter"
+   ],
+   "slots": [
+    {
+     "key": "job_title",
+     "type": "job",
+     "label": "Job Title",
+     "question": "What is the job title?"
+    },
+    {
+     "key": "annual_salary",
+     "type": "amount",
+     "label": "Annual Salary",
+     "question": "What is the annual salary?"
+    },
+    {
+     "key": "start_date",
+     "type": "date",
+     "label": "Start Date",
+     "question": "What is the start date?",
+     "chips": [
+      "Today",
+      "Skip"
+     ],
+     "ask": false
+    }
+   ],
+   "intro": "",
+   "clauses": [],
+   "roleLabels": {
+    "signer": [
+     "Employee",
+     "Employer"
+    ],
+    "approver": [
+     "HR Approver"
+    ],
+    "reviewer": [
+     "Hiring Manager"
+    ],
+    "acknowledgment-recipient": [],
+    "viewer": [],
+    "carbon-copy": [
+     "HR Records"
+    ]
+   }
+  }
+ ],
+ "clauses": [
+  {
+   "id": "confidentiality",
+   "title": "Confidentiality",
+   "kind": "clause",
+   "text": "Each party receiving confidential information shall keep it confidential, shall use it only for the purpose of this Agreement, and shall not disclose it to any third party without the prior written consent of the other party.",
+   "essential": true,
+   "aliases": [
+    "confidentiality clause",
+    "keep it confidential",
+    "non disclosure clause"
+   ],
+   "keywords": [
+    "confidential",
+    "confidentiality",
+    "secret",
+    "secrets",
+    "nda"
+   ],
+   "plain": "Each side will keep the other side's private information secret, use it only for this agreement, and not share it without written permission."
+  },
+  {
+   "id": "confidentiality-exclusions",
+   "title": "Exclusions from Confidential Information",
+   "kind": "clause",
+   "text": "Confidential information does not include information that is or becomes public through no fault of the receiving party, was lawfully known to the receiving party before disclosure, or is required to be disclosed by law or court order.",
+   "keywords": [
+    "exclusions",
+    "exceptions",
+    "public"
+   ]
+  },
+  {
+   "id": "return-of-materials",
+   "title": "Return of Materials",
+   "kind": "clause",
+   "text": "Upon request or upon the end of this Agreement, the receiving party shall promptly return or destroy all materials containing confidential information and confirm in writing that it has done so.",
+   "keywords": [
+    "return",
+    "destroy",
+    "materials"
+   ]
+  },
+  {
+   "id": "term",
+   "title": "Term",
+   "kind": "clause",
+   "text": "This Agreement takes effect on {effectiveDate} and continues for {term}, unless terminated earlier under this Agreement.",
+   "essential": true,
+   "keywords": [
+    "term",
+    "duration",
+    "period",
+    "effectivity"
+   ]
+  },
+  {
+   "id": "termination",
+   "title": "Termination",
+   "kind": "clause",
+   "text": "Either party may terminate this Agreement by giving {noticePeriod} written notice to the other party. Either party may terminate immediately by written notice if the other party materially breaches this Agreement and fails to cure the breach within fifteen (15) days of being notified.",
+   "essential": true,
+   "aliases": [
+    "termination clause",
+    "end the contract",
+    "cancel the contract"
+   ],
+   "keywords": [
+    "termination",
+    "terminate",
+    "cancel",
+    "cancellation",
+    "end"
+   ],
+   "plain": "Either side can end this agreement by giving {noticePeriod} written notice. If one side seriously breaks the agreement and does not fix it within 15 days of being told, the other side can end it right away."
+  },
+  {
+   "id": "payment-terms",
+   "title": "Payment Terms",
+   "kind": "clause",
+   "text": "{partyB} shall pay the amount of {amount} within thirty (30) days of receiving a valid invoice. Payments shall be made in Philippine Pesos by bank transfer or any other method the parties agree in writing.",
+   "essential": true,
+   "aliases": [
+    "payment clause",
+    "payment schedule"
+   ],
+   "keywords": [
+    "payment",
+    "payments",
+    "pay",
+    "invoice",
+    "fee",
+    "fees",
+    "price"
+   ],
+   "plain": "{partyB} will pay {amount} within 30 days of getting a proper invoice, in Philippine Pesos, by bank transfer or another method both sides agree on in writing."
+  },
+  {
+   "id": "late-payment",
+   "title": "Late Payment",
+   "kind": "clause",
+   "text": "Any amount not paid when due shall bear interest at the rate of one percent (1%) per month from the due date until fully paid.",
+   "keywords": [
+    "late",
+    "penalty",
+    "interest",
+    "overdue"
+   ]
+  },
+  {
+   "id": "governing-law",
+   "title": "Governing Law",
+   "kind": "clause",
+   "text": "This Agreement shall be governed by and construed in accordance with the laws of the Republic of the Philippines.",
+   "essential": true,
+   "aliases": [
+    "governing law clause",
+    "choice of law",
+    "applicable law",
+    "philippine law"
+   ],
+   "keywords": [
+    "governing",
+    "law",
+    "laws",
+    "jurisdiction",
+    "philippines",
+    "philippine"
+   ]
+  },
+  {
+   "id": "dispute-resolution",
+   "title": "Dispute Resolution",
+   "kind": "clause",
+   "text": "The parties shall first try in good faith to settle any dispute arising from this Agreement through negotiation. If the dispute is not settled within thirty (30) days, either party may refer it to mediation, and failing that, to the proper courts of {venue}, to the exclusion of all other courts.",
+   "aliases": [
+    "dispute clause",
+    "disputes"
+   ],
+   "keywords": [
+    "dispute",
+    "disputes",
+    "mediation",
+    "court",
+    "courts",
+    "venue",
+    "conflict"
+   ]
+  },
+  {
+   "id": "arbitration",
+   "title": "Arbitration",
+   "kind": "clause",
+   "text": "Any dispute that is not settled by negotiation shall be finally resolved by arbitration in {venue} under Republic Act No. 9285 (the Alternative Dispute Resolution Act of 2004). The arbitral award shall be final and binding on the parties.",
+   "keywords": [
+    "arbitration",
+    "arbitrator",
+    "adr"
+   ]
+  },
+  {
+   "id": "force-majeure",
+   "title": "Force Majeure",
+   "kind": "clause",
+   "text": "Neither party shall be liable for any delay or failure to perform caused by events beyond its reasonable control, including natural disasters, typhoons, earthquakes, epidemics, war, strikes or acts of government. The affected party shall promptly notify the other party and resume performance as soon as possible.",
+   "aliases": [
+    "act of god",
+    "fortuitous event"
+   ],
+   "keywords": [
+    "force",
+    "majeure",
+    "typhoon",
+    "disaster",
+    "fortuitous",
+    "pandemic",
+    "calamity"
+   ]
+  },
+  {
+   "id": "data-privacy",
+   "title": "Data Privacy",
+   "kind": "clause",
+   "text": "Each party shall process personal data received under this Agreement in accordance with Republic Act No. 10173 (the Data Privacy Act of 2012), its implementing rules and regulations, and the issuances of the National Privacy Commission, and shall use reasonable organisational, physical and technical measures to protect that data.",
+   "aliases": [
+    "data privacy act",
+    "ra 10173",
+    "privacy clause",
+    "data protection"
+   ],
+   "keywords": [
+    "privacy",
+    "data",
+    "personal",
+    "10173",
+    "npc",
+    "protection"
+   ],
+   "plain": "Each side will handle personal data under the Data Privacy Act of 2012 (Republic Act No. 10173) and the National Privacy Commission's rules, and will take reasonable steps to keep it safe."
+  },
+  {
+   "id": "non-compete",
+   "title": "Non-Competition",
+   "kind": "clause",
+   "text": "During the term of this Agreement and for {restrictionPeriod} after it ends, {partyB} shall not engage in any business that directly competes with {partyA} within {territory}, to the extent permitted by law.",
+   "aliases": [
+    "non compete",
+    "noncompete",
+    "non-competition clause",
+    "restrictive covenant"
+   ],
+   "keywords": [
+    "compete",
+    "competition",
+    "competitor",
+    "competing",
+    "noncompete"
+   ]
+  },
+  {
+   "id": "non-solicitation",
+   "title": "Non-Solicitation",
+   "kind": "clause",
+   "text": "For {restrictionPeriod} after this Agreement ends, neither party shall solicit or hire the employees or clients of the other party without its prior written consent.",
+   "aliases": [
+    "non solicit",
+    "no poaching"
+   ],
+   "keywords": [
+    "solicit",
+    "solicitation",
+    "poach",
+    "poaching"
+   ]
+  },
+  {
+   "id": "warranties",
+   "title": "Warranties",
+   "kind": "clause",
+   "text": "Each party warrants that it has full power and authority to enter into this Agreement, and that its obligations under it do not conflict with any other agreement it is bound by.",
+   "aliases": [
+    "representations and warranties",
+    "warranty clause"
+   ],
+   "keywords": [
+    "warranty",
+    "warranties",
+    "warrant",
+    "represent",
+    "representations",
+    "guarantee"
+   ]
+  },
+  {
+   "id": "limitation-of-liability",
+   "title": "Limitation of Liability",
+   "kind": "clause",
+   "text": "Except for breach of confidentiality or wilful misconduct, neither party shall be liable for indirect, incidental or consequential damages, and each party's total liability under this Agreement shall not exceed the total amount paid under it in the twelve (12) months before the claim.",
+   "aliases": [
+    "liability cap",
+    "limit liability"
+   ],
+   "keywords": [
+    "liability",
+    "liable",
+    "damages",
+    "cap",
+    "limitation"
+   ]
+  },
+  {
+   "id": "indemnity",
+   "title": "Indemnity",
+   "kind": "clause",
+   "text": "Each party shall indemnify and hold the other party harmless from any claims, losses and expenses, including reasonable attorney's fees, arising from its own breach of this Agreement or its negligence.",
+   "aliases": [
+    "indemnification",
+    "hold harmless"
+   ],
+   "keywords": [
+    "indemnity",
+    "indemnify",
+    "indemnification",
+    "harmless"
+   ]
+  },
+  {
+   "id": "intellectual-property",
+   "title": "Intellectual Property",
+   "kind": "clause",
+   "text": "Each party keeps ownership of the intellectual property it owned before this Agreement. Intellectual property created specifically for {partyA} under this Agreement shall belong to {partyA} upon full payment, and {partyB} shall sign any document reasonably needed to confirm this.",
+   "aliases": [
+    "ip clause",
+    "ip ownership",
+    "ownership of work"
+   ],
+   "keywords": [
+    "intellectual",
+    "property",
+    "ip",
+    "copyright",
+    "ownership",
+    "trademark"
+   ]
+  },
+  {
+   "id": "notices",
+   "title": "Notices",
+   "kind": "clause",
+   "text": "All notices under this Agreement shall be in writing and delivered personally, by courier, or by email to the addresses the parties give each other. A notice is received on delivery, or on the next business day if sent by email.",
+   "keywords": [
+    "notice",
+    "notices",
+    "address",
+    "communication"
+   ]
+  },
+  {
+   "id": "entire-agreement",
+   "title": "Entire Agreement",
+   "kind": "clause",
+   "text": "This Agreement is the entire agreement between the parties on its subject and replaces all earlier discussions, understandings and agreements, whether written or oral.",
+   "aliases": [
+    "whole agreement",
+    "integration clause"
+   ],
+   "keywords": [
+    "entire",
+    "whole",
+    "integration"
+   ]
+  },
+  {
+   "id": "amendments",
+   "title": "Amendments",
+   "kind": "clause",
+   "text": "This Agreement may be changed only by a written document signed by both parties.",
+   "aliases": [
+    "amendment clause",
+    "changes to the agreement",
+    "modification"
+   ],
+   "keywords": [
+    "amend",
+    "amendment",
+    "amendments",
+    "modify",
+    "modification",
+    "change"
+   ]
+  },
+  {
+   "id": "severability",
+   "title": "Severability",
+   "kind": "clause",
+   "text": "If any provision of this Agreement is found invalid or unenforceable, the remaining provisions shall continue in full force and effect.",
+   "keywords": [
+    "severability",
+    "severable",
+    "invalid"
+   ]
+  },
+  {
+   "id": "assignment",
+   "title": "Assignment",
+   "kind": "clause",
+   "text": "Neither party may assign or transfer its rights or obligations under this Agreement without the prior written consent of the other party.",
+   "keywords": [
+    "assign",
+    "assignment",
+    "transfer"
+   ]
+  },
+  {
+   "id": "waiver",
+   "title": "Waiver",
+   "kind": "clause",
+   "text": "A failure or delay by either party to enforce any provision of this Agreement shall not be a waiver of that provision or of any other right.",
+   "keywords": [
+    "waiver",
+    "waive"
+   ]
+  },
+  {
+   "id": "counterparts",
+   "title": "Counterparts and Electronic Signatures",
+   "kind": "clause",
+   "text": "This Agreement may be signed in counterparts, and signatures may be given electronically, to the extent permitted by Republic Act No. 8792 (the Electronic Commerce Act of 2000).",
+   "aliases": [
+    "electronic signatures",
+    "e-signature clause",
+    "counterparts clause"
+   ],
+   "keywords": [
+    "counterparts",
+    "electronic",
+    "esignature",
+    "e-signature",
+    "digital"
+   ]
+  },
+  {
+   "id": "independent-contractor",
+   "title": "Independent Contractor",
+   "kind": "clause",
+   "text": "{partyB} is an independent contractor. Nothing in this Agreement creates an employer–employee relationship, partnership or joint venture between the parties.",
+   "aliases": [
+    "no employer employee relationship",
+    "contractor status"
+   ],
+   "keywords": [
+    "independent",
+    "contractor",
+    "relationship"
+   ]
+  },
+  {
+   "id": "compliance-with-laws",
+   "title": "Compliance with Laws",
+   "kind": "clause",
+   "text": "Each party shall comply with all laws, regulations and government issuances that apply to its obligations under this Agreement.",
+   "keywords": [
+    "comply",
+    "compliance",
+    "laws",
+    "regulations"
+   ]
+  },
+  {
+   "id": "probationary-period",
+   "title": "Probationary Period",
+   "kind": "clause",
+   "text": "The Employee shall serve a probationary period of up to six (6) months, during which the Employee's performance will be evaluated against the reasonable standards made known at the start of employment.",
+   "keywords": [
+    "probation",
+    "probationary",
+    "regularization",
+    "regular"
+   ]
+  },
+  {
+   "id": "working-hours",
+   "title": "Working Hours",
+   "kind": "clause",
+   "text": "The Employee's regular working hours shall be eight (8) hours a day, five (5) days a week, excluding meal breaks, subject to the Employer's policies and the Labor Code of the Philippines.",
+   "keywords": [
+    "hours",
+    "schedule",
+    "overtime",
+    "shift"
+   ]
+  },
+  {
+   "id": "compensation-benefits",
+   "title": "Compensation and Benefits",
+   "kind": "clause",
+   "text": "The Employee shall receive a monthly salary of {amount}, less applicable taxes and statutory contributions, together with the benefits required by law, including 13th month pay, SSS, PhilHealth and Pag-IBIG contributions.",
+   "keywords": [
+    "salary",
+    "compensation",
+    "benefits",
+    "13th",
+    "sss",
+    "philhealth",
+    "pagibig"
+   ]
+  },
+  {
+   "id": "security-deposit",
+   "title": "Security Deposit",
+   "kind": "clause",
+   "text": "{partyB} shall pay a security deposit of {deposit}, which will be returned within thirty (30) days after the end of this Agreement, less any unpaid amounts and the cost of repairing damage beyond normal wear and tear.",
+   "aliases": [
+    "deposit clause",
+    "advance and deposit"
+   ],
+   "keywords": [
+    "deposit",
+    "security",
+    "advance"
+   ]
+  },
+  {
+   "id": "rent-payment",
+   "title": "Rent",
+   "kind": "clause",
+   "text": "{partyB} shall pay a monthly rent of {amount} on or before the fifth (5th) day of each month.",
+   "keywords": [
+    "rent",
+    "monthly",
+    "rental"
+   ]
+  },
+  {
+   "id": "maintenance-repairs",
+   "title": "Maintenance and Repairs",
+   "kind": "clause",
+   "text": "{partyB} shall keep the property or equipment in good condition and shall promptly report any damage. {partyA} shall be responsible for major repairs not caused by {partyB}'s fault.",
+   "keywords": [
+    "maintenance",
+    "repair",
+    "repairs",
+    "damage",
+    "upkeep"
+   ]
+  },
+  {
+   "id": "use-of-property",
+   "title": "Use of Property",
+   "kind": "clause",
+   "text": "The property shall be used only for its agreed purpose and in compliance with building rules and applicable laws. No alterations may be made without prior written consent.",
+   "keywords": [
+    "use",
+    "purpose",
+    "alterations",
+    "sublease"
+   ]
+  },
+  {
+   "id": "scope-of-services",
+   "title": "Scope of Services",
+   "kind": "clause",
+   "text": "{partyB} shall perform the services described in the attached statement of work, with due care and in a professional manner.",
+   "keywords": [
+    "scope",
+    "services",
+    "deliverables",
+    "statement",
+    "work"
+   ]
+  },
+  {
+   "id": "service-levels",
+   "title": "Service Levels",
+   "kind": "clause",
+   "text": "The provider shall meet the service levels agreed by the parties, including {uptime}, and shall report any failure to meet them together with the steps taken to fix it.",
+   "keywords": [
+    "uptime",
+    "availability",
+    "sla",
+    "response",
+    "levels"
+   ]
+  },
+  {
+   "id": "delivery",
+   "title": "Delivery",
+   "kind": "clause",
+   "text": "Goods shall be delivered to the agreed location on or before {deliveryDate}. Risk of loss passes to the recipient upon delivery and acceptance.",
+   "keywords": [
+    "delivery",
+    "deliver",
+    "shipment",
+    "ship"
+   ]
+  },
+  {
+   "id": "acceptance",
+   "title": "Inspection and Acceptance",
+   "kind": "clause",
+   "text": "The recipient shall inspect the goods within five (5) business days of delivery and may reject goods that are damaged or do not match the order, by written notice.",
+   "keywords": [
+    "inspection",
+    "inspect",
+    "accept",
+    "acceptance",
+    "reject"
+   ]
+  },
+  {
+   "id": "insurance",
+   "title": "Insurance",
+   "kind": "clause",
+   "text": "Each party shall keep appropriate insurance to cover its liabilities under this Agreement and shall provide proof of insurance on request.",
+   "keywords": [
+    "insurance",
+    "insured",
+    "coverage"
+   ]
+  },
+  {
+   "id": "license-grant",
+   "title": "License Grant",
+   "kind": "clause",
+   "text": "{partyA} grants {partyB} a non-exclusive, non-transferable license to use the licensed material during the term of this Agreement, only for the purposes stated in it.",
+   "keywords": [
+    "grant",
+    "license",
+    "licence",
+    "use"
+   ]
+  },
+  {
+   "id": "repayment",
+   "title": "Repayment",
+   "kind": "clause",
+   "text": "{partyB} shall repay the loan of {amount} in equal monthly instalments, with interest at {interest}, starting one month after the loan is released.",
+   "keywords": [
+    "repay",
+    "repayment",
+    "instalment",
+    "installment",
+    "amortization"
+   ]
+  },
+  {
+   "id": "collateral",
+   "title": "Collateral",
+   "kind": "clause",
+   "text": "To secure the loan, {partyB} mortgages in favour of {partyA} the property described in the attached schedule, free from any other lien or encumbrance.",
+   "keywords": [
+    "collateral",
+    "security",
+    "mortgage",
+    "lien"
+   ]
+  },
+  {
+   "id": "release-of-claims",
+   "title": "Release of Claims",
+   "kind": "clause",
+   "text": "Upon receiving the settlement amount, each party releases the other from all claims arising from the matter described in this Agreement.",
+   "keywords": [
+    "release",
+    "claims",
+    "waive",
+    "quitclaim"
+   ]
+  },
+  {
+   "id": "no-admission",
+   "title": "No Admission of Liability",
+   "kind": "clause",
+   "text": "This settlement is not an admission of liability or wrongdoing by any party.",
+   "keywords": [
+    "admission",
+    "liability",
+    "wrongdoing"
+   ]
+  },
+  {
+   "id": "share-transfer",
+   "title": "Transfer of Shares",
+   "kind": "clause",
+   "text": "No shareholder may sell or transfer shares without first offering them to the other shareholders on the same terms.",
+   "keywords": [
+    "transfer",
+    "shares",
+    "first",
+    "refusal"
+   ]
+  },
+  {
+   "id": "profit-sharing",
+   "title": "Profits and Losses",
+   "kind": "clause",
+   "text": "Profits and losses shall be shared among the partners in proportion to their capital contributions, unless they agree otherwise in writing.",
+   "keywords": [
+    "profit",
+    "profits",
+    "losses",
+    "share"
+   ]
+  },
+  {
+   "id": "use-of-funds",
+   "title": "Use of Funds",
+   "kind": "clause",
+   "text": "The Company shall use the investment only for the business purposes disclosed to the Investor.",
+   "keywords": [
+    "funds",
+    "use",
+    "proceeds"
+   ]
+  },
+  {
+   "id": "title-transfer",
+   "title": "Transfer of Title",
+   "kind": "clause",
+   "text": "The Seller shall deliver the owner's copy of the title and all documents needed to transfer title to the Buyer upon full payment of the purchase price.",
+   "keywords": [
+    "title",
+    "tct",
+    "transfer",
+    "deed"
+   ]
+  },
+  {
+   "id": "taxes-and-fees",
+   "title": "Taxes and Fees",
+   "kind": "clause",
+   "text": "Unless the parties agree otherwise, capital gains tax shall be paid by the Seller, and documentary stamp tax, transfer tax and registration fees by the Buyer.",
+   "keywords": [
+    "tax",
+    "taxes",
+    "fees",
+    "stamp"
+   ]
+  },
+  {
+   "id": "patient-rights",
+   "title": "Patient Rights",
+   "kind": "clause",
+   "text": "The patient may ask questions at any time and may withdraw this consent before the procedure begins.",
+   "keywords": [
+    "rights",
+    "withdraw",
+    "questions"
+   ]
+  },
+  {
+   "id": "revocation",
+   "title": "Revocation",
+   "kind": "clause",
+   "text": "This consent or authorisation may be withdrawn at any time by written notice, without affecting anything done before the withdrawal.",
+   "keywords": [
+    "revoke",
+    "revocation",
+    "withdraw"
+   ]
+  },
+  {
+   "id": "code-of-conduct",
+   "title": "Code of Conduct",
+   "kind": "clause",
+   "text": "The student shall follow the school's rules and code of conduct as published in the student handbook.",
+   "keywords": [
+    "conduct",
+    "rules",
+    "handbook",
+    "discipline"
+   ]
+  },
+  {
+   "id": "scholarship-conditions",
+   "title": "Scholarship Conditions",
+   "kind": "clause",
+   "text": "The scholar shall maintain the required grades and enrolment status. The scholarship may be suspended if these conditions are not met.",
+   "keywords": [
+    "grades",
+    "conditions",
+    "maintain"
+   ]
+  },
+  {
+   "id": "return-service",
+   "title": "Return Service",
+   "kind": "clause",
+   "text": "After completing the studies, the scholar shall render service to the grantor for the period stated in the attached schedule, if one applies.",
+   "keywords": [
+    "return",
+    "service",
+    "bond"
+   ]
+  },
+  {
+   "id": "training-plan",
+   "title": "Training Plan",
+   "kind": "clause",
+   "text": "The host company shall give the intern a training plan and a supervisor, and the intern shall follow reasonable instructions and workplace rules.",
+   "keywords": [
+    "training",
+    "plan",
+    "supervisor"
+   ]
+  },
+  {
+   "id": "security-measures",
+   "title": "Security Measures",
+   "kind": "clause",
+   "text": "The receiving party shall keep appropriate technical and organisational security measures, including access controls, encryption where appropriate, and regular security reviews.",
+   "keywords": [
+    "security",
+    "encryption",
+    "measures",
+    "access"
+   ]
+  },
+  {
+   "id": "breach-notification",
+   "title": "Breach Notification",
+   "kind": "clause",
+   "text": "The processor shall notify the controller of any personal data breach without undue delay, and in any case within seventy-two (72) hours of discovering it, so that the controller can meet its own reporting duties.",
+   "keywords": [
+    "breach",
+    "incident",
+    "notification",
+    "notify"
+   ]
+  },
+  {
+   "id": "acceptable-use",
+   "title": "Acceptable Use",
+   "kind": "clause",
+   "text": "The user shall use system access only for authorised work, shall not share credentials, and shall report any suspected security incident immediately.",
+   "keywords": [
+    "acceptable",
+    "credentials",
+    "password",
+    "passwords"
+   ]
+  },
+  {
+   "id": "equipment-use",
+   "title": "Company Equipment",
+   "kind": "clause",
+   "text": "Equipment issued to the employee remains company property and shall be returned in good condition when employment ends.",
+   "keywords": [
+    "equipment",
+    "laptop",
+    "device",
+    "devices"
+   ]
+  },
+  {
+   "id": "deliverables",
+   "title": "Deliverables",
+   "kind": "clause",
+   "text": "The content creator shall produce the deliverables listed in the attached brief, subject to the brand's reasonable review before publication.",
+   "keywords": [
+    "deliverables",
+    "posts",
+    "content",
+    "brief"
+   ]
+  },
+  {
+   "id": "disclosure-of-sponsorship",
+   "title": "Disclosure of Sponsorship",
+   "kind": "clause",
+   "text": "Sponsored content shall be clearly identified as paid or sponsored, in line with applicable advertising standards.",
+   "keywords": [
+    "disclosure",
+    "sponsored",
+    "ad",
+    "paid"
+   ]
+  },
+  {
+   "id": "sponsor-benefits",
+   "title": "Sponsor Benefits",
+   "kind": "clause",
+   "text": "The organizer shall give the sponsor the benefits listed in the attached schedule, such as logo placement and mentions.",
+   "keywords": [
+    "benefits",
+    "logo",
+    "mentions",
+    "exposure"
+   ]
+  },
+  {
+   "id": "non-binding-nature",
+   "title": "Nature of this Memorandum",
+   "kind": "clause",
+   "text": "This memorandum records the parties' shared intentions. Except for the confidentiality and governing law sections, it does not create binding obligations until a definitive agreement is signed.",
+   "keywords": [
+    "binding",
+    "intention",
+    "intentions",
+    "memorandum"
+   ]
+  },
+  {
+   "id": "publication",
+   "title": "Publication of Results",
+   "kind": "clause",
+   "text": "Either party may publish research results after giving the other party thirty (30) days to review the draft for confidential information.",
+   "keywords": [
+    "publication",
+    "publish",
+    "results",
+    "paper"
+   ]
+  },
+  {
+   "id": "ip-assignment",
+   "title": "Assignment of Rights",
+   "kind": "clause",
+   "text": "The assignor assigns to the assignee all rights, title and interest in the invention, including any patent applications and patents based on it.",
+   "keywords": [
+    "assign",
+    "assignment",
+    "rights",
+    "patent"
+   ]
+  },
+  {
+   "id": "further-assurances",
+   "title": "Further Assurances",
+   "kind": "clause",
+   "text": "Each party shall sign any further documents reasonably needed to carry out this Agreement, including filings with the Intellectual Property Office of the Philippines.",
+   "keywords": [
+    "further",
+    "assurances",
+    "ipophl",
+    "filings"
+   ]
+  },
+  {
+   "id": "warranty-exclusions",
+   "title": "Warranty Exclusions",
+   "kind": "clause",
+   "text": "The warranty does not cover damage caused by misuse, accidents, unauthorised repairs or normal wear and tear.",
+   "keywords": [
+    "exclusions",
+    "misuse",
+    "wear"
+   ]
+  },
+  {
+   "id": "repair-terms",
+   "title": "Repair Terms",
+   "kind": "clause",
+   "text": "The service provider will contact the customer before doing work that exceeds the estimate. Items not collected within sixty (60) days of notice may be disposed of.",
+   "keywords": [
+    "estimate",
+    "collect",
+    "repair"
+   ]
+  },
+  {
+   "id": "refund-terms",
+   "title": "Refund Terms",
+   "kind": "clause",
+   "text": "Approved refunds are paid using the original payment method within fourteen (14) business days of approval.",
+   "keywords": [
+    "refund",
+    "refunds",
+    "reimburse"
+   ]
+  },
+  {
+   "id": "appointment",
+   "title": "Appointment",
+   "kind": "clause",
+   "text": "The supplier appoints the distributor as its {exclusivity} distributor for the territory of {territory} during the term of this Agreement.",
+   "keywords": [
+    "appoint",
+    "appointment",
+    "territory",
+    "exclusive"
+   ]
+  },
+  {
+   "id": "mitigation-plan",
+   "title": "Mitigation Plan",
+   "kind": "clause",
+   "text": "The identified risks and the controls to reduce them are listed in the attached risk register, with an owner and target date for each.",
+   "keywords": [
+    "mitigation",
+    "controls",
+    "register"
+   ]
+  },
+  {
+   "id": "test-plan",
+   "title": "Test Plan",
+   "kind": "clause",
+   "text": "Testing shall follow the attached test plan, including safety precautions, success criteria and the people responsible.",
+   "keywords": [
+    "plan",
+    "criteria",
+    "precautions"
+   ]
+  },
+  {
+   "id": "budget-justification",
+   "title": "Justification",
+   "kind": "clause",
+   "text": "Reason for the request: {purpose}. Budget line: [Budget Line]. Expected benefit: [Expected Benefit].",
+   "keywords": [
+    "justification",
+    "reason",
+    "budget"
+   ]
+  },
+  {
+   "id": "applicant-declaration",
+   "title": "Declaration",
+   "kind": "clause",
+   "text": "I declare that the information in this form is true and complete to the best of my knowledge, and I understand that false information may lead to rejection.",
+   "keywords": [
+    "declaration",
+    "declare",
+    "true"
+   ]
+  },
+  {
+   "id": "signature-block",
+   "title": "Signature Block",
+   "kind": "block",
+   "lines": [
+    "{party}",
+    "Signature: ____________________",
+    "Printed Name: ____________________",
+    "Date: ____________________"
+   ],
+   "aliases": [
+    "signature lines",
+    "signatures",
+    "sign here"
+   ],
+   "keywords": [
+    "signature",
+    "signatures",
+    "sign",
+    "signatory"
+   ]
+  },
+  {
+   "id": "date-block",
+   "title": "Date and Place",
+   "kind": "block",
+   "lines": [
+    "Signed on ____________________ at ____________________, Philippines."
+   ],
+   "aliases": [
+    "date line",
+    "place of signing"
+   ],
+   "keywords": [
+    "date",
+    "place",
+    "signed"
+   ]
+  },
+  {
+   "id": "witness-block",
+   "title": "Witnesses",
+   "kind": "block",
+   "lines": [
+    "Signed in the presence of:",
+    "Witness 1: ____________________",
+    "Witness 2: ____________________"
+   ],
+   "aliases": [
+    "witness lines",
+    "witnesses",
+    "signed in the presence of"
+   ],
+   "keywords": [
+    "witness",
+    "witnesses",
+    "presence"
+   ]
+  },
+  {
+   "id": "acknowledgment-block",
+   "title": "Acknowledgment",
+   "kind": "block",
+   "lines": [
+    "I have read and understood this document.",
+    "Name: ____________________",
+    "Signature: ____________________",
+    "Date: ____________________"
+   ],
+   "aliases": [
+    "acknowledgement block"
+   ],
+   "keywords": [
+    "acknowledgment",
+    "acknowledgement",
+    "acknowledge"
+   ]
+  },
+  {
+   "id": "approval-block",
+   "title": "Approval",
+   "kind": "block",
+   "lines": [
+    "Reviewed by: ____________________  Date: __________",
+    "Approved by: ____________________  Date: __________",
+    "Decision:  ☐ Approved   ☐ Not approved"
+   ],
+   "keywords": [
+    "approval",
+    "approve",
+    "approved",
+    "approver"
+   ]
+  },
+  {
+   "id": "certification-block",
+   "title": "Certification",
+   "kind": "block",
+   "lines": [
+    "I certify that the information above is correct as of the date below.",
+    "Name and Position: ____________________",
+    "Signature: ____________________",
+    "Date: ____________________"
+   ],
+   "keywords": [
+    "certify",
+    "certification",
+    "certificate"
+   ]
+  }
+ ]
+}

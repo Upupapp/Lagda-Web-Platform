@@ -13,6 +13,7 @@ import { readyMadeIcon } from "../../../services/ready-made-icons";
 import { PREP_PARTICIPANT_ROLE_LABELS } from "../../../models/prepare";
 import { usePageMeta } from "../../../hooks/usePageMeta";
 import { useViewport } from "../../../hooks/useViewport";
+import { CenteredColumn } from "../../../components/platform";
 
 const GF    = { fontFamily: "'Geist', sans-serif" };
 const AZURE = "#0078D4";
@@ -148,6 +149,9 @@ export function ReadyMadeGalleryPage() {
       `}</style>
 
       <div style={{ background: "white", borderBottom: "1px solid #E2E8F0", padding: isNarrow ? "16px 16px" : "20px 24px" }}>
+        {/* Header and grid share one centred column, so a wide screen does not
+            leave the gallery pinned left with a blank strip on the right. */}
+        <CenteredColumn>
         <Link to="/app/templates" style={{ ...GF, fontSize: 12, color: "#64748B", textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 4, marginBottom: 10 }}>
           <ChevronLeft size={13} /> Templates
         </Link>
@@ -208,9 +212,11 @@ export function ReadyMadeGalleryPage() {
           {chip(null, "All", READY_MADE_TEMPLATES.length)}
           {READY_MADE_CATEGORIES.map(c => chip(c.id, c.label, c.count))}
         </div>
+        </CenteredColumn>
       </div>
 
       <div style={{ padding: isNarrow ? "16px" : "20px 24px 40px" }}>
+      <CenteredColumn>
         {grouped.length === 0 ? (
           <div style={{ textAlign: "center", padding: "48px 16px", color: "#64748B", ...GF, fontSize: 13 }}>
             No ready-made template matches “{query.trim()}”.
@@ -221,11 +227,14 @@ export function ReadyMadeGalleryPage() {
               {category}
               <span style={{ ...GF, fontSize: 11, fontWeight: 500, color: "#94A3B8" }}>{items.length}</span>
             </h2>
+            {/* The same tracks in every section, so cards line up down the
+                page; inside the centred column that is at most four across. */}
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 220px), 1fr))", gap: 16 }}>
               {items.map(t => <ReadyMadeCard key={t.id} template={t} />)}
             </div>
           </section>
         ))}
+      </CenteredColumn>
       </div>
     </div>
   );

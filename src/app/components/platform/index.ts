@@ -15,6 +15,8 @@ export type { PageHeaderProps, BreadcrumbItem } from "./PageHeader";
 export {
   AppContent,
   AppContentFull,
+  CenteredColumn,
+  CONTENT_MAX_WIDTH,
   SettingsContent,
   TwoColumnLayout,
   DashboardGrid,

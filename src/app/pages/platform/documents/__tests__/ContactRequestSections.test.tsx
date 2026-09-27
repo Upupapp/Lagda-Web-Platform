@@ -109,9 +109,10 @@ describe("Others: requests for you", () => {
     expect(within(done).getByText("Signed document")).toBeTruthy();
     expect(within(done).queryByRole("button")).toBeNull();
 
-    // The role documents are still listed below.
-    expect(screen.getByRole("table", { name: "Other documents I take part in" })).toBeTruthy();
-    expect(screen.getByText("Documents you take part in")).toBeTruthy();
+    // The role documents are still listed below. They load separately from the
+    // requests, so wait for them rather than assuming they arrived first.
+    expect(await screen.findByRole("table", { name: "Other documents I take part in" })).toBeTruthy();
+    expect(await screen.findByText("Documents you take part in")).toBeTruthy();
     // 1 role document + 2 pending requests.
     await waitFor(() => { expect(lastCount).toBe(3); });
   });

@@ -30,38 +30,50 @@
 //   behind a toggle at the top-left and the document keeps the screen.
 //
 // Plus a focus mode: the document maximizes to fill the viewport, dropping
-// the page-count strip and the starter bar, for writing rather than fiddling.
+// the page-count strip, for writing rather than fiddling.
+//
+// ── LAGDA Chatbot ──────────────────────────────────────────────────────────
+//
+// The old "Start from a purpose" bar is gone; its ready-made documents and
+// the detailed starter drafts now live inside the LAGDA Chatbot (see
+// `author/chatbot/`), a rule-based writing assistant that asks a few
+// questions and then types the draft into this editor. Its conversation is
+// kept while the page is open and deleted when it writes, on save, and on
+// leaving — the page warns before the last two.
 
-import { useEffect, useRef, useState } from "react";
-import { useParams, Link } from "react-router";
+import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useParams, Link, useBlocker } from "react-router";
 import { useEditor, EditorContent } from "@tiptap/react";
 import {
   ChevronLeft, AlertCircle, Info, Save, CheckCircle2, FileText,
-  SlidersHorizontal, X, Maximize2, Minimize2,
+  SlidersHorizontal, X, Maximize2, Minimize2, FastForward,
 } from "lucide-react";
 import { TemplateProvider, useTemplates } from "../../../context/TemplateContext";
 import { usePlatform } from "../../../context/PlatformContext";
 import { SkeletonBlock, SKELETON_STYLE } from "../../../components/platform";
+import { ConfirmDialog, useConfirm, type ConfirmRequest } from "../../../components/platform/ConfirmDialog";
 import { useProcessing } from "../../../services/processing.service";
 import {
-  generateTemplateDocument, saveResolvedFieldAnchors, realTemplatesAvailable,
+  generateTemplateDocument, saveResolvedFieldAnchors, realTemplatesAvailable, updateTemplate,
 } from "../../../services/templates-source";
-import type { DocumentTemplate } from "../../../models/templates";
+import type { DocumentTemplate, TemplateRolePlaceholder } from "../../../models/templates";
 import { usePageMeta } from "../../../hooks/usePageMeta";
 import { useViewport } from "../../../hooks/useViewport";
 import { Z } from "../../../utils/z-index";
 import { flowDocumentExtensions } from "./author/extensions";
 import { flowDocumentToJSON, jsonToFlowDocument } from "./author/converter";
 import { RibbonToolbar } from "./author/RibbonToolbar";
-import { STARTER_TEMPLATES, type StarterTemplate } from "./author/starterTemplates";
-import { PurposePicker } from "./author/PurposePicker";
-import {
-  readyMadeTypingFrame, readyMadeTypingLength, type ReadyMadeTemplate,
-} from "../../../services/ready-made-templates";
+import { ChatToggle } from "./author/chatbot/ChatToggle";
+import { OrbitLoader } from "./author/chatbot/chatbot-ui";
+import { CHATBOT_CSS, BOT_IMAGE, useReducedMotion } from "./author/chatbot/chatbot-theme";
+import { useChatSession } from "./author/chatbot/chat-store";
+import type { EngineContext, WritePlan } from "./author/chatbot/engine";
+import { hasUserTurns } from "./author/chatbot/session";
+import { useDraftTypewriter } from "./author/chatbot/useDraftTypewriter";
 
-/** Roughly how long the typed reveal takes, however long the text. */
-const TYPING_FRAMES = 45;
-const TYPING_FRAME_MS = 22;
+// The chatbot's engine and knowledge base load when the chat is first opened,
+// not with the editor.
+const ChatPanel = lazy(() => import("./author/chatbot/ChatPanel").then(m => ({ default: m.ChatPanel })));
 
 // ── Design tokens ─────────────────────────────────────────────────────────────
 const GF     = { fontFamily: "'Geist', sans-serif" };
@@ -73,6 +85,14 @@ const HAIRLINE = "1px solid rgba(0,0,0,0.08)";
 const PAGE_W = 720;
 /** Focus mode earns a wider measure — the chrome around it is gone. */
 const PAGE_W_MAX = 860;
+/** The chatbot's side panel on a desktop, and on a tablet. */
+const PANEL_W = 380;
+const PANEL_W_MEDIUM = 340;
+const DONE_TOAST_MS = 6500;
+
+export const LEAVE_WARNING = "Leaving this page will delete your conversation with LAGDA Chatbot.";
+export const SAVE_WARNING = "Saving will finish this template and delete your conversation with LAGDA Chatbot.";
+export const DRAFT_DONE = "Draft written. Review and edit anything you like.";
 
 // The editor's own internals are a real stylesheet, so they use real media
 // queries: 72px of page margin is right on A4 and absurd on a 360px phone,
@@ -86,12 +106,15 @@ const EDITOR_CSS = `
   font-family: 'Times New Roman', Times, serif;
   font-size: 11pt;
   line-height: 1.5;
+  overflow-wrap: anywhere;
 }
 .flow-doc-editor .ProseMirror p { margin: 0 0 8pt; }
 .flow-doc-editor .ProseMirror h1 { font-size: 20pt; font-weight: 700; margin: 0 0 10pt; }
 .flow-doc-editor .ProseMirror h2 { font-size: 16pt; font-weight: 700; margin: 0 0 10pt; }
 .flow-doc-editor .ProseMirror h3 { font-size: 13pt; font-weight: 700; margin: 0 0 10pt; }
-.flow-doc-editor .ProseMirror ol { padding-left: 24px; margin: 0 0 8pt; }
+.flow-doc-editor .ProseMirror ol { padding-left: 24px; margin: 0 0 8pt; list-style: decimal outside; }
+.flow-doc-editor .ProseMirror ol ol { list-style-type: lower-alpha; }
+.flow-doc-editor .ProseMirror ol ol ol { list-style-type: lower-roman; }
 .flow-doc-editor .ProseMirror li { margin-bottom: 4pt; }
 .flow-doc-editor .ProseMirror .flow-page-break {
   margin: 16px 0; padding: 4px 0; text-align: center; font-size: 10px;
@@ -105,6 +128,7 @@ const EDITOR_CSS = `
   background: #ECFDF5; color: #047857; border-radius: 3px; padding: 1px 3px;
   text-decoration: underline; text-decoration-style: dotted;
 }
+.flow-doc-editor .ProseMirror[contenteditable="false"] { cursor: default; }
 @media (max-width: 767px) {
   .flow-doc-editor .ProseMirror {
     min-height: 68vh;
@@ -120,6 +144,15 @@ const EDITOR_CSS = `
   .flow-doc-editor .ProseMirror ol { padding-left: 20px; }
 }
 `;
+
+/** The side panel's place, held while its code arrives. */
+function PanelFallback({ width, reduced }: { width: number; reduced: boolean }) {
+  return (
+    <div aria-hidden style={{ width, flexShrink: 0, height: "100%", borderLeft: HAIRLINE, background: "#F8FAFC", display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <OrbitLoader caption="Getting your assistant ready" reduced={reduced} />
+    </div>
+  );
+}
 
 /** A header control: 40px on a phone (thumb), 32px on a pointer. */
 function IconControl({
@@ -155,7 +188,8 @@ function AuthorEditorInner({ template }: { template: DocumentTemplate }) {
   usePageMeta();
   const platform = usePlatform();
   const { run } = useProcessing();
-  const { isNarrow } = useViewport();
+  const { isNarrow, isMedium } = useViewport();
+  const reduced = useReducedMotion();
   const workspaceId = platform.currentWorkspace?.id;
   const isReal = realTemplatesAvailable(workspaceId);
 
@@ -168,6 +202,9 @@ function AuthorEditorInner({ template }: { template: DocumentTemplate }) {
   // and hiding a toolbar nobody asked to hide is its own annoyance.
   const [ribbonOpen, setRibbonOpen] = useState(false);
   const [maximized, setMaximized] = useState(false);
+  // The template's role slots — the chatbot can add to them, so they are
+  // held here rather than read from the (stale) loaded template.
+  const [placeholders, setPlaceholders] = useState<TemplateRolePlaceholder[]>(template.placeholders);
 
   const editor = useEditor({
     extensions: flowDocumentExtensions(),
@@ -175,44 +212,135 @@ function AuthorEditorInner({ template }: { template: DocumentTemplate }) {
     onUpdate: () => setChanged(true),
   });
 
-  const [typing, setTyping] = useState(false);
-  const typingTimer = useRef<ReturnType<typeof setInterval> | null>(null);
-  useEffect(() => () => { if (typingTimer.current) clearInterval(typingTimer.current); }, []);
-  const isEmpty = template.content.content.length === 0 && !changed;
-  const ribbonVisible = editor !== null && (!isNarrow || ribbonOpen);
-  const showStarters = (isEmpty || typing) && !maximized;
-
-  const applyStarter = (starter: StarterTemplate) => {
+  const [docEmpty, setDocEmpty] = useState(template.content.content.length === 0);
+  useEffect(() => {
     if (!editor) return;
-    editor.commands.setContent(flowDocumentToJSON(starter.build(template.placeholders)));
-    setChanged(true);
-  };
+    const sync = () => setDocEmpty(editor.isEmpty);
+    sync();
+    editor.on("update", sync);
+    return () => { editor.off("update", sync); };
+  }, [editor]);
 
-  // Written in as if typed, then settles on the full document — signature
-  // lines bound to this template's own signer roles where it has them.
-  const writeFromPurpose = (source: ReadyMadeTemplate) => {
-    if (!editor || typing) return;
-    const total = readyMadeTypingLength(source);
-    const show = (chars: number) =>
-      editor.commands.setContent(flowDocumentToJSON(readyMadeTypingFrame(source, template.placeholders, chars)));
-    setChanged(true);
-    const reduced = typeof window !== "undefined"
-      && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
-    if (reduced) { show(total); return; }
+  // ── LAGDA Chatbot ─────────────────────────────────────────────────────────
+  const chat = useChatSession(template.id);
+  const hasChat = hasUserTurns(chat.session.messages);
+  const [chatOpen, setChatOpen] = useState(false);
+  const [everOpened, setEverOpened] = useState(false);
+  const [doneNote, setDoneNote] = useState<string | null>(null);
+  const toggleRef = useRef<HTMLButtonElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const pageRef = useRef<HTMLDivElement>(null);
+  const badgeRef = useRef<HTMLSpanElement>(null);
+  const ribbonRef = useRef<HTMLDivElement>(null);
+  const wasOpen = useRef(false);
+  const typewriter = useDraftTypewriter({ editor, scrollRef, badgeHostRef: pageRef, badgeRef, reduced });
+  const typing = typewriter.busy;
+  const panelSide = !isNarrow;
+  const panelWidth = isMedium ? PANEL_W_MEDIUM : PANEL_W;
 
-    const step = Math.max(1, Math.ceil(total / TYPING_FRAMES));
-    let written = 0;
-    setTyping(true);
-    typingTimer.current = setInterval(() => {
-      written = Math.min(total, written + step);
-      show(written);
-      if (written >= total) {
-        if (typingTimer.current) clearInterval(typingTimer.current);
-        typingTimer.current = null;
-        setTyping(false);
+  // Leaving the page (Back, or any in-app route) always ends the chat.
+  const clearChat = chat.clear;
+  useEffect(() => () => clearChat(), [clearChat]);
+
+  // Focus returns to the button that opened the chat.
+  useEffect(() => {
+    if (wasOpen.current && !chatOpen) toggleRef.current?.focus();
+    wasOpen.current = chatOpen;
+  }, [chatOpen]);
+
+  // The ribbon is out of reach while the draft is typed.
+  useEffect(() => {
+    const el = ribbonRef.current;
+    if (el) el.inert = typing;
+  });
+
+  useEffect(() => {
+    if (doneNote === null) return;
+    const t = setTimeout(() => setDoneNote(null), DONE_TOAST_MS);
+    return () => clearTimeout(t);
+  }, [doneNote]);
+
+  // A browser refresh or tab close loses an in-memory chat: ask first.
+  useEffect(() => {
+    if (!hasChat) return;
+    const onBeforeUnload = (e: BeforeUnloadEvent) => { e.preventDefault(); e.returnValue = ""; };
+    window.addEventListener("beforeunload", onBeforeUnload);
+    return () => window.removeEventListener("beforeunload", onBeforeUnload);
+  }, [hasChat]);
+
+  // Back, or any other in-app navigation, with a conversation in progress.
+  const blocker = useBlocker(({ currentLocation, nextLocation }) =>
+    hasChat && currentLocation.pathname !== nextLocation.pathname);
+  const leaving = useRef(false);
+  const leaveRequest: ConfirmRequest | null = blocker.state === "blocked"
+    ? {
+        title: "Leave this page?",
+        body: LEAVE_WARNING,
+        confirmLabel: "Leave and delete",
+        cancelLabel: "Stay",
+        destructive: true,
+        onConfirm: () => {
+          leaving.current = true;
+          chat.clear();
+          blocker.proceed?.();
+        },
       }
-    }, TYPING_FRAME_MS);
+    : null;
+  const closeLeave = () => {
+    if (!leaving.current && blocker.state === "blocked") blocker.reset?.();
+    leaving.current = false;
   };
+
+  const { confirm, confirmDialog } = useConfirm();
+
+  const engineCtx: EngineContext = useMemo(() => ({
+    userName: platform.user?.displayName ?? "",
+    documentHasContent: !docEmpty,
+    canSaveRoles: isReal,
+  }), [platform.user?.displayName, docEmpty, isReal]);
+
+  const openChat = () => { setChatOpen(true); setEverOpened(true); setDoneNote(null); };
+
+  // "Yes, write it": the chat is cleared and closed, the page loader plays
+  // while the roles are saved, then the draft is typed in.
+  const writeDraft = useCallback((plan: WritePlan) => {
+    if (!editor) return;
+    chat.clear();
+    setChatOpen(false);
+    let rolesNote: string | null = null;
+    const prepare = async () => {
+      const [{ buildDraft }, { participantsToPlaceholders }] = await Promise.all([
+        import("./author/chatbot/draft"), import("./author/chatbot/participants"),
+      ]);
+      let slots = placeholders;
+      if (plan.participants.length > 0 && plan.docId !== null) {
+        if (isReal && workspaceId) {
+          try {
+            const merged = participantsToPlaceholders(plan.participants, placeholders);
+            const updated = await updateTemplate(workspaceId, template.id, {
+              name: template.name,
+              routingMode: template.routing.mode,
+              placeholders: merged,
+              notifySenderOnComplete: template.settings.completionCopySender,
+              variables: template.variables,
+            });
+            slots = updated.placeholders;
+            setPlaceholders(updated.placeholders);
+            rolesNote = `Template roles set up: ${plan.participants.map(p => p.label).join(", ")}.`;
+          } catch (err) {
+            rolesNote = `The roles could not be saved${err instanceof Error && err.message !== "" ? ` (${err.message})` : ""}. The names are in the document text.`;
+          }
+        } else {
+          rolesNote = "Open a workspace to save the roles. The names are in the document text.";
+        }
+      }
+      return buildDraft(plan, slots);
+    };
+    typewriter.start(prepare, plan.placement, () => {
+      setChanged(true);
+      setDoneNote(rolesNote === null ? DRAFT_DONE : `${DRAFT_DONE} ${rolesNote}`);
+    });
+  }, [editor, chat, placeholders, isReal, workspaceId, template, typewriter]);
 
   const handleSave = async () => {
     if (typing) return;
@@ -244,15 +372,37 @@ function AuthorEditorInner({ template }: { template: DocumentTemplate }) {
     }
   };
 
+  // Saving finishes the template, and with it the conversation.
+  const requestSave = () => {
+    if (typing) return;
+    if (!hasChat) { chat.clear(); void handleSave(); return; }
+    confirm({
+      title: "Save and finish?",
+      body: SAVE_WARNING,
+      confirmLabel: "Save",
+      cancelLabel: "Keep chatting",
+      onConfirm: () => { chat.clear(); setChatOpen(false); void handleSave(); },
+    });
+  };
+
   const statusPill = changed
     ? { text: "Unsaved changes", fg: "#92400E", bg: "#FEF3C7", border: "#FDE68A" }
     : saved
       ? { text: "Saved", fg: "#065F46", bg: "#D1FAE5", border: "#A7F3D0" }
       : null;
 
+  const ribbonVisible = editor !== null && (!isNarrow || ribbonOpen);
+  const sidePanelOpen = chatOpen && panelSide;
+  const toggleVisible = !chatOpen && !typing;
+  const fabBottom = isNarrow ? 16 : 24;
+  const toggleBottom = isReal
+    ? `calc(${String(fabBottom + 48 + 14)}px + env(safe-area-inset-bottom, 0px))`
+    : `calc(${String(fabBottom)}px + env(safe-area-inset-bottom, 0px))`;
+
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100dvh", background: "#ffffff", ...GF, overflow: "hidden" }}>
       <style>{EDITOR_CSS}</style>
+      <style>{CHATBOT_CSS}</style>
 
       {/* ── Header: navigation and view controls only ───────────────────── */}
       <header style={{
@@ -374,73 +524,199 @@ function AuthorEditorInner({ template }: { template: DocumentTemplate }) {
       {/* Ribbon. Capped and scrollable on a phone: wrapped to three rows it
           would otherwise take half the viewport. */}
       {ribbonVisible && editor && (
-        <div style={{ flexShrink: 0, maxHeight: isNarrow ? "38vh" : undefined, overflowY: isNarrow ? "auto" : undefined }}>
+        <div
+          ref={ribbonRef}
+          aria-disabled={typing || undefined}
+          style={{
+            flexShrink: 0, maxHeight: isNarrow ? "38vh" : undefined, overflowY: isNarrow ? "auto" : undefined,
+            opacity: typing ? 0.55 : 1, pointerEvents: typing ? "none" : undefined, transition: "opacity 200ms",
+          }}
+        >
           <RibbonToolbar
             editor={editor}
             variables={template.variables}
-            placeholders={template.placeholders}
+            placeholders={placeholders}
             compact={isNarrow}
           />
         </div>
       )}
 
-      {showStarters && (
-        <PurposePicker
-          compact={isNarrow}
-          busy={typing}
-          onWrite={writeFromPurpose}
-          starters={STARTER_TEMPLATES}
-          onStarter={applyStarter}
+      {/* ── The document, and the chatbot's side panel beside it ────────── */}
+      <div style={{ flex: 1, minHeight: 0, display: "flex", minWidth: 0 }}>
+        <div style={{ flex: 1, minWidth: 0, position: "relative", display: "flex" }}>
+          <div
+            ref={scrollRef}
+            data-testid="author-canvas"
+            style={{
+              flex: 1, minWidth: 0, overflowY: "auto", overflowX: "hidden", background: BGCANVAS,
+              // Bottom room for the floating actions, plus the phone's home bar;
+              // right room on a tablet so the chat button never sits on the page.
+              padding: isNarrow
+                ? "12px 10px calc(170px + env(safe-area-inset-bottom, 0px))"
+                : `24px ${isMedium && toggleVisible ? "96px" : "24px"} 104px 24px`,
+            }}
+          >
+            <div
+              ref={pageRef}
+              className={`flow-doc-editor${typewriter.fading ? " lagda-cb-draft-fade" : ""}`}
+              aria-busy={typing || undefined}
+              style={{
+                position: "relative",
+                width: "100%",
+                maxWidth: maximized ? PAGE_W_MAX : PAGE_W,
+                margin: "0 auto",
+                background: "white",
+                borderRadius: isNarrow ? 8 : 0,
+                boxShadow: "0 4px 24px rgba(0,0,0,0.18)",
+              }}
+            >
+              <EditorContent editor={editor} />
+              {typewriter.phase === "typing" && (
+                <span
+                  ref={badgeRef}
+                  aria-hidden
+                  data-testid="typing-badge"
+                  className={reduced ? undefined : "lagda-cb-bob"}
+                  style={{
+                    position: "absolute", left: 0, top: 0, opacity: 0,
+                    width: 26, height: 26, borderRadius: "50%", background: "#EAF4FF",
+                    boxShadow: `0 2px 8px rgba(0,120,212,0.35), 0 0 0 2px #FFFFFF`, pointerEvents: "none",
+                    display: "inline-flex", alignItems: "center", justifyContent: "center",
+                    transition: "top 90ms ease-out, opacity 150ms",
+                  }}
+                >
+                  <img src={BOT_IMAGE} alt="" width={22} height={22} style={{ width: 22, height: 22, objectFit: "contain" }} />
+                </span>
+              )}
+            </div>
+          </div>
+
+          {/* The loader over the page while the draft is prepared. */}
+          {typewriter.phase === "loading" && (
+            <div data-testid="draft-loader" style={{
+              position: "absolute", inset: 0, zIndex: Z.raised, display: "flex", alignItems: "center", justifyContent: "center",
+              background: "rgba(223,227,232,0.82)", backdropFilter: "blur(2px)",
+            }}>
+              <OrbitLoader caption={reduced ? "Writing your draft" : "LAGDA Chatbot is writing your draft"} reduced={reduced} />
+            </div>
+          )}
+
+          {/* Typing: say so, and offer the way out. */}
+          {typing && (
+            <div style={{
+              position: "absolute", left: 12, right: 12, zIndex: Z.raised, display: "flex", justifyContent: "center", pointerEvents: "none",
+              bottom: isNarrow ? "calc(16px + env(safe-area-inset-bottom, 0px))" : 24,
+            }}>
+            <div style={{
+              pointerEvents: "auto", display: "flex", alignItems: "center", gap: 10, maxWidth: "100%",
+              background: NAVY, color: "#FFFFFF", borderRadius: 99, padding: "6px 6px 6px 14px",
+              boxShadow: "0 8px 24px rgba(7,17,31,0.3)",
+            }}>
+              <span role="status" style={{ ...GF, fontSize: 12.5, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                {typewriter.phase === "loading" ? (isNarrow ? "Preparing…" : "Preparing your draft…") : (isNarrow ? "Writing…" : "Writing your draft…")}
+              </span>
+              <button
+                type="button"
+                onClick={typewriter.skip}
+                style={{
+                  ...GF, display: "inline-flex", alignItems: "center", gap: 6, flexShrink: 0,
+                  border: "none", borderRadius: 99, background: "#FFFFFF", color: NAVY,
+                  fontSize: 12.5, fontWeight: 700, padding: "7px 12px", minHeight: 34, cursor: "pointer",
+                }}
+              >
+                <FastForward size={13} aria-hidden /> Skip animation
+              </button>
+            </div>
+            </div>
+          )}
+
+          {doneNote !== null && (
+            <div style={{ position: "absolute", top: 12, left: 12, right: 12, zIndex: Z.raised, display: "flex", justifyContent: "center", pointerEvents: "none" }}>
+            <div role="status" data-testid="draft-done" className="lagda-cb-bubble-in" style={{
+              pointerEvents: "auto", maxWidth: "100%", display: "flex", alignItems: "flex-start", gap: 8,
+              background: "#ECFDF5", border: "1px solid #A7F3D0", color: "#065F46", borderRadius: 12,
+              padding: "9px 10px 9px 12px", boxShadow: "0 8px 22px rgba(7,17,31,0.12)",
+            }}>
+              <CheckCircle2 size={15} aria-hidden style={{ flexShrink: 0, marginTop: 1 }} />
+              <span style={{ ...GF, fontSize: 12.5, fontWeight: 600, lineHeight: 1.45, minWidth: 0 }}>{doneNote}</span>
+              <button type="button" aria-label="Dismiss" onClick={() => setDoneNote(null)}
+                style={{ border: "none", background: "none", color: "#065F46", cursor: "pointer", padding: 0, flexShrink: 0 }}>
+                <X size={14} />
+              </button>
+            </div>
+            </div>
+          )}
+        </div>
+
+        {sidePanelOpen && (
+          <Suspense fallback={<PanelFallback width={panelWidth} reduced={reduced} />}>
+          <ChatPanel
+            templateId={template.id}
+            variant="side"
+            width={panelWidth}
+            user={platform.user}
+            ctx={engineCtx}
+            reduced={reduced}
+            onClose={() => setChatOpen(false)}
+            onWrite={writeDraft}
+          />
+          </Suspense>
+        )}
+      </div>
+
+      {chatOpen && !panelSide && (
+        <Suspense fallback={null}>
+        <ChatPanel
+          templateId={template.id}
+          variant="sheet"
+          user={platform.user}
+          ctx={engineCtx}
+          reduced={reduced}
+          onClose={() => setChatOpen(false)}
+          onWrite={writeDraft}
         />
+        </Suspense>
       )}
 
-      {/* ── The document ────────────────────────────────────────────────── */}
-      <div style={{
-        flex: 1, minHeight: 0, overflowY: "auto", background: BGCANVAS,
-        // Bottom room for the floating action, plus the phone's home bar.
-        padding: isNarrow
-          ? "12px 10px calc(104px + env(safe-area-inset-bottom, 0px))"
-          : "24px 24px 104px",
-      }}>
-        <div
-          className="flow-doc-editor"
-          style={{
-            width: "100%",
-            maxWidth: maximized ? PAGE_W_MAX : PAGE_W,
-            margin: "0 auto",
-            background: "white",
-            borderRadius: isNarrow ? 8 : 0,
-            boxShadow: "0 4px 24px rgba(0,0,0,0.18)",
-          }}
-        >
-          <EditorContent editor={editor} />
-        </div>
-      </div>
+      {toggleVisible && (
+        <ChatToggle
+          ref={toggleRef}
+          documentEmpty={docEmpty}
+          everOpened={everOpened}
+          reduced={reduced}
+          right={isNarrow ? 14 : 24}
+          bottom={toggleBottom}
+          onOpen={openChat}
+        />
+      )}
 
       {/* ── Generate & Save: the lower-right corner ─────────────────────── */}
       {isReal && (
         <button
-          onClick={() => { void handleSave(); }}
-          disabled={saving}
+          onClick={requestSave}
+          disabled={saving || typing}
           style={{
             position: "fixed",
-            right: isNarrow ? 14 : 24,
-            bottom: `calc(${isNarrow ? "16px" : "24px"} + env(safe-area-inset-bottom, 0px))`,
+            right: (isNarrow ? 14 : 24) + (sidePanelOpen ? panelWidth : 0),
+            bottom: `calc(${String(fabBottom)}px + env(safe-area-inset-bottom, 0px))`,
             zIndex: Z.sticky,
-            display: "inline-flex", alignItems: "center", gap: 8,
+            display: typing && isNarrow ? "none" : "inline-flex", alignItems: "center", gap: 8,
             padding: isNarrow ? "13px 18px" : "12px 20px",
             minHeight: 48,
-            background: saving ? "#93C5FD" : AZURE,
+            background: saving || typing ? "#93C5FD" : AZURE,
             color: "white", border: "none", borderRadius: 99,
             ...GF, fontSize: 13, fontWeight: 700,
             boxShadow: "0 6px 20px rgba(0,120,212,0.38)",
-            cursor: saving ? "default" : "pointer",
+            cursor: saving || typing ? "default" : "pointer",
           }}
         >
           {saving ? <Save size={15} /> : saved ? <CheckCircle2 size={15} /> : <Save size={15} />}
           {saving ? "Generating…" : saved ? "Saved" : "Generate & Save"}
         </button>
       )}
+
+      {confirmDialog}
+      <ConfirmDialog request={leaveRequest} onClose={closeLeave} />
     </div>
   );
 }

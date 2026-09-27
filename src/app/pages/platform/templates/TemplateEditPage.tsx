@@ -23,7 +23,11 @@ import type { PrepParticipantRole } from "../../../models/prepare";
 import type {
   TemplateRolePlaceholder, TemplateVariable, TemplateVariableType,
 } from "../../../models/templates";
-import { SkeletonBlock, SKELETON_STYLE } from "../../../components/platform";
+import { SkeletonBlock, SKELETON_STYLE, CenteredColumn, CONTENT_MAX_WIDTH } from "../../../components/platform";
+
+// One centred column for the header, the tab row and the tab body, so on a
+// wide screen Save Changes ends on the same right edge as the form below it.
+const EDIT_COLUMN = CONTENT_MAX_WIDTH.form;
 import {
   TEMPLATE_CATEGORY_LABELS,
   TEMPLATE_CATEGORIES,
@@ -826,6 +830,7 @@ function TemplateEditInner() {
     <div style={{ background: "#F8FAFC", minHeight: "100%", ...GF }}>
       {/* Header */}
       <div style={{ background: "white", borderBottom: "1px solid #E2E8F0", padding: isNarrow ? "16px 16px" : "16px 24px" }}>
+        <CenteredColumn max={EDIT_COLUMN}>
         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
           <Link to={`/app/templates/${templateId}`} style={{ ...GF, fontSize: 12, color: "#64748B", textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 4 }}>
             <ChevronLeft size={13} />
@@ -886,10 +891,12 @@ function TemplateEditInner() {
             </div>
           </div>
         )}
+        </CenteredColumn>
       </div>
 
       {/* Tabs */}
-      <div style={{ background: "white", borderBottom: "1px solid #E2E8F0", padding: "0 24px", display: "flex", gap: 2 }}>
+      <div style={{ background: "white", borderBottom: "1px solid #E2E8F0", padding: "0 24px" }}>
+      <CenteredColumn max={EDIT_COLUMN} style={{ display: "flex", gap: 2 }}>
         {TABS.map(tab => (
           <button
             key={tab.id}
@@ -913,10 +920,12 @@ function TemplateEditInner() {
             {tab.label}
           </button>
         ))}
+      </CenteredColumn>
       </div>
 
       {/* Tab content */}
-      <div style={{ padding: "24px", maxWidth: 640 }}>
+      <div style={{ padding: "24px" }}>
+      <CenteredColumn max={EDIT_COLUMN}>
         {activeTab === "details"      && <DetailsTab      draft={draft} onChange={p => setDraft(d => d ? { ...d, ...p } : d)} />}
         {activeTab === "author"       && <AuthorTab       draft={draft} canWrite={canWrite} />}
         {activeTab === "placeholders" && <PlaceholdersTab draft={draft} workspaceId={workspaceId} onChange={p => setDraft(d => d ? { ...d, ...p } : d)} />}
@@ -924,6 +933,7 @@ function TemplateEditInner() {
         {activeTab === "auth"         && <AuthTab         draft={draft} onChange={p => setDraft(d => d ? { ...d, ...p } : d)} />}
         {activeTab === "settings"     && <SettingsTab     draft={draft} canWrite={canWrite} onChange={p => setDraft(d => d ? { ...d, ...p } : d)} />}
         {activeTab === "variables"    && <VariablesTab    draft={draft} onChange={p => setDraft(d => d ? { ...d, ...p } : d)} />}
+      </CenteredColumn>
       </div>
     </div>
   );
