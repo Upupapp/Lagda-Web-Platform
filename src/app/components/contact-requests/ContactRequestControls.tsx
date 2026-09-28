@@ -6,7 +6,7 @@ import { useCallback, useEffect, useState } from "react";
 import { FileSignature, Upload, FilePen, Clock, UserCheck, Globe, Mail, Bell } from "lucide-react";
 import {
   CONTACT_REQUEST_KIND_LABELS, CONTACT_REQUEST_KIND_TONES,
-  CONTACT_REQUEST_STATUS_LABELS, CONTACT_REQUEST_STATUS_TONES,
+  CONTACT_REQUEST_STATUS_LABELS, CONTACT_REQUEST_STATUS_TONES, ENABLED_CONTACT_REQUEST_KINDS,
   type ContactRequest, type ContactRequestKind, type ContactRequestStatus,
 } from "../../models/contact-requests";
 import type { ContactWorkspaceMember } from "../../models/contacts";
@@ -119,16 +119,19 @@ export function requestAvailability(
   return { enabled: true };
 }
 
-/** The three actions as buttons (contact detail). A disabled action keeps its
- *  place and says why, visibly, rather than vanishing. */
-export function ContactRequestButtons({ contact, currentUserId, onChoose }: {
+/** The request actions as buttons (contact detail). Only the kinds in
+ *  `ENABLED_CONTACT_REQUEST_KINDS` are offered unless `kinds` says otherwise.
+ *  A disabled action keeps its place and says why, visibly, rather than
+ *  vanishing. */
+export function ContactRequestButtons({ contact, currentUserId, onChoose, kinds = ENABLED_CONTACT_REQUEST_KINDS }: {
   contact: { workspaceMember?: ContactWorkspaceMember | null; status: string; id: string };
   currentUserId: string | undefined;
   onChoose: (kind: ContactRequestKind) => void;
+  kinds?: readonly ContactRequestKind[];
 }) {
   return (
     <div role="group" aria-label="Request actions" style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-      {CONTACT_REQUEST_KINDS.map(kind => {
+      {kinds.map(kind => {
         const availability = requestAvailability(contact, kind, currentUserId);
         const Icon = KIND_ICONS[kind];
         const reasonId = `req-${kind}-${contact.id}-why`;

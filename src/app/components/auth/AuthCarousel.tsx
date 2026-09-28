@@ -110,15 +110,21 @@ export const AUTH_CAROUSEL_SLIDES: readonly Slide[] = [
 /** Length of the laptop's drop-in landing animation, in milliseconds. */
 export const AUTH_CAROUSEL_DROP_MS = 1150;
 
+/** How long the laptop, Upload and Signature slides each stay on screen
+ *  (the laptop's counted from when its drop-in has landed). */
+export const AUTH_CAROUSEL_STEP_DWELL_MS = 2000;
+
 /**
- * Display time per slide, in milliseconds: intro 3s; laptop 1s after its
- * drop-in has fully landed; Upload 1s; Signature 1s; Send 3s; then loop.
+ * Display time per slide, in milliseconds: intro 3s; laptop 2s after its
+ * drop-in has fully landed; Upload 2s; Signature 2s; Send 3s; then loop.
+ * The same timing drives the wide-screen carousel and the phone
+ * "How LAGDA works" modal.
  */
 export const AUTH_CAROUSEL_DURATIONS = [
   3000,
-  AUTH_CAROUSEL_DROP_MS + 1000,
-  1000,
-  1000,
+  AUTH_CAROUSEL_DROP_MS + AUTH_CAROUSEL_STEP_DWELL_MS,
+  AUTH_CAROUSEL_STEP_DWELL_MS,
+  AUTH_CAROUSEL_STEP_DWELL_MS,
   3000,
 ] as const;
 

@@ -1,5 +1,7 @@
-// /app/contacts — Contacts library page.
-// Views, search, filters, sort, desktop table, mobile cards, multi-select, bulk actions.
+// /app/contacts — Contacts library page ("All Contacts").
+// One view — every contact — with search, tag filter, sort, cards,
+// multi-select and bulk actions. The other place in Contacts is
+// Requests From Contacts (/app/contacts/requests), linked from the nav here.
 // Frontend-only demonstration. No real persistence, sync, or identity verification.
 // Burgundy (#67023B) never used. eNotary never referenced.
 
@@ -9,21 +11,14 @@ import { User as BlankPersonIcon, MoreVertical } from "lucide-react";
 import { ContactProvider, useContacts } from "../../../context/ContactContext";
 import type { ContactListItem, ContactView, ContactSortField, ContactScope, ContactStatus, ContactTagId, ContactGroupId } from "../../../models/contacts";
 import {
-  CONTACT_VIEW_LABELS, CONTACT_VIEWS, CONTACT_STATUS_LABELS, CONTACT_SCOPE_LABELS,
+  CONTACT_STATUS_LABELS, CONTACT_SCOPE_LABELS,
   SYSTEM_CONTACT_TAGS, getContactTagById,
 } from "../../../models/contacts";
 import { Z } from "../../../utils/z-index";
-import { TabStrip } from "../../../components/platform/TabStrip";
 import { FilterChips } from "../../../components/platform/FilterChips";
 import { useProcessing } from "../../../services/processing.service";
-import { usePlatform } from "../../../context/PlatformContext";
-import { useWorkspaceAccess } from "../../../hooks/useWorkspaceAccess";
-import { contactRequestsAvailable } from "../../../services/real/contact-request.service";
-import { ContactRequestDialog } from "../../../components/contact-requests/ContactRequestDialog";
-import {
-  MembershipBadge, CONTACT_REQUEST_KINDS, requestAvailability,
-} from "../../../components/contact-requests/ContactRequestControls";
-import { CONTACT_REQUEST_KIND_LABELS, type ContactRequestKind } from "../../../models/contact-requests";
+import { MembershipBadge } from "../../../components/contact-requests/ContactRequestControls";
+import { ContactsSectionNav } from "./ContactsSectionNav";
 
 const GF    = { fontFamily: "'Geist', sans-serif" };
 const GM    = { fontFamily: "'Geist Mono', monospace" };
@@ -131,14 +126,7 @@ function Skeleton({ rows = 5 }: { rows?: number }) {
 
 function ContactsLibrary() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const { state, isReal, setQuery, asyncLoadList, asyncLoadGroups, asyncBulkArchive, asyncBulkRestore, asyncBulkAddToGroup, clearPending } = useContacts();
-
-  // "My Contacts" and "Frequently Used" have nothing real behind them — no
-  // ownership column, no usage column — so a real address book doesn't
-  // offer them at all, rather than show a tab whose count can never match
-  // what clicking it reveals. Fixture mode keeps every view, since the mock
-  // service genuinely tracks both.
-  const visibleViews = isReal ? CONTACT_VIEWS.filter(v => v !== "personal" && v !== "frequent") : CONTACT_VIEWS;
+  const { state, setQuery, asyncLoadList, asyncLoadGroups, asyncBulkArchive, asyncBulkAddToGroup, clearPending } = useContacts();
 
   const [searchInput,   setSearchInput]   = useState(searchParams.get("q") ?? "");
   const [selectedIds,   setSelectedIds]   = useState<Set<string>>(new Set());
@@ -146,30 +134,17 @@ function ContactsLibrary() {
   const [, setShowBulkMenu] = useState(false);
   const debouncedSearch = useDebounce(searchInput, 280);
 
-  // 086. Asking a contact for something. Offered only against a real
-  // workspace (a request names a real person and may send a real email), and
-  // hidden once the server has confirmed this account lacks the privilege.
-  const platform = usePlatform();
-  const access = useWorkspaceAccess();
-  const workspaceId = platform.currentWorkspace?.id;
-  const canSendRequests = contactRequestsAvailable(workspaceId)
-    && (!access.confirmed || access.can("upload-request.create"));
-  const [requestFor, setRequestFor] = useState<{ contact: ContactListItem; kind: ContactRequestKind } | null>(null);
-  const cardRequests = canSendRequests
-    ? { currentUserId: platform.user?.id, onChoose: (contact: ContactListItem, kind: ContactRequestKind) => { setRequestFor({ contact, kind }); } }
-    : undefined;
-
-  const currentView = (searchParams.get("view") as ContactView) ?? "all";
+  // One view only: All Contacts. The scope / status views and filters
+  // (personal, shared, archived…) are no longer offered, so the query is
+  // pinned to "all" whatever an old link says.
+  const currentView: ContactView = "all";
 
   // Sync URL params → context query
   useEffect(() => {
-    const view   = (searchParams.get("view")  as ContactView  ) ?? "all";
     const sort   = (searchParams.get("sort")  as ContactSortField) ?? "updatedAt";
     const dir    = (searchParams.get("dir")   as "asc" | "desc") ?? "desc";
     const page   = parseInt(searchParams.get("page") ?? "1", 10);
-    const scope  = (searchParams.get("scope") as ContactScope | "all") ?? "all";
-    const status = (searchParams.get("status") as ContactStatus | "all") ?? "all";
-    setQuery({ view, sort, direction: dir, page, scopeFilter: scope, statusFilter: status, search: debouncedSearch });
+    setQuery({ view: "all", sort, direction: dir, page, scopeFilter: "all", statusFilter: "all", search: debouncedSearch });
   }, [searchParams, debouncedSearch, setQuery]);
 
   // Reload list when query changes
@@ -178,22 +153,20 @@ function ContactsLibrary() {
   // Load groups once
   useEffect(() => { void asyncLoadGroups(); }, [asyncLoadGroups]);
 
-  // Clear selection on view change
-  useEffect(() => { setSelectedIds(new Set()); }, [currentView]);
-
-  // A stale/shared link to a view this workspace no longer offers (e.g.
-  // "My Contacts" against a real address book) falls back to "All Contacts"
-  // rather than silently rendering a tab strip with nothing selected.
+  // An old link to a view or scope / status filter that is no longer offered
+  // lands on All Contacts with those parameters dropped, so the URL never
+  // claims a narrowing the list does not apply.
   useEffect(() => {
-    if (visibleViews.includes(currentView)) return;
+    if (!searchParams.has("view") && !searchParams.has("scope") && !searchParams.has("status")) return;
     setSearchParams(prev => {
       const next = new URLSearchParams(prev);
       next.delete("view");
+      next.delete("scope");
+      next.delete("status");
       next.delete("page");
       return next;
     }, { replace: true });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isReal, currentView]);
+  }, [searchParams, setSearchParams]);
 
   // Clear pending feedback after delay
   useEffect(() => {
@@ -202,7 +175,6 @@ function ContactsLibrary() {
     return () => clearTimeout(t);
   }, [state.pendingMessage, clearPending]);
 
-  const setView    = (v: ContactView)       => { const p = new URLSearchParams(searchParams); p.set("view", v); p.delete("page"); setSearchParams(p); };
   const setSort    = (s: ContactSortField)  => { const p = new URLSearchParams(searchParams); p.set("sort", s); setSearchParams(p); };
   const toggleDir  = ()                     => { const p = new URLSearchParams(searchParams); p.set("dir", state.query.direction === "asc" ? "desc" : "asc"); setSearchParams(p); };
   const setPage    = (pg: number)           => { const p = new URLSearchParams(searchParams); p.set("page", String(pg)); setSearchParams(p); };
@@ -211,12 +183,6 @@ function ContactsLibrary() {
   // reorder rather than hide, so neither is a filter the user needs warning about.
   const activeFilterChips = [
     ...(searchInput.trim() ? [{ key: "q", label: `Search: "${searchInput.trim()}"` }] : []),
-    ...(state.query.scopeFilter !== "all"
-      ? [{ key: "scope", label: `Scope: ${CONTACT_SCOPE_LABELS[state.query.scopeFilter] ?? state.query.scopeFilter}` }]
-      : []),
-    ...(state.query.statusFilter !== "all"
-      ? [{ key: "status", label: `Status: ${CONTACT_STATUS_LABELS[state.query.statusFilter] ?? state.query.statusFilter}` }]
-      : []),
     ...state.query.tagFilter.map(tagId => ({
       key: `tag:${tagId}`,
       label: `Tag: ${getContactTagById(tagId)?.label ?? tagId}`,
@@ -225,8 +191,6 @@ function ContactsLibrary() {
 
   const removeFilter = (key: string) => {
     if (key === "q")      { setSearchInput(""); return; }
-    if (key === "scope")  { setQuery({ scopeFilter: "all", page: 1 }); return; }
-    if (key === "status") { setQuery({ statusFilter: "all", page: 1 }); return; }
     if (key.startsWith("tag:")) {
       const tagId = key.slice(4) as ContactTagId;
       setQuery({ tagFilter: state.query.tagFilter.filter(t => t !== tagId), page: 1 });
@@ -235,7 +199,7 @@ function ContactsLibrary() {
 
   const clearAllFilters = () => {
     setSearchInput("");
-    setQuery({ tagFilter: [], scopeFilter: "all", statusFilter: "all", page: 1 });
+    setQuery({ tagFilter: [], page: 1 });
   };
 
   const toggleSelect = (id: string) => setSelectedIds(prev => { const s = new Set(prev); if (s.has(id)) { s.delete(id); } else { s.add(id); } return s; });
@@ -244,7 +208,6 @@ function ContactsLibrary() {
 
   const items   = state.listResult?.items ?? [];
   const total   = state.listResult?.total  ?? 0;
-  const counts  = state.listResult?.viewCounts;
   const hasNext = state.listResult?.hasNextPage ?? false;
   const hasPrev = state.listResult?.hasPrevPage ?? false;
 
@@ -278,30 +241,7 @@ function ContactsLibrary() {
           </div>
         </div>
 
-        {/* Views bar */}
-        <TabStrip label="Contact views" activeKey={currentView} className="contacts-viewstrip">
-          {visibleViews.map(v => (
-            <button
-              key={v}
-              onClick={() => setView(v)}
-              aria-current={currentView === v ? "page" : undefined}
-              style={{
-                ...GF, fontSize: 13, fontWeight: currentView === v ? 700 : 500,
-                padding: "6px 12px", borderRadius: 8, border: "none", cursor: "pointer",
-                background: currentView === v ? LIGHT : "transparent",
-                color: currentView === v ? AZURE : SLATE,
-                whiteSpace: "nowrap",
-              }}
-            >
-              {CONTACT_VIEW_LABELS[v]}
-              {counts && (
-                <span style={{ ...GM, fontSize: 10, marginLeft: 5, color: currentView === v ? AZURE : SILVER }}>
-                  {counts[v]}
-                </span>
-              )}
-            </button>
-          ))}
-        </TabStrip>
+        <ContactsSectionNav current="all" />
       </header>
 
       {/* Toolbar */}
@@ -360,17 +300,6 @@ function ContactsLibrary() {
       {/* Filter panel */}
       {showFilters && (
         <div id="filter-panel" role="region" aria-label="Filters" style={{ background: "#FFFFFF", borderBottom: "1px solid #F0F2F5", padding: "12px 24px", display: "flex", gap: 16, flexWrap: "wrap" }}>
-          <FilterSelect label="Scope" value={state.query.scopeFilter} onChange={v => setQuery({ scopeFilter: v as ContactScope | "all", page: 1 })}>
-            <option value="all">All scopes</option>
-            <option value="workspace">Workspace</option>
-            <option value="personal">Personal</option>
-          </FilterSelect>
-          <FilterSelect label="Status" value={state.query.statusFilter} onChange={v => setQuery({ statusFilter: v as ContactStatus | "all", page: 1 })}>
-            <option value="all">All statuses</option>
-            <option value="active">Active</option>
-            <option value="archived">Archived</option>
-            <option value="invalid">Invalid</option>
-          </FilterSelect>
           <div>
             <label style={{ ...GF, fontSize: 11, fontWeight: 700, color: SLATE, display: "block", marginBottom: 4 }}>Tags</label>
             <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
@@ -400,8 +329,8 @@ function ContactsLibrary() {
               })}
             </div>
           </div>
-          {(state.query.tagFilter.length > 0 || state.query.scopeFilter !== "all" || state.query.statusFilter !== "all") && (
-            <button onClick={() => setQuery({ tagFilter: [], scopeFilter: "all", statusFilter: "all", page: 1 })}
+          {state.query.tagFilter.length > 0 && (
+            <button onClick={() => setQuery({ tagFilter: [], page: 1 })}
               style={{ ...GF, fontSize: 12, color: "#DC2626", background: "none", border: "none", cursor: "pointer", alignSelf: "flex-end", padding: "4px 0" }}>
               Clear all filters
             </button>
@@ -446,10 +375,7 @@ function ContactsLibrary() {
           </span>
           <div style={{ flex: 1 }} />
           <BulkActionButton label="Add Tag" onClick={() => setShowBulkMenu(v => !v)} />
-          {currentView === "archived"
-            ? <BulkActionButton label="Restore" onClick={async () => { await asyncBulkRestore(selArr); clearSelect(); void asyncLoadList(); }} />
-            : <BulkActionButton label="Archive" onClick={async () => { await asyncBulkArchive(selArr); clearSelect(); void asyncLoadList(); }} />
-          }
+          <BulkActionButton label="Archive" onClick={async () => { await asyncBulkArchive(selArr); clearSelect(); void asyncLoadList(); }} />
           <BulkActionButton label="Add to Group" onClick={async () => {
             // Use first group as demo
             await asyncBulkAddToGroup(selArr, "grp-clients" as ContactGroupId);
@@ -477,7 +403,7 @@ function ContactsLibrary() {
         )}
 
         {!state.listLoading && !state.listError && items.length === 0 && (
-          <EmptyState view={currentView} hasSearch={!!searchInput.trim()} hasFilters={state.query.tagFilter.length > 0} onClear={() => { setSearchInput(""); setQuery({ tagFilter: [], scopeFilter: "all", statusFilter: "all" }); }} />
+          <EmptyState view={currentView} hasSearch={!!searchInput.trim()} hasFilters={state.query.tagFilter.length > 0} onClear={() => { setSearchInput(""); setQuery({ tagFilter: [] }); }} />
         )}
 
         {!state.listLoading && !state.listError && items.length > 0 && (
@@ -494,7 +420,7 @@ function ContactsLibrary() {
             </div>
 
             <div className="contact-card-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(268px, 1fr))", gap: 12 }}>
-              {items.map(c => <ContactCard key={c.id} contact={c} selected={selectedIds.has(c.id)} onToggle={toggleSelect} requests={cardRequests} />)}
+              {items.map(c => <ContactCard key={c.id} contact={c} selected={selectedIds.has(c.id)} onToggle={toggleSelect} />)}
             </div>
 
             {/* Pagination */}
@@ -511,15 +437,6 @@ function ContactsLibrary() {
         )}
       </main>
 
-      {requestFor !== null && workspaceId !== undefined && (
-        <ContactRequestDialog
-          workspaceId={workspaceId}
-          kind={requestFor.kind}
-          contact={requestFor.contact}
-          onClose={() => { setRequestFor(null); }}
-        />
-      )}
-
       <style>{`
         @media (max-width: 480px) { .contact-card-grid { grid-template-columns: 1fr !important; } }
       `}</style>
@@ -529,10 +446,8 @@ function ContactsLibrary() {
 
 // ── Contact card ──────────────────────────────────────────────────────────────
 
-function ContactCard({ contact: c, selected, onToggle, requests }: {
+function ContactCard({ contact: c, selected, onToggle }: {
   contact: ContactListItem; selected: boolean; onToggle: (id: string) => void;
-  /** Present when this workspace can send contact requests (086). */
-  requests?: { currentUserId: string | undefined; onChoose: (contact: ContactListItem, kind: ContactRequestKind) => void };
 }) {
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -570,8 +485,9 @@ function ContactCard({ contact: c, selected, onToggle, requests }: {
           {c.organization && <p style={{ ...GF, color: SLATE, fontSize: 11, margin: "1px 0 0", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.organization}</p>}
         </div>
 
-        {/* The one visible control: everything else (View/Edit/Archive) hides
-            behind it, so a card full of data doesn't also read as a toolbar. */}
+        {/* The one visible control. Its menu holds exactly two items — View
+            Contact and Edit. Requests are made from the contact's own page;
+            archiving is done there or in bulk. */}
         <div ref={menuRef} style={{ position: "relative", flexShrink: 0 }}>
           <button
             onClick={() => setMenuOpen(v => !v)}
@@ -586,22 +502,8 @@ function ContactCard({ contact: c, selected, onToggle, requests }: {
           </button>
           {menuOpen && (
             <div role="menu" aria-label={`Actions for ${c.name}`} style={{ position: "absolute", right: 0, top: "calc(100% + 4px)", zIndex: Z.dropdown, background: "#FFFFFF", border: "1.5px solid #E3E8EF", borderRadius: 10, boxShadow: "0 8px 24px rgba(0,0,0,0.12)", minWidth: 160, width: "max-content", maxWidth: "min(280px, calc(100vw - 48px))", overflow: "hidden" }}>
-              <MenuItem label="View Contact"     onClick={() => { void navigate(`/app/contacts/${c.id}`); setMenuOpen(false); }} />
-              {c.status === "active"    && <MenuItem label="Edit"    onClick={() => { void navigate(`/app/contacts/${c.id}/edit`); setMenuOpen(false); }} />}
-              {requests !== undefined && c.status === "active" && CONTACT_REQUEST_KINDS.map(kind => {
-                const availability = requestAvailability(c, kind, requests.currentUserId);
-                return (
-                  <MenuItem
-                    key={kind}
-                    label={CONTACT_REQUEST_KIND_LABELS[kind].action}
-                    disabled={!availability.enabled}
-                    hint={availability.reason}
-                    onClick={() => { setMenuOpen(false); requests.onChoose(c, kind); }}
-                  />
-                );
-              })}
-              {c.status !== "archived"  && <MenuItem label="Archive" onClick={() => { setMenuOpen(false); }} />}
-              {c.status === "archived"  && <MenuItem label="Restore" onClick={() => { setMenuOpen(false); }} />}
+              <MenuItem label="View Contact" onClick={() => { void navigate(`/app/contacts/${c.id}`); setMenuOpen(false); }} />
+              <MenuItem label="Edit" onClick={() => { void navigate(`/app/contacts/${c.id}/edit`); setMenuOpen(false); }} />
             </div>
           )}
         </div>
@@ -627,30 +529,14 @@ function ContactCard({ contact: c, selected, onToggle, requests }: {
   );
 }
 
-function MenuItem({ label, onClick, disabled = false, hint }: { label: string; onClick: () => void; disabled?: boolean; hint?: string }) {
+function MenuItem({ label, onClick }: { label: string; onClick: () => void }) {
   return (
-    <button role="menuitem" onClick={() => { if (!disabled) onClick(); }}
-      aria-disabled={disabled || undefined}
-      title={hint}
-      style={{ ...GF, display: "block", width: "100%", padding: "10px 14px", border: "none", borderBottom: "1px solid #F8FAFC", background: "#FFFFFF", textAlign: "left", cursor: disabled ? "not-allowed" : "pointer", fontSize: 13, color: disabled ? "#475569" : NAVY }}
+    <button role="menuitem" onClick={onClick}
+      style={{ ...GF, display: "block", width: "100%", padding: "10px 14px", minHeight: 44, border: "none", borderBottom: "1px solid #F8FAFC", background: "#FFFFFF", textAlign: "left", cursor: "pointer", fontSize: 13, color: NAVY }}
       onMouseEnter={e => (e.currentTarget.style.background = "#F8FAFC")}
       onMouseLeave={e => (e.currentTarget.style.background = "#FFFFFF")}>
       {label}
-      {disabled && hint && (
-        <span style={{ display: "block", fontSize: 11, color: "#475569", marginTop: 2, lineHeight: 1.35, whiteSpace: "normal" }}>{hint}</span>
-      )}
     </button>
-  );
-}
-
-function FilterSelect({ label, value, onChange, children }: { label: string; value: string; onChange: (v: string) => void; children: React.ReactNode }) {
-  return (
-    <div>
-      <label style={{ ...GF, fontSize: 11, fontWeight: 700, color: SLATE, display: "block", marginBottom: 4 }}>{label}</label>
-      <select value={value} onChange={e => onChange(e.target.value)} style={{ ...GF, fontSize: 12, border: "1.5px solid #D1D9E0", borderRadius: 8, padding: "5px 10px", color: NAVY }}>
-        {children}
-      </select>
-    </div>
   );
 }
 

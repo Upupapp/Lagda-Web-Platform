@@ -895,6 +895,11 @@ const ContactGroupDetailPage = lazy(() =>
     default: m.ContactGroupDetailPage,
   })),
 );
+const RequestsFromContactsPage = lazy(() =>
+  import("./app/pages/platform/contacts/requests/RequestsFromContactsPage").then((m) => ({
+    default: m.RequestsFromContactsPage,
+  })),
+);
 const ContactImportPage = lazy(() =>
   import("./app/pages/platform/contacts/ContactImportPage").then((m) => ({
     default: m.ContactImportPage,
@@ -2124,6 +2129,14 @@ export const router = createBrowserRouter([
         element: (
           <Suspense fallback={null}>
             <ContactImportPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: "contacts/requests",
+        element: (
+          <Suspense fallback={null}>
+            <RequestsFromContactsPage />
           </Suspense>
         ),
       },

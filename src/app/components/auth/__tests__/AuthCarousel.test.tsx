@@ -57,11 +57,11 @@ describe("AuthCarousel", () => {
     expect(screen.getByText("Move important work forward.")).toBeInTheDocument();
   });
 
-  it("uses the timing intro 3s, laptop 1s after landing, Upload 1s, Signature 1s, Send 3s", () => {
-    expect(AUTH_CAROUSEL_DURATIONS).toEqual([3000, AUTH_CAROUSEL_DROP_MS + 1000, 1000, 1000, 3000]);
+  it("uses the timing intro 3s, laptop 2s after landing, Upload 2s, Signature 2s, Send 3s", () => {
+    expect(AUTH_CAROUSEL_DURATIONS).toEqual([3000, AUTH_CAROUSEL_DROP_MS + 2000, 2000, 2000, 3000]);
     render(<AuthCarousel />);
     // The drop-in length in the CSS matches the constant, so the laptop
-    // dwells a full second after it has landed.
+    // dwells two full seconds after it has landed.
     const css = Array.from(document.querySelectorAll("style")).map(s => s.textContent ?? "").join("\n");
     expect(css).toContain(`auth-drop ${AUTH_CAROUSEL_DROP_MS}ms`);
   });
@@ -73,17 +73,39 @@ describe("AuthCarousel", () => {
     expect(currentSlide()).toBe(1);
     advance(200);
     expect(currentSlide()).toBe(2);
-    advance(AUTH_CAROUSEL_DROP_MS + 1000 - 200);
+    advance(AUTH_CAROUSEL_DROP_MS + 2000 - 200);
     expect(currentSlide()).toBe(2);
     advance(200);
     expect(currentSlide()).toBe(3);
-    advance(1000);
+    advance(1800);
+    expect(currentSlide()).toBe(3);
+    advance(200);
     expect(currentSlide()).toBe(4);
-    advance(1000);
+    advance(1800);
+    expect(currentSlide()).toBe(4);
+    advance(200);
     expect(currentSlide()).toBe(5);
     advance(2800);
     expect(currentSlide()).toBe(5);
     advance(200);
+    expect(currentSlide()).toBe(1);
+  });
+
+  it("uses the same 2s dwells in the phone modal", () => {
+    render(<AuthCarousel variant="modal" />);
+    advance(3000);
+    expect(currentSlide()).toBe(2);
+    advance(AUTH_CAROUSEL_DROP_MS + 2000 - 200);
+    expect(currentSlide()).toBe(2);
+    advance(200);
+    expect(currentSlide()).toBe(3);
+    advance(1800);
+    expect(currentSlide()).toBe(3);
+    advance(200);
+    expect(currentSlide()).toBe(4);
+    advance(2000);
+    expect(currentSlide()).toBe(5);
+    advance(3000);
     expect(currentSlide()).toBe(1);
   });
 
@@ -117,7 +139,7 @@ describe("AuthCarousel", () => {
     await u.click(screen.getByRole("button", { name: "Next slide" }));
     expect(currentSlide()).toBe(2);
     // Laptop slide gets its full dwell, then autoplay carries on.
-    advance(AUTH_CAROUSEL_DROP_MS + 1000);
+    advance(AUTH_CAROUSEL_DROP_MS + 2000);
     expect(currentSlide()).toBe(3);
     await u.click(screen.getByRole("button", { name: "Go to slide 5" }));
     expect(currentSlide()).toBe(5);

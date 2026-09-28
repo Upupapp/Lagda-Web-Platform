@@ -67,12 +67,14 @@ describe("answering", () => {
     expect(bodyOf(lastCall(fetchMock).init)).toEqual({});
   });
 
-  it("declines with an optional trimmed reason and cancels", async () => {
+  it("declines with a required, trimmed reason (always sent), and cancels", async () => {
     const fetchMock = stubFetch(json({}));
     await realContactRequestService.decline("ws_1", "cr_1", "  not mine  ");
+    expect(lastCall(fetchMock).url).toBe("http://api.test/workspaces/ws_1/contact-requests/cr_1/decline");
     expect(bodyOf(lastCall(fetchMock).init)).toEqual({ reason: "not mine" });
-    await realContactRequestService.decline("ws_1", "cr_1", "");
-    expect(bodyOf(lastCall(fetchMock).init)).toEqual({});
+    // Never silently dropped: an empty reason reaches the server, which refuses it.
+    await realContactRequestService.decline("ws_1", "cr_1", "   ");
+    expect(bodyOf(lastCall(fetchMock).init)).toEqual({ reason: "" });
     await realContactRequestService.cancel("ws_1", "cr_1");
     expect(lastCall(fetchMock).url).toBe("http://api.test/workspaces/ws_1/contact-requests/cr_1/cancel");
   });

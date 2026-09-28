@@ -1,8 +1,11 @@
 import { useState } from "react";
-import { NavLink, useLocation } from "react-router";
+import { useLocation } from "react-router";
+import {
+  LayoutDashboard, Sparkles, Milestone, ClipboardList, CircleHelp, Stamp,
+  type LucideIcon,
+} from "lucide-react";
 import { ENOTARY_SUBNAV, ENOTARY_DISCLAIMER } from "../../pages/public/enotary/content";
-import { Z } from "../../utils/z-index";
-import { TabStrip } from "../platform/TabStrip";
+import { SectionTabs } from "../public/SectionTabs";
 import { PublicSection } from "../public/PublicKit";
 import type { PublicSectionProps } from "../public/PublicKit";
 
@@ -13,44 +16,30 @@ const SOFT_BURGUNDY = "rgba(103,2,59,0.06)";
 
 // ── SubNav ──────────────────────────────────────────────────────────────────
 
+const ENOTARY_ICONS: Record<string, LucideIcon> = {
+  "/enotary": LayoutDashboard,
+  "/enotary/future-capabilities": Sparkles,
+  "/enotary/accreditation-roadmap": Milestone,
+  "/enotary/waitlist": ClipboardList,
+  "/enotary/faq": CircleHelp,
+};
+
 export function EnotarySubNav() {
   const location = useLocation();
   return (
-    <nav
-      aria-label="eNotary navigation"
-      style={{
-        position: "sticky", top: 72, zIndex: Z.sticky,
-        background: "rgba(255,255,255,0.95)", backdropFilter: "blur(12px)",
-        borderBottom: "1px solid rgba(0,0,0,0.07)",
-      }}
-    >
-      <div style={{ maxWidth: 1280, margin: "0 auto", padding: "0 24px" }}>
-        <TabStrip as="scroller" label="eNotary pages" activeKey={location.pathname}
-          className="enotary-subnav-scroll">
-          {ENOTARY_SUBNAV.map(({ label, path }) => {
-            const isActive = path === "/enotary"
-              ? location.pathname === "/enotary"
-              : location.pathname.startsWith(path);
-            return (
-              <NavLink
-                key={path}
-                to={path}
-                style={{
-                  color: isActive ? BURGUNDY : "#64748B",
-                  ...GF, fontSize: 13, fontWeight: isActive ? 700 : 500,
-                  padding: "14px 18px", textDecoration: "none", whiteSpace: "nowrap",
-                  borderBottom: isActive ? `2px solid ${BURGUNDY}` : "2px solid transparent",
-                  transition: "color 0.15s, border-color 0.15s",
-                }}
-              >
-                {label}
-              </NavLink>
-            );
-          })}
-        </TabStrip>
-      </div>
-      <style>{`.enotary-subnav-scroll::-webkit-scrollbar{display:none}`}</style>
-    </nav>
+    <SectionTabs
+      label="eNotary navigation"
+      tone="enotary"
+      tabs={ENOTARY_SUBNAV.map(({ label, path }) => ({
+        key: path,
+        label,
+        to: path,
+        icon: ENOTARY_ICONS[path] ?? Stamp,
+        active: path === "/enotary"
+          ? location.pathname === "/enotary"
+          : location.pathname.startsWith(path),
+      }))}
+    />
   );
 }
 

@@ -2,8 +2,11 @@ import { Link, useLocation } from "react-router";
 import { useState } from "react";
 import { LAGDA_PLANS, COMPARE_GROUPS, type LagdaPlan } from "../../config/pricing.config";
 import { PRICING_SUBNAV } from "../../pages/public/pricing/content";
-import { Z } from "../../utils/z-index";
-import { TabStrip } from "../platform/TabStrip";
+import {
+  LayoutDashboard, Columns3, PenLine, HardDrive, LayoutTemplate, KeyRound, Building2, CircleHelp, Tag,
+  type LucideIcon,
+} from "lucide-react";
+import { SectionTabs } from "../public/SectionTabs";
 import { PublicSection, PublicHeading } from "../public/PublicKit";
 import type { PublicSectionProps, PublicHeadingProps } from "../public/PublicKit";
 import { ON_LIGHT } from "../../utils/on-light";
@@ -12,34 +15,30 @@ const GF = { fontFamily: "'Geist', sans-serif" };
 const GM = { fontFamily: "'Geist Mono', monospace" };
 
 // ── Pricing sub-nav ───────────────────────────────────────────────────────────
+const PRICING_ICONS: Record<string, LucideIcon> = {
+  "/pricing": LayoutDashboard,
+  "/pricing/compare": Columns3,
+  "/pricing/signing-requests": PenLine,
+  "/pricing/storage-limits": HardDrive,
+  "/pricing/templates-by-plan": LayoutTemplate,
+  "/pricing/authentication-by-plan": KeyRound,
+  "/pricing/enterprise": Building2,
+  "/pricing/faq": CircleHelp,
+};
+
 export function PricingSubNav() {
   const { pathname } = useLocation();
   return (
-    <nav aria-label="Pricing navigation" style={{
-      position: "sticky", top: 72, zIndex: Z.sticky,
-      background: "rgba(255,255,255,0.95)", backdropFilter: "blur(12px)",
-      borderBottom: "1px solid rgba(0,0,0,0.08)",
-    }}>
-      <TabStrip as="scroller" label="Pricing pages" activeKey={pathname}
-        style={{ maxWidth: 1200, margin: "0 auto", padding: "0 24px" }}>
-        {PRICING_SUBNAV.map(({ label, path }) => {
-          const active = pathname === path || (path !== "/pricing" && pathname.startsWith(path + "/"));
-          return (
-            <Link key={path} to={path} aria-current={active ? "page" : undefined} style={{
-              textDecoration: "none", flexShrink: 0,
-              display: "flex", alignItems: "center", padding: "14px 16px",
-              borderBottom: active ? "2px solid #0078D4" : "2px solid transparent",
-              transition: "border-color 0.15s ease",
-            }}>
-              <span style={{ ...GF, fontSize: 13, fontWeight: active ? 700 : 500, color: active ? "#07111F" : ON_LIGHT.slate, whiteSpace: "nowrap", transition: "color 0.15s ease" }}>
-                {label}
-              </span>
-            </Link>
-          );
-        })}
-      </TabStrip>
-      <style>{`.pricing-subnav a:hover span { color: #07111F !important; }`}</style>
-    </nav>
+    <SectionTabs
+      label="Pricing navigation"
+      tabs={PRICING_SUBNAV.map(({ label, path }) => ({
+        key: path,
+        label,
+        to: path,
+        icon: PRICING_ICONS[path] ?? Tag,
+        active: pathname === path || (path !== "/pricing" && pathname.startsWith(path + "/")),
+      }))}
+    />
   );
 }
 

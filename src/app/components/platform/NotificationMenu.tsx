@@ -11,6 +11,7 @@ import {
 import { useNotificationCenter } from "../../context/NotificationCenterContext";
 import type { NotificationRecord, NotificationCategory, NotificationSeverity } from "../../models/notifications";
 import { Z } from "../../utils/z-index";
+import { isContactRequestsLink } from "../../models/contact-requests";
 
 const GF    = { fontFamily: "'Geist', sans-serif" };
 const BORDER = "rgba(0,0,0,0.08)";
@@ -20,6 +21,16 @@ const AMBER = "#D97706";
 const RED   = "#DC2626";
 const GREEN = "#16A34A";
 const SLATE = "#64748B";
+
+/**
+ * Where a bell item goes. Most open their notification's detail page; a
+ * contact request opens straight onto the request itself (Contacts →
+ * Requests From Contacts, focused on it), which is what the notice is about.
+ */
+function bellItemPath(n: Pick<NotificationRecord, "id" | "actionPath">): string {
+  if (isContactRequestsLink(n.actionPath)) return n.actionPath;
+  return `/app/notifications/${n.id}`;
+}
 
 function severityColor(severity: NotificationSeverity): string {
   switch (severity) {
@@ -291,7 +302,7 @@ export function NotificationMenu({
               recent.map((n) => (
                 <li key={n.id}>
                   <Link
-                    to={`/app/notifications/${n.id}`}
+                    to={bellItemPath(n)}
                     onClick={() => handleItemClick(n)}
                     style={{
                       display: "flex", gap: 10, padding: "10px 14px",

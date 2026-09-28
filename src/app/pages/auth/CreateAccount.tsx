@@ -4,6 +4,7 @@
 
 import { useState, useRef } from "react";
 import { Link, Navigate, useSearchParams, useNavigate } from "react-router";
+import { Eye, EyeOff } from "lucide-react";
 import {
   parsePlanId,
   PLAN_DISPLAY_NAMES,
@@ -142,6 +143,45 @@ function InputField({
   );
 }
 
+/**
+ * A show/hide toggle for ONE password field. Each field has its own, so
+ * revealing the password never reveals the confirmation (or the reverse).
+ * `name` is the field's name in the label: "password" or "confirm password".
+ */
+function RevealToggle({ shown, onToggle, name, controls }: {
+  shown: boolean; onToggle: () => void; name: string; controls: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onToggle}
+      aria-label={`${shown ? "Hide" : "Show"} ${name}`}
+      aria-pressed={shown}
+      aria-controls={controls}
+      className="create-account-reveal"
+      style={{
+        position: "absolute",
+        right: 4,
+        top: "50%",
+        transform: "translateY(-50%)",
+        width: 40,
+        height: 40,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        background: "none",
+        border: "none",
+        borderRadius: 6,
+        cursor: "pointer",
+        color: "#475569",
+        padding: 0,
+      }}
+    >
+      {shown ? <EyeOff size={18} aria-hidden /> : <Eye size={18} aria-hidden />}
+    </button>
+  );
+}
+
 function PwReq({ met, children }: { met: boolean; children: string }) {
   return (
     <li
@@ -183,7 +223,9 @@ export function CreateAccount() {
   });
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
+  // Independent: each password field reveals only itself.
   const [showPw, setShowPw] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const [errors, setErrors] = useState<
     FormErrors & { password?: string; confirm?: string }
   >({});
@@ -221,9 +263,14 @@ export function CreateAccount() {
     return e;
   }
 
+  // Nothing is submitted until the Terms of Service and Privacy Policy are
+  // accepted — not from the button, and not by pressing Enter in a field.
+  const canSubmit = fields.consent;
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (status === "submitting") return;
+    if (!canSubmit) return;
     const errs = validate();
     if (Object.keys(errs).length > 0) {
       setErrors(errs);
@@ -549,30 +596,16 @@ export function CreateAccount() {
                   color: "#07111F",
                   ...GF,
                   fontSize: 14,
-                  padding: "11px 44px 11px 14px",
+                  padding: "11px 48px 11px 14px",
                   outline: "none",
                 }}
               />
-              <button
-                type="button"
-                onClick={() => setShowPw((v) => !v)}
-                aria-label={showPw ? "Hide password" : "Show password"}
-                style={{
-                  position: "absolute",
-                  right: 12,
-                  top: "50%",
-                  transform: "translateY(-50%)",
-                  background: "none",
-                  border: "none",
-                  cursor: "pointer",
-                  color: "#64748B",
-                  ...GF,
-                  fontSize: 11,
-                  padding: 4,
-                }}
-              >
-                {showPw ? "Hide" : "Show"}
-              </button>
+              <RevealToggle
+                shown={showPw}
+                onToggle={() => setShowPw((v) => !v)}
+                name="password"
+                controls="ca-pw"
+              />
             </div>
             {errors.password && (
               <p
@@ -625,9 +658,10 @@ export function CreateAccount() {
                 *
               </span>
             </label>
+            <div style={{ position: "relative" }}>
             <input
               id="ca-confirm"
-              type={showPw ? "text" : "password"}
+              type={showConfirm ? "text" : "password"}
               value={confirm}
               onChange={(e) => setConfirm(e.target.value)}
               autoComplete="new-password"
@@ -643,10 +677,17 @@ export function CreateAccount() {
                 color: "#07111F",
                 ...GF,
                 fontSize: 14,
-                padding: "11px 14px",
+                padding: "11px 48px 11px 14px",
                 outline: "none",
               }}
             />
+            <RevealToggle
+              shown={showConfirm}
+              onToggle={() => setShowConfirm((v) => !v)}
+              name="confirm password"
+              controls="ca-confirm"
+            />
+            </div>
             {errors.confirm && (
               <p
                 role="alert"
@@ -737,26 +778,47 @@ export function CreateAccount() {
           )}
         </div>
 
-        <button
-          type="submit"
-          disabled={status === "submitting"}
-          style={{
-            background: status === "submitting" ? "rgba(0,120,212,0.5)" : AZURE,
-            color: "white",
-            ...GF,
-            fontSize: 15,
-            fontWeight: 700,
-            padding: "14px",
-            borderRadius: 8,
-            border: "none",
-            cursor: status === "submitting" ? "not-allowed" : "pointer",
-            minHeight: 48,
-            transition: "background 0.15s",
-          }}
-          aria-busy={status === "submitting"}
-        >
-          {status === "submitting" ? "Creating account…" : "Create account"}
-        </button>
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          {/* aria-disabled rather than `disabled` until consent is given, so
+              the button stays focusable and its reason (the hint below) is
+              read with it. The submit handler refuses either way. */}
+          <button
+            type="submit"
+            disabled={status === "submitting"}
+            aria-disabled={!canSubmit || status === "submitting"}
+            aria-describedby={!canSubmit ? "ca-submit-hint" : undefined}
+            onClick={(e) => { if (!canSubmit) e.preventDefault(); }}
+            style={{
+              background: !canSubmit
+                ? "#E2E8F0"
+                : status === "submitting" ? "rgba(0,120,212,0.5)" : AZURE,
+              // Slate-600 on slate-200 is 6.0:1, so the unavailable state
+              // still reads; white on azure is 4.5:1.
+              color: !canSubmit ? "#475569" : "white",
+              ...GF,
+              fontSize: 15,
+              fontWeight: 700,
+              padding: "14px",
+              borderRadius: 8,
+              border: "none",
+              cursor: !canSubmit || status === "submitting" ? "not-allowed" : "pointer",
+              minHeight: 48,
+              width: "100%",
+              transition: "background 0.15s",
+            }}
+            aria-busy={status === "submitting"}
+          >
+            {status === "submitting" ? "Creating account…" : "Create account"}
+          </button>
+          {!canSubmit && (
+            <p
+              id="ca-submit-hint"
+              style={{ color: "#475569", ...GF, fontSize: 12, lineHeight: 1.5, margin: 0, textAlign: "center" }}
+            >
+              Agree to the Terms of Service and Privacy Policy to create your account.
+            </p>
+          )}
+        </div>
       </form>
 
       <div style={{ textAlign: "center", marginTop: 20 }}>
@@ -779,6 +841,8 @@ export function CreateAccount() {
 
       <style>{`
         .create-account-form { display: flex; flex-direction: column; gap: 18px; }
+        .create-account-reveal:hover { background: #F1F5F9 !important; }
+        .create-account-reveal:focus-visible { outline: 2px solid #0078D4; outline-offset: 1px; }
         .create-account-field-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; align-items: start; }
         @media (max-width: 680px) {
           .create-account-field-grid { grid-template-columns: 1fr; gap: 16px; }

@@ -1,10 +1,11 @@
-import { useLocation, Link } from "react-router";
+import { useLocation } from "react-router";
+import {
+  Scale, Gavel, Briefcase, UserPlus, Banknote, PackageCheck, House, Landmark,
+  GraduationCap, HeartPulse, Layers,
+  type LucideIcon,
+} from "lucide-react";
 import { SOLUTIONS_NAV } from "../../pages/public/solutions/content";
-import { Z } from "../../utils/z-index";
-import { TabStrip } from "../platform/TabStrip";
-
-const GF = { fontFamily: "'Geist', sans-serif" };
-const GM = { fontFamily: "'Geist Mono', monospace" };
+import { SectionTabs } from "../public/SectionTabs";
 
 const GROUPS = ["Legal", "Business", "Property & Services", "Public & Institutional"] as const;
 const GROUP_COLORS: Record<string, string> = {
@@ -14,78 +15,38 @@ const GROUP_COLORS: Record<string, string> = {
   "Public & Institutional": "#7C3AED",
 };
 
+const ICONS: Record<string, LucideIcon> = {
+  "/solutions/lawyers": Scale,
+  "/solutions/law-firms": Gavel,
+  "/solutions/business-teams": Briefcase,
+  "/solutions/hr-and-recruitment": UserPlus,
+  "/solutions/finance": Banknote,
+  "/solutions/procurement": PackageCheck,
+  "/solutions/real-estate": House,
+  "/solutions/government-and-lgu": Landmark,
+  "/solutions/education": GraduationCap,
+  "/solutions/healthcare-and-wellness": HeartPulse,
+};
+
 export function SolutionsSubNav() {
   const { pathname } = useLocation();
 
+  // Grouped order: Legal → Business → Property & Services → Public & Institutional.
+  const items = GROUPS.flatMap((group) => SOLUTIONS_NAV.filter((n) => n.group === group));
+
   return (
-    <nav
-      aria-label="Solutions navigation"
-      style={{
-        position: "sticky", top: 72, zIndex: Z.sticky,
-        background: "rgba(255,255,255,0.95)", backdropFilter: "blur(12px)",
-        borderBottom: "1px solid rgba(0,0,0,0.08)",
-      }}
-    >
-      <TabStrip as="scroller" label="Solution pages" activeKey={pathname}
-        style={{ maxWidth: 1200, margin: "0 auto", padding: "0 24px" }}>
-        {GROUPS.map((group) => {
-          const items = SOLUTIONS_NAV.filter((n) => n.group === group);
-          const isGroupActive = items.some((n) => pathname === n.path || pathname.startsWith(n.path + "/"));
-          return (
-            <div key={group} style={{ display: "flex", alignItems: "stretch", gap: 0 }}>
-              {/* Group label — non-interactive */}
-              <div style={{
-                display: "flex", alignItems: "center",
-                padding: "0 12px 0 16px",
-                borderRight: "1px solid rgba(0,0,0,0.07)",
-                flexShrink: 0,
-              }}>
-                <span style={{
-                  color: isGroupActive ? GROUP_COLORS[group] : "#94A3B8",
-                  ...GM, fontSize: 9, fontWeight: 700, letterSpacing: "0.1em",
-                  textTransform: "uppercase", whiteSpace: "nowrap",
-                  transition: "color 0.15s ease",
-                }}>
-                  {group}
-                </span>
-              </div>
-              {/* Links for this group */}
-              {items.map((item) => {
-                const active = pathname === item.path || pathname.startsWith(item.path + "/");
-                return (
-                  <Link
-                    key={item.path}
-                    to={item.path}
-                    aria-current={active ? "page" : undefined}
-                    style={{
-                      textDecoration: "none", flexShrink: 0,
-                      display: "flex", alignItems: "center",
-                      padding: "14px 14px",
-                      borderBottom: active ? `2px solid ${GROUP_COLORS[group]}` : "2px solid transparent",
-                      transition: "border-color 0.15s ease, color 0.15s ease",
-                    }}
-                  >
-                    <span style={{
-                      ...GF, fontSize: 13,
-                      fontWeight: active ? 700 : 500,
-                      color: active ? "#07111F" : "#64748B",
-                      whiteSpace: "nowrap",
-                      transition: "color 0.15s ease",
-                    }}>
-                      {item.label}
-                    </span>
-                  </Link>
-                );
-              })}
-            </div>
-          );
-        })}
-      </TabStrip>
-      <style>{`
-        nav[aria-label="Solutions navigation"] ::-webkit-scrollbar { display: none; }
-        nav[aria-label="Solutions navigation"] a:hover span { color: #07111F !important; }
-      `}</style>
-    </nav>
+    <SectionTabs
+      label="Solutions navigation"
+      groupColors={GROUP_COLORS}
+      tabs={items.map((item) => ({
+        key: item.path,
+        label: item.label,
+        to: item.path,
+        group: item.group,
+        icon: ICONS[item.path] ?? Layers,
+        active: pathname === item.path || pathname.startsWith(item.path + "/"),
+      }))}
+    />
   );
 }
 

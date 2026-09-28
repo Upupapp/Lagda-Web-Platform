@@ -1,9 +1,24 @@
-import { Link, useLocation } from "react-router";
+import { useLocation } from "react-router";
+import {
+  LayoutDashboard, BadgeCheck, LockKeyhole, KeyRound, Fingerprint, ScrollText,
+  FileCheck2, MapPin, Database, EyeOff, Shield,
+  type LucideIcon,
+} from "lucide-react";
 import { SECURITY_SUBNAV } from "../../pages/public/security/content";
-import { Z } from "../../utils/z-index";
-import { TabStrip } from "../platform/TabStrip";
+import { SectionTabs } from "../public/SectionTabs";
 
-const GF = { fontFamily: "'Geist', sans-serif" };
+const ICONS: Record<string, LucideIcon> = {
+  "/security": LayoutDashboard,
+  "/security/trust-center": BadgeCheck,
+  "/security/account-security": LockKeyhole,
+  "/security/signer-authentication": KeyRound,
+  "/security/identity-verification": Fingerprint,
+  "/security/audit-trail": ScrollText,
+  "/security/document-verification": FileCheck2,
+  "/security/device-and-location-evidence": MapPin,
+  "/security/secure-storage": Database,
+  "/security/privacy-and-data-protection": EyeOff,
+};
 
 export function SecuritySubNav() {
   const { pathname } = useLocation();
@@ -14,62 +29,16 @@ export function SecuritySubNav() {
   };
 
   return (
-    <nav
-      aria-label="Security pages"
-      style={{
-        borderBottom: "1px solid rgba(0,0,0,0.08)",
-        background: "rgba(255,255,255,0.95)",
-        backdropFilter: "blur(12px)",
-        position: "sticky",
-        top: 72,
-        zIndex: Z.sticky,
-      }}
-    >
-      <TabStrip as="scroller" label="Security pages" activeKey={pathname}
-        style={{ maxWidth: 1200, margin: "0 auto", padding: "0 24px" }}>
-        <ul
-          role="list"
-          style={{
-            display: "flex",
-            gap: 0,
-            listStyle: "none",
-            margin: 0,
-            padding: 0,
-            whiteSpace: "nowrap",
-          }}
-        >
-          {SECURITY_SUBNAV.map((item) => {
-            const active = isActive(item.path);
-            return (
-              <li key={item.path}>
-                <Link
-                  to={item.path}
-                  aria-current={active ? "page" : undefined}
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    padding: "12px 14px",
-                    ...GF,
-                    fontSize: 13,
-                    fontWeight: active ? 700 : 500,
-                    color: active ? "#07111F" : "#64748B",
-                    textDecoration: "none",
-                    borderBottom: active ? "2px solid #0078D4" : "2px solid transparent",
-                    marginBottom: -1,
-                    transition: "color 0.15s ease, border-color 0.15s ease",
-                  }}
-                  onMouseEnter={(e) => { if (!active) e.currentTarget.style.color = "#07111F"; }}
-                  onMouseLeave={(e) => { if (!active) e.currentTarget.style.color = "#64748B"; }}
-                >
-                  {item.label}
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
-      </TabStrip>
-      <style>{`nav[aria-label="Security pages"] ::-webkit-scrollbar { display: none; }`}</style>
-    </nav>
+    <SectionTabs
+      label="Security pages"
+      tabs={SECURITY_SUBNAV.map((item) => ({
+        key: item.path,
+        label: item.label,
+        to: item.path,
+        icon: ICONS[item.path] ?? Shield,
+        active: isActive(item.path),
+      }))}
+    />
   );
 }
 

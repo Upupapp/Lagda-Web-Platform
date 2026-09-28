@@ -5,7 +5,7 @@
 //
 // The server matches the contact's address against the workspace's CURRENT
 // member directory when the request is made. A member gets it in-app (their
-// Documents → Others and their notification feed, no email); anyone else is
+// Contacts → Requests From Contacts and their notification feed, no email); anyone else is
 // emailed and the requester records the outcome. The UI explains which will
 // happen using the contact's `workspaceMember`, but the request's own
 // `delivery` field is the truth once it exists.
@@ -61,11 +61,13 @@ class RealContactRequestService {
     });
   }
 
-  async decline(workspaceId: string, requestId: string, reason?: string): Promise<ContactRequest> {
-    const trimmed = reason?.trim() ?? "";
+  /** A reason is REQUIRED (1–500 characters after trimming); the backend
+   *  answers 422 validation_failed without one. It is always sent, so an
+   *  empty one fails on the server rather than being silently dropped. */
+  async decline(workspaceId: string, requestId: string, reason: string): Promise<ContactRequest> {
     return apiRequest<ContactRequest>(`${one(workspaceId, requestId)}/decline`, {
       method: "POST",
-      body: trimmed === "" ? {} : { reason: trimmed },
+      body: { reason: reason.trim() },
     });
   }
 
@@ -79,13 +81,13 @@ class RealContactRequestService {
     return result.items;
   }
 
-  /** What has been asked of ME, from every workspace ("Others"). Pending first. */
+  /** What has been asked of ME, from every workspace ("Received"). Pending first. */
   async listReceived(status?: ContactRequestStatus): Promise<ContactRequest[]> {
     const result = await apiRequest<{ items: ContactRequest[] }>(`/me/contact-requests${statusQuery(status)}`);
     return result.items;
   }
 
-  /** "Requests you sent", from every workspace. */
+  /** What I asked of my contacts, from every workspace ("Sent"). */
   async listSent(status?: ContactRequestStatus): Promise<ContactRequest[]> {
     const result = await apiRequest<{ items: ContactRequest[] }>(`/me/contact-requests/sent${statusQuery(status)}`);
     return result.items;
@@ -137,7 +139,7 @@ export function contactRequestErrorMessage(error: unknown, operation: ContactReq
         return "This request couldn't be completed. Make sure you attach a document you uploaded, "
           + "or that you still have permission to prepare documents.";
       case "decline":
-        return "This request couldn't be declined. Keep the reason under 500 characters.";
+        return "Please give a reason for rejecting this request, between 1 and 500 characters.";
       case "cancel":
         return "Only the person who sent a request can cancel it.";
       default:

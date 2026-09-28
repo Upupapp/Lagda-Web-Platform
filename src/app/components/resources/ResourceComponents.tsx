@@ -1,7 +1,10 @@
 import { Link, useLocation } from "react-router";
 import { RESOURCES_SUBNAV, EDU_DISCLAIMER } from "../../pages/public/resources/content";
-import { Z } from "../../utils/z-index";
-import { TabStrip } from "../platform/TabStrip";
+import {
+  LayoutDashboard, CircleHelp, BookOpen, Scale, FileCheck2, KeyRound, LayoutTemplate, ShieldCheck,
+  type LucideIcon,
+} from "lucide-react";
+import { SectionTabs } from "../public/SectionTabs";
 import { PublicSection, PublicHeading } from "../public/PublicKit";
 import type { PublicSectionProps, PublicHeadingProps } from "../public/PublicKit";
 
@@ -9,31 +12,30 @@ const GF = { fontFamily: "'Geist', sans-serif" };
 const GM = { fontFamily: "'Geist Mono', monospace" };
 
 // ── Resources sub-nav ─────────────────────────────────────────────────────────
+const RESOURCE_ICONS: Record<string, LucideIcon> = {
+  "/resources": LayoutDashboard,
+  "/resources/faq": CircleHelp,
+  "/resources/guides": BookOpen,
+  "/resources/legal-framework": Scale,
+  "/resources/document-verification-guide": FileCheck2,
+  "/resources/authentication-guide": KeyRound,
+  "/resources/templates-guide": LayoutTemplate,
+  "/resources/security-guide": ShieldCheck,
+};
+
 export function ResourcesSubNav() {
   const { pathname } = useLocation();
   return (
-    <nav aria-label="Resources navigation" style={{
-      position: "sticky", top: 72, zIndex: Z.sticky,
-      background: "rgba(255,255,255,0.95)", backdropFilter: "blur(12px)",
-      borderBottom: "1px solid rgba(0,0,0,0.08)",
-    }}>
-      <TabStrip as="scroller" label="Resource pages" activeKey={pathname}
-        style={{ maxWidth: 1200, margin: "0 auto", padding: "0 24px" }}>
-        {RESOURCES_SUBNAV.map(({ label, path }) => {
-          const active = pathname === path || (path !== "/resources" && pathname.startsWith(path + "/"));
-          return (
-            <Link key={path} to={path} aria-current={active ? "page" : undefined} style={{
-              textDecoration: "none", flexShrink: 0,
-              display: "flex", alignItems: "center", padding: "14px 14px",
-              borderBottom: active ? "2px solid #0078D4" : "2px solid transparent",
-              transition: "border-color 0.15s ease",
-            }}>
-              <span style={{ ...GF, fontSize: 12, fontWeight: active ? 700 : 500, color: active ? "#07111F" : "#64748B", whiteSpace: "nowrap" }}>{label}</span>
-            </Link>
-          );
-        })}
-      </TabStrip>
-    </nav>
+    <SectionTabs
+      label="Resources navigation"
+      tabs={RESOURCES_SUBNAV.map(({ label, path }) => ({
+        key: path,
+        label,
+        to: path,
+        icon: RESOURCE_ICONS[path] ?? BookOpen,
+        active: pathname === path || (path !== "/resources" && pathname.startsWith(path + "/")),
+      }))}
+    />
   );
 }
 
@@ -123,8 +125,8 @@ export function ResourceCard({ icon, title, desc, path, category, audience }: { 
         transition: "border-color 0.15s ease, box-shadow 0.15s ease",
         boxShadow: "0 1px 4px rgba(7,17,31,0.07)",
       }}
-        onMouseEnter={(e) => { (e.currentTarget as HTMLDivElement).style.borderColor = "rgba(0,120,212,0.35)"; (e.currentTarget as HTMLDivElement).style.boxShadow = "0 4px 16px rgba(7,17,31,0.10)"; }}
-        onMouseLeave={(e) => { (e.currentTarget as HTMLDivElement).style.borderColor = "rgba(0,0,0,0.08)"; (e.currentTarget as HTMLDivElement).style.boxShadow = "0 1px 4px rgba(7,17,31,0.07)"; }}
+        onMouseEnter={(e) => { e.currentTarget.style.borderColor = "rgba(0,120,212,0.35)"; e.currentTarget.style.boxShadow = "0 4px 16px rgba(7,17,31,0.10)"; }}
+        onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(0,0,0,0.08)"; e.currentTarget.style.boxShadow = "0 1px 4px rgba(7,17,31,0.07)"; }}
       >
         <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
           <span aria-hidden style={{ fontSize: 22, flexShrink: 0 }}>{icon}</span>

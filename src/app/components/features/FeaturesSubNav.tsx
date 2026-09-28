@@ -1,9 +1,18 @@
-import { Link, useLocation } from "react-router";
+import { useLocation } from "react-router";
+import {
+  LayoutDashboard, Workflow, ShieldCheck, Zap, Users, Layers,
+  type LucideIcon,
+} from "lucide-react";
 import { FEATURES_GROUPS } from "../../pages/public/features/content";
-import { Z } from "../../utils/z-index";
-import { TabStrip } from "../platform/TabStrip";
+import { SectionTabs } from "../public/SectionTabs";
 
-const GF = { fontFamily: "'Geist', sans-serif" };
+const ICONS: Record<string, LucideIcon> = {
+  overview: LayoutDashboard,
+  core: Workflow,
+  trust: ShieldCheck,
+  productivity: Zap,
+  team: Users,
+};
 
 export function FeaturesSubNav() {
   const { pathname } = useLocation();
@@ -16,62 +25,16 @@ export function FeaturesSubNav() {
   );
 
   return (
-    <nav
-      aria-label="Features sections"
-      style={{
-        borderBottom: "1px solid rgba(0,0,0,0.08)",
-        background: "rgba(255,255,255,0.95)",
-        backdropFilter: "blur(12px)",
-        position: "sticky",
-        top: 72,
-        zIndex: Z.sticky,
-      }}
-    >
-      <TabStrip as="scroller" label="Feature pages" activeKey={pathname}
-        style={{ maxWidth: 1200, margin: "0 auto", padding: "0 24px" }}>
-        <ul
-          role="list"
-          style={{
-            display: "flex",
-            gap: 0,
-            listStyle: "none",
-            margin: 0,
-            padding: 0,
-            whiteSpace: "nowrap",
-          }}
-        >
-          {FEATURES_GROUPS.map((group) => {
-            const active = activeGroup?.groupKey === group.groupKey;
-            return (
-              <li key={group.groupKey}>
-                <Link
-                  to={group.linkTo}
-                  aria-current={active ? "page" : undefined}
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    padding: "12px 16px",
-                    ...GF,
-                    fontSize: 13,
-                    fontWeight: active ? 700 : 500,
-                    color: active ? "#07111F" : "#64748B",
-                    textDecoration: "none",
-                    borderBottom: active ? "2px solid #0078D4" : "2px solid transparent",
-                    marginBottom: -1,
-                    transition: "color 0.15s ease, border-color 0.15s ease",
-                  }}
-                  onMouseEnter={(e) => { if (!active) e.currentTarget.style.color = "#07111F"; }}
-                  onMouseLeave={(e) => { if (!active) e.currentTarget.style.color = "#64748B"; }}
-                >
-                  {group.label}
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
-      </TabStrip>
-      <style>{`nav[aria-label="Features sections"] ::-webkit-scrollbar { display: none; }`}</style>
-    </nav>
+    <SectionTabs
+      label="Features sections"
+      tabs={FEATURES_GROUPS.map((group) => ({
+        key: group.groupKey,
+        label: group.label,
+        to: group.linkTo,
+        icon: ICONS[group.groupKey] ?? Layers,
+        active: activeGroup?.groupKey === group.groupKey,
+      }))}
+    />
   );
 }
 

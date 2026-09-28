@@ -26,6 +26,9 @@
 
 import { apiRequest } from "../api-client";
 import { sharedByMePath, sharedWithMePath } from "./document-sharing.service";
+import {
+  contactRequestsPath, type ContactRequestGroup, type ContactRequestView,
+} from "../../models/contact-requests";
 import type {
   NotificationRecord, NotificationId, NotificationCategory,
   NotificationSeverity, NotificationPriority,
@@ -77,9 +80,10 @@ function formatDue(iso: string | null): string | null {
   return date.toLocaleDateString("en-PH", { month: "short", day: "numeric", year: "numeric" });
 }
 
-/** The Documents list a contact-request notice opens, focused on the request. */
-export function contactRequestPath(list: "others" | "requests-sent", requestId: string): string {
-  return `/app/documents?list=${list}&request=${encodeURIComponent(requestId)}`;
+/** Where a contact-request notice opens: Contacts → Requests From Contacts,
+ *  on the view and sub-section the request is in, focused on it. */
+export function contactRequestPath(view: ContactRequestView, group: ContactRequestGroup, requestId: string): string {
+  return contactRequestsPath({ view, group, requestId });
 }
 
 /**
@@ -170,9 +174,9 @@ function present(row: FeedRow): Presentation {
       return {
         category: "my-actions", severity: "info", priority: "high",
         title: `${requester} ${kind?.asked ?? "sent you a request"}`,
-        body: parts.length > 0 ? parts.join(" ") : `Open it in Documents → Others${where}.`,
-        actionLabel: "Open in Others",
-        actionPath: contactRequestPath("others", row.sourceId),
+        body: parts.length > 0 ? parts.join(" ") : `Open it in Contacts → Requests From Contacts${where}.`,
+        actionLabel: "Open request",
+        actionPath: contactRequestPath("received", "pending", row.sourceId),
         why: "You were sent this because a member of your workspace asked something of you. "
           + "It was not emailed.",
         inAppOnly: true,
@@ -196,9 +200,9 @@ function present(row: FeedRow): Presentation {
         title: completed ? `${responder} completed ${subject}` : `${responder} declined ${subject}`,
         body: completed
           ? `Your request for ${kind?.noun ?? "a document"}${where} is complete.`
-          : `Your request for ${kind?.noun ?? "a document"}${where} was declined.${reason === null ? "" : ` Reason: “${reason}”`}`,
+          : `Your request for ${kind?.noun ?? "a document"}${where} was declined. ${reason === null ? "No reason given." : `Reason: “${reason}”`}`,
         actionLabel: "View request",
-        actionPath: contactRequestPath("requests-sent", row.sourceId),
+        actionPath: contactRequestPath("sent", completed ? "approved" : "rejected", row.sourceId),
         why: "You were sent this because you asked a contact for something and they answered.",
         inAppOnly: true,
       };

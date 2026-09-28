@@ -10,6 +10,39 @@ import { haptic } from "@/app/utils/haptic";
 import { Z } from "../../utils/z-index";
 import { usePlatform } from "../../context/PlatformContext";
 import { UserAvatar } from "../platform/UserAvatar";
+import {
+  Signature, Layers, Tag, ShieldCheck, BookOpen, Stamp, Compass, X,
+  type LucideIcon,
+} from "lucide-react";
+
+// ── Top-nav icons ─────────────────────────────────────────────────────────────
+const NAV_ICONS: Record<string, LucideIcon> = {
+  esignature: Signature,
+  solutions: Layers,
+  pricing: Tag,
+  security: ShieldCheck,
+  resources: BookOpen,
+  enotary: Stamp,
+};
+function navIcon(id: string): LucideIcon {
+  return NAV_ICONS[id] ?? Compass;
+}
+
+// ── Logo ──────────────────────────────────────────────────────────────────────
+// The header SVG draws the wordmark on a 1086×814 canvas with a lot of empty
+// space around it (the wordmark occupies roughly x 88–1004, y 267–507), so
+// `object-fit: contain` in a normal box shrinks it to ~80px wide. Like the
+// platform header, we crop to the wordmark: a fixed box sized from the
+// wordmark's aspect ratio, and the image scaled and offset inside it. The box
+// width is one CSS variable (`--phdr-logo-w`), set per breakpoint below, so
+// every other dimension follows from it.
+function HeaderLogo({ className }: { className?: string }) {
+  return (
+    <span className={`phdr-logo${className ? ` ${className}` : ""}`}>
+      <img src={lagdaHeaderLogo} alt="LAGDA" className="phdr-logo-img" />
+    </span>
+  );
+}
 
 // ── Chevron icon ──────────────────────────────────────────────────────────────
 /** Signed in: the account's avatar, linking to the dashboard. */
@@ -44,6 +77,7 @@ function Chevron({ open }: { open: boolean }) {
       viewBox="0 0 12 12"
       fill="none"
       aria-hidden="true"
+      className="phdr-chev"
       style={{
         transform: open ? "rotate(180deg)" : "rotate(0deg)",
         transition: "transform 0.2s ease",
@@ -74,6 +108,7 @@ function MegaPanel({
   const accentBg = isAzure ? "rgba(0,120,212,0.06)" : "rgba(103,2,59,0.06)";
   const accentBorder = isAzure ? "rgba(0,120,212,0.18)" : "rgba(103,2,59,0.2)";
   const GF = { fontFamily: "'Geist', sans-serif" };
+  const SectionIcon = navIcon(section.id);
 
   return (
     <div
@@ -107,6 +142,18 @@ function MegaPanel({
             gap: 16,
           }}
         >
+          <div style={{ display: "flex", alignItems: "center", gap: 14, minWidth: 0 }}>
+          <span
+            aria-hidden="true"
+            style={{
+              width: 40, height: 40, borderRadius: 11, flexShrink: 0,
+              display: "inline-flex", alignItems: "center", justifyContent: "center",
+              background: accentBg, color: accentColor,
+              boxShadow: `0 0 0 1px ${accentBorder} inset`,
+            }}
+          >
+            <SectionIcon size={20} strokeWidth={1.9} />
+          </span>
           <div>
             <p
               style={{
@@ -123,6 +170,7 @@ function MegaPanel({
             <p style={{ color: "#64748B", ...GF, fontSize: 13, margin: 0 }}>
               {section.menuDescription}
             </p>
+          </div>
           </div>
           <Link
             to={section.path}
@@ -260,6 +308,7 @@ function MegaPanel({
 // ── Mobile drawer ─────────────────────────────────────────────────────────────
 function MobileDrawer({ onClose }: { onClose: () => void }) {
   const { sessionStatus } = usePlatform();
+  const { pathname } = useLocation();
   const [openSection, setOpenSection] = useState<string | null>(null);
 
   // Body scroll lock
@@ -319,37 +368,30 @@ function MobileDrawer({ onClose }: { onClose: () => void }) {
         {/* Top bar */}
         <div
           style={{
-            padding: "20px 24px",
+            padding: "14px 16px 14px 24px",
+            minHeight: 72,
+            boxSizing: "border-box",
             borderBottom: "1px solid rgba(7,17,31,0.08)",
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
           }}
         >
-          <img
-            src={lagdaHeaderLogo}
-            alt="LAGDA"
-            style={{
-              display: "block",
-              width: 150,
-              height: 44,
-              objectFit: "contain",
-              objectPosition: "left center",
-            }}
-          />
+          <HeaderLogo className="phdr-logo--drawer" />
           <button
             onClick={() => {
               haptic("selection");
               onClose();
             }}
             aria-label="Close menu"
+            className="phdr-iconbtn"
             style={{
-              color: "#64748B",
-              background: "none",
-              border: "none",
+              color: "#334155",
+              background: "#FFFFFF",
+              border: "1px solid rgba(7,17,31,0.12)",
+              borderRadius: 10,
               cursor: "pointer",
               padding: 8,
-              fontSize: 20,
               lineHeight: 1,
               minWidth: 44,
               minHeight: 44,
@@ -358,7 +400,7 @@ function MobileDrawer({ onClose }: { onClose: () => void }) {
               justifyContent: "center",
             }}
           >
-            ✕
+            <X size={20} strokeWidth={2} aria-hidden="true" />
           </button>
         </div>
 
@@ -425,36 +467,48 @@ function MobileDrawer({ onClose }: { onClose: () => void }) {
             const isOpen = openSection === nav.id;
             const isEnotary = nav.id === "enotary";
             const accentColor = isEnotary ? "#b01262" : "#0078d4";
+            const isCurrent = pathname.startsWith(nav.matchPrefix);
+            const NavIcon = navIcon(nav.id);
 
             return (
               <div key={nav.id}>
                 <button
                   aria-expanded={isOpen}
                   aria-controls={`mobile-section-${nav.id}`}
+                  aria-current={isCurrent ? "page" : undefined}
+                  className="phdr-drawer-row"
+                  data-open={isOpen ? "true" : "false"}
+                  data-current={isCurrent ? "true" : "false"}
                   onClick={() => {
                     haptic("selection");
                     setOpenSection(isOpen ? null : nav.id);
                   }}
                   style={{
+                    ["--phdr-accent" as string]: accentColor,
+                    ["--phdr-tint" as string]: isEnotary ? "rgba(176,18,98,0.07)" : "rgba(0,120,212,0.07)",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "space-between",
                     width: "100%",
-                    padding: "14px 24px",
-                    background: "transparent",
+                    minHeight: 56,
+                    padding: "10px 20px 10px 24px",
                     border: "none",
                     borderBottom: "1px solid rgba(7,17,31,0.06)",
                     cursor: "pointer",
+                    color: "#334155",
                   }}
                 >
                   <div
-                    style={{ display: "flex", alignItems: "center", gap: 10 }}
+                    style={{ display: "flex", alignItems: "center", gap: 12 }}
                   >
+                    <span className="phdr-drawer-ico" aria-hidden="true">
+                      <NavIcon size={18} strokeWidth={1.9} />
+                    </span>
                     <span
                       style={{
                         color: "#07111F",
                         ...GF,
-                        fontSize: 14,
+                        fontSize: 15,
                         fontWeight: 600,
                       }}
                     >
@@ -484,7 +538,8 @@ function MobileDrawer({ onClose }: { onClose: () => void }) {
                 {isOpen && (
                   <div
                     id={`mobile-section-${nav.id}`}
-                    style={{ background: "#F8FAFB", padding: "4px 0 8px" }}
+                    className="phdr-drawer-body"
+                    style={{ background: "#F8FAFC", padding: "6px 0 12px", borderBottom: "1px solid rgba(7,17,31,0.06)" }}
                   >
                     {nav.items.map((item) => (
                       <Link
@@ -498,9 +553,11 @@ function MobileDrawer({ onClose }: { onClose: () => void }) {
                           display: "flex",
                           alignItems: "center",
                           gap: 10,
-                          padding: "11px 24px 11px 36px",
+                          minHeight: 44,
+                          padding: "10px 24px 10px 70px",
                           textDecoration: "none",
                         }}
+                        className="phdr-drawer-link"
                       >
                         <div
                           style={{
@@ -545,7 +602,7 @@ function MobileDrawer({ onClose }: { onClose: () => void }) {
                       }}
                       style={{
                         display: "block",
-                        margin: "8px 24px 0",
+                        margin: "8px 24px 0 70px",
                         padding: "10px 16px",
                         background: isEnotary
                           ? "rgba(103,2,59,0.08)"
@@ -737,12 +794,13 @@ export function PublicHeader() {
               style={{
                 maxWidth: 1440,
                 margin: "0 auto",
-                padding: "0 48px",
+                gap: 16,
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "space-between",
                 height: "100%",
               }}
+              className="phdr-inner"
             >
               {/* Logo — brand mark only, not a link */}
               <div
@@ -753,24 +811,14 @@ export function PublicHeader() {
                   minHeight: 44,
                 }}
               >
-                <img
-                  src={lagdaHeaderLogo}
-                  alt="LAGDA"
-                  style={{
-                    display: "block",
-                    width: 190,
-                    height: 54,
-                    objectFit: "contain",
-                    objectPosition: "left center",
-                  }}
-                />
+                <HeaderLogo />
               </div>
 
               {/* Desktop nav */}
               <ul
                 role="list"
                 style={{
-                  gap: 4,
+                  gap: 2,
                   alignItems: "center",
                   margin: 0,
                   padding: 0,
@@ -783,7 +831,9 @@ export function PublicHeader() {
                   const isEnotary = nav.id === "enotary";
                   const isOpen = openDropdown === nav.id;
                   const accentColor = isEnotary ? "#b01262" : "#0078d4";
-                  const accentTextColor = isEnotary ? "#B01262" : "#0078D4";
+                  // Darker than the accent so it stays AA on the tinted pill.
+                  const accentTextColor = isEnotary ? "#9E1058" : "#0062AF";
+                  const NavIcon = navIcon(nav.id);
 
                   return (
                     <li
@@ -809,32 +859,20 @@ export function PublicHeader() {
                             setOpenDropdown(nav.id);
                           }
                         }}
+                        className="phdr-navbtn"
+                        data-active={isActive ? "true" : "false"}
+                        data-open={isOpen ? "true" : "false"}
                         style={{
-                          background: "none",
-                          border: "none",
-                          cursor: "pointer",
-                          padding: "8px 10px 8px 12px",
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 4,
-                          color: isActive ? accentTextColor : "#334155",
-                          fontSize: 13,
+                          ["--phdr-accent" as string]: accentColor,
+                          ["--phdr-accent-text" as string]: accentTextColor,
+                          ["--phdr-tint" as string]: isEnotary ? "rgba(176,18,98,0.07)" : "rgba(0,120,212,0.07)",
                           fontWeight: isActive ? 600 : 500,
                           ...GF,
-                          transition: "color 0.18s ease",
-                          borderBottom: isActive
-                            ? `2px solid ${accentColor}`
-                            : "2px solid transparent",
-                        }}
-                        onMouseEnter={(e) => {
-                          if (!isActive)
-                            e.currentTarget.style.color = "#07111F";
-                        }}
-                        onMouseLeave={(e) => {
-                          if (!isActive)
-                            e.currentTarget.style.color = "#334155";
                         }}
                       >
+                        <span className="phdr-navico" aria-hidden="true">
+                          <NavIcon size={16} strokeWidth={1.9} />
+                        </span>
                         {nav.label}
                         {nav.badge && (
                           <span
@@ -852,7 +890,7 @@ export function PublicHeader() {
                             {nav.badge}
                           </span>
                         )}
-                        <span style={{ marginLeft: 2, opacity: 0.6 }}>
+                        <span className="phdr-navchev" style={{ marginLeft: 2, opacity: 0.6, display: "inline-flex" }}>
                           <Chevron open={isOpen} />
                         </span>
                       </button>
@@ -1053,6 +1091,132 @@ export function PublicHeader() {
         @keyframes dropdownEnter {
           from { opacity: 0; transform: translateY(-6px); }
           to   { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Header gutters: phone → tablet → desktop. */
+        .phdr-inner { padding: 0 16px; }
+        @media (min-width: 640px)  { .phdr-inner { padding: 0 24px; } }
+        @media (min-width: 1280px) { .phdr-inner { padding: 0 40px; } }
+
+        /* Logo crop — see HeaderLogo. Wordmark box = 916×240 canvas units,
+           offset (88, 267) inside the 1086×814 canvas. */
+        .phdr-logo {
+          --phdr-logo-w: 118px;
+          display: block;
+          width: var(--phdr-logo-w);
+          height: calc(var(--phdr-logo-w) * 0.2620);
+          overflow: hidden;
+          flex-shrink: 0;
+        }
+        .phdr-logo-img {
+          display: block;
+          max-width: none;
+          width: calc(var(--phdr-logo-w) * 1.1856);
+          height: auto;
+          margin-left: calc(var(--phdr-logo-w) * -0.0961);
+          margin-top: calc(var(--phdr-logo-w) * -0.2915);
+        }
+        @media (min-width: 640px)  { .phdr-logo { --phdr-logo-w: 128px; } }
+        @media (min-width: 1280px) { .phdr-logo { --phdr-logo-w: 144px; } }
+        .phdr-logo.phdr-logo--drawer { --phdr-logo-w: 124px; }
+
+        /* Top-nav triggers: icon + label pill, underline indicator. */
+        .phdr-navbtn {
+          position: relative;
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          height: 40px;
+          padding: 0 8px 0 9px;
+          border: none;
+          border-radius: 10px;
+          background: transparent;
+          color: #334155;
+          font-size: 13px;
+          cursor: pointer;
+          white-space: nowrap;
+          transition: color 180ms ease, background-color 180ms ease;
+        }
+        .phdr-navbtn::after {
+          content: "";
+          position: absolute;
+          left: 10px;
+          right: 10px;
+          bottom: 3px;
+          height: 2px;
+          border-radius: 2px;
+          background: var(--phdr-accent);
+          transform: scaleX(0);
+          transform-origin: center;
+          opacity: 0;
+          transition: transform 200ms cubic-bezier(0.22, 0.8, 0.24, 1), opacity 160ms ease;
+        }
+        .phdr-navico {
+          display: inline-flex;
+          color: #64748B;
+          transition: color 180ms ease;
+        }
+        .phdr-navbtn:hover { color: #07111F; background: rgba(7,17,31,0.045); }
+        .phdr-navbtn:hover .phdr-navico { color: var(--phdr-accent); }
+        .phdr-navbtn:hover::after { transform: scaleX(0.35); opacity: 0.55; }
+        .phdr-navbtn[data-open="true"] { color: var(--phdr-accent-text); background: var(--phdr-tint); }
+        .phdr-navbtn[data-open="true"] .phdr-navico { color: var(--phdr-accent); }
+        .phdr-navbtn[data-open="true"]::after { transform: scaleX(1); opacity: 1; }
+        .phdr-navbtn[data-active="true"] { color: var(--phdr-accent-text); }
+        .phdr-navbtn[data-active="true"] .phdr-navico { color: var(--phdr-accent); }
+        .phdr-navbtn[data-active="true"]::after { transform: scaleX(1); opacity: 1; }
+        .phdr-navbtn:focus-visible { outline: 2px solid #0078D4; outline-offset: 2px; }
+        /* The desktop row must hold the logo, six triggers, the Coming Soon
+           badge and both CTAs on one line. Measured budgets:
+             1024–1199  labels only (icons + chevrons would clip the CTA)
+             1200–1359  icons + labels, chevrons tucked away
+             ≥1360      icons + labels + chevrons */
+        @media (min-width: 1024px) and (max-width: 1199px) {
+          .phdr-navico { display: none !important; }
+          .phdr-navbtn { padding: 0 8px; }
+        }
+        @media (min-width: 1024px) and (max-width: 1359px) {
+          .phdr-navchev { display: none !important; }
+        }
+        @media (min-width: 1200px) and (max-width: 1359px) {
+          .phdr-navbtn { padding: 0 10px 0 9px; }
+        }
+        @media (min-width: 1360px) {
+          .phdr-navbtn { padding: 0 10px 0 11px; }
+        }
+
+        /* Mobile drawer rows. */
+        .phdr-drawer-row { background: transparent; transition: background-color 180ms ease; }
+        .phdr-drawer-row:hover { background: #F8FAFC; }
+        .phdr-drawer-row[data-open="true"] { background: var(--phdr-tint); }
+        .phdr-drawer-row:focus-visible { outline: 2px solid #0078D4; outline-offset: -2px; }
+        .phdr-drawer-ico {
+          width: 34px;
+          height: 34px;
+          border-radius: 9px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
+          background: #F1F5F9;
+          color: #475569;
+          transition: background-color 180ms ease, color 180ms ease;
+        }
+        .phdr-drawer-row[data-open="true"] .phdr-drawer-ico,
+        .phdr-drawer-row[data-current="true"] .phdr-drawer-ico {
+          background: var(--phdr-accent);
+          color: #FFFFFF;
+        }
+        .phdr-drawer-link { transition: background-color 160ms ease; }
+        .phdr-drawer-link:hover { background: rgba(7,17,31,0.04); }
+        .phdr-drawer-link:focus-visible { outline: 2px solid #0078D4; outline-offset: -2px; }
+        .phdr-iconbtn:hover { background: #F8FAFC !important; color: #07111F !important; }
+        .phdr-iconbtn:focus-visible { outline: 2px solid #0078D4; outline-offset: 2px; }
+
+        @media (prefers-reduced-motion: reduce) {
+          .phdr-navbtn, .phdr-navbtn::after, .phdr-navico,
+          .phdr-drawer-row, .phdr-drawer-ico, .phdr-drawer-link { transition: none; }
+          .phdr-chev { transition: none !important; }
         }
       `}</style>
     </>

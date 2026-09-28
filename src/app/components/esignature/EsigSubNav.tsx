@@ -1,9 +1,19 @@
-import { Link, useLocation } from "react-router";
+import { useLocation } from "react-router";
+import {
+  LayoutDashboard, Workflow, ShieldCheck, Sparkles, Palette, Building2, FileText,
+  type LucideIcon,
+} from "lucide-react";
 import { ESIG_SUBNAV } from "../../pages/public/esignature/content";
-import { Z } from "../../utils/z-index";
-import { TabStrip } from "../platform/TabStrip";
+import { SectionTabs } from "../public/SectionTabs";
 
-const GF = { fontFamily: "'Geist', sans-serif" };
+const ICONS: Record<string, LucideIcon> = {
+  "/esignature": LayoutDashboard,
+  "/esignature/core-workflow": Workflow,
+  "/esignature/verification-and-audit": ShieldCheck,
+  "/esignature/advanced-capabilities": Sparkles,
+  "/esignature/templates-and-branding": Palette,
+  "/esignature/team-and-enterprise": Building2,
+};
 
 export function EsigSubNav() {
   const { pathname } = useLocation();
@@ -15,66 +25,15 @@ export function EsigSubNav() {
   };
 
   return (
-    <nav
-      aria-label="eSignature pages"
-      style={{
-        borderBottom: "1px solid rgba(0,0,0,0.08)",
-        background: "rgba(255,255,255,0.95)",
-        backdropFilter: "blur(12px)",
-        position: "sticky",
-        top: 72,
-        zIndex: Z.sticky,
-      }}
-    >
-      <TabStrip as="scroller" label="eSignature pages" activeKey={pathname}
-        style={{ maxWidth: 1200, margin: "0 auto", padding: "0 24px" }}>
-        <ul
-          role="list"
-          style={{
-            display: "flex",
-            gap: 0,
-            listStyle: "none",
-            margin: 0,
-            padding: 0,
-            whiteSpace: "nowrap",
-          }}
-        >
-          {ESIG_SUBNAV.map((item) => {
-            const active = isActive(item.path);
-            return (
-              <li key={item.path}>
-                <Link
-                  to={item.path}
-                  aria-current={active ? "page" : undefined}
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    padding: "12px 16px",
-                    ...GF,
-                    fontSize: 13,
-                    fontWeight: active ? 700 : 500,
-                    color: active ? "#07111F" : "#64748B",
-                    textDecoration: "none",
-                    borderBottom: active ? "2px solid #0078D4" : "2px solid transparent",
-                    marginBottom: -1,
-                    transition: "color 0.15s ease, border-color 0.15s ease",
-                  }}
-                  onMouseEnter={(e) => {
-                    if (!active) e.currentTarget.style.color = "#07111F";
-                  }}
-                  onMouseLeave={(e) => {
-                    if (!active) e.currentTarget.style.color = "#64748B";
-                  }}
-                >
-                  {item.label}
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
-      </TabStrip>
-      {/* Hide scrollbar in webkit */}
-      <style>{`.esig-subnav-list::-webkit-scrollbar { display: none; }`}</style>
-    </nav>
+    <SectionTabs
+      label="eSignature pages"
+      tabs={ESIG_SUBNAV.map((item) => ({
+        key: item.path,
+        label: item.label,
+        to: item.path,
+        icon: ICONS[item.path] ?? FileText,
+        active: isActive(item.path),
+      }))}
+    />
   );
 }

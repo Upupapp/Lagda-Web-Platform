@@ -6,7 +6,7 @@ vi.mock("../../../services/backend-flag", () => ({ USE_REAL_BACKEND: true, API_B
 
 import { ContactRequestDialog, dueDateToIso, DELIVERY_COPY } from "../ContactRequestDialog";
 import {
-  ContactRequestButtons, ContactRequestHistory, MembershipBadge, requestAvailability,
+  ContactRequestButtons, ContactRequestHistory, MembershipBadge, requestAvailability, CONTACT_REQUEST_KINDS,
 } from "../ContactRequestControls";
 
 type Handler = (url: string, init: RequestInit) => { status?: number; body: unknown } | undefined;
@@ -149,7 +149,7 @@ describe("membership and availability", () => {
 
   it("disables preparation for an external contact with a visible reason", async () => {
     const onChoose = vi.fn();
-    render(<ContactRequestButtons contact={{ id: "con_x", status: "active", workspaceMember: null }} currentUserId="me" onChoose={onChoose} />);
+    render(<ContactRequestButtons contact={{ id: "con_x", status: "active", workspaceMember: null }} currentUserId="me" onChoose={onChoose} kinds={CONTACT_REQUEST_KINDS} />);
     const prep = screen.getByRole("button", { name: /Assign for document preparation/ });
     expect(prep.getAttribute("aria-disabled")).toBe("true");
     expect(screen.getByText(/Only workspace members can be assigned to prepare a document/)).toBeTruthy();

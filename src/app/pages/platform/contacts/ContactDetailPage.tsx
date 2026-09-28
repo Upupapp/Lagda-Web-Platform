@@ -15,7 +15,7 @@ import { ContactRequestDialog, DELIVERY_COPY } from "../../../components/contact
 import {
   MembershipBadge, ContactRequestButtons, ContactRequestHistory,
 } from "../../../components/contact-requests/ContactRequestControls";
-import type { ContactRequestKind } from "../../../models/contact-requests";
+import { contactRequestsPath, type ContactRequestKind } from "../../../models/contact-requests";
 
 const GF    = { fontFamily: "'Geist', sans-serif" };
 const GM    = { fontFamily: "'Geist Mono', monospace" };
@@ -319,15 +319,21 @@ function ContactDetail() {
             {contact.workspaceMember !== undefined && (
               <p style={{ ...GF, fontSize: 13, color: "#334155", margin: "0 0 12px", lineHeight: 1.55 }}>
                 {contact.workspaceMember === null
-                  ? <><strong>External contact.</strong> {DELIVERY_COPY.external}</>
+                  ? <><strong>External contact.</strong> They are not a member of this workspace.</>
                   : <><strong>Workspace member ({contact.workspaceMember.displayName}).</strong> {DELIVERY_COPY.member}</>}
               </p>
             )}
+            {/* Only "Assign for document preparation" is offered (see
+                ENABLED_CONTACT_REQUEST_KINDS); for an external contact it stays
+                visible, disabled, with the reason. */}
             <ContactRequestButtons
               contact={contact}
               currentUserId={platform.user?.id}
               onChoose={kind => { setRequestKind(kind); }}
             />
+            <p style={{ ...GF, fontSize: 12.5, color: "#475569", margin: "12px 0 0" }}>
+              Track answers in <Link to={contactRequestsPath({ view: "sent" })} style={{ color: "#005A9E", fontWeight: 600 }}>Requests From Contacts</Link>.
+            </p>
             <h3 style={{ ...GF, fontSize: 12, fontWeight: 700, color: "#334155", textTransform: "uppercase", letterSpacing: "0.05em", margin: "18px 0 10px" }}>
               Request history
             </h3>
