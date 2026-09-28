@@ -5,19 +5,19 @@
 // No Burgundy. No eNotary.
 
 import React, { useEffect, useState } from "react";
-import { Link } from "react-router";
 import { WorkspaceAdminProvider, useWorkspaceAdmin } from "../../../context/WorkspaceAdminContext";
 import { Z } from "../../../utils/z-index";
 import { useWorkspaceMode } from "../../../hooks/useWorkspaceAccess";
 import { RealTeamsPage } from "./real/RealTeamsPage";
 import { ManagePage } from "./real/manage-ui";
+import { TeamBrandCard, TEAM_CARD_STYLES } from "./real/TeamBrandCard";
+import { useDocumentCardBranding, type CardBranding } from "../documents/CompletedDocumentCards";
 
 const GF    = { fontFamily: "'Geist', sans-serif" };
 const GM    = { fontFamily: "'Geist Mono', monospace" };
 const NAVY  = "#07111F";
 const AZURE = "#0078D4";
 const SLATE = "#64748B";
-const SILVER= "#8A9BAE";
 
 function CreateTeamModal({ onDone, onCancel }: { onDone: () => void; onCancel: () => void }) {
   const { asyncCreateTeam, asyncLoadTeams } = useWorkspaceAdmin();
@@ -75,32 +75,18 @@ function CreateTeamModal({ onDone, onCancel }: { onDone: () => void; onCancel: (
   );
 }
 
-function TeamCard({ team }: { team: { id: string; name: string; description?: string; status: string; memberCount: number } }) {
+function TeamCard({ team, branding }: { team: { id: string; name: string; description?: string; status: string; memberCount: number }; branding: CardBranding }) {
   return (
-    <Link to={`/app/workspace/teams/${team.id}`} style={{ textDecoration: "none" }}>
-      <div style={{ background: "#FFFFFF", border: "1.5px solid #E3E8EF", borderRadius: 12, padding: "16px 20px", cursor: "pointer", transition: "border-color 0.15s" }}
-        onMouseEnter={e => (e.currentTarget.style.borderColor = AZURE)}
-        onMouseLeave={e => (e.currentTarget.style.borderColor = "#E3E8EF")}>
-        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 8 }}>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ ...GF, fontSize: 14, fontWeight: 700, color: NAVY }}>{team.name}</div>
-            {team.description && <div style={{ ...GF, fontSize: 12, color: SLATE, marginTop: 3 }}>{team.description}</div>}
-          </div>
-          {team.status === "archived" && (
-            <span style={{ ...GM, fontSize: 10, padding: "2px 8px", borderRadius: 999, background: "#F1F5F9", color: "#475569", flexShrink: 0 }}>Archived</span>
-          )}
-        </div>
-        <div style={{ marginTop: 10, display: "flex", gap: 6, alignItems: "center" }}>
-          <span style={{ ...GM, fontSize: 11, color: AZURE }}>{team.memberCount}</span>
-          <span style={{ ...GF, fontSize: 12, color: SILVER }}>{team.memberCount === 1 ? "member" : "members"}</span>
-        </div>
-      </div>
-    </Link>
+    <TeamBrandCard to={`/app/workspace/teams/${team.id}`} testId={`team-${team.id}`} name={team.name} kind="Team"
+      parentName={null} archived={team.status === "archived"} description={team.description ?? null}
+      membersLabel={`${String(team.memberCount)} ${team.memberCount === 1 ? "member" : "members"}`}
+      initials={[]} extraCount={0} subCount={0} branding={branding} />
   );
 }
 
 function TeamsInner() {
   const { state, asyncLoadTeams } = useWorkspaceAdmin();
+  const branding = useDocumentCardBranding();
   const [showArchived, setShowArchived] = useState(false);
   const [showModal, setShowModal] = useState(false);
 
@@ -110,7 +96,7 @@ function TeamsInner() {
   const archived = state.teams.filter(t => t.status === "archived");
 
   return (
-    <ManagePage crumbs={[{ label: "Manage", to: "/app/workspace" }, { label: "Teams" }]} title="Teams" maxWidth={900}
+    <ManagePage crumbs={[{ label: "Manage", to: "/app/workspace" }, { label: "Teams" }]} title="Teams" maxWidth={1180}
       actions={
         <>
           <label style={{ display: "flex", alignItems: "center", gap: 6, cursor: "pointer", ...GF, fontSize: 12, color: SLATE }}>
@@ -123,6 +109,7 @@ function TeamsInner() {
           </button>
         </>
       }>
+      <style>{TEAM_CARD_STYLES}</style>
       {showModal && <CreateTeamModal onDone={() => setShowModal(false)} onCancel={() => setShowModal(false)} />}
         {state.teamsLoading ? (
           <div aria-busy="true" style={{ textAlign: "center", padding: "48px", ...GF, fontSize: 13, color: SLATE }}>Loading teams…</div>
@@ -138,15 +125,15 @@ function TeamsInner() {
               </div>
             ) : (
               <>
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))", gap: 14 }}>
-                  {active.map(t => <TeamCard key={t.id} team={t} />)}
-                </div>
+                <ul className="team-grid" aria-label="Teams">
+                  {active.map(t => <TeamCard key={t.id} team={t} branding={branding} />)}
+                </ul>
                 {showArchived && archived.length > 0 && (
                   <>
                     <h2 style={{ ...GF, fontSize: 12, fontWeight: 700, color: SLATE, textTransform: "uppercase", letterSpacing: "0.06em", margin: "24px 0 12px" }}>Archived</h2>
-                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))", gap: 14 }}>
-                      {archived.map(t => <TeamCard key={t.id} team={t} />)}
-                    </div>
+                    <ul className="team-grid" aria-label="Archived teams">
+                      {archived.map(t => <TeamCard key={t.id} team={t} branding={branding} />)}
+                    </ul>
                   </>
                 )}
               </>

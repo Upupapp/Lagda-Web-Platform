@@ -20,6 +20,8 @@ import React, { useEffect, useState, useRef } from "react";
 // This page is listed in LIVE_SETTINGS_PATHS, so the shell shows it no preview
 // note. That listing is the single place the decision is made.
 import { SettingsPage, SSection, SField, INPUT_STYLE, BTN_PRIMARY, BTN_SECONDARY, Skeleton } from "./SettingsShell";
+import { SettingsActions } from "./SettingsActions";
+import { Save, Undo2 } from "lucide-react";
 import { mockAccountSettingsService } from "../../../services/mock/settings.service";
 import { realAccountSettingsService } from "../../../services/real/account-settings.service";
 import { USE_REAL_BACKEND } from "../../../services/backend-flag";
@@ -290,19 +292,20 @@ export function ProfilePage() {
         </SSection>
 
         {/* Actions */}
-        <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
-          <button type="submit" disabled={!hasChanges || saving} style={{ ...BTN_PRIMARY, opacity: (!hasChanges || saving) ? 0.6 : 1, cursor: (!hasChanges || saving) ? "not-allowed" : "pointer" }}>
-            {saving ? "Saving…" : "Save changes"}
-          </button>
-          {hasChanges && !saving && (
-            <button type="button" onClick={discard} style={BTN_SECONDARY}>Discard</button>
-          )}
+        <SettingsActions status={<>
           {saved && <span role="status" style={{ ...GF, fontSize: 13, color: "#15803D" }}>Profile updated.</span>}
           {saveError !== null && (
             <span role="alert" style={{ ...GF, fontSize: 13, color: "#DC2626" }}>{saveError}</span>
           )}
-          {hasChanges && !saving && <span style={{ ...GF, fontSize: 12, color: SLATE }}>Unsaved changes.</span>}
-        </div>
+          {hasChanges && !saving && !saved && saveError === null && <span style={{ ...GF, fontSize: 12.5, color: SLATE }}>Unsaved changes.</span>}
+        </>}>
+          {hasChanges && !saving && (
+            <button type="button" onClick={discard} style={BTN_SECONDARY}><Undo2 size={15} aria-hidden /> Discard</button>
+          )}
+          <button type="submit" disabled={!hasChanges || saving} style={{ ...BTN_PRIMARY, opacity: (!hasChanges || saving) ? 0.6 : 1, cursor: (!hasChanges || saving) ? "not-allowed" : "pointer" }}>
+            <Save size={15} aria-hidden /> {saving ? "Saving…" : "Save changes"}
+          </button>
+        </SettingsActions>
       </form>
     </SettingsPage>
   );

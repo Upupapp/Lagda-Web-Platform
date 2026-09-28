@@ -17,6 +17,10 @@ import { buttonStyle, inputStyle, labelStyle, hintStyle } from "../join/join-sty
 import { ManagePage, LoadingBlock, ErrorBlock, GF, GM, NAVY, AZURE, SLATE, SILVER, BORDER } from "./manage-ui";
 import { cardStyle, LIGHT } from "./manage-styles";
 import { errorMessage, formatDate } from "./manage-format";
+import { BrandBand } from "../../settings/branding-preview";
+import { useDocumentCardBranding } from "../../documents/CompletedDocumentCards";
+import { TeamHierarchyTree } from "./TeamHierarchyTree";
+import { buildLevels, ladderRole, subTeamTree, type HierarchyPerson } from "./team-hierarchy";
 
 const NAME_MAX = 120;
 
@@ -140,7 +144,10 @@ function AddMemberDialog({ candidates, onClose, onAdd }: {
 export function RealTeamDetailPage({ workspaceId, teamId }: { workspaceId: string; teamId: string }) {
   const access = useWorkspaceAccess();
   const { isNarrow } = useViewport();
+  const branding = useDocumentCardBranding();
   const [unit, setUnit] = useState<OrganizationUnit | null>(null);
+  const [allUnits, setAllUnits] = useState<OrganizationUnit[]>([]);
+  const [childCounts, setChildCounts] = useState<Map<string, number | null>>(() => new Map());
   const [parentName, setParentName] = useState<string | null>(null);
   const [members, setMembers] = useState<OrganizationUnitMember[] | null>(null);
   const [roster, setRoster] = useState<WorkspaceMemberSummary[] | null>(null);
@@ -160,8 +167,22 @@ export function RealTeamDetailPage({ workspaceId, teamId }: { workspaceId: strin
       const found = units.find(u => u.unitId === teamId) ?? null;
       if (!found) { setState("missing"); return; }
       setUnit(found);
+      setAllUnits(units);
       setParentName(found.parentUnitId ? units.find(u => u.unitId === found.parentUnitId)?.name ?? null : null);
-      setMembers(await realOrganizationService.listMembers(workspaceId, teamId));
+      // Headcounts for the sub-teams drawn as branches: every descendant,
+      // one small request each (an org chart is a handful of rows).
+      const descendants = subTeamTree(units, teamId, (u, children) => ({
+        id: u.unitId, name: u.name, kindLabel: "", memberCount: null, href: "", archived: false, children,
+      }));
+      const ids: string[] = [];
+      const walk = (list: typeof descendants) => { for (const d of list) { ids.push(d.id); walk(d.children); } };
+      walk(descendants);
+      const [own, ...counts] = await Promise.all([
+        realOrganizationService.listMembers(workspaceId, teamId),
+        ...ids.map(id => realOrganizationService.listMembers(workspaceId, id).then(m => m.length).catch(() => null)),
+      ]);
+      setChildCounts(new Map(ids.map((id, i) => [id, counts[i] ?? null])));
+      setMembers(own);
       setState("ready");
     } catch (err) {
       setError(errorMessage(err, "We couldn't load this team."));
@@ -201,13 +222,63 @@ export function RealTeamDetailPage({ workspaceId, teamId }: { workspaceId: strin
   const candidates = (roster ?? []).filter(m => m.userId && !inTeam.has(m.userId)).sort((a, b) => a.displayName.localeCompare(b.displayName));
   const done = () => { setModal(null); void load(); };
 
+  // The hierarchy: people from the unit, their WORKSPACE role from the
+  // roster when this caller may read it (owners and administrators), else
+  // unit titles only.
+  const rosterByUser = new Map((roster ?? []).filter(m => m.userId).map(m => [m.userId as string, m]));
+  const rolesKnown = roster !== null;
+  const people: HierarchyPerson[] = members.map(m => {
+    const r = rosterByUser.get(m.userId);
+    return {
+      id: m.userId,
+      name: m.displayName,
+      role: rolesKnown ? ladderRole(r?.roleId ?? "member") : null,
+      roleTitle: r?.roleTitle ?? null,
+      unitTitle: m.title,
+      href: r ? `/app/workspace/members/${encodeURIComponent(r.id)}` : null,
+    };
+  });
+  const subTeams = subTeamTree(allUnits, unit.unitId, (u, children) => ({
+    id: u.unitId,
+    name: u.name,
+    kindLabel: ORGANIZATION_UNIT_KIND_LABELS[u.kind] ?? u.kind,
+    memberCount: childCounts.get(u.unitId) ?? null,
+    href: `/app/workspace/teams/${encodeURIComponent(u.unitId)}`,
+    archived: u.archivedAt !== null,
+    children,
+  }));
+  const kindLabel = ORGANIZATION_UNIT_KIND_LABELS[unit.kind] ?? unit.kind;
+
   return (
-    <ManagePage crumbs={crumbs} title={unit.name} maxWidth={760}
+    <ManagePage crumbs={crumbs} title={unit.name} maxWidth={1180}
       badge={!active ? <span style={{ ...GM, fontSize: 10, padding: "2px 8px", borderRadius: 999, background: "#F1F5F9", color: "#475569" }}>Archived</span> : undefined}
       actions={active ? <>
         {canUpdate && <button type="button" onClick={() => setModal({ kind: "rename" })} style={buttonStyle("secondary")}>Rename</button>}
         {canArchive && <button type="button" onClick={() => setModal({ kind: "archive" })} style={buttonStyle("secondary")}>Archive</button>}
       </> : undefined}>
+      <div style={{ borderRadius: 12, overflow: "hidden", marginBottom: 16, border: `1px solid ${BORDER}` }} data-testid="team-brand-header">
+        <BrandBand variant="card" compact={isNarrow} testId="team-banner"
+          subtitle={`${unit.name} · ${kindLabel}${parentName ? ` in ${parentName}` : ""}`}
+          branding={{ displayName: branding.displayName, primaryColor: branding.primaryColor, logoPreviewUrl: branding.logoUrl }}
+          headerAside={
+            <span style={{ ...GF, fontSize: 12, fontWeight: 700, color: "#FFFFFF", background: "rgba(7,17,31,0.28)", borderRadius: 999, padding: "4px 10px", whiteSpace: "nowrap", flexShrink: 0 }}>
+              {members.length} {members.length === 1 ? "member" : "members"}
+            </span>
+          } />
+      </div>
+
+      <section aria-labelledby="team-hierarchy-heading" style={{ ...cardStyle, padding: isNarrow ? "14px 12px 16px" : "16px 20px 20px", marginBottom: 16 }}>
+        <h2 id="team-hierarchy-heading" style={{ ...GF, fontSize: 13, fontWeight: 700, color: NAVY, margin: "0 0 10px", textTransform: "uppercase", letterSpacing: "0.06em" }}>
+          Hierarchy
+        </h2>
+        {members.length === 0 && subTeams.length === 0 ? (
+          <p style={{ ...GF, fontSize: 14, color: SLATE, margin: 0 }}>No one is in this team yet, and it has no sub-teams.</p>
+        ) : (
+          <TeamHierarchyTree teamName={unit.name} teamKind={kindLabel} brandColor={branding.primaryColor} logoUrl={branding.logoUrl}
+            levels={buildLevels(people)} subTeams={subTeams} rolesUnavailable={!rolesKnown && members.length > 0} />
+        )}
+      </section>
+
       <section aria-labelledby="team-members" style={{ ...cardStyle, overflow: "hidden" }}>
         <div style={{ padding: "14px 20px", borderBottom: `1px solid ${BORDER}`, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
           <h2 id="team-members" style={{ ...GF, fontSize: 13, fontWeight: 700, color: NAVY, margin: 0, textTransform: "uppercase", letterSpacing: "0.06em" }}>

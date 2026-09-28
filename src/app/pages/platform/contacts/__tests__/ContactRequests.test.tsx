@@ -60,13 +60,13 @@ describe("Add Contact", () => {
 });
 
 describe("Contacts list", () => {
-  it("shows only All Contacts, with Requests From Contacts beside it, and no scope or status filters", async () => {
+  it("shows All Contacts, with Requests From Contacts and Archived beside it, and no scope or status filters", async () => {
     mockApi();
     render(<MemoryRouter initialEntries={["/app/contacts"]}><ContactsPage /></MemoryRouter>);
     await screen.findByText("Maria Santos");
     const nav = screen.getByRole("navigation", { name: "Contacts sections" });
     const links = within(nav).getAllByRole("link");
-    expect(links.map(link => link.textContent)).toEqual(["All Contacts", "Requests From Contacts"]);
+    expect(links.map(link => link.textContent)).toEqual(["All Contacts", "Requests From Contacts", "Archived"]);
     expect(within(nav).getByRole("link", { name: "All Contacts" }).getAttribute("aria-current")).toBe("page");
     expect(within(nav).getByRole("link", { name: "Requests From Contacts" }).getAttribute("href")).toBe("/app/contacts/requests");
     expect(screen.queryByRole("navigation", { name: "Contact views" })).toBeNull();

@@ -3,8 +3,21 @@
 // Demo build: session-local, no email is sent. With a real backend the
 // invitation is real and emailed, and no demonstration notice is shown.
 // On phones the table becomes a list of cards. No Burgundy. No eNotary.
+//
+// ?invitation=<id> opens the page focused on one invitation — the link a
+// "declined your invitation" notice (bell, or the dashboard's Needs
+// attention) carries. The list filter switches to show it if it would hide
+// it, and the row is scrolled to, focused and briefly pulsed. A declined
+// invitation shows the invitee's reason, which the invitation list itself
+// does not carry: it comes from the decline notice this account received.
+// If the invitation is not in this workspace but the notice names another
+// workspace this account belongs to, that workspace is opened first.
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
+import { useSearchParams } from "react-router";
+import { usePlatform } from "../../../context/PlatformContext";
+import { useOptionalNotificationCenter } from "../../../context/NotificationCenterContext";
+import type { InvitationDeclineDetail } from "../../../models/notifications";
 import { WorkspaceAdminProvider, useWorkspaceAdmin } from "../../../context/WorkspaceAdminContext";
 import type { WorkspaceInvitation, WorkspaceInvitationStatus, WorkspaceRoleId } from "../../../models/workspace-admin";
 import { WORKSPACE_INVITATION_STATUS_LABELS } from "../../../models/workspace-admin";
@@ -106,7 +119,25 @@ function InviteForm({ onDone }: { onDone: () => void }) {
   );
 }
 
-function InvitationRow({ inv, asCard = false }: { inv: WorkspaceInvitation; asCard?: boolean }) {
+type InvitationFilter = "all" | "pending" | "declined" | "expired" | "revoked";
+const FILTERS: readonly InvitationFilter[] = ["all", "pending", "declined", "expired", "revoked"];
+
+/** The decline reason line, when the notice for this invitation is known. */
+function DeclineReason({ decline }: { decline: InvitationDeclineDetail }) {
+  return (
+    // #334155 on white (and on the #F0F7FF highlight) is above 9:1.
+    <div data-testid="decline-reason" style={{ ...GF, fontSize: 12, color: "#334155", marginTop: 4, overflowWrap: "anywhere" }}>
+      {decline.reason === null ? "Declined. No reason given." : <>Declined. Reason: &ldquo;{decline.reason}&rdquo;</>}
+    </div>
+  );
+}
+
+function InvitationRow({ inv, asCard = false, focused = false, decline }: {
+  inv: WorkspaceInvitation; asCard?: boolean;
+  /** The invitation named by ?invitation=, highlighted and focusable. */
+  focused?: boolean;
+  decline?: InvitationDeclineDetail;
+}) {
   const { asyncResendInvitation, asyncRevokeInvitation, asyncLoadInvitations } = useWorkspaceAdmin();
   const [acting, setActing] = useState(false);
   const badge = STATUS_BADGE[inv.status];
@@ -145,9 +176,15 @@ function InvitationRow({ inv, asCard = false }: { inv: WorkspaceInvitation; asCa
     </>
   );
 
+  const focusProps = {
+    "data-invitation-id": inv.id,
+    ...(focused ? { tabIndex: -1, "data-focused": "true", className: "invitation-focus", "aria-current": "true" as const } : {}),
+  };
+  const reason = inv.status === "declined" && decline !== undefined ? <DeclineReason decline={decline} /> : null;
+
   if (asCard) {
     return (
-      <li data-testid={`invitation-${inv.id}`} style={{ borderBottom: "1px solid #F0F2F5", padding: "12px 14px", display: "flex", flexDirection: "column", gap: 6 }}>
+      <li data-testid={`invitation-${inv.id}`} {...focusProps} style={{ borderBottom: "1px solid #F0F2F5", padding: "12px 14px", display: "flex", flexDirection: "column", gap: 6, background: focused ? "#F0F7FF" : undefined }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
           <span style={{ ...GF, fontSize: 14, fontWeight: 600, color: NAVY, overflowWrap: "anywhere", flex: "1 1 160px", minWidth: 0 }}>{inv.email}</span>
           <span style={{ ...GM, fontSize: 10, padding: "3px 9px", borderRadius: 999, background: badge.bg, color: badge.color }}>
@@ -158,16 +195,18 @@ function InvitationRow({ inv, asCard = false }: { inv: WorkspaceInvitation; asCa
           {inv.roleName} · <span style={{ color: isExpiring ? "#E65100" : SILVER }}>{when}</span>
         </div>
         {inv.invitedByName && <div style={{ ...GM, fontSize: 11, color: SILVER }}>Invited by {inv.invitedByName}</div>}
+        {reason}
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>{actions}</div>
       </li>
     );
   }
 
   return (
-    <tr style={{ borderBottom: "1px solid #F0F2F5" }}>
+    <tr data-testid={`invitation-${inv.id}`} {...focusProps} style={{ borderBottom: "1px solid #F0F2F5", background: focused ? "#F0F7FF" : undefined }}>
       <td style={{ padding: "12px 16px" }}>
         <div style={{ ...GF, fontSize: 13, fontWeight: 600, color: NAVY, overflowWrap: "anywhere" }}>{inv.email}</div>
         {inv.invitedByName && <div style={{ ...GM, fontSize: 11, color: SILVER }}>Invited by {inv.invitedByName}</div>}
+        {reason}
       </td>
       <td style={{ padding: "12px 12px", ...GF, fontSize: 13, color: SLATE }}>{inv.roleName}</td>
       <td style={{ padding: "12px 12px" }}>
@@ -188,10 +227,73 @@ function InvitationRow({ inv, asCard = false }: { inv: WorkspaceInvitation; asCa
 function InvitationsInner() {
   const { state, asyncLoadInvitations } = useWorkspaceAdmin();
   const { isNarrow } = useViewport();
+  const platform = usePlatform();
+  const notices = useOptionalNotificationCenter();
+  const [searchParams] = useSearchParams();
+  const focusId = searchParams.get("invitation");
   const [showForm, setShowForm] = useState(false);
-  const [filter, setFilter] = useState<"all" | "pending" | "expired" | "revoked">("all");
+  const [filter, setFilter] = useState<InvitationFilter>("all");
+  // Loaded at least once for the current workspace — "not found" is only
+  // meaningful after that, never during the first render's empty list.
+  const [loadedFor, setLoadedFor] = useState<string | null>(null);
+  const workspaceKey = platform.currentWorkspace?.id ?? "";
+  const handledFocus = useRef<string | null>(null);
+  const switchedFor = useRef<string | null>(null);
 
-  useEffect(() => { void asyncLoadInvitations(); }, [asyncLoadInvitations]);
+  useEffect(() => {
+    let cancelled = false;
+    setLoadedFor(null);
+    void asyncLoadInvitations().then(() => { if (!cancelled) setLoadedFor(workspaceKey); });
+    return () => { cancelled = true; };
+  }, [asyncLoadInvitations, workspaceKey]);
+
+  // Decline notices this account received, by invitation id: the reason
+  // lives on the notice, not on the invitation list.
+  const declines = new Map<string, { id: string; status: string; detail: InvitationDeclineDetail }>();
+  for (const n of notices?.items ?? []) {
+    const detail = n.invitationDecline;
+    if (detail?.invitationId != null && !declines.has(detail.invitationId)) {
+      declines.set(detail.invitationId, { id: n.id, status: n.status, detail });
+    }
+  }
+
+  const loaded = loadedFor === workspaceKey && !state.invitationsLoading;
+  const focusInv = focusId === null ? undefined : state.invitations.find(i => i.id === focusId);
+  const focusDecline = focusId === null ? undefined : declines.get(focusId);
+  const focusMissing = focusId !== null && loaded && focusInv === undefined;
+
+  // Not in this workspace, but its notice names another of this account's
+  // workspaces: open that one (once) and let the list reload.
+  useEffect(() => {
+    if (!focusMissing || focusId === null || switchedFor.current === focusId) return;
+    const target = focusDecline?.detail.workspaceId ?? null;
+    if (target === null || target === "" || target === workspaceKey) return;
+    if (!platform.workspaces.some(w => w.id === target)) return;
+    switchedFor.current = focusId;
+    platform.switchWorkspace(target);
+  }, [focusMissing, focusId, focusDecline, workspaceKey, platform]);
+
+  // Show it: widen the filter if the current one hides it, then scroll to
+  // and focus the row. Once per ?invitation= value.
+  useEffect(() => {
+    if (focusInv === undefined || focusId === null || handledFocus.current === focusId) return;
+    const visible = filter === "all" || focusInv.status === filter;
+    if (!visible) {
+      setFilter(FILTERS.includes(focusInv.status as InvitationFilter) ? focusInv.status as InvitationFilter : "all");
+      return;
+    }
+    handledFocus.current = focusId;
+    const row = document.querySelector<HTMLElement>(`[data-invitation-id="${CSS.escape(focusId)}"]`);
+    if (row !== null) {
+      if (typeof row.scrollIntoView === "function") row.scrollIntoView({ block: "center", behavior: "smooth" });
+      row.focus({ preventScroll: true });
+    }
+  }, [focusInv, focusId, filter]);
+
+  // Opening the invitation is reading its decline notice.
+  useEffect(() => {
+    if (focusDecline !== undefined && focusDecline.status === "unread") notices?.markRead(focusDecline.id);
+  }, [focusDecline, notices]);
 
   const filtered = state.invitations.filter(i => filter === "all" || i.status === filter);
 
@@ -205,10 +307,16 @@ function InvitationsInner() {
       }>
         {showForm && <InviteForm onDone={() => setShowForm(false)} />}
 
+        {focusMissing && (
+          <p role="status" style={{ ...GF, fontSize: 13, color: "#334155", margin: "0 0 14px", padding: "10px 14px", background: "#F8FAFC", border: "1px solid #E3E8EF", borderRadius: 8 }}>
+            That invitation is not in this workspace&rsquo;s list. It may belong to another workspace, or it may have been replaced by a newer invitation.
+          </p>
+        )}
+
         {/* Filter tabs */}
         <div style={{ display: "flex", gap: 4, marginBottom: 14, flexWrap: "wrap" }}>
-          {(["all", "pending", "expired", "revoked"] as const).map(f => (
-            <button key={f} onClick={() => setFilter(f)}
+          {FILTERS.map(f => (
+            <button key={f} onClick={() => setFilter(f)} aria-pressed={filter === f}
               style={{ ...GF, fontSize: 12, fontWeight: 600, padding: "5px 14px", borderRadius: 999, border: "none", cursor: "pointer",
                 background: filter === f ? NAVY : "#F1F5F9", color: filter === f ? "#FFFFFF" : SLATE }}>
               {f.charAt(0).toUpperCase() + f.slice(1)}
@@ -232,7 +340,7 @@ function InvitationsInner() {
             </div>
           ) : isNarrow ? (
             <ul aria-label="Invitations" style={{ listStyle: "none", margin: 0, padding: 0 }}>
-              {filtered.map(inv => <InvitationRow key={inv.id} inv={inv} asCard />)}
+              {filtered.map(inv => <InvitationRow key={inv.id} inv={inv} asCard focused={inv.id === focusId} decline={declines.get(inv.id)?.detail} />)}
             </ul>
           ) : (
             <div style={{ overflowX: "auto" }}>
@@ -247,12 +355,23 @@ function InvitationsInner() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filtered.map(inv => <InvitationRow key={inv.id} inv={inv} />)}
+                  {filtered.map(inv => <InvitationRow key={inv.id} inv={inv} focused={inv.id === focusId} decline={declines.get(inv.id)?.detail} />)}
                 </tbody>
               </table>
             </div>
           )}
         </div>
+
+        <style>{`
+          .invitation-focus { outline: 2px solid ${AZURE}; outline-offset: -2px; animation: invitation-pulse 1.6s ease-out 2; }
+          .invitation-focus:focus { outline: 2px solid ${AZURE}; }
+          @keyframes invitation-pulse {
+            0%   { box-shadow: inset 0 0 0 0 rgba(0,120,212,0.35); }
+            50%  { box-shadow: inset 0 0 0 4px rgba(0,120,212,0.25); }
+            100% { box-shadow: inset 0 0 0 0 rgba(0,120,212,0); }
+          }
+          @media (prefers-reduced-motion: reduce) { .invitation-focus { animation: none; } }
+        `}</style>
 
         {!USE_REAL_BACKEND && (
           <p style={{ ...GF, fontSize: 12, color: SLATE, marginTop: 16, padding: "10px 16px", background: "#FFFBEB", border: "1px solid #FDE68A", borderRadius: 8 }}>

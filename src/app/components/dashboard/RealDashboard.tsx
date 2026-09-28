@@ -21,14 +21,26 @@
 // otherwise find out too late: a decline, an expiry, a request nobody has
 // touched in a week, a document fully prepared and then forgotten. The
 // counts come second; the lists after that.
+//
+// Needs attention also carries one kind of account notice: an invitation this
+// user sent that was DECLINED (WORKSPACE_INVITATION_DECLINED, from the
+// account feed the notification center already loads). Unread ones from the
+// last 14 days are listed with the invitee, the reason and the date, and a
+// "Review invitation" link to Manage → Invitations focused on it — switching
+// to that invitation's workspace first when it is not the current one.
+// Opening it marks the notice read, which takes it off this list.
 
 import { useState, useEffect, type CSSProperties } from "react";
 import { Link } from "react-router";
 import {
   FilePlus, FileText, XCircle, Clock, AlertTriangle, FileEdit,
-  CheckCircle2, Send, ChevronRight, PenLine, History,
+  CheckCircle2, Send, ChevronRight, PenLine, History, UserX, X,
 } from "lucide-react";
 import { usePlatform } from "../../context/PlatformContext";
+import { useOptionalNotificationCenter } from "../../context/NotificationCenterContext";
+import {
+  invitationDeclinesNeedingAttention, declineReviewPath, type DeclineAttentionEntry,
+} from "../../services/dashboard/invitation-declines";
 import {
   AppContent, StatCard, DashboardGrid, EmptyStateLayout, SkeletonBlock, PageHeader,
 } from "../platform";
@@ -242,6 +254,80 @@ function AttentionRow({ entry, onSignatures, onAudit }: {
   );
 }
 
+function fmtDate(iso: string): string {
+  const date = new Date(iso);
+  return Number.isNaN(date.getTime())
+    ? ""
+    : date.toLocaleDateString("en-PH", { month: "short", day: "numeric", year: "numeric" });
+}
+
+/** "<invitee> declined your invitation to <workspace>", its reason and date,
+ *  the action — review the invitation in Manage → Invitations — and a small
+ *  Dismiss (×) that takes it out of Needs attention without opening it. */
+function DeclineRow({ entry, onOpen, onDismiss }: {
+  entry: DeclineAttentionEntry;
+  onOpen: (entry: DeclineAttentionEntry) => void;
+  onDismiss?: (entry: DeclineAttentionEntry) => void;
+}) {
+  const { notice, decline } = entry;
+  const workspace = decline.workspaceName ?? "your workspace";
+  const date = fmtDate(notice.createdAt);
+  return (
+    <li
+      data-testid={`decline-${notice.id}`}
+      style={{
+        listStyle: "none", background: "#fff", border: `1px solid ${SLATE2}`,
+        borderRadius: 10, padding: "12px 14px", marginBottom: 8,
+        display: "flex", alignItems: "flex-start", gap: 12, flexWrap: "wrap", minWidth: 0, ...GF,
+      }}
+    >
+      <UserX size={18} aria-hidden style={{ color: RED, flexShrink: 0, marginTop: 1 }} />
+      <div style={{ minWidth: 0, flex: "1 1 200px" }}>
+        <p style={{ margin: 0, fontSize: 14, fontWeight: 600, color: NAVY, overflowWrap: "anywhere" }}>
+          {decline.invitee} declined your invitation to {workspace}
+        </p>
+        <p style={{ margin: "4px 0 0", fontSize: 13, color: "#334155", overflowWrap: "anywhere" }}>
+          {decline.reason === null ? "No reason given." : <>Reason: &ldquo;{decline.reason}&rdquo;</>}
+        </p>
+        {date !== "" && (
+          <p style={{ margin: "4px 0 0", fontSize: 12, color: SLATE6 }}>
+            Declined <time dateTime={notice.createdAt}>{date}</time>
+          </p>
+        )}
+      </div>
+      <Link
+        to={declineReviewPath(decline)}
+        onClick={() => onOpen(entry)}
+        aria-label={`Review invitation declined by ${decline.invitee}`}
+        className="dashboard-decline-review"
+        style={{
+          ...GF, display: "inline-flex", alignItems: "center", gap: 4, flexShrink: 0,
+          fontSize: 12, fontWeight: 600, color: AZURE, textDecoration: "none",
+          border: `1px solid ${SLATE2}`, borderRadius: 6, padding: "6px 10px", minHeight: 32,
+          whiteSpace: "nowrap", marginLeft: "auto",
+        }}
+      >
+        Review invitation <ChevronRight size={13} aria-hidden />
+      </Link>
+      {onDismiss !== undefined && (
+        <button
+          type="button"
+          onClick={() => onDismiss(entry)}
+          aria-label={`Dismiss the decline from ${decline.invitee}`}
+          title="Dismiss"
+          style={{
+            ...GF, display: "inline-flex", alignItems: "center", justifyContent: "center",
+            flexShrink: 0, width: 32, height: 32, padding: 0, cursor: "pointer",
+            background: "transparent", border: `1px solid ${SLATE2}`, borderRadius: 6, color: SLATE6,
+          }}
+        >
+          <X size={14} aria-hidden />
+        </button>
+      )}
+    </li>
+  );
+}
+
 function ProgressMeter({ signed, of }: { signed: number; of: number }) {
   const pct = of === 0 ? 0 : Math.round((signed / of) * 100);
   return (
@@ -261,8 +347,10 @@ function ProgressMeter({ signed, of }: { signed: number; of: number }) {
 // ── The page ───────────────────────────────────────────────────────────────
 
 export function RealDashboard() {
-  const { currentWorkspace, user } = usePlatform();
+  const platform = usePlatform();
+  const { currentWorkspace, user } = platform;
   const workspaceId = currentWorkspace?.id ?? null;
+  const notices = useOptionalNotificationCenter();
 
   const [items, setItems] = useState<SigningRequestListItem[]>([]);
   const [total, setTotal] = useState(0);
@@ -291,6 +379,59 @@ export function RealDashboard() {
   const flying    = inFlight(items);
   const done      = recentlyCompleted(items, 5);
   const paged     = summary.total > summary.fetched;
+  const declines  = invitationDeclinesNeedingAttention(notices?.items ?? [], now);
+
+  // Opening a decline: switch to the invitation's workspace when it is not
+  // the current one (Manage → Invitations lists the CURRENT workspace's), and
+  // mark the notice read so it leaves this list.
+  const openDecline = ({ notice, decline }: DeclineAttentionEntry) => {
+    const target = decline.workspaceId;
+    if (target !== null && target !== "" && target !== workspaceId
+      && platform.workspaces.some(w => w.id === target)) {
+      platform.switchWorkspace(target);
+    }
+    notices?.markRead(notice.id);
+  };
+
+  // Dismissing: persisted server-side like the read mark, so it stays out
+  // of Needs attention after a reload.
+  const dismissDecline = ({ notice }: DeclineAttentionEntry) => {
+    notices?.dismiss(notice.id);
+  };
+
+  const attentionCount = attention.length + declines.length;
+  const attentionSection = (
+    <section aria-label="Needs attention">
+      <SectionTitle count={attentionCount}>Needs attention</SectionTitle>
+      {attentionCount === 0
+        ? (
+          <div style={{
+            ...GF, display: "flex", alignItems: "center", gap: 8, padding: "12px 14px",
+            borderRadius: 10, background: "#F0FDF4", border: "1px solid #BBF7D0",
+            color: "#166534", fontSize: 13,
+          }}>
+            <CheckCircle2 size={16} aria-hidden />
+            Nothing is waiting on you. No declines, nothing expiring soon, nothing stalled.
+          </div>
+        )
+        : (
+          <ul style={{ margin: 0, padding: 0 }}>
+            {declines.map(entry => (
+              <DeclineRow
+                key={entry.notice.id} entry={entry} onOpen={openDecline}
+                {...(notices === null ? {} : { onDismiss: dismissDecline })}
+              />
+            ))}
+            {attention.map(entry => (
+              <AttentionRow
+                key={entry.item.signingRequestId} entry={entry}
+                onSignatures={setSignaturesFor} onAudit={setAuditFor}
+              />
+            ))}
+          </ul>
+        )}
+    </section>
+  );
 
   const greeting = user?.displayName ? `Welcome back, ${user.displayName.split(" ")[0]}` : "Dashboard";
 
@@ -312,6 +453,8 @@ export function RealDashboard() {
           />
         )}
 
+        {status === "ready" && items.length === 0 && declines.length > 0 && attentionSection}
+
         {status === "ready" && items.length === 0 && (
           <EmptyStateLayout
             icon={<Send size={28} />}
@@ -324,30 +467,7 @@ export function RealDashboard() {
         {status === "ready" && items.length > 0 && (
           <>
             {/* 1 — what needs you */}
-            <section aria-label="Needs attention">
-              <SectionTitle count={attention.length}>Needs attention</SectionTitle>
-              {attention.length === 0
-                ? (
-                  <div style={{
-                    ...GF, display: "flex", alignItems: "center", gap: 8, padding: "12px 14px",
-                    borderRadius: 10, background: "#F0FDF4", border: "1px solid #BBF7D0",
-                    color: "#166534", fontSize: 13,
-                  }}>
-                    <CheckCircle2 size={16} aria-hidden />
-                    Nothing is waiting on you. No declines, nothing expiring soon, nothing stalled.
-                  </div>
-                )
-                : (
-                  <ul style={{ margin: 0, padding: 0 }}>
-                    {attention.map(entry => (
-                      <AttentionRow
-                        key={entry.item.signingRequestId} entry={entry}
-                        onSignatures={setSignaturesFor} onAudit={setAuditFor}
-                      />
-                    ))}
-                  </ul>
-                )}
-            </section>
+            {attentionSection}
 
             {/* 2 — the counts, scoped honestly */}
             <section aria-label="Document status summary">
@@ -435,6 +555,10 @@ export function RealDashboard() {
           onClose={() => setAuditFor(null)}
         />
       )}
+      <style>{`
+        .dashboard-decline-review:hover { background: #F0F7FF; }
+        .dashboard-decline-review:focus-visible { outline: 2px solid ${AZURE}; outline-offset: 2px; }
+      `}</style>
     </>
   );
 }

@@ -6,7 +6,6 @@
 // page offers none; archived teams stay listable as a record.
 
 import { useCallback, useEffect, useState } from "react";
-import { Link } from "react-router";
 import { useWorkspaceAccess } from "../../../../hooks/useWorkspaceAccess";
 import { realOrganizationService } from "../../../../services/real/organization.service";
 import {
@@ -15,14 +14,17 @@ import {
 } from "../../../../models/organization";
 import { Dialog, ErrorNote } from "../join/join-ui";
 import { buttonStyle, inputStyle, labelStyle, hintStyle } from "../join/join-styles";
-import { ManagePage, NotAvailable, LoadingBlock, ErrorBlock, GF, GM, NAVY, SLATE, SILVER } from "./manage-ui";
+import { ManagePage, NotAvailable, LoadingBlock, ErrorBlock, GF, SLATE, SILVER } from "./manage-ui";
 import { cardStyle, sectionHeadingStyle } from "./manage-styles";
 import { errorMessage } from "./manage-format";
+import { TeamBrandCard, TEAM_CARD_STYLES } from "./TeamBrandCard";
+import { initialsOfName } from "./team-hierarchy";
+import { useDocumentCardBranding, type CardBranding } from "../../documents/CompletedDocumentCards";
 
 const UNIT_NAME_MAX = 120;
 const CRUMBS = [{ label: "Manage", to: "/app/workspace" }, { label: "Teams" }];
 
-interface TeamRow extends OrganizationUnit { memberCount: number | null }
+interface TeamRow extends OrganizationUnit { memberCount: number | null; initials: string[] }
 
 function CreateTeamDialog({ workspaceId, units, onClose, onCreated }: {
   workspaceId: string; units: OrganizationUnit[]; onClose: () => void; onCreated: () => void;
@@ -86,34 +88,22 @@ function CreateTeamDialog({ workspaceId, units, onClose, onCreated }: {
   );
 }
 
-function TeamCard({ team, parentName }: { team: TeamRow; parentName: string | null }) {
-  const archived = team.archivedAt !== null;
+function TeamCard({ team, parentName, subCount, branding }: {
+  team: TeamRow; parentName: string | null; subCount: number; branding: CardBranding;
+}) {
+  const kind = ORGANIZATION_UNIT_KIND_LABELS[team.kind] ?? team.kind;
+  const members = team.memberCount === null ? "Members: —" : `${String(team.memberCount)} ${team.memberCount === 1 ? "member" : "members"}`;
   return (
-    <Link to={`/app/workspace/teams/${encodeURIComponent(team.unitId)}`} data-testid={`team-${team.unitId}`}
-      style={{ textDecoration: "none", minWidth: 0 }}>
-      <div style={{ ...cardStyle, padding: "16px 18px", height: "100%", opacity: archived ? 0.75 : 1 }}>
-        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 8 }}>
-          <div style={{ minWidth: 0 }}>
-            <div style={{ ...GF, fontSize: 14, fontWeight: 700, color: NAVY, overflowWrap: "anywhere" }}>{team.name}</div>
-            <div style={{ ...GF, fontSize: 12, color: SLATE, marginTop: 3 }}>
-              {ORGANIZATION_UNIT_KIND_LABELS[team.kind] ?? team.kind}
-              {parentName && <> · in {parentName}</>}
-            </div>
-          </div>
-          {archived && (
-            <span style={{ ...GM, fontSize: 10, padding: "2px 8px", borderRadius: 999, background: "#F1F5F9", color: "#475569", flexShrink: 0 }}>Archived</span>
-          )}
-        </div>
-        <div style={{ marginTop: 10, ...GF, fontSize: 12, color: SILVER }}>
-          {team.memberCount === null ? "Members: —" : `${String(team.memberCount)} ${team.memberCount === 1 ? "member" : "members"}`}
-        </div>
-      </div>
-    </Link>
+    <TeamBrandCard to={`/app/workspace/teams/${encodeURIComponent(team.unitId)}`} testId={`team-${team.unitId}`}
+      name={team.name} kind={kind} parentName={parentName} archived={team.archivedAt !== null}
+      membersLabel={members} initials={team.initials} extraCount={Math.max(0, (team.memberCount ?? 0) - team.initials.length)}
+      subCount={subCount} branding={branding} />
   );
 }
 
 export function RealTeamsPage({ workspaceId }: { workspaceId: string }) {
   const access = useWorkspaceAccess();
+  const branding = useDocumentCardBranding();
   const [teams, setTeams] = useState<TeamRow[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [showArchived, setShowArchived] = useState(false);
@@ -127,9 +117,12 @@ export function RealTeamsPage({ workspaceId }: { workspaceId: string }) {
       const units = await realOrganizationService.listUnits(workspaceId);
       // One small request per team for its headcount. A workspace's org
       // chart is a handful of rows, and the backend has no count route.
-      const counts = await Promise.all(units.map(u =>
-        realOrganizationService.listMembers(workspaceId, u.unitId).then(m => m.length).catch(() => null)));
-      setTeams(units.map((u, i) => ({ ...u, memberCount: counts[i] ?? null })));
+      const rosters = await Promise.all(units.map(u =>
+        realOrganizationService.listMembers(workspaceId, u.unitId).catch(() => null)));
+      setTeams(units.map((u, i) => {
+        const list = rosters[i] ?? null;
+        return { ...u, memberCount: list === null ? null : list.length, initials: (list ?? []).slice(0, 4).map(m => initialsOfName(m.displayName)) };
+      }));
     } catch (err) {
       setError(errorMessage(err, "We couldn't load the teams."));
     }
@@ -144,10 +137,15 @@ export function RealTeamsPage({ workspaceId }: { workspaceId: string }) {
   const byId = new Map((teams ?? []).map(t => [t.unitId, t.name]));
   const active = (teams ?? []).filter(t => t.archivedAt === null).sort((a, b) => a.name.localeCompare(b.name));
   const archived = (teams ?? []).filter(t => t.archivedAt !== null).sort((a, b) => a.name.localeCompare(b.name));
-  const grid = { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(240px, 100%), 1fr))", gap: 14 } as const;
+  const subCounts = new Map<string, number>();
+  for (const t of teams ?? []) if (t.parentUnitId && t.archivedAt === null) subCounts.set(t.parentUnitId, (subCounts.get(t.parentUnitId) ?? 0) + 1);
+  const card = (t: TeamRow) => (
+    <TeamCard key={t.unitId} team={t} parentName={t.parentUnitId ? byId.get(t.parentUnitId) ?? null : null}
+      subCount={subCounts.get(t.unitId) ?? 0} branding={branding} />
+  );
 
   return (
-    <ManagePage crumbs={CRUMBS} title="Teams" maxWidth={900}
+    <ManagePage crumbs={CRUMBS} title="Teams" maxWidth={1180}
       actions={<>
         {archived.length > 0 && (
           <label style={{ display: "flex", alignItems: "center", gap: 6, cursor: "pointer", ...GF, fontSize: 12, color: SLATE, minHeight: 36 }}>
@@ -163,6 +161,7 @@ export function RealTeamsPage({ workspaceId }: { workspaceId: string }) {
         Teams show how your people are organised: departments, offices, branches and other groups.
         Being in a team does not change what someone can do; their role does that.
       </p>
+      <style>{TEAM_CARD_STYLES}</style>
       {error ? <ErrorBlock message={error} onRetry={() => void load()} />
         : teams === null ? <LoadingBlock label="Loading teams…" />
         : active.length === 0 && archived.length === 0 ? (
@@ -176,11 +175,11 @@ export function RealTeamsPage({ workspaceId }: { workspaceId: string }) {
           <>
             {active.length === 0
               ? <p style={{ ...GF, fontSize: 14, color: SLATE }}>No active teams.</p>
-              : <div style={grid}>{active.map(t => <TeamCard key={t.unitId} team={t} parentName={t.parentUnitId ? byId.get(t.parentUnitId) ?? null : null} />)}</div>}
+              : <ul className="team-grid" aria-label="Teams">{active.map(card)}</ul>}
             {showArchived && archived.length > 0 && (
               <>
                 <h2 style={{ ...sectionHeadingStyle, margin: "24px 0 12px" }}>Archived</h2>
-                <div style={grid}>{archived.map(t => <TeamCard key={t.unitId} team={t} parentName={t.parentUnitId ? byId.get(t.parentUnitId) ?? null : null} />)}</div>
+                <ul className="team-grid" aria-label="Archived teams">{archived.map(card)}</ul>
               </>
             )}
           </>

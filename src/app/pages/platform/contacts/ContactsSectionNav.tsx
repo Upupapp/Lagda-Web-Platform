@@ -1,6 +1,7 @@
-// The two places inside Contacts: the address book ("All Contacts") and
-// "Requests From Contacts". They are separate routes, so this is navigation
-// (links with aria-current), not an in-page tablist.
+// The places inside Contacts: the active address book ("All Contacts"),
+// "Requests From Contacts", and the "Archived" contacts. They are separate
+// routes, so this is navigation (links with aria-current), not an in-page
+// tablist.
 
 import { Link } from "react-router";
 import { TabStrip } from "../../../components/platform/TabStrip";
@@ -8,12 +9,15 @@ import { CONTACT_REQUESTS_ROUTE } from "../../../models/contact-requests";
 
 const GF = { fontFamily: "'Geist', sans-serif" } as const;
 
-export type ContactsSection = "all" | "requests";
+export type ContactsSection = "all" | "requests" | "archived";
+
+export const ARCHIVED_CONTACTS_ROUTE = "/app/contacts/archived";
 
 export function ContactsSectionNav({ current }: { current: ContactsSection }) {
   const items: { key: ContactsSection; label: string; to: string }[] = [
     { key: "all", label: "All Contacts", to: "/app/contacts" },
     { key: "requests", label: "Requests From Contacts", to: CONTACT_REQUESTS_ROUTE },
+    { key: "archived", label: "Archived", to: ARCHIVED_CONTACTS_ROUTE },
   ];
   return (
     <TabStrip label="Contacts sections" activeKey={current} className="contacts-viewstrip">

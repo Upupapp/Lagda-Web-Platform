@@ -105,6 +105,24 @@ export interface NotificationRecord {
   readonly actionPath: string | null;
   readonly whyReceivedReason: string;
   status: NotificationStatus;
+  /**
+   * Set only on a WORKSPACE_INVITATION_DECLINED notice (sent to the inviter).
+   * The structured facts behind its title/body, so the dashboard's Needs
+   * attention and Manage → Invitations can show them without re-parsing
+   * rendered copy. Absent on every other notice.
+   */
+  readonly invitationDecline?: InvitationDeclineDetail;
+}
+
+export interface InvitationDeclineDetail {
+  /** The declined invitation. Null only when an older notice did not name it. */
+  readonly invitationId: string | null;
+  /** Who declined: display name, else email, else a generic "The invitee". */
+  readonly invitee: string;
+  readonly reason: string | null;
+  readonly workspaceName: string | null;
+  /** The workspace the invitation was to; null when the notice did not say. */
+  readonly workspaceId: string | null;
 }
 
 // ── Query + result ────────────────────────────────────────────────────────────

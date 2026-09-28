@@ -4,6 +4,8 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import { SettingsPage, SSection, SField, INPUT_STYLE, BTN_PRIMARY, BTN_SECONDARY, Skeleton, StatusBadge, PreviewSaved } from "./SettingsShell";
+import { SettingsActions } from "./SettingsActions";
+import { RotateCcw, Save, Undo2 } from "lucide-react";
 import { mockBrandingSettingsService } from "../../../services/mock/settings.service";
 import { useConfirm } from "../../../components/platform/ConfirmDialog";
 import type { WorkspaceBranding } from "../../../models/settings";
@@ -186,14 +188,13 @@ function DemoBrandingPage() {
           The official LAGDA attribution ("Powered by LAGDA") is required and cannot be removed.
         </div>
 
-        <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+        <SettingsActions status={saved ? <PreviewSaved /> : undefined}>
+          <button type="button" onClick={handleReset} style={BTN_SECONDARY}><RotateCcw size={15} aria-hidden /> Reset to defaults</button>
+          {dirty && !saving && <button type="button" onClick={() => { setForm({ ...branding }); setDirty(false); }} style={BTN_SECONDARY}><Undo2 size={15} aria-hidden /> Discard</button>}
           <button type="submit" disabled={!dirty || saving} style={{ ...BTN_PRIMARY, opacity: (!dirty || saving) ? 0.6 : 1, cursor: (!dirty || saving) ? "not-allowed" : "pointer" }}>
-            {saving ? "Saving…" : "Save branding"}
+            <Save size={15} aria-hidden /> {saving ? "Saving…" : "Save branding"}
           </button>
-          {dirty && !saving && <button type="button" onClick={() => { setForm({ ...branding }); setDirty(false); }} style={BTN_SECONDARY}>Discard</button>}
-          <button type="button" onClick={handleReset} style={{ ...GF, fontSize: 13, padding: "9px 16px", border: "1.5px solid #D1D9E0", borderRadius: 8, background: "#FFFFFF", color: SLATE, cursor: "pointer" }}>Reset to defaults</button>
-          {saved && <PreviewSaved />}
-        </div>
+        </SettingsActions>
       </form>
     </SettingsPage>
   );

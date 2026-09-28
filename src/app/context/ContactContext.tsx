@@ -16,6 +16,7 @@ import {
   useContext,
   useReducer,
   useCallback,
+  useRef,
   type ReactNode,
 } from "react";
 import type {
@@ -263,13 +264,21 @@ export function ContactProvider({ children }: { children: ReactNode }) {
     dispatch({ type: "SET_QUERY", payload: q });
   }, []);
 
+  // Latest request wins. Two list loads can be in flight at once (a query
+  // change while the previous page is still loading, or a reload after a
+  // restore); without this an older, slower response could land last and
+  // show the wrong section's rows — e.g. active contacts under Archived.
+  const listRequestSeq = useRef(0);
   const asyncLoadList = useCallback(async () => {
+    const seq = ++listRequestSeq.current;
     dispatch({ type: "LIST_LOADING" });
     try {
       // Use current state via closure — note: we need to read latest query from state
       const result = await sourceListContacts(workspaceId, state.query);
+      if (seq !== listRequestSeq.current) return;
       dispatch({ type: "LIST_SUCCESS", payload: result });
     } catch {
+      if (seq !== listRequestSeq.current) return;
       dispatch({ type: "LIST_ERROR", payload: "Could not load contacts. Please try again." });
     }
   }, [state.query, workspaceId]);

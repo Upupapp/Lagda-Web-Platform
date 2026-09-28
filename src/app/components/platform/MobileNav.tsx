@@ -8,7 +8,7 @@ import { NavLink, Link } from "react-router";
 import {
   Menu, X, LayoutDashboard, FileText, Files, Users, ShieldCheck,
   Bell, Users2, Settings, Settings2, FilePlus, Inbox, HelpCircle, GitBranch, BarChart2, Zap,
-  Search, Compass, Share2,
+  Search, Compass, Share2, Mail,
 } from "lucide-react";
 import lagdaHeaderLogo from "../../../brand elements/svg/LagdaLogoPrimaryHorizontalFullColor_Header.svg";
 import { usePlatform } from "../../context/PlatformContext";
@@ -24,6 +24,8 @@ const CommandPalette = lazy(() =>
 import { useSignOutFlow } from "../../hooks/useSignOutFlow";
 import { usePrepareLaunch } from "../../hooks/usePrepareLaunch";
 import { UserAvatar } from "./UserAvatar";
+import { usePendingInvitationCount } from "../../hooks/usePendingInvitationCount";
+import { InvitationCountBubble, INVITATION_BUBBLE_STYLES } from "./InvitationCountBubble";
 
 const BORDER = "rgba(0,0,0,0.08)";
 const GF     = { fontFamily: "'Geist', sans-serif" };
@@ -33,7 +35,7 @@ const GM     = { fontFamily: "'Geist Mono', monospace" };
 // HelpCircle were absent, so "My Actions" rendered with no icon on mobile only.
 const ICON_MAP: Record<string, React.ElementType> = {
   LayoutDashboard, FileText, Files, Users, ShieldCheck, Bell, Users2, Settings, Settings2, FilePlus,
-  Inbox, HelpCircle, GitBranch, BarChart2, Zap, Share2,
+  Inbox, HelpCircle, GitBranch, BarChart2, Zap, Share2, Mail,
 };
 function NavIcon({ name, size = 18 }: { name: string; size?: number }) {
   const Comp = ICON_MAP[name];
@@ -102,6 +104,7 @@ export function MobileNav() {
   // The drawer closes first so the confirmation is not stacked behind it.
   const { requestSignOut, confirmDialog } = useSignOutFlow(() => { setDrawerOpen(false); });
   const { onPrepareClick } = usePrepareLaunch();
+  const pendingInvitations = usePendingInvitationCount();
   const handleSignOut = requestSignOut;
 
   const openSearch = useCallback(() => {
@@ -353,6 +356,7 @@ export function MobileNav() {
                             {unreadCount > 99 ? "99+" : unreadCount}
                           </span>
                         )}
+                        {item.id === "invitations" && <InvitationCountBubble key={pendingInvitations} count={pendingInvitations} />}
                       </>
                     )}
                   </NavLink>
@@ -432,6 +436,7 @@ export function MobileNav() {
       <style>{`
         .mobile-nav-btn:hover, .mobile-nav-btn:focus-visible { color: #0078D4 !important; background: #EAF6FF !important; }
         .mobile-nav-btn:focus-visible { outline: 2px solid #0078D4; outline-offset: 2px; }
+        ${INVITATION_BUBBLE_STYLES}
         @media (prefers-reduced-motion: reduce) {
           #mobile-nav-drawer { transition: none !important; }
         }

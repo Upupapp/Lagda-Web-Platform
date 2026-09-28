@@ -96,8 +96,20 @@ describe("navigation icons", () => {
   // back one well-meaning addition at a time.
   // Raised from 7 to 8 for Shared Documents (087), a confirmed product
   // decision: it sits directly below Documents as its own section.
+  // Raised from 8 to 9 for Invitations, a confirmed product decision: the
+  // workspace invitations addressed to this account, directly below Shared
+  // Documents.
   it("keeps the primary rail short", () => {
-    expect(PRIMARY_NAV.length).toBeLessThanOrEqual(8);
+    expect(PRIMARY_NAV.length).toBeLessThanOrEqual(9);
+  });
+
+  it("puts Invitations directly below Shared Documents, for every signed-in person", () => {
+    const ids = PRIMARY_NAV.map(i => i.id);
+    expect(ids.indexOf("invitations")).toBe(ids.indexOf("shared-documents") + 1);
+    const item = PRIMARY_NAV.find(i => i.id === "invitations");
+    expect(item?.path).toBe("/app/invitations");
+    expect(item?.showOnMobile).toBe(true);
+    expect(item?.permission).toBeUndefined();
   });
 
   it("puts Shared Documents directly below Documents", () => {

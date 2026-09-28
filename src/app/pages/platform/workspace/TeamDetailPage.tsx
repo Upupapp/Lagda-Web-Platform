@@ -12,6 +12,11 @@ import { Z } from "../../../utils/z-index";
 import { useWorkspaceMode } from "../../../hooks/useWorkspaceAccess";
 import { RealTeamDetailPage } from "./real/RealTeamDetailPage";
 import { ManagePage } from "./real/manage-ui";
+import { BrandBand } from "../settings/branding-preview";
+import { useDocumentCardBranding } from "../documents/CompletedDocumentCards";
+import { useViewport } from "../../../hooks/useViewport";
+import { TeamHierarchyTree } from "./real/TeamHierarchyTree";
+import { buildLevels, ladderRole } from "./real/team-hierarchy";
 
 const CRUMBS = [{ label: "Manage", to: "/app/workspace" }, { label: "Teams", to: "/app/workspace/teams" }];
 
@@ -61,6 +66,8 @@ function TeamDetailInner() {
   const [editing, setEditing] = useState(false);
   const [archiving, setArchiving] = useState(false);
   const [removing, setRemoving] = useState<Set<string>>(new Set());
+  const branding = useDocumentCardBranding();
+  const { isNarrow } = useViewport();
 
   useEffect(() => {
     if (!teamId) return;
@@ -119,7 +126,7 @@ function TeamDetailInner() {
   const { team, members } = state.activeTeam;
 
   return (
-    <ManagePage crumbs={[...CRUMBS, { label: team.name }]} title={team.name} maxWidth={720}
+    <ManagePage crumbs={[...CRUMBS, { label: team.name }]} title={team.name} maxWidth={1180}
       badge={team.status === "archived" ? (
         <span style={{ ...GM, fontSize: 10, padding: "2px 8px", borderRadius: 999, background: "#F1F5F9", color: "#475569" }}>Archived</span>
       ) : undefined}
@@ -143,6 +150,32 @@ function TeamDetailInner() {
           name={team.name} description={team.description ?? ""}
           onSave={handleSaveEdit} onCancel={() => setEditing(false)} />
       )}
+
+      <div style={{ borderRadius: 12, overflow: "hidden", marginBottom: 16, border: "1px solid #E3E8EF" }} data-testid="team-brand-header">
+        <BrandBand variant="card" compact={isNarrow} testId="team-banner" subtitle={`${team.name} · Team`}
+          branding={{ displayName: branding.displayName, primaryColor: branding.primaryColor, logoPreviewUrl: branding.logoUrl }}
+          headerAside={
+            <span style={{ ...GF, fontSize: 12, fontWeight: 700, color: "#FFFFFF", background: "rgba(7,17,31,0.28)", borderRadius: 999, padding: "4px 10px", whiteSpace: "nowrap", flexShrink: 0 }}>
+              {members.length} {members.length === 1 ? "member" : "members"}
+            </span>
+          } />
+      </div>
+
+      <section aria-labelledby="team-hierarchy-heading" style={{ background: "#FFFFFF", border: "1.5px solid #E3E8EF", borderRadius: 12, padding: isNarrow ? "14px 12px 16px" : "16px 20px 20px", marginBottom: 16 }}>
+        <h2 id="team-hierarchy-heading" style={{ ...GF, fontSize: 13, fontWeight: 700, color: NAVY, margin: "0 0 10px", textTransform: "uppercase", letterSpacing: "0.06em" }}>
+          Hierarchy
+        </h2>
+        {members.length === 0 ? (
+          <p style={{ ...GF, fontSize: 14, color: SLATE, margin: 0 }}>No one is in this team yet.</p>
+        ) : (
+          <TeamHierarchyTree teamName={team.name} teamKind="Team" brandColor={branding.primaryColor} logoUrl={branding.logoUrl}
+            subTeams={[]}
+            levels={buildLevels(members.map(m => ({
+              id: m.id, name: m.displayName, role: ladderRole(m.roleId), roleName: m.roleName,
+              roleTitle: m.roleTitle ?? null, unitTitle: null, href: `/app/workspace/members/${m.id}`,
+            })))} />
+        )}
+      </section>
 
         {/* Members */}
         <section style={{ background: "#FFFFFF", border: "1.5px solid #E3E8EF", borderRadius: 12, overflow: "hidden" }}>

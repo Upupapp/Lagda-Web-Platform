@@ -1,7 +1,13 @@
 // /app/contacts — Contacts library page ("All Contacts").
-// One view — every contact — with search, tag filter, sort, cards,
-// multi-select and bulk actions. The other place in Contacts is
-// Requests From Contacts (/app/contacts/requests), linked from the nav here.
+// One view — every ACTIVE contact — with search, tag filter, sort, cards,
+// multi-select and bulk actions. The other places in Contacts are
+// Requests From Contacts (/app/contacts/requests) and Archived
+// (/app/contacts/archived), both linked from the section nav here.
+//
+// /app/contacts/archived is this same library in its archived section: the
+// backend's `state=archived` listing (contacts-source maps view "archived"
+// onto it), the same cards, and a menu of View Contact and Restore. No
+// selection or bulk actions there — restoring is one contact at a time.
 // Frontend-only demonstration. No real persistence, sync, or identity verification.
 // Burgundy (#67023B) never used. eNotary never referenced.
 
@@ -124,9 +130,13 @@ function Skeleton({ rows = 5 }: { rows?: number }) {
 
 // ── Inner library component ───────────────────────────────────────────────────
 
-function ContactsLibrary() {
+type LibrarySection = "all" | "archived";
+
+function ContactsLibrary({ section }: { section: LibrarySection }) {
   const [searchParams, setSearchParams] = useSearchParams();
-  const { state, setQuery, asyncLoadList, asyncLoadGroups, asyncBulkArchive, asyncBulkAddToGroup, clearPending } = useContacts();
+  const { state, setQuery, asyncLoadList, asyncLoadGroups, asyncBulkArchive, asyncBulkAddToGroup, asyncRestore, clearPending } = useContacts();
+  const archived = section === "archived";
+  const [restoringId, setRestoringId] = useState<string | null>(null);
 
   const [searchInput,   setSearchInput]   = useState(searchParams.get("q") ?? "");
   const [selectedIds,   setSelectedIds]   = useState<Set<string>>(new Set());
@@ -134,21 +144,26 @@ function ContactsLibrary() {
   const [, setShowBulkMenu] = useState(false);
   const debouncedSearch = useDebounce(searchInput, 280);
 
-  // One view only: All Contacts. The scope / status views and filters
-  // (personal, shared, archived…) are no longer offered, so the query is
-  // pinned to "all" whatever an old link says.
-  const currentView: ContactView = "all";
+  // Two views, one per route: All Contacts (active only) and Archived. The
+  // scope / status filters (personal, shared…) are no longer offered, so the
+  // query is pinned to the route's view whatever an old link says.
+  const currentView: ContactView = archived ? "archived" : "all";
 
   // Sync URL params → context query
   useEffect(() => {
     const sort   = (searchParams.get("sort")  as ContactSortField) ?? "updatedAt";
     const dir    = (searchParams.get("dir")   as "asc" | "desc") ?? "desc";
     const page   = parseInt(searchParams.get("page") ?? "1", 10);
-    setQuery({ view: "all", sort, direction: dir, page, scopeFilter: "all", statusFilter: "all", search: debouncedSearch });
-  }, [searchParams, debouncedSearch, setQuery]);
+    setQuery({ view: currentView, sort, direction: dir, page, scopeFilter: "all", statusFilter: "all", search: debouncedSearch });
+  }, [searchParams, debouncedSearch, setQuery, currentView]);
 
-  // Reload list when query changes
-  useEffect(() => { void asyncLoadList(); }, [state.query]); // eslint-disable-line react-hooks/exhaustive-deps
+  // Reload list when query changes — but only once the query is this
+  // section's. The provider starts on the default ("all") query, so without
+  // this the Archived section's first render would also fetch active contacts.
+  useEffect(() => {
+    if (state.query.view !== currentView) return;
+    void asyncLoadList();
+  }, [state.query]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Load groups once
   useEffect(() => { void asyncLoadGroups(); }, [asyncLoadGroups]);
@@ -213,6 +228,13 @@ function ContactsLibrary() {
 
   const selArr = Array.from(selectedIds) as ContactId[];
 
+  const restore = async (id: string) => {
+    setRestoringId(id);
+    await asyncRestore(id as ContactId);
+    setRestoringId(null);
+    await asyncLoadList();
+  };
+
   return (
     <div style={{ minHeight: "100vh", background: PAGE_BG }}>
       {/* Skip link */}
@@ -228,7 +250,9 @@ function ContactsLibrary() {
           <div>
             <h1 style={{ ...GF, color: NAVY, fontSize: 22, fontWeight: 800, margin: 0 }}>Contacts</h1>
             <p style={{ ...GF, color: SLATE, fontSize: 13, marginTop: 3 }}>
-              Manage reusable participant information for document workflows.
+              {archived
+                ? "Archived contacts are kept for your records and left out of participant pickers. Restore one to use it again."
+                : "Manage reusable participant information for document workflows."}
             </p>
           </div>
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
@@ -241,7 +265,7 @@ function ContactsLibrary() {
           </div>
         </div>
 
-        <ContactsSectionNav current="all" />
+        <ContactsSectionNav current={section} />
       </header>
 
       {/* Toolbar */}
@@ -364,7 +388,7 @@ function ContactsLibrary() {
       )}
 
       {/* Bulk action bar */}
-      {selectedIds.size > 0 && (
+      {!archived && selectedIds.size > 0 && (
         <div role="toolbar" aria-label="Bulk contact actions" style={{
           margin: "12px 24px 0",
           background: NAVY, color: "#FFFFFF", borderRadius: 10,
@@ -408,19 +432,26 @@ function ContactsLibrary() {
 
         {!state.listLoading && !state.listError && items.length > 0 && (
           <>
-            {/* Select all */}
+            {/* Select all (active contacts only — Archived has no bulk actions) */}
             <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
-              <label style={{ display: "flex", alignItems: "center", gap: 6, cursor: "pointer", ...GF, fontSize: 12, color: SLATE }}>
-                <input type="checkbox" checked={selectedIds.size === items.length && items.length > 0}
-                  onChange={e => e.target.checked ? selectAll() : clearSelect()}
-                  aria-label="Select all visible contacts" style={{ accentColor: AZURE }} />
-                Select all
-              </label>
-              <span style={{ ...GF, fontSize: 12, color: SILVER }}>{total} contact{total !== 1 ? "s" : ""}</span>
+              {!archived && (
+                <label style={{ display: "flex", alignItems: "center", gap: 6, cursor: "pointer", ...GF, fontSize: 12, color: SLATE }}>
+                  <input type="checkbox" checked={selectedIds.size === items.length && items.length > 0}
+                    onChange={e => e.target.checked ? selectAll() : clearSelect()}
+                    aria-label="Select all visible contacts" style={{ accentColor: AZURE }} />
+                  Select all
+                </label>
+              )}
+              {/* SLATE on the page background: SILVER is 2.6:1 there and fails AA. */}
+              <span style={{ ...GF, fontSize: 12, color: SLATE }}>
+                {total} {archived ? "archived " : ""}contact{total !== 1 ? "s" : ""}
+              </span>
             </div>
 
-            <div className="contact-card-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(268px, 1fr))", gap: 12 }}>
-              {items.map(c => <ContactCard key={c.id} contact={c} selected={selectedIds.has(c.id)} onToggle={toggleSelect} />)}
+            <div className="contact-card-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(268px, 100%), 1fr))", gap: 12 }}>
+              {items.map(c => archived
+                ? <ContactCard key={c.id} contact={c} archived restoring={restoringId === c.id} onRestore={id => { void restore(id); }} />
+                : <ContactCard key={c.id} contact={c} selected={selectedIds.has(c.id)} onToggle={toggleSelect} />)}
             </div>
 
             {/* Pagination */}
@@ -438,7 +469,7 @@ function ContactsLibrary() {
       </main>
 
       <style>{`
-        @media (max-width: 480px) { .contact-card-grid { grid-template-columns: 1fr !important; } }
+        @media (max-width: 480px) { .contact-card-grid { grid-template-columns: minmax(0, 1fr) !important; } }
       `}</style>
     </div>
   );
@@ -446,8 +477,14 @@ function ContactsLibrary() {
 
 // ── Contact card ──────────────────────────────────────────────────────────────
 
-function ContactCard({ contact: c, selected, onToggle }: {
-  contact: ContactListItem; selected: boolean; onToggle: (id: string) => void;
+function ContactCard({ contact: c, selected = false, onToggle, archived = false, restoring = false, onRestore }: {
+  contact: ContactListItem;
+  selected?: boolean;
+  onToggle?: (id: string) => void;
+  /** The Archived section's card: no selection, and a Restore action. */
+  archived?: boolean;
+  restoring?: boolean;
+  onRestore?: (id: string) => void;
 }) {
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -465,14 +502,19 @@ function ContactCard({ contact: c, selected, onToggle }: {
       style={{
         background: "#FFFFFF", border: selected ? `2px solid ${AZURE}` : "1.5px solid #E3E8EF",
         borderRadius: 14, padding: "16px", position: "relative",
+        // A grid item defaults to min-width: auto, so a long unbroken name or
+        // email (nowrap + ellipsis) would widen the whole column past a phone.
+        minWidth: 0,
         boxShadow: selected ? "0 4px 14px rgba(0,120,212,0.12)" : "0 1px 2px rgba(7,17,31,0.04)",
         transition: "box-shadow 0.15s, border-color 0.15s",
       }}
     >
       {/* Select + 3-dot actions share the top-right corner with the avatar/name */}
       <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
-        <input type="checkbox" checked={selected} onChange={() => onToggle(c.id)} aria-label={`Select ${c.name}`}
-          style={{ accentColor: AZURE, marginTop: 12 }} />
+        {!archived && (
+          <input type="checkbox" checked={selected} onChange={() => onToggle?.(c.id)} aria-label={`Select ${c.name}`}
+            style={{ accentColor: AZURE, marginTop: 12 }} />
+        )}
         <ContactAvatar name={c.name} avatarUrl={c.avatarUrl} size={44} />
         <div style={{ flex: 1, minWidth: 0, paddingTop: 1 }}>
           <Link to={`/app/contacts/${c.id}`} style={{ ...GF, color: NAVY, fontWeight: 700, fontSize: 14, textDecoration: "none", display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
@@ -486,7 +528,8 @@ function ContactCard({ contact: c, selected, onToggle }: {
         </div>
 
         {/* The one visible control. Its menu holds exactly two items — View
-            Contact and Edit. Requests are made from the contact's own page;
+            Contact and Edit (or, on an archived contact, View Contact and
+            Restore). Requests are made from the contact's own page;
             archiving is done there or in bulk. */}
         <div ref={menuRef} style={{ position: "relative", flexShrink: 0 }}>
           <button
@@ -503,7 +546,9 @@ function ContactCard({ contact: c, selected, onToggle }: {
           {menuOpen && (
             <div role="menu" aria-label={`Actions for ${c.name}`} style={{ position: "absolute", right: 0, top: "calc(100% + 4px)", zIndex: Z.dropdown, background: "#FFFFFF", border: "1.5px solid #E3E8EF", borderRadius: 10, boxShadow: "0 8px 24px rgba(0,0,0,0.12)", minWidth: 160, width: "max-content", maxWidth: "min(280px, calc(100vw - 48px))", overflow: "hidden" }}>
               <MenuItem label="View Contact" onClick={() => { void navigate(`/app/contacts/${c.id}`); setMenuOpen(false); }} />
-              <MenuItem label="Edit" onClick={() => { void navigate(`/app/contacts/${c.id}/edit`); setMenuOpen(false); }} />
+              {archived
+                ? <MenuItem label={restoring ? "Restoring…" : "Restore"} disabled={restoring} onClick={() => { onRestore?.(c.id); setMenuOpen(false); }} />
+                : <MenuItem label="Edit" onClick={() => { void navigate(`/app/contacts/${c.id}/edit`); setMenuOpen(false); }} />}
             </div>
           )}
         </div>
@@ -522,17 +567,18 @@ function ContactCard({ contact: c, selected, onToggle }: {
       )}
 
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 12, paddingTop: 10, borderTop: "1px solid #F0F2F5" }}>
-        <span style={{ ...GF, fontSize: 11, color: SLATE }}>Last used</span>
-        <RelativeDate iso={c.lastUsedAt} />
+        {/* An archived contact's last change is its archiving (or later). */}
+        <span style={{ ...GF, fontSize: 11, color: SLATE }}>{archived ? "Last updated" : "Last used"}</span>
+        <RelativeDate iso={archived ? c.updatedAt : c.lastUsedAt} />
       </div>
     </div>
   );
 }
 
-function MenuItem({ label, onClick }: { label: string; onClick: () => void }) {
+function MenuItem({ label, onClick, disabled = false }: { label: string; onClick: () => void; disabled?: boolean }) {
   return (
-    <button role="menuitem" onClick={onClick}
-      style={{ ...GF, display: "block", width: "100%", padding: "10px 14px", minHeight: 44, border: "none", borderBottom: "1px solid #F8FAFC", background: "#FFFFFF", textAlign: "left", cursor: "pointer", fontSize: 13, color: NAVY }}
+    <button role="menuitem" onClick={onClick} disabled={disabled}
+      style={{ ...GF, display: "block", width: "100%", padding: "10px 14px", minHeight: 44, border: "none", borderBottom: "1px solid #F8FAFC", background: "#FFFFFF", textAlign: "left", cursor: disabled ? "not-allowed" : "pointer", fontSize: 13, color: NAVY }}
       onMouseEnter={e => (e.currentTarget.style.background = "#F8FAFC")}
       onMouseLeave={e => (e.currentTarget.style.background = "#FFFFFF")}>
       {label}
@@ -588,7 +634,7 @@ function EmptyState({ view, hasSearch, hasFilters, onClear }: { view: ContactVie
     recent:     { icon: "🕐", title: "No recently used contacts", desc: "Contacts used in document workflows appear here.", action: () => { void launchPrepare(); }, actionLabel: "Prepare a Document" },
     frequent:   { icon: "⭐", title: "No frequently used contacts", desc: "Frequently used contacts are based on demonstration activity data.", },
     duplicates: { icon: "✓",  title: "No potential duplicates", desc: "No contacts share the same email or appear similar." },
-    archived:   { icon: "📁", title: "No archived contacts", desc: "Archived contacts are removed from normal pickers but retained here." },
+    archived:   { icon: "📁", title: "No archived contacts", desc: "Contacts you archive are kept here, out of participant pickers, until you restore them.", action: () => { void navigate("/app/contacts"); }, actionLabel: "View All Contacts" },
   };
   const cfg = configs[view] ?? configs.all;
   return (
@@ -610,7 +656,18 @@ function EmptyState({ view, hasSearch, hasFilters, onClear }: { view: ContactVie
 export function ContactsPage() {
   return (
     <ContactProvider>
-      <ContactsLibrary />
+      <ContactsLibrary section="all" />
+    </ContactProvider>
+  );
+}
+
+/** /app/contacts/archived. A separate component (not a prop on
+ *  ContactsPage) so moving between the two routes remounts the provider
+ *  rather than carrying one section's list into the other. */
+export function ArchivedContactsPage() {
+  return (
+    <ContactProvider>
+      <ContactsLibrary section="archived" />
     </ContactProvider>
   );
 }

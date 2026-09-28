@@ -7,7 +7,7 @@ import { NavLink } from "react-router";
 import {
   LayoutDashboard, FileText, Files, Users, ShieldCheck,
   Bell, Users2, Settings, Settings2, FilePlus, ChevronLeft, ChevronRight,
-  HelpCircle, Inbox, Share2,
+  HelpCircle, Inbox, Share2, Mail,
   GitBranch,
   BarChart2,
   Zap,
@@ -20,6 +20,8 @@ import { UserMenu } from "./UserMenu";
 import { Z } from "../../utils/z-index";
 import { useSignOutFlow } from "../../hooks/useSignOutFlow";
 import { usePrepareLaunch } from "../../hooks/usePrepareLaunch";
+import { usePendingInvitationCount } from "../../hooks/usePendingInvitationCount";
+import { InvitationCountBubble, INVITATION_BUBBLE_STYLES, pendingInvitationsLabel } from "./InvitationCountBubble";
 
 const BORDER = "rgba(0,0,0,0.08)";
 const GF     = { fontFamily: "'Geist', sans-serif" };
@@ -31,7 +33,7 @@ const GM     = { fontFamily: "'Geist Mono', monospace" };
 const ICON_MAP: Record<string, React.ElementType> = {
   LayoutDashboard, FileText, Files, Users, ShieldCheck,
   Bell, Users2, Settings, Settings2, FilePlus, HelpCircle, Inbox, GitBranch,
-  BarChart2, Zap, Share2,
+  BarChart2, Zap, Share2, Mail,
 };
 
 function NavIcon({ name, size = 16 }: { name: string; size?: number }) {
@@ -149,6 +151,49 @@ function DocumentsNavItem({
   );
 }
 
+// The Invitations row: the same look as every other row, plus a pop-up
+// bubble with a mail icon and the PENDING count (hidden at zero). Collapsed,
+// the bubble shrinks to a numbered corner badge and the link's own label
+// carries the count, since an icon-only link has no visible text to join.
+function InvitationsNavItem({ to, icon, label, collapsed, pending }: {
+  to: string; icon: string; label: string; collapsed: boolean; pending: number;
+}) {
+  const named = pending > 0 ? `${label}, ${pendingInvitationsLabel(pending)}` : label;
+  return (
+    <li>
+      <NavLink
+        to={to}
+        data-testid="nav-invitations"
+        aria-label={collapsed ? named : undefined}
+        title={collapsed ? named : undefined}
+        style={({ isActive }) => ({
+          display: "flex", alignItems: "center", gap: collapsed ? 0 : 10,
+          padding: collapsed ? "9px 0" : "8px 10px", justifyContent: collapsed ? "center" : "flex-start",
+          borderRadius: 8, textDecoration: "none",
+          background: isActive ? "rgba(0,120,212,0.14)" : "transparent",
+          border: isActive ? "1px solid rgba(0,120,212,0.22)" : "1px solid transparent",
+          color: isActive ? "#0078D4" : "#64748B", transition: "background 0.12s, color 0.12s",
+          position: "relative", minHeight: 36,
+        })}
+      >
+        {({ isActive }) => (
+          <>
+            <span aria-hidden style={{ flexShrink: 0, color: isActive ? "#0078D4" : "#64748B", display: "flex", alignItems: "center" }}>
+              <NavIcon name={icon} />
+            </span>
+            {!collapsed && (
+              <span style={{ ...GF, fontSize: 13, fontWeight: isActive ? 600 : 400, flex: 1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                {label}
+              </span>
+            )}
+            <InvitationCountBubble key={pending} count={pending} variant={collapsed ? "dot" : "pill"} />
+          </>
+        )}
+      </NavLink>
+    </li>
+  );
+}
+
 export function PlatformSidebar() {
   const [collapsed, setCollapsed] = useState(false);
   const { hasPermission, hasFlag } = usePlatform();
@@ -159,6 +204,7 @@ export function PlatformSidebar() {
   // mobile drawer and the onboarding header.
   const { requestSignOut, confirmDialog } = useSignOutFlow();
   const { onPrepareClick } = usePrepareLaunch();
+  const pendingInvitations = usePendingInvitationCount();
 
   const sidebarWidth = collapsed ? 60 : 240;
 
@@ -297,6 +343,12 @@ export function PlatformSidebar() {
                 />
               );
             }
+            if (item.id === "invitations") {
+              return (
+                <InvitationsNavItem key={item.id} to={item.path} icon={item.icon} label={item.label}
+                  collapsed={collapsed} pending={pendingInvitations} />
+              );
+            }
             const badge = item.showBadge && item.id === "inbox" ? unreadCount : null;
             return (
               <SidebarItem
@@ -365,6 +417,7 @@ export function PlatformSidebar() {
         .platform-sidebar button:focus-visible,
         .sidebar-collapse-btn:focus-visible { outline: 2px solid #0078D4; outline-offset: 2px; border-radius: 6px; }
         .prepare-cta:hover { background: #0B2344 !important; }
+        ${INVITATION_BUBBLE_STYLES}
         @media (prefers-reduced-motion: reduce) {
           .platform-sidebar, .platform-sidebar * { transition: none !important; }
         }

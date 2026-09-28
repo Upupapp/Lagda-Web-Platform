@@ -10,7 +10,8 @@
 // on Clear and on unmount. They are never logged or stored.
 
 import React, { useEffect, useRef, useState } from "react";
-import { Eye, EyeOff, KeyRound, ListChecks, CircleCheck } from "lucide-react";
+import { Eye, EyeOff, KeyRound, ListChecks, CircleCheck, Eraser } from "lucide-react";
+import { SettingsActions } from "./SettingsActions";
 import { SettingsPage, SSection, SField, BTN_PRIMARY, BTN_SECONDARY, INPUT_STYLE, Notice, SET } from "./SettingsShell";
 import { securityData, IS_LIVE } from "./settings-data";
 import { PASSWORD_MIN_LENGTH } from "../../../services/real/security-settings.service";
@@ -137,12 +138,12 @@ export function PasswordPage() {
             {errors.confirm && <div id="pwd-confirm-err" role="alert" style={{ ...GF, fontSize: 12.5, color: SET.DANGER, marginTop: 5 }}>{errors.confirm}</div>}
           </SField>
 
-          <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginTop: 4 }}>
+          <SettingsActions>
+            <button type="button" onClick={clear} style={BTN_SECONDARY}><Eraser size={15} aria-hidden /> Clear</button>
             <button type="submit" disabled={submitting} style={{ ...BTN_PRIMARY, opacity: submitting ? 0.7 : 1, cursor: submitting ? "not-allowed" : "pointer" }}>
-              {submitting ? "Changing…" : "Change password"}
+              <KeyRound size={15} aria-hidden /> {submitting ? "Changing…" : "Change password"}
             </button>
-            <button type="button" onClick={clear} style={BTN_SECONDARY}>Clear</button>
-          </div>
+          </SettingsActions>
         </form>
       </SSection>
 

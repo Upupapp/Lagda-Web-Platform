@@ -26,12 +26,13 @@
 
 import { apiRequest } from "../api-client";
 import { sharedByMePath, sharedWithMePath } from "./document-sharing.service";
+import { invitationRoleLabel, invitationsPath, sentInvitationPath, SENT_INVITATIONS_PATH } from "./my-invitations.service";
 import {
   contactRequestsPath, type ContactRequestGroup, type ContactRequestView,
 } from "../../models/contact-requests";
 import type {
   NotificationRecord, NotificationId, NotificationCategory,
-  NotificationSeverity, NotificationPriority,
+  NotificationSeverity, NotificationPriority, InvitationDeclineDetail,
 } from "../../models/notifications";
 
 interface FeedRow {
@@ -42,7 +43,21 @@ interface FeedRow {
   readonly sourceId: string;
   readonly templateInput: unknown;
   readonly createdAt: string;
+  /** 090. This account's own read state, persisted server-side. */
+  readonly read?: boolean;
+  /** 090. This account's own dismissal, persisted server-side. */
+  readonly dismissed?: boolean;
 }
+
+/** 090. A change to this account's own state on feed rows. An absent key
+ *  leaves that half alone. */
+export interface NotificationStateChange {
+  readonly read?: boolean;
+  readonly dismissed?: boolean;
+}
+
+/** The most ids one state call may carry (the backend refuses more). */
+export const MAX_STATE_IDS_PER_CALL = 100;
 
 interface FeedResponse { readonly notifications: readonly FeedRow[] }
 
@@ -64,6 +79,8 @@ interface Presentation {
   readonly why: string;
   /** Defaults to email-and-in-app; the in-app-only types say so. */
   readonly inAppOnly?: boolean;
+  /** WORKSPACE_INVITATION_DECLINED only. */
+  readonly invitationDecline?: InvitationDeclineDetail;
 }
 
 /** How a contact request's kind reads inside a sentence. */
@@ -125,6 +142,59 @@ function present(row: FeedRow): Presentation {
         actionLabel: null, actionPath: null,
         why: "You were sent this because somebody invited you to their workspace.",
       };
+
+    // ── Invitations section: received / declined workspace invitations. ─────
+    case "WORKSPACE_INVITATION_RECEIVED": {
+      const input = row.templateInput;
+      const inviter = str(input, "inviterDisplayName") ?? "Someone";
+      const role = str(input, "role");
+      const expires = formatDue(str(input, "expiresAt"));
+      // The row's sourceId is the NOTICE id (089); the invitation is named in the input.
+      const invitationId = str(input, "invitationId") ?? undefined;
+      const target = workspaceName ?? "their workspace";
+      return {
+        category: "workspace", severity: "info", priority: "high",
+        title: `${inviter} invited you to join ${target}`,
+        body: [
+          `Invitation to join ${target}${role === null ? "" : ` as ${invitationRoleLabel(role)}`}.`,
+          expires === null ? null : `It expires ${expires}.`,
+          "Accept or reject it in Invitations.",
+        ].filter((part): part is string => part !== null).join(" "),
+        actionLabel: "Open invitation",
+        actionPath: invitationsPath("pending", invitationId),
+        why: "You were sent this because a workspace invited your email address to join it. It was not emailed.",
+        inAppOnly: true,
+      };
+    }
+
+    case "WORKSPACE_INVITATION_DECLINED": {
+      const input = row.templateInput;
+      const who = str(input, "inviteeDisplayName") ?? str(input, "inviteeEmail") ?? str(input, "email") ?? "The invitee";
+      const reason = str(input, "reason");
+      const role = str(input, "role");
+      // The row's sourceId is the NOTICE id (089); the invitation is named in the input.
+      const invitationId = str(input, "invitationId") ?? undefined;
+      const target = workspaceName ?? "the workspace";
+      return {
+        category: "workspace", severity: "warning", priority: "normal",
+        title: `${who} declined your invitation to join ${target}`,
+        body: `The invitation to join ${target}${role === null ? "" : ` as ${invitationRoleLabel(role)}`} was declined. `
+          + (reason === null ? "No reason given." : `Reason: “${reason}”`),
+        // Sent to the INVITER (089), so it opens the workspace's own
+        // invitations list, not the invitee's Invitations section.
+        actionLabel: "View invitation",
+        actionPath: invitationId === undefined ? SENT_INVITATIONS_PATH : sentInvitationPath(invitationId),
+        why: "You were sent this because someone declined an invitation you sent. It was not emailed.",
+        inAppOnly: true,
+        invitationDecline: {
+          invitationId: invitationId ?? null,
+          invitee: who,
+          reason,
+          workspaceName,
+          workspaceId: row.workspaceId,
+        },
+      };
+    }
 
     case "ACCOUNT_EMAIL_VERIFICATION":
       return {
@@ -320,17 +390,49 @@ function toRecord(row: FeedRow): NotificationRecord {
     actionLabel: p.actionLabel,
     actionPath: p.actionPath,
     whyReceivedReason: p.why,
-    // Everything arrives unread. Read state is per-session and held in the
-    // store this hydrates — the backend records no per-user read marker, so
-    // there is nothing truer available to report.
-    status: "unread",
+    // The account's own state, persisted server-side (090). A backend that
+    // predates it sends neither flag, which reads as unread.
+    status: row.dismissed === true ? "dismissed" : row.read === true ? "read" : "unread",
+    ...(p.invitationDecline === undefined ? {} : { invitationDecline: p.invitationDecline }),
   };
 }
 
 class RealNotificationFeedService {
+  /**
+   * The account's feed, INCLUDING dismissed notices: the notification
+   * center shows them in their own view and must be able to restore them.
+   * (The endpoint hides them by default.)
+   */
   async list(): Promise<NotificationRecord[]> {
-    const response = await apiRequest<FeedResponse>("/me/notifications");
+    const response = await apiRequest<FeedResponse>("/me/notifications?includeDismissed=true");
     return response.notifications.map(toRecord);
+  }
+
+  /**
+   * Persists this account's state for the given notices (090). Ids that are
+   * not the account's own are ignored by the server. Sent in chunks of the
+   * server's bound, so "mark all read" on a long feed still lands.
+   */
+  async setState(ids: readonly string[], change: NotificationStateChange): Promise<void> {
+    const unique = [...new Set(ids)];
+    if (unique.length === 0) return;
+    if (change.read === undefined && change.dismissed === undefined) return;
+    for (let at = 0; at < unique.length; at += MAX_STATE_IDS_PER_CALL) {
+      await apiRequest<void>("/me/notifications/state", {
+        method: "POST",
+        body: { ids: unique.slice(at, at + MAX_STATE_IDS_PER_CALL), ...change },
+      });
+    }
+  }
+
+  /** Marks the notices read (or unread with `read = false`). */
+  markRead(ids: readonly string[], read = true): Promise<void> {
+    return this.setState(ids, { read });
+  }
+
+  /** Dismisses the notices (or restores them with `dismissed = false`). */
+  dismiss(ids: readonly string[], dismissed = true): Promise<void> {
+    return this.setState(ids, { dismissed });
   }
 }
 

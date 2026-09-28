@@ -58,6 +58,16 @@ beforeEach(() => {
 const renderPage = () => render(<MemoryRouter><BrandingPage /></MemoryRouter>);
 
 describe("branding with a real backend", () => {
+  it("puts Reset to defaults and Save branding in the bottom-right action row, Save right-most", async () => {
+    renderPage();
+    await screen.findByDisplayValue("Counsel since 1998");
+    const row = screen.getByTestId("settings-actions");
+    const names = Array.from(row.querySelectorAll("button")).map(b => b.textContent?.trim());
+    expect(names[0]).toBe("Reset to defaults");
+    expect(names[names.length - 1]).toBe("Save branding");
+    for (const b of Array.from(row.querySelectorAll("button"))) expect(b.querySelector("svg")).not.toBeNull();
+  });
+
   it("loads the current workspace's saved branding and says what it applies to", async () => {
     renderPage();
     expect(await screen.findByDisplayValue("Counsel since 1998")).toBeInTheDocument();

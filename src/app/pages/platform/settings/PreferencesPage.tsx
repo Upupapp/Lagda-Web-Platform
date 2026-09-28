@@ -9,7 +9,8 @@
 // light for now.
 
 import React, { useEffect, useMemo, useState } from "react";
-import { Globe2, CalendarClock, Palette, LayoutList, Save } from "lucide-react";
+import { Globe2, CalendarClock, Palette, LayoutList, Save, Undo2 } from "lucide-react";
+import { SettingsActions } from "./SettingsActions";
 import { SettingsPage, SSection, SField, BTN_PRIMARY, BTN_SECONDARY, Skeleton, SET, INPUT_STYLE } from "./SettingsShell";
 import { preferencesData, IS_LIVE, type PreferenceValues } from "./settings-data";
 import type { PreferencesUpdate } from "../../../services/real/account-settings.service";
@@ -186,20 +187,21 @@ export function PreferencesPage() {
           </SField>
         </SSection>
 
-        <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
-          <button type="submit" disabled={!dirty || saving} style={{ ...BTN_PRIMARY, opacity: !dirty || saving ? 0.6 : 1, cursor: !dirty || saving ? "not-allowed" : "pointer" }}>
-            <Save size={15} aria-hidden /> {saving ? "Saving…" : "Save preferences"}
-          </button>
-          {dirty && !saving && (
-            <button type="button" onClick={() => { setForm(saved); setMessage(null); }} style={BTN_SECONDARY}>Discard</button>
-          )}
+        <SettingsActions status={<>
           {message && (
             <span role={message.tone === "ok" ? "status" : "alert"} style={{ ...GF, fontSize: 13, color: message.tone === "ok" ? SET.SUCCESS : SET.DANGER }}>
               {message.text}
             </span>
           )}
           {dirty && !saving && !message && <span style={{ ...GF, fontSize: 12.5, color: SET.SLATE }}>Unsaved changes.</span>}
-        </div>
+        </>}>
+          {dirty && !saving && (
+            <button type="button" onClick={() => { setForm(saved); setMessage(null); }} style={BTN_SECONDARY}><Undo2 size={15} aria-hidden /> Discard</button>
+          )}
+          <button type="submit" disabled={!dirty || saving} style={{ ...BTN_PRIMARY, opacity: !dirty || saving ? 0.6 : 1, cursor: !dirty || saving ? "not-allowed" : "pointer" }}>
+            <Save size={15} aria-hidden /> {saving ? "Saving…" : "Save preferences"}
+          </button>
+        </SettingsActions>
       </form>
     </SettingsPage>
   );

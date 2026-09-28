@@ -4,7 +4,7 @@
 import {
   createContext, useContext, useState, useCallback, useEffect, useRef, type ReactNode,
 } from "react";
-import type { NotificationRecord } from "../models/notifications";
+import type { NotificationRecord, NotificationStatus } from "../models/notifications";
 import {
   notificationCenterService, hydrate,
 } from "../services/mock/notification-center.service";
@@ -52,6 +52,14 @@ function loadAll(): NotificationRecord[] {
   return notificationCenterService.getAllItems();
 }
 
+/** Each of `ids`' current status, taken BEFORE an optimistic change so a
+ *  failed write can put it back. */
+function snapshot(ids: readonly string[]): Map<string, NotificationStatus> {
+  const wanted = new Set(ids);
+  return new Map(notificationCenterService.getAllItems()
+    .filter(n => wanted.has(n.id)).map(n => [n.id, n.status]));
+}
+
 export function NotificationCenterProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<NotificationRecord[]>(() => loadAll());
   const [scope, setScopeState] = useState<DocumentFeedScope>(() => readScope());
@@ -59,10 +67,12 @@ export function NotificationCenterProvider({ children }: { children: ReactNode }
   const workspaceId = platform.currentWorkspace?.id;
   const workspaceName = platform.currentWorkspace?.name ?? "";
 
-  // Ids of rows the SERVER keeps state for — the document feed's. A change
-  // to one of these is written through; any other row's state is this
-  // session's alone, as it always was.
-  const serverStateIds = useRef<Set<string>>(new Set());
+  // Ids of rows the SERVER keeps state for, by where it keeps it: the
+  // document feed's (071, per workspace) and the account feed's (090, per
+  // account). A change to one of these is written through; any other row's
+  // state (the demonstration data) is this session's alone.
+  const documentStateIds = useRef<Set<string>>(new Set());
+  const accountStateIds = useRef<Set<string>>(new Set());
   // The latest fetch, so a failed write can re-sync from the server rather
   // than leave the screen claiming a state that was never saved.
   const refetch = useRef<() => void>(() => {});
@@ -78,10 +88,9 @@ export function NotificationCenterProvider({ children }: { children: ReactNode }
   // TWO sources, because they answer different questions and neither alone
   // fills the bell:
   //
-  //   `/me/notifications` is the EMAIL substrate — messages this account was
-  //   sent. A signing invitation is addressed to a recipient and a workspace
-  //   invitation to an invitee, so a member's own row there is nearly always
-  //   empty, and no status transition writes one at all.
+  //   `/me/notifications` is the account's own notices — messages and in-app
+  //   notices addressed to this account, with its read/dismissed state
+  //   persisted (090).
   //
   //   `/workspaces/:id/document-notifications` is the evidence projection —
   //   what actually happened to this workspace's documents, one row per
@@ -98,7 +107,7 @@ export function NotificationCenterProvider({ children }: { children: ReactNode }
     const load = () => {
       void (async () => {
         const [account, documents] = await Promise.all([
-          realNotificationFeedService.list().catch(() => []),
+          realNotificationFeedService.list().catch((): NotificationRecord[] => []),
           workspaceId === undefined
             ? Promise.resolve([])
             : realDocumentFeedService.list(workspaceId, workspaceName, scope).catch(() => null),
@@ -108,8 +117,10 @@ export function NotificationCenterProvider({ children }: { children: ReactNode }
         // rather than blanking it. An empty result replaces it, since that is
         // true — e.g. switching to "mine" in a workspace of others' documents.
         if (documents === null) return;
-        serverStateIds.current = new Set(documents.map(n => n.id));
-        hydrate([...account, ...documents], serverStateIds.current);
+        documentStateIds.current = new Set(documents.map(n => n.id));
+        accountStateIds.current = new Set(account.map(n => n.id));
+        hydrate([...account, ...documents],
+          new Set([...accountStateIds.current, ...documentStateIds.current]));
         setItems([...notificationCenterService.getAllItems()]);
       })();
     };
@@ -124,46 +135,84 @@ export function NotificationCenterProvider({ children }: { children: ReactNode }
     };
   }, [workspaceId, workspaceName, scope]);
 
-  /** Writes a state change for the server-tracked ids among `ids`. */
-  const persist = useCallback((ids: readonly string[], change: { read?: boolean; dismissed?: boolean }) => {
-    if (!USE_REAL_BACKEND || workspaceId === undefined) return;
-    const tracked = ids.filter(id => serverStateIds.current.has(id));
-    if (tracked.length === 0) return;
-    realDocumentFeedService.setState(workspaceId, tracked, change)
-      .catch(() => { refetch.current(); });
-  }, [workspaceId]);
+  /** Puts back what `before` recorded, then re-syncs from the server. */
+  const revert = useCallback((before: ReadonlyMap<string, NotificationStatus>) => {
+    const current = notificationCenterService.getAllItems();
+    hydrate(
+      current.map(n => {
+        const status = before.get(n.id);
+        return status === undefined ? n : { ...n, status };
+      }),
+      new Set(current.map(n => n.id)),
+    );
+    setItems([...notificationCenterService.getAllItems()]);
+    refetch.current();
+  }, []);
+
+  /**
+   * Writes a state change for the server-tracked ids among `ids`: the
+   * document feed's to its workspace endpoint, the account feed's to
+   * `/me/notifications/state`. The screen has already changed (optimistic);
+   * a failed write reverts the rows it covered.
+   */
+  const persist = useCallback((
+    ids: readonly string[], change: { read?: boolean; dismissed?: boolean },
+    before: ReadonlyMap<string, NotificationStatus>,
+  ) => {
+    if (!USE_REAL_BACKEND) return;
+    const documents = workspaceId === undefined
+      ? [] : ids.filter(id => documentStateIds.current.has(id));
+    const account = ids.filter(id => accountStateIds.current.has(id));
+    const undo = (covered: readonly string[]) => () => {
+      revert(new Map(covered.flatMap(id => {
+        const status = before.get(id);
+        return status === undefined ? [] : [[id, status] as const];
+      })));
+    };
+    if (documents.length > 0 && workspaceId !== undefined) {
+      realDocumentFeedService.setState(workspaceId, documents, change).catch(undo(documents));
+    }
+    if (account.length > 0) {
+      realNotificationFeedService.setState(account, change).catch(undo(account));
+    }
+  }, [workspaceId, revert]);
 
   const markRead = useCallback((id: string) => {
+    const before = snapshot([id]);
     notificationCenterService.markRead(id);
-    persist([id], { read: true });
+    persist([id], { read: true }, before);
     reload();
   }, [reload, persist]);
 
   const markUnread = useCallback((id: string) => {
+    const before = snapshot([id]);
     notificationCenterService.markUnread(id);
-    persist([id], { read: false });
+    persist([id], { read: false }, before);
     reload();
   }, [reload, persist]);
 
   const markAllRead = useCallback(() => {
     const unread = notificationCenterService.getAllItems()
       .filter(n => n.status === "unread").map(n => n.id);
+    const before = snapshot(unread);
     notificationCenterService.markAllRead();
-    persist(unread, { read: true });
+    persist(unread, { read: true }, before);
     reload();
   }, [reload, persist]);
 
   const dismiss = useCallback((id: string) => {
+    const before = snapshot([id]);
     notificationCenterService.dismiss(id);
-    persist([id], { dismissed: true });
+    persist([id], { dismissed: true }, before);
     reload();
   }, [reload, persist]);
 
   const restore = useCallback((id: string) => {
+    const before = snapshot([id]);
     notificationCenterService.restore(id);
     // The local restore also marks read (see the service); keep the server
     // in step so a reload shows the same thing.
-    persist([id], { dismissed: false, read: true });
+    persist([id], { dismissed: false, read: true }, before);
     reload();
   }, [reload, persist]);
 
@@ -181,6 +230,15 @@ export function NotificationCenterProvider({ children }: { children: ReactNode }
       {children}
     </NotificationCenterContext.Provider>
   );
+}
+
+/**
+ * The notification center when one is mounted, else null. For surfaces that
+ * are also rendered outside PlatformLayout (a page under test, say) and
+ * treat notices as an optional addition rather than a requirement.
+ */
+export function useOptionalNotificationCenter(): NotificationCenterContextValue | null {
+  return useContext(NotificationCenterContext);
 }
 
 export function useNotificationCenter(): NotificationCenterContextValue {

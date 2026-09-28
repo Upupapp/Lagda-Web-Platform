@@ -87,6 +87,20 @@ export const PRIMARY_NAV: PlatformNavItem[] = [
     description: "Documents shared by you and with you",
   },
   {
+    // Directly below Shared Documents: workspace invitations addressed to
+    // this ACCOUNT (not to the current workspace), so no permission gates it
+    // — anyone signed in can be invited. Its row carries a pending-count
+    // bubble; see usePendingInvitationCount.
+    id: "invitations",
+    label: "Invitations",
+    path: "/app/invitations",
+    icon: "Mail",
+    group: "primary",
+    showBadge: true,
+    showOnMobile: true,
+    description: "Workspace invitations sent to you",
+  },
+  {
     id: "templates",
     label: "Templates",
     path: "/app/templates",

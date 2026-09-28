@@ -535,6 +535,12 @@ const LegacySharedRedirect = lazy(() =>
     default: m.LegacySharedRedirect,
   })),
 );
+// Invitations: workspace invitations addressed to this account
+const MyInvitationsPage = lazy(() =>
+  import("./app/pages/platform/invitations/MyInvitationsPage").then((m) => ({
+    default: m.MyInvitationsPage,
+  })),
+);
 const PlatformPlaceholder = lazy(() =>
   import("./app/pages/platform/PlatformPlaceholder").then((m) => ({
     default: m.PlatformPlaceholder,
@@ -868,6 +874,11 @@ const WorkspaceSettingsPage = lazy(() =>
 const ContactsPage = lazy(() =>
   import("./app/pages/platform/contacts/ContactsPage").then((m) => ({
     default: m.ContactsPage,
+  })),
+);
+const ArchivedContactsPage = lazy(() =>
+  import("./app/pages/platform/contacts/ContactsPage").then((m) => ({
+    default: m.ArchivedContactsPage,
   })),
 );
 const CreateContactPage = lazy(() =>
@@ -1614,6 +1625,16 @@ export const router = createBrowserRouter([
         ),
       },
 
+      // Invitations: workspace invitations sent to this account.
+      {
+        path: "invitations",
+        element: (
+          <Suspense fallback={null}>
+            <MyInvitationsPage />
+          </Suspense>
+        ),
+      },
+
       // Document Organization (Command 31) — static paths BEFORE :transactionId
       {
         path: "documents/folders",
@@ -2137,6 +2158,14 @@ export const router = createBrowserRouter([
         element: (
           <Suspense fallback={null}>
             <RequestsFromContactsPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: "contacts/archived",
+        element: (
+          <Suspense fallback={null}>
+            <ArchivedContactsPage />
           </Suspense>
         ),
       },

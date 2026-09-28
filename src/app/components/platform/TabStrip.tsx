@@ -77,11 +77,15 @@ export function TabStrip({
     const tab = active.getBoundingClientRect();
     if (tab.left >= strip.left && tab.right <= strip.right) return;
 
-    active.scrollIntoView({
-      inline: "center",
-      block: "nearest",
-      behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
-    });
+    // Scroll the STRIP only, centring the tab. `scrollIntoView` also scrolls
+    // every scrollable ancestor — including a page container with
+    // `overflow: hidden`, which then sits shifted sideways with no scrollbar
+    // to bring it back (seen on phones when the last tab is the active one).
+    const target = scroller.scrollLeft + (tab.left - strip.left) - (strip.width - tab.width) / 2;
+    const left = Math.max(0, Math.min(target, scroller.scrollWidth - scroller.clientWidth));
+    const behavior: ScrollBehavior = window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth";
+    if (typeof scroller.scrollTo === "function") scroller.scrollTo({ left, behavior });
+    else scroller.scrollLeft = left;
   }, [activeKey]);
 
   const cls = `lagda-tabstrip${className ? ` ${className}` : ""}`;

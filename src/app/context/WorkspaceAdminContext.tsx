@@ -7,6 +7,7 @@ import {
   useContext,
   useReducer,
   useCallback,
+  useRef,
   type ReactNode,
 } from "react";
 import type {
@@ -417,14 +418,22 @@ export function WorkspaceAdminProvider({ children }: { children: ReactNode }) {
     } catch { dispatch({ type: "ACTION_ERROR", error: "Failed to update teams." }); }
   }, []);
 
+  // Latest request wins: after a workspace switch the previous workspace's
+  // list may still be in flight, and must not land on top of the new one.
+  const invitationsSeq = useRef(0);
   const asyncLoadInvitations = useCallback(async () => {
+    const seq = ++invitationsSeq.current;
     dispatch({ type: "INVITATIONS_LOADING" });
     try {
       const invitations = isReal
         ? await realWorkspaceAdminService.listInvitations(workspaceId)
         : await mockWorkspaceAdminService.listInvitations();
+      if (seq !== invitationsSeq.current) return;
       dispatch({ type: "INVITATIONS_LOADED", invitations });
-    } catch { dispatch({ type: "INVITATIONS_ERROR", error: "Failed to load invitations." }); }
+    } catch {
+      if (seq !== invitationsSeq.current) return;
+      dispatch({ type: "INVITATIONS_ERROR", error: "Failed to load invitations." });
+    }
   }, [isReal, workspaceId]);
 
   const asyncSendInvitation = useCallback(async (input: WorkspaceInviteInput): Promise<boolean> => {

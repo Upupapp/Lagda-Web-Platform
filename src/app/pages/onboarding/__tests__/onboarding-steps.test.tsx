@@ -153,7 +153,9 @@ describe("Profile step", () => {
     await user.click(screen.getByRole("radio", { name: "24-hour" }));
     await user.click(continueButton());
 
-    expect(await screen.findByText(/How will you use LAGDA/)).toBeInTheDocument();
+    // The next step is a lazily loaded route: under full-suite load its chunk
+    // can take longer than findBy's 1s default, so wait as long as the test may.
+    expect(await screen.findByText(/How will you use LAGDA/, undefined, { timeout: 10_000 })).toBeInTheDocument();
     expect(calls.find((c) => c.method === "PATCH" && c.path === "/me/profile")?.body).toEqual({
       fullName: "Ana Reyes", displayName: "Ana Reyes", jobTitle: "Associate",
       department: null, preferredSenderName: null,

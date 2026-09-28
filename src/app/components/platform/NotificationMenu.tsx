@@ -12,6 +12,7 @@ import { useNotificationCenter } from "../../context/NotificationCenterContext";
 import type { NotificationRecord, NotificationCategory, NotificationSeverity } from "../../models/notifications";
 import { Z } from "../../utils/z-index";
 import { isContactRequestsLink } from "../../models/contact-requests";
+import { isInvitationsLink } from "../../services/real/my-invitations.service";
 
 const GF    = { fontFamily: "'Geist', sans-serif" };
 const BORDER = "rgba(0,0,0,0.08)";
@@ -25,10 +26,12 @@ const SLATE = "#64748B";
 /**
  * Where a bell item goes. Most open their notification's detail page; a
  * contact request opens straight onto the request itself (Contacts →
- * Requests From Contacts, focused on it), which is what the notice is about.
+ * Requests From Contacts, focused on it), which is what the notice is about;
+ * a workspace invitation opens the Invitations section on that invitation.
  */
 function bellItemPath(n: Pick<NotificationRecord, "id" | "actionPath">): string {
   if (isContactRequestsLink(n.actionPath)) return n.actionPath;
+  if (isInvitationsLink(n.actionPath)) return n.actionPath;
   return `/app/notifications/${n.id}`;
 }
 

@@ -9,6 +9,8 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import { SettingsPage, SSection, SField, INPUT_STYLE, BTN_PRIMARY, BTN_SECONDARY, Skeleton } from "./SettingsShell";
+import { SettingsActions } from "./SettingsActions";
+import { RotateCcw, Save, Undo2 } from "lucide-react";
 import { useConfirm } from "../../../components/platform/ConfirmDialog";
 import { usePlatform } from "../../../context/PlatformContext";
 import {
@@ -279,22 +281,26 @@ export function RealBrandingPage({ workspaceId }: { workspaceId: string }) {
         </div>
 
         {canEdit && (
-          <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
-            <button type="submit" disabled={!dirty || saving || !colorValid || !nameValid}
-              style={{ ...BTN_PRIMARY, opacity: (!dirty || saving || !colorValid || !nameValid) ? 0.6 : 1, cursor: (!dirty || saving) ? "not-allowed" : "pointer" }}>
-              {saving ? "Saving…" : "Save branding"}
+          <SettingsActions status={status && (
+            <div role={status.tone === "error" ? "alert" : "status"} style={{ ...GF, fontSize: 13, color: status.tone === "error" ? "#DC2626" : "#1B5E20" }}>
+              {status.text}
+            </div>
+          )}>
+            <button type="button" onClick={handleReset} style={BTN_SECONDARY}>
+              <RotateCcw size={15} aria-hidden /> Reset to defaults
             </button>
             {dirty && !saving && (
               <button type="button" onClick={() => { setForm(formOf(branding)); setLogo({ kind: "unchanged" }); setLogoError(null); if (fileRef.current) fileRef.current.value = ""; }} style={BTN_SECONDARY}>
-                Discard
+                <Undo2 size={15} aria-hidden /> Discard
               </button>
             )}
-            <button type="button" onClick={handleReset} style={{ ...GF, fontSize: 13, padding: "9px 16px", border: "1.5px solid #D1D9E0", borderRadius: 8, background: "#FFFFFF", color: SLATE, cursor: "pointer" }}>
-              Reset to defaults
+            <button type="submit" disabled={!dirty || saving || !colorValid || !nameValid}
+              style={{ ...BTN_PRIMARY, opacity: (!dirty || saving || !colorValid || !nameValid) ? 0.6 : 1, cursor: (!dirty || saving) ? "not-allowed" : "pointer" }}>
+              <Save size={15} aria-hidden /> {saving ? "Saving…" : "Save branding"}
             </button>
-          </div>
+          </SettingsActions>
         )}
-        {status && (
+        {!canEdit && status && (
           <div role={status.tone === "error" ? "alert" : "status"} style={{ ...GF, fontSize: 12, marginTop: 10, color: status.tone === "error" ? "#DC2626" : "#1B5E20" }}>
             {status.text}
           </div>
