@@ -853,11 +853,6 @@ const RoleDetailPage = lazy(() =>
     default: m.RoleDetailPage,
   })),
 );
-const SignedDocumentsPage = lazy(() =>
-  import("./app/pages/platform/workspace/SignedDocumentsPage").then((m) => ({
-    default: m.SignedDocumentsPage,
-  })),
-);
 
 const ActivityPage = lazy(() =>
   import("./app/pages/platform/workspace/ActivityPage").then((m) => ({
@@ -2522,7 +2517,8 @@ export const router = createBrowserRouter([
           { path: "invitations", element: <InvitationsPage /> },
           { path: "teams", element: <TeamsPage /> },
           { path: "roles", element: <RolesPage /> },
-          { path: "documents", element: <SignedDocumentsPage /> },
+          // Documents lives in the side panel; Manage no longer repeats it.
+          { path: "documents", element: <Navigate to="/app/documents" replace /> },
           { path: "activity", element: <ActivityPage /> },
           { path: "settings", element: <WorkspaceSettingsPage /> },
           { path: "members/:memberId", element: <MemberDetailPage /> },

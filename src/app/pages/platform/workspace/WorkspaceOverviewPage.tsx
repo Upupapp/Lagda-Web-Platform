@@ -230,7 +230,6 @@ function WorkspaceOverviewInner() {
             <h2 style={{ ...GF, fontSize: 12, fontWeight: 700, color: SLATE, textTransform: "uppercase", letterSpacing: "0.06em", margin: "18px 0 2px" }}>
               Oversight
             </h2>
-            <QuickLinkRow label="All workspace documents" path="/app/workspace/documents" description="Every document sent for signing, and who sent it" />
             <QuickLinkRow label="Reports"                 path="/app/reports"            description="Volume, turnaround and completion figures" />
             <QuickLinkRow label="Activity log"            path="/app/workspace/activity" description="A record of administrative changes" />
 

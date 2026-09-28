@@ -22,6 +22,7 @@ vi.mock("../../../../services/real/my-signing.service", async importOriginal => 
         entry("signer", "Lease"), entry("approver", "Budget"), entry("viewer", "Minutes"),
       ]),
       signedDocuments: () => Promise.resolve([]),
+      completedOtherDocuments: () => Promise.resolve([]),
       continueSigning: vi.fn(),
     },
   };

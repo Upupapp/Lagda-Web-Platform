@@ -215,7 +215,6 @@ export function RealWorkspaceOverview({ workspaceId }: { workspaceId: string }) 
 
   const stacked = isNarrow || isMedium;
   const padX = isNarrow ? 16 : 24;
-  const isAdmin = canManageMembers;
 
   // The hub. In the shell the banners already list every Manage page, so
   // only what lives elsewhere in the product stays here.
@@ -241,11 +240,8 @@ export function RealWorkspaceOverview({ workspaceId }: { workspaceId: string }) 
       {canTeams && <HubLink label="Teams" path="/app/workspace/teams" description="Departments, offices and other groups of members" />}
       <HubLink label="Who can do what" path="/app/workspace/roles" description="What each role in this workspace is allowed to do" />
 
-      {(access.can("document.view") || access.can("activity.view")) && (
+      {access.can("activity.view") && (
         <h2 style={{ ...sectionHeadingStyle, margin: "18px 0 2px" }}>Oversight</h2>
-      )}
-      {access.can("document.view") && isAdmin && (
-        <HubLink label="All workspace documents" path="/app/workspace/documents" description="Every document sent for signing, and who sent it" />
       )}
       {access.can("activity.view") && (
         <HubLink label="Activity log" path="/app/workspace/activity" description="Changes to members, links, teams and settings" />

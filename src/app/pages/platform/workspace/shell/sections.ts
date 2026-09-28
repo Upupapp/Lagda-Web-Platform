@@ -7,7 +7,7 @@
 
 import type { LucideIcon } from "lucide-react";
 import {
-  LayoutDashboard, Users, UserPlus, Link2, Mail, Network, ShieldCheck, Files, History, SlidersHorizontal,
+  LayoutDashboard, Users, UserPlus, Link2, Mail, Network, ShieldCheck, History, SlidersHorizontal,
 } from "lucide-react";
 import type { WorkspaceAccess } from "../../../../hooks/useWorkspaceAccess";
 
@@ -15,7 +15,7 @@ export const WORKSPACE_ROOT = "/app/workspace";
 
 export type WorkspaceSectionKey =
   | "overview" | "members" | "join-requests" | "join-links" | "invitations"
-  | "teams" | "roles" | "documents" | "activity" | "settings";
+  | "teams" | "roles" | "activity" | "settings";
 
 /** Which banner figure a section carries, if any. */
 export type BannerCountKey = "members" | "joinRequests" | "invitations" | "joinLinks";
@@ -49,8 +49,6 @@ export const WORKSPACE_SECTIONS: readonly WorkspaceSection[] = [
   { key: "teams", label: "Teams", hint: "Departments, offices and other groups of members", path: `${WORKSPACE_ROOT}/teams`, icon: Network,
     allowed: a => a.can("unit.view") },
   { key: "roles", label: "Roles", hint: "Who can do what", path: `${WORKSPACE_ROOT}/roles`, icon: ShieldCheck, allowed: always },
-  { key: "documents", label: "Documents", hint: "All workspace documents", path: `${WORKSPACE_ROOT}/documents`, icon: Files,
-    allowed: a => a.can("document.view") && a.can("membership.role.change") },
   { key: "activity", label: "Activity", hint: "A record of changes to members, links, teams and settings", path: `${WORKSPACE_ROOT}/activity`, icon: History,
     allowed: a => a.can("activity.view") },
   { key: "settings", label: "Settings", hint: "The workspace's name and sign-in policy", path: `${WORKSPACE_ROOT}/settings`, icon: SlidersHorizontal,

@@ -2,6 +2,10 @@
 // with Download), its participants, and its audit trail. The PDF comes from
 // GET /me/shared-documents/:id/document; participants and events from
 // GET /me/shared-documents/:id/details (the 083 details shape).
+//
+// DocumentRecordDialog is the same dialog over any source of those two things;
+// "Signed by me" and "Others" open a participant's own completed documents
+// with it (participant-document.ts).
 
 import { useEffect, useState } from "react";
 import { Download, ExternalLink } from "lucide-react";
@@ -39,24 +43,44 @@ export function fileNameFor(title: string): string {
   return base.toLowerCase().endsWith(".pdf") ? base : `${base}.pdf`;
 }
 
-export function SharedDocumentDialog({ item, view, onClose }: {
-  item: SharedDocument; view: SharedDocumentView; onClose: () => void;
+export interface DocumentRecordSource {
+  /** Changes when the record does; reloads the dialog's content. */
+  readonly key: string;
+  readonly documentTitle: string;
+  readonly loadFile: () => Promise<Blob>;
+  readonly loadDetails: () => Promise<SharedDocumentDetails>;
+}
+
+export function DocumentRecordDialog({ source, view, onClose }: {
+  source: DocumentRecordSource; view: SharedDocumentView; onClose: () => void;
 }) {
   return (
-    <ModalFrame title={TITLES[view]} subtitle={item.documentTitle} onClose={onClose} width={view === "document" ? 920 : 620}
+    <ModalFrame title={TITLES[view]} subtitle={source.documentTitle} onClose={onClose} width={view === "document" ? 920 : 620}
       footer={<button type="button" onClick={onClose} style={modalButtonStyle("secondary")}>Done</button>}>
-      {view === "document" ? <DocumentBody item={item} /> : <DetailsBody item={item} view={view} />}
+      {view === "document" ? <DocumentBody item={source} /> : <DetailsBody item={source} view={view} />}
     </ModalFrame>
   );
 }
 
-function DocumentBody({ item }: { item: SharedDocument }) {
+export function SharedDocumentDialog({ item, view, onClose }: {
+  item: SharedDocument; view: SharedDocumentView; onClose: () => void;
+}) {
+  const source: DocumentRecordSource = {
+    key: item.id,
+    documentTitle: item.documentTitle,
+    loadFile: () => documentSharingService.sharedDocumentFile(item.id),
+    loadDetails: () => documentSharingService.sharedDetails(item.id),
+  };
+  return <DocumentRecordDialog source={source} view={view} onClose={onClose} />;
+}
+
+function DocumentBody({ item }: { item: DocumentRecordSource }) {
   const [state, setState] = useState<{ s: "loading" } | { s: "ready"; url: string } | { s: "error"; text: string }>({ s: "loading" });
 
   useEffect(() => {
     let cancelled = false;
     let created: string | null = null;
-    documentSharingService.sharedDocumentFile(item.id)
+    item.loadFile()
       .then(blob => {
         if (cancelled) return;
         created = URL.createObjectURL(blob);
@@ -67,7 +91,9 @@ function DocumentBody({ item }: { item: SharedDocument }) {
       cancelled = true;
       if (created) URL.revokeObjectURL(created);
     };
-  }, [item.id]);
+    // Keyed on the record, not the loader's identity, which changes each render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [item.key]);
 
   function download() {
     if (state.s !== "ready") return;
@@ -102,16 +128,17 @@ function DocumentBody({ item }: { item: SharedDocument }) {
   );
 }
 
-function DetailsBody({ item, view }: { item: SharedDocument; view: "participants" | "audit" }) {
+function DetailsBody({ item, view }: { item: DocumentRecordSource; view: "participants" | "audit" }) {
   const [state, setState] = useState<{ s: "loading" } | { s: "ready"; details: SharedDocumentDetails } | { s: "error"; text: string }>({ s: "loading" });
 
   useEffect(() => {
     let cancelled = false;
-    documentSharingService.sharedDetails(item.id)
+    item.loadDetails()
       .then(details => { if (!cancelled) setState({ s: "ready", details }); })
       .catch((err: unknown) => { if (!cancelled) setState({ s: "error", text: sharingErrorMessage(err, "open") }); });
     return () => { cancelled = true; };
-  }, [item.id]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [item.key]);
 
   if (state.s === "loading") return <p role="status" style={{ ...GF, fontSize: 13, color: SLATE, margin: 0 }}>Loading…</p>;
   if (state.s === "error") return <div role="alert"><SharingNotice tone="error">{state.text}</SharingNotice></div>;

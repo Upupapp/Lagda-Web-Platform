@@ -1,6 +1,11 @@
 // "Documents I must sign" and "Signed by me" — documents OTHER people sent to
 // this account, from any workspace (backend migrations 055, 056).
 //
+// Once a document is completed it shows in "Signed by me" / "Others" as the
+// same card Completed uses, under the OWNER workspace's banner and logo, with
+// the signed copy, participants and audit trail. Those open through the
+// participant's own grant (participant-document.ts); nothing is emailed.
+//
 // Account-scoped rather than workspace-scoped, which is why these are their
 // own tables and not filters on the sent list: the sent list is this
 // workspace's documents, these are the signed-in person's.
@@ -17,14 +22,19 @@ import { useCallback, useEffect, useRef, useState, type ReactNode } from "react"
 import { useNavigate } from "react-router";
 import {
   X, PenLine, UserRound, Mail, Building2, CalendarClock, FileText, ShieldCheck,
-  Lock, ArrowRight, Inbox, FileCheck2, Loader2,
+  Lock, ArrowRight, Inbox, FileCheck2, Loader2, Eye, Users, History,
 } from "lucide-react";
 import { Z } from "../../../utils/z-index";
 import { ApiError } from "../../../services/api-client";
 import {
-  realMySigningService, continueSigningPath, isSignerEntry, canContinueFromApp,
-  type DocumentToSign, type SignedDocument,
+  realMySigningService, continueSigningPath, isSignerEntry, canContinueFromApp, participantLogoUrl,
+  type DocumentToSign, type SignedDocument, type CompletedOtherDocument, type ParticipantCompletion,
 } from "../../../services/real/my-signing.service";
+import { participantDocumentSource } from "../../../services/real/participant-document";
+import {
+  DocumentRecordDialog, type DocumentRecordSource, type SharedDocumentView,
+} from "../../../components/document-sharing/SharedDocumentDialog";
+import { CompletedDocumentGrid, type CompletedCardData } from "./CompletedDocumentCards";
 
 /** What a non-signer is asked to do, in the words the list and dialog use. */
 const ROLE_WORDING: Record<string, { label: string; action: string; verb: string }> = {
@@ -371,6 +381,54 @@ const loadToSign = () => realMySigningService.documentsToSign().then(items => it
 const loadOthers = () => realMySigningService.documentsToSign()
   .then(items => items.filter(item => !isSignerEntry(item)));
 const loadSigned = () => realMySigningService.signedDocuments();
+const loadCompletedOthers = (): Promise<CompletedOtherDocument[]> => realMySigningService.completedOtherDocuments();
+
+// ── Completed documents, as cards ───────────────────────────────────────────
+
+const DEFAULT_BANNER = "#0078D4";
+
+type Viewer = { source: DocumentRecordSource; view: SharedDocumentView } | null;
+
+function participantCard(input: {
+  key: string; title: string; completion: ParticipantCompletion; subtitle: string;
+  extra: ReactNode; onView: (view: SharedDocumentView) => void; onSender: () => void;
+}): CompletedCardData {
+  const { completion } = input;
+  return {
+    key: input.key,
+    title: input.title,
+    verificationId: completion.verificationId,
+    done: completion.completed,
+    total: completion.participants,
+    createdAt: completion.completedAt,
+    dateLabel: "Completed",
+    bannerSubtitle: input.subtitle,
+    branding: {
+      displayName: completion.branding.displayName,
+      primaryColor: completion.branding.primaryColor ?? DEFAULT_BANNER,
+      logoUrl: participantLogoUrl(completion),
+    },
+    extra: input.extra,
+    actions: [
+      { id: "view", label: "View / Download signed document", icon: Eye, onSelect: () => input.onView("document") },
+      { id: "participants", label: "View participants", icon: Users, onSelect: () => input.onView("participants") },
+      { id: "audit", label: "View audit trail", icon: History, onSelect: () => input.onView("audit") },
+      { id: "sender", label: "See the sender", icon: UserRound, onSelect: input.onSender },
+    ],
+  };
+}
+
+function SentByLine({ item }: { item: { senderName: string | null; workspaceName: string | null } }) {
+  return (
+    <span style={{ ...GF, fontSize: 12.5, color: SLATE6, overflowWrap: "anywhere" }}>
+      <UserRound size={12} aria-hidden style={{ display: "inline-block", verticalAlign: "-2px" }} /> Sent by {senderLine(item)}
+    </span>
+  );
+}
+
+function SubHeading({ children }: { children: ReactNode }) {
+  return <h3 style={{ ...GF, fontSize: 13, fontWeight: 700, color: NAVY, margin: "22px 0 10px" }}>{children}</h3>;
+}
 
 // ── Documents I must sign ───────────────────────────────────────────────────
 
@@ -463,11 +521,11 @@ function OtherAction({ item, onContinue }: { item: DocumentToSign; onContinue: (
   if (canContinueFromApp(item)) {
     return <RowButton icon={ArrowRight} label={wordingFor(item).action} primary onClick={onContinue} />;
   }
-  // Nothing to do in the app: a viewer's access is the emailed link, and a
-  // copy recipient is sent the finished document.
+  // Nothing to do in the app yet: a viewer's access is the emailed link, and
+  // a copy recipient opens the finished document here once it is completed.
   return (
     <span style={{ ...GF, fontSize: 12, color: SLATE6, lineHeight: 1.4 }}>
-      {item.recipientType === "viewer" ? "Open it from your email link" : "You’ll get the completed copy by email"}
+      {item.recipientType === "viewer" ? "Open it from your email link" : "It appears here once completed"}
     </span>
   );
 }
@@ -475,9 +533,18 @@ function OtherAction({ item, onContinue }: { item: DocumentToSign; onContinue: (
 export function OthersSection({ onCount }: {
   onCount?: (count: number) => void;
 }) {
-  const { items, status, reload } = useList(loadOthers);
+  const open = useList(loadOthers);
+  const done = useList(loadCompletedOthers);
   const [senderFor, setSenderFor] = useState<DocumentToSign | null>(null);
   const [continueFor, setContinueFor] = useState<DocumentToSign | null>(null);
+  const [viewer, setViewer] = useState<Viewer>(null);
+
+  // A completed document is shown once, as its card, not also as an open row.
+  const completedIds = new Set(done.items.map(item => item.signingRequestId));
+  const items = open.items.filter(item => !completedIds.has(item.signingRequestId));
+  const status = open.status === "error" || done.status === "error" ? "error"
+    : open.status === "ready" && done.status === "ready" ? "ready" : "loading";
+  const reload = () => { open.reload(); done.reload(); };
 
   // The documents this account takes part in — nothing else. Contact
   // requests (086) are in Contacts → Requests From Contacts.
@@ -488,7 +555,7 @@ export function OthersSection({ onCount }: {
   return (
     <section aria-label="Other documents I take part in" style={{ marginTop: 20 }}>
       <style>{STYLES}</style>
-      {status !== "ready" || items.length === 0 ? (
+      {status !== "ready" || (items.length === 0 && done.items.length === 0) ? (
         <EmptyOrError
           status={status} icon={Inbox} onRetry={reload}
           emptyTitle="Nothing here yet"
@@ -496,6 +563,19 @@ export function OthersSection({ onCount }: {
         />
       ) : (
         <>
+          {done.items.length > 0 && (
+            <CompletedDocumentGrid label="Completed documents I took part in" cards={done.items.map(item => participantCard({
+              key: `${item.signingRequestId}:${item.recipientId}`,
+              title: item.documentTitle,
+              completion: item.completion,
+              subtitle: `Your role: ${wordingFor(item).label}`,
+              extra: <SentByLine item={item} />,
+              onView: view => setViewer({ source: participantDocumentSource(item.completion.verificationId, item.documentTitle), view }),
+              onSender: () => setSenderFor(item),
+            }))} />
+          )}
+          {items.length > 0 && done.items.length > 0 && <SubHeading>In progress</SubHeading>}
+          {items.length > 0 && <>
           <div className="mysign-table" role="table" aria-label="Other documents I take part in">
             <div role="row" className="mysign-row mysign-head">
               <div role="columnheader">Document</div>
@@ -543,10 +623,12 @@ export function OthersSection({ onCount }: {
               </div>
             ))}
           </div>
+          </>}
         </>
       )}
       {senderFor !== null && <SenderDialog item={senderFor} onClose={() => setSenderFor(null)} />}
       {continueFor !== null && <ContinueSigningDialog item={continueFor} onClose={() => setContinueFor(null)} />}
+      {viewer !== null && <DocumentRecordDialog source={viewer.source} view={viewer.view} onClose={() => setViewer(null)} />}
     </section>
   );
 }
@@ -554,13 +636,18 @@ export function OthersSection({ onCount }: {
 // ── Signed by me ────────────────────────────────────────────────────────────
 
 export function SignedByMeSection() {
-  const { items, status, reload } = useList(loadSigned);
+  const { items: all, status, reload } = useList(loadSigned);
   const [senderFor, setSenderFor] = useState<SignedDocument | null>(null);
+  const [viewer, setViewer] = useState<Viewer>(null);
+  const completed = all.filter((item): item is SignedDocument & { completion: ParticipantCompletion } =>
+    item.completion !== null);
+  // Signed, but others still have to finish: listed as before.
+  const items = all.filter(item => item.completion === null);
 
   return (
     <section aria-label="Signed by me" style={{ marginTop: 20 }}>
       <style>{STYLES}</style>
-      {status !== "ready" || items.length === 0 ? (
+      {status !== "ready" || all.length === 0 ? (
         <EmptyOrError
           status={status} icon={FileCheck2} onRetry={reload}
           emptyTitle="You haven't signed anything yet"
@@ -568,6 +655,19 @@ export function SignedByMeSection() {
         />
       ) : (
         <>
+          {completed.length > 0 && (
+            <CompletedDocumentGrid label="Completed documents I signed" cards={completed.map(item => participantCard({
+              key: item.signingRequestId,
+              title: item.documentTitle,
+              completion: item.completion,
+              subtitle: `Signed ${fmtDate(item.signedAt)}`,
+              extra: <SentByLine item={item} />,
+              onView: view => setViewer({ source: participantDocumentSource(item.completion.verificationId, item.documentTitle), view }),
+              onSender: () => setSenderFor(item),
+            }))} />
+          )}
+          {items.length > 0 && completed.length > 0 && <SubHeading>Waiting for others to finish</SubHeading>}
+          {items.length > 0 && <>
           <div className="mysign-table" role="table" aria-label="Signed by me">
             <div role="row" className="mysign-row signed mysign-head">
               <div role="columnheader">Document</div>
@@ -612,9 +712,11 @@ export function SignedByMeSection() {
               </div>
             ))}
           </div>
+          </>}
         </>
       )}
       {senderFor !== null && <SenderDialog item={senderFor} onClose={() => setSenderFor(null)} />}
+      {viewer !== null && <DocumentRecordDialog source={viewer.source} view={viewer.view} onClose={() => setViewer(null)} />}
     </section>
   );
 }

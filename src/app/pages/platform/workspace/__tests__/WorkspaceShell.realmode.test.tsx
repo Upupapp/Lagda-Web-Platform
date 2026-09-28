@@ -147,7 +147,8 @@ describe("Workspace shell — banners by capability", () => {
     // The count is part of the banner's accessible name.
     expect(screen.getByRole("link", { name: /Join requests, 2 waiting/ })).toHaveAttribute("href", "/app/workspace/join-requests");
     expect(screen.getByTestId("banner-roles")).toHaveAttribute("title", "Who can do what");
-    expect(screen.getByTestId("banner-documents")).toHaveAttribute("title", "All workspace documents");
+    // Documents lives in the side panel; Manage does not repeat it.
+    expect(screen.queryByTestId("banner-documents")).toBeNull();
   });
 
   it("gives a New Comer only what their role reaches and never calls admin-only endpoints", async () => {
