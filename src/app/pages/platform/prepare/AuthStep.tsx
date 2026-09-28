@@ -1,11 +1,11 @@
-// Step 4 of 7: Authentication — set the default auth method and per-participant overrides.
+// Authentication — set the default auth method and per-participant overrides.
 // PRIVACY: no OTP codes, passwords, or tokens are shown, collected, or logged here.
 // Burgundy (#67023B) is NEVER used. eNotary is NEVER mentioned.
 
 import React, { useEffect } from "react";
 import { ShieldCheck } from "lucide-react";
 import { usePrepare } from "../../../context/PrepareContext";
-import {
+import { stepEyebrow,
   PREP_AUTH_METHODS,
   getAuthMethodConfig,
   isAuthMethodAvailableForParticipant,
@@ -358,7 +358,7 @@ export function AuthStep() {
     <div style={GF}>
       <StepBanner
         icon={ShieldCheck}
-        eyebrow="Step 4 of 7"
+        eyebrow={stepEyebrow("authentication")}
         title="Authentication"
         description="Choose how participants verify their identity before accessing the document. Set a default for all participants, then override individually if needed."
         meta={`Default: ${defaultMethodLabel}${overrideCount > 0 ? ` · ${overrideCount} override${overrideCount !== 1 ? "s" : ""}` : ""}`}

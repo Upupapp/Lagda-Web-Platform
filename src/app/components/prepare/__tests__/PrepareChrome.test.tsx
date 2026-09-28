@@ -130,4 +130,15 @@ describe("the nav bar", () => {
       expect(button.style.minHeight).toBe("44px");
     }
   });
+
+  it("centres the guide between Previous and Continue in its own column", () => {
+    atWidth(320, <PrepareNavBar {...base} continueBlocked={false} guide={<button type="button">Guide</button>} />);
+    const guide = screen.getByRole("button", { name: "Guide" });
+    const cell = guide.parentElement!;
+    expect(cell).toHaveClass("prep-nav-guide");
+    expect(cell.style.justifySelf).toBe("center");
+    const bar = cell.parentElement!;
+    const cells = Array.from(bar.children).map(c => c.className);
+    expect(cells).toEqual(["prep-nav-prev", "prep-nav-guide", "prep-nav-next"]);
+  });
 });

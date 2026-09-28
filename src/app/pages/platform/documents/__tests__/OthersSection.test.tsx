@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, within } from "@testing-library/react";
+import { render, screen, within, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
 
@@ -46,7 +46,9 @@ describe("I must sign", () => {
     expect(within(t).getByText("Lease")).toBeTruthy();
     expect(within(t).getByText("Old signer entry")).toBeTruthy();
     expect(within(t).queryByText("Budget")).toBeNull();
-    expect(onCount).toHaveBeenLastCalledWith(2);
+    // The count is reported from a passive effect after the table commits,
+    // so it can land a tick after the table is findable.
+    await waitFor(() => { expect(onCount).toHaveBeenLastCalledWith(2); });
   });
 });
 
@@ -62,7 +64,7 @@ describe("Others", () => {
     for (const badge of ["Approver", "Reviewer", "Acknowledgment", "Viewer", "Copy recipient"]) {
       expect(within(t).getByText(badge)).toBeTruthy();
     }
-    expect(onCount).toHaveBeenLastCalledWith(5);
+    await waitFor(() => { expect(onCount).toHaveBeenLastCalledWith(5); });
   });
 
   it("offers a role-worded continue to those who act, and none to those who only receive", async () => {

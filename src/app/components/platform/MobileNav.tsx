@@ -8,7 +8,7 @@ import { NavLink, Link } from "react-router";
 import {
   Menu, X, LayoutDashboard, FileText, Files, Users, ShieldCheck,
   Bell, Users2, Settings, Settings2, FilePlus, Inbox, HelpCircle, GitBranch, BarChart2, Zap,
-  Search, Compass, Share2, Mail,
+  Search, Compass, Share2, Mail, ChevronDown,
 } from "lucide-react";
 import lagdaHeaderLogo from "../../../brand elements/svg/LagdaLogoPrimaryHorizontalFullColor_Header.svg";
 import { usePlatform } from "../../context/PlatformContext";
@@ -46,6 +46,7 @@ function NavIcon({ name, size = 18 }: { name: string; size?: number }) {
 export function MobileNav() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [toolsOpen, setToolsOpen] = useState(false);
   const { user, currentWorkspace, unreadCount, hasPermission, hasFlag } = usePlatform();
   const { restartTour } = useTour();
   const drawerRef    = useRef<HTMLDivElement>(null);
@@ -276,56 +277,6 @@ export function MobileNav() {
           </div>
         )}
 
-        {/* Utility row: search, restart tour, help — kept separate from the
-            primary nav list so it doesn't dilute the section links. */}
-        <div style={{ padding: "10px 10px 0", flexShrink: 0 }}>
-          <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-            <button
-              onClick={openSearch}
-              data-guide="mobile-search-trigger"
-              style={{
-                display: "flex", alignItems: "center", gap: 12,
-                padding: "10px 12px", borderRadius: 8, minHeight: 44,
-                background: "transparent", border: "none", width: "100%",
-                color: "#64748B", cursor: "pointer", textAlign: "left",
-              }}
-            >
-              <Search size={18} aria-hidden />
-              <span style={{ ...GF, fontSize: 14 }}>Search</span>
-            </button>
-            <button
-              onClick={handleRestartTour}
-              data-guide="mobile-restart-tour-trigger"
-              style={{
-                display: "flex", alignItems: "center", gap: 12,
-                padding: "10px 12px", borderRadius: 8, minHeight: 44,
-                background: "transparent", border: "none", width: "100%",
-                color: "#64748B", cursor: "pointer", textAlign: "left",
-              }}
-            >
-              <Compass size={18} aria-hidden />
-              <span style={{ ...GF, fontSize: 14 }}>Restart Tour</span>
-            </button>
-            <Link
-              to="/help"
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="Help Center (opens in new tab)"
-              data-guide="mobile-help-link"
-              onClick={closeAndNavigate}
-              style={{
-                display: "flex", alignItems: "center", gap: 12,
-                padding: "10px 12px", borderRadius: 8, minHeight: 44,
-                color: "#64748B", textDecoration: "none",
-              }}
-            >
-              <HelpCircle size={18} aria-hidden />
-              <span style={{ ...GF, fontSize: 14 }}>Help Center</span>
-            </Link>
-          </div>
-          <div style={{ borderTop: `1px solid ${BORDER}`, margin: "8px 0 0" }} />
-        </div>
-
         {/* Primary nav */}
         <nav aria-label="Platform sections" data-guide="platform-sidebar-nav" style={{ flex: 1, padding: "10px 10px", overflowY: "auto" }}>
           <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: 2 }}>
@@ -340,17 +291,17 @@ export function MobileNav() {
                     onClick={closeAndNavigate}
                     style={({ isActive }) => ({
                       display: "flex", alignItems: "center", gap: 12,
-                      padding: "12px 12px", borderRadius: 8, minHeight: 44,
+                      padding: "12px 12px", borderRadius: 8, minHeight: 48,
                       textDecoration: "none",
-                      background: isActive ? "rgba(0,120,212,0.14)" : "transparent",
+                      background: isActive ? "rgba(0,120,212,0.12)" : "transparent",
                       border: isActive ? "1px solid rgba(0,120,212,0.22)" : "1px solid transparent",
-                      color: isActive ? "#0078D4" : "#64748B",
+                      color: isActive ? "#005A9E" : "#334155",
                     })}
                   >
                     {({ isActive }) => (
                       <>
-                        <span style={{ color: isActive ? "#0078D4" : "#64748B", display: "flex" }}><NavIcon name={item.icon} /></span>
-                        <span style={{ ...GF, fontSize: 14, fontWeight: isActive ? 600 : 400 }}>{item.label}</span>
+                        <span style={{ color: isActive ? "#005A9E" : "#475569", display: "flex" }}><NavIcon name={item.icon} size={20} /></span>
+                        <span style={{ ...GF, fontSize: 15, fontWeight: isActive ? 600 : 500 }}>{item.label}</span>
                         {item.id === "inbox" && unreadCount > 0 && (
                           <span style={{ marginLeft: "auto", background: "#0078D4", color: "white", fontFamily: "'Geist Mono', monospace", fontSize: 10, fontWeight: 700, borderRadius: 999, padding: "1px 6px" }}>
                             {unreadCount > 99 ? "99+" : unreadCount}
@@ -402,6 +353,84 @@ export function MobileNav() {
           </ul>
         </nav>
 
+        {/* Tools & help — secondary to the section links above, so it sits
+            at the bottom, collapsed until asked for. The items stay mounted
+            (the tour targets them by data-guide) but are inert while shut. */}
+        <div className="mnav-tools" style={{ borderTop: `1px solid ${BORDER}`, padding: "6px 10px", flexShrink: 0 }}>
+          <button
+            type="button"
+            onClick={() => setToolsOpen(o => !o)}
+            aria-expanded={toolsOpen}
+            aria-controls="mobile-nav-tools"
+            className="mnav-tools-toggle"
+            style={{
+              display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12,
+              width: "100%", minHeight: 44, padding: "10px 12px", borderRadius: 8,
+              background: "transparent", border: "none", cursor: "pointer", textAlign: "left",
+              color: "#334155", ...GF, fontSize: 13, fontWeight: 600,
+            }}
+          >
+            <span>Tools &amp; help</span>
+            <ChevronDown size={16} aria-hidden className="mnav-tools-chevron"
+              style={{ transform: toolsOpen ? "rotate(180deg)" : "rotate(0deg)" }} />
+          </button>
+          <div
+            id="mobile-nav-tools"
+            className="mnav-tools-panel"
+            data-open={toolsOpen ? "true" : "false"}
+            {...({ inert: toolsOpen ? undefined : "" } as { inert?: string })}
+            aria-hidden={toolsOpen ? undefined : true}
+            style={{ display: "grid", gridTemplateRows: toolsOpen ? "1fr" : "0fr", visibility: toolsOpen ? "visible" : "hidden" }}
+          >
+            <div style={{ overflow: "hidden", minHeight: 0 }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                <button
+                  onClick={openSearch}
+                  data-guide="mobile-search-trigger"
+                  style={{
+                    display: "flex", alignItems: "center", gap: 12,
+                    padding: "10px 12px", borderRadius: 8, minHeight: 44,
+                    background: "transparent", border: "none", width: "100%",
+                    color: "#475569", cursor: "pointer", textAlign: "left",
+                  }}
+                >
+                  <Search size={18} aria-hidden />
+                  <span style={{ ...GF, fontSize: 14 }}>Search</span>
+                </button>
+                <button
+                  onClick={handleRestartTour}
+                  data-guide="mobile-restart-tour-trigger"
+                  style={{
+                    display: "flex", alignItems: "center", gap: 12,
+                    padding: "10px 12px", borderRadius: 8, minHeight: 44,
+                    background: "transparent", border: "none", width: "100%",
+                    color: "#475569", cursor: "pointer", textAlign: "left",
+                  }}
+                >
+                  <Compass size={18} aria-hidden />
+                  <span style={{ ...GF, fontSize: 14 }}>Restart Tour</span>
+                </button>
+                <Link
+                  to="/help"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="Help Center (opens in new tab)"
+                  data-guide="mobile-help-link"
+                  onClick={closeAndNavigate}
+                  style={{
+                    display: "flex", alignItems: "center", gap: 12,
+                    padding: "10px 12px", borderRadius: 8, minHeight: 44,
+                    color: "#475569", textDecoration: "none",
+                  }}
+                >
+                  <HelpCircle size={18} aria-hidden />
+                  <span style={{ ...GF, fontSize: 14 }}>Help Center</span>
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* User footer */}
         {user && (
           <div style={{ borderTop: `1px solid ${BORDER}`, padding: "12px 14px", flexShrink: 0 }}>
@@ -437,8 +466,14 @@ export function MobileNav() {
         .mobile-nav-btn:hover, .mobile-nav-btn:focus-visible { color: #0078D4 !important; background: #EAF6FF !important; }
         .mobile-nav-btn:focus-visible { outline: 2px solid #0078D4; outline-offset: 2px; }
         ${INVITATION_BUBBLE_STYLES}
+        .mnav-tools-panel { transition: grid-template-rows 180ms ease, visibility 0s 180ms; }
+        .mnav-tools-panel[data-open="true"] { transition: grid-template-rows 180ms ease, visibility 0s; }
+        .mnav-tools-chevron { transition: transform 180ms ease; flex-shrink: 0; }
+        .mnav-tools-toggle:hover { background: #F1F5F9 !important; }
+        .mnav-tools-toggle:focus-visible { outline: 2px solid #0078D4; outline-offset: 2px; }
         @media (prefers-reduced-motion: reduce) {
           #mobile-nav-drawer { transition: none !important; }
+          .mnav-tools-panel, .mnav-tools-panel[data-open="true"], .mnav-tools-chevron { transition: none !important; }
         }
       `}</style>
       {confirmDialog}

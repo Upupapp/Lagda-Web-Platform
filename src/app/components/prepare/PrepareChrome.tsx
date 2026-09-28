@@ -41,7 +41,7 @@ const GF: CSSProperties = { fontFamily: "'Geist', sans-serif" };
 const NAVY   = "#07111F";
 const AZURE  = "#0078D4";
 const SILVER = "#8A9BAE";
-const GOLD   = "#C9960C";
+const GOLD   = "#8A6100"; // 5.6:1 on white — the lighter gold failed AA for text
 const DANGER = "#C0392B";
 
 // ── Breadcrumb ─────────────────────────────────────────────────────────────
@@ -149,6 +149,8 @@ export interface PrepareNavBarProps {
   readonly onContinue: () => void;
   /** Opens the "what's left" reminder. Also what a blocked Continue does. */
   readonly onShowMissing: () => void;
+  /** The Preparation Guide button, centred between Previous and Continue. */
+  readonly guide?: ReactNode;
 }
 
 /** The Continue label, at the length the screen can afford. */
@@ -161,7 +163,7 @@ export function continueLabel(
 }
 
 export function PrepareNavBar({
-  prevId, nextId, continueBlocked, onPrevious, onContinue, onShowMissing,
+  prevId, nextId, continueBlocked, onPrevious, onContinue, onShowMissing, guide,
 }: PrepareNavBarProps) {
   const { isCompact } = useViewport();
 
@@ -185,14 +187,19 @@ export function PrepareNavBar({
   }
 
   return (
+    // Three columns — 1fr auto 1fr — so the guide sits dead centre and
+    // neither Previous nor Continue moves when it appears or changes width.
     <div className="prep-nav-bar">
-      <div>{previous}</div>
+      <div className="prep-nav-prev" style={{ justifySelf: "start", minWidth: 0 }}>{previous}</div>
 
-      <div style={{ display: "flex", alignItems: "center", gap: isCompact ? 8 : 12, minWidth: 0 }}>
+      <div className="prep-nav-guide" style={{ justifySelf: "center" }}>{guide}</div>
+
+      <div className="prep-nav-next" style={{ justifySelf: "end", display: "flex", alignItems: "center", gap: isCompact ? 8 : 12, minWidth: 0 }}>
         {continueBlocked && !isCompact && (
           <button
             type="button"
             onClick={onShowMissing}
+            className="prep-nav-reminder"
             style={{
               ...GF, fontSize: 12.5, fontWeight: 600, color: GOLD,
               background: "none", border: "none", cursor: "pointer",

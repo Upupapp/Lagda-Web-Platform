@@ -1,4 +1,4 @@
-// Step 7 of 7: Place Fields — interactive field-placement editor.
+// Place Fields — interactive field-placement editor.
 // Command 19: replaces FieldsHandoff.tsx placeholder.
 //
 // PRIVACY: No file content is read or stored. No participant PII is persisted.

@@ -1,4 +1,4 @@
-// Step 5 of 7: Settings — invitation, reminders, expiration, and completion settings.
+// Settings — invitation, reminders, expiration, and completion settings.
 // PRIVACY: invitation messages are stored only in React context, never persisted.
 // No invitations are sent from this frontend demonstration.
 // Burgundy (#67023B) is NEVER used. eNotary is NEVER mentioned.
@@ -7,7 +7,7 @@ import React, { useEffect, useCallback } from "react";
 import { SlidersHorizontal } from "lucide-react";
 import { usePrepare } from "../../../context/PrepareContext";
 import { usePlatform } from "../../../context/PlatformContext";
-import {
+import { stepEyebrow,
   DEFAULT_PREP_SETTINGS,
 } from "../../../models/prepare";
 import { StepBanner, StepTwoColumn, RailCard, StepIssueList } from "../../../components/prepare/StepBanner";
@@ -457,7 +457,7 @@ export function SettingsStep() {
     <div style={GF}>
       <StepBanner
         icon={SlidersHorizontal}
-        eyebrow="Step 5 of 7"
+        eyebrow={stepEyebrow("settings")}
         title="Settings"
         description="Configure how invitations are sent, when reminders fire, and what happens when the transaction completes or expires."
         meta={`${reminderSummary} · ${expirySummary}`}

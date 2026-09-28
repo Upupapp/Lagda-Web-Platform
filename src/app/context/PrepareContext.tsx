@@ -47,6 +47,7 @@ import type { FieldDefinition } from "../models/field-editor";
 import type { TemplateApplication } from "../models/templates";
 import {
   normalizeRoutingGroups,
+  PREPARATION_STEPS,
 } from "../models/prepare";
 import {
   prepareService,
@@ -60,6 +61,7 @@ import { log } from "../utils/logger";
 function resolveStepStates(
   draft: PreparationDraft | null,
   activeStepId: PreparationStepId | null,
+  settingsSeen = true,
 ): Record<PreparationStepId, PreparationStepState> {
   const unavail = (): PreparationStepState => "unavailable";
 
@@ -126,7 +128,10 @@ function resolveStepStates(
     upload:         stepState("upload", true, filesOk),
     participants:   stepState("participants", filesOk, participantsOk),
     routing:        stepState("routing", participantsOk, routingOk),
-    settings:       stepState("settings", routingOk, settingsOk),
+    // Settings is valid from its defaults, so validity alone would tick it
+    // before the sender ever opened it. Display only: gating still uses
+    // settingsOk.
+    settings:       stepState("settings", routingOk, settingsOk && settingsSeen),
     fields:         beforeFields
       ? (activeStepId === "fields" ? "current" : "available")
       : "blocked",
@@ -483,7 +488,22 @@ export function PrepareProvider({ children }: { children: React.ReactNode }) {
   }, [platform.currentWorkspace?.id, state.draft?.files]);
 
   // Derived step states
-  const stepStates = resolveStepStates(state.draft, state.activeStepId);
+  // Steps opened this session, per draft. Settings reads "complete" only once
+  // the sender has opened it (or moved past it), not straight from defaults.
+  const [visitedSteps, setVisitedSteps] = useState<{ draftId: string | null; ids: ReadonlySet<PreparationStepId> }>({ draftId: null, ids: new Set() });
+  const draftId = state.draft?.id ?? null;
+  const activeStepId = state.activeStepId;
+  useEffect(() => {
+    setVisitedSteps(prev => {
+      const ids = prev.draftId === draftId ? prev.ids : new Set<PreparationStepId>();
+      if (activeStepId === null || ids.has(activeStepId)) return prev.draftId === draftId ? prev : { draftId, ids };
+      return { draftId, ids: new Set([...ids, activeStepId]) };
+    });
+  }, [draftId, activeStepId]);
+  const seen = visitedSteps.draftId === draftId ? visitedSteps.ids : new Set<PreparationStepId>();
+  const settingsIndex = PREPARATION_STEPS.findIndex(s => s.id === "settings");
+  const settingsSeen = PREPARATION_STEPS.some((s, i) => i >= settingsIndex && seen.has(s.id));
+  const stepStates = resolveStepStates(state.draft, state.activeStepId, settingsSeen);
 
   // A field snapshot from a discarded/replaced draft must never leak into
   // the next one's readiness calculation.

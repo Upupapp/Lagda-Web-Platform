@@ -9,7 +9,7 @@
 // light for now.
 
 import React, { useEffect, useMemo, useState } from "react";
-import { Globe2, CalendarClock, Palette, LayoutList, Save, Undo2 } from "lucide-react";
+import { Globe2, CalendarClock, Save, Undo2 } from "lucide-react";
 import { SettingsActions } from "./SettingsActions";
 import { SettingsPage, SSection, SField, BTN_PRIMARY, BTN_SECONDARY, Skeleton, SET, INPUT_STYLE } from "./SettingsShell";
 import { preferencesData, IS_LIVE, type PreferenceValues } from "./settings-data";
@@ -52,29 +52,6 @@ const NUMBER_FORMATS: { value: PreferenceValues["numberFormat"]; label: string }
   { value: "dot-comma", label: "1.234,56" },
   { value: "space-dot", label: "1 234.56" },
 ];
-
-function RadioRow<T extends string>({ name, value, options, onChange, labelledBy }: {
-  name: string; value: T; options: { value: T; label: string }[]; onChange: (v: T) => void; labelledBy?: string;
-}) {
-  return (
-    <div role="radiogroup" aria-labelledby={labelledBy} style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-      {options.map(o => {
-        const checked = value === o.value;
-        return (
-          <label key={o.value} style={{
-            display: "inline-flex", alignItems: "center", gap: 8, cursor: "pointer", ...GF, fontSize: 13.5,
-            color: checked ? SET.AZURE_TEXT : SET.INK, fontWeight: checked ? 600 : 500,
-            border: `1.5px solid ${checked ? SET.AZURE : "#CBD5E1"}`, background: checked ? "#EFF6FD" : "#FFFFFF",
-            borderRadius: 8, padding: "8px 12px", minHeight: 40, boxSizing: "border-box",
-          }}>
-            <input type="radio" name={name} value={o.value} checked={checked} onChange={() => { onChange(o.value); }} style={{ accentColor: SET.AZURE, margin: 0 }} />
-            {o.label}
-          </label>
-        );
-      })}
-    </div>
-  );
-}
 
 export function PreferencesPage() {
   const [saved, setSaved] = useState<PreferenceValues | null>(null);
@@ -166,24 +143,6 @@ export function PreferencesPage() {
             <select id="pref-number" value={form.numberFormat} onChange={e => { update("numberFormat", e.target.value as PreferenceValues["numberFormat"]); }} style={SELECT_STYLE}>
               {NUMBER_FORMATS.map(f => <option key={f.value} value={f.value}>{f.label}</option>)}
             </select>
-          </SField>
-        </SSection>
-
-        <SSection title="Appearance" icon={Palette}>
-          <SField label="Theme" help="LAGDA uses the light theme for now. Your choice is saved for when other themes are added.">
-            <RadioRow name="appearance" value={form.appearance} onChange={v => { update("appearance", v); }}
-              options={[{ value: "system", label: "Follow system" }, { value: "light", label: "Light" }, { value: "dark", label: "Dark" }]} />
-          </SField>
-          <SField label="Density">
-            <RadioRow name="density" value={form.density} onChange={v => { update("density", v); }}
-              options={[{ value: "comfortable", label: "Comfortable" }, { value: "compact", label: "Compact" }]} />
-          </SField>
-        </SSection>
-
-        <SSection title="Default view" icon={LayoutList}>
-          <SField label="Documents list" help="How the Documents list opens.">
-            <RadioRow name="documentListView" value={form.documentListView} onChange={v => { update("documentListView", v); }}
-              options={[{ value: "table", label: "Table" }, { value: "grid", label: "Grid" }]} />
           </SField>
         </SSection>
 

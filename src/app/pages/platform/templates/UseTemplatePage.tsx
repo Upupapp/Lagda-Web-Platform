@@ -7,7 +7,7 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router";
 import {
-  ChevronLeft, ChevronRight, Users, Type, Eye,
+  ChevronLeft, ChevronRight,  
   CheckCircle2, AlertCircle, Zap, LayoutTemplate,
   ArrowRight, Info,
 } from "lucide-react";
@@ -31,6 +31,7 @@ import type { PrepAuthMethodId } from "../../../models/prepare";
 import { PARTICIPANT_ACCENT_COLORS } from "../../../models/field-editor";
 import { usePageMeta } from "../../../hooks/usePageMeta";
 import { useViewport } from "../../../hooks/useViewport";
+import { ResponsiveStepper } from "../../../components/system/ResponsiveStepper";
 import {
   MAP_ROLES_AUTH_METHOD, mapRolesOrganization, withMapRolesDefaults,
 } from "./map-roles-defaults";
@@ -44,45 +45,12 @@ const RED   = "#DC2626";
 
 // ── Step indicator ────────────────────────────────────────────────────────────
 const STEPS = [
-  { id: "roles",     label: "Map Roles",        icon: <Users size={14} /> },
-  { id: "variables", label: "Enter Variables",   icon: <Type  size={14} /> },
-  { id: "review",    label: "Review & Launch",   icon: <Eye   size={14} /> },
+  { id: "roles",     label: "Map Roles" },
+  { id: "variables", label: "Enter Variables" },
+  { id: "review",    label: "Review & Launch" },
 ] as const;
 
 type WizardStep = typeof STEPS[number]["id"];
-
-function StepBar({ current }: { current: WizardStep }) {
-  const idx = STEPS.findIndex(s => s.id === current);
-  return (
-    <div style={{ display: "flex", alignItems: "center", gap: 0 }}>
-      {STEPS.map((s, i) => {
-        const done    = i < idx;
-        const active  = i === idx;
-        return (
-          <div key={s.id} style={{ display: "flex", alignItems: "center" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 14px" }}>
-              <div style={{
-                width: 26, height: 26, borderRadius: "50%",
-                background: done ? GREEN : active ? AZURE : "#E2E8F0",
-                display: "flex", alignItems: "center", justifyContent: "center",
-                color: done || active ? "white" : "#94A3B8",
-                flexShrink: 0,
-              }}>
-                {done ? <CheckCircle2 size={14} /> : <span style={{ ...GF, fontSize: 11, fontWeight: 700 }}>{i + 1}</span>}
-              </div>
-              <span style={{ ...GF, fontSize: 13, fontWeight: active ? 700 : 400, color: active ? "#0F172A" : done ? GREEN : "#94A3B8" }}>
-                {s.label}
-              </span>
-            </div>
-            {i < STEPS.length - 1 && (
-              <div style={{ width: 32, height: 1, background: done ? GREEN : "#E2E8F0" }} />
-            )}
-          </div>
-        );
-      })}
-    </div>
-  );
-}
 
 // ── Step 1: Map Roles ─────────────────────────────────────────────────────────
 function RoleMappingStep({
@@ -670,24 +638,34 @@ function UseTemplateInner() {
   }
 
   const stepIdx = STEPS.findIndex(s => s.id === step);
+  // A template with no variables skips that step on Continue, so the
+  // stepper does not show it either.
+  const visibleSteps = STEPS.filter(s => s.id !== "variables" || t.variables.length > 0);
+  const visibleIdx = Math.max(0, visibleSteps.findIndex(s => s.id === step));
 
   return (
     <div style={{ background: "#F8FAFC", minHeight: "100%", ...GF }}>
       {/* Header */}
       <div style={{ background: "white", borderBottom: "1px solid #E2E8F0", padding: isNarrow ? "16px 16px" : "16px 24px" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
-          <Link to={`/app/templates/${templateId}`} style={{ ...GF, fontSize: 12, color: "#64748B", textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 4 }}>
-            <ChevronLeft size={13} />
-            {t.name}
+        <nav aria-label="Breadcrumb" style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16, minWidth: 0, whiteSpace: "nowrap" }}>
+          <Link to={`/app/templates/${templateId}`} title={t.name} style={{ ...GF, fontSize: 13, color: "#475569", textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 4, minWidth: 0, minHeight: 32 }}>
+            <ChevronLeft size={14} aria-hidden style={{ flexShrink: 0 }} />
+            <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", minWidth: 0 }}>{t.name}</span>
           </Link>
-          <span style={{ color: "#CBD5E1" }}>/</span>
-          <span style={{ ...GF, fontSize: 12, color: "#0F172A" }}>Use Template</span>
-        </div>
-        <StepBar current={step} />
+          <span aria-hidden style={{ color: "#94A3B8", flexShrink: 0 }}>/</span>
+          <span aria-current="page" style={{ ...GF, fontSize: 13, color: "#0F172A", fontWeight: 600, flexShrink: 0 }}>Use Template</span>
+        </nav>
+        <ResponsiveStepper
+          label="Use template steps"
+          steps={visibleSteps}
+          currentIndex={visibleIdx}
+          canSelect={i => i < visibleIdx}
+          onSelect={i => { setError(null); setStep(visibleSteps[i]!.id); }}
+        />
       </div>
 
       {/* Content */}
-      <div style={{ maxWidth: 640, padding: "24px" }}>
+      <div style={{ maxWidth: 640, padding: isNarrow ? "20px 16px" : "24px", boxSizing: "border-box" }}>
         {error && (
           <div style={{ display: "flex", alignItems: "flex-start", gap: 8, padding: "12px 14px", background: "#FEF0F0", border: "1px solid #FECACA", borderRadius: 9, marginBottom: 16 }}>
             <AlertCircle size={14} color={RED} style={{ flexShrink: 0, marginTop: 1 }} />
@@ -703,7 +681,7 @@ function UseTemplateInner() {
         <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 24 }}>
           {stepIdx > 0 && (
             <button
-              onClick={() => { setError(null); setStep(STEPS[stepIdx - 1]!.id); }}
+              onClick={() => { setError(null); setStep((visibleSteps[visibleIdx - 1] ?? STEPS[0]).id); }}
               style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "10px 18px", background: "#F1F5F9", color: "#0F172A", border: "none", borderRadius: 8, ...GF, fontSize: 13, fontWeight: 600, cursor: "pointer" }}
             >
               <ChevronLeft size={13} />

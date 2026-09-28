@@ -606,3 +606,9 @@ export function isAuthMethodAvailableForParticipant(
   }
   return { available: true };
 }
+
+/** Banner eyebrow for a step, e.g. "Step 4 of 8", read from PREPARATION_STEPS
+ *  so it cannot drift when the order changes. */
+export function stepEyebrow(id: PreparationStepId): string {
+  return `Step ${PREPARATION_STEPS.findIndex(s => s.id === id) + 1} of ${PREPARATION_STEPS.length}`;
+}

@@ -2,7 +2,7 @@
 // and Home/End move between tabs, only the active tab is in the Tab order,
 // and each tab names the panel it controls. Counts are part of the name.
 
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import type { LucideIcon } from "lucide-react";
 import { GF } from "../../../components/document-sharing/SharingPrimitives";
 
@@ -25,6 +25,7 @@ export function SharingTabs<T extends string>({ label, tabs, active, onChange, i
   size?: "major" | "minor";
 }) {
   const refs = useRef(new Map<string, HTMLButtonElement>());
+  const listRef = useRef<HTMLDivElement | null>(null);
 
   function onKeyDown(e: React.KeyboardEvent<HTMLDivElement>) {
     const i = tabs.findIndex(t => t.id === active);
@@ -41,9 +42,23 @@ export function SharingTabs<T extends string>({ label, tabs, active, onChange, i
     refs.current.get(tab.id)?.focus();
   }
 
+  // On a phone the row scrolls sideways rather than wrapping; keep the
+  // selected tab in view so it is never the one hidden off the edge.
+  useEffect(() => {
+    // Scrolls the strip only, never the page: scrollIntoView would also
+    // move the window vertically when the strip is off screen.
+    const el = refs.current.get(active);
+    const row = listRef.current;
+    if (!el || !row) return;
+    const left = el.offsetLeft - row.offsetLeft;
+    const right = left + el.offsetWidth;
+    if (left < row.scrollLeft) row.scrollLeft = left;
+    else if (right > row.scrollLeft + row.clientWidth) row.scrollLeft = right - row.clientWidth;
+  }, [active]);
+
   const major = size === "major";
   return (
-    <div role="tablist" aria-label={label} onKeyDown={onKeyDown}
+    <div role="tablist" aria-label={label} onKeyDown={onKeyDown} ref={listRef}
       className={major ? "sharing-tabs sharing-tabs-major" : "sharing-tabs sharing-tabs-minor"}>
       {tabs.map(tab => {
         const selected = tab.id === active;
@@ -66,7 +81,9 @@ export function SharingTabs<T extends string>({ label, tabs, active, onChange, i
 }
 
 export const SHARING_STYLES = `
-  .sharing-tabs { display: flex; gap: 4px; flex-wrap: wrap; min-width: 0; }
+  .sharing-tabs { display: flex; gap: 4px; flex-wrap: nowrap; white-space: nowrap; overflow: auto; overflow-y: hidden; min-width: 0; max-width: 100%; scrollbar-width: none; -ms-overflow-style: none; -webkit-overflow-scrolling: touch; scroll-behavior: smooth; }
+  .sharing-tabs::-webkit-scrollbar { display: none; }
+  .sharing-tab { flex-shrink: 0; }
   .sharing-tabs-major { border-bottom: 1px solid #E2E8F0; margin: 0 0 16px; }
   .sharing-tabs-minor { margin: 0 0 14px; padding: 4px; background: #F1F5F9; border-radius: 10px; width: fit-content; max-width: 100%; box-sizing: border-box; }
   .sharing-tab { display: inline-flex; align-items: center; gap: 7px; border: none; background: none; cursor: pointer; color: #475569; font-weight: 600; white-space: nowrap; }

@@ -1,4 +1,4 @@
-// Step 1 of 7: Documents — file selection and transaction details.
+// Documents — file selection and transaction details.
 // PRIVACY / SECURITY:
 //   • browser File objects are NEVER put into PrepFile/draft state — that
 //     stays metadata-only (name, size, type), which IS what's persisted to
@@ -13,7 +13,7 @@ import { FileText } from "lucide-react";
 import { usePrepare } from "../../../context/PrepareContext";
 import { usePlatform } from "../../../context/PlatformContext";
 import type { PrepFile } from "../../../models/prepare";
-import { DEFAULT_TRANSACTION_DETAILS } from "../../../models/prepare";
+import { stepEyebrow, DEFAULT_TRANSACTION_DETAILS } from "../../../models/prepare";
 import { classifyFilesWithRefs, humanFileSize, fileStateLabel } from "../../../services/prepare/file-intake";
 import { setFileRef, getFileRef, clearFileRef } from "../../../services/prepare/file-registry";
 import { realDocumentService } from "../../../services/real/document.service";
@@ -951,7 +951,7 @@ export function UploadStep() {
     <div style={GF}>
       <StepBanner
         icon={FileText}
-        eyebrow="Step 1 of 7"
+        eyebrow={stepEyebrow("upload")}
         title="Documents"
         description="Select the documents for this transaction. Only file names and sizes are used — no file contents are read or stored in this demonstration."
         meta={files.length === 0 ? "No files added" : `${readyCount} of ${files.length} file${files.length !== 1 ? "s" : ""} ready`}

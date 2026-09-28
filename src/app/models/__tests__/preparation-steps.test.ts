@@ -7,7 +7,7 @@
 // a decision nothing checks is one that drifts back silently.
 
 import { describe, it, expect } from "vitest";
-import { PREPARATION_STEPS } from "../prepare";
+import { PREPARATION_STEPS, stepEyebrow } from "../prepare";
 
 describe("PREPARATION_STEPS", () => {
   it("runs documents → signers → order → settings → fields → authentication → review → authorization", () => {
@@ -54,5 +54,13 @@ describe("PREPARATION_STEPS", () => {
   it("gives every step a distinct route", () => {
     const routes = PREPARATION_STEPS.map(s => s.route);
     expect(new Set(routes).size).toBe(routes.length);
+  });
+});
+
+describe("stepEyebrow", () => {
+  it("numbers each step from PREPARATION_STEPS", () => {
+    expect(stepEyebrow("upload")).toBe(`Step 1 of ${PREPARATION_STEPS.length}`);
+    expect(stepEyebrow("authentication")).toBe(`Step 6 of ${PREPARATION_STEPS.length}`);
+    expect(stepEyebrow("authorization")).toBe(`Step ${PREPARATION_STEPS.length} of ${PREPARATION_STEPS.length}`);
   });
 });

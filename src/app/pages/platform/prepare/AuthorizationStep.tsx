@@ -30,6 +30,7 @@ import {
 import { usePrepare } from "../../../context/PrepareContext";
 import { useProcessing } from "../../../services/processing.service";
 import { StepBanner } from "../../../components/prepare/StepBanner";
+import { stepEyebrow } from "../../../models/prepare";
 
 const GF = { fontFamily: "'Geist', sans-serif" } as const;
 const NAVY = "#07111F";
@@ -101,7 +102,7 @@ export function AuthorizationStep() {
     <div style={{ display: "flex", flexDirection: "column", gap: "clamp(14px, 3.5vw, 20px)" }}>
       <StepBanner
         icon={BadgeCheck}
-        eyebrow="Step 8 of 8"
+        eyebrow={stepEyebrow("authorization")}
         title="Authorization"
         description="The last step before anyone is emailed. Check what is about to be sent, then authorize it."
       />

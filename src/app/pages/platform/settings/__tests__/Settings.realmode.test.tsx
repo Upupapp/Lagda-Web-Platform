@@ -179,11 +179,13 @@ describe("preferences", () => {
     expect(tz).toHaveValue("Asia/Manila");
     expect(screen.getByLabelText("Time format")).toHaveValue("12h");
     await user.selectOptions(screen.getByLabelText("Date format"), "YYYY-MM-DD");
-    await user.click(screen.getByRole("radio", { name: "Compact" }));
+    // Appearance (theme, density) and Default view are hidden for now.
+    expect(screen.queryByText("Appearance")).toBeNull();
+    expect(screen.queryByText("Default view")).toBeNull();
     await user.click(screen.getByRole("button", { name: /Save preferences/ }));
     expect(await screen.findByText("Preferences saved.")).toBeInTheDocument();
     const patch = calls.find(c => c.method === "PATCH" && c.path === "/me/preferences");
-    expect(patch?.body).toEqual({ dateFormat: "YYYY-MM-DD", density: "compact" });
+    expect(patch?.body).toEqual({ dateFormat: "YYYY-MM-DD" });
     expect(screen.getByRole("button", { name: /Save preferences/ })).toBeDisabled();
   });
 });

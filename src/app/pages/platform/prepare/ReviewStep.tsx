@@ -1,4 +1,4 @@
-// Step 6 of 7: Review — full summary before proceeding to field placement.
+// Review — full summary before proceeding to field placement.
 // Shows all draft data, validation status, and field-placement readiness.
 // The "Continue to Authorization" CTA calls markReadyForFieldPlacement() and
 // navigates to /authorization — the last step before anyone is emailed.
@@ -11,7 +11,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import { ClipboardCheck, Check, ChevronRight } from "lucide-react";
 import { usePrepare } from "../../../context/PrepareContext";
-import {
+import { stepEyebrow,
   PREPARATION_STEPS,
   PREP_PARTICIPANT_ROLE_LABELS,
   DEFAULT_PREP_SETTINGS,
@@ -431,7 +431,7 @@ export function ReviewStep() {
     <div style={GF}>
       <StepBanner
         icon={ClipboardCheck}
-        eyebrow="Step 6 of 7"
+        eyebrow={stepEyebrow("review")}
         title="Review"
         description="Check all preparation settings before proceeding to place signature fields."
         meta={isReady ? "Ready for field placement" : "Not yet ready"}

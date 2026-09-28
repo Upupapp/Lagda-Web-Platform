@@ -1,5 +1,8 @@
-// Floating Help/Preparation FAB — persistent across every /app/prepare/*
-// step (mounted once in PrepareLayout).
+// Preparation Guide button — persistent across every /app/prepare/* step.
+// It used to float over the page; it now sits in the centre of the wizard's
+// Previous/Continue bar (PrepareLayout passes it to PrepareNavBar), so it can
+// never cover Continue or the last field of a form. The panel opens above the
+// bar, centred on wide screens and as a bottom sheet on phones.
 //
 // ── What it answers, and in what order ─────────────────────────────────────
 //
@@ -58,7 +61,7 @@ function useNavBarClearance(fallback: number): number {
   const [clearance, setClearance] = useState(fallback);
 
   useEffect(() => {
-    const GAP = 16;
+    const GAP = 8;
     const bar = document.querySelector<HTMLElement>(".prep-nav-bar");
     if (!bar) { setClearance(fallback); return; }
 
@@ -132,7 +135,6 @@ export function PreparationHelpFab() {
   // everywhere else — and so these values can be derived from each other
   // (the panel sits a fixed gap above the FAB) instead of being three
   // hand-kept numbers that silently disagree after an edit.
-  const fabSize = isCompact ? 48 : 52;
 
   // Clearance above the wizard's Previous/Continue bar is MEASURED, not
   // assumed. The previous constants (80/96px) were calibrated against a bar
@@ -140,7 +142,7 @@ export function PreparationHelpFab() {
   // top of Continue at exactly the widths it was meant to clear. The bar is
   // shorter now, but the lesson is that a fixed number here is a guess about
   // someone else's layout; measuring it is the only version that stays true.
-  const navBarClearance = useNavBarClearance(isCompact ? 80 : 96);
+  const navBarClearance = useNavBarClearance(isCompact ? 72 : 80);
 
   // Close on outside click.
   useEffect(() => {
@@ -253,38 +255,40 @@ export function PreparationHelpFab() {
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
+        aria-controls={open ? "prep-help-panel" : undefined}
         aria-label={open ? "Close preparation guide" : "Open preparation guide"}
+        title="Preparation guide"
         style={{
-          position: "fixed",
-          right: `max(${String(isCompact ? 16 : 20)}px, env(safe-area-inset-right, 0px))`,
-          // Cleared above the wizard's Previous/Continue nav bar rather than
-          // the viewport edge, so the FAB never sits on top of Continue.
-          // That bar is ~73px on desktop and ~65px on mobile (see
-          // PrepareLayout's .prep-nav-bar and its own media query).
-          bottom: `calc(${String(navBarClearance)}px + env(safe-area-inset-bottom, 0px))`,
-          zIndex: Z.helpFab,
-          width: fabSize,
-          height: fabSize,
-          borderRadius: "50%",
-          border: "none",
-          background: ready ? T.success : T.ink,
-          color: T.surface,
-          display: "flex",
+          ...GF,
+          position: "relative",
+          height: 44,
+          minWidth: 44,
+          padding: isCompact ? 0 : "0 16px 0 12px",
+          borderRadius: 999,
+          border: `1px solid ${open ? T.azure : T.borderStrong}`,
+          background: open ? T.azureWash : T.surface,
+          color: ready ? T.success : T.ink,
+          display: "inline-flex",
           alignItems: "center",
           justifyContent: "center",
+          gap: 7,
+          fontSize: 14,
+          fontWeight: 600,
+          whiteSpace: "nowrap",
           cursor: "pointer",
-          boxShadow: "0 6px 20px rgba(7,17,31,0.28)",
         }}
         className={`prep-help-fab${nudging ? " prep-help-fab--nudge" : ""}`}
       >
-        {open ? <X size={22} strokeWidth={2.25} /> : <HelpCircle size={24} strokeWidth={2} />}
+        {open ? <X size={18} strokeWidth={2.25} aria-hidden /> : <HelpCircle size={18} strokeWidth={2} aria-hidden />}
+        {!isCompact && <span>Guide</span>}
         {!open && !ready && items.length > 0 && (
           <span
             aria-hidden="true"
+            className="prep-help-badge"
             style={{
               position: "absolute",
-              top: -2,
-              right: -2,
+              top: -6,
+              right: -6,
               minWidth: 18,
               height: 18,
               padding: "0 4px",
@@ -307,6 +311,7 @@ export function PreparationHelpFab() {
       {open && (
         <div
           ref={panelRef}
+          id="prep-help-panel"
           role="dialog"
           aria-modal="false"
           aria-labelledby="prep-help-heading"
@@ -319,15 +324,18 @@ export function PreparationHelpFab() {
             // the FAB: a 360px popover anchored right has nowhere to go at
             // 320px, and clamping it to the viewport leaves it touching both
             // edges anyway.
+            // Phones: a bottom sheet across the full width. Wider screens: a
+            // panel centred above the nav bar, over the button that opened it.
             ...(isCompact
-              ? { left: 12, right: 12, width: "auto" }
-              : { right: "max(20px, env(safe-area-inset-right, 0px))", width: 360 }),
-            bottom: `calc(${String(navBarClearance + fabSize + 12)}px + env(safe-area-inset-bottom, 0px))`,
-            maxHeight: isCompact ? "min(65vh, 520px)" : "min(70vh, 560px)",
+              ? { left: 0, right: 0, bottom: 0, width: "auto", borderRadius: "16px 16px 0 0",
+                  paddingBottom: "env(safe-area-inset-bottom, 0px)" }
+              : { left: "50%", transform: "translateX(-50%)", width: "min(400px, calc(100vw - 32px))",
+                  bottom: `calc(${String(navBarClearance)}px + env(safe-area-inset-bottom, 0px))`,
+                  borderRadius: 16 }),
+            maxHeight: isCompact ? "min(75vh, 560px)" : "min(70vh, 560px)",
             display: "flex",
             flexDirection: "column",
             background: T.surface,
-            borderRadius: 16,
             boxShadow: "0 20px 56px rgba(7,17,31,0.24)",
             border: `1px solid ${T.border}`,
             overflow: "hidden",
@@ -345,7 +353,7 @@ export function PreparationHelpFab() {
                 onClick={() => setOpen(false)}
                 aria-label="Close"
                 style={{
-                  width: 26, height: 26, borderRadius: 8, border: `1px solid ${T.border}`,
+                  width: 36, height: 36, borderRadius: 8, border: `1px solid ${T.border}`,
                   background: T.surface, color: T.ink, display: "flex", alignItems: "center",
                   justifyContent: "center", cursor: "pointer", flexShrink: 0,
                 }}
@@ -518,7 +526,8 @@ export function PreparationHelpFab() {
       {/* Only what inline styles genuinely cannot express. The geometry that
           used to live here is now derived from `useViewport` above. */}
       <style>{`
-        .prep-help-fab:hover { filter: brightness(1.08); }
+        .prep-help-fab:hover { background: ${T.canvas} !important; }
+        .prep-help-fab:focus-visible { outline: 2px solid ${T.azure}; outline-offset: 2px; }
 
         /* The nudge, when somebody tries to move on with work outstanding.
            *

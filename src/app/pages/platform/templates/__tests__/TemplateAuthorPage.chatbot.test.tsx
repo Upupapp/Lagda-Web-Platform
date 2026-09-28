@@ -43,6 +43,11 @@ vi.mock("../../../../services/templates-source", () => ({
 import { TemplateAuthorPage, LEAVE_WARNING, SAVE_WARNING } from "../TemplateAuthorPage";
 import { getChatSession, hasChatSession, resetChatStore, setChatSession } from "../author/chatbot/chat-store";
 import { initialState, respond, type EngineState } from "../author/chatbot/engine";
+// The page loads the draft builder on demand. Loading it here first means the
+// test waits on the save itself, not on a cold module transform that can take
+// longer than waitFor allows when the whole suite is running.
+import "../author/chatbot/draft";
+import "../author/chatbot/participants";
 
 function mountPage() {
   const router = createMemoryRouter([

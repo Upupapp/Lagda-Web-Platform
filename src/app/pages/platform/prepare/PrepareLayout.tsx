@@ -35,6 +35,7 @@ import { PreparationHelpFab, nudgePreparationHelp } from "../../../components/pr
 import { currentStepFromPath } from "../../../components/prepare/prep-step-guides";
 import { PrepareBreadcrumb, PrepareNavBar } from "../../../components/prepare/PrepareChrome";
 import { useProcessing } from "../../../services/processing.service";
+import { ResponsiveStepper } from "../../../components/system/ResponsiveStepper";
 
 const GF = { fontFamily: "'Geist', sans-serif" };
 const NAVY   = "#07111F";
@@ -292,93 +293,25 @@ function StepperTopBar({
   stepStates: Record<PreparationStepId, PreparationStepState>;
   onStepClick: (id: PreparationStepId) => void;
 }) {
-  const totalSteps = PREPARATION_STEPS.length;
-  const activeIdx  = activeStepId ? STEP_ORDER.indexOf(activeStepId) + 1 : 1;
-  const activeRef  = useRef<HTMLButtonElement | null>(null);
-
-  // Open showing where you are. A strip that starts at step one while you are
-  // on step six is a strip that has to be explored before it can be read.
-  useEffect(() => {
-    activeRef.current?.scrollIntoView({ block: "nearest", inline: "center" });
-  }, [activeStepId]);
-
+  const activeIdx = activeStepId ? Math.max(0, STEP_ORDER.indexOf(activeStepId)) : 0;
+  const locked = (i: number) => {
+    const st = stepStates[STEP_ORDER[i]!];
+    return st === "unavailable" || st === "blocked";
+  };
   return (
-    <div
-      style={{
-        background: "#F5F7FA",
-        borderBottom: "1px solid #E3E8EF",
-        padding: "10px 0 10px",
-      }}
-    >
-      <div style={{
-        ...GF, display: "flex", justifyContent: "space-between",
-        alignItems: "center", padding: "0 16px 8px",
-      }}>
-        <span style={{ fontSize: 12, fontWeight: 700, color: NAVY }}>
-          Prepare Document
-        </span>
-        <span style={{ fontSize: 11, color: SILVER }}>
-          Step {activeIdx} of {totalSteps}
-        </span>
-      </div>
-
-      <ol
-        aria-label="Preparation steps"
-        style={{
-          display: "flex", alignItems: "center", gap: 6,
-          listStyle: "none", margin: 0, padding: "0 16px",
-          overflowX: "auto", scrollbarWidth: "none",
-          WebkitOverflowScrolling: "touch",
+    <div style={{ background: "#F5F7FA", borderBottom: "1px solid #E3E8EF", padding: "10px 16px 8px" }}>
+      <ResponsiveStepper
+        label="Preparation steps"
+        steps={PREPARATION_STEPS}
+        currentIndex={activeIdx}
+        useShortLabels
+        isComplete={i => {
+          const st = stepStates[STEP_ORDER[i]!];
+          return st === "complete" || st === "complete-with-warning";
         }}
-      >
-        {PREPARATION_STEPS.map((step, idx) => {
-          const state = stepStates[step.id];
-          const isActive = step.id === activeStepId;
-          const locked = state === "unavailable" || state === "blocked";
-          const done = state === "complete" || state === "complete-with-warning";
-
-          return (
-            <li key={step.id} style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
-              <button
-                type="button"
-                ref={isActive ? activeRef : undefined}
-                onClick={() => { if (!locked) onStepClick(step.id); }}
-                disabled={locked}
-                aria-current={isActive ? "step" : undefined}
-                // Says WHY it cannot be opened, rather than being inert.
-                title={locked ? `${step.label} — finish the earlier steps first` : step.label}
-                style={{
-                  ...GF, display: "inline-flex", alignItems: "center", gap: 6,
-                  minHeight: 36, padding: "0 12px", borderRadius: 999,
-                  border: isActive ? `1px solid ${AZURE}` : "1px solid #E3E8EF",
-                  background: isActive ? "#EBF4FC" : locked ? "#F1F5F9" : "#FFFFFF",
-                  color: locked ? SILVER : isActive ? AZURE : NAVY,
-                  fontSize: 12.5, fontWeight: isActive ? 700 : 600,
-                  whiteSpace: "nowrap",
-                  cursor: locked ? "not-allowed" : "pointer",
-                }}
-              >
-                <span
-                  aria-hidden
-                  style={{
-                    width: 18, height: 18, borderRadius: "50%", flexShrink: 0,
-                    display: "inline-flex", alignItems: "center", justifyContent: "center",
-                    fontSize: 10, fontWeight: 700,
-                    background: done ? AZURE : isActive ? AZURE : "#E3E8EF",
-                    color: done || isActive ? "#FFFFFF" : SILVER,
-                  }}
-                >
-                  {done ? "✓" : idx + 1}
-                </span>
-                {step.shortLabel}
-              </button>
-              {idx < PREPARATION_STEPS.length - 1 && (
-                <span aria-hidden style={{ width: 10, height: 1, background: "#D1D9E0", flexShrink: 0 }} />
-              )}
-            </li>
-          );
-        })}
-      </ol>
+        canSelect={i => !locked(i)}
+        onSelect={i => { onStepClick(STEP_ORDER[i]!); }}
+      />
     </div>
   );
 }
@@ -436,9 +369,10 @@ const LAYOUT_STYLES = `
   .prep-nav-bar {
     border-top: 1px solid #E3E8EF;
     padding: 16px 40px;
-    display: flex;
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
     align-items: center;
-    justify-content: space-between;
+    column-gap: 12px;
     background: #FFFFFF;
     flex-shrink: 0;
     /* Sits below the scrollable .prep-step-area rather than overlapping it,
@@ -453,13 +387,19 @@ const LAYOUT_STYLES = `
   .prep-step-row:disabled {
     cursor: default;
   }
+  /* Below a laptop width the long "see what's left" link would wrap into
+     three lines beside Continue; the Guide button in the middle of the bar
+     carries the same count and opens the same list. */
+  @media (max-width: 1100px) {
+    .prep-nav-reminder { display: none !important; }
+  }
   @media (max-width: 768px) {
     .prep-layout-root { height: 100dvh; }
     .prep-sidebar  { display: none; }
     .prep-steprail { display: none; }
     .prep-topbar   { display: block; }
     .prep-step-area { padding: 20px 16px 32px; }
-    .prep-nav-bar   { padding: 12px 16px; }
+    .prep-nav-bar   { padding: 12px 16px; column-gap: 8px; }
     .prep-breadcrumb { padding: 0 16px !important; }
   }
 `;
@@ -654,6 +594,7 @@ export function PrepareLayout() {
               onPrevious={handlePrevious}
               onContinue={handleContinue}
               onShowMissing={() => setShowMissing(true)}
+              guide={<PreparationHelpFab />}
             />
           )}
         </div>
@@ -676,7 +617,6 @@ export function PrepareLayout() {
       )}
 
       {/* Persistent cross-step help — what's missing, how close to ready */}
-      <PreparationHelpFab />
     </div>
   );
 }

@@ -4,7 +4,7 @@
 // interaction contract the component promises.
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, act } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
 
@@ -27,7 +27,7 @@ vi.mock("../../../context/PrepareContext", () => ({
 // ready assertions below only hold under that path.
 vi.mock("../../../services/backend-flag", () => ({ USE_REAL_BACKEND: true }));
 
-import { PreparationHelpFab } from "../PreparationHelpFab";
+import { PreparationHelpFab, nudgePreparationHelp } from "../PreparationHelpFab";
 import type { PreparationStepId, PreparationStepState } from "../../../models/prepare";
 
 const ALL_AVAILABLE: Record<PreparationStepId, PreparationStepState> = {
@@ -225,31 +225,56 @@ describe("PreparationHelpFab", () => {
   });
   // ── Clearance above the nav bar ────────────────────────────────────────────
 
-  it("clears the nav bar by its measured height, not a guess", async () => {
-    // The old constants were 80/96px. At 320px the bar reached 131px on two
-    // steps, and the FAB sat on top of Continue. jsdom has no layout, so the
-    // bar's height is stubbed; what is asserted is that the FAB READS it.
+  it("opens its panel above the nav bar by the bar's measured height", async () => {
+    // jsdom has no layout, so the bar's height is stubbed; what is asserted
+    // is that the panel READS it rather than assuming a number.
     const bar = document.createElement("div");
     bar.className = "prep-nav-bar";
     Object.defineProperty(bar, "getBoundingClientRect", {
-      value: () => ({ height: 131, width: 320, top: 0, left: 0, right: 320, bottom: 131, x: 0, y: 0, toJSON: () => ({}) }),
+      value: () => ({ height: 131, width: 1024, top: 0, left: 0, right: 1024, bottom: 131, x: 0, y: 0, toJSON: () => ({}) }),
     });
     document.body.appendChild(bar);
     try {
       renderAt(PARTICIPANTS);
-      const fab = screen.getByRole("button", { name: /open preparation guide/i });
-      await new Promise(resolve => setTimeout(resolve, 0));
-      // 131px bar + 16px gap.
-      expect(fab.style.bottom).toContain("147px");
+      await userEvent.setup().click(screen.getByRole("button", { name: /open preparation guide/i }));
+      // 131px bar + 8px gap.
+      expect(screen.getByRole("dialog").style.bottom).toContain("139px");
     } finally {
       bar.remove();
     }
   });
 
-  it("falls back to a fixed clearance when there is no nav bar", () => {
-    // The Fields step hides the bar entirely.
+  it("is an in-flow button, not a floating one, labelled Guide on wide screens", () => {
     renderAt(PARTICIPANTS);
-    const fab = screen.getByRole("button", { name: /open preparation guide/i });
-    expect(fab.style.bottom).toMatch(/calc\((96|80)px/);
+    const btn = screen.getByRole("button", { name: /open preparation guide/i });
+    expect(btn.style.position).not.toBe("fixed");
+    expect(btn).toHaveTextContent("Guide");
+    expect(btn).toHaveAttribute("aria-expanded", "false");
+  });
+
+  it("keeps the outstanding-items badge on the button", () => {
+    renderAt(PARTICIPANTS);
+    const btn = screen.getByRole("button", { name: /open preparation guide/i });
+    expect(btn.querySelector(".prep-help-badge")).not.toBeNull();
+  });
+
+  it("goes icon-only on a phone and opens as a bottom sheet", async () => {
+    const prev = window.innerWidth;
+    Object.defineProperty(window, "innerWidth", { configurable: true, value: 320 });
+    try {
+      renderAt(PARTICIPANTS);
+      const btn = screen.getByRole("button", { name: /open preparation guide/i });
+      expect(btn).not.toHaveTextContent("Guide");
+      await userEvent.setup().click(btn);
+      expect(screen.getByRole("dialog").style.bottom).toBe("0px");
+    } finally {
+      Object.defineProperty(window, "innerWidth", { configurable: true, value: prev });
+    }
+  });
+
+  it("opens when a blocked action nudges it", async () => {
+    renderAt(PARTICIPANTS);
+    act(() => { nudgePreparationHelp(); });
+    expect(await screen.findByRole("dialog", {}, { timeout: 2000 })).toBeInTheDocument();
   });
 });

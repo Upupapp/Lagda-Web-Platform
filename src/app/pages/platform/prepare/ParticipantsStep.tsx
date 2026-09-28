@@ -1,4 +1,4 @@
-// Step 2 of 7: Participants — add, edit, remove, and reorder participants.
+// Participants — add, edit, remove, and reorder participants.
 // PRIVACY: participant names and email addresses exist only in React context memory.
 // They are never written to localStorage, sessionStorage, or cookies.
 // Burgundy (#67023B) is NEVER used. eNotary is NEVER mentioned.
@@ -6,7 +6,7 @@
 import React, { useEffect, useState } from "react";
 import { Users } from "lucide-react";
 import { usePrepare } from "../../../context/PrepareContext";
-import {
+import { stepEyebrow,
   PREP_PARTICIPANT_ROLE_LABELS,
   PREP_PARTICIPANT_ROLE_DESCRIPTIONS,
   PREP_ROLE_IS_BLOCKING,
@@ -740,7 +740,7 @@ export function ParticipantsStep() {
     <div style={GF}>
       <StepBanner
         icon={Users}
-        eyebrow="Step 2 of 7"
+        eyebrow={stepEyebrow("participants")}
         title="Participants"
         description="Add the people who will interact with this document. At least one signer, approver, reviewer, or acknowledgment recipient is required."
         meta={participants.length === 0 ? "No participants added" : `${participants.length} participant${participants.length !== 1 ? "s" : ""} added`}

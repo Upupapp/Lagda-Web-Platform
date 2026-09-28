@@ -1,4 +1,4 @@
-// Step 3 of 7: Routing — configure how participants are sequenced.
+// Routing — configure how participants are sequenced.
 // Routing groups are created automatically from the routing mode or
 // manually by the user. Participants are assigned to groups here.
 // Burgundy (#67023B) is NEVER used. eNotary is NEVER mentioned.
@@ -6,7 +6,7 @@
 import React, { useEffect, useCallback } from "react";
 import { Route } from "lucide-react";
 import { usePrepare } from "../../../context/PrepareContext";
-import {
+import { stepEyebrow,
   ROUTING_MODE_DESCRIPTIONS,
   PREP_PARTICIPANT_ROLE_LABELS,
   PREP_ROLE_IS_BLOCKING,
@@ -69,7 +69,7 @@ function buildDefaultGroups(
       stepNumber:             0,
       label:                  `Step ${i + 1}`,
       participantIds:         [p.id],
-      requiredCompletionRule: "all" as RoutingCompletionRule,
+      requiredCompletionRule: "all",
     })));
   }
 
@@ -485,7 +485,7 @@ export function RoutingStep() {
       <div style={GF}>
         <StepBanner
           icon={Route}
-          eyebrow="Step 3 of 7"
+          eyebrow={stepEyebrow("routing")}
           title="Routing"
           description="Choose how participants are sequenced and whether they act simultaneously or one at a time."
           meta="Waiting on participants"
@@ -707,7 +707,7 @@ export function RoutingStep() {
     <div style={GF}>
       <StepBanner
         icon={Route}
-        eyebrow="Step 3 of 7"
+        eyebrow={stepEyebrow("routing")}
         title="Routing"
         description="Choose how participants are sequenced and whether they act simultaneously or one at a time."
         meta={currentModeLabel}
