@@ -94,27 +94,23 @@ describe("VerificationIdActions", () => {
 });
 
 describe("Documents list — Verification ID (real mode)", () => {
-  it("shows the column, the id on the completed row and a dash on the others", async () => {
+  it("shows the id on the completed card and a dash on the others", async () => {
     render(<MemoryRouter initialEntries={["/app/documents"]}><DocumentsPage /></MemoryRouter>);
-    const table = await screen.findByRole("table", { name: "Documents" });
-    expect(within(table).getByRole("columnheader", { name: "Verification ID" })).toBeInTheDocument();
-    await waitFor(() => expect(within(table).getAllByText("LAGDA-VER-2026-004821").length).toBeGreaterThan(0));
-    const rows = within(table).getAllByRole("row");
-    const draftRow = rows.find(r => within(r).queryByText("Draft NDA"))!;
-    expect(within(draftRow).getByText("—")).toBeInTheDocument();
-    // Desktop column visible; the tablet line and phone card carry the same
-    // actions but are hidden by the page CSS at this (default) width.
-    expect(screen.getAllByRole("link", { name: "Verify document" })).toHaveLength(1);
-    const all = screen.getAllByRole("link", { name: "Verify document", hidden: true });
-    expect(all).toHaveLength(3);
-    for (const link of all) expect(link).toHaveAttribute("href", "/app/verify/LAGDA-VER-2026-004821");
+    const grid = await screen.findByRole("list", { name: "Documents" });
+    await waitFor(() => expect(within(grid).getAllByText("LAGDA-VER-2026-004821").length).toBeGreaterThan(0));
+    const cards = within(grid).getAllByTestId("completed-card");
+    const draftCard = cards.find(c => within(c).queryByText("Draft NDA"))!;
+    expect(within(draftCard).getByText("—")).toBeInTheDocument();
+    // Only the completed card has an id to verify; the draft's is a dash.
+    const link = screen.getByRole("link", { name: "Verify document" });
+    expect(link).toHaveAttribute("href", "/app/verify/LAGDA-VER-2026-004821");
   });
 
   it("finds a document by its Verification ID although the server search does not", async () => {
     render(<MemoryRouter initialEntries={["/app/documents?q=LAGDA-VER-2026-004821"]}><DocumentsPage /></MemoryRouter>);
-    const table = await screen.findByRole("table", { name: "Documents" });
-    await waitFor(() => expect(within(table).getByText("Lease Agreement")).toBeInTheDocument());
-    expect(within(table).queryByText("Draft NDA")).toBeNull();
+    const grid = await screen.findByRole("list", { name: "Documents" });
+    await waitFor(() => expect(within(grid).getByText("Lease Agreement")).toBeInTheDocument());
+    expect(within(grid).queryByText("Draft NDA")).toBeNull();
   });
 });
 

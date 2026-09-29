@@ -32,16 +32,16 @@ const DocumentArchiveViewer = lazy(() =>
 import { SignatureRecordDialog } from "../../../components/documents/SignatureRecordDialog";
 import { ResendSigningDialog } from "../../../components/documents/ResendSigningDialog";
 import { realDocumentService, type RealDocument } from "../../../services/real/document.service";
-import { iconForDocument } from "../../../services/documents/file-type-icon";
 import { documentOrganizationService } from "../../../services/mock/document-organization.service";
 import { isCapabilityInActiveProfile } from "../../../config/capability-resolver";
 import { SIGNING_REQUEST_STATUS } from "../../../services/signing-request-status";
 import { StatusBadge } from "../../../components/documents/StatusBadge";
 import { VerificationIdActions } from "../../../components/documents/VerificationIdActions";
-import { CompletedDocumentGrid, type CompletedCardData } from "./CompletedDocumentCards";
+import { CompletedDocumentGrid, type CompletedCardData, type CardAction } from "./CompletedDocumentCards";
 import { AuditTrailDialog } from "../../../components/documents/AuditTrailDialog";
 import { ShareDocumentDialog } from "../../../components/document-sharing/ShareDocumentDialog";
 import type { TransactionStatus } from "../../../models";
+import { TRANSACTION_STATUS_LABELS } from "../../../models";
 import type {
   DocumentView, DocumentListQuery, DocumentListItem, DocumentListResult,
   DocumentFolder, DocumentTag, DocumentSortField, DocumentSortDirection,
@@ -2188,82 +2188,6 @@ interface DocumentFileFacts {
   filename: string | null;
 }
 
-// The signature affordance. Shown only once a request has actually been sent
-// — a draft has no signatures to record, and offering to open an empty
-// record would read as though something were missing.
-function SignatureLink({
-  item, onOpen, compact,
-}: {
-  item: SigningRequestListItem;
-  onOpen: (item: SigningRequestListItem) => void;
-  compact?: boolean;
-}) {
-  if (item.state === "draft" || item.state === "ready-to-send") {
-    return <ParticipantProgress done={item.completedParticipantCount} total={item.participantCount} />;
-  }
-  const allSigned = item.completedParticipantCount > 0
-    && item.completedParticipantCount >= item.participantCount;
-  return (
-    <button
-      onClick={e => { e.stopPropagation(); onOpen(item); }}
-      title="View participants"
-      style={{
-        display: "inline-flex", alignItems: "center", gap: 6, background: "none",
-        border: "none", padding: 0, cursor: "pointer", ...GF,
-      }}
-    >
-      <ParticipantProgress done={item.completedParticipantCount} total={item.participantCount} />
-      <span style={{
-        fontSize: compact === true ? 11 : 12, color: allSigned ? "#059669" : AZURE,
-        fontWeight: 600, whiteSpace: "nowrap",
-      }}>
-        {allSigned ? "Signed" : "Details"}
-      </span>
-    </button>
-  );
-}
-
-/**
- * A row action: icon AND label.
- *
- * The actions used to be four 32px icon-only buttons in a row. An icon is a
- * reminder for someone who already knows the action, not an explanation for
- * someone meeting it — a pencil reads as "edit" or "sign" depending on what
- * you already believe, and a paper plane as "send" or "send again".
- *
- * On a phone the label sits beside the icon, because that is where the guess
- * is most expensive and where a 32px target was already too small. Below
- * 400px the labels drop and `title`/`aria-label` carry the meaning, which is
- * the point at which four labelled buttons genuinely cannot fit.
- */
-function DocAction({ icon: Icon, label, onClick, tone }: {
-  icon: typeof Eye;
-  label: string;
-  onClick: () => void;
-  tone?: "default" | "primary";
-}) {
-  return (
-    <button
-      onClick={onClick}
-      aria-label={label}
-      title={label}
-      className="doc-action"
-      style={{
-        ...GF,
-        display: "inline-flex", alignItems: "center", gap: 6,
-        minHeight: 34, padding: "0 10px", borderRadius: 7,
-        border: "1px solid #E3E8EF", background: "#FFFFFF",
-        color: tone === "primary" ? AZURE : SLATE4,
-        fontSize: 12.5, fontWeight: 600, cursor: "pointer",
-        whiteSpace: "nowrap",
-      }}
-    >
-      <Icon size={15} aria-hidden />
-      <span className="doc-action-label">{label}</span>
-    </button>
-  );
-}
-
 // ── Unsent drafts ────────────────────────────────────────────────────────────
 //
 // A signing request is created only at the final Send step. A document that
@@ -2295,171 +2219,66 @@ function unsentDraftRow(document: RealDocument): SigningRequestListItem {
   };
 }
 
-function RealDocumentRow({
-  item, onView, onSignatures, onAudit, onResend, file, verificationId,
-}: {
-  item: SigningRequestListItem;
-  onView: (item: SigningRequestListItem) => void;
-  onSignatures: (item: SigningRequestListItem) => void;
-  onAudit: (item: SigningRequestListItem) => void;
-  onResend: (item: SigningRequestListItem) => void;
-  file: DocumentFileFacts | undefined;
-  verificationId?: string | null;
-}) {
-  const FileGlyph = iconForDocument(file?.mediaType, file?.filename);
-  const navigate = useNavigate();
-  return (
-    <div role="row" className="doc-row doc-grid-real">
-      <div role="cell" />
-      <div role="cell" style={{ padding: "8px 8px", minWidth: 0 }}>
-        <div style={{ display: "flex", alignItems: "flex-start", gap: 8, minWidth: 0 }}>
-          <FileGlyph size={15} aria-hidden style={{ flexShrink: 0, marginTop: 2, color: SLATE4 }} />
-          <button
-            onClick={() => onView(item)}
-            title={item.documentTitle}
-            style={{
-              fontSize: 13, fontWeight: 600, color: NAVY, background: "none", border: "none",
-              cursor: "pointer", padding: 0, textAlign: "left", overflow: "hidden",
-              textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "100%", ...GF,
-            }}
-          >
-            {item.documentTitle}
-          </button>
-        </div>
-        {item.state === "completed" && verificationId && (
-          <div className="doc-vid-tablet" style={{ paddingLeft: 23 }}>
-            <VerificationIdActions id={verificationId} variant="line" label="Verification ID" />
-          </div>
-        )}
-      </div>
-      <div role="cell" style={{ padding: "8px 8px" }}>
-        <StatusBadge status={SIGNING_REQUEST_STATUS[item.state]} />
-      </div>
-      <div role="cell" className="doc-col-vid" style={{ padding: "8px 8px" }}>
-        <VerificationIdActions id={item.state === "completed" ? verificationId : null} />
-      </div>
-      <div role="cell" style={{ padding: "8px 8px" }}>
-        <SignatureLink item={item} onOpen={onSignatures} />
-      </div>
-      <div role="cell" className="doc-col-updated" style={{ padding: "8px 8px" }}>
-        <span style={{ fontSize: 12, color: SLATE4, whiteSpace: "nowrap", ...GF }}>
-          {fmtRelative(item.createdAt)}
-        </span>
-      </div>
-      <div role="cell" className="doc-actions-cell" style={{ padding: "8px 4px" }}>
-        {/* Signers, as an action rather than a hidden affordance.
-            *
-            * The signature record was already reachable — by clicking the
-            * "2/3" progress indicator, which reads as a status label, not a
-            * button. The capability existed and nobody could find it. Drafts
-            * have no signers yet, so it appears once a request has been sent. */}
-        {/* Drafts only. "Continue" on a sent or completed request would
-            promise editing of something already in front of its recipients —
-            and for a completed one, of evidence. */}
-        {item.state === "draft" && (
-          <DocAction icon={Pencil} label="Continue" tone="primary"
-            onClick={() => { void navigate(`/app/prepare/upload?resumeDocumentId=${encodeURIComponent(item.documentId)}`); }} />
-        )}
-        {item.state !== "draft" && item.state !== "ready-to-send" && (
-          <DocAction icon={Send} label="Send again" onClick={() => onResend(item)} />
-        )}
-        {item.state !== "draft" && item.state !== "ready-to-send" && (
-          <DocAction icon={Users} label="Participants" onClick={() => onSignatures(item)} />
-        )}
-        {/* An unsent draft has no signing request, so no history exists for
-            it yet; and it can be viewed only once a file was uploaded. */}
-        {!isUnsentDraft(item) && (
-          <DocAction icon={History} label="History" onClick={() => onAudit(item)} />
-        )}
-        {(!isUnsentDraft(item) || file?.mediaType != null) && (
-          <DocAction icon={Eye} label="View" onClick={() => onView(item)} />
-        )}
-      </div>
-    </div>
-  );
-}
+// One card design for every list — Sent, Draft, Declined and Completed all
+// draw the same branded card (CompletedDocumentCards.tsx). Completed's own
+// green pill is right only for a completed request, so every other state
+// gets the shared `StatusBadge` instead (`statusBadge`); the actions offered
+// are exactly RealDocumentRow's old per-state set, just reached from the
+// card's menu instead of a table cell, the way Completed's always were.
+function documentCard(
+  item: SigningRequestListItem,
+  deps: {
+    verificationId: string | null;
+    file: DocumentFileFacts | undefined;
+    navigate: ReturnType<typeof useNavigate>;
+    onView: () => void;
+    onSignatures: () => void;
+    onAudit: () => void;
+    onResend: () => void;
+    onShare?: () => void;
+  },
+): CompletedCardData {
+  const actions: CardAction[] = [];
+  // Drafts only. "Continue" on a sent or completed request would promise
+  // editing of something already in front of its recipients — and for a
+  // completed one, of evidence.
+  if (item.state === "draft") {
+    actions.push({
+      id: "continue", label: "Continue", icon: Pencil,
+      onSelect: () => { void deps.navigate(`/app/prepare/upload?resumeDocumentId=${encodeURIComponent(item.documentId)}`); },
+    });
+  }
+  // The rest keeps Completed's own order (View, Participants, History, Send
+  // again) — the menu this design started from — for every state that offers
+  // each action.
+  if (!isUnsentDraft(item) || deps.file?.mediaType != null) {
+    actions.push({ id: "view", label: "View", icon: Eye, onSelect: deps.onView });
+  }
+  if (item.state !== "draft" && item.state !== "ready-to-send") {
+    actions.push({ id: "participants", label: "Participants", icon: Users, onSelect: deps.onSignatures });
+  }
+  // An unsent draft has no signing request, so no history exists for it yet.
+  if (!isUnsentDraft(item)) {
+    actions.push({ id: "history", label: "History", icon: History, onSelect: deps.onAudit });
+  }
+  if (item.state !== "draft" && item.state !== "ready-to-send") {
+    actions.push({ id: "send-again", label: "Send again", icon: Send, onSelect: deps.onResend });
+  }
 
-// Mobile card — the `.doc-table-desktop` grid layout above is hidden below
-// 767px (DOC_STYLES), so without this a mobile visitor to /app/documents saw
-// nothing at all: every real item still loaded, just with no surface to
-// render it on. Same fields as the desktop row, stacked top-to-bottom.
-function RealDocumentCard({
-  item, onView, onSignatures, onAudit, onResend, file, verificationId,
-}: {
-  item: SigningRequestListItem;
-  onView: (item: SigningRequestListItem) => void;
-  onSignatures: (item: SigningRequestListItem) => void;
-  onAudit: (item: SigningRequestListItem) => void;
-  onResend: (item: SigningRequestListItem) => void;
-  file: DocumentFileFacts | undefined;
-  verificationId?: string | null;
-}) {
-  const FileGlyph = iconForDocument(file?.mediaType, file?.filename);
-  const navigate = useNavigate();
-  // A div, not a button: the signature affordance below is itself a button,
-  // and a button inside a button is invalid HTML that browsers resolve
-  // unpredictably. The title and the eye icon are the two real controls.
-  return (
-    <div
-      style={{
-        background: "#fff", border: `1px solid ${SLATE2}`, borderRadius: 10,
-        padding: "12px 14px", marginBottom: 10, ...GF,
-      }}
-    >
-      <div style={{ display: "flex", alignItems: "flex-start", gap: 8 }}>
-        <FileGlyph size={16} aria-hidden style={{ flexShrink: 0, marginTop: 2, color: SLATE4 }} />
-        <div style={{ minWidth: 0, flex: 1 }}>
-          <button
-            onClick={() => onView(item)}
-            title={item.documentTitle}
-            style={{
-              fontSize: 14, fontWeight: 600, color: NAVY, background: "none",
-              border: "none", padding: 0, textAlign: "left", cursor: "pointer",
-              display: "block", maxWidth: "100%", ...GF,
-              overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
-            }}
-          >
-            {item.documentTitle}
-          </button>
-          <div style={{ marginTop: 8, display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-            <StatusBadge status={SIGNING_REQUEST_STATUS[item.state]} />
-            <SignatureLink item={item} onOpen={onSignatures} compact />
-          </div>
-          <div style={{ marginTop: 6, fontSize: 12, color: SLATE4 }}>
-            {fmtRelative(item.createdAt)}
-          </div>
-        </div>
-        {/* Drafts only. "Continue" on a sent or completed request would
-            promise editing of something already in front of its recipients —
-            and for a completed one, of evidence. */}
-        {item.state === "draft" && (
-          <DocAction icon={Pencil} label="Continue" tone="primary"
-            onClick={() => { void navigate(`/app/prepare/upload?resumeDocumentId=${encodeURIComponent(item.documentId)}`); }} />
-        )}
-        {item.state !== "draft" && item.state !== "ready-to-send" && (
-          <DocAction icon={Send} label="Send again" onClick={() => onResend(item)} />
-        )}
-        {item.state !== "draft" && item.state !== "ready-to-send" && (
-          <DocAction icon={Users} label="Participants" onClick={() => onSignatures(item)} />
-        )}
-        {/* An unsent draft has no signing request, so no history exists for
-            it yet; and it can be viewed only once a file was uploaded. */}
-        {!isUnsentDraft(item) && (
-          <DocAction icon={History} label="History" onClick={() => onAudit(item)} />
-        )}
-        {(!isUnsentDraft(item) || file?.mediaType != null) && (
-          <DocAction icon={Eye} label="View" onClick={() => onView(item)} />
-        )}
-      </div>
-      {/* Full card width, not the title column: beside the action buttons
-          that column is too narrow on a phone to show the id at all. */}
-      {item.state === "completed" && verificationId && (
-        <div style={{ marginTop: 8, paddingLeft: 24 }}>
-          <VerificationIdActions id={verificationId} variant="line" label="Verification ID" />
-        </div>
-      )}
-    </div>
-  );
+  return {
+    key: item.signingRequestId,
+    title: item.documentTitle,
+    verificationId: item.state === "completed" ? deps.verificationId : null,
+    done: item.completedParticipantCount,
+    total: item.participantCount,
+    createdAt: item.createdAt,
+    dateLabel: item.state === "draft" ? "Started" : "Created",
+    // Completed keeps the card's own default subtitle ("Completed document"); everything else names its status here, since that pill only exists for completed.
+    bannerSubtitle: item.state === "completed" ? undefined : TRANSACTION_STATUS_LABELS[SIGNING_REQUEST_STATUS[item.state]],
+    statusBadge: item.state === "completed" ? undefined : <StatusBadge status={SIGNING_REQUEST_STATUS[item.state]} />,
+    actions,
+    onShare: deps.onShare,
+  };
 }
 
 // The owner-facing document viewer: the "Digital Document Archive" reading
@@ -2625,6 +2444,7 @@ function FilterField({
 
 function DocumentsPageRealMode() {
   const { onPrepareClick } = usePrepareLaunch();
+  const navigate = useNavigate();
   const { currentWorkspace } = usePlatform();
   const workspaceId = currentWorkspace?.id ?? null;
 
@@ -2938,63 +2758,17 @@ function DocumentsPageRealMode() {
             description="Nothing in this workspace matches the current search and filters. Try a shorter name, a different signer, or another status."
           />
         )}
-        {status === "ready" && rows.length > 0 && list === "completed" && (
-          <CompletedDocumentGrid cards={rows.map((item): CompletedCardData => ({
-            key: item.signingRequestId,
-            title: item.documentTitle,
+        {status === "ready" && rows.length > 0 && (
+          <CompletedDocumentGrid label="Documents" cards={rows.map(item => documentCard(item, {
             verificationId: verificationIds.get(item.documentId) ?? null,
-            done: item.completedParticipantCount,
-            total: item.participantCount,
-            createdAt: item.createdAt,
-            actions: [
-              { id: "view", label: "View", icon: Eye, onSelect: () => { setViewing(item); } },
-              { id: "participants", label: "Participants", icon: Users, onSelect: () => { setSignaturesFor(item); } },
-              { id: "history", label: "History", icon: History, onSelect: () => { setAuditFor(item); } },
-              { id: "send-again", label: "Send again", icon: Send, onSelect: () => { setResendFor(item); } },
-            ],
-            onShare: () => { setShareFor(item); },
+            file: files.get(item.documentId),
+            navigate,
+            onView: () => { setViewing(item); },
+            onSignatures: () => { setSignaturesFor(item); },
+            onAudit: () => { setAuditFor(item); },
+            onResend: () => { setResendFor(item); },
+            onShare: item.state === "completed" ? () => { setShareFor(item); } : undefined,
           }))} />
-        )}
-        {status === "ready" && rows.length > 0 && list !== "completed" && (
-          <div className="doc-table-desktop doc-list-frame" role="table" aria-label="Documents">
-            <div role="rowgroup" className="doc-list-head">
-              <div role="row" className="doc-header doc-grid-real">
-                <div role="columnheader" aria-label="Icon" />
-                <div role="columnheader" style={{ fontSize: 11, fontWeight: 700, color: SLATE4, textTransform: "uppercase", letterSpacing: "0.06em", padding: "0 8px", ...GF }}>Document</div>
-                <div role="columnheader" style={{ fontSize: 11, fontWeight: 700, color: SLATE4, textTransform: "uppercase", letterSpacing: "0.06em", padding: "0 8px", ...GF }}>Status</div>
-                <div role="columnheader" className="doc-col-vid" style={{ fontSize: 11, fontWeight: 700, color: SLATE4, textTransform: "uppercase", letterSpacing: "0.06em", padding: "0 8px", whiteSpace: "nowrap", ...GF }}>Verification ID</div>
-                <div role="columnheader" style={{ fontSize: 11, fontWeight: 700, color: SLATE4, textTransform: "uppercase", letterSpacing: "0.06em", padding: "0 8px", ...GF }}>Progress</div>
-                <div role="columnheader" className="doc-col-updated" style={{ fontSize: 11, fontWeight: 700, color: SLATE4, textTransform: "uppercase", letterSpacing: "0.06em", padding: "0 8px", ...GF }}>Created</div>
-                {/* A visible heading, not just an aria-label: the column is the
-                    widest in the table, and an unlabelled one reads as a gap. */}
-                <div role="columnheader" style={{ fontSize: 11, fontWeight: 700, color: SLATE4, textTransform: "uppercase", letterSpacing: "0.06em", padding: "0 8px", textAlign: "right", ...GF }}>Actions</div>
-              </div>
-            </div>
-            <div role="rowgroup" className="doc-list-scroll">
-              {rows.map(item => (
-                <RealDocumentRow
-                  key={item.signingRequestId} item={item}
-                  onView={setViewing} onSignatures={setSignaturesFor} onAudit={setAuditFor}
-                  onResend={setResendFor}
-                  file={files.get(item.documentId)}
-                verificationId={verificationIds.get(item.documentId) ?? null}
-                />
-              ))}
-            </div>
-          </div>
-        )}
-        {status === "ready" && rows.length > 0 && list !== "completed" && (
-          <div className="doc-cards-mobile doc-list-frame doc-list-scroll">
-            {rows.map(item => (
-              <RealDocumentCard
-                key={item.signingRequestId} item={item}
-                onView={setViewing} onSignatures={setSignaturesFor} onAudit={setAuditFor}
-                onResend={setResendFor}
-                file={files.get(item.documentId)}
-                verificationId={verificationIds.get(item.documentId) ?? null}
-              />
-            ))}
-          </div>
         )}
         </>)}
       </AppContent>

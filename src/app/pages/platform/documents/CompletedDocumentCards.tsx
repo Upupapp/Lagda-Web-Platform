@@ -90,6 +90,13 @@ export interface CompletedCardData {
   dateLabel?: string;
   /** Extra lines under the progress bar (who it is shared with, and so on). */
   extra?: React.ReactNode;
+  /**
+   * Replaces the hardcoded green "Completed" pill. Every OTHER list in
+   * Documents (Sent, Draft, Declined) uses this same card, and a draft or a
+   * declined request is not completed — the pill they need is `StatusBadge`,
+   * not a copy of this one pretending to be it.
+   */
+  statusBadge?: React.ReactNode;
 }
 
 function formatCreated(iso: string): string {
@@ -203,30 +210,33 @@ export function CompletedDocumentCard({ card, branding: workspaceBranding }: { c
           display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden",
         }}>{card.title}</h3>
         <div>
-          <span style={{
-            ...GF, fontSize: 11.5, fontWeight: 700, padding: "3px 9px", borderRadius: 999,
-            background: "#DCFCE7", color: "#166534", border: "1px solid #BBF7D0",
-            display: "inline-flex", alignItems: "center", gap: 5,
-          }}>
-            <CircleCheck size={12} aria-hidden /> Completed
-          </span>
+          {card.statusBadge ?? (
+            <span style={{
+              ...GF, fontSize: 11.5, fontWeight: 700, padding: "3px 9px", borderRadius: 999,
+              background: "#DCFCE7", color: "#166534", border: "1px solid #BBF7D0",
+              display: "inline-flex", alignItems: "center", gap: 5,
+            }}>
+              <CircleCheck size={12} aria-hidden /> Completed
+            </span>
+          )}
         </div>
-        {card.verificationId && (
-          <div style={{ minWidth: 0 }}>
-            <VerificationIdActions id={card.verificationId} variant="line" label="Verification ID" />
+        <div style={{ minWidth: 0 }}>
+          <VerificationIdActions id={card.verificationId} variant="line" label="Verification ID" />
+        </div>
+        {/* A draft has no participants yet; a meter reading "0 of 0" is noise. */}
+        {card.total > 0 && (
+          <div>
+            <div style={{ display: "flex", justifyContent: "space-between", ...GF, fontSize: 12.5, color: SLATE, marginBottom: 5 }}>
+              <span data-testid="completed-card-progress">{card.done} of {card.total} signed</span>
+              <span>{pct}%</span>
+            </div>
+            <div role="meter" aria-valuenow={card.done} aria-valuemin={0} aria-valuemax={card.total}
+              aria-label={`${String(card.done)} of ${String(card.total)} signed`}
+              style={{ height: 6, background: BORDER, borderRadius: 999, overflow: "hidden" }}>
+              <div style={{ width: `${String(pct)}%`, height: "100%", background: pct === 100 ? "#15803D" : DEFAULT_COLOR, borderRadius: 999 }} />
+            </div>
           </div>
         )}
-        <div>
-          <div style={{ display: "flex", justifyContent: "space-between", ...GF, fontSize: 12.5, color: SLATE, marginBottom: 5 }}>
-            <span data-testid="completed-card-progress">{card.done} of {card.total} signed</span>
-            <span>{pct}%</span>
-          </div>
-          <div role="meter" aria-valuenow={card.done} aria-valuemin={0} aria-valuemax={card.total}
-            aria-label={`${String(card.done)} of ${String(card.total)} signed`}
-            style={{ height: 6, background: BORDER, borderRadius: 999, overflow: "hidden" }}>
-            <div style={{ width: `${String(pct)}%`, height: "100%", background: pct === 100 ? "#15803D" : DEFAULT_COLOR, borderRadius: 999 }} />
-          </div>
-        </div>
         {card.extra}
         <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 10, flexWrap: "wrap", marginTop: "auto" }}>
           <div style={{ ...GF, fontSize: 12.5, color: SLATE }}>

@@ -34,6 +34,7 @@ import { participantDocumentSource } from "../../../services/real/participant-do
 import {
   DocumentRecordDialog, type DocumentRecordSource, type SharedDocumentView,
 } from "../../../components/document-sharing/SharedDocumentDialog";
+import { ParticipantDocumentViewer } from "../../../components/documents/ParticipantDocumentViewer";
 import { CompletedDocumentGrid, type CompletedCardData } from "./CompletedDocumentCards";
 
 /** What a non-signer is asked to do, in the words the list and dialog use. */
@@ -391,7 +392,7 @@ type Viewer = { source: DocumentRecordSource; view: SharedDocumentView } | null;
 
 function participantCard(input: {
   key: string; title: string; completion: ParticipantCompletion; subtitle: string;
-  extra: ReactNode; onView: (view: SharedDocumentView) => void; onSender: () => void;
+  extra: ReactNode; onView: (view: SharedDocumentView) => void; onViewDocument: () => void; onSender: () => void;
 }): CompletedCardData {
   const { completion } = input;
   return {
@@ -410,7 +411,10 @@ function participantCard(input: {
     },
     extra: input.extra,
     actions: [
-      { id: "view", label: "View / Download signed document", icon: Eye, onSelect: () => input.onView("document") },
+      // The same full-screen showcase Completed's "View" opens, not the
+      // inline preview — onView("document") is reserved for that dialog's
+      // participants/audit views, so this one is its own callback.
+      { id: "view", label: "View / Download signed document", icon: Eye, onSelect: input.onViewDocument },
       { id: "participants", label: "View participants", icon: Users, onSelect: () => input.onView("participants") },
       { id: "audit", label: "View audit trail", icon: History, onSelect: () => input.onView("audit") },
       { id: "sender", label: "See the sender", icon: UserRound, onSelect: input.onSender },
@@ -538,6 +542,7 @@ export function OthersSection({ onCount }: {
   const [senderFor, setSenderFor] = useState<DocumentToSign | null>(null);
   const [continueFor, setContinueFor] = useState<DocumentToSign | null>(null);
   const [viewer, setViewer] = useState<Viewer>(null);
+  const [bigViewer, setBigViewer] = useState<DocumentRecordSource | null>(null);
 
   // A completed document is shown once, as its card, not also as an open row.
   const completedIds = new Set(done.items.map(item => item.signingRequestId));
@@ -571,6 +576,7 @@ export function OthersSection({ onCount }: {
               subtitle: `Your role: ${wordingFor(item).label}`,
               extra: <SentByLine item={item} />,
               onView: view => setViewer({ source: participantDocumentSource(item.completion.verificationId, item.documentTitle), view }),
+              onViewDocument: () => setBigViewer(participantDocumentSource(item.completion.verificationId, item.documentTitle)),
               onSender: () => setSenderFor(item),
             }))} />
           )}
@@ -629,6 +635,7 @@ export function OthersSection({ onCount }: {
       {senderFor !== null && <SenderDialog item={senderFor} onClose={() => setSenderFor(null)} />}
       {continueFor !== null && <ContinueSigningDialog item={continueFor} onClose={() => setContinueFor(null)} />}
       {viewer !== null && <DocumentRecordDialog source={viewer.source} view={viewer.view} onClose={() => setViewer(null)} />}
+      {bigViewer !== null && <ParticipantDocumentViewer source={bigViewer} onClose={() => setBigViewer(null)} />}
     </section>
   );
 }
@@ -639,6 +646,7 @@ export function SignedByMeSection() {
   const { items: all, status, reload } = useList(loadSigned);
   const [senderFor, setSenderFor] = useState<SignedDocument | null>(null);
   const [viewer, setViewer] = useState<Viewer>(null);
+  const [bigViewer, setBigViewer] = useState<DocumentRecordSource | null>(null);
   const completed = all.filter((item): item is SignedDocument & { completion: ParticipantCompletion } =>
     item.completion !== null);
   // Signed, but others still have to finish: listed as before.
@@ -663,6 +671,7 @@ export function SignedByMeSection() {
               subtitle: `Signed ${fmtDate(item.signedAt)}`,
               extra: <SentByLine item={item} />,
               onView: view => setViewer({ source: participantDocumentSource(item.completion.verificationId, item.documentTitle), view }),
+              onViewDocument: () => setBigViewer(participantDocumentSource(item.completion.verificationId, item.documentTitle)),
               onSender: () => setSenderFor(item),
             }))} />
           )}
@@ -717,6 +726,7 @@ export function SignedByMeSection() {
       )}
       {senderFor !== null && <SenderDialog item={senderFor} onClose={() => setSenderFor(null)} />}
       {viewer !== null && <DocumentRecordDialog source={viewer.source} view={viewer.view} onClose={() => setViewer(null)} />}
+      {bigViewer !== null && <ParticipantDocumentViewer source={bigViewer} onClose={() => setBigViewer(null)} />}
     </section>
   );
 }
