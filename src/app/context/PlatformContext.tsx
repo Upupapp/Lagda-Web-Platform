@@ -154,6 +154,13 @@ export interface PlatformContextValue {
   signOut: () => Promise<void>;
   switchWorkspace:            (workspaceId: string) => void;
   /**
+   * Real-backend only: re-reads GET /workspaces and adds any workspace this
+   * account has joined since sign-in (an approved join request), dropping any
+   * it no longer belongs to. Existing entries are kept as they are, so a
+   * badge's applied branding survives. Failures are silent: the list stays.
+   */
+  refreshWorkspaceList:       () => Promise<void>;
+  /**
    * Applies a rename the backend has ALREADY confirmed (PATCH
    * /workspaces/:id succeeded) to the session's workspace list, so the
    * sidebar and switcher show the new name without a full refresh.
@@ -484,6 +491,28 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
     // For demo, keep existing notifications.
   }, [workspaces]);
 
+  const refreshWorkspaceList = useCallback(async () => {
+    if (!USE_REAL_BACKEND) return;
+    let fresh: PlatformWorkspace[];
+    try {
+      fresh = (await realWorkspaceService.list()).map(normalizeWorkspace);
+    } catch {
+      return;
+    }
+    const freshIds = new Set(fresh.map(w => w.id));
+    const kept = workspaces.filter(w => freshIds.has(w.id));
+    const known = new Set(kept.map(w => w.id));
+    const added = fresh.filter(w => !known.has(w.id));
+    if (added.length > 0 || kept.length !== workspaces.length) setWorkspaces([...kept, ...added]);
+    // The workspace in use was left or removed: fall back to one still held.
+    if (currentWorkspace !== null && !freshIds.has(currentWorkspace.id)) {
+      const next = kept[0] ?? added[0] ?? null;
+      setCurrentWorkspace(next);
+      setRole(next?.role ?? null);
+      if (next) writeActiveWorkspaceIdPreference(next.id);
+    }
+  }, [workspaces, currentWorkspace]);
+
   const applyWorkspaceRename = useCallback((workspaceId: string, name: string) => {
     const rename = (w: PlatformWorkspace): PlatformWorkspace => {
       if (w.id !== workspaceId) return w;
@@ -544,7 +573,7 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
       notifications, unreadCount, flags,
       activeLaunchProfile: ACTIVE_LAUNCH_PROFILE,
       resolveCapability: resolveCapabilityFn,
-      signIn, refreshSessionFromBackend, createWorkspace, signOut, switchWorkspace, applyWorkspaceRename, applyWorkspaceBranding,
+      signIn, refreshSessionFromBackend, createWorkspace, signOut, switchWorkspace, refreshWorkspaceList, applyWorkspaceRename, applyWorkspaceBranding,
       markNotificationRead, markAllNotificationsRead,
       expireSession, hasPermission, hasFlag,
     }}>

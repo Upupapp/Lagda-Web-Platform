@@ -298,3 +298,52 @@ describe("creating the first workspace", () => {
     expect(screen.getByTestId("current").textContent).toBe("-");
   });
 });
+
+describe("refreshing the workspace list (a join request approved after sign-in)", () => {
+  function RefreshProbe() {
+    const p = usePlatform();
+    return (
+      <div>
+        <span data-testid="names">{p.workspaces.map(w => w.name).join(",")}</span>
+        <span data-testid="current">{p.currentWorkspace?.name ?? "-"}</span>
+        <span data-testid="brand">{p.workspaces.find(w => w.id === "ws_1")?.brandColor ?? "-"}</span>
+        <button type="button" onClick={() => { p.applyWorkspaceBranding("ws_1", { brandColor: "#112233", logoUrl: null }); }}>brand</button>
+        <button type="button" onClick={() => { void p.refreshWorkspaceList(); }}>refresh</button>
+      </div>
+    );
+  }
+
+  it("adds a newly joined workspace and keeps the current one and its applied branding", async () => {
+    me.mockResolvedValue(profile());
+    list.mockResolvedValueOnce([workspace("ws_1", "Mabini Legal")]);
+    render(<PlatformProvider><RefreshProbe /></PlatformProvider>);
+    await waitFor(() => { expect(screen.getByTestId("current").textContent).toBe("Mabini Legal"); });
+    await act(async () => { screen.getByRole("button", { name: "brand" }).click(); });
+
+    list.mockResolvedValueOnce([workspace("ws_1", "Mabini Legal"), workspace("ws_2", "Acme Legal")]);
+    await act(async () => { screen.getByRole("button", { name: "refresh" }).click(); });
+
+    await waitFor(() => { expect(screen.getByTestId("names").textContent).toBe("Mabini Legal,Acme Legal"); });
+    expect(screen.getByTestId("current").textContent).toBe("Mabini Legal");
+    expect(screen.getByTestId("brand").textContent).toBe("#112233");
+  });
+
+  it("moves off a workspace the account no longer belongs to, and keeps the list when the read fails", async () => {
+    me.mockResolvedValue(profile());
+    list.mockResolvedValueOnce([workspace("ws_1", "Mabini Legal"), workspace("ws_2", "Acme Legal")]);
+    try { window.localStorage.setItem("lagda.activeWorkspaceId", "ws_1"); } catch { /* optional */ }
+    render(<PlatformProvider><RefreshProbe /></PlatformProvider>);
+    await waitFor(() => { expect(screen.getByTestId("names").textContent).toBe("Mabini Legal,Acme Legal"); });
+    const current = screen.getByTestId("current").textContent;
+
+    list.mockRejectedValueOnce(new Error("offline"));
+    await act(async () => { screen.getByRole("button", { name: "refresh" }).click(); });
+    expect(screen.getByTestId("names").textContent).toBe("Mabini Legal,Acme Legal");
+
+    const other = current === "Mabini Legal" ? workspace("ws_2", "Acme Legal") : workspace("ws_1", "Mabini Legal");
+    list.mockResolvedValueOnce([other]);
+    await act(async () => { screen.getByRole("button", { name: "refresh" }).click(); });
+    await waitFor(() => { expect(screen.getByTestId("current").textContent).toBe(other.name); });
+    expect(screen.getByTestId("names").textContent).toBe(other.name);
+  });
+});

@@ -8,8 +8,9 @@ import { NavLink, Link } from "react-router";
 import {
   Menu, X, LayoutDashboard, FileText, Files, Users, ShieldCheck,
   Bell, Users2, Settings, Settings2, FilePlus, Inbox, HelpCircle, GitBranch, BarChart2, Zap,
-  Search, Compass, Share2, Mail, ChevronDown,
+  Search, Compass, Share2, Mail, ChevronDown, LogIn,
 } from "lucide-react";
+import { JoinWorkspaceDialog } from "./JoinWorkspaceDialog";
 import lagdaHeaderLogo from "../../../brand elements/svg/LagdaLogoPrimaryHorizontalFullColor_Header.svg";
 import { usePlatform } from "../../context/PlatformContext";
 import { PRIMARY_NAV, UTILITY_NAV, PREPARE_ACTION } from "../../config/platform.nav";
@@ -47,6 +48,7 @@ export function MobileNav() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [toolsOpen, setToolsOpen] = useState(false);
+  const [joining, setJoining] = useState(false);
   const { user, currentWorkspace, unreadCount, hasPermission, hasFlag } = usePlatform();
   const { restartTour } = useTour();
   const drawerRef    = useRef<HTMLDivElement>(null);
@@ -254,6 +256,16 @@ export function MobileNav() {
                 <p style={{ color: "#64748B", ...GM, fontSize: 10, margin: 0 }}>{currentWorkspace.plan}</p>
               </div>
             </div>
+            {/* The drawer closes first so the dialog is not stacked behind it. */}
+            <button type="button" onClick={() => { setDrawerOpen(false); setJoining(true); }}
+              style={{
+                display: "flex", alignItems: "center", gap: 8, width: "100%", marginTop: 10,
+                minHeight: 40, padding: "0 10px", borderRadius: 8, border: `1px solid ${BORDER}`,
+                background: "#FFFFFF", color: "#0F172A", ...GF, fontSize: 13, fontWeight: 500, cursor: "pointer",
+              }}>
+              <LogIn size={15} aria-hidden style={{ color: "#0078D4", flexShrink: 0 }} />
+              Join another workspace
+            </button>
           </div>
         )}
 
@@ -477,6 +489,7 @@ export function MobileNav() {
         }
       `}</style>
       {confirmDialog}
+      {joining && <JoinWorkspaceDialog onClose={() => { setJoining(false); triggerRef.current?.focus(); }} />}
     </>
   );
 }

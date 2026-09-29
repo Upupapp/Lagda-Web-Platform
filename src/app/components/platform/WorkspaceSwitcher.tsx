@@ -1,11 +1,17 @@
 // Workspace switcher — shows current workspace, allows switching between workspaces.
 // Frontend-only: switching updates in-memory context state only.
+//
+// "Join another workspace" opens JoinWorkspaceDialog (a join link someone
+// shared). Opening the menu re-reads the workspace list, so a workspace whose
+// join request was approved after sign-in appears here without a reload.
+// Creating a workspace from here is deliberately not offered yet.
 
 import { useState, useRef, useEffect } from "react";
-import { ChevronDown, Check, Plus } from "lucide-react";
+import { ChevronDown, Check, LogIn } from "lucide-react";
 import { usePlatform } from "../../context/PlatformContext";
 import { PLAN_LABELS } from "../../models";
 import { WorkspaceBadge } from "./WorkspaceBadge";
+import { JoinWorkspaceDialog } from "./JoinWorkspaceDialog";
 
 const GF   = { fontFamily: "'Geist', sans-serif" };
 const GM   = { fontFamily: "'Geist Mono', monospace" };
@@ -16,8 +22,19 @@ interface WorkspaceSwitcherProps {
 }
 
 export function WorkspaceSwitcher({ collapsed }: WorkspaceSwitcherProps) {
-  const { currentWorkspace, workspaces, switchWorkspace } = usePlatform();
+  const { currentWorkspace, workspaces, switchWorkspace, refreshWorkspaceList } = usePlatform();
   const [open, setOpen] = useState(false);
+  const [joining, setJoining] = useState(false);
+
+  // Opening the menu is when someone looks for a newly approved workspace.
+  useEffect(() => {
+    if (open) void refreshWorkspaceList();
+    // Only on opening; the function's identity changes with the list itself.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
+
+  const startJoin = () => { setOpen(false); setJoining(true); };
+  const joinDialog = joining ? <JoinWorkspaceDialog onClose={() => { setJoining(false); triggerRef.current?.focus(); }} /> : null;
   const triggerRef = useRef<HTMLButtonElement>(null);
   const menuRef    = useRef<HTMLDivElement>(null);
 
@@ -74,10 +91,12 @@ export function WorkspaceSwitcher({ collapsed }: WorkspaceSwitcherProps) {
             currentId={currentWorkspace.id}
             onSelect={(id) => { switchWorkspace(id); setOpen(false); }}
             onClose={() => { setOpen(false); triggerRef.current?.focus(); }}
+            onJoin={startJoin}
             ref={menuRef}
             style={{ top: 0, left: 44 }}
           />
         )}
+        {joinDialog}
       </div>
     );
   }
@@ -114,10 +133,12 @@ export function WorkspaceSwitcher({ collapsed }: WorkspaceSwitcherProps) {
           currentId={currentWorkspace.id}
           onSelect={(id) => { switchWorkspace(id); setOpen(false); triggerRef.current?.focus(); }}
           onClose={() => { setOpen(false); triggerRef.current?.focus(); }}
+          onJoin={startJoin}
           ref={menuRef}
           style={{ top: "calc(100% + 4px)", left: 0, right: 0 }}
         />
       )}
+      {joinDialog}
     </div>
   );
 }
@@ -132,11 +153,12 @@ interface WorkspaceMenuProps {
   currentId: string;
   onSelect: (id: string) => void;
   onClose: () => void;
+  onJoin: () => void;
   style?: React.CSSProperties;
 }
 
 const WorkspaceMenu = forwardRef<HTMLDivElement, WorkspaceMenuProps>(
-  ({ workspaces, currentId, onSelect, style }, ref) => (
+  ({ workspaces, currentId, onSelect, onJoin, style }, ref) => (
     <div
       ref={ref}
       role="listbox"
@@ -188,15 +210,12 @@ const WorkspaceMenu = forwardRef<HTMLDivElement, WorkspaceMenuProps>(
             display: "flex", alignItems: "center", gap: 8,
             width: "100%", border: "none", background: "transparent",
             borderRadius: 7, padding: "7px 10px", cursor: "pointer",
-            color: "#64748B", ...GF, fontSize: 12,
+            color: "#0F172A", ...GF, fontSize: 12, fontWeight: 500, textAlign: "left", minHeight: 34,
           }}
-          onClick={() => {}}
-          aria-label="Create or join workspace — coming in a future release"
-          title="Coming in a future release"
+          onClick={onJoin}
         >
-          <Plus size={13} aria-hidden />
-          <span>Create or join workspace</span>
-          <span style={{ ...GM, fontSize: 9, color: "#94A3B8", marginLeft: "auto" }}>SOON</span>
+          <LogIn size={13} aria-hidden style={{ color: "#0078D4", flexShrink: 0 }} />
+          <span>Join another workspace</span>
         </button>
       </div>
     </div>
