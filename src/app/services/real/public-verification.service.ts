@@ -215,8 +215,15 @@ export async function fetchVerificationDetails(
   if (response.status === 401) return { kind: "expired" };
   if (response.status === 429) return { kind: "rate-limited" };
   if (!response.ok) return { kind: "error" };
-  const details = await readJson<VerificationDetails>(response);
-  if (details === null) return { kind: "error" };
+  // The route answers `{ details: {...} }` (DetailsResponseSchema), not the
+  // details themselves. Reading the envelope as the details left
+  // `participants` undefined, and drawing it threw — which surfaced only as
+  // a generic "Something went wrong" on every Participants/Audit trail open.
+  const body = await readJson<{ details?: VerificationDetails }>(response);
+  const details = body?.details;
+  if (details === undefined || !Array.isArray(details.participants) || !Array.isArray(details.events)) {
+    return { kind: "error" };
+  }
   return { kind: "ok", details };
 }
 

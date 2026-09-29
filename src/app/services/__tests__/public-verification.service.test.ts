@@ -114,9 +114,17 @@ describe("token-bearing calls", () => {
     expect(await fetchSignedDocument("ver_1", "tok_1")).toEqual({ kind: "expired" });
   });
 
-  it("fetchVerificationDetails returns details", async () => {
-    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(json(DETAILS)));
+  it("fetchVerificationDetails unwraps the { details } envelope the route answers with", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(json({ details: DETAILS })));
     expect(await fetchVerificationDetails("ver_1", "tok_1")).toEqual({ kind: "ok", details: DETAILS });
+  });
+
+  it("fetchVerificationDetails refuses a body that is not that envelope, rather than crashing later", async () => {
+    // The old reader took the bare body as the details; drawing its missing
+    // `participants` threw, and Signed by me / Others showed only a generic
+    // error on every open, even though the server answered 200.
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(json(DETAILS)));
+    expect(await fetchVerificationDetails("ver_1", "tok_1")).toEqual({ kind: "error" });
   });
 });
 
