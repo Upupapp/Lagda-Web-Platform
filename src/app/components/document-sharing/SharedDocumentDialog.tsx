@@ -76,10 +76,12 @@ export function SharedDocumentDialog({ item, view, onClose }: {
 
 function DocumentBody({ item }: { item: DocumentRecordSource }) {
   const [state, setState] = useState<{ s: "loading" } | { s: "ready"; url: string } | { s: "error"; text: string }>({ s: "loading" });
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
     let created: string | null = null;
+    setState({ s: "loading" });
     item.loadFile()
       .then(blob => {
         if (cancelled) return;
@@ -93,7 +95,7 @@ function DocumentBody({ item }: { item: DocumentRecordSource }) {
     };
     // Keyed on the record, not the loader's identity, which changes each render.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [item.key]);
+  }, [item.key, attempt]);
 
   function download() {
     if (state.s !== "ready") return;
@@ -119,7 +121,12 @@ function DocumentBody({ item }: { item: DocumentRecordSource }) {
         )}
       </div>
       {state.s === "loading" && <p role="status" style={{ ...GF, fontSize: 13, color: SLATE, margin: 0 }}>Loading the signed document…</p>}
-      {state.s === "error" && <div role="alert"><SharingNotice tone="error">{state.text}</SharingNotice></div>}
+      {state.s === "error" && (
+        <div role="alert" style={{ display: "flex", flexDirection: "column", gap: 8, alignItems: "flex-start" }}>
+          <SharingNotice tone="error">{state.text}</SharingNotice>
+          <button type="button" onClick={() => setAttempt(n => n + 1)} style={modalButtonStyle("secondary")}>Try again</button>
+        </div>
+      )}
       {state.s === "ready" && (
         <iframe src={state.url} title={`Signed document: ${item.documentTitle}`}
           style={{ width: "100%", height: "min(68vh, 760px)", minHeight: 320, border: `1px solid ${BORDER}`, borderRadius: 8, background: "#F1F5F9", display: "block", boxSizing: "border-box" }} />
@@ -130,18 +137,27 @@ function DocumentBody({ item }: { item: DocumentRecordSource }) {
 
 function DetailsBody({ item, view }: { item: DocumentRecordSource; view: "participants" | "audit" }) {
   const [state, setState] = useState<{ s: "loading" } | { s: "ready"; details: SharedDocumentDetails } | { s: "error"; text: string }>({ s: "loading" });
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
+    setState({ s: "loading" });
     item.loadDetails()
       .then(details => { if (!cancelled) setState({ s: "ready", details }); })
       .catch((err: unknown) => { if (!cancelled) setState({ s: "error", text: sharingErrorMessage(err, "open") }); });
     return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [item.key]);
+  }, [item.key, attempt]);
 
   if (state.s === "loading") return <p role="status" style={{ ...GF, fontSize: 13, color: SLATE, margin: 0 }}>Loading…</p>;
-  if (state.s === "error") return <div role="alert"><SharingNotice tone="error">{state.text}</SharingNotice></div>;
+  if (state.s === "error") {
+    return (
+      <div role="alert" style={{ display: "flex", flexDirection: "column", gap: 8, alignItems: "flex-start" }}>
+        <SharingNotice tone="error">{state.text}</SharingNotice>
+        <button type="button" onClick={() => setAttempt(n => n + 1)} style={modalButtonStyle("secondary")}>Try again</button>
+      </div>
+    );
+  }
   const { details } = state;
 
   if (view === "participants") {
