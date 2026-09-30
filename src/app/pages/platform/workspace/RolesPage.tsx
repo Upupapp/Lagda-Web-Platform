@@ -151,7 +151,7 @@ function RolesInner() {
   const customArchived = state.roles.filter(r => r.type === "custom" && r.status === "archived");
 
   return (
-    <ManagePage crumbs={[{ label: "Manage", to: "/app/workspace" }, { label: "Who can do what" }]} title="Who can do what" maxWidth={900}
+    <ManagePage crumbs={[{ label: "Workspace", to: "/app/workspace" }, { label: "Who can do what" }]} title="Who can do what" maxWidth={900}
       actions={
         <>
           <label style={{ display: "flex", alignItems: "center", gap: 6, cursor: "pointer", ...GF, fontSize: 12, color: SLATE }}>

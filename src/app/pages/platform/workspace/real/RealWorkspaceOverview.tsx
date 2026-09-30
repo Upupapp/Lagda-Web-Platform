@@ -223,7 +223,7 @@ export function RealWorkspaceOverview({ workspaceId }: { workspaceId: string }) 
       <section aria-labelledby="more-for-workspace" style={{ ...cardStyle, padding: "4px 20px" }}>
         <h2 id="more-for-workspace" style={{ ...sectionHeadingStyle, margin: "14px 0 2px" }}>More for this workspace</h2>
         <HubLink label="Signing routes" path="/app/workflow" description="Reusable signing orders for documents with several signers" />
-        <HubLink label="Logo & colours" path="/app/settings/branding" description="How your documents and emails look to signers" />
+        <HubLink label="Logo & colours" path="/app/workspace/settings/branding" description="How your documents and emails look to signers" />
         <div style={{ height: 8 }} />
       </section>
     ) : null
@@ -252,7 +252,7 @@ export function RealWorkspaceOverview({ workspaceId }: { workspaceId: string }) 
           <h2 style={{ ...sectionHeadingStyle, margin: "18px 0 2px" }}>Workspace</h2>
           <HubLink label="Workspace settings" path="/app/workspace/settings" description="The workspace's name" />
           <HubLink label="Signing routes" path="/app/workflow" description="Reusable signing orders for documents with several signers" />
-          <HubLink label="Logo & colours" path="/app/settings/branding" description="How your documents and emails look to signers" />
+          <HubLink label="Logo & colours" path="/app/workspace/settings/branding" description="How your documents and emails look to signers" />
         </>
       )}
       <div style={{ height: 8 }} />
@@ -319,7 +319,7 @@ export function RealWorkspaceOverview({ workspaceId }: { workspaceId: string }) 
   // In the shell, its header already names the workspace and your role.
   if (shell) {
     return (
-      <ManagePage crumbs={[{ label: "Manage", to: "/app/workspace" }, { label: "Overview" }]} title="Overview"
+      <ManagePage crumbs={[{ label: "Workspace", to: "/app/workspace" }, { label: "Overview" }]} title="Overview"
         subtitle="What needs your attention, and what your role can do here.">
         {body}
       </ManagePage>

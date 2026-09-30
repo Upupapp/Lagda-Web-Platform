@@ -18,7 +18,7 @@ import { cardStyle, sectionHeadingStyle } from "./manage-styles";
 import { errorMessage, formatDate } from "./manage-format";
 
 const WORKSPACE_NAME_MAX = 200;
-const CRUMBS = [{ label: "Manage", to: "/app/workspace" }, { label: "Workspace settings" }];
+const CRUMBS = [{ label: "Workspace", to: "/app/workspace" }, { label: "Workspace settings" }];
 
 export function RealWorkspaceSettingsPage({ workspaceId }: { workspaceId: string }) {
   const platform = usePlatform();
@@ -100,7 +100,7 @@ export function RealWorkspaceSettingsPage({ workspaceId }: { workspaceId: string
         <section style={{ ...cardStyle, padding: "16px 24px", marginTop: 16 }}>
           <h2 style={sectionHeadingStyle}>Elsewhere</h2>
           <p style={{ ...GF, fontSize: 13, color: SLATE, margin: 0, lineHeight: 1.7 }}>
-            How documents and emails look: <Link to="/app/settings/branding" style={{ color: AZURE, fontWeight: 600, textDecoration: "none" }}>Logo &amp; colours</Link>.
+            How documents and emails look: <Link to="/app/workspace/settings/branding" style={{ color: AZURE, fontWeight: 600, textDecoration: "none" }}>Logo &amp; colours</Link>.
             {" "}Who can do what: <Link to="/app/workspace/roles" style={{ color: AZURE, fontWeight: 600, textDecoration: "none" }}>Roles</Link>.
           </p>
         </section>

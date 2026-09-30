@@ -9,6 +9,7 @@
 // There is no time-based expiry.
 
 import { useCallback, useEffect, useId, useState } from "react";
+import { Link } from "react-router";
 import { VerificationQRCode } from "../../../../components/verification/VerificationQRCode";
 import { useViewport } from "../../../../hooks/useViewport";
 import {
@@ -16,6 +17,8 @@ import {
   validateTicketInput, JoinActionError, JOIN_TICKET_LABEL_MAX,
   type JoinTicket, type JoinTicketState,
 } from "../../../../services/real/workspace-join.service";
+import { realOrganizationService } from "../../../../services/real/organization.service";
+import { mockWorkspaceAdminService } from "../../../../services/mock/workspace-admin.service";
 import { Dialog, ErrorNote } from "./join-ui";
 import {
   buttonStyle, formatWhen, hintStyle, inputStyle, labelStyle,
@@ -157,6 +160,7 @@ export function JoinLinksSection({ workspaceId, onChanged, flush = false }: {
 
       {(modal?.kind === "create" || modal?.kind === "edit") && (
         <TicketFormDialog
+          workspaceId={workspaceId}
           ticket={modal.kind === "edit" ? modal.ticket : null}
           onClose={() => setModal(null)}
           onSave={async (input) => {
@@ -254,18 +258,77 @@ function TicketRow({ ticket, narrow, copied, onEdit, onSend, onWithdraw, onQr, o
   );
 }
 
-function TicketFormDialog({ ticket, onClose, onSave }: {
-  ticket: JoinTicket | null; onClose: () => void;
+/** The live teams' names, for the Team choice. Null while loading; [] when there are none or they could not be read. */
+function useTeamNames(workspaceId: string): string[] | null {
+  const [names, setNames] = useState<string[] | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    const load = workspaceId === "demo"
+      ? mockWorkspaceAdminService.listTeams().then(list => list.map(t => t.name))
+      : realOrganizationService.listUnits(workspaceId).then(list => list.filter(u => u.archivedAt === null).map(u => u.name));
+    load
+      .then(list => { if (!cancelled) setNames([...new Set(list)].sort((a, b) => a.localeCompare(b))); })
+      .catch(() => { if (!cancelled) setNames([]); });
+    return () => { cancelled = true; };
+  }, [workspaceId]);
+  return names;
+}
+
+const TEAM_NOTE_SEPARATOR = " · ";
+
+/**
+ * The link's label, from the team it is for and an optional note. The
+ * backend keeps one label per link, so the two are stored together
+ * ("Finance · for Ana, starts Monday") and split again when a draft is
+ * edited. The team is a label only: approving the request does not place
+ * the person in it.
+ */
+function composeTicketLabel(team: string, note: string): string {
+  const t = team.trim();
+  const n = note.trim();
+  if (t === "") return n;
+  if (n === "") return t;
+  const room = JOIN_TICKET_LABEL_MAX - t.length - TEAM_NOTE_SEPARATOR.length;
+  return room > 0 ? `${t}${TEAM_NOTE_SEPARATOR}${n.slice(0, room)}` : t.slice(0, JOIN_TICKET_LABEL_MAX);
+}
+
+/** Splits a saved label back into a known team and the note after it. */
+function splitTicketLabel(label: string, teams: readonly string[]): { team: string; note: string } {
+  const match = [...teams].sort((a, b) => b.length - a.length)
+    .find(t => label === t || label.startsWith(`${t}${TEAM_NOTE_SEPARATOR}`));
+  if (match === undefined) return { team: "", note: label };
+  return { team: match, note: label.slice(match.length + TEAM_NOTE_SEPARATOR.length) };
+}
+
+function TicketFormDialog({ workspaceId, ticket, onClose, onSave }: {
+  workspaceId: string; ticket: JoinTicket | null; onClose: () => void;
   onSave: (input: { label: string; recipientEmail: string | null }) => Promise<void>;
 }) {
-  const [label, setLabel] = useState(ticket?.label ?? "");
+  const teams = useTeamNames(workspaceId);
+  const [team, setTeam] = useState("");
+  const [note, setNote] = useState(ticket?.label ?? "");
+  const [split, setSplit] = useState(ticket === null);
   const [email, setEmail] = useState(ticket?.recipientEmail ?? "");
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
-  const labelId = useId();
+  const teamId = useId();
+  const noteId = useId();
   const emailId = useId();
 
+  // Editing a draft: once the teams are known, pick its team back out of the label.
+  useEffect(() => {
+    if (split || teams === null || ticket === null) return;
+    const parts = splitTicketLabel(ticket.label, teams);
+    setTeam(parts.team);
+    setNote(parts.note);
+    setSplit(true);
+  }, [split, teams, ticket]);
+
+  const noTeams = teams !== null && teams.length === 0;
+
   async function submit() {
+    const label = composeTicketLabel(team, note);
+    if (label === "") { setError("Choose a team, or add a note so you know who the link is for."); return; }
     const checked = validateTicketInput(label, email);
     if ("error" in checked) { setError(checked.error); return; }
     setSaving(true);
@@ -289,11 +352,35 @@ function TicketFormDialog({ ticket, onClose, onSave }: {
       {error && <ErrorNote>{error}</ErrorNote>}
       <form onSubmit={(e) => { e.preventDefault(); void submit(); }}>
         <div style={{ marginBottom: 14 }}>
-          <label htmlFor={labelId} style={labelStyle}>Label</label>
-          <input id={labelId} type="text" value={label} maxLength={JOIN_TICKET_LABEL_MAX}
-            onChange={(e) => setLabel(e.target.value)} placeholder="Finance team" style={inputStyle()}
-            aria-describedby={`${labelId}-hint`} />
-          <p id={`${labelId}-hint`} style={hintStyle}>For your reference, e.g. who the link is for. It is shown on the request.</p>
+          <label htmlFor={teamId} style={labelStyle}>Team</label>
+          <select id={teamId} value={noTeams ? "" : team} onChange={(e) => setTeam(e.target.value)}
+            disabled={teams === null || noTeams} data-testid="join-link-team"
+            style={{ ...inputStyle(), cursor: teams === null || noTeams ? "default" : "pointer" }}
+            aria-describedby={`${teamId}-hint`}>
+            {teams === null && <option value="">Loading teams…</option>}
+            {noTeams && <option value="">No team created yet</option>}
+            {teams !== null && !noTeams && (
+              <>
+                <option value="">No specific team</option>
+                {teams.map(t => <option key={t} value={t}>{t}</option>)}
+              </>
+            )}
+          </select>
+          <p id={`${teamId}-hint`} style={hintStyle}>
+            {noTeams ? (
+              <>Group newcomers by team once you have one. <Link to="/app/workspace/teams" onClick={onClose}
+                data-testid="join-link-create-team" style={{ color: AZURE, fontWeight: 600, textDecoration: "none" }}>Create one</Link></>
+            ) : "Shown on the request so you know where the person belongs. It does not add them to the team."}
+          </p>
+        </div>
+        <div style={{ marginBottom: 14 }}>
+          <label htmlFor={noteId} style={labelStyle}>
+            Note <span style={{ fontWeight: 400, color: SLATE }}>(optional)</span>
+          </label>
+          <input id={noteId} type="text" value={note} maxLength={JOIN_TICKET_LABEL_MAX}
+            onChange={(e) => setNote(e.target.value)} placeholder="e.g. for Ana, starts Monday" style={inputStyle()}
+            aria-describedby={`${noteId}-hint`} data-testid="join-link-note" />
+          <p id={`${noteId}-hint`} style={hintStyle}>For your reference, e.g. who the link is for.</p>
         </div>
         <div>
           <label htmlFor={emailId} style={labelStyle}>

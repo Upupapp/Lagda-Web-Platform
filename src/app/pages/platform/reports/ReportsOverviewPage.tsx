@@ -125,7 +125,7 @@ export function ReportsOverviewPage() {
           </p>
           <p style={{ ...GF, fontSize: 12, color: SLATE, margin: 0 }}>
             <strong>Plan Usage</strong> — for signing-request, storage, and member-seat consumption, see{" "}
-            <Link to="/app/settings/usage" style={{ color: AZURE }}>Usage Settings</Link>.
+            <Link to="/app/workspace/settings/usage" style={{ color: AZURE }}>Usage Settings</Link>.
           </p>
           <p style={{ ...GF, fontSize: 12, color: SLATE, margin: 0 }}>
             <strong>Administrative Events</strong> — for the workspace member and role change log, see{" "}

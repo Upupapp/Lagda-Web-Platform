@@ -34,7 +34,8 @@ function deriveTitle(pathname: string): string {
     return parts.length > 2 ? "Templates › Ready-made › Preview" : "Templates › Ready-made";
   }
   return parts
-    .map((p) => p.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()))
+    // /app/settings is the person's own settings; the workspace's are under Workspace.
+    .map((p, i) => i === 0 && p === "settings" ? "My Settings" : p.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()))
     .join(" › ");
 }
 

@@ -12,7 +12,7 @@ import { JoinRequestsSection } from "./join/JoinRequestsSection";
 import { ManagePage, NotAvailable, GF, AZURE } from "./real/manage-ui";
 import { useWorkspaceShell } from "./shell/workspace-shell-context";
 
-const CRUMBS = [{ label: "Manage", to: "/app/workspace" }, { label: "Join requests" }];
+const CRUMBS = [{ label: "Workspace", to: "/app/workspace" }, { label: "Join requests" }];
 
 export function JoinRequestsPage() {
   const platform = usePlatform();

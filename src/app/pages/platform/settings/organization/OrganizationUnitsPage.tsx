@@ -1,4 +1,4 @@
-// /app/settings/organization — Organization Units.
+// /app/workspace/organization — Organization Units.
 //
 // The org chart: departments/offices/teams/etc., who belongs to each, and
 // which TITLE (061) a member holds inside one — "Department Head" of

@@ -128,7 +128,7 @@ export function RealRolesPage({ workspaceId }: { workspaceId: string }) {
   const { isNarrow, isMedium } = useViewport();
   const roster = useRoster(workspaceId);
   return (
-    <ManagePage crumbs={[{ label: "Manage", to: "/app/workspace" }, { label: "Who can do what" }]} title="Who can do what" maxWidth={1060}>
+    <ManagePage crumbs={[{ label: "Workspace", to: "/app/workspace" }, { label: "Who can do what" }]} title="Who can do what" maxWidth={1060}>
       <p data-testid="roles-read-only" style={{ ...GF, fontSize: 13, color: SLATE, margin: "0 0 18px", lineHeight: 1.6, maxWidth: 720 }}>
         Every workspace has the same seven roles. They cannot be created or changed. An owner or administrator
         gives each person a role from the Members page, and can add either of two privileges.
@@ -146,7 +146,7 @@ export function RealRolesPage({ workspaceId }: { workspaceId: string }) {
 export function RealRoleDetailPage({ workspaceId, roleId }: { workspaceId: string; roleId: string }) {
   const { isNarrow } = useViewport();
   const roster = useRoster(workspaceId);
-  const crumbsBase = [{ label: "Manage", to: "/app/workspace" }, { label: "Who can do what", to: "/app/workspace/roles" }];
+  const crumbsBase = [{ label: "Workspace", to: "/app/workspace" }, { label: "Who can do what", to: "/app/workspace/roles" }];
 
   if (!isBackendWorkspaceRole(roleId)) {
     return (

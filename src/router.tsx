@@ -9,6 +9,7 @@ import { NotFound } from "./app/pages/public/NotFound";
 import { DevPlaceholder } from "./app/pages/shared/DevPlaceholder";
 import { CapabilityGuard } from "./app/components/platform/CapabilityUnavailable";
 import { FeatureGuard } from "./app/components/platform/FeatureGuard";
+import { LegacySettingsRedirect } from "./app/pages/platform/settings/LegacySettingsRedirect";
 // Route-level error boundaries. Every top-level route root carries one, so a
 // thrown render or lazy-chunk error can never reach react-router's default
 // screen (which prints the raw error outside the LAGDA shell). See
@@ -2512,7 +2513,33 @@ export const router = createBrowserRouter([
           // Documents lives in the side panel; Manage no longer repeats it.
           { path: "documents", element: <Navigate to="/app/documents" replace /> },
           { path: "activity", element: <ActivityPage /> },
+          // Invite people is one tab over the two pages below it.
+          { path: "invite", element: <Navigate to="/app/workspace/invitations" replace /> },
+          // Organisation › Organization units (was /app/settings/organization).
+          { path: "organization", element: <SettingsOrganizationUnitsPage /> },
+          // Workspace settings, behind the gear. General is the workspace's
+          // own settings page; the rest moved here from /app/settings.
           { path: "settings", element: <WorkspaceSettingsPage /> },
+          { path: "settings/branding", element: <SettingsBrandingPage /> },
+          { path: "settings/billing", element: <SettingsBillingPage /> },
+          { path: "settings/billing/invoices/:invoiceId", element: <SettingsInvoicePage /> },
+          { path: "settings/usage", element: <SettingsUsagePage /> },
+          {
+            path: "settings/integrations",
+            element: (
+              <CapabilityGuard capabilityId="integrations">
+                <SettingsIntegrationsPage />
+              </CapabilityGuard>
+            ),
+          },
+          {
+            path: "settings/integrations/:integrationId",
+            element: (
+              <CapabilityGuard capabilityId="integrations">
+                <SettingsIntegrationDetailPage />
+              </CapabilityGuard>
+            ),
+          },
           { path: "members/:memberId", element: <MemberDetailPage /> },
           { path: "teams/:teamId", element: <TeamDetailPage /> },
           { path: "roles/:roleId", element: <RoleDetailPage /> },
@@ -2593,52 +2620,14 @@ export const router = createBrowserRouter([
               <SignaturesPage />
             ),
           },
-          {
-            path: "branding",
-            element: (
-              <SettingsBrandingPage />
-            ),
-          },
-          {
-            path: "billing",
-            element: (
-              <SettingsBillingPage />
-            ),
-          },
-          {
-            path: "billing/invoices/:invoiceId",
-            element: (
-              <SettingsInvoicePage />
-            ),
-          },
-          {
-            path: "usage",
-            element: (
-              <SettingsUsagePage />
-            ),
-          },
-          {
-            path: "organization",
-            element: (
-              <SettingsOrganizationUnitsPage />
-            ),
-          },
-          {
-            path: "integrations",
-            element: (
-              <CapabilityGuard capabilityId="integrations">
-              <SettingsIntegrationsPage />
-            </CapabilityGuard>
-            ),
-          },
-          {
-            path: "integrations/:integrationId",
-            element: (
-              <CapabilityGuard capabilityId="integrations">
-              <SettingsIntegrationDetailPage />
-            </CapabilityGuard>
-            ),
-          },
+          // Workspace-wide settings moved to Workspace › Workspace settings
+          // (and Organization units to Workspace › Organisation). The old
+          // addresses keep working and land on the same page there.
+          { path: "branding", element: <LegacySettingsRedirect /> },
+          { path: "billing/*", element: <LegacySettingsRedirect /> },
+          { path: "usage", element: <LegacySettingsRedirect /> },
+          { path: "organization", element: <LegacySettingsRedirect /> },
+          { path: "integrations/*", element: <LegacySettingsRedirect /> },
           {
             path: "data-and-privacy",
             element: (

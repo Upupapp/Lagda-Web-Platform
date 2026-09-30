@@ -16,7 +16,7 @@ import { ManagePage, NotAvailable, LoadingBlock, ErrorBlock, GF, GM, NAVY, SLATE
 import { cardStyle } from "./manage-styles";
 import { errorMessage } from "./manage-format";
 
-const CRUMBS = [{ label: "Manage", to: "/app/workspace" }, { label: "Activity log" }];
+const CRUMBS = [{ label: "Workspace", to: "/app/workspace" }, { label: "Activity log" }];
 export const EMPTY_ACTIVITY_MESSAGE = "Nothing recorded yet. Changes to members, links, teams and settings appear here from now on.";
 
 const CATEGORY_TONE: Record<WorkspaceActivityCategory, { bg: string; color: string }> = {

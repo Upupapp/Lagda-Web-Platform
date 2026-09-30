@@ -1,19 +1,19 @@
-// The settings shell — mounted ONCE for /app/settings/* by the router.
+// The My Settings shell — mounted ONCE for /app/settings/* by the router.
 //
 // ── Layout ─────────────────────────────────────────────────────────────────
 //
-// A header with two labelled strips of section banners — Personal and
-// Workspace — and the current section rendered in the area below them. The
-// URL decides what is shown, so deep links, reloads and back/forward work as
-// they always did; only the content area changes when you move between
-// sections, with a short transition (none under reduced motion).
+// A header with the person's six sections side by side in a carousel —
+// Profile, Preferences, Security, Notifications, Signatures & Initials, and
+// Data & Privacy — and the current section rendered in the area below. The
+// row scrolls sideways, with a button at each end, and keeps the current
+// section in view. The URL decides what is shown, so deep links, reloads and
+// back/forward work as they always did; only the content area changes when
+// you move between sections, with a short transition (none under reduced
+// motion).
 //
-// It follows the Manage shell (workspace/shell/WorkspaceShell.tsx): roving
-// focus across the banners, aria-current on the one you are in, the section
-// heading focused on arrival, and a banner row that becomes a horizontally
-// scrolling, snapping strip on small screens with the current banner kept in
-// view and fades at the edges that can still scroll. On phones the two
-// strips become one row.
+// Workspace-wide settings are no longer here: they are under Workspace,
+// behind the gear at the top right (workspace/shell/WorkspaceShell.tsx).
+// Their pages still use SettingsPage and the primitives below.
 //
 // ── Pages ──────────────────────────────────────────────────────────────────
 //
@@ -22,14 +22,16 @@
 // SSection, SField, the buttons, StatusBadge…) are shared by every section.
 
 import React, {
-  createContext, useCallback, useContext, useEffect, useId, useLayoutEffect, useMemo, useRef, Suspense,
+  createContext, useCallback, useContext, useEffect, useId, useLayoutEffect, useMemo, useRef, useState, Suspense,
   type KeyboardEvent as ReactKeyboardEvent,
 } from "react";
 import { Link, Outlet, useLocation } from "react-router";
-import { Settings2, UserRound, Building2, Info } from "lucide-react";
+import { Settings, Settings2, UserCog, Building2, Info, ChevronLeft, ChevronRight } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { usePlatform } from "../../../context/PlatformContext";
 import { USE_REAL_BACKEND } from "../../../services/backend-flag";
+import { useWorkspaceAccess } from "../../../hooks/useWorkspaceAccess";
+import { workspaceSettingsEntry } from "../workspace/shell/sections";
 import {
   SETTINGS_ROOT, SETTINGS_SECTIONS, SETTINGS_GROUP_LABELS, SECURITY_TABS, settingsSectionForPath,
   type SettingsGroup, type SettingsSection,
@@ -89,7 +91,8 @@ const GROUP_TONE: Record<SettingsGroup, { accent: string; text: string; tint: st
  */
 export function isLiveSettingsPath(pathname: string, real: boolean = USE_REAL_BACKEND): boolean {
   if (!real) return false;
-  return !pathname.startsWith(`${SETTINGS_ROOT}/integrations`);
+  return !pathname.startsWith(`${SETTINGS_ROOT}/integrations`)
+    && !pathname.startsWith("/app/workspace/settings/integrations");
 }
 
 function PreviewNote({ overview }: { overview: boolean }) {
@@ -154,7 +157,9 @@ export function SettingsPage({ title, breadcrumb, description, icon, actions, ch
   const Icon = icon ?? section?.icon ?? Settings2;
   const tone = GROUP_TONE[section?.group ?? "personal"];
   const crumbs = breadcrumb?.split(" › ") ?? [];
-  const eyebrow = crumbs.length > 1 ? crumbs.slice(0, -1).join(" › ") : section ? SETTINGS_GROUP_LABELS[section.group] : "Settings";
+  const eyebrow = crumbs.length > 1 ? crumbs.slice(0, -1).join(" › ")
+    : section ? (section.key === "organization" ? "Organisation" : section.group === "workspace" ? "Workspace Settings" : SETTINGS_GROUP_LABELS[section.group])
+    : "My Settings";
   const overview = pathname === SETTINGS_ROOT || pathname === `${SETTINGS_ROOT}/`;
 
   useEffect(() => {
@@ -212,13 +217,13 @@ function ContentFallback() {
 export function SettingsLayout() {
   const location = useLocation();
   const platform = usePlatform();
+  const access = useWorkspaceAccess();
   const focusedPath = useRef(location.pathname);
   const value = useMemo<ShellValue>(() => ({ focusedPath }), []);
   const current = settingsSectionForPath(location.pathname);
   const onSecurity = current?.key === "security";
   const live = USE_REAL_BACKEND;
   const userName = platform.user?.displayName ?? platform.user?.fullName ?? null;
-  const workspaceName = platform.currentWorkspace?.name ?? null;
 
   return (
     <ShellContext.Provider value={value}>
@@ -226,21 +231,28 @@ export function SettingsLayout() {
         <header className="st-header">
           <div className="st-inner">
             <div className="st-identity">
-              <span aria-hidden className="st-identity-icon"><Settings2 size={22} strokeWidth={1.8} /></span>
+              <span aria-hidden className="st-identity-icon"><UserCog size={22} strokeWidth={1.8} /></span>
               <div style={{ minWidth: 0, flex: "1 1 auto" }}>
-                <div className="st-eyebrow">Account and workspace</div>
-                <h1 className="st-title">Settings</h1>
-                {(userName || workspaceName) && (
-                  <div className="st-sub">
-                    {userName && <>Signed in as <strong>{userName}</strong></>}
-                    {userName && workspaceName && <span aria-hidden> · </span>}
-                    {workspaceName && <>Workspace <strong>{workspaceName}</strong></>}
-                  </div>
-                )}
+                <div className="st-eyebrow">Personal</div>
+                <h1 className="st-title">My Settings</h1>
+                <div className="st-sub">
+                  {userName && <>Signed in as <strong>{userName}</strong><span aria-hidden> · </span></>}
+                  These settings are yours alone.
+                </div>
               </div>
               {!live && <span className="st-demo-pill">Demo build</span>}
             </div>
-            <SettingsBanners current={current} pathname={location.pathname} workspaceName={workspaceName} />
+            <SettingsCarousel current={current} pathname={location.pathname} />
+            <p className="st-moved" data-testid="settings-moved-note">
+              <Building2 size={14} aria-hidden strokeWidth={2} />
+              <span>
+                Branding, billing, usage and integrations are workspace-wide:{" "}
+                <Link to={workspaceSettingsEntry(access)} className="st-moved-link">
+                  <span>Workspace</span><span aria-hidden>›</span>
+                  <Settings size={13} aria-hidden strokeWidth={2} /><span>Workspace Settings</span>
+                </Link>
+              </span>
+            </p>
           </div>
         </header>
 
@@ -248,7 +260,7 @@ export function SettingsLayout() {
           {onSecurity && <SecurityTabs pathname={location.pathname} />}
           <main id="main-content" className="st-main">
             {/* Only this area waits for a section's code; the header and the
-                banners above never unmount. */}
+                carousel above never unmount. */}
             <Suspense fallback={<ContentFallback />}>
               <div key={location.pathname} className="st-section-enter">
                 <Outlet />
@@ -263,7 +275,11 @@ export function SettingsLayout() {
   );
 }
 
-// ── Banners ────────────────────────────────────────────────────────────────
+// ── The carousel ───────────────────────────────────────────────────────────
+//
+// The six sections side by side, each an upright card (icon, name, one line
+// on what it holds). The row scrolls sideways — by swipe, trackpad, the
+// keyboard, or the two buttons — and keeps the current section in view.
 
 /** Updates the fade attributes of a scrolling row from its scroll position. */
 function measureScroller(el: HTMLElement) {
@@ -281,124 +297,127 @@ function centerIn(el: HTMLElement, active: HTMLElement) {
   const r = el.getBoundingClientRect();
   if (a.left >= r.left + 8 && a.right <= r.right - 8) return;
   const target = el.scrollLeft + (a.left - r.left) - (r.width - a.width) / 2;
-  const reduce = typeof window.matchMedia === "function" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  if (typeof el.scrollTo === "function") el.scrollTo({ left: Math.max(0, target), behavior: reduce ? "auto" : "smooth" });
+  if (typeof el.scrollTo === "function") el.scrollTo({ left: Math.max(0, target), behavior: reducedMotion() ? "auto" : "smooth" });
   else el.scrollLeft = Math.max(0, target);
 }
 
-function SettingsBanners({ current, pathname, workspaceName }: {
-  current: SettingsSection | null; pathname: string; workspaceName: string | null;
-}) {
-  const navRef = useRef<HTMLElement>(null);
-  const labelId = useId();
-  const groups: SettingsGroup[] = ["personal", "workspace"];
-  const ordered = groups.flatMap(g => SETTINGS_SECTIONS.filter(s => s.group === g));
-  const activeIndex = current ? ordered.findIndex(s => s.key === current.key) : -1;
-  const rove = useRef(Math.max(0, activeIndex));
-  rove.current = Math.max(0, activeIndex);
+function reducedMotion(): boolean {
+  return typeof window.matchMedia === "function" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+}
 
-  const measureAll = useCallback(() => {
-    navRef.current?.querySelectorAll<HTMLElement>("[data-scroller]").forEach(measureScroller);
+function SettingsCarousel({ current, pathname }: { current: SettingsSection | null; pathname: string }) {
+  const listRef = useRef<HTMLUListElement>(null);
+  const labelId = useId();
+  const listId = useId();
+  const sections = SETTINGS_SECTIONS;
+  const activeIndex = current ? sections.findIndex(s => s.key === current.key) : -1;
+  const [rove, setRove] = useState(Math.max(0, activeIndex));
+  const [edges, setEdges] = useState({ left: false, right: false });
+
+  useEffect(() => { setRove(Math.max(0, activeIndex)); }, [activeIndex]);
+
+  const measure = useCallback(() => {
+    const el = listRef.current;
+    if (!el) return;
+    measureScroller(el);
+    setEdges(e => {
+      const next = { left: el.dataset.fadeLeft === "true", right: el.dataset.fadeRight === "true" };
+      return next.left === e.left && next.right === e.right ? e : next;
+    });
   }, []);
 
   useEffect(() => {
-    const nav = navRef.current;
-    if (!nav) return;
-    const scrollers = Array.from(nav.querySelectorAll<HTMLElement>("[data-scroller]"));
-    const onScroll = (e: Event) => { if (e.currentTarget instanceof HTMLElement) measureScroller(e.currentTarget); };
-    scrollers.forEach(s => { s.addEventListener("scroll", onScroll, { passive: true }); });
-    measureAll();
+    const el = listRef.current;
+    if (!el) return;
+    measure();
+    el.addEventListener("scroll", measure, { passive: true });
     let observer: ResizeObserver | null = null;
     if (typeof ResizeObserver !== "undefined") {
-      observer = new ResizeObserver(measureAll);
-      scrollers.forEach(s => { observer?.observe(s); });
+      observer = new ResizeObserver(measure);
+      observer.observe(el);
     } else {
-      window.addEventListener("resize", measureAll);
+      window.addEventListener("resize", measure);
     }
     return () => {
-      scrollers.forEach(s => { s.removeEventListener("scroll", onScroll); });
+      el.removeEventListener("scroll", measure);
       observer?.disconnect();
-      window.removeEventListener("resize", measureAll);
+      window.removeEventListener("resize", measure);
     };
-  }, [measureAll]);
+  }, [measure]);
 
-  // Keep the current banner in view in whichever row is scrolling at this width.
   useLayoutEffect(() => {
-    const nav = navRef.current;
-    const active = nav?.querySelector<HTMLElement>('a[data-active="true"]');
-    if (!nav || !active) return;
-    nav.querySelectorAll<HTMLElement>("[data-scroller]").forEach(s => {
-      if (s.contains(active)) centerIn(s, active);
-    });
-    measureAll();
-  }, [current?.key, measureAll]);
+    const el = listRef.current;
+    const active = el?.querySelector<HTMLElement>('a[data-active="true"]');
+    if (el && active) centerIn(el, active);
+    measure();
+  }, [current?.key, measure]);
 
-  const onKeyDown = (e: ReactKeyboardEvent<HTMLElement>) => {
-    const links = Array.from(navRef.current?.querySelectorAll<HTMLAnchorElement>("a[data-st-banner]") ?? []);
+  const scrollByPage = (dir: -1 | 1) => {
+    const el = listRef.current;
+    if (!el) return;
+    const step = Math.max(160, Math.round(el.clientWidth * 0.8)) * dir;
+    if (typeof el.scrollBy === "function") el.scrollBy({ left: step, behavior: reducedMotion() ? "auto" : "smooth" });
+    else el.scrollLeft += step;
+  };
+
+  const onKeyDown = (e: ReactKeyboardEvent<HTMLUListElement>) => {
+    const links = Array.from(listRef.current?.querySelectorAll<HTMLAnchorElement>("a[data-st-banner]") ?? []);
     const i = links.findIndex(l => l === document.activeElement);
     if (i < 0 || links.length === 0) return;
     let next: number;
-    if (e.key === "ArrowRight" || e.key === "ArrowDown") next = (i + 1) % links.length;
-    else if (e.key === "ArrowLeft" || e.key === "ArrowUp") next = (i - 1 + links.length) % links.length;
+    if (e.key === "ArrowRight") next = (i + 1) % links.length;
+    else if (e.key === "ArrowLeft") next = (i - 1 + links.length) % links.length;
     else if (e.key === "Home") next = 0;
     else if (e.key === "End") next = links.length - 1;
     else return;
     e.preventDefault();
-    links.forEach((l, idx) => { l.tabIndex = idx === next ? 0 : -1; });
+    setRove(next);
     links[next]?.focus();
   };
 
-  let index = -1;
   return (
-    <nav ref={navRef} aria-labelledby={labelId} className="st-nav" onKeyDown={onKeyDown}>
-      <span id={labelId} className="st-visually-hidden">Settings sections</span>
-      <div className="st-rows" data-scroller="" data-testid="settings-banners">
-        {groups.map(group => {
-          const items = SETTINGS_SECTIONS.filter(s => s.group === group);
-          if (items.length === 0) return null;
-          const GroupIcon = group === "personal" ? UserRound : Building2;
-          const groupLabelId = `${labelId}-${group}`;
+    <nav aria-labelledby={labelId} className="st-carousel"
+      data-fade-left={edges.left ? "true" : undefined} data-fade-right={edges.right ? "true" : undefined}>
+      <span id={labelId} className="st-carousel-label">My Settings sections</span>
+      <button type="button" className="st-scroll-btn" data-dir="prev" aria-controls={listId}
+        aria-label="Scroll sections left" data-testid="settings-scroll-prev"
+        disabled={!edges.left} onClick={() => { scrollByPage(-1); }}>
+        <ChevronLeft size={18} strokeWidth={2.2} aria-hidden />
+      </button>
+      <ul ref={listRef} id={listId} className="st-cards" data-scroller="" data-testid="settings-banners" onKeyDown={onKeyDown}>
+        {sections.map((section, i) => {
+          const active = current?.key === section.key;
+          const exact = active && pathname === section.path;
           return (
-            <div key={group} className="st-group" data-group={group} role="group" aria-labelledby={groupLabelId}>
-              <div id={groupLabelId} className="st-group-label">
-                <GroupIcon size={13} aria-hidden strokeWidth={2} />
-                <span>{SETTINGS_GROUP_LABELS[group]}</span>
-                {group === "workspace" && workspaceName && (
-                  <span className="st-group-extra"> · {workspaceName}</span>
-                )}
-              </div>
-              <ul className="st-tabs" data-scroller="">
-                {items.map(section => {
-                  index += 1;
-                  const active = current?.key === section.key;
-                  const exact = active && pathname === section.path;
-                  return (
-                    <li key={section.key}>
-                      <Banner section={section} active={active} exact={exact} tabIndex={index === rove.current ? 0 : -1} />
-                    </li>
-                  );
-                })}
-              </ul>
-            </div>
+            <li key={section.key}>
+              <SectionCard section={section} active={active} exact={exact}
+                tabIndex={i === rove ? 0 : -1} onFocus={() => { setRove(i); }} />
+            </li>
           );
         })}
-      </div>
+      </ul>
+      <button type="button" className="st-scroll-btn" data-dir="next" aria-controls={listId}
+        aria-label="Scroll sections right" data-testid="settings-scroll-next"
+        disabled={!edges.right} onClick={() => { scrollByPage(1); }}>
+        <ChevronRight size={18} strokeWidth={2.2} aria-hidden />
+      </button>
     </nav>
   );
 }
 
-function Banner({ section, active, exact, tabIndex }: {
-  section: SettingsSection; active: boolean; exact: boolean; tabIndex: number;
+function SectionCard({ section, active, exact, tabIndex, onFocus }: {
+  section: SettingsSection; active: boolean; exact: boolean; tabIndex: number; onFocus: () => void;
 }) {
   const Icon = section.icon;
   return (
     <Link to={section.path} data-st-banner="" data-testid={`settings-banner-${section.key}`}
-      data-active={active ? "true" : "false"} data-group={section.group}
+      data-active={active ? "true" : "false"}
       aria-current={exact ? "page" : active ? "true" : undefined}
-      title={section.hint} tabIndex={tabIndex} className="st-tab">
-      <span aria-hidden className="st-tab-icon"><Icon size={17} strokeWidth={1.9} /></span>
-      <span className="st-tab-label">{section.label}</span>
-      <span aria-hidden className="st-tab-bar" />
+      title={section.hint} tabIndex={tabIndex} onFocus={onFocus} className="st-card-tab">
+      <span aria-hidden className="st-card-icon"><Icon size={20} strokeWidth={1.9} /></span>
+      <span className="st-card-label">{section.label}</span>
+      <span className="st-card-hint">{section.hint}</span>
+      <span aria-hidden className="st-card-bar" />
     </Link>
   );
 }
@@ -438,17 +457,16 @@ function SecurityTabs({ pathname }: { pathname: string }) {
 
 // ── Styles ─────────────────────────────────────────────────────────────────
 //
-// A style block because the banner rows change SHAPE at two widths, and that
-// has to be right on the first paint.
+// A style block because the carousel changes SHAPE on a phone, and that has
+// to be right on the first paint.
 
 const P = GROUP_TONE.personal;
-const W = GROUP_TONE.workspace;
 
 const SHELL_CSS = `
 .st-shell { background: ${SET.CANVAS}; min-height: 100%; padding-bottom: 48px; overflow-x: clip; }
 .st-inner { max-width: 1120px; margin: 0 auto; padding: 0 24px; box-sizing: border-box; min-width: 0; }
-.st-header { position: relative; background: #FFFFFF; border-bottom: 1px solid ${SET.BORDER}; padding: 22px 0 18px; }
-.st-header::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, ${SET.NAVY} 0%, #0B3A66 45%, ${SET.AZURE} 80%, ${SET.TEAL} 100%); }
+.st-header { position: relative; background: #FFFFFF; border-bottom: 1px solid ${SET.BORDER}; padding: 22px 0 16px; }
+.st-header::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, ${SET.NAVY} 0%, #0B3A66 45%, ${SET.AZURE} 100%); }
 .st-identity { display: flex; align-items: center; gap: 14px; min-width: 0; margin-bottom: 18px; }
 .st-identity-icon { width: 46px; height: 46px; border-radius: 12px; background: #F0F7FF; border: 1.5px solid #BAD7F5; color: ${SET.AZURE_TEXT};
   display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
@@ -460,84 +478,81 @@ const SHELL_CSS = `
   text-transform: uppercase; color: ${TONES.warning.fg}; background: ${TONES.warning.bg}; border: 1px solid ${TONES.warning.border}; border-radius: 999px; padding: 3px 9px; }
 .st-visually-hidden { position: absolute !important; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
 
-.st-nav { min-width: 0; }
-.st-rows { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
-.st-group { min-width: 0; border: 1px solid ${SET.BORDER}; border-radius: 12px; padding: 10px 10px 8px; background: linear-gradient(180deg, #FAFBFD 0%, #F3F6FA 100%); }
-.st-group-label { display: flex; align-items: center; gap: 6px; padding: 0 4px 8px; font-family: ${SET.MONO}; font-size: 10.5px; font-weight: 700;
-  letter-spacing: 0.1em; text-transform: uppercase; min-width: 0; white-space: nowrap; }
-.st-group[data-group="personal"] .st-group-label { color: ${P.text}; }
-.st-group[data-group="workspace"] .st-group-label { color: ${W.text}; }
-.st-group-extra { font-family: ${SET.FONT}; text-transform: none; letter-spacing: 0; font-weight: 600; color: ${SET.SLATE}; overflow: hidden; text-overflow: ellipsis; }
-.st-tabs { list-style: none; margin: 0; padding: 3px; display: flex; gap: 8px; min-width: 0;
-  overflow-x: auto; overflow-y: hidden; scrollbar-width: none; -ms-overflow-style: none; scroll-snap-type: x proximity; overscroll-behavior-x: contain; }
-.st-tabs::-webkit-scrollbar, .st-rows::-webkit-scrollbar, .st-subtabs::-webkit-scrollbar { display: none; }
-.st-tabs > li { flex: 1 1 0; min-width: 0; max-width: 210px; display: flex; scroll-snap-align: center; }
+/* Carousel: [<]  six upright cards  [>] on a wide screen. */
+.st-carousel { display: grid; grid-template-columns: 40px minmax(0, 1fr) 40px; grid-template-areas: "prev list next";
+  align-items: center; gap: 10px; min-width: 0; }
+.st-carousel-label { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.st-scroll-btn { width: 40px; height: 40px; border-radius: 999px; border: 1.5px solid ${SET.BORDER}; background: #FFFFFF; color: ${SET.INK};
+  display: inline-flex; align-items: center; justify-content: center; cursor: pointer; padding: 0; outline: none;
+  box-shadow: 0 1px 2px rgba(7,17,31,0.06), 0 6px 14px -10px rgba(7,17,31,0.35); -webkit-tap-highlight-color: transparent;
+  transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease, opacity 150ms ease, transform 150ms ease; }
+.st-scroll-btn[data-dir="prev"] { grid-area: prev; }
+.st-scroll-btn[data-dir="next"] { grid-area: next; }
+.st-scroll-btn:hover:not(:disabled) { border-color: ${SET.AZURE}; color: ${SET.AZURE_TEXT}; background: #F0F7FF; }
+.st-scroll-btn:active:not(:disabled) { transform: scale(0.94); }
+.st-scroll-btn:focus-visible { box-shadow: 0 0 0 3px rgba(0,120,212,0.35); border-color: ${SET.AZURE}; }
+.st-scroll-btn:disabled { opacity: 0.4; cursor: default; box-shadow: none; }
+
+.st-cards { grid-area: list; list-style: none; margin: 0; padding: 4px 3px 6px; display: flex; gap: 12px; min-width: 0;
+  overflow-x: auto; overflow-y: hidden; scrollbar-width: none; -ms-overflow-style: none; scroll-snap-type: x mandatory;
+  overscroll-behavior-x: contain; scroll-padding: 0 3px; }
+.st-cards::-webkit-scrollbar, .st-subtabs::-webkit-scrollbar { display: none; }
+.st-cards > li { flex: 0 0 188px; display: flex; scroll-snap-align: start; }
 
 [data-scroller] { --st-fade-l: 0px; --st-fade-r: 0px;
   -webkit-mask-image: linear-gradient(to right, transparent 0, #000 var(--st-fade-l), #000 calc(100% - var(--st-fade-r)), transparent 100%);
   mask-image: linear-gradient(to right, transparent 0, #000 var(--st-fade-l), #000 calc(100% - var(--st-fade-r)), transparent 100%); }
-[data-scroller][data-fade-left="true"] { --st-fade-l: 28px; }
-[data-scroller][data-fade-right="true"] { --st-fade-r: 28px; }
+[data-scroller][data-fade-left="true"] { --st-fade-l: 24px; }
+[data-scroller][data-fade-right="true"] { --st-fade-r: 24px; }
 
-.st-tab { position: relative; flex: 1 1 auto; box-sizing: border-box; display: flex; align-items: center; gap: 10px; min-width: 0;
-  min-height: 56px; padding: 8px 12px 10px 8px; border-radius: 10px; border: 1.5px solid ${SET.BORDER}; background: #FFFFFF;
-  text-decoration: none; color: ${SET.INK}; outline: none; -webkit-tap-highlight-color: transparent;
-  transition: background-color 160ms ease, border-color 160ms ease, box-shadow 160ms ease, color 160ms ease; }
-.st-tab:hover { border-color: #C9D5E3; box-shadow: 0 1px 2px rgba(7,17,31,0.05); }
-.st-tab:focus-visible { box-shadow: 0 0 0 3px rgba(0,120,212,0.35); border-color: ${SET.AZURE}; }
-.st-tab-icon { width: 34px; height: 34px; border-radius: 9px; flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+.st-card-tab { position: relative; flex: 1 1 auto; box-sizing: border-box; display: flex; flex-direction: column; align-items: flex-start; gap: 6px;
+  min-width: 0; min-height: 132px; padding: 14px 14px 16px; border-radius: 14px; border: 1.5px solid ${SET.BORDER};
+  background: linear-gradient(180deg, #FFFFFF 0%, #F9FBFD 100%); text-decoration: none; color: ${SET.INK}; outline: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color 160ms ease, border-color 160ms ease, box-shadow 160ms ease, color 160ms ease, transform 160ms ease; }
+.st-card-tab:hover { border-color: #C9D5E3; box-shadow: 0 1px 2px rgba(7,17,31,0.05), 0 10px 20px -14px rgba(7,17,31,0.35); transform: translateY(-1px); }
+.st-card-tab:focus-visible { box-shadow: 0 0 0 3px rgba(0,120,212,0.35); border-color: ${SET.AZURE}; }
+.st-card-icon { width: 42px; height: 42px; border-radius: 11px; flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+  background: ${P.tint}; border: 1px solid ${P.line}; color: ${P.text}; margin-bottom: 4px;
   transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease; }
-.st-tab[data-group="personal"] .st-tab-icon { background: ${P.tint}; border: 1px solid ${P.line}; color: ${P.text}; }
-.st-tab[data-group="workspace"] .st-tab-icon { background: ${W.tint}; border: 1px solid ${W.line}; color: ${W.text}; }
-.st-tab-label { font-family: ${SET.FONT}; font-size: 13px; font-weight: 600; line-height: 1.25; min-width: 0; overflow-wrap: anywhere; }
-.st-tab-bar { position: absolute; left: 12px; right: 12px; bottom: 3px; height: 3px; border-radius: 3px;
-  transform: scaleX(0); transform-origin: center; transition: transform 180ms ease; }
-.st-tab[data-group="personal"] .st-tab-bar { background: ${P.accent}; }
-.st-tab[data-group="workspace"] .st-tab-bar { background: ${W.accent}; }
-.st-tab[data-active="true"] { box-shadow: 0 1px 2px rgba(7,17,31,0.06), 0 6px 16px -10px rgba(7,17,31,0.35); }
-.st-tab[data-active="true"][data-group="personal"] { background: ${P.tint}; border-color: ${P.accent}; color: ${P.text}; }
-.st-tab[data-active="true"][data-group="workspace"] { background: ${W.tint}; border-color: ${W.accent}; color: ${W.text}; }
-.st-tab[data-active="true"][data-group="personal"] .st-tab-icon { background: ${P.accent}; border-color: ${P.accent}; color: #FFFFFF; }
-.st-tab[data-active="true"][data-group="workspace"] .st-tab-icon { background: ${W.accent}; border-color: ${W.accent}; color: #FFFFFF; }
-.st-tab[data-active="true"] .st-tab-label { font-weight: 700; }
-.st-tab[data-active="true"] .st-tab-bar { transform: scaleX(1); }
-.st-tab[data-active="true"]:focus-visible { box-shadow: 0 0 0 3px rgba(0,120,212,0.35); }
+.st-card-label { font-family: ${SET.FONT}; font-size: 14px; font-weight: 700; line-height: 1.25; color: ${SET.NAVY}; overflow-wrap: anywhere; }
+.st-card-hint { font-family: ${SET.FONT}; font-size: 12px; line-height: 1.4; color: ${SET.SLATE};
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.st-card-bar { position: absolute; left: 14px; right: 14px; bottom: 5px; height: 3px; border-radius: 3px; background: ${P.accent};
+  transform: scaleX(0); transform-origin: left; transition: transform 200ms ease; }
+.st-card-tab[data-active="true"] { background: ${P.tint}; border-color: ${P.accent};
+  box-shadow: 0 0 0 3px rgba(0,120,212,0.12), 0 10px 22px -14px rgba(0,120,212,0.55); }
+.st-card-tab[data-active="true"] .st-card-icon { background: ${P.accent}; border-color: ${P.accent}; color: #FFFFFF; }
+.st-card-tab[data-active="true"] .st-card-label { color: ${P.text}; }
+.st-card-tab[data-active="true"] .st-card-bar { transform: scaleX(1); }
+.st-card-tab[data-active="true"]:focus-visible { box-shadow: 0 0 0 3px rgba(0,120,212,0.35); }
 
-/* 1024-1279: tighter cards, labels may wrap to two lines — never truncated. */
-@media (min-width: 1024px) and (max-width: 1279px) {
-  .st-tabs { gap: 6px; }
-  .st-tab { gap: 8px; padding: 8px 8px 10px 7px; }
-  .st-tab-icon { width: 30px; height: 30px; }
-  .st-tab-label { font-size: 12.5px; }
-}
+.st-moved { display: flex; align-items: flex-start; gap: 8px; margin: 12px 0 0; font-family: ${SET.FONT}; font-size: 12.5px; line-height: 1.5; color: ${SET.SLATE}; }
+.st-moved > svg { flex-shrink: 0; margin-top: 2px; color: ${SET.MUTED}; }
+.st-moved-link { display: inline-flex; align-items: center; gap: 4px; vertical-align: bottom; color: ${SET.AZURE_TEXT}; font-weight: 600; text-decoration: none; white-space: nowrap; }
+.st-moved-link svg { display: inline-block; flex-shrink: 0; }
+.st-moved-link:hover span:last-child { text-decoration: underline; text-underline-offset: 3px; }
 
-/* Tablet: each strip is a compact row that scrolls and snaps. */
-@media (max-width: 1023px) {
-  .st-tabs > li { flex: 0 0 auto; max-width: none; }
-  .st-tab { min-height: 44px; padding: 0 14px 0 6px; gap: 8px; }
-  .st-tab-icon { width: 30px; height: 30px; border-radius: 8px; }
-  .st-tab-label { white-space: nowrap; }
-  .st-tab-bar { bottom: 2px; height: 2.5px; }
-}
-
-/* Phone: the two strips become ONE scrolling row; each group keeps a small
-   label at its start so Personal and Workspace still read as two sets. */
+/* Phone: the buttons move above the row, beside its label, so the cards get
+   the full width and nothing crowds them. */
 @media (max-width: 767px) {
   .st-inner { padding: 0 16px; }
-  .st-header { padding: 16px 0 12px; }
-  .st-identity { gap: 12px; margin-bottom: 14px; }
+  .st-header { padding: 16px 0 14px; }
+  .st-identity { gap: 12px; margin-bottom: 12px; }
   .st-identity-icon { width: 40px; height: 40px; border-radius: 10px; }
   .st-title { font-size: 20px; }
-  .st-rows { flex-direction: row; align-items: stretch; gap: 10px; overflow-x: auto; overflow-y: hidden; scrollbar-width: none;
-    scroll-snap-type: x proximity; overscroll-behavior-x: contain; border: 1px solid ${SET.BORDER}; border-radius: 12px;
-    background: linear-gradient(180deg, #FAFBFD 0%, #F3F6FA 100%); padding: 6px; }
-  .st-group { display: flex; align-items: center; gap: 6px; flex: 0 0 auto; border: 0; padding: 0; background: none; border-radius: 0; }
-  .st-group + .st-group { border-left: 1px solid ${SET.BORDER}; padding-left: 10px; }
-  .st-group-label { padding: 0 2px; font-size: 9.5px; writing-mode: vertical-rl; transform: rotate(180deg); letter-spacing: 0.12em; }
-  .st-group-label svg { display: none; }
-  .st-group-extra { display: none; }
-  .st-tabs { overflow: visible; padding: 0; mask-image: none !important; -webkit-mask-image: none !important; }
+  .st-carousel { grid-template-columns: minmax(0, 1fr) 40px 40px; grid-template-areas: "label prev next" "list list list"; row-gap: 8px; column-gap: 8px; }
+  .st-carousel-label { grid-area: label; position: static; width: auto; height: auto; margin: 0; overflow: hidden; clip: auto; text-overflow: ellipsis;
+    font-family: ${SET.MONO}; font-size: 10.5px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: ${SET.MUTED}; }
+  .st-cards { margin: 0 -16px; padding: 4px 16px 6px; gap: 10px; scroll-padding: 0 16px; }
+  .st-cards > li { flex-basis: 150px; }
+  .st-card-tab { min-height: 118px; padding: 12px 12px 14px; border-radius: 12px; }
+  .st-card-icon { width: 38px; height: 38px; border-radius: 10px; }
+  .st-card-label { font-size: 13.5px; }
+  .st-card-hint { font-size: 11.5px; }
+  [data-scroller].st-cards { -webkit-mask-image: none; mask-image: none; }
 }
+@media (hover: none) { .st-card-tab:hover { transform: none; } }
 
 .st-content { padding-top: 22px; min-height: 60vh; }
 @media (max-width: 767px) { .st-content { padding-top: 16px; } }
@@ -563,7 +578,8 @@ const SHELL_CSS = `
 
 @media (prefers-reduced-motion: reduce) {
   .st-section-enter { animation: none; }
-  .st-tab, .st-tab-icon, .st-tab-bar, .st-subtab { transition: none; }
+  .st-card-tab, .st-card-icon, .st-card-bar, .st-subtab, .st-scroll-btn { transition: none; }
+  .st-card-tab:hover { transform: none; }
 }
 
 @media print {

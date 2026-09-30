@@ -201,7 +201,7 @@ export function RealTeamDetailPage({ workspaceId, teamId }: { workspaceId: strin
     return () => { cancelled = true; };
   }, [workspaceId, canSeeRoster]);
 
-  const crumbs = [{ label: "Manage", to: "/app/workspace" }, { label: "Teams", to: "/app/workspace/teams" }, { label: unit?.name ?? "Team" }];
+  const crumbs = [{ label: "Workspace", to: "/app/workspace" }, { label: "Teams", to: "/app/workspace/teams" }, { label: unit?.name ?? "Team" }];
 
   if (state === "loading") return <ManagePage crumbs={crumbs} title="Team"><LoadingBlock label="Loading team…" /></ManagePage>;
   if (state === "error") return <ManagePage crumbs={crumbs} title="Team"><ErrorBlock message={error ?? "We couldn't load this team."} onRetry={() => void load()} /></ManagePage>;

@@ -1,4 +1,4 @@
-// /app/settings/billing/invoices/:invoiceId — the full SAMPLE invoice.
+// /app/workspace/settings/billing/invoices/:invoiceId — the full SAMPLE invoice.
 //
 // Signed-in only (it lives under the platform layout). There is exactly one
 // invoice, INV-SAMPLE-0001, and it is a sample: the banner says so at the
@@ -46,7 +46,7 @@ export function InvoicePage() {
   const { invoiceId } = useParams();
   const billedTo = useInvoiceBilledTo();
   const back = (
-    <Link to="/app/settings/billing" className="inv-no-print" style={{ ...GF, fontSize: 13, fontWeight: 600, color: SET.AZURE_TEXT, textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 4, minHeight: 32, marginBottom: 10 }}>
+    <Link to="/app/workspace/settings/billing" className="inv-no-print" style={{ ...GF, fontSize: 13, fontWeight: 600, color: SET.AZURE_TEXT, textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 4, minHeight: 32, marginBottom: 10 }}>
       <ArrowLeft size={15} aria-hidden /> Billing & Plan
     </Link>
   );

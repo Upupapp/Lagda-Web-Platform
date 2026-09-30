@@ -18,7 +18,7 @@ import { useViewport } from "../../../hooks/useViewport";
 import { TeamHierarchyTree } from "./real/TeamHierarchyTree";
 import { buildLevels, ladderRole } from "./real/team-hierarchy";
 
-const CRUMBS = [{ label: "Manage", to: "/app/workspace" }, { label: "Teams", to: "/app/workspace/teams" }];
+const CRUMBS = [{ label: "Workspace", to: "/app/workspace" }, { label: "Teams", to: "/app/workspace/teams" }];
 
 const GF    = { fontFamily: "'Geist', sans-serif" };
 const GM    = { fontFamily: "'Geist Mono', monospace" };

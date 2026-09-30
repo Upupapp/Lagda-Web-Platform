@@ -8,7 +8,7 @@ import { NavLink, Link } from "react-router";
 import {
   Menu, X, LayoutDashboard, FileText, Files, Users, ShieldCheck,
   Bell, Users2, Settings, Settings2, FilePlus, Inbox, HelpCircle, GitBranch, BarChart2, Zap,
-  Search, Compass, Share2, Mail, ChevronDown, LogIn,
+  Search, Compass, Share2, Mail, ChevronDown, LogIn, Building2, UserCog,
 } from "lucide-react";
 import { JoinWorkspaceDialog } from "./JoinWorkspaceDialog";
 import lagdaHeaderLogo from "../../../brand elements/svg/LagdaLogoPrimaryHorizontalFullColor_Header.svg";
@@ -36,7 +36,7 @@ const GM     = { fontFamily: "'Geist Mono', monospace" };
 // HelpCircle were absent, so "My Actions" rendered with no icon on mobile only.
 const ICON_MAP: Record<string, React.ElementType> = {
   LayoutDashboard, FileText, Files, Users, ShieldCheck, Bell, Users2, Settings, Settings2, FilePlus,
-  Inbox, HelpCircle, GitBranch, BarChart2, Zap, Share2, Mail,
+  Inbox, HelpCircle, GitBranch, BarChart2, Zap, Share2, Mail, Building2, UserCog,
 };
 function NavIcon({ name, size = 18 }: { name: string; size?: number }) {
   const Comp = ICON_MAP[name];
@@ -356,8 +356,8 @@ export function MobileNav() {
               <NavLink to="/app/settings/profile" onClick={closeAndNavigate} style={({ isActive }) => ({ display: "flex", alignItems: "center", gap: 12, padding: "10px 12px", borderRadius: 8, textDecoration: "none", color: isActive ? "#0078D4" : "#64748B" })}>
                 {({ isActive }) => (
                   <>
-                    <span style={{ color: isActive ? "#0078D4" : "#64748B", display: "flex" }}><NavIcon name="Settings" /></span>
-                    <span style={{ ...GF, fontSize: 14, fontWeight: isActive ? 600 : 400 }}>Settings</span>
+                    <span style={{ color: isActive ? "#0078D4" : "#64748B", display: "flex" }}><NavIcon name="UserCog" /></span>
+                    <span style={{ ...GF, fontSize: 14, fontWeight: isActive ? 600 : 400 }}>My Settings</span>
                   </>
                 )}
               </NavLink>

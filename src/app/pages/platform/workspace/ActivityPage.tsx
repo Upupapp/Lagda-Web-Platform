@@ -118,7 +118,7 @@ function ActivityInner() {
   }, [asyncLoadActivity, debouncedSearch, eventType]);
 
   return (
-    <ManagePage crumbs={[{ label: "Manage", to: "/app/workspace" }, { label: "Activity" }]} title="Administrative Activity" maxWidth={900}>
+    <ManagePage crumbs={[{ label: "Workspace", to: "/app/workspace" }, { label: "Activity" }]} title="Administrative Activity" maxWidth={900}>
         {/* Filters */}
         <div style={{ display: "flex", gap: 10, marginBottom: 16, flexWrap: "wrap" }}>
           <input type="search" placeholder="Search actor, target, event…" value={search} onChange={e => setSearch(e.target.value)}

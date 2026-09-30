@@ -72,7 +72,7 @@ const OUTCOME_FALLBACK_LABELS: Partial<Record<CapabilityResolutionOutcome, strin
 };
 
 const OUTCOME_FALLBACK_ROUTES: Partial<Record<CapabilityResolutionOutcome, string>> = {
-  "unavailable-plan":  "/app/settings/billing",
+  "unavailable-plan":  "/app/workspace/settings/billing",
   "future-product":    "/enotary",
 };
 

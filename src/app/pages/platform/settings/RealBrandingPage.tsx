@@ -1,4 +1,4 @@
-// /app/settings/branding, real backend (082).
+// /app/workspace/settings/branding, real backend (082).
 //
 // Loads the CURRENT workspace's branding, previews edits as they are typed,
 // and saves them to the workspace: the display name renames the workspace;

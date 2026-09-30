@@ -22,7 +22,7 @@ import { initialsOfName } from "./team-hierarchy";
 import { useDocumentCardBranding, type CardBranding } from "../../documents/CompletedDocumentCards";
 
 const UNIT_NAME_MAX = 120;
-const CRUMBS = [{ label: "Manage", to: "/app/workspace" }, { label: "Teams" }];
+const CRUMBS = [{ label: "Workspace", to: "/app/workspace" }, { label: "Teams" }];
 
 interface TeamRow extends OrganizationUnit { memberCount: number | null; initials: string[] }
 

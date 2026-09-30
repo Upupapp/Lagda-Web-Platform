@@ -4,6 +4,7 @@
 import { describe, it, expect } from "vitest";
 import { settingsSectionForPath, ALL_SETTINGS_SECTIONS, SECURITY_TABS } from "../sections";
 import { isLiveSettingsPath } from "../SettingsShell";
+import { movedSettingsPath } from "../LegacySettingsRedirect";
 import {
   LAGDA_PLANS, COMPARE_GROUPS, SAMPLE_PLANS, SAMPLE_COMPARE_GROUPS, CURRENT_PLAN, currentPlanLimits,
   annualSaving, formatPeso,
@@ -17,9 +18,23 @@ describe("settings sections", () => {
     expect(settingsSectionForPath("/app/settings")).toBeNull();
     expect(settingsSectionForPath("/app/settings/profile")?.key).toBe("profile");
     expect(settingsSectionForPath("/app/settings/security/mfa")?.key).toBe("security");
-    expect(settingsSectionForPath("/app/settings/billing/invoices/INV-SAMPLE-0001")?.key).toBe("billing");
+    expect(settingsSectionForPath("/app/workspace/settings/billing/invoices/INV-SAMPLE-0001")?.key).toBe("billing");
+    expect(settingsSectionForPath("/app/workspace/settings/branding")?.key).toBe("branding");
+    expect(settingsSectionForPath("/app/workspace/organization")?.key).toBe("organization");
     expect(settingsSectionForPath("/app/settings/nope")).toBeNull();
     expect(settingsSectionForPath("/app/workspace")).toBeNull();
+    expect(settingsSectionForPath("/app/workspace/settings")).toBeNull();
+  });
+
+  it("sends every moved settings address to its new home, keeping the rest of the path", () => {
+    expect(movedSettingsPath("/app/settings/branding")).toBe("/app/workspace/settings/branding");
+    expect(movedSettingsPath("/app/settings/billing")).toBe("/app/workspace/settings/billing");
+    expect(movedSettingsPath("/app/settings/billing/invoices/INV-SAMPLE-0001")).toBe("/app/workspace/settings/billing/invoices/INV-SAMPLE-0001");
+    expect(movedSettingsPath("/app/settings/usage")).toBe("/app/workspace/settings/usage");
+    expect(movedSettingsPath("/app/settings/integrations/slack")).toBe("/app/workspace/settings/integrations/slack");
+    expect(movedSettingsPath("/app/settings/organization")).toBe("/app/workspace/organization");
+    expect(movedSettingsPath("/app/settings/profile")).toBeNull();
+    expect(movedSettingsPath("/app/settings")).toBeNull();
   });
 
   it("groups six personal and five workspace sections, with Integrations capability-gated", () => {
@@ -33,7 +48,8 @@ describe("settings sections", () => {
 
   it("is live everywhere but Integrations with a backend, and nowhere without one", () => {
     expect(isLiveSettingsPath("/app/settings/notifications", true)).toBe(true);
-    expect(isLiveSettingsPath("/app/settings/integrations", true)).toBe(false);
+    expect(isLiveSettingsPath("/app/workspace/settings/integrations", true)).toBe(false);
+    expect(isLiveSettingsPath("/app/workspace/settings/branding", true)).toBe(true);
     expect(isLiveSettingsPath("/app/settings/profile", false)).toBe(false);
   });
 });

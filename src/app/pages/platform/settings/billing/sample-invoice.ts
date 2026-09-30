@@ -16,7 +16,7 @@ import { useWorkspaceMode } from "../../../../hooks/useWorkspaceAccess";
 import { realWorkspaceMembersService } from "../../../../services/real/workspace-members.service";
 
 export const SAMPLE_INVOICE_ID = "INV-SAMPLE-0001";
-export const SAMPLE_INVOICE_PATH = `/app/settings/billing/invoices/${SAMPLE_INVOICE_ID}`;
+export const SAMPLE_INVOICE_PATH = `/app/workspace/settings/billing/invoices/${SAMPLE_INVOICE_ID}`;
 export const SAMPLE_INVOICE_BANNER = "SAMPLE INVOICE — NO PAYMENT HAS BEEN TAKEN";
 export const VAT_RATE = 0.12;
 

@@ -36,6 +36,8 @@ function renderAt(path: string) {
           <Route path="security/password" element={<PasswordPage />} />
           <Route path="security/sessions" element={<SessionsPage />} />
           <Route path="notifications" element={<NotificationsPage />} />
+        </Route>
+        <Route path="/app/workspace/settings">
           <Route path="usage" element={<UsagePage />} />
           <Route path="billing" element={<BillingPage />} />
         </Route>
@@ -49,7 +51,7 @@ describe("settings in the demo build", () => {
     renderAt("/app/settings");
     expect(screen.getByText("Demo build")).toBeInTheDocument();
     expect(screen.getByTestId("settings-preview-note")).toHaveTextContent(/not connected to an account/);
-    expect(await screen.findByTestId("overview-usage")).toBeInTheDocument();
+    expect(await screen.findByTestId("overview-workspace-links")).toBeInTheDocument();
     expect(fetchSpy).not.toHaveBeenCalled();
   });
 
@@ -75,7 +77,7 @@ describe("settings in the demo build", () => {
   });
 
   it("shows sample usage, labelled as such", async () => {
-    renderAt("/app/settings/usage");
+    renderAt("/app/workspace/settings/usage");
     expect(await screen.findByTestId("usage-value-sent-month")).toHaveTextContent("12");
     expect(screen.getByText("Demo build — these are sample figures.")).toBeInTheDocument();
   });
@@ -87,7 +89,7 @@ describe("settings in the demo build", () => {
   });
 
   it("bills to the signed-in user when there is no members list", () => {
-    renderAt("/app/settings/billing");
+    renderAt("/app/workspace/settings/billing");
     expect(screen.getByTestId("invoice-billed-name")).toHaveTextContent("Ana Reyes");
   });
 });

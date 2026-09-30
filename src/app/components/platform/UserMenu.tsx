@@ -134,7 +134,7 @@ export function UserMenu({ collapsed, onSignOut }: UserMenuProps) {
                 * concerns; it was never personal. */}
             <MenuItem to="/app/settings/profile" icon={<CircleUser size={14} aria-hidden />} label="Your profile" onClose={() => setOpen(false)} />
             <MenuItem to="/app/settings/security" icon={<Lock size={14} aria-hidden />} label="Sign-in & security" onClose={() => setOpen(false)} />
-            <MenuItem to="/app/settings" icon={<Settings size={14} aria-hidden />} label="Settings" onClose={() => setOpen(false)} />
+            <MenuItem to="/app/settings" icon={<Settings size={14} aria-hidden />} label="My Settings" onClose={() => setOpen(false)} />
 
             <div style={{ borderTop: `1px solid ${BORDER}`, margin: "4px 0" }} />
 

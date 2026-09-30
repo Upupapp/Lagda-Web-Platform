@@ -95,14 +95,14 @@ function MoreForThisWorkspace() {
       </h2>
       <QuickLinkRow label="Reports"          path="/app/reports"           description="Volume, turnaround and completion figures" />
       <QuickLinkRow label="Signing routes"   path="/app/workflow"          description="Reusable signing orders for documents with several signers" />
-      <QuickLinkRow label="Logo & colours"   path="/app/settings/branding" description="How your documents and emails look to signers" />
-      <QuickLinkRow label="Plan & billing"   path="/app/settings/billing"  description="Your plan, invoices and usage" />
+      <QuickLinkRow label="Logo & colours"   path="/app/workspace/settings/branding" description="How your documents and emails look to signers" />
+      <QuickLinkRow label="Plan & billing"   path="/app/workspace/settings/billing"  description="Your plan, invoices and usage" />
       <div style={{ height: 8 }} />
     </section>
   );
 }
 
-const OVERVIEW_CRUMBS = [{ label: "Manage", to: "/app/workspace" }, { label: "Overview" }];
+const OVERVIEW_CRUMBS = [{ label: "Workspace", to: "/app/workspace" }, { label: "Overview" }];
 
 function WorkspaceOverviewInner() {
   const { state, asyncLoadOverview } = useWorkspaceAdmin();
@@ -241,8 +241,8 @@ function WorkspaceOverviewInner() {
                 and the automation rules engine — and the section's own tab was
                 also called "Workflows", so the nav read "Workflow › Workflows". */}
             <QuickLinkRow label="Signing routes"   path="/app/workflow"           description="Reusable signing orders for documents with several signers" />
-            <QuickLinkRow label="Logo & colours"   path="/app/settings/branding"  description="How your documents and emails look to signers" />
-            <QuickLinkRow label="Plan & billing"   path="/app/settings/billing"   description="Your plan, invoices and usage" />
+            <QuickLinkRow label="Logo & colours"   path="/app/workspace/settings/branding"  description="How your documents and emails look to signers" />
+            <QuickLinkRow label="Plan & billing"   path="/app/workspace/settings/billing"   description="Your plan, invoices and usage" />
             <div style={{ borderBottom: "none", padding: "12px 0 2px" }}>
               <Link to="/app/workspace/settings" style={{ ...GF, fontSize: 13, fontWeight: 600, color: AZURE, textDecoration: "none" }}>
                 Workspace settings &amp; sign-in policy →

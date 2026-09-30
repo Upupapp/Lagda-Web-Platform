@@ -1,4 +1,4 @@
-// /app/settings/integrations — Integration catalog.
+// /app/workspace/settings/integrations — Integration catalog.
 // Frontend-only. No OAuth, no credential storage, no data synchronization.
 
 import React, { useEffect, useState } from "react";
@@ -42,7 +42,7 @@ function IntegrationCard({ integration }: { integration: IntegrationDefinition }
   const connBadge = connectionBadge(integration.connectionStatus);
 
   return (
-    <Link to={`/app/settings/integrations/${integration.id}`} style={{ textDecoration: "none" }}>
+    <Link to={`/app/workspace/settings/integrations/${integration.id}`} style={{ textDecoration: "none" }}>
       <div style={{ border: "1.5px solid #E3E8EF", borderRadius: 10, padding: "16px 18px", background: "#FFFFFF", cursor: "pointer", display: "flex", flexDirection: "column", gap: 10, height: "100%", boxSizing: "border-box" }}
         onMouseEnter={e => (e.currentTarget.style.boxShadow = "0 2px 12px rgba(0,120,212,0.10)")}
         onMouseLeave={e => (e.currentTarget.style.boxShadow = "none")}>

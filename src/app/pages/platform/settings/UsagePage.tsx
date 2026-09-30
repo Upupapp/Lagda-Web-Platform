@@ -1,4 +1,4 @@
-// /app/settings/usage — this workspace's usage for the current month.
+// /app/workspace/settings/usage — this workspace's usage for the current month.
 //
 // With a backend every figure is GET /workspaces/:id/usage — a new workspace
 // shows zeros, not samples. Limits come from the plan in config/pricing.config
@@ -143,7 +143,7 @@ export function UsagePage() {
         <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
           <Badge tone="accent" icon={Sparkles}>{CURRENT_PLAN.name}</Badge>
           <span style={{ ...GF, fontSize: 13, color: SET.SLATE }}>{limits ? "Plan limits apply" : "No limits applied"}</span>
-          <Link to="/app/settings/billing" style={{ ...GF, fontSize: 13, fontWeight: 600, color: SET.AZURE_TEXT, textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 4 }}>
+          <Link to="/app/workspace/settings/billing" style={{ ...GF, fontSize: 13, fontWeight: 600, color: SET.AZURE_TEXT, textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 4 }}>
             Plans <ArrowRight size={14} aria-hidden />
           </Link>
         </div>

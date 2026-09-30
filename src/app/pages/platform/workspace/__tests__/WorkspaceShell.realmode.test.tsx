@@ -1,9 +1,10 @@
-// The Manage workspace shell with a real backend: one header and one row of
-// section banners for every /app/workspace/* page, banners gated by what the
-// viewer's role may use, counts from the API, the active banner following
-// the URL (detail pages keep their section active), sections rendered inside
-// the shell without a second page header, focus moved to the new section's
-// heading, and arrow-key movement along the banner row.
+// The Workspace shell with a real backend: one header for every
+// /app/workspace/* page, with the gear to Workspace Settings at its top
+// right, four parts (Overview, People, Organisation, Activity log) and a row
+// of tabs for the parts that have them — gated by what the viewer's role may
+// use, counts from the API, the active part and tab following the URL
+// (detail pages keep theirs active), sections rendered inside the shell
+// without a second page header, and focus moved to the new section's heading.
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, within, waitFor } from "@testing-library/react";
@@ -26,7 +27,6 @@ const platform = {
 vi.mock("../../../../context/PlatformContext", () => ({ usePlatform: () => platform }));
 
 import { WorkspaceShell } from "../shell/WorkspaceShell";
-import { WORKSPACE_SECTIONS } from "../shell/sections";
 import { WorkspaceOverviewPage } from "../WorkspaceOverviewPage";
 import { MembersPage } from "../MembersPage";
 import { MemberDetailPage } from "../MemberDetailPage";
@@ -128,27 +128,36 @@ function renderShellAt(path: string) {
   );
 }
 
-const bannerKeys = () =>
-  within(screen.getByTestId("workspace-banners")).getAllByRole("link").map(l => l.getAttribute("data-testid"));
+const partKeys = () =>
+  within(screen.getByTestId("workspace-parts")).getAllByRole("link").map(l => l.getAttribute("data-testid"));
+const tabKeys = () =>
+  within(screen.getByTestId("workspace-tabs")).getAllByRole("link").map(l => l.getAttribute("data-testid"));
 
-describe("Workspace shell — banners by capability", () => {
-  it("gives an owner every section, in order, with the overview's real counts", async () => {
-    renderShellAt("/app/workspace");
+describe("Workspace shell — parts and tabs by capability", () => {
+  it("gives an owner every part and tab, in order, with the overview's real counts", async () => {
+    renderShellAt("/app/workspace/members");
     expect(await screen.findByTestId("workspace-name")).toHaveTextContent("Reyes Law Office");
-    expect(bannerKeys()).toEqual(WORKSPACE_SECTIONS.map(s => `banner-${s.key}`));
+    expect(partKeys()).toEqual(["part-overview", "part-people", "part-organisation", "part-activity"]);
+    expect(tabKeys()).toEqual(["tab-members", "tab-invite", "tab-join-requests"]);
 
-    await waitFor(() => expect(screen.getByTestId("banner-count-members")).toHaveTextContent("3"));
-    await waitFor(() => expect(screen.getByTestId("banner-count-join-requests")).toHaveTextContent("2"));
-    await waitFor(() => expect(screen.getByTestId("banner-count-invitations")).toHaveTextContent("2"));
-    await waitFor(() => expect(screen.getByTestId("banner-count-join-links")).toHaveTextContent("1"));
-    // Waiting join requests are flagged; totals are not.
-    expect(screen.getByTestId("banner-count-join-requests")).toHaveAttribute("data-tone", "attention");
-    expect(screen.getByTestId("banner-count-members")).not.toHaveAttribute("data-tone");
-    // The count is part of the banner's accessible name.
-    expect(screen.getByRole("link", { name: /Join requests, 2 waiting/ })).toHaveAttribute("href", "/app/workspace/join-requests");
-    expect(screen.getByTestId("banner-roles")).toHaveAttribute("title", "Who can do what");
-    // Documents lives in the side panel; Manage does not repeat it.
-    expect(screen.queryByTestId("banner-documents")).toBeNull();
+    await waitFor(() => expect(screen.getByTestId("tab-count-members")).toHaveTextContent("3"));
+    await waitFor(() => expect(screen.getByTestId("tab-count-join-requests")).toHaveTextContent("2"));
+    await waitFor(() => expect(screen.getByTestId("tab-count-invite")).toHaveTextContent("2"));
+    // Waiting join requests are flagged, on the tab and on People; totals are not.
+    expect(screen.getByTestId("tab-count-join-requests")).toHaveAttribute("data-tone", "attention");
+    expect(screen.getByTestId("tab-count-members")).not.toHaveAttribute("data-tone");
+    expect(screen.getByTestId("part-count-people")).toHaveTextContent("2");
+    // The count is part of the accessible name.
+    expect(screen.getByRole("link", { name: /Requests, 2 waiting/ })).toHaveAttribute("href", "/app/workspace/join-requests");
+    expect(screen.getByRole("link", { name: /People, 2 waiting/ })).toHaveAttribute("href", "/app/workspace/members");
+  });
+
+  it("puts Teams, Organization units and Roles & permissions under Organisation", async () => {
+    renderShellAt("/app/workspace/teams");
+    await screen.findByTestId("team-un_fin");
+    expect(tabKeys()).toEqual(["tab-teams", "tab-organization", "tab-roles"]);
+    expect(screen.getByTestId("tab-roles")).toHaveTextContent("Roles & permissions");
+    expect(screen.getByTestId("part-organisation")).toHaveAttribute("data-active", "true");
   });
 
   it("gives a New Comer only what their role reaches and never calls admin-only endpoints", async () => {
@@ -157,28 +166,65 @@ describe("Workspace shell — banners by capability", () => {
     renderShellAt("/app/workspace");
     await screen.findByTestId("workspace-name");
     await waitFor(() => expect(screen.getByTestId("your-role")).toHaveTextContent("New Comer"));
-    expect(bannerKeys()).toEqual(["banner-overview", "banner-teams", "banner-roles"]);
+    expect(partKeys()).toEqual(["part-overview", "part-organisation"]);
+    // The gear opens the settings a New Comer may read.
+    expect(screen.getByTestId("workspace-settings-gear")).toHaveAttribute("href", "/app/workspace/settings/branding");
     const forbidden = ["/members", "/join-requests", "/join-tickets", "/invitations", "/activity"];
     expect(calls.filter(c => forbidden.some(f => c.path.endsWith(f)))).toEqual([]);
   });
 
-  it("shows an auditor the activity log and documents are for administrators", async () => {
+  it("shows an auditor the activity log, and People is for administrators", async () => {
     platform.role = "auditor";
     accessRole = "auditor";
     renderShellAt("/app/workspace");
     await screen.findByTestId("workspace-name");
-    await waitFor(() => expect(bannerKeys()).toContain("banner-activity"));
-    expect(bannerKeys()).not.toContain("banner-members");
-    expect(bannerKeys()).not.toContain("banner-documents");
-    expect(bannerKeys()).not.toContain("banner-settings");
+    await waitFor(() => expect(partKeys()).toContain("part-activity"));
+    expect(partKeys()).not.toContain("part-people");
   });
 
-  it("keeps the current section's banner when a direct link reaches a section the role does not list", async () => {
+  it("keeps the current tab when a direct link reaches a page the role does not list", async () => {
     platform.role = "sender";
     accessRole = "sender";
     renderShellAt("/app/workspace/settings");
     expect(await screen.findByTestId("workspace-name-readonly")).toHaveTextContent("Reyes Law Office");
-    expect(screen.getByTestId("banner-settings")).toHaveAttribute("aria-current", "page");
+    expect(screen.getByTestId("tab-general")).toHaveAttribute("aria-current", "page");
+  });
+});
+
+describe("Workspace shell — Workspace Settings behind the gear", () => {
+  it("is a gear at the top right, labelled Workspace Settings, opening General for an owner", async () => {
+    const user = userEvent.setup();
+    renderShellAt("/app/workspace");
+    await screen.findByTestId("workspace-name");
+    const gear = screen.getByRole("link", { name: "Workspace Settings" });
+    expect(gear).toBe(screen.getByTestId("workspace-settings-gear"));
+    expect(gear).toHaveAttribute("href", "/app/workspace/settings");
+    expect(gear).toHaveTextContent("Workspace Settings");
+    // No part is "Workspace settings": the gear is its only way in.
+    expect(partKeys()).not.toContain("part-settings");
+
+    await user.click(gear);
+    expect(screen.getByTestId("location")).toHaveTextContent("/app/workspace/settings");
+    expect(await screen.findByTestId("workspace-settings-heading")).toHaveTextContent("Workspace Settings");
+    expect(tabKeys().slice(0, 4)).toEqual(["tab-general", "tab-branding", "tab-billing", "tab-usage"]);
+    expect(screen.getByTestId("workspace-settings-gear")).toHaveAttribute("data-active", "true");
+    expect(within(screen.getByTestId("workspace-parts")).getAllByRole("link").filter(l => l.getAttribute("data-active") === "true")).toEqual([]);
+    expect(screen.getByTestId("workspace-settings-close")).toHaveAttribute("href", "/app/workspace");
+  });
+});
+
+describe("Workspace shell — Invite people", () => {
+  it("is one tab over email invitations and join links, with a switch between them", async () => {
+    const user = userEvent.setup();
+    renderShellAt("/app/workspace/invitations");
+    const email = await screen.findByTestId("invite-method-email");
+    expect(email).toHaveAttribute("aria-current", "page");
+    expect(screen.getByTestId("tab-invite")).toHaveAttribute("data-active", "true");
+
+    await user.click(screen.getByTestId("invite-method-link"));
+    expect(screen.getByTestId("location")).toHaveTextContent("/app/workspace/join-links");
+    expect(screen.getByTestId("invite-method-link")).toHaveAttribute("aria-current", "page");
+    expect(screen.getByTestId("tab-invite")).toHaveAttribute("data-active", "true");
   });
 });
 
@@ -212,21 +258,21 @@ describe("Workspace shell — sections render inside it", () => {
   });
 });
 
-describe("Workspace shell — the active banner follows the URL", () => {
-  it("marks the current section and moves with a banner click, keeping the header mounted", async () => {
+describe("Workspace shell — the active part and tab follow the URL", () => {
+  it("marks the current tab and moves with a part click, keeping the header mounted", async () => {
     const user = userEvent.setup();
     renderShellAt("/app/workspace/teams");
     await screen.findByTestId("team-un_fin");
     const header = screen.getByTestId("workspace-name");
-    expect(screen.getByTestId("banner-teams")).toHaveAttribute("aria-current", "page");
-    expect(screen.getByTestId("banner-teams")).toHaveAttribute("data-active", "true");
-    expect(screen.getByTestId("banner-members")).not.toHaveAttribute("aria-current");
+    expect(screen.getByTestId("tab-teams")).toHaveAttribute("aria-current", "page");
+    expect(screen.getByTestId("tab-teams")).toHaveAttribute("data-active", "true");
 
-    await user.click(screen.getByTestId("banner-members"));
+    await user.click(screen.getByTestId("part-people"));
     expect(screen.getByTestId("location")).toHaveTextContent("/app/workspace/members");
     expect(await screen.findByRole("heading", { level: 2, name: "Member Directory" })).toBeInTheDocument();
-    expect(screen.getByTestId("banner-members")).toHaveAttribute("aria-current", "page");
-    expect(screen.getByTestId("banner-teams")).toHaveAttribute("data-active", "false");
+    expect(screen.getByTestId("tab-members")).toHaveAttribute("aria-current", "page");
+    expect(screen.getByTestId("part-people")).toHaveAttribute("data-active", "true");
+    expect(screen.getByTestId("part-organisation")).toHaveAttribute("data-active", "false");
     // Same element: the shell was not rebuilt by the section change.
     expect(screen.getByTestId("workspace-name")).toBe(header);
   });
@@ -237,16 +283,16 @@ describe("Workspace shell — the active banner follows the URL", () => {
     const first = await screen.findByRole("heading", { level: 2, name: "Teams" });
     expect(document.activeElement).not.toBe(first);
 
-    await user.click(screen.getByTestId("banner-roles"));
+    await user.click(screen.getByTestId("tab-roles"));
     const heading = await screen.findByRole("heading", { level: 2, name: "Who can do what" });
     await waitFor(() => expect(document.activeElement).toBe(heading));
   });
 
-  it("keeps the parent section active on a detail page, with a way back", async () => {
+  it("keeps the parent tab active on a detail page, with a way back", async () => {
     renderShellAt("/app/workspace/teams/un_fin");
     expect(await screen.findByRole("heading", { level: 2, name: "Finance" })).toBeInTheDocument();
-    expect(screen.getByTestId("banner-teams")).toHaveAttribute("data-active", "true");
-    expect(screen.getByTestId("banner-teams")).toHaveAttribute("aria-current", "true");
+    expect(screen.getByTestId("tab-teams")).toHaveAttribute("data-active", "true");
+    expect(screen.getByTestId("tab-teams")).toHaveAttribute("aria-current", "true");
     const crumbs = within(screen.getByTestId("workspace-section")).getByRole("navigation", { name: "Breadcrumb" });
     expect(within(crumbs).getByRole("link", { name: "Teams" })).toHaveAttribute("href", "/app/workspace/teams");
     expect(within(crumbs).getByText("Finance")).toHaveAttribute("aria-current", "page");
@@ -255,38 +301,12 @@ describe("Workspace shell — the active banner follows the URL", () => {
   it("keeps Members active on a member's page and Roles on a role's page", async () => {
     const { unmount } = renderShellAt("/app/workspace/members/m_sender");
     expect(await screen.findByRole("heading", { level: 2, name: "Jose Cruz" })).toBeInTheDocument();
-    expect(screen.getByTestId("banner-members")).toHaveAttribute("data-active", "true");
+    expect(screen.getByTestId("tab-members")).toHaveAttribute("data-active", "true");
+    expect(screen.getByTestId("part-people")).toHaveAttribute("data-active", "true");
     unmount();
 
     renderShellAt("/app/workspace/roles/sender");
     expect(await screen.findByTestId("role-abilities")).toBeInTheDocument();
-    expect(screen.getByTestId("banner-roles")).toHaveAttribute("data-active", "true");
-  });
-});
-
-describe("Workspace shell — keyboard", () => {
-  it("is one tab stop, and the arrow keys, Home and End move along the row", async () => {
-    const user = userEvent.setup();
-    renderShellAt("/app/workspace/teams");
-    await screen.findByTestId("team-un_fin");
-    const links = within(screen.getByTestId("workspace-banners")).getAllByRole("link");
-    expect(links.filter(l => l.tabIndex === 0)).toEqual([screen.getByTestId("banner-teams")]);
-
-    screen.getByTestId("banner-teams").focus();
-    await user.keyboard("{ArrowRight}");
-    expect(document.activeElement).toBe(screen.getByTestId("banner-roles"));
-    await user.keyboard("{ArrowLeft}{ArrowLeft}");
-    expect(document.activeElement).toBe(screen.getByTestId("banner-invitations"));
-    await user.keyboard("{Home}");
-    expect(document.activeElement).toBe(screen.getByTestId("banner-overview"));
-    await user.keyboard("{ArrowLeft}");
-    expect(document.activeElement).toBe(screen.getByTestId("banner-settings"));
-    await user.keyboard("{End}");
-    expect(document.activeElement).toBe(screen.getByTestId("banner-settings"));
-    // The roving stop follows focus, so Tab out and back returns here.
-    expect(screen.getByTestId("banner-settings").tabIndex).toBe(0);
-
-    await user.keyboard("{Enter}");
-    expect(screen.getByTestId("location")).toHaveTextContent("/app/workspace/settings");
+    expect(screen.getByTestId("tab-roles")).toHaveAttribute("data-active", "true");
   });
 });

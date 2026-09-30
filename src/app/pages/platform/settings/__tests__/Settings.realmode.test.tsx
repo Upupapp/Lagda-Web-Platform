@@ -123,10 +123,13 @@ function renderAt(path: string) {
           <Route path="security/sessions" element={<SessionsPage />} />
           <Route path="security/activity" element={<SecurityActivityPage />} />
           <Route path="notifications" element={<NotificationsPage />} />
+          <Route path="data-and-privacy" element={<DataPrivacyPage />} />
+        </Route>
+        {/* Moved to Workspace › Workspace Settings; the pages are the same. */}
+        <Route path="/app/workspace/settings">
           <Route path="usage" element={<UsagePage />} />
           <Route path="billing" element={<BillingPage />} />
           <Route path="billing/invoices/:invoiceId" element={<InvoicePage />} />
-          <Route path="data-and-privacy" element={<DataPrivacyPage />} />
         </Route>
       </Routes>
     </MemoryRouter>,
@@ -134,12 +137,22 @@ function renderAt(path: string) {
 }
 
 describe("settings shell", () => {
-  it("shows Personal and Workspace strips of banners, marks the current one, and no preview note", async () => {
+  it("shows the six personal sections side by side, marks the current one, and no preview note", async () => {
     renderAt("/app/settings/preferences");
+    expect(screen.getByRole("heading", { level: 1, name: "My Settings" })).toBeInTheDocument();
     const banners = screen.getByTestId("settings-banners");
-    expect(within(banners).getByRole("group", { name: /Personal/ })).toBeInTheDocument();
-    expect(within(banners).getByRole("group", { name: /Workspace/ })).toBeInTheDocument();
+    expect(within(banners).getAllByRole("link").map(l => l.textContent)).toEqual([
+      expect.stringContaining("Profile"), expect.stringContaining("Preferences"), expect.stringContaining("Security"),
+      expect.stringContaining("Notifications"), expect.stringContaining("Signatures & Initials"), expect.stringContaining("Data & Privacy"),
+    ]);
     for (const s of SETTINGS_SECTIONS) expect(screen.getByTestId(`settings-banner-${s.key}`)).toHaveAttribute("href", s.path);
+    // Workspace-wide settings are not here any more; a line says where they went.
+    expect(screen.queryByTestId("settings-banner-branding")).toBeNull();
+    expect(screen.queryByTestId("settings-banner-billing")).toBeNull();
+    expect(screen.getByTestId("settings-moved-note")).toHaveTextContent("Workspace Settings");
+    // The row scrolls with a button at each end.
+    expect(screen.getByRole("button", { name: "Scroll sections left" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Scroll sections right" })).toBeInTheDocument();
     expect(screen.getByTestId("settings-banner-preferences")).toHaveAttribute("aria-current", "page");
     expect(screen.getByTestId("settings-banner-profile")).not.toHaveAttribute("aria-current");
     // Roving focus: only the current banner is in the tab order.
@@ -331,7 +344,7 @@ describe("notifications", () => {
 
 describe("usage", () => {
   it("shows the workspace's real counts, with no limit applied during Early Access", async () => {
-    renderAt("/app/settings/usage");
+    renderAt("/app/workspace/settings/usage");
     expect(await screen.findByTestId("usage-value-sent-month")).toHaveTextContent("3");
     expect(screen.getByTestId("usage-value-in-progress")).toHaveTextContent("2");
     expect(screen.getByTestId("usage-value-documents-total")).toHaveTextContent("17");
@@ -348,7 +361,7 @@ describe("usage", () => {
       if (url.endsWith("/workspaces/ws_1/usage")) return Promise.resolve(json(200, { period: USAGE.period }));
       return Promise.resolve(json(404, { error: { code: "x", message: "x" } }));
     });
-    renderAt("/app/settings/usage");
+    renderAt("/app/workspace/settings/usage");
     expect(await screen.findByTestId("usage-value-sent-month")).toHaveTextContent("0");
     expect(screen.getByTestId("usage-value-storage")).toHaveTextContent("0 B");
   });
@@ -356,7 +369,7 @@ describe("usage", () => {
 
 describe("billing & plan", () => {
   it("shows Early Access with nothing billed and real usage lines", async () => {
-    renderAt("/app/settings/billing");
+    renderAt("/app/workspace/settings/billing");
     expect(screen.getByTestId("billing-current-plan")).toHaveTextContent("EARLY ACCESS");
     expect(screen.getByText(/Includes all Business features at no charge/)).toBeInTheDocument();
     expect(screen.getByTestId("billing-cycle")).toHaveTextContent("—");
@@ -367,7 +380,7 @@ describe("billing & plan", () => {
 
   it("shows sample prices monthly and annually, from the plan config", async () => {
     const user = userEvent.setup();
-    renderAt("/app/settings/billing");
+    renderAt("/app/workspace/settings/billing");
     expect(screen.getByTestId("sample-pricing-notice")).toHaveTextContent("SAMPLE PRICING — FINAL PRICES CONFIRMED AT LAUNCH");
     expect(screen.getByTestId("plan-price-free")).toHaveTextContent("₱0");
     expect(screen.getByTestId("plan-price-personal")).toHaveTextContent("₱299");
@@ -384,7 +397,7 @@ describe("billing & plan", () => {
 
   it("explains that paid plans open at launch instead of starting a checkout", async () => {
     const user = userEvent.setup();
-    renderAt("/app/settings/billing");
+    renderAt("/app/workspace/settings/billing");
     await user.click(screen.getByRole("button", { name: "Choose Personal" }));
     const dialog = screen.getByRole("dialog", { name: "Paid plans open at launch" });
     expect(dialog).toBeInTheDocument();
@@ -395,7 +408,7 @@ describe("billing & plan", () => {
 
   it("expands the full comparison from the same config", async () => {
     const user = userEvent.setup();
-    renderAt("/app/settings/billing");
+    renderAt("/app/workspace/settings/billing");
     expect(screen.queryByTestId("plan-compare")).toBeNull();
     await user.click(screen.getByRole("button", { name: /Compare all features/ }));
     const table = screen.getByTestId("plan-compare");
@@ -406,7 +419,7 @@ describe("billing & plan", () => {
   });
 
   it("shows one sample invoice billed to the workspace owner", async () => {
-    renderAt("/app/settings/billing");
+    renderAt("/app/workspace/settings/billing");
     const card = screen.getByTestId("sample-invoice-card");
     expect(card).toHaveTextContent("SAMPLE INVOICE — NO PAYMENT HAS BEEN TAKEN");
     expect(card).toHaveTextContent("INV-SAMPLE-0001");
@@ -414,13 +427,13 @@ describe("billing & plan", () => {
     expect(await within(card).findByText("Carmen Reyes")).toBeInTheDocument();
     expect(card).toHaveTextContent("owner@reyes.ph");
     expect(card).toHaveTextContent("Reyes Law Office");
-    expect(within(card).getByRole("link", { name: /View invoice/ })).toHaveAttribute("href", "/app/settings/billing/invoices/INV-SAMPLE-0001");
+    expect(within(card).getByRole("link", { name: /View invoice/ })).toHaveAttribute("href", "/app/workspace/settings/billing/invoices/INV-SAMPLE-0001");
   });
 });
 
 describe("sample invoice page", () => {
   it("shows the full sample invoice with VAT, status and the audit trail", async () => {
-    renderAt("/app/settings/billing/invoices/INV-SAMPLE-0001");
+    renderAt("/app/workspace/settings/billing/invoices/INV-SAMPLE-0001");
     expect(screen.getByTestId("invoice-sample-banner")).toHaveTextContent("SAMPLE INVOICE — NO PAYMENT HAS BEEN TAKEN");
     expect(screen.getByTestId("invoice-number")).toHaveTextContent("INV-SAMPLE-0001");
     expect(screen.getByTestId("invoice-total")).toHaveTextContent("₱7,990.00");
@@ -433,19 +446,21 @@ describe("sample invoice page", () => {
   });
 
   it("says not found for any other invoice number", () => {
-    renderAt("/app/settings/billing/invoices/INV-0002");
+    renderAt("/app/workspace/settings/billing/invoices/INV-0002");
     expect(screen.getByRole("heading", { name: "Invoice not found" })).toBeInTheDocument();
   });
 });
 
 describe("overview and data & privacy", () => {
-  it("summarises the profile, security, plan and usage", async () => {
+  it("summarises the profile and security, and points to where workspace settings went", async () => {
     renderAt("/app/settings");
     expect(screen.getByTestId("overview-profile-name")).toHaveTextContent("Ana Reyes");
     expect(await screen.findByTestId("overview-mfa")).toHaveTextContent("Off");
     expect(screen.getByTestId("overview-sessions")).toHaveTextContent("3");
-    expect(screen.getByText("EARLY ACCESS")).toBeInTheDocument();
-    expect(await screen.findByTestId("overview-usage")).toHaveTextContent("12.4 MB");
+    // The plan and usage are workspace-wide, so they moved to Workspace.
+    expect(screen.queryByTestId("overview-usage")).toBeNull();
+    const links = screen.getByTestId("overview-workspace-links");
+    expect(within(links).getByRole("link", { name: /Organisation/ })).toHaveAttribute("href", "/app/workspace/organization");
   });
 
   it("offers only honest actions: contact support", () => {

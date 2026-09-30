@@ -298,7 +298,7 @@ function InvitationsInner() {
   const filtered = state.invitations.filter(i => filter === "all" || i.status === filter);
 
   return (
-    <ManagePage crumbs={[{ label: "Manage", to: "/app/workspace" }, { label: "Invitations" }]} title="Invitations" maxWidth={900}
+    <ManagePage crumbs={[{ label: "Workspace", to: "/app/workspace" }, { label: "Invitations" }]} title="Invitations" maxWidth={900}
       actions={
         <button onClick={() => setShowForm(v => !v)}
           style={{ ...GF, fontSize: 13, fontWeight: 600, background: AZURE, color: "#FFFFFF", border: "none", borderRadius: 8, padding: "9px 18px", cursor: "pointer" }}>

@@ -11,6 +11,7 @@ import {
   GitBranch,
   BarChart2,
   Zap,
+  Building2, UserCog,
 } from "lucide-react";
 import { usePlatform } from "../../context/PlatformContext";
 import { useNotificationCenter } from "../../context/NotificationCenterContext";
@@ -33,7 +34,7 @@ const GM     = { fontFamily: "'Geist Mono', monospace" };
 const ICON_MAP: Record<string, React.ElementType> = {
   LayoutDashboard, FileText, Files, Users, ShieldCheck,
   Bell, Users2, Settings, Settings2, FilePlus, HelpCircle, Inbox, GitBranch,
-  BarChart2, Zap, Share2, Mail,
+  BarChart2, Zap, Share2, Mail, Building2, UserCog,
 };
 
 function NavIcon({ name, size = 16 }: { name: string; size?: number }) {
@@ -392,11 +393,12 @@ export function PlatformSidebar() {
               />
             );
           })}
-          {/* Settings */}
+          {/* My Settings: the person's own settings. The workspace's are
+              under Workspace, behind its gear. */}
           <SidebarItem
             to="/app/settings/profile"
-            icon="Settings"
-            label="Settings"
+            icon="UserCog"
+            label="My Settings"
             badge={null}
             collapsed={collapsed}
           />

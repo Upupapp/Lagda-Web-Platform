@@ -621,7 +621,7 @@ function UsageMeter({
 function UsageSnapshot({ usage, isLoading }: { usage: DashboardUsage | null; isLoading: boolean }) {
   return (
     <section aria-label="Usage and plan snapshot" data-guide="dashboard-usage" style={{ marginBottom: 20 }}>
-      <SectionHeader label="Usage & Plan" to="/app/settings/billing" linkLabel="Manage" />
+      <SectionHeader label="Usage & Plan" to="/app/workspace/settings/billing" linkLabel="Manage" />
       <Card style={{ padding: "16px" }}>
         {isLoading || !usage ? (
           <>

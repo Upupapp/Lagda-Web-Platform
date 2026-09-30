@@ -187,14 +187,14 @@ export const UTILITY_NAV: PlatformNavItem[] = [
     // reads one word and decides it is not for them today, instead of
     // deciding that eleven times before their first send.
     id: "manage",
-    label: "Manage",
+    label: "Workspace",
     path: "/app/workspace",
-    icon: "Settings2",
+    icon: "Building2",
     group: "utility",
     permission: "manage_team",
     featureFlag: "teamEnabled",
     showOnMobile: true,
-    description: "People, oversight and workspace settings",
+    description: "People, organisation, activity and workspace settings",
   },
 ];
 

@@ -221,7 +221,7 @@ function RoleResolutionField({ placeholder, units, onChange }: {
     return (
       <p style={{ ...GF, fontSize: 11.5, color: "#94A3B8", margin: "8px 0 0", lineHeight: 1.5 }}>
         This role is filled by hand each time. Create an{" "}
-        <Link to="/app/settings/organization" style={{ color: AZURE }}>organization unit</Link>{" "}
+        <Link to="/app/workspace/organization" style={{ color: AZURE }}>organization unit</Link>{" "}
         to route it automatically by title instead.
       </p>
     );

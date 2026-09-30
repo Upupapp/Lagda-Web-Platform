@@ -33,7 +33,7 @@ describe("Manage overview — demo build", () => {
     await waitFor(() => expect(card).toHaveTextContent("Professional legal document management"));
     expect(within(card).getByTestId("brand-card-name")).toHaveTextContent("Mabini Legal Solutions");
     expect(within(card).getByTestId("brand-card-sender")).toHaveTextContent("Mabini Legal Solutions");
-    expect(within(card).getByTestId("edit-branding-link")).toHaveAttribute("href", "/app/settings/branding");
+    expect(within(card).getByTestId("edit-branding-link")).toHaveAttribute("href", "/app/workspace/settings/branding");
     expect(card).toHaveTextContent("Powered by LAGDA");
   });
 });

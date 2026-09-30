@@ -299,7 +299,7 @@ function MembersInner() {
   );
 
   return (
-    <ManagePage crumbs={[{ label: "Manage", to: "/app/workspace" }, { label: "Members" }]} title="Member Directory" maxWidth={1060}
+    <ManagePage crumbs={[{ label: "Workspace", to: "/app/workspace" }, { label: "Members" }]} title="Member Directory" maxWidth={1060}
       badge={canManageJoin && pendingCount > 0 ? (
         <Link to="/app/workspace/join-requests" data-testid="pending-requests-badge"
           style={{ ...GF, fontSize: 12, fontWeight: 700, color: "#8A5A00", background: "#FFF8E1", border: "1px solid #F5D98B", borderRadius: 999, padding: "3px 10px", textDecoration: "none" }}>

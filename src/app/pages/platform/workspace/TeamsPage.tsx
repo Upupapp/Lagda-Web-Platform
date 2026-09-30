@@ -96,7 +96,7 @@ function TeamsInner() {
   const archived = state.teams.filter(t => t.status === "archived");
 
   return (
-    <ManagePage crumbs={[{ label: "Manage", to: "/app/workspace" }, { label: "Teams" }]} title="Teams" maxWidth={1180}
+    <ManagePage crumbs={[{ label: "Workspace", to: "/app/workspace" }, { label: "Teams" }]} title="Teams" maxWidth={1180}
       actions={
         <>
           <label style={{ display: "flex", alignItems: "center", gap: 6, cursor: "pointer", ...GF, fontSize: 12, color: SLATE }}>

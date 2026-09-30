@@ -1,4 +1,4 @@
-// /app/settings/branding — Workspace branding and recipient-facing presentation.
+// /app/workspace/settings/branding — Workspace branding and recipient-facing presentation.
 // Real backend (082): RealBrandingPage, saved to the current workspace.
 // Demo build: the mock below — logo stays in memory, nothing is stored.
 

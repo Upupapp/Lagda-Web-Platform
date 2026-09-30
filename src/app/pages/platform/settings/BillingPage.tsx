@@ -1,4 +1,4 @@
-// /app/settings/billing — the plan, sample pricing and the sample invoice.
+// /app/workspace/settings/billing — the plan, sample pricing and the sample invoice.
 //
 // Nothing on this page takes or asks for payment. The workspace is on Early
 // Access, which bills nothing; the plan cards show SAMPLE prices from
@@ -80,7 +80,7 @@ function OverviewCard() {
             ))}
           </ul>
         )}
-        <Link to="/app/settings/usage" style={{ ...GF, fontSize: 13, fontWeight: 600, color: SET.AZURE_TEXT, textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 4, marginTop: 10 }}>
+        <Link to="/app/workspace/settings/usage" style={{ ...GF, fontSize: 13, fontWeight: 600, color: SET.AZURE_TEXT, textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 4, marginTop: 10 }}>
           All usage <ArrowRight size={14} aria-hidden />
         </Link>
       </div>

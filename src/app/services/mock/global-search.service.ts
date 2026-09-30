@@ -662,12 +662,12 @@ const SETTINGS_ROUTE_FIXTURES = [
   { id: "st_sessions",      label: "Active Sessions",          path: "/app/settings/security/sessions", desc: "Manage active login sessions", perm: "manage_security" },
   { id: "st_notifprefs",    label: "Notification Preferences", path: "/app/settings/notifications",   desc: "Email and in-app notification settings" },
   { id: "st_signatures",    label: "Signatures & Initials",    path: "/app/settings/signatures",      desc: "Manage your personal signature library" },
-  { id: "st_branding",      label: "Branding",                 path: "/app/settings/branding",        desc: "Workspace logo and display name", perm: "manage_branding" },
-  { id: "st_billing",       label: "Billing",                  path: "/app/settings/billing",         desc: "Subscription and payment details", perm: "view_billing" },
-  { id: "st_usage",         label: "Usage",                    path: "/app/settings/usage",           desc: "Signing requests, storage, and plan limits", perm: "view_usage" },
+  { id: "st_branding",      label: "Branding",                 path: "/app/workspace/settings/branding",        desc: "Workspace logo and display name", perm: "manage_branding" },
+  { id: "st_billing",       label: "Billing",                  path: "/app/workspace/settings/billing",         desc: "Subscription and payment details", perm: "view_billing" },
+  { id: "st_usage",         label: "Usage",                    path: "/app/workspace/settings/usage",           desc: "Signing requests, storage, and plan limits", perm: "view_usage" },
   // Integrations is post-launch and its route is capability-guarded, so it is
   // filtered out below rather than listed unconditionally here.
-  { id: "st_integrations",  label: "Integrations",             path: "/app/settings/integrations",    desc: "Connected apps and services", perm: "manage_integrations", capability: "integrations" },
+  { id: "st_integrations",  label: "Integrations",             path: "/app/workspace/settings/integrations",    desc: "Connected apps and services", perm: "manage_integrations", capability: "integrations" },
   { id: "st_dataprivacy",   label: "Data & Privacy",           path: "/app/settings/data-and-privacy", desc: "Export account data and privacy controls" },
 ].filter((s) => !("capability" in s) || isCapabilityInActiveProfile(s.capability as string));
 
@@ -926,7 +926,7 @@ const ADVANCED_REPORTS_COMMANDS: CommandPaletteCommand[] = isAdvancedReportsEnab
 ] : [];
 
 const INTEGRATIONS_COMMANDS: CommandPaletteCommand[] = isIntegrationsEnabled() ? [
-  { id: "cmd_integrations"   as CommandPaletteCommandId, label: "Open Integrations",          group: "Settings", type: "settings",     icon: "Puzzle",   isPinnable: false, requiresPermission: "manage_integrations", destination: { type: "platform-route", path: "/app/settings/integrations" } },
+  { id: "cmd_integrations"   as CommandPaletteCommandId, label: "Open Integrations",          group: "Settings", type: "settings",     icon: "Puzzle",   isPinnable: false, requiresPermission: "manage_integrations", destination: { type: "platform-route", path: "/app/workspace/settings/integrations" } },
 ] : [];
 
 // Bulk Send preparation commands (Gap Closure Command 5).
@@ -980,8 +980,8 @@ const ALL_COMMANDS: CommandPaletteCommand[] = [
   { id: "cmd_security"      as CommandPaletteCommandId, label: "Open Security",              group: "Settings", type: "settings",    icon: "Lock",            isPinnable: true,  requiresPermission: "manage_security",  destination: { type: "platform-route", path: "/app/settings/security" } },
   { id: "cmd_signatures"    as CommandPaletteCommandId, label: "Open Signatures & Initials", group: "Settings", type: "settings",    icon: "PenLine",         isPinnable: true,  destination: { type: "platform-route", path: "/app/settings/signatures" } },
   { id: "cmd_notifpref"     as CommandPaletteCommandId, label: "Notification Preferences",  group: "Settings", type: "settings",    icon: "BellRing",        isPinnable: false, destination: { type: "platform-route", path: "/app/settings/notifications" } },
-  { id: "cmd_billing"       as CommandPaletteCommandId, label: "Open Billing",               group: "Settings", type: "settings",    icon: "CreditCard",      isPinnable: false, requiresPermission: "view_billing",     destination: { type: "platform-route", path: "/app/settings/billing" } },
-  { id: "cmd_usage"         as CommandPaletteCommandId, label: "Open Usage",                 group: "Settings", type: "settings",    icon: "BarChart2",       isPinnable: false, requiresPermission: "view_usage",       destination: { type: "platform-route", path: "/app/settings/usage" } },
+  { id: "cmd_billing"       as CommandPaletteCommandId, label: "Open Billing",               group: "Settings", type: "settings",    icon: "CreditCard",      isPinnable: false, requiresPermission: "view_billing",     destination: { type: "platform-route", path: "/app/workspace/settings/billing" } },
+  { id: "cmd_usage"         as CommandPaletteCommandId, label: "Open Usage",                 group: "Settings", type: "settings",    icon: "BarChart2",       isPinnable: false, requiresPermission: "view_usage",       destination: { type: "platform-route", path: "/app/workspace/settings/usage" } },
   ...INTEGRATIONS_COMMANDS,
   { id: "cmd_dataprivacy"   as CommandPaletteCommandId, label: "Data & Privacy",             group: "Settings", type: "settings",    icon: "Shield",          isPinnable: false, destination: { type: "platform-route", path: "/app/settings/data-and-privacy" } },
 

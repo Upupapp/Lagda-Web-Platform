@@ -1,4 +1,4 @@
-// /app/settings/integrations/:integrationId — Integration detail and demonstration actions.
+// /app/workspace/settings/integrations/:integrationId — Integration detail and demonstration actions.
 // No OAuth, no credential storage, no data synchronization, no real connections.
 
 import React, { useEffect, useState } from "react";
@@ -103,7 +103,7 @@ export function IntegrationDetailPage() {
   if (notFound || !integration) return (
     <SettingsPage title="Integration not found" breadcrumb="Integrations › Not found">
       <div style={{ padding: "40px 0", textAlign: "center", ...GF, fontSize: 14, color: SLATE }}>
-        Integration not found.{" "}<Link to="/app/settings/integrations" style={{ color: AZURE }}>Back to Integrations</Link>
+        Integration not found.{" "}<Link to="/app/workspace/settings/integrations" style={{ color: AZURE }}>Back to Integrations</Link>
       </div>
     </SettingsPage>
   );
@@ -261,7 +261,7 @@ export function IntegrationDetailPage() {
       )}
 
       <div style={{ marginTop: 14 }}>
-        <Link to="/app/settings/integrations" style={{ ...GF, fontSize: 13, color: AZURE, textDecoration: "none" }}>← Back to Integrations</Link>
+        <Link to="/app/workspace/settings/integrations" style={{ ...GF, fontSize: 13, color: AZURE, textDecoration: "none" }}>← Back to Integrations</Link>
       </div>
     </SettingsPage>
   );

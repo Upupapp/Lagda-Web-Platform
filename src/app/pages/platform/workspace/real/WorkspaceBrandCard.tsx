@@ -47,7 +47,7 @@ export function WorkspaceBrandCard({
   const showPrompt = canEdit && !isCustomised(branding);
 
   const editLink = canEdit ? (
-    <Link to="/app/settings/branding" data-testid="edit-branding-link"
+    <Link to="/app/workspace/settings/branding" data-testid="edit-branding-link"
       style={{ ...GF, fontSize: 12, fontWeight: 600, color: "#FFFFFF", textDecoration: "underline", textUnderlineOffset: 3, whiteSpace: "nowrap", flexShrink: 0 }}>
       Edit branding
     </Link>
@@ -82,7 +82,7 @@ export function WorkspaceBrandCard({
         </dl>
         {showPrompt && (
           <p data-testid="brand-card-prompt" style={{ ...GF, fontSize: 12, color: SLATE, margin: "14px 0 0" }}>
-            <Link to="/app/settings/branding" style={{ color: AZURE, fontWeight: 600, textDecoration: "none" }}>Add your logo and colours</Link>
+            <Link to="/app/workspace/settings/branding" style={{ color: AZURE, fontWeight: 600, textDecoration: "none" }}>Add your logo and colours</Link>
             {" "}so signers recognise documents from this workspace.
           </p>
         )}

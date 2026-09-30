@@ -179,7 +179,7 @@ describe("Manage overview — real backend", () => {
     expect(within(card).getByTestId("brand-card-sender")).toHaveTextContent("Each sender's own name");
     expect(within(card).getByTestId("your-privileges")).toHaveTextContent("Both privileges come with your role.");
     expect(within(card).getByRole("link", { name: "What your role can do →" })).toHaveAttribute("href", "/app/workspace/roles");
-    expect(within(card).getByTestId("edit-branding-link")).toHaveAttribute("href", "/app/settings/branding");
+    expect(within(card).getByTestId("edit-branding-link")).toHaveAttribute("href", "/app/workspace/settings/branding");
     expect(card).toHaveTextContent("Powered by LAGDA");
     // Nothing customised yet: an owner is invited to add a logo and colours.
     expect(within(card).getByTestId("brand-card-prompt")).toHaveTextContent("Add your logo and colours");

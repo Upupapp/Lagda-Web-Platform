@@ -19,7 +19,7 @@ import { useWorkspaceMode } from "../../../hooks/useWorkspaceAccess";
 import { RealMemberAbilities, RealMemberTeams } from "./real/RealMemberSections";
 import { ManagePage } from "./real/manage-ui";
 
-const CRUMBS = [{ label: "Manage", to: "/app/workspace" }, { label: "Members", to: "/app/workspace/members" }];
+const CRUMBS = [{ label: "Workspace", to: "/app/workspace" }, { label: "Members", to: "/app/workspace/members" }];
 
 const GF    = { fontFamily: "'Geist', sans-serif" };
 const GM    = { fontFamily: "'Geist Mono', monospace" };

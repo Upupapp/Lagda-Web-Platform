@@ -13,7 +13,7 @@ import { useWorkspaceMode } from "../../../hooks/useWorkspaceAccess";
 import { RealRoleDetailPage } from "./real/RealRolesPages";
 import { ManagePage } from "./real/manage-ui";
 
-const CRUMBS = [{ label: "Manage", to: "/app/workspace" }, { label: "Roles", to: "/app/workspace/roles" }];
+const CRUMBS = [{ label: "Workspace", to: "/app/workspace" }, { label: "Roles", to: "/app/workspace/roles" }];
 
 const GF    = { fontFamily: "'Geist', sans-serif" };
 const GM    = { fontFamily: "'Geist Mono', monospace" };

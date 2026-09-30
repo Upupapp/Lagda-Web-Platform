@@ -99,7 +99,7 @@ export function SignedDocumentsPage() {
   };
 
   return (
-    <ManagePage crumbs={[{ label: "Manage", to: "/app/workspace" }, { label: "All workspace documents" }]} title="All workspace documents" maxWidth={1000}
+    <ManagePage crumbs={[{ label: "Workspace", to: "/app/workspace" }, { label: "All workspace documents" }]} title="All workspace documents" maxWidth={1000}
       subtitle={
         <span style={{ display: "block", maxWidth: "70ch" }}>
           Every document this workspace has sent for signing, and who sent it.

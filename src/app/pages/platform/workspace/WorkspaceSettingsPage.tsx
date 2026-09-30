@@ -11,7 +11,7 @@ import { useWorkspaceMode } from "../../../hooks/useWorkspaceAccess";
 import { RealWorkspaceSettingsPage } from "./real/RealWorkspaceSettingsPage";
 import { ManagePage } from "./real/manage-ui";
 
-const SETTINGS_CRUMBS = [{ label: "Manage", to: "/app/workspace" }, { label: "Settings" }];
+const SETTINGS_CRUMBS = [{ label: "Workspace", to: "/app/workspace" }, { label: "Settings" }];
 
 const GF    = { fontFamily: "'Geist', sans-serif" };
 const NAVY  = "#07111F";

@@ -11,7 +11,7 @@ import { JoinLinksSection } from "./join/JoinLinksSection";
 import { ManagePage, NotAvailable, GF, AZURE } from "./real/manage-ui";
 import { useWorkspaceShell } from "./shell/workspace-shell-context";
 
-const CRUMBS = [{ label: "Manage", to: "/app/workspace" }, { label: "Join links" }];
+const CRUMBS = [{ label: "Workspace", to: "/app/workspace" }, { label: "Join links" }];
 
 export function JoinLinksPage() {
   const platform = usePlatform();
