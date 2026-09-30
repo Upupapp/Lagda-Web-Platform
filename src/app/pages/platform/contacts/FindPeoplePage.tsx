@@ -106,10 +106,14 @@ export function FindPeoplePage() {
           {available ? (
             <form className="fp-search" role="search" noValidate onSubmit={e => { e.preventDefault(); void find(); }}>
               <label htmlFor={inputId} className="fp-visually-hidden">Email address</label>
-              <span aria-hidden className="fp-search-icon"><Mail size={17} /></span>
-              <input ref={inputRef} id={inputId} type="email" inputMode="email" autoComplete="off" spellCheck={false}
-                value={email} onChange={e => { setEmail(e.target.value); if (phase.kind !== "idle") setPhase({ kind: "idle" }); }}
-                placeholder="name@example.com" className="fp-input" data-testid="find-email" />
+              {/* The field and its icon are one holder, so the icon stays attached
+                  to the field whether the button sits beside it or below it. */}
+              <div className="fp-field" data-testid="find-field">
+                <span aria-hidden className="fp-search-icon"><Mail size={18} /></span>
+                <input ref={inputRef} id={inputId} type="email" inputMode="email" autoComplete="off" spellCheck={false}
+                  value={email} onChange={e => { setEmail(e.target.value); if (phase.kind !== "idle") setPhase({ kind: "idle" }); }}
+                  placeholder="name@example.com" className="fp-input" data-testid="find-email" />
+              </div>
               <button type="submit" className="fp-find" disabled={phase.kind === "searching"} data-testid="find-button">
                 {phase.kind === "searching" ? <Loader2 size={16} className="fp-spin" aria-hidden /> : <Search size={16} aria-hidden />}
                 <span>Find</span>
@@ -217,11 +221,15 @@ const CSS = `
   color: #FFFFFF; background: linear-gradient(135deg, #0B3A66 0%, ${C.AZURE} 100%); box-shadow: 0 10px 22px -12px rgba(0,120,212,0.8); }
 .fp-title { font-family: 'Geist', sans-serif; font-size: 24px; font-weight: 800; color: ${C.NAVY}; margin: 0; }
 .fp-sub { font-family: 'Geist', sans-serif; font-size: 14px; color: ${C.SLATE}; margin: 6px auto 18px; max-width: 52ch; line-height: 1.55; }
-.fp-search { position: relative; display: flex; gap: 8px; max-width: 560px; margin: 0 auto; }
-.fp-search-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: #94A3B8; display: flex; pointer-events: none; }
-.fp-input { flex: 1 1 auto; min-width: 0; height: 50px; box-sizing: border-box; padding: 0 14px 0 42px; border: 1.5px solid #CBD5E1; border-radius: 12px;
-  font-family: 'Geist', sans-serif; font-size: 16px; color: ${C.NAVY}; background: #FFFFFF; outline: none; }
-.fp-input:focus { border-color: ${C.AZURE}; box-shadow: 0 0 0 4px rgba(0,120,212,0.14); }
+.fp-search { display: flex; gap: 8px; max-width: 560px; margin: 0 auto; }
+.fp-field { flex: 1 1 auto; min-width: 0; display: flex; align-items: stretch; height: 50px; box-sizing: border-box; border: 1.5px solid #CBD5E1;
+  border-radius: 12px; background: #FFFFFF; overflow: hidden; transition: border-color 140ms ease, box-shadow 140ms ease; }
+.fp-field:focus-within { border-color: ${C.AZURE}; box-shadow: 0 0 0 4px rgba(0,120,212,0.14); }
+.fp-search-icon { flex: 0 0 46px; display: flex; align-items: center; justify-content: center; color: #64748B; background: #F5F8FC;
+  border-right: 1.5px solid #E2E8F0; pointer-events: none; }
+.fp-field:focus-within .fp-search-icon { color: ${C.AZURE}; background: #EEF5FD; }
+.fp-input { flex: 1 1 auto; min-width: 0; height: 100%; box-sizing: border-box; padding: 0 14px; border: none;
+  font-family: 'Geist', sans-serif; font-size: 16px; color: ${C.NAVY}; background: transparent; outline: none; }
 .fp-find { flex-shrink: 0; display: inline-flex; align-items: center; gap: 7px; height: 50px; padding: 0 22px; border: none; border-radius: 12px; cursor: pointer;
   background: ${C.AZURE}; color: #FFFFFF; font-family: 'Geist', sans-serif; font-size: 15px; font-weight: 700; }
 .fp-find:disabled { opacity: 0.7; cursor: progress; }
@@ -271,6 +279,7 @@ const CSS = `
   .fp-hero { padding: 22px 16px 16px; border-radius: 16px; }
   .fp-title { font-size: 21px; }
   .fp-search { flex-direction: column; }
+  .fp-field { flex: 0 0 auto; width: 100%; }
   .fp-find { width: 100%; justify-content: center; }
   .fp-person { flex-direction: column; align-items: flex-start; }
   .fp-person-actions, .fp-person-actions .fp-btn, .fp-result .fp-btn { width: 100%; }

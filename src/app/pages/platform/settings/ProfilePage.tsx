@@ -28,6 +28,7 @@ import { USE_REAL_BACKEND } from "../../../services/backend-flag";
 import { usePlatform, announceProfileChanged } from "../../../context/PlatformContext";
 import { initialsOf } from "../../../components/platform/UserAvatar";
 import type { UserProfile } from "../../../models/settings";
+import { AVATAR_TYPES, MAX_AVATAR_SOURCE_BYTES as MAX_SOURCE_BYTES, toAvatarPng } from "../../../utils/avatar-image";
 
 /** One switch, read once, rather than a conditional at each call site. */
 const settingsService = USE_REAL_BACKEND
@@ -38,45 +39,6 @@ const GF    = { fontFamily: "'Geist', sans-serif" };
 const NAVY  = "#07111F";
 const AZURE = "#0078D4";
 const SLATE = "#64748B";
-
-const AVATAR_TYPES = ["image/png", "image/jpeg", "image/jpg", "image/webp"];
-const MAX_SOURCE_BYTES = 5 * 1024 * 1024;
-/** What is stored: a square this size, whatever was picked. Small enough to
- *  load instantly in the header, large enough to stay sharp at 2x. */
-const AVATAR_SIZE = 256;
-
-/**
- * Crops the picked image to a centred square and scales it to AVATAR_SIZE,
- * as a PNG — the only format the server accepts, because a PNG's shape can
- * be checked from its header without an image library. Returns the base64
- * payload without the `data:` prefix, and a preview URL.
- */
-async function toAvatarPng(file: File): Promise<{ base64: string; preview: string }> {
-  const url = URL.createObjectURL(file);
-  try {
-    const img = await new Promise<HTMLImageElement>((resolve, reject) => {
-      const el = new Image();
-      el.onload = () => { resolve(el); };
-      el.onerror = () => { reject(new Error("unreadable")); };
-      el.src = url;
-    });
-    const side = Math.min(img.naturalWidth, img.naturalHeight);
-    const canvas = document.createElement("canvas");
-    canvas.width = AVATAR_SIZE;
-    canvas.height = AVATAR_SIZE;
-    const ctx = canvas.getContext("2d");
-    if (ctx === null) throw new Error("no canvas");
-    ctx.drawImage(
-      img,
-      (img.naturalWidth - side) / 2, (img.naturalHeight - side) / 2, side, side,
-      0, 0, AVATAR_SIZE, AVATAR_SIZE,
-    );
-    const dataUrl = canvas.toDataURL("image/png");
-    return { base64: dataUrl.slice(dataUrl.indexOf(",") + 1), preview: dataUrl };
-  } finally {
-    URL.revokeObjectURL(url);
-  }
-}
 
 /** What the photo will be after Save: unchanged, a new one, or none. */
 type PhotoChange =

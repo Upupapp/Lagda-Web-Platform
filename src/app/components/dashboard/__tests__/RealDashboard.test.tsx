@@ -6,7 +6,7 @@
 // failed request — the three states a real account actually meets.
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import type { SigningRequestListItem } from "../../../services/real/signing-request.service";
 
@@ -120,10 +120,14 @@ describe("with signing requests", () => {
     expect(await screen.findByText(/Nothing is waiting on you/)).toBeTruthy();
   });
 
-  it("greets the person by first name", async () => {
+  it("opens with the person's profile on the workspace's banner", async () => {
     list.mockResolvedValue({ items: [req()], total: 1, page: 1, perPage: 100, hasNextPage: false });
     renderPage();
-    expect(await screen.findByRole("heading", { name: /Welcome back, Ana/ })).toBeTruthy();
+    const hero = await screen.findByTestId("profile-hero");
+    expect(within(hero).getByRole("heading", { level: 1, name: /Ana Reyes/ })).toBeTruthy();
+    expect(within(hero).getByRole("link", { name: /Edit Profile/ }).getAttribute("href")).toBe("/app/settings/profile");
+    expect(within(hero).getByRole("button", { name: "Change your photo" })).toBeTruthy();
+    expect(within(hero).getByTestId("profile-hero-logo")).toBeTruthy();
   });
 
   it("offers the signature record for a declined request", async () => {

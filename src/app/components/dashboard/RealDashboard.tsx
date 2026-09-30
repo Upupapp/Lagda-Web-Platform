@@ -34,15 +34,17 @@ import { useState, useEffect, type CSSProperties } from "react";
 import { Link } from "react-router";
 import {
   FilePlus, FileText, XCircle, Clock, AlertTriangle, FileEdit,
-  CheckCircle2, Send, ChevronRight, PenLine, History, UserX, X,
+  CheckCircle2, Send, ChevronRight, PenLine, History, UserX, X, Bell, BarChart3, CircleCheck,
+  type LucideIcon,
 } from "lucide-react";
+import { ProfileHero } from "./ProfileHero";
 import { usePlatform } from "../../context/PlatformContext";
 import { useOptionalNotificationCenter } from "../../context/NotificationCenterContext";
 import {
   invitationDeclinesNeedingAttention, declineReviewPath, type DeclineAttentionEntry,
 } from "../../services/dashboard/invitation-declines";
 import {
-  AppContent, StatCard, DashboardGrid, EmptyStateLayout, SkeletonBlock, PageHeader,
+  AppContent, EmptyStateLayout, SkeletonBlock,
 } from "../platform";
 import {
   realSigningRequestService, type SigningRequestListItem,
@@ -116,13 +118,41 @@ const ATTENTION: Record<AttentionKind, {
 
 // ── Pieces ─────────────────────────────────────────────────────────────────
 
-function SectionTitle({ children, count }: { children: string; count?: number }) {
+/** A section of Home: a white panel with an icon, a title, a count pill, an optional line and action. */
+function Panel({ icon: Icon, title, count, subtitle, action, label, children }: {
+  icon: LucideIcon; title: string; count?: number; subtitle?: string; action?: React.ReactNode;
+  label: string; children: React.ReactNode;
+}) {
   return (
-    <div style={{ display: "flex", alignItems: "baseline", gap: 8, margin: "28px 0 12px" }}>
-      <h2 style={{ ...GF, fontSize: 15, fontWeight: 700, color: NAVY, margin: 0 }}>{children}</h2>
-      {count !== undefined && (
-        <span style={{ ...GF, fontSize: 12, fontWeight: 600, color: SLATE4 }}>{count}</span>
-      )}
+    <section aria-label={label} className="hd-panel">
+      <div className="hd-panel-head">
+        <Icon size={22} strokeWidth={1.9} aria-hidden className="hd-panel-icon" />
+        <div style={{ flex: "1 1 auto", minWidth: 0 }}>
+          <div className="hd-panel-title-row">
+            <h2 className="hd-panel-title">{title}</h2>
+            {count !== undefined && <span className="hd-count" aria-label={`${String(count)} items`}>{count}</span>}
+          </div>
+          {subtitle && <p className="hd-panel-sub">{subtitle}</p>}
+        </div>
+        {action}
+      </div>
+      {children}
+    </section>
+  );
+}
+
+/** One "At a glance" figure: an icon in a tinted circle, a label, the number, a line. */
+function GlanceTile({ icon: Icon, label, value, sub, tone }: {
+  icon: LucideIcon; label: string; value: number; sub: string; tone: "azure" | "red" | "slate" | "green";
+}) {
+  return (
+    <div className="hd-tile" data-tone={tone}>
+      <span aria-hidden className="hd-tile-icon"><Icon size={20} strokeWidth={2} /></span>
+      <div style={{ minWidth: 0 }}>
+        <div className="hd-tile-label">{label}</div>
+        <div className="hd-tile-value">{value}</div>
+        <div className="hd-tile-sub">{sub}</div>
+      </div>
     </div>
   );
 }
@@ -145,16 +175,8 @@ function PrepareLink({ label = "Prepare Document" }: { label?: string }) {
   );
 }
 
-function RowShell({ children }: { children: React.ReactNode }) {
-  return (
-    <li style={{
-      listStyle: "none", background: "#fff", border: `1px solid ${SLATE2}`,
-      borderRadius: 10, padding: "12px 14px", marginBottom: 8,
-      display: "flex", alignItems: "center", gap: 12, minWidth: 0, ...GF,
-    }}>
-      {children}
-    </li>
-  );
+function RowShell({ children, tone }: { children: React.ReactNode; tone?: "danger" }) {
+  return <li className="hd-row" data-tone={tone}>{children}</li>;
 }
 
 function Title({ item }: { item: SigningRequestListItem }) {
@@ -179,14 +201,9 @@ function SignaturesButton({ onClick, title }: { onClick: () => void; title: stri
       type="button"
       onClick={onClick}
       aria-label={`Signatures for ${title}`}
-      style={{
-        ...GF, display: "inline-flex", alignItems: "center", gap: 4,
-        fontSize: 12, fontWeight: 600, color: AZURE, background: "none",
-        border: `1px solid ${SLATE2}`, borderRadius: 6, padding: "6px 10px",
-        cursor: "pointer", whiteSpace: "nowrap", minHeight: 32,
-      }}
+      className="hd-btn" data-variant="primary"
     >
-      <PenLine size={13} aria-hidden />
+      <PenLine size={15} aria-hidden />
       Signatures
     </button>
   );
@@ -199,14 +216,9 @@ function ActivityButton({ onClick, title }: { onClick: () => void; title: string
       onClick={onClick}
       aria-label={`Activity for ${title}`}
       title="Audit trail"
-      style={{
-        ...GF, display: "inline-flex", alignItems: "center", gap: 4,
-        fontSize: 12, fontWeight: 600, color: SLATE6, background: "none",
-        border: `1px solid ${SLATE2}`, borderRadius: 6, padding: "6px 10px",
-        cursor: "pointer", whiteSpace: "nowrap", minHeight: 32,
-      }}
+      className="hd-btn"
     >
-      <History size={13} aria-hidden />
+      <History size={15} aria-hidden />
       Activity
     </button>
   );
@@ -219,7 +231,7 @@ function RowActions({ item, onSignatures, onAudit }: {
   onAudit: (item: SigningRequestListItem) => void;
 }) {
   return (
-    <div style={{ display: "flex", gap: 6, flexShrink: 0, flexWrap: "wrap", justifyContent: "flex-end" }}>
+    <div className="hd-row-actions">
       <SignaturesButton title={item.documentTitle} onClick={() => onSignatures(item)} />
       <ActivityButton title={item.documentTitle} onClick={() => onAudit(item)} />
     </div>
@@ -235,8 +247,10 @@ function AttentionRow({ entry, onSignatures, onAudit }: {
   const Icon = meta.icon;
   const drillable = entry.kind !== "never-sent";
   return (
-    <RowShell>
-      <Icon size={18} aria-hidden style={{ color: meta.color, flexShrink: 0 }} />
+    <RowShell {...(entry.kind === "declined" ? { tone: "danger" as const } : {})}>
+      <span aria-hidden className="hd-row-badge" style={{ color: meta.color }}>
+        <Icon size={entry.kind === "declined" ? 26 : 20} aria-hidden fill={entry.kind === "declined" ? meta.color : "none"} stroke={entry.kind === "declined" ? "#FFFFFF" : meta.color} />
+      </span>
       <div style={{ minWidth: 0, flex: 1 }}>
         <Title item={entry.item} />
         <div style={{ fontSize: 12, color: meta.color, fontWeight: 600, marginTop: 4 }}>
@@ -348,7 +362,7 @@ function ProgressMeter({ signed, of }: { signed: number; of: number }) {
 
 export function RealDashboard() {
   const platform = usePlatform();
-  const { currentWorkspace, user } = platform;
+  const { currentWorkspace } = platform;
   const workspaceId = currentWorkspace?.id ?? null;
   const notices = useOptionalNotificationCenter();
 
@@ -401,8 +415,9 @@ export function RealDashboard() {
 
   const attentionCount = attention.length + declines.length;
   const attentionSection = (
-    <section aria-label="Needs attention">
-      <SectionTitle count={attentionCount}>Needs attention</SectionTitle>
+    <Panel label="Needs attention" icon={Bell} title="Needs attention" count={attentionCount}
+      subtitle={attentionCount === 0 ? undefined : "These items require your immediate attention."}
+      action={<Link to="/app/documents" className="hd-viewall">View all <ChevronRight size={16} aria-hidden /></Link>}>
       {attentionCount === 0
         ? (
           <div style={{
@@ -430,15 +445,14 @@ export function RealDashboard() {
             ))}
           </ul>
         )}
-    </section>
+    </Panel>
   );
-
-  const greeting = user?.displayName ? `Welcome back, ${user.displayName.split(" ")[0]}` : "Dashboard";
 
   return (
     <>
-      <PageHeader title={greeting} primaryAction={<PrepareLink />} />
       <AppContent style={{ padding: "0 24px 40px" }}>
+        {/* Who you are, on the banner of the workspace you are in. */}
+        <ProfileHero />
         {status === "loading" && (
           <div style={{ padding: "24px 0" }} aria-busy="true" aria-label="Loading dashboard">
             <SkeletonBlock height={96} />
@@ -470,30 +484,28 @@ export function RealDashboard() {
             {attentionSection}
 
             {/* 2 — the counts, scoped honestly */}
-            <section aria-label="Document status summary">
-              <SectionTitle>At a glance</SectionTitle>
-              <DashboardGrid>
-                <StatCard label="In flight" value={summary.inFlight} accent={AZURE} sub="Sent, waiting on signatures" />
-                <StatCard label="Needs attention" value={summary.attention} accent={summary.attention > 0 ? RED : undefined} sub="Declined or expired" />
-                <StatCard label="Drafts" value={summary.drafts} sub="Prepared, not yet sent" />
-                <StatCard label="Completed" value={summary.completed} accent={GREEN} sub="Every signature collected" />
-              </DashboardGrid>
+            <Panel label="Document status summary" icon={BarChart3} title="At a glance">
+              <div className="hd-tiles">
+                <GlanceTile icon={Send} tone="azure" label="In flight" value={summary.inFlight} sub="Sent, waiting on signatures" />
+                <GlanceTile icon={Clock} tone={summary.attention > 0 ? "red" : "slate"} label="Needs attention" value={summary.attention} sub="Declined or expired" />
+                <GlanceTile icon={FileText} tone="slate" label="Drafts" value={summary.drafts} sub="Prepared, not yet sent" />
+                <GlanceTile icon={CircleCheck} tone="green" label="Completed" value={summary.completed} sub="Every signature collected" />
+              </div>
               {paged && (
                 <p style={{ ...GF, fontSize: 12, color: SLATE6, margin: "10px 2px 0" }}>
                   Counts cover your {summary.fetched} most recent requests. This workspace has {summary.total} in total —
                   see <Link to="/app/documents" style={{ color: AZURE }}>Documents</Link> for all of them.
                 </p>
               )}
-            </section>
+            </Panel>
 
             {/* 3 — in flight */}
             {flying.length > 0 && (
-              <section aria-label="In flight">
-                <SectionTitle count={flying.length}>In flight</SectionTitle>
+              <Panel label="In flight" icon={Send} title="In flight" count={flying.length}>
                 <ul style={{ margin: 0, padding: 0 }}>
                   {flying.slice(0, 8).map(({ item, signed, of }) => (
                     <RowShell key={item.signingRequestId}>
-                      <Send size={16} aria-hidden style={{ color: AZURE, flexShrink: 0 }} />
+                      <span aria-hidden className="hd-row-badge" style={{ color: AZURE }}><Send size={22} aria-hidden /></span>
                       <div style={{ minWidth: 0, flex: 1 }}>
                         <Title item={item} />
                         <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 6, flexWrap: "wrap" }}>
@@ -507,17 +519,16 @@ export function RealDashboard() {
                     </RowShell>
                   ))}
                 </ul>
-              </section>
+              </Panel>
             )}
 
             {/* 4 — recently done */}
             {done.length > 0 && (
-              <section aria-label="Recently completed">
-                <SectionTitle count={done.length}>Recently completed</SectionTitle>
+              <Panel label="Recently completed" icon={CheckCircle2} title="Recently completed" count={done.length}>
                 <ul style={{ margin: 0, padding: 0 }}>
                   {done.map(item => (
                     <RowShell key={item.signingRequestId}>
-                      <CheckCircle2 size={16} aria-hidden style={{ color: GREEN, flexShrink: 0 }} />
+                      <span aria-hidden className="hd-row-badge"><CheckCircle2 size={26} aria-hidden fill={GREEN} stroke="#FFFFFF" /></span>
                       <div style={{ minWidth: 0, flex: 1 }}>
                         <Title item={item} />
                         <div style={{ fontSize: 12, color: SLATE4, marginTop: 4 }}>
@@ -528,7 +539,7 @@ export function RealDashboard() {
                     </RowShell>
                   ))}
                 </ul>
-              </section>
+              </Panel>
             )}
 
             <p style={{ ...GF, fontSize: 12, color: SLATE4, margin: "28px 2px 0" }}>
@@ -558,7 +569,62 @@ export function RealDashboard() {
       <style>{`
         .dashboard-decline-review:hover { background: #F0F7FF; }
         .dashboard-decline-review:focus-visible { outline: 2px solid ${AZURE}; outline-offset: 2px; }
+        ${HOME_CSS}
       `}</style>
     </>
   );
 }
+
+const HOME_CSS = `
+.hd-panel { background: #FFFFFF; border: 1px solid #E6EBF2; border-radius: 18px; padding: 18px 18px 14px; margin-top: 16px;
+  box-shadow: 0 1px 2px rgba(7,17,31,0.03); min-width: 0; }
+.hd-panel-head { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 14px; min-width: 0; }
+.hd-panel-icon { color: #0B1F4B; flex-shrink: 0; margin-top: 1px; }
+.hd-panel-title-row { display: flex; align-items: center; gap: 10px; }
+.hd-panel-title { margin: 0; font-family: 'Geist', sans-serif; font-size: 18px; font-weight: 700; color: #0B1F4B; }
+.hd-count { font-family: 'Geist', sans-serif; font-size: 12px; font-weight: 700; min-width: 22px; height: 22px; padding: 0 7px; box-sizing: border-box; border-radius: 999px;
+  display: inline-flex; align-items: center; justify-content: center; background: #E6F0FB; color: #1D4ED8; }
+.hd-panel-sub { font-family: 'Geist', sans-serif; font-size: 14px; color: #64748B; margin: 4px 0 0; }
+.hd-viewall { display: inline-flex; align-items: center; gap: 6px; min-height: 42px; padding: 0 14px 0 16px; border-radius: 12px; border: 1.5px solid #D6DEE8;
+  font-family: 'Geist', sans-serif; font-size: 14px; font-weight: 600; color: #334155; text-decoration: none; white-space: nowrap; flex-shrink: 0; }
+.hd-viewall:hover { border-color: #0078D4; color: #005A9E; }
+.hd-row { list-style: none; display: flex; align-items: center; gap: 14px; min-width: 0; background: #FFFFFF; border: 1px solid #E6EBF2; border-radius: 12px;
+  padding: 14px 16px; margin-bottom: 10px; font-family: 'Geist', sans-serif; }
+.hd-row:last-child { margin-bottom: 0; }
+.hd-row[data-tone="danger"] { background: #FEF2F2; border-color: #FCD5D5; }
+.hd-row-badge { width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.hd-row-actions { display: flex; gap: 8px; flex-shrink: 0; flex-wrap: wrap; justify-content: flex-end; }
+.hd-btn { display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 0 14px; border-radius: 10px; border: 1.5px solid #D6DEE8;
+  background: #FFFFFF; font-family: 'Geist', sans-serif; font-size: 13px; font-weight: 600; color: #475569; cursor: pointer; white-space: nowrap; }
+.hd-btn[data-variant="primary"] { color: #1D6FD1; border-color: #CFE0F5; }
+.hd-btn:hover { border-color: #0078D4; color: #005A9E; background: #F5F9FE; }
+.hd-btn:focus-visible { outline: 3px solid rgba(0,120,212,0.35); outline-offset: 1px; }
+.hd-tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
+.hd-tile { display: flex; gap: 14px; align-items: flex-start; border: 1px solid #E6EBF2; border-radius: 14px; padding: 16px; background: #FFFFFF; min-width: 0;
+  box-shadow: 0 6px 16px -14px rgba(7,17,31,0.4); }
+.hd-tile-icon { width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.hd-tile[data-tone="azure"] .hd-tile-icon { background: #E6F0FB; color: #1D6FD1; }
+.hd-tile[data-tone="red"] .hd-tile-icon { background: #FDECEC; color: #DC2626; }
+.hd-tile[data-tone="slate"] .hd-tile-icon { background: #EEF2F7; color: #334155; }
+.hd-tile[data-tone="green"] .hd-tile-icon { background: #E3F6EC; color: #059669; }
+.hd-tile-label { font-family: 'Geist', sans-serif; font-size: 12.5px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: #475569; }
+.hd-tile-value { font-family: 'Geist', sans-serif; font-size: 34px; font-weight: 800; line-height: 1.1; margin-top: 6px; color: #0B1F4B; }
+.hd-tile[data-tone="azure"] .hd-tile-value { color: #1D6FD1; }
+.hd-tile[data-tone="red"] .hd-tile-value { color: #DC2626; }
+.hd-tile[data-tone="green"] .hd-tile-value { color: #059669; }
+.hd-tile-sub { font-family: 'Geist', sans-serif; font-size: 13px; color: #64748B; margin-top: 8px; }
+@media (max-width: 1100px) { .hd-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 640px) {
+  .hd-panel { padding: 14px 12px 12px; border-radius: 16px; }
+  .hd-panel-head { gap: 10px; }
+  .hd-panel-title { font-size: 17px; }
+  .hd-panel-sub { font-size: 13px; }
+  .hd-viewall { min-height: 36px; padding: 0 10px 0 12px; font-size: 13px; border-radius: 10px; }
+  .hd-tiles { gap: 10px; }
+  .hd-tile { flex-direction: column; gap: 8px; padding: 12px; }
+  .hd-tile-value { font-size: 28px; }
+  .hd-row { flex-wrap: wrap; align-items: flex-start; padding: 12px; }
+  .hd-row-actions { width: 100%; flex-wrap: nowrap; padding-left: 50px; box-sizing: border-box; }
+  .hd-row-actions .hd-btn { flex: 1 1 0; min-width: 0; justify-content: center; padding: 0 8px; }
+}
+`;
