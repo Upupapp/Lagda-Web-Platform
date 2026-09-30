@@ -27,6 +27,15 @@ vi.mock("../../../context/PlatformContext", () => ({
   }),
 }));
 
+// 093. The person's plan decides the Home header.
+const PAID = { plan: "business", storedPlan: "business", paidUntil: null, autoRenew: true, freeDocumentsUsed: 0, freeDocumentLimit: 1, pendingRequest: null, approver: false, upgradesAvailable: true };
+let myPlan: Record<string, unknown> | null = PAID;
+vi.mock("../../../hooks/usePlans", () => ({
+  useMyPlan: () => ({ plan: myPlan, refresh: vi.fn() }),
+  useWorkspacePlan: () => ({ plan: myPlan?.plan ?? null, info: null, refresh: vi.fn() }),
+  useWorkspaceAllows: () => true,
+}));
+
 import { RealDashboard } from "../RealDashboard";
 
 const DAY = 86_400_000;
@@ -128,6 +137,31 @@ describe("with signing requests", () => {
     expect(within(hero).getByRole("link", { name: /Edit Profile/ }).getAttribute("href")).toBe("/app/settings/profile");
     expect(within(hero).getByRole("button", { name: "Change your photo" })).toBeTruthy();
     expect(within(hero).getByTestId("profile-hero-logo")).toBeTruthy();
+  });
+
+  it("gives a Free person their Free pass instead of the banner", async () => {
+    myPlan = { ...PAID, plan: "free", storedPlan: "free", autoRenew: false, freeDocumentsUsed: 0 };
+    list.mockResolvedValue({ items: [req()], total: 1, page: 1, perPage: 100, hasNextPage: false });
+    renderPage();
+    const hero = await screen.findByTestId("free-hero");
+    expect(screen.queryByTestId("profile-hero")).toBeNull();
+    expect(within(hero).getByTestId("free-hero-badge").textContent).toContain("Free plan");
+    expect(within(hero).getByRole("heading", { level: 1, name: "Your free document is ready" })).toBeTruthy();
+    expect(within(hero).getByTestId("free-hero-plan-link").getAttribute("href")).toBe("/app/settings/plan");
+    expect(within(hero).getByTestId("free-hero-tile-business").getAttribute("href")).toBe("/app/settings/plan?choose=business");
+    myPlan = PAID;
+  });
+
+  it("tells a Free person when the free document is used, and shows a waiting request", async () => {
+    myPlan = { ...PAID, plan: "free", storedPlan: "free", autoRenew: false, freeDocumentsUsed: 1,
+      pendingRequest: { requestId: "pur_1", plan: "business", amountPesos: 799, status: "pending", createdAt: ago(0), expiresAt: ahead(7), decidedAt: null } };
+    list.mockResolvedValue({ items: [req()], total: 1, page: 1, perPage: 100, hasNextPage: false });
+    renderPage();
+    const hero = await screen.findByTestId("free-hero");
+    expect(within(hero).getByRole("heading", { level: 1, name: "You've used your free document" })).toBeTruthy();
+    expect(within(hero).getByTestId("free-hero-pending").textContent).toContain("Business is waiting for approval");
+    expect(within(hero).queryByTestId("free-hero-tile-business")).toBeNull();
+    myPlan = PAID;
   });
 
   it("offers the signature record for a declined request", async () => {

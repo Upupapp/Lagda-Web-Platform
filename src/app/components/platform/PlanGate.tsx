@@ -41,6 +41,26 @@ export function PlanUpgradeCard({ minimum, feature, compact = false }: {
   );
 }
 
+/**
+ * Joining another workspace is part of Personal: the PERSON's own plan
+ * decides, wherever they are. Shown where an invitation would be accepted.
+ */
+export function JoinNeedsPersonalNotice() {
+  return (
+    <section className="pg-card pg-compact" data-testid="join-needs-personal" aria-label="Joining needs the Personal plan">
+      <span className="pg-icon" aria-hidden><Lock size={18} /></span>
+      <div className="pg-text">
+        <h2 className="pg-title">Joining another workspace is part of the Personal plan</h2>
+        <p className="pg-body">You are on Free. Upgrade to Personal or Business to accept invitations and join other workspaces. Your invitations stay here until you do.</p>
+        <Link to="/app/settings/plan?choose=personal" className="pg-cta" data-testid="join-needs-personal-cta">
+          See plans <ArrowRight size={15} aria-hidden />
+        </Link>
+      </div>
+      <style>{CSS}</style>
+    </section>
+  );
+}
+
 /** Children only when the workspace's plan includes `minimum` (or is unread). */
 export function WhenPlan({ minimum, children }: { minimum: "personal" | "business"; children: React.ReactNode }) {
   const { plan } = useWorkspacePlan();

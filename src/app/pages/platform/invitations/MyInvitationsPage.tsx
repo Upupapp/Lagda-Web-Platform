@@ -12,6 +12,8 @@
 // backend's word). `?status=rejected` is accepted as an alias so a
 // hand-typed link still lands on the right tab.
 
+import { JoinNeedsPersonalNotice } from "../../../components/platform/PlanGate";
+import { useMyPlan } from "../../../hooks/usePlans";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "react-router";
 import { Check, X, Undo2, Inbox, Ban, CircleCheck, Mail } from "lucide-react";
@@ -102,6 +104,10 @@ export function MyInvitationsPage() {
     }, { replace: true });
   };
 
+  // 093. Joining another workspace is part of Personal (the person's own plan).
+  const { plan: myPlan } = useMyPlan();
+  const mayJoin = myPlan === null || myPlan.plan !== "free";
+
   async function act(item: MyInvitation, verb: "accept" | "withdraw") {
     setBusyId(item.invitationId);
     setNotice(null);
@@ -145,7 +151,7 @@ export function MyInvitationsPage() {
       return <>
         <SmallButton icon={X} label="Reject" variant="danger" disabled={anyBusy}
           ariaLabel={`Reject: ${subject}`} onClick={() => { setNotice(null); setDeclining(item); }} />
-        <SmallButton icon={Check} label={busyId === item.invitationId ? "Accepting…" : "Accept"} variant="primary" disabled={anyBusy}
+        <SmallButton icon={Check} label={busyId === item.invitationId ? "Accepting…" : "Accept"} variant="primary" disabled={anyBusy || !mayJoin}
           ariaLabel={`Accept: ${subject}`} onClick={() => { void act(item, "accept"); }} />
       </>;
     }
@@ -175,6 +181,7 @@ export function MyInvitationsPage() {
             description="Workspace invitations are sent to real accounts. They are not available in this demonstration." />
         ) : (
           <>
+            {!mayJoin && <JoinNeedsPersonalNotice />}
             <SharingTabs label="Invitations by status" idPrefix={PREFIX} active={status} tabs={tabs} onChange={setStatus} />
             <div aria-live="polite" style={{ marginBottom: notice ? 14 : 0 }}>
               {notice && <SharingNotice tone={notice.tone}>{notice.text}</SharingNotice>}

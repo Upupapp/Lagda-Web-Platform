@@ -42,6 +42,7 @@ export const JOIN_FULL_NAME_MAX = 200;
 export const NEW_COMER_LABEL = "New Comer";
 
 export const JOIN_MESSAGES = {
+  needsPersonal: "Joining another workspace is part of the Personal plan. Upgrade from My Settings › Plan & Billing, then open this link again.",
   used: "Someone already used this link. Ask the workspace owner for a new one.",
   invalid: "This join link isn't valid. It may have been withdrawn. Ask the workspace owner for a new one.",
   alreadyMember: "You're already a member of this workspace.",
@@ -370,6 +371,8 @@ export async function submitJoinRequest(token: string, input: JoinRequestInput):
     const code = errorCode(err);
     if (code === "join_already_member") return { kind: "already-member" };
     if (code === "join_request_pending") return { kind: "pending" };
+    // 093. Joining another workspace is part of Personal.
+    if (code === "plan_required") return { kind: "error", message: JOIN_MESSAGES.needsPersonal };
     if (err.status === 410 || code === "join_link_used") return { kind: "used" };
     if (err.status === 404 || code === "join_link_invalid") return { kind: "invalid" };
     if (code === "join_email_unverified") {

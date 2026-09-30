@@ -38,6 +38,8 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { ProfileHero } from "./ProfileHero";
+import { FreePlanHero } from "./FreePlanHero";
+import { useMyPlan } from "../../hooks/usePlans";
 import { usePlatform } from "../../context/PlatformContext";
 import { useOptionalNotificationCenter } from "../../context/NotificationCenterContext";
 import {
@@ -361,6 +363,7 @@ function ProgressMeter({ signed, of }: { signed: number; of: number }) {
 // ── The page ───────────────────────────────────────────────────────────────
 
 export function RealDashboard() {
+  const { plan: myPlan } = useMyPlan();
   const platform = usePlatform();
   const { currentWorkspace } = platform;
   const workspaceId = currentWorkspace?.id ?? null;
@@ -451,8 +454,13 @@ export function RealDashboard() {
   return (
     <>
       <AppContent style={{ padding: "0 24px 40px" }}>
-        {/* Who you are, on the banner of the workspace you are in. */}
-        <ProfileHero />
+        {/* Who you are: on the banner of the workspace you are in, or — on
+            the Free plan, which has no branding — your Free pass and the way
+            to Plan & Billing. Nothing is shown until the plan is known, so a
+            Free person never sees the banner flash first. */}
+        {myPlan === null ? <div style={{ minHeight: 200 }} aria-hidden />
+          : myPlan.plan === "free" ? <FreePlanHero plan={myPlan} />
+          : <ProfileHero />}
         {status === "loading" && (
           <div style={{ padding: "24px 0" }} aria-busy="true" aria-label="Loading dashboard">
             <SkeletonBlock height={96} />

@@ -19,7 +19,7 @@ const platform = {
 vi.mock("../../../../context/PlatformContext", () => ({ usePlatform: () => platform }));
 
 import { PlanBillingPage } from "../PlanBillingPage";
-import { PlanGate } from "../../../../components/platform/PlanGate";
+import { PlanGate, JoinNeedsPersonalNotice } from "../../../../components/platform/PlanGate";
 import { FreeDocumentUsedNotice } from "../../../../components/platform/FreeDocumentUsedNotice";
 import { PlanRequestPage } from "../../plans/PlanRequestsPage";
 import { resetPlanStore } from "../../../../hooks/usePlans";
@@ -160,6 +160,14 @@ describe("paid features on a Free owner's workspace", () => {
     render(<MemoryRouter><FreeDocumentUsedNotice /></MemoryRouter>);
     expect(screen.getByTestId("free-document-used")).toHaveTextContent("You've used your free document");
     expect(await screen.findByTestId("free-document-see-plans")).toHaveAttribute("href", "/app/settings/plan");
+  });
+});
+
+describe("joining another workspace", () => {
+  it("is part of Personal, with See plans", () => {
+    render(<MemoryRouter><JoinNeedsPersonalNotice /></MemoryRouter>);
+    expect(screen.getByTestId("join-needs-personal")).toHaveTextContent("Joining another workspace is part of the Personal plan");
+    expect(screen.getByTestId("join-needs-personal-cta")).toHaveAttribute("href", "/app/settings/plan?choose=personal");
   });
 });
 
