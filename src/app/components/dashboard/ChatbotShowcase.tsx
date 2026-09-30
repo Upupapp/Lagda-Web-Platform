@@ -1,4 +1,5 @@
-// "Meet the LAGDA Chatbot": a short showcase under the Free pass on Home (093).
+// "Meet the LAGDA Chatbot": a showcase for Free accounts (093) — under the
+// Free pass on Home, and above My Templates, where the chatbot would be used.
 //
 // The chatbot is a Personal and Business feature that a Free account never
 // meets (it lives in the template editor), so this shows it working: the bot
@@ -6,26 +7,20 @@
 // The sample wording is invented here — never ready-made template text, which
 // the server keeps for paid plans.
 //
-// It can be hidden for seven days (remembered in this browser only), and all
-// motion stops for anyone who asks for reduced motion.
+// Always shown to a Free account (it is part of the offer, like the Free
+// pass). All motion stops for anyone who asks for reduced motion.
+//
+// Two layouts: `home` puts the bot first, the chat in the middle and the
+// benefits last; `templates` leads with the chat, a template being written,
+// and gives the bot the right-hand side on wide screens — on a phone the
+// bot tucks in beside the heading so the list below stays close.
 
 import { useEffect, useState } from "react";
 import { Link } from "react-router";
-import { Sparkles, ArrowRight, X, Check } from "lucide-react";
+import { Sparkles, ArrowRight, Check } from "lucide-react";
 import botImage from "../../../assets/chatbot/lagda-bot.webp";
 
-const HIDE_KEY = "lagda.chatbotShowcase.hiddenUntil";
-const HIDE_FOR_MS = 7 * 24 * 60 * 60 * 1000;
 const STEP_MS = 1400;
-
-function hiddenNow(): boolean {
-  try {
-    const until = Number(window.localStorage.getItem(HIDE_KEY) ?? "0");
-    return Number.isFinite(until) && until > Date.now();
-  } catch {
-    return false;
-  }
-}
 
 function prefersReducedMotion(): boolean {
   try {
@@ -54,38 +49,51 @@ function Star({ className }: { className: string }) {
   );
 }
 
-export function ChatbotShowcase() {
-  const [hidden, setHidden] = useState(hiddenNow);
-  const step = useChatLoop();
-  if (hidden) return null;
+const COPY = {
+  home: {
+    kicker: "Meet the LAGDA Chatbot",
+    ask: "Draft an NDA between Reyes Law and Maria Santos. Both sign.",
+    answer: "Done! Two signers, signing order set, and ready for you to edit.",
+    label: "Example: you ask the chatbot to draft an NDA for two signers, and it writes the template with the signers and signing order set.",
+    points: ["Describe it, and it writes the template", "Signers and roles set for you", "Signing order ready to send"],
+  },
+  templates: {
+    kicker: "Write templates with the LAGDA Chatbot",
+    ask: "A service agreement for a web design project. The client and the designer sign.",
+    answer: "Your template is ready: two signers, roles and order set. Edit anything you like.",
+    label: "Example: you describe a service agreement, and the chatbot writes the template with its signers, roles and order set.",
+    points: ["A new template in seconds", "Roles and signing order included", "Edit it like any template"],
+  },
+} as const;
 
-  const hide = () => {
-    try { window.localStorage.setItem(HIDE_KEY, String(Date.now() + HIDE_FOR_MS)); } catch { /* hidden for this visit */ }
-    setHidden(true);
-  };
+export function ChatbotShowcase({ variant = "home" }: { variant?: "home" | "templates" }) {
+  const step = useChatLoop();
+  const copy = COPY[variant];
+
+  const bot = (
+    <div className="cs-bot" aria-hidden>
+      <Star className="cs-s1" /><Star className="cs-s2" /><Star className="cs-s3" /><Star className="cs-s4" />
+      <img src={botImage} alt="" width={112} height={112} className="cs-bot-img" />
+    </div>
+  );
 
   return (
-    <section className="cs-card" aria-label="Meet the LAGDA Chatbot" data-testid="chatbot-showcase">
+    <section className={`cs-card cs-${variant}`} aria-label={copy.kicker} data-testid={`chatbot-showcase${variant === "home" ? "" : `-${variant}`}`}>
       <div className="cs-head">
-        <span className="cs-kicker"><Sparkles size={13} aria-hidden /> Meet the LAGDA Chatbot</span>
-        <span className="cs-head-right">
-          <span className="cs-chip"><Sparkles size={11} aria-hidden /> Personal plan</span>
-          <button type="button" className="cs-x" onClick={hide} aria-label="Hide for 7 days" data-testid="chatbot-showcase-hide">
-            <X size={16} aria-hidden />
-          </button>
+        <span className="cs-kicker">
+          {variant === "templates" && <span className="cs-mini-bot" aria-hidden><img src={botImage} alt="" width={40} height={40} /></span>}
+          <Sparkles size={13} aria-hidden /> {copy.kicker}
         </span>
+        <span className="cs-chip"><Sparkles size={11} aria-hidden /> Personal plan</span>
       </div>
 
       <div className="cs-body">
-        <div className="cs-bot" aria-hidden>
-          <Star className="cs-s1" /><Star className="cs-s2" /><Star className="cs-s3" /><Star className="cs-s4" />
-          <img src={botImage} alt="" width={112} height={112} className="cs-bot-img" />
-        </div>
+        {variant === "home" && bot}
 
-        <div className="cs-chat" role="img" aria-label="Example: you ask the chatbot to draft an NDA for two signers, and it writes the template with the signers and signing order set.">
+        <div className="cs-chat" role="img" aria-label={copy.label}>
           <div className="cs-msg cs-you">
             <span className="cs-who">You</span>
-            Draft an NDA between Reyes Law and Maria Santos. Both sign.
+            {copy.ask}
           </div>
           {step === 1 && (
             <div className="cs-msg cs-bot-msg cs-typing"><span /><span /><span /></div>
@@ -93,16 +101,16 @@ export function ChatbotShowcase() {
           {step >= 2 && (
             <div className="cs-msg cs-bot-msg cs-answer">
               <span className="cs-who">LAGDA Bot</span>
-              Done! Two signers, signing order set, and ready for you to edit.
+              {copy.answer}
             </div>
           )}
         </div>
 
         <ul className="cs-points">
-          <li><Check size={15} aria-hidden /> Describe it, and it writes the template</li>
-          <li><Check size={15} aria-hidden /> Signers and roles set for you</li>
-          <li><Check size={15} aria-hidden /> Signing order ready to send</li>
+          {copy.points.map(p => <li key={p}><Check size={15} aria-hidden /> {p}</li>)}
         </ul>
+
+        {variant === "templates" && bot}
       </div>
 
       <div className="cs-foot">
@@ -129,13 +137,9 @@ const CSS = `
 .cs-head { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 18px 24px 0; }
 .cs-kicker { display: inline-flex; align-items: center; gap: 7px; font-family: 'Geist Mono', ui-monospace, monospace; font-size: 11.5px; font-weight: 700;
   letter-spacing: 0.14em; text-transform: uppercase; color: #FDE68A; }
-.cs-head-right { display: inline-flex; align-items: center; gap: 8px; }
 .cs-chip { display: inline-flex; align-items: center; gap: 5px; font-family: 'Geist Mono', ui-monospace, monospace; font-size: 10.5px; font-weight: 700;
-  letter-spacing: 0.12em; text-transform: uppercase; color: #3B2A00; background: linear-gradient(135deg, #FDE68A, #F5C542); padding: 4px 10px; border-radius: 999px; }
-.cs-x { width: 32px; height: 32px; border-radius: 9px; border: 1px solid rgba(255,255,255,0.18); background: rgba(255,255,255,0.06); color: #C7D4EA;
-  display: inline-flex; align-items: center; justify-content: center; cursor: pointer; }
-.cs-x:hover { background: rgba(255,255,255,0.14); color: #FFFFFF; }
-.cs-x:focus-visible, .cs-cta:focus-visible { outline: 3px solid #F5C542; outline-offset: 2px; }
+  letter-spacing: 0.12em; text-transform: uppercase; color: #3B2A00; background: linear-gradient(135deg, #FDE68A, #F5C542); padding: 4px 10px; border-radius: 999px; white-space: nowrap; flex-shrink: 0; }
+.cs-cta:focus-visible { outline: 3px solid #F5C542; outline-offset: 2px; }
 
 .cs-body { position: relative; display: grid; grid-template-columns: auto minmax(0, 1.4fr) minmax(0, 1fr); gap: 24px; align-items: center; padding: 16px 24px 18px; }
 .cs-bot { position: relative; width: 132px; height: 132px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
@@ -184,14 +188,33 @@ const CSS = `
   color: #0B1F4B; font-weight: 800; font-size: 14.5px; text-decoration: none; box-shadow: 0 10px 24px -12px rgba(255,255,255,0.6); transition: transform 150ms ease; }
 .cs-cta:hover { transform: translateY(-1px); }
 
+.cs-mini-bot { display: none; }
+
+/* My Templates: the chat leads, the bot takes the right-hand side, lifted
+   over the card's edge on a speech tail, as if it had just answered. */
+.cs-templates { margin: 16px 0 4px; }
+.cs-templates .cs-body { grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr) auto; }
+.cs-templates .cs-bot { width: 150px; height: 150px; margin: -24px 0 -12px; }
+.cs-templates .cs-bot::before { width: 136px; height: 136px; }
+.cs-templates .cs-bot-img { width: 132px; height: 132px; }
+
 @media (max-width: 1100px) {
   .cs-body { grid-template-columns: auto minmax(0, 1fr); }
   .cs-points { grid-column: 1 / -1; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .cs-templates .cs-body { grid-template-columns: minmax(0, 1fr) auto; }
+  .cs-templates .cs-bot { grid-row: 1; grid-column: 2; margin: 0; width: 120px; height: 120px; }
+  .cs-templates .cs-bot-img { width: 104px; height: 104px; }
 }
 @media (max-width: 640px) {
   .cs-card { border-radius: 18px; }
   .cs-head { padding: 16px 16px 0; }
   .cs-chip { display: none; }
+  /* Templates on a phone: the bot tucks in beside the heading. */
+  .cs-templates .cs-bot { display: none; }
+  .cs-templates .cs-mini-bot { display: inline-flex; width: 40px; height: 40px; margin-right: 4px; animation: cs-hop 2.5s ease-in-out infinite; transform-origin: 50% 85%; }
+  .cs-templates .cs-mini-bot img { width: 40px; height: 40px; filter: drop-shadow(0 6px 10px rgba(7,17,31,0.5)); }
+  .cs-templates .cs-body { grid-template-columns: minmax(0, 1fr); }
+  .cs-templates .cs-points { display: none; }
   .cs-body { grid-template-columns: minmax(0, 1fr); gap: 14px; padding: 12px 16px 14px; justify-items: center; }
   .cs-chat { width: 100%; min-height: 150px; }
   .cs-points { grid-template-columns: minmax(0, 1fr); width: 100%; }
@@ -200,7 +223,7 @@ const CSS = `
   .cs-cta { margin-left: 0; justify-content: center; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .cs-bot-img, .cs-star, .cs-typing span, .cs-msg { animation: none; }
+  .cs-bot-img, .cs-star, .cs-typing span, .cs-msg, .cs-templates .cs-mini-bot { animation: none; }
   .cs-star { opacity: 0.8; }
   .cs-cta { transition: none; }
   .cs-cta:hover { transform: none; }

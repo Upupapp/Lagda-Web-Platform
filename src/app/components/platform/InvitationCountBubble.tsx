@@ -21,9 +21,9 @@ export function pendingInvitationsLabel(count: number): string {
  */
 export const NAV_BUBBLES = {
   invitations: { icon: Mail, testId: "invitation-bubble", label: pendingInvitationsLabel },
-  documents: { icon: FileText, testId: "documents-bubble", label: (n: number) => `${String(n)} unread document ${n === 1 ? "update" : "updates"}` },
-  shared: { icon: Share2, testId: "shared-bubble", label: (n: number) => `${String(n)} unread sharing ${n === 1 ? "update" : "updates"}` },
-  contacts: { icon: UserPlus, testId: "contacts-bubble", label: (n: number) => `${String(n)} unread contact ${n === 1 ? "request" : "requests"}` },
+  documents: { icon: FileText, testId: "documents-bubble", label: (n: number) => `${String(n)} ${n === 1 ? "document" : "documents"} to sign` },
+  shared: { icon: Share2, testId: "shared-bubble", label: (n: number) => `${String(n)} pending shared ${n === 1 ? "document" : "documents"}` },
+  contacts: { icon: UserPlus, testId: "contacts-bubble", label: (n: number) => `${String(n)} pending contact ${n === 1 ? "request" : "requests"}` },
 } as const satisfies Record<string, { icon: LucideIcon; testId: string; label: (n: number) => string }>;
 
 export type NavBubbleKind = keyof typeof NAV_BUBBLES;

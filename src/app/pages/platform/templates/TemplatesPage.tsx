@@ -2,6 +2,8 @@
 // Views, search, filter bar, sort, grid/list toggle, pagination, empty states.
 // Inline styles only. No Tailwind. No Burgundy.
 
+import { ChatbotShowcase } from "../../../components/dashboard/ChatbotShowcase";
+import { useWorkspaceAllows } from "../../../hooks/usePlans";
 import { useReadyMade } from "../../../hooks/useReadyMade";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Link, useNavigate } from "react-router";
@@ -252,6 +254,7 @@ function TemplatesInner() {
   usePageMeta();
   // 093. The ready-made counts come from the server's catalogue.
   useReadyMade();
+  const chatLocked = useWorkspaceAllows("personal") === false;
   const { state, setQuery, loadList, canWrite } = useTemplates();
   const { isNarrow } = useViewport();
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
@@ -407,6 +410,9 @@ function TemplatesInner() {
           </span>
         </Link>
         <style>{`.tpl-ready-banner { transition: box-shadow .15s, border-color .15s; } .tpl-ready-banner:hover, .tpl-ready-banner:focus-visible { border-color: ${AZURE}; box-shadow: 0 2px 10px rgba(0,120,212,0.12); outline: none; }`}</style>
+
+        {/* 093. Where the chatbot would be used, while it is locked. */}
+        {chatLocked && <ChatbotShowcase variant="templates" />}
 
         {/* One view: "My Templates", every template whatever its status.
             The seven views (All, Workspace, My Templates, Drafts, Recently

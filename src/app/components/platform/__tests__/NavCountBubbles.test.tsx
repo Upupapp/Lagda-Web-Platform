@@ -1,34 +1,65 @@
-// The side panel's pop-up counts: each unread notice is counted on exactly
-// one row (Documents, Shared Documents or Contacts), and each row's bubble
-// has its own icon and a spoken label. Plus the Free Home chatbot showcase.
+// The side panel's pop-up counts show only what is WAITING on this account:
+// Documents counts "I must sign" (signers only), Shared Documents counts
+// pending shares plus pending access requests on your own documents, and
+// Contacts counts pending contact requests. Each row's bubble has its own
+// icon. Plus the chatbot showcase for Free accounts (Home and My Templates).
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
-import { renderHook } from "@testing-library/react";
+import { render, screen, waitFor, renderHook } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 
-let items: { status: string; category: string; actionPath: string | null }[] = [];
-vi.mock("../../../context/NotificationCenterContext", () => ({
-  useOptionalNotificationCenter: () => ({ items }),
+vi.mock("../../../services/backend-flag", () => ({ USE_REAL_BACKEND: true, API_BASE_URL: "http://api.test" }));
+vi.mock("../../../context/PlatformContext", () => ({
+  usePlatform: () => ({ currentWorkspace: { id: "ws_1" }, user: { id: "usr_me" } }),
+}));
+const documentsToSign = vi.fn();
+vi.mock("../../../services/real/my-signing.service", () => ({
+  realMySigningService: { documentsToSign: () => documentsToSign() },
+  isSignerEntry: (i: { recipientType: string | null }) => i.recipientType === null || i.recipientType === "signer",
+}));
+const sharedWithMe = vi.fn();
+const listAccessRequests = vi.fn();
+vi.mock("../../../services/real/document-sharing.service", () => ({
+  documentSharingService: {
+    sharedWithMe: (s: string) => sharedWithMe(s),
+    listAccessRequests: (ws: string, s: string) => listAccessRequests(ws, s),
+  },
+}));
+const connections = vi.fn();
+vi.mock("../../../services/real/contact-connections.service", () => ({
+  contactConnectionsService: { list: () => connections() },
 }));
 
-import { useNavCounts } from "../../../hooks/useNavCounts";
+import { useNavCounts, resetNavCounts } from "../../../hooks/useNavCounts";
 import { NavCountBubble } from "../InvitationCountBubble";
 import { ChatbotShowcase } from "../../dashboard/ChatbotShowcase";
 
+beforeEach(() => {
+  resetNavCounts();
+  documentsToSign.mockResolvedValue([
+    { recipientType: "signer" }, { recipientType: null }, { recipientType: "carbon-copy" }, { recipientType: "approver" },
+  ]);
+  sharedWithMe.mockResolvedValue([{ id: "sh_1" }]);
+  listAccessRequests.mockResolvedValue([
+    { document: { owner: { userId: "usr_me" } } }, { document: { owner: { userId: "usr_other" } } },
+  ]);
+  connections.mockResolvedValue({ received: [{}, {}, {}], sent: [{}] });
+});
+
 describe("side panel counts", () => {
-  it("counts each unread notice on the one row it leads to", () => {
-    items = [
-      { status: "unread", category: "documents", actionPath: "/app/documents/sr_1" },
-      { status: "unread", category: "documents", actionPath: "/app/documents/sr_2" },
-      { status: "read", category: "documents", actionPath: "/app/documents/sr_3" },
-      { status: "unread", category: "documents", actionPath: "/app/shared-documents/with-me?section=pending" },
-      { status: "unread", category: "my-actions", actionPath: "/app/shared-documents/by-me?section=pending" },
-      { status: "unread", category: "workspace", actionPath: "/app/contacts/pending" },
-    ];
+  it("counts only what is waiting on this account", async () => {
     const { result } = renderHook(() => useNavCounts());
-    expect(result.current).toEqual({ documents: 2, shared: 2, contacts: 1 });
+    await waitFor(() => { expect(result.current).toEqual({ documents: 2, shared: 2, contacts: 3 }); });
+    expect(sharedWithMe).toHaveBeenCalledWith("pending");
+    expect(listAccessRequests).toHaveBeenCalledWith("ws_1", "pending");
+  });
+
+  it("keeps the other numbers when one source fails", async () => {
+    connections.mockRejectedValue(new Error("offline"));
+    const { result } = renderHook(() => useNavCounts());
+    await waitFor(() => { expect(result.current.documents).toBe(2); });
+    expect(result.current.contacts).toBe(0);
+    expect(result.current.shared).toBe(2);
   });
 
   it("gives each row its own bubble, hidden at zero", () => {
@@ -40,34 +71,29 @@ describe("side panel counts", () => {
         <NavCountBubble kind="invitations" count={0} />
       </>,
     );
-    expect(screen.getByTestId("documents-bubble").getAttribute("aria-label")).toBe("2 unread document updates");
-    expect(screen.getByTestId("shared-bubble").getAttribute("aria-label")).toBe("1 unread sharing update");
-    expect(screen.getByTestId("contacts-bubble").getAttribute("aria-label")).toBe("3 unread contact requests");
+    expect(screen.getByTestId("documents-bubble").getAttribute("aria-label")).toBe("2 documents to sign");
+    expect(screen.getByTestId("shared-bubble").getAttribute("aria-label")).toBe("1 pending shared document");
+    expect(screen.getByTestId("contacts-bubble").getAttribute("aria-label")).toBe("3 pending contact requests");
     expect(screen.queryByTestId("invitation-bubble")).toBeNull();
-    // Three different icons.
     const icons = [...container.querySelectorAll("svg")].map(s => s.getAttribute("class"));
     expect(new Set(icons).size).toBe(3);
   });
 });
 
 describe("chatbot showcase", () => {
-  beforeEach(() => { window.localStorage.clear(); });
-
-  it("shows the chatbot at work and leads to the plans", () => {
+  it("is always shown on Home, with no way to hide it, and leads to the plans", () => {
     render(<MemoryRouter><ChatbotShowcase /></MemoryRouter>);
     const card = screen.getByTestId("chatbot-showcase");
     expect(card.textContent).toContain("Meet the LAGDA Chatbot");
     expect(card.textContent).toContain("Draft an NDA");
+    expect(card.querySelector("button")).toBeNull();
     expect(screen.getByTestId("chatbot-showcase-cta").getAttribute("href")).toBe("/app/settings/plan?choose=personal");
   });
 
-  it("hides for seven days", async () => {
-    const user = userEvent.setup();
-    const { unmount } = render(<MemoryRouter><ChatbotShowcase /></MemoryRouter>);
-    await user.click(screen.getByTestId("chatbot-showcase-hide"));
-    expect(screen.queryByTestId("chatbot-showcase")).toBeNull();
-    unmount();
-    render(<MemoryRouter><ChatbotShowcase /></MemoryRouter>);
-    expect(screen.queryByTestId("chatbot-showcase")).toBeNull();
+  it("has its own wording in My Templates", () => {
+    render(<MemoryRouter><ChatbotShowcase variant="templates" /></MemoryRouter>);
+    const card = screen.getByTestId("chatbot-showcase-templates");
+    expect(card.textContent).toContain("Write templates with the LAGDA Chatbot");
+    expect(card.textContent).toContain("service agreement");
   });
 });
