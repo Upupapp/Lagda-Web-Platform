@@ -42,6 +42,15 @@ function roleBadgeStyle(role: PrepParticipantRole): { bg: string; color: string 
   }
 }
 
+/** A contact's Document role tag, as a participant role. The first one wins, in this order. */
+const TAG_TO_ROLE: readonly (readonly [string, PrepParticipantRole])[] = [
+  ["tag-signer", "signer"], ["tag-approver", "approver"], ["tag-reviewer", "reviewer"], ["tag-ack", "acknowledgment-recipient"],
+];
+export function roleFromContactTags(tagIds: readonly string[] | undefined): PrepParticipantRole | null {
+  if (!tagIds) return null;
+  return TAG_TO_ROLE.find(([tag]) => tagIds.includes(tag))?.[1] ?? null;
+}
+
 // ── Inline participant editor ─────────────────────────────────────────────────
 
 function ParticipantEditor({
@@ -53,7 +62,7 @@ function ParticipantEditor({
 }: {
   participant: Partial<PrepParticipant> & { id: string };
   allEmails: string[];
-  contacts: { id: string; name: string; email: string; organization: string }[];
+  contacts: { id: string; name: string; email: string; organization: string; tagIds?: readonly string[] }[];
   onSave: (updated: PrepParticipant) => void;
   onCancel: () => void;
 }) {
@@ -70,10 +79,14 @@ function ParticipantEditor({
     return !q || c.name.toLowerCase().includes(q) || c.email.toLowerCase().includes(q);
   }).slice(0, 5);
 
-  const applyContact = (c: { name: string; email: string; organization: string }) => {
+  const applyContact = (c: { name: string; email: string; organization: string; tagIds?: readonly string[] }) => {
     setName(c.name);
     setEmail(c.email);
     setOrg(c.organization);
+    // The contact's Document role (Contacts › Edit roles & notes) pre-selects
+    // the participant's role; it stays changeable here.
+    const preset = roleFromContactTags(c.tagIds);
+    if (preset !== null) setRole(preset);
     setShowContacts(false);
     setContactFilter("");
     setErrors({});

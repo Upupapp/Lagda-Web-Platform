@@ -13,7 +13,7 @@
 import { useCallback, useEffect, useId, useState } from "react";
 import { Link } from "react-router";
 import {
-  Building2, Send, RotateCw, XCircle, FilePenLine, Network, CheckCircle2, MailCheck, Clock3,
+  Building2, Send, RotateCw, XCircle, FilePenLine, Network, CheckCircle2, MailCheck, Clock3, ShieldCheck, Settings2,
 } from "lucide-react";
 import { useWorkspaceAccess } from "../../../hooks/useWorkspaceAccess";
 import { usePlatform } from "../../../context/PlatformContext";
@@ -21,7 +21,8 @@ import {
   realWorkspaceAdminService, ASSIGNABLE_ROLES, REAL_ROLE_LABELS,
 } from "../../../services/real/workspace-admin.service";
 import { realOrganizationService } from "../../../services/real/organization.service";
-import type { WorkspaceInvitation, WorkspaceRoleId } from "../../../models/workspace-admin";
+import type { WorkspaceInvitation, WorkspaceRoleId, WorkspaceMemberSummary } from "../../../models/workspace-admin";
+import { memberRoleLabel, effectivePrivileges } from "../../../models/workspace-admin";
 import type { Contact } from "../../../models/contacts";
 import { Dialog, ErrorNote } from "../workspace/join/join-ui";
 import { buttonStyle, inputStyle, labelStyle, hintStyle } from "../workspace/join/join-styles";
@@ -76,6 +77,20 @@ export function ContactWorkspaceCard({ contact, workspaceId, onAskToPrepare, can
     setBusy(false);
   };
 
+  // What the member may do here is their MEMBERSHIP's — shown, not edited.
+  const canSeeMembers = access.can("membership.view");
+  const canManageAccess = access.can("membership.role.change");
+  const [membership, setMembership] = useState<WorkspaceMemberSummary | null>(null);
+  useEffect(() => {
+    if (member === null || !canSeeMembers) { setMembership(null); return; }
+    let cancelled = false;
+    realWorkspaceAdminService.listMembers(workspaceId)
+      .then(list => { if (!cancelled) setMembership(list.find(m => m.userId === member.userId) ?? null); })
+      .catch(() => { /* the card still shows they are a member */ });
+    return () => { cancelled = true; };
+  }, [member, canSeeMembers, workspaceId]);
+  const privileges = membership === null ? null : effectivePrivileges(membership);
+
   const status = member !== null ? "member" : invitation !== null ? "invited" : "outside";
 
   return (
@@ -93,7 +108,23 @@ export function ContactWorkspaceCard({ contact, workspaceId, onAskToPrepare, can
 
       {status === "member" && (
         <>
-          <p className="cw-state" data-tone="member"><CheckCircle2 size={16} aria-hidden /> <span><strong>Member</strong> · {member?.displayName}</span></p>
+          <p className="cw-state" data-tone="member"><CheckCircle2 size={16} aria-hidden />
+            <span><strong>Member</strong> · {membership === null ? member?.displayName : memberRoleLabel(membership)}</span></p>
+          {privileges !== null && membership !== null && (
+            <div className="cw-access" data-testid="member-access">
+              <span className="cw-access-title"><ShieldCheck size={14} aria-hidden /> What they can do here</span>
+              <ul>
+                <li data-on={privileges.canRequestDocuments ? "true" : "false"}>{privileges.canRequestDocuments ? "✓" : "—"} Request documents</li>
+                <li data-on={privileges.canAssignSigners ? "true" : "false"}>{privileges.canAssignSigners ? "✓" : "—"} Assign signers</li>
+              </ul>
+              {privileges.inherent && <span className="cw-access-note">Both come with their role.</span>}
+              {canManageAccess && (
+                <Link to={`/app/workspace/members/${encodeURIComponent(membership.id)}`} className="cw-access-link">
+                  <Settings2 size={13} aria-hidden /> Manage access
+                </Link>
+              )}
+            </div>
+          )}
           <div className="cw-actions">
             {canAskToPrepare && (
               <button type="button" className="cw-btn" data-variant="primary" onClick={onAskToPrepare}>
@@ -292,6 +323,16 @@ const CARD_CSS = `
 .cw-hint { display: flex; gap: 6px; align-items: flex-start; font-family: 'Geist', sans-serif; font-size: 12.5px; color: ${C.MUTED}; margin: 0; line-height: 1.5; }
 .cw-hint svg { flex-shrink: 0; margin-top: 2px; }
 .cw-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.cw-access { border: 1px solid ${C.BORDER}; border-radius: 10px; padding: 10px 12px; background: #FBFCFE; display: flex; flex-direction: column; gap: 6px; }
+.cw-access-title { display: inline-flex; align-items: center; gap: 6px; font-family: 'Geist', sans-serif; font-size: 12px; font-weight: 700; color: ${C.SLATE};
+  text-transform: uppercase; letter-spacing: 0.05em; }
+.cw-access ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 3px; }
+.cw-access li { font-family: 'Geist', sans-serif; font-size: 13px; color: ${C.MUTED}; }
+.cw-access li[data-on="true"] { color: #14532D; font-weight: 600; }
+.cw-access-note { font-family: 'Geist', sans-serif; font-size: 12px; color: ${C.MUTED}; }
+.cw-access-link { align-self: flex-start; display: inline-flex; align-items: center; gap: 5px; font-family: 'Geist', sans-serif; font-size: 12.5px; font-weight: 700;
+  color: ${C.AZURE_TEXT}; text-decoration: none; min-height: 28px; }
+.cw-access-link:hover { text-decoration: underline; text-underline-offset: 3px; }
 .cw-btn { display: inline-flex; align-items: center; gap: 7px; min-height: 40px; padding: 0 14px; border-radius: 9px; border: 1.5px solid #CBD5E1;
   background: #FFFFFF; color: ${C.INK}; font-family: 'Geist', sans-serif; font-size: 13px; font-weight: 700; cursor: pointer; }
 .cw-btn:hover:not(:disabled) { border-color: ${C.AZURE}; color: ${C.AZURE_TEXT}; }

@@ -1,13 +1,28 @@
 // /app/contacts/:contactId/edit — Edit an existing contact.
-// Reuses same form fields as Create, pre-populated. Historical participant separation notice.
-// Frontend-only demonstration. No real persistence.
-// Burgundy never used. eNotary never referenced.
+//
+// Two forms, by who the contact is:
+//
+//   Linked to a LAGDA account (connected, or a member of this workspace):
+//     "Edit roles & notes". Name, email, title and organisation come from the
+//     person's own profile and are shown read-only — editing them here would
+//     only be overwritten by the live values. What is yours to set: the roles
+//     they play in your documents, a category, their phone, a private note,
+//     and who in the workspace can use the contact.
+//   External (no account): every field, since you are the only source.
+//
+// What a person may DO in the workspace is not a contact's business: role
+// and privileges belong to their membership (People › Members).
 
 import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate, Link } from "react-router";
 import { ContactProvider, useContacts } from "../../../context/ContactContext";
 import type { ContactCreateInput, ContactScope, ContactTagId } from "../../../models/contacts";
 import { SYSTEM_CONTACT_TAGS, CONTACT_SCOPE_LABELS } from "../../../models/contacts";
+import { BadgeCheck, Lock } from "lucide-react";
+import { PersonAvatar } from "./contacts-ui";
+
+/** The tags that say what part someone plays in a document; the rest are categories. */
+const ROLE_TAGS = new Set<string>(["tag-signer", "tag-approver", "tag-reviewer", "tag-ack"]);
 
 const GF    = { fontFamily: "'Geist', sans-serif" };
 const GM    = { fontFamily: "'Geist Mono', monospace" };
@@ -103,6 +118,9 @@ function EditForm() {
     }
   };
 
+  // Someone with a LAGDA account behind them speaks for their own identity.
+  const linked = !!state.activeContact?.account;
+
   if (state.activeLoading || !loaded) {
     return (
       <div style={{ minHeight: "100vh", background: "#F8FAFC", padding: "32px 24px" }}>
@@ -133,7 +151,7 @@ function EditForm() {
             <li style={{ color: SLATE }}>Edit</li>
           </ol>
         </nav>
-        <h1 style={{ ...GF, fontSize: 22, fontWeight: 800, color: NAVY, margin: 0 }}>Edit Contact</h1>
+        <h1 style={{ ...GF, fontSize: 22, fontWeight: 800, color: NAVY, margin: 0 }}>{linked ? "Edit roles & notes" : "Edit contact"}</h1>
       </header>
 
       <div style={{ maxWidth: 600, margin: "32px auto 0", padding: "0 24px" }}>
@@ -151,6 +169,22 @@ function EditForm() {
             </div>
           )}
 
+          {linked ? (
+            <div data-testid="linked-identity" style={{ display: "flex", gap: 14, alignItems: "center", flexWrap: "wrap", border: "1.5px solid #E3E8EF", borderRadius: 12, padding: "14px 16px", background: "#FBFCFE", marginBottom: 22 }}>
+              <PersonAvatar name={state.activeContact.name} avatarUrl={state.activeContact.avatarUrl} size={52} />
+              <div style={{ flex: "1 1 220px", minWidth: 0 }}>
+                <div style={{ ...GF, fontSize: 15, fontWeight: 800, color: NAVY, overflowWrap: "anywhere" }}>{state.activeContact.name}</div>
+                <div style={{ ...GM, fontSize: 12, color: SLATE, overflowWrap: "anywhere" }}>{state.activeContact.email}</div>
+                {(state.activeContact.title || state.activeContact.organization) && (
+                  <div style={{ ...GF, fontSize: 12.5, color: SLATE, marginTop: 2 }}>{[state.activeContact.title, state.activeContact.organization].filter(Boolean).join(" · ")}</div>
+                )}
+              </div>
+              <p style={{ ...GF, flexBasis: "100%", display: "flex", gap: 6, alignItems: "center", fontSize: 12, color: SLATE, margin: 0 }}>
+                <Lock size={13} aria-hidden /> Name, email, title and organisation come from their LAGDA profile, so they stay up to date on their own.
+                {state.activeContact.account?.connected && <BadgeCheck size={13} aria-hidden color="#166534" />}
+              </p>
+            </div>
+          ) : (<>
           <FormField label="Full Name" required error={errors.name}>
             <input type="text" value={name} onChange={e => setName(e.target.value)} aria-required="true" aria-invalid={!!errors.name} style={inputStyle(!!errors.name)} />
           </FormField>
@@ -171,8 +205,15 @@ function EditForm() {
               <input type="text" value={title} onChange={e => setTitle(e.target.value)} style={inputStyle()} />
             </FormField>
           </div>
+          </>)}
 
-          <FormField label="Visibility">
+          {linked && (
+            <FormField label="Phone Number" error={errors.phone} hint="Not part of their LAGDA profile — yours to keep.">
+              <input type="tel" value={phone} onChange={e => setPhone(e.target.value)} aria-invalid={!!errors.phone} style={inputStyle(!!errors.phone)} />
+            </FormField>
+          )}
+
+          <FormField label="Who can use this contact">
             <div style={{ display: "flex", gap: 8 }}>
               {(["personal", "workspace"] as ContactScope[]).map(s => (
                 <button key={s} type="button" role="radio" aria-checked={scope === s} onClick={() => setScope(s)}
@@ -183,9 +224,13 @@ function EditForm() {
             </div>
           </FormField>
 
-          <FormField label="Tags">
+          <FormField label="Document roles" hint="The parts they usually play when you prepare a document.">
+            <TagPicker tags={SYSTEM_CONTACT_TAGS.filter(t => ROLE_TAGS.has(t.id))} selected={tagIds} onToggle={toggleTag} />
+          </FormField>
+
+          <FormField label="Category">
             <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-              {SYSTEM_CONTACT_TAGS.map(tag => {
+              {SYSTEM_CONTACT_TAGS.filter(t => !ROLE_TAGS.has(t.id)).map(tag => {
                 const active = tagIds.includes(tag.id);
                 return (
                   <button key={tag.id} type="button" onClick={() => toggleTag(tag.id)} aria-pressed={active}
@@ -197,7 +242,7 @@ function EditForm() {
             </div>
           </FormField>
 
-          <FormField label="Note">
+          <FormField label="Note" hint="Private to this contact record.">
             <textarea value={note} onChange={e => setNote(e.target.value)} rows={3} style={{ ...inputStyle(), resize: "vertical" }} />
           </FormField>
 
@@ -208,11 +253,31 @@ function EditForm() {
             </Link>
             <button type="button" onClick={handleSubmit} disabled={saving}
               style={{ ...GF, fontSize: 13, fontWeight: 700, color: "#FFFFFF", background: saving ? SILVER : AZURE, border: "none", borderRadius: 8, padding: "9px 22px", cursor: saving ? "not-allowed" : "pointer" }}>
-              {saving ? "Saving…" : "Save Changes"}
+              {saving ? "Saving…" : "Save changes"}
             </button>
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+function TagPicker({ tags, selected, onToggle }: {
+  tags: readonly { id: ContactTagId; label: string; color: string }[]; selected: readonly ContactTagId[]; onToggle: (id: ContactTagId) => void;
+}) {
+  return (
+    <div role="group" style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+      {tags.map(tag => {
+        const active = selected.includes(tag.id);
+        return (
+          <button key={tag.id} type="button" onClick={() => onToggle(tag.id)} aria-pressed={active}
+            style={{ ...GF, fontSize: 13, padding: "8px 14px", borderRadius: 10, cursor: "pointer", minHeight: 38,
+              background: active ? `${tag.color}18` : "#FFFFFF", color: active ? tag.color : NAVY,
+              border: active ? `1.5px solid ${tag.color}` : "1.5px solid #D1D9E0", fontWeight: active ? 700 : 600 }}>
+            {active ? "✓ " : ""}{tag.label}
+          </button>
+        );
+      })}
     </div>
   );
 }

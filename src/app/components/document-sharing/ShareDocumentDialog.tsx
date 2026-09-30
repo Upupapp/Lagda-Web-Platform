@@ -1,10 +1,13 @@
 // Share a completed document, and manage who it is shared with.
 //
 // One dialog, two starting points:
-//   mode "add"   the Share button on a Completed card, "+ Add More" in Shared By Me:
-//                the email / full name form first, then the people with access.
-//   mode "list"  "Shared With" in Shared By Me: the people first, each with
-//                Edit and Remove; "+ Add more" reveals the form.
+//   mode "add"   the Share button on a Completed card, "Add more" in Shared By Me:
+//                the ways to add someone first — from your contacts (one click,
+//                only people without access), or manually by email — then the
+//                people with access.
+//   mode "list"  "View people with access" in Shared By Me: the people with
+//                access, each with Edit and Remove, then the document's
+//                participants (read-only: they always keep their own access).
 //
 // Edit and Remove swap the dialog's content rather than stacking a second
 // modal, so there is always exactly one focus trap and one Escape handler.
@@ -12,12 +15,14 @@
 // Shared With Me once they have a LAGDA account with that verified address.
 
 import { useCallback, useEffect, useId, useRef, useState } from "react";
-import { Share2, Pencil, Trash2, UserPlus, UserRound, Mail } from "lucide-react";
+import { Share2, Pencil, Trash2, UserPlus, UserRound, Mail, BookUser, Keyboard, PenLine } from "lucide-react";
+import { DEFAULT_CONTACT_QUERY } from "../../models/contacts";
+import { PersonAvatar } from "../../pages/platform/contacts/contacts-ui";
 import { ModalFrame, modalButtonStyle } from "../contact-requests/ModalFrame";
 import {
   documentSharingService, sharingErrorMessage, isValidShareEmail, formatSharingDate,
   MAX_FULL_NAME_LENGTH,
-  type DocumentShare, type AccessRequest,
+  type DocumentShare, type AccessRequest, type DocumentParticipant,
 } from "../../services/real/document-sharing.service";
 import { GF, NAVY, SLATE, BORDER, StatusChip, SharingNotice, TextField, SmallButton, type ChipTone } from "./SharingPrimitives";
 
@@ -57,6 +62,8 @@ export function ShareDocumentDialog({ workspaceId, target, mode = "add", onClose
   const [view, setView] = useState<View>({ k: "main" });
   const [shares, setShares] = useState<DocumentShare[]>([]);
   const [requests, setRequests] = useState<AccessRequest[]>([]);
+  const [participants, setParticipants] = useState<readonly DocumentParticipant[]>([]);
+  const [addWay, setAddWay] = useState<"contacts" | "manual">("contacts");
   const [loadState, setLoadState] = useState<"loading" | "ready" | "error">("loading");
   const [loadError, setLoadError] = useState<string | null>(null);
   const [addOpen, setAddOpen] = useState(mode === "add");
@@ -75,6 +82,7 @@ export function ShareDocumentDialog({ workspaceId, target, mode = "add", onClose
     Promise.all([sharesP, requestsP])
       .then(([result, approved]) => {
         setShares(result.shares.filter(s => s.status !== "removed"));
+        setParticipants(result.participants ?? []);
         setRequests(approved);
         setLoadState("ready");
       })
@@ -155,23 +163,45 @@ export function ShareDocumentDialog({ workspaceId, target, mode = "add", onClose
   }
 
   const people = shares.length + requests.length;
+  // Who already has access, by address: the contacts picker leaves them out.
+  const withAccess = new Set<string>([
+    ...shares.filter(s => s.status !== "rejected").map(s => s.email.trim().toLowerCase()),
+    ...requests.map(r => r.requester.email.trim().toLowerCase()),
+    ...participants.map(p => p.email.trim().toLowerCase()),
+  ]);
+  const onShared = (share: DocumentShare) => {
+    setShares(list => [share, ...list.filter(s => s.shareId !== share.shareId)]);
+    setNotice({ tone: "success", text: `Shared with ${share.fullName ?? share.email}. ${NO_EMAIL_COPY}` });
+    changed();
+  };
 
   return (
-    <ModalFrame key="main" title={mode === "list" ? "Shared with" : "Share document"} subtitle={target.title} onClose={onClose} width={580}
+    <ModalFrame key="main" title={mode === "list" ? "People with access" : "Share document"} subtitle={target.title} onClose={onClose} width={600}
       footer={<button type="button" onClick={onClose} style={modalButtonStyle("secondary")}>Done</button>}>
       <div style={{ display: "flex", flexDirection: "column", gap: 18, minWidth: 0 }}>
         <div aria-live="polite">{notice && <SharingNotice tone={notice.tone}>{notice.text}</SharingNotice>}</div>
 
         {addOpen ? (
-          <AddShareForm workspaceId={workspaceId} target={target} autoFocus
-            onShared={share => {
-              setShares(list => [share, ...list.filter(s => s.shareId !== share.shareId)]);
-              setNotice({ tone: "success", text: `Shared with ${share.email}. ${NO_EMAIL_COPY}` });
-              changed();
-            }} />
+          <div style={{ display: "flex", flexDirection: "column", gap: 10, minWidth: 0 }}>
+            <div role="tablist" aria-label="How to add someone" style={{ display: "flex", gap: 4, padding: 4, borderRadius: 10, background: "#EEF2F7", border: `1px solid ${BORDER}` }}>
+              {([["contacts", "From your contacts", BookUser], ["manual", "Enter manually", Keyboard]] as const).map(([key, label, Icon]) => (
+                <button key={key} type="button" role="tab" aria-selected={addWay === key} data-testid={`add-way-${key}`}
+                  onClick={() => { setAddWay(key); setNotice(null); }}
+                  style={{ ...GF, flex: "1 1 0", minWidth: 0, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 6,
+                    minHeight: 38, border: "none", borderRadius: 8, cursor: "pointer", fontSize: 13, fontWeight: addWay === key ? 700 : 600,
+                    background: addWay === key ? "#FFFFFF" : "transparent", color: addWay === key ? NAVY : SLATE,
+                    boxShadow: addWay === key ? "0 1px 3px rgba(7,17,31,0.14)" : "none" }}>
+                  <Icon size={15} aria-hidden /> {label}
+                </button>
+              ))}
+            </div>
+            {addWay === "contacts"
+              ? <ContactsPicker workspaceId={workspaceId} target={target} excluded={withAccess} onShared={onShared} />
+              : <AddShareForm workspaceId={workspaceId} target={target} autoFocus onShared={onShared} />}
+          </div>
         ) : (
           <div>
-            <SmallButton icon={UserPlus} label="+ Add more" variant="primary" onClick={() => { setNotice(null); setAddOpen(true); }} />
+            <SmallButton icon={UserPlus} label="Add more" variant="primary" onClick={() => { setNotice(null); setAddOpen(true); }} />
           </div>
         )}
 
@@ -187,7 +217,7 @@ export function ShareDocumentDialog({ workspaceId, target, mode = "add", onClose
             </div>
           )}
           {loadState === "ready" && people === 0 && (
-            <p style={{ ...GF, fontSize: 13, color: SLATE, margin: 0 }}>Not shared with anyone yet. Participants always keep their own access.</p>
+            <p style={{ ...GF, fontSize: 13, color: SLATE, margin: 0 }}>Not shared with anyone yet.</p>
           )}
           {loadState === "ready" && people > 0 && (
             <ul data-testid="share-people" style={{ listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: 8 }}>
@@ -233,6 +263,8 @@ export function ShareDocumentDialog({ workspaceId, target, mode = "add", onClose
             </ul>
           )}
         </section>
+
+        {loadState === "ready" && participants.length > 0 && <ParticipantsList participants={participants} />}
       </div>
     </ModalFrame>
   );
@@ -334,5 +366,115 @@ function EditShareView({ workspaceId, target, share, onClose, onCancel, onSaved 
         {error && <div role="alert"><SharingNotice tone="error">{error}</SharingNotice></div>}
       </form>
     </ModalFrame>
+  );
+}
+
+// ── Participants (read-only) ──────────────────────────────────────────────
+
+const ROLE_LABEL: Record<string, string> = {
+  SIGNER: "Signer", APPROVER: "Approver", REVIEWER: "Reviewer", ACKNOWLEDGER: "Acknowledgement",
+  ACKNOWLEDGMENT_RECIPIENT: "Acknowledgement", VIEWER: "Viewer", CC: "Copy", CARBON_COPY: "Copy",
+};
+const roleLabel = (role: string) => ROLE_LABEL[role.toUpperCase()]
+  ?? role.toLowerCase().replace(/[_-]+/g, " ").replace(/^\w/, c => c.toUpperCase());
+
+function ParticipantsList({ participants }: { participants: readonly DocumentParticipant[] }) {
+  return (
+    <section aria-labelledby="share-participants-heading" style={{ minWidth: 0 }}>
+      <h3 id="share-participants-heading" style={{ ...GF, fontSize: 14, fontWeight: 700, color: NAVY, margin: "0 0 4px", display: "flex", alignItems: "center", gap: 6 }}>
+        <PenLine size={15} aria-hidden /> Participants ({participants.length})
+      </h3>
+      <p style={{ ...GF, fontSize: 12.5, color: SLATE, margin: "0 0 8px" }}>They took part in the document and always keep their own access.</p>
+      <ul data-testid="share-participants" style={{ listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: 6 }}>
+        {participants.map(p => (
+          <li key={p.email} style={{ border: `1px solid ${BORDER}`, borderRadius: 10, padding: "8px 12px", display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center", background: "#FBFCFE", minWidth: 0 }}>
+            <div style={{ flex: "1 1 200px", minWidth: 0 }}>
+              <div style={{ ...GF, fontSize: 13.5, fontWeight: 600, color: NAVY, overflowWrap: "anywhere" }}>{p.name}</div>
+              <div style={{ ...GF, fontSize: 12.5, color: SLATE, overflowWrap: "anywhere" }}>{p.email}{p.organization ? ` · ${p.organization}` : ""}</div>
+            </div>
+            <StatusChip tone="info">{roleLabel(p.role)}</StatusChip>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
+// ── Add from your contacts ────────────────────────────────────────────────
+
+interface PickableContact { id: string; name: string; email: string; organization?: string; avatarUrl?: string }
+
+/**
+ * The contacts who do not yet have access: not a participant, not already
+ * shared with (a live share), not holding an approved request. One click
+ * shares the document with them, under the name in your contacts.
+ */
+function ContactsPicker({ workspaceId, target, excluded, onShared }: {
+  workspaceId: string; target: ShareTarget; excluded: ReadonlySet<string>;
+  onShared: (share: DocumentShare) => void;
+}) {
+  const [contacts, setContacts] = useState<PickableContact[] | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
+  const [busy, setBusy] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    import("../../services/contacts-source")
+      .then(m => m.listContacts(workspaceId, { ...DEFAULT_CONTACT_QUERY, perPage: 100, sort: "name", direction: "asc" }))
+      .then(page => {
+        if (cancelled) return;
+        setContacts(page.items.map(c => ({
+          id: c.id, name: c.name, email: c.email,
+          ...(c.organization ? { organization: c.organization } : {}),
+          ...(c.avatarUrl ? { avatarUrl: c.avatarUrl } : {}),
+        })));
+      })
+      .catch(() => { if (!cancelled) setError("Your contacts could not be loaded."); });
+    return () => { cancelled = true; };
+  }, [workspaceId]);
+
+  const q = search.trim().toLowerCase();
+  const available = (contacts ?? []).filter(c => !excluded.has(c.email.trim().toLowerCase()));
+  const shown = available.filter(c => q === "" || c.name.toLowerCase().includes(q) || c.email.toLowerCase().includes(q));
+
+  const add = async (c: PickableContact) => {
+    setBusy(c.id); setError(null);
+    try {
+      const share = await documentSharingService.createShare(workspaceId, target.documentId, { email: c.email, fullName: c.name });
+      onShared(share);
+    } catch (err) {
+      setError(sharingErrorMessage(err, "share"));
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  return (
+    <div data-testid="share-contacts-picker" style={{ display: "flex", flexDirection: "column", gap: 10, border: `1px solid ${BORDER}`, borderRadius: 10, padding: 14, background: "#F8FAFC", minWidth: 0 }}>
+      <TextField label="Search your contacts" value={search} onChange={setSearch} autoComplete="off" autoFocus maxLength={120} />
+      {error && <div role="alert"><SharingNotice tone="error">{error}</SharingNotice></div>}
+      {contacts === null && !error && <p role="status" style={{ ...GF, fontSize: 13, color: SLATE, margin: 0 }}>Loading your contacts…</p>}
+      {contacts !== null && available.length === 0 && (
+        <p style={{ ...GF, fontSize: 13, color: SLATE, margin: 0 }}>Everyone in your contacts already has access. Enter someone manually instead.</p>
+      )}
+      {contacts !== null && available.length > 0 && shown.length === 0 && (
+        <p style={{ ...GF, fontSize: 13, color: SLATE, margin: 0 }}>No contact matches “{search.trim()}”.</p>
+      )}
+      <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: 6, maxHeight: 280, overflowY: "auto" }}>
+        {shown.map(c => (
+          <li key={c.id} style={{ display: "flex", alignItems: "center", gap: 10, background: "#FFFFFF", border: `1px solid ${BORDER}`, borderRadius: 10, padding: "8px 10px", minWidth: 0 }}>
+            <PersonAvatar name={c.name} avatarUrl={c.avatarUrl} size={34} />
+            <div style={{ flex: "1 1 auto", minWidth: 0 }}>
+              <div style={{ ...GF, fontSize: 13.5, fontWeight: 600, color: NAVY, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.name}</div>
+              <div style={{ ...GF, fontSize: 12, color: SLATE, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.email}{c.organization ? ` · ${c.organization}` : ""}</div>
+            </div>
+            <SmallButton icon={UserPlus} label={busy === c.id ? "Adding…" : "Give access"} variant="primary" ariaLabel={`Give ${c.name} access`}
+              disabled={busy !== null} onClick={() => { void add(c); }} />
+          </li>
+        ))}
+      </ul>
+      <p style={{ ...GF, fontSize: 12.5, color: SLATE, margin: 0, lineHeight: 1.55 }}>{NO_EMAIL_COPY}</p>
+    </div>
   );
 }

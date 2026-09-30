@@ -52,9 +52,20 @@ export interface DocumentShare {
   readonly removedAt: string | null;
 }
 
+/** A participant of the completed document — they always keep their own access. */
+export interface DocumentParticipant {
+  readonly name: string;
+  readonly email: string;
+  readonly organization: string | null;
+  /** The signing role, e.g. SIGNER, APPROVER, CC. */
+  readonly role: string;
+}
+
 export interface DocumentShares {
   readonly document: SharedCompletedDocument;
   readonly shares: readonly DocumentShare[];
+  /** Absent from an older backend. */
+  readonly participants?: readonly DocumentParticipant[];
 }
 
 export interface UpdatedShare {

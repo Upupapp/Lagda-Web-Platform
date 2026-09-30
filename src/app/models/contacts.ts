@@ -139,6 +139,8 @@ export interface ContactAccount {
   displayName: string;
   jobTitle:    string | null;
   connected:   boolean;
+  /** The brand colour of the workspace this person belongs to, for their banner. */
+  brandColor?: string | null;
 }
 
 export interface Contact {

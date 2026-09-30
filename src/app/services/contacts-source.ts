@@ -96,6 +96,7 @@ function toContact(wire: WireContact, workspaceId: string): Contact {
     ...(wire.account === undefined ? {} : {
       account: account === null ? null : {
         userId: account.userId, displayName: account.displayName, jobTitle: account.jobTitle, connected: account.connected,
+        brandColor: account.brandColor ?? null,
       },
     }),
     ...(wire.note === null ? {} : { note: wire.note }),
@@ -300,6 +301,12 @@ export async function archiveContact(
 ): Promise<Contact> {
   if (!realContactsAvailable(workspaceId)) throw new ContactsNotWritableError();
   return toContact(await realContactService.archive(workspaceId!, id), workspaceId!);
+}
+
+/** 092. Deletes an ARCHIVED contact for good. Documents keep what they snapshotted. */
+export async function deleteContact(workspaceId: string | undefined, id: ContactId): Promise<void> {
+  if (!realContactsAvailable(workspaceId)) throw new ContactsNotWritableError();
+  await realContactService.delete(workspaceId!, id);
 }
 
 export async function restoreContact(

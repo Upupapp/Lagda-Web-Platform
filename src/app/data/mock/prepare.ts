@@ -459,6 +459,8 @@ export interface MockContact {
   email:        string;
   organization: string;
   lastUsedAt:   string;
+  /** The contact's Document role tags (Signer, Approver…), used to pre-select the participant role. */
+  tagIds?:      readonly string[];
 }
 
 export const MOCK_CONTACTS: MockContact[] = [

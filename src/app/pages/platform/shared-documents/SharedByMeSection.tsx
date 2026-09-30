@@ -3,8 +3,9 @@
 //   Approved Access  completed documents with at least one accepted share or
 //                    approved request (the backend drops one at zero), as the
 //                    same branded cards as Documents → Completed. The burger
-//                    menu opens "Shared with" (Edit / Remove per person) and
-//                    "+ Add more".
+//                    menu opens "View people with access" (Edit / Remove per
+//                    person, and the participants) and "Add more" (from your
+//                    contacts, or manually).
 //   Pending Access   access requests waiting for a decision: Approve / Reject.
 //   Rejected Access  rejected requests: Withdraw rejection (back to Pending) /
 //                    Delete (after a confirmation).
@@ -163,8 +164,8 @@ export function SharedByMeSection({ section, onSection }: { section: ByMeSection
                   </div>
                 ),
                 actions: [
-                  { id: "shared-with", label: "Shared with", icon: Users, onSelect: () => setDialog({ target, mode: "list" }) },
-                  { id: "add-more", label: "+ Add more", icon: UserPlus, onSelect: () => setDialog({ target, mode: "add" }) },
+                  { id: "shared-with", label: "View people with access", icon: Users, onSelect: () => setDialog({ target, mode: "list" }) },
+                  { id: "add-more", label: "Add more", icon: UserPlus, onSelect: () => setDialog({ target, mode: "add" }) },
                 ],
               };
             })} />

@@ -113,7 +113,7 @@ describe("Contacts → Archived", () => {
     await screen.findByText("Rosa Lim");
     await userEvent.click(screen.getByRole("button", { name: "Actions for Rosa Lim" }));
     const menu = screen.getByRole("menu", { name: "Actions for Rosa Lim" });
-    expect(within(menu).getAllByRole("menuitem").map(item => item.textContent)).toEqual(["View contact", "Restore"]);
+    expect(within(menu).getAllByRole("menuitem").map(item => item.textContent)).toEqual(["View contact", "Restore", "Delete permanently"]);
     await userEvent.click(within(menu).getByRole("menuitem", { name: "View contact" }));
     expect(screen.getByTestId("where").textContent).toBe("/app/contacts/con_a");
   });

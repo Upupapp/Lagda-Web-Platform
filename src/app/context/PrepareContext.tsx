@@ -22,6 +22,7 @@ import { readJSON, writeJSON, removeKey, PERSISTENCE_KEYS } from "../services/lo
 import { loadResumableDraft } from "../services/real/resume-draft.service";
 import { clearAllFileRefs } from "../services/prepare/file-registry";
 import { USE_REAL_BACKEND } from "../services/backend-flag";
+import { DEFAULT_CONTACT_QUERY } from "../models/contacts";
 import { usePlatform } from "./PlatformContext";
 import { realRecipientService } from "../services/real/recipient.service";
 import {
@@ -750,14 +751,29 @@ export function PrepareProvider({ children }: { children: React.ReactNode }) {
   // be reported, because an empty catch makes "the lookup failed" and "you have
   // none of these" indistinguishable — to the user AND to whoever debugs it.
   // `log` is the approved channel and redacts before emitting.
+  // With a backend, "Add from contacts" offers the workspace's real address
+  // book (the contacts this person can see), not the demonstration list.
+  const contactsWorkspaceId = platform.currentWorkspace?.id;
   const loadContacts = useCallback(async () => {
     try {
+      if (USE_REAL_BACKEND && contactsWorkspaceId) {
+        const { listContacts } = await import("../services/contacts-source");
+        const page = await listContacts(contactsWorkspaceId, { ...DEFAULT_CONTACT_QUERY, perPage: 100 });
+        dispatch({
+          type: "SET_CONTACTS",
+          contacts: page.items.map(c => ({
+            id: c.id, name: c.name, email: c.email, organization: c.organization ?? "",
+            lastUsedAt: c.lastUsedAt ?? c.updatedAt, tagIds: c.tagIds,
+          })),
+        });
+        return;
+      }
       const contacts = await prepareService.getContacts();
       dispatch({ type: "SET_CONTACTS", contacts });
     } catch (error) {
       log.warn("prepare: contact lookup failed; the contact picker will be empty", error);
     }
-  }, []);
+  }, [contactsWorkspaceId]);
 
   const loadTemplates = useCallback(async () => {
     try {

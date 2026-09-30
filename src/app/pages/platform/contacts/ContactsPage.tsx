@@ -15,6 +15,7 @@ import React, { useEffect, useState, useRef } from "react";
 import { useNavigate, useSearchParams, Link } from "react-router";
 import {
   MoreVertical, Mail, Phone, Building2, Share2, Clock3, ChevronRight, LayoutGrid, List as ListIcon,
+  BadgeCheck, UserRound, type LucideIcon,
   Users, Inbox, Send,
 } from "lucide-react";
 import { ContactProvider, useContacts } from "../../../context/ContactContext";
@@ -24,7 +25,9 @@ import { Z } from "../../../utils/z-index";
 import { FilterChips } from "../../../components/platform/FilterChips";
 import { useProcessing } from "../../../services/processing.service";
 import {
-  ContactsHeader, PersonAvatar, AccountBadges, DetailLine, useConnectionLists, useLiveRefresh, type HeaderStat,
+  ContactsHeader, PersonAvatar, AccountBadges, useConnectionLists, useLiveRefresh, DeleteContactDialog,
+  brandGradient, BrandWaves,
+  type HeaderStat,
 } from "./contacts-ui";
 
 const LAYOUT_KEY = "lagda.contacts.layout";
@@ -99,6 +102,7 @@ function ContactsLibrary({ section }: { section: LibrarySection }) {
     try { window.localStorage.setItem(LAYOUT_KEY, next); } catch { /* a per-visit choice then */ }
   };
   const connections = useConnectionLists();
+  const [deleting, setDeleting] = useState<ContactListItem | null>(null);
 
   const [searchInput,   setSearchInput]   = useState(searchParams.get("q") ?? "");
   const [selectedIds,   setSelectedIds]   = useState<Set<string>>(new Set());
@@ -419,7 +423,7 @@ function ContactsLibrary({ section }: { section: LibrarySection }) {
 
             <ul className={layout === "grid" ? "ct-grid" : "ct-list"} aria-label={archived ? "Archived contacts" : "Contacts"}>
               {items.map(c => archived
-                ? <ContactCard key={c.id} layout={layout} contact={c} archived restoring={restoringId === c.id} onRestore={id => { void restore(id); }} />
+                ? <ContactCard key={c.id} layout={layout} contact={c} archived restoring={restoringId === c.id} onRestore={id => { void restore(id); }} onDelete={setDeleting} />
                 : <ContactCard key={c.id} layout={layout} contact={c} selected={selectedIds.has(c.id)} onToggle={toggleSelect} />)}
             </ul>
 
@@ -438,13 +442,18 @@ function ContactsLibrary({ section }: { section: LibrarySection }) {
       </main>
 
       <style>{CARD_CSS}</style>
+      {deleting && (
+        <DeleteContactDialog contactId={deleting.id} name={deleting.name}
+          onCancel={() => { setDeleting(null); }}
+          onDeleted={() => { setDeleting(null); void asyncLoadList(); }} />
+      )}
     </div>
   );
 }
 
 // ── Contact card ──────────────────────────────────────────────────────────────
 
-function ContactCard({ contact: c, selected = false, onToggle, archived = false, restoring = false, onRestore, layout }: {
+function ContactCard({ contact: c, selected = false, onToggle, archived = false, restoring = false, onRestore, onDelete, layout }: {
   contact: ContactListItem;
   selected?: boolean;
   onToggle?: (id: string) => void;
@@ -452,6 +461,8 @@ function ContactCard({ contact: c, selected = false, onToggle, archived = false,
   archived?: boolean;
   restoring?: boolean;
   onRestore?: (id: string) => void;
+  /** Archived only (092): opens the permanent-delete confirmation. */
+  onDelete?: (contact: ContactListItem) => void;
   layout: "grid" | "list";
 }) {
   const navigate = useNavigate();
@@ -478,7 +489,10 @@ function ContactCard({ contact: c, selected = false, onToggle, archived = false,
         <div role="menu" aria-label={`Actions for ${c.name}`} style={{ position: "absolute", right: 0, top: "calc(100% + 4px)", zIndex: Z.dropdown, background: "#FFFFFF", border: "1.5px solid #E3E8EF", borderRadius: 10, boxShadow: "0 8px 24px rgba(0,0,0,0.12)", minWidth: 160, width: "max-content", maxWidth: "min(280px, calc(100vw - 48px))", overflow: "hidden" }}>
           <MenuItem label="View contact" onClick={() => { void navigate(`/app/contacts/${c.id}`); setMenuOpen(false); }} />
           {archived
-            ? <MenuItem label={restoring ? "Restoring…" : "Restore"} disabled={restoring} onClick={() => { onRestore?.(c.id); setMenuOpen(false); }} />
+            ? <>
+                <MenuItem label={restoring ? "Restoring…" : "Restore"} disabled={restoring} onClick={() => { onRestore?.(c.id); setMenuOpen(false); }} />
+                <MenuItem label="Delete permanently" danger onClick={() => { onDelete?.(c); setMenuOpen(false); }} />
+              </>
             : <MenuItem label="Edit" onClick={() => { void navigate(`/app/contacts/${c.id}/edit`); setMenuOpen(false); }} />}
         </div>
       )}
@@ -509,28 +523,41 @@ function ContactCard({ contact: c, selected = false, onToggle, archived = false,
     );
   }
 
+  const connected = c.account?.connected === true;
   return (
     <li className="ct-card" data-selected={selected ? "true" : undefined}>
-      <div className="ct-card-top">
-        {checkbox}
-        <PersonAvatar name={c.name} avatarUrl={c.avatarUrl} size={52} />
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <Link to={`/app/contacts/${c.id}`} className="ct-name">{c.name}</Link>
-          {c.title && <span className="ct-card-title">{c.title}</span>}
-          <span className="ct-card-badges">
-            <AccountBadges account={c.account} workspaceMember={c.workspaceMember} />
-            {c.scope === "workspace" && (
-              <span className="ct-soft-pill" title="Everyone in the workspace can use this contact"><Share2 size={11} aria-hidden /> Shared</span>
-            )}
-          </span>
-        </div>
-        {menu}
+      {/* The banner is the brand colour of the workspace this person belongs to. */}
+      <div className="ct-card-band" style={{ backgroundImage: brandGradient(c.account?.brandColor) }} data-testid="contact-card-band">
+        <BrandWaves />
+      </div>
+      <div className="ct-card-controls">
+        <span>{checkbox}</span>
+        <span className="ct-card-menu">{menu}</span>
+      </div>
+
+      <div className="ct-card-avatar">
+        <PersonAvatar name={c.name} avatarUrl={c.avatarUrl} size={96} ring />
+        {connected && <span className="ct-card-dot" title="On LAGDA" aria-hidden />}
+      </div>
+
+      <div className="ct-card-id">
+        <Link to={`/app/contacts/${c.id}`} className="ct-name">
+          <span className="ct-name-text">{c.name}</span>
+          {connected && <BadgeCheck size={20} strokeWidth={2.2} className="ct-verified" aria-label="Connected on LAGDA" />}
+        </Link>
+        {c.title && <span className="ct-card-title">{c.title}</span>}
+        <span className="ct-card-badges">
+          <AccountBadges account={c.account} workspaceMember={c.workspaceMember} />
+          {c.scope === "workspace" && (
+            <span className="ct-soft-pill" title="Everyone in the workspace can use this contact"><Share2 size={11} aria-hidden /> Shared</span>
+          )}
+        </span>
       </div>
 
       <div className="ct-card-details">
-        <DetailLine icon={Mail} mono href={`mailto:${c.email}`}>{c.email}</DetailLine>
-        <DetailLine icon={Phone} href={c.phone ? `tel:${c.phone}` : undefined}>{c.phone}</DetailLine>
-        <DetailLine icon={Building2}>{c.organization}</DetailLine>
+        <CardDetail icon={Mail} href={`mailto:${c.email}`}>{c.email}</CardDetail>
+        <CardDetail icon={Phone} href={c.phone ? `tel:${c.phone}` : undefined}>{c.phone}</CardDetail>
+        <CardDetail icon={Building2}>{c.organization}</CardDetail>
       </div>
 
       {c.tagIds.length > 0 && (
@@ -542,35 +569,65 @@ function ContactCard({ contact: c, selected = false, onToggle, archived = false,
 
       <div className="ct-card-foot">
         <span className="ct-card-when">
-          <Clock3 size={12} aria-hidden /> {archived ? "Updated" : "Used"} <RelativeDate iso={archived ? c.updatedAt : c.lastUsedAt} />
+          <Clock3 size={17} aria-hidden /> {archived ? "Updated" : "Used"} · <RelativeDate iso={archived ? c.updatedAt : c.lastUsedAt} />
         </span>
-        <Link to={`/app/contacts/${c.id}`} className="ct-card-open">View profile <ChevronRight size={14} aria-hidden /></Link>
+        <Link to={`/app/contacts/${c.id}`} className="ct-card-open"><UserRound size={16} aria-hidden /> View profile <ChevronRight size={15} aria-hidden /></Link>
       </div>
     </li>
   );
 }
 
+/** One line of the card's details: an icon in a soft circle, then the value. */
+function CardDetail({ icon: Icon, href, children }: { icon: LucideIcon; href?: string | undefined; children: React.ReactNode }) {
+  if (children === undefined || children === null || children === "") return null;
+  const value = <span className="ct-detail-value">{children}</span>;
+  return (
+    <span className="ct-detail">
+      <span aria-hidden className="ct-detail-icon"><Icon size={17} strokeWidth={1.9} /></span>
+      {href ? <a href={href} className="ct-detail-link">{value}</a> : value}
+    </span>
+  );
+}
+
 const CARD_CSS = `
-.ct-grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(290px, 100%), 1fr)); gap: 14px; }
-.ct-card { background: #FFFFFF; border: 1.5px solid #E3E8EF; border-radius: 16px; padding: 16px 16px 12px; min-width: 0; display: flex; flex-direction: column; gap: 12px;
-  box-shadow: 0 1px 2px rgba(7,17,31,0.04); transition: box-shadow 160ms ease, border-color 160ms ease, transform 160ms ease; position: relative; }
-.ct-card:hover { border-color: #C9D5E3; box-shadow: 0 10px 24px -16px rgba(7,17,31,0.35); transform: translateY(-1px); }
-.ct-card[data-selected="true"] { border-color: ${AZURE}; box-shadow: 0 0 0 3px rgba(0,120,212,0.14); }
-.ct-card-top { display: flex; align-items: flex-start; gap: 12px; min-width: 0; }
-.ct-check { accent-color: ${AZURE}; width: 16px; height: 16px; margin: 18px 0 0; flex-shrink: 0; cursor: pointer; }
-.ct-name { font-family: 'Geist', sans-serif; color: ${NAVY}; font-weight: 700; font-size: 15px; text-decoration: none; display: block;
+.ct-grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(300px, 100%), 1fr)); gap: 18px; }
+.ct-card { background: #FFFFFF; border: 1px solid #E6EBF2; border-radius: 20px; padding: 0 16px 14px; min-width: 0; display: flex; flex-direction: column;
+  gap: 12px; position: relative; overflow: hidden; box-shadow: 0 1px 2px rgba(7,17,31,0.04), 0 12px 28px -22px rgba(7,17,31,0.35);
+  transition: box-shadow 180ms ease, transform 180ms ease, border-color 180ms ease; }
+.ct-card:hover { box-shadow: 0 18px 38px -24px rgba(7,17,31,0.45); transform: translateY(-2px); border-color: #D6DEE8; }
+.ct-card[data-selected="true"] { border-color: ${AZURE}; box-shadow: 0 0 0 3px rgba(0,120,212,0.16); }
+.ct-card-band { position: relative; height: 92px; margin: 0 -16px; overflow: hidden; }
+.ct-card-controls { position: absolute; top: 10px; left: 12px; right: 10px; display: flex; justify-content: space-between; align-items: flex-start; z-index: 1; }
+.ct-card-controls .ct-check { margin: 0; width: 18px; height: 18px; background: #FFFFFF; border-radius: 4px; box-shadow: 0 1px 3px rgba(7,17,31,0.25); }
+.ct-card-menu .ct-icon-btn { background: rgba(255,255,255,0.88); color: ${NAVY}; box-shadow: 0 1px 3px rgba(7,17,31,0.18); }
+.ct-card-menu .ct-icon-btn:hover, .ct-card-menu .ct-icon-btn[data-open="true"] { background: #FFFFFF; color: ${AZURE}; }
+.ct-card-avatar { position: relative; align-self: center; margin-top: -62px; line-height: 0; }
+.ct-card-dot { position: absolute; right: 6px; bottom: 6px; width: 20px; height: 20px; border-radius: 50%; background: #16A34A; border: 3px solid #FFFFFF;
+  box-shadow: 0 1px 3px rgba(7,17,31,0.25); }
+.ct-card-id { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 4px; min-width: 0; }
+.ct-name { display: inline-flex; align-items: center; gap: 7px; max-width: 100%; font-family: 'Geist', sans-serif; color: ${NAVY}; font-weight: 800;
+  font-size: 19px; line-height: 1.25; text-decoration: none; }
+.ct-name-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.ct-name:hover .ct-name-text { color: ${AZURE}; }
+.ct-verified { flex-shrink: 0; color: #FFFFFF; fill: #2F80ED; }
+.ct-card-title { display: block; max-width: 100%; font-family: 'Geist', sans-serif; font-size: 13.5px; font-weight: 600; color: #7B8BA3; letter-spacing: 0.01em;
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.ct-name:hover { color: ${AZURE}; }
-.ct-card-title { display: block; font-family: 'Geist', sans-serif; font-size: 12.5px; color: ${SLATE}; margin-top: 1px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.ct-card-badges { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 7px; }
+.ct-card-badges { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; margin-top: 4px; }
 .ct-soft-pill { display: inline-flex; align-items: center; gap: 4px; font-family: 'Geist', sans-serif; font-size: 11px; font-weight: 600; color: ${SLATE};
   background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 999px; padding: 2px 8px; white-space: nowrap; }
-.ct-card-details { display: flex; flex-direction: column; gap: 6px; padding: 10px 12px; background: #F8FAFC; border-radius: 10px; min-width: 0; }
-.ct-card-tags { display: flex; gap: 5px; flex-wrap: wrap; }
-.ct-card-foot { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding-top: 10px; border-top: 1px solid #F0F2F5; margin-top: auto; }
-.ct-card-when { display: inline-flex; align-items: center; gap: 5px; font-family: 'Geist', sans-serif; font-size: 11.5px; color: ${SLATE}; }
-.ct-card-open { display: inline-flex; align-items: center; gap: 2px; font-family: 'Geist', sans-serif; font-size: 12.5px; font-weight: 700; color: #005A9E; text-decoration: none; min-height: 32px; }
-.ct-card-open:hover { text-decoration: underline; text-underline-offset: 3px; }
+.ct-card-details { display: flex; flex-direction: column; gap: 10px; padding: 12px 14px; background: #F5F8FC; border-radius: 14px; min-width: 0; }
+.ct-detail { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.ct-detail-icon { width: 36px; height: 36px; border-radius: 50%; background: #E6F0FB; color: #1D6FD1; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.ct-detail-value { font-family: 'Geist', sans-serif; font-size: 13.5px; color: ${NAVY}; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block; }
+.ct-detail-link { min-width: 0; text-decoration: none; display: flex; }
+.ct-detail-link:hover .ct-detail-value { color: ${AZURE}; }
+.ct-card-tags { display: flex; gap: 5px; flex-wrap: wrap; justify-content: center; }
+.ct-card-foot { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding-top: 12px; border-top: 1px solid #EDF1F6; margin-top: auto; }
+.ct-card-when { display: inline-flex; align-items: center; gap: 6px; font-family: 'Geist', sans-serif; font-size: 12.5px; color: #7B8BA3; }
+.ct-card-open { display: inline-flex; align-items: center; gap: 6px; min-height: 38px; padding: 0 12px 0 14px; border-radius: 12px; background: #EEF5FD;
+  font-family: 'Geist', sans-serif; font-size: 13px; font-weight: 700; color: #1D6FD1; text-decoration: none; white-space: nowrap; }
+.ct-card-open:hover { background: #E1EDFB; }
+.ct-card-open:focus-visible { outline: 3px solid rgba(0,120,212,0.35); outline-offset: 1px; }
 .ct-icon-btn { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; color: ${SLATE}; background: transparent;
   border: none; border-radius: 8px; cursor: pointer; text-decoration: none; flex-shrink: 0; }
 .ct-icon-btn:hover, .ct-icon-btn[data-open="true"] { background: ${LIGHT}; color: ${AZURE}; }
@@ -596,15 +653,16 @@ const CARD_CSS = `
 @media (max-width: 767px) {
   .ct-toolbar { padding: 10px 16px; }
   .ct-main { padding: 14px 16px !important; }
+  .ct-name { font-size: 18px; }
 }
 @media (hover: none) { .ct-card:hover { transform: none; } }
 @media (prefers-reduced-motion: reduce) { .ct-card { transition: none; } .ct-card:hover { transform: none; } }
 `;
 
-function MenuItem({ label, onClick, disabled = false }: { label: string; onClick: () => void; disabled?: boolean }) {
+function MenuItem({ label, onClick, disabled = false, danger = false }: { label: string; onClick: () => void; disabled?: boolean; danger?: boolean }) {
   return (
     <button role="menuitem" onClick={onClick} disabled={disabled}
-      style={{ ...GF, display: "block", width: "100%", padding: "10px 14px", minHeight: 44, border: "none", borderBottom: "1px solid #F8FAFC", background: "#FFFFFF", textAlign: "left", cursor: disabled ? "not-allowed" : "pointer", fontSize: 13, color: NAVY }}
+      style={{ ...GF, display: "block", width: "100%", padding: "10px 14px", minHeight: 44, border: "none", borderBottom: "1px solid #F8FAFC", background: "#FFFFFF", textAlign: "left", cursor: disabled ? "not-allowed" : "pointer", fontSize: 13, color: danger ? "#B42318" : NAVY, fontWeight: danger ? 600 : 400 }}
       onMouseEnter={e => (e.currentTarget.style.background = "#F8FAFC")}
       onMouseLeave={e => (e.currentTarget.style.background = "#FFFFFF")}>
       {label}

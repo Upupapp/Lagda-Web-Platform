@@ -17,7 +17,7 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "react-router";
 import {
-  User as BlankPersonIcon, Users, UserSearch, Inbox, FileText, Archive, BadgeCheck, Building2,
+  User as BlankPersonIcon, Users, UserSearch, Inbox, FileText, Archive, Building2,
   Globe, type LucideIcon,
 } from "lucide-react";
 import { TabStrip } from "../../../components/platform/TabStrip";
@@ -26,7 +26,9 @@ import {
   contactConnectionsService, contactConnectionsAvailable, type ConnectionLists,
 } from "../../../services/real/contact-connections.service";
 import { usePlatform } from "../../../context/PlatformContext";
-import type { ContactAccount, ContactWorkspaceMember } from "../../../models/contacts";
+import type { ContactAccount, ContactWorkspaceMember, ContactId } from "../../../models/contacts";
+import { ModalFrame, modalButtonStyle } from "../../../components/contact-requests/ModalFrame";
+import { deleteContact } from "../../../services/contacts-source";
 
 export const C = {
   NAVY: "#07111F",
@@ -114,6 +116,47 @@ export function PersonAvatar({ name, avatarUrl, size = 44, ring = false }: {
   );
 }
 
+// ── Brand banner ───────────────────────────────────────────────────────────
+//
+// A contact's banner is the brand colour of the workspace that person belongs
+// to (091's `account.brandColor`); an external contact, with no workspace, gets
+// LAGDA's own blue. The gradient is derived from the one colour so any brand
+// reads well, and the waves are a white overlay on top of it.
+
+export const DEFAULT_BRAND_COLOR = "#2F8CF0";
+
+function hexToRgb(hex: string): [number, number, number] | null {
+  const m = /^#?([0-9a-f]{6})$/i.exec(hex.trim());
+  if (!m) return null;
+  const n = parseInt(m[1]!, 16);
+  return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+}
+
+function mix(a: [number, number, number], b: [number, number, number], t: number): string {
+  const c = a.map((v, i) => Math.round(v + (b[i]! - v) * t));
+  return `rgb(${String(c[0])}, ${String(c[1])}, ${String(c[2])})`;
+}
+
+/** A banner gradient from one brand colour: deeper on the left, lighter and a touch violet on the right. */
+export function brandGradient(color: string | null | undefined): string {
+  const base = hexToRgb(color ?? "") ?? hexToRgb(DEFAULT_BRAND_COLOR)!;
+  const deep = mix(base, [7, 17, 31], 0.08);
+  const light = mix(base, [255, 255, 255], 0.22);
+  const violet = mix(base, [139, 124, 246], 0.55);
+  return `linear-gradient(100deg, ${deep} 0%, ${light} 55%, ${violet} 100%)`;
+}
+
+/** Two soft white waves over a brand banner. Decorative. */
+export function BrandWaves() {
+  return (
+    <svg aria-hidden viewBox="0 0 400 100" preserveAspectRatio="none"
+      style={{ position: "absolute", inset: 0, width: "100%", height: "100%", pointerEvents: "none" }}>
+      <path d="M0,70 C70,20 140,20 200,62 C260,100 330,96 400,48 L400,100 L0,100 Z" fill="rgba(255,255,255,0.16)" />
+      <path d="M0,86 C90,52 170,60 240,84 C300,104 350,92 400,74 L400,100 L0,100 Z" fill="rgba(255,255,255,0.12)" />
+    </svg>
+  );
+}
+
 // ── Badges ─────────────────────────────────────────────────────────────────
 
 function Pill({ icon: Icon, tone, children, title }: {
@@ -142,7 +185,12 @@ export function AccountBadges({ account, workspaceMember }: {
   return (
     <>
       {account?.connected && (
-        <Pill icon={BadgeCheck} tone="success" title="Connected: you added each other on LAGDA">On LAGDA</Pill>
+        <span title="Connected: you added each other on LAGDA" style={{
+          ...C.GF, display: "inline-flex", alignItems: "center", gap: 6, fontSize: 11.5, fontWeight: 700, padding: "3px 10px",
+          borderRadius: 999, background: "#E8F8EE", color: "#15803D", whiteSpace: "nowrap", lineHeight: 1.5,
+        }}>
+          <span aria-hidden style={{ width: 7, height: 7, borderRadius: "50%", background: "#16A34A" }} /> On LAGDA
+        </span>
       )}
       {workspaceMember && <Pill icon={Building2} tone="info" title="A member of this workspace">Workspace member</Pill>}
       {workspaceMember === null && !account?.connected && (
@@ -292,3 +340,44 @@ const HEADER_CSS = `
 }
 @media (prefers-reduced-motion: reduce) { .ct-primary { transition: none; } }
 `;
+
+// ── Permanent delete (092) ─────────────────────────────────────────────────
+
+/**
+ * Deletes an ARCHIVED contact after an explicit Continue. Cancel is focused
+ * first, so Enter never deletes by accident.
+ */
+export function DeleteContactDialog({ contactId, name, onCancel, onDeleted }: {
+  contactId: string; name: string; onCancel: () => void; onDeleted: () => void;
+}) {
+  const platform = usePlatform();
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const run = async () => {
+    setBusy(true); setError(null);
+    try {
+      await deleteContact(platform.currentWorkspace?.id, contactId as ContactId);
+      onDeleted();
+    } catch {
+      setError("The contact could not be deleted. Please try again.");
+      setBusy(false);
+    }
+  };
+  return (
+    <ModalFrame title="Delete this contact permanently?" subtitle={name} onClose={onCancel} busy={busy} width={480}
+      footer={<>
+        <button type="button" data-autofocus onClick={onCancel} disabled={busy} style={modalButtonStyle("secondary", busy)}>Cancel</button>
+        <button type="button" onClick={() => { void run(); }} disabled={busy} style={modalButtonStyle("danger", busy)} data-testid="confirm-delete-contact">
+          {busy ? "Deleting…" : "Continue"}
+        </button>
+      </>}>
+      <p style={{ ...C.GF, fontSize: 14, color: C.INK, margin: 0, lineHeight: 1.6 }}>
+        <strong>{name}</strong> will be removed from your contacts for good. This can't be undone — but you can always find or add them again.
+      </p>
+      <p style={{ ...C.GF, fontSize: 13, color: C.SLATE, margin: "10px 0 0", lineHeight: 1.55 }}>
+        Documents already sent, and document requests, keep the name and email they recorded.
+      </p>
+      {error && <p role="alert" style={{ ...C.GF, fontSize: 13, color: "#991B1B", margin: "10px 0 0" }}>{error}</p>}
+    </ModalFrame>
+  );
+}

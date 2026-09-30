@@ -6,12 +6,12 @@
 import React, { useCallback, useEffect, useState } from "react";
 import {
   Mail, Phone, Building2, Briefcase, Share2, User as UserIcon, Pencil, Archive, RotateCcw, ArrowLeft,
-  StickyNote, Tag as TagIcon, type LucideIcon,
+  StickyNote, Tag as TagIcon, Trash2, type LucideIcon,
 } from "lucide-react";
-import { PersonAvatar, AccountBadges, useLiveRefresh, C } from "./contacts-ui";
+import { PersonAvatar, AccountBadges, useLiveRefresh, C, DeleteContactDialog, brandGradient, BrandWaves } from "./contacts-ui";
 import { ContactWorkspaceCard } from "./ContactWorkspaceCard";
 import { USE_REAL_BACKEND } from "../../../services/backend-flag";
-import { useParams, Link } from "react-router";
+import { useParams, Link, useNavigate } from "react-router";
 import { ContactProvider, useContacts } from "../../../context/ContactContext";
 import type { ContactDuplicateCandidate, ContactUsageSummary, ContactTagId } from "../../../models/contacts";
 import { CONTACT_STATUS_LABELS, CONTACT_SOURCE_LABELS, getContactTagById } from "../../../models/contacts";
@@ -161,6 +161,8 @@ function ContactDetail() {
   const { contactId } = useParams<{ contactId: string }>();
   const { state, asyncLoadContact, clearActiveContact, asyncArchive, asyncRestore } = useContacts();
   const [archiving, setArchiving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const navigateTo = useNavigate();
   const [requestKind, setRequestKind] = useState<ContactRequestKind | null>(null);
   const [historyKey, setHistoryKey] = useState(0);
   const platform = usePlatform();
@@ -242,7 +244,11 @@ function ContactDetail() {
     <div style={{ minHeight: "100vh", background: PAGE_BG, padding: "0 0 48px" }}>
       {/* Profile header */}
       <header className="cd-hero">
-        <div className="cd-band" aria-hidden />
+        {/* The brand colour of the workspace this person belongs to. */}
+        <div className="cd-band" aria-hidden data-testid="contact-profile-band"
+          style={{ backgroundImage: brandGradient(contact.account?.brandColor) }}>
+          <BrandWaves />
+        </div>
         <div className="cd-hero-inner">
           <Link to="/app/contacts" className="cd-back"><ArrowLeft size={15} aria-hidden /> Contacts</Link>
           <div className="cd-hero-row">
@@ -268,9 +274,14 @@ function ContactDetail() {
                   <Archive size={15} aria-hidden /> {archiving ? "Archiving…" : "Archive"}
                 </button>
               ) : (
-                <button type="button" onClick={() => { void handleRestore(); }} className="cd-btn" data-variant="restore">
-                  <RotateCcw size={15} aria-hidden /> Restore
-                </button>
+                <>
+                  <button type="button" onClick={() => { void handleRestore(); }} className="cd-btn" data-variant="restore">
+                    <RotateCcw size={15} aria-hidden /> Restore
+                  </button>
+                  <button type="button" onClick={() => { setDeleting(true); }} className="cd-btn" data-variant="danger" data-testid="delete-contact">
+                    <Trash2 size={15} aria-hidden /> Delete permanently
+                  </button>
+                </>
               )}
             </div>
           </div>
@@ -404,6 +415,11 @@ function ContactDetail() {
       </div>
 
       <style>{DETAIL_CSS}</style>
+      {deleting && (
+        <DeleteContactDialog contactId={contact.id} name={contact.name}
+          onCancel={() => { setDeleting(false); }}
+          onDeleted={() => { void navigateTo("/app/contacts/archived", { replace: true }); }} />
+      )}
 
       {requestKind !== null && workspaceId !== undefined && (
         <ContactRequestDialog
@@ -420,15 +436,13 @@ function ContactDetail() {
 
 const DETAIL_CSS = `
 .cd-hero { position: relative; background: #FFFFFF; border-bottom: 1px solid #E3E8EF; }
-.cd-band { height: 112px; background:
-  radial-gradient(120% 140% at 100% 0%, rgba(0,120,212,0.55) 0%, rgba(0,120,212,0) 55%),
-  linear-gradient(120deg, #07111F 0%, #0B3A66 55%, #0078D4 100%); }
+.cd-band { position: relative; height: 128px; overflow: hidden; }
 .cd-hero-inner { max-width: 1080px; margin: 0 auto; padding: 0 24px 18px; box-sizing: border-box; }
-.cd-back { position: absolute; top: 14px; left: 24px; display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px; border-radius: 8px;
+.cd-back { position: absolute; z-index: 1; top: 14px; left: 24px; display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px; border-radius: 8px;
   font-family: 'Geist', sans-serif; font-size: 12.5px; font-weight: 600; color: #FFFFFF; text-decoration: none; background: rgba(255,255,255,0.14); }
 .cd-back:hover { background: rgba(255,255,255,0.24); }
 .cd-hero-row { display: flex; align-items: flex-start; gap: 18px; padding-top: 14px; flex-wrap: wrap; }
-.cd-avatar { display: flex; margin-top: -62px; flex-shrink: 0; }
+.cd-avatar { position: relative; z-index: 1; display: flex; margin-top: -62px; flex-shrink: 0; }
 .cd-hero-text { flex: 1 1 260px; min-width: 0; }
 .cd-actions { align-self: center; }
 .cd-name { font-family: 'Geist', sans-serif; font-size: 26px; font-weight: 800; color: #07111F; margin: 0; line-height: 1.2; overflow-wrap: anywhere; }
@@ -443,6 +457,7 @@ const DETAIL_CSS = `
 .cd-btn:focus-visible { outline: 3px solid rgba(0,120,212,0.35); outline-offset: 1px; }
 .cd-btn[data-variant="quiet"] { color: #475569; }
 .cd-btn[data-variant="restore"] { color: #166534; border-color: #BBF7D0; background: #F0FDF4; }
+.cd-btn[data-variant="danger"] { color: #B42318; border-color: #FECACA; background: #FFFFFF; }
 .cd-layout { max-width: 1080px; margin: 22px auto 0; padding: 0 24px; box-sizing: border-box; display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 18px; align-items: start; }
 .cd-main, .cd-side { min-width: 0; display: flex; flex-direction: column; gap: 0; }
 .cd-side { gap: 16px; position: sticky; top: 16px; }
@@ -456,7 +471,7 @@ const DETAIL_CSS = `
   .cd-side { position: static; }
 }
 @media (max-width: 600px) {
-  .cd-band { height: 92px; }
+  .cd-band { height: 104px; }
   .cd-hero-inner { padding: 0 16px 16px; }
   .cd-back { left: 16px; }
   .cd-hero-row { flex-direction: column; align-items: flex-start; gap: 10px; padding-top: 0; }

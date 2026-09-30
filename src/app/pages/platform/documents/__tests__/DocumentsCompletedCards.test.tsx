@@ -150,7 +150,11 @@ describe("Documents › Completed", () => {
     await user.click(share);
     const dialog = await screen.findByRole("dialog", { name: "Share document" });
     expect(within(dialog).getByText("Lease Agreement")).toBeInTheDocument();
-    expect(within(dialog).getByLabelText(/Email address/)).toHaveFocus();
+    // Opens on "From your contacts"; the manual form is one tab away.
+    expect(within(dialog).getByTestId("add-way-contacts")).toHaveAttribute("aria-selected", "true");
+    expect(within(dialog).getByTestId("share-contacts-picker")).toBeInTheDocument();
+    await user.click(within(dialog).getByTestId("add-way-manual"));
+    expect(within(dialog).getByLabelText(/Email address/)).toBeInTheDocument();
     expect(within(dialog).getByText(/No email is sent/)).toBeInTheDocument();
     await waitFor(() => expect(calls).toContain("GET http://api.test/workspaces/ws_1/documents/doc_a/shares"));
   });

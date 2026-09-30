@@ -114,10 +114,10 @@ describe("Shared By Me", () => {
     expect(within(card).getByTestId("completed-card-banner-name")).toHaveTextContent("Acme");
     expect(within(card).getByTestId("shared-by-me-people")).toHaveTextContent("3 people have access · 1 waiting to accept · 1 request to review");
     await userEvent.click(within(card).getByRole("button", { name: "Show actions for Lease Agreement" }));
-    expect(within(card).getAllByRole("menuitem").map(i => i.textContent)).toEqual(["Shared with", "+ Add more"]);
+    expect(within(card).getAllByRole("menuitem").map(i => i.textContent)).toEqual(["View people with access", "Add more"]);
   });
 
-  it("opens Shared with (the people list) and + Add more (the form) from the menu", async () => {
+  it("opens View people with access (the people list) and Add more (contacts or the form) from the menu", async () => {
     mockSharingApi(byMeRoutes({
       "GET /workspaces/ws_1/documents/doc_1/shares": { document: DOC, shares: [] },
       "GET /workspaces/ws_1/access-requests?status=approved": { items: [] },
@@ -125,14 +125,16 @@ describe("Shared By Me", () => {
     renderAt("/app/shared-documents/by-me");
     const card = await screen.findByTestId("completed-card");
     await userEvent.click(within(card).getByRole("button", { name: /actions for Lease Agreement/ }));
-    await userEvent.click(within(card).getByRole("menuitem", { name: "Shared with" }));
-    const list = screen.getByRole("dialog", { name: "Shared with" });
+    await userEvent.click(within(card).getByRole("menuitem", { name: "View people with access" }));
+    const list = screen.getByRole("dialog", { name: "People with access" });
     expect(within(list).queryByLabelText(/Email address/)).toBeNull();
     await userEvent.click(within(list).getByRole("button", { name: "Done" }));
 
     await userEvent.click(within(card).getByRole("button", { name: /actions for Lease Agreement/ }));
-    await userEvent.click(within(card).getByRole("menuitem", { name: "+ Add more" }));
+    await userEvent.click(within(card).getByRole("menuitem", { name: "Add more" }));
     const add = screen.getByRole("dialog", { name: "Share document" });
+    expect(within(add).getByTestId("add-way-contacts")).toHaveAttribute("aria-selected", "true");
+    await userEvent.click(within(add).getByTestId("add-way-manual"));
     expect(within(add).getByLabelText(/Email address/)).toBeInTheDocument();
   });
 

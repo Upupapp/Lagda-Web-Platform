@@ -53,6 +53,8 @@ export interface WireContact {
   account?: {
     userId: string; displayName: string; jobTitle: string | null;
     avatarVersion: string | null; connected: boolean;
+    /** The brand colour of the person's workspace (absent from an older backend). */
+    brandColor?: string | null;
   } | null;
 }
 
@@ -163,6 +165,11 @@ class RealContactService {
       `${base(workspaceId)}/${encodeURIComponent(contactId)}/archive`,
       { method: "POST" },
     );
+  }
+
+  /** 092. Permanent, and only for an archived contact (422 otherwise). */
+  async delete(workspaceId: string, contactId: string): Promise<void> {
+    await apiRequest<void>(`${base(workspaceId)}/${encodeURIComponent(contactId)}`, { method: "DELETE" });
   }
 
   async restore(workspaceId: string, contactId: string): Promise<WireContact> {
