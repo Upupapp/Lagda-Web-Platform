@@ -8,6 +8,13 @@ import "@testing-library/jest-dom/vitest";
 import { afterEach, beforeEach, vi, expect } from "vitest";
 
 import { resetAllTestServices } from "./reset-services";
+import readyMadeFixture from "./fixtures/ready_made_template.json";
+import { installReadyMadeLibrary, trustInstalledReadyMadeLibrary } from "../app/services/ready-made-templates";
+
+// The ready-made library is served by the backend, never bundled (093). Tests
+// get the full library from this fixture, as a paid workspace would.
+installReadyMadeLibrary(readyMadeFixture, "full");
+trustInstalledReadyMadeLibrary(true);
 
 // ── No network, ever ─────────────────────────────────────────────────────────
 //

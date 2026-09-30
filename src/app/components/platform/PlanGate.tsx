@@ -10,27 +10,53 @@
 
 import { useWorkspacePlan } from "../../hooks/usePlans";
 import { planIncludes, PLAN_NAMES } from "../../services/real/plans.service";
-import { PlanPassCard, PlanPassPrices } from "./PlanPass";
+import { PlanPassCard, PlanTiles } from "./PlanPass";
 
-export function PlanUpgradeCard({ minimum, feature, compact = false }: {
+/** The tile line that IS each locked feature, and what Personal lacks of it. */
+const FEATURE_LINES: Readonly<Record<string, { line: string; missing?: string }>> = {
+  "Sharing documents": { line: "Share completed documents" },
+  "Ready-made templates": { line: "Ready-made templates and chatbot" },
+  "Branding": { line: "Your logo and colours" },
+  "Workspace settings": { line: "Your logo and colours" },
+  "Members": { line: "Invite your team", missing: "members" },
+  "Inviting members": { line: "Invite your team", missing: "members" },
+  "Join links": { line: "Teams, roles and join links", missing: "join links" },
+  "Join requests": { line: "Teams, roles and join links", missing: "join requests" },
+  "Teams": { line: "Teams, roles and join links", missing: "teams" },
+  "Roles": { line: "Teams, roles and join links", missing: "roles" },
+  "Organisation": { line: "Teams, roles and join links", missing: "organisation" },
+  "The activity log": { line: "Shared contacts and activity log", missing: "the activity log" },
+};
+
+const KEPT = "Anything you set up is kept · Test mode, no money is moved";
+
+export function PlanUpgradeCard({ minimum, feature, compact = false, title }: {
   minimum: "personal" | "business";
   feature: string;
   compact?: boolean;
+  /** Replaces "<feature> is part of the <plan> plan". */
+  title?: string;
 }) {
   const { info } = useWorkspacePlan();
   const owner = info?.ownerIsYou ?? false;
   const name = PLAN_NAMES[minimum];
+  const lit = FEATURE_LINES[feature];
   return (
     <PlanPassCard
       testId="plan-upgrade-card"
       compact={compact}
       chip={`${name} plan`}
-      title={`${feature} is part of the ${name} plan`}
+      title={title ?? `${feature} is part of the ${name} plan`}
       body={<p>{owner
-        ? `Upgrade to ${name} to use it in this workspace. Anything you set up before is kept and comes back when you upgrade.`
+        ? `Upgrade to ${name} to use it in this workspace. Anything you set up before comes back when you upgrade.`
         : `This workspace uses its owner's plan${info?.ownerName ? ` (${info.ownerName})` : ""}. Ask the owner to upgrade to ${name}.`}</p>}
-      {...(owner ? { cta: { to: `/app/settings/plan?choose=${minimum}`, label: "See plans", testId: "plan-upgrade-cta" } } : {})}
-      {...(owner && !compact ? { aside: <PlanPassPrices highlight={minimum} /> } : {})}
+      {...(owner
+        ? {
+            cta: { to: `/app/settings/plan?choose=${minimum}`, label: "See plans", testId: "plan-upgrade-cta" },
+            note: KEPT,
+            aside: <PlanTiles requires={minimum} {...(lit ? { highlight: lit.line } : {})} {...(lit?.missing ? { missing: lit.missing } : {})} />,
+          }
+        : { askOwner: "Ask the owner to upgrade" })}
     />
   );
 }
@@ -48,6 +74,8 @@ export function JoinNeedsPersonalNotice() {
       title="Joining another workspace is part of the Personal plan"
       body={<p>You are on Free. Upgrade to Personal or Business to accept invitations and join other workspaces. Your invitations stay here until you do.</p>}
       cta={{ to: "/app/settings/plan?choose=personal", label: "See plans", testId: "join-needs-personal-cta" }}
+      note={KEPT}
+      aside={<PlanTiles requires="personal" highlight="Join other workspaces" />}
     />
   );
 }

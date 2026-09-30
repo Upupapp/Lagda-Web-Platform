@@ -2,6 +2,7 @@
 // Views, search, filter bar, sort, grid/list toggle, pagination, empty states.
 // Inline styles only. No Tailwind. No Burgundy.
 
+import { useReadyMade } from "../../../hooks/useReadyMade";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Link, useNavigate } from "react-router";
 import {
@@ -249,6 +250,8 @@ function CardSkeleton() {
 // ── Main inner component ──────────────────────────────────────────────────────
 function TemplatesInner() {
   usePageMeta();
+  // 093. The ready-made counts come from the server's catalogue.
+  useReadyMade();
   const { state, setQuery, loadList, canWrite } = useTemplates();
   const { isNarrow } = useViewport();
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");

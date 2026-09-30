@@ -2,7 +2,7 @@
 // becomes a real FlowDocument built from the ready-made wording.
 
 import { describe, it, expect } from "vitest";
-import rawLibrary from "../../../../../../../assets/ready_made_template.json";
+import rawLibrary from "../../../../../../../test/fixtures/ready_made_template.json";
 import { KB, findClause, findDocument } from "../knowledge";
 import { buildDraft, draftLength, draftStream, readyMadeSource, truncateDraft, participantBlocks } from "../draft";
 import { typingUnitMs, typingWeights, TYPING_MAX_MS } from "../useDraftTypewriter";

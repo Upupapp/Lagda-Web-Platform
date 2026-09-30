@@ -16,7 +16,8 @@
 // before the new photo shows, so the header, the sidebar and everyone's
 // contact cards for you all change together.
 
-import { useWorkspacePlan } from "../../hooks/usePlans";
+import { useWorkspacePlan, useMyPlan } from "../../hooks/usePlans";
+import { TierCrystal, TierPill } from "./TierBadges";
 import { useRef, useState } from "react";
 import { Link } from "react-router";
 import { Camera, Mail, Pencil, BadgeCheck, Loader2 } from "lucide-react";
@@ -38,6 +39,9 @@ export function ProfileHero() {
   // 093. Branding is paid. On a Free owner's workspace the banner is LAGDA's
   // blue with the initials, and the saved colour and logo wait for an upgrade.
   const { plan, info } = useWorkspacePlan(workspaceId);
+  // 093. The PERSON's paid plan, shown on their own banner.
+  const { plan: myPlan } = useMyPlan();
+  const tier = myPlan !== null && myPlan.plan !== "free" ? myPlan.plan : null;
   const free = plan === "free";
   const branding = free && saved !== null ? { ...saved, primaryColor: null, logoUrl: null } : saved;
   const fileRef = useRef<HTMLInputElement>(null);
@@ -74,9 +78,10 @@ export function ProfileHero() {
   };
 
   return (
-    <section className="ph-card" aria-label="Your profile" data-testid="profile-hero">
+    <section className={tier !== null ? "ph-card ph-card-tiered" : "ph-card"} aria-label="Your profile" data-testid="profile-hero">
       <div className="ph-band" style={{ backgroundImage: brandGradient(branding?.primaryColor ?? null) }} data-testid="profile-hero-band">
         <BrandWaves />
+        {tier !== null && <span className="ph-tier"><TierCrystal tier={tier} /></span>}
         <div className="ph-brand" title={workspaceName}>
           <span className="ph-brand-name">{workspaceName}</span>
           <span className="ph-logo" data-testid="profile-hero-logo">
@@ -102,6 +107,7 @@ export function ProfileHero() {
           <h1 className="ph-name">
             <span>{fullName}</span>
             <BadgeCheck size={24} strokeWidth={2.2} className="ph-verified" aria-label="Email verified" />
+            {tier !== null && <TierPill tier={tier} />}
           </h1>
           {secondLine !== "" && <p className="ph-second">{secondLine}</p>}
           {user?.email && (
@@ -126,6 +132,9 @@ const CSS = `
 .ph-card { background: #FFFFFF; border: 1px solid #E6EBF2; border-radius: 20px; overflow: hidden; margin: 20px 0 8px;
   box-shadow: 0 1px 2px rgba(7,17,31,0.04), 0 16px 34px -26px rgba(7,17,31,0.4); }
 .ph-band { position: relative; height: 112px; overflow: hidden; }
+/* Room for the tier crystal above the photo. */
+.ph-card-tiered .ph-band { height: 128px; }
+.ph-tier { position: absolute; top: 14px; left: 16px; z-index: 1; }
 .ph-brand { position: absolute; top: 12px; right: 16px; z-index: 1; display: flex; align-items: center; gap: 10px; max-width: 60%; }
 .ph-brand-name { font-family: 'Geist', sans-serif; font-size: 12.5px; font-weight: 700; color: #FFFFFF; text-shadow: 0 1px 2px rgba(7,17,31,0.35);
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -143,7 +152,7 @@ const CSS = `
 .ph-spin { animation: ph-spin 900ms linear infinite; }
 @keyframes ph-spin { to { transform: rotate(360deg); } }
 .ph-text { flex: 1 1 260px; min-width: 0; padding-top: 14px; }
-.ph-name { display: flex; align-items: center; gap: 8px; margin: 0; font-family: 'Geist', sans-serif; font-size: 26px; font-weight: 800; color: #0B1F4B; line-height: 1.2; }
+.ph-name { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin: 0; font-family: 'Geist', sans-serif; font-size: 26px; font-weight: 800; color: #0B1F4B; line-height: 1.2; }
 .ph-name > span { min-width: 0; overflow-wrap: anywhere; }
 .ph-verified { flex-shrink: 0; color: #FFFFFF; fill: #2F80ED; }
 .ph-second { font-family: 'Geist', sans-serif; font-size: 16px; color: #7B8BA3; margin: 4px 0 0; }
@@ -162,7 +171,9 @@ const CSS = `
 @media (max-width: 640px) {
   .ph-card { border-radius: 16px; margin-top: 14px; }
   .ph-band { height: 92px; }
+  .ph-card-tiered .ph-band { height: 106px; }
   .ph-brand { top: 10px; right: 12px; gap: 8px; }
+  .ph-tier { top: 12px; left: 12px; }
   .ph-brand-name { display: none; }
   .ph-logo { width: 58px; height: 58px; }
   .ph-logo-initials { font-size: 18px; }

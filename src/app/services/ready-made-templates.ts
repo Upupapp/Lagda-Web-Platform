@@ -1,8 +1,13 @@
-// The ready-made template library, read from `assets/ready_made_template.json`.
+// The ready-made template library, as the SERVER hands it out (093).
 //
-// Bundled, not stored: a card and its preview cost nothing until someone
-// chooses "Use this template", and only then does ONE copy land in their
-// workspace as an ordinary template they own and can edit.
+// Not bundled: the web app ships no template text. The server gives everyone
+// the CATALOGUE (titles, categories, signing roles — every body empty) and
+// gives the full library only to a member of a workspace on Personal or
+// higher (services/ready-made-library.ts loads both). A Free account's browser
+// therefore never holds a single ready-made document, whatever it inspects.
+//
+// Choosing "Use this template" copies ONE into the workspace as an ordinary
+// template the owner can edit.
 //
 // Only documents with a Signer step are offered. The rest are approval-only
 // forms, which the signing flow is not built around.
@@ -16,15 +21,15 @@
 // Steps are renumbered from 1 once the Preparer is dropped, because the
 // backend refuses a template whose routing steps skip a number.
 
-import library from "../../assets/ready_made_template.json";
 import type { PrepParticipantRole } from "../models/prepare";
 import type {
   DocumentBlock, FlowDocument, TemplateRolePlaceholder,
 } from "../models/templates";
 
-interface RawStep { step: number; role: string; action_type: string }
-interface RawDocument { document_type: string; title: string; body_content: string; signing_workflow: RawStep[] }
-interface RawLibrary { categories: { category: string; documents: RawDocument[] }[] }
+export interface RawStep { step: number; role: string; action_type: string }
+/** `body_content` is absent in the catalogue. */
+export interface RawDocument { document_type: string; title: string; body_content?: string; signing_workflow: RawStep[] }
+export interface RawLibrary { categories: { category: string; documents: RawDocument[] }[] }
 
 export interface ReadyMadeRole {
   readonly label: string;
@@ -80,7 +85,7 @@ function toTemplate(category: string, doc: RawDocument): ReadyMadeTemplate | nul
     categoryId,
     documentType: doc.document_type,
     title: doc.title.trim(),
-    body: doc.body_content.trim(),
+    body: (doc.body_content ?? "").trim(),
     preparedBy: preparer ? preparer.role.trim() : null,
     roles,
   };
@@ -91,17 +96,72 @@ export function parseReadyMadeLibrary(raw: RawLibrary): ReadyMadeTemplate[] {
     c.documents.map(d => toTemplate(c.category, d)).filter((t): t is ReadyMadeTemplate => t !== null));
 }
 
-export const READY_MADE_TEMPLATES: readonly ReadyMadeTemplate[] =
-  parseReadyMadeLibrary(library);
+// ── The loaded library ──────────────────────────────────────────────────────
+//
+// Filled IN PLACE by `installReadyMadeLibrary`, so every reader of these
+// arrays sees the same library; components re-render through
+// `useReadyMade` (hooks/useReadyMade.ts), which subscribes below.
 
-export const READY_MADE_CATEGORIES: readonly ReadyMadeCategory[] = (() => {
+/** What is loaded: nothing yet, the catalogue (no text), or the full library. */
+export type ReadyMadeLibraryKind = "none" | "catalog" | "full";
+
+export const READY_MADE_TEMPLATES: ReadyMadeTemplate[] = [];
+export const READY_MADE_CATEGORIES: ReadyMadeCategory[] = [];
+let rawDocuments: RawDocument[] = [];
+let libraryKind: ReadyMadeLibraryKind = "none";
+let libraryVersion = 0;
+const listeners = new Set<() => void>();
+
+export function installReadyMadeLibrary(raw: RawLibrary, kind: Exclude<ReadyMadeLibraryKind, "none">): void {
+  const templates = parseReadyMadeLibrary(raw);
+  READY_MADE_TEMPLATES.length = 0;
+  READY_MADE_TEMPLATES.push(...templates);
   const seen = new Map<string, ReadyMadeCategory>();
-  for (const t of READY_MADE_TEMPLATES) {
+  for (const t of templates) {
     const prev = seen.get(t.categoryId);
     seen.set(t.categoryId, { id: t.categoryId, label: t.category, count: (prev?.count ?? 0) + 1 });
   }
-  return [...seen.values()];
-})();
+  READY_MADE_CATEGORIES.length = 0;
+  READY_MADE_CATEGORIES.push(...seen.values());
+  // Text is kept only from the full library; the catalogue carries none.
+  rawDocuments = kind === "full" ? raw.categories.flatMap(c => c.documents) : [];
+  libraryKind = kind;
+  libraryVersion += 1;
+  for (const l of listeners) l();
+}
+
+let trustedForAll = false;
+
+/**
+ * Tests only: the library a test installed counts as the full library of
+ * every workspace (tests never reach the server). Here rather than in the
+ * loader so the test setup imports nothing that talks to the network.
+ */
+export function trustInstalledReadyMadeLibrary(trusted: boolean): void {
+  trustedForAll = trusted;
+}
+
+export function readyMadeLibraryTrusted(): boolean {
+  return trustedForAll;
+}
+
+export function readyMadeLibraryKind(): ReadyMadeLibraryKind {
+  return libraryKind;
+}
+
+export function readyMadeLibraryVersion(): number {
+  return libraryVersion;
+}
+
+export function subscribeReadyMade(listener: () => void): () => void {
+  listeners.add(listener);
+  return () => { listeners.delete(listener); };
+}
+
+/** Every document of the FULL library, approval-only ones included (the chatbot's). */
+export function readyMadeRawDocuments(): readonly RawDocument[] {
+  return rawDocuments;
+}
 
 export function findReadyMadeTemplate(id: string | undefined): ReadyMadeTemplate | undefined {
   return id === undefined ? undefined : READY_MADE_TEMPLATES.find(t => t.id === id);

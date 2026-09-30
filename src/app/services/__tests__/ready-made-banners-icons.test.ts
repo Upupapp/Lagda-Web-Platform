@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import library from "../../../assets/ready_made_template.json";
+import library from "../../../test/fixtures/ready_made_template.json";
 import { READY_MADE_CATEGORIES, READY_MADE_TEMPLATES } from "../ready-made-templates";
 import {
   bannerSlug, CARD_BANNERS, categoryBanner, FULL_BANNERS,

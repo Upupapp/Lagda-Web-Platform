@@ -25,6 +25,12 @@ vi.mock("../../../hooks/workspace-branding-store", () => ({
   useWorkspaceBrandingSnapshot: (id: string | null) => (id === null ? null : snapshots[id] ?? null),
 }));
 
+let myPlan: { plan: string } | null = { plan: "business" };
+vi.mock("../../../hooks/usePlans", () => ({
+  useMyPlan: () => ({ plan: myPlan, refresh: vi.fn() }),
+  useWorkspacePlan: () => ({ plan: "business", info: null, refresh: vi.fn() }),
+}));
+
 import { ProfileHero } from "../ProfileHero";
 import { brandGradient } from "../../../pages/platform/contacts/contacts-ui";
 
@@ -51,5 +57,21 @@ describe("ProfileHero", () => {
     expect(screen.getByTestId("profile-hero-logo").textContent).toBe("SF");
     expect(screen.getByText("Side Firm")).toBeTruthy();
     expect(screen.getByRole("heading", { level: 1, name: /Ana Reyes/ })).toBeTruthy();
+  });
+
+  it("shows the paid tier as a crystal on the banner and beside the check", () => {
+    workspace = { id: "ws_1", name: "Reyes Law" };
+    myPlan = { plan: "business" };
+    renderHero();
+    expect(screen.getByTestId("tier-crystal").getAttribute("aria-label")).toBe("Business Tier");
+    expect(screen.getByTestId("tier-pill").textContent).toContain("Business");
+    myPlan = { plan: "personal" };
+  });
+
+  it("shows no tier while the plan is unknown", () => {
+    myPlan = null;
+    renderHero();
+    expect(screen.queryByTestId("tier-crystal")).toBeNull();
+    myPlan = { plan: "business" };
   });
 });

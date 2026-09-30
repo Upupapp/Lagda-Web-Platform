@@ -2,6 +2,8 @@
 // it into the workspace and open it in the author editor.
 // Inline styles only. No Burgundy.
 
+import { useReadyMade } from "../../../hooks/useReadyMade";
+import { PlanUpgradeCard } from "../../../components/platform/PlanGate";
 import { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router";
 import { AlertCircle, ArrowRight, ChevronLeft, GitBranch, PenLine, Users } from "lucide-react";
@@ -75,7 +77,10 @@ function DocumentPreview({ template, isNarrow }: { template: ReadyMadeTemplate; 
 export function ReadyMadePreviewPage() {
   usePageMeta();
   const { readyId } = useParams<{ readyId: string }>();
-  const template = findReadyMadeTemplate(readyId);
+  // 093. The text comes only from the server's full library (Personal+).
+  const library = useReadyMade({ full: true });
+  const found = findReadyMadeTemplate(readyId);
+  const template = library.status === "full" && found !== undefined && found.body !== "" ? found : undefined;
   const navigate = useNavigate();
   const { isNarrow } = useViewport();
   const platform = usePlatform();
@@ -87,6 +92,16 @@ export function ReadyMadePreviewPage() {
   const banner = template ? categoryBanner(template.category) : undefined;
   const Icon = readyMadeIcon(template?.title ?? "");
 
+  if (library.status === "loading") {
+    return <div aria-busy="true" aria-label="Loading the template" style={{ minHeight: 320 }} />;
+  }
+  if (library.status === "locked") {
+    return (
+      <div style={{ padding: isNarrow ? "16px" : "20px 24px" }}>
+        <PlanUpgradeCard minimum="personal" feature="Ready-made templates" />
+      </div>
+    );
+  }
   if (!template) {
     return (
       <div style={{ padding: isNarrow ? "40px 16px" : "40px 24px", textAlign: "center", ...GF }}>

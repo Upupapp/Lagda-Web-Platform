@@ -54,6 +54,7 @@
 // A refresh restores the draft from the server. Nothing is kept in
 // localStorage/sessionStorage — document text is private.
 
+import { loadReadyMadeLibrary } from "../../../services/ready-made-library";
 import { useWorkspaceAllows } from "../../../hooks/usePlans";
 import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useParams, Link, Navigate, useBlocker, useLocation } from "react-router";
@@ -529,6 +530,12 @@ function AuthorEditorInner({ template, onReload }: { template: DocumentTemplate;
   const ribbonVisible = editor !== null && (!isNarrow || ribbonOpen);
   // 093. The LAGDA Chatbot is part of the paid plans.
   const chatAllowed = useWorkspaceAllows("personal") !== false;
+  // The chatbot drafts from the ready-made wording, which the server hands
+  // over only on Personal or higher.
+  const chatWorkspaceId = platform.currentWorkspace?.id;
+  useEffect(() => {
+    if (chatAllowed) void loadReadyMadeLibrary(chatWorkspaceId);
+  }, [chatAllowed, chatWorkspaceId]);
   const sidePanelOpen = chatAllowed && chatOpen && panelSide;
   const toggleVisible = chatAllowed && !chatOpen && !typing;
   const fabBottom = isNarrow ? 16 : 24;

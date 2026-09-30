@@ -2107,7 +2107,7 @@ export const router = createBrowserRouter([
         path: "templates/gallery",
         element: (
           <Suspense fallback={null}>
-            <PlanGate minimum="personal" feature="Ready-made templates"><ReadyMadeGalleryPage /></PlanGate>
+            <ReadyMadeGalleryPage />
           </Suspense>
         ),
       },

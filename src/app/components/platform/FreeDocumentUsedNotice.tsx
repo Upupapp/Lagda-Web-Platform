@@ -4,7 +4,7 @@
 
 import { FileLock2 } from "lucide-react";
 import { useWorkspacePlan } from "../../hooks/usePlans";
-import { PlanPassCard, PlanPassPrices } from "./PlanPass";
+import { PlanPassCard, PlanTiles } from "./PlanPass";
 
 export function FreeDocumentUsedNotice() {
   const { info } = useWorkspacePlan();
@@ -18,12 +18,13 @@ export function FreeDocumentUsedNotice() {
         chip="Free plan"
         title="You've used your free document"
         body={<p>{owner
-          ? "Choose Personal or Business to send more. Your draft is kept, so you can send it once your plan is active."
+          ? "Choose Personal or Business to send more. You can send this draft once your plan is active."
           : "This workspace is on its owner's Free plan. Ask the owner to choose Personal or Business to send more."}</p>}
         {...(owner ? {
           cta: { to: "/app/settings/plan", label: "See plans", testId: "free-document-see-plans" },
-          aside: <PlanPassPrices highlight="personal" />,
-        } : {})}
+          note: "Your draft is kept · Test mode, no money is moved",
+          aside: <PlanTiles requires="personal" highlight="50 documents a month" />,
+        } : { askOwner: "Ask the owner to upgrade" })}
       />
     </div>
   );

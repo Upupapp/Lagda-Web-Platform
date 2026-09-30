@@ -4,12 +4,13 @@
 // The wording of each document comes from the ready-made library through
 // the existing service (`findReadyMadeTemplate` + `buildReadyMadeDocument`)
 // — the chatbot's JSON only references a title/id, it never copies a body.
-// The twelve approval-only documents the gallery leaves out (no Signer step)
-// are read from the same library file by title.
+// The approval-only documents the gallery leaves out (no Signer step) are
+// read from the same library by title. The library is the one the SERVER
+// handed over (093): the chatbot is a paid feature, and TemplateAuthorPage
+// loads the full library before it opens.
 
-import library from "../../../../../../assets/ready_made_template.json";
 import {
-  buildReadyMadeDocument, findReadyMadeTemplate,
+  buildReadyMadeDocument, findReadyMadeTemplate, readyMadeRawDocuments,
 } from "../../../../../services/ready-made-templates";
 import type {
   DocumentBlock, DocumentInlineContent, DocumentListItem, DocumentTextRun, FlowDocument, TemplateRolePlaceholder,
@@ -19,17 +20,16 @@ import { KB, findClause, findDocument, findRule, type KbClause, type KbDocument 
 import type { WritePlan } from "./engine";
 import type { Participant } from "./participants";
 
-interface RawDoc { title: string; body_content: string; signing_workflow: { step: number; role: string; action_type: string }[] }
-const RAW_DOCS: RawDoc[] = (library as { categories: { documents: RawDoc[] }[] }).categories.flatMap(c => c.documents);
 
 /** The ready-made wording for a chatbot document: title, body, preparer. */
 export function readyMadeSource(doc: KbDocument): { title: string; body: string; preparedBy: string | null } | null {
   if (!("readyMadeTitle" in doc.source)) return null;
   const inGallery = findReadyMadeTemplate(doc.source.readyMadeId);
-  if (inGallery) return { title: inGallery.title, body: inGallery.body, preparedBy: inGallery.preparedBy };
+  // An empty body is the catalogue (no text): the full library is not loaded.
+  if (inGallery && inGallery.body !== "") return { title: inGallery.title, body: inGallery.body, preparedBy: inGallery.preparedBy };
   const title = doc.source.readyMadeTitle;
-  const raw = RAW_DOCS.find(d => d.title.trim() === title);
-  if (!raw) return null;
+  const raw = readyMadeRawDocuments().find(d => d.title.trim() === title);
+  if (!raw || raw.body_content === undefined) return null;
   const preparer = raw.signing_workflow.find(s => s.action_type === "Preparer");
   return { title: raw.title.trim(), body: raw.body_content.trim(), preparedBy: preparer ? preparer.role.trim() : null };
 }

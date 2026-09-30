@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import rawLibrary from "../../../assets/ready_made_template.json";
+import rawLibrary from "../../../test/fixtures/ready_made_template.json";
 import {
   READY_MADE_TEMPLATES, READY_MADE_CATEGORIES, parseReadyMadeLibrary, findReadyMadeTemplate,
   searchReadyMadeTemplates, readyMadePlaceholders, buildReadyMadeDocument,

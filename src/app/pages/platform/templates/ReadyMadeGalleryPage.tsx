@@ -1,13 +1,19 @@
 // /app/templates/gallery — ready-made templates, grouped by purpose.
 // Inline styles only. No Burgundy.
+//
+// 093. The cards come from the server's CATALOGUE: titles, categories and
+// roles, never a document's text. On a Free owner's workspace every card is
+// shown under a frosted cover and cannot be opened — no link, no focus, no
+// handler — and the text it would open is refused by the server anyway, so
+// nothing in the browser can be coaxed into revealing it.
 
 import { useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router";
-import { ChevronLeft, Search, Sparkles, Users, X } from "lucide-react";
-import {
-  READY_MADE_CATEGORIES, READY_MADE_TEMPLATES, searchReadyMadeTemplates,
-  type ReadyMadeTemplate,
-} from "../../../services/ready-made-templates";
+import { ChevronLeft, Search, Sparkles, Users, X, Lock } from "lucide-react";
+import { searchReadyMadeTemplates, type ReadyMadeTemplate } from "../../../services/ready-made-templates";
+import { useReadyMade } from "../../../hooks/useReadyMade";
+import { useWorkspaceAllows } from "../../../hooks/usePlans";
+import { PlanUpgradeCard } from "../../../components/platform/PlanGate";
 import { categoryBanner } from "../../../services/ready-made-banners";
 import { readyMadeIcon } from "../../../services/ready-made-icons";
 import { PREP_PARTICIPANT_ROLE_LABELS } from "../../../models/prepare";
@@ -19,9 +25,9 @@ const GF    = { fontFamily: "'Geist', sans-serif" };
 const AZURE = "#0078D4";
 const MAX_ROLE_CHIPS = 3;
 
-function ReadyMadeCard({ template }: { template: ReadyMadeTemplate }) {
+function ReadyMadeCard({ template, locked = false }: { template: ReadyMadeTemplate; locked?: boolean }) {
   const navigate = useNavigate();
-  const open = () => { void navigate(`/app/templates/gallery/${template.id}`); };
+  const open = () => { if (!locked) void navigate(`/app/templates/gallery/${template.id}`); };
   const shown = template.roles.slice(0, MAX_ROLE_CHIPS);
   const hidden = template.roles.length - shown.length;
   const banner = categoryBanner(template.category);
@@ -29,18 +35,29 @@ function ReadyMadeCard({ template }: { template: ReadyMadeTemplate }) {
 
   return (
     <article
-      onClick={open}
-      onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); open(); } }}
-      tabIndex={0}
-      role="button"
-      aria-label={`Preview ready-made template: ${template.title}`}
-      className="rmt-card"
+      {...(locked ? {
+        "aria-label": `${template.title} — part of the Personal plan`,
+        "data-testid": "ready-made-locked-card",
+      } : {
+        onClick: open,
+        onKeyDown: (e: React.KeyboardEvent) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); open(); } },
+        tabIndex: 0,
+        role: "button",
+        "aria-label": `Preview ready-made template: ${template.title}`,
+      })}
+      className={locked ? "rmt-card rmt-locked" : "rmt-card"}
       style={{
+        position: "relative",
         background: "white", border: "1px solid #E2E8F0", borderRadius: 12,
-        cursor: "pointer", display: "flex", flexDirection: "column",
+        cursor: locked ? "default" : "pointer", display: "flex", flexDirection: "column",
         minWidth: 0, height: "100%", boxSizing: "border-box",
       }}
     >
+      {locked && (
+        <div className="rmt-frost" aria-hidden>
+          <span className="rmt-frost-chip"><Lock size={13} /> Personal</span>
+        </div>
+      )}
       <div style={{ position: "relative" }}>
         <div className="rmt-banner" style={{
           aspectRatio: "16 / 5", background: "#E2E8F0", overflow: "hidden",
@@ -81,6 +98,12 @@ function ReadyMadeCard({ template }: { template: ReadyMadeTemplate }) {
       <p style={{ ...GF, fontSize: 12, color: "#64748B", margin: "0 0 14px", lineHeight: 1.5, overflowWrap: "anywhere" }}>
         {template.documentType}
       </p>
+      {locked && (
+        // Decoration, not text: the catalogue carries none to show.
+        <div aria-hidden className="rmt-ghost">
+          <span style={{ width: "92%" }} /><span style={{ width: "78%" }} /><span style={{ width: "85%" }} />
+        </div>
+      )}
 
       <div style={{ marginTop: "auto", display: "flex", flexWrap: "wrap", gap: 6, alignItems: "center" }}>
         <Users size={12} color="#94A3B8" aria-hidden />
@@ -106,8 +129,15 @@ export function ReadyMadeGalleryPage() {
   const { isNarrow } = useViewport();
   const [query, setQuery] = useState("");
   const [categoryId, setCategoryId] = useState<string | null>(null);
+  const library = useReadyMade();
+  const READY_MADE_TEMPLATES = library.templates;
+  const READY_MADE_CATEGORIES = library.categories;
+  // 093. Ready-made templates are part of Personal. Unknown hides nothing.
+  const locked = useWorkspaceAllows("personal") === false;
 
-  const results = useMemo(() => searchReadyMadeTemplates(query, categoryId), [query, categoryId]);
+  // `library.version`: the arrays are filled in place when the server answers.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const results = useMemo(() => searchReadyMadeTemplates(query, categoryId), [query, categoryId, library.version]);
   const grouped = useMemo(() => {
     const out = new Map<string, ReadyMadeTemplate[]>();
     for (const t of results) out.set(t.category, [...(out.get(t.category) ?? []), t]);
@@ -142,6 +172,14 @@ export function ReadyMadeGalleryPage() {
         .rmt-card:hover { box-shadow: 0 6px 20px rgba(15,23,42,0.10); border-color: #CBD5E1; transform: translateY(-2px); }
         .rmt-card:hover img { transform: scale(1.04); }
         .rmt-card:focus-visible { box-shadow: 0 0 0 3px white, 0 0 0 5px ${AZURE}; border-color: ${AZURE}; }
+        .rmt-locked { pointer-events: none; user-select: none; overflow: hidden; }
+        .rmt-locked > :not(.rmt-frost) { filter: blur(2.5px) saturate(0.85); }
+        .rmt-frost { position: absolute; inset: 0; z-index: 2; border-radius: 12px; display: flex; align-items: flex-start; justify-content: flex-end; padding: 10px;
+          background: linear-gradient(180deg, rgba(11,27,58,0.10), rgba(11,27,58,0.28)); backdrop-filter: blur(1.5px); -webkit-backdrop-filter: blur(1.5px); }
+        .rmt-frost-chip { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 800; letter-spacing: 0.04em; color: #3B2A00;
+          background: linear-gradient(135deg, #FDE68A, #F5C542); border-radius: 999px; padding: 4px 10px; box-shadow: 0 6px 16px -8px rgba(245,197,66,0.9); }
+        .rmt-ghost { display: grid; gap: 6px; margin: -4px 0 14px; }
+        .rmt-ghost span { display: block; height: 7px; border-radius: 4px; background: #E2E8F0; }
         @media (prefers-reduced-motion: reduce) {
           .rmt-card, .rmt-card img { transition: none; }
           .rmt-card:hover, .rmt-card:hover img { transform: none; }
@@ -167,8 +205,9 @@ export function ReadyMadeGalleryPage() {
               Ready-made Templates
             </h1>
             <p style={{ ...GF, fontSize: 13, color: "#64748B", margin: "4px 0 0", lineHeight: 1.55 }}>
-              {READY_MADE_TEMPLATES.length} templates with their roles and signing order already set up.
-              Preview one, then use it to make it your own.
+              {library.status === "loading" && READY_MADE_TEMPLATES.length === 0 ? "Loading the templates…"
+                : `${String(READY_MADE_TEMPLATES.length)} templates with their roles and signing order already set up. `
+                  + (locked ? "They are part of the Personal plan." : "Preview one, then use it to make it your own.")}
             </p>
           </div>
         </div>
@@ -217,7 +256,17 @@ export function ReadyMadeGalleryPage() {
 
       <div style={{ padding: isNarrow ? "16px" : "20px 24px 40px" }}>
       <CenteredColumn>
-        {grouped.length === 0 ? (
+        {locked && (
+          <PlanUpgradeCard minimum="personal" feature="Ready-made templates"
+            title={`${String(READY_MADE_TEMPLATES.length)} ready-made templates are part of the Personal plan`} />
+        )}
+        {library.status === "error" && READY_MADE_TEMPLATES.length === 0 ? (
+          <div role="alert" style={{ textAlign: "center", padding: "48px 16px", color: "#64748B", ...GF, fontSize: 13 }}>
+            The ready-made templates could not be loaded. Please refresh the page.
+          </div>
+        ) : library.status === "loading" && READY_MADE_TEMPLATES.length === 0 ? (
+          <div aria-busy="true" style={{ minHeight: 240 }} />
+        ) : grouped.length === 0 ? (
           <div style={{ textAlign: "center", padding: "48px 16px", color: "#64748B", ...GF, fontSize: 13 }}>
             No ready-made template matches “{query.trim()}”.
           </div>
@@ -230,7 +279,7 @@ export function ReadyMadeGalleryPage() {
             {/* The same tracks in every section, so cards line up down the
                 page; inside the centred column that is at most four across. */}
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 220px), 1fr))", gap: 16 }}>
-              {items.map(t => <ReadyMadeCard key={t.id} template={t} />)}
+              {items.map(t => <ReadyMadeCard key={t.id} template={t} locked={locked} />)}
             </div>
           </section>
         ))}

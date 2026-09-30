@@ -143,6 +143,19 @@ describe("paid features on a Free owner's workspace", () => {
     expect(screen.queryByText("teams page")).toBeNull();
   });
 
+  it("marks the tile that unlocks it, and dims Personal when only Business will do", async () => {
+    render(<MemoryRouter><PlanGate minimum="business" feature="Teams"><p>teams page</p></PlanGate></MemoryRouter>);
+    const business = await screen.findByTestId("plan-tile-business");
+    expect(business).toHaveTextContent("Unlocks this");
+    expect(business.querySelector(".pt-lit")?.textContent).toContain("Teams, roles and join links");
+    const personal = screen.getByTestId("plan-tile-personal");
+    expect(personal.className).toContain("pt-tile-shut");
+    expect(personal).toHaveTextContent("Doesn't include teams");
+    // See plans sits in the footer, after the tiles.
+    const cta = screen.getByTestId("plan-upgrade-cta");
+    expect(cta.closest(".pp-foot")).not.toBeNull();
+  });
+
   it("asks a member to ask the owner", async () => {
     workspacePlan = { ...workspacePlan, ownerIsYou: false };
     render(<MemoryRouter><PlanGate minimum="personal" feature="Branding"><p>branding</p></PlanGate></MemoryRouter>);

@@ -1,6 +1,7 @@
 // /app/templates/new — Create template from blank, draft, transaction, or example.
 // Inline styles only. No backend. demonstrationOnly.
 
+import { useReadyMade } from "../../../hooks/useReadyMade";
 import { useState } from "react";
 import { useNavigate, Link } from "react-router";
 import {
@@ -414,6 +415,8 @@ function BlankForm({ onCreated, onCancel, isNarrow }: {
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 export function CreateTemplatePage() {
+  // 093. The ready-made counts come from the server's catalogue.
+  useReadyMade();
   usePageMeta();
   const navigate = useNavigate();
   const [selected, setSelected] = useState<string | null>(null);
