@@ -17,6 +17,7 @@ vi.mock("../../../context/PlatformContext", () => ({
 }));
 vi.mock("../../../context/NotificationCenterContext", () => ({
   useNotificationCenter: () => ({ items: [], unreadCount: 0 }),
+  useOptionalNotificationCenter: () => ({ items: [], unreadCount: 0 }),
 }));
 vi.mock("../../../hooks/useSignOutFlow", () => ({ useSignOutFlow: () => ({ requestSignOut: vi.fn(), confirmDialog: null }) }));
 vi.mock("../../../hooks/usePrepareLaunch", () => ({ usePrepareLaunch: () => ({ onPrepareClick: () => undefined }) }));

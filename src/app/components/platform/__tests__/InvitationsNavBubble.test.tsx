@@ -15,7 +15,10 @@ vi.mock("../UserMenu", () => ({ UserMenu: () => <div /> }));
 vi.mock("../../../context/PlatformContext", () => ({
   usePlatform: () => ({ hasPermission: () => true, hasFlag: () => true, unreadCount: 0, user: null, currentWorkspace: null }),
 }));
-vi.mock("../../../context/NotificationCenterContext", () => ({ useNotificationCenter: () => ({ items: [], unreadCount: 0 }) }));
+vi.mock("../../../context/NotificationCenterContext", () => ({
+  useNotificationCenter: () => ({ items: [], unreadCount: 0 }),
+  useOptionalNotificationCenter: () => ({ items: [], unreadCount: 0 }),
+}));
 vi.mock("../../../hooks/useSignOutFlow", () => ({ useSignOutFlow: () => ({ requestSignOut: vi.fn(), confirmDialog: null }) }));
 vi.mock("../../../hooks/usePrepareLaunch", () => ({ usePrepareLaunch: () => ({ onPrepareClick: () => undefined }) }));
 

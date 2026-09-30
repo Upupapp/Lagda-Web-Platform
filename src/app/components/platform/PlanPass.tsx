@@ -89,7 +89,7 @@ export function PlanPassCard({ chip, title, body, cta, askOwner, note, testId, c
   aside?: React.ReactNode;
 }) {
   return (
-    <section className={`pp-card${compact ? " pp-compact" : ""}`} data-testid={testId} aria-label={title}>
+    <section className={`pp-card${compact ? " pp-compact" : ""}${aside ? " pp-has-aside" : ""}`} data-testid={testId} aria-label={title}>
       <div className="pp-inner">
         <div className="pp-main">
           <div className="pp-top">
@@ -226,6 +226,13 @@ export const PLAN_PASS_CSS = `
 .pp-compare-btn { display: inline-flex; align-items: center; gap: 6px; min-height: 38px; padding: 0 14px; border-radius: 10px; font: inherit; font-size: 13px; font-weight: 700; cursor: pointer;
   background: rgba(255,255,255,0.08); color: #E8EEF9; border: 1px solid rgba(255,255,255,0.18); }
 .pp-compare-btn:focus-visible { outline: 3px solid #F5C542; outline-offset: 2px; }
+/* Beside the tiles, the message is centred as one block facing them; stacked
+   (tablet and phone) it stays left-aligned with everything below it. */
+@media (min-width: 901px) {
+  .pp-has-aside .pp-main { align-items: center; text-align: center; }
+  .pp-has-aside .pp-top { justify-content: center; }
+  .pp-has-aside .pp-body { max-width: 46ch; }
+}
 @media (max-width: 1180px) { .pp-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 900px) {
   .pp-inner { flex-direction: column; align-items: stretch; }

@@ -39,6 +39,7 @@ import {
 } from "lucide-react";
 import { ProfileHero } from "./ProfileHero";
 import { FreePlanHero } from "./FreePlanHero";
+import { ChatbotShowcase } from "./ChatbotShowcase";
 import { useMyPlan } from "../../hooks/usePlans";
 import { usePlatform } from "../../context/PlatformContext";
 import { useOptionalNotificationCenter } from "../../context/NotificationCenterContext";
@@ -459,7 +460,7 @@ export function RealDashboard() {
             to Plan & Billing. Nothing is shown until the plan is known, so a
             Free person never sees the banner flash first. */}
         {myPlan === null ? <div style={{ minHeight: 200 }} aria-hidden />
-          : myPlan.plan === "free" ? <FreePlanHero plan={myPlan} />
+          : myPlan.plan === "free" ? <><FreePlanHero plan={myPlan} /><ChatbotShowcase /></>
           : <ProfileHero />}
         {status === "loading" && (
           <div style={{ padding: "24px 0" }} aria-busy="true" aria-label="Loading dashboard">

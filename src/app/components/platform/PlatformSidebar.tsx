@@ -23,7 +23,8 @@ import { Z } from "../../utils/z-index";
 import { useSignOutFlow } from "../../hooks/useSignOutFlow";
 import { usePrepareLaunch } from "../../hooks/usePrepareLaunch";
 import { usePendingInvitationCount } from "../../hooks/usePendingInvitationCount";
-import { InvitationCountBubble, INVITATION_BUBBLE_STYLES, pendingInvitationsLabel } from "./InvitationCountBubble";
+import { InvitationCountBubble, NavCountBubble, NAV_BUBBLES, INVITATION_BUBBLE_STYLES, pendingInvitationsLabel, type NavBubbleKind } from "./InvitationCountBubble";
+import { useNavCounts } from "../../hooks/useNavCounts";
 
 const BORDER = "rgba(0,0,0,0.08)";
 const GF     = { fontFamily: "'Geist', sans-serif" };
@@ -116,7 +117,7 @@ function DocumentsNavItem({
     // No room for a separate bell button in icon-only mode — the existing
     // dot-badge convention carries the "something's unread" signal instead,
     // exactly like every other collapsed row.
-    return <SidebarItem to={to} icon={icon} label={label} badge={docsUnreadCount} collapsed />;
+    return <CountedNavItem to={to} icon={icon} label={label} count={docsUnreadCount} kind="documents" collapsed />;
   }
   return (
     <li style={{ display: "flex", alignItems: "center", gap: 2 }}>
@@ -146,6 +147,47 @@ function DocumentsNavItem({
             <span style={{ ...GF, fontSize: 13, fontWeight: isActive ? 600 : 400, flex: 1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
               {label}
             </span>
+            <NavCountBubble key={docsUnreadCount} kind="documents" count={docsUnreadCount} />
+          </>
+        )}
+      </NavLink>
+    </li>
+  );
+}
+
+// Shared Documents and Contacts: an ordinary row with its own pop-up count.
+function CountedNavItem({ to, icon, label, collapsed, count, kind }: {
+  to: string; icon: string; label: string; collapsed: boolean; count: number; kind: NavBubbleKind;
+}) {
+  const named = count > 0 ? `${label}, ${NAV_BUBBLES[kind].label(count)}` : label;
+  return (
+    <li>
+      <NavLink
+        to={to}
+        data-testid={`nav-${kind}`}
+        aria-label={collapsed ? named : undefined}
+        title={collapsed ? named : undefined}
+        style={({ isActive }) => ({
+          display: "flex", alignItems: "center", gap: collapsed ? 0 : 10,
+          padding: collapsed ? "9px 0" : "8px 10px", justifyContent: collapsed ? "center" : "flex-start",
+          borderRadius: 8, textDecoration: "none",
+          background: isActive ? "rgba(0,120,212,0.14)" : "transparent",
+          border: isActive ? "1px solid rgba(0,120,212,0.22)" : "1px solid transparent",
+          color: isActive ? "#0078D4" : "#64748B", transition: "background 0.12s, color 0.12s",
+          position: "relative", minHeight: 36,
+        })}
+      >
+        {({ isActive }) => (
+          <>
+            <span aria-hidden style={{ flexShrink: 0, color: isActive ? "#0078D4" : "#64748B", display: "flex", alignItems: "center" }}>
+              <NavIcon name={icon} />
+            </span>
+            {!collapsed && (
+              <span style={{ ...GF, fontSize: 13, fontWeight: isActive ? 600 : 400, flex: 1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                {label}
+              </span>
+            )}
+            <NavCountBubble key={count} kind={kind} count={count} variant={collapsed ? "dot" : "pill"} />
           </>
         )}
       </NavLink>
@@ -200,8 +242,10 @@ export function PlatformSidebar() {
   const [collapsed, setCollapsed] = useState(false);
   const { hasPermission, hasFlag } = usePlatform();
   const planAllows = usePlanCheck();
-  const { items, unreadCount } = useNotificationCenter();
-  const docsUnreadCount = items.filter((n) => n.category === "documents" && n.status === "unread").length;
+  const { unreadCount } = useNotificationCenter();
+  // Split by where each notice leads, so no notice is counted twice.
+  const navCounts = useNavCounts();
+  const docsUnreadCount = navCounts.documents;
 
   // Confirmation + the branded modal now live in one hook, shared with the
   // mobile drawer and the onboarding header.
@@ -350,6 +394,13 @@ export function PlatformSidebar() {
               return (
                 <InvitationsNavItem key={item.id} to={item.path} icon={item.icon} label={item.label}
                   collapsed={collapsed} pending={pendingInvitations} />
+              );
+            }
+            if (item.id === "shared-documents" || item.id === "contacts") {
+              const kind = item.id === "contacts" ? "contacts" : "shared";
+              return (
+                <CountedNavItem key={item.id} to={item.path} icon={item.icon} label={item.label}
+                  collapsed={collapsed} count={navCounts[kind]} kind={kind} />
               );
             }
             const badge = item.showBadge && item.id === "inbox" ? unreadCount : null;

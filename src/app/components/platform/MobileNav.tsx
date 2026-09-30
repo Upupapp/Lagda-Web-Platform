@@ -26,7 +26,8 @@ import { useSignOutFlow } from "../../hooks/useSignOutFlow";
 import { usePrepareLaunch } from "../../hooks/usePrepareLaunch";
 import { UserAvatar } from "./UserAvatar";
 import { usePendingInvitationCount } from "../../hooks/usePendingInvitationCount";
-import { InvitationCountBubble, INVITATION_BUBBLE_STYLES } from "./InvitationCountBubble";
+import { InvitationCountBubble, NavCountBubble, INVITATION_BUBBLE_STYLES } from "./InvitationCountBubble";
+import { useNavCounts } from "../../hooks/useNavCounts";
 
 const BORDER = "rgba(0,0,0,0.08)";
 const GF     = { fontFamily: "'Geist', sans-serif" };
@@ -112,6 +113,7 @@ export function MobileNav() {
   const { requestSignOut, confirmDialog } = useSignOutFlow(() => { setDrawerOpen(false); });
   const { onPrepareClick } = usePrepareLaunch();
   const pendingInvitations = usePendingInvitationCount();
+  const navCounts = useNavCounts();
   const handleSignOut = requestSignOut;
 
   const openSearch = useCallback(() => {
@@ -334,6 +336,9 @@ export function MobileNav() {
                           </span>
                         )}
                         {item.id === "invitations" && <InvitationCountBubble key={pendingInvitations} count={pendingInvitations} />}
+                        {item.id === "documents" && <NavCountBubble key={navCounts.documents} kind="documents" count={navCounts.documents} />}
+                        {item.id === "shared-documents" && <NavCountBubble key={navCounts.shared} kind="shared" count={navCounts.shared} />}
+                        {item.id === "contacts" && <NavCountBubble key={navCounts.contacts} kind="contacts" count={navCounts.contacts} />}
                       </>
                     )}
                   </NavLink>
