@@ -14,7 +14,7 @@ import {
 import { SettingsPage, SSection, SCard, Badge, BTN_PRIMARY, BTN_SECONDARY, Notice, SET, TONES } from "./SettingsShell";
 import {
   SAMPLE_PLANS, SAMPLE_COMPARE_GROUPS, currentPlanLimits,
-  formatPeso, annualSaving, type SamplePlan, type CompareCell, type CatalogPlanId,
+  formatPeso, type SamplePlan, type CompareCell, type CatalogPlanId,
 } from "../../../config/pricing.config";
 import { useWorkspacePlan } from "../../../hooks/usePlans";
 import { PLAN_NAMES } from "../../../services/real/plans.service";
@@ -26,11 +26,10 @@ import {
   SAMPLE_INVOICE_ID, SAMPLE_INVOICE_PATH, SAMPLE_INVOICE_BANNER, SAMPLE_INVOICE_TOTAL, useInvoiceBilledTo,
 } from "./billing/sample-invoice";
 import { Z } from "../../../utils/z-index";
+import { PLAN_PASS_CSS } from "../../../components/platform/PlanPass";
 
 const GF = { fontFamily: SET.FONT };
 const GM = { fontFamily: SET.MONO };
-
-type Cycle = "monthly" | "annual";
 
 // ── Overview ───────────────────────────────────────────────────────────────
 
@@ -107,35 +106,29 @@ function OverviewCard() {
 
 // ── Plans ──────────────────────────────────────────────────────────────────
 
-function PriceBlock({ plan, cycle }: { plan: SamplePlan; cycle: Cycle }) {
+/** The price line: monthly only while LAGDA is in test mode. */
+function TilePrice({ plan }: { plan: SamplePlan }) {
   if (plan.price === null) {
     return (
       <div>
-        <div style={{ ...GF, fontSize: 26, fontWeight: 800, color: SET.NAVY, lineHeight: 1.1 }}>Custom</div>
-        <div style={{ ...GF, fontSize: 12.5, color: SET.SLATE, marginTop: 4 }}>Priced for your organization</div>
+        <div className="pp-tile-price" data-testid={`plan-price-${plan.id}`}>Custom</div>
+        <div className="pp-tile-sub">Priced for your organization</div>
       </div>
     );
   }
-  const amount = cycle === "monthly" ? plan.price.monthly : plan.price.annual;
-  const unit = `${plan.price.perUser ? "/user" : ""}/${cycle === "monthly" ? "mo" : "yr"}`;
-  const saving = annualSaving(plan.price);
+  const amount = plan.price.monthly;
   return (
     <div>
-      <div style={{ display: "flex", alignItems: "baseline", gap: 4, flexWrap: "wrap" }}>
-        <span data-testid={`plan-price-${plan.id}`} style={{ ...GF, fontSize: 26, fontWeight: 800, color: SET.NAVY, lineHeight: 1.1 }}>{formatPeso(amount)}</span>
-        {amount > 0 && <span style={{ ...GF, fontSize: 13, color: SET.SLATE }}>{unit}</span>}
+      <div className="pp-tile-price" data-testid={`plan-price-${plan.id}`}>
+        {formatPeso(amount)}{amount > 0 && <small>{plan.price.perUser ? "/user/mo" : "/mo"}</small>}
       </div>
-      <div data-testid={`plan-saving-${plan.id}`} style={{ ...GF, fontSize: 12.5, color: saving > 0 ? TONES.success.fg : SET.SLATE, marginTop: 4, fontWeight: saving > 0 ? 600 : 500 }}>
-        {amount === 0 ? "Free, always"
-          : cycle === "annual" ? `Save ${formatPeso(saving)}${plan.price.perUser ? " per user" : ""} a year`
-          : `Or ${formatPeso(plan.price.annual)}${plan.price.perUser ? "/user" : ""}/yr — save ${formatPeso(saving)}`}
-      </div>
+      <div className="pp-tile-sub">{amount === 0 ? "Free, always" : "Monthly · test mode"}</div>
     </div>
   );
 }
 
-function PlanCard({ plan, cycle, onChoose, current, disabled }: {
-  plan: SamplePlan; cycle: Cycle; onChoose: (plan: SamplePlan) => void; current: boolean; disabled: boolean;
+function PlanTile({ plan, onChoose, current, disabled }: {
+  plan: SamplePlan; onChoose: (plan: SamplePlan) => void; current: boolean; disabled: boolean;
 }) {
   const inert = disabled || current || plan.id === "free";
   const label = current ? "Your plan"
@@ -143,32 +136,22 @@ function PlanCard({ plan, cycle, onChoose, current, disabled }: {
     : plan.id === "free" ? "Free, always"
     : `Choose ${plan.name}`;
   return (
-    <div data-testid={`plan-card-${plan.id}`} style={{
-      position: "relative", display: "flex", flexDirection: "column", gap: 14, minWidth: 0,
-      background: "#FFFFFF", borderRadius: 12, padding: "18px 18px 16px",
-      border: plan.mostPopular ? `2px solid ${SET.AZURE}` : `1px solid ${SET.BORDER}`,
-      boxShadow: plan.mostPopular ? "0 8px 22px -12px rgba(0,120,212,0.45)" : "0 1px 2px rgba(7,17,31,0.04)",
-    }}>
-      <div style={{ display: "flex", gap: 6, flexWrap: "wrap", minHeight: 22 }}>
-        {plan.mostPopular && <Badge tone="info" icon={Star}>Most popular</Badge>}
-        {current && <Badge tone="success" icon={BadgeCheck}>Current plan</Badge>}
+    <div data-testid={`plan-card-${plan.id}`}
+      className={`pp-tile${plan.mostPopular ? " pp-tile-business" : ""}${current ? " pp-tile-current" : ""}`}>
+      <div className="pp-tile-tags">
+        {plan.mostPopular && <span className="pp-tag pp-tag-popular"><Star size={11} aria-hidden /> Most popular</span>}
+        {current && <span className="pp-tag pp-tag-current"><BadgeCheck size={11} aria-hidden /> Current plan</span>}
       </div>
       <div>
-        <h4 style={{ ...GF, fontSize: 17, fontWeight: 800, color: SET.NAVY, margin: 0 }}>{plan.name}</h4>
-        <p style={{ ...GF, fontSize: 13, color: SET.SLATE, margin: "3px 0 0", lineHeight: 1.45 }}>{plan.tagline}</p>
+        <h4 className="pp-tile-name">{plan.name}</h4>
+        <p className="pp-tile-tagline">{plan.tagline}</p>
       </div>
-      <PriceBlock plan={plan} cycle={cycle} />
-      <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "grid", gap: 7, flex: 1, alignContent: "start" }}>
-        {plan.highlights.map(h => (
-          <li key={h} style={{ display: "flex", gap: 8, alignItems: "flex-start", ...GF, fontSize: 13, color: SET.INK, lineHeight: 1.45 }}>
-            <Check size={15} aria-hidden color={SET.SUCCESS} style={{ flexShrink: 0, marginTop: 2 }} /> {h}
-          </li>
-        ))}
+      <TilePrice plan={plan} />
+      <ul>
+        {plan.highlights.map(h => <li key={h}><Check size={14} aria-hidden /> {h}</li>)}
       </ul>
-      <button type="button" onClick={() => { onChoose(plan); }} disabled={inert}
-        data-testid={`plan-choose-${plan.id}`}
-        style={{ ...(plan.mostPopular && !current ? BTN_PRIMARY : BTN_SECONDARY), width: "100%",
-          ...(inert ? { opacity: 0.6, cursor: "default" } : {}) }}>
+      <button type="button" onClick={() => { onChoose(plan); }} disabled={inert} data-testid={`plan-choose-${plan.id}`}
+        className={`pp-tile-btn${plan.mostPopular && !current ? " pp-tile-btn-primary" : ""}`}>
         {label}
       </button>
     </div>
@@ -270,22 +253,29 @@ export function PlanShowcase({ current, onChoose, disabled = false, description 
   return (
     <SSection title="Plans" icon={Star}
       description={description ?? "What each plan includes. Paid plans are monthly while LAGDA is in test mode."}>
-      <div data-testid="sample-pricing-notice" style={{ ...GM, fontSize: 11, fontWeight: 700, letterSpacing: "0.08em", color: TONES.warning.fg, background: TONES.warning.bg, border: `1px solid ${TONES.warning.border}`, borderRadius: 8, padding: "8px 12px", marginBottom: 14, display: "flex", alignItems: "center", gap: 8 }}>
-        <Info size={14} aria-hidden style={{ flexShrink: 0 }} /> TEST MODE — NO MONEY IS MOVED. MONTHLY PLANS ONLY.
-      </div>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 220px), 1fr))", gap: 14 }}>
-        {SAMPLE_PLANS.map(p => (
-          <PlanCard key={p.id} plan={p} cycle="monthly" onChoose={choose} current={p.id === current} disabled={disabled} />
-        ))}
-      </div>
-      <div style={{ marginTop: 14 }}>
-        <button type="button" aria-expanded={compare} aria-controls={compareId} onClick={() => { setCompare(c => !c); }} style={BTN_SECONDARY}>
-          {compare ? "Hide comparison" : "Compare all features"}
-          <ChevronDown size={15} aria-hidden style={{ transform: compare ? "rotate(180deg)" : "none", transition: "transform 150ms ease" }} />
-        </button>
+      {/* The same "pass" as the Free pass on Home and every plan lock. */}
+      <div className="pp-panel" data-testid="plan-panel">
+        <div className="pp-panel-head">
+          <span className="pp-panel-kicker">Choose your plan</span>
+          <span className="pp-test" data-testid="sample-pricing-notice">
+            <Info size={13} aria-hidden /> TEST MODE — NO MONEY IS MOVED. MONTHLY PLANS ONLY.
+          </span>
+        </div>
+        <div className="pp-tiles">
+          {SAMPLE_PLANS.map(p => (
+            <PlanTile key={p.id} plan={p} onChoose={choose} current={p.id === current} disabled={disabled} />
+          ))}
+        </div>
+        <div className="pp-panel-foot">
+          <button type="button" className="pp-compare-btn" aria-expanded={compare} aria-controls={compareId} onClick={() => { setCompare(c => !c); }}>
+            {compare ? "Hide comparison" : "Compare all features"}
+            <ChevronDown size={15} aria-hidden style={{ transform: compare ? "rotate(180deg)" : "none", transition: "transform 150ms ease" }} />
+          </button>
+        </div>
       </div>
       <div id={compareId} hidden={!compare}>{compare && <CompareTable />}</div>
       {enterprise && <EnterpriseDialog onClose={() => { setEnterprise(false); }} />}
+      <style>{PLAN_PASS_CSS}</style>
     </SSection>
   );
 }

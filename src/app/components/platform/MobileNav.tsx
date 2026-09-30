@@ -2,15 +2,14 @@
 // Replaces the sidebar at <768px.
 // Focus-trapped while open. Escape closes. Scroll locked.
 
-import { usePlanCheck } from "../../hooks/usePlans";
+import { usePlanCheck, useMyPlan } from "../../hooks/usePlans";
 import { WorkspaceBadge } from "./WorkspaceBadge";
 import { useState, useRef, useEffect, useCallback, lazy, Suspense } from "react";
 import { NavLink, Link } from "react-router";
 import {
   Menu, X, LayoutDashboard, FileText, Files, Users, ShieldCheck,
   Bell, Users2, Settings, Settings2, FilePlus, Inbox, HelpCircle, GitBranch, BarChart2, Zap,
-  Search, Compass, Share2, Mail, ChevronDown, LogIn, Building2, UserCog,
-} from "lucide-react";
+  Search, Compass, Share2, Mail, ChevronDown, LogIn, Building2, UserCog, Lock } from "lucide-react";
 import { JoinWorkspaceDialog } from "./JoinWorkspaceDialog";
 import lagdaHeaderLogo from "../../../brand elements/svg/LagdaLogoPrimaryHorizontalFullColor_Header.svg";
 import { usePlatform } from "../../context/PlatformContext";
@@ -52,6 +51,9 @@ export function MobileNav() {
   const [joining, setJoining] = useState(false);
   const { user, currentWorkspace, unreadCount, hasPermission, hasFlag } = usePlatform();
   const planAllows = usePlanCheck();
+  // 093. Joining another workspace is part of Personal (the person's own plan).
+  const { plan: myPlan } = useMyPlan();
+  const joinLocked = myPlan?.plan === "free";
   const { restartTour } = useTour();
   const drawerRef    = useRef<HTMLDivElement>(null);
   const triggerRef   = useRef<HTMLButtonElement>(null);
@@ -259,14 +261,24 @@ export function MobileNav() {
               </div>
             </div>
             {/* The drawer closes first so the dialog is not stacked behind it. */}
-            <button type="button" onClick={() => { setDrawerOpen(false); setJoining(true); }}
+            <button type="button" disabled={joinLocked} aria-disabled={joinLocked}
+              onClick={joinLocked ? undefined : () => { setDrawerOpen(false); setJoining(true); }}
+              data-testid="mobile-join-workspace"
               style={{
                 display: "flex", alignItems: "center", gap: 8, width: "100%", marginTop: 10,
                 minHeight: 40, padding: "0 10px", borderRadius: 8, border: `1px solid ${BORDER}`,
-                background: "#FFFFFF", color: "#0F172A", ...GF, fontSize: 13, fontWeight: 500, cursor: "pointer",
+                background: joinLocked ? "#F8FAFC" : "#FFFFFF", color: joinLocked ? "#94A3B8" : "#0F172A", ...GF, fontSize: 13, fontWeight: 500,
+                cursor: joinLocked ? "not-allowed" : "pointer",
               }}>
-              <LogIn size={15} aria-hidden style={{ color: "#0078D4", flexShrink: 0 }} />
-              Join another workspace
+              {joinLocked
+                ? <Lock size={15} aria-hidden style={{ color: "#B45309", flexShrink: 0 }} />
+                : <LogIn size={15} aria-hidden style={{ color: "#0078D4", flexShrink: 0 }} />}
+              <span style={{ flex: 1, textAlign: "left" }}>Join another workspace</span>
+              {joinLocked && (
+                <span style={{ fontSize: 10.5, fontWeight: 700, color: "#92400E", background: "#FEF3C7", border: "1px solid #FDE68A", borderRadius: 999, padding: "1px 8px" }}>
+                  Personal
+                </span>
+              )}
             </button>
           </div>
         )}

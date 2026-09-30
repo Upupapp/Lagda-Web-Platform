@@ -6,8 +6,9 @@
 // join request was approved after sign-in appears here without a reload.
 // Creating a workspace from here is deliberately not offered yet.
 
+import { useMyPlan } from "../../hooks/usePlans";
 import { useState, useRef, useEffect } from "react";
-import { ChevronDown, Check, LogIn } from "lucide-react";
+import { ChevronDown, Check, LogIn, Lock } from "lucide-react";
 import { usePlatform } from "../../context/PlatformContext";
 import { PLAN_LABELS } from "../../models";
 import { WorkspaceBadge } from "./WorkspaceBadge";
@@ -23,6 +24,9 @@ interface WorkspaceSwitcherProps {
 
 export function WorkspaceSwitcher({ collapsed }: WorkspaceSwitcherProps) {
   const { currentWorkspace, workspaces, switchWorkspace, refreshWorkspaceList } = usePlatform();
+  // 093. Joining another workspace is part of Personal (the person's own plan).
+  const { plan: myPlan } = useMyPlan();
+  const joinLocked = myPlan?.plan === "free";
   const [open, setOpen] = useState(false);
   const [joining, setJoining] = useState(false);
 
@@ -92,6 +96,7 @@ export function WorkspaceSwitcher({ collapsed }: WorkspaceSwitcherProps) {
             onSelect={(id) => { switchWorkspace(id); setOpen(false); }}
             onClose={() => { setOpen(false); triggerRef.current?.focus(); }}
             onJoin={startJoin}
+          joinLocked={joinLocked}
             ref={menuRef}
             style={{ top: 0, left: 44 }}
           />
@@ -134,6 +139,7 @@ export function WorkspaceSwitcher({ collapsed }: WorkspaceSwitcherProps) {
           onSelect={(id) => { switchWorkspace(id); setOpen(false); triggerRef.current?.focus(); }}
           onClose={() => { setOpen(false); triggerRef.current?.focus(); }}
           onJoin={startJoin}
+          joinLocked={joinLocked}
           ref={menuRef}
           style={{ top: "calc(100% + 4px)", left: 0, right: 0 }}
         />
@@ -154,11 +160,13 @@ interface WorkspaceMenuProps {
   onSelect: (id: string) => void;
   onClose: () => void;
   onJoin: () => void;
+  /** 093. On Free: shown, but not clickable, with the plan it needs. */
+  joinLocked: boolean;
   style?: React.CSSProperties;
 }
 
 const WorkspaceMenu = forwardRef<HTMLDivElement, WorkspaceMenuProps>(
-  ({ workspaces, currentId, onSelect, onJoin, style }, ref) => (
+  ({ workspaces, currentId, onSelect, onJoin, joinLocked, style }, ref) => (
     <div
       ref={ref}
       role="listbox"
@@ -206,16 +214,28 @@ const WorkspaceMenu = forwardRef<HTMLDivElement, WorkspaceMenuProps>(
 
       <div style={{ borderTop: `1px solid ${BORDER}`, marginTop: 4, paddingTop: 4 }}>
         <button
+          type="button"
+          disabled={joinLocked}
+          aria-disabled={joinLocked}
+          title={joinLocked ? "Joining another workspace is part of the Personal plan" : undefined}
+          data-testid="workspace-menu-join"
           style={{
             display: "flex", alignItems: "center", gap: 8,
             width: "100%", border: "none", background: "transparent",
-            borderRadius: 7, padding: "7px 10px", cursor: "pointer",
-            color: "#0F172A", ...GF, fontSize: 12, fontWeight: 500, textAlign: "left", minHeight: 34,
+            borderRadius: 7, padding: "7px 10px", cursor: joinLocked ? "not-allowed" : "pointer",
+            color: joinLocked ? "#94A3B8" : "#0F172A", ...GF, fontSize: 12, fontWeight: 500, textAlign: "left", minHeight: 34,
           }}
-          onClick={onJoin}
+          onClick={joinLocked ? undefined : onJoin}
         >
-          <LogIn size={13} aria-hidden style={{ color: "#0078D4", flexShrink: 0 }} />
-          <span>Join another workspace</span>
+          {joinLocked
+            ? <Lock size={13} aria-hidden style={{ color: "#B45309", flexShrink: 0 }} />
+            : <LogIn size={13} aria-hidden style={{ color: "#0078D4", flexShrink: 0 }} />}
+          <span style={{ flex: 1, minWidth: 0 }}>Join another workspace</span>
+          {joinLocked && (
+            <span data-testid="workspace-menu-join-plan" style={{ fontSize: 10, fontWeight: 700, color: "#92400E", background: "#FEF3C7", border: "1px solid #FDE68A", borderRadius: 999, padding: "1px 7px", whiteSpace: "nowrap" }}>
+              Personal
+            </span>
+          )}
         </button>
       </div>
     </div>
