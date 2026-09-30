@@ -43,6 +43,14 @@ describe("ResendSigningDialog", () => {
     expect(screen.getByRole("tab", { name: /Re-send to same participants/ })).toBeTruthy();
   });
 
+  it("from Sent, offers new emails only: no re-sending to the same participants", () => {
+    render(<ResendSigningDialog workspaceId="ws" documentId="doc" documentTitle="Lease"
+      onClose={vi.fn()} onSent={vi.fn()} allowSameParticipants={false} />);
+    expect(screen.queryByRole("tab", { name: /Re-send to same participants/ })).toBeNull();
+    expect(screen.queryByRole("tab", { name: /Send to new emails/ })).toBeNull();
+    expect(svc.currentParticipants).not.toHaveBeenCalled();
+  });
+
   it("lists the same participants, all ticked, with roles and steps", async () => {
     open();
     await userEvent.click(screen.getByRole("tab", { name: /Re-send to same participants/ }));

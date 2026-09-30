@@ -15,7 +15,7 @@ import {
   EmptyStateLayout, SkeletonBlock, SKELETON_STYLE, CenteredColumn,
 } from "../../../components/platform";
 import {
-  TEMPLATE_VIEWS, TEMPLATE_CATEGORIES, TEMPLATE_STATUS_LABELS,
+  TEMPLATE_CATEGORIES, TEMPLATE_STATUS_LABELS,
   TEMPLATE_STATUS_TONE, TEMPLATE_CATEGORY_LABELS, TEMPLATE_SCOPE_LABELS,
   DEFAULT_TEMPLATE_QUERY,
 } from "../../../models/templates";
@@ -26,7 +26,6 @@ import type {
 import { usePageMeta } from "../../../hooks/usePageMeta";
 import { useViewport } from "../../../hooks/useViewport";
 import { FilterChips } from "../../../components/platform/FilterChips";
-import { TabStrip } from "../../../components/platform/TabStrip";
 
 // ── Design tokens ─────────────────────────────────────────────────────────────
 const GF    = { fontFamily: "'Geist', sans-serif" };
@@ -279,7 +278,12 @@ function TemplatesInner() {
     searchTimeout.current = setTimeout(() => updateQuery({ q }), 280);
   };
 
-  const activeView     = state.query.view;
+  // A saved or linked query may still name one of the retired views.
+  const activeView = state.query.view;
+  useEffect(() => {
+    if (activeView !== "all") updateQuery({ view: "all" });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeView]);
   const { listResult, listLoading } = state;
   const items          = listResult?.items ?? [];
   const total          = listResult?.total ?? 0;
@@ -401,40 +405,21 @@ function TemplatesInner() {
         </Link>
         <style>{`.tpl-ready-banner { transition: box-shadow .15s, border-color .15s; } .tpl-ready-banner:hover, .tpl-ready-banner:focus-visible { border-color: ${AZURE}; box-shadow: 0 2px 10px rgba(0,120,212,0.12); outline: none; }`}</style>
 
-        {/* View tabs.
-            Was a plain flex row with no overflow handling, so at 390px the last
-            three views sat at x 435..690 — off-screen and unreachable, with no
-            way to scroll to them. TabStrip makes the row scrollable, scrolls the
-            active tab into view, and raises the targets to 44px on mobile. */}
-        <TabStrip
-          as="tablist"
-          label="Template views"
-          activeKey={activeView}
-          style={{ gap: 2, marginTop: 16, borderBottom: "1px solid #E2E8F0", marginBottom: -1 }}
-        >
-          {TEMPLATE_VIEWS.map(v => (
-            <button
-              key={v.id}
-              role="tab"
-              aria-selected={activeView === v.id}
-              onClick={() => updateQuery({ view: v.id })}
-              style={{
-                ...GF,
-                fontSize:   12,
-                fontWeight: activeView === v.id ? 700 : 500,
-                color:      activeView === v.id ? AZURE : "#64748B",
-                background: "none",
-                border:     "none",
-                borderBottom: activeView === v.id ? `2px solid ${AZURE}` : "2px solid transparent",
-                padding:    "8px 14px",
-                cursor:     "pointer",
-                whiteSpace: "nowrap",
-              }}
-            >
-              {v.label}
-            </button>
-          ))}
-        </TabStrip>
+        {/* One view: "My Templates", every template whatever its status.
+            The seven views (All, Workspace, My Templates, Drafts, Recently
+            Used, Available, Archived) filtered on scope, status and last use,
+            none of which the backend sends yet — every stored template read as
+            "Available · Workspace · never used", so three views repeated the
+            whole list and four were always empty. Brought back when the data
+            behind them exists. */}
+        <div style={{ marginTop: 16, borderBottom: "1px solid #E2E8F0", marginBottom: -1 }}>
+          <h2 style={{
+            ...GF, display: "inline-block", margin: 0, fontSize: 13, fontWeight: 700, color: AZURE,
+            borderBottom: `2px solid ${AZURE}`, padding: "8px 14px", marginBottom: -1,
+          }}>
+            My Templates
+          </h2>
+        </div>
         </CenteredColumn>
       </div>
 

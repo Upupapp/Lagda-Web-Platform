@@ -89,9 +89,43 @@ describe("Documents › Correspondence", () => {
     expect(within(card).getByRole("heading", { name: "Employment Agreement 2026" })).toBeInTheDocument();
     expect(within(card).getByText(/To 3 participants/)).toBeInTheDocument();
     expect(within(card).getByText("1 of 3 signed")).toBeInTheDocument();
-    for (const name of ["Participants of", "History of", "View", "again"]) {
+    for (const name of ["Participants of", "History of", "View", "to a new email address"]) {
       expect(within(card).getByRole("button", { name: new RegExp(name) })).toBeInTheDocument();
     }
+    expect(within(card).getByText("Send to new email")).toBeInTheDocument();
+  });
+
+  it("draws a single letter narrow and centred, several in the wider column", async () => {
+    const { unmount } = renderAt("/app/documents");
+    const list = await screen.findByRole("list", { name: "Sent documents" });
+    expect(list.className).toContain("mail-card-list-single");
+    unmount();
+
+    listRequests.mockResolvedValue({
+      items: [SENT, { ...SENT, signingRequestId: "sr_two", documentTitle: "NDA" }],
+      total: 2, page: 1, perPage: 50, hasNextPage: false,
+    });
+    renderAt("/app/documents");
+    await screen.findByRole("heading", { name: "NDA" });
+    expect(screen.getByRole("list", { name: "Sent documents" }).className).not.toContain("mail-card-list-single");
+  });
+
+  it("offers Send to new email only while the document is still out for signing", async () => {
+    listRequests.mockResolvedValue({
+      items: [{ ...SENT, state: "expired" }], total: 1, page: 1, perPage: 50, hasNextPage: false,
+    });
+    renderAt("/app/documents");
+    const card = await screen.findByTestId("outbox-card");
+    expect(within(card).queryByText("Send to new email")).toBeNull();
+    expect(within(card).getByRole("button", { name: /View/ })).toBeInTheDocument();
+  });
+
+  it("opens the send dialog from Sent without re-sending to the same participants", async () => {
+    const user = userEvent.setup();
+    renderAt("/app/documents");
+    await user.click(await screen.findByText("Send to new email"));
+    const dialog = await screen.findByRole("dialog");
+    expect(within(dialog).queryByRole("tab", { name: /Re-send to same participants/ })).toBeNull();
   });
 
   it("shows I must sign as mail cards under the SENDER's banner, actions at the bottom corners", async () => {

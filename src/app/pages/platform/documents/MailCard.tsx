@@ -81,17 +81,27 @@ export function MailAction({ icon: Icon, label, onClick, primary = false, ariaLa
   );
 }
 
+/**
+ * Centred in the page. A single letter is drawn narrow (510 px), the way one
+ * letter sits on a desk; several use the wider column. Both shrink to the
+ * screen on a phone.
+ */
 export function MailCardList({ label, children }: { label: string; children: ReactNode }) {
+  const single = Array.isArray(children) ? children.filter(Boolean).length === 1 : children !== null && children !== undefined;
   return (
     <>
-      <ul className="mail-card-list" aria-label={label}>{children}</ul>
+      <ul className={single ? "mail-card-list mail-card-list-single" : "mail-card-list"} aria-label={label}>{children}</ul>
       <style>{MAIL_STYLES}</style>
     </>
   );
 }
 
 const MAIL_STYLES = `
-  .mail-card-list { list-style: none; margin: 16px 0 0; padding: 0; display: flex; flex-direction: column; gap: 16px; max-width: 920px; }
+  .mail-card-list {
+    list-style: none; margin: 16px auto 0; padding: 0; display: flex; flex-direction: column; gap: 16px;
+    width: 100%; max-width: 920px; box-sizing: border-box;
+  }
+  .mail-card-list-single { max-width: 510px; }
   .mail-card {
     background: #FFFFFF; border: 1px solid ${BORDER}; border-radius: 12px; overflow: hidden; min-width: 0;
     box-shadow: 0 1px 2px rgba(7,17,31,0.05), 0 6px 18px -12px rgba(7,17,31,0.18);

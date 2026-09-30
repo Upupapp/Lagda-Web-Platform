@@ -2267,6 +2267,7 @@ function OutboxCard({ item, branding, onView, onSignatures, onAudit, onResend }:
   const total = item.participantCount;
   const done = item.completedParticipantCount;
   const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+  const pending = item.state === "sent" || item.state === "partially-completed";
   return (
     <MailCard
       testId="outbox-card"
@@ -2279,8 +2280,13 @@ function OutboxCard({ item, branding, onView, onSignatures, onAudit, onResend }:
         <MailAction icon={History} label="History" onClick={onAudit} ariaLabel={`History of ${item.documentTitle}`} />
       </>}
       footerEnd={<>
-        <MailAction icon={Eye} label="View" onClick={onView} ariaLabel={`View ${item.documentTitle}`} />
-        <MailAction icon={Send} label="Send again" primary onClick={onResend} ariaLabel={`Send ${item.documentTitle} again`} />
+        <MailAction icon={Eye} label="View" onClick={onView} ariaLabel={`View ${item.documentTitle}`} primary={!pending} />
+        {/* Only while still out for signing, and only to new addresses (the
+            dialog opens without "re-send to the same participants"). */}
+        {pending && (
+          <MailAction icon={Send} label="Send to new email" primary onClick={onResend}
+            ariaLabel={`Send ${item.documentTitle} to a new email address`} />
+        )}
       </>}
     >
       <MailLine>
@@ -2893,6 +2899,8 @@ function DocumentsPageRealMode() {
       )}
       {resendFor && workspaceId && (
         <ResendSigningDialog
+          // From Sent, new addresses only: no re-sending to the same people.
+          allowSameParticipants={list !== "sent"}
           workspaceId={workspaceId}
           documentId={resendFor.documentId}
           documentTitle={resendFor.documentTitle}

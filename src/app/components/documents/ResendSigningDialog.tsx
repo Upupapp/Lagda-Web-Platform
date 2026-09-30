@@ -79,8 +79,14 @@ function ModeSwitch({ mode, onChange, disabled }: {
 }
 
 export function ResendSigningDialog({
-  workspaceId, documentId, documentTitle, onClose, onSent,
+  workspaceId, documentId, documentTitle, onClose, onSent, allowSameParticipants = true,
 }: {
+  /**
+   * False from Documents › Sent: a document still out for signing is sent on
+   * to NEW addresses only. Re-sending it to the people who already have it is
+   * what turns into repeated emails, so that option is not offered there.
+   */
+  allowSameParticipants?: boolean;
   workspaceId: string;
   documentId: string;
   documentTitle: string;
@@ -195,7 +201,9 @@ export function ResendSigningDialog({
         </header>
 
         <div style={{ padding: "14px 18px" }}>
-          <ModeSwitch mode={mode} onChange={m => { setMode(m); setError(null); }} disabled={sending} />
+          {allowSameParticipants && (
+            <ModeSwitch mode={mode} onChange={m => { setMode(m); setError(null); }} disabled={sending} />
+          )}
 
           {mode === "same" ? (
             <SameParticipants
