@@ -54,6 +54,7 @@
 // A refresh restores the draft from the server. Nothing is kept in
 // localStorage/sessionStorage — document text is private.
 
+import { useWorkspaceAllows } from "../../../hooks/usePlans";
 import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useParams, Link, Navigate, useBlocker, useLocation } from "react-router";
 import { useEditor, EditorContent } from "@tiptap/react";
@@ -526,8 +527,10 @@ function AuthorEditorInner({ template, onReload }: { template: DocumentTemplate;
           : <AlertCircle size={size} aria-hidden />;
 
   const ribbonVisible = editor !== null && (!isNarrow || ribbonOpen);
-  const sidePanelOpen = chatOpen && panelSide;
-  const toggleVisible = !chatOpen && !typing;
+  // 093. The LAGDA Chatbot is part of the paid plans.
+  const chatAllowed = useWorkspaceAllows("personal") !== false;
+  const sidePanelOpen = chatAllowed && chatOpen && panelSide;
+  const toggleVisible = chatAllowed && !chatOpen && !typing;
   const fabBottom = isNarrow ? 16 : 24;
   const toggleBottom = isReal
     ? `calc(${String(fabBottom + 48 + 14)}px + env(safe-area-inset-bottom, 0px))`
@@ -826,7 +829,7 @@ function AuthorEditorInner({ template, onReload }: { template: DocumentTemplate;
         )}
       </div>
 
-      {chatOpen && !panelSide && (
+      {chatAllowed && chatOpen && !panelSide && (
         <Suspense fallback={null}>
         <ChatPanel
           templateId={template.id}

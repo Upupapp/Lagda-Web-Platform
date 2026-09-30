@@ -14,7 +14,9 @@ import type { LucideIcon } from "lucide-react";
 import { SettingsPage, SSection, Skeleton, Notice, BTN_SECONDARY, Badge, SET, TONES } from "./SettingsShell";
 import { useWorkspaceUsage, formatBytes, formatDate, IS_LIVE } from "./settings-data";
 import { useWorkspaceMode } from "../../../hooks/useWorkspaceAccess";
-import { CURRENT_PLAN, currentPlanLimits, type PlanLimit } from "../../../config/pricing.config";
+import { currentPlanLimits, type PlanLimit } from "../../../config/pricing.config";
+import { useWorkspacePlan } from "../../../hooks/usePlans";
+import { PLAN_NAMES } from "../../../services/real/plans.service";
 
 const GF = { fontFamily: SET.FONT };
 const GM = { fontFamily: SET.MONO };
@@ -91,6 +93,7 @@ export function UsagePage() {
   const { workspaceId } = useWorkspaceMode();
   const { usage, error, reload } = useWorkspaceUsage(workspaceId);
   const limits = currentPlanLimits();
+  const { plan } = useWorkspacePlan();
   const heading = { title: "Usage", breadcrumb: "Usage", description: "What this workspace has used this month, and in total." };
 
   if (error) return (
@@ -141,7 +144,7 @@ export function UsagePage() {
           <div style={{ ...GF, fontSize: 12.5, color: SET.SLATE }}>{formatDate(usage.period.start)} – {formatDate(usage.period.end - 1)}</div>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-          <Badge tone="accent" icon={Sparkles}>{CURRENT_PLAN.name}</Badge>
+          <Badge tone="accent" icon={Sparkles}>{plan === null ? "…" : PLAN_NAMES[plan]}</Badge>
           <span style={{ ...GF, fontSize: 13, color: SET.SLATE }}>{limits ? "Plan limits apply" : "No limits applied"}</span>
           <Link to="/app/workspace/settings/billing" style={{ ...GF, fontSize: 13, fontWeight: 600, color: SET.AZURE_TEXT, textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 4 }}>
             Plans <ArrowRight size={14} aria-hidden />

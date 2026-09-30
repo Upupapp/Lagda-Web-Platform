@@ -3,6 +3,7 @@
 // Frontend-only demonstration. No real persistence, sync, or identity verification.
 // Burgundy never used. eNotary never referenced.
 
+import { useWorkspaceAllows } from "../../../hooks/usePlans";
 import React, { useState, useCallback } from "react";
 import { useNavigate, Link, useSearchParams } from "react-router";
 import { ContactProvider, useContacts } from "../../../context/ContactContext";
@@ -135,6 +136,8 @@ function CreateContactForm() {
   }, [workspaceName]);
   const [title,  setTitle]  = useState("");
   const [scope,  setScope]  = useState<ContactScope>("personal");
+  // 093. Sharing a contact with the workspace is part of Business.
+  const canShareContacts = useWorkspaceAllows("business") !== false;
   const [note,   setNote]   = useState("");
   const [tagIds,    setTagIds]    = useState<ContactTagId[]>([]);
   const [groupIds,  _setGroupIds]  = useState<ContactGroupId[]>([]);
@@ -291,9 +294,11 @@ function CreateContactForm() {
               </FormField>
             </div>
 
-            <FormField label="Visibility" hint="Workspace contacts may be shared with permitted team members.">
+            <FormField label="Visibility" hint={canShareContacts
+              ? "Workspace contacts may be shared with permitted team members."
+              : "Sharing contacts with the workspace is part of the Business plan."}>
               <div style={{ display: "flex", gap: 8 }}>
-                {(["personal", "workspace"] as ContactScope[]).map(s => (
+                {((canShareContacts ? ["personal", "workspace"] : ["personal"]) as ContactScope[]).map(s => (
                   <button
                     key={s}
                     type="button"

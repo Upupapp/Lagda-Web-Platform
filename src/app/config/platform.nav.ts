@@ -15,6 +15,8 @@ export interface PlatformNavItem {
   group: NavGroup;
   permission?: PlatformPermission;
   featureFlag?: PlatformFeatureFlag;
+  /** 093. Hidden while the workspace owner's plan is below this. */
+  plan?: "personal" | "business";
   status?: NavStatus;
   showBadge?: boolean;      // dynamic badge (e.g., unread count)
   showOnMobile?: boolean;
@@ -193,6 +195,7 @@ export const UTILITY_NAV: PlatformNavItem[] = [
     group: "utility",
     permission: "manage_team",
     featureFlag: "teamEnabled",
+    plan: "personal",
     showOnMobile: true,
     description: "People, organisation, activity and workspace settings",
   },

@@ -268,10 +268,10 @@ const GB = 1_000_000_000;
 
 export const SAMPLE_PLANS: readonly SamplePlan[] = [
   {
-    id: "free", name: "Free", tagline: "Try LAGDA for occasional signing",
+    id: "free", name: "Free", tagline: "Try LAGDA with one document",
     price: { monthly: 0, annual: 0, perUser: false }, mostPopular: false,
     limits: {
-      signingRequestsPerMonth: { value: 5, label: "5" },
+      signingRequestsPerMonth: { value: 1, label: "1 document in total" },
       users: { value: 1, label: "1" },
       storageBytes: { value: 500 * MB, label: "500 MB" },
       templates: { value: 3, label: "3" },
@@ -279,7 +279,7 @@ export const SAMPLE_PLANS: readonly SamplePlan[] = [
     signerAuthentication: "Secure link + email code",
     branding: false, teamControls: false, activityLog: false,
     support: "Help Center", trial: null,
-    highlights: ["5 signing requests a month", "Secure link and email code", "Audit trail and Verification", "Help Center support"],
+    highlights: ["1 document sent for signing", "Unlimited signing of documents sent to you", "Personal contacts", "Audit trail and Verification", "Help Center support"],
   },
   {
     id: "personal", name: "Personal", tagline: "For individuals and solo practitioners",
@@ -291,9 +291,9 @@ export const SAMPLE_PLANS: readonly SamplePlan[] = [
       templates: { value: 25, label: "25" },
     },
     signerAuthentication: "+ SMS code",
-    branding: false, teamControls: false, activityLog: false,
-    support: "Email", trial: "14 days",
-    highlights: ["50 signing requests a month", "SMS code for signers", "25 templates, 5 GB storage", "Email support"],
+    branding: true, teamControls: false, activityLog: false,
+    support: "Email", trial: null,
+    highlights: ["50 signing requests a month", "Personal branding", "Document sharing", "Ready-made templates and chatbot", "Email support"],
   },
   {
     id: "business", name: "Business", tagline: "For teams and growing organizations",
@@ -306,8 +306,8 @@ export const SAMPLE_PLANS: readonly SamplePlan[] = [
     },
     signerAuthentication: "+ Authenticator app",
     branding: true, teamControls: true, activityLog: true,
-    support: "Priority email", trial: "14 days",
-    highlights: ["200 signing requests per user a month", "Company branding", "Join links, approvals and roles", "Workspace activity log"],
+    support: "Priority email", trial: null,
+    highlights: ["200 signing requests per user a month", "Company branding", "Members, teams, join links and roles", "Shared contacts and the workspace card", "Workspace activity log"],
   },
   {
     id: "enterprise", name: "Enterprise", tagline: "For large organizations and institutions",
@@ -352,7 +352,7 @@ export const SAMPLE_COMPARE_GROUPS: readonly CatalogCompareGroup[] = [
   {
     id: "limits", title: "Limits",
     rows: [
-      { id: "signing-requests", label: "Signing requests per month", cell: p => p.limits.signingRequestsPerMonth.label },
+      { id: "signing-requests", label: "Documents you send", cell: p => p.id === "free" ? p.limits.signingRequestsPerMonth.label : `${p.limits.signingRequestsPerMonth.label} a month` },
       { id: "users", label: "Users", cell: p => p.limits.users.label },
       { id: "storage", label: "Storage", cell: p => p.limits.storageBytes.label },
       { id: "templates", label: "Templates", cell: p => p.limits.templates.label },
@@ -369,7 +369,9 @@ export const SAMPLE_COMPARE_GROUPS: readonly CatalogCompareGroup[] = [
   {
     id: "workspace", title: "Workspace",
     rows: [
-      { id: "branding", label: "Company branding", cell: p => p.branding },
+      { id: "branding", label: "Branding", cell: p => p.branding },
+      { id: "sharing", label: "Document sharing", cell: p => p.id !== "free" },
+      { id: "contacts", label: "Personal contacts", cell: () => true },
       { id: "team", label: "Join links, approvals and roles", cell: p => p.teamControls },
       { id: "activity", label: "Workspace activity log", cell: p => p.activityLog },
     ],
@@ -378,7 +380,7 @@ export const SAMPLE_COMPARE_GROUPS: readonly CatalogCompareGroup[] = [
     id: "support", title: "Support",
     rows: [
       { id: "support", label: "Support", cell: p => p.support },
-      { id: "trial", label: "Free trial", cell: p => p.trial ?? false },
+      { id: "trial", label: "Trial", cell: p => p.trial ?? false },
     ],
   },
 ];

@@ -55,7 +55,7 @@ export function InvoicePage() {
     return (
       <SettingsPage title="Invoice not found" breadcrumb="Billing & Plan › Invoice">
         {back}
-        <SCard><p style={{ ...GF, fontSize: 13.5, color: SET.SLATE, margin: 0 }}>There is no invoice with that number. Early Access is not billed, so the only invoice is the sample.</p></SCard>
+        <SCard><p style={{ ...GF, fontSize: 13.5, color: SET.SLATE, margin: 0 }}>There is no invoice with that number. Test mode bills nothing, so the only invoice is the sample.</p></SCard>
       </SettingsPage>
     );
   }

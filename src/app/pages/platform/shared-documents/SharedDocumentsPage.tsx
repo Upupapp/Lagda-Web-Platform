@@ -7,6 +7,8 @@
 // The backend's notices link to /app/documents/shared-by-me and
 // /app/documents/shared-with-me; the router sends both here.
 
+import { PlanUpgradeCard } from "../../../components/platform/PlanGate";
+import { useWorkspaceAllows } from "../../../hooks/usePlans";
 import { Navigate, useNavigate, useParams, useSearchParams } from "react-router";
 import { Send, Inbox, Share2 } from "lucide-react";
 import { AppContent, EmptyStateLayout, PageHeader } from "../../../components/platform";
@@ -27,6 +29,9 @@ export function SharedDocumentsPage() {
   const [params, setParams] = useSearchParams();
   const navigate = useNavigate();
   usePageMeta();
+  // 093. Sharing is paid. What was already shared stays listed, so it can
+  // still be managed and taken back.
+  const paid = useWorkspaceAllows("personal");
 
   if (tab !== "by-me" && tab !== "with-me") return <Navigate to={`${SHARED_DOCUMENTS_PATH}/by-me`} replace />;
   const active: Tab = tab;
@@ -60,7 +65,10 @@ export function SharedDocumentsPage() {
             <EmptyStateLayout icon={<Share2 size={26} />} title="Sharing needs a connected LAGDA account"
               description="Document sharing works with real completed documents. It is not available in this demonstration." />
           ) : active === "by-me" ? (
-            <SharedByMeSection section={byMeSection} onSection={setSection} />
+            <>
+              {paid === false && <PlanUpgradeCard minimum="personal" feature="Sharing documents" compact />}
+              <SharedByMeSection section={byMeSection} onSection={setSection} />
+            </>
           ) : (
             <SharedWithMeSection section={withMeSection} onSection={setSection} />
           )}

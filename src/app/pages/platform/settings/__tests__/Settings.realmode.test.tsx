@@ -27,6 +27,7 @@ import { SessionsPage } from "../SessionsPage";
 import { SecurityActivityPage } from "../SecurityActivityPage";
 import { NotificationsPage } from "../NotificationsPage";
 import { UsagePage } from "../UsagePage";
+import { PlanBillingPage } from "../PlanBillingPage";
 import { BillingPage } from "../BillingPage";
 import { InvoicePage } from "../billing/InvoicePage";
 import { DataPrivacyPage } from "../DataPrivacyPage";
@@ -102,6 +103,12 @@ beforeEach(() => {
       return Promise.resolve(json(200, { workspaceId: "ws_1", membershipId: "m1", role, capabilities: ROLE_CAPABILITIES[role as "owner"], roleTitle: null }));
     }
     if (path === "/workspaces/ws_1/usage") return Promise.resolve(json(200, USAGE));
+    // 093. The workspace's plan is its owner's.
+    if (path === "/workspaces/ws_1/plan") return Promise.resolve(json(200, { plan: "business", ownerIsYou: true, ownerName: "Carmen Reyes", paidUntil: "2026-10-30T09:00:00.000Z" }));
+    if (path === "/me/plan") return Promise.resolve(json(200, {
+      plan: "business", storedPlan: "business", paidUntil: "2026-10-30T09:00:00.000Z", autoRenew: false,
+      freeDocumentsUsed: 0, freeDocumentLimit: 1, pendingRequest: null, approver: false, upgradesAvailable: true,
+    }));
     if (path === "/workspaces/ws_1/members") return Promise.resolve(json(200, { members: [
       { membershipId: "m2", userId: "u9", email: "owner@reyes.ph", displayName: "Carmen Reyes", role: "owner", joinedAt: 1, isCurrentUser: false },
       { membershipId: "m1", userId: "u1", email: "ana@example.com", displayName: "Ana Reyes", role: "administrator", joinedAt: 2, isCurrentUser: true },
@@ -124,6 +131,7 @@ function renderAt(path: string) {
           <Route path="security/activity" element={<SecurityActivityPage />} />
           <Route path="notifications" element={<NotificationsPage />} />
           <Route path="data-and-privacy" element={<DataPrivacyPage />} />
+          <Route path="plan" element={<PlanBillingPage />} />
         </Route>
         {/* Moved to Workspace › Workspace Settings; the pages are the same. */}
         <Route path="/app/workspace/settings">
@@ -137,13 +145,14 @@ function renderAt(path: string) {
 }
 
 describe("settings shell", () => {
-  it("shows the six personal sections side by side, marks the current one, and no preview note", async () => {
+  it("shows the seven personal sections side by side, marks the current one, and no preview note", async () => {
     renderAt("/app/settings/preferences");
     expect(screen.getByRole("heading", { level: 1, name: "My Settings" })).toBeInTheDocument();
     const banners = screen.getByTestId("settings-banners");
     expect(within(banners).getAllByRole("link").map(l => l.textContent)).toEqual([
       expect.stringContaining("Profile"), expect.stringContaining("Preferences"), expect.stringContaining("Security"),
       expect.stringContaining("Notifications"), expect.stringContaining("Signatures & Initials"), expect.stringContaining("Data & Privacy"),
+      expect.stringContaining("Plan & Billing"),
     ]);
     for (const s of SETTINGS_SECTIONS) expect(screen.getByTestId(`settings-banner-${s.key}`)).toHaveAttribute("href", s.path);
     // Workspace-wide settings are not here any more; a line says where they went.
@@ -368,41 +377,38 @@ describe("usage", () => {
 });
 
 describe("billing & plan", () => {
-  it("shows Early Access with nothing billed and real usage lines", async () => {
+  it("shows the workspace's plan as its owner's, with real usage lines", async () => {
     renderAt("/app/workspace/settings/billing");
-    expect(screen.getByTestId("billing-current-plan")).toHaveTextContent("EARLY ACCESS");
-    expect(screen.getByText(/Includes all Business features at no charge/)).toBeInTheDocument();
-    expect(screen.getByTestId("billing-cycle")).toHaveTextContent("—");
-    expect(screen.getByTestId("billing-next-invoice")).toHaveTextContent("None");
+    expect(await screen.findByTestId("billing-plan-summary")).toHaveTextContent("This workspace has Business features because you are on Business.");
+    expect(screen.getByTestId("billing-current-plan")).toHaveTextContent("BUSINESS");
+    expect(screen.getByTestId("billing-cycle")).toHaveTextContent("Monthly");
+    expect(screen.getByTestId("billing-next-invoice")).toHaveTextContent("2026");
+    expect(screen.getByTestId("billing-manage-plan")).toHaveAttribute("href", "/app/settings/plan");
     const lines = await screen.findByTestId("billing-usage-lines");
     expect(lines).toHaveTextContent("Signing requests this month3 (no limit applied)");
   });
 
-  it("shows sample prices monthly and annually, from the plan config", async () => {
-    const user = userEvent.setup();
+  it("shows monthly test-mode prices from the plan config, marking the current plan", async () => {
     renderAt("/app/workspace/settings/billing");
-    expect(screen.getByTestId("sample-pricing-notice")).toHaveTextContent("SAMPLE PRICING — FINAL PRICES CONFIRMED AT LAUNCH");
+    expect(screen.getByTestId("sample-pricing-notice")).toHaveTextContent("TEST MODE — NO MONEY IS MOVED");
     expect(screen.getByTestId("plan-price-free")).toHaveTextContent("₱0");
     expect(screen.getByTestId("plan-price-personal")).toHaveTextContent("₱299");
     expect(screen.getByTestId("plan-price-business")).toHaveTextContent("₱799");
     expect(within(screen.getByTestId("plan-card-enterprise")).getByText("Custom")).toBeInTheDocument();
     expect(within(screen.getByTestId("plan-card-business")).getByText("Most popular")).toBeInTheDocument();
-    expect(within(screen.getByTestId("plan-card-business")).getByText("Your current features")).toBeInTheDocument();
-    await user.click(screen.getByRole("radio", { name: /Annual/ }));
-    expect(screen.getByTestId("plan-price-personal")).toHaveTextContent("₱2,990");
-    expect(screen.getByTestId("plan-price-business")).toHaveTextContent("₱7,990");
-    expect(screen.getByTestId("plan-saving-personal")).toHaveTextContent("Save ₱598");
-    expect(screen.getByTestId("plan-saving-business")).toHaveTextContent("Save ₱1,598 per user");
+    expect(await within(screen.getByTestId("plan-card-business")).findByText("Current plan")).toBeInTheDocument();
+    expect(within(screen.getByTestId("plan-card-free")).getByText("1 document sent for signing")).toBeInTheDocument();
   });
 
-  it("explains that paid plans open at launch instead of starting a checkout", async () => {
+  it("sends Choose to your own Plan & Billing, and explains Enterprise", async () => {
     const user = userEvent.setup();
     renderAt("/app/workspace/settings/billing");
-    await user.click(screen.getByRole("button", { name: "Choose Personal" }));
-    const dialog = screen.getByRole("dialog", { name: "Paid plans open at launch" });
-    expect(dialog).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Contact sales" }));
+    expect(screen.getByRole("dialog", { name: "Enterprise is set up by LAGDA" })).toBeInTheDocument();
     await user.keyboard("{Escape}");
     expect(screen.queryByRole("dialog")).toBeNull();
+    await user.click(screen.getByRole("button", { name: "Choose Personal" }));
+    expect(await screen.findByRole("heading", { name: "Upgrade to Personal" })).toBeInTheDocument();
     expect(calls.some(c => c.method !== "GET")).toBe(false);
   });
 
@@ -412,8 +418,9 @@ describe("billing & plan", () => {
     expect(screen.queryByTestId("plan-compare")).toBeNull();
     await user.click(screen.getByRole("button", { name: /Compare all features/ }));
     const table = screen.getByTestId("plan-compare");
-    expect(within(table).getByRole("rowheader", { name: "Signing requests per month" })).toBeInTheDocument();
-    expect(within(table).getByText("200 per user")).toBeInTheDocument();
+    expect(within(table).getByRole("rowheader", { name: "Documents you send" })).toBeInTheDocument();
+    expect(within(table).getByText("1 document in total")).toBeInTheDocument();
+    expect(within(table).getByText("200 per user a month")).toBeInTheDocument();
     expect(within(table).getByText("50 GB shared")).toBeInTheDocument();
     expect(within(table).getByText("Priority email")).toBeInTheDocument();
   });

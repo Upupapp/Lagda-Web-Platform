@@ -36,6 +36,9 @@ function deriveTitle(pathname: string): string {
   if (parts[0] === "templates" && parts[1] === "gallery") {
     return parts.length > 2 ? "Templates › Ready-made › Preview" : "Templates › Ready-made";
   }
+  if (parts[0] === "settings" && parts[1] === "plan") return "My Settings › Plan & Billing";
+  // A request id is noise; the approver sees whose request on the page.
+  if (parts[0] === "plan-requests") return parts.length > 1 ? "Upgrade requests › Request" : "Upgrade requests";
   return parts
     // /app/settings is the person's own settings; the workspace's are under Workspace.
     .map((p, i) => i === 0 && p === "settings" ? "My Settings" : p.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()))

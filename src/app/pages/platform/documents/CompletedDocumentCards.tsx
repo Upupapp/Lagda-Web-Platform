@@ -15,6 +15,7 @@
 // Shared Documents (087) reuses the same card: Shared By Me with the current
 // workspace's branding, Shared With Me with the OWNER workspace's (`branding`).
 
+import { useWorkspaceAllows } from "../../../hooks/usePlans";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { Link } from "react-router";
 import { Menu, X, CircleCheck, Share2 } from "lucide-react";
@@ -54,10 +55,13 @@ export function useDocumentCardBranding(): CardBranding {
   }, [isReal]);
 
   const ws = platform.currentWorkspace;
+  // 093. Branding is paid: a Free owner's workspace shows LAGDA's colour and
+  // no logo. What was saved is kept for when the owner upgrades.
+  const branded = useWorkspaceAllows("personal") !== false;
   return {
     displayName: snapshot?.displayName || ws?.name || "Workspace",
-    primaryColor: snapshot?.primaryColor ?? ws?.brandColor ?? ws?.accentColor ?? DEFAULT_COLOR,
-    logoUrl: snapshot?.logoUrl ?? null,
+    primaryColor: branded ? snapshot?.primaryColor ?? ws?.brandColor ?? ws?.accentColor ?? DEFAULT_COLOR : DEFAULT_COLOR,
+    logoUrl: branded ? snapshot?.logoUrl ?? null : null,
   };
 }
 

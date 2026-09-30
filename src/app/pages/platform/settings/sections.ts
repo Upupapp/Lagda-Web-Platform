@@ -14,7 +14,7 @@
 import type { LucideIcon } from "lucide-react";
 import {
   UserRound, SlidersHorizontal, ShieldCheck, Bell, PenLine, Database,
-  Palette, CreditCard, BarChart3, Network, Puzzle,
+  Palette, CreditCard, BarChart3, Network, Puzzle, Gem,
 } from "lucide-react";
 import { isCapabilityInActiveProfile } from "../../../config/capability-resolver";
 
@@ -23,7 +23,7 @@ export const SETTINGS_ROOT = "/app/settings";
 export type SettingsGroup = "personal" | "workspace";
 
 export type SettingsSectionKey =
-  | "profile" | "preferences" | "security" | "notifications" | "signatures" | "data-and-privacy"
+  | "profile" | "preferences" | "security" | "notifications" | "signatures" | "data-and-privacy" | "plan"
   | "branding" | "billing" | "usage" | "organization" | "integrations";
 
 export interface SettingsSection {
@@ -48,8 +48,9 @@ export const ALL_SETTINGS_SECTIONS: readonly SettingsSection[] = [
   { key: "notifications", label: "Notifications", hint: "Which emails LAGDA sends you", path: p("notifications"), icon: Bell, group: "personal" },
   { key: "signatures", label: "Signatures & Initials", hint: "The signature and initials you apply to documents", path: p("signatures"), icon: PenLine, group: "personal" },
   { key: "data-and-privacy", label: "Data & Privacy", hint: "What LAGDA keeps about you, and your requests", path: p("data-and-privacy"), icon: Database, group: "personal" },
+  { key: "plan", label: "Plan & Billing", hint: "Your plan, the Free document and upgrading", path: p("plan"), icon: Gem, group: "personal" },
   { key: "branding", label: "Branding", hint: "Logo, colour and sender display", path: ws("branding"), icon: Palette, group: "workspace" },
-  { key: "billing", label: "Billing & Plan", hint: "Your plan, sample pricing and invoices", path: ws("billing"), icon: CreditCard, group: "workspace" },
+  { key: "billing", label: "Billing & Plan", hint: "This workspace's plan (its owner's) and invoices", path: ws("billing"), icon: CreditCard, group: "workspace" },
   { key: "usage", label: "Usage", hint: "Signing requests, documents and storage this month", path: ws("usage"), icon: BarChart3, group: "workspace" },
   { key: "organization", label: "Organization Units", hint: "Departments, offices and titles", path: "/app/workspace/organization", icon: Network, group: "workspace" },
   // Post-launch; its route is capability-guarded, so its tab is not shown

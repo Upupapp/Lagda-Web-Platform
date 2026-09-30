@@ -1,3 +1,4 @@
+import { PlanGate } from "./app/components/platform/PlanGate";
 import { lazy, Suspense } from "react";
 import { createBrowserRouter, Navigate } from "react-router";
 import { PublicLayout } from "./app/layouts/PublicLayout";
@@ -1009,6 +1010,21 @@ const SettingsInvoicePage = lazy(() =>
     default: m.InvoicePage,
   })),
 );
+const SettingsPlanBillingPage = lazy(() =>
+  import("./app/pages/platform/settings/PlanBillingPage").then((m) => ({
+    default: m.PlanBillingPage,
+  })),
+);
+const PlanRequestsPage = lazy(() =>
+  import("./app/pages/platform/plans/PlanRequestsPage").then((m) => ({
+    default: m.PlanRequestsPage,
+  })),
+);
+const PlanRequestPage = lazy(() =>
+  import("./app/pages/platform/plans/PlanRequestsPage").then((m) => ({
+    default: m.PlanRequestPage,
+  })),
+);
 const SettingsDataPrivacyPage = lazy(() =>
   import("./app/pages/platform/settings/DataPrivacyPage").then((m) => ({
     default: m.DataPrivacyPage,
@@ -1626,6 +1642,24 @@ export const router = createBrowserRouter([
         ),
       },
 
+      // 093. The LAGDA owner's upgrade approvals (the approval email links here).
+      {
+        path: "plan-requests",
+        element: (
+          <Suspense fallback={null}>
+            <PlanRequestsPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: "plan-requests/:requestId",
+        element: (
+          <Suspense fallback={null}>
+            <PlanRequestPage />
+          </Suspense>
+        ),
+      },
+
       // Invitations: workspace invitations sent to this account.
       {
         path: "invitations",
@@ -2073,7 +2107,7 @@ export const router = createBrowserRouter([
         path: "templates/gallery",
         element: (
           <Suspense fallback={null}>
-            <ReadyMadeGalleryPage />
+            <PlanGate minimum="personal" feature="Ready-made templates"><ReadyMadeGalleryPage /></PlanGate>
           </Suspense>
         ),
       },
@@ -2081,7 +2115,7 @@ export const router = createBrowserRouter([
         path: "templates/gallery/:readyId",
         element: (
           <Suspense fallback={null}>
-            <ReadyMadePreviewPage />
+            <PlanGate minimum="personal" feature="Ready-made templates"><ReadyMadePreviewPage /></PlanGate>
           </Suspense>
         ),
       },
@@ -2531,27 +2565,27 @@ export const router = createBrowserRouter([
         path: "workspace",
         element: <WorkspaceShell />,
         children: [
-          { index: true, element: <WorkspaceOverviewPage /> },
-          { path: "members", element: <MembersPage /> },
-          { path: "join-requests", element: <JoinRequestsPage /> },
-          { path: "join-links", element: <JoinLinksPage /> },
-          { path: "invitations", element: <InvitationsPage /> },
-          { path: "teams", element: <TeamsPage /> },
-          { path: "roles", element: <RolesPage /> },
+          { index: true, element: <PlanGate minimum="personal" feature="The workspace overview"><WorkspaceOverviewPage /></PlanGate> },
+          { path: "members", element: <PlanGate minimum="business" feature="Members"><MembersPage /></PlanGate> },
+          { path: "join-requests", element: <PlanGate minimum="business" feature="Join requests"><JoinRequestsPage /></PlanGate> },
+          { path: "join-links", element: <PlanGate minimum="business" feature="Join links"><JoinLinksPage /></PlanGate> },
+          { path: "invitations", element: <PlanGate minimum="business" feature="Inviting members"><InvitationsPage /></PlanGate> },
+          { path: "teams", element: <PlanGate minimum="business" feature="Teams"><TeamsPage /></PlanGate> },
+          { path: "roles", element: <PlanGate minimum="business" feature="Roles"><RolesPage /></PlanGate> },
           // Documents lives in the side panel; Manage no longer repeats it.
           { path: "documents", element: <Navigate to="/app/documents" replace /> },
-          { path: "activity", element: <ActivityPage /> },
+          { path: "activity", element: <PlanGate minimum="business" feature="The activity log"><ActivityPage /></PlanGate> },
           // Invite people is one tab over the two pages below it.
           { path: "invite", element: <Navigate to="/app/workspace/invitations" replace /> },
           // Organisation › Organization units (was /app/settings/organization).
-          { path: "organization", element: <SettingsOrganizationUnitsPage /> },
+          { path: "organization", element: <PlanGate minimum="business" feature="Organisation"><SettingsOrganizationUnitsPage /></PlanGate> },
           // Workspace settings, behind the gear. General is the workspace's
           // own settings page; the rest moved here from /app/settings.
-          { path: "settings", element: <WorkspaceSettingsPage /> },
-          { path: "settings/branding", element: <SettingsBrandingPage /> },
+          { path: "settings", element: <PlanGate minimum="personal" feature="Workspace settings"><WorkspaceSettingsPage /></PlanGate> },
+          { path: "settings/branding", element: <PlanGate minimum="personal" feature="Branding"><SettingsBrandingPage /></PlanGate> },
           { path: "settings/billing", element: <SettingsBillingPage /> },
           { path: "settings/billing/invoices/:invoiceId", element: <SettingsInvoicePage /> },
-          { path: "settings/usage", element: <SettingsUsagePage /> },
+          { path: "settings/usage", element: <PlanGate minimum="personal" feature="Usage"><SettingsUsagePage /></PlanGate> },
           {
             path: "settings/integrations",
             element: (
@@ -2568,9 +2602,9 @@ export const router = createBrowserRouter([
               </CapabilityGuard>
             ),
           },
-          { path: "members/:memberId", element: <MemberDetailPage /> },
-          { path: "teams/:teamId", element: <TeamDetailPage /> },
-          { path: "roles/:roleId", element: <RoleDetailPage /> },
+          { path: "members/:memberId", element: <PlanGate minimum="business" feature="Members"><MemberDetailPage /></PlanGate> },
+          { path: "teams/:teamId", element: <PlanGate minimum="business" feature="Teams"><TeamDetailPage /></PlanGate> },
+          { path: "roles/:roleId", element: <PlanGate minimum="business" feature="Roles"><RoleDetailPage /></PlanGate> },
         ],
       },
       // Settings (Command 24) — ONE layout route, sixteen children.
@@ -2662,6 +2696,8 @@ export const router = createBrowserRouter([
               <SettingsDataPrivacyPage />
             ),
           },
+          // 093. The person's own plan.
+          { path: "plan", element: <SettingsPlanBillingPage /> },
         ],
       },
 

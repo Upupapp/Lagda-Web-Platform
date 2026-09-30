@@ -5,6 +5,7 @@
 // No real document content in list. No private audit evidence displayed.
 // All participant names are fictional. No IP, device, location shown.
 
+import { useWorkspaceAllows } from "../../../hooks/usePlans";
 import { useState, useEffect, useCallback, useMemo, useRef, lazy, Suspense } from "react";
 import { Link, Navigate, useSearchParams, useNavigate } from "react-router";
 import {
@@ -2320,7 +2321,8 @@ function documentCard(
     onView: () => void;
     onSignatures: () => void;
     onAudit: () => void;
-    onResend: () => void;
+    /** Absent on a Free owner's workspace (093): no Send again. */
+    onResend?: () => void;
     onShare?: () => void;
   },
 ): CompletedCardData {
@@ -2347,7 +2349,7 @@ function documentCard(
   if (!isUnsentDraft(item)) {
     actions.push({ id: "history", label: "History", icon: History, onSelect: deps.onAudit });
   }
-  if (item.state !== "draft" && item.state !== "ready-to-send") {
+  if (item.state !== "draft" && item.state !== "ready-to-send" && deps.onResend !== undefined) {
     actions.push({ id: "send-again", label: "Send again", icon: Send, onSelect: deps.onResend });
   }
 
@@ -2532,6 +2534,8 @@ function DocumentsPageRealMode() {
   const { onPrepareClick } = usePrepareLaunch();
   const navigate = useNavigate();
   const ownBranding = useDocumentCardBranding();
+  // 093. Sharing and Send again are paid; an unread plan hides nothing.
+  const paidWorkspace = useWorkspaceAllows("personal") !== false;
   const { currentWorkspace } = usePlatform();
   const workspaceId = currentWorkspace?.id ?? null;
 
@@ -2888,8 +2892,8 @@ function DocumentsPageRealMode() {
             onView: () => { setViewing(item); },
             onSignatures: () => { setSignaturesFor(item); },
             onAudit: () => { setAuditFor(item); },
-            onResend: () => { setResendFor(item); },
-            onShare: item.state === "completed" ? () => { setShareFor(item); } : undefined,
+            ...(paidWorkspace ? { onResend: () => { setResendFor(item); } } : {}),
+            onShare: item.state === "completed" && paidWorkspace ? () => { setShareFor(item); } : undefined,
           }))} />
         )}
         </>)}

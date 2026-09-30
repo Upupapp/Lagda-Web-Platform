@@ -37,9 +37,9 @@ describe("settings sections", () => {
     expect(movedSettingsPath("/app/settings")).toBeNull();
   });
 
-  it("groups six personal and five workspace sections, with Integrations capability-gated", () => {
+  it("groups seven personal and five workspace sections, with Integrations capability-gated", () => {
     expect(ALL_SETTINGS_SECTIONS.filter(s => s.group === "personal").map(s => s.label)).toEqual(
-      ["Profile", "Preferences", "Security", "Notifications", "Signatures & Initials", "Data & Privacy"]);
+      ["Profile", "Preferences", "Security", "Notifications", "Signatures & Initials", "Data & Privacy", "Plan & Billing"]);
     expect(ALL_SETTINGS_SECTIONS.filter(s => s.group === "workspace").map(s => s.label)).toEqual(
       ["Branding", "Billing & Plan", "Usage", "Organization Units", "Integrations"]);
     expect(ALL_SETTINGS_SECTIONS.find(s => s.key === "integrations")?.capability).toBe("integrations");
@@ -69,13 +69,13 @@ describe("pricing config", () => {
     expect(business?.price).toEqual({ monthly: 799, annual: 7990, perUser: true });
     expect(enterprise?.price).toBeNull();
     expect(business?.mostPopular).toBe(true);
-    expect(SAMPLE_PLANS.map(p => p.limits.signingRequestsPerMonth.label)).toEqual(["5", "50", "200 per user", "Custom"]);
+    expect(SAMPLE_PLANS.map(p => p.limits.signingRequestsPerMonth.label)).toEqual(["1 document in total", "50", "200 per user", "Custom"]);
     expect(SAMPLE_PLANS.map(p => p.limits.users.label)).toEqual(["1", "1", "Up to 50", "Unlimited"]);
     expect(SAMPLE_PLANS.map(p => p.limits.storageBytes.label)).toEqual(["500 MB", "5 GB", "50 GB shared", "Custom"]);
     expect(SAMPLE_PLANS.map(p => p.limits.templates.label)).toEqual(["3", "25", "Unlimited shared", "Unlimited"]);
     expect(SAMPLE_PLANS.map(p => p.support)).toEqual(["Help Center", "Email", "Priority email", "Dedicated"]);
-    expect(SAMPLE_PLANS.map(p => p.trial)).toEqual([null, "14 days", "14 days", "Demo"]);
-    expect(SAMPLE_PLANS.map(p => p.branding)).toEqual([false, false, true, true]);
+    expect(SAMPLE_PLANS.map(p => p.trial)).toEqual([null, null, null, "Demo"]);
+    expect(SAMPLE_PLANS.map(p => p.branding)).toEqual([false, true, true, true]);
     expect(annualSaving({ monthly: 299, annual: 2990, perUser: false })).toBe(598);
     expect(formatPeso(7990)).toBe("₱7,990");
   });
@@ -86,7 +86,7 @@ describe("pricing config", () => {
     expect(rows.find(r => r.id === "signer-auth")?.cell(SAMPLE_PLANS[3]!)).toBe("+ SSO");
   });
 
-  it("applies no limits during Early Access", () => {
+  it("applies no limits beyond the Free document (enforced by the server)", () => {
     expect(CURRENT_PLAN.name).toBe("Early Access");
     expect(currentPlanLimits()).toBeNull();
   });

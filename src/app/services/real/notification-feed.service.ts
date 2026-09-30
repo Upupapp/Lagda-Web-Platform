@@ -173,6 +173,46 @@ function present(row: FeedRow): Presentation {
       };
     }
 
+    // 093. Plans. Emailed too, so none is in-app only.
+    case "PLAN_UPGRADE_REQUESTED": {
+      const who = str(row.templateInput, "requesterDisplayName") ?? "Someone";
+      const plan = str(row.templateInput, "planName") ?? "a paid plan";
+      const requestId = str(row.templateInput, "requestId");
+      return {
+        category: "my-actions", severity: "info", priority: "high",
+        title: `${who} asked for the ${plan} plan`,
+        body: "A test-mode upgrade request is waiting for your approval. No money was moved.",
+        actionLabel: "Review the request",
+        actionPath: requestId === null ? "/app/plan-requests" : `/app/plan-requests/${encodeURIComponent(requestId)}`,
+        why: "You were sent this because you approve plan upgrades for LAGDA.",
+      };
+    }
+
+    case "PLAN_UPGRADE_APPROVED": {
+      const plan = str(row.templateInput, "planName") ?? "Your plan";
+      const until = str(row.templateInput, "paidUntil");
+      return {
+        category: "workspace", severity: "success", priority: "normal",
+        title: `Your ${plan} plan is active`,
+        body: until === null ? "Your upgrade was approved." : `Your upgrade was approved. It runs until ${until}.`,
+        actionLabel: "Open Plan & Billing",
+        actionPath: "/app/settings/plan",
+        why: "You were sent this because you asked to upgrade your plan.",
+      };
+    }
+
+    case "PLAN_UPGRADE_DECLINED": {
+      const plan = str(row.templateInput, "planName") ?? "paid plan";
+      return {
+        category: "workspace", severity: "warning", priority: "normal",
+        title: `Your ${plan} plan request was declined`,
+        body: "You can send a new request from Plan & Billing.",
+        actionLabel: "Open Plan & Billing",
+        actionPath: "/app/settings/plan",
+        why: "You were sent this because you asked to upgrade your plan.",
+      };
+    }
+
     case "WORKSPACE_INVITATION_RECEIVED": {
       const input = row.templateInput;
       const inviter = str(input, "inviterDisplayName") ?? "Someone";

@@ -3,6 +3,7 @@
 // Frontend-only demonstration. No real identity verification claims.
 // Burgundy never used. eNotary never referenced.
 
+import { WhenPlan } from "../../../components/platform/PlanGate";
 import React, { useCallback, useEffect, useState } from "react";
 import {
   Mail, Phone, Building2, Briefcase, Share2, User as UserIcon, Pencil, Archive, RotateCcw, ArrowLeft,
@@ -376,9 +377,11 @@ function ContactDetail() {
 
         <aside className="cd-side">
           {USE_REAL_BACKEND && workspaceId !== undefined && contact.status === "active" && (
-            <ContactWorkspaceCard contact={contact} workspaceId={workspaceId}
-              canAskToPrepare={canRequest && contact.workspaceMember != null}
-              onAskToPrepare={() => { setRequestKind("preparation"); }} />
+            <WhenPlan minimum="business">
+              <ContactWorkspaceCard contact={contact} workspaceId={workspaceId}
+                canAskToPrepare={canRequest && contact.workspaceMember != null}
+                onAskToPrepare={() => { setRequestKind("preparation"); }} />
+            </WhenPlan>
           )}
         {/* Participant separation notice */}
         <SectionCard title="Document Participation">

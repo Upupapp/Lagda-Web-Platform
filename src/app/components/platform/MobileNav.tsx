@@ -2,6 +2,7 @@
 // Replaces the sidebar at <768px.
 // Focus-trapped while open. Escape closes. Scroll locked.
 
+import { usePlanCheck } from "../../hooks/usePlans";
 import { WorkspaceBadge } from "./WorkspaceBadge";
 import { useState, useRef, useEffect, useCallback, lazy, Suspense } from "react";
 import { NavLink, Link } from "react-router";
@@ -50,6 +51,7 @@ export function MobileNav() {
   const [toolsOpen, setToolsOpen] = useState(false);
   const [joining, setJoining] = useState(false);
   const { user, currentWorkspace, unreadCount, hasPermission, hasFlag } = usePlatform();
+  const planAllows = usePlanCheck();
   const { restartTour } = useTour();
   const drawerRef    = useRef<HTMLDivElement>(null);
   const triggerRef   = useRef<HTMLButtonElement>(null);
@@ -295,7 +297,7 @@ export function MobileNav() {
             {PRIMARY_NAV.map((item) => {
               const allowed = !item.permission || hasPermission(item.permission);
               const enabled = !item.featureFlag || hasFlag(item.featureFlag);
-              if (!allowed || !enabled) return null;
+              if (!allowed || !enabled || (item.plan !== undefined && !planAllows(item.plan))) return null;
               return (
                 <li key={item.id}>
                   <NavLink
@@ -333,7 +335,7 @@ export function MobileNav() {
             {UTILITY_NAV.map((item) => {
               const allowed = !item.permission || hasPermission(item.permission);
               const enabled = !item.featureFlag || hasFlag(item.featureFlag);
-              if (!allowed || !enabled) return null;
+              if (!allowed || !enabled || (item.plan !== undefined && !planAllows(item.plan))) return null;
               return (
                 <li key={item.id}>
                   <NavLink to={item.path} onClick={closeAndNavigate} style={({ isActive }) => ({ display: "flex", alignItems: "center", gap: 12, padding: "10px 12px", borderRadius: 8, textDecoration: "none", color: isActive ? "#0078D4" : "#64748B" })}>

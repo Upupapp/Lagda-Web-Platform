@@ -16,6 +16,7 @@
 // before the new photo shows, so the header, the sidebar and everyone's
 // contact cards for you all change together.
 
+import { useWorkspacePlan } from "../../hooks/usePlans";
 import { useRef, useState } from "react";
 import { Link } from "react-router";
 import { Camera, Mail, Pencil, BadgeCheck, Loader2 } from "lucide-react";
@@ -33,7 +34,12 @@ export function ProfileHero() {
   const platform = usePlatform();
   const { user, currentWorkspace, refreshSessionFromBackend } = platform;
   const workspaceId = currentWorkspace?.id ?? null;
-  const branding = useWorkspaceBrandingSnapshot(workspaceId);
+  const saved = useWorkspaceBrandingSnapshot(workspaceId);
+  // 093. Branding is paid. On a Free owner's workspace the banner is LAGDA's
+  // blue with the initials, and the saved colour and logo wait for an upgrade.
+  const { plan, info } = useWorkspacePlan(workspaceId);
+  const free = plan === "free";
+  const branding = free && saved !== null ? { ...saved, primaryColor: null, logoUrl: null } : saved;
   const fileRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
   const [preview, setPreview] = useState<string | null>(null);
@@ -102,6 +108,11 @@ export function ProfileHero() {
             <p className="ph-email"><Mail size={16} aria-hidden /> <span>{user.email}</span></p>
           )}
           {error && <p role="alert" className="ph-error">{error}</p>}
+          {free && info?.ownerIsYou && (
+            <p className="ph-hint" data-testid="profile-hero-plan-hint">
+              <Link to="/app/settings/plan">Add your logo and colours: Personal plan</Link>
+            </p>
+          )}
         </div>
 
         <Link to="/app/settings/profile" className="ph-edit"><Pencil size={16} aria-hidden /> Edit Profile</Link>
@@ -139,6 +150,9 @@ const CSS = `
 .ph-email { display: flex; align-items: center; gap: 8px; font-family: 'Geist', sans-serif; font-size: 14px; color: #64748B; margin: 8px 0 0; min-width: 0; }
 .ph-email span { overflow-wrap: anywhere; }
 .ph-email svg { flex-shrink: 0; }
+.ph-hint { font-family: 'Geist', sans-serif; font-size: 13px; margin: 8px 0 0; }
+.ph-hint a { color: #005A9E; font-weight: 600; text-decoration: none; }
+.ph-hint a:hover { text-decoration: underline; }
 .ph-error { font-family: 'Geist', sans-serif; font-size: 13px; color: #B91C1C; margin: 8px 0 0; }
 .ph-edit { display: inline-flex; align-items: center; gap: 8px; min-height: 46px; padding: 0 20px; border-radius: 12px; border: 1.5px solid #D6DEE8;
   background: #FFFFFF; color: #334155; font-family: 'Geist', sans-serif; font-size: 14.5px; font-weight: 600; text-decoration: none; white-space: nowrap;

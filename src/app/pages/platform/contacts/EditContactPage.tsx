@@ -13,6 +13,7 @@
 // What a person may DO in the workspace is not a contact's business: role
 // and privileges belong to their membership (People › Members).
 
+import { useWorkspaceAllows } from "../../../hooks/usePlans";
 import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate, Link } from "react-router";
 import { ContactProvider, useContacts } from "../../../context/ContactContext";
@@ -61,6 +62,8 @@ function EditForm() {
   const [org,    setOrg]    = useState("");
   const [title,  setTitle]  = useState("");
   const [scope,  setScope]  = useState<ContactScope>("personal");
+  // 093. Sharing a contact with the workspace is part of Business.
+  const canShareContacts = useWorkspaceAllows("business") !== false;
   const [note,   setNote]   = useState("");
   const [tagIds,  setTagIds] = useState<ContactTagId[]>([]);
   const [errors,  setErrors] = useState<Record<string, string>>({});
@@ -215,7 +218,7 @@ function EditForm() {
 
           <FormField label="Who can use this contact">
             <div style={{ display: "flex", gap: 8 }}>
-              {(["personal", "workspace"] as ContactScope[]).map(s => (
+              {((canShareContacts || scope === "workspace" ? ["personal", "workspace"] : ["personal"]) as ContactScope[]).map(s => (
                 <button key={s} type="button" role="radio" aria-checked={scope === s} onClick={() => setScope(s)}
                   style={{ ...GF, flex: 1, fontSize: 13, padding: "10px 0", borderRadius: 8, cursor: "pointer", fontWeight: scope === s ? 700 : 500, border: `1.5px solid ${scope === s ? AZURE : "#D1D9E0"}`, background: scope === s ? LIGHT : "#FFFFFF", color: scope === s ? AZURE : SLATE }}>
                   {CONTACT_SCOPE_LABELS[s]}

@@ -2,6 +2,7 @@
 // Collapses to icon-only mode via a toggle button.
 // Hidden on mobile — MobileNav handles that breakpoint.
 
+import { usePlanCheck } from "../../hooks/usePlans";
 import { useState } from "react";
 import { NavLink } from "react-router";
 import {
@@ -198,6 +199,7 @@ function InvitationsNavItem({ to, icon, label, collapsed, pending }: {
 export function PlatformSidebar() {
   const [collapsed, setCollapsed] = useState(false);
   const { hasPermission, hasFlag } = usePlatform();
+  const planAllows = usePlanCheck();
   const { items, unreadCount } = useNotificationCenter();
   const docsUnreadCount = items.filter((n) => n.category === "documents" && n.status === "unread").length;
 
@@ -331,7 +333,7 @@ export function PlatformSidebar() {
           {PRIMARY_NAV.map((item) => {
             const allowed = !item.permission || hasPermission(item.permission);
             const enabled = !item.featureFlag || hasFlag(item.featureFlag);
-            if (!allowed || !enabled) return null;
+            if (!allowed || !enabled || (item.plan !== undefined && !planAllows(item.plan))) return null;
             if (item.id === "documents") {
               return (
                 <DocumentsNavItem
@@ -380,7 +382,7 @@ export function PlatformSidebar() {
           {UTILITY_NAV.map((item) => {
             const allowed = !item.permission || hasPermission(item.permission);
             const enabled = !item.featureFlag || hasFlag(item.featureFlag);
-            if (!allowed || !enabled) return null;
+            if (!allowed || !enabled || (item.plan !== undefined && !planAllows(item.plan))) return null;
             const badge = item.showBadge && item.id === "notifications" ? unreadCount : null;
             return (
               <SidebarItem

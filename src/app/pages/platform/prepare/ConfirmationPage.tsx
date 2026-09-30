@@ -19,6 +19,9 @@ import { mockDocumentService } from "../../../services/mock/document.service";
 import { mapPreparationDraftToDocumentListItem } from "../../../services/prepare/draft-to-document";
 import { USE_REAL_BACKEND } from "../../../services/backend-flag";
 import { ApiError } from "../../../services/api-client";
+import { useMyPlan, useWorkspacePlan, announcePlanChanged } from "../../../hooks/usePlans";
+import { PLAN_ERROR } from "../../../services/real/plans.service";
+import { FreeDocumentUsedNotice } from "../../../components/platform/FreeDocumentUsedNotice";
 import { useProcessing, buildSteps } from "../../../services/processing.service";
 import { realSigningRequestService } from "../../../services/real/signing-request.service";
 import { realPreparationService } from "../../../services/real/preparation.service";
@@ -55,6 +58,13 @@ function ConfirmationPageInner({ participants }: { participants: PrepParticipant
   // on (reported live). `detail` lines are shown verbatim; they're
   // diagnostic text from the API, not something to reword.
   const [sendError, setSendError] = useState<{ message: string; details: string[] } | null>(null);
+  // 093. A Free owner's workspace sends one document for life. Known up front
+  // from the plans, and again from the server's refusal if the two raced.
+  const { plan: myPlan } = useMyPlan();
+  const { plan: workspacePlan } = useWorkspacePlan();
+  const [freeLimitHit, setFreeLimitHit] = useState(false);
+  const freeUsed = freeLimitHit || (USE_REAL_BACKEND && workspacePlan === "free" && myPlan !== null
+    && myPlan.freeDocumentsUsed >= myPlan.freeDocumentLimit);
   // Whether to show the readiness banner at all — hidden on first arrival so
   // the page doesn't flash "not ready" before the visitor has done anything,
   // shown from the first Send attempt onward. The banner's CONTENT below is
@@ -216,12 +226,17 @@ function ConfirmationPageInner({ participants }: { participants: PrepParticipant
       // Backend-confirmed. This logical attempt is over — the next Send
       // (a different document, some other time) must never reuse these keys.
       pendingSendRef.current = null;
+      announcePlanChanged();
       await discardDraft();
       void navigate("/app/documents");
         },
       );
     } catch (err) {
-      if (err instanceof ApiError) {
+      if (err instanceof ApiError && err.body?.code === PLAN_ERROR.freeLimit) {
+        setFreeLimitHit(true);
+        setSendError(null);
+        announcePlanChanged();
+      } else if (err instanceof ApiError) {
         setSendError({
           message: err.message,
           details: (err.body?.details ?? []).map((d) => (d.field ? `${d.field}: ${d.message}` : d.message)),
@@ -357,6 +372,8 @@ function ConfirmationPageInner({ participants }: { participants: PrepParticipant
             </ul>
           </div>
         )}
+
+        {freeUsed && <FreeDocumentUsedNotice />}
 
         {USE_REAL_BACKEND && sendError && (
           <div style={{
@@ -544,7 +561,7 @@ function ConfirmationPageInner({ participants }: { participants: PrepParticipant
             ← Edit Fields
           </button>
           <button
-            disabled={!canProceed || (USE_REAL_BACKEND && sending)}
+            disabled={!canProceed || freeUsed || (USE_REAL_BACKEND && sending)}
             onClick={() => {
               if (USE_REAL_BACKEND) {
                 void handleRealSend();
@@ -561,13 +578,13 @@ function ConfirmationPageInner({ participants }: { participants: PrepParticipant
               void discardDraft();
               void navigate("/app/documents");
             }}
-            aria-disabled={!canProceed || (USE_REAL_BACKEND && sending)}
+            aria-disabled={!canProceed || freeUsed || (USE_REAL_BACKEND && sending)}
             style={{
               ...GF,
               padding:      "10px 28px",
               borderRadius: 8,
               border:       "none",
-              background:   (canProceed && !(USE_REAL_BACKEND && sending)) ? AZURE : "#8AB8D8",
+              background:   (canProceed && !freeUsed && !(USE_REAL_BACKEND && sending)) ? AZURE : "#8AB8D8",
               color:        WHITE,
               fontSize:     14,
               fontWeight:   700,
