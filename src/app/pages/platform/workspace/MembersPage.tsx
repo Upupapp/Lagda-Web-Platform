@@ -7,10 +7,11 @@
 // approved person with no title shows as "New Comer".
 //
 // With a real backend there is no suspend or deactivate (a membership exists
-// or it does not), no bulk action, and the role filter speaks the backend's
-// seven roles. No Burgundy. No eNotary.
+// or it does not), and the role filter speaks the backend's seven roles. The
+// one bulk action there is "Add selected to contacts" (member-contacts.ts),
+// offered to roles that may create contacts. No Burgundy. No eNotary.
 
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState, type ReactNode } from "react";
 import { Link, useSearchParams } from "react-router";
 import { WorkspaceAdminProvider, useWorkspaceAdmin } from "../../../context/WorkspaceAdminContext";
 import { usePlatform } from "../../../context/PlatformContext";
@@ -26,6 +27,8 @@ import { useWorkspaceMode } from "../../../hooks/useWorkspaceAccess";
 import { AccessEditor, Dialog, ErrorNote, PrivilegeChips, type AccessDraft } from "./join/join-ui";
 import { buttonStyle } from "./join/join-styles";
 import { ManagePage } from "./real/manage-ui";
+import { useMemberContacts } from "./member-contacts";
+import { AddToContactsButton, AddToContactsDialog } from "./MemberContactControls";
 
 const GF    = { fontFamily: "'Geist', sans-serif" };
 const GM    = { fontFamily: "'Geist Mono', monospace" };
@@ -69,8 +72,9 @@ function RoleCell({ member }: { member: WorkspaceMemberSummary }) {
   );
 }
 
-function MemberRow({ member, selected, onToggle, onEditAccess }: {
+function MemberRow({ member, selected, onToggle, onEditAccess, contactControl }: {
   member: WorkspaceMemberSummary; selected: boolean; onToggle?: () => void; onEditAccess?: () => void;
+  contactControl?: ReactNode;
 }) {
   const badge = STATUS_BADGE[member.status];
   return (
@@ -103,6 +107,7 @@ function MemberRow({ member, selected, onToggle, onEditAccess }: {
         {member.joinedAt ? new Date(member.joinedAt).toLocaleDateString("en-PH") : "—"}
       </td>
       <td style={{ padding: "10px 12px", whiteSpace: "nowrap", textAlign: "right" }}>
+        {contactControl}
         {onEditAccess && (
           <button type="button" onClick={onEditAccess} aria-label={`Edit access for ${member.displayName}`}
             style={{ ...GF, fontSize: 12, fontWeight: 600, color: AZURE, background: "none", border: "none", cursor: "pointer", padding: "4px 8px" }}>
@@ -118,7 +123,9 @@ function MemberRow({ member, selected, onToggle, onEditAccess }: {
   );
 }
 
-function MemberCard({ member, onEditAccess }: { member: WorkspaceMemberSummary; onEditAccess?: () => void }) {
+function MemberCard({ member, onEditAccess, contactControl }: {
+  member: WorkspaceMemberSummary; onEditAccess?: () => void; contactControl?: ReactNode;
+}) {
   const badge = STATUS_BADGE[member.status];
   return (
     <li style={{ borderBottom: "1px solid #F0F2F5", padding: "12px 14px", display: "flex", flexDirection: "column", gap: 8 }}>
@@ -137,6 +144,7 @@ function MemberCard({ member, onEditAccess }: { member: WorkspaceMemberSummary; 
       </div>
       <RoleCell member={member} />
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+        {contactControl}
         {onEditAccess && (
           <button type="button" onClick={onEditAccess} aria-label={`Edit access for ${member.displayName}`} style={buttonStyle("secondary")}>
             Edit access
@@ -260,6 +268,11 @@ function MembersInner() {
   const [sort, setSort] = useState<string>("name");
   const [dir, setDir] = useState<"asc" | "desc">("asc");
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const contacts = useMemberContacts(workspaceId);
+  const [adding, setAdding] = useState<WorkspaceMemberSummary[] | null>(null);
+  const [contactsNotice, setContactsNotice] = useState<string | null>(null);
+  // Selection drives the demo's bulk bar and, with a backend, "Add selected to contacts".
+  const selectable = !isReal || contacts.available;
 
   const debouncedSearch = useDebounce(search, 280);
 
@@ -335,13 +348,31 @@ function MembersInner() {
           </select>
         </div>
 
+        {contactsNotice && (
+          <p role="status" data-testid="contacts-notice"
+            style={{ ...GF, fontSize: 13, color: "#14532D", background: "#F0FDF4", border: "1px solid #BBF7D0", borderRadius: 8, padding: "8px 12px", margin: "0 0 12px",
+              display: "flex", gap: 10, alignItems: "center", justifyContent: "space-between", flexWrap: "wrap" }}>
+            <span>{contactsNotice}</span>
+            <Link to="/app/contacts" style={{ color: "#14532D", fontWeight: 700 }}>Open contacts →</Link>
+          </p>
+        )}
+
         {/* Bulk bar */}
-        {!isReal && selected.size > 0 && (
-          <div role="toolbar" aria-label="Bulk actions" style={{ background: NAVY, borderRadius: 10, padding: "10px 18px", marginBottom: 12, display: "flex", alignItems: "center", gap: 16 }}>
+        {selectable && selected.size > 0 && (
+          <div role="toolbar" aria-label="Bulk actions" style={{ background: NAVY, borderRadius: 10, padding: "10px 18px", marginBottom: 12, display: "flex", alignItems: "center", gap: "10px 16px", flexWrap: "wrap" }}>
             <span style={{ ...GF, fontSize: 13, color: "#FFFFFF", fontWeight: 600 }}>{selected.size} selected</span>
-            <span style={{ ...GF, fontSize: 12, color: "#94A3B8", cursor: "pointer" }} onClick={() => setSelected(new Set())}>Clear</span>
+            <button type="button" onClick={() => setSelected(new Set())}
+              style={{ ...GF, fontSize: 12, color: "#CBD5E1", background: "none", border: "none", cursor: "pointer", padding: "4px 0" }}>Clear</button>
             <div style={{ flex: 1 }} />
-            <span style={{ ...GF, fontSize: 12, color: "#94A3B8" }}>Bulk actions on selected members (demonstration)</span>
+            {contacts.available ? (
+              <button type="button" data-testid="bulk-add-contacts" disabled={contacts.checking}
+                onClick={() => setAdding(state.members.filter(m => selected.has(m.id)))}
+                style={{ ...GF, fontSize: 13, fontWeight: 700, color: NAVY, background: "#FFFFFF", border: "none", borderRadius: 8, padding: "8px 14px", cursor: "pointer", minHeight: 36 }}>
+                Add selected to contacts
+              </button>
+            ) : (
+              <span style={{ ...GF, fontSize: 12, color: "#94A3B8" }}>Bulk actions on selected members (demonstration)</span>
+            )}
           </div>
         )}
 
@@ -359,14 +390,17 @@ function MembersInner() {
             </div>
           ) : isNarrow ? (
             <ul aria-label="Members" style={{ listStyle: "none", margin: 0, padding: 0 }}>
-              {state.members.map(m => <MemberCard key={m.id} member={m} onEditAccess={editAccessFor(m)} />)}
+              {state.members.map(m => (
+                <MemberCard key={m.id} member={m} onEditAccess={editAccessFor(m)}
+                  contactControl={<AddToContactsButton member={m} contacts={contacts} variant="button" onAdd={() => setAdding([m])} />} />
+              ))}
             </ul>
           ) : (
             <div style={{ overflowX: "auto" }}>
               <table role="table" style={{ width: "100%", borderCollapse: "collapse" }}>
                 <thead style={{ borderBottom: "2px solid #E3E8EF", background: "#F8FAFC" }}>
                   <tr>
-                    {!isReal && (
+                    {selectable && (
                       <th style={{ padding: "10px 12px 10px 16px", width: 40 }}>
                         <input type="checkbox" checked={allSelected} onChange={toggleAll} aria-label="Select all members" />
                       </th>
@@ -380,8 +414,9 @@ function MembersInner() {
                 </thead>
                 <tbody>
                   {state.members.map(m => (
-                    <MemberRow key={m.id} member={m} selected={selected.has(m.id)} onToggle={isReal ? undefined : () => toggleOne(m.id)}
-                      onEditAccess={editAccessFor(m)} />
+                    <MemberRow key={m.id} member={m} selected={selected.has(m.id)} onToggle={selectable ? () => toggleOne(m.id) : undefined}
+                      onEditAccess={editAccessFor(m)}
+                      contactControl={<AddToContactsButton member={m} contacts={contacts} onAdd={() => setAdding([m])} />} />
                   ))}
                 </tbody>
               </table>
@@ -398,6 +433,12 @@ function MembersInner() {
         {canManageJoin && workspaceId !== null && (
           <JoinSummaryCard workspaceId={workspaceId} onPendingCount={setPendingCount} />
         )}
+
+      {adding && (
+        <AddToContactsDialog members={adding} contacts={contacts}
+          onClose={() => setAdding(null)}
+          onDone={(message) => { setAdding(null); setSelected(new Set()); setContactsNotice(message); }} />
+      )}
 
       {editing && workspaceId !== null && (
         <EditAccessDialog member={editing} workspaceId={workspaceId}

@@ -17,6 +17,8 @@ import { ASSIGNABLE_ROLES, REAL_ROLE_LABELS } from "../../../services/real/works
 import { Z } from "../../../utils/z-index";
 import { useWorkspaceMode } from "../../../hooks/useWorkspaceAccess";
 import { RealMemberAbilities, RealMemberTeams } from "./real/RealMemberSections";
+import { useMemberContacts } from "./member-contacts";
+import { AddToContactsButton, AddToContactsDialog } from "./MemberContactControls";
 import { ManagePage } from "./real/manage-ui";
 
 const CRUMBS = [{ label: "Workspace", to: "/app/workspace" }, { label: "Members", to: "/app/workspace/members" }];
@@ -115,6 +117,9 @@ function MemberDetailInner() {
   const [modal, setModal] = useState<"suspend" | "deactivate" | "remove" | null>(null);
   const [newRoleId, setNewRoleId] = useState<string>("");
   const [roleUpdating, setRoleUpdating] = useState(false);
+  const contacts = useMemberContacts(isReal ? workspaceId : null);
+  const [addingContact, setAddingContact] = useState(false);
+  const [contactsNotice, setContactsNotice] = useState<string | null>(null);
 
   useEffect(() => {
     if (!memberId) return;
@@ -219,8 +224,10 @@ function MemberDetailInner() {
         </>
       }
       subtitle={<span style={{ ...GM, fontSize: 12 }}>{m.email}</span>}
-      actions={m.isOwner ? undefined : (
+      actions={(
         <>
+          <AddToContactsButton member={m} contacts={contacts} variant="button" onAdd={() => setAddingContact(true)} />
+          {!m.isOwner && <>
           {/* Suspend/Reactivate/Deactivate: no real backend equivalent
               (074's exploration). A membership exists or it does not. */}
           {!USE_REAL_BACKEND && m.status === "active" && (
@@ -245,8 +252,20 @@ function MemberDetailInner() {
             style={{ ...GF, fontSize: 13, padding: "8px 16px", border: "1.5px solid #FECACA", borderRadius: 8, background: "#FEF2F2", color: "#991B1B", cursor: "pointer" }}>
             Remove
           </button>
+          </>}
         </>
       )}>
+      {contactsNotice && (
+        <p role="status" data-testid="contacts-notice"
+          style={{ ...GF, fontSize: 13, color: "#14532D", background: "#F0FDF4", border: "1px solid #BBF7D0", borderRadius: 8, padding: "8px 12px", margin: "0 0 16px" }}>
+          {contactsNotice}
+        </p>
+      )}
+      {addingContact && (
+        <AddToContactsDialog members={[m]} contacts={contacts}
+          onClose={() => setAddingContact(false)}
+          onDone={(message) => { setAddingContact(false); setContactsNotice(message); }} />
+      )}
       {modal === "suspend" && <SuspendModal onConfirm={handleSuspend} onCancel={() => setModal(null)} />}
       {modal === "deactivate" && (
         <ConfirmModal

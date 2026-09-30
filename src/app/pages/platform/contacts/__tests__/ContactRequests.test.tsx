@@ -60,15 +60,15 @@ describe("Add Contact", () => {
 });
 
 describe("Contacts list", () => {
-  it("shows All Contacts, with Requests From Contacts and Archived beside it, and no scope or status filters", async () => {
+  it("shows All contacts, with Pending, Document requests and Archived beside it, and no scope or status filters", async () => {
     mockApi();
     render(<MemoryRouter initialEntries={["/app/contacts"]}><ContactsPage /></MemoryRouter>);
     await screen.findByText("Maria Santos");
     const nav = screen.getByRole("navigation", { name: "Contacts sections" });
     const links = within(nav).getAllByRole("link");
-    expect(links.map(link => link.textContent)).toEqual(["All Contacts", "Requests From Contacts", "Archived"]);
-    expect(within(nav).getByRole("link", { name: "All Contacts" }).getAttribute("aria-current")).toBe("page");
-    expect(within(nav).getByRole("link", { name: "Requests From Contacts" }).getAttribute("href")).toBe("/app/contacts/requests");
+    expect(links.map(link => link.textContent)).toEqual(["All contacts", "Pending", "Document requests", "Archived"]);
+    expect(within(nav).getByRole("link", { name: "All contacts" }).getAttribute("aria-current")).toBe("page");
+    expect(within(nav).getByRole("link", { name: "Document requests" }).getAttribute("href")).toBe("/app/contacts/requests");
     expect(screen.queryByRole("navigation", { name: "Contact views" })).toBeNull();
     for (const gone of ["My Contacts", "Workspace", "Archived", "Recently Used", "Potential Duplicates", "Frequently Used"]) {
       expect(screen.queryByRole("button", { name: new RegExp(`^${gone}`) })).toBeNull();
@@ -100,7 +100,7 @@ describe("Contacts list", () => {
       await userEvent.click(screen.getByRole("button", { name: `Actions for ${name}` }));
       const menu = screen.getByRole("menu", { name: `Actions for ${name}` });
       const items = within(menu).getAllByRole("menuitem");
-      expect(items.map(item => item.textContent)).toEqual(["View Contact", "Edit"]);
+      expect(items.map(item => item.textContent)).toEqual(["View contact", "Edit"]);
       await userEvent.click(screen.getByRole("button", { name: `Actions for ${name}` }));
     }
     expect(screen.queryByRole("menuitem", { name: /Assign for document|Request a signed document|Archive|Restore/ })).toBeNull();

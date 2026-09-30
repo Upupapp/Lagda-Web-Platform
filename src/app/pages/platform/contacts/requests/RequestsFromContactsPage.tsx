@@ -28,7 +28,7 @@ import {
   type ContactRequest, type ContactRequestGroup, type ContactRequestView,
 } from "../../../../models/contact-requests";
 import { modalButtonStyle } from "../../../../components/contact-requests/ModalFrame";
-import { ContactsSectionNav } from "../ContactsSectionNav";
+import { ContactsHeader, useConnectionLists } from "../contacts-ui";
 import {
   RequestCard, ActionButton, InlineError, OpenDocumentButton,
   RejectDialog, CancelRequestDialog, MarkReceivedDialog,
@@ -173,6 +173,8 @@ export function RequestsFromContactsPage() {
   const panelRef = useRef<HTMLDivElement>(null);
   const focusedRef = useRef<string | null>(null);
   const baseId = useId();
+  // The Pending tab's count in the shared header.
+  const pendingCount = useConnectionLists().lists?.received.length;
 
   const go = useCallback((next: { view?: ContactRequestView; group?: ContactRequestGroup; request?: string | null }) => {
     setSearchParams(prev => {
@@ -323,16 +325,11 @@ export function RequestsFromContactsPage() {
   return (
     <div style={{ minHeight: "100vh", background: PAGE_BG }}>
       <style>{STYLES}</style>
-      <header style={{ background: "#FFFFFF", borderBottom: "1px solid #E3E8EF", padding: "20px 24px 16px" }} className="rfc-header">
-        <h1 style={{ ...GF, color: NAVY, fontSize: 22, fontWeight: 800, margin: 0 }}>Contacts</h1>
-        <p style={{ ...GF, color: SLATE, fontSize: 13, margin: "3px 0 0" }}>
-          Manage reusable participant information for document workflows.
-        </p>
-        <ContactsSectionNav current="requests" />
-      </header>
+      <ContactsHeader section="requests" pendingCount={pendingCount}
+        subtitle="Documents you asked your contacts for, and what they asked of you." />
 
       <main className="rfc-main" style={{ padding: "20px 24px 40px", maxWidth: 980, boxSizing: "border-box" }}>
-        <h2 style={{ ...GF, fontSize: 18, fontWeight: 700, color: NAVY, margin: "0 0 4px" }}>Requests From Contacts</h2>
+        <h2 style={{ ...GF, fontSize: 18, fontWeight: 700, color: NAVY, margin: "0 0 4px" }}>Document requests</h2>
         <p style={{ ...GF, fontSize: 13.5, color: SLATE, margin: "0 0 16px", lineHeight: 1.55, maxWidth: 680 }}>
           Requests your colleagues sent you, and requests you sent to your contacts, across every workspace you belong to.
         </p>

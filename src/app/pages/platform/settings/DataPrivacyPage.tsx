@@ -5,10 +5,13 @@
 // this page yet, so both say so and point to support, which handles them.
 // Nothing here pretends to start a request.
 
+import { useEffect, useId, useState } from "react";
 import { Link } from "react-router";
-import { FileText, UserRound, Users, Mail, ShieldCheck, Download, Trash2, LifeBuoy, ArrowRight } from "lucide-react";
+import { FileText, UserRound, Users, Mail, ShieldCheck, Download, Trash2, LifeBuoy, ArrowRight, UserSearch } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import { SettingsPage, SSection, BTN_SECONDARY, SET } from "./SettingsShell";
+import { SettingsPage, SSection, BTN_SECONDARY, SET, Switch } from "./SettingsShell";
+import { usePlatform } from "../../../context/PlatformContext";
+import { contactConnectionsService, contactConnectionsAvailable } from "../../../services/real/contact-connections.service";
 
 const GF = { fontFamily: SET.FONT };
 
@@ -38,6 +41,50 @@ function RequestRow({ icon: Icon, title, body, danger }: { icon: LucideIcon; tit
   );
 }
 
+/**
+ * 091. Whether others can find this account by its exact email in Contacts ›
+ * Find people. On by default; turning it off makes every lookup of this
+ * address answer "not found", exactly like an address with no account.
+ */
+function DiscoverySetting() {
+  const platform = usePlatform();
+  const available = contactConnectionsAvailable(platform.currentWorkspace?.id);
+  const [value, setValue] = useState<boolean | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const labelId = useId();
+  const descId = useId();
+  useEffect(() => {
+    if (!available) return;
+    contactConnectionsService.getDiscovery()
+      .then(r => { setValue(r.discoverableByEmail); })
+      .catch(() => { setError("This setting could not be loaded."); });
+  }, [available]);
+  if (!available) return null;
+  const change = (next: boolean) => {
+    setBusy(true); setError(null);
+    contactConnectionsService.setDiscovery(next)
+      .then(r => { setValue(r.discoverableByEmail); })
+      .catch(() => { setError("The change could not be saved. Please try again."); })
+      .finally(() => { setBusy(false); });
+  };
+  return (
+    <SSection title="Being found" icon={UserSearch}>
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 16 }}>
+        <div style={{ minWidth: 0 }}>
+          <div id={labelId} style={{ ...GF, fontSize: 14, fontWeight: 700, color: SET.NAVY }}>Let people find me by email</div>
+          <div id={descId} style={{ ...GF, fontSize: 13, color: SET.SLATE, marginTop: 3, lineHeight: 1.55 }}>
+            Someone who types your exact email in Contacts › Find people can see your name, title and photo, and ask to add you. Turn this off and you can't be found — people can still add you as an external contact.
+          </div>
+          {error && <div role="alert" style={{ ...GF, fontSize: 12.5, color: SET.DANGER, marginTop: 6 }}>{error}</div>}
+        </div>
+        <Switch checked={value ?? true} disabled={value === null || busy} busy={busy}
+          labelledBy={labelId} describedBy={descId} onChange={change} />
+      </div>
+    </SSection>
+  );
+}
+
 export function DataPrivacyPage() {
   return (
     <SettingsPage title="Data & Privacy" breadcrumb="Data & Privacy" description="What LAGDA keeps about you, and how to ask for a copy or for your account to be deleted.">
@@ -54,6 +101,8 @@ export function DataPrivacyPage() {
           ))}
         </ul>
       </SSection>
+
+      <DiscoverySetting />
 
       <SSection title="Requests" icon={LifeBuoy} description="These are handled by our support team for now. Contact support from your account email and we will take it from there.">
         <div style={{ marginTop: -14 }}>

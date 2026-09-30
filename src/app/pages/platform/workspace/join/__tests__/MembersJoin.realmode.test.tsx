@@ -182,11 +182,12 @@ describe("Members page — join requests and access", () => {
     expect(calls.some((c) => c.path.includes("join-"))).toBe(false);
   });
 
-  it("hides suspend-era filters and bulk selection with a real backend", async () => {
+  it("hides suspend-era filters with a real backend; selection is only for adding to contacts", async () => {
     renderPage();
     await screen.findByTestId("member-role-m_new");
     expect(screen.queryByLabelText("Filter by status")).toBeNull();
-    expect(screen.queryByLabelText("Select all members")).toBeNull();
+    // Selection exists for "Add selected to contacts" (member-contacts.ts), never for suspend-era bulk actions.
+    expect(screen.queryByText(/Bulk actions on selected members/)).toBeNull();
     const roleFilter = screen.getByLabelText("Filter by role");
     expect(within(roleFilter).getByRole("option", { name: "New Comer" })).toHaveValue("member");
     expect(within(roleFilter).queryByRole("option", { name: "Billing Admin" })).toBeNull();

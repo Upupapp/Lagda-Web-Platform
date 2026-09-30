@@ -77,10 +77,10 @@ describe("Contacts → Archived", () => {
     await screen.findByText("Rosa Lim");
     const nav = screen.getByRole("navigation", { name: "Contacts sections" });
     const links = within(nav).getAllByRole("link");
-    expect(links.map(link => link.textContent)).toEqual(["All Contacts", "Requests From Contacts", "Archived"]);
+    expect(links.map(link => link.textContent)).toEqual(["All contacts", "Pending", "Document requests", "Archived"]);
     expect(within(nav).getByRole("link", { name: "Archived" }).getAttribute("aria-current")).toBe("page");
     expect(within(nav).getByRole("link", { name: "Archived" }).getAttribute("href")).toBe("/app/contacts/archived");
-    expect(within(nav).getByRole("link", { name: "All Contacts" })).not.toHaveAttribute("aria-current");
+    expect(within(nav).getByRole("link", { name: "All contacts" })).not.toHaveAttribute("aria-current");
   });
 
   it("lists only archived contacts, from the backend's archived listing", async () => {
@@ -101,11 +101,11 @@ describe("Contacts → Archived", () => {
     expect(listUrls().every(url => url.includes("state=active"))).toBe(true);
   });
 
-  it("does not offer Import Contacts for now, but still offers Add Contact", async () => {
+  it("does not offer Import Contacts for now, but still offers Find people", async () => {
     renderAt("/app/contacts");
     await screen.findByText("Maria Santos");
     expect(screen.queryByRole("link", { name: /Import Contacts/ })).toBeNull();
-    expect(screen.getByRole("link", { name: /Add Contact/ })).toBeTruthy();
+    expect(screen.getByRole("link", { name: /Find people/ })).toBeTruthy();
   });
 
   it("offers View Contact and Restore in the card menu", async () => {
@@ -113,8 +113,8 @@ describe("Contacts → Archived", () => {
     await screen.findByText("Rosa Lim");
     await userEvent.click(screen.getByRole("button", { name: "Actions for Rosa Lim" }));
     const menu = screen.getByRole("menu", { name: "Actions for Rosa Lim" });
-    expect(within(menu).getAllByRole("menuitem").map(item => item.textContent)).toEqual(["View Contact", "Restore"]);
-    await userEvent.click(within(menu).getByRole("menuitem", { name: "View Contact" }));
+    expect(within(menu).getAllByRole("menuitem").map(item => item.textContent)).toEqual(["View contact", "Restore"]);
+    await userEvent.click(within(menu).getByRole("menuitem", { name: "View contact" }));
     expect(screen.getByTestId("where").textContent).toBe("/app/contacts/con_a");
   });
 

@@ -144,6 +144,35 @@ function present(row: FeedRow): Presentation {
       };
 
     // ── Invitations section: received / declined workspace invitations. ─────
+    // ── 091. Contact connections — both in-app only (no email). ───────────
+    case "CONTACT_CONNECTION_REQUESTED": {
+      const requester = str(row.templateInput, "requesterDisplayName") ?? "Someone";
+      const from = str(row.templateInput, "workspaceName");
+      return {
+        category: "workspace", severity: "info", priority: "high",
+        title: `${requester} wants to add you as a contact`,
+        body: `${requester}${from === null ? "" : ` (${from})`} asked to add you as a contact on LAGDA. Accept to add each other, or decline — they are not told.`,
+        actionLabel: "Review request",
+        actionPath: "/app/contacts/pending",
+        why: "You were sent this because someone found your LAGDA account by its exact email. You can turn that off in My Settings › Data & Privacy.",
+        inAppOnly: true,
+      };
+    }
+
+    case "CONTACT_CONNECTION_ACCEPTED": {
+      const responder = str(row.templateInput, "responderDisplayName") ?? "Someone";
+      const contactId = str(row.templateInput, "contactId");
+      return {
+        category: "workspace", severity: "success", priority: "normal",
+        title: `${responder} accepted your contact request`,
+        body: `You and ${responder} are now in each other's contacts.`,
+        actionLabel: contactId === null ? "Open contacts" : "View contact",
+        actionPath: contactId === null ? "/app/contacts" : `/app/contacts/${encodeURIComponent(contactId)}`,
+        why: "You were sent this because you asked this person to add you as a contact.",
+        inAppOnly: true,
+      };
+    }
+
     case "WORKSPACE_INVITATION_RECEIVED": {
       const input = row.templateInput;
       const inviter = str(input, "inviterDisplayName") ?? "Someone";
@@ -244,7 +273,7 @@ function present(row: FeedRow): Presentation {
       return {
         category: "my-actions", severity: "info", priority: "high",
         title: `${requester} ${kind?.asked ?? "sent you a request"}`,
-        body: parts.length > 0 ? parts.join(" ") : `Open it in Contacts → Requests From Contacts${where}.`,
+        body: parts.length > 0 ? parts.join(" ") : `Open it in Contacts → Document requests${where}.`,
         actionLabel: "Open request",
         actionPath: contactRequestPath("received", "pending", row.sourceId),
         why: "You were sent this because a member of your workspace asked something of you. "

@@ -131,8 +131,19 @@ export interface ContactWorkspaceMember {
   displayName: string;
 }
 
+/** 091. The LAGDA account a contact stands for — through an accepted
+ *  contact request (`connected`), or else the workspace member holding its
+ *  address — with that account's own name and title as they are now. */
+export interface ContactAccount {
+  userId:      string;
+  displayName: string;
+  jobTitle:    string | null;
+  connected:   boolean;
+}
+
 export interface Contact {
   workspaceMember?: ContactWorkspaceMember | null;
+  account?: ContactAccount | null;
   id:           ContactId;
   status:       ContactStatus;
   scope:        ContactScope;
@@ -174,6 +185,7 @@ export interface Contact {
 
 export interface ContactListItem {
   workspaceMember?: ContactWorkspaceMember | null;
+  account?: ContactAccount | null;
   id:           ContactId;
   status:       ContactStatus;
   scope:        ContactScope;

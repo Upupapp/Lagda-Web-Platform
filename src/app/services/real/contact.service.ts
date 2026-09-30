@@ -49,6 +49,11 @@ export interface WireContact {
   /** 086. The workspace member this contact's address belongs to right now,
    *  or null for an external contact. Resolved by the server on every read. */
   workspaceMember?: { userId: string; displayName: string } | null;
+  /** 091. The account behind the contact, with its live name, title and photo version. */
+  account?: {
+    userId: string; displayName: string; jobTitle: string | null;
+    avatarVersion: string | null; connected: boolean;
+  } | null;
 }
 
 /**

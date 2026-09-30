@@ -30,7 +30,7 @@
 // the same reason: there is no backend for them yet, and a facade cannot
 // invent one.
 
-import { USE_REAL_BACKEND } from "./backend-flag";
+import { USE_REAL_BACKEND, API_BASE_URL } from "./backend-flag";
 import {
   realContactService,
   type WireContact, type WireContactListQuery, type WireContactSort,
@@ -67,7 +67,13 @@ function toWireSort(sort: ContactListQuery["sort"]): WireContactSort {
   return "updatedAt";
 }
 
+/** 091. A contact's photo: served only when an account stands behind it. */
+export function contactAvatarUrl(workspaceId: string, contactId: string, version: string): string {
+  return `${API_BASE_URL ?? ""}/workspaces/${encodeURIComponent(workspaceId)}/contacts/${encodeURIComponent(contactId)}/avatar?v=${encodeURIComponent(version)}`;
+}
+
 function toContact(wire: WireContact, workspaceId: string): Contact {
+  const account = wire.account ?? null;
   return {
     // The backend mints `cnt_...`; `ContactId` is a branded string and this
     // is the one place a raw wire id crosses into it.
@@ -79,11 +85,19 @@ function toContact(wire: WireContact, workspaceId: string): Contact {
     // The caller's own account when personal; no column for it otherwise --
     // "" is what an ownerless workspace contact has always meant here.
     ownerId: wire.ownerUserId ?? "",
-    name: wire.name,
+    // An account behind the contact speaks for itself: its own name and
+    // title as they are NOW, so an edit to a profile shows everywhere.
+    name: account?.displayName ?? wire.name,
     email: wire.email,
     ...(wire.phone === null ? {} : { phone: wire.phone }),
     ...(wire.organization === null ? {} : { organization: wire.organization }),
-    ...(wire.title === null ? {} : { title: wire.title }),
+    ...((account?.jobTitle ?? wire.title) === null ? {} : { title: (account?.jobTitle ?? wire.title) as string }),
+    ...(account?.avatarVersion ? { avatarUrl: contactAvatarUrl(workspaceId, wire.contactId, account.avatarVersion) } : {}),
+    ...(wire.account === undefined ? {} : {
+      account: account === null ? null : {
+        userId: account.userId, displayName: account.displayName, jobTitle: account.jobTitle, connected: account.connected,
+      },
+    }),
     ...(wire.note === null ? {} : { note: wire.note }),
     tagIds: wire.tagIds as ContactTagId[],
     groupIds: [],
@@ -117,6 +131,8 @@ function toListItem(wire: WireContact, workspaceId: string): ContactListItem {
     workspaceId,
     demonstrationOnly: false,
     ...(contact.workspaceMember === undefined ? {} : { workspaceMember: contact.workspaceMember }),
+    ...(contact.avatarUrl === undefined ? {} : { avatarUrl: contact.avatarUrl }),
+    ...(contact.account === undefined ? {} : { account: contact.account }),
   };
 }
 

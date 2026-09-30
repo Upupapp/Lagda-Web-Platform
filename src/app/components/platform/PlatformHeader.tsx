@@ -30,6 +30,9 @@ function deriveTitle(pathname: string): string {
   const parts = pathname.replace(/^\/app\/?/, "").split("/").filter(Boolean);
   if (parts.length === 0) return "Dashboard";
   // A ready-made template's id is a long slug; spelling it out reads as noise.
+  if (parts[0] === "contacts" && parts[1] === "new") {
+    return parts[2] === "external" ? "Contacts › Find people › External contact" : "Contacts › Find people";
+  }
   if (parts[0] === "templates" && parts[1] === "gallery") {
     return parts.length > 2 ? "Templates › Ready-made › Preview" : "Templates › Ready-made";
   }

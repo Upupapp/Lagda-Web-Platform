@@ -13,18 +13,25 @@
 
 import React, { useEffect, useState, useRef } from "react";
 import { useNavigate, useSearchParams, Link } from "react-router";
-import { User as BlankPersonIcon, MoreVertical } from "lucide-react";
-import { ContactProvider, useContacts } from "../../../context/ContactContext";
-import type { ContactListItem, ContactView, ContactSortField, ContactScope, ContactStatus, ContactTagId, ContactGroupId } from "../../../models/contacts";
 import {
-  CONTACT_STATUS_LABELS, CONTACT_SCOPE_LABELS,
-  SYSTEM_CONTACT_TAGS, getContactTagById,
-} from "../../../models/contacts";
+  MoreVertical, Mail, Phone, Building2, Share2, Clock3, ChevronRight, LayoutGrid, List as ListIcon,
+  Users, Inbox, Send,
+} from "lucide-react";
+import { ContactProvider, useContacts } from "../../../context/ContactContext";
+import type { ContactListItem, ContactView, ContactSortField, ContactTagId, ContactGroupId } from "../../../models/contacts";
+import { SYSTEM_CONTACT_TAGS, getContactTagById } from "../../../models/contacts";
 import { Z } from "../../../utils/z-index";
 import { FilterChips } from "../../../components/platform/FilterChips";
 import { useProcessing } from "../../../services/processing.service";
-import { MembershipBadge } from "../../../components/contact-requests/ContactRequestControls";
-import { ContactsSectionNav } from "./ContactsSectionNav";
+import {
+  ContactsHeader, PersonAvatar, AccountBadges, DetailLine, useConnectionLists, useLiveRefresh, type HeaderStat,
+} from "./contacts-ui";
+
+const LAYOUT_KEY = "lagda.contacts.layout";
+
+function readLayout(): "grid" | "list" {
+  try { return window.localStorage.getItem(LAYOUT_KEY) === "list" ? "list" : "grid"; } catch { return "grid"; }
+}
 
 const GF    = { fontFamily: "'Geist', sans-serif" };
 const GM    = { fontFamily: "'Geist Mono', monospace" };
@@ -41,32 +48,6 @@ function useDebounce<T>(value: T, ms: number): T {
   return d;
 }
 
-function StatusBadge({ status }: { status: string }) {
-  const configs: Record<string, { bg: string; color: string }> = {
-    active:     { bg: "#DCFCE7", color: "#166534" },
-    archived:   { bg: "#F1F5F9", color: "#475569" },
-    invalid:    { bg: "#FEF3C7", color: "#92400E" },
-    // Slate, not the Soft Burgundy Tint this used to be. Burgundy of any
-    // strength is reserved for eNotary; spending it on an eSignature contact
-    // status is what erodes the one visual cue separating the two products.
-    restricted: { bg: "#E2E8F0", color: "#334155" },
-  };
-  const c = configs[status] ?? { bg: "#F1F5F9", color: "#475569" };
-  return (
-    <span style={{ ...GM, fontSize: 10, fontWeight: 700, padding: "2px 7px", borderRadius: 999, background: c.bg, color: c.color }}>
-      {CONTACT_STATUS_LABELS[status as ContactStatus] ?? status}
-    </span>
-  );
-}
-
-function ScopeBadge({ scope }: { scope: ContactScope }) {
-  return (
-    <span style={{ ...GM, fontSize: 10, padding: "2px 7px", borderRadius: 999, background: scope === "workspace" ? "#EBF4FC" : "#F8FAFC", color: scope === "workspace" ? AZURE : SLATE }}>
-      {CONTACT_SCOPE_LABELS[scope]}
-    </span>
-  );
-}
-
 function TagChip({ tagId }: { tagId: ContactTagId }) {
   const tag = getContactTagById(tagId);
   if (!tag) return null;
@@ -74,31 +55,6 @@ function TagChip({ tagId }: { tagId: ContactTagId }) {
     <span style={{ ...GM, fontSize: 9, padding: "2px 6px", borderRadius: 999, background: `${tag.color}18`, color: tag.color }}>
       {tag.label}
     </span>
-  );
-}
-
-/**
- * A real profile picture when this contact is tied to a registered LAGDA
- * account (`avatarUrl` set), otherwise a blank default person — never
- * initials. An address-book entry is not a verified identity (see
- * services/real/contact.service.ts), so guessing a face from a name's
- * initials would overstate what's actually known about most rows here.
- */
-function ContactAvatar({ name, avatarUrl, size = 40 }: { name: string; avatarUrl?: string; size?: number }) {
-  const [failed, setFailed] = useState(false);
-  const showImage = !!avatarUrl && !failed;
-  return (
-    <div style={{
-      width: size, height: size, borderRadius: "50%", flexShrink: 0, overflow: "hidden",
-      background: showImage ? "transparent" : "#EEF2F6",
-      display: "flex", alignItems: "center", justifyContent: "center",
-      border: "1px solid #E3E8EF",
-    }}>
-      {showImage
-        ? <img src={avatarUrl} alt="" onError={() => setFailed(true)} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-        : <BlankPersonIcon size={Math.round(size * 0.55)} color={SILVER} aria-label={`${name}'s profile picture is not set`} strokeWidth={1.75} />
-      }
-    </div>
   );
 }
 
@@ -137,6 +93,12 @@ function ContactsLibrary({ section }: { section: LibrarySection }) {
   const { state, setQuery, asyncLoadList, asyncLoadGroups, asyncBulkArchive, asyncBulkAddToGroup, asyncRestore, clearPending } = useContacts();
   const archived = section === "archived";
   const [restoringId, setRestoringId] = useState<string | null>(null);
+  const [layout, setLayout] = useState<"grid" | "list">(readLayout);
+  const chooseLayout = (next: "grid" | "list") => {
+    setLayout(next);
+    try { window.localStorage.setItem(LAYOUT_KEY, next); } catch { /* a per-visit choice then */ }
+  };
+  const connections = useConnectionLists();
 
   const [searchInput,   setSearchInput]   = useState(searchParams.get("q") ?? "");
   const [selectedIds,   setSelectedIds]   = useState<Set<string>>(new Set());
@@ -228,6 +190,19 @@ function ContactsLibrary({ section }: { section: LibrarySection }) {
 
   const selArr = Array.from(selectedIds) as ContactId[];
 
+  // Someone accepting a request, or changing their name or photo, shows up
+  // here without a reload.
+  useLiveRefresh(() => { if (!state.listLoading) void asyncLoadList(); });
+
+  const stats: HeaderStat[] = archived ? [] : [
+    { label: "Contacts", value: state.listResult ? total : "—", icon: Users },
+    ...(connections.available ? [
+      { label: "Waiting for you", value: connections.lists?.received.length ?? "—", icon: Inbox,
+        ...((connections.lists?.received.length ?? 0) > 0 ? { tone: "attention" as const } : {}) },
+      { label: "Requests sent", value: connections.lists?.sent.length ?? "—", icon: Send },
+    ] : []),
+  ];
+
   const restore = async (id: string) => {
     setRestoringId(id);
     await asyncRestore(id as ContactId);
@@ -244,30 +219,17 @@ function ContactsLibrary({ section }: { section: LibrarySection }) {
         Skip to contacts
       </a>
 
-      {/* Page header */}
-      <header style={{ background: "#FFFFFF", borderBottom: "1px solid #E3E8EF", padding: "20px 24px 16px" }}>
-        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
-          <div>
-            <h1 style={{ ...GF, color: NAVY, fontSize: 22, fontWeight: 800, margin: 0 }}>Contacts</h1>
-            <p style={{ ...GF, color: SLATE, fontSize: 13, marginTop: 3 }}>
-              {archived
-                ? "Archived contacts are kept for your records and left out of participant pickers. Restore one to use it again."
-                : "Manage reusable participant information for document workflows."}
-            </p>
-          </div>
-          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-            {/* Import Contacts is hidden for now (the page is kept for later). */}
-            <Link to="/app/contacts/new" style={{ ...GF, fontSize: 13, color: "#FFFFFF", background: AZURE, border: "none", borderRadius: 8, padding: "8px 16px", textDecoration: "none", fontWeight: 700 }}>
-              + Add Contact
-            </Link>
-          </div>
-        </div>
-
-        <ContactsSectionNav current={section} />
-      </header>
+      <ContactsHeader
+        section={archived ? "archived" : "all"}
+        pendingCount={connections.lists?.received.length}
+        subtitle={archived
+          ? "Archived contacts are kept for your records and left out of participant pickers. Restore one to use it again."
+          : "The people you send documents to. Find anyone on LAGDA by their email, or add someone who isn't on LAGDA yet."}
+        stats={stats}
+      />
 
       {/* Toolbar */}
-      <div style={{ background: "#FFFFFF", borderBottom: "1px solid #F0F2F5", padding: "10px 24px", display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+      <div className="ct-toolbar">
         {/* Search */}
         <div style={{ flex: "1 1 220px", position: "relative" }}>
           <label htmlFor="contact-search" style={{ position: "absolute", left: -9999 }}>Search contacts</label>
@@ -317,6 +279,15 @@ function ContactsLibrary({ section }: { section: LibrarySection }) {
         >
           {state.query.direction === "asc" ? "↑" : "↓"}
         </button>
+
+        <div className="ct-layout" role="group" aria-label="Layout">
+          <button type="button" aria-pressed={layout === "grid"} aria-label="Cards" title="Cards" onClick={() => chooseLayout("grid")}>
+            <LayoutGrid size={15} aria-hidden />
+          </button>
+          <button type="button" aria-pressed={layout === "list"} aria-label="List" title="List" onClick={() => chooseLayout("list")}>
+            <ListIcon size={15} aria-hidden />
+          </button>
+        </div>
       </div>
 
       {/* Filter panel */}
@@ -411,7 +382,7 @@ function ContactsLibrary({ section }: { section: LibrarySection }) {
       )}
 
       {/* Main content */}
-      <main id="contacts-main" style={{ padding: "16px 24px" }}>
+      <main id="contacts-main" className="ct-main" style={{ padding: "16px 24px" }}>
         {state.listLoading && <Skeleton />}
 
         {!state.listLoading && state.listError && (
@@ -446,11 +417,11 @@ function ContactsLibrary({ section }: { section: LibrarySection }) {
               </span>
             </div>
 
-            <div className="contact-card-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(268px, 100%), 1fr))", gap: 12 }}>
+            <ul className={layout === "grid" ? "ct-grid" : "ct-list"} aria-label={archived ? "Archived contacts" : "Contacts"}>
               {items.map(c => archived
-                ? <ContactCard key={c.id} contact={c} archived restoring={restoringId === c.id} onRestore={id => { void restore(id); }} />
-                : <ContactCard key={c.id} contact={c} selected={selectedIds.has(c.id)} onToggle={toggleSelect} />)}
-            </div>
+                ? <ContactCard key={c.id} layout={layout} contact={c} archived restoring={restoringId === c.id} onRestore={id => { void restore(id); }} />
+                : <ContactCard key={c.id} layout={layout} contact={c} selected={selectedIds.has(c.id)} onToggle={toggleSelect} />)}
+            </ul>
 
             {/* Pagination */}
             {(hasNext || hasPrev) && (
@@ -466,16 +437,14 @@ function ContactsLibrary({ section }: { section: LibrarySection }) {
         )}
       </main>
 
-      <style>{`
-        @media (max-width: 480px) { .contact-card-grid { grid-template-columns: minmax(0, 1fr) !important; } }
-      `}</style>
+      <style>{CARD_CSS}</style>
     </div>
   );
 }
 
 // ── Contact card ──────────────────────────────────────────────────────────────
 
-function ContactCard({ contact: c, selected = false, onToggle, archived = false, restoring = false, onRestore }: {
+function ContactCard({ contact: c, selected = false, onToggle, archived = false, restoring = false, onRestore, layout }: {
   contact: ContactListItem;
   selected?: boolean;
   onToggle?: (id: string) => void;
@@ -483,6 +452,7 @@ function ContactCard({ contact: c, selected = false, onToggle, archived = false,
   archived?: boolean;
   restoring?: boolean;
   onRestore?: (id: string) => void;
+  layout: "grid" | "list";
 }) {
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -495,83 +465,141 @@ function ContactCard({ contact: c, selected = false, onToggle, archived = false,
     return () => document.removeEventListener("mousedown", handle);
   }, [menuOpen]);
 
-  return (
-    <div
-      style={{
-        background: "#FFFFFF", border: selected ? `2px solid ${AZURE}` : "1.5px solid #E3E8EF",
-        borderRadius: 14, padding: "16px", position: "relative",
-        // A grid item defaults to min-width: auto, so a long unbroken name or
-        // email (nowrap + ellipsis) would widen the whole column past a phone.
-        minWidth: 0,
-        boxShadow: selected ? "0 4px 14px rgba(0,120,212,0.12)" : "0 1px 2px rgba(7,17,31,0.04)",
-        transition: "box-shadow 0.15s, border-color 0.15s",
-      }}
-    >
-      {/* Select + 3-dot actions share the top-right corner with the avatar/name */}
-      <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
-        {!archived && (
-          <input type="checkbox" checked={selected} onChange={() => onToggle?.(c.id)} aria-label={`Select ${c.name}`}
-            style={{ accentColor: AZURE, marginTop: 12 }} />
-        )}
-        <ContactAvatar name={c.name} avatarUrl={c.avatarUrl} size={44} />
-        <div style={{ flex: 1, minWidth: 0, paddingTop: 1 }}>
-          <Link to={`/app/contacts/${c.id}`} style={{ ...GF, color: NAVY, fontWeight: 700, fontSize: 14, textDecoration: "none", display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-            {c.name}
-          </Link>
-          <p style={{ ...GM, color: SLATE, fontSize: 11, margin: "2px 0 0", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.email}</p>
-          {/* SLATE, not SILVER: this sits on a white card, where #8A9BAE is
-              2.7:1 and fails WCAG AA. The a11y suite tracks the palette's
-              contrast defect and fails when it spreads to new nodes. */}
-          {c.organization && <p style={{ ...GF, color: SLATE, fontSize: 11, margin: "1px 0 0", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.organization}</p>}
+  const menu = (
+    <div ref={menuRef} style={{ position: "relative", flexShrink: 0 }}>
+      <button
+        onClick={() => setMenuOpen(v => !v)}
+        aria-label={`Actions for ${c.name}`} aria-expanded={menuOpen} aria-haspopup="menu"
+        className="ct-icon-btn" data-open={menuOpen ? "true" : undefined}
+      >
+        <MoreVertical size={16} aria-hidden />
+      </button>
+      {menuOpen && (
+        <div role="menu" aria-label={`Actions for ${c.name}`} style={{ position: "absolute", right: 0, top: "calc(100% + 4px)", zIndex: Z.dropdown, background: "#FFFFFF", border: "1.5px solid #E3E8EF", borderRadius: 10, boxShadow: "0 8px 24px rgba(0,0,0,0.12)", minWidth: 160, width: "max-content", maxWidth: "min(280px, calc(100vw - 48px))", overflow: "hidden" }}>
+          <MenuItem label="View contact" onClick={() => { void navigate(`/app/contacts/${c.id}`); setMenuOpen(false); }} />
+          {archived
+            ? <MenuItem label={restoring ? "Restoring…" : "Restore"} disabled={restoring} onClick={() => { onRestore?.(c.id); setMenuOpen(false); }} />
+            : <MenuItem label="Edit" onClick={() => { void navigate(`/app/contacts/${c.id}/edit`); setMenuOpen(false); }} />}
         </div>
+      )}
+    </div>
+  );
 
-        {/* The one visible control. Its menu holds exactly two items — View
-            Contact and Edit (or, on an archived contact, View Contact and
-            Restore). Requests are made from the contact's own page;
-            archiving is done there or in bulk. */}
-        <div ref={menuRef} style={{ position: "relative", flexShrink: 0 }}>
-          <button
-            onClick={() => setMenuOpen(v => !v)}
-            aria-label={`Actions for ${c.name}`} aria-expanded={menuOpen} aria-haspopup="menu"
-            style={{
-              display: "flex", alignItems: "center", justifyContent: "center",
-              width: 28, height: 28, color: menuOpen ? AZURE : SLATE,
-              background: menuOpen ? LIGHT : "transparent", border: "none", borderRadius: 7, cursor: "pointer",
-            }}
-          >
-            <MoreVertical size={16} aria-hidden />
-          </button>
-          {menuOpen && (
-            <div role="menu" aria-label={`Actions for ${c.name}`} style={{ position: "absolute", right: 0, top: "calc(100% + 4px)", zIndex: Z.dropdown, background: "#FFFFFF", border: "1.5px solid #E3E8EF", borderRadius: 10, boxShadow: "0 8px 24px rgba(0,0,0,0.12)", minWidth: 160, width: "max-content", maxWidth: "min(280px, calc(100vw - 48px))", overflow: "hidden" }}>
-              <MenuItem label="View Contact" onClick={() => { void navigate(`/app/contacts/${c.id}`); setMenuOpen(false); }} />
-              {archived
-                ? <MenuItem label={restoring ? "Restoring…" : "Restore"} disabled={restoring} onClick={() => { onRestore?.(c.id); setMenuOpen(false); }} />
-                : <MenuItem label="Edit" onClick={() => { void navigate(`/app/contacts/${c.id}/edit`); setMenuOpen(false); }} />}
-            </div>
-          )}
+  const checkbox = !archived && (
+    <input type="checkbox" checked={selected} onChange={() => onToggle?.(c.id)} aria-label={`Select ${c.name}`}
+      className="ct-check" />
+  );
+
+  if (layout === "list") {
+    return (
+      <li className="ct-row" data-selected={selected ? "true" : undefined}>
+        {checkbox}
+        <PersonAvatar name={c.name} avatarUrl={c.avatarUrl} size={36} />
+        <div className="ct-row-main">
+          <Link to={`/app/contacts/${c.id}`} className="ct-name">{c.name}</Link>
+          <span className="ct-row-sub">{[c.title, c.organization].filter(Boolean).join(" · ") || c.email}</span>
         </div>
+        <span className="ct-row-email">{c.email}</span>
+        <span className="ct-row-badges">
+          <AccountBadges account={c.account} workspaceMember={c.workspaceMember} />
+        </span>
+        <a href={`mailto:${c.email}`} className="ct-icon-btn ct-row-mail" aria-label={`Email ${c.name}`}><Mail size={15} aria-hidden /></a>
+        {menu}
+      </li>
+    );
+  }
+
+  return (
+    <li className="ct-card" data-selected={selected ? "true" : undefined}>
+      <div className="ct-card-top">
+        {checkbox}
+        <PersonAvatar name={c.name} avatarUrl={c.avatarUrl} size={52} />
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <Link to={`/app/contacts/${c.id}`} className="ct-name">{c.name}</Link>
+          {c.title && <span className="ct-card-title">{c.title}</span>}
+          <span className="ct-card-badges">
+            <AccountBadges account={c.account} workspaceMember={c.workspaceMember} />
+            {c.scope === "workspace" && (
+              <span className="ct-soft-pill" title="Everyone in the workspace can use this contact"><Share2 size={11} aria-hidden /> Shared</span>
+            )}
+          </span>
+        </div>
+        {menu}
       </div>
 
-      <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap", margin: "12px 0 0" }}>
-        <ScopeBadge scope={c.scope} />
-        <StatusBadge status={c.status} />
-        <MembershipBadge member={c.workspaceMember} />
+      <div className="ct-card-details">
+        <DetailLine icon={Mail} mono href={`mailto:${c.email}`}>{c.email}</DetailLine>
+        <DetailLine icon={Phone} href={c.phone ? `tel:${c.phone}` : undefined}>{c.phone}</DetailLine>
+        <DetailLine icon={Building2}>{c.organization}</DetailLine>
       </div>
 
       {c.tagIds.length > 0 && (
-        <div style={{ display: "flex", gap: 4, flexWrap: "wrap", marginTop: 10 }}>
+        <div className="ct-card-tags">
           {c.tagIds.slice(0, 3).map(t => <TagChip key={t} tagId={t} />)}
+          {c.tagIds.length > 3 && <span className="ct-soft-pill">+{c.tagIds.length - 3}</span>}
         </div>
       )}
 
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 12, paddingTop: 10, borderTop: "1px solid #F0F2F5" }}>
-        {/* An archived contact's last change is its archiving (or later). */}
-        <span style={{ ...GF, fontSize: 11, color: SLATE }}>{archived ? "Last updated" : "Last used"}</span>
-        <RelativeDate iso={archived ? c.updatedAt : c.lastUsedAt} />
+      <div className="ct-card-foot">
+        <span className="ct-card-when">
+          <Clock3 size={12} aria-hidden /> {archived ? "Updated" : "Used"} <RelativeDate iso={archived ? c.updatedAt : c.lastUsedAt} />
+        </span>
+        <Link to={`/app/contacts/${c.id}`} className="ct-card-open">View profile <ChevronRight size={14} aria-hidden /></Link>
       </div>
-    </div>
+    </li>
   );
 }
+
+const CARD_CSS = `
+.ct-grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(290px, 100%), 1fr)); gap: 14px; }
+.ct-card { background: #FFFFFF; border: 1.5px solid #E3E8EF; border-radius: 16px; padding: 16px 16px 12px; min-width: 0; display: flex; flex-direction: column; gap: 12px;
+  box-shadow: 0 1px 2px rgba(7,17,31,0.04); transition: box-shadow 160ms ease, border-color 160ms ease, transform 160ms ease; position: relative; }
+.ct-card:hover { border-color: #C9D5E3; box-shadow: 0 10px 24px -16px rgba(7,17,31,0.35); transform: translateY(-1px); }
+.ct-card[data-selected="true"] { border-color: ${AZURE}; box-shadow: 0 0 0 3px rgba(0,120,212,0.14); }
+.ct-card-top { display: flex; align-items: flex-start; gap: 12px; min-width: 0; }
+.ct-check { accent-color: ${AZURE}; width: 16px; height: 16px; margin: 18px 0 0; flex-shrink: 0; cursor: pointer; }
+.ct-name { font-family: 'Geist', sans-serif; color: ${NAVY}; font-weight: 700; font-size: 15px; text-decoration: none; display: block;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ct-name:hover { color: ${AZURE}; }
+.ct-card-title { display: block; font-family: 'Geist', sans-serif; font-size: 12.5px; color: ${SLATE}; margin-top: 1px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ct-card-badges { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 7px; }
+.ct-soft-pill { display: inline-flex; align-items: center; gap: 4px; font-family: 'Geist', sans-serif; font-size: 11px; font-weight: 600; color: ${SLATE};
+  background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 999px; padding: 2px 8px; white-space: nowrap; }
+.ct-card-details { display: flex; flex-direction: column; gap: 6px; padding: 10px 12px; background: #F8FAFC; border-radius: 10px; min-width: 0; }
+.ct-card-tags { display: flex; gap: 5px; flex-wrap: wrap; }
+.ct-card-foot { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding-top: 10px; border-top: 1px solid #F0F2F5; margin-top: auto; }
+.ct-card-when { display: inline-flex; align-items: center; gap: 5px; font-family: 'Geist', sans-serif; font-size: 11.5px; color: ${SLATE}; }
+.ct-card-open { display: inline-flex; align-items: center; gap: 2px; font-family: 'Geist', sans-serif; font-size: 12.5px; font-weight: 700; color: #005A9E; text-decoration: none; min-height: 32px; }
+.ct-card-open:hover { text-decoration: underline; text-underline-offset: 3px; }
+.ct-icon-btn { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; color: ${SLATE}; background: transparent;
+  border: none; border-radius: 8px; cursor: pointer; text-decoration: none; flex-shrink: 0; }
+.ct-icon-btn:hover, .ct-icon-btn[data-open="true"] { background: ${LIGHT}; color: ${AZURE}; }
+.ct-icon-btn:focus-visible { outline: 2px solid rgba(0,120,212,0.5); outline-offset: 1px; }
+
+.ct-list { list-style: none; margin: 0; padding: 0; background: #FFFFFF; border: 1.5px solid #E3E8EF; border-radius: 14px; overflow: hidden; }
+.ct-row { display: flex; align-items: center; gap: 12px; padding: 10px 14px; border-bottom: 1px solid #F0F2F5; min-width: 0; }
+.ct-row:last-child { border-bottom: none; }
+.ct-row:hover { background: #FAFBFD; }
+.ct-row[data-selected="true"] { background: ${LIGHT}; }
+.ct-row .ct-check { margin: 0; }
+.ct-row-main { flex: 1 1 200px; min-width: 0; display: flex; flex-direction: column; }
+.ct-row-sub { font-family: 'Geist', sans-serif; font-size: 12px; color: ${SLATE}; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ct-row-email { flex: 1 1 200px; min-width: 0; font-family: 'Geist Mono', monospace; font-size: 12px; color: ${SLATE}; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ct-row-badges { display: flex; gap: 5px; flex-shrink: 0; }
+@media (max-width: 900px) { .ct-row-email { display: none; } }
+@media (max-width: 600px) { .ct-row-badges, .ct-row-mail { display: none; } }
+
+.ct-toolbar { background: #FFFFFF; border-bottom: 1px solid #F0F2F5; padding: 10px 24px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.ct-layout { display: inline-flex; padding: 3px; gap: 2px; border-radius: 9px; background: #F1F5F9; border: 1px solid #E2E8F0; }
+.ct-layout button { display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 30px; border: none; border-radius: 7px; background: transparent; color: ${SLATE}; cursor: pointer; }
+.ct-layout button[aria-pressed="true"] { background: #FFFFFF; color: ${NAVY}; box-shadow: 0 1px 2px rgba(7,17,31,0.12); }
+@media (max-width: 767px) {
+  .ct-toolbar { padding: 10px 16px; }
+  .ct-main { padding: 14px 16px !important; }
+}
+@media (hover: none) { .ct-card:hover { transform: none; } }
+@media (prefers-reduced-motion: reduce) { .ct-card { transition: none; } .ct-card:hover { transform: none; } }
+`;
 
 function MenuItem({ label, onClick, disabled = false }: { label: string; onClick: () => void; disabled?: boolean }) {
   return (

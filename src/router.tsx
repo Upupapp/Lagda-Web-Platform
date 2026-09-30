@@ -877,6 +877,16 @@ const ArchivedContactsPage = lazy(() =>
     default: m.ArchivedContactsPage,
   })),
 );
+const FindPeoplePage = lazy(() =>
+  import("./app/pages/platform/contacts/FindPeoplePage").then((m) => ({
+    default: m.FindPeoplePage,
+  })),
+);
+const PendingContactsPage = lazy(() =>
+  import("./app/pages/platform/contacts/PendingContactsPage").then((m) => ({
+    default: m.PendingContactsPage,
+  })),
+);
 const CreateContactPage = lazy(() =>
   import("./app/pages/platform/contacts/CreateContactPage").then((m) => ({
     default: m.CreateContactPage,
@@ -2129,10 +2139,28 @@ export const router = createBrowserRouter([
         ),
       },
       {
+        // 091. Adding a contact starts by finding them on LAGDA by email.
         path: "contacts/new",
         element: (
           <Suspense fallback={null}>
+            <FindPeoplePage />
+          </Suspense>
+        ),
+      },
+      {
+        // Someone who isn't on LAGDA: the full form, prefilled from Find people.
+        path: "contacts/new/external",
+        element: (
+          <Suspense fallback={null}>
             <CreateContactPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: "contacts/pending",
+        element: (
+          <Suspense fallback={null}>
+            <PendingContactsPage />
           </Suspense>
         ),
       },

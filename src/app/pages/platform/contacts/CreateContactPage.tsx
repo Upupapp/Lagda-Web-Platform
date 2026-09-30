@@ -4,7 +4,7 @@
 // Burgundy never used. eNotary never referenced.
 
 import React, { useState, useCallback } from "react";
-import { useNavigate, Link } from "react-router";
+import { useNavigate, Link, useSearchParams } from "react-router";
 import { ContactProvider, useContacts } from "../../../context/ContactContext";
 import type { ContactCreateInput, ContactScope, ContactTagId, ContactGroupId, ContactDuplicateCandidate } from "../../../models/contacts";
 import { SYSTEM_CONTACT_TAGS, CONTACT_SCOPE_LABELS } from "../../../models/contacts";
@@ -121,8 +121,10 @@ function CreateContactForm() {
   // contacts added from inside a workspace belong to it — and stays editable.
   const workspaceName = usePlatform().currentWorkspace?.name ?? "";
 
-  const [name,   setName]   = useState("");
-  const [email,  setEmail]  = useState("");
+  // Prefilled when Find people found no LAGDA account for an address.
+  const [params] = useSearchParams();
+  const [name,   setName]   = useState(params.get("name") ?? "");
+  const [email,  setEmail]  = useState(params.get("email") ?? "");
   const [phone,  setPhone]  = useState("");
   const [org,    setOrg]    = useState(workspaceName);
   const orgTouched = React.useRef(false);
@@ -210,12 +212,14 @@ function CreateContactForm() {
             <ol style={{ display: "flex", gap: 6, listStyle: "none", margin: 0, padding: 0, ...GF, fontSize: 12, color: SILVER }}>
               <li><Link to="/app/contacts" style={{ color: AZURE, textDecoration: "none" }}>Contacts</Link></li>
               <li aria-hidden>›</li>
-              <li style={{ color: SLATE }}>Add Contact</li>
+              <li><Link to="/app/contacts/new" style={{ color: AZURE, textDecoration: "none" }}>Find people</Link></li>
+              <li aria-hidden>›</li>
+              <li style={{ color: SLATE }}>External contact</li>
             </ol>
           </nav>
-          <h1 style={{ ...GF, fontSize: 22, fontWeight: 800, color: NAVY, margin: 0 }}>Add Contact</h1>
+          <h1 style={{ ...GF, fontSize: 22, fontWeight: 800, color: NAVY, margin: 0 }}>Add an external contact</h1>
           <p style={{ ...GF, fontSize: 13, color: SLATE, marginTop: 4 }}>
-            Contact details are reused when adding participants to document workflows.
+            For someone who isn't on LAGDA, like a client or the other side's counsel. Only a name and email are needed.
           </p>
         </header>
 
@@ -356,7 +360,7 @@ function CreateContactForm() {
                 disabled={saving}
                 aria-busy={saving}
                 style={{ ...GF, fontSize: 13, fontWeight: 700, color: "#FFFFFF", background: saving ? SILVER : AZURE, border: "none", borderRadius: 8, padding: "9px 22px", cursor: saving ? "not-allowed" : "pointer" }}>
-                {saving ? "Creating…" : "Create Contact"}
+                {saving ? "Adding…" : "Add contact"}
               </button>
             </div>
           </div>

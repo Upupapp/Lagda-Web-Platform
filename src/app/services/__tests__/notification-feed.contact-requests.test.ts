@@ -66,6 +66,6 @@ describe("contact request notifications", () => {
     expect(received!.body).not.toContain("undefined");
     expect(declined!.title).toBe("Your contact declined your request");
     expect(declined!.body).toBe("Your request for a document was declined. No reason given.");
-    expect(received!.body).toBe("Open it in Contacts → Requests From Contacts.");
+    expect(received!.body).toBe("Open it in Contacts → Document requests.");
   });
 });

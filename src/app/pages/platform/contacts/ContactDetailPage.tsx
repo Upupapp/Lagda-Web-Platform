@@ -3,17 +3,24 @@
 // Frontend-only demonstration. No real identity verification claims.
 // Burgundy never used. eNotary never referenced.
 
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
+import {
+  Mail, Phone, Building2, Briefcase, Share2, User as UserIcon, Pencil, Archive, RotateCcw, ArrowLeft,
+  StickyNote, Tag as TagIcon, type LucideIcon,
+} from "lucide-react";
+import { PersonAvatar, AccountBadges, useLiveRefresh, C } from "./contacts-ui";
+import { ContactWorkspaceCard } from "./ContactWorkspaceCard";
+import { USE_REAL_BACKEND } from "../../../services/backend-flag";
 import { useParams, Link } from "react-router";
 import { ContactProvider, useContacts } from "../../../context/ContactContext";
 import type { ContactDuplicateCandidate, ContactUsageSummary, ContactTagId } from "../../../models/contacts";
-import { CONTACT_STATUS_LABELS, CONTACT_SCOPE_LABELS, CONTACT_SOURCE_LABELS, getContactTagById } from "../../../models/contacts";
+import { CONTACT_STATUS_LABELS, CONTACT_SOURCE_LABELS, getContactTagById } from "../../../models/contacts";
 import { usePlatform } from "../../../context/PlatformContext";
 import { useWorkspaceAccess } from "../../../hooks/useWorkspaceAccess";
 import { contactRequestsAvailable } from "../../../services/real/contact-request.service";
 import { ContactRequestDialog, DELIVERY_COPY } from "../../../components/contact-requests/ContactRequestDialog";
 import {
-  MembershipBadge, ContactRequestButtons, ContactRequestHistory,
+  ContactRequestButtons, ContactRequestHistory,
 } from "../../../components/contact-requests/ContactRequestControls";
 import { contactRequestsPath, type ContactRequestKind } from "../../../models/contact-requests";
 
@@ -53,19 +60,6 @@ function TagChip({ tagId }: { tagId: ContactTagId }) {
   );
 }
 
-function InitialsAvatar({ name, size = 48 }: { name: string; size?: number }) {
-  const initials = name.split(" ").map(w => w[0]).slice(0, 2).join("").toUpperCase();
-  return (
-    <div style={{
-      width: size, height: size, borderRadius: "50%",
-      background: LIGHT, display: "flex", alignItems: "center", justifyContent: "center",
-      ...GM, fontSize: size * 0.3, fontWeight: 700, color: AZURE, flexShrink: 0, userSelect: "none",
-    }}>
-      {initials}
-    </div>
-  );
-}
-
 function SectionCard({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section style={{ background: "#FFFFFF", border: "1.5px solid #E3E8EF", borderRadius: 12, marginBottom: 16, overflow: "hidden" }}>
@@ -77,11 +71,14 @@ function SectionCard({ title, children }: { title: string; children: React.React
   );
 }
 
-function InfoRow({ label, value }: { label: string; value: React.ReactNode }) {
+function InfoTile({ icon: Icon, label, value }: { icon: LucideIcon; label: string; value: React.ReactNode }) {
   return (
-    <div style={{ display: "flex", gap: 12, marginBottom: 12, alignItems: "flex-start" }}>
-      <dt style={{ ...GF, fontSize: 12, fontWeight: 700, color: SILVER, minWidth: 110, marginTop: 1 }}>{label}</dt>
-      <dd style={{ ...GF, fontSize: 13, color: NAVY, margin: 0, flex: 1, wordBreak: "break-word" }}>{value ?? "—"}</dd>
+    <div className="cd-tile">
+      <span aria-hidden className="cd-tile-icon"><Icon size={15} aria-hidden /></span>
+      <div style={{ minWidth: 0 }}>
+        <dt className="cd-tile-label">{label}</dt>
+        <dd className="cd-tile-value">{value ?? <span style={{ color: "#94A3B8" }}>—</span>}</dd>
+      </div>
     </div>
   );
 }
@@ -179,7 +176,26 @@ function ContactDetail() {
     return () => clearActiveContact();
   }, [contactId, asyncLoadContact, clearActiveContact]);
 
-  const contact = state.activeContact;
+  // A new name, title or photo — or their joining the workspace — shows here
+  // without a reload. A quiet re-read, so the page never flashes a skeleton.
+  const [fresh, setFresh] = useState<typeof state.activeContact>(null);
+  const reread = useCallback(() => {
+    if (!contactId || !USE_REAL_BACKEND) return;
+    void import("../../../services/contacts-source").then(m => m.getContact(workspaceId, contactId as ContactId))
+      .then(next => { if (next) setFresh(next); })
+      .catch(() => { /* keep what is shown */ });
+  }, [contactId, workspaceId]);
+  useLiveRefresh(reread);
+  // "Invite to workspace" after accepting a request lands on #workspace.
+  const loadedId = state.activeContact?.id;
+  useEffect(() => {
+    if (loadedId === undefined || window.location.hash !== "#workspace") return;
+    const t = window.setTimeout(() => { document.getElementById("workspace")?.scrollIntoView({ behavior: "smooth", block: "start" }); }, 150);
+    return () => { window.clearTimeout(t); };
+  }, [loadedId]);
+  useEffect(() => { setFresh(null); }, [state.activeContact]);
+
+  const contact = fresh !== null && fresh.id === state.activeContact?.id ? fresh : state.activeContact;
   const usage   = state.activeUsage;
   const dups    = state.activeDuplicates;
   const loading = state.activeLoading;
@@ -224,64 +240,46 @@ function ContactDetail() {
 
   return (
     <div style={{ minHeight: "100vh", background: PAGE_BG, padding: "0 0 48px" }}>
-      {/* Page header */}
-      <header style={{ background: "#FFFFFF", borderBottom: "1px solid #E3E8EF", padding: "20px 24px" }}>
-        <nav aria-label="Breadcrumb" style={{ marginBottom: 12 }}>
-          <ol style={{ display: "flex", gap: 6, listStyle: "none", margin: 0, padding: 0, ...GF, fontSize: 12, color: SILVER }}>
-            <li><Link to="/app/contacts" style={{ color: AZURE, textDecoration: "none" }}>Contacts</Link></li>
-            <li aria-hidden>›</li>
-            <li style={{ color: SLATE }}>{contact.name}</li>
-          </ol>
-        </nav>
-
-        <div style={{ display: "flex", alignItems: "flex-start", gap: 16, flexWrap: "wrap" }}>
-          <InitialsAvatar name={contact.name} size={52} />
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 4 }}>
-              <h1 style={{ ...GF, fontSize: 22, fontWeight: 800, color: NAVY, margin: 0 }}>{contact.name}</h1>
-              <StatusBadge status={contact.status} />
-              <span style={{ ...GM, fontSize: 10, padding: "3px 9px", borderRadius: 999, background: contact.scope === "workspace" ? "#EBF4FC" : "#F8FAFC", color: contact.scope === "workspace" ? AZURE : SLATE }}>
-                {CONTACT_SCOPE_LABELS[contact.scope]}
-              </span>
-              <MembershipBadge member={contact.workspaceMember} />
+      {/* Profile header */}
+      <header className="cd-hero">
+        <div className="cd-band" aria-hidden />
+        <div className="cd-hero-inner">
+          <Link to="/app/contacts" className="cd-back"><ArrowLeft size={15} aria-hidden /> Contacts</Link>
+          <div className="cd-hero-row">
+            <span className="cd-avatar"><PersonAvatar name={contact.name} avatarUrl={contact.avatarUrl} size={96} ring /></span>
+            <div className="cd-hero-text">
+              <h1 className="cd-name">{contact.name}</h1>
+              {(contact.title || contact.organization) && (
+                <p className="cd-role">{[contact.title, contact.organization].filter(Boolean).join(" · ")}</p>
+              )}
+              <div className="cd-badges">
+                <AccountBadges account={contact.account} workspaceMember={contact.workspaceMember} />
+                {contact.scope === "workspace" && <span className="cd-soft"><Share2 size={11} aria-hidden /> Shared with the workspace</span>}
+                {contact.status !== "active" && <StatusBadge status={contact.status} />}
+              </div>
             </div>
-            <p style={{ ...GM, fontSize: 13, color: SLATE, margin: "0 0 4px" }}>{contact.email}</p>
-            {contact.phone && <p style={{ ...GM, fontSize: 12, color: SILVER, margin: 0 }}>{contact.phone}</p>}
-          </div>
-
-          {/* Actions */}
-          <div style={{ display: "flex", gap: 8, flexShrink: 0, flexWrap: "wrap" }}>
-            {contact.status === "active" && (
-              <Link to={`/app/contacts/${contact.id}/edit`}
-                style={{ ...GF, fontSize: 13, color: AZURE, border: `1.5px solid ${AZURE}`, borderRadius: 8, padding: "8px 16px", textDecoration: "none", fontWeight: 600 }}>
-                Edit
-              </Link>
-            )}
-            {contact.status !== "archived" ? (
-              <button onClick={handleArchive} disabled={archiving}
-                style={{ ...GF, fontSize: 13, color: SLATE, border: "1.5px solid #D1D9E0", borderRadius: 8, padding: "8px 16px", background: "#FFFFFF", cursor: "pointer" }}>
-                {archiving ? "Archiving…" : "Archive"}
-              </button>
-            ) : (
-              <button onClick={handleRestore}
-                style={{ ...GF, fontSize: 13, color: "#166534", border: "1.5px solid #BBF7D0", borderRadius: 8, padding: "8px 16px", background: "#F0FDF4", cursor: "pointer" }}>
-                Restore
-              </button>
-            )}
+            <div className="cd-actions">
+              <a href={`mailto:${contact.email}`} className="cd-btn"><Mail size={15} aria-hidden /> Email</a>
+              {contact.status === "active" && (
+                <Link to={`/app/contacts/${contact.id}/edit`} className="cd-btn"><Pencil size={15} aria-hidden /> Edit</Link>
+              )}
+              {contact.status !== "archived" ? (
+                <button type="button" onClick={() => { void handleArchive(); }} disabled={archiving} className="cd-btn" data-variant="quiet">
+                  <Archive size={15} aria-hidden /> {archiving ? "Archiving…" : "Archive"}
+                </button>
+              ) : (
+                <button type="button" onClick={() => { void handleRestore(); }} className="cd-btn" data-variant="restore">
+                  <RotateCcw size={15} aria-hidden /> Restore
+                </button>
+              )}
+            </div>
           </div>
         </div>
-
-        {/* Tags */}
-        {contact.tagIds.length > 0 && (
-          <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 12 }}>
-            {contact.tagIds.map(t => <TagChip key={t} tagId={t} />)}
-          </div>
-        )}
       </header>
 
       {/* Content */}
-      <div style={{ maxWidth: 720, margin: "24px auto 0", padding: "0 24px" }}>
-
+      <div className="cd-layout">
+        <div className="cd-main">
         {/* Invalid notice */}
         {contact.status === "invalid" && (
           <div role="alert" style={{ background: "#FFFBEB", border: "1.5px solid #FCD34D", borderRadius: 10, padding: "12px 16px", marginBottom: 16, ...GF, fontSize: 13, color: "#92400E" }}>
@@ -295,20 +293,25 @@ function ContactDetail() {
         )}
 
         {/* Contact info */}
-        <SectionCard title="Contact Information">
-          <dl style={{ margin: 0 }}>
-            <InfoRow label="Full Name"    value={contact.name} />
-            <InfoRow label="Email"        value={<a href={`mailto:${contact.email}`} style={{ color: AZURE, textDecoration: "none" }}>{contact.email}</a>} />
-            <InfoRow label="Phone"        value={contact.phone} />
-            <InfoRow label="Organization" value={contact.organization} />
-            <InfoRow label="Title / Role" value={contact.title} />
-            <InfoRow label="Scope"        value={CONTACT_SCOPE_LABELS[contact.scope]} />
-            <InfoRow label="Source"       value={CONTACT_SOURCE_LABELS[contact.source]} />
+        <SectionCard title="Contact information">
+          <dl className="cd-tiles">
+            <InfoTile icon={Mail} label="Email" value={<a href={`mailto:${contact.email}`} style={{ color: "#005A9E", textDecoration: "none", ...C.GM, fontSize: 13 }}>{contact.email}</a>} />
+            <InfoTile icon={Phone} label="Phone" value={contact.phone ? <a href={`tel:${contact.phone}`} style={{ color: "#005A9E", textDecoration: "none" }}>{contact.phone}</a> : undefined} />
+            <InfoTile icon={Building2} label="Organisation" value={contact.organization} />
+            <InfoTile icon={Briefcase} label="Title / role" value={contact.title} />
+            <InfoTile icon={Share2} label="Who can use it" value={contact.scope === "workspace" ? "Everyone in the workspace" : "Only you"} />
+            <InfoTile icon={UserIcon} label="Source" value={contact.account?.connected ? "Added each other on LAGDA" : CONTACT_SOURCE_LABELS[contact.source]} />
           </dl>
+          {contact.tagIds.length > 0 && (
+            <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center", marginTop: 14 }}>
+              <TagIcon size={14} color="#94A3B8" aria-hidden />
+              {contact.tagIds.map(t => <TagChip key={t} tagId={t} />)}
+            </div>
+          )}
           {contact.note && (
-            <div style={{ background: "#F8FAFC", borderRadius: 8, padding: "10px 14px", marginTop: 8 }}>
-              <p style={{ ...GF, fontSize: 12, fontWeight: 700, color: SILVER, marginBottom: 4, textTransform: "uppercase", letterSpacing: "0.05em" }}>Note</p>
-              <p style={{ ...GF, fontSize: 13, color: NAVY, margin: 0 }}>{contact.note}</p>
+            <div style={{ background: "#F8FAFC", borderRadius: 10, padding: "10px 14px", marginTop: 14, display: "flex", gap: 10 }}>
+              <StickyNote size={15} color="#94A3B8" aria-hidden style={{ flexShrink: 0, marginTop: 2 }} />
+              <p style={{ ...GF, fontSize: 13, color: NAVY, margin: 0, lineHeight: 1.55 }}>{contact.note}</p>
             </div>
           )}
         </SectionCard>
@@ -332,7 +335,7 @@ function ContactDetail() {
               onChoose={kind => { setRequestKind(kind); }}
             />
             <p style={{ ...GF, fontSize: 12.5, color: "#475569", margin: "12px 0 0" }}>
-              Track answers in <Link to={contactRequestsPath({ view: "sent" })} style={{ color: "#005A9E", fontWeight: 600 }}>Requests From Contacts</Link>.
+              Track answers in <Link to={contactRequestsPath({ view: "sent" })} style={{ color: "#005A9E", fontWeight: 600 }}>Document requests</Link>.
             </p>
             <h3 style={{ ...GF, fontSize: 12, fontWeight: 700, color: "#334155", textTransform: "uppercase", letterSpacing: "0.05em", margin: "18px 0 10px" }}>
               Request history
@@ -358,6 +361,14 @@ function ContactDetail() {
         {/* Usage summary */}
         {usage && <UsageSummaryCard usage={usage} />}
 
+        </div>
+
+        <aside className="cd-side">
+          {USE_REAL_BACKEND && workspaceId !== undefined && contact.status === "active" && (
+            <ContactWorkspaceCard contact={contact} workspaceId={workspaceId}
+              canAskToPrepare={canRequest && contact.workspaceMember != null}
+              onAskToPrepare={() => { setRequestKind("preparation"); }} />
+          )}
         {/* Participant separation notice */}
         <SectionCard title="Document Participation">
           <p style={{ ...GF, fontSize: 13, color: SLATE, margin: "0 0 8px" }}>
@@ -376,7 +387,7 @@ function ContactDetail() {
         </div>
 
         {/* Metadata footer */}
-        <div style={{ display: "flex", gap: 24, flexWrap: "wrap", marginTop: 20, padding: "0 4px" }}>
+        <div style={{ display: "flex", gap: 20, flexWrap: "wrap", padding: "0 4px" }}>
           {[
             { label: "Created",     val: contact.createdAt ? new Date(contact.createdAt).toLocaleDateString() : "—" },
             { label: "Updated",     val: contact.updatedAt ? new Date(contact.updatedAt).toLocaleDateString() : "—" },
@@ -389,7 +400,10 @@ function ContactDetail() {
             </div>
           ))}
         </div>
+        </aside>
       </div>
+
+      <style>{DETAIL_CSS}</style>
 
       {requestKind !== null && workspaceId !== undefined && (
         <ContactRequestDialog
@@ -403,6 +417,58 @@ function ContactDetail() {
     </div>
   );
 }
+
+const DETAIL_CSS = `
+.cd-hero { position: relative; background: #FFFFFF; border-bottom: 1px solid #E3E8EF; }
+.cd-band { height: 112px; background:
+  radial-gradient(120% 140% at 100% 0%, rgba(0,120,212,0.55) 0%, rgba(0,120,212,0) 55%),
+  linear-gradient(120deg, #07111F 0%, #0B3A66 55%, #0078D4 100%); }
+.cd-hero-inner { max-width: 1080px; margin: 0 auto; padding: 0 24px 18px; box-sizing: border-box; }
+.cd-back { position: absolute; top: 14px; left: 24px; display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px; border-radius: 8px;
+  font-family: 'Geist', sans-serif; font-size: 12.5px; font-weight: 600; color: #FFFFFF; text-decoration: none; background: rgba(255,255,255,0.14); }
+.cd-back:hover { background: rgba(255,255,255,0.24); }
+.cd-hero-row { display: flex; align-items: flex-start; gap: 18px; padding-top: 14px; flex-wrap: wrap; }
+.cd-avatar { display: flex; margin-top: -62px; flex-shrink: 0; }
+.cd-hero-text { flex: 1 1 260px; min-width: 0; }
+.cd-actions { align-self: center; }
+.cd-name { font-family: 'Geist', sans-serif; font-size: 26px; font-weight: 800; color: #07111F; margin: 0; line-height: 1.2; overflow-wrap: anywhere; }
+.cd-role { font-family: 'Geist', sans-serif; font-size: 14px; color: #475569; margin: 3px 0 0; }
+.cd-badges { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; align-items: center; }
+.cd-soft { display: inline-flex; align-items: center; gap: 4px; font-family: 'Geist', sans-serif; font-size: 11px; font-weight: 600; color: #475569;
+  background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 999px; padding: 2px 8px; }
+.cd-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.cd-btn { display: inline-flex; align-items: center; gap: 7px; min-height: 40px; padding: 0 14px; border-radius: 9px; border: 1.5px solid #CBD5E1; background: #FFFFFF;
+  color: #1E293B; font-family: 'Geist', sans-serif; font-size: 13px; font-weight: 700; text-decoration: none; cursor: pointer; }
+.cd-btn:hover:not(:disabled) { border-color: #0078D4; color: #005A9E; }
+.cd-btn:focus-visible { outline: 3px solid rgba(0,120,212,0.35); outline-offset: 1px; }
+.cd-btn[data-variant="quiet"] { color: #475569; }
+.cd-btn[data-variant="restore"] { color: #166534; border-color: #BBF7D0; background: #F0FDF4; }
+.cd-layout { max-width: 1080px; margin: 22px auto 0; padding: 0 24px; box-sizing: border-box; display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 18px; align-items: start; }
+.cd-main, .cd-side { min-width: 0; display: flex; flex-direction: column; gap: 0; }
+.cd-side { gap: 16px; position: sticky; top: 16px; }
+.cd-tiles { margin: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 230px), 1fr)); gap: 10px; }
+.cd-tile { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border: 1px solid #EEF2F6; border-radius: 10px; background: #FBFCFE; min-width: 0; }
+.cd-tile-icon { width: 30px; height: 30px; border-radius: 8px; background: #F0F7FF; color: #005A9E; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.cd-tile-label { font-family: 'Geist', sans-serif; font-size: 11px; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.05em; }
+.cd-tile-value { font-family: 'Geist', sans-serif; font-size: 13.5px; color: #07111F; margin: 2px 0 0; overflow-wrap: anywhere; }
+@media (max-width: 960px) {
+  .cd-layout { grid-template-columns: minmax(0, 1fr); }
+  .cd-side { position: static; }
+}
+@media (max-width: 600px) {
+  .cd-band { height: 92px; }
+  .cd-hero-inner { padding: 0 16px 16px; }
+  .cd-back { left: 16px; }
+  .cd-hero-row { flex-direction: column; align-items: flex-start; gap: 10px; padding-top: 0; }
+  .cd-avatar { margin-top: -52px; }
+  .cd-hero-text { flex: 0 0 auto; width: 100%; }
+  .cd-actions { align-self: stretch; }
+  .cd-name { font-size: 22px; }
+  .cd-actions { width: 100%; }
+  .cd-btn { flex: 1 1 0; justify-content: center; padding: 0 10px; }
+  .cd-layout { padding: 0 16px; margin-top: 16px; }
+}
+`;
 
 export function ContactDetailPage() {
   return (

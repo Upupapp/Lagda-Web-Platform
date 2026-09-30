@@ -36,7 +36,7 @@ export const TITLE_MAX = 200;
 export const MESSAGE_MAX = 2000;
 
 export const DELIVERY_COPY = {
-  member: "They'll see it in Contacts → Requests From Contacts and their notifications. No email is sent.",
+  member: "They'll see it in Contacts → Document requests and their notifications. No email is sent.",
   external: "We'll email them. They'll reply to you, and you mark it complete here.",
 } as const;
 
@@ -155,8 +155,8 @@ export function ContactRequestDialog({ workspaceId, kind, contact, onClose, onCr
           <CheckCircle2 size={18} color="#047857" aria-hidden style={{ flexShrink: 0, marginTop: 1 }} />
           <p style={{ ...GF, fontSize: 14, color: NAVY, margin: 0, lineHeight: 1.6 }}>
             {inApp
-              ? <>{sent.recipient?.displayName ?? contact.name} will see it in Contacts → Requests From Contacts and their notifications. No email was sent.</>
-              : <>We emailed {contact.name} ({contact.email}). When they reply to you, mark it received from Contacts → Requests From Contacts → Sent.</>}
+              ? <>{sent.recipient?.displayName ?? contact.name} will see it in Contacts → Document requests and their notifications. No email was sent.</>
+              : <>We emailed {contact.name} ({contact.email}). When they reply to you, mark it received from Contacts → Document requests → Sent.</>}
           </p>
         </div>
       </ModalFrame>
