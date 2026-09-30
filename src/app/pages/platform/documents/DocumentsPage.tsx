@@ -12,7 +12,7 @@ import {
   X, AlertCircle, ChevronLeft, ChevronRight, Tag, FolderOpen, Folder,
   ShieldCheck, Activity, Users, RefreshCw, Inbox, ArrowUpDown,
   Star, Clock, ExternalLink,
-  Eye, Bell, Ban, Shuffle, Shield, Info, Send, Download, History, PenLine, FileCheck2,
+  Eye, Bell, Ban, Shuffle, Shield, Info, Send, Download, History, PenLine, FileCheck2, Mail,
 } from "lucide-react";
 import { usePlatform } from "../../../context/PlatformContext";
 import {
@@ -37,7 +37,10 @@ import { isCapabilityInActiveProfile } from "../../../config/capability-resolver
 import { SIGNING_REQUEST_STATUS } from "../../../services/signing-request-status";
 import { StatusBadge } from "../../../components/documents/StatusBadge";
 import { VerificationIdActions } from "../../../components/documents/VerificationIdActions";
-import { CompletedDocumentGrid, type CompletedCardData, type CardAction } from "./CompletedDocumentCards";
+import {
+  CompletedDocumentGrid, useDocumentCardBranding, type CompletedCardData, type CardAction, type CardBranding,
+} from "./CompletedDocumentCards";
+import { MailCard, MailCardList, MailLine, MailAction, formalDate } from "./MailCard";
 import { AuditTrailDialog } from "../../../components/documents/AuditTrailDialog";
 import { ShareDocumentDialog } from "../../../components/document-sharing/ShareDocumentDialog";
 import type { TransactionStatus } from "../../../models";
@@ -278,7 +281,24 @@ const DOC_STYLES = SKELETON_STYLE + `
     .doc-cards-mobile { margin-top: 16px; }
   }
 
-  /* The three lists: what this workspace sent, and what was sent to me. */
+  /* The two groups: a formal segmented switch above that group's tabs. */
+  .doc-groups {
+    display: inline-flex; margin-top: 16px; padding: 4px; gap: 4px; border-radius: 12px;
+    background: #F1F5F9; border: 1px solid #E2E8F0; max-width: 100%;
+  }
+  .doc-group {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 40px; padding: 0 18px;
+    border: none; border-radius: 9px; background: transparent; color: #475569; cursor: pointer; white-space: nowrap;
+    font-family: 'Geist', sans-serif; font-size: 14px; font-weight: 600; letter-spacing: 0.01em;
+  }
+  .doc-group[aria-selected="true"] { background: #FFFFFF; color: #07111F; box-shadow: 0 1px 3px rgba(7,17,31,0.14); }
+  .doc-group:focus-visible { outline: 2px solid #0078D4; outline-offset: 2px; }
+  @media (max-width: 767px) {
+    .doc-groups { display: flex; width: 100%; box-sizing: border-box; }
+    .doc-group { flex: 1 1 0; padding: 0 10px; min-width: 0; }
+  }
+
+  /* The lists inside the chosen group. */
   .doc-list-tabs { display: flex; gap: 4px; margin-top: 16px; border-bottom: 1px solid #E2E8F0; overflow-x: auto; scrollbar-width: none; }
   .doc-list-tabs::-webkit-scrollbar { display: none; }
   .doc-list-tab {
@@ -2219,6 +2239,66 @@ function unsentDraftRow(document: RealDocument): SigningRequestListItem {
   };
 }
 
+// ── Sent: the outbox mail card ─────────────────────────────────────────────
+//
+// What this workspace sent, as a letter under its OWN banner: the send date in
+// the corner, the status in words, the document centred with who it went to
+// and how far signing has got, and the same actions as before along the
+// bottom — Participants and History at the left, View and Send again at the
+// right.
+
+const OUTBOX_STATUS: Partial<Record<SigningRequestState, { label: string; color: string }>> = {
+  "sent":                { label: "Out for signature", color: "#0078D4" },
+  "partially-completed": { label: "Partially signed",  color: "#0078D4" },
+  "completion-ready":    { label: "Finalizing",        color: "#15803D" },
+  "cancelled":           { label: "Cancelled",         color: "#64748B" },
+  "expired":             { label: "Expired",           color: "#B45309" },
+};
+
+function OutboxCard({ item, branding, onView, onSignatures, onAudit, onResend }: {
+  item: SigningRequestListItem;
+  branding: CardBranding;
+  onView: () => void;
+  onSignatures: () => void;
+  onAudit: () => void;
+  onResend: () => void;
+}) {
+  const status = OUTBOX_STATUS[item.state] ?? { label: TRANSACTION_STATUS_LABELS[SIGNING_REQUEST_STATUS[item.state]], color: "#0078D4" };
+  const total = item.participantCount;
+  const done = item.completedParticipantCount;
+  const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+  return (
+    <MailCard
+      testId="outbox-card"
+      branding={{ displayName: branding.displayName, primaryColor: branding.primaryColor, logoUrl: branding.logoUrl }}
+      subtitle={status.label}
+      corner={<>Sent {formalDate(item.sentAt ?? item.createdAt)}</>}
+      title={item.documentTitle}
+      footerStart={<>
+        <MailAction icon={Users} label="Participants" onClick={onSignatures} ariaLabel={`Participants of ${item.documentTitle}`} />
+        <MailAction icon={History} label="History" onClick={onAudit} ariaLabel={`History of ${item.documentTitle}`} />
+      </>}
+      footerEnd={<>
+        <MailAction icon={Eye} label="View" onClick={onView} ariaLabel={`View ${item.documentTitle}`} />
+        <MailAction icon={Send} label="Send again" primary onClick={onResend} ariaLabel={`Send ${item.documentTitle} again`} />
+      </>}
+    >
+      <MailLine>
+        To {total} {total === 1 ? "participant" : "participants"} · <strong style={{ color: "#07111F" }}>{done} of {total} signed</strong>
+      </MailLine>
+      {total > 0 && (
+        <div className="mail-progress" role="meter" aria-valuenow={done} aria-valuemin={0} aria-valuemax={total}
+          aria-label={`${String(done)} of ${String(total)} signed`}>
+          <div style={{ width: `${String(pct)}%`, background: pct === 100 ? "#15803D" : status.color }} />
+        </div>
+      )}
+      {item.expiresAt !== null && (item.state === "sent" || item.state === "partially-completed") && (
+        <MailLine>Signing closes {formalDate(item.expiresAt)}</MailLine>
+      )}
+    </MailCard>
+  );
+}
+
 // One card design for every list — Sent, Draft, Declined and Completed all
 // draw the same branded card (CompletedDocumentCards.tsx). Completed's own
 // green pill is right only for a completed request, so every other state
@@ -2445,6 +2525,7 @@ function FilterField({
 function DocumentsPageRealMode() {
   const { onPrepareClick } = usePrepareLaunch();
   const navigate = useNavigate();
+  const ownBranding = useDocumentCardBranding();
   const { currentWorkspace } = usePlatform();
   const workspaceId = currentWorkspace?.id ?? null;
 
@@ -2484,6 +2565,7 @@ function DocumentsPageRealMode() {
   const list: "sent" | "to-sign" | "signed" | "others" | "completed" | "draft" | "declined" =
     rawList === "to-sign" || rawList === "signed" || rawList === "others" || rawList === "completed"
       || rawList === "draft" || rawList === "declined" ? rawList : "sent";
+  const group: "correspondence" | "records" = list === "sent" || list === "to-sign" ? "correspondence" : "records";
   const [toSignCount, setToSignCount] = useState<number | null>(null);
   const [othersCount, setOthersCount] = useState<number | null>(null);
   const setList = (next: typeof list) => {
@@ -2665,35 +2747,58 @@ function DocumentsPageRealMode() {
       />
       <AppContent style={{ padding: "0 24px 32px" }}>
         <style>{DOC_STYLES}</style>
-        <div className="doc-list-tabs" role="tablist" aria-label="Document lists">
-          <button type="button" role="tab" className="doc-list-tab" aria-selected={list === "sent"} onClick={() => setList("sent")}>
-            <Send size={14} aria-hidden /> Sent
-          </button>
-          <button type="button" role="tab" className="doc-list-tab" aria-selected={list === "to-sign"} onClick={() => setList("to-sign")}>
-            <PenLine size={14} aria-hidden /> I must sign
+        {/* Two groups: Correspondence (documents still travelling — out from
+            this workspace, or in to me) and Records (everything kept). The
+            group follows the list, so every existing ?list= link still lands
+            in the right place. Documents always opens on Sent. */}
+        <div className="doc-groups" role="tablist" aria-label="Document groups">
+          <button type="button" role="tab" className="doc-group" aria-selected={group === "correspondence"}
+            onClick={() => { if (group !== "correspondence") setList("sent"); }}>
+            <Mail size={16} aria-hidden /> <span>Correspondence</span>
             {toSignCount !== null && toSignCount > 0 && (
-              <span className="doc-list-count" aria-label={`${toSignCount} waiting`}>{toSignCount}</span>
+              <span className="doc-list-count" aria-label={`${String(toSignCount)} waiting for your signature`}>{toSignCount}</span>
             )}
           </button>
-          <button type="button" role="tab" className="doc-list-tab" aria-selected={list === "signed"} onClick={() => setList("signed")}>
-            <FileCheck2 size={14} aria-hidden /> Signed by me
-          </button>
-          <button type="button" role="tab" className="doc-list-tab" aria-selected={list === "others"} onClick={() => setList("others")}>
-            <Users size={14} aria-hidden /> Others
+          <button type="button" role="tab" className="doc-group" aria-selected={group === "records"}
+            onClick={() => { if (group !== "records") setList("signed"); }}>
+            <Archive size={16} aria-hidden /> <span>Records</span>
             {othersCount !== null && othersCount > 0 && (
               <span className="doc-list-count" aria-label={`${String(othersCount)} to look at`}>{othersCount}</span>
             )}
           </button>
-          <button type="button" role="tab" className="doc-list-tab" aria-selected={list === "draft"} onClick={() => setList("draft")}>
-            <FileText size={14} aria-hidden /> Draft
-          </button>
-          <button type="button" role="tab" className="doc-list-tab" aria-selected={list === "declined"} onClick={() => setList("declined")}>
-            <FileText size={14} aria-hidden /> Declined
-          </button>
-          {/* Last, after Declined: the finished work, shown as branded cards. */}
-          <button type="button" role="tab" className="doc-list-tab" aria-selected={list === "completed"} onClick={() => setList("completed")}>
-            <FileCheck2 size={14} aria-hidden /> Completed
-          </button>
+        </div>
+        <div className="doc-list-tabs" role="tablist" aria-label="Document lists">
+          {group === "correspondence" ? (<>
+            <button type="button" role="tab" className="doc-list-tab" aria-selected={list === "sent"} onClick={() => setList("sent")}>
+              <Send size={14} aria-hidden /> Sent
+            </button>
+            <button type="button" role="tab" className="doc-list-tab" aria-selected={list === "to-sign"} onClick={() => setList("to-sign")}>
+              <PenLine size={14} aria-hidden /> I must sign
+              {toSignCount !== null && toSignCount > 0 && (
+                <span className="doc-list-count" aria-label={`${toSignCount} waiting`}>{toSignCount}</span>
+              )}
+            </button>
+          </>) : (<>
+            <button type="button" role="tab" className="doc-list-tab" aria-selected={list === "signed"} onClick={() => setList("signed")}>
+              <FileCheck2 size={14} aria-hidden /> Signed by me
+            </button>
+            <button type="button" role="tab" className="doc-list-tab" aria-selected={list === "others"} onClick={() => setList("others")}>
+              <Users size={14} aria-hidden /> Others
+              {othersCount !== null && othersCount > 0 && (
+                <span className="doc-list-count" aria-label={`${String(othersCount)} to look at`}>{othersCount}</span>
+              )}
+            </button>
+            <button type="button" role="tab" className="doc-list-tab" aria-selected={list === "draft"} onClick={() => setList("draft")}>
+              <FileText size={14} aria-hidden /> Draft
+            </button>
+            <button type="button" role="tab" className="doc-list-tab" aria-selected={list === "declined"} onClick={() => setList("declined")}>
+              <FileText size={14} aria-hidden /> Declined
+            </button>
+            {/* Last, after Declined: the finished work, shown as branded cards. */}
+            <button type="button" role="tab" className="doc-list-tab" aria-selected={list === "completed"} onClick={() => setList("completed")}>
+              <FileCheck2 size={14} aria-hidden /> Completed
+            </button>
+          </>)}
         </div>
         {list === "to-sign" && <DocumentsToSignSection onCount={setToSignCount} />}
         {list === "signed" && <SignedByMeSection />}
@@ -2758,7 +2863,18 @@ function DocumentsPageRealMode() {
             description="Nothing in this workspace matches the current search and filters. Try a shorter name, a different signer, or another status."
           />
         )}
-        {status === "ready" && rows.length > 0 && (
+        {status === "ready" && rows.length > 0 && list === "sent" && (
+          <MailCardList label="Sent documents">
+            {rows.map(item => (
+              <OutboxCard key={item.signingRequestId} item={item} branding={ownBranding}
+                onView={() => { setViewing(item); }}
+                onSignatures={() => { setSignaturesFor(item); }}
+                onAudit={() => { setAuditFor(item); }}
+                onResend={() => { setResendFor(item); }} />
+            ))}
+          </MailCardList>
+        )}
+        {status === "ready" && rows.length > 0 && list !== "sent" && (
           <CompletedDocumentGrid label="Documents" cards={rows.map(item => documentCard(item, {
             verificationId: verificationIds.get(item.documentId) ?? null,
             file: files.get(item.documentId),

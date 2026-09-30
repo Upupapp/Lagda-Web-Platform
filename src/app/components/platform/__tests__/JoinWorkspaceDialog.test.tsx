@@ -131,4 +131,16 @@ describe("the workspace menu", () => {
     const dialog = await screen.findByRole("dialog");
     expect(within(dialog).getByLabelText("Join link")).toBeInTheDocument();
   });
+
+  it("draws the dialog at the top of the page, not inside the sidebar that opened it", async () => {
+    const user = userEvent.setup();
+    const { container } = render(<WorkspaceSwitcher collapsed={false} />);
+    await user.click(screen.getByRole("button", { name: /Current workspace: Mine/ }));
+    await user.click(screen.getByRole("button", { name: "Join another workspace" }));
+    const dialog = await screen.findByRole("dialog");
+    // Inside the sidebar, the sidebar's stacking context capped the backdrop
+    // below the header. Portalled to <body>, it covers the whole shell.
+    expect(container.contains(dialog)).toBe(false);
+    expect(document.body.contains(dialog)).toBe(true);
+  });
 });

@@ -95,7 +95,7 @@ describe("VerificationIdActions", () => {
 
 describe("Documents list — Verification ID (real mode)", () => {
   it("shows the id on the completed card and a dash on the others", async () => {
-    render(<MemoryRouter initialEntries={["/app/documents"]}><DocumentsPage /></MemoryRouter>);
+    render(<MemoryRouter initialEntries={["/app/documents?list=completed"]}><DocumentsPage /></MemoryRouter>);
     const grid = await screen.findByRole("list", { name: "Documents" });
     await waitFor(() => expect(within(grid).getAllByText("LAGDA-VER-2026-004821").length).toBeGreaterThan(0));
     const cards = within(grid).getAllByTestId("completed-card");
@@ -107,7 +107,7 @@ describe("Documents list — Verification ID (real mode)", () => {
   });
 
   it("finds a document by its Verification ID although the server search does not", async () => {
-    render(<MemoryRouter initialEntries={["/app/documents?q=LAGDA-VER-2026-004821"]}><DocumentsPage /></MemoryRouter>);
+    render(<MemoryRouter initialEntries={["/app/documents?list=completed&q=LAGDA-VER-2026-004821"]}><DocumentsPage /></MemoryRouter>);
     const grid = await screen.findByRole("list", { name: "Documents" });
     await waitFor(() => expect(within(grid).getByText("Lease Agreement")).toBeInTheDocument());
     expect(within(grid).queryByText("Draft NDA")).toBeNull();

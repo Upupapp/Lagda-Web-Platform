@@ -74,7 +74,7 @@ describe("I must sign", () => {
   it("lists signers only (and pre-role entries, which were signers')", async () => {
     const onCount = vi.fn();
     render(<MemoryRouter><DocumentsToSignSection onCount={onCount} /></MemoryRouter>);
-    const t = await table("Documents I must sign");
+    const t = await screen.findByRole("list", { name: "Documents I must sign" });
     expect(within(t).getByText("Lease")).toBeTruthy();
     expect(within(t).getByText("Old signer entry")).toBeTruthy();
     expect(within(t).queryByText("Budget")).toBeNull();

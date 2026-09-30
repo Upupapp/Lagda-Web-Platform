@@ -906,11 +906,6 @@ const RequestsFromContactsPage = lazy(() =>
     default: m.RequestsFromContactsPage,
   })),
 );
-const ContactImportPage = lazy(() =>
-  import("./app/pages/platform/contacts/ContactImportPage").then((m) => ({
-    default: m.ContactImportPage,
-  })),
-);
 
 // Settings (Command 24)
 // The shell. Lazy like everything else here, which costs one loader on the
@@ -2141,12 +2136,9 @@ export const router = createBrowserRouter([
         ),
       },
       {
+        // Import is hidden for now; an old link lands on Contacts.
         path: "contacts/import",
-        element: (
-          <Suspense fallback={null}>
-            <ContactImportPage />
-          </Suspense>
-        ),
+        element: <Navigate to="/app/contacts" replace />,
       },
       {
         path: "contacts/requests",

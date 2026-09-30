@@ -101,6 +101,13 @@ describe("Contacts → Archived", () => {
     expect(listUrls().every(url => url.includes("state=active"))).toBe(true);
   });
 
+  it("does not offer Import Contacts for now, but still offers Add Contact", async () => {
+    renderAt("/app/contacts");
+    await screen.findByText("Maria Santos");
+    expect(screen.queryByRole("link", { name: /Import Contacts/ })).toBeNull();
+    expect(screen.getByRole("link", { name: /Add Contact/ })).toBeTruthy();
+  });
+
   it("offers View Contact and Restore in the card menu", async () => {
     renderAt("/app/contacts/archived");
     await screen.findByText("Rosa Lim");

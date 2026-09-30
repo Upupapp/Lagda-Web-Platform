@@ -25,6 +25,18 @@ export interface DocumentToSign {
   workspaceName: string | null;
   invitedAt: string;
   expiresAt: string;
+  /**
+   * The SENDER workspace's banner — present when this account's verified
+   * address is a recipient of the request. Absent from an older server, and
+   * null when it cannot be shown; the card then uses the default colour.
+   */
+  branding?: SenderBranding | null;
+}
+
+export interface SenderBranding {
+  displayName: string;
+  primaryColor: string | null;
+  logo: { version: string; width: number; height: number } | null;
 }
 
 /**
@@ -121,4 +133,12 @@ export function participantLogoUrl(completion: ParticipantCompletion): string | 
   if (completion.branding.logo === null || API_BASE_URL === null) return null;
   return `${API_BASE_URL}/me/participant-documents/${encodeURIComponent(completion.verificationId)}`
     + `/branding/logo?v=${encodeURIComponent(completion.branding.logo.version)}`;
+}
+
+/** The sender workspace's logo on an "I must sign" card, or null. */
+export function senderLogoUrl(item: Pick<DocumentToSign, "signingRequestId" | "branding">): string | null {
+  const logo = item.branding?.logo ?? null;
+  if (logo === null || API_BASE_URL === null) return null;
+  return `${API_BASE_URL}/me/documents-to-sign/${encodeURIComponent(item.signingRequestId)}`
+    + `/branding/logo?v=${encodeURIComponent(logo.version)}`;
 }

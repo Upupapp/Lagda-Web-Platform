@@ -60,10 +60,13 @@ beforeEach(() => {
 const renderCompleted = () => render(<MemoryRouter initialEntries={["/app/documents?list=completed"]}><DocumentsPage /></MemoryRouter>);
 
 describe("Documents › Completed", () => {
-  it("is the last section, right after Declined", () => {
-    render(<MemoryRouter initialEntries={["/app/documents"]}><DocumentsPage /></MemoryRouter>);
+  it("is the last section of Records, right after Declined", () => {
+    render(<MemoryRouter initialEntries={["/app/documents?list=completed"]}><DocumentsPage /></MemoryRouter>);
+    const groups = within(screen.getByRole("tablist", { name: "Document groups" })).getAllByRole("tab");
+    expect(groups.map(g => g.textContent?.trim())).toEqual(["Correspondence", "Records"]);
+    expect(groups[1]).toHaveAttribute("aria-selected", "true");
     const tabs = within(screen.getByRole("tablist", { name: "Document lists" })).getAllByRole("tab").map(t => t.textContent?.trim());
-    expect(tabs.slice(-2)).toEqual(["Declined", "Completed"]);
+    expect(tabs).toEqual(["Signed by me", "Others", "Draft", "Declined", "Completed"]);
   });
 
   it("shows each completed document as a card with name, badge, Verification ID, progress and date", async () => {

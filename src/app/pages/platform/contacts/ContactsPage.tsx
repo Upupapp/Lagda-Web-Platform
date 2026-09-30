@@ -256,9 +256,7 @@ function ContactsLibrary({ section }: { section: LibrarySection }) {
             </p>
           </div>
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-            <Link to="/app/contacts/import" style={{ ...GF, fontSize: 13, color: AZURE, border: `1.5px solid ${AZURE}`, borderRadius: 8, padding: "8px 14px", textDecoration: "none", fontWeight: 600 }}>
-              Import Contacts
-            </Link>
+            {/* Import Contacts is hidden for now (the page is kept for later). */}
             <Link to="/app/contacts/new" style={{ ...GF, fontSize: 13, color: "#FFFFFF", background: AZURE, border: "none", borderRadius: 8, padding: "8px 16px", textDecoration: "none", fontWeight: 700 }}>
               + Add Contact
             </Link>

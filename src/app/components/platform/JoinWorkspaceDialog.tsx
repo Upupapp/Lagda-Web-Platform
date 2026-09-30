@@ -8,8 +8,14 @@
 //
 // Reuses the join service's parser, preview, request and wording, so every
 // outcome reads exactly as it does on the join page and in onboarding.
+//
+// Rendered into document.body (a portal). It is opened from inside the sidebar,
+// which is a sticky layer with its own stacking context: drawn in place, the
+// dialog and its backdrop were capped at the sidebar's level, and the header
+// stayed on top of them, undimmed.
 
-import { useEffect, useId, useState } from "react";
+import { useEffect, useId, useState, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { CheckCircle2, Send } from "lucide-react";
 import { ModalFrame, modalButtonStyle } from "../contact-requests/ModalFrame";
 import { usePlatform } from "../../context/PlatformContext";
@@ -39,6 +45,15 @@ const inputStyle: React.CSSProperties = {
 const labelStyle: React.CSSProperties = { ...GF, display: "block", fontSize: 13, fontWeight: 600, color: NAVY, marginBottom: 6 };
 
 export function JoinWorkspaceDialog({ onClose }: { onClose: () => void }) {
+  return <TopLayer><JoinWorkspaceDialogBody onClose={onClose} /></TopLayer>;
+}
+
+/** Above the whole shell — header and sidebar included. */
+function TopLayer({ children }: { children: ReactNode }) {
+  return typeof document === "undefined" ? <>{children}</> : createPortal(children, document.body);
+}
+
+function JoinWorkspaceDialogBody({ onClose }: { onClose: () => void }) {
   const { user } = usePlatform();
   const ids = { link: useId(), name: useId(), reason: useId(), status: useId() };
   const [link, setLink] = useState("");

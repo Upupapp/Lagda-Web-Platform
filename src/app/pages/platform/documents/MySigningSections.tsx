@@ -27,7 +27,7 @@ import {
 import { Z } from "../../../utils/z-index";
 import { ApiError } from "../../../services/api-client";
 import {
-  realMySigningService, continueSigningPath, isSignerEntry, canContinueFromApp, participantLogoUrl,
+  realMySigningService, continueSigningPath, isSignerEntry, canContinueFromApp, participantLogoUrl, senderLogoUrl,
   type DocumentToSign, type SignedDocument, type CompletedOtherDocument, type ParticipantCompletion,
 } from "../../../services/real/my-signing.service";
 import { participantDocumentSource } from "../../../services/real/participant-document";
@@ -36,6 +36,7 @@ import {
 } from "../../../components/document-sharing/SharedDocumentDialog";
 import { ParticipantDocumentViewer } from "../../../components/documents/ParticipantDocumentViewer";
 import { CompletedDocumentGrid, type CompletedCardData } from "./CompletedDocumentCards";
+import { MailCard, MailCardList, MailLine, MailAction, formalDate } from "./MailCard";
 
 /** What a non-signer is asked to do, in the words the list and dialog use. */
 const ROLE_WORDING: Record<string, { label: string; action: string; verb: string }> = {
@@ -454,52 +455,33 @@ export function DocumentsToSignSection({ onCount }: { onCount?: (count: number) 
         />
       ) : (
         <>
-          <div className="mysign-table" role="table" aria-label="Documents I must sign">
-            <div role="row" className="mysign-row mysign-head">
-              <div role="columnheader">Document</div>
-              <div role="columnheader">Sent by</div>
-              <div role="columnheader" className="mysign-when">Received</div>
-              <div role="columnheader" style={{ textAlign: "right" }}>Actions</div>
-            </div>
-            {items.map(item => (
-              <div role="row" className="mysign-row" key={`${item.signingRequestId}:${item.recipientId}`}>
-                <div role="cell" style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                  <FileText size={15} aria-hidden style={{ color: SLATE4, flexShrink: 0 }} />
-                  <span title={item.documentTitle} style={{
-                    ...GF, fontSize: 13, fontWeight: 600, color: NAVY,
-                    overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
-                  }}>
-                    {item.documentTitle}
-                  </span>
-                </div>
-                <div role="cell" style={{ ...GF, fontSize: 12.5, color: SLATE6, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }} title={senderLine(item)}>
-                  {senderLine(item)}
-                </div>
-                <div role="cell" className="mysign-when" style={{ ...GF, fontSize: 12, color: SLATE4 }}>
-                  {fmtDate(item.invitedAt)}
-                </div>
-                <div role="cell" className="mysign-actions">
-                  <RowButton icon={UserRound} label="See the sender" onClick={() => setSenderFor(item)} />
-                  <RowButton icon={PenLine} label="Continue signing" primary onClick={() => setContinueFor(item)} />
-                </div>
-              </div>
-            ))}
-          </div>
-          <div className="mysign-cards">
-            {items.map(item => (
-              <div key={`${item.signingRequestId}:${item.recipientId}`} style={{
-                border: `1px solid ${SLATE2}`, borderRadius: 10, padding: "12px 14px", marginBottom: 10, background: "#fff",
-              }}>
-                <div style={{ ...GF, fontSize: 14, fontWeight: 600, color: NAVY, wordBreak: "break-word" }}>{item.documentTitle}</div>
-                <div style={{ ...GF, fontSize: 12.5, color: SLATE6, marginTop: 4 }}>{senderLine(item)}</div>
-                <div style={{ ...GF, fontSize: 12, color: SLATE4, marginTop: 2 }}>Received {fmtDate(item.invitedAt)}</div>
-                <div style={{ display: "flex", gap: 8, marginTop: 10, flexWrap: "wrap" }}>
-                  <RowButton icon={UserRound} label="See the sender" onClick={() => setSenderFor(item)} />
-                  <RowButton icon={PenLine} label="Continue signing" primary onClick={() => setContinueFor(item)} />
-                </div>
-              </div>
-            ))}
-          </div>
+          <MailCardList label="Documents I must sign">
+            {items.map(item => {
+              const expires = item.expiresAt ? new Date(item.expiresAt) : null;
+              const soon = expires !== null && expires.getTime() - Date.now() < 3 * 24 * 60 * 60 * 1000;
+              return (
+                <MailCard
+                  key={`${item.signingRequestId}:${item.recipientId}`}
+                  testId="to-sign-card"
+                  branding={{
+                    displayName: item.branding?.displayName ?? item.workspaceName ?? "LAGDA",
+                    primaryColor: item.branding?.primaryColor ?? DEFAULT_BANNER,
+                    logoUrl: senderLogoUrl(item),
+                  }}
+                  subtitle="Signature requested"
+                  corner={<>Received {formalDate(item.invitedAt)}</>}
+                  title={item.documentTitle}
+                  footerStart={<MailAction icon={UserRound} label="See the sender" onClick={() => setSenderFor(item)} />}
+                  footerEnd={<MailAction icon={PenLine} label="Continue signing" primary onClick={() => setContinueFor(item)} />}
+                >
+                  <MailLine>Sent by <strong style={{ color: NAVY }}>{item.senderName ?? item.senderEmail ?? "the sender"}</strong></MailLine>
+                  {expires !== null && (
+                    <MailLine tone={soon ? "warning" : "muted"}>Please sign by {formalDate(item.expiresAt)}</MailLine>
+                  )}
+                </MailCard>
+              );
+            })}
+          </MailCardList>
         </>
       )}
       {senderFor !== null && <SenderDialog item={senderFor} onClose={() => setSenderFor(null)} />}
