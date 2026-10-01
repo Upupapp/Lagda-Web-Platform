@@ -285,6 +285,8 @@ export function ContactsHeader({ section, subtitle, stats, pendingCount, action 
           </Link>
         )}
       </div>
+      <ContactsSectionNav current={section} {...(pendingCount === undefined ? {} : { pendingCount })} />
+      {/* Under the tabs, at the right: the figures follow the sections. */}
       {stats && stats.length > 0 && (
         <ul className="ct-stats" aria-label="Contacts at a glance">
           {stats.map(s => {
@@ -301,7 +303,6 @@ export function ContactsHeader({ section, subtitle, stats, pendingCount, action 
           })}
         </ul>
       )}
-      <ContactsSectionNav current={section} {...(pendingCount === undefined ? {} : { pendingCount })} />
       <style>{HEADER_CSS}</style>
     </header>
   );
@@ -321,7 +322,9 @@ const HEADER_CSS = `
   box-shadow: 0 6px 16px -8px rgba(0,120,212,0.6); transition: background-color 150ms ease, box-shadow 150ms ease; }
 .ct-primary:hover { background: #006CBE; }
 .ct-primary:focus-visible { outline: 3px solid rgba(0,120,212,0.35); outline-offset: 2px; }
-.ct-stats { list-style: none; margin: 0 0 12px; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 10px; max-width: 760px; }
+/* Under the tabs, at the right edge: one row of figures. */
+.ct-stats { list-style: none; margin: 10px 0 4px; padding: 0; display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 10px; }
+.ct-stats > .ct-stat { flex: 0 0 auto; min-width: 170px; }
 .ct-stat { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: 1px solid ${C.BORDER}; border-radius: 12px;
   background: linear-gradient(180deg, #FFFFFF 0%, #F8FAFC 100%); min-width: 0; }
 .ct-stat-icon { width: 32px; height: 32px; border-radius: 9px; background: ${C.LIGHT}; color: ${C.AZURE_TEXT}; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
@@ -335,9 +338,12 @@ const HEADER_CSS = `
   .ct-header-icon { width: 40px; height: 40px; border-radius: 10px; }
   .ct-title { font-size: 20px; }
   .ct-primary { width: 100%; justify-content: center; order: 3; }
-  .ct-stats { display: flex; overflow-x: auto; scrollbar-width: none; margin: 0 -16px 10px; padding: 0 16px; scroll-snap-type: x proximity; }
-  .ct-stats::-webkit-scrollbar { display: none; }
-  .ct-stat { flex: 0 0 auto; min-width: 148px; scroll-snap-align: start; }
+  /* Phones: the three figures as one even row, compact. */
+  .ct-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; margin: 8px 0 4px; }
+  .ct-stats > .ct-stat { min-width: 0; padding: 8px; gap: 6px; flex-direction: column; align-items: flex-start; }
+  .ct-stats .ct-stat-icon { width: 24px; height: 24px; }
+  .ct-stats .ct-stat-value { font-size: 16px; }
+  .ct-stats .ct-stat-label { font-size: 11px; white-space: normal; }
 }
 @media (prefers-reduced-motion: reduce) { .ct-primary { transition: none; } }
 `;

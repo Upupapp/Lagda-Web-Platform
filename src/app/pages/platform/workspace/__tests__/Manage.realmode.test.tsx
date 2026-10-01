@@ -154,13 +154,15 @@ describe("Manage overview — real backend", () => {
     expect(screen.getByTestId("stat-invitations")).toHaveTextContent("2");
     expect(screen.getByTestId("stat-join-links")).toHaveTextContent("1");
     await waitFor(() => expect(screen.getByTestId("stat-teams")).toHaveTextContent("2"));
-    expect(screen.getByTestId("stat-join-requests").getAttribute("href")).toBe("/app/workspace/join-requests");
-    expect(screen.getByTestId("stat-join-links").getAttribute("href")).toBe("/app/workspace/join-links");
+    expect(screen.getByTestId("stat-join-requests").getAttribute("href")).toBe("/app/invitations?view=sent&panel=requests");
+    expect(screen.getByTestId("stat-join-links").getAttribute("href")).toBe("/app/invitations?view=sent&panel=links");
 
     expect(container.textContent).not.toMatch(DEMO_TEXT);
     expect(screen.queryByText("Suspended")).toBeNull();
     expect(screen.queryByText(/Billing email/)).toBeNull();
-    expect(screen.queryByText(/Plan/)).toBeNull();
+    // Plan usage is real usage; no plan is NAMED until the backend says which.
+    expect(screen.getByTestId("plan-usage")).toBeInTheDocument();
+    expect(screen.queryByText(/plan · this month/)).toBeNull();
     expect(screen.getByTestId("your-role")).toHaveTextContent("Owner");
     // The old "This workspace" panel is gone; its facts live in the brand card.
     expect(screen.queryByTestId("workspace-facts")).toBeNull();
@@ -223,7 +225,7 @@ describe("Manage overview — real backend", () => {
     expect(attention).toHaveTextContent("Ramon Diaz asked to join");
     expect(attention).toHaveTextContent("Join link: Front desk");
     const reviews = within(attention).getAllByRole("link", { name: "Review" });
-    expect(reviews[0]).toHaveAttribute("href", "/app/workspace/join-requests");
+    expect(reviews[0]).toHaveAttribute("href", "/app/invitations?view=sent&panel=requests");
     await waitFor(() => expect(attention).toHaveTextContent("Invitation to soon@example.com expires soon"));
     expect(attention).not.toHaveTextContent("later@example.com");
   });
@@ -263,7 +265,7 @@ describe("Manage overview — real backend", () => {
     expect(screen.queryByRole("link", { name: /Activity log/ })).toBeNull();
     expect(screen.getByRole("link", { name: /Who can do what/ })).toBeInTheDocument();
     expect(container.textContent).not.toMatch(DEMO_TEXT);
-    const forbidden = ["/members", "/join-requests", "/join-tickets", "/invitations", "/activity"];
+    const forbidden = ["ws_1/members", "/join-requests", "/join-tickets", "/invitations", "/activity"];
     expect(calls.filter(c => forbidden.some(f => c.path.endsWith(f)))).toEqual([]);
   });
 

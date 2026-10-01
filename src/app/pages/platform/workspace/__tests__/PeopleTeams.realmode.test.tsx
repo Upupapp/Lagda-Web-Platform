@@ -105,12 +105,12 @@ describe("the team tree", () => {
     show();
     const tree = await screen.findByTestId("team-tree");
     const finance = within(tree).getByRole("region", { name: "Finance" });
-    expect(within(finance).getByTestId("person-u3")).toHaveTextContent("Analyst");
-    expect(within(finance).getByTestId("person-u1")).toHaveTextContent("You");
+    expect(within(finance).getByTestId("tree-node-u3")).toHaveTextContent("Analyst");
+    expect(within(finance).getByTestId("tree-node-u1")).toHaveTextContent("You");
     expect(within(finance).getByRole("region", { name: "Payroll" })).toBeInTheDocument();
     expect(within(screen.getByTestId("not-in-team")).getByTestId("person-u4")).toHaveTextContent("Lea Santos");
     // The owner's photo, from the workspace's people.
-    expect(within(finance).getByTestId("person-u1").querySelector("img")?.getAttribute("src"))
+    expect(within(finance).getByTestId("tree-node-u1").querySelector("img")?.getAttribute("src"))
       .toBe("http://api.test/workspaces/ws_1/members/u1/avatar?v=v1");
   });
 });
@@ -119,7 +119,7 @@ describe("a person's panel", () => {
   it("moves them to another team: added there, then removed from this one", async () => {
     const user = userEvent.setup();
     show();
-    await user.click(await screen.findByTestId("person-u3"));
+    await user.click(await screen.findByTestId("tree-node-u3"));
     const panel = screen.getByTestId("member-panel");
     expect(within(panel).getByText("jose@example.com")).toBeInTheDocument();
     await user.selectOptions(within(panel).getByTestId("move-to"), "un_new");
@@ -133,7 +133,7 @@ describe("a person's panel", () => {
   it("swaps positions with a teammate: both titles change", async () => {
     const user = userEvent.setup();
     show();
-    await user.click(await screen.findByTestId("person-u3"));
+    await user.click(await screen.findByTestId("tree-node-u3"));
     const panel = screen.getByTestId("member-panel");
     await user.selectOptions(within(panel).getByTestId("swap-with"), "u1");
     await user.click(within(panel).getByTestId("swap-member"));
@@ -145,14 +145,14 @@ describe("a person's panel", () => {
   it("removes them from the team after confirming, and keeps the owner un-removable", async () => {
     const user = userEvent.setup();
     show();
-    await user.click(await screen.findByTestId("person-u3"));
+    await user.click(await screen.findByTestId("tree-node-u3"));
     let panel = screen.getByTestId("member-panel");
     await user.click(within(panel).getByTestId("remove-from-team"));
     await user.click(within(panel).getByTestId("confirm-remove"));
     await waitFor(() => expect(calls.some(c => c.method === "DELETE" && c.path === "/workspaces/ws_1/units/un_old/members/u3")).toBe(true));
     await waitFor(() => expect(screen.queryByTestId("member-panel")).toBeNull());
 
-    await user.click(screen.getAllByTestId("person-u1")[0]!);
+    await user.click(screen.getAllByTestId("tree-node-u1")[0]!);
     panel = screen.getByTestId("member-panel");
     expect(within(panel).queryByTestId("remove-from-workspace")).toBeNull();
     expect(within(panel).queryByTestId("member-role")).toBeNull();
@@ -218,6 +218,34 @@ describe("deleting a team, and the panels beside the title", () => {
     await user.click(screen.getByTestId("open-waiting"));
     const panel = screen.getByRole("dialog", { name: "Waiting to Join" });
     expect(within(panel).getByText("soon@example.com")).toBeInTheDocument();
+  });
+});
+
+describe("a team as a tree", () => {
+  it("puts people on levels by role, the owner at the top, and switches to a grid and back", async () => {
+    const user = userEvent.setup();
+    show();
+    const finance = await screen.findByRole("region", { name: "Finance" });
+    const levels = within(finance).getAllByTestId(/^tree-level-/).map(l => l.getAttribute("data-testid"));
+    expect(levels).toEqual(["tree-level-owner", "tree-level-sender"]);
+    expect(within(within(finance).getByTestId("tree-level-owner")).getByTestId("tree-node-u1")).toHaveTextContent("Department Head");
+
+    await user.click(within(finance).getByTestId("view-grid-un_old"));
+    expect(within(finance).queryByTestId("team-tree-view")).toBeNull();
+    expect(within(finance).getByTestId("person-u3")).toBeInTheDocument();
+    await user.click(within(finance).getByTestId("view-tree-un_old"));
+    expect(within(finance).getByTestId("team-tree-view")).toBeInTheDocument();
+  });
+
+  it("keeps the You badge whole beside a long name in the grid", async () => {
+    const user = userEvent.setup();
+    show();
+    const finance = await screen.findByRole("region", { name: "Finance" });
+    await user.click(within(finance).getByTestId("view-grid-un_old"));
+    const card = within(finance).getByTestId("person-u1");
+    const name = card.querySelector(".pt-person-name-text");
+    expect(name).toHaveTextContent("Ana Reyes");
+    expect(name?.parentElement?.querySelector(".pt-you")).toHaveTextContent("You");
   });
 });
 

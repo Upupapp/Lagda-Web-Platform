@@ -11,6 +11,7 @@
 // It is never written to localStorage, sessionStorage, a cookie or the URL.
 
 import { useCallback, useEffect, useId, useRef, useState } from "react";
+import { Fingerprint } from "lucide-react";
 import { Link } from "react-router";
 import {
   lookupVerification, requestAccessCode, submitAccessCode, requestMemberAccess,
@@ -917,8 +918,11 @@ export function FileCheckPanel({ verificationId }: { verificationId: string }) {
         {file && <p style={{ color: NAVY, ...GF, fontSize: 13, margin: 0, overflowWrap: "anywhere" }}>Selected: <strong>{file.name}</strong> ({formatSize(file.size)})</p>}
       </div>
       {error && <p role="alert" style={{ color: RED, ...GF, fontSize: 12, margin: "8px 0 0" }}>{error}</p>}
-      <div style={{ marginTop: 14 }}>
-        <button type="button" onClick={() => { void check(); }} disabled={!file || busy} style={buttonStyle("primary", !file || busy)}>
+      {/* At the panel's right edge on every screen, like a form's submit. */}
+      <div style={{ marginTop: 14, display: "flex", justifyContent: "flex-end" }}>
+        <button type="button" onClick={() => { void check(); }} disabled={!file || busy} data-testid="check-file"
+          style={{ ...buttonStyle("primary", !file || busy), display: "inline-flex", alignItems: "center", gap: 8, whiteSpace: "nowrap" }}>
+          <Fingerprint size={17} aria-hidden />
           {busy ? "Checking…" : "Check file"}
         </button>
       </div>

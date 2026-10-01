@@ -1,6 +1,9 @@
 // /app/contacts — Contacts library page ("All Contacts").
-// One view — every ACTIVE contact — with search, tag filter, sort, cards,
-// multi-select and bulk actions. The other places in Contacts are
+// One view — every ACTIVE contact — with search, tag filter, sort and cards.
+// (Multi-select and its bulk bar — Add Tag, Archive, Add to Group — were
+// removed: they only ever changed the demo data, never a real contact.
+// Archiving is one contact at a time, from the contact's own page.)
+// The other places in Contacts are
 // Requests From Contacts (/app/contacts/requests) and Archived
 // (/app/contacts/archived), both linked from the section nav here.
 //
@@ -19,7 +22,7 @@ import {
   Users, Inbox, Send,
 } from "lucide-react";
 import { ContactProvider, useContacts } from "../../../context/ContactContext";
-import type { ContactListItem, ContactView, ContactSortField, ContactTagId, ContactGroupId } from "../../../models/contacts";
+import type { ContactListItem, ContactView, ContactSortField, ContactTagId } from "../../../models/contacts";
 import { SYSTEM_CONTACT_TAGS, getContactTagById } from "../../../models/contacts";
 import { Z } from "../../../utils/z-index";
 import { FilterChips } from "../../../components/platform/FilterChips";
@@ -94,7 +97,7 @@ type LibrarySection = "all" | "archived";
 
 function ContactsLibrary({ section }: { section: LibrarySection }) {
   const [searchParams, setSearchParams] = useSearchParams();
-  const { state, setQuery, asyncLoadList, asyncLoadGroups, asyncBulkArchive, asyncBulkAddToGroup, asyncRestore, clearPending } = useContacts();
+  const { state, setQuery, asyncLoadList, asyncLoadGroups, asyncRestore, clearPending } = useContacts();
   const archived = section === "archived";
   const [restoringId, setRestoringId] = useState<string | null>(null);
   const [layout, setLayout] = useState<"grid" | "list">(readLayout);
@@ -106,9 +109,7 @@ function ContactsLibrary({ section }: { section: LibrarySection }) {
   const [deleting, setDeleting] = useState<ContactListItem | null>(null);
 
   const [searchInput,   setSearchInput]   = useState(searchParams.get("q") ?? "");
-  const [selectedIds,   setSelectedIds]   = useState<Set<string>>(new Set());
   const [showFilters,   setShowFilters]   = useState(false);
-  const [, setShowBulkMenu] = useState(false);
   const debouncedSearch = useDebounce(searchInput, 280);
   // A search is under way: the words are still settling, or the list is
   // being asked for them.
@@ -187,16 +188,12 @@ function ContactsLibrary({ section }: { section: LibrarySection }) {
     setQuery({ tagFilter: [], page: 1 });
   };
 
-  const toggleSelect = (id: string) => setSelectedIds(prev => { const s = new Set(prev); if (s.has(id)) { s.delete(id); } else { s.add(id); } return s; });
-  const selectAll    = () => { if (!state.listResult) return; setSelectedIds(new Set(state.listResult.items.map(c => c.id))); };
-  const clearSelect  = () => setSelectedIds(new Set());
 
   const items   = state.listResult?.items ?? [];
   const total   = state.listResult?.total  ?? 0;
   const hasNext = state.listResult?.hasNextPage ?? false;
   const hasPrev = state.listResult?.hasPrevPage ?? false;
 
-  const selArr = Array.from(selectedIds) as ContactId[];
 
   // Someone accepting a request, or changing their name or photo, shows up
   // here without a reload.
@@ -377,31 +374,6 @@ function ContactsLibrary({ section }: { section: LibrarySection }) {
         </div>
       )}
 
-      {/* Bulk action bar */}
-      {!archived && selectedIds.size > 0 && (
-        <div role="toolbar" aria-label="Bulk contact actions" style={{
-          margin: "12px 24px 0",
-          background: NAVY, color: "#FFFFFF", borderRadius: 10,
-          padding: "10px 16px", display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap",
-        }}>
-          <span style={{ ...GF, fontSize: 13, fontWeight: 700 }} aria-live="polite">
-            {selectedIds.size} selected
-          </span>
-          <div style={{ flex: 1 }} />
-          <BulkActionButton label="Add Tag" onClick={() => setShowBulkMenu(v => !v)} />
-          <BulkActionButton label="Archive" onClick={async () => { await withProcess("contact-archive", "", () => asyncBulkArchive(selArr)); clearSelect(); void asyncLoadList(); }} />
-          <BulkActionButton label="Add to Group" onClick={async () => {
-            // Use first group as demo
-            await asyncBulkAddToGroup(selArr, "grp-clients" as ContactGroupId);
-            clearSelect();
-            void asyncLoadList();
-          }} />
-          <button onClick={clearSelect} style={{ ...GF, fontSize: 12, color: "#94A3B8", background: "none", border: "none", cursor: "pointer" }}>
-            Clear selection
-          </button>
-        </div>
-      )}
-
       {/* Main content */}
       <main id="contacts-main" className="ct-main" style={{ padding: "16px 24px" }}>
         {state.listLoading && <Skeleton />}
@@ -422,16 +394,7 @@ function ContactsLibrary({ section }: { section: LibrarySection }) {
 
         {!state.listLoading && !state.listError && items.length > 0 && (
           <>
-            {/* Select all (active contacts only — Archived has no bulk actions) */}
             <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
-              {!archived && (
-                <label style={{ display: "flex", alignItems: "center", gap: 6, cursor: "pointer", ...GF, fontSize: 12, color: SLATE }}>
-                  <input type="checkbox" checked={selectedIds.size === items.length && items.length > 0}
-                    onChange={e => e.target.checked ? selectAll() : clearSelect()}
-                    aria-label="Select all visible contacts" style={{ accentColor: AZURE }} />
-                  Select all
-                </label>
-              )}
               {/* SLATE on the page background: SILVER is 2.6:1 there and fails AA. */}
               <span style={{ ...GF, fontSize: 12, color: SLATE }}>
                 {total} {archived ? "archived " : ""}contact{total !== 1 ? "s" : ""}
@@ -441,7 +404,7 @@ function ContactsLibrary({ section }: { section: LibrarySection }) {
             <ul className={layout === "grid" ? "ct-grid" : "ct-list"} aria-label={archived ? "Archived contacts" : "Contacts"}>
               {items.map(c => archived
                 ? <ContactCard key={c.id} layout={layout} contact={c} archived restoring={restoringId === c.id} onRestore={id => { void restore(id); }} onDelete={setDeleting} />
-                : <ContactCard key={c.id} layout={layout} contact={c} selected={selectedIds.has(c.id)} onToggle={toggleSelect} />)}
+                : <ContactCard key={c.id} layout={layout} contact={c} />)}
             </ul>
 
             {/* Pagination */}
@@ -470,11 +433,9 @@ function ContactsLibrary({ section }: { section: LibrarySection }) {
 
 // ── Contact card ──────────────────────────────────────────────────────────────
 
-function ContactCard({ contact: c, selected = false, onToggle, archived = false, restoring = false, onRestore, onDelete, layout }: {
+function ContactCard({ contact: c, archived = false, restoring = false, onRestore, onDelete, layout }: {
   contact: ContactListItem;
-  selected?: boolean;
-  onToggle?: (id: string) => void;
-  /** The Archived section's card: no selection, and a Restore action. */
+  /** The Archived section's card: a Restore action. */
   archived?: boolean;
   restoring?: boolean;
   onRestore?: (id: string) => void;
@@ -516,15 +477,9 @@ function ContactCard({ contact: c, selected = false, onToggle, archived = false,
     </div>
   );
 
-  const checkbox = !archived && (
-    <input type="checkbox" checked={selected} onChange={() => onToggle?.(c.id)} aria-label={`Select ${c.name}`}
-      className="ct-check" />
-  );
-
   if (layout === "list") {
     return (
-      <li className="ct-row" data-selected={selected ? "true" : undefined}>
-        {checkbox}
+      <li className="ct-row">
         <PersonAvatar name={c.name} avatarUrl={c.avatarUrl} size={36} />
         <div className="ct-row-main">
           <Link to={`/app/contacts/${c.id}`} className="ct-name">{c.name}</Link>
@@ -542,13 +497,12 @@ function ContactCard({ contact: c, selected = false, onToggle, archived = false,
 
   const connected = c.account?.connected === true;
   return (
-    <li className="ct-card" data-selected={selected ? "true" : undefined}>
+    <li className="ct-card">
       {/* The banner is the brand colour of the workspace this person belongs to. */}
       <div className="ct-card-band" style={{ backgroundImage: brandGradient(c.account?.brandColor) }} data-testid="contact-card-band">
         <BrandWaves />
       </div>
       <div className="ct-card-controls">
-        <span>{checkbox}</span>
         <span className="ct-card-menu">{menu}</span>
       </div>
 
@@ -612,10 +566,8 @@ const CARD_CSS = `
   gap: 12px; position: relative; overflow: hidden; box-shadow: 0 1px 2px rgba(7,17,31,0.04), 0 12px 28px -22px rgba(7,17,31,0.35);
   transition: box-shadow 180ms ease, transform 180ms ease, border-color 180ms ease; }
 .ct-card:hover { box-shadow: 0 18px 38px -24px rgba(7,17,31,0.45); transform: translateY(-2px); border-color: #D6DEE8; }
-.ct-card[data-selected="true"] { border-color: ${AZURE}; box-shadow: 0 0 0 3px rgba(0,120,212,0.16); }
 .ct-card-band { position: relative; height: 92px; margin: 0 -16px; overflow: hidden; }
-.ct-card-controls { position: absolute; top: 10px; left: 12px; right: 10px; display: flex; justify-content: space-between; align-items: flex-start; z-index: 1; }
-.ct-card-controls .ct-check { margin: 0; width: 18px; height: 18px; background: #FFFFFF; border-radius: 4px; box-shadow: 0 1px 3px rgba(7,17,31,0.25); }
+.ct-card-controls { position: absolute; top: 10px; left: 12px; right: 10px; display: flex; justify-content: flex-end; align-items: flex-start; z-index: 1; }
 .ct-card-menu .ct-icon-btn { background: rgba(255,255,255,0.88); color: ${NAVY}; box-shadow: 0 1px 3px rgba(7,17,31,0.18); }
 .ct-card-menu .ct-icon-btn:hover, .ct-card-menu .ct-icon-btn[data-open="true"] { background: #FFFFFF; color: ${AZURE}; }
 .ct-card-avatar { position: relative; align-self: center; margin-top: -62px; line-height: 0; }
@@ -654,8 +606,6 @@ const CARD_CSS = `
 .ct-row { display: flex; align-items: center; gap: 12px; padding: 10px 14px; border-bottom: 1px solid #F0F2F5; min-width: 0; }
 .ct-row:last-child { border-bottom: none; }
 .ct-row:hover { background: #FAFBFD; }
-.ct-row[data-selected="true"] { background: ${LIGHT}; }
-.ct-row .ct-check { margin: 0; }
 .ct-row-main { flex: 1 1 200px; min-width: 0; display: flex; flex-direction: column; }
 .ct-row-sub { font-family: 'Geist', sans-serif; font-size: 12px; color: ${SLATE}; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ct-row-email { flex: 1 1 200px; min-width: 0; font-family: 'Geist Mono', monospace; font-size: 12px; color: ${SLATE}; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -682,15 +632,6 @@ function MenuItem({ label, onClick, disabled = false, danger = false }: { label:
       style={{ ...GF, display: "block", width: "100%", padding: "10px 14px", minHeight: 44, border: "none", borderBottom: "1px solid #F8FAFC", background: "#FFFFFF", textAlign: "left", cursor: disabled ? "not-allowed" : "pointer", fontSize: 13, color: danger ? "#B42318" : NAVY, fontWeight: danger ? 600 : 400 }}
       onMouseEnter={e => (e.currentTarget.style.background = "#F8FAFC")}
       onMouseLeave={e => (e.currentTarget.style.background = "#FFFFFF")}>
-      {label}
-    </button>
-  );
-}
-
-function BulkActionButton({ label, onClick }: { label: string; onClick: () => void }) {
-  return (
-    <button onClick={onClick}
-      style={{ ...GF, fontSize: 12, fontWeight: 600, color: "#FFFFFF", background: "rgba(255,255,255,0.15)", border: "1.5px solid rgba(255,255,255,0.25)", borderRadius: 8, padding: "6px 12px", cursor: "pointer" }}>
       {label}
     </button>
   );

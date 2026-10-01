@@ -398,7 +398,8 @@ export function RequestsFromContactsPage() {
               </div>
             )}
             {current.status === "ready" && shown.length === 0 && (
-              <div style={{ textAlign: "center", padding: "32px 12px", background: "#FFFFFF", border: "1px dashed #CBD5E1", borderRadius: 10 }}>
+              <div data-testid="requests-empty" style={{ textAlign: "center", padding: "32px 12px", background: "#FFFFFF", border: "1px dashed #CBD5E1", borderRadius: 10,
+                display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
                 <Inbox size={26} aria-hidden style={{ color: "#64748B" }} />
                 <h3 style={{ ...GF, fontSize: 15, fontWeight: 700, color: NAVY, margin: "8px 0 4px" }}>{empty.title}</h3>
                 <p style={{ ...GF, fontSize: 13, color: SLATE, margin: "0 auto", lineHeight: 1.6, maxWidth: 420 }}>{empty.body}</p>

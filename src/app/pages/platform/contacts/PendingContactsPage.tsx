@@ -130,7 +130,7 @@ export function PendingContactsPage() {
           {lists !== null && sent.length === 0 && (
             <p className="pc-empty">
               No requests waiting. <Link to={FIND_PEOPLE_ROUTE} style={{ color: C.AZURE_TEXT, fontWeight: 700, textDecoration: "none" }}>
-                <UserSearch size={13} aria-hidden style={{ verticalAlign: "-2px" }} /> Find people</Link> to add someone on LAGDA.
+                <UserSearch size={14} aria-hidden /> Find people</Link> <span>to add someone on LAGDA.</span>
             </p>
           )}
           <ul className="pc-list">
@@ -200,7 +200,9 @@ const CSS = `
   background: #ECFDF3; border: 1px solid #BBF7D0; border-radius: 999px; padding: 4px 10px; }
 .pc-picker { display: inline-flex; align-items: center; gap: 6px; font-family: 'Geist', sans-serif; font-size: 12.5px; color: ${C.SLATE}; }
 .pc-picker select { font-family: 'Geist', sans-serif; font-size: 13px; color: ${C.NAVY}; min-height: 40px; max-width: 200px; border: 1.5px solid #CBD5E1; border-radius: 9px; padding: 0 10px; background: #FFFFFF; }
-.pc-empty { font-family: 'Geist', sans-serif; font-size: 13.5px; color: ${C.SLATE}; background: #FFFFFF; border: 1.5px dashed #CBD5E1; border-radius: 12px; padding: 14px 16px; margin: 0; line-height: 1.55; }
+.pc-empty { font-family: 'Geist', sans-serif; font-size: 13.5px; color: ${C.SLATE}; background: #FFFFFF; border: 1.5px dashed #CBD5E1; border-radius: 12px; padding: 18px 16px; margin: 0; line-height: 1.6;
+  text-align: center; display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 4px; }
+.pc-empty a { display: inline-flex; align-items: center; gap: 4px; }
 .pc-skeleton { height: 84px; border-radius: 14px; background: linear-gradient(90deg, #EEF2F6, #F8FAFC, #EEF2F6); }
 .pc-alert { font-family: 'Geist', sans-serif; font-size: 13.5px; color: #991B1B; background: #FEF2F2; border: 1px solid #FECACA; border-radius: 10px; padding: 10px 14px; margin: 0; }
 .pc-info { display: flex; align-items: center; gap: 8px; font-family: 'Geist', sans-serif; font-size: 13px; color: #1E3A8A; background: #EFF6FF; border: 1px solid #BFDBFE; border-radius: 10px; padding: 10px 12px; margin: 0; }

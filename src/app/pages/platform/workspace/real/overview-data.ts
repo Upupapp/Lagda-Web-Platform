@@ -25,6 +25,8 @@ export interface OverviewData {
   createdAt: number | null;
   me: WorkspaceMemberSummary | null;
   members: Count;
+  /** Names and user ids, for faces in Recent activity. Empty until read. */
+  roster: { userId: string; displayName: string }[];
   pendingRequests: JoinRequest[] | null | "error";
   invitations: WorkspaceInvitation[] | null | "error";
   activeLinks: Count;
@@ -32,7 +34,7 @@ export interface OverviewData {
 }
 
 export const EMPTY_OVERVIEW: OverviewData = {
-  name: null, createdAt: null, me: null, members: null, pendingRequests: null,
+  name: null, createdAt: null, me: null, members: null, roster: [], pendingRequests: null,
   invitations: null, activeLinks: null, teams: null,
 };
 
@@ -78,7 +80,12 @@ export function useRealOverviewData(
       .catch(() => { /* the session's name stands in */ });
     if (members) {
       realWorkspaceAdminService.listMembers(workspaceId)
-        .then(list => { set({ members: list.length, me: list.find(m => m.isCurrentUser) ?? null }); })
+        .then(list => {
+          set({
+            members: list.length, me: list.find(m => m.isCurrentUser) ?? null,
+            roster: list.filter(m => m.userId).map(m => ({ userId: m.userId!, displayName: m.displayName })),
+          });
+        })
         .catch(() => { set({ members: "error" }); });
     }
     if (manageMembers) {

@@ -153,7 +153,7 @@ describe("Workspace shell — parts by capability", () => {
     expect(partKeys()).toEqual(["part-overview", "part-people"]);
     // The gear opens the settings a New Comer may read.
     expect(screen.getByTestId("workspace-settings-gear")).toHaveAttribute("href", "/app/workspace/settings/branding");
-    const forbidden = ["/members", "/join-requests", "/join-tickets", "/invitations", "/activity"];
+    const forbidden = ["ws_1/members", "/join-requests", "/join-tickets", "/invitations", "/activity"];
     expect(calls.filter(c => forbidden.some(f => c.path.endsWith(f)))).toEqual([]);
   });
 

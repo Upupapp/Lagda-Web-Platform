@@ -78,7 +78,7 @@ const WIRED: Record<string, ProcessKind[]> = {
   "pages/platform/contacts/CreateContactPage.tsx": ["contact-create"],
   "pages/platform/contacts/EditContactPage.tsx": ["contact-update"],
   "pages/platform/contacts/contacts-ui.tsx": ["contact-delete"],
-  "pages/platform/contacts/ContactsPage.tsx": ["contact-archive", "contact-restore"],
+  "pages/platform/contacts/ContactsPage.tsx": ["contact-restore"],
   "pages/platform/contacts/ContactDetailPage.tsx": ["contact-archive", "contact-restore"],
   "pages/platform/contacts/FindPeoplePage.tsx": ["contact-lookup", "contact-request-send", "contact-request-cancel"],
   "pages/platform/contacts/PendingContactsPage.tsx": ["contact-request-accept", "contact-request-decline", "contact-request-cancel"],

@@ -43,7 +43,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } fro
 import { useSearchParams } from "react-router";
 import {
   Search, Plus, Network, UserPlus, Users, MoreHorizontal, Pencil, Trash2, ArrowLeftRight,
-  ChevronRight, Mail, X, Contact, Clock,
+  ChevronRight, Mail, X, Contact, Clock, GitFork, LayoutGrid,
 } from "lucide-react";
 import { useWorkspaceAccess } from "../../../../hooks/useWorkspaceAccess";
 import { usePlatform } from "../../../../context/PlatformContext";
@@ -63,6 +63,7 @@ import {
 import type { WorkspaceMemberSummary, WorkspaceInvitation } from "../../../../models/workspace-admin";
 import { isOwnerOrAdministratorRole } from "../../../../models/workspace-admin";
 import { MemberAvatar } from "../../../../components/platform/MemberAvatar";
+import { TeamTreeView } from "./TeamTreeView";
 import { withProcess } from "../../../../config/process-screens";
 import { InvitePeopleToggle } from "../../invitations/InvitePeoplePanel";
 import { AccessEditor, Dialog, ErrorNote, type AccessDraft } from "../join/join-ui";
@@ -149,6 +150,8 @@ export function RealPeopleTeamsPage({ workspaceId }: { workspaceId: string }) {
   const [dialog, setDialog] = useState<null | { kind: "new-team"; parent: string | null } | { kind: "rename"; unit: OrganizationUnit }
     | { kind: "delete"; unit: OrganizationUnit } | { kind: "add-people"; unit: OrganizationUnit } | { kind: "contacts" } | { kind: "waiting" }>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  // Each team shows its people as a tree (the default) or a compact grid.
+  const [gridTeams, setGridTeams] = useState<ReadonlySet<string>>(new Set());
   const loadSeq = useRef(0);
 
   const load = useCallback(async () => {
@@ -234,7 +237,7 @@ export function RealPeopleTeamsPage({ workspaceId }: { workspaceId: string }) {
       <button type="button" className="pt-person" data-testid={`person-${p.userId}`} onClick={() => { setOpen({ userId: p.userId, unitId }); }}>
         <MemberAvatar name={p.name} url={photo(p.userId)} size={40} />
         <span className="pt-person-text">
-          <span className="pt-person-name">{p.name}{p.userId === meId && <span className="pt-you">You</span>}</span>
+          <span className="pt-person-name"><span className="pt-person-name-text">{p.name}</span>{p.userId === meId && <span className="pt-you">You</span>}</span>
           <span className="pt-person-line">{p.line ?? p.email}</span>
         </span>
         <ChevronRight size={16} aria-hidden className="pt-person-go" />
@@ -250,8 +253,26 @@ export function RealPeopleTeamsPage({ workspaceId }: { workspaceId: string }) {
     const deleteBlock = node.members.length > 0
       ? `Remove the ${count} in it first`
       : node.children.length > 0 ? "Delete or move the teams inside it first" : null;
+    const asGrid = gridTeams.has(node.unit.unitId);
+    const setView = (grid: boolean) => {
+      setGridTeams(prev => {
+        const next = new Set(prev);
+        if (grid) next.add(node.unit.unitId); else next.delete(node.unit.unitId);
+        return next;
+      });
+    };
     const actions = (
       <div className="pt-team-actions">
+        {node.members.length > 0 && (
+          <div className="pt-view" role="group" aria-label={`Show ${node.unit.name} as`}>
+            <button type="button" aria-pressed={!asGrid} title="Tree" aria-label="Tree" data-testid={`view-tree-${node.unit.unitId}`} onClick={() => { setView(false); }}>
+              <GitFork size={14} aria-hidden style={{ transform: "rotate(180deg)" }} />
+            </button>
+            <button type="button" aria-pressed={asGrid} title="Grid" aria-label="Grid" data-testid={`view-grid-${node.unit.unitId}`} onClick={() => { setView(true); }}>
+              <LayoutGrid size={14} aria-hidden />
+            </button>
+          </div>
+        )}
         {may.placeMembers && canSeeMembers && (
           <button type="button" className="pt-mini" onClick={() => { setDialog({ kind: "add-people", unit: node.unit }); }}>
             <UserPlus size={14} aria-hidden /> <span className="pt-mini-label">Add people</span>
@@ -268,7 +289,12 @@ export function RealPeopleTeamsPage({ workspaceId }: { workspaceId: string }) {
     );
     const body = (
       <>
-        {shownMembers.length > 0 ? (
+        {shownMembers.length > 0 && !asGrid ? (
+          <TeamTreeView members={shownMembers} label={node.unit.name} meId={meId}
+            memberOf={userId => people.get(userId)?.member ?? null}
+            photo={userId => photo(userId)}
+            onOpen={userId => { setOpen({ userId, unitId: node.unit.unitId }); }} />
+        ) : shownMembers.length > 0 ? (
           <ul className="pt-people">
             {shownMembers.map(m => personButton({
               userId: m.userId, name: m.displayName, email: m.email,
@@ -1004,6 +1030,10 @@ const PEOPLE_TEAMS_CSS = `
 .pt-team-meta { font-family: 'Geist', sans-serif; font-size: 12px; color: ${SLATE}; display: inline-flex; align-items: center; gap: 6px; flex-wrap: wrap; }
 .pt-new { font-size: 10px; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase; color: #15803D; background: #DCFCE7; border-radius: 999px; padding: 2px 8px; flex-shrink: 0; }
 .pt-team-actions { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+.pt-view { display: inline-flex; padding: 2px; gap: 2px; background: #F1F5F9; border: 1px solid #E2E8F0; border-radius: 9px; }
+.pt-view button { width: 30px; height: 28px; border: none; border-radius: 7px; background: transparent; color: ${SLATE}; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
+.pt-view button[aria-pressed="true"] { background: #FFFFFF; color: ${AZURE}; box-shadow: 0 1px 2px rgba(7,17,31,0.12); }
+.pt-view button:focus-visible { outline: 3px solid rgba(0,120,212,0.4); outline-offset: 1px; }
 .pt-mini { display: inline-flex; align-items: center; gap: 6px; font-family: 'Geist', sans-serif; font-size: 12.5px; font-weight: 600; color: ${NAVY};
   background: #FFFFFF; border: 1px solid #D1D9E0; border-radius: 9px; min-height: 34px; padding: 0 11px; cursor: pointer; white-space: nowrap; }
 .pt-mini:hover:not(:disabled) { border-color: ${AZURE}; color: ${AZURE}; }
@@ -1020,13 +1050,16 @@ const PEOPLE_TEAMS_CSS = `
 .pt-menu-disabled { color: #94A3B8 !important; cursor: not-allowed !important; }
 .pt-menu-disabled span { display: flex; flex-direction: column; }
 .pt-menu-disabled small { font-size: 11px; color: ${SLATE}; margin-top: 2px; }
-.pt-people { list-style: none; margin: 12px 0 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 8px; }
+.pt-people { list-style: none; margin: 12px 0 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(210px, 100%), 1fr)); gap: 8px; }
+.pt-people > li { min-width: 0; }
 .pt-person { width: 100%; display: flex; align-items: center; gap: 10px; text-align: left; background: #FFFFFF; border: 1px solid ${BORDER}; border-radius: 12px;
   padding: 8px 10px; cursor: pointer; min-height: 58px; box-sizing: border-box; transition: border-color 120ms ease, box-shadow 120ms ease, transform 120ms ease; }
 .pt-person:hover { border-color: #93C5FD; box-shadow: 0 8px 18px -12px rgba(0,120,212,0.7); transform: translateY(-1px); }
 .pt-person:focus-visible { outline: 3px solid rgba(0,120,212,0.4); outline-offset: 2px; }
 .pt-person-text { flex: 1; min-width: 0; display: flex; flex-direction: column; }
-.pt-person-name { font-family: 'Geist', sans-serif; font-size: 13.5px; font-weight: 700; color: ${NAVY}; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: inline-flex; align-items: center; gap: 6px; }
+.pt-person-name { font-family: 'Geist', sans-serif; font-size: 13.5px; font-weight: 700; color: ${NAVY}; display: flex; align-items: center; gap: 6px; min-width: 0; }
+.pt-person-name-text { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pt-person-name .pt-you { flex-shrink: 0; }
 .pt-person-line { font-family: 'Geist', sans-serif; font-size: 12px; color: ${SLATE}; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .pt-person-go { color: #94A3B8; flex-shrink: 0; }
 .pt-you { font-size: 10px; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase; color: #FFFFFF; background: ${AZURE}; border-radius: 999px; padding: 1px 7px; }
@@ -1088,7 +1121,7 @@ const PEOPLE_TEAMS_CSS = `
   .pt-team-head { flex-wrap: wrap; }
   .pt-team-actions { width: 100%; justify-content: flex-end; }
   .pt-mini-label { display: inline; }
-  .pt-people { grid-template-columns: 1fr; }
+  .pt-people { grid-template-columns: minmax(0, 1fr); }
   .pt-sub { padding: 10px; }
   .pt-scrim { padding: 0; align-items: flex-end; }
   .pt-panel { border-radius: 20px 20px 0 0; max-height: 94dvh; }

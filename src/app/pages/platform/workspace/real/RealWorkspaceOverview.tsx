@@ -7,6 +7,15 @@
 // administrators see the full hub; everyone else sees their own access, the
 // pages their role reaches, and their other workspaces.
 //
+// ── The charts (revamp) ────────────────────────────────────────────────────
+//
+// Under the branded card: four headline figures with trend lines, the weekly
+// "Signing activity" chart, plan usage rings and where documents stand —
+// for roles that may see documents. Then Needs attention (now also documents
+// waiting on a signer for a week or more), teams at a glance and the latest
+// activity. All from real figures (overview-insights.ts); a role that cannot
+// see documents gets no empty charts.
+//
 // Inside the workspace shell this is the Overview section: the shell's
 // header already names the workspace and the viewer's role, its banners
 // already list the pages, and it already loaded the figures — so this reads
@@ -30,8 +39,17 @@ import {
 import { useWorkspaceShell } from "../shell/workspace-shell-context";
 import { useWorkspaceBrandingSnapshot } from "../../../../hooks/workspace-branding-store";
 import { WorkspaceBrandCard } from "./WorkspaceBrandCard";
+import { useOverviewInsights, stuckRequests } from "./overview-insights";
+import { KpiCards, SigningActivity, PlanUsage, StatusDonut, TeamBars, RecentActivity, OVERVIEW_CSS } from "./OverviewCharts";
+import { useWorkspacePlan } from "../../../../hooks/usePlans";
+import { PLAN_NAMES } from "../../../../services/real/plans.service";
+import { SAMPLE_PLANS } from "../../../../config/pricing.config";
+import { useWorkspacePeople, memberAvatarUrl } from "../../../../services/real/workspace-people.service";
+import { useCallback, useMemo } from "react";
 
 const EXPIRING_WITHIN_MS = 3 * 24 * 60 * 60 * 1000;
+/** A document still with its signers after this many days needs a nudge. */
+const STUCK_AFTER_DAYS = 7;
 const ATTENTION_REQUEST_LIMIT = 5;
 
 function StatCard({ label, value, path, testId }: { label: string; value: Count; path: string; testId: string }) {
@@ -157,6 +175,18 @@ export function RealWorkspaceOverview({ workspaceId }: { workspaceId: string }) 
   const canTeams = gates.teams;
 
   const branding = useWorkspaceBrandingSnapshot(workspaceId);
+  const insightGates = useMemo(() => ({
+    documents: access.can("signing-request.view"),
+    usage: access.can("document.view"),
+    teams: gates.teams,
+    activity: access.can("activity.view"),
+  }), [access, gates.teams]);
+  const insights = useOverviewInsights(workspaceId, insightGates);
+  const { plan: planId } = useWorkspacePlan(workspaceId);
+  const versions = useWorkspacePeople(insightGates.activity ? workspaceId : null);
+  const photo = useCallback((userId: string | null | undefined) => memberAvatarUrl(workspaceId, userId, versions), [workspaceId, versions]);
+  // The names the shell's loader already read: no second request.
+  const rosterByName = useMemo(() => new Map(data.roster.map(p => [p.displayName.toLowerCase(), p])), [data.roster]);
   const name = data.name ?? platform.currentWorkspace?.name ?? "Workspace";
   const role = access.role;
   // A member who cannot read the roster still gets their own title from /access.
@@ -178,23 +208,23 @@ export function RealWorkspaceOverview({ workspaceId }: { workspaceId: string }) 
   const pendingCount = pendingRequests.length;
 
   const stats: { key: string; label: string; value: Count; path: string }[] = [];
-  if (canMembers) stats.push({ key: "members", label: "Members", value: data.members, path: "/app/workspace/members" });
+  if (canMembers) stats.push({ key: "members", label: "Members", value: data.members, path: "/app/workspace/people" });
   if (canManageMembers) {
     stats.push({
       key: "join-requests", label: "Join requests waiting",
       value: data.pendingRequests === null ? null : data.pendingRequests === "error" ? "error" : pendingCount,
-      path: "/app/workspace/join-requests",
+      path: "/app/invitations?view=sent&panel=requests",
     });
   }
   if (canInvitations) {
     stats.push({
       key: "invitations", label: "Pending invitations",
       value: data.invitations === null ? null : data.invitations === "error" ? "error" : pendingInvitations.length,
-      path: "/app/workspace/invitations",
+      path: "/app/invitations?view=sent",
     });
-    stats.push({ key: "join-links", label: "Active join links", value: data.activeLinks, path: "/app/workspace/join-links" });
+    stats.push({ key: "join-links", label: "Active join links", value: data.activeLinks, path: "/app/invitations?view=sent&panel=links" });
   }
-  if (canTeams) stats.push({ key: "teams", label: "Teams", value: data.teams, path: "/app/workspace/teams" });
+  if (canTeams) stats.push({ key: "teams", label: "Teams", value: data.teams, path: "/app/workspace/people" });
 
   const attention: ReactNode[] = [];
   for (const r of pendingRequests.slice(0, ATTENTION_REQUEST_LIMIT)) {
@@ -202,7 +232,7 @@ export function RealWorkspaceOverview({ workspaceId }: { workspaceId: string }) 
       <AttentionRow key={r.requestId}
         title={`${r.fullName} asked to join`}
         description={`${r.email} · ${r.sourceKind === "invitation" ? "Email invitation" : `Join link: ${r.ticketLabel ?? "—"}`} · ${formatDate(r.createdAt)}`}
-        actionLabel="Review" actionPath="/app/workspace/join-requests" />,
+        actionLabel="Review" actionPath="/app/invitations?view=sent&panel=requests" />,
     );
   }
   if (pendingCount > ATTENTION_REQUEST_LIMIT) {
@@ -210,7 +240,7 @@ export function RealWorkspaceOverview({ workspaceId }: { workspaceId: string }) 
       <AttentionRow key="more-requests" tone="info"
         title={`${String(pendingCount - ATTENTION_REQUEST_LIMIT)} more join request${pendingCount - ATTENTION_REQUEST_LIMIT === 1 ? "" : "s"}`}
         description="Every request waits for an owner or administrator to approve or decline it."
-        actionLabel="See all" actionPath="/app/workspace/join-requests" />,
+        actionLabel="See all" actionPath="/app/invitations?view=sent&panel=requests" />,
     );
   }
   for (const inv of expiringSoon) {
@@ -218,8 +248,20 @@ export function RealWorkspaceOverview({ workspaceId }: { workspaceId: string }) 
       <AttentionRow key={inv.id} tone="info"
         title={`Invitation to ${inv.email} expires soon`}
         description={`It expires on ${formatDate(inv.expiresAt)}. Resend it if they still need to join.`}
-        actionLabel="Open invitations" actionPath="/app/workspace/invitations" />,
+        actionLabel="Open invitations" actionPath="/app/invitations?view=sent" />,
     );
+  }
+  // Documents a signer has been sitting on for a week or more.
+  if (Array.isArray(insights.requests)) {
+    for (const r of stuckRequests(insights.requests, STUCK_AFTER_DAYS).slice(0, 3)) {
+      const days = Math.floor((now - Date.parse(r.sentAt ?? "")) / 86_400_000);
+      attention.push(
+        <AttentionRow key={`stuck-${r.signingRequestId}`} tone="info"
+          title={`“${r.documentTitle}” is still waiting on signers`}
+          description={`Sent ${String(days)} days ago · ${String(r.completedParticipantCount)} of ${String(r.participantCount)} done. A reminder may help.`}
+          actionLabel="Open" actionPath={`/app/documents/${encodeURIComponent(r.documentId)}`} />,
+      );
+    }
   }
 
   const stacked = isNarrow || isMedium;
@@ -294,12 +336,40 @@ export function RealWorkspaceOverview({ workspaceId }: { workspaceId: string }) 
     />
   );
 
+  const planInfo = SAMPLE_PLANS.find(p => p.id === planId);
+  const members = typeof data.members === "number" ? data.members : 1;
+  const sendLimit = planInfo?.limits.signingRequestsPerMonth.value == null ? null
+    : planId === "business" ? planInfo.limits.signingRequestsPerMonth.value * Math.max(1, members)
+    : planInfo.limits.signingRequestsPerMonth.value;
+  const storageLimit = planInfo?.limits.storageBytes.value ?? null;
+  const accent = branding?.primaryColor ?? platform.currentWorkspace?.brandColor ?? AZURE;
+
+  const charts = insightGates.documents ? (
+    <div data-testid="overview-charts">
+      <KpiCards requests={insights.requests} />
+      <SigningActivity requests={insights.requests} />
+      <div className="ov-pair">
+        <PlanUsage usage={insights.usage} planName={planId ? PLAN_NAMES[planId] : null} sendLimit={sendLimit} storageLimit={storageLimit} />
+        <StatusDonut requests={insights.requests} />
+      </div>
+    </div>
+  ) : null;
+
+  const glance = (insightGates.teams || insightGates.activity) ? (
+    <div className="ov-pair">
+      {insightGates.teams && <TeamBars teams={insights.teams} accent={accent} />}
+      {insightGates.activity && <RecentActivity activity={insights.activity} meId={platform.user?.id ?? null} people={rosterByName} photo={photo} />}
+    </div>
+  ) : null;
+
   const body = (
     <div style={{
-      ...(shell ? {} : { maxWidth: 960, margin: "24px auto 0", padding: `0 ${String(padX)}px` }),
+      ...(shell ? {} : { maxWidth: 1100, margin: "24px auto 0", padding: `0 ${String(padX)}px` }),
       boxSizing: "border-box",
     }}>
+    <style>{OVERVIEW_CSS}</style>
     {brandCard}
+    {charts}
     <div style={{ display: "flex", gap: 24, flexDirection: stacked ? "column" : "row", alignItems: "flex-start" }}>
       <div style={{ flex: "1 1 0", minWidth: 0, width: stacked ? "100%" : undefined }}>
         {stats.length > 0 && (
@@ -314,6 +384,8 @@ export function RealWorkspaceOverview({ workspaceId }: { workspaceId: string }) 
             <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: 8 }}>{attention}</ul>
           </section>
         )}
+
+        {glance}
 
         {hub}
       </div>
@@ -354,3 +426,4 @@ export function RealWorkspaceOverview({ workspaceId }: { workspaceId: string }) 
     </div>
   );
 }
+

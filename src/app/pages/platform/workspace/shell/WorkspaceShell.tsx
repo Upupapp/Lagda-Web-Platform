@@ -34,7 +34,8 @@ import {
 import { Link, Outlet, useLocation, useNavigate } from "react-router";
 import { useWorkspaceAllows } from "../../../../hooks/usePlans";
 import { lastAppPage, DEFAULT_APP_PAGE } from "../../../../services/last-app-page";
-import { Settings, X } from "lucide-react";
+import { Settings, X, Building2 } from "lucide-react";
+import { useWorkspaceBrandingSnapshot } from "../../../../hooks/workspace-branding-store";
 import { usePlatform } from "../../../../context/PlatformContext";
 import { useWorkspaceAccess, useWorkspaceMode, backendRoleFromPlatform, type WorkspaceAccess } from "../../../../hooks/useWorkspaceAccess";
 import { REAL_ROLE_LABELS } from "../../../../services/real/workspace-admin.service";
@@ -175,6 +176,32 @@ function DemoWorkspaceShell() {
 }
 
 
+// ── The workspace's mark ───────────────────────────────────────────────────
+//
+// The header names the WORKSPACE, so it wears the workspace's own logo (its
+// branding), never a person's photo — every member sees this header, and an
+// owner's face would read as "this is my page". With no logo, a building in
+// the workspace's colour says "workspace" more plainly than two initials.
+
+function WorkspaceMark({ name, fallbackInitials }: { name: string; fallbackInitials: string }) {
+  const platform = usePlatform();
+  const branding = useWorkspaceBrandingSnapshot(platform.currentWorkspace?.id ?? null);
+  const color = branding?.primaryColor ?? platform.currentWorkspace?.brandColor ?? null;
+  if (branding?.logoUrl) {
+    return (
+      <span className="ws-initials ws-mark-logo" data-testid="workspace-mark-logo">
+        <img src={branding.logoUrl} alt={`${name} logo`} />
+      </span>
+    );
+  }
+  return (
+    <span aria-hidden className="ws-initials ws-mark-icon" data-testid="workspace-mark-icon" title={fallbackInitials}
+      style={color ? { background: color, borderColor: color, color: "#FFFFFF" } : undefined}>
+      <Building2 size={22} strokeWidth={2} />
+    </span>
+  );
+}
+
 // ── Frame ──────────────────────────────────────────────────────────────────
 
 function ShellFrame({ name, initials, roleLabel, access, counts, realOverview, refreshCounts, demo }: {
@@ -200,7 +227,7 @@ function ShellFrame({ name, initials, roleLabel, access, counts, realOverview, r
         <header className="ws-shell-header">
           <div className="ws-shell-inner">
             <div className="ws-identity">
-              <div aria-hidden className="ws-initials">{initials ?? initialsOf(name)}</div>
+              <WorkspaceMark name={name} fallbackInitials={initials ?? initialsOf(name)} />
               <div className="ws-identity-text">
                 <div className="ws-eyebrow">Workspace</div>
                 <h1 data-testid="workspace-name" className="ws-name">{name}</h1>
@@ -437,6 +464,8 @@ const SHELL_CSS = `
 .ws-shell-header { position: relative; background: #FFFFFF; border-bottom: 1px solid ${BORDER}; padding: 22px 0 18px; }
 .ws-shell-header::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, ${NAVY} 0%, #0B3A66 45%, ${AZURE} 100%); }
 .ws-identity { display: flex; align-items: center; gap: 14px; min-width: 0; margin-bottom: 18px; }
+.ws-mark-logo { background: #FFFFFF !important; overflow: hidden; padding: 3px; box-sizing: border-box; }
+.ws-mark-logo img { width: 100%; height: 100%; object-fit: contain; border-radius: 8px; }
 .ws-identity-text { min-width: 0; flex: 1 1 auto; }
 .ws-initials { width: 46px; height: 46px; border-radius: 12px; background: ${LIGHT}; border: 1.5px solid #BAD7F5; color: ${AZURE};
   display: flex; align-items: center; justify-content: center; flex-shrink: 0;

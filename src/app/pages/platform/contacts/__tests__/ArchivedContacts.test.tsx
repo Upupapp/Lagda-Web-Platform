@@ -101,6 +101,14 @@ describe("Contacts → Archived", () => {
     expect(listUrls().every(url => url.includes("state=active"))).toBe(true);
   });
 
+  it("has no multi-select or bulk bar — it only ever changed demo data", async () => {
+    renderAt("/app/contacts");
+    expect(await screen.findByText("Maria Santos")).toBeTruthy();
+    expect(screen.queryAllByRole("checkbox")).toEqual([]);
+    expect(screen.queryByText("Select all")).toBeNull();
+    expect(screen.queryByRole("toolbar", { name: "Bulk contact actions" })).toBeNull();
+  });
+
   it("does not offer Import Contacts for now, but still offers Find people", async () => {
     renderAt("/app/contacts");
     await screen.findByText("Maria Santos");
