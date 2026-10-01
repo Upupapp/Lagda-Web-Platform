@@ -28,8 +28,8 @@ export interface RouteMeta {
 export const PUBLIC_ROUTES: RouteMeta[] = [
   {
     path: "/",
-    title: "LAGDA — Philippine Legal Document Automation",
-    description: "LAGDA eSignature helps Philippine professionals and organizations prepare, send, sign, track, verify, and securely manage documents online.",
+    title: "LAGDA eSignature | Send, Sign & Verify Documents Online",
+    description: "Prepare, send, sign, track, and verify documents online with LAGDA—the Philippine-first eSignature and legal document automation platform.",
     breadcrumb: "Home",
     layout: "public",
     requiresAuth: false,
@@ -40,8 +40,8 @@ export const PUBLIC_ROUTES: RouteMeta[] = [
   },
   {
     path: "/home",
-    title: "LAGDA — Philippine Legal Document Automation",
-    description: "LAGDA eSignature helps Philippine professionals and organizations prepare, send, sign, track, verify, and securely manage documents online.",
+    title: "LAGDA eSignature | Send, Sign & Verify Documents Online",
+    description: "Prepare, send, sign, track, and verify documents online with LAGDA—the Philippine-first eSignature and legal document automation platform.",
     breadcrumb: "Home",
     layout: "public",
     requiresAuth: false,

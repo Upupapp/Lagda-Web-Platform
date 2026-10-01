@@ -5,6 +5,8 @@ import { APP_CONFIG } from "@/app/config/app.config";
 
 const ALL_ROUTES = [...PUBLIC_ROUTES, ...AUTH_ROUTES, ...PLATFORM_ROUTES];
 const SITE_ORIGIN = "https://lagda.io";
+const SOCIAL_IMAGE_URL = `${SITE_ORIGIN}/brand/lagda-social-preview.jpg`;
+const SOCIAL_IMAGE_ALT = "LAGDA eSignature — Send. Sign. Verify. Philippine-first eSignature and document automation.";
 
 // Route metadata is declared with the same `:param` patterns the router uses —
 // 39 of the entries are parametric. Matching them with `route.path === pathname`
@@ -94,15 +96,19 @@ export function usePageMeta() {
     setProperty("og:type", "website");
     setProperty("og:url", `${SITE_ORIGIN}${canonicalPath}`);
     setProperty("og:site_name", "LAGDA");
-    setProperty("og:image", `${SITE_ORIGIN}/brand/lagda-og-preview.png`);
+    setProperty("og:image", SOCIAL_IMAGE_URL);
+    setProperty("og:image:secure_url", SOCIAL_IMAGE_URL);
+    setProperty("og:image:type", "image/jpeg");
     setProperty("og:image:width", "1200");
     setProperty("og:image:height", "630");
+    setProperty("og:image:alt", SOCIAL_IMAGE_ALT);
     setProperty("og:locale", "en_PH");
 
     // Twitter / X
     setMeta("twitter:card", "summary_large_image");
     setMeta("twitter:title", title);
     setMeta("twitter:description", description);
-    setMeta("twitter:image", `${SITE_ORIGIN}/brand/lagda-og-preview.png`);
+    setMeta("twitter:image", SOCIAL_IMAGE_URL);
+    setMeta("twitter:image:alt", SOCIAL_IMAGE_ALT);
   }, [pathname]);
 }
