@@ -10,6 +10,7 @@ import {
   DECLINE_REASON_MAX, DECLINE_REASON_MIN, invitationErrorMessage, myInvitationsService, type MyInvitation,
 } from "../../../services/real/my-invitations.service";
 import { invitationSubject } from "./InvitationLetter";
+import { withProcess } from "../../../config/process-screens";
 
 const GF = { fontFamily: "'Geist', sans-serif" } as const;
 const NAVY = "#07111F";
@@ -36,7 +37,7 @@ export function DeclineInvitationDialog({ item, onClose, onDeclined }: {
       setBusy(true);
       setError(null);
       try {
-        await myInvitationsService.decline(item.invitationId, trimmed);
+        await withProcess("invitation-decline", "", () => myInvitationsService.decline(item.invitationId, trimmed));
         onDeclined();
         onClose();
       } catch (err) {

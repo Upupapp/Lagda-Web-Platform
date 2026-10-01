@@ -26,6 +26,7 @@ import { ApiError } from "../../../services/api-client";
 import { USE_REAL_BACKEND } from "../../../services/backend-flag";
 import { formatPeso } from "../../../config/pricing.config";
 import { Z } from "../../../utils/z-index";
+import { withProcess } from "../../../config/process-screens";
 
 const GF = { fontFamily: SET.FONT };
 const GM = { fontFamily: SET.MONO };
@@ -144,7 +145,7 @@ function UpgradeDialog({ plan, onClose, onSent }: { plan: RequestablePlan; onClo
     if (empty.length > 0) { setBad(new Set(empty)); setError("Fill in every field. Copy the sample account shown."); return; }
     setSending(true); setError(null); setBad(new Set());
     try {
-      await plansService.requestUpgrade(plan, values);
+      await withProcess("plan-request", PLAN_NAMES[plan], () => plansService.requestUpgrade(plan, values));
       onSent();
     } catch (err) {
       if (err instanceof ApiError && err.body?.code === PLAN_ERROR.sampleOnly) {
@@ -250,7 +251,7 @@ export function PlanBillingPage() {
 
   const cancel = async () => {
     setCancelling(true);
-    try { await plansService.cancelRequest(); setNotice("Your request was cancelled."); } catch { /* shown by the refresh below */ }
+    try { await withProcess("plan-request-cancel", "", () => plansService.cancelRequest()); setNotice("Your request was cancelled."); } catch { /* shown by the refresh below */ }
     await refresh();
     announcePlanChanged();
     setCancelling(false);

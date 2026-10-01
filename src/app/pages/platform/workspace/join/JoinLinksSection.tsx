@@ -24,6 +24,7 @@ import {
   buttonStyle, formatWhen, hintStyle, inputStyle, labelStyle,
   GF, GM, NAVY, AZURE, SLATE, SILVER, BORDER,
 } from "./join-styles";
+import { withProcess } from "../../../../config/process-screens";
 
 const TABS: { id: JoinTicketState; label: string; empty: string }[] = [
   { id: "sent", label: "Sent", empty: "No sent links. Create a link and send it to someone you want to invite." },
@@ -166,7 +167,7 @@ export function JoinLinksSection({ workspaceId, onChanged, flush = false }: {
           onSave={async (input) => {
             const saved = modal.kind === "edit"
               ? await updateJoinTicket(workspaceId, modal.ticket.ticketId, input)
-              : await createJoinTicket(workspaceId, input);
+              : await withProcess("join-link-create", "", () => createJoinTicket(workspaceId, input));
             replace(saved);
             setTab("draft");
             setModal(null);
@@ -368,7 +369,7 @@ function TicketFormDialog({ workspaceId, ticket, onClose, onSave }: {
           </select>
           <p id={`${teamId}-hint`} style={hintStyle}>
             {noTeams ? (
-              <>Group newcomers by team once you have one. <Link to="/app/workspace/teams" onClick={onClose}
+              <>Group newcomers by team once you have one. <Link to="/app/workspace/people" onClick={onClose}
                 data-testid="join-link-create-team" style={{ color: AZURE, fontWeight: 600, textDecoration: "none" }}>Create one</Link></>
             ) : "Shown on the request so you know where the person belongs. It does not add them to the team."}
           </p>

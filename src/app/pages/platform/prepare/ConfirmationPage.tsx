@@ -27,6 +27,7 @@ import { realSigningRequestService } from "../../../services/real/signing-reques
 import { realPreparationService } from "../../../services/real/preparation.service";
 import { fromBackendField } from "../../../services/prepare/field-sync";
 import { computeSendReadiness, buildActionUrl } from "../../../services/prepare/send-readiness";
+import { processScreen } from "../../../config/process-screens";
 
 // ── Design tokens ─────────────────────────────────────────────────────────────
 const GF     = { fontFamily: "'Geist', sans-serif" };
@@ -192,7 +193,7 @@ function ConfirmationPageInner({ participants }: { participants: PrepParticipant
     try {
       await run(
         {
-          message: "Sending for signature",
+          ...processScreen("send-for-signature"),
           detail: "Do not close this tab.",
           steps: buildSteps(SEND_STAGES, "create"),
         },

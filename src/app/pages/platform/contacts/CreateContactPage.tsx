@@ -11,6 +11,7 @@ import type { ContactCreateInput, ContactScope, ContactTagId, ContactGroupId, Co
 import { SYSTEM_CONTACT_TAGS, CONTACT_SCOPE_LABELS } from "../../../models/contacts";
 import { Z } from "../../../utils/z-index";
 import { usePlatform } from "../../../context/PlatformContext";
+import { withProcess } from "../../../config/process-screens";
 
 const GF    = { fontFamily: "'Geist', sans-serif" };
 const GM    = { fontFamily: "'Geist Mono', monospace" };
@@ -184,7 +185,7 @@ function CreateContactForm() {
         organization: org.trim() || undefined, title: title.trim() || undefined,
         scope, tagIds, groupIds, note: note.trim() || undefined,
       };
-      const contact = await asyncCreate(input);
+      const contact = await withProcess("contact-create", input.name, () => asyncCreate(input));
       void navigate(`/app/contacts/${contact.id}`);
     } catch {
       setErrors({ _form: "Could not create contact. Please try again." });

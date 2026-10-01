@@ -27,6 +27,7 @@ import type { Contact } from "../../../models/contacts";
 import { Dialog, ErrorNote } from "../workspace/join/join-ui";
 import { buttonStyle, inputStyle, labelStyle, hintStyle } from "../workspace/join/join-styles";
 import { C, useLiveRefresh } from "./contacts-ui";
+import { withProcess } from "../../../config/process-screens";
 
 const normal = (email: string) => email.trim().toLowerCase();
 
@@ -119,7 +120,7 @@ export function ContactWorkspaceCard({ contact, workspaceId, onAskToPrepare, can
               </ul>
               {privileges.inherent && <span className="cw-access-note">Both come with their role.</span>}
               {canManageAccess && (
-                <Link to={`/app/workspace/members/${encodeURIComponent(membership.id)}`} className="cw-access-link">
+                <Link to={`/app/workspace/people?member=${encodeURIComponent(membership.id)}`} className="cw-access-link">
                   <Settings2 size={13} aria-hidden /> Manage access
                 </Link>
               )}
@@ -226,7 +227,7 @@ function InviteDialog({ email, name, workspaceId, workspaceName, onClose, onSent
   const send = async () => {
     setBusy(true); setError(null);
     try {
-      await realWorkspaceAdminService.sendInvitation(workspaceId, { email, roleId: roleId as WorkspaceRoleId }, crypto.randomUUID());
+      await withProcess("member-invite", email, () => realWorkspaceAdminService.sendInvitation(workspaceId, { email, roleId: roleId as WorkspaceRoleId }, crypto.randomUUID()));
       onSent();
     } catch {
       setError("The invitation could not be sent. They may already be invited or a member.");
@@ -302,7 +303,7 @@ function AddToTeamDialog({ workspaceId, userId, name, onClose, onAdded }: {
       </select>
       {none && (
         <p style={hintStyle}>
-          <Link to="/app/workspace/teams" style={{ color: C.AZURE, fontWeight: 600, textDecoration: "none" }}>Create one</Link> in Workspace › Organisation first.
+          <Link to="/app/workspace/people" style={{ color: C.AZURE, fontWeight: 600, textDecoration: "none" }}>Create one</Link> in Workspace › People &amp; Teams first.
         </p>
       )}
     </Dialog>

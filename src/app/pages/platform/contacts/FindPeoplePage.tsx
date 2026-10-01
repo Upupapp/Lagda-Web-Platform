@@ -25,6 +25,7 @@ import {
 import {
   C, PersonAvatar, EXTERNAL_CONTACT_ROUTE, PENDING_CONTACTS_ROUTE,
 } from "./contacts-ui";
+import { withProcess } from "../../../config/process-screens";
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -58,7 +59,7 @@ export function FindPeoplePage() {
     if (!available || workspaceId === null) return;
     setPhase({ kind: "searching" });
     try {
-      const result = await contactConnectionsService.lookup(workspaceId, trimmed);
+      const result = await withProcess("contact-lookup", "", () => contactConnectionsService.lookup(workspaceId, trimmed));
       setPhase({ kind: "done", email: trimmed, result });
     } catch (error) {
       setPhase({ kind: "error", message: connectionErrorMessage(error, "The search could not be completed. Please try again.") });
@@ -69,7 +70,8 @@ export function FindPeoplePage() {
     if (phase.kind !== "done" || workspaceId === null) return;
     setSending(true); setActionError(null);
     try {
-      const sent = await contactConnectionsService.send(workspaceId, phase.email);
+      const email = phase.email;
+      const sent = await withProcess("contact-request-send", "", () => contactConnectionsService.send(workspaceId, email));
       setPhase({ ...phase, result: { ...phase.result, person: phase.result.person && { ...phase.result.person, relationship: "requested", connectionId: sent.connectionId } } });
     } catch (error) {
       setActionError(connectionErrorMessage(error, "The request could not be sent. Please try again."));
@@ -81,7 +83,8 @@ export function FindPeoplePage() {
     if (phase.kind !== "done" || !phase.result.person?.connectionId) return;
     setSending(true); setActionError(null);
     try {
-      await contactConnectionsService.cancel(phase.result.person.connectionId);
+      const connectionId = phase.result.person.connectionId;
+      await withProcess("contact-request-cancel", "", () => contactConnectionsService.cancel(connectionId));
       setPhase({ ...phase, result: { ...phase.result, person: { ...phase.result.person, relationship: "none", connectionId: null } } });
     } catch (error) {
       setActionError(connectionErrorMessage(error, "The request could not be cancelled. Please try again."));

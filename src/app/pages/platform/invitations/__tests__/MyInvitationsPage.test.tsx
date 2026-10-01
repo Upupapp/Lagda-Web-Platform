@@ -8,13 +8,15 @@ import { MemoryRouter, Route, Routes, useLocation } from "react-router";
 
 vi.setConfig({ testTimeout: 20_000 });
 vi.mock("../../../../services/backend-flag", () => ({ USE_REAL_BACKEND: true, API_BASE_URL: "http://api.test" }));
-const platform = { workspaces: [] as { id: string }[] };
+const platform = { workspaces: [] as { id: string }[], currentWorkspace: null as { id: string; name: string } | null, user: { id: "u1" } };
 vi.mock("../../../../context/PlatformContext", () => ({ usePlatform: () => platform }));
 
 import { MyInvitationsPage } from "../MyInvitationsPage";
 import { getPendingInvitationCount, resetPendingInvitationCount } from "../../../../hooks/usePendingInvitationCount";
 import { mockSharingApi, apiError, type Routes as ApiRoutes } from "../../../../components/document-sharing/__tests__/sharing-test-api";
 import { invitation } from "./invitation-fixtures";
+import { resetPlanStore } from "../../../../hooks/usePlans";
+import { ROLE_CAPABILITIES } from "../../../../models/workspace-role-policy";
 
 function Where() {
   const { pathname, search } = useLocation();
@@ -51,7 +53,50 @@ function routes(over: ApiRoutes = {}): ApiRoutes {
 beforeEach(() => {
   vi.unstubAllGlobals();
   resetPendingInvitationCount();
+  resetPlanStore();
   platform.workspaces = [{ id: "ws_joined" }];
+  platform.currentWorkspace = null;
+});
+
+describe("Invitations — Received and Sent", () => {
+  const ownerOnBusiness = (plan = "business") => routes({
+    "GET /workspaces/ws_1/access": { workspaceId: "ws_1", membershipId: "m1", role: "owner", capabilities: [...ROLE_CAPABILITIES.owner], roleTitle: null },
+    "GET /workspaces/ws_1/plan": { plan, ownerIsYou: true, ownerName: "Ana Reyes", paidUntil: null },
+    "GET /workspaces/ws_1/invitations": { invitations: [] },
+    "GET /workspaces/ws_1/join-requests": { requests: [] },
+    "GET /workspaces/ws_1/join-tickets": { tickets: [] },
+  });
+
+  it("adds Sent and the Invite people button for someone who may invite, on Business", async () => {
+    platform.currentWorkspace = { id: "ws_1", name: "Reyes Law Office" };
+    mockSharingApi(ownerOnBusiness());
+    const user = userEvent.setup();
+    renderAt("/app/invitations");
+    const sent = await screen.findByTestId("invitations-view-sent");
+    expect(screen.getByTestId("invitations-view-received")).toHaveAttribute("aria-pressed", "true");
+    expect(await screen.findByTestId("invite-people-toggle")).toBeInTheDocument();
+    await user.click(sent);
+    expect(screen.getByTestId("where")).toHaveTextContent("/app/invitations?view=sent");
+    expect(await screen.findByTestId("invitations-sent")).toBeInTheDocument();
+  });
+
+  it("opens the panel on Requests from a link to the join requests", async () => {
+    platform.currentWorkspace = { id: "ws_1", name: "Reyes Law Office" };
+    mockSharingApi(ownerOnBusiness());
+    renderAt("/app/invitations?view=sent&panel=requests");
+    const panel = await screen.findByTestId("invite-people-panel");
+    expect(within(panel).getByTestId("invite-tab-requests")).toHaveAttribute("aria-selected", "true");
+  });
+
+  it("shows only Received on a Free workspace", async () => {
+    platform.currentWorkspace = { id: "ws_1", name: "Reyes Law Office" };
+    mockSharingApi(ownerOnBusiness("free"));
+    renderAt("/app/invitations?view=sent");
+    await screen.findAllByTestId("invitation-card");
+    expect(screen.queryByTestId("invitations-view-sent")).toBeNull();
+    expect(screen.queryByTestId("invite-people-toggle")).toBeNull();
+    expect(screen.queryByTestId("invitations-sent")).toBeNull();
+  });
 });
 
 describe("Invitations page", () => {

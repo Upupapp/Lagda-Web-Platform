@@ -14,6 +14,7 @@ import {
 } from "../../../../services/real/workspace-join.service";
 import { AccessEditor, Dialog, ErrorNote, type AccessDraft } from "./join-ui";
 import { buttonStyle, formatWhen, GF, GM, NAVY, AZURE, SLATE, SILVER, BORDER } from "./join-styles";
+import { withProcess } from "../../../../config/process-screens";
 
 const STATE_BADGE: Record<JoinRequestState, { label: string; bg: string; color: string }> = {
   pending: { label: "Pending", bg: "#FFF8E1", color: "#8A5A00" },
@@ -126,14 +127,16 @@ export function JoinRequestsSection({ workspaceId, refreshKey = 0, onDecided, on
       {modal?.kind === "approve" && (
         <ApproveDialog request={modal.request} onClose={() => setModal(null)}
           onApprove={async (access) => {
-            await approveJoinRequest(workspaceId, modal.request.requestId, access);
+            const requestId = modal.request.requestId;
+            await withProcess("join-request-decide", "", () => approveJoinRequest(workspaceId, requestId, access));
             decided(modal.request.requestId, "approved");
           }} />
       )}
       {modal?.kind === "decline" && (
         <DeclineDialog request={modal.request} onClose={() => setModal(null)}
           onConfirm={async () => {
-            await declineJoinRequest(workspaceId, modal.request.requestId);
+            const requestId = modal.request.requestId;
+            await withProcess("join-request-decide", "", () => declineJoinRequest(workspaceId, requestId));
             decided(modal.request.requestId, "declined");
           }} />
       )}

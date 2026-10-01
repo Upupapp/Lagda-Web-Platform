@@ -25,6 +25,7 @@ import { ConfirmDeleteTemplate } from "../../../components/templates/ConfirmDele
 import { deleteTemplate } from "../../../services/templates-source";
 import { usePlatform } from "../../../context/PlatformContext";
 import { useProcessing } from "../../../services/processing.service";
+import { processScreen } from "../../../config/process-screens";
 
 // ── Design tokens ─────────────────────────────────────────────────────────────
 const GF    = { fontFamily: "'Geist', sans-serif" };
@@ -276,10 +277,7 @@ function TemplateDetailInner() {
       // the route change too, so the person is not returned to a list that
       // still shows the template they just removed.
       await runProcessing(
-        {
-          message: "Deleting the template",
-          detail: "Documents already sent from it are not affected.",
-        },
+        processScreen("template-delete"),
         () => deleteTemplate(platform.currentWorkspace?.id, t.id),
       );
       setConfirmDelete(false);

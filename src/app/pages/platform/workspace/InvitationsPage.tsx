@@ -59,7 +59,7 @@ const INVITE_ROLE_OPTIONS = USE_REAL_BACKEND
   ? ASSIGNABLE_ROLES.map(id => ({ id, name: REAL_ROLE_LABELS[id] }))
   : SYSTEM_ROLES;
 
-function InviteForm({ onDone }: { onDone: () => void }) {
+export function InviteForm({ onDone }: { onDone: () => void }) {
   const { asyncSendInvitation, asyncLoadInvitations } = useWorkspaceAdmin();
   const [email, setEmail] = useState("");
   const [roleId, setRoleId] = useState<string>(
@@ -224,7 +224,7 @@ function InvitationRow({ inv, asCard = false, focused = false, decline }: {
   );
 }
 
-function InvitationsInner() {
+function InvitationsInner({ embedded = false }: { embedded?: boolean }) {
   const { state, asyncLoadInvitations } = useWorkspaceAdmin();
   const { isNarrow } = useViewport();
   const platform = usePlatform();
@@ -297,16 +297,8 @@ function InvitationsInner() {
 
   const filtered = state.invitations.filter(i => filter === "all" || i.status === filter);
 
-  return (
-    <ManagePage crumbs={[{ label: "Workspace", to: "/app/workspace" }, { label: "Invitations" }]} title="Invitations" maxWidth={900}
-      actions={
-        <button onClick={() => setShowForm(v => !v)}
-          style={{ ...GF, fontSize: 13, fontWeight: 600, background: AZURE, color: "#FFFFFF", border: "none", borderRadius: 8, padding: "9px 18px", cursor: "pointer" }}>
-          {showForm ? "Cancel" : "+ Invite Member"}
-        </button>
-      }>
-        {showForm && <InviteForm onDone={() => setShowForm(false)} />}
-
+  const body = (
+      <>
         {focusMissing && (
           <p role="status" style={{ ...GF, fontSize: 13, color: "#334155", margin: "0 0 14px", padding: "10px 14px", background: "#F8FAFC", border: "1px solid #E3E8EF", borderRadius: 8 }}>
             That invitation is not in this workspace&rsquo;s list. It may belong to another workspace, or it may have been replaced by a newer invitation.
@@ -379,7 +371,32 @@ function InvitationsInner() {
             Status changes are session-local and reset on reload.
           </p>
         )}
+      </>
+  );
+
+  // Inside the Invitations hub (Sent): the list only — the hub has its own
+  // "Invite people" button.
+  if (embedded) return body;
+  return (
+    <ManagePage crumbs={[{ label: "Workspace", to: "/app/workspace" }, { label: "Invitations" }]} title="Invitations" maxWidth={900}
+      actions={
+        <button onClick={() => setShowForm(v => !v)}
+          style={{ ...GF, fontSize: 13, fontWeight: 600, background: AZURE, color: "#FFFFFF", border: "none", borderRadius: 8, padding: "9px 18px", cursor: "pointer" }}>
+          {showForm ? "Cancel" : "+ Invite Member"}
+        </button>
+      }>
+      {showForm && <InviteForm onDone={() => setShowForm(false)} />}
+      {body}
     </ManagePage>
+  );
+}
+
+/** The workspace's sent invitations, for the Invitations hub's Sent view. */
+export function WorkspaceSentInvitations() {
+  return (
+    <WorkspaceAdminProvider>
+      <InvitationsInner embedded />
+    </WorkspaceAdminProvider>
   );
 }
 

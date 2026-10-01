@@ -38,6 +38,7 @@ import {
   getTemplateActionAvailability,
   validateTemplate,
 } from "../services/mock/templates.service";
+import { withProcess } from "../config/process-screens";
 
 // ── State definition ───────────────────────────────────────────────────────────
 
@@ -282,7 +283,7 @@ export function TemplateProvider({ children }: { children: React.ReactNode }) {
 
   const archive = useCallback(async (id: DocumentTemplateId) => {
     dispatch({ type: "OP_START", op: "archive" });
-    const r = await asyncArchive(id);
+    const r = await withProcess("template-archive", "", () => asyncArchive(id));
     if (r.ok && r.template) {
       dispatch({ type: "OP_SUCCESS", message: "Template archived.", template: r.template });
     } else {

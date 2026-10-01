@@ -22,6 +22,7 @@ import {
   type SharedDocument,
 } from "../../../services/real/document-sharing.service";
 import { SharingTabs, panelId, tabId } from "./SharingTabs";
+import { withProcess } from "../../../config/process-screens";
 
 export type WithMeSection = "accepted" | "pending" | "rejected";
 
@@ -58,7 +59,8 @@ export function SharedWithMeSection({ section, onSection }: { section: WithMeSec
     setBusyId(item.id);
     setNotice(null);
     try {
-      await documentSharingService.actOnShared(item.id, verb);
+      await withProcess(verb === "accept" ? "shared-accept" : verb === "reject" ? "shared-reject" : "shared-undo-reject", "",
+        () => documentSharingService.actOnShared(item.id, verb));
       setNotice({
         tone: "success",
         text: verb === "accept" ? `“${item.documentTitle}” is now under Accepted.`
@@ -195,8 +197,9 @@ export function SharedWithMeSection({ section, onSection }: { section: WithMeSec
           onClose={() => setConfirm(null)}
           onConfirm={async () => {
             try {
-              if (confirm.kind === "remove-access") await documentSharingService.removeMyAccess(confirm.item.id);
-              else await documentSharingService.deleteShared(confirm.item.id);
+              const item = confirm.item;
+              if (confirm.kind === "remove-access") await withProcess("shared-remove-access", "", () => documentSharingService.removeMyAccess(item.id));
+              else await withProcess("shared-delete", "", () => documentSharingService.deleteShared(item.id));
               setNotice({
                 tone: "success",
                 text: confirm.kind === "remove-access"

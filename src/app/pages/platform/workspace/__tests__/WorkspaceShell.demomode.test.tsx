@@ -18,10 +18,10 @@ vi.mock("../../../../context/PlatformContext", () => ({ usePlatform: () => platf
 import { WorkspaceShell } from "../shell/WorkspaceShell";
 import { WorkspaceOverviewPage } from "../WorkspaceOverviewPage";
 import { MembersPage } from "../MembersPage";
+import { PeopleTeamsPage } from "../PeopleTeamsPage";
 import { TeamsPage } from "../TeamsPage";
 import { TeamDetailPage } from "../TeamDetailPage";
-import { mockWorkspaceAdminService } from "../../../../services/mock/workspace-admin.service";
-import { listJoinRequests, listJoinTickets, resetDemoJoinStore } from "../../../../services/real/workspace-join.service";
+import { listJoinRequests, resetDemoJoinStore } from "../../../../services/real/workspace-join.service";
 
 const fetchSpy = vi.fn();
 
@@ -37,6 +37,7 @@ function renderShellAt(path: string) {
       <Routes>
         <Route path="/app/workspace" element={<WorkspaceShell />}>
           <Route index element={<WorkspaceOverviewPage />} />
+          <Route path="people" element={<PeopleTeamsPage />} />
           <Route path="members" element={<MembersPage />} />
           <Route path="teams" element={<TeamsPage />} />
           <Route path="invitations" element={<div />} />
@@ -48,25 +49,16 @@ function renderShellAt(path: string) {
 }
 
 describe("Workspace shell — demo build", () => {
-  it("shows the demonstration workspace, every part and the demo counts, with no network", async () => {
-    const { workspace } = await mockWorkspaceAdminService.getWorkspace();
+  it("shows the demonstration workspace, its three parts and the requests waiting, with no network", async () => {
     const pendingRequests = (await listJoinRequests("demo", "pending")).length;
-    const activeLinks = (await listJoinTickets("demo")).filter(t => t.state === "sent" && t.usedAt === null && t.request === null).length;
-
-    const { unmount } = renderShellAt("/app/workspace/members");
+    renderShellAt("/app/workspace/people");
     await waitFor(() => expect(screen.getByTestId("workspace-name")).toHaveTextContent("Mabini Legal Solutions"));
     expect(screen.getByText("Demonstration")).toBeInTheDocument();
     const parts = within(screen.getByTestId("workspace-parts")).getAllByRole("link");
-    expect(parts.map(b => b.getAttribute("data-testid"))).toEqual(["part-overview", "part-people", "part-organisation", "part-activity"]);
-
-    await waitFor(() => expect(screen.getByTestId("tab-count-members")).toHaveTextContent(String(workspace.activeMembers)));
-    expect(screen.getByTestId("tab-count-invite")).toHaveTextContent(String(workspace.pendingInvitations));
-    expect(screen.getByTestId("tab-count-join-requests")).toHaveTextContent(String(pendingRequests));
-    unmount();
-
-    renderShellAt("/app/workspace/invitations");
-    const method = await screen.findByTestId("invite-method-link");
-    await waitFor(() => expect(method).toHaveAccessibleName(`Join link, ${String(activeLinks)} active`));
+    expect(parts.map(b => b.getAttribute("data-testid"))).toEqual(["part-overview", "part-people", "part-activity"]);
+    if (pendingRequests > 0) {
+      await waitFor(() => expect(screen.getByTestId("part-count-people")).toHaveTextContent(String(pendingRequests)));
+    }
     expect(fetchSpy).not.toHaveBeenCalled();
   });
 
@@ -82,21 +74,14 @@ describe("Workspace shell — demo build", () => {
     expect(fetchSpy).not.toHaveBeenCalled();
   });
 
-  it("switches parts inside the shell and keeps Teams active on a team's page", async () => {
+  it("switches to People & Teams inside the shell: the demo members and teams", async () => {
     const user = userEvent.setup();
     renderShellAt("/app/workspace");
     await screen.findByTestId("workspace-section");
-    await user.click(screen.getByTestId("part-organisation"));
+    await user.click(screen.getByTestId("part-people"));
+    expect(await screen.findByRole("heading", { level: 2, name: "Member Directory" })).toBeInTheDocument();
     expect(await screen.findByRole("heading", { level: 2, name: "Teams" })).toBeInTheDocument();
-    expect(screen.getByTestId("tab-teams")).toHaveAttribute("aria-current", "page");
-
-    const firstTeam = await within(screen.getByTestId("workspace-section")).findAllByRole("link");
-    const teamLink = firstTeam.find(l => /\/app\/workspace\/teams\/.+/.test(l.getAttribute("href") ?? ""));
-    expect(teamLink).toBeDefined();
-    if (teamLink) await user.click(teamLink);
-    const crumbs = await screen.findByRole("navigation", { name: "Breadcrumb" });
-    expect(within(crumbs).getByRole("link", { name: "Teams" })).toHaveAttribute("href", "/app/workspace/teams");
-    expect(screen.getByTestId("tab-teams")).toHaveAttribute("aria-current", "true");
+    expect(screen.getByTestId("part-people")).toHaveAttribute("data-active", "true");
     expect(fetchSpy).not.toHaveBeenCalled();
   });
 });

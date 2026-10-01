@@ -70,7 +70,7 @@ function renderDashboard() {
     <MemoryRouter initialEntries={["/app"]}>
       <Routes>
         <Route path="/app" element={<RealDashboard />} />
-        <Route path="/app/workspace/invitations" element={<Where />} />
+        <Route path="/app/invitations" element={<Where />} />
       </Routes>
     </MemoryRouter>,
   );
@@ -111,7 +111,7 @@ describe("dashboard Needs attention — declined invitations", () => {
     expect(row.textContent).toContain("Reason: “Wrong team”");
     expect(row.querySelector("time")).not.toBeNull();
     const link = within(row).getByRole("link", { name: "Review invitation declined by Paul Cruz" });
-    expect(link.getAttribute("href")).toBe("/app/workspace/invitations?invitation=inv_7");
+    expect(link.getAttribute("href")).toBe("/app/invitations?view=sent&invitation=inv_7");
     // Shown even when the workspace has no signing requests yet.
     expect(screen.getByText("Send your first document")).toBeTruthy();
   });
@@ -130,7 +130,7 @@ describe("dashboard Needs attention — declined invitations", () => {
     await userEvent.click(await screen.findByRole("link", { name: /Review invitation/ }));
     expect(markRead).toHaveBeenCalledWith("n1");
     expect(platform.switchWorkspace).not.toHaveBeenCalled();
-    expect(screen.getByTestId("where").textContent).toBe("/app/workspace/invitations?invitation=inv_7");
+    expect(screen.getByTestId("where").textContent).toBe("/app/invitations?view=sent&invitation=inv_7");
   });
 
   it("dismisses a decline with its × without opening it", async () => {
@@ -161,7 +161,7 @@ describe("dashboard Needs attention — declined invitations", () => {
     await userEvent.click(within(row).getByRole("link", { name: /Review invitation/ }));
     expect(platform.switchWorkspace).toHaveBeenCalledWith("ws_2");
     expect(markRead).toHaveBeenCalledWith("n2");
-    expect(screen.getByTestId("where").textContent).toBe("/app/workspace/invitations?invitation=inv_9");
+    expect(screen.getByTestId("where").textContent).toBe("/app/invitations?view=sent&invitation=inv_9");
   });
 
   it("sits beside document attention items and counts them together", async () => {

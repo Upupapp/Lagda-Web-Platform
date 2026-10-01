@@ -34,7 +34,7 @@ import {
 import { Link, Outlet, useLocation, useNavigate } from "react-router";
 import { useWorkspaceAllows } from "../../../../hooks/usePlans";
 import { lastAppPage, DEFAULT_APP_PAGE } from "../../../../services/last-app-page";
-import { Settings, X, Mail, Link2 } from "lucide-react";
+import { Settings, X } from "lucide-react";
 import { usePlatform } from "../../../../context/PlatformContext";
 import { useWorkspaceAccess, useWorkspaceMode, backendRoleFromPlatform, type WorkspaceAccess } from "../../../../hooks/useWorkspaceAccess";
 import { REAL_ROLE_LABELS } from "../../../../services/real/workspace-admin.service";
@@ -222,7 +222,6 @@ function ShellFrame({ name, initials, roleLabel, access, counts, realOverview, r
               tabs={tabs} current={where.tab} detail={where.detail} counts={counts}
               pathname={location.pathname} />
           )}
-          {where.tab === "invite" && <InviteMethodSwitch pathname={location.pathname} counts={counts} />}
           {/* Only this area waits for a section's code. The header, the parts
               and the tabs above it never unmount. */}
           <Suspense fallback={<SectionSkeleton />}>
@@ -358,8 +357,7 @@ function PartsNav({ parts, current, detail, counts }: {
           const Icon = part.icon;
           // People carries the requests waiting on the viewer; nothing else
           // is urgent enough for the top row.
-          const badge = part.key === "people" && part.tabs.some(t => t.key === "join-requests") && waiting !== null && waiting !== "0"
-            ? waiting : null;
+          const badge = part.key === "people" && waiting !== null && waiting !== "0" ? waiting : null;
           return (
             <li key={part.key}>
               <Link to={part.path} className="ws-part" data-ws-part="" data-testid={`part-${part.key}`}
@@ -422,32 +420,6 @@ function TabRow({ label, tabs, current, detail, counts, pathname }: {
           );
         })}
       </ul>
-    </nav>
-  );
-}
-
-// ── Invite people: email invitation or join link ───────────────────────────
-
-function InviteMethodSwitch({ pathname, counts }: { pathname: string; counts: BannerCounts }) {
-  const methods = [
-    { path: `${WORKSPACE_ROOT}/invitations`, label: "Email invitation", hint: "We email a personal invitation to one address", icon: Mail, count: countText(counts.invitations), noun: "pending" },
-    { path: `${WORKSPACE_ROOT}/join-links`, label: "Join link", hint: "A single-use link you share yourself, or we email it", icon: Link2, count: countText(counts.joinLinks), noun: "active" },
-  ];
-  return (
-    <nav aria-label="How to invite" className="ws-method" data-testid="invite-method-switch">
-      {methods.map(m => {
-        const active = pathname === m.path || pathname.startsWith(`${m.path}/`);
-        const Icon = m.icon;
-        return (
-          <Link key={m.path} to={m.path} className="ws-method-option" data-active={active ? "true" : "false"}
-            aria-current={active ? "page" : undefined} data-testid={`invite-method-${m.path.endsWith("links") ? "link" : "email"}`}
-            aria-label={m.count === null ? undefined : `${m.label}, ${m.count} ${m.noun}`} title={m.hint}>
-            <Icon size={16} strokeWidth={1.9} aria-hidden />
-            <span>{m.label}</span>
-            {m.count !== null && <span aria-hidden className="ws-subtab-count">{m.count}</span>}
-          </Link>
-        );
-      })}
     </nav>
   );
 }

@@ -21,6 +21,7 @@ import type { ContactCreateInput, ContactScope, ContactTagId } from "../../../mo
 import { SYSTEM_CONTACT_TAGS, CONTACT_SCOPE_LABELS } from "../../../models/contacts";
 import { BadgeCheck, Lock } from "lucide-react";
 import { PersonAvatar } from "./contacts-ui";
+import { withProcess } from "../../../config/process-screens";
 
 /** The tags that say what part someone plays in a document; the rest are categories. */
 const ROLE_TAGS = new Set<string>(["tag-signer", "tag-approver", "tag-reviewer", "tag-ack"]);
@@ -113,7 +114,7 @@ function EditForm() {
         organization: org.trim() || undefined, title: title.trim() || undefined,
         scope, tagIds, groupIds: state.activeContact?.groupIds ?? [], note: note.trim() || undefined,
       };
-      await asyncUpdate(contactId as ContactId, input);
+      await withProcess("contact-update", "", () => asyncUpdate(contactId as ContactId, input));
       void navigate(`/app/contacts/${contactId}`);
     } catch {
       setErrors({ _form: "Could not save changes. Please try again." });

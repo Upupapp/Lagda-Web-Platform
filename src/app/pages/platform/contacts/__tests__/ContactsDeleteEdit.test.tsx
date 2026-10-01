@@ -152,7 +152,7 @@ describe("a member's access, shown not edited", () => {
     const access = await screen.findByTestId("member-access");
     expect(access).toHaveTextContent("✓ Request documents");
     expect(access).toHaveTextContent("— Assign signers");
-    expect(within(access).getByRole("link", { name: /Manage access/ })).toHaveAttribute("href", "/app/workspace/members/m_ben");
+    expect(within(access).getByRole("link", { name: /Manage access/ })).toHaveAttribute("href", "/app/workspace/people?member=m_ben");
     expect(screen.getByTestId("contact-workspace-card")).toHaveTextContent("Paralegal");
     // The profile banner wears the brand colour of Ben's workspace.
     expect(screen.getByTestId("contact-profile-band").style.backgroundImage).toBe(brandGradient("#0B5E3C"));

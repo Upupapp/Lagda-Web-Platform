@@ -25,6 +25,7 @@ import {
 import { ApiError } from "../../services/api-client";
 import { VerificationQRCode } from "./VerificationQRCode";
 import { OtpInput } from "./OtpInput";
+import { withProcess } from "../../config/process-screens";
 
 // ── Tokens ────────────────────────────────────────────────────────────────────
 const GF = { fontFamily: "'Geist', sans-serif" };
@@ -250,7 +251,7 @@ export function VerificationSearch({ basePath, initialId = "" }: { basePath: str
     if (!id) { setIdError("Enter a Verification ID."); return; }
     setIdError(null);
     setState({ s: "loading" });
-    const result = await lookupVerification(id);
+    const result = await withProcess("verify-lookup", "", () => lookupVerification(id));
     if (result.kind === "found") {
       setState({ s: "found", record: result.record });
       setTimeout(() => resultRef.current?.focus(), 0);
@@ -518,7 +519,7 @@ function AccessStatusPanel({ verificationId, access, onChange, onUseCode }: {
     setBusy(true);
     setError(null);
     try {
-      const created = await documentSharingService.requestAccess(verificationId, note);
+      const created = await withProcess("verify-access-request", "", () => documentSharingService.requestAccess(verificationId, note));
       setSent(true);
       onChange({ ...access, relation: "request-pending", requestId: created.requestId, canRequestAccess: false });
     } catch (err) {
@@ -622,7 +623,7 @@ function EmailStep({ verificationId, wait, onSent, onError, clearNotice }: {
     setFieldError(null);
     clearNotice();
     setBusy(true);
-    const result = await requestAccessCode(verificationId, trimmed);
+    const result = await withProcess("verify-code-send", "", () => requestAccessCode(verificationId, trimmed));
     setBusy(false);
     if (result.kind === "sent") onSent(trimmed, result.expiresInSeconds);
     else if (result.kind === "rate-limited" && result.retryAfterSeconds !== undefined) wait.start(result.retryAfterSeconds);
@@ -675,7 +676,7 @@ function CodeStep({ verificationId, email, expiresInSeconds, wait, onGranted, on
     e.preventDefault();
     if (code.length !== 6) { setInvalid(true); onNotice({ tone: "error", text: "Enter all 6 digits of the code." }); return; }
     setBusy(true);
-    const result = await submitAccessCode(verificationId, email, code);
+    const result = await withProcess("verify-code-check", "", () => submitAccessCode(verificationId, email, code));
     setBusy(false);
     if (result.kind === "granted") { onGranted(result.grant); return; }
     if (result.kind === "denied") {
@@ -891,7 +892,7 @@ export function FileCheckPanel({ verificationId }: { verificationId: string }) {
     if (!file) return;
     setBusy(true);
     setResult(null);
-    const r = await checkVerificationFile(verificationId, file);
+    const r = await withProcess("verify-integrity", "", () => checkVerificationFile(verificationId, file));
     setBusy(false);
     setResult(r);
   }

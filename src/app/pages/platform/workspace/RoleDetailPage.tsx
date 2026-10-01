@@ -1,4 +1,4 @@
-// /app/workspace/roles/:roleId — Role detail.
+// /app/workspace/settings/roles/:roleId — Role detail.
 // Shows role info, permission matrix, member count, edit/archive for custom roles.
 // Demo build: fictional roles with edit/archive. With a real backend the
 // page is read-only — see real/RealRolesPages.tsx. No Burgundy. No eNotary.
@@ -13,7 +13,7 @@ import { useWorkspaceMode } from "../../../hooks/useWorkspaceAccess";
 import { RealRoleDetailPage } from "./real/RealRolesPages";
 import { ManagePage } from "./real/manage-ui";
 
-const CRUMBS = [{ label: "Workspace", to: "/app/workspace" }, { label: "Roles", to: "/app/workspace/roles" }];
+const CRUMBS = [{ label: "Workspace", to: "/app/workspace" }, { label: "Roles", to: "/app/workspace/settings/roles" }];
 
 const GF    = { fontFamily: "'Geist', sans-serif" };
 const GM    = { fontFamily: "'Geist Mono', monospace" };
@@ -128,7 +128,7 @@ function RoleDetailInner() {
   if (state.roleError || !state.activeRole) {
     return (
       <ManagePage crumbs={[...CRUMBS, { label: "Role" }]} title="Role not found" maxWidth={860}>
-        <p style={{ ...GF, color: SLATE }}>Role not found. <Link to="/app/workspace/roles" style={{ color: AZURE }}>Back to Roles</Link></p>
+        <p style={{ ...GF, color: SLATE }}>Role not found. <Link to="/app/workspace/settings/roles" style={{ color: AZURE }}>Back to Roles</Link></p>
       </ManagePage>
     );
   }

@@ -4,7 +4,7 @@
 // No real participant PII is stored, submitted, or retained after session.
 // Inline styles only. No Burgundy. No real backend.
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams, Link } from "react-router";
 import {
   ChevronLeft, ChevronRight,  
@@ -35,6 +35,7 @@ import { ResponsiveStepper } from "../../../components/system/ResponsiveStepper"
 import {
   MAP_ROLES_AUTH_METHOD, mapRolesOrganization, withMapRolesDefaults,
 } from "./map-roles-defaults";
+import { withProcess } from "../../../config/process-screens";
 
 // ── Design tokens ─────────────────────────────────────────────────────────────
 const GF    = { fontFamily: "'Geist', sans-serif" };
@@ -53,6 +54,9 @@ const STEPS = [
 type WizardStep = typeof STEPS[number]["id"];
 
 // ── Step 1: Map Roles ─────────────────────────────────────────────────────────
+/** A launch that could not make its draft — its message is shown as is. */
+class LaunchFailed extends Error {}
+
 /** The wizard's one column: stepper, step and navigation share it, centred. */
 const COLUMN_WIDTH = 688;
 
@@ -411,6 +415,15 @@ function UseTemplateInner() {
   const organization = mapRolesOrganization(platform.currentWorkspace?.name);
   const t = state.activeTemplate;
 
+  // Arriving here (from "Use this template now", a card's Use button or a
+  // link): the opening screen, once per template, named for it.
+  const openedFor = useRef<string | null>(null);
+  useEffect(() => {
+    if (!t || openedFor.current === t.id) return;
+    openedFor.current = t.id;
+    void withProcess("template-open", t.name, () => Promise.resolve());
+  }, [t]);
+
   const [step,     setStep]     = useState<WizardStep>("roles");
   const [mappings, setMappings] = useState<TemplateRoleMapping[]>([]);
   const [assignments, setAssignments] = useState<TemplateRoleAssignment[] | null>(null);
@@ -525,13 +538,14 @@ function UseTemplateInner() {
       }
 
       // The snapshot goes into a real draft, staged for the Prepare flow.
-      const handoff = await handOffTemplateToPrepare(
-        t.id, result.application, initialFilesFor(t),
-      );
-      if (!handoff.ok || !handoff.draft) {
-        setError(handoff.errorMessage ?? "The draft could not be created.");
-        return;
-      }
+      // Behind the launch screen. A draft that could not be made is a
+      // failure, shown at once rather than after the hold.
+      const application = result.application;
+      const handoff = await withProcess("template-launch", "", async () => {
+        const made = await handOffTemplateToPrepare(t.id, application, initialFilesFor(t));
+        if (!made.ok || !made.draft) throw new LaunchFailed(made.errorMessage ?? "The draft could not be created.");
+        return made as typeof made & { draft: NonNullable<typeof made.draft> };
+      });
 
       setLaunchDraftId(handoff.draft.id);
       setLaunchRoute(handoff.route ?? TEMPLATE_HANDOFF_ROUTE);
@@ -539,8 +553,8 @@ function UseTemplateInner() {
       setAuthDowngrades(result.authDowngrades ?? []);
       setLaunchStepCount(handoff.draft.routing.groups.length);
       setLaunched(true);
-    } catch {
-      setError("An unexpected error occurred.");
+    } catch (err) {
+      setError(err instanceof LaunchFailed ? err.message : "An unexpected error occurred.");
     } finally {
       setLaunching(false);
     }

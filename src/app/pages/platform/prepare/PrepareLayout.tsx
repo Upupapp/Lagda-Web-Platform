@@ -12,7 +12,7 @@ import { PREPARATION_STEPS } from "../../../models/prepare";
 import type { PreparationStepId, PreparationStepState } from "../../../models/prepare";
 import {
   FileText, Users, ListOrdered, SlidersHorizontal, PenLine,
-  ShieldCheck, ClipboardCheck, BadgeCheck, Check,
+  ShieldCheck, ClipboardCheck, BadgeCheck, Check, ChevronLeft, ChevronRight,
 } from "lucide-react";
 import { Z } from "../../../utils/z-index";
 
@@ -35,7 +35,7 @@ import { PreparationHelpFab, nudgePreparationHelp } from "../../../components/pr
 import { currentStepFromPath } from "../../../components/prepare/prep-step-guides";
 import { PrepareBreadcrumb, PrepareNavBar } from "../../../components/prepare/PrepareChrome";
 import { useProcessing } from "../../../services/processing.service";
-import { ResponsiveStepper } from "../../../components/system/ResponsiveStepper";
+import { processScreen } from "../../../config/process-screens";
 
 const GF = { fontFamily: "'Geist', sans-serif" };
 const NAVY   = "#07111F";
@@ -181,13 +181,46 @@ function DiscardDialog({
 // prerequisites met but never visited reads "available", not "complete".
 
 function StepperCards({
-  activeStepId, stepStates, onStepClick,
+  activeStepId, stepStates, onStepClick, compact = false,
 }: {
   activeStepId: PreparationStepId | null;
   stepStates: Record<PreparationStepId, PreparationStepState>;
   onStepClick: (id: PreparationStepId) => void;
+  /** Phones and small tablets: smaller cards, the same steps and rules. */
+  compact?: boolean;
 }) {
   const activeRef = useRef<HTMLButtonElement | null>(null);
+  const stripRef = useRef<HTMLOListElement | null>(null);
+  // Which way there is more to see: each arrow shows only when it can move.
+  const [edges, setEdges] = useState({ left: false, right: false });
+
+  useEffect(() => {
+    const strip = stripRef.current;
+    if (!strip) return;
+    const measure = () => {
+      setEdges({
+        left: strip.scrollLeft > 2,
+        right: strip.scrollLeft + strip.clientWidth < strip.scrollWidth - 2,
+      });
+    };
+    measure();
+    strip.addEventListener("scroll", measure, { passive: true });
+    window.addEventListener("resize", measure);
+    const observer = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(measure);
+    observer?.observe(strip);
+    return () => {
+      strip.removeEventListener("scroll", measure);
+      window.removeEventListener("resize", measure);
+      observer?.disconnect();
+    };
+  }, []);
+
+  /** Slides the strip most of its own width, keeping a card of overlap. */
+  const slide = (dir: -1 | 1) => {
+    const strip = stripRef.current;
+    if (!strip) return;
+    strip.scrollBy({ left: dir * Math.max(120, strip.clientWidth * 0.75), behavior: "smooth" });
+  };
 
   // Keep the current card in view. The strip scrolls when eight cards do not
   // fit, and a strip that opens at step one while you are on step six has to
@@ -197,12 +230,24 @@ function StepperCards({
   }, [activeStepId]);
 
   return (
+    <div className="prep-strip">
+    {edges.left && (
+      <button type="button" className="prep-strip-arrow prep-strip-arrow-left" aria-label="Scroll steps left"
+        data-testid="prep-steps-left" onClick={() => { slide(-1); }}>
+        <ChevronLeft size={18} aria-hidden />
+      </button>
+    )}
     <ol
+      ref={stripRef}
       aria-label="Preparation steps"
+      className={compact ? "prep-cards-compact" : undefined}
+      data-testid={compact ? "prep-step-cards-compact" : "prep-step-cards"}
       style={{
-        display: "flex", alignItems: "stretch", gap: 8,
-        listStyle: "none", margin: 0, padding: "12px 20px",
-        overflowX: "auto", scrollbarWidth: "none",
+        display: "flex", alignItems: "stretch", gap: compact ? 6 : 8,
+        listStyle: "none", margin: 0, padding: compact ? "2px 16px 4px" : "12px 20px",
+        overflowX: "auto", scrollbarWidth: "none", scrollBehavior: "smooth",
+        scrollSnapType: compact ? "x proximity" : undefined,
+        scrollPaddingInline: compact ? 16 : undefined,
       }}
     >
       {PREPARATION_STEPS.map((step, idx) => {
@@ -213,7 +258,7 @@ function StepperCards({
         const Icon = STEP_ICONS[step.icon] ?? FileText;
 
         return (
-          <li key={step.id} style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+          <li key={step.id} style={{ display: "flex", alignItems: "center", gap: compact ? 6 : 8, flexShrink: 0, scrollSnapAlign: compact ? "start" : undefined }}>
             <button
               type="button"
               ref={isActive ? activeRef : undefined}
@@ -222,9 +267,9 @@ function StepperCards({
               aria-current={isActive ? "step" : undefined}
               title={locked ? `${step.label} — finish the earlier steps first` : step.label}
               style={{
-                ...GF, display: "flex", alignItems: "flex-start", gap: 9,
-                width: 186, textAlign: "left",
-                padding: "10px 12px", borderRadius: 10,
+                ...GF, display: "flex", alignItems: "flex-start", gap: compact ? 8 : 9,
+                width: compact ? 150 : 186, minHeight: 44, textAlign: "left",
+                padding: compact ? "8px 10px" : "10px 12px", borderRadius: 10,
                 border: isActive ? `1.5px solid ${AZURE}` : "1px solid #E3E8EF",
                 background: isActive ? "#EBF4FC" : locked ? "#F8FAFC" : "#FFFFFF",
                 cursor: locked ? "not-allowed" : "pointer",
@@ -251,8 +296,8 @@ function StepperCards({
                 }}>
                   {idx + 1}. {step.label}
                 </span>
-                <span style={{
-                  display: "block", fontSize: 11, color: SILVER,
+                <span className="prep-card-blurb" style={{
+                  display: "block", fontSize: compact ? 10.5 : 11, color: SILVER,
                   marginTop: 2, lineHeight: 1.4,
                 }}>
                   {step.blurb}
@@ -260,33 +305,36 @@ function StepperCards({
               </span>
             </button>
             {idx < PREPARATION_STEPS.length - 1 && (
-              <span aria-hidden style={{ width: 12, height: 1, background: "#D1D9E0", flexShrink: 0 }} />
+              <span aria-hidden style={{ width: compact ? 6 : 12, height: 1, background: "#D1D9E0", flexShrink: 0 }} />
             )}
           </li>
         );
       })}
     </ol>
+    {edges.right && (
+      <button type="button" className="prep-strip-arrow prep-strip-arrow-right" aria-label="Scroll steps right"
+        data-testid="prep-steps-right" onClick={() => { slide(1); }}>
+        <ChevronRight size={18} aria-hidden />
+      </button>
+    )}
+    </div>
   );
 }
 
 // StepperSidebar removed with the vertical rail it drew. The sequence is
 // now StepperCards above (desktop) and StepperTopBar below (mobile).
 
-// ── Mobile horizontal stepper ─────────────────────────────────────────────────
+// ── Mobile stepper ────────────────────────────────────────────────────────────
 //
-// Replaces a label, a "Step 2 of 7" counter and a progress line. Those told
-// you where you were and nothing else: not what came next, not what was
-// already done, and not what was still locked. On a phone that bar WAS the
-// navigation, so the sequence was invisible for the whole of preparation.
-//
-// A horizontal strip of steps instead. Reachable steps are buttons; locked
-// ones are visibly locked rather than absent, because "why can I not get to
-// Fields yet" is answered by seeing it sit there greyed after Routing.
-//
-// The wide-screen rail is untouched — it already shows the whole sequence
-// down the side, and rebuilding it would be churn for no gain.
+// The same cards as the wide screen, smaller, in a strip you swipe: every
+// step you can reach is a card you can tap at any time, a finished one shows
+// ✓, and a locked one sits there dimmed until the steps before it are done —
+// exactly the wide screen's rules. It used to be a "STEP n OF 8" bar whose
+// segments were tappable but showed no names, so nobody knew they could be.
+// The line above the cards still says where you are; the strip keeps the
+// current card in view, and fades at the edge when there is more to see.
 
-function StepperTopBar({
+export function StepperTopBar({
   activeStepId, stepStates, onStepClick,
 }: {
   activeStepId: PreparationStepId | null;
@@ -294,23 +342,18 @@ function StepperTopBar({
   onStepClick: (id: PreparationStepId) => void;
 }) {
   const activeIdx = activeStepId ? Math.max(0, STEP_ORDER.indexOf(activeStepId)) : 0;
-  const locked = (i: number) => {
-    const st = stepStates[STEP_ORDER[i]!];
-    return st === "unavailable" || st === "blocked";
-  };
+  const current = PREPARATION_STEPS[activeIdx];
   return (
-    <div style={{ background: "#F5F7FA", borderBottom: "1px solid #E3E8EF", padding: "10px 16px 8px" }}>
-      <ResponsiveStepper
-        label="Preparation steps"
-        steps={PREPARATION_STEPS}
-        currentIndex={activeIdx}
-        useShortLabels
-        isComplete={i => {
-          const st = stepStates[STEP_ORDER[i]!];
-          return st === "complete" || st === "complete-with-warning";
-        }}
-        canSelect={i => !locked(i)}
-        onSelect={i => { onStepClick(STEP_ORDER[i]!); }}
+    <div style={{ background: "#F5F7FA", borderBottom: "1px solid #E3E8EF", padding: "8px 0 8px" }}>
+      <p data-testid="prep-step-caption" style={{ ...GF, margin: "0 16px 6px", fontSize: 11, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "#475569" }}>
+        Step {activeIdx + 1} of {PREPARATION_STEPS.length}
+        {current && <span style={{ color: NAVY, letterSpacing: 0, textTransform: "none", fontSize: 12.5 }}> · {current.label}</span>}
+      </p>
+      <StepperCards
+        activeStepId={activeStepId}
+        stepStates={stepStates}
+        onStepClick={onStepClick}
+        compact
       />
     </div>
   );
@@ -337,8 +380,8 @@ const LAYOUT_STYLES = `
     flex: 1;
     min-height: 0;
   }
-  /* The horizontal card strip. Desktop only — below 769px the existing
-     mobile pill bar takes over, unchanged. */
+  /* The horizontal card strip. Desktop; below 769px the same cards come
+     smaller, in the phone bar (StepperTopBar). */
   .prep-steprail {
     display: block;
     background: #FFFFFF;
@@ -346,6 +389,27 @@ const LAYOUT_STYLES = `
     flex-shrink: 0;
   }
   .prep-steprail ol::-webkit-scrollbar { display: none; }
+  .prep-cards-compact::-webkit-scrollbar { display: none; }
+  /* More cards off to the side: an arrow at that edge slides the strip. */
+  .prep-strip { position: relative; }
+  .prep-strip-arrow {
+    position: absolute; top: 50%; transform: translateY(-50%); z-index: 2;
+    width: 34px; height: 34px; border-radius: 50%; padding: 0;
+    display: inline-flex; align-items: center; justify-content: center;
+    background: #FFFFFF; color: ${NAVY}; border: 1px solid #D1D9E0; cursor: pointer;
+    box-shadow: 0 4px 12px -4px rgba(7,17,31,0.35);
+    transition: background 120ms ease, border-color 120ms ease;
+  }
+  .prep-strip-arrow:hover { background: #EBF4FC; border-color: ${AZURE}; }
+  .prep-strip-arrow:focus-visible { outline: 3px solid rgba(0,120,212,0.45); outline-offset: 2px; }
+  .prep-strip-arrow-left { left: 6px; }
+  .prep-strip-arrow-right { right: 6px; }
+  @media (prefers-reduced-motion: reduce) {
+    .prep-strip ol { scroll-behavior: auto !important; }
+  }
+  .prep-cards-compact .prep-card-blurb {
+    display: -webkit-box !important; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  }
 
   .prep-sidebar {
     display: flex;
@@ -506,10 +570,7 @@ export function PrepareLayout() {
     // is destructive and irreversible, so it should visibly happen rather
     // than the dialog blinking out and the page changing.
     await runProcessing(
-      {
-        message: "Discarding this preparation",
-        detail: "Removing the draft and its uploaded files.",
-      },
+      processScreen("discard-draft"),
       async () => { await discardDraft(); },
     );
     await navigate("/app/prepare");

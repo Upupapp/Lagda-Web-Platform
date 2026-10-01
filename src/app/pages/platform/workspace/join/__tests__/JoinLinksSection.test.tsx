@@ -156,7 +156,7 @@ describe("JoinLinksSection", () => {
     const dialog = screen.getByRole("dialog", { name: "Create join link" });
     expect(await within(dialog).findByRole("option", { name: "No team created yet" })).toBeInTheDocument();
     expect(within(dialog).getByRole("combobox", { name: "Team" })).toBeDisabled();
-    expect(within(dialog).getByRole("link", { name: "Create one" })).toHaveAttribute("href", "/app/workspace/teams");
+    expect(within(dialog).getByRole("link", { name: "Create one" })).toHaveAttribute("href", "/app/workspace/people");
     await user.click(within(dialog).getByRole("button", { name: "Save as draft" }));
     expect(within(dialog).getByRole("alert")).toHaveTextContent("Choose a team, or add a note");
     await user.type(within(dialog).getByLabelText(/Note/), "Reception");

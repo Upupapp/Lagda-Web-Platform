@@ -108,7 +108,7 @@ export function RealMemberTeams({ workspaceId, userId }: { workspaceId: string; 
         <p aria-busy="true" style={{ ...GF, fontSize: 13, color: SLATE, margin: 0 }}>Loading teams…</p>
       ) : mine.length === 0 ? (
         <p style={{ ...GF, fontSize: 13, color: SLATE, margin: 0 }}>
-          Not in any team.{rows.length === 0 && canManage && <> <Link to="/app/workspace/teams" style={{ color: AZURE }}>Create a team</Link> first.</>}
+          Not in any team.{rows.length === 0 && canManage && <> <Link to="/app/workspace/people" style={{ color: AZURE }}>Create a team</Link> first.</>}
         </p>
       ) : (
         <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
@@ -153,7 +153,7 @@ export function RealMemberAbilities({ roleId, canRequestDocuments, canAssignSign
           })}
         </div>
       ))}
-      <Link to={`/app/workspace/roles/${roleId}`} style={{ ...GF, fontSize: 12, fontWeight: 600, color: AZURE, textDecoration: "none" }}>About this role →</Link>
+      <Link to={`/app/workspace/settings/roles/${roleId}`} style={{ ...GF, fontSize: 12, fontWeight: 600, color: AZURE, textDecoration: "none" }}>About this role →</Link>
     </section>
   );
 }

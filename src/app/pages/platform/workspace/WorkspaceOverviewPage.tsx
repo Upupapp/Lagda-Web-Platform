@@ -187,7 +187,7 @@ function WorkspaceOverviewInner() {
           <StatCard label="Suspended"           value={workspace.suspendedMembers}   path="/app/workspace/members?status=suspended" />
           <StatCard label="Pending Invitations" value={workspace.pendingInvitations} path="/app/workspace/invitations" />
           <StatCard label="Active Teams"        value={workspace.teamCount}          path="/app/workspace/teams" />
-          <StatCard label="Custom Roles"        value={workspace.customRoleCount}    path="/app/workspace/roles" />
+          <StatCard label="Custom Roles"        value={workspace.customRoleCount}    path="/app/workspace/settings/roles" />
         </div>
 
         {/* Attention items */}
@@ -225,7 +225,7 @@ function WorkspaceOverviewInner() {
             <QuickLinkRow label="Teams"            path="/app/workspace/teams"       description="Group members by department or function" />
             {/* "Roles & Permissions" was two abstract nouns. This asks the
                 question the page answers. */}
-            <QuickLinkRow label="Who can do what"  path="/app/workspace/roles"       description="What each kind of member is allowed to do" />
+            <QuickLinkRow label="Who can do what"  path="/app/workspace/settings/roles"       description="What each kind of member is allowed to do" />
 
             <h2 style={{ ...GF, fontSize: 12, fontWeight: 700, color: SLATE, textTransform: "uppercase", letterSpacing: "0.06em", margin: "18px 0 2px" }}>
               Oversight

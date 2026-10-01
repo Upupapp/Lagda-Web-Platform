@@ -13,6 +13,7 @@ import {
   contactConnectionsService, connectionErrorMessage, personAvatarUrl, type ContactConnection,
 } from "../../../services/real/contact-connections.service";
 import { C, ContactsHeader, PersonAvatar, useConnectionLists, FIND_PEOPLE_ROUTE } from "./contacts-ui";
+import { withProcess } from "../../../config/process-screens";
 
 const when = (iso: string) => new Date(iso).toLocaleDateString("en-PH", { month: "short", day: "numeric", year: "numeric" });
 
@@ -34,13 +35,13 @@ export function PendingContactsPage() {
     try {
       if (action === "accept") {
         const workspaceId = target[c.connectionId] ?? currentId;
-        const result = await contactConnectionsService.accept(c.connectionId, workspaceId);
+        const result = await withProcess("contact-request-accept", c.person.displayName, () => contactConnectionsService.accept(c.connectionId, workspaceId));
         setAccepted({ name: c.person.displayName, contactId: result.contactId, workspaceId: result.workspaceId });
       } else if (action === "decline") {
-        await contactConnectionsService.decline(c.connectionId);
+        await withProcess("contact-request-decline", "", () => contactConnectionsService.decline(c.connectionId));
         setDeclined(c.person.displayName);
       } else {
-        await contactConnectionsService.cancel(c.connectionId);
+        await withProcess("contact-request-cancel", "", () => contactConnectionsService.cancel(c.connectionId));
       }
       refresh();
     } catch (err) {

@@ -20,6 +20,7 @@ import {
 } from "../../services/real/resend-signing.service";
 import type { RealRecipient } from "../../services/real/recipient.service";
 import { Z } from "../../utils/z-index";
+import { withProcess } from "../../config/process-screens";
 
 const GF: CSSProperties = { fontFamily: "'Geist', sans-serif" };
 const NAVY = "#07111F";
@@ -135,11 +136,11 @@ export function ResendSigningDialog({
     void (async () => {
       try {
         const result = mode === "new"
-          ? await resendSigningService.resend(
+          ? await withProcess("resend-new", "", () => resendSigningService.resend(
             workspaceId, documentId,
             addresses.map(email => ({ name: "", email })),
-          )
-          : await resendSigningService.resendToSame(workspaceId, documentId, kept);
+          ))
+          : await withProcess("resend-same", "", () => resendSigningService.resendToSame(workspaceId, documentId, kept));
         onSent(result.signingRequestId, result.sentTo);
       } catch (err) {
         // The sequence mutates the document before it sends, so a failure

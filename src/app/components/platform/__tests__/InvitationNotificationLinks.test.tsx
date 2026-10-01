@@ -55,7 +55,7 @@ describe("invitation notification links", () => {
     const received = screen.getByRole("link", { name: /Olivia invited you to join Globex Legal/ });
     expect(received.getAttribute("href")).toBe("/app/invitations?status=pending&invitation=inv_a");
     const declined = screen.getByRole("link", { name: /Ben declined your invitation to join Acme/ });
-    expect(declined.getAttribute("href")).toBe("/app/workspace/invitations?invitation=inv_b");
+    expect(declined.getAttribute("href")).toBe("/app/invitations?view=sent&invitation=inv_b");
     expect(within(declined).getByText(/Reason: “Wrong team”/)).toBeTruthy();
     await userEvent.click(received);
     expect(screen.getByTestId("where").textContent).toBe("/app/invitations?status=pending&invitation=inv_a");
@@ -66,7 +66,7 @@ describe("invitation notification links", () => {
     const hrefs = screen.getAllByRole("link", { name: /Open invitation|View invitation/ }).map(link => link.getAttribute("href"));
     expect(hrefs).toEqual([
       "/app/invitations?status=pending&invitation=inv_a",
-      "/app/workspace/invitations?invitation=inv_b",
+      "/app/invitations?view=sent&invitation=inv_b",
     ]);
   });
 });
