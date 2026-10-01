@@ -5,6 +5,7 @@
 //   POST   /workspaces/:id/units
 //   PATCH  /workspaces/:id/units/:unitId
 //   POST   /workspaces/:id/units/:unitId/archive
+//   DELETE /workspaces/:id/units/:unitId            (094: an empty team, for good)
 //   GET    /workspaces/:id/units/:unitId/members
 //   POST   /workspaces/:id/units/:unitId/members
 //   PATCH  /workspaces/:id/units/:unitId/members/:userId
@@ -71,6 +72,11 @@ class RealOrganizationService {
       `${base(workspaceId)}/${encodeURIComponent(unitId)}/archive`,
       { method: "POST" },
     );
+  }
+
+  /** 094. Deletes an EMPTY team for good (409 while it has people or teams inside). */
+  async deleteUnit(workspaceId: string, unitId: string): Promise<void> {
+    await apiRequest<void>(`${base(workspaceId)}/${encodeURIComponent(unitId)}`, { method: "DELETE" });
   }
 
   async listMembers(workspaceId: string, unitId: string): Promise<OrganizationUnitMember[]> {

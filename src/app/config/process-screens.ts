@@ -101,7 +101,7 @@ const SCREENS = {
   "contact-to-team": { tag: "People & Teams", icon: UserPlus, message: w => w ? `Adding ${w}…` : "Adding the contact to the team…", detail: "Members join the team at once; others get an invitation first." },
   "team-member-add": { tag: "People & Teams", icon: UserPlus, message: w => w ? `Adding ${w}…` : "Adding them to the team…", detail: "Their workspace role and access stay the same." },
   "team-rename": { tag: "People & Teams", icon: Save, message: () => "Renaming the team…", detail: "The new name shows everywhere straight away." },
-  "team-archive": { tag: "People & Teams", icon: Archive, message: w => w ? `Archiving ${w}…` : "Archiving the team…", detail: "Its people stay in the workspace." },
+  "team-delete": { tag: "People & Teams", icon: Trash2, message: w => w ? `Deleting ${w}…` : "Deleting the team…", detail: "It is removed for good. The Activity log keeps its name." },
   "team-create": { tag: "People & Teams", icon: Network, message: w => w ? `Creating ${w}…` : "Creating the team…", detail: "Add people to it straight after." },
 } as const satisfies Record<string, Screen>;
 

@@ -3,19 +3,28 @@
 // What used to be two parts and five tabs (People › Members, Invite people,
 // Requests; Organisation › Teams, Organization units) is one page:
 //
-//   ┌ People & Teams ────────────────────── [Search] [+ New team] ┐
-//   │ ┌ Not in a team yet ─────────────┐  ┌ Add from contacts ──┐ │
-//   │ │ (faces)              [Place]   │  │ Add to: [Finance ▾] │ │
-//   │ └────────────────────────────────┘  │ [search contacts]   │ │
-//   │ ┌ Finance · Department · 4 ──────┐  │ Maria   Member [Add]│ │
-//   │ │ (faces, titles)                │  │ Jose    Invite [Add]│ │
-//   │ │ └ Payroll · Team · 2           │  └─────────────────────┘ │
-//   │ └────────────────────────────────┘                         │
-//   └─────────────────────────────────────────────────── [Invite people]
+//   People & Teams   [Add from contacts] [Waiting to Join 2] [+ New team]
+//   3 people · 3 teams   [Search people or teams…]
+//   ┌ Not in a team yet ───────────────────────────────────────────────┐
+//   └──────────────────────────────────────────────────────────────────┘
+//   ┌──── workspace brand banner ────┐  ┌──── workspace brand banner ────┐
+//   │ Finance · Department · 2       │  │ Litigation · Team · 1   NEW    │
+//   │ (faces, titles)                │  │ (faces, titles)                │
+//   │ ┃ Payroll · Team · 0           │  │                                │
+//   └────────────────────────────────┘  └────────────────────────────────┘
+//                                                         [Invite people]
+//
+// The teams take the whole width. "Add from contacts", "Waiting to Join" and
+// "New team" are buttons beside the title, each opening its own panel in the
+// middle of the page (a sheet from the bottom on a phone). A team card wears
+// the workspace's own banner — its colour and logo — as the teams always
+// did; a person's panel opens under the two-toned banner the Home dashboard
+// uses.
 //
 // Teams and "organization units" were always the same thing on the backend
 // (039's units: a kind, a parent and members with a title each), so they are
-// drawn once, as a tree from the top down, newest first. Clicking a person
+// drawn once, as a tree from the top down, newest first. A team is deleted for
+// good (094) — only once it is empty: no people and no teams inside it. Clicking a person
 // opens their panel in the middle of the page: their position in the team,
 // moving them to another team, swapping positions with a teammate, their
 // workspace role and access, and removing them — from the team, or from the
@@ -33,12 +42,14 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useSearchParams } from "react-router";
 import {
-  Search, Plus, Network, UserPlus, Users, MoreHorizontal, Pencil, Archive, ArrowLeftRight,
+  Search, Plus, Network, UserPlus, Users, MoreHorizontal, Pencil, Trash2, ArrowLeftRight,
   ChevronRight, Mail, X, Contact, Clock,
 } from "lucide-react";
 import { useWorkspaceAccess } from "../../../../hooks/useWorkspaceAccess";
 import { usePlatform } from "../../../../context/PlatformContext";
-import { useViewport } from "../../../../hooks/useViewport";
+import { useDocumentCardBranding, type CardBranding } from "../../documents/CompletedDocumentCards";
+import { BrandBand } from "../../settings/branding-preview";
+import { brandGradient, BrandWaves } from "../../contacts/contacts-ui";
 import { Z } from "../../../../utils/z-index";
 import { realOrganizationService } from "../../../../services/real/organization.service";
 import { realWorkspaceAdminService, REAL_ROLE_LABELS, type BackendWorkspaceRole } from "../../../../services/real/workspace-admin.service";
@@ -113,16 +124,16 @@ interface PageData {
 export function RealPeopleTeamsPage({ workspaceId }: { workspaceId: string }) {
   const access = useWorkspaceAccess();
   const platform = usePlatform();
-  const { isNarrow } = useViewport();
   const meId = platform.user?.id ?? null;
   const versions = useWorkspacePeople(workspaceId);
+  const branding = useDocumentCardBranding();
   const [params, setParams] = useSearchParams();
 
   const canSeeMembers = access.can("membership.view");
   const may = {
     createTeam: access.can("unit.create"),
     renameTeam: access.can("unit.update"),
-    archiveTeam: access.can("unit.archive"),
+    deleteTeam: access.can("unit.archive"),
     placeMembers: access.can("unit.member.manage"),
     changeRole: access.can("membership.role.change"),
     removeMember: access.can("membership.remove"),
@@ -136,7 +147,7 @@ export function RealPeopleTeamsPage({ workspaceId }: { workspaceId: string }) {
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState<{ userId: string; unitId: string | null } | null>(null);
   const [dialog, setDialog] = useState<null | { kind: "new-team"; parent: string | null } | { kind: "rename"; unit: OrganizationUnit }
-    | { kind: "archive"; unit: OrganizationUnit } | { kind: "add-people"; unit: OrganizationUnit } | { kind: "contacts" }>(null);
+    | { kind: "delete"; unit: OrganizationUnit } | { kind: "add-people"; unit: OrganizationUnit } | { kind: "contacts" } | { kind: "waiting" }>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const loadSeq = useRef(0);
 
@@ -215,8 +226,7 @@ export function RealPeopleTeamsPage({ workspaceId }: { workspaceId: string }) {
   if (!data) return <ManagePage crumbs={CRUMBS} title="People & Teams"><LoadingBlock label="Loading people and teams…" /></ManagePage>;
 
   const memberCount = data.members?.length ?? people.size;
-  const contactsAside = may.contacts && (may.placeMembers || may.invite) && allTeams.length > 0;
-  const wide = !isNarrow && typeof window !== "undefined" && window.innerWidth >= 1100;
+  const contactsAllowed = may.contacts && (may.placeMembers || may.invite) && allTeams.length > 0;
   const openPerson = open ? people.get(open.userId) ?? null : null;
 
   const personButton = (p: { userId: string; name: string; email: string; line: string | null }, unitId: string | null) => (
@@ -236,32 +246,28 @@ export function RealPeopleTeamsPage({ workspaceId }: { workspaceId: string }) {
     if (!nodeMatches(node)) return null;
     const isNew = Date.now() - node.unit.createdAt < NEW_FOR_MS;
     const shownMembers = node.members.filter(m => matches(m.displayName, m.email) || node.unit.name.toLowerCase().includes(q));
-    return (
-      <section key={node.unit.unitId} className="pt-team" data-team-id={node.unit.unitId} data-depth={depth}
-        aria-label={node.unit.name}>
-        <header className="pt-team-head">
-          <span className="pt-team-icon" aria-hidden><Network size={16} /></span>
-          <div className="pt-team-title">
-            <h3>{node.unit.name}</h3>
-            <span className="pt-team-meta">
-              {ORGANIZATION_UNIT_KIND_LABELS[node.unit.kind]} · {node.members.length} {node.members.length === 1 ? "person" : "people"}
-              {isNew && <span className="pt-new">New</span>}
-            </span>
-          </div>
-          <div className="pt-team-actions">
-            {may.placeMembers && canSeeMembers && (
-              <button type="button" className="pt-mini" onClick={() => { setDialog({ kind: "add-people", unit: node.unit }); }}>
-                <UserPlus size={14} aria-hidden /> Add people
-              </button>
-            )}
-            {(may.renameTeam || may.archiveTeam || may.createTeam) && (
-              <TeamMenu
-                onRename={may.renameTeam ? () => { setDialog({ kind: "rename", unit: node.unit }); } : undefined}
-                onArchive={may.archiveTeam ? () => { setDialog({ kind: "archive", unit: node.unit }); } : undefined}
-                onSubTeam={may.createTeam ? () => { setDialog({ kind: "new-team", parent: node.unit.unitId }); } : undefined} />
-            )}
-          </div>
-        </header>
+    const count = `${String(node.members.length)} ${node.members.length === 1 ? "person" : "people"}`;
+    const deleteBlock = node.members.length > 0
+      ? `Remove the ${count} in it first`
+      : node.children.length > 0 ? "Delete or move the teams inside it first" : null;
+    const actions = (
+      <div className="pt-team-actions">
+        {may.placeMembers && canSeeMembers && (
+          <button type="button" className="pt-mini" onClick={() => { setDialog({ kind: "add-people", unit: node.unit }); }}>
+            <UserPlus size={14} aria-hidden /> <span className="pt-mini-label">Add people</span>
+          </button>
+        )}
+        {(may.renameTeam || may.deleteTeam || may.createTeam) && (
+          <TeamMenu
+            onRename={may.renameTeam ? () => { setDialog({ kind: "rename", unit: node.unit }); } : undefined}
+            onDelete={may.deleteTeam ? () => { setDialog({ kind: "delete", unit: node.unit }); } : undefined}
+            deleteBlockedBecause={deleteBlock}
+            onSubTeam={may.createTeam ? () => { setDialog({ kind: "new-team", parent: node.unit.unitId }); } : undefined} />
+        )}
+      </div>
+    );
+    const body = (
+      <>
         {shownMembers.length > 0 ? (
           <ul className="pt-people">
             {shownMembers.map(m => personButton({
@@ -270,11 +276,45 @@ export function RealPeopleTeamsPage({ workspaceId }: { workspaceId: string }) {
             }, node.unit.unitId))}
           </ul>
         ) : q === "" && (
-          <p className="pt-empty">No one in this team yet.{may.placeMembers && " Use Add people, or add someone from your contacts."}</p>
+          <p className="pt-empty">No one in this team yet.{may.placeMembers && " Use Add people, or Add from contacts."}</p>
         )}
         {node.children.length > 0 && (
           <div className="pt-children">{node.children.map(c => renderTeam(c, depth + 1))}</div>
         )}
+      </>
+    );
+    if (depth > 0) {
+      // A team inside a team: a lighter card, edged in the workspace colour.
+      return (
+        <section key={node.unit.unitId} className="pt-sub" data-team-id={node.unit.unitId} data-depth={depth}
+          aria-label={node.unit.name} style={{ borderLeftColor: branding.primaryColor }}>
+          <header className="pt-team-head">
+            <div className="pt-team-title">
+              <h3>{node.unit.name}</h3>
+              <span className="pt-team-meta">{ORGANIZATION_UNIT_KIND_LABELS[node.unit.kind]} · {count}{isNew && <span className="pt-new">New</span>}</span>
+            </div>
+            {actions}
+          </header>
+          {body}
+        </section>
+      );
+    }
+    return (
+      <section key={node.unit.unitId} className="pt-team pt-team-branded" data-team-id={node.unit.unitId} data-depth={depth}
+        aria-label={node.unit.name}>
+        <div className="pt-team-band">
+          <BrandBand variant="card" compact testId={`team-${node.unit.unitId}-banner`}
+            subtitle={`${ORGANIZATION_UNIT_KIND_LABELS[node.unit.kind]} · ${count}`}
+            branding={{ displayName: branding.displayName, primaryColor: branding.primaryColor, logoPreviewUrl: branding.logoUrl }}
+            headerAside={isNew ? <span className="pt-new pt-new-on-band">New</span> : undefined} />
+        </div>
+        <div className="pt-team-inner">
+          <header className="pt-team-head">
+            <div className="pt-team-title"><h3>{node.unit.name}</h3></div>
+            {actions}
+          </header>
+          {body}
+        </div>
       </section>
     );
   };
@@ -287,11 +327,26 @@ export function RealPeopleTeamsPage({ workspaceId }: { workspaceId: string }) {
 
   return (
     <ManagePage crumbs={CRUMBS} title="People & Teams" maxWidth={1240}
-      actions={may.createTeam ? (
-        <button type="button" onClick={() => { setDialog({ kind: "new-team", parent: null }); }} style={{ ...buttonStyle("primary"), ...INLINE }} data-testid="new-team">
-          <Plus size={15} aria-hidden /> New team
-        </button>
-      ) : undefined}>
+      actions={(
+        <div className="pt-actions" role="group" aria-label="People & Teams actions">
+          {contactsAllowed && (
+            <button type="button" className="pt-action" onClick={() => { setDialog({ kind: "contacts" }); }} data-testid="open-contacts">
+              <Contact size={16} aria-hidden /> <span>Add from contacts</span>
+            </button>
+          )}
+          {may.seeInvitations && (
+            <button type="button" className="pt-action" aria-pressed={dialog?.kind === "waiting"} onClick={() => { setDialog({ kind: "waiting" }); }} data-testid="open-waiting">
+              <Clock size={16} aria-hidden /> <span>Waiting to Join</span>
+              {data.invitations.length > 0 && <span className="pt-action-count" aria-label={`${String(data.invitations.length)} waiting`}>{data.invitations.length}</span>}
+            </button>
+          )}
+          {may.createTeam && (
+            <button type="button" className="pt-action pt-action-primary" onClick={() => { setDialog({ kind: "new-team", parent: null }); }} data-testid="new-team">
+              <Plus size={16} aria-hidden /> <span>New team</span>
+            </button>
+          )}
+        </div>
+      )}>
       <style>{PEOPLE_TEAMS_CSS}</style>
       <div className="pt-toolbar">
         <p className="pt-summary">
@@ -304,67 +359,38 @@ export function RealPeopleTeamsPage({ workspaceId }: { workspaceId: string }) {
           <span className="pt-sr">Search people and teams</span>
           <input type="search" value={query} onChange={e => { setQuery(e.target.value); }} placeholder="Search people or teams…" data-testid="people-search" />
         </label>
-        {contactsAside && !wide && (
-          <button type="button" className="pt-mini pt-contacts-btn" onClick={() => { setDialog({ kind: "contacts" }); }} data-testid="open-contacts">
-            <Contact size={15} aria-hidden /> Add from contacts
-          </button>
-        )}
       </div>
       <div aria-live="polite">{notice && <p className="pt-notice" role="status">{notice}<button type="button" aria-label="Dismiss" onClick={() => { setNotice(null); }}><X size={14} /></button></p>}</div>
 
-      <div className={contactsAside && wide ? "pt-layout pt-layout-aside" : "pt-layout"}>
-        <div className="pt-main">
-          {unplaced.length > 0 && unplaced.some(m => matches(m.displayName, m.email)) && (
-            <section className="pt-team pt-unplaced" aria-label="Not in a team yet" data-testid="not-in-team">
-              <header className="pt-team-head">
-                <span className="pt-team-icon" aria-hidden style={{ background: "#FEF3C7", color: "#92400E" }}><Users size={16} /></span>
-                <div className="pt-team-title">
-                  <h3>Not in a team yet</h3>
-                  <span className="pt-team-meta">New joiners land here. Open someone to place them in a team.</span>
-                </div>
-              </header>
-              <ul className="pt-people">
-                {unplaced.filter(m => matches(m.displayName, m.email)).map(m => personButton({ userId: m.userId!, name: m.displayName, email: m.email, line: roleLine(m) }, null))}
-              </ul>
-            </section>
-          )}
+      <div className="pt-main">
+        {unplaced.length > 0 && unplaced.some(m => matches(m.displayName, m.email)) && (
+          <section className="pt-team pt-unplaced" aria-label="Not in a team yet" data-testid="not-in-team">
+            <header className="pt-team-head">
+              <span className="pt-team-icon" aria-hidden style={{ background: "#FEF3C7", color: "#92400E" }}><Users size={16} /></span>
+              <div className="pt-team-title">
+                <h3>Not in a team yet</h3>
+                <span className="pt-team-meta">New joiners land here. Open someone to place them in a team.</span>
+              </div>
+            </header>
+            <ul className="pt-people">
+              {unplaced.filter(m => matches(m.displayName, m.email)).map(m => personButton({ userId: m.userId!, name: m.displayName, email: m.email, line: roleLine(m) }, null))}
+            </ul>
+          </section>
+        )}
 
-          {data.invitations.length > 0 && q === "" && (
-            <section className="pt-team pt-waiting" aria-label="Waiting to join" data-testid="waiting-to-join">
-              <header className="pt-team-head">
-                <span className="pt-team-icon" aria-hidden style={{ background: "#F1F5F9", color: "#475569" }}><Clock size={16} /></span>
-                <div className="pt-team-title">
-                  <h3>Waiting to join</h3>
-                  <span className="pt-team-meta">Invited, not joined yet. Once they join they appear under Not in a team yet.</span>
-                </div>
-              </header>
-              <ul className="pt-people">
-                {data.invitations.map(i => (
-                  <li key={i.id}><span className="pt-person pt-person-static">
-                    <span className="pt-invited" aria-hidden><Mail size={16} /></span>
-                    <span className="pt-person-text"><span className="pt-person-name">{i.email}</span>
-                      <span className="pt-person-line">Invited {formatDate(i.sentAt)} · {i.roleName}</span></span>
-                  </span></li>
-                ))}
-              </ul>
-            </section>
-          )}
-
-          {tree.length === 0 ? (
-            <div className="pt-team pt-blank">
-              <Network size={28} aria-hidden color={SILVER} />
-              <h3>No teams yet</h3>
-              <p>Teams group people — a department, an office, a project. {may.createTeam ? "Create the first one with New team." : "An owner or administrator can create them."}</p>
-            </div>
-          ) : (
-            <div className="pt-tree" data-testid="team-tree">{tree.map(n => renderTeam(n, 0))}</div>
-          )}
-        </div>
-        {contactsAside && wide && <aside className="pt-aside" aria-label="Add from contacts">{contactsPanel}</aside>}
+        {tree.length === 0 ? (
+          <div className="pt-team pt-blank">
+            <Network size={28} aria-hidden color={SILVER} />
+            <h3>No teams yet</h3>
+            <p>Teams group people — a department, an office, a project. {may.createTeam ? "Create the first one with New team." : "An owner or administrator can create them."}</p>
+          </div>
+        ) : (
+          <div className="pt-tree" data-testid="team-tree">{tree.map(n => renderTeam(n, 0))}</div>
+        )}
       </div>
 
       {openPerson && (
-        <MemberPanel workspaceId={workspaceId} person={openPerson} unitId={open?.unitId ?? null}
+        <MemberPanel workspaceId={workspaceId} person={openPerson} unitId={open?.unitId ?? null} branding={branding}
           teams={allTeams} teamsOfPerson={teamsOf(openPerson.userId)} meId={meId} photo={photo(openPerson.userId)} may={may}
           onClose={() => { setOpen(null); }}
           onChanged={(message, close) => { if (close) setOpen(null); void reload(message); }} />
@@ -388,15 +414,15 @@ export function RealPeopleTeamsPage({ workspaceId }: { workspaceId: string }) {
             await reload(`The team is now called ${name}.`);
           }} />
       )}
-      {dialog?.kind === "archive" && (
-        <ConfirmDialog title={`Archive ${dialog.unit.name}?`} confirmLabel="Archive team" danger
-          body="Archiving is final: the team stops being listed and cannot be restored. Its people stay in the workspace."
+      {dialog?.kind === "delete" && (
+        <ConfirmDialog title={`Delete ${dialog.unit.name}?`} confirmLabel="Delete team" danger
+          body="This deletes the team for good — it cannot be undone. The Activity log keeps its name in the history."
           onClose={() => { setDialog(null); }}
           onConfirm={async () => {
             const unit = dialog.unit;
-            await withProcess("team-archive", unit.name, () => realOrganizationService.archiveUnit(workspaceId, unit.unitId));
+            await withProcess("team-delete", unit.name, () => realOrganizationService.deleteUnit(workspaceId, unit.unitId));
             setDialog(null);
-            await reload(`${unit.name} was archived.`);
+            await reload(`${unit.name} was deleted.`);
           }} />
       )}
       {dialog?.kind === "add-people" && (
@@ -408,6 +434,27 @@ export function RealPeopleTeamsPage({ workspaceId }: { workspaceId: string }) {
             setDialog(null);
             await reload(`${member.displayName} is now in ${unit.name}.`);
           }} />
+      )}
+      {dialog?.kind === "waiting" && (
+        <Dialog title="Waiting to Join" onClose={() => { setDialog(null); }}
+          footer={<button type="button" onClick={() => { setDialog(null); }} style={buttonStyle("secondary")}>Close</button>}>
+          <div data-testid="waiting-to-join">
+            <p className="pt-dialog-lead">Invited, not joined yet. Once they join they appear under Not in a team yet, ready to be placed.</p>
+            {data.invitations.length === 0 ? (
+              <p className="pt-empty">No one is waiting. Invite people with the button at the lower right.</p>
+            ) : (
+              <ul className="pt-contact-list">
+                {data.invitations.map(i => (
+                  <li key={i.id}>
+                    <span className="pt-invited" aria-hidden><Mail size={16} /></span>
+                    <span className="pt-person-text"><span className="pt-person-name">{i.email}</span>
+                      <span className="pt-person-line">Invited {formatDate(i.sentAt)} · {i.roleName}</span></span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </Dialog>
       )}
       {dialog?.kind === "contacts" && (
         <Dialog title="Add from contacts" onClose={() => { setDialog(null); }}
@@ -430,7 +477,9 @@ function roleLine(m: WorkspaceMemberSummary): string {
 
 // ── The team's menu ───────────────────────────────────────────────────────
 
-function TeamMenu({ onRename, onArchive, onSubTeam }: { onRename?: () => void; onArchive?: () => void; onSubTeam?: () => void }) {
+function TeamMenu({ onRename, onDelete, deleteBlockedBecause, onSubTeam }: {
+  onRename?: () => void; onDelete?: () => void; deleteBlockedBecause: string | null; onSubTeam?: () => void;
+}) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -453,7 +502,11 @@ function TeamMenu({ onRename, onArchive, onSubTeam }: { onRename?: () => void; o
         <div role="menu" className="pt-menu-list">
           {item("Add a sub-team", <Plus size={14} aria-hidden />, onSubTeam)}
           {item("Rename", <Pencil size={14} aria-hidden />, onRename)}
-          {item("Archive", <Archive size={14} aria-hidden />, onArchive)}
+          {onDelete && (deleteBlockedBecause === null
+            ? <button type="button" role="menuitem" className="pt-menu-danger" data-testid="delete-team" onClick={() => { setOpen(false); onDelete(); }}><Trash2 size={14} aria-hidden />Delete team</button>
+            : <button type="button" role="menuitem" aria-disabled="true" disabled className="pt-menu-disabled" data-testid="delete-team" title={deleteBlockedBecause}>
+                <Trash2 size={14} aria-hidden /><span>Delete team<small>{deleteBlockedBecause}</small></span>
+              </button>)}
         </div>
       )}
     </div>
@@ -464,8 +517,9 @@ function TeamMenu({ onRename, onArchive, onSubTeam }: { onRename?: () => void; o
 
 const CHANGEABLE_ROLES: BackendWorkspaceRole[] = ["administrator", "template_administrator", "sender", "reviewer", "auditor", "member"];
 
-function MemberPanel({ workspaceId, person, unitId, teams, teamsOfPerson, meId, photo, may, onClose, onChanged }: {
+function MemberPanel({ workspaceId, person, unitId, branding, teams, teamsOfPerson, meId, photo, may, onClose, onChanged }: {
   workspaceId: string;
+  branding: CardBranding;
   person: Person;
   /** The team the person was opened from (null: not in a team, or from a link). */
   unitId: string | null;
@@ -477,7 +531,6 @@ function MemberPanel({ workspaceId, person, unitId, teams, teamsOfPerson, meId, 
   onClose: () => void;
   onChanged: (message: string, close: boolean) => void;
 }) {
-  const { isNarrow } = useViewport();
   const member = person.member;
   const isMe = person.userId === meId;
   const isOwner = member?.isOwner === true;
@@ -521,10 +574,19 @@ function MemberPanel({ workspaceId, person, unitId, teams, teamsOfPerson, meId, 
   return (
     <div className="pt-scrim" onMouseDown={e => { if (e.target === e.currentTarget && !busy) onClose(); }} style={{ zIndex: Z.modal }}>
       <div role="dialog" aria-modal="true" aria-label={`${person.name}'s details`} data-testid="member-panel"
-        className="pt-panel" style={{ alignSelf: isNarrow ? "flex-end" : "center" }}>
-        <button type="button" className="pt-panel-close" aria-label="Close" onClick={onClose} disabled={busy}><X size={18} aria-hidden /></button>
+        className="pt-panel">
+        <div className="pt-panel-band" style={{ backgroundImage: brandGradient(branding.primaryColor) }} data-testid="member-panel-band">
+          <BrandWaves />
+          <span className="pt-panel-brand">
+            {branding.logoUrl
+              ? <img src={branding.logoUrl} alt="" />
+              : <span aria-hidden>{branding.displayName.split(/\s+/).map(w => w[0] ?? "").join("").slice(0, 2).toUpperCase()}</span>}
+            <span className="pt-panel-brand-name">{branding.displayName}</span>
+          </span>
+          <button type="button" className="pt-panel-close" aria-label="Close" onClick={onClose} disabled={busy}><X size={18} aria-hidden /></button>
+        </div>
         <div className="pt-panel-head">
-          <MemberAvatar name={person.name} url={photo} size={72} ring />
+          <span className="pt-panel-avatar"><MemberAvatar name={person.name} url={photo} size={88} ring /></span>
           <div style={{ minWidth: 0 }}>
             <h2>{person.name}{isMe && <span className="pt-you">You</span>}</h2>
             <p className="pt-panel-email">{person.email}</p>
@@ -737,7 +799,6 @@ function ContactsToTeam({ workspaceId, teams, people, invitations, mayPlace, may
   return (
     <div className="pt-contacts" data-testid="contacts-panel">
       <div className="pt-contacts-head">
-        <h3><Contact size={16} aria-hidden /> Add from contacts</h3>
         <p>Members join the team at once. Anyone else is invited to the workspace first.</p>
       </div>
       <label className="pt-field">
@@ -898,22 +959,40 @@ function AddPeopleDialog({ unit, candidates, photo, onClose, onAdd }: {
 
 const PEOPLE_TEAMS_CSS = `
 .pt-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+
+/* Actions beside the title: contacts, waiting, new team. */
+.pt-actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+.pt-action { position: relative; display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-height: 40px; padding: 0 14px;
+  font-family: 'Geist', sans-serif; font-size: 13.5px; font-weight: 600; color: ${NAVY}; background: #FFFFFF; border: 1px solid #D1D9E0;
+  border-radius: 10px; cursor: pointer; white-space: nowrap; transition: border-color 120ms ease, background 120ms ease, color 120ms ease; }
+.pt-action:hover { border-color: ${AZURE}; color: ${AZURE}; }
+.pt-action:focus-visible { outline: 3px solid rgba(0,120,212,0.4); outline-offset: 2px; }
+.pt-action[aria-pressed="true"] { background: #EBF4FC; border-color: ${AZURE}; color: ${AZURE}; }
+.pt-action-primary { background: ${AZURE}; border-color: ${AZURE}; color: #FFFFFF; box-shadow: 0 6px 16px -8px rgba(0,120,212,0.7); }
+.pt-action-primary:hover { background: #0A6BC0; color: #FFFFFF; }
+.pt-action-count { min-width: 20px; height: 20px; padding: 0 6px; border-radius: 999px; background: #DC2626; color: #FFFFFF; font-size: 11px; font-weight: 800;
+  display: inline-flex; align-items: center; justify-content: center; }
+
 .pt-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; margin-bottom: 14px; }
 .pt-summary { display: inline-flex; align-items: center; gap: 6px; margin: 0; font-family: 'Geist', sans-serif; font-size: 13px; color: ${SLATE}; font-weight: 600; }
-.pt-search { display: flex; align-items: center; gap: 8px; flex: 1 1 240px; max-width: 360px; border: 1.5px solid #D1D9E0; border-radius: 10px; padding: 0 10px; background: #FFFFFF; min-height: 38px; }
+.pt-search { display: flex; align-items: center; gap: 8px; flex: 1 1 240px; max-width: 420px; border: 1.5px solid #D1D9E0; border-radius: 10px; padding: 0 10px; background: #FFFFFF; min-height: 40px; }
 .pt-search-full { max-width: none; flex: none; width: 100%; box-sizing: border-box; margin: 10px 0; }
 .pt-search:focus-within { border-color: ${AZURE}; }
 .pt-search input { border: none; outline: none; flex: 1; min-width: 0; font-family: 'Geist', sans-serif; font-size: 13px; color: ${NAVY}; background: transparent; }
 .pt-notice { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-family: 'Geist', sans-serif; font-size: 13px; color: #14532D;
   background: #F0FDF4; border: 1px solid #BBF7D0; border-radius: 10px; padding: 10px 14px; margin: 0 0 14px; }
 .pt-notice button { border: none; background: none; cursor: pointer; color: #14532D; display: inline-flex; }
-.pt-layout { display: block; }
-.pt-layout-aside { display: grid; grid-template-columns: minmax(0, 1fr) 330px; gap: 20px; align-items: start; }
-.pt-aside { position: sticky; top: 12px; }
-.pt-main { display: flex; flex-direction: column; gap: 14px; min-width: 0; padding-bottom: 80px; }
-.pt-tree { display: flex; flex-direction: column; gap: 14px; }
-.pt-team { background: #FFFFFF; border: 1px solid ${BORDER}; border-radius: 14px; padding: 14px 16px; min-width: 0; box-shadow: 0 1px 2px rgba(7,17,31,0.04); }
-.pt-team[data-depth]:not([data-depth="0"]) { box-shadow: none; border-radius: 12px; background: #FBFCFE; }
+.pt-dialog-lead { font-family: 'Geist', sans-serif; font-size: 13px; color: ${SLATE}; margin: 0 0 10px; line-height: 1.5; }
+
+/* The teams take the whole width: one column, two on a wide screen. */
+.pt-main { display: flex; flex-direction: column; gap: 16px; min-width: 0; padding-bottom: 88px; }
+.pt-tree { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; align-items: start; }
+@media (min-width: 1200px) { .pt-tree { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.pt-team { background: #FFFFFF; border: 1px solid ${BORDER}; border-radius: 16px; padding: 14px 16px; min-width: 0; box-shadow: 0 1px 2px rgba(7,17,31,0.04); }
+.pt-team-branded { padding: 0; overflow: hidden; }
+.pt-team-band { position: relative; }
+.pt-team-inner { padding: 14px 16px 16px; }
+.pt-new-on-band { background: #FFFFFF; color: #15803D; }
 .pt-unplaced { border-color: #FDE68A; background: #FFFDF5; }
 .pt-blank { text-align: center; padding: 36px 20px; }
 .pt-blank h3 { font-family: 'Geist', sans-serif; font-size: 16px; color: ${NAVY}; margin: 8px 0 4px; }
@@ -921,9 +1000,9 @@ const PEOPLE_TEAMS_CSS = `
 .pt-team-head { display: flex; align-items: center; gap: 10px; min-width: 0; }
 .pt-team-icon { flex: 0 0 34px; width: 34px; height: 34px; border-radius: 10px; display: inline-flex; align-items: center; justify-content: center; background: #EBF4FC; color: #0B4F8A; }
 .pt-team-title { flex: 1; min-width: 0; }
-.pt-team-title h3 { font-family: 'Geist', sans-serif; font-size: 15px; font-weight: 800; color: ${NAVY}; margin: 0; overflow-wrap: anywhere; }
+.pt-team-title h3 { font-family: 'Geist', sans-serif; font-size: 16px; font-weight: 800; color: ${NAVY}; margin: 0; overflow-wrap: anywhere; }
 .pt-team-meta { font-family: 'Geist', sans-serif; font-size: 12px; color: ${SLATE}; display: inline-flex; align-items: center; gap: 6px; flex-wrap: wrap; }
-.pt-new { font-size: 10px; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase; color: #15803D; background: #DCFCE7; border-radius: 999px; padding: 1px 7px; }
+.pt-new { font-size: 10px; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase; color: #15803D; background: #DCFCE7; border-radius: 999px; padding: 2px 8px; flex-shrink: 0; }
 .pt-team-actions { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
 .pt-mini { display: inline-flex; align-items: center; gap: 6px; font-family: 'Geist', sans-serif; font-size: 12.5px; font-weight: 600; color: ${NAVY};
   background: #FFFFFF; border: 1px solid #D1D9E0; border-radius: 9px; min-height: 34px; padding: 0 11px; cursor: pointer; white-space: nowrap; }
@@ -931,18 +1010,21 @@ const PEOPLE_TEAMS_CSS = `
 .pt-mini:disabled { opacity: 0.55; cursor: default; }
 .pt-icon-only { padding: 0; width: 34px; justify-content: center; }
 .pt-menu { position: relative; }
-.pt-menu-list { position: absolute; right: 0; top: calc(100% + 4px); z-index: ${Z.dropdown}; min-width: 180px; background: #FFFFFF; border: 1px solid ${BORDER};
+.pt-menu-list { position: absolute; right: 0; top: calc(100% + 4px); z-index: ${Z.dropdown}; min-width: 220px; background: #FFFFFF; border: 1px solid ${BORDER};
   border-radius: 10px; box-shadow: 0 12px 28px -8px rgba(7,17,31,0.25); padding: 4px; display: flex; flex-direction: column; }
-.pt-menu-list button { display: flex; align-items: center; gap: 8px; font-family: 'Geist', sans-serif; font-size: 13px; color: ${NAVY}; background: none; border: none;
+.pt-menu-list button { display: flex; align-items: flex-start; gap: 8px; font-family: 'Geist', sans-serif; font-size: 13px; color: ${NAVY}; background: none; border: none;
   text-align: left; padding: 9px 10px; border-radius: 7px; cursor: pointer; }
-.pt-menu-list button:hover { background: #F1F5F9; }
-.pt-people { list-style: none; margin: 12px 0 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 8px; }
+.pt-menu-list button:hover:not(:disabled) { background: #F1F5F9; }
+.pt-menu-list button svg { margin-top: 2px; flex-shrink: 0; }
+.pt-menu-danger { color: #B42318 !important; }
+.pt-menu-disabled { color: #94A3B8 !important; cursor: not-allowed !important; }
+.pt-menu-disabled span { display: flex; flex-direction: column; }
+.pt-menu-disabled small { font-size: 11px; color: ${SLATE}; margin-top: 2px; }
+.pt-people { list-style: none; margin: 12px 0 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 8px; }
 .pt-person { width: 100%; display: flex; align-items: center; gap: 10px; text-align: left; background: #FFFFFF; border: 1px solid ${BORDER}; border-radius: 12px;
-  padding: 8px 10px; cursor: pointer; min-height: 56px; box-sizing: border-box; transition: border-color 120ms ease, box-shadow 120ms ease; }
-.pt-person:hover { border-color: #93C5FD; box-shadow: 0 6px 16px -10px rgba(0,120,212,0.6); }
+  padding: 8px 10px; cursor: pointer; min-height: 58px; box-sizing: border-box; transition: border-color 120ms ease, box-shadow 120ms ease, transform 120ms ease; }
+.pt-person:hover { border-color: #93C5FD; box-shadow: 0 8px 18px -12px rgba(0,120,212,0.7); transform: translateY(-1px); }
 .pt-person:focus-visible { outline: 3px solid rgba(0,120,212,0.4); outline-offset: 2px; }
-.pt-person-static { cursor: default; }
-.pt-person-static:hover { border-color: ${BORDER}; box-shadow: none; }
 .pt-person-text { flex: 1; min-width: 0; display: flex; flex-direction: column; }
 .pt-person-name { font-family: 'Geist', sans-serif; font-size: 13.5px; font-weight: 700; color: ${NAVY}; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: inline-flex; align-items: center; gap: 6px; }
 .pt-person-line { font-family: 'Geist', sans-serif; font-size: 12px; color: ${SLATE}; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -950,25 +1032,36 @@ const PEOPLE_TEAMS_CSS = `
 .pt-you { font-size: 10px; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase; color: #FFFFFF; background: ${AZURE}; border-radius: 999px; padding: 1px 7px; }
 .pt-invited { width: 40px; height: 40px; border-radius: 50%; background: #F1F5F9; color: #475569; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
 .pt-empty { font-family: 'Geist', sans-serif; font-size: 13px; color: ${SLATE}; margin: 10px 0 0; }
-.pt-children { margin: 12px 0 0 18px; padding-left: 14px; border-left: 2px solid #E3E8EF; display: flex; flex-direction: column; gap: 10px; }
-.pt-contacts { background: #FFFFFF; border: 1px solid ${BORDER}; border-radius: 14px; padding: 14px 16px; }
-.pt-contacts-head h3 { display: flex; align-items: center; gap: 7px; font-family: 'Geist', sans-serif; font-size: 15px; font-weight: 800; color: ${NAVY}; margin: 0; }
-.pt-contacts-head p { font-family: 'Geist', sans-serif; font-size: 12.5px; color: ${SLATE}; margin: 4px 0 10px; line-height: 1.5; }
+.pt-children { margin-top: 14px; display: flex; flex-direction: column; gap: 10px; }
+.pt-sub { background: #FBFCFE; border: 1px solid ${BORDER}; border-left: 4px solid ${AZURE}; border-radius: 12px; padding: 12px 14px; min-width: 0; }
+.pt-sub .pt-team-title h3 { font-size: 14.5px; }
+.pt-contacts { min-width: 0; }
+.pt-contacts-head p { font-family: 'Geist', sans-serif; font-size: 12.5px; color: ${SLATE}; margin: 0 0 10px; line-height: 1.5; }
 .pt-field { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 0; margin-bottom: 8px; }
-.pt-contact-list { list-style: none; margin: 4px 0 0; padding: 0; display: flex; flex-direction: column; gap: 4px; max-height: 460px; overflow-y: auto; }
-.pt-contact-list li { display: flex; align-items: center; gap: 10px; padding: 7px 4px; border-bottom: 1px solid #F1F5F9; }
+.pt-contact-list { list-style: none; margin: 4px 0 0; padding: 0; display: flex; flex-direction: column; gap: 4px; max-height: min(460px, 50dvh); overflow-y: auto; }
+.pt-contact-list li { display: flex; align-items: center; gap: 10px; padding: 8px 4px; border-bottom: 1px solid #F1F5F9; }
 .pt-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
 .pt-chip { font-family: 'Geist', sans-serif; font-size: 12px; font-weight: 600; padding: 4px 11px; border-radius: 999px; background: #F0F7FF; color: ${AZURE}; border: 1px solid #BAD7F5; white-space: nowrap; }
 .pt-chip-muted { background: #F8FAFC; color: ${SLATE}; border-color: ${BORDER}; }
-.pt-scrim { position: fixed; inset: 0; background: rgba(7,17,31,0.5); display: flex; justify-content: center; align-items: center; padding: 16px; box-sizing: border-box; }
-.pt-panel { position: relative; background: #FFFFFF; width: min(600px, 100%); max-height: calc(100dvh - 32px); overflow-y: auto; border-radius: 18px;
-  padding: 24px; box-sizing: border-box; box-shadow: 0 24px 64px rgba(7,17,31,0.3); }
-.pt-panel-close { position: absolute; top: 14px; right: 14px; width: 36px; height: 36px; border-radius: 10px; border: 1px solid ${BORDER}; background: #FFFFFF; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
-.pt-panel-head { display: flex; align-items: center; gap: 16px; padding-right: 40px; }
+
+/* A person's panel: the Home dashboard's two-toned banner, their face over it. */
+.pt-scrim { position: fixed; inset: 0; background: rgba(7,17,31,0.55); display: flex; justify-content: center; align-items: center; padding: 16px; box-sizing: border-box; }
+.pt-panel { position: relative; background: #FFFFFF; width: min(620px, 100%); max-height: calc(100dvh - 32px); overflow-y: auto; border-radius: 20px;
+  box-sizing: border-box; box-shadow: 0 24px 64px rgba(7,17,31,0.32); }
+.pt-panel > :not(.pt-panel-band):not(.pt-panel-head) { margin-left: 24px; margin-right: 24px; }
+.pt-panel-band { position: relative; height: 112px; overflow: hidden; display: flex; align-items: flex-start; justify-content: space-between; padding: 14px 14px 0 18px; box-sizing: border-box; }
+.pt-panel-brand { position: relative; display: inline-flex; align-items: center; gap: 10px; min-width: 0; color: #FFFFFF; }
+.pt-panel-brand img, .pt-panel-brand > span[aria-hidden] { width: 36px; height: 36px; border-radius: 10px; background: rgba(255,255,255,0.95); object-fit: contain; padding: 3px; box-sizing: border-box;
+  display: inline-flex; align-items: center; justify-content: center; font-family: 'Geist', sans-serif; font-weight: 800; font-size: 13px; color: ${NAVY}; flex-shrink: 0; }
+.pt-panel-brand-name { font-family: 'Geist', sans-serif; font-size: 14px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-shadow: 0 1px 2px rgba(7,17,31,0.25); }
+.pt-panel-close { position: relative; width: 36px; height: 36px; border-radius: 10px; border: none; background: rgba(255,255,255,0.92); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.pt-panel-head { display: flex; align-items: flex-start; gap: 16px; padding: 0 24px; margin-top: -44px; position: relative; }
+.pt-panel-avatar { flex-shrink: 0; border-radius: 50%; box-shadow: 0 8px 20px -8px rgba(7,17,31,0.45); }
+.pt-panel-head > div { min-width: 0; padding-top: 52px; }
 .pt-panel-head h2 { font-family: 'Geist', sans-serif; font-size: 20px; font-weight: 800; color: ${NAVY}; margin: 0; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; overflow-wrap: anywhere; }
 .pt-panel-email { font-family: 'Geist Mono', monospace; font-size: 12px; color: ${SLATE}; margin: 2px 0 0; overflow-wrap: anywhere; }
 .pt-panel-role { font-family: 'Geist', sans-serif; font-size: 13px; color: ${NAVY}; font-weight: 600; margin: 4px 0 0; }
-.pt-panel-note { font-family: 'Geist', sans-serif; font-size: 12px; color: ${SILVER}; margin: 10px 0 4px; }
+.pt-panel-note { font-family: 'Geist', sans-serif; font-size: 12px; color: ${SILVER}; margin-top: 12px; margin-bottom: 4px; }
 .pt-panel-sec { border-top: 1px solid #F0F2F5; padding-top: 14px; margin-top: 14px; }
 .pt-panel-sec h3 { font-family: 'Geist', sans-serif; font-size: 13px; font-weight: 800; color: ${NAVY}; text-transform: uppercase; letter-spacing: 0.05em; margin: 0 0 10px; }
 .pt-row { display: flex; align-items: flex-end; gap: 10px; margin-bottom: 8px; }
@@ -978,19 +1071,33 @@ const PEOPLE_TEAMS_CSS = `
 .pt-danger h3 { color: #991B1B; }
 .pt-confirm { background: #FEF2F2; border: 1px solid #FECACA; border-radius: 10px; padding: 12px; }
 .pt-confirm p { font-family: 'Geist', sans-serif; font-size: 13px; color: #7F1D1D; margin: 0 0 10px; line-height: 1.5; }
-.pt-panel-foot { font-family: 'Geist Mono', monospace; font-size: 11px; color: ${SILVER}; margin: 14px 0 0; }
+.pt-panel-foot { font-family: 'Geist Mono', monospace; font-size: 11px; color: ${SILVER}; margin-top: 14px; padding-bottom: 22px; }
+
+/* Tablets: the three actions share one even row under the title. */
+@media (max-width: 900px) {
+  .manage-actions { flex: 1 1 100%; }
+  .pt-actions { width: 100%; display: grid; grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); }
+}
+/* Phones: icon over label, a tidy three-up bar; everything one column. */
 @media (max-width: 640px) {
+  .pt-action { flex-direction: column; gap: 3px; min-height: 56px; padding: 6px 4px; font-size: 11.5px; white-space: normal; text-align: center; line-height: 1.15; }
+  .pt-action-count { position: absolute; top: 4px; right: 6px; }
   .pt-search { max-width: none; flex-basis: 100%; }
-  .pt-contacts-btn { width: 100%; justify-content: center; min-height: 42px; }
-  .pt-team { padding: 12px; }
+  .pt-team-inner, .pt-team { padding: 12px; }
+  .pt-team-branded { padding: 0; }
   .pt-team-head { flex-wrap: wrap; }
   .pt-team-actions { width: 100%; justify-content: flex-end; }
+  .pt-mini-label { display: inline; }
   .pt-people { grid-template-columns: 1fr; }
-  .pt-children { margin-left: 6px; padding-left: 10px; }
+  .pt-sub { padding: 10px; }
   .pt-scrim { padding: 0; align-items: flex-end; }
-  .pt-panel { border-radius: 18px 18px 0 0; max-height: 92dvh; padding: 20px 16px; }
-  .pt-panel-head { flex-direction: column; align-items: flex-start; gap: 10px; }
+  .pt-panel { border-radius: 20px 20px 0 0; max-height: 94dvh; }
+  .pt-panel > :not(.pt-panel-band):not(.pt-panel-head) { margin-left: 16px; margin-right: 16px; }
+  .pt-panel-band { height: 96px; }
+  .pt-panel-head { flex-direction: column; align-items: flex-start; gap: 8px; padding: 0 16px; margin-top: -40px; }
+  .pt-panel-head > div { padding-top: 0; }
   .pt-row { flex-direction: column; align-items: stretch; }
   .pt-row > button { margin-bottom: 0; }
 }
+@media (prefers-reduced-motion: reduce) { .pt-person, .pt-action { transition: none; } .pt-person:hover { transform: none; } }
 `;

@@ -90,7 +90,7 @@ function ManageSection({ crumbs, title, badge, actions, children, leading, subti
             {subtitle && <div style={{ ...GF, fontSize: 13, color: SLATE, marginTop: 4, lineHeight: 1.5, overflowWrap: "anywhere" }}>{subtitle}</div>}
           </div>
         </div>
-        {actions && <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>{actions}</div>}
+        {actions && <div className="manage-actions" style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>{actions}</div>}
       </div>
       {/* The shell sets the width. A page built as a narrow form keeps its
           measure, left-aligned under the heading, instead of stretching. */}

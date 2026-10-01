@@ -94,7 +94,7 @@ const WIRED: Record<string, ProcessKind[]> = {
   "pages/platform/workspace/join/JoinRequestsSection.tsx": ["join-request-decide"],
   "pages/platform/workspace/real/RealPeopleTeamsPage.tsx": [
     "member-move", "member-title", "member-swap", "member-access", "member-role", "member-remove",
-    "team-member-remove", "team-member-add", "contact-to-team", "team-create", "team-rename", "team-archive",
+    "team-member-remove", "team-member-add", "contact-to-team", "team-create", "team-rename", "team-delete",
   ],
 };
 

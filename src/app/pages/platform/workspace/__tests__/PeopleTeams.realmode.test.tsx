@@ -69,8 +69,11 @@ beforeEach(() => {
     if (unitList && method === "GET") return ok({ members: unitMembers[unitList[1]!] ?? [] });
     if (unitList && method === "POST") return Promise.resolve(json(204, null));
     if (/^\/workspaces\/ws_1\/units\/[^/]+\/members\/[^/]+$/.test(path)) return Promise.resolve(json(204, null));
+    if (/^\/workspaces\/ws_1\/units\/[^/]+$/.test(path) && method === "DELETE") return Promise.resolve(json(204, null));
     if (path === "/workspaces/ws_1/members") return ok({ members: MEMBERS });
-    if (path === "/workspaces/ws_1/invitations" && method === "GET") return ok({ invitations: [] });
+    if (path === "/workspaces/ws_1/invitations" && method === "GET") {
+      return ok({ invitations: [{ invitationId: "inv_1", email: "soon@example.com", role: "sender", state: "pending", createdAt: NOW - DAY, expiresAt: NOW + 6 * DAY }] });
+    }
     if (path === "/workspaces/ws_1/invitations" && method === "POST") {
       return ok({ invitationId: "inv_new", email: (body as { email: string }).email, role: "member", state: "pending", createdAt: NOW, expiresAt: NOW + 7 * DAY });
     }
@@ -183,3 +186,38 @@ describe("contacts into a team", () => {
     await waitFor(() => expect(calls.find(c => c.method === "POST" && c.path === "/workspaces/ws_1/invitations")?.body).toMatchObject({ email: "pia@example.com", role: "member" }));
   });
 });
+
+describe("deleting a team, and the panels beside the title", () => {
+  it("offers Delete only for an empty team, saying why otherwise", async () => {
+    const user = userEvent.setup();
+    show();
+    const finance = await screen.findByRole("region", { name: "Finance" });
+    const menus = within(finance).getAllByRole("button", { name: "Team options" });
+    await user.click(menus[0]!);
+    const blocked = screen.getByTestId("delete-team");
+    expect(blocked).toBeDisabled();
+    expect(blocked).toHaveTextContent("Remove the 2 people in it first");
+    await user.keyboard("{Escape}");
+
+    const cebu = screen.getByRole("region", { name: "Cebu Office" });
+    await user.click(within(cebu).getByRole("button", { name: "Team options" }));
+    await user.click(screen.getByTestId("delete-team"));
+    await user.click(screen.getByRole("button", { name: "Delete team" }));
+    await waitFor(() => expect(calls.some(c => c.method === "DELETE" && c.path === "/workspaces/ws_1/units/un_new")).toBe(true));
+    expect(await screen.findByText("Cebu Office was deleted.")).toBeInTheDocument();
+  });
+
+  it("puts Add from contacts, Waiting to Join and New team beside the title, Waiting opening its own panel", async () => {
+    const user = userEvent.setup();
+    show();
+    await screen.findByTestId("team-tree");
+    const group = screen.getByRole("group", { name: "People & Teams actions" });
+    expect(within(group).getAllByRole("button").map(b => b.getAttribute("data-testid"))).toEqual(["open-contacts", "open-waiting", "new-team"]);
+    expect(screen.queryByTestId("waiting-to-join")).toBeNull();
+    expect(screen.getByTestId("open-waiting")).toHaveTextContent("Waiting to Join1");
+    await user.click(screen.getByTestId("open-waiting"));
+    const panel = screen.getByRole("dialog", { name: "Waiting to Join" });
+    expect(within(panel).getByText("soon@example.com")).toBeInTheDocument();
+  });
+});
+
