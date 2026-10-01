@@ -14,13 +14,13 @@ export function PricingOverview() {
     <PricingPageShell>
       <PricingHero
         heading="Choose the LAGDA plan that fits your document workflow."
-        sub="LAGDA eSignature plans differ by usage, workspace size, authentication options, templates, branding, and enterprise capabilities. Prices will be confirmed at launch."
+        sub="Start free with one document. Personal adds your branding, sharing and ready-made templates; Business adds your team. Prices are confirmed at launch, and Enterprise is coming soon."
       />
 
       {/* Plan cards */}
       <PricingSection id="plans">
-        <PricingHeading eyebrow="Plans" id="plans-heading" heading="eSignature plans for individuals, teams, and enterprise." center
-          sub="All plans include document preparation, audit trail, and Document Verification. Plans differ in sending allowances, workspace features, and authentication options."
+        <PricingHeading eyebrow="Plans" id="plans-heading" heading="eSignature plans for everyone, individuals and teams." center
+          sub="Every plan includes document preparation, the audit trail and Document Verification, and signing what others send you is always free. A plan belongs to a person: a workspace has its owner's plan."
         />
         <PlanCards />
         <div style={{ textAlign: "center", marginTop: 28 }}>
@@ -38,9 +38,9 @@ export function PricingOverview() {
             { icon: "📄", title: "Document Preparation",   desc: "Upload PDFs, configure fields, set participant roles, routing, and authentication." },
             { icon: "📋", title: "Audit Trail",             desc: "Every invitation, view, authentication event, and signature recorded with timestamps." },
             { icon: "🔍", title: "Document Verification",  desc: "Verification ID and QR code included on all completed transactions on all plans." },
-            { icon: "📑", title: "Templates",              desc: "Personal templates on all plans. Shared templates and advanced management on Business and Enterprise." },
-            { icon: "🔐", title: "Authentication",         desc: "Secure invitation and email OTP on all plans. SMS OTP and authenticator app on Business+." },
-            { icon: "🏢", title: "Workspace",              desc: "Shared workspace, role-based access, and administration on Business and Enterprise." },
+            { icon: "📑", title: "Templates",              desc: "Templates on every plan. Ready-made templates and the LAGDA Chatbot on Personal and Business." },
+            { icon: "🔐", title: "Authentication",         desc: "Secure invitation link and email code for signers, and two-step verification for your account, on every plan." },
+            { icon: "🏢", title: "Workspace",              desc: "Members, teams, roles, join links and the activity log on Business." },
           ].map(({ icon, title, desc }) => (
             <div key={title} style={{ display: "flex", gap: 14, alignItems: "flex-start", background: "#ffffff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: 12, padding: "16px 20px", boxShadow: "0 1px 4px rgba(7,17,31,0.07)" }}>
               <span aria-hidden style={{ fontSize: 22, flexShrink: 0 }}>{icon}</span>
@@ -77,9 +77,9 @@ export function PricingOverview() {
       {/* Enterprise */}
       <PricingSection id="enterprise-cta">
         <div style={{ maxWidth: 720, margin: "0 auto", textAlign: "center" }}>
-          <p style={{ color: "#0078D4", ...GM, fontSize: 11, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 12 }}>ENTERPRISE</p>
-          <h2 style={{ color: "#07111F", ...GF, fontSize: "clamp(22px, 3.5vw, 34px)", fontWeight: 800, marginBottom: 14, letterSpacing: "-0.02em" }}>High-volume, complex, or integration requirements?</h2>
-          <p style={{ color: "#64748B", ...GF, fontSize: 16, lineHeight: 1.65, marginBottom: 28 }}>Enterprise arrangements include custom volume, workspace administration, onboarding, security review, and integration planning.</p>
+          <p style={{ color: "#0078D4", ...GM, fontSize: 11, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 12 }}>ENTERPRISE · COMING SOON</p>
+          <h2 style={{ color: "#07111F", ...GF, fontSize: "clamp(22px, 3.5vw, 34px)", fontWeight: 800, marginBottom: 14, letterSpacing: "-0.02em" }}>High volume or a large organization?</h2>
+          <p style={{ color: "#64748B", ...GF, fontSize: 16, lineHeight: 1.65, marginBottom: 28 }}>Enterprise is coming soon: everything in Business, with custom volume and dedicated onboarding and support. Contact us to be told when it opens.</p>
           <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
             <Link to="/contact" style={{ background: "#0078D4", color: "white", ...GF, fontSize: 14, fontWeight: 700, padding: "12px 28px", borderRadius: 8, textDecoration: "none", minHeight: 44, display: "flex", alignItems: "center" }}>Contact Sales</Link>
             <Link to="/pricing/enterprise" style={{ background: "#ffffff", color: "#07111F", ...GF, fontSize: 14, fontWeight: 600, padding: "12px 28px", borderRadius: 8, textDecoration: "none", minHeight: 44, display: "flex", alignItems: "center", border: "1px solid rgba(0,0,0,0.14)" }}>Learn About Enterprise</Link>

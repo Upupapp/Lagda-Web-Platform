@@ -31,6 +31,7 @@ vi.mock("../../../services/real/contact-connections.service", () => ({
 }));
 
 import { useNavCounts, resetNavCounts } from "../../../hooks/useNavCounts";
+import { announceNavCountsChanged } from "../../../services/nav-counts-signal";
 import { NavCountBubble } from "../InvitationCountBubble";
 import { ChatbotShowcase } from "../../dashboard/ChatbotShowcase";
 
@@ -60,6 +61,34 @@ describe("side panel counts", () => {
     await waitFor(() => { expect(result.current.documents).toBe(2); });
     expect(result.current.contacts).toBe(0);
     expect(result.current.shared).toBe(2);
+  });
+
+  it("is live: an action re-reads at once, and a count that reaches zero is gone", async () => {
+    const { result } = renderHook(() => useNavCounts());
+    await waitFor(() => { expect(result.current).toEqual({ documents: 2, shared: 2, contacts: 3 }); });
+
+    // The documents are signed, the shares answered, the requests accepted.
+    documentsToSign.mockResolvedValue([{ recipientType: "carbon-copy" }]);
+    sharedWithMe.mockResolvedValue([]);
+    listAccessRequests.mockResolvedValue([]);
+    connections.mockResolvedValue({ received: [{}], sent: [] });
+    announceNavCountsChanged();
+    await waitFor(() => { expect(result.current).toEqual({ documents: 0, shared: 0, contacts: 1 }); });
+
+    const { container } = render(<NavCountBubble kind="documents" count={result.current.documents} />);
+    expect(container.textContent).toBe("");
+  });
+
+  it("an action during a read still gets a fresh read after it", async () => {
+    let release: () => void = () => undefined;
+    documentsToSign.mockImplementationOnce(() => new Promise(r => { release = () => { r([{ recipientType: "signer" }, { recipientType: "signer" }]); }; }));
+    const { result } = renderHook(() => useNavCounts());
+    // The first read is still on its way when the document is signed.
+    documentsToSign.mockResolvedValue([]);
+    announceNavCountsChanged();
+    release();
+    await waitFor(() => { expect(result.current.documents).toBe(0); });
+    expect(documentsToSign).toHaveBeenCalledTimes(2);
   });
 
   it("gives each row its own bubble, hidden at zero", () => {

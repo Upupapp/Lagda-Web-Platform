@@ -57,11 +57,11 @@
 import { loadReadyMadeLibrary } from "../../../services/ready-made-library";
 import { useWorkspaceAllows } from "../../../hooks/usePlans";
 import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useParams, Link, Navigate, useBlocker, useLocation } from "react-router";
+import { useParams, Link, Navigate, useBlocker, useLocation, useNavigate } from "react-router";
 import { useEditor, EditorContent } from "@tiptap/react";
 import {
   ChevronLeft, AlertCircle, Info, Save, CheckCircle2, FileText,
-  SlidersHorizontal, X, Maximize2, Minimize2, FastForward, CloudOff, Loader2, RefreshCw,
+  SlidersHorizontal, X, Maximize2, Minimize2, FastForward, CloudOff, Loader2, RefreshCw, ArrowRight,
 } from "lucide-react";
 import { TemplateProvider, useTemplates, useActiveTemplateLoader } from "../../../context/TemplateContext";
 import { buildSignInUrl } from "../../../utils/authReturnPath";
@@ -241,6 +241,7 @@ function AuthorEditorInner({ template, onReload }: { template: DocumentTemplate;
   const workspaceId = platform.currentWorkspace?.id;
   const isReal = realTemplatesAvailable(workspaceId);
 
+  const navigate = useNavigate();
   const [saved, setSaved] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -498,6 +499,9 @@ function AuthorEditorInner({ template, onReload }: { template: DocumentTemplate;
       setSaving(false);
     }
   };
+
+  // Generated, and not changed since: ready to send.
+  const readyToUse = isReal && contentGenerated === true && !changed && !saving && !typing && !conflict;
 
   // Saving finishes the template, and with it the conversation.
   const requestSave = () => {
@@ -863,9 +867,13 @@ function AuthorEditorInner({ template, onReload }: { template: DocumentTemplate;
       )}
 
       {/* ── Generate & Save: the lower-right corner ─────────────────────── */}
+      {/* Once the document is generated and nothing has changed since, there
+          is nothing left to save: the same corner offers to use it. An edit
+          (or the chatbot typing) turns it back into Generate & Save. */}
       {isReal && (
         <button
-          onClick={requestSave}
+          data-testid="author-finish"
+          onClick={readyToUse ? () => { void navigate(`/app/templates/${template.id}/use`); } : requestSave}
           disabled={saving || typing}
           style={{
             position: "fixed",
@@ -882,8 +890,8 @@ function AuthorEditorInner({ template, onReload }: { template: DocumentTemplate;
             cursor: saving || typing ? "default" : "pointer",
           }}
         >
-          {saving ? <Save size={15} /> : saved ? <CheckCircle2 size={15} /> : <Save size={15} />}
-          {saving ? "Generating…" : saved ? "Saved" : "Generate & Save"}
+          {saving ? <Save size={15} /> : readyToUse ? <ArrowRight size={15} aria-hidden /> : <Save size={15} />}
+          {saving ? "Generating…" : readyToUse ? "Use this template now" : "Generate & Save"}
         </button>
       )}
 

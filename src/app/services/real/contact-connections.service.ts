@@ -7,6 +7,7 @@
 
 import { USE_REAL_BACKEND, API_BASE_URL } from "../backend-flag";
 import { apiRequest, ApiError } from "../api-client";
+import { changesNavCounts } from "../nav-counts-signal";
 
 export function contactConnectionsAvailable(workspaceId: string | null | undefined): boolean {
   return USE_REAL_BACKEND && typeof workspaceId === "string" && workspaceId !== "";
@@ -62,13 +63,13 @@ export const contactConnectionsService = {
     return apiRequest<ConnectionLists>("/me/contact-connections");
   },
   accept(connectionId: string, workspaceId: string): Promise<{ contactId: string | null; workspaceId: string }> {
-    return apiRequest(`${one(connectionId)}/accept`, { method: "POST", body: { workspaceId } });
+    return changesNavCounts(apiRequest(`${one(connectionId)}/accept`, { method: "POST", body: { workspaceId } }));
   },
   async decline(connectionId: string): Promise<void> {
-    await apiRequest<void>(`${one(connectionId)}/decline`, { method: "POST" });
+    await changesNavCounts(apiRequest<void>(`${one(connectionId)}/decline`, { method: "POST" }));
   },
   async cancel(connectionId: string): Promise<void> {
-    await apiRequest<void>(`${one(connectionId)}/cancel`, { method: "POST" });
+    await changesNavCounts(apiRequest<void>(`${one(connectionId)}/cancel`, { method: "POST" }));
   },
   getDiscovery(): Promise<{ discoverableByEmail: boolean }> {
     return apiRequest("/me/contact-discovery");

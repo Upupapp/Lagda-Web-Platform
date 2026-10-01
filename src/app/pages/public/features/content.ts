@@ -191,17 +191,8 @@ export const CONTACT_INFO = [
 ];
 
 // ── Workspace roles ───────────────────────────────────────────────────────────
-export const WORKSPACE_ROLES = [
-  { role: "Owner",                  perms: "Full control over workspace, billing, and member management." },
-  { role: "Administrator",          perms: "Manages members, templates, branding, and workspace settings." },
-  { role: "Billing Administrator",  perms: "Manages subscription, payment, and plan details." },
-  { role: "Security Administrator", perms: "Configures authentication requirements and access controls." },
-  { role: "Template Administrator", perms: "Creates, edits, and manages shared templates." },
-  { role: "Sender",                 perms: "Prepares and sends document transactions." },
-  { role: "Reviewer",               perms: "Reviews transactions as an internal step in workflows." },
-  { role: "Viewer",                 perms: "Views transaction status and documents without sending." },
-  { role: "Auditor",                perms: "Access to audit records and usage reports." },
-];
+// The live roles, kept in one place (esignature/content.ts).
+export { WORKSPACE_ROLES } from "../esignature/content";
 
 // ── Plan limit categories ─────────────────────────────────────────────────────
 export const PLAN_LIMIT_CATEGORIES = [

@@ -27,6 +27,7 @@ import { realAccountSettingsService } from "../../../services/real/account-setti
 import { USE_REAL_BACKEND } from "../../../services/backend-flag";
 import { usePlatform, announceProfileChanged } from "../../../context/PlatformContext";
 import { initialsOf } from "../../../components/platform/UserAvatar";
+import { useMyPlan } from "../../../hooks/usePlans";
 import type { UserProfile } from "../../../models/settings";
 import { AVATAR_TYPES, MAX_AVATAR_SOURCE_BYTES as MAX_SOURCE_BYTES, toAvatarPng } from "../../../utils/avatar-image";
 
@@ -59,6 +60,8 @@ export function ProfilePage() {
   const [saveError, setSaveError] = useState<string | null>(null);
   const [validErr, setValidErr] = useState<Record<string, string>>({});
   const [photo, setPhoto]       = useState<PhotoChange>({ kind: "none" });
+  // The photo is set here on Free only; Personal and Business do not show it.
+  const showPhoto = useMyPlan().plan?.plan === "free";
   const [avatarErr, setAvatarErr] = useState<string | null>(null);
   const { user, refreshSessionFromBackend } = usePlatform();
   const fileRef = useRef<HTMLInputElement>(null);
@@ -186,39 +189,40 @@ export function ProfilePage() {
   return (
     <SettingsPage title="Profile" breadcrumb="Profile" description="Your name, photo and how you appear to the people you send documents to.">
       <form onSubmit={handleSave} noValidate>
-        {/* Avatar */}
+        {/* Avatar — Free accounts only */}
+        {showPhoto && (
         <SSection title="Profile Photo">
-          <div style={{ display: "flex", alignItems: "center", gap: 20, flexWrap: "wrap" }}>
-            <div aria-hidden style={{ width: 72, height: 72, borderRadius: "50%", background: shownPhoto ? "transparent" : AZURE, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", flexShrink: 0 }}>
+          <div data-testid="profile-photo" style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", gap: 14 }}>
+            <div aria-hidden style={{ width: 104, height: 104, borderRadius: "50%", background: shownPhoto ? "#FFFFFF" : AZURE, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", flexShrink: 0,
+              border: "3px solid #FFFFFF", boxShadow: "0 0 0 2px #D6E4F5, 0 10px 24px -12px rgba(7,17,31,0.45)" }}>
               {shownPhoto
                 ? <img src={shownPhoto} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                : <span style={{ ...GF, fontSize: 24, fontWeight: 800, color: "#FFFFFF" }}>{initials}</span>
+                : <span style={{ ...GF, fontSize: 32, fontWeight: 800, color: "#FFFFFF" }}>{initials}</span>
               }
             </div>
-            <div>
-              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                <label htmlFor="avatar-upload" style={{ ...GF, fontSize: 13, fontWeight: 600, padding: "7px 14px", border: "1.5px solid #D1D9E0", borderRadius: 8, cursor: "pointer", color: NAVY, background: "#FFFFFF" }}>
-                  {shownPhoto ? "Change photo" : "Select image"}
-                </label>
-                <input id="avatar-upload" type="file" ref={fileRef} accept="image/png,image/jpeg,image/webp" onChange={e => { void handleFileSelect(e); }} style={{ display: "none" }} aria-describedby="avatar-help" />
-                {shownPhoto && (
-                  <button type="button" onClick={handleRemoveAvatar} style={{ ...GF, fontSize: 13, padding: "7px 14px", border: "1.5px solid #FECACA", borderRadius: 8, cursor: "pointer", color: "#991B1B", background: "#FEF2F2" }}>Remove</button>
-                )}
-              </div>
-              <div id="avatar-help" style={{ ...GF, fontSize: 12, color: SLATE, marginTop: 6 }}>
-                {USE_REAL_BACKEND
-                  ? "PNG, JPEG or WebP, up to 5 MB. Cropped to a square. Saved with the rest of your profile, and shown wherever your name appears."
-                  : "PNG, JPEG or WebP, up to 5 MB. A preview only in this demo — not uploaded or stored."}
-              </div>
-              {photo.kind !== "none" && (
-                <div style={{ ...GF, fontSize: 12, color: AZURE, marginTop: 4 }}>
-                  {photo.kind === "upload" ? "New photo — press Save changes to keep it." : "Photo will be removed when you save."}
-                </div>
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "center" }}>
+              <label htmlFor="avatar-upload" style={{ ...GF, fontSize: 13, fontWeight: 600, padding: "7px 14px", border: "1.5px solid #D1D9E0", borderRadius: 8, cursor: "pointer", color: NAVY, background: "#FFFFFF" }}>
+                {shownPhoto ? "Change photo" : "Select image"}
+              </label>
+              <input id="avatar-upload" type="file" ref={fileRef} accept="image/png,image/jpeg,image/webp" onChange={e => { void handleFileSelect(e); }} style={{ display: "none" }} aria-describedby="avatar-help" />
+              {shownPhoto && (
+                <button type="button" onClick={handleRemoveAvatar} style={{ ...GF, fontSize: 13, padding: "7px 14px", border: "1.5px solid #FECACA", borderRadius: 8, cursor: "pointer", color: "#991B1B", background: "#FEF2F2" }}>Remove</button>
               )}
-              {avatarErr && <div role="alert" style={{ ...GF, fontSize: 12, color: "#DC2626", marginTop: 4 }}>{avatarErr}</div>}
             </div>
+            <div id="avatar-help" style={{ ...GF, fontSize: 12, lineHeight: 1.5, color: SLATE, maxWidth: 420 }}>
+              {USE_REAL_BACKEND
+                ? "PNG, JPEG or WebP, up to 5 MB. Cropped to a square. Saved with the rest of your profile, and shown wherever your name appears."
+                : "PNG, JPEG or WebP, up to 5 MB. A preview only in this demo — not uploaded or stored."}
+            </div>
+            {photo.kind !== "none" && (
+              <div style={{ ...GF, fontSize: 12, color: AZURE }}>
+                {photo.kind === "upload" ? "New photo — press Save changes to keep it." : "Photo will be removed when you save."}
+              </div>
+            )}
+            {avatarErr && <div role="alert" style={{ ...GF, fontSize: 12, color: "#DC2626" }}>{avatarErr}</div>}
           </div>
         </SSection>
+        )}
 
         {/* Identity */}
         <SSection title="Personal Information">

@@ -53,6 +53,7 @@ function mountPage() {
   const router = createMemoryRouter([
     { path: "/app/templates/:templateId/author", element: <TemplateAuthorPage /> },
     { path: "/app/templates/:id", element: <p>template details</p> },
+    { path: "/app/templates/:id/use", element: <p>use template</p> },
   ], { initialEntries: ["/app/templates/tpl_1/author"] });
   render(<RouterProvider router={router} />);
   return router;
@@ -212,6 +213,16 @@ describe("the author page and LAGDA Chatbot", () => {
       mountPage();
       await user.click(screen.getByRole("button", { name: /Generate & Save/ }));
       expect(screen.queryByRole("alertdialog")).toBeNull();
+      expect(generateTemplateDocument).toHaveBeenCalledTimes(1);
+    });
+
+    it("once generated, the same button offers to use the template", async () => {
+      const router = mountPage();
+      await user.click(screen.getByRole("button", { name: /Generate & Save/ }));
+      const use = await screen.findByRole("button", { name: /Use this template now/ });
+      expect(screen.queryByRole("button", { name: /Generate & Save/ })).toBeNull();
+      await user.click(use);
+      expect(router.state.location.pathname).toBe("/app/templates/tpl_1/use");
       expect(generateTemplateDocument).toHaveBeenCalledTimes(1);
     });
   });

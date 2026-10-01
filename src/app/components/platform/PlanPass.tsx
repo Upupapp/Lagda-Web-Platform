@@ -204,6 +204,13 @@ export const PLAN_PASS_CSS = `
   background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.14); color: #E8EEF9; }
 .pp-tile-business { background: linear-gradient(160deg, rgba(47,140,240,0.35), rgba(255,255,255,0.06)); border-color: rgba(96,165,250,0.6); }
 .pp-tile-current { box-shadow: 0 0 0 2px #F5C542; border-color: transparent; }
+.pp-tile-soon { border-style: dashed; background: rgba(255,255,255,0.03); }
+.pp-tile-soon .pp-tile-name, .pp-tile-soon .pp-tile-price { color: #C7D4EA; }
+.pp-tile { height: 100%; box-sizing: border-box; }
+.pp-panel .pc-wrap { margin-top: 4px; }
+/* In Plan & Billing the grid keeps its own rhythm: four across, two below 1180px. */
+.pp-panel .pc-track { gap: 14px; }
+@media (max-width: 1180px) { .pp-panel .pc-track { --pc-cols: 2; } }
 .pp-tile-tags { display: flex; gap: 6px; flex-wrap: wrap; min-height: 22px; }
 .pp-tag { display: inline-flex; align-items: center; gap: 4px; font-size: 10.5px; font-weight: 700; border-radius: 999px; padding: 2px 8px; white-space: nowrap; }
 .pp-tag-popular { color: #0B1F4B; background: #BFDBFE; }

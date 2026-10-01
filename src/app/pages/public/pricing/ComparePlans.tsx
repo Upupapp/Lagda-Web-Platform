@@ -17,7 +17,7 @@ export function ComparePlans() {
             Compare LAGDA eSignature Plans
           </h1>
           <p style={{ color: "#64748B", ...GF, fontSize: 16, lineHeight: 1.65, maxWidth: 640, margin: "0 auto" }}>
-            A detailed view of what's included in each plan. Prices and exact limits will be confirmed at launch.
+            What each plan includes today. Free is free, always; Personal and Business prices are confirmed at launch; Enterprise is coming soon.
           </p>
         </div>
       </section>
@@ -37,9 +37,7 @@ export function ComparePlans() {
           {[
             { sym: "✓ Included",       col: "#16A34A" },
             { sym: "— Not included",   col: "#94A3B8" },
-            { sym: "Enterprise",       col: "#0078D4" },
-            { sym: "Planned",          col: "#C9960C" },
-            { sym: "Varies by plan",   col: "#64748B" },
+            { sym: "Coming soon",      col: "#7D5C06" },
           ].map(({ sym, col }) => (
             <span key={sym} style={{ color: col, ...GM, fontSize: 10, display: "flex", alignItems: "center", gap: 4 }}>{sym}</span>
           ))}
@@ -48,23 +46,19 @@ export function ComparePlans() {
         <CompareTable />
 
         <p style={{ color: "#94A3B8", ...GF, fontSize: 12, lineHeight: 1.65, marginTop: 20 }}>
-          Feature availability may vary by plan configuration, product version, and market. This comparison reflects planned availability and is subject to change. Planned features are not yet confirmed as included.
+          This comparison lists only what works in LAGDA today. Enterprise is coming soon and will include everything in Business. A workspace has its owner's plan.
         </p>
       </PricingSection>
 
       {/* Auth methods detail */}
       <PricingSection id="auth-detail">
-        <PricingHeading eyebrow="Authentication" id="auth-h2" heading="Authentication availability by plan." sub="Authentication method availability may also depend on organization settings, country, and provider availability." />
+        <PricingHeading eyebrow="Authentication" id="auth-h2" heading="Authentication on every plan." sub="Every plan has the same signer authentication today." />
         <div style={{ display: "grid", gap: 12 }} className="auth-grid">
           {[
-            { method: "Secure invitation link",       personal: true,  business: true,  enterprise: true,  note: "All plans" },
-            { method: "Verified email access",         personal: true,  business: true,  enterprise: true,  note: "All plans" },
-            { method: "Email OTP",                     personal: true,  business: true,  enterprise: true,  note: "All plans" },
-            { method: "SMS OTP",                       personal: false, business: true,  enterprise: true,  note: "Business and Enterprise" },
-            { method: "Authenticator app (TOTP)",      personal: false, business: true,  enterprise: true,  note: "Business and Enterprise" },
-            { method: "Account authentication",        personal: true,  business: true,  enterprise: true,  note: "All plans" },
-            { method: "Identity-document verification",personal: false, business: false, enterprise: false, note: "Planned future capability" },
-            { method: "Enterprise SSO / IdP",         personal: false, business: false, enterprise: true,  note: "Enterprise only" },
+            { method: "Secure invitation link",               note: "All plans" },
+            { method: "Email code for signers",               note: "All plans" },
+            { method: "Sign from your LAGDA account",          note: "All plans" },
+            { method: "Two-step verification for your account", note: "All plans" },
           ].map(({ method, note }) => (
             <div key={method} style={{ background: "#ffffff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: 10, padding: "12px 16px", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, boxShadow: "0 1px 4px rgba(7,17,31,0.07)" }}>
               <span style={{ color: "#334155", ...GF, fontSize: 13 }}>{method}</span>

@@ -91,6 +91,7 @@ function AttentionRow({ title, description, actionLabel, actionPath, tone = "war
 function WorkspacesPanel() {
   const platform = usePlatform();
   const current = platform.currentWorkspace?.id;
+  const ownerPhoto = platform.user?.avatarUrl ?? null;
   return (
     <section aria-labelledby="your-workspaces" data-testid="your-workspaces" style={{ ...cardStyle, padding: "16px 20px" }}>
       <h2 id="your-workspaces" style={sectionHeadingStyle}>Your workspaces</h2>
@@ -100,9 +101,17 @@ function WorkspacesPanel() {
           return (
             <li key={w.id} data-testid={`workspace-row-${w.id}`}
               style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 10px", borderRadius: 10, border: `1px solid ${isCurrent ? "#BAD7F5" : BORDER}`, background: isCurrent ? LIGHT : "#FFFFFF" }}>
-              <div aria-hidden style={{ width: 30, height: 30, borderRadius: 8, background: w.accentColor, color: "#FFFFFF", display: "flex", alignItems: "center", justifyContent: "center", ...GM, fontSize: 11, fontWeight: 700, flexShrink: 0 }}>
-                {w.initials}
-              </div>
+              {/* A workspace you own shows its owner — you — by your profile
+                  photo. Others keep their initials: their owners' photos are
+                  not something this account is given. */}
+              {w.role === "owner" && ownerPhoto ? (
+                <img src={ownerPhoto} alt="" aria-hidden data-testid={`workspace-owner-photo-${w.id}`}
+                  style={{ width: 30, height: 30, borderRadius: 8, objectFit: "cover", flexShrink: 0, border: `1px solid ${BORDER}`, boxSizing: "border-box", background: "#FFFFFF" }} />
+              ) : (
+                <div aria-hidden style={{ width: 30, height: 30, borderRadius: 8, background: w.accentColor, color: "#FFFFFF", display: "flex", alignItems: "center", justifyContent: "center", ...GM, fontSize: 11, fontWeight: 700, flexShrink: 0 }}>
+                  {w.initials}
+                </div>
+              )}
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ ...GF, fontSize: 13, fontWeight: 600, color: NAVY, overflowWrap: "anywhere" }}>{w.name}</div>
                 <div style={{ ...GF, fontSize: 11, color: SLATE }}>

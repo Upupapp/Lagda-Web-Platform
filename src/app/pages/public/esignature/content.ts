@@ -14,7 +14,7 @@ export const OVERVIEW_FEATURES = [
   { icon: "📄", title: "Document Preparation",     desc: "Upload PDFs, configure fields, set instructions, and prepare the document before it goes out." },
   { icon: "👥", title: "Recipient Management",      desc: "Add signers, approvers, reviewers, and copy recipients — each with their own role and access level." },
   { icon: "🔀", title: "Parallel & Sequential Routing", desc: "Control the order documents move through participants. Send to everyone at once or in a defined sequence." },
-  { icon: "🔐", title: "Signer Authentication",     desc: "Confirm participant identity at signing using secure links, email OTP, SMS OTP, or authenticator apps." },
+  { icon: "🔐", title: "Signer Authentication",     desc: "Confirm participant identity at signing with a secure invitation link and an email code, or by signing from a LAGDA account." },
   { icon: "📋", title: "Audit Trail",               desc: "Every invitation, view, authentication event, signature, and completion is recorded with timestamp and evidence." },
   { icon: "🔍", title: "Document Verification",     desc: "Completed documents receive a Verification ID and QR code that anyone can use to confirm status — no account needed." },
   { icon: "📁", title: "Templates",                 desc: "Save and reuse complete signing workflows — fields, routing, authentication, and branding — as reusable templates." },
@@ -45,10 +45,7 @@ export const PARTICIPANT_ROLES = [
 export const AUTH_METHODS = [
   { label: "Secure Invitation Link",  desc: "Unique one-time link delivered to the participant's email.", available: true },
   { label: "Email OTP",               desc: "One-time passcode sent to the participant's registered email.", available: true },
-  { label: "SMS OTP",                 desc: "One-time passcode delivered via SMS.", available: true },
-  { label: "Authenticator App",       desc: "TOTP-based verification via the participant's authenticator application.", available: true },
   { label: "Account Authentication",  desc: "Participant authenticates through their LAGDA account.", available: true },
-  { label: "Enterprise SSO",          desc: "Authentication via the organization's identity provider.", available: false, label2: "Enterprise" },
 ];
 
 export const TRANSACTION_STATUSES = [
@@ -123,23 +120,27 @@ export const TEMPLATE_FEATURES = [
   "Workspace-sharing permissions",
 ];
 
+/**
+ * The workspace roles that exist in LAGDA (Business plan). The features page
+ * reuses this list, so the two can never disagree with the product.
+ */
 export const WORKSPACE_ROLES = [
-  { role: "Owner",                  perms: "Full workspace control, billing, and settings." },
-  { role: "Administrator",          perms: "Manage members, templates, and workspace settings." },
-  { role: "Billing Administrator",  perms: "Manage billing and plan changes." },
-  { role: "Template Administrator", perms: "Create, edit, and manage shared templates." },
+  { role: "Owner",                  perms: "Full control of the workspace and its members. The workspace has the owner's plan." },
+  { role: "Administrator",          perms: "Manage members, invitations, join links, teams, branding and workspace settings." },
+  { role: "Template Administrator", perms: "Create, edit, and manage the workspace's templates." },
   { role: "Sender",                 perms: "Prepare and send documents. Access own transactions." },
   { role: "Reviewer",               perms: "View transactions and audit records. Cannot send." },
   { role: "Auditor",                perms: "View audit records and verification history only." },
+  { role: "New Comer",              perms: "Joined through a join link; an owner or administrator gives them a role." },
 ];
 
 export const TEAM_CAPABILITIES = [
-  { icon: "🏢", title: "Shared Workspace",     desc: "All team senders work within a single organizational workspace." },
-  { icon: "📁", title: "Shared Templates",     desc: "Template administrators build once; the whole team uses." },
-  { icon: "👥", title: "Contacts Library",     desc: "Shared contact directory speeds up participant setup for every sender." },
-  { icon: "🎨", title: "Company Branding",     desc: "Consistent logo, header, and sender identity across all outgoing documents." },
-  { icon: "🔒", title: "Role-Based Access",    desc: "Control who can send, review, administer, or audit within the workspace." },
-  { icon: "📊", title: "Usage Reporting",      desc: "Monitor transaction volume, completion rates, and sender activity." },
+  { icon: "🏢", title: "Shared Workspace",      desc: "Your whole team works in one workspace on the Business plan." },
+  { icon: "🔗", title: "Invitations and Join Links", desc: "Invite people by email, or share a join link and approve who asks to join." },
+  { icon: "👥", title: "Teams and Roles",       desc: "Group people into teams and give each person the role they need." },
+  { icon: "📇", title: "Shared Contacts",       desc: "A contact directory the whole team can use when preparing documents." },
+  { icon: "🎨", title: "Company Branding",      desc: "Your logo and colours across the workspace and on completed documents." },
+  { icon: "🕑", title: "Activity Log",          desc: "See who joined, who was invited, and who changed roles in the workspace." },
 ];
 
 export const LEGAL_NOTE = "Some documents may still require wet signatures, notarization, personal appearance, witnesses, or other legal formalities. Users remain responsible for determining the requirements that apply to each transaction.";

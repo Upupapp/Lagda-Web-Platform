@@ -145,6 +145,16 @@ export function readyMadeLibraryTrusted(): boolean {
   return trustedForAll;
 }
 
+/** Empties the library (sign-out): no account's text outlives its session. */
+export function clearReadyMadeLibrary(): void {
+  READY_MADE_TEMPLATES.length = 0;
+  READY_MADE_CATEGORIES.length = 0;
+  rawDocuments = [];
+  libraryKind = "none";
+  libraryVersion += 1;
+  for (const l of listeners) l();
+}
+
 export function readyMadeLibraryKind(): ReadyMadeLibraryKind {
   return libraryKind;
 }

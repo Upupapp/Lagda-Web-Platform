@@ -17,6 +17,7 @@
 
 import { API_BASE_URL, USE_REAL_BACKEND } from "../backend-flag";
 import { apiRequest, ApiError, extractErrorBody } from "../api-client";
+import { changesNavCounts } from "../nav-counts-signal";
 
 // ── Wire types ────────────────────────────────────────────────────────────
 
@@ -227,11 +228,11 @@ export const documentSharingService = {
   decideAccessRequest(
     workspaceId: string, requestId: string, verb: "approve" | "reject" | "withdraw-rejection" | "remove",
   ): Promise<AccessRequest> {
-    return apiRequest<AccessRequest>(`${request(workspaceId, requestId)}/${verb}`, { method: "POST" });
+    return changesNavCounts(apiRequest<AccessRequest>(`${request(workspaceId, requestId)}/${verb}`, { method: "POST" }));
   },
 
   deleteAccessRequest(workspaceId: string, requestId: string): Promise<void> {
-    return apiRequest<void>(request(workspaceId, requestId), { method: "DELETE" });
+    return changesNavCounts(apiRequest<void>(request(workspaceId, requestId), { method: "DELETE" }));
   },
 
   async sharedByMe(workspaceId: string, scope: "mine" | "workspace" = "mine"): Promise<SharedByMeItem[]> {
@@ -247,15 +248,15 @@ export const documentSharingService = {
   },
 
   actOnShared(id: string, verb: "accept" | "reject" | "withdraw-rejection"): Promise<SharedDocument> {
-    return apiRequest<SharedDocument>(`${mine(id)}/${verb}`, { method: "POST" });
+    return changesNavCounts(apiRequest<SharedDocument>(`${mine(id)}/${verb}`, { method: "POST" }));
   },
 
   removeMyAccess(id: string): Promise<void> {
-    return apiRequest<void>(`${mine(id)}/remove-access`, { method: "POST" });
+    return changesNavCounts(apiRequest<void>(`${mine(id)}/remove-access`, { method: "POST" }));
   },
 
   deleteShared(id: string): Promise<void> {
-    return apiRequest<void>(mine(id), { method: "DELETE" });
+    return changesNavCounts(apiRequest<void>(mine(id), { method: "DELETE" }));
   },
 
   async sharedDetails(id: string): Promise<SharedDocumentDetails> {

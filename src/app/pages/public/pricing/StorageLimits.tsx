@@ -51,7 +51,7 @@ export function StorageLimits() {
             Document storage in your LAGDA workspace.
           </h1>
           <p style={{ color: "#64748B", ...GF, fontSize: 16, lineHeight: 1.65 }}>
-            Storage covers the documents, records, templates, and workspace assets associated with your account. Storage limits and categories will be confirmed at launch.
+            Storage covers the documents, records, templates, and workspace assets associated with your account. Free has 500 MB, Personal 5 GB and Business 50 GB shared by the team.
           </p>
         </div>
       </section>

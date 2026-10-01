@@ -9,9 +9,10 @@
 import { apiRequest, ApiError } from "./api-client";
 import { USE_REAL_BACKEND } from "./backend-flag";
 import {
-  installReadyMadeLibrary, readyMadeLibraryKind, readyMadeLibraryTrusted, type RawLibrary,
+  installReadyMadeLibrary, readyMadeLibraryKind, readyMadeLibraryTrusted, clearReadyMadeLibrary, type RawLibrary,
 } from "./ready-made-templates";
 import { DEMO_READY_MADE_LIBRARY } from "./ready-made-demo";
+import { registerSessionCleanup } from "./session-lifecycle";
 
 export type ReadyMadeLoad = "full" | "catalog" | "locked" | "error";
 
@@ -74,3 +75,14 @@ export function resetReadyMadeLoader(): void {
   fullFor = null;
   catalogLoading = null;
 }
+
+// Sign-out: the full text a paid account loaded must not stay in memory for
+// whoever signs in next on this tab. The demo build keeps its placeholder.
+registerSessionCleanup({
+  id: "ready-made-library",
+  onSignOut: () => {
+    fullFor = null;
+    catalogLoading = null;
+    if (USE_REAL_BACKEND && !readyMadeLibraryTrusted()) clearReadyMadeLibrary();
+  },
+});

@@ -53,6 +53,9 @@ const STEPS = [
 type WizardStep = typeof STEPS[number]["id"];
 
 // ── Step 1: Map Roles ─────────────────────────────────────────────────────────
+/** The wizard's one column: stepper, step and navigation share it, centred. */
+const COLUMN_WIDTH = 688;
+
 function RoleMappingStep({
   template: _template, mappings, assignments, organization, onChange,
 }: {
@@ -70,8 +73,8 @@ function RoleMappingStep({
 
   return (
     <div>
-      <h2 style={{ ...GF, fontSize: 16, fontWeight: 700, color: "#0F172A", margin: "0 0 6px" }}>Map Participants to Roles</h2>
-      <p style={{ ...GF, fontSize: 13, color: "#64748B", margin: "0 0 20px" }}>
+      <h2 style={{ ...GF, fontSize: 16, fontWeight: 700, color: "#0F172A", margin: "0 0 6px", textAlign: "center" }}>Map Participants to Roles</h2>
+      <p style={{ ...GF, fontSize: 13, color: "#64748B", margin: "0 0 20px", textAlign: "center" }}>
         Enter the participant for each role placeholder in this template.
       </p>
       <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
@@ -177,7 +180,7 @@ function VariablesStep({
 
   return (
     <div>
-      <h2 style={{ ...GF, fontSize: 16, fontWeight: 700, color: "#0F172A", margin: "0 0 6px" }}>Enter Variable Values</h2>
+      <h2 style={{ ...GF, fontSize: 16, fontWeight: 700, color: "#0F172A", margin: "0 0 6px", textAlign: "center" }}>Enter Variable Values</h2>
       <div style={{ ...GF, background: "#EEF6FF", border: "1px solid #BFDBFE", borderRadius: 10, padding: "11px 14px", margin: "0 0 16px" }} role="note">
         <p style={{ fontSize: 12.5, color: "#475569", margin: 0, lineHeight: 1.6 }}>
           These values are written into the document wherever the template
@@ -185,7 +188,7 @@ function VariablesStep({
           still recorded on the review step, but has nowhere to appear.
         </p>
       </div>
-      <p style={{ ...GF, fontSize: 13, color: "#64748B", margin: "0 0 20px" }}>
+      <p style={{ ...GF, fontSize: 13, color: "#64748B", margin: "0 0 20px", textAlign: "center" }}>
         These values will be used to customize the invitation message and document content.
       </p>
       <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
@@ -264,8 +267,8 @@ function ReviewStep({
 
   return (
     <div>
-      <h2 style={{ ...GF, fontSize: 16, fontWeight: 700, color: "#0F172A", margin: "0 0 6px" }}>Review & Launch</h2>
-      <p style={{ ...GF, fontSize: 13, color: "#64748B", margin: "0 0 20px" }}>
+      <h2 style={{ ...GF, fontSize: 16, fontWeight: 700, color: "#0F172A", margin: "0 0 6px", textAlign: "center" }}>Review & Launch</h2>
+      <p style={{ ...GF, fontSize: 13, color: "#64748B", margin: "0 0 20px", textAlign: "center" }}>
         Review your configuration before creating the signing request.
       </p>
 
@@ -655,17 +658,20 @@ function UseTemplateInner() {
           <span aria-hidden style={{ color: "#94A3B8", flexShrink: 0 }}>/</span>
           <span aria-current="page" style={{ ...GF, fontSize: 13, color: "#0F172A", fontWeight: 600, flexShrink: 0 }}>Use Template</span>
         </nav>
-        <ResponsiveStepper
-          label="Use template steps"
-          steps={visibleSteps}
-          currentIndex={visibleIdx}
-          canSelect={i => i < visibleIdx}
-          onSelect={i => { setError(null); setStep(visibleSteps[i]!.id); }}
-        />
+        {/* The stepper sits on the same centred column as the step below it. */}
+        <div style={{ maxWidth: COLUMN_WIDTH, margin: "0 auto" }}>
+          <ResponsiveStepper
+            label="Use template steps"
+            steps={visibleSteps}
+            currentIndex={visibleIdx}
+            canSelect={i => i < visibleIdx}
+            onSelect={i => { setError(null); setStep(visibleSteps[i]!.id); }}
+          />
+        </div>
       </div>
 
       {/* Content */}
-      <div style={{ maxWidth: 640, padding: isNarrow ? "20px 16px" : "24px", boxSizing: "border-box" }}>
+      <div data-testid="use-template-column" style={{ maxWidth: COLUMN_WIDTH, margin: "0 auto", padding: isNarrow ? "20px 16px" : "28px 24px 32px", boxSizing: "border-box" }}>
         {error && (
           <div style={{ display: "flex", alignItems: "flex-start", gap: 8, padding: "12px 14px", background: "#FEF0F0", border: "1px solid #FECACA", borderRadius: 9, marginBottom: 16 }}>
             <AlertCircle size={14} color={RED} style={{ flexShrink: 0, marginTop: 1 }} />

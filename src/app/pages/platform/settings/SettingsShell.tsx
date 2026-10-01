@@ -32,6 +32,7 @@ import { usePlatform } from "../../../context/PlatformContext";
 import { USE_REAL_BACKEND } from "../../../services/backend-flag";
 import { useWorkspaceAccess } from "../../../hooks/useWorkspaceAccess";
 import { workspaceSettingsEntry } from "../workspace/shell/sections";
+import { useWorkspaceAllows } from "../../../hooks/usePlans";
 import {
   SETTINGS_ROOT, SETTINGS_SECTIONS, SETTINGS_GROUP_LABELS, SECURITY_TABS, settingsSectionForPath,
   type SettingsGroup, type SettingsSection,
@@ -218,6 +219,8 @@ export function SettingsLayout() {
   const location = useLocation();
   const platform = usePlatform();
   const access = useWorkspaceAccess();
+  // Free has no Workspace, so no pointer to it either.
+  const hasWorkspace = useWorkspaceAllows("personal") !== false;
   const focusedPath = useRef(location.pathname);
   const value = useMemo<ShellValue>(() => ({ focusedPath }), []);
   const current = settingsSectionForPath(location.pathname);
@@ -243,7 +246,7 @@ export function SettingsLayout() {
               {!live && <span className="st-demo-pill">Demo build</span>}
             </div>
             <SettingsCarousel current={current} pathname={location.pathname} />
-            <p className="st-moved" data-testid="settings-moved-note">
+            {hasWorkspace && <p className="st-moved" data-testid="settings-moved-note">
               <Building2 size={14} aria-hidden strokeWidth={2} />
               <span>
                 Branding, billing, usage and integrations are workspace-wide:{" "}
@@ -252,7 +255,7 @@ export function SettingsLayout() {
                   <Settings size={13} aria-hidden strokeWidth={2} /><span>Workspace Settings</span>
                 </Link>
               </span>
-            </p>
+            </p>}
           </div>
         </header>
 
@@ -505,7 +508,7 @@ const SHELL_CSS = `
 [data-scroller][data-fade-left="true"] { --st-fade-l: 24px; }
 [data-scroller][data-fade-right="true"] { --st-fade-r: 24px; }
 
-.st-card-tab { position: relative; flex: 1 1 auto; box-sizing: border-box; display: flex; flex-direction: column; align-items: flex-start; gap: 6px;
+.st-card-tab { position: relative; flex: 1 1 auto; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 6px;
   min-width: 0; min-height: 132px; padding: 14px 14px 16px; border-radius: 14px; border: 1.5px solid ${SET.BORDER};
   background: linear-gradient(180deg, #FFFFFF 0%, #F9FBFD 100%); text-decoration: none; color: ${SET.INK}; outline: none;
   -webkit-tap-highlight-color: transparent;
@@ -519,12 +522,13 @@ const SHELL_CSS = `
 .st-card-hint { font-family: ${SET.FONT}; font-size: 12px; line-height: 1.4; color: ${SET.SLATE};
   display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .st-card-bar { position: absolute; left: 14px; right: 14px; bottom: 5px; height: 3px; border-radius: 3px; background: ${P.accent};
-  transform: scaleX(0); transform-origin: left; transition: transform 200ms ease; }
+  transform: scaleX(0); transform-origin: center; transition: transform 200ms ease; }
 .st-card-tab[data-active="true"] { background: ${P.tint}; border-color: ${P.accent};
   box-shadow: 0 0 0 3px rgba(0,120,212,0.12), 0 10px 22px -14px rgba(0,120,212,0.55); }
 .st-card-tab[data-active="true"] .st-card-icon { background: ${P.accent}; border-color: ${P.accent}; color: #FFFFFF; }
 .st-card-tab[data-active="true"] .st-card-label { color: ${P.text}; }
 .st-card-tab[data-active="true"] .st-card-bar { transform: scaleX(1); }
+.st-card-tab[data-active="true"] { display: flex; justify-content: center; align-items: center; }
 .st-card-tab[data-active="true"]:focus-visible { box-shadow: 0 0 0 3px rgba(0,120,212,0.35); }
 
 .st-moved { display: flex; align-items: flex-start; gap: 8px; margin: 12px 0 0; font-family: ${SET.FONT}; font-size: 12.5px; line-height: 1.5; color: ${SET.SLATE}; }

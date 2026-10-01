@@ -17,14 +17,21 @@
 
 import { useEffect, useSyncExternalStore } from "react";
 import { myInvitationsAvailable, myInvitationsService } from "../services/real/my-invitations.service";
+import { registerSessionCleanup } from "../services/session-lifecycle";
+import { onNavCountsChanged } from "../services/nav-counts-signal";
 
-export const INVITATION_POLL_MS = 60_000;
+// Live enough to feel instant: an action here (or in another tab) re-reads at
+// once; anything else is picked up within this, while the tab is visible.
+export const INVITATION_POLL_MS = 15_000;
 
 let count = 0;
 const listeners = new Set<() => void>();
 let subscribers = 0;
 let timer: ReturnType<typeof setInterval> | null = null;
 let inflight: Promise<void> | null = null;
+/** An action landed while a read was running: read once more after it. */
+let again = false;
+let unlisten: (() => void) | null = null;
 /** Bumped by every publish, so a slower poll never overwrites a newer number. */
 let generation = 0;
 
@@ -43,14 +50,23 @@ export function publishPendingInvitationCount(next: number): void {
 /** Asks the backend now. Resolves once the number is current. */
 export function refreshPendingInvitationCount(): Promise<void> {
   if (!myInvitationsAvailable()) return Promise.resolve();
-  if (inflight) return inflight;
+  if (inflight) { again = true; return inflight; }
   const started = generation;
   inflight = myInvitationsService.list("pending")
     .then(items => { if (generation === started) publishPendingInvitationCount(items.length); })
     .catch(() => { /* keep the last good number */ })
-    .finally(() => { inflight = null; });
+    .finally(() => {
+      inflight = null;
+      if (again) { again = false; void refreshPendingInvitationCount(); }
+    });
   return inflight;
 }
+
+// Sign-out: the next account must not see this one's pending invitations.
+registerSessionCleanup({
+  id: "pending-invitation-count",
+  onSignOut: () => { generation += 1; inflight = null; if (count !== 0) { count = 0; emit(); } },
+});
 
 function onFocus() { void refreshPendingInvitationCount(); }
 function onVisibility() { if (document.visibilityState === "visible") void refreshPendingInvitationCount(); }
@@ -58,14 +74,17 @@ function onVisibility() { if (document.visibilityState === "visible") void refre
 function start() {
   if (!myInvitationsAvailable() || typeof window === "undefined") return;
   void refreshPendingInvitationCount();
-  timer = setInterval(() => { void refreshPendingInvitationCount(); }, INVITATION_POLL_MS);
+  timer = setInterval(() => { if (document.visibilityState !== "hidden") void refreshPendingInvitationCount(); }, INVITATION_POLL_MS);
   window.addEventListener("focus", onFocus);
   document.addEventListener("visibilitychange", onVisibility);
+  unlisten = onNavCountsChanged(() => { void refreshPendingInvitationCount(); });
 }
 
 function stop() {
   if (timer !== null) clearInterval(timer);
   timer = null;
+  unlisten?.();
+  unlisten = null;
   if (typeof window === "undefined") return;
   window.removeEventListener("focus", onFocus);
   document.removeEventListener("visibilitychange", onVisibility);
@@ -83,6 +102,7 @@ export function resetPendingInvitationCount(): void {
   count = 0;
   generation = 0;
   inflight = null;
+  again = false;
   listeners.clear();
 }
 

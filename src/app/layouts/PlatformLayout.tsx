@@ -17,6 +17,8 @@ import { SKELETON_STYLE } from "../components/platform/AppContentLayout";
 import { LagdaLoader } from "../components/brand/LagdaLoader";
 import { TourProvider } from "../tour/TourContext";
 import { buildSignInUrl } from "../utils/authReturnPath";
+import { rememberAppPage } from "../services/last-app-page";
+import { refreshNavCountsOnNavigation } from "../hooks/useNavCounts";
 
 // ── Route loading fallback ────────────────────────────────────────────────────
 function PlatformPageLoader() {
@@ -188,6 +190,12 @@ export function PlatformLayout() {
   useEffect(() => {
     if (mainRef.current) mainRef.current.scrollTop = 0;
   }, [location.pathname]);
+
+  // Where "back" is, for a Free account that opens Workspace (WorkspaceShell).
+  useEffect(() => { rememberAppPage(location.pathname, location.search); }, [location.pathname, location.search]);
+
+  // The side panel's counts follow you: a page change re-reads them.
+  useEffect(() => { refreshNavCountsOnNavigation(); }, [location.pathname]);
 
   if (sessionStatus === "initializing") {
     return <SessionInitializing />;

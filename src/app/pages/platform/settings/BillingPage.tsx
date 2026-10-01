@@ -6,12 +6,12 @@
 // where the plan cards' buttons lead. Nothing here takes or asks for payment,
 // and the one invoice is a SAMPLE, labelled as such everywhere it appears.
 
-import React, { useEffect, useId, useRef, useState } from "react";
+import React, { useId, useState } from "react";
 import { Link, useNavigate } from "react-router";
 import {
-  Sparkles, CalendarClock, ReceiptText, Star, Check, Minus, ChevronDown, Info, ArrowRight, X, BadgeCheck, Gauge,
+  Sparkles, CalendarClock, ReceiptText, Star, Check, Minus, ChevronDown, Info, ArrowRight, BadgeCheck, Gauge,
 } from "lucide-react";
-import { SettingsPage, SSection, SCard, Badge, BTN_PRIMARY, BTN_SECONDARY, Notice, SET, TONES } from "./SettingsShell";
+import { SettingsPage, SSection, SCard, Badge, BTN_SECONDARY, Notice, SET, TONES } from "./SettingsShell";
 import {
   SAMPLE_PLANS, SAMPLE_COMPARE_GROUPS, currentPlanLimits,
   formatPeso, type SamplePlan, type CompareCell, type CatalogPlanId,
@@ -25,8 +25,8 @@ import { VerificationQRCode } from "../../../components/verification/Verificatio
 import {
   SAMPLE_INVOICE_ID, SAMPLE_INVOICE_PATH, SAMPLE_INVOICE_BANNER, SAMPLE_INVOICE_TOTAL, useInvoiceBilledTo,
 } from "./billing/sample-invoice";
-import { Z } from "../../../utils/z-index";
 import { PLAN_PASS_CSS } from "../../../components/platform/PlanPass";
+import { PlanCarousel } from "../../../components/pricing/PlanCarousel";
 
 const GF = { fontFamily: SET.FONT };
 const GM = { fontFamily: SET.MONO };
@@ -130,16 +130,18 @@ function TilePrice({ plan }: { plan: SamplePlan }) {
 function PlanTile({ plan, onChoose, current, disabled }: {
   plan: SamplePlan; onChoose: (plan: SamplePlan) => void; current: boolean; disabled: boolean;
 }) {
-  const inert = disabled || current || plan.id === "free";
+  const soon = plan.id === "enterprise";
+  const inert = disabled || current || plan.id === "free" || soon;
   const label = current ? "Your plan"
-    : plan.price === null ? "Contact sales"
+    : soon ? "Coming soon"
     : plan.id === "free" ? "Free, always"
     : `Choose ${plan.name}`;
   return (
     <div data-testid={`plan-card-${plan.id}`}
-      className={`pp-tile${plan.mostPopular ? " pp-tile-business" : ""}${current ? " pp-tile-current" : ""}`}>
+      className={`pp-tile${plan.mostPopular ? " pp-tile-business" : ""}${current ? " pp-tile-current" : ""}${soon ? " pp-tile-soon" : ""}`}>
       <div className="pp-tile-tags">
         {plan.mostPopular && <span className="pp-tag pp-tag-popular"><Star size={11} aria-hidden /> Most popular</span>}
+        {soon && <span className="pp-tag pp-tag-current">Coming soon</span>}
         {current && <span className="pp-tag pp-tag-current"><BadgeCheck size={11} aria-hidden /> Current plan</span>}
       </div>
       <div>
@@ -205,36 +207,6 @@ function CompareTable() {
   );
 }
 
-function EnterpriseDialog({ onClose }: { onClose: () => void }) {
-  const titleId = useId();
-  const closeRef = useRef<HTMLButtonElement>(null);
-  useEffect(() => {
-    const previous = document.activeElement as HTMLElement | null;
-    closeRef.current?.focus();
-    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
-    document.addEventListener("keydown", onKey);
-    return () => { document.removeEventListener("keydown", onKey); previous?.focus?.(); };
-  }, [onClose]);
-  return (
-    <div role="presentation" onClick={onClose} style={{ position: "fixed", inset: 0, zIndex: Z.modal, background: "rgba(7,17,31,0.45)", display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
-      <div role="dialog" aria-modal="true" aria-labelledby={titleId} onClick={e => { e.stopPropagation(); }}
-        style={{ background: "#FFFFFF", borderRadius: 14, padding: 24, width: "100%", maxWidth: 440, boxShadow: "0 24px 60px -20px rgba(7,17,31,0.45)" }}>
-        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12 }}>
-          <h3 id={titleId} style={{ ...GF, fontSize: 18, fontWeight: 800, color: SET.NAVY, margin: 0 }}>Enterprise is set up by LAGDA</h3>
-          <button type="button" onClick={onClose} aria-label="Close" style={{ background: "none", border: "none", cursor: "pointer", color: SET.SLATE, padding: 4, borderRadius: 6 }}><X size={18} aria-hidden /></button>
-        </div>
-        <p style={{ ...GF, fontSize: 13.5, color: SET.INK, lineHeight: 1.6, margin: "12px 0 0" }}>
-          Enterprise is everything in Business plus single sign-on and dedicated support, arranged with each
-          organization. Contact LAGDA and we will set it up for your account.
-        </p>
-        <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 18 }}>
-          <button ref={closeRef} type="button" onClick={onClose} style={BTN_PRIMARY}>Got it</button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 export function PlanShowcase({ current, onChoose, disabled = false, description }: {
   /** The plan to mark as current, or null while unknown. */
   current: CatalogPlanId | null;
@@ -244,11 +216,9 @@ export function PlanShowcase({ current, onChoose, disabled = false, description 
   description?: string;
 }) {
   const [compare, setCompare] = useState(false);
-  const [enterprise, setEnterprise] = useState(false);
   const compareId = useId();
   const choose = (plan: SamplePlan) => {
-    if (plan.id === "enterprise") setEnterprise(true);
-    else if (plan.id === "personal" || plan.id === "business") onChoose(plan.id);
+    if (plan.id === "personal" || plan.id === "business") onChoose(plan.id);
   };
   return (
     <SSection title="Plans" icon={Star}
@@ -261,11 +231,11 @@ export function PlanShowcase({ current, onChoose, disabled = false, description 
             <Info size={13} aria-hidden /> TEST MODE — NO MONEY IS MOVED. MONTHLY PLANS ONLY.
           </span>
         </div>
-        <div className="pp-tiles">
+        <PlanCarousel label="Plans" tone="dark" testId="plan-carousel">
           {SAMPLE_PLANS.map(p => (
             <PlanTile key={p.id} plan={p} onChoose={choose} current={p.id === current} disabled={disabled} />
           ))}
-        </div>
+        </PlanCarousel>
         <div className="pp-panel-foot">
           <button type="button" className="pp-compare-btn" aria-expanded={compare} aria-controls={compareId} onClick={() => { setCompare(c => !c); }}>
             {compare ? "Hide comparison" : "Compare all features"}
@@ -274,7 +244,6 @@ export function PlanShowcase({ current, onChoose, disabled = false, description 
         </div>
       </div>
       <div id={compareId} hidden={!compare}>{compare && <CompareTable />}</div>
-      {enterprise && <EnterpriseDialog onClose={() => { setEnterprise(false); }} />}
       <style>{PLAN_PASS_CSS}</style>
     </SSection>
   );
@@ -311,10 +280,12 @@ function InvoicesSection() {
               View invoice <ArrowRight size={14} aria-hidden />
             </Link>
           </div>
-          <div style={{ textAlign: "center", flexShrink: 0 }}>
+          <div className="inv-qr" style={{ textAlign: "center", flexShrink: 0 }}>
             <VerificationQRCode url={url} size={112} alt={`QR code linking to sample invoice ${SAMPLE_INVOICE_ID}`} />
             <div style={{ ...GF, fontSize: 11.5, color: SET.SLATE, marginTop: 4 }}>Scan to open</div>
           </div>
+          {/* On a phone the QR wraps below the details: give it the whole row, centred. */}
+          <style>{`@media (max-width: 640px) { .inv-qr { flex: 1 1 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; } }`}</style>
         </div>
       </div>
     </SSection>

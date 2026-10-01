@@ -1,26 +1,33 @@
 // Canonical LAGDA pricing configuration.
-// No approved numeric prices exist — monthlyPrice/annualPrice are null on the
-// PUBLIC plans below. The in-app catalogue at the end of this file carries
-// SAMPLE prices, shown only inside the app and always labelled as samples.
-// Never substitute competitor prices or invent limits.
+//
+// The PUBLIC plans and comparison below describe what is LIVE (backend 093):
+// Free, Personal and Business as they work in the product today, and
+// Enterprise as Coming Soon. Nothing unbuilt is listed. The in-app catalogue
+// at the end of this file carries the prices and allowances shown inside the
+// app; a test (settings-config.test.ts) keeps the two from drifting.
+//
+// Plans belong to PEOPLE: a workspace has its owner's plan.
 // LAGDA eNotary is NOT included in any plan below — it is a separate future product.
 
 export type PlanId = "personal" | "business" | "enterprise";
 export type AvailValue = "included" | "not-included" | "varies" | "enterprise" | "pending";
 
 export interface LagdaPlan {
-  id: PlanId;
+  id: CatalogPlanId;
   name: string;
   tagline: string;
   audience: string;
   monthlyPrice: null;
   annualPrice: null;
   currency: "PHP";
-  trial: boolean;
+  /** No plan offers a trial: Free is how LAGDA is tried. */
+  trial: false;
   freeForever: boolean;
   featured: boolean;
   enterprise: boolean;
   contactSales: boolean;
+  /** Shown, but not yet offered (Enterprise). */
+  comingSoon: boolean;
   ctaLabel: string;
   ctaPath: string;
   secondaryCtaLabel?: string;
@@ -32,6 +39,33 @@ export interface LagdaPlan {
 
 export const LAGDA_PLANS: LagdaPlan[] = [
   {
+    id: "free",
+    name: "Free",
+    tagline: "Try LAGDA with one document",
+    audience: "Anyone who wants to try LAGDA, or who mostly signs documents other people send.",
+    monthlyPrice: null,
+    annualPrice: null,
+    currency: "PHP",
+    trial: false,
+    freeForever: true,
+    featured: false,
+    enterprise: false,
+    contactSales: false,
+    comingSoon: false,
+    ctaLabel: "Create Free Account",
+    ctaPath: "/create-account",
+    availabilityStatus: "available",
+    highlights: [
+      "1 document sent for signing",
+      "Unlimited signing of documents sent to you",
+      "Secure invitation link and email code",
+      "Audit trail and Document Verification",
+      "Personal contacts and contact requests",
+      "Two-step verification for your account",
+    ],
+    note: "Upgrade any time from My Settings › Plan & Billing.",
+  },
+  {
     id: "personal",
     name: "Personal",
     tagline: "For individuals and solo practitioners",
@@ -39,25 +73,24 @@ export const LAGDA_PLANS: LagdaPlan[] = [
     monthlyPrice: null,
     annualPrice: null,
     currency: "PHP",
-    trial: true,
+    trial: false,
     freeForever: false,
     featured: false,
     enterprise: false,
     contactSales: false,
-    ctaLabel: "Create Free Account",
+    comingSoon: false,
+    ctaLabel: "Create Account",
     ctaPath: "/create-account",
     availabilityStatus: "available",
     highlights: [
-      "Document preparation and sending",
-      "Signing-request allowance",
-      "Secure invitation access",
-      "Email OTP authentication",
-      "Audit trail and completion report",
-      "Document Verification",
-      "Personal templates",
-      "Saved contacts",
+      "Everything in Free",
+      "50 documents a month",
+      "Your logo and colours",
+      "Share completed documents",
+      "Ready-made templates and the LAGDA Chatbot",
+      "Join other workspaces",
     ],
-    note: "Signing-request allowances and feature availability are subject to plan terms confirmed at launch.",
+    note: "Start on Free, then choose Personal in Plan & Billing.",
   },
   {
     id: "business",
@@ -67,30 +100,30 @@ export const LAGDA_PLANS: LagdaPlan[] = [
     monthlyPrice: null,
     annualPrice: null,
     currency: "PHP",
-    trial: true,
+    trial: false,
     freeForever: false,
     featured: true,
     enterprise: false,
     contactSales: false,
-    ctaLabel: "Start Free Trial",
+    comingSoon: false,
+    ctaLabel: "Create Account",
     ctaPath: "/create-account",
     availabilityStatus: "available",
     highlights: [
       "Everything in Personal",
-      "Higher signing-request allowances",
-      "Multiple senders in one workspace",
-      "Shared template library",
+      "200 documents per user a month",
+      "Members and invitations",
+      "Teams, roles and join links",
       "Company branding",
-      "SMS OTP and authenticator app authentication",
-      "Role-based access control",
-      "Usage reports and workspace administration",
+      "Shared contacts and the workspace activity log",
     ],
+    note: "Start on Free, then choose Business in Plan & Billing.",
   },
   {
     id: "enterprise",
     name: "Enterprise",
     tagline: "For large organizations and institutions",
-    audience: "Large organizations with high volume, complex workflows, compliance requirements, or integration needs.",
+    audience: "Large organizations with high volume, complex workflows, or compliance requirements.",
     monthlyPrice: null,
     annualPrice: null,
     currency: "PHP",
@@ -99,21 +132,16 @@ export const LAGDA_PLANS: LagdaPlan[] = [
     featured: false,
     enterprise: true,
     contactSales: true,
-    ctaLabel: "Contact Sales",
+    comingSoon: true,
+    ctaLabel: "Ask About Enterprise",
     ctaPath: "/contact",
-    secondaryCtaLabel: "Book a Demo",
-    secondaryCtaPath: "/book-a-demo?topic=enterprise-admin",
-    availabilityStatus: "available",
+    availabilityStatus: "pending",
     highlights: [
       "Everything in Business",
-      "Custom signing-request volume",
-      "Custom workspace administration",
-      "Enterprise SSO and identity provider",
-      "API and webhook integration by arrangement",
-      "Custom onboarding and support",
-      "Security and compliance review",
+      "Custom document volume",
+      "Dedicated onboarding and support",
     ],
-    note: "Enterprise arrangements are tailored to your organization's requirements. Contact sales to discuss.",
+    note: "Enterprise is coming soon. Contact us to be told when it opens.",
   },
 ];
 
@@ -121,6 +149,7 @@ export interface CompareRow {
   id: string;
   label: string;
   desc?: string;
+  free: string;
   personal: string;
   business: string;
   enterprise: string;
@@ -132,78 +161,86 @@ export interface CompareGroup {
   rows: CompareRow[];
 }
 
+const ALL = { free: "included", personal: "included", business: "included", enterprise: "included" } as const;
+const PAID = { free: "not-included", personal: "included", business: "included", enterprise: "included" } as const;
+const TEAM = { free: "not-included", personal: "not-included", business: "included", enterprise: "included" } as const;
+
+/**
+ * Only what is live. Enterprise is Coming Soon: its column shows what it
+ * will include (everything in Business), and the table marks it so.
+ */
 export const COMPARE_GROUPS: CompareGroup[] = [
   {
     id: "core",
     title: "Core Workflow",
     rows: [
-      { id: "doc-prep",        label: "Document preparation",                          personal: "included",     business: "included",     enterprise: "included"     },
-      { id: "roles",           label: "Participant roles (signer, approver, viewer, CC)", personal: "included",  business: "included",     enterprise: "included"     },
-      { id: "parallel",        label: "Parallel signing",                              personal: "included",     business: "included",     enterprise: "included"     },
-      { id: "sequential",      label: "Sequential signing",                            personal: "included",     business: "included",     enterprise: "included"     },
-      { id: "mixed-routing",   label: "Mixed routing",                                 personal: "included",     business: "included",     enterprise: "included"     },
-      { id: "reminders",       label: "Automatic reminders",                           personal: "included",     business: "included",     enterprise: "included"     },
-      { id: "expiration",      label: "Transaction expiration",                        personal: "included",     business: "included",     enterprise: "included"     },
+      { id: "doc-prep",       label: "Document preparation",                            ...ALL },
+      { id: "roles",          label: "Participant roles (signer, approver, viewer, CC)", ...ALL },
+      { id: "parallel",       label: "Parallel signing",                                ...ALL },
+      { id: "sequential",     label: "Sequential signing",                              ...ALL },
+      { id: "reminders",      label: "Automatic reminders",                             ...ALL },
+      { id: "expiration",     label: "Transaction expiration",                          ...ALL },
     ],
   },
   {
     id: "usage",
     title: "Usage and Limits",
     rows: [
-      { id: "signing-requests", label: "Signing requests per period",                  personal: "varies",       business: "varies",       enterprise: "varies"       },
-      { id: "senders",          label: "Senders",                                      personal: "1",            business: "varies",       enterprise: "varies"       },
-      { id: "participants",     label: "Participants per transaction",                  personal: "varies",       business: "varies",       enterprise: "varies"       },
-      { id: "storage",          label: "Document storage",                             personal: "varies",       business: "varies",       enterprise: "varies"       },
+      { id: "documents-sent", label: "Documents you send",            free: "1 in total", personal: "50 a month", business: "200 per user a month", enterprise: "Custom" },
+      { id: "signing-for-you",label: "Signing documents sent to you", free: "Unlimited",  personal: "Unlimited",  business: "Unlimited",            enterprise: "Unlimited" },
+      { id: "users",          label: "People in your workspace",      free: "1",          personal: "1",          business: "Up to 50",             enterprise: "Custom" },
+      { id: "storage",        label: "Document storage",              free: "500 MB",     personal: "5 GB",       business: "50 GB shared",         enterprise: "Custom" },
     ],
   },
   {
     id: "trust",
     title: "Trust and Evidence",
     rows: [
-      { id: "audit-trail",      label: "Audit trail",                                  personal: "included",     business: "included",     enterprise: "included"     },
-      { id: "completion-report",label: "Completion report",                            personal: "included",     business: "included",     enterprise: "included"     },
-      { id: "doc-verification", label: "Document Verification",                        personal: "included",     business: "included",     enterprise: "included"     },
-      { id: "verification-id",  label: "Verification ID and QR code",                  personal: "included",     business: "included",     enterprise: "included"     },
+      { id: "audit-trail",       label: "Audit trail",                 ...ALL },
+      { id: "completion-report", label: "Completion report",           ...ALL },
+      { id: "doc-verification",  label: "Document Verification",       ...ALL },
+      { id: "verification-id",   label: "Verification ID and QR code", ...ALL },
     ],
   },
   {
     id: "auth",
-    title: "Authentication Methods",
+    title: "Authentication",
     rows: [
-      { id: "secure-link",     label: "Secure invitation link",                        personal: "included",     business: "included",     enterprise: "included"     },
-      { id: "verified-email",  label: "Verified email access",                         personal: "included",     business: "included",     enterprise: "included"     },
-      { id: "email-otp",       label: "Email OTP",                                     personal: "included",     business: "included",     enterprise: "included"     },
-      { id: "sms-otp",         label: "SMS OTP",                                       personal: "not-included", business: "included",     enterprise: "included"     },
-      { id: "auth-app",        label: "Authenticator app (TOTP)",                      personal: "not-included", business: "included",     enterprise: "included"     },
-      { id: "account-auth",    label: "Account authentication",                        personal: "included",     business: "included",     enterprise: "included"     },
-      { id: "identity-verify", label: "Identity-document verification",                personal: "pending",      business: "pending",      enterprise: "enterprise"   },
-      { id: "enterprise-sso",  label: "Enterprise SSO / identity provider",            personal: "not-included", business: "not-included", enterprise: "enterprise"   },
+      { id: "secure-link",  label: "Secure invitation link",               ...ALL },
+      { id: "email-code",   label: "Email code for signers",               ...ALL },
+      { id: "account-auth", label: "Sign from your LAGDA account",          ...ALL },
+      { id: "two-step",     label: "Two-step verification for your account", ...ALL },
     ],
   },
   {
     id: "productivity",
-    title: "Productivity",
+    title: "Templates, Contacts and Branding",
     rows: [
-      { id: "tmpl-personal",   label: "Personal templates",                            personal: "included",     business: "included",     enterprise: "included"     },
-      { id: "tmpl-shared",     label: "Shared workspace templates",                   personal: "not-included", business: "included",     enterprise: "included"     },
-      { id: "contacts",        label: "Saved contacts",                                personal: "included",     business: "included",     enterprise: "included"     },
-      { id: "branding",        label: "Company branding",                              personal: "not-included", business: "included",     enterprise: "included"     },
-      { id: "notifications",   label: "Notification controls",                         personal: "included",     business: "included",     enterprise: "included"     },
+      { id: "templates",        label: "Templates",                          free: "3, blank only", personal: "25", business: "Unlimited", enterprise: "Unlimited" },
+      { id: "ready-made",       label: "Ready-made templates",               ...PAID },
+      { id: "chatbot",          label: "LAGDA Chatbot",                      ...PAID },
+      { id: "contacts",         label: "Personal contacts and requests",     ...ALL },
+      { id: "branding",         label: "Your logo and colours",              ...PAID },
+      { id: "notifications",    label: "Notification controls",              ...ALL },
     ],
   },
   {
-    id: "team",
-    title: "Team and Enterprise",
+    id: "sharing",
+    title: "Sharing and Workspaces",
     rows: [
-      { id: "workspace",       label: "Shared workspace",                              personal: "not-included", business: "included",     enterprise: "included"     },
-      { id: "rbac",            label: "Role-based access control",                    personal: "not-included", business: "included",     enterprise: "included"     },
-      { id: "usage-admin",     label: "Usage administration",                          personal: "not-included", business: "included",     enterprise: "included"     },
-      { id: "api",             label: "API access",                                    personal: "not-included", business: "not-included", enterprise: "enterprise"   },
-      { id: "webhooks",        label: "Webhooks",                                      personal: "not-included", business: "not-included", enterprise: "enterprise"   },
-      { id: "embedded",        label: "Embedded signing",                              personal: "not-included", business: "not-included", enterprise: "enterprise"   },
-      { id: "user-prov",       label: "User provisioning",                             personal: "not-included", business: "not-included", enterprise: "enterprise"   },
-      { id: "onboarding",      label: "Custom onboarding",                             personal: "not-included", business: "not-included", enterprise: "enterprise"   },
-      { id: "priority-support",label: "Priority support",                              personal: "not-included", business: "not-included", enterprise: "enterprise"   },
+      { id: "share-docs",     label: "Share completed documents",  ...PAID },
+      { id: "join-others",    label: "Join other workspaces",      ...PAID },
+      { id: "members",        label: "Members and invitations",    ...TEAM },
+      { id: "teams-roles",    label: "Teams, roles and join links", ...TEAM },
+      { id: "shared-contacts",label: "Shared contacts",            ...TEAM },
+      { id: "activity",       label: "Workspace activity log",     ...TEAM },
+    ],
+  },
+  {
+    id: "support",
+    title: "Support",
+    rows: [
+      { id: "support", label: "Support", free: "Help Center", personal: "Email", business: "Priority email", enterprise: "Dedicated" },
     ],
   },
 ];
@@ -290,7 +327,7 @@ export const SAMPLE_PLANS: readonly SamplePlan[] = [
       storageBytes: { value: 5 * GB, label: "5 GB" },
       templates: { value: 25, label: "25" },
     },
-    signerAuthentication: "+ SMS code",
+    signerAuthentication: "Secure link + email code",
     branding: true, teamControls: false, activityLog: false,
     support: "Email", trial: null,
     highlights: ["50 signing requests a month", "Personal branding", "Document sharing", "Ready-made templates and chatbot", "Email support"],
@@ -304,13 +341,13 @@ export const SAMPLE_PLANS: readonly SamplePlan[] = [
       storageBytes: { value: 50 * GB, label: "50 GB shared" },
       templates: { value: null, label: "Unlimited shared" },
     },
-    signerAuthentication: "+ Authenticator app",
+    signerAuthentication: "Secure link + email code",
     branding: true, teamControls: true, activityLog: true,
     support: "Priority email", trial: null,
     highlights: ["200 signing requests per user a month", "Company branding", "Members, teams, join links and roles", "Shared contacts and the workspace card", "Workspace activity log"],
   },
   {
-    id: "enterprise", name: "Enterprise", tagline: "For large organizations and institutions",
+    id: "enterprise", name: "Enterprise", tagline: "Coming soon, for large organizations",
     price: null, mostPopular: false,
     limits: {
       signingRequestsPerMonth: { value: null, label: "Custom" },
@@ -318,10 +355,10 @@ export const SAMPLE_PLANS: readonly SamplePlan[] = [
       storageBytes: { value: null, label: "Custom" },
       templates: { value: null, label: "Unlimited" },
     },
-    signerAuthentication: "+ SSO",
+    signerAuthentication: "Secure link + email code",
     branding: true, teamControls: true, activityLog: true,
-    support: "Dedicated", trial: "Demo",
-    highlights: ["Custom volume and storage", "Single sign-on (SSO)", "Everything in Business", "Dedicated support"],
+    support: "Dedicated", trial: null,
+    highlights: ["Everything in Business", "Custom document volume", "Dedicated onboarding and support"],
   },
 ];
 
@@ -380,7 +417,6 @@ export const SAMPLE_COMPARE_GROUPS: readonly CatalogCompareGroup[] = [
     id: "support", title: "Support",
     rows: [
       { id: "support", label: "Support", cell: p => p.support },
-      { id: "trial", label: "Trial", cell: p => p.trial ?? false },
     ],
   },
 ];

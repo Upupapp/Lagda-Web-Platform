@@ -33,6 +33,7 @@ import { InvoicePage } from "../billing/InvoicePage";
 import { DataPrivacyPage } from "../DataPrivacyPage";
 import { SETTINGS_SECTIONS } from "../sections";
 import { ROLE_CAPABILITIES } from "../../../../models/workspace-role-policy";
+import { resetPlanStore } from "../../../../hooks/usePlans";
 
 function json(status: number, body: unknown): Response {
   return new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json" } });
@@ -45,6 +46,7 @@ let me: Record<string, unknown>;
 let notif: Record<string, unknown>;
 let role: string;
 let failNotificationPatch = false;
+let workspacePlan = "business";
 const calls: { method: string; path: string; body: unknown }[] = [];
 
 const USAGE = {
@@ -61,6 +63,8 @@ const SESSIONS = [
 ];
 
 beforeEach(() => {
+  resetPlanStore();
+  workspacePlan = "business";
   calls.length = 0;
   role = "owner";
   failNotificationPatch = false;
@@ -104,7 +108,7 @@ beforeEach(() => {
     }
     if (path === "/workspaces/ws_1/usage") return Promise.resolve(json(200, USAGE));
     // 093. The workspace's plan is its owner's.
-    if (path === "/workspaces/ws_1/plan") return Promise.resolve(json(200, { plan: "business", ownerIsYou: true, ownerName: "Carmen Reyes", paidUntil: "2026-10-30T09:00:00.000Z" }));
+    if (path === "/workspaces/ws_1/plan") return Promise.resolve(json(200, { plan: workspacePlan, ownerIsYou: true, ownerName: "Carmen Reyes", paidUntil: "2026-10-30T09:00:00.000Z" }));
     if (path === "/me/plan") return Promise.resolve(json(200, {
       plan: "business", storedPlan: "business", paidUntil: "2026-10-30T09:00:00.000Z", autoRenew: false,
       freeDocumentsUsed: 0, freeDocumentLimit: 1, pendingRequest: null, approver: false, upgradesAvailable: true,
@@ -145,6 +149,14 @@ function renderAt(path: string) {
 }
 
 describe("settings shell", () => {
+  it("Free has no Workspace, so no line pointing to it", async () => {
+    workspacePlan = "free";
+    renderAt("/app/settings/preferences");
+    expect(await screen.findByTestId("settings-banner-preferences")).toBeInTheDocument();
+    await waitFor(() => { expect(screen.queryByTestId("settings-moved-note")).toBeNull(); });
+    expect(screen.queryByRole("link", { name: /Workspace Settings/ })).toBeNull();
+  });
+
   it("shows the seven personal sections side by side, marks the current one, and no preview note", async () => {
     renderAt("/app/settings/preferences");
     expect(screen.getByRole("heading", { level: 1, name: "My Settings" })).toBeInTheDocument();
@@ -400,13 +412,11 @@ describe("billing & plan", () => {
     expect(within(screen.getByTestId("plan-card-free")).getByText("1 document sent for signing")).toBeInTheDocument();
   });
 
-  it("sends Choose to your own Plan & Billing, and explains Enterprise", async () => {
+  it("sends Choose to your own Plan & Billing, with Enterprise coming soon", async () => {
     const user = userEvent.setup();
     renderAt("/app/workspace/settings/billing");
-    await user.click(screen.getByRole("button", { name: "Contact sales" }));
-    expect(screen.getByRole("dialog", { name: "Enterprise is set up by LAGDA" })).toBeInTheDocument();
-    await user.keyboard("{Escape}");
-    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(screen.getByTestId("plan-choose-enterprise")).toHaveTextContent("Coming soon");
+    expect(screen.getByTestId("plan-choose-enterprise")).toBeDisabled();
     await user.click(screen.getByRole("button", { name: "Choose Personal" }));
     expect(await screen.findByRole("heading", { name: "Upgrade to Personal" })).toBeInTheDocument();
     expect(calls.some(c => c.method !== "GET")).toBe(false);

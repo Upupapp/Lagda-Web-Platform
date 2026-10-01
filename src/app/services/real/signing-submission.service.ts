@@ -3,6 +3,7 @@
 // Uses recipientApiRequest — recipient realm only, see that file's header.
 
 import { recipientApiRequest } from "../recipient-api-client";
+import { changesNavCounts } from "../nav-counts-signal";
 
 export type SubmittedFieldValue =
   | { kind: "signature"; fieldId: string }
@@ -46,20 +47,20 @@ export interface DeclineSigningResult {
 
 class RealSigningSubmissionService {
   async submit(input: SubmitSigningInput, idempotencyKey: string): Promise<SubmitSigningResult> {
-    return recipientApiRequest<SubmitSigningResult>("/signing/submission", {
+    return changesNavCounts(recipientApiRequest<SubmitSigningResult>("/signing/submission", {
       method: "POST",
       body: input,
       headers: { "Idempotency-Key": idempotencyKey },
-    });
+    }));
   }
 
   // Deliberately no Idempotency-Key — the backend treats decline as
   // naturally idempotent (a retry matches zero remaining rows to update).
   async decline(reason: SigningDeclineReason): Promise<DeclineSigningResult> {
-    return recipientApiRequest<DeclineSigningResult>("/signing/decline", {
+    return changesNavCounts(recipientApiRequest<DeclineSigningResult>("/signing/decline", {
       method: "POST",
       body: { reason },
-    });
+    }));
   }
 
   /**
@@ -69,10 +70,10 @@ class RealSigningSubmissionService {
    * body, naturally idempotent like decline.
    */
   async skip(): Promise<{ skippedAt: number; applied: boolean }> {
-    return recipientApiRequest<{ skippedAt: number; applied: boolean }>("/signing/skip", {
+    return changesNavCounts(recipientApiRequest<{ skippedAt: number; applied: boolean }>("/signing/skip", {
       method: "POST",
       body: {},
-    });
+    }));
   }
 }
 

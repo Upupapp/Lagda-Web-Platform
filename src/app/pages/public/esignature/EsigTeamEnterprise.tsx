@@ -69,10 +69,10 @@ function WorkspaceMockup() {
 // ── Reporting preview ─────────────────────────────────────────────────────────
 function ReportingPreview() {
   const STATS = [
-    { label: "Transactions sent (30d)", value: "48",  color: "#0078D4" },
-    { label: "Completion rate",         value: "87%", color: "#178A4C" },
-    { label: "Avg. completion time",    value: "1.4d",color: "#0078D4" },
-    { label: "Expiring this week",      value: "3",   color: "#B45309" },
+    { label: "Documents sent this month", value: "48",     color: "#0078D4" },
+    { label: "Members",                   value: "12",     color: "#178A4C" },
+    { label: "Templates",                 value: "9",      color: "#0078D4" },
+    { label: "Storage used",              value: "3.1 GB", color: "#B45309" },
   ];
 
   return (
@@ -125,7 +125,7 @@ export function EsigTeamEnterprise() {
         eyebrow="Team & Enterprise"
         headingId="te-h1"
         heading="Built for teams, law firms, and high-volume organizations."
-        sub="LAGDA eSignature is designed to support organizations with multiple senders, shared workflows, governance controls, role-based access, and usage reporting — all within a shared workspace."
+        sub="On the Business plan, your whole team works in one LAGDA workspace: members, teams, roles, join links, shared contacts, company branding and an activity log. Enterprise is coming soon."
       />
 
       {/* Team capabilities grid */}
@@ -149,12 +149,12 @@ export function EsigTeamEnterprise() {
           <div>
             <SectionHeading eyebrow="Workspace management" id="wsm-heading" heading="Everyone in the right place with the right access." sub="Role-based access controls help organizations define who can send, review, administer, or audit document transactions." />
             <p style={{ color: "#334155", ...GF, fontSize: 14, lineHeight: 1.65, margin: 0, marginBottom: 16 }}>
-              LAGDA workspaces are designed to keep each organization's documents, templates, contacts, billing, and settings separate — even when a user belongs to multiple workspaces.
+              LAGDA workspaces keep each organization's documents, templates, contacts and settings separate — even when a person belongs to several workspaces. A workspace has its owner's plan.
             </p>
             <div style={{ background: "rgba(0,120,212,0.06)", border: "1px solid rgba(0,120,212,0.15)", borderRadius: 12, padding: "14px 16px" }}>
               <p style={{ color: "#0078D4", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.06em", marginBottom: 6 }}>WORKSPACE ISOLATION</p>
               <p style={{ color: "#334155", ...GF, fontSize: 13, lineHeight: 1.5, margin: 0 }}>
-                Documents, templates, contacts, members, branding, billing, usage, and activity history are separate per workspace.
+                Documents, templates, contacts, members, branding, usage, and activity history are separate per workspace.
               </p>
             </div>
           </div>
@@ -172,26 +172,27 @@ export function EsigTeamEnterprise() {
               Role-based access helps organizations control who prepares, sends, reviews, administers, or audits document transactions — without giving everyone full workspace access.
             </p>
             <p style={{ color: "#64748B", ...GF, fontSize: 13, lineHeight: 1.6, margin: 0 }}>
-              The exact permission matrix depends on your plan and workspace configuration. Contact Sales to discuss enterprise governance requirements.
+              Roles are part of the Business plan. Every role below works in LAGDA today.
             </p>
           </div>
           <WorkspaceRolesTable />
         </div>
       </PageSection>
 
-      {/* Reporting */}
+      {/* Activity and usage */}
       <PageSection id="reporting">
         <div style={{ display: "grid", gap: "32px 48px", alignItems: "start" }} className="te-two-col">
           <div>
-            <SectionHeading eyebrow="Usage reporting" id="report-heading" heading="Monitor your team's document activity." sub="Track transaction volume, completion rates, sender activity, expiring requests, and failed deliveries — all within the workspace." />
+            <SectionHeading eyebrow="Activity and usage" id="report-heading" heading="See what is happening in your workspace." sub="The activity log records who joined, who was invited, and what changed. Usage shows the workspace's totals for the month." />
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               {[
-                "Transaction volume by sender and period",
-                "Completion rate and average completion time",
-                "Expiring and overdue transactions",
-                "Failed delivery notifications",
-                "Template usage frequency",
-                "Verification activity",
+                "Members joining and leaving",
+                "Invitations sent, accepted and declined",
+                "Join requests approved and declined",
+                "Role and team changes",
+                "Branding and document-sharing changes",
+                "Documents sent this month",
+                "Members, templates and storage used",
               ].map((item) => (
                 <div key={item} style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
                   <span style={{ color: "#0078D4", fontWeight: 700, flexShrink: 0, fontSize: 13 }}>✓</span>
@@ -204,26 +205,24 @@ export function EsigTeamEnterprise() {
         </div>
       </PageSection>
 
-      {/* Security + enterprise */}
+      {/* Security today, Enterprise coming soon */}
       <PageSection id="security-enterprise" light bordered>
-        <SectionHeading eyebrow="Enterprise direction" id="ent-heading" heading="Ready for higher-volume organizations." center />
+        <SectionHeading eyebrow="Security and Enterprise" id="ent-heading" heading="Secure for every team today. Enterprise is coming soon." center />
         <div style={{ display: "grid", gap: 14 }} className="ent-grid">
           {[
-            { title: "Multi-factor authentication",  desc: "Require MFA for all workspace members as an organization-level control." },
-            { title: "Session management",            desc: "Control how long sessions remain active and set timeout policies." },
-            { title: "Authentication defaults",       desc: "Set organization-wide default authentication requirements for all senders." },
-            { title: "Retention controls",            desc: "Configure how long transaction records are retained within the workspace." },
-            { title: "Single Sign-On (SSO)",          desc: "Authenticate workspace members through your organization's identity provider.", enterprise: true },
-            { title: "User provisioning",             desc: "Manage workspace membership through your identity and access management system.", enterprise: true },
-            { title: "API & webhooks",                desc: "Connect LAGDA to your internal systems programmatically as the platform expands.", enterprise: true },
-            { title: "Custom integrations",           desc: "Discuss document-management, government-system, and enterprise integrations with Sales.", enterprise: true },
+            { title: "Two-step verification",   desc: "Every member can protect their own sign-in with an authenticator app." },
+            { title: "Verified accounts",        desc: "Every account confirms its email address before it can be used." },
+            { title: "Audit trail",              desc: "Every signing event is recorded, with a completion report and Document Verification." },
+            { title: "Role-based access",        desc: "Each member sees and does only what their role allows." },
+            { title: "Custom document volume",   desc: "Volume beyond Business for high-sending organizations.", enterprise: true },
+            { title: "Dedicated onboarding and support", desc: "A guided rollout and a direct line to the LAGDA team.", enterprise: true },
           ].map((f) => (
             <div key={f.title} style={{ background: "#ffffff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: 10, padding: "13px 14px", boxShadow: "0 1px 4px rgba(7,17,31,0.06)" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 4 }}>
                 <span style={{ color: "#07111F", ...GF, fontSize: 13, fontWeight: 700 }}>{f.title}</span>
                 {f.enterprise && (
-                  <span style={{ background: "rgba(201,150,12,0.1)", border: "1px solid rgba(201,150,12,0.3)", color: "#9A7208", borderRadius: 999, padding: "2px 8px", ...GM, fontSize: 9, fontWeight: 700 }}>
-                    ENTERPRISE
+                  <span style={{ background: "rgba(201,150,12,0.1)", border: "1px solid rgba(201,150,12,0.3)", color: "#7D5C06", borderRadius: 999, padding: "2px 8px", ...GM, fontSize: 9, fontWeight: 700 }}>
+                    ENTERPRISE · COMING SOON
                   </span>
                 )}
               </div>
@@ -233,7 +232,7 @@ export function EsigTeamEnterprise() {
         </div>
         <div style={{ marginTop: 20, background: "rgba(201,150,12,0.06)", border: "1px solid rgba(201,150,12,0.15)", borderRadius: 12, padding: "16px 18px" }}>
           <p style={{ color: "#334155", ...GF, fontSize: 13, lineHeight: 1.6, margin: 0 }}>
-            Enterprise and integration capabilities are on LAGDA's roadmap and may not be currently available on all plans. Contact Sales to discuss your organization's requirements and current availability.
+            Enterprise is coming soon and will include everything in Business. Contact us to be told when it opens.
           </p>
         </div>
         <style>{`.ent-grid { grid-template-columns: repeat(2, 1fr); } @media (max-width: 720px) { .ent-grid { grid-template-columns: 1fr; } }`}</style>
@@ -246,9 +245,9 @@ export function EsigTeamEnterprise() {
 
       <PageCTA
         heading="Ready to scale your document workflow?"
-        sub="Contact Sales to discuss team, enterprise, and volume requirements."
-        primaryLabel="Contact Sales"
-        primaryPath="/contact"
+        sub="Start on Free, then choose Business in Plan & Billing when your team joins."
+        primaryLabel="Create Free Account"
+        primaryPath="/create-account"
         secondaryLabel="Compare Plans"
         secondaryPath="/pricing/compare"
       />

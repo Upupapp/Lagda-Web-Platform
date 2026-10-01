@@ -17,6 +17,7 @@
 
 import { API_BASE_URL, USE_REAL_BACKEND } from "../backend-flag";
 import { apiRequest, ApiError } from "../api-client";
+import { changesNavCounts } from "../nav-counts-signal";
 import { REAL_ROLE_LABELS, type BackendWorkspaceRole } from "./workspace-admin.service";
 
 // ── Wire types ────────────────────────────────────────────────────────────
@@ -124,15 +125,15 @@ export const myInvitationsService = {
 
   /** `pending: true` — a join request now waits for the owner (the usual case). */
   accept(id: string): Promise<MyInvitationAcceptResult> {
-    return apiRequest<MyInvitationAcceptResult>(`${mine(id)}/accept`, { method: "POST" });
+    return changesNavCounts(apiRequest<MyInvitationAcceptResult>(`${mine(id)}/accept`, { method: "POST" }));
   },
 
   decline(id: string, reason: string): Promise<MyInvitation> {
-    return apiRequest<MyInvitation>(`${mine(id)}/decline`, { method: "POST", body: { reason: reason.trim() } });
+    return changesNavCounts(apiRequest<MyInvitation>(`${mine(id)}/decline`, { method: "POST", body: { reason: reason.trim() } }));
   },
 
   withdrawDecline(id: string): Promise<MyInvitation> {
-    return apiRequest<MyInvitation>(`${mine(id)}/withdraw-decline`, { method: "POST" });
+    return changesNavCounts(apiRequest<MyInvitation>(`${mine(id)}/withdraw-decline`, { method: "POST" }));
   },
 };
 

@@ -20,7 +20,7 @@ function SigningRequestMockup() {
       <div style={{ padding: "12px 16px", borderBottom: "1px solid rgba(0,0,0,0.08)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <div>
           <p style={{ color: "#07111F", ...GF, fontSize: 12, fontWeight: 700, margin: 0 }}>Signing Requests — July 2026</p>
-          <p style={{ color: "#64748B", ...GM, fontSize: 10, margin: "2px 0 0" }}>Northbridge Legal · Professional</p>
+          <p style={{ color: "#64748B", ...GM, fontSize: 10, margin: "2px 0 0" }}>Northbridge Legal · Business</p>
         </div>
         <div style={{ textAlign: "right" }}>
           <p style={{ color: "#0078D4", ...GM, fontSize: 18, fontWeight: 800, margin: 0 }}>{counts.used}</p>
@@ -78,7 +78,7 @@ export function SigningRequests() {
           <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
             <p style={{ color: "#64748B", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.08em" }}>SIGNING REQUEST EXAMPLE</p>
             <SigningRequestMockup />
-            <PricingNotice text="This mockup shows illustrative data. Actual signing-request counting rules, allowances, and limit behavior will be confirmed in plan terms before launch." />
+            <PricingNotice text="This mockup shows illustrative data. Free: 1 document in total. Personal: 50 a month. Business: 200 per user a month." />
           </div>
         </div>
         <style>{`.sr-grid { grid-template-columns: 1fr 1fr; } @media (max-width: 800px) { .sr-grid { grid-template-columns: 1fr; } }`}</style>
@@ -87,7 +87,7 @@ export function SigningRequests() {
       <PricingSection id="cta" light bordered>
         <div style={{ maxWidth: 600, margin: "0 auto", textAlign: "center" }}>
           <h2 style={{ color: "#07111F", ...GF, fontSize: 26, fontWeight: 800, marginBottom: 12 }}>Ready to compare plans?</h2>
-          <p style={{ color: "#64748B", ...GF, fontSize: 15, lineHeight: 1.65, marginBottom: 24 }}>See how signing-request allowances and limits vary across Personal, Business, and Enterprise.</p>
+          <p style={{ color: "#64748B", ...GF, fontSize: 15, lineHeight: 1.65, marginBottom: 24 }}>See what each plan includes, from Free to Business.</p>
           <Link to="/pricing/compare" style={{ background: "#0078D4", color: "white", ...GF, fontSize: 14, fontWeight: 700, padding: "12px 28px", borderRadius: 8, textDecoration: "none", minHeight: 44, display: "inline-flex", alignItems: "center" }}>Compare Plans</Link>
         </div>
       </PricingSection>

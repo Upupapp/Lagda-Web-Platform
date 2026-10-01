@@ -7,14 +7,14 @@ const GF = { fontFamily: "'Geist', sans-serif" };
 const GM = { fontFamily: "'Geist Mono', monospace" };
 
 const TEMPLATE_DIMENSIONS = [
-  { icon: "👤", title: "Personal templates",       personal: true,  business: true,  enterprise: true  },
-  { icon: "🏢", title: "Shared workspace templates",personal: false, business: true,  enterprise: true  },
-  { icon: "🔒", title: "Template permissions",      personal: false, business: true,  enterprise: true  },
-  { icon: "🎨", title: "Branding in templates",     personal: false, business: true,  enterprise: true  },
-  { icon: "🔐", title: "Authentication rules",       personal: true,  business: true,  enterprise: true  },
-  { icon: "⏰", title: "Reminder and expiry rules", personal: true,  business: true,  enterprise: true  },
-  { icon: "👥", title: "Participant-role placeholders",personal: true, business: true, enterprise: true  },
-  { icon: "🔄", title: "Enterprise-managed templates",personal: false, business: false, enterprise: true },
+  { icon: "📑", title: "Templates (Free: 3, blank only)", free: true,  personal: true,  business: true,  enterprise: true  },
+  { icon: "✨", title: "Ready-made templates",            free: false, personal: true,  business: true,  enterprise: true  },
+  { icon: "🤖", title: "LAGDA Chatbot",                   free: false, personal: true,  business: true,  enterprise: true  },
+  { icon: "🎨", title: "Your logo and colours",           free: false, personal: true,  business: true,  enterprise: true  },
+  { icon: "🏢", title: "Shared with your team",           free: false, personal: false, business: true,  enterprise: true  },
+  { icon: "🔒", title: "Template administrator role",     free: false, personal: false, business: true,  enterprise: true  },
+  { icon: "⏰", title: "Reminder and expiry rules",       free: true,  personal: true,  business: true,  enterprise: true  },
+  { icon: "👥", title: "Participant-role placeholders",   free: true,  personal: true,  business: true,  enterprise: true  },
 ];
 
 const TEMPLATE_USES = [
@@ -57,16 +57,20 @@ export function TemplatesByPlan() {
             <thead>
               <tr style={{ borderBottom: "1px solid rgba(0,0,0,0.1)" }}>
                 <th style={{ textAlign: "left", padding: "10px 16px 10px 0", color: "#64748B", ...GF, fontSize: 13, fontWeight: 600, width: "50%" }}>Template feature</th>
+                <th style={{ textAlign: "center", padding: "10px 12px", color: "#334155", ...GF, fontSize: 12, fontWeight: 700 }}>Free</th>
                 <th style={{ textAlign: "center", padding: "10px 12px", color: "#334155", ...GF, fontSize: 12, fontWeight: 700 }}>Personal</th>
                 <th style={{ textAlign: "center", padding: "10px 12px", color: "#0078D4", ...GF, fontSize: 12, fontWeight: 700 }}>Business</th>
-                <th style={{ textAlign: "center", padding: "10px 12px", color: "#334155", ...GF, fontSize: 12, fontWeight: 700 }}>Enterprise</th>
+                <th style={{ textAlign: "center", padding: "10px 12px", color: "#64748B", ...GF, fontSize: 12, fontWeight: 700 }}>Enterprise<span style={{ display: "block", ...GM, fontSize: 9, color: "#7D5C06" }}>COMING SOON</span></th>
               </tr>
             </thead>
             <tbody>
-              {TEMPLATE_DIMENSIONS.map(({ icon, title, personal, business, enterprise }) => (
+              {TEMPLATE_DIMENSIONS.map(({ icon, title, free, personal, business, enterprise }) => (
                 <tr key={title} style={{ borderBottom: "1px solid rgba(0,0,0,0.06)" }}>
                   <td style={{ padding: "10px 16px 10px 0", color: "#334155", ...GF, fontSize: 13 }}>
                     <span aria-hidden style={{ marginRight: 8 }}>{icon}</span>{title}
+                  </td>
+                  <td style={{ textAlign: "center", padding: "10px 12px" }}>
+                    {free ? <span style={{ color: "#16A34A" }}>✓</span> : <span style={{ color: "#94A3B8" }}>—</span>}
                   </td>
                   <td style={{ textAlign: "center", padding: "10px 12px" }}>
                     {personal ? <span style={{ color: "#16A34A" }}>✓</span> : <span style={{ color: "#94A3B8" }}>—</span>}
@@ -83,7 +87,7 @@ export function TemplatesByPlan() {
           </table>
         </div>
         <p style={{ color: "#94A3B8", ...GF, fontSize: 12, marginTop: 12 }}>
-          Numeric template limits will be confirmed at launch. Actual limits depend on plan terms.
+          Free holds 3 blank templates; Personal 25; Business unlimited, shared with the team.
         </p>
       </PricingSection>
 

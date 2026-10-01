@@ -8,6 +8,7 @@
 
 import { useSyncExternalStore } from "react";
 import type { WorkspaceBranding } from "../models/settings";
+import { registerSessionCleanup } from "../services/session-lifecycle";
 
 export interface WorkspaceBrandingSnapshot {
   readonly displayName: string;
@@ -36,6 +37,9 @@ export function setWorkspaceBrandingSnapshot(workspaceId: string, snapshot: Work
   snapshots = next;
   emit();
 }
+
+// Sign-out: another account's workspace colours and logos are forgotten.
+registerSessionCleanup({ id: "workspace-branding", onSignOut: () => { snapshots = new Map(); emit(); } });
 
 export function getWorkspaceBrandingSnapshot(workspaceId: string): WorkspaceBrandingSnapshot | null {
   return snapshots.get(workspaceId) ?? null;

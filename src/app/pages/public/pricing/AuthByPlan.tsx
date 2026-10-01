@@ -31,20 +31,6 @@ const AUTH_METHODS = [
     assurance: "Low to medium",
   },
   {
-    id: "sms-otp",
-    name: "SMS OTP",
-    desc: "A one-time passcode is delivered via SMS to the participant's confirmed mobile number. Adds a separate channel from the email invitation.",
-    personal: false, business: true, enterprise: true,
-    assurance: "Medium",
-  },
-  {
-    id: "auth-app",
-    name: "Authenticator app (TOTP)",
-    desc: "Time-based one-time passcode from the participant's authenticator application. Requires prior enrolment.",
-    personal: false, business: true, enterprise: true,
-    assurance: "Medium to high",
-  },
-  {
     id: "account-auth",
     name: "Account authentication",
     desc: "Participant authenticates through their existing LAGDA account. Suitable for regular collaborators.",
@@ -52,19 +38,11 @@ const AUTH_METHODS = [
     assurance: "Medium",
   },
   {
-    id: "identity-verify",
-    name: "Identity-document verification",
-    desc: "Participant's government-issued ID is verified as part of the signing process. This is a planned future capability.",
-    personal: false, business: false, enterprise: false,
-    note: "Planned future capability — not yet available.",
-    assurance: "High",
-  },
-  {
-    id: "enterprise-sso",
-    name: "Enterprise SSO / identity provider",
-    desc: "Participant authenticates through your organization's enterprise identity provider (e.g., Azure AD, Okta). Requires Enterprise arrangement.",
-    personal: false, business: false, enterprise: true,
-    assurance: "High (depends on IdP)",
+    id: "two-step",
+    name: "Two-step verification for your account",
+    desc: "Protects your own LAGDA sign-in with a code from an authenticator app. Every account can turn it on in Security.",
+    personal: true, business: true, enterprise: true,
+    assurance: "Medium to high",
   },
 ];
 
@@ -87,7 +65,7 @@ export function AuthByPlan() {
             Signer authentication methods and plan availability.
           </h1>
           <p style={{ color: "#64748B", ...GF, fontSize: 16, lineHeight: 1.65 }}>
-            Authentication helps increase confidence that the intended participant is acting. Method availability may also depend on organization settings, country, and provider availability.
+            Authentication helps increase confidence that the intended participant is acting. Every plan, Free included, has the same methods today.
           </p>
         </div>
       </section>
@@ -95,7 +73,7 @@ export function AuthByPlan() {
       <PricingSection id="methods">
         <PricingHeading eyebrow="Authentication methods" id="meth-h2" heading="Available methods by plan." />
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-          {AUTH_METHODS.map(({ id, name, desc, personal, business, enterprise, caution, note, assurance }) => (
+          {AUTH_METHODS.map(({ id, name, desc, personal, business, enterprise, caution, assurance }) => (
             <div key={id} style={{ background: "#ffffff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: 12, padding: "16px 20px", boxShadow: "0 1px 4px rgba(7,17,31,0.07)" }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, flexWrap: "wrap", marginBottom: 8 }}>
                 <div style={{ flex: 1 }}>
@@ -103,7 +81,7 @@ export function AuthByPlan() {
                   <p style={{ color: "#64748B", ...GF, fontSize: 13, margin: 0, lineHeight: 1.5 }}>{desc}</p>
                 </div>
                 <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
-                  {[{ label: "Personal", incl: personal }, { label: "Business", incl: business }, { label: "Enterprise", incl: enterprise }].map(({ label, incl }) => (
+                  {[{ label: "Free", incl: personal }, { label: "Personal", incl: personal }, { label: "Business", incl: business }, { label: "Enterprise · soon", incl: enterprise }].map(({ label, incl }) => (
                     <span key={label} style={{
                       ...GM, fontSize: 9, fontWeight: 700, padding: "3px 8px", borderRadius: 4,
                       background: incl ? "rgba(0,120,212,0.1)" : "rgba(0,0,0,0.04)",
@@ -115,7 +93,6 @@ export function AuthByPlan() {
               </div>
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                 <span style={{ color: "#64748B", ...GM, fontSize: 9 }}>ASSURANCE: {assurance}</span>
-                {note && <span style={{ color: "#C9960C", ...GM, fontSize: 9 }}>⚠ {note}</span>}
               </div>
               {caution && (
                 <p style={{ color: "#64748B", ...GM, fontSize: 10, marginTop: 8, borderTop: "1px solid rgba(0,0,0,0.07)", paddingTop: 8 }}>Note: {caution}</p>

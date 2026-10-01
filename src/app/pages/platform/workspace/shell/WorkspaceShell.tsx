@@ -31,7 +31,9 @@ import type React from "react";
 import {
   Suspense, useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState,
 } from "react";
-import { Link, Outlet, useLocation } from "react-router";
+import { Link, Outlet, useLocation, useNavigate } from "react-router";
+import { useWorkspaceAllows } from "../../../../hooks/usePlans";
+import { lastAppPage, DEFAULT_APP_PAGE } from "../../../../services/last-app-page";
 import { Settings, X, Mail, Link2 } from "lucide-react";
 import { usePlatform } from "../../../../context/PlatformContext";
 import { useWorkspaceAccess, useWorkspaceMode, backendRoleFromPlatform, type WorkspaceAccess } from "../../../../hooks/useWorkspaceAccess";
@@ -58,8 +60,39 @@ const LIGHT = "#F0F7FF";
 
 // ── Entry ──────────────────────────────────────────────────────────────────
 
+/**
+ * Free: there is no Workspace to manage (the side panel has no link to it), so
+ * opening /app/workspace — typed in, or an old bookmark — goes straight back
+ * to the page before it. Personal and Business are never moved; a plan not
+ * read yet moves nobody.
+ *
+ * Back is the last app page this tab showed; after a typed-in URL (which
+ * reloads the app) it is the browser's own Back, and Home when there is
+ * nothing to go back to — or Back did not leave Workspace.
+ */
+function useFreeWorkspaceBounce(): boolean {
+  const free = useWorkspaceAllows("personal") === false;
+  const navigate = useNavigate();
+  useEffect(() => {
+    if (!free) return;
+    const home = () => { void navigate(DEFAULT_APP_PAGE, { replace: true }); };
+    const previous = lastAppPage();
+    if (previous !== null) { void navigate(previous, { replace: true }); return; }
+    if (window.history.length <= 1) { home(); return; }
+    window.history.back();
+    const fallback = window.setTimeout(home, FREE_BACK_FALLBACK_MS);
+    return () => { window.clearTimeout(fallback); };
+  }, [free, navigate]);
+  return free;
+}
+
+/** How long Back gets to leave Workspace before Home is used instead. */
+const FREE_BACK_FALLBACK_MS = 1200;
+
 export function WorkspaceShell() {
   const { isReal, workspaceId } = useWorkspaceMode();
+  const bounced = useFreeWorkspaceBounce();
+  if (bounced) return null;
   if (isReal && workspaceId !== null) return <RealWorkspaceShell key={workspaceId} workspaceId={workspaceId} />;
   return <DemoWorkspaceShell />;
 }
@@ -576,7 +609,12 @@ const SHELL_CSS = `
   .ws-shell-header { padding: 16px 0 12px; }
   .ws-identity { gap: 12px; margin-bottom: 14px; }
   .ws-initials { width: 40px; height: 40px; border-radius: 10px; font-size: 13px; }
-  .ws-name { font-size: 20px; }
+  /* Centred, and always stacked in this order — eyebrow, name, role —
+     whatever the name's length: a column, never a wrapping row (a row
+     would put a short name beside "Workspace"). Long names wrap, centred. */
+  .ws-identity-text { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+  .ws-identity-text > * { max-width: 100%; }
+  .ws-name { font-size: 15px; }
   .ws-role { font-size: 12.5px; }
   .ws-demo-pill { display: none; }
   .ws-subtab { padding: 0 12px; font-size: 13.5px; }

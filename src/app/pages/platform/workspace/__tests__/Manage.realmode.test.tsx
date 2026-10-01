@@ -22,6 +22,7 @@ const platform = {
   ],
   switchWorkspace: vi.fn(),
   applyWorkspaceRename: vi.fn(),
+  user: { avatarUrl: "http://api.test/me/avatar?v=1" } as { avatarUrl?: string } | null,
 };
 vi.mock("../../../../context/PlatformContext", () => ({ usePlatform: () => platform }));
 
@@ -234,6 +235,10 @@ describe("Manage overview — real backend", () => {
     expect(within(panel).getByTestId("workspace-row-ws_1")).toHaveTextContent("CURRENT");
     expect(within(panel).getByTestId("workspace-row-ws_2")).toHaveTextContent("New Comer");
     expect(panel).toHaveTextContent("ask one of its owners or administrators for a join link");
+    // The workspace you own shows you, its owner, by your photo; the other keeps its initials.
+    expect(within(panel).getByTestId("workspace-owner-photo-ws_1").getAttribute("src")).toBe("http://api.test/me/avatar?v=1");
+    expect(within(panel).queryByTestId("workspace-owner-photo-ws_2")).toBeNull();
+    expect(within(panel).getByTestId("workspace-row-ws_2")).toHaveTextContent("CB");
     await user.click(within(panel).getByRole("button", { name: "Switch to Cebu Branch" }));
     expect(platform.switchWorkspace).toHaveBeenCalledWith("ws_2");
   });

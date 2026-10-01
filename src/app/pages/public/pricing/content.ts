@@ -19,22 +19,22 @@ export const PRICING_FAQ_GROUPS = [
       {
         id: "which-plan",
         q: "Which plan should I choose?",
-        a: "If you send documents on your own, the Personal plan covers individual use. If you work with a team or need shared templates, branding, and administration, the Business plan is more appropriate. Organizations with high volume, complex requirements, or integration needs should contact sales to discuss Enterprise.",
+        a: "Start on Free to try LAGDA with one document. If you send documents on your own, Personal adds 50 documents a month, your branding, sharing and ready-made templates. If you work with a team, Business adds members, teams, roles and join links. Enterprise is coming soon.",
       },
       {
         id: "free-plan",
-        q: "Is there a free plan or free trial?",
-        a: "LAGDA offers a free trial to help you evaluate the product before committing. Trial terms will be confirmed at launch. Contact sales or create an account to get started.",
+        q: "Is there a free plan?",
+        a: "Yes, a free plan: every new account starts on Free, which sends one document for signing and signs anything sent to you, without limit. There is no time-limited trial. Upgrade to Personal or Business from My Settings › Plan & Billing.",
       },
       {
         id: "change-plans",
         q: "Can I change plans?",
-        a: "Plan-change options and any applicable adjustments will be confirmed in the product. Contact support if you have questions about changing your plan.",
+        a: "Yes. Choose Personal or Business in My Settings › Plan & Billing. A paid plan runs month by month; when a month ends without renewal the account returns to Free, and nothing is deleted.",
       },
       {
         id: "annual-billing",
         q: "Is annual billing available?",
-        a: "Annual billing options may be available. Terms will be confirmed at launch. Contact sales for information on annual pricing.",
+        a: "Not yet. Plans are monthly for now.",
       },
       {
         id: "taxes",
@@ -44,7 +44,7 @@ export const PRICING_FAQ_GROUPS = [
       {
         id: "enterprise-custom",
         q: "Is enterprise pricing customized?",
-        a: "Yes. Enterprise arrangements are tailored to your organization's volume, workspace, integration, and support requirements. Contact sales to discuss.",
+        a: "Enterprise is coming soon and will be priced for each organization. Contact us to be told when it opens.",
       },
     ],
   },
@@ -55,27 +55,27 @@ export const PRICING_FAQ_GROUPS = [
       {
         id: "signing-request-def",
         q: "What counts as a signing request?",
-        a: "A signing request is a transaction sent to one or more participants for action. Whether a request counts toward your allowance depends on plan terms confirmed at launch. Drafts that have not been sent do not typically count.",
+        a: "A document you send for signing to one or more participants. It counts once it is sent; drafts never count. Signing documents other people send you never counts.",
       },
       {
         id: "participants-count",
         q: "How many participants can a request include?",
-        a: "Participant limits per transaction may vary by plan. This will be confirmed at launch.",
+        a: "As many as the document needs, on every plan. A document with five participants still counts as one.",
       },
       {
         id: "limit-reached",
         q: "What happens when a signing-request limit is reached?",
-        a: "Behavior when a limit is reached — such as pausing sending, notifying administrators, or offering additional usage — will be confirmed in the product before launch.",
+        a: "On Free, once your one document is sent, sending pauses until you choose Personal or Business; your drafts are kept. Signing documents sent to you is never limited.",
       },
       {
         id: "storage-measure",
         q: "How is storage measured?",
-        a: "Storage may include documents, completed records, templates, and workspace assets. Measurement approach and limits will be confirmed at launch.",
+        a: "Storage covers documents, completed records, templates and workspace assets: 500 MB on Free, 5 GB on Personal and 50 GB shared on Business.",
       },
       {
         id: "completed-docs",
         q: "Can I still access completed documents if a limit is reached?",
-        a: "Completed document records and audit trails are generally preserved regardless of active sending status. Specific access terms will be confirmed in the product.",
+        a: "Yes. Completed documents and their audit trails stay available on every plan, including Free.",
       },
     ],
   },
@@ -86,17 +86,17 @@ export const PRICING_FAQ_GROUPS = [
       {
         id: "templates-which-plan",
         q: "Which plans include templates?",
-        a: "Personal templates are available on all plans. Shared workspace templates and advanced template management are available on Business and Enterprise plans.",
+        a: "Every plan has templates (Free: 3, blank only). Personal adds ready-made templates and the LAGDA Chatbot. On Business, templates are shared with your team.",
       },
       {
         id: "branding-which-plan",
         q: "Which plans include company branding?",
-        a: "Company branding — including logo, colors, and email customization — is available on Business and Enterprise plans.",
+        a: "Your logo and colours are part of Personal and Business. On Business they are your company's, shown across the workspace.",
       },
       {
         id: "auth-which-plan",
         q: "Which authentication methods are available by plan?",
-        a: "Secure invitation links, verified email access, email OTP, and account authentication are available on all plans. SMS OTP and authenticator app are available on Business and Enterprise. Enterprise SSO requires an Enterprise arrangement. See the Authentication by Plan page for details.",
+        a: "Every plan has the same signer authentication: a secure invitation link and an email code, or signing from a LAGDA account. Every account can also turn on two-step verification for its own sign-in.",
       },
       {
         id: "doc-verification-included",
@@ -106,7 +106,7 @@ export const PRICING_FAQ_GROUPS = [
       {
         id: "api-available",
         q: "Are APIs available?",
-        a: "API and webhook access are available as part of Enterprise arrangements. Contact sales to discuss integration requirements.",
+        a: "Not at the moment.",
       },
     ],
   },
@@ -147,17 +147,17 @@ export const SIGNING_REQUEST_NOTES = [
   {
     icon: "✅",
     title: "Completed, cancelled, and voided",
-    body: "How completed, cancelled, declined, expired, or voided transactions are treated for usage counting will be confirmed in final plan terms.",
+    body: "A sent document counts once, whatever happens next: completing, declining, expiring or voiding it does not give it back.",
   },
   {
     icon: "📊",
     title: "Workspace visibility",
-    body: "Usage toward your allowance is visible in your workspace. Administrators on Business and Enterprise plans can monitor usage across senders.",
+    body: "Your plan and the Free document are shown in My Settings › Plan & Billing; the workspace's monthly totals are in Workspace Settings › Usage.",
   },
   {
     icon: "⚠️",
     title: "Limit-reached behavior",
-    body: "Behavior when a limit is reached — pausing sending, notifying administrators, or offering additional usage — will be confirmed before production launch.",
+    body: "On Free, sending pauses after your one document until you choose Personal or Business. Your drafts are kept, and signing what others send you is never limited.",
   },
 ];
 
@@ -175,10 +175,6 @@ export const STORAGE_CATEGORIES = [
 export const ENTERPRISE_NEEDS = [
   { icon: "📊", title: "High sending volume",        desc: "Organizations that send frequently need volume arrangements beyond standard plan limits." },
   { icon: "👥", title: "Multiple departments",        desc: "Complex organizations may need workspace structures that reflect real organizational boundaries." },
-  { icon: "🔐", title: "Authentication policies",     desc: "Enterprise organizations may require consistent authentication rules applied across all senders." },
-  { icon: "🔑", title: "Enterprise SSO",             desc: "Single sign-on and identity-provider integration for existing enterprise directories." },
-  { icon: "⚙️", title: "API and webhook integration", desc: "Connect LAGDA to existing business systems, document management platforms, or workflows." },
   { icon: "🎨", title: "Custom workspace structure",  desc: "Workspace roles, permissions, and administrative boundaries tailored to your organization." },
-  { icon: "📋", title: "Compliance and security review", desc: "Organizations with security or regulatory requirements may need a formal review process." },
   { icon: "📞", title: "Custom onboarding and support", desc: "Dedicated onboarding, training, and support aligned to your team's rollout needs." },
 ];

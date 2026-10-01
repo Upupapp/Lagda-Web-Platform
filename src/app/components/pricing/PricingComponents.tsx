@@ -10,6 +10,7 @@ import { SectionTabs } from "../public/SectionTabs";
 import { PublicSection, PublicHeading } from "../public/PublicKit";
 import type { PublicSectionProps, PublicHeadingProps } from "../public/PublicKit";
 import { ON_LIGHT } from "../../utils/on-light";
+import { PlanCarousel } from "./PlanCarousel";
 
 const GF = { fontFamily: "'Geist', sans-serif" };
 const GM = { fontFamily: "'Geist Mono', monospace" };
@@ -53,35 +54,48 @@ export function PricingPageShell({ children }: { children: React.ReactNode }) {
 }
 
 // ── Plan card ─────────────────────────────────────────────────────────────────
+//
+// Free shows its ₱0; Personal and Business say their price is confirmed at
+// launch; Enterprise is Coming Soon — dimmed, with its own badge, so it never
+// competes with the plans people can choose today.
 export function PlanCard({ plan }: { plan: LagdaPlan }) {
+  const soon = plan.comingSoon;
   return (
-    <div style={{
-      background: plan.featured ? "rgba(0,120,212,0.05)" : "#ffffff",
-      border: plan.featured ? "1.5px solid rgba(0,120,212,0.35)" : "1px solid rgba(0,0,0,0.08)",
+    <div data-testid={`public-plan-${plan.id}`} style={{
+      background: soon ? "#F8FAFC" : plan.featured ? "rgba(0,120,212,0.05)" : "#ffffff",
+      border: soon ? "1px dashed rgba(7,17,31,0.22)" : plan.featured ? "1.5px solid rgba(0,120,212,0.35)" : "1px solid rgba(0,0,0,0.08)",
       borderRadius: 16, padding: "28px 24px", display: "flex", flexDirection: "column", gap: 0,
-      position: "relative",
-      boxShadow: plan.featured ? "0 8px 24px rgba(0,120,212,0.14)" : "0 1px 4px rgba(7,17,31,0.07)",
+      position: "relative", height: "100%", boxSizing: "border-box",
+      boxShadow: soon ? "none" : plan.featured ? "0 8px 24px rgba(0,120,212,0.14)" : "0 1px 4px rgba(7,17,31,0.07)",
     }}>
-      {plan.featured && (
+      {(plan.featured || soon) && (
         <div style={{
           position: "absolute", top: -12, left: "50%", transform: "translateX(-50%)",
-          background: "#0078D4", color: "white", ...GM, fontSize: 9, fontWeight: 700,
-          letterSpacing: "0.1em", padding: "3px 12px", borderRadius: 999, whiteSpace: "nowrap",
-        }}>RECOMMENDED FOR TEAMS</div>
+          background: soon ? "linear-gradient(135deg, #FDE68A, #F5C542)" : "#0078D4", color: soon ? "#3B2A00" : "white",
+          ...GM, fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", padding: "3px 12px", borderRadius: 999, whiteSpace: "nowrap",
+        }}>{soon ? "COMING SOON" : "RECOMMENDED FOR TEAMS"}</div>
       )}
-      <p style={{ color: ON_LIGHT.azure, ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", marginBottom: 6 }}>
+      <p style={{ color: soon ? ON_LIGHT.slate : ON_LIGHT.azure, ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", marginBottom: 6 }}>
         {plan.name.toUpperCase()}
       </p>
       <p style={{ color: "#07111F", ...GF, fontSize: 20, fontWeight: 800, margin: 0, marginBottom: 4 }}>{plan.name}</p>
-      <p style={{ color: ON_LIGHT.slate, ...GF, fontSize: 13, lineHeight: 1.5, marginBottom: 20 }}>{plan.tagline}</p>
+      <p style={{ color: ON_LIGHT.slate, ...GF, fontSize: 13, lineHeight: 1.5, marginBottom: 20, minHeight: "2.9em" }}>{plan.tagline}</p>
 
       {/* Price */}
-      <div style={{ marginBottom: 20, padding: "14px 0", borderTop: "1px solid rgba(0,0,0,0.08)", borderBottom: "1px solid rgba(0,0,0,0.08)" }}>
-        {plan.contactSales ? (
-          <p style={{ color: "#07111F", ...GF, fontSize: 18, fontWeight: 700, margin: 0 }}>Contact Sales</p>
+      <div style={{ marginBottom: 20, padding: "14px 0", borderTop: "1px solid rgba(0,0,0,0.08)", borderBottom: "1px solid rgba(0,0,0,0.08)", minHeight: 52 }}>
+        {plan.freeForever ? (
+          <>
+            <p style={{ color: "#07111F", ...GF, fontSize: 24, fontWeight: 800, margin: 0, lineHeight: 1 }}>₱0</p>
+            <p style={{ color: ON_LIGHT.slate, ...GF, fontSize: 13, margin: "4px 0 0" }}>Free, always</p>
+          </>
+        ) : soon ? (
+          <>
+            <p style={{ color: "#07111F", ...GF, fontSize: 18, fontWeight: 700, margin: 0 }}>Coming soon</p>
+            <p style={{ color: ON_LIGHT.slate, ...GF, fontSize: 13, margin: "4px 0 0" }}>Priced for your organization</p>
+          </>
         ) : (
           <>
-            <p style={{ color: ON_LIGHT.slate, ...GM, fontSize: 11, margin: "0 0 4px" }}>PRICING</p>
+            <p style={{ color: ON_LIGHT.slate, ...GM, fontSize: 11, margin: "0 0 4px" }}>MONTHLY PRICING</p>
             <p style={{ color: ON_LIGHT.slate, ...GF, fontSize: 13, margin: 0 }}>To be confirmed at launch</p>
           </>
         )}
@@ -91,7 +105,7 @@ export function PlanCard({ plan }: { plan: LagdaPlan }) {
       <ul style={{ listStyle: "none", margin: "0 0 24px", padding: 0, display: "flex", flexDirection: "column", gap: 8 }}>
         {plan.highlights.map((h) => (
           <li key={h} style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
-            <span style={{ color: ON_LIGHT.success, flexShrink: 0, fontSize: 12, marginTop: 2 }}>✓</span>
+            <span style={{ color: soon ? ON_LIGHT.slate : ON_LIGHT.success, flexShrink: 0, fontSize: 12, marginTop: 2 }}>✓</span>
             <span style={{ color: "#334155", ...GF, fontSize: 13, lineHeight: 1.45 }}>{h}</span>
           </li>
         ))}
@@ -122,18 +136,12 @@ export function PlanCard({ plan }: { plan: LagdaPlan }) {
   );
 }
 
-// ── Plan cards grid ───────────────────────────────────────────────────────────
+// ── Plan cards: one carousel on every screen ──────────────────────────────────
 export function PlanCards() {
   return (
-    <div>
-      <div style={{ display: "grid", gap: 20 }} className="plan-cards-grid">
-        {LAGDA_PLANS.map((plan) => <PlanCard key={plan.id} plan={plan} />)}
-      </div>
-      <style>{`
-        .plan-cards-grid { grid-template-columns: repeat(3, 1fr); }
-        @media (max-width: 900px) { .plan-cards-grid { grid-template-columns: 1fr; max-width: 480px; margin: 0 auto; } }
-      `}</style>
-    </div>
+    <PlanCarousel label="LAGDA plans" testId="public-plan-carousel">
+      {LAGDA_PLANS.map((plan) => <PlanCard key={plan.id} plan={plan} />)}
+    </PlanCarousel>
   );
 }
 
@@ -151,6 +159,7 @@ function AvailCell({ value }: { value: string }) {
   if (value === "enterprise")   return <span style={{ color: ON_LIGHT.azure, ...GM, fontSize: 10, fontWeight: 700 }}>Enterprise</span>;
   if (value === "pending")      return <span style={{ color: ON_LIGHT.gold, ...GM, fontSize: 10 }}>Planned</span>;
   if (value === "varies")       return <span style={{ color: ON_LIGHT.slate, ...GF, fontSize: 12 }}>Varies by plan</span>;
+  if (value === "coming-soon")  return <span style={{ color: ON_LIGHT.gold, ...GM, fontSize: 10 }}>Coming soon</span>;
   return <span style={{ color: ON_LIGHT.slate, ...GF, fontSize: 12 }}>{value}</span>;
 }
 
@@ -165,16 +174,19 @@ export function CompareTable() {
 
   return (
     <div style={{ overflowX: "auto" }}>
-      <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 620 }} aria-label="LAGDA plan comparison">
+      <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 760 }} aria-label="LAGDA plan comparison">
         <caption style={{ ...GM, fontSize: 10, color: ON_LIGHT.slate, textAlign: "left", padding: "0 0 12px", letterSpacing: "0.08em" }}>
           LAGDA ESIGNATURE PLAN COMPARISON · LAGDA ENOTARY IS A SEPARATE FUTURE PRODUCT NOT INCLUDED IN ANY PLAN
         </caption>
         <thead>
           <tr style={{ borderBottom: "1px solid rgba(0,0,0,0.1)" }}>
-            <th style={{ textAlign: "left", padding: "12px 16px 12px 0", color: ON_LIGHT.slate, ...GF, fontSize: 13, fontWeight: 600, width: "40%" }}>Feature</th>
+            <th style={{ textAlign: "left", padding: "12px 16px 12px 0", color: ON_LIGHT.slate, ...GF, fontSize: 13, fontWeight: 600, width: "32%" }}>Feature</th>
             {LAGDA_PLANS.map(p => (
-              <th key={p.id} style={{ textAlign: "center", padding: "12px 16px", color: p.featured ? ON_LIGHT.azure : "#07111F", ...GF, fontSize: 13, fontWeight: 700 }}>
+              <th key={p.id} style={{ textAlign: "center", padding: "12px 16px", color: p.featured ? ON_LIGHT.azure : p.comingSoon ? ON_LIGHT.slate : "#07111F", ...GF, fontSize: 13, fontWeight: 700 }}>
                 {p.name}
+                {p.comingSoon && (
+                  <span style={{ display: "block", marginTop: 4, ...GM, fontSize: 9, fontWeight: 700, letterSpacing: "0.08em", color: "#9A6B00" }}>COMING SOON</span>
+                )}
               </th>
             ))}
           </tr>
@@ -183,7 +195,7 @@ export function CompareTable() {
           {COMPARE_GROUPS.map(group => (
             <>
               <tr key={group.id + "-header"}>
-                <td colSpan={4} style={{ padding: "12px 16px 8px 0" }}>
+                <td colSpan={5} style={{ padding: "12px 16px 8px 0" }}>
                   <button
                     onClick={() => toggle(group.id)}
                     aria-expanded={openGroups.has(group.id)}
@@ -201,9 +213,10 @@ export function CompareTable() {
               {openGroups.has(group.id) && group.rows.map(row => (
                 <tr key={row.id} style={{ borderBottom: "1px solid rgba(0,0,0,0.06)" }}>
                   <td style={{ padding: "10px 16px 10px 16px", color: "#334155", ...GF, fontSize: 13 }}>{row.label}</td>
+                  <td style={{ padding: "10px 16px", textAlign: "center" }}><AvailCell value={row.free} /></td>
                   <td style={{ padding: "10px 16px", textAlign: "center" }}><AvailCell value={row.personal} /></td>
                   <td style={{ padding: "10px 16px", textAlign: "center", background: "rgba(0,120,212,0.04)" }}><AvailCell value={row.business} /></td>
-                  <td style={{ padding: "10px 16px", textAlign: "center" }}><AvailCell value={row.enterprise} /></td>
+                  <td style={{ padding: "10px 16px", textAlign: "center", background: "#F8FAFC", opacity: 0.75 }}><AvailCell value={row.enterprise} /></td>
                 </tr>
               ))}
             </>

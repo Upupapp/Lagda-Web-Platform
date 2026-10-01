@@ -55,8 +55,10 @@ describe("settings sections", () => {
 });
 
 describe("pricing config", () => {
-  it("leaves the public plans without prices", () => {
-    expect(LAGDA_PLANS.map(p => p.id)).toEqual(["personal", "business", "enterprise"]);
+  it("lists the live plans publicly, with Enterprise coming soon and no paid prices", () => {
+    expect(LAGDA_PLANS.map(p => p.id)).toEqual(["free", "personal", "business", "enterprise"]);
+    expect(LAGDA_PLANS.filter(p => p.comingSoon).map(p => p.id)).toEqual(["enterprise"]);
+    expect(LAGDA_PLANS.every(p => p.trial === false)).toBe(true);
     for (const p of LAGDA_PLANS) { expect(p.monthlyPrice).toBeNull(); expect(p.annualPrice).toBeNull(); }
     expect(JSON.stringify(COMPARE_GROUPS)).not.toContain("₱");
   });
@@ -74,16 +76,33 @@ describe("pricing config", () => {
     expect(SAMPLE_PLANS.map(p => p.limits.storageBytes.label)).toEqual(["500 MB", "5 GB", "50 GB shared", "Custom"]);
     expect(SAMPLE_PLANS.map(p => p.limits.templates.label)).toEqual(["3", "25", "Unlimited shared", "Unlimited"]);
     expect(SAMPLE_PLANS.map(p => p.support)).toEqual(["Help Center", "Email", "Priority email", "Dedicated"]);
-    expect(SAMPLE_PLANS.map(p => p.trial)).toEqual([null, null, null, "Demo"]);
+    expect(SAMPLE_PLANS.map(p => p.trial)).toEqual([null, null, null, null]);
     expect(SAMPLE_PLANS.map(p => p.branding)).toEqual([false, true, true, true]);
     expect(annualSaving({ monthly: 299, annual: 2990, perUser: false })).toBe(598);
     expect(formatPeso(7990)).toBe("₱7,990");
   });
 
+  it("keeps the public comparison and the in-app catalogue in step", () => {
+    const row = (id: string) => COMPARE_GROUPS.flatMap(g => g.rows).find(r => r.id === id)!;
+    const cols = ["free", "personal", "business", "enterprise"] as const;
+    cols.forEach((col, i) => {
+      const plan = SAMPLE_PLANS[i]!;
+      expect(row("storage")[col]).toBe(plan.limits.storageBytes.label);
+      expect(row("users")[col] === plan.limits.users.label || (col === "enterprise" && row("users")[col] === "Custom")).toBe(true);
+      const sent = plan.limits.signingRequestsPerMonth.value;
+      if (sent !== null) expect(row("documents-sent")[col]).toContain(String(sent));
+      expect(row("branding")[col] === "included").toBe(plan.branding);
+    });
+    // Nothing unbuilt is offered.
+    const text = JSON.stringify(COMPARE_GROUPS) + JSON.stringify(LAGDA_PLANS);
+    for (const gone of ["SMS", "TOTP", "SSO", "API", "Webhook", "provisioning"]) expect(text).not.toContain(gone);
+  });
+
   it("derives every comparison cell from the plans", () => {
     const rows = SAMPLE_COMPARE_GROUPS.flatMap(g => g.rows);
     for (const row of rows) for (const plan of SAMPLE_PLANS) expect(row.cell(plan)).not.toBeUndefined();
-    expect(rows.find(r => r.id === "signer-auth")?.cell(SAMPLE_PLANS[3]!)).toBe("+ SSO");
+    // The same live signer authentication on every plan.
+    expect(new Set(SAMPLE_PLANS.map(p => rows.find(r => r.id === "signer-auth")?.cell(p)))).toEqual(new Set(["Secure link + email code"]));
   });
 
   it("applies no limits beyond the Free document (enforced by the server)", () => {
