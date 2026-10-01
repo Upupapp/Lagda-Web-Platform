@@ -1,9 +1,16 @@
 // The Workspace parts, their tabs, and which of them a person may use.
 //
-// The workspace is four parts — Overview, People, Organisation and Activity
-// log — plus Workspace settings, which sits behind the gear at the top right
-// of the header. People, Organisation and Workspace settings each have a row
-// of tabs; the tab list below is the only place those are defined.
+// The workspace is three parts — Overview, People & Teams and Activity log —
+// plus Workspace settings, which sits behind the gear at the top right of the
+// header and is the only part with a row of tabs (defined below, and only
+// here).
+//
+// People & Teams replaced two parts and six tabs (People: Members, Invite
+// people, Requests; Organisation: Teams, Organization units, Roles). Teams and
+// organization units were the same records, so they are one tree; inviting
+// and requests moved to the Invite people panel (Invitations, and a button on
+// People & Teams); Roles & permissions moved behind the gear. The old paths
+// redirect, so every bookmark still lands somewhere sensible.
 //
 // The gates decide only what is SHOWN; every page still checks for itself,
 // and the backend re-checks every action. They are the gates the pages had
@@ -11,7 +18,7 @@
 
 import type { LucideIcon } from "lucide-react";
 import {
-  LayoutDashboard, Users, UserPlus, Inbox, Network, Building2, ShieldCheck, History,
+  LayoutDashboard, Network, ShieldCheck, History,
   SlidersHorizontal, Palette, CreditCard, BarChart3, Puzzle,
 } from "lucide-react";
 import type { WorkspaceAccess } from "../../../../hooks/useWorkspaceAccess";
@@ -20,15 +27,13 @@ import { isCapabilityInActiveProfile } from "../../../../config/capability-resol
 export const WORKSPACE_ROOT = "/app/workspace";
 export const WORKSPACE_SETTINGS_ROOT = `${WORKSPACE_ROOT}/settings`;
 
-export type WorkspacePartKey = "overview" | "people" | "organisation" | "activity";
+export type WorkspacePartKey = "overview" | "people" | "activity";
 
-/** Where a tab lives: one of the parts, or Workspace settings behind the gear. */
-export type WorkspaceTabGroup = "people" | "organisation" | "settings";
+/** Where a tab lives: Workspace settings behind the gear. */
+export type WorkspaceTabGroup = "settings";
 
 export type WorkspaceTabKey =
-  | "members" | "invite" | "join-requests"
-  | "teams" | "organization" | "roles"
-  | "general" | "branding" | "billing" | "usage" | "integrations";
+  | "general" | "branding" | "billing" | "usage" | "roles" | "integrations";
 
 /** Which figure a part or tab carries, if any. */
 export type BannerCountKey = "members" | "joinRequests" | "invitations" | "joinLinks";
@@ -71,29 +76,13 @@ const ws = (rest: string) => rest === "" ? WORKSPACE_SETTINGS_ROOT : `${WORKSPAC
 
 export const WORKSPACE_PARTS: readonly WorkspacePart[] = [
   { key: "overview", label: "Overview", hint: "What needs attention, and your access", icon: LayoutDashboard, path: WORKSPACE_ROOT },
-  { key: "people", label: "People", hint: "Members, invitations and join requests", icon: Users },
-  { key: "organisation", label: "Organisation", hint: "Teams, organization units, and who can do what", icon: Network },
+  { key: "people", label: "People & Teams", hint: "Your teams and the people in them", icon: Network,
+    path: w("people"), allowed: a => a.can("unit.view") || a.can("membership.view") },
   { key: "activity", label: "Activity log", hint: "A record of changes to members, links, teams and settings", icon: History,
     path: w("activity"), allowed: a => a.can("activity.view") },
 ];
 
 export const WORKSPACE_TABS: readonly WorkspaceTab[] = [
-  // People
-  { key: "members", group: "people", label: "Members", hint: "Who is in this workspace", path: w("members"), icon: Users,
-    segments: ["members"], countKey: "members", allowed: a => a.can("membership.view") },
-  // Email invitations and join links are two ways of doing one thing, so
-  // they share a tab; a switch at the top of the tab moves between them.
-  { key: "invite", group: "people", label: "Invite people", hint: "Invite by email, or share a single-use join link", path: w("invitations"), icon: UserPlus,
-    segments: ["invitations", "join-links", "invite"], countKey: "invitations", allowed: a => a.can("invitation.view") },
-  { key: "join-requests", group: "people", label: "Requests", hint: "People waiting for you to approve or decline them", path: w("join-requests"), icon: Inbox,
-    segments: ["join-requests"], countKey: "joinRequests", attention: true, allowed: a => a.can("membership.role.change") },
-  // Organisation
-  { key: "teams", group: "organisation", label: "Teams", hint: "Departments, offices and other groups of members", path: w("teams"), icon: Network,
-    segments: ["teams"], allowed: a => a.can("unit.view") },
-  { key: "organization", group: "organisation", label: "Organization units", hint: "Departments, offices and titles", path: w("organization"), icon: Building2,
-    segments: ["organization"], allowed: always },
-  { key: "roles", group: "organisation", label: "Roles & permissions", hint: "Who can do what", path: w("roles"), icon: ShieldCheck,
-    segments: ["roles"], allowed: always },
   // Workspace settings (the gear)
   { key: "general", group: "settings", label: "General", hint: "The workspace's name and sign-in policy", path: ws(""), icon: SlidersHorizontal,
     segments: [""], allowed: a => a.can("workspace.update") },
@@ -103,11 +92,16 @@ export const WORKSPACE_TABS: readonly WorkspaceTab[] = [
     segments: ["billing"], allowed: always },
   { key: "usage", group: "settings", label: "Usage", hint: "Signing requests, documents and storage this month", path: ws("usage"), icon: BarChart3,
     segments: ["usage"], allowed: always },
+  { key: "roles", group: "settings", label: "Roles & permissions", hint: "The seven roles and what each may do", path: ws("roles"), icon: ShieldCheck,
+    segments: ["roles"], allowed: always },
   // Post-launch; its route is capability-guarded, so the tab is not shown
   // where the page would be a dead end.
   { key: "integrations", group: "settings", label: "Integrations", hint: "Connected apps — coming soon", path: ws("integrations"), icon: Puzzle,
     segments: ["integrations"], capability: "integrations", allowed: always },
 ];
+
+/** People & Teams, and the old paths that now redirect to it. */
+const PEOPLE_SEGMENTS: readonly string[] = ["people", "members", "teams", "organization", "invitations", "join-links", "join-requests", "invite"];
 
 export interface WorkspaceLocation {
   /** The part the path is in; "settings" behind the gear; null outside the workspace. */
@@ -133,9 +127,10 @@ export function locateWorkspacePath(pathname: string): WorkspaceLocation {
     return { part: "settings", tab: tab?.key ?? null, detail: parts.length > 2 };
   }
   if (first === "activity") return { part: "activity", tab: null, detail: parts.length > 1 };
-  const tab = WORKSPACE_TABS.find(t => t.group !== "settings" && t.segments.includes(first));
-  if (!tab) return { part: null, tab: null, detail: false };
-  return { part: tab.group, tab: tab.key, detail: parts.length > 1 };
+  if (PEOPLE_SEGMENTS.includes(first)) return { part: "people", tab: null, detail: parts.length > 1 };
+  // Roles moved behind the gear; the old path redirects there.
+  if (first === "roles") return { part: "settings", tab: "roles", detail: parts.length > 1 };
+  return { part: null, tab: null, detail: false };
 }
 
 /** A stable key for "which page of the workspace is this", used to re-read the counts on arrival. */
@@ -172,7 +167,7 @@ export function visibleParts(access: WorkspaceAccess, location: WorkspaceLocatio
       if (current || (part.allowed ?? always)(access)) out.push({ ...part, path: part.path, tabs: [] });
       continue;
     }
-    const tabs = visibleTabs(part.key as WorkspaceTabGroup, access, current ? location.tab : null);
+    const tabs = visibleTabs("settings", access, current ? location.tab : null);
     const first = tabs[0];
     if (first) out.push({ ...part, path: first.path, tabs });
   }

@@ -8,6 +8,16 @@
 //   Accepted  Read-only: "Waiting for approval" until the account is a
 //             member of that workspace, then "Joined".
 //
+// ── Received and Sent ──────────────────────────────────────────────────────
+//
+//   /app/invitations?view=sent
+//
+// For someone who may invite people to the current workspace (Business, and
+// a role that may), a switch at the top adds SENT: that workspace's own
+// invitations — pending, accepted, rejected, expired — and the Invite people
+// button at the lower right opens inviting by email, join links and the
+// requests waiting for an answer. Everyone else sees only Received.
+//
 // The tabs say "Rejected"; the wire and the URL say `declined` (the
 // backend's word). `?status=rejected` is accepted as an alias so a
 // hand-typed link still lands on the right tab.
@@ -29,7 +39,11 @@ import {
 } from "../../../services/real/my-invitations.service";
 import { InvitationLetter, INVITATION_STYLES, invitationSubject } from "./InvitationLetter";
 import { DeclineInvitationDialog } from "./DeclineInvitationDialog";
+import { withProcess } from "../../../config/process-screens";
 
+import { useWorkspaceAccess } from "../../../hooks/useWorkspaceAccess";
+import { WorkspaceSentInvitations } from "../workspace/InvitationsPage";
+import { InvitePeopleToggle, useInvitePeopleAccess } from "./InvitePeoplePanel";
 const PREFIX = "invitations";
 
 type Lists = Record<MyInvitationStatus, MyInvitation[]>;
@@ -41,10 +55,44 @@ function statusFromParam(raw: string | null): MyInvitationStatus {
   return "pending";
 }
 
+function ViewSwitch({ view, onChange }: { view: "received" | "sent"; onChange: (v: "received" | "sent") => void }) {
+  const options = [
+    { id: "received" as const, label: "Received", hint: "Invitations to join other workspaces" },
+    { id: "sent" as const, label: "Sent", hint: "Invitations from this workspace" },
+  ];
+  return (
+    <div role="group" aria-label="Received or sent invitations" className="inv-view-switch">
+      {options.map(o => (
+        <button key={o.id} type="button" aria-pressed={view === o.id} title={o.hint} data-testid={`invitations-view-${o.id}`}
+          onClick={() => { onChange(o.id); }}>{o.label}</button>
+      ))}
+    </div>
+  );
+}
+
+const VIEW_SWITCH_STYLES = `
+.inv-view-switch { display: inline-flex; padding: 4px; gap: 4px; background: #EEF2F6; border-radius: 12px; margin-bottom: 16px; }
+.inv-view-switch button { font-family: 'Geist', sans-serif; font-size: 13.5px; font-weight: 600; min-height: 38px; padding: 0 18px;
+  border: none; border-radius: 9px; background: transparent; color: #475569; cursor: pointer; }
+.inv-view-switch button[aria-pressed="true"] { background: #FFFFFF; color: #07111F; box-shadow: 0 1px 3px rgba(7,17,31,0.12); }
+.inv-view-switch button:focus-visible { outline: 3px solid rgba(0,120,212,0.4); outline-offset: 1px; }
+`;
+
 export function MyInvitationsPage() {
   usePageMeta();
   const [params, setParams] = useSearchParams();
   const status = statusFromParam(params.get("status"));
+  const invite = useInvitePeopleAccess();
+  const workspaceAccess = useWorkspaceAccess();
+  const canSeeSent = invite.email && workspaceAccess.can("invitation.view");
+  const view: "received" | "sent" = canSeeSent && params.get("view") === "sent" ? "sent" : "received";
+  const setView = (next: "received" | "sent") => {
+    setParams(prev => {
+      const out = new URLSearchParams(prev);
+      if (next === "sent") out.set("view", "sent"); else out.delete("view");
+      return out;
+    }, { replace: true });
+  };
   const focusId = params.get("invitation");
   const platform = usePlatform();
   const memberOf = new Set((platform.workspaces ?? []).map(w => w.id));
@@ -114,13 +162,13 @@ export function MyInvitationsPage() {
     try {
       let text: string;
       if (verb === "accept") {
-        const result = await myInvitationsService.accept(item.invitationId);
+        const result = await withProcess("invitation-accept", item.workspaceName, () => myInvitationsService.accept(item.invitationId));
         // `pending: false` only when the account was already a member.
         text = result.pending === false
           ? `You are already a member of ${item.workspaceName}.`
           : `${ACCEPTED_NOTICE} “${item.workspaceName}” is now under Accepted.`;
       } else {
-        await myInvitationsService.withdrawDecline(item.invitationId);
+        await withProcess("invitation-undo-decline", "", () => myInvitationsService.withdrawDecline(item.invitationId));
         text = `The rejection was withdrawn. The invitation to ${item.workspaceName} is back under Pending.`;
       }
       setNotice({ tone: "success", text });
@@ -173,10 +221,17 @@ export function MyInvitationsPage() {
   return (
     <div style={{ minWidth: 0, overflowX: "hidden" }}>
       <PageHeader title="Invitations"
-        description="Invitations to join other LAGDA workspaces, sent to your email address. Accepting sends a request that the workspace owner approves." />
+        description={view === "sent"
+          ? "Invitations sent from this workspace. Use Invite people to send more, share a join link, or answer requests."
+          : "Invitations to join other LAGDA workspaces, sent to your email address. Accepting sends a request that the workspace owner approves."} />
       <AppContent style={{ padding: "16px clamp(12px, 3vw, 24px) 40px", boxSizing: "border-box", minWidth: 0 }}>
-        <style>{SHARING_STYLES}{INVITATION_STYLES}</style>
-        {!myInvitationsAvailable() ? (
+        <style>{SHARING_STYLES}{INVITATION_STYLES}{VIEW_SWITCH_STYLES}</style>
+        {canSeeSent && <ViewSwitch view={view} onChange={setView} />}
+        {view === "sent" ? (
+          <div data-testid="invitations-sent">
+            <WorkspaceSentInvitations />
+          </div>
+        ) : !myInvitationsAvailable() ? (
           <EmptyStateLayout icon={<Mail size={26} />} title="Invitations need a connected LAGDA account"
             description="Workspace invitations are sent to real accounts. They are not available in this demonstration." />
         ) : (
@@ -210,6 +265,12 @@ export function MyInvitationsPage() {
           </>
         )}
       </AppContent>
+
+      {platform.currentWorkspace && (
+        <InvitePeopleToggle workspaceId={platform.currentWorkspace.id}
+          initialTab={params.get("panel") === "links" ? "links" : params.get("panel") === "requests" ? "requests" : "email"}
+          openOnArrival={params.get("panel") === "links" || params.get("panel") === "requests"} />
+      )}
 
       {declining && (
         <DeclineInvitationDialog item={declining} onClose={() => setDeclining(null)}

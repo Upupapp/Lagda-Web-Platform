@@ -29,6 +29,7 @@ import {
   brandGradient, BrandWaves,
   type HeaderStat,
 } from "./contacts-ui";
+import { withProcess } from "../../../config/process-screens";
 
 const LAYOUT_KEY = "lagda.contacts.layout";
 
@@ -109,6 +110,9 @@ function ContactsLibrary({ section }: { section: LibrarySection }) {
   const [showFilters,   setShowFilters]   = useState(false);
   const [, setShowBulkMenu] = useState(false);
   const debouncedSearch = useDebounce(searchInput, 280);
+  // A search is under way: the words are still settling, or the list is
+  // being asked for them.
+  const searching = searchInput.trim() !== "" && (searchInput !== debouncedSearch || state.listLoading);
 
   // Two views, one per route: All Contacts (active only) and Archived. The
   // scope / status filters (personal, shared…) are no longer offered, so the
@@ -209,7 +213,7 @@ function ContactsLibrary({ section }: { section: LibrarySection }) {
 
   const restore = async (id: string) => {
     setRestoringId(id);
-    await asyncRestore(id as ContactId);
+    await withProcess("contact-restore", "", () => asyncRestore(id as ContactId));
     setRestoringId(null);
     await asyncLoadList();
   };
@@ -250,6 +254,19 @@ function ContactsLibrary({ section }: { section: LibrarySection }) {
             }}
           />
           <span style={{ position: "absolute", left: 11, top: "50%", transform: "translateY(-50%)", color: SILVER, fontSize: 14 }}>⌕</span>
+          {/* Searching is as-you-type, so no full-screen loading screen: a
+              small spinner in the box while the words settle and the list is
+              asked, announced politely once. */}
+          {searching && (
+            <span data-testid="contact-search-spinner" style={{ position: "absolute", right: 30, top: "50%", transform: "translateY(-50%)", display: "inline-flex", alignItems: "center", gap: 6, ...GF, fontSize: 11.5, color: SLATE, pointerEvents: "none" }}>
+              <span aria-hidden className="ct-search-spin" />
+              Searching…
+            </span>
+          )}
+          <span role="status" style={{ position: "absolute", left: -9999 }}>{searching ? "Searching contacts" : ""}</span>
+          <style>{`.ct-search-spin { width: 12px; height: 12px; border-radius: 50%; border: 2px solid #CBD5E1; border-top-color: #0078D4; animation: ct-search-spin 700ms linear infinite; }
+@keyframes ct-search-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .ct-search-spin { animation: none; } }`}</style>
         </div>
 
         {/* Filter toggle */}
@@ -372,7 +389,7 @@ function ContactsLibrary({ section }: { section: LibrarySection }) {
           </span>
           <div style={{ flex: 1 }} />
           <BulkActionButton label="Add Tag" onClick={() => setShowBulkMenu(v => !v)} />
-          <BulkActionButton label="Archive" onClick={async () => { await asyncBulkArchive(selArr); clearSelect(); void asyncLoadList(); }} />
+          <BulkActionButton label="Archive" onClick={async () => { await withProcess("contact-archive", "", () => asyncBulkArchive(selArr)); clearSelect(); void asyncLoadList(); }} />
           <BulkActionButton label="Add to Group" onClick={async () => {
             // Use first group as demo
             await asyncBulkAddToGroup(selArr, "grp-clients" as ContactGroupId);

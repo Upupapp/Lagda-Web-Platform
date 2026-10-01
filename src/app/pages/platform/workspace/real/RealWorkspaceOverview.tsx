@@ -247,7 +247,7 @@ export function RealWorkspaceOverview({ workspaceId }: { workspaceId: string }) 
       {canInvitations && <HubLink label="Join links" path="/app/workspace/join-links" description="Single-use links that let someone ask to join" />}
       {canInvitations && <HubLink label="Invitations" path="/app/workspace/invitations" description="People invited by email who have not joined yet" />}
       {canTeams && <HubLink label="Teams" path="/app/workspace/teams" description="Departments, offices and other groups of members" />}
-      <HubLink label="Who can do what" path="/app/workspace/roles" description="What each role in this workspace is allowed to do" />
+      <HubLink label="Who can do what" path="/app/workspace/settings/roles" description="What each role in this workspace is allowed to do" />
 
       {access.can("activity.view") && (
         <h2 style={{ ...sectionHeadingStyle, margin: "18px 0 2px" }}>Oversight</h2>

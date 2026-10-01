@@ -28,6 +28,7 @@ import {
   type SharedByMeItem, type AccessRequest,
 } from "../../../services/real/document-sharing.service";
 import { SharingTabs, panelId, tabId } from "./SharingTabs";
+import { withProcess } from "../../../config/process-screens";
 
 export type ByMeSection = "approved" | "pending" | "rejected";
 type Scope = "mine" | "workspace";
@@ -91,7 +92,9 @@ export function SharedByMeSection({ section, onSection }: { section: ByMeSection
     setBusyId(request.requestId);
     setNotice(null);
     try {
-      await documentSharingService.decideAccessRequest(workspaceId, request.requestId, verb);
+      const ws = workspaceId;
+      await withProcess(verb === "approve" ? "access-approve" : verb === "reject" ? "access-reject" : "access-undo", "",
+        () => documentSharingService.decideAccessRequest(ws, request.requestId, verb));
       const who = request.requester.displayName;
       setNotice({
         tone: "success",
@@ -216,7 +219,8 @@ export function SharedByMeSection({ section, onSection }: { section: ByMeSection
           onClose={() => setConfirmDelete(null)}
           onConfirm={async () => {
             try {
-              await documentSharingService.deleteAccessRequest(workspaceId, confirmDelete.requestId);
+              const requestId = confirmDelete.requestId;
+              await withProcess("access-delete", "", () => documentSharingService.deleteAccessRequest(workspaceId, requestId));
               setNotice({ tone: "success", text: "The request was deleted." });
               load(true);
               return null;

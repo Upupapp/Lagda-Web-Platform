@@ -29,7 +29,7 @@ describe("workspace invitation notifications (Invitations section)", () => {
     expect(declined!.title).toBe("Paul declined your invitation to join Globex Legal");
     expect(declined!.body).toBe("The invitation to join Globex Legal as Reviewer was declined. Reason: “Wrong team”");
     // 089 sends the decline to the INVITER, so it opens Manage → Invitations.
-    expect(declined!.actionPath).toBe("/app/workspace/invitations?invitation=inv_7");
+    expect(declined!.actionPath).toBe("/app/invitations?view=sent&invitation=inv_7");
     for (const n of [received, declined]) expect(n!.deliveryClass).toBe("in-app-only");
   });
 
@@ -49,7 +49,7 @@ describe("workspace invitation notifications (Invitations section)", () => {
     feed([row("WORKSPACE_INVITATION_RECEIVED", { workspaceName: "Acme" }), row("WORKSPACE_INVITATION_DECLINED", { workspaceName: "Acme" })]);
     const [n, d] = await realNotificationFeedService.list();
     expect(n!.actionPath).toBe("/app/invitations?status=pending");
-    expect(d!.actionPath).toBe("/app/workspace/invitations");
+    expect(d!.actionPath).toBe("/app/invitations?view=sent");
   });
 
   it("degrades to true, generic wording when the template input is missing", async () => {

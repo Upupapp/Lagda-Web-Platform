@@ -29,6 +29,7 @@ import { usePlatform } from "../../../context/PlatformContext";
 import type { ContactAccount, ContactWorkspaceMember, ContactId } from "../../../models/contacts";
 import { ModalFrame, modalButtonStyle } from "../../../components/contact-requests/ModalFrame";
 import { deleteContact } from "../../../services/contacts-source";
+import { withProcess } from "../../../config/process-screens";
 
 export const C = {
   NAVY: "#07111F",
@@ -356,7 +357,7 @@ export function DeleteContactDialog({ contactId, name, onCancel, onDeleted }: {
   const run = async () => {
     setBusy(true); setError(null);
     try {
-      await deleteContact(platform.currentWorkspace?.id, contactId as ContactId);
+      await withProcess("contact-delete", "", () => deleteContact(platform.currentWorkspace?.id, contactId as ContactId));
       onDeleted();
     } catch {
       setError("The contact could not be deleted. Please try again.");

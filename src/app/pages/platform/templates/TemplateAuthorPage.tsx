@@ -88,6 +88,7 @@ import { useChatSession } from "./author/chatbot/chat-store";
 import type { EngineContext, WritePlan } from "./author/chatbot/engine";
 import { hasUserTurns } from "./author/chatbot/session";
 import { useDraftTypewriter } from "./author/chatbot/useDraftTypewriter";
+import { processScreen } from "../../../config/process-screens";
 
 // The chatbot's engine and knowledge base load when the chat is first opened,
 // not with the editor.
@@ -479,7 +480,7 @@ function AuthorEditorInner({ template, onReload }: { template: DocumentTemplate;
       }
       const content = jsonToFlowDocument(editor.getJSON());
       const { template: updated, resolvedAnchors } = await run(
-        { message: "Generating your document", detail: "Rendering the content into a PDF." },
+        processScreen("template-generate"),
         () => generateTemplateDocument(workspaceId, template.id, { content }),
       );
       if (resolvedAnchors.length > 0) {

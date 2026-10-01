@@ -32,6 +32,8 @@ export interface WorkspaceActivityEntry {
   category: WorkspaceActivityCategory;
   /** e.g. "member.role_changed", "join_request.approved". */
   action: string;
+  /** Who did it (null: the system). Older servers omit it. */
+  actorUserId?: string | null;
   actorName: string | null;
   summary: string;
   subjectLabel: string | null;

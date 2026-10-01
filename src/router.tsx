@@ -28,6 +28,7 @@ import { isCapabilityInActiveProfile } from "./app/config/capability-resolver";
 // Auth routes use an inline <AuthSuspense> wrapper below.
 
 // Auth
+import { ToPeople, ToPerson, ToTeam, ToSentInvitations, ToRoles } from "./app/pages/platform/workspace/legacy-redirects";
 const SignIn = lazy(() =>
   import("./app/pages/auth/SignIn").then((m) => ({ default: m.SignIn })),
 );
@@ -800,6 +801,11 @@ const UseTemplatePage = lazy(() =>
 );
 
 // Workspace Administration (Command 23)
+const PeopleTeamsPage = lazy(() =>
+  import("./app/pages/platform/workspace/PeopleTeamsPage").then((m) => ({
+    default: m.PeopleTeamsPage,
+  })),
+);
 const WorkspaceShell = lazy(() =>
   import("./app/pages/platform/workspace/shell/WorkspaceShell").then((m) => ({
     default: m.WorkspaceShell,
@@ -808,41 +814,6 @@ const WorkspaceShell = lazy(() =>
 const WorkspaceOverviewPage = lazy(() =>
   import("./app/pages/platform/workspace/WorkspaceOverviewPage").then((m) => ({
     default: m.WorkspaceOverviewPage,
-  })),
-);
-const MembersPage = lazy(() =>
-  import("./app/pages/platform/workspace/MembersPage").then((m) => ({
-    default: m.MembersPage,
-  })),
-);
-const MemberDetailPage = lazy(() =>
-  import("./app/pages/platform/workspace/MemberDetailPage").then((m) => ({
-    default: m.MemberDetailPage,
-  })),
-);
-const JoinRequestsPage = lazy(() =>
-  import("./app/pages/platform/workspace/JoinRequestsPage").then((m) => ({
-    default: m.JoinRequestsPage,
-  })),
-);
-const JoinLinksPage = lazy(() =>
-  import("./app/pages/platform/workspace/JoinLinksPage").then((m) => ({
-    default: m.JoinLinksPage,
-  })),
-);
-const InvitationsPage = lazy(() =>
-  import("./app/pages/platform/workspace/InvitationsPage").then((m) => ({
-    default: m.InvitationsPage,
-  })),
-);
-const TeamsPage = lazy(() =>
-  import("./app/pages/platform/workspace/TeamsPage").then((m) => ({
-    default: m.TeamsPage,
-  })),
-);
-const TeamDetailPage = lazy(() =>
-  import("./app/pages/platform/workspace/TeamDetailPage").then((m) => ({
-    default: m.TeamDetailPage,
   })),
 );
 const RolesPage = lazy(() =>
@@ -938,11 +909,6 @@ const SettingsOverviewPage = lazy(() =>
 const SettingsProfilePage = lazy(() =>
   import("./app/pages/platform/settings/ProfilePage").then((m) => ({
     default: m.ProfilePage,
-  })),
-);
-const SettingsOrganizationUnitsPage = lazy(() =>
-  import("./app/pages/platform/settings/organization/OrganizationUnitsPage").then((m) => ({
-    default: m.OrganizationUnitsPage,
   })),
 );
 const SettingsPreferencesPage = lazy(() =>
@@ -2566,19 +2532,21 @@ export const router = createBrowserRouter([
         element: <WorkspaceShell />,
         children: [
           { index: true, element: <PlanGate minimum="personal" feature="The workspace overview"><WorkspaceOverviewPage /></PlanGate> },
-          { path: "members", element: <PlanGate minimum="business" feature="Members"><MembersPage /></PlanGate> },
-          { path: "join-requests", element: <PlanGate minimum="business" feature="Join requests"><JoinRequestsPage /></PlanGate> },
-          { path: "join-links", element: <PlanGate minimum="business" feature="Join links"><JoinLinksPage /></PlanGate> },
-          { path: "invitations", element: <PlanGate minimum="business" feature="Inviting members"><InvitationsPage /></PlanGate> },
-          { path: "teams", element: <PlanGate minimum="business" feature="Teams"><TeamsPage /></PlanGate> },
-          { path: "roles", element: <PlanGate minimum="business" feature="Roles"><RolesPage /></PlanGate> },
+          // People & Teams: members and teams (and what were "organization
+          // units") on one page. The old paths below redirect to it.
+          { path: "people", element: <PlanGate minimum="business" feature="People & Teams"><PeopleTeamsPage /></PlanGate> },
+          { path: "members", element: <ToPeople /> },
+          { path: "teams", element: <ToPeople /> },
+          { path: "organization", element: <ToPeople /> },
+          // Inviting and requests live in the Invitations hub now.
+          { path: "invitations", element: <ToSentInvitations /> },
+          { path: "join-links", element: <ToSentInvitations panel="links" /> },
+          { path: "join-requests", element: <ToSentInvitations panel="requests" /> },
+          { path: "invite", element: <ToSentInvitations /> },
+          { path: "roles", element: <ToRoles /> },
           // Documents lives in the side panel; Manage no longer repeats it.
           { path: "documents", element: <Navigate to="/app/documents" replace /> },
           { path: "activity", element: <PlanGate minimum="business" feature="The activity log"><ActivityPage /></PlanGate> },
-          // Invite people is one tab over the two pages below it.
-          { path: "invite", element: <Navigate to="/app/workspace/invitations" replace /> },
-          // Organisation › Organization units (was /app/settings/organization).
-          { path: "organization", element: <PlanGate minimum="business" feature="Organisation"><SettingsOrganizationUnitsPage /></PlanGate> },
           // Workspace settings, behind the gear. General is the workspace's
           // own settings page; the rest moved here from /app/settings.
           { path: "settings", element: <PlanGate minimum="personal" feature="Workspace settings"><WorkspaceSettingsPage /></PlanGate> },
@@ -2586,6 +2554,9 @@ export const router = createBrowserRouter([
           { path: "settings/billing", element: <SettingsBillingPage /> },
           { path: "settings/billing/invoices/:invoiceId", element: <SettingsInvoicePage /> },
           { path: "settings/usage", element: <PlanGate minimum="personal" feature="Usage"><SettingsUsagePage /></PlanGate> },
+          // Roles & permissions, behind the gear (was /app/workspace/roles).
+          { path: "settings/roles", element: <PlanGate minimum="business" feature="Roles"><RolesPage /></PlanGate> },
+          { path: "settings/roles/:roleId", element: <PlanGate minimum="business" feature="Roles"><RoleDetailPage /></PlanGate> },
           {
             path: "settings/integrations",
             element: (
@@ -2602,9 +2573,9 @@ export const router = createBrowserRouter([
               </CapabilityGuard>
             ),
           },
-          { path: "members/:memberId", element: <PlanGate minimum="business" feature="Members"><MemberDetailPage /></PlanGate> },
-          { path: "teams/:teamId", element: <PlanGate minimum="business" feature="Teams"><TeamDetailPage /></PlanGate> },
-          { path: "roles/:roleId", element: <PlanGate minimum="business" feature="Roles"><RoleDetailPage /></PlanGate> },
+          { path: "members/:memberId", element: <ToPerson /> },
+          { path: "teams/:teamId", element: <ToTeam /> },
+          { path: "roles/:roleId", element: <ToRoles /> },
         ],
       },
       // Settings (Command 24) — ONE layout route, sixteen children.

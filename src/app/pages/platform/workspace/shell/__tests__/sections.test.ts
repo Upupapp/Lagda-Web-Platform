@@ -14,14 +14,14 @@ describe("workspace parts and tabs", () => {
   it("places every workspace path, including detail pages, in its part and tab", () => {
     expect(locateWorkspacePath("/app/workspace")).toEqual({ part: "overview", tab: null, detail: false });
     expect(locateWorkspacePath("/app/workspace/")).toEqual({ part: "overview", tab: null, detail: false });
-    expect(locateWorkspacePath("/app/workspace/members")).toEqual({ part: "people", tab: "members", detail: false });
-    expect(locateWorkspacePath("/app/workspace/members/m_1")).toEqual({ part: "people", tab: "members", detail: true });
-    expect(locateWorkspacePath("/app/workspace/invitations")).toEqual({ part: "people", tab: "invite", detail: false });
-    expect(locateWorkspacePath("/app/workspace/join-links")).toEqual({ part: "people", tab: "invite", detail: false });
-    expect(locateWorkspacePath("/app/workspace/join-requests")).toEqual({ part: "people", tab: "join-requests", detail: false });
-    expect(locateWorkspacePath("/app/workspace/teams/un_fin")).toEqual({ part: "organisation", tab: "teams", detail: true });
-    expect(locateWorkspacePath("/app/workspace/organization")).toEqual({ part: "organisation", tab: "organization", detail: false });
-    expect(locateWorkspacePath("/app/workspace/roles/sender")).toEqual({ part: "organisation", tab: "roles", detail: true });
+    expect(locateWorkspacePath("/app/workspace/people")).toEqual({ part: "people", tab: null, detail: false });
+    // The old People and Organisation paths redirect to People & Teams.
+    for (const old of ["members", "members/m_1", "teams", "teams/un_fin", "organization", "invitations", "join-links", "join-requests"]) {
+      expect(locateWorkspacePath(`/app/workspace/${old}`).part, old).toBe("people");
+    }
+    // Roles moved behind the gear.
+    expect(locateWorkspacePath("/app/workspace/settings/roles")).toEqual({ part: "settings", tab: "roles", detail: false });
+    expect(locateWorkspacePath("/app/workspace/settings/roles/sender")).toEqual({ part: "settings", tab: "roles", detail: true });
     expect(locateWorkspacePath("/app/workspace/activity")).toEqual({ part: "activity", tab: null, detail: false });
     expect(locateWorkspacePath("/app/workspace/settings")).toEqual({ part: "settings", tab: "general", detail: false });
     expect(locateWorkspacePath("/app/workspace/settings/billing/invoices/INV-1")).toEqual({ part: "settings", tab: "billing", detail: true });
@@ -32,7 +32,7 @@ describe("workspace parts and tabs", () => {
 
   it("gives each page a stable key for re-reading the counts", () => {
     expect(sectionKeyForPath("/app/workspace")).toBe("overview");
-    expect(sectionKeyForPath("/app/workspace/members/m_1")).toBe("members");
+    expect(sectionKeyForPath("/app/workspace/people")).toBe("people");
     expect(sectionKeyForPath("/app/workspace/activity")).toBe("activity");
     expect(sectionKeyForPath("/app/settings")).toBeNull();
   });
@@ -44,12 +44,17 @@ describe("workspace parts and tabs", () => {
   it("gates parts and tabs by capability, and always keeps the current one", () => {
     const parts = (role: keyof typeof ROLE_CAPABILITIES, path = "/app/workspace") =>
       visibleParts(accessFor(role), locateWorkspacePath(path)).map(p => `${p.key}:${p.tabs.map(t => t.key).join(",")}`);
-    expect(parts("owner")).toEqual([
-      "overview:", "people:members,invite,join-requests", "organisation:teams,organization,roles", "activity:",
-    ]);
-    expect(parts("member")).toEqual(["overview:", "organisation:teams,organization,roles"]);
+    expect(parts("owner")).toEqual(["overview:", "people:", "activity:"]);
+    // A New Comer sees the teams (read-only); no activity log.
+    expect(parts("member")).toEqual(["overview:", "people:"]);
     expect(parts("auditor")).toContain("activity:");
-    expect(parts("member", "/app/workspace/members")).toContain("people:members");
+    expect(parts("reviewer")).toEqual(["overview:"]);
+    expect(parts("reviewer", "/app/workspace/people")).toContain("people:");
+  });
+
+  it("puts Roles & permissions behind the gear, after Usage", () => {
+    expect(visibleTabs("settings", accessFor("owner"), null).map(t => t.key)).toContain("roles");
+    expect(visibleTabs("settings", accessFor("member"), null).map(t => t.key)).toContain("roles");
   });
 
   it("opens the gear on General for those who may change it, otherwise on Branding", () => {

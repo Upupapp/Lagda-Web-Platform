@@ -29,6 +29,7 @@
 // slow opacity breath, so the modal still reads as "busy" without any movement.
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
+import type { LucideIcon } from "lucide-react";
 import { Z } from "../../utils/z-index";
 
 /** The official LAGDA shield, shared with LagdaLoader. */
@@ -58,6 +59,9 @@ export interface ProcessingModalProps {
   detail?: string;
   /** Optional phase checklist for operations with distinct stages. */
   steps?: ProcessingStep[];
+  /** What KIND of work this is — a small icon-and-label tag above the message
+   *  ("Invitation", "Integrity check"), so the screen fits the process. */
+  tag?: { label: string; icon?: LucideIcon };
   /** Fades the modal out. The parent unmounts after EXIT_MS. */
   isExiting?: boolean;
   children?: ReactNode;
@@ -258,6 +262,7 @@ export function ProcessingModal({
   message,
   detail,
   steps,
+  tag,
   isExiting = false,
   children,
 }: ProcessingModalProps) {
@@ -350,6 +355,17 @@ export function ProcessingModal({
         }}
       >
         <ProcessingMark />
+
+        {tag && (
+          <span data-testid="processing-tag" style={{
+            ...GF, display: "inline-flex", alignItems: "center", gap: 6, marginBottom: -6,
+            padding: "4px 10px", borderRadius: 999, background: "#EBF4FC", border: "1px solid #BFDBFE",
+            color: "#005A9E", fontSize: 11, fontWeight: 700, letterSpacing: "0.04em", textTransform: "uppercase",
+          }}>
+            {tag.icon && <tag.icon size={13} aria-hidden />}
+            {tag.label}
+          </span>
+        )}
 
         <div style={{ display: "grid", gap: 6, textAlign: "center", width: "100%" }}>
           {/* The single live region for the whole modal. The message is the

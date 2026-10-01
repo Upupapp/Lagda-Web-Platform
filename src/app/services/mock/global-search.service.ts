@@ -532,7 +532,7 @@ function buildRoleResults(query: string): GlobalSearchResult[] {
         { field: "description", label: "Description", text: r.description },
       ]),
       matchScore:       computeScore(query, r.name, r.description),
-      destination:      { type: "platform-route", path: `/app/workspace/roles/${r.id}`, requiresPermission: "manage_team" },
+      destination:      { type: "platform-route", path: `/app/workspace/settings/roles/${r.id}`, requiresPermission: "manage_team" },
       availability:     "available",
       demonstrationOnly: true,
     }));

@@ -83,8 +83,9 @@ export function invitationsPath(status?: MyInvitationStatus, invitationId?: stri
 }
 
 /** Manage → Invitations, where an INVITER sees the invitations they sent. */
-export const SENT_INVITATIONS_PATH = "/app/workspace/invitations";
-export const sentInvitationPath = (invitationId: string) => `${SENT_INVITATIONS_PATH}?invitation=${enc(invitationId)}`;
+/** The workspace's own invitations: Invitations › Sent. */
+export const SENT_INVITATIONS_PATH = "/app/invitations?view=sent";
+export const sentInvitationPath = (invitationId: string) => `${SENT_INVITATIONS_PATH}&invitation=${enc(invitationId)}`;
 
 /** A notice link that opens an invitation directly (the bell goes straight there). */
 export function isInvitationsLink(path: string | null): path is string {

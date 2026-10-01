@@ -24,6 +24,7 @@ import {
   ContactRequestButtons, ContactRequestHistory,
 } from "../../../components/contact-requests/ContactRequestControls";
 import { contactRequestsPath, type ContactRequestKind } from "../../../models/contact-requests";
+import { withProcess } from "../../../config/process-screens";
 
 const GF    = { fontFamily: "'Geist', sans-serif" };
 const GM    = { fontFamily: "'Geist Mono', monospace" };
@@ -207,13 +208,13 @@ function ContactDetail() {
   const handleArchive = async () => {
     if (!contact) return;
     setArchiving(true);
-    await asyncArchive(contact.id);
+    await withProcess("contact-archive", contact.name, () => asyncArchive(contact.id));
     setArchiving(false);
   };
 
   const handleRestore = async () => {
     if (!contact) return;
-    await asyncRestore(contact.id);
+    await withProcess("contact-restore", "", () => asyncRestore(contact.id));
   };
 
   if (loading) {

@@ -75,7 +75,7 @@ export function WorkspaceBrandCard({
           <Fact label="Your role" testId="brand-card-role">
             <span>{roleLabel}</span>
             <span data-testid="your-privileges" style={{ display: "block", color: SLATE, fontSize: 12, marginTop: 2 }}>{privilegesLine}</span>
-            <Link to="/app/workspace/roles" style={{ ...GF, fontSize: 12, fontWeight: 600, color: AZURE, textDecoration: "none", display: "inline-block", marginTop: 4 }}>
+            <Link to="/app/workspace/settings/roles" style={{ ...GF, fontSize: 12, fontWeight: 600, color: AZURE, textDecoration: "none", display: "inline-block", marginTop: 4 }}>
               What your role can do →
             </Link>
           </Fact>

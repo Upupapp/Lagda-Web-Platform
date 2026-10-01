@@ -1,10 +1,9 @@
 // The Workspace shell with a real backend: one header for every
 // /app/workspace/* page, with the gear to Workspace Settings at its top
-// right, four parts (Overview, People, Organisation, Activity log) and a row
-// of tabs for the parts that have them — gated by what the viewer's role may
-// use, counts from the API, the active part and tab following the URL
-// (detail pages keep theirs active), sections rendered inside the shell
-// without a second page header, and focus moved to the new section's heading.
+// right, three parts (Overview, People & Teams, Activity log) — gated by what
+// the viewer's role may use, the requests waiting shown on People & Teams —
+// sections rendered inside the shell without a second page header, focus
+// moved to the new section's heading, and Roles & permissions behind the gear.
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, within, waitFor } from "@testing-library/react";
@@ -28,19 +27,14 @@ vi.mock("../../../../context/PlatformContext", () => ({ usePlatform: () => platf
 
 import { WorkspaceShell } from "../shell/WorkspaceShell";
 import { WorkspaceOverviewPage } from "../WorkspaceOverviewPage";
-import { MembersPage } from "../MembersPage";
-import { MemberDetailPage } from "../MemberDetailPage";
-import { JoinRequestsPage } from "../JoinRequestsPage";
-import { JoinLinksPage } from "../JoinLinksPage";
-import { InvitationsPage } from "../InvitationsPage";
-import { TeamsPage } from "../TeamsPage";
-import { TeamDetailPage } from "../TeamDetailPage";
+import { PeopleTeamsPage } from "../PeopleTeamsPage";
 import { RolesPage } from "../RolesPage";
 import { RoleDetailPage } from "../RoleDetailPage";
 import { SignedDocumentsPage } from "../SignedDocumentsPage";
 import { ActivityPage } from "../ActivityPage";
 import { WorkspaceSettingsPage } from "../WorkspaceSettingsPage";
 import { ROLE_CAPABILITIES } from "../../../../models/workspace-role-policy";
+import { resetPlanStore } from "../../../../hooks/usePlans";
 
 function json(status: number, body: unknown): Response {
   return new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json" } });
@@ -75,6 +69,7 @@ let accessRole = "owner";
 const calls: { method: string; path: string }[] = [];
 
 beforeEach(() => {
+  resetPlanStore();
   calls.length = 0;
   platform.role = "owner";
   accessRole = "owner";
@@ -94,6 +89,8 @@ beforeEach(() => {
     if (method === "GET" && path === "/workspaces/ws_1/units") return ok({ units: UNITS });
     if (method === "GET" && /\/units\/[^/]+\/members$/.test(path)) return ok({ members: [] });
     if (method === "GET" && path === "/workspaces/ws_1/activity") return ok({ events: [], nextCursor: null });
+    if (method === "GET" && path === "/workspaces/ws_1/plan") return ok({ plan: "business", ownerIsYou: true, ownerName: "Ana Reyes", paidUntil: null });
+    if (method === "GET" && path === "/workspaces/ws_1/people") return ok({ people: [] });
     return Promise.resolve(json(404, { error: { code: "resource_not_found", message: `${method} ${path}` } }));
   }));
 });
@@ -109,18 +106,12 @@ function renderShellAt(path: string) {
       <Routes>
         <Route path="/app/workspace" element={<WorkspaceShell />}>
           <Route index element={<WorkspaceOverviewPage />} />
-          <Route path="members" element={<MembersPage />} />
-          <Route path="join-requests" element={<JoinRequestsPage />} />
-          <Route path="join-links" element={<JoinLinksPage />} />
-          <Route path="invitations" element={<InvitationsPage />} />
-          <Route path="teams" element={<TeamsPage />} />
-          <Route path="roles" element={<RolesPage />} />
+          <Route path="people" element={<PeopleTeamsPage />} />
           <Route path="documents" element={<SignedDocumentsPage />} />
           <Route path="activity" element={<ActivityPage />} />
           <Route path="settings" element={<WorkspaceSettingsPage />} />
-          <Route path="members/:memberId" element={<MemberDetailPage />} />
-          <Route path="teams/:teamId" element={<TeamDetailPage />} />
-          <Route path="roles/:roleId" element={<RoleDetailPage />} />
+          <Route path="settings/roles" element={<RolesPage />} />
+          <Route path="settings/roles/:roleId" element={<RoleDetailPage />} />
         </Route>
       </Routes>
       <LocationProbe />
@@ -133,31 +124,24 @@ const partKeys = () =>
 const tabKeys = () =>
   within(screen.getByTestId("workspace-tabs")).getAllByRole("link").map(l => l.getAttribute("data-testid"));
 
-describe("Workspace shell — parts and tabs by capability", () => {
-  it("gives an owner every part and tab, in order, with the overview's real counts", async () => {
-    renderShellAt("/app/workspace/members");
+describe("Workspace shell — parts by capability", () => {
+  it("gives an owner the three parts, with the requests waiting on People & Teams", async () => {
+    renderShellAt("/app/workspace/people");
     expect(await screen.findByTestId("workspace-name")).toHaveTextContent("Reyes Law Office");
-    expect(partKeys()).toEqual(["part-overview", "part-people", "part-organisation", "part-activity"]);
-    expect(tabKeys()).toEqual(["tab-members", "tab-invite", "tab-join-requests"]);
-
-    await waitFor(() => expect(screen.getByTestId("tab-count-members")).toHaveTextContent("3"));
-    await waitFor(() => expect(screen.getByTestId("tab-count-join-requests")).toHaveTextContent("2"));
-    await waitFor(() => expect(screen.getByTestId("tab-count-invite")).toHaveTextContent("2"));
-    // Waiting join requests are flagged, on the tab and on People; totals are not.
-    expect(screen.getByTestId("tab-count-join-requests")).toHaveAttribute("data-tone", "attention");
-    expect(screen.getByTestId("tab-count-members")).not.toHaveAttribute("data-tone");
-    expect(screen.getByTestId("part-count-people")).toHaveTextContent("2");
-    // The count is part of the accessible name.
-    expect(screen.getByRole("link", { name: /Requests, 2 waiting/ })).toHaveAttribute("href", "/app/workspace/join-requests");
-    expect(screen.getByRole("link", { name: /People, 2 waiting/ })).toHaveAttribute("href", "/app/workspace/members");
+    expect(partKeys()).toEqual(["part-overview", "part-people", "part-activity"]);
+    expect(screen.getByTestId("part-people")).toHaveTextContent("People & Teams");
+    // No row of tabs outside Workspace settings any more.
+    expect(screen.queryByTestId("workspace-tabs")).toBeNull();
+    await waitFor(() => expect(screen.getByTestId("part-count-people")).toHaveTextContent("2"));
+    expect(screen.getByRole("link", { name: /People & Teams, 2 waiting/ })).toHaveAttribute("href", "/app/workspace/people");
   });
 
-  it("puts Teams, Organization units and Roles & permissions under Organisation", async () => {
-    renderShellAt("/app/workspace/teams");
-    await screen.findByTestId("team-un_fin");
-    expect(tabKeys()).toEqual(["tab-teams", "tab-organization", "tab-roles"]);
-    expect(screen.getByTestId("tab-roles")).toHaveTextContent("Roles & permissions");
-    expect(screen.getByTestId("part-organisation")).toHaveAttribute("data-active", "true");
+  it("draws the teams as one tree, newest first, with sub-teams inside their team", async () => {
+    renderShellAt("/app/workspace/people");
+    const tree = await screen.findByTestId("team-tree");
+    const finance = within(tree).getByRole("region", { name: "Finance" });
+    expect(within(finance).getByRole("region", { name: "Cebu Office" })).toBeInTheDocument();
+    expect(screen.getByTestId("part-people")).toHaveAttribute("data-active", "true");
   });
 
   it("gives a New Comer only what their role reaches and never calls admin-only endpoints", async () => {
@@ -166,14 +150,14 @@ describe("Workspace shell — parts and tabs by capability", () => {
     renderShellAt("/app/workspace");
     await screen.findByTestId("workspace-name");
     await waitFor(() => expect(screen.getByTestId("your-role")).toHaveTextContent("New Comer"));
-    expect(partKeys()).toEqual(["part-overview", "part-organisation"]);
+    expect(partKeys()).toEqual(["part-overview", "part-people"]);
     // The gear opens the settings a New Comer may read.
     expect(screen.getByTestId("workspace-settings-gear")).toHaveAttribute("href", "/app/workspace/settings/branding");
     const forbidden = ["/members", "/join-requests", "/join-tickets", "/invitations", "/activity"];
     expect(calls.filter(c => forbidden.some(f => c.path.endsWith(f)))).toEqual([]);
   });
 
-  it("shows an auditor the activity log, and People is for administrators", async () => {
+  it("shows an auditor the activity log, and People & Teams is for those who may see people or teams", async () => {
     platform.role = "auditor";
     accessRole = "auditor";
     renderShellAt("/app/workspace");
@@ -200,31 +184,38 @@ describe("Workspace shell — Workspace Settings behind the gear", () => {
     expect(gear).toBe(screen.getByTestId("workspace-settings-gear"));
     expect(gear).toHaveAttribute("href", "/app/workspace/settings");
     expect(gear).toHaveTextContent("Workspace Settings");
-    // No part is "Workspace settings": the gear is its only way in.
     expect(partKeys()).not.toContain("part-settings");
 
     await user.click(gear);
     expect(screen.getByTestId("location")).toHaveTextContent("/app/workspace/settings");
     expect(await screen.findByTestId("workspace-settings-heading")).toHaveTextContent("Workspace Settings");
-    expect(tabKeys().slice(0, 4)).toEqual(["tab-general", "tab-branding", "tab-billing", "tab-usage"]);
+    expect(tabKeys()).toEqual(["tab-general", "tab-branding", "tab-billing", "tab-usage", "tab-roles"]);
+    expect(screen.getByTestId("tab-roles")).toHaveTextContent("Roles & permissions");
     expect(screen.getByTestId("workspace-settings-gear")).toHaveAttribute("data-active", "true");
     expect(within(screen.getByTestId("workspace-parts")).getAllByRole("link").filter(l => l.getAttribute("data-active") === "true")).toEqual([]);
     expect(screen.getByTestId("workspace-settings-close")).toHaveAttribute("href", "/app/workspace");
   });
+
+  it("keeps Roles & permissions active on a role's page", async () => {
+    renderShellAt("/app/workspace/settings/roles/sender");
+    expect(await screen.findByTestId("role-abilities")).toBeInTheDocument();
+    expect(screen.getByTestId("tab-roles")).toHaveAttribute("data-active", "true");
+  });
 });
 
 describe("Workspace shell — Invite people", () => {
-  it("is one tab over email invitations and join links, with a switch between them", async () => {
+  it("is one button at the lower right, opening email invitations, join links and requests", async () => {
     const user = userEvent.setup();
-    renderShellAt("/app/workspace/invitations");
-    const email = await screen.findByTestId("invite-method-email");
-    expect(email).toHaveAttribute("aria-current", "page");
-    expect(screen.getByTestId("tab-invite")).toHaveAttribute("data-active", "true");
-
-    await user.click(screen.getByTestId("invite-method-link"));
-    expect(screen.getByTestId("location")).toHaveTextContent("/app/workspace/join-links");
-    expect(screen.getByTestId("invite-method-link")).toHaveAttribute("aria-current", "page");
-    expect(screen.getByTestId("tab-invite")).toHaveAttribute("data-active", "true");
+    renderShellAt("/app/workspace/people");
+    const toggle = await screen.findByTestId("invite-people-toggle");
+    await waitFor(() => expect(screen.getByTestId("invite-people-pending")).toHaveTextContent("2"));
+    await user.click(toggle);
+    const panel = screen.getByTestId("invite-people-panel");
+    expect(within(panel).getAllByRole("tab").map(t => t.textContent?.replace(/\d+$/, "").trim())).toEqual(["Invite by email", "Join links", "Requests"]);
+    await user.click(within(panel).getByTestId("invite-tab-links"));
+    expect(await within(panel).findByTestId("join-links-section")).toBeInTheDocument();
+    await user.click(within(panel).getByTestId("invite-tab-requests"));
+    expect(await within(panel).findByTestId("join-requests-section")).toBeInTheDocument();
   });
 });
 
@@ -237,76 +228,54 @@ describe("Workspace shell — sections render inside it", () => {
     const section = screen.getByTestId("workspace-section");
     expect(within(section).getByRole("heading", { level: 2, name: "Overview" })).toBeInTheDocument();
     expect(within(section).getByTestId("needs-attention")).toHaveTextContent("Liza Tan asked to join");
-    // The banners replace the hub's list of Manage pages.
     expect(within(section).queryByRole("link", { name: /^Members/ })).toBeNull();
     expect(within(section).getByRole("link", { name: /Signing routes/ })).toHaveAttribute("href", "/app/workflow");
-    // The overview reads the shell's figures instead of asking again.
     expect(calls.filter(c => c.path === "/workspaces/ws_1/members")).toHaveLength(1);
   });
 
   it.each([
-    ["/app/workspace/teams", "Teams"],
-    ["/app/workspace/roles", "Who can do what"],
+    ["/app/workspace/people", "People & Teams"],
+    ["/app/workspace/settings/roles", "Who can do what"],
     ["/app/workspace/activity", "Activity log"],
-    ["/app/workspace/join-requests", "Join requests"],
   ])("renders %s under the shell's header with its own section heading", async (path, heading) => {
     renderShellAt(path);
     const section = await screen.findByTestId("workspace-section");
-    expect(within(section).getByRole("heading", { level: 2, name: heading })).toBeInTheDocument();
+    expect(await within(section).findByRole("heading", { level: 2, name: heading })).toBeInTheDocument();
     expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
     expect(within(section).queryByRole("navigation", { name: "Breadcrumb" })).toBeNull();
   });
 });
 
-describe("Workspace shell — the active part and tab follow the URL", () => {
-  it("marks the current tab and moves with a part click, keeping the header mounted", async () => {
+describe("Workspace shell — the active part follows the URL", () => {
+  it("moves with a part click, keeping the header mounted", async () => {
     const user = userEvent.setup();
-    renderShellAt("/app/workspace/teams");
-    await screen.findByTestId("team-un_fin");
+    renderShellAt("/app/workspace/people");
+    await screen.findByTestId("team-tree");
     const header = screen.getByTestId("workspace-name");
-    expect(screen.getByTestId("tab-teams")).toHaveAttribute("aria-current", "page");
-    expect(screen.getByTestId("tab-teams")).toHaveAttribute("data-active", "true");
-
-    await user.click(screen.getByTestId("part-people"));
-    expect(screen.getByTestId("location")).toHaveTextContent("/app/workspace/members");
-    expect(await screen.findByRole("heading", { level: 2, name: "Member Directory" })).toBeInTheDocument();
-    expect(screen.getByTestId("tab-members")).toHaveAttribute("aria-current", "page");
     expect(screen.getByTestId("part-people")).toHaveAttribute("data-active", "true");
-    expect(screen.getByTestId("part-organisation")).toHaveAttribute("data-active", "false");
-    // Same element: the shell was not rebuilt by the section change.
+
+    await user.click(screen.getByTestId("part-activity"));
+    expect(screen.getByTestId("location")).toHaveTextContent("/app/workspace/activity");
+    expect(await screen.findByRole("heading", { level: 2, name: "Activity log" })).toBeInTheDocument();
+    expect(screen.getByTestId("part-activity")).toHaveAttribute("data-active", "true");
+    expect(screen.getByTestId("part-people")).toHaveAttribute("data-active", "false");
     expect(screen.getByTestId("workspace-name")).toBe(header);
   });
 
   it("moves focus to the new section's heading, but not on first arrival", async () => {
     const user = userEvent.setup();
-    renderShellAt("/app/workspace/teams");
-    const first = await screen.findByRole("heading", { level: 2, name: "Teams" });
+    renderShellAt("/app/workspace/people");
+    const first = await screen.findByRole("heading", { level: 2, name: "People & Teams" });
     expect(document.activeElement).not.toBe(first);
 
-    await user.click(screen.getByTestId("tab-roles"));
-    const heading = await screen.findByRole("heading", { level: 2, name: "Who can do what" });
+    await user.click(screen.getByTestId("part-activity"));
+    const heading = await screen.findByRole("heading", { level: 2, name: "Activity log" });
     await waitFor(() => expect(document.activeElement).toBe(heading));
   });
 
-  it("keeps the parent tab active on a detail page, with a way back", async () => {
-    renderShellAt("/app/workspace/teams/un_fin");
-    expect(await screen.findByRole("heading", { level: 2, name: "Finance" })).toBeInTheDocument();
-    expect(screen.getByTestId("tab-teams")).toHaveAttribute("data-active", "true");
-    expect(screen.getByTestId("tab-teams")).toHaveAttribute("aria-current", "true");
-    const crumbs = within(screen.getByTestId("workspace-section")).getByRole("navigation", { name: "Breadcrumb" });
-    expect(within(crumbs).getByRole("link", { name: "Teams" })).toHaveAttribute("href", "/app/workspace/teams");
-    expect(within(crumbs).getByText("Finance")).toHaveAttribute("aria-current", "page");
-  });
-
-  it("keeps Members active on a member's page and Roles on a role's page", async () => {
-    const { unmount } = renderShellAt("/app/workspace/members/m_sender");
-    expect(await screen.findByRole("heading", { level: 2, name: "Jose Cruz" })).toBeInTheDocument();
-    expect(screen.getByTestId("tab-members")).toHaveAttribute("data-active", "true");
-    expect(screen.getByTestId("part-people")).toHaveAttribute("data-active", "true");
-    unmount();
-
-    renderShellAt("/app/workspace/roles/sender");
-    expect(await screen.findByTestId("role-abilities")).toBeInTheDocument();
-    expect(screen.getByTestId("tab-roles")).toHaveAttribute("data-active", "true");
+  it("opens a person's panel from a link to them", async () => {
+    renderShellAt("/app/workspace/people?member=m_sender");
+    const panel = await screen.findByTestId("member-panel");
+    expect(within(panel).getByRole("heading", { level: 2 })).toHaveTextContent("Jose Cruz");
   });
 });

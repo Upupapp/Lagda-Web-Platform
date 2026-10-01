@@ -25,6 +25,7 @@ import {
   type DocumentShare, type AccessRequest, type DocumentParticipant,
 } from "../../services/real/document-sharing.service";
 import { GF, NAVY, SLATE, BORDER, StatusChip, SharingNotice, TextField, SmallButton, type ChipTone } from "./SharingPrimitives";
+import { withProcess } from "../../config/process-screens";
 
 export interface ShareTarget {
   documentId: string;
@@ -96,7 +97,7 @@ export function ShareDocumentDialog({ workspaceId, target, mode = "add", onClose
   async function removeShare(share: DocumentShare) {
     setBusy(true);
     try {
-      await documentSharingService.removeShare(workspaceId, target.documentId, share.shareId);
+      await withProcess("share-remove", shareName(share), () => documentSharingService.removeShare(workspaceId, target.documentId, share.shareId));
       setShares(list => list.filter(s => s.shareId !== share.shareId));
       setNotice({ tone: "success", text: `${shareName(share)} no longer has access.` });
       changed();
@@ -111,7 +112,7 @@ export function ShareDocumentDialog({ workspaceId, target, mode = "add", onClose
   async function removeRequest(request: AccessRequest) {
     setBusy(true);
     try {
-      await documentSharingService.decideAccessRequest(workspaceId, request.requestId, "remove");
+      await withProcess("access-remove", "", () => documentSharingService.decideAccessRequest(workspaceId, request.requestId, "remove"));
       setRequests(list => list.filter(r => r.requestId !== request.requestId));
       setNotice({ tone: "success", text: `${request.requester.displayName} no longer has access.` });
       changed();
@@ -288,7 +289,8 @@ function AddShareForm({ workspaceId, target, autoFocus, onShared }: {
     setError(null);
     setBusy(true);
     try {
-      const share = await documentSharingService.createShare(workspaceId, target.documentId, { email, fullName });
+      const share = await withProcess("share-create", fullName.trim() || email.trim(),
+        () => documentSharingService.createShare(workspaceId, target.documentId, { email, fullName }));
       setEmail("");
       setFullName("");
       onShared(share);
@@ -338,10 +340,10 @@ function EditShareView({ workspaceId, target, share, onClose, onCancel, onSaved 
     setError(null);
     setBusy(true);
     try {
-      const result = await documentSharingService.updateShare(workspaceId, target.documentId, share.shareId, {
+      const result = await withProcess("share-update", "", () => documentSharingService.updateShare(workspaceId, target.documentId, share.shareId, {
         ...(emailChanged ? { email } : {}),
         ...(nameChanged ? { fullName } : {}),
-      });
+      }));
       onSaved(result.share, result.previous);
     } catch (err) {
       setError(sharingErrorMessage(err, "edit"));
@@ -441,7 +443,8 @@ function ContactsPicker({ workspaceId, target, excluded, onShared }: {
   const add = async (c: PickableContact) => {
     setBusy(c.id); setError(null);
     try {
-      const share = await documentSharingService.createShare(workspaceId, target.documentId, { email: c.email, fullName: c.name });
+      const share = await withProcess("share-create", c.name || c.email,
+        () => documentSharingService.createShare(workspaceId, target.documentId, { email: c.email, fullName: c.name }));
       onShared(share);
     } catch (err) {
       setError(sharingErrorMessage(err, "share"));

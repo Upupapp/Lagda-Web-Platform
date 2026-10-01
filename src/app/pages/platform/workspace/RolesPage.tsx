@@ -1,4 +1,4 @@
-// /app/workspace/roles — Roles directory.
+// /app/workspace/settings/roles — Roles directory.
 // System roles (read-only) and custom roles (editable). Create new custom role.
 // Demo build: fictional system and custom roles. With a real backend the
 // page is the read-only matrix of the seven fixed roles — see
@@ -111,7 +111,7 @@ function CreateRoleModal({ onDone, onCancel }: { onDone: () => void; onCancel: (
 
 function RoleCard({ role, isSystem }: { role: { id: string; name: string; type: string; status: string; memberCount: number; isOwnerRole: boolean }; isSystem: boolean }) {
   return (
-    <Link to={`/app/workspace/roles/${role.id}`} style={{ textDecoration: "none" }}>
+    <Link to={`/app/workspace/settings/roles/${role.id}`} style={{ textDecoration: "none" }}>
       <div style={{ background: "#FFFFFF", border: "1.5px solid #E3E8EF", borderRadius: 12, padding: "14px 18px", cursor: "pointer", transition: "border-color 0.15s", opacity: role.status === "archived" ? 0.65 : 1 }}
         onMouseEnter={e => (e.currentTarget.style.borderColor = AZURE)}
         onMouseLeave={e => (e.currentTarget.style.borderColor = "#E3E8EF")}>

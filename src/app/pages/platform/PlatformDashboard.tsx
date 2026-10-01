@@ -670,7 +670,7 @@ function WorkspaceTeamSummary({ memberCount, workspaceName, planLabel, isLoading
 }) {
   return (
     <section aria-label="Workspace and team summary" data-guide="dashboard-team" style={{ marginBottom: 20 }}>
-      <SectionHeader label="Team" to="/app/workspace/members" linkLabel="Manage" />
+      <SectionHeader label="Team" to="/app/workspace/people" linkLabel="Manage" />
       <Card style={{ padding: "16px" }}>
         {isLoading ? (
           <>

@@ -88,7 +88,7 @@ function WorkspaceSettingsLinks() {
   const access = useWorkspaceAccess();
   const links = [
     { to: workspaceSettingsEntry(access), label: "Workspace Settings", hint: "Name, branding, billing, usage and integrations", icon: Settings },
-    { to: "/app/workspace/members", label: "People", hint: "Members, invitations and join requests", icon: Users },
+    { to: "/app/workspace/people", label: "People & Teams", hint: "Your teams and the people in them", icon: Users },
     { to: "/app/workspace/organization", label: "Organisation", hint: "Teams, organization units and roles", icon: Network },
   ];
   return (

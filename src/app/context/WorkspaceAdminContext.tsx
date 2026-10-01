@@ -41,6 +41,7 @@ import {
 import { USE_REAL_BACKEND } from "../services/backend-flag";
 import { getDemoMemberAccess } from "../services/real/workspace-join.service";
 import { usePlatform } from "./PlatformContext";
+import { withProcess } from "../config/process-screens";
 
 // ── State ─────────────────────────────────────────────────────────────────────
 
@@ -388,11 +389,10 @@ export function WorkspaceAdminProvider({ children }: { children: ReactNode }) {
   const asyncRemoveMember = useCallback(async (id: WorkspaceMemberId) => {
     dispatch({ type: "ACTION_LOADING" });
     try {
-      if (isReal) {
-        await realWorkspaceAdminService.removeMember(workspaceId, id);
-      } else {
-        await mockWorkspaceAdminService.removeMember(id);
-      }
+      await withProcess("member-remove", "", async () => {
+        if (isReal) await realWorkspaceAdminService.removeMember(workspaceId, id);
+        else await mockWorkspaceAdminService.removeMember(id);
+      });
       dispatch({ type: "ACTION_DONE" });
     } catch { dispatch({ type: "ACTION_ERROR", error: "Failed to remove member." }); }
   }, [isReal, workspaceId]);
@@ -400,12 +400,14 @@ export function WorkspaceAdminProvider({ children }: { children: ReactNode }) {
   const asyncUpdateMemberRole = useCallback(async (id: WorkspaceMemberId, roleId: WorkspaceRoleId, roleName: string) => {
     dispatch({ type: "ACTION_LOADING" });
     try {
-      if (isReal) {
-        await realWorkspaceAdminService.changeMemberRole(
-          workspaceId, id, roleId as unknown as BackendWorkspaceRole);
-      } else {
-        await mockWorkspaceAdminService.updateMemberRole(id, roleId, roleName);
-      }
+      await withProcess("member-role", "", async () => {
+        if (isReal) {
+          await realWorkspaceAdminService.changeMemberRole(
+            workspaceId, id, roleId as unknown as BackendWorkspaceRole);
+        } else {
+          await mockWorkspaceAdminService.updateMemberRole(id, roleId, roleName);
+        }
+      });
       dispatch({ type: "ACTION_DONE" });
     } catch { dispatch({ type: "ACTION_ERROR", error: "Failed to update role." }); }
   }, [isReal, workspaceId]);
@@ -439,13 +441,15 @@ export function WorkspaceAdminProvider({ children }: { children: ReactNode }) {
   const asyncSendInvitation = useCallback(async (input: WorkspaceInviteInput): Promise<boolean> => {
     dispatch({ type: "ACTION_LOADING" });
     try {
-      if (isReal) {
-        // Required by the backend, not optional — a lost response must not
-        // re-invite the same address on retry. One key per logical send.
-        await realWorkspaceAdminService.sendInvitation(workspaceId, input, crypto.randomUUID());
-      } else {
-        await mockWorkspaceAdminService.sendInvitation(input);
-      }
+      await withProcess("member-invite", input.email, async () => {
+        if (isReal) {
+          // Required by the backend, not optional — a lost response must not
+          // re-invite the same address on retry. One key per logical send.
+          await realWorkspaceAdminService.sendInvitation(workspaceId, input, crypto.randomUUID());
+        } else {
+          await mockWorkspaceAdminService.sendInvitation(input);
+        }
+      });
       dispatch({ type: "ACTION_DONE" });
       return true;
     } catch {

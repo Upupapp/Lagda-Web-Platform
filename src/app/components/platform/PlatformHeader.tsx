@@ -37,6 +37,8 @@ function deriveTitle(pathname: string): string {
     return parts.length > 2 ? "Templates › Ready-made › Preview" : "Templates › Ready-made";
   }
   if (parts[0] === "settings" && parts[1] === "plan") return "My Settings › Plan & Billing";
+  if (parts[0] === "workspace" && parts[1] === "people") return "Workspace › People & Teams";
+  if (parts[0] === "workspace" && parts[1] === "settings" && parts[2] === "roles") return "Workspace › Settings › Roles & Permissions";
   // A request id is noise; the approver sees whose request on the page.
   if (parts[0] === "plan-requests") return parts.length > 1 ? "Upgrade requests › Request" : "Upgrade requests";
   return parts

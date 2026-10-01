@@ -58,7 +58,7 @@ function MatrixTable() {
             <th scope="col" style={{ ...GM, fontSize: 10, color: SILVER, textTransform: "uppercase", letterSpacing: "0.05em", textAlign: "left", padding: "10px 16px" }}>Ability</th>
             {ROLE_ORDER.map(r => (
               <th key={r} scope="col" style={{ ...GF, fontSize: 12, fontWeight: 700, color: NAVY, padding: "10px 6px", textAlign: "center" }}>
-                <Link to={`/app/workspace/roles/${r}`} style={{ color: NAVY, textDecoration: "none" }}>{REAL_ROLE_LABELS[r]}</Link>
+                <Link to={`/app/workspace/settings/roles/${r}`} style={{ color: NAVY, textDecoration: "none" }}>{REAL_ROLE_LABELS[r]}</Link>
               </th>
             ))}
           </tr>
@@ -88,7 +88,7 @@ function RoleCard({ role, count }: { role: BackendWorkspaceRole; count: number |
   return (
     <li data-testid={`role-card-${role}`} style={{ ...cardStyle, padding: "16px 18px", listStyle: "none" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 8, flexWrap: "wrap" }}>
-        <Link to={`/app/workspace/roles/${role}`} style={{ ...GF, fontSize: 15, fontWeight: 700, color: NAVY, textDecoration: "none" }}>{REAL_ROLE_LABELS[role]}</Link>
+        <Link to={`/app/workspace/settings/roles/${role}`} style={{ ...GF, fontSize: 15, fontWeight: 700, color: NAVY, textDecoration: "none" }}>{REAL_ROLE_LABELS[role]}</Link>
         {count !== null && <span style={{ ...GM, fontSize: 11, color: AZURE }}>{count} {count === 1 ? "member" : "members"}</span>}
       </div>
       <p style={{ ...GF, fontSize: 12, color: SLATE, margin: "4px 0 10px", lineHeight: 1.5 }}>{ROLE_SUMMARIES[role]}</p>
@@ -146,14 +146,14 @@ export function RealRolesPage({ workspaceId }: { workspaceId: string }) {
 export function RealRoleDetailPage({ workspaceId, roleId }: { workspaceId: string; roleId: string }) {
   const { isNarrow } = useViewport();
   const roster = useRoster(workspaceId);
-  const crumbsBase = [{ label: "Workspace", to: "/app/workspace" }, { label: "Who can do what", to: "/app/workspace/roles" }];
+  const crumbsBase = [{ label: "Workspace", to: "/app/workspace" }, { label: "Who can do what", to: "/app/workspace/settings/roles" }];
 
   if (!isBackendWorkspaceRole(roleId)) {
     return (
       <ManagePage crumbs={[...crumbsBase, { label: "Role" }]} title="Role not found">
         <div style={{ ...cardStyle, padding: 28, textAlign: "center" }}>
           <p style={{ ...GF, fontSize: 14, color: SLATE, margin: "0 0 10px" }}>There is no such role in this workspace.</p>
-          <Link to="/app/workspace/roles" style={{ ...GF, fontSize: 13, fontWeight: 600, color: AZURE, textDecoration: "none" }}>See all roles</Link>
+          <Link to="/app/workspace/settings/roles" style={{ ...GF, fontSize: 13, fontWeight: 600, color: AZURE, textDecoration: "none" }}>See all roles</Link>
         </div>
       </ManagePage>
     );

@@ -42,6 +42,7 @@ import {
   ProcessingModal,
   PROCESSING_EXIT_MS,
   type ProcessingStep,
+  type ProcessingModalProps,
 } from "../components/brand/ProcessingModal";
 
 export interface ProcessingOptions {
@@ -51,6 +52,8 @@ export interface ProcessingOptions {
   detail?: string;
   /** Optional phase checklist for multi-stage work. */
   steps?: ProcessingStep[];
+  /** Optional icon-and-label tag naming the kind of work (process-screens.ts). */
+  tag?: ProcessingModalProps["tag"];
   /**
    * Hold the CALLER for at least this long, even if the work finishes sooner.
    *
@@ -95,6 +98,17 @@ const ProcessingContext = createContext<ProcessingContextValue>({
 });
 
 const APPEAR_DELAY_MS = 180;
+
+/**
+ * The mounted provider's `run`, for code that is not a component (or is one
+ * of many small ones): `runProcess` uses it, and without a provider — a unit
+ * test — simply runs the work, exactly as the context default does.
+ */
+let activeRun: ProcessingContextValue["run"] | null = null;
+
+export function runProcess<T>(options: ProcessingOptions, work: () => Promise<T>): Promise<T> {
+  return activeRun ? activeRun(options, () => work()) : work();
+}
 
 /**
  * How long the modal stays up once it has appeared.
@@ -190,6 +204,11 @@ export function ProcessingProvider({ children }: { children: ReactNode }) {
     [show, hide, update],
   );
 
+  useEffect(() => {
+    activeRun = run;
+    return () => { if (activeRun === run) activeRun = null; };
+  }, [run]);
+
   useEffect(
     () => () => {
       clearTimeout(appearTimer.current);
@@ -212,6 +231,7 @@ export function ProcessingProvider({ children }: { children: ReactNode }) {
           message={options.message}
           detail={options.detail}
           steps={options.steps}
+          tag={options.tag}
           isExiting={exiting}
         />
       )}

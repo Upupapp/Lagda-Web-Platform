@@ -179,7 +179,7 @@ describe("Manage overview — real backend", () => {
     expect(card).toHaveTextContent("Workspace overview");
     expect(within(card).getByTestId("brand-card-sender")).toHaveTextContent("Each sender's own name");
     expect(within(card).getByTestId("your-privileges")).toHaveTextContent("Both privileges come with your role.");
-    expect(within(card).getByRole("link", { name: "What your role can do →" })).toHaveAttribute("href", "/app/workspace/roles");
+    expect(within(card).getByRole("link", { name: "What your role can do →" })).toHaveAttribute("href", "/app/workspace/settings/roles");
     expect(within(card).getByTestId("edit-branding-link")).toHaveAttribute("href", "/app/workspace/settings/branding");
     expect(card).toHaveTextContent("Powered by LAGDA");
     // Nothing customised yet: an owner is invited to add a logo and colours.
@@ -401,10 +401,10 @@ describe("Activity log — real backend", () => {
     expect(screen.getByRole("heading", { name: "Today" })).toBeInTheDocument();
     expect(screen.getByTestId("activity-e2")).toBeInTheDocument();
 
-    await user.click(screen.getByRole("button", { name: "Load more" }));
+    await user.click(screen.getByRole("button", { name: "Load older entries" }));
     expect(await screen.findByTestId("activity-e3")).toHaveTextContent("created the workspace");
     expect(calls.some(c => c.url.includes("before=cur_2"))).toBe(true);
-    expect(screen.queryByRole("button", { name: "Load more" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Load older entries" })).toBeNull();
 
     await user.click(screen.getByRole("button", { name: "Join links" }));
     expect(await screen.findByTestId("activity-e9")).toBeInTheDocument();
