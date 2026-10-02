@@ -36,6 +36,12 @@ let generation = 0;
 const listeners = new Set<Listener>();
 
 const emit = () => { for (const l of listeners) l(); };
+
+/** Calls back whenever the person's plan is (re)read — for views that follow it, like invoices. */
+export function onPlanRead(listener: () => void): () => void {
+  listeners.add(listener);
+  return () => { listeners.delete(listener); };
+}
 const subscribe = (l: Listener) => { listeners.add(l); return () => { listeners.delete(l); }; };
 const key = (workspaceId: string) => `${account ?? ""}|${workspaceId}`;
 

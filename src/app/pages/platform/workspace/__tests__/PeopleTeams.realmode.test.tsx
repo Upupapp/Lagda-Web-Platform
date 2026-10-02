@@ -127,7 +127,7 @@ describe("a person's panel", () => {
     await waitFor(() => expect(calls.some(c => c.method === "DELETE" && c.path === "/workspaces/ws_1/units/un_old/members/u3")).toBe(true));
     const added = calls.find(c => c.method === "POST" && c.path === "/workspaces/ws_1/units/un_new/members");
     expect(added?.body).toEqual({ userId: "u3", title: "Analyst" });
-    expect(await screen.findByText("Jose Cruz is now in Cebu Office.")).toBeInTheDocument();
+    expect((await screen.findAllByText("Jose Cruz is now in Cebu Office.")).length).toBeGreaterThan(0);
   });
 
   it("swaps positions with a teammate: both titles change", async () => {

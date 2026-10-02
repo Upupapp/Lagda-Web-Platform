@@ -47,6 +47,8 @@ let notif: Record<string, unknown>;
 let role: string;
 let failNotificationPatch = false;
 let workspacePlan = "business";
+let workspacePlanOwnerIsYou = true;
+let invoices: Record<string, unknown>[] = [];
 const calls: { method: string; path: string; body: unknown }[] = [];
 
 const USAGE = {
@@ -65,6 +67,11 @@ const SESSIONS = [
 beforeEach(() => {
   resetPlanStore();
   workspacePlan = "business";
+  workspacePlanOwnerIsYou = true;
+  invoices = [
+    { number: "LAGDA-2026-0002", requestId: "pur_2", plan: "business", planName: "Business", amountPesos: 799, issuedAt: "2026-09-20T01:00:00.000Z", periodEnd: "2026-10-20T01:00:00.000Z" },
+    { number: "LAGDA-2026-0001", requestId: "pur_1", plan: "personal", planName: "Personal", amountPesos: 299, issuedAt: "2026-08-20T01:00:00.000Z", periodEnd: "2026-09-20T01:00:00.000Z" },
+  ];
   calls.length = 0;
   role = "owner";
   failNotificationPatch = false;
@@ -108,7 +115,11 @@ beforeEach(() => {
     }
     if (path === "/workspaces/ws_1/usage") return Promise.resolve(json(200, USAGE));
     // 093. The workspace's plan is its owner's.
-    if (path === "/workspaces/ws_1/plan") return Promise.resolve(json(200, { plan: workspacePlan, ownerIsYou: true, ownerName: "Carmen Reyes", paidUntil: "2026-10-30T09:00:00.000Z" }));
+    if (path === "/workspaces/ws_1/plan") return Promise.resolve(json(200, { plan: workspacePlan, ownerIsYou: workspacePlanOwnerIsYou, ownerName: "Carmen Reyes", paidUntil: "2026-10-30T09:00:00.000Z" }));
+    if (path === "/me/plan/invoices") return Promise.resolve(json(200, { invoices }));
+    if (/^\/me\/plan\/invoices\/[^/]+\/pdf$/.test(path)) {
+      return Promise.resolve(new Response(new Blob(["%PDF-1.7 test"], { type: "application/pdf" }), { status: 200, headers: { "content-type": "application/pdf" } }));
+    }
     if (path === "/me/plan") return Promise.resolve(json(200, {
       plan: "business", storedPlan: "business", paidUntil: "2026-10-30T09:00:00.000Z", autoRenew: false,
       freeDocumentsUsed: 0, freeDocumentLimit: 1, pendingRequest: null, approver: false, upgradesAvailable: true,
@@ -435,36 +446,68 @@ describe("billing & plan", () => {
     expect(within(table).getByText("Priority email")).toBeInTheDocument();
   });
 
-  it("shows one sample invoice billed to the workspace owner", async () => {
+  it("lists the owner's invoices, one per approved plan change, newest first, billed to the owner", async () => {
     renderAt("/app/workspace/settings/billing");
-    const card = screen.getByTestId("sample-invoice-card");
-    expect(card).toHaveTextContent("SAMPLE INVOICE — NO PAYMENT HAS BEEN TAKEN");
-    expect(card).toHaveTextContent("INV-SAMPLE-0001");
-    expect(card).toHaveTextContent("₱7,990");
-    expect(await within(card).findByText("Carmen Reyes")).toBeInTheDocument();
-    expect(card).toHaveTextContent("owner@reyes.ph");
-    expect(card).toHaveTextContent("Reyes Law Office");
-    expect(within(card).getByRole("link", { name: /View invoice/ })).toHaveAttribute("href", "/app/workspace/settings/billing/invoices/INV-SAMPLE-0001");
+    const list = await screen.findByTestId("invoice-list");
+    const items = within(list).getAllByRole("listitem");
+    expect(items.map(i => i.getAttribute("data-testid"))).toEqual(["invoice-LAGDA-2026-0002", "invoice-LAGDA-2026-0001"]);
+    expect(items[0]).toHaveTextContent("Business");
+    expect(items[0]).toHaveTextContent("₱799");
+    expect(items[1]).toHaveTextContent("Personal");
+    expect(items[1]).toHaveTextContent("Test — not paid");
+    expect(await within(items[0]!).findByText(/Carmen Reyes/)).toBeInTheDocument();
+    expect(within(items[0]!).getByRole("link", { name: /View/ })).toHaveAttribute("href", "/app/workspace/settings/billing/invoices/LAGDA-2026-0002");
+  });
+
+  it("says so when there are no invoices yet", async () => {
+    invoices = [];
+    renderAt("/app/workspace/settings/billing");
+    expect(await screen.findByTestId("no-invoices")).toBeInTheDocument();
+  });
+
+  it("shows invoices to the owner only", async () => {
+    workspacePlanOwnerIsYou = false;
+    renderAt("/app/workspace/settings/billing");
+    expect(await screen.findByTestId("invoices-owner-only")).toBeInTheDocument();
+    expect(screen.queryByTestId("invoice-list")).toBeNull();
   });
 });
 
-describe("sample invoice page", () => {
-  it("shows the full sample invoice with VAT, status and the audit trail", async () => {
-    renderAt("/app/workspace/settings/billing/invoices/INV-SAMPLE-0001");
-    expect(screen.getByTestId("invoice-sample-banner")).toHaveTextContent("SAMPLE INVOICE — NO PAYMENT HAS BEEN TAKEN");
-    expect(screen.getByTestId("invoice-number")).toHaveTextContent("INV-SAMPLE-0001");
-    expect(screen.getByTestId("invoice-total")).toHaveTextContent("₱7,990.00");
-    expect(screen.getByTestId("invoice-vat")).toHaveTextContent("₱856.07");
-    expect(screen.getByTestId("invoice-status")).toHaveTextContent("Sample — not paid");
+describe("invoice page", () => {
+  it("shows a test-mode invoice with VAT, status and the audit trail", async () => {
+    renderAt("/app/workspace/settings/billing/invoices/LAGDA-2026-0002");
+    expect(await screen.findByTestId("invoice-number")).toHaveTextContent("LAGDA-2026-0002");
+    expect(screen.getByTestId("invoice-sample-banner")).toHaveTextContent("TEST MODE — NO PAYMENT HAS BEEN TAKEN");
+    expect(screen.getByTestId("invoice-total")).toHaveTextContent("₱799.00");
+    expect(screen.getByTestId("invoice-vat")).toHaveTextContent("₱85.61");
+    expect(screen.getByTestId("invoice-status")).toHaveTextContent("Test — not paid");
     const audit = screen.getByTestId("invoice-audit");
-    expect(within(audit).getAllByTestId("audit-event").map(e => e.textContent)).toEqual(["Issued", "Viewed", "Marked as sample"]);
+    expect(within(audit).getAllByTestId("audit-event").map(e => e.textContent)).toEqual(["Requested", "Approved", "Issued", "Marked as test"]);
     expect(await screen.findByTestId("invoice-page-billed-name")).toHaveTextContent("Carmen Reyes");
     expect(screen.getByRole("button", { name: /Print/ })).toBeInTheDocument();
   });
 
-  it("says not found for any other invoice number", () => {
-    renderAt("/app/workspace/settings/billing/invoices/INV-0002");
-    expect(screen.getByRole("heading", { name: "Invoice not found" })).toBeInTheDocument();
+  it("downloads the invoice as a PDF built by the server", async () => {
+    const user = userEvent.setup();
+    const created: Blob[] = [];
+    vi.stubGlobal("URL", Object.assign(URL, { createObjectURL: (b: Blob) => { created.push(b); return "blob:invoice"; }, revokeObjectURL: () => undefined }));
+    renderAt("/app/workspace/settings/billing/invoices/LAGDA-2026-0002");
+    await user.click(await screen.findByTestId("download-pdf"));
+    await waitFor(() => expect(created).toHaveLength(1));
+    expect(created[0]!.type).toBe("application/pdf");
+    const asked = calls.find(c => c.path === "/me/plan/invoices/LAGDA-2026-0002/pdf");
+    expect(asked).toBeDefined();
+  });
+
+  it("shows the LAGDA logo and the QR block", async () => {
+    renderAt("/app/workspace/settings/billing/invoices/LAGDA-2026-0001");
+    expect(await screen.findByTestId("invoice-logo")).toHaveAttribute("alt", "LAGDA");
+    expect(screen.getByTestId("invoice-qr")).toHaveTextContent("Open this invoice in LAGDA");
+  });
+
+  it("says not found for a number that is not on the account", async () => {
+    renderAt("/app/workspace/settings/billing/invoices/LAGDA-2026-0009");
+    expect(await screen.findByRole("heading", { name: "Invoice not found" })).toBeInTheDocument();
   });
 });
 

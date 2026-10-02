@@ -572,6 +572,9 @@ function MemberPanel({ workspaceId, person, unitId, branding, teams, teamsOfPers
   const [confirmRemove, setConfirmRemove] = useState<"team" | "workspace" | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  // What just happened, shown at the foot of the panel where the person is
+  // looking — the page's notice sits behind the overlay.
+  const [saved, setSaved] = useState<string | null>(null);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === "Escape" && !busy) onClose(); };
@@ -582,8 +585,10 @@ function MemberPanel({ workspaceId, person, unitId, branding, teams, teamsOfPers
   const run = async (work: () => Promise<void>, message: string, close = false) => {
     setBusy(true);
     setError(null);
+    setSaved(null);
     try {
       await work();
+      if (!close) setSaved(message);
       onChanged(message, close);
     } catch (err) {
       setError(errorMessage(err, "That didn't work. Please try again."));
@@ -762,6 +767,11 @@ function MemberPanel({ workspaceId, person, unitId, branding, teams, teamsOfPers
           </section>
         )}
         {member && <p className="pt-panel-foot">Joined {formatDate(member.joinedAt)}</p>}
+        {(error || saved) && (
+          <div className="pt-panel-status" role={error ? "alert" : "status"} data-testid="panel-status" data-tone={error ? "error" : "ok"}>
+            {error ?? saved}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -1104,6 +1114,9 @@ const PEOPLE_TEAMS_CSS = `
 .pt-danger h3 { color: #991B1B; }
 .pt-confirm { background: #FEF2F2; border: 1px solid #FECACA; border-radius: 10px; padding: 12px; }
 .pt-confirm p { font-family: 'Geist', sans-serif; font-size: 13px; color: #7F1D1D; margin: 0 0 10px; line-height: 1.5; }
+.pt-panel-status { position: sticky; bottom: 0; margin: 0 !important; padding: 12px 24px; font-family: 'Geist', sans-serif; font-size: 13px; font-weight: 600; line-height: 1.4; }
+.pt-panel-status[data-tone="ok"] { background: #F0FDF4; color: #14532D; border-top: 1px solid #BBF7D0; }
+.pt-panel-status[data-tone="error"] { background: #FEF2F2; color: #7F1D1D; border-top: 1px solid #FECACA; }
 .pt-panel-foot { font-family: 'Geist Mono', monospace; font-size: 11px; color: ${SILVER}; margin-top: 14px; padding-bottom: 22px; }
 
 /* Tablets: the three actions share one even row under the title. */

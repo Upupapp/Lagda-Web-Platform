@@ -4,7 +4,8 @@
 // There is no fixture twin: the demo build has every feature, so the plan
 // hooks answer "business" there without calling anything.
 
-import { apiRequest } from "../api-client";
+import { API_BASE_URL } from "../backend-flag";
+import { apiRequest, ApiError } from "../api-client";
 
 export type PlanId = "free" | "personal" | "business" | "enterprise";
 export type RequestablePlan = "personal" | "business";
@@ -87,7 +88,39 @@ export const PLAN_ERROR = {
 
 const one = (requestId: string) => `/plan-requests/${encodeURIComponent(requestId)}`;
 
+/** One approved plan change (test mode: no payment was taken). */
+export interface PlanInvoice {
+  number: string;
+  requestId: string;
+  plan: RequestablePlan;
+  planName: string;
+  amountPesos: number;
+  /** When it was approved: the invoice date and the start of the month it buys. */
+  issuedAt: string;
+  periodEnd: string;
+}
+
+/** The invoice's PDF, built by the server. `workspace` is the name printed under "Billed to". */
+async function invoicePdf(number: string, workspace: string): Promise<Blob> {
+  if (API_BASE_URL === null) throw new ApiError(0, undefined, "No backend is configured.");
+  let response: Response;
+  try {
+    response = await fetch(`${API_BASE_URL}/me/plan/invoices/${encodeURIComponent(number)}/pdf?workspace=${encodeURIComponent(workspace.slice(0, 120))}`,
+      { method: "GET", credentials: "include" });
+  } catch {
+    throw new ApiError(0, undefined, "Could not reach the server. Check your connection and try again.");
+  }
+  if (!response.ok) throw new ApiError(response.status, undefined, "The invoice PDF could not be created.");
+  const blob = await response.blob();
+  return blob.type ? blob : new Blob([blob], { type: "application/pdf" });
+}
+
 export const plansService = {
+  invoicePdf,
+  /** The caller's own invoices, newest first. */
+  invoices(): Promise<{ invoices: PlanInvoice[] }> {
+    return apiRequest<{ invoices: PlanInvoice[] }>("/me/plan/invoices");
+  },
   mine(): Promise<MyPlan> {
     return apiRequest<MyPlan>("/me/plan");
   },

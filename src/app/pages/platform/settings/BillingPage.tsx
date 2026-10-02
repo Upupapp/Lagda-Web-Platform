@@ -8,7 +8,7 @@
 
 import React, { useId, useState } from "react";
 import { Link, useNavigate } from "react-router";
-import {
+import { Download,
   Sparkles, CalendarClock, ReceiptText, Star, Check, Minus, ChevronDown, Info, ArrowRight, BadgeCheck, Gauge,
 } from "lucide-react";
 import { SettingsPage, SSection, SCard, Badge, BTN_SECONDARY, Notice, SET, TONES } from "./SettingsShell";
@@ -24,6 +24,7 @@ import { useWorkspaceUsage, formatBytes } from "./settings-data";
 import { VerificationQRCode } from "../../../components/verification/VerificationQRCode";
 import {
   SAMPLE_INVOICE_ID, SAMPLE_INVOICE_PATH, SAMPLE_INVOICE_BANNER, SAMPLE_INVOICE_TOTAL, useInvoiceBilledTo,
+  usePlanInvoices, invoicePath, TEST_INVOICE_BANNER, downloadInvoicePdf,
 } from "./billing/sample-invoice";
 import { PLAN_PASS_CSS } from "../../../components/platform/PlanPass";
 import { PlanCarousel } from "../../../components/pricing/PlanCarousel";
@@ -251,6 +252,70 @@ export function PlanShowcase({ current, onChoose, disabled = false, description 
 
 // ── Invoices ───────────────────────────────────────────────────────────────
 
+/** The owner's real (test-mode) invoices: one per approved plan change, newest first. */
+function RealInvoicesSection({ isOwner }: { isOwner: boolean }) {
+  const { invoices, error } = usePlanInvoices(isOwner);
+  const billedTo = useInvoiceBilledTo();
+  const [saving, setSaving] = useState<string | null>(null);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const savePdf = (number: string) => {
+    setSaving(number);
+    setSaveError(null);
+    downloadInvoicePdf(number, billedTo.workspace)
+      .catch(() => { setSaveError("The PDF could not be created. Try again."); })
+      .finally(() => { setSaving(null); });
+  };
+  const date = (iso: string) => new Date(iso).toLocaleDateString("en-PH", { year: "numeric", month: "short", day: "numeric" });
+  return (
+    <SSection title="Invoices" icon={ReceiptText}
+      description="One invoice for every plan change that was approved. Test mode bills nothing, so none of them has been paid.">
+      {!isOwner ? (
+        <p data-testid="invoices-owner-only" style={{ ...GF, fontSize: 13.5, color: SET.SLATE, margin: 0, lineHeight: 1.55 }}>
+          Invoices are visible to the workspace owner, who holds the plan.
+        </p>
+      ) : error && invoices === null ? (
+        <p role="alert" style={{ ...GF, fontSize: 13.5, color: "#991B1B", margin: 0 }}>Your invoices could not be loaded. Reload the page to try again.</p>
+      ) : invoices === null ? (
+        <p aria-busy="true" style={{ ...GF, fontSize: 13.5, color: SET.SLATE, margin: 0 }}>Loading your invoices…</p>
+      ) : invoices.length === 0 ? (
+        <p data-testid="no-invoices" style={{ ...GF, fontSize: 13.5, color: SET.SLATE, margin: 0, lineHeight: 1.55 }}>
+          No invoices yet. When a Personal or Business plan is approved, its invoice appears here.
+        </p>
+      ) : (
+        <ul data-testid="invoice-list" style={{ listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: 10 }}>
+          {invoices.map(inv => (
+            <li key={inv.number} data-testid={`invoice-${inv.number}`}
+              style={{ border: `1px solid ${SET.BORDER}`, borderRadius: 12, padding: "12px 14px", display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap", justifyContent: "space-between" }}>
+              <div style={{ minWidth: 0, flex: "1 1 220px" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                  <span style={{ ...GM, fontSize: 13.5, fontWeight: 700, color: SET.NAVY }}>{inv.number}</span>
+                  <Badge tone="neutral">Test — not paid</Badge>
+                </div>
+                <div style={{ ...GF, fontSize: 13, color: SET.INK, marginTop: 4 }}>
+                  {inv.planName} · {date(inv.issuedAt)} – {date(inv.periodEnd)}
+                </div>
+                <div style={{ ...GF, fontSize: 12, color: SET.SLATE }}>Billed to {billedTo.name}</div>
+              </div>
+              <span style={{ ...GF, fontSize: 18, fontWeight: 800, color: SET.NAVY }}>{formatPeso(inv.amountPesos)}</span>
+              <span style={{ display: "inline-flex", gap: 8, flexWrap: "wrap" }}>
+                <Link to={invoicePath(inv.number)} data-testid={`view-invoice-${inv.number}`} style={{ ...BTN_SECONDARY }}>
+                  View <ArrowRight size={14} aria-hidden />
+                </Link>
+                <button type="button" data-testid={`pdf-invoice-${inv.number}`} disabled={saving !== null}
+                  onClick={() => { savePdf(inv.number); }} style={{ ...BTN_SECONDARY, cursor: saving !== null ? "default" : "pointer" }}>
+                  <Download size={14} aria-hidden /> {saving === inv.number ? "Preparing…" : "PDF"}
+                </button>
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
+      {saveError && <p role="alert" style={{ ...GF, fontSize: 13, color: "#991B1B", margin: "10px 0 0" }}>{saveError}</p>}
+      <p style={{ ...GM, fontSize: 10.5, letterSpacing: "0.08em", color: TONES.warning.fg, margin: "12px 0 0" }}>{TEST_INVOICE_BANNER}</p>
+    </SSection>
+  );
+}
+
 function InvoicesSection() {
   const billedTo = useInvoiceBilledTo();
   const url = typeof window !== "undefined" ? `${window.location.origin}${SAMPLE_INVOICE_PATH}` : SAMPLE_INVOICE_PATH;
@@ -293,7 +358,7 @@ function InvoicesSection() {
 }
 
 export function BillingPage() {
-  const { plan } = useWorkspacePlan();
+  const { plan, info } = useWorkspacePlan();
   const navigate = useNavigate();
   return (
     <SettingsPage title="Billing & Plan" breadcrumb="Billing & Plan" description="This workspace’s plan, what each plan includes, and your invoices.">
@@ -301,7 +366,7 @@ export function BillingPage() {
       <OverviewCard />
       <PlanShowcase current={plan} onChoose={id => { void navigate(`/app/settings/plan?choose=${id}`); }}
         description="What each plan includes. Choosing one opens your own Plan & Billing." />
-      <InvoicesSection />
+      {USE_REAL_BACKEND ? <RealInvoicesSection isOwner={info?.ownerIsYou === true} /> : <InvoicesSection />}
     </SettingsPage>
   );
 }
