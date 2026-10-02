@@ -1,5 +1,6 @@
 // C13 — MFA recovery code entry page.
-// Accepts any non-empty code in demo mode. Never logs the code.
+// With a backend the server checks the code (and burns it). The demo build
+// accepts any non-empty code and says so. Never logs the code.
 
 import { useState, useRef, useEffect } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router";
@@ -9,6 +10,8 @@ import { delay } from "../../services/mock/delay";
 import { USE_REAL_BACKEND } from "../../services/backend-flag";
 import { realAuthService } from "../../services/real/auth.service";
 import { ApiError } from "../../services/api-client";
+import { sanitizeAppReturnTo } from "../../utils/authReturnPath";
+import { mfaCeremonyEnded } from "./mfa-ceremony";
 
 const GF    = { fontFamily: "'Geist', sans-serif" };
 const GM    = { fontFamily: "'Geist Mono', monospace" };
@@ -17,12 +20,21 @@ const AZURE = "#0078D4";
 export function RecoveryCodes() {
   const navigate  = useNavigate();
   const [params]  = useSearchParams();
-  const returnTo  = params.get("returnTo") ?? "/app/dashboard";
+  const rawReturnTo = params.get("returnTo");
+  const returnTo  = sanitizeAppReturnTo(rawReturnTo);
+  // Carried to the sibling pages, so the place the visitor was heading for
+  // survives a switch between the authenticator and a recovery code.
+  const returnQuery = rawReturnTo ? `?returnTo=${encodeURIComponent(returnTo)}` : "";
   const platform  = usePlatform();
 
   const [code,     setCode]    = useState("");
   const [status,   setStatus]  = useState<"idle"|"submitting"|"success"|"error">("idle");
   const [errorMsg, setErrorMsg]= useState<string | null>(null);
+  // The sign-in attempt is over (expired, or too many wrong codes): no code
+  // can work until the password is entered again.
+  const [ended,    setEnded]   = useState(false);
+  // How many codes are left, once one has just been spent.
+  const [remaining, setRemaining] = useState<number | null>(null);
   const inputRef   = useRef<HTMLInputElement>(null);
 
   useEffect(() => { inputRef.current?.focus(); }, []);
@@ -47,12 +59,17 @@ export function RecoveryCodes() {
     // session afterwards is the one the server says exists.
     if (USE_REAL_BACKEND) {
       try {
-        await realAuthService.submitMfaChallenge(trimmed);
+        const result = await realAuthService.submitMfaChallenge(trimmed);
+        const left = typeof result.recoveryCodesRemaining === "number" ? result.recoveryCodesRemaining : null;
+        setRemaining(left);
         setStatus("success");
         await platform.refreshSessionFromBackend();
-        setTimeout(() => navigate(safeReturnTo(returnTo), { replace: true }), 800);
+        // Long enough to read how many codes are left; that count is shown
+        // nowhere else on the way in.
+        setTimeout(() => { void navigate(returnTo, { replace: true }); }, left === null ? 800 : 2600);
       } catch (err) {
         setStatus("error");
+        setEnded(mfaCeremonyEnded(err));
         // The server's own message where it has one. It is deliberately the
         // same for a wrong code and a used one, so neither leaks which.
         setErrorMsg(err instanceof ApiError
@@ -71,7 +88,7 @@ export function RecoveryCodes() {
       // never enters the session as an undefined workspace.
       const ws = payload.currentWorkspace ?? payload.workspaces[0];
       if (ws) platform.signIn(payload.user, payload.workspaces, ws, payload.subscription, payload.notifications);
-      setTimeout(() => navigate(safeReturnTo(returnTo), { replace: true }), 800);
+      setTimeout(() => { void navigate(returnTo, { replace: true }); }, 800);
     } else {
       setStatus("error");
       setErrorMsg("Enter a recovery code.");
@@ -87,22 +104,34 @@ export function RecoveryCodes() {
         </p>
       </div>
 
-      <div style={{ background: "rgba(0,120,212,0.06)", border: "1px solid rgba(0,120,212,0.15)", borderRadius: 10, padding: "12px 16px", marginBottom: 20 }}>
-        <p style={{ color: "#C9960C", ...GM, fontSize: 9, fontWeight: 700, margin: "0 0 4px" }}>FRONTEND DEMONSTRATION</p>
-        <p style={{ color: "#334155", ...GF, fontSize: 12, margin: 0, lineHeight: 1.5 }}>
-          In this demonstration, any non-empty recovery code is accepted.
-        </p>
-      </div>
+      {!USE_REAL_BACKEND && (
+        <div style={{ background: "rgba(0,120,212,0.06)", border: "1px solid rgba(0,120,212,0.15)", borderRadius: 10, padding: "12px 16px", marginBottom: 20 }}>
+          <p style={{ color: "#C9960C", ...GM, fontSize: 9, fontWeight: 700, margin: "0 0 4px" }}>FRONTEND DEMONSTRATION</p>
+          <p style={{ color: "#334155", ...GF, fontSize: 12, margin: 0, lineHeight: 1.5 }}>
+            In this demonstration, any non-empty recovery code is accepted.
+          </p>
+        </div>
+      )}
 
       {errorMsg && (
         <div role="alert" style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: 8, padding: "12px 14px", marginBottom: 16 }}>
           <p style={{ color: "#EF4444", ...GF, fontSize: 13, margin: 0 }}>{errorMsg}</p>
+          {ended && (
+            <Link to={`/sign-in${returnQuery}`} data-testid="mfa-sign-in-again" style={{ color: "#0078D4", ...GF, fontSize: 13, fontWeight: 700, display: "inline-block", marginTop: 8 }}>Sign in again</Link>
+          )}
         </div>
       )}
 
       {status === "success" && (
         <div role="status" aria-live="polite" style={{ textAlign: "center", marginBottom: 16, color: "#0078D4", ...GF, fontSize: 14 }}>
           Code accepted — signing you in…
+          {remaining !== null && (
+            <p data-testid="recovery-remaining" style={{ color: remaining <= 2 ? "#B45309" : "#334155", ...GF, fontSize: 13, lineHeight: 1.55, margin: "8px 0 0" }}>
+              {remaining === 0
+                ? "That was your last recovery code. Set up two-step verification again in Settings to get a new set."
+                : `That code is now used up. You have ${remaining} recovery code${remaining === 1 ? "" : "s"} left.`}
+            </p>
+          )}
         </div>
       )}
 
@@ -120,8 +149,9 @@ export function RecoveryCodes() {
             autoComplete="off"
             aria-required
             aria-invalid={status === "error"}
-            disabled={status === "submitting" || status === "success"}
-            placeholder="DEMO-XXXX-XXXX"
+            disabled={status === "submitting" || status === "success" || ended}
+            placeholder={USE_REAL_BACKEND ? "XXXX-XXXX-XXXX" : "DEMO-XXXX-XXXX"}
+            maxLength={32}
             style={{
               width: "100%", boxSizing: "border-box",
               background: "#ffffff",
@@ -137,7 +167,7 @@ export function RecoveryCodes() {
           </p>
         </div>
 
-        {status !== "success" && (
+        {status !== "success" && !ended && (
           <button
             type="submit"
             disabled={!code.trim() || status === "submitting"}
@@ -157,15 +187,14 @@ export function RecoveryCodes() {
       </form>
 
       <div style={{ textAlign: "center", marginTop: 20 }}>
-        <Link to="/mfa" style={{ color: "#0078D4", ...GF, fontSize: 13, textDecoration: "none" }}>Use authenticator app instead</Link>
-        <span style={{ color: "#94A3B8", margin: "0 10px" }}>·</span>
-        <Link to="/sign-in" style={{ color: "#64748B", ...GF, fontSize: 13, textDecoration: "none" }}>Back to Sign In</Link>
+        {!ended && (
+          <>
+            <Link to={`/mfa${returnQuery}`} style={{ color: "#0078D4", ...GF, fontSize: 13, textDecoration: "none" }}>Use authenticator app instead</Link>
+            <span style={{ color: "#94A3B8", margin: "0 10px" }}>·</span>
+          </>
+        )}
+        <Link to={`/sign-in${returnQuery}`} style={{ color: "#64748B", ...GF, fontSize: 13, textDecoration: "none" }}>Back to Sign In</Link>
       </div>
     </>
   );
-}
-
-function safeReturnTo(raw: string): string {
-  if (raw.startsWith("/app")) return raw;
-  return "/app/dashboard";
 }

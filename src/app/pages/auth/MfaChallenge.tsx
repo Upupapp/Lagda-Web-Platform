@@ -12,6 +12,7 @@ import { usePlatform } from "../../context/PlatformContext";
 import { useOnboarding } from "../../context/OnboardingContext";
 import { createMockSignInPayload } from "../../context/PlatformContext";
 import { sanitizeAppReturnTo } from "../../utils/authReturnPath";
+import { mfaCeremonyEnded } from "./mfa-ceremony";
 
 const GF    = { fontFamily: "'Geist', sans-serif" };
 const GM    = { fontFamily: "'Geist Mono', monospace" };
@@ -21,6 +22,7 @@ export function MfaChallenge() {
   const navigate   = useNavigate();
   const [params]   = useSearchParams();
   const returnTo   = params.get("returnTo") ?? "/app/dashboard";
+  const returnQuery = params.get("returnTo") ? `?returnTo=${encodeURIComponent(sanitizeAppReturnTo(returnTo))}` : "";
   const platform   = usePlatform();
   const { pendingUser } = useOnboarding();
 
@@ -28,6 +30,8 @@ export function MfaChallenge() {
   const [status,   setStatus]  = useState<"idle"|"submitting"|"success"|"error">("idle");
   const [errorMsg, setErrorMsg]= useState<string | null>(null);
   const [errorCode,setErrorCode]=useState<"invalid"|"locked"|null>(null);
+  // The sign-in attempt is over; only entering the password again can help.
+  const [ended,    setEnded]   = useState(false);
   const inputRef   = useRef<HTMLInputElement>(null);
   const errorRef   = useRef<HTMLDivElement>(null);
 
@@ -51,10 +55,11 @@ export function MfaChallenge() {
         // refreshSessionFromBackend is still the one shared place that
         // derives identity + workspace state, rather than duplicating it.
         await platform.refreshSessionFromBackend();
-        setTimeout(() => navigate(sanitizeAppReturnTo(returnTo), { replace: true }), 800);
+        setTimeout(() => { void navigate(sanitizeAppReturnTo(returnTo), { replace: true }); }, 800);
       } catch (err) {
         setStatus("error");
         setErrorCode("invalid");
+        setEnded(mfaCeremonyEnded(err));
         setErrorMsg(
           err instanceof ApiError
             ? err.message
@@ -74,7 +79,7 @@ export function MfaChallenge() {
       // never enters the session as an undefined workspace.
       const ws = payload.currentWorkspace ?? payload.workspaces[0];
       if (ws) platform.signIn(payload.user, payload.workspaces, ws, payload.subscription, payload.notifications);
-      setTimeout(() => navigate(sanitizeAppReturnTo(returnTo), { replace: true }), 800);
+      setTimeout(() => { void navigate(sanitizeAppReturnTo(returnTo), { replace: true }); }, 800);
     } else {
       setStatus("error");
       setErrorCode(result.errorCode ?? "invalid");
@@ -123,6 +128,9 @@ export function MfaChallenge() {
           {errorCode === "locked" && (
             <Link to="/auth/account-locked" style={{ color: "#0078D4", ...GF, fontSize: 12, display: "block", marginTop: 6 }}>View account locked information</Link>
           )}
+          {ended && (
+            <Link to={`/sign-in${returnQuery}`} data-testid="mfa-sign-in-again" style={{ color: "#0078D4", ...GF, fontSize: 13, fontWeight: 700, display: "inline-block", marginTop: 8 }}>Sign in again</Link>
+          )}
         </div>
       )}
 
@@ -147,7 +155,7 @@ export function MfaChallenge() {
             inputMode="numeric"
             aria-required
             aria-invalid={status === "error"}
-            disabled={status === "submitting" || errorCode === "locked" || status === "success"}
+            disabled={status === "submitting" || errorCode === "locked" || status === "success" || ended}
             placeholder="000000"
             maxLength={6}
             style={{
@@ -162,7 +170,7 @@ export function MfaChallenge() {
           />
         </div>
 
-        {errorCode !== "locked" && status !== "success" && (
+        {errorCode !== "locked" && status !== "success" && !ended && (
           <button
             type="submit"
             disabled={status === "submitting" || code.length !== 6}
@@ -182,10 +190,10 @@ export function MfaChallenge() {
       </form>
 
       {/* Recovery option */}
-      {errorCode !== "locked" && (
+      {errorCode !== "locked" && !ended && (
         <div style={{ textAlign: "center", marginTop: 20 }}>
           <p style={{ color: "#334155", ...GF, fontSize: 13, margin: "0 0 6px" }}>Lost access to your authenticator?</p>
-          <Link to="/mfa/recovery" style={{ color: "#0078D4", ...GF, fontSize: 13, textDecoration: "none" }}>Use a recovery code</Link>
+          <Link to={`/mfa/recovery${returnQuery}`} style={{ color: "#0078D4", ...GF, fontSize: 13, textDecoration: "none" }}>Use a recovery code</Link>
         </div>
       )}
 
