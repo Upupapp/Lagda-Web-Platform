@@ -24,6 +24,7 @@ import {
 } from "../../../services/real/plans.service";
 import { ApiError } from "../../../services/api-client";
 import { USE_REAL_BACKEND } from "../../../services/backend-flag";
+import { publicInquiriesService } from "../../../services/real/public-inquiries.service";
 import { formatPeso } from "../../../config/pricing.config";
 import { Z } from "../../../utils/z-index";
 import { withProcess } from "../../../config/process-screens";
@@ -234,7 +235,25 @@ function UpgradeDialog({ plan, onClose, onSent }: { plan: RequestablePlan; onClo
 
 // ── The page ────────────────────────────────────────────────────────────────
 
+/**
+ * How many website messages this account can read, or null when it reads
+ * none: to every account but the LAGDA owner's the inbox answers "not found".
+ */
+function useWebsiteMessageCount(): number | null {
+  const [count, setCount] = useState<number | null>(null);
+  useEffect(() => {
+    if (!USE_REAL_BACKEND) return;
+    let live = true;
+    publicInquiriesService.inbox()
+      .then(inbox => { if (live) setCount(inbox.counts.demo + inbox.counts.contact + inbox.counts.waitlist); })
+      .catch(() => { /* not this account's inbox: nothing to show */ });
+    return () => { live = false; };
+  }, []);
+  return count;
+}
+
 export function PlanBillingPage() {
+  const websiteMessages = useWebsiteMessageCount();
   const { plan, refresh } = useMyPlan();
   const [params, setParams] = useSearchParams();
   const asked = params.get("choose");
@@ -269,6 +288,11 @@ export function PlanBillingPage() {
           {plan.approver && (
             <Notice tone="accent" icon={Inbox}>
               You approve plan upgrades for LAGDA. <Link to="/app/plan-requests" data-testid="plan-requests-link" style={{ color: "inherit", fontWeight: 700 }}>Review upgrade requests</Link>
+            </Notice>
+          )}
+          {websiteMessages !== null && (
+            <Notice tone="accent" icon={Inbox}>
+              You read messages from the LAGDA website ({websiteMessages} so far). <Link to="/app/inquiries" data-testid="inquiries-link" style={{ color: "inherit", fontWeight: 700 }}>Open website messages</Link>
             </Notice>
           )}
           {!plan.upgradesAvailable && USE_REAL_BACKEND && (

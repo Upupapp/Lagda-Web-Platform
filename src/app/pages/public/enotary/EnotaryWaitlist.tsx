@@ -5,6 +5,8 @@ import {
 } from "../../../components/enotary/EnotaryComponents";
 import { ENOTARY_DISCLAIMER } from "./content";
 import { Link } from "react-router";
+import { USE_REAL_BACKEND } from "../../../services/backend-flag";
+import { publicInquiriesService, inquiryErrorMessage } from "../../../services/real/public-inquiries.service";
 
 const GF = { fontFamily: "'Geist', sans-serif" };
 const GM = { fontFamily: "'Geist Mono', monospace" };
@@ -59,6 +61,7 @@ export function EnotaryWaitlist() {
   const [fields, setFields] = useState<WaitlistFields>(INITIAL);
   const [errors, setErrors] = useState<Partial<Record<keyof WaitlistFields, string>>>({});
   const [formState, setFormState] = useState<FormState>("idle");
+  const [errorText, setErrorText] = useState("Something went wrong. Please try again.");
 
   const set = <K extends keyof WaitlistFields>(key: K, value: WaitlistFields[K]) =>
     setFields((f) => ({ ...f, [key]: value }));
@@ -78,9 +81,28 @@ export function EnotaryWaitlist() {
     e.preventDefault();
     if (!validate()) return;
     setFormState("submitting");
-    setTimeout(() => {
-      setFormState(Math.random() > 0.08 ? "success" : "error");
-    }, 900);
+
+    // With a backend the sign-up is stored and the LAGDA owner is told.
+    if (USE_REAL_BACKEND) {
+      publicInquiriesService.submit({
+        kind: "waitlist",
+        name: fields.name,
+        email: fields.email,
+        organization: fields.organization,
+        topic: AUDIENCE_OPTIONS.find(option => option.value === fields.audience)?.label ?? fields.audience,
+        message: fields.interest,
+        consent: true,
+      }).then(() => {
+        setFormState("success");
+      }).catch((error: unknown) => {
+        setErrorText(inquiryErrorMessage(error));
+        setFormState("error");
+      });
+      return;
+    }
+
+    // The demo build has no server: it says so on the next screen.
+    setTimeout(() => { setFormState("success"); }, 900);
   }
 
   const inputStyle: React.CSSProperties = {
@@ -95,9 +117,11 @@ export function EnotaryWaitlist() {
         <section style={{ padding: "80px 24px", minHeight: "50vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
           <div style={{ maxWidth: 580, width: "100%", textAlign: "center" }}>
             <div style={{ width: 56, height: 56, borderRadius: "50%", background: "rgba(103,2,59,0.1)", border: "1px solid rgba(176,18,98,0.3)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 20px", fontSize: 24 }}>✓</div>
-            <h2 style={{ color: "#07111F", ...GF, fontSize: "clamp(20px, 3vw, 28px)", fontWeight: 900, margin: "0 0 12px" }}>Information validated</h2>
-            <p style={{ color: "#334155", ...GF, fontSize: 15, lineHeight: 1.7, margin: "0 0 20px" }}>
-              Your information has been validated in this frontend demonstration. Live waitlist registration will be connected during backend integration.
+            <h2 style={{ color: "#07111F", ...GF, fontSize: "clamp(20px, 3vw, 28px)", fontWeight: 900, margin: "0 0 12px" }}>{USE_REAL_BACKEND ? "You are on the list" : "Information validated"}</h2>
+            <p data-testid="waitlist-received" role="status" style={{ color: "#334155", ...GF, fontSize: 15, lineHeight: 1.7, margin: "0 0 20px" }}>
+              {USE_REAL_BACKEND
+                ? <>We will email <strong>{fields.email.trim()}</strong> when there is news about LAGDA eNotary.</>
+                : "Your information has been validated in this frontend demonstration. Nothing was sent: the live site stores the sign-up and tells LAGDA."}
             </p>
             <div style={{ background: "rgba(103,2,59,0.06)", border: "1px solid rgba(176,18,98,0.2)", borderRadius: 10, padding: "14px 18px", marginBottom: 24 }}>
               <p style={{ color: "#67023B", ...GF, fontSize: 13, lineHeight: 1.6, margin: 0 }}>
@@ -151,7 +175,7 @@ export function EnotaryWaitlist() {
           <form onSubmit={handleSubmit} noValidate aria-label="eNotary waitlist registration">
             {formState === "error" && (
               <div role="alert" style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: 8, padding: "12px 16px", marginBottom: 20 }}>
-                <p style={{ color: "#ef4444", ...GF, fontSize: 13, margin: 0 }}>Something went wrong in this demonstration. Please try again.</p>
+                <p style={{ color: "#ef4444", ...GF, fontSize: 13, margin: 0 }}>{errorText}</p>
               </div>
             )}
 

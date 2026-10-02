@@ -1,15 +1,10 @@
-// Public form service contracts and mock implementations.
-// All mock services simulate latency, validate inputs, and return typed responses.
-// No real API calls, no persistent storage of submitted personal data.
-// Replace each MockXxxService with a RealXxxService at integration time.
+// What the DEMO build (no server) uses for the public pages: the demo-request
+// form, the sample verification records, and a no-op conversion tracker.
+// On the live site the forms call services/real/public-inquiries.service.ts.
 
 import type {
-  CreateAccountRequest,
-  SignInRequest,
   DemoRequest,
-  ContactRequest,
   PublicVerificationRequest,
-  WaitlistRequest,
   FormSubmissionResult,
   DemoVerificationResult,
   DemoVerificationOutcome,
@@ -19,25 +14,12 @@ import { delay } from "../mock/delay";
 
 // ── Service interfaces ─────────────────────────────────────────────────────────
 
-export interface IPublicAccountService {
-  createAccount(req: CreateAccountRequest): Promise<FormSubmissionResult>;
-  signIn(req: SignInRequest): Promise<FormSubmissionResult>;
-}
-
 export interface IDemoRequestService {
   submitDemoRequest(req: DemoRequest): Promise<FormSubmissionResult>;
 }
 
-export interface IPublicContactService {
-  submitContact(req: ContactRequest): Promise<FormSubmissionResult>;
-}
-
 export interface IPublicVerificationService {
   verify(req: PublicVerificationRequest): Promise<DemoVerificationResult>;
-}
-
-export interface IWaitlistService {
-  submitWaitlist(req: WaitlistRequest): Promise<FormSubmissionResult>;
 }
 
 export interface IConversionTrackingService {
@@ -103,40 +85,10 @@ const VER_ID_RE = /^LAGDA-VER-\d{4}-\w{4,10}$/i;
 
 // ── Mock implementations ───────────────────────────────────────────────────────
 
-class MockPublicAccountService implements IPublicAccountService {
-  async createAccount(_req: CreateAccountRequest): Promise<FormSubmissionResult> {
-    await delay(800);
-    // Simulate ~8% email-already-used error, ~4% network error
-    const r = Math.random();
-    if (r < 0.04) return { success: false, demonstrationOnly: true, errorCode: "network", errorMessage: "A network error occurred. Please try again." };
-    if (r < 0.12) return { success: false, demonstrationOnly: true, errorCode: "duplicate", errorMessage: "An account with this email address already exists in this demonstration." };
-    return { success: true, demonstrationOnly: true };
-  }
-
-  async signIn(_req: SignInRequest): Promise<FormSubmissionResult> {
-    await delay(700);
-    const r = Math.random();
-    if (r < 0.04) return { success: false, demonstrationOnly: true, errorCode: "network", errorMessage: "A network error occurred. Please try again." };
-    // Simulate invalid credentials ~15% of attempts so the state can be shown
-    if (r < 0.19) return { success: false, demonstrationOnly: true, errorCode: "invalid-credentials", errorMessage: "The email or password is incorrect." };
-    return { success: true, demonstrationOnly: true };
-  }
-}
-
 class MockDemoRequestService implements IDemoRequestService {
   async submitDemoRequest(_req: DemoRequest): Promise<FormSubmissionResult> {
+    // The demo build has no server. It never pretends to fail at random.
     await delay(900);
-    const r = Math.random();
-    if (r < 0.06) return { success: false, demonstrationOnly: true, errorCode: "network", errorMessage: "A network error occurred. Please try again." };
-    return { success: true, demonstrationOnly: true };
-  }
-}
-
-class MockPublicContactService implements IPublicContactService {
-  async submitContact(_req: ContactRequest): Promise<FormSubmissionResult> {
-    await delay(900);
-    const r = Math.random();
-    if (r < 0.06) return { success: false, demonstrationOnly: true, errorCode: "network", errorMessage: "A network error occurred. Please try again." };
     return { success: true, demonstrationOnly: true };
   }
 }
@@ -163,15 +115,6 @@ class MockPublicVerificationService implements IPublicVerificationService {
   }
 }
 
-class MockWaitlistService implements IWaitlistService {
-  async submitWaitlist(_req: WaitlistRequest): Promise<FormSubmissionResult> {
-    await delay(900);
-    const r = Math.random();
-    if (r < 0.06) return { success: false, demonstrationOnly: true, errorCode: "network", errorMessage: "A network error occurred. Please try again." };
-    return { success: true, demonstrationOnly: true };
-  }
-}
-
 class MockConversionTrackingService implements IConversionTrackingService {
   track(_event: ConversionEvent): void {
     // No-op during frontend-only phase.
@@ -183,11 +126,8 @@ class MockConversionTrackingService implements IConversionTrackingService {
 // ── Exported singleton instances ───────────────────────────────────────────────
 // Replace these with real service instances at backend integration time.
 
-export const publicAccountService: IPublicAccountService = new MockPublicAccountService();
 export const demoRequestService: IDemoRequestService = new MockDemoRequestService();
-export const publicContactService: IPublicContactService = new MockPublicContactService();
 export const publicVerificationService: IPublicVerificationService = new MockPublicVerificationService();
-export const waitlistService: IWaitlistService = new MockWaitlistService();
 export const conversionTracker: IConversionTrackingService = new MockConversionTrackingService();
 
 export { VER_ID_RE };

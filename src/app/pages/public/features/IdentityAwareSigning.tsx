@@ -8,7 +8,7 @@ const GM = { fontFamily: "'Geist Mono', monospace" };
 
 const LAYERS = [
   { num: "01", label: "Recipient access",    color: "#0078D4", desc: "The participant receives a secure invitation to the transaction. Access is controlled by the invitation method — link, account login, or enterprise session." },
-  { num: "02", label: "Authentication",      color: "#0078D4", desc: "A configured method verifies the participant has access to a credential — email account, mobile number, authenticator app, or enterprise identity. Different methods provide different evidence." },
+  { num: "02", label: "Authentication",      color: "#0078D4", desc: "A configured method verifies the participant has access to a credential — today an email account or a LAGDA account; a mobile number and an enterprise identity are planned. Different methods provide different evidence." },
   { num: "03", label: "Signature adoption",  color: "#178A4C", desc: "The participant applies a visible representation — typed, drawn, uploaded, or certificate-based. A signature image is a representation. Authentication is what builds the evidence record." },
   { num: "04", label: "Intent and consent",  color: "#9A7208", desc: "The platform records that the participant took a deliberate action — reviewing, consenting, and completing their assigned fields — not that the document was signed accidentally." },
   { num: "05", label: "Event evidence",      color: "#7C3AED", desc: "Each action — invitation, delivery, viewing, authentication, signing, completion — is recorded as a timestamped audit event with device and network context." },
@@ -92,9 +92,9 @@ export function IdentityAwareSigning() {
           {[
             { label: "Secure link only",     strength: 1, note: "Proves access to the email inbox where the invitation was sent." },
             { label: "Email OTP",            strength: 2, note: "Proves access to the email account at the time of signing — same channel as invitation." },
-            { label: "SMS OTP",              strength: 3, note: "Proves access to a separate mobile number — different channel, stronger evidence." },
-            { label: "Authenticator app",    strength: 3, note: "Time-based code from an enrolled app — independent of email channel." },
-            { label: "Enterprise SSO",       strength: 4, note: "Organization controls the identity claim and authentication standards." },
+            { label: "SMS OTP (Planned)",        strength: 3, note: "Planned, not available yet. Would prove access to a separate mobile number — different channel, stronger evidence." },
+            { label: "Authenticator app (Planned)", strength: 3, note: "Planned as a signer step, not available yet. Would be a time-based code from an enrolled app — independent of email." },
+            { label: "Enterprise SSO (Planned)", strength: 4, note: "Planned, not available yet. The organization would control the identity claim and authentication standards." },
           ].map((a) => (
             <div key={a.label} style={{ display: "flex", gap: 14, alignItems: "center", background: "#ffffff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: 10, padding: "10px 14px", boxShadow: "0 1px 4px rgba(7,17,31,0.06)" }}>
               <span style={{ color: "#334155", ...GF, fontSize: 12, fontWeight: 600, minWidth: 160, flexShrink: 0 }}>{a.label}</span>

@@ -60,7 +60,7 @@ export const OVERVIEW_CAPABILITIES = [
   { icon: "⚡", title: "Parallel Signing", desc: "Several participants act at the same time. Useful when order doesn't matter.", path: "/features/parallel-signing", group: "Core Workflow" },
   { icon: "↕️", title: "Sequential Signing", desc: "Participants act in a defined order, one step unlocking the next.", path: "/features/sequential-signing", group: "Core Workflow" },
   // Trust & Evidence
-  { icon: "🔑", title: "Signer Authentication", desc: "Increase confidence with email OTP, SMS OTP, authenticator app, and more.", path: "/features/signer-authentication", group: "Trust & Evidence" },
+  { icon: "🔑", title: "Signer Authentication", desc: "Increase confidence with a secure link, an email code, or a LAGDA account sign-in. SMS codes and SSO are planned.", path: "/features/signer-authentication", group: "Trust & Evidence" },
   { icon: "🪪", title: "Identity-Aware Signing", desc: "Layers access, authentication, intent, and document-integrity evidence.", path: "/features/identity-aware-signing", group: "Trust & Evidence" },
   { icon: "📋", title: "Audit Trail", desc: "Every transaction event — delivery, viewing, authentication, signing — recorded.", path: "/features/audit-trail", group: "Trust & Evidence" },
   { icon: "🔍", title: "Document Verification", desc: "QR code, Verification ID, or link to confirm a document matches its record.", path: "/features/document-verification", group: "Trust & Evidence" },
@@ -72,7 +72,7 @@ export const OVERVIEW_CAPABILITIES = [
   // Team & Scale
   { icon: "🗂️", title: "Team Workspaces", desc: "Multiple senders, shared templates, roles, and unified administration.", path: "/features/team-workspaces", group: "Team & Scale" },
   { icon: "📊", title: "Storage & Plan Limits", desc: "Understand capacity, storage, and what to expect as volume grows.", path: "/features/storage-and-plan-limits", group: "Team & Scale" },
-  { icon: "🔌", title: "API & Integrations", desc: "Enterprise integration direction for embedded signing and system connections.", path: "/features/api-and-integrations", group: "Team & Scale" },
+  { icon: "🔌", title: "API & Integrations", desc: "Planned: an API and webhooks for embedded signing and system connections. Not built yet.", path: "/features/api-and-integrations", group: "Team & Scale" },
 ];
 
 // ── Participant roles ─────────────────────────────────────────────────────────
@@ -90,11 +90,11 @@ export const AUTH_METHODS = [
   { method: "Secure invitation link", tier: "Core",       desc: "Recipient accesses the transaction via a time-limited secure link delivered to their email address.", channel: "Email" },
   { method: "Verified email access",  tier: "Core",       desc: "Confirms the recipient can access the email account where the invitation was sent.", channel: "Email" },
   { method: "Email OTP",              tier: "Core",       desc: "One-time code sent to the participant's email address before they can proceed.", channel: "Email" },
-  { method: "SMS OTP",                tier: "Advanced",   desc: "One-time code sent to a verified mobile number — a separate channel from the invitation email.", channel: "SMS" },
-  { method: "Authenticator app",      tier: "Advanced",   desc: "Time-based code from the participant's authenticator application.", channel: "App" },
+  { method: "SMS OTP",                tier: "Planned",    desc: "Planned, not available yet: a one-time code sent to a verified mobile number — a separate channel from the invitation email.", channel: "SMS" },
+  { method: "Authenticator app",      tier: "Planned",    desc: "Planned, not available yet as a signer step: a time-based code from the participant's authenticator app. Today a signer with a LAGDA account can protect that account with an authenticator app.", channel: "App" },
   { method: "Account authentication", tier: "Core",       desc: "Participant signs in to their LAGDA account to access the transaction.", channel: "Account" },
-  { method: "Identity-document validation", tier: "Enterprise", desc: "Additional check using a government-issued ID where configured.", channel: "Identity" },
-  { method: "Enterprise SSO",         tier: "Enterprise", desc: "Authenticate through the organization's identity provider.", channel: "SSO" },
+  { method: "Identity-document validation", tier: "Planned", desc: "Planned, not available yet: an additional check using a government-issued ID.", channel: "Identity" },
+  { method: "Enterprise SSO",         tier: "Planned",    desc: "Planned, not available yet: authenticating through the organization's identity provider.", channel: "SSO" },
 ] as const;
 
 // ── Audit events ──────────────────────────────────────────────────────────────
@@ -202,10 +202,10 @@ export const PLAN_LIMIT_CATEGORIES = [
   { icon: "💾", title: "Storage",                desc: "Document and transaction data storage. Varies by plan." },
   { icon: "📑", title: "Templates",              desc: "Number of saved reusable workflows per workspace." },
   { icon: "📎", title: "File size per document", desc: "Maximum size per uploaded PDF. Varies by plan." },
-  { icon: "🔑", title: "Authentication methods", desc: "Access to advanced methods like SMS OTP may be plan-gated." },
+  { icon: "🔑", title: "Authentication methods", desc: "Secure link, email code and account sign-in are on every plan. SMS OTP and SSO are planned." },
   { icon: "🏢", title: "Branding",               desc: "Logo and custom email branding may be plan-dependent." },
   { icon: "📊", title: "Audit access",           desc: "Duration and detail level of accessible audit records." },
-  { icon: "🔌", title: "API and webhooks",       desc: "Enterprise integration access. Contact Sales." },
+  { icon: "🔌", title: "API and webhooks",       desc: "Planned. Not built yet." },
 ];
 
 // ── Legal ─────────────────────────────────────────────────────────────────────

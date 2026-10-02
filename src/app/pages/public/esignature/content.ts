@@ -93,7 +93,7 @@ export const ADVANCED_CAPS = [
   { tier: "Advanced",   icon: "◐",  title: "Tags and search",           desc: "Tag transactions and use filters to find documents quickly across your workspace." },
   { tier: "Enterprise", icon: "★",  title: "Bulk workflows",            desc: "Send the same document to many recipients as individual transactions at scale." },
   { tier: "Enterprise", icon: "★",  title: "Embedded signing",          desc: "Integrate signing into your own application or portal experience." },
-  { tier: "Enterprise", icon: "★",  title: "API & webhooks",            desc: "Connect LAGDA to your systems programmatically as the platform expands." },
+  { tier: "Enterprise", icon: "★",  title: "API & webhooks (Planned)",  desc: "Planned, not built yet: connecting LAGDA to your systems programmatically." },
 ];
 
 export const FIELD_TYPES = [

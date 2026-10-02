@@ -44,8 +44,8 @@ export function GuidesOverview() {
                     background: "#ffffff", border: "1px solid rgba(0,0,0,0.08)",
                     transition: "border-color 0.15s ease",
                   }}
-                    onMouseEnter={(e) => (e.currentTarget as HTMLAnchorElement).style.borderColor = "rgba(0,120,212,0.3)"}
-                    onMouseLeave={(e) => (e.currentTarget as HTMLAnchorElement).style.borderColor = "rgba(0,0,0,0.08)"}
+                    onMouseEnter={(e) => (e.currentTarget).style.borderColor = "rgba(0,120,212,0.3)"}
+                    onMouseLeave={(e) => (e.currentTarget).style.borderColor = "rgba(0,0,0,0.08)"}
                   >
                     <span style={{ color: "#334155", ...GF, fontSize: 13 }}>{g.title}</span>
                     <span style={{ color: "#94A3B8", fontSize: 12 }}>→</span>
@@ -71,7 +71,7 @@ export function GuidesOverview() {
             { label: "Document Verification",    path: "/features/document-verification" },
             { label: "Templates",                path: "/features/templates" },
             { label: "Team Workspaces",          path: "/features/team-workspaces" },
-            { label: "API and Integrations",     path: "/features/api-and-integrations" },
+            { label: "API and Integrations (Planned)", path: "/features/api-and-integrations" },
           ].map(({ label, path }) => (
             <Link key={path} to={path} style={{
               display: "flex", alignItems: "center", justifyContent: "space-between",

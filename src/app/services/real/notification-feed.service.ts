@@ -188,6 +188,22 @@ function present(row: FeedRow): Presentation {
       };
     }
 
+    // 095. A message from the public website, to the LAGDA owner's inbox.
+    case "PUBLIC_INQUIRY_RECEIVED": {
+      const kind = str(row.templateInput, "kindLabel") ?? "Message";
+      const who = str(row.templateInput, "senderName") ?? "A visitor";
+      const email = str(row.templateInput, "senderEmail");
+      const inquiryId = str(row.templateInput, "inquiryId");
+      return {
+        category: "my-actions", severity: "info", priority: "normal",
+        title: `${kind} from ${who}`,
+        body: `${who}${email === null ? "" : ` (${email})`} sent this from the LAGDA website. Open it to read it and reply.`,
+        actionLabel: "Open the message",
+        actionPath: inquiryId === null ? "/app/inquiries" : `/app/inquiries/${encodeURIComponent(inquiryId)}`,
+        why: "You were sent this because this account reads messages from the LAGDA website.",
+      };
+    }
+
     case "PLAN_UPGRADE_APPROVED": {
       const plan = str(row.templateInput, "planName") ?? "Your plan";
       const until = str(row.templateInput, "paidUntil");

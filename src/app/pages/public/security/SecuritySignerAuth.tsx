@@ -11,6 +11,7 @@ const TIER_COLOR: Record<string, string> = {
   Core:       "#0078D4",
   Advanced:   "#7c3aed",
   Enterprise: "#B45309",
+  Planned:    "#64748B",
 };
 
 export function SecuritySignerAuth() {
@@ -77,9 +78,9 @@ export function SecuritySignerAuth() {
             </p>
           </div>
           <div style={{ background: "rgba(0,120,212,0.06)", border: "1px solid rgba(0,120,212,0.2)", borderRadius: 12, padding: "16px" }}>
-            <p style={{ color: "#0078D4", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.07em", marginBottom: 10 }}>INDEPENDENT CHANNEL (SMS OTP)</p>
+            <p style={{ color: "#0078D4", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.07em", marginBottom: 10 }}>INDEPENDENT CHANNEL (SMS OTP — PLANNED)</p>
             <p style={{ color: "#334155", ...GF, fontSize: 13, lineHeight: 1.6, margin: 0 }}>
-              The OTP arrives on a mobile number — a channel separate from email. An attacker would need to control both the email account and the phone number to proceed.
+              Planned, not available yet. The OTP would arrive on a mobile number — a channel separate from email — so an attacker would need both the email account and the phone. Today the independent option is a LAGDA account protected by two-step verification.
             </p>
           </div>
         </div>
@@ -91,8 +92,8 @@ export function SecuritySignerAuth() {
         <div style={{ display: "grid", gap: 10 }} className="rm-grid">
           {[
             { tier: "Low risk",    method: "Secure link or Email OTP",    examples: "Internal approvals, low-value contracts, standard correspondence" },
-            { tier: "Medium risk", method: "SMS OTP or Authenticator app", examples: "Client agreements, employment documents, financial forms" },
-            { tier: "High risk",   method: "Account login + MFA, or SSO",  examples: "High-value contracts, multi-party legal agreements, enterprise workflows" },
+            { tier: "Medium risk", method: "Email OTP, or account login (SMS OTP is planned)", examples: "Client agreements, employment documents, financial forms" },
+            { tier: "High risk",   method: "Account login with two-step verification (SSO is planned)", examples: "High-value contracts, multi-party legal agreements, enterprise workflows" },
           ].map((r) => (
             <div key={r.tier} style={{ background: "#ffffff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: 10, padding: "14px 14px", boxShadow: "0 1px 4px rgba(7,17,31,0.07)" }}>
               <p style={{ color: "#0078D4", ...GM, fontSize: 10, fontWeight: 700, margin: 0, marginBottom: 4 }}>{r.tier}</p>

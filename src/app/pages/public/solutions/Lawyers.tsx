@@ -76,7 +76,7 @@ const DOCS = [
 const CAPABILITIES = [
   { icon: "📑", title: "Templates",             desc: "Save your standard engagement workflow. Reuse for every new client.", path: "/features/templates" },
   { icon: "📇", title: "Saved contacts",        desc: "Store recurring clients and send invitations without re-entering details.", path: "/features/contacts" },
-  { icon: "🔑", title: "Signer authentication", desc: "OTP, authenticator, or account login — match authentication to transaction risk.", path: "/features/signer-authentication" },
+  { icon: "🔑", title: "Signer authentication", desc: "Secure link, email code, or account login — match authentication to transaction risk.", path: "/features/signer-authentication" },
   { icon: "📋", title: "Audit trail",            desc: "Every event — delivery, viewing, signing — timestamped and preserved.", path: "/features/audit-trail" },
   { icon: "🔍", title: "Document Verification", desc: "Confirm any document matches its LAGDA record using a Verification ID.", path: "/features/document-verification" },
   { icon: "🔔", title: "Automatic reminders",   desc: "Clients are reminded without manual follow-up from your team.", path: "/features/notifications" },

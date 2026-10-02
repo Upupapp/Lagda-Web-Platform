@@ -17,7 +17,7 @@ export const SECURITY_SUBNAV = [
 export const SECURITY_LAYERS = [
   { layer: "Account security",          icon: "🔐", desc: "Protects access to the LAGDA account or workspace using passwords, MFA, session management, and access history." },
   { layer: "Signing-request access",    icon: "🔗", desc: "Controls how a participant reaches a signing transaction — through a secure link, account login, or enterprise session." },
-  { layer: "Signer authentication",     icon: "🔑", desc: "Increases confidence that the right participant is acting — via OTP, authenticator app, account login, or identity check." },
+  { layer: "Signer authentication",     icon: "🔑", desc: "Increases confidence that the right participant is acting — via a secure link, an email code, or account login." },
   { layer: "Signature adoption",        icon: "✍️", desc: "How the participant creates or applies their visible signature — type, draw, upload, or certificate-based." },
   { layer: "Audit evidence",            icon: "📋", desc: "Records of every transaction event: delivery, viewing, authentication, signing, completion, and verification." },
   { layer: "Document integrity",        icon: "🔍", desc: "Reference data that helps determine whether a document matches the recorded completed transaction." },
@@ -44,19 +44,19 @@ export const AUTH_COMPARISON = [
   },
   {
     method: "SMS OTP",
-    experience: "Enter a code received on a mobile number",
+    experience: "Planned: enter a code received on a mobile number",
     independentChannel: true,
-    evidenceRecorded: ["OTP verified event", "Channel (SMS)", "IP", "Time"],
-    typicalUse: "Transactions where a separate channel increases confidence",
-    tier: "Advanced",
+    evidenceRecorded: ["Planned"],
+    typicalUse: "Planned — not available yet",
+    tier: "Planned",
   },
   {
     method: "Authenticator app",
-    experience: "Enter a time-based code from an app",
+    experience: "Planned as a signer step: enter a time-based code from an app",
     independentChannel: true,
-    evidenceRecorded: ["TOTP verified event", "IP", "Time"],
-    typicalUse: "Higher-assurance transactions for enrolled participants",
-    tier: "Advanced",
+    evidenceRecorded: ["Planned"],
+    typicalUse: "Planned — today, require account login instead",
+    tier: "Planned",
   },
   {
     method: "Account login",
@@ -68,11 +68,11 @@ export const AUTH_COMPARISON = [
   },
   {
     method: "Enterprise SSO",
-    experience: "Authenticate through organization identity provider",
+    experience: "Planned: authenticate through the organization's identity provider",
     independentChannel: true,
-    evidenceRecorded: ["IdP auth event", "Claims", "Session", "IP"],
-    typicalUse: "Enterprise workspaces with centralized identity",
-    tier: "Enterprise",
+    evidenceRecorded: ["Planned"],
+    typicalUse: "Planned — not available yet",
+    tier: "Planned",
   },
 ];
 
@@ -116,7 +116,7 @@ export const DATA_CATEGORIES = [
   { category: "Authentication data", examples: "OTP events, auth method used, verification result" },
   { category: "Audit data",        examples: "Event log, timestamps, device data, IP addresses" },
   { category: "Verification data", examples: "Verification ID, record status, file comparison result" },
-  { category: "Usage data",        examples: "Transaction volume, storage used, API calls" },
+  { category: "Usage data",        examples: "Transaction volume, storage used" },
 ];
 
 // ── Storage lifecycle stages ──────────────────────────────────────────────────

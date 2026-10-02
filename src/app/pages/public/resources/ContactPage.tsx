@@ -4,6 +4,8 @@ import {
   ResourcesPageShell, ResourcesSection,
 } from "../../../components/resources/ResourceComponents";
 import { parseContactCategory, CONTACT_CATEGORY_LABELS } from "../../../models/forms";
+import { USE_REAL_BACKEND } from "../../../services/backend-flag";
+import { publicInquiriesService, inquiryErrorMessage } from "../../../services/real/public-inquiries.service";
 
 const GF = { fontFamily: "'Geist', sans-serif" };
 const GM = { fontFamily: "'Geist Mono', monospace" };
@@ -64,8 +66,8 @@ function Input({ id, type = "text", value, onChange, placeholder, autocomplete }
         borderRadius: 8, padding: "11px 14px", color: "#07111F", ...GF, fontSize: 14,
         outline: "none", minHeight: 44,
       }}
-      onFocus={e => (e.target as HTMLInputElement).style.borderColor = "#0078D4"}
-      onBlur={e => (e.target as HTMLInputElement).style.borderColor = "rgba(0,0,0,0.14)"}
+      onFocus={e => (e.target).style.borderColor = "#0078D4"}
+      onBlur={e => (e.target).style.borderColor = "rgba(0,0,0,0.14)"}
     />
   );
 }
@@ -92,6 +94,7 @@ export function ContactPage() {
   const [errors, setErrors]       = useState<Partial<Record<keyof ContactForm, string>>>({});
   const [state, setState]         = useState<FormState>("idle");
   const [_submitted, setSubmitted] = useState(false);
+  const [errorText, setErrorText] = useState("Something went wrong. Please try again.");
 
   const set = (key: keyof ContactForm) => (value: string | boolean) =>
     setForm(f => ({ ...f, [key]: value }));
@@ -102,8 +105,33 @@ export function ContactPage() {
     if (Object.keys(errs).length > 0) { setErrors(errs); return; }
     setErrors({});
     setState("submitting");
+
+    // With a backend the message is stored and the LAGDA owner is told.
+    if (USE_REAL_BACKEND) {
+      publicInquiriesService.submit({
+        kind: "contact",
+        name: form.name,
+        email: form.email,
+        organization: form.organization,
+        role: form.role,
+        phone: form.phone,
+        topic: form.category,
+        subject: form.subject,
+        message: form.message,
+        consent: true,
+      }).then(() => {
+        setState("success");
+        setSubmitted(true);
+      }).catch((error: unknown) => {
+        setErrorText(inquiryErrorMessage(error));
+        setState("error");
+      });
+      return;
+    }
+
+    // The demo build has no server: it says so on the next screen.
     setTimeout(() => {
-      setState(Math.random() > 0.1 ? "success" : "error");
+      setState("success");
       setSubmitted(true);
     }, 900);
   };
@@ -114,14 +142,22 @@ export function ContactPage() {
         <ResourcesSection id="success">
           <div style={{ maxWidth: 540, margin: "0 auto", textAlign: "center", padding: "40px 0" }}>
             <div style={{ fontSize: 40, marginBottom: 16 }}>✅</div>
-            <h1 style={{ color: "#07111F", ...GF, fontSize: 28, fontWeight: 800, marginBottom: 12 }}>Message received.</h1>
-            <p style={{ color: "#64748B", ...GF, fontSize: 15, lineHeight: 1.65, marginBottom: 20 }}>
-              Your message has been validated in this frontend demonstration. Live message delivery will be connected during backend integration.
-            </p>
-            <div style={{ background: "rgba(0,120,212,0.06)", border: "1px solid rgba(0,120,212,0.2)", borderRadius: 10, padding: "14px 18px", marginBottom: 24 }}>
-              <p style={{ color: "#0078D4", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", marginBottom: 4 }}>FRONTEND DEMONSTRATION</p>
-              <p style={{ color: "#334155", ...GF, fontSize: 13, lineHeight: 1.6, margin: 0 }}>No message has been transmitted. Contact form delivery requires backend integration.</p>
-            </div>
+            <h1 style={{ color: "#07111F", ...GF, fontSize: 28, fontWeight: 800, marginBottom: 12 }}>{USE_REAL_BACKEND ? "Message sent." : "Message validated."}</h1>
+            {USE_REAL_BACKEND ? (
+              <p data-testid="contact-received" role="status" style={{ color: "#64748B", ...GF, fontSize: 15, lineHeight: 1.65, marginBottom: 24 }}>
+                LAGDA has your message. We will reply to <strong style={{ color: "#07111F" }}>{form.email.trim()}</strong>.
+              </p>
+            ) : (
+              <>
+                <p style={{ color: "#64748B", ...GF, fontSize: 15, lineHeight: 1.65, marginBottom: 20 }}>
+                  Your message has been validated in this frontend demonstration.
+                </p>
+                <div style={{ background: "rgba(0,120,212,0.06)", border: "1px solid rgba(0,120,212,0.2)", borderRadius: 10, padding: "14px 18px", marginBottom: 24 }}>
+                  <p style={{ color: "#0078D4", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", marginBottom: 4 }}>FRONTEND DEMONSTRATION</p>
+                  <p style={{ color: "#334155", ...GF, fontSize: 13, lineHeight: 1.6, margin: 0 }}>No message has been transmitted. The live site stores the message and tells LAGDA.</p>
+                </div>
+              </>
+            )}
             <button onClick={() => { setForm(EMPTY); setState("idle"); setSubmitted(false); }} style={{ background: "#0078D4", color: "white", ...GF, fontSize: 14, fontWeight: 700, padding: "11px 24px", borderRadius: 8, border: "none", cursor: "pointer", minHeight: 44 }}>Send another message</button>
           </div>
         </ResourcesSection>
@@ -152,7 +188,7 @@ export function ContactPage() {
           {state === "error" && (
             <div role="alert" style={{ background: "rgba(220,38,38,0.06)", border: "1px solid rgba(220,38,38,0.2)", borderRadius: 10, padding: "12px 16px", marginBottom: 20 }}>
               <p style={{ color: "#DC2626", ...GF, fontSize: 13, fontWeight: 600, margin: "0 0 4px" }}>Submission error</p>
-              <p style={{ color: "#334155", ...GF, fontSize: 13, margin: 0 }}>Something went wrong. Please try again.</p>
+              <p style={{ color: "#334155", ...GF, fontSize: 13, margin: 0 }}>{errorText}</p>
               <button onClick={() => setState("idle")} style={{ color: "#0078D4", background: "none", border: "none", cursor: "pointer", ...GF, fontSize: 13, padding: 0, marginTop: 8 }}>Try again</button>
             </div>
           )}
@@ -203,8 +239,8 @@ export function ContactPage() {
                 rows={5}
                 placeholder="Describe your question or requirement…"
                 style={{ width: "100%", boxSizing: "border-box", background: "#ffffff", border: "1px solid rgba(0,0,0,0.14)", borderRadius: 8, padding: "11px 14px", color: "#07111F", ...GF, fontSize: 14, outline: "none", resize: "vertical", minHeight: 120 }}
-                onFocus={e => (e.target as HTMLTextAreaElement).style.borderColor = "#0078D4"}
-                onBlur={e => (e.target as HTMLTextAreaElement).style.borderColor = "rgba(0,0,0,0.14)"}
+                onFocus={e => (e.target).style.borderColor = "#0078D4"}
+                onBlur={e => (e.target).style.borderColor = "rgba(0,0,0,0.14)"}
               />
               <FieldError msg={errors.message} />
             </div>

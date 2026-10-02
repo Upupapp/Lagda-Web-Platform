@@ -76,7 +76,7 @@ export const SHARED_CAPABILITIES = [
   { icon: "📑", title: "Templates",             desc: "Save any document workflow as a reusable template.", path: "/features/templates" },
   { icon: "↕️", title: "Sequential signing",    desc: "Define who signs first — unlock each step in order.", path: "/features/sequential-signing" },
   { icon: "⚡", title: "Parallel signing",      desc: "Multiple participants sign simultaneously.", path: "/features/parallel-signing" },
-  { icon: "🔑", title: "Signer authentication", desc: "OTP, authenticator app, account login, or SSO.", path: "/features/signer-authentication" },
+  { icon: "🔑", title: "Signer authentication", desc: "Secure link, email code, or account login.", path: "/features/signer-authentication" },
   { icon: "📋", title: "Audit trail",            desc: "Every event — delivery, viewing, signing — timestamped.", path: "/features/audit-trail" },
   { icon: "🔍", title: "Verification",           desc: "Confirm any document matches its LAGDA record.", path: "/features/document-verification" },
   { icon: "🗂️", title: "Team workspaces",       desc: "Shared templates, contacts, and role-based access.", path: "/features/team-workspaces" },

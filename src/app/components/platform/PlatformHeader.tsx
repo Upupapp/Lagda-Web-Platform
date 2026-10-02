@@ -41,6 +41,8 @@ function deriveTitle(pathname: string): string {
   if (parts[0] === "workspace" && parts[1] === "settings" && parts[2] === "roles") return "Workspace › Settings › Roles & Permissions";
   // A request id is noise; the approver sees whose request on the page.
   if (parts[0] === "plan-requests") return parts.length > 1 ? "Upgrade requests › Request" : "Upgrade requests";
+  // An inquiry id is noise too.
+  if (parts[0] === "inquiries") return parts.length > 1 ? "Website messages › Message" : "Website messages";
   return parts
     // /app/settings is the person's own settings; the workspace's are under Workspace.
     .map((p, i) => i === 0 && p === "settings" ? "My Settings" : p.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()))

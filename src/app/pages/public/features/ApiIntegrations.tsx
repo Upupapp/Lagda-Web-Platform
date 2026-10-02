@@ -16,7 +16,7 @@ function ApiEndpointMockup() {
   return (
     <div aria-hidden style={{ background: "#ffffff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: 14, overflow: "hidden", maxWidth: 440, width: "100%", boxShadow: "0 4px 16px rgba(7,17,31,0.08)" }}>
       <div style={{ padding: "10px 16px", borderBottom: "1px solid rgba(0,0,0,0.07)" }}>
-        <p style={{ color: "#0078D4", ...GM, fontSize: 10, fontWeight: 700, margin: 0 }}>LAGDA API · v1 · Enterprise</p>
+        <p style={{ color: "#0078D4", ...GM, fontSize: 10, fontWeight: 700, margin: 0 }}>LAGDA API · PLANNED · NOT BUILT</p>
       </div>
       {endpoints.map((e, i) => (
         <div key={i} style={{ padding: "10px 16px", borderBottom: "1px solid rgba(0,0,0,0.05)", display: "flex", gap: 10, alignItems: "flex-start" }}>
@@ -33,7 +33,7 @@ function ApiEndpointMockup() {
         </div>
       ))}
       <div style={{ padding: "10px 16px", background: "#f8fafb" }}>
-        <p style={{ color: "#94A3B8", ...GM, fontSize: 9, margin: 0 }}>Representative endpoint shapes — not production documentation. API access is Enterprise.</p>
+        <p style={{ color: "#94A3B8", ...GM, fontSize: 9, margin: 0 }}>A sketch of what is planned. These endpoints do not exist.</p>
       </div>
     </div>
   );
@@ -45,31 +45,40 @@ export function ApiIntegrations() {
       <PageHero
         eyebrow="API and Integrations"
         headingId="api-h1"
-        heading="Embed LAGDA signing into your own systems and workflows."
-        sub="Enterprise API access allows organizations to initiate transactions, track status, and receive webhooks programmatically. This page describes the integration direction — not production API documentation."
+        heading="Planned: embed LAGDA signing into your own systems."
+        sub="An API and webhooks are planned and are not built yet. This page describes the direction so you can tell us what you would need. There is no API to use today, and no keys can be issued."
       />
+
+      <div style={{ maxWidth: 1100, margin: "0 auto", padding: "0 24px 8px" }}>
+        <div role="note" data-testid="api-planned-notice" style={{ background: "rgba(201,150,12,0.08)", border: "1px solid rgba(201,150,12,0.3)", borderRadius: 12, padding: "14px 18px" }}>
+          <p style={{ color: "#8A6508", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", margin: "0 0 4px" }}>PLANNED — NOT AVAILABLE</p>
+          <p style={{ color: "#334155", ...GF, fontSize: 13.5, lineHeight: 1.6, margin: 0 }}>
+            LAGDA has no public API and no webhooks today. Everything below is planned work, shown so the direction is clear. Nothing on this page can be bought, enabled or connected yet.
+          </p>
+        </div>
+      </div>
 
       <PageSection id="overview" light bordered>
         <div style={{ display: "grid", gap: "32px 48px", alignItems: "start" }} className="api-two-col">
           <div>
-            <SectionHeading eyebrow="Enterprise API" id="ea-h2" heading="Trigger signing transactions from your own applications." sub="The LAGDA API is designed for enterprise and developer integrations where document workflows need to be embedded in an existing system." />
+            <SectionHeading eyebrow="Planned API" id="ea-h2" heading="What the API is planned to do." sub="The intent is to let an organization start and follow signing transactions from its own systems. None of this is built yet." />
             <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 20 }}>
               {[
-                "Initiate signing transactions via API",
+                "Planned: start signing transactions from your system",
                 "Track transaction status and completion programmatically",
-                "Receive real-time webhook events for key transaction milestones",
-                "Retrieve full audit trails via API",
-                "Launch workflows from saved templates",
+                "Planned: webhook events for key transaction milestones",
+                "Planned: retrieve the audit trail programmatically",
+                "Planned: start a transaction from a saved template",
               ].map((item) => (
                 <div key={item} style={{ display: "flex", gap: 8 }}>
-                  <span style={{ color: "#0078D4", fontWeight: 700, flexShrink: 0 }}>✓</span>
+                  <span aria-hidden style={{ color: "#B45309", fontWeight: 700, flexShrink: 0 }}>○</span>
                   <span style={{ color: "#334155", ...GF, fontSize: 14, lineHeight: 1.5 }}>{item}</span>
                 </div>
               ))}
             </div>
             <div>
-              <AvailBadge tier="Enterprise" />
-              <span style={{ color: "#64748B", ...GF, fontSize: 13, marginLeft: 10 }}>API access is available on Enterprise plans. Contact Sales for details.</span>
+              <AvailBadge tier="Planned" />
+              <span style={{ color: "#64748B", ...GF, fontSize: 13, marginLeft: 10 }}>Not available on any plan yet. Tell us what you need and we will tell you when it opens.</span>
             </div>
           </div>
           <ApiEndpointMockup />
@@ -98,11 +107,11 @@ export function ApiIntegrations() {
       </PageSection>
 
       <PageSection id="safeguards" light bordered>
-        <SectionHeading eyebrow="Safeguards" id="sg-h2" heading="What API integrations do not do." center />
+        <SectionHeading eyebrow="Safeguards" id="sg-h2" heading="What this page is not." center />
         <div style={{ display: "grid", gap: 10 }} className="sg-grid">
           {[
-            { label: "No credential issuance here",    desc: "API keys and credentials are issued through your account settings after contacting Sales — not via a self-serve mechanism on this page." },
-            { label: "No production environment here", desc: "This page describes integration capabilities. It does not connect to any LAGDA signing infrastructure." },
+            { label: "No credential issuance here",    desc: "There are no API keys or credentials to issue: the API is planned and not built." },
+            { label: "No production environment here", desc: "This page describes planned capabilities. It does not connect to any LAGDA signing infrastructure." },
             { label: "No real signing via sandbox",    desc: "The API endpoint examples on this page are illustrative only. They do not trigger real document transactions." },
             { label: "No partner program listed",      desc: "LAGDA does not list specific integration partner names or certifications on this page." },
           ].map((s) => (
@@ -116,16 +125,16 @@ export function ApiIntegrations() {
       </PageSection>
 
       <RelatedPages links={[
-        { label: "Storage & Plan Limits",   desc: "API access by plan tier", path: "/features/storage-and-plan-limits" },
+        { label: "Storage & Plan Limits",   desc: "What each plan includes today", path: "/features/storage-and-plan-limits" },
         { label: "Team & Enterprise",       desc: "Enterprise workspace and admin features", path: "/esignature/team-and-enterprise" },
         { label: "View Pricing",            desc: "Enterprise plan inquiry", path: "/pricing" },
       ]} />
 
       <PageCTA
-        heading="Contact Sales to discuss Enterprise API access."
-        sub="LAGDA's Enterprise plan includes API access, webhooks, and dedicated support. Reach out to start a conversation."
-        primaryLabel="Contact Sales"
-        primaryPath="/contact"
+        heading="Tell us what you would connect LAGDA to."
+        sub="The API and webhooks are planned, not built. Tell us what you need and we will tell you when they open."
+        primaryLabel="Tell us what you need"
+        primaryPath="/contact?category=partnership"
         secondaryLabel="View Plans"
         secondaryPath="/pricing"
       />

@@ -49,7 +49,7 @@ export function SecurityGuide() {
 
         <GuideSection id="signer-auth" title="3. Signer authentication">
           <GuidePara>
-            Signer authentication methods add additional confirmation at the moment of signing. Available methods include email OTP, SMS OTP, authenticator app, and enterprise SSO, depending on your plan.
+            Signer authentication methods add additional confirmation at the moment of signing. Available today: a secure invitation link, an email code, and signing in to a LAGDA account. SMS OTP and enterprise SSO are planned.
           </GuidePara>
           <GuidePara>
             <Link to="/security/signer-authentication" style={{ color: "#38bdf8", textDecoration: "none", fontWeight: 600 }}>Signer Authentication →</Link>

@@ -76,7 +76,7 @@ export function AccountSecurity() {
           {[
             { icon: "📱", title: "Authenticator app",   desc: "Use a TOTP app (Google Authenticator, Authy, or similar) to generate time-based codes for account login." },
             { icon: "🔑", title: "Backup codes",        desc: "One-time recovery codes for when your primary MFA device is unavailable. Store these securely." },
-            { icon: "🏢", title: "Enterprise SSO",      desc: "Enterprise accounts can delegate authentication to an organizational identity provider via SAML/SSO." },
+            { icon: "🏢", title: "Enterprise SSO (Planned)", desc: "Planned, not available yet: delegating sign-in to an organization's identity provider." },
             { icon: "⚠️", title: "Account recovery",   desc: "Identity verification is required for account recovery to prevent unauthorized access through the recovery flow." },
           ].map((m) => (
             <div key={m.title} style={{ background: "#ffffff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: 10, padding: "14px 14px", display: "flex", gap: 12, boxShadow: "0 1px 4px rgba(7,17,31,0.07)" }}>

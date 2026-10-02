@@ -7,7 +7,6 @@ import { CreateAccountLayout } from "./app/layouts/CreateAccountLayout";
 import { PlatformLayout } from "./app/layouts/PlatformLayout";
 import { RecipientLayout } from "./app/layouts/RecipientLayout";
 import { NotFound } from "./app/pages/public/NotFound";
-import { DevPlaceholder } from "./app/pages/shared/DevPlaceholder";
 import { CapabilityGuard } from "./app/components/platform/CapabilityUnavailable";
 import { FeatureGuard } from "./app/components/platform/FeatureGuard";
 import { LegacySettingsRedirect } from "./app/pages/platform/settings/LegacySettingsRedirect";
@@ -119,9 +118,6 @@ const OnboardingComplete = lazy(() =>
 // Home — original marketing landing page. "/" now renders EsigOverview
 // (the eSignature product overview) instead; Home stays reachable at
 // /home rather than being deleted.
-const Home = lazy(() =>
-  import("./app/pages/public/Home").then((m) => ({ default: m.Home })),
-);
 
 // eSignature family
 const EsigOverview = lazy(() =>
@@ -986,6 +982,16 @@ const PlanRequestsPage = lazy(() =>
     default: m.PlanRequestsPage,
   })),
 );
+const InquiriesPage = lazy(() =>
+  import("./app/pages/platform/inquiries/InquiriesPage").then((m) => ({
+    default: m.InquiriesPage,
+  })),
+);
+const InquiryPage = lazy(() =>
+  import("./app/pages/platform/inquiries/InquiriesPage").then((m) => ({
+    default: m.InquiryPage,
+  })),
+);
 const PlanRequestPage = lazy(() =>
   import("./app/pages/platform/plans/PlanRequestsPage").then((m) => ({
     default: m.PlanRequestPage,
@@ -1622,6 +1628,25 @@ export const router = createBrowserRouter([
         element: (
           <Suspense fallback={null}>
             <PlanRequestPage />
+          </Suspense>
+        ),
+      },
+
+      // 095. Messages from the public website (the LAGDA owner's account only;
+      // the notification email links here).
+      {
+        path: "inquiries",
+        element: (
+          <Suspense fallback={null}>
+            <InquiriesPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: "inquiries/:inquiryId",
+        element: (
+          <Suspense fallback={null}>
+            <InquiryPage />
           </Suspense>
         ),
       },
@@ -2871,7 +2896,8 @@ export const router = createBrowserRouter([
     element: <PublicLayout />,
     children: [
       { index: true, element: <EsigOverview /> },
-      { path: "home", element: <Home /> },
+      // The old second home page. Nothing links to it; `/` is the home page.
+      { path: "home", element: <Navigate to="/" replace /> },
 
       // ── eSignature product pages ──────────────────────────────────────────
       { path: "esignature", element: <EsigOverview /> },
@@ -3007,16 +3033,8 @@ export const router = createBrowserRouter([
       { path: "legal/privacy", element: <Privacy /> },
       { path: "legal/terms", element: <Terms /> },
       { path: "legal/accessibility", element: <Accessibility /> },
-      {
-        path: "legal/*",
-        element: (
-          <DevPlaceholder
-            title="Legal"
-            subtitle="This legal page is coming soon."
-            showBack
-          />
-        ),
-      },
+      // An unknown legal page is not "coming soon": it does not exist.
+      { path: "legal/*", element: <NotFound /> },
 
       // ── 404 ──────────────────────────────────────────────────────────────
       { path: "*", element: <NotFound /> },

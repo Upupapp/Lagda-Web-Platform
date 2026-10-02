@@ -57,7 +57,7 @@ export function StoragePlanLimits() {
             { trigger: "Signing requests near limit",      behavior: "You are notified before the limit is reached. Outstanding transactions are not interrupted." },
             { trigger: "Storage approaching capacity",     behavior: "A notification prompts you to review storage or consider a plan upgrade." },
             { trigger: "Seat limit reached",               behavior: "New member invitations may be blocked until the seat count is increased." },
-            { trigger: "Authentication method gating",     behavior: "Advanced methods like SMS OTP may require a plan that includes them. Existing transactions are not disrupted." },
+            { trigger: "Authentication method gating",     behavior: "Secure link, email code and account sign-in are on every plan. SMS OTP is planned and not available yet." },
           ].map((r) => (
             <div key={r.trigger} style={{ background: "#ffffff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: 10, padding: "12px 14px", display: "flex", gap: 16 }}>
               <div style={{ flex: 1 }}>
@@ -78,7 +78,7 @@ export function StoragePlanLimits() {
       <RelatedPages links={[
         { label: "Pricing",           desc: "Exact limits by plan tier", path: "/pricing" },
         { label: "Team Workspaces",   desc: "Seat and role structure", path: "/features/team-workspaces" },
-        { label: "API & Integrations", desc: "Enterprise volume access", path: "/features/api-and-integrations" },
+        { label: "API & Integrations", desc: "Planned — not built yet", path: "/features/api-and-integrations" },
       ]} />
 
       <PageCTA

@@ -35,28 +35,34 @@ describe("PublicHeader", () => {
     platform.user = null;
   });
 
-  it("gives every top-nav trigger an icon and keeps the Coming Soon badge", () => {
+  it("gives every top-nav link an icon and keeps the Coming Soon badge", () => {
     renderAt();
     const nav = screen.getByRole("navigation", { name: "Main navigation", hidden: true });
+    const list = nav.querySelector(".phdr-desktop-nav") as HTMLElement;
     for (const label of LABELS) {
-      const btn = within(nav).getByRole("button", { name: new RegExp(`^${label}`), hidden: true });
-      expect(btn.querySelector(".phdr-navico svg")).not.toBeNull();
+      const link = within(list).getByRole("link", { name: new RegExp(`^${label}`), hidden: true });
+      expect(link.querySelector(".phdr-navico svg")).not.toBeNull();
     }
-    expect(within(nav).getByRole("button", { name: /eNotary/, hidden: true })).toHaveTextContent("Coming Soon");
+    expect(within(list).getByRole("link", { name: /eNotary/, hidden: true })).toHaveTextContent("Coming Soon");
   });
 
-  it("marks the current section and opens its mega panel on click", async () => {
+  it("links each section straight to its own page, with no dropdown", () => {
     renderAt("/security/trust-center");
-    const security = screen.getByRole("button", { name: /^Security/, hidden: true });
+    const nav = screen.getByRole("navigation", { name: "Main navigation", hidden: true });
+    const list = nav.querySelector(".phdr-desktop-nav") as HTMLElement;
+    const hrefs = LABELS.map(label =>
+      within(list).getByRole("link", { name: new RegExp(`^${label}`), hidden: true }).getAttribute("href"));
+    expect(hrefs).toEqual(["/esignature", "/solutions", "/pricing", "/security", "/resources", "/enotary"]);
+
+    const security = within(list).getByRole("link", { name: /^Security/, hidden: true });
     expect(security).toHaveAttribute("aria-current", "page");
     expect(security).toHaveAttribute("data-active", "true");
-    expect(screen.getByRole("button", { name: /^Pricing/, hidden: true })).not.toHaveAttribute("aria-current");
+    expect(within(list).getByRole("link", { name: /^Pricing/, hidden: true })).not.toHaveAttribute("aria-current");
 
-    await userEvent.click(screen.getByRole("button", { name: /^Solutions/, hidden: true }));
-    const solutions = screen.getByRole("button", { name: /^Solutions/, hidden: true });
-    expect(solutions).toHaveAttribute("aria-expanded", "true");
-    expect(solutions).toHaveAttribute("data-open", "true");
-    expect(screen.getByRole("menu", { hidden: true })).toBeInTheDocument();
+    // Nothing in the desktop row opens a menu any more.
+    expect(within(list).queryAllByRole("button", { hidden: true })).toEqual([]);
+    expect(list.querySelector("[aria-haspopup]")).toBeNull();
+    expect(screen.queryByRole("menu", { hidden: true })).toBeNull();
   });
 
   it("renders the logo inside the crop box", () => {

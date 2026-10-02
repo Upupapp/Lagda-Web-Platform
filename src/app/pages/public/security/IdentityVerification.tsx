@@ -8,7 +8,7 @@ const GM = { fontFamily: "'Geist Mono', monospace" };
 
 const LAYERS = [
   { num: "01", label: "Signing-request access",    color: "#0078D4", desc: "Control how a participant reaches the transaction — via a secure link, account login, or enterprise session." },
-  { num: "02", label: "Signer authentication",     color: "#0078D4", desc: "Verify the participant's identity before they can act — via OTP, authenticator, account, or enterprise SSO." },
+  { num: "02", label: "Signer authentication",     color: "#0078D4", desc: "Verify the participant's identity before they can act — via an email code or account sign-in. SMS codes and enterprise SSO are planned." },
   { num: "03", label: "Declared signature intent", color: "#7c3aed", desc: "Confirmation that the participant understands and intends to apply their signature." },
   { num: "04", label: "Audit evidence",            color: "#a78bfa", desc: "Timestamped record of every action — delivery, viewing, authentication, field completion, and signature adoption." },
 ];
@@ -51,7 +51,7 @@ export function IdentityVerification() {
             <p style={{ color: "#22C55E", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.07em", marginBottom: 10 }}>LAGDA PROVIDES</p>
             {[
               "Evidence-based audit trail per participant",
-              "Multiple authentication methods (email, SMS, TOTP, SSO)",
+              "Authentication by secure link, email code or account sign-in (SMS and SSO are planned)",
               "Declared intent confirmation before signing",
               "IP, device, and session evidence recorded",
               "Access-controlled evidence visibility",

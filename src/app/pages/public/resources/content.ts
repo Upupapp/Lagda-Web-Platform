@@ -65,7 +65,7 @@ export const GENERAL_FAQ_GROUPS = [
       {
         id: "require-auth",
         q: "Can I require authentication for signers?",
-        a: "Yes. You can configure authentication requirements for each participant — including secure invitation links, email OTP, SMS OTP, authenticator app, or account authentication. Method availability depends on your plan.",
+        a: "Yes. You can configure authentication requirements for each participant — a secure invitation link, an email code, or signing in to a LAGDA account. SMS OTP and enterprise SSO are planned and not available yet.",
       },
       {
         id: "use-templates",
@@ -159,7 +159,7 @@ export const GENERAL_FAQ_GROUPS = [
       {
         id: "how-plans-differ",
         q: "How do plans differ?",
-        a: "Plans differ primarily in signing-request allowances, number of senders, authentication options, template sharing, company branding, workspace administration, and API and integration access. All plans include document preparation, audit trail, and Document Verification.",
+        a: "Plans differ primarily in signing-request allowances, number of senders, authentication options, template sharing, company branding and workspace administration. All plans include document preparation, audit trail, and Document Verification.",
       },
       {
         id: "contact-sales",

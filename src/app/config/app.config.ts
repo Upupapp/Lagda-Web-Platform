@@ -15,9 +15,6 @@ export const APP_CONFIG = {
     enotary: "/enotary",
   },
 
-  // Mock mode: all services return mock data. Set to false when real API is wired.
-  mockMode: true,
-
   // Simulated network latency in ms (used by mock services)
   mockDelayMs: 400,
 

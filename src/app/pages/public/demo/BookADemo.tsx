@@ -7,6 +7,8 @@ import {
   VALID_DEMO_TOPICS,
 } from "../../../models/forms";
 import { demoRequestService, conversionTracker } from "../../../services/public";
+import { USE_REAL_BACKEND } from "../../../services/backend-flag";
+import { publicInquiriesService, inquiryErrorMessage } from "../../../services/real/public-inquiries.service";
 import { ENOTARY_STATUS, ENOTARY_QUALIFIER } from "../../../config/enotary-disclaimer";
 
 const GF = { fontFamily: "'Geist', sans-serif" };
@@ -94,6 +96,32 @@ export function BookADemo() {
     setErrors({});
     setServerError(null);
     setStatus("submitting");
+
+    // With a backend the request is stored and the LAGDA owner is told.
+    if (USE_REAL_BACKEND) {
+      try {
+        await publicInquiriesService.submit({
+          kind: "demo",
+          name: fields.name,
+          email: fields.email,
+          organization: fields.organization,
+          role: fields.role === "" ? "" : INQUIRY_ROLE_LABELS[fields.role],
+          organizationSize: fields.orgSize === "" ? "" : ORG_SIZE_LABELS[fields.orgSize],
+          industry: fields.industry,
+          topic: fields.primaryInterest === "" ? "" : DEMO_TOPIC_LABELS[fields.primaryInterest],
+          message: fields.message,
+          consent: true,
+        });
+        setStatus("success");
+        setTimeout(() => confirmRef.current?.focus(), 50);
+      } catch (error) {
+        setStatus("error");
+        setServerError(inquiryErrorMessage(error));
+        setTimeout(() => errorRef.current?.focus(), 50);
+      }
+      return;
+    }
+
     const result = await demoRequestService.submitDemoRequest(fields);
     if (result.success) {
       setStatus("success");
@@ -114,8 +142,10 @@ export function BookADemo() {
             <div style={{ width: 56, height: 56, borderRadius: "50%", background: "rgba(0,120,212,0.1)", border: "1px solid rgba(0,120,212,0.3)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 20px", fontSize: 24 }} aria-hidden>✓</div>
             <h1 style={{ color: "#07111F", ...GF, fontSize: "clamp(20px, 3vw, 28px)", fontWeight: 900, margin: "0 0 12px" }}>Demo request received</h1>
             <div style={{ background: "rgba(0,120,212,0.06)", border: "1px solid rgba(0,120,212,0.2)", borderRadius: 10, padding: "14px 18px", marginBottom: 20 }} role="status">
-              <p style={{ color: "#334155", ...GF, fontSize: 14, lineHeight: 1.65, margin: 0 }}>
-                Your demo request has been validated in this frontend demonstration. Live scheduling and sales follow-up will be connected during backend integration.
+              <p data-testid="demo-received" style={{ color: "#334155", ...GF, fontSize: 14, lineHeight: 1.65, margin: 0 }}>
+                {USE_REAL_BACKEND
+                  ? <>LAGDA has your request. We will reply to <strong>{fields.email.trim()}</strong> to arrange a time. No demo is booked until we do.</>
+                  : "Your demo request has been validated in this frontend demonstration. Nothing was sent: the live site stores the request and tells LAGDA."}
               </p>
             </div>
             <div style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap" }}>

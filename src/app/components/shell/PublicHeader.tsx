@@ -1,11 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "react-router";
 import lagdaHeaderLogo from "../../../brand elements/svg/LagdaLogoPrimaryHorizontalFullColor_Header.svg";
-import {
-  TOP_NAV,
-  type NavSection,
-  type NavItem,
-} from "@/app/config/nav.config";
+import { TOP_NAV } from "@/app/config/nav.config";
 import { haptic } from "@/app/utils/haptic";
 import { Z } from "../../utils/z-index";
 import { usePlatform } from "../../context/PlatformContext";
@@ -92,216 +88,6 @@ function Chevron({ open }: { open: boolean }) {
         strokeLinejoin="round"
       />
     </svg>
-  );
-}
-
-// ── Mega dropdown panel ───────────────────────────────────────────────────────
-function MegaPanel({
-  section,
-  onClose,
-}: {
-  section: NavSection;
-  onClose: () => void;
-}) {
-  const isAzure = section.accent === "azure";
-  const accentColor = isAzure ? "#0078d4" : "#b01262";
-  const accentBg = isAzure ? "rgba(0,120,212,0.06)" : "rgba(103,2,59,0.06)";
-  const accentBorder = isAzure ? "rgba(0,120,212,0.18)" : "rgba(103,2,59,0.2)";
-  const GF = { fontFamily: "'Geist', sans-serif" };
-  const SectionIcon = navIcon(section.id);
-
-  return (
-    <div
-      role="menu"
-      aria-label={section.menuTitle}
-      style={{
-        background: "#ffffff",
-        border: `1px solid ${accentBorder}`,
-        borderRadius: 20,
-        padding: 24,
-        boxShadow:
-          "0 24px 64px rgba(7,17,31,0.16), 0 2px 8px rgba(7,17,31,0.06)",
-        minWidth: 720,
-        maxWidth: 880,
-        animation: "dropdownEnter 0.2s ease-out both",
-      }}
-    >
-      {/* Header */}
-      <div
-        style={{
-          marginBottom: 20,
-          paddingBottom: 16,
-          borderBottom: "1px solid rgba(7,17,31,0.08)",
-        }}
-      >
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            gap: 16,
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", gap: 14, minWidth: 0 }}>
-          <span
-            aria-hidden="true"
-            style={{
-              width: 40, height: 40, borderRadius: 11, flexShrink: 0,
-              display: "inline-flex", alignItems: "center", justifyContent: "center",
-              background: accentBg, color: accentColor,
-              boxShadow: `0 0 0 1px ${accentBorder} inset`,
-            }}
-          >
-            <SectionIcon size={20} strokeWidth={1.9} />
-          </span>
-          <div>
-            <p
-              style={{
-                color: "#07111F",
-                ...GF,
-                fontSize: 15,
-                fontWeight: 700,
-                margin: 0,
-                marginBottom: 4,
-              }}
-            >
-              {section.menuTitle}
-            </p>
-            <p style={{ color: "#64748B", ...GF, fontSize: 13, margin: 0 }}>
-              {section.menuDescription}
-            </p>
-          </div>
-          </div>
-          <Link
-            to={section.path}
-            role="menuitem"
-            onClick={onClose}
-            style={{
-              background: accentColor,
-              color: "white",
-              borderRadius: 8,
-              padding: "8px 16px",
-              fontSize: 13,
-              fontWeight: 600,
-              ...GF,
-              textDecoration: "none",
-              whiteSpace: "nowrap",
-              flexShrink: 0,
-              transition: "filter 0.15s ease, transform 0.15s ease",
-              display: "inline-block",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.filter = "brightness(1.12)";
-              e.currentTarget.style.transform = "translateY(-1px)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.filter = "";
-              e.currentTarget.style.transform = "";
-            }}
-          >
-            {section.menuCtaLabel} →
-          </Link>
-        </div>
-        {section.menuCtaNote && (
-          <p
-            style={{
-              color: "#64748B",
-              fontFamily: "'Geist Mono', monospace",
-              fontSize: 11,
-              margin: 0,
-              marginTop: 8,
-            }}
-          >
-            {section.menuCtaNote}
-          </p>
-        )}
-      </div>
-
-      {/* Items grid */}
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(2, 1fr)",
-          gap: 4,
-        }}
-      >
-        {section.items.map((item: NavItem) => (
-          <Link
-            key={item.label}
-            to={item.path}
-            role="menuitem"
-            onClick={onClose}
-            style={{
-              display: "flex",
-              alignItems: "flex-start",
-              gap: 10,
-              padding: "10px 12px",
-              borderRadius: 10,
-              textDecoration: "none",
-              transition: "background 0.15s ease",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = accentBg;
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = "transparent";
-            }}
-          >
-            <div
-              style={{
-                width: 6,
-                height: 6,
-                borderRadius: "50%",
-                flexShrink: 0,
-                marginTop: 7,
-                background: item.isComingSoon ? "#b01262" : accentColor,
-              }}
-            />
-            <div>
-              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                <span
-                  style={{
-                    color: "#07111F",
-                    ...GF,
-                    fontSize: 13,
-                    fontWeight: 600,
-                  }}
-                >
-                  {item.label}
-                </span>
-                {item.isComingSoon && (
-                  <span
-                    style={{
-                      background: "rgba(103,2,59,0.1)",
-                      color: "#67023B",
-                      border: "1px solid rgba(176,18,98,0.25)",
-                      borderRadius: 999,
-                      padding: "1px 7px",
-                      fontSize: 10,
-                      fontWeight: 600,
-                      ...GF,
-                    }}
-                  >
-                    Coming Soon
-                  </span>
-                )}
-              </div>
-              <p
-                style={{
-                  color: "#64748B",
-                  ...GF,
-                  fontSize: 12,
-                  margin: 0,
-                  marginTop: 2,
-                }}
-              >
-                {item.description}
-              </p>
-            </div>
-          </Link>
-        ))}
-      </div>
-    </div>
   );
 }
 
@@ -694,10 +480,7 @@ export function PublicHeader() {
   const { sessionStatus } = usePlatform();
   const { pathname } = useLocation();
   const [scrolled, setScrolled] = useState(false);
-  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const openTimer = useRef<ReturnType<typeof setTimeout>>();
-  const closeTimer = useRef<ReturnType<typeof setTimeout>>();
   const navRef = useRef<HTMLElement>(null);
 
   // Scroll detection
@@ -709,26 +492,13 @@ export function PublicHeader() {
 
   // Close menus on route change
   useEffect(() => {
-    setOpenDropdown(null);
     setMobileOpen(false);
   }, [pathname]);
-
-  // Close dropdown on outside click
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (navRef.current && !navRef.current.contains(e.target as Node)) {
-        setOpenDropdown(null);
-      }
-    };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, []);
 
   // Close on Escape
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
-        setOpenDropdown(null);
         setMobileOpen(false);
       }
     };
@@ -744,19 +514,6 @@ export function PublicHeader() {
     window.addEventListener("resize", handler);
     return () => window.removeEventListener("resize", handler);
   }, []);
-
-  function startOpen(id: string) {
-    clearTimeout(closeTimer.current);
-    clearTimeout(openTimer.current);
-    openTimer.current = setTimeout(() => setOpenDropdown(id), 420);
-  }
-  function startClose() {
-    clearTimeout(openTimer.current);
-    closeTimer.current = setTimeout(() => setOpenDropdown(null), 240);
-  }
-  function cancelClose() {
-    clearTimeout(closeTimer.current);
-  }
 
   const GF = { fontFamily: "'Geist', sans-serif" };
 
@@ -814,7 +571,9 @@ export function PublicHeader() {
                 <HeaderLogo />
               </div>
 
-              {/* Desktop nav */}
+              {/* Desktop nav: one link per section. Each section's own pages
+                  are the tabs under the header on that page, so a second
+                  list of them here would only repeat those. */}
               <ul
                 role="list"
                 style={{
@@ -829,44 +588,24 @@ export function PublicHeader() {
                 {TOP_NAV.map((nav) => {
                   const isActive = pathname.startsWith(nav.matchPrefix);
                   const isEnotary = nav.id === "enotary";
-                  const isOpen = openDropdown === nav.id;
                   const accentColor = isEnotary ? "#b01262" : "#0078d4";
                   // Darker than the accent so it stays AA on the tinted pill.
                   const accentTextColor = isEnotary ? "#9E1058" : "#0062AF";
                   const NavIcon = navIcon(nav.id);
 
                   return (
-                    <li
-                      key={nav.id}
-                      style={{ position: "relative" }}
-                      onMouseEnter={() => startOpen(nav.id)}
-                      onMouseLeave={startClose}
-                    >
-                      <button
+                    <li key={nav.id}>
+                      <Link
+                        to={nav.path}
                         aria-current={isActive ? "page" : undefined}
-                        aria-expanded={isOpen}
-                        aria-haspopup="menu"
-                        onClick={() => {
-                          setOpenDropdown(isOpen ? null : nav.id);
-                        }}
-                        onKeyDown={(e) => {
-                          if (
-                            e.key === "ArrowDown" ||
-                            e.key === "Enter" ||
-                            e.key === " "
-                          ) {
-                            e.preventDefault();
-                            setOpenDropdown(nav.id);
-                          }
-                        }}
                         className="phdr-navbtn"
                         data-active={isActive ? "true" : "false"}
-                        data-open={isOpen ? "true" : "false"}
                         style={{
                           ["--phdr-accent" as string]: accentColor,
                           ["--phdr-accent-text" as string]: accentTextColor,
                           ["--phdr-tint" as string]: isEnotary ? "rgba(176,18,98,0.07)" : "rgba(0,120,212,0.07)",
                           fontWeight: isActive ? 600 : 500,
+                          textDecoration: "none",
                           ...GF,
                         }}
                       >
@@ -890,37 +629,7 @@ export function PublicHeader() {
                             {nav.badge}
                           </span>
                         )}
-                        <span className="phdr-navchev" style={{ marginLeft: 2, opacity: 0.6, display: "inline-flex" }}>
-                          <Chevron open={isOpen} />
-                        </span>
-                      </button>
-
-                      {/* Mega panel.
-                          `position: fixed` anchored to the viewport center, not
-                          the trigger's own <li> — the panel is up to 880px wide,
-                          and centering it under a trigger near either edge of the
-                          nav (eSignature on the left, eNotary on the right) would
-                          push it straight off the edge of the screen. Anchoring
-                          to the viewport instead keeps it fully visible no matter
-                          which item opened it. */}
-                      {isOpen && (
-                        <div
-                          style={{
-                            position: "fixed",
-                            top: 80,
-                            left: "50%",
-                            transform: "translateX(-50%)",
-                            zIndex: Z.dropdown,
-                          }}
-                          onMouseEnter={cancelClose}
-                          onMouseLeave={startClose}
-                        >
-                          <MegaPanel
-                            section={nav}
-                            onClose={() => setOpenDropdown(null)}
-                          />
-                        </div>
-                      )}
+                      </Link>
                     </li>
                   );
                 })}

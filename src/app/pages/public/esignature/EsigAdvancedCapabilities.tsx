@@ -177,7 +177,7 @@ export function EsigAdvancedCapabilities() {
               ))}
             </ul>
             <p style={{ color: "#64748B", ...GF, fontSize: 12, marginTop: 16, lineHeight: 1.6 }}>
-              Reminder delivery is not guaranteed. LAGDA dispatches reminders but cannot control email or SMS delivery.
+              Reminder delivery is not guaranteed. LAGDA dispatches reminders by email but cannot control email delivery.
             </p>
           </div>
           <RemindersMockup />
@@ -216,7 +216,7 @@ export function EsigAdvancedCapabilities() {
         <div style={{ marginTop: 24, background: "rgba(201,150,12,0.06)", border: "1px solid rgba(201,150,12,0.15)", borderRadius: 12, padding: "16px 18px" }}>
           <p style={{ color: "#C9960C", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.06em", marginBottom: 6 }}>ENTERPRISE AND PLANNED CAPABILITIES</p>
           <p style={{ color: "#64748B", ...GF, fontSize: 13, lineHeight: 1.6, margin: 0 }}>
-            LAGDA's architecture is intended to support advanced delivery models such as bulk workflows, embedded signing, web forms, APIs, and webhooks as the platform expands. These are not currently available to all users. Contact Sales to discuss enterprise requirements.
+            Bulk sending, embedded signing, web forms, an API and webhooks are planned. None of them is available today. Contact us to say which you need.
           </p>
         </div>
       </PageSection>
