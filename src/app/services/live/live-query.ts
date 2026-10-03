@@ -81,6 +81,8 @@ export function readLive<T>(
   const read = fetcher().then(
     value => {
       if (generation !== started) return value;
+      // The same object again (a 304 answered from the held copy): nothing
+      // on screen changes, only the age.
       publish(entry, { data: value, error: undefined, reading: false, readAt: Date.now() });
       return value;
     },

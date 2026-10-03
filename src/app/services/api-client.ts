@@ -12,6 +12,36 @@
 // the frontend origin for this to work (see Lagda-Backend/.env).
 
 import { API_BASE_URL } from "./backend-flag";
+import { registerSessionCleanup } from "./session-lifecycle";
+
+// ── Conditional GET ──────────────────────────────────────────────────────
+//
+// The server tags every JSON answer to a GET with an ETag. The last answer
+// to each path is held here with its tag; the next GET of that path sends
+// the tag in If-None-Match, and a 304 — a few hundred bytes, no body — is
+// answered with the held copy. The live layer re-reads its lists every 15
+// seconds, and most of those answers have not changed, so this is what makes
+// that cheap on a phone. Memory only, and emptied on sign-out.
+//
+// The held copy is returned as the SAME object, so a caller that compares
+// by identity (useLiveQuery) can tell "unchanged" from "new" for free.
+
+const HELD_LIMIT = 300;
+const held = new Map<string, { etag: string; body: unknown }>();
+
+function hold(path: string, etag: string, body: unknown): void {
+  held.delete(path);
+  held.set(path, { etag, body });
+  if (held.size > HELD_LIMIT) {
+    const oldest = held.keys().next().value;
+    if (oldest !== undefined) held.delete(oldest);
+  }
+}
+
+/** For tests: forgets every held answer. */
+export function resetHeldAnswers(): void { held.clear(); }
+
+registerSessionCleanup({ id: "api-client-held-answers", onSignOut: resetHeldAnswers });
 
 const CSRF_COOKIE_NAME = "lagda_csrf";
 
@@ -113,6 +143,8 @@ export async function apiRequest<T>(path: string, init: ApiRequestInit = {}): Pr
       headers[name] = value;
     }
   }
+  const prior = method === "GET" ? held.get(path) : undefined;
+  if (prior !== undefined) headers["If-None-Match"] = prior.etag;
 
   const body = init.body !== undefined ? JSON.stringify(init.body) : undefined;
   const keepalive = init.keepalive === true
@@ -133,12 +165,23 @@ export async function apiRequest<T>(path: string, init: ApiRequestInit = {}): Pr
   }
 
   if (response.status === 204) return undefined as T;
+  if (response.status === 304) {
+    // Only ever asked for with a held copy; without one (a proxy's doing),
+    // ask again plainly rather than fail.
+    if (prior !== undefined) return prior.body as T;
+    held.delete(path);
+    return apiRequest<T>(path, init);
+  }
 
   const isJson = response.headers.get("content-type")?.includes("application/json");
   const payload: unknown = isJson ? await response.json().catch(() => undefined) : undefined;
 
   if (!response.ok) {
     throw new ApiError(response.status, extractErrorBody(payload), `Request failed with status ${response.status}.`);
+  }
+  if (method === "GET" && isJson) {
+    const etag = response.headers.get("etag");
+    if (etag !== null && etag !== "") hold(path, etag, payload);
   }
   return payload as T;
 }
