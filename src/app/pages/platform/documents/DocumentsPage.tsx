@@ -63,6 +63,7 @@ import type {
 import { TAG_STYLE_COLORS } from "../../../models/document-organization";
 import { usePageMeta } from "../../../hooks/usePageMeta";
 import { USE_REAL_BACKEND } from "../../../services/backend-flag";
+import { NAV_COUNT_POLL_MS } from "../../../hooks/useNavCounts";
 import { preparationRoute } from "../../../services/preparation-platform-projection";
 import { Z } from "../../../utils/z-index";
 import { FilterChips } from "../../../components/platform/FilterChips";
@@ -2374,35 +2375,43 @@ function documentCard(
 // an <iframe> was rejected). This wrapper only supplies WHAT to load — the
 // real stored bytes, via the same real backend route the rest of this page
 // already talks to — never how to render it.
+/** What the viewer needs of a request: enough to be built from a detail read too. */
+type ViewableRequest = Pick<SigningRequestListItem, "signingRequestId" | "documentId" | "documentTitle" | "state">;
+
 function DocumentViewerDialog({
   workspaceId, item, onClose,
 }: {
   workspaceId: string;
-  item: SigningRequestListItem;
+  item: ViewableRequest;
   onClose: () => void;
 }) {
+  // ── Which bytes (finding 9) ──────────────────────────────────────────────
+  //
+  // The uploaded file is what the recipient signed against and stays
+  // byte-identical forever; the signature is never in it. At completion the
+  // merge draws the signatures onto a SEPARATE sealed artifact. The viewer
+  // used to show only the uploaded file, so a completed document looked
+  // unsigned here while Check a Document showed it signed.
+  //
+  // A completed request now opens on the signed version, with the original
+  // one click away. Other states have no signed version yet.
+  const completed = item.state === "completed";
+  const [version, setVersion] = useState<"signed" | "original">(completed ? "signed" : "original");
   const loadBlob = useCallback(
-    () => realSigningRequestService.documentContentBlob(workspaceId, item.documentId),
-    [workspaceId, item.documentId],
+    () => version === "signed"
+      ? realSigningRequestService.completedDocumentBlob(workspaceId, item.signingRequestId)
+      : realSigningRequestService.documentContentBlob(workspaceId, item.documentId),
+    [workspaceId, item.documentId, item.signingRequestId, version],
   );
-
-  // ── The signed version ────────────────────────────────────────────────────
-  //
-  // The viewer above draws the SOURCE document — the bytes as uploaded, which
-  // is what the recipient signed against and what stays byte-identical
-  // forever. The signature is not in those bytes and never will be: the merge
-  // draws it onto a SEPARATE sealed artifact at completion.
-  //
-  // So a sender looking at a completed request sees an unsigned-looking
-  // document and has no way, from here, to see the signed one. This is that
-  // way.
-  //
-  // Offered only for a `completed` request, because that is the only state in
-  // which a sealed artifact exists. A button that 404s is worse than no
-  // button.
-  const signedVersion = item.state === "completed"
+  const signedVersion = completed
     ? realSigningRequestService.downloadUrl(workspaceId, item.signingRequestId)
     : null;
+  const toggleStyle = (active: boolean): React.CSSProperties => ({
+    padding: "5px 10px", borderRadius: 6, border: "1px solid rgba(201,161,90,0.45)",
+    background: active ? "rgba(201,161,90,0.28)" : "transparent", color: "#E8DCC4",
+    fontSize: 12, fontWeight: active ? 700 : 600, cursor: active ? "default" : "pointer",
+    fontFamily: "'Geist', sans-serif",
+  });
 
   return (
     <Suspense fallback={
@@ -2417,22 +2426,30 @@ function DocumentViewerDialog({
       </div>
     }>
       <DocumentArchiveViewer
-        title={item.documentTitle}
+        // The viewer loads its blob once per mount: switching versions mounts
+        // it afresh so the other bytes are drawn.
+        key={version}
+        title={version === "signed" ? `${item.documentTitle} (signed)` : item.documentTitle}
         loadBlob={loadBlob}
         onClose={onClose}
+        // The download is a plain anchor, not `window.open` or a fetch-and-blob
+        // dance. `/api` is proxied through this same origin by
+        // `public/_redirects` — done precisely so the session cookie is
+        // first-party — so an ordinary same-origin navigation carries it. The
+        // route answers with `Content-Disposition: attachment`, so the browser
+        // downloads and the page never navigates away. `window.open` would
+        // risk a popup block and can leave a blank tab behind; fetching to a
+        // Blob would buffer a whole signed PDF in memory to reproduce what
+        // the browser already does natively.
         headerAction={signedVersion === null ? undefined : (
-          // A plain anchor, not `window.open` or a fetch-and-blob dance.
-          //
-          // `/api` is proxied through this same origin by `public/_redirects`
-          // — done precisely so the session cookie is first-party — so an
-          // ordinary same-origin navigation carries it. The route answers with
-          // `Content-Disposition: attachment`, so the browser downloads and
-          // the page never navigates away.
-          //
-          // `window.open` would risk a popup block and can leave a blank tab
-          // behind; fetching to a Blob would buffer a whole signed PDF in
-          // memory to reproduce what the browser already does natively.
-          <a
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
+            <span role="group" aria-label="Which version to show" style={{ display: "inline-flex", gap: 4 }}>
+              <button type="button" data-testid="viewer-signed" aria-pressed={version === "signed"}
+                onClick={() => { setVersion("signed"); }} style={toggleStyle(version === "signed")}>Signed</button>
+              <button type="button" data-testid="viewer-original" aria-pressed={version === "original"}
+                onClick={() => { setVersion("original"); }} style={toggleStyle(version === "original")}>Original</button>
+            </span>
+            <a
             href={signedVersion}
             download
             style={{
@@ -2448,6 +2465,7 @@ function DocumentViewerDialog({
             <Download size={14} aria-hidden />
             Signed PDF
           </a>
+          </span>
         )}
       />
     </Suspense>
@@ -2541,7 +2559,7 @@ function DocumentsPageRealMode() {
 
   const [items, setItems] = useState<SigningRequestListItem[]>([]);
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
-  const [viewing, setViewing] = useState<SigningRequestListItem | null>(null);
+  const [viewing, setViewing] = useState<ViewableRequest | null>(null);
   const [signaturesFor, setSignaturesFor] = useState<SigningRequestListItem | null>(null);
   const [resendFor, setResendFor] = useState<SigningRequestListItem | null>(null);
   const [auditFor, setAuditFor] = useState<SigningRequestListItem | null>(null);
@@ -2697,6 +2715,63 @@ function DocumentsPageRealMode() {
 
     return () => { cancelled = true; };
   }, [workspaceId, refreshKey]);
+
+  // ── Live enough (finding 5) ───────────────────────────────────────────
+  //
+  // A completed request used to keep saying "0 of 1 signed" until the page
+  // was reloaded. The list now re-reads when the tab comes back and on the
+  // same timer as the side-panel counts, so what the notice says and what
+  // the card says agree within a few seconds. Rows stay on screen while a
+  // re-read is in flight (see `fetching`), so nothing flickers.
+  useEffect(() => {
+    if (!workspaceId) return;
+    let last = Date.now();
+    const bump = () => {
+      // At most one re-read every few seconds, however many events arrive.
+      if (Date.now() - last < 3_000) return;
+      last = Date.now();
+      setRefreshKey(k => k + 1);
+    };
+    const onVisibility = () => { if (document.visibilityState === "visible") bump(); };
+    const timer = setInterval(() => { if (document.visibilityState !== "hidden") bump(); }, NAV_COUNT_POLL_MS);
+    window.addEventListener("focus", bump);
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      clearInterval(timer);
+      window.removeEventListener("focus", bump);
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
+  }, [workspaceId]);
+
+  // ── Opening one request from a link (finding 6) ───────────────────────
+  //
+  // `?open=<signing request id>`: the signed-document notice and the old
+  // /app/documents/<id> address both land here. The request is taken from
+  // the unfiltered list when it is there, and read on its own otherwise,
+  // so a link into an older request still opens. The parameter is dropped
+  // once used, so closing the viewer does not reopen it on the next render.
+  const openId = searchParams.get("open");
+  useEffect(() => {
+    if (!workspaceId || openId === null) return;
+    let cancelled = false;
+    const done = () => {
+      setSearchParams(prev => { const next = new URLSearchParams(prev); next.delete("open"); return next; }, { replace: true });
+    };
+    const found = allRequests.find(r => r.signingRequestId === openId);
+    if (found) { setViewing(found); done(); return; }
+    if (requestedDocumentIds === null) return; // the unfiltered list has not answered yet
+    void realSigningRequestService.get(workspaceId, openId)
+      .then(detail => {
+        if (cancelled) return;
+        setViewing({
+          signingRequestId: detail.signingRequestId, documentId: detail.documentId,
+          documentTitle: detail.documentTitle, state: detail.state,
+        });
+      })
+      .catch(() => { /* Not this workspace's request, or gone: the list stays. */ })
+      .finally(() => { if (!cancelled) done(); });
+    return () => { cancelled = true; };
+  }, [workspaceId, openId, allRequests, requestedDocumentIds, setSearchParams]);
 
   // Unsent drafts, filtered the way the server filters requests: by name.
   // They have no signers yet, so a signer filter excludes them, and they

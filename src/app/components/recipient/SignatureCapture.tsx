@@ -296,6 +296,17 @@ export function SignatureCapture({
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const wrapRef = useRef<HTMLDivElement | null>(null);
   const drawing = useRef(false);
+  /** The device-pixel ratio the canvas was last sized with. */
+  const ratioRef = useRef(1);
+  /**
+   * Whether the pad is mid-signature (finding 2).
+   *
+   * Each lift of the pen hands the mark up as the value, and a value used to
+   * swap the pad for the adopted view at once — so a signature of two strokes
+   * could not be drawn. While this is set the pad stays, ink and all, until
+   * the signer clears it, changes mode, or closes the sheet.
+   */
+  const [padSession, setPadSession] = useState(false);
   const { isMobileS } = useViewport();
 
   const noun = purpose === "initials" ? "initials" : "signature";
@@ -307,7 +318,7 @@ export function SignatureCapture({
    * question at a time: first "here is what you signed with, keep it or
    * change it", and only then "how do you want to sign".
    */
-  const picking = value === null || replacing;
+  const picking = value === null || replacing || padSession;
 
   // ── Canvas sizing ─────────────────────────────────────────────────────────
   //
@@ -321,6 +332,7 @@ export function SignatureCapture({
     if (canvas === null || wrap === null) return;
 
     const ratio = Math.min(window.devicePixelRatio || 1, 3);
+    ratioRef.current = ratio;
     const cssWidth = wrap.clientWidth;
     const cssHeight = 150;
     const nextWidth = Math.round(cssWidth * ratio);
@@ -347,8 +359,16 @@ export function SignatureCapture({
   useEffect(() => {
     sizeCanvas();
     window.addEventListener("resize", sizeCanvas);
-    return () => { window.removeEventListener("resize", sizeCanvas); };
-  }, [sizeCanvas, mode]);
+    // The sheet is measured while it is still opening, so the pad's first
+    // width can be short of its final one; a stretched canvas then puts the
+    // ink to the right of the pen. Re-measure whenever the wrapper settles.
+    const wrap = wrapRef.current;
+    const observer = typeof ResizeObserver === "undefined" || wrap === null
+      ? null
+      : new ResizeObserver(() => { sizeCanvas(); });
+    observer?.observe(wrap as Element);
+    return () => { window.removeEventListener("resize", sizeCanvas); observer?.disconnect(); };
+  }, [sizeCanvas, mode, picking]);
 
   // Reopening on a TYPED signature restores the text and the tab that made
   // it, so "change my signature" starts from what is there rather than from
@@ -367,7 +387,14 @@ export function SignatureCapture({
     const canvas = canvasRef.current;
     if (canvas === null) return null;
     const rect = canvas.getBoundingClientRect();
-    return { x: event.clientX - rect.left, y: event.clientY - rect.top };
+    // In the canvas's own (CSS-pixel) space. If the element is drawn at a
+    // size other than the one it was measured at, the ink would otherwise
+    // land away from the pen by that difference.
+    const logicalWidth = canvas.width / ratioRef.current;
+    const logicalHeight = canvas.height / ratioRef.current;
+    const sx = rect.width > 0 ? logicalWidth / rect.width : 1;
+    const sy = rect.height > 0 ? logicalHeight / rect.height : 1;
+    return { x: (event.clientX - rect.left) * sx, y: (event.clientY - rect.top) * sy };
   };
 
   const startStroke = (event: React.PointerEvent<HTMLCanvasElement>) => {
@@ -389,6 +416,7 @@ export function SignatureCapture({
       // Not fatal. Drawing continues uncaptured.
     }
     drawing.current = true;
+    setPadSession(true);
     context.beginPath();
     context.moveTo(point.x, point.y);
     // A tap with no movement is a legitimate mark (a dot), so ink is recorded
@@ -422,6 +450,7 @@ export function SignatureCapture({
     if (canvas === null || context === undefined || context === null) return;
     context.clearRect(0, 0, canvas.width, canvas.height);
     setHasInk(false);
+    setPadSession(false);
     onChange(null);
   };
 
@@ -436,6 +465,7 @@ export function SignatureCapture({
     setUploadError(null);
     setTyped("");
     setHasInk(false);
+    setPadSession(false);
     onChange(null);
   };
 
@@ -768,7 +798,7 @@ export function SignatureCapture({
               <span style={{
                 overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
               }}>
-                {hasInk ? `Your ${noun} is ready` : `Draw your ${noun} above`}
+                {hasInk ? `Your ${noun} is ready — keep drawing to add to it` : `Draw your ${noun} above`}
               </span>
             </span>
             <button

@@ -27,7 +27,6 @@ import { realAccountSettingsService } from "../../../services/real/account-setti
 import { USE_REAL_BACKEND } from "../../../services/backend-flag";
 import { usePlatform, announceProfileChanged } from "../../../context/PlatformContext";
 import { initialsOf } from "../../../components/platform/UserAvatar";
-import { useMyPlan } from "../../../hooks/usePlans";
 import type { UserProfile } from "../../../models/settings";
 import { AVATAR_TYPES, MAX_AVATAR_SOURCE_BYTES as MAX_SOURCE_BYTES, toAvatarPng } from "../../../utils/avatar-image";
 
@@ -60,8 +59,10 @@ export function ProfilePage() {
   const [saveError, setSaveError] = useState<string | null>(null);
   const [validErr, setValidErr] = useState<Record<string, string>>({});
   const [photo, setPhoto]       = useState<PhotoChange>({ kind: "none" });
-  // The photo is set here on Free only; Personal and Business do not show it.
-  const showPhoto = useMyPlan().plan?.plan === "free";
+  // On every plan. It used to be hidden here on Personal and Business, whose
+  // only photo control was the camera button on the Home banner — which a
+  // tester on a laptop could not find (finding 14). Both places work now.
+  const showPhoto = true;
   const [avatarErr, setAvatarErr] = useState<string | null>(null);
   const { user, refreshSessionFromBackend } = usePlatform();
   const fileRef = useRef<HTMLInputElement>(null);

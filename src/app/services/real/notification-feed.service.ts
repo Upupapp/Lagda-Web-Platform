@@ -68,6 +68,16 @@ function str(input: unknown, key: string): string | null {
   return typeof value === "string" && value.trim().length > 0 ? value : null;
 }
 
+/** A boolean field from an unknown bag, or null. */
+function bool(input: unknown, key: string): boolean | null {
+  if (typeof input !== "object" || input === null) return null;
+  const value = (input as Record<string, unknown>)[key];
+  return typeof value === "boolean" ? value : null;
+}
+
+/** The page that lists a workspace's join requests, for its owners. */
+const JOIN_REQUESTS_PATH = "/app/invitations?view=sent&panel=requests";
+
 interface Presentation {
   readonly category: NotificationCategory;
   readonly severity: NotificationSeverity;
@@ -126,8 +136,8 @@ function present(row: FeedRow): Presentation {
           ? "Everyone has signed. The completed document is ready."
           : `Everyone has signed ${documentTitle}. The completed document is ready.`,
         actionLabel: "View document",
-        // The request id, which is what the documents surface routes on.
-        actionPath: `/app/documents/${row.sourceId}`,
+        // The request id. The documents page opens that request's viewer.
+        actionPath: `/app/documents?list=completed&open=${encodeURIComponent(row.sourceId)}`,
         why: "You were sent this because a signing request you created has been "
           + "completed by every recipient.",
       };
@@ -297,7 +307,7 @@ function present(row: FeedRow): Presentation {
         body: "A password reset was requested for your account. If this "
           + "wasn't you, change your password and review your sessions.",
         actionLabel: "Review sessions",
-        actionPath: "/app/settings/sessions",
+        actionPath: "/app/settings/security/sessions",
         why: "You were sent this because a password reset was requested for your account.",
       };
 
@@ -433,6 +443,139 @@ function present(row: FeedRow): Presentation {
         actionLabel: "Open Shared With Me",
         actionPath: sharedWithMePath(approved ? "accepted" : "rejected"),
         why: "You were sent this because you asked for access to a completed document. It was not emailed.",
+        inAppOnly: true,
+      };
+    }
+
+    // ── 078. Joining a workspace ─────────────────────────────────────────
+    case "WORKSPACE_JOIN_REQUESTED": {
+      const who = str(row.templateInput, "requesterName") ?? "Someone";
+      const email = str(row.templateInput, "requesterEmail");
+      const workspace = str(row.templateInput, "workspaceName") ?? "your workspace";
+      const reason = str(row.templateInput, "reason");
+      return {
+        category: "workspace", severity: "info", priority: "high",
+        title: `${who} asked to join ${workspace}`,
+        body: `${who}${email === null ? "" : ` (${email})`} is waiting for your approval.${reason === null ? "" : ` Their note: “${reason}”`}`,
+        actionLabel: "Review the request",
+        actionPath: JOIN_REQUESTS_PATH,
+        why: "You were sent this because you manage this workspace's members.",
+      };
+    }
+
+    case "WORKSPACE_JOIN_DECIDED": {
+      const workspace = str(row.templateInput, "workspaceName") ?? "the workspace";
+      const approved = bool(row.templateInput, "approved") === true;
+      return {
+        category: "workspace", severity: approved ? "success" : "info", priority: "normal",
+        title: approved ? `You are now a member of ${workspace}` : `Your request to join ${workspace} was declined`,
+        body: approved
+          ? `Your request was approved. ${workspace} is in your workspace list now.`
+          : `A manager of ${workspace} declined your request. You can ask again later.`,
+        actionLabel: approved ? "Open the workspace" : "Open Invitations",
+        actionPath: approved ? "/app/workspace" : "/app/invitations",
+        why: "You were sent this because you asked to join this workspace.",
+      };
+    }
+
+    case "WORKSPACE_JOIN_LINK": {
+      const workspace = str(row.templateInput, "workspaceName") ?? "a workspace";
+      const sender = str(row.templateInput, "senderDisplayName") ?? "Someone";
+      return {
+        category: "workspace", severity: "info", priority: "normal",
+        title: `${sender} sent you a link to join ${workspace}`,
+        body: `Open the link in the email to ask to join ${workspace}.`,
+        actionLabel: "Open Invitations",
+        actionPath: "/app/invitations",
+        why: "You were sent this because a join link was emailed to your address.",
+      };
+    }
+
+    // ── Documents sent to this account ─────────────────────────────────
+    case "SIGNING_INVITATION": {
+      const title = str(row.templateInput, "documentTitle") ?? "A document";
+      const sender = str(row.templateInput, "senderDisplayName") ?? "Someone";
+      const view = str(row.templateInput, "accessKind") === "view";
+      return {
+        category: "my-actions", severity: "info", priority: "high",
+        title: view ? `${sender} shared ${title} with you` : `${title} is waiting for your signature`,
+        body: view
+          ? `${sender} sent you ${title} to read. Open the link in the email to view it.`
+          : `${sender} sent you ${title} to sign. It is under Needs your signature.`,
+        actionLabel: view ? "Open Documents" : "Open Needs your signature",
+        actionPath: view ? "/app/documents?list=others" : "/app/documents?list=to-sign",
+        why: "You were sent this because the document was sent to your email address.",
+      };
+    }
+
+    // 096. The in-app side of a signing invitation, to the account that holds
+    // the address (decision 4): the email alone left a new account unaware.
+    case "DOCUMENT_WAITING_FOR_SIGNATURE": {
+      const title = str(row.templateInput, "documentTitle") ?? "A document";
+      const sender = str(row.templateInput, "senderDisplayName") ?? "Someone";
+      const workspace = str(row.templateInput, "workspaceName");
+      return {
+        category: "my-actions", severity: "info", priority: "high",
+        title: `${title} is waiting for your signature`,
+        body: `${sender}${workspace === null ? "" : ` (${workspace})`} sent you ${title} to sign. Open Needs your signature to continue.`,
+        actionLabel: "Open Needs your signature",
+        actionPath: "/app/documents?list=to-sign",
+        why: "You were sent this because the document was sent to the email address of this account.",
+        inAppOnly: true,
+      };
+    }
+
+    case "FINAL_COPY_AVAILABLE": {
+      const title = str(row.templateInput, "documentTitle") ?? "A document you signed";
+      const sender = str(row.templateInput, "senderDisplayName") ?? "the sender";
+      return {
+        category: "documents", severity: "success", priority: "normal",
+        title: `Your signed copy of ${title} is ready`,
+        body: `Everyone has signed ${title}, sent by ${sender}. Your copy is under Signed by me.`,
+        actionLabel: "Open Signed by me",
+        actionPath: "/app/documents?list=signed",
+        why: "You were sent this because you signed this document.",
+      };
+    }
+
+    case "DOCUMENT_UPLOAD_REQUESTED": {
+      const title = str(row.templateInput, "requestTitle") ?? "A document";
+      const who = str(row.templateInput, "requesterDisplayName") ?? "Someone";
+      const note = str(row.templateInput, "note");
+      return {
+        category: "my-actions", severity: "info", priority: "high",
+        title: `${who} asked you to upload ${title}`,
+        body: `${who} needs a document from you: ${title}.${note === null ? "" : ` Their note: “${note}”`}`,
+        actionLabel: "Open Upload requests",
+        actionPath: "/app/upload-requests",
+        why: "You were sent this because the request was assigned to you.",
+      };
+    }
+
+    case "CONTACT_REQUEST_EMAILED": {
+      const title = str(row.templateInput, "requestTitle") ?? "A request";
+      const who = str(row.templateInput, "requesterDisplayName") ?? "Someone";
+      return {
+        category: "my-actions", severity: "info", priority: "normal",
+        title: `${who} sent you a request: ${title}`,
+        body: `${who} asked you for something by email. Open the link in that email to answer.`,
+        actionLabel: "Open Requests",
+        actionPath: "/app/contacts/requests",
+        why: "You were sent this because a request was emailed to your address.",
+      };
+    }
+
+    // ── Emailed codes: the code itself is only ever in the email ───────
+    case "VERIFICATION_ACCESS_CODE":
+    case "SHARED_DOCUMENT_ACCESS_CODE": {
+      const title = str(row.templateInput, "documentTitle") ?? "a document";
+      return {
+        category: "security", severity: "info", priority: "normal",
+        title: `A code was emailed to you for ${title}`,
+        body: "Enter the 6-digit code from the email to open the document. It expires soon. If you did not ask for it, ignore the email.",
+        actionLabel: "Check a Document",
+        actionPath: "/app/verify",
+        why: "You were sent this because someone entered your address to open this document.",
         inAppOnly: true,
       };
     }

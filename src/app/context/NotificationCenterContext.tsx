@@ -13,6 +13,7 @@ import {
   realDocumentFeedService, type DocumentFeedScope,
 } from "../services/real/document-feed.service";
 import { USE_REAL_BACKEND } from "../services/backend-flag";
+import { NAV_COUNT_POLL_MS } from "../hooks/useNavCounts";
 import { usePlatform } from "./PlatformContext";
 
 export type { DocumentFeedScope };
@@ -127,11 +128,19 @@ export function NotificationCenterProvider({ children }: { children: ReactNode }
     refetch.current = load;
 
     load();
+    // A phone browser rarely fires `focus` when its tab comes back; it does
+    // fire `visibilitychange`. And a tab left open gets the same timer as the
+    // side-panel counts, so a new notice shows without anyone touching it.
     const onFocus = () => { load(); };
+    const onVisibility = () => { if (document.visibilityState === "visible") load(); };
+    const timer = setInterval(() => { if (document.visibilityState !== "hidden") load(); }, NAV_COUNT_POLL_MS);
     window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onVisibility);
     return () => {
       cancelled = true;
+      clearInterval(timer);
       window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onVisibility);
     };
   }, [workspaceId, workspaceName, scope]);
 

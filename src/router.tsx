@@ -7,6 +7,8 @@ import { CreateAccountLayout } from "./app/layouts/CreateAccountLayout";
 import { PlatformLayout } from "./app/layouts/PlatformLayout";
 import { RecipientLayout } from "./app/layouts/RecipientLayout";
 import { NotFound } from "./app/pages/public/NotFound";
+import { OpenDocumentRedirect } from "./app/pages/platform/documents/OpenDocumentRedirect";
+import { USE_REAL_BACKEND } from "./app/services/backend-flag";
 import { CapabilityGuard } from "./app/components/platform/CapabilityUnavailable";
 import { FeatureGuard } from "./app/components/platform/FeatureGuard";
 import { LegacySettingsRedirect } from "./app/pages/platform/settings/LegacySettingsRedirect";
@@ -1711,9 +1713,14 @@ export const router = createBrowserRouter([
       },
 
       // Transaction detail — nested routes (Command 16)
+      //
+      // On the live site this address opens the request in the Documents
+      // page's viewer: the detail pages below are the demo build's, and a
+      // link into them from a real notice used to end at "Transaction not
+      // found" (finding 6).
       {
         path: "documents/:transactionId",
-        element: (
+        element: USE_REAL_BACKEND ? <OpenDocumentRedirect /> : (
           <Suspense fallback={null}>
             <TransactionDetailLayout />
           </Suspense>

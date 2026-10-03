@@ -418,7 +418,14 @@ function AccessSection({ verificationId, memberAccess }: { verificationId: strin
     return () => { cancelled = true; };
   }, [memberAccess, verificationId]);
 
+  // The grant kept after "Close document view", so the view can be reopened
+  // without a new emailed code until the grant itself expires. Closing still
+  // takes the document off the screen at once.
+  const [recent, setRecent] = useState<VerificationGrant | null>(null);
+  const recentValid = recent !== null && new Date(recent.expiresAt).getTime() > Date.now();
+
   const expire = useCallback(() => {
+    setRecent(null);
     setStage({ s: "email" });
     setNotice({ tone: "info", text: MSG_EXPIRED });
   }, []);
@@ -454,6 +461,14 @@ function AccessSection({ verificationId, memberAccess }: { verificationId: strin
           onChange={(access) => setStage({ s: "status", access })}
           onUseCode={() => { setNotice(null); setStage({ s: "email" }); }} />
       )}
+      {stage.s === "email" && recentValid && recent !== null && (
+        <div data-testid="reopen-document" style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap", marginBottom: 14 }}>
+          <span style={{ ...GF, fontSize: 13, color: SLATE }}>Your access is still valid.</span>
+          <button type="button" onClick={() => { setNotice(null); setStage({ s: "unlocked", grant: recent }); }} style={buttonStyle("primary")}>
+            Reopen the document
+          </button>
+        </div>
+      )}
       {stage.s === "email" && (
         <EmailStep verificationId={verificationId} wait={wait}
           onSent={(email, expiresInSeconds) => {
@@ -471,7 +486,7 @@ function AccessSection({ verificationId, memberAccess }: { verificationId: strin
       )}
       {stage.s === "unlocked" && (
         <UnlockedView verificationId={verificationId} grant={stage.grant} onExpired={expire}
-          onLock={() => { setNotice({ tone: "info", text: "Document view closed." }); setStage({ s: "email" }); }} />
+          onLock={() => { setRecent(stage.grant); setNotice({ tone: "info", text: "Document view closed. You can reopen it below until your access expires." }); setStage({ s: "email" }); }} />
       )}
       {!memberAccess && stage.s !== "unlocked" && <RequestAccessLinks verificationId={verificationId} />}
     </section>

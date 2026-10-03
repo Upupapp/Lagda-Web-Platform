@@ -1,6 +1,7 @@
-// Settings › Profile: the Profile Photo section is for Free accounts only —
-// centred photo, then Change photo / Remove, then the note. Personal and
-// Business do not show it, and neither does a plan not read yet.
+// Settings › Profile: the Profile Photo section — centred photo, then Change
+// photo / Remove, then the note — on EVERY plan. It used to be Free-only,
+// with Personal and Business sent to the Home banner's camera button, which
+// a tester on a laptop could not find (finding 14).
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, within } from "@testing-library/react";
@@ -44,12 +45,12 @@ describe("Profile Photo by plan", () => {
   });
 
   for (const paid of ["personal", "business", null]) {
-    it(`${paid ?? "an unread plan"}: no Profile Photo`, async () => {
+    it(`${paid ?? "an unread plan"}: the Profile Photo is there too`, async () => {
       planId = paid;
       show();
-      await screen.findByText("Personal Information");
-      expect(screen.queryByTestId("profile-photo")).toBeNull();
-      expect(screen.queryByText("Profile Photo")).toBeNull();
+      const section = await screen.findByTestId("profile-photo");
+      expect(within(section).getByText("Change photo")).toBeTruthy();
+      expect(within(section).getByText("Remove")).toBeTruthy();
     });
   }
 });

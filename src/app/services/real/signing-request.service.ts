@@ -290,6 +290,22 @@ class RealSigningRequestService {
       + `/signing-requests/${encodeURIComponent(signingRequestId)}/completed-document`;
   }
 
+  // The SIGNED document, as a blob, for the in-app viewer. The same route as
+  // `downloadUrl` (completed-document, Content-Disposition attachment); read
+  // with the session cookie so the viewer can draw it instead of the browser
+  // saving it. Only a completed request has one.
+  async completedDocumentBlob(workspaceId: string, signingRequestId: string): Promise<Blob> {
+    if (!API_BASE_URL) {
+      throw new Error("completedDocumentBlob called with no VITE_API_BASE_URL configured.");
+    }
+    const response = await fetch(this.downloadUrl(workspaceId, signingRequestId),
+      { method: "GET", credentials: "include", cache: "no-store" });
+    if (!response.ok) {
+      throw new ApiError(response.status, undefined, "Could not load the signed document.");
+    }
+    return response.blob();
+  }
+
   // Viewing a document's own bytes, at any state (not just completed) — the
   // owner-facing counterpart to the recipient ceremony's
   // fetchRecipientDocumentBlob(). Same reasoning: a Blob is what

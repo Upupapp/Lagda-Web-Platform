@@ -63,6 +63,8 @@ function resolveStepStates(
   draft: PreparationDraft | null,
   activeStepId: PreparationStepId | null,
   settingsSeen = true,
+  /** Whether the field editor holds at least one placed field. */
+  fieldsPlaced = false,
 ): Record<PreparationStepId, PreparationStepState> {
   const unavail = (): PreparationStepState => "unavailable";
 
@@ -133,8 +135,10 @@ function resolveStepStates(
     // before the sender ever opened it. Display only: gating still uses
     // settingsOk.
     settings:       stepState("settings", routingOk, settingsOk && settingsSeen),
+    // Complete once a field has been placed (finding 3): the card used to
+    // stay "available" forever, the one grey step between green ones.
     fields:         beforeFields
-      ? (activeStepId === "fields" ? "current" : "available")
+      ? (activeStepId === "fields" ? "current" : fieldsPlaced ? "complete" : "available")
       : "blocked",
     authentication: stepState("authentication", beforeAuth, authOk),
     review:         stepState("review", beforeReview, v.isValid),
@@ -504,7 +508,7 @@ export function PrepareProvider({ children }: { children: React.ReactNode }) {
   const seen = visitedSteps.draftId === draftId ? visitedSteps.ids : new Set<PreparationStepId>();
   const settingsIndex = PREPARATION_STEPS.findIndex(s => s.id === "settings");
   const settingsSeen = PREPARATION_STEPS.some((s, i) => i >= settingsIndex && seen.has(s.id));
-  const stepStates = resolveStepStates(state.draft, state.activeStepId, settingsSeen);
+  const stepStates = resolveStepStates(state.draft, state.activeStepId, settingsSeen, (fieldsSnapshot?.length ?? 0) > 0);
 
   // A field snapshot from a discarded/replaced draft must never leak into
   // the next one's readiness calculation.
