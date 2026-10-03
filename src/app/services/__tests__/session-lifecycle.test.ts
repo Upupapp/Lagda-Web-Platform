@@ -114,6 +114,7 @@ describe("the real services register themselves", () => {
       "document-collaboration",
       "document-organization",
       "global-search",
+      "live-query", // services/live/live-query.ts, loaded by the test setup
       "notification-center",
       "signing-workflow",
       "workflow-automation",

@@ -14,6 +14,7 @@
 // workspace this account belongs to, that workspace is opened first.
 
 import React, { useEffect, useRef, useState } from "react";
+import { useLiveRefresh } from "../../../services/live/use-live-refresh";
 import { useSearchParams } from "react-router";
 import { usePlatform } from "../../../context/PlatformContext";
 import { useOptionalNotificationCenter } from "../../../context/NotificationCenterContext";
@@ -246,6 +247,9 @@ function InvitationsInner({ embedded = false }: { embedded?: boolean }) {
     void asyncLoadInvitations().then(() => { if (!cancelled) setLoadedFor(workspaceKey); });
     return () => { cancelled = true; };
   }, [asyncLoadInvitations, workspaceKey]);
+  // LIVE: one sent from the Invite panel (its own provider), accepted by the
+  // invitee, or revoked in another tab shows here without a reload.
+  useLiveRefresh(() => { void asyncLoadInvitations({ quiet: true }); }, { topics: ["invitations", "members"] });
 
   // Decline notices this account received, by invitation id: the reason
   // lives on the notice, not on the invitation list.

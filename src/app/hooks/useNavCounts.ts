@@ -9,10 +9,11 @@
 // menu can both be mounted, and one poll serves both. LIVE: an action that
 // changes a count (signing, sharing, access and contact requests — see
 // nav-counts-signal.ts) re-reads at once, here and in the other open tabs; so
-// does moving to another page, coming back to the tab, and a check every 15
-// seconds while the tab is visible — so a bubble drops, and vanishes at zero,
-// without a refresh. Each number fails on its own and keeps its last good
-// value — an error never reaches the navigation.
+// does moving to another page, and every beat of the app's one heartbeat
+// (services/live/heartbeat.ts: coming back to the tab, and every 15 seconds
+// while it is visible) — so a bubble drops, and vanishes at zero, without a
+// refresh. Each number fails on its own and keeps its last good value — an
+// error never reaches the navigation.
 
 import { useEffect, useSyncExternalStore } from "react";
 import { USE_REAL_BACKEND } from "../services/backend-flag";
@@ -22,8 +23,9 @@ import { documentSharingService } from "../services/real/document-sharing.servic
 import { contactConnectionsService } from "../services/real/contact-connections.service";
 import { registerSessionCleanup } from "../services/session-lifecycle";
 import { onNavCountsChanged } from "../services/nav-counts-signal";
+import { HEARTBEAT_MS, onHeartbeat } from "../services/live/heartbeat";
 
-export const NAV_COUNT_POLL_MS = 15_000;
+export const NAV_COUNT_POLL_MS = HEARTBEAT_MS;
 /** Moving between pages re-reads, but not more often than this. */
 export const NAV_COUNT_NAVIGATION_GAP_MS = 3_000;
 
@@ -37,7 +39,7 @@ const ZERO: NavCounts = { documents: 0, shared: 0, contacts: 0 };
 let counts: NavCounts = ZERO;
 const listeners = new Set<() => void>();
 let subscribers = 0;
-let timer: ReturnType<typeof setInterval> | null = null;
+let offHeartbeat: (() => void) | null = null;
 let inflight: Promise<void> | null = null;
 /** An action landed while a read was running: read once more after it. */
 let again = false;
@@ -95,27 +97,18 @@ export function refreshNavCountsOnNavigation(): void {
   void refreshNavCounts();
 }
 
-function onFocus() { void refreshNavCounts(); }
-function onVisibility() { if (document.visibilityState === "visible") void refreshNavCounts(); }
-
 function start() {
   if (!USE_REAL_BACKEND || typeof window === "undefined") return;
   void refreshNavCounts();
-  // A hidden tab is not asked; it catches up the moment it is shown.
-  timer = setInterval(() => { if (document.visibilityState !== "hidden") void refreshNavCounts(); }, NAV_COUNT_POLL_MS);
-  window.addEventListener("focus", onFocus);
-  document.addEventListener("visibilitychange", onVisibility);
+  offHeartbeat = onHeartbeat(() => { void refreshNavCounts(); });
   unlisten = onNavCountsChanged(() => { void refreshNavCounts(); });
 }
 
 function stop() {
-  if (timer !== null) clearInterval(timer);
-  timer = null;
+  offHeartbeat?.();
+  offHeartbeat = null;
   unlisten?.();
   unlisten = null;
-  if (typeof window === "undefined") return;
-  window.removeEventListener("focus", onFocus);
-  document.removeEventListener("visibilitychange", onVisibility);
 }
 
 function subscribe(listener: () => void): () => void {

@@ -1,15 +1,19 @@
 // One shared copy of the plans (backend 093): the signed-in account's own, and
 // each workspace's (its OWNER's, which is what decides what a workspace offers).
 //
-// Read on first use, again when the window regains focus, and whenever
-// something announces a change (an upgrade request, an approval arriving in
-// another tab). The demo build has every feature: its hooks answer "business"
-// without a request.
+// Read on first use, once a minute on the app's heartbeat
+// (services/live/heartbeat.ts), and at once whenever something announces the
+// `plan` topic (an upgrade request, an approval arriving in another tab).
+// The demo build has every feature: its hooks answer "business" without a
+// request.
 
 import { useCallback, useEffect, useSyncExternalStore } from "react";
 import { USE_REAL_BACKEND } from "../services/backend-flag";
 import { usePlatform } from "../context/PlatformContext";
 import { registerSessionCleanup } from "../services/session-lifecycle";
+import { onHeartbeat } from "../services/live/heartbeat";
+import { announce, onTopic } from "../services/live/topics";
+import { SETTINGS_TTL_MS } from "../services/live/live-query";
 import {
   plansService, planIncludes, type MyPlan, type PlanId, type WorkspacePlan,
 } from "../services/real/plans.service";
@@ -44,8 +48,6 @@ export function onPlanRead(listener: () => void): () => void {
 }
 const subscribe = (l: Listener) => { listeners.add(l); return () => { listeners.delete(l); }; };
 const key = (workspaceId: string) => `${account ?? ""}|${workspaceId}`;
-
-const CHANNEL = "lagda-plan";
 
 /** Points the store at this account, forgetting another's answers. */
 function scopeToAccount(userId: string | null): void {
@@ -94,13 +96,7 @@ function knownWorkspaceIds(): string[] {
 
 /** Re-reads every plan here, and tells the account's other tabs to. */
 export function announcePlanChanged(): void {
-  void refreshMyPlan();
-  for (const id of knownWorkspaceIds()) void refreshWorkspacePlan(id);
-  try {
-    const channel = new BroadcastChannel(CHANNEL);
-    channel.postMessage("changed");
-    channel.close();
-  } catch { /* no BroadcastChannel: this tab is still current */ }
+  announce("plan");
 }
 
 /** Forgets everything (sign-out, and tests). Late answers are dropped. */
@@ -125,11 +121,9 @@ function watchForChanges(): void {
     if (mine !== null) void refreshMyPlan();
     for (const id of knownWorkspaceIds()) void refreshWorkspacePlan(id);
   };
-  window.addEventListener("focus", refreshAll);
-  try {
-    const channel = new BroadcastChannel(CHANNEL);
-    channel.onmessage = refreshAll;
-  } catch { /* no BroadcastChannel */ }
+  // Never unsubscribed: the store is module-wide and outlives every hook.
+  onTopic("plan", refreshAll);
+  onHeartbeat(refreshAll, { every: SETTINGS_TTL_MS });
 }
 
 const DEMO_MINE: MyPlan = {

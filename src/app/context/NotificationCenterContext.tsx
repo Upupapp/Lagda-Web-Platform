@@ -13,7 +13,8 @@ import {
   realDocumentFeedService, type DocumentFeedScope,
 } from "../services/real/document-feed.service";
 import { USE_REAL_BACKEND } from "../services/backend-flag";
-import { NAV_COUNT_POLL_MS } from "../hooks/useNavCounts";
+import { onHeartbeat } from "../services/live/heartbeat";
+import { onTopic } from "../services/live/topics";
 import { usePlatform } from "./PlatformContext";
 
 export type { DocumentFeedScope };
@@ -97,8 +98,9 @@ export function NotificationCenterProvider({ children }: { children: ReactNode }
   //   what actually happened to this workspace's documents, one row per
   //   document, with this reader's read/dismissed state persisted (071).
   //
-  // Re-fetched when the tab regains focus, the same cheap approximation of
-  // "live" the rest of the product uses. Each source fails independently: a
+  // Re-fetched on the app's heartbeat (services/live/heartbeat.ts) and at
+  // once when the `notifications` or `documents` topic is announced — the
+  // same "live" the rest of the product uses. Each source fails independently: a
   // dead account feed must not blank the document feed, and neither may take
   // down the platform shell.
   useEffect(() => {
@@ -128,19 +130,12 @@ export function NotificationCenterProvider({ children }: { children: ReactNode }
     refetch.current = load;
 
     load();
-    // A phone browser rarely fires `focus` when its tab comes back; it does
-    // fire `visibilitychange`. And a tab left open gets the same timer as the
-    // side-panel counts, so a new notice shows without anyone touching it.
-    const onFocus = () => { load(); };
-    const onVisibility = () => { if (document.visibilityState === "visible") load(); };
-    const timer = setInterval(() => { if (document.visibilityState !== "hidden") load(); }, NAV_COUNT_POLL_MS);
-    window.addEventListener("focus", onFocus);
-    document.addEventListener("visibilitychange", onVisibility);
+    // One beat for the whole app (the side-panel counts share it), so a new
+    // notice shows without anyone touching the tab.
+    const offs = [onHeartbeat(load), onTopic("notifications", load), onTopic("documents", load)];
     return () => {
       cancelled = true;
-      clearInterval(timer);
-      window.removeEventListener("focus", onFocus);
-      document.removeEventListener("visibilitychange", onVisibility);
+      for (const off of offs) off();
     };
   }, [workspaceId, workspaceName, scope]);
 

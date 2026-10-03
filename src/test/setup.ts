@@ -8,6 +8,9 @@ import "@testing-library/jest-dom/vitest";
 import { afterEach, beforeEach, vi, expect } from "vitest";
 
 import { resetAllTestServices } from "./reset-services";
+import { resetLiveCache } from "../app/services/live/live-query";
+import { resetHeartbeat } from "../app/services/live/heartbeat";
+import { resetTopics } from "../app/services/live/topics";
 import readyMadeFixture from "./fixtures/ready_made_template.json";
 import { installReadyMadeLibrary, trustInstalledReadyMadeLibrary } from "../app/services/ready-made-templates";
 
@@ -86,6 +89,11 @@ beforeEach(() => {
 // suites pass or fail depending on order.
 afterEach(() => {
   resetAllTestServices();
+  // The live layer holds what a page last read, across mounts by design —
+  // and so across tests, unless it is emptied here.
+  resetLiveCache();
+  resetHeartbeat();
+  resetTopics();
   window.localStorage.clear();
   window.sessionStorage.clear();
   vi.unstubAllGlobals();

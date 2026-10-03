@@ -9,10 +9,10 @@
 // config/pricing.config, so the invoice cannot disagree with the plan cards.
 // Prices are VAT-inclusive: the ₱7,990 on the card is the invoice total.
 
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { plansService, type PlanInvoice } from "../../../../services/real/plans.service";
-import { onPlanRead } from "../../../../hooks/usePlans";
 import { USE_REAL_BACKEND } from "../../../../services/backend-flag";
+import { useLiveQuery, SETTINGS_TTL_MS } from "../../../../services/live/live-query";
 import { SAMPLE_PLANS } from "../../../../config/pricing.config";
 import { usePlatform } from "../../../../context/PlatformContext";
 import { useWorkspaceMode } from "../../../../hooks/useWorkspaceAccess";
@@ -105,29 +105,21 @@ export function useInvoiceBilledTo(): BilledTo {
 // ── Real (test-mode) invoices ──────────────────────────────────────────────
 //
 // One per approved plan change, from the server. Nothing was paid: each says
-// so. They follow the person's plan live — an approval, here or in another
-// tab, re-reads them — so the invoice is there the moment the plan changes.
+// so. They follow the person's plan live (services/live): an approval, here
+// or in another tab, announces `plan`, which re-reads them — so the invoice
+// is there the moment the plan changes — and the held list shows at once on
+// a return to the page.
 
 export const TEST_INVOICE_BANNER = "TEST MODE — NO PAYMENT HAS BEEN TAKEN";
 export const invoicePath = (number: string) => `/app/workspace/settings/billing/invoices/${encodeURIComponent(number)}`;
 
 export function usePlanInvoices(enabled = true): { invoices: PlanInvoice[] | null; error: boolean } {
-  const [invoices, setInvoices] = useState<PlanInvoice[] | null>(null);
-  const [error, setError] = useState(false);
-  const load = useCallback(() => {
-    plansService.invoices()
-      .then(r => { setInvoices(r.invoices); setError(false); })
-      .catch(() => { setError(true); });
-  }, []);
-  useEffect(() => {
-    if (!enabled || !USE_REAL_BACKEND) return;
-    load();
-    // Re-read when the plan is re-read (approval, another tab) and on focus.
-    const off = onPlanRead(load);
-    window.addEventListener("focus", load);
-    return () => { off(); window.removeEventListener("focus", load); };
-  }, [enabled, load]);
-  return { invoices, error };
+  const query = useLiveQuery(
+    enabled && USE_REAL_BACKEND ? "billing:invoices" : null,
+    () => plansService.invoices(),
+    { ttl: SETTINGS_TTL_MS, topics: ["plan", "billing"] },
+  );
+  return { invoices: query.data?.invoices ?? null, error: query.error !== undefined };
 }
 
 /** A real invoice in the shape the invoice page draws. Prices include VAT. */

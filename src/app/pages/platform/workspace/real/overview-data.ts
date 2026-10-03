@@ -10,6 +10,7 @@
 // the backend would refuse with its hidden 404 is never made.
 
 import { useEffect, useState } from "react";
+import { useLiveRefresh } from "../../../../services/live/use-live-refresh";
 import type { WorkspaceAccess } from "../../../../hooks/useWorkspaceAccess";
 import { realWorkspaceService } from "../../../../services/real/workspace.service";
 import { realWorkspaceAdminService } from "../../../../services/real/workspace-admin.service";
@@ -70,6 +71,11 @@ export function useRealOverviewData(
 ): OverviewData {
   const [data, setData] = useState<OverviewData>(EMPTY_OVERVIEW);
   const { members, manageMembers, invitations, teams } = gates;
+  // LIVE: re-read every 30 s and the moment members, invitations or the
+  // workspace itself change anywhere in this browser. The figures on screen
+  // stay until the new ones land.
+  const [beat, setBeat] = useState(0);
+  useLiveRefresh(() => { setBeat(b => b + 1); }, { enabled, every: 30_000, topics: ["members", "invitations", "workspace"] });
 
   useEffect(() => {
     if (!enabled) return;
@@ -107,7 +113,7 @@ export function useRealOverviewData(
         .catch(() => { set({ teams: "error" }); });
     }
     return () => { signal.cancelled = true; };
-  }, [enabled, workspaceId, members, manageMembers, invitations, teams, refreshKey]);
+  }, [enabled, workspaceId, members, manageMembers, invitations, teams, refreshKey, beat]);
 
   return data;
 }

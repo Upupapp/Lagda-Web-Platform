@@ -222,7 +222,8 @@ interface WorkspaceAdminContextValue {
   clearActiveMember:      () => void;
 
   // Invitations
-  asyncLoadInvitations:   () => Promise<void>;
+  /** `quiet`: keep the list on screen while it re-reads (a live refresh). */
+  asyncLoadInvitations:   (options?: { quiet?: boolean }) => Promise<void>;
   /** Resolves true when the invitation was sent. */
   asyncSendInvitation:    (input: WorkspaceInviteInput) => Promise<boolean>;
   asyncResendInvitation:  (id: WorkspaceInvitationId) => Promise<void>;
@@ -423,9 +424,9 @@ export function WorkspaceAdminProvider({ children }: { children: ReactNode }) {
   // Latest request wins: after a workspace switch the previous workspace's
   // list may still be in flight, and must not land on top of the new one.
   const invitationsSeq = useRef(0);
-  const asyncLoadInvitations = useCallback(async () => {
+  const asyncLoadInvitations = useCallback(async (options: { quiet?: boolean } = {}) => {
     const seq = ++invitationsSeq.current;
-    dispatch({ type: "INVITATIONS_LOADING" });
+    if (!options.quiet) dispatch({ type: "INVITATIONS_LOADING" });
     try {
       const invitations = isReal
         ? await realWorkspaceAdminService.listInvitations(workspaceId)

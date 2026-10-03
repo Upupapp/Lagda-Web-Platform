@@ -83,7 +83,7 @@ function toRecord(row: FeedRow, workspaceId: string, workspaceName: string): Not
     // Always `documents`: every row is derived from evidence, and evidence is
     // scoped to a signing request by construction. Nothing else can arrive.
     category: "documents",
-    severity: row.severity as NotificationSeverity,
+    severity: row.severity,
     priority: priorityOf(row),
     title: row.title,
     body: row.body,

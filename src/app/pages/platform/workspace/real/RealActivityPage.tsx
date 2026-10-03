@@ -20,6 +20,7 @@
 // One column on a phone; on a wider screen a timeline rail on the left.
 
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useLiveRefresh } from "../../../../services/live/use-live-refresh";
 import { Users, KeyRound, Link2, Network, Building2, Search, Settings2, type LucideIcon } from "lucide-react";
 import { useWorkspaceAccess } from "../../../../hooks/useWorkspaceAccess";
 import { usePlatform } from "../../../../context/PlatformContext";
@@ -152,10 +153,13 @@ export function RealActivityPage({ workspaceId }: { workspaceId: string }) {
   const [moreError, setMoreError] = useState<string | null>(null);
   const [loadingMore, setLoadingMore] = useState(false);
   const request = useRef(0);
+  /** Older entries were loaded: a quiet re-read would throw them away, so none happens. */
+  const paged = useRef(false);
 
-  const loadFirst = useCallback(async (cat: WorkspaceActivityCategory | null) => {
+  const loadFirst = useCallback(async (cat: WorkspaceActivityCategory | null, quiet = false) => {
     const id = ++request.current;
-    setEvents(null);
+    paged.current = false;
+    if (!quiet) setEvents(null);
     setError(null);
     setMoreError(null);
     try {
@@ -170,6 +174,11 @@ export function RealActivityPage({ workspaceId }: { workspaceId: string }) {
   }, [workspaceId]);
 
   useEffect(() => { if (canView) void loadFirst(category); }, [canView, category, loadFirst]);
+  // LIVE: the newest entries arrive every 30 s, and at once after a change
+  // to members, links or the workspace made in this browser — while the
+  // first page is all that is shown.
+  useLiveRefresh(() => { if (!paged.current) void loadFirst(category, true); },
+    { enabled: canView, every: 30_000, topics: ["members", "invitations", "workspace"] });
 
   // The members, so a sentence's subject can be shown with their face.
   useEffect(() => {
@@ -196,6 +205,7 @@ export function RealActivityPage({ workspaceId }: { workspaceId: string }) {
         const seen = new Set((list ?? []).map(e => e.eventId));
         return [...(list ?? []), ...page.events.filter(e => !seen.has(e.eventId))];
       });
+      paged.current = true;
       setNextCursor(page.nextCursor);
     } catch (err) {
       if (id === request.current) setMoreError(errorMessage(err, "We couldn't load older entries."));

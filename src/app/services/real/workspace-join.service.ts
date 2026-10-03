@@ -32,6 +32,7 @@
 // in-memory stand-in so the whole flow can be walked end to end.
 
 import { apiRequest, ApiError } from "../api-client";
+import { changes } from "../live/topics";
 import { USE_REAL_BACKEND } from "../backend-flag";
 
 export const JOIN_TICKET_LABEL_MAX = 120;
@@ -361,10 +362,10 @@ export async function submitJoinRequest(token: string, input: JoinRequestInput):
     return { kind: "sent", workspaceName: preview.workspaceName };
   }
   try {
-    const result = await apiRequest<{ requestId: string; workspaceName: string; state: "pending" }>(
+    const result = await changes("invitations", apiRequest<{ requestId: string; workspaceName: string; state: "pending" }>(
       "/workspace-join/requests",
       { method: "POST", body: { token, fullName: input.fullName, reason: input.reason } },
-    );
+    ));
     return { kind: "sent", workspaceName: result.workspaceName };
   } catch (err) {
     if (!(err instanceof ApiError)) return { kind: "error", message: JOIN_MESSAGES.submitError };
@@ -425,9 +426,9 @@ export async function createJoinTicket(workspaceId: string, input: JoinTicketInp
     demo.tickets.unshift(t);
     return presentDemo(t);
   }
-  return manage(() => apiRequest<JoinTicket>(`${ws(workspaceId)}/join-tickets`, {
+  return manage(() => changes("invitations", apiRequest<JoinTicket>(`${ws(workspaceId)}/join-tickets`, {
     method: "POST", body: { label: input.label, recipientEmail: input.recipientEmail },
-  }), "We couldn't save this link.");
+  })), "We couldn't save this link.");
 }
 
 export async function updateJoinTicket(
@@ -441,9 +442,9 @@ export async function updateJoinTicket(
     t.updatedAt = Date.now();
     return presentDemo(t);
   }
-  return manage(() => apiRequest<JoinTicket>(`${ws(workspaceId)}/join-tickets/${encodeURIComponent(ticketId)}`, {
+  return manage(() => changes("invitations", apiRequest<JoinTicket>(`${ws(workspaceId)}/join-tickets/${encodeURIComponent(ticketId)}`, {
     method: "PATCH", body: { label: input.label, recipientEmail: input.recipientEmail },
-  }), "We couldn't save this link.");
+  })), "We couldn't save this link.");
 }
 
 /** Draft → Sent, or Withdrawn → Sent ("Send again"). Always a NEW link. */
@@ -466,10 +467,10 @@ export async function sendJoinTicket(
     t.updatedAt = now;
     return presentDemo(t);
   }
-  return manage(() => apiRequest<JoinTicket>(
+  return manage(() => changes("invitations", apiRequest<JoinTicket>(
     `${ws(workspaceId)}/join-tickets/${encodeURIComponent(ticketId)}/send`,
     { method: "POST", body: { email: options.email } },
-  ), "We couldn't send this link.");
+  )), "We couldn't send this link.");
 }
 
 export async function withdrawJoinTicket(workspaceId: string, ticketId: string): Promise<JoinTicket> {
@@ -484,10 +485,10 @@ export async function withdrawJoinTicket(workspaceId: string, ticketId: string):
     t.updatedAt = now;
     return presentDemo(t);
   }
-  return manage(() => apiRequest<JoinTicket>(
+  return manage(() => changes("invitations", apiRequest<JoinTicket>(
     `${ws(workspaceId)}/join-tickets/${encodeURIComponent(ticketId)}/withdraw`,
     { method: "POST", body: {} },
-  ), "We couldn't withdraw this link.");
+  )), "We couldn't withdraw this link.");
 }
 
 export async function listJoinRequests(workspaceId: string, state?: JoinRequestState): Promise<JoinRequest[]> {
@@ -539,10 +540,10 @@ export async function approveJoinRequest(
     });
     return { memberId };
   }
-  return manage(() => apiRequest<{ memberId: string }>(
+  return manage(() => changes("members", apiRequest<{ memberId: string }>(
     `${ws(workspaceId)}/join-requests/${encodeURIComponent(requestId)}/approve`,
     { method: "POST", body },
-  ), "We couldn't approve this request.");
+  )), "We couldn't approve this request.");
 }
 
 export async function declineJoinRequest(workspaceId: string, requestId: string): Promise<void> {
@@ -550,10 +551,10 @@ export async function declineJoinRequest(workspaceId: string, requestId: string)
     decideDemo(requestId, "declined");
     return;
   }
-  await manage(() => apiRequest<{ declined: true }>(
+  await manage(() => changes("invitations", apiRequest<{ declined: true }>(
     `${ws(workspaceId)}/join-requests/${encodeURIComponent(requestId)}/decline`,
     { method: "POST", body: {} },
-  ), "We couldn't decline this request.");
+  )), "We couldn't decline this request.");
 }
 
 export async function updateMemberAccess(
@@ -569,8 +570,8 @@ export async function updateMemberAccess(
     });
     return;
   }
-  await manage(() => apiRequest<{ updated: true }>(
+  await manage(() => changes("members", apiRequest<{ updated: true }>(
     `${ws(workspaceId)}/members/${encodeURIComponent(memberId)}/access`,
     { method: "PATCH", body },
-  ), "We couldn't update this member's access.");
+  )), "We couldn't update this member's access.");
 }

@@ -22,6 +22,7 @@
 // save. This file is the fix.
 
 import { apiRequest } from "../api-client";
+import { changes } from "../live/topics";
 
 /** The nine fields `ContactSchema` returns on a READ. */
 export type WireContactScope = "personal" | "workspace";
@@ -144,39 +145,39 @@ class RealContactService {
   }
 
   async create(workspaceId: string, input: WireContactCreate): Promise<WireContactWriteResult> {
-    return apiRequest<WireContactWriteResult>(base(workspaceId), {
+    return changes("contacts", apiRequest<WireContactWriteResult>(base(workspaceId), {
       method: "POST", body: input,
-    });
+    }));
   }
 
   /** Whole-record replace — the backend has no PATCH for a contact. */
   async update(
     workspaceId: string, contactId: string, input: WireContactWrite,
   ): Promise<WireContactWriteResult> {
-    return apiRequest<WireContactWriteResult>(
+    return changes("contacts", apiRequest<WireContactWriteResult>(
       `${base(workspaceId)}/${encodeURIComponent(contactId)}`,
       { method: "PUT", body: input },
-    );
+    ));
   }
 
   /** Archiving keeps the record and its history; it leaves the active book. */
   async archive(workspaceId: string, contactId: string): Promise<WireContact> {
-    return apiRequest<WireContact>(
+    return changes("contacts", apiRequest<WireContact>(
       `${base(workspaceId)}/${encodeURIComponent(contactId)}/archive`,
       { method: "POST" },
-    );
+    ));
   }
 
   /** 092. Permanent, and only for an archived contact (422 otherwise). */
   async delete(workspaceId: string, contactId: string): Promise<void> {
-    await apiRequest<void>(`${base(workspaceId)}/${encodeURIComponent(contactId)}`, { method: "DELETE" });
+    await changes("contacts", apiRequest<void>(`${base(workspaceId)}/${encodeURIComponent(contactId)}`, { method: "DELETE" }));
   }
 
   async restore(workspaceId: string, contactId: string): Promise<WireContact> {
-    return apiRequest<WireContact>(
+    return changes("contacts", apiRequest<WireContact>(
       `${base(workspaceId)}/${encodeURIComponent(contactId)}/restore`,
       { method: "POST" },
-    );
+    ));
   }
 }
 

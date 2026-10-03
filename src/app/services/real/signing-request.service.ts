@@ -6,6 +6,7 @@
 
 import { apiRequest, ApiError } from "../api-client";
 import { API_BASE_URL } from "../backend-flag";
+import { changes } from "../live/topics";
 
 export type SigningRequestState =
   | "draft" | "ready-to-send" | "sent" | "partially-completed"
@@ -191,10 +192,10 @@ class RealSigningRequestService {
   // because the error is about the whole request, not a field. `body: {}`
   // is the actual empty-but-present object the schema requires.
   async create(workspaceId: string, documentId: string, idempotencyKey: string): Promise<SigningRequestCreated> {
-    return apiRequest<SigningRequestCreated>(
+    return changes("documents", apiRequest<SigningRequestCreated>(
       `/workspaces/${encodeURIComponent(workspaceId)}/documents/${encodeURIComponent(documentId)}/signing-requests`,
       { method: "POST", headers: { "Idempotency-Key": idempotencyKey }, body: {} },
-    );
+    ));
   }
 
   /**
@@ -256,23 +257,24 @@ class RealSigningRequestService {
     workspaceId: string, signingRequestId: string, idempotencyKey: string,
     options: { shareFinalCopy?: boolean } = {},
   ): Promise<SentResponse> {
-    return apiRequest<SentResponse>(
+    // The documents list (and its counts) change the moment this lands.
+    return changes("documents", apiRequest<SentResponse>(
       `/workspaces/${encodeURIComponent(workspaceId)}/signing-requests/${encodeURIComponent(signingRequestId)}/send`,
       {
         method: "POST", headers: { "Idempotency-Key": idempotencyKey },
         body: options.shareFinalCopy === false ? { shareFinalCopy: false } : {},
       },
-    );
+    ));
   }
 
   // Not called from any UI entry point yet this command (no cancel affordance
   // exists in the traced Prepare/Confirmation flow) — included because the
   // route is real and a future command may need it without re-tracing.
   async cancel(workspaceId: string, signingRequestId: string, reason: string): Promise<{ signingRequestId: string; state: "cancelled"; cancelledAt: number }> {
-    return apiRequest(
+    return changes("documents", apiRequest(
       `/workspaces/${encodeURIComponent(workspaceId)}/signing-requests/${encodeURIComponent(signingRequestId)}/cancel`,
       { method: "POST", body: { reason } },
-    );
+    ));
   }
 
   // Phase 1-C. Not a JSON call — this URL is meant for a plain <a href> or

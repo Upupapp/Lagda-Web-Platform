@@ -30,7 +30,7 @@
 // to that invitation's workspace first when it is not the current one.
 // Opening it marks the notice read, which takes it off this list.
 
-import { useState, useEffect, type CSSProperties } from "react";
+import { useState, type CSSProperties } from "react";
 import { Link } from "react-router";
 import {
   FilePlus, FileText, XCircle, Clock, AlertTriangle, FileEdit,
@@ -41,6 +41,7 @@ import { ProfileHero } from "./ProfileHero";
 import { FreePlanHero } from "./FreePlanHero";
 import { ChatbotShowcase } from "./ChatbotShowcase";
 import { useMyPlan } from "../../hooks/usePlans";
+import { useLiveQuery } from "../../services/live/live-query";
 import { usePlatform } from "../../context/PlatformContext";
 import { useOptionalNotificationCenter } from "../../context/NotificationCenterContext";
 import {
@@ -363,6 +364,8 @@ function ProgressMeter({ signed, of }: { signed: number; of: number }) {
 
 // ── The page ───────────────────────────────────────────────────────────────
 
+const NO_ITEMS: SigningRequestListItem[] = [];
+
 export function RealDashboard() {
   const { plan: myPlan } = useMyPlan();
   const platform = usePlatform();
@@ -370,26 +373,21 @@ export function RealDashboard() {
   const workspaceId = currentWorkspace?.id ?? null;
   const notices = useOptionalNotificationCenter();
 
-  const [items, setItems] = useState<SigningRequestListItem[]>([]);
-  const [total, setTotal] = useState(0);
-  const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
   const [signaturesFor, setSignaturesFor] = useState<SigningRequestListItem | null>(null);
   const [auditFor, setAuditFor] = useState<SigningRequestListItem | null>(null);
 
-  useEffect(() => {
-    if (!workspaceId) return;
-    let cancelled = false;
-    setStatus("loading");
-    void realSigningRequestService.list(workspaceId, { perPage: PAGE_SIZE })
-      .then(result => {
-        if (cancelled) return;
-        setItems(result.items);
-        setTotal(result.total);
-        setStatus("ready");
-      })
-      .catch(() => { if (!cancelled) setStatus("error"); });
-    return () => { cancelled = true; };
-  }, [workspaceId]);
+  // LIVE (services/live): the held list shows at once on a return to Home,
+  // re-reads on the heartbeat, and at once after a send, re-send or cancel
+  // anywhere in this browser (the `documents` topic).
+  const query = useLiveQuery(
+    workspaceId ? `documents:dashboard:${workspaceId}` : null,
+    () => realSigningRequestService.list(workspaceId ?? "", { perPage: PAGE_SIZE }),
+    { topics: ["documents"] },
+  );
+  const items = query.data?.items ?? NO_ITEMS;
+  const total = query.data?.total ?? 0;
+  const status: "loading" | "ready" | "error" =
+    query.data !== undefined ? "ready" : query.error !== undefined ? "error" : "loading";
 
   const now = Date.now();
   const summary   = summarize(items, total);

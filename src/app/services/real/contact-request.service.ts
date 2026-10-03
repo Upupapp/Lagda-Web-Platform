@@ -16,6 +16,7 @@
 
 import { USE_REAL_BACKEND } from "../backend-flag";
 import { apiRequest, ApiError } from "../api-client";
+import { changes } from "../live/topics";
 import type {
   ContactRequest, ContactRequestStatus, CreateContactRequestInput,
 } from "../../models/contact-requests";
@@ -34,7 +35,7 @@ class RealContactRequestService {
   async create(workspaceId: string, input: CreateContactRequestInput): Promise<ContactRequest> {
     const message = input.message?.trim() ?? "";
     const documentId = input.documentId?.trim() ?? "";
-    return apiRequest<ContactRequest>(`${ws(workspaceId)}/contact-requests`, {
+    return changes("contacts", apiRequest<ContactRequest>(`${ws(workspaceId)}/contact-requests`, {
       method: "POST",
       body: {
         kind: input.kind,
@@ -45,7 +46,7 @@ class RealContactRequestService {
         ...(documentId === "" || input.kind === "upload" ? {} : { documentId }),
         ...(input.dueAt === undefined || input.dueAt === "" ? {} : { dueAt: input.dueAt }),
       },
-    });
+    }));
   }
 
   async get(workspaceId: string, requestId: string): Promise<ContactRequest> {
@@ -55,24 +56,24 @@ class RealContactRequestService {
   /** `documentId` answers an upload / signed-document request; a preparation
    *  request is completed without one. */
   async complete(workspaceId: string, requestId: string, documentId?: string): Promise<ContactRequest> {
-    return apiRequest<ContactRequest>(`${one(workspaceId, requestId)}/complete`, {
+    return changes("contacts", apiRequest<ContactRequest>(`${one(workspaceId, requestId)}/complete`, {
       method: "POST",
       body: documentId === undefined ? {} : { documentId },
-    });
+    }));
   }
 
   /** A reason is REQUIRED (1–500 characters after trimming); the backend
    *  answers 422 validation_failed without one. It is always sent, so an
    *  empty one fails on the server rather than being silently dropped. */
   async decline(workspaceId: string, requestId: string, reason: string): Promise<ContactRequest> {
-    return apiRequest<ContactRequest>(`${one(workspaceId, requestId)}/decline`, {
+    return changes("contacts", apiRequest<ContactRequest>(`${one(workspaceId, requestId)}/decline`, {
       method: "POST",
       body: { reason: reason.trim() },
-    });
+    }));
   }
 
   async cancel(workspaceId: string, requestId: string): Promise<ContactRequest> {
-    return apiRequest<ContactRequest>(`${one(workspaceId, requestId)}/cancel`, { method: "POST" });
+    return changes("contacts", apiRequest<ContactRequest>(`${one(workspaceId, requestId)}/cancel`, { method: "POST" }));
   }
 
   async listForContact(workspaceId: string, contactId: string): Promise<ContactRequest[]> {

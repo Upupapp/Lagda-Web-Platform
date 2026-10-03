@@ -9,6 +9,7 @@
 // There is no time-based expiry.
 
 import { useCallback, useEffect, useId, useState } from "react";
+import { useLiveRefresh } from "../../../../services/live/use-live-refresh";
 import { Link } from "react-router";
 import { VerificationQRCode } from "../../../../components/verification/VerificationQRCode";
 import { useViewport } from "../../../../hooks/useViewport";
@@ -70,6 +71,8 @@ export function JoinLinksSection({ workspaceId, onChanged, flush = false }: {
   }, [workspaceId]);
 
   useEffect(() => { void load(); }, [load]);
+  // LIVE: a link used, sent or withdrawn elsewhere shows here.
+  useLiveRefresh(() => { void load(); }, { topics: ["invitations", "members"] });
 
   const replace = (next: JoinTicket) => {
     setTickets(list => {

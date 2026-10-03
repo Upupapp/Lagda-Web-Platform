@@ -230,8 +230,12 @@ describe("Received → Pending actions", () => {
 
   it("marks a preparation done and moves it to Approved", async () => {
     received = [request()];
-    routes = ({ url }) => (url.endsWith("/complete")
-      ? { body: request({ status: "completed", completedAt: "2026-09-27T00:00:00.000Z" }) } : undefined);
+    routes = ({ url }) => {
+      if (!url.endsWith("/complete")) return undefined;
+      const done = request({ status: "completed", completedAt: "2026-09-27T00:00:00.000Z" });
+      received = [done]; // the list re-reads after the action
+      return { body: done };
+    };
     renderPage();
     await userEvent.click(await screen.findByRole("button", { name: /Mark as done/ }));
     expect(await screen.findByText(/It is now under Approved/)).toBeTruthy();
@@ -258,8 +262,12 @@ describe("Received → Pending actions", () => {
 
   it("requires a reason to reject: submit stays disabled until one is typed, with a counter", async () => {
     received = [request()];
-    routes = ({ url }) => (url.endsWith("/decline")
-      ? { body: request({ status: "declined", declineReason: "Not my client", declinedAt: "2026-09-27T00:00:00.000Z" }) } : undefined);
+    routes = ({ url }) => {
+      if (!url.endsWith("/decline")) return undefined;
+      const declined = request({ status: "declined", declineReason: "Not my client", declinedAt: "2026-09-27T00:00:00.000Z" });
+      received = [declined]; // the list re-reads after the action
+      return { body: declined };
+    };
     renderPage();
     await userEvent.click(await screen.findByRole("button", { name: "Reject" }));
     const dialog = await screen.findByRole("dialog", { name: "Reject this request" });
@@ -326,8 +334,12 @@ describe("Received → Pending actions", () => {
 describe("Sent → Pending actions", () => {
   it("cancels only after Continue; Cancel keeps it", async () => {
     sent = [sentRequest()];
-    routes = ({ url }) => (url.endsWith("/cancel")
-      ? { body: sentRequest({ status: "cancelled", cancelledAt: "2026-09-27T00:00:00.000Z" }) } : undefined);
+    routes = ({ url }) => {
+      if (!url.endsWith("/cancel")) return undefined;
+      const cancelled = sentRequest({ status: "cancelled", cancelledAt: "2026-09-27T00:00:00.000Z" });
+      sent = [cancelled]; // the list re-reads after the action
+      return { body: cancelled };
+    };
     renderPage("/app/contacts/requests?view=sent");
     const item = await screen.findByRole("listitem", { name: /Prepare the lease/ });
     expect(within(item).getByText("In-app, no email")).toBeTruthy();

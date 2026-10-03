@@ -6,6 +6,7 @@
 
 import { API_BASE_URL } from "../backend-flag";
 import { apiRequest, ApiError } from "../api-client";
+import { changes } from "../live/topics";
 
 export type PlanId = "free" | "personal" | "business" | "enterprise";
 export type RequestablePlan = "personal" | "business";
@@ -128,10 +129,10 @@ export const plansService = {
     return apiRequest<WorkspacePlan>(`/workspaces/${encodeURIComponent(workspaceId)}/plan`);
   },
   requestUpgrade(plan: RequestablePlan, bank: BankDetails): Promise<UpgradeRequest> {
-    return apiRequest<UpgradeRequest>("/me/plan/upgrade-requests", { method: "POST", body: { plan, bank } });
+    return changes("plan", apiRequest<UpgradeRequest>("/me/plan/upgrade-requests", { method: "POST", body: { plan, bank } }));
   },
   cancelRequest(): Promise<void> {
-    return apiRequest<void>("/me/plan/upgrade-requests/cancel", { method: "POST" });
+    return changes("plan", apiRequest<void>("/me/plan/upgrade-requests/cancel", { method: "POST" }));
   },
   pendingReviews(): Promise<{ requests: UpgradeReview[] }> {
     return apiRequest<{ requests: UpgradeReview[] }>("/plan-requests");
@@ -140,6 +141,6 @@ export const plansService = {
     return apiRequest<UpgradeReview>(one(requestId));
   },
   decide(requestId: string, decision: "approve" | "decline"): Promise<UpgradeReview> {
-    return apiRequest<UpgradeReview>(`${one(requestId)}/${decision}`, { method: "POST" });
+    return changes("plan", apiRequest<UpgradeReview>(`${one(requestId)}/${decision}`, { method: "POST" }));
   },
 };

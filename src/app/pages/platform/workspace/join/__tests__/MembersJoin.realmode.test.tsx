@@ -39,7 +39,10 @@ const REQUESTS = [
 
 const calls: { method: string; path: string; body: unknown }[] = [];
 
+let requests = REQUESTS;
+
 beforeEach(() => {
+  requests = REQUESTS;
   calls.length = 0;
   platform.role = "owner";
   vi.stubGlobal("fetch", vi.fn((url: string, init?: RequestInit) => {
@@ -48,9 +51,12 @@ beforeEach(() => {
     const body: unknown = init?.body ? JSON.parse(init.body as string) : undefined;
     calls.push({ method, path, body });
     if (method === "GET" && path === "/workspaces/ws_1/members") return Promise.resolve(json(200, { members: MEMBERS }));
-    if (method === "GET" && path === "/workspaces/ws_1/join-requests") return Promise.resolve(json(200, { requests: REQUESTS }));
+    if (method === "GET" && path === "/workspaces/ws_1/join-requests") return Promise.resolve(json(200, { requests }));
     if (method === "GET" && path === "/workspaces/ws_1/join-tickets") return Promise.resolve(json(200, { tickets: [] }));
-    if (method === "POST" && path === "/workspaces/ws_1/join-requests/jr_1/approve") return Promise.resolve(json(200, { memberId: "m_liza" }));
+    if (method === "POST" && path === "/workspaces/ws_1/join-requests/jr_1/approve") {
+      requests = requests.filter(r => r.requestId !== "jr_1"); // the section re-reads after the decision
+      return Promise.resolve(json(200, { memberId: "m_liza" }));
+    }
     if (method === "POST" && path === "/workspaces/ws_1/join-requests/jr_2/decline") return Promise.resolve(json(200, { declined: true }));
     if (method === "PATCH" && path === "/workspaces/ws_1/members/m_new/access") return Promise.resolve(json(200, { updated: true }));
     return Promise.resolve(json(404, { error: { code: "not_found", message: `${method} ${path}` } }));

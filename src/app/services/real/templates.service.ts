@@ -26,6 +26,7 @@
 // is a migration, not a change here.
 
 import { apiRequest } from "../api-client";
+import { changes } from "../live/topics";
 import type {
   DocumentTemplate,
   TemplateRolePlaceholder,
@@ -222,25 +223,25 @@ class RealTemplatesService {
   }
 
   async create(workspaceId: string, input: WireTemplateWrite): Promise<WireTemplate> {
-    return apiRequest<WireTemplate>(base(workspaceId), {
+    return changes("templates", apiRequest<WireTemplate>(base(workspaceId), {
       method: "POST", body: input,
-    });
+    }));
   }
 
   async update(
     workspaceId: string, templateId: string, input: WireTemplateWrite,
   ): Promise<WireTemplate> {
-    return apiRequest<WireTemplate>(
+    return changes("templates", apiRequest<WireTemplate>(
       `${base(workspaceId)}/${encodeURIComponent(templateId)}`,
       { method: "PUT", body: input },
-    );
+    ));
   }
 
   async remove(workspaceId: string, templateId: string): Promise<void> {
-    await apiRequest<void>(
+    await changes("templates", apiRequest<void>(
       `${base(workspaceId)}/${encodeURIComponent(templateId)}`,
       { method: "DELETE" },
-    );
+    ));
   }
 
   /** A template's field layout (060), in deterministic order. */
@@ -256,10 +257,10 @@ class RealTemplatesService {
   async saveFields(
     workspaceId: string, templateId: string, fields: WireFieldInput[],
   ): Promise<WireField[]> {
-    const result = await apiRequest<{ items: WireField[] }>(
+    const result = await changes("templates", apiRequest<{ items: WireField[] }>(
       `${base(workspaceId)}/${encodeURIComponent(templateId)}/fields`,
       { method: "PUT", body: { fields } },
-    );
+    ));
     return result.items;
   }
 
@@ -273,10 +274,10 @@ class RealTemplatesService {
   async generateDocument(
     workspaceId: string, templateId: string, input: WireGenerateDocumentInput,
   ): Promise<WireGenerateDocumentResult> {
-    return apiRequest<WireGenerateDocumentResult>(
+    return changes("documents", apiRequest<WireGenerateDocumentResult>(
       `${base(workspaceId)}/${encodeURIComponent(templateId)}/generate-document`,
       { method: "POST", body: input },
-    );
+    ));
   }
 
   /**
@@ -291,10 +292,10 @@ class RealTemplatesService {
     workspaceId: string, templateId: string, input: WireSaveContentInput,
     options: { keepalive?: boolean } = {},
   ): Promise<WireSaveContentResult> {
-    return apiRequest<WireSaveContentResult>(
+    return changes("templates", apiRequest<WireSaveContentResult>(
       `${base(workspaceId)}/${encodeURIComponent(templateId)}/content`,
       { method: "PUT", body: input, keepalive: options.keepalive === true },
-    );
+    ));
   }
 
   /**

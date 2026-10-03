@@ -14,6 +14,7 @@
 // people allowed to invite or to answer requests.
 
 import { useCallback, useEffect, useId, useState } from "react";
+import { useLiveRefresh } from "../../../services/live/use-live-refresh";
 import { UserPlus, Mail, Link2, Inbox, X } from "lucide-react";
 import { useWorkspaceAccess } from "../../../hooks/useWorkspaceAccess";
 import { useWorkspaceAllows } from "../../../hooks/usePlans";
@@ -62,6 +63,7 @@ export function InvitePeopleToggle({ workspaceId, onChanged, initialTab, openOnA
     listJoinRequests(workspaceId, "pending").then(list => { setPending(list.length); }).catch(() => undefined);
   }, [allowed.requests, workspaceId]);
   useEffect(() => { refreshPending(); }, [refreshPending]);
+  useLiveRefresh(refreshPending, { topics: ["invitations", "members"] });
 
   useEffect(() => {
     if (!open) return;

@@ -16,6 +16,7 @@
 // organization/OrganizationUnitsPage.tsx.
 
 import { apiRequest } from "../api-client";
+import { changes } from "../live/topics";
 import type {
   OrganizationUnit, OrganizationUnitKind, OrganizationUnitMember,
 } from "../../models/organization";
@@ -50,7 +51,7 @@ class RealOrganizationService {
     workspaceId: string,
     input: { name: string; kind: OrganizationUnitKind; parentUnitId?: string },
   ): Promise<OrganizationUnit> {
-    return apiRequest<WireUnit>(base(workspaceId), { method: "POST", body: input });
+    return changes("members", apiRequest<WireUnit>(base(workspaceId), { method: "POST", body: input }));
   }
 
   /** `parentUnitId` absent leaves the unit where it is; `null` promotes it
@@ -60,23 +61,23 @@ class RealOrganizationService {
     workspaceId: string, unitId: string,
     input: { name: string; parentUnitId?: string | null },
   ): Promise<OrganizationUnit> {
-    return apiRequest<WireUnit>(
+    return changes("members", apiRequest<WireUnit>(
       `${base(workspaceId)}/${encodeURIComponent(unitId)}`,
       { method: "PATCH", body: input },
-    );
+    ));
   }
 
   /** Archives, never deletes. The row survives — see the model's header. */
   async archiveUnit(workspaceId: string, unitId: string): Promise<void> {
-    await apiRequest<void>(
+    await changes("members", apiRequest<void>(
       `${base(workspaceId)}/${encodeURIComponent(unitId)}/archive`,
       { method: "POST" },
-    );
+    ));
   }
 
   /** 094. Deletes an EMPTY team for good (409 while it has people or teams inside). */
   async deleteUnit(workspaceId: string, unitId: string): Promise<void> {
-    await apiRequest<void>(`${base(workspaceId)}/${encodeURIComponent(unitId)}`, { method: "DELETE" });
+    await changes("members", apiRequest<void>(`${base(workspaceId)}/${encodeURIComponent(unitId)}`, { method: "DELETE" }));
   }
 
   async listMembers(workspaceId: string, unitId: string): Promise<OrganizationUnitMember[]> {
@@ -91,16 +92,16 @@ class RealOrganizationService {
     workspaceId: string, unitId: string,
     input: { userId: string; title?: string | null },
   ): Promise<void> {
-    await apiRequest<void>(memberBase(workspaceId, unitId), { method: "POST", body: input });
+    await changes("members", apiRequest<void>(memberBase(workspaceId, unitId), { method: "POST", body: input }));
   }
 
   /** Removes membership entirely. To change a title without removing
    *  someone, use `setMemberTitle`. */
   async removeMember(workspaceId: string, unitId: string, userId: string): Promise<void> {
-    await apiRequest<void>(
+    await changes("members", apiRequest<void>(
       `${memberBase(workspaceId, unitId)}/${encodeURIComponent(userId)}`,
       { method: "DELETE" },
-    );
+    ));
   }
 
   /** `title: null` clears it — the member stays, they simply no longer
@@ -108,10 +109,10 @@ class RealOrganizationService {
   async setMemberTitle(
     workspaceId: string, unitId: string, userId: string, title: string | null,
   ): Promise<void> {
-    await apiRequest<void>(
+    await changes("members", apiRequest<void>(
       `${memberBase(workspaceId, unitId)}/${encodeURIComponent(userId)}`,
       { method: "PATCH", body: { title } },
-    );
+    ));
   }
 }
 

@@ -7,6 +7,7 @@
 
 import { USE_REAL_BACKEND, API_BASE_URL } from "../backend-flag";
 import { apiRequest, ApiError } from "../api-client";
+import { changes } from "../live/topics";
 import { changesNavCounts } from "../nav-counts-signal";
 
 export function contactConnectionsAvailable(workspaceId: string | null | undefined): boolean {
@@ -57,19 +58,19 @@ export const contactConnectionsService = {
     return apiRequest<LookupResult>(`${ws(workspaceId)}/contact-connections/lookup`, { method: "POST", body: { email } });
   },
   send(workspaceId: string, email: string): Promise<ContactConnection> {
-    return apiRequest<ContactConnection>(`${ws(workspaceId)}/contact-connections`, { method: "POST", body: { email } });
+    return changes("contacts", apiRequest<ContactConnection>(`${ws(workspaceId)}/contact-connections`, { method: "POST", body: { email } }));
   },
   list(): Promise<ConnectionLists> {
     return apiRequest<ConnectionLists>("/me/contact-connections");
   },
   accept(connectionId: string, workspaceId: string): Promise<{ contactId: string | null; workspaceId: string }> {
-    return changesNavCounts(apiRequest(`${one(connectionId)}/accept`, { method: "POST", body: { workspaceId } }));
+    return changes("contacts", changesNavCounts(apiRequest(`${one(connectionId)}/accept`, { method: "POST", body: { workspaceId } })));
   },
   async decline(connectionId: string): Promise<void> {
-    await changesNavCounts(apiRequest<void>(`${one(connectionId)}/decline`, { method: "POST" }));
+    await changes("contacts", changesNavCounts(apiRequest<void>(`${one(connectionId)}/decline`, { method: "POST" })));
   },
   async cancel(connectionId: string): Promise<void> {
-    await changesNavCounts(apiRequest<void>(`${one(connectionId)}/cancel`, { method: "POST" }));
+    await changes("contacts", changesNavCounts(apiRequest<void>(`${one(connectionId)}/cancel`, { method: "POST" })));
   },
   getDiscovery(): Promise<{ discoverableByEmail: boolean }> {
     return apiRequest("/me/contact-discovery");

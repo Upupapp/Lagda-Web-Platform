@@ -46,6 +46,7 @@ let me: Record<string, unknown>;
 let notif: Record<string, unknown>;
 let role: string;
 let failNotificationPatch = false;
+let failInvoices = false;
 let workspacePlan = "business";
 let workspacePlanOwnerIsYou = true;
 let invoices: Record<string, unknown>[] = [];
@@ -75,6 +76,7 @@ beforeEach(() => {
   calls.length = 0;
   role = "owner";
   failNotificationPatch = false;
+  failInvoices = false;
   me = {
     userId: "u1", email: "ana@example.com", emailVerified: true,
     profile: { fullName: "Ana Reyes", displayName: "Ana Reyes", jobTitle: null, department: null, preferredSenderName: null },
@@ -116,7 +118,10 @@ beforeEach(() => {
     if (path === "/workspaces/ws_1/usage") return Promise.resolve(json(200, USAGE));
     // 093. The workspace's plan is its owner's.
     if (path === "/workspaces/ws_1/plan") return Promise.resolve(json(200, { plan: workspacePlan, ownerIsYou: workspacePlanOwnerIsYou, ownerName: "Carmen Reyes", paidUntil: "2026-10-30T09:00:00.000Z" }));
-    if (path === "/me/plan/invoices") return Promise.resolve(json(200, { invoices }));
+    if (path === "/me/plan/invoices") {
+      if (failInvoices) return Promise.resolve(json(500, { error: { code: "server_error", message: "boom" } }));
+      return Promise.resolve(json(200, { invoices }));
+    }
     if (/^\/me\/plan\/invoices\/[^/]+\/pdf$/.test(path)) {
       return Promise.resolve(new Response(new Blob(["%PDF-1.7 test"], { type: "application/pdf" }), { status: 200, headers: { "content-type": "application/pdf" } }));
     }
@@ -485,6 +490,13 @@ describe("invoice page", () => {
     expect(within(audit).getAllByTestId("audit-event").map(e => e.textContent)).toEqual(["Requested", "Approved", "Issued", "Marked as test"]);
     expect(await screen.findByTestId("invoice-page-billed-name")).toHaveTextContent("Carmen Reyes");
     expect(screen.getByRole("button", { name: /Print/ })).toBeInTheDocument();
+  });
+
+  it("says the invoice could not be loaded when the list cannot be read — not that it does not exist", async () => {
+    failInvoices = true;
+    renderAt("/app/workspace/settings/billing/invoices/LAGDA-2026-0002");
+    expect(await screen.findByRole("alert")).toHaveTextContent("The invoice could not be loaded.");
+    expect(screen.queryByText(/no invoice with that number/)).toBeNull();
   });
 
   it("downloads the invoice as a PDF built by the server", async () => {

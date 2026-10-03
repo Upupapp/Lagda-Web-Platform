@@ -16,6 +16,7 @@
 // `WorkspaceAdminContext` can call either one without its callers knowing
 // which. `demonstrationOnly: false` on every row this service returns.
 import { apiRequest } from "../api-client";
+import { changes } from "../live/topics";
 import type {
   WorkspaceMemberSummary, WorkspaceMemberId,
   WorkspaceInvitation, WorkspaceInvitationId, WorkspaceInvitationStatus,
@@ -138,18 +139,18 @@ class RealWorkspaceAdminService {
   async changeMemberRole(
     workspaceId: string, membershipId: string, role: BackendWorkspaceRole,
   ): Promise<WorkspaceMemberSummary> {
-    const member = await apiRequest<WireMember>(
+    const member = await changes("members", apiRequest<WireMember>(
       `/workspaces/${encodeURIComponent(workspaceId)}/members/${encodeURIComponent(membershipId)}/role`,
       { method: "PATCH", body: { role } },
-    );
+    ));
     return toSummary(member);
   }
 
   async removeMember(workspaceId: string, membershipId: string): Promise<void> {
-    await apiRequest<{ membershipId: string; removed: true }>(
+    await changes("members", apiRequest<{ membershipId: string; removed: true }>(
       `/workspaces/${encodeURIComponent(workspaceId)}/members/${encodeURIComponent(membershipId)}`,
       { method: "DELETE" },
-    );
+    ));
   }
 
   async listInvitations(workspaceId: string): Promise<WorkspaceInvitation[]> {
@@ -161,32 +162,32 @@ class RealWorkspaceAdminService {
   async sendInvitation(
     workspaceId: string, input: WorkspaceInviteInput, idempotencyKey: string,
   ): Promise<WorkspaceInvitation> {
-    const invitation = await apiRequest<WireInvitation>(
+    const invitation = await changes("invitations", apiRequest<WireInvitation>(
       `/workspaces/${encodeURIComponent(workspaceId)}/invitations`,
       {
         method: "POST",
         body: { email: input.email, role: input.roleId },
         headers: { "Idempotency-Key": idempotencyKey },
       },
-    );
+    ));
     return toInvitation(invitation);
   }
 
   async resendInvitation(
     workspaceId: string, invitationId: string, idempotencyKey: string,
   ): Promise<WorkspaceInvitation> {
-    const invitation = await apiRequest<WireInvitation>(
+    const invitation = await changes("invitations", apiRequest<WireInvitation>(
       `/workspaces/${encodeURIComponent(workspaceId)}/invitations/${encodeURIComponent(invitationId)}/resend`,
       { method: "POST", body: {}, headers: { "Idempotency-Key": idempotencyKey } },
-    );
+    ));
     return toInvitation(invitation);
   }
 
   async revokeInvitation(workspaceId: string, invitationId: string): Promise<void> {
-    await apiRequest<{ invitationId: string; state: string }>(
+    await changes("invitations", apiRequest<{ invitationId: string; state: string }>(
       `/workspaces/${encodeURIComponent(workspaceId)}/invitations/${encodeURIComponent(invitationId)}/revoke`,
       { method: "POST", body: {} },
-    );
+    ));
   }
 }
 

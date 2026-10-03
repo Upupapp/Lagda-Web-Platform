@@ -7,6 +7,8 @@
 // and the pages say so.
 
 import { useCallback, useEffect, useState } from "react";
+import { useLiveRefresh } from "../../../services/live/use-live-refresh";
+import { SETTINGS_TTL_MS } from "../../../services/live/live-query";
 import { USE_REAL_BACKEND } from "../../../services/backend-flag";
 import {
   realSecuritySettingsService, PASSWORD_MIN_LENGTH,
@@ -179,6 +181,9 @@ export function useWorkspaceUsage(workspaceId: string | null): { usage: Workspac
     return () => { cancelled = true; };
   }, [workspaceId, tick]);
   const reload = useCallback(() => { setTick(t => t + 1); }, []);
+  // LIVE: once a minute, and at once after a document is sent (the figures
+  // on screen stay until the new ones land).
+  useLiveRefresh(reload, { enabled: workspaceId !== null, every: SETTINGS_TTL_MS, topics: ["documents"] });
   return { usage, error, reload };
 }
 

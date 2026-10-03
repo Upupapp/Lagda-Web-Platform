@@ -16,6 +16,8 @@
 // page changing.
 
 import { useEffect, useState } from "react";
+import { useLiveRefresh } from "../../../../services/live/use-live-refresh";
+import { SETTINGS_TTL_MS } from "../../../../services/live/live-query";
 import { realSigningRequestService, type SigningRequestListItem, type SigningRequestState } from "../../../../services/real/signing-request.service";
 import { realWorkspaceUsageService, type WorkspaceUsage } from "../../../../services/real/workspace-usage.service";
 import { realOrganizationService } from "../../../../services/real/organization.service";
@@ -140,6 +142,9 @@ async function requestsInWindow(workspaceId: string, now: number): Promise<Signi
 export function useOverviewInsights(workspaceId: string, gates: InsightGates, refreshKey: string | number = 0): OverviewInsights {
   const [data, setData] = useState<OverviewInsights>({ requests: null, usage: null, teams: null, activity: null });
   const { documents, usage, teams, activity } = gates;
+  // LIVE: once a minute, and at once after a document or team change.
+  const [beat, setBeat] = useState(0);
+  useLiveRefresh(() => { setBeat(b => b + 1); }, { every: SETTINGS_TTL_MS, topics: ["documents", "members"] });
   useEffect(() => {
     let cancelled = false;
     const set = (patch: Partial<OverviewInsights>) => { if (!cancelled) setData(d => ({ ...d, ...patch })); };
@@ -163,6 +168,6 @@ export function useOverviewInsights(workspaceId: string, gates: InsightGates, re
       listWorkspaceActivity(workspaceId, { limit: 5 }).then(p => { set({ activity: p.events.slice(0, 5) }); }).catch(() => { set({ activity: "error" }); });
     }
     return () => { cancelled = true; };
-  }, [workspaceId, documents, usage, teams, activity, refreshKey]);
+  }, [workspaceId, documents, usage, teams, activity, refreshKey, beat]);
   return data;
 }

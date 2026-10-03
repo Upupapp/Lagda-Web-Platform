@@ -6,6 +6,7 @@
 // two privileges; without a title the person appears as "New Comer".
 
 import { useCallback, useEffect, useId, useState } from "react";
+import { useLiveRefresh } from "../../../../services/live/use-live-refresh";
 import { useViewport } from "../../../../hooks/useViewport";
 import {
   listJoinRequests, approveJoinRequest, declineJoinRequest, JoinActionError,
@@ -54,6 +55,8 @@ export function JoinRequestsSection({ workspaceId, refreshKey = 0, onDecided, on
   }, [workspaceId]);
 
   useEffect(() => { void load(); }, [load, refreshKey]);
+  // LIVE: a request that arrives, or is decided in another tab, shows here.
+  useLiveRefresh(() => { void load(); }, { topics: ["invitations", "members"] });
 
   const pending = (requests ?? []).filter(r => r.state === "pending").sort((a, b) => a.createdAt - b.createdAt);
   const history = (requests ?? []).filter(r => r.state !== "pending")

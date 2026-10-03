@@ -6,6 +6,8 @@ import { ChatbotShowcase } from "../../../components/dashboard/ChatbotShowcase";
 import { useWorkspaceAllows } from "../../../hooks/usePlans";
 import { useReadyMade } from "../../../hooks/useReadyMade";
 import { useState, useEffect, useCallback, useRef } from "react";
+import { useLiveRefresh } from "../../../services/live/use-live-refresh";
+import { SETTINGS_TTL_MS } from "../../../services/live/live-query";
 import { Link, useNavigate } from "react-router";
 import {
   LayoutTemplate, Plus, Search, Grid, List,
@@ -273,6 +275,11 @@ function TemplatesInner() {
     loadList(state.query);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.query]);
+
+  // LIVE: a template saved, duplicated or removed anywhere in this browser
+  // shows at once; another member's within a minute. The cards stay while
+  // the list re-reads.
+  useLiveRefresh(() => { loadList(state.query, { quiet: true }); }, { every: SETTINGS_TTL_MS, topics: ["templates"] });
 
   const updateQuery = useCallback((partial: Partial<TemplateListQuery>) => {
     setQuery({ ...state.query, page: 1, ...partial });

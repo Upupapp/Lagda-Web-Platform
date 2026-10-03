@@ -11,6 +11,7 @@ import { Link } from "react-router";
 import { usePlatform } from "../../../../context/PlatformContext";
 import { useWorkspaceAccess } from "../../../../hooks/useWorkspaceAccess";
 import { realWorkspaceService } from "../../../../services/real/workspace.service";
+import { announce } from "../../../../services/live/topics";
 import { buttonStyle, inputStyle, labelStyle, hintStyle } from "../join/join-styles";
 import { ErrorNote } from "../join/join-ui";
 import { ManagePage, GF, GM, NAVY, AZURE, SLATE, SILVER } from "./manage-ui";
@@ -58,6 +59,8 @@ export function RealWorkspaceSettingsPage({ workspaceId }: { workspaceId: string
       setSaved(s => ({ ...s, name: result.name }));
       setName(result.name);
       platform.applyWorkspaceRename(workspaceId, result.name);
+      // This tab is done above; the other tabs re-read the workspace list.
+      announce("workspace", { remoteOnly: true });
       setStatus("Workspace name saved.");
     } catch (err) {
       setError(errorMessage(err, "We couldn't rename the workspace. Please try again."));

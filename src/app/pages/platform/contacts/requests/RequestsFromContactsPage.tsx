@@ -28,7 +28,7 @@ import {
   type ContactRequest, type ContactRequestGroup, type ContactRequestView,
 } from "../../../../models/contact-requests";
 import { modalButtonStyle } from "../../../../components/contact-requests/ModalFrame";
-import { ContactsHeader, useConnectionLists } from "../contacts-ui";
+import { ContactsHeader, useConnectionLists, useLiveRefresh } from "../contacts-ui";
 import {
   RequestCard, ActionButton, InlineError, OpenDocumentButton,
   RejectDialog, CancelRequestDialog, MarkReceivedDialog,
@@ -49,17 +49,19 @@ function useRequestList(load: () => Promise<ContactRequest[]>) {
   const [items, setItems] = useState<ContactRequest[]>([]);
   const [status, setStatus] = useState<ListStatus>(USE_REAL_BACKEND ? "loading" : "ready");
   const [error, setError] = useState<string | null>(null);
-  const reload = useCallback(() => {
+  const reload = useCallback((quiet = false) => {
     // No backend: nothing can have been asked, and nothing is invented.
     if (!USE_REAL_BACKEND) { setItems([]); setStatus("ready"); return () => undefined; }
     let cancelled = false;
-    setStatus("loading"); setError(null);
+    // A quiet re-read (the heartbeat, a change elsewhere) keeps the list on screen.
+    if (!quiet) { setStatus("loading"); setError(null); }
     load()
       .then(result => { if (!cancelled) { setItems(sortRequests(result)); setStatus("ready"); } })
       .catch((err: unknown) => { if (!cancelled) { setError(contactRequestErrorMessage(err, "load")); setStatus("error"); } });
     return () => { cancelled = true; };
   }, [load]);
   useEffect(() => reload(), [reload]);
+  useLiveRefresh(() => { reload(true); });
   const replace = useCallback((next: ContactRequest) => {
     setItems(list => sortRequests(list.map(item => (item.requestId === next.requestId ? next : item))));
   }, []);

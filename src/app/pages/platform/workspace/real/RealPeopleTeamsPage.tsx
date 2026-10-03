@@ -40,6 +40,7 @@
 // re-checks every action.
 
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useLiveRefresh } from "../../../../services/live/use-live-refresh";
 import { useSearchParams } from "react-router";
 import {
   Search, Plus, Network, UserPlus, Users, MoreHorizontal, Pencil, Trash2, ArrowLeftRight,
@@ -178,6 +179,10 @@ export function RealPeopleTeamsPage({ workspaceId }: { workspaceId: string }) {
   }, [workspaceId, canSeeMembers, may.seeInvitations]);
 
   useEffect(() => { void load(); }, [load]);
+  // LIVE: another member's change (a team, a role, an invitation) shows
+  // within 30 s; one made in this browser shows at once. `load` keeps the
+  // page on screen while it reads.
+  useLiveRefresh(() => { void load(); }, { every: 30_000, topics: ["members", "invitations"] });
 
   const reload = useCallback(async (message?: string) => {
     if (message) setNotice(message);

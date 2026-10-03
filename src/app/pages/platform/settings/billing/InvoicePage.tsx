@@ -77,6 +77,15 @@ export function InvoicePage() {
   if (real && found === undefined && invoices === null && !error) {
     return <SettingsPage title="Invoice" breadcrumb="Billing & Plan › Invoice">{back}<SCard><p aria-busy="true" style={{ ...GF, fontSize: 13.5, color: SET.SLATE, margin: 0 }}>Loading the invoice…</p></SCard></SettingsPage>;
   }
+  // The list could not be read: that is not "no such invoice".
+  if (real && found === undefined && invoices === null && error) {
+    return (
+      <SettingsPage title="Invoice" breadcrumb="Billing & Plan › Invoice">
+        {back}
+        <SCard><p role="alert" style={{ ...GF, fontSize: 13.5, color: "#991B1B", margin: 0 }}>The invoice could not be loaded. Reload the page to try again.</p></SCard>
+      </SettingsPage>
+    );
+  }
   if (real ? found === undefined : invoiceId !== SAMPLE_INVOICE_ID) {
     return (
       <SettingsPage title="Invoice not found" breadcrumb="Billing & Plan › Invoice">

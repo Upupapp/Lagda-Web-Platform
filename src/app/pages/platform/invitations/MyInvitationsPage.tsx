@@ -25,6 +25,7 @@
 import { JoinNeedsPersonalNotice } from "../../../components/platform/PlanGate";
 import { useMyPlan } from "../../../hooks/usePlans";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useLiveRefresh } from "../../../services/live/use-live-refresh";
 import { useSearchParams } from "react-router";
 import { Check, X, Undo2, Inbox, Ban, CircleCheck, Mail } from "lucide-react";
 import { AppContent, EmptyStateLayout, PageHeader, SkeletonBlock } from "../../../components/platform";
@@ -133,6 +134,9 @@ export function MyInvitationsPage() {
     void load();
     return () => { loadSeq.current += 1; };
   }, [load]);
+  // LIVE: an invitation that arrives, or is answered in another tab, shows
+  // without a reload; the lists stay on screen while they re-read.
+  useLiveRefresh(() => { if (myInvitationsAvailable()) void load(true); }, { topics: ["invitations"] });
 
   // A notice link (?invitation=<id>) scrolls its letter into view once.
   useEffect(() => {

@@ -15,6 +15,7 @@
 // an acceptance or a new photo shows up on its own.
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
+import { useLiveRefresh as useLiveRefreshOn } from "../../../services/live/use-live-refresh";
 import { Link } from "react-router";
 import {
   User as BlankPersonIcon, Users, UserSearch, Inbox, FileText, Archive, Building2,
@@ -53,22 +54,13 @@ export const EXTERNAL_CONTACT_ROUTE = "/app/contacts/new/external";
 
 // ── Live refresh ───────────────────────────────────────────────────────────
 
-/** Calls `refresh` every `ms` while the page is visible, and on becoming visible. */
+/**
+ * Calls `refresh` on the app's heartbeat (services/live) every `ms` while
+ * the page is visible, and at once when contacts change anywhere in this
+ * browser (a contact saved, a request answered — the `contacts` topic).
+ */
 export function useLiveRefresh(refresh: () => void, ms = 60_000): void {
-  const latest = useRef(refresh);
-  latest.current = refresh;
-  useEffect(() => {
-    const tick = () => { if (document.visibilityState === "visible") latest.current(); };
-    const timer = window.setInterval(tick, ms);
-    const onVisible = () => { if (document.visibilityState === "visible") latest.current(); };
-    document.addEventListener("visibilitychange", onVisible);
-    window.addEventListener("focus", onVisible);
-    return () => {
-      window.clearInterval(timer);
-      document.removeEventListener("visibilitychange", onVisible);
-      window.removeEventListener("focus", onVisible);
-    };
-  }, [ms]);
+  useLiveRefreshOn(refresh, { every: ms, topics: ["contacts"] });
 }
 
 /** The account's own requests, kept current. Null lists while loading or without a backend. */

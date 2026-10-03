@@ -191,7 +191,8 @@ interface TemplateContextValue {
   scope: TemplateScope;
   // Library
   setQuery:      (q: TemplateListQuery) => void;
-  loadList:      (q?: TemplateListQuery) => void;
+  /** `quiet`: keep the list on screen while it re-reads (a live refresh). */
+  loadList:      (q?: TemplateListQuery, options?: { quiet?: boolean }) => void;
   // Active template
   loadTemplate:  (id: DocumentTemplateId) => void;
   /** True when templates are the workspace's own records and can be saved.
@@ -225,9 +226,9 @@ export function TemplateProvider({ children }: { children: React.ReactNode }) {
   // otherwise overwrite it.
   const activeRequest = useRef(0);
 
-  const loadList = useCallback(async (q?: TemplateListQuery) => {
+  const loadList = useCallback(async (q?: TemplateListQuery, options: { quiet?: boolean } = {}) => {
     const query = q ?? latestQuery.current;
-    dispatch({ type: "LIST_LOADING" });
+    if (!options.quiet) dispatch({ type: "LIST_LOADING" });
     try {
       const result = await sourceList(workspaceId, query);
       dispatch({ type: "LIST_SUCCESS", result });
@@ -341,7 +342,7 @@ export function TemplateProvider({ children }: { children: React.ReactNode }) {
       state,
       scope,
       setQuery,
-      loadList: q => { void loadList(q); },
+      loadList: (q, options) => { void loadList(q, options); },
       loadTemplate: id => { void loadTemplate(id); },
       canWrite: realTemplatesAvailable(workspaceId),
       clearTemplate,

@@ -63,7 +63,7 @@ import type {
 import { TAG_STYLE_COLORS } from "../../../models/document-organization";
 import { usePageMeta } from "../../../hooks/usePageMeta";
 import { USE_REAL_BACKEND } from "../../../services/backend-flag";
-import { NAV_COUNT_POLL_MS } from "../../../hooks/useNavCounts";
+import { useLiveQuery } from "../../../services/live/live-query";
 import { preparationRoute } from "../../../services/preparation-platform-projection";
 import { Z } from "../../../utils/z-index";
 import { FilterChips } from "../../../components/platform/FilterChips";
@@ -2548,6 +2548,9 @@ function FilterField({
   );
 }
 
+const EMPTY_REQUESTS: SigningRequestListItem[] = [];
+const EMPTY_DOCUMENTS: RealDocument[] = [];
+
 function DocumentsPageRealMode() {
   const { onPrepareClick } = usePrepareLaunch();
   const navigate = useNavigate();
@@ -2557,28 +2560,11 @@ function DocumentsPageRealMode() {
   const { currentWorkspace } = usePlatform();
   const workspaceId = currentWorkspace?.id ?? null;
 
-  const [items, setItems] = useState<SigningRequestListItem[]>([]);
-  const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
   const [viewing, setViewing] = useState<ViewableRequest | null>(null);
   const [signaturesFor, setSignaturesFor] = useState<SigningRequestListItem | null>(null);
   const [resendFor, setResendFor] = useState<SigningRequestListItem | null>(null);
   const [auditFor, setAuditFor] = useState<SigningRequestListItem | null>(null);
   const [shareFor, setShareFor] = useState<SigningRequestListItem | null>(null);
-  const [files, setFiles] = useState<Map<string, DocumentFileFacts>>(new Map());
-  const [documents, setDocuments] = useState<RealDocument[]>([]);
-  // Which documents have EVER had a signing request, read unfiltered. Null
-  // until known, so no document is briefly shown as a draft while loading.
-  const [requestedDocumentIds, setRequestedDocumentIds] = useState<Set<string> | null>(null);
-  // Every loaded request, unfiltered: the pool a Verification ID search is
-  // matched against, since the server's q searches names only.
-  const [allRequests, setAllRequests] = useState<SigningRequestListItem[]>([]);
-  // Bumped after a re-send. That produces an additional signing request, so
-  // the list gains a row — there is nothing in place to patch.
-  const [refreshKey, setRefreshKey] = useState(0);
-  const [total, setTotal] = useState(0);
-  // A refetch for a new filter keeps the rows on screen. Blanking the table
-  // to a skeleton on every search would make the search feel broken.
-  const [fetching, setFetching] = useState(false);
 
   // The filters live in the URL, so a filtered list survives a reload, can be
   // shared, and can be opened directly from the command palette.
@@ -2663,85 +2649,61 @@ function DocumentsPageRealMode() {
     return () => document.removeEventListener("keydown", onKey);
   }, []);
 
-  useEffect(() => {
-    if (!workspaceId) return;
-    if (list === "to-sign" || list === "signed" || list === "others") return;
-    let cancelled = false;
-    setFetching(true);
-    const states = LIST_STATES[list];
-
-    void realSigningRequestService.list(workspaceId, { perPage: 50, q, signer, states })
-      .then(result => {
-        if (cancelled) return;
-        setItems(result.items);
-        setTotal(result.total);
-        setStatus("ready");
-        setFetching(false);
-      })
-      .catch(() => { if (!cancelled) { setStatus("error"); setFetching(false); } });
-
-    return () => { cancelled = true; };
-  }, [workspaceId, refreshKey, q, signer, list]);
-
-  useEffect(() => {
-    if (!workspaceId) return;
-    let cancelled = false;
-
-    // The file's TYPE, fetched alongside rather than as part of the list.
-    // A signing request is a workflow row and carries no file information;
-    // the document row is where the server's detected media type lives. A
-    // separate, non-blocking call so a failure here costs an accurate icon
-    // and never the list itself.
-    void realDocumentService.list(workspaceId, { perPage: 100 })
-      .then(result => {
-        if (cancelled) return;
-        setFiles(new Map(result.items.map(document => [
-          document.documentId,
-          { mediaType: document.source?.mediaType ?? null, filename: document.originalFilename },
-        ])));
-        setDocuments(result.items);
-      })
-      .catch(() => { /* Icons fall back to the generic file glyph; drafts are not listed. */ });
-
-    // Unfiltered, so a search or status filter on the sent list cannot make a
-    // SENT document look like an unsent draft.
-    void realSigningRequestService.list(workspaceId, { perPage: 100 })
-      .then(result => {
-        if (cancelled) return;
-        setRequestedDocumentIds(new Set(result.items.map(r => r.documentId)));
-        setAllRequests(result.items);
-      })
-      .catch(() => { /* Without this, drafts are not listed rather than guessed. */ });
-
-    return () => { cancelled = true; };
-  }, [workspaceId, refreshKey]);
-
-  // ── Live enough (finding 5) ───────────────────────────────────────────
+  // ── The three reads, LIVE (services/live/live-query.ts) ───────────────
   //
-  // A completed request used to keep saying "0 of 1 signed" until the page
-  // was reloaded. The list now re-reads when the tab comes back and on the
-  // same timer as the side-panel counts, so what the notice says and what
-  // the card says agree within a few seconds. Rows stay on screen while a
-  // re-read is in flight (see `fetching`), so nothing flickers.
-  useEffect(() => {
-    if (!workspaceId) return;
-    let last = Date.now();
-    const bump = () => {
-      // At most one re-read every few seconds, however many events arrive.
-      if (Date.now() - last < 3_000) return;
-      last = Date.now();
-      setRefreshKey(k => k + 1);
-    };
-    const onVisibility = () => { if (document.visibilityState === "visible") bump(); };
-    const timer = setInterval(() => { if (document.visibilityState !== "hidden") bump(); }, NAV_COUNT_POLL_MS);
-    window.addEventListener("focus", bump);
-    document.addEventListener("visibilitychange", onVisibility);
-    return () => {
-      clearInterval(timer);
-      window.removeEventListener("focus", bump);
-      document.removeEventListener("visibilitychange", onVisibility);
-    };
-  }, [workspaceId]);
+  // Each is held in memory under its key, so coming back to this page shows
+  // the last list at once and re-reads behind it; each re-reads on the app's
+  // heartbeat (finding 5: a completed request used to say "0 of 1 signed"
+  // until a reload) and the moment the `documents` topic is announced (a
+  // send, a re-send, a cancel — here or in another tab). Rows stay on screen
+  // while a re-read is in flight (see `fetching`), so nothing flickers.
+  const ownList = !(list === "to-sign" || list === "signed" || list === "others");
+  const states = LIST_STATES[ownList ? list : "sent"];
+  const listQuery = useLiveQuery(
+    workspaceId && ownList ? `documents:list:${workspaceId}:${list}:${q}:${signer}` : null,
+    () => realSigningRequestService.list(workspaceId ?? "", { perPage: 50, q, signer, states }),
+    { topics: ["documents"] },
+  );
+  const items = listQuery.data?.items ?? EMPTY_REQUESTS;
+  const total = listQuery.data?.total ?? 0;
+  const status: "loading" | "ready" | "error" =
+    listQuery.data !== undefined ? "ready" : listQuery.error !== undefined ? "error" : "loading";
+  // A refetch for a new filter keeps the rows on screen. Blanking the table
+  // to a skeleton on every search would make the search feel broken.
+  const fetching = listQuery.refreshing;
+
+  // The file's TYPE, read alongside rather than as part of the list. A
+  // signing request is a workflow row and carries no file information; the
+  // document row is where the server's detected media type lives. A separate,
+  // non-blocking read so a failure here costs an accurate icon and never the
+  // list itself.
+  const documentsQuery = useLiveQuery(
+    workspaceId ? `documents:files:${workspaceId}` : null,
+    () => realDocumentService.list(workspaceId ?? "", { perPage: 100 }),
+    { topics: ["documents"] },
+  );
+  const documents = documentsQuery.data?.items ?? EMPTY_DOCUMENTS;
+  const files = useMemo<Map<string, DocumentFileFacts>>(() => new Map(documents.map(document => [
+    document.documentId,
+    { mediaType: document.source?.mediaType ?? null, filename: document.originalFilename },
+  ])), [documents]);
+
+  // Every request, unfiltered: which documents have EVER had a signing
+  // request (null until known, so no document is briefly shown as a draft
+  // while loading — and a search or status filter on the sent list cannot
+  // make a SENT document look like an unsent draft), and the pool a
+  // Verification ID search is matched against, since the server's q searches
+  // names only.
+  const allQuery = useLiveQuery(
+    workspaceId ? `documents:all:${workspaceId}` : null,
+    () => realSigningRequestService.list(workspaceId ?? "", { perPage: 100 }),
+    { topics: ["documents"] },
+  );
+  const allRequests = allQuery.data?.items ?? EMPTY_REQUESTS;
+  const requestedDocumentIds = useMemo(
+    () => (allQuery.data === undefined ? null : new Set(allQuery.data.items.map(r => r.documentId))),
+    [allQuery.data],
+  );
 
   // ── Opening one request from a link (finding 6) ───────────────────────
   //
@@ -2988,7 +2950,8 @@ function DocumentsPageRealMode() {
             setResendFor(null);
             // Refetch rather than patching the row: the send produced a NEW
             // request, so the list has an extra entry, not an edited one.
-            setRefreshKey(k => k + 1);
+            void listQuery.refresh();
+            void allQuery.refresh();
           }}
         />
       )}

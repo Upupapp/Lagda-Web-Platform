@@ -34,6 +34,9 @@ import type { LaunchProfileId, CapabilityResolution, ProductCapabilityId } from 
 import { runSignOutCleanup, runWorkspaceSwitchCleanup } from "../services/session-lifecycle";
 import { readJSON, writeJSON, removeKey, PERSISTENCE_KEYS } from "../services/local-persistence";
 import { USE_REAL_BACKEND } from "../services/backend-flag";
+import { announce, onTopic } from "../services/live/topics";
+import { onHeartbeat } from "../services/live/heartbeat";
+import { SETTINGS_TTL_MS } from "../services/live/live-query";
 import { realAuthService } from "../services/real/auth.service";
 import { realWorkspaceService } from "../services/real/workspace.service";
 import {
@@ -48,19 +51,12 @@ import { ApiError } from "../services/api-client";
 // content before access is confirmed, or bounces a genuinely-authenticated
 // zero-workspace account back to sign-in as if it weren't signed in at all.
 
-const PROFILE_CHANNEL = "lagda-profile";
-
 /**
  * Tells every OTHER open tab that this account's profile changed, so each
  * re-reads it. The tab that saved refreshes itself directly.
  */
 export function announceProfileChanged(): void {
-  if (typeof BroadcastChannel === "undefined") return;
-  try {
-    const channel = new BroadcastChannel(PROFILE_CHANNEL);
-    channel.postMessage("changed");
-    channel.close();
-  } catch { /* a browser without it simply updates on the next load */ }
+  announce("profile", { remoteOnly: true });
 }
 export type WorkspaceStatus = "initializing" | "ready" | "empty" | "error";
 
@@ -318,10 +314,8 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
   // here too, so every open tab shows the same person — not just the one
   // the save happened in.
   useEffect(() => {
-    if (!USE_REAL_BACKEND || typeof BroadcastChannel === "undefined") return;
-    const channel = new BroadcastChannel(PROFILE_CHANNEL);
-    channel.onmessage = () => { void refreshSessionFromBackend(); };
-    return () => { channel.close(); };
+    if (!USE_REAL_BACKEND) return;
+    return onTopic("profile", () => { void refreshSessionFromBackend(); });
   }, [refreshSessionFromBackend]);
 
   // LOCAL_PERSISTENCE — mock-backend only. Restores a session saved before a
@@ -491,6 +485,9 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
     // For demo, keep existing notifications.
   }, [workspaces]);
 
+  // The list of workspaces this account holds, re-read: one that was joined
+  // or left appears or goes, and a name or role another member changed is
+  // adopted (branding and logo, which the list does not carry, are kept).
   const refreshWorkspaceList = useCallback(async () => {
     if (!USE_REAL_BACKEND) return;
     let fresh: PlatformWorkspace[];
@@ -499,19 +496,42 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
     } catch {
       return;
     }
-    const freshIds = new Set(fresh.map(w => w.id));
-    const kept = workspaces.filter(w => freshIds.has(w.id));
+    const byId = new Map(fresh.map(w => [w.id, w]));
+    const adopt = (held: PlatformWorkspace, now: PlatformWorkspace): PlatformWorkspace => (
+      held.name === now.name && held.role === now.role
+        ? held
+        : { ...held, name: now.name, initials: now.initials, role: now.role }
+    );
+    const kept = workspaces.flatMap(w => { const now = byId.get(w.id); return now ? [adopt(w, now)] : []; });
     const known = new Set(kept.map(w => w.id));
     const added = fresh.filter(w => !known.has(w.id));
-    if (added.length > 0 || kept.length !== workspaces.length) setWorkspaces([...kept, ...added]);
-    // The workspace in use was left or removed: fall back to one still held.
-    if (currentWorkspace !== null && !freshIds.has(currentWorkspace.id)) {
+    const changed = added.length > 0 || kept.length !== workspaces.length || kept.some((w, i) => w !== workspaces[i]);
+    if (changed) setWorkspaces([...kept, ...added]);
+    if (currentWorkspace === null) return;
+    const now = byId.get(currentWorkspace.id);
+    if (now === undefined) {
+      // The workspace in use was left or removed: fall back to one still held.
       const next = kept[0] ?? added[0] ?? null;
       setCurrentWorkspace(next);
       setRole(next?.role ?? null);
       if (next) writeActiveWorkspaceIdPreference(next.id);
+    } else {
+      const next = adopt(currentWorkspace, now);
+      if (next !== currentWorkspace) { setCurrentWorkspace(next); setRole(next.role); }
     }
   }, [workspaces, currentWorkspace]);
+
+  // LIVE: the list follows the `workspace` topic (a rename or branding save
+  // in another tab) and, once a minute, the app's heartbeat — so a rename by
+  // another member reaches every tab without a reload.
+  const refreshWorkspaceListRef = useRef(refreshWorkspaceList);
+  refreshWorkspaceListRef.current = refreshWorkspaceList;
+  useEffect(() => {
+    if (!USE_REAL_BACKEND || sessionStatus !== "authenticated") return;
+    const reread = () => { void refreshWorkspaceListRef.current(); };
+    const offs = [onTopic("workspace", reread), onHeartbeat(reread, { every: SETTINGS_TTL_MS })];
+    return () => { for (const off of offs) off(); };
+  }, [sessionStatus]);
 
   const applyWorkspaceRename = useCallback((workspaceId: string, name: string) => {
     const rename = (w: PlatformWorkspace): PlatformWorkspace => {

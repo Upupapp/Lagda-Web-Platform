@@ -14,6 +14,8 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
 
 vi.setConfig({ testTimeout: 15_000 });
+import { resetLiveCache } from "../../../../services/live/live-query";
+
 vi.mock("../../../../services/backend-flag", () => ({ USE_REAL_BACKEND: true, API_BASE_URL: "http://api.test" }));
 vi.mock("../../../../context/PlatformContext", () => ({
   usePlatform: () => ({ currentWorkspace: { id: "ws_1", name: "Reyes Law", accentColor: "#0078D4" } }),
@@ -100,6 +102,9 @@ describe("Documents › Correspondence", () => {
     const list = await screen.findByRole("list", { name: "Sent documents" });
     expect(list.className).toContain("mail-card-list-single");
     unmount();
+    // The list is held across mounts (live-query); empty it so the second
+    // render reads the new rows instead of showing the held one.
+    resetLiveCache();
 
     listRequests.mockResolvedValue({
       items: [SENT, { ...SENT, signingRequestId: "sr_two", documentTitle: "NDA" }],
