@@ -19,6 +19,7 @@
 // the handful of things every role needs, not every screen that exists.
 
 import type { GuideStep } from "./types";
+import { USE_REAL_BACKEND } from "../services/backend-flag";
 
 // Mirrors PlatformLayout.tsx's desktop/mobile chrome breakpoint. Defined once
 // here and imported by both TourContext (which picks `target` vs
@@ -43,7 +44,11 @@ export const TOUR_STEPS: GuideStep[] = [
     route: "/app/dashboard",
     title: "Welcome to LAGDA",
     description:
-      "This short tour walks through the Dashboard and the sidebar so you know where things live. Everything shown here is a frontend demonstration — the data on screen is mock data, not a live backend.",
+      // The mock-data disclaimer is true only of the demo build; a real
+      // account is looking at its own documents.
+      USE_REAL_BACKEND
+        ? "This short tour walks through the Dashboard and the sidebar so you know where things live."
+        : "This short tour walks through the Dashboard and the sidebar so you know where things live. Everything shown here is a frontend demonstration — the data on screen is mock data, not a live backend.",
     placement: "center",
   },
   {
@@ -88,7 +93,11 @@ export const TOUR_STEPS: GuideStep[] = [
     target: "platform-sidebar-nav",
     title: "Getting Around LAGDA",
     description:
-      "This is how you reach the rest of the platform: Documents, Workflow, Templates, Contacts, Verify Document, My Actions, Reports, and Automation, plus Notifications, Team, and Settings below. Only the sections your role can access are shown — on smaller screens, the same navigation lives behind the menu icon at the top.",
+      // Real mode names the rows platform.nav.ts actually renders for a real
+      // account; the demo build keeps its wider (mock) section list.
+      USE_REAL_BACKEND
+        ? "This is how you reach the rest of LAGDA: Home, Documents, Shared Documents, Invitations, Templates, Contacts, and Check a Document, plus Workspace and My Settings below. Only the sections your role and plan can access are shown — on smaller screens, the same navigation lives behind the menu icon at the top."
+        : "This is how you reach the rest of the platform: Documents, Workflow, Templates, Contacts, Verify Document, My Actions, Reports, and Automation, plus Notifications, Team, and Settings below. Only the sections your role can access are shown — on smaller screens, the same navigation lives behind the menu icon at the top.",
     placement: "right",
   },
 
@@ -105,7 +114,10 @@ export const TOUR_STEPS: GuideStep[] = [
     mobileTarget: "mobile-search-trigger",
     title: "Search",
     description:
-      "Press Ctrl+K (⌘K on Mac) or use this shortcut to search across documents, my actions, templates, contacts, people & teams, verification, notifications, reports, settings, and help — all from one place.",
+      // Real mode lists only what palette-search.ts searches for a real account.
+      USE_REAL_BACKEND
+        ? "Press Ctrl+K (⌘K on Mac) or use this shortcut to find your documents, settings, and help — all from one place."
+        : "Press Ctrl+K (⌘K on Mac) or use this shortcut to search across documents, my actions, templates, contacts, people & teams, verification, notifications, reports, settings, and help — all from one place.",
     placement: "bottom",
     condition: () => hasGuideTarget("header-search-btn") || hasGuideTarget("mobile-search-trigger"),
   },

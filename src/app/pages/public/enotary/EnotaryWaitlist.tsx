@@ -255,7 +255,9 @@ export function EnotaryWaitlist() {
               </button>
 
               <p style={{ color: "#94A3B8", ...GF, fontSize: 12, lineHeight: 1.6, margin: 0 }}>
-                This is a frontend demonstration. Waitlist registrations are not currently stored or processed. Live registration will be connected during backend integration.
+                {USE_REAL_BACKEND
+                  ? "We'll email you when LAGDA eNotary opens."
+                  : "This is a frontend demonstration. Waitlist registrations are not currently stored or processed. Live registration will be connected during backend integration."}
               </p>
             </div>
           </form>

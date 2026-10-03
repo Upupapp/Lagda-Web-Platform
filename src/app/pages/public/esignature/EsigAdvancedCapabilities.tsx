@@ -4,10 +4,10 @@
   PageSection,
   SectionHeading,
   RelatedPages,
-  PageCTA,
   LegalNote,
   AvailBadge,
 } from "../../../components/esignature/EsigPageShell";
+import { AccountPageCTA } from "../../../components/shell/AccountPageCTA";
 import { ADVANCED_CAPS } from "./content";
 
 const GF = { fontFamily: "'Geist', sans-serif" };
@@ -40,7 +40,7 @@ function ParallelSequentialComparison() {
       <div style={{ background: "rgba(201,150,12,0.06)", border: "1px solid rgba(201,150,12,0.2)", borderRadius: 14, padding: "20px 18px" }}>
         <p style={{ color: "#C9960C", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", marginBottom: 14 }}>SEQUENTIAL SIGNING</p>
         <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
-          {["Manager approves first â†’", "Signatory signs second â†’", "Completed"].map((step, i) => (
+          {["Manager approves first →", "Signatory signs second →", "Completed"].map((step, i) => (
             <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 0", borderBottom: i < 2 ? "1px dashed rgba(201,150,12,0.2)" : "none" }}>
               <span style={{ color: "#C9960C", ...GM, fontSize: 10, fontWeight: 700, flexShrink: 0 }}>{String(i + 1).padStart(2, "0")}</span>
               <span style={{ color: i === 2 ? "#178A4C" : "#334155", ...GF, fontSize: 12 }}>{step}</span>
@@ -160,7 +160,7 @@ export function EsigAdvancedCapabilities() {
       <PageSection id="reminders">
         <div style={{ display: "grid", gap: "32px 48px", alignItems: "start" }} className="ac-two-col">
           <div>
-            <SectionHeading eyebrow="Reminders & expiration" id="remind-heading" heading="Know when, how, and where signing happened." sub="Configure automated reminders for pending participants and set a completion deadline to keep transactions moving." />
+            <SectionHeading eyebrow="Reminders & expiration" id="remind-heading" heading="Keep signing moving with reminders and deadlines." sub="Configure automated reminders for pending participants and set a completion deadline so no document is left waiting." />
             <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>
               {[
                 "Set a first-reminder delay (e.g., after 3 days)",
@@ -171,7 +171,7 @@ export function EsigAdvancedCapabilities() {
                 "Expired transactions are locked; records are retained",
               ].map((item) => (
                 <li key={item} style={{ display: "flex", gap: 8, alignItems: "flex-start", marginBottom: 8 }}>
-                  <span style={{ color: "#0078D4", fontWeight: 700, flexShrink: 0, fontSize: 13 }}>âœ“</span>
+                  <span style={{ color: "#0078D4", fontWeight: 700, flexShrink: 0, fontSize: 13 }}>✓</span>
                   <span style={{ color: "#64748B", ...GF, fontSize: 14, lineHeight: 1.5 }}>{item}</span>
                 </li>
               ))}
@@ -226,7 +226,7 @@ export function EsigAdvancedCapabilities() {
         { label: "Team & Enterprise",    desc: "Shared workspaces and organization administration", path: "/esignature/team-and-enterprise" },
       ]} />
 
-      <PageCTA
+      <AccountPageCTA
         heading="Start with LAGDA eSignature today."
         primaryLabel="Create Free Account"
         primaryPath="/create-account"

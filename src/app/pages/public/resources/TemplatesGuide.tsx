@@ -45,7 +45,7 @@ export function TemplatesGuide() {
             "Reminder schedule — automatic follow-up timing for pending actions",
             "Expiration settings — transaction deadline from the date of sending",
             "Signing instructions — messages displayed to each participant",
-            "Branding — company logo, colors, and email customization (Business and Enterprise plans)",
+            "Branding — your logo and colours (Personal, Business and Enterprise plans)",
           ]} />
         </GuideSection>
 
@@ -54,7 +54,7 @@ export function TemplatesGuide() {
             Personal templates are available on all plans and are owned by the individual sender. Shared workspace templates — visible and usable by all authorized senders in a workspace — require Business or Enterprise.
           </GuidePara>
           <GuidePara>
-            Template quantity limits, permission controls, and Enterprise-managed template features will be confirmed at launch.
+            Free includes up to 3 templates, started from a blank document. Personal includes up to 25 templates and the ready-made template library. Business includes unlimited shared templates. See the full list on <Link to="/pricing/compare" style={{ color: "#0078D4", textDecoration: "none", fontWeight: 600 }}>Compare Plans</Link>.
           </GuidePara>
         </GuideSection>
 

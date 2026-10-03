@@ -5,6 +5,7 @@ import { PublicLayout } from "./app/layouts/PublicLayout";
 import { AuthLayout } from "./app/layouts/AuthLayout";
 import { CreateAccountLayout } from "./app/layouts/CreateAccountLayout";
 import { PlatformLayout } from "./app/layouts/PlatformLayout";
+import { PageMetaRoute } from "./app/hooks/usePageMeta";
 import { RecipientLayout } from "./app/layouts/RecipientLayout";
 import { NotFound } from "./app/pages/public/NotFound";
 import { OpenDocumentRedirect } from "./app/pages/platform/documents/OpenDocumentRedirect";
@@ -2740,10 +2741,13 @@ export const router = createBrowserRouter([
   {
     path: "/app/prepare",
     errorElement: <PlatformRouteError />,
+    // Outside PlatformLayout, so the tab title is set here (routes.ts).
     element: (
-      <Suspense fallback={null}>
-        <PrepareRoot />
-      </Suspense>
+      <PageMetaRoute>
+        <Suspense fallback={null}>
+          <PrepareRoot />
+        </Suspense>
+      </PageMetaRoute>
     ),
     children: [
       // Entry screen: no stepper shell — shows Start / Template / Resume options
@@ -2838,9 +2842,11 @@ export const router = createBrowserRouter([
     path: "/app/templates/:templateId/fields",
     errorElement: <PlatformRouteError />,
     element: (
-      <Suspense fallback={null}>
-        <TemplateFieldsPage />
-      </Suspense>
+      <PageMetaRoute>
+        <Suspense fallback={null}>
+          <TemplateFieldsPage />
+        </Suspense>
+      </PageMetaRoute>
     ),
   },
   // ── Template document authoring (066) — full-screen, outside PlatformLayout ─
@@ -2849,9 +2855,11 @@ export const router = createBrowserRouter([
     path: "/app/templates/:templateId/author",
     errorElement: <PlatformRouteError />,
     element: (
-      <Suspense fallback={null}>
-        <TemplateAuthorPage />
-      </Suspense>
+      <PageMetaRoute>
+        <Suspense fallback={null}>
+          <TemplateAuthorPage />
+        </Suspense>
+      </PageMetaRoute>
     ),
   },
 

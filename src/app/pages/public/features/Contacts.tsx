@@ -1,7 +1,8 @@
 import { FeaturesPageShell } from "../../../components/features/FeaturesSubNav";
 import {
-  PageHero, PageSection, SectionHeading, RelatedPages, PageCTA, LegalNote,
+  PageHero, PageSection, SectionHeading, RelatedPages, LegalNote,
 } from "../../../components/esignature/EsigPageShell";
+import { AccountPageCTA } from "../../../components/shell/AccountPageCTA";
 import { CONTACT_INFO } from "./content";
 
 const GF = { fontFamily: "'Geist', sans-serif" };
@@ -101,7 +102,7 @@ export function Contacts() {
         { label: "Notifications",     desc: "Stay informed about participant actions", path: "/features/notifications" },
       ]} />
 
-      <PageCTA
+      <AccountPageCTA
         heading="Explore Team Workspaces."
         sub="Share contacts and templates across your team — with role-based access control."
         primaryLabel="Team Workspaces"

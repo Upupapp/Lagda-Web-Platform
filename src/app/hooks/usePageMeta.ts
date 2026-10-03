@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, type ReactNode } from "react";
 import { useLocation } from "react-router";
 import { PUBLIC_ROUTES, AUTH_ROUTES, PLATFORM_ROUTES } from "@/app/config/routes";
 import { APP_CONFIG } from "@/app/config/app.config";
@@ -68,7 +68,12 @@ function setRobots(indexable: boolean) {
   setMeta("robots", indexable ? "index, follow" : "noindex, nofollow");
 }
 
-export function usePageMeta() {
+/**
+ * `fallbackTitle` is used when no route entry matches. The platform shell
+ * passes its own crumb-derived title so an unregistered /app page still
+ * names itself instead of falling back to the marketing title.
+ */
+export function usePageMeta(fallbackTitle?: string) {
   const { pathname } = useLocation();
 
   useEffect(() => {
@@ -76,7 +81,7 @@ export function usePageMeta() {
     const normalPath = pathname.length > 1 ? pathname.replace(/\/$/, "") : pathname;
     const route = findRoute(normalPath);
 
-    const title = route?.title ?? `${APP_CONFIG.name} — ${APP_CONFIG.tagline}`;
+    const title = route?.title ?? fallbackTitle ?? `${APP_CONFIG.name} — ${APP_CONFIG.tagline}`;
     const description = route?.description ?? APP_CONFIG.legal.esignatureStatement;
     const isIndexable = route?.isIndexable ?? false;
     // Never publish the pattern itself as a canonical URL — for a parametric
@@ -110,5 +115,16 @@ export function usePageMeta() {
     setMeta("twitter:description", description);
     setMeta("twitter:image", SOCIAL_IMAGE_URL);
     setMeta("twitter:image:alt", SOCIAL_IMAGE_ALT);
-  }, [pathname]);
+  }, [pathname, fallbackTitle]);
+}
+
+/**
+ * Applies usePageMeta to a route subtree that has no layout of its own doing
+ * so — the full-screen /app shells outside PlatformLayout (Prepare, the
+ * template field editor and document author). Without it the tab kept
+ * whatever title the previous page set, typically "Sign In — LAGDA".
+ */
+export function PageMetaRoute({ children }: { children: ReactNode }): ReactNode {
+  usePageMeta();
+  return children;
 }

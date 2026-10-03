@@ -35,7 +35,7 @@ export function Privacy() {
             <span style={{ color: "#94A3B8", ...GM, fontSize: 10 }}>Structure reviewed: {LAST_REVIEWED}</span>
           </div>
           <p style={{ color: "#64748B", ...GF, fontSize: 13, lineHeight: 1.65, marginTop: 14 }}>
-            This privacy policy structure has been prepared as part of the frontend development phase. It requires formal legal review and approval before publication. Content marked as pending requires legal confirmation.
+            This is a draft of the LAGDA Privacy Policy. It is under legal review and is not yet the final policy. Content marked as pending requires legal confirmation.
           </p>
         </div>
       </section>
@@ -115,7 +115,7 @@ export function Privacy() {
         <div style={{ marginTop: 40, padding: "16px 20px", background: "rgba(201,150,12,0.06)", border: "1px solid rgba(201,150,12,0.25)", borderRadius: 10 }}>
           <p style={{ color: "#C9960C", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", marginBottom: 6 }}>LEGAL REVIEW REQUIRED BEFORE PUBLICATION</p>
           <p style={{ color: "#64748B", ...GF, fontSize: 13, lineHeight: 1.65, margin: 0 }}>
-            This document is a structural draft prepared during the frontend development phase. Sections marked "pending legal review" require review and approval by qualified legal counsel before this policy can be published as the official LAGDA Privacy Policy.
+            This document is a draft. Sections marked "pending legal review" require review and approval by qualified legal counsel before this policy can be published as the official LAGDA Privacy Policy.
           </p>
         </div>
       </div>

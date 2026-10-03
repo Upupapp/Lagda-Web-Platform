@@ -148,3 +148,48 @@ describe("edge states", () => {
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 });
+
+describe("presentation fixes", () => {
+  it("never doubles the v of a version that already carries one", async () => {
+    const [, , consent] = trail.entries;
+    audit.mockResolvedValue({
+      ...trail,
+      entries: [{ ...consent!, details: { kind: "consent", consentType: "electronic-records", consentVersion: "v0-demonstration" } }],
+    });
+    renderDialog();
+    expect(await screen.findByText(/Consent: electronic records v0-demonstration/)).toBeTruthy();
+    expect(screen.queryByText(/vv0/)).toBeNull();
+  });
+
+  it("puts a send before the eligibility it causes when they share an instant", async () => {
+    const at = "2026-09-18T02:15:00.000Z";
+    const base = { eventVersion: 1, occurredAt: at, details: { kind: "none" as const } };
+    audit.mockResolvedValue({
+      ...trail,
+      entries: [
+        { ...base, id: "a", type: "recipient-activated", actor: { type: "system", displayName: "LAGDA" }, description: "Recipient became eligible to sign" },
+        { ...base, id: "b", type: "transaction-sent", actor: { type: "workspace-user", displayName: "Ana Reyes" }, description: "Request sent for signing" },
+        { ...base, id: "c", type: "transaction-created", actor: { type: "workspace-user", displayName: "Ana Reyes" }, description: "Signing request created" },
+      ],
+    });
+    renderDialog();
+    const items = await screen.findAllByRole("listitem");
+    expect(items.map(i => i.textContent)).toEqual([
+      expect.stringContaining("Signing request created"),
+      expect.stringContaining("Request sent for signing"),
+      expect.stringContaining("Recipient became eligible to sign"),
+    ]);
+  });
+
+  it("keeps the server's order for entries at different times", async () => {
+    audit.mockResolvedValue(trail);
+    renderDialog();
+    const items = await screen.findAllByRole("listitem");
+    expect(items.map(i => i.textContent)).toEqual([
+      expect.stringContaining("Signing request sent"),
+      expect.stringContaining("opened the signing link"),
+      expect.stringContaining("agreed to sign"),
+      expect.stringContaining("All required signatures"),
+    ]);
+  });
+});

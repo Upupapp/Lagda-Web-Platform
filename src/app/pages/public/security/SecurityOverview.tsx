@@ -1,8 +1,9 @@
 import { SecurityPageShell } from "../../../components/security/SecuritySubNav";
 import {
-  PageHero, PageSection, SectionHeading, RelatedPages, PageCTA, LegalNote,
+  PageHero, PageSection, SectionHeading, RelatedPages, LegalNote,
 } from "../../../components/esignature/EsigPageShell";
 import { SECURITY_LAYERS } from "./content";
+import { AccountPageCTA } from "../../../components/shell/AccountPageCTA";
 
 const GF = { fontFamily: "'Geist', sans-serif" };
 const GM = { fontFamily: "'Geist Mono', monospace" };
@@ -73,7 +74,7 @@ export function SecurityOverview() {
         { label: "Features Overview",   desc: "Full product capability map", path: "/features" },
       ]} />
 
-      <PageCTA
+      <AccountPageCTA
         heading="Start with Account Security."
         sub="See how LAGDA protects sender accounts — the first layer in every secure transaction."
         primaryLabel="Account Security"

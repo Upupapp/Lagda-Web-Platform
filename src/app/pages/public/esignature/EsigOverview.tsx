@@ -14,6 +14,7 @@ import {
 import { OVERVIEW_FEATURES, LIFECYCLE_STEPS, TRANSACTION_STATUSES } from "./content";
 import lagdaLogoFull from "../../../../brand elements/svg/LagdaLogoPrimaryHorizontalFullColor.svg";
 import { ON_LIGHT } from "../../../utils/on-light";
+import { useAccountCta } from "../../../hooks/useSignedIn";
 
 const GF = { fontFamily: "'Geist', sans-serif" };
 const GM = { fontFamily: "'Geist Mono', monospace" };
@@ -341,6 +342,8 @@ function SenderRecipientSection() {
 
 // ── Main export ───────────────────────────────────────────────────────────────
 export function EsigOverview() {
+  const heroCta = useAccountCta();
+  const closingCta = useAccountCta("prepare");
   return (
     <EsigPageShell>
       {/* Hero */}
@@ -352,7 +355,7 @@ export function EsigOverview() {
         visual={<InteractiveLogo />}
       >
         <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginBottom: 24 }}>
-          <Link to="/create-account" style={{
+          <Link to={heroCta.path} style={{
             background: "#0078D4", color: "white", padding: "13px 28px", borderRadius: 12,
             ...GF, fontSize: 15, fontWeight: 700, textDecoration: "none",
             display: "inline-flex", alignItems: "center",
@@ -362,7 +365,7 @@ export function EsigOverview() {
             onMouseEnter={(e) => { e.currentTarget.style.filter = "brightness(1.1)"; }}
             onMouseLeave={(e) => { e.currentTarget.style.filter = ""; }}
           >
-            Create Free Account
+            {heroCta.label}
           </Link>
           <Link to="/esignature/core-workflow" style={{
             background: "#ffffff", color: "#07111F",
@@ -455,10 +458,10 @@ export function EsigOverview() {
       ]} />
 
       <PageCTA
-        heading="Ready to send your first document?"
-        sub="Create a free LAGDA account and send your first document today."
-        primaryLabel="Create Free Account"
-        primaryPath="/create-account"
+        heading={closingCta.signedIn ? "Ready to send your next document?" : "Ready to send your first document?"}
+        sub={closingCta.sub}
+        primaryLabel={closingCta.label}
+        primaryPath={closingCta.path}
         secondaryLabel="Book a Demo"
         secondaryPath="/book-a-demo"
       />

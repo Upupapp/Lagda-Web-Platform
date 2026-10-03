@@ -1,7 +1,8 @@
 import { FeaturesPageShell } from "../../../components/features/FeaturesSubNav";
 import {
-  PageHero, PageSection, SectionHeading, RelatedPages, PageCTA, LegalNote,
+  PageHero, PageSection, SectionHeading, RelatedPages, LegalNote,
 } from "../../../components/esignature/EsigPageShell";
+import { AccountPageCTA } from "../../../components/shell/AccountPageCTA";
 import { PLAN_LIMIT_CATEGORIES } from "./content";
 
 const GF = { fontFamily: "'Geist', sans-serif" };
@@ -38,8 +39,8 @@ export function StoragePlanLimits() {
         <div style={{ display: "grid", gap: 10 }} className="ds-grid">
           {[
             { title: "During the transaction",   desc: "Documents are retained during the active signing workflow until completed, declined, cancelled, or expired." },
-            { title: "After completion",          desc: "Completed transaction records are retained according to the plan's retention period. Download and export at any time." },
-            { title: "Archived transactions",    desc: "Archived transactions are removed from active views. Storage implications and retention may vary by plan." },
+            { title: "After completion",          desc: "Completed documents and their audit trails stay available on every plan, including Free. Download them at any time." },
+            { title: "Archived transactions",    desc: "Archived transactions are removed from active views." },
           ].map((s) => (
             <div key={s.title} style={{ background: "#ffffff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: 10, padding: "14px 14px" }}>
               <p style={{ color: "#07111F", ...GF, fontSize: 13, fontWeight: 700, margin: 0, marginBottom: 4 }}>{s.title}</p>
@@ -54,10 +55,10 @@ export function StoragePlanLimits() {
         <SectionHeading eyebrow="Approaching limits" id="al-h2" heading="What happens when you near or reach a plan limit." center />
         <div style={{ display: "flex", flexDirection: "column", gap: 10, maxWidth: 640, margin: "0 auto" }}>
           {[
-            { trigger: "Signing requests near limit",      behavior: "You are notified before the limit is reached. Outstanding transactions are not interrupted." },
-            { trigger: "Storage approaching capacity",     behavior: "A notification prompts you to review storage or consider a plan upgrade." },
-            { trigger: "Seat limit reached",               behavior: "New member invitations may be blocked until the seat count is increased." },
-            { trigger: "Authentication method gating",     behavior: "Secure link, email code and account sign-in are on every plan. SMS OTP is planned and not available yet." },
+            { trigger: "Sending limit reached",            behavior: "On Free, sending pauses after your one document until you choose Personal or Business. Your drafts are kept, and signing what others send you is never limited." },
+            { trigger: "Storage",                          behavior: "500 MB on Free, 5 GB on Personal and 50 GB shared on Business. A larger plan is chosen in My Settings › Plan & Billing." },
+            { trigger: "People in a workspace",            behavior: "Free and Personal are for one person. A Business workspace holds up to 50 people." },
+            { trigger: "Signer authentication",            behavior: "Every plan has the same signer authentication: a secure invitation link and an email code, or signing from a LAGDA account. SMS OTP is planned and not available yet." },
           ].map((r) => (
             <div key={r.trigger} style={{ background: "#ffffff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: 10, padding: "12px 14px", display: "flex", gap: 16 }}>
               <div style={{ flex: 1 }}>
@@ -69,19 +70,19 @@ export function StoragePlanLimits() {
         </div>
         <div style={{ textAlign: "center", marginTop: 24 }}>
           <p style={{ color: "#64748B", ...GF, fontSize: 13, margin: 0 }}>
-            Exact limits, upgrade flows, and overage behavior are on the{" "}
+            The documents you can send each month and the storage on each plan are on the{" "}
             <a href="/pricing" style={{ color: "#0078D4", textDecoration: "underline" }}>Pricing page</a>.
           </p>
         </div>
       </PageSection>
 
       <RelatedPages links={[
-        { label: "Pricing",           desc: "Exact limits by plan tier", path: "/pricing" },
+        { label: "Pricing",           desc: "Documents and storage by plan", path: "/pricing" },
         { label: "Team Workspaces",   desc: "Seat and role structure", path: "/features/team-workspaces" },
         { label: "API & Integrations", desc: "Planned — not built yet", path: "/features/api-and-integrations" },
       ]} />
 
-      <PageCTA
+      <AccountPageCTA
         heading="See exact plan details on the Pricing page."
         sub="LAGDA plans are designed to grow with your team. Compare what's included before you start."
         primaryLabel="View Pricing"

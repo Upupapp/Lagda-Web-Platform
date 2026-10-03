@@ -20,6 +20,7 @@ import {
   type AuditTrail, type AuditEntry, type AuditActorType,
 } from "../../services/real/signing-request.service";
 import { Z } from "../../utils/z-index";
+import { orderAuditEntries } from "./audit-order";
 
 const GF: CSSProperties = { fontFamily: "'Geist', sans-serif" };
 const GM: CSSProperties = { fontFamily: "'Geist Mono', monospace" };
@@ -76,7 +77,8 @@ function EntryRow({ entry }: { entry: AuditEntry }) {
           {entry.details.kind === "consent" && (
             <div style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 12, color: SLATE6, marginTop: 4, ...GF }}>
               <FileCheck size={12} aria-hidden />
-              Consent: {entry.details.consentType.replace(/-/g, " ")} v{entry.details.consentVersion}
+              {/* A version may already carry its "v" ("v0-…"); never print "vv". */}
+              Consent: {entry.details.consentType.replace(/-/g, " ")} {/^v/i.test(entry.details.consentVersion) ? "" : "v"}{entry.details.consentVersion}
             </div>
           )}
 
@@ -197,7 +199,7 @@ export function AuditTrailDialog({
                 Times are shown in your timezone.
               </p>
               <ol style={{ margin: "8px 0 0", padding: 0 }}>
-                {data.entries.map(entry => <EntryRow key={entry.id} entry={entry} />)}
+                {orderAuditEntries(data.entries).map(entry => <EntryRow key={entry.id} entry={entry} />)}
               </ol>
               <p style={{ fontSize: 11, color: SLATE4, margin: "14px 0 0", ...GF }}>
                 This record is read-only. The same trail backs the document&rsquo;s public

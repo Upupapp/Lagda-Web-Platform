@@ -562,7 +562,10 @@ describe("overview and data & privacy", () => {
     expect(screen.getByText("Delete my account")).toBeInTheDocument();
     const links = screen.getAllByRole("link", { name: /Contact support/ });
     expect(links).toHaveLength(2);
-    for (const l of links) expect(l).toHaveAttribute("href", "/contact");
+    // Prefilled, so the request reaches the inbox already labelled.
+    expect(links[0]).toHaveAttribute("href", "/contact?topic=privacy&subject=Download%20my%20data");
+    expect(links[1]).toHaveAttribute("href", "/contact?topic=privacy&subject=Delete%20my%20account");
+    expect(screen.getByText(/reply to your account email/)).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /export|closure|delete/i })).toBeNull();
   });
 });

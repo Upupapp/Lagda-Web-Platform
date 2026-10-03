@@ -18,6 +18,8 @@ const CommandPalette = lazy(() =>
 import { Z } from "../../utils/z-index";
 import lagdaLogoFull from "../../../brand elements/svg/LagdaLogoPrimaryHorizontalFullColor.svg";
 import { isPaletteShortcut, paletteShortcutLabel } from "../../utils/keyboard-shortcuts";
+import { usePageMeta } from "../../hooks/usePageMeta";
+import { useDetailTitleFor } from "../../hooks/useDetailTitle";
 
 const GF    = { fontFamily: "'Geist', sans-serif" };
 
@@ -25,8 +27,14 @@ interface PlatformHeaderProps {
   pageTitle?: string;
 }
 
-// Derive a readable page title from the URL path
-function deriveTitle(pathname: string): string {
+// A record id in the URL — "con_7a7cf3b7…", "wft_67fb…", "txn_004", or a
+// UUID. Spelled out in the crumb it reads as noise ("Contacts › Con_7a7cf3b7").
+const RECORD_ID = /^(?:[a-z]{2,8}_[a-z0-9-]*\d[\w-]*|[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f-]{20,})$/i;
+
+// Derive a readable page title from the URL path. `detailLabel` is the
+// record's name as published by its page (useDetailTitle); it replaces the id
+// segment, and until it arrives the id is simply left out.
+function deriveTitle(pathname: string, detailLabel: string | null = null): string {
   const parts = pathname.replace(/^\/app\/?/, "").split("/").filter(Boolean);
   if (parts.length === 0) return "Dashboard";
   // A ready-made template's id is a long slug; spelling it out reads as noise.
@@ -43,16 +51,30 @@ function deriveTitle(pathname: string): string {
   if (parts[0] === "plan-requests") return parts.length > 1 ? "Upgrade requests › Request" : "Upgrade requests";
   // An inquiry id is noise too.
   if (parts[0] === "inquiries") return parts.length > 1 ? "Website messages › Message" : "Website messages";
+  let labelled = false;
   return parts
-    // /app/settings is the person's own settings; the workspace's are under Workspace.
-    .map((p, i) => i === 0 && p === "settings" ? "My Settings" : p.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()))
+    .flatMap((p, i) => {
+      if (RECORD_ID.test(p)) {
+        if (detailLabel === null || labelled) return [];
+        labelled = true;
+        return [detailLabel];
+      }
+      // /app/settings is the person's own settings; the workspace's are under Workspace.
+      return [i === 0 && p === "settings" ? "My Settings" : p.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())];
+    })
     .join(" › ");
 }
 
 export function PlatformHeader({ pageTitle }: PlatformHeaderProps) {
   const { pathname } = useLocation();
   const [searchOpen, setSearchOpen] = useState(false);
-  const title = pageTitle ?? deriveTitle(pathname);
+  const detailLabel = useDetailTitleFor(pathname);
+  const title = pageTitle ?? deriveTitle(pathname, detailLabel);
+  // The tab title for every page inside the shell. PlatformLayout set none,
+  // so the tab kept "Sign In — LAGDA" (or a marketing title) across the whole
+  // app. Route metadata wins; the crumb's last part covers anything unlisted.
+  // The detail label is deliberately not passed: tab titles carry no names.
+  usePageMeta(`${deriveTitle(pathname).split(" › ").pop() || "Dashboard"} — LAGDA`);
   const { restartTour } = useTour();
 
   const openSearch = useCallback(() => setSearchOpen(true), []);

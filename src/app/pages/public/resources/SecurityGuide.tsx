@@ -117,11 +117,11 @@ export function SecurityGuide() {
             LAGDA does not represent that its platform is invulnerable, certified to any specific standard, or compliant with any specific regulation. Security controls are designed to be layered and defensible, not absolute.
           </GuidePara>
           <GuideList items={[
-            "LAGDA does not claim invulnerability or immunity from all attacks",
-            "LAGDA does not claim specific encryption algorithm standards without approval",
-            "LAGDA does not claim specific data residency without approval",
-            "LAGDA does not claim a specific security certification without verification",
-            "LAGDA does not claim specific uptime guarantees without approval",
+            "LAGDA does not claim to be immune from every attack",
+            "LAGDA does not currently publish details of the encryption algorithms it uses",
+            "LAGDA does not currently commit to storing data in a particular country or region",
+            "LAGDA does not currently hold a security certification",
+            "LAGDA does not currently offer an uptime guarantee",
           ]} />
         </GuideSection>
 

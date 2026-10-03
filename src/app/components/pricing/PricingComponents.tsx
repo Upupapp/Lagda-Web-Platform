@@ -1,6 +1,7 @@
 import { Link, useLocation } from "react-router";
 import { useState } from "react";
-import { LAGDA_PLANS, COMPARE_GROUPS, type LagdaPlan } from "../../config/pricing.config";
+import { LAGDA_PLANS, COMPARE_GROUPS, SAMPLE_PLANS, formatPeso, type LagdaPlan } from "../../config/pricing.config";
+import { useSignedIn } from "../../hooks/useSignedIn";
 import { PRICING_SUBNAV } from "../../pages/public/pricing/content";
 import {
   LayoutDashboard, Columns3, PenLine, HardDrive, LayoutTemplate, KeyRound, Building2, CircleHelp, Tag,
@@ -55,11 +56,22 @@ export function PricingPageShell({ children }: { children: React.ReactNode }) {
 
 // ── Plan card ─────────────────────────────────────────────────────────────────
 //
-// Free shows its ₱0; Personal and Business say their price is confirmed at
-// launch; Enterprise is Coming Soon — dimmed, with its own badge, so it never
+// Free shows its ₱0; Personal and Business show the same monthly price the
+// app's Plan & Billing shows (the in-app catalogue), labelled as a test-mode
+// price; Enterprise is Coming Soon — dimmed, with its own badge, so it never
 // competes with the plans people can choose today.
+//
+// A signed-in visitor already has an account: every plan they can choose
+// sends them to Plan & Billing instead of to Create Account.
+export const TEST_MODE_PRICE_LABEL = "Test-mode price · final price confirmed at launch";
+
 export function PlanCard({ plan }: { plan: LagdaPlan }) {
   const soon = plan.comingSoon;
+  const signedIn = useSignedIn();
+  const price = SAMPLE_PLANS.find(p => p.id === plan.id)?.price ?? null;
+  const manage = signedIn && !plan.contactSales;
+  const ctaLabel = manage ? "Manage your plan" : plan.ctaLabel;
+  const ctaPath = manage ? "/app/settings/plan" : plan.ctaPath;
   return (
     <div data-testid={`public-plan-${plan.id}`} style={{
       background: soon ? "#F8FAFC" : plan.featured ? "rgba(0,120,212,0.05)" : "#ffffff",
@@ -93,6 +105,14 @@ export function PlanCard({ plan }: { plan: LagdaPlan }) {
             <p style={{ color: "#07111F", ...GF, fontSize: 18, fontWeight: 700, margin: 0 }}>Coming soon</p>
             <p style={{ color: ON_LIGHT.slate, ...GF, fontSize: 13, margin: "4px 0 0" }}>Priced for your organization</p>
           </>
+        ) : price ? (
+          <>
+            <p style={{ color: "#07111F", ...GF, fontSize: 24, fontWeight: 800, margin: 0, lineHeight: 1 }}>
+              {formatPeso(price.monthly)}
+              <span style={{ color: ON_LIGHT.slate, fontSize: 13, fontWeight: 500 }}>{price.perUser ? " per user / month" : " / month"}</span>
+            </p>
+            <p data-testid={`public-plan-${plan.id}-price-note`} style={{ color: ON_LIGHT.slate, ...GF, fontSize: 12, margin: "4px 0 0" }}>{TEST_MODE_PRICE_LABEL}</p>
+          </>
         ) : (
           <>
             <p style={{ color: ON_LIGHT.slate, ...GM, fontSize: 11, margin: "0 0 4px" }}>MONTHLY PRICING</p>
@@ -113,14 +133,14 @@ export function PlanCard({ plan }: { plan: LagdaPlan }) {
 
       {/* CTAs */}
       <div style={{ marginTop: "auto", display: "flex", flexDirection: "column", gap: 8 }}>
-        <Link to={plan.ctaPath} style={{
+        <Link to={ctaPath} style={{
           display: "flex", alignItems: "center", justifyContent: "center",
           background: plan.featured ? "#0078D4" : "#ffffff",
           color: plan.featured ? "white" : "#07111F", borderRadius: 8, padding: "11px 20px", textDecoration: "none",
           ...GF, fontSize: 14, fontWeight: 700, minHeight: 44,
           border: plan.featured ? "none" : "1px solid rgba(0,0,0,0.14)",
           transition: "filter 0.15s ease",
-        }}>{plan.ctaLabel}</Link>
+        }}>{ctaLabel}</Link>
         {plan.secondaryCtaLabel && plan.secondaryCtaPath && (
           <Link to={plan.secondaryCtaPath} style={{
             display: "flex", alignItems: "center", justifyContent: "center",

@@ -56,7 +56,7 @@ export function CreateAccountLayout({ children }: { children: ReactNode }) {
 				.create-account-card { width: 100%; box-sizing: border-box; background: #ffffff; border: 1px solid #dbeafe; border-radius: 18px; padding: 36px 48px 42px; box-shadow: 0 18px 50px rgba(7,17,31,0.08); }
 				.create-account-card-header { display: flex; align-items: center; justify-content: space-between; gap: 24px; margin-bottom: 28px; }
 				.create-account-card-header img { display: block; width: 273px; height: 78px; object-fit: cover; object-position: left center; }
-				.create-account-card-header h1 { color: #050505; font-family: 'Palatino Linotype', Palatino, Georgia, serif; font-size: 22px; font-weight: 700; line-height: 1.08; letter-spacing: -0.015em; text-align: right; text-transform: uppercase; max-width: 330px; margin: 0; }
+				.create-account-card-header h1 { color: #050505; font-family: 'Geist', 'Inter', sans-serif; font-size: 22px; font-weight: 800; line-height: 1.08; letter-spacing: -0.015em; text-align: right; text-transform: uppercase; max-width: 330px; margin: 0; }
 				.create-account-footer { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 28px 12px 4px; color: #64748b; font-size: 11px; text-align: center; }
 				.create-account-footer-logo { display: block; width: 205px; height: 65px; object-fit: cover; margin-bottom: 3px; position: relative; top: 13px; }
 				.create-account-footer p { max-width: 680px; margin: 0; line-height: 1.55; }

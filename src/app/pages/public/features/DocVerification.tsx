@@ -78,7 +78,7 @@ export function DocVerification() {
       <PageSection id="demo" light bordered>
         <div style={{ display: "grid", gap: "32px 48px", alignItems: "start" }} className="dv-two-col">
           <div>
-            <SectionHeading eyebrow="Verification result" id="vr-h2" heading="Every result state — clearly explained." sub="Select a state to see what the public verification record shows. Private evidence is never exposed in public verification." />
+            <SectionHeading eyebrow="Verification result" id="vr-h2" heading="Every result state — clearly explained." sub="Select a state to see what the public verification record shows. The IDs below are samples and will not verify. Private evidence is never exposed in public verification." />
             <p style={{ color: "#64748B", ...GF, fontSize: 13, lineHeight: 1.6, margin: 0, marginBottom: 16 }}>
               These are illustrative frontend examples. Real verification requires a valid LAGDA Verification ID and an active transaction record.
             </p>
@@ -106,7 +106,7 @@ export function DocVerification() {
         <SectionHeading eyebrow="How to verify" id="hv-h2" heading="Multiple ways to verify a LAGDA document." center />
         <div style={{ display: "grid", gap: 12 }} className="vm-grid">
           {[
-            { icon: "🔍", method: "Verification ID", desc: "Enter the LAGDA-VER- identifier printed on or attached to the document. Example: LAGDA-VER-2026-004821." },
+            { icon: "🔍", method: "Verification ID", desc: "Enter the Verification ID printed on or attached to the document: LAGDA-VER-, the year, and 10 letters and digits. Example (sample — will not verify): LAGDA-VER-2026-Xs8kQ2mPz4." },
             { icon: "📷", method: "QR code",          desc: "Scan the QR code printed or embedded on the completed document. Opens the verification record directly." },
             { icon: "🔗", method: "Secure link",      desc: "Use a verification link provided with the completed document. Links may have expiration." },
           ].map((m) => (

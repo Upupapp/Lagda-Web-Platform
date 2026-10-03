@@ -33,6 +33,7 @@ import { SEARCH_SCOPE_ICONS, SEARCH_SCOPE_LABELS } from "../../models/search";
 import { globalSearchService } from "../mock/global-search.service";
 import { SIGNING_REQUEST_STATUS } from "../signing-request-status";
 import { realSigningRequestService } from "./signing-request.service";
+import type { SigningRequestListItem } from "./signing-request.service";
 
 /** The scopes that have a truthful source in real mode, in display order. */
 export const REAL_PALETTE_SCOPES: readonly GlobalSearchScope[] = ["all", "documents", "settings", "help"];
@@ -44,6 +45,26 @@ const MAX_DOCUMENTS = 5;
 
 function titleCase(state: string): string {
   return state.replace(/-/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+}
+
+function shortDate(iso: string): string | null {
+  const d = new Date(iso);
+  return Number.isNaN(d.getTime())
+    ? null
+    : d.toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" });
+}
+
+/**
+ * Status, then when and by whom. Several documents commonly share a title
+ * (the same contract sent twice), and a list of rows reading only
+ * "Agreement — Sent" gave no way to tell them apart.
+ */
+function documentDescription(item: SigningRequestListItem, statusLabel: string): string {
+  const parts = [statusLabel];
+  const date = shortDate(item.sentAt ?? item.createdAt);
+  if (date) parts.push(`${item.sentAt ? "Sent" : "Created"} ${date}`);
+  if (item.initiator?.name) parts.push(`by ${item.initiator.name}`);
+  return parts.join(" · ");
 }
 
 async function documentGroup(
@@ -63,7 +84,7 @@ async function documentGroup(
         id: `sr_real_${item.signingRequestId}` as GlobalSearchResultId,
         type: item.state === "draft" ? "document-draft" : "document",
         title: item.documentTitle,
-        description: titleCase(status),
+        description: documentDescription(item, titleCase(status)),
         status,
         statusLabel: titleCase(status),
         updatedAt: item.createdAt,

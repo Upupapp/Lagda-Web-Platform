@@ -25,6 +25,7 @@ import {
 } from "../../../components/contact-requests/ContactRequestControls";
 import { contactRequestsPath, type ContactRequestKind } from "../../../models/contact-requests";
 import { withProcess } from "../../../config/process-screens";
+import { useDetailTitle } from "../../../hooks/useDetailTitle";
 
 const GF    = { fontFamily: "'Geist', sans-serif" };
 const GM    = { fontFamily: "'Geist Mono', monospace" };
@@ -200,6 +201,8 @@ function ContactDetail() {
   useEffect(() => { setFresh(null); }, [state.activeContact]);
 
   const contact = fresh !== null && fresh.id === state.activeContact?.id ? fresh : state.activeContact;
+  // The header crumb reads "Contacts › <name>", not the record id.
+  useDetailTitle(contact?.name);
   const usage   = state.activeUsage;
   const dups    = state.activeDuplicates;
   const loading = state.activeLoading;
@@ -372,7 +375,9 @@ function ContactDetail() {
         )}
 
         {/* Usage summary */}
-        {usage && <UsageSummaryCard usage={usage} />}
+        {/* Usage comes from fixtures (ContactContext) and carries a "demonstration
+            values" note — never shown against a real workspace's contact. */}
+        {usage && !USE_REAL_BACKEND && <UsageSummaryCard usage={usage} />}
 
         </div>
 
@@ -397,7 +402,9 @@ function ContactDetail() {
         {/* Privacy notice */}
         <div style={{ background: "#F8FAFC", border: "1.5px solid #E3E8EF", borderRadius: 10, padding: "14px 18px" }}>
           <p style={{ ...GF, fontSize: 11, color: SLATE, margin: 0 }}>
-            <strong>Privacy:</strong> Contact information is not shared with external parties or verified against government identity systems. This record is a demonstration-only fixture and does not represent a real individual.
+            <strong>Privacy:</strong> Contact information is not shared with external parties or verified against government identity systems.
+            {/* Only the demo build's contacts are fixtures; a real workspace's are real people. */}
+            {!USE_REAL_BACKEND && " This record is a demonstration-only fixture and does not represent a real individual."}
           </p>
         </div>
 

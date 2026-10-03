@@ -55,9 +55,12 @@ export function TrustCenter() {
               ))}
             </div>
             <div style={{ marginTop: 20 }}>
-              <a href="/contact" style={{ display: "inline-block", background: "#0078D4", color: "white", ...GF, fontSize: 13, fontWeight: 700, padding: "10px 20px", borderRadius: 8, textDecoration: "none" }}>
+              <a href="/contact?topic=security" style={{ display: "inline-block", background: "#0078D4", color: "white", ...GF, fontSize: 13, fontWeight: 700, padding: "10px 20px", borderRadius: 8, textDecoration: "none" }}>
                 Contact Security Team
               </a>
+              <p style={{ color: "#64748B", ...GF, fontSize: 12, lineHeight: 1.6, margin: "10px 0 0" }}>
+                The contact form opens with “Security or privacy” selected, and your report goes to LAGDA's security contact.
+              </p>
             </div>
           </div>
         </div>

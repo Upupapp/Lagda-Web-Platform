@@ -75,7 +75,7 @@ export function SecurityAuditTrail() {
         <SectionHeading eyebrow="Retention" id="ret-h2" heading="How long audit records are kept." center />
         <div style={{ display: "grid", gap: 10 }} className="ret-grid">
           {[
-            { title: "Retention period by plan",      desc: "Audit record retention varies by plan. Exact durations are on the Pricing page." },
+            { title: "Retention periods",             desc: "LAGDA has not published audit record retention periods yet. They will be set out in the final Privacy Policy." },
             { title: "Export before deletion",        desc: "Audit records can be exported before a retention period ends. Senders and Auditors can initiate exports." },
             { title: "Workspace-configurable",        desc: "Some retention settings may be configurable by administrators within their plan's allowed range." },
             { title: "Legal hold",                    desc: "Records subject to legal hold should be exported and stored by the responsible party outside LAGDA." },

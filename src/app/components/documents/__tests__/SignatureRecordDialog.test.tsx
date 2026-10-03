@@ -90,6 +90,25 @@ describe("SignatureRecordDialog", () => {
     expect(screen.queryByText("Account name")).toBeNull();
   });
 
+  it("flags an account name that differs from the name in the document", async () => {
+    signatures.mockResolvedValue(withLinkedAccount);
+    renderDialog();
+
+    expect((await screen.findByTestId("signatory-name-mismatch")).textContent)
+      .toBe("Name differs from the LAGDA account (Ma. Teresa Santos)");
+  });
+
+  it("does not flag a name that differs only in case or spacing", async () => {
+    signatures.mockResolvedValue({
+      ...withLinkedAccount,
+      signatories: [{ ...withLinkedAccount.signatories[0]!, linkedAccountName: "  maria   SANTOS " }],
+    });
+    renderDialog();
+
+    await screen.findByText("Signed in with a LAGDA account");
+    expect(screen.queryByTestId("signatory-name-mismatch")).toBeNull();
+  });
+
   // Approvers used to crash this dialog: `approved`/`skipped` had no
   // presentation, and the row read a property of undefined.
   it("shows an approver who approved and one who was skipped, with their roles", async () => {

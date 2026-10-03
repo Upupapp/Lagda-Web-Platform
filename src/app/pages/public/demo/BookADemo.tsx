@@ -264,7 +264,9 @@ export function BookADemo() {
             <label style={{ display: "flex", gap: 10, cursor: "pointer", alignItems: "flex-start" }}>
               <input type="checkbox" id="demo-consent" checked={fields.consent} onChange={(e) => set("consent", e.target.checked)} aria-describedby={errors.consent ? "demo-consent-err" : undefined} style={{ marginTop: 2, flexShrink: 0, accentColor: AZURE }} />
               <span style={{ color: "#334155", ...GF, fontSize: 12, lineHeight: 1.6 }}>
-                I understand this is a demo request and that the information I provide will be used to arrange a product demonstration when live scheduling is connected. I have read the <Link to="/legal/privacy" style={{ color: "#0078D4", textDecoration: "none" }}>Privacy Policy</Link>.
+                {USE_REAL_BACKEND
+                  ? "I agree that LAGDA may use these details to contact me about a product demonstration."
+                  : "I understand this is a demo request and that the information I provide will be used to arrange a product demonstration when live scheduling is connected."} I have read the <Link to="/legal/privacy" style={{ color: "#0078D4", textDecoration: "none" }}>Privacy Policy</Link>.
               </span>
             </label>
             {errors.consent && <p id="demo-consent-err" role="alert" style={{ color: "#DC2626", ...GF, fontSize: 12, margin: "4px 0 0" }}>{errors.consent}</p>}
@@ -276,12 +278,18 @@ export function BookADemo() {
             {status === "submitting" ? "Submitting…" : "Request a Demo"}
           </button>
 
-          <div style={{ padding: "12px 14px", background: "rgba(180,83,9,0.06)", border: "1px solid rgba(180,83,9,0.2)", borderRadius: 8 }}>
-            <p style={{ color: "#B45309", ...GM, fontSize: 9, fontWeight: 700, marginBottom: 4 }}>FRONTEND DEMONSTRATION</p>
-            <p style={{ color: "#64748B", ...GF, fontSize: 11, margin: 0, lineHeight: 1.5 }}>
-              No live scheduling or sales follow-up occurs during this demonstration phase. This will be connected during backend integration.
+          {USE_REAL_BACKEND ? (
+            <p style={{ color: "#64748B", ...GF, fontSize: 12, margin: 0, lineHeight: 1.5 }}>
+              We'll reply by email.
             </p>
-          </div>
+          ) : (
+            <div style={{ padding: "12px 14px", background: "rgba(180,83,9,0.06)", border: "1px solid rgba(180,83,9,0.2)", borderRadius: 8 }}>
+              <p style={{ color: "#B45309", ...GM, fontSize: 9, fontWeight: 700, marginBottom: 4 }}>FRONTEND DEMONSTRATION</p>
+              <p style={{ color: "#64748B", ...GF, fontSize: 11, margin: 0, lineHeight: 1.5 }}>
+                No live scheduling or sales follow-up occurs during this demonstration phase. This will be connected during backend integration.
+              </p>
+            </div>
+          )}
         </form>
 
         <div style={{ marginTop: 32, paddingTop: 24, borderTop: "1px solid rgba(0,0,0,0.06)" }}>

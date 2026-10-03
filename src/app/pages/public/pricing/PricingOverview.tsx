@@ -14,7 +14,7 @@ export function PricingOverview() {
     <PricingPageShell>
       <PricingHero
         heading="Choose the LAGDA plan that fits your document workflow."
-        sub="Start free with one document. Personal adds your branding, sharing and ready-made templates; Business adds your team. Prices are confirmed at launch, and Enterprise is coming soon."
+        sub="Start free with one document. Personal adds your branding, sharing and ready-made templates; Business adds your team. Prices shown are test-mode prices, confirmed at launch, and Enterprise is coming soon."
       />
 
       {/* Plan cards */}

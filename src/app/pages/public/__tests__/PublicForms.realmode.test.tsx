@@ -92,6 +92,22 @@ describe("the contact form with a backend", () => {
     expect(field(container, "c-message")).toHaveValue("We are twelve lawyers. How does Business work?");
   });
 
+  it("asks for an ordinary consent, not a demonstration acknowledgement", () => {
+    const { container } = renderPage(<ContactPage />);
+    expect(container.textContent).toContain("I agree that LAGDA may use these details to reply to me.");
+    expect(container.textContent).not.toMatch(/frontend demonstration|backend integration/i);
+  });
+
+  it("preselects the topic named in the link", () => {
+    const { container } = renderPage(<ContactPage />, "/contact?topic=security");
+    expect(field(container, "c-category")).toHaveValue("Security or privacy");
+  });
+
+  it("preselects every category a ?category= link can name", () => {
+    const { container } = renderPage(<ContactPage />, "/contact?category=enotary");
+    expect(field(container, "c-category")).toHaveValue("LAGDA eNotary question");
+  });
+
   it("sends nothing while the form is incomplete", async () => {
     const user = userEvent.setup();
     renderPage(<ContactPage />);
@@ -123,6 +139,12 @@ describe("the demo request form with a backend", () => {
     expect((call?.body as { topic: string }).topic.length).toBeGreaterThan(3);
   });
 
+  it("says when to expect a reply, not that nothing is followed up", () => {
+    const { container } = renderPage(<BookADemo />);
+    expect(container.textContent).toContain("We'll reply by email.");
+    expect(container.textContent).not.toMatch(/No live scheduling|backend integration|live scheduling is connected/i);
+  });
+
   it("shows a connection failure as an error, not as a success", async () => {
     const user = userEvent.setup();
     vi.stubGlobal("fetch", vi.fn(() => Promise.reject(new TypeError("Failed to fetch"))));
@@ -138,6 +160,12 @@ describe("the demo request form with a backend", () => {
 });
 
 describe("the eNotary waitlist form with a backend", () => {
+  it("does not say sign-ups are thrown away", () => {
+    const { container } = renderPage(<EnotaryWaitlist />);
+    expect(container.textContent).toContain("We'll email you when LAGDA eNotary opens.");
+    expect(container.textContent).not.toMatch(/not currently stored|backend integration/i);
+  });
+
   it("stores the sign-up and keeps the accreditation disclaimer beside the confirmation", async () => {
     const user = userEvent.setup();
     answer = () => json(201, { inquiryId: "pin_3", kind: "waitlist", receivedAt: "2026-10-02T09:00:00.000Z" });

@@ -1,4 +1,6 @@
 import { Link } from "react-router";
+import { useSignedIn } from "../../../hooks/useSignedIn";
+import { SAMPLE_PLANS, formatPeso } from "../../../config/pricing.config";
 import {
   PricingPageShell, PricingSection, PricingHeading,
   CompareTable, EnotarySeparationNote, PlanCards,
@@ -7,7 +9,14 @@ import {
 const GF = { fontFamily: "'Geist', sans-serif" };
 const GM = { fontFamily: "'Geist Mono', monospace" };
 
+/** The monthly price the app's Plan & Billing shows for a plan. */
+function monthly(id: "personal" | "business"): string {
+  const price = SAMPLE_PLANS.find(p => p.id === id)?.price;
+  return price ? formatPeso(price.monthly) : "";
+}
+
 export function ComparePlans() {
+  const signedIn = useSignedIn();
   return (
     <PricingPageShell>
       <section style={{ padding: "64px 24px 48px", background: "radial-gradient(ellipse 70% 40% at 50% 0%, rgba(0,120,212,0.1) 0%, transparent 70%)" }}>
@@ -17,7 +26,7 @@ export function ComparePlans() {
             Compare LAGDA eSignature Plans
           </h1>
           <p style={{ color: "#64748B", ...GF, fontSize: 16, lineHeight: 1.65, maxWidth: 640, margin: "0 auto" }}>
-            What each plan includes today. Free is free, always; Personal and Business prices are confirmed at launch; Enterprise is coming soon.
+            What each plan includes today. Free is free, always; Personal is {monthly("personal")} a month and Business {monthly("business")} per user a month (test-mode prices, final prices confirmed at launch); Enterprise is coming soon.
           </p>
         </div>
       </section>
@@ -78,9 +87,9 @@ export function ComparePlans() {
       <PricingSection id="cta" light bordered>
         <div style={{ maxWidth: 600, margin: "0 auto", textAlign: "center" }}>
           <h2 style={{ color: "#07111F", ...GF, fontSize: 28, fontWeight: 800, marginBottom: 14 }}>Ready to get started?</h2>
-          <p style={{ color: "#64748B", ...GF, fontSize: 15, lineHeight: 1.65, marginBottom: 28 }}>Create a free account or contact sales to discuss your requirements.</p>
+          <p style={{ color: "#64748B", ...GF, fontSize: 15, lineHeight: 1.65, marginBottom: 28 }}>{signedIn ? "Change your plan in Plan & Billing, or contact sales to discuss your requirements." : "Create a free account or contact sales to discuss your requirements."}</p>
           <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
-            <Link to="/create-account" style={{ background: "#0078D4", color: "white", ...GF, fontSize: 14, fontWeight: 700, padding: "12px 28px", borderRadius: 8, textDecoration: "none", minHeight: 44, display: "flex", alignItems: "center" }}>Create Free Account</Link>
+            <Link to={signedIn ? "/app/settings/plan" : "/create-account"} style={{ background: "#0078D4", color: "white", ...GF, fontSize: 14, fontWeight: 700, padding: "12px 28px", borderRadius: 8, textDecoration: "none", minHeight: 44, display: "flex", alignItems: "center" }}>{signedIn ? "Manage your plan" : "Create Free Account"}</Link>
             <Link to="/contact" style={{ background: "#ffffff", color: "#07111F", ...GF, fontSize: 14, fontWeight: 600, padding: "12px 28px", borderRadius: 8, textDecoration: "none", minHeight: 44, display: "flex", alignItems: "center", border: "1px solid rgba(0,0,0,0.14)" }}>Contact Sales</Link>
           </div>
         </div>

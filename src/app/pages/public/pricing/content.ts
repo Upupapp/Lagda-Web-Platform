@@ -168,7 +168,7 @@ export const STORAGE_CATEGORIES = [
   { icon: "📋", label: "Audit records",           desc: "Records of all transaction events, including authentication evidence." },
   { icon: "📑", label: "Templates",              desc: "Reusable document workflow configurations." },
   { icon: "📎", label: "Attachments",            desc: "Supplementary files included with transactions." },
-  { icon: "🎨", label: "Branding assets",         desc: "Logos, color configurations, and email branding files." },
+  { icon: "🎨", label: "Branding assets",         desc: "Your logo and colours." },
   { icon: "🏢", label: "Workspace assets",        desc: "Shared resources associated with your organization workspace." },
 ];
 

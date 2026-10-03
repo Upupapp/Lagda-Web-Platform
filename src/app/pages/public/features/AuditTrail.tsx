@@ -15,7 +15,7 @@ function AuditTimeline() {
       <div style={{ background: "#ffffff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: 14, overflow: "hidden", boxShadow: "0 4px 16px rgba(7,17,31,0.08)" }}>
         <div style={{ padding: "10px 16px", borderBottom: "1px solid rgba(0,0,0,0.07)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <span style={{ color: "#07111F", ...GF, fontSize: 12, fontWeight: 700 }}>Audit Trail</span>
-          <span style={{ color: "#0078D4", ...GM, fontSize: 10, fontWeight: 700 }}>LAGDA-VER-2026-004821</span>
+          <span style={{ color: "#0078D4", ...GM, fontSize: 10, fontWeight: 700 }}>LAGDA-VER-2026-Xs8kQ2mPz4</span>
         </div>
         {AUDIT_EVENTS.map((e, i) => (
           <div key={i}>

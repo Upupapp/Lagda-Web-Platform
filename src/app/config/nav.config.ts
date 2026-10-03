@@ -36,7 +36,7 @@ export const TOP_NAV: NavSection[] = [
     menuCtaLabel: "Explore eSignature",
     items: [
       { label: "Core Workflow",         path: "/esignature/core-workflow",          description: "Prepare, send, verify, and sign documents." },
-      { label: "Document Workflows",    path: "/workflow",                          description: "Reusable multi-stage processes, started as many times as needed." },
+      { label: "Document Workflows",    path: "/workflow",                          description: "Coming soon: reusable multi-stage processes, started as many times as needed.", isComingSoon: true },
       { label: "Verification & Audit",  path: "/esignature/verification-and-audit", description: "Audit trails, QR verification, and signing records." },
       { label: "Advanced Capabilities", path: "/esignature/advanced-capabilities",  description: "Parallel signing, storage, and advanced workflows." },
       { label: "Templates & Branding",  path: "/esignature/templates-and-branding", description: "Reusable templates and company branding controls." },
@@ -57,7 +57,7 @@ export const TOP_NAV: NavSection[] = [
       { label: "Law Firms",        path: "/solutions/law-firms",  description: "Multi-lawyer practices and full-service firms." },
       { label: "Business Teams",   path: "/solutions/business-teams",     description: "Internal approvals, contracts, and HR documents." },
       { label: "Government / LGU", path: "/solutions/government-and-lgu", description: "Official documents and public sector workflows." },
-      { label: "Real Estate",      path: "/solutions/real-estate",        description: "Property contracts, deeds, and broker agreements." },
+      { label: "Real Estate",      path: "/solutions/real-estate",        description: "Leases, renewals and property acknowledgments." },
       { label: "HR & Recruitment", path: "/solutions/hr-and-recruitment", description: "Employment contracts, NDAs, and onboarding." },
       { label: "Finance",          path: "/solutions/finance",            description: "Loan agreements, term sheets, and compliance docs." },
       { label: "Procurement",      path: "/solutions/procurement",        description: "Supplier contracts and purchase agreements." },
@@ -72,9 +72,9 @@ export const TOP_NAV: NavSection[] = [
     menuTitle: "Pricing",
     menuDescription: "Understand plans, limits, templates, storage, and enterprise options.",
     menuCtaLabel: "View Pricing",
-    menuCtaNote: "Personal starts free. Business is recommended for teams.",
+    menuCtaNote: "Start on Free. Business is recommended for teams.",
     items: [
-      { label: "Plans",             path: "/pricing",                       description: "Personal, Professional, Business, Business Plus, Enterprise." },
+      { label: "Plans",             path: "/pricing",                       description: "Free, Personal, Business, Enterprise." },
       { label: "Compare Plans",     path: "/pricing/compare",               description: "Side-by-side feature and limit comparison." },
       { label: "Signing Requests",  path: "/pricing/signing-requests",      description: "How sending limits work across plans." },
       { label: "Storage Limits",    path: "/pricing/storage-limits",        description: "Document storage per plan tier." },
@@ -94,12 +94,12 @@ export const TOP_NAV: NavSection[] = [
     menuCtaLabel: "Explore Security",
     items: [
       { label: "Security Overview",               path: "/security",                                description: "High-level overview of the LAGDA security model." },
-      { label: "Trust Center",                    path: "/security/trust-center",                   description: "Compliance posture, policies, and legal framework." },
+      { label: "Trust Center",                    path: "/security/trust-center",                   description: "Policies, contacts and responsible disclosure." },
       { label: "Identity Verification",           path: "/security/identity-verification",          description: "Know exactly who signed and how." },
       { label: "Audit Trail",                     path: "/security/audit-trail",                    description: "Every action recorded with timestamp and evidence." },
       { label: "Document Verification",           path: "/security/document-verification",          description: "Verify completed documents via QR or Verification ID." },
       { label: "Device & Location Evidence",      path: "/security/device-and-location-evidence",   description: "Signing evidence captured at each event." },
-      { label: "Secure Storage",                  path: "/security/secure-storage",                 description: "Encrypted document storage and retention." },
+      { label: "Secure Storage",                  path: "/security/secure-storage",                 description: "How documents are stored and kept." },
     ],
   },
   {
@@ -158,7 +158,7 @@ export const FOOTER_COLUMNS: FooterColumn[] = [
     heading: "Product",
     links: [
       { label: "eSignature",            path: "/esignature" },
-      { label: "Document Workflows",    path: "/workflow" },
+      { label: "Document Workflows",    path: "/workflow", isComingSoon: true },
       { label: "Core Workflow",         path: "/esignature/core-workflow" },
       { label: "Document Verification", path: "/verify" },
       { label: "Templates & Branding",  path: "/esignature/templates-and-branding" },

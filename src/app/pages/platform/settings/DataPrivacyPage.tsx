@@ -23,6 +23,12 @@ const DATA_KINDS: { title: string; body: string; icon: LucideIcon }[] = [
   { icon: ShieldCheck, title: "Security", body: "Your signed-in sessions and your two-step verification setup. Passwords are stored only as secure hashes." },
 ];
 
+// The public contact form reaches the LAGDA inbox; `topic` and `subject`
+// prefill it so the request arrives already labelled.
+function supportLink(subject: string): string {
+  return `/contact?topic=privacy&subject=${encodeURIComponent(subject)}`;
+}
+
 function RequestRow({ icon: Icon, title, body, danger }: { icon: LucideIcon; title: string; body: string; danger?: boolean }) {
   return (
     <div style={{ display: "flex", gap: 14, alignItems: "center", flexWrap: "wrap", padding: "14px 0", borderTop: `1px solid ${SET.BORDER}` }}>
@@ -34,7 +40,7 @@ function RequestRow({ icon: Icon, title, body, danger }: { icon: LucideIcon; tit
         <div style={{ ...GF, fontSize: 14, fontWeight: 700, color: SET.NAVY }}>{title}</div>
         <div style={{ ...GF, fontSize: 13, color: SET.SLATE, marginTop: 2, lineHeight: 1.5 }}>{body}</div>
       </div>
-      <Link to="/contact" style={{ ...BTN_SECONDARY, minHeight: 36, padding: "6px 14px", fontSize: 13 }}>
+      <Link to={supportLink(title)} style={{ ...BTN_SECONDARY, minHeight: 36, padding: "6px 14px", fontSize: 13 }}>
         <LifeBuoy size={14} aria-hidden /> Contact support
       </Link>
     </div>
@@ -104,7 +110,7 @@ export function DataPrivacyPage() {
 
       <DiscoverySetting />
 
-      <SSection title="Requests" icon={LifeBuoy} description="These are handled by our support team for now. Contact support from your account email and we will take it from there.">
+      <SSection title="Requests" icon={LifeBuoy} description="These are handled by our support team for now. Send the request from the contact form and we'll reply to your account email.">
         <div style={{ marginTop: -14 }}>
           <RequestRow icon={Download} title="Download my data" body="A copy of your account information and the documents you own." />
           <RequestRow icon={Trash2} title="Delete my account" danger

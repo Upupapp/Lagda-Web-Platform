@@ -43,7 +43,7 @@ import { useOverviewInsights, stuckRequests } from "./overview-insights";
 import { KpiCards, SigningActivity, PlanUsage, StatusDonut, TeamBars, RecentActivity, OVERVIEW_CSS } from "./OverviewCharts";
 import { useWorkspacePlan } from "../../../../hooks/usePlans";
 import { PLAN_NAMES } from "../../../../services/real/plans.service";
-import { SAMPLE_PLANS } from "../../../../config/pricing.config";
+import { SAMPLE_PLANS, currentPlanLimits } from "../../../../config/pricing.config";
 import { useWorkspacePeople, memberAvatarUrl } from "../../../../services/real/workspace-people.service";
 import { useCallback, useMemo } from "react";
 
@@ -336,7 +336,13 @@ export function RealWorkspaceOverview({ workspaceId }: { workspaceId: string }) 
     />
   );
 
-  const planInfo = SAMPLE_PLANS.find(p => p.id === planId);
+  // The same rule as Settings › Usage: while no plan limits are applied
+  // (currentPlanLimits() is null — the backend enforces no sending cap on a
+  // paid plan yet), a paid workspace has no ceiling to draw. Showing
+  // "0 of 1400" here while Usage said "No limits applied" was two answers to
+  // one question. Free's one-document limit IS enforced, so it stays.
+  const limitsApply = planId === "free" || currentPlanLimits() !== null;
+  const planInfo = limitsApply ? SAMPLE_PLANS.find(p => p.id === planId) : undefined;
   const members = typeof data.members === "number" ? data.members : 1;
   const sendLimit = planInfo?.limits.signingRequestsPerMonth.value == null ? null
     : planId === "business" ? planInfo.limits.signingRequestsPerMonth.value * Math.max(1, members)

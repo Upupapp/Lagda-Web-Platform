@@ -1,6 +1,6 @@
 import { SecurityPageShell } from "../../../components/security/SecuritySubNav";
 import {
-  PageHero, PageSection, SectionHeading, RelatedPages, PageCTA, LegalNote,
+  PageHero, PageSection, SectionHeading, RelatedPages, PageCTA, LegalNote, AvailBadge,
 } from "../../../components/esignature/EsigPageShell";
 
 const GF = { fontFamily: "'Geist', sans-serif" };
@@ -10,8 +10,8 @@ function AccountSecurityDiagram() {
   const controls = [
     { label: "Password",         icon: "🔒", state: "Strong", color: "#22C55E" },
     { label: "MFA",              icon: "📱", state: "Enabled", color: "#22C55E" },
-    { label: "Active sessions",  icon: "💻", state: "1 device", color: "#0078D4" },
-    { label: "Login history",    icon: "📋", state: "No anomalies", color: "#22C55E" },
+    { label: "Active sessions",  icon: "💻", state: "1 session", color: "#0078D4" },
+    { label: "Sign-in history",  icon: "📋", state: "Planned", color: "#64748B" },
   ];
   return (
     <div aria-hidden style={{ background: "#ffffff", border: "1px solid rgba(0,120,212,0.22)", borderRadius: 14, overflow: "hidden", maxWidth: 380, width: "100%", boxShadow: "0 4px 16px rgba(7,17,31,0.10)" }}>
@@ -30,7 +30,7 @@ function AccountSecurityDiagram() {
       ))}
       <div style={{ padding: "10px 16px", background: "rgba(34,197,94,0.06)", display: "flex", alignItems: "center", gap: 8 }}>
         <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#22C55E" }} />
-        <span style={{ color: "#22C55E", ...GM, fontSize: 10, fontWeight: 700 }}>All controls active</span>
+        <span style={{ color: "#22C55E", ...GM, fontSize: 10, fontWeight: 700 }}>Password and MFA on</span>
       </div>
     </div>
   );
@@ -43,7 +43,7 @@ export function AccountSecurity() {
         eyebrow="Account Security"
         headingId="as-h1"
         heading="Protect the LAGDA account that sends your documents."
-        sub="Account security is the first layer in the LAGDA security model. Before any signing transaction begins, the sender's account must be properly protected. This page covers passwords, multi-factor authentication, session management, and access history."
+        sub="Account security is the first layer in the LAGDA security model. Before any signing transaction begins, the sender's account must be properly protected. This page covers passwords, multi-factor authentication, and session management."
       />
 
       <PageSection id="controls" light bordered>
@@ -52,15 +52,16 @@ export function AccountSecurity() {
             <SectionHeading eyebrow="Account controls" id="ac-h2" heading="What LAGDA provides for account-level protection." sub="Senders and workspace administrators should enable all available controls. Stronger account protection reduces the risk of unauthorized transactions." />
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               {[
-                "Password-based account authentication with enforcement options",
-                "Multi-factor authentication (MFA) using authenticator app",
-                "Active session visibility and remote termination",
-                "Login history with IP and device records",
-                "Suspicious-activity detection",
-              ].map((item) => (
-                <div key={item} style={{ display: "flex", gap: 8 }}>
-                  <span style={{ color: "#16A34A", fontWeight: 700, flexShrink: 0 }}>✓</span>
-                  <span style={{ color: "#334155", ...GF, fontSize: 14, lineHeight: 1.5 }}>{item}</span>
+                { item: "Password-based account authentication with enforcement options" },
+                { item: "Multi-factor authentication (MFA) using authenticator app" },
+                { item: "Active session visibility and remote termination" },
+                { item: "Sign-in history with IP and device records", planned: true },
+                { item: "Suspicious-activity detection", planned: true },
+              ].map(({ item, planned }) => (
+                <div key={item} style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                  <span style={{ color: planned ? "#94A3B8" : "#16A34A", fontWeight: 700, flexShrink: 0 }}>{planned ? "○" : "✓"}</span>
+                  <span style={{ color: planned ? "#64748B" : "#334155", ...GF, fontSize: 14, lineHeight: 1.5 }}>{item}</span>
+                  {planned && <AvailBadge tier="Planned" />}
                 </div>
               ))}
             </div>

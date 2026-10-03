@@ -1,5 +1,6 @@
 import { SolPageShell } from "../../../components/solutions/SolutionsSubNav";
-import { PageHero, PageSection, SectionHeading, PageCTA } from "../../../components/esignature/EsigPageShell";
+import { PageHero, PageSection, SectionHeading } from "../../../components/esignature/EsigPageShell";
+import { AccountPageCTA } from "../../../components/shell/AccountPageCTA";
 import {
   DocExampleList, WorkflowSteps, ChallengeCards, CapabilityLinks,
   NoticeBox, EnotaryNotice, SolLegalNote, RelatedSolutions, ParticipantRoles,
@@ -161,13 +162,14 @@ export function Procurement() {
         ]} />
       </PageSection>
 
-      <PageCTA
+      <AccountPageCTA
         heading="Streamline your vendor agreement process."
         sub="Contact Sales for a team workspace or start free to explore procurement workflow templates."
         primaryLabel="Book a Demo"
         primaryPath="/book-a-demo?solution=procurement"
         secondaryLabel="Create Free Account"
         secondaryPath="/create-account"
+        signedInSub="Contact Sales for a team workspace, or go to your dashboard to explore procurement workflow templates."
       />
       <SolLegalNote />
     </SolPageShell>

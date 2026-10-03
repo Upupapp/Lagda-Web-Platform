@@ -22,6 +22,7 @@ import { SYSTEM_CONTACT_TAGS, CONTACT_SCOPE_LABELS } from "../../../models/conta
 import { BadgeCheck, Lock } from "lucide-react";
 import { PersonAvatar } from "./contacts-ui";
 import { withProcess } from "../../../config/process-screens";
+import { useDetailTitle } from "../../../hooks/useDetailTitle";
 
 /** The tags that say what part someone plays in a document; the rest are categories. */
 const ROLE_TAGS = new Set<string>(["tag-signer", "tag-approver", "tag-reviewer", "tag-ack"]);
@@ -56,6 +57,8 @@ function EditForm() {
   const { contactId } = useParams<{ contactId: string }>();
   const navigate = useNavigate();
   const { state, asyncLoadContact, clearActiveContact, asyncUpdate } = useContacts();
+  // The header crumb names the contact, not its id.
+  useDetailTitle(state.activeContact?.name);
 
   const [name,   setName]   = useState("");
   const [email,  setEmail]  = useState("");

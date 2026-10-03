@@ -5,9 +5,9 @@ import {
   PageSection,
   SectionHeading,
   RelatedPages,
-  PageCTA,
   LegalNote,
 } from "../../../components/esignature/EsigPageShell";
+import { AccountPageCTA } from "../../../components/shell/AccountPageCTA";
 import { AUDIT_EVENTS, VERIFICATION_STATES } from "./content";
 
 const GF = { fontFamily: "'Geist', sans-serif" };
@@ -97,24 +97,24 @@ function VerificationDemo() {
 
   const DETAILS: Record<string, { label: string; value: string; mono?: boolean }[]> = {
     verified: [
-      { label: "Verification ID", value: "LAGDA-VER-2026-004821", mono: true },
+      { label: "Verification ID", value: "LAGDA-VER-2026-Xs8kQ2mPz4", mono: true },
       { label: "Status",          value: "Completed" },
       { label: "Completed",       value: "14 July 2026, 4:01 PM PHT" },
       { label: "Document Match",  value: "Confirmed" },
       { label: "Participants",    value: "3 of 3 completed" },
     ],
     mismatch: [
-      { label: "Verification ID", value: "LAGDA-VER-2026-004821", mono: true },
+      { label: "Verification ID", value: "LAGDA-VER-2026-Xs8kQ2mPz4", mono: true },
       { label: "Record Status",   value: "Completed" },
       { label: "Warning",         value: "The submitted file does not match the LAGDA record for this ID." },
     ],
     incomplete: [
-      { label: "Verification ID", value: "LAGDA-VER-2026-004788", mono: true },
+      { label: "Verification ID", value: "LAGDA-VER-2026-Hb3nW7tLq2", mono: true },
       { label: "Status",          value: "Awaiting signatures" },
       { label: "Note",            value: "This document has not yet been completed." },
     ],
     notfound: [
-      { label: "Searched",        value: "LAGDA-VER-2026-000000", mono: true },
+      { label: "Searched",        value: "LAGDA-VER-2026-Nf4rT9cVw1", mono: true },
       { label: "Result",          value: "No matching record was found." },
     ],
   };
@@ -303,13 +303,14 @@ export function EsigVerificationAudit() {
         { label: "Advanced Capabilities", desc: "Reminders, bulk, and enterprise features", path: "/esignature/advanced-capabilities" },
       ]} />
 
-      <PageCTA
+      <AccountPageCTA
         heading="Track, verify, and secure every signing workflow."
         sub="Start free. Every LAGDA transaction includes a full audit trail and Verification ID."
         primaryLabel="Create Free Account"
         primaryPath="/create-account"
         secondaryLabel="Verify a Document"
         secondaryPath="/verify"
+        signedInSub="Every LAGDA transaction includes a full audit trail and Verification ID."
       />
 
       <LegalNote />

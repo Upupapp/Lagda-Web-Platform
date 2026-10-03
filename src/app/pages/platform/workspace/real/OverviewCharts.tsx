@@ -192,6 +192,9 @@ function bytes(n: number): string {
 export function PlanUsage({ usage, planName, sendLimit, storageLimit }: {
   usage: Loadable<WorkspaceUsage>; planName: string | null; sendLimit: number | null; storageLimit: number | null;
 }) {
+  // A null limit on a KNOWN plan is "none applied" (Settings › Usage says the
+  // same); while the plan is still being read it says nothing either way.
+  const noLimit = planName === null ? "" : " · no limit applied";
   return (
     <section className="ov-card" aria-labelledby="ov-usage-title" data-testid="plan-usage">
       <header className="ov-card-head">
@@ -201,9 +204,9 @@ export function PlanUsage({ usage, planName, sendLimit, storageLimit }: {
       {usage === "error" ? <Unavailable what="usage figures" /> : usage === null ? <Loading /> : (
         <div className="ov-rings">
           <Ring used={usage.signingRequests.sentThisMonth} limit={sendLimit} label="Documents sent"
-            detail={sendLimit === null ? `${String(usage.signingRequests.sentThisMonth)} this month` : `${String(usage.signingRequests.sentThisMonth)} of ${String(sendLimit)}`} />
+            detail={sendLimit === null ? `${String(usage.signingRequests.sentThisMonth)} sent this month${noLimit}` : `${String(usage.signingRequests.sentThisMonth)} of ${String(sendLimit)}`} />
           <Ring used={usage.storageBytes} limit={storageLimit} label="Storage"
-            detail={storageLimit === null ? bytes(usage.storageBytes) : `${bytes(usage.storageBytes)} of ${bytes(storageLimit)}`} />
+            detail={storageLimit === null ? `${bytes(usage.storageBytes)}${noLimit}` : `${bytes(usage.storageBytes)} of ${bytes(storageLimit)}`} />
         </div>
       )}
     </section>

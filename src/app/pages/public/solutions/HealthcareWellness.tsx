@@ -1,5 +1,6 @@
 import { SolPageShell } from "../../../components/solutions/SolutionsSubNav";
-import { PageHero, PageSection, SectionHeading, PageCTA } from "../../../components/esignature/EsigPageShell";
+import { PageHero, PageSection, SectionHeading } from "../../../components/esignature/EsigPageShell";
+import { AccountPageCTA } from "../../../components/shell/AccountPageCTA";
 import {
   DocExampleList, WorkflowSteps, ChallengeCards, CapabilityLinks,
   NoticeBox, EnotaryNotice, SolLegalNote, RelatedSolutions,
@@ -55,7 +56,7 @@ function WellnessMockup() {
         </div>
       ))}
       <div style={{ padding: "10px 16px", background: "#f8fafb", display: "flex", justifyContent: "space-between" }}>
-        <span style={{ color: "#94A3B8", ...GM, fontSize: 9 }}>LAGDA-VER-2026-009917</span>
+        <span style={{ color: "#94A3B8", ...GM, fontSize: 9 }}>LAGDA-VER-2026-Wq9cF3zLx6</span>
         <span style={{ color: "#16A34A", ...GM, fontSize: 9, fontWeight: 700 }}>Audit trail active</span>
       </div>
     </div>
@@ -186,7 +187,7 @@ export function HealthcareWellness() {
         ]} />
       </PageSection>
 
-      <PageCTA
+      <AccountPageCTA
         heading="Explore LAGDA for your wellness practice."
         sub="Contact us with questions about how LAGDA eSignature may apply to your specific workflow."
         primaryLabel="Book a Demo"

@@ -26,6 +26,7 @@ import type { DocumentTemplate } from "../../../models/templates";
 import { PREP_PARTICIPANT_ROLE_LABELS } from "../../../models/prepare";
 import { PARTICIPANT_ACCENT_COLORS } from "../../../models/field-editor";
 import { usePageMeta } from "../../../hooks/usePageMeta";
+import { useDetailTitle } from "../../../hooks/useDetailTitle";
 import { useMediaQuery } from "../../../hooks/useViewport";
 
 // ── Design tokens ─────────────────────────────────────────────────────────────
@@ -149,6 +150,8 @@ function TemplatePreviewInner() {
   useActiveTemplateLoader(templateId);
 
   usePageMeta();
+  // The header crumb names the template, not its id.
+  useDetailTitle(t?.name);
 
   // ── The real document ─────────────────────────────────────────────────────
   //

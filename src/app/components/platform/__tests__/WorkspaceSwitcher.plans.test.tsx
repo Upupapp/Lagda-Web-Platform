@@ -15,7 +15,11 @@ vi.mock("../../../context/PlatformContext", () => ({
   }),
 }));
 let myPlan: { plan: string } | null = { plan: "free" };
-vi.mock("../../../hooks/usePlans", () => ({ useMyPlan: () => ({ plan: myPlan, refresh: vi.fn() }) }));
+let workspacePlan: string | null = "business";
+vi.mock("../../../hooks/usePlans", () => ({
+  useMyPlan: () => ({ plan: myPlan, refresh: vi.fn() }),
+  useWorkspacePlan: () => ({ plan: workspacePlan, info: null, refresh: vi.fn() }),
+}));
 
 import { WorkspaceSwitcher } from "../WorkspaceSwitcher";
 
@@ -42,5 +46,22 @@ describe("Join another workspace in the workspace menu", () => {
     await open();
     expect(screen.getByTestId("workspace-menu-join")).not.toBeDisabled();
     expect(screen.queryByTestId("workspace-menu-join-plan")).toBeNull();
+  });
+});
+
+// TC-37. The session's workspace record carries a placeholder plan
+// ("personal" above); the line under the name must be the workspace's real one.
+describe("Plan under the workspace name", () => {
+  it("shows the workspace's real plan, not the session placeholder", () => {
+    workspacePlan = "business";
+    render(<MemoryRouter><WorkspaceSwitcher collapsed={false} /></MemoryRouter>);
+    expect(screen.getByTestId("workspace-switcher-plan").textContent).toBe("Business");
+  });
+
+  it("shows nothing while the plan is unknown", () => {
+    workspacePlan = null;
+    render(<MemoryRouter><WorkspaceSwitcher collapsed={false} /></MemoryRouter>);
+    expect(screen.queryByTestId("workspace-switcher-plan")).toBeNull();
+    expect(screen.queryByText("Personal")).toBeNull();
   });
 });

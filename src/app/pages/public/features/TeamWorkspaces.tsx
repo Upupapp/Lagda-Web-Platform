@@ -58,7 +58,7 @@ export function TeamWorkspaces() {
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               {[
                 "Invite by email — new members register and are linked automatically",
-                "Multiple roles can be assigned to the same member",
+                "Each member has one role; owners and administrators can add extra privileges (request documents, assign signers)",
                 "Workspace visibility controls shared contacts and templates",
                 "Audit records show activity per sender",
               ].map((item) => (
@@ -75,7 +75,7 @@ export function TeamWorkspaces() {
       </PageSection>
 
       <PageSection id="roles">
-        <SectionHeading eyebrow="Workspace roles" id="wr-h2" heading="Every role — and what it controls." sub="LAGDA uses purpose-built workspace roles. Assign more than one role to a member to combine permissions." center />
+        <SectionHeading eyebrow="Workspace roles" id="wr-h2" heading="Every role — and what it controls." sub="LAGDA uses purpose-built workspace roles. Each member has one role; owners and administrators can add extra privileges (request documents, assign signers)." center />
         <div style={{ display: "grid", gap: 10 }} className="wr-grid">
           {WORKSPACE_ROLES.map((r) => (
             <div key={r.role} style={{ background: "#ffffff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: 10, padding: "12px 14px" }}>

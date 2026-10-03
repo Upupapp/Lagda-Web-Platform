@@ -12,6 +12,7 @@ import { READY_MADE_TEMPLATES, READY_MADE_CATEGORIES } from "../../../services/r
 import { asyncCreateBlank } from "../../../services/mock/templates.service";
 import { createTemplate, realTemplatesAvailable } from "../../../services/templates-source";
 import { usePlatform } from "../../../context/PlatformContext";
+import { USE_REAL_BACKEND } from "../../../services/backend-flag";
 import {
   PREP_PARTICIPANT_ROLE_LABELS, VALID_PREP_PARTICIPANT_ROLES,
 } from "../../../models/prepare";
@@ -86,7 +87,10 @@ const SOURCES = [
     description: "Use an in-progress transaction draft as the starting point for a new template.",
     icon:        <FileText size={22} color="#64748B" />,
     available:   false,
-    note:        "No qualifying drafts in this demonstration.",
+    // A real workspace's drafts exist — this path is simply not built yet,
+    // so it says so instead of blaming a "demonstration".
+    note:        USE_REAL_BACKEND ? "Starting from a draft is coming soon." : "No qualifying drafts in this demonstration.",
+    comingSoon:  USE_REAL_BACKEND,
   },
   {
     id:          "from-transaction",
@@ -94,7 +98,8 @@ const SOURCES = [
     description: "Copy the document set and participant roles from a completed signing transaction.",
     icon:        <FolderOpen size={22} color="#64748B" />,
     available:   false,
-    note:        "Connect to a real workspace to use this option.",
+    note:        USE_REAL_BACKEND ? "Starting from a completed transaction is coming soon." : "Connect to a real workspace to use this option.",
+    comingSoon:  USE_REAL_BACKEND,
   },
   {
     id:          "duplicate",
@@ -521,7 +526,14 @@ export function CreateTemplatePage() {
                 transition:    "border-color 0.15s, background 0.15s",
               }}
             >
-              <div style={{ marginBottom: 10 }}>{s.icon}</div>
+              <div style={{ marginBottom: 10, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
+                {s.icon}
+                {"comingSoon" in s && s.comingSoon && (
+                  <span style={{ ...GF, fontSize: 10, fontWeight: 700, color: "#64748B", background: "#E2E8F0", borderRadius: 999, padding: "2px 8px", textTransform: "uppercase", letterSpacing: "0.04em" }}>
+                    Coming soon
+                  </span>
+                )}
+              </div>
               <div style={{ ...GF, fontSize: 13, fontWeight: 700, color: "#0F172A", marginBottom: 5 }}>{s.label}</div>
               <div style={{ ...GF, fontSize: 12, color: "#64748B", lineHeight: 1.5 }}>{s.description}</div>
               {"note" in s && !s.available && (

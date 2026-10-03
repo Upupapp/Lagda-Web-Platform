@@ -13,7 +13,7 @@
 // invitation went to, and the exact instant their submission was accepted.
 
 import { useState, useEffect, type CSSProperties } from "react";
-import { X, CheckCircle2, Clock, XCircle, MinusCircle, ShieldCheck, SkipForward, BadgeCheck } from "lucide-react";
+import { X, CheckCircle2, Clock, XCircle, MinusCircle, ShieldCheck, SkipForward, BadgeCheck, AlertTriangle } from "lucide-react";
 import {
   realSigningRequestService,
   type SigningRequestSignatures, type Signatory, type RecipientWorkflowState,
@@ -32,6 +32,12 @@ const GREEN  = "#059669";
 const AMBER  = "#B45309";
 const RED    = "#DC2626";
 const AZURE  = "#0078D4";
+
+/** Case- and whitespace-insensitive, so "bruce  wayne" matches "Bruce Wayne". */
+function sameName(a: string, b: string): boolean {
+  const norm = (v: string) => v.trim().replace(/\s+/g, " ").toLowerCase();
+  return norm(a) === norm(b);
+}
 
 /** Absolute, with the timezone shown — an evidentiary timestamp is useless
  *  as "2 days ago", and ambiguous without an offset. */
@@ -149,6 +155,20 @@ function SignatoryRow({ signatory }: { signatory: Signatory }) {
               </div>
               <Detail label="Account name" value={signatory.linkedAccountName ?? "Not available"} />
               <Detail label="Account email" value={signatory.linkedAccountEmail ?? "Not available"} />
+              {/* The sender typed one name; the person signed in as another.
+                  Both are kept as recorded — this only makes the difference
+                  visible instead of leaving it to be spotted. */}
+              {signatory.linkedAccountName !== null && !sameName(signatory.name, signatory.linkedAccountName) && (
+                <div data-testid="signatory-name-mismatch" role="note" style={{
+                  display: "flex", alignItems: "center", gap: 6, marginTop: 8,
+                  padding: "4px 8px", borderRadius: 6, background: "#FFFBEB", border: "1px solid #FDE68A",
+                }}>
+                  <AlertTriangle size={12} aria-hidden style={{ color: AMBER, flexShrink: 0 }} />
+                  <span style={{ fontSize: 11, fontWeight: 600, color: AMBER, ...GF }}>
+                    Name differs from the LAGDA account ({signatory.linkedAccountName})
+                  </span>
+                </div>
+              )}
             </div>
           )}
 

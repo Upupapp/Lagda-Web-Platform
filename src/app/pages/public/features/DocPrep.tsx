@@ -1,7 +1,8 @@
 import { FeaturesPageShell } from "../../../components/features/FeaturesSubNav";
 import {
-  PageHero, PageSection, SectionHeading, RelatedPages, PageCTA, LegalNote, AvailBadge,
+  PageHero, PageSection, SectionHeading, RelatedPages, LegalNote, AvailBadge,
 } from "../../../components/esignature/EsigPageShell";
+import { AccountPageCTA } from "../../../components/shell/AccountPageCTA";
 
 const GF = { fontFamily: "'Geist', sans-serif" };
 const GM = { fontFamily: "'Geist Mono', monospace" };
@@ -149,7 +150,7 @@ export function DocPrep() {
         { label: "Templates",          desc: "Save and reuse preparation setups", path: "/features/templates" },
       ]} />
 
-      <PageCTA
+      <AccountPageCTA
         heading="See the Core Workflow in detail."
         sub="The Core Workflow page walks through preparation, routing, authentication, and completion."
         primaryLabel="Core Workflow"

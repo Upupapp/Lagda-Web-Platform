@@ -67,7 +67,7 @@ export const OVERVIEW_CAPABILITIES = [
   // Productivity
   { icon: "📑", title: "Templates", desc: "Save any workflow as a reusable template. Build once. Use every time.", path: "/features/templates", group: "Productivity" },
   { icon: "📇", title: "Contacts", desc: "Save participants for recurring document workflows. Reduce setup time.", path: "/features/contacts", group: "Productivity" },
-  { icon: "🏢", title: "Company Branding", desc: "Apply workspace logo and identity to signing invitations and pages.", path: "/features/company-branding", group: "Productivity" },
+  { icon: "🏢", title: "Company Branding", desc: "Your logo and colours across the workspace. Branded signing pages and emails are planned.", path: "/features/company-branding", group: "Productivity" },
   { icon: "🔔", title: "Notifications", desc: "Stay informed when documents are signed, viewed, declined, or expiring.", path: "/features/notifications", group: "Productivity" },
   // Team & Scale
   { icon: "🗂️", title: "Team Workspaces", desc: "Multiple senders, shared templates, roles, and unified administration.", path: "/features/team-workspaces", group: "Team & Scale" },
@@ -118,8 +118,8 @@ export const VERIFICATION_STATES = [
     color: "#22C55E",
     bg: "rgba(34,197,94,0.1)",
     border: "rgba(34,197,94,0.25)",
-    desc: "The uploaded file matches the record for LAGDA-VER-2026-004821. The transaction was completed on 14 July 2026.",
-    public: ["Verification ID: LAGDA-VER-2026-004821", "Status: Completed", "Completed: 14 Jul 2026", "Document: Professional Services Agreement", "File match: Confirmed"],
+    desc: "The uploaded file matches the record for LAGDA-VER-2026-Xs8kQ2mPz4. The transaction was completed on 14 July 2026.",
+    public: ["Verification ID: LAGDA-VER-2026-Xs8kQ2mPz4", "Status: Completed", "Completed: 14 Jul 2026", "Document: Professional Services Agreement", "File match: Confirmed"],
   },
   {
     id: "mismatch",
@@ -127,8 +127,8 @@ export const VERIFICATION_STATES = [
     color: "#F59E0B",
     bg: "rgba(245,158,11,0.1)",
     border: "rgba(245,158,11,0.25)",
-    desc: "A record exists for LAGDA-VER-2026-004821, but the uploaded file does not match the recorded completed document.",
-    public: ["Verification ID: LAGDA-VER-2026-004821", "Status: Completed", "Completed: 14 Jul 2026", "File match: Not confirmed — file may have been altered"],
+    desc: "A record exists for LAGDA-VER-2026-Xs8kQ2mPz4, but the uploaded file does not match the recorded completed document.",
+    public: ["Verification ID: LAGDA-VER-2026-Xs8kQ2mPz4", "Status: Completed", "Completed: 14 Jul 2026", "File match: Not confirmed — file may have been altered"],
   },
   {
     id: "incomplete",
@@ -196,15 +196,13 @@ export { WORKSPACE_ROLES } from "../esignature/content";
 
 // ── Plan limit categories ─────────────────────────────────────────────────────
 export const PLAN_LIMIT_CATEGORIES = [
-  { icon: "📤", title: "Signing requests",       desc: "Monthly or annual transaction volume. Varies by plan." },
-  { icon: "👤", title: "Senders",                desc: "Number of users who can send document transactions." },
-  { icon: "🗂️", title: "Workspace seats",       desc: "Total members across all workspace roles." },
-  { icon: "💾", title: "Storage",                desc: "Document and transaction data storage. Varies by plan." },
-  { icon: "📑", title: "Templates",              desc: "Number of saved reusable workflows per workspace." },
-  { icon: "📎", title: "File size per document", desc: "Maximum size per uploaded PDF. Varies by plan." },
+  { icon: "📤", title: "Documents you send",     desc: "1 in total on Free, 50 a month on Personal, 200 per user a month on Business." },
+  { icon: "🗂️", title: "People in your workspace", desc: "1 on Free and Personal, up to 50 on Business." },
+  { icon: "💾", title: "Storage",                desc: "500 MB on Free, 5 GB on Personal, 50 GB shared on Business." },
+  { icon: "📑", title: "Templates",              desc: "3 blank templates on Free, 25 on Personal, unlimited on Business." },
   { icon: "🔑", title: "Authentication methods", desc: "Secure link, email code and account sign-in are on every plan. SMS OTP and SSO are planned." },
-  { icon: "🏢", title: "Branding",               desc: "Logo and custom email branding may be plan-dependent." },
-  { icon: "📊", title: "Audit access",           desc: "Duration and detail level of accessible audit records." },
+  { icon: "🏢", title: "Branding",               desc: "Your logo and colours are part of Personal and Business." },
+  { icon: "📊", title: "Audit trail",            desc: "The audit trail and Document Verification are on every plan." },
   { icon: "🔌", title: "API and webhooks",       desc: "Planned. Not built yet." },
 ];
 

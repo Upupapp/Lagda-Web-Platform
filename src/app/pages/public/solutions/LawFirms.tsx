@@ -7,6 +7,7 @@ import {
   NoticeBox, EnotaryNotice, SolLegalNote, ParticipantRoles, RelatedSolutions,
 } from "../../../components/solutions/SolComponents";
 import { FIRM_WORKFLOW, FIRM_NOTICE } from "./content";
+import { WORKSPACE_ROLES } from "../esignature/content";
 
 const GF = { fontFamily: "'Geist', sans-serif" };
 const GM = { fontFamily: "'Geist Mono', monospace" };
@@ -74,21 +75,16 @@ const DOCS = [
   "Matter-closing acknowledgments",
 ];
 
-const FIRM_ROLES = [
-  { role: "Owner",                  desc: "Full control over workspace, billing, and member management." },
-  { role: "Administrator",          desc: "Manages members, templates, branding, and workspace settings." },
-  { role: "Template Administrator", desc: "Creates, edits, and publishes templates for firm-wide use." },
-  { role: "Billing Administrator",  desc: "Manages subscription, payment, and plan details." },
-  { role: "Security Administrator", desc: "Configures authentication requirements and access controls." },
-  { role: "Sender",                 desc: "Prepares and sends document transactions." },
-  { role: "Auditor",                desc: "Access to audit records and usage reports." },
-];
+// The workspace roles the product has, worded for a firm. Kept to the live
+// roles (esignature/content.ts WORKSPACE_ROLES): there is no billing or
+// security administrator, and no usage reports.
+const FIRM_ROLES = WORKSPACE_ROLES.map(r => ({ role: r.role, desc: r.perms }));
 
 const CAPABILITIES = [
   { icon: "🗂️", title: "Team Workspaces",       desc: "Multiple senders, shared templates, and centralized visibility.", path: "/features/team-workspaces" },
   { icon: "📑", title: "Shared templates",        desc: "Firm-approved workflows locked and published by Template Administrators.", path: "/features/templates" },
-  { icon: "🏢", title: "Company branding",        desc: "Firm logo and identity on every outgoing document and invitation.", path: "/features/company-branding" },
-  { icon: "🔑", title: "Authentication controls", desc: "Configure authentication defaults across the workspace.", path: "/features/signer-authentication" },
+  { icon: "🏢", title: "Company branding",        desc: "Firm logo and colours across the workspace. Branded signing pages and invitation emails are planned.", path: "/features/company-branding" },
+  { icon: "🔑", title: "Authentication controls", desc: "A secure link and email code, or signing from a LAGDA account, for every participant.", path: "/features/signer-authentication" },
   { icon: "📋", title: "Audit trail",              desc: "Full event history per transaction. Auditor role for firm review.", path: "/features/audit-trail" },
   { icon: "🔍", title: "Verification",             desc: "Every completed document gets a Verification ID.", path: "/features/document-verification" },
 ];
@@ -129,7 +125,7 @@ export function LawFirms() {
                 "Firm logo and email identity on all outgoing documents",
                 "Role-based access — who can send, review, or audit",
                 "Shared contact directory for recurring clients",
-                "Centralized usage and activity visibility",
+                "Workspace activity log for the whole firm",
               ].map((item) => (
                 <div key={item} style={{ display: "flex", gap: 8 }}>
                   <span style={{ color: "#0078D4", flexShrink: 0, fontWeight: 700 }}>✓</span>
@@ -139,7 +135,7 @@ export function LawFirms() {
             </div>
           </div>
           <div>
-            <SectionHeading eyebrow="Workspace roles" id="wr-h2" heading="Role-based permissions for every function." sub="Roles control who can send, manage, audit, and administer. Multiple roles can be combined for the same member." />
+            <SectionHeading eyebrow="Workspace roles" id="wr-h2" heading="Role-based permissions for every function." sub="Roles control who can send, manage, audit, and administer. Each member has one role; owners and administrators can add extra privileges (request documents, assign signers)." />
             <ParticipantRoles roles={FIRM_ROLES} />
           </div>
         </div>

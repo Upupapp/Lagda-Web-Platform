@@ -30,7 +30,7 @@ export const AUTH_STEPS = [
     number: "02",
     title: "Digital Signing",
     description:
-      "Apply legally recognized e-signatures with an intuitive interface.",
+      "Apply electronic signatures with a full audit trail.",
   },
   {
     number: "03",

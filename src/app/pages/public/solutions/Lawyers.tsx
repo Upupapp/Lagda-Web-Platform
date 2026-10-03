@@ -1,7 +1,8 @@
 import { SolPageShell } from "../../../components/solutions/SolutionsSubNav";
 import {
-  PageHero, PageSection, SectionHeading, PageCTA,
+  PageHero, PageSection, SectionHeading,
 } from "../../../components/esignature/EsigPageShell";
+import { AccountPageCTA } from "../../../components/shell/AccountPageCTA";
 import {
   DocExampleList, WorkflowSteps, ChallengeCards, CapabilityLinks,
   NoticeBox, EnotaryNotice, SolLegalNote, RelatedSolutions,
@@ -42,7 +43,7 @@ function ClientEngagementMockup() {
         </div>
       ))}
       <div style={{ padding: "10px 16px", background: "#f8fafb", display: "flex", justifyContent: "space-between" }}>
-        <span style={{ color: "#94A3B8", ...GM, fontSize: 9 }}>LAGDA-VER-2026-004821</span>
+        <span style={{ color: "#94A3B8", ...GM, fontSize: 9 }}>LAGDA-VER-2026-Xs8kQ2mPz4</span>
         <span style={{ color: "#16A34A", ...GM, fontSize: 9, fontWeight: 700 }}>Audit trail active</span>
       </div>
     </div>
@@ -151,13 +152,15 @@ export function Lawyers() {
         ]} />
       </PageSection>
 
-      <PageCTA
+      <AccountPageCTA
         heading="Start with a free LAGDA account."
         sub="Set up your first signing workflow, build a template, and invite a client — at no cost to start."
         primaryLabel="Create Free Account"
         primaryPath="/create-account"
         secondaryLabel="Explore Law Firms"
         secondaryPath="/solutions/law-firms"
+        signedInHeading="Set up your first signing workflow."
+        signedInSub="Build a template and invite a client from your dashboard."
       />
       <SolLegalNote extra="Lawyers remain responsible for determining whether each document is suitable for electronic signing under applicable law and professional standards." />
     </SolPageShell>

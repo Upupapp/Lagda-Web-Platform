@@ -30,6 +30,7 @@ import { PREP_AUTH_METHODS } from "../../../models/prepare";
 import type { PrepAuthMethodId } from "../../../models/prepare";
 import { PARTICIPANT_ACCENT_COLORS } from "../../../models/field-editor";
 import { usePageMeta } from "../../../hooks/usePageMeta";
+import { useDetailTitle } from "../../../hooks/useDetailTitle";
 import { useViewport } from "../../../hooks/useViewport";
 import { ResponsiveStepper } from "../../../components/system/ResponsiveStepper";
 import {
@@ -474,6 +475,8 @@ function UseTemplateInner() {
   }, [t?.id, workspaceId]);
 
   usePageMeta();
+  // The header crumb names the template, not its id.
+  useDetailTitle(t?.name);
 
   const handleMappingChange = (idx: number, patch: Partial<TemplateRoleMapping>) => {
     setMappings(m => m.map((r, i) => i === idx ? { ...r, ...patch } : r));

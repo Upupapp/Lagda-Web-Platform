@@ -40,6 +40,7 @@ import { PREP_PARTICIPANT_ROLE_LABELS } from "../../../models/prepare";
 import type { PrepAuthMethodId } from "../../../models/prepare";
 import { PREP_AUTH_METHODS } from "../../../models/prepare";
 import { usePageMeta } from "../../../hooks/usePageMeta";
+import { useDetailTitle } from "../../../hooks/useDetailTitle";
 import { useViewport } from "../../../hooks/useViewport";
 
 // ── Design tokens ─────────────────────────────────────────────────────────────
@@ -732,6 +733,8 @@ function TemplateEditInner() {
   }, [state.activeTemplate, draft]);
 
   usePageMeta();
+  // The header crumb names the template, not its id.
+  useDetailTitle(state.activeTemplate?.name);
 
   const platform = usePlatform();
   const { run: runProcessing } = useProcessing();

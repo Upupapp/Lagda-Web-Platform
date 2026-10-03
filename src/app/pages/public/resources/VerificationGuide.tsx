@@ -50,7 +50,7 @@ export function VerificationGuide() {
             "As a QR code embedded in the completed document, if QR placement was configured",
           ]} />
           <GuidePara>
-            A Verification ID follows the format: LAGDA-VER-YYYY-NNNNNN (example: LAGDA-VER-2026-004821).
+            A Verification ID follows the format LAGDA-VER-YYYY-XXXXXXXXXX: the year the transaction was completed, then 10 letters and digits. Upper and lower case matter, and the code never uses 0, 1, O, I, L or lower-case l and o, so it is hard to misread. Sample (for illustration only, it will not verify): LAGDA-VER-2026-Xb7Kq2mPwR.
           </GuidePara>
         </GuideSection>
 

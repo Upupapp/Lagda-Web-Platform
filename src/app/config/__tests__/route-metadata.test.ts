@@ -19,7 +19,7 @@ import {
 
 describe("getRouteMeta", () => {
   it("resolves an exact static path", () => {
-    expect(getRouteMeta("/app/dashboard")?.title).toBe("Dashboard | LAGDA");
+    expect(getRouteMeta("/app/dashboard")?.title).toBe("Dashboard — LAGDA");
   });
 
   it("resolves a parametric path to its pattern's metadata", () => {

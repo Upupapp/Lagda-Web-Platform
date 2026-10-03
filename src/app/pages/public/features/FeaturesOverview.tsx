@@ -1,8 +1,10 @@
 import { Link } from "react-router";
 import { FeaturesPageShell } from "../../../components/features/FeaturesSubNav";
 import {
-  PageHero, PageSection, SectionHeading, RelatedPages, PageCTA, LegalNote,
+  PageHero, PageSection, SectionHeading, RelatedPages, LegalNote,
 } from "../../../components/esignature/EsigPageShell";
+import { AccountPageCTA } from "../../../components/shell/AccountPageCTA";
+import { useAccountCta } from "../../../hooks/useSignedIn";
 import { OVERVIEW_CAPABILITIES } from "./content";
 
 const GF = { fontFamily: "'Geist', sans-serif" };
@@ -69,6 +71,7 @@ function CapabilityMap({ group }: { group: string }) {
 }
 
 export function FeaturesOverview() {
+  const account = useAccountCta();
   return (
     <FeaturesPageShell>
       <PageHero
@@ -81,8 +84,8 @@ export function FeaturesOverview() {
           <Link to="/esignature/core-workflow" style={{ background: "#0078D4", color: "white", padding: "12px 24px", borderRadius: 10, ...GF, fontSize: 14, fontWeight: 700, textDecoration: "none", display: "inline-flex", alignItems: "center", minHeight: 44 }}>
             Explore Core Workflow →
           </Link>
-          <Link to="/create-account" style={{ background: "#ffffff", color: "#07111F", border: "1px solid rgba(0,0,0,0.12)", padding: "12px 20px", borderRadius: 10, ...GF, fontSize: 14, fontWeight: 600, textDecoration: "none", display: "inline-flex", alignItems: "center", minHeight: 44 }}>
-            Create Free Account
+          <Link to={account.path} style={{ background: "#ffffff", color: "#07111F", border: "1px solid rgba(0,0,0,0.12)", padding: "12px 20px", borderRadius: 10, ...GF, fontSize: 14, fontWeight: 600, textDecoration: "none", display: "inline-flex", alignItems: "center", minHeight: 44 }}>
+            {account.label}
           </Link>
         </div>
       </PageHero>
@@ -133,13 +136,14 @@ export function FeaturesOverview() {
         { label: "View Plans",           desc: "Compare plans and capabilities by tier", path: "/pricing" },
       ]} />
 
-      <PageCTA
+      <AccountPageCTA
         heading="Start with LAGDA eSignature today."
         sub="Create a free account or explore the Core Workflow to see LAGDA in action."
         primaryLabel="Create Free Account"
         primaryPath="/create-account"
         secondaryLabel="Explore Core Workflow"
         secondaryPath="/esignature/core-workflow"
+        signedInSub="Go to your dashboard or explore the Core Workflow to see LAGDA in action."
       />
 
       <LegalNote showEnotary />

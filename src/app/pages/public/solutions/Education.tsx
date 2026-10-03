@@ -1,5 +1,6 @@
 import { SolPageShell } from "../../../components/solutions/SolutionsSubNav";
-import { PageHero, PageSection, SectionHeading, PageCTA } from "../../../components/esignature/EsigPageShell";
+import { PageHero, PageSection, SectionHeading } from "../../../components/esignature/EsigPageShell";
+import { AccountPageCTA } from "../../../components/shell/AccountPageCTA";
 import {
   DocExampleList, WorkflowSteps, ChallengeCards, CapabilityLinks,
   NoticeBox, EnotaryNotice, SolLegalNote, RelatedSolutions, ParticipantRoles,
@@ -46,7 +47,7 @@ function EnrollmentMockup() {
         </div>
       ))}
       <div style={{ padding: "10px 16px", background: "#f8fafb", display: "flex", justifyContent: "space-between" }}>
-        <span style={{ color: "#94A3B8", ...GM, fontSize: 9 }}>LAGDA-VER-2026-003492</span>
+        <span style={{ color: "#94A3B8", ...GM, fontSize: 9 }}>LAGDA-VER-2026-Ed2vP5hJn7</span>
         <span style={{ color: "#16A34A", ...GM, fontSize: 9, fontWeight: 700 }}>Audit trail active</span>
       </div>
     </div>
@@ -158,7 +159,7 @@ export function Education() {
         ]} />
       </PageSection>
 
-      <PageCTA
+      <AccountPageCTA
         heading="Get your enrollment forms online."
         sub="Templates, guardian signing, and automatic reminders — built for institutional workflows."
         primaryLabel="Create Free Account"

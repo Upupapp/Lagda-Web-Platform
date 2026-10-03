@@ -1,5 +1,6 @@
 import { SolPageShell } from "../../../components/solutions/SolutionsSubNav";
-import { PageHero, PageSection, SectionHeading, PageCTA } from "../../../components/esignature/EsigPageShell";
+import { PageHero, PageSection, SectionHeading } from "../../../components/esignature/EsigPageShell";
+import { AccountPageCTA } from "../../../components/shell/AccountPageCTA";
 import {
   DocExampleList, WorkflowSteps, ChallengeCards, CapabilityLinks,
   NoticeBox, EnotaryNotice, SolLegalNote, RelatedSolutions,
@@ -39,7 +40,7 @@ function PropertyMockup() {
         </div>
       ))}
       <div style={{ padding: "10px 16px", background: "#f8fafb", display: "flex", justifyContent: "space-between" }}>
-        <span style={{ color: "#94A3B8", ...GM, fontSize: 9 }}>LAGDA-VER-2026-008813</span>
+        <span style={{ color: "#94A3B8", ...GM, fontSize: 9 }}>LAGDA-VER-2026-Rm7gK4dYb2</span>
         <span style={{ color: "#16A34A", ...GM, fontSize: 9, fontWeight: 700 }}>Audit trail active</span>
       </div>
     </div>
@@ -165,13 +166,14 @@ export function RealEstate() {
         ]} />
       </PageSection>
 
-      <PageCTA
+      <AccountPageCTA
         heading="Start signing leases and acknowledgments online."
         sub="Use LAGDA eSignature for the documents where it's appropriate. Start free, no card required."
         primaryLabel="Create Free Account"
         primaryPath="/create-account"
         secondaryLabel="Book a Demo"
         secondaryPath="/book-a-demo?solution=real-estate"
+        signedInSub="Use LAGDA eSignature for the documents where it's appropriate."
       />
       <SolLegalNote extra="Real estate organizations remain responsible for confirming that each document type is eligible for electronic signing under applicable law." />
     </SolPageShell>

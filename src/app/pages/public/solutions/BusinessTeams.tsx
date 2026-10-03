@@ -1,5 +1,6 @@
 import { SolPageShell } from "../../../components/solutions/SolutionsSubNav";
-import { PageHero, PageSection, SectionHeading, PageCTA } from "../../../components/esignature/EsigPageShell";
+import { PageHero, PageSection, SectionHeading } from "../../../components/esignature/EsigPageShell";
+import { AccountPageCTA } from "../../../components/shell/AccountPageCTA";
 import {
   DocExampleList, WorkflowSteps, ChallengeCards, CapabilityLinks,
   NoticeBox, EnotaryNotice, SolLegalNote, RelatedSolutions,
@@ -49,7 +50,7 @@ function ApprovalFlowMockup() {
         </div>
       ))}
       <div style={{ padding: "10px 16px", background: "#f8fafb", display: "flex", justifyContent: "space-between" }}>
-        <span style={{ color: "#94A3B8", ...GM, fontSize: 9 }}>LAGDA-VER-2026-002247</span>
+        <span style={{ color: "#94A3B8", ...GM, fontSize: 9 }}>LAGDA-VER-2026-Bt6yR1kMs8</span>
         <span style={{ color: "#16A34A", ...GM, fontSize: 9, fontWeight: 700 }}>2 of 5 complete</span>
       </div>
     </div>
@@ -150,13 +151,14 @@ export function BusinessTeams() {
         ]} />
       </PageSection>
 
-      <PageCTA
+      <AccountPageCTA
         heading="Bring your team onto one approval workflow."
         sub="Start with a free LAGDA account or contact Sales for a team workspace setup and demo."
         primaryLabel="Create Free Account"
         primaryPath="/create-account"
         secondaryLabel="Book a Demo"
         secondaryPath="/book-a-demo?solution=business-teams"
+        signedInSub="Go to your dashboard, or contact Sales for a team workspace setup and demo."
       />
       <SolLegalNote />
     </SolPageShell>

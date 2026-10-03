@@ -19,6 +19,8 @@ import {
 import type { DocumentTemplate } from "../../../models/templates";
 import { PREP_PARTICIPANT_ROLE_LABELS } from "../../../models/prepare";
 import { usePageMeta } from "../../../hooks/usePageMeta";
+import { useDetailTitle } from "../../../hooks/useDetailTitle";
+import { USE_REAL_BACKEND } from "../../../services/backend-flag";
 import { useViewport } from "../../../hooks/useViewport";
 import { Z } from "../../../utils/z-index";
 import { ConfirmDeleteTemplate } from "../../../components/templates/ConfirmDeleteTemplate";
@@ -298,6 +300,8 @@ function TemplateDetailInner() {
   useActiveTemplateLoader(templateId);
 
   usePageMeta();
+  // The header crumb reads "Templates › <name>", not the record id.
+  useDetailTitle(t?.name);
 
   const handleDuplicate = useCallback(() => {
     if (!t) return;
@@ -606,7 +610,11 @@ function TemplateDetailInner() {
             <DetailRow label="Last Updated" value={new Date(t.updatedAt).toLocaleDateString()} isLast />
           </div>
 
-          {/* Usage card */}
+          {/* Usage card. Demo build only: the backend tracks no template usage,
+              so a real template's counts are placeholder zeros
+              (real/templates.service.ts) and showing them claims a history
+              that was never recorded. */}
+          {!USE_REAL_BACKEND && (
           <div style={{ background: "white", border: "1px solid #E2E8F0", borderRadius: 12, padding: "16px 18px" }}>
             <h3 style={{ ...GF, fontSize: 12, fontWeight: 700, color: "#64748B", textTransform: "uppercase", letterSpacing: "0.06em", margin: "0 0 14px" }}>Usage</h3>
             <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
@@ -622,6 +630,7 @@ function TemplateDetailInner() {
               </p>
             )}
           </div>
+          )}
         </div>
         </div>
       </div>

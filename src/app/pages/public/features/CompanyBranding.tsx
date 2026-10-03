@@ -43,7 +43,7 @@ function BrandingPreview({ branded }: { branded: boolean }) {
       </div>
       {/* Footer */}
       <div style={{ padding: "10px 18px", borderTop: "1px solid rgba(0,0,0,0.07)", display: "flex", justifyContent: "space-between" }}>
-        <span style={{ color: "#94A3B8", ...GM, fontSize: 10 }}>LAGDA-VER-2026-004821</span>
+        <span style={{ color: "#94A3B8", ...GM, fontSize: 10 }}>LAGDA-VER-2026-Xs8kQ2mPz4</span>
         <span style={{ color: branded ? "#0078D4" : "#94A3B8", ...GF, fontSize: 10 }}>
           {branded ? "Mabini Legal Solutions via LAGDA" : "Secured by LAGDA"}
         </span>
@@ -60,13 +60,13 @@ export function CompanyBranding() {
         eyebrow="Company Branding"
         headingId="cb-h1"
         heading="Help recipients recognize who sent the document."
-        sub="LAGDA workspace branding lets organizations add a consistent identity to outgoing documents — logo, company header, and email customization. Branding builds recognition and reduces confusion for recipients."
+        sub="Today, your logo and colours appear across your LAGDA workspace: the workspace badge, the workspace card and the cards in your documents list. Branded signing pages and invitation emails are planned."
       />
 
       <PageSection id="preview" light bordered>
         <div style={{ display: "grid", gap: "32px 48px", alignItems: "start" }} className="cb-two-col">
           <div>
-            <SectionHeading eyebrow="Before and after" id="ba-h2" heading="See what branding adds to the recipient experience." sub="Toggle to compare an unbranded and branded signing invitation. LAGDA trust indicators remain visible in both states." />
+            <SectionHeading eyebrow="Before and after" id="ba-h2" heading="See what branding adds to the recipient experience." sub="Planned, not available yet: toggle to preview how a branded signing invitation will compare with today's standard one. LAGDA trust indicators will remain visible in both." />
             <div style={{ display: "flex", gap: 8, marginBottom: 20 }}>
               <button
                 onClick={() => setBranded(false)}
@@ -85,16 +85,18 @@ export function CompanyBranding() {
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               {[
-                "Company logo in the signing interface",
-                "Customizable invitation email subject and message",
-                "Organizational sender name and identity",
-                "Completion-page branding",
-                "Verification ID and QR placement",
-                "Branding never removes LAGDA trust indicators",
-              ].map((item) => (
-                <div key={item} style={{ display: "flex", gap: 8 }}>
-                  <span style={{ color: "#0078D4", fontWeight: 700, flexShrink: 0 }}>✓</span>
+                { item: "Logo and colours on your workspace badge", planned: false },
+                { item: "Branded workspace card", planned: false },
+                { item: "Branded cards in your documents list", planned: false },
+                { item: "Branding never removes LAGDA trust indicators", planned: false },
+                { item: "Company logo on the signing page", planned: true },
+                { item: "Branded invitation email", planned: true },
+                { item: "Completion-page branding", planned: true },
+              ].map(({ item, planned }) => (
+                <div key={item} style={{ display: "flex", gap: 8, alignItems: "flex-start", flexWrap: "wrap" }}>
+                  <span aria-hidden style={{ color: planned ? "#94A3B8" : "#0078D4", fontWeight: 700, flexShrink: 0 }}>{planned ? "○" : "✓"}</span>
                   <span style={{ color: "#334155", ...GF, fontSize: 14, lineHeight: 1.5 }}>{item}</span>
+                  {planned && <AvailBadge tier="Planned" />}
                 </div>
               ))}
             </div>
@@ -105,10 +107,10 @@ export function CompanyBranding() {
       </PageSection>
 
       <PageSection id="safeguards">
-        <SectionHeading eyebrow="Document safeguards" id="ds-h2" heading="Branding is applied to the interface — not the document content." center />
+        <SectionHeading eyebrow="Document safeguards" id="ds-h2" heading="Branding is applied to LAGDA — not the document content." center />
         <div style={{ display: "grid", gap: 12 }} className="ds-grid">
           {[
-            { title: "Applied to interface",       desc: "Branding appears in the signing environment and invitation email — not overlaid on the PDF content itself." },
+            { title: "Applied to interface",       desc: "Branding appears in your workspace today, and is planned for signing pages and invitation emails. It is never overlaid on the PDF content itself." },
             { title: "Source content respected",   desc: "Existing headers, footers, and document content should not be obscured by organizational branding." },
             { title: "Verification placement",     desc: "QR codes and Verification IDs use controlled placement to avoid obscuring document content." },
             { title: "LAGDA indicators preserved", desc: "Organizational branding does not remove or replace LAGDA platform trust indicators." },

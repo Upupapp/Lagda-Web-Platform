@@ -4,9 +4,10 @@ import {
   PageSection,
   SectionHeading,
   RelatedPages,
-  PageCTA,
   LegalNote,
+  AvailBadge,
 } from "../../../components/esignature/EsigPageShell";
+import { AccountPageCTA } from "../../../components/shell/AccountPageCTA";
 import { TEMPLATE_FEATURES } from "./content";
 
 const GF = { fontFamily: "'Geist', sans-serif" };
@@ -81,6 +82,19 @@ function TemplateFeatureList() {
   );
 }
 
+// ── Branding checklist ────────────────────────────────────────────────────────
+// What branding does today, and what is planned. The app says signing pages
+// and emails do not use custom branding yet; this list must say the same.
+const BRANDING_ITEMS: { item: string; planned: boolean }[] = [
+  { item: "Logo and colours on your workspace badge",         planned: false },
+  { item: "Branded workspace card",                           planned: false },
+  { item: "Branded cards in your documents list",             planned: false },
+  { item: "Company branding never removes LAGDA trust indicators", planned: false },
+  { item: "Company logo on the signing page",                 planned: true },
+  { item: "Branded invitation email",                         planned: true },
+  { item: "Completion-page branding",                         planned: true },
+];
+
 // ── Branding preview mockup ───────────────────────────────────────────────────
 function BrandingMockup() {
   return (
@@ -111,7 +125,7 @@ function BrandingMockup() {
       </div>
       {/* Footer */}
       <div style={{ padding: "10px 18px", borderTop: "1px solid rgba(0,0,0,0.07)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <span style={{ color: "#64748B", ...GM, fontSize: 10 }}>LAGDA-VER-2026-004821</span>
+        <span style={{ color: "#64748B", ...GM, fontSize: 10 }}>LAGDA-VER-2026-Xs8kQ2mPz4</span>
         <span style={{ color: "#64748B", ...GF, fontSize: 10 }}>Secured by LAGDA</span>
       </div>
     </div>
@@ -149,7 +163,7 @@ export function EsigTemplatesBranding() {
       <PageHero
         eyebrow="Templates & Branding"
         headingId="tb-h1"
-        heading="Turn repeat documents into branded, reusable workflows."
+        heading="Turn repeat documents into reusable workflows."
         sub="A LAGDA template is more than a stored document — it captures the full workflow: fields, routing, authentication, reminders, and branding. Build once. Use every time."
       />
 
@@ -183,30 +197,29 @@ export function EsigTemplatesBranding() {
       <PageSection id="branding" light bordered>
         <div style={{ display: "grid", gap: "32px 48px", alignItems: "start" }} className="tb-two-col">
           <div>
-            <SectionHeading eyebrow="Company branding" id="brand-heading" heading="Apply company branding only when it fits the document." />
+            <SectionHeading eyebrow="Company branding" id="brand-heading" heading="Your logo and colours across your workspace." />
             <p style={{ color: "#64748B", ...GF, fontSize: 15, lineHeight: 1.65, margin: 0, marginBottom: 16 }}>
-              LAGDA workspace branding lets organizations add a consistent identity to their outgoing documents — logo, company header, sender name, and email customization.
+              Today, workspace branding appears inside LAGDA: on your workspace badge, your workspace card, and the cards in your documents list.
             </p>
             <p style={{ color: "#64748B", ...GF, fontSize: 15, lineHeight: 1.65, margin: 0, marginBottom: 20 }}>
-              Branding is applied to the signing interface and invitation email, not directly onto document content. LAGDA does not automatically overlay logos onto the PDF content itself.
+              Branded signing pages and invitation emails are planned and not available yet — signers currently see the standard LAGDA signing page and email. LAGDA never overlays logos onto the PDF content itself.
             </p>
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              {[
-                "Company logo in the signing interface",
-                "Customizable invitation email subject and message",
-                "Organizational sender name and identity",
-                "Completion-page branding",
-                "Verification placement and QR positioning",
-                "Company branding never removes LAGDA trust indicators",
-              ].map((item) => (
-                <div key={item} style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
-                  <span style={{ color: "#0078D4", fontWeight: 700, flexShrink: 0, fontSize: 13 }}>✓</span>
+              {BRANDING_ITEMS.map(({ item, planned }) => (
+                <div key={item} style={{ display: "flex", gap: 8, alignItems: "flex-start", flexWrap: "wrap" }}>
+                  <span aria-hidden style={{ color: planned ? "#94A3B8" : "#0078D4", fontWeight: 700, flexShrink: 0, fontSize: 13 }}>{planned ? "○" : "✓"}</span>
                   <span style={{ color: "#64748B", ...GF, fontSize: 14, lineHeight: 1.5 }}>{item}</span>
+                  {planned && <AvailBadge tier="Planned" />}
                 </div>
               ))}
             </div>
           </div>
-          <BrandingMockup />
+          <div>
+            <BrandingMockup />
+            <p style={{ color: "#64748B", ...GM, fontSize: 10, margin: "10px 0 0", letterSpacing: "0.04em" }}>
+              PLANNED · A BRANDED INVITATION, NOT AVAILABLE YET · SAMPLE ID — WILL NOT VERIFY
+            </p>
+          </div>
         </div>
       </PageSection>
 
@@ -239,13 +252,14 @@ export function EsigTemplatesBranding() {
         { label: "View Plans",            desc: "Template limits and availability by plan", path: "/pricing" },
       ]} />
 
-      <PageCTA
+      <AccountPageCTA
         heading="Start with LAGDA eSignature today."
         sub="Create a free account and build your first reusable signing workflow."
         primaryLabel="Create Free Account"
         primaryPath="/create-account"
         secondaryLabel="View Plans"
         secondaryPath="/pricing"
+        signedInSub="Build your first reusable signing workflow from Templates in the app."
       />
 
       <LegalNote />

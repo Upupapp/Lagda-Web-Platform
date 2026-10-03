@@ -1,7 +1,8 @@
 import { FeaturesPageShell } from "../../../components/features/FeaturesSubNav";
 import {
-  PageHero, PageSection, SectionHeading, RelatedPages, PageCTA, LegalNote, AvailBadge,
+  PageHero, PageSection, SectionHeading, RelatedPages, LegalNote, AvailBadge,
 } from "../../../components/esignature/EsigPageShell";
+import { AccountPageCTA } from "../../../components/shell/AccountPageCTA";
 import { TEMPLATE_FIELDS } from "./content";
 
 const GF = { fontFamily: "'Geist', sans-serif" };
@@ -122,13 +123,14 @@ export function Templates() {
         { label: "Contacts",              desc: "Reuse participant data across templates", path: "/features/contacts" },
       ]} />
 
-      <PageCTA
+      <AccountPageCTA
         heading="Start with LAGDA eSignature today."
         sub="Create a free account and build your first reusable signing workflow."
         primaryLabel="Create Free Account"
         primaryPath="/create-account"
         secondaryLabel="Templates & Branding"
         secondaryPath="/esignature/templates-and-branding"
+        signedInSub="Build your first reusable signing workflow from Templates in the app."
       />
       <LegalNote />
     </FeaturesPageShell>

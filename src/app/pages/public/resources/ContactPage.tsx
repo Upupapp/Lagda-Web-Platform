@@ -3,7 +3,7 @@ import { useSearchParams } from "react-router";
 import {
   ResourcesPageShell, ResourcesSection,
 } from "../../../components/resources/ResourceComponents";
-import { parseContactCategory, CONTACT_CATEGORY_LABELS } from "../../../models/forms";
+import { parseContactCategory, CONTACT_CATEGORY_LABELS, VALID_CONTACT_CATEGORIES, type ContactCategory } from "../../../models/forms";
 import { USE_REAL_BACKEND } from "../../../services/backend-flag";
 import { publicInquiriesService, inquiryErrorMessage } from "../../../services/real/public-inquiries.service";
 
@@ -24,17 +24,33 @@ interface ContactForm {
   consent: boolean;
 }
 
-const CATEGORIES = [
-  "Sales",
-  "Product question",
-  "Account support",
-  "Billing question",
-  "Security or privacy",
-  "Document Verification concern",
-  "Partnership",
-  "eNotary waitlist question",
-  "Other",
-];
+// The select lists every category the ?category= link can preselect, so a
+// preselected value is always one of the options.
+const CATEGORIES = VALID_CONTACT_CATEGORIES.map(c => CONTACT_CATEGORY_LABELS[c]);
+
+// Short ?topic= words used in links (security.txt, Trust Center, help pages).
+const TOPIC_ALIASES: Record<string, ContactCategory> = {
+  security: "security-privacy",
+  privacy: "security-privacy",
+  support: "account-support",
+  account: "account-support",
+  sales: "sales",
+  billing: "billing",
+  product: "product",
+  verification: "verification",
+  partnership: "partnership",
+  accessibility: "accessibility",
+  enotary: "enotary",
+  other: "other",
+};
+
+function preselectedCategoryFrom(params: URLSearchParams): string {
+  const topic = params.get("topic")?.trim().toLowerCase() ?? "";
+  const category = parseContactCategory(params.get("category"))
+    ?? TOPIC_ALIASES[topic]
+    ?? parseContactCategory(topic || null);
+  return category ? CONTACT_CATEGORY_LABELS[category] : "";
+}
 
 const EMPTY: ContactForm = { name: "", email: "", organization: "", role: "", category: "", subject: "", message: "", phone: "", consent: false };
 
@@ -86,9 +102,8 @@ function validate(form: ContactForm) {
 
 export function ContactPage() {
   const [params] = useSearchParams();
-  // Support ?category=sales, ?category=account-support, etc. — safe preselection
-  const rawCategory = parseContactCategory(params.get("category"));
-  const preselectedCategory = rawCategory ? CONTACT_CATEGORY_LABELS[rawCategory] : "";
+  // Support ?category=account-support and ?topic=security etc. — safe preselection
+  const preselectedCategory = preselectedCategoryFrom(params);
 
   const [form, setForm]           = useState<ContactForm>({ ...EMPTY, category: preselectedCategory });
   const [errors, setErrors]       = useState<Partial<Record<keyof ContactForm, string>>>({});
@@ -260,7 +275,9 @@ export function ContactPage() {
                   style={{ width: 18, height: 18, marginTop: 2, flexShrink: 0, accentColor: "#0078D4", cursor: "pointer" }}
                 />
                 <span style={{ color: "#64748B", ...GF, fontSize: 13, lineHeight: 1.55 }}>
-                  I acknowledge that this form is a frontend demonstration. I understand no message will be delivered until backend integration is complete. I agree not to include sensitive personal or confidential information in this form.
+                  {USE_REAL_BACKEND
+                    ? "I agree that LAGDA may use these details to reply to me. I won't include confidential or sensitive personal information."
+                    : "I acknowledge that this form is a frontend demonstration. I understand no message will be delivered until backend integration is complete. I agree not to include sensitive personal or confidential information in this form."}
                 </span>
               </label>
               <FieldError msg={errors.consent} />

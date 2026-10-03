@@ -6,7 +6,9 @@
 // join request was approved after sign-in appears here without a reload.
 // Creating a workspace from here is deliberately not offered yet.
 
-import { useMyPlan } from "../../hooks/usePlans";
+import { useMyPlan, useWorkspacePlan } from "../../hooks/usePlans";
+import { USE_REAL_BACKEND } from "../../services/backend-flag";
+import { PLAN_NAMES } from "../../services/real/plans.service";
 import { useState, useRef, useEffect } from "react";
 import { ChevronDown, Check, LogIn, Lock } from "lucide-react";
 import { usePlatform } from "../../context/PlatformContext";
@@ -17,6 +19,32 @@ import { JoinWorkspaceDialog } from "./JoinWorkspaceDialog";
 const GF   = { fontFamily: "'Geist', sans-serif" };
 const GM   = { fontFamily: "'Geist Mono', monospace" };
 const BORDER = "rgba(0,0,0,0.08)";
+
+/**
+ * The plan name shown under a workspace's name.
+ *
+ * Real mode reads the workspace's plan (its owner's, 093) — the session's
+ * workspace record carries only a placeholder `plan: "personal"`
+ * (session-bootstrap normalizeWorkspace), which put "Personal" under a
+ * Business workspace. Empty while the plan is still being read, rather than a
+ * guess. The demo build keeps the fixture's own plan.
+ */
+function useWorkspacePlanLabel(workspace: { id: string; plan: keyof typeof PLAN_LABELS } | null): string {
+  const { plan } = useWorkspacePlan(workspace?.id ?? null);
+  if (workspace === null) return "";
+  if (!USE_REAL_BACKEND) return PLAN_LABELS[workspace.plan];
+  return plan === null ? "" : PLAN_NAMES[plan];
+}
+
+function WorkspacePlanLine({ workspace }: { workspace: { id: string; plan: keyof typeof PLAN_LABELS; role: string } }) {
+  const label = useWorkspacePlanLabel(workspace);
+  const role = workspace.role.replace("_", " ");
+  return (
+    <p style={{ ...GM, fontSize: 9, color: "#94A3B8", margin: 0 }}>
+      {label ? `${label} · ${role}` : role}
+    </p>
+  );
+}
 
 interface WorkspaceSwitcherProps {
   collapsed: boolean;
@@ -67,9 +95,9 @@ export function WorkspaceSwitcher({ collapsed }: WorkspaceSwitcherProps) {
     return () => document.removeEventListener("keydown", handler);
   }, [open]);
 
-  if (!currentWorkspace) return null;
+  const planLabel = useWorkspacePlanLabel(currentWorkspace ?? null);
 
-  const planLabel = PLAN_LABELS[currentWorkspace.plan];
+  if (!currentWorkspace) return null;
 
   if (collapsed) {
     return (
@@ -127,7 +155,7 @@ export function WorkspaceSwitcher({ collapsed }: WorkspaceSwitcherProps) {
           <p style={{ color: "#07111F", ...GF, fontSize: 12, fontWeight: 600, margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
             {currentWorkspace.name}
           </p>
-          <p style={{ color: "#64748B", ...GM, fontSize: 9, margin: 0 }}>{planLabel}</p>
+          {planLabel && <p data-testid="workspace-switcher-plan" style={{ color: "#64748B", ...GM, fontSize: 9, margin: 0 }}>{planLabel}</p>}
         </div>
         <ChevronDown size={12} style={{ color: "#64748B", flexShrink: 0, transform: open ? "rotate(180deg)" : undefined, transition: "transform 0.15s" }} aria-hidden />
       </button>
@@ -203,9 +231,7 @@ const WorkspaceMenu = forwardRef<HTMLDivElement, WorkspaceMenuProps>(
               <p style={{ ...GF, fontSize: 12, fontWeight: 600, margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                 {ws.name}
               </p>
-              <p style={{ ...GM, fontSize: 9, color: "#94A3B8", margin: 0 }}>
-                {PLAN_LABELS[ws.plan]} · {ws.role.replace("_", " ")}
-              </p>
+              <WorkspacePlanLine workspace={ws} />
             </div>
             {isCurrent && <Check size={13} style={{ color: "#0078D4", flexShrink: 0 }} aria-hidden />}
           </button>

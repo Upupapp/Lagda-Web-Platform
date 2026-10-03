@@ -7,9 +7,10 @@ import {
   PageSection,
   SectionHeading,
   RelatedPages,
-  PageCTA,
   LegalNote,
 } from "../../../components/esignature/EsigPageShell";
+import { AccountPageCTA } from "../../../components/shell/AccountPageCTA";
+import { useSignedIn } from "../../../hooks/useSignedIn";
 import { PARTICIPANT_ROLES, AUTH_METHODS, FIELD_TYPES } from "./content";
 import lagdaLogoFull from "../../../../brand elements/svg/LagdaLogoPrimaryHorizontalFullColor.svg";
 
@@ -19,6 +20,9 @@ const AZURE = "#0078D4";
 
 // ── Hero visual — logo + quick actions ────────────────────────────────────────
 function TryItNowPanel() {
+  // Uploading needs an account: a signed-in visitor goes straight to Prepare,
+  // anyone else creates an account first.
+  const signedIn = useSignedIn();
   return (
     <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 16 }}>
       <img
@@ -51,7 +55,7 @@ function TryItNowPanel() {
           </span>
         </Link>
         <Link
-          to="/home?openUpload=1"
+          to={signedIn ? "/app/prepare" : "/create-account"}
           style={{
             display: "inline-flex", alignItems: "center", gap: 10,
             background: AZURE, color: "#FFFFFF",
@@ -383,13 +387,16 @@ export function EsigCoreWorkflow() {
         { label: "Advanced Capabilities",  desc: "Reminders, expiration, and complex routing", path: "/esignature/advanced-capabilities" },
       ]} />
 
-      <PageCTA
+      <AccountPageCTA
         heading="Ready to send your first document?"
         sub="Create a free LAGDA account and prepare your first signing request in minutes."
         primaryLabel="Create Free Account"
         primaryPath="/create-account"
         secondaryLabel="Explore Verification & Audit"
         secondaryPath="/esignature/verification-and-audit"
+        kind="prepare"
+        signedInHeading="Ready to send your next document?"
+        signedInSub
       />
 
       <LegalNote />

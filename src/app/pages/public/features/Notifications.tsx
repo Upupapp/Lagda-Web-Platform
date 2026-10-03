@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { FeaturesPageShell } from "../../../components/features/FeaturesSubNav";
 import {
-  PageHero, PageSection, SectionHeading, RelatedPages, PageCTA, LegalNote,
+  PageHero, PageSection, SectionHeading, RelatedPages, LegalNote,
 } from "../../../components/esignature/EsigPageShell";
+import { AccountPageCTA } from "../../../components/shell/AccountPageCTA";
 import { NOTIFICATION_EVENTS } from "./content";
 
 const GF = { fontFamily: "'Geist', sans-serif" };
@@ -135,7 +136,7 @@ export function Notifications() {
         { label: "Team Workspaces",   desc: "Workspace-level notification visibility", path: "/features/team-workspaces" },
       ]} />
 
-      <PageCTA
+      <AccountPageCTA
         heading="Review every event with the Audit Trail."
         sub="When you need more than a notification, the full audit trail records every event with timestamps."
         primaryLabel="Audit Trail"

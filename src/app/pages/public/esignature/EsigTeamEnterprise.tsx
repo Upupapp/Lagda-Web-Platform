@@ -4,9 +4,9 @@ import {
   PageSection,
   SectionHeading,
   RelatedPages,
-  PageCTA,
   LegalNote,
 } from "../../../components/esignature/EsigPageShell";
+import { AccountPageCTA } from "../../../components/shell/AccountPageCTA";
 import { WORKSPACE_ROLES, TEAM_CAPABILITIES } from "./content";
 
 const GF = { fontFamily: "'Geist', sans-serif" };
@@ -243,13 +243,14 @@ export function EsigTeamEnterprise() {
         { label: "Templates & Branding", desc: "Shared templates and company identity", path: "/esignature/templates-and-branding" },
       ]} />
 
-      <PageCTA
+      <AccountPageCTA
         heading="Ready to scale your document workflow?"
         sub="Start on Free, then choose Business in Plan & Billing when your team joins."
         primaryLabel="Create Free Account"
         primaryPath="/create-account"
         secondaryLabel="Compare Plans"
         secondaryPath="/pricing/compare"
+        signedInSub="Owners can choose Business in Plan & Billing when the team joins."
       />
 
       <LegalNote />

@@ -70,7 +70,7 @@ export const AUDIT_EVENTS = [
   { icon: "✍️", event: "Signed",                      who: "Ana Reyes · signature adopted",          time: "14 Jul · 2:16 PM" },
   { icon: "📧", event: "Approval request sent",       who: "Marco Santos · marco@example.ph",        time: "14 Jul · 2:16 PM" },
   { icon: "✅", event: "Transaction completed",        who: "All 3 participants completed",           time: "14 Jul · 4:01 PM" },
-  { icon: "🔍", event: "Verification record created", who: "LAGDA-VER-2026-004821",                  time: "14 Jul · 4:01 PM" },
+  { icon: "🔍", event: "Verification record created", who: "LAGDA-VER-2026-Xs8kQ2mPz4",                  time: "14 Jul · 4:01 PM" },
 ];
 
 export const VERIFICATION_STATES = [

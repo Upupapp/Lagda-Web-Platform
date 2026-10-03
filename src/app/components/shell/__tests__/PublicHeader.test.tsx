@@ -104,4 +104,22 @@ describe("PublicHeader", () => {
     await userEvent.click(within(drawer).getByRole("button", { name: "Close menu" }));
     expect(screen.queryByRole("dialog", { name: "Navigation menu" })).toBeNull();
   });
+
+  it("the mobile drawer offers the dashboard, not Create Free Account, when signed in", async () => {
+    platform.sessionStatus = "authenticated";
+    platform.user = { displayName: "Ana Reyes" };
+    renderAt("/pricing");
+    await userEvent.click(screen.getByRole("button", { name: "Open navigation menu" }));
+    const drawer = screen.getByRole("dialog", { name: "Navigation menu" });
+    expect(within(drawer).getByRole("link", { name: "Go to dashboard, signed in as Ana Reyes" })).toHaveAttribute("href", "/app/dashboard");
+    expect(within(drawer).queryByRole("link", { name: "Create Free Account" })).toBeNull();
+  });
+
+  it("marks Document Workflows Coming Soon in the mobile drawer", async () => {
+    renderAt("/esignature");
+    await userEvent.click(screen.getByRole("button", { name: "Open navigation menu" }));
+    const drawer = screen.getByRole("dialog", { name: "Navigation menu" });
+    await userEvent.click(within(drawer).getByRole("button", { name: /^eSignature/ }));
+    expect(within(drawer).getByRole("link", { name: /Document Workflows/ })).toHaveTextContent("Coming Soon");
+  });
 });

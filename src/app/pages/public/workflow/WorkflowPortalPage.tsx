@@ -8,11 +8,11 @@
 // audit trail. The marketing site described the first and never mentioned the
 // second, so the public story did not match the product.
 //
-// Every claim here is checked against what /app/workflow actually does. The
-// stage kinds, the template-versus-run distinction, the independence of runs and
-// the "starting a run never changes the workflow" promise are all real
-// behaviour, not aspiration. Nothing here promises delivery, notification or
-// legal effect.
+// COMING SOON. /app/workflow is still a demo, so this page describes what the
+// feature is being built to do, says plainly that it is not available yet, and
+// asks visitors to contact us rather than to start using it — the same way
+// eNotary and Enterprise are shown. Nothing here promises delivery,
+// notification or legal effect.
 
 import { Link } from "react-router";
 import { usePageMeta } from "../../../hooks/usePageMeta";
@@ -68,14 +68,29 @@ export function WorkflowPortalPage() {
   return (
     <EsigPageShell>
       <PageHero
-        eyebrow="Document workflows"
+        eyebrow="Document workflows — Coming soon"
         headingId="wf-hero"
         heading="Design a process once. Run it as many times as you need."
-        sub="A LAGDA workflow is a reusable sequence of stages — review, approval, signature, verification — with the right people assigned to each. Start it for one client or a hundred; every run tracks its own documents, participants, progress and audit trail."
+        sub="A LAGDA workflow will be a reusable sequence of stages — review, approval, signature, verification — with the right people assigned to each. Start it for one client or a hundred; every run will track its own documents, participants, progress and audit trail."
       >
+        <div
+          role="note"
+          data-testid="workflow-coming-soon"
+          style={{
+            display: "flex", alignItems: "flex-start", gap: 10, flexWrap: "wrap",
+            background: "rgba(245,197,66,0.12)", border: "1px solid rgba(201,150,12,0.35)",
+            borderRadius: 12, padding: "12px 14px", marginBottom: 20, maxWidth: 620,
+          }}
+        >
+          <span style={comingSoonPill}>COMING SOON</span>
+          <span style={{ ...GF, color: "#334155", fontSize: 14, lineHeight: 1.6, flex: "1 1 260px" }}>
+            Document Workflows is not available yet. Today, LAGDA sends a document for signing
+            through the Core Workflow. Contact us to hear when workflows open.
+          </span>
+        </div>
         <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-          <Link to="/book-a-demo" style={ctaPrimary}>Book a demo</Link>
-          <Link to="/esignature" style={ctaSecondary}>See eSignature</Link>
+          <Link to="/contact" style={ctaPrimary}>Contact us</Link>
+          <Link to="/esignature/core-workflow" style={ctaSecondary}>See what works today</Link>
         </div>
       </PageHero>
 
@@ -114,8 +129,8 @@ export function WorkflowPortalPage() {
           />
         </div>
         <p style={{ ...GF, color: "#334155", fontSize: 14.5, lineHeight: 1.7, margin: "24px auto 0", maxWidth: 640, textAlign: "center" }}>
-          Starting a run never changes the workflow it came from, and never touches
-          any other run. Editing a workflow leaves work already in progress exactly
+          Starting a run will never change the workflow it came from, or touch any
+          other run. Editing a workflow will leave work already in progress exactly
           as it was.
         </p>
       </PageSection>
@@ -145,7 +160,7 @@ export function WorkflowPortalPage() {
           eyebrow="Examples"
           id="wf-examples-h"
           heading="Processes teams already run on paper."
-          sub="These ship as starting points. Rename the stages, change who is assigned, and it is yours."
+          sub="Starting points like these are planned. Rename the stages, change who is assigned, and it is yours."
         />
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 18 }}>
           {EXAMPLES.map(ex => (
@@ -169,7 +184,7 @@ export function WorkflowPortalPage() {
           eyebrow="Visibility"
           id="wf-visibility-h"
           heading="Know what is waiting, on whom, and for how long."
-          sub="Every run shows its stage board, so nobody has to ask where a document has got to."
+          sub="Every run will show its stage board, so nobody has to ask where a document has got to."
         />
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 18 }}>
           {[
@@ -200,12 +215,12 @@ export function WorkflowPortalPage() {
       </PageSection>
 
       <PageCTA
-        heading="See a workflow run end to end."
-        sub="Book a walkthrough and we will route a sample document through review, approval, signature and verification."
-        primaryLabel="Book a demo"
-        primaryPath="/book-a-demo"
-        secondaryLabel="Contact sales"
-        secondaryPath="/contact"
+        heading="Document Workflows is coming soon."
+        sub="Tell us about the process you want to run, and we will let you know when workflows open. Until then, send documents for signing with the Core Workflow."
+        primaryLabel="Contact us"
+        primaryPath="/contact"
+        secondaryLabel="See Core Workflow"
+        secondaryPath="/esignature/core-workflow"
       />
 
       <RelatedPages
@@ -260,6 +275,13 @@ const ctaPrimary: React.CSSProperties = {
   ...GF, display: "inline-flex", alignItems: "center", minHeight: 48, padding: "0 24px",
   borderRadius: 10, background: "#07111F", color: "white", fontSize: 15, fontWeight: 700,
   textDecoration: "none",
+};
+
+// The gold "Coming soon" pill the Enterprise plan card uses.
+const comingSoonPill: React.CSSProperties = {
+  ...GM, background: "linear-gradient(135deg, #FDE68A, #F5C542)", color: "#3B2A00",
+  fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", padding: "3px 12px",
+  borderRadius: 999, whiteSpace: "nowrap", flexShrink: 0, marginTop: 2,
 };
 
 const ctaSecondary: React.CSSProperties = {

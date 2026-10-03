@@ -89,7 +89,6 @@ export function AuthLayout({ children }: AuthLayoutProps) {
           )}
 
           <div className="auth-card">
-            <span className="auth-form-label">Sign-in Page</span>
             <div className="auth-card-logo">
               <img src={lagdaLogo} alt="LAGDA" />
             </div>
@@ -167,7 +166,6 @@ export function AuthLayout({ children }: AuthLayoutProps) {
         .auth-proof-item h2 { color: #07111f; font-size: 14px; font-weight: 800; margin: 0 0 3px; }
         .auth-proof-item p { color: #64748b; font-size: 12px; line-height: 1.5; margin: 0; }
         .auth-card { width: 100%; box-sizing: border-box; position: relative; background: #fff; border: 1px solid #dbeafe; border-radius: 16px; padding: 116px 32px 32px; box-shadow: 0 24px 80px rgba(7,17,31,.12); }
-        .auth-form-label { position: absolute; top: 26px; left: 28px; color: #334155; font-family: Georgia, 'Times New Roman', serif; font-size: 16px; font-weight: 600; letter-spacing: .02em; line-height: 1; }
         .auth-card-logo { position: absolute; top: 16px; right: 18px; display: flex; justify-content: flex-end; pointer-events: none; }
         .auth-card-logo img { display: block; width: 234px; height: 97px; object-fit: cover; object-position: right center; }
         .auth-footer { display: flex; align-items: center; justify-content: center; gap: 24px; padding-top: 20px; color: #64748b; font-family: 'Geist Mono', monospace; font-size: 11px; }
@@ -179,7 +177,7 @@ export function AuthLayout({ children }: AuthLayoutProps) {
         .auth-mobile-info-row, .auth-mobile-modal { display: none; }
         .auth-back-button:focus-visible, .auth-footer a:focus-visible { outline: 2px solid #0078d4; outline-offset: 4px; border-radius: 4px; }
         @media (max-width: 800px) { .auth-grid > .auth-carousel { display: none; } .auth-grid { grid-template-columns: 1fr; gap: 32px; padding: 52px 0 40px; } .auth-grid .auth-intro { display: none; } .auth-secure-mark { display: none; } .auth-mobile-info-row { display: flex; justify-content: flex-end; margin-top: 14px; } .auth-mobile-info-button { display: inline-flex; align-items: center; justify-content: center; min-height: 36px; max-width: 100%; padding: 8px 14px; border: 1px solid #b9d8f5; border-radius: 999px; background: rgba(255,255,255,.9); color: #005ba9; font: 700 11px 'Geist', sans-serif; box-shadow: 0 6px 18px rgba(7,17,31,.08); cursor: pointer; } .auth-mobile-info-button:hover { background: #ffffff; border-color: #8fc2ed; } .auth-mobile-modal { display: flex; position: fixed; inset: 0; z-index: 30; align-items: center; justify-content: center; padding: 12px; } .auth-mobile-modal-backdrop { position: absolute; inset: 0; border: 0; background: rgba(7,17,31,.48); cursor: pointer; } .auth-mobile-modal-panel { position: relative; width: min(100%, 455px); max-height: calc(100dvh - 24px); overflow-y: auto; box-sizing: border-box; padding: 20px; border: 1px solid #dbeafe; border-radius: 16px; background: #f5faff; box-shadow: 0 20px 60px rgba(7,17,31,.25); } .auth-mobile-modal-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; } .auth-mobile-modal-title { margin: 0; color: #0078d4; font-family: 'Geist Mono', monospace; font-size: 10px; font-weight: 800; letter-spacing: .14em; line-height: 1.35; text-transform: uppercase; } .auth-mobile-modal-loading { height: clamp(300px, calc(100dvh - 110px), 500px); } .auth-mobile-modal-close { flex: 0 0 auto; width: 30px; height: 30px; border: 1px solid #cfe3f7; border-radius: 8px; background: #ffffff; color: #334155; font: 400 22px/1 'Geist', sans-serif; cursor: pointer; } }
-        @media (max-width: 480px) { .auth-mobile-modal-panel { padding: 16px; } .auth-shell { padding: 20px 16px; } .auth-grid { padding-top: 42px; } .auth-card { max-width: 520px; padding: 136px 20px 30px; } .auth-form-label { top: 23px; left: 20px; font-size: 14px; } .auth-card-logo { top: 5px; right: 0px; } .auth-footer { align-items: center; flex-direction: column; text-align: center; gap: 12px; } .auth-footer-links { justify-content: center; } }
+        @media (max-width: 480px) { .auth-mobile-modal-panel { padding: 16px; } .auth-shell { padding: 20px 16px; } .auth-grid { padding-top: 42px; } .auth-card { max-width: 520px; padding: 136px 20px 30px; } .auth-card-logo { top: 5px; right: 0px; } .auth-footer { align-items: center; flex-direction: column; text-align: center; gap: 12px; } .auth-footer-links { justify-content: center; } }
         @media (prefers-reduced-motion: reduce) { .auth-back-button { transition: none; } }
       `}</style>
     </div>

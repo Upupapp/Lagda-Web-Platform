@@ -1,5 +1,6 @@
 import { SolPageShell } from "../../../components/solutions/SolutionsSubNav";
-import { PageHero, PageSection, SectionHeading, PageCTA } from "../../../components/esignature/EsigPageShell";
+import { PageHero, PageSection, SectionHeading } from "../../../components/esignature/EsigPageShell";
+import { AccountPageCTA } from "../../../components/shell/AccountPageCTA";
 import {
   DocExampleList, WorkflowSteps, ChallengeCards, CapabilityLinks,
   NoticeBox, EnotaryNotice, SolLegalNote, RelatedSolutions,
@@ -151,13 +152,14 @@ export function Finance() {
         ]} />
       </PageSection>
 
-      <PageCTA
+      <AccountPageCTA
         heading="Bring structure to your internal approvals."
         sub="Contact Sales for a team workspace setup or start free to explore the approval workflow."
         primaryLabel="Book a Demo"
         primaryPath="/book-a-demo?solution=finance"
         secondaryLabel="Create Free Account"
         secondaryPath="/create-account"
+        signedInSub="Contact Sales for a team workspace setup, or go to your dashboard to explore the approval workflow."
       />
       <SolLegalNote extra={FINANCE_NOTICE} />
     </SolPageShell>
