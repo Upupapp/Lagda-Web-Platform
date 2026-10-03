@@ -21,7 +21,6 @@ import {
   usePlanInvoices, buildPlanInvoice, invoicePath, TEST_INVOICE_BANNER, downloadInvoicePdf,
 } from "./sample-invoice";
 import { USE_REAL_BACKEND } from "../../../../services/backend-flag";
-import { useWorkspacePlan } from "../../../../hooks/usePlans";
 
 const GF = { fontFamily: SET.FONT };
 const GM = { fontFamily: SET.MONO };
@@ -54,11 +53,13 @@ const PRINT_CSS = `
 export function InvoicePage() {
   const { invoiceId } = useParams();
   const billedTo = useInvoiceBilledTo();
-  const { info } = useWorkspacePlan();
   const real = USE_REAL_BACKEND;
   const [savingPdf, setSavingPdf] = useState(false);
   const [pdfError, setPdfError] = useState(false);
-  const { invoices, error } = usePlanInvoices(real && info?.ownerIsYou === true);
+  // The server lists the caller's own invoices and nobody else's, so there
+  // is no owner check here: a person who paid from a workspace they do not
+  // own still opens their invoice.
+  const { invoices, error } = usePlanInvoices(real);
   const back = (
     <Link to="/app/workspace/settings/billing" className="inv-no-print" style={{ ...GF, fontSize: 13, fontWeight: 600, color: SET.AZURE_TEXT, textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 4, minHeight: 32, marginBottom: 10 }}>
       <ArrowLeft size={15} aria-hidden /> Billing & Plan
@@ -66,14 +67,6 @@ export function InvoicePage() {
   );
 
   const found = real ? invoices?.find(i => i.number === invoiceId) : undefined;
-  if (real && info !== null && info.ownerIsYou !== true) {
-    return (
-      <SettingsPage title="Invoice" breadcrumb="Billing & Plan › Invoice">
-        {back}
-        <SCard><p style={{ ...GF, fontSize: 13.5, color: SET.SLATE, margin: 0 }}>Invoices are visible to the workspace owner, who holds the plan.</p></SCard>
-      </SettingsPage>
-    );
-  }
   if (real && found === undefined && invoices === null && !error) {
     return <SettingsPage title="Invoice" breadcrumb="Billing & Plan › Invoice">{back}<SCard><p aria-busy="true" style={{ ...GF, fontSize: 13.5, color: SET.SLATE, margin: 0 }}>Loading the invoice…</p></SCard></SettingsPage>;
   }

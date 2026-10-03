@@ -9,14 +9,11 @@
 // config/pricing.config, so the invoice cannot disagree with the plan cards.
 // Prices are VAT-inclusive: the ₱7,990 on the card is the invoice total.
 
-import { useEffect, useState } from "react";
 import { plansService, type PlanInvoice } from "../../../../services/real/plans.service";
 import { USE_REAL_BACKEND } from "../../../../services/backend-flag";
 import { useLiveQuery, SETTINGS_TTL_MS } from "../../../../services/live/live-query";
 import { SAMPLE_PLANS } from "../../../../config/pricing.config";
 import { usePlatform } from "../../../../context/PlatformContext";
-import { useWorkspaceMode } from "../../../../hooks/useWorkspaceAccess";
-import { realWorkspaceMembersService } from "../../../../services/real/workspace-members.service";
 
 export const SAMPLE_INVOICE_ID = "INV-SAMPLE-0001";
 export const SAMPLE_INVOICE_PATH = `/app/workspace/settings/billing/invoices/${SAMPLE_INVOICE_ID}`;
@@ -72,33 +69,18 @@ export function buildSampleInvoice(billedToName: string): SampleInvoice {
 export interface BilledTo { name: string; email: string; workspace: string }
 
 /**
- * Who the sample invoice is addressed to: the workspace OWNER, read from the
- * members list with a backend. When that list is not available to this
- * person (or in the demo build), the signed-in user stands in.
+ * Who an invoice is addressed to: the SIGNED-IN person. A plan belongs to a
+ * person, the server lists only the caller's own invoices and prints the
+ * caller's name on the PDF — so the page says the same, whichever workspace
+ * it is opened from (the workspace name is just where it was opened).
  */
 export function useInvoiceBilledTo(): BilledTo {
   const platform = usePlatform();
-  const { isReal, workspaceId } = useWorkspaceMode();
-  const fallback: BilledTo = {
-    name: platform.user?.fullName ?? platform.user?.displayName ?? "Workspace owner",
+  return {
+    name: platform.user?.fullName ?? platform.user?.displayName ?? "You",
     email: platform.user?.email ?? "",
     workspace: platform.currentWorkspace?.name ?? "Your workspace",
   };
-  const [owner, setOwner] = useState<{ name: string; email: string } | null>(null);
-
-  useEffect(() => {
-    if (!isReal || workspaceId === null) return;
-    let cancelled = false;
-    realWorkspaceMembersService.list(workspaceId)
-      .then(members => {
-        const o = members.find(m => m.role === "owner");
-        if (!cancelled && o) setOwner({ name: o.displayName, email: o.email });
-      })
-      .catch(() => { /* not permitted or unavailable — the signed-in user stands in */ });
-    return () => { cancelled = true; };
-  }, [isReal, workspaceId]);
-
-  return owner ? { ...fallback, ...owner } : fallback;
 }
 
 

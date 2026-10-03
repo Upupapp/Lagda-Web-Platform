@@ -56,6 +56,9 @@ beforeEach(() => {
     const body: unknown = init?.body ? JSON.parse(init.body as string) : undefined;
     calls.push({ method, path, body });
     if (path === "/me/plan") return Promise.resolve(json(200, mine));
+    if (path === "/me/plan/invoices") return Promise.resolve(json(200, { invoices: [
+      { number: "LAGDA-2026-0001", requestId: "pur_0", plan: "personal", planName: "Personal", amountPesos: 299, issuedAt: "2026-09-20T01:00:00.000Z", periodEnd: "2026-10-20T01:00:00.000Z" },
+    ] }));
     if (path === "/workspaces/ws_1/plan") return Promise.resolve(json(200, workspacePlan));
     if (path === "/me/plan/upgrade-requests" && method === "POST") {
       const bank = (body as { bank: Record<string, string> }).bank;
@@ -131,6 +134,27 @@ describe("My Settings › Plan & Billing", () => {
     await user.click(await screen.findByTestId("my-plan-cancel-request"));
     await waitFor(() => { expect(calls.some(c => c.path === "/me/plan/upgrade-requests/cancel")).toBe(true); });
     expect(await screen.findByText("Your request was cancelled.")).toBeInTheDocument();
+  });
+});
+
+describe("on a paid plan", () => {
+  it("shows the invoices in place of the plan cards, and the cards on request", async () => {
+    const user = userEvent.setup();
+    mine = { ...FREE, plan: "personal", storedPlan: "personal", paidUntil: "2026-10-20T01:00:00.000Z" };
+    renderPlan();
+    expect(await screen.findByTestId("my-plan-name")).toHaveTextContent("PERSONAL");
+    const list = await screen.findByTestId("invoice-list");
+    expect(within(list).getByTestId("invoice-LAGDA-2026-0001")).toHaveTextContent("Personal");
+    expect(within(list).getByRole("link", { name: /View/ })).toHaveAttribute("href", "/app/workspace/settings/billing/invoices/LAGDA-2026-0001");
+    expect(screen.queryByTestId("plan-panel")).toBeNull();
+    await user.click(screen.getByTestId("show-plans"));
+    expect(screen.getByTestId("plan-panel")).toBeInTheDocument();
+  });
+
+  it("opens the cards at once when a plan was chosen elsewhere (?choose=)", async () => {
+    mine = { ...FREE, plan: "personal", storedPlan: "personal", paidUntil: "2026-10-20T01:00:00.000Z" };
+    renderPlan("/app/settings/plan?choose=business");
+    expect(await screen.findByRole("heading", { name: "Upgrade to Business" })).toBeInTheDocument();
   });
 });
 

@@ -253,7 +253,7 @@ export function PlanShowcase({ current, onChoose, disabled = false, description 
 // ── Invoices ───────────────────────────────────────────────────────────────
 
 /** The owner's real (test-mode) invoices: one per approved plan change, newest first. */
-function RealInvoicesSection({ isOwner }: { isOwner: boolean }) {
+export function RealInvoicesSection({ isOwner }: { isOwner: boolean }) {
   const { invoices, error } = usePlanInvoices(isOwner);
   const billedTo = useInvoiceBilledTo();
   const [saving, setSaving] = useState<string | null>(null);
@@ -316,7 +316,7 @@ function RealInvoicesSection({ isOwner }: { isOwner: boolean }) {
   );
 }
 
-function InvoicesSection() {
+export function InvoicesSection() {
   const billedTo = useInvoiceBilledTo();
   const url = typeof window !== "undefined" ? `${window.location.origin}${SAMPLE_INVOICE_PATH}` : SAMPLE_INVOICE_PATH;
   return (
@@ -357,16 +357,54 @@ function InvoicesSection() {
   );
 }
 
+/** A paid plan: the plan cards give way to the invoices, until asked for. */
+export function isPaidPlan(plan: CatalogPlanId | null): boolean {
+  return plan === "personal" || plan === "business";
+}
+
+/**
+ * On a paid plan the four plan cards are out of the way — what matters is
+ * the plan in force and its invoices. This row brings the cards back for
+ * someone who wants to compare or change.
+ */
+export function ChangePlanRow({ onShow, description }: { onShow: () => void; description: string }) {
+  return (
+    <SCard>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+        <div style={{ minWidth: 0, flex: "1 1 260px" }}>
+          <div style={{ ...GF, fontSize: 14, fontWeight: 700, color: SET.NAVY }}>Looking for the other plans?</div>
+          <div style={{ ...GF, fontSize: 13, color: SET.SLATE, marginTop: 2, lineHeight: 1.5 }}>{description}</div>
+        </div>
+        <button type="button" data-testid="show-plans" onClick={onShow} style={{ ...BTN_SECONDARY, cursor: "pointer" }}>
+          <Star size={14} aria-hidden /> See all plans
+        </button>
+      </div>
+    </SCard>
+  );
+}
+
 export function BillingPage() {
   const { plan, info } = useWorkspacePlan();
   const navigate = useNavigate();
+  // A workspace on a paid plan shows its owner's invoices in place of the
+  // plan cards; the cards come back on request.
+  const paid = isPaidPlan(plan);
+  const [showPlans, setShowPlans] = useState(false);
+  // Keyed siblings, so the invoices section keeps its identity (and its
+  // state) when the plan arrives and the two swap places.
+  const plans = paid && !showPlans
+    ? <ChangePlanRow key="plans" onShow={() => { setShowPlans(true); }}
+        description="Compare Personal, Business and Enterprise. Choosing one opens your own Plan & Billing." />
+    : <PlanShowcase key="plans" current={plan} onChoose={id => { void navigate(`/app/settings/plan?choose=${id}`); }}
+        description="What each plan includes. Choosing one opens your own Plan & Billing." />;
+  const invoices = USE_REAL_BACKEND
+    ? <RealInvoicesSection key="invoices" isOwner={info?.ownerIsYou === true} />
+    : <InvoicesSection key="invoices" />;
   return (
     <SettingsPage title="Billing & Plan" breadcrumb="Billing & Plan" description="This workspace’s plan, what each plan includes, and your invoices.">
       <Notice tone="info" icon={Sparkles}>A plan belongs to a person: this workspace has its owner’s plan. The owner changes it from My Settings › Plan &amp; Billing.</Notice>
       <OverviewCard />
-      <PlanShowcase current={plan} onChoose={id => { void navigate(`/app/settings/plan?choose=${id}`); }}
-        description="What each plan includes. Choosing one opens your own Plan & Billing." />
-      {USE_REAL_BACKEND ? <RealInvoicesSection isOwner={info?.ownerIsYou === true} /> : <InvoicesSection />}
+      {paid ? [invoices, plans] : [plans, invoices]}
     </SettingsPage>
   );
 }

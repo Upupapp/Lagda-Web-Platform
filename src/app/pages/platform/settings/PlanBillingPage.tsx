@@ -16,7 +16,7 @@ import {
   Sparkles, CalendarClock, FileCheck2, Hourglass, Copy, Check, FlaskConical, X, ShieldCheck, Inbox, Loader2,
 } from "lucide-react";
 import { SettingsPage, SCard, SSection, Badge, BTN_PRIMARY, BTN_SECONDARY, Notice, SET, TONES } from "./SettingsShell";
-import { PlanShowcase } from "./BillingPage";
+import { PlanShowcase, RealInvoicesSection, InvoicesSection, ChangePlanRow } from "./BillingPage";
 import { useMyPlan, announcePlanChanged } from "../../../hooks/usePlans";
 import {
   plansService, SAMPLE_BANK_ACCOUNT, PLAN_PRICES, PLAN_NAMES, PLAN_ERROR,
@@ -267,6 +267,11 @@ export function PlanBillingPage() {
 
   const blocked = plan !== null && (plan.pendingRequest !== null || !plan.upgradesAvailable);
   const open = plan !== null && choosing !== null && !blocked ? choosing : null;
+  // On a paid plan the invoices take the plan cards' place; the cards come
+  // back on request (a ?choose= link, or "See all plans"). The free document
+  // card and the lapsed notice stay in CurrentPlanCard.
+  const paid = plan !== null && plan.plan !== "free";
+  const [showPlans, setShowPlans] = useState(asked !== null);
 
   const cancel = async () => {
     setCancelling(true);
@@ -298,17 +303,25 @@ export function PlanBillingPage() {
           {!plan.upgradesAvailable && USE_REAL_BACKEND && (
             <Notice tone="warning">Upgrades are not available right now. Please try again later.</Notice>
           )}
-          <PlanShowcase current={plan.plan} disabled={blocked}
-            onChoose={id => { setNotice(null); setChoosing(id); }}
-            description={plan.pendingRequest ? "You have a request waiting for approval. Cancel it to choose another plan." : undefined} />
-          <SSection title="How upgrading works" icon={FlaskConical}>
-            <ol style={{ ...GF, fontSize: 13.5, color: SET.INK, lineHeight: 1.65, margin: 0, paddingLeft: 20 }}>
-              <li>Choose Personal or Business.</li>
-              <li>Copy the sample account into the form. It is test mode: no money is moved.</li>
-              <li>LAGDA approves or declines your request, usually within a day. You get an email and a notification.</li>
-              <li>Once approved, your plan runs for one month. When it ends you return to Free, and nothing is deleted.</li>
-            </ol>
-          </SSection>
+          {paid && (USE_REAL_BACKEND ? <RealInvoicesSection isOwner /> : <InvoicesSection />)}
+          {paid && !showPlans ? (
+            <ChangePlanRow onShow={() => { setShowPlans(true); }}
+              description="Compare Personal, Business and Enterprise, or move to another plan when your month ends." />
+          ) : (
+            <>
+              <PlanShowcase current={plan.plan} disabled={blocked}
+                onChoose={id => { setNotice(null); setChoosing(id); }}
+                description={plan.pendingRequest ? "You have a request waiting for approval. Cancel it to choose another plan." : undefined} />
+              <SSection title="How upgrading works" icon={FlaskConical}>
+                <ol style={{ ...GF, fontSize: 13.5, color: SET.INK, lineHeight: 1.65, margin: 0, paddingLeft: 20 }}>
+                  <li>Choose Personal or Business.</li>
+                  <li>Copy the sample account into the form. It is test mode: no money is moved.</li>
+                  <li>LAGDA approves or declines your request, usually within a day. You get an email and a notification.</li>
+                  <li>Once approved, your plan runs for one month. When it ends you return to Free, and nothing is deleted.</li>
+                </ol>
+              </SSection>
+            </>
+          )}
         </>
       )}
       {open && (

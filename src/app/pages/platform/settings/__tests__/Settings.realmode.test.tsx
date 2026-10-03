@@ -416,8 +416,27 @@ describe("billing & plan", () => {
     expect(lines).toHaveTextContent("Signing requests this month3 (no limit applied)");
   });
 
-  it("shows monthly test-mode prices from the plan config, marking the current plan", async () => {
+  it("on a paid plan, shows the invoices in place of the plan cards until asked", async () => {
+    const user = userEvent.setup();
     renderAt("/app/workspace/settings/billing");
+    expect(await screen.findByTestId("invoice-list")).toBeInTheDocument();
+    expect(screen.queryByTestId("plan-panel")).toBeNull();
+    await user.click(screen.getByTestId("show-plans"));
+    expect(screen.getByTestId("plan-panel")).toBeInTheDocument();
+    expect(screen.queryByTestId("show-plans")).toBeNull();
+  });
+
+  it("on Free, shows the plan cards first", async () => {
+    workspacePlan = "free";
+    renderAt("/app/workspace/settings/billing");
+    expect(await screen.findByTestId("plan-panel")).toBeInTheDocument();
+    expect(screen.queryByTestId("show-plans")).toBeNull();
+  });
+
+  it("shows monthly test-mode prices from the plan config, marking the current plan", async () => {
+    const user = userEvent.setup();
+    renderAt("/app/workspace/settings/billing");
+    await user.click(await screen.findByTestId("show-plans"));
     expect(screen.getByTestId("sample-pricing-notice")).toHaveTextContent("TEST MODE — NO MONEY IS MOVED");
     expect(screen.getByTestId("plan-price-free")).toHaveTextContent("₱0");
     expect(screen.getByTestId("plan-price-personal")).toHaveTextContent("₱299");
@@ -431,6 +450,7 @@ describe("billing & plan", () => {
   it("sends Choose to your own Plan & Billing, with Enterprise coming soon", async () => {
     const user = userEvent.setup();
     renderAt("/app/workspace/settings/billing");
+    await user.click(await screen.findByTestId("show-plans"));
     expect(screen.getByTestId("plan-choose-enterprise")).toHaveTextContent("Coming soon");
     expect(screen.getByTestId("plan-choose-enterprise")).toBeDisabled();
     await user.click(screen.getByRole("button", { name: "Choose Personal" }));
@@ -441,6 +461,7 @@ describe("billing & plan", () => {
   it("expands the full comparison from the same config", async () => {
     const user = userEvent.setup();
     renderAt("/app/workspace/settings/billing");
+    await user.click(await screen.findByTestId("show-plans"));
     expect(screen.queryByTestId("plan-compare")).toBeNull();
     await user.click(screen.getByRole("button", { name: /Compare all features/ }));
     const table = screen.getByTestId("plan-compare");
@@ -451,7 +472,7 @@ describe("billing & plan", () => {
     expect(within(table).getByText("Priority email")).toBeInTheDocument();
   });
 
-  it("lists the owner's invoices, one per approved plan change, newest first, billed to the owner", async () => {
+  it("lists the owner's invoices, one per approved plan change, newest first, billed to the signed-in person", async () => {
     renderAt("/app/workspace/settings/billing");
     const list = await screen.findByTestId("invoice-list");
     const items = within(list).getAllByRole("listitem");
@@ -460,7 +481,7 @@ describe("billing & plan", () => {
     expect(items[0]).toHaveTextContent("₱799");
     expect(items[1]).toHaveTextContent("Personal");
     expect(items[1]).toHaveTextContent("Test — not paid");
-    expect(await within(items[0]!).findByText(/Carmen Reyes/)).toBeInTheDocument();
+    expect(within(items[0]!).getByText(/Ana Reyes/)).toBeInTheDocument();
     expect(within(items[0]!).getByRole("link", { name: /View/ })).toHaveAttribute("href", "/app/workspace/settings/billing/invoices/LAGDA-2026-0002");
   });
 
@@ -488,7 +509,7 @@ describe("invoice page", () => {
     expect(screen.getByTestId("invoice-status")).toHaveTextContent("Test — not paid");
     const audit = screen.getByTestId("invoice-audit");
     expect(within(audit).getAllByTestId("audit-event").map(e => e.textContent)).toEqual(["Requested", "Approved", "Issued", "Marked as test"]);
-    expect(await screen.findByTestId("invoice-page-billed-name")).toHaveTextContent("Carmen Reyes");
+    expect(screen.getByTestId("invoice-page-billed-name")).toHaveTextContent("Ana Reyes");
     expect(screen.getByRole("button", { name: /Print/ })).toBeInTheDocument();
   });
 
