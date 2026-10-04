@@ -193,7 +193,7 @@ function Fact({ icon: Icon, label, value }: { icon: typeof Mail; label: string; 
 // ── See the sender ──────────────────────────────────────────────────────────
 
 function SenderDialog({ item, onClose }: {
-  item: (DocumentToSign | SignedDocument) & { signedAt?: string; invitedAt?: string; expiresAt?: string };
+  item: (DocumentToSign | SignedDocument) & { signedAt?: string; invitedAt?: string; expiresAt?: string; requestExpiresAt?: string | null };
   onClose: () => void;
 }) {
   return (
@@ -204,6 +204,9 @@ function SenderDialog({ item, onClose }: {
       <Fact icon={FileText} label="Document" value={item.documentTitle} />
       {item.invitedAt !== undefined && (
         <Fact icon={CalendarClock} label="Received" value={fmtDateTime(item.invitedAt)} />
+      )}
+      {item.requestExpiresAt != null && (
+        <Fact icon={CalendarClock} label="Sender's deadline" value={fmtDateTime(item.requestExpiresAt)} />
       )}
       {item.expiresAt !== undefined && (
         <Fact icon={CalendarClock} label="Signing link valid until" value={fmtDateTime(item.expiresAt)} />
@@ -457,7 +460,10 @@ export function DocumentsToSignSection({ onCount }: { onCount?: (count: number) 
         <>
           <MailCardList label="Documents I must sign">
             {items.map(item => {
-              const expires = item.expiresAt ? new Date(item.expiresAt) : null;
+              // The sender's deadline when there is one. Without one nothing
+              // closes the document, and the only date is the link's own.
+              const deadline = item.requestExpiresAt ?? null;
+              const expires = deadline !== null ? new Date(deadline) : item.expiresAt ? new Date(item.expiresAt) : null;
               const soon = expires !== null && expires.getTime() - Date.now() < 3 * 24 * 60 * 60 * 1000;
               return (
                 <MailCard
@@ -476,7 +482,11 @@ export function DocumentsToSignSection({ onCount }: { onCount?: (count: number) 
                 >
                   <MailLine>Sent by <strong style={{ color: NAVY }}>{item.senderName ?? item.senderEmail ?? "the sender"}</strong></MailLine>
                   {expires !== null && (
-                    <MailLine tone={soon ? "warning" : "muted"}>Please sign by {formalDate(item.expiresAt)}</MailLine>
+                    <MailLine tone={soon ? "warning" : "muted"}>
+                      {deadline !== null
+                        ? <>Please sign by {formalDate(deadline)}</>
+                        : <>Your signing link works until {formalDate(item.expiresAt)}</>}
+                    </MailLine>
                   )}
                 </MailCard>
               );

@@ -51,6 +51,7 @@ const ROWS: Record<string, Record<string, unknown>> = {
   PLAN_UPGRADE_APPROVED: { recipientName: "Ana", planName: "Business", requestId: "pur_1", paidUntil: "3 November 2026" },
   PLAN_UPGRADE_DECLINED: { recipientName: "Ana", planName: "Business", requestId: "pur_1" },
   DOCUMENT_WAITING_FOR_SIGNATURE: { recipientName: "Ana", documentTitle: "NDA.pdf", senderDisplayName: "Ben", workspaceName: "Reyes Law", signingRequestId: "sr_1" },
+  SIGNING_LINK_LAPSED: { recipientName: "Ana", documentTitle: "NDA.pdf", signingRequestId: "sr_1", waitingOn: ["Jose Cruz", "Ben Lim"], waitingOnMore: 0 },
   PUBLIC_INQUIRY_RECEIVED: { recipientName: "Chris", kindLabel: "Demo request", senderName: "Jose Cruz", senderEmail: "jose@example.ph", inquiryId: "pin_1" },
 };
 

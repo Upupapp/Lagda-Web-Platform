@@ -24,7 +24,10 @@ export interface DocumentToSign {
   senderEmail: string | null;
   workspaceName: string | null;
   invitedAt: string;
+  /** When this signing LINK stops working. Not the sender's deadline. */
   expiresAt: string;
+  /** 097. The sender's own deadline for the document, or null when none was set. Absent from an older server. */
+  requestExpiresAt?: string | null;
   /**
    * The SENDER workspace's banner — present when this account's verified
    * address is a recipient of the request. Absent from an older server, and

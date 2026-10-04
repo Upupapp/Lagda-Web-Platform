@@ -7,6 +7,8 @@ import React, { useEffect, useCallback } from "react";
 import { SlidersHorizontal } from "lucide-react";
 import { usePrepare } from "../../../context/PrepareContext";
 import { usePlatform } from "../../../context/PlatformContext";
+import { USE_REAL_BACKEND } from "../../../services/backend-flag";
+import { todayInManila } from "../../../services/prepare/deadline";
 import { stepEyebrow,
   DEFAULT_PREP_SETTINGS,
 } from "../../../models/prepare";
@@ -180,7 +182,8 @@ export function SettingsStep() {
     updateSettings({ ...settings, completion: { ...settings.completion, ...patch } });
   }, [settings, updateSettings]);
 
-  const today = new Date().toISOString().split("T")[0]!;
+  // The earliest deadline is today: it runs to the end of the day in Manila.
+  const today = todayInManila();
 
   const main = (
     <div style={{ ...GF, width: "100%" }}>
@@ -283,7 +286,9 @@ export function SettingsStep() {
         </div>
       </div>
 
-      {/* Reminders */}
+      {/* Reminders — the demo build only. The server sends no reminders, so
+          the live app does not offer settings that would do nothing. */}
+      {!USE_REAL_BACKEND && (
       <div style={{ marginBottom: 32, padding: "20px", borderRadius: 12, border: "1px solid #E3E8EF" }}>
         <SectionHeader
           title="Reminders"
@@ -319,18 +324,19 @@ export function SettingsStep() {
           onChange={v => updateReminders({ repeatIntervalDays: v })}
         />
       </div>
+      )}
 
       {/* Expiration */}
       <div style={{ marginBottom: 32, padding: "20px", borderRadius: 12, border: "1px solid #E3E8EF" }}>
         <SectionHeader
           title="Expiration"
-          subtitle="Automatically void the transaction if participants do not complete it by a deadline."
+          subtitle="Optional. Close signing on a date you choose. Without one, the document waits until it is signed."
         />
         <div style={{ marginBottom: 14 }}>
           <Toggle
             id="expiration-enabled"
             label="Set an expiration date"
-            description="The transaction will be voided after the expiration date if not completed."
+            description="Signing closes at the end of this day, Philippine time. Anyone who has not acted by then can no longer sign, and you are told in LAGDA."
             checked={settings.expiration.enabled}
             onChange={v => updateExpiration({ enabled: v, expiresAt: v ? settings.expiration.expiresAt : null })}
           />
@@ -393,20 +399,22 @@ export function SettingsStep() {
           <Toggle
             id="create-verification"
             label="Create a verification record"
-            description="A verification record will be created, enabling this transaction to be checked at verify.lagda.ph."
+            description="A verification record will be created, enabling this transaction to be checked at lagda.io/verify."
             checked={settings.completion.createVerificationRecord}
             onChange={v => updateCompletion({ createVerificationRecord: v })}
           />
         </div>
       </div>
 
-      {/* Demo notice */}
-      <div style={{ ...GF, padding: "12px 14px", borderRadius: 8, background: "#F5F7FA", border: "1px solid #E3E8EF", fontSize: 12, color: SILVER, lineHeight: 1.6 }}>
-        <strong style={{ color: "#4B5E70" }}>Frontend demonstration</strong>
-        <br />
-        No invitations, reminders, or completion notifications are sent from this demonstration.
-        Invitation messages entered here are stored only in this browser session.
-      </div>
+      {/* Demo notice — the demo build only. The live app does send. */}
+      {!USE_REAL_BACKEND && (
+        <div style={{ ...GF, padding: "12px 14px", borderRadius: 8, background: "#F5F7FA", border: "1px solid #E3E8EF", fontSize: 12, color: SILVER, lineHeight: 1.6 }}>
+          <strong style={{ color: "#4B5E70" }}>Frontend demonstration</strong>
+          <br />
+          No invitations, reminders, or completion notifications are sent from this demonstration.
+          Invitation messages entered here are stored only in this browser session.
+        </div>
+      )}
     </div>
   );
 
@@ -419,13 +427,13 @@ export function SettingsStep() {
 
   const rail = (
     <>
-      <RailCard title="Reminders & expiry">
+      <RailCard title={USE_REAL_BACKEND ? "Expiration" : "Reminders & expiry"}>
         <div style={{ ...GF, fontSize: 12, color: "#4B5E70", display: "flex", flexDirection: "column", gap: 8 }}>
-          <div>
+          {!USE_REAL_BACKEND && <div>
             {settings.reminders.enabled
               ? `First reminder after ${settings.reminders.firstReminderDays} day${settings.reminders.firstReminderDays !== 1 ? "s" : ""}, then every ${settings.reminders.repeatIntervalDays} day${settings.reminders.repeatIntervalDays !== 1 ? "s" : ""}.`
               : "Reminders are disabled."}
-          </div>
+          </div>}
           <div>
             {settings.expiration.enabled && settings.expiration.expiresAt
               ? `Expires ${new Date(settings.expiration.expiresAt).toLocaleDateString("en-PH", { year: "numeric", month: "long", day: "numeric" })}.`

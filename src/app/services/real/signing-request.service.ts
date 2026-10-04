@@ -119,7 +119,14 @@ export interface Signatory {
   /** The name/email of the LAGDA account this recipient signed in as, if any. */
   linkedAccountName: string | null;
   linkedAccountEmail: string | null;
+  /**
+   * 097. When this person's current signing link stops working. Set only for
+   * someone the request is waiting on; null or absent otherwise. A value in
+   * the past is a link that no longer works.
+   */
+  linkExpiresAt?: string | null;
 }
+
 
 export interface SigningRequestSignatures {
   signingRequestId: string;
@@ -264,6 +271,30 @@ class RealSigningRequestService {
         method: "POST", headers: { "Idempotency-Key": idempotencyKey },
         body: options.shareFinalCopy === false ? { shareFinalCopy: false } : {},
       },
+    ));
+  }
+
+  /**
+   * Sets the request's deadline, or clears it with null. The server takes it
+   * only while the request is out for signing (sent, or partly signed), and
+   * only as a future instant; it then expires the request itself.
+   */
+  async setExpiry(workspaceId: string, signingRequestId: string, expiresAt: string | null): Promise<{ expiresAt: string | null }> {
+    return changes("documents", apiRequest<{ expiresAt: string | null }>(
+      `/workspaces/${encodeURIComponent(workspaceId)}/signing-requests/${encodeURIComponent(signingRequestId)}/expiry`,
+      { method: "PUT", body: { expiresAt } },
+    ));
+  }
+
+  /**
+   * Sends one participant a new signing link on the SAME request (097). The
+   * link they had stops working; nothing else about the request changes.
+   */
+  async reissueLink(workspaceId: string, signingRequestId: string, recipientId: string): Promise<{ recipientId: string; linkExpiresAt: string }> {
+    return changes("documents", apiRequest<{ recipientId: string; linkExpiresAt: string }>(
+      `/workspaces/${encodeURIComponent(workspaceId)}/signing-requests/${encodeURIComponent(signingRequestId)}`
+      + `/recipients/${encodeURIComponent(recipientId)}/reissue-link`,
+      { method: "POST", body: {} },
     ));
   }
 

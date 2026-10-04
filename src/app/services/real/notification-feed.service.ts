@@ -68,6 +68,30 @@ function str(input: unknown, key: string): string | null {
   return typeof value === "string" && value.trim().length > 0 ? value : null;
 }
 
+/** A list of non-empty strings from an unknown bag. Anything else is an empty list. */
+function strings(input: unknown, key: string): string[] {
+  if (typeof input !== "object" || input === null) return [];
+  const value = (input as Record<string, unknown>)[key];
+  return Array.isArray(value)
+    ? value.filter((v): v is string => typeof v === "string" && v.trim().length > 0)
+    : [];
+}
+
+/** A finite number field from an unknown bag, or null. */
+function num(input: unknown, key: string): number | null {
+  if (typeof input !== "object" || input === null) return null;
+  const value = (input as Record<string, unknown>)[key];
+  return typeof value === "number" && Number.isFinite(value) ? value : null;
+}
+
+/** "Ana Reyes", "Ana Reyes and Ben Lim", "Ana Reyes, Ben Lim and 3 more". */
+function waitingOnPhrase(names: readonly string[], more: number): string {
+  if (names.length === 0) return more > 1 ? `${String(more)} participants` : "A participant";
+  if (more > 0) return `${names.join(", ")} and ${String(more)} more`;
+  if (names.length === 1) return names[0]!;
+  return `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]!}`;
+}
+
 /** A boolean field from an unknown bag, or null. */
 function bool(input: unknown, key: string): boolean | null {
   if (typeof input !== "object" || input === null) return null;
@@ -521,6 +545,29 @@ function present(row: FeedRow): Presentation {
         actionLabel: "Open Needs your signature",
         actionPath: "/app/documents?list=to-sign",
         why: "You were sent this because the document was sent to the email address of this account.",
+        inAppOnly: true,
+      };
+    }
+
+    // 097. In-app only. To the sender: a signing link ended on a request
+    // still waiting. Nothing is renewed; the Participants panel sends a new one.
+    case "SIGNING_LINK_LAPSED": {
+      const title = documentTitle ?? "a document you sent";
+      const names = strings(row.templateInput, "waitingOn");
+      const more = num(row.templateInput, "waitingOnMore") ?? 0;
+      const who = waitingOnPhrase(names, more);
+      const several = names.length + more > 1;
+      const requestId = str(row.templateInput, "signingRequestId");
+      return {
+        category: "documents", severity: "warning", priority: "high",
+        title: `A signing link for ${title} has ended`,
+        body: `${who} ${several ? "have" : "has"} not acted on ${title}, and the signing link sent to ${several ? "them" : "that person"} no longer works. `
+          + "Nothing is sent again automatically. Open Participants to send a new link.",
+        actionLabel: "Open participants",
+        actionPath: requestId === null
+          ? "/app/documents?list=sent"
+          : `/app/documents?list=sent&participants=${encodeURIComponent(requestId)}`,
+        why: "You were sent this because you sent this document and a signing link for it ended before everyone acted.",
         inAppOnly: true,
       };
     }

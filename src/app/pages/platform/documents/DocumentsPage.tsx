@@ -32,6 +32,8 @@ const DocumentArchiveViewer = lazy(() =>
     .then(m => ({ default: m.DocumentArchiveViewer })));
 import { SignatureRecordDialog } from "../../../components/documents/SignatureRecordDialog";
 import { ResendSigningDialog } from "../../../components/documents/ResendSigningDialog";
+import { ExpirationDialog } from "../../../components/documents/ExpirationDialog";
+import { toastSuccess } from "../../../components/brand/BrandToast";
 import { realDocumentService, type RealDocument } from "../../../services/real/document.service";
 import { documentOrganizationService } from "../../../services/mock/document-organization.service";
 import { isCapabilityInActiveProfile } from "../../../config/capability-resolver";
@@ -310,6 +312,17 @@ const DOC_STYLES = SKELETON_STYLE + `
     cursor: pointer; margin-bottom: -1px;
   }
   .doc-list-tab[aria-selected="true"] { color: #0078D4; border-bottom-color: #0078D4; }
+  /* Phones and tablets: every section stays on screen. The strip wraps into chips rather
+     than scrolling sideways with its scrollbar hidden, which left the later
+     sections (and the selected one) out of sight. */
+  @media (max-width: 900px) {
+    .doc-list-tabs { flex-wrap: wrap; overflow-x: visible; border-bottom: none; gap: 8px; }
+    .doc-list-tab {
+      border: 1px solid #D1D9E0; border-radius: 999px; padding: 7px 12px; margin-bottom: 0;
+      background: #FFFFFF; white-space: nowrap;
+    }
+    .doc-list-tab[aria-selected="true"] { border-color: #0078D4; background: #EFF6FF; color: #005A9E; }
+  }
   .doc-list-count {
     min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; font-size: 11px;
     display: inline-flex; align-items: center; justify-content: center;
@@ -2257,13 +2270,14 @@ const OUTBOX_STATUS: Partial<Record<SigningRequestState, { label: string; color:
   "expired":             { label: "Expired",           color: "#B45309" },
 };
 
-function OutboxCard({ item, branding, onView, onSignatures, onAudit, onResend }: {
+function OutboxCard({ item, branding, onView, onSignatures, onAudit, onResend, onExpiration }: {
   item: SigningRequestListItem;
   branding: CardBranding;
   onView: () => void;
   onSignatures: () => void;
   onAudit: () => void;
   onResend: () => void;
+  onExpiration: () => void;
 }) {
   const status = OUTBOX_STATUS[item.state] ?? { label: TRANSACTION_STATUS_LABELS[SIGNING_REQUEST_STATUS[item.state]], color: "#0078D4" };
   const total = item.participantCount;
@@ -2300,8 +2314,17 @@ function OutboxCard({ item, branding, onView, onSignatures, onAudit, onResend }:
           <div style={{ width: `${String(pct)}%`, background: pct === 100 ? "#15803D" : status.color }} />
         </div>
       )}
-      {item.expiresAt !== null && (item.state === "sent" || item.state === "partially-completed") && (
-        <MailLine>Signing closes {formalDate(item.expiresAt)}</MailLine>
+      {/* The deadline is the sender's, and optional: said either way, with the
+          control that sets, changes or removes it while signing is open. */}
+      {pending && (
+        <MailLine>
+          {item.expiresAt !== null ? <>Signing closes {formalDate(item.expiresAt)}</> : "No expiration"}
+          {" · "}
+          <button type="button" className="mail-inline-link" onClick={onExpiration}
+            aria-label={`${item.expiresAt !== null ? "Change expiration" : "Set expiration"} of ${item.documentTitle}`}>
+            {item.expiresAt !== null ? "Change" : "Set expiration"}
+          </button>
+        </MailLine>
       )}
     </MailCard>
   );
@@ -2482,14 +2505,16 @@ function DocumentViewerDialog({
  * Which lifecycle states each SECTION queries for. Sections replaced the old
  * status-filter dropdown: a sender no longer chooses a status inside "Sent",
  * they instead click the section that already means that status. Cancelled
- * and expired requests have no section of their own — they stay visible in
- * Sent, since either one still needs a sender's attention, not a signer's.
+ * requests have no section of their own and stay visible in Sent. Expired
+ * ones sit with Declined: both ended without everyone signing.
  */
 const LIST_STATES: Readonly<Record<"sent" | "completed" | "draft" | "declined", readonly SigningRequestState[]>> = {
-  sent:      ["sent", "partially-completed", "completion-ready", "cancelled", "expired"],
+  sent:      ["sent", "partially-completed", "completion-ready", "cancelled"],
   completed: ["completed"],
   draft:     ["draft", "ready-to-send"],
-  declined:  ["declined"],
+  // One section for both ways a request ends without everyone signing. The
+  // address keeps the name `declined`, which existing links already use.
+  declined:  ["declined", "expired"],
 };
 
 /** The value once it has stopped changing for ms: one request per pause, not per keystroke. */
@@ -2561,8 +2586,9 @@ function DocumentsPageRealMode() {
   const workspaceId = currentWorkspace?.id ?? null;
 
   const [viewing, setViewing] = useState<ViewableRequest | null>(null);
-  const [signaturesFor, setSignaturesFor] = useState<SigningRequestListItem | null>(null);
+  const [signaturesFor, setSignaturesFor] = useState<Pick<SigningRequestListItem, "signingRequestId" | "documentTitle"> | null>(null);
   const [resendFor, setResendFor] = useState<SigningRequestListItem | null>(null);
+  const [expirationFor, setExpirationFor] = useState<SigningRequestListItem | null>(null);
   const [auditFor, setAuditFor] = useState<SigningRequestListItem | null>(null);
   const [shareFor, setShareFor] = useState<SigningRequestListItem | null>(null);
 
@@ -2735,6 +2761,28 @@ function DocumentsPageRealMode() {
     return () => { cancelled = true; };
   }, [workspaceId, openId, allRequests, requestedDocumentIds, setSearchParams]);
 
+  // `?participants=<signing request id>`: the lapsed-signing-link notice lands
+  // here, on the panel that sends a new link. Same rules as `open` above.
+  const participantsId = searchParams.get("participants");
+  useEffect(() => {
+    if (!workspaceId || participantsId === null) return;
+    let cancelled = false;
+    const done = () => {
+      setSearchParams(prev => { const next = new URLSearchParams(prev); next.delete("participants"); return next; }, { replace: true });
+    };
+    const found = allRequests.find(r => r.signingRequestId === participantsId);
+    if (found) { setSignaturesFor(found); done(); return; }
+    if (requestedDocumentIds === null) return; // the unfiltered list has not answered yet
+    void realSigningRequestService.get(workspaceId, participantsId)
+      .then(detail => {
+        if (cancelled) return;
+        setSignaturesFor({ signingRequestId: detail.signingRequestId, documentTitle: detail.documentTitle });
+      })
+      .catch(() => { /* Not this workspace's request, or gone: the list stays. */ })
+      .finally(() => { if (!cancelled) done(); });
+    return () => { cancelled = true; };
+  }, [workspaceId, participantsId, allRequests, requestedDocumentIds, setSearchParams]);
+
   // Unsent drafts, filtered the way the server filters requests: by name.
   // They have no signers yet, so a signer filter excludes them, and they
   // only ever belong in the Draft section.
@@ -2839,7 +2887,7 @@ function DocumentsPageRealMode() {
               <FileText size={14} aria-hidden /> Draft
             </button>
             <button type="button" role="tab" className="doc-list-tab" aria-selected={list === "declined"} onClick={() => setList("declined")}>
-              <FileText size={14} aria-hidden /> Declined
+              <FileText size={14} aria-hidden /> Declined &amp; Expired
             </button>
             {/* Last, after Declined: the finished work, shown as branded cards. */}
             <button type="button" role="tab" className="doc-list-tab" aria-selected={list === "completed"} onClick={() => setList("completed")}>
@@ -2917,7 +2965,8 @@ function DocumentsPageRealMode() {
                 onView={() => { setViewing(item); }}
                 onSignatures={() => { setSignaturesFor(item); }}
                 onAudit={() => { setAuditFor(item); }}
-                onResend={() => { setResendFor(item); }} />
+                onResend={() => { setResendFor(item); }}
+                onExpiration={() => { setExpirationFor(item); }} />
             ))}
           </MailCardList>
         )}
@@ -2950,6 +2999,21 @@ function DocumentsPageRealMode() {
             setResendFor(null);
             // Refetch rather than patching the row: the send produced a NEW
             // request, so the list has an extra entry, not an edited one.
+            void listQuery.refresh();
+            void allQuery.refresh();
+          }}
+        />
+      )}
+      {expirationFor && workspaceId && (
+        <ExpirationDialog
+          workspaceId={workspaceId}
+          signingRequestId={expirationFor.signingRequestId}
+          documentTitle={expirationFor.documentTitle}
+          expiresAt={expirationFor.expiresAt}
+          onClose={() => { setExpirationFor(null); }}
+          onSaved={() => {
+            setExpirationFor(null);
+            toastSuccess("Expiration saved");
             void listQuery.refresh();
             void allQuery.refresh();
           }}

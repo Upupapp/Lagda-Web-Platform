@@ -13,7 +13,7 @@
 // invitation went to, and the exact instant their submission was accepted.
 
 import { useState, useEffect, type CSSProperties } from "react";
-import { X, CheckCircle2, Clock, XCircle, MinusCircle, ShieldCheck, SkipForward, BadgeCheck, AlertTriangle } from "lucide-react";
+import { X, CheckCircle2, Clock, XCircle, MinusCircle, ShieldCheck, SkipForward, BadgeCheck, AlertTriangle, Send, Loader2 } from "lucide-react";
 import {
   realSigningRequestService,
   type SigningRequestSignatures, type Signatory, type RecipientWorkflowState,
@@ -21,6 +21,8 @@ import {
 import { Z } from "../../utils/z-index";
 import { completedWord } from "../../services/participant-wording";
 import { DECLINE_REASON_CATEGORIES } from "../../models/recipient";
+import { ApiError } from "../../services/api-client";
+import { signingLinkLapsed } from "../../services/real/signing-link";
 
 const GF: CSSProperties = { fontFamily: "'Geist', sans-serif" };
 
@@ -93,7 +95,7 @@ function declineReasonLabel(reason: string): string {
     ?? reason.replace(/-/g, " ");
 }
 
-function SignatoryRow({ signatory }: { signatory: Signatory }) {
+function SignatoryRow({ signatory, link }: { signatory: Signatory; link?: LinkControl }) {
   // Falls back rather than crashing if a newer backend sends a state this
   // build does not know yet — the defect this used to have.
   const presentation = STATE_PRESENTATION[signatory.state]
@@ -196,6 +198,7 @@ function SignatoryRow({ signatory }: { signatory: Signatory }) {
               Declined {fmtAbsolute(signatory.declinedAt)}
             </div>
           )}
+          {link !== undefined && <SigningLink signatory={signatory} link={link} />}
           {/* The signer's stated reason, in the words they chose from. Only
               the category is recorded — there is no free-text note to show. */}
           {signatory.declinedAt !== null && signatory.declineReason !== null && (
@@ -217,6 +220,69 @@ function SignatoryRow({ signatory }: { signatory: Signatory }) {
   );
 }
 
+/** What a row needs to offer a new signing link. Absent when the request is no longer out for signing. */
+interface LinkControl {
+  /** The recipient a new link is being sent to right now, if any. */
+  readonly sending: string | null;
+  /** Recipients sent a new link in this dialog, and when that link ends. */
+  readonly sent: ReadonlyMap<string, string>;
+  readonly error: { recipientId: string; message: string } | null;
+  readonly onSend: (signatory: Signatory) => void;
+}
+
+/**
+ * The signing link of someone the request is waiting on: when it ends, and,
+ * once it has ended, the button that sends a new one. Nothing is renewed
+ * automatically, so a lapsed link stays lapsed until the sender presses this.
+ */
+function SigningLink({ signatory, link }: { signatory: Signatory; link: LinkControl }) {
+  const sentUntil = link.sent.get(signatory.recipientId);
+  if (sentUntil !== undefined) {
+    return (
+      <div role="status" data-testid="signing-link-sent" style={{ fontSize: 12, color: GREEN, fontWeight: 600, marginTop: 8, ...GF }}>
+        A new signing link was emailed to {signatory.email}. It works until {fmtAbsolute(sentUntil)}.
+      </div>
+    );
+  }
+  if (signatory.state !== "active" || signatory.linkExpiresAt == null) return null;
+  if (!signingLinkLapsed(signatory)) {
+    return (
+      <div style={{ fontSize: 12, color: SLATE6, marginTop: 6, ...GF }}>
+        Signing link works until {fmtAbsolute(signatory.linkExpiresAt)}
+      </div>
+    );
+  }
+  const busy = link.sending === signatory.recipientId;
+  return (
+    <div data-testid="signing-link-lapsed" style={{
+      marginTop: 8, padding: "10px 12px", borderRadius: 8, background: "#FFFBEB", border: "1px solid #FDE68A",
+    }}>
+      <div style={{ display: "flex", alignItems: "flex-start", gap: 6 }}>
+        <AlertTriangle size={13} aria-hidden style={{ color: AMBER, flexShrink: 0, marginTop: 2 }} />
+        <span style={{ fontSize: 12.5, color: NAVY, lineHeight: 1.5, ...GF }}>
+          <strong>The signing link has ended.</strong> It stopped working on {fmtAbsolute(signatory.linkExpiresAt)},
+          {" "}and {signatory.name} has not acted. Nothing is sent again until you choose to.
+        </span>
+      </div>
+      <button
+        type="button" disabled={link.sending !== null} onClick={() => { link.onSend(signatory); }}
+        aria-label={`Send a new link to ${signatory.name}`}
+        style={{
+          ...GF, marginTop: 8, display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12.5, fontWeight: 600,
+          color: "#fff", background: AZURE, border: "none", borderRadius: 7, padding: "7px 12px",
+          cursor: link.sending === null ? "pointer" : "default", opacity: link.sending !== null && !busy ? 0.6 : 1,
+        }}
+      >
+        {busy ? <Loader2 size={13} aria-hidden className="animate-spin" /> : <Send size={13} aria-hidden />}
+        {busy ? "Sending…" : "Send a new link"}
+      </button>
+      {link.error?.recipientId === signatory.recipientId && (
+        <p role="alert" style={{ fontSize: 12, color: RED, margin: "8px 0 0", ...GF }}>{link.error.message}</p>
+      )}
+    </div>
+  );
+}
+
 export interface SignatureRecordDialogProps {
   workspaceId: string;
   signingRequestId: string;
@@ -229,6 +295,27 @@ export function SignatureRecordDialog({
 }: SignatureRecordDialogProps) {
   const [data, setData] = useState<SigningRequestSignatures | null>(null);
   const [failed, setFailed] = useState(false);
+  const [sending, setSending] = useState<string | null>(null);
+  const [sent, setSent] = useState<ReadonlyMap<string, string>>(() => new Map());
+  const [linkError, setLinkError] = useState<{ recipientId: string; message: string } | null>(null);
+
+  function sendNewLink(signatory: Signatory) {
+    setSending(signatory.recipientId);
+    setLinkError(null);
+    void realSigningRequestService.reissueLink(workspaceId, signingRequestId, signatory.recipientId)
+      .then(result => {
+        setSent(previous => new Map(previous).set(signatory.recipientId, result.linkExpiresAt));
+      })
+      .catch((cause: unknown) => {
+        setLinkError({
+          recipientId: signatory.recipientId,
+          message: cause instanceof ApiError && cause.status !== 0
+            ? cause.message
+            : "The new link could not be sent. Check your connection and try again.",
+        });
+      })
+      .finally(() => { setSending(null); });
+  }
 
   useEffect(() => {
     const previous = document.body.style.overflow;
@@ -318,7 +405,9 @@ export function SignatureRecordDialog({
               </p>
               <ul style={{ margin: "8px 0 0", padding: 0 }}>
                 {data.signatories.map(signatory => (
-                  <SignatoryRow key={signatory.recipientId} signatory={signatory} />
+                  <SignatoryRow key={signatory.recipientId} signatory={signatory}
+                    {...(data.state === "sent" || data.state === "partially-completed"
+                      ? { link: { sending, sent, error: linkError, onSend: sendNewLink } } : {})} />
                 ))}
               </ul>
             </>

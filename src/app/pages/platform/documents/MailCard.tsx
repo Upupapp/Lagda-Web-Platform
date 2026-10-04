@@ -137,6 +137,11 @@ const MAIL_STYLES = `
   .mail-action-primary { background: #0078D4; border-color: #0078D4; color: #FFFFFF; }
   .mail-action-primary:hover { background: #005A9E; border-color: #005A9E; color: #FFFFFF; }
   .mail-action:focus-visible { outline: 2px solid #0078D4; outline-offset: 2px; }
+  .mail-inline-link {
+    font: inherit; font-weight: 600; color: #005A9E; background: none; border: none; padding: 0;
+    cursor: pointer; text-decoration: underline; text-underline-offset: 2px;
+  }
+  .mail-inline-link:focus-visible { outline: 2px solid #0078D4; outline-offset: 2px; border-radius: 3px; }
   .mail-progress { width: min(100%, 320px); height: 6px; background: ${BORDER}; border-radius: 999px; overflow: hidden; margin-top: 4px; }
   .mail-progress > div { height: 100%; border-radius: 999px; }
   @media (max-width: 520px) {

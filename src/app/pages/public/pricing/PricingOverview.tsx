@@ -1,4 +1,5 @@
 import { Link } from "react-router";
+import { ON_LIGHT } from "../../../utils/on-light";
 import {
   PricingPageShell, PricingHero, PricingSection, PricingHeading,
   PlanCards, CompareTable, FaqAccordion, EnotarySeparationNote,
@@ -24,7 +25,7 @@ export function PricingOverview() {
         />
         <PlanCards />
         <div style={{ textAlign: "center", marginTop: 28 }}>
-          <Link to="/pricing/compare" style={{ color: "#0078D4", ...GF, fontSize: 14, textDecoration: "none", fontWeight: 600 }}>
+          <Link to="/pricing/compare" style={{ color: ON_LIGHT.azure, ...GF, fontSize: 14, textDecoration: "none", fontWeight: 600 }}>
             Compare all features in detail →
           </Link>
         </div>
@@ -69,7 +70,7 @@ export function PricingOverview() {
         <div style={{ maxWidth: 720, margin: "0 auto" }}>
           <FaqAccordion items={topFaq} />
           <div style={{ textAlign: "center", marginTop: 20 }}>
-            <Link to="/pricing/faq" style={{ color: "#0078D4", ...GF, fontSize: 14, textDecoration: "none", fontWeight: 600 }}>View all pricing questions →</Link>
+            <Link to="/pricing/faq" style={{ color: ON_LIGHT.azure, ...GF, fontSize: 14, textDecoration: "none", fontWeight: 600 }}>View all pricing questions →</Link>
           </div>
         </div>
       </PricingSection>
@@ -77,7 +78,7 @@ export function PricingOverview() {
       {/* Enterprise */}
       <PricingSection id="enterprise-cta">
         <div style={{ maxWidth: 720, margin: "0 auto", textAlign: "center" }}>
-          <p style={{ color: "#0078D4", ...GM, fontSize: 11, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 12 }}>ENTERPRISE · COMING SOON</p>
+          <p style={{ color: ON_LIGHT.azure, ...GM, fontSize: 11, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 12 }}>ENTERPRISE · COMING SOON</p>
           <h2 style={{ color: "#07111F", ...GF, fontSize: "clamp(22px, 3.5vw, 34px)", fontWeight: 800, marginBottom: 14, letterSpacing: "-0.02em" }}>High volume or a large organization?</h2>
           <p style={{ color: "#64748B", ...GF, fontSize: 16, lineHeight: 1.65, marginBottom: 28 }}>Enterprise is coming soon: everything in Business, with custom volume and dedicated onboarding and support. Contact us to be told when it opens.</p>
           <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
@@ -89,7 +90,7 @@ export function PricingOverview() {
 
       {/* Responsible-use note */}
       <div style={{ maxWidth: 1200, margin: "0 auto", padding: "0 24px 48px" }}>
-        <p style={{ color: "#94A3B8", ...GF, fontSize: 12, lineHeight: 1.65, borderTop: "1px solid rgba(0,0,0,0.07)", paddingTop: 20 }}>
+        <p style={{ color: ON_LIGHT.muted, ...GF, fontSize: 12, lineHeight: 1.65, borderTop: "1px solid rgba(0,0,0,0.07)", paddingTop: 20 }}>
           Some documents may still require wet signatures, notarization, personal appearance, witnesses, or other legal formalities. Users remain responsible for determining the requirements that apply to each transaction. LAGDA eNotary is a separate future regulated product — Coming Soon and Subject to Supreme Court Accreditation and applicable rules.
         </p>
       </div>

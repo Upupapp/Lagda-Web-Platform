@@ -236,7 +236,10 @@ export function CompareTable() {
                   <td style={{ padding: "10px 16px", textAlign: "center" }}><AvailCell value={row.free} /></td>
                   <td style={{ padding: "10px 16px", textAlign: "center" }}><AvailCell value={row.personal} /></td>
                   <td style={{ padding: "10px 16px", textAlign: "center", background: "rgba(0,120,212,0.04)" }}><AvailCell value={row.business} /></td>
-                  <td style={{ padding: "10px 16px", textAlign: "center", background: "#F8FAFC", opacity: 0.75 }}><AvailCell value={row.enterprise} /></td>
+                  {/* Enterprise is coming soon: its column is set apart by its tint
+                      and its header, never by fading the text (0.75 opacity
+                      put every cell under 4.5:1). */}
+                  <td style={{ padding: "10px 16px", textAlign: "center", background: "#F8FAFC" }}><AvailCell value={row.enterprise} /></td>
                 </tr>
               ))}
             </>

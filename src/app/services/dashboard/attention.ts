@@ -33,12 +33,15 @@ export interface AttentionThresholds {
   readonly stalledDays: number;
   /** A draft older than this that was never sent counts as forgotten. */
   readonly forgottenDraftDays: number;
+  /** A request that expired within this many days is still listed. */
+  readonly expiredDays: number;
 }
 
 export const DEFAULT_THRESHOLDS: AttentionThresholds = {
   expiringDays: 7,
   stalledDays: 5,
   forgottenDraftDays: 2,
+  expiredDays: 30,
 };
 
 // ── Buckets ────────────────────────────────────────────────────────────────
@@ -81,26 +84,27 @@ export function summarize(items: readonly SigningRequestListItem[], total: numbe
 
 // ── Needs attention ────────────────────────────────────────────────────────
 
-export type AttentionKind = "declined" | "expiring" | "stalled" | "never-sent";
+export type AttentionKind = "declined" | "expired" | "expiring" | "stalled" | "never-sent";
 
 export interface AttentionEntry {
   readonly kind: AttentionKind;
   readonly item: SigningRequestListItem;
   /**
-   * Days until expiry (for `expiring`), days since sent (for `stalled`), or
-   * days since created (for `never-sent`). Absent for `declined`, which is
-   * urgent regardless of age.
+   * Days until expiry (for `expiring`), days since the deadline passed (for
+   * `expired`), days since sent (for `stalled`), or days since created (for
+   * `never-sent`). Absent for `declined`, which is urgent regardless of age.
    */
   readonly days?: number;
 }
 
 /**
  * Urgency order. Declined first: somebody has refused and the sender may not
- * know yet. Expiring next, soonest first. Then stalled, oldest first. Then
+ * know yet. Expired next, most recent first: signing has closed and only the
+ * sender can start it again. Then expiring, soonest first. Then stalled, oldest first. Then
  * drafts that were prepared and forgotten, oldest first.
  */
 const KIND_RANK: Record<AttentionKind, number> = {
-  declined: 0, expiring: 1, stalled: 2, "never-sent": 3,
+  declined: 0, expired: 1, expiring: 2, stalled: 3, "never-sent": 4,
 };
 
 function daysBetween(fromIso: string, toMs: number): number {
@@ -117,6 +121,14 @@ export function needsAttention(
   for (const item of items) {
     if (item.state === "declined") {
       out.push({ kind: "declined", item });
+      continue;
+    }
+
+    // Closed by its deadline with somebody still to sign. Listed for a while,
+    // not for ever: an old expiry the sender has seen is history, not a task.
+    if (item.state === "expired") {
+      const since = item.expiresAt === null ? 0 : daysBetween(item.expiresAt, now);
+      if (since <= thresholds.expiredDays) out.push({ kind: "expired", item, days: Math.max(0, since) });
       continue;
     }
 
@@ -150,9 +162,10 @@ export function needsAttention(
   return out.sort((a, b) => {
     const rank = KIND_RANK[a.kind] - KIND_RANK[b.kind];
     if (rank !== 0) return rank;
-    // Within a kind: expiring soonest first; everything else oldest first.
+    // Within a kind: expiring soonest first, expired most recent first;
+    // everything else oldest first.
     const da = a.days ?? 0, db = b.days ?? 0;
-    return a.kind === "expiring" ? da - db : db - da;
+    return a.kind === "expiring" || a.kind === "expired" ? da - db : db - da;
   });
 }
 

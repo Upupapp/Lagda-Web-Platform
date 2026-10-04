@@ -1,6 +1,10 @@
 [build]
   command = "npm run build"
   publish = "dist"
+  # Skip the build when a push changes nothing a visitor is served: tests,
+  # docs and CI files only. Exit 0 = skip, anything else = build. A first
+  # build has no cached commit, so git fails and the build runs.
+  ignore = "git diff --quiet $CACHED_COMMIT_REF $COMMIT_REF -- . ':(exclude)tests' ':(exclude)docs' ':(exclude).github' ':(exclude,glob)**/*.md' ':(exclude,glob)**/__tests__/**' ':(exclude,glob)**/*.test.ts' ':(exclude,glob)**/*.test.tsx'"
 
 [build.environment]
   VITE_LAUNCH_PROFILE = "launch-default"

@@ -139,6 +139,26 @@ describe("needsAttention", () => {
   });
 });
 
+describe("an expired request", () => {
+  it("is listed after a decline and before anything still open", () => {
+    const out = needsAttention([
+      req({ state: "sent", expiresAt: daysAhead(2) }),
+      req({ state: "expired", expiresAt: daysAgo(3) }),
+      req({ state: "declined" }),
+    ], NOW);
+    expect(out.map(e => e.kind)).toEqual(["declined", "expired", "expiring"]);
+    expect(Math.floor(out[1]!.days ?? -1)).toBe(3);
+  });
+
+  it("puts the most recent expiry first, and drops one older than the window", () => {
+    const recent = req({ state: "expired", expiresAt: daysAgo(1) });
+    const older = req({ state: "expired", expiresAt: daysAgo(12) });
+    const stale = req({ state: "expired", expiresAt: daysAgo(DEFAULT_THRESHOLDS.expiredDays + 1) });
+    const out = needsAttention([older, stale, recent], NOW);
+    expect(out.map(e => e.item.signingRequestId)).toEqual([recent.signingRequestId, older.signingRequestId]);
+  });
+});
+
 describe("inFlight", () => {
   it("returns only sent requests, newest first, with progress", () => {
     const out = inFlight([

@@ -24,6 +24,8 @@ import { PLAN_ERROR } from "../../../services/real/plans.service";
 import { FreeDocumentUsedNotice } from "../../../components/platform/FreeDocumentUsedNotice";
 import { useProcessing, buildSteps } from "../../../services/processing.service";
 import { realSigningRequestService } from "../../../services/real/signing-request.service";
+import { deadlineFromDate } from "../../../services/prepare/deadline";
+import { toastWarning } from "../../../components/brand/BrandToast";
 import { realPreparationService } from "../../../services/real/preparation.service";
 import { fromBackendField } from "../../../services/prepare/field-sync";
 import { computeSendReadiness, buildActionUrl } from "../../../services/prepare/send-readiness";
@@ -223,6 +225,20 @@ function ConfirmationPageInner({ participants }: { participants: PrepParticipant
       await realSigningRequestService.send(workspaceId, signingRequestId, pending.sendKey, {
         shareFinalCopy: draft.settings.completion.sendCompletionCopyToParticipants,
       });
+
+      // The deadline, when the sender set one. The server takes it only on a
+      // request that is already out, so it follows the send. The request IS
+      // sent whatever happens here: a deadline that could not be saved is
+      // said plainly, with where to set it, never reported as a failed send.
+      const deadline = draft.settings.expiration.enabled ? deadlineFromDate(draft.settings.expiration.expiresAt) : null;
+      if (deadline !== null) {
+        try {
+          await realSigningRequestService.setExpiry(workspaceId, signingRequestId, deadline);
+        } catch {
+          toastWarning("Sent, but the expiration date was not saved",
+            "Open the document in Documents and choose Set expiration to add it.");
+        }
+      }
 
       // Backend-confirmed. This logical attempt is over — the next Send
       // (a different document, some other time) must never reuse these keys.

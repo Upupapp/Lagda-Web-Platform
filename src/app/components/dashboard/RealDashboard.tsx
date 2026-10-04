@@ -103,6 +103,13 @@ const ATTENTION: Record<AttentionKind, {
     icon: XCircle, color: RED,
     label: () => "Declined",
   },
+  expired: {
+    icon: Clock, color: RED,
+    label: days => {
+      const whole = Math.floor(days ?? 0);
+      return whole <= 0 ? "Expired today, not fully signed" : `Expired ${plural(whole, "day")} ago, not fully signed`;
+    },
+  },
   expiring: {
     icon: Clock, color: AMBER,
     label: days => {
@@ -443,7 +450,7 @@ export function RealDashboard() {
     <div ref={attentionRef} tabIndex={-1} className="hd-attention-anchor">
     <Panel label="Needs attention" icon={Bell} title="Needs attention" count={attentionCount}
       subtitle={attentionCount === 0 ? undefined : "These items require your immediate attention."}
-      action={<Link to="/app/documents" className="hd-viewall">View all <ChevronRight size={16} aria-hidden /></Link>}>
+      action={<Link to="/app/documents?list=declined" className="hd-viewall" aria-label="View all declined and expired documents">View all <ChevronRight size={16} aria-hidden /></Link>}>
       {attentionCount === 0
         ? (
           <div style={{

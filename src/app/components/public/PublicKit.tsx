@@ -17,6 +17,7 @@
 // to change. What that buys is that the next spacing decision is made once.
 
 import { useState } from "react";
+import { ON_LIGHT } from "../../utils/on-light";
 import type { ReactNode } from "react";
 
 const GF = { fontFamily: "'Geist', sans-serif" };
@@ -82,7 +83,9 @@ export function PublicHeading({ eyebrow, id, heading, sub, center }: PublicHeadi
   return (
     <div style={{ marginBottom: 40, textAlign: center ? "center" : undefined }}>
       <p style={{
-        color: "#0078D4", ...GM, fontSize: 11, fontWeight: 700,
+        // Azure as TEXT on a light panel: the brand fill (#0078D4) is 4.3:1
+        // on the tinted sections, under AA for 11px.
+        color: ON_LIGHT.azure, ...GM, fontSize: 11, fontWeight: 700,
         letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 10,
       }}>
         {eyebrow}

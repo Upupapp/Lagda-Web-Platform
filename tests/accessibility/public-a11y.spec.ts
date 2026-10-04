@@ -62,7 +62,12 @@ interface PublicRoute {
  *  components. They are NOT a brand decision and NOT blocked on anyone; they
  *  are simply not yet done, and each route's number below is its measured
  *  count so the ratchet still catches a regression while they are worked
- *  through. */
+ *  through.
+ *
+ *  October 2026: /pricing had climbed back to 35 unnoticed (the comparison
+ *  table's Enterprise column was drawn at 0.75 opacity, which put every cell
+ *  under 4.5:1) while this job was not running. It is now 0, and the shared
+ *  section eyebrow uses ON_LIGHT.azure, which lowered six other routes. */
 const contrast = (nodes: number): TrackedDefect => ({
   rule: "color-contrast",
   nodes,
@@ -76,13 +81,14 @@ const contrast = (nodes: number): TrackedDefect => ({
 
 // Baselines measured against this build at 1440x900.
 const ROUTES: readonly PublicRoute[] = [
-  { path: "/",           name: "home",       trackedDefects: [contrast(11)] },
-  { path: "/esignature", name: "eSignature", trackedDefects: [contrast(11)] },
-  { path: "/workflow",   name: "workflow",   trackedDefects: [contrast(9)] },
-  { path: "/pricing",    name: "pricing",    trackedDefects: [contrast(4)] },
-  { path: "/security",   name: "security",   trackedDefects: [contrast(4)] },
-  { path: "/solutions",  name: "solutions",  trackedDefects: [contrast(20)] },
-  { path: "/resources",  name: "resources",  trackedDefects: [contrast(12)] },
+  { path: "/",           name: "home",       trackedDefects: [contrast(7)] },
+  { path: "/esignature", name: "eSignature", trackedDefects: [contrast(7)] },
+  { path: "/workflow",   name: "workflow",   trackedDefects: [contrast(4)] },
+  // Clean: any contrast failure here is now a plain violation, not a tracked one.
+  { path: "/pricing",    name: "pricing" },
+  { path: "/security",   name: "security",   trackedDefects: [contrast(2)] },
+  { path: "/solutions",  name: "solutions",  trackedDefects: [contrast(13)] },
+  { path: "/resources",  name: "resources",  trackedDefects: [contrast(10)] },
   { path: "/verify",     name: "verify",     trackedDefects: [contrast(1)] },
   { path: "/enotary",    name: "eNotary",    trackedDefects: [contrast(14)] },
   { path: "/contact",    name: "contact",    trackedDefects: [contrast(1)] },

@@ -66,7 +66,7 @@ describe("Documents › Completed", () => {
     expect(groups.map(g => g.textContent?.trim())).toEqual(["Correspondence", "Records"]);
     expect(groups[1]).toHaveAttribute("aria-selected", "true");
     const tabs = within(screen.getByRole("tablist", { name: "Document lists" })).getAllByRole("tab").map(t => t.textContent?.trim());
-    expect(tabs).toEqual(["Signed by me", "Others", "Draft", "Declined", "Completed"]);
+    expect(tabs).toEqual(["Signed by me", "Others", "Draft", "Declined & Expired", "Completed"]);
   });
 
   it("shows each completed document as a card with name, badge, Verification ID, progress and date", async () => {

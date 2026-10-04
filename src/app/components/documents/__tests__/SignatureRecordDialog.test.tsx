@@ -3,11 +3,16 @@
 
 import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import type { SigningRequestSignatures } from "../../../services/real/signing-request.service";
 
 const signatures = vi.fn();
+const reissueLink = vi.fn();
 vi.mock("../../../services/real/signing-request.service", () => ({
-  realSigningRequestService: { signatures: (...args: unknown[]) => signatures(...args) },
+  realSigningRequestService: {
+    signatures: (...args: unknown[]) => signatures(...args),
+    reissueLink: (...args: unknown[]) => reissueLink(...args),
+  },
 }));
 
 import { SignatureRecordDialog } from "../SignatureRecordDialog";
@@ -183,5 +188,54 @@ describe("SignatureRecordDialog", () => {
     signatures.mockResolvedValue(noLinkedAccount);
     renderDialog();
     expect(await screen.findByRole("heading", { name: "Participants" })).toBeTruthy();
+  });
+});
+
+// 097. A signing link lives fourteen days and is never renewed on its own:
+// the sender sees that it ended, who has not acted, and sends a new one.
+describe("a signing link that has ended", () => {
+  const waiting = (linkExpiresAt: string | null, state: SigningRequestSignatures["state"] = "sent"): SigningRequestSignatures => ({
+    ...noLinkedAccount,
+    state,
+    signedCount: 0,
+    signatories: [{ ...noLinkedAccount.signatories[0]!, state: "active", signedAt: null, linkExpiresAt }],
+  });
+
+  it("says so, names who has not acted, and sends a new link on the same request", async () => {
+    signatures.mockResolvedValue(waiting("2026-01-02T00:00:00.000Z"));
+    reissueLink.mockResolvedValue({ recipientId: "srr_1", linkExpiresAt: "2099-01-16T00:00:00.000Z" });
+    renderDialog();
+
+    const notice = await screen.findByTestId("signing-link-lapsed");
+    expect(notice.textContent).toContain("The signing link has ended");
+    expect(notice.textContent).toContain("Maria Santos has not acted");
+
+    await userEvent.click(screen.getByRole("button", { name: "Send a new link to Maria Santos" }));
+    expect(reissueLink).toHaveBeenCalledWith("ws_1", "sr_1", "srr_1");
+    const sent = await screen.findByTestId("signing-link-sent");
+    expect(sent.textContent).toContain("maria@ayalaland.example");
+    expect(screen.queryByTestId("signing-link-lapsed")).toBeNull();
+  });
+
+  it("says so when a new link cannot be sent", async () => {
+    signatures.mockResolvedValue(waiting("2026-01-02T00:00:00.000Z"));
+    reissueLink.mockRejectedValue(new Error("offline"));
+    renderDialog();
+    await userEvent.click(await screen.findByRole("button", { name: "Send a new link to Maria Santos" }));
+    expect((await screen.findByRole("alert")).textContent).toContain("could not be sent");
+  });
+
+  it("offers nothing while the link still works", async () => {
+    signatures.mockResolvedValue(waiting("2099-01-02T00:00:00.000Z"));
+    renderDialog();
+    expect(await screen.findByText(/Signing link works until/)).toBeTruthy();
+    expect(screen.queryByRole("button", { name: /Send a new link/ })).toBeNull();
+  });
+
+  it("offers nothing once the request is no longer out for signing", async () => {
+    signatures.mockResolvedValue(waiting("2026-01-02T00:00:00.000Z", "expired"));
+    renderDialog();
+    expect(await screen.findByText("Maria Santos")).toBeTruthy();
+    expect(screen.queryByRole("button", { name: /Send a new link/ })).toBeNull();
   });
 });

@@ -277,6 +277,9 @@ export function ContactRequestDialog({ workspaceId, kind, contact, onClose, onCr
             onChange={event => { setDue(event.target.value); }}
             style={inputStyle(fieldErrors.due !== undefined)}
           />
+          <p style={hintStyle}>
+            A target date your contact sees. The request stays open after it passes.
+          </p>
           {fieldErrors.due !== undefined && <p id={`${ids.due}-err`} style={fieldErrorStyle}>{fieldErrors.due}</p>}
         </div>
       </form>
