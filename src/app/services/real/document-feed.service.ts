@@ -30,7 +30,7 @@
 import { apiRequest } from "../api-client";
 import type {
   NotificationRecord, NotificationId,
-  NotificationSeverity, NotificationPriority,
+  NotificationPriority,
 } from "../../models/notifications";
 
 /** One row, exactly as the closed response schema publishes it. */

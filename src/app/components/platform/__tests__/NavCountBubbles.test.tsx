@@ -1,21 +1,42 @@
 // The side panel's pop-up counts show only what is WAITING on this account:
-// Documents counts "I must sign" (signers only), Shared Documents counts
-// pending shares plus pending access requests on your own documents, and
-// Contacts counts pending contact requests. Each row's bubble has its own
-// icon. Plus the chatbot showcase for Free accounts (Home and My Templates).
+// Documents counts what you must still act on (sign, approve, review,
+// acknowledge — never a copy for information), Shared Documents counts
+// pending shares plus pending access requests on your own documents,
+// Contacts counts pending contact requests plus pending document requests,
+// Workspace counts join requests for someone who decides them, and My
+// Settings counts plan requests for the approver. Each row's bubble has its
+// own icon. Plus the chatbot showcase for Free accounts (Home and My Templates).
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, waitFor, renderHook } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 
 vi.mock("../../../services/backend-flag", () => ({ USE_REAL_BACKEND: true, API_BASE_URL: "http://api.test" }));
+let role = "member";
+let approver = false;
 vi.mock("../../../context/PlatformContext", () => ({
-  usePlatform: () => ({ currentWorkspace: { id: "ws_1" }, user: { id: "usr_me" } }),
+  usePlatform: () => ({ currentWorkspace: { id: "ws_1" }, user: { id: "usr_me" }, role }),
+}));
+vi.mock("../../../hooks/usePlans", () => ({
+  useMyPlan: () => ({ plan: { approver }, refresh: () => Promise.resolve() }),
+}));
+const documentRequests = vi.fn();
+vi.mock("../../../services/real/contact-request.service", () => ({
+  realContactRequestService: { listReceived: (s: string) => documentRequests(s) },
+}));
+const joinRequests = vi.fn();
+vi.mock("../../../services/real/workspace-join.service", () => ({
+  listJoinRequests: (ws: string, s: string) => joinRequests(ws, s),
+}));
+const planReviews = vi.fn();
+vi.mock("../../../services/real/plans.service", () => ({
+  plansService: { pendingReviews: () => planReviews() },
 }));
 const documentsToSign = vi.fn();
 vi.mock("../../../services/real/my-signing.service", () => ({
   realMySigningService: { documentsToSign: () => documentsToSign() },
-  isSignerEntry: (i: { recipientType: string | null }) => i.recipientType === null || i.recipientType === "signer",
+  canContinueFromApp: (i: { recipientType: string | null }) =>
+    i.recipientType === null || ["signer", "approver", "reviewer", "acknowledgment-recipient"].includes(i.recipientType),
 }));
 const sharedWithMe = vi.fn();
 const listAccessRequests = vi.fn();
@@ -32,11 +53,19 @@ vi.mock("../../../services/real/contact-connections.service", () => ({
 
 import { useNavCounts, resetNavCounts } from "../../../hooks/useNavCounts";
 import { announceNavCountsChanged } from "../../../services/nav-counts-signal";
+import { announce } from "../../../services/live/topics";
 import { NavCountBubble } from "../InvitationCountBubble";
 import { ChatbotShowcase } from "../../dashboard/ChatbotShowcase";
 
+const ALL = { documents: 3, shared: 2, contacts: 5, documentRequests: 2, workspace: 0, settings: 0 };
+
 beforeEach(() => {
   resetNavCounts();
+  role = "member";
+  approver = false;
+  documentRequests.mockResolvedValue([{ status: "pending" }, { status: "pending" }]);
+  joinRequests.mockResolvedValue([{ state: "pending" }, { state: "pending" }, { state: "pending" }]);
+  planReviews.mockResolvedValue({ requests: [{}, {}] });
   documentsToSign.mockResolvedValue([
     { recipientType: "signer" }, { recipientType: null }, { recipientType: "carbon-copy" }, { recipientType: "approver" },
   ]);
@@ -50,30 +79,66 @@ beforeEach(() => {
 describe("side panel counts", () => {
   it("counts only what is waiting on this account", async () => {
     const { result } = renderHook(() => useNavCounts());
-    await waitFor(() => { expect(result.current).toEqual({ documents: 2, shared: 2, contacts: 3 }); });
+    // Signer, unnamed role and approver must act; the carbon copy does not.
+    // Contacts: 3 contact requests + 2 document requests.
+    await waitFor(() => { expect(result.current).toEqual(ALL); });
     expect(sharedWithMe).toHaveBeenCalledWith("pending");
     expect(listAccessRequests).toHaveBeenCalledWith("ws_1", "pending");
+    expect(documentRequests).toHaveBeenCalledWith("pending");
+  });
+
+  it("asks for join requests and plan requests only on behalf of someone who decides them", async () => {
+    const { result } = renderHook(() => useNavCounts());
+    await waitFor(() => { expect(result.current).toEqual(ALL); });
+    expect(joinRequests).not.toHaveBeenCalled();
+    expect(planReviews).not.toHaveBeenCalled();
+  });
+
+  it("shows an owner the join requests waiting, and the approver the plan requests", async () => {
+    role = "owner";
+    approver = true;
+    const { result } = renderHook(() => useNavCounts());
+    await waitFor(() => { expect(result.current).toEqual({ ...ALL, workspace: 3, settings: 2 }); });
+    expect(joinRequests).toHaveBeenCalledWith("ws_1", "pending");
+  });
+
+  it("counts a document request on the Contacts bubble, and drops it the moment it is answered", async () => {
+    const { result } = renderHook(() => useNavCounts());
+    await waitFor(() => { expect(result.current.contacts).toBe(5); });
+    documentRequests.mockResolvedValue([{ status: "pending" }]);
+    announce("contacts"); // what completing, declining or cancelling a request raises
+    await waitFor(() => { expect(result.current.contacts).toBe(4); });
+    expect(result.current.documentRequests).toBe(1);
+  });
+
+  it("keeps the contact requests when the document requests cannot be read", async () => {
+    documentRequests.mockRejectedValue(new Error("offline"));
+    const { result } = renderHook(() => useNavCounts());
+    await waitFor(() => { expect(result.current.contacts).toBe(3); });
+    expect(result.current.documentRequests).toBe(0);
   });
 
   it("keeps the other numbers when one source fails", async () => {
     connections.mockRejectedValue(new Error("offline"));
     const { result } = renderHook(() => useNavCounts());
-    await waitFor(() => { expect(result.current.documents).toBe(2); });
-    expect(result.current.contacts).toBe(0);
+    await waitFor(() => { expect(result.current.documents).toBe(3); });
+    // The contact requests are unknown; the document requests still count.
+    expect(result.current.contacts).toBe(2);
     expect(result.current.shared).toBe(2);
   });
 
   it("is live: an action re-reads at once, and a count that reaches zero is gone", async () => {
     const { result } = renderHook(() => useNavCounts());
-    await waitFor(() => { expect(result.current).toEqual({ documents: 2, shared: 2, contacts: 3 }); });
+    await waitFor(() => { expect(result.current).toEqual(ALL); });
 
     // The documents are signed, the shares answered, the requests accepted.
+    documentRequests.mockResolvedValue([]);
     documentsToSign.mockResolvedValue([{ recipientType: "carbon-copy" }]);
     sharedWithMe.mockResolvedValue([]);
     listAccessRequests.mockResolvedValue([]);
     connections.mockResolvedValue({ received: [{}], sent: [] });
     announceNavCountsChanged();
-    await waitFor(() => { expect(result.current).toEqual({ documents: 0, shared: 0, contacts: 1 }); });
+    await waitFor(() => { expect(result.current).toEqual({ ...ALL, documents: 0, shared: 0, contacts: 1, documentRequests: 0 }); });
 
     const { container } = render(<NavCountBubble kind="documents" count={result.current.documents} />);
     expect(container.textContent).toBe("");
@@ -97,15 +162,19 @@ describe("side panel counts", () => {
         <NavCountBubble kind="documents" count={2} />
         <NavCountBubble kind="shared" count={1} />
         <NavCountBubble kind="contacts" count={3} />
+        <NavCountBubble kind="workspace" count={2} />
+        <NavCountBubble kind="settings" count={1} />
         <NavCountBubble kind="invitations" count={0} />
       </>,
     );
-    expect(screen.getByTestId("documents-bubble").getAttribute("aria-label")).toBe("2 documents to sign");
+    expect(screen.getByTestId("documents-bubble").getAttribute("aria-label")).toBe("2 documents waiting for you");
     expect(screen.getByTestId("shared-bubble").getAttribute("aria-label")).toBe("1 pending shared document");
-    expect(screen.getByTestId("contacts-bubble").getAttribute("aria-label")).toBe("3 pending contact requests");
+    expect(screen.getByTestId("contacts-bubble").getAttribute("aria-label")).toBe("3 requests waiting in Contacts");
+    expect(screen.getByTestId("workspace-bubble").getAttribute("aria-label")).toBe("2 join requests waiting");
+    expect(screen.getByTestId("settings-bubble").getAttribute("aria-label")).toBe("1 plan request waiting");
     expect(screen.queryByTestId("invitation-bubble")).toBeNull();
     const icons = [...container.querySelectorAll("svg")].map(s => s.getAttribute("class"));
-    expect(new Set(icons).size).toBe(3);
+    expect(new Set(icons).size).toBe(5);
   });
 });
 

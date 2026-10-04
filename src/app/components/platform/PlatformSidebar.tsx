@@ -434,6 +434,13 @@ export function PlatformSidebar() {
             const allowed = !item.permission || hasPermission(item.permission);
             const enabled = !item.featureFlag || hasFlag(item.featureFlag);
             if (!allowed || !enabled || (item.plan !== undefined && !planAllows(item.plan))) return null;
+            // Workspace: join requests waiting for an owner or administrator.
+            if (item.id === "manage") {
+              return (
+                <CountedNavItem key={item.id} to={item.path} icon={item.icon} label={item.label}
+                  collapsed={collapsed} count={navCounts.workspace} kind="workspace" />
+              );
+            }
             const badge = item.showBadge && item.id === "notifications" ? unreadCount : null;
             return (
               <SidebarItem
@@ -448,12 +455,15 @@ export function PlatformSidebar() {
           })}
           {/* My Settings: the person's own settings. The workspace's are
               under Workspace, behind its gear. */}
-          <SidebarItem
-            to="/app/settings/profile"
+          {/* Its bubble is the plan approver's: upgrade requests waiting.
+              With one waiting, the row opens Plan & Billing, where they are. */}
+          <CountedNavItem
+            to={navCounts.settings > 0 ? "/app/settings/plan" : "/app/settings/profile"}
             icon="UserCog"
             label="My Settings"
-            badge={null}
             collapsed={collapsed}
+            count={navCounts.settings}
+            kind="settings"
           />
         </ul>
       </nav>

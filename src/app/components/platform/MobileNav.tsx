@@ -28,6 +28,7 @@ import { UserAvatar } from "./UserAvatar";
 import { usePendingInvitationCount } from "../../hooks/usePendingInvitationCount";
 import { InvitationCountBubble, NavCountBubble, INVITATION_BUBBLE_STYLES } from "./InvitationCountBubble";
 import { useNavCounts } from "../../hooks/useNavCounts";
+import { useWorkspacePlanLabel } from "../../hooks/useWorkspacePlanLabel";
 
 const BORDER = "rgba(0,0,0,0.08)";
 const GF     = { fontFamily: "'Geist', sans-serif" };
@@ -55,6 +56,9 @@ export function MobileNav() {
   // 093. Joining another workspace is part of Personal (the person's own plan).
   const { plan: myPlan } = useMyPlan();
   const joinLocked = myPlan?.plan === "free";
+  // The workspace's real plan, as the desktop switcher shows it (never the
+  // session's placeholder).
+  const planLabel = useWorkspacePlanLabel(currentWorkspace ?? null);
   const { restartTour } = useTour();
   const drawerRef    = useRef<HTMLDivElement>(null);
   const triggerRef   = useRef<HTMLButtonElement>(null);
@@ -259,7 +263,7 @@ export function MobileNav() {
               <WorkspaceBadge workspace={currentWorkspace} size={28} radius={7} fontSize={10} />
               <div>
                 <p style={{ color: "#07111F", ...GF, fontSize: 13, fontWeight: 600, margin: 0 }}>{currentWorkspace.name}</p>
-                <p style={{ color: "#64748B", ...GM, fontSize: 10, margin: 0 }}>{currentWorkspace.plan}</p>
+                {planLabel && <p style={{ color: "#64748B", ...GM, fontSize: 10, margin: 0 }}>{planLabel}</p>}
               </div>
             </div>
             {/* The drawer closes first so the dialog is not stacked behind it. */}
@@ -365,6 +369,7 @@ export function MobileNav() {
                             {unreadCount > 99 ? "99+" : unreadCount}
                           </span>
                         )}
+                        {item.id === "manage" && <NavCountBubble key={navCounts.workspace} kind="workspace" count={navCounts.workspace} />}
                       </>
                     )}
                   </NavLink>
@@ -372,11 +377,12 @@ export function MobileNav() {
               );
             })}
             <li>
-              <NavLink to="/app/settings/profile" onClick={closeAndNavigate} style={({ isActive }) => ({ display: "flex", alignItems: "center", gap: 12, padding: "10px 12px", borderRadius: 8, textDecoration: "none", color: isActive ? "#0078D4" : "#64748B" })}>
+              <NavLink to={navCounts.settings > 0 ? "/app/settings/plan" : "/app/settings/profile"} onClick={closeAndNavigate} style={({ isActive }) => ({ display: "flex", alignItems: "center", gap: 12, padding: "10px 12px", borderRadius: 8, textDecoration: "none", color: isActive ? "#0078D4" : "#64748B" })}>
                 {({ isActive }) => (
                   <>
                     <span style={{ color: isActive ? "#0078D4" : "#64748B", display: "flex" }}><NavIcon name="UserCog" /></span>
                     <span style={{ ...GF, fontSize: 14, fontWeight: isActive ? 600 : 400 }}>My Settings</span>
+                    <NavCountBubble key={navCounts.settings} kind="settings" count={navCounts.settings} />
                   </>
                 )}
               </NavLink>

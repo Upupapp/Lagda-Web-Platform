@@ -91,10 +91,10 @@ export function FirebaseVerificationAction() {
           return;
         }
         setState("verified");
-        setTimeout(() => navigate(
+        setTimeout(() => { void navigate(
           `/sign-in?returnTo=${encodeURIComponent(sanitizeOnboardingReturnTo(returnTo))}`,
           { replace: true },
-        ), 1200);
+        ); }, 1200);
       } catch {
         setState("temporary-failure");
       }

@@ -30,7 +30,7 @@
 // to that invitation's workspace first when it is not the current one.
 // Opening it marks the notice read, which takes it off this list.
 
-import { useState, type CSSProperties } from "react";
+import { useRef, useState, type CSSProperties } from "react";
 import { Link } from "react-router";
 import {
   FilePlus, FileText, XCircle, Clock, AlertTriangle, FileEdit,
@@ -145,20 +145,35 @@ function Panel({ icon: Icon, title, count, subtitle, action, label, children }: 
   );
 }
 
-/** One "At a glance" figure: an icon in a tinted circle, a label, the number, a line. */
-function GlanceTile({ icon: Icon, label, value, sub, tone }: {
+/**
+ * One "At a glance" figure: an icon in a tinted circle, a label, the number,
+ * a line. The WHOLE tile is the control — it opens the list the number
+ * counts (`to`), or brings the matching panel on this page into view
+ * (`onOpen`). One large target, named for what it opens, rather than an icon
+ * nobody would guess is a button.
+ */
+function GlanceTile({ icon: Icon, label, value, sub, tone, to, onOpen, opens }: {
   icon: LucideIcon; label: string; value: number; sub: string; tone: "azure" | "red" | "slate" | "green";
+  to?: string; onOpen?: () => void;
+  /** What activating the tile does, for its accessible name: "Open sent documents". */
+  opens: string;
 }) {
-  return (
-    <div className="hd-tile" data-tone={tone}>
+  const body = (
+    <>
       <span aria-hidden className="hd-tile-icon"><Icon size={20} strokeWidth={2} /></span>
-      <div style={{ minWidth: 0 }}>
+      <div style={{ minWidth: 0, flex: "1 1 auto" }}>
         <div className="hd-tile-label">{label}</div>
         <div className="hd-tile-value">{value}</div>
         <div className="hd-tile-sub">{sub}</div>
       </div>
-    </div>
+      <ChevronRight aria-hidden size={18} className="hd-tile-go" />
+    </>
   );
+  const name = `${label}: ${String(value)}. ${opens}`;
+  const testId = `glance-${label.toLowerCase().replace(/\s+/g, "-")}`;
+  return to !== undefined
+    ? <Link to={to} className="hd-tile" data-tone={tone} data-testid={testId} aria-label={name}>{body}</Link>
+    : <button type="button" onClick={onOpen} className="hd-tile" data-tone={tone} data-testid={testId} aria-label={name}>{body}</button>;
 }
 
 function PrepareLink({ label = "Prepare Document" }: { label?: string }) {
@@ -416,7 +431,16 @@ export function RealDashboard() {
   };
 
   const attentionCount = attention.length + declines.length;
+  const attentionRef = useRef<HTMLDivElement>(null);
+  const showAttention = () => {
+    const el = attentionRef.current;
+    if (el === null) return;
+    const calm = typeof window.matchMedia === "function" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    el.scrollIntoView({ behavior: calm ? "auto" : "smooth", block: "start" });
+    el.focus({ preventScroll: true });
+  };
   const attentionSection = (
+    <div ref={attentionRef} tabIndex={-1} className="hd-attention-anchor">
     <Panel label="Needs attention" icon={Bell} title="Needs attention" count={attentionCount}
       subtitle={attentionCount === 0 ? undefined : "These items require your immediate attention."}
       action={<Link to="/app/documents" className="hd-viewall">View all <ChevronRight size={16} aria-hidden /></Link>}>
@@ -448,6 +472,7 @@ export function RealDashboard() {
           </ul>
         )}
     </Panel>
+    </div>
   );
 
   return (
@@ -493,10 +518,16 @@ export function RealDashboard() {
             {/* 2 — the counts, scoped honestly */}
             <Panel label="Document status summary" icon={BarChart3} title="At a glance">
               <div className="hd-tiles">
-                <GlanceTile icon={Send} tone="azure" label="In flight" value={summary.inFlight} sub="Sent, waiting on signatures" />
-                <GlanceTile icon={Clock} tone={summary.attention > 0 ? "red" : "slate"} label="Needs attention" value={summary.attention} sub="Declined or expired" />
-                <GlanceTile icon={FileText} tone="slate" label="Drafts" value={summary.drafts} sub="Prepared, not yet sent" />
-                <GlanceTile icon={CircleCheck} tone="green" label="Completed" value={summary.completed} sub="Every signature collected" />
+                <GlanceTile icon={Send} tone="azure" label="In flight" value={summary.inFlight} sub="Sent, waiting on signatures"
+                  to="/app/documents" opens="Open sent documents" />
+                {/* Declined and expired sit in two different lists; the panel
+                    above holds both, so the tile brings it into view. */}
+                <GlanceTile icon={Clock} tone={summary.attention > 0 ? "red" : "slate"} label="Needs attention" value={summary.attention} sub="Declined or expired"
+                  onOpen={showAttention} opens="Show what needs attention" />
+                <GlanceTile icon={FileText} tone="slate" label="Drafts" value={summary.drafts} sub="Prepared, not yet sent"
+                  to="/app/documents?list=draft" opens="Open drafts" />
+                <GlanceTile icon={CircleCheck} tone="green" label="Completed" value={summary.completed} sub="Every signature collected"
+                  to="/app/documents?list=completed" opens="Open completed documents" />
               </div>
               {paged && (
                 <p style={{ ...GF, fontSize: 12, color: SLATE6, margin: "10px 2px 0" }}>
@@ -609,6 +640,18 @@ const HOME_CSS = `
 .hd-tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
 .hd-tile { display: flex; gap: 14px; align-items: flex-start; border: 1px solid #E6EBF2; border-radius: 14px; padding: 16px; background: #FFFFFF; min-width: 0;
   box-shadow: 0 6px 16px -14px rgba(7,17,31,0.4); }
+/* A tile is a link or a button: it looks like the card it was, and says it can be opened. */
+a.hd-tile, button.hd-tile { text-decoration: none; color: inherit; text-align: left; font: inherit; cursor: pointer; width: 100%; box-sizing: border-box;
+  transition: border-color 0.12s, box-shadow 0.12s, transform 0.12s; }
+a.hd-tile:hover, button.hd-tile:hover { border-color: #B9CBE4; box-shadow: 0 10px 22px -14px rgba(7,17,31,0.5); transform: translateY(-1px); }
+a.hd-tile:focus-visible, button.hd-tile:focus-visible { outline: 2px solid #0078D4; outline-offset: 2px; }
+/* The arrow sits in the corner, out of the text's way, at every width. */
+a.hd-tile, button.hd-tile { position: relative; }
+.hd-tile-go { position: absolute; top: 14px; right: 12px; color: #94A3B8; transition: transform 0.12s, color 0.12s; }
+.hd-tile:hover .hd-tile-go, .hd-tile:focus-visible .hd-tile-go { color: #0078D4; transform: translateX(2px); }
+.hd-attention-anchor { scroll-margin-top: 72px; }
+.hd-attention-anchor:focus { outline: none; }
+@media (prefers-reduced-motion: reduce) { a.hd-tile, button.hd-tile, .hd-tile-go { transition: none; } a.hd-tile:hover, button.hd-tile:hover { transform: none; } }
 .hd-tile-icon { width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
 .hd-tile[data-tone="azure"] .hd-tile-icon { background: #E6F0FB; color: #1D6FD1; }
 .hd-tile[data-tone="red"] .hd-tile-icon { background: #FDECEC; color: #DC2626; }

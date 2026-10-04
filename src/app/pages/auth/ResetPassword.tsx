@@ -121,7 +121,7 @@ function ResetForm({ token, onInvalidToken }: { token: string | null; onInvalidT
       }
       setStatus("success");
       setTimeout(() => successRef.current?.focus(), 50);
-      setTimeout(() => navigate("/sign-in?notice=password-reset", { replace: true }), 1800);
+      setTimeout(() => { void navigate("/sign-in?notice=password-reset", { replace: true }); }, 1800);
       return;
     }
 
@@ -130,7 +130,7 @@ function ResetForm({ token, onInvalidToken }: { token: string | null; onInvalidT
     if (result.success) {
       setStatus("success");
       setTimeout(() => successRef.current?.focus(), 50);
-      setTimeout(() => navigate("/sign-in?notice=password-reset", { replace: true }), 1800);
+      setTimeout(() => { void navigate("/sign-in?notice=password-reset", { replace: true }); }, 1800);
     } else {
       setStatus("error");
       setFormErr("Something went wrong in this demonstration. Please try again.");

@@ -6,9 +6,8 @@
 // join request was approved after sign-in appears here without a reload.
 // Creating a workspace from here is deliberately not offered yet.
 
-import { useMyPlan, useWorkspacePlan } from "../../hooks/usePlans";
-import { USE_REAL_BACKEND } from "../../services/backend-flag";
-import { PLAN_NAMES } from "../../services/real/plans.service";
+import { useMyPlan } from "../../hooks/usePlans";
+import { useWorkspacePlanLabel } from "../../hooks/useWorkspacePlanLabel";
 import { useState, useRef, useEffect } from "react";
 import { ChevronDown, Check, LogIn, Lock } from "lucide-react";
 import { usePlatform } from "../../context/PlatformContext";
@@ -19,22 +18,6 @@ import { JoinWorkspaceDialog } from "./JoinWorkspaceDialog";
 const GF   = { fontFamily: "'Geist', sans-serif" };
 const GM   = { fontFamily: "'Geist Mono', monospace" };
 const BORDER = "rgba(0,0,0,0.08)";
-
-/**
- * The plan name shown under a workspace's name.
- *
- * Real mode reads the workspace's plan (its owner's, 093) — the session's
- * workspace record carries only a placeholder `plan: "personal"`
- * (session-bootstrap normalizeWorkspace), which put "Personal" under a
- * Business workspace. Empty while the plan is still being read, rather than a
- * guess. The demo build keeps the fixture's own plan.
- */
-function useWorkspacePlanLabel(workspace: { id: string; plan: keyof typeof PLAN_LABELS } | null): string {
-  const { plan } = useWorkspacePlan(workspace?.id ?? null);
-  if (workspace === null) return "";
-  if (!USE_REAL_BACKEND) return PLAN_LABELS[workspace.plan];
-  return plan === null ? "" : PLAN_NAMES[plan];
-}
 
 function WorkspacePlanLine({ workspace }: { workspace: { id: string; plan: keyof typeof PLAN_LABELS; role: string } }) {
   const label = useWorkspacePlanLabel(workspace);

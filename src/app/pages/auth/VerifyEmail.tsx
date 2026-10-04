@@ -73,9 +73,9 @@ export function VerifyEmail() {
           // No session exists yet — register never signs the visitor in, it
           // only creates the account (see auth.service.ts). Verifying routes
           // back to sign-in rather than straight into onboarding.
-          setTimeout(() => navigate(
+          setTimeout(() => { void navigate(
             `/sign-in?returnTo=${encodeURIComponent(returnTo)}`, { replace: true },
-          ), 1500);
+          ); }, 1500);
         } else {
           setStatus("error");
           setErrorCode("invalid");
@@ -101,7 +101,7 @@ export function VerifyEmail() {
     if (result.success) {
       setStatus("success");
       setTimeout(() => successRef.current?.focus(), 50);
-      setTimeout(() => navigate(sanitizeOnboardingReturnTo(returnTo), { replace: true }), 1500);
+      setTimeout(() => { void navigate(sanitizeOnboardingReturnTo(returnTo), { replace: true }); }, 1500);
     } else {
       setStatus("error");
       setErrorCode(result.errorCode ?? "invalid");

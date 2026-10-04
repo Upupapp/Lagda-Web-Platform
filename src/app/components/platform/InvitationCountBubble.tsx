@@ -6,7 +6,7 @@
 // than a bare "3" a screen reader would read without context. White on
 // #B42318 is 6.1:1.
 
-import { Mail, FileText, Share2, UserPlus, type LucideIcon } from "lucide-react";
+import { Mail, FileText, Share2, UserPlus, UserCheck, BadgeCheck, type LucideIcon } from "lucide-react";
 
 const GM = { fontFamily: "'Geist Mono', monospace" };
 
@@ -17,13 +17,16 @@ export function pendingInvitationsLabel(count: number): string {
 /**
  * The navigation rows that carry a pop-up count, each with its own icon so
  * the rows can be told apart at a glance: Invitations (mail), Documents
- * (document), Shared Documents (share) and Contacts (person).
+ * (document), Shared Documents (share), Contacts (person), Workspace (a
+ * person to approve) and My Settings (a plan request to decide).
  */
 export const NAV_BUBBLES = {
   invitations: { icon: Mail, testId: "invitation-bubble", label: pendingInvitationsLabel },
-  documents: { icon: FileText, testId: "documents-bubble", label: (n: number) => `${String(n)} ${n === 1 ? "document" : "documents"} to sign` },
+  documents: { icon: FileText, testId: "documents-bubble", label: (n: number) => `${String(n)} ${n === 1 ? "document" : "documents"} waiting for you` },
   shared: { icon: Share2, testId: "shared-bubble", label: (n: number) => `${String(n)} pending shared ${n === 1 ? "document" : "documents"}` },
-  contacts: { icon: UserPlus, testId: "contacts-bubble", label: (n: number) => `${String(n)} pending contact ${n === 1 ? "request" : "requests"}` },
+  contacts: { icon: UserPlus, testId: "contacts-bubble", label: (n: number) => `${String(n)} ${n === 1 ? "request" : "requests"} waiting in Contacts` },
+  workspace: { icon: UserCheck, testId: "workspace-bubble", label: (n: number) => `${String(n)} join ${n === 1 ? "request" : "requests"} waiting` },
+  settings: { icon: BadgeCheck, testId: "settings-bubble", label: (n: number) => `${String(n)} plan ${n === 1 ? "request" : "requests"} waiting` },
 } as const satisfies Record<string, { icon: LucideIcon; testId: string; label: (n: number) => string }>;
 
 export type NavBubbleKind = keyof typeof NAV_BUBBLES;

@@ -16,6 +16,7 @@
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useLiveRefresh as useLiveRefreshOn } from "../../../services/live/use-live-refresh";
+import { useNavCounts } from "../../../hooks/useNavCounts";
 import { Link } from "react-router";
 import {
   User as BlankPersonIcon, Users, UserSearch, Inbox, FileText, Archive, Building2,
@@ -217,6 +218,9 @@ export type ContactsSection = "all" | "pending" | "requests" | "archived";
 
 export function ContactsSectionNav({ current, pendingCount }: { current: ContactsSection; pendingCount?: number }) {
   const platform = usePlatform();
+  // Document requests waiting on me: the same number the side panel adds to
+  // the Contacts bubble, so the tab that holds them can be found.
+  const requestsCount = useNavCounts().documentRequests;
   const connections = contactConnectionsAvailable(platform.currentWorkspace?.id);
   const items: { key: ContactsSection; label: string; to: string; icon: LucideIcon }[] = [
     { key: "all", label: "All contacts", to: "/app/contacts", icon: Users },
@@ -229,7 +233,8 @@ export function ContactsSectionNav({ current, pendingCount }: { current: Contact
       {items.map(item => {
         const active = item.key === current;
         const Icon = item.icon;
-        const count = item.key === "pending" && pendingCount !== undefined && pendingCount > 0 ? pendingCount : null;
+        const waiting = item.key === "pending" ? pendingCount : item.key === "requests" ? requestsCount : undefined;
+        const count = waiting !== undefined && waiting > 0 ? waiting : null;
         return (
           <Link key={item.key} to={item.to} aria-current={active ? "page" : undefined}
             aria-label={count === null ? undefined : `${item.label}, ${String(count)} waiting`}

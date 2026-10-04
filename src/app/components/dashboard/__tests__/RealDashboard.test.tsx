@@ -120,6 +120,30 @@ describe("with signing requests", () => {
     expect(screen.queryByText(/most recent requests/)).toBeNull();
   });
 
+  it("makes each At-a-glance tile open the list its number counts", async () => {
+    list.mockResolvedValue({
+      items: [req({ state: "sent" }), req({ signingRequestId: "sr_d", state: "declined" })],
+      total: 2, page: 1, perPage: 100, hasNextPage: false,
+    });
+    renderPage();
+    // The whole tile is the control, named for its number and what it opens.
+    const inFlight = await screen.findByTestId("glance-in-flight");
+    expect(inFlight.tagName).toBe("A");
+    expect(inFlight.getAttribute("href")).toBe("/app/documents");
+    expect(inFlight.getAttribute("aria-label")).toBe("In flight: 1. Open sent documents");
+    expect(screen.getByTestId("glance-drafts").getAttribute("href")).toBe("/app/documents?list=draft");
+    expect(screen.getByTestId("glance-completed").getAttribute("href")).toBe("/app/documents?list=completed");
+
+    // Declined and expired live in two lists; this tile shows the panel that holds both.
+    const attention = screen.getByTestId("glance-needs-attention");
+    expect(attention.tagName).toBe("BUTTON");
+    const scrolled = vi.fn();
+    Element.prototype.scrollIntoView = scrolled;
+    attention.click();
+    expect(scrolled).toHaveBeenCalledTimes(1);
+    expect(document.activeElement?.querySelector('[aria-label="Needs attention"]')).not.toBeNull();
+  });
+
   it("says plainly when nothing is waiting", async () => {
     list.mockResolvedValue({
       items: [req({ sentAt: ago(1) })], total: 1, page: 1, perPage: 100, hasNextPage: false,
