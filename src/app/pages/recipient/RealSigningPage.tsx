@@ -48,6 +48,7 @@ import { SaveSignaturePrompt } from "../../components/recipient/SaveSignaturePro
 import { LagdaLoader } from "../../components/brand/LagdaLoader";
 import { useMinimumSplash } from "../../hooks/useMinimumSplash";
 import { ceremonyWording } from "../../services/participant-wording";
+import { ConfirmActionDialog } from "../../components/recipient/ConfirmActionDialog";
 
 // The signer palette lives in `signer-ui`. Only the font alias survives the
 // redesign: every colour this page used is now applied by a primitive from
@@ -156,7 +157,7 @@ export function RealSigningPage() {
   const [linkError, setLinkError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [declineReason, setDeclineReason] = useState<SigningDeclineReason>("not-agree");
-  const [confirmingApproval, setConfirmingApproval] = useState(false);
+  const [confirmingAction, setConfirmingAction] = useState(false);
 
   // Same NEW-KEY / RETRY-SAME-KEY / RETIRE-ON-SUCCESS rule as sender Send
   // (ConfirmationPage) — one submission per ceremony, in-memory only.
@@ -424,10 +425,14 @@ export function RealSigningPage() {
     return !values[f.fieldId] || String(values[f.fieldId]).trim() === "";
   });
 
+  const requiredFieldsMessage = (): string | null => missingRequired.length === 0 ? null
+    : `Complete all required fields first: ${missingRequired.map((f) => f.label).join(", ")}.`;
+
   const handleSubmit = async () => {
     if (!view || submitting) return;
-    if (missingRequired.length > 0) {
-      setErrorMessage(`Complete all required fields first: ${missingRequired.map((f) => f.label).join(", ")}.`);
+    const missing = requiredFieldsMessage();
+    if (missing !== null) {
+      setErrorMessage(missing);
       return;
     }
     setSubmitting(true);
@@ -459,6 +464,7 @@ export function RealSigningPage() {
       setErrorMessage(describeSubmissionError(err));
     } finally {
       setSubmitting(false);
+      setConfirmingAction(false);
     }
   };
 
@@ -908,23 +914,26 @@ export function RealSigningPage() {
             background: "linear-gradient(to bottom, rgba(245,247,250,0), #F5F7FA 28%)",
           }}
         >
-          {isApprover && confirmingApproval && (
-            <p role="status" data-testid="approve-confirm-note" style={{ fontSize: 13, color: "#475569", margin: "0 0 2px", lineHeight: 1.5 }}>
-              Approving is recorded under your name and cannot be undone. Click Confirm approval to record it.
-            </p>
-          )}
           <ActionRow>
             <ActionButton
               icon={submitting ? Loader2 : Send}
               onClick={() => {
-                // An approval is one click from final, so it is asked twice.
-                if (isApprover && !confirmingApproval) { setConfirmingApproval(true); return; }
+                // An approver, reviewer or acknowledgment recipient is asked
+                // once, formally, before their one-button act is recorded.
+                // Anything still missing is said first: the question is only
+                // worth asking when Continue can actually succeed.
+                if (wording.confirm !== null) {
+                  if (requiredFieldsMessage() !== null) { void handleSubmit(); return; }
+                  setErrorMessage(null);
+                  setConfirmingAction(true);
+                  return;
+                }
                 void handleSubmit();
               }}
               disabled={submitting}
               full
             >
-              {submitting ? "Submitting…" : (isApprover && confirmingApproval ? "Confirm approval" : wording.action)}
+              {submitting ? "Submitting…" : wording.action}
             </ActionButton>
             {isApprover && (
               // Passing on it: the request moves on without this approval.
@@ -954,6 +963,15 @@ export function RealSigningPage() {
             )}
           </ActionRow>
         </div>
+        {confirmingAction && wording.confirm !== null && (
+          <ConfirmActionDialog
+            copy={wording.confirm}
+            documentTitle={view.request.documentTitle}
+            busy={submitting}
+            onContinue={() => void handleSubmit()}
+            onCancel={() => { setConfirmingAction(false); }}
+          />
+        )}
       </SignerCard>
     );
   }
