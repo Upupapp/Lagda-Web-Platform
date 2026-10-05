@@ -177,11 +177,55 @@ describe("a person's panel", () => {
     show();
     await user.click(await screen.findByTestId("tree-node-u3"));
     const panel = screen.getByTestId("member-panel");
+    await user.click(within(panel).getByRole("button", { name: "Go to Swap position" }));
     await user.selectOptions(within(panel).getByTestId("swap-with"), "u1");
     await user.click(within(panel).getByTestId("swap-member"));
     await waitFor(() => expect(calls.filter(c => c.method === "PATCH" && c.path.startsWith("/workspaces/ws_1/units/un_old/members/"))).toHaveLength(2));
     const patches = calls.filter(c => c.method === "PATCH").map(c => [c.path.split("/").pop(), (c.body as { title: string }).title]);
     expect(patches).toEqual([["u3", "Department Head"], ["u1", "Analyst"]]);
+  });
+
+  it("shows one section at a time, Team first, with arrows and dots to move between them", async () => {
+    const user = userEvent.setup();
+    show();
+    await user.click(await screen.findByTestId("tree-node-u3"));
+    const panel = screen.getByTestId("member-panel");
+    const title = within(panel).getByTestId("panel-section-title");
+    expect(title).toHaveTextContent("Team");
+    expect(within(panel).getByTestId("move-to")).toBeInTheDocument();
+    // The other sections are not on screen until they are chosen.
+    expect(within(panel).queryByTestId("position-title")).toBeNull();
+    expect(within(panel).queryByTestId("swap-with")).toBeNull();
+
+    await user.click(within(panel).getByRole("button", { name: "Next section" }));
+    expect(title).toHaveTextContent("Title");
+    expect(within(panel).getByTestId("position-title")).toBeInTheDocument();
+    expect(within(panel).queryByTestId("move-to")).toBeNull();
+
+    // Back from the first goes round to the last, like any carousel.
+    await user.click(within(panel).getByRole("button", { name: "Previous section" }));
+    await user.click(within(panel).getByRole("button", { name: "Previous section" }));
+    const dots = within(within(panel).getByTestId("panel-sections")).getAllByRole("button", { name: /^Go to / });
+    expect(dots.at(-1)).toHaveAttribute("aria-current", "true");
+
+    await user.click(within(panel).getByRole("button", { name: "Go to Team" }));
+    expect(title).toHaveTextContent("Team");
+  });
+
+  it("keeps Remove as the panel's footer on every section", async () => {
+    const user = userEvent.setup();
+    show();
+    await user.click(await screen.findByTestId("tree-node-u3"));
+    const panel = screen.getByTestId("member-panel");
+    const sections = within(within(panel).getByTestId("panel-sections")).getAllByRole("button", { name: /^Go to / });
+    for (const dot of sections) {
+      await user.click(dot);
+      expect(within(panel).getByTestId("remove-from-team")).toBeInTheDocument();
+    }
+    // After the sections, not among them.
+    const footer = within(panel).getByRole("region", { name: "Remove" });
+    // eslint-disable-next-line no-bitwise
+    expect(within(panel).getByTestId("panel-sections").compareDocumentPosition(footer) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
   it("removes them from the team after confirming, and keeps the owner un-removable", async () => {

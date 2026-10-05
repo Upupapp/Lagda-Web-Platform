@@ -44,7 +44,7 @@ import { useLiveRefresh } from "../../../../services/live/use-live-refresh";
 import { useSearchParams } from "react-router";
 import {
   Search, Plus, Network, UserPlus, Users, MoreHorizontal, Pencil, Trash2, ArrowLeftRight,
-  ChevronRight, Mail, X, Contact, Clock, GitFork, LayoutGrid, ArrowUpDown } from "lucide-react";
+  ChevronRight, ChevronLeft, Mail, X, Contact, Clock, GitFork, LayoutGrid, ArrowUpDown } from "lucide-react";
 import { useWorkspaceAccess } from "../../../../hooks/useWorkspaceAccess";
 import { usePlatform } from "../../../../context/PlatformContext";
 import { useDocumentCardBranding, type CardBranding } from "../../documents/CompletedDocumentCards";
@@ -617,6 +617,7 @@ function MemberPanel({ workspaceId, person, unitId, branding, teams, teamsOfPers
     roleTitle: member?.roleTitle ?? "", canRequestDocuments: member?.canRequestDocuments === true, canAssignSigners: member?.canAssignSigners === true,
   });
   const [confirmRemove, setConfirmRemove] = useState<"team" | "workspace" | null>(null);
+  const [sectionIndex, setSectionIndex] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   // What just happened, shown at the foot of the panel where the person is
@@ -649,6 +650,29 @@ function MemberPanel({ workspaceId, person, unitId, branding, teams, teamsOfPers
   const inherent = member ? isOwnerOrAdministratorRole(member.roleId) : false;
   const canEditMember = !!member && may.changeRole && !isOwner;
 
+  // ── One section at a time ────────────────────────────────────────────────
+  //
+  // Each of these saves on its own button. Stacked, they made one long form
+  // with five save buttons, and on a phone the one being used was usually off
+  // the screen. They are now pages of one small carousel: Team first, the
+  // arrows (or the dots) go to the next, and Remove is the panel's footer.
+  // Only the sections this viewer may use for this person are listed.
+  const inTeam = !!context && !!inContext && may.placeMembers;
+  const sections: { id: "team" | "title" | "swap" | "role" | "access"; label: string }[] = [
+    { id: "team", label: "Team" },
+    ...(inTeam ? [{ id: "title" as const, label: "Title" }] : []),
+    ...(inTeam && teammates.length > 0 ? [{ id: "swap" as const, label: "Swap position" }] : []),
+    ...(canEditMember && !isMe ? [{ id: "role" as const, label: "Workspace role" }] : []),
+    ...(canEditMember ? [{ id: "access" as const, label: "Access" }] : []),
+  ];
+  const at = Math.min(sectionIndex, sections.length - 1);
+  const current = sections[at]!.id;
+  const go = (to: number) => {
+    setSectionIndex((to + sections.length) % sections.length);
+    // What was just saved, or just refused, belongs to the section left behind.
+    setSaved(null); setError(null);
+  };
+
   return (
     <div className="pt-scrim" onMouseDown={e => { if (e.target === e.currentTarget && !busy) onClose(); }} style={{ zIndex: Z.modal }}>
       <div role="dialog" aria-modal="true" aria-label={`${person.name}'s details`} data-testid="member-panel"
@@ -674,9 +698,30 @@ function MemberPanel({ workspaceId, person, unitId, branding, teams, teamsOfPers
         <p className="pt-panel-note">Name, email and photo are theirs to change, in their own profile.</p>
         {error && <ErrorNote>{error}</ErrorNote>}
 
+        {sections.length > 1 && (
+          <div className="pt-carousel" role="group" aria-label="Sections" data-testid="panel-sections">
+            <button type="button" className="pt-carousel-arrow" aria-label="Previous section" disabled={busy}
+              onClick={() => { go(at - 1); }}><ChevronLeft size={18} aria-hidden /></button>
+            <div className="pt-carousel-mid">
+              <span className="pt-carousel-title" aria-live="polite" data-testid="panel-section-title">{sections[at]!.label}</span>
+              <span className="pt-carousel-count">{at + 1} of {sections.length}</span>
+              <span className="pt-carousel-dots">
+                {sections.map((sec, i) => (
+                  <button key={sec.id} type="button" className="pt-carousel-dot" disabled={busy}
+                    aria-label={`Go to ${sec.label}`} aria-current={i === at ? "true" : undefined}
+                    onClick={() => { go(i); }} />
+                ))}
+              </span>
+            </div>
+            <button type="button" className="pt-carousel-arrow" aria-label="Next section" disabled={busy}
+              onClick={() => { go(at + 1); }}><ChevronRight size={18} aria-hidden /></button>
+          </div>
+        )}
+
         {/* Teams */}
-        <section className="pt-panel-sec" aria-label="Team">
-          <h3>Team</h3>
+        {current === "team" && (
+        <section className="pt-panel-sec pt-slide" aria-label="Team">
+          {sections.length <= 1 && <h3>Team</h3>}
           <div className="pt-chips">
             {teamsOfPerson.length === 0 ? <span className="pt-chip pt-chip-muted">Not in a team yet</span>
               : teamsOfPerson.map(t => <span key={t.unit.unitId} className="pt-chip">{t.unit.name}</span>)}
@@ -703,11 +748,12 @@ function MemberPanel({ workspaceId, person, unitId, branding, teams, teamsOfPers
             </div>
           )}
         </section>
+        )}
 
-        {/* Position in the team */}
-        {context && inContext && may.placeMembers && (
-          <section className="pt-panel-sec" aria-label="Position">
-            <h3>Position in {context.unit.name}</h3>
+        {/* Title in the team */}
+        {current === "title" && context && inContext && (
+          <section className="pt-panel-sec pt-slide" aria-label="Title">
+            <p className="pt-slide-lead">Their position in {context.unit.name}.</p>
             <div className="pt-row">
               <label className="pt-field">
                 <span style={labelStyle}>Title</span>
@@ -720,6 +766,13 @@ function MemberPanel({ workspaceId, person, unitId, branding, teams, teamsOfPers
                     `${person.name}'s position was saved.`);
                 }}>Save</button>
             </div>
+          </section>
+        )}
+
+        {/* Swapping positions with a teammate */}
+        {current === "swap" && context && inContext && (
+          <section className="pt-panel-sec pt-slide" aria-label="Swap position">
+            <p className="pt-slide-lead">The two exchange titles in {context.unit.name}.</p>
             {teammates.length > 0 && (
               <div className="pt-row">
                 <label className="pt-field">
@@ -743,10 +796,10 @@ function MemberPanel({ workspaceId, person, unitId, branding, teams, teamsOfPers
           </section>
         )}
 
-        {/* Workspace role and access */}
-        {canEditMember && member && (
-          <section className="pt-panel-sec" aria-label="Role and access">
-            <h3>Role and access</h3>
+        {/* Workspace role */}
+        {current === "role" && canEditMember && member && (
+          <section className="pt-panel-sec pt-slide" aria-label="Workspace role">
+            <p className="pt-slide-lead">What they may do across the whole workspace.</p>
             {!isMe && (
               <div className="pt-row">
                 <label className="pt-field">
@@ -763,6 +816,12 @@ function MemberPanel({ workspaceId, person, unitId, branding, teams, teamsOfPers
                   }}>Change role</button>
               </div>
             )}
+          </section>
+        )}
+
+        {/* Role title and privileges */}
+        {current === "access" && canEditMember && member && (
+          <section className="pt-panel-sec pt-slide" aria-label="Access">
             <AccessEditor value={accessDraft} onChange={setAccessDraft} privilegesInherent={inherent} />
             <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 10 }}>
               <button type="button" disabled={busy} style={buttonStyle("secondary", busy)} data-testid="save-access"
@@ -776,9 +835,15 @@ function MemberPanel({ workspaceId, person, unitId, branding, teams, teamsOfPers
           </section>
         )}
 
-        {/* Removing */}
+        {(error || saved) && (
+          <div className="pt-panel-status" role={error ? "alert" : "status"} data-testid="panel-status" data-tone={error ? "error" : "ok"}>
+            {error ?? saved}
+          </div>
+        )}
+
+        {/* Removing: the panel's footer, the same on every section */}
         {((context && inContext && may.placeMembers) || (member && may.removeMember && !isOwner && !isMe)) && (
-          <section className="pt-panel-sec pt-danger" aria-label="Remove">
+          <section className="pt-panel-footer pt-danger" aria-label="Remove">
             <h3>Remove</h3>
             {confirmRemove === null ? (
               <div className="pt-row pt-row-wrap">
@@ -814,11 +879,6 @@ function MemberPanel({ workspaceId, person, unitId, branding, teams, teamsOfPers
           </section>
         )}
         {member && <p className="pt-panel-foot">Joined {formatDate(member.joinedAt)}</p>}
-        {(error || saved) && (
-          <div className="pt-panel-status" role={error ? "alert" : "status"} data-testid="panel-status" data-tone={error ? "error" : "ok"}>
-            {error ?? saved}
-          </div>
-        )}
       </div>
     </div>
   );
@@ -1163,6 +1223,21 @@ const PEOPLE_TEAMS_CSS = `
 .pt-row-wrap { flex-wrap: wrap; align-items: center; }
 .pt-row-wrap > button { margin-bottom: 0; }
 .pt-danger h3 { color: #991B1B; }
+.pt-carousel { display: flex; align-items: center; gap: 10px; border-top: 1px solid #F0F2F5; padding-top: 14px; margin-top: 14px; }
+.pt-carousel-arrow { width: 40px; height: 40px; flex-shrink: 0; border-radius: 10px; border: 1px solid #D1D9E0; background: #FFFFFF; color: ${NAVY}; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
+.pt-carousel-arrow:hover:not(:disabled) { background: #F1F5F9; }
+.pt-carousel-arrow:disabled { opacity: 0.5; cursor: not-allowed; }
+.pt-carousel-mid { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 3px; text-align: center; }
+.pt-carousel-title { font-family: 'Geist', sans-serif; font-size: 14px; font-weight: 800; color: ${NAVY}; text-transform: uppercase; letter-spacing: 0.05em; overflow-wrap: anywhere; }
+.pt-carousel-count { font-family: 'Geist Mono', monospace; font-size: 10.5px; color: ${SILVER}; }
+.pt-carousel-dots { display: inline-flex; gap: 2px; }
+.pt-carousel-dot { width: 22px; height: 22px; padding: 0; border: none; background: none; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
+.pt-carousel-dot::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: #CBD5E1; }
+.pt-carousel-dot[aria-current="true"]::before { background: ${AZURE}; width: 18px; border-radius: 999px; }
+.pt-slide { border-top: none; padding-top: 0; min-height: 132px; }
+.pt-slide-lead { font-family: 'Geist', sans-serif; font-size: 12.5px; color: ${SLATE}; margin: 0 0 10px; }
+.pt-panel-footer { border-top: 1px solid #F0F2F5; padding-top: 14px; margin-top: 14px; }
+.pt-panel-footer h3 { font-family: 'Geist', sans-serif; font-size: 13px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; margin: 0 0 10px; }
 .pt-confirm { background: #FEF2F2; border: 1px solid #FECACA; border-radius: 10px; padding: 12px; }
 .pt-confirm p { font-family: 'Geist', sans-serif; font-size: 13px; color: #7F1D1D; margin: 0 0 10px; line-height: 1.5; }
 .pt-panel-status { position: sticky; bottom: 0; margin: 0 !important; padding: 12px 24px; font-family: 'Geist', sans-serif; font-size: 13px; font-weight: 600; line-height: 1.4; }
