@@ -3,6 +3,10 @@
 // They are never written to localStorage, sessionStorage, or cookies.
 // Burgundy (#67023B) is NEVER used. eNotary is NEVER mentioned.
 
+import { usePlatform } from "../../../context/PlatformContext";
+import { useAccountNameAssist } from "../../../hooks/useAccountNameAssist";
+import { ParticipantNameField } from "../../../components/prepare/ParticipantNameField";
+import { PeoplePicker, type PickedPerson } from "../../../components/prepare/PeoplePicker";
 import React, { useEffect, useState } from "react";
 import { Users } from "lucide-react";
 import { usePrepare } from "../../../context/PrepareContext";
@@ -71,24 +75,24 @@ function ParticipantEditor({
   const [role,  setRole]  = useState<PrepParticipantRole>(participant.role ?? "signer");
   const [org,   setOrg]   = useState(participant.organization ?? "");
   const [errors, setErrors] = useState<{ name?: string; email?: string }>({});
-  const [contactFilter, setContactFilter] = useState("");
-  const [showContacts, setShowContacts] = useState(false);
+  const workspaceId = usePlatform().currentWorkspace?.id;
+  // The name comes from the person's LAGDA account when their email has one.
+  const assist = useAccountNameAssist({
+    workspaceId, email, name,
+    onName: (found) => { setName(found); setErrors(v => ({ ...v, name: undefined })); },
+  });
 
-  const filteredContacts = contacts.filter(c => {
-    const q = contactFilter.toLowerCase();
-    return !q || c.name.toLowerCase().includes(q) || c.email.toLowerCase().includes(q);
-  }).slice(0, 5);
-
-  const applyContact = (c: { name: string; email: string; organization: string; tagIds?: readonly string[] }) => {
-    setName(c.name);
-    setEmail(c.email);
-    setOrg(c.organization);
-    // The contact's Document role (Contacts › Edit roles & notes) pre-selects
-    // the participant's role; it stays changeable here.
-    const preset = roleFromContactTags(c.tagIds);
-    if (preset !== null) setRole(preset);
-    setShowContacts(false);
-    setContactFilter("");
+  const applyPerson = (person: PickedPerson) => {
+    setName(person.name);
+    setEmail(person.email);
+    assist.notePicked(person);
+    if (person.from === "contact") {
+      setOrg(person.contact.organization);
+      // The contact's Document role (Contacts › Edit roles & notes) pre-selects
+      // the participant's role; it stays changeable here.
+      const preset = roleFromContactTags(person.contact.tagIds);
+      if (preset !== null) setRole(preset);
+    }
     setErrors({});
   };
 
@@ -130,75 +134,13 @@ function ParticipantEditor({
         background: "#F0F7FF",
       }}
     >
-      {/* Contact lookup */}
-      {contacts.length > 0 && (
-        <div style={{ marginBottom: 16 }}>
-          <button
-            onClick={() => setShowContacts(v => !v)}
-            style={{
-              ...GF,
-              padding: "6px 14px",
-              borderRadius: 8,
-              border: `1px solid ${AZURE}`,
-              background: "#FFFFFF",
-              color: AZURE,
-              fontSize: 12,
-              fontWeight: 600,
-              cursor: "pointer",
-            }}
-          >
-            {showContacts ? "Hide contacts" : "Add from contacts"}
-          </button>
-          {showContacts && (
-            <div style={{ marginTop: 10, background: "#FFFFFF", borderRadius: 8, border: "1px solid #D1D9E0", overflow: "hidden" }}>
-              <div style={{ padding: "8px 12px", borderBottom: "1px solid #E3E8EF" }}>
-                <input
-                  type="text"
-                  placeholder="Search by name or email…"
-                  value={contactFilter}
-                  onChange={e => setContactFilter(e.target.value)}
-                  autoFocus
-                  style={{
-                    ...GF,
-                    width: "100%",
-                    padding: "6px 0",
-                    border: "none",
-                    outline: "none",
-                    fontSize: 13,
-                    color: NAVY,
-                    boxSizing: "border-box",
-                  }}
-                />
-              </div>
-              {filteredContacts.length === 0 && (
-                <div style={{ ...GF, padding: "12px", fontSize: 13, color: SILVER }}>No contacts found</div>
-              )}
-              {filteredContacts.map(c => (
-                <button
-                  key={c.id}
-                  onClick={() => applyContact(c)}
-                  style={{
-                    ...GF,
-                    display: "block",
-                    width: "100%",
-                    padding: "10px 14px",
-                    border: "none",
-                    borderBottom: "1px solid #F0F2F5",
-                    background: "#FFFFFF",
-                    textAlign: "left",
-                    cursor: "pointer",
-                    fontSize: 13,
-                    color: NAVY,
-                  }}
-                >
-                  <div style={{ fontWeight: 600 }}>{c.name}</div>
-                  <div style={{ color: SILVER, fontSize: 12 }}>{c.email}</div>
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
+      {/* Choose a person: contacts, my team, other teams */}
+      <PeoplePicker
+        workspaceId={workspaceId}
+        contacts={contacts}
+        onPick={applyPerson}
+        takenEmails={allEmails.filter(e => e !== participant.email)}
+      />
 
       {/* Fields */}
       {/* `auto-fit` with a 180px floor, not a hard `1fr 1fr`. At 320px the
@@ -210,14 +152,14 @@ function ParticipantEditor({
           <label style={{ ...GF, fontSize: 12, fontWeight: 600, color: NAVY, display: "block", marginBottom: 4 }}>
             Full name <span style={{ color: GOLD }}>*</span>
           </label>
-          <input
-            type="text"
+          <ParticipantNameField
             value={name}
-            onChange={e => { setName(e.target.value); setErrors(v => ({ ...v, name: undefined })); }}
+            onChange={v => { setName(v); setErrors(e => ({ ...e, name: undefined })); }}
+            assist={assist}
             placeholder="Juan dela Cruz"
-            aria-invalid={!!errors.name}
-            aria-describedby={errors.name ? "pax-name-err" : undefined}
-            style={{
+            invalid={!!errors.name}
+            describedBy={errors.name ? "pax-name-err" : undefined}
+            inputStyle={{
               ...GF,
               width: "100%",
               padding: "8px 10px",
@@ -243,7 +185,7 @@ function ParticipantEditor({
           <input
             type="email"
             value={email}
-            onChange={e => { setEmail(e.target.value); setErrors(v => ({ ...v, email: undefined })); }}
+            onChange={e => { setEmail(e.target.value); assist.noteEmailTyped(); setErrors(v => ({ ...v, email: undefined })); }}
             placeholder="juan@example.com"
             aria-invalid={!!errors.email}
             aria-describedby={errors.email ? "pax-email-err" : undefined}

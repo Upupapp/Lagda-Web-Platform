@@ -34,6 +34,9 @@ import { useDetailTitle } from "../../../hooks/useDetailTitle";
 import { useViewport } from "../../../hooks/useViewport";
 import { ResponsiveStepper } from "../../../components/system/ResponsiveStepper";
 import { MAP_ROLES_AUTH_METHOD, withMapRolesDefaults } from "./map-roles-defaults";
+import { useAccountNameAssist } from "../../../hooks/useAccountNameAssist";
+import { ParticipantNameField } from "../../../components/prepare/ParticipantNameField";
+import { PeoplePicker } from "../../../components/prepare/PeoplePicker";
 import { USE_REAL_BACKEND } from "../../../services/backend-flag";
 import { realTemplatesService } from "../../../services/real/templates.service";
 import { ApiError } from "../../../services/api-client";
@@ -108,24 +111,11 @@ function RoleMappingStep({
                 )}
               </div>
               <div style={{ display: "grid", gridTemplateColumns: isNarrow ? "1fr" : "1fr 1fr", gap: 10 }}>
-                <FormField label="Full Name" required={m.required}>
-                  <input
-                    type="text"
-                    value={m.displayName}
-                    onChange={e => onChange(idx, { displayName: e.target.value })}
-                    placeholder="e.g. Maria Santos"
-                    style={inputStyle}
-                  />
-                </FormField>
-                <FormField label="Email Address" required={m.required}>
-                  <input
-                    type="email"
-                    value={m.email}
-                    onChange={e => onChange(idx, { email: e.target.value })}
-                    placeholder="e.g. maria@example.com"
-                    style={inputStyle}
-                  />
-                </FormField>
+                <RoleIdentity
+                  mapping={m}
+                  onChange={patch => onChange(idx, patch)}
+                  takenEmails={mappings.filter((_, i) => i !== idx).map(x => x.email.trim()).filter(e => e !== "")}
+                />
                 {m.role === "carbon-copy" ? (
                   <FormField label="Access">
                     <input type="text" readOnly aria-readonly="true" value="Sees it in their LAGDA account" style={readOnlyInputStyle} />
@@ -143,6 +133,54 @@ function RoleMappingStep({
         })}
       </div>
     </div>
+  );
+}
+
+/**
+ * Who fills one role: chosen from the workspace's people, or typed. The same
+ * rule as Prepare's Signers step: an email with a LAGDA account brings that
+ * account's name, locked, with Edit to change it for this document.
+ */
+function RoleIdentity({ mapping, onChange, takenEmails }: {
+  mapping: TemplateRoleMapping;
+  onChange: (patch: Partial<TemplateRoleMapping>) => void;
+  takenEmails: string[];
+}) {
+  const workspaceId = usePlatform().currentWorkspace?.id;
+  const assist = useAccountNameAssist({
+    workspaceId, email: mapping.email, name: mapping.displayName,
+    onName: found => { onChange({ displayName: found }); },
+  });
+  return (
+    <>
+      <div style={{ gridColumn: "1 / -1", marginBottom: -4 }}>
+        <PeoplePicker
+          compact
+          workspaceId={workspaceId}
+          contacts={[]}
+          takenEmails={takenEmails}
+          onPick={person => { onChange({ displayName: person.name, email: person.email }); assist.notePicked(person); }}
+        />
+      </div>
+      <FormField label="Full Name" required={mapping.required}>
+        <ParticipantNameField
+          value={mapping.displayName}
+          onChange={v => { onChange({ displayName: v }); }}
+          assist={assist}
+          placeholder="e.g. Maria Santos"
+          inputStyle={inputStyle}
+        />
+      </FormField>
+      <FormField label="Email Address" required={mapping.required}>
+        <input
+          type="email"
+          value={mapping.email}
+          onChange={e => { onChange({ email: e.target.value }); assist.noteEmailTyped(); }}
+          placeholder="e.g. maria@example.com"
+          style={inputStyle}
+        />
+      </FormField>
+    </>
   );
 }
 
