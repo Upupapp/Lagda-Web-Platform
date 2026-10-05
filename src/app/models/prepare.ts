@@ -77,7 +77,7 @@ export const PREPARATION_STEPS: {
   { id: "upload",         label: "Documents",      shortLabel: "Docs",     route: "/app/prepare/upload",         icon: "FileText",   blurb: "The file everyone will sign" },
   { id: "participants",   label: "Signers",        shortLabel: "Signers",  route: "/app/prepare/participants",   icon: "Users",      blurb: "Who needs to sign it" },
   { id: "routing",        label: "Order",          shortLabel: "Order",    route: "/app/prepare/routing",        icon: "ListOrdered", blurb: "What order they sign in" },
-  { id: "settings",       label: "Settings",       shortLabel: "Settings", route: "/app/prepare/settings",       icon: "SlidersHorizontal", blurb: "Reminders and expiry" },
+  { id: "settings",       label: "Settings",       shortLabel: "Settings", route: "/app/prepare/settings",       icon: "SlidersHorizontal", blurb: "Reminders and expiration" },
   { id: "fields",         label: "Place Fields",   shortLabel: "Fields",   route: "/app/prepare/fields",         icon: "PenLine",    blurb: "Where each signature goes" },
   { id: "authentication", label: "Authentication", shortLabel: "Auth",     route: "/app/prepare/authentication", icon: "ShieldCheck", blurb: "How signers prove who they are" },
   { id: "review",         label: "Review",         shortLabel: "Review",   route: "/app/prepare/review",         icon: "ClipboardCheck", blurb: "Check everything before sending" },
