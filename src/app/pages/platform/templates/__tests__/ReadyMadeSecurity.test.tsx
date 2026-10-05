@@ -68,7 +68,10 @@ describe("ready-made templates stay on the server", () => {
     const offenders = srcFiles(join(root, "app")).concat(join(root, "router.tsx"))
       .filter(f => readFileSync(f, "utf8").includes("ready_made_template.json"));
     expect(offenders).toEqual([]);
-  });
+    // It reads every source file. That is seconds, not milliseconds, and it
+    // grows with the app: at the default 5s it timed out whenever the disk
+    // was busy, which says nothing about what it checks.
+  }, 30_000);
 
   it("keeps only the catalogue on a Free workspace, and drops text loaded for a paid one", async () => {
     installReadyMadeLibrary(FULL, "full");
