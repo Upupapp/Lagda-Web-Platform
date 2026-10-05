@@ -9,6 +9,7 @@
 // Both halves live here rather than in each of the three call sites, so the
 // wording, the destructive styling and the redirect cannot drift apart.
 
+import { noteDeliberateSignOut } from "../utils/authReturnPath";
 import { useCallback } from "react";
 import { useNavigate } from "react-router";
 import { usePlatform } from "../context/PlatformContext";
@@ -47,6 +48,8 @@ export function useSignOutFlow(beforeSignOut?: () => void): SignOutFlow {
             detail: "Ending your session and clearing this device.",
           },
           async () => {
+            // Before the session ends: the guards react the moment it does.
+            noteDeliberateSignOut();
             await signOut();
           },
         );

@@ -47,7 +47,28 @@ export function sanitizeOnboardingReturnTo(raw: string | null | undefined): stri
 
 /** Builds the sign-in URL used to send an unauthenticated/expired visitor
  *  back through auth without losing where they were headed. */
-export function buildSignInUrl(pathname: string): string {
+/**
+ * Set while a DELIBERATE sign-out is in flight.
+ *
+ * Signing out flips the session to "unauthenticated" while the person is
+ * still on an /app page, and the route guards answer that the way they answer
+ * an expired session: by sending them to sign-in with `returnTo` set to the
+ * page they were on. That ran before the sign-out flow's own navigation, so a
+ * sign-out from the Password page ended on /sign-in?returnTo=…/password, and
+ * whoever signed in next in that tab, on ANY account, was dropped on that page.
+ *
+ * `returnTo` is for someone who did not choose to leave: an expired session,
+ * or a signed-out visitor opening a deep link. A short window, not a flag to
+ * clear: nothing has to remember to reset it, and a sign-in minutes later is
+ * unaffected.
+ */
+let deliberateSignOutUntil = 0;
+export function noteDeliberateSignOut(now: number = Date.now()): void {
+  deliberateSignOutUntil = now + 15_000;
+}
+
+export function buildSignInUrl(pathname: string, now: number = Date.now()): string {
+  if (now < deliberateSignOutUntil) return "/sign-in";
   const safe = pathname.startsWith("/app") ? pathname : DEFAULT_RETURN_PATH;
   return `/sign-in?returnTo=${encodeURIComponent(safe)}`;
 }

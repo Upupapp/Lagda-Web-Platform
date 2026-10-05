@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { sanitizeAppReturnTo } from "../authReturnPath";
+import { sanitizeAppReturnTo, buildSignInUrl, noteDeliberateSignOut } from "../authReturnPath";
 
 describe("sanitizeAppReturnTo", () => {
   it("keeps /app paths and falls back for anything else", () => {
@@ -22,5 +22,26 @@ describe("sanitizeAppReturnTo", () => {
     expect(sanitizeAppReturnTo("/join/abc/../../evil")).toBe("/app/dashboard");
     expect(sanitizeAppReturnTo("/join//evil.example")).toBe("/app/dashboard");
     expect(sanitizeAppReturnTo("/invitations/accept?token=abcdef&next=https://evil")).toBe("/app/dashboard");
+  });
+});
+
+describe("a deliberate sign-out", () => {
+  it("ends on a plain /sign-in, where an expired session keeps the page to return to", () => {
+    const t0 = 1_800_000_000_000;
+    // Nobody signed out: the session expired, or a signed-out visitor opened a link.
+    expect(buildSignInUrl("/app/settings/security/password", t0))
+      .toBe("/sign-in?returnTo=%2Fapp%2Fsettings%2Fsecurity%2Fpassword");
+
+    // The person pressed Sign Out. The next sign-in in this tab, on ANY
+    // account, must open Home, not the page the last person was on.
+    noteDeliberateSignOut(t0);
+    expect(buildSignInUrl("/app/settings/security/password", t0 + 300)).toBe("/sign-in");
+    expect(buildSignInUrl("/app/documents?list=sent", t0 + 5_000)).toBe("/sign-in");
+  });
+
+  it("is a short window, so a session that expires later still returns to its page", () => {
+    const t0 = 1_800_000_100_000;
+    noteDeliberateSignOut(t0);
+    expect(buildSignInUrl("/app/documents", t0 + 60_000)).toBe("/sign-in?returnTo=%2Fapp%2Fdocuments");
   });
 });
