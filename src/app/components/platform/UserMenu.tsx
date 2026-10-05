@@ -1,5 +1,6 @@
 // User account menu — displays user info and navigation to profile, settings, sign out.
 
+import { USE_REAL_BACKEND } from "../../services/backend-flag";
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Link } from "react-router";
 import { CircleUser, Lock, HelpCircle, LogOut, ChevronUp, Settings, Sparkles } from "lucide-react";
@@ -171,11 +172,15 @@ export function UserMenu({ collapsed, onSignOut }: UserMenuProps) {
               <span>Sign Out</span>
             </button>
 
-            <div style={{ padding: "6px 10px 2px" }}>
-              <p style={{ color: "#94A3B8", ...GM, fontSize: 9 }}>
-                FRONTEND DEMONSTRATION — Signing out clears the in-memory session only.
-              </p>
-            </div>
+            {/* The demo build only. On the live site signing out ends the
+                session on the server, and this note said it did not. */}
+            {!USE_REAL_BACKEND && (
+              <div style={{ padding: "6px 10px 2px" }}>
+                <p style={{ color: "#94A3B8", ...GM, fontSize: 9 }}>
+                  FRONTEND DEMONSTRATION — Signing out clears the in-memory session only.
+                </p>
+              </div>
+            )}
           </div>
         </div>
       )}

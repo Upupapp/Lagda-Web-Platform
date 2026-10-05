@@ -22,6 +22,30 @@ import { ApiError } from "../../../services/api-client";
 import { StepBanner, StepTwoColumn, RailCard } from "../../../components/prepare/StepBanner";
 import { useProcessing, buildSteps } from "../../../services/processing.service";
 
+/**
+ * "3 pages", "1 page". On the live site the count is the server's own, read
+ * from the uploaded file, so it is stated plainly. The demo build has no file
+ * to read and marks its number as an estimate.
+ */
+export function pageCountLabel(count: number, exact: boolean): string {
+  return `${exact ? "" : "~"}${String(count)} ${count === 1 ? "page" : "pages"}`;
+}
+
+/**
+ * The page count beside a file, or nothing.
+ *
+ * The number shown before an upload finishes was a guess from the file's size
+ * (one page per 40 KB), printed as "~1 pages". On the live site the guess is
+ * not shown at all: the line appears once the server has counted the pages,
+ * and states that count. The demo build, which never uploads, keeps its
+ * estimate and marks it as one.
+ */
+export function pageCountText(file: Pick<PrepFile, "pageCount" | "demoPageCount">, live: boolean): string {
+  if (file.pageCount !== undefined) return ` · ${pageCountLabel(file.pageCount, true)}`;
+  if (!live && file.demoPageCount !== undefined) return ` · ${pageCountLabel(file.demoPageCount, false)}`;
+  return "";
+}
+
 const GF     = { fontFamily: "'Geist', sans-serif" };
 const NAVY   = "#07111F";
 const AZURE  = "#0078D4";
@@ -152,7 +176,7 @@ function FileRow({
         </div>
         <div style={{ ...GF, fontSize: 12, color: stateColor, marginTop: 2 }}>
           {stateText} · {humanSize(file.fileSizeBytes)}
-          {file.demoPageCount !== undefined && ` · ~${file.demoPageCount} pages`}
+          {pageCountText(file, USE_REAL_BACKEND)}
         </div>
         <UploadStatusLine file={file} onRetry={onRetryUpload} onReselect={onReselect} />
       </div>
@@ -526,6 +550,8 @@ export function UploadStep() {
         uploadStatus: "uploaded",
         backendArtifactId: result.artifactId,
         backendDigest: result.digest,
+        // The server's own count, in place of the size-based guess.
+        ...(Number.isInteger(result.pageCount) && result.pageCount > 0 ? { pageCount: result.pageCount } : {}),
       });
       // The backend now holds the bytes — no reason to keep them in memory.
       clearFileRef(pf.id);
@@ -890,9 +916,9 @@ export function UploadStep() {
           <>
             <strong style={{ color: "#4B5E70" }}>Your document is uploaded securely</strong>
             <br />
-            Every file is scanned for malware before it's stored. Participants, routing, and
-            other setup below stays local to this browser until you finish preparing the
-            transaction.
+            Every file is scanned for malware before it's stored. The document and the
+            participants you add are saved to your workspace as you go; nobody is contacted
+            until you send it on the last step.
           </>
         ) : (
           <>

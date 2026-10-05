@@ -4,6 +4,7 @@
 // Each step renders via <Outlet />. The layout is NOT responsible for step business logic.
 // eNotary content is NEVER shown here. Burgundy (#67023B) is NEVER used.
 
+import { USE_REAL_BACKEND } from "../../../services/backend-flag";
 import React, { useState, useCallback, useRef, useEffect } from "react";
 import { Outlet, Navigate, useNavigate, useLocation } from "react-router";
 import { PrepareProvider, usePrepare } from "../../../context/PrepareContext";
@@ -117,12 +118,14 @@ function DiscardDialog({
           Discard this preparation?
         </h2>
         <p style={{ margin: "0 0 24px", fontSize: 14, color: "#4B5E70", lineHeight: 1.6 }}>
-          All draft content — files, participants, routing, authentication, and settings — will be removed.
-          This action cannot be undone.
+          {USE_REAL_BACKEND
+            ? "This draft and its setup (participants, order, settings and fields) are removed from your Drafts. This cannot be undone."
+            : "All draft content — files, participants, routing, authentication, and settings — will be removed. This action cannot be undone."}
         </p>
         <p style={{ margin: "0 0 24px", fontSize: 13, color: SILVER, lineHeight: 1.5 }}>
-          No files have been uploaded and no invitations have been sent. Your documents workspace
-          is unaffected.
+          {USE_REAL_BACKEND
+            ? "Nothing has been sent to anyone, so no one is notified. The file you uploaded is kept in LAGDA’s secure storage for now; it is no longer listed among your documents."
+            : "No files have been uploaded and no invitations have been sent. Your documents workspace is unaffected."}
         </p>
         <div style={{ display: "flex", gap: 12, justifyContent: "flex-end" }}>
           <button

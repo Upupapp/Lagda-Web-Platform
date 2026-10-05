@@ -293,7 +293,7 @@ export function UploadDocumentModal({ open, onClose }: { open: boolean; onClose:
                       </div>
                       <div style={{ ...GF, fontSize: 12, color, marginTop: 2 }}>
                         {text} · {humanFileSize(f.fileSizeBytes)}
-                        {f.demoPageCount !== undefined && ` · ~${f.demoPageCount} pages`}
+                        {f.demoPageCount !== undefined && ` · ~${String(f.demoPageCount)} ${f.demoPageCount === 1 ? "page" : "pages"}`}
                       </div>
                     </div>
                     <button

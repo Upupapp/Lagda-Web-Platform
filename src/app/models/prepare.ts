@@ -128,7 +128,10 @@ export interface PrepFile {
   mimeType:      string;
   fileState:     PrepFileState;
   order:         number;
-  demoPageCount?: number; // fixture-only; never derived by parsing
+  demoPageCount?: number; // an ESTIMATE from the file's size; never derived by parsing
+  /** The real number of pages, as the server counted them when the file was
+   *  uploaded. Absent until then, and always in the demo build. */
+  pageCount?: number;
 
   // ── Real backend artifact (P1 document/upload integration) ──────────────
   // Everything below is a REAL backend fact once set, never fabricated —
