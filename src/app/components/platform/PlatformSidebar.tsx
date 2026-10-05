@@ -25,7 +25,7 @@ import { usePrepareLaunch } from "../../hooks/usePrepareLaunch";
 import { usePendingInvitationCount } from "../../hooks/usePendingInvitationCount";
 import { InvitationCountBubble, NavCountBubble, NAV_BUBBLES, INVITATION_BUBBLE_STYLES, pendingInvitationsLabel, type NavBubbleKind } from "./InvitationCountBubble";
 import { useNavCounts } from "../../hooks/useNavCounts";
-import { useCanPrepare } from "../../hooks/useCanPrepare";
+import { useNavAccess } from "../../hooks/useCanPrepare";
 
 const BORDER = "rgba(0,0,0,0.08)";
 const GF     = { fontFamily: "'Geist', sans-serif" };
@@ -241,7 +241,7 @@ function InvitationsNavItem({ to, icon, label, collapsed, pending }: {
 
 export function PlatformSidebar() {
   const [collapsed, setCollapsed] = useState(false);
-  const { hasPermission, hasFlag } = usePlatform();
+  const { hasFlag } = usePlatform();
   const planAllows = usePlanCheck();
   const { unreadCount } = useNotificationCenter();
   // Split by where each notice leads, so no notice is counted twice.
@@ -256,7 +256,8 @@ export function PlatformSidebar() {
 
   const sidebarWidth = collapsed ? 60 : 240;
 
-  const canPrepare = useCanPrepare() && hasFlag("prepareFlowEnabled");
+  const nav = useNavAccess();
+  const canPrepare = nav.canPrepare && hasFlag("prepareFlowEnabled");
 
   return (
     <aside
@@ -376,7 +377,7 @@ export function PlatformSidebar() {
       <nav aria-label="Platform sections" data-guide="platform-sidebar-nav" style={{ flex: 1, padding: collapsed ? "10px 8px" : "10px 14px", overflowY: "auto" }}>
         <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: 2 }}>
           {PRIMARY_NAV.map((item) => {
-            const allowed = !item.permission || hasPermission(item.permission);
+            const allowed = nav.allows(item);
             const enabled = !item.featureFlag || hasFlag(item.featureFlag);
             if (!allowed || !enabled || (item.plan !== undefined && !planAllows(item.plan))) return null;
             if (item.id === "documents") {
@@ -432,7 +433,7 @@ export function PlatformSidebar() {
         {collapsed && <div style={{ height: 8 }} />}
         <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: 2 }}>
           {UTILITY_NAV.map((item) => {
-            const allowed = !item.permission || hasPermission(item.permission);
+            const allowed = nav.allows(item);
             const enabled = !item.featureFlag || hasFlag(item.featureFlag);
             if (!allowed || !enabled || (item.plan !== undefined && !planAllows(item.plan))) return null;
             // Workspace: join requests waiting for an owner or administrator.

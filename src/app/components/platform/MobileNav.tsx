@@ -29,7 +29,7 @@ import { usePendingInvitationCount } from "../../hooks/usePendingInvitationCount
 import { InvitationCountBubble, NavCountBubble, INVITATION_BUBBLE_STYLES } from "./InvitationCountBubble";
 import { useNavCounts } from "../../hooks/useNavCounts";
 import { useWorkspacePlanLabel } from "../../hooks/useWorkspacePlanLabel";
-import { useCanPrepare } from "../../hooks/useCanPrepare";
+import { useNavAccess } from "../../hooks/useCanPrepare";
 
 const BORDER = "rgba(0,0,0,0.08)";
 const GF     = { fontFamily: "'Geist', sans-serif" };
@@ -52,7 +52,7 @@ export function MobileNav() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [toolsOpen, setToolsOpen] = useState(false);
   const [joining, setJoining] = useState(false);
-  const { user, currentWorkspace, unreadCount, hasPermission, hasFlag } = usePlatform();
+  const { user, currentWorkspace, unreadCount, hasFlag } = usePlatform();
   const planAllows = usePlanCheck();
   // 093. Joining another workspace is part of Personal (the person's own plan).
   const { plan: myPlan } = useMyPlan();
@@ -132,7 +132,8 @@ export function MobileNav() {
     restartTour();
   }, [restartTour]);
 
-  const canPrepare = useCanPrepare() && hasFlag("prepareFlowEnabled");
+  const nav = useNavAccess();
+  const canPrepare = nav.canPrepare && hasFlag("prepareFlowEnabled");
 
   return (
     <>
@@ -314,7 +315,7 @@ export function MobileNav() {
         <nav aria-label="Platform sections" data-guide="platform-sidebar-nav" style={{ flex: 1, padding: "10px 10px", overflowY: "auto" }}>
           <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: 2 }}>
             {PRIMARY_NAV.map((item) => {
-              const allowed = !item.permission || hasPermission(item.permission);
+              const allowed = nav.allows(item);
               const enabled = !item.featureFlag || hasFlag(item.featureFlag);
               if (!allowed || !enabled || (item.plan !== undefined && !planAllows(item.plan))) return null;
               return (
@@ -355,7 +356,7 @@ export function MobileNav() {
           <div style={{ borderTop: `1px solid ${BORDER}`, margin: "8px 0" }} />
           <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: 2 }}>
             {UTILITY_NAV.map((item) => {
-              const allowed = !item.permission || hasPermission(item.permission);
+              const allowed = nav.allows(item);
               const enabled = !item.featureFlag || hasFlag(item.featureFlag);
               if (!allowed || !enabled || (item.plan !== undefined && !planAllows(item.plan))) return null;
               return (
