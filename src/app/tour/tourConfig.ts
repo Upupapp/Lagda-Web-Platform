@@ -96,7 +96,7 @@ export const TOUR_STEPS: GuideStep[] = [
       // Real mode names the rows platform.nav.ts actually renders for a real
       // account; the demo build keeps its wider (mock) section list.
       USE_REAL_BACKEND
-        ? "This is how you reach the rest of LAGDA: Home, Documents, Shared Documents, Invitations, Templates, Contacts, and Check a Document, plus Workspace and My Settings below. Only the sections your role and plan can access are shown — on smaller screens, the same navigation lives behind the menu icon at the top."
+        ? "This is how you reach the rest of LAGDA: Home, Documents, Shared Documents, Invitations, Templates, Contacts, and Verify a Document, plus Workspace and My Settings below. Only the sections your role and plan can access are shown — on smaller screens, the same navigation lives behind the menu icon at the top."
         : "This is how you reach the rest of the platform: Documents, Workflow, Templates, Contacts, Verify Document, My Actions, Reports, and Automation, plus Notifications, Team, and Settings below. Only the sections your role can access are shown — on smaller screens, the same navigation lives behind the menu icon at the top.",
     placement: "right",
   },

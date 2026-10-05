@@ -37,7 +37,7 @@ const SEGMENT_LABELS: Record<string, string> = {
   waitlist:                  "Join Waitlist",
   help:                      "Help Center",
   contact:                   "Contact",
-  verify:                    "Verify Document",
+  verify:                    "Verify a Document",
   "service-status":          "Service Status",
   privacy:                   "Privacy Policy",
   terms:                     "Terms of Service",

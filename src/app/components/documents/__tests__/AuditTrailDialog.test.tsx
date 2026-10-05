@@ -8,6 +8,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { MemoryRouter } from "react-router";
 import type { AuditTrail } from "../../../services/real/signing-request.service";
 
 const audit = vi.fn();
@@ -54,10 +55,12 @@ const trail: AuditTrail = {
 
 function renderDialog(onClose: () => void = vi.fn()) {
   render(
-    <AuditTrailDialog
-      workspaceId="ws_1" signingRequestId="sr_1"
-      documentTitle="Lease Agreement" onClose={onClose}
-    />,
+    <MemoryRouter>
+      <AuditTrailDialog
+        workspaceId="ws_1" signingRequestId="sr_1"
+        documentTitle="Lease Agreement" onClose={onClose}
+      />
+    </MemoryRouter>,
   );
 }
 
@@ -191,5 +194,17 @@ describe("presentation fixes", () => {
       expect.stringContaining("agreed to sign"),
       expect.stringContaining("All required signatures"),
     ]);
+  });
+
+  it("names the page as the sidebar does, and the name is a link to it", async () => {
+    // It said "Verify Document" in blue, which is not what the sidebar calls
+    // the page and was not a link.
+    audit.mockResolvedValue(trail);
+    const onClose = vi.fn();
+    renderDialog(onClose);
+    const link = await screen.findByRole("link", { name: "Verify a Document" });
+    expect(link).toHaveAttribute("href", "/app/verify");
+    await userEvent.click(link);
+    expect(onClose).toHaveBeenCalled();
   });
 });

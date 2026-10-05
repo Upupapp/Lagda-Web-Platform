@@ -15,6 +15,7 @@
 
 import { useState, useEffect, type CSSProperties } from "react";
 import { X, User, Mail, Cog, ShieldCheck, FileCheck } from "lucide-react";
+import { Link } from "react-router";
 import {
   realSigningRequestService,
   type AuditTrail, type AuditEntry, type AuditActorType,
@@ -203,7 +204,9 @@ export function AuditTrailDialog({
               </ol>
               <p style={{ fontSize: 11, color: SLATE4, margin: "14px 0 0", ...GF }}>
                 This record is read-only. The same trail backs the document&rsquo;s public
-                verification page — <span style={{ color: AZURE }}>Verify Document</span> in the sidebar.
+                verification page —{" "}
+                <Link to="/app/verify" onClick={onClose} style={{ color: AZURE, textDecoration: "underline" }}>Verify a Document</Link>{" "}
+                in the sidebar.
               </p>
             </>
           )}

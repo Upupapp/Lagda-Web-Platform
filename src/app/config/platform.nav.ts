@@ -135,7 +135,7 @@ export const PRIMARY_NAV: PlatformNavItem[] = [
   },
   {
     id: "verify",
-    label: "Check a Document",
+    label: "Verify a Document",
     path: "/app/verify",
     icon: "ShieldCheck",
     group: "primary",

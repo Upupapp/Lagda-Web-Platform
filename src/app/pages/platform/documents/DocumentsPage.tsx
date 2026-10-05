@@ -2415,7 +2415,7 @@ function DocumentViewerDialog({
   // byte-identical forever; the signature is never in it. At completion the
   // merge draws the signatures onto a SEPARATE sealed artifact. The viewer
   // used to show only the uploaded file, so a completed document looked
-  // unsigned here while Check a Document showed it signed.
+  // unsigned here while Verify a Document showed it signed.
   //
   // A completed request now opens on the signed version, with the original
   // one click away. Other states have no signed version yet.

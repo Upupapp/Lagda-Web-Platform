@@ -188,7 +188,7 @@ export const HELP_ARTICLES: readonly HelpArticle[] = [
     title: "Check a document by its Verification ID or file",
     summary: "Confirm that a document was completed through LAGDA and that a file you hold is the sealed original.",
     steps: [
-      "Open lagda.io/verify (Check a Document in the app sidebar, or Document Verification in the website footer).",
+      "Open lagda.io/verify (Verify a Document in the app sidebar, or Document Verification in the website footer).",
       "Type the Verification ID printed on the document, in the form LAGDA-VER-YYYY-XXXXXXXXXX, and click Check record. Or scan the QR code on the document with your phone.",
       "The result shows whether a completed record exists, when it was completed, how many participants it had, and the cryptographic digest of the sealed file. It does not show the document or the participants' details.",
       "To compare a PDF you hold against the sealed original, drop it under Check a file and click Check file. LAGDA compares the file's digest; nothing is uploaded or stored.",
