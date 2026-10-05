@@ -101,6 +101,48 @@ describe("the team tree", () => {
     expect(tree[1]!.children.map(n => n.unit.name)).toEqual(["Payroll"]);
   });
 
+  it("orders every level by date created or by name, as chosen", () => {
+    const units = [
+      ...UNITS,
+      { unitId: "un_ap", parentUnitId: "un_old", kind: "team", name: "accounts payable", createdAt: NOW - 2 * DAY, archivedAt: null },
+      { unitId: "un_t10", parentUnitId: null, kind: "team", name: "Team 10", createdAt: NOW - 20 * DAY, archivedAt: null },
+      { unitId: "un_t2", parentUnitId: null, kind: "team", name: "Team 2", createdAt: NOW - 30 * DAY, archivedAt: null },
+    ] as unknown as OrganizationUnit[];
+    const names = (sort: Parameters<typeof buildTeamTree>[2]) => {
+      const tree = buildTeamTree(units, new Map(), sort);
+      return { top: tree.map(n => n.unit.name), finance: tree.find(n => n.unit.name === "Finance")!.children.map(n => n.unit.name) };
+    };
+    // Oldest first: ascending by the date each team was created.
+    expect(names("oldest")).toEqual({ top: ["Finance", "Team 2", "Team 10", "Cebu Office"], finance: ["Payroll", "accounts payable"] });
+    expect(names("newest").top).toEqual(["Cebu Office", "Team 10", "Team 2", "Finance"]);
+    // By name: capitals do not sort ahead of small letters, and "Team 2" comes before "Team 10".
+    expect(names("name-asc")).toEqual({ top: ["Cebu Office", "Finance", "Team 2", "Team 10"], finance: ["accounts payable", "Payroll"] });
+    expect(names("name-desc").top).toEqual(["Team 10", "Team 2", "Finance", "Cebu Office"]);
+  });
+
+  it("re-orders the page when a sort is chosen, and remembers it", async () => {
+    window.localStorage.removeItem("lagda.people-teams.sort");
+    const user = userEvent.setup();
+    const view = show();
+    const tree = await screen.findByTestId("team-tree");
+    const order = () => [...tree.querySelectorAll('[data-depth="0"]')].map(node => node.getAttribute("aria-label"));
+    expect(order()).toEqual(["Cebu Office", "Finance"]);
+
+    await user.selectOptions(screen.getByTestId("team-sort"), "oldest");
+    expect(order()).toEqual(["Finance", "Cebu Office"]);
+    await user.selectOptions(screen.getByTestId("team-sort"), "name-asc");
+    expect(order()).toEqual(["Cebu Office", "Finance"]);
+    await user.selectOptions(screen.getByTestId("team-sort"), "name-desc");
+    expect(order()).toEqual(["Finance", "Cebu Office"]);
+
+    // The choice is still there on the next visit.
+    view.unmount();
+    show();
+    await screen.findByTestId("team-tree");
+    expect(screen.getByTestId<HTMLSelectElement>("team-sort").value).toBe("name-desc");
+    window.localStorage.removeItem("lagda.people-teams.sort");
+  });
+
   it("shows teams with their people and titles, and who is not in a team yet", async () => {
     show();
     const tree = await screen.findByTestId("team-tree");

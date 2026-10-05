@@ -588,8 +588,7 @@ export function RealDashboard() {
             )}
 
             <p style={{ ...GF, fontSize: 12, color: SLATE4, margin: "28px 2px 0" }}>
-              Everything above comes from your signing requests. Usage, plan and activity summaries aren&rsquo;t
-              available for real accounts yet, so they aren&rsquo;t shown.
+              Everything above comes from your signing requests.
             </p>
           </>
         )}

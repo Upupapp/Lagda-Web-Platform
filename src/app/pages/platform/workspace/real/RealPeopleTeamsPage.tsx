@@ -44,8 +44,7 @@ import { useLiveRefresh } from "../../../../services/live/use-live-refresh";
 import { useSearchParams } from "react-router";
 import {
   Search, Plus, Network, UserPlus, Users, MoreHorizontal, Pencil, Trash2, ArrowLeftRight,
-  ChevronRight, Mail, X, Contact, Clock, GitFork, LayoutGrid,
-} from "lucide-react";
+  ChevronRight, Mail, X, Contact, Clock, GitFork, LayoutGrid, ArrowUpDown } from "lucide-react";
 import { useWorkspaceAccess } from "../../../../hooks/useWorkspaceAccess";
 import { usePlatform } from "../../../../context/PlatformContext";
 import { useDocumentCardBranding, type CardBranding } from "../../documents/CompletedDocumentCards";
@@ -95,8 +94,39 @@ export interface TeamNode {
   children: TeamNode[];
 }
 
-/** Units into a tree, every level newest first. Archived units are left out. */
-export function buildTeamTree(units: OrganizationUnit[], members: ReadonlyMap<string, OrganizationUnitMember[]>): TeamNode[] {
+/** How the teams are ordered. The same order applies at every level of the tree. */
+export type TeamSort = "newest" | "oldest" | "name-asc" | "name-desc";
+
+export const TEAM_SORT_LABELS: Readonly<Record<TeamSort, string>> = {
+  newest: "Newest first",
+  oldest: "Oldest first",
+  "name-asc": "Name A to Z",
+  "name-desc": "Name Z to A",
+};
+
+const TEAM_SORT_KEY = "lagda.people-teams.sort";
+
+/** The order last chosen on this device; newest first when none, or when storage is unavailable. */
+function rememberedTeamSort(): TeamSort {
+  try {
+    const stored = window.localStorage.getItem(TEAM_SORT_KEY);
+    return stored !== null && stored in TEAM_SORT_LABELS ? stored as TeamSort : "newest";
+  } catch { return "newest"; }
+}
+
+/** Two teams in the chosen order. Names compare without regard to case or accents; ties fall back to age, so the order never shuffles. */
+function compareTeams(sort: TeamSort): (a: OrganizationUnit, b: OrganizationUnit) => number {
+  const byName = (a: OrganizationUnit, b: OrganizationUnit) => a.name.localeCompare(b.name, undefined, { sensitivity: "base", numeric: true });
+  switch (sort) {
+    case "oldest": return (a, b) => a.createdAt - b.createdAt || byName(a, b);
+    case "name-asc": return (a, b) => byName(a, b) || a.createdAt - b.createdAt;
+    case "name-desc": return (a, b) => byName(b, a) || a.createdAt - b.createdAt;
+    default: return (a, b) => b.createdAt - a.createdAt || byName(a, b);
+  }
+}
+
+/** Units into a tree, every level in the chosen order (newest first by default). Archived units are left out. */
+export function buildTeamTree(units: OrganizationUnit[], members: ReadonlyMap<string, OrganizationUnitMember[]>, sort: TeamSort = "newest"): TeamNode[] {
   const live = units.filter(u => u.archivedAt === null);
   const ids = new Set<string>(live.map(u => u.unitId));
   const byParent = new Map<string, OrganizationUnit[]>();
@@ -105,7 +135,7 @@ export function buildTeamTree(units: OrganizationUnit[], members: ReadonlyMap<st
     byParent.set(parent, [...(byParent.get(parent) ?? []), u]);
   }
   const build = (parent: string): TeamNode[] => (byParent.get(parent) ?? [])
-    .sort((a, b) => b.createdAt - a.createdAt)
+    .sort(compareTeams(sort))
     .map(unit => ({ unit, members: members.get(unit.unitId) ?? [], children: build(unit.unitId) }));
   return build("");
 }
@@ -147,6 +177,11 @@ export function RealPeopleTeamsPage({ workspaceId }: { workspaceId: string }) {
   const [data, setData] = useState<PageData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [query, setQuery] = useState("");
+  const [sort, setSort] = useState<TeamSort>(rememberedTeamSort);
+  const chooseSort = (next: TeamSort) => {
+    setSort(next);
+    try { window.localStorage.setItem(TEAM_SORT_KEY, next); } catch { /* the order still applies for this visit */ }
+  };
   const [open, setOpen] = useState<{ userId: string; unitId: string | null } | null>(null);
   const [dialog, setDialog] = useState<null | { kind: "new-team"; parent: string | null } | { kind: "rename"; unit: OrganizationUnit }
     | { kind: "delete"; unit: OrganizationUnit } | { kind: "add-people"; unit: OrganizationUnit } | { kind: "contacts" } | { kind: "waiting" }>(null);
@@ -207,7 +242,7 @@ export function RealPeopleTeamsPage({ workspaceId }: { workspaceId: string }) {
     }
   }, [data, params, setParams]);
 
-  const tree = useMemo(() => data ? buildTeamTree(data.units, data.unitMembers) : [], [data]);
+  const tree = useMemo(() => data ? buildTeamTree(data.units, data.unitMembers, sort) : [], [data, sort]);
   const allTeams = useMemo(() => flatten(tree), [tree]);
 
   const people = useMemo(() => {
@@ -389,6 +424,13 @@ export function RealPeopleTeamsPage({ workspaceId }: { workspaceId: string }) {
           <Search size={15} aria-hidden color={SILVER} />
           <span className="pt-sr">Search people and teams</span>
           <input type="search" value={query} onChange={e => { setQuery(e.target.value); }} placeholder="Search people or teams…" data-testid="people-search" />
+        </label>
+        <label className="pt-sort">
+          <ArrowUpDown size={15} aria-hidden color={SILVER} />
+          <span className="pt-sort-label">Sort teams</span>
+          <select value={sort} onChange={e => { chooseSort(e.target.value as TeamSort); }} data-testid="team-sort">
+            {(Object.keys(TEAM_SORT_LABELS) as TeamSort[]).map(key => <option key={key} value={key}>{TEAM_SORT_LABELS[key]}</option>)}
+          </select>
         </label>
       </div>
       <div aria-live="polite">{notice && <p className="pt-notice" role="status">{notice}<button type="button" aria-label="Dismiss" onClick={() => { setNotice(null); }}><X size={14} /></button></p>}</div>
@@ -1018,6 +1060,10 @@ const PEOPLE_TEAMS_CSS = `
 .pt-summary { display: inline-flex; align-items: center; gap: 6px; margin: 0; font-family: 'Geist', sans-serif; font-size: 13px; color: ${SLATE}; font-weight: 600; }
 .pt-search { display: flex; align-items: center; gap: 8px; flex: 1 1 240px; max-width: 420px; border: 1.5px solid #D1D9E0; border-radius: 10px; padding: 0 10px; background: #FFFFFF; min-height: 40px; }
 .pt-search-full { max-width: none; flex: none; width: 100%; box-sizing: border-box; margin: 10px 0; }
+.pt-sort { display: inline-flex; align-items: center; gap: 8px; margin-left: auto; border: 1.5px solid #D1D9E0; border-radius: 10px; padding: 0 10px; min-height: 40px; background: #fff; box-sizing: border-box; }
+.pt-sort:focus-within { border-color: ${AZURE}; }
+.pt-sort-label { font-family: 'Geist', sans-serif; font-size: 12.5px; font-weight: 600; color: ${SLATE}; white-space: nowrap; }
+.pt-sort select { border: none; outline: none; background: transparent; font-family: 'Geist', sans-serif; font-size: 13px; font-weight: 600; color: ${NAVY}; padding: 8px 2px; cursor: pointer; min-width: 0; }
 .pt-search:focus-within { border-color: ${AZURE}; }
 .pt-search input { border: none; outline: none; flex: 1; min-width: 0; font-family: 'Geist', sans-serif; font-size: 13px; color: ${NAVY}; background: transparent; }
 .pt-notice { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-family: 'Geist', sans-serif; font-size: 13px; color: #14532D;
@@ -1134,6 +1180,8 @@ const PEOPLE_TEAMS_CSS = `
   .pt-action { flex-direction: column; gap: 3px; min-height: 56px; padding: 6px 4px; font-size: 11.5px; white-space: normal; text-align: center; line-height: 1.15; }
   .pt-action-count { position: absolute; top: 4px; right: 6px; }
   .pt-search { max-width: none; flex-basis: 100%; }
+  .pt-sort { margin-left: 0; flex: 1 1 100%; justify-content: space-between; }
+  .pt-sort select { flex: 1; text-align: right; }
   .pt-team-inner, .pt-team { padding: 12px; }
   .pt-team-branded { padding: 0; }
   .pt-team-head { flex-wrap: wrap; }

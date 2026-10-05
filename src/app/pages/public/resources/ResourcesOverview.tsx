@@ -67,7 +67,7 @@ export function ResourcesOverview() {
           {[
             { icon: "❓", title: "Help Center", desc: "Browse guides and common product questions by topic.", path: "/help", cta: "Go to Help Center" },
             { icon: "✉️", title: "Contact", desc: "Reach our team with sales, product, or support questions.", path: "/contact", cta: "Contact LAGDA" },
-            { icon: "📡", title: "Service Status", desc: "View current platform status. Demonstration data — not connected to production monitoring.", path: "/service-status", cta: "View Status" },
+            { icon: "📡", title: "Service Status", desc: "Check whether LAGDA is up and answering right now.", path: "/service-status", cta: "View Status" },
           ].map(({ icon, title, desc, path, cta }) => (
             <div key={path} style={{ background: "#ffffff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: 12, padding: "20px 22px", display: "flex", flexDirection: "column", gap: 10, boxShadow: "0 1px 4px rgba(7,17,31,0.07)" }}>
               <span aria-hidden style={{ fontSize: 24 }}>{icon}</span>

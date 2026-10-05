@@ -365,7 +365,7 @@ export function OnboardingWorkspace() {
                   aria-required
                   aria-invalid={!!joinError || preview.status === "bad"}
                   aria-describedby={joinError ? "ws-join-link-err" : "ws-join-status"}
-                  placeholder="https://lagda.ph/join/…"
+                  placeholder="https://lagda.io/join/…"
                   style={inputStyle(!!joinError)}
                 />
               </Field>

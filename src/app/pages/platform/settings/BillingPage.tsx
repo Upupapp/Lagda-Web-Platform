@@ -332,7 +332,7 @@ export function InvoicesSection() {
               <Badge tone="neutral">Sample — not paid</Badge>
             </div>
             <div style={{ display: "flex", alignItems: "baseline", gap: 10, flexWrap: "wrap", marginTop: 6 }}>
-              <span style={{ ...GF, fontSize: 14, color: SET.INK }}>Business (annual)</span>
+              <span style={{ ...GF, fontSize: 14, color: SET.INK }}>Business (monthly)</span>
               <span style={{ ...GF, fontSize: 20, fontWeight: 800, color: SET.NAVY }}>{formatPeso(SAMPLE_INVOICE_TOTAL)}</span>
             </div>
             <div style={{ ...GF, fontSize: 13, color: SET.SLATE, marginTop: 10, lineHeight: 1.55 }}>

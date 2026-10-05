@@ -12,6 +12,7 @@ import {
 import { useNotificationCenter } from "../../../context/NotificationCenterContext";
 import type { NotificationRecord, NotificationCategory } from "../../../models/notifications";
 import { NOTIFICATION_CATEGORY_LABELS } from "../../../models/notifications";
+import { USE_REAL_BACKEND } from "../../../services/backend-flag";
 
 // ── Design tokens ─────────────────────────────────────────────────────────────
 const GF    = { fontFamily: "'Geist', sans-serif" };
@@ -153,17 +154,19 @@ export function NotificationDetailPage() {
         </Link>
       </div>
 
-      {/* Demo notice */}
-      <div
-        role="note"
-        aria-label="Demonstration data notice"
-        style={{ display: "flex", gap: 8, padding: "10px 12px", background: "#F8FAFC", border: "1px solid #E2E8F0", borderRadius: 8, margin: "16px 0" }}
-      >
-        <AlertCircle size={13} style={{ color: SLATE, flexShrink: 0, marginTop: 1 }} aria-hidden />
-        <p style={{ ...GF, fontSize: 12, color: SLATE, margin: 0 }}>
-          This notification and its read state are fictional frontend demonstration data. No notification was delivered, synchronized, or persisted.
-        </p>
-      </div>
+      {/* Demo notice: the demo build only. A real account's notifications are real. */}
+      {!USE_REAL_BACKEND && (
+        <div
+          role="note"
+          aria-label="Demonstration data notice"
+          style={{ display: "flex", gap: 8, padding: "10px 12px", background: "#F8FAFC", border: "1px solid #E2E8F0", borderRadius: 8, margin: "16px 0" }}
+        >
+          <AlertCircle size={13} style={{ color: SLATE, flexShrink: 0, marginTop: 1 }} aria-hidden />
+          <p style={{ ...GF, fontSize: 12, color: SLATE, margin: 0 }}>
+            This notification and its read state are fictional frontend demonstration data. No notification was delivered, synchronized, or persisted.
+          </p>
+        </div>
+      )}
 
       {/* Card */}
       <div style={{ background: "white", border: "1px solid #E2E8F0", borderRadius: 12, overflow: "hidden", marginBottom: 16 }}>
@@ -300,9 +303,11 @@ export function NotificationDetailPage() {
         <p style={{ ...GF, fontSize: 13, color: SLATE, lineHeight: 1.6, margin: 0 }}>
           {deliveryClassDescription(n.deliveryClass)}
         </p>
-        <p style={{ ...GF, fontSize: 11, color: SILVER, margin: "10px 0 0", fontStyle: "italic" }}>
-          This is reference information only. No delivery status is tracked in this frontend demonstration. Never assume a notification was delivered, synchronized, or received.
-        </p>
+        {!USE_REAL_BACKEND && (
+          <p style={{ ...GF, fontSize: 11, color: SILVER, margin: "10px 0 0", fontStyle: "italic" }}>
+            This is reference information only. No delivery status is tracked in this frontend demonstration. Never assume a notification was delivered, synchronized, or received.
+          </p>
+        )}
       </div>
 
       {/* Preference link */}

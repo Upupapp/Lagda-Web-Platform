@@ -112,12 +112,15 @@ describe("pricing config", () => {
 });
 
 describe("sample invoice", () => {
-  it("is the Business annual price with 12% VAT included", () => {
+  it("is one month of Business with 12% VAT included", () => {
     const inv = buildSampleInvoice("Ana Reyes");
-    expect(SAMPLE_INVOICE_TOTAL).toBe(7990);
-    expect(inv.total).toBe(7990);
-    expect(inv.subtotal).toBe(7133.93);
-    expect(inv.vat).toBe(856.07);
+    expect(SAMPLE_INVOICE_TOTAL).toBe(799);
+    expect(inv.total).toBe(799);
+    expect(inv.subtotal).toBe(713.39);
+    expect(inv.vat).toBe(85.61);
+    // Monthly plans only: the sample must not bill a year.
+    expect(inv.lines[0]?.description).toBe("LAGDA Business — monthly plan");
+    expect(inv.periodEnd - inv.periodStart).toBeLessThan(31 * 86_400_000);
     expect(inv.audit.map(a => a.event)).toEqual(["Issued", "Viewed", "Marked as sample"]);
   });
 });

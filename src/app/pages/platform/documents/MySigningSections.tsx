@@ -363,7 +363,7 @@ function EmptyOrError({ status, icon: Icon, emptyTitle, emptyBody, onRetry }: {
   const failed = status === "error";
   return (
     <div style={{ textAlign: "center", padding: "36px 12px" }}>
-      <Icon size={28} aria-hidden style={{ color: SLATE4 }} />
+      <Icon size={28} aria-hidden style={{ color: SLATE4, display: "block", margin: "0 auto" }} />
       <h3 style={{ ...GF, fontSize: 15, fontWeight: 700, color: NAVY, margin: "10px 0 4px" }}>
         {failed ? "Couldn't load this list" : emptyTitle}
       </h3>

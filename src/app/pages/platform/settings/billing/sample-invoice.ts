@@ -22,7 +22,9 @@ export const VAT_RATE = 0.12;
 
 const business = SAMPLE_PLANS.find(p => p.id === "business");
 /** ₱7,990 — the Business plan's annual sample price for one user. */
-export const SAMPLE_INVOICE_TOTAL = business?.price?.annual ?? 7990;
+// Monthly: the only billing period LAGDA offers. The sample used to bill a
+// year, which the page it sits on says does not exist.
+export const SAMPLE_INVOICE_TOTAL = business?.price?.monthly ?? 799;
 
 const round2 = (n: number) => Math.round(n * 100) / 100;
 
@@ -44,17 +46,17 @@ export interface SampleInvoice {
 export function buildSampleInvoice(billedToName: string): SampleInvoice {
   const issuedAt = Date.UTC(2026, 8, 1, 1, 0); // 1 Sep 2026, 09:00 Manila
   const periodStart = issuedAt;
-  const periodEnd = Date.UTC(2027, 7, 31, 15, 59);
+  const periodEnd = Date.UTC(2026, 8, 30, 15, 59); // 30 Sep 2026, end of day in Manila
   const total = SAMPLE_INVOICE_TOTAL;
   const subtotal = round2(total / (1 + VAT_RATE));
   const vat = round2(total - subtotal);
   return {
     id: SAMPLE_INVOICE_ID,
-    planLabel: "Business (annual)",
+    planLabel: "Business (monthly)",
     issuedAt, periodStart, periodEnd,
     lines: [{
-      description: "LAGDA Business — annual plan",
-      detail: "1 user · 12 months · sample pricing",
+      description: "LAGDA Business — monthly plan",
+      detail: "1 user · 1 month · sample pricing",
       quantity: 1, unitPrice: total, amount: total,
     }],
     subtotal, vat, total, currency: "PHP",

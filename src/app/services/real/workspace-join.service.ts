@@ -192,7 +192,7 @@ interface DemoStore {
 const HOUR = 3_600_000;
 
 function demoOrigin(): string {
-  return typeof window !== "undefined" && window.location?.origin ? window.location.origin : "https://app.lagda.ph";
+  return typeof window !== "undefined" && window.location?.origin ? window.location.origin : "https://lagda.io";
 }
 
 function demoToken(): string {

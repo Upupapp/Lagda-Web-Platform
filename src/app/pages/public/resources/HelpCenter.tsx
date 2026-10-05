@@ -1,16 +1,18 @@
 import { useState } from "react";
+import { ON_LIGHT } from "../../../utils/on-light";
 import { Link } from "react-router";
 import {
   ResourcesPageShell, ResourcesSection,
 } from "../../../components/resources/ResourceComponents";
+import { HELP_ARTICLES, HELP_CATEGORIES, helpArticlePath } from "../../../content/help-articles";
 
 const GF = { fontFamily: "'Geist', sans-serif" };
 const GM = { fontFamily: "'Geist Mono', monospace" };
 
-// Help is not a separate article library: each entry names the topic and the
-// existing guide or product page that covers it, so a visitor knows where the
-// link leads before following it.
-const HELP_ARTICLES = [
+// Two lists. The ARTICLES (content/help-articles.ts) explain one task each in
+// numbered steps. The entries below are the related guide and product pages,
+// each naming the page it opens so a visitor knows where the link leads.
+const RELATED_PAGES = [
   { id: "getting-started-1", category: "Getting Started", title: "Guides for preparing and sending a document", page: "Guides", tags: ["document", "prepare", "upload", "start", "send", "signing", "workflow"], path: "/resources/guides" },
   { id: "getting-started-2", category: "Getting Started", title: "How participant roles work", page: "Participant Roles", tags: ["participants", "signer", "add", "recipient"], path: "/features/participant-roles" },
   { id: "getting-started-3", category: "Getting Started", title: "Frequently asked questions", page: "FAQ", tags: ["faq", "questions", "start"], path: "/resources/faq" },
@@ -28,13 +30,21 @@ const HELP_ARTICLES = [
   { id: "enotary-1", category: "LAGDA eNotary", title: "About LAGDA eNotary", page: "LAGDA eNotary", tags: ["enotary", "notary", "notarization", "coming soon", "accreditation"], path: "/enotary" },
 ];
 
-const CATEGORIES = ["Getting Started", "Authentication", "Templates", "Verification", "Account", "Plans and Billing", "Teams and Workspace", "Legal and Compliance", "LAGDA eNotary"];
+const PAGE_CATEGORIES = ["Getting Started", "Authentication", "Templates", "Verification", "Account", "Plans and Billing", "Teams and Workspace", "Legal and Compliance", "LAGDA eNotary"];
+const CATEGORIES = [...HELP_CATEGORIES, ...PAGE_CATEGORIES];
 
 export function HelpCenter() {
   const [query, setQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
-  const filtered = HELP_ARTICLES.filter(article => {
+  const q0 = query.toLowerCase().trim();
+  const articles = HELP_ARTICLES.filter(article => {
+    const matchesCategory = !selectedCategory || article.category === selectedCategory;
+    const matchesQuery = !q0 || article.title.toLowerCase().includes(q0) || article.summary.toLowerCase().includes(q0) || article.tags.some(t => t.includes(q0));
+    return matchesCategory && matchesQuery;
+  });
+
+  const filtered = RELATED_PAGES.filter(article => {
     const matchesCategory = !selectedCategory || article.category === selectedCategory;
     const q = query.toLowerCase().trim();
     const matchesQuery = !q || article.title.toLowerCase().includes(q) || article.page.toLowerCase().includes(q) || article.tags.some(t => t.includes(q));
@@ -89,13 +99,41 @@ export function HelpCenter() {
           ))}
         </div>
 
-        {/* Results */}
-        {filtered.length === 0 ? (
+        {/* Articles: one task each, in steps. */}
+        {articles.length > 0 && (
+          <div style={{ marginBottom: 36 }}>
+            <h2 style={{ color: "#07111F", ...GF, fontSize: 18, fontWeight: 800, margin: "0 0 4px" }}>Help articles</h2>
+            <p style={{ color: ON_LIGHT.slate, ...GF, fontSize: 13, lineHeight: 1.55, margin: "0 0 12px" }}>Step-by-step instructions for one task at a time.</p>
+            <p style={{ color: ON_LIGHT.slate, ...GM, fontSize: 10, marginBottom: 16 }}>{articles.length} ARTICLE{articles.length !== 1 ? "S" : ""}</p>
+            <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+              {articles.map(({ slug, category, title, summary }) => (
+                <Link key={slug} to={helpArticlePath(slug)} style={{
+                  display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16,
+                  padding: "13px 18px", borderRadius: 9, textDecoration: "none",
+                  background: "#ffffff", border: "1px solid rgba(0,0,0,0.08)",
+                }}
+                  onMouseEnter={(e) => { (e.currentTarget).style.borderColor = "rgba(0,120,212,0.3)"; (e.currentTarget).style.background = "rgba(0,120,212,0.04)"; }}
+                  onMouseLeave={(e) => { (e.currentTarget).style.borderColor = "rgba(0,0,0,0.08)"; (e.currentTarget).style.background = "#ffffff"; }}
+                >
+                  <div>
+                    <span style={{ color: ON_LIGHT.azure, ...GM, fontSize: 9, fontWeight: 700, letterSpacing: "0.08em", display: "block", marginBottom: 3 }}>{category.toUpperCase()}</span>
+                    <span style={{ color: "#07111F", ...GF, fontSize: 14, fontWeight: 600, display: "block" }}>{title}</span>
+                    <span style={{ color: ON_LIGHT.slate, ...GF, fontSize: 12, display: "block", marginTop: 2 }}>{summary}</span>
+                  </div>
+                  <span style={{ color: "#94A3B8", fontSize: 14, flexShrink: 0 }}>→</span>
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Related pages */}
+        {filtered.length === 0 && articles.length === 0 ? (
           <div style={{ textAlign: "center", padding: "40px 0" }}>
-            <p style={{ color: "#64748B", ...GF, fontSize: 16, fontWeight: 600 }}>No guides or pages found for "{query}"</p>
+            <p style={{ color: "#64748B", ...GF, fontSize: 16, fontWeight: 600 }}>No articles, guides or pages found for "{query}"</p>
             <p style={{ color: "#64748B", ...GF, fontSize: 13 }}>Try a different search term or <Link to="/contact" style={{ color: "#0078D4", textDecoration: "none" }}>contact our team</Link>.</p>
           </div>
-        ) : (
+        ) : filtered.length === 0 ? null : (
           <div>
             <h2 style={{ color: "#07111F", ...GF, fontSize: 18, fontWeight: 800, margin: "0 0 4px" }}>Related guides and pages</h2>
             <p style={{ color: "#64748B", ...GF, fontSize: 13, lineHeight: 1.55, margin: "0 0 12px" }}>Each topic opens the LAGDA guide or product page that covers it.</p>
@@ -126,7 +164,7 @@ export function HelpCenter() {
 
       <ResourcesSection id="contact-support" light bordered>
         <div style={{ maxWidth: 600, margin: "0 auto", textAlign: "center" }}>
-          <p style={{ color: "#0078D4", ...GM, fontSize: 11, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 12 }}>STILL NEED HELP?</p>
+          <p style={{ color: ON_LIGHT.azure, ...GM, fontSize: 11, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 12 }}>STILL NEED HELP?</p>
           <h2 style={{ color: "#07111F", ...GF, fontSize: 26, fontWeight: 800, marginBottom: 12 }}>Contact our team.</h2>
           <p style={{ color: "#64748B", ...GF, fontSize: 15, lineHeight: 1.65, marginBottom: 24 }}>Our team can help with sales, product questions, and support inquiries.</p>
           <Link to="/contact" style={{ background: "#0078D4", color: "white", ...GF, fontSize: 14, fontWeight: 700, padding: "12px 28px", borderRadius: 8, textDecoration: "none", minHeight: 44, display: "inline-flex", alignItems: "center" }}>Contact Support</Link>

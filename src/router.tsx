@@ -438,6 +438,11 @@ const HelpCenter = lazy(() =>
     default: m.HelpCenter,
   })),
 );
+const HelpArticle = lazy(() =>
+  import("./app/pages/public/resources/HelpArticle").then((m) => ({
+    default: m.HelpArticle,
+  })),
+);
 const ContactPage = lazy(() =>
   import("./app/pages/public/resources/ContactPage").then((m) => ({
     default: m.ContactPage,
@@ -3002,6 +3007,7 @@ export const router = createBrowserRouter([
       { path: "resources/templates-guide", element: <TemplatesGuide /> },
       { path: "resources/security-guide", element: <SecurityGuide /> },
       { path: "help", element: <HelpCenter /> },
+      { path: "help/:slug", element: <HelpArticle /> },
       { path: "contact", element: <ContactPage /> },
       { path: "service-status", element: <ServiceStatus /> },
 
