@@ -355,6 +355,10 @@ export function DocumentArchiveViewer({
       <div
         style={{
           flexShrink: 0, display: "flex", alignItems: "center", gap: 12,
+          // On a phone the header is two rows: title and page count above,
+          // the view switch and download below. In one row those buttons took
+          // the width, the title vanished and "Page 1 of 1" broke into a column.
+          flexWrap: isCompact ? "wrap" : "nowrap", rowGap: 8,
           padding: isCompact ? "10px 12px" : "12px 20px",
           background: INK_PANEL, borderBottom: `1px solid rgba(201,161,90,0.25)`,
           boxShadow: "0 2px 10px rgba(0,0,0,0.35)",
@@ -386,14 +390,16 @@ export function DocumentArchiveViewer({
             {title}
           </div>
           {state.status === "ready" && (
-            <div style={{ fontSize: 10, color: GOLD, letterSpacing: "0.06em", textTransform: "uppercase", ...GF, marginTop: 1 }}>
+            <div style={{ fontSize: 10, color: GOLD, letterSpacing: "0.06em", textTransform: "uppercase", whiteSpace: "nowrap", ...GF, marginTop: 1 }}>
               Page {currentPage} of {numPages}
             </div>
           )}
         </div>
 
         {headerAction !== undefined && (
-          <div style={{ display: "flex", alignItems: "center", flexShrink: 0 }}>
+          <div style={isCompact
+            ? { display: "flex", alignItems: "center", order: 5, flexBasis: "100%", flexWrap: "wrap", gap: 6 }
+            : { display: "flex", alignItems: "center", flexShrink: 0 }}>
             {headerAction}
           </div>
         )}
