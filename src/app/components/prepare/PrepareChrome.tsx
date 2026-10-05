@@ -157,7 +157,9 @@ export interface PrepareNavBarProps {
 export function continueLabel(
   nextId: PreparationStepId | null, blocked: boolean, compact: boolean,
 ): string {
-  if (blocked) return compact ? "Not ready →" : "Not ready yet →";
+  // Still "Continue": a button that changed its name and turned pale read as
+  // the button having gone. It stays put, greyed, and says why beside it.
+  if (blocked) return "Continue →";
   if (nextId === "fields") return compact ? "Place Fields →" : "Continue to Place Fields →";
   return "Continue →";
 }
@@ -195,18 +197,21 @@ export function PrepareNavBar({
       <div className="prep-nav-guide" style={{ justifySelf: "center" }}>{guide}</div>
 
       <div className="prep-nav-next" style={{ justifySelf: "end", display: "flex", alignItems: "center", gap: isCompact ? 8 : 12, minWidth: 0 }}>
+        {/* Wide screens only: at phone width there is no room beside the
+            buttons, and pressing the greyed Continue opens the same list. */}
         {continueBlocked && !isCompact && (
           <button
             type="button"
             onClick={onShowMissing}
             className="prep-nav-reminder"
+            data-testid="continue-blocked-reason"
             style={{
               ...GF, fontSize: 12.5, fontWeight: 600, color: GOLD,
               background: "none", border: "none", cursor: "pointer",
               padding: "6px 4px", textDecoration: "underline", textUnderlineOffset: 2,
             }}
           >
-            A few things still need attention — see what&rsquo;s left
+            {"This step is not finished \u2014 see what\u2019s missing"}
           </button>
         )}
         {nextId && (
@@ -219,9 +224,9 @@ export function PrepareNavBar({
             style={{
               ...button,
               border: "none",
-              background: continueBlocked ? "#FEF9EC" : AZURE,
-              color: continueBlocked ? GOLD : "#FFFFFF",
-              ...(continueBlocked ? { boxShadow: "inset 0 0 0 1px #F0D07A" } : {}),
+              background: continueBlocked ? "#E5E7EB" : AZURE,
+              color: continueBlocked ? "#6B7280" : "#FFFFFF",
+              ...(continueBlocked ? { cursor: "not-allowed" } : {}),
             }}
           >
             {continueLabel(nextId, continueBlocked, isCompact)}

@@ -85,14 +85,14 @@ describe("the nav bar", () => {
 
   it("keeps the reminder link on a desktop", () => {
     atWidth(1280, <PrepareNavBar {...base} continueBlocked />);
-    expect(screen.getByText(/see what.s left/)).toBeTruthy();
+    expect(screen.getByText(/This step is not finished . see what.s missing/)).toBeTruthy();
   });
 
   it("still opens the reminder from a blocked Continue on a phone", () => {
     // Removing the link must not remove the path to the answer.
     const onShowMissing = vi.fn();
     atWidth(320, <PrepareNavBar {...base} continueBlocked onShowMissing={onShowMissing} />);
-    screen.getByRole("button", { name: "Not ready →" }).click();
+    screen.getByRole("button", { name: "Continue →" }).click();
     expect(onShowMissing).toHaveBeenCalledTimes(1);
   });
 
@@ -106,14 +106,16 @@ describe("the nav bar", () => {
   it("shortens the labels only where the screen needs it", () => {
     expect(continueLabel("fields", false, false)).toBe("Continue to Place Fields →");
     expect(continueLabel("fields", false, true)).toBe("Place Fields →");
-    expect(continueLabel("routing", true, false)).toBe("Not ready yet →");
-    expect(continueLabel("routing", true, true)).toBe("Not ready →");
+    // Blocked, it is still called Continue: a button that changed its name
+    // read to a tester as the button having disappeared.
+    expect(continueLabel("routing", true, false)).toBe("Continue →");
+    expect(continueLabel("routing", true, true)).toBe("Continue →");
     expect(continueLabel("routing", false, true)).toBe("Continue →");
   });
 
   it("marks a blocked Continue for assistive technology without disabling it", () => {
     atWidth(1280, <PrepareNavBar {...base} continueBlocked />);
-    const button = screen.getByRole("button", { name: "Not ready yet →" });
+    const button = screen.getByRole("button", { name: "Continue →" });
     expect(button.getAttribute("aria-disabled")).toBe("true");
     expect((button as HTMLButtonElement).disabled).toBe(false);
   });
