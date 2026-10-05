@@ -725,7 +725,15 @@ function CodeStep({ verificationId, email, expiresInSeconds, wait, onGranted, on
   return (
     <form noValidate onSubmit={(e) => { void submit(e); }} aria-label="Enter your access code" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
       <p id={hintId} style={{ color: SLATE, ...GF, fontSize: 14, lineHeight: 1.6, margin: 0 }}>
-        Enter the 6-digit code sent to <strong style={{ overflowWrap: "anywhere" }}>{email}</strong>. The code expires in {minutes} minutes.
+        If <strong style={{ overflowWrap: "anywhere" }}>{email}</strong> has access to this document, a 6-digit code
+        is on its way to that address. Enter it here; it expires in {minutes} minutes.
+      </p>
+      {/* The server answers every request the same way, so that nobody can
+          learn who has access by asking. The page must not then claim a code
+          WAS sent: someone without access waited for an email that never came. */}
+      <p data-testid="code-not-arrived" style={{ color: SLATE, ...GF, fontSize: 12.5, lineHeight: 1.55, margin: 0 }}>
+        No email after a few minutes? Check your spam folder. If it is not there, this address may not
+        have access: use the address the document was sent to, or ask the sender to share it with you.
       </p>
       <OtpInput label="6-digit access code" describedBy={hintId} value={code} autoFocus
         onChange={(v) => { setCode(v); setInvalid(false); }} disabled={busy} invalid={invalid} />
