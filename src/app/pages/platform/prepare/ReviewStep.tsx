@@ -163,11 +163,14 @@ export function ReviewStep() {
   const handleContinue = async () => {
     if (!isReady || isSubmitting) return;
     setIsSubmitting(true);
-    const ok = await markReadyForFieldPlacement();
+    // Marking the draft ready is a note on the draft, not the gate: the
+    // checklist above already says the steps are complete (`isReady`). When
+    // that note could not be written the button used to show "Preparing…",
+    // reset, and go nowhere, while Continue at the foot of the page, which
+    // never asked, moved on. Both now do the same thing.
+    await markReadyForFieldPlacement().catch(() => false);
     setIsSubmitting(false);
-    if (ok) {
-      void navigate("/app/prepare/authorization");
-    }
+    void navigate("/app/prepare/authorization");
   };
 
   const readyFiles = files.filter(f => f.fileState === "ready");
