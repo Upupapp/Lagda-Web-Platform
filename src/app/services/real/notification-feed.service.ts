@@ -286,6 +286,24 @@ function present(row: FeedRow): Presentation {
       };
     }
 
+    // The inviter is told when their invitation is accepted. Until this, an
+    // invitation simply turned "Accepted" on the Sent list and nothing said so.
+    case "WORKSPACE_INVITATION_ACCEPTED": {
+      const input = row.templateInput;
+      const who = str(input, "inviteeDisplayName") ?? str(input, "inviteeName") ?? str(input, "inviteeEmail") ?? "The invitee";
+      const role = str(input, "role");
+      const invitationId = str(input, "invitationId") ?? undefined;
+      const target = workspaceName ?? str(input, "workspaceName") ?? "the workspace";
+      return {
+        category: "workspace", severity: "success", priority: "normal",
+        title: `${who} accepted your invitation to join ${target}`,
+        body: `${who} is now a member of ${target}${role === null ? "" : ` as ${invitationRoleLabel(role)}`}.`,
+        actionLabel: "View invitation",
+        actionPath: invitationId === undefined ? SENT_INVITATIONS_PATH : sentInvitationPath(invitationId),
+        why: "You were sent this because you invited this person to the workspace.",
+      };
+    }
+
     case "WORKSPACE_INVITATION_DECLINED": {
       const input = row.templateInput;
       const who = str(input, "inviteeDisplayName") ?? str(input, "inviteeEmail") ?? str(input, "email") ?? "The invitee";
@@ -620,7 +638,7 @@ function present(row: FeedRow): Presentation {
         category: "security", severity: "info", priority: "normal",
         title: `A code was emailed to you for ${title}`,
         body: "Enter the 6-digit code from the email to open the document. It expires soon. If you did not ask for it, ignore the email.",
-        actionLabel: "Check a Document",
+        actionLabel: "Verify a Document",
         actionPath: "/app/verify",
         why: "You were sent this because someone entered your address to open this document.",
         inAppOnly: true,

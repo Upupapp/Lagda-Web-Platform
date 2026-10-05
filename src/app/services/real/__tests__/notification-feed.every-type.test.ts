@@ -44,6 +44,7 @@ const ROWS: Record<string, Record<string, unknown>> = {
   DOCUMENT_ACCESS_REJECTED: { recipientName: "Ana", documentTitle: "NDA.pdf", verificationId: "LAGDA-VER-2026-X", approved: false },
   SHARED_DOCUMENT_ACCESS_CODE: { recipientName: "Ana", documentTitle: "NDA.pdf" },
   WORKSPACE_INVITATION_RECEIVED: { recipientName: "Ana", invitationId: "inv_1", workspaceName: "Reyes Law", inviterDisplayName: "Ben", role: "sender", expiresAt: "2026-10-10T00:00:00.000Z" },
+  WORKSPACE_INVITATION_ACCEPTED: { recipientName: "Ben", inviteeDisplayName: "Ana", inviteeEmail: "ana@example.ph", workspaceName: "Reyes Law", invitationId: "inv_1" },
   WORKSPACE_INVITATION_DECLINED: { recipientName: "Ben", inviteeDisplayName: "Ana", inviteeEmail: "ana@example.ph", invitationId: "inv_1" },
   CONTACT_CONNECTION_REQUESTED: { recipientName: "Ana", requesterDisplayName: "Ben", workspaceName: "Reyes Law", connectionId: "cc_1" },
   CONTACT_CONNECTION_ACCEPTED: { recipientName: "Ben", responderDisplayName: "Ana", contactId: "ct_1" },
