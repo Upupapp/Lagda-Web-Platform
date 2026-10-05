@@ -31,6 +31,7 @@ import {
 } from "../../../components/pdf/DocumentPageSurface";
 import { realSigningRequestService } from "../../../services/real/signing-request.service";
 import { usePageMeta } from "../../../hooks/usePageMeta";
+import { useViewport } from "../../../hooks/useViewport";
 import type * as pdfjsLib from "pdfjs-dist";
 
 // ── Design tokens ─────────────────────────────────────────────────────────────
@@ -428,9 +429,15 @@ function RightPanel({
   onDeselectAll:  () => void;
 }) {
   const sel = selected ? fields.find(f => f._localId === selected) ?? null : null;
+  const { isNarrow } = useViewport();
 
   return (
-    <div style={{ width: 220, flexShrink: 0, borderLeft: "1px solid rgba(0,0,0,0.08)", background: "#ffffff", overflowY: "auto" }}>
+    // Beside the document on a wide screen. On a phone it sits UNDER it, at a
+    // fixed share of the height: side by side, a 220px panel left the document
+    // a strip about 100px wide and placing a field on it was not possible.
+    <div style={isNarrow
+      ? { width: "100%", flexShrink: 0, height: "38dvh", borderTop: "1px solid rgba(0,0,0,0.12)", background: "#ffffff", overflowY: "auto" }
+      : { width: 220, flexShrink: 0, borderLeft: "1px solid rgba(0,0,0,0.08)", background: "#ffffff", overflowY: "auto" }}>
       {sel ? (
         <div style={{ padding: 12 }}>
           <div style={{ display: "flex", alignItems: "center", marginBottom: 10 }}>
@@ -567,6 +574,7 @@ function RightPanel({
 
 // ── Fields editor inner ───────────────────────────────────────────────────────
 function FieldsEditorInner({ template }: { template: DocumentTemplate }) {
+  const { isNarrow } = useViewport();
   usePageMeta();
   const platform = usePlatform();
   const { run } = useProcessing();
@@ -778,9 +786,9 @@ function FieldsEditorInner({ template }: { template: DocumentTemplate }) {
       </div>
 
       {/* Main workspace */}
-      <div style={{ flex: 1, display: "flex", overflow: "hidden" }}>
+      <div style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: isNarrow ? "column" : "row", overflow: "hidden" }}>
         {/* Pages column */}
-        <div style={{ flex: 1, minWidth: 0, overflowY: "auto", background: BGCANVAS, display: "flex", flexDirection: "column", alignItems: "center", gap: 24, padding: 24 }}>
+        <div style={{ flex: 1, minWidth: 0, minHeight: 0, overflowY: "auto", background: BGCANVAS, display: "flex", flexDirection: "column", alignItems: "center", gap: 24, padding: isNarrow ? 12 : 24 }}>
           {Array.from({ length: pageCount }, (_, i) => {
             const pageId = `page-${i + 1}`;
             return (

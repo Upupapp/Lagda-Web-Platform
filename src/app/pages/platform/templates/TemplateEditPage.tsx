@@ -469,8 +469,8 @@ function AuthTab({ draft, onChange }: { draft: DocumentTemplate; onChange: (patc
             {draft.placeholders.map(ph => {
               const override = draft.authentication.placeholderOverrides[ph.id] ?? draft.authentication.globalDefault;
               return (
-                <div key={ph.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 14px", background: "white", border: "1px solid #E2E8F0", borderRadius: 9 }}>
-                  <span style={{ ...GF, fontSize: 13, color: "#0F172A", flex: 1 }}>{ph.label}</span>
+                <div key={ph.id} style={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: 12, padding: "10px 14px", background: "white", border: "1px solid #E2E8F0", borderRadius: 9 }}>
+                  <span style={{ ...GF, fontSize: 13, color: "#0F172A", flex: "1 1 120px", minWidth: 0, overflowWrap: "anywhere" }}>{ph.label}</span>
                   <select
                     value={override}
                     onChange={e => onChange({
@@ -479,7 +479,7 @@ function AuthTab({ draft, onChange }: { draft: DocumentTemplate; onChange: (patc
                         placeholderOverrides: { ...draft.authentication.placeholderOverrides, [ph.id]: e.target.value as PrepAuthMethodId },
                       },
                     })}
-                    style={{ ...GF, fontSize: 12, border: "1px solid #E2E8F0", borderRadius: 7, padding: "5px 8px", background: "white" }}
+                    style={{ ...GF, fontSize: 12, border: "1px solid #E2E8F0", borderRadius: 7, padding: "5px 8px", background: "white", maxWidth: "100%", minWidth: 0 }}
                   >
                     {AUTH_METHODS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
                   </select>
