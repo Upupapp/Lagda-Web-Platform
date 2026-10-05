@@ -19,7 +19,8 @@ const GF   = { fontFamily: "'Geist', sans-serif" };
 const GM   = { fontFamily: "'Geist Mono', monospace" };
 const BORDER = "rgba(0,0,0,0.08)";
 
-function WorkspacePlanLine({ workspace }: { workspace: { id: string; plan: keyof typeof PLAN_LABELS; role: string } }) {
+/** A workspace's plan and the person's role in it. Shared with the mobile drawer. */
+export function WorkspacePlanLine({ workspace }: { workspace: { id: string; plan: keyof typeof PLAN_LABELS; role: string } }) {
   const label = useWorkspacePlanLabel(workspace);
   const role = workspace.role.replace("_", " ");
   return (

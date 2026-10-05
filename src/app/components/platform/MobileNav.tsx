@@ -4,12 +4,13 @@
 
 import { usePlanCheck, useMyPlan } from "../../hooks/usePlans";
 import { WorkspaceBadge } from "./WorkspaceBadge";
+import { WorkspacePlanLine } from "./WorkspaceSwitcher";
 import { useState, useRef, useEffect, useCallback, lazy, Suspense } from "react";
 import { NavLink, Link } from "react-router";
 import {
   Menu, X, LayoutDashboard, FileText, Files, Users, ShieldCheck,
   Bell, Users2, Settings, Settings2, FilePlus, Inbox, HelpCircle, GitBranch, BarChart2, Zap,
-  Search, Compass, Share2, Mail, ChevronDown, LogIn, Building2, UserCog, Lock } from "lucide-react";
+  Search, Compass, Share2, Mail, ChevronDown, LogIn, Building2, UserCog, Lock, Check } from "lucide-react";
 import { JoinWorkspaceDialog } from "./JoinWorkspaceDialog";
 import lagdaHeaderLogo from "../../../brand elements/svg/LagdaLogoPrimaryHorizontalFullColor_Header.svg";
 import { usePlatform } from "../../context/PlatformContext";
@@ -52,7 +53,15 @@ export function MobileNav() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [toolsOpen, setToolsOpen] = useState(false);
   const [joining, setJoining] = useState(false);
-  const { user, currentWorkspace, unreadCount, hasFlag } = usePlatform();
+  const { user, currentWorkspace, workspaces, switchWorkspace, refreshWorkspaceList, unreadCount, hasFlag } = usePlatform();
+  const [switching, setSwitching] = useState(false);
+  // Opening the list is when someone looks for a newly approved workspace.
+  useEffect(() => {
+    if (switching) void refreshWorkspaceList();
+    // Only on opening; the function's identity changes with the list itself.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [switching]);
+
   const planAllows = usePlanCheck();
   // 093. Joining another workspace is part of Personal (the person's own plan).
   const { plan: myPlan } = useMyPlan();
@@ -261,13 +270,62 @@ export function MobileNav() {
         {/* Workspace */}
         {currentWorkspace && (
           <div style={{ padding: "12px 14px", borderBottom: `1px solid ${BORDER}`, flexShrink: 0 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            {/* The switcher. The desktop sidebar has had one all along; here the
+                workspace was only a label, so on a phone there was no way to
+                change workspace at all. It opens IN PLACE, as a list under the
+                row: a floating menu inside a 280px drawer has nowhere to go. */}
+            <button
+              type="button"
+              onClick={() => { setSwitching(v => !v); }}
+              aria-expanded={switching}
+              aria-controls="mobile-workspace-list"
+              aria-label={`Current workspace: ${currentWorkspace.name}. Tap to switch.`}
+              data-testid="mobile-workspace-switcher"
+              style={{
+                display: "flex", alignItems: "center", gap: 10, width: "100%", minHeight: 44,
+                padding: "6px 8px", margin: "-6px -8px 0", boxSizing: "content-box",
+                background: switching ? "#F1F5F9" : "transparent", border: "none", borderRadius: 8,
+                cursor: "pointer", textAlign: "left",
+              }}
+            >
               <WorkspaceBadge workspace={currentWorkspace} size={28} radius={7} fontSize={10} />
-              <div>
-                <p style={{ color: "#07111F", ...GF, fontSize: 13, fontWeight: 600, margin: 0 }}>{currentWorkspace.name}</p>
-                {planLabel && <p style={{ color: "#64748B", ...GM, fontSize: 10, margin: 0 }}>{planLabel}</p>}
+              <span style={{ flex: 1, minWidth: 0 }}>
+                <span style={{ display: "block", color: "#07111F", ...GF, fontSize: 13, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{currentWorkspace.name}</span>
+                {planLabel && <span style={{ display: "block", color: "#64748B", ...GM, fontSize: 10 }}>{planLabel}</span>}
+              </span>
+              <ChevronDown size={16} aria-hidden style={{ color: "#64748B", flexShrink: 0, transform: switching ? "rotate(180deg)" : "none", transition: "transform 0.15s" }} />
+            </button>
+            {switching && (
+              <div id="mobile-workspace-list" role="group" aria-label="Your workspaces"
+                style={{ marginTop: 8, border: `1px solid ${BORDER}`, borderRadius: 8, overflow: "hidden" }}>
+                {workspaces.map(ws => {
+                  const current = ws.id === currentWorkspace.id;
+                  return (
+                    <button
+                      key={ws.id} type="button"
+                      aria-current={current ? "true" : undefined}
+                      onClick={() => {
+                        setSwitching(false);
+                        if (!current) switchWorkspace(ws.id);
+                        setDrawerOpen(false); triggerRef.current?.focus();
+                      }}
+                      style={{
+                        display: "flex", alignItems: "center", gap: 10, width: "100%", minHeight: 48,
+                        padding: "6px 10px", background: current ? "#EEF6FD" : "#FFFFFF", border: "none",
+                        borderBottom: `1px solid ${BORDER}`, cursor: "pointer", textAlign: "left",
+                      }}
+                    >
+                      <WorkspaceBadge workspace={ws} size={26} radius={7} fontSize={10} />
+                      <span style={{ flex: 1, minWidth: 0 }}>
+                        <span style={{ display: "block", color: "#07111F", ...GF, fontSize: 13, fontWeight: current ? 700 : 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{ws.name}</span>
+                        <WorkspacePlanLine workspace={ws} />
+                      </span>
+                      {current && <Check size={15} aria-hidden style={{ color: "#0078D4", flexShrink: 0 }} />}
+                    </button>
+                  );
+                })}
               </div>
-            </div>
+            )}
             {/* The drawer closes first so the dialog is not stacked behind it. */}
             <button type="button" disabled={joinLocked} aria-disabled={joinLocked}
               onClick={joinLocked ? undefined : () => { setDrawerOpen(false); setJoining(true); }}
