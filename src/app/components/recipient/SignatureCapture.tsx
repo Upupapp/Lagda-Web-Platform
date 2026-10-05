@@ -307,6 +307,19 @@ export function SignatureCapture({
    * the signer clears it, changes mode, or closes the sheet.
    */
   const [padSession, setPadSession] = useState(false);
+  /**
+   * Whether the signer is in the middle of TYPING their signature.
+   *
+   * The same fault the pad had, in the Type field: every keystroke hands the
+   * text up as the value, and a value used to swap the field for the adopted
+   * view at once. So the first letter was taken as the whole signature, the
+   * field they were typing in was removed, and a document could be signed
+   * "J". While this is set the field stays, with its preview, until the signer
+   * changes mode, removes the signature, or closes the sheet (Done, or Save).
+   * The value still follows every letter, so what is submitted is always
+   * exactly what the preview shows.
+   */
+  const [typeSession, setTypeSession] = useState(false);
   const { isMobileS } = useViewport();
 
   const noun = purpose === "initials" ? "initials" : "signature";
@@ -318,7 +331,7 @@ export function SignatureCapture({
    * question at a time: first "here is what you signed with, keep it or
    * change it", and only then "how do you want to sign".
    */
-  const picking = value === null || replacing || padSession;
+  const picking = value === null || replacing || padSession || typeSession;
 
   // ── Canvas sizing ─────────────────────────────────────────────────────────
   //
@@ -466,11 +479,13 @@ export function SignatureCapture({
     setTyped("");
     setHasInk(false);
     setPadSession(false);
+    setTypeSession(false);
     onChange(null);
   };
 
   const onTyped = (text: string) => {
     setTyped(text);
+    setTypeSession(true);
     const trimmed = text.trim();
     onChange(trimmed.length === 0
       ? null
@@ -645,7 +660,7 @@ export function SignatureCapture({
           believes their first attempt is binding will not try to improve it,
           and a wobbly signature they are stuck with is a worse outcome than
           one they redrew. */}
-      {value !== null && !replacing && (
+      {value !== null && !replacing && !typeSession && (
         <div>
           <div
             style={{
@@ -721,6 +736,7 @@ export function SignatureCapture({
               disabled={disabled}
               onClick={() => {
                 setReplacing(false);
+                setTypeSession(false);
                 setTyped("");
                 setHasInk(false);
                 clearCanvas();

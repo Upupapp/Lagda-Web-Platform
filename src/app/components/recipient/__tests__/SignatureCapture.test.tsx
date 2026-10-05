@@ -12,6 +12,7 @@
 // is not meaningfully testable here — but it does not limit the assertions
 // this file actually makes, which are about what leaves the component.
 
+import { useState } from "react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -91,6 +92,88 @@ describe("the three ways to sign", () => {
     setup();
     expect(screen.getByRole("button", { name: "Draw" }).getAttribute("aria-pressed"))
       .toBe("true");
+  });
+});
+
+/**
+ * The component as the signing page and the Signatures page really use it:
+ * every value it hands up is handed straight back as its `value`. `setup`
+ * above keeps `value` fixed, which is how typing a signature one letter at a
+ * time went untested: fed back, the first letter used to end the typing.
+ */
+function Controlled({ purpose = "signature", onValue }: {
+  purpose?: "signature" | "initials";
+  onValue?: (value: SignatureValue | null) => void;
+}) {
+  const [value, setValue] = useState<SignatureValue | null>(null);
+  return (
+    <SignatureCapture
+      label="Signature (required)" purpose={purpose} value={value}
+      onChange={next => { setValue(next); onValue?.(next); }}
+    />
+  );
+}
+
+describe("typing a signature letter by letter, with the value fed back", () => {
+  it("keeps the field while the name is typed, and the signature is the whole name", async () => {
+    const onValue = vi.fn<(value: SignatureValue | null) => void>();
+    const user = userEvent.setup();
+    render(<Controlled onValue={onValue} />);
+    await user.click(screen.getByRole("button", { name: "Type" }));
+    const field = screen.getByLabelText<HTMLInputElement>("Type your signature");
+
+    await user.type(field, "J");
+    // The first letter is not the signature: the field is still here to type in.
+    expect(screen.getByLabelText("Type your signature")).toBe(field);
+    await user.type(field, "ames Cortes");
+
+    expect(field.value).toBe("James Cortes");
+    expect(lastValue(onValue)).toMatchObject({ method: "typed", text: "James Cortes" });
+    // One preview of what will be signed, not the field AND an "adopted" card.
+    expect(screen.queryByRole("button", { name: /Change/ })).toBeNull();
+  });
+
+  it("lets the signer correct a mistake without the field vanishing", async () => {
+    const onValue = vi.fn<(value: SignatureValue | null) => void>();
+    const user = userEvent.setup();
+    render(<Controlled onValue={onValue} />);
+    await user.click(screen.getByRole("button", { name: "Type" }));
+    const field = screen.getByLabelText<HTMLInputElement>("Type your signature");
+    await user.type(field, "Jmaes");
+    await user.clear(field);
+    // Emptied: no signature, and the field is still there to try again.
+    expect(lastValue(onValue)).toMatchObject({ text: "Jmaes" });
+    expect(onValue.mock.calls.at(-1)?.[0]).toBeNull();
+    await user.type(screen.getByLabelText("Type your signature"), "James");
+    expect(lastValue(onValue)).toMatchObject({ method: "typed", text: "James" });
+  });
+
+  it("does the same for initials", async () => {
+    const onValue = vi.fn<(value: SignatureValue | null) => void>();
+    const user = userEvent.setup();
+    render(<Controlled purpose="initials" onValue={onValue} />);
+    await user.click(screen.getByRole("button", { name: "Type" }));
+    await user.type(screen.getByLabelText("Type your initials"), "JMC");
+    expect(lastValue(onValue)).toMatchObject({ method: "typed", text: "JMC" });
+  });
+
+  it("shows the adopted signature, with Change, when the sheet is opened again", () => {
+    // Closing the sheet (Done, or Save) unmounts the box; reopened with a typed
+    // value it answers "here is what you signed with" first, as before.
+    setup("signature", { method: "typed", text: "James Cortes", styleIndex: 0, provenance: "typed-live" });
+    expect(screen.getByRole("button", { name: /Change/ })).toBeTruthy();
+    expect(screen.queryByLabelText("Type your signature")).toBeNull();
+  });
+
+  it("leaving Type for another way to sign ends the typing and clears it", async () => {
+    const onValue = vi.fn<(value: SignatureValue | null) => void>();
+    const user = userEvent.setup();
+    render(<Controlled onValue={onValue} />);
+    await user.click(screen.getByRole("button", { name: "Type" }));
+    await user.type(screen.getByLabelText("Type your signature"), "James");
+    await user.click(screen.getByRole("button", { name: "Draw" }));
+    expect(onValue.mock.calls.at(-1)?.[0]).toBeNull();
+    expect(screen.queryByLabelText("Type your signature")).toBeNull();
   });
 });
 
