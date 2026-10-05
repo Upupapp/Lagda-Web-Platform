@@ -309,7 +309,11 @@ function PageCanvas({
   };
 
   return (
-    <div ref={ref} style={{ flex: 1, overflowY: "auto", background: BGCANVAS, padding: "24px", display: "flex", flexDirection: "column", alignItems: "center", gap: 24 }}>
+    // `alignSelf: stretch` + full width: the page is sized from THIS box's
+    // width. Centred by its parent it shrank to fit its own content, the
+    // content was sized from it, and on a phone the two settled on a
+    // thumbnail about 20px wide.
+    <div ref={ref} style={{ flex: 1, alignSelf: "stretch", width: "100%", boxSizing: "border-box", overflowY: "auto", background: BGCANVAS, padding: "24px", display: "flex", flexDirection: "column", alignItems: "center", gap: 24 }}>
       <div
         data-page-surface={pageId}
         style={{
