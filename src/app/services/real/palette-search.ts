@@ -47,11 +47,12 @@ function titleCase(state: string): string {
   return state.replace(/-/g, " ").replace(/\b\w/g, c => c.toUpperCase());
 }
 
+/** Date AND time: two copies of one contract are often sent the same day. */
 function shortDate(iso: string): string | null {
   const d = new Date(iso);
   return Number.isNaN(d.getTime())
     ? null
-    : d.toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" });
+    : d.toLocaleString(undefined, { day: "numeric", month: "short", year: "numeric", hour: "numeric", minute: "2-digit" });
 }
 
 /**
@@ -59,8 +60,10 @@ function shortDate(iso: string): string | null {
  * (the same contract sent twice), and a list of rows reading only
  * "Agreement — Sent" gave no way to tell them apart.
  */
-function documentDescription(item: SigningRequestListItem, statusLabel: string): string {
-  const parts = [statusLabel];
+export function documentDescription(item: Pick<SigningRequestListItem, "sentAt" | "createdAt" | "initiator">): string {
+  // No status here: the row already shows it once, as its own label. It used
+  // to be repeated in this line as well.
+  const parts: string[] = [];
   const date = shortDate(item.sentAt ?? item.createdAt);
   if (date) parts.push(`${item.sentAt ? "Sent" : "Created"} ${date}`);
   if (item.initiator?.name) parts.push(`by ${item.initiator.name}`);
@@ -84,7 +87,7 @@ async function documentGroup(
         id: `sr_real_${item.signingRequestId}` as GlobalSearchResultId,
         type: item.state === "draft" ? "document-draft" : "document",
         title: item.documentTitle,
-        description: documentDescription(item, titleCase(status)),
+        description: documentDescription(item),
         status,
         statusLabel: titleCase(status),
         updatedAt: item.createdAt,
