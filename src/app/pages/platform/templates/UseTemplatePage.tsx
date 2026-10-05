@@ -4,7 +4,7 @@
 // gets its OWN document (a copy of the template's file); nothing is sent here.
 // Inline styles only. No Burgundy.
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { useParams, Link } from "react-router";
 import {
   ChevronLeft, ChevronRight,  
@@ -151,6 +151,7 @@ function RoleIdentity({ mapping, onChange, takenEmails }: {
     workspaceId, email: mapping.email, name: mapping.displayName,
     onName: found => { onChange({ displayName: found }); },
   });
+  const nameId = useId(), emailId = useId();
   return (
     <>
       <div style={{ gridColumn: "1 / -1", marginBottom: -4 }}>
@@ -162,8 +163,9 @@ function RoleIdentity({ mapping, onChange, takenEmails }: {
           onPick={person => { onChange({ displayName: person.name, email: person.email }); assist.notePicked(person); }}
         />
       </div>
-      <FormField label="Full Name" required={mapping.required}>
+      <FormField label="Full Name" required={mapping.required} htmlFor={nameId}>
         <ParticipantNameField
+          id={nameId}
           value={mapping.displayName}
           onChange={v => { onChange({ displayName: v }); }}
           assist={assist}
@@ -171,8 +173,9 @@ function RoleIdentity({ mapping, onChange, takenEmails }: {
           inputStyle={inputStyle}
         />
       </FormField>
-      <FormField label="Email Address" required={mapping.required}>
+      <FormField label="Email Address" required={mapping.required} htmlFor={emailId}>
         <input
+          id={emailId}
           type="email"
           value={mapping.email}
           onChange={e => { onChange({ email: e.target.value }); assist.noteEmailTyped(); }}
@@ -375,10 +378,10 @@ const textareaStyle: React.CSSProperties = {
   fontFamily: "'Geist', sans-serif", fontSize: 13, color: "#0F172A",
   background: "white", boxSizing: "border-box", resize: "vertical",
 };
-function FormField({ label, required, children }: { label: string; required?: boolean; children: React.ReactNode }) {
+function FormField({ label, required, htmlFor, children }: { label: string; required?: boolean; htmlFor?: string; children: React.ReactNode }) {
   return (
     <div>
-      <label style={{ ...GF, fontSize: 11, fontWeight: 600, color: "#64748B", textTransform: "uppercase", letterSpacing: "0.05em", display: "block", marginBottom: 4 }}>
+      <label htmlFor={htmlFor} style={{ ...GF, fontSize: 11, fontWeight: 600, color: "#64748B", textTransform: "uppercase", letterSpacing: "0.05em", display: "block", marginBottom: 4 }}>
         {label}{required && <span style={{ color: RED }}> *</span>}
       </label>
       {children}

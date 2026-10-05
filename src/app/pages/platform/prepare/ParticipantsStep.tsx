@@ -7,7 +7,7 @@ import { usePlatform } from "../../../context/PlatformContext";
 import { useAccountNameAssist } from "../../../hooks/useAccountNameAssist";
 import { ParticipantNameField } from "../../../components/prepare/ParticipantNameField";
 import { PeoplePicker, type PickedPerson } from "../../../components/prepare/PeoplePicker";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useId } from "react";
 import { Users } from "lucide-react";
 import { usePrepare } from "../../../context/PrepareContext";
 import { stepEyebrow,
@@ -76,6 +76,9 @@ function ParticipantEditor({
   const [org,   setOrg]   = useState(participant.organization ?? "");
   const [errors, setErrors] = useState<{ name?: string; email?: string }>({});
   const workspaceId = usePlatform().currentWorkspace?.id;
+  // Each visible label names its field. Untied, a screen reader announced the
+  // fields by their example text: "Juan dela Cruz", "juan@example.com".
+  const ids = { name: useId(), email: useId(), role: useId(), org: useId() };
   // The name comes from the person's LAGDA account when their email has one.
   const assist = useAccountNameAssist({
     workspaceId, email, name,
@@ -149,10 +152,11 @@ function ParticipantEditor({
           would happen, and stays two-up everywhere it fits. */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 12, marginBottom: 12 }}>
         <div>
-          <label style={{ ...GF, fontSize: 12, fontWeight: 600, color: NAVY, display: "block", marginBottom: 4 }}>
+          <label htmlFor={ids.name} style={{ ...GF, fontSize: 12, fontWeight: 600, color: NAVY, display: "block", marginBottom: 4 }}>
             Full name <span style={{ color: GOLD }}>*</span>
           </label>
           <ParticipantNameField
+            id={ids.name}
             value={name}
             onChange={v => { setName(v); setErrors(e => ({ ...e, name: undefined })); }}
             assist={assist}
@@ -179,10 +183,11 @@ function ParticipantEditor({
         </div>
 
         <div>
-          <label style={{ ...GF, fontSize: 12, fontWeight: 600, color: NAVY, display: "block", marginBottom: 4 }}>
+          <label htmlFor={ids.email} style={{ ...GF, fontSize: 12, fontWeight: 600, color: NAVY, display: "block", marginBottom: 4 }}>
             Email address <span style={{ color: GOLD }}>*</span>
           </label>
           <input
+            id={ids.email}
             type="email"
             value={email}
             onChange={e => { setEmail(e.target.value); assist.noteEmailTyped(); setErrors(v => ({ ...v, email: undefined })); }}
@@ -211,10 +216,11 @@ function ParticipantEditor({
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 12, marginBottom: 16 }}>
         <div>
-          <label style={{ ...GF, fontSize: 12, fontWeight: 600, color: NAVY, display: "block", marginBottom: 4 }}>
+          <label htmlFor={ids.role} style={{ ...GF, fontSize: 12, fontWeight: 600, color: NAVY, display: "block", marginBottom: 4 }}>
             Role <span style={{ color: GOLD }}>*</span>
           </label>
           <select
+            id={ids.role}
             value={role}
             onChange={e => setRole(e.target.value as PrepParticipantRole)}
             style={{
@@ -238,10 +244,11 @@ function ParticipantEditor({
         </div>
 
         <div>
-          <label style={{ ...GF, fontSize: 12, fontWeight: 600, color: NAVY, display: "block", marginBottom: 4 }}>
+          <label htmlFor={ids.org} style={{ ...GF, fontSize: 12, fontWeight: 600, color: NAVY, display: "block", marginBottom: 4 }}>
             Organization <span style={{ color: SILVER, fontWeight: 400 }}>(optional)</span>
           </label>
           <input
+            id={ids.org}
             type="text"
             value={org}
             onChange={e => setOrg(e.target.value)}
