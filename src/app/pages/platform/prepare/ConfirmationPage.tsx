@@ -24,6 +24,8 @@ import { PLAN_ERROR } from "../../../services/real/plans.service";
 import { FreeDocumentUsedNotice } from "../../../components/platform/FreeDocumentUsedNotice";
 import { useProcessing, buildSteps } from "../../../services/processing.service";
 import { realSigningRequestService } from "../../../services/real/signing-request.service";
+import { realDocumentService } from "../../../services/real/document.service";
+import { describeSendDetail } from "../../../services/prepare/send-readiness";
 import { deadlineFromDate } from "../../../services/prepare/deadline";
 import { toastWarning } from "../../../components/brand/BrandToast";
 import { realPreparationService } from "../../../services/real/preparation.service";
@@ -41,7 +43,7 @@ const WHITE  = "#FFFFFF";
 // ── Inner component (needs FieldEditorContext) ────────────────────────────────
 function ConfirmationPageInner({ participants }: { participants: PrepParticipant[] }) {
   const navigate = useNavigate();
-  const { draft, setStep, discardDraft, syncError, multiDocumentSigningGap, setFieldsSnapshot, updateSettings } = usePrepare();
+  const { draft, setStep, discardDraft, syncError, multiDocumentSigningGap, setFieldsSnapshot } = usePrepare();
   const { user, currentWorkspace } = usePlatform();
   const {
     initialize, fields, documents, runValidation, validation, loadRealFields,
@@ -206,6 +208,14 @@ function ConfirmationPageInner({ participants }: { participants: PrepParticipant
       }
       pendingSendRef.current = pending;
 
+      // The title typed on Prepare becomes the document's name. It was never
+      // sent before, so Documents showed the file's (or the template's) name.
+      // Not worth failing a send over: the request goes out either way.
+      const typedTitle = draft.details.title.trim();
+      if (typedTitle !== "" && !pending.signingRequestId) {
+        try { await realDocumentService.rename(workspaceId, documentId, typedTitle); } catch { /* keeps its current name */ }
+      }
+
       let signingRequestId = pending.signingRequestId;
       if (!signingRequestId) {
         const created = await realSigningRequestService.create(workspaceId, documentId, pending.createKey);
@@ -222,9 +232,7 @@ function ConfirmationPageInner({ participants }: { participants: PrepParticipant
 
       if (!pending.sendKey) pending.sendKey = crypto.randomUUID();
       pendingSendRef.current = pending;
-      await realSigningRequestService.send(workspaceId, signingRequestId, pending.sendKey, {
-        shareFinalCopy: draft.settings.completion.sendCompletionCopyToParticipants,
-      });
+      await realSigningRequestService.send(workspaceId, signingRequestId, pending.sendKey);
 
       // The deadline, when the sender set one. The server takes it only on a
       // request that is already out, so it follows the send. The request IS
@@ -256,7 +264,7 @@ function ConfirmationPageInner({ participants }: { participants: PrepParticipant
       } else if (err instanceof ApiError) {
         setSendError({
           message: err.message,
-          details: (err.body?.details ?? []).map((d) => (d.field ? `${d.field}: ${d.message}` : d.message)),
+          details: (err.body?.details ?? []).map((d) => describeSendDetail(d, draft.participants)),
         });
       } else {
         setSendError({ message: "Something went wrong sending this signing request. Please try again.", details: [] });
@@ -324,13 +332,11 @@ function ConfirmationPageInner({ participants }: { participants: PrepParticipant
             marginBottom: 28,
           }}>
             <div style={{ ...GF, fontSize: 12, fontWeight: 700, color: "#2E7D32", marginBottom: 4 }}>
-              Real Signing Request
+              This will be sent for real
             </div>
             <p style={{ ...GF, fontSize: 12, color: "#2E5E38", margin: 0, lineHeight: 1.6 }}>
-              Sending creates a real signing request on the server and queues real invitation delivery to each
-              participant. This does not yet confirm the email was delivered, only that the server accepted the
-              send — and it stops at "sent"; automatic completion/final-document generation is not part of this
-              release yet.
+              Sending invites the first step's participants straight away; each later step is invited when
+              the one before it finishes. You can follow everyone's progress, and send a link again, from Documents.
             </p>
           </div>
         ) : (
@@ -542,32 +548,9 @@ function ConfirmationPageInner({ participants }: { participants: PrepParticipant
             default; off for a sensitive document. One switch for signers,
             approvers, reviewers and copy recipients alike (viewers never
             receive one). */}
-        <label style={{ ...GF, display: "flex", alignItems: "flex-start", gap: 10, marginBottom: 16, padding: "12px 14px", borderRadius: 10, border: "1px solid #E3E8EF", background: WHITE, cursor: "pointer" }}>
-          <input
-            type="checkbox"
-            checked={draft.settings.completion.sendCompletionCopyToParticipants}
-            onChange={e => {
-              const on = e.target.checked;
-              updateSettings({
-                ...draft.settings,
-                completion: {
-                  ...draft.settings.completion,
-                  sendCompletionCopyToParticipants: on,
-                  sendCompletionCopyToCCRecipients: on,
-                },
-              });
-            }}
-            style={{ marginTop: 2 }}
-          />
-          <span>
-            <span style={{ display: "block", fontSize: 14, fontWeight: 600, color: NAVY }}>
-              Send everyone the final copy
-            </span>
-            <span style={{ display: "block", fontSize: 12.5, color: SILVER, marginTop: 2, lineHeight: 1.45 }}>
-              When the document is completed, each participant and copy recipient is emailed a personal link to download the signed PDF. Turn off for sensitive documents.
-            </span>
-          </span>
-        </label>
+        <p data-testid="final-copy-note" style={{ ...GF, fontSize: 12.5, color: "#475569", margin: "0 0 16px", lineHeight: 1.5 }}>
+          Participants with a LAGDA account can open the completed document under Records.
+        </p>
 
         {/* Actions */}
         <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
@@ -623,7 +606,7 @@ function ConfirmationPageInner({ participants }: { participants: PrepParticipant
         <footer style={{ marginTop: 48, padding: "14px 0", borderTop: "1px solid #E3E8EF" }}>
           <p style={{ ...GF, fontSize: 11, color: SILVER, lineHeight: 1.7, margin: 0 }}>
             {USE_REAL_BACKEND
-              ? 'Sending queues a real invitation to each participant. Completion, final-document generation, and public verification are not part of this release yet. LAGDA does not make claims of being "Supreme Court approved", "tamper-proof", "blockchain verified", or "guaranteed legally valid" for any document sent through this product. eNotary services are a separate product stream and are not part of this workflow.'
+              ? 'LAGDA records who acted on a document and when. It does not guarantee the legal effect of any particular document; ask a lawyer where that matters. Notarization is a separate service and is not part of sending a document for signature.'
               : 'This is a frontend demonstration workflow. No document has been uploaded, parsed, stored, signed, or sent. No signing request exists. No participant will receive any invitation, OTP, or email. LAGDA does not make claims of being "Supreme Court approved", "tamper-proof", "blockchain verified", or "guaranteed legally valid" for any document prepared through this demonstration. eNotary services are a separate product stream and are not part of this workflow.'}
           </p>
         </footer>

@@ -4,6 +4,7 @@
 // Burgundy (#67023B) never appears here.
 
 import React, {
+  useMemo,
   createContext,
   useCallback,
   useContext,
@@ -29,6 +30,7 @@ import {
   realTemplatesAvailable,
 } from "../services/templates-source";
 import { usePlatform } from "./PlatformContext";
+import { useWorkspaceAccess } from "../hooks/useWorkspaceAccess";
 import {
   asyncMakeAvailable,
   asyncReturnToDraft,
@@ -198,6 +200,11 @@ interface TemplateContextValue {
   /** True when templates are the workspace's own records and can be saved.
    *  False in fixture mode, where an authoring control would only refuse. */
   canWrite:      boolean;
+  /** May this person create, change and delete templates here? Everyone may
+   *  in fixture mode (nothing is saved). In a real workspace it is the
+   *  server's answer, so a member who can only USE templates is not shown
+   *  Edit or Delete on one that belongs to the workspace. */
+  canManage:     { create: boolean; update: boolean; remove: boolean };
   clearTemplate: () => void;
   // Actions
   makeAvailable: (id: DocumentTemplateId) => void;
@@ -337,6 +344,14 @@ export function TemplateProvider({ children }: { children: React.ReactNode }) {
     dispatch({ type: "OP_CLEAR" });
   }, []);
 
+  const access = useWorkspaceAccess();
+  const real = realTemplatesAvailable(workspaceId);
+  const canManage = useMemo(() => ({
+    create: !real || access.can("template.create"),
+    update: !real || access.can("template.update"),
+    remove: !real || access.can("template.delete"),
+  }), [real, access]);
+
   return (
     <TemplateContext.Provider value={{
       state,
@@ -345,6 +360,7 @@ export function TemplateProvider({ children }: { children: React.ReactNode }) {
       loadList: (q, options) => { void loadList(q, options); },
       loadTemplate: id => { void loadTemplate(id); },
       canWrite: realTemplatesAvailable(workspaceId),
+      canManage,
       clearTemplate,
       makeAvailable: id => { void makeAvailable(id); },
       returnToDraft: id => { void returnToDraft(id); },

@@ -375,7 +375,7 @@ function ContactsLibrary({ section }: { section: LibrarySection }) {
       )}
 
       {/* Main content */}
-      <main id="contacts-main" className="ct-main" style={{ padding: "16px 24px" }}>
+      <div id="contacts-main" className="ct-main" style={{ padding: "16px 24px" }}>
         {state.listLoading && <Skeleton />}
 
         {!state.listLoading && state.listError && (
@@ -419,7 +419,7 @@ function ContactsLibrary({ section }: { section: LibrarySection }) {
             )}
           </>
         )}
-      </main>
+      </div>
 
       <style>{CARD_CSS}</style>
       {deleting && (

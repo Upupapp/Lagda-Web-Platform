@@ -8,6 +8,7 @@ import { describe, it, expect } from "vitest";
 import {
   computeSendReadiness,
   buildActionUrl,
+  describeSendDetail,
   type SendReadinessAction,
 } from "../prepare/send-readiness";
 import {
@@ -221,5 +222,93 @@ describe("buildActionUrl", () => {
     const url = buildActionUrl({ label: "x", route: "/app/prepare/fields", fieldIds: [] });
     expect(url).not.toContain("focusFieldIds");
     expect(url).toContain("showValidation=1");
+  });
+});
+
+// ── Everyone who must act holds a field ─────────────────────────────────────
+
+describe("a required participant with no field", () => {
+  const ack = makeParticipant({ id: "rcp_2", name: "Ana Reyes", role: "acknowledgment-recipient" });
+
+  it("blocks the send and names the person, with a link to place their field", () => {
+    const result = computeSendReadiness({ ...READY_INPUT(), draft: makeDraft({ participants: [makeParticipant(), ack] }) });
+    expect(result.ready).toBe(false);
+    const blocker = result.blockers.find(b => b.message.startsWith("Ana Reyes has no field"));
+    expect(blocker?.action).toMatchObject({ route: "/app/prepare/fields", participantId: "rcp_2" });
+  });
+
+  it("is satisfied by any field of theirs", () => {
+    const result = computeSendReadiness({
+      ...READY_INPUT(),
+      draft: makeDraft({ participants: [makeParticipant(), ack] }),
+      fields: [makeField(), makeField({ id: "bf_saved_2", type: "full-name", participantId: "rcp_2" })],
+    });
+    expect(result.ready).toBe(true);
+  });
+
+  it.each(["approver", "viewer", "carbon-copy"] as const)("does not ask a %s for one", role => {
+    const result = computeSendReadiness({
+      ...READY_INPUT(),
+      draft: makeDraft({ participants: [makeParticipant(), makeParticipant({ id: "rcp_3", name: "Quiet One", role })] }),
+    });
+    expect(result.blockers.some(b => b.message.startsWith("Quiet One"))).toBe(false);
+  });
+
+  it("does not ask an optional participant for one", () => {
+    const result = computeSendReadiness({
+      ...READY_INPUT(),
+      draft: makeDraft({ participants: [makeParticipant(), { ...ack, isRequired: false }] }),
+    });
+    expect(result.blockers.some(b => b.message.startsWith("Ana Reyes"))).toBe(false);
+  });
+});
+
+describe("describeSendDetail", () => {
+  const people = [{ name: "Maria Santos" }, { name: "Ana Reyes" }];
+
+  it("turns the server's recipient position into the person's name", () => {
+    expect(describeSendDetail({ field: "recipients[1]", message: "This required recipient has no field to complete." }, people))
+      .toBe("Ana Reyes: This required recipient has no field to complete.");
+  });
+
+  it("numbers a field from one", () => {
+    expect(describeSendDetail({ field: "fields[0]", message: "This field has no assigned recipient." }, people))
+      .toBe("Field 1: This field has no assigned recipient.");
+  });
+
+  it("shows the message alone when the position names nobody it knows", () => {
+    expect(describeSendDetail({ field: "recipients[9]", message: "No field." }, people)).toBe("No field.");
+    expect(describeSendDetail({ field: "recipients", message: "Add at least one recipient." }, people)).toBe("Add at least one recipient.");
+    expect(describeSendDetail({ message: "Not ready." }, people)).toBe("Not ready.");
+  });
+});
+
+describe("a first step nobody acts in", () => {
+  const copy = makeParticipant({ id: "rcp_c", name: "Records Desk", role: "carbon-copy", isRequired: false });
+  const routing = (first: string[], second: string[]) => ({
+    ...DEFAULT_ROUTING_CONFIG,
+    groups: [
+      { id: "g1", stepNumber: 1, participantIds: first },
+      { id: "g2", stepNumber: 2, participantIds: second },
+    ],
+  }) as unknown as PreparationDraft["routing"];
+
+  it("blocks the send: the document would never start", () => {
+    const result = computeSendReadiness({
+      ...READY_INPUT(),
+      draft: makeDraft({ participants: [makeParticipant(), copy], routing: routing(["rcp_c"], ["rcp_1"]) }),
+    });
+    expect(result.ready).toBe(false);
+    expect(result.blockers.some(b => b.message.startsWith("The first step has only copy recipients"))).toBe(true);
+  });
+
+  it("is fine when a copy recipient shares the first step with a signer, or comes later", () => {
+    for (const r of [routing(["rcp_1", "rcp_c"], []), routing(["rcp_1"], ["rcp_c"])]) {
+      const result = computeSendReadiness({
+        ...READY_INPUT(),
+        draft: makeDraft({ participants: [makeParticipant(), copy], routing: r }),
+      });
+      expect(result.ready).toBe(true);
+    }
   });
 });

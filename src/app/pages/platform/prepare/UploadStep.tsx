@@ -289,7 +289,7 @@ function DropZone({
         {disabled ? "Uploads temporarily unavailable" : "Drop files here, or click to select"}
       </div>
       <div style={{ ...GF, fontSize: 13, color: SILVER }}>
-        PDF, DOC, or DOCX · Up to 20 MB per file (demonstration limit) · Up to 10 files
+        PDF, DOC, or DOCX · Up to 20 MB per file · Up to 10 files
       </div>
     </div>
   );
@@ -953,7 +953,9 @@ export function UploadStep() {
         icon={FileText}
         eyebrow={stepEyebrow("upload")}
         title="Documents"
-        description="Select the documents for this transaction. Only file names and sizes are used — no file contents are read or stored in this demonstration."
+        description={USE_REAL_BACKEND
+          ? "Add the document for this transaction and give it a title. The title is the name everyone will see."
+          : "Select the documents for this transaction. Only file names and sizes are used — no file contents are read or stored in this demonstration."}
         meta={files.length === 0 ? "No files added" : `${readyCount} of ${files.length} file${files.length !== 1 ? "s" : ""} ready`}
       />
       <StepTwoColumn main={main} rail={rail} />

@@ -185,12 +185,18 @@ export function OpenDocumentButton({ request, disabled }: { request: ContactRequ
   const navigate = useNavigate();
   const platform = usePlatform();
   const documentId = request.documentId;
+  // The document is a template's own: the work is to USE the template, which
+  // brings its roles, steps and fields. Opening the bare document in Prepare
+  // dropped all three and left the assignee to rebuild them by hand.
+  const templateId = request.templateId ?? null;
   return (
-    <ActionButton icon={FolderOpen} label="Open document" variant="primary" disabled={disabled || documentId === null}
+    <ActionButton icon={FolderOpen} label={templateId !== null ? "Use the template" : "Open document"} variant="primary" disabled={disabled || documentId === null}
       onClick={() => {
         if (documentId === null) return;
         if (platform.currentWorkspace?.id !== request.workspaceId) platform.switchWorkspace(request.workspaceId);
-        void navigate(`/app/prepare/upload?resumeDocumentId=${encodeURIComponent(documentId)}`);
+        void navigate(templateId !== null
+          ? `/app/templates/${encodeURIComponent(templateId)}/use`
+          : `/app/prepare/upload?resumeDocumentId=${encodeURIComponent(documentId)}`);
       }} />
   );
 }

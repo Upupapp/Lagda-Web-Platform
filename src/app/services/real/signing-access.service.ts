@@ -66,6 +66,10 @@ export interface CeremonyView {
     mayViewAssignedFields: boolean;
     mayAcceptConsent: boolean;
     mayProceedToInput: boolean;
+    /** Whether Decline belongs on the page. Absent from an older server. */
+    mayDecline?: boolean;
+    /** Whether Skip belongs on the page: an approver's alone. */
+    maySkip?: boolean;
   };
   consent: {
     required: boolean;

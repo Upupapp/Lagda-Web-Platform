@@ -48,14 +48,27 @@ describe("who gets what", () => {
     ],
   } as unknown as PrepRoutingConfig;
 
-  it("signers (routing order) then reviewers; approvers only when asked", () => {
+  it("signers (routing order), reviewers, then acknowledgment recipients; approvers only when asked", () => {
     expect(planRequests(people, routing, [], { includeApprovers: false })).toEqual([
       { participantId: "s2", type: "signature-block" },
       { participantId: "s1", type: "signature-block" },
       { participantId: "r1", type: "review-block" },
+      // The server will not send while they hold no field at all.
+      { participantId: "k1", type: "full-name" },
     ]);
-    expect(planRequests(people, routing, [], { includeApprovers: true }).at(-1))
-      .toEqual({ participantId: "a1", type: "approval-block" });
+    expect(planRequests(people, routing, [], { includeApprovers: true }))
+      .toContainEqual({ participantId: "a1", type: "approval-block" });
+  });
+
+  it("gives an acknowledgment recipient nothing when they already hold any field", () => {
+    const fields = [field({ id: "k", type: "checkbox", participantId: "k1" })];
+    expect(planRequests(people, routing, fields, { includeApprovers: false }).map(r => r.participantId))
+      .toEqual(["s2", "s1", "r1"]);
+  });
+
+  it("never gives a viewer or a copy recipient a field", () => {
+    const quiet = [pax("v1", "viewer"), pax("c1", "carbon-copy")];
+    expect(planRequests(quiet, routing, [], { includeApprovers: true })).toEqual([]);
   });
 
   it("skips anyone who already has their field", () => {
@@ -64,7 +77,7 @@ describe("who gets what", () => {
       field({ id: "b", type: "review-block", participantId: "r1" }),
     ];
     expect(planRequests(people, routing, fields, { includeApprovers: false }))
-      .toEqual([{ participantId: "s2", type: "signature-block" }]);
+      .toEqual([{ participantId: "s2", type: "signature-block" }, { participantId: "k1", type: "full-name" }]);
   });
 
   it("orders by routing step even when participants were added in another order", () => {
@@ -79,6 +92,22 @@ describe("who gets what", () => {
     expect(partials.map(p => [p.label, p.required])).toEqual([
       ["Reviewed over Name", true], ["Approved over Name", false],
     ]);
+  });
+});
+
+describe("mixed types in one run", () => {
+  it("sizes each type from its own defaults and keeps them apart", () => {
+    const plan = planPlacement([
+      { participantId: "s1", type: "signature-block" },
+      { participantId: "s2", type: "signature-block" },
+      { participantId: "k1", type: "full-name" },
+    ], doc, []);
+    expect(plan.map(p => p.participantId).sort()).toEqual(["k1", "s1", "s2"]);
+    const name = plan.find(p => p.type === "full-name")!;
+    const block = plan.find(p => p.type === "signature-block")!;
+    // A printed name is a line, not a block: it must not inherit the block's height.
+    expect(name.rect.height).toBeLessThan(block.rect.height);
+    assertNoOverlaps(plan.map(p => p.rect));
   });
 });
 

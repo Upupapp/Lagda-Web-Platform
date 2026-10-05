@@ -74,6 +74,20 @@ export function buildActionUrl(action: SendReadinessAction): string {
   return query ? `${action.route}?${query}` : action.route;
 }
 
+/** Roles that must hold a field before the server will send. */
+const NEEDS_A_FIELD: readonly string[] = ["signer", "reviewer", "acknowledgment-recipient"];
+
+/** Required, acting participants who hold no field at all. */
+export function participantsMissingAField(
+  draft: Pick<PreparationDraft, "participants">,
+  fields: readonly Pick<FieldDefinition, "participantId">[],
+): { id: string; name: string }[] {
+  const holders = new Set(fields.map(f => f.participantId).filter((id): id is string => typeof id === "string"));
+  return draft.participants
+    .filter(p => p.isRequired && NEEDS_A_FIELD.includes(p.role) && !holders.has(p.id))
+    .map(p => ({ id: p.id, name: p.name }));
+}
+
 export function computeSendReadiness(input: SendReadinessInput): SendReadinessResult {
   const { draft, multiDocumentSigningGap, syncError, fields } = input;
   const blockers: SendReadinessBlocker[] = [];
@@ -157,6 +171,34 @@ export function computeSendReadiness(input: SendReadinessInput): SendReadinessRe
         },
       });
     }
+    // The server's own rule (assessSnapshotReadiness): every REQUIRED
+    // participant who acts must hold at least one field. Approvers are the
+    // exception (they approve without one); viewers and copy recipients never
+    // act. Without this check the send was refused with "not ready to send"
+    // and nothing on screen said who was missing a field.
+    // The first step must hold someone who ACTS. The server opens the next
+    // step when the current one's people finish; a first step of only copy
+    // recipients or viewers has nobody to finish, so nothing would ever open.
+    // (`?? []`: a draft saved before routing existed has none to read.)
+    const firstStep = [...((draft.routing as PreparationDraft["routing"] | undefined)?.groups ?? [])]
+      .filter(g => g.participantIds.length > 0)
+      .sort((x, y) => x.stepNumber - y.stepNumber)[0];
+    if (firstStep && !firstStep.participantIds.some(id => {
+      const person = draft.participants.find(p => p.id === id);
+      return person !== undefined && person.role !== "carbon-copy" && person.role !== "viewer";
+    })) {
+      blockers.push({
+        message: "The first step has only copy recipients or viewers, so nobody would start the document. Put a signer, approver, reviewer or acknowledgment recipient in the first step.",
+        action: { label: "Change the order", route: "/app/prepare/routing" },
+      });
+    }
+    const withoutField = participantsMissingAField(draft, fields);
+    for (const person of withoutField) {
+      blockers.push({
+        message: `${person.name} has no field on the document. Each signer, reviewer and acknowledgment recipient needs at least one.`,
+        action: { label: "Place a field", route: "/app/prepare/fields", participantId: person.id },
+      });
+    }
     if (fields.some((f) => !f.id.startsWith("bf_"))) {
       blockers.push({
         message: "Field placement has local, unsaved edits — save before sending.",
@@ -166,4 +208,25 @@ export function computeSendReadiness(input: SendReadinessInput): SendReadinessRe
   }
 
   return { ready: blockers.length === 0, blockers };
+}
+
+/**
+ * One of the server's reasons for refusing a send, with the PERSON named.
+ *
+ * The server says which recipient by position (`recipients[6]`) and never by
+ * name. The draft holds the same people in the same order, so the position is
+ * turned back into a name here; anything unrecognised is shown as it came.
+ */
+export function describeSendDetail(
+  detail: { field?: string; message: string },
+  participants: readonly { name: string }[],
+): string {
+  const at = /^(recipients|fields)\[(\d+)\]$/.exec(detail.field ?? "");
+  if (!at) return detail.message;
+  const index = Number(at[2]);
+  if (at[1] === "recipients") {
+    const name = participants[index]?.name;
+    return name ? `${name}: ${detail.message}` : detail.message;
+  }
+  return `Field ${String(index + 1)}: ${detail.message}`;
 }

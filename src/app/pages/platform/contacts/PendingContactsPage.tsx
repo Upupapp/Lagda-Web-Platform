@@ -58,7 +58,7 @@ export function PendingContactsPage() {
       <ContactsHeader section="pending" pendingCount={received.length}
         subtitle="People who asked to add you as a contact, and the requests you sent. Accepting adds you to each other's contacts." />
 
-      <main className="pc-main">
+      <div className="pc-main">
         {!available && (
           <p className="pc-info"><Inbox size={15} aria-hidden /> Contact requests are available in a connected LAGDA workspace.</p>
         )}
@@ -155,7 +155,7 @@ export function PendingContactsPage() {
             ))}
           </ul>
         </section>
-      </main>
+      </div>
       <style>{CSS}</style>
     </div>
   );

@@ -24,6 +24,10 @@ export interface ContactRequest {
   readonly message: string | null;
   readonly documentId: string | null;
   readonly documentTitle: string | null;
+  /** Set when `documentId` is a template's own document: the template to use.
+   *  Absent from an older server. */
+  readonly templateId?: string | null;
+  readonly templateName?: string | null;
   readonly dueAt: string | null;
   readonly contact: { readonly contactId: string; readonly name: string; readonly email: string };
   /** `in-app`: a workspace member, no email. `email`: anyone else. */

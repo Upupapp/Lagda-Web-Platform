@@ -257,7 +257,7 @@ function TemplatesInner() {
   // 093. The ready-made counts come from the server's catalogue.
   useReadyMade();
   const chatLocked = useWorkspaceAllows("personal") === false;
-  const { state, setQuery, loadList, canWrite } = useTemplates();
+  const { state, setQuery, loadList, canWrite, canManage } = useTemplates();
   const { isNarrow } = useViewport();
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [showFilters, setShowFilters] = useState(false);
@@ -338,7 +338,7 @@ function TemplatesInner() {
               mode the save would refuse, and a button that cannot succeed is
               worse than no button — it reads as a broken feature rather than
               an unavailable one. */}
-          {canWrite && (
+          {canWrite && canManage.create && (
             <Link
               to="/app/templates/new"
               style={{

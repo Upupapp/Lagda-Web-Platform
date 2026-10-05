@@ -330,7 +330,7 @@ export function RequestsFromContactsPage() {
       <ContactsHeader section="requests" pendingCount={pendingCount}
         subtitle="Documents you asked your contacts for, and what they asked of you." />
 
-      <main className="rfc-main" style={{ padding: "20px 24px 40px", maxWidth: 980, boxSizing: "border-box" }}>
+      <div className="rfc-main" style={{ padding: "20px 24px 40px", maxWidth: 980, boxSizing: "border-box" }}>
         <h2 style={{ ...GF, fontSize: 18, fontWeight: 700, color: NAVY, margin: "0 0 4px" }}>Document requests</h2>
         <p style={{ ...GF, fontSize: 13.5, color: SLATE, margin: "0 0 16px", lineHeight: 1.55, maxWidth: 680 }}>
           Requests your colleagues sent you, and requests you sent to your contacts, across every workspace you belong to.
@@ -431,7 +431,7 @@ export function RequestsFromContactsPage() {
             event.target.value = "";
           }}
         />
-      </main>
+      </div>
 
       {rejectFor !== null && (
         <RejectDialog

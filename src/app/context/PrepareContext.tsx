@@ -179,7 +179,8 @@ type PrepareAction =
   | { type: "SET_TEMPLATES"; templates: MockTemplateSummary[] }
   | { type: "SET_RESUMABLE"; drafts: ResumableDraftSummary[] };
 
-function prepareReducer(state: PrepareState, action: PrepareAction): PrepareState {
+/** Exported for its tests only. */
+export function prepareReducer(state: PrepareState, action: PrepareAction): PrepareState {
   switch (action.type) {
     case "LOAD_START":
       return { ...state, loadState: "loading", errorMessage: null };
@@ -212,6 +213,13 @@ function prepareReducer(state: PrepareState, action: PrepareAction): PrepareStat
               ...g, participantIds: g.participantIds.map(replace),
             })),
           },
+          // A template's fields name the participants by the ids they had
+          // BEFORE the server created them. Left alone, every one of them
+          // pointed at a participant that no longer existed and arrived on
+          // Place Fields as "a removed participant can't complete this".
+          ...(state.draft.templateFields
+            ? { templateFields: state.draft.templateFields.map((f) => (f.participantId === null ? f : { ...f, participantId: replace(f.participantId) })) }
+            : {}),
         },
       };
     }
@@ -468,6 +476,22 @@ export function PrepareProvider({ children }: { children: React.ReactNode }) {
         void syncParticipants(workspaceId, documentId, [], local).then((result) => {
           if (result.idReplacements.size > 0) {
             dispatch({ type: "REPLACE_PARTICIPANT_IDS", replacements: result.idReplacements });
+            // The step each person is in. Creating a recipient does not carry
+            // it, so until now a draft that arrived whole (a template) left
+            // everyone on the server's default step 1: the screen showed five
+            // steps and the server would have asked all of them at once.
+            const routing = draftRef.current?.routing;
+            if (routing) {
+              const orders: { id: string; routingOrder: number }[] = [];
+              for (const group of routing.groups) {
+                for (const id of group.participantIds) {
+                  orders.push({ id: result.idReplacements.get(id) ?? id, routingOrder: group.stepNumber });
+                }
+              }
+              void syncRoutingOrder(workspaceId, documentId, orders).then((errors) => {
+                if (errors.size > 0) setSyncError([...errors.values()][0] ?? "The signing order could not be saved.");
+              });
+            }
           }
           if (result.errors.size > 0) {
             setSyncError([...result.errors.values()][0]

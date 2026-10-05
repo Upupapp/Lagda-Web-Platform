@@ -144,7 +144,8 @@ export function orderForPlacement(
     });
   }
   const roleRank = (p: PrepParticipant) =>
-    p.role === "signer" ? 0 : p.role === "reviewer" ? 1 : p.role === "approver" ? 2 : 3;
+    p.role === "signer" ? 0 : p.role === "reviewer" ? 1 : p.role === "approver" ? 2
+      : p.role === "acknowledgment-recipient" ? 3 : 4;
   return participants
     .map((p, index) => ({ p, index }))
     .sort((a, b) =>
@@ -172,6 +173,13 @@ export function missingBlockFor(
   }
   if (participant.role === "approver" && opts.includeApprovers) {
     return own.some(f => f.type === "approval-block") ? null : "approval-block";
+  }
+  // The server refuses to send while a required acknowledgment recipient holds
+  // no field at all (they are a participant who must act). Their printed name
+  // is the lightest thing that satisfies it: it fills in by itself, and they
+  // still finish by pressing Acknowledge. Any field they already hold counts.
+  if (participant.role === "acknowledgment-recipient") {
+    return own.length > 0 ? null : "full-name";
   }
   return null;
 }
@@ -205,12 +213,32 @@ export function planPlacement(
   document: EditorDocument,
   fields: readonly FieldDefinition[],
 ): PlannedField[] {
+  // One pass per field type, in the order the types first appear: a row is
+  // sized from ONE type, so a name line laid out in a row of signature blocks
+  // would be drawn at a block's size. Each pass keeps clear of what the
+  // earlier ones placed.
+  const order: FieldType[] = [];
+  for (const r of requests) if (!order.includes(r.type)) order.push(r.type);
+  const planned: PlannedField[] = [];
+  for (const type of order) {
+    planned.push(...planOneType(requests.filter(r => r.type === type), document, fields, planned));
+  }
+  return planned;
+}
+
+function planOneType(
+  requests: readonly PlacementRequest[],
+  document: EditorDocument,
+  fields: readonly FieldDefinition[],
+  alreadyPlanned: readonly PlannedField[],
+): PlannedField[] {
   if (requests.length === 0 || document.pages.length === 0) return [];
   const pages: EditorPage[] = [...document.pages].sort((a, b) => b.pageNumber - a.pageNumber);
   for (const page of pages) {
-    const occupied = fields
-      .filter(f => f.documentId === document.id && f.pageId === page.id)
-      .map(f => f.rect);
+    const occupied = [
+      ...fields.filter(f => f.documentId === document.id && f.pageId === page.id).map(f => f.rect),
+      ...alreadyPlanned.filter(p => p.pageId === page.id).map(p => p.rect),
+    ];
     const rects = layoutOnPage(requests, occupied);
     if (rects) {
       return requests.map((r, i) => ({ participantId: r.participantId, type: r.type, pageId: page.id, rect: rects[i]! }));

@@ -156,6 +156,7 @@ export function RealSigningPage() {
   const [linkError, setLinkError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [declineReason, setDeclineReason] = useState<SigningDeclineReason>("not-agree");
+  const [confirmingApproval, setConfirmingApproval] = useState(false);
 
   // Same NEW-KEY / RETRY-SAME-KEY / RETIRE-ON-SUCCESS rule as sender Send
   // (ConfirmationPage) — one submission per ceremony, in-memory only.
@@ -907,18 +908,26 @@ export function RealSigningPage() {
             background: "linear-gradient(to bottom, rgba(245,247,250,0), #F5F7FA 28%)",
           }}
         >
+          {isApprover && confirmingApproval && (
+            <p role="status" data-testid="approve-confirm-note" style={{ fontSize: 13, color: "#475569", margin: "0 0 2px", lineHeight: 1.5 }}>
+              Approving is recorded under your name and cannot be undone. Click Confirm approval to record it.
+            </p>
+          )}
           <ActionRow>
             <ActionButton
               icon={submitting ? Loader2 : Send}
-              onClick={() => void handleSubmit()}
+              onClick={() => {
+                // An approval is one click from final, so it is asked twice.
+                if (isApprover && !confirmingApproval) { setConfirmingApproval(true); return; }
+                void handleSubmit();
+              }}
               disabled={submitting}
               full
             >
-              {submitting ? "Submitting…" : wording.action}
+              {submitting ? "Submitting…" : (isApprover && confirmingApproval ? "Confirm approval" : wording.action)}
             </ActionButton>
-            {isApprover ? (
-              // Approvers cannot decline — the backend refuses it (069). Their
-              // alternative to approving is skipping.
+            {isApprover && (
+              // Passing on it: the request moves on without this approval.
               <ActionButton
                 kind="secondary"
                 icon={SkipForward}
@@ -928,7 +937,11 @@ export function RealSigningPage() {
               >
                 Skip
               </ActionButton>
-            ) : (
+            )}
+            {/* An approver may refuse outright as well, which ends the request
+                for everyone. The server says whether (`mayDecline`); an older
+                server says nothing for an approver and the button stays off. */}
+            {(isApprover ? view.access.mayDecline === true : true) && (
               <ActionButton
                 kind="secondary"
                 icon={Ban}

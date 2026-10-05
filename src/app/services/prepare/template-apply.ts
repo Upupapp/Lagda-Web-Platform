@@ -374,7 +374,10 @@ export function resolveTemplateApplication(
       email,
       role: slot.role,
       organization: mapping?.organization?.trim() ?? "",
-      isRequired: slot.required,
+      // They never act, so they can never hold a transaction open. Marked
+      // required, they showed "required but cannot block completion" warnings
+      // and were counted among the people the document was waiting for.
+      isRequired: slot.role === "carbon-copy" || slot.role === "viewer" ? false : slot.required,
       // Filled in below, once the groups exist.
       routingGroupId: null,
       // Set just below, once it has been checked against what the server

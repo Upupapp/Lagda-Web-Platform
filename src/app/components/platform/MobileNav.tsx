@@ -29,6 +29,7 @@ import { usePendingInvitationCount } from "../../hooks/usePendingInvitationCount
 import { InvitationCountBubble, NavCountBubble, INVITATION_BUBBLE_STYLES } from "./InvitationCountBubble";
 import { useNavCounts } from "../../hooks/useNavCounts";
 import { useWorkspacePlanLabel } from "../../hooks/useWorkspacePlanLabel";
+import { useCanPrepare } from "../../hooks/useCanPrepare";
 
 const BORDER = "rgba(0,0,0,0.08)";
 const GF     = { fontFamily: "'Geist', sans-serif" };
@@ -131,7 +132,7 @@ export function MobileNav() {
     restartTour();
   }, [restartTour]);
 
-  const canPrepare = hasPermission("prepare_documents") && hasFlag("prepareFlowEnabled");
+  const canPrepare = useCanPrepare() && hasFlag("prepareFlowEnabled");
 
   return (
     <>

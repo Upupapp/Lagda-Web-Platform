@@ -76,8 +76,12 @@ function SectionCard({ title, children }: { title: string; children: React.React
 // ── Action button strip ───────────────────────────────────────────────────────
 function ActionStrip({
   template, onMakeAvailable, onReturnToDraft, onArchive, onRestore, onDuplicate, onDelete,
-  canDelete, hasStatusLifecycle, pendingOp,
+  canDelete, canEdit, canDuplicate, hasStatusLifecycle, pendingOp,
 }: {
+  /** Edit, Fields and Author: only for someone who may change the template. */
+  canEdit:         boolean;
+  /** Duplicate makes a new template. */
+  canDuplicate:    boolean;
   template:        DocumentTemplate;
   onMakeAvailable: () => void;
   onReturnToDraft: () => void;
@@ -103,36 +107,15 @@ function ActionStrip({
   hasStatusLifecycle: boolean;
   pendingOp:       string;
 }) {
-  const { isNarrow } = useViewport();
   const { id, status } = template;
   const busy = pendingOp !== "none";
 
   return (
-    /* ── One horizontal row on a phone, scrolled ────────────────────────
-       Wrapping produced four ragged rows of different widths that pushed
-       the content below off the fold, and the primary action ended up
-       visually level with Archive. A single row keeps the order meaningful
-       — Use Template first, destructive last — and costs a swipe instead of
-       a third of the screen.
-
-       `WebkitOverflowScrolling` for momentum on iOS; the negative margin
-       plus padding lets the row bleed to the screen edge so it reads as
-       scrollable rather than clipped. */
-    <div style={{
-      display: "flex",
-      alignItems: "center",
-      gap: 8,
-      ...(isNarrow
-        ? {
-            flexWrap: "nowrap" as const,
-            overflowX: "auto" as const,
-            WebkitOverflowScrolling: "touch" as const,
-            scrollbarWidth: "none" as const,
-            margin: "0 -16px",
-            padding: "2px 16px 6px",
-          }
-        : { flexWrap: "wrap" as const }),
-    }}>
+    /* Wraps at every width. On a phone this used to be one sideways-scrolling
+       row: Edit, Fields, Author, Duplicate and Delete sat off the edge of the
+       screen with nothing to say they were there. Wrapped, the primary action
+       still comes first and every button is on screen. */
+    <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
       {/* Primary: Use (available only) */}
       {status === "available" && (
         <Link
@@ -154,7 +137,7 @@ function ActionStrip({
       </Link>
 
       {/* Edit */}
-      {status !== "archived" && (
+      {canEdit && status !== "archived" && (
         <Link
           to={`/app/templates/${id}/edit`}
           style={{ display: "inline-flex", alignItems: "center", gap: 7, padding: "9px 16px", background: "#F1F5F9", color: "#0F172A", borderRadius: 8, ...GF, fontSize: 13, fontWeight: 600, textDecoration: "none", flexShrink: 0, whiteSpace: "nowrap" }}
@@ -165,7 +148,7 @@ function ActionStrip({
       )}
 
       {/* Fields */}
-      {status !== "archived" && (
+      {canEdit && status !== "archived" && (
         <Link
           to={`/app/templates/${id}/fields`}
           style={{ display: "inline-flex", alignItems: "center", gap: 7, padding: "9px 16px", background: "#F1F5F9", color: "#0F172A", borderRadius: 8, ...GF, fontSize: 13, fontWeight: 600, textDecoration: "none", flexShrink: 0, whiteSpace: "nowrap" }}
@@ -178,7 +161,7 @@ function ActionStrip({
       {/* Author the document (066) — a peer of Fields, not something buried in
           the Documents tab. Offered whatever the template's document state is:
           the editor itself warns before replacing one that was uploaded. */}
-      {status !== "archived" && (
+      {canEdit && status !== "archived" && (
         <Link
           to={`/app/templates/${id}/author`}
           style={{ display: "inline-flex", alignItems: "center", gap: 7, padding: "9px 16px", background: "#F1F5F9", color: "#0F172A", borderRadius: 8, ...GF, fontSize: 13, fontWeight: 600, textDecoration: "none", flexShrink: 0, whiteSpace: "nowrap" }}
@@ -189,6 +172,7 @@ function ActionStrip({
       )}
 
       {/* Duplicate */}
+      {canDuplicate && (
       <button
         onClick={onDuplicate}
         disabled={busy}
@@ -197,6 +181,7 @@ function ActionStrip({
         <Copy size={14} />
         {pendingOp === "duplicate" ? "Duplicating…" : "Duplicate"}
       </button>
+      )}
 
       {/* Make Available / Return to Draft */}
       {hasStatusLifecycle && status === "draft" && (
@@ -292,7 +277,7 @@ function TemplateDetailInner() {
     }
   };
   const { templateId } = useParams<{ templateId: string }>();
-  const { state, makeAvailable, returnToDraft, archive, restore, duplicate, clearOpMessage, canWrite } = useTemplates();
+  const { state, makeAvailable, returnToDraft, archive, restore, duplicate, clearOpMessage, canWrite, canManage } = useTemplates();
   const navigate = useNavigate();
   const t = state.activeTemplate;
 
@@ -404,7 +389,9 @@ function TemplateDetailInner() {
           onRestore={() => restore(t.id)}
           onDuplicate={handleDuplicate}
           onDelete={() => { setConfirmDelete(true); }}
-          canDelete={canWrite}
+          canDelete={canWrite && canManage.remove}
+          canEdit={canManage.update}
+          canDuplicate={canManage.create}
           hasStatusLifecycle={!canWrite}
           pendingOp={state.pendingOp}
         />
@@ -419,7 +406,9 @@ function TemplateDetailInner() {
       <div style={{ padding: isNarrow ? "20px 16px" : "20px 24px", display: "grid",
         // Top to bottom on a phone: a 300px sidebar next to a 1fr column left
         // the main content about 40px wide and pushed everything sideways.
-        gridTemplateColumns: isNarrow ? "1fr" : "1fr 300px",
+        // `minmax(0, …)`: a bare 1fr cannot shrink below its content, so on a
+        // tablet the 300px panel was pushed past the right edge.
+        gridTemplateColumns: isNarrow ? "minmax(0, 1fr)" : "minmax(0, 1fr) minmax(0, 300px)",
         gap: 16, alignItems: "start" }}>
 
         {/* Main column */}

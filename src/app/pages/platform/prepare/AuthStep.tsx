@@ -262,7 +262,7 @@ export function AuthStep() {
           Default authentication method
         </legend>
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-          {PREP_AUTH_METHODS.map(m => {
+          {PREP_AUTH_METHODS.filter(m => !USE_REAL_BACKEND || m.id === "none").map(m => {
             // Real-backend mode (P2 §7): only "none" is server-enforced —
             // see isAuthMethodAvailableForParticipant's matching gate for
             // the per-participant override list below. Checked as an
@@ -287,8 +287,18 @@ export function AuthStep() {
         </div>
       </fieldset>
 
+      {/* The other checks (email code, SMS, identity verification) are not
+          offered until the server enforces them: a choice that does nothing
+          must not be on the screen. */}
+      {USE_REAL_BACKEND && (
+        <p data-testid="auth-only-link-note" style={{ ...GF, fontSize: 13, color: "#475569", lineHeight: 1.55, margin: "0 0 8px" }}>
+          Every participant opens the document through a secure invitation link that is theirs alone.
+          Participants with a LAGDA account also confirm their password before they act.
+        </p>
+      )}
+
       {/* Per-participant overrides */}
-      {hasParticipants && (
+      {!USE_REAL_BACKEND && hasParticipants && (
         <div>
           <div style={{ ...GF, fontSize: 13, fontWeight: 700, color: NAVY, marginBottom: 4 }}>
             Per-participant authentication
@@ -312,13 +322,13 @@ export function AuthStep() {
       )}
 
       {/* Privacy notice */}
-      <div style={{ ...GF, marginTop: 32, padding: "12px 14px", borderRadius: 8, background: "#F5F7FA", border: "1px solid #E3E8EF", fontSize: 12, color: SILVER, lineHeight: 1.6 }}>
+      {!USE_REAL_BACKEND && <div style={{ ...GF, marginTop: 32, padding: "12px 14px", borderRadius: 8, background: "#F5F7FA", border: "1px solid #E3E8EF", fontSize: 12, color: SILVER, lineHeight: 1.6 }}>
         <strong style={{ color: "#4B5E70" }}>Privacy notice</strong>
         <br />
         Authentication method selections are stored only in this browser session. No OTP codes,
         passwords, or tokens are generated, transmitted, or logged in this frontend demonstration.
         Authentication selection alone does not confirm a participant's identity or legal capacity.
-      </div>
+      </div>}
     </div>
   );
 

@@ -337,7 +337,7 @@ export function ReviewStep() {
         <br /><br />
         The legal validity of electronic signatures in the Philippines is governed by the Electronic
         Commerce Act (Republic Act No. 8792) and its implementing rules. LAGDA does not guarantee
-        the legal effect of any transaction prepared using this demonstration system.
+        the legal effect of any particular transaction; ask a lawyer where that matters.
       </div>
 
       {/* CTA */}

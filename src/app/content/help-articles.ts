@@ -85,11 +85,11 @@ export const HELP_ARTICLES: readonly HelpArticle[] = [
     summary: "What each role can do on a document, so you choose the right one for each person.",
     steps: [
       "Signer: must sign. The document cannot complete without every required signer.",
-      "Approver: approves or declines the document instead of signing it. An approver can be placed before the signers in a sequential order, so nothing is signed until they approve.",
+      "Approver: approves the document instead of signing it. They can also Skip (the document moves on without their approval) or Decline (the request ends for everyone). Put an approver in an earlier step than the signers so nothing is signed until they approve.",
       "Reviewer: reads the document and marks their review complete. They place no signature.",
-      "Acknowledges: confirms they have read the document. Used for policies and notices.",
+      "Acknowledgment recipient: confirms they have read the document by clicking Acknowledge. Used for policies and notices. A required acknowledgment recipient must act before the document completes.",
       "Viewer: can open the document but is not asked to do anything.",
-      "Copy recipient: receives the completed document at the end and is not sent a signing link.",
+      "Copy recipient: is not asked to do anything and is not sent a link or an email. If they have a LAGDA account, the document appears there under Documents.",
       "On the Signers step, tick Required to make a person's part necessary for completion, or untick it for someone whose action is optional.",
     ],
     notes: [
@@ -129,10 +129,10 @@ export const HELP_ARTICLES: readonly HelpArticle[] = [
     before: ["The email from LAGDA with your signing link. It is addressed to you alone; do not forward it."],
     steps: [
       "Open the email and click the signing button or link. The document opens in your browser.",
-      "Read the Electronic Signature Disclosure. It explains that you are signing electronically, that you can ask for a paper copy, and how to withdraw. Tick the box and click I Agree and Continue.",
+      "Confirm that you agree to sign and be identified electronically for this document, then click I consent — continue. If you have a LAGDA account you are first asked to confirm your password.",
       "Go through the fields marked for you. Click a signature field to adopt your signature: Draw it with your mouse or finger, Type your name, or Upload an image. Click Done, then Adopt Signature. Initials work the same way.",
       "Fill in any date, text or checkbox fields assigned to you. A field marked Required must be completed before you can finish.",
-      "When every field is done, click Continue, review the summary, and click Submit. LAGDA seals your signature and records the time.",
+      "When every field is done, click Submit signature at the bottom of the page. LAGDA seals your signature and records the time. To refuse instead, click Decline and choose a reason.",
       "You will see a confirmation. The sender is told at once. When everyone has signed, the completed document is available to all participants.",
     ],
     notes: [

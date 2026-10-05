@@ -740,9 +740,10 @@ function FieldsEditorInner({ template }: { template: DocumentTemplate }) {
       )}
 
       {/* Assign-to role bar + doc tabs */}
-      <div style={{ background: "#f8fafb", borderBottom: "1px solid rgba(0,0,0,0.08)", padding: "8px 16px", display: "flex", alignItems: "center", gap: 16, flexShrink: 0 }}>
+      <div style={{ background: "#f8fafb", borderBottom: "1px solid rgba(0,0,0,0.08)", padding: "8px 16px", display: "flex", alignItems: "center", gap: 16, flexShrink: 0, flexWrap: "wrap" }}>
         {template.placeholders.length > 0 && (
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          /* Wraps: eleven roles in one row made the whole page 1020px wide. */
+          <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", minWidth: 0 }}>
             <span style={{ color: SILVER, ...GF, fontSize: 11 }}>Assign to:</span>
             {template.placeholders.map((ph, idx) => {
               const color = PARTICIPANT_ACCENT_COLORS[idx % PARTICIPANT_ACCENT_COLORS.length] ?? AZURE;
@@ -779,7 +780,7 @@ function FieldsEditorInner({ template }: { template: DocumentTemplate }) {
       {/* Main workspace */}
       <div style={{ flex: 1, display: "flex", overflow: "hidden" }}>
         {/* Pages column */}
-        <div style={{ flex: 1, overflowY: "auto", background: BGCANVAS, display: "flex", flexDirection: "column", alignItems: "center", gap: 24, padding: 24 }}>
+        <div style={{ flex: 1, minWidth: 0, overflowY: "auto", background: BGCANVAS, display: "flex", flexDirection: "column", alignItems: "center", gap: 24, padding: 24 }}>
           {Array.from({ length: pageCount }, (_, i) => {
             const pageId = `page-${i + 1}`;
             return (

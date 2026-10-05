@@ -1,15 +1,15 @@
 // /app/templates/:templateId/use — Use Template flow.
 // 3-step wizard: Map Roles → Enter Variables → Review & Launch.
-// Creates a fictional Prepare draft on completion (frontend-only, demonstrationOnly).
-// No real participant PII is stored, submitted, or retained after session.
-// Inline styles only. No Burgundy. No real backend.
+// Creates a Prepare draft on completion. Against the real backend each use
+// gets its OWN document (a copy of the template's file); nothing is sent here.
+// Inline styles only. No Burgundy.
 
 import { useEffect, useRef, useState } from "react";
 import { useParams, Link } from "react-router";
 import {
   ChevronLeft, ChevronRight,  
   CheckCircle2, AlertCircle, Zap, LayoutTemplate,
-  ArrowRight, Info,
+  ArrowRight,
 } from "lucide-react";
 import { TemplateProvider, useTemplates, useActiveTemplateLoader } from "../../../context/TemplateContext";
 import { usePlatform } from "../../../context/PlatformContext";
@@ -33,9 +33,10 @@ import { usePageMeta } from "../../../hooks/usePageMeta";
 import { useDetailTitle } from "../../../hooks/useDetailTitle";
 import { useViewport } from "../../../hooks/useViewport";
 import { ResponsiveStepper } from "../../../components/system/ResponsiveStepper";
-import {
-  MAP_ROLES_AUTH_METHOD, mapRolesOrganization, withMapRolesDefaults,
-} from "./map-roles-defaults";
+import { MAP_ROLES_AUTH_METHOD, withMapRolesDefaults } from "./map-roles-defaults";
+import { USE_REAL_BACKEND } from "../../../services/backend-flag";
+import { realTemplatesService } from "../../../services/real/templates.service";
+import { ApiError } from "../../../services/api-client";
 import { withProcess } from "../../../config/process-screens";
 
 // ── Design tokens ─────────────────────────────────────────────────────────────
@@ -62,12 +63,10 @@ class LaunchFailed extends Error {}
 const COLUMN_WIDTH = 688;
 
 function RoleMappingStep({
-  template: _template, mappings, assignments, organization, onChange,
+  template: _template, mappings, assignments, onChange,
 }: {
   template:  DocumentTemplate;
   mappings:  TemplateRoleMapping[];
-  /** The sender's workspace — shown, never typed. */
-  organization: string;
   /** 061. `null` while still loading. */
   assignments: TemplateRoleAssignment[] | null;
   onChange:  (idx: number, patch: Partial<TemplateRoleMapping>) => void;
@@ -127,21 +126,17 @@ function RoleMappingStep({
                     style={inputStyle}
                   />
                 </FormField>
-                <FormField label="Organization" required={false}>
-                  <input
-                    type="text"
-                    value={organization}
-                    readOnly
-                    aria-readonly="true"
-                    title="Set from your workspace"
-                    style={readOnlyInputStyle}
-                  />
-                </FormField>
-                <FormField label="Authentication">
-                  <select value={MAP_ROLES_AUTH_METHOD} disabled style={readOnlyInputStyle}>
-                    <option value={MAP_ROLES_AUTH_METHOD}>{authLabel}</option>
-                  </select>
-                </FormField>
+                {m.role === "carbon-copy" ? (
+                  <FormField label="Access">
+                    <input type="text" readOnly aria-readonly="true" value="Sees it in their LAGDA account" style={readOnlyInputStyle} />
+                  </FormField>
+                ) : (
+                  <FormField label="Authentication">
+                    <select value={MAP_ROLES_AUTH_METHOD} disabled style={readOnlyInputStyle}>
+                      <option value={MAP_ROLES_AUTH_METHOD}>{authLabel}</option>
+                    </select>
+                  </FormField>
+                )}
               </div>
             </div>
           );
@@ -319,13 +314,6 @@ function ReviewStep({
         </div>
       )}
 
-      {/* Demo notice */}
-      <div style={{ padding: "12px 14px", background: "#F8FAFC", border: "1px solid #E2E8F0", borderRadius: 8, display: "flex", gap: 8 }}>
-        <Info size={14} color="#94A3B8" style={{ flexShrink: 0, marginTop: 1 }} />
-        <p style={{ ...GF, fontSize: 12, color: "#64748B", margin: 0, lineHeight: 1.6 }}>
-          <strong>Demonstration only.</strong> Launching will create a fictional draft in the Prepare flow. No real signing request will be sent. No emails will be delivered. Participant data entered here is discarded when you close this page.
-        </p>
-      </div>
     </div>
   );
 }
@@ -413,7 +401,6 @@ function UseTemplateInner() {
   const { state } = useTemplates();
   const platform = usePlatform();
   const workspaceId = platform.currentWorkspace?.id;
-  const organization = mapRolesOrganization(platform.currentWorkspace?.name);
   const t = state.activeTemplate;
 
   // Arriving here (from "Use this template now", a card's Use button or a
@@ -432,7 +419,9 @@ function UseTemplateInner() {
   const [launching,setLaunching]= useState(false);
   const [error,    setError]    = useState<string | null>(null);
   const [launched, setLaunched] = useState(false);
-  const [launchDraftId, setLaunchDraftId] = useState<string | null>(null);
+  // One key per launch attempt: a retry after a lost response returns the
+  // same new document instead of leaving two.
+  const launchKey = useRef<{ templateId: string; key: string } | null>(null);
   const [launchRoute, setLaunchRoute] = useState<string>(TEMPLATE_HANDOFF_ROUTE);
   const [launchParticipantCount, setLaunchParticipantCount] = useState(0);
   const [launchStepCount, setLaunchStepCount] = useState(0);
@@ -526,7 +515,7 @@ function UseTemplateInner() {
       // stored template, because its id was never in that catalogue.
       const result = resolveTemplateApplication({
         placeholders: t.placeholders,
-        roleMappings: withMapRolesDefaults(mappings, platform.currentWorkspace?.name),
+        roleMappings: withMapRolesDefaults(mappings),
         routingMode: t.routing.mode,
         fields: t.fields,
         // 064. What the sender typed on the Variables step. These were
@@ -545,12 +534,32 @@ function UseTemplateInner() {
       // failure, shown at once rather than after the hold.
       const application = result.application;
       const handoff = await withProcess("template-launch", "", async () => {
-        const made = await handOffTemplateToPrepare(t.id, application, initialFilesFor(t));
+        // This use's own document. The template keeps its one; a use that
+        // prepared THAT document met the previous use's recipients on it.
+        let files = initialFilesFor(t);
+        if (USE_REAL_BACKEND && files && workspaceId) {
+          if (launchKey.current?.templateId !== t.id) launchKey.current = { templateId: t.id, key: crypto.randomUUID() };
+          try {
+            const copy = await realTemplatesService.instantiate(workspaceId, t.id, launchKey.current.key, t.name);
+            files = files.map(f => ({
+              ...f,
+              id: `pf_template_${copy.documentId}`,
+              backendDocumentId: copy.documentId,
+              backendArtifactId: copy.sourceArtifactId,
+            }));
+          } catch (err) {
+            throw new LaunchFailed(err instanceof ApiError && err.status === 403
+              ? "You do not have permission to prepare a document from this template."
+              : "A copy of the template's document could not be made. Please try again.");
+          }
+        }
+        const made = await handOffTemplateToPrepare(t.id, application, files);
+        // Made: the next launch is a new use and gets a new document.
+        if (made.ok) launchKey.current = null;
         if (!made.ok || !made.draft) throw new LaunchFailed(made.errorMessage ?? "The draft could not be created.");
         return made as typeof made & { draft: NonNullable<typeof made.draft> };
       });
 
-      setLaunchDraftId(handoff.draft.id);
       setLaunchRoute(handoff.route ?? TEMPLATE_HANDOFF_ROUTE);
       setLaunchParticipantCount(handoff.draft.participants.length);
       setAuthDowngrades(result.authDowngrades ?? []);
@@ -610,16 +619,15 @@ function UseTemplateInner() {
             {launchStepCount} {launchStepCount === 1 ? "routing step" : "routing steps"}.
           </p>
           <p style={{ ...GF, fontSize: 12, color: "#94A3B8", margin: "0 0 10px" }}>
-            Nothing has been sent yet. Choose the document on the next step, then review
+            Nothing has been sent yet. Give it a title on the next step, then review
             everything before sending.
           </p>
           {/* Says plainly that the draft is now independent of the template.
               Someone who edits the template afterwards should not have to guess
               whether this draft changes with it. It does not. */}
           <p style={{ ...GF, fontSize: 12, color: "#94A3B8", margin: "0 0 28px" }}>
-            This draft now has its own copy of the roles and routing — later changes to
-            the template will not affect it. Draft ID:{" "}
-            <code style={{ background: "#F1F5F9", padding: "1px 5px", borderRadius: 4 }}>{launchDraftId}</code>
+            This draft now has its own copy of the document, roles and routing. Later changes to
+            the template will not affect it.
           </p>
           {authDowngrades.length > 0 && (
             /* Told, not swallowed. This template asks for an identity check
@@ -696,7 +704,7 @@ function UseTemplateInner() {
           </div>
         )}
 
-        {step === "roles"     && <RoleMappingStep template={t} mappings={mappings} assignments={assignments} organization={organization} onChange={handleMappingChange} />}
+        {step === "roles"     && <RoleMappingStep template={t} mappings={mappings} assignments={assignments} onChange={handleMappingChange} />}
         {step === "variables" && <VariablesStep variables={t.variables} values={varValues} onChange={(key, val) => setVarValues(v => ({ ...v, [key]: val }))} />}
         {step === "review"    && <ReviewStep template={t} mappings={mappings} variableValues={varValues} />}
 

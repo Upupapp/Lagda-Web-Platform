@@ -2185,8 +2185,8 @@ export function PlaceForEveryoneDialog({
         <div style={{ padding: "14px 20px", display: "flex", flexDirection: "column", gap: 12, fontSize: 13, color: "#33414F", lineHeight: 1.5 }}>
           <p style={{ margin: 0 }}>
             Adds a <strong>Signature over Name</strong> for each signer and a <strong>Reviewed over Name</strong> for
-            each reviewer who does not have one yet, side by side at the bottom of the last page. Existing fields are
-            never moved or covered.
+            each reviewer who does not have one yet, side by side at the bottom of the last page. An acknowledgment
+            recipient with no field gets their printed name. Existing fields are never moved or covered.
           </p>
           {hasApprovers && (
             <label style={{ display: "flex", alignItems: "flex-start", gap: 9, cursor: "pointer", padding: "9px 11px", borderRadius: 8, border: "1px solid #E3E8EF", background: "#F8FAFC" }}>

@@ -3,6 +3,7 @@
 // Tab-based layout. All mutations are in-session only. demonstrationOnly.
 // Inline styles only. No Burgundy.
 
+import { USE_REAL_BACKEND } from "../../../services/backend-flag";
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router";
 import {
@@ -447,7 +448,11 @@ function RoutingTab({ draft, onChange }: { draft: DocumentTemplate; onChange: (p
 
 // ── Tab panel: Auth ────────────────────────────────────────────────────────────
 function AuthTab({ draft, onChange }: { draft: DocumentTemplate; onChange: (patch: Partial<DocumentTemplate>) => void }) {
-  const AUTH_METHODS = PREP_AUTH_METHODS.map(m => [m.id, m.label] as [string, string]);
+  // Against the real server only the invitation link is enforced, so it is
+  // the only one offered: a template must not promise a check nobody performs.
+  const AUTH_METHODS = PREP_AUTH_METHODS
+    .filter(m => !USE_REAL_BACKEND || m.id === "none")
+    .map(m => [m.id, m.label] as [string, string]);
   return (
     <div>
       <FormField label="Global Default Auth Method" hint="Applied to all role placeholders unless overridden below.">
@@ -896,8 +901,10 @@ function TemplateEditInner() {
       </div>
 
       {/* Tabs */}
-      <div style={{ background: "white", borderBottom: "1px solid #E2E8F0", padding: "0 24px" }}>
-      <CenteredColumn max={EDIT_COLUMN} style={{ display: "flex", gap: 2 }}>
+      <div style={{ background: "white", borderBottom: "1px solid #E2E8F0", padding: isNarrow ? "0 8px" : "0 24px" }}>
+      {/* Wraps: seven tabs do not fit a phone, and a row that ran off the edge
+          hid Routing, Auth, Settings and Variables and dragged the page sideways. */}
+      <CenteredColumn max={EDIT_COLUMN} style={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
         {TABS.map(tab => (
           <button
             key={tab.id}

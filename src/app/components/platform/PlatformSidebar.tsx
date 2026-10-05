@@ -25,6 +25,7 @@ import { usePrepareLaunch } from "../../hooks/usePrepareLaunch";
 import { usePendingInvitationCount } from "../../hooks/usePendingInvitationCount";
 import { InvitationCountBubble, NavCountBubble, NAV_BUBBLES, INVITATION_BUBBLE_STYLES, pendingInvitationsLabel, type NavBubbleKind } from "./InvitationCountBubble";
 import { useNavCounts } from "../../hooks/useNavCounts";
+import { useCanPrepare } from "../../hooks/useCanPrepare";
 
 const BORDER = "rgba(0,0,0,0.08)";
 const GF     = { fontFamily: "'Geist', sans-serif" };
@@ -255,7 +256,7 @@ export function PlatformSidebar() {
 
   const sidebarWidth = collapsed ? 60 : 240;
 
-  const canPrepare = hasPermission("prepare_documents") && hasFlag("prepareFlowEnabled");
+  const canPrepare = useCanPrepare() && hasFlag("prepareFlowEnabled");
 
   return (
     <aside

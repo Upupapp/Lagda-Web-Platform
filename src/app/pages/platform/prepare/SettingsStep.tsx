@@ -195,7 +195,9 @@ export function SettingsStep() {
       <div style={{ marginBottom: 32, padding: "20px", borderRadius: 12, border: "1px solid #E3E8EF" }}>
         <SectionHeader
           title="Invitation"
-          subtitle="Customise the email invitation sent to participants. No invitations are sent in this demonstration."
+          subtitle={USE_REAL_BACKEND
+            ? "Customise the email invitation sent to participants."
+            : "Customise the email invitation sent to participants. No invitations are sent in this demonstration."}
         />
 
         <div style={{ marginBottom: 14 }}>
@@ -249,9 +251,11 @@ export function SettingsStep() {
               boxSizing: "border-box",
             }}
           />
-          <div style={{ ...GF, fontSize: 11, color: SILVER, marginTop: 3 }}>
-            Not stored after this browser session. Not transmitted in this demonstration.
-          </div>
+          {!USE_REAL_BACKEND && (
+            <div style={{ ...GF, fontSize: 11, color: SILVER, marginTop: 3 }}>
+              Not stored after this browser session. Not transmitted in this demonstration.
+            </div>
+          )}
         </div>
 
         <div>
@@ -380,15 +384,9 @@ export function SettingsStep() {
             checked={settings.completion.notifySenderOnComplete}
             onChange={v => updateCompletion({ notifySenderOnComplete: v })}
           />
-          <Toggle
-            id="copy-participants"
-            label="Send everyone the final copy"
-            description="When completed, each participant and copy recipient is emailed a personal link to the signed PDF. Viewers are not."
-            checked={settings.completion.sendCompletionCopyToParticipants}
-            onChange={v => updateCompletion({
-              sendCompletionCopyToParticipants: v, sendCompletionCopyToCCRecipients: v,
-            })}
-          />
+          <p data-testid="final-copy-note" style={{ ...GF, fontSize: 13, color: "#475569", margin: 0, lineHeight: 1.55 }}>
+            Participants with a LAGDA account can open the completed document under Records.
+          </p>
           <Toggle
             id="allow-download"
             label="Allow participant download"
@@ -420,7 +418,6 @@ export function SettingsStep() {
 
   const completionFlags: { label: string; on: boolean }[] = [
     { label: "Notify sender on complete", on: settings.completion.notifySenderOnComplete },
-    { label: "Final copy to everyone", on: settings.completion.sendCompletionCopyToParticipants },
     { label: "Participant download allowed", on: settings.completion.allowParticipantDownload },
     { label: "Verification record created", on: settings.completion.createVerificationRecord },
   ];

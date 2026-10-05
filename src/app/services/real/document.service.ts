@@ -97,6 +97,14 @@ class RealDocumentService {
     );
   }
 
+  /** The title the sender typed on Prepare. Until this, it was never sent. */
+  async rename(workspaceId: string, documentId: string, title: string): Promise<RealDocument> {
+    return apiRequest<RealDocument>(
+      `/workspaces/${encodeURIComponent(workspaceId)}/documents/${encodeURIComponent(documentId)}`,
+      { method: "PATCH", body: { title } },
+    );
+  }
+
   async create(workspaceId: string, title: string): Promise<RealDocument> {
     return apiRequest<RealDocument>(`/workspaces/${encodeURIComponent(workspaceId)}/documents`, {
       method: "POST",

@@ -310,6 +310,33 @@ class RealTemplatesService {
     );
     return result.items;
   }
+
+  /**
+   * One USE of a template: the server makes a fresh document holding the
+   * template's file and returns its ids. Every use used to prepare the
+   * template's own single document, so a second use met the first one's
+   * recipients, lost its step order and orphaned its fields. The key makes a
+   * double click or a lost response return the same document.
+   */
+  async instantiate(
+    workspaceId: string, templateId: string, idempotencyKey: string, title?: string,
+  ): Promise<WireTemplateInstance> {
+    return changes("documents", apiRequest<WireTemplateInstance>(
+      `${base(workspaceId)}/${encodeURIComponent(templateId)}/instantiate`,
+      {
+        method: "POST", headers: { "Idempotency-Key": idempotencyKey },
+        body: title && title.trim() ? { title: title.trim() } : {},
+      },
+    ));
+  }
+}
+
+/** What `instantiate` returns that this app uses: the new document. */
+export interface WireTemplateInstance {
+  documentId: string;
+  sourceArtifactId: string;
+  documentTitle: string;
+  pageCount: number | null;
 }
 
 export const realTemplatesService = new RealTemplatesService();

@@ -336,7 +336,9 @@ export function RibbonToolbar({
                   {placeholders.length === 0 && variables.length === 0 && (
                     <div style={{ ...GF, fontSize: 11.5, color: "#CBD5E1", padding: "2px 8px 6px" }}>No roles or variables yet.</div>
                   )}
-                  {placeholders.map(p => (
+                  {/* A copy recipient or a viewer never fills anything in, so a
+                      field cannot be theirs. */}
+                  {placeholders.filter(p => p.role !== "carbon-copy" && p.role !== "viewer").map(p => (
                     <DropdownItem key={p.id} compact={compact} onClick={() => { insertFieldForSlot(ft, p); close(); }}>
                       <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}><PenLine size={12} color={SILVER} />For {p.label}</span>
                     </DropdownItem>

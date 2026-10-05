@@ -350,11 +350,24 @@ export function RoutingStep() {
   const routeErrors  = validation?.errors.filter(e => e.stepId === "routing") ?? [];
   const routeWarnings = validation?.warnings.filter(e => e.stepId === "routing") ?? [];
   const isApprovalBased = routing.mode === "approval-based";
-  // An approver's whole point is to be asked before signing opens — the only
-  // mode that guarantees that ordering is Approval-based, so once one is on
-  // the transaction the other three modes stop being valid choices, not just
-  // discouraged ones.
+  // An approver is usually asked before signing opens, and Approval-based is
+  // the mode that arranges that by itself. It is no longer the ONLY mode an
+  // approver allows: a sender (or a template) may put approvers in any step,
+  // e.g. approver, then a second approver, then a reviewer, then the signers.
+  // The server orders people by step number alone, whatever their role. Before
+  // this, an approver locked the other three modes and a template's five steps
+  // collapsed into two.
   const hasApprover = participants.some(p => p.role === "approver");
+  // True when some approver shares a step with, or comes after, a signer: the
+  // order is allowed, but worth pointing out since it is rarely what is meant.
+  const approverNotFirst = hasApprover && !isApprovalBased && (() => {
+    const stepOf = new Map<string, number>();
+    for (const g of routing.groups) for (const id of g.participantIds) stepOf.set(id, g.stepNumber);
+    const signerSteps = participants.filter(p => p.role === "signer").map(p => stepOf.get(p.id)).filter((n): n is number => n !== undefined);
+    if (signerSteps.length === 0) return false;
+    const firstSigner = Math.min(...signerSteps);
+    return participants.some(p => p.role === "approver" && (stepOf.get(p.id) ?? 0) >= firstSigner);
+  })();
 
   // ── Mode change: rebuild groups ─────────────────────────────────────────────
 
@@ -364,16 +377,6 @@ export function RoutingStep() {
       : buildDefaultGroups(mode, participants);
     updateRouting({ mode, groups });
   }, [participants, updateRouting]);
-
-  // An approver added while some other mode is active forces the switch —
-  // this runs on its own effect, separate from participant reconciliation
-  // below, because it changes the MODE itself, not just a mode's groups.
-  useEffect(() => {
-    if (hasApprover && routingRef.current.mode !== "approval-based") {
-      handleModeChange("approval-based");
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hasApprover]);
 
   // ── Participant reconciliation ──────────────────────────────────────────────
   // Runs whenever who's on the transaction (or their role) changes — not on
@@ -535,7 +538,9 @@ export function RoutingStep() {
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           {ROUTING_MODES.map(m => {
             const active = routing.mode === m.id;
-            const locked = hasApprover && m.id !== "approval-based";
+            // No mode is locked any more; kept as a constant so the styles
+            // below read the same as before.
+            const locked = false;
             return (
               <label
                 key={m.id}
@@ -566,9 +571,7 @@ export function RoutingStep() {
                     {m.label}
                   </div>
                   <div style={{ fontSize: 12, color: SILVER, marginTop: 3, lineHeight: 1.5 }}>
-                    {locked
-                      ? "Unavailable — an approver is on this transaction, so signing can only open after they act."
-                      : ROUTING_MODE_DESCRIPTIONS[m.id]}
+                    {ROUTING_MODE_DESCRIPTIONS[m.id]}
                   </div>
                 </div>
               </label>
@@ -594,6 +597,17 @@ export function RoutingStep() {
           So this notice must keep saying, in whatever words legal settles on,
           that this is SEQUENCING and not a legal or audit record of approval.
           Do not quietly delete it; replace it with the approved wording. */}
+      {approverNotFirst && (
+        <div role="note" data-testid="approver-order-note" style={{
+          ...GF, marginBottom: 24, padding: "12px 16px", borderRadius: 10, fontSize: 13, lineHeight: 1.55,
+          background: "#FFFBEB", border: "1px solid #FDE68A", color: "#7C4A03",
+        }}>
+          <strong>An approver is in the same step as a signer, or after one.</strong> That is allowed, but signing
+          will open without waiting for that approval. Move the approver to an earlier step, or choose
+          Approval-based, if they should approve first.
+        </div>
+      )}
+
       {isApprovalBased && (
         <div
           style={{

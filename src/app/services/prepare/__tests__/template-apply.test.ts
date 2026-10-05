@@ -95,6 +95,16 @@ function field(over: Partial<TemplateField> = {}): TemplateField {
 // ── 1. A real pre-filled draft ──────────────────────────────────────────────
 
 describe("a template produces a real pre-filled draft", () => {
+  it.each(["carbon-copy", "viewer"] as const)("never marks a %s required, whatever the template says", role => {
+    const result = resolve({
+      placeholders: [slot(), slot({ id: "ph_2", label: "Records", role, required: true })],
+      roleMappings: [mapping(), mapping({ placeholderId: "ph_2", displayName: "Records Desk", email: "records@acme.test" })],
+    });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.application.participants.map(p => [p.role, p.isRequired])).toEqual([["signer", true], [role, false]]);
+  });
+
   it("creates one participant per mapped slot, with the person's details", () => {
     const result = resolve();
     expect(result.ok).toBe(true);

@@ -237,7 +237,7 @@ export function PositionedSigningSurface({
         <span style={{ minWidth: 0 }}>
           {remaining === 0
             ? "All your fields are complete"
-            : `${String(remaining)} field${remaining === 1 ? "" : "s"} still need your input`}
+            : `${String(remaining)} field${remaining === 1 ? " still needs" : "s still need"} your input`}
         </span>
       </div>
 

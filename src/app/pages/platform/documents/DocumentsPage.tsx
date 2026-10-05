@@ -74,6 +74,7 @@ import { isSearchFocusShortcut } from "../../../utils/keyboard-shortcuts";
 import { DocumentsToSignSection, SignedByMeSection, OthersSection } from "./MySigningSections";
 import { realMySigningService, isSignerEntry } from "../../../services/real/my-signing.service";
 import { legacyContactRequestRedirect } from "../../../models/contact-requests";
+import { useCanPrepare } from "../../../hooks/useCanPrepare";
 
 // ── Design tokens (inline styles only — no Tailwind in JSX) ──────────────────
 
@@ -1782,7 +1783,7 @@ function DocumentsPageMockDemo() {
   const [searchParams, setSearchParams] = useSearchParams();
 
   const canViewDocs = hasPermission("view_documents");
-  const canPrepare  = hasPermission("prepare_documents");
+  const canPrepare  = useCanPrepare();
   const canVerify   = hasPermission("verify_documents");
   const canArchive  = hasPermission("prepare_documents");
 
