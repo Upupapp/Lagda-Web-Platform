@@ -209,6 +209,16 @@ describe("/verify/:id access flow", () => {
     expect(await screen.findByText(/Your access to this document has expired/, undefined, { timeout: 2000 })).toBeTruthy();
   });
 
+  it("says the owner removed the record, and offers nothing to unlock", async () => {
+    lookupVerification.mockResolvedValue({ kind: "removed", removedAt: "2026-10-06T03:20:00.000Z", issuerName: "Reyes Law" });
+    renderRecord("ver_gone");
+    const notice = await screen.findByTestId("verification-removed");
+    expect(notice.textContent).toContain("This record was removed by its owner");
+    expect(notice.textContent).toContain("Reyes Law");
+    expect(screen.queryByText(/No completed LAGDA verification record was found/)).toBeNull();
+    expect(screen.queryByRole("button", { name: /code/i })).toBeNull();
+  });
+
   it("shows not found for an unknown ID", async () => {
     lookupVerification.mockResolvedValue({ kind: "not-found" });
     renderRecord("nope");

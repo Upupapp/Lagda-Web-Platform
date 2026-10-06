@@ -46,6 +46,12 @@ describe("lookupVerification", () => {
     expect(await lookupVerification("nope")).toEqual({ kind: "rate-limited" });
   });
 
+  it("reads 410 as a record its owner removed, never as not-found", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(json(
+      { verificationId: "ver_1", status: "removed", removedAt: "2026-10-06T03:20:00.000Z", issuerName: "Reyes Law" }, 410)));
+    expect(await lookupVerification("ver_1")).toEqual({ kind: "removed", removedAt: "2026-10-06T03:20:00.000Z", issuerName: "Reyes Law" });
+  });
+
   it("reads a 500 or a network failure as a retryable error", async () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(json({}, 500)));
     expect(await lookupVerification("ver_1")).toEqual({ kind: "error" });

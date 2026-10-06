@@ -234,8 +234,24 @@ export function RecordSummary({ record, action }: { record: RealVerificationReco
 
 // ── Search / ID entry ─────────────────────────────────────────────────────────
 
+/** A record whose document the owner permanently deleted. */
+function RemovedRecordNotice({ removedAt, issuerName }: { removedAt: string | null; issuerName: string | null }) {
+  const when = removedAt === null ? null : new Date(removedAt).toLocaleDateString(undefined, { day: "numeric", month: "long", year: "numeric" });
+  return (
+    <div role="status" data-testid="verification-removed" style={{
+      border: "1px solid #FDE68A", background: "#FFFBEB", borderRadius: 12, padding: "14px 16px",
+      color: "#78350F", fontFamily: "'Geist', sans-serif", fontSize: 14, lineHeight: 1.6,
+    }}>
+      <strong style={{ display: "block", fontSize: 15, marginBottom: 2 }}>This record was removed by its owner</strong>
+      This Verification ID belonged to a document completed with LAGDA{issuerName !== null ? <> by <strong>{issuerName}</strong></> : null}.
+      {" "}The owner permanently deleted it{when !== null ? <> on {when}</> : null}, so the document and its details can no longer be shown or checked here.
+    </div>
+  );
+}
+
 type LookupState =
   | { s: "idle" } | { s: "loading" } | { s: "found"; record: RealVerificationRecord }
+  | { s: "removed"; removedAt: string | null; issuerName: string | null }
   | { s: "not-found" } | { s: "rate-limited"; timed?: boolean } | { s: "error" };
 
 export function VerificationSearch({ basePath, initialId = "" }: { basePath: string; initialId?: string }) {
@@ -260,6 +276,8 @@ export function VerificationSearch({ basePath, initialId = "" }: { basePath: str
       const timed = result.retryAfterSeconds !== undefined;
       if (result.retryAfterSeconds !== undefined) startWait(result.retryAfterSeconds);
       setState({ s: "rate-limited", timed });
+    } else if (result.kind === "removed") {
+      setState({ s: "removed", removedAt: result.removedAt, issuerName: result.issuerName });
     } else {
       setState({ s: result.kind });
     }
@@ -293,6 +311,7 @@ export function VerificationSearch({ basePath, initialId = "" }: { basePath: str
       </form>
 
       <div aria-live="polite" style={{ minWidth: 0 }}>
+        {state.s === "removed" && <RemovedRecordNotice removedAt={state.removedAt} issuerName={state.issuerName} />}
         {state.s === "not-found" && (
           <Notice tone="error">No completed LAGDA verification record was found for this ID. Check that it was entered exactly as printed.</Notice>
         )}
@@ -340,7 +359,9 @@ export function VerificationRecordView({ verificationId, basePath, memberAccess 
         setLookup({ s: "rate-limited", timed: true });
         return;
       }
-      setLookup(result.kind === "found" ? { s: "found", record: result.record } : { s: result.kind });
+      setLookup(result.kind === "found" ? { s: "found", record: result.record }
+        : result.kind === "removed" ? { s: "removed", removedAt: result.removedAt, issuerName: result.issuerName }
+        : { s: result.kind });
     });
     return () => { cancelled = true; };
   }, [verificationId, startLookupWait]);
@@ -356,6 +377,7 @@ export function VerificationRecordView({ verificationId, basePath, memberAccess 
             ? <RateLimitNotice wait={lookupWait} action="retry" />
             : <Link to={`${basePath}/${encodeURIComponent(verificationId)}`} reloadDocument style={{ ...buttonStyle("primary"), alignSelf: "flex-start" }}>Try again</Link>
         ) : (
+        lookup.s === "removed" ? <RemovedRecordNotice removedAt={lookup.removedAt} issuerName={lookup.issuerName} /> :
         <div role="alert">
           <Notice tone="error">
             {lookup.s === "not-found"

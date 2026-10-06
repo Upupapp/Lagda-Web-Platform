@@ -71,6 +71,8 @@ export interface RateLimited {
 
 export type LookupResult =
   | { readonly kind: "found"; readonly record: RealVerificationRecord }
+  /** The document existed, and its owner permanently deleted it. */
+  | { readonly kind: "removed"; readonly removedAt: string | null; readonly issuerName: string | null }
   | { readonly kind: "not-found" }
   | RateLimited
   | { readonly kind: "error" };
@@ -165,9 +167,20 @@ export async function lookupVerification(verificationId: string): Promise<Lookup
   }
   if (response.status === 404) return { kind: "not-found" };
   if (response.status === 429) return rateLimitedFrom(response);
-  if (!response.ok) return { kind: "error" };
-  const record = await readJson<RealVerificationRecord>(response);
+  // 410 Gone: the record existed and its owner permanently deleted it.
+  if (!response.ok && response.status !== 410) return { kind: "error" };
+  const record = await readJson<RealVerificationRecord & { status?: string; removedAt?: string | number; issuerName?: string }>(response);
   if (record === null) return { kind: "error" };
+  // A genuine document whose owner deleted it must not read as "never
+  // existed": that would make a real document look forged.
+  if (response.status === 410 || record.status === "removed") {
+    const at = record.removedAt === undefined ? null : new Date(record.removedAt);
+    return {
+      kind: "removed",
+      removedAt: at !== null && !Number.isNaN(at.getTime()) ? at.toISOString() : null,
+      issuerName: typeof record.issuerName === "string" && record.issuerName !== "" ? record.issuerName : null,
+    };
+  }
   return { kind: "found", record };
 }
 
