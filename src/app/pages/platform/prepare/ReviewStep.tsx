@@ -1,7 +1,7 @@
 // Review — full summary before proceeding to field placement.
 // Shows all draft data, validation status, and field-placement readiness.
-// The "Continue to Authorization" CTA calls markReadyForFieldPlacement() and
-// navigates to /authorization — the last step before anyone is emailed.
+// The "Continue to Authorization" CTA navigates to /authorization — the last
+// step before anyone is emailed.
 // Fields now come BEFORE Review in the sequence, so by the time somebody
 // reaches this screen the placement they are reviewing already exists.
 // Burgundy (#67023B) is NEVER used. eNotary is NEVER mentioned.
@@ -136,10 +136,8 @@ export function ReviewStep() {
     draft,
     setStep,
     validate,
-    markReadyForFieldPlacement,
   } = usePrepare();
 
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [showMissing, setShowMissing] = useState(false);
 
   useEffect(() => { setStep("review"); }, [setStep]);
@@ -160,16 +158,13 @@ export function ReviewStep() {
   const auth         = draft?.auth ?? DEFAULT_AUTH_CONFIG;
   const settings     = draft?.settings ?? DEFAULT_PREP_SETTINGS;
 
-  const handleContinue = async () => {
-    if (!isReady || isSubmitting) return;
-    setIsSubmitting(true);
-    // Marking the draft ready is a note on the draft, not the gate: the
-    // checklist above already says the steps are complete (`isReady`). When
-    // that note could not be written the button used to show "Preparing…",
-    // reset, and go nowhere, while Continue at the foot of the page, which
-    // never asked, moved on. Both now do the same thing.
-    await markReadyForFieldPlacement().catch(() => false);
-    setIsSubmitting(false);
+  const handleContinue = () => {
+    if (!isReady) return;
+    // Exactly what Continue at the foot of the page does: move on. This
+    // button used to mark the draft ready first, and loaded back the copy
+    // that call returned. That copy is the local one, whose participants
+    // carry different ids from the saved ones, so every field then read as
+    // "assigned to a participant that no longer exists" and Send was blocked.
     void navigate("/app/prepare/authorization");
   };
 
@@ -346,8 +341,7 @@ export function ReviewStep() {
       {/* CTA */}
       <div style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
         <button
-          onClick={isReady ? (isSubmitting ? undefined : handleContinue) : () => setShowMissing(true)}
-          disabled={isSubmitting}
+          onClick={isReady ? handleContinue : () => setShowMissing(true)}
           style={{
             ...GF,
             padding: "12px 32px",
@@ -357,10 +351,10 @@ export function ReviewStep() {
             color: isReady ? "#FFFFFF" : GOLD,
             fontSize: 15,
             fontWeight: 700,
-            cursor: isSubmitting ? "not-allowed" : "pointer",
+            cursor: "pointer",
           }}
         >
-          {isSubmitting ? "Preparing…" : isReady ? "Continue to Authorization →" : "Not ready yet →"}
+          {isReady ? "Continue to Authorization →" : "Not ready yet →"}
         </button>
         {!isReady && (
           <button
