@@ -20,7 +20,7 @@ import {
   MailOpen, MailX, Undo2, Share2, UserMinus, Trash2, Send, RefreshCcw, ShieldCheck,
   Fingerprint, KeyRound, UserPlus, UserCheck, UserX, Archive, ArchiveRestore, Search,
   Crown, FilePen, LayoutTemplate, Rocket, Link2, Users, UserCog, FileX, Save, Inbox,
-  Network, ArrowLeftRight,
+  Network, ArrowLeftRight, Ban, RotateCcw,
 } from "lucide-react";
 import { runProcess, type ProcessingOptions } from "../services/processing.service";
 
@@ -103,6 +103,19 @@ const SCREENS = {
   "team-rename": { tag: "People & Teams", icon: Save, message: () => "Renaming the team…", detail: "The new name shows everywhere straight away." },
   "team-delete": { tag: "People & Teams", icon: Trash2, message: w => w ? `Deleting ${w}…` : "Deleting the team…", detail: "It is removed for good. The Activity log keeps its name." },
   "team-create": { tag: "People & Teams", icon: Network, message: w => w ? `Creating ${w}…` : "Creating the team…", detail: "Add people to it straight after." },
+  // ── A document's life: cancel, restore, the Recycle Bin, deletion ─────────
+  "document-cancel": { tag: "Documents", icon: Ban, message: w => w ? `Cancelling “${w}”…` : "Cancelling the signing request…", detail: "Every signing link stops working." },
+  "document-restore": { tag: "Documents", icon: RotateCcw, message: w => w ? `Restoring “${w}”…` : "Restoring the signing request…", detail: "New links go to everyone who has not acted yet." },
+  "document-trash": { tag: "Recycle Bin", icon: Trash2, message: w => w ? `Moving “${w}” to the Recycle Bin…` : "Moving it to the Recycle Bin…", detail: "Nothing is erased. It can be restored." },
+  "draft-delete": { tag: "Documents", icon: FileX, message: w => w ? `Deleting the draft “${w}”…` : "Deleting the draft…", detail: "Its file, participants and fields are erased." },
+  "document-delete": { tag: "Documents", icon: FileX, message: w => w ? `Deleting “${w}”…` : "Deleting the document…", detail: "It is erased for good." },
+  "bin-restore": { tag: "Recycle Bin", icon: ArchiveRestore, message: w => w ? `Restoring “${w}” from the Recycle Bin…` : "Restoring it from the Recycle Bin…", detail: "It goes back to the list it came from." },
+  "bin-delete": { tag: "Recycle Bin", icon: FileX, message: w => w ? `Permanently deleting “${w}”…` : "Permanently deleting the document…", detail: "The document, its signatures and its history are erased." },
+  "deletion-request": { tag: "Recycle Bin", icon: Send, message: () => "Sending your request to the owner…", detail: "The workspace owner decides whether it is deleted." },
+  "deletion-approve": { tag: "Deletion request", icon: UserCheck, message: () => "Approving and deleting the document…", detail: "Everyone who had access is told, with your reason." },
+  "deletion-disapprove": { tag: "Deletion request", icon: UserX, message: () => "Disapproving the deletion request…", detail: "The document stays in the Recycle Bin." },
+  "signed-remove": { tag: "Signed by me", icon: Trash2, message: () => "Removing it from your Signed by me list…", detail: "Nothing is erased for anyone else." },
+  "deleted-notice-remove": { tag: "Documents", icon: Trash2, message: () => "Removing the deleted-document notice…", detail: "It leaves your list." },
 } as const satisfies Record<string, Screen>;
 
 export type ProcessKind = keyof typeof SCREENS;

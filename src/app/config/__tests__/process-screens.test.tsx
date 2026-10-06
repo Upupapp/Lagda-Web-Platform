@@ -92,6 +92,10 @@ const WIRED: Record<string, ProcessKind[]> = {
   "context/WorkspaceAdminContext.tsx": ["member-invite", "member-role", "member-remove"],
   "pages/platform/workspace/join/JoinLinksSection.tsx": ["join-link-create"],
   "pages/platform/workspace/join/JoinRequestsSection.tsx": ["join-request-decide"],
+  "components/documents/useDocumentLifecycle.tsx": [
+    "document-cancel", "document-restore", "document-trash", "draft-delete", "document-delete", "bin-restore",
+    "bin-delete", "deletion-request", "deletion-approve", "deletion-disapprove", "signed-remove", "deleted-notice-remove",
+  ],
   "pages/platform/workspace/real/RealPeopleTeamsPage.tsx": [
     "member-move", "member-title", "member-swap", "member-access", "member-role", "member-remove",
     "team-member-remove", "team-member-add", "contact-to-team", "team-create", "team-rename", "team-delete",
