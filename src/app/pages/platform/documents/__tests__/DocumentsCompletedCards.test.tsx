@@ -60,13 +60,14 @@ beforeEach(() => {
 const renderCompleted = () => render(<MemoryRouter initialEntries={["/app/documents?list=completed"]}><DocumentsPage /></MemoryRouter>);
 
 describe("Documents › Completed", () => {
-  it("is the last section of Records, right after Declined", () => {
+  it("is the last section of Records, after Declined and Cancelled", () => {
     render(<MemoryRouter initialEntries={["/app/documents?list=completed"]}><DocumentsPage /></MemoryRouter>);
     const groups = within(screen.getByRole("tablist", { name: "Document groups" })).getAllByRole("tab");
     expect(groups.map(g => g.textContent?.trim())).toEqual(["Correspondence", "Records"]);
     expect(groups[1]).toHaveAttribute("aria-selected", "true");
     const tabs = within(screen.getByRole("tablist", { name: "Document lists" })).getAllByRole("tab").map(t => t.textContent?.trim());
-    expect(tabs).toEqual(["Signed by me", "Others", "Draft", "Declined & Expired", "Completed"]);
+    // "Others" is gone; Cancelled has its own section, before Completed.
+    expect(tabs).toEqual(["Signed by me", "Draft", "Declined & Expired", "Cancelled", "Completed"]);
   });
 
   it("shows each completed document as a card with name, badge, Verification ID, progress and date", async () => {
@@ -144,9 +145,10 @@ describe("Documents › Completed", () => {
     renderCompleted();
     const card = await screen.findByTestId("completed-card");
     const share = within(card).getByRole("button", { name: "Share Lease Agreement" });
-    // The last control in the card: nothing follows it in the tab order.
+    // Share, then the corner's Move to Trash: the last two controls in the card.
     const focusables = within(card).getAllByRole("button");
-    expect(focusables[focusables.length - 1]).toBe(share);
+    expect(focusables[focusables.length - 2]).toBe(share);
+    expect(focusables[focusables.length - 1]).toHaveAccessibleName("Move to Trash: Lease Agreement");
     await user.click(share);
     const dialog = await screen.findByRole("dialog", { name: "Share document" });
     expect(within(dialog).getByText("Lease Agreement")).toBeInTheDocument();

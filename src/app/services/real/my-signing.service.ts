@@ -81,9 +81,14 @@ export interface ContinueSigningResult {
   expiresAt: string;
 }
 
+/** What a person may be asked to do with a document. */
+export type InboxAction = "sign" | "approve" | "review" | "acknowledge";
+
 class RealMySigningService {
-  async documentsToSign(): Promise<DocumentToSign[]> {
-    const res = await apiRequest<{ items: DocumentToSign[] }>("/me/documents-to-sign");
+  /** Everything waiting for this person, or only what waits for one kind of action. */
+  async documentsToSign(action?: InboxAction): Promise<DocumentToSign[]> {
+    const res = await apiRequest<{ items: DocumentToSign[] }>(
+      action === undefined ? "/me/documents-to-sign" : `/me/documents-to-sign?action=${action}`);
     return res.items;
   }
 

@@ -15,7 +15,7 @@ vi.mock("../../../../services/real/my-signing.service", async importOriginal => 
   return {
     ...actual,
     realMySigningService: {
-      documentsToSign: () => documentsToSign(),
+      documentsToSign: (action?: string) => documentsToSign(action),
       signedDocuments: () => signedDocuments(),
       completedOtherDocuments: () => completedOthers(),
       continueSigning: vi.fn(),
@@ -57,7 +57,8 @@ beforeEach(() => {
   sources.length = 0;
   signedDocuments.mockResolvedValue([]);
   completedOthers.mockResolvedValue([]);
-  documentsToSign.mockResolvedValue([
+  // The server filters by what the person must do; the mock does the same.
+  const all = [
     entry("signer", "Lease"),
     entry(null, "Old signer entry"),
     entry("approver", "Budget"),
@@ -65,7 +66,12 @@ beforeEach(() => {
     entry("acknowledgment-recipient", "Handbook"),
     entry("viewer", "Minutes"),
     entry("carbon-copy", "Contract copy"),
-  ]);
+  ];
+  const TYPE_OF: Record<string, (string | null)[]> = {
+    sign: ["signer", null], approve: ["approver"], review: ["reviewer"], acknowledge: ["acknowledgment-recipient"],
+  };
+  documentsToSign.mockImplementation((action?: string) =>
+    Promise.resolve(action === undefined ? all : all.filter(e => TYPE_OF[action]?.includes(e.recipientType))));
 });
 
 const table = (name: string) => screen.findByRole("table", { name });

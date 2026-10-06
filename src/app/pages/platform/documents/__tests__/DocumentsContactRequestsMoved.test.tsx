@@ -65,13 +65,14 @@ const renderAt = (entry: string) => render(
 );
 
 describe("Documents without contact requests", () => {
-  it("has no Requests you sent tab, and Others counts role documents only", async () => {
+  it("has no Requests you sent tab and no Others tab; an old Others link lands on I must approve", async () => {
     renderAt("/app/documents?list=others");
     const tabs = screen.getByRole("tablist", { name: "Document lists" });
     expect(within(tabs).queryByRole("tab", { name: /Requests you sent/ })).toBeNull();
-    // Approver + viewer; the pending contact request is not counted.
-    await waitFor(() => { expect(within(tabs).getByRole("tab", { name: /Others/ }).textContent?.trim()).toBe("Others2"); });
-    expect(await screen.findByRole("table", { name: "Other documents I take part in" })).toBeTruthy();
+    // What a person must approve, review or acknowledge has its own inbox now.
+    expect(within(tabs).queryByRole("tab", { name: /Others/ })).toBeNull();
+    await waitFor(() => { expect(within(tabs).getByRole("tab", { name: /I must approve/ })).toHaveAttribute("aria-selected", "true"); });
+    expect(await screen.findByTestId("inbox-approve")).toBeTruthy();
     expect(screen.queryByText("Requests for you")).toBeNull();
     expect(screen.queryByRole("list", { name: "Requests for you" })).toBeNull();
     expect(urls.some(url => url.includes("/me/contact-requests"))).toBe(false);

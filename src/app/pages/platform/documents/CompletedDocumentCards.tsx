@@ -86,6 +86,12 @@ export interface CompletedCardData {
   actions: CardAction[];
   /** Shows a "Share" button in the card's bottom-right corner. */
   onShare?: () => void;
+  /**
+   * An icon-only button in the very bottom-right corner: Move to Trash, or
+   * Delete. Only the icon shows; its label appears on hover and is what a
+   * screen reader reads.
+   */
+  cornerAction?: { label: string; icon: LucideIcon; onSelect: () => void; tone?: "danger" | "neutral"; testId?: string };
   /** Another workspace's branding (a document shared WITH me); defaults to the current workspace's. */
   branding?: CardBranding;
   /** The banner's second line. Defaults to "Completed document". */
@@ -257,6 +263,28 @@ export function CompletedDocumentCard({ card, branding: workspaceBranding }: { c
               <Share2 size={14} aria-hidden /> Share
             </button>
           )}
+          {card.cornerAction && (() => {
+            const corner = card.cornerAction;
+            const danger = corner.tone !== "neutral";
+            const Icon = corner.icon;
+            return (
+              <span className="doc-card-corner" style={{ position: "relative", marginLeft: card.onShare ? 0 : "auto", display: "inline-flex" }}>
+                <button type="button" className="doc-card-corner-btn" onClick={corner.onSelect}
+                  aria-label={`${corner.label}: ${card.title}`} data-testid={corner.testId ?? "card-corner-action"}
+                  style={{
+                    width: 36, height: 36, borderRadius: 8, padding: 0, cursor: "pointer",
+                    border: `1px solid ${danger ? "#FECACA" : BORDER}`, background: "#FFFFFF", color: danger ? "#B91C1C" : SLATE,
+                    display: "inline-flex", alignItems: "center", justifyContent: "center",
+                  }}>
+                  <Icon size={16} aria-hidden />
+                </button>
+                <span className="doc-card-corner-tip" aria-hidden style={{
+                  ...GF, position: "absolute", right: 0, bottom: "calc(100% + 6px)", whiteSpace: "nowrap", pointerEvents: "none",
+                  background: NAVY, color: "#FFFFFF", fontSize: 11.5, fontWeight: 600, padding: "5px 9px", borderRadius: 7,
+                }}>{corner.label}</span>
+              </span>
+            );
+          })()}
         </div>
       </div>
     </li>
@@ -278,6 +306,10 @@ export function CompletedDocumentGrid({ cards, label = "Completed documents" }: 
         .doc-card-menu-btn:focus-visible { outline: 3px solid #FFFFFF; outline-offset: 1px; box-shadow: 0 0 0 5px rgba(0,120,212,0.7) !important; }
         .doc-card-menu-item:hover, .doc-card-menu-item:focus { background: #F1F5F9 !important; outline: none; }
         .doc-card-share-btn:hover { background: #EFF6FF !important; }
+        .doc-card-corner-tip { opacity: 0; transform: translateY(2px); transition: opacity 0.12s, transform 0.12s; }
+        .doc-card-corner:hover .doc-card-corner-tip, .doc-card-corner:focus-within .doc-card-corner-tip { opacity: 1; transform: none; }
+        .doc-card-corner-btn:hover { background: #F8FAFC !important; }
+        .doc-card-corner-btn:focus-visible { outline: 2px solid #0078D4; outline-offset: 2px; }
         .doc-card-share-btn:focus-visible { outline: 2px solid #0078D4; outline-offset: 2px; }
       `}</style>
     </>

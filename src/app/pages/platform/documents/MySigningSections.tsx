@@ -18,11 +18,14 @@
 // step is deliberately two presses rather than one: the first proves who you
 // are, the second is you choosing to go and sign a binding document now.
 
+import { DeletedDocumentsBlock } from "../../../components/documents/DeletedDocumentsBlock";
+import { useDocumentLifecycle } from "../../../components/documents/useDocumentLifecycle";
+import type { InboxAction } from "../../../services/real/my-signing.service";
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { useNavigate } from "react-router";
 import {
   X, PenLine, UserRound, Mail, Building2, CalendarClock, FileText, ShieldCheck,
-  Lock, ArrowRight, Inbox, FileCheck2, Loader2, Eye, Users, History,
+  Lock, ArrowRight, Inbox, FileCheck2, Loader2, Eye, Users, History, Trash2,
 } from "lucide-react";
 import { Z } from "../../../utils/z-index";
 import { ApiError } from "../../../services/api-client";
@@ -382,7 +385,39 @@ function EmptyOrError({ status, icon: Icon, emptyTitle, emptyBody, onRetry }: {
   );
 }
 
-const loadToSign = () => realMySigningService.documentsToSign().then(items => items.filter(isSignerEntry));
+// One loader per inbox, each a stable function so the list reloads only when asked.
+const LOAD_INBOX: Record<InboxAction, () => Promise<DocumentToSign[]>> = {
+  sign: () => realMySigningService.documentsToSign("sign"),
+  approve: () => realMySigningService.documentsToSign("approve"),
+  review: () => realMySigningService.documentsToSign("review"),
+  acknowledge: () => realMySigningService.documentsToSign("acknowledge"),
+};
+
+/** The words for each inbox: its name, what is asked, and what is empty. */
+const INBOX_WORDING: Record<InboxAction, {
+  label: string; subtitle: string; continueLabel: string; by: string; emptyTitle: string; emptyBody: string;
+}> = {
+  sign: {
+    label: "Documents I must sign", subtitle: "Signature requested", continueLabel: "Continue signing", by: "Please sign by",
+    emptyTitle: "Nothing waiting for your signature",
+    emptyBody: "Documents sent to your email address for signing will appear here.",
+  },
+  approve: {
+    label: "Documents I must approve", subtitle: "Approval requested", continueLabel: "Continue to approve", by: "Please approve by",
+    emptyTitle: "Nothing waiting for your approval",
+    emptyBody: "Documents that need your approval before they can be signed will appear here.",
+  },
+  review: {
+    label: "Documents I must review", subtitle: "Review requested", continueLabel: "Continue to review", by: "Please review by",
+    emptyTitle: "Nothing waiting for your review",
+    emptyBody: "Documents you are asked to review will appear here.",
+  },
+  acknowledge: {
+    label: "Documents to acknowledge", subtitle: "Acknowledgment requested", continueLabel: "Continue to acknowledge", by: "Please acknowledge by",
+    emptyTitle: "Nothing waiting for your acknowledgment",
+    emptyBody: "Documents you are asked to acknowledge will appear here.",
+  },
+};
 const loadOthers = () => realMySigningService.documentsToSign()
   .then(items => items.filter(item => !isSignerEntry(item)));
 const loadSigned = () => realMySigningService.signedDocuments();
@@ -397,6 +432,8 @@ type Viewer = { source: DocumentRecordSource; view: SharedDocumentView } | null;
 function participantCard(input: {
   key: string; title: string; completion: ParticipantCompletion; subtitle: string;
   extra: ReactNode; onView: (view: SharedDocumentView) => void; onViewDocument: () => void; onSender: () => void;
+  /** "Delete" in the card's bottom-right corner: off this person's own list only. */
+  onRemove?: () => void;
 }): CompletedCardData {
   const { completion } = input;
   return {
@@ -414,6 +451,7 @@ function participantCard(input: {
       logoUrl: participantLogoUrl(completion),
     },
     extra: input.extra,
+    ...(input.onRemove ? { cornerAction: { label: "Delete from my list", icon: Trash2, onSelect: input.onRemove, testId: "signed-remove" } } : {}),
     actions: [
       // The same full-screen showcase Completed's "View" opens, not the
       // inline preview — onView("document") is reserved for that dialog's
@@ -440,25 +478,32 @@ function SubHeading({ children }: { children: ReactNode }) {
 
 // ── Documents I must sign ───────────────────────────────────────────────────
 
-export function DocumentsToSignSection({ onCount }: { onCount?: (count: number) => void }) {
-  const { items, status, reload } = useList(loadToSign);
+export function DocumentsToSignSection({ action = "sign", onCount }: {
+  /** Which inbox: what this person is asked to do. */
+  action?: InboxAction;
+  onCount?: (count: number) => void;
+}) {
+  const { items, status, reload } = useList(LOAD_INBOX[action]);
+  const words = INBOX_WORDING[action];
   const [senderFor, setSenderFor] = useState<DocumentToSign | null>(null);
   const [continueFor, setContinueFor] = useState<DocumentToSign | null>(null);
 
   useEffect(() => { if (status === "ready") onCount?.(items.length); }, [status, items.length, onCount]);
 
   return (
-    <section aria-label="Documents I must sign" style={{ marginTop: 20 }}>
+    <section aria-label={words.label} data-testid={`inbox-${action}`} style={{ marginTop: 20 }}>
       <style>{STYLES}</style>
+      {/* A document deleted by its owner while it waited here leaves a notice. */}
+      {action === "sign" && <DeletedDocumentsBlock origins={["to-sign"]} heading="Deleted by the owner" />}
       {status !== "ready" || items.length === 0 ? (
         <EmptyOrError
           status={status} icon={Inbox} onRetry={reload}
-          emptyTitle="Nothing waiting for your signature"
-          emptyBody="Documents sent to your email address for signing will appear here."
+          emptyTitle={words.emptyTitle}
+          emptyBody={words.emptyBody}
         />
       ) : (
         <>
-          <MailCardList label="Documents I must sign">
+          <MailCardList label={words.label}>
             {items.map(item => {
               // The sender's deadline when there is one. Without one nothing
               // closes the document, and the only date is the link's own.
@@ -474,18 +519,18 @@ export function DocumentsToSignSection({ onCount }: { onCount?: (count: number) 
                     primaryColor: item.branding?.primaryColor ?? DEFAULT_BANNER,
                     logoUrl: senderLogoUrl(item),
                   }}
-                  subtitle="Signature requested"
+                  subtitle={words.subtitle}
                   corner={<>Received {formalDate(item.invitedAt)}</>}
                   title={item.documentTitle}
                   footerStart={<MailAction icon={UserRound} label="See the sender" onClick={() => setSenderFor(item)} />}
-                  footerEnd={<MailAction icon={PenLine} label="Continue signing" primary onClick={() => setContinueFor(item)} />}
+                  footerEnd={<MailAction icon={PenLine} label={words.continueLabel} primary onClick={() => setContinueFor(item)} />}
                 >
                   <MailLine>Sent by <strong style={{ color: NAVY }}>{item.senderName ?? item.senderEmail ?? "the sender"}</strong></MailLine>
                   {expires !== null && (
                     <MailLine tone={soon ? "warning" : "muted"}>
                       {deadline !== null
-                        ? <>Please sign by {formalDate(deadline)}</>
-                        : <>Your signing link works until {formalDate(item.expiresAt)}</>}
+                        ? <>{words.by} {formalDate(deadline)}</>
+                        : <>Your link works until {formalDate(item.expiresAt)}</>}
                     </MailLine>
                   )}
                 </MailCard>
@@ -636,6 +681,11 @@ export function OthersSection({ onCount }: {
 
 export function SignedByMeSection() {
   const { items: all, status, reload } = useList(loadSigned);
+  // Removing only takes it off THIS person's list; allowed on every plan.
+  const lifecycle = useDocumentLifecycle({ freePlan: false, onDone: reload });
+  const askRemove = (item: SignedDocument) => {
+    lifecycle.ask({ kind: "remove-signed", signingRequestId: item.signingRequestId, title: item.documentTitle });
+  };
   const [senderFor, setSenderFor] = useState<SignedDocument | null>(null);
   const [viewer, setViewer] = useState<Viewer>(null);
   const [bigViewer, setBigViewer] = useState<DocumentRecordSource | null>(null);
@@ -647,6 +697,8 @@ export function SignedByMeSection() {
   return (
     <section aria-label="Signed by me" style={{ marginTop: 20 }}>
       <style>{STYLES}</style>
+      <DeletedDocumentsBlock origins={["signed-by-me"]} heading="Deleted by the owner" />
+      {lifecycle.element}
       {status !== "ready" || all.length === 0 ? (
         <EmptyOrError
           status={status} icon={FileCheck2} onRetry={reload}
@@ -665,6 +717,7 @@ export function SignedByMeSection() {
               onView: view => setViewer({ source: participantDocumentSource(item.completion.verificationId, item.documentTitle), view }),
               onViewDocument: () => setBigViewer(participantDocumentSource(item.completion.verificationId, item.documentTitle)),
               onSender: () => setSenderFor(item),
+              onRemove: () => { askRemove(item); },
             }))} />
           )}
           {items.length > 0 && completed.length > 0 && <SubHeading>Waiting for others to finish</SubHeading>}
@@ -695,6 +748,7 @@ export function SignedByMeSection() {
                 </div>
                 <div role="cell" className="mysign-actions">
                   <RowButton icon={UserRound} label="See the sender" onClick={() => setSenderFor(item)} />
+                  <RowButton icon={Trash2} label="Delete" onClick={() => { askRemove(item); }} />
                 </div>
               </div>
             ))}
@@ -707,8 +761,9 @@ export function SignedByMeSection() {
                 <div style={{ ...GF, fontSize: 14, fontWeight: 600, color: NAVY, wordBreak: "break-word" }}>{item.documentTitle}</div>
                 <div style={{ ...GF, fontSize: 12.5, color: SLATE6, marginTop: 4 }}>{senderLine(item)}</div>
                 <div style={{ ...GF, fontSize: 12, color: GREEN, marginTop: 2 }}>Signed {fmtDate(item.signedAt)}</div>
-                <div style={{ marginTop: 10 }}>
+                <div style={{ marginTop: 10, display: "flex", gap: 6, flexWrap: "wrap" }}>
                   <RowButton icon={UserRound} label="See the sender" onClick={() => setSenderFor(item)} />
+                  <RowButton icon={Trash2} label="Delete" onClick={() => { askRemove(item); }} />
                 </div>
               </div>
             ))}

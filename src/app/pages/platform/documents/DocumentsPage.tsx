@@ -5,6 +5,12 @@
 // No real document content in list. No private audit evidence displayed.
 // All participant names are fictional. No IP, device, location shown.
 
+import { Trash2, BadgeCheck, CheckCheck } from "lucide-react";
+import { useDocumentLifecycle } from "../../../components/documents/useDocumentLifecycle";
+import { RecycleBinButton, RecycleBinPanel } from "../../../components/documents/RecycleBin";
+import { DeletedDocumentsBlock, DeletedNoticeFromLink } from "../../../components/documents/DeletedDocumentsBlock";
+import { documentLifecycleService, type InboxCounts } from "../../../services/real/document-lifecycle.service";
+import type { InboxAction } from "../../../services/real/my-signing.service";
 import { useWorkspaceAllows } from "../../../hooks/usePlans";
 import { useState, useEffect, useCallback, useMemo, useRef, lazy, Suspense } from "react";
 import { Link, Navigate, useSearchParams, useNavigate } from "react-router";
@@ -71,8 +77,7 @@ import { Z } from "../../../utils/z-index";
 import { FilterChips } from "../../../components/platform/FilterChips";
 import { usePrepareLaunch } from "../../../hooks/usePrepareLaunch";
 import { isSearchFocusShortcut } from "../../../utils/keyboard-shortcuts";
-import { DocumentsToSignSection, SignedByMeSection, OthersSection } from "./MySigningSections";
-import { realMySigningService, isSignerEntry } from "../../../services/real/my-signing.service";
+import { DocumentsToSignSection, SignedByMeSection } from "./MySigningSections";
 import { legacyContactRequestRedirect } from "../../../models/contact-requests";
 import { useCanPrepare } from "../../../hooks/useCanPrepare";
 
@@ -2271,7 +2276,9 @@ const OUTBOX_STATUS: Partial<Record<SigningRequestState, { label: string; color:
   "expired":             { label: "Expired",           color: "#B45309" },
 };
 
-function OutboxCard({ item, branding, onView, onSignatures, onAudit, onResend, onExpiration }: {
+function OutboxCard({ item, branding, onView, onSignatures, onAudit, onResend, onExpiration, onCancel }: {
+  /** Stops the request: every signing link ends. Absent where it cannot be cancelled. */
+  onCancel?: (() => void) | undefined;
   item: SigningRequestListItem;
   branding: CardBranding;
   onView: () => void;
@@ -2295,6 +2302,9 @@ function OutboxCard({ item, branding, onView, onSignatures, onAudit, onResend, o
       footerStart={<>
         <MailAction icon={Users} label="Participants" onClick={onSignatures} ariaLabel={`Participants of ${item.documentTitle}`} />
         <MailAction icon={History} label="History" onClick={onAudit} ariaLabel={`History of ${item.documentTitle}`} />
+        {pending && onCancel && (
+          <MailAction icon={Ban} label="Cancel" onClick={onCancel} ariaLabel={`Cancel ${item.documentTitle}`} />
+        )}
       </>}
       footerEnd={<>
         <MailAction icon={Eye} label="View" onClick={onView} ariaLabel={`View ${item.documentTitle}`} primary={!pending} />
@@ -2349,6 +2359,13 @@ function documentCard(
     /** Absent on a Free owner's workspace (093): no Send again. */
     onResend?: () => void;
     onShare?: () => void;
+    onCancel?: () => void;
+    /** Cancelled: back out for signature, from where it stopped. */
+    onRestore?: () => void;
+    /** Cancelled or completed: to the Recycle Bin. */
+    onTrash?: () => void;
+    /** Draft, declined or expired: deleted for good. */
+    onDelete?: () => void;
   },
 ): CompletedCardData {
   const actions: CardAction[] = [];
@@ -2374,9 +2391,19 @@ function documentCard(
   if (!isUnsentDraft(item)) {
     actions.push({ id: "history", label: "History", icon: History, onSelect: deps.onAudit });
   }
-  if (item.state !== "draft" && item.state !== "ready-to-send" && deps.onResend !== undefined) {
+  if (item.state !== "draft" && item.state !== "ready-to-send" && item.state !== "cancelled" && deps.onResend !== undefined) {
     actions.push({ id: "send-again", label: "Send again", icon: Send, onSelect: deps.onResend });
   }
+  if (item.state === "cancelled" && deps.onRestore !== undefined) {
+    actions.push({ id: "restore", label: "Restore", icon: RotateCcw, onSelect: deps.onRestore });
+  }
+  // One icon-only button in the card's bottom-right corner; its name shows on hover.
+  const cornerAction: CompletedCardData["cornerAction"] =
+    (item.state === "completed" || item.state === "cancelled") && deps.onTrash !== undefined
+      ? { label: "Move to Trash", icon: Trash2, onSelect: deps.onTrash, testId: "card-move-to-trash" }
+      : (item.state === "draft" || item.state === "ready-to-send" || item.state === "declined" || item.state === "expired") && deps.onDelete !== undefined
+        ? { label: item.state === "declined" || item.state === "expired" ? "Permanently Delete" : "Delete draft", icon: Trash2, onSelect: deps.onDelete, testId: "card-delete" }
+        : undefined;
 
   return {
     key: item.signingRequestId,
@@ -2391,6 +2418,7 @@ function documentCard(
     statusBadge: item.state === "completed" ? undefined : <StatusBadge status={SIGNING_REQUEST_STATUS[item.state]} />,
     actions,
     onShare: deps.onShare,
+    ...(cornerAction ? { cornerAction } : {}),
   };
 }
 
@@ -2509,8 +2537,11 @@ function DocumentViewerDialog({
  * requests have no section of their own and stay visible in Sent. Expired
  * ones sit with Declined: both ended without everyone signing.
  */
-const LIST_STATES: Readonly<Record<"sent" | "completed" | "draft" | "declined", readonly SigningRequestState[]>> = {
-  sent:      ["sent", "partially-completed", "completion-ready", "cancelled"],
+const LIST_STATES: Readonly<Record<"sent" | "completed" | "draft" | "declined" | "cancelled", readonly SigningRequestState[]>> = {
+  // Out for signature only. A cancelled request has its own section in
+  // Records, where it can be restored or moved to the Recycle Bin.
+  sent:      ["sent", "partially-completed", "completion-ready"],
+  cancelled: ["cancelled"],
   completed: ["completed"],
   draft:     ["draft", "ready-to-send"],
   // One section for both ways a request ends without everyone signing. The
@@ -2574,6 +2605,26 @@ function FilterField({
   );
 }
 
+type DocumentsList =
+  | "sent" | "to-sign" | "to-approve" | "to-review" | "to-acknowledge"
+  | "signed" | "draft" | "declined" | "cancelled" | "completed";
+const DOCUMENTS_LISTS: readonly DocumentsList[] = [
+  "sent", "to-sign", "to-approve", "to-review", "to-acknowledge", "signed", "draft", "declined", "cancelled", "completed",
+];
+function isDocumentsList(value: string | null): value is DocumentsList {
+  return value !== null && (DOCUMENTS_LISTS as readonly string[]).includes(value);
+}
+/** The inbox each "I must…" list shows. */
+const INBOX_OF: Partial<Record<DocumentsList, InboxAction>> = {
+  "to-sign": "sign", "to-approve": "approve", "to-review": "review", "to-acknowledge": "acknowledge",
+};
+const INBOX_TABS: readonly { list: DocumentsList; action: InboxAction; label: string; icon: typeof PenLine }[] = [
+  { list: "to-sign", action: "sign", label: "I must sign", icon: PenLine },
+  { list: "to-approve", action: "approve", label: "I must approve", icon: BadgeCheck },
+  { list: "to-review", action: "review", label: "I must review", icon: Eye },
+  { list: "to-acknowledge", action: "acknowledge", label: "Acknowledgement", icon: CheckCheck },
+];
+
 const EMPTY_REQUESTS: SigningRequestListItem[] = [];
 const EMPTY_DOCUMENTS: RealDocument[] = [];
 
@@ -2592,6 +2643,11 @@ function DocumentsPageRealMode() {
   const [expirationFor, setExpirationFor] = useState<SigningRequestListItem | null>(null);
   const [auditFor, setAuditFor] = useState<SigningRequestListItem | null>(null);
   const [shareFor, setShareFor] = useState<SigningRequestListItem | null>(null);
+  const [binOpen, setBinOpen] = useState(false);
+  const [binCount, setBinCount] = useState<number | null>(null);
+  const isOwner = currentWorkspace?.role === "owner";
+  const freePlan = !paidWorkspace;
+  const [noticeId, setNoticeId] = useState<string | null>(null);
 
   // The filters live in the URL, so a filtered list survives a reload, can be
   // shared, and can be opened directly from the command palette.
@@ -2603,12 +2659,15 @@ function DocumentsPageRealMode() {
   const rawList = searchParams.get("list");
   // Contact requests (086) are no longer listed here — they live in
   // Contacts → Requests From Contacts, and DocumentsPage redirects old links.
-  const list: "sent" | "to-sign" | "signed" | "others" | "completed" | "draft" | "declined" =
-    rawList === "to-sign" || rawList === "signed" || rawList === "others" || rawList === "completed"
-      || rawList === "draft" || rawList === "declined" ? rawList : "sent";
-  const group: "correspondence" | "records" = list === "sent" || list === "to-sign" ? "correspondence" : "records";
-  const [toSignCount, setToSignCount] = useState<number | null>(null);
-  const [othersCount, setOthersCount] = useState<number | null>(null);
+  // "Others" is gone: what a person must approve, review or acknowledge has
+  // its own inbox beside "I must sign", and what they already acted on lives
+  // under Shared Documents. An old ?list=others link lands on the approvals.
+  const list: DocumentsList =
+    rawList === "others" ? "to-approve"
+      : isDocumentsList(rawList) ? rawList : "sent";
+  const group: "correspondence" | "records" = list === "sent" || INBOX_OF[list] !== undefined ? "correspondence" : "records";
+  const [inbox, setInbox] = useState<InboxCounts | null>(null);
+  const inboxTotal = inbox === null ? 0 : inbox.sign + inbox.approve + inbox.review + inbox.acknowledge;
   const setList = (next: typeof list) => {
     setSearchParams(prev => {
       const params = new URLSearchParams(prev);
@@ -2619,18 +2678,12 @@ function DocumentsPageRealMode() {
   // The badges on "I must sign" and "Others" are known before either list is
   // opened. Others counts role documents only — contact requests are counted
   // in Contacts → Requests From Contacts, not here.
-  useEffect(() => {
-    let cancelled = false;
-    void realMySigningService.documentsToSign()
-      .then(entries => {
-        if (cancelled) return;
-        const signing = entries.filter(isSignerEntry).length;
-        setToSignCount(signing);
-        setOthersCount(entries.length - signing);
-      })
-      .catch(() => { /* The badge is a convenience; the list reports its own failure. */ });
-    return () => { cancelled = true; };
+  const loadInbox = useCallback(() => {
+    void documentLifecycleService.inboxCounts()
+      .then(setInbox)
+      .catch(() => { /* The badges are a convenience; each list reports its own failure. */ });
   }, []);
+  useEffect(() => { loadInbox(); }, [loadInbox]);
 
   const [nameInput, setNameInput] = useState(urlQ);
   const [signerInput, setSignerInput] = useState(urlSigner);
@@ -2684,7 +2737,7 @@ function DocumentsPageRealMode() {
   // until a reload) and the moment the `documents` topic is announced (a
   // send, a re-send, a cancel — here or in another tab). Rows stay on screen
   // while a re-read is in flight (see `fetching`), so nothing flickers.
-  const ownList = !(list === "to-sign" || list === "signed" || list === "others");
+  const ownList = list === "sent" || list === "completed" || list === "draft" || list === "declined" || list === "cancelled";
   const states = LIST_STATES[ownList ? list : "sent"];
   const listQuery = useLiveQuery(
     workspaceId && ownList ? `documents:list:${workspaceId}:${list}:${q}:${signer}` : null,
@@ -2822,6 +2875,46 @@ function DocumentsPageRealMode() {
     [drafts, items, byVerificationId]);
   const rowTotal = total + drafts.length + byVerificationId.length;
 
+  // Links from the bell: `?bin=open` opens the Recycle Bin, and
+  // `?deletedNotice=<id>` the owner's notice for a deleted document. Each
+  // parameter is dropped once used, so closing does not reopen it.
+  const binParam = searchParams.get("bin");
+  const noticeParam = searchParams.get("deletedNotice");
+  useEffect(() => {
+    if (binParam === null && noticeParam === null) return;
+    if (binParam === "open") setBinOpen(true);
+    if (noticeParam !== null) setNoticeId(noticeParam);
+    setSearchParams(prev => { const next = new URLSearchParams(prev); next.delete("bin"); next.delete("deletedNotice"); return next; }, { replace: true });
+  }, [binParam, noticeParam, setSearchParams]);
+
+  // ── Cancel, restore, the Recycle Bin, delete ──────────────────────────
+  const loadBinCount = useCallback(() => {
+    if (!workspaceId || freePlan) { setBinCount(null); return; }
+    void Promise.all([
+      documentLifecycleService.recycleBin(workspaceId),
+      isOwner ? documentLifecycleService.deletionRequests(workspaceId) : Promise.resolve([]),
+    ]).then(([inBin]) => { setBinCount(inBin.length); }).catch(() => { setBinCount(null); });
+  }, [workspaceId, freePlan, isOwner]);
+  useEffect(() => { loadBinCount(); }, [loadBinCount]);
+  const refreshLists = useCallback(() => {
+    void listQuery.refresh(); void allQuery.refresh(); void documentsQuery.refresh(); loadBinCount();
+  }, [listQuery, allQuery, documentsQuery, loadBinCount]);
+  const lifecycle = useDocumentLifecycle({ freePlan, onDone: refreshLists });
+  const lifecycleFor = (item: SigningRequestListItem): Pick<Parameters<typeof documentCard>[1], "onCancel" | "onRestore" | "onTrash" | "onDelete"> => {
+    if (!workspaceId) return {};
+    const base = { workspaceId, signingRequestId: item.signingRequestId, title: item.documentTitle };
+    return {
+      onCancel: () => { lifecycle.ask({ kind: "cancel", ...base }); },
+      onRestore: () => { lifecycle.ask({ kind: "restore", ...base }); },
+      onTrash: () => { if (item.state === "cancelled" || item.state === "completed") lifecycle.ask({ kind: "trash", ...base, state: item.state }); },
+      onDelete: () => {
+        if (item.state === "declined" || item.state === "expired") lifecycle.ask({ kind: "delete-ended", ...base });
+        else if (isUnsentDraft(item)) lifecycle.ask({ kind: "delete-draft", workspaceId, documentId: item.documentId, title: item.documentTitle });
+        else lifecycle.ask({ kind: "delete-draft", workspaceId, documentId: item.documentId, signingRequestId: item.signingRequestId, title: item.documentTitle });
+      },
+    };
+  };
+
   return (
     <>
       <PageHeader
@@ -2847,42 +2940,43 @@ function DocumentsPageRealMode() {
             this workspace, or in to me) and Records (everything kept). The
             group follows the list, so every existing ?list= link still lands
             in the right place. Documents always opens on Sent. */}
+        {/* The groups on the left; the Recycle Bin, a round button, at the far
+            right of the same row. */}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
         <div className="doc-groups" role="tablist" aria-label="Document groups">
           <button type="button" role="tab" className="doc-group" aria-selected={group === "correspondence"}
             onClick={() => { if (group !== "correspondence") setList("sent"); }}>
             <Mail size={16} aria-hidden /> <span>Correspondence</span>
-            {toSignCount !== null && toSignCount > 0 && (
-              <span className="doc-list-count" aria-label={`${String(toSignCount)} waiting for your signature`}>{toSignCount}</span>
+            {inboxTotal > 0 && (
+              <span className="doc-list-count" aria-label={`${String(inboxTotal)} waiting for you`}>{inboxTotal}</span>
             )}
           </button>
           <button type="button" role="tab" className="doc-group" aria-selected={group === "records"}
             onClick={() => { if (group !== "records") setList("signed"); }}>
             <Archive size={16} aria-hidden /> <span>Records</span>
-            {othersCount !== null && othersCount > 0 && (
-              <span className="doc-list-count" aria-label={`${String(othersCount)} to look at`}>{othersCount}</span>
-            )}
           </button>
+        </div>
+        {!freePlan && workspaceId && <RecycleBinButton count={binCount} onClick={() => { setBinOpen(true); }} />}
         </div>
         <div className="doc-list-tabs" role="tablist" aria-label="Document lists">
           {group === "correspondence" ? (<>
             <button type="button" role="tab" className="doc-list-tab" aria-selected={list === "sent"} onClick={() => setList("sent")}>
               <Send size={14} aria-hidden /> Sent
             </button>
-            <button type="button" role="tab" className="doc-list-tab" aria-selected={list === "to-sign"} onClick={() => setList("to-sign")}>
-              <PenLine size={14} aria-hidden /> I must sign
-              {toSignCount !== null && toSignCount > 0 && (
-                <span className="doc-list-count" aria-label={`${toSignCount} waiting`}>{toSignCount}</span>
-              )}
-            </button>
+            {INBOX_TABS.map(tab => {
+              const count = inbox?.[tab.action] ?? 0;
+              const Icon = tab.icon;
+              return (
+                <button key={tab.list} type="button" role="tab" className="doc-list-tab" data-testid={`tab-${tab.list}`}
+                  aria-selected={list === tab.list} onClick={() => setList(tab.list)}>
+                  <Icon size={14} aria-hidden /> {tab.label}
+                  {count > 0 && <span className="doc-list-count" aria-label={`${String(count)} waiting`}>{count}</span>}
+                </button>
+              );
+            })}
           </>) : (<>
             <button type="button" role="tab" className="doc-list-tab" aria-selected={list === "signed"} onClick={() => setList("signed")}>
               <FileCheck2 size={14} aria-hidden /> Signed by me
-            </button>
-            <button type="button" role="tab" className="doc-list-tab" aria-selected={list === "others"} onClick={() => setList("others")}>
-              <Users size={14} aria-hidden /> Others
-              {othersCount !== null && othersCount > 0 && (
-                <span className="doc-list-count" aria-label={`${String(othersCount)} to look at`}>{othersCount}</span>
-              )}
             </button>
             <button type="button" role="tab" className="doc-list-tab" aria-selected={list === "draft"} onClick={() => setList("draft")}>
               <FileText size={14} aria-hidden /> Draft
@@ -2890,16 +2984,19 @@ function DocumentsPageRealMode() {
             <button type="button" role="tab" className="doc-list-tab" aria-selected={list === "declined"} onClick={() => setList("declined")}>
               <FileText size={14} aria-hidden /> Declined &amp; Expired
             </button>
-            {/* Last, after Declined: the finished work, shown as branded cards. */}
+            <button type="button" role="tab" className="doc-list-tab" data-testid="tab-cancelled" aria-selected={list === "cancelled"} onClick={() => setList("cancelled")}>
+              <Ban size={14} aria-hidden /> Cancelled
+            </button>
+            {/* Last: the finished work, shown as branded cards. */}
             <button type="button" role="tab" className="doc-list-tab" aria-selected={list === "completed"} onClick={() => setList("completed")}>
               <FileCheck2 size={14} aria-hidden /> Completed
             </button>
           </>)}
         </div>
-        {list === "to-sign" && <DocumentsToSignSection onCount={setToSignCount} />}
+        {INBOX_OF[list] !== undefined && <DocumentsToSignSection key={list} action={INBOX_OF[list]} onCount={loadInbox} />}
         {list === "signed" && <SignedByMeSection />}
-        {list === "others" && <OthersSection onCount={setOthersCount} />}
-        {(list === "sent" || list === "completed" || list === "draft" || list === "declined") && (<>
+        {list === "sent" && <DeletedDocumentsBlock origins={["sent"]} heading="Deleted" />}
+        {ownList && (<>
         {status === "loading" && (
           <div style={{ padding: "32px 0" }}>
             <SkeletonBlock height={40} />
@@ -2967,7 +3064,8 @@ function DocumentsPageRealMode() {
                 onSignatures={() => { setSignaturesFor(item); }}
                 onAudit={() => { setAuditFor(item); }}
                 onResend={() => { setResendFor(item); }}
-                onExpiration={() => { setExpirationFor(item); }} />
+                onExpiration={() => { setExpirationFor(item); }}
+                onCancel={lifecycleFor(item).onCancel} />
             ))}
           </MailCardList>
         )}
@@ -2981,12 +3079,19 @@ function DocumentsPageRealMode() {
             onAudit: () => { setAuditFor(item); },
             ...(paidWorkspace ? { onResend: () => { setResendFor(item); } } : {}),
             onShare: item.state === "completed" && paidWorkspace ? () => { setShareFor(item); } : undefined,
+            ...lifecycleFor(item),
           }))} />
         )}
         </>)}
       </AppContent>
       {viewing && workspaceId && (
         <DocumentViewerDialog workspaceId={workspaceId} item={viewing} onClose={() => setViewing(null)} />
+      )}
+      {noticeId !== null && <DeletedNoticeFromLink id={noticeId} onClose={() => { setNoticeId(null); }} />}
+      {lifecycle.element}
+      {binOpen && workspaceId && (
+        <RecycleBinPanel workspaceId={workspaceId} isOwner={isOwner} freePlan={freePlan}
+          onClose={() => { setBinOpen(false); }} onChanged={refreshLists} />
       )}
       {resendFor && workspaceId && (
         <ResendSigningDialog

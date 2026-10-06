@@ -45,6 +45,20 @@ vi.mock("../../../../services/real/my-signing.service", async importOriginal => 
   };
 });
 
+vi.mock("../../../../services/real/document-lifecycle.service", async importOriginal => {
+  const actual = await importOriginal<typeof import("../../../../services/real/document-lifecycle.service")>();
+  return {
+    ...actual,
+    documentLifecycleService: {
+      ...actual.documentLifecycleService,
+      inboxCounts: () => Promise.resolve({ sign: 1, approve: 0, review: 0, acknowledge: 0 }),
+      recycleBin: () => Promise.resolve([]),
+      deletionRequests: () => Promise.resolve([]),
+      deletedDocuments: () => Promise.resolve([]),
+    },
+  };
+});
+
 import { DocumentsPage } from "../DocumentsPage";
 
 const SENT = {
@@ -78,7 +92,8 @@ describe("Documents › Correspondence", () => {
     // The badge says something is waiting; the page does not jump to it.
     expect(await within(groups[0]!).findByText("1")).toBeInTheDocument();
     const tabs = within(screen.getByRole("tablist", { name: "Document lists" })).getAllByRole("tab");
-    expect(tabs.map(t => t.textContent?.trim())).toEqual(["Sent", "I must sign1"]);
+    // One inbox per thing a person may be asked to do, each with its own count.
+    expect(tabs.map(t => t.textContent?.trim())).toEqual(["Sent", "I must sign1", "I must approve", "I must review", "Acknowledgement"]);
     expect(tabs[0]).toHaveAttribute("aria-selected", "true");
   });
 
