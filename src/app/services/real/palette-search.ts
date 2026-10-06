@@ -33,6 +33,7 @@ import { SEARCH_SCOPE_ICONS, SEARCH_SCOPE_LABELS } from "../../models/search";
 import { globalSearchService } from "../mock/global-search.service";
 import { SIGNING_REQUEST_STATUS } from "../signing-request-status";
 import { realSigningRequestService } from "./signing-request.service";
+import { realDocumentService } from "./document.service";
 import type { SigningRequestListItem } from "./signing-request.service";
 
 /** The scopes that have a truthful source in real mode, in display order. */
@@ -60,14 +61,36 @@ function shortDate(iso: string): string | null {
  * (the same contract sent twice), and a list of rows reading only
  * "Agreement — Sent" gave no way to tell them apart.
  */
-export function documentDescription(item: Pick<SigningRequestListItem, "sentAt" | "createdAt" | "initiator">): string {
+export function documentDescription(
+  item: Pick<SigningRequestListItem, "sentAt" | "createdAt" | "initiator">,
+  verificationId?: string | null,
+): string {
   // No status here: the row already shows it once, as its own label. It used
   // to be repeated in this line as well.
   const parts: string[] = [];
   const date = shortDate(item.sentAt ?? item.createdAt);
   if (date) parts.push(`${item.sentAt ? "Sent" : "Created"} ${date}`);
   if (item.initiator?.name) parts.push(`by ${item.initiator.name}`);
+  // A completed document's own identifier: the one thing two copies sent by
+  // the same person in the same minute still do not share.
+  if (verificationId) parts.push(verificationId);
   return parts.join(" · ");
+}
+
+/**
+ * Verification IDs for the completed documents among the results, by document.
+ * The search rows do not carry them; the document list does. Asked for only
+ * when a completed document is among the results, and never fatal: a result
+ * without its ID is still a true result.
+ */
+async function verificationIds(workspaceId: string, items: readonly SigningRequestListItem[]): Promise<Map<string, string>> {
+  const found = new Map<string, string>();
+  if (!items.some(item => item.state === "completed")) return found;
+  try {
+    const page = await realDocumentService.list(workspaceId, { perPage: 100 });
+    for (const doc of page.items) if (doc.verificationId) found.set(doc.documentId, doc.verificationId);
+  } catch { /* shown without the ID */ }
+  return found;
 }
 
 async function documentGroup(
@@ -75,6 +98,7 @@ async function documentGroup(
 ): Promise<GlobalSearchResultGroup | null> {
   const page = await realSigningRequestService.list(workspaceId, { q: query, perPage: MAX_DOCUMENTS });
   if (page.items.length === 0) return null;
+  const ids = await verificationIds(workspaceId, page.items);
   const lower = query.toLowerCase();
   return {
     scope: "documents",
@@ -87,7 +111,7 @@ async function documentGroup(
         id: `sr_real_${item.signingRequestId}` as GlobalSearchResultId,
         type: item.state === "draft" ? "document-draft" : "document",
         title: item.documentTitle,
-        description: documentDescription(item),
+        description: documentDescription(item, item.state === "completed" ? ids.get(item.documentId) : null),
         status,
         statusLabel: titleCase(status),
         updatedAt: item.createdAt,

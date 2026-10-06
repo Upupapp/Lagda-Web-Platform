@@ -65,6 +65,33 @@ describe("the real command palette search", () => {
       .toBe("/app/documents?q=James%20Employment%20Agreement.pdf");
   });
 
+  it("shows a completed document's Verification ID, so identical titles can be told apart", async () => {
+    apiRequest.mockImplementation((path: string) => Promise.resolve(path.includes("/signing-requests")
+      ? { ...EMPTY_PAGE, total: 2, items: [
+          row({ signingRequestId: "sr_a", documentId: "doc_a", state: "completed", sentAt: "2026-09-20T01:00:00.000Z" }),
+          row({ signingRequestId: "sr_b", documentId: "doc_b", state: "completed", sentAt: "2026-09-20T01:00:00.000Z" }),
+        ] }
+      : { items: [{ documentId: "doc_a", verificationId: "LAGDA-VER-2026-AAAA" }, { documentId: "doc_b", verificationId: "LAGDA-VER-2026-BBBB" }], total: 2, page: 1, perPage: 100, hasNextPage: false }));
+    const res = await searchPaletteReal("ws_1", "employ", "documents");
+    const [a, b] = res.groups.find(g => g.scope === "documents")?.results ?? [];
+    expect(a?.description).toContain("LAGDA-VER-2026-AAAA");
+    expect(b?.description).toContain("LAGDA-VER-2026-BBBB");
+    expect(a?.description).not.toBe(b?.description);
+  });
+
+  it("asks for no Verification IDs when nothing found is completed, and survives the lookup failing", async () => {
+    apiRequest.mockResolvedValue({ ...EMPTY_PAGE, items: [row()], total: 1 });
+    await searchPaletteReal("ws_1", "employ", "documents");
+    expect(apiRequest).toHaveBeenCalledTimes(1);
+
+    apiRequest.mockReset();
+    apiRequest.mockImplementation((path: string) => path.includes("/signing-requests")
+      ? Promise.resolve({ ...EMPTY_PAGE, items: [row({ state: "completed" })], total: 1 })
+      : Promise.reject(new Error("offline")));
+    const res = await searchPaletteReal("ws_1", "employ", "documents");
+    expect(res.groups.find(g => g.scope === "documents")?.results).toHaveLength(1);
+  });
+
   it("never returns fixture records as results", async () => {
     // "a" matches something in nearly every mock provider.
     apiRequest.mockResolvedValue(EMPTY_PAGE);
