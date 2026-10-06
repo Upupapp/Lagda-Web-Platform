@@ -170,6 +170,25 @@ describe("the Recycle Bin", () => {
     await waitFor(() => { expect(svc.deleteFromBin).toHaveBeenCalledWith("ws_1", "sr_1", "Superseded"); });
   });
 
+  it("keeps the cursor in the reason box when the page behind refreshes", async () => {
+    // The page re-renders on a timer, handing the panel a new `onClose`. That
+    // used to move the focus to Close, and the next space typed closed the bin.
+    const user = userEvent.setup();
+    svc.recycleBin.mockResolvedValue([binItem()]);
+    const panel = (onClose: () => void) => (
+      <MemoryRouter><RecycleBinPanel workspaceId="ws_1" isOwner freePlan={false} onClose={onClose} onChanged={() => {}} /></MemoryRouter>);
+    const onClose = vi.fn();
+    const view = render(panel(() => { onClose(); }));
+    await user.click(within(await screen.findByTestId("recycle-bin-item")).getByRole("button", { name: /Permanently Delete/ }));
+    const reason = screen.getByLabelText(/Reason for deleting/);
+    await user.type(reason, "No longer");
+    view.rerender(panel(() => { onClose(); }));
+    expect(reason).toHaveFocus();
+    await user.keyboard(" needed");
+    expect(reason).toHaveValue("No longer needed");
+    expect(onClose).not.toHaveBeenCalled();
+  });
+
   it("a member's delete is a request to the owner, and a pending one says so", async () => {
     const user = userEvent.setup();
     svc.recycleBin.mockResolvedValue([

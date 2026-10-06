@@ -99,8 +99,13 @@ export function RecycleBinPanel({ workspaceId, isOwner, freePlan, onClose, onCha
   const lifecycle = useDocumentLifecycle({ freePlan, onDone: () => { load(); onChanged(); } });
   const ask = (action: LifecycleAction) => { lifecycle.ask(action); };
 
+  // Focus goes to Close once, when the panel opens. It must not be repeated
+  // when `onClose` changes identity: the page behind refreshes on a timer,
+  // and each refresh used to pull the focus out of a confirmation's reason
+  // box onto Close, where the next space typed closed the whole panel.
+  useEffect(() => { closeRef.current?.focus(); }, []);
+
   useEffect(() => {
-    closeRef.current?.focus();
     const onKey = (e: KeyboardEvent) => {
       // A confirmation on top handles its own Escape first.
       if (e.key === "Escape" && document.querySelector("[role=alertdialog]") === null) onClose();
