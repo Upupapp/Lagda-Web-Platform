@@ -101,6 +101,8 @@ function bool(input: unknown, key: string): boolean | null {
 
 /** The page that lists a workspace's join requests, for its owners. */
 const JOIN_REQUESTS_PATH = "/app/invitations?view=sent&panel=requests";
+/** Documents, with the Recycle Bin opened. */
+const RECYCLE_BIN_PATH = "/app/documents?bin=open";
 
 interface Presentation {
   readonly category: NotificationCategory;
@@ -416,6 +418,87 @@ function present(row: FeedRow): Presentation {
     }
 
     // ── 087. Document sharing — all six are in-app only (no email). ─────────
+    // ── A document's life: completion for the people who took part, the
+    //    Recycle Bin's deletion requests, deletion itself, access given up.
+    //    All in-app only. ────────────────────────────────────────────────
+    case "DOCUMENT_COMPLETED_FOR_PARTICIPANT": {
+      const sharedId = str(row.templateInput, "sharedDocumentId");
+      const where = workspaceName === null ? "" : ` from ${workspaceName}`;
+      return {
+        category: "documents", severity: "success", priority: "normal",
+        title: documentTitle === null ? "A document you took part in is complete" : `“${documentTitle}” is complete`,
+        body: `Everyone has finished${where}. The signed document is under Shared Documents › Shared with me, where you can view and download it.`,
+        actionLabel: "Open the signed document",
+        // Opens Shared with me AND the signed document's own panel.
+        actionPath: sharedId === null ? sharedWithMePath("accepted") : `${sharedWithMePath("accepted")}&open=${encodeURIComponent(sharedId)}`,
+        why: "You were sent this because you took part in this document. It was not emailed.",
+        inAppOnly: true,
+      };
+    }
+
+    case "DOCUMENT_DELETION_REQUESTED": {
+      const who = str(row.templateInput, "requesterDisplayName") ?? "A member of your workspace";
+      const reason = str(row.templateInput, "reason");
+      return {
+        category: "my-actions", severity: "warning", priority: "high",
+        title: documentTitle === null ? `${who} asked you to delete a document` : `${who} asked you to delete “${documentTitle}”`,
+        body: `Only you, the workspace owner, can delete a document permanently. ${reason === null ? "No reason was given." : `Their reason: “${reason}”`} Approve or disapprove it in the Recycle Bin.`,
+        actionLabel: "Open the Recycle Bin",
+        actionPath: RECYCLE_BIN_PATH,
+        why: "You were sent this because you own the workspace this document belongs to.",
+        inAppOnly: true,
+      };
+    }
+
+    case "DOCUMENT_DELETION_APPROVED":
+    case "DOCUMENT_DELETION_DISAPPROVED": {
+      const owner = str(row.templateInput, "ownerDisplayName") ?? "The workspace owner";
+      const approved = row.type === "DOCUMENT_DELETION_APPROVED";
+      const subject = documentTitle === null ? "the document" : `“${documentTitle}”`;
+      return {
+        category: "documents", severity: approved ? "success" : "info", priority: "normal",
+        title: approved ? `${owner} approved deleting ${subject}` : `${owner} disapproved deleting ${subject}`,
+        body: approved
+          ? "The document was permanently deleted."
+          : "The document was not deleted. It is still in the Recycle Bin, where you can restore it.",
+        actionLabel: approved ? "Open Documents" : "Open the Recycle Bin",
+        actionPath: approved ? "/app/documents" : RECYCLE_BIN_PATH,
+        why: "You were sent this because you asked the workspace owner to delete this document.",
+        inAppOnly: true,
+      };
+    }
+
+    case "DOCUMENT_DELETED": {
+      const by = str(row.templateInput, "deletedByDisplayName") ?? "The owner";
+      const noticeId = str(row.templateInput, "deletedDocumentId");
+      const reason = str(row.templateInput, "reason");
+      const where = workspaceName === null ? "" : ` of ${workspaceName}`;
+      return {
+        category: "documents", severity: "warning", priority: "normal",
+        title: documentTitle === null ? `${by} deleted a document you had access to` : `${by} deleted “${documentTitle}”`,
+        body: `The owner${where} permanently deleted this document. It can no longer be opened. ${reason === null ? "" : `Reason: “${reason}”`}`.trim(),
+        actionLabel: "View details",
+        actionPath: noticeId === null ? "/app/documents" : `/app/documents?deletedNotice=${encodeURIComponent(noticeId)}`,
+        why: "You were sent this because you had access to this document.",
+        inAppOnly: true,
+      };
+    }
+
+    case "DOCUMENT_ACCESS_REMOVED": {
+      const person = str(row.templateInput, "personDisplayName") ?? str(row.templateInput, "personEmail") ?? "Someone";
+      const message = str(row.templateInput, "message");
+      const subject = documentTitle === null ? "a document" : `“${documentTitle}”`;
+      return {
+        category: "documents", severity: "info", priority: "normal",
+        title: `${person} removed their access to ${subject}`,
+        body: `They can no longer open it. ${message === null ? "No message was left." : `Their message: “${message}”`}`,
+        actionLabel: "Open Shared by me",
+        actionPath: sharedByMePath(),
+        why: "You were sent this because you own the workspace this document belongs to.",
+        inAppOnly: true,
+      };
+    }
+
     case "DOCUMENT_SHARE_RECEIVED": {
       const sharer = str(row.templateInput, "sharerDisplayName") ?? "Someone";
       const where = workspaceName === null ? "" : ` (${workspaceName})`;
