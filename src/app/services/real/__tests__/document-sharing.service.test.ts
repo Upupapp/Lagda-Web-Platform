@@ -41,7 +41,7 @@ describe("documentSharingService", () => {
     await svc.sharedByMe("ws 1", "workspace");
     await svc.sharedWithMe("rejected");
     await svc.actOnShared("shd_1", "accept");
-    await svc.removeMyAccess("shd_1");
+    await svc.removeMyAccess("shd_1", "No longer involved");
     await svc.deleteShared("shd_1");
     expect(await svc.sharedDetails("shd_1")).toEqual({ participants: [] });
     expect(await svc.myAccess("LAGDA-1")).toEqual({ relation: "none" });
@@ -50,7 +50,7 @@ describe("documentSharingService", () => {
 
     expect(api.calls.map(c => c.body)).toEqual([
       undefined, { email: "a@b.co" }, { fullName: null }, undefined, undefined, undefined, undefined, undefined,
-      undefined, undefined, undefined, undefined, undefined, undefined, {}, { note: "Please" },
+      undefined, undefined, { message: "No longer involved" }, undefined, undefined, undefined, {}, { note: "Please" },
     ]);
     expect(api.fetchMock.mock.calls.every(([, init]) => (init as RequestInit).credentials === "include")).toBe(true);
   });

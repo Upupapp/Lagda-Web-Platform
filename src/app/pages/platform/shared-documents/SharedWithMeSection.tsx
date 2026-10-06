@@ -10,6 +10,9 @@
 //
 // What each item offers comes from its `actions`, never from a guess here.
 
+import { useSearchParams } from "react-router";
+import { LifecycleConfirmDialog } from "../../../components/documents/LifecycleConfirmDialog";
+import { DeletedDocumentsBlock } from "../../../components/documents/DeletedDocumentsBlock";
 import { useCallback, useEffect, useState } from "react";
 import { Eye, Users, History, LogOut, Check, X, Undo2, Trash2, FileText, Clock, MessageSquare, UserRound, Inbox, Ban, CircleCheck } from "lucide-react";
 import { EmptyStateLayout, SkeletonBlock } from "../../../components/platform";
@@ -31,7 +34,25 @@ const DEFAULT_COLOR = "#0078D4";
 
 interface Data { accepted: SharedDocument[]; pending: SharedDocument[]; rejected: SharedDocument[] }
 
-type Confirm = { kind: "remove-access" | "delete"; item: SharedDocument };
+type Confirm = { kind: "delete"; item: SharedDocument };
+
+const PARTICIPANT_ROLE: Record<string, string> = {
+  "approver": "Approver", "reviewer": "Reviewer", "acknowledgment-recipient": "Acknowledgment recipient", "carbon-copy": "Copy recipient",
+};
+
+function RequestStateBadge({ state }: { state: "in-progress" | "declined" | "cancelled" | "expired" }) {
+  const look = state === "in-progress"
+    ? { label: "In-Progress", bg: "#EFF6FF", fg: "#1E40AF", border: "#BFDBFE" }
+    : state === "declined" ? { label: "Declined", bg: "#FEF2F2", fg: "#991B1B", border: "#FECACA" }
+    : state === "cancelled" ? { label: "Cancelled", bg: "#F1F5F9", fg: "#334155", border: "#CBD5E1" }
+    : { label: "Expired", bg: "#FFFBEB", fg: "#92400E", border: "#FDE68A" };
+  return (
+    <span data-testid="request-state" style={{
+      fontFamily: "'Geist', sans-serif", fontSize: 11.5, fontWeight: 700, padding: "3px 9px", borderRadius: 999,
+      background: look.bg, color: look.fg, border: `1px solid ${look.border}`, display: "inline-flex", alignItems: "center",
+    }}>{look.label}</span>
+  );
+}
 
 export function SharedWithMeSection({ section, onSection }: { section: WithMeSection; onSection: (s: WithMeSection) => void }) {
   const [data, setData] = useState<Data>({ accepted: [], pending: [], rejected: [] });
@@ -41,6 +62,23 @@ export function SharedWithMeSection({ section, onSection }: { section: WithMeSec
   const [viewer, setViewer] = useState<{ item: SharedDocument; view: SharedDocumentView } | null>(null);
   const [confirm, setConfirm] = useState<Confirm | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [removing, setRemoving] = useState<SharedDocument | null>(null);
+  const [removeBusy, setRemoveBusy] = useState(false);
+  const [removeError, setRemoveError] = useState<string | null>(null);
+  const [params, setParams] = useSearchParams();
+  const dropParam = useCallback((name: string) => {
+    setParams(prev => { const next = new URLSearchParams(prev); next.delete(name); return next; }, { replace: true });
+  }, [setParams]);
+
+  // `?open=<id>`: the "document completed" notice lands here and opens the
+  // signed document at once, the same panel "View" opens.
+  const openParam = params.get("open");
+  useEffect(() => {
+    if (openParam === null || status !== "ready") return;
+    const found = data.accepted.find(item => item.id === openParam);
+    if (found && found.actions.includes("open")) setViewer({ item: found, view: "document" });
+    dropParam("open");
+  }, [openParam, status, data.accepted, dropParam]);
 
   const load = useCallback((quiet = false) => {
     if (!quiet) setStatus("loading");
@@ -91,7 +129,7 @@ export function SharedWithMeSection({ section, onSection }: { section: WithMeSec
       );
     }
     if (item.actions.includes("remove-access")) {
-      actions.push({ id: "remove-access", label: "Remove your access", icon: LogOut, onSelect: () => setConfirm({ kind: "remove-access", item }) });
+      actions.push({ id: "remove-access", label: "Remove your access", icon: LogOut, onSelect: () => { setRemoveError(null); setRemoving(item); } });
     }
     return actions;
   }
@@ -112,6 +150,11 @@ export function SharedWithMeSection({ section, onSection }: { section: WithMeSec
             <SmallButton label="Try again" onClick={() => load()} />
           </div>
         )}
+        {/* Documents an owner deleted leave a notice where they used to be. */}
+        {section === "accepted" && (
+          <DeletedDocumentsBlock origins={["shared-with-me"]} heading="Deleted by the owner"
+            openId={params.get("deleted")} onOpened={() => { dropParam("deleted"); }} />
+        )}
         {status === "ready" && section === "accepted" && (
           data.accepted.length === 0 ? (
             <EmptyStateLayout icon={<CircleCheck size={26} />} title="Nothing shared with you yet"
@@ -123,9 +166,14 @@ export function SharedWithMeSection({ section, onSection }: { section: WithMeSec
               verificationId: item.verificationId,
               done: item.progress.completed,
               total: item.progress.participants,
-              createdAt: item.completedAt,
-              dateLabel: "Completed",
-              bannerSubtitle: "Shared with you",
+              // Until it completes there is no completion date to show.
+              createdAt: item.completedAt ?? item.updatedAt,
+              dateLabel: item.completedAt !== null ? "Completed" : "Updated",
+              bannerSubtitle: item.kind === "participant" ? `You: ${PARTICIPANT_ROLE[item.participantRole ?? ""] ?? "Participant"}` : "Shared with you",
+              // A participant's entry follows the request: In-Progress until it
+              // ends, then whatever it ended as. It stays until they remove it.
+              ...(item.kind === "participant" && item.requestState !== undefined && item.requestState !== "completed"
+                ? { statusBadge: <RequestStateBadge state={item.requestState} /> } : {}),
               branding: {
                 displayName: item.branding.displayName,
                 primaryColor: item.branding.primaryColor ?? DEFAULT_COLOR,
@@ -138,6 +186,7 @@ export function SharedWithMeSection({ section, onSection }: { section: WithMeSec
                     <span style={{ overflowWrap: "anywhere" }}>Shared by {item.sharedBy.displayName}</span>
                   )}
                   {item.kind === "access-request" && <span>Access approved on your request</span>}
+                  {item.kind === "participant" && item.requestState === "in-progress" && <span>Waiting for the other participants to finish</span>}
                 </div>
               ),
               actions: cardActions(item),
@@ -189,32 +238,51 @@ export function SharedWithMeSection({ section, onSection }: { section: WithMeSec
       </div>
 
       {viewer && <SharedDocumentDialog item={viewer.item} view={viewer.view} onClose={() => setViewer(null)} />}
+      {removing && (
+        <LifecycleConfirmDialog
+          subject={removing.documentTitle} busy={removeBusy} error={removeError}
+          copy={{
+            title: "Remove your access?", icon: LogOut, tone: "danger",
+            lead: "By choosing Continue, you give up your access to this document.",
+            points: [
+              "You will no longer be able to open it. The owner would have to share it with you again.",
+              "The workspace owner is told that you removed your access, with the message you write below.",
+            ],
+            reason: { label: "Message to the owner", placeholder: "Why are you removing your access?", hint: "Required. The owner will see it." },
+          }}
+          onCancel={() => { if (!removeBusy) setRemoving(null); }}
+          onContinue={message => {
+            const item = removing;
+            setRemoveBusy(true); setRemoveError(null);
+            void withProcess("shared-remove-access", "", () => documentSharingService.removeMyAccess(item.id, message))
+              .then(() => {
+                setRemoving(null);
+                setNotice({ tone: "success", text: `You no longer have access to “${item.documentTitle}”. The owner has been told.` });
+                load(true);
+              })
+              .catch((err: unknown) => { setRemoveError(sharingErrorMessage(err, "respond")); })
+              .finally(() => { setRemoveBusy(false); });
+          }}
+        />
+      )}
       {confirm && (
         <ConfirmDialog
-          title={confirm.kind === "remove-access" ? "Remove your access?" : "Delete this document?"}
+          title="Delete this document?"
           subtitle={confirm.item.documentTitle}
-          busyLabel={confirm.kind === "remove-access" ? "Removing…" : "Deleting…"}
+          busyLabel="Deleting…"
           onClose={() => setConfirm(null)}
           onConfirm={async () => {
             try {
               const item = confirm.item;
-              if (confirm.kind === "remove-access") await withProcess("shared-remove-access", "", () => documentSharingService.removeMyAccess(item.id));
-              else await withProcess("shared-delete", "", () => documentSharingService.deleteShared(item.id));
-              setNotice({
-                tone: "success",
-                text: confirm.kind === "remove-access"
-                  ? `You no longer have access to “${confirm.item.documentTitle}”.`
-                  : `“${confirm.item.documentTitle}” was deleted from your list.`,
-              });
+              await withProcess("shared-delete", "", () => documentSharingService.deleteShared(item.id));
+              setNotice({ tone: "success", text: `“${item.documentTitle}” was deleted from your list.` });
               load(true);
               return null;
             } catch (err) {
               return sharingErrorMessage(err, "respond");
             }
           }}>
-          {confirm.kind === "remove-access"
-            ? <>You will no longer be able to open <strong>{confirm.item.documentTitle}</strong>. The owner would have to share it with you again.</>
-            : <><strong>{confirm.item.documentTitle}</strong> will be removed from your Rejected list. This cannot be undone.</>}
+          <><strong>{confirm.item.documentTitle}</strong> will be removed from your Rejected list. This cannot be undone.</>
         </ConfirmDialog>
       )}
     </div>

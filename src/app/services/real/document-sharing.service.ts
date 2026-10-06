@@ -102,11 +102,20 @@ export type SharedAction = "accept" | "reject" | "withdraw-rejection" | "delete"
 
 export interface SharedDocument {
   readonly id: string;
-  readonly kind: "share" | "access-request";
+  /** `participant`: this person took part in the document (approver, reviewer,
+   *  acknowledgment or copy recipient). Made automatically, not by a share. */
+  readonly kind: "share" | "access-request" | "participant";
+  /** `automatic` = a participant's own access; the owner cannot revoke it. */
+  readonly access?: "manual" | "automatic";
   readonly status: SharedStatus;
-  readonly verificationId: string;
+  /** Where the signing request stands. A share is always of a completed one. */
+  readonly requestState?: "in-progress" | "completed" | "declined" | "cancelled" | "expired";
+  readonly participantRole?: "approver" | "reviewer" | "acknowledgment-recipient" | "carbon-copy" | null;
+  readonly signingRequestId?: string;
+  /** Null until the document is completed. */
+  readonly verificationId: string | null;
   readonly documentTitle: string;
-  readonly completedAt: string;
+  readonly completedAt: string | null;
   readonly owner: { readonly displayName: string };
   readonly sharedBy: { readonly displayName: string } | null;
   readonly fullName: string | null;
@@ -251,8 +260,9 @@ export const documentSharingService = {
     return changesNavCounts(apiRequest<SharedDocument>(`${mine(id)}/${verb}`, { method: "POST" }));
   },
 
-  removeMyAccess(id: string): Promise<void> {
-    return changesNavCounts(apiRequest<void>(`${mine(id)}/remove-access`, { method: "POST" }));
+  /** `message` is this person's reason; the workspace owner is told. */
+  removeMyAccess(id: string, message: string): Promise<void> {
+    return changesNavCounts(apiRequest<void>(`${mine(id)}/remove-access`, { method: "POST", body: { message } }));
   },
 
   deleteShared(id: string): Promise<void> {

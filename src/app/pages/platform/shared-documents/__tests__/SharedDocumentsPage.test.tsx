@@ -282,10 +282,14 @@ describe("Shared With Me", () => {
     const card = await screen.findByTestId("completed-card");
     await userEvent.click(within(card).getByRole("button", { name: /actions for Supply Contract/ }));
     await userEvent.click(within(card).getByRole("menuitem", { name: "Remove your access" }));
-    const confirm = screen.getByRole("dialog", { name: "Remove your access?" });
+    const confirm = screen.getByRole("alertdialog", { name: "Remove your access?" });
     expect(within(confirm).getByRole("button", { name: "Cancel" })).toHaveFocus();
+    // A message to the owner is required: Continue is off until one is written.
+    expect(within(confirm).getByRole("button", { name: "Continue" })).toBeDisabled();
+    await userEvent.type(within(confirm).getByLabelText(/Message to the owner/), "No longer involved");
     await userEvent.click(within(confirm).getByRole("button", { name: "Continue" }));
     await waitFor(() => expect(api.calls.some(c => c.method === "POST" && c.path.endsWith("/shd_1/remove-access"))).toBe(true));
+    expect(api.calls.find(c => c.path.endsWith("/shd_1/remove-access"))?.body).toEqual({ message: "No longer involved" });
     expect(await screen.findByText(/You no longer have access to “Supply Contract”/)).toBeInTheDocument();
   });
 

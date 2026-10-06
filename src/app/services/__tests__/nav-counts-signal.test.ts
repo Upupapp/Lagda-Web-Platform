@@ -25,7 +25,7 @@ beforeEach(() => {
 describe("actions that change the side panel's counts", () => {
   const ACTIONS: [string, () => Promise<unknown>][] = [
     ["accepting a shared document", () => documentSharingService.actOnShared("sh_1", "accept")],
-    ["removing my access", () => { status = 204; return documentSharingService.removeMyAccess("sh_1"); }],
+    ["removing my access", () => { status = 204; return documentSharingService.removeMyAccess("sh_1", "No longer involved"); }],
     ["deciding an access request", () => documentSharingService.decideAccessRequest("ws_1", "ar_1", "approve")],
     ["accepting a contact request", () => contactConnectionsService.accept("cc_1", "ws_1")],
     ["declining a contact request", () => { status = 204; return contactConnectionsService.decline("cc_1"); }],
