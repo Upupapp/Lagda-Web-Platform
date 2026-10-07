@@ -199,6 +199,12 @@ describe("the Recycle Bin", () => {
     expect(text).toHaveTextContent("ask the workspace owner to delete it permanently");
   });
 
+  it("a completed document's card carries its Verification ID, which the bin itself supplies", async () => {
+    svc.recycleBin.mockResolvedValue([binItem({ verificationId: "LAGDA-VER-2026-BINBINBIN1" })]);
+    renderBin(true);
+    expect(await screen.findByText("LAGDA-VER-2026-BINBINBIN1")).toBeInTheDocument();
+  });
+
   it("shows why a completed document was moved to the bin", async () => {
     svc.recycleBin.mockResolvedValue([binItem({ trashedReason: "Replaced by the signed renewal" }), binItem({ signingRequestId: "sr_2", documentId: "doc_2", state: "cancelled", trashedReason: null })]);
     renderBin(true);

@@ -38,6 +38,8 @@ export interface RecycleBinItem {
   trashedAt: string; trashedBy: BinPerson;
   /** Why it was moved here. Asked for a completed document; null otherwise. */
   trashedReason?: string | null;
+  /** A completed document's Verification ID. */
+  verificationId?: string | null;
   completedAt: string | null; cancelledAt: string | null; participantCount: number;
   deletionRequest: DeletionRequestSummary | null;
   actions: BinAction[];

@@ -154,7 +154,7 @@ export function RecycleBinPanel({ workspaceId, isOwner, freePlan, onClose, onCha
     const completed = item.state === "completed";
     return {
       key: item.signingRequestId, testId: "recycle-bin-item", title: item.documentTitle, actions: [],
-      verificationId: verificationIds.get(item.documentId) ?? null, hideVerification: !completed,
+      verificationId: item.verificationId ?? verificationIds.get(item.documentId) ?? null, hideVerification: !completed,
       done: completed ? item.participantCount : 0, total: completed ? item.participantCount : 0,
       createdAt: item.trashedAt, dateLabel: "Moved to the bin", bannerSubtitle: "In the Recycle Bin",
       ...(completed ? {} : { statusBadge: cancelledBadge }),
