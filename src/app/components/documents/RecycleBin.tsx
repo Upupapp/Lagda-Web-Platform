@@ -1,5 +1,9 @@
-// The Recycle Bin: a round button at the top right of Documents, and the wide
-// panel it opens in the centre of the page.
+// The Recycle Bin: a round button at the top right of Documents, and the panel
+// it opens in the centre of the page.
+//
+// The panel has a fixed size on a wide screen (it does not grow and shrink
+// with what is in it), takes most of a tablet, and fills a phone. Inside, each
+// document is the same branded card as Records › Completed.
 //
 // Completed and cancelled documents moved to the bin are listed here. Each can
 // be restored. Only the workspace OWNER can delete one permanently; a sender
@@ -8,8 +12,10 @@
 // disapprove it.
 
 import { useCallback, useEffect, useId, useRef, useState } from "react";
-import { Trash2, X, ArchiveRestore, FileX2, Clock, ThumbsUp, ThumbsDown, Send, Inbox } from "lucide-react";
+import { Trash2, X, ArchiveRestore, FileX2, Clock, ThumbsUp, ThumbsDown, Send, Inbox, CircleSlash } from "lucide-react";
 import { MemberAvatar } from "../platform/MemberAvatar";
+import { CompletedDocumentCard, useDocumentCardBranding, type CompletedCardData } from "../../pages/platform/documents/CompletedDocumentCards";
+import { realDocumentService } from "../../services/real/document.service";
 import { useDocumentLifecycle, type LifecycleAction } from "./useDocumentLifecycle";
 import {
   documentLifecycleService, memberAvatarUrl, type DeletionRequest, type RecycleBinItem,
@@ -96,6 +102,21 @@ export function RecycleBinPanel({ workspaceId, isOwner, freePlan, onClose, onCha
   }, [workspaceId, isOwner]);
   useEffect(() => { load(); }, [load]);
 
+  // Verification IDs are on the document list, not on the bin's own rows.
+  // Without them a card simply shows none: a failure here changes nothing else.
+  const branding = useDocumentCardBranding();
+  const [verificationIds, setVerificationIds] = useState<ReadonlyMap<string, string>>(new Map());
+  useEffect(() => {
+    let cancelled = false;
+    void realDocumentService.list(workspaceId, { perPage: 100 })
+      .then(page => {
+        if (cancelled) return;
+        setVerificationIds(new Map(page.items.flatMap(d => (d.verificationId ? [[d.documentId, d.verificationId] as const] : []))));
+      })
+      .catch(() => { /* cards show no Verification ID */ });
+    return () => { cancelled = true; };
+  }, [workspaceId]);
+
   const lifecycle = useDocumentLifecycle({ freePlan, onDone: () => { load(); onChanged(); } });
   const ask = (action: LifecycleAction) => { lifecycle.ask(action); };
 
@@ -117,137 +138,182 @@ export function RecycleBinPanel({ workspaceId, isOwner, freePlan, onClose, onCha
   const pendingIds = new Set(requests.map(r => r.signingRequestId));
   // The owner decides requested items in their own section, not twice.
   const listed = (items ?? []).filter(item => !(isOwner && pendingIds.has(item.signingRequestId)));
+  const documentOf = new Map((items ?? []).map(item => [item.signingRequestId, item.documentId]));
+
+  const cancelledBadge = (
+    <span style={{
+      ...GF, fontSize: 11.5, fontWeight: 700, padding: "3px 9px", borderRadius: 999, background: "#F1F5F9", color: SLATE,
+      border: `1px solid ${BORDER}`, display: "inline-flex", alignItems: "center", gap: 5,
+    }}><CircleSlash size={12} aria-hidden /> Cancelled</span>
+  );
+  const actionsRow: React.CSSProperties = { display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "flex-end", paddingTop: 10, borderTop: `1px solid ${BORDER}` };
+  const line: React.CSSProperties = { ...GF, fontSize: 12.5, color: SLATE, margin: 0, display: "flex", alignItems: "center", gap: 7, minWidth: 0 };
+
+  /** One document in the bin, as the same card Records › Completed shows. */
+  const binCard = (item: RecycleBinItem): CompletedCardData => {
+    const completed = item.state === "completed";
+    return {
+      key: item.signingRequestId, testId: "recycle-bin-item", title: item.documentTitle, actions: [],
+      verificationId: verificationIds.get(item.documentId) ?? null, hideVerification: !completed,
+      done: completed ? item.participantCount : 0, total: completed ? item.participantCount : 0,
+      createdAt: item.trashedAt, dateLabel: "Moved to the bin", bannerSubtitle: "In the Recycle Bin",
+      ...(completed ? {} : { statusBadge: cancelledBadge }),
+      extra: (
+        <>
+          <p style={line}>
+            <MemberAvatar name={item.trashedBy.displayName} url={memberAvatarUrl(workspaceId, item.trashedBy)} size={20} />
+            <span style={{ minWidth: 0, overflowWrap: "anywhere" }}>Moved here by {item.trashedBy.displayName} · {when(item.trashedAt)}</span>
+          </p>
+          {item.deletionRequest !== null && (
+            <p data-testid="pending-owner" style={{ ...GF, fontSize: 12.5, fontWeight: 700, color: "#92400E", background: "#FFFBEB", border: "1px solid #FDE68A", borderRadius: 8, padding: "6px 9px", margin: 0, display: "flex", alignItems: "center", gap: 6 }}>
+              <Clock size={13} aria-hidden /> Pending the owner&rsquo;s approval
+            </p>
+          )}
+        </>
+      ),
+      footer: (
+        <div style={actionsRow}>
+          {item.actions.includes("restore") && (
+            <SmallButton icon={ArchiveRestore} label="Restore" tone="primary" testId="bin-restore"
+              onClick={() => { ask({ kind: "bin-restore", workspaceId, signingRequestId: item.signingRequestId, title: item.documentTitle, state: item.state }); }} />
+          )}
+          {item.actions.includes("delete") && (
+            <SmallButton icon={FileX2} label="Permanently Delete" tone="danger" testId="bin-delete"
+              onClick={() => { ask({ kind: "bin-delete", workspaceId, signingRequestId: item.signingRequestId, title: item.documentTitle }); }} />
+          )}
+          {item.actions.includes("request-deletion") && (
+            <SmallButton icon={Send} label="Delete" tone="danger" testId="bin-request-deletion"
+              onClick={() => { ask({ kind: "bin-request-deletion", workspaceId, signingRequestId: item.signingRequestId, title: item.documentTitle }); }} />
+          )}
+        </div>
+      ),
+    };
+  };
+
+  /** A deletion request, on the same card, with who asked and why. */
+  const requestCard = (req: DeletionRequest): CompletedCardData => {
+    const completed = req.state === "completed";
+    const documentId = req.signingRequestId === null ? undefined : documentOf.get(req.signingRequestId);
+    return {
+      key: req.requestId, testId: "deletion-request", title: req.documentTitle, actions: [],
+      verificationId: documentId === undefined ? null : verificationIds.get(documentId) ?? null, hideVerification: !completed,
+      done: 0, total: 0, createdAt: req.requestedAt, dateLabel: "Asked", bannerSubtitle: "Deletion requested",
+      ...(completed ? {} : { statusBadge: cancelledBadge }),
+      extra: (
+        <>
+          <p style={line}>
+            <MemberAvatar name={req.requestedBy.displayName} url={memberAvatarUrl(workspaceId, req.requestedBy)} size={20} />
+            <span style={{ minWidth: 0, overflowWrap: "anywhere" }}><strong style={{ color: NAVY }}>{req.requestedBy.displayName}</strong> asked to delete this · {when(req.requestedAt)}</span>
+          </p>
+          <p style={{ ...GF, fontSize: 13, color: NAVY, margin: 0, padding: "8px 10px", background: "#FFFBEB", border: "1px solid #FDE68A", borderRadius: 8, lineHeight: 1.5, whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>
+            <span style={{ display: "block", fontSize: 11.5, fontWeight: 700, color: "#92400E", marginBottom: 2 }}>Their reason</span>
+            {req.reason ?? "No reason given."}
+          </p>
+        </>
+      ),
+      footer: (
+        <div style={actionsRow}>
+          <SmallButton icon={ThumbsDown} label="Disapprove Deletion" testId="disapprove-deletion"
+            onClick={() => { ask({ kind: "disapprove-deletion", workspaceId, requestId: req.requestId, title: req.documentTitle, requester: req.requestedBy.displayName }); }} />
+          <SmallButton icon={ThumbsUp} label="Approve Deletion" tone="danger" testId="approve-deletion"
+            onClick={() => { ask({ kind: "approve-deletion", workspaceId, requestId: req.requestId, title: req.documentTitle, requester: req.requestedBy.displayName }); }} />
+        </div>
+      ),
+    };
+  };
+
+  const empty = items !== null && !failed && listed.length === 0 && !(isOwner && requests.length > 0);
+  const heading: React.CSSProperties = { ...GF, fontSize: 15, fontWeight: 800, color: NAVY, margin: 0 };
 
   return (
-    <div data-testid="recycle-bin-scrim" onMouseDown={e => { if (e.target === e.currentTarget) onClose(); }}
-      style={{ position: "fixed", inset: 0, zIndex: Z.modal, background: "rgba(7,17,31,0.55)", display: "flex", alignItems: "center", justifyContent: "center", padding: 16, boxSizing: "border-box" }}>
-      <div role="dialog" aria-modal="true" aria-labelledby={titleId} data-testid="recycle-bin-panel"
-        style={{
-          ...GF, background: "#FFFFFF", borderRadius: 18, width: "100%", maxWidth: 960, maxHeight: "calc(100dvh - 32px)",
-          display: "flex", flexDirection: "column", boxSizing: "border-box", boxShadow: "0 24px 60px -12px rgba(7,17,31,0.55)", overflow: "hidden",
-        }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "16px 18px", borderBottom: `1px solid ${BORDER}`, flexShrink: 0 }}>
-          <span aria-hidden style={{ width: 40, height: 40, borderRadius: "50%", background: "#F1F5F9", display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-            <Trash2 size={19} color={SLATE} />
+    <div data-testid="recycle-bin-scrim" className="recycle-bin-scrim" onMouseDown={e => { if (e.target === e.currentTarget) onClose(); }}
+      style={{ position: "fixed", inset: 0, zIndex: Z.modal, background: "rgba(7,17,31,0.55)", display: "flex", alignItems: "center", justifyContent: "center", boxSizing: "border-box" }}>
+      <div role="dialog" aria-modal="true" aria-labelledby={titleId} data-testid="recycle-bin-panel" className="recycle-bin-panel"
+        style={{ ...GF, background: "#F8FAFC", display: "flex", flexDirection: "column", boxSizing: "border-box", boxShadow: "0 24px 60px -12px rgba(7,17,31,0.55)", overflow: "hidden" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "16px 20px", background: "#FFFFFF", borderBottom: `1px solid ${BORDER}`, flexShrink: 0 }}>
+          <span aria-hidden style={{ width: 42, height: 42, borderRadius: "50%", background: "#F1F5F9", display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+            <Trash2 size={20} color={SLATE} />
           </span>
           <div style={{ minWidth: 0, flex: 1 }}>
-            <h2 id={titleId} style={{ ...GF, fontSize: 18, fontWeight: 800, color: NAVY, margin: 0 }}>Recycle Bin</h2>
-            <p style={{ ...GF, fontSize: 12.5, color: SLATE, margin: "2px 0 0", lineHeight: 1.45 }}>
+            <h2 id={titleId} style={{ ...GF, fontSize: 19, fontWeight: 800, color: NAVY, margin: 0 }}>Recycle Bin</h2>
+            <p style={{ ...GF, fontSize: 13, color: SLATE, margin: "2px 0 0", lineHeight: 1.45 }}>
               {isOwner
                 ? "Documents moved to the bin. Restore one, or delete it permanently. Only you, the workspace owner, can delete."
                 : "Documents you moved to the bin. Restore one, or ask the workspace owner to delete it permanently."}
             </p>
           </div>
+          {items !== null && !failed && (
+            <span data-testid="recycle-bin-total" style={{ ...GF, fontSize: 12.5, fontWeight: 700, color: SLATE, background: "#F1F5F9", border: `1px solid ${BORDER}`, borderRadius: 999, padding: "4px 11px", whiteSpace: "nowrap", flexShrink: 0 }}>
+              {(items.length)} {items.length === 1 ? "document" : "documents"}
+            </span>
+          )}
           <button ref={closeRef} type="button" aria-label="Close" onClick={onClose}
-            style={{ width: 36, height: 36, borderRadius: 10, border: "none", background: "#F1F5F9", cursor: "pointer", display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+            style={{ width: 38, height: 38, borderRadius: 10, border: "none", background: "#F1F5F9", cursor: "pointer", display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
             <X size={18} aria-hidden />
           </button>
         </div>
 
-        <div style={{ overflowY: "auto", padding: "16px 18px 20px", minHeight: 0 }}>
+        <div className="recycle-bin-body" style={{ overflowY: "auto", minHeight: 0, flex: 1, display: "flex", flexDirection: "column" }}>
           {/* ── The owner's deletion requests ───────────────────────────── */}
           {isOwner && requests.length > 0 && (
-            <section aria-label="Deletion requests" data-testid="deletion-requests" style={{ marginBottom: 20 }}>
-              <h3 style={{ ...GF, fontSize: 12, fontWeight: 800, letterSpacing: "0.06em", textTransform: "uppercase", color: "#92400E", margin: "0 0 4px" }}>
-                Deletion requests ({requests.length})
-              </h3>
-              <p style={{ ...GF, fontSize: 12.5, color: SLATE, margin: "0 0 10px", lineHeight: 1.5 }}>
+            <section aria-label="Deletion requests" data-testid="deletion-requests" style={{ marginBottom: 26 }}>
+              <h3 style={{ ...heading, color: "#92400E" }}>Deletion requests ({requests.length})</h3>
+              <p style={{ ...GF, fontSize: 13, color: SLATE, margin: "3px 0 12px", lineHeight: 1.5 }}>
                 A sender or administrator of your workspace asked for these to be deleted. Only you can decide. Their reason is shown to you alone.
               </p>
-              <ul style={{ margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: 10 }}>
-                {requests.map(req => (
-                  <li key={req.requestId} data-testid="deletion-request" style={{ listStyle: "none", border: "1px solid #FDE68A", background: "#FFFBEB", borderRadius: 12, padding: "12px 14px" }}>
-                    <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
-                      <MemberAvatar name={req.requestedBy.displayName} url={memberAvatarUrl(workspaceId, req.requestedBy)} size={36} />
-                      <div style={{ minWidth: 0, flex: 1 }}>
-                        <p style={{ ...GF, fontSize: 14, fontWeight: 700, color: NAVY, margin: 0, overflowWrap: "anywhere" }}>{req.documentTitle}</p>
-                        <p style={{ ...GF, fontSize: 12.5, color: SLATE, margin: "2px 0 0" }}>
-                          <strong style={{ color: NAVY }}>{req.requestedBy.displayName}</strong> asked to delete this {req.state} document · {when(req.requestedAt)}
-                        </p>
-                        <p style={{ ...GF, fontSize: 13, color: NAVY, margin: "8px 0 0", padding: "8px 10px", background: "#FFFFFF", border: `1px solid ${BORDER}`, borderRadius: 8, lineHeight: 1.5, whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>
-                          <span style={{ display: "block", fontSize: 10.5, fontWeight: 800, letterSpacing: "0.06em", textTransform: "uppercase", color: SLATE, marginBottom: 2 }}>Their reason</span>
-                          {req.reason ?? "No reason given."}
-                        </p>
-                      </div>
-                    </div>
-                    <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "flex-end", marginTop: 10 }}>
-                      <SmallButton icon={ThumbsDown} label="Disapprove Deletion" testId="disapprove-deletion"
-                        onClick={() => { ask({ kind: "disapprove-deletion", workspaceId, requestId: req.requestId, title: req.documentTitle, requester: req.requestedBy.displayName }); }} />
-                      <SmallButton icon={ThumbsUp} label="Approve Deletion" tone="danger" testId="approve-deletion"
-                        onClick={() => { ask({ kind: "approve-deletion", workspaceId, requestId: req.requestId, title: req.documentTitle, requester: req.requestedBy.displayName }); }} />
-                    </div>
-                  </li>
-                ))}
+              <ul className="recycle-bin-list" style={{ margin: 0, padding: 0 }}>
+                {requests.map(req => <CompletedDocumentCard key={req.requestId} card={requestCard(req)} branding={branding} />)}
               </ul>
             </section>
           )}
 
           {/* ── What is in the bin ─────────────────────────────────────── */}
-          {(isOwner && requests.length > 0) && (
-            <h3 style={{ ...GF, fontSize: 12, fontWeight: 800, letterSpacing: "0.06em", textTransform: "uppercase", color: SLATE, margin: "0 0 10px" }}>
-              In the bin
-            </h3>
-          )}
-          {items === null && <p role="status" style={{ ...GF, fontSize: 13.5, color: SLATE, margin: 0 }}>Loading the Recycle Bin…</p>}
+          {(isOwner && requests.length > 0 && listed.length > 0) && <h3 style={{ ...heading, marginBottom: 12 }}>In the bin</h3>}
+          {items === null && <p role="status" style={{ ...GF, fontSize: 14, color: SLATE, margin: "auto", textAlign: "center" }}>Loading the Recycle Bin…</p>}
           {items !== null && failed && (
-            <p role="alert" style={{ ...GF, fontSize: 13.5, color: "#7F1D1D", margin: 0 }}>The Recycle Bin could not be loaded. Close it and try again.</p>
+            <p role="alert" style={{ ...GF, fontSize: 14, color: "#7F1D1D", margin: "auto", textAlign: "center" }}>The Recycle Bin could not be loaded. Close it and try again.</p>
           )}
-          {items !== null && !failed && listed.length === 0 && (
-            <div style={{ textAlign: "center", padding: "28px 12px" }}>
-              <span aria-hidden style={{ width: 52, height: 52, borderRadius: "50%", background: "#F1F5F9", display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
-                <Inbox size={24} color={SLATE} />
+          {empty && (
+            <div data-testid="recycle-bin-empty" style={{ margin: "auto", textAlign: "center", padding: "24px 12px", maxWidth: 420 }}>
+              <span aria-hidden style={{ width: 72, height: 72, borderRadius: "50%", background: "#FFFFFF", border: `1px solid ${BORDER}`, display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
+                <Inbox size={32} color={SLATE} />
               </span>
-              <p style={{ ...GF, fontSize: 15, fontWeight: 700, color: NAVY, margin: "10px 0 4px" }}>The Recycle Bin is empty</p>
-              <p style={{ ...GF, fontSize: 13, color: SLATE, margin: 0, lineHeight: 1.5 }}>
-                Completed and cancelled documents you move to the bin appear here.
+              <p style={{ ...GF, fontSize: 18, fontWeight: 800, color: NAVY, margin: "14px 0 6px" }}>The Recycle Bin is empty</p>
+              <p style={{ ...GF, fontSize: 14, color: SLATE, margin: 0, lineHeight: 1.55 }}>
+                Completed and cancelled documents you move to the bin appear here. You can restore them, or delete them for good.
               </p>
             </div>
           )}
           {listed.length > 0 && (
             <ul className="recycle-bin-list" style={{ margin: 0, padding: 0 }}>
-              {listed.map(item => {
-                const waiting = item.deletionRequest !== null;
-                return (
-                  <li key={item.signingRequestId} data-testid="recycle-bin-item" style={{ listStyle: "none", border: `1px solid ${BORDER}`, borderRadius: 12, padding: "12px 14px", display: "flex", flexDirection: "column", gap: 8, minWidth: 0 }}>
-                    <div style={{ display: "flex", alignItems: "flex-start", gap: 8, minWidth: 0 }}>
-                      <p title={item.documentTitle} style={{ ...GF, fontSize: 14, fontWeight: 700, color: NAVY, margin: 0, flex: 1, minWidth: 0, overflowWrap: "anywhere" }}>{item.documentTitle}</p>
-                      <span style={{
-                        ...GF, fontSize: 11, fontWeight: 700, padding: "2px 8px", borderRadius: 999, flexShrink: 0,
-                        ...(item.state === "completed" ? { background: "#DCFCE7", color: "#166534", border: "1px solid #BBF7D0" } : { background: "#F1F5F9", color: SLATE, border: `1px solid ${BORDER}` }),
-                      }}>{item.state === "completed" ? "Completed" : "Cancelled"}</span>
-                    </div>
-                    <p style={{ ...GF, fontSize: 12.5, color: SLATE, margin: 0, display: "flex", alignItems: "center", gap: 7, minWidth: 0 }}>
-                      <MemberAvatar name={item.trashedBy.displayName} url={memberAvatarUrl(workspaceId, item.trashedBy)} size={20} />
-                      <span style={{ minWidth: 0, overflowWrap: "anywhere" }}>Moved here by {item.trashedBy.displayName} · {when(item.trashedAt)}</span>
-                    </p>
-                    {waiting && (
-                      <p data-testid="pending-owner" style={{ ...GF, fontSize: 12.5, fontWeight: 700, color: "#92400E", background: "#FFFBEB", border: "1px solid #FDE68A", borderRadius: 8, padding: "6px 9px", margin: 0, display: "flex", alignItems: "center", gap: 6 }}>
-                        <Clock size={13} aria-hidden /> Pending the owner&rsquo;s approval
-                      </p>
-                    )}
-                    <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "flex-end", marginTop: "auto" }}>
-                      {item.actions.includes("restore") && (
-                        <SmallButton icon={ArchiveRestore} label="Restore" tone="primary" testId="bin-restore"
-                          onClick={() => { ask({ kind: "bin-restore", workspaceId, signingRequestId: item.signingRequestId, title: item.documentTitle, state: item.state }); }} />
-                      )}
-                      {item.actions.includes("delete") && (
-                        <SmallButton icon={FileX2} label="Permanently Delete" tone="danger" testId="bin-delete"
-                          onClick={() => { ask({ kind: "bin-delete", workspaceId, signingRequestId: item.signingRequestId, title: item.documentTitle }); }} />
-                      )}
-                      {item.actions.includes("request-deletion") && (
-                        <SmallButton icon={Send} label="Delete" tone="danger" testId="bin-request-deletion"
-                          onClick={() => { ask({ kind: "bin-request-deletion", workspaceId, signingRequestId: item.signingRequestId, title: item.documentTitle }); }} />
-                      )}
-                    </div>
-                  </li>
-                );
-              })}
+              {listed.map(item => <CompletedDocumentCard key={item.signingRequestId} card={binCard(item)} branding={branding} />)}
             </ul>
           )}
         </div>
         <style>{`
-          .recycle-bin-list { display: grid; gap: 12px; grid-template-columns: minmax(0, 1fr); }
-          @media (min-width: 720px) { .recycle-bin-list { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+          /* A phone: the whole screen. */
+          .recycle-bin-scrim { padding: 0; }
+          .recycle-bin-panel { width: 100%; height: 100dvh; border-radius: 0; }
+          .recycle-bin-body { padding: 16px; }
+          .recycle-bin-list { display: grid; gap: 16px; grid-template-columns: minmax(0, 1fr); }
+          /* A tablet: most of the screen, with a margin. */
+          @media (min-width: 640px) {
+            .recycle-bin-scrim { padding: 20px; }
+            .recycle-bin-panel { height: calc(100dvh - 40px); border-radius: 18px; }
+            .recycle-bin-body { padding: 20px; }
+            .recycle-bin-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+          }
+          /* A wide screen: a fixed size, whatever is inside. */
+          @media (min-width: 1100px) {
+            .recycle-bin-panel { width: min(1180px, calc(100vw - 64px)); height: min(820px, calc(100dvh - 64px)); }
+            .recycle-bin-body { padding: 22px 24px 26px; }
+            .recycle-bin-list { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+          }
+          /* A very wide screen: wider still. */
+          @media (min-width: 1600px) {
+            .recycle-bin-panel { width: 1360px; height: min(880px, calc(100dvh - 80px)); }
+            .recycle-bin-list { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+          }
         `}</style>
       </div>
       {lifecycle.element}

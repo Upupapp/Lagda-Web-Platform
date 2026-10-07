@@ -107,6 +107,12 @@ export interface CompletedCardData {
    * not a copy of this one pretending to be it.
    */
   statusBadge?: React.ReactNode;
+  /** Leaves the Verification ID line out (a cancelled document never had one). */
+  hideVerification?: boolean;
+  /** A row of actions under the date: the Recycle Bin's Restore and Delete. */
+  footer?: React.ReactNode;
+  /** The card's test id. Defaults to "completed-card". */
+  testId?: string;
 }
 
 function formatCreated(iso: string): string {
@@ -203,7 +209,7 @@ export function CompletedDocumentCard({ card, branding: workspaceBranding }: { c
   const pct = card.total > 0 ? Math.round((card.done / card.total) * 100) : 0;
   const branding = card.branding ?? workspaceBranding;
   return (
-    <li className="doc-completed-card" data-testid="completed-card" style={{
+    <li className="doc-completed-card" data-testid={card.testId ?? "completed-card"} style={{
       position: "relative", listStyle: "none", minWidth: 0, display: "flex", flexDirection: "column",
       background: "#FFFFFF", border: `1px solid ${BORDER}`, borderRadius: 12, overflow: "visible",
       boxShadow: "0 1px 2px rgba(7,17,31,0.05)",
@@ -230,9 +236,11 @@ export function CompletedDocumentCard({ card, branding: workspaceBranding }: { c
             </span>
           )}
         </div>
-        <div style={{ minWidth: 0 }}>
-          <VerificationIdActions id={card.verificationId} variant="line" label="Verification ID" />
-        </div>
+        {card.hideVerification !== true && (
+          <div style={{ minWidth: 0 }}>
+            <VerificationIdActions id={card.verificationId} variant="line" label="Verification ID" />
+          </div>
+        )}
         {/* A draft has no participants yet; a meter reading "0 of 0" is noise. */}
         {card.total > 0 && (
           <div>
@@ -286,6 +294,7 @@ export function CompletedDocumentCard({ card, branding: workspaceBranding }: { c
             );
           })()}
         </div>
+        {card.footer}
       </div>
     </li>
   );

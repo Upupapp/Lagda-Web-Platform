@@ -23,6 +23,15 @@ vi.mock("../../../services/real/signing-request.service", () => ({
   realSigningRequestService: { cancel: (...a: unknown[]) => cancel(...a) as unknown },
 }));
 
+// The bin draws each document on the Completed card, which reads the workspace's branding.
+vi.mock("../../../pages/platform/documents/CompletedDocumentCards", async importOriginal => ({
+  ...(await importOriginal<typeof import("../../../pages/platform/documents/CompletedDocumentCards")>()),
+  useDocumentCardBranding: () => ({ displayName: "Reyes Law", primaryColor: "#1B7A3A", logoUrl: null }),
+}));
+vi.mock("../../../services/real/document.service", () => ({
+  realDocumentService: { list: () => Promise.resolve({ items: [{ documentId: "doc_1", verificationId: "LAGDA-VER-2026-TEST" }], total: 1, page: 1, perPage: 100, hasNextPage: false }) },
+}));
+
 import { LifecycleConfirmDialog } from "../LifecycleConfirmDialog";
 import { useDocumentLifecycle, lifecycleCopy, lifecycleErrorMessage, type LifecycleAction } from "../useDocumentLifecycle";
 import { RecycleBinButton, RecycleBinPanel } from "../RecycleBin";
@@ -134,6 +143,11 @@ describe("running an action", () => {
     expect(screen.getByRole("alertdialog")).toBeInTheDocument();
   });
 
+  it("says which template owns a document, in the server's own words", () => {
+    const said = "This is the document of the template “Service Agreement”. To remove it, delete the template.";
+    expect(lifecycleErrorMessage(new ApiError(409, { code: "document_in_use", message: said }, "x"))).toBe(said);
+  });
+
   it("a request already waiting on the owner is said plainly", () => {
     expect(lifecycleErrorMessage(new ApiError(409, { code: "deletion_request_pending", message: "x" }, "x"))).toMatch(/already asked the owner/);
   });
@@ -162,6 +176,11 @@ describe("the Recycle Bin", () => {
     renderBin(true);
     const item = await screen.findByTestId("recycle-bin-item");
     expect(within(item).getByText(/Moved here by Ben/)).toBeInTheDocument();
+    // Drawn as the branded Completed card: banner, Verification ID, progress.
+    expect(within(item).getByTestId("completed-card-banner-name")).toHaveTextContent("Reyes Law");
+    expect(await within(item).findByText("LAGDA-VER-2026-TEST")).toBeInTheDocument();
+    expect(within(item).getByTestId("completed-card-progress")).toHaveTextContent("3 of 3 signed");
+    expect(screen.getByTestId("recycle-bin-total")).toHaveTextContent("1 document");
     await user.click(within(item).getByRole("button", { name: /Permanently Delete/ }));
     const confirm = screen.getByRole("alertdialog", { name: "Permanently delete this document?" });
     expect(within(confirm).getByRole("button", { name: "Continue" })).toBeDisabled();
@@ -187,6 +206,19 @@ describe("the Recycle Bin", () => {
     await user.keyboard(" needed");
     expect(reason).toHaveValue("No longer needed");
     expect(onClose).not.toHaveBeenCalled();
+  });
+
+  it("a cancelled document has its own badge and no Verification ID line; an empty bin says so in the middle", async () => {
+    svc.recycleBin.mockResolvedValue([binItem({ state: "cancelled", completedAt: null, cancelledAt: "2026-10-05T00:00:00.000Z" })]);
+    const view = renderBin(true);
+    const item = await screen.findByTestId("recycle-bin-item");
+    expect(within(item).getByText("Cancelled")).toBeInTheDocument();
+    expect(within(item).queryByText("Verification ID")).toBeNull();
+    expect(within(item).queryByTestId("completed-card-progress")).toBeNull();
+    view.unmount();
+    svc.recycleBin.mockResolvedValue([]);
+    renderBin(true);
+    expect(await screen.findByTestId("recycle-bin-empty")).toHaveTextContent("The Recycle Bin is empty");
   });
 
   it("a member's delete is a request to the owner, and a pending one says so", async () => {
@@ -222,7 +254,10 @@ describe("the Recycle Bin", () => {
     renderBin(true);
     const request = await screen.findByTestId("deletion-request");
     expect(request).toHaveTextContent("Client asked us to remove it");
-    expect(within(request).getAllByRole("button").map(b => b.textContent?.trim())).toEqual(["Disapprove Deletion", "Approve Deletion"]);
+    // The same branded card as Records › Completed, with the owner's two decisions on it.
+    expect(within(request).getByTestId("completed-card-banner-name")).toHaveTextContent("Reyes Law");
+    expect(within(request).getByText("LAGDA-VER-2026-TEST")).toBeInTheDocument();
+    expect(within(request).getAllByRole("button").map(b => b.textContent?.trim()).filter(Boolean)).toEqual(["Disapprove Deletion", "Approve Deletion"]);
     // Decided in its own section, so it is not listed a second time below.
     expect(screen.queryByTestId("recycle-bin-item")).toBeNull();
 
