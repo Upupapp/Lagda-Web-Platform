@@ -80,6 +80,7 @@ export function InviteForm({ onDone }: { onDone: () => void }) {
     const ok = await asyncSendInvitation({ email: email.trim(), roleId: roleId as WorkspaceRoleId });
     await asyncLoadInvitations();
     setSending(false);
+    if (ok === "already-member") { setError("That person is already a member of this workspace. Nothing was sent."); return; }
     if (!ok) { setError("We couldn't send the invitation. Check the address and try again."); return; }
     setSuccess(true);
     setEmail(""); setRoleId(USE_REAL_BACKEND ? "member" : "role_member");

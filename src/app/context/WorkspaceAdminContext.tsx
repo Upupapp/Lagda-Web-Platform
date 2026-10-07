@@ -42,6 +42,7 @@ import { USE_REAL_BACKEND } from "../services/backend-flag";
 import { getDemoMemberAccess } from "../services/real/workspace-join.service";
 import { usePlatform } from "./PlatformContext";
 import { withProcess } from "../config/process-screens";
+import { ApiError } from "../services/api-client";
 
 // ── State ─────────────────────────────────────────────────────────────────────
 
@@ -225,7 +226,8 @@ interface WorkspaceAdminContextValue {
   /** `quiet`: keep the list on screen while it re-reads (a live refresh). */
   asyncLoadInvitations:   (options?: { quiet?: boolean }) => Promise<void>;
   /** Resolves true when the invitation was sent. */
-  asyncSendInvitation:    (input: WorkspaceInviteInput) => Promise<boolean>;
+  /** False when it could not be sent; "already-member" when the server said why. */
+  asyncSendInvitation:    (input: WorkspaceInviteInput) => Promise<boolean | "already-member">;
   asyncResendInvitation:  (id: WorkspaceInvitationId) => Promise<void>;
   asyncRevokeInvitation:  (id: WorkspaceInvitationId) => Promise<void>;
 
@@ -439,7 +441,7 @@ export function WorkspaceAdminProvider({ children }: { children: ReactNode }) {
     }
   }, [isReal, workspaceId]);
 
-  const asyncSendInvitation = useCallback(async (input: WorkspaceInviteInput): Promise<boolean> => {
+  const asyncSendInvitation = useCallback(async (input: WorkspaceInviteInput): Promise<boolean | "already-member"> => {
     dispatch({ type: "ACTION_LOADING" });
     try {
       await withProcess("member-invite", input.email, async () => {
@@ -453,7 +455,12 @@ export function WorkspaceAdminProvider({ children }: { children: ReactNode }) {
       });
       dispatch({ type: "ACTION_DONE" });
       return true;
-    } catch {
+    } catch (err) {
+      // Not a fault with the address: the person is in the workspace already.
+      if (err instanceof ApiError && err.body?.code === "already_workspace_member") {
+        dispatch({ type: "ACTION_ERROR", error: "That person is already a member of this workspace." });
+        return "already-member";
+      }
       dispatch({ type: "ACTION_ERROR", error: "Failed to send invitation." });
       return false;
     }
