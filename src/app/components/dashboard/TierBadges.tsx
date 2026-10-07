@@ -2,8 +2,8 @@
 //
 //   TierCrystal — top-left of the banner: a faceted crystal, "Business Tier"
 //                 (or Personal / Enterprise), with small stars that twinkle,
-//                 and a short wiggle every three seconds.
-//   TierPill    — beside the verified check: the plan's name.
+//                 and a short wiggle every three seconds. The WORKSPACE's plan.
+//   TierPill    — beside the verified check: the PERSON's own plan.
 //
 // Motion stops for anyone who asks the system for reduced motion.
 
@@ -47,7 +47,7 @@ function Star({ className }: { className: string }) {
 
 export function TierCrystal({ tier }: { tier: PaidPlan }) {
   return (
-    <span className={`tc-crystal tc-${tier}`} data-testid="tier-crystal" role="img" aria-label={`${LABEL[tier]} Tier`}>
+    <span className={`tc-crystal tc-${tier}`} data-testid="tier-crystal" role="img" aria-label={`Workspace plan: ${LABEL[tier]} Tier`} title={`This workspace is on the ${LABEL[tier]} plan`}>
       <Star className="tc-s1" /><Star className="tc-s2" /><Star className="tc-s3" /><Star className="tc-s4" />
       <Crystal tier={tier} />
       <span className="tc-text">{LABEL[tier]} Tier</span>
@@ -58,7 +58,8 @@ export function TierCrystal({ tier }: { tier: PaidPlan }) {
 
 export function TierPill({ tier }: { tier: PaidPlan }) {
   return (
-    <span className={`tp-pill tc-${tier}`} data-testid="tier-pill">
+    <span className={`tp-pill tc-${tier}`} data-testid="tier-pill" title={`Your own plan: ${LABEL[tier]}`}>
+      <span style={{ position: "absolute", width: 1, height: 1, overflow: "hidden", clip: "rect(0 0 0 0)", whiteSpace: "nowrap" }}>Your own plan: </span>
       <Crystal tier={tier} />
       {LABEL[tier]}
       <style>{TIER_CSS}</style>

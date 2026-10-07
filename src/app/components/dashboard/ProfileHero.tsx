@@ -39,10 +39,15 @@ export function ProfileHero() {
   // 093. Branding is paid. On a Free owner's workspace the banner is LAGDA's
   // blue with the initials, and the saved colour and logo wait for an upgrade.
   const { plan, info } = useWorkspacePlan(workspaceId);
-  // 093. The PERSON's paid plan, shown on their own banner.
+  // The banner carries the workspace's name, colour and logo, so its badge is
+  // the WORKSPACE's plan, the same one the sidebar names. The pill beside the
+  // person's name is the PERSON's own plan. They differ for a member on a
+  // Personal plan working in a Business workspace; shown as one, the banner
+  // said "Personal Tier" while the sidebar said "Business".
   const { plan: myPlan } = useMyPlan();
-  const tier = myPlan !== null && myPlan.plan !== "free" ? myPlan.plan : null;
+  const ownTier = myPlan !== null && myPlan.plan !== "free" ? myPlan.plan : null;
   const free = plan === "free";
+  const tier = plan !== null && plan !== "free" ? plan : null;
   const branding = free && saved !== null ? { ...saved, primaryColor: null, logoUrl: null } : saved;
   const fileRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
@@ -107,7 +112,7 @@ export function ProfileHero() {
           <h1 className="ph-name">
             <span>{fullName}</span>
             <BadgeCheck size={24} strokeWidth={2.2} className="ph-verified" aria-label="Email verified" />
-            {tier !== null && <TierPill tier={tier} />}
+            {ownTier !== null && <TierPill tier={ownTier} />}
           </h1>
           {secondLine !== "" && <p className="ph-second">{secondLine}</p>}
           {user?.email && (

@@ -26,9 +26,10 @@ vi.mock("../../../hooks/workspace-branding-store", () => ({
 }));
 
 let myPlan: { plan: string } | null = { plan: "business" };
+let workspacePlan: string | null = "business";
 vi.mock("../../../hooks/usePlans", () => ({
   useMyPlan: () => ({ plan: myPlan, refresh: vi.fn() }),
-  useWorkspacePlan: () => ({ plan: "business", info: null, refresh: vi.fn() }),
+  useWorkspacePlan: () => ({ plan: workspacePlan, info: null, refresh: vi.fn() }),
 }));
 
 import { ProfileHero } from "../ProfileHero";
@@ -59,19 +60,36 @@ describe("ProfileHero", () => {
     expect(screen.getByRole("heading", { level: 1, name: /Ana Reyes/ })).toBeTruthy();
   });
 
-  it("shows the paid tier as a crystal on the banner and beside the check", () => {
+  it("shows the workspace's plan as a crystal on the banner, and the person's own beside the check", () => {
     workspace = { id: "ws_1", name: "Reyes Law" };
-    myPlan = { plan: "business" };
     renderHero();
-    expect(screen.getByTestId("tier-crystal").getAttribute("aria-label")).toBe("Business Tier");
-    expect(screen.getByTestId("tier-pill").textContent).toContain("Business");
-    myPlan = { plan: "personal" };
+    expect(screen.getByTestId("tier-crystal").getAttribute("aria-label")).toBe("Workspace plan: Business Tier");
+    expect(screen.getByTestId("tier-pill").textContent).toContain("Your own plan: Business");
   });
 
-  it("shows no tier while the plan is unknown", () => {
-    myPlan = null;
+  it("a member on Personal in a Business workspace sees the workspace's tier on the banner, as the sidebar names it", () => {
+    workspace = { id: "ws_1", name: "Reyes Law" };
+    myPlan = { plan: "personal" };
+    renderHero();
+    // It read "Personal Tier" here while the sidebar said "Business".
+    expect(screen.getByTestId("tier-crystal").textContent).toContain("Business Tier");
+    expect(screen.getByTestId("tier-pill").textContent).toContain("Your own plan: Personal");
+    myPlan = { plan: "business" };
+  });
+
+  it("a Free member of a paid workspace has the banner's tier and no pill of their own", () => {
+    myPlan = { plan: "free" };
+    renderHero();
+    expect(screen.getByTestId("tier-crystal").textContent).toContain("Business Tier");
+    expect(screen.queryByTestId("tier-pill")).toBeNull();
+    myPlan = { plan: "business" };
+  });
+
+  it("shows no tier while the plans are unknown", () => {
+    myPlan = null; workspacePlan = null;
     renderHero();
     expect(screen.queryByTestId("tier-crystal")).toBeNull();
-    myPlan = { plan: "business" };
+    expect(screen.queryByTestId("tier-pill")).toBeNull();
+    myPlan = { plan: "business" }; workspacePlan = "business";
   });
 });
