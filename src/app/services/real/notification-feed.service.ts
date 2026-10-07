@@ -450,6 +450,21 @@ function present(row: FeedRow): Presentation {
       };
     }
 
+    case "DOCUMENT_MOVED_TO_BIN": {
+      const who = str(row.templateInput, "actorDisplayName") ?? "A member of your workspace";
+      const reason = str(row.templateInput, "reason");
+      const subject = documentTitle === null ? "a document" : `“${documentTitle}”`;
+      return {
+        category: "documents", severity: "warning", priority: "normal",
+        title: "A document was moved to the Recycle Bin",
+        body: `${who} moved ${subject} to the Recycle Bin.${reason === null ? "" : ` Reason: ${reason}`}`,
+        actionLabel: "Open the Recycle Bin",
+        actionPath: RECYCLE_BIN_PATH,
+        why: "You were sent this because you own the workspace this document belongs to.",
+        inAppOnly: true,
+      };
+    }
+
     case "DOCUMENT_DELETION_APPROVED":
     case "DOCUMENT_DELETION_DISAPPROVED": {
       const owner = str(row.templateInput, "ownerDisplayName") ?? "The workspace owner";

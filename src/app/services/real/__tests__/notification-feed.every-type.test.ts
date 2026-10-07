@@ -50,6 +50,7 @@ const ROWS: Record<string, Record<string, unknown>> = {
   DOCUMENT_DELETION_DISAPPROVED: { recipientName: "Ben", ownerDisplayName: "Chris", documentTitle: "NDA.pdf", workspaceName: "Reyes Law", deletionRequestId: "dr_1", signingRequestId: "sr_1" },
   DOCUMENT_DELETED: { recipientName: "Ana", deletedByDisplayName: "Chris", documentTitle: "NDA.pdf", workspaceName: "Reyes Law", deletedDocumentId: "dd_1", kind: "completed", reason: "Superseded" },
   DOCUMENT_ACCESS_REMOVED: { recipientName: "Chris", personDisplayName: "Ana", personEmail: "ana@example.ph", documentTitle: "NDA.pdf", workspaceName: "Reyes Law", message: "No longer involved", signingRequestId: "sr_1" },
+  DOCUMENT_MOVED_TO_BIN: { recipientName: "Chris", actorDisplayName: "Ben", documentTitle: "NDA.pdf", workspaceName: "Reyes Law", reason: "Superseded", signingRequestId: "sr_1" },
   WORKSPACE_INVITATION_ACCEPTED: { recipientName: "Ben", inviteeDisplayName: "Ana", inviteeEmail: "ana@example.ph", workspaceName: "Reyes Law", invitationId: "inv_1" },
   WORKSPACE_INVITATION_DECLINED: { recipientName: "Ben", inviteeDisplayName: "Ana", inviteeEmail: "ana@example.ph", invitationId: "inv_1" },
   CONTACT_CONNECTION_REQUESTED: { recipientName: "Ana", requesterDisplayName: "Ben", workspaceName: "Reyes Law", connectionId: "cc_1" },
@@ -95,6 +96,15 @@ describe("the account notification feed", () => {
       if (getRouteMeta(pathname) === undefined) missing.push(`${record.title} → ${record.actionPath}`);
     }
     expect(missing, "actions that lead nowhere").toEqual([]);
+  });
+
+  it("tells the owner who moved a document to the Recycle Bin, and why, and opens the bin", async () => {
+    const records = await realNotificationFeedService.list();
+    const moved = records.find(r => r.title === "A document was moved to the Recycle Bin");
+    expect(moved?.body).toBe("Ben moved “NDA.pdf” to the Recycle Bin. Reason: Superseded");
+    // Where the deletion-request notice leads too.
+    expect(moved?.actionPath).toBe(records.find(r => r.title.includes("asked you to delete"))?.actionPath);
+    expect(moved?.actionPath).toBe("/app/documents?bin=open");
   });
 
   it("opens a signed document in the Documents viewer, never in the demo detail page", async () => {
