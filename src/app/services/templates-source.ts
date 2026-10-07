@@ -38,7 +38,7 @@ import {
   type TemplateListResult,
 } from "./mock/templates.service";
 import type {
-  DocumentTemplate, DocumentTemplateId, TemplateListQuery,
+  DocumentTemplate, DocumentTemplateId, TemplateListQuery, TemplateCategory,
   TemplateListItem, TemplateRolePlaceholder, TemplateRoleAssignment, TemplateVariable,
   FlowDocument, ResolvedFieldAnchor,
 } from "../models/templates";
@@ -232,6 +232,8 @@ export interface TemplateDraft {
   placeholders: readonly TemplateRolePlaceholder[];
   notifySenderOnComplete: boolean;
   variables: readonly TemplateVariable[];
+  /** Left out, a new template is "other" and a stored one keeps its own. */
+  category?: TemplateCategory;
 }
 
 export async function createTemplate(
@@ -283,6 +285,7 @@ export async function duplicateTemplate(
 
   const created = await createTemplate(workspaceId, {
     name: `${source.name} (Copy)`,
+    category: source.category,
     routingMode: source.routing.mode,
     placeholders: source.placeholders.map(p => ({
       ...p,

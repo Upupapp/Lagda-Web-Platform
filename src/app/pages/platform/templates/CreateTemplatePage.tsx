@@ -163,6 +163,7 @@ function BlankForm({ onCreated, onCancel, isNarrow }: {
           { message: "Saving the template", detail: "Storing its roles and routing." },
           () => createTemplate(workspaceId, {
             name,
+            category,
             routingMode,
             placeholders: slots.map(sl => ({
               ...sl, description: "", mustMapToParticipant: sl.required,

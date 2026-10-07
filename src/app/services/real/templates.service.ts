@@ -30,6 +30,7 @@ import { changes } from "../live/topics";
 import type {
   DocumentTemplate,
   TemplateRolePlaceholder,
+  TemplateCategory,
   TemplateRequestSettings,
   TemplateRoleResolution,
   TemplateVariable,
@@ -140,6 +141,8 @@ export interface WireTemplate {
   routingMode: RoutingMode;
   roleSlots: WireRoleSlot[];
   completionSettings: { notifySenderOnComplete: boolean };
+  /** What kind of document this is for. Stored by the server since 102. */
+  category?: TemplateCategory;
   /** 063. Definitions only — see `WireVariable`'s own header for what a
    *  variable does and does not connect to yet. */
   variables: WireVariable[];
@@ -205,6 +208,8 @@ export interface WireTemplateWrite {
   roleSlots: WireRoleSlotWrite[];
   completionSettings: { notifySenderOnComplete: boolean };
   variables: WireVariable[];
+  /** Left out, a new template is "other" and a stored one keeps its own. */
+  category?: TemplateCategory;
 }
 
 const base = (workspaceId: string) =>
@@ -398,7 +403,7 @@ export function toDocumentTemplate(wire: WireTemplate): DocumentTemplate {
     id: wire.workflowTemplateId,
     name: wire.name,
     description: "",
-    category: "other",
+    category: wire.category ?? "other",
     status: "available",
     scope: "workspace",
     source: "blank",
@@ -532,6 +537,7 @@ export function toWireWrite(input: {
   placeholders: readonly TemplateRolePlaceholder[];
   notifySenderOnComplete: boolean;
   variables: readonly TemplateVariable[];
+  category?: TemplateCategory;
 }): WireTemplateWrite {
   return {
     name: input.name.trim(),
@@ -555,5 +561,6 @@ export function toWireWrite(input: {
     })),
     completionSettings: { notifySenderOnComplete: input.notifySenderOnComplete },
     variables: input.variables.map(toWireVariable),
+    ...(input.category === undefined ? {} : { category: input.category }),
   };
 }

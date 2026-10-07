@@ -145,6 +145,24 @@ describe("toWireWrite sends exactly what the schema accepts", () => {
 
     expect(Object.keys(body.completionSettings)).toEqual(["notifySenderOnComplete"]);
   });
+
+  it("sends the category that was chosen, and no key at all when none was", () => {
+    const base = { name: "Onboarding", routingMode: "sequential" as const, placeholders: [slot()], notifySenderOnComplete: true, variables: [] };
+    expect(toWireWrite({ ...base, category: "human-resources" }).category).toBe("human-resources");
+    // Left out, a stored template keeps its own. An explicit `undefined`
+    // key would be sent as nothing anyway; the key is simply absent.
+    expect("category" in toWireWrite(base)).toBe(false);
+  });
+});
+
+describe("the category a template was saved under", () => {
+  it("is read back from the server", () => {
+    expect(toDocumentTemplate({ ...WIRE, category: "contracts" }).category).toBe("contracts");
+  });
+
+  it("is \"other\" for a template stored before categories were", () => {
+    expect(toDocumentTemplate(WIRE).category).toBe("other");
+  });
 });
 
 // ── Reading ─────────────────────────────────────────────────────────────────

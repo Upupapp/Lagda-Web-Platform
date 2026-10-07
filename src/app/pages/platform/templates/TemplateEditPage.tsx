@@ -760,6 +760,7 @@ function TemplateEditInner() {
         { message: "Saving your changes", detail: "Updating the template's roles and routing." },
         () => updateTemplate(workspaceId, draft.id, {
           name: draft.name,
+          category: draft.category,
           routingMode: draft.routing.mode,
           placeholders: draft.placeholders,
           notifySenderOnComplete: draft.settings.completionCopySender,
