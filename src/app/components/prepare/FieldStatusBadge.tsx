@@ -246,7 +246,7 @@ export function FieldStatusBadge({
           {red && (
             <div style={{ marginTop: 9 }}>
               <div style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: "0.05em", textTransform: "uppercase", color: T.silver, marginBottom: 5 }}>
-                Assign someone
+                Assign participant
               </div>
               {eligible.length === 0 ? (
                 <div style={{ fontSize: 11.5, color: T.danger, lineHeight: 1.45 }}>

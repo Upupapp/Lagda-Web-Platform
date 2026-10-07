@@ -187,7 +187,7 @@ export function RealRoleDetailPage({ workspaceId, roleId }: { workspaceId: strin
           <p style={{ ...GF, fontSize: 12, color: SLATE, margin: "6px 0 0", lineHeight: 1.5 }}>
             {inherent
               ? "Both privileges come with this role."
-              : "An owner or administrator can add the privileges “Request documents from others” and “Assign someone for document signing” to anyone with this role."}
+              : "An owner or administrator can add the privileges “Request documents from others” and “Assign participants for document signing” to anyone with this role."}
           </p>
         </section>
 

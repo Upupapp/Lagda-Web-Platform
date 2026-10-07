@@ -163,7 +163,7 @@ describe("Members page — join requests and access", () => {
     const dialog = screen.getByRole("dialog", { name: "Edit access — Maria Santos" });
     await user.type(within(dialog).getByLabelText(/Role title/), "Paralegal");
     await user.click(within(dialog).getByLabelText("Privileges"));
-    await user.click(within(dialog).getByLabelText("Assign someone for document signing"));
+    await user.click(within(dialog).getByLabelText("Assign participants for document signing"));
     await user.click(within(dialog).getByRole("button", { name: "Save" }));
     expect(calls.find((c) => c.method === "PATCH")).toEqual({
       method: "PATCH", path: "/workspaces/ws_1/members/m_new/access",

@@ -51,5 +51,5 @@ export interface Privileges {
 
 export const PRIVILEGE_OPTIONS: { key: keyof Privileges; label: string; chip: string }[] = [
   { key: "canRequestDocuments", label: "Request documents from others", chip: "Requests documents" },
-  { key: "canAssignSigners", label: "Assign someone for document signing", chip: "Assigns signers" },
+  { key: "canAssignSigners", label: "Assign participants for document signing", chip: "Assigns signers" },
 ];

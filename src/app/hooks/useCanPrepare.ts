@@ -1,7 +1,7 @@
 // What the signed-in person may reach in this workspace, for navigation.
 //
 // The role alone used to decide it. A member whose ROLE cannot send (a
-// Reviewer, say) but who was granted "Assign someone for document signing"
+// Reviewer, say) but who was granted "Assign participants for document signing"
 // CAN prepare, read contacts and use templates: the server lets them, and did
 // all along. The Prepare button stayed grey and Contacts stayed off their menu
 // anyway, so they could only get in by typing the address.

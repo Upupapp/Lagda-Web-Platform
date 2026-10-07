@@ -73,7 +73,7 @@ export const PRIVILEGE_CAPABILITIES: Readonly<Record<WorkspacePrivilegeKey, read
 
 export const PRIVILEGE_LABELS: Record<WorkspacePrivilegeKey, string> = {
   requestDocuments: "Request documents from others",
-  assignSigners: "Assign someone for document signing",
+  assignSigners: "Assign participants for document signing",
 };
 
 // ── Plain-language abilities ────────────────────────────────────────────────

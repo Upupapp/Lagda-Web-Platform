@@ -82,7 +82,7 @@ function HelpBody() {
 
       <Section title="The question-mark badges">
         <P>Every field has a small <strong>?</strong> at its top-right corner. <span style={{ color: T.success, fontWeight: 700 }}>Green</span> means it is assigned to someone who can complete it; <span style={{ color: T.danger, fontWeight: 700 }}>red</span> means nobody can yet.</P>
-        <P>Select a badge to see what the field is for and who completes it. On a red one, <strong>Assign someone</strong> lists the participants who can — choose one to fix it.</P>
+        <P>Select a badge to see what the field is for and who completes it. On a red one, <strong>Assign participant</strong> lists the participants who can — choose one to fix it.</P>
       </Section>
 
       <Section title="Validate & Auto-fix">
