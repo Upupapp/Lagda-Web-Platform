@@ -31,6 +31,8 @@ export type LifecycleAction =
   | { kind: "delete-ended"; workspaceId: string; signingRequestId: string; title: string }
   | { kind: "bin-restore"; workspaceId: string; signingRequestId: string; title: string; state: "cancelled" | "completed" }
   | { kind: "bin-delete"; workspaceId: string; signingRequestId: string; title: string }
+  /** The owner: everything in the bin, one reason for all. `title` is the count in words. */
+  | { kind: "bin-empty"; workspaceId: string; signingRequestIds: readonly string[]; title: string }
   | { kind: "bin-request-deletion"; workspaceId: string; signingRequestId: string; title: string }
   | { kind: "approve-deletion"; workspaceId: string; requestId: string; title: string; requester: string }
   | { kind: "disapprove-deletion"; workspaceId: string; requestId: string; title: string; requester: string }
@@ -103,6 +105,18 @@ export function lifecycleCopy(action: LifecycleAction): LifecycleConfirmCopy {
         points: [ERASED, "Everyone who had access sees a notice that you deleted it, with your name and the reason you give below.", RETENTION_POINT],
         reason: { label: "Reason for deleting", placeholder: "Why is this document being deleted?", hint: "Required. The people who had access will see it." },
       };
+    case "bin-empty":
+      return {
+        title: "Empty the Recycle Bin?", icon: FileX2, tone: "danger",
+        lead: `By choosing Continue, you permanently delete ${action.title} as the workspace owner: everything in the Recycle Bin.`,
+        points: [
+          "Each document, its signatures and its audit trail are erased for everyone. This cannot be undone.",
+          "Everyone who had access to one of them sees a notice that you deleted it, with your name and the reason you give below.",
+          "Any request to delete one of them is approved by this.",
+          RETENTION_POINT,
+        ],
+        reason: { label: "Reason for deleting them all", placeholder: "Why is the Recycle Bin being emptied?", hint: "Required. The same reason is shown for every document." },
+      };
     case "bin-request-deletion":
       return {
         title: "Ask the owner to delete this document?", icon: Send,
@@ -145,7 +159,7 @@ export function lifecycleCopy(action: LifecycleAction): LifecycleConfirmCopy {
 const PROCESS: Record<LifecycleAction["kind"], ProcessKind> = {
   "cancel": "document-cancel", "restore": "document-restore", "trash": "document-trash",
   "delete-draft": "draft-delete", "delete-ended": "document-delete",
-  "bin-restore": "bin-restore", "bin-delete": "bin-delete", "bin-request-deletion": "deletion-request",
+  "bin-restore": "bin-restore", "bin-delete": "bin-delete", "bin-empty": "bin-empty", "bin-request-deletion": "deletion-request",
   "approve-deletion": "deletion-approve", "disapprove-deletion": "deletion-disapprove",
   "remove-signed": "signed-remove", "remove-notice": "deleted-notice-remove",
 };
@@ -153,7 +167,7 @@ const PROCESS: Record<LifecycleAction["kind"], ProcessKind> = {
 const DONE: Record<LifecycleAction["kind"], string> = {
   "cancel": "Signing request cancelled", "restore": "Signing request restored", "trash": "Moved to the Recycle Bin",
   "delete-draft": "Draft deleted", "delete-ended": "Document deleted",
-  "bin-restore": "Document restored", "bin-delete": "Document permanently deleted", "bin-request-deletion": "Deletion request sent to the owner",
+  "bin-restore": "Document restored", "bin-delete": "Document permanently deleted", "bin-empty": "The Recycle Bin was emptied", "bin-request-deletion": "Deletion request sent to the owner",
   "approve-deletion": "Deletion approved. The document was deleted.", "disapprove-deletion": "Deletion disapproved",
   "remove-signed": "Removed from your list", "remove-notice": "Notice removed",
 };
@@ -175,6 +189,16 @@ async function perform(action: LifecycleAction, reason: string): Promise<void> {
     case "bin-restore": await svc.restoreFromBin(action.workspaceId, action.signingRequestId); return;
     case "bin-delete":
     case "bin-request-deletion": await svc.deleteFromBin(action.workspaceId, action.signingRequestId, reason); return;
+    case "bin-empty": {
+      // One at a time, each a deletion of its own with its own notices. If
+      // one is refused the rest are left alone and the person is told how far it got.
+      let done = 0;
+      for (const id of action.signingRequestIds) {
+        try { await svc.deleteFromBin(action.workspaceId, id, reason); } catch (err) { throw new BinEmptyStoppedError(done, action.signingRequestIds.length, err); }
+        done += 1;
+      }
+      return;
+    }
     case "approve-deletion": await svc.approveDeletion(action.workspaceId, action.requestId, reason); return;
     case "disapprove-deletion": await svc.disapproveDeletion(action.workspaceId, action.requestId); return;
     case "remove-signed": await svc.removeFromSignedByMe(action.signingRequestId); return;
@@ -182,8 +206,18 @@ async function perform(action: LifecycleAction, reason: string): Promise<void> {
   }
 }
 
+/** Emptying the bin stopped part-way: what was deleted stays deleted. */
+export class BinEmptyStoppedError extends Error {
+  constructor(readonly deleted: number, readonly total: number, readonly reason: unknown) {
+    super("The Recycle Bin was not fully emptied.");
+  }
+}
+
 /** Plain words for the refusals the server gives. */
 export function lifecycleErrorMessage(err: unknown): string {
+  if (err instanceof BinEmptyStoppedError) {
+    return `${String(err.deleted)} of ${String(err.total)} documents were deleted, then it stopped. ${lifecycleErrorMessage(err.reason)} The rest are still in the Recycle Bin.`;
+  }
   if (err instanceof ApiError) {
     switch (err.body?.code) {
       case "cancel_first": return "This document is still out for signature. Cancel it first.";
@@ -226,6 +260,8 @@ export function useDocumentLifecycle({ freePlan, onDone }: {
       .then(() => { setAction(null); toastSuccess(DONE[current.kind]); onDone?.(current); })
       .catch((err: unknown) => {
         if (isPlanRequired(err)) { setAction(null); setPlanNotice(true); } else setError(lifecycleErrorMessage(err));
+        // Part of it happened: what is behind the pop-up re-reads.
+        if (err instanceof BinEmptyStoppedError && err.deleted > 0) onDone?.(current);
       })
       .finally(() => { setBusy(false); });
   };

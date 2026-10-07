@@ -81,9 +81,11 @@ function SmallButton({ icon: Icon, label, tone = "neutral", onClick, testId }: {
   );
 }
 
-export function RecycleBinPanel({ workspaceId, isOwner, freePlan, onClose, onChanged }: {
+export function RecycleBinPanel({ workspaceId, isOwner, currentUserId, freePlan, onClose, onChanged }: {
   workspaceId: string;
   isOwner: boolean;
+  /** The person looking, so their own moves read "by you". */
+  currentUserId?: string;
   freePlan: boolean;
   onClose: () => void;
   /** Something left or returned from the bin: the lists behind should re-read. */
@@ -162,7 +164,7 @@ export function RecycleBinPanel({ workspaceId, isOwner, freePlan, onClose, onCha
         <>
           <p style={line}>
             <MemberAvatar name={item.trashedBy.displayName} url={memberAvatarUrl(workspaceId, item.trashedBy)} size={20} />
-            <span style={{ minWidth: 0, overflowWrap: "anywhere" }}>Moved here by {item.trashedBy.displayName} · {when(item.trashedAt)}</span>
+            <span style={{ minWidth: 0, overflowWrap: "anywhere" }}>Moved here by {item.trashedBy.userId === currentUserId ? "you" : item.trashedBy.displayName} · {when(item.trashedAt)}</span>
           </p>
           {item.trashedReason !== null && item.trashedReason !== undefined && (
             <p data-testid="recycle-bin-reason" style={{ ...GF, fontSize: 12.5, color: SLATE, margin: 0, lineHeight: 1.5, overflowWrap: "anywhere" }}>
@@ -288,6 +290,15 @@ export function RecycleBinPanel({ workspaceId, isOwner, freePlan, onClose, onCha
               <p style={{ ...GF, fontSize: 14, color: SLATE, margin: 0, lineHeight: 1.55 }}>
                 Completed and cancelled documents you move to the bin appear here. You can restore them, or delete them for good.
               </p>
+            </div>
+          )}
+          {isOwner && items !== null && items.length > 0 && (
+            <div data-testid="recycle-bin-empty-all" style={{ display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: 10, marginBottom: 16 }}>
+              <p style={{ ...GF, fontSize: 13, color: SLATE, margin: 0, lineHeight: 1.5, flex: "1 1 240px" }}>
+                Emptying the bin permanently deletes everything in it, with one reason for all.
+              </p>
+              <SmallButton icon={Trash2} label="Empty Recycle Bin" tone="danger" testId="bin-empty"
+                onClick={() => { ask({ kind: "bin-empty", workspaceId, signingRequestIds: items.map(item => item.signingRequestId), title: items.length === 1 ? "1 document" : `${String(items.length)} documents` }); }} />
             </div>
           )}
           {listed.length > 0 && (

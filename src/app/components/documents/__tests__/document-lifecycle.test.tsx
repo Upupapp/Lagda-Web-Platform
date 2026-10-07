@@ -78,7 +78,7 @@ describe("the confirmation", () => {
 
   it.each<[LifecycleAction["kind"], boolean]>([
     ["cancel", true], ["restore", false], ["trash", true], ["delete-draft", false], ["delete-ended", false],
-    ["bin-restore", false], ["bin-delete", true], ["bin-request-deletion", true], ["approve-deletion", true],
+    ["bin-restore", false], ["bin-delete", true], ["bin-empty", true], ["bin-request-deletion", true], ["approve-deletion", true],
     ["disapprove-deletion", false], ["remove-signed", false], ["remove-notice", false],
   ])("%s asks for a reason: %s", (kind, needsReason) => {
     const action = { kind, workspaceId: "ws", signingRequestId: "sr", documentId: "doc", requestId: "dr", id: "dd", title: "NDA.pdf", state: "completed", requester: "Ben" } as unknown as LifecycleAction;
@@ -175,8 +175,8 @@ const binItem = (over: Record<string, unknown> = {}) => ({
   trashedAt: "2026-10-06T02:00:00.000Z", trashedBy: person("Ben"), completedAt: "2026-10-01T00:00:00.000Z", cancelledAt: null,
   participantCount: 3, deletionRequest: null, actions: ["restore", "delete"], ...over,
 });
-const renderBin = (isOwner: boolean) => render(
-  <MemoryRouter><RecycleBinPanel workspaceId="ws_1" isOwner={isOwner} freePlan={false} onClose={() => {}} onChanged={() => {}} /></MemoryRouter>);
+const renderBin = (isOwner: boolean, currentUserId?: string) => render(
+  <MemoryRouter><RecycleBinPanel workspaceId="ws_1" isOwner={isOwner} currentUserId={currentUserId} freePlan={false} onClose={() => {}} onChanged={() => {}} /></MemoryRouter>);
 
 describe("the Recycle Bin", () => {
   it("the button is a labelled round control with a count", () => {
@@ -203,6 +203,49 @@ describe("the Recycle Bin", () => {
     svc.recycleBin.mockResolvedValue([binItem({ verificationId: "LAGDA-VER-2026-BINBINBIN1" })]);
     renderBin(true);
     expect(await screen.findByText("LAGDA-VER-2026-BINBINBIN1")).toBeInTheDocument();
+  });
+
+  it("says \"by you\" for what the person looking moved, and the name for anyone else", async () => {
+    svc.recycleBin.mockResolvedValue([binItem(), binItem({ signingRequestId: "sr_2", documentId: "doc_2", trashedBy: person("Ana") })]);
+    renderBin(true, "u_Ben");
+    expect(await screen.findByText(/^Moved here by you ·/)).toBeInTheDocument();
+    expect(screen.getByText(/^Moved here by Ana ·/)).toBeInTheDocument();
+    expect(screen.queryByText(/^Moved here by Ben ·/)).toBeNull();
+  });
+
+  it("the owner can empty the bin: one reason, every document deleted in turn", async () => {
+    const user = userEvent.setup();
+    svc.recycleBin.mockResolvedValue([binItem(), binItem({ signingRequestId: "sr_2", documentId: "doc_2" })]);
+    svc.deleteFromBin.mockResolvedValue({ outcome: "deleted" });
+    renderBin(true);
+    await user.click(await screen.findByRole("button", { name: "Empty Recycle Bin" }));
+    const dialog = screen.getByRole("alertdialog", { name: "Empty the Recycle Bin?" });
+    expect(dialog).toHaveTextContent("you permanently delete 2 documents as the workspace owner");
+    expect(within(dialog).getByRole("button", { name: "Continue" })).toBeDisabled();
+    await user.type(within(dialog).getByLabelText(/Reason for deleting them all/), "Year-end clear-out");
+    await user.click(within(dialog).getByRole("button", { name: "Continue" }));
+    await waitFor(() => { expect(svc.deleteFromBin).toHaveBeenCalledTimes(2); });
+    expect(svc.deleteFromBin).toHaveBeenNthCalledWith(1, "ws_1", "sr_1", "Year-end clear-out");
+    expect(svc.deleteFromBin).toHaveBeenNthCalledWith(2, "ws_1", "sr_2", "Year-end clear-out");
+  });
+
+  it("if emptying stops part-way, it says how many were deleted and leaves the rest", async () => {
+    const user = userEvent.setup();
+    svc.recycleBin.mockResolvedValue([binItem(), binItem({ signingRequestId: "sr_2", documentId: "doc_2" })]);
+    svc.deleteFromBin.mockResolvedValueOnce({ outcome: "deleted" }).mockRejectedValueOnce(new Error("offline"));
+    renderBin(true);
+    await user.click(await screen.findByRole("button", { name: "Empty Recycle Bin" }));
+    const dialog = screen.getByRole("alertdialog", { name: "Empty the Recycle Bin?" });
+    await user.type(within(dialog).getByLabelText(/Reason for deleting them all/), "Clear-out");
+    await user.click(within(dialog).getByRole("button", { name: "Continue" }));
+    expect(await within(dialog).findByRole("alert")).toHaveTextContent("1 of 2 documents were deleted, then it stopped.");
+  });
+
+  it("a member is not offered Empty Recycle Bin", async () => {
+    svc.recycleBin.mockResolvedValue([binItem({ actions: ["restore", "request-deletion"] })]);
+    renderBin(false);
+    await screen.findByTestId("recycle-bin-item");
+    expect(screen.queryByRole("button", { name: "Empty Recycle Bin" })).toBeNull();
   });
 
   it("shows why a completed document was moved to the bin", async () => {

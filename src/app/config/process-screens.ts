@@ -111,6 +111,7 @@ const SCREENS = {
   "document-delete": { tag: "Documents", icon: FileX, message: w => w ? `Deleting “${w}”…` : "Deleting the document…", detail: "It is erased for good." },
   "bin-restore": { tag: "Recycle Bin", icon: ArchiveRestore, message: w => w ? `Restoring “${w}” from the Recycle Bin…` : "Restoring it from the Recycle Bin…", detail: "It goes back to the list it came from." },
   "bin-delete": { tag: "Recycle Bin", icon: FileX, message: w => w ? `Permanently deleting “${w}”…` : "Permanently deleting the document…", detail: "The document, its signatures and its history are erased." },
+  "bin-empty": { tag: "Recycle Bin", icon: FileX, message: () => "Emptying the Recycle Bin…", detail: "Each document, its signatures and its history are erased." },
   "deletion-request": { tag: "Recycle Bin", icon: Send, message: () => "Sending your request to the owner…", detail: "The workspace owner decides whether it is deleted." },
   "deletion-approve": { tag: "Deletion request", icon: UserCheck, message: () => "Approving and deleting the document…", detail: "Everyone who had access is told, with your reason." },
   "deletion-disapprove": { tag: "Deletion request", icon: UserX, message: () => "Disapproving the deletion request…", detail: "The document stays in the Recycle Bin." },

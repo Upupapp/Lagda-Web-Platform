@@ -2635,7 +2635,7 @@ function DocumentsPageRealMode() {
   const ownBranding = useDocumentCardBranding();
   // 093. Sharing and Send again are paid; an unread plan hides nothing.
   const paidWorkspace = useWorkspaceAllows("personal") !== false;
-  const { currentWorkspace } = usePlatform();
+  const { currentWorkspace, user } = usePlatform();
   const workspaceId = currentWorkspace?.id ?? null;
 
   const [viewing, setViewing] = useState<ViewableRequest | null>(null);
@@ -3111,7 +3111,7 @@ function DocumentsPageRealMode() {
       {noticeId !== null && <DeletedNoticeFromLink id={noticeId} onClose={() => { setNoticeId(null); }} />}
       {lifecycle.element}
       {binOpen && workspaceId && (
-        <RecycleBinPanel workspaceId={workspaceId} isOwner={isOwner} freePlan={freePlan}
+        <RecycleBinPanel workspaceId={workspaceId} isOwner={isOwner} currentUserId={user?.id} freePlan={freePlan}
           onClose={() => { setBinOpen(false); }} onChanged={refreshLists} />
       )}
       {resendFor && workspaceId && (
