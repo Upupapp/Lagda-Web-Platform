@@ -184,7 +184,9 @@ export function lifecycleErrorMessage(err: unknown): string {
     switch (err.body?.code) {
       case "cancel_first": return "This document is still out for signature. Cancel it first.";
       case "move_to_trash_first": return "Move this document to the Recycle Bin first; the owner deletes it from there.";
-      case "document_in_use": return "This document cannot be deleted: a template uses it, or someone was asked to prepare it.";
+      // The server says which: a template's own document (and names the
+      // template to delete), or one somebody was asked to prepare.
+      case "document_in_use": return err.message || "This document cannot be deleted while something else still uses it.";
       case "deletion_request_pending": return "Someone has already asked the owner to delete this document.";
       case "deletion_request_not_pending": return "This request was already decided.";
       case "signing_request_not_restorable": return "Only a cancelled signing request can be restored.";
