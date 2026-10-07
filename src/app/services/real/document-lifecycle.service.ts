@@ -36,6 +36,8 @@ export interface RecycleBinItem {
   signingRequestId: string; documentId: string; documentTitle: string;
   state: "cancelled" | "completed";
   trashedAt: string; trashedBy: BinPerson;
+  /** Why it was moved here. Asked for a completed document; null otherwise. */
+  trashedReason?: string | null;
   completedAt: string | null; cancelledAt: string | null; participantCount: number;
   deletionRequest: DeletionRequestSummary | null;
   actions: BinAction[];
@@ -93,8 +95,10 @@ export const documentLifecycleService = {
   },
 
   // ── The Recycle Bin ───────────────────────────────────────────────────
-  moveToTrash(workspaceId: string, signingRequestId: string): Promise<void> {
-    return docs(apiRequest(`${sr(workspaceId, signingRequestId)}/trash`, { method: "POST" })).then(() => undefined);
+  /** A completed document needs a reason; a cancelled one already has its own. */
+  moveToTrash(workspaceId: string, signingRequestId: string, reason = ""): Promise<void> {
+    const body = reason === "" ? {} : { reason };
+    return docs(apiRequest(`${sr(workspaceId, signingRequestId)}/trash`, { method: "POST", body })).then(() => undefined);
   },
   async recycleBin(workspaceId: string): Promise<RecycleBinItem[]> {
     return (await apiRequest<{ items: RecycleBinItem[] }>(`${ws(workspaceId)}/recycle-bin`)).items;

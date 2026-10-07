@@ -101,7 +101,7 @@ describe("Documents: cancel, restore and the Recycle Bin", () => {
     expect(screen.queryByText("Lease out for signature")).toBeNull();
     await user.click(screen.getByRole("button", { name: "Move to Trash: Withdrawn offer" }));
     await user.click(within(screen.getByRole("alertdialog")).getByRole("button", { name: "Continue" }));
-    await waitFor(() => { expect(svc.moveToTrash).toHaveBeenCalledWith("ws_1", "sr_can"); });
+    await waitFor(() => { expect(svc.moveToTrash).toHaveBeenCalledWith("ws_1", "sr_can", ""); });
   });
 
   it("the Recycle Bin button counts what is in the bin and opens it; a bell link opens it too", async () => {

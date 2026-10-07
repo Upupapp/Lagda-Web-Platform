@@ -164,6 +164,11 @@ export function RecycleBinPanel({ workspaceId, isOwner, freePlan, onClose, onCha
             <MemberAvatar name={item.trashedBy.displayName} url={memberAvatarUrl(workspaceId, item.trashedBy)} size={20} />
             <span style={{ minWidth: 0, overflowWrap: "anywhere" }}>Moved here by {item.trashedBy.displayName} · {when(item.trashedAt)}</span>
           </p>
+          {item.trashedReason !== null && item.trashedReason !== undefined && (
+            <p data-testid="recycle-bin-reason" style={{ ...GF, fontSize: 12.5, color: SLATE, margin: 0, lineHeight: 1.5, overflowWrap: "anywhere" }}>
+              <span style={{ fontWeight: 700, color: NAVY }}>Reason:</span> {item.trashedReason}
+            </p>
+          )}
           {item.deletionRequest !== null && (
             <p data-testid="pending-owner" style={{ ...GF, fontSize: 12.5, fontWeight: 700, color: "#92400E", background: "#FFFBEB", border: "1px solid #FDE68A", borderRadius: 8, padding: "6px 9px", margin: 0, display: "flex", alignItems: "center", gap: 6 }}>
               <Clock size={13} aria-hidden /> Pending the owner&rsquo;s approval

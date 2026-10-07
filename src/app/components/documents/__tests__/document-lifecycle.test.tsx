@@ -77,7 +77,7 @@ describe("the confirmation", () => {
   });
 
   it.each<[LifecycleAction["kind"], boolean]>([
-    ["cancel", true], ["restore", false], ["trash", false], ["delete-draft", false], ["delete-ended", false],
+    ["cancel", true], ["restore", false], ["trash", true], ["delete-draft", false], ["delete-ended", false],
     ["bin-restore", false], ["bin-delete", true], ["bin-request-deletion", true], ["approve-deletion", true],
     ["disapprove-deletion", false], ["remove-signed", false], ["remove-notice", false],
   ])("%s asks for a reason: %s", (kind, needsReason) => {
@@ -85,6 +85,11 @@ describe("the confirmation", () => {
     const copy = lifecycleCopy(action);
     expect(copy.reason !== undefined).toBe(needsReason);
     expect(copy.lead).toMatch(/^By choosing Continue/);
+  });
+
+  it("moving a cancelled document to the bin asks for no second reason", () => {
+    const copy = lifecycleCopy({ kind: "trash", workspaceId: "ws", signingRequestId: "sr", title: "NDA.pdf", state: "cancelled" });
+    expect(copy.reason).toBeUndefined();
   });
 
   it("an owner deleting for good is reminded that keeping records is theirs to do", () => {
@@ -117,6 +122,17 @@ describe("running an action", () => {
     expect(screen.queryByRole("alertdialog")).toBeNull();
   });
 
+  it("a completed document goes to the bin only with a reason, which is sent", async () => {
+    const user = userEvent.setup();
+    svc.moveToTrash.mockResolvedValue(undefined);
+    render(<Host action={{ kind: "trash", workspaceId: "ws_1", signingRequestId: "sr_1", title: "Lease", state: "completed" }} />);
+    await user.click(screen.getByRole("button", { name: "go" }));
+    expect(screen.getByRole("button", { name: "Continue" })).toBeDisabled();
+    await user.type(screen.getByLabelText(/Reason for moving it to the bin/), "Replaced by the signed renewal");
+    await user.click(screen.getByRole("button", { name: "Continue" }));
+    await waitFor(() => { expect(svc.moveToTrash).toHaveBeenCalledWith("ws_1", "sr_1", "Replaced by the signed renewal"); });
+  });
+
   it("on the Free plan, explains what is needed instead of asking", async () => {
     const user = userEvent.setup();
     render(<Host freePlan action={{ kind: "trash", workspaceId: "ws_1", signingRequestId: "sr_1", title: "Lease", state: "completed" }} />);
@@ -136,7 +152,7 @@ describe("running an action", () => {
   it("shows the server's refusal inside the dialog, in plain words", async () => {
     const user = userEvent.setup();
     svc.moveToTrash.mockRejectedValue(new ApiError(409, { code: "cancel_first", message: "x" }, "x"));
-    render(<Host action={{ kind: "trash", workspaceId: "ws_1", signingRequestId: "sr_1", title: "Lease", state: "completed" }} />);
+    render(<Host action={{ kind: "trash", workspaceId: "ws_1", signingRequestId: "sr_1", title: "Lease", state: "cancelled" }} />);
     await user.click(screen.getByRole("button", { name: "go" }));
     await user.click(screen.getByRole("button", { name: "Continue" }));
     expect(await screen.findByRole("alert")).toHaveTextContent("still out for signature. Cancel it first.");
@@ -168,6 +184,14 @@ describe("the Recycle Bin", () => {
     const button = screen.getByRole("button", { name: "Recycle Bin, 3 items" });
     expect(button.style.borderRadius).toBe("50%");
     expect(screen.getByTestId("recycle-bin-count")).toHaveTextContent("3");
+  });
+
+  it("shows why a completed document was moved to the bin", async () => {
+    svc.recycleBin.mockResolvedValue([binItem({ trashedReason: "Replaced by the signed renewal" }), binItem({ signingRequestId: "sr_2", documentId: "doc_2", state: "cancelled", trashedReason: null })]);
+    renderBin(true);
+    const reasons = await screen.findAllByTestId("recycle-bin-reason");
+    expect(reasons).toHaveLength(1);
+    expect(reasons[0]).toHaveTextContent("Reason: Replaced by the signed renewal");
   });
 
   it("the owner may restore or permanently delete, and deleting needs their reason", async () => {

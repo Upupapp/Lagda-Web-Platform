@@ -73,6 +73,10 @@ export function lifecycleCopy(action: LifecycleAction): LifecycleConfirmCopy {
           "Nothing is erased yet, and nothing changes for the participants.",
           "From the Recycle Bin it can be restored. Only the workspace owner can delete it permanently.",
         ],
+        // A cancelled document already carries the reason it was cancelled.
+        ...(action.state === "completed"
+          ? { reason: { label: "Reason for moving it to the bin", placeholder: "Why is this completed document being moved?", hint: "Required. Shown with the document in the Recycle Bin." } }
+          : {}),
       };
     case "delete-draft":
       return {
@@ -162,7 +166,7 @@ async function perform(action: LifecycleAction, reason: string): Promise<void> {
   switch (action.kind) {
     case "cancel": await realSigningRequestService.cancel(action.workspaceId, action.signingRequestId, reason); return;
     case "restore": await svc.restore(action.workspaceId, action.signingRequestId); return;
-    case "trash": await svc.moveToTrash(action.workspaceId, action.signingRequestId); return;
+    case "trash": await svc.moveToTrash(action.workspaceId, action.signingRequestId, reason); return;
     case "delete-draft":
       if (action.signingRequestId !== undefined) await svc.deleteRequest(action.workspaceId, action.signingRequestId);
       else await svc.deleteDraftDocument(action.workspaceId, action.documentId);
