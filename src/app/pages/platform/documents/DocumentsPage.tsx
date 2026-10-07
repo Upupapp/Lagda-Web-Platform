@@ -41,6 +41,7 @@ import { ResendSigningDialog } from "../../../components/documents/ResendSigning
 import { ExpirationDialog } from "../../../components/documents/ExpirationDialog";
 import { toastSuccess } from "../../../components/brand/BrandToast";
 import { realDocumentService, type RealDocument } from "../../../services/real/document.service";
+import { realTemplatesService } from "../../../services/real/templates.service";
 import { documentOrganizationService } from "../../../services/mock/document-organization.service";
 import { isCapabilityInActiveProfile } from "../../../config/capability-resolver";
 import { SIGNING_REQUEST_STATUS } from "../../../services/signing-request-status";
@@ -2837,18 +2838,38 @@ function DocumentsPageRealMode() {
     return () => { cancelled = true; };
   }, [workspaceId, participantsId, allRequests, requestedDocumentIds, setSearchParams]);
 
+  // The documents that are a workflow template's own: what each use of the
+  // template is copied from. Null until known, so none is briefly shown as a
+  // draft. Someone who may not read templates gets an empty set, and the
+  // server still refuses the delete with a message naming the template.
+  const templatesQuery = useLiveQuery(
+    workspaceId ? `documents:template-documents:${workspaceId}` : null,
+    () => realTemplatesService.list(workspaceId ?? "").then(
+      items => items.flatMap(t => (t.documentId === null ? [] : [t.documentId])),
+      () => [] as string[],
+    ),
+    { topics: ["documents"] },
+  );
+  const templateDocumentIds = useMemo(
+    () => (templatesQuery.data === undefined ? null : new Set(templatesQuery.data)),
+    [templatesQuery.data],
+  );
+
   // Unsent drafts, filtered the way the server filters requests: by name.
   // They have no signers yet, so a signer filter excludes them, and they
   // only ever belong in the Draft section.
   const drafts = useMemo(() => {
-    if (requestedDocumentIds === null) return [];
+    if (requestedDocumentIds === null || templateDocumentIds === null) return [];
     if (list !== "draft" || signer !== "") return [];
     const needle = q.toLowerCase();
     return documents
       .filter(d => !requestedDocumentIds.has(d.documentId))
+      // A template's own document belongs to Templates. Listed here it looked
+      // like a draft with a Delete button that could never work.
+      .filter(d => !templateDocumentIds.has(d.documentId))
       .filter(d => needle === "" || d.title.toLowerCase().includes(needle))
       .map(unsentDraftRow);
-  }, [documents, requestedDocumentIds, q, signer, list]);
+  }, [documents, requestedDocumentIds, templateDocumentIds, q, signer, list]);
 
   const verificationIds = useMemo(() => {
     const map = new Map<string, string>();

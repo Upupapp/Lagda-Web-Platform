@@ -8,8 +8,8 @@ import { MemoryRouter } from "react-router";
 
 vi.setConfig({ testTimeout: 20_000 });
 
-const { svc, listRequests, cancel, plan } = vi.hoisted(() => ({
-  listRequests: vi.fn(), cancel: vi.fn(), plan: { paid: true },
+const { svc, listRequests, cancel, plan, docs } = vi.hoisted(() => ({
+  listRequests: vi.fn(), cancel: vi.fn(), plan: { paid: true }, docs: { items: [] as unknown[], templates: [] as unknown[] },
   svc: { inboxCounts: vi.fn(), recycleBin: vi.fn(), deletionRequests: vi.fn(), deletedDocuments: vi.fn(), restore: vi.fn(), moveToTrash: vi.fn() },
 }));
 
@@ -33,8 +33,11 @@ vi.mock("../../../../services/real/signing-request.service", async importOrigina
 });
 vi.mock("../../../../services/real/document.service", async importOriginal => {
   const actual = await importOriginal<typeof import("../../../../services/real/document.service")>();
-  return { ...actual, realDocumentService: { ...actual.realDocumentService, list: () => Promise.resolve({ items: [], total: 0, page: 1, perPage: 100, hasNextPage: false }) } };
+  return { ...actual, realDocumentService: { ...actual.realDocumentService, list: () => Promise.resolve({ items: docs.items, total: docs.items.length, page: 1, perPage: 100, hasNextPage: false }) } };
 });
+vi.mock("../../../../services/real/templates.service", () => ({
+  realTemplatesService: { list: () => Promise.resolve(docs.templates) },
+}));
 vi.mock("../../../../services/real/my-signing.service", async importOriginal => {
   const actual = await importOriginal<typeof import("../../../../services/real/my-signing.service")>();
   return { ...actual, realMySigningService: { documentsToSign: () => Promise.resolve([]), signedDocuments: () => Promise.resolve([]) } };
@@ -54,7 +57,7 @@ const request = (state: string, title: string, id: string) => ({
 const ALL = [request("sent", "Lease out for signature", "sr_out"), request("cancelled", "Withdrawn offer", "sr_can")];
 
 beforeEach(() => {
-  plan.paid = true;
+  plan.paid = true; docs.items = []; docs.templates = [];
   for (const fn of Object.values(svc)) { fn.mockReset(); fn.mockResolvedValue(undefined); }
   svc.inboxCounts.mockResolvedValue({ sign: 0, approve: 2, review: 0, acknowledge: 1 });
   svc.recycleBin.mockResolvedValue([]); svc.deletionRequests.mockResolvedValue([]); svc.deletedDocuments.mockResolvedValue([]);
@@ -114,6 +117,21 @@ describe("Documents: cancel, restore and the Recycle Bin", () => {
     view.unmount();
     renderAt("/app/documents?bin=open");
     expect(await screen.findByTestId("recycle-bin-item")).toHaveTextContent("Old NDA");
+  });
+
+  it("a template's own document is not listed among the drafts", async () => {
+    // It is what every use of the template is copied from. Shown as a draft it
+    // had a Delete button that could never work.
+    const doc = (id: string, title: string) => ({
+      documentId: id, workspaceId: "ws_1", title, originalFilename: null, createdByUserId: "u", folderId: null,
+      createdAt: "2026-10-05T00:00:00.000Z", updatedAt: "2026-10-05T00:00:00.000Z", source: null, verificationId: null,
+    });
+    docs.items = [doc("doc_draft", "Lease draft"), doc("doc_tpl", "Service Agreement (generated)")];
+    docs.templates = [{ workflowTemplateId: "wft_1", name: "Service Agreement", documentId: "doc_tpl" }, { workflowTemplateId: "wft_2", name: "No document yet", documentId: null }];
+    renderAt("/app/documents?list=draft");
+    expect(await screen.findByText("Lease draft")).toBeInTheDocument();
+    expect(screen.queryByText("Service Agreement (generated)")).toBeNull();
+    expect(screen.getByRole("button", { name: "Delete draft: Lease draft" })).toBeInTheDocument();
   });
 
   it("the Free plan has no Recycle Bin, and Move to Trash explains what is needed", async () => {
