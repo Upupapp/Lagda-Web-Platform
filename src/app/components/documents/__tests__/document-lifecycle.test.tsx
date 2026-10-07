@@ -186,6 +186,19 @@ describe("the Recycle Bin", () => {
     expect(screen.getByTestId("recycle-bin-count")).toHaveTextContent("3");
   });
 
+  it("the header holds the title, the count, Close and the description as its own full-width line", async () => {
+    svc.recycleBin.mockResolvedValue([binItem()]);
+    renderBin(false);
+    const header = await screen.findByTestId("recycle-bin-header");
+    expect(within(header).getByRole("heading", { name: "Recycle Bin" })).toBeInTheDocument();
+    expect(await within(header).findByTestId("recycle-bin-total")).toHaveTextContent("1 document");
+    expect(within(header).getByRole("button", { name: "Close" })).toBeInTheDocument();
+    // A direct child of the header grid, not nested beside the icon.
+    const text = within(header).getByTestId("recycle-bin-description");
+    expect(text.parentElement).toBe(header);
+    expect(text).toHaveTextContent("ask the workspace owner to delete it permanently");
+  });
+
   it("shows why a completed document was moved to the bin", async () => {
     svc.recycleBin.mockResolvedValue([binItem({ trashedReason: "Replaced by the signed renewal" }), binItem({ signingRequestId: "sr_2", documentId: "doc_2", state: "cancelled", trashedReason: null })]);
     renderBin(true);

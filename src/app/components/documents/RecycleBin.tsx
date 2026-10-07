@@ -235,27 +235,28 @@ export function RecycleBinPanel({ workspaceId, isOwner, freePlan, onClose, onCha
       style={{ position: "fixed", inset: 0, zIndex: Z.modal, background: "rgba(7,17,31,0.55)", display: "flex", alignItems: "center", justifyContent: "center", boxSizing: "border-box" }}>
       <div role="dialog" aria-modal="true" aria-labelledby={titleId} data-testid="recycle-bin-panel" className="recycle-bin-panel"
         style={{ ...GF, background: "#F8FAFC", display: "flex", flexDirection: "column", boxSizing: "border-box", boxShadow: "0 24px 60px -12px rgba(7,17,31,0.55)", overflow: "hidden" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "16px 20px", background: "#FFFFFF", borderBottom: `1px solid ${BORDER}`, flexShrink: 0 }}>
-          <span aria-hidden style={{ width: 42, height: 42, borderRadius: "50%", background: "#F1F5F9", display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+        {/* On a phone the title, the count and Close share the first row and
+            the description runs the full width beneath them. Beside the
+            icon it was squeezed into a column a few words wide. */}
+        <div data-testid="recycle-bin-header" className="recycle-bin-head" style={{ background: "#FFFFFF", borderBottom: `1px solid ${BORDER}`, flexShrink: 0 }}>
+          <span aria-hidden className="recycle-bin-head-icon" style={{ borderRadius: "50%", background: "#F1F5F9", display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
             <Trash2 size={20} color={SLATE} />
           </span>
-          <div style={{ minWidth: 0, flex: 1 }}>
-            <h2 id={titleId} style={{ ...GF, fontSize: 19, fontWeight: 800, color: NAVY, margin: 0 }}>Recycle Bin</h2>
-            <p style={{ ...GF, fontSize: 13, color: SLATE, margin: "2px 0 0", lineHeight: 1.45 }}>
-              {isOwner
-                ? "Documents moved to the bin. Restore one, or delete it permanently. Only you, the workspace owner, can delete."
-                : "Documents you moved to the bin. Restore one, or ask the workspace owner to delete it permanently."}
-            </p>
-          </div>
+          <h2 id={titleId} className="recycle-bin-head-title" style={{ ...GF, fontWeight: 800, color: NAVY, margin: 0, minWidth: 0 }}>Recycle Bin</h2>
           {items !== null && !failed && (
-            <span data-testid="recycle-bin-total" style={{ ...GF, fontSize: 12.5, fontWeight: 700, color: SLATE, background: "#F1F5F9", border: `1px solid ${BORDER}`, borderRadius: 999, padding: "4px 11px", whiteSpace: "nowrap", flexShrink: 0 }}>
+            <span data-testid="recycle-bin-total" className="recycle-bin-head-total" style={{ ...GF, fontSize: 12.5, fontWeight: 700, color: SLATE, background: "#F1F5F9", border: `1px solid ${BORDER}`, borderRadius: 999, padding: "4px 11px", whiteSpace: "nowrap" }}>
               {(items.length)} {items.length === 1 ? "document" : "documents"}
             </span>
           )}
-          <button ref={closeRef} type="button" aria-label="Close" onClick={onClose}
-            style={{ width: 38, height: 38, borderRadius: 10, border: "none", background: "#F1F5F9", cursor: "pointer", display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+          <button ref={closeRef} type="button" aria-label="Close" onClick={onClose} className="recycle-bin-head-close"
+            style={{ width: 40, height: 40, borderRadius: 10, border: "none", background: "#F1F5F9", cursor: "pointer", display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
             <X size={18} aria-hidden />
           </button>
+          <p data-testid="recycle-bin-description" className="recycle-bin-head-text" style={{ ...GF, color: SLATE, margin: 0, lineHeight: 1.5, minWidth: 0 }}>
+            {isOwner
+              ? "Documents moved to the bin. Restore one, or delete it permanently. Only you, the workspace owner, can delete."
+              : "Documents you moved to the bin. Restore one, or ask the workspace owner to delete it permanently."}
+          </p>
         </div>
 
         <div className="recycle-bin-body" style={{ overflowY: "auto", minHeight: 0, flex: 1, display: "flex", flexDirection: "column" }}>
@@ -301,12 +302,35 @@ export function RecycleBinPanel({ workspaceId, isOwner, freePlan, onClose, onCha
           .recycle-bin-panel { width: 100%; height: 100dvh; border-radius: 0; }
           .recycle-bin-body { padding: 16px; }
           .recycle-bin-list { display: grid; gap: 16px; grid-template-columns: minmax(0, 1fr); }
+          .recycle-bin-head {
+            display: grid; align-items: center; column-gap: 12px; row-gap: 10px; padding: 14px 16px 16px;
+            grid-template-columns: auto minmax(0, 1fr) auto auto;
+            grid-template-areas: "icon title total close" "text text text text";
+          }
+          .recycle-bin-head-icon { grid-area: icon; width: 40px; height: 40px; }
+          .recycle-bin-head-title { grid-area: title; font-size: 18px; }
+          .recycle-bin-head-total { grid-area: total; }
+          .recycle-bin-head-close { grid-area: close; }
+          .recycle-bin-head-text { grid-area: text; font-size: 13.5px; padding-top: 10px; border-top: 1px solid #EEF2F6; }
+          /* Too narrow for the count beside the title: it goes under it. */
+          @media (max-width: 359px) {
+            .recycle-bin-head { grid-template-columns: auto minmax(0, 1fr) auto; grid-template-areas: "icon title close" "total total total" "text text text"; }
+            .recycle-bin-head-total { justify-self: start; }
+          }
           /* A tablet: most of the screen, with a margin. */
           @media (min-width: 640px) {
             .recycle-bin-scrim { padding: 20px; }
             .recycle-bin-panel { height: calc(100dvh - 40px); border-radius: 18px; }
             .recycle-bin-body { padding: 20px; }
             .recycle-bin-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            /* Room for the description beside the icon, under the title. */
+            .recycle-bin-head {
+              row-gap: 2px; padding: 16px 20px;
+              grid-template-areas: "icon title total close" "icon text total close";
+            }
+            .recycle-bin-head-icon { width: 42px; height: 42px; }
+            .recycle-bin-head-title { font-size: 19px; align-self: end; }
+            .recycle-bin-head-text { font-size: 13px; padding-top: 0; border-top: 0; align-self: start; line-height: 1.45; }
           }
           /* A wide screen: a fixed size, whatever is inside. */
           @media (min-width: 1100px) {
