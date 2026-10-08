@@ -310,8 +310,10 @@ const DOC_STYLES = SKELETON_STYLE + `
   }
 
   /* The lists inside the chosen group. */
-  .doc-list-tabs { display: flex; gap: 4px; margin-top: 16px; border-bottom: 1px solid #E2E8F0; overflow-x: auto; scrollbar-width: none; }
+  .doc-list-strip { position: relative; margin-top: 16px; }
+  .doc-list-tabs { display: flex; gap: 4px; border-bottom: 1px solid #E2E8F0; overflow-x: auto; scrollbar-width: none; }
   .doc-list-tabs::-webkit-scrollbar { display: none; }
+  .doc-list-arrow { display: none; }
   .doc-list-tab {
     display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;
     padding: 10px 12px; font-family: 'Geist', sans-serif; font-size: 13px; font-weight: 600;
@@ -319,17 +321,34 @@ const DOC_STYLES = SKELETON_STYLE + `
     cursor: pointer; margin-bottom: -1px;
   }
   .doc-list-tab[aria-selected="true"] { color: #0078D4; border-bottom-color: #0078D4; }
-  /* Phones and tablets: every section stays on screen. The strip wraps into chips rather
-     than scrolling sideways with its scrollbar hidden, which left the later
-     sections (and the selected one) out of sight. */
+  /* Phones and tablets: the sections sit side by side on ONE row of chips
+     that scrolls sideways. An arrow at either edge shows there is more that
+     way and moves the row, and the chosen section is always brought into
+     view, so a section is never out of sight without a sign of it. */
   @media (max-width: 900px) {
-    .doc-list-tabs { flex-wrap: wrap; overflow-x: visible; border-bottom: none; gap: 8px; }
+    .doc-list-tabs {
+      flex-wrap: nowrap; overflow-x: auto; border-bottom: none; gap: 8px; padding: 2px 0;
+      scroll-behavior: smooth; -webkit-overflow-scrolling: touch; overscroll-behavior-x: contain;
+    }
     .doc-list-tab {
       border: 1px solid #D1D9E0; border-radius: 999px; padding: 7px 12px; margin-bottom: 0;
-      background: #FFFFFF; white-space: nowrap;
+      background: #FFFFFF; white-space: nowrap; flex: 0 0 auto;
     }
     .doc-list-tab[aria-selected="true"] { border-color: #0078D4; background: #EFF6FF; color: #005A9E; }
+    .doc-list-arrow {
+      position: absolute; top: 0; bottom: 0; width: 46px; padding: 0; border: none; cursor: pointer;
+      align-items: center; color: #07111F; z-index: 1;
+    }
+    .doc-list-arrow[data-show="true"] { display: flex; }
+    .doc-list-arrow[data-side="left"] { left: -2px; justify-content: flex-start; background: linear-gradient(90deg, #F8FAFC 58%, rgba(248,250,252,0)); }
+    .doc-list-arrow[data-side="right"] { right: -2px; justify-content: flex-end; background: linear-gradient(270deg, #F8FAFC 58%, rgba(248,250,252,0)); }
+    .doc-list-arrow span {
+      width: 32px; height: 32px; border-radius: 50%; background: #FFFFFF; border: 1px solid #CBD5E1;
+      display: inline-flex; align-items: center; justify-content: center; box-shadow: 0 1px 3px rgba(7,17,31,0.12);
+    }
+    .doc-list-arrow:focus-visible span { outline: 3px solid rgba(0,120,212,0.35); outline-offset: 1px; }
   }
+  @media (prefers-reduced-motion: reduce) { .doc-list-tabs { scroll-behavior: auto; } }
   .doc-list-count {
     min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; font-size: 11px;
     display: inline-flex; align-items: center; justify-content: center;
@@ -2979,7 +2998,7 @@ function DocumentsPageRealMode() {
         </div>
         {!freePlan && workspaceId && <RecycleBinButton count={binCount} onClick={() => { setBinOpen(true); }} />}
         </div>
-        <div className="doc-list-tabs" role="tablist" aria-label="Document lists">
+        <DocListStrip watch={`${group}:${list}`}>
           {group === "correspondence" ? (<>
             <button type="button" role="tab" className="doc-list-tab" aria-selected={list === "sent"} onClick={() => setList("sent")}>
               <Send size={14} aria-hidden /> Sent
@@ -3013,7 +3032,7 @@ function DocumentsPageRealMode() {
               <FileCheck2 size={14} aria-hidden /> Completed
             </button>
           </>)}
-        </div>
+        </DocListStrip>
         {INBOX_OF[list] !== undefined && <DocumentsToSignSection key={list} action={INBOX_OF[list]} onCount={loadInbox} />}
         {list === "signed" && <SignedByMeSection />}
         {list === "sent" && <DeletedDocumentsBlock origins={["sent"]} heading="Deleted" />}
@@ -3170,6 +3189,67 @@ function DocumentsPageRealMode() {
         />
       )}
     </>
+  );
+}
+
+/**
+ * The row of document lists. On a phone it is one row that scrolls sideways,
+ * with an arrow at each edge that has more behind it.
+ */
+function DocListStrip({ watch, children }: { watch: string; children: React.ReactNode }) {
+  const row = useRef<HTMLDivElement>(null);
+  const [more, setMore] = useState({ left: false, right: false });
+
+  const measure = useCallback(() => {
+    const el = row.current;
+    if (el === null) return;
+    const left = el.scrollLeft > 2, right = el.scrollLeft + el.clientWidth < el.scrollWidth - 2;
+    setMore(now => (now.left === left && now.right === right ? now : { left, right }));
+  }, []);
+
+  useEffect(() => {
+    const el = row.current;
+    if (el === null) return;
+    // The chosen list is brought into view, sideways only.
+    const chosen = el.querySelector<HTMLElement>('[aria-selected="true"]');
+    if (chosen !== null) {
+      const from = chosen.offsetLeft - 44, to = chosen.offsetLeft + chosen.offsetWidth + 44;
+      if (from < el.scrollLeft) el.scrollLeft = Math.max(0, from);
+      else if (to > el.scrollLeft + el.clientWidth) el.scrollLeft = to - el.clientWidth;
+    }
+    measure();
+  }, [watch, measure]);
+
+  useEffect(() => {
+    const el = row.current;
+    if (el === null) return;
+    window.addEventListener("resize", measure);
+    const observer = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(measure);
+    observer?.observe(el);
+    return () => { window.removeEventListener("resize", measure); observer?.disconnect(); };
+  }, [measure]);
+
+  const move = (direction: 1 | -1) => {
+    const el = row.current;
+    if (el !== null) el.scrollLeft += direction * Math.max(140, Math.round(el.clientWidth * 0.7));
+  };
+
+  return (
+    <div className="doc-list-strip">
+      {/* The arrows only move the row. Every list is reachable from the
+          keyboard through the tabs themselves, so they stay out of its way. */}
+      <button type="button" className="doc-list-arrow" data-side="left" data-show={more.left} tabIndex={-1} aria-hidden={!more.left}
+        aria-label="Show earlier lists" onClick={() => { move(-1); }}>
+        <span><ChevronLeft size={16} aria-hidden /></span>
+      </button>
+      <div ref={row} className="doc-list-tabs" role="tablist" aria-label="Document lists" onScroll={measure}>
+        {children}
+      </div>
+      <button type="button" className="doc-list-arrow" data-side="right" data-show={more.right} tabIndex={-1} aria-hidden={!more.right}
+        aria-label="Show more lists" onClick={() => { move(1); }}>
+        <span><ChevronRight size={16} aria-hidden /></span>
+      </button>
+    </div>
   );
 }
 
