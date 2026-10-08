@@ -2,7 +2,8 @@
 //
 //   not in the workspace   → Invite to workspace (with a role)
 //   invited, not joined    → Resend, Withdraw
-//   a member               → Ask to prepare a document, Add to team
+//   a member               → Ask to prepare a document, the teams they are
+//                            in, and Add to team while one is left to join
 //
 // Everything here uses routes that already exist — workspace invitations,
 // 086's preparation request, and team membership — gated exactly as those
@@ -92,6 +93,19 @@ export function ContactWorkspaceCard({ contact, workspaceId, onAskToPrepare, can
   }, [member, canSeeMembers, workspaceId]);
   const privileges = membership === null ? null : effectivePrivileges(membership);
 
+  // The teams this member is in, and the ones still open to them. The card
+  // used to offer "Add to team" whatever the answer, so adding someone to a
+  // team they were already in failed, and nothing said which teams they had.
+  const canSeeTeams = access.can("unit.view");
+  const [teams, setTeams] = useState<MemberTeams | null>(null);
+  const loadTeams = useCallback(async () => {
+    if (member === null || !canSeeTeams) { setTeams(null); return; }
+    try { setTeams(await memberTeams(workspaceId, member.userId)); }
+    catch { /* unknown: the card falls back to offering Add to team */ }
+  }, [member, canSeeTeams, workspaceId]);
+  useEffect(() => { void loadTeams(); }, [loadTeams]);
+  useLiveRefresh(() => { void loadTeams(); });
+
   const status = member !== null ? "member" : invitation !== null ? "invited" : "outside";
 
   return (
@@ -126,15 +140,30 @@ export function ContactWorkspaceCard({ contact, workspaceId, onAskToPrepare, can
               )}
             </div>
           )}
+          {teams !== null && teams.joined.length > 0 && (
+            <div className="cw-teams" data-testid="member-teams">
+              <span className="cw-access-title"><Network size={14} aria-hidden /> {teams.joined.length === 1 ? "Team" : "Teams"}</span>
+              <ul>
+                {teams.joined.map(team => (
+                  <li key={team.unitId}>
+                    <span className="cw-team-name">{team.name}</span>
+                    {team.title !== null && <span className="cw-team-title">{team.title}</span>}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
           <div className="cw-actions">
             {canAskToPrepare && (
               <button type="button" className="cw-btn" data-variant="primary" onClick={onAskToPrepare}>
                 <FilePenLine size={15} aria-hidden /> Ask to prepare a document
               </button>
             )}
-            {canManageTeams && member !== null && (
-              <button type="button" className="cw-btn" onClick={() => { setDialog("team"); }}>
-                <Network size={15} aria-hidden /> Add to team
+            {/* Offered only while a team is left to join. Unknown teams (not
+                loaded, or not theirs to see) keep the button, as before. */}
+            {canManageTeams && member !== null && (teams === null || teams.open.length > 0 || teams.total === 0) && (
+              <button type="button" className="cw-btn" onClick={() => { setDialog("team"); }} data-testid="add-to-team">
+                <Network size={15} aria-hidden /> {teams !== null && teams.joined.length > 0 ? "Add to another team" : "Add to team"}
               </button>
             )}
           </div>
@@ -208,8 +237,9 @@ export function ContactWorkspaceCard({ contact, workspaceId, onAskToPrepare, can
       )}
       {dialog === "team" && member !== null && (
         <AddToTeamDialog workspaceId={workspaceId} userId={member.userId} name={member.displayName}
+          open={teams?.open ?? null}
           onClose={() => { setDialog(null); }}
-          onAdded={team => { setDialog(null); setNotice(`${member.displayName} was added to ${team}.`); }} />
+          onAdded={team => { setDialog(null); setNotice(`${member.displayName} was added to ${team}.`); void loadTeams(); }} />
       )}
 
       <style>{CARD_CSS}</style>
@@ -255,15 +285,44 @@ function InviteDialog({ email, name, workspaceId, workspaceName, onClose, onSent
   );
 }
 
-function AddToTeamDialog({ workspaceId, userId, name, onClose, onAdded }: {
-  workspaceId: string; userId: string; name: string; onClose: () => void; onAdded: (teamName: string) => void;
+interface TeamRef { unitId: string; name: string }
+interface MemberTeams {
+  /** The live teams this person is in, with their title there. */
+  joined: (TeamRef & { title: string | null })[];
+  /** The live teams they are not in. */
+  open: TeamRef[];
+  /** How many live teams the workspace has. */
+  total: number;
+}
+
+/** Which of the workspace's live teams one member is in. One read per team. */
+async function memberTeams(workspaceId: string, userId: string): Promise<MemberTeams> {
+  const live = (await realOrganizationService.listUnits(workspaceId))
+    .filter(u => u.archivedAt === null)
+    .sort((a, b) => a.name.localeCompare(b.name));
+  const rosters = await Promise.all(live.map(u => realOrganizationService.listMembers(workspaceId, u.unitId)));
+  const joined: MemberTeams["joined"] = [], open: TeamRef[] = [];
+  live.forEach((u, i) => {
+    const mine = rosters[i]?.find(m => m.userId === userId);
+    if (mine === undefined) open.push({ unitId: u.unitId, name: u.name });
+    else joined.push({ unitId: u.unitId, name: u.name, title: mine.title });
+  });
+  return { joined, open, total: live.length };
+}
+
+function AddToTeamDialog({ workspaceId, userId, name, open, onClose, onAdded }: {
+  workspaceId: string; userId: string; name: string;
+  /** The teams they are not in yet, when known: only those are offered. */
+  open: TeamRef[] | null;
+  onClose: () => void; onAdded: (teamName: string) => void;
 }) {
-  const [teams, setTeams] = useState<{ unitId: string; name: string }[] | null>(null);
-  const [unitId, setUnitId] = useState("");
+  const [teams, setTeams] = useState<{ unitId: string; name: string }[] | null>(open);
+  const [unitId, setUnitId] = useState(open?.[0]?.unitId ?? "");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const fieldId = useId();
   useEffect(() => {
+    if (open !== null && open.length > 0) return;
     realOrganizationService.listUnits(workspaceId)
       .then(list => {
         const live = list.filter(u => u.archivedAt === null).map(u => ({ unitId: u.unitId, name: u.name }))
@@ -334,6 +393,11 @@ const CARD_CSS = `
 .cw-access-link { align-self: flex-start; display: inline-flex; align-items: center; gap: 5px; font-family: 'Geist', sans-serif; font-size: 12.5px; font-weight: 700;
   color: ${C.AZURE_TEXT}; text-decoration: none; min-height: 28px; }
 .cw-access-link:hover { text-decoration: underline; text-underline-offset: 3px; }
+.cw-teams { border: 1px solid ${C.BORDER}; border-radius: 10px; padding: 10px 12px; background: #FBFCFE; display: flex; flex-direction: column; gap: 7px; }
+.cw-teams ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+.cw-teams li { display: inline-flex; align-items: baseline; gap: 6px; max-width: 100%; padding: 4px 10px; border-radius: 999px; background: #EFF6FF; border: 1px solid #BFDBFE; }
+.cw-team-name { font-family: 'Geist', sans-serif; font-size: 12.5px; font-weight: 700; color: #1E3A8A; overflow-wrap: anywhere; }
+.cw-team-title { font-family: 'Geist', sans-serif; font-size: 11.5px; color: ${C.SLATE}; overflow-wrap: anywhere; }
 .cw-btn { display: inline-flex; align-items: center; gap: 7px; min-height: 40px; padding: 0 14px; border-radius: 9px; border: 1.5px solid #CBD5E1;
   background: #FFFFFF; color: ${C.INK}; font-family: 'Geist', sans-serif; font-size: 13px; font-weight: 700; cursor: pointer; }
 .cw-btn:hover:not(:disabled) { border-color: ${C.AZURE}; color: ${C.AZURE_TEXT}; }
