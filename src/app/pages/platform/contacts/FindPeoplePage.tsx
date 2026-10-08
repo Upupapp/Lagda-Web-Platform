@@ -284,7 +284,18 @@ const CSS = `
   .fp-search { flex-direction: column; }
   .fp-field { flex: 0 0 auto; width: 100%; }
   .fp-find { width: 100%; justify-content: center; }
-  .fp-person { flex-direction: column; align-items: flex-start; }
+  /* A phone: one centred column. The photo, then the name, the "On LAGDA"
+     label, and the actions across the full width. The text block must not
+     keep its 200px basis here: in a column that is a height, and it left a
+     tall empty gap above the button. */
+  .fp-person { flex-direction: column; align-items: center; text-align: center; gap: 12px; padding: 24px 18px 18px; }
+  .fp-person-text { flex: 0 0 auto; width: 100%; display: flex; flex-direction: column; align-items: center; }
+  .fp-person-name { font-size: 19px; }
+  .fp-verified { margin-top: 10px; }
+  .fp-person-actions { flex-direction: column; align-items: stretch; gap: 10px; margin-top: 6px; }
+  .fp-person-actions .fp-btn, .fp-person-actions .fp-requested { min-height: 46px; justify-content: center; }
+  .fp-person-actions .fp-muted { justify-content: center; text-align: center; }
+  .fp-person-note { text-align: center; }
   .fp-person-actions, .fp-person-actions .fp-btn, .fp-result .fp-btn { width: 100%; }
 }
 @media (prefers-reduced-motion: reduce) { .fp-person { animation: none; } .fp-spin { animation: none; } }
