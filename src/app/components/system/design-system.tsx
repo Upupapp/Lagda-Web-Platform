@@ -29,7 +29,7 @@
 // decisions that genuinely cannot be fluid — stacking a row into a column,
 // dropping a label to its icon.
 
-import React, { useEffect, useState, type CSSProperties, type ReactNode } from "react";
+import React, { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import type { LucideIcon } from "lucide-react";
 
 // ── Tokens ──────────────────────────────────────────────────────────────────
@@ -377,9 +377,25 @@ export function ProgressRail({
   const { isMobileS, isCompact } = useViewport();
   const index = steps.findIndex(step => step.id === current);
   const oneLine = scrollOnMobile && isCompact;
+  const railRef = useRef<HTMLOListElement>(null);
+
+  // A one-line rail longer than the screen would leave the current step out
+  // of sight once the earlier ones fill the row. Bring it into view, moving
+  // the rail only and never the page.
+  useEffect(() => {
+    const rail = railRef.current;
+    if (!oneLine || rail === null) return;
+    const active = rail.querySelector<HTMLElement>('[aria-current="step"]')?.parentElement;
+    if (!active) return;
+    const start = active.offsetLeft - rail.offsetLeft;
+    const end = start + active.offsetWidth;
+    if (end > rail.scrollLeft + rail.clientWidth) rail.scrollLeft = end - rail.clientWidth;
+    else if (start < rail.scrollLeft) rail.scrollLeft = start;
+  }, [oneLine, index]);
 
   return (
     <ol
+      ref={railRef}
       aria-label={label}
       style={{
         ...GF, display: "flex", alignItems: "center", gap: isMobileS ? 4 : 8,

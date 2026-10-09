@@ -25,6 +25,29 @@ describe("ProgressRail", () => {
     expect(rail.style.overflowX).toBe("auto");
   });
 
+  it("brings the current step into view when the rail is longer than the screen", () => {
+    // jsdom lays nothing out, so the sizes a phone would report are supplied.
+    const sizes = { offsetLeft: 300, offsetWidth: 90, clientWidth: 358 };
+    const restore = (Object.keys(sizes) as (keyof typeof sizes)[]).map(key => {
+      const was = Object.getOwnPropertyDescriptor(HTMLElement.prototype, key);
+      Object.defineProperty(HTMLElement.prototype, key, {
+        configurable: true,
+        get(this: HTMLElement) {
+          if (key === "clientWidth") return this.tagName === "OL" ? sizes.clientWidth : 0;
+          if (this.tagName === "OL") return 0;
+          return sizes[key];
+        },
+      });
+      return () => { if (was) Object.defineProperty(HTMLElement.prototype, key, was); else Reflect.deleteProperty(HTMLElement.prototype, key); };
+    });
+    try {
+      render(<ProgressRail steps={STEPS} current="c" label="Long" scrollOnMobile />);
+      expect(screen.getByRole("list", { name: "Long" }).scrollLeft).toBe(300 + 90 - 358);
+    } finally {
+      restore.forEach(undo => { undo(); });
+    }
+  });
+
   it("keeps wrapping when it does not opt in", () => {
     render(<ProgressRail steps={STEPS} current="b" label="Other" />);
     expect(screen.getByRole("list", { name: "Other" }).style.flexWrap).toBe("wrap");
