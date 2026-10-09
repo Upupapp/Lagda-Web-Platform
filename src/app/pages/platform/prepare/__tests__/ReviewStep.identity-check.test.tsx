@@ -58,8 +58,6 @@ describe("Review › Authentication", () => {
     expect(list.textContent).toContain("Ana Reyes: Secure Invitation Link + ID and face verification");
     expect(list.textContent).not.toContain("Ben Cruz");
     expect(list.textContent).toContain("Test mode: the check is simulated and no identity is actually verified.");
-    // It does not hold up sending.
-    expect(screen.getByRole("button", { name: /Continue to Authorization/ })).toBeEnabled();
   });
 
   it("adds nothing when nobody was asked", async () => {

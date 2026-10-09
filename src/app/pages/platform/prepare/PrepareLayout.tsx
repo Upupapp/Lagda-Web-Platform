@@ -6,6 +6,7 @@
 
 import { USE_REAL_BACKEND } from "../../../services/backend-flag";
 import React, { useState, useCallback, useRef, useEffect } from "react";
+import { isContinueBlocked } from "./continue-gate";
 import { Outlet, Navigate, useNavigate, useLocation } from "react-router";
 import { PrepareProvider, usePrepare } from "../../../context/PrepareContext";
 import { usePlatform } from "../../../context/PlatformContext";
@@ -597,11 +598,14 @@ export function PrepareLayout() {
   // step itself has outstanding errors (e.g. an in-flight/failed upload) —
   // previously only the "fields" arrival was checked, so Continue would
   // silently advance past a step with real, unresolved errors.
-  const currentStepBlocked = activeStepId !== null
-    && validate().errors.some(issue => issue.stepId === activeStepId);
-  const continueBlocked = currentStepBlocked || (nextId === "fields"
-    ? stepStates["fields"] === "blocked"
-    : false);
+  // On Review the whole document must be ready: see continue-gate.ts.
+  const validation = validate();
+  const continueBlocked = isContinueBlocked({
+    activeStepId, nextId,
+    errorStepIds: validation.errors.map(issue => issue.stepId),
+    fieldsBlocked: stepStates["fields"] === "blocked",
+    readyForFieldPlacement: validation.readyForFieldPlacement,
+  });
 
   const isFieldsStep = activeStepId === "fields";
 

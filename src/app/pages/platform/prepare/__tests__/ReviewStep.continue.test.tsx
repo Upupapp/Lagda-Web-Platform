@@ -1,12 +1,11 @@
-// Review › "Continue to Authorization": it moves on exactly as Continue at the
-// foot of the page does. It must not reload the draft on the way: doing so
-// swapped the saved participants for a local copy with other ids, every field
-// then read as "assigned to a participant that no longer exists", and Send
-// was blocked.
+// Review has no button of its own for moving on. Continue at the foot of the
+// page is the one way to Authorization; a second "Continue to Authorization"
+// button here was two primary buttons for one action. (That button once
+// reloaded the draft on the way and broke Send, which is one more reason it
+// is gone rather than kept in step.)
 
 import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Routes, Route } from "react-router";
 
 const markReadyForFieldPlacement = vi.fn();
@@ -22,8 +21,8 @@ vi.mock("../../../../context/PrepareContext", () => ({
 
 import { ReviewStep } from "../ReviewStep";
 
-describe("Review › Continue to Authorization", () => {
-  it("opens Authorization without reloading the draft", async () => {
+describe("Review", () => {
+  it("offers no way on of its own, and never marks the draft ready", () => {
     render(
       <MemoryRouter initialEntries={["/app/prepare/review"]}>
         <Routes>
@@ -32,8 +31,8 @@ describe("Review › Continue to Authorization", () => {
         </Routes>
       </MemoryRouter>,
     );
-    await userEvent.click(screen.getByRole("button", { name: /Continue to Authorization/ }));
-    expect(await screen.findByText("Authorization step")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Continue to Authorization|Not ready yet/ })).toBeNull();
+    expect(screen.queryByText("Authorization step")).toBeNull();
     expect(markReadyForFieldPlacement).not.toHaveBeenCalled();
   });
 });

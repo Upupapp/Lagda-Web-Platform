@@ -1,13 +1,15 @@
 // Review — full summary before proceeding to field placement.
 // Shows all draft data, validation status, and field-placement readiness.
-// The "Continue to Authorization" CTA navigates to /authorization — the last
-// step before anyone is emailed.
+// Continue at the foot of the page is the one way on to Authorization, the
+// last step before anyone is emailed. This step used to carry its own
+// "Continue to Authorization" button as well: two primary buttons for one
+// action. The footer's Continue now holds the readiness rule that button had.
 // Fields now come BEFORE Review in the sequence, so by the time somebody
 // reaches this screen the placement they are reviewing already exists.
 // Burgundy (#67023B) is NEVER used. eNotary is NEVER mentioned.
-// Legal limitation notice is required before the CTA.
+// Legal limitation notice is required on this step.
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import { useNavigate } from "react-router";
 import { ClipboardCheck, Check, ChevronRight } from "lucide-react";
 import { usePrepare } from "../../../context/PrepareContext";
@@ -24,7 +26,6 @@ import { stepEyebrow,
 } from "../../../models/prepare";
 import type { PreparationStepId, PrepValidationIssue } from "../../../models/prepare";
 import { StepBanner, StepTwoColumn, RailCard } from "../../../components/prepare/StepBanner";
-import { MissingItemsModal } from "../../../components/prepare/MissingItemsModal";
 import { useIdentityCheckRequirements } from "../../../hooks/useIdentityCheckRequirements";
 import { IDENTITY_CHECK_OPTION_LABEL, roleCanBeAskedForIdentityCheck } from "../../../models/identity-check";
 
@@ -140,8 +141,6 @@ export function ReviewStep() {
     validate,
   } = usePrepare();
 
-  const [showMissing, setShowMissing] = useState(false);
-
   useEffect(() => { setStep("review"); }, [setStep]);
 
   const goToStep = (id: PreparationStepId) => {
@@ -165,16 +164,6 @@ export function ReviewStep() {
   const identityChecked = identityCheck.status === "ready"
     ? participants.filter(p => roleCanBeAskedForIdentityCheck(p.role) && identityCheck.isRequired(p.email))
     : [];
-
-  const handleContinue = () => {
-    if (!isReady) return;
-    // Exactly what Continue at the foot of the page does: move on. This
-    // button used to mark the draft ready first, and loaded back the copy
-    // that call returned. That copy is the local one, whose participants
-    // carry different ids from the saved ones, so every field then read as
-    // "assigned to a participant that no longer exists" and Send was blocked.
-    void navigate("/app/prepare/authorization");
-  };
 
   const readyFiles = files.filter(f => f.fileState === "ready");
   const stepValidity = validation?.stepValidity;
@@ -360,42 +349,6 @@ export function ReviewStep() {
         Commerce Act (Republic Act No. 8792) and its implementing rules. LAGDA does not guarantee
         the legal effect of any particular transaction; ask a lawyer where that matters.
       </div>
-
-      {/* CTA */}
-      <div style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
-        <button
-          onClick={isReady ? handleContinue : () => setShowMissing(true)}
-          style={{
-            ...GF,
-            padding: "12px 32px",
-            borderRadius: 8,
-            border: isReady ? "none" : "1px solid #F0D07A",
-            background: isReady ? AZURE : "#FEF9EC",
-            color: isReady ? "#FFFFFF" : GOLD,
-            fontSize: 15,
-            fontWeight: 700,
-            cursor: "pointer",
-          }}
-        >
-          {isReady ? "Continue to Authorization →" : "Not ready yet →"}
-        </button>
-        {!isReady && (
-          <button
-            type="button"
-            onClick={() => setShowMissing(true)}
-            style={{ ...GF, fontSize: 12.5, fontWeight: 600, color: GOLD, background: "none", border: "none", cursor: "pointer", textDecoration: "underline", textUnderlineOffset: 2 }}
-          >
-            See what's left
-          </button>
-        )}
-      </div>
-
-      <MissingItemsModal
-        open={showMissing}
-        onClose={() => setShowMissing(false)}
-        issues={validation?.errors ?? []}
-        onGoToStep={goToStep}
-      />
     </div>
   );
 
