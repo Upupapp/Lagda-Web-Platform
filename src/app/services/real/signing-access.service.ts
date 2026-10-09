@@ -75,6 +75,26 @@ export interface IdentityCheckResult {
   status: "pending" | "passed" | "locked" | "not-required";
 }
 
+/**
+ * A way to continue the identity check on a phone: a link, shown as a QR
+ * code, that is good for ten minutes. The secret is in the link's FRAGMENT,
+ * so it is never sent to a server by the browser that opens it. Asking for
+ * another one revokes this one.
+ */
+export interface IdentityHandoff {
+  handoffId: string;
+  url: string;
+  expiresAt: string;
+}
+
+export type IdentityHandoffState = "waiting" | "opened" | "completed" | "failed" | "expired" | "revoked";
+
+/** How the phone is getting on, as the computer that showed the code sees it. */
+export interface IdentityHandoffStatus {
+  status: IdentityHandoffState;
+  attemptsRemaining: number;
+}
+
 /** True while the identity check stands between this participant and the document. */
 export function identityCheckOutstanding(view: Pick<CeremonyView, "identityCheck">): boolean {
   const check = view.identityCheck;
@@ -234,6 +254,22 @@ class RealSigningAccessService {
         ...(input.testOutcome === undefined ? {} : { testOutcome: input.testOutcome }),
       },
     });
+  }
+
+  /**
+   * Asks for a link that continues the identity check on a phone. Same
+   * session, cookies and CSRF token as the attempt itself. Refused (409) with
+   * the same codes as an attempt when the check is no longer wanted, is
+   * locked, or is not available.
+   */
+  async createIdentityHandoff(): Promise<IdentityHandoff> {
+    return recipientApiRequest<IdentityHandoff>("/signing/identity-check/handoff", { method: "POST" });
+  }
+
+  // Safe to poll: writes nothing.
+  async identityHandoffStatus(handoffId: string): Promise<IdentityHandoffStatus> {
+    return recipientApiRequest<IdentityHandoffStatus>(
+      `/signing/identity-check/handoff/${encodeURIComponent(handoffId)}`);
   }
 
   // Streams the PDF; the caller builds an object URL from the blob for an

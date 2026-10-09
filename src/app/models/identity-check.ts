@@ -94,3 +94,20 @@ export function identityIdHasBack(idType: string): boolean {
 export function roleCanBeAskedForIdentityCheck(role: string): boolean {
   return role === "signer" || role === "approver" || role === "reviewer" || role === "acknowledgment-recipient";
 }
+
+// ── Continuing on a phone ───────────────────────────────────────────────────
+
+/** How long a link to continue on a phone is good for. */
+export const IDENTITY_HANDOFF_LIFETIME_MS = 10 * 60 * 1000;
+
+/**
+ * How long a hand-off link has left, by this device's clock. `null` when the
+ * answer cannot be believed: a link the server has just handed over is never
+ * already over, nor good for longer than its lifetime, so either means this
+ * device's clock is wrong and the server's word is the only one to go by.
+ */
+export function identityHandoffTimeLeft(expiresAt: string, now: number): number | null {
+  const left = Date.parse(expiresAt) - now;
+  if (!Number.isFinite(left) || left <= 0 || left > IDENTITY_HANDOFF_LIFETIME_MS + 60_000) return null;
+  return left;
+}
