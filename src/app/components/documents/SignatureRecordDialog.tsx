@@ -12,8 +12,8 @@
 // the interesting content is evidentiary — the party's name, the address the
 // invitation went to, and the exact instant their submission was accepted.
 
-import { useState, useEffect, type CSSProperties } from "react";
-import { X, CheckCircle2, Clock, XCircle, MinusCircle, ShieldCheck, SkipForward, BadgeCheck, AlertTriangle, Send, Loader2 } from "lucide-react";
+import { useState, useEffect, useCallback, type CSSProperties } from "react";
+import { X, CheckCircle2, Clock, XCircle, MinusCircle, ShieldCheck, SkipForward, BadgeCheck, AlertTriangle, Send, Loader2, IdCard } from "lucide-react";
 import {
   realSigningRequestService,
   type SigningRequestSignatures, type Signatory, type RecipientWorkflowState,
@@ -23,6 +23,11 @@ import { completedWord } from "../../services/participant-wording";
 import { DECLINE_REASON_CATEGORIES } from "../../models/recipient";
 import { ApiError } from "../../services/api-client";
 import { signingLinkLapsed } from "../../services/real/signing-link";
+import {
+  realIdentityCheckService, describeIdentityWaiveError,
+  type RecipientIdentityCheck,
+} from "../../services/real/identity-check.service";
+import { LifecycleConfirmDialog, type LifecycleConfirmCopy } from "./LifecycleConfirmDialog";
 
 const GF: CSSProperties = { fontFamily: "'Geist', sans-serif" };
 
@@ -95,7 +100,94 @@ function declineReasonLabel(reason: string): string {
     ?? reason.replace(/-/g, " ");
 }
 
-function SignatoryRow({ signatory, link }: { signatory: Signatory; link?: LinkControl }) {
+/**
+ * 105. How one participant stands on the identity check the sender asked of
+ * them, in the sender's words.
+ *
+ * A pass made in test mode is a SIMULATION and is never worded as a pass:
+ * it reads "Completed (test mode)".
+ */
+function identityCheckLine(check: RecipientIdentityCheck): { text: string; color: string } {
+  switch (check.status) {
+    case "passed": {
+      const when = check.verifiedAt === null ? "" : ` ${fmtAbsolute(check.verifiedAt)}`;
+      return check.mode === "live"
+        ? { text: `Passed${when}`, color: GREEN }
+        : { text: `Completed (test mode)${when}`, color: AMBER };
+    }
+    case "locked":
+      return { text: "Locked after 3 attempts", color: RED };
+    case "waived":
+      return {
+        text: `Lighter method allowed${check.waivedAt === null ? "" : ` ${fmtAbsolute(check.waivedAt)}`}`,
+        color: SLATE6,
+      };
+    case "pending":
+      return check.failedAttempts > 0
+        ? { text: `Not passed, ${String(check.failedAttempts)} ${check.failedAttempts === 1 ? "attempt" : "attempts"}`, color: AMBER }
+        : { text: "Required, not done yet", color: SLATE6 };
+    default:
+      return { text: "Not required", color: SLATE4 };
+  }
+}
+
+/** What a row needs to show the identity check and offer the lighter method. */
+interface IdentityControl {
+  readonly check: RecipientIdentityCheck;
+  /** Absent once the request is no longer out for signing. */
+  readonly onAllow?: (signatory: Signatory) => void;
+}
+
+function IdentityCheckLine({ signatory, identity }: { signatory: Signatory; identity: IdentityControl }) {
+  const { check } = identity;
+  const line = identityCheckLine(check);
+  const canAllow = identity.onAllow !== undefined && (check.status === "pending" || check.status === "locked");
+  return (
+    <div data-testid="signatory-identity-check" style={{ marginTop: 8 }}>
+      <div style={{ display: "flex", alignItems: "baseline", gap: 6, flexWrap: "wrap" }}>
+        <IdCard size={13} aria-hidden style={{ color: SLATE4, flexShrink: 0, alignSelf: "center" }} />
+        <span style={{ fontSize: 10.5, fontWeight: 700, color: SLATE4, textTransform: "uppercase", letterSpacing: "0.05em", ...GF }}>
+          Identity check
+        </span>
+        <span style={{ fontSize: 12.5, fontWeight: 600, color: line.color, ...GF }}>{line.text}</span>
+      </div>
+      {canAllow && (
+        <button
+          type="button" onClick={() => { identity.onAllow?.(signatory); }}
+          aria-label={`Allow a lighter method for ${signatory.name}`}
+          style={{
+            ...GF, marginTop: 8, minHeight: 36, display: "inline-flex", alignItems: "center", gap: 6,
+            fontSize: 12.5, fontWeight: 600, color: AZURE, background: "#fff",
+            border: `1px solid #BFDBFE`, borderRadius: 7, padding: "7px 12px", cursor: "pointer",
+          }}
+        >
+          Allow a lighter method
+        </button>
+      )}
+    </div>
+  );
+}
+
+const WAIVE_COPY: LifecycleConfirmCopy = {
+  title: "Allow a lighter method?",
+  lead: "This participant will be able to open and sign the document with their secure link alone, without the identity check.",
+  points: [
+    "This is recorded in the document's history.",
+    "It applies to this participant only.",
+  ],
+  reason: {
+    label: "Reason",
+    placeholder: "For example: they do not have an ID with them.",
+    hint: "Optional. Shown in the document's history.",
+    optional: true,
+  },
+  tone: "neutral",
+  icon: IdCard,
+};
+
+function SignatoryRow({ signatory, link, identity }: {
+  signatory: Signatory; link?: LinkControl; identity?: IdentityControl;
+}) {
   // Falls back rather than crashing if a newer backend sends a state this
   // build does not know yet — the defect this used to have.
   const presentation = STATE_PRESENTATION[signatory.state]
@@ -198,6 +290,7 @@ function SignatoryRow({ signatory, link }: { signatory: Signatory; link?: LinkCo
               Declined {fmtAbsolute(signatory.declinedAt)}
             </div>
           )}
+          {identity !== undefined && <IdentityCheckLine signatory={signatory} identity={identity} />}
           {link !== undefined && <SigningLink signatory={signatory} link={link} />}
           {/* The signer's stated reason, in the words they chose from. Only
               the category is recorded — there is no free-text note to show. */}
@@ -317,6 +410,43 @@ export function SignatureRecordDialog({
       .finally(() => { setSending(null); });
   }
 
+  // 105. The identity check, where the sender asked one of anybody. `null`
+  // covers "feature off" (the route does not exist) and any failure to read
+  // it: the dialog then shows exactly what it showed before.
+  const [identityChecks, setIdentityChecks] = useState<ReadonlyMap<string, RecipientIdentityCheck> | null>(null);
+  const [waiving, setWaiving] = useState<Signatory | null>(null);
+  const [waiveBusy, setWaiveBusy] = useState(false);
+  const [waiveError, setWaiveError] = useState<string | null>(null);
+
+  const loadIdentityChecks = useCallback(async (): Promise<void> => {
+    try {
+      setIdentityChecks(shownIdentityChecks(await realIdentityCheckService.checks(workspaceId, signingRequestId)));
+    } catch {
+      setIdentityChecks(null);
+    }
+  }, [workspaceId, signingRequestId]);
+
+  useEffect(() => {
+    let cancelled = false;
+    void realIdentityCheckService.checks(workspaceId, signingRequestId)
+      .then(items => { if (!cancelled) setIdentityChecks(shownIdentityChecks(items)); })
+      .catch(() => { if (!cancelled) setIdentityChecks(null); });
+    return () => { cancelled = true; };
+  }, [workspaceId, signingRequestId]);
+
+  function allowLighterMethod(reason: string) {
+    if (waiving === null || waiveBusy) return;
+    setWaiveBusy(true);
+    setWaiveError(null);
+    void realIdentityCheckService.waive(workspaceId, signingRequestId, waiving.recipientId, reason)
+      .then(async () => {
+        await loadIdentityChecks();
+        setWaiving(null);
+      })
+      .catch((cause: unknown) => { setWaiveError(describeIdentityWaiveError(cause)); })
+      .finally(() => { setWaiveBusy(false); });
+  }
+
   useEffect(() => {
     const previous = document.body.style.overflow;
     document.body.style.overflow = "hidden";
@@ -406,6 +536,8 @@ export function SignatureRecordDialog({
               <ul style={{ margin: "8px 0 0", padding: 0 }}>
                 {data.signatories.map(signatory => (
                   <SignatoryRow key={signatory.recipientId} signatory={signatory}
+                    {...identityControlFor(signatory, identityChecks, data.state,
+                      target => { setWaiveError(null); setWaiving(target); })}
                     {...(data.state === "sent" || data.state === "partially-completed"
                       ? { link: { sending, sent, error: linkError, onSend: sendNewLink } } : {})} />
                 ))}
@@ -414,6 +546,38 @@ export function SignatureRecordDialog({
           )}
         </div>
       </div>
+      {waiving !== null && (
+        <LifecycleConfirmDialog
+          copy={WAIVE_COPY}
+          subject={`${waiving.name} · ${documentTitle}`}
+          busy={waiveBusy}
+          error={waiveError}
+          onContinue={allowLighterMethod}
+          onCancel={() => { if (!waiveBusy) setWaiving(null); }}
+        />
+      )}
     </div>
   );
+}
+
+/** The participants a check was asked of, by recipient; null when there is nothing to show. */
+function shownIdentityChecks(
+  items: readonly RecipientIdentityCheck[] | null,
+): ReadonlyMap<string, RecipientIdentityCheck> | null {
+  const shown = (items ?? []).filter(item => item.status !== "not-required");
+  return shown.length === 0 ? null : new Map(shown.map(item => [item.recipientId, item]));
+}
+
+/** The identity check of one row, as a prop to spread; nothing when there is none. */
+function identityControlFor(
+  signatory: Signatory,
+  checks: ReadonlyMap<string, RecipientIdentityCheck> | null,
+  requestState: SigningRequestSignatures["state"],
+  onAllow: (signatory: Signatory) => void,
+): { identity?: IdentityControl } {
+  const check = checks?.get(signatory.recipientId);
+  if (check === undefined) return {};
+  // A lighter method only means something while the request is still out.
+  const open = requestState === "sent" || requestState === "partially-completed";
+  return { identity: open ? { check, onAllow } : { check } };
 }

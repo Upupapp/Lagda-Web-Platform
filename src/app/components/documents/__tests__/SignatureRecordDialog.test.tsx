@@ -2,7 +2,7 @@
 // (if any) shown distinctly from what the sender wrote in the document.
 
 import { describe, it, expect, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { SigningRequestSignatures } from "../../../services/real/signing-request.service";
 
@@ -15,7 +15,22 @@ vi.mock("../../../services/real/signing-request.service", () => ({
   },
 }));
 
+// 105. The identity check has its own routes, which exist only where the
+// check is switched on. Unless a test says otherwise they answer as a
+// deployment without the feature does: nothing (the service's `null`).
+const identityChecks = vi.fn();
+const waiveIdentityCheck = vi.fn();
+vi.mock("../../../services/real/identity-check.service", async (original) => ({
+  ...(await original<typeof import("../../../services/real/identity-check.service")>()),
+  realIdentityCheckService: {
+    checks: (...args: unknown[]) => (identityChecks(...args) as Promise<unknown> | undefined) ?? Promise.resolve(null),
+    waive: (...args: unknown[]) => waiveIdentityCheck(...args) as unknown,
+  },
+}));
+
 import { SignatureRecordDialog } from "../SignatureRecordDialog";
+import { ApiError } from "../../../services/api-client";
+import type { RecipientIdentityCheck } from "../../../services/real/identity-check.service";
 
 const withLinkedAccount: SigningRequestSignatures = {
   signingRequestId: "sr_1",
@@ -237,5 +252,172 @@ describe("a signing link that has ended", () => {
     renderDialog();
     expect(await screen.findByText("Maria Santos")).toBeTruthy();
     expect(screen.queryByRole("button", { name: /Send a new link/ })).toBeNull();
+  });
+});
+
+// 105. The sender may ask a participant for an identity check. Where they
+// did, each row says how that participant stands, and the sender can let
+// them continue with their secure link alone.
+describe("the identity check of each participant", () => {
+  const out = (state: SigningRequestSignatures["state"] = "sent"): SigningRequestSignatures => ({
+    ...noLinkedAccount,
+    state,
+    signedCount: 0,
+    signatories: [{ ...noLinkedAccount.signatories[0]!, state: "active", signedAt: null }],
+  });
+  const standing = (over: Partial<RecipientIdentityCheck> = {}): RecipientIdentityCheck => ({
+    recipientId: "srr_1", email: "maria@ayalaland.example", required: true, status: "pending", mode: "test",
+    lastOutcome: null, failedAttempts: 0, verifiedAt: null, idType: null, waivedAt: null, ...over,
+  });
+  const line = async () => (await screen.findByTestId("signatory-identity-check")).textContent;
+
+  it("shows nothing where the feature is off", async () => {
+    signatures.mockResolvedValue(out());
+    renderDialog();
+    await screen.findByText("(name in document)");
+    expect(identityChecks).toHaveBeenCalledWith("ws_1", "sr_1");
+    expect(screen.queryByTestId("signatory-identity-check")).toBeNull();
+    expect(screen.queryByText("Identity check")).toBeNull();
+    expect(screen.queryByRole("button", { name: /lighter method/ })).toBeNull();
+  });
+
+  it("shows nothing when the checks cannot be read, and the participants still load", async () => {
+    signatures.mockResolvedValue(out());
+    identityChecks.mockRejectedValue(new ApiError(500, undefined, "boom"));
+    renderDialog();
+    expect(await screen.findByText("Maria Santos")).toBeTruthy();
+    expect(screen.queryByTestId("signatory-identity-check")).toBeNull();
+  });
+
+  it("shows nothing for a participant nothing was asked of", async () => {
+    signatures.mockResolvedValue(out());
+    identityChecks.mockResolvedValue([standing({ required: false, status: "not-required", mode: null })]);
+    renderDialog();
+    await screen.findByText("(name in document)");
+    await waitFor(() => { expect(identityChecks).toHaveBeenCalled(); });
+    expect(screen.queryByTestId("signatory-identity-check")).toBeNull();
+  });
+
+  it("says Required, not done yet before any attempt", async () => {
+    signatures.mockResolvedValue(out());
+    identityChecks.mockResolvedValue([standing()]);
+    renderDialog();
+    expect(await line()).toContain("Identity check");
+    expect(await line()).toContain("Required, not done yet");
+    expect(screen.getByRole("button", { name: "Allow a lighter method for Maria Santos" })).toBeInTheDocument();
+  });
+
+  it("counts the attempts that were not passed", async () => {
+    signatures.mockResolvedValue(out());
+    identityChecks.mockResolvedValue([standing({ lastOutcome: "failed", failedAttempts: 2 })]);
+    renderDialog();
+    expect(await line()).toContain("Not passed, 2 attempts");
+  });
+
+  it("never calls a simulated result a pass", async () => {
+    signatures.mockResolvedValue(out());
+    identityChecks.mockResolvedValue([standing({
+      status: "passed", lastOutcome: "passed", verifiedAt: "2026-09-22T03:41:00.000Z", idType: "umid",
+    })]);
+    renderDialog();
+    const text = await line();
+    expect(text).toContain("Completed (test mode)");
+    expect(text).toMatch(/2026/);
+    expect(text).not.toMatch(/Passed|verified/i);
+    // Done: nothing lighter is left to allow.
+    expect(screen.queryByRole("button", { name: /lighter method/ })).toBeNull();
+  });
+
+  it("says Passed, with the date, for a real check", async () => {
+    signatures.mockResolvedValue(out());
+    identityChecks.mockResolvedValue([standing({
+      status: "passed", mode: "live", lastOutcome: "passed", verifiedAt: "2026-09-22T03:41:00.000Z",
+    })]);
+    renderDialog();
+    expect(await line()).toMatch(/Passed .*2026/);
+  });
+
+  it("says Lighter method allowed, with the date, once waived", async () => {
+    signatures.mockResolvedValue(out());
+    identityChecks.mockResolvedValue([standing({ required: false, status: "waived", waivedAt: "2026-09-23T03:41:00.000Z" })]);
+    renderDialog();
+    expect(await line()).toMatch(/Lighter method allowed .*2026/);
+    expect(screen.queryByRole("button", { name: /Allow a lighter method/ })).toBeNull();
+  });
+
+  it("offers no lighter method once the request is no longer out for signing", async () => {
+    signatures.mockResolvedValue(out("expired"));
+    identityChecks.mockResolvedValue([standing({ status: "locked", failedAttempts: 3 })]);
+    renderDialog();
+    expect(await line()).toContain("Locked after 3 attempts");
+    expect(screen.queryByRole("button", { name: /Allow a lighter method/ })).toBeNull();
+  });
+
+  it("asks before allowing a lighter method, sends the reason, and shows the new standing", async () => {
+    signatures.mockResolvedValue(out());
+    identityChecks.mockResolvedValueOnce([standing({ status: "locked", lastOutcome: "failed", failedAttempts: 3 })]);
+    waiveIdentityCheck.mockResolvedValue({ recipientId: "srr_1", status: "waived", waivedAt: "2026-09-23T03:41:00.000Z" });
+    renderDialog();
+    expect(await line()).toContain("Locked after 3 attempts");
+
+    await userEvent.click(screen.getByRole("button", { name: "Allow a lighter method for Maria Santos" }));
+    const confirm = screen.getByRole("alertdialog", { name: "Allow a lighter method?" });
+    expect(confirm.textContent).toContain("open and sign the document with their secure link alone");
+    expect(confirm.textContent).toContain("This is recorded in the document's history.");
+    expect(confirm.textContent).toContain("Maria Santos");
+    // Cancel and Continue, and the reason is optional: Continue is not held back.
+    expect(within(confirm).getByRole("button", { name: "Cancel" })).toHaveFocus();
+    expect(within(confirm).getByRole("button", { name: "Continue" })).toBeEnabled();
+    expect(within(confirm).getByRole("textbox", { name: /Reason/ })).toHaveAttribute("maxlength", "500");
+    expect(waiveIdentityCheck).not.toHaveBeenCalled();
+
+    identityChecks.mockResolvedValueOnce([standing({ required: false, status: "waived", waivedAt: "2026-09-23T03:41:00.000Z" })]);
+    await userEvent.type(within(confirm).getByRole("textbox", { name: /Reason/ }), "No ID with them");
+    await userEvent.click(within(confirm).getByRole("button", { name: "Continue" }));
+
+    expect(waiveIdentityCheck).toHaveBeenCalledWith("ws_1", "sr_1", "srr_1", "No ID with them");
+    await waitFor(() => { expect(screen.queryByRole("alertdialog")).toBeNull(); });
+    expect(await line()).toContain("Lighter method allowed");
+    expect(identityChecks).toHaveBeenCalledTimes(2);
+    expect(screen.queryByRole("button", { name: /Allow a lighter method/ })).toBeNull();
+  });
+
+  it("can be allowed before the participant has even tried, with no reason", async () => {
+    signatures.mockResolvedValue(out());
+    identityChecks.mockResolvedValue([standing()]);
+    waiveIdentityCheck.mockResolvedValue({ recipientId: "srr_1", status: "waived", waivedAt: "2026-09-23T03:41:00.000Z" });
+    renderDialog();
+    await userEvent.click(await screen.findByRole("button", { name: "Allow a lighter method for Maria Santos" }));
+    await userEvent.click(screen.getByRole("button", { name: "Continue" }));
+    expect(waiveIdentityCheck).toHaveBeenCalledWith("ws_1", "sr_1", "srr_1", "");
+  });
+
+  it("changes nothing on Cancel, and Escape closes only the question", async () => {
+    const onClose = vi.fn();
+    signatures.mockResolvedValue(out());
+    identityChecks.mockResolvedValue([standing()]);
+    render(
+      <SignatureRecordDialog workspaceId="ws_1" signingRequestId="sr_1" documentTitle="Office Lease" onClose={onClose} />,
+    );
+    await userEvent.click(await screen.findByRole("button", { name: "Allow a lighter method for Maria Santos" }));
+    await userEvent.keyboard("{Escape}");
+    expect(screen.queryByRole("alertdialog")).toBeNull();
+    expect(onClose).not.toHaveBeenCalled();
+
+    await userEvent.click(screen.getByRole("button", { name: "Allow a lighter method for Maria Santos" }));
+    await userEvent.click(screen.getByRole("button", { name: "Cancel" }));
+    expect(screen.queryByRole("alertdialog")).toBeNull();
+    expect(waiveIdentityCheck).not.toHaveBeenCalled();
+  });
+
+  it("says why inside the question when it cannot be done", async () => {
+    signatures.mockResolvedValue(out());
+    identityChecks.mockResolvedValue([standing()]);
+    waiveIdentityCheck.mockRejectedValue(new ApiError(409, { code: "identity_check_not_required", message: "m" }, "x"));
+    renderDialog();
+    await userEvent.click(await screen.findByRole("button", { name: "Allow a lighter method for Maria Santos" }));
+    await userEvent.click(screen.getByRole("button", { name: "Continue" }));
+    expect((await screen.findByRole("alert")).textContent).toBe("No identity check is required of this participant any more.");
+    expect(screen.getByRole("alertdialog")).toBeInTheDocument();
   });
 });
