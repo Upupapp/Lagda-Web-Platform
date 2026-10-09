@@ -610,6 +610,15 @@ export function usePlatform(): PlatformContextValue {
   return ctx;
 }
 
+/**
+ * The platform context where there is one, else null. For a hook that adds
+ * something optional to a screen and must leave the screen exactly as it was
+ * when it is rendered outside the provider.
+ */
+export function useOptionalPlatform(): PlatformContextValue | null {
+  return useContext(PlatformContext);
+}
+
 export function usePermission(permission: PlatformPermission): boolean {
   const { hasPermission } = usePlatform();
   return hasPermission(permission);
