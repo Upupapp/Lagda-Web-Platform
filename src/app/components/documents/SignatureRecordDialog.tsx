@@ -28,6 +28,7 @@ import {
   type RecipientIdentityCheck,
 } from "../../services/real/identity-check.service";
 import { LifecycleConfirmDialog, type LifecycleConfirmCopy } from "./LifecycleConfirmDialog";
+import { identityIdTypeLabel } from "../../models/identity-check";
 
 const GF: CSSProperties = { fontFamily: "'Geist', sans-serif" };
 
@@ -151,6 +152,13 @@ function IdentityCheckLine({ signatory, identity }: { signatory: Signatory; iden
         </span>
         <span style={{ fontSize: 12.5, fontWeight: 600, color: line.color, ...GF }}>{line.text}</span>
       </div>
+      {/* The kind of ID the participant presented, where the server reports
+          one. Named as a kind and never as a result. */}
+      {check.idType !== null && (
+        <div data-testid="signatory-identity-id-type" style={{ fontSize: 11.5, color: SLATE6, marginTop: 3, overflowWrap: "anywhere", ...GF }}>
+          ID: {identityIdTypeLabel(check.idType)}
+        </div>
+      )}
       {canAllow && (
         <button
           type="button" onClick={() => { identity.onAllow?.(signatory); }}

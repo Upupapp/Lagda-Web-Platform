@@ -27,7 +27,9 @@ import { stepEyebrow,
 import type { PreparationStepId, PrepValidationIssue } from "../../../models/prepare";
 import { StepBanner, StepTwoColumn, RailCard } from "../../../components/prepare/StepBanner";
 import { useIdentityCheckRequirements } from "../../../hooks/useIdentityCheckRequirements";
-import { IDENTITY_CHECK_OPTION_LABEL, roleCanBeAskedForIdentityCheck } from "../../../models/identity-check";
+import {
+  IDENTITY_CHECK_OPTION_LABEL, IDENTITY_CHECK_HOSTED_EXPLAINER, roleCanBeAskedForIdentityCheck,
+} from "../../../models/identity-check";
 
 const GF     = { fontFamily: "'Geist', sans-serif" };
 const NAVY   = "#07111F";
@@ -273,6 +275,11 @@ export function ReviewStep() {
                 {": "}{getAuthMethodConfig(auth.defaultMethod).label} + {IDENTITY_CHECK_OPTION_LABEL}
               </li>
             ))}
+            {identityCheck.flow === "hosted" && (
+              <li data-testid="review-identity-check-explainer" style={{ ...GF, fontSize: 12, color: SILVER, lineHeight: 1.5 }}>
+                {IDENTITY_CHECK_HOSTED_EXPLAINER}
+              </li>
+            )}
             {identityCheck.mode === "test" && (
               <li style={{ ...GF, fontSize: 12, color: "#92400E" }}>
                 Test mode: the check is simulated and no identity is actually verified.

@@ -38,6 +38,11 @@ export type IdentityRequirementsSaveState = "idle" | "saving" | "saved" | "faile
 export interface IdentityRequirementsControl {
   readonly status: IdentityRequirementsStatus;
   readonly mode: IdentityCheckMode | null;
+  /**
+   * `hosted`: the participant is taken to the identity verification partner's
+   * page. Absent means `inline`, as from a server that does not say.
+   */
+  readonly flow?: "inline" | "hosted";
   /** False when there is no saved document to attach a requirement to yet. */
   readonly canEdit: boolean;
   readonly saveState: IdentityRequirementsSaveState;
@@ -188,10 +193,12 @@ export function useIdentityCheckRequirements(): IdentityRequirementsControl {
 
   return useMemo<IdentityRequirementsControl>(() => {
     if (availability === null || !availability.available || featureOff) return OFF_CONTROL;
-    if (!availability.planAllows) return { ...OFF_CONTROL, status: "plan-locked", mode: availability.mode };
+    const flow = availability.flow === "hosted" ? "hosted" as const : "inline" as const;
+    if (!availability.planAllows) return { ...OFF_CONTROL, status: "plan-locked", mode: availability.mode, flow };
     return {
       status: shown === null ? "loading" : "ready",
       mode: availability.mode,
+      flow,
       canEdit: shown !== null && documentId !== undefined,
       saveState, error,
       isRequired: email => shown?.has(key(email)) ?? false,

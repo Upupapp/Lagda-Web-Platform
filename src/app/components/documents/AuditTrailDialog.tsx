@@ -48,6 +48,18 @@ const ACTOR: Record<AuditActorType, { icon: typeof User; label: string }> = {
   "system":         { icon: Cog,  label: "LAGDA" },
 };
 
+/**
+ * How the ID and face were taken. Where the identity verification partner did
+ * it, it is named as that and never by brand; an attempt that was not passed
+ * is not called verified.
+ */
+function captureLabel(capture: "camera" | "upload" | "provider", outcome: "passed" | "failed"): string {
+  if (capture === "provider") {
+    return outcome === "passed" ? "Verified by our identity partner" : "Checked by our identity partner";
+  }
+  return capture === "camera" ? "Captured by camera" : "Uploaded selfie";
+}
+
 function EntryRow({ entry }: { entry: AuditEntry }) {
   const actor = ACTOR[entry.actor.type];
   const ActorIcon = actor.icon;
@@ -96,12 +108,20 @@ function EntryRow({ entry }: { entry: AuditEntry }) {
                 </span>
               )}
               {entry.details.capture !== null && (
-                <span>{entry.details.capture === "camera" ? "Captured by camera" : "Uploaded selfie"}</span>
+                <span>{captureLabel(entry.details.capture, entry.details.outcome)}</span>
               )}
               {entry.details.mode === "test" && (
                 <span style={{ display: "inline-flex", alignItems: "center", gap: 4, color: "#92400E", fontWeight: 600 }}>
                   <FlaskConical size={12} aria-hidden />
                   Test mode: simulated
+                </span>
+              )}
+              {/* What a sender quotes to support. Its own line, and selected
+                  whole by one click so it is copied without a stray space. */}
+              {typeof entry.details.providerReference === "string" && entry.details.providerReference.trim() !== "" && (
+                <span data-testid="audit-identity-reference" style={{ flexBasis: "100%", minWidth: 0, fontSize: 11.5, color: SLATE4, overflowWrap: "anywhere" }}>
+                  Reference:{" "}
+                  <span style={{ ...GM, userSelect: "all" }}>{entry.details.providerReference}</span>
                 </span>
               )}
             </div>

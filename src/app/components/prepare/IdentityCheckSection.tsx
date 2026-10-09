@@ -15,7 +15,8 @@ import { AlertTriangle, Check, Loader2, Lock } from "lucide-react";
 import type { PrepParticipant } from "../../models/prepare";
 import { PREP_PARTICIPANT_ROLE_LABELS } from "../../models/prepare";
 import {
-  IDENTITY_CHECK_OPTION_LABEL, IDENTITY_CHECK_TEST_MODE_NOTICE, roleCanBeAskedForIdentityCheck,
+  IDENTITY_CHECK_OPTION_LABEL, IDENTITY_CHECK_TEST_MODE_NOTICE, IDENTITY_CHECK_HOSTED_EXPLAINER,
+  roleCanBeAskedForIdentityCheck,
 } from "../../models/identity-check";
 import type { IdentityRequirementsControl } from "../../hooks/useIdentityCheckRequirements";
 
@@ -120,9 +121,13 @@ export function IdentityCheckSection({ control, participants }: {
         ) : <SaveStatus control={control} />}
       </div>
 
-      <p style={{ ...GF, fontSize: 13, color: "#475569", lineHeight: 1.55, margin: "6px 0 0" }}>
-        Ask a participant to show an ID and take a selfie before they can open the document.
-        This is in addition to their secure invitation link, not instead of it.
+      <p data-testid="identity-check-explainer" style={{ ...GF, fontSize: 13, color: "#475569", lineHeight: 1.55, margin: "6px 0 0" }}>
+        {control.flow === "hosted" ? IDENTITY_CHECK_HOSTED_EXPLAINER : (
+          <>
+            Ask a participant to show an ID and take a selfie before they can open the document.
+            This is in addition to their secure invitation link, not instead of it.
+          </>
+        )}
       </p>
 
       {locked && (
