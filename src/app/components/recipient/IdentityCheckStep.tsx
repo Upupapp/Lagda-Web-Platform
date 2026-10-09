@@ -23,6 +23,18 @@
 // permission prompt nobody asked for is a reason to close the tab. Its tracks
 // are stopped after the capture, on cancel, on leaving the stage, when the
 // tab is hidden or the page is put away, and on unmount.
+//
+// ── Two places it runs ─────────────────────────────────────────────────────
+//
+// The stages are the same wherever the check is done; only what carries the
+// attempt differs, and that is the TRANSPORT. On the signing page it is the
+// participant's ceremony: an attempt, and a re-read of the ceremony that lets
+// the page move on. On a phone that scanned the computer's QR code it is the
+// hand-off link: an attempt, and nothing to move on to, so the phone says
+// "done" and the computer continues by itself.
+//
+// `IdentityCheckStep` is the signing page's: the ceremony transport, built
+// from its props. `IdentityCheckStages` takes the transport itself.
 
 import {
   useCallback, useEffect, useId, useRef, useState,
@@ -30,7 +42,7 @@ import {
 } from "react";
 import {
   AlertTriangle, ArrowLeft, Ban, Camera, CheckCircle2, FlaskConical, IdCard, ImageUp, Loader2, Lock,
-  RefreshCw, ScanFace, ShieldCheck, Trash2, Upload,
+  RefreshCw, ScanFace, ShieldCheck, Smartphone, Trash2, Upload,
 } from "lucide-react";
 import {
   ActionButton, ActionRow, Notice, PhaseBanner, ProgressRail, GF, T, TAP, type RailStep,
@@ -40,6 +52,9 @@ import type {
   CeremonyIdentityCheck, IdentityCheckResult, IdentityCheckSubmission,
 } from "../../services/real/signing-access.service";
 import { groupIdentityIdTypes, identityIdHasBack } from "../../models/identity-check";
+import { IdentityHandoffPanel, type IdentityHandoffClient } from "./IdentityHandoffPanel";
+
+export type { IdentityHandoffClient } from "./IdentityHandoffPanel";
 
 export interface IdentityCheckStepProps {
   readonly identityCheck: CeremonyIdentityCheck;
@@ -54,6 +69,39 @@ export interface IdentityCheckStepProps {
   /** Present when the page offers declining; opens the page's own decline form. */
   readonly onDecline?: () => void;
   /** How long each camera prompt stays up. */
+  readonly promptMs?: number;
+  /**
+   * Present when the check can be continued on a phone. Offered only after
+   * the participant has agreed, and never on a device that is itself a phone.
+   */
+  readonly handoff?: IdentityHandoffClient;
+}
+
+/** What carries the attempt, and what happens around it. */
+export type IdentityCheckTransport =
+  | {
+      /** The participant's own signing session, on the signing page. */
+      readonly kind: "ceremony";
+      readonly submit: (input: IdentityCheckSubmission) => Promise<IdentityCheckResult>;
+      /** Re-reads the ceremony. Resolves to a message when it could not be read, else null. */
+      readonly reload: () => Promise<string | null>;
+      readonly handoff?: IdentityHandoffClient;
+    }
+  | {
+      /** A phone that opened the computer's hand-off link. */
+      readonly kind: "handoff";
+      readonly submit: (input: IdentityCheckSubmission) => Promise<IdentityCheckResult>;
+      /** When the link runs out, by this device's clock. Null when that clock cannot be trusted. */
+      readonly deadline: number | null;
+      /** The link is over: expired, replaced, or no longer wanted. */
+      readonly onEnded: () => void;
+    };
+
+export interface IdentityCheckStagesProps {
+  readonly identityCheck: CeremonyIdentityCheck;
+  readonly documentTitle: string;
+  readonly transport: IdentityCheckTransport;
+  readonly onDecline?: () => void;
   readonly promptMs?: number;
 }
 
@@ -118,11 +166,12 @@ function cameraSupported(): boolean {
   }
 }
 
-function describeAttemptError(error: unknown): string {
+function describeAttemptError(error: unknown, onPhone: boolean): string {
   if (!(error instanceof ApiError)) return "Something went wrong. Please try again.";
   if (error.status === 0) return "Could not reach the server. Check your connection and try again.";
-  if (error.status === 401) return "Your signing session has ended. Open your signing link again to continue.";
-  if (error.status === 403) return "This action could not be verified. Reload the page and try again.";
+  // A phone has no signing session to end, and reloading there loses the link.
+  if (error.status === 401 && !onPhone) return "Your signing session has ended. Open your signing link again to continue.";
+  if (error.status === 403 && !onPhone) return "This action could not be verified. Reload the page and try again.";
   if (error.status === 429) return "Too many tries in a short time. Wait a minute, then try again.";
   if (error.body?.code === "identity_check_invalid") {
     return error.body.details?.some(detail => detail.field === "idType") === true
@@ -315,9 +364,27 @@ const BODY: CSSProperties = {
 // ── The step ────────────────────────────────────────────────────────────────
 
 export function IdentityCheckStep({
-  identityCheck, documentTitle, submit, onReload, onDecline, promptMs = 2000,
+  identityCheck, documentTitle, submit, onReload, onDecline, promptMs, handoff,
 }: IdentityCheckStepProps) {
+  return (
+    <IdentityCheckStages
+      identityCheck={identityCheck} documentTitle={documentTitle}
+      transport={{ kind: "ceremony", submit, reload: onReload, ...(handoff !== undefined ? { handoff } : {}) }}
+      {...(onDecline !== undefined ? { onDecline } : {})}
+      {...(promptMs !== undefined ? { promptMs } : {})}
+    />
+  );
+}
+
+export function IdentityCheckStages({
+  identityCheck, documentTitle, transport, onDecline, promptMs = 2000,
+}: IdentityCheckStagesProps) {
   const testMode = identityCheck.mode === "test";
+  const onPhone = transport.kind === "handoff";
+  // Read when something happens, never as a reason to start over: the page
+  // hands a new transport over on every render.
+  const transportRef = useRef(transport);
+  transportRef.current = transport;
   const [stage, setStage] = useState<Stage>("consent");
   const [agreed, setAgreed] = useState(false);
   const [idType, setIdType] = useState("");
@@ -335,6 +402,7 @@ export function IdentityCheckStep({
   const [recheckCount, setRecheckCount] = useState(0);
   const [recheckNote, setRecheckNote] = useState<string | null>(null);
   const [announcement, setAnnouncement] = useState("");
+  const [handingOff, setHandingOff] = useState(false);
 
   const [touch] = useState(isTouchDevice);
   const [canUseCamera] = useState(cameraSupported);
@@ -349,6 +417,8 @@ export function IdentityCheckStep({
   const urlsRef = useRef(new Set<string>());
 
   const locked = identityCheck.status === "locked" || result?.kind === "locked";
+  // Someone already holding a phone is not sent to find one.
+  const phone = transport.kind === "ceremony" && !touch ? transport.handoff : undefined;
   const groups = groupIdentityIdTypes(identityCheck.idTypes);
   const hasBack = idType === "" || identityIdHasBack(idType);
 
@@ -488,7 +558,22 @@ export function IdentityCheckStep({
   const resultKind = result?.kind ?? null;
   useEffect(() => {
     headingRef.current?.focus();
-  }, [stage, resultKind, locked]);
+  }, [stage, resultKind, locked, handingOff]);
+
+  // ── A link that runs out (on a phone) ────────────────────────────────────
+
+  const deadline = transport.kind === "handoff" ? transport.deadline : null;
+  useEffect(() => {
+    // Not while an answer is on its way, and not once there is nothing left
+    // to send: "done" must not turn into "this link has ended".
+    if (deadline === null || locked) return;
+    if (resultKind === "checking" || resultKind === "passed") return;
+    const timer = window.setTimeout(() => {
+      const current = transportRef.current;
+      if (current.kind === "handoff") current.onEnded();
+    }, Math.max(0, deadline - Date.now()));
+    return () => { window.clearTimeout(timer); };
+  }, [deadline, resultKind, locked]);
 
   // ── Stage 2: the ID ──────────────────────────────────────────────────────
 
@@ -564,7 +649,10 @@ export function IdentityCheckStep({
   };
 
   const reload = async (): Promise<void> => {
-    const message = await onReload();
+    const current = transportRef.current;
+    // A phone has no ceremony to read: the link is simply over.
+    if (current.kind === "handoff") { current.onEnded(); return; }
+    const message = await current.reload();
     // Null means the page has read the ceremony and is moving on; if it has
     // not moved, the attempt screen is the right place to be.
     backToFace(message);
@@ -579,7 +667,7 @@ export function IdentityCheckStep({
     setResult({ kind: "checking" });
     setAnnouncement("Checking…");
     try {
-      const answer = await submit({
+      const answer = await transportRef.current.submit({
         idType, capture: selfie.capture, consent: true,
         // Only ever sent in test mode: the server refuses it otherwise.
         ...(testMode ? { testOutcome } : {}),
@@ -589,7 +677,9 @@ export function IdentityCheckStep({
         setAnnouncement("The identity check could not be completed.");
       } else if (answer.outcome === "passed") {
         setResult({ kind: "passed" });
-        setAnnouncement(testMode ? "Identity check completed in test mode." : "Identity check passed.");
+        setAnnouncement(onPhone
+          ? "Done. You can return to your computer."
+          : testMode ? "Identity check completed in test mode." : "Identity check passed.");
       } else if (answer.status === "not-required") {
         // The sender allowed another way while this attempt was being made.
         await reload();
@@ -605,11 +695,12 @@ export function IdentityCheckStep({
       } else if (
         code === "identity_check_not_required" || code === "identity_check_unavailable"
         || code === "signing_ceremony_unavailable" || (error instanceof ApiError && error.status === 404)
+        || (onPhone && error instanceof ApiError && error.status === 401)
       ) {
         // Something changed on the sender's side. The ceremony says what.
         await reload();
       } else {
-        backToFace(describeAttemptError(error));
+        backToFace(describeAttemptError(error, onPhone));
       }
     } finally {
       submittingRef.current = false;
@@ -617,10 +708,11 @@ export function IdentityCheckStep({
   };
 
   const continueAfterPass = async () => {
-    if (busy) return;
+    const current = transportRef.current;
+    if (busy || current.kind !== "ceremony") return;
     setBusy(true);
     try {
-      const message = await onReload();
+      const message = await current.reload();
       if (message !== null) { setSubmitError(message); setAnnouncement(message); }
     } finally {
       setBusy(false);
@@ -634,11 +726,12 @@ export function IdentityCheckStep({
   };
 
   const checkAgain = async () => {
-    if (busy) return;
+    const current = transportRef.current;
+    if (busy || current.kind !== "ceremony") return;
     setBusy(true);
     setRecheckNote(null);
     try {
-      const message = await onReload();
+      const message = await current.reload();
       if (message !== null) { setRecheckNote(message); setAnnouncement(message); }
       else setRecheckCount(count => count + 1);
     } finally {
@@ -663,6 +756,35 @@ export function IdentityCheckStep({
     setRecheckNote(note);
     setAnnouncement(note);
   }, [recheckCount]);
+
+  // ── Continuing on a phone ────────────────────────────────────────────────
+
+  /** The click handler of "Use my phone instead": the only place a code is asked for. */
+  const continueOnPhone = () => {
+    cancelCamera();
+    setSubmitError(null);
+    setHandingOff(true);
+  };
+
+  const phonePassed = () => {
+    setHandingOff(false);
+    setStage("result");
+    setResult({ kind: "passed" });
+    setAnnouncement(testMode ? "Identity check completed in test mode." : "Identity check passed.");
+    // Nothing more to ask here: on to whatever the ceremony says comes next.
+    void continueAfterPass();
+  };
+
+  const phoneLocked = () => {
+    setHandingOff(false);
+    setResult({ kind: "locked" });
+    setAnnouncement("The identity check could not be completed.");
+  };
+
+  const phoneGone = async (): Promise<string | null> => {
+    const current = transportRef.current;
+    return current.kind === "ceremony" ? current.reload() : null;
+  };
 
   // ── Shared pieces ────────────────────────────────────────────────────────
 
@@ -717,7 +839,7 @@ export function IdentityCheckStep({
     </fieldset>
   );
 
-  const frame = (children: ReactNode, rail: Stage | null) => (
+  const frame = (children: ReactNode, rail: Stage | null, panel = false) => (
     <div data-testid="identity-check-step">
       <style>{STYLES}</style>
       <PhaseBanner
@@ -737,7 +859,7 @@ export function IdentityCheckStep({
       )}
       {rail !== null && <ProgressRail steps={STAGES} current={rail} label="Identity check progress" scrollOnMobile />}
       <div role="status" aria-live="polite" style={SR_ONLY}>{announcement}</div>
-      <div key={rail ?? "locked"} className="idc-stage">{children}</div>
+      <div key={panel ? "phone" : rail ?? "locked"} className="idc-stage">{children}</div>
     </div>
   );
 
@@ -747,24 +869,49 @@ export function IdentityCheckStep({
     return frame(
       <>
         <StageHeading headingRef={headingRef}>The identity check is closed for now</StageHeading>
-        <Notice icon={Lock} tone="neutral">
-          The identity check could not be completed. The sender has been told and can let you
-          continue another way. You can come back to this link later.
-        </Notice>
-        {recheckNote !== null && (
-          <p data-testid="identity-check-recheck-note" style={{ ...BODY, color: T.inkSoft }}>{recheckNote}</p>
+        {onPhone ? (
+          // The hand-off link will not last, so nothing here says to come back to it.
+          <Notice icon={Lock} tone="neutral">
+            The identity check could not be completed. The sender has been told and can let you
+            continue another way. You can return to your computer.
+          </Notice>
+        ) : (
+          <>
+            <Notice icon={Lock} tone="neutral">
+              The identity check could not be completed. The sender has been told and can let you
+              continue another way. You can come back to this link later.
+            </Notice>
+            {recheckNote !== null && (
+              <p data-testid="identity-check-recheck-note" style={{ ...BODY, color: T.inkSoft }}>{recheckNote}</p>
+            )}
+            <ActionRow>
+              <ActionButton
+                icon={busy ? Loader2 : RefreshCw} kind="secondary"
+                onClick={() => void checkAgain()} disabled={busy} full
+              >
+                {busy ? "Checking…" : "Check again"}
+              </ActionButton>
+            </ActionRow>
+          </>
         )}
-        <ActionRow>
-          <ActionButton
-            icon={busy ? Loader2 : RefreshCw} kind="secondary"
-            onClick={() => void checkAgain()} disabled={busy} full
-          >
-            {busy ? "Checking…" : "Check again"}
-          </ActionButton>
-        </ActionRow>
         {declineLink}
       </>,
       null,
+    );
+  }
+
+  // ── On a phone instead ───────────────────────────────────────────────────
+
+  // Only ever from the ID or the face stage, so never before the agreement.
+  if (handingOff && phone !== undefined && agreed && (stage === "id" || stage === "face")) {
+    return frame(
+      <IdentityHandoffPanel
+        client={phone} headingRef={headingRef} announce={setAnnouncement}
+        onBack={() => { setHandingOff(false); }}
+        onCompleted={phonePassed} onLocked={phoneLocked} onGone={phoneGone}
+      />,
+      stage,
+      true,
     );
   }
 
@@ -867,6 +1014,20 @@ export function IdentityCheckStep({
           )}
         </div>
 
+        {phone !== undefined && (
+          <div style={{
+            display: "flex", flexWrap: "wrap", alignItems: "center", gap: 10, marginTop: 16, padding: 12,
+            borderRadius: 12, background: T.canvas, border: `1px solid ${T.border}`,
+          }}>
+            <span style={{ ...GF, flex: "1 1 180px", minWidth: 0, fontSize: 12.5, color: T.inkSoft, lineHeight: 1.45 }}>
+              Easier with a phone camera? Continue this check on your phone.
+            </span>
+            <button type="button" onClick={continueOnPhone} style={{ ...SMALL_BUTTON, flex: "1 1 180px" }}>
+              <Smartphone size={15} aria-hidden /> Use my phone instead
+            </button>
+          </div>
+        )}
+
         <ActionRow>
           <ActionButton icon={ScanFace} onClick={continueFromId} full>Continue</ActionButton>
           <ActionButton kind="secondary" icon={ArrowLeft} onClick={() => { setStage("consent"); }} full>Back</ActionButton>
@@ -896,6 +1057,7 @@ export function IdentityCheckStep({
             <SelfieChoices
               canUseCamera={canUseCamera} starting={camera === "starting"} touch={touch}
               error={errors.selfie ?? null} onCamera={startCamera} onFile={pickSelfie}
+              {...(phone !== undefined ? { onPhone: continueOnPhone } : {})}
             />
           </>
         )}
@@ -972,6 +1134,20 @@ export function IdentityCheckStep({
 
   // ── Result ───────────────────────────────────────────────────────────────
 
+  if (result?.kind === "passed" && onPhone) {
+    return frame(
+      <>
+        <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
+          <CheckCircle2 size={22} aria-hidden style={{ color: testMode ? "#B45309" : T.success, flexShrink: 0, marginTop: 1 }} />
+          <StageHeading headingRef={headingRef}>Done</StageHeading>
+        </div>
+        <p style={BODY}>You can return to your computer. It will continue by itself.</p>
+        {testMode && <p style={BODY}>This was a simulated check. No identity was verified.</p>}
+      </>,
+      "result",
+    );
+  }
+
   if (result?.kind === "passed") {
     return frame(
       <>
@@ -1032,9 +1208,11 @@ export function IdentityCheckStep({
   );
 }
 
-function SelfieChoices({ canUseCamera, starting, touch, error, onCamera, onFile }: {
+function SelfieChoices({ canUseCamera, starting, touch, error, onCamera, onFile, onPhone }: {
   canUseCamera: boolean; starting: boolean; touch: boolean; error: string | null;
   onCamera: () => void; onFile: (file: File) => void;
+  /** Present when the check can be continued on a phone. */
+  onPhone?: () => void;
 }) {
   const fileRef = useRef<HTMLInputElement>(null);
   const errorId = useId();
@@ -1058,9 +1236,16 @@ function SelfieChoices({ canUseCamera, starting, touch, error, onCamera, onFile 
             {starting ? "Starting the camera…" : "Use my camera"}
           </ActionButton>
         )}
+        {/* No camera here: the phone in their pocket is the first thing to offer. */}
+        {!canUseCamera && onPhone !== undefined && (
+          <ActionButton icon={Smartphone} onClick={onPhone} full>Use my phone instead</ActionButton>
+        )}
         <ActionButton kind="secondary" icon={Upload} onClick={() => fileRef.current?.click()} full>
           {canUseCamera ? "Upload a selfie instead" : "Upload a selfie"}
         </ActionButton>
+        {canUseCamera && onPhone !== undefined && (
+          <ActionButton kind="secondary" icon={Smartphone} onClick={onPhone} full>Use my phone instead</ActionButton>
+        )}
       </div>
       <p style={{ ...GF, margin: "8px 0 0", fontSize: 11.5, color: T.silver, lineHeight: 1.45 }}>
         JPEG, PNG or WebP, up to 8 MB.

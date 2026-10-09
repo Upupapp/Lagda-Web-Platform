@@ -732,6 +732,12 @@ export function RealSigningPage() {
           documentTitle={view.request.documentTitle}
           submit={(input) => realSigningAccessService.submitIdentityCheck(input)}
           onReload={reloadCeremony}
+          // "Use my phone instead": a QR code that carries the check to a
+          // phone. The same session as the attempt itself.
+          handoff={{
+            create: () => realSigningAccessService.createIdentityHandoff(),
+            status: (handoffId) => realSigningAccessService.identityHandoffStatus(handoffId),
+          }}
           // Declining stays possible while the check is outstanding, where
           // the server says this participant may decline at all.
           {...(view.access.mayDecline === true
