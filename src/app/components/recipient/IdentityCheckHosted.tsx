@@ -31,12 +31,32 @@
 // survives the trip to the partner's page and back. That marker also says
 // "this tab has sent them away", which is what tells a first visit (Start)
 // from a return (waiting). It holds a small number and nothing else.
+//
+// ── A new tab, not this one ────────────────────────────────────────────────
+//
+// On a computer the partner's page opens in a NEW tab and this one stays, and
+// waits. The partner reliably sends back only the device that FINISHES the
+// check; a participant who starts on a computer and finishes on the phone
+// its page offers would otherwise be left on the partner's "all done" page
+// with no LAGDA tab to return to. So this tab is what continues: it asks for
+// the result every few seconds and moves on by itself.
+//
+// The tab is opened blank, in the click itself, BEFORE the visit is asked
+// for, and pointed at the partner's address once that is known. A tab opened
+// after an await is no longer the click's and browsers block it; and asking
+// `window.open` for "noopener" makes it return null even when it worked, so
+// a blocked pop-up could not be told from an opened one. The blank tab's
+// opener is cut by hand instead, and the tab is closed again if the visit
+// cannot be opened. If the browser blocks even that, or on a phone (which
+// finishes the check itself and is sent back), this tab goes there instead,
+// as it always did. The marker then also says a tab was opened, and when,
+// so a reload of this tab comes back to the wait.
 
 import {
   useCallback, useEffect, useId, useRef, useState, type CSSProperties, type ReactNode,
 } from "react";
 import {
-  AlertTriangle, Ban, CheckCircle2, Clock, Loader2, Lock, RefreshCw, ShieldCheck,
+  AlertTriangle, Ban, CheckCircle2, Clock, ExternalLink, Loader2, Lock, RefreshCw, ShieldCheck, Smartphone,
 } from "lucide-react";
 import {
   ActionButton, ActionRow, Notice, PhaseBanner, GF, T, TAP,
@@ -63,10 +83,58 @@ export interface IdentityCheckHostedProps {
   readonly onReload: () => Promise<string | null>;
   /** Present when the page offers declining; opens the page's own decline form. */
   readonly onDecline?: () => void;
-  /** Sends the browser to the partner's page. The page's own navigation unless given. */
+  /** Sends THIS tab to the partner's page. The page's own navigation unless given. */
   readonly navigate?: (url: string) => void;
+  /**
+   * Opens a blank new tab, to be pointed at the partner's page once its
+   * address is known. Called inside the click, before anything is awaited.
+   * Null when the browser would not open one. `window.open` unless given.
+   */
+  readonly openTab?: () => ProviderTab | null;
+  /** A phone or tablet: the partner's page takes this tab. Detected unless given. */
+  readonly touch?: boolean;
   /** When the participant came back from the partner's page, if they just did. */
   readonly returnedAt?: number | null;
+}
+
+/** A tab opened for the partner's page, not yet pointed anywhere. */
+export interface ProviderTab {
+  /** Points the tab at the partner's page. */
+  readonly go: (url: string) => void;
+  /** Closes it again: the visit could not be opened. */
+  readonly close: () => void;
+}
+
+function openBlankTab(): ProviderTab | null {
+  let tab: Window | null = null;
+  try { tab = window.open("", "_blank"); } catch { tab = null; }
+  if (tab === null) return null;
+  const opened = tab;
+  // The partner's page gets no handle on this one.
+  try { opened.opener = null; } catch { /* already cut */ }
+  return {
+    go: url => { opened.location.replace(url); },
+    close: () => { try { opened.close(); } catch { /* already gone */ } },
+  };
+}
+
+/**
+ * Whether this device is a phone or tablet, which finishes the check itself
+ * and is sent back by the provider, so it keeps one tab.
+ *
+ * Deliberately narrower than "has a touch screen": a laptop with a touch
+ * screen is still a computer, the provider shows it only the code to scan,
+ * and it is the device that finishes (the phone) that is sent back. Treated
+ * as a phone, such a laptop would be left on the provider's finished page.
+ * So the MAIN pointer must be a finger, or the browser must say it is mobile.
+ */
+function isTouchDevice(): boolean {
+  try {
+    if (/Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) return true;
+    return typeof window.matchMedia === "function" && window.matchMedia("(pointer: coarse)").matches;
+  } catch {
+    return false;
+  }
 }
 
 /** How often the result is asked for just after coming back. */
@@ -75,6 +143,8 @@ export const HOSTED_FAST_POLL_MS = 3_000;
 export const HOSTED_REVIEW_POLL_MS = 10_000;
 /** How long "passed" stays up before the page moves on by itself. */
 export const HOSTED_PASSED_PAUSE_MS = 1_200;
+/** How long this tab waits on a check being done in the tab it opened. */
+export const HOSTED_TAB_WAIT_MS = 15 * 60 * 1000;
 /** How long "Opening…" may stand if the browser never left. */
 const OPENING_GIVE_UP_MS = 10_000;
 
@@ -84,6 +154,8 @@ type View =
   | { readonly kind: "start" }
   /** Just back: the result usually arrives within seconds. */
   | { readonly kind: "waiting" }
+  /** The partner's page is open in another tab; this one waits for the result. */
+  | { readonly kind: "tab" }
   | { readonly kind: "review" }
   | { readonly kind: "not-received" }
   | { readonly kind: "failed"; readonly left: number }
@@ -125,20 +197,31 @@ function isWebAddress(url: unknown): url is string {
 
 const markerKey = (requestId: string) => `lagda:identity-hosted:${requestId}`;
 
-/** The attempts left when this tab sent the participant away, or null if it never did. */
-function readMarker(requestId: string): number | null {
+interface Marker {
+  /** The attempts left when this tab sent the participant away. */
+  readonly attempts: number;
+  /** When this tab opened the partner's page in a new tab, if that is how they went. */
+  readonly tabSince: number | null;
+}
+
+/** What this tab kept when it sent the participant away, or null if it never did. */
+function readMarker(requestId: string): Marker | null {
   try {
     const raw = window.sessionStorage.getItem(markerKey(requestId));
     if (raw === null) return null;
-    const attempts = Number(raw);
-    return Number.isInteger(attempts) && attempts >= 0 ? attempts : null;
+    const [count = "", how, when] = raw.split("|");
+    const attempts = Number(count);
+    if (count === "" || !Number.isInteger(attempts) || attempts < 0) return null;
+    const since = how === "tab" ? Number(when) : Number.NaN;
+    return { attempts, tabSince: Number.isFinite(since) ? since : null };
   } catch {
     return null;
   }
 }
 
-function writeMarker(requestId: string, attempts: number): void {
-  try { window.sessionStorage.setItem(markerKey(requestId), String(attempts)); } catch { /* not kept: the return page still says they came back */ }
+function writeMarker(requestId: string, attempts: number, tabSince: number | null = null): void {
+  const value = tabSince === null ? String(attempts) : `${String(attempts)}|tab|${String(tabSince)}`;
+  try { window.sessionStorage.setItem(markerKey(requestId), value); } catch { /* not kept: the return page still says they came back */ }
 }
 
 function clearMarker(requestId: string): void {
@@ -173,6 +256,7 @@ const HEADINGS: Readonly<Record<View["kind"], string>> = {
   "arriving": "Checking…",
   "start": "Before you start",
   "waiting": "Checking for your result…",
+  "tab": "Finish the verification in the new tab",
   "review": "Your verification is being reviewed",
   "not-received": "We have not received your result yet",
   "failed": "We could not complete the identity check",
@@ -194,23 +278,32 @@ export function IdentityCheckHosted(props: IdentityCheckHostedProps) {
   const [arrival] = useState(() => {
     const marker = readMarker(requestId);
     const fastUntil = returnedAt === null ? 0 : returnedAt + IDENTITY_RETURN_FAST_WINDOW_MS;
+    // A reload of the tab that was left waiting. Not for a tab the partner
+    // sent back: that one is the return, whatever it inherited.
+    const since = returnedAt === null ? marker?.tabSince ?? null : null;
+    const tabUntil = since !== null && since <= Date.now() ? since + HOSTED_TAB_WAIT_MS : 0;
     return {
       sentAway: marker !== null || returnedAt !== null,
-      baseline: marker ?? identityCheck.attemptsRemaining,
+      baseline: marker?.attempts ?? identityCheck.attemptsRemaining,
       fastUntil,
+      tabUntil,
     };
   });
+  const [touch] = useState(() => props.touch ?? isTouchDevice());
 
   /** True once this tab has sent the participant to the partner's page. */
   const sentAwayRef = useRef(arrival.sentAway);
   /** The attempts left as last known: a lower number later means an attempt was not passed. */
   const baselineRef = useRef(arrival.baseline);
   const fastUntilRef = useRef(arrival.fastUntil);
+  /** Until when this tab waits on the tab it opened. 0: it is not waiting on one. */
+  const tabUntilRef = useRef(arrival.tabUntil);
 
   const [view, setView] = useState<View>(() => {
     if (identityCheck.status === "locked") return { kind: "locked" };
     if (!arrival.sentAway) return { kind: "start" };
-    return Date.now() < arrival.fastUntil ? { kind: "waiting" } : { kind: "arriving" };
+    if (Date.now() < arrival.fastUntil) return { kind: "waiting" };
+    return Date.now() < arrival.tabUntil ? { kind: "tab" } : { kind: "arriving" };
   });
   const viewRef = useRef(view);
   const [agreed, setAgreed] = useState(false);
@@ -247,6 +340,7 @@ export function IdentityCheckHosted(props: IdentityCheckHostedProps) {
   /** Where a participant with nothing new to hear belongs. */
   const resting = useCallback((): View => {
     if (!sentAwayRef.current) return { kind: "start" };
+    if (Date.now() < tabUntilRef.current) return { kind: "tab" };
     return Date.now() < fastUntilRef.current ? { kind: "waiting" } : { kind: "not-received" };
   }, []);
 
@@ -285,6 +379,7 @@ export function IdentityCheckHosted(props: IdentityCheckHostedProps) {
     const code = error instanceof ApiError ? error.body?.code : undefined;
     if (code === "identity_check_locked") {
       clearMarker(propsRef.current.requestId);
+      tabUntilRef.current = 0;
       show({ kind: "locked" });
       return;
     }
@@ -306,12 +401,14 @@ export function IdentityCheckHosted(props: IdentityCheckHostedProps) {
     const { requestId: id } = propsRef.current;
     if (answer.status === "passed") {
       clearMarker(id);
+      tabUntilRef.current = 0;
       show({ kind: "passed" }, false);
       setAnnouncement("Identity check passed.");
       return;
     }
     if (answer.status === "locked") {
       clearMarker(id);
+      tabUntilRef.current = 0;
       show({ kind: "locked" }, false);
       setAnnouncement("The identity check could not be completed.");
       return;
@@ -331,6 +428,7 @@ export function IdentityCheckHosted(props: IdentityCheckHostedProps) {
     if (answer.attemptsRemaining < baselineRef.current) {
       // The only sign of an attempt that was not passed.
       baselineRef.current = answer.attemptsRemaining;
+      tabUntilRef.current = 0;
       show({ kind: "failed", left: answer.attemptsRemaining }, false);
       setAnnouncement("We could not complete the identity check.");
       return;
@@ -342,7 +440,7 @@ export function IdentityCheckHosted(props: IdentityCheckHostedProps) {
     if (origin === "quiet" && before !== "waiting" && before !== "review") return;
     if (before === "failed") return;
     show(resting());
-    if (origin === "manual" && before === "not-received") {
+    if (origin === "manual" && (before === "not-received" || before === "tab")) {
       tell("Nothing has arrived yet. If you finished the check, wait a moment and check again.", true);
     }
   }, [moveOn, resting, show, tell]);
@@ -380,29 +478,48 @@ export function IdentityCheckHosted(props: IdentityCheckHostedProps) {
   const go = useCallback(async (): Promise<void> => {
     if (startingRef.current) return;
     startingRef.current = true;
+    // In the click, before anything is awaited: see the note at the top.
+    let tab: ProviderTab | null = null;
+    if (!touch) {
+      try { tab = (propsRef.current.openTab ?? openBlankTab)(); } catch { tab = null; }
+    }
     setBusy("session");
     setNote(null);
     setAnnouncement("Opening…");
     try {
       const session = await propsRef.current.startSession();
-      if (!aliveRef.current) return;
+      if (!aliveRef.current) { tab?.close(); return; }
       if (!isWebAddress(session.url)) {
+        tab?.close();
         stopOpening();
         show({ kind: "unavailable", retry: "session" });
         return;
       }
       sentAwayRef.current = true;
+      if (tab !== null) {
+        // This tab stays, and is the one that continues.
+        const now = Date.now();
+        tabUntilRef.current = now + HOSTED_TAB_WAIT_MS;
+        writeMarker(propsRef.current.requestId, baselineRef.current, now);
+        tab.go(session.url);
+        stopOpening();
+        show({ kind: "tab" }, false);
+        setAnnouncement("The verification page opened in a new tab.");
+        return;
+      }
+      tabUntilRef.current = 0;
       writeMarker(propsRef.current.requestId, baselineRef.current);
       // The page is leaving: the button stays busy so it cannot be pressed
       // again on the way out. If the browser never leaves, it is given back.
       openingTimerRef.current = window.setTimeout(stopOpening, OPENING_GIVE_UP_MS);
       (propsRef.current.navigate ?? ((url: string) => { window.location.assign(url); }))(session.url);
     } catch (error) {
+      tab?.close();
       if (!aliveRef.current) return;
       stopOpening();
       await refused(error, "manual", "session");
     }
-  }, [refused, show, stopOpening]);
+  }, [refused, show, stopOpening, touch]);
 
   // ── Arrival, and leaving ─────────────────────────────────────────────────
 
@@ -425,7 +542,7 @@ export function IdentityCheckHosted(props: IdentityCheckHostedProps) {
   // ── Asking again by itself ───────────────────────────────────────────────
 
   useEffect(() => {
-    if (shownKind !== "review" && shownKind !== "waiting") return;
+    if (shownKind !== "review" && shownKind !== "waiting" && shownKind !== "tab") return;
     const every = shownKind === "review" ? HOSTED_REVIEW_POLL_MS : HOSTED_FAST_POLL_MS;
     let timer: number | null = null;
     const stop = () => {
@@ -444,17 +561,33 @@ export function IdentityCheckHosted(props: IdentityCheckHostedProps) {
     };
     start();
     document.addEventListener("visibilitychange", onVisibility);
+    // Waiting on another tab, the participant comes back by switching to this
+    // one. That may be a window gaining focus without anything becoming
+    // visible, so both are listened for.
+    const onFocus = () => { if (!document.hidden) void ask("quiet"); };
+    if (shownKind === "tab") window.addEventListener("focus", onFocus);
 
-    // Just back: after the fast window, stop asking and say so.
+    // Just back: after the fast window, stop asking and say so. Waiting on
+    // another tab: the same, after a good deal longer.
     let settleTimer: number | null = null;
     if (shownKind === "waiting") {
       settleTimer = window.setTimeout(() => {
         if (viewRef.current.kind === "waiting") show({ kind: "not-received" });
       }, Math.max(0, fastUntilRef.current - Date.now()));
     }
+    if (shownKind === "tab") {
+      settleTimer = window.setTimeout(() => {
+        if (viewRef.current.kind !== "tab") return;
+        tabUntilRef.current = 0;
+        // A reload from here on is an ordinary return, not a wait.
+        writeMarker(propsRef.current.requestId, baselineRef.current);
+        show({ kind: "not-received" });
+      }, Math.max(0, tabUntilRef.current - Date.now()));
+    }
     return () => {
       stop();
       document.removeEventListener("visibilitychange", onVisibility);
+      window.removeEventListener("focus", onFocus);
       if (settleTimer !== null) window.clearTimeout(settleTimer);
     };
   }, [shownKind, ask, show]);
@@ -614,12 +747,19 @@ export function IdentityCheckHosted(props: IdentityCheckHostedProps) {
           The sender asked that you confirm who you are before you sign this document.
           It takes about two minutes.
         </p>
-        <p style={BODY}>
-          When you continue, you will be taken to our identity verification partner&rsquo;s secure
-          page. There you will photograph your ID and take a short selfie video check, and then
-          you will be brought back here. If this device has no camera, you can switch to your
-          phone on that page.
-        </p>
+        {touch ? (
+          <p style={BODY}>
+            When you continue, you will be taken to our identity verification partner&rsquo;s secure
+            page. There you will photograph your ID and take a short selfie video check with this
+            device, and then you will be brought back here.
+          </p>
+        ) : (
+          <p style={BODY}>
+            When you continue, our identity verification partner&rsquo;s secure page opens in a new
+            tab. There you will photograph your ID and take a short selfie video check, and this
+            page continues by itself when you are done.
+          </p>
+        )}
         <ul style={{ ...BODY, paddingLeft: 20, listStyle: "disc" }}>
           <li style={{ display: "list-item", marginBottom: 4 }}>A photo of your ID</li>
           <li style={{ display: "list-item", marginBottom: 4 }}>A selfie</li>
@@ -629,6 +769,16 @@ export function IdentityCheckHosted(props: IdentityCheckHostedProps) {
           Our partner checks your ID and selfie. LAGDA receives the result and a reference,
           not the images.
         </p>
+        {/* On a computer the partner's page hands the camera work to a phone.
+            Said before they agree, so the code to scan is not a surprise. */}
+        {!touch && (
+          <div data-testid="identity-hosted-phone-notice">
+            <Notice icon={Smartphone} tone="info">
+              Have your phone ready. You will scan a code and take the photos with your
+              phone&rsquo;s camera.
+            </Notice>
+          </div>
+        )}
         {noteLine}
         <label
           htmlFor={consentId}
@@ -698,6 +848,37 @@ export function IdentityCheckHosted(props: IdentityCheckHostedProps) {
         </p>
         {noteLine}
         <ActionRow>
+          <ActionButton
+            icon={checking ? Loader2 : RefreshCw} kind="secondary"
+            onClick={() => void ask("manual")} disabled={busy !== null} full
+          >
+            {checking ? "Checking…" : "Check again"}
+          </ActionButton>
+        </ActionRow>
+        {declineLink}
+      </>,
+    );
+  }
+
+  // ── The partner's page is open in another tab ────────────────────────────
+
+  if (shown.kind === "tab") {
+    return frame(
+      <>
+        {heading}
+        <p style={BODY}>
+          We opened our identity verification partner&rsquo;s secure page in a new tab. Scan the code
+          it shows with your phone and complete the check there. This page will continue by
+          itself when you are done.
+        </p>
+        {noteLine}
+        <ActionRow>
+          <ActionButton
+            icon={opening ? Loader2 : ExternalLink}
+            onClick={() => void go()} disabled={busy !== null} full
+          >
+            {opening ? "Opening…" : "Open the verification page again"}
+          </ActionButton>
           <ActionButton
             icon={checking ? Loader2 : RefreshCw} kind="secondary"
             onClick={() => void ask("manual")} disabled={busy !== null} full

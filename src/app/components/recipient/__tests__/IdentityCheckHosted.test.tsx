@@ -3,9 +3,12 @@
 //
 // Pinned here, in the order a participant meets them:
 //
-//   - nothing is sent until they agree; then one visit is opened, the browser
-//     is sent to the address exactly as the server gave it, and the button
-//     cannot be pressed twice
+//   - nothing is sent until they agree; then one visit is opened, the
+//     partner's page is opened at the address exactly as the server gave it,
+//     and the button cannot be pressed twice
+//   - on a computer that page opens in a NEW tab and this one waits, asking
+//     every 3 s; on a phone, or where the browser blocks the tab, this tab
+//     goes there itself
 //   - coming back, the result is asked for at once and then every 3 s for
 //     about 20 s, after which the page says it has not arrived and stops
 //   - a review by a person is waited for at 10 s, only while the tab shows
@@ -18,8 +21,8 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import {
-  IdentityCheckHosted, HOSTED_FAST_POLL_MS, HOSTED_REVIEW_POLL_MS, HOSTED_PASSED_PAUSE_MS,
-  type IdentityCheckHostedProps,
+  IdentityCheckHosted, HOSTED_FAST_POLL_MS, HOSTED_REVIEW_POLL_MS, HOSTED_PASSED_PAUSE_MS, HOSTED_TAB_WAIT_MS,
+  type IdentityCheckHostedProps, type ProviderTab,
 } from "../IdentityCheckHosted";
 import { ApiError } from "../../../services/api-client";
 import type {
@@ -46,16 +49,20 @@ function setup(over: Partial<IdentityCheckHostedProps> = {}) {
   const refresh = vi.fn<IdentityCheckHostedProps["refresh"]>().mockResolvedValue(standing());
   const onReload = vi.fn<IdentityCheckHostedProps["onReload"]>().mockResolvedValue(null);
   const navigate = vi.fn<(url: string) => void>();
+  // A computer whose browser opens the tab it is asked for, unless a test says otherwise.
+  const tab = { go: vi.fn<ProviderTab["go"]>(), close: vi.fn<ProviderTab["close"]>() };
+  const openTab = vi.fn<() => ProviderTab | null>(() => tab);
   const props: IdentityCheckHostedProps = {
     identityCheck: pending, documentTitle: "Office Lease", requestId: "sr_1",
-    startSession, refresh, onReload, navigate, ...over,
+    startSession, refresh, onReload, navigate, openTab, touch: false, ...over,
   };
   const view = render(<IdentityCheckHosted {...props} />);
   return {
     startSession: props.startSession as typeof startSession,
     refresh: props.refresh as typeof refresh,
     onReload: props.onReload as typeof onReload,
-    navigate, props, ...view,
+    openTab: props.openTab as typeof openTab,
+    navigate, tab, props, ...view,
   };
 }
 
@@ -114,11 +121,16 @@ describe("before they go", () => {
     expect(screen.getByText("Required")).toBeInTheDocument();
     expect(screen.getByText('The sender asked for this before you open "Office Lease".')).toBeInTheDocument();
     expect(heading("Before you start")).toBeInTheDocument();
-    expect(screen.getByText(/taken to our identity verification partner’s secure\s+page/)).toBeInTheDocument();
+    expect(screen.getByText(/our identity verification partner’s secure page opens in a new\s+tab/)).toBeInTheDocument();
     expect(screen.getByText(/photograph your ID and take a short selfie video check/)).toBeInTheDocument();
-    expect(screen.getByText(/brought back here/)).toBeInTheDocument();
+    expect(screen.getByText(/this\s+page continues by itself when you are done/)).toBeInTheDocument();
     expect(screen.getByText(/It takes about two minutes/)).toBeInTheDocument();
-    expect(screen.getByText(/you can switch to your\s+phone on that page/)).toBeInTheDocument();
+    // On a computer the photos are taken with a phone: said before they agree.
+    expect((screen.getByTestId("identity-hosted-phone-notice").textContent ?? "").replace(/\s+/g, " "))
+      .toBe("Have your phone ready. You will scan a code and take the photos with your phone’s camera.");
+    // And not, as well, that a phone is only for a device without a camera.
+    expect(screen.queryByText(/If this device has no camera/)).toBeNull();
+    expect(screen.queryByText(/switch to your\s+phone/)).toBeNull();
     expect(screen.getByText("A photo of your ID")).toBeInTheDocument();
     expect(screen.getByText("A selfie")).toBeInTheDocument();
     expect(screen.getByText(/The result of the check, which is recorded/)).toBeInTheDocument();
@@ -133,26 +145,58 @@ describe("before they go", () => {
     expectNothingInline();
   });
 
-  it("opens one visit and sends the browser to the address exactly as given", async () => {
-    const { startSession, navigate } = setup();
+  it("on a phone says the check is done on this device, with nothing about getting a phone ready", () => {
+    setup({ touch: true });
+    expect(heading("Before you start")).toBeInTheDocument();
+    expect(screen.getByText(/taken to our identity verification partner’s secure\s+page/)).toBeInTheDocument();
+    expect(screen.getByText(/photograph your ID and take a short selfie video check with this\s+device/)).toBeInTheDocument();
+    expect(screen.getByText(/brought back here/)).toBeInTheDocument();
+    expect(screen.queryByTestId("identity-hosted-phone-notice")).toBeNull();
+    expect(screen.queryByText(/Have your phone ready|scan a code|new\s+tab/)).toBeNull();
+    expect(screen.getByText("A photo of your ID")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Continue to verification" })).toBeDisabled();
+  });
+
+  it("opens one visit, and the partner's page in a new tab at the address exactly as given", async () => {
+    const { startSession, navigate, openTab, tab } = setup();
     await userEvent.click(screen.getByRole("checkbox", { name: AGREE }));
     await userEvent.click(screen.getByRole("button", { name: "Continue to verification" }));
 
-    await waitFor(() => { expect(navigate).toHaveBeenCalledTimes(1); });
-    expect(navigate).toHaveBeenCalledWith(PARTNER_URL);
+    await waitFor(() => { expect(tab.go).toHaveBeenCalledTimes(1); });
+    expect(tab.go).toHaveBeenCalledWith(PARTNER_URL);
+    expect(openTab).toHaveBeenCalledTimes(1);
+    expect(tab.close).not.toHaveBeenCalled();
+    // This tab stays where it is.
+    expect(navigate).not.toHaveBeenCalled();
     expect(startSession).toHaveBeenCalledTimes(1);
     expect(startSession).toHaveBeenCalledWith();
-    // What this tab remembers for the way back: how many attempts were left, and nothing else.
-    expect(window.sessionStorage.getItem(MARKER)).toBe("3");
+    // What this tab remembers: how many attempts were left, that a tab was opened, and when.
+    expect(window.sessionStorage.getItem(MARKER) ?? "").toMatch(/^3\|tab\|\d+$/);
     expect(window.sessionStorage.length).toBe(1);
     expect(window.localStorage.getItem(MARKER)).toBeNull();
   });
 
-  it("shows Opening… and cannot be pressed twice", async () => {
+  it("opens the tab in the click itself, before the visit has been asked for", async () => {
+    const order: string[] = [];
+    const tab = { go: vi.fn<ProviderTab["go"]>(), close: vi.fn<ProviderTab["close"]>() };
+    const openTab = vi.fn<() => ProviderTab | null>(() => { order.push("tab"); return tab; });
+    const startSession = vi.fn<IdentityCheckHostedProps["startSession"]>(() => {
+      order.push("session");
+      return new Promise(() => undefined);
+    });
+    setup({ openTab, startSession });
+    await userEvent.click(screen.getByRole("checkbox", { name: AGREE }));
+    press(screen.getByRole("button", { name: "Continue to verification" }));
+    // Both have happened by the time the click handler returns.
+    expect(order).toEqual(["tab", "session"]);
+    expect(tab.go).not.toHaveBeenCalled();
+  });
+
+  it("shows Opening… and cannot be pressed twice, where this tab is the one that goes", async () => {
     let open: (value: { url: string; expiresAt: string }) => void = () => undefined;
     const startSession = vi.fn<IdentityCheckHostedProps["startSession"]>(
       () => new Promise(resolve => { open = resolve; }));
-    const { navigate } = setup({ startSession });
+    const { navigate } = setup({ startSession, touch: true });
     await userEvent.click(screen.getByRole("checkbox", { name: AGREE }));
     const next = screen.getByRole("button", { name: "Continue to verification" });
     press(next);
@@ -172,7 +216,7 @@ describe("before they go", () => {
   });
 
   it("gives the button back when the Back button restores the page", async () => {
-    const { startSession } = setup();
+    const { startSession } = setup({ touch: true });
     await userEvent.click(screen.getByRole("checkbox", { name: AGREE }));
     await userEvent.click(screen.getByRole("button", { name: "Continue to verification" }));
     await screen.findByRole("button", { name: "Opening…" });
@@ -187,11 +231,14 @@ describe("before they go", () => {
   it("does not go to an address that is not a web address", async () => {
     const startSession = vi.fn<IdentityCheckHostedProps["startSession"]>()
       .mockResolvedValue({ url: ["java", "script:alert(1)"].join(""), expiresAt: "2026-10-09T02:30:00.000Z" });
-    const { navigate } = setup({ startSession });
+    const { navigate, tab } = setup({ startSession });
     await userEvent.click(screen.getByRole("checkbox", { name: AGREE }));
     await userEvent.click(screen.getByRole("button", { name: "Continue to verification" }));
     expect(await screen.findByRole("heading", { name: "Identity verification is not available right now" })).toBeInTheDocument();
     expect(navigate).not.toHaveBeenCalled();
+    // The blank tab is not left behind, and is never pointed there.
+    expect(tab.go).not.toHaveBeenCalled();
+    expect(tab.close).toHaveBeenCalledTimes(1);
     expect(window.sessionStorage.getItem(MARKER)).toBeNull();
   });
 
@@ -249,16 +296,22 @@ describe("when a visit cannot be opened", () => {
     const startSession = vi.fn<IdentityCheckHostedProps["startSession"]>()
       .mockRejectedValueOnce(refusal(409, "identity_check_unavailable"))
       .mockResolvedValue({ url: PARTNER_URL, expiresAt: "2026-10-09T02:30:00.000Z" });
-    const { navigate } = setup({ startSession });
+    const { navigate, tab, openTab } = setup({ startSession });
     await press();
     expect(await screen.findByRole("heading", { name: "Identity verification is not available right now" })).toBeInTheDocument();
     expect(screen.getByText("Please try again in a few minutes.")).toBeInTheDocument();
-    expect(document.body.textContent).not.toContain("server said");
+    expect(document.body.textContent ?? "").not.toContain("server said");
     expect(navigate).not.toHaveBeenCalled();
+    // The blank tab opened for the visit is closed again.
+    expect(tab.close).toHaveBeenCalledTimes(1);
+    expect(tab.go).not.toHaveBeenCalled();
 
     await userEvent.click(screen.getByRole("button", { name: "Try again" }));
-    await waitFor(() => { expect(navigate).toHaveBeenCalledWith(PARTNER_URL); });
+    await waitFor(() => { expect(tab.go).toHaveBeenCalledWith(PARTNER_URL); });
     expect(startSession).toHaveBeenCalledTimes(2);
+    expect(openTab).toHaveBeenCalledTimes(2);
+    expect(tab.close).toHaveBeenCalledTimes(1);
+    expect(navigate).not.toHaveBeenCalled();
   });
 
   it("says too many tries on a 429", async () => {
@@ -391,7 +444,7 @@ describe("just back from the partner's page", () => {
     window.sessionStorage.setItem(MARKER, "3");
     const refresh = vi.fn<IdentityCheckHostedProps["refresh"]>().mockResolvedValue(standing({ attemptsRemaining: 2 }));
     // The ceremony read on the way back already carries the lower number.
-    const { startSession, navigate } = setup({
+    const { startSession, tab } = setup({
       refresh, returnedAt: Date.now(), identityCheck: { ...pending, attemptsRemaining: 2 },
     });
     await pass(0);
@@ -407,8 +460,9 @@ describe("just back from the partner's page", () => {
     press(screen.getByRole("button", { name: "Try again" }));
     await pass(0);
     expect(startSession).toHaveBeenCalledTimes(1);
-    expect(navigate).toHaveBeenCalledWith(PARTNER_URL);
-    expect(window.sessionStorage.getItem(MARKER)).toBe("2");
+    expect(tab.go).toHaveBeenCalledWith(PARTNER_URL);
+    expect(heading("Finish the verification in the new tab")).toBeInTheDocument();
+    expect(window.sessionStorage.getItem(MARKER) ?? "").toMatch(/^2\|tab\|\d+$/);
   });
 
   it("says 1 attempt left in the singular", async () => {
@@ -582,14 +636,15 @@ describe("when no result has arrived", () => {
   });
 
   it("goes back to the same visit with Continue verification", async () => {
-    const { startSession, navigate } = setup();
+    const { startSession, tab } = setup();
     await pass(0);
     press(screen.getByRole("button", { name: "Continue verification" }));
     expect(screen.getByRole("button", { name: "Opening…" })).toBeDisabled();
     expect(screen.getByRole("button", { name: "Check again" })).toBeDisabled();
     await pass(0);
     expect(startSession).toHaveBeenCalledTimes(1);
-    expect(navigate).toHaveBeenCalledWith(PARTNER_URL);
+    expect(tab.go).toHaveBeenCalledWith(PARTNER_URL);
+    expect(heading("Finish the verification in the new tab")).toBeInTheDocument();
   });
 
   it("says it is not available when asking is refused, and tries again from there", async () => {
@@ -645,7 +700,7 @@ describe("when no result has arrived", () => {
   });
 });
 
-describe("sitting on Start after having sent them away", () => {
+describe("sitting on Start after this tab itself went to the partner's page", () => {
   it("asks nothing on focus before they were ever sent away", async () => {
     const { refresh } = setup();
     await waitFor(() => { expect(refresh).toHaveBeenCalledTimes(1); });
@@ -659,7 +714,7 @@ describe("sitting on Start after having sent them away", () => {
     const refresh = vi.fn<IdentityCheckHostedProps["refresh"]>()
       .mockResolvedValueOnce(standing())
       .mockResolvedValue(standing({ status: "passed" }));
-    const { navigate } = setup({ refresh });
+    const { navigate } = setup({ refresh, touch: true });
     await userEvent.click(screen.getByRole("checkbox", { name: AGREE }));
     await userEvent.click(screen.getByRole("button", { name: "Continue to verification" }));
     await waitFor(() => { expect(navigate).toHaveBeenCalledTimes(1); });
@@ -672,7 +727,7 @@ describe("sitting on Start after having sent them away", () => {
   });
 
   it("stays on Start when the tab comes back and there is still nothing", async () => {
-    const { refresh, navigate } = setup();
+    const { refresh, navigate } = setup({ touch: true });
     await userEvent.click(screen.getByRole("checkbox", { name: AGREE }));
     await userEvent.click(screen.getByRole("button", { name: "Continue to verification" }));
     await waitFor(() => { expect(navigate).toHaveBeenCalledTimes(1); });
@@ -680,6 +735,355 @@ describe("sitting on Start after having sent them away", () => {
     await waitFor(() => { expect(refresh).toHaveBeenCalledTimes(2); });
     expect(heading("Before you start")).toBeInTheDocument();
     expect(screen.queryByRole("alert")).toBeNull();
+  });
+});
+
+// ── A new tab, and this one waits ────────────────────────────────────────────
+
+describe("on a computer, with the partner's page in a new tab", () => {
+  beforeEach(() => { vi.useFakeTimers(); });
+
+  const TAB_HEADING = "Finish the verification in the new tab";
+
+  /** Agrees and presses, on a held clock. */
+  async function begin() {
+    press(screen.getByRole("checkbox", { name: AGREE }));
+    press(screen.getByRole("button", { name: "Continue to verification" }));
+    await pass(0);
+  }
+
+  it("says where the page went, announces it, and asks for the result every 3 s", async () => {
+    const { refresh, tab, navigate } = setup();
+    await pass(0);
+    expect(refresh).toHaveBeenCalledTimes(1);
+    await begin();
+
+    expect(tab.go).toHaveBeenCalledWith(PARTNER_URL);
+    expect(navigate).not.toHaveBeenCalled();
+    expect(heading(TAB_HEADING)).toHaveFocus();
+    expect(screen.getByText(
+      /We opened our identity verification partner’s secure page in a new tab\. Scan the code\s+it shows with your phone and complete the check there\. This page will continue by\s+itself when you are done\./,
+    )).toBeInTheDocument();
+    const live = screen.getByRole("status");
+    expect(live).toHaveAttribute("aria-live", "polite");
+    expect(live.textContent ?? "").toBe("The verification page opened in a new tab.");
+    expect(screen.getByRole("button", { name: "Open the verification page again" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Check again" })).toBeEnabled();
+    expectNothingInline();
+
+    await pass(HOSTED_FAST_POLL_MS - 1);
+    expect(refresh).toHaveBeenCalledTimes(1);
+    await pass(1);
+    expect(refresh).toHaveBeenCalledTimes(2);
+    await pass(HOSTED_FAST_POLL_MS);
+    expect(refresh).toHaveBeenCalledTimes(3);
+    // Well past the 20 s a return is given: this wait does not cut off there.
+    await pass(60_000);
+    expect(refresh).toHaveBeenCalledTimes(23);
+    expect(heading(TAB_HEADING)).toBeInTheDocument();
+  });
+
+  it("pauses while this tab is hidden, and asks at once when they switch back to it", async () => {
+    const { refresh } = setup();
+    await pass(0);
+    await begin();
+    expect(refresh).toHaveBeenCalledTimes(1);
+
+    // They are in the new tab, doing the check.
+    setHidden(true);
+    await pass(10 * HOSTED_FAST_POLL_MS);
+    expect(refresh).toHaveBeenCalledTimes(1);
+
+    setHidden(false);
+    await pass(0);
+    expect(refresh).toHaveBeenCalledTimes(2);
+    await pass(HOSTED_FAST_POLL_MS);
+    expect(refresh).toHaveBeenCalledTimes(3);
+  });
+
+  it("asks at once when the window gets the focus back", async () => {
+    const { refresh } = setup();
+    await pass(0);
+    await begin();
+    act(() => { window.dispatchEvent(new Event("focus")); });
+    await pass(0);
+    expect(refresh).toHaveBeenCalledTimes(2);
+  });
+
+  it("stops asking when the screen goes away", async () => {
+    const { refresh, unmount } = setup();
+    await pass(0);
+    await begin();
+    await pass(HOSTED_FAST_POLL_MS);
+    expect(refresh).toHaveBeenCalledTimes(2);
+    unmount();
+    await pass(60_000);
+    expect(refresh).toHaveBeenCalledTimes(2);
+  });
+
+  it("continues by itself after a pass, by re-reading the ceremony", async () => {
+    const refresh = vi.fn<IdentityCheckHostedProps["refresh"]>()
+      .mockResolvedValueOnce(standing())
+      .mockResolvedValueOnce(standing())
+      .mockResolvedValue(standing({ status: "passed", verifiedAt: "2026-10-09T02:00:00.000Z" }));
+    const { onReload } = setup({ refresh });
+    await pass(0);
+    await begin();
+    await pass(HOSTED_FAST_POLL_MS);
+    expect(heading(TAB_HEADING)).toBeInTheDocument();
+    await pass(HOSTED_FAST_POLL_MS);
+    expect(heading("Identity check passed")).toHaveFocus();
+    expect(onReload).not.toHaveBeenCalled();
+    expect(window.sessionStorage.getItem(MARKER)).toBeNull();
+
+    await pass(HOSTED_PASSED_PAUSE_MS);
+    expect(onReload).toHaveBeenCalledTimes(1);
+    const asked = refresh.mock.calls.length;
+    await pass(60_000);
+    expect(refresh).toHaveBeenCalledTimes(asked);
+  });
+
+  it("shows the review screen when a person at the partner is looking at it", async () => {
+    const refresh = vi.fn<IdentityCheckHostedProps["refresh"]>()
+      .mockResolvedValueOnce(standing())
+      .mockResolvedValue(standing({ pendingReview: true }));
+    setup({ refresh });
+    await pass(0);
+    await begin();
+    await pass(HOSTED_FAST_POLL_MS);
+    expect(heading("Your verification is being reviewed")).toHaveFocus();
+    // And from there at the review's own pace.
+    const asked = refresh.mock.calls.length;
+    await pass(HOSTED_REVIEW_POLL_MS - 1);
+    expect(refresh).toHaveBeenCalledTimes(asked);
+    await pass(1);
+    expect(refresh).toHaveBeenCalledTimes(asked + 1);
+  });
+
+  it("sees an attempt that was not passed, and opens a new tab to try again", async () => {
+    const refresh = vi.fn<IdentityCheckHostedProps["refresh"]>()
+      .mockResolvedValueOnce(standing())
+      .mockResolvedValue(standing({ attemptsRemaining: 2 }));
+    const { startSession, openTab, tab } = setup({ refresh });
+    await pass(0);
+    await begin();
+    await pass(HOSTED_FAST_POLL_MS);
+    expect(heading("We could not complete the identity check")).toHaveFocus();
+    expect(screen.getByTestId("identity-check-attempts-left").textContent ?? "").toBe("2 attempts left");
+    const asked = refresh.mock.calls.length;
+    await pass(60_000);
+    expect(refresh).toHaveBeenCalledTimes(asked);
+
+    press(screen.getByRole("button", { name: "Try again" }));
+    await pass(0);
+    expect(startSession).toHaveBeenCalledTimes(2);
+    expect(openTab).toHaveBeenCalledTimes(2);
+    expect(tab.go).toHaveBeenCalledTimes(2);
+    expect(heading(TAB_HEADING)).toBeInTheDocument();
+    expect(window.sessionStorage.getItem(MARKER) ?? "").toMatch(/^2\|tab\|\d+$/);
+  });
+
+  it("shows the closed screen when the check is locked", async () => {
+    const refresh = vi.fn<IdentityCheckHostedProps["refresh"]>()
+      .mockResolvedValueOnce(standing())
+      .mockResolvedValue(standing({ status: "locked", attemptsRemaining: 0 }));
+    setup({ refresh });
+    await pass(0);
+    await begin();
+    await pass(HOSTED_FAST_POLL_MS);
+    expect(heading("The identity check is closed for now")).toHaveFocus();
+    expect(window.sessionStorage.getItem(MARKER)).toBeNull();
+    const asked = refresh.mock.calls.length;
+    await pass(60_000);
+    expect(refresh).toHaveBeenCalledTimes(asked);
+  });
+
+  it("opens the verification page again, in another new tab, on the same visit", async () => {
+    const { startSession, openTab, tab, navigate } = setup();
+    await pass(0);
+    await begin();
+    press(screen.getByRole("button", { name: "Open the verification page again" }));
+    expect(screen.getByRole("button", { name: "Opening…" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Check again" })).toBeDisabled();
+    await pass(0);
+    expect(startSession).toHaveBeenCalledTimes(2);
+    expect(openTab).toHaveBeenCalledTimes(2);
+    expect(tab.go).toHaveBeenCalledTimes(2);
+    expect(tab.go).toHaveBeenLastCalledWith(PARTNER_URL);
+    expect(tab.close).not.toHaveBeenCalled();
+    expect(navigate).not.toHaveBeenCalled();
+    expect(heading(TAB_HEADING)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Open the verification page again" })).toBeEnabled();
+  });
+
+  it("closes the blank tab and stays put when the page cannot be opened again", async () => {
+    const startSession = vi.fn<IdentityCheckHostedProps["startSession"]>()
+      .mockResolvedValueOnce({ url: PARTNER_URL, expiresAt: "2026-10-09T02:30:00.000Z" })
+      .mockRejectedValue(refusal(429, "rate_limited"));
+    const { tab } = setup({ startSession });
+    await pass(0);
+    await begin();
+    press(screen.getByRole("button", { name: "Open the verification page again" }));
+    await pass(0);
+    expect(tab.close).toHaveBeenCalledTimes(1);
+    expect(tab.go).toHaveBeenCalledTimes(1);
+    expect(heading(TAB_HEADING)).toBeInTheDocument();
+    expect(screen.getByRole("alert").textContent ?? "").toBe("Too many tries in a short time. Wait a minute, then try again.");
+  });
+
+  it("checks again when asked, and says when there is still nothing", async () => {
+    const { refresh } = setup();
+    await pass(0);
+    await begin();
+    press(screen.getByRole("button", { name: "Check again" }));
+    await pass(0);
+    expect(refresh).toHaveBeenCalledTimes(2);
+    expect(heading(TAB_HEADING)).toBeInTheDocument();
+    expect(screen.getByTestId("identity-hosted-note").textContent ?? "")
+      .toBe("Nothing has arrived yet. If you finished the check, wait a moment and check again.");
+  });
+
+  it("says it is not available when Check again is refused, and comes back to the wait", async () => {
+    const refresh = vi.fn<IdentityCheckHostedProps["refresh"]>()
+      .mockResolvedValueOnce(standing())
+      .mockRejectedValueOnce(refusal(409, "identity_check_unavailable"))
+      .mockResolvedValue(standing());
+    setup({ refresh });
+    await pass(0);
+    await begin();
+    press(screen.getByRole("button", { name: "Check again" }));
+    await pass(0);
+    expect(heading("Identity verification is not available right now")).toBeInTheDocument();
+    expect(document.body.textContent ?? "").not.toContain("server said");
+    press(screen.getByRole("button", { name: "Try again" }));
+    await pass(0);
+    expect(heading(TAB_HEADING)).toBeInTheDocument();
+  });
+
+  it("keeps waiting through a question that fails by itself", async () => {
+    const refresh = vi.fn<IdentityCheckHostedProps["refresh"]>()
+      .mockResolvedValueOnce(standing())
+      .mockRejectedValueOnce(refusal(409, "identity_check_unavailable"))
+      .mockRejectedValueOnce(refusal(429, "rate_limited"))
+      .mockResolvedValue(standing());
+    setup({ refresh });
+    await pass(0);
+    await begin();
+    await pass(3 * HOSTED_FAST_POLL_MS);
+    expect(refresh).toHaveBeenCalledTimes(4);
+    expect(heading(TAB_HEADING)).toBeInTheDocument();
+    expect(screen.queryByRole("alert")).toBeNull();
+  });
+
+  it("after 15 minutes says nothing has arrived, and stops asking", async () => {
+    const { refresh } = setup();
+    await pass(0);
+    await begin();
+    await pass(HOSTED_TAB_WAIT_MS - 1);
+    expect(heading(TAB_HEADING)).toBeInTheDocument();
+    await pass(1);
+    expect(heading("We have not received your result yet")).toHaveFocus();
+    expect(screen.getByRole("button", { name: "Check again" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Continue verification" })).toBeEnabled();
+    // A reload from here is an ordinary return, no longer a wait on a tab.
+    expect(window.sessionStorage.getItem(MARKER)).toBe("3");
+    const asked = refresh.mock.calls.length;
+    await pass(60_000);
+    expect(refresh).toHaveBeenCalledTimes(asked);
+  });
+
+  it("comes back to the wait, not to Start, when this tab is reloaded", async () => {
+    window.sessionStorage.setItem(MARKER, `3|tab|${String(Date.now() - 60_000)}`);
+    const { refresh, openTab, startSession } = setup();
+    expect(heading(TAB_HEADING)).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Continue to verification" })).toBeNull();
+    await pass(0);
+    expect(refresh).toHaveBeenCalledTimes(1);
+    await pass(HOSTED_FAST_POLL_MS);
+    expect(refresh).toHaveBeenCalledTimes(2);
+    // Nothing is opened by a reload.
+    expect(openTab).not.toHaveBeenCalled();
+    expect(startSession).not.toHaveBeenCalled();
+
+    // The 15 minutes are counted from when the tab was opened, not from the reload.
+    await pass(HOSTED_TAB_WAIT_MS - 60_000 - HOSTED_FAST_POLL_MS);
+    expect(heading("We have not received your result yet")).toBeInTheDocument();
+  });
+
+  it("sees on a reload an attempt that was not passed while it was away", async () => {
+    window.sessionStorage.setItem(MARKER, `3|tab|${String(Date.now() - 60_000)}`);
+    const refresh = vi.fn<IdentityCheckHostedProps["refresh"]>().mockResolvedValue(standing({ attemptsRemaining: 2 }));
+    setup({ refresh, identityCheck: { ...pending, attemptsRemaining: 2 } });
+    await pass(0);
+    expect(heading("We could not complete the identity check")).toBeInTheDocument();
+  });
+
+  it("is an ordinary return once the 15 minutes are over", async () => {
+    window.sessionStorage.setItem(MARKER, `3|tab|${String(Date.now() - HOSTED_TAB_WAIT_MS - 1)}`);
+    setup();
+    expect(heading("Checking…")).toBeInTheDocument();
+    await pass(0);
+    expect(heading("We have not received your result yet")).toBeInTheDocument();
+  });
+
+  it("is the return, not the wait, in a tab the partner sent back", async () => {
+    // A tab opened from this one starts with a copy of what this one kept.
+    window.sessionStorage.setItem(MARKER, `3|tab|${String(Date.now() - 60_000)}`);
+    setup({ returnedAt: Date.now() });
+    expect(heading("Checking for your result…")).toBeInTheDocument();
+    await pass(20_000);
+    expect(heading("We have not received your result yet")).toBeInTheDocument();
+  });
+});
+
+describe("where the browser will not open a new tab", () => {
+  it("sends this tab to the partner's page instead, as before", async () => {
+    const openTab = vi.fn<() => ProviderTab | null>(() => null);
+    const { navigate, startSession } = setup({ openTab });
+    await userEvent.click(screen.getByRole("checkbox", { name: AGREE }));
+    await userEvent.click(screen.getByRole("button", { name: "Continue to verification" }));
+    await waitFor(() => { expect(navigate).toHaveBeenCalledTimes(1); });
+    expect(navigate).toHaveBeenCalledWith(PARTNER_URL);
+    expect(openTab).toHaveBeenCalledTimes(1);
+    expect(startSession).toHaveBeenCalledTimes(1);
+    // Still Start, still busy: this page is on its way out.
+    expect(screen.getByRole("button", { name: "Opening…" })).toBeDisabled();
+    expect(screen.queryByRole("heading", { name: "Finish the verification in the new tab" })).toBeNull();
+    // An ordinary marker: coming back is a return, not a wait on a tab.
+    expect(window.sessionStorage.getItem(MARKER)).toBe("3");
+  });
+
+  it("does the same when opening one throws", async () => {
+    const openTab = vi.fn<() => ProviderTab | null>(() => { throw new Error("blocked"); });
+    const { navigate } = setup({ openTab });
+    await userEvent.click(screen.getByRole("checkbox", { name: AGREE }));
+    await userEvent.click(screen.getByRole("button", { name: "Continue to verification" }));
+    await waitFor(() => { expect(navigate).toHaveBeenCalledWith(PARTNER_URL); });
+  });
+});
+
+describe("on a phone", () => {
+  it("opens no new tab: this one goes to the partner's page", async () => {
+    const { navigate, openTab, tab } = setup({ touch: true });
+    await userEvent.click(screen.getByRole("checkbox", { name: AGREE }));
+    await userEvent.click(screen.getByRole("button", { name: "Continue to verification" }));
+    await waitFor(() => { expect(navigate).toHaveBeenCalledTimes(1); });
+    expect(navigate).toHaveBeenCalledWith(PARTNER_URL);
+    expect(openTab).not.toHaveBeenCalled();
+    expect(tab.go).not.toHaveBeenCalled();
+    expect(window.sessionStorage.getItem(MARKER)).toBe("3");
+    expect(screen.queryByRole("heading", { name: "Finish the verification in the new tab" })).toBeNull();
+  });
+
+  it("goes back to the same visit in this tab too", async () => {
+    vi.useFakeTimers();
+    window.sessionStorage.setItem(MARKER, "3");
+    const { navigate, openTab } = setup({ touch: true });
+    await pass(0);
+    press(screen.getByRole("button", { name: "Continue verification" }));
+    await pass(0);
+    expect(navigate).toHaveBeenCalledWith(PARTNER_URL);
+    expect(openTab).not.toHaveBeenCalled();
   });
 });
 

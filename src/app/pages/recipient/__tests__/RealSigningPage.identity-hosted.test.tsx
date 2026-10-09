@@ -11,8 +11,8 @@
 // And what must not change: a ceremony that does not say `hosted` gets the
 // stages it always had.
 
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { act, render, screen, waitFor } from "@testing-library/react";
+import { describe, it, expect, vi, beforeEach, afterEach, type MockInstance } from "vitest";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Routes, Route } from "react-router";
 import type { CeremonyView, CeremonyIdentityCheck } from "../../../services/real/signing-access.service";
@@ -125,6 +125,9 @@ function expectNothingInline() {
 
 const originalLocation = window.location;
 const assign = vi.fn();
+/** The blank tab the browser hands back, as far as this page uses one. */
+const newTab = { opener: {} as unknown, location: { replace: vi.fn() }, close: vi.fn() };
+let open: MockInstance<typeof window.open>;
 
 beforeEach(() => {
   bootstrap.mockResolvedValue({ authenticated: true });
@@ -135,6 +138,8 @@ beforeEach(() => {
   window.sessionStorage.clear();
   window.history.replaceState(null, "", "/");
   Object.defineProperty(window, "location", { configurable: true, value: { ...originalLocation, hash: "", assign } });
+  newTab.opener = {};
+  open = vi.spyOn(window, "open").mockReturnValue(newTab as unknown as Window);
 });
 
 afterEach(() => {
@@ -175,16 +180,77 @@ describe("the hosted identity check on the signing page", () => {
     expect(screen.queryByTestId("identity-check-hosted")).toBeNull();
   });
 
-  it("sends the browser, in this tab, to the partner's address exactly as given", async () => {
+  it("opens the partner's page in a new tab at the address exactly as given, and stays to wait", async () => {
     renderPage();
     await userEvent.click(await screen.findByRole("checkbox", { name: AGREE }));
     expect(startIdentityCheckSession).not.toHaveBeenCalled();
+    expect(open).not.toHaveBeenCalled();
+    await userEvent.click(screen.getByRole("button", { name: "Continue to verification" }));
+
+    expect(await screen.findByRole("heading", { level: 2, name: "Finish the verification in the new tab" })).toBeInTheDocument();
+    // A blank tab, asked for without "noopener" so that a blocked one can be told from an opened one...
+    expect(open).toHaveBeenCalledTimes(1);
+    expect(open).toHaveBeenCalledWith("", "_blank");
+    // ...its opener cut by hand, and then pointed at the partner.
+    expect(newTab.opener).toBeNull();
+    expect(newTab.location.replace).toHaveBeenCalledTimes(1);
+    expect(newTab.location.replace).toHaveBeenCalledWith(PARTNER_URL);
+    expect(newTab.close).not.toHaveBeenCalled();
+    expect(assign).not.toHaveBeenCalled();
+    expect(startIdentityCheckSession).toHaveBeenCalledTimes(1);
+    expectNothingInline();
+  });
+
+  it("sends this tab there instead when the browser blocks the new one", async () => {
+    open.mockReturnValue(null);
+    renderPage();
+    await userEvent.click(await screen.findByRole("checkbox", { name: AGREE }));
     await userEvent.click(screen.getByRole("button", { name: "Continue to verification" }));
     await waitFor(() => { expect(assign).toHaveBeenCalledTimes(1); });
     expect(assign).toHaveBeenCalledWith(PARTNER_URL);
-    expect(startIdentityCheckSession).toHaveBeenCalledTimes(1);
     expect(screen.getByRole("button", { name: "Opening…" })).toBeDisabled();
-    expectNothingInline();
+    expect(screen.queryByRole("heading", { name: "Finish the verification in the new tab" })).toBeNull();
+  });
+
+  it("closes the blank tab when the visit cannot be opened", async () => {
+    startIdentityCheckSession.mockRejectedValue(new ApiError(409, { code: "identity_check_unavailable", message: "m" }, "z"));
+    renderPage();
+    await userEvent.click(await screen.findByRole("checkbox", { name: AGREE }));
+    await userEvent.click(screen.getByRole("button", { name: "Continue to verification" }));
+    expect(await screen.findByRole("heading", { name: "Identity verification is not available right now" })).toBeInTheDocument();
+    expect(newTab.close).toHaveBeenCalledTimes(1);
+    expect(newTab.location.replace).not.toHaveBeenCalled();
+    expect(assign).not.toHaveBeenCalled();
+  });
+
+  it("continues from the waiting tab after a pass, re-reading the ceremony without entering it again", async () => {
+    vi.useFakeTimers();
+    const tick = async (ms: number) => { await act(async () => { await vi.advanceTimersByTimeAsync(ms); }); };
+    refreshIdentityCheckSession
+      .mockResolvedValueOnce(standing())
+      .mockResolvedValueOnce(standing())
+      .mockResolvedValue(standing({ status: "passed", verifiedAt: "2026-10-09T02:00:00.000Z" }));
+    read.mockResolvedValue(passed());
+    renderPage();
+    await tick(0);
+    // eslint-disable-next-line testing-library/prefer-user-event -- the clock is held
+    fireEvent.click(screen.getByRole("checkbox", { name: AGREE }));
+    // eslint-disable-next-line testing-library/prefer-user-event -- the clock is held
+    fireEvent.click(screen.getByRole("button", { name: "Continue to verification" }));
+    await tick(0);
+    expect(screen.getByRole("heading", { level: 2, name: "Finish the verification in the new tab" })).toBeInTheDocument();
+    expect(refreshIdentityCheckSession).toHaveBeenCalledTimes(1);
+
+    await tick(3000);
+    expect(refreshIdentityCheckSession).toHaveBeenCalledTimes(2);
+    expect(read).not.toHaveBeenCalled();
+    await tick(3000);
+    expect(screen.getByRole("heading", { name: "Identity check passed" })).toBeInTheDocument();
+    await tick(1200);
+    expect(screen.getByRole("heading", { name: CONSENT_TITLE })).toBeInTheDocument();
+    expect(read).toHaveBeenCalledTimes(1);
+    expect(enter).toHaveBeenCalledTimes(1);
+    expect(assign).not.toHaveBeenCalled();
   });
 
   it("moves on to consent after a pass, re-reading the ceremony without entering it again", async () => {
