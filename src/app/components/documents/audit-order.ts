@@ -21,6 +21,11 @@ const RANK: Readonly<Record<string, number>> = {
   // "recipient-activated" is placed by context — see rankOf.
   "authentication-completed": 3,
   "document-viewed": 4,
+  // 105. The identity check comes after the link is opened and before
+  // consent; a waiver follows the attempts it answers.
+  "identity-check-failed": 4.4,
+  "identity-check-passed": 4.5,
+  "identity-check-waived": 4.6,
   "consent-accepted": 5,
   "submission-accepted": 6,
   "signature-completed": 7,

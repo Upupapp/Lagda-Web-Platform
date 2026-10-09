@@ -208,3 +208,113 @@ describe("presentation fixes", () => {
     expect(onClose).toHaveBeenCalled();
   });
 });
+
+// 105. The identity check's entries. A check made in test mode was SIMULATED:
+// the server's sentence says so, and nothing added beside it may read as a
+// verification.
+describe("identity check entries", () => {
+  const recipient = { type: "recipient" as const, displayName: "James Reid", recipientId: "srr_1" };
+
+  it("shows the server's sentence, the kind of ID and how the selfie was taken", async () => {
+    audit.mockResolvedValue({
+      ...trail,
+      entries: [{
+        id: "ev_i", type: "identity-check-passed", eventVersion: 1, occurredAt: "2026-09-18T03:40:30.000Z",
+        actor: recipient, description: "Identity check simulated (test mode): passed",
+        details: { kind: "identity-check", mode: "test", outcome: "passed", idType: "umid", capture: "camera" },
+      }],
+    });
+    renderDialog();
+    const [item] = await screen.findAllByRole("listitem");
+    expect(item?.textContent).toContain("Identity check simulated (test mode): passed");
+    const extra = screen.getByTestId("audit-identity-check").textContent ?? "";
+    expect(extra).toContain("ID: UMID (SSS / GSIS)");
+    expect(extra).toContain("Captured by camera");
+    expect(extra).toContain("Test mode: simulated");
+    expect(extra).not.toMatch(/verified|identity confirmed|biometric/i);
+  });
+
+  it("says Uploaded selfie, and leaves out what the entry does not carry", async () => {
+    audit.mockResolvedValue({
+      ...trail,
+      entries: [
+        {
+          id: "ev_f", type: "identity-check-failed", eventVersion: 1, occurredAt: "2026-09-18T03:40:30.000Z",
+          actor: recipient, description: "Identity check not passed",
+          details: { kind: "identity-check", mode: "live", outcome: "failed", idType: "a-new-kind", capture: "upload" },
+        },
+        {
+          id: "ev_g", type: "identity-check-failed", eventVersion: 1, occurredAt: "2026-09-18T03:41:30.000Z",
+          actor: recipient, description: "Identity check not passed",
+          details: { kind: "identity-check", mode: "live", outcome: "failed", idType: null, capture: null },
+        },
+      ],
+    });
+    renderDialog();
+    const [first, second] = await screen.findAllByTestId("audit-identity-check");
+    expect(first?.textContent).toContain("ID: a new kind");
+    expect(first?.textContent).toContain("Uploaded selfie");
+    expect(first?.textContent).not.toContain("Test mode");
+    expect(second?.textContent).toBe("");
+  });
+
+  it("shows the sender's reason for allowing a lighter method, when one was given", async () => {
+    const waived = {
+      type: "identity-check-waived", eventVersion: 1,
+      actor: { type: "workspace-user" as const, displayName: "Ana Reyes" },
+      description: "Sender allowed this participant to continue without the identity check",
+    };
+    audit.mockResolvedValue({
+      ...trail,
+      entries: [
+        { ...waived, id: "ev_w1", occurredAt: "2026-09-18T03:42:00.000Z", details: { kind: "identity-check-waived", reason: "No ID with them" } },
+        { ...waived, id: "ev_w2", occurredAt: "2026-09-18T03:43:00.000Z", details: { kind: "identity-check-waived", reason: null } },
+      ],
+    });
+    renderDialog();
+    const items = await screen.findAllByRole("listitem");
+    expect(items[0]?.textContent).toContain("Sender allowed this participant to continue without the identity check");
+    expect(screen.getAllByTestId("audit-identity-waiver")).toHaveLength(1);
+    expect(screen.getByTestId("audit-identity-waiver").textContent).toBe("Reason: No ID with them");
+  });
+
+  it("puts a failed attempt, the pass and the consent in that order when they share an instant", async () => {
+    const at = "2026-09-18T03:40:30.000Z";
+    const base = { eventVersion: 1, occurredAt: at, actor: recipient };
+    audit.mockResolvedValue({
+      ...trail,
+      entries: [
+        { ...base, id: "c", type: "consent-accepted", description: "Consent accepted", details: { kind: "consent", consentType: "electronic-records", consentVersion: "1" } },
+        { ...base, id: "w", type: "identity-check-waived", description: "Sender allowed this participant to continue without the identity check", details: { kind: "identity-check-waived", reason: null } },
+        { ...base, id: "p", type: "identity-check-passed", description: "Identity check simulated (test mode): passed", details: { kind: "identity-check", mode: "test", outcome: "passed", idType: null, capture: null } },
+        { ...base, id: "f", type: "identity-check-failed", description: "Identity check simulated (test mode): not passed", details: { kind: "identity-check", mode: "test", outcome: "failed", idType: null, capture: null } },
+        { ...base, id: "v", type: "document-viewed", description: "Signing link opened", details: { kind: "none" } },
+      ],
+    });
+    renderDialog();
+    const items = await screen.findAllByRole("listitem");
+    expect(items.map(i => i.textContent)).toEqual([
+      expect.stringContaining("Signing link opened"),
+      expect.stringContaining("(test mode): not passed"),
+      expect.stringContaining("(test mode): passed"),
+      expect.stringContaining("Sender allowed this participant"),
+      expect.stringContaining("Consent accepted"),
+    ]);
+  });
+
+  it("still shows an entry whose details this build does not know", async () => {
+    audit.mockResolvedValue({
+      ...trail,
+      entries: [{
+        id: "ev_n", type: "something-new", eventVersion: 1, occurredAt: "2026-09-18T03:40:30.000Z",
+        actor: recipient, description: "Something new happened",
+        details: { kind: "a-future-kind", detail: "x" } as unknown as AuditTrail["entries"][number]["details"],
+      }],
+    });
+    renderDialog();
+    const [item] = await screen.findAllByRole("listitem");
+    expect(item?.textContent).toContain("Something new happened");
+    expect(item?.textContent).toContain("James Reid");
+    expect(screen.queryByTestId("audit-identity-check")).toBeNull();
+  });
+});

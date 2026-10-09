@@ -14,7 +14,7 @@
 // exactly what somebody disputing a signature would ask us to justify.
 
 import { useState, useEffect, type CSSProperties } from "react";
-import { X, User, Mail, Cog, ShieldCheck, FileCheck } from "lucide-react";
+import { X, User, Mail, Cog, ShieldCheck, FileCheck, IdCard, FlaskConical, MessageSquare } from "lucide-react";
 import { Link } from "react-router";
 import {
   realSigningRequestService,
@@ -22,6 +22,7 @@ import {
 } from "../../services/real/signing-request.service";
 import { Z } from "../../utils/z-index";
 import { orderAuditEntries } from "./audit-order";
+import { identityIdTypeLabel } from "../../models/identity-check";
 
 const GF: CSSProperties = { fontFamily: "'Geist', sans-serif" };
 const GM: CSSProperties = { fontFamily: "'Geist Mono', monospace" };
@@ -80,6 +81,35 @@ function EntryRow({ entry }: { entry: AuditEntry }) {
               <FileCheck size={12} aria-hidden />
               {/* A version may already carry its "v" ("v0-…"); never print "vv". */}
               Consent: {entry.details.consentType.replace(/-/g, " ")} {/^v/i.test(entry.details.consentVersion) ? "" : "v"}{entry.details.consentVersion}
+            </div>
+          )}
+
+          {/* 105. The server's sentence above already says whether the attempt
+              was simulated. What is added here is only what was presented and
+              how; in test mode nothing is added that reads as a verification. */}
+          {entry.details.kind === "identity-check" && (
+            <div data-testid="audit-identity-check" style={{ display: "flex", alignItems: "center", gap: "2px 10px", flexWrap: "wrap", fontSize: 12, color: SLATE6, marginTop: 4, ...GF }}>
+              {entry.details.idType !== null && (
+                <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
+                  <IdCard size={12} aria-hidden />
+                  ID: {identityIdTypeLabel(entry.details.idType)}
+                </span>
+              )}
+              {entry.details.capture !== null && (
+                <span>{entry.details.capture === "camera" ? "Captured by camera" : "Uploaded selfie"}</span>
+              )}
+              {entry.details.mode === "test" && (
+                <span style={{ display: "inline-flex", alignItems: "center", gap: 4, color: "#92400E", fontWeight: 600 }}>
+                  <FlaskConical size={12} aria-hidden />
+                  Test mode: simulated
+                </span>
+              )}
+            </div>
+          )}
+          {entry.details.kind === "identity-check-waived" && entry.details.reason !== null && entry.details.reason.trim() !== "" && (
+            <div data-testid="audit-identity-waiver" style={{ display: "flex", alignItems: "flex-start", gap: 5, fontSize: 12, color: SLATE6, marginTop: 4, overflowWrap: "anywhere", ...GF }}>
+              <MessageSquare size={12} aria-hidden style={{ flexShrink: 0, marginTop: 2 }} />
+              <span>Reason: {entry.details.reason}</span>
             </div>
           )}
 
