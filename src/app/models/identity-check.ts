@@ -23,6 +23,15 @@ export const SECURE_LINK_PLUS_IDENTITY_LABEL = `${SECURE_LINK_LABEL} + ${IDENTIT
 export const IDENTITY_CHECK_TEST_MODE_NOTICE =
   "Test mode. The check is simulated: no identity is actually verified, and the document's history will say so.";
 
+/**
+ * What the sender is told the check asks of a participant where it is done on
+ * the identity verification partner's page.
+ */
+export const IDENTITY_CHECK_HOSTED_EXPLAINER =
+  "The participant is taken to a secure verification page to show an ID and complete a face check "
+  + "before they can open the document. "
+  + "This is in addition to their secure invitation link, not instead of it.";
+
 const ID_TYPE_LABELS: Readonly<Record<string, string>> = {
   "philsys-national-id": "Philippine Identification (PhilSys) Card / ePhilID",
   "philippine-passport": "Philippine Passport",
@@ -41,6 +50,9 @@ const ID_TYPE_LABELS: Readonly<Record<string, string>> = {
   "government-office-id": "Government office or GOCC ID",
   "foreign-passport": "Foreign Passport",
   "acr-icard": "Alien Certificate of Registration (ACR I-Card)",
+  // What the identity verification partner reports: a kind, not a named card.
+  "passport": "Passport",
+  "other-id": "Other government ID",
 };
 
 const ID_TYPE_GROUPS: readonly { readonly label: string; readonly ids: readonly string[] }[] = [
@@ -110,4 +122,37 @@ export function identityHandoffTimeLeft(expiresAt: string, now: number): number 
   const left = Date.parse(expiresAt) - now;
   if (!Number.isFinite(left) || left <= 0 || left > IDENTITY_HANDOFF_LIFETIME_MS + 60_000) return null;
   return left;
+}
+
+// ── Coming back from the identity verification partner ─────────────────────
+
+/** Where the partner sends the browser when the participant has finished. */
+export const IDENTITY_RETURN_PATH = "/sign/identity/return";
+
+/**
+ * The signing page's address for a participant whose signing session is
+ * already open: the same one "Continue signing" in Documents uses.
+ */
+export const SIGNING_CONTINUE_PATH = "/sign/continue";
+
+/** How long after coming back the result is asked for every few seconds. */
+export const IDENTITY_RETURN_FAST_WINDOW_MS = 20_000;
+
+/**
+ * What the return page hands the signing page, in router state and never in
+ * the address: that the participant has just come back, and when.
+ */
+export interface IdentityReturnState {
+  readonly identityReturnedAt: number;
+}
+
+export function identityReturnState(now: number): IdentityReturnState {
+  return { identityReturnedAt: now };
+}
+
+/** When the participant came back, or null when router state does not say so. */
+export function identityReturnedAt(state: unknown): number | null {
+  if (typeof state !== "object" || state === null) return null;
+  const at = (state as { identityReturnedAt?: unknown }).identityReturnedAt;
+  return typeof at === "number" && Number.isFinite(at) ? at : null;
 }

@@ -22,6 +22,11 @@ export interface IdentityCheckAvailability {
   minimumPlan: "business";
   planAllows: boolean;
   idTypes: string[];
+  /**
+   * `hosted`: the participant is taken to the identity verification partner's
+   * page. Absent from an older server, which means `inline`.
+   */
+  flow?: "inline" | "hosted";
 }
 
 export interface IdentityRequirement {
@@ -43,6 +48,7 @@ export interface RecipientIdentityCheck {
   lastOutcome: "passed" | "failed" | null;
   failedAttempts: number;
   verifiedAt: string | null;
+  /** The kind of ID presented. `passport` and `other-id` come from the hosted flow. */
   idType: string | null;
   waivedAt: string | null;
 }

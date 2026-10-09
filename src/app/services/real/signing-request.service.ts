@@ -176,7 +176,11 @@ export type AuditDetails =
     mode: "test" | "live";
     outcome: "passed" | "failed";
     idType: string | null;
-    capture: "camera" | "upload" | null;
+    /** `provider`: checked on the identity verification partner's page. */
+    capture: "camera" | "upload" | "provider" | null;
+    /** Live events only: who checked it, and their reference for the check. */
+    provider?: string;
+    providerReference?: string;
   }
   /** 105. The sender let a participant continue without the identity check. */
   | { kind: "identity-check-waived"; reason: string | null }

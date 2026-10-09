@@ -55,6 +55,44 @@ export interface CeremonyIdentityCheck {
   verifiedAt: string | null;
   /** The kinds of ID the participant may choose from. */
   idTypes: string[];
+  /**
+   * Where the check is done. `inline`: on LAGDA's own screens. `hosted`: on
+   * the identity verification partner's page, which the participant is sent
+   * to and brought back from. Absent from an older server: `inline`.
+   */
+  flow?: IdentityCheckFlow;
+}
+
+export type IdentityCheckFlow = "inline" | "hosted";
+
+/** Where this check is done. Anything but an explicit `hosted` is `inline`. */
+export function identityCheckFlow(check: Pick<CeremonyIdentityCheck, "flow"> | undefined): IdentityCheckFlow {
+  return check?.flow === "hosted" ? "hosted" : "inline";
+}
+
+/**
+ * A visit to the identity verification partner's page. `url` is theirs: the
+ * browser is sent to it exactly as given. Asking again while one is open
+ * returns the same one.
+ */
+export interface IdentityCheckSession {
+  url: string;
+  expiresAt: string;
+}
+
+/**
+ * Where the hosted check stands, asked of the partner now.
+ *
+ * `pendingReview` means a person at the partner is looking at it: the status
+ * stays `pending` and the answer comes later. It is reported only here, never
+ * on the ceremony. An attempt that was not passed shows only as `pending`
+ * with fewer `attemptsRemaining` than before.
+ */
+export interface IdentityCheckSessionStatus {
+  status: "pending" | "passed" | "locked" | "not-required";
+  attemptsRemaining: number;
+  verifiedAt: string | null;
+  pendingReview: boolean;
 }
 
 /**
@@ -254,6 +292,31 @@ class RealSigningAccessService {
         ...(input.testOutcome === undefined ? {} : { testOutcome: input.testOutcome }),
       },
     });
+  }
+
+  /**
+   * HOSTED FLOW. Opens a visit to the identity verification partner's page.
+   * The body is the participant's agreement and nothing else. Refused with
+   * 409 `identity_check_not_required`, `identity_check_locked` or
+   * `identity_check_unavailable` (also when the partner cannot be reached).
+   */
+  async startIdentityCheckSession(): Promise<IdentityCheckSession> {
+    return recipientApiRequest<IdentityCheckSession>("/signing/identity-check/session", {
+      method: "POST",
+      body: { consent: true },
+    });
+  }
+
+  /**
+   * HOSTED FLOW. Asks the partner where the check stands and brings the
+   * ceremony up to date with the answer.
+   *
+   * NO body, on purpose: the client then sends no JSON content type either,
+   * and the server answers 400 to a JSON content type with nothing after it.
+   */
+  async refreshIdentityCheckSession(): Promise<IdentityCheckSessionStatus> {
+    return recipientApiRequest<IdentityCheckSessionStatus>(
+      "/signing/identity-check/session/refresh", { method: "POST" });
   }
 
   /**
