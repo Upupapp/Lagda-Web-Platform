@@ -562,6 +562,9 @@ export type RecipientLayoutType = "recipient";
 export const RECIPIENT_ROUTES: RouteMeta[] = [
   { path: "/sign/:requestId", title: "Document Request — LAGDA eSignature", breadcrumb: "Document Request", section: "recipient", product: "esignature", layout: "platform", requiresAuth: false, isPublic: false, isIndexable: false, status: "implemented", analyticsName: "recipient_access"   },
   { path: "/sign",            title: "Document Request — LAGDA eSignature", breadcrumb: "Document Request", section: "recipient", product: "esignature", layout: "platform", requiresAuth: false, isPublic: false, isIndexable: false, status: "implemented", analyticsName: "recipient_root"     },
+  // The identity check, continued on a phone from the computer's QR code. No
+  // session and no sign-in: the link's fragment is the credential.
+  { path: "/sign/identity/handoff", title: "Identity Check — LAGDA eSignature", breadcrumb: "Identity Check", section: "recipient", product: "esignature", layout: "platform", requiresAuth: false, isPublic: true, isIndexable: false, status: "implemented", analyticsName: "recipient_identity_handoff" },
   { path: "/copy/:token",     title: "Your Signed Document — LAGDA eSignature", breadcrumb: "Signed Document", section: "recipient", product: "esignature", layout: "platform", requiresAuth: false, isPublic: false, isIndexable: false, status: "implemented", analyticsName: "final_copy" },
   { path: "/copy",            title: "Your Signed Document — LAGDA eSignature", breadcrumb: "Signed Document", section: "recipient", product: "esignature", layout: "platform", requiresAuth: false, isPublic: false, isIndexable: false, status: "implemented", analyticsName: "final_copy_root" },
 ];

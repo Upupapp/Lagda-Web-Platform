@@ -18,7 +18,14 @@ import { USE_REAL_BACKEND } from "../services/backend-flag";
 import { ShieldCheck, ArrowLeft } from "lucide-react";
 import lagdaHeaderLogo from "../../brand elements/svg/LagdaLogoPrimaryHorizontalFullColor_Header.svg";
 
-export function RecipientLayout() {
+export function RecipientLayout({ documentsLink = true }: {
+  /**
+   * The "Back to Documents" row. Off for a page reached on a device that has
+   * no account session and holds its link in memory only (the identity check
+   * continued on a phone): leaving the page there loses the link.
+   */
+  documentsLink?: boolean;
+} = {}) {
   return (
     <div
       style={{
@@ -96,7 +103,7 @@ export function RecipientLayout() {
           Shown on every /sign/* page, signed in or not — for an anonymous
           emailed-link recipient this simply leads to the sign-in wall, the
           same place any other authenticated-app link would. */}
-      <div
+      {documentsLink && <div
         style={{
           background: "#FFFFFF",
           borderBottom: "1px solid #E3E8EF",
@@ -116,7 +123,7 @@ export function RecipientLayout() {
           <ArrowLeft size={15} aria-hidden />
           Back to Documents
         </Link>
-      </div>
+      </div>}
 
       {/* Page content */}
       <main

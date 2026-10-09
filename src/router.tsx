@@ -645,6 +645,12 @@ const RecipientRoot = lazy(() =>
     default: m.RecipientRoot,
   })),
 );
+// The identity check, continued on a phone from the computer's QR code.
+const IdentityHandoffPage = lazy(() =>
+  import("./app/pages/recipient/IdentityHandoffPage").then((m) => ({
+    default: m.IdentityHandoffPage,
+  })),
+);
 // A participant's copy of a finished document (073).
 const FinalCopyPage = lazy(() =>
   import("./app/pages/recipient/FinalCopyPage").then((m) => ({
@@ -2893,6 +2899,19 @@ export const router = createBrowserRouter([
           </Suspense>
         ),
       },
+    ],
+  },
+
+  // /sign/identity/handoff#<token> — the identity check, continued on a
+  // phone that scanned the computer's QR code. Public: no session, no
+  // sign-in, the link is the only authority. Same shell as /sign, without the
+  // way back to Documents: the phone holds its link in memory only.
+  {
+    path: "/sign/identity/handoff",
+    errorElement: <RecipientRouteError />,
+    element: <RecipientLayout documentsLink={false} />,
+    children: [
+      { index: true, element: <Suspense fallback={null}><IdentityHandoffPage /></Suspense> },
     ],
   },
 
