@@ -40,6 +40,49 @@ export interface CeremonyField {
   maxLength: number | null;
 }
 
+/**
+ * Where this participant stands on the sender's optional identity check.
+ *
+ * While `status` is `pending` or `locked` the server withholds the document,
+ * the fields and consent. `mode: "test"` means the check is SIMULATED: nothing
+ * is verified, and the page must say so.
+ */
+export interface CeremonyIdentityCheck {
+  required: boolean;
+  status: "not-required" | "pending" | "passed" | "locked";
+  mode: "test" | "live" | null;
+  attemptsRemaining: number;
+  verifiedAt: string | null;
+  /** The kinds of ID the participant may choose from. */
+  idTypes: string[];
+}
+
+/**
+ * One attempt. Deliberately no image, ID number or name: the server accepts
+ * none, and the capture never leaves the browser.
+ */
+export interface IdentityCheckSubmission {
+  idType: string;
+  capture: "camera" | "upload";
+  consent: true;
+  /** TEST MODE ONLY. Refused by the server in any other mode. */
+  testOutcome?: "pass" | "fail";
+}
+
+export interface IdentityCheckResult {
+  outcome: "passed" | "failed";
+  attemptsRemaining: number;
+  status: "pending" | "passed" | "locked" | "not-required";
+}
+
+/** True while the identity check stands between this participant and the document. */
+export function identityCheckOutstanding(view: Pick<CeremonyView, "identityCheck">): boolean {
+  const check = view.identityCheck;
+  // Absent from an older server: nothing is asked.
+  if (check === undefined) return false;
+  return check.required && (check.status === "pending" || check.status === "locked");
+}
+
 export interface CeremonyView {
   request: { signingRequestId: string; documentTitle: string };
   recipient: { recipientId: string; name: string; email: string; type: string };
@@ -79,6 +122,8 @@ export interface CeremonyView {
     acceptedVersion: string | null;
     acceptedAt: string | null;
   };
+  /** 105. Absent from a server that predates the identity check: treat as not required. */
+  identityCheck?: CeremonyIdentityCheck;
   document: { mediaType: string; sizeBytes: number; digest: string; pageCount: number | null } | null;
   fields: CeremonyField[];
   firstEnteredAt: string | null;
@@ -171,6 +216,23 @@ class RealSigningAccessService {
     return recipientApiRequest<CeremonyView>("/signing/ceremony/consent", {
       method: "POST",
       body: { consentVersion },
+    });
+  }
+
+  /**
+   * One attempt at the sender's identity check. The route exists only where
+   * the check is switched on; the body names the kind of ID and how the
+   * selfie was taken, and nothing else.
+   */
+  async submitIdentityCheck(input: IdentityCheckSubmission): Promise<IdentityCheckResult> {
+    return recipientApiRequest<IdentityCheckResult>("/signing/identity-check", {
+      method: "POST",
+      body: {
+        idType: input.idType,
+        capture: input.capture,
+        consent: true,
+        ...(input.testOutcome === undefined ? {} : { testOutcome: input.testOutcome }),
+      },
     });
   }
 
