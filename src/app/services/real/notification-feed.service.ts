@@ -688,6 +688,24 @@ function present(row: FeedRow): Presentation {
       };
     }
 
+    // 105. In-app only. To the sender: a participant used up the identity
+    // check's attempts. Nothing is decided for them; the document's
+    // Signatures is where they can be allowed another way.
+    case "IDENTITY_CHECK_LOCKED": {
+      const who = str(row.templateInput, "participantName") ?? "A participant";
+      const subject = documentTitle === null ? "a document you sent" : `“${documentTitle}”`;
+      return {
+        category: "documents", severity: "warning", priority: "high",
+        title: "A participant could not pass the identity check",
+        body: `${who} could not pass the identity check for ${subject} after 3 attempts. `
+          + "You can allow a lighter method for them in the document's Signatures.",
+        actionLabel: "Open Documents",
+        actionPath: "/app/documents",
+        why: "You were sent this because you sent this document and asked this participant for an identity check.",
+        inAppOnly: true,
+      };
+    }
+
     case "FINAL_COPY_AVAILABLE": {
       const title = str(row.templateInput, "documentTitle") ?? "A document you signed";
       const sender = str(row.templateInput, "senderDisplayName") ?? "the sender";

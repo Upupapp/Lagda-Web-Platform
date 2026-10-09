@@ -60,6 +60,7 @@ const ROWS: Record<string, Record<string, unknown>> = {
   PLAN_UPGRADE_DECLINED: { recipientName: "Ana", planName: "Business", requestId: "pur_1" },
   DOCUMENT_WAITING_FOR_SIGNATURE: { recipientName: "Ana", documentTitle: "NDA.pdf", senderDisplayName: "Ben", workspaceName: "Reyes Law", signingRequestId: "sr_1" },
   SIGNING_LINK_LAPSED: { recipientName: "Ana", documentTitle: "NDA.pdf", signingRequestId: "sr_1", waitingOn: ["Jose Cruz", "Ben Lim"], waitingOnMore: 0 },
+  IDENTITY_CHECK_LOCKED: { recipientName: "Ana", participantName: "Jose Cruz", documentTitle: "NDA.pdf", signingRequestId: "sr_1", participantRecipientId: "srr_1" },
   PUBLIC_INQUIRY_RECEIVED: { recipientName: "Chris", kindLabel: "Demo request", senderName: "Jose Cruz", senderEmail: "jose@example.ph", inquiryId: "pin_1" },
 };
 
@@ -105,6 +106,17 @@ describe("the account notification feed", () => {
     // Where the deletion-request notice leads too.
     expect(moved?.actionPath).toBe(records.find(r => r.title.includes("asked you to delete"))?.actionPath);
     expect(moved?.actionPath).toBe("/app/documents?bin=open");
+  });
+
+  it("tells the sender who could not pass the identity check, and opens Documents", async () => {
+    const records = await realNotificationFeedService.list();
+    const locked = records.find(r => r.title === "A participant could not pass the identity check");
+    expect(locked?.body).toBe(
+      "Jose Cruz could not pass the identity check for “NDA.pdf” after 3 attempts. "
+      + "You can allow a lighter method for them in the document's Signatures.");
+    expect(locked?.severity).toBe("warning");
+    expect(locked?.actionLabel).toBe("Open Documents");
+    expect(locked?.actionPath).toBe("/app/documents");
   });
 
   it("opens a signed document in the Documents viewer, never in the demo detail page", async () => {
