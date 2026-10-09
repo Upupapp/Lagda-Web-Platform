@@ -113,10 +113,10 @@ describe("the account notification feed", () => {
     const locked = records.find(r => r.title === "A participant could not pass the identity check");
     expect(locked?.body).toBe(
       "Jose Cruz could not pass the identity check for “NDA.pdf” after 3 attempts. "
-      + "You can allow a lighter method for them in the document's Signatures.");
+      + "Open Participants to allow a lighter method for them.");
     expect(locked?.severity).toBe("warning");
-    expect(locked?.actionLabel).toBe("Open Documents");
-    expect(locked?.actionPath).toBe("/app/documents");
+    expect(locked?.actionLabel).toBe("Open participants");
+    expect(locked?.actionPath).toBe("/app/documents?list=sent&participants=sr_1");
   });
 
   it("opens a signed document in the Documents viewer, never in the demo detail page", async () => {

@@ -690,17 +690,21 @@ function present(row: FeedRow): Presentation {
 
     // 105. In-app only. To the sender: a participant used up the identity
     // check's attempts. Nothing is decided for them; the document's
-    // Signatures is where they can be allowed another way.
+    // Participants is where they can be allowed another way, so the notice
+    // opens it directly, as the lapsed-link notice does.
     case "IDENTITY_CHECK_LOCKED": {
       const who = str(row.templateInput, "participantName") ?? "A participant";
       const subject = documentTitle === null ? "a document you sent" : `“${documentTitle}”`;
+      const requestId = str(row.templateInput, "signingRequestId");
       return {
         category: "documents", severity: "warning", priority: "high",
         title: "A participant could not pass the identity check",
         body: `${who} could not pass the identity check for ${subject} after 3 attempts. `
-          + "You can allow a lighter method for them in the document's Signatures.",
-        actionLabel: "Open Documents",
-        actionPath: "/app/documents",
+          + "Open Participants to allow a lighter method for them.",
+        actionLabel: "Open participants",
+        actionPath: requestId === null
+          ? "/app/documents?list=sent"
+          : `/app/documents?list=sent&participants=${encodeURIComponent(requestId)}`,
         why: "You were sent this because you sent this document and asked this participant for an identity check.",
         inAppOnly: true,
       };
