@@ -608,7 +608,9 @@ export function IdentityCheckStages({
   const continueFromId = () => {
     const next: typeof errors = {};
     if (idType === "") next.idType = "Choose the type of ID.";
-    if (front === null) next.front = "Add a photo of the front of your ID.";
+    // The photo boxes are not on the screen until a type is chosen, so a
+    // message about them would point at nothing.
+    else if (front === null) next.front = "Add a photo of the front of your ID.";
     setErrors(current => ({ ...current, ...next }));
     if (next.idType !== undefined || next.front !== undefined) {
       setAnnouncement([next.idType, next.front].filter(Boolean).join(" "));
@@ -1000,19 +1002,24 @@ export function IdentityCheckStages({
           </p>
         )}
 
-        <div className="idc-grid" style={{ marginTop: 16 }}>
-          <ImagePicker
-            label="Front of the ID" picked={front} error={errors.front ?? null} touch={touch} capture="environment"
-            hint="JPEG, PNG or WebP, up to 8 MB."
-            onPick={file => { pick("front", file); }} onRemove={() => { remove("front"); }}
-          />
-          {hasBack && (
+        {/* The photo boxes wait for the type: which sides are asked for
+            depends on it (a passport has no back), and two empty boxes under
+            an unanswered question read as the first thing to do. */}
+        {idType !== "" && (
+          <div className="idc-grid" style={{ marginTop: 16 }}>
             <ImagePicker
-              label="Back of the ID" optional picked={back} error={errors.back ?? null} touch={touch} capture="environment"
-              onPick={file => { pick("back", file); }} onRemove={() => { remove("back"); }}
+              label="Front of the ID" picked={front} error={errors.front ?? null} touch={touch} capture="environment"
+              hint="JPEG, PNG or WebP, up to 8 MB."
+              onPick={file => { pick("front", file); }} onRemove={() => { remove("front"); }}
             />
-          )}
-        </div>
+            {hasBack && (
+              <ImagePicker
+                label="Back of the ID" optional picked={back} error={errors.back ?? null} touch={touch} capture="environment"
+                onPick={file => { pick("back", file); }} onRemove={() => { remove("back"); }}
+              />
+            )}
+          </div>
+        )}
 
         {phone !== undefined && (
           <div style={{

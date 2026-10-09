@@ -167,15 +167,36 @@ describe("your ID", () => {
     ]);
   });
 
-  it("asks for the type and the front in plain words, tied to their fields", async () => {
+  it("shows no photo boxes until a type of ID is chosen", async () => {
+    setup();
+    await agree();
+    expect(screen.queryByRole("group", { name: /Front of the ID/ })).toBeNull();
+    expect(screen.queryByRole("group", { name: /Back of the ID/ })).toBeNull();
+    expect(screen.queryByText("JPEG, PNG or WebP, up to 8 MB.")).toBeNull();
+    await userEvent.selectOptions(screen.getByLabelText("Type of ID"), "umid");
+    expect(screen.getByRole("group", { name: /Front of the ID/ })).toBeInTheDocument();
+    expect(screen.getByRole("group", { name: /Back of the ID/ })).toBeInTheDocument();
+    // Going back to "Choose one" takes them away again.
+    await userEvent.selectOptions(screen.getByLabelText("Type of ID"), "");
+    expect(screen.queryByRole("group", { name: /Front of the ID/ })).toBeNull();
+  });
+
+  it("asks for the type first, then for the front, in plain words tied to their fields", async () => {
     setup();
     await agree();
     await userEvent.click(screen.getByRole("button", { name: "Continue" }));
-    expect(screen.getByText("Choose the type of ID.")).toBeInTheDocument();
-    expect(screen.getByText("Add a photo of the front of your ID.")).toBeInTheDocument();
+    // Shown beside the field (and announced, which is why it is found by role).
+    expect(screen.getByRole("alert")).toHaveTextContent("Choose the type of ID.");
+    // The photo boxes are not there yet, so nothing is said about them.
+    expect(screen.queryByText("Add a photo of the front of your ID.")).toBeNull();
     const select = screen.getByLabelText("Type of ID");
     expect(select).toHaveAttribute("aria-invalid", "true");
     expect(select).toHaveAccessibleDescription("Choose the type of ID.");
+    expect(screen.getByRole("heading", { name: "Your ID" })).toBeInTheDocument();
+
+    await userEvent.selectOptions(select, "umid");
+    await userEvent.click(screen.getByRole("button", { name: "Continue" }));
+    expect(screen.getByRole("alert")).toHaveTextContent("Add a photo of the front of your ID.");
     expect(screen.getByRole("heading", { name: "Your ID" })).toBeInTheDocument();
   });
 
@@ -190,6 +211,7 @@ describe("your ID", () => {
   it("refuses a file that is not an image, and one over 8 MB", async () => {
     setup();
     await agree();
+    await userEvent.selectOptions(screen.getByLabelText("Type of ID"), "umid");
     const input = screen.getByLabelText("Front of the ID: choose a file");
     // As a drop or a permissive picker would hand it over: `accept` is only a hint.
     const user = userEvent.setup({ applyAccept: false });
@@ -207,6 +229,7 @@ describe("your ID", () => {
   it("shows a preview with the name and size, and lets it be replaced or removed", async () => {
     setup();
     await agree();
+    await userEvent.selectOptions(screen.getByLabelText("Type of ID"), "umid");
     const input = screen.getByLabelText("Front of the ID: choose a file");
     await userEvent.upload(input, image("front-one.jpg"));
     expect(screen.getByAltText("Front of the ID preview")).toHaveAttribute("src", "blob:test/1");
@@ -227,6 +250,7 @@ describe("your ID", () => {
   it("asks for the back as optional, and not at all for a passport", async () => {
     setup();
     await agree();
+    await userEvent.selectOptions(screen.getByLabelText("Type of ID"), "umid");
     expect(screen.getByRole("group", { name: /Back of the ID/ }).textContent).toContain("(optional)");
     await userEvent.upload(screen.getByLabelText("Back of the ID: choose a file"), image("back.jpg"));
     await userEvent.selectOptions(screen.getByLabelText("Type of ID"), "philippine-passport");
@@ -238,6 +262,7 @@ describe("your ID", () => {
   it("lets the pictures go when the screen goes away", async () => {
     const { unmount } = setup();
     await agree();
+    await userEvent.selectOptions(screen.getByLabelText("Type of ID"), "umid");
     await userEvent.upload(screen.getByLabelText("Front of the ID: choose a file"), image());
     expect(revokeObjectURL).not.toHaveBeenCalled();
     unmount();
@@ -249,6 +274,7 @@ describe("your ID", () => {
     try {
       setup();
       await agree();
+      await userEvent.selectOptions(screen.getByLabelText("Type of ID"), "umid");
       expect(screen.getAllByRole("button", { name: "Take a photo" }).length).toBeGreaterThan(0);
       expect(screen.getByLabelText("Front of the ID: take a photo")).toHaveAttribute("capture", "environment");
       // And the selfie upload opens the front camera there.
