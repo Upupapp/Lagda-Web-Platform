@@ -167,6 +167,19 @@ export interface AuditActor {
 export type AuditDetails =
   | { kind: "authentication"; method: string }
   | { kind: "consent"; consentType: string; consentVersion: string }
+  /**
+   * 105. One identity check attempt. `mode: "test"` means it was SIMULATED:
+   * nothing was verified, and the entry must never be shown as if it were.
+   */
+  | {
+    kind: "identity-check";
+    mode: "test" | "live";
+    outcome: "passed" | "failed";
+    idType: string | null;
+    capture: "camera" | "upload" | null;
+  }
+  /** 105. The sender let a participant continue without the identity check. */
+  | { kind: "identity-check-waived"; reason: string | null }
   | { kind: "none" };
 
 export interface AuditEntry {

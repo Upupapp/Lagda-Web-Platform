@@ -23,8 +23,9 @@ import { realSigningAccountLinkService }
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useParams } from "react-router";
 import {
-  realSigningAccessService, type CeremonyView,
+  realSigningAccessService, identityCheckOutstanding, type CeremonyView,
 } from "../../services/real/signing-access.service";
+import { IdentityCheckStep } from "../../components/recipient/IdentityCheckStep";
 import {
   realSigningSubmissionService, type SubmittedFieldValue, type SigningDeclineReason,
 } from "../../services/real/signing-submission.service";
@@ -79,7 +80,13 @@ function maskRecipientEmail(email: string): string {
 // you agree to, because signing in changes what the consent screen can
 // offer. It is skipped once an account is already linked — there is no
 // choice left to make at that point.
-type Phase = "loading" | "unavailable" | "choose" | "consent" | "ceremony" | "submitted" | "declined" | "decline-form" | "skipped" | "view";
+//
+// "identity" sits between them, and only for a participant the sender asked
+// an identity check of: until it is passed (or the sender allows another
+// way) the server withholds consent, the document and the fields, so there is
+// nothing else this page could show. A ceremony that carries no such
+// requirement never enters it.
+type Phase = "loading" | "unavailable" | "choose" | "identity" | "consent" | "ceremony" | "submitted" | "declined" | "decline-form" | "skipped" | "view";
 
 // ── Continuing from the app ───────────────────────────────────────────────
 //
@@ -158,6 +165,9 @@ export function RealSigningPage() {
   const [submitting, setSubmitting] = useState(false);
   const [declineReason, setDeclineReason] = useState<SigningDeclineReason>("not-agree");
   const [confirmingAction, setConfirmingAction] = useState(false);
+  // Where "Back" on the decline form returns to: the document, or the
+  // identity check when declining was opened from there.
+  const [declineFrom, setDeclineFrom] = useState<"ceremony" | "identity">("ceremony");
 
   // Same NEW-KEY / RETRY-SAME-KEY / RETIRE-ON-SUCCESS rule as sender Send
   // (ConfirmationPage) — one submission per ceremony, in-memory only.
@@ -196,6 +206,15 @@ export function RealSigningPage() {
     // server permits.
     if (ceremony.accountLink === undefined) {
       setPhase("choose");
+      return;
+    }
+    // The sender's optional identity check. After the sign-in gate, because
+    // that is still how this participant is recognised, and before consent,
+    // because the server will not take a consent while the check is
+    // outstanding. Absent or not required: this branch is never taken and
+    // everything below is exactly as it was.
+    if (identityCheckOutstanding(ceremony)) {
+      setPhase("identity");
       return;
     }
     if (ceremony.consent.required && !ceremony.consent.accepted && ceremony.access.mayAcceptConsent) {
@@ -277,7 +296,12 @@ export function RealSigningPage() {
           // A failed poll is ignored on purpose: the signer is not waiting on
           // this request and an error banner over "not yet your turn" would
           // report a problem they cannot act on.
-          if (!cancelled) setView(fresh);
+          if (cancelled) return;
+          // The sender may add an identity check after sending. The server
+          // then withholds the document, which this screen would otherwise
+          // show as "not yet your turn" for ever.
+          if (identityCheckOutstanding(fresh)) { applyView(fresh); return; }
+          setView(fresh);
         } catch { /* transient — the next tick tries again */ }
       })();
     }, 15000);
@@ -299,6 +323,16 @@ export function RealSigningPage() {
       void (async () => {
         try {
           const fresh = await realSigningAccessService.read();
+          // An identity check asked for since this page was read (see the
+          // poll above). Never taken while the account choice is still open:
+          // `applyView` below decides that case, in its usual order.
+          // Nor once they have moved on (submitted, declining): the answer to
+          // a request made on an earlier screen must not pull them back.
+          if (identityCheckOutstanding(fresh)
+            && (phaseRef.current === "consent" || phaseRef.current === "ceremony")) {
+            applyView(fresh);
+            return;
+          }
           setView(fresh);
           // They went to confirm and came back confirmed. Move on rather
           // than leaving them staring at a choice they have just made.
@@ -375,12 +409,42 @@ export function RealSigningPage() {
     })();
   };
 
+  /**
+   * Re-reads the ceremony and goes wherever it now points. Used by the
+   * identity check: after a pass, after "Check again", and when the sender
+   * changed something while the participant was on the screen.
+   *
+   * `read()`, never `enter()`: entry is recorded once.
+   * Resolves to a message when the ceremony could not be read.
+   */
+  const reloadCeremony = async (): Promise<string | null> => {
+    try {
+      const fresh = await realSigningAccessService.read();
+      applyView(fresh);
+      return null;
+    } catch (err) {
+      return describeError(err);
+    }
+  };
+
+  /**
+   * The server refused because the identity check is outstanding: the
+   * ceremony this page holds is out of date. Read it again, which puts the
+   * participant on the identity check. True when that was the refusal.
+   */
+  const recoverIdentityCheckRequired = async (err: unknown): Promise<boolean> => {
+    if (!(err instanceof ApiError) || err.body?.code !== "signing_identity_check_required") return false;
+    setErrorMessage(await reloadCeremony());
+    return true;
+  };
+
   const handleAcceptConsent = async () => {
     if (!view) return;
     try {
       const updated = await realSigningAccessService.acceptConsent(view.consent.requiredVersion);
       applyView(updated);
     } catch (err) {
+      if (await recoverIdentityCheckRequired(err)) return;
       setErrorMessage(describeError(err));
     }
   };
@@ -461,7 +525,7 @@ export function RealSigningPage() {
         },
       );
     } catch (err) {
-      setErrorMessage(describeSubmissionError(err));
+      if (!(await recoverIdentityCheckRequired(err))) setErrorMessage(describeSubmissionError(err));
     } finally {
       setSubmitting(false);
       setConfirmingAction(false);
@@ -660,6 +724,24 @@ export function RealSigningPage() {
     );
   }
 
+  if (phase === "identity" && view?.identityCheck !== undefined) {
+    return (
+      <SignerCard>
+        <IdentityCheckStep
+          identityCheck={view.identityCheck}
+          documentTitle={view.request.documentTitle}
+          submit={(input) => realSigningAccessService.submitIdentityCheck(input)}
+          onReload={reloadCeremony}
+          // Declining stays possible while the check is outstanding, where
+          // the server says this participant may decline at all.
+          {...(view.access.mayDecline === true
+            ? { onDecline: () => { setErrorMessage(null); setDeclineFrom("identity"); setPhase("decline-form"); } }
+            : {})}
+        />
+      </SignerCard>
+    );
+  }
+
   if (phase === "consent" && view) {
     return (
       <SignerCard>
@@ -781,9 +863,9 @@ export function RealSigningPage() {
           </ActionButton>
           <ActionButton
             kind="secondary" icon={ArrowLeft}
-            onClick={() => { setPhase("ceremony"); }} full
+            onClick={() => { setPhase(declineFrom); }} full
           >
-            Back to document
+            {declineFrom === "identity" ? "Back to the identity check" : "Back to document"}
           </ActionButton>
         </ActionRow>
       </SignerCard>
@@ -954,7 +1036,7 @@ export function RealSigningPage() {
               <ActionButton
                 kind="secondary"
                 icon={Ban}
-                onClick={() => { setPhase("decline-form"); }}
+                onClick={() => { setDeclineFrom("ceremony"); setPhase("decline-form"); }}
                 disabled={submitting}
                 full
               >

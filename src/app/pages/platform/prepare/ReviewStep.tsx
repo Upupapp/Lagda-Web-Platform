@@ -25,6 +25,8 @@ import { stepEyebrow,
 import type { PreparationStepId, PrepValidationIssue } from "../../../models/prepare";
 import { StepBanner, StepTwoColumn, RailCard } from "../../../components/prepare/StepBanner";
 import { MissingItemsModal } from "../../../components/prepare/MissingItemsModal";
+import { useIdentityCheckRequirements } from "../../../hooks/useIdentityCheckRequirements";
+import { IDENTITY_CHECK_OPTION_LABEL, roleCanBeAskedForIdentityCheck } from "../../../models/identity-check";
 
 const GF     = { fontFamily: "'Geist', sans-serif" };
 const NAVY   = "#07111F";
@@ -157,6 +159,12 @@ export function ReviewStep() {
   const routing      = draft?.routing ?? DEFAULT_ROUTING_CONFIG;
   const auth         = draft?.auth ?? DEFAULT_AUTH_CONFIG;
   const settings     = draft?.settings ?? DEFAULT_PREP_SETTINGS;
+  // Participants the sender asked "ID and face verification" of. Empty unless
+  // the server offers the check here and the sender switched it on.
+  const identityCheck = useIdentityCheckRequirements();
+  const identityChecked = identityCheck.status === "ready"
+    ? participants.filter(p => roleCanBeAskedForIdentityCheck(p.role) && identityCheck.isRequired(p.email))
+    : [];
 
   const handleContinue = () => {
     if (!isReady) return;
@@ -267,6 +275,21 @@ export function ReviewStep() {
           <div style={{ ...GF, fontSize: 12, color: SILVER }}>
             {Object.keys(auth.perParticipant).length} participant{Object.keys(auth.perParticipant).length !== 1 ? "s" : ""} with custom method
           </div>
+        )}
+        {identityChecked.length > 0 && (
+          <ul data-testid="review-identity-check" style={{ listStyle: "none", margin: "6px 0 0", padding: 0, display: "flex", flexDirection: "column", gap: 4 }}>
+            {identityChecked.map(p => (
+              <li key={p.id} style={{ ...GF, fontSize: 12, color: "#4B5E70", overflowWrap: "anywhere" }}>
+                <strong style={{ color: NAVY }}>{p.name || p.email}</strong>
+                {": "}{getAuthMethodConfig(auth.defaultMethod).label} + {IDENTITY_CHECK_OPTION_LABEL}
+              </li>
+            ))}
+            {identityCheck.mode === "test" && (
+              <li style={{ ...GF, fontSize: 12, color: "#92400E" }}>
+                Test mode: the check is simulated and no identity is actually verified.
+              </li>
+            )}
+          </ul>
         )}
       </SectionBlock>
 

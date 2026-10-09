@@ -26,8 +26,12 @@ export interface LifecycleConfirmCopy {
   /** One sentence: what pressing Continue does. */
   readonly lead: string;
   readonly points?: readonly string[];
-  /** Asks for a reason, and requires one. */
-  readonly reason?: { readonly label: string; readonly placeholder: string; readonly hint?: string };
+  /** Asks for a reason, and requires one unless it is marked `optional`. */
+  readonly reason?: {
+    readonly label: string; readonly placeholder: string; readonly hint?: string;
+    /** The reason may be left empty. Continue is then never held back by it. */
+    readonly optional?: boolean;
+  };
   /** Red for what cannot be undone; blue otherwise. */
   readonly tone?: "danger" | "neutral";
   readonly icon: LucideIcon;
@@ -50,7 +54,8 @@ export function LifecycleConfirmDialog({ copy, subject, busy = false, error = nu
   const danger = copy.tone === "danger";
   const accent = danger ? DANGER : AZURE;
   const Icon = copy.icon;
-  const needsReason = copy.reason !== undefined;
+  const reasonOptional = copy.reason?.optional === true;
+  const needsReason = copy.reason !== undefined && !reasonOptional;
   const ready = !busy && (!needsReason || reason.trim().length > 0);
 
   useEffect(() => {
@@ -117,20 +122,23 @@ export function LifecycleConfirmDialog({ copy, subject, busy = false, error = nu
         {copy.reason !== undefined && (
           <div style={{ padding: "12px 22px 0" }}>
             <label htmlFor={reasonId} style={{ ...GF, display: "block", fontSize: 12.5, fontWeight: 700, color: NAVY, marginBottom: 5 }}>
-              {copy.reason.label} <span style={{ color: DANGER }}>*</span>
+              {copy.reason.label}{" "}
+              {reasonOptional
+                ? <span style={{ fontWeight: 500, color: "#64748B" }}>(optional)</span>
+                : <span style={{ color: DANGER }}>*</span>}
             </label>
             <textarea
               id={reasonId} value={reason} maxLength={REASON_MAX} rows={3} disabled={busy}
               onChange={e => { setReason(e.target.value); }}
               placeholder={copy.reason.placeholder}
-              aria-required="true" aria-describedby={hintId}
+              aria-required={reasonOptional ? "false" : "true"} aria-describedby={hintId}
               style={{
                 ...GF, width: "100%", boxSizing: "border-box", padding: "9px 11px", borderRadius: 9,
                 border: "1px solid #CBD5E1", fontSize: 13.5, color: NAVY, resize: "vertical", minHeight: 76,
               }}
             />
             <div id={hintId} style={{ ...GF, display: "flex", justifyContent: "space-between", gap: 10, fontSize: 11.5, color: "#64748B", marginTop: 4 }}>
-              <span>{copy.reason.hint ?? "Required."}</span>
+              <span>{copy.reason.hint ?? (reasonOptional ? "Optional." : "Required.")}</span>
               <span>{reason.length}/{REASON_MAX}</span>
             </div>
           </div>

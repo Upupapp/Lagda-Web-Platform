@@ -15,6 +15,9 @@ import { stepEyebrow,
 import type { PrepAuthMethodId, PrepParticipant } from "../../../models/prepare";
 import { StepBanner, StepTwoColumn, RailCard } from "../../../components/prepare/StepBanner";
 import { USE_REAL_BACKEND } from "../../../services/backend-flag";
+import { IdentityCheckSection } from "../../../components/prepare/IdentityCheckSection";
+import { useIdentityCheckRequirements } from "../../../hooks/useIdentityCheckRequirements";
+import { IDENTITY_CHECK_OPTION_LABEL } from "../../../models/identity-check";
 
 const GF     = { fontFamily: "'Geist', sans-serif" };
 const NAVY   = "#07111F";
@@ -215,6 +218,10 @@ function ParticipantAuthRow({
 
 export function AuthStep() {
   const { draft, updateAuth, setStep, validate } = usePrepare();
+  // "ID and face verification": held by the server, not by the draft. "off"
+  // unless the server offers it to this workspace, and then nothing below
+  // that reads it renders anything.
+  const identityCheck = useIdentityCheckRequirements();
 
   useEffect(() => { setStep("authentication"); }, [setStep]);
 
@@ -297,6 +304,12 @@ export function AuthStep() {
         </p>
       )}
 
+      {/* In addition to the link, never instead of it. Renders nothing
+          unless the server offers the check to this workspace. */}
+      {USE_REAL_BACKEND && (
+        <IdentityCheckSection control={identityCheck} participants={participants} />
+      )}
+
       {/* Per-participant overrides */}
       {!USE_REAL_BACKEND && hasParticipants && (
         <div>
@@ -343,6 +356,21 @@ export function AuthStep() {
           {participants.map(p => {
             const override = auth.perParticipant[p.id] ?? null;
             const effective = override ?? auth.defaultMethod;
+            const withIdentityCheck = identityCheck.status === "ready" && identityCheck.isRequired(p.email);
+            if (withIdentityCheck) {
+              // Two methods do not fit beside a name: the name keeps its line
+              // and the methods wrap under it.
+              return (
+                <div key={p.id} data-testid="auth-rail-identity-check" style={{ minWidth: 0 }}>
+                  <div style={{ ...GF, fontSize: 12, fontWeight: 600, color: NAVY, overflowWrap: "anywhere" }}>
+                    {p.name}
+                  </div>
+                  <div style={{ ...GF, fontSize: 11, color: AZURE, fontWeight: 700, overflowWrap: "anywhere" }}>
+                    {getAuthMethodConfig(effective).label} + {IDENTITY_CHECK_OPTION_LABEL}
+                  </div>
+                </div>
+              );
+            }
             return (
               <div key={p.id} style={{ display: "flex", justifyContent: "space-between", gap: 8, minWidth: 0 }}>
                 <span
