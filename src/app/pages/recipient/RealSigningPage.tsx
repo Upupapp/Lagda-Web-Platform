@@ -21,11 +21,13 @@ import { realSigningAccountLinkService }
   from "../../services/real/signing-account-link.service";
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { useParams } from "react-router";
+import { useLocation, useParams } from "react-router";
 import {
-  realSigningAccessService, identityCheckOutstanding, type CeremonyView,
+  realSigningAccessService, identityCheckOutstanding, identityCheckFlow, type CeremonyView,
 } from "../../services/real/signing-access.service";
 import { IdentityCheckStep } from "../../components/recipient/IdentityCheckStep";
+import { IdentityCheckHosted } from "../../components/recipient/IdentityCheckHosted";
+import { identityReturnedAt } from "../../models/identity-check";
 import {
   realSigningSubmissionService, type SubmittedFieldValue, type SigningDeclineReason,
 } from "../../services/real/signing-submission.service";
@@ -142,6 +144,11 @@ const SPLASH_EXIT_MS = 240;
 
 export function RealSigningPage() {
   const { requestId: token } = useParams<{ requestId: string }>();
+  // Set, in router state and never in the address, by the page the identity
+  // verification partner sends a participant back to. Read once: it says
+  // when they came back, and that their signing session is already open.
+  const location = useLocation();
+  const [returnedAt] = useState(() => identityReturnedAt(location.state));
   const [phase, setPhase] = useState<Phase>("loading");
   // The focus handler is registered once per phase change but runs later,
   // after an await. It reads the CURRENT phase through this rather than the
@@ -234,6 +241,24 @@ export function RealSigningPage() {
       return;
     }
     const fromApp = token === CONTINUE_SEGMENT;
+    // Back from the identity verification partner's page. There is no code
+    // to redeem and no link to open again: the signing session they left
+    // with is still theirs, so the ceremony is simply read. `read()`, never
+    // `enter()`: they entered before they left. A code in the address still
+    // wins, so "Continue signing" from Documents is exactly as it was.
+    if (fromApp && returnedAt !== null && window.location.hash.replace(/^#/, "") === "") {
+      void (async () => {
+        try {
+          applyView(await realSigningAccessService.read());
+        } catch (err) {
+          setErrorMessage(err instanceof ApiError && err.status === 401
+            ? "Your signing session has ended. Open your signing link again to continue."
+            : describeReturnError(err));
+          setPhase("unavailable");
+        }
+      })();
+      return;
+    }
     void (async () => {
       try {
         if (fromApp) {
@@ -724,6 +749,28 @@ export function RealSigningPage() {
     );
   }
 
+  // The check done on the identity verification partner's page. None of the
+  // screens below it (LAGDA's own ID and selfie stages, its QR code to a
+  // phone) exist in this flow: the server refuses them.
+  if (phase === "identity" && view?.identityCheck !== undefined && identityCheckFlow(view.identityCheck) === "hosted") {
+    return (
+      <SignerCard>
+        <IdentityCheckHosted
+          identityCheck={view.identityCheck}
+          documentTitle={view.request.documentTitle}
+          requestId={view.request.signingRequestId}
+          startSession={() => realSigningAccessService.startIdentityCheckSession()}
+          refresh={() => realSigningAccessService.refreshIdentityCheckSession()}
+          onReload={reloadCeremony}
+          returnedAt={returnedAt}
+          {...(view.access.mayDecline === true
+            ? { onDecline: () => { setErrorMessage(null); setDeclineFrom("identity"); setPhase("decline-form"); } }
+            : {})}
+        />
+      </SignerCard>
+    );
+  }
+
   if (phase === "identity" && view?.identityCheck !== undefined) {
     return (
       <SignerCard>
@@ -1102,6 +1149,18 @@ const LINK_UNUSABLE =
   "This signing link can no longer be opened. It may have expired, already "
   + "been used, or been replaced by a newer one. Ask the sender to send you a "
   + "new link.";
+
+/**
+ * Why the ceremony could not be read for someone coming back from the
+ * identity check. Never the server's own text: nothing was asked of them
+ * here that it could be about.
+ */
+function describeReturnError(err: unknown): string {
+  if (err instanceof ApiError && err.status === 0) {
+    return "Could not reach the server. Check your connection, then reload this page.";
+  }
+  return "Your document could not be opened right now. Reload this page, or open your signing link again.";
+}
 
 function describeError(err: unknown): string {
   if (err instanceof ApiError) {
