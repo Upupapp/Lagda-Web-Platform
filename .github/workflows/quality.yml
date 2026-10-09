@@ -62,8 +62,13 @@ jobs:
       - name: Type-check
         run: npm run typecheck
 
+      # Type-aware lint of the whole tree no longer fits Node's default heap
+      # (about 2 GB): it ran out at 2,017 MB and the step died with exit 134,
+      # which reads like a lint failure and is not one. The runner has 16 GB.
       - name: Lint
         run: npm run lint
+        env:
+          NODE_OPTIONS: --max-old-space-size=6144
 
       - name: Unit and component tests with coverage
         run: npm run test:coverage
