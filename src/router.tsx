@@ -651,6 +651,11 @@ const IdentityHandoffPage = lazy(() =>
     default: m.IdentityHandoffPage,
   })),
 );
+const IdentityReturnPage = lazy(() =>
+  import("./app/pages/recipient/IdentityReturnPage").then((m) => ({
+    default: m.IdentityReturnPage,
+  })),
+);
 // A participant's copy of a finished document (073).
 const FinalCopyPage = lazy(() =>
   import("./app/pages/recipient/FinalCopyPage").then((m) => ({
@@ -2912,6 +2917,20 @@ export const router = createBrowserRouter([
     element: <RecipientLayout documentsLink={false} />,
     children: [
       { index: true, element: <Suspense fallback={null}><IdentityHandoffPage /></Suspense> },
+    ],
+  },
+
+  // /sign/identity/return — where the identity verification partner sends a
+  // participant back to. Public and unindexed like every /sign page: it holds
+  // nothing itself, strips the partner's query values, and routes into the
+  // signing page on the participant's own signing session. No way back to
+  // Documents: it may open on a phone that has no session at all.
+  {
+    path: "/sign/identity/return",
+    errorElement: <RecipientRouteError />,
+    element: <RecipientLayout documentsLink={false} />,
+    children: [
+      { index: true, element: <Suspense fallback={null}><IdentityReturnPage /></Suspense> },
     ],
   },
 

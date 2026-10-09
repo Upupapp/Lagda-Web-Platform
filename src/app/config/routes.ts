@@ -565,6 +565,9 @@ export const RECIPIENT_ROUTES: RouteMeta[] = [
   // The identity check, continued on a phone from the computer's QR code. No
   // session and no sign-in: the link's fragment is the credential.
   { path: "/sign/identity/handoff", title: "Identity Check — LAGDA eSignature", breadcrumb: "Identity Check", section: "recipient", product: "esignature", layout: "platform", requiresAuth: false, isPublic: true, isIndexable: false, status: "implemented", analyticsName: "recipient_identity_handoff" },
+  // Where the identity verification partner sends a participant back to. It
+  // shows nothing of its own and routes into the signing page.
+  { path: "/sign/identity/return", title: "Identity Check — LAGDA eSignature", breadcrumb: "Identity Check", section: "recipient", product: "esignature", layout: "platform", requiresAuth: false, isPublic: true, isIndexable: false, status: "implemented", analyticsName: "recipient_identity_return" },
   { path: "/copy/:token",     title: "Your Signed Document — LAGDA eSignature", breadcrumb: "Signed Document", section: "recipient", product: "esignature", layout: "platform", requiresAuth: false, isPublic: false, isIndexable: false, status: "implemented", analyticsName: "final_copy" },
   { path: "/copy",            title: "Your Signed Document — LAGDA eSignature", breadcrumb: "Signed Document", section: "recipient", product: "esignature", layout: "platform", requiresAuth: false, isPublic: false, isIndexable: false, status: "implemented", analyticsName: "final_copy_root" },
 ];
