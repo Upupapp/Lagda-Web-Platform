@@ -22,13 +22,17 @@
 //
 // A separate step changes the question from "is this correct?" to "do I want
 // to send this now?" — which are different questions with different answers.
+//
+// ── Where the buttons are ─────────────────────────────────────────────────
+//
+// In the footer, with Previous, as on every other step. This step used to
+// carry its own "Back to Review" (the footer's Previous already goes there)
+// and its own Authorize. See use-authorize-send.ts.
 
-import { useNavigate } from "react-router";
 import {
-  BadgeCheck, Mail, Users, FileText, AlertTriangle, ArrowLeft,
+  BadgeCheck, Mail, Users, FileText, AlertTriangle,
 } from "lucide-react";
 import { usePrepare } from "../../../context/PrepareContext";
-import { useProcessing } from "../../../services/processing.service";
 import { StepBanner } from "../../../components/prepare/StepBanner";
 import { stepEyebrow } from "../../../models/prepare";
 
@@ -69,9 +73,7 @@ const ROLE_NAMES: Record<string, string> = {
 };
 
 export function AuthorizationStep() {
-  const navigate = useNavigate();
   const { draft } = usePrepare();
-  const { run: runProcessing } = useProcessing();
 
   // Everyone who ACTS — approvers and reviewers are emailed a link too, and
   // listing only signers told the sender fewer people would be contacted
@@ -79,32 +81,13 @@ export function AuthorizationStep() {
   const actors = draft?.participants.filter(p => ACTING_ROLES.has(p.role)) ?? [];
   const title = draft?.details.title?.trim();
 
-  const authorize = () => {
-    void (async () => {
-      await runProcessing(
-        {
-          message: "Authorizing",
-          detail: "Preparing your document for sending.",
-          // Long enough to read. A confirmation that flickers past leaves
-          // somebody unsure whether they pressed the button at all.
-          minDuration: 1200,
-        },
-        // Nothing to await: the real send happens on the confirmation page,
-        // which owns the idempotency keys and the failure handling. This
-        // step's only job is the deliberate pause and the navigation.
-        async () => Promise.resolve(true),
-      );
-      void navigate("/app/prepare/confirmation");
-    })();
-  };
-
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "clamp(14px, 3.5vw, 20px)" }}>
       <StepBanner
         icon={BadgeCheck}
         eyebrow={stepEyebrow("authorization")}
         title="Authorization"
-        description="The last step before anyone is emailed. Check what is about to be sent, then authorize it."
+        description="The last step before anyone is emailed. Check what is about to be sent, then press Authorize below."
       />
 
       <div style={{
@@ -150,38 +133,6 @@ export function AuthorizationStep() {
           check — your account and its permissions are what actually authorise
           the send.
         </p>
-      </div>
-
-      <div style={{
-        display: "flex", gap: 10, flexWrap: "wrap",
-        justifyContent: "space-between", alignItems: "center",
-      }}>
-        <button
-          type="button"
-          onClick={() => { void navigate("/app/prepare/review"); }}
-          style={{
-            ...GF, display: "inline-flex", alignItems: "center", gap: 7,
-            minHeight: 42, padding: "0 16px", borderRadius: 9,
-            border: "1px solid #D1D9E0", background: "#FFFFFF",
-            color: NAVY, fontSize: 13.5, fontWeight: 600, cursor: "pointer",
-          }}
-        >
-          <ArrowLeft size={15} aria-hidden /> Back to Review
-        </button>
-
-        <button
-          type="button"
-          onClick={authorize}
-          style={{
-            ...GF, display: "inline-flex", alignItems: "center", gap: 8,
-            minHeight: 46, padding: "0 22px", borderRadius: 9, border: "none",
-            background: AZURE, color: "#FFFFFF",
-            fontSize: 14.5, fontWeight: 700, cursor: "pointer",
-            boxShadow: "0 4px 14px rgba(0,120,212,0.28)",
-          }}
-        >
-          <BadgeCheck size={17} aria-hidden /> Authorize
-        </button>
       </div>
     </div>
   );

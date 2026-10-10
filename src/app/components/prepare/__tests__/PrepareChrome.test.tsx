@@ -143,4 +143,29 @@ describe("the nav bar", () => {
     const cells = Array.from(bar.children).map(c => c.className);
     expect(cells).toEqual(["prep-nav-prev", "prep-nav-guide", "prep-nav-next"]);
   });
+
+  it("carries the last step's own way forward where Continue sits", async () => {
+    // Authorization has no next step. Its Authorize button used to sit in the
+    // page, beside a second "Back to Review"; it belongs in the same corner
+    // as Continue on every other step.
+    const onClick = vi.fn();
+    atWidth(1280, <PrepareNavBar {...base} prevId="review" nextId={null} continueBlocked={false} finalAction={{ label: "Authorize", onClick }} />);
+    const authorize = screen.getByRole("button", { name: "Authorize" });
+    expect(authorize.parentElement).toHaveClass("prep-nav-next");
+    expect(screen.queryByRole("button", { name: /Continue/ })).toBeNull();
+    expect(screen.getByRole("button", { name: /Previous/ })).toBeInTheDocument();
+    authorize.click();
+    expect(onClick).toHaveBeenCalledTimes(1);
+  });
+
+  it("shows no forward button on a last step that offers none", () => {
+    atWidth(1280, <PrepareNavBar {...base} prevId="review" nextId={null} continueBlocked={false} />);
+    expect(screen.queryByRole("button", { name: /Authorize|Continue/ })).toBeNull();
+  });
+
+  it("keeps Continue, not the final action, while there is a next step", () => {
+    atWidth(1280, <PrepareNavBar {...base} continueBlocked={false} finalAction={{ label: "Authorize", onClick: vi.fn() }} />);
+    expect(screen.getByRole("button", { name: /Continue/ })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Authorize" })).toBeNull();
+  });
 });

@@ -151,6 +151,12 @@ export interface PrepareNavBarProps {
   readonly onShowMissing: () => void;
   /** The Preparation Guide button, centred between Previous and Continue. */
   readonly guide?: ReactNode;
+  /**
+   * The forward action of a step that has no next step: Authorize, on the
+   * last one. It takes Continue's place, so the way forward is always in the
+   * same corner.
+   */
+  readonly finalAction?: { readonly label: string; readonly icon?: ReactNode; readonly onClick: () => void };
 }
 
 /** The Continue label, at the length the screen can afford. */
@@ -165,7 +171,7 @@ export function continueLabel(
 }
 
 export function PrepareNavBar({
-  prevId, nextId, continueBlocked, onPrevious, onContinue, onShowMissing, guide,
+  prevId, nextId, continueBlocked, onPrevious, onContinue, onShowMissing, guide, finalAction,
 }: PrepareNavBarProps) {
   const { isCompact } = useViewport();
 
@@ -230,6 +236,18 @@ export function PrepareNavBar({
             }}
           >
             {continueLabel(nextId, continueBlocked, isCompact)}
+          </button>
+        )}
+        {!nextId && finalAction && (
+          <button
+            type="button"
+            onClick={finalAction.onClick}
+            style={{
+              ...button, border: "none", background: AZURE, color: "#FFFFFF", fontWeight: 700,
+              display: "inline-flex", alignItems: "center", gap: 8,
+            }}
+          >
+            {finalAction.icon}{finalAction.label}
           </button>
         )}
       </div>
