@@ -40,6 +40,8 @@ import {
 import { ParticipantDocumentViewer } from "../../../components/documents/ParticipantDocumentViewer";
 import { CompletedDocumentGrid, type CompletedCardData } from "./CompletedDocumentCards";
 import { MailCard, MailCardList, MailLine, MailAction, formalDate } from "./MailCard";
+import { InboxIdentityBadge, inboxIdentityCheckShown } from "./InboxIdentityBadge";
+import { USE_REAL_BACKEND } from "../../../services/backend-flag";
 
 /** What a non-signer is asked to do, in the words the list and dialog use. */
 const ROLE_WORDING: Record<string, { label: string; action: string; verb: string }> = {
@@ -487,6 +489,8 @@ export function DocumentsToSignSection({ action = "sign", onCount }: {
   const words = INBOX_WORDING[action];
   const [senderFor, setSenderFor] = useState<DocumentToSign | null>(null);
   const [continueFor, setContinueFor] = useState<DocumentToSign | null>(null);
+  // The one identity note that is open, by its card. Opening another closes it.
+  const [identityNoteFor, setIdentityNoteFor] = useState<string | null>(null);
 
   useEffect(() => { if (status === "ready") onCount?.(items.length); }, [status, items.length, onCount]);
 
@@ -510,10 +514,23 @@ export function DocumentsToSignSection({ action = "sign", onCount }: {
               const deadline = item.requestExpiresAt ?? null;
               const expires = deadline !== null ? new Date(deadline) : item.expiresAt ? new Date(item.expiresAt) : null;
               const soon = expires !== null && expires.getTime() - Date.now() < 3 * 24 * 60 * 60 * 1000;
+              const cardKey = `${item.signingRequestId}:${item.recipientId}`;
+              // Only where the server says this person must pass the check on
+              // this document. An older server says nothing, and nothing is shown.
+              const identityCheck = USE_REAL_BACKEND && inboxIdentityCheckShown(item.identityCheck)
+                ? item.identityCheck : null;
               return (
                 <MailCard
-                  key={`${item.signingRequestId}:${item.recipientId}`}
+                  key={cardKey}
                   testId="to-sign-card"
+                  badge={identityCheck === null ? undefined : (
+                    <InboxIdentityBadge
+                      check={identityCheck} action={action} documentTitle={item.documentTitle}
+                      open={identityNoteFor === cardKey}
+                      onToggle={() => { setIdentityNoteFor(current => (current === cardKey ? null : cardKey)); }}
+                      onClose={() => { setIdentityNoteFor(current => (current === cardKey ? null : current)); }}
+                    />
+                  )}
                   branding={{
                     displayName: item.branding?.displayName ?? item.workspaceName ?? "LAGDA",
                     primaryColor: item.branding?.primaryColor ?? DEFAULT_BANNER,
