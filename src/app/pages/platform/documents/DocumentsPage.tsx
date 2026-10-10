@@ -42,7 +42,7 @@ import {
   DRAFT_REQUEST_STATES, draftSources, isUnsentDraft, selectUnsentDraftDocuments, unsentDraftRow,
 } from "../../../services/documents/draft-list";
 import { ExpirationDialog } from "../../../components/documents/ExpirationDialog";
-import { toastSuccess } from "../../../components/brand/BrandToast";
+import { toastSuccess, toastError } from "../../../components/brand/BrandToast";
 import type { RealDocument } from "../../../services/real/document.service";
 import { documentOrganizationService } from "../../../services/mock/document-organization.service";
 import { isCapabilityInActiveProfile } from "../../../config/capability-resolver";
@@ -2434,6 +2434,9 @@ function documentCard(
 /** What the viewer needs of a request: enough to be built from a detail read too. */
 type ViewableRequest = Pick<SigningRequestListItem, "signingRequestId" | "documentId" | "documentTitle" | "state">;
 
+/** What "send for signing again" needs of a request: enough to be built from a detail read too. */
+type ResendTarget = Pick<SigningRequestListItem, "signingRequestId" | "documentId" | "documentTitle">;
+
 function DocumentViewerDialog({
   workspaceId, item, onClose,
 }: {
@@ -2643,7 +2646,7 @@ function DocumentsPageRealMode() {
 
   const [viewing, setViewing] = useState<ViewableRequest | null>(null);
   const [signaturesFor, setSignaturesFor] = useState<Pick<SigningRequestListItem, "signingRequestId" | "documentTitle"> | null>(null);
-  const [resendFor, setResendFor] = useState<SigningRequestListItem | null>(null);
+  const [resendFor, setResendFor] = useState<ResendTarget | null>(null);
   const [expirationFor, setExpirationFor] = useState<SigningRequestListItem | null>(null);
   const [auditFor, setAuditFor] = useState<SigningRequestListItem | null>(null);
   const [shareFor, setShareFor] = useState<SigningRequestListItem | null>(null);
@@ -3155,6 +3158,22 @@ function DocumentsPageRealMode() {
           signingRequestId={signaturesFor.signingRequestId}
           documentTitle={signaturesFor.documentTitle}
           onClose={() => setSignaturesFor(null)}
+          // "Send to someone else", for a participant whose ID carries another
+          // name: the same dialog Send again opens, which starts on new emails.
+          onSendToSomeoneElse={() => {
+            const requestId = signaturesFor.signingRequestId;
+            const listed = allRequests.find(r => r.signingRequestId === requestId);
+            if (listed) { setResendFor(listed); return; }
+            // Opened from a notice, for a request the list in hand does not hold.
+            void realSigningRequestService.get(workspaceId, requestId)
+              .then(detail => {
+                setResendFor({
+                  signingRequestId: detail.signingRequestId, documentId: detail.documentId,
+                  documentTitle: detail.documentTitle,
+                });
+              })
+              .catch(() => { toastError("That document could not be opened to send again. Find it under Sent and try from there."); });
+          }}
         />
       )}
       {auditFor && workspaceId && (

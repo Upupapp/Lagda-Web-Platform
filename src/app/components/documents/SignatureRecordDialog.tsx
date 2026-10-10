@@ -12,8 +12,8 @@
 // the interesting content is evidentiary — the party's name, the address the
 // invitation went to, and the exact instant their submission was accepted.
 
-import { useState, useEffect, useCallback, type CSSProperties } from "react";
-import { X, CheckCircle2, Clock, XCircle, MinusCircle, ShieldCheck, SkipForward, BadgeCheck, AlertTriangle, Send, Loader2, IdCard } from "lucide-react";
+import { useState, useEffect, useCallback, useRef, type CSSProperties } from "react";
+import { X, CheckCircle2, Clock, XCircle, MinusCircle, ShieldCheck, SkipForward, BadgeCheck, AlertTriangle, Send, Loader2, IdCard, UserCheck } from "lucide-react";
 import {
   realSigningRequestService,
   type SigningRequestSignatures, type Signatory, type RecipientWorkflowState,
@@ -24,11 +24,11 @@ import { DECLINE_REASON_CATEGORIES } from "../../models/recipient";
 import { ApiError } from "../../services/api-client";
 import { signingLinkLapsed } from "../../services/real/signing-link";
 import {
-  realIdentityCheckService, describeIdentityWaiveError,
-  type RecipientIdentityCheck,
+  realIdentityCheckService, describeIdentityWaiveError, describeIdentityNameResolutionError,
+  identityNameReasonError, type RecipientIdentityCheck,
 } from "../../services/real/identity-check.service";
 import { LifecycleConfirmDialog, type LifecycleConfirmCopy } from "./LifecycleConfirmDialog";
-import { identityIdTypeLabel } from "../../models/identity-check";
+import { identityIdTypeLabel, identityNameDifferencesLabel } from "../../models/identity-check";
 
 const GF: CSSProperties = { fontFamily: "'Geist', sans-serif" };
 
@@ -118,6 +118,9 @@ function identityCheckLine(check: RecipientIdentityCheck): { text: string; color
     }
     case "locked":
       return { text: "Locked after 3 attempts", color: RED };
+    // Passed, and held: the name on the ID is not the one on the document.
+    case "name-mismatch":
+      return { text: "Name does not match", color: AMBER };
     case "waived":
       return {
         text: `Lighter method allowed${check.waivedAt === null ? "" : ` ${fmtAbsolute(check.waivedAt)}`}`,
@@ -137,12 +140,82 @@ interface IdentityControl {
   readonly check: RecipientIdentityCheck;
   /** Absent once the request is no longer out for signing. */
   readonly onAllow?: (signatory: Signatory) => void;
+  /** Asks the sender to confirm that a name which does not match is the same person. Absent as `onAllow` is. */
+  readonly onResolve?: (signatory: Signatory, check: RecipientIdentityCheck) => void;
+  /** Opens "send for signing again" to new addresses. Absent where the page has no such dialog. */
+  readonly onSendElsewhere?: () => void;
+  /** What was just decided about this participant's name, in this dialog. */
+  readonly resolved?: string;
+}
+
+const SR_ONLY: CSSProperties = {
+  position: "absolute", width: 1, height: 1, padding: 0, margin: -1, overflow: "hidden",
+  clip: "rect(0 0 0 0)", whiteSpace: "nowrap", border: 0,
+};
+
+/** 44px controls on a phone; the row's own compact size elsewhere. */
+const DIALOG_STYLES = `
+  .srd-action { min-height: 36px; }
+  @media (max-width: 560px) { .srd-action { min-height: 44px; } }
+  .srd-resolved:focus { outline: none; }
+  .srd-resolved:focus-visible { outline: 2px solid ${AZURE}; outline-offset: 3px; border-radius: 4px; }
+`;
+
+const ACTION_BUTTON: CSSProperties = {
+  ...GF, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 6, boxSizing: "border-box",
+  fontSize: 12.5, fontWeight: 600, color: AZURE, background: "#fff", textAlign: "center", lineHeight: 1.3,
+  border: "1px solid #BFDBFE", borderRadius: 7, padding: "7px 12px", cursor: "pointer",
+};
+
+/** A name the server sent, or null: absent, empty, or not a string at all. */
+function nameOrNull(value: unknown): string | null {
+  return typeof value === "string" && value.trim() !== "" ? value.trim() : null;
+}
+
+/** The small tag beside "Name on ID": nothing for an exact match or a server that does not say. */
+function NameMatchTag({ check }: { check: RecipientIdentityCheck }) {
+  const tag: CSSProperties = {
+    ...GF, fontSize: 10.5, fontWeight: 700, borderRadius: 99, padding: "1px 7px", whiteSpace: "nowrap",
+  };
+  if (check.nameMatch === "close") {
+    const differences = identityNameDifferencesLabel(check.nameDifferences);
+    return (
+      <span
+        data-testid="signatory-identity-name-tag"
+        {...(differences === "" ? {} : { title: `Differences: ${differences}` })}
+        style={{ ...tag, color: AMBER, background: "#FFFBEB", border: "1px solid #FDE68A" }}
+      >
+        Close match
+        {/* A tooltip is not read out, and cannot be reached by touch or keyboard. */}
+        {differences !== "" && <span style={SR_ONLY}>: {differences}</span>}
+      </span>
+    );
+  }
+  if (check.nameMatch === "accepted") {
+    return <span data-testid="signatory-identity-name-tag" style={{ ...tag, color: SLATE6, background: "#F1F5F9" }}>Accepted by the sender</span>;
+  }
+  return null;
+}
+
+/** One of the two names, labelled. Either can be long: it wraps, and never pushes the dialog wider. */
+function NameRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div style={{ display: "flex", flexWrap: "wrap", alignItems: "baseline", gap: "0 6px", marginTop: 4, minWidth: 0 }}>
+      <dt style={{ ...GF, fontSize: 12, color: SLATE6, margin: 0 }}>{label}:</dt>
+      <dd style={{ ...GF, fontSize: 13, fontWeight: 600, color: NAVY, margin: 0, minWidth: 0, overflowWrap: "anywhere" }}>{value}</dd>
+    </div>
+  );
 }
 
 function IdentityCheckLine({ signatory, identity }: { signatory: Signatory; identity: IdentityControl }) {
   const { check } = identity;
   const line = identityCheckLine(check);
-  const canAllow = identity.onAllow !== undefined && (check.status === "pending" || check.status === "locked");
+  const mismatch = check.status === "name-mismatch";
+  const canAllow = identity.onAllow !== undefined
+    && (check.status === "pending" || check.status === "locked" || mismatch);
+  const verifiedName = nameOrNull(check.verifiedName);
+  const documentName = nameOrNull(check.documentName) ?? signatory.name;
+  const { onResolve, onSendElsewhere } = identity;
   return (
     <div data-testid="signatory-identity-check" style={{ marginTop: 8 }}>
       <div style={{ display: "flex", alignItems: "baseline", gap: 6, flexWrap: "wrap" }}>
@@ -159,15 +232,77 @@ function IdentityCheckLine({ signatory, identity }: { signatory: Signatory; iden
           ID: {identityIdTypeLabel(check.idType)}
         </div>
       )}
+      {/* The name the partner read from the ID, where the server reports
+          one. A name that does not match is shown in the panel below instead. */}
+      {!mismatch && verifiedName !== null && (
+        <div data-testid="signatory-identity-name" style={{
+          display: "flex", flexWrap: "wrap", alignItems: "baseline", gap: "2px 8px",
+          fontSize: 11.5, color: SLATE6, marginTop: 3, ...GF,
+        }}>
+          <span style={{ minWidth: 0, overflowWrap: "anywhere" }}>Name on ID: {verifiedName}</span>
+          <NameMatchTag check={check} />
+        </div>
+      )}
+      {identity.resolved !== undefined && (
+        <div
+          tabIndex={-1} className="srd-resolved" data-testid="signatory-name-resolved"
+          data-resolved-for={signatory.recipientId}
+          style={{ fontSize: 12, color: GREEN, fontWeight: 600, marginTop: 6, overflowWrap: "anywhere", ...GF }}
+        >
+          {identity.resolved}
+        </div>
+      )}
+      {mismatch && (
+        <div
+          role="group" aria-label={`Name does not match for ${signatory.name}`}
+          data-testid="signatory-identity-name-mismatch"
+          style={{ marginTop: 8, padding: "10px 12px", borderRadius: 8, background: "#FFFBEB", border: "1px solid #FDE68A" }}
+        >
+          <div style={{ display: "flex", alignItems: "flex-start", gap: 6 }}>
+            <AlertTriangle size={13} aria-hidden style={{ color: AMBER, flexShrink: 0, marginTop: 2 }} />
+            <span style={{ fontSize: 12.5, color: NAVY, lineHeight: 1.5, minWidth: 0, ...GF }}>
+              This participant passed the identity check, but the name on their ID is not the name on
+              this document. They cannot open it until you decide.
+            </span>
+          </div>
+          <dl style={{ margin: "6px 0 0", padding: 0 }}>
+            <NameRow label="Name on ID" value={verifiedName ?? "Not available"} />
+            <NameRow label="On this document" value={documentName} />
+          </dl>
+          {/* The name on a sent document cannot be changed, so there is no
+              button for it: what to do instead is said in a sentence. */}
+          {onResolve !== undefined && (
+            <p data-testid="signatory-identity-name-resend-hint" style={{ fontSize: 12, color: SLATE6, lineHeight: 1.5, margin: "8px 0 0", ...GF }}>
+              To have them sign under the name on their ID, send the document again with that name.
+            </p>
+          )}
+          {onResolve !== undefined && (
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 8 }}>
+              <button
+                type="button" className="srd-action" onClick={() => { onResolve(signatory, check); }}
+                aria-label={`Accept ${signatory.name} as the same person`}
+                style={{ ...ACTION_BUTTON, flex: "1 1 150px" }}
+              >
+                Accept as the same person
+              </button>
+              {onSendElsewhere !== undefined && (
+                <button
+                  type="button" className="srd-action" onClick={onSendElsewhere}
+                  aria-label={`Send this document to someone else instead of ${signatory.name}`}
+                  style={{ ...ACTION_BUTTON, flex: "1 1 150px" }}
+                >
+                  Send to someone else
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+      )}
       {canAllow && (
         <button
-          type="button" onClick={() => { identity.onAllow?.(signatory); }}
+          type="button" className="srd-action" onClick={() => { identity.onAllow?.(signatory); }}
           aria-label={`Allow a lighter method for ${signatory.name}`}
-          style={{
-            ...GF, marginTop: 8, minHeight: 36, display: "inline-flex", alignItems: "center", gap: 6,
-            fontSize: 12.5, fontWeight: 600, color: AZURE, background: "#fff",
-            border: `1px solid #BFDBFE`, borderRadius: 7, padding: "7px 12px", cursor: "pointer",
-          }}
+          style={{ ...ACTION_BUTTON, marginTop: 8 }}
         >
           Allow a lighter method
         </button>
@@ -192,6 +327,28 @@ const WAIVE_COPY: LifecycleConfirmCopy = {
   tone: "neutral",
   icon: IdCard,
 };
+
+/** The document's name stays; the sender says why it is the same person. */
+function acceptNameCopy(verifiedName: string | null, documentName: string): LifecycleConfirmCopy {
+  return {
+    title: "Accept as the same person?",
+    lead: verifiedName === null
+      ? `The name on this document stays “${documentName}”. You confirm it is the person whose ID was checked.`
+      : `The ID says “${verifiedName}”. This document says “${documentName}”, and that stays as it is. `
+        + "You confirm they are the same person.",
+    points: [
+      "Your reason is recorded in the document's history.",
+      "They can then open the document without verifying again.",
+    ],
+    reason: {
+      label: "Reason",
+      placeholder: "For example: married name",
+      hint: "Required. Recorded in the document's history.",
+    },
+    tone: "neutral",
+    icon: UserCheck,
+  };
+}
 
 function SignatoryRow({ signatory, link, identity }: {
   signatory: Signatory; link?: LinkControl; identity?: IdentityControl;
@@ -389,10 +546,16 @@ export interface SignatureRecordDialogProps {
   signingRequestId: string;
   documentTitle: string;
   onClose: () => void;
+  /**
+   * Opens "send for signing again" for this request, to new addresses. Called
+   * after this dialog has asked to be closed. Absent: "Send to someone else"
+   * is not offered.
+   */
+  onSendToSomeoneElse?: () => void;
 }
 
 export function SignatureRecordDialog({
-  workspaceId, signingRequestId, documentTitle, onClose,
+  workspaceId, signingRequestId, documentTitle, onClose, onSendToSomeoneElse,
 }: SignatureRecordDialogProps) {
   const [data, setData] = useState<SigningRequestSignatures | null>(null);
   const [failed, setFailed] = useState(false);
@@ -455,6 +618,83 @@ export function SignatureRecordDialog({
       .finally(() => { setWaiveBusy(false); });
   }
 
+  // ── A name that does not match: the sender decides ────────────────────────
+  const [resolving, setResolving] = useState<{ signatory: Signatory; check: RecipientIdentityCheck } | null>(null);
+  const [resolveBusy, setResolveBusy] = useState(false);
+  // The ref, not the state: two presses in one tick must be one decision.
+  const resolveBusyRef = useRef(false);
+  const [resolveError, setResolveError] = useState<string | null>(null);
+  /** What is wrong with the reason itself, said beside its field. */
+  const [resolveReasonError, setResolveReasonError] = useState<string | null>(null);
+  const [resolved, setResolved] = useState<ReadonlyMap<string, string>>(() => new Map());
+  const [announcement, setAnnouncement] = useState("");
+  const [focusResolved, setFocusResolved] = useState<string | null>(null);
+  const aliveRef = useRef(true);
+  const overlayRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    aliveRef.current = true;
+    return () => { aliveRef.current = false; };
+  }, []);
+
+  /**
+   * After a decision the checks are read again. What the server answered the
+   * decision with is shown meanwhile, and stays if the re-read fails.
+   */
+  const rereadAfterResolution = useCallback(async (updated: RecipientIdentityCheck | null): Promise<void> => {
+    if (updated !== null && typeof updated === "object" && typeof updated.recipientId === "string") {
+      setIdentityChecks(previous => shownIdentityChecks(
+        [...(previous?.values() ?? [])].filter(item => item.recipientId !== updated.recipientId).concat(updated)));
+    }
+    try {
+      const checks = await realIdentityCheckService.checks(workspaceId, signingRequestId);
+      if (aliveRef.current && checks !== null) setIdentityChecks(shownIdentityChecks(checks));
+    } catch { /* what the decision was answered with is what is shown */ }
+  }, [workspaceId, signingRequestId]);
+
+  function resolveName(reason: string) {
+    if (resolving === null || resolveBusyRef.current) return;
+    const { signatory } = resolving;
+    resolveBusyRef.current = true;
+    setResolveBusy(true);
+    setResolveError(null);
+    setResolveReasonError(null);
+    void (async () => {
+      try {
+        // Accepting what is already accepted is answered the same way: a success.
+        const updated = await realIdentityCheckService.resolveName(
+          workspaceId, signingRequestId, signatory.recipientId, { action: "accept", reason });
+        await rereadAfterResolution(updated);
+        if (!aliveRef.current) return;
+        const message = `Accepted as the same person. ${signatory.name} can now open the document.`;
+        setResolved(previous => new Map(previous).set(signatory.recipientId, message));
+        setAnnouncement(message);
+        setResolving(null);
+        setFocusResolved(signatory.recipientId);
+      } catch (cause) {
+        if (!aliveRef.current) return;
+        const aboutReason = identityNameReasonError(cause);
+        if (aboutReason !== null) setResolveReasonError(aboutReason);
+        else setResolveError(describeIdentityNameResolutionError(cause));
+        // Decided elsewhere meanwhile: what stands now is shown behind the message.
+        if (cause instanceof ApiError && cause.body?.code === "identity_name_not_pending") {
+          void rereadAfterResolution(null);
+        }
+      } finally {
+        resolveBusyRef.current = false;
+        if (aliveRef.current) setResolveBusy(false);
+      }
+    })();
+  }
+
+  // The button that opened the confirmation is gone with the panel, so focus
+  // goes to the line that says what was decided.
+  useEffect(() => {
+    if (focusResolved === null) return;
+    const lines = overlayRef.current?.querySelectorAll<HTMLElement>("[data-resolved-for]") ?? [];
+    for (const line of lines) if (line.dataset.resolvedFor === focusResolved) line.focus();
+    setFocusResolved(null);
+  }, [focusResolved]);
+
   useEffect(() => {
     const previous = document.body.style.overflow;
     document.body.style.overflow = "hidden";
@@ -477,6 +717,7 @@ export function SignatureRecordDialog({
 
   return (
     <div
+      ref={overlayRef}
       role="dialog" aria-modal="true" aria-label={`Participants for ${documentTitle}`}
       style={{
         position: "fixed", inset: 0, zIndex: Z.modal, display: "flex",
@@ -520,6 +761,8 @@ export function SignatureRecordDialog({
           </button>
         </div>
 
+        <style>{DIALOG_STYLES}</style>
+        <div role="status" aria-live="polite" data-testid="participants-announcement" style={SR_ONLY}>{announcement}</div>
         <div style={{ overflowY: "auto", padding: "4px 18px 18px" }}>
           {failed && (
             <p style={{ fontSize: 13, color: SLATE6, padding: "24px 0", ...GF }}>
@@ -544,8 +787,16 @@ export function SignatureRecordDialog({
               <ul style={{ margin: "8px 0 0", padding: 0 }}>
                 {data.signatories.map(signatory => (
                   <SignatoryRow key={signatory.recipientId} signatory={signatory}
-                    {...identityControlFor(signatory, identityChecks, data.state,
-                      target => { setWaiveError(null); setWaiving(target); })}
+                    {...identityControlFor(signatory, identityChecks, data.state, {
+                      onAllow: target => { setWaiveError(null); setWaiving(target); },
+                      onResolve: (target, check) => {
+                        setResolveError(null);
+                        setResolveReasonError(null);
+                        setResolving({ signatory: target, check });
+                      },
+                      ...(onSendToSomeoneElse === undefined
+                        ? {} : { onSendElsewhere: () => { onClose(); onSendToSomeoneElse(); } }),
+                    }, resolved.get(signatory.recipientId))}
                     {...(data.state === "sent" || data.state === "partially-completed"
                       ? { link: { sending, sent, error: linkError, onSend: sendNewLink } } : {})} />
                 ))}
@@ -562,6 +813,19 @@ export function SignatureRecordDialog({
           error={waiveError}
           onContinue={allowLighterMethod}
           onCancel={() => { if (!waiveBusy) setWaiving(null); }}
+        />
+      )}
+      {resolving !== null && (
+        <LifecycleConfirmDialog
+          key={resolving.signatory.recipientId}
+          copy={acceptNameCopy(nameOrNull(resolving.check.verifiedName),
+            nameOrNull(resolving.check.documentName) ?? resolving.signatory.name)}
+          subject={`${resolving.signatory.name} · ${documentTitle}`}
+          busy={resolveBusy}
+          error={resolveError}
+          reasonError={resolveReasonError}
+          onContinue={resolveName}
+          onCancel={() => { if (!resolveBusy) setResolving(null); }}
         />
       )}
     </div>
@@ -581,11 +845,13 @@ function identityControlFor(
   signatory: Signatory,
   checks: ReadonlyMap<string, RecipientIdentityCheck> | null,
   requestState: SigningRequestSignatures["state"],
-  onAllow: (signatory: Signatory) => void,
+  actions: Pick<IdentityControl, "onAllow" | "onResolve" | "onSendElsewhere">,
+  resolved: string | undefined,
 ): { identity?: IdentityControl } {
   const check = checks?.get(signatory.recipientId);
   if (check === undefined) return {};
-  // A lighter method only means something while the request is still out.
+  // A lighter method, or a decision about a name, only means something while
+  // the request is still out.
   const open = requestState === "sent" || requestState === "partially-completed";
-  return { identity: open ? { check, onAllow } : { check } };
+  return { identity: { check, ...(open ? actions : {}), ...(resolved === undefined ? {} : { resolved }) } };
 }

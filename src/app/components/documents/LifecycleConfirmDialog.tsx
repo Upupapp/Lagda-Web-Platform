@@ -37,7 +37,9 @@ export interface LifecycleConfirmCopy {
   readonly icon: LucideIcon;
 }
 
-export function LifecycleConfirmDialog({ copy, subject, busy = false, error = null, onContinue, onCancel }: {
+export function LifecycleConfirmDialog({ copy, subject, busy = false, error = null, reasonError = null, onContinue, onCancel }: {
+  /** What is wrong with the reason, shown beside its field until it is edited. */
+  reasonError?: string | null;
   copy: LifecycleConfirmCopy;
   /** What it is about, usually the document's title. */
   subject: string;
@@ -47,10 +49,15 @@ export function LifecycleConfirmDialog({ copy, subject, busy = false, error = nu
   onContinue: (reason: string) => void;
   onCancel: () => void;
 }) {
-  const titleId = useId(), bodyId = useId(), reasonId = useId(), hintId = useId();
+  const titleId = useId(), bodyId = useId(), reasonId = useId(), hintId = useId(), reasonErrorId = useId();
   const cancelRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const [reason, setReason] = useState("");
+  // A complaint about the reason stands until the reason is changed; a new
+  // attempt may bring it back.
+  const [reasonEdited, setReasonEdited] = useState(false);
+  useEffect(() => { if (busy) setReasonEdited(false); }, [busy]);
+  const reasonProblem = reasonError !== null && !reasonEdited ? reasonError : null;
   const danger = copy.tone === "danger";
   const accent = danger ? DANGER : AZURE;
   const Icon = copy.icon;
@@ -111,7 +118,7 @@ export function LifecycleConfirmDialog({ copy, subject, busy = false, error = nu
         </div>
 
         <div id={bodyId} style={{ padding: "10px 22px 4px" }}>
-          <p style={{ ...GF, fontSize: 14, color: "#1F2937", margin: "0 0 10px", lineHeight: 1.55 }}>{copy.lead}</p>
+          <p style={{ ...GF, fontSize: 14, color: "#1F2937", margin: "0 0 10px", lineHeight: 1.55, overflowWrap: "anywhere" }}>{copy.lead}</p>
           {copy.points !== undefined && copy.points.length > 0 && (
             <ul style={{ ...GF, fontSize: 13, color: "#374151", margin: 0, paddingLeft: 20, lineHeight: 1.6, listStyle: "disc" }}>
               {copy.points.map(point => <li key={point} style={{ marginBottom: 4, display: "list-item", listStyle: "disc" }}>{point}</li>)}
@@ -129,14 +136,22 @@ export function LifecycleConfirmDialog({ copy, subject, busy = false, error = nu
             </label>
             <textarea
               id={reasonId} value={reason} maxLength={REASON_MAX} rows={3} disabled={busy}
-              onChange={e => { setReason(e.target.value); }}
+              onChange={e => { setReason(e.target.value); setReasonEdited(true); }}
               placeholder={copy.reason.placeholder}
-              aria-required={reasonOptional ? "false" : "true"} aria-describedby={hintId}
+              aria-required={reasonOptional ? "false" : "true"}
+              aria-describedby={reasonProblem === null ? hintId : `${reasonErrorId} ${hintId}`}
+              {...(reasonProblem === null ? {} : { "aria-invalid": true })}
               style={{
                 ...GF, width: "100%", boxSizing: "border-box", padding: "9px 11px", borderRadius: 9,
-                border: "1px solid #CBD5E1", fontSize: 13.5, color: NAVY, resize: "vertical", minHeight: 76,
+                border: `1px solid ${reasonProblem === null ? "#CBD5E1" : DANGER}`, fontSize: 13.5, color: NAVY,
+                resize: "vertical", minHeight: 76,
               }}
             />
+            {reasonProblem !== null && (
+              <p id={reasonErrorId} role="alert" data-testid="lifecycle-reason-error" style={{ ...GF, margin: "4px 0 0", fontSize: 12.5, fontWeight: 600, color: DANGER, lineHeight: 1.4 }}>
+                {reasonProblem}
+              </p>
+            )}
             <div id={hintId} style={{ ...GF, display: "flex", justifyContent: "space-between", gap: 10, fontSize: 11.5, color: "#64748B", marginTop: 4 }}>
               <span>{copy.reason.hint ?? (reasonOptional ? "Optional." : "Required.")}</span>
               <span>{reason.length}/{REASON_MAX}</span>
