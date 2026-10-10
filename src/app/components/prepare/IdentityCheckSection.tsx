@@ -17,7 +17,7 @@ import type { PrepParticipant } from "../../models/prepare";
 import { PREP_PARTICIPANT_ROLE_LABELS } from "../../models/prepare";
 import {
   IDENTITY_CHECK_OPTION_LABEL, IDENTITY_CHECK_TEST_MODE_NOTICE, IDENTITY_CHECK_HOSTED_EXPLAINER,
-  IDENTITY_CHECK_VALID_SENDER_NOTE,
+  IDENTITY_CHECK_VALID_SENDER_NOTE, IDENTITY_CHECK_NAME_SENDER_NOTE,
   roleCanBeAskedForIdentityCheck,
 } from "../../models/identity-check";
 import type { IdentityRequirementsControl } from "../../hooks/useIdentityCheckRequirements";
@@ -155,6 +155,14 @@ export function IdentityCheckSection({
       {!locked && (
         <p data-testid="identity-check-valid-note" style={{ ...GF, fontSize: 12.5, color: SILVER, lineHeight: 1.5, margin: "4px 0 0" }}>
           {IDENTITY_CHECK_VALID_SENDER_NOTE}
+        </p>
+      )}
+
+      {/* The name read from the ID is compared with the name typed for the
+          participant. Not where the plan does not include the check. */}
+      {!locked && (
+        <p data-testid="identity-check-name-note" style={{ ...GF, fontSize: 12.5, color: SILVER, lineHeight: 1.5, margin: "4px 0 0" }}>
+          {IDENTITY_CHECK_NAME_SENDER_NOTE}
         </p>
       )}
 

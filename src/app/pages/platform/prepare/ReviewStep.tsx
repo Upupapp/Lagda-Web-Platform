@@ -28,7 +28,8 @@ import type { PreparationStepId, PrepValidationIssue } from "../../../models/pre
 import { StepBanner, StepTwoColumn, RailCard } from "../../../components/prepare/StepBanner";
 import { useIdentityCheckRequirements } from "../../../hooks/useIdentityCheckRequirements";
 import {
-  IDENTITY_CHECK_OPTION_LABEL, IDENTITY_CHECK_HOSTED_EXPLAINER, roleCanBeAskedForIdentityCheck,
+  IDENTITY_CHECK_OPTION_LABEL, IDENTITY_CHECK_HOSTED_EXPLAINER, IDENTITY_CHECK_NAME_SENDER_NOTE,
+  roleCanBeAskedForIdentityCheck,
 } from "../../../models/identity-check";
 
 const GF     = { fontFamily: "'Geist', sans-serif" };
@@ -286,6 +287,12 @@ export function ReviewStep() {
               </li>
             )}
           </ul>
+        )}
+        {/* Said last, where the names can still be put right. */}
+        {identityChecked.length > 0 && (
+          <p data-testid="review-identity-name-note" style={{ ...GF, fontSize: 12, color: SILVER, lineHeight: 1.5, margin: "4px 0 0" }}>
+            {IDENTITY_CHECK_NAME_SENDER_NOTE}
+          </p>
         )}
       </SectionBlock>
 
