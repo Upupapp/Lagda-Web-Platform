@@ -21,6 +21,7 @@ import { USE_REAL_BACKEND } from "../../../services/backend-flag";
 import { ApiError } from "../../../services/api-client";
 import { StepBanner, StepTwoColumn, RailCard } from "../../../components/prepare/StepBanner";
 import { useProcessing, buildSteps } from "../../../services/processing.service";
+import { useTitleSuggestion } from "../../../hooks/useTitleSuggestion";
 
 /**
  * "3 pages", "1 page". On the live site the count is the server's own, read
@@ -433,6 +434,9 @@ export function UploadStep() {
     updateDetails,
     setStep,
     validate,
+    saveTitle,
+    titleSave,
+    recordServerTitle,
   } = usePrepare();
   const { currentWorkspace } = usePlatform();
   const { run } = useProcessing();
@@ -541,6 +545,10 @@ export function UploadStep() {
       if (!documentId) {
         const created = await realDocumentService.create(currentWorkspace.id, pf.fileName);
         documentId = created.documentId;
+        // What the server called it (the file's name, numbered if that name
+        // was taken). The typed title replaces it as soon as this file has a
+        // document: see the effect on `primaryDocumentId` below.
+        recordServerTitle(documentId, typeof created.title === "string" && created.title !== "" ? created.title : pf.fileName);
         patchFile(pf.id, { backendDocumentId: documentId });
       }
       patchFile(pf.id, { uploadStatus: "processing" });
@@ -565,7 +573,20 @@ export function UploadStep() {
           : "Something went wrong uploading this file. Please try again.",
       });
     }
-  }, [currentWorkspace, patchFile, run]);
+  }, [currentWorkspace, patchFile, run, recordServerTitle]);
+
+  // ── The title reaches the server early ──────────────────────────────────────
+  //
+  // The document is created with the FILE's name. The title typed here is
+  // saved to it when the field loses focus, the moment a document exists for
+  // a title typed before the upload, and on the way out of this step. Each of
+  // these only asks: PrepareContext decides whether there is anything to
+  // save, and runs the saves one at a time.
+  const primaryDocumentId = files.find(f => f.backendDocumentId)?.backendDocumentId;
+  useEffect(() => {
+    if (primaryDocumentId !== undefined) void saveTitle();
+  }, [primaryDocumentId, saveTitle]);
+  useEffect(() => () => { void saveTitle(); }, [saveTitle]);
 
   // Covers files that arrived via resume (PrepareEntryPage's claimPending →
   // createDraft({initialFiles: ...})) rather than through addFiles() in
@@ -681,6 +702,28 @@ export function UploadStep() {
       setTitleError(null);
     }
   }, [details, updateDetails]);
+
+  // Said in advance, while typing: this title is taken, and what it will be
+  // saved as. Not asked for a title that is already this document's own.
+  const typedTitle = details.title.trim();
+  const titleIsSaved = primaryDocumentId !== undefined
+    && details.savedTitle?.documentId === primaryDocumentId
+    && details.savedTitle.title === typedTitle;
+  const titleHint = useTitleSuggestion({
+    workspaceId: currentWorkspace?.id,
+    title: details.title,
+    excludeDocumentId: primaryDocumentId,
+    enabled: !titleIsSaved && details.title.length <= 200,
+  });
+  // One line under the field, in order of what matters most to know.
+  const titleSaveFailed = titleSave.state === "failed";
+  const adjustedNote = titleSave.adjusted !== null && titleSave.adjusted.saved === typedTitle
+    ? `A document named "${titleSave.adjusted.typed}" already exists here, so this one is saved as "${titleSave.adjusted.saved}".`
+    : null;
+  const titleNote = titleSaveFailed
+    ? null
+    : adjustedNote
+      ?? (titleHint !== null ? `"${titleHint.typed}" is already used in this workspace. It will be saved as "${titleHint.title}".` : null);
 
   const fileErrors = validation?.errors.filter(e => e.stepId === "upload") ?? [];
   const atLimit  = files.length >= 10;
@@ -831,10 +874,13 @@ export function UploadStep() {
           type="text"
           value={details.title}
           onChange={e => handleTitleChange(e.target.value)}
+          onBlur={() => { void saveTitle(); }}
           placeholder="e.g. Employment Agreement — Maria Santos"
           maxLength={200}
           aria-invalid={!!titleError}
-          aria-describedby={titleError ? "prep-title-error" : undefined}
+          aria-describedby={USE_REAL_BACKEND
+            ? (titleError ? "prep-title-error prep-title-note" : "prep-title-note")
+            : (titleError ? "prep-title-error" : undefined)}
           style={{
             ...GF,
             width: "100%",
@@ -855,6 +901,33 @@ export function UploadStep() {
         <div style={{ ...GF, fontSize: 11, color: SILVER, marginTop: 4 }}>
           {details.title.length}/200 characters
         </div>
+        {/* What the title is, or will be, saved as. The room for it is always
+            there (live build only), so the form below does not move when a
+            line appears. Announced politely; a save that failed is an alert. */}
+        {USE_REAL_BACKEND && (
+          <div
+            id="prep-title-note"
+            data-testid="prep-title-note"
+            style={{ ...GF, minHeight: 44, marginTop: 4, fontSize: 12, lineHeight: "18px", overflowWrap: "anywhere" }}
+          >
+            <span role="status" aria-live="polite" style={{ color: "#4B5E70" }}>{titleNote}</span>
+            {titleSaveFailed && (
+              <span role="alert" style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "0 10px", color: "#B91C1C" }}>
+                <span>The title could not be saved. Check your connection and try again.</span>
+                <button
+                  type="button"
+                  onClick={() => { void saveTitle(); }}
+                  style={{
+                    ...GF, minHeight: 44, minWidth: 44, background: "none", border: "none", padding: "0 4px",
+                    fontSize: 12.5, fontWeight: 700, color: AZURE, textDecoration: "underline", cursor: "pointer",
+                  }}
+                >
+                  Try again
+                </button>
+              </span>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Internal description */}

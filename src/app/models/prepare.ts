@@ -153,6 +153,13 @@ export interface TransactionDetailsDraft {
   description: string;   // optional internal note; never exposed to participants
   folderId:    string | null;
   tagIds:      string[];
+  /**
+   * The title the server holds for this draft's document, and which document
+   * that is. Set when the document is created, renamed or reopened; absent
+   * until then and always in the demo build. It is what stops a title being
+   * sent again when nothing about it changed.
+   */
+  savedTitle?: { documentId: string; title: string };
 }
 
 export const DEFAULT_TRANSACTION_DETAILS: TransactionDetailsDraft = {

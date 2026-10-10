@@ -19,6 +19,14 @@ export interface SigningRequestCreated {
   recipientCount: number;
   fieldCount: number;
   createdAt: string;
+  /**
+   * The document's title as this request carries it. A second request on a
+   * document (a re-send) is numbered by the server, so this is the FINAL
+   * title. Absent from an older server.
+   */
+  documentTitle?: string;
+  /** True only when creating this request renamed the document: a re-send. */
+  titleAdjusted?: boolean;
 }
 
 export interface SigningRequestRecipient {

@@ -24,10 +24,9 @@ import { PLAN_ERROR } from "../../../services/real/plans.service";
 import { FreeDocumentUsedNotice } from "../../../components/platform/FreeDocumentUsedNotice";
 import { useProcessing, buildSteps } from "../../../services/processing.service";
 import { realSigningRequestService } from "../../../services/real/signing-request.service";
-import { realDocumentService } from "../../../services/real/document.service";
 import { describeSendDetail } from "../../../services/prepare/send-readiness";
 import { deadlineFromDate } from "../../../services/prepare/deadline";
-import { toastWarning } from "../../../components/brand/BrandToast";
+import { toastInfo, toastWarning } from "../../../components/brand/BrandToast";
 import { realPreparationService } from "../../../services/real/preparation.service";
 import { fromBackendField } from "../../../services/prepare/field-sync";
 import { computeSendReadiness, buildActionUrl } from "../../../services/prepare/send-readiness";
@@ -40,10 +39,20 @@ const AZURE  = "#0078D4";
 const SILVER = "#8A9BAE";
 const WHITE  = "#FFFFFF";
 
+/**
+ * The title did not reach the server, so nothing was sent.
+ *
+ * A failed rename used to be swallowed here ("the request goes out either
+ * way"), and the document went to its signers under its file's name.
+ */
+class TitleNotSavedError extends Error {
+  constructor() { super("The title could not be saved, so nothing was sent. Check your connection and try again."); }
+}
+
 // ── Inner component (needs FieldEditorContext) ────────────────────────────────
 function ConfirmationPageInner({ participants }: { participants: PrepParticipant[] }) {
   const navigate = useNavigate();
-  const { draft, setStep, discardDraft, syncError, multiDocumentSigningGap, setFieldsSnapshot } = usePrepare();
+  const { draft, setStep, discardDraft, syncError, multiDocumentSigningGap, setFieldsSnapshot, saveTitle } = usePrepare();
   const { user, currentWorkspace } = usePlatform();
   const {
     initialize, fields, documents, runValidation, validation, loadRealFields,
@@ -208,12 +217,16 @@ function ConfirmationPageInner({ participants }: { participants: PrepParticipant
       }
       pendingSendRef.current = pending;
 
-      // The title typed on Prepare becomes the document's name. It was never
-      // sent before, so Documents showed the file's (or the template's) name.
-      // Not worth failing a send over: the request goes out either way.
-      const typedTitle = draft.details.title.trim();
-      if (typedTitle !== "" && !pending.signingRequestId) {
-        try { await realDocumentService.rename(workspaceId, documentId, typedTitle); } catch { /* keeps its current name */ }
+      // The title typed on Prepare is the document's name. It is saved as
+      // soon as it is typed (see PrepareContext.saveTitle), so there is
+      // normally nothing left to do here; this is the last chance for one
+      // that is not saved yet. A save that fails STOPS the send: the request
+      // must not go out under a name the sender did not choose.
+      let renamedAtSend: { typed: string; saved: string } | null = null;
+      if (!pending.signingRequestId) {
+        const titleOutcome = await saveTitle();
+        if (titleOutcome.status === "failed") throw new TitleNotSavedError();
+        if (titleOutcome.status === "saved") renamedAtSend = titleOutcome.adjusted;
       }
 
       let signingRequestId = pending.signingRequestId;
@@ -251,6 +264,10 @@ function ConfirmationPageInner({ participants }: { participants: PrepParticipant
       // Backend-confirmed. This logical attempt is over — the next Send
       // (a different document, some other time) must never reuse these keys.
       pendingSendRef.current = null;
+      if (renamedAtSend !== null) {
+        toastInfo(`Sent as "${renamedAtSend.saved}"`,
+          `A document named "${renamedAtSend.typed}" already exists here.`);
+      }
       announcePlanChanged();
       await discardDraft();
       void navigate("/app/documents");
@@ -261,6 +278,8 @@ function ConfirmationPageInner({ participants }: { participants: PrepParticipant
         setFreeLimitHit(true);
         setSendError(null);
         announcePlanChanged();
+      } else if (err instanceof TitleNotSavedError) {
+        setSendError({ message: err.message, details: [] });
       } else if (err instanceof ApiError) {
         setSendError({
           message: err.message,

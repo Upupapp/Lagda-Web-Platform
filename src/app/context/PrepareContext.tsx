@@ -20,6 +20,8 @@ import React, {
 } from "react";
 import { readJSON, writeJSON, removeKey, PERSISTENCE_KEYS } from "../services/local-persistence";
 import { loadResumableDraft } from "../services/real/resume-draft.service";
+import { realDocumentService } from "../services/real/document.service";
+import { deleteDraftOnServer } from "../services/prepare/unfinished-draft";
 import { clearAllFileRefs } from "../services/prepare/file-registry";
 import { USE_REAL_BACKEND } from "../services/backend-flag";
 import { DEFAULT_CONTACT_QUERY } from "../models/contacts";
@@ -299,6 +301,29 @@ function hydratedInitialState(): PrepareState {
   return { ...INITIAL_STATE, draft: saved, loadState: "ready" };
 }
 
+// ── Saving the title ──────────────────────────────────────────────────────────
+
+/** The longest title the field and the server accept. */
+export const TITLE_MAX_LENGTH = 200;
+
+export interface TitleSaveStatus {
+  readonly state: "idle" | "saving" | "saved" | "failed";
+  /**
+   * The server saved a different title than the one typed, because that one
+   * was already used in the workspace. `saved` is now the draft's title.
+   */
+  readonly adjusted: { readonly typed: string; readonly saved: string } | null;
+}
+
+export type TitleSaveOutcome =
+  /** Nothing to save: no document yet, no title, or it is already saved. */
+  | { readonly status: "skipped" }
+  | { readonly status: "saved"; readonly title: string; readonly adjusted: { readonly typed: string; readonly saved: string } | null }
+  | { readonly status: "failed" };
+
+const TITLE_IDLE: TitleSaveStatus = { state: "idle", adjusted: null };
+const TITLE_SKIPPED: TitleSaveOutcome = { status: "skipped" };
+
 // ── Context interface ─────────────────────────────────────────────────────────
 
 interface PrepareContextValue {
@@ -344,7 +369,31 @@ interface PrepareContextValue {
    * started it.
    */
   resumeBackendDraft: (documentId: string) => Promise<boolean>;
+  /**
+   * Clears the LOCAL draft only. What the server holds is left alone: this is
+   * what follows a send, and what "keep that as a draft" means.
+   */
   discardDraft: () => Promise<void>;
+  /**
+   * "Discard draft": deletes the draft's documents on the server, then clears
+   * the local draft. Rejects, with the local draft kept, when the server
+   * could not delete. A draft that never reached the server is just cleared.
+   */
+  deleteDraftEverywhere: () => Promise<void>;
+
+  // The title, as the server holds it
+  /** How the last save of the title went. Not persisted. */
+  titleSave: TitleSaveStatus;
+  /** True when a document exists and its title is not the one typed. */
+  titleNeedsSave: boolean;
+  /**
+   * Saves the typed title to the draft's document, when there is one and the
+   * title is not already saved. Saves run one at a time, each with the title
+   * as it stands when its turn comes. Never rejects.
+   */
+  saveTitle: () => Promise<TitleSaveOutcome>;
+  /** Records the title the server gave a document it has just created. */
+  recordServerTitle: (documentId: string, title: string) => void;
 
   // Draft mutations (update local state immediately, persist via service)
   updateFiles:        (files: PrepFile[]) => void;
@@ -432,6 +481,14 @@ export function PrepareProvider({ children }: { children: React.ReactNode }) {
   // function started.
   const draftRef = useRef(state.draft);
   useEffect(() => { draftRef.current = state.draft; }, [state.draft]);
+  // The same, but current from the moment of the render itself. The title
+  // save is started from effects and event handlers of child components,
+  // which run before the effect above has caught up.
+  const latestDraftRef = useRef(state.draft);
+  latestDraftRef.current = state.draft;
+  const workspaceIdRef = useRef(platform.currentWorkspace?.id);
+  workspaceIdRef.current = platform.currentWorkspace?.id;
+  const [titleSave, setTitleSave] = useState<TitleSaveStatus>(TITLE_IDLE);
 
   // Reload/resume authority: once a real backend document exists for this
   // draft, the backend's own recipient list — not whatever localStorage
@@ -557,6 +614,7 @@ export function PrepareProvider({ children }: { children: React.ReactNode }) {
     dispatch({ type: "LOAD_START" });
     try {
       const draft = await prepareService.createDraft(opts);
+      setTitleSave(TITLE_IDLE);
       dispatch({ type: "LOAD_OK", draft });
       return draft.id;
     } catch (_e) {
@@ -582,7 +640,14 @@ export function PrepareProvider({ children }: { children: React.ReactNode }) {
       const withParticipants = resumable.participants.length === 0
         ? draft
         : await prepareService.updateParticipants(draft.id, resumable.participants);
-      dispatch({ type: "LOAD_OK", draft: withParticipants });
+      // The title came FROM the server, so it is already saved there. Without
+      // this note the first save would rename the document to its own title.
+      const withSavedTitle = await prepareService.updateTransactionDetails(draft.id, {
+        ...withParticipants.details,
+        savedTitle: { documentId, title: resumable.title.trim() },
+      });
+      setTitleSave(TITLE_IDLE);
+      dispatch({ type: "LOAD_OK", draft: withSavedTitle });
       return true;
     } catch {
       dispatch({
@@ -607,20 +672,116 @@ export function PrepareProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
+  // LOCAL ONLY, on purpose. This is what follows a send (the document is now
+  // a signing request and must stay) and what "keep that as a draft" means.
+  // "Discard draft" is deleteDraftEverywhere below, which deletes on the
+  // server first.
   const discardDraft = useCallback(async () => {
-    if (state.draft) {
-      await prepareService.discardDraft(state.draft.id).catch(() => {});
+    const current = latestDraftRef.current;
+    if (current) {
+      await prepareService.discardDraft(current.id).catch(() => {});
     }
-    // BACKEND DOCUMENT CLEANUP POLICY REQUIRED — Lagda-Backend has no
-    // document-deletion route (traced: GET/PATCH exist on
-    // /workspaces/{id}/documents/{id}, no DELETE). A discarded draft whose
-    // files already reached real backend document/upload state therefore
-    // leaves that document behind server-side; this only clears local
-    // draft state and the in-memory File registry, and does not pretend
-    // otherwise. Revisit once the backend defines one.
     clearAllFileRefs();
+    setTitleSave(TITLE_IDLE);
     dispatch({ type: "DISCARD" });
-  }, [state.draft]);
+  }, []);
+
+  const deleteDraftEverywhere = useCallback(async () => {
+    // The demo build has nothing on a server, and makes no call.
+    if (USE_REAL_BACKEND) {
+      // Throws when a document could not be deleted: the local draft is then
+      // still here, exactly as it was, for the caller to say so.
+      await deleteDraftOnServer(workspaceIdRef.current, latestDraftRef.current);
+    }
+    await discardDraft();
+  }, [discardDraft]);
+
+  // ── The title, saved early ────────────────────────────────────────────────
+  //
+  // The document is created with its FILE's name, and the title the sender
+  // types used to reach the server only at Send, with a failure swallowed. It
+  // is now saved as soon as there is a document to save it to. The server may
+  // answer with a different title (it numbers one that is already used); that
+  // title then becomes the draft's.
+  /** Saves wait their turn here, so two never race for the last word. */
+  const titleQueueRef = useRef<Promise<unknown>>(Promise.resolve());
+
+  const writeDetails = useCallback((draftId: PrepDraftId, details: TransactionDetailsDraft) => {
+    dispatch({ type: "UPDATE_DRAFT", patch: { details } });
+    prepareService.updateTransactionDetails(draftId, details).catch(() => {});
+  }, []);
+
+  const saveTitle = useCallback((): Promise<TitleSaveOutcome> => {
+    if (!USE_REAL_BACKEND) return Promise.resolve(TITLE_SKIPPED);
+
+    const run = async (): Promise<TitleSaveOutcome> => {
+      const before = latestDraftRef.current;
+      const workspaceId = workspaceIdRef.current;
+      const documentId = getPrimaryBackendDocumentId(before);
+      if (!before || !workspaceId || !documentId) return TITLE_SKIPPED;
+      const typed = before.details.title.trim();
+      // Never an empty title, and never one the field itself refuses.
+      if (typed === "" || typed.length > TITLE_MAX_LENGTH) return TITLE_SKIPPED;
+      const saved = before.details.savedTitle;
+      if (saved?.documentId === documentId && saved.title === typed) {
+        // Typed back to what is saved: an earlier failure no longer applies.
+        setTitleSave(current => (current.state === "failed" ? TITLE_IDLE : current));
+        return TITLE_SKIPPED;
+      }
+
+      setTitleSave(current => ({ state: "saving", adjusted: current.adjusted }));
+      try {
+        const document = await realDocumentService.rename(workspaceId, documentId, typed);
+        const serverTitle = typeof document.title === "string" ? document.title.trim() : "";
+        // An older server does not say; that means "saved as typed".
+        const wasAdjusted = document.titleAdjusted === true && serverTitle !== "" && serverTitle !== typed;
+        const nowSaved = wasAdjusted ? serverTitle : typed;
+
+        const after = latestDraftRef.current;
+        let adjusted: { typed: string; saved: string } | null = null;
+        if (after && after.id === before.id) {
+          // The field takes the server's title only if it still holds what
+          // was sent. Somebody who kept typing keeps what they typed, and
+          // that is saved in its own turn.
+          const untouched = after.details.title.trim() === typed;
+          if (wasAdjusted && untouched) adjusted = { typed, saved: serverTitle };
+          writeDetails(after.id, {
+            ...after.details,
+            title: wasAdjusted && untouched ? serverTitle : after.details.title,
+            savedTitle: { documentId, title: nowSaved },
+          });
+        }
+        setTitleSave({ state: "saved", adjusted });
+        return { status: "saved", title: nowSaved, adjusted };
+      } catch (error) {
+        log.warn("prepare: the document title could not be saved", error);
+        setTitleSave({ state: "failed", adjusted: null });
+        return { status: "failed" };
+      }
+    };
+
+    const next = titleQueueRef.current.then(run, run);
+    titleQueueRef.current = next;
+    return next;
+  }, [writeDetails]);
+
+  const recordServerTitle = useCallback((documentId: string, title: string) => {
+    const current = latestDraftRef.current;
+    if (!current) return;
+    const saved = current.details.savedTitle;
+    // One note, for the document the title belongs to. A second file's
+    // document must not overwrite the first's.
+    if (saved !== undefined && saved.documentId !== documentId) return;
+    writeDetails(current.id, { ...current.details, savedTitle: { documentId, title: title.trim() } });
+  }, [writeDetails]);
+
+  const primaryDocumentId = getPrimaryBackendDocumentId(state.draft);
+  const typedTitle = state.draft?.details.title.trim() ?? "";
+  const savedTitle = state.draft?.details.savedTitle;
+  const titleNeedsSave = USE_REAL_BACKEND
+    && primaryDocumentId !== undefined
+    && typedTitle !== "" && typedTitle.length <= TITLE_MAX_LENGTH
+    && !(savedTitle?.documentId === primaryDocumentId && savedTitle.title === typedTitle);
 
   const updateFiles = useCallback((files: PrepFile[]) => {
     dispatch({ type: "UPDATE_DRAFT", patch: { files } });
@@ -837,6 +998,11 @@ export function PrepareProvider({ children }: { children: React.ReactNode }) {
     loadDraft,
     resumeBackendDraft,
     discardDraft,
+    deleteDraftEverywhere,
+    titleSave,
+    titleNeedsSave,
+    saveTitle,
+    recordServerTitle,
     updateFiles,
     updateDetails,
     updateParticipants,

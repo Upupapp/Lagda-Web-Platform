@@ -9,7 +9,7 @@
 // localStorage or any other workspace source (see PlatformContext's P1
 // authority boundary).
 
-import { apiRequest, apiUpload } from "../api-client";
+import { apiRequest, apiUpload, ApiError } from "../api-client";
 
 /**
  * The document's accepted bytes, or null before any upload has landed.
@@ -36,6 +36,20 @@ export interface RealDocument {
   source: RealDocumentSource | null;
   /** The Verification ID of the latest sealed completion, or null. */
   verificationId?: string | null;
+  /**
+   * On a create or a rename: the server saved a different title than the one
+   * asked for, because that one was already used in the workspace (it adds
+   * " (2)", " (3)"…). `title` is always the one saved. Absent from an older
+   * server, which means false.
+   */
+  titleAdjusted?: boolean;
+}
+
+/** What a title would be saved as. `changed`: not as it was typed. */
+export interface TitleSuggestion {
+  requested: string;
+  title: string;
+  changed: boolean;
 }
 
 export interface RealDocumentListResult {
@@ -103,6 +117,31 @@ class RealDocumentService {
       `/workspaces/${encodeURIComponent(workspaceId)}/documents/${encodeURIComponent(documentId)}`,
       { method: "PATCH", body: { title } },
     );
+  }
+
+  /**
+   * What `title` would be saved as in this workspace, before anything is
+   * saved. `excludeDocumentId` leaves that document's own title out of the
+   * comparison, for a document that is being renamed.
+   *
+   * `null` when there is nothing to say: an older server without the route
+   * (404), or a title the server would refuse (422).
+   */
+  async titleSuggestion(
+    workspaceId: string, title: string, excludeDocumentId?: string,
+  ): Promise<TitleSuggestion | null> {
+    const query = new URLSearchParams({ title });
+    if (excludeDocumentId !== undefined) query.set("excludeDocumentId", excludeDocumentId);
+    try {
+      const result = await apiRequest<Partial<TitleSuggestion>>(
+        `/workspaces/${encodeURIComponent(workspaceId)}/documents/title-suggestion?${query.toString()}`,
+      );
+      if (typeof result.title !== "string" || result.title === "") return null;
+      return { requested: result.requested ?? title, title: result.title, changed: result.changed === true };
+    } catch (error) {
+      if (error instanceof ApiError && (error.status === 404 || error.status === 422)) return null;
+      throw error;
+    }
   }
 
   async create(workspaceId: string, title: string): Promise<RealDocument> {
