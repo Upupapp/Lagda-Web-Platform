@@ -133,8 +133,9 @@ export function ResendSigningDialog({
   workspaceId, documentId, documentTitle, onClose, onSent, allowSameParticipants = true, signingRequestId,
 }: {
   /**
-   * The request being sent again. Its identity checks are where "locked" and
-   * "lighter method allowed" are read from. Absent: nothing is said of either.
+   * The request being sent again. Its identity checks are where "locked",
+   * "name on ID did not match" and "lighter method allowed" are read from.
+   * Absent: nothing is said of any of them.
    */
   signingRequestId?: string;
   /**
@@ -273,6 +274,8 @@ export function ResendSigningDialog({
         : `Lighter method allowed${day === "" ? "" : ` ${day}`}. They will not be asked for it again. Switch off and on to ask again.`);
     } else if (identity.locked.has(key)) {
       lines.push("Locked after 3 attempts today. Resending does not give more attempts. Allow a lighter method if they cannot pass.");
+    } else if (identity.nameMismatch.has(key)) {
+      lines.push("Name on ID did not match. Sending again does not change that; decide in Participants or send to the right person.");
     }
     const inherited = starting.inheritedFrom.get(key);
     if (inherited !== undefined && !chosen.has(key)) lines.push(`On because ${inherited}, who they replace, was asked for it.`);

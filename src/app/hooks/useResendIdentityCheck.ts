@@ -42,6 +42,8 @@ export interface ResendIdentityCheck {
   readonly waivedAt: ReadonlyMap<string, string>;
   /** Addresses locked out of the check on the request being sent again. */
   readonly locked: ReadonlySet<string>;
+  /** Addresses that passed, but under a name that is not the document's, and wait on the sender. */
+  readonly nameMismatch: ReadonlySet<string>;
   /** Reads everything again, after an `error`. */
   readonly retry: () => void;
 }
@@ -50,9 +52,10 @@ interface Held {
   readonly required: ReadonlySet<string>;
   readonly waivedAt: ReadonlyMap<string, string>;
   readonly locked: ReadonlySet<string>;
+  readonly nameMismatch: ReadonlySet<string>;
 }
 
-const NOTHING: Held = { required: new Set(), waivedAt: new Map(), locked: new Set() };
+const NOTHING: Held = { required: new Set(), waivedAt: new Map(), locked: new Set(), nameMismatch: new Set() };
 
 export function useResendIdentityCheck({ workspaceId, documentId, signingRequestId }: {
   workspaceId: string;
@@ -87,14 +90,18 @@ export function useResendIdentityCheck({ workspaceId, documentId, signingRequest
         const waivedAt = new Map<string, string>();
         for (const item of requirements) if (item.waivedAt !== null) waivedAt.set(identityEmailKey(item.email), item.waivedAt);
         const locked = new Set<string>();
+        const nameMismatch = new Set<string>();
         for (const check of checks ?? []) {
           const email = identityEmailKey(check.email);
           if (check.status === "locked") locked.add(email);
+          if (check.status === "name-mismatch") nameMismatch.add(email);
           if (check.waivedAt !== null && !waivedAt.has(email)) waivedAt.set(email, check.waivedAt);
         }
         setHeld({
           state: "ready",
-          value: { required: new Set(requirements.map(item => identityEmailKey(item.email))), waivedAt, locked },
+          value: {
+            required: new Set(requirements.map(item => identityEmailKey(item.email))), waivedAt, locked, nameMismatch,
+          },
         });
       } catch {
         if (!cancelled) setHeld({ state: "error", value: NOTHING });
@@ -118,6 +125,7 @@ export function useResendIdentityCheck({ workspaceId, documentId, signingRequest
       required: held.value.required,
       waivedAt: held.value.waivedAt,
       locked: held.value.locked,
+      nameMismatch: held.value.nameMismatch,
       retry,
     };
   }, [read, usable, held]);
