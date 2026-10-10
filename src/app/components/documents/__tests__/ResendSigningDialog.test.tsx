@@ -5,6 +5,12 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
+// Pinned, so this file reads the same whatever a local .env sets: the build
+// where "ID and face verification" is not in play. Where it is, the dialog
+// reads the workspace's settings before it will send; that is pinned in
+// ResendSigningDialog.identity.test.tsx.
+vi.mock("../../../services/backend-flag", () => ({ USE_REAL_BACKEND: false, API_BASE_URL: null }));
+
 const svc = vi.hoisted(() => ({
   currentParticipants: vi.fn(),
   resendToSame: vi.fn(),

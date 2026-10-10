@@ -32,9 +32,22 @@
 // there leaves a DRAFT request on a correctly configured document — visible,
 // resumable and safe — rather than a document pointing at a recipient list
 // nobody chose.
+//
+// ── The identity check goes with the new list ─────────────────────────────
+//
+// Who must pass "ID and face verification" is kept by the participant's
+// EMAIL on the document. Change the addresses and the requirement is left
+// behind on the old ones: the new person skips the check and nothing says so.
+//
+// So when the caller passes `identity`, the complete set for the NEW list is
+// saved after the recipients are replaced and BEFORE the request is created.
+// If it cannot be saved, nothing is created and nothing is sent. A re-send
+// must never go out with the check silently dropped.
 
 import { realRecipientService, type RealRecipient } from "./recipient.service";
 import { realSigningRequestService } from "./signing-request.service";
+import { realIdentityCheckService, describeIdentityRequirementError } from "./identity-check.service";
+import { ApiError } from "../api-client";
 
 export interface ResendRecipient {
   readonly name: string;
@@ -44,6 +57,74 @@ export interface ResendRecipient {
 export interface ResendResult {
   readonly signingRequestId: string;
   readonly sentTo: number;
+  /**
+   * The title the new request went out under, as the server reports it. The
+   * server numbers a re-send ("Lease (2)") so it can be told apart from the
+   * earlier one. Null from a server that does not say.
+   */
+  readonly documentTitle: string | null;
+}
+
+/** Who must pass the identity check on the list being sent to. */
+export interface ResendIdentity {
+  /** The COMPLETE set of addresses that must pass. `[]`: nobody. */
+  readonly emails: readonly string[];
+  /**
+   * Addresses the sender allowed a lighter method earlier and now wants asked
+   * again. The server keeps a waiver for as long as the address stays in the
+   * set, so these are taken out and put back.
+   */
+  readonly askAgain?: readonly string[];
+}
+
+export interface ResendOptions {
+  /** Absent: the identity check is not offered here, and nothing is saved. */
+  readonly identity?: ResendIdentity;
+}
+
+/** The identity check could not be saved for the new list. Nothing was sent. */
+export class ResendIdentityNotSavedError extends Error {
+  constructor(reason: string) {
+    super(`ID and face verification could not be saved, so nothing was sent. ${reason}`);
+    this.name = "ResendIdentityNotSavedError";
+  }
+}
+
+const emailKey = (email: string) => email.trim().toLowerCase();
+
+/**
+ * Makes the document's set exactly `identity.emails`, or throws.
+ *
+ * `listed` is everyone on the new recipient list. It matters for one case
+ * only: a server that will not change the set once the document's last
+ * request has ended. There, the send may still go ahead if what the server
+ * ALREADY holds for these people is what was asked for, since nothing would
+ * be dropped or added. Anything else stops the send.
+ */
+async function saveIdentityRequirements(
+  workspaceId: string, documentId: string, identity: ResendIdentity, listed: readonly string[],
+): Promise<void> {
+  const wanted = [...new Set(identity.emails.map(emailKey))];
+  const askAgain = new Set((identity.askAgain ?? []).map(emailKey).filter(email => wanted.includes(email)));
+  try {
+    if (askAgain.size > 0) {
+      await realIdentityCheckService.replaceRequirements(
+        workspaceId, documentId, wanted.filter(email => !askAgain.has(email)));
+    }
+    await realIdentityCheckService.replaceRequirements(workspaceId, documentId, wanted);
+  } catch (cause) {
+    const closed = cause instanceof ApiError && cause.body?.code === "identity_requirement_not_editable";
+    if (closed && askAgain.size === 0) {
+      const held = await realIdentityCheckService.requirements(workspaceId, documentId).catch(() => null);
+      if (held !== null) {
+        const onList = new Set(listed.map(emailKey));
+        const heldForList = held.map(item => emailKey(item.email)).filter(email => onList.has(email));
+        const same = heldForList.length === wanted.length && heldForList.every(email => wanted.includes(email));
+        if (same) return;
+      }
+    }
+    throw new ResendIdentityNotSavedError(describeIdentityRequirementError(cause, wanted));
+  }
 }
 
 /** The most addresses one re-send will accept. */
@@ -113,6 +194,7 @@ class ResendSigningService {
     workspaceId: string,
     documentId: string,
     keep: readonly RealRecipient[],
+    options: ResendOptions = {},
   ): Promise<ResendResult> {
     if (!canResendTo(keep)) {
       throw new Error("Keep at least one person who signs, approves, reviews or acknowledges.");
@@ -127,12 +209,19 @@ class ResendSigningService {
         routingOrder: participant.routingOrder,
       })),
       { departingFields: "remove" });
-    return this.sendCurrent(workspaceId, documentId, keep.length);
+    return this.sendCurrent(workspaceId, documentId, keep.map(participant => participant.email), options);
   }
 
+  /**
+   * The recipient list is in place. Saves the identity check for it (when
+   * asked to), and only then creates and sends the new request.
+   */
   private async sendCurrent(
-    workspaceId: string, documentId: string, count: number,
+    workspaceId: string, documentId: string, listed: readonly string[], options: ResendOptions,
   ): Promise<ResendResult> {
+    if (options.identity !== undefined) {
+      await saveIdentityRequirements(workspaceId, documentId, options.identity, listed);
+    }
     const created = await realSigningRequestService.create(
       workspaceId, documentId, crypto.randomUUID());
     if (created.state === "draft") {
@@ -140,7 +229,12 @@ class ResendSigningService {
     }
     await realSigningRequestService.send(
       workspaceId, created.signingRequestId, crypto.randomUUID());
-    return { signingRequestId: created.signingRequestId, sentTo: count };
+    const title = typeof created.documentTitle === "string" ? created.documentTitle.trim() : "";
+    return {
+      signingRequestId: created.signingRequestId,
+      sentTo: listed.length,
+      documentTitle: title === "" ? null : title,
+    };
   }
 
   /**
@@ -155,6 +249,7 @@ class ResendSigningService {
     workspaceId: string,
     documentId: string,
     recipients: readonly ResendRecipient[],
+    options: ResendOptions = {},
   ): Promise<ResendResult> {
     if (recipients.length === 0) {
       throw new Error("Add at least one email address.");
@@ -186,17 +281,7 @@ class ResendSigningService {
         isRequired: true,
       })));
 
-    const created = await realSigningRequestService.create(
-      workspaceId, documentId, crypto.randomUUID());
-
-    if (created.state === "draft") {
-      await realSigningRequestService.markReadyToSend(workspaceId, created.signingRequestId);
-    }
-
-    await realSigningRequestService.send(
-      workspaceId, created.signingRequestId, crypto.randomUUID());
-
-    return { signingRequestId: created.signingRequestId, sentTo: recipients.length };
+    return this.sendCurrent(workspaceId, documentId, recipients.map(recipient => recipient.email), options);
   }
 }
 

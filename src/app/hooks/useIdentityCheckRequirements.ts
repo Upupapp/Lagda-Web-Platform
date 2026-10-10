@@ -57,7 +57,44 @@ export interface IdentityRequirementsControl {
   clear: () => void;
 }
 
-const key = (email: string) => email.trim().toLowerCase();
+/** How an address is compared: the server lower-cases the ones it stores. */
+export const identityEmailKey = (email: string) => email.trim().toLowerCase();
+const key = identityEmailKey;
+
+export interface IdentityAvailabilityRead {
+  /** The answer, once there is one. */
+  readonly availability: IdentityCheckAvailability | null;
+  /** `none`: no workspace to ask about. `failed`: the answer could not be read. */
+  readonly state: "none" | "loading" | "known" | "failed";
+}
+
+/**
+ * Whether this workspace can ask for the check, and how the asking went.
+ * Shared by Prepare and the send-again dialog, so both ask the one question
+ * the one way. `attempt` asks again when it changes.
+ */
+export function useIdentityCheckAvailabilityRead(workspaceId: string | undefined, attempt = 0): IdentityAvailabilityRead {
+  const [read, setRead] = useState<IdentityAvailabilityRead>(
+    { availability: null, state: workspaceId === undefined ? "none" : "loading" });
+  useEffect(() => {
+    if (workspaceId === undefined) { setRead({ availability: null, state: "none" }); return; }
+    setRead({ availability: null, state: "loading" });
+    let cancelled = false;
+    realIdentityCheckService.availability(workspaceId)
+      .then(result => { if (!cancelled) setRead({ availability: result, state: "known" }); })
+      .catch(() => { if (!cancelled) setRead({ availability: null, state: "failed" }); });
+    return () => { cancelled = true; };
+  }, [workspaceId, attempt]);
+  return read;
+}
+
+/**
+ * The answer alone: `null` while unknown and when it could not be read.
+ * Prepare treats both as "not offered", and the step stays as it was.
+ */
+export function useIdentityCheckAvailability(workspaceId: string | undefined): IdentityCheckAvailability | null {
+  return useIdentityCheckAvailabilityRead(workspaceId).availability;
+}
 
 const OFF_CONTROL: IdentityRequirementsControl = {
   status: "off", mode: null, canEdit: false, saveState: "idle", error: null,
@@ -74,7 +111,7 @@ export function useIdentityCheckRequirements(): IdentityRequirementsControl {
   const files = draft?.files ?? [];
   const documentId = files.find(file => file.backendDocumentId)?.backendDocumentId;
 
-  const [availability, setAvailability] = useState<IdentityCheckAvailability | null>(null);
+  const availability = useIdentityCheckAvailability(workspaceId);
   /** The set as the screen shows it: optimistic while a save is in flight. */
   const [shown, setShown] = useState<ReadonlySet<string> | null>(null);
   const [waived, setWaived] = useState<ReadonlySet<string>>(() => new Set());
@@ -101,17 +138,6 @@ export function useIdentityCheckRequirements(): IdentityRequirementsControl {
     [participants]);
   const eligibleRef = useRef(eligible);
   eligibleRef.current = eligible;
-
-  useEffect(() => {
-    setAvailability(null);
-    if (workspaceId === undefined) return;
-    let cancelled = false;
-    realIdentityCheckService.availability(workspaceId)
-      .then(result => { if (!cancelled) setAvailability(result); })
-      // Not knowing is treated as not offered: the step stays as it was.
-      .catch(() => { if (!cancelled) setAvailability(null); });
-    return () => { cancelled = true; };
-  }, [workspaceId]);
 
   const usable = availability !== null && availability.available && availability.planAllows;
   const [featureOff, setFeatureOff] = useState(false);
