@@ -135,7 +135,9 @@ describe("before they go", () => {
     expect(screen.getByText("A photo of your ID")).toBeInTheDocument();
     expect(screen.getByText("A selfie")).toBeInTheDocument();
     expect(screen.getByText(/The result of the check, which is recorded/)).toBeInTheDocument();
-    expect(screen.getByText(/LAGDA receives the result and a reference,\s+not the images/)).toBeInTheDocument();
+    expect(screen.getByText(
+      /LAGDA keeps the name shown on your ID, and the result of the check\. It does not keep your ID number, your photo, or the image of your ID\./,
+    )).toBeInTheDocument();
 
     const next = screen.getByRole("button", { name: "Continue to verification" });
     expect(next).toBeDisabled();

@@ -13,7 +13,8 @@
 // ── What leaves this device ────────────────────────────────────────────────
 //
 // That the participant agreed. Nothing else: the images go from the
-// participant to the partner, and LAGDA receives the result and a reference.
+// participant to the partner. LAGDA keeps the name the partner read from the
+// ID and the result of the check; this browser is never given that name.
 //
 // ── Knowing where they stand ───────────────────────────────────────────────
 //
@@ -25,6 +26,10 @@
 //   pending, fewer attempts     → that attempt was not passed
 //   pending, nothing new        → no result yet (or, never started: Start)
 //   locked / not-required       → the locked screen / on to the ceremony
+//   name-mismatch               → passed, but the name on the ID is not the
+//                                 name the sender entered: wait for the
+//                                 sender, asking every 15 s while the tab
+//                                 shows. Nothing here starts the check again.
 //
 // "Fewer attempts than before" needs a before. It is the number this tab
 // last knew when it sent the participant away, kept in sessionStorage so it
@@ -57,6 +62,7 @@ import {
 } from "react";
 import {
   AlertTriangle, Ban, CheckCircle2, Clock, ExternalLink, Loader2, Lock, RefreshCw, ShieldCheck, Smartphone,
+  UserRoundX,
 } from "lucide-react";
 import {
   ActionButton, ActionRow, Notice, PhaseBanner, GF, T, TAP,
@@ -65,7 +71,9 @@ import { ApiError } from "../../services/api-client";
 import type {
   CeremonyIdentityCheck, IdentityCheckSession, IdentityCheckSessionStatus,
 } from "../../services/real/signing-access.service";
-import { IDENTITY_RETURN_FAST_WINDOW_MS, IDENTITY_CHECK_VALID_NOTE } from "../../models/identity-check";
+import {
+  IDENTITY_RETURN_FAST_WINDOW_MS, IDENTITY_CHECK_VALID_NOTE, IDENTITY_CHECK_KEPT_NOTE,
+} from "../../models/identity-check";
 
 export interface IdentityCheckHostedProps {
   readonly identityCheck: CeremonyIdentityCheck;
@@ -141,6 +149,8 @@ function isTouchDevice(): boolean {
 export const HOSTED_FAST_POLL_MS = 3_000;
 /** How often it is asked for while a person at the partner is reviewing. */
 export const HOSTED_REVIEW_POLL_MS = 10_000;
+/** How often it is asked for while the sender decides about the name on the ID. */
+export const HOSTED_NAME_POLL_MS = 15_000;
 /**
  * How long "passed" stays up before the page moves on by itself. Long enough
  * to read how long the pass counts for; Continue is there for anyone who has.
@@ -164,6 +174,8 @@ type View =
   | { readonly kind: "failed"; readonly left: number }
   | { readonly kind: "passed" }
   | { readonly kind: "locked" }
+  /** Passed, but the name on the ID is not the one on the document: the sender decides. */
+  | { readonly kind: "name-mismatch" }
   | { readonly kind: "unavailable"; readonly retry: "session" | "refresh" };
 
 /**
@@ -173,6 +185,7 @@ type View =
  */
 type Origin = "arrival" | "manual" | "quiet";
 
+const NAME_UNCHANGED = "Nothing has changed yet. You can try again later.";
 const TOO_MANY = "Too many tries in a short time. Wait a minute, then try again.";
 
 /** In plain words, and never in the server's or the partner's. */
@@ -265,6 +278,7 @@ const HEADINGS: Readonly<Record<View["kind"], string>> = {
   "failed": "We could not complete the identity check",
   "passed": "Identity check passed",
   "locked": "The identity check is closed for now",
+  "name-mismatch": "The name on your ID does not match this document",
   "unavailable": "Identity verification is not available right now",
 };
 
@@ -304,6 +318,7 @@ export function IdentityCheckHosted(props: IdentityCheckHostedProps) {
 
   const [view, setView] = useState<View>(() => {
     if (identityCheck.status === "locked") return { kind: "locked" };
+    if (identityCheck.status === "name-mismatch") return { kind: "name-mismatch" };
     if (!arrival.sentAway) return { kind: "start" };
     if (Date.now() < arrival.fastUntil) return { kind: "waiting" };
     return Date.now() < arrival.tabUntil ? { kind: "tab" } : { kind: "arriving" };
@@ -386,13 +401,21 @@ export function IdentityCheckHosted(props: IdentityCheckHostedProps) {
       show({ kind: "locked" });
       return;
     }
+    if (code === "identity_name_mismatch") {
+      // Already passed: there is no visit to open. The sender decides.
+      clearMarker(propsRef.current.requestId);
+      tabUntilRef.current = 0;
+      show({ kind: "name-mismatch" });
+      return;
+    }
     if (code === "identity_check_not_required" || code === "signing_ceremony_unavailable") {
       // Something changed on the sender's side. The ceremony says what.
       await moveOn();
       return;
     }
     if (origin === "quiet") return;
-    if (code === "identity_check_unavailable") {
+    // Waiting on the sender, there is nothing to start again: the wait stays.
+    if (code === "identity_check_unavailable" && viewRef.current.kind !== "name-mismatch") {
       show({ kind: "unavailable", retry: what });
       return;
     }
@@ -424,6 +447,22 @@ export function IdentityCheckHosted(props: IdentityCheckHostedProps) {
       return;
     }
     const before = viewRef.current.kind;
+    if (answer.status === "name-mismatch") {
+      clearMarker(id);
+      tabUntilRef.current = 0;
+      show({ kind: "name-mismatch" });
+      if (origin === "manual" && before === "name-mismatch") tell(NAME_UNCHANGED, true);
+      return;
+    }
+    if (before === "name-mismatch" && !answer.pendingReview) {
+      // The server no longer holds a pass for them: the check is theirs to
+      // do again, from the beginning and with a fresh agreement.
+      clearMarker(id);
+      sentAwayRef.current = false;
+      baselineRef.current = answer.attemptsRemaining;
+      show({ kind: "start" });
+      return;
+    }
     if (answer.pendingReview) {
       show({ kind: "review" });
       if (origin === "manual" && before === "review") tell("It is still being reviewed. Nothing more is needed from you right now.", true);
@@ -546,8 +585,9 @@ export function IdentityCheckHosted(props: IdentityCheckHostedProps) {
   // ── Asking again by itself ───────────────────────────────────────────────
 
   useEffect(() => {
-    if (shownKind !== "review" && shownKind !== "waiting" && shownKind !== "tab") return;
-    const every = shownKind === "review" ? HOSTED_REVIEW_POLL_MS : HOSTED_FAST_POLL_MS;
+    if (shownKind !== "review" && shownKind !== "waiting" && shownKind !== "tab" && shownKind !== "name-mismatch") return;
+    const every = shownKind === "name-mismatch" ? HOSTED_NAME_POLL_MS
+      : shownKind === "review" ? HOSTED_REVIEW_POLL_MS : HOSTED_FAST_POLL_MS;
     let timer: number | null = null;
     const stop = () => {
       if (timer !== null) window.clearInterval(timer);
@@ -663,6 +703,15 @@ export function IdentityCheckHosted(props: IdentityCheckHostedProps) {
     tell("Nothing has changed yet. You can try again later.", true);
   }, [recheckCount, show, tell]);
 
+  // The ceremony, read again by the page, now says the name does not match.
+  const ceremonyStatus = identityCheck.status;
+  useEffect(() => {
+    if (ceremonyStatus !== "name-mismatch" || viewRef.current.kind === "name-mismatch") return;
+    clearMarker(propsRef.current.requestId);
+    tabUntilRef.current = 0;
+    show({ kind: "name-mismatch" });
+  }, [ceremonyStatus, show]);
+
   // ── Focus ────────────────────────────────────────────────────────────────
 
   useEffect(() => {
@@ -741,6 +790,36 @@ export function IdentityCheckHosted(props: IdentityCheckHostedProps) {
     );
   }
 
+  // ── Passed, but the name is not the one on the document ──────────────────
+
+  if (shown.kind === "name-mismatch") {
+    return frame(
+      <>
+        <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
+          <UserRoundX size={22} aria-hidden style={{ color: "#B45309", flexShrink: 0, marginTop: 1 }} />
+          {heading}
+        </div>
+        <p style={BODY}>
+          Your identity was verified, but the name on your ID is different from the name the
+          sender entered for you. The sender has been told and can correct it or confirm it is
+          you. You do not need to verify again.
+        </p>
+        <p data-testid="identity-hosted-name-attempts" style={BODY}>This did not use one of your attempts.</p>
+        {/* Room kept for what "Check again" says, so the button does not move under a finger. */}
+        <div style={{ minHeight: 34 }}>{noteLine}</div>
+        <ActionRow>
+          <ActionButton
+            icon={checking ? Loader2 : RefreshCw} kind="secondary"
+            onClick={() => void ask("manual")} disabled={busy !== null} full
+          >
+            {checking ? "Checking…" : "Check again"}
+          </ActionButton>
+        </ActionRow>
+        {declineLink}
+      </>,
+    );
+  }
+
   // ── Start ────────────────────────────────────────────────────────────────
 
   if (shown.kind === "start") {
@@ -769,9 +848,8 @@ export function IdentityCheckHosted(props: IdentityCheckHostedProps) {
           <li style={{ display: "list-item", marginBottom: 4 }}>A selfie</li>
           <li style={{ display: "list-item" }}>The result of the check, which is recorded in the document&rsquo;s history</li>
         </ul>
-        <p style={BODY}>
-          Our partner checks your ID and selfie. LAGDA receives the result and a reference,
-          not the images.
+        <p data-testid="identity-check-kept-note" style={BODY}>
+          Our partner checks your ID and selfie. {IDENTITY_CHECK_KEPT_NOTE}
         </p>
         {/* On a computer the partner's page hands the camera work to a phone.
             Said before they agree, so the code to scan is not a surprise. */}

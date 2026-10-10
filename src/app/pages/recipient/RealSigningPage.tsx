@@ -752,7 +752,10 @@ export function RealSigningPage() {
   // The check done on the identity verification partner's page. None of the
   // screens below it (LAGDA's own ID and selfie stages, its QR code to a
   // phone) exist in this flow: the server refuses them.
-  if (phase === "identity" && view?.identityCheck !== undefined && identityCheckFlow(view.identityCheck) === "hosted") {
+  // A name that does not match is waited out on the same screen whatever the
+  // flow: it is a wait for the sender, and nothing on it starts a check.
+  if (phase === "identity" && view?.identityCheck !== undefined
+    && (identityCheckFlow(view.identityCheck) === "hosted" || view.identityCheck.status === "name-mismatch")) {
     return (
       <SignerCard>
         <IdentityCheckHosted
