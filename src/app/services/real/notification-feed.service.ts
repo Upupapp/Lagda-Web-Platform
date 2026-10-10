@@ -710,6 +710,28 @@ function present(row: FeedRow): Presentation {
       };
     }
 
+    // In-app only. To the sender: a participant passed the identity check
+    // under a name that is not the one on the document. The name read from
+    // the ID is not in the notice; Participants is where it is shown and
+    // where the sender decides, so the notice opens it directly.
+    case "IDENTITY_NAME_MISMATCH": {
+      const who = str(row.templateInput, "participantName") ?? "A participant";
+      const subject = documentTitle === null ? "a document you sent" : `“${documentTitle}”`;
+      const requestId = str(row.templateInput, "signingRequestId");
+      return {
+        category: "documents", severity: "warning", priority: "high",
+        title: "The name on a participant's ID does not match",
+        body: `${who} verified their identity for ${subject}, but the name on their ID is different from `
+          + "the name on the document. Open Participants to decide.",
+        actionLabel: "Open participants",
+        actionPath: requestId === null
+          ? "/app/documents?list=sent"
+          : `/app/documents?list=sent&participants=${encodeURIComponent(requestId)}`,
+        why: "You were sent this because you sent this document and asked this participant for an identity check.",
+        inAppOnly: true,
+      };
+    }
+
     case "FINAL_COPY_AVAILABLE": {
       const title = str(row.templateInput, "documentTitle") ?? "A document you signed";
       const sender = str(row.templateInput, "senderDisplayName") ?? "the sender";

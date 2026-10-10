@@ -61,6 +61,7 @@ const ROWS: Record<string, Record<string, unknown>> = {
   DOCUMENT_WAITING_FOR_SIGNATURE: { recipientName: "Ana", documentTitle: "NDA.pdf", senderDisplayName: "Ben", workspaceName: "Reyes Law", signingRequestId: "sr_1" },
   SIGNING_LINK_LAPSED: { recipientName: "Ana", documentTitle: "NDA.pdf", signingRequestId: "sr_1", waitingOn: ["Jose Cruz", "Ben Lim"], waitingOnMore: 0 },
   IDENTITY_CHECK_LOCKED: { recipientName: "Ana", participantName: "Jose Cruz", documentTitle: "NDA.pdf", signingRequestId: "sr_1", participantRecipientId: "srr_1" },
+  IDENTITY_NAME_MISMATCH: { recipientName: "Ana", participantName: "Jose Cruz", documentTitle: "NDA.pdf", signingRequestId: "sr_1", participantRecipientId: "srr_1" },
   PUBLIC_INQUIRY_RECEIVED: { recipientName: "Chris", kindLabel: "Demo request", senderName: "Jose Cruz", senderEmail: "jose@example.ph", inquiryId: "pin_1" },
 };
 
@@ -117,6 +118,38 @@ describe("the account notification feed", () => {
     expect(locked?.severity).toBe("warning");
     expect(locked?.actionLabel).toBe("Open participants");
     expect(locked?.actionPath).toBe("/app/documents?list=sent&participants=sr_1");
+  });
+
+  it("tells the sender a participant's ID carries another name, and opens Participants to decide", async () => {
+    const records = await realNotificationFeedService.list();
+    const mismatch = records.find(r => r.title === "The name on a participant's ID does not match");
+    expect(mismatch?.body).toBe(
+      "Jose Cruz verified their identity for “NDA.pdf”, but the name on their ID is different from "
+      + "the name on the document. Open Participants to decide.");
+    expect(mismatch?.severity).toBe("warning");
+    expect(mismatch?.actionLabel).toBe("Open participants");
+    expect(mismatch?.actionPath).toBe("/app/documents?list=sent&participants=sr_1");
+    expect(mismatch?.deliveryClass).toBe("in-app-only");
+    // The name read from the ID is never in a notice.
+    expect(`${mismatch?.title ?? ""} ${mismatch?.body ?? ""}`).not.toMatch(/srr_1/);
+    // The same reason the locked notice gives: it is the sender's document and the sender's check.
+    expect(mismatch?.whyReceivedReason).toBe(
+      records.find(r => r.title === "A participant could not pass the identity check")?.whyReceivedReason);
+    expect(mismatch?.whyReceivedReason).toMatch(/^You were sent this because you sent this document/);
+  });
+
+  it("opens Sent for a name-mismatch notice that names no request, and still reads without a name or title", async () => {
+    vi.stubGlobal("fetch", vi.fn(() => Promise.resolve(new Response(JSON.stringify({
+      notifications: [{
+        id: "nint_x", type: "IDENTITY_NAME_MISMATCH", workspaceId: "ws_1", sourceKind: "X", sourceId: "src_x",
+        templateInput: {}, createdAt: "2026-10-10T09:00:00.000Z", read: false, dismissed: false,
+      }],
+    }), { status: 200, headers: { "content-type": "application/json" } }))));
+    const [record] = await realNotificationFeedService.list();
+    expect(record?.actionPath).toBe("/app/documents?list=sent");
+    expect(record?.body).toBe(
+      "A participant verified their identity for a document you sent, but the name on their ID is different from "
+      + "the name on the document. Open Participants to decide.");
   });
 
   it("opens a signed document in the Documents viewer, never in the demo detail page", async () => {
