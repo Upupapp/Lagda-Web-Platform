@@ -59,6 +59,48 @@ export const IDENTITY_CHECK_VALID_NOTE_TEST =
 export const IDENTITY_CHECK_VALID_SENDER_NOTE =
   `A participant who passes is not asked again for ${VALID_FOR} on this workspace's documents.`;
 
+// ── The name on the ID ──────────────────────────────────────────────────────
+
+/**
+ * What LAGDA keeps of a real check, said to the participant before they
+ * agree. Never said where the check is simulated: nothing is read there.
+ */
+export const IDENTITY_CHECK_KEPT_NOTE =
+  "LAGDA keeps the name shown on your ID, and the result of the check. "
+  + "It does not keep your ID number, your photo, or the image of your ID.";
+
+/** Said to the sender, where they choose who must pass the check. */
+export const IDENTITY_CHECK_NAME_SENDER_NOTE =
+  "The name on the participant's ID must match the name you enter for them here.";
+
+/** How the name read from the ID compares with the name on the document. */
+export type IdentityNameMatch = "match" | "close" | "mismatch" | "accepted";
+
+const NAME_DIFFERENCE_LABELS: Readonly<Record<string, string>> = {
+  "middle-name-missing": "middle name not on the document",
+  "middle-initial": "middle initial",
+  "suffix": "suffix (Jr., III…)",
+  "order": "names in a different order",
+  "abbreviation": "abbreviation (Ma. for Maria)",
+  "extra-given-name": "extra given name on the ID",
+  "spacing": "spacing of the family name (Dela Cruz / De la Cruz)",
+};
+
+/** One difference in plain words. A value this build does not know still reads. */
+export function identityNameDifferenceLabel(difference: string): string {
+  const known = NAME_DIFFERENCE_LABELS[difference];
+  if (known !== undefined) return known;
+  return /^[a-z][a-z0-9]*(-[a-z0-9]+)*$/.test(difference) ? difference.replace(/-/g, " ") : "another small difference";
+}
+
+/** The differences as one phrase: "middle initial, suffix (Jr., III…)". Empty when none are named. */
+export function identityNameDifferencesLabel(differences: readonly string[] | null | undefined): string {
+  if (!Array.isArray(differences)) return "";
+  const words = differences.filter((item): item is string => typeof item === "string" && item !== "")
+    .map(identityNameDifferenceLabel);
+  return [...new Set(words)].join(", ");
+}
+
 /** A date and time in the reader's own locale: "9 Oct 2026, 10:00 am". */
 function whenLabel(at: Date): string {
   return at.toLocaleString(undefined, {
@@ -79,14 +121,29 @@ export function identityCheckStandingNote(
     readonly mode: IdentityCheckMode | null; readonly verifiedAt: string | null;
   } | undefined,
 ): string | null {
-  if (check === undefined || !check.required || check.status !== "passed" || check.verifiedAt === null) return null;
-  const verified = new Date(check.verifiedAt);
+  if (check === undefined || !check.required || check.status !== "passed") return null;
+  const validity = identityCheckValidity(check.verifiedAt);
+  if (validity === null) return null;
+  return check.mode === "test"
+    ? `Identity check completed in test mode ${validity.verified}. Kept until ${validity.until}.`
+    : `Identity verified ${validity.verified}. Valid until ${validity.until}. `
+      + "You will not be asked again for this workspace's documents until then.";
+}
+
+/**
+ * When a pass was made and until when it counts, as the reader's own dates.
+ * `null` when there is no believable record of when. The one place the
+ * validity window is turned into words: the consent screen's line and the
+ * inbox card's note both read it from here.
+ */
+export function identityCheckValidity(
+  verifiedAt: string | null | undefined,
+): { readonly verified: string; readonly until: string } | null {
+  if (typeof verifiedAt !== "string") return null;
+  const verified = new Date(verifiedAt);
   if (Number.isNaN(verified.getTime())) return null;
   const until = new Date(verified.getTime() + IDENTITY_CHECK_VALID_HOURS * 60 * 60 * 1000);
-  return check.mode === "test"
-    ? `Identity check completed in test mode ${whenLabel(verified)}. Kept until ${whenLabel(until)}.`
-    : `Identity verified ${whenLabel(verified)}. Valid until ${whenLabel(until)}. `
-      + "You will not be asked again for this workspace's documents until then.";
+  return { verified: whenLabel(verified), until: whenLabel(until) };
 }
 
 const ID_TYPE_LABELS: Readonly<Record<string, string>> = {

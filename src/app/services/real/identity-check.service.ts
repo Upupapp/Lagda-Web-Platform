@@ -13,7 +13,7 @@
 // off" and is answered with `null`: nothing to show, never an error to show.
 
 import { apiRequest, ApiError } from "../api-client";
-import type { IdentityCheckMode } from "../../models/identity-check";
+import type { IdentityCheckMode, IdentityNameMatch } from "../../models/identity-check";
 
 export interface IdentityCheckAvailability {
   available: boolean;
@@ -36,7 +36,12 @@ export interface IdentityRequirement {
   waivedAt: string | null;
 }
 
-export type SenderIdentityCheckStatus = "not-required" | "pending" | "passed" | "locked" | "waived";
+/**
+ * `name-mismatch`: the check was passed, but the name read from the ID is not
+ * the name on the document. The participant is held until the sender decides.
+ */
+export type SenderIdentityCheckStatus =
+  | "not-required" | "pending" | "passed" | "locked" | "waived" | "name-mismatch";
 
 export interface RecipientIdentityCheck {
   recipientId: string;
@@ -51,7 +56,29 @@ export interface RecipientIdentityCheck {
   /** The kind of ID presented. `passport` and `other-id` come from the hosted flow. */
   idType: string | null;
   waivedAt: string | null;
+  // ── The name on the ID. All absent from an older server: nothing is said. ──
+  /** The full name read from the ID. Shown to the sender only. */
+  verifiedName?: string | null;
+  /** How that name compares with the one on the document. */
+  nameMatch?: IdentityNameMatch | null;
+  /** What differs, from a closed vocabulary. An unknown value still reads. */
+  nameDifferences?: string[];
+  /** The name the participant is signing under on this request. */
+  documentName?: string;
 }
+
+/**
+ * What the sender decides about a name that does not match: the document's
+ * name stays, and they say why it is the same person. The name on a sent
+ * request cannot be changed, so there is no "use the ID's name": signing
+ * under that name means sending the document again with it.
+ */
+export interface IdentityNameResolution {
+  readonly action: "accept";
+  readonly reason: string;
+}
+
+export const IDENTITY_NAME_REASON_MAX = 500;
 
 export interface IdentityCheckWaived {
   recipientId: string;
@@ -133,6 +160,26 @@ class RealIdentityCheckService {
       { method: "POST", body: trimmed === "" ? {} : { reason: trimmed.slice(0, IDENTITY_CHECK_WAIVE_REASON_MAX) } },
     );
   }
+
+  /**
+   * Accepts a name that does not match as the same person. Answers with the
+   * participant's check as it now stands; accepting again once accepted
+   * answers the same way. Refused with 422 `identity_requirement_invalid`
+   * (`details` naming `reason`: `required` or `too-long`), 409
+   * `identity_name_not_pending`, or 404 for a member who may not decide.
+   */
+  async resolveName(
+    workspaceId: string, signingRequestId: string, recipientId: string, resolution: IdentityNameResolution,
+  ): Promise<RecipientIdentityCheck> {
+    return apiRequest<RecipientIdentityCheck>(
+      `${ws(workspaceId)}/signing-requests/${encodeURIComponent(signingRequestId)}`
+      + `/recipients/${encodeURIComponent(recipientId)}/identity-check/name-resolution`,
+      {
+        method: "POST",
+        body: { action: "accept", reason: resolution.reason.trim().slice(0, IDENTITY_NAME_REASON_MAX) },
+      },
+    );
+  }
 }
 
 export const realIdentityCheckService = new RealIdentityCheckService();
@@ -181,5 +228,43 @@ export function describeIdentityWaiveError(error: unknown): string {
   }
   if (error.status === 404) return "This is not available right now.";
   if (error.status === 403) return "You do not have permission to do this.";
+  return error.body?.message ?? "That could not be done. Try again.";
+}
+
+export const IDENTITY_NAME_CORRECTION_UNAVAILABLE =
+  "The name cannot be changed on a document that has already been sent. "
+  + "Accept it as the same person, or send the document to someone else.";
+
+/**
+ * What is wrong with the reason, said beside its field. `null` when the
+ * refusal is not about the reason.
+ */
+export function identityNameReasonError(error: unknown): string | null {
+  if (!(error instanceof ApiError) || error.status !== 422) return null;
+  if (error.body?.code !== "identity_requirement_invalid") return null;
+  const about = (error.body.details ?? []).filter(detail => detail.field === "reason");
+  if (about.some(detail => detail.code === "too-long")) {
+    return `The reason is too long (${String(IDENTITY_NAME_REASON_MAX)} characters at most).`;
+  }
+  return about.some(detail => detail.code === "required") ? "Give a reason." : null;
+}
+
+/** Why the sender's decision about the name failed, in plain words. */
+export function describeIdentityNameResolutionError(error: unknown): string {
+  if (!(error instanceof ApiError)) return "That could not be done. Try again.";
+  if (error.status === 0) return "That could not be done. Check your connection and try again.";
+  const code = error.body?.code;
+  // Not asked for by anything on screen any more; said plainly if it ever comes.
+  if (code === "identity_name_correction_unavailable") return IDENTITY_NAME_CORRECTION_UNAVAILABLE;
+  if (code === "identity_name_not_pending") {
+    return "This name is no longer waiting for a decision. It may already have been decided.";
+  }
+  const reason = identityNameReasonError(error);
+  if (reason !== null) return reason;
+  // A member who may not decide is answered as if the document were not there.
+  if (error.status === 404 || error.status === 403) {
+    return "You do not have permission to do this, or the document is no longer available.";
+  }
+  if (error.status === 422) return "That could not be done. Check the reason and try again.";
   return error.body?.message ?? "That could not be done. Try again.";
 }

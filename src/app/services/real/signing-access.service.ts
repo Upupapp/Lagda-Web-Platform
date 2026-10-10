@@ -43,13 +43,16 @@ export interface CeremonyField {
 /**
  * Where this participant stands on the sender's optional identity check.
  *
- * While `status` is `pending` or `locked` the server withholds the document,
- * the fields and consent. `mode: "test"` means the check is SIMULATED: nothing
+ * While `status` is `pending`, `locked` or `name-mismatch` the server
+ * withholds the document, the fields and consent. `name-mismatch`: the check
+ * was passed, but the name read from the ID is not the name the sender
+ * entered; the sender decides, and the participant waits. The ID's name is
+ * never given to this browser. `mode: "test"` means the check is SIMULATED: nothing
  * is verified, and the page must say so.
  */
 export interface CeremonyIdentityCheck {
   required: boolean;
-  status: "not-required" | "pending" | "passed" | "locked";
+  status: "not-required" | "pending" | "passed" | "locked" | "name-mismatch";
   mode: "test" | "live" | null;
   attemptsRemaining: number;
   verifiedAt: string | null;
@@ -89,7 +92,7 @@ export interface IdentityCheckSession {
  * with fewer `attemptsRemaining` than before.
  */
 export interface IdentityCheckSessionStatus {
-  status: "pending" | "passed" | "locked" | "not-required";
+  status: "pending" | "passed" | "locked" | "not-required" | "name-mismatch";
   attemptsRemaining: number;
   verifiedAt: string | null;
   pendingReview: boolean;
@@ -138,7 +141,9 @@ export function identityCheckOutstanding(view: Pick<CeremonyView, "identityCheck
   const check = view.identityCheck;
   // Absent from an older server: nothing is asked.
   if (check === undefined) return false;
-  return check.required && (check.status === "pending" || check.status === "locked");
+  // A name that does not match blocks exactly as a lock does: the sender decides.
+  return check.required
+    && (check.status === "pending" || check.status === "locked" || check.status === "name-mismatch");
 }
 
 export interface CeremonyView {
@@ -297,8 +302,9 @@ class RealSigningAccessService {
   /**
    * HOSTED FLOW. Opens a visit to the identity verification partner's page.
    * The body is the participant's agreement and nothing else. Refused with
-   * 409 `identity_check_not_required`, `identity_check_locked` or
-   * `identity_check_unavailable` (also when the partner cannot be reached).
+   * 409 `identity_check_not_required`, `identity_check_locked`,
+   * `identity_check_unavailable` (also when the partner cannot be reached) or
+   * `identity_name_mismatch` (passed, and waiting on the sender about the name).
    */
   async startIdentityCheckSession(): Promise<IdentityCheckSession> {
     return recipientApiRequest<IdentityCheckSession>("/signing/identity-check/session", {

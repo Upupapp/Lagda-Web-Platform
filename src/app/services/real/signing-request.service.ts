@@ -189,7 +189,18 @@ export type AuditDetails =
     /** Live events only: who checked it, and their reference for the check. */
     provider?: string;
     providerReference?: string;
+    /**
+     * The full name read from the ID, and how it compares with the
+     * document's. `unavailable`: the name could not be read, and there is none.
+     */
+    verifiedName?: string | null;
+    nameMatch?: "match" | "close" | "mismatch" | "accepted" | "unavailable" | null;
+    nameDifferences?: string[];
   }
+  /** The name read from the ID is not the name on the document. */
+  | { kind: "identity-name-mismatch"; verifiedName?: string | null; documentName?: string | null }
+  /** The sender accepted that the two names are the same person. */
+  | { kind: "identity-name-accepted"; verifiedName?: string | null; documentName?: string | null; reason?: string | null }
   /** 105. The sender let a participant continue without the identity check. */
   | { kind: "identity-check-waived"; reason: string | null }
   | { kind: "none" };
