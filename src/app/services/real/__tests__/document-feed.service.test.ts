@@ -42,10 +42,45 @@ describe("realDocumentFeedService", () => {
     expect(records.map(r => r.status)).toEqual(["unread", "read", "dismissed"]);
   });
 
-  it("deep-links to the document, not the unfiltered list", async () => {
+  it("deep-links to the document itself, by id, never to a search for its title", async () => {
     apiRequest.mockResolvedValue({ notifications: [row()] });
     const [record] = await realDocumentFeedService.list("ws_1", "Acme");
-    expect(record!.actionPath).toBe("/app/documents?q=Office%20Lease%20%26%20Annex");
+    expect(record!.actionLabel).toBe("View document");
+    expect(record!.actionPath).toBe("/app/documents?list=completed&open=sreq_1");
+    expect(record!.actionPath).not.toContain("q=");
+  });
+
+  it("opens the document in the list its state puts it in", async () => {
+    const types: Record<string, string> = {
+      "transaction-completed": "completed",
+      "transaction-cancelled": "cancelled",
+      "transaction-expired": "declined",
+      "participant-declined": "declined",
+      "transaction-sent": "sent",
+      "transaction-resumed": "sent",
+      "recipient-activated": "sent",
+      "signature-completed": "sent",
+      "approval-completed": "sent",
+      "participant-skipped": "sent",
+      "something-this-build-does-not-know": "sent",
+    };
+    apiRequest.mockResolvedValue({
+      notifications: Object.keys(types).map((type, index) => row({ id: `ev_${String(index)}`, type, signingRequestId: "sr 9/a" })),
+    });
+    const records = await realDocumentFeedService.list("ws_1", "Acme");
+    expect(records.map(record => record.actionPath)).toEqual(
+      Object.values(types).map(list => `/app/documents?list=${list}&open=sr%209%2Fa`));
+  });
+
+  it("falls back to the list alone when a row has no id", async () => {
+    apiRequest.mockResolvedValue({ notifications: [
+      row({ type: "transaction-cancelled", signingRequestId: "" }),
+      row({ id: "ev_2", type: "signature-completed", signingRequestId: undefined }),
+    ] });
+    const records = await realDocumentFeedService.list("ws_1", "Acme");
+    expect(records.map(record => record.actionPath)).toEqual([
+      "/app/documents?list=cancelled", "/app/documents?list=sent",
+    ]);
   });
 
   it("writes a state change with only the halves it names", async () => {

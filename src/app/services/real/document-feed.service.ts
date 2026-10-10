@@ -71,6 +71,37 @@ function whyReceived(row: FeedRow): string {
     : "You are seeing this because a document in this workspace changed status.";
 }
 
+/**
+ * Which Documents list a row's document is in now. Each row is the document's
+ * CURRENT state, so its type says where the document lives: finished ones
+ * under Completed, stopped ones under Cancelled, declined and expired ones
+ * together, and everything still travelling under Sent.
+ */
+function listOf(type: string): "sent" | "completed" | "cancelled" | "declined" {
+  switch (type) {
+    case "transaction-completed": return "completed";
+    case "transaction-cancelled": return "cancelled";
+    case "transaction-expired":
+    case "participant-declined": return "declined";
+    default: return "sent";
+  }
+}
+
+/**
+ * Where "View document" goes: that document, opened, in the list it is in.
+ *
+ * It used to be a search for the document's TITLE, which opened a list of
+ * everything with a similar name, or nothing at all once the title changed.
+ * `open=<signing request id>` is the link the other notices already use (see
+ * notification-feed.service.ts): the Documents page opens exactly that
+ * request. A row without an id opens its list, and nothing is guessed.
+ */
+export function documentFeedActionPath(row: Pick<FeedRow, "type" | "signingRequestId">): string {
+  const list = `/app/documents?list=${listOf(row.type)}`;
+  const id = typeof row.signingRequestId === "string" ? row.signingRequestId.trim() : "";
+  return id === "" ? list : `${list}&open=${encodeURIComponent(id)}`;
+}
+
 function toRecord(row: FeedRow, workspaceId: string, workspaceName: string): NotificationRecord {
   return {
     // The evidence event's own id. Stable across reloads, which is what lets
@@ -97,9 +128,8 @@ function toRecord(row: FeedRow, workspaceId: string, workspaceName: string): Not
     isDismissible: true,
     hasAction: true,
     actionLabel: "View document",
-    // The same deep link real-mode search uses: the documents list, filtered
-    // to this document. Every row used to open the unfiltered list.
-    actionPath: `/app/documents?q=${encodeURIComponent(row.documentTitle)}`,
+    // This document, by id: see documentFeedActionPath.
+    actionPath: documentFeedActionPath(row),
     whyReceivedReason: whyReceived(row),
     // The reader's own state, persisted server-side (071).
     status: row.dismissed ? "dismissed" : row.read ? "read" : "unread",
