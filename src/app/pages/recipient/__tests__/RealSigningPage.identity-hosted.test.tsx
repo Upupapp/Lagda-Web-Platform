@@ -246,7 +246,8 @@ describe("the hosted identity check on the signing page", () => {
     expect(read).not.toHaveBeenCalled();
     await tick(3000);
     expect(screen.getByRole("heading", { name: "Identity check passed" })).toBeInTheDocument();
-    await tick(1200);
+    // Six seconds to read how long the pass counts for, then on by itself.
+    await tick(6000);
     expect(screen.getByRole("heading", { name: CONSENT_TITLE })).toBeInTheDocument();
     expect(read).toHaveBeenCalledTimes(1);
     expect(enter).toHaveBeenCalledTimes(1);
@@ -259,12 +260,12 @@ describe("the hosted identity check on the signing page", () => {
     renderPage();
     expect(await screen.findByRole("heading", { name: "Identity check passed" })).toBeInTheDocument();
     expect(read).not.toHaveBeenCalled();
-    expect(await screen.findByRole("heading", { name: CONSENT_TITLE }, { timeout: 4000 })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: CONSENT_TITLE }, { timeout: 9000 })).toBeInTheDocument();
     expect(read).toHaveBeenCalledTimes(1);
     expect(enter).toHaveBeenCalledTimes(1);
     expect(screen.queryByTestId("identity-check-hosted")).toBeNull();
     expectNothingInline();
-  });
+  }, 20_000);
 
   it("shows the closed screen for a locked check, and lets them in once the sender allows it", async () => {
     enter.mockResolvedValue(gated({ status: "locked", attemptsRemaining: 0 }));

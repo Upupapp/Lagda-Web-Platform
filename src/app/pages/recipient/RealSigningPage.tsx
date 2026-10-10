@@ -27,7 +27,7 @@ import {
 } from "../../services/real/signing-access.service";
 import { IdentityCheckStep } from "../../components/recipient/IdentityCheckStep";
 import { IdentityCheckHosted } from "../../components/recipient/IdentityCheckHosted";
-import { identityReturnedAt } from "../../models/identity-check";
+import { identityReturnedAt, identityCheckStandingNote } from "../../models/identity-check";
 import {
   realSigningSubmissionService, type SubmittedFieldValue, type SigningDeclineReason,
 } from "../../services/real/signing-submission.service";
@@ -42,7 +42,7 @@ import {
 } from "../../components/recipient/signer-ui";
 import {
   FileSignature, ShieldCheck, CheckCircle2, XCircle, Clock, AlertTriangle,
-  Ban, ArrowLeft, Send, Loader2, SkipForward, Eye,
+  Ban, ArrowLeft, Send, Loader2, SkipForward, Eye, BadgeCheck,
 } from "lucide-react";
 import { DECLINE_REASON_CATEGORIES } from "../../models/recipient";
 import { isServerStampedType } from "../../models/field-editor";
@@ -796,6 +796,7 @@ export function RealSigningPage() {
   }
 
   if (phase === "consent" && view) {
+    const identityStanding = identityCheckStandingNote(view.identityCheck);
     return (
       <SignerCard>
         <StepRail current="consent" />
@@ -808,6 +809,18 @@ export function RealSigningPage() {
         />
         {errorMessage !== null && (
           <Notice icon={AlertTriangle} tone="danger">{errorMessage}</Notice>
+        )}
+        {/* Not asked for the identity check, because an earlier pass still
+            counts: said here, so nobody wonders why. Nothing is rendered for
+            a document that does not ask the check at all. */}
+        {identityStanding !== null && (
+          <p data-testid="identity-check-standing" style={{
+            ...GF, display: "flex", alignItems: "flex-start", gap: 7, margin: "0 0 12px",
+            fontSize: 12.5, lineHeight: 1.5, color: "#475569",
+          }}>
+            <BadgeCheck size={15} aria-hidden style={{ flexShrink: 0, marginTop: 1, color: "#64748B" }} />
+            <span style={{ minWidth: 0 }}>{identityStanding}</span>
+          </p>
         )}
         <ActionRow>
           <ActionButton

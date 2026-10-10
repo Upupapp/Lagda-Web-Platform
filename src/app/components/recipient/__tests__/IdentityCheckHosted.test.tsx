@@ -25,6 +25,7 @@ import {
   type IdentityCheckHostedProps, type ProviderTab,
 } from "../IdentityCheckHosted";
 import { ApiError } from "../../../services/api-client";
+import { IDENTITY_CHECK_VALID_NOTE } from "../../../models/identity-check";
 import type {
   CeremonyIdentityCheck, IdentityCheckSessionStatus,
 } from "../../../services/real/signing-access.service";
@@ -406,7 +407,8 @@ describe("just back from the partner's page", () => {
     await pass(HOSTED_FAST_POLL_MS);
     expect(heading("Identity check passed")).toHaveFocus();
     expect(screen.getByText("Thank you. You can now continue to the document.")).toBeInTheDocument();
-    expect(screen.getByRole("status").textContent).toBe("Identity check passed.");
+    // Announced whole: that they passed, and how long it counts for.
+    expect(screen.getByRole("status").textContent).toBe(`Identity check passed. ${IDENTITY_CHECK_VALID_NOTE}`);
     expect(onReload).not.toHaveBeenCalled();
     expect(window.sessionStorage.getItem(MARKER)).toBeNull();
 
@@ -1110,5 +1112,60 @@ describe("a check the ceremony already says is locked", () => {
     expect(await screen.findByRole("heading", { name: "Before you start" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Continue to verification" })).toBeDisabled();
     expect(window.sessionStorage.getItem(MARKER)).toBeNull();
+  });
+});
+
+// ── How long the pass counts, and time to read it ───────────────────────────
+
+describe("after a pass: how long it counts", () => {
+  beforeEach(() => { vi.useFakeTimers(); });
+
+  const passedNow = () => vi.fn<IdentityCheckHostedProps["refresh"]>().mockResolvedValue(standing({ status: "passed" }));
+
+  it("says the pass counts for the next 24 hours, in the notice and to a screen reader", async () => {
+    setup({ refresh: passedNow(), returnedAt: Date.now() });
+    await pass(0);
+    expect(heading("Identity check passed")).toBeInTheDocument();
+    expect(screen.getByTestId("identity-check-valid-note").textContent ?? "").toBe(
+      "Your identity is verified for the next 24 hours. During that time you can open and sign other "
+      + "documents from this sender's workspace without verifying again.");
+    const live = screen.getByRole("status");
+    expect(live.getAttribute("aria-live")).toBe("polite");
+    expect(live.textContent ?? "").toBe(`Identity check passed. ${IDENTITY_CHECK_VALID_NOTE}`);
+    expect(screen.getByTestId("identity-hosted-auto-continue").textContent ?? "")
+      .toBe("This page continues by itself in a few seconds.");
+  });
+
+  it("waits six seconds, long enough to read it, then continues by itself", async () => {
+    expect(HOSTED_PASSED_PAUSE_MS).toBe(6_000);
+    const { onReload } = setup({ refresh: passedNow(), returnedAt: Date.now() });
+    await pass(0);
+    // The old pause has long gone by, and it is still there to be read.
+    await pass(1_200);
+    expect(onReload).not.toHaveBeenCalled();
+    await pass(4_799);
+    expect(onReload).not.toHaveBeenCalled();
+    expect(heading("Identity check passed")).toBeInTheDocument();
+    await pass(1);
+    expect(onReload).toHaveBeenCalledTimes(1);
+  });
+
+  it("continues at once on Continue, and not a second time when the six seconds are up", async () => {
+    const { onReload } = setup({ refresh: passedNow(), returnedAt: Date.now() });
+    await pass(0);
+    press(screen.getByRole("button", { name: "Continue" }));
+    await pass(0);
+    expect(onReload).toHaveBeenCalledTimes(1);
+    await pass(HOSTED_PASSED_PAUSE_MS);
+    expect(onReload).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not continue after the page has gone", async () => {
+    const { onReload, unmount } = setup({ refresh: passedNow(), returnedAt: Date.now() });
+    await pass(0);
+    expect(heading("Identity check passed")).toBeInTheDocument();
+    unmount();
+    await pass(HOSTED_PASSED_PAUSE_MS * 2);
+    expect(onReload).not.toHaveBeenCalled();
   });
 });

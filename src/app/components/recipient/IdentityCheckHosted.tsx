@@ -65,7 +65,7 @@ import { ApiError } from "../../services/api-client";
 import type {
   CeremonyIdentityCheck, IdentityCheckSession, IdentityCheckSessionStatus,
 } from "../../services/real/signing-access.service";
-import { IDENTITY_RETURN_FAST_WINDOW_MS } from "../../models/identity-check";
+import { IDENTITY_RETURN_FAST_WINDOW_MS, IDENTITY_CHECK_VALID_NOTE } from "../../models/identity-check";
 
 export interface IdentityCheckHostedProps {
   readonly identityCheck: CeremonyIdentityCheck;
@@ -141,8 +141,11 @@ function isTouchDevice(): boolean {
 export const HOSTED_FAST_POLL_MS = 3_000;
 /** How often it is asked for while a person at the partner is reviewing. */
 export const HOSTED_REVIEW_POLL_MS = 10_000;
-/** How long "passed" stays up before the page moves on by itself. */
-export const HOSTED_PASSED_PAUSE_MS = 1_200;
+/**
+ * How long "passed" stays up before the page moves on by itself. Long enough
+ * to read how long the pass counts for; Continue is there for anyone who has.
+ */
+export const HOSTED_PASSED_PAUSE_MS = 6_000;
 /** How long this tab waits on a check being done in the tab it opened. */
 export const HOSTED_TAB_WAIT_MS = 15 * 60 * 1000;
 /** How long "Opening…" may stand if the browser never left. */
@@ -403,7 +406,8 @@ export function IdentityCheckHosted(props: IdentityCheckHostedProps) {
       clearMarker(id);
       tabUntilRef.current = 0;
       show({ kind: "passed" }, false);
-      setAnnouncement("Identity check passed.");
+      // The whole of it, politely: that they passed, and how long it counts.
+      setAnnouncement(`Identity check passed. ${IDENTITY_CHECK_VALID_NOTE}`);
       return;
     }
     if (answer.status === "locked") {
@@ -820,6 +824,14 @@ export function IdentityCheckHosted(props: IdentityCheckHostedProps) {
           {heading}
         </div>
         <p style={BODY}>Thank you. You can now continue to the document.</p>
+        <div data-testid="identity-check-valid-note">
+          <Notice icon={Clock} tone="info">{IDENTITY_CHECK_VALID_NOTE}</Notice>
+        </div>
+        {busy !== "reload" && !movedOnceRef.current && (
+          <p data-testid="identity-hosted-auto-continue" style={{ ...BODY, fontSize: 12.5, color: "#64748B" }}>
+            This page continues by itself in a few seconds.
+          </p>
+        )}
         {noteLine}
         <ActionRow>
           <ActionButton

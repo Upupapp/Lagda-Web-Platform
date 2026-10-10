@@ -41,7 +41,7 @@ import {
   type CSSProperties, type DragEvent, type ReactNode, type Ref,
 } from "react";
 import {
-  AlertTriangle, ArrowLeft, Ban, Camera, CheckCircle2, FlaskConical, IdCard, ImageUp, Loader2, Lock,
+  AlertTriangle, ArrowLeft, Ban, Camera, CheckCircle2, Clock, FlaskConical, IdCard, ImageUp, Loader2, Lock,
   RefreshCw, ScanFace, ShieldCheck, Smartphone, Trash2, Upload,
 } from "lucide-react";
 import {
@@ -51,7 +51,9 @@ import { ApiError } from "../../services/api-client";
 import type {
   CeremonyIdentityCheck, IdentityCheckResult, IdentityCheckSubmission,
 } from "../../services/real/signing-access.service";
-import { groupIdentityIdTypes, identityIdHasBack } from "../../models/identity-check";
+import {
+  groupIdentityIdTypes, identityIdHasBack, IDENTITY_CHECK_VALID_NOTE, IDENTITY_CHECK_VALID_NOTE_TEST,
+} from "../../models/identity-check";
 import { IdentityHandoffPanel, type IdentityHandoffClient } from "./IdentityHandoffPanel";
 
 export type { IdentityHandoffClient } from "./IdentityHandoffPanel";
@@ -1169,6 +1171,13 @@ export function IdentityCheckStages({
             ? "This was a simulated check. No identity was verified."
             : "Thank you. You can now continue to the document."}
         </p>
+        {/* How long this counts. In test mode nothing was verified, and the
+            note does not say it was. */}
+        <div data-testid="identity-check-valid-note">
+          <Notice icon={Clock} tone="info">
+            {testMode ? IDENTITY_CHECK_VALID_NOTE_TEST : IDENTITY_CHECK_VALID_NOTE}
+          </Notice>
+        </div>
         {submitError !== null && <Notice icon={AlertTriangle} tone="danger">{submitError}</Notice>}
         <ActionRow>
           <ActionButton icon={busy ? Loader2 : undefined} onClick={() => void continueAfterPass()} disabled={busy} full>

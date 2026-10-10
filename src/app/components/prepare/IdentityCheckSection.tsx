@@ -11,11 +11,13 @@
 // sender who believes a simulated check identified somebody has been misled
 // by this screen.
 
+import type { ReactNode } from "react";
 import { AlertTriangle, Check, Loader2, Lock } from "lucide-react";
 import type { PrepParticipant } from "../../models/prepare";
 import { PREP_PARTICIPANT_ROLE_LABELS } from "../../models/prepare";
 import {
   IDENTITY_CHECK_OPTION_LABEL, IDENTITY_CHECK_TEST_MODE_NOTICE, IDENTITY_CHECK_HOSTED_EXPLAINER,
+  IDENTITY_CHECK_VALID_SENDER_NOTE,
   roleCanBeAskedForIdentityCheck,
 } from "../../models/identity-check";
 import type { IdentityRequirementsControl } from "../../hooks/useIdentityCheckRequirements";
@@ -75,9 +77,27 @@ function SaveStatus({ control }: { control: IdentityRequirementsControl }) {
   );
 }
 
-export function IdentityCheckSection({ control, participants }: {
+/** Who a switch is for. A Prepare participant is one; so is a recipient of a re-send. */
+export type IdentityCheckPerson = Pick<PrepParticipant, "id" | "name" | "email"> & { readonly role: string };
+
+const ROLE_LABELS: Readonly<Record<string, string>> = PREP_PARTICIPANT_ROLE_LABELS;
+
+export function IdentityCheckSection({
+  control, participants, renderNote,
+  emptyMessage = "Add participants first, then choose who must pass the check.",
+  notEditableMessage = "Upload the document first, then choose who must pass the check.",
+}: {
   control: IdentityRequirementsControl;
-  participants: readonly PrepParticipant[];
+  participants: readonly IdentityCheckPerson[];
+  /**
+   * More to say under one person's line: what the sender should know before
+   * a re-send, for instance. Prepare passes nothing and reads as it always did.
+   */
+  renderNote?: (person: IdentityCheckPerson) => ReactNode;
+  /** Said when nobody is listed. */
+  emptyMessage?: string;
+  /** Said when the switches cannot be changed yet. `null`: say nothing. */
+  notEditableMessage?: string | null;
 }) {
   if (control.status === "off") return null;
 
@@ -130,6 +150,14 @@ export function IdentityCheckSection({ control, participants }: {
         )}
       </p>
 
+      {/* How long a pass counts. Not where the plan does not include the
+          check: there is nothing to pass. */}
+      {!locked && (
+        <p data-testid="identity-check-valid-note" style={{ ...GF, fontSize: 12.5, color: SILVER, lineHeight: 1.5, margin: "4px 0 0" }}>
+          {IDENTITY_CHECK_VALID_SENDER_NOTE}
+        </p>
+      )}
+
       {locked && (
         <p data-testid="identity-check-plan-note" style={{ ...GF, fontSize: 12.5, fontWeight: 600, color: GOLD, margin: "10px 0 0" }}>
           Available on the Business plan.
@@ -149,7 +177,7 @@ export function IdentityCheckSection({ control, participants }: {
 
       {participants.length === 0 ? (
         <p style={{ ...GF, fontSize: 12.5, color: SILVER, margin: "12px 0 0" }}>
-          Add participants first, then choose who must pass the check.
+          {emptyMessage}
         </p>
       ) : (
         <>
@@ -183,13 +211,14 @@ export function IdentityCheckSection({ control, participants }: {
                       {p.name || p.email}
                     </div>
                     <div style={{ ...GF, fontSize: 11.5, color: SILVER, overflowWrap: "anywhere" }}>
-                      {PREP_PARTICIPANT_ROLE_LABELS[p.role]} · {p.email}
+                      {ROLE_LABELS[p.role] ?? p.role} · {p.email}
                     </div>
                     {on && control.isWaived(p.email) && (
                       <div style={{ ...GF, fontSize: 11.5, color: GOLD, marginTop: 2 }}>
                         You allowed this participant a lighter method. Switch off and on to ask again.
                       </div>
                     )}
+                    {renderNote?.(p)}
                   </div>
                   <Switch
                     checked={on} disabled={disabled}
@@ -209,7 +238,7 @@ export function IdentityCheckSection({ control, participants }: {
                     {p.name || p.email}
                   </div>
                   <div style={{ ...GF, fontSize: 11.5, color: SILVER, overflowWrap: "anywhere" }}>
-                    {PREP_PARTICIPANT_ROLE_LABELS[p.role]} · {p.email}
+                    {ROLE_LABELS[p.role] ?? p.role} · {p.email}
                   </div>
                 </div>
                 <span style={{ ...GF, fontSize: 11.5, color: SILVER, flexShrink: 0 }}>Not applicable</span>
@@ -217,9 +246,9 @@ export function IdentityCheckSection({ control, participants }: {
             ))}
           </ul>
 
-          {!locked && !control.canEdit && control.status === "ready" && (
+          {!locked && !control.canEdit && control.status === "ready" && notEditableMessage !== null && (
             <p style={{ ...GF, fontSize: 12, color: SILVER, margin: "8px 0 0" }}>
-              Upload the document first, then choose who must pass the check.
+              {notEditableMessage}
             </p>
           )}
         </>

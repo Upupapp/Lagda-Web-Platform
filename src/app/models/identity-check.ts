@@ -32,6 +32,63 @@ export const IDENTITY_CHECK_HOSTED_EXPLAINER =
   + "before they can open the document. "
   + "This is in addition to their secure invitation link, not instead of it.";
 
+// ── How long a pass counts ──────────────────────────────────────────────────
+
+/**
+ * A passed check counts for this many hours, for every document in the SAME
+ * workspace that asks the check of the SAME email address.
+ *
+ * FOR WORDING ONLY. The server enforces the real window and decides who is
+ * asked; nothing here lets anybody through or keeps anybody out. Every
+ * sentence that names the duration is built from this one number.
+ */
+export const IDENTITY_CHECK_VALID_HOURS = 24;
+
+const VALID_FOR = `${String(IDENTITY_CHECK_VALID_HOURS)} hours`;
+
+/** Said to the participant straight after a real pass. */
+export const IDENTITY_CHECK_VALID_NOTE =
+  `Your identity is verified for the next ${VALID_FOR}. During that time you can open and sign other `
+  + "documents from this sender's workspace without verifying again.";
+
+/** The same moment in test mode, where nothing was verified and nothing may say it was. */
+export const IDENTITY_CHECK_VALID_NOTE_TEST =
+  `In test mode this result is kept for ${VALID_FOR}, as a real verification would be.`;
+
+/** Said to the sender, under what the check asks of a participant. */
+export const IDENTITY_CHECK_VALID_SENDER_NOTE =
+  `A participant who passes is not asked again for ${VALID_FOR} on this workspace's documents.`;
+
+/** A date and time in the reader's own locale: "9 Oct 2026, 10:00 am". */
+function whenLabel(at: Date): string {
+  return at.toLocaleString(undefined, {
+    day: "numeric", month: "short", year: "numeric", hour: "numeric", minute: "2-digit",
+  });
+}
+
+/**
+ * What a participant is told when they are NOT asked, because an earlier
+ * pass still counts. `null` when there is nothing to say: no check asked of
+ * them, not passed, or no record of when.
+ *
+ * In test mode nothing was verified, and the sentence does not say it was.
+ */
+export function identityCheckStandingNote(
+  check: {
+    readonly required: boolean; readonly status: string;
+    readonly mode: IdentityCheckMode | null; readonly verifiedAt: string | null;
+  } | undefined,
+): string | null {
+  if (check === undefined || !check.required || check.status !== "passed" || check.verifiedAt === null) return null;
+  const verified = new Date(check.verifiedAt);
+  if (Number.isNaN(verified.getTime())) return null;
+  const until = new Date(verified.getTime() + IDENTITY_CHECK_VALID_HOURS * 60 * 60 * 1000);
+  return check.mode === "test"
+    ? `Identity check completed in test mode ${whenLabel(verified)}. Kept until ${whenLabel(until)}.`
+    : `Identity verified ${whenLabel(verified)}. Valid until ${whenLabel(until)}. `
+      + "You will not be asked again for this workspace's documents until then.";
+}
+
 const ID_TYPE_LABELS: Readonly<Record<string, string>> = {
   "philsys-national-id": "Philippine Identification (PhilSys) Card / ePhilID",
   "philippine-passport": "Philippine Passport",
