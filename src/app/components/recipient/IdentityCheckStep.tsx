@@ -53,6 +53,7 @@ import type {
 } from "../../services/real/signing-access.service";
 import {
   groupIdentityIdTypes, identityIdHasBack, IDENTITY_CHECK_VALID_NOTE, IDENTITY_CHECK_VALID_NOTE_TEST,
+  IDENTITY_CHECK_KEPT_NOTE,
 } from "../../models/identity-check";
 import { IdentityHandoffPanel, type IdentityHandoffClient } from "./IdentityHandoffPanel";
 
@@ -939,6 +940,10 @@ export function IdentityCheckStages({
             In test mode nothing leaves this device: your ID and selfie are not uploaded,
             and nobody&rsquo;s identity is checked.
           </p>
+        )}
+        {/* A real check only: where it is simulated nothing is read, so nothing is kept. */}
+        {identityCheck.mode === "live" && (
+          <p data-testid="identity-check-kept-note" style={BODY}>{IDENTITY_CHECK_KEPT_NOTE}</p>
         )}
         <label
           htmlFor={consentId}
