@@ -34,6 +34,20 @@ export interface DocumentToSign {
    * null when it cannot be shown; the card then uses the default colour.
    */
   branding?: SenderBranding | null;
+  /**
+   * Where THIS person stands on the sender's identity check for this
+   * document. Absent from an older server: nothing is asked, and nothing is
+   * shown.
+   */
+  identityCheck?: InboxIdentityCheck | null;
+}
+
+/** The identity check as an inbox row reports it. Never the name read from an ID. */
+export interface InboxIdentityCheck {
+  required: boolean;
+  status: "not-required" | "pending" | "passed" | "locked" | "name-mismatch";
+  verifiedAt: string | null;
+  attemptsRemaining: number;
 }
 
 export interface SenderBranding {

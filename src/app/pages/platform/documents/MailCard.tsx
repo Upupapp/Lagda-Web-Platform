@@ -21,8 +21,14 @@ export interface MailCardBranding {
 }
 
 export function MailCard({
-  branding, subtitle, corner, title, children, footerStart, footerEnd, testId = "mail-card",
+  branding, subtitle, corner, title, children, footerStart, footerEnd, testId = "mail-card", badge,
 }: {
+  /**
+   * Something that sits ON the card's corner, half outside it. The card then
+   * stops clipping at its edge (the banner and footer keep its rounded
+   * corners themselves), so the badge is whole. Read after the body.
+   */
+  badge?: ReactNode;
   branding: MailCardBranding;
   /** The banner's second line, e.g. "Signature requested". */
   subtitle: string;
@@ -37,8 +43,9 @@ export function MailCard({
   footerEnd?: ReactNode;
   testId?: string;
 }) {
+  const hasBadge = badge !== undefined && badge !== null && badge !== false;
   return (
-    <li className="mail-card" data-testid={testId}>
+    <li className={hasBadge ? "mail-card mail-card-with-badge" : "mail-card"} data-testid={testId}>
       <div className="mail-card-banner">
         <BrandBand variant="card" compact testId={`${testId}-banner`} subtitle={subtitle}
           branding={{ displayName: branding.displayName, primaryColor: branding.primaryColor, logoPreviewUrl: branding.logoUrl }}
@@ -48,6 +55,7 @@ export function MailCard({
         <h3 className="mail-card-title" title={title}>{title}</h3>
         {children}
       </div>
+      {hasBadge && badge}
       {(footerStart !== undefined || footerEnd !== undefined) && (
         <div className="mail-card-footer">
           <div className="mail-card-footer-start">{footerStart}</div>
@@ -106,6 +114,9 @@ const MAIL_STYLES = `
     background: #FFFFFF; border: 1px solid ${BORDER}; border-radius: 12px; overflow: hidden; min-width: 0;
     box-shadow: 0 1px 2px rgba(7,17,31,0.05), 0 6px 18px -12px rgba(7,17,31,0.18);
   }
+  .mail-card-with-badge { position: relative; overflow: visible; }
+  .mail-card-with-badge > .mail-card-banner { border-radius: 11px 11px 0 0; overflow: hidden; }
+  .mail-card-with-badge > .mail-card-footer { border-radius: 0 0 11px 11px; }
   .mail-card-corner {
     font-family: 'Geist', sans-serif; font-size: 12px; font-weight: 600; color: #FFFFFF; white-space: nowrap;
     background: rgba(7,17,31,0.22); border-radius: 999px; padding: 4px 10px; align-self: flex-start; flex-shrink: 0;
