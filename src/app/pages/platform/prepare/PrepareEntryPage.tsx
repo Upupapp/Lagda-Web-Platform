@@ -3,53 +3,56 @@
 // Permission gate: users without prepareFlowEnabled see a plan-upgrade notice.
 // Burgundy (#67023B) is NEVER used here. eNotary is NEVER mentioned.
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useNavigate, useSearchParams, Link } from "react-router";
 import { usePrepare } from "../../../context/PrepareContext";
 import { usePlatform } from "../../../context/PlatformContext";
 import { usePendingPreparation } from "../../../context/PendingPreparationContext";
 import { useProcessing } from "../../../services/processing.service";
+import { USE_REAL_BACKEND } from "../../../services/backend-flag";
+import { useDraftList } from "../../../hooks/useDraftList";
 import {
-  realSigningRequestService, type SigningRequestListItem,
-} from "../../../services/real/signing-request.service";
+  UnfinishedDraftDialog, type UnfinishedDraftChoice,
+} from "../../../components/prepare/UnfinishedDraftDialog";
+import {
+  isDraftEmpty, draftServerDocumentIds, draftDisplayTitle, draftDeleteErrorMessage,
+} from "../../../services/prepare/unfinished-draft";
 
 const GF     = { fontFamily: "'Geist', sans-serif" };
 const NAVY   = "#07111F";
 const AZURE  = "#0078D4";
 const SILVER = "#8A9BAE";
 
+/** "8 Oct 2026, 2:15 pm": when a draft last changed. Empty if unreadable. */
+export function draftChangedLabel(iso: string): string {
+  const at = new Date(iso);
+  if (Number.isNaN(at.getTime())) return "";
+  return at.toLocaleString(undefined, {
+    day: "numeric", month: "short", year: "numeric", hour: "numeric", minute: "2-digit",
+  });
+}
+
 // DraftCard and TemplateCard removed with the fixtures they rendered. Real
-// drafts are listed inline below, straight from the signing-request list.
+// drafts are listed inline below, from the same list Documents › Draft shows.
 export function PrepareEntryPage() {
   const navigate  = useNavigate();
   const [params]  = useSearchParams();
   const platform = usePlatform();
   const { hasFlag } = platform;
   const { claimPending } = usePendingPreparation();
-  const { createDraft } = usePrepare();
+  const { createDraft, draft, deleteDraftEverywhere, saveTitle } = usePrepare();
 
-  // Real drafts: signing requests the server still holds in `draft` state.
+  // Real drafts: everything unfinished the server holds.
   //
-  // These used to be three fixtures with invented titles and dates. Fetched
-  // here rather than through PrepareContext because this is the only page
-  // that lists them — the context's own draft is the one being prepared, not
-  // a directory of everything unfinished.
-  const [realDrafts, setRealDrafts] = useState<SigningRequestListItem[]>([]);
-  useEffect(() => {
-    const workspaceId = platform.currentWorkspace?.id;
-    if (workspaceId === undefined) return;
-    let cancelled = false;
-    void realSigningRequestService.list(workspaceId, { perPage: 50 })
-      .then(result => {
-        if (cancelled) return;
-        setRealDrafts(result.items.filter(item => item.state === "draft"));
-      })
-      // An empty list is the right fallback. Showing nothing is honest, and
-      // an error about drafts would bury this page's actual purpose, which is
-      // starting a new one.
-      .catch(() => { /* leave the list empty */ });
-    return () => { cancelled = true; };
-  }, [platform.currentWorkspace?.id]);
+  // The SAME list Documents › Draft shows (services/documents/draft-list.ts):
+  // the documents uploaded and prepared but never sent, as well as the
+  // requests made and not sent yet. This page used to list only the second
+  // kind, so a draft could be in Documents and missing here.
+  //
+  // A failed read leaves the list empty. Showing nothing is honest, and an
+  // error about drafts would bury this page's actual purpose, which is
+  // starting a new one.
+  const realDrafts = useDraftList(platform.currentWorkspace?.id);
 
   const canPrepare = hasFlag("prepareFlowEnabled");
   const resumeId = params.get("resumeId");
@@ -97,14 +100,74 @@ export function PrepareEntryPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [canPrepare, resumeId]);
 
-  const handleStartNew = async () => {
-    const draftId = await runProcessing(
-      { message: "Starting a new preparation", detail: "Creating your draft." },
-      async () => createDraft({ source: "new" }),
-    );
-    if (draftId) {
-      void navigate("/app/prepare/upload");
+  // One start at a time: a second press while the first is still creating its
+  // draft would make two.
+  const startingRef = useRef(false);
+  const [starting, setStarting] = useState(false);
+  const startNew = async () => {
+    if (startingRef.current) return;
+    startingRef.current = true;
+    setStarting(true);
+    try {
+      const draftId = await runProcessing(
+        { message: "Starting a new preparation", detail: "Creating your draft." },
+        async () => createDraft({ source: "new" }),
+      );
+      if (draftId) {
+        void navigate("/app/prepare/upload");
+      }
+    } finally {
+      startingRef.current = false;
+      setStarting(false);
     }
+  };
+
+  // ── An unfinished draft is asked about before it is replaced ────────────────
+  //
+  // There is one draft slot, and "Start preparation" used to replace whatever
+  // was in it without a word. A draft with anything in it (a file, a
+  // participant or a title) is now asked about first. The demo build keeps
+  // nothing on a server and behaves as it always did.
+  const [asking, setAsking] = useState(false);
+  const [askBusy, setAskBusy] = useState<UnfinishedDraftChoice | null>(null);
+  const [askError, setAskError] = useState<string | null>(null);
+
+  const handleStartNew = () => {
+    if (startingRef.current) return;
+    if (USE_REAL_BACKEND && draft !== null && !isDraftEmpty(draft)) {
+      setAskError(null);
+      setAsking(true);
+      return;
+    }
+    void startNew();
+  };
+
+  const handleUnfinishedChoice = (choice: UnfinishedDraftChoice) => {
+    if (askBusy !== null) return;
+    if (choice === "continue") {
+      setAsking(false);
+      void navigate("/app/prepare/upload");
+      return;
+    }
+    setAskBusy(choice);
+    setAskError(null);
+    void (async () => {
+      try {
+        // "Discard" deletes it on the server first and stops here if that
+        // fails, with the draft kept. "Keep" leaves the server alone (a title
+        // typed a moment ago is saved to it, best effort): only this
+        // browser's slot is replaced.
+        if (choice === "discard") await deleteDraftEverywhere();
+        else await saveTitle();
+      } catch (err) {
+        setAskError(draftDeleteErrorMessage(err));
+        setAskBusy(null);
+        return;
+      }
+      setAsking(false);
+      setAskBusy(null);
+      await startNew();
+    })();
   };
 
   // ── Resuming a pre-auth document selection ──────────────────────────────────
@@ -220,8 +283,10 @@ export function PrepareEntryPage() {
             </p>
             <button
               onClick={handleStartNew}
+              disabled={starting}
               style={{
                 ...GF,
+                minHeight: 44,
                 padding: "11px 28px",
                 borderRadius: 8,
                 border: "none",
@@ -229,7 +294,8 @@ export function PrepareEntryPage() {
                 color: "#FFFFFF",
                 fontSize: 14,
                 fontWeight: 700,
-                cursor: "pointer",
+                cursor: starting ? "not-allowed" : "pointer",
+                opacity: starting ? 0.7 : 1,
               }}
             >
               Start preparation →
@@ -245,54 +311,78 @@ export function PrepareEntryPage() {
           * invitations, an invented starting point is no longer a harmless
           * placeholder. They return when a template API is behind them. */}
 
-      {/* Resume a draft — real signing requests still in `draft` state.
+      {/* Resume a draft — the same drafts Documents › Draft shows, the one
+          * most recently changed first.
           *
           * Resuming reopens preparation against that same backend document
           * rather than starting a second one beside it. */}
       {realDrafts.length > 0 && (
-        <section style={{ marginBottom: 36 }}>
-          <h2 style={{ fontSize: 15, fontWeight: 700, color: NAVY, margin: "0 0 14px" }}>
+        <section aria-labelledby="prep-resume-heading" style={{ marginBottom: 36 }}>
+          <h2 id="prep-resume-heading" style={{ fontSize: 15, fontWeight: 700, color: NAVY, margin: "0 0 14px" }}>
             Resume a draft
           </h2>
-          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            {realDrafts.map(item => (
-              <div
-                key={item.signingRequestId}
-                style={{
-                  display: "flex", alignItems: "center", justifyContent: "space-between",
-                  gap: 14, flexWrap: "wrap",
-                  padding: "14px 16px", borderRadius: 10,
-                  border: "1px solid #E3E8EF", background: "#FAFBFC",
-                }}
-              >
-                <div style={{ minWidth: 0 }}>
-                  <div style={{ ...GF, fontSize: 14, fontWeight: 700, color: NAVY }}>
-                    {item.documentTitle}
-                  </div>
-                  <div style={{ ...GF, fontSize: 12, color: SILVER, marginTop: 3 }}>
-                    {item.participantCount === 1
-                      ? "1 participant"
-                      : `${item.participantCount} participants`}
-                  </div>
-                </div>
-                <button
-                  onClick={() => {
-                    void navigate(
-                      `/app/prepare/upload?resumeDocumentId=${encodeURIComponent(item.documentId)}`);
-                  }}
+          <ul data-testid="prep-resume-list" style={{ listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: 10 }}>
+            {realDrafts.map(item => {
+              const changed = draftChangedLabel(item.changedAt);
+              // The file's name, unless it is what the title already says.
+              const fileName = item.fileName !== null && item.fileName !== item.title ? item.fileName : null;
+              return (
+                <li
+                  key={item.key}
                   style={{
-                    ...GF, minHeight: 38, padding: "0 16px", borderRadius: 8,
-                    border: `1px solid ${AZURE}`, background: "#FFFFFF",
-                    color: AZURE, fontSize: 13, fontWeight: 700, cursor: "pointer",
-                    flexShrink: 0,
+                    display: "flex", alignItems: "center", justifyContent: "space-between",
+                    gap: 14, flexWrap: "wrap",
+                    padding: "14px 16px", borderRadius: 10,
+                    border: "1px solid #E3E8EF", background: "#FAFBFC",
                   }}
                 >
-                  Resume &rarr;
-                </button>
-              </div>
-            ))}
-          </div>
+                  <div style={{ minWidth: 0, flex: "1 1 180px" }}>
+                    <div style={{ ...GF, fontSize: 14, fontWeight: 700, color: NAVY, overflowWrap: "anywhere" }}>
+                      {item.title}
+                    </div>
+                    {fileName !== null && (
+                      <div style={{ ...GF, fontSize: 12, color: "#4B5E70", marginTop: 3, overflowWrap: "anywhere" }}>
+                        {fileName}
+                      </div>
+                    )}
+                    {changed !== "" && (
+                      <div style={{ ...GF, fontSize: 12, color: SILVER, marginTop: 3 }}>
+                        Last changed {changed}
+                      </div>
+                    )}
+                  </div>
+                  <button
+                    aria-label={`Resume ${item.title}`}
+                    onClick={() => {
+                      void navigate(
+                        `/app/prepare/upload?resumeDocumentId=${encodeURIComponent(item.documentId)}`);
+                    }}
+                    style={{
+                      ...GF, minHeight: 44, padding: "0 16px", borderRadius: 8,
+                      border: `1px solid ${AZURE}`, background: "#FFFFFF",
+                      color: AZURE, fontSize: 13, fontWeight: 700, cursor: "pointer",
+                      flexShrink: 0,
+                    }}
+                  >
+                    Resume &rarr;
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
         </section>
+      )}
+
+      {asking && draft !== null && (
+        <UnfinishedDraftDialog
+          title={draftDisplayTitle(draft)}
+          intent="start"
+          canKeep={draftServerDocumentIds(draft).length > 0}
+          busy={askBusy}
+          error={askError}
+          onChoose={handleUnfinishedChoice}
+          onCancel={() => { if (askBusy === null) setAsking(false); }}
+        />
       )}
 
       {/* Footer notice */}

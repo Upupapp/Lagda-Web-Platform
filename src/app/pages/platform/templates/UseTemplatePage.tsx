@@ -5,7 +5,7 @@
 // Inline styles only. No Burgundy.
 
 import { useEffect, useId, useRef, useState } from "react";
-import { useParams, Link } from "react-router";
+import { useParams, useNavigate, Link } from "react-router";
 import {
   ChevronLeft, ChevronRight,  
   CheckCircle2, AlertCircle, Zap, LayoutTemplate,
@@ -41,6 +41,14 @@ import { USE_REAL_BACKEND } from "../../../services/backend-flag";
 import { realTemplatesService } from "../../../services/real/templates.service";
 import { ApiError } from "../../../services/api-client";
 import { withProcess } from "../../../config/process-screens";
+import {
+  UnfinishedDraftDialog, type UnfinishedDraftChoice,
+} from "../../../components/prepare/UnfinishedDraftDialog";
+import {
+  readStoredDraft, clearStoredDraft, isDraftEmpty, draftServerDocumentIds, draftDisplayTitle,
+  deleteDraftOnServer, draftDeleteErrorMessage,
+} from "../../../services/prepare/unfinished-draft";
+import type { PreparationDraft } from "../../../models/prepare";
 
 // ── Design tokens ─────────────────────────────────────────────────────────────
 const GF    = { fontFamily: "'Geist', sans-serif" };
@@ -539,7 +547,61 @@ function UseTemplateInner() {
     }
   };
 
-  const handleLaunch = async () => {
+  // ── An unfinished draft is asked about before it is replaced ────────────────
+  //
+  // Launching writes the new draft into the one local slot (see
+  // template-handoff.ts), and used to replace a preparation in progress
+  // without a word. This page sits outside PrepareProvider, so it reads that
+  // slot directly. The demo build behaves as it always did.
+  const navigate = useNavigate();
+  const [unfinished, setUnfinished] = useState<PreparationDraft | null>(null);
+  const [unfinishedBusy, setUnfinishedBusy] = useState<UnfinishedDraftChoice | null>(null);
+  const [unfinishedError, setUnfinishedError] = useState<string | null>(null);
+
+  const handleLaunch = () => {
+    if (!t || launching) return;
+    const stored = USE_REAL_BACKEND ? readStoredDraft() : null;
+    if (stored !== null && !isDraftEmpty(stored)) {
+      setUnfinishedError(null);
+      setUnfinished(stored);
+      return;
+    }
+    void launch();
+  };
+
+  const handleUnfinishedChoice = (choice: UnfinishedDraftChoice) => {
+    if (unfinished === null || unfinishedBusy !== null) return;
+    if (choice === "continue") {
+      setUnfinished(null);
+      void navigate(TEMPLATE_HANDOFF_ROUTE);
+      return;
+    }
+    if (choice === "keep") {
+      // It stays on the server and in Drafts; launching replaces only what
+      // this browser holds.
+      setUnfinished(null);
+      void launch();
+      return;
+    }
+    setUnfinishedBusy("discard");
+    setUnfinishedError(null);
+    void (async () => {
+      try {
+        await deleteDraftOnServer(workspaceId, unfinished);
+      } catch (err) {
+        // Not deleted: it is still there, untouched, and nothing is launched.
+        setUnfinishedError(draftDeleteErrorMessage(err));
+        setUnfinishedBusy(null);
+        return;
+      }
+      clearStoredDraft();
+      setUnfinished(null);
+      setUnfinishedBusy(null);
+      await launch();
+    })();
+  };
+
+  const launch = async () => {
     if (!t) return;
     setLaunching(true);
     setError(null);
@@ -781,6 +843,18 @@ function UseTemplateInner() {
           )}
         </div>
       </div>
+
+      {unfinished !== null && (
+        <UnfinishedDraftDialog
+          title={draftDisplayTitle(unfinished)}
+          intent="template"
+          canKeep={draftServerDocumentIds(unfinished).length > 0}
+          busy={unfinishedBusy}
+          error={unfinishedError}
+          onChoose={handleUnfinishedChoice}
+          onCancel={() => { if (unfinishedBusy === null) setUnfinished(null); }}
+        />
+      )}
     </div>
   );
 }

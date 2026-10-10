@@ -43,10 +43,11 @@ export interface TemplateHandoffResult {
 /**
  * Creates the draft and stages it for PrepareProvider.
  *
- * NOTE — this replaces whatever draft was in progress, the same way
- * PrepareEntryPage's "Start new" does. Launching a template is an equally
- * explicit act, so it behaves the same way rather than inventing a different
- * rule; a confirmation prompt for BOTH paths would be a separate change.
+ * NOTE — this replaces whatever draft is in the local slot. The CALLER asks
+ * first: UseTemplatePage shows the same three-choice question as
+ * PrepareEntryPage's "Start preparation" when an unfinished draft is there
+ * (see components/prepare/UnfinishedDraftDialog.tsx), and only calls this
+ * once the sender has chosen to keep that draft on the server or discard it.
  */
 export async function handOffTemplateToPrepare(
   templateId: string,

@@ -7,6 +7,7 @@
 import { USE_REAL_BACKEND } from "../../../services/backend-flag";
 import React, { useState, useCallback, useRef, useEffect } from "react";
 import { isContinueBlocked } from "./continue-gate";
+import { useAuthorizeSend } from "./use-authorize-send";
 import { Outlet, Navigate, useNavigate, useLocation } from "react-router";
 import { PrepareProvider, usePrepare } from "../../../context/PrepareContext";
 import { usePlatform } from "../../../context/PlatformContext";
@@ -38,6 +39,13 @@ import { currentStepFromPath } from "../../../components/prepare/prep-step-guide
 import { PrepareBreadcrumb, PrepareNavBar } from "../../../components/prepare/PrepareChrome";
 import { useProcessing } from "../../../services/processing.service";
 import { processScreen } from "../../../config/process-screens";
+import { toastInfo } from "../../../components/brand/BrandToast";
+import {
+  UnfinishedDraftDialog, type UnfinishedDraftChoice,
+} from "../../../components/prepare/UnfinishedDraftDialog";
+import {
+  isDraftEmpty, draftServerDocumentIds, draftDisplayTitle, draftDeleteErrorMessage,
+} from "../../../services/prepare/unfinished-draft";
 
 const GF = { fontFamily: "'Geist', sans-serif" };
 const NAVY   = "#07111F";
@@ -78,18 +86,32 @@ function stepRoute(id: PreparationStepId): string {
 
 // ── Discard confirmation dialog ───────────────────────────────────────────────
 
-function DiscardDialog({
+export function DiscardDialog({
   onCancel,
   onConfirm,
+  error = null,
 }: {
   onCancel: () => void;
   onConfirm: () => void;
+  /** Why the last attempt did not delete the draft. It is still here. */
+  error?: string | null;
 }) {
+  // "Keep editing" is focused first: Enter must never be what deletes.
+  const keepRef = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    const opener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    keepRef.current?.focus();
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") { e.stopPropagation(); onCancel(); } };
+    window.addEventListener("keydown", onKey, true);
+    return () => { window.removeEventListener("keydown", onKey, true); opener?.focus(); };
+  }, [onCancel]);
+
   return (
     <div
       role="dialog"
       aria-modal="true"
       aria-labelledby="discard-dialog-title"
+      data-testid="discard-dialog"
       style={{
         position: "fixed",
         inset: 0,
@@ -108,7 +130,10 @@ function DiscardDialog({
           borderRadius: 12,
           maxWidth: 420,
           width: "100%",
-          padding: "32px",
+          maxHeight: "calc(100dvh - 48px)",
+          overflowY: "auto",
+          boxSizing: "border-box",
+          padding: "clamp(20px, 6vw, 32px)",
           boxShadow: "0 8px 32px rgba(7,17,31,0.18)",
         }}
       >
@@ -125,14 +150,24 @@ function DiscardDialog({
         </p>
         <p style={{ margin: "0 0 24px", fontSize: 13, color: SILVER, lineHeight: 1.5 }}>
           {USE_REAL_BACKEND
-            ? "Nothing has been sent to anyone, so no one is notified. The file you uploaded is kept in LAGDA’s secure storage for now; it is no longer listed among your documents."
+            ? "Nothing has been sent to anyone, so no one is notified. The file you uploaded is deleted with the draft."
             : "No files have been uploaded and no invitations have been sent. Your documents workspace is unaffected."}
         </p>
-        <div style={{ display: "flex", gap: 12, justifyContent: "flex-end" }}>
+        {error !== null && (
+          <p role="alert" style={{
+            margin: "0 0 20px", padding: "9px 12px", borderRadius: 9, background: "#FEF2F2",
+            border: "1px solid #FECACA", color: "#7F1D1D", fontSize: 13, lineHeight: 1.45,
+          }}>
+            {error}
+          </p>
+        )}
+        <div style={{ display: "flex", gap: 12, justifyContent: "flex-end", flexWrap: "wrap-reverse" }}>
           <button
+            ref={keepRef}
             onClick={onCancel}
             style={{
               ...GF,
+              minHeight: 44,
               padding: "10px 20px",
               borderRadius: 8,
               border: `1px solid #D1D9E0`,
@@ -149,6 +184,7 @@ function DiscardDialog({
             onClick={onConfirm}
             style={{
               ...GF,
+              minHeight: 44,
               padding: "10px 20px",
               borderRadius: 8,
               border: "none",
@@ -159,7 +195,7 @@ function DiscardDialog({
               cursor: "pointer",
             }}
           >
-            Discard draft
+            {error !== null ? "Try again" : "Discard draft"}
           </button>
         </div>
       </div>
@@ -478,15 +514,19 @@ export function PrepareLayout() {
   const {
     stepStates,
     isDirty,
-    discardDraft,
     setStep,
     draft,
     validate,
     resumeBackendDraft,
+    deleteDraftEverywhere,
+    saveTitle,
+    titleNeedsSave,
   } = usePrepare();
 
   const { run: runProcessing } = useProcessing();
   const [showDiscard, setShowDiscard] = useState(false);
+  const [discardError, setDiscardError] = useState<string | null>(null);
+  const discardingRef = useRef(false);
   const [showMissing, setShowMissing] = useState(false);
 
   // Reopening a draft from the Documents list.
@@ -498,21 +538,98 @@ export function PrepareLayout() {
   // Runs at most once per document id: `resumedRef` is checked and set before
   // the await, so a re-render mid-flight cannot start a second rebuild that
   // would create a second local draft against the same backend document.
+  //
+  // ── When another draft is already in progress ────────────────────────────
+  //
+  // There is one draft slot, and reopening B used to replace A without a
+  // word. A draft with anything in it is now asked about first (live build
+  // only). Reopening the draft that is ALREADY open is not a replacement at
+  // all: it just carries on, keeping what this browser holds.
   const resumeDocumentId = new URLSearchParams(location.search).get("resumeDocumentId");
   const resumedRef = useRef<string | null>(null);
+  const draftNowRef = useRef(draft);
+  draftNowRef.current = draft;
+  const [resumeAsk, setResumeAsk] = useState<{ documentId: string; path: string } | null>(null);
+  const [resumeBusy, setResumeBusy] = useState<UnfinishedDraftChoice | null>(null);
+  const [resumeError, setResumeError] = useState<string | null>(null);
+
+  const runResume = useCallback(async (documentId: string, path: string) => {
+    await resumeBackendDraft(documentId);
+    // The id is dropped from the URL either way. On success it has done its
+    // work; on failure the error is already on screen, and leaving it would
+    // retry the same broken rebuild on every reload.
+    void navigate(path, { replace: true });
+  }, [resumeBackendDraft, navigate]);
+
   useEffect(() => {
     if (resumeDocumentId === null || resumedRef.current === resumeDocumentId) return;
     resumedRef.current = resumeDocumentId;
-    void (async () => {
-      await resumeBackendDraft(resumeDocumentId);
-      // The id is dropped from the URL either way. On success it has done its
-      // work; on failure the error is already on screen, and leaving it would
-      // retry the same broken rebuild on every reload.
+    const current = draftNowRef.current;
+    if (current !== null && draftServerDocumentIds(current).includes(resumeDocumentId)) {
       void navigate(location.pathname, { replace: true });
+      return;
+    }
+    if (USE_REAL_BACKEND && current !== null && !isDraftEmpty(current)) {
+      setResumeError(null);
+      setResumeAsk({ documentId: resumeDocumentId, path: location.pathname });
+      return;
+    }
+    void runResume(resumeDocumentId, location.pathname);
+  }, [resumeDocumentId, runResume, navigate, location.pathname]);
+
+  const handleResumeChoice = useCallback((choice: UnfinishedDraftChoice) => {
+    if (resumeAsk === null || resumeBusy !== null) return;
+    const { documentId, path } = resumeAsk;
+    if (choice === "continue") {
+      setResumeAsk(null);
+      void navigate(path, { replace: true });
+      return;
+    }
+    setResumeBusy(choice);
+    setResumeError(null);
+    void (async () => {
+      try {
+        // "Keep" leaves the server alone: reopening the other draft replaces
+        // only what this browser holds. "Discard" deletes first, and stops
+        // here if that fails, with the unfinished draft still in place.
+        if (choice === "discard") await deleteDraftEverywhere();
+        // Kept: a title typed a moment ago goes with it (best effort).
+        else await saveTitle();
+      } catch (err) {
+        setResumeError(draftDeleteErrorMessage(err));
+        setResumeBusy(null);
+        return;
+      }
+      setResumeAsk(null);
+      setResumeBusy(null);
+      await runResume(documentId, path);
     })();
-  }, [resumeDocumentId, resumeBackendDraft, navigate, location.pathname]);
+  }, [resumeAsk, resumeBusy, deleteDraftEverywhere, saveTitle, runResume, navigate]);
 
   const activeStepId = currentStepFromPath(location.pathname);
+
+  // Leaving Documents with a title the server does not hold yet: it is saved
+  // first, and a save that fails keeps the sender on the step, where the
+  // field says so. Everywhere else, and whenever there is nothing to save,
+  // moving on is immediate, exactly as before.
+  const leavingRef = useRef(false);
+  const leaveStep = useCallback((go: () => void) => {
+    if (activeStepId !== "upload" || !titleNeedsSave) { go(); return; }
+    if (leavingRef.current) return;
+    leavingRef.current = true;
+    void saveTitle()
+      .then(outcome => {
+        if (outcome.status === "failed") return;
+        // Numbered on the way out: the note under the field is on the step
+        // being left, so it is said here as well.
+        if (outcome.status === "saved" && outcome.adjusted !== null) {
+          toastInfo(`Saved as "${outcome.adjusted.saved}"`,
+            `A document named "${outcome.adjusted.typed}" already exists here.`);
+        }
+        go();
+      })
+      .finally(() => { leavingRef.current = false; });
+  }, [activeStepId, titleNeedsSave, saveTitle]);
 
   const handleStepClick = useCallback((id: PreparationStepId) => {
     // The cards and the mobile bar both disable locked steps, so this is the
@@ -523,9 +640,11 @@ export function PrepareLayout() {
       nudgePreparationHelp();
       return;
     }
-    setStep(id);
-    void navigate(stepRoute(id));
-  }, [navigate, setStep, stepStates]);
+    leaveStep(() => {
+      setStep(id);
+      void navigate(stepRoute(id));
+    });
+  }, [navigate, setStep, stepStates, leaveStep]);
 
   const goToStepFromReminder = useCallback((id: PreparationStepId) => {
     setStep(id);
@@ -541,6 +660,9 @@ export function PrepareLayout() {
       void navigate("/app/prepare");
     }
   }, [activeStepId, navigate, setStep]);
+
+  // The last step's way forward, shown in the footer where Continue sits.
+  const authorizeSend = useAuthorizeSend();
 
   const handleContinue = useCallback(() => {
     const next = nextStep(activeStepId);
@@ -560,28 +682,46 @@ export function PrepareLayout() {
       return;
     }
 
-    setStep(next);
-    void navigate(stepRoute(next));
-  }, [activeStepId, navigate, setStep, stepStates]);
+    leaveStep(() => {
+      setStep(next);
+      void navigate(stepRoute(next));
+    });
+  }, [activeStepId, navigate, setStep, stepStates, leaveStep]);
 
   const handleDiscardRequest = useCallback(() => {
+    setDiscardError(null);
     setShowDiscard(true);
   }, []);
 
   const handleDiscardConfirm = useCallback(async () => {
+    if (discardingRef.current) return;
+    discardingRef.current = true;
     setShowDiscard(false);
-    // Discarding deletes uploaded files and local state. It is short, but it
-    // is destructive and irreversible, so it should visibly happen rather
-    // than the dialog blinking out and the page changing.
-    await runProcessing(
-      processScreen("discard-draft"),
-      async () => { await discardDraft(); },
-    );
+    setDiscardError(null);
+    // Discarding deletes the uploaded document on the server and the local
+    // state. It is short, but it is destructive and irreversible, so it
+    // should visibly happen rather than the dialog blinking out and the page
+    // changing.
+    try {
+      await runProcessing(
+        processScreen("discard-draft"),
+        async () => { await deleteDraftEverywhere(); },
+      );
+    } catch (err) {
+      // Not deleted: the draft is still here, untouched. The question comes
+      // back saying so, with the same button to try again.
+      setDiscardError(draftDeleteErrorMessage(err));
+      setShowDiscard(true);
+      return;
+    } finally {
+      discardingRef.current = false;
+    }
     await navigate("/app/prepare");
-  }, [discardDraft, navigate, runProcessing]);
+  }, [deleteDraftEverywhere, navigate, runProcessing]);
 
   const handleDiscardCancel = useCallback(() => {
     setShowDiscard(false);
+    setDiscardError(null);
   }, []);
 
   // Guard: if user deep-links to a step URL without an active draft, redirect to entry.
@@ -663,6 +803,9 @@ export function PrepareLayout() {
               onContinue={handleContinue}
               onShowMissing={() => setShowMissing(true)}
               guide={<PreparationHelpFab />}
+              finalAction={activeStepId === "authorization"
+                ? { label: "Authorize", icon: <BadgeCheck size={17} aria-hidden />, onClick: authorizeSend }
+                : undefined}
             />
           )}
         </div>
@@ -681,6 +824,20 @@ export function PrepareLayout() {
         <DiscardDialog
           onCancel={handleDiscardCancel}
           onConfirm={handleDiscardConfirm}
+          error={discardError}
+        />
+      )}
+
+      {/* Reopening another draft while this one is unfinished */}
+      {resumeAsk !== null && draft !== null && (
+        <UnfinishedDraftDialog
+          title={draftDisplayTitle(draft)}
+          intent="resume"
+          canKeep={draftServerDocumentIds(draft).length > 0}
+          busy={resumeBusy}
+          error={resumeError}
+          onChoose={handleResumeChoice}
+          onCancel={() => { handleResumeChoice("continue"); }}
         />
       )}
 
