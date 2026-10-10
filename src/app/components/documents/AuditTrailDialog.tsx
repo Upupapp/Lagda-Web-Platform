@@ -14,7 +14,7 @@
 // exactly what somebody disputing a signature would ask us to justify.
 
 import { useState, useEffect, type CSSProperties } from "react";
-import { X, User, Mail, Cog, ShieldCheck, FileCheck, IdCard, FlaskConical, MessageSquare } from "lucide-react";
+import { X, User, Mail, Cog, ShieldCheck, FileCheck, IdCard, FlaskConical, MessageSquare, type LucideIcon } from "lucide-react";
 import { Link } from "react-router";
 import {
   realSigningRequestService,
@@ -22,7 +22,7 @@ import {
 } from "../../services/real/signing-request.service";
 import { Z } from "../../utils/z-index";
 import { orderAuditEntries } from "./audit-order";
-import { identityIdTypeLabel } from "../../models/identity-check";
+import { identityIdTypeLabel, identityNameDifferencesLabel } from "../../models/identity-check";
 
 const GF: CSSProperties = { fontFamily: "'Geist', sans-serif" };
 const GM: CSSProperties = { fontFamily: "'Geist Mono', monospace" };
@@ -58,6 +58,36 @@ function captureLabel(capture: "camera" | "upload" | "provider", outcome: "passe
     return outcome === "passed" ? "Verified by our identity partner" : "Checked by our identity partner";
   }
   return capture === "camera" ? "Captured by camera" : "Uploaded selfie";
+}
+
+/** A name or a reason the server recorded, or null: absent, empty, or not text. */
+function recorded(value: unknown): string | null {
+  return typeof value === "string" && value.trim() !== "" ? value.trim() : null;
+}
+
+/**
+ * The facts recorded with a decision about a name, one to a line. Names and
+ * reasons are the sender's and the ID's own words and can be long: they wrap.
+ */
+function DetailLines({ testId, icon: Icon, lines }: { testId: string; icon: LucideIcon; lines: readonly string[] }) {
+  if (lines.length === 0) return null;
+  return (
+    <div data-testid={testId} style={{ display: "flex", alignItems: "flex-start", gap: 5, fontSize: 12, color: SLATE6, marginTop: 4, ...GF }}>
+      <Icon size={12} aria-hidden style={{ flexShrink: 0, marginTop: 2 }} />
+      <div style={{ minWidth: 0, overflowWrap: "anywhere" }}>
+        {lines.map(line => <div key={line}>{line}</div>)}
+      </div>
+    </div>
+  );
+}
+
+/** "Name on ID: …" and "On this document: …", each only where it was recorded. */
+function nameLines(verifiedName: unknown, documentName: unknown): string[] {
+  const onId = recorded(verifiedName), onDocument = recorded(documentName);
+  return [
+    ...(onId === null ? [] : [`Name on ID: ${onId}`]),
+    ...(onDocument === null ? [] : [`On this document: ${onDocument}`]),
+  ];
 }
 
 function EntryRow({ entry }: { entry: AuditEntry }) {
@@ -124,7 +154,40 @@ function EntryRow({ entry }: { entry: AuditEntry }) {
                   <span style={{ ...GM, userSelect: "all" }}>{entry.details.providerReference}</span>
                 </span>
               )}
+              {/* The name the partner read from the ID, where one was recorded,
+                  and what differed where it was close to the document's. Where
+                  it could not be read there is none, and the server's sentence
+                  above already says so. */}
+              {recorded(entry.details.verifiedName) !== null && (
+                <span data-testid="audit-identity-name" style={{ flexBasis: "100%", minWidth: 0, overflowWrap: "anywhere" }}>
+                  Name on ID: {recorded(entry.details.verifiedName)}
+                </span>
+              )}
+              {recorded(entry.details.verifiedName) !== null && entry.details.nameMatch === "close" && (
+                <span data-testid="audit-identity-name-close" style={{ flexBasis: "100%", minWidth: 0, overflowWrap: "anywhere" }}>
+                  {identityNameDifferencesLabel(entry.details.nameDifferences) === ""
+                    ? "Close match"
+                    : `Close match: ${identityNameDifferencesLabel(entry.details.nameDifferences)}`}
+                </span>
+              )}
+              {/* A pass made after the sender accepted that name as the same person. */}
+              {recorded(entry.details.verifiedName) !== null && entry.details.nameMatch === "accepted" && (
+                <span data-testid="audit-identity-name-accepted-note" style={{ flexBasis: "100%", minWidth: 0 }}>
+                  Accepted by the sender
+                </span>
+              )}
             </div>
+          )}
+          {entry.details.kind === "identity-name-mismatch" && (
+            <DetailLines testId="audit-identity-name-mismatch" icon={IdCard}
+              lines={nameLines(entry.details.verifiedName, entry.details.documentName)} />
+          )}
+          {entry.details.kind === "identity-name-accepted" && (
+            <DetailLines testId="audit-identity-name-accepted" icon={IdCard}
+              lines={[
+                ...nameLines(entry.details.verifiedName, entry.details.documentName),
+                ...(recorded(entry.details.reason) === null ? [] : [`Reason: ${recorded(entry.details.reason) ?? ""}`]),
+              ]} />
           )}
           {entry.details.kind === "identity-check-waived" && entry.details.reason !== null && entry.details.reason.trim() !== "" && (
             <div data-testid="audit-identity-waiver" style={{ display: "flex", alignItems: "flex-start", gap: 5, fontSize: 12, color: SLATE6, marginTop: 4, overflowWrap: "anywhere", ...GF }}>

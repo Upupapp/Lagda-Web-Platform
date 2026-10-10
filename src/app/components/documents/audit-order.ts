@@ -25,6 +25,10 @@ const RANK: Readonly<Record<string, number>> = {
   // consent; a waiver follows the attempts it answers.
   "identity-check-failed": 4.4,
   "identity-check-passed": 4.5,
+  // The name is compared as the check is passed, and the sender's decision
+  // answers the mismatch it follows: verified, mismatch, acceptance, consent.
+  "identity-name-mismatch": 4.52,
+  "identity-name-accepted": 4.54,
   "identity-check-waived": 4.6,
   "consent-accepted": 5,
   "submission-accepted": 6,
@@ -38,13 +42,27 @@ const RANK: Readonly<Record<string, number>> = {
 };
 
 /**
+ * The entries about the name on an ID are also known by what they carry, so
+ * they sit in the right place whatever the server calls the event itself.
+ */
+const KIND_RANK: Readonly<Record<string, number>> = {
+  "identity-name-mismatch": 4.52,
+  "identity-name-accepted": 4.54,
+};
+
+function kindOf(entry: AuditEntry): string {
+  const kind: unknown = (entry.details as { kind?: unknown } | null | undefined)?.kind;
+  return typeof kind === "string" ? kind : "";
+}
+
+/**
  * Eligibility follows a SEND when one shares its instant (the first signer),
  * and otherwise follows the previous participant finishing (sequential
  * routing: the next signer becomes eligible as the last one completes).
  */
-function rankOf(type: string, groupHasSend: boolean): number | undefined {
-  if (type === "recipient-activated") return groupHasSend ? 2 : 8;
-  return RANK[type];
+function rankOf(entry: AuditEntry, groupHasSend: boolean): number | undefined {
+  if (entry.type === "recipient-activated") return groupHasSend ? 2 : 8;
+  return RANK[entry.type] ?? KIND_RANK[kindOf(entry)];
 }
 
 export function orderAuditEntries(entries: readonly AuditEntry[]): AuditEntry[] {
@@ -56,7 +74,7 @@ export function orderAuditEntries(entries: readonly AuditEntry[]): AuditEntry[] 
   // so it stays beside its neighbour and the comparison remains consistent.
   let previous = 0;
   const ranks = entries.map((e, i) => {
-    const r = rankOf(e.type, sendTimes.has(times[i] ?? 0));
+    const r = rankOf(e, sendTimes.has(times[i] ?? 0));
     previous = r ?? previous;
     return previous;
   });
