@@ -38,10 +38,12 @@ const DocumentArchiveViewer = lazy(() =>
     .then(m => ({ default: m.DocumentArchiveViewer })));
 import { SignatureRecordDialog } from "../../../components/documents/SignatureRecordDialog";
 import { ResendSigningDialog } from "../../../components/documents/ResendSigningDialog";
+import {
+  DRAFT_REQUEST_STATES, draftSources, isUnsentDraft, selectUnsentDraftDocuments, unsentDraftRow,
+} from "../../../services/documents/draft-list";
 import { ExpirationDialog } from "../../../components/documents/ExpirationDialog";
 import { toastSuccess } from "../../../components/brand/BrandToast";
-import { realDocumentService, type RealDocument } from "../../../services/real/document.service";
-import { realTemplatesService } from "../../../services/real/templates.service";
+import type { RealDocument } from "../../../services/real/document.service";
 import { documentOrganizationService } from "../../../services/mock/document-organization.service";
 import { isCapabilityInActiveProfile } from "../../../config/capability-resolver";
 import { SIGNING_REQUEST_STATUS } from "../../../services/signing-request-status";
@@ -2257,28 +2259,10 @@ interface DocumentFileFacts {
 // seemed to vanish until you remembered to reopen it. It is shown as a Draft
 // row built from the document itself, marked so the actions a request would
 // have (history, signers, send again) are not offered for it.
-
-const UNSENT_DRAFT_PREFIX = "unsent-draft:";
-
-function isUnsentDraft(item: SigningRequestListItem): boolean {
-  return item.signingRequestId.startsWith(UNSENT_DRAFT_PREFIX);
-}
-
-function unsentDraftRow(document: RealDocument): SigningRequestListItem {
-  return {
-    signingRequestId: `${UNSENT_DRAFT_PREFIX}${document.documentId}`,
-    documentId: document.documentId,
-    documentTitle: document.title,
-    state: "draft",
-    participantCount: 0,
-    completedParticipantCount: 0,
-    initiator: null,
-    createdAt: document.createdAt,
-    sentAt: null,
-    completedAt: null,
-    expiresAt: null,
-  };
-}
+//
+// What counts as one is decided in services/documents/draft-list.ts, which
+// "Resume a draft" on the Prepare entry page reads too, so the two lists
+// cannot disagree.
 
 // ── Sent: the outbox mail card ─────────────────────────────────────────────
 //
@@ -2563,7 +2547,7 @@ const LIST_STATES: Readonly<Record<"sent" | "completed" | "draft" | "declined" |
   sent:      ["sent", "partially-completed", "completion-ready"],
   cancelled: ["cancelled"],
   completed: ["completed"],
-  draft:     ["draft", "ready-to-send"],
+  draft:     DRAFT_REQUEST_STATES,
   // One section for both ways a request ends without everyone signing. The
   // address keeps the name `declined`, which existing links already use.
   declined:  ["declined", "expired"],
@@ -2778,8 +2762,8 @@ function DocumentsPageRealMode() {
   // non-blocking read so a failure here costs an accurate icon and never the
   // list itself.
   const documentsQuery = useLiveQuery(
-    workspaceId ? `documents:files:${workspaceId}` : null,
-    () => realDocumentService.list(workspaceId ?? "", { perPage: 100 }),
+    workspaceId ? draftSources.filesKey(workspaceId) : null,
+    () => draftSources.readFiles(workspaceId ?? ""),
     { topics: ["documents"] },
   );
   const documents = documentsQuery.data?.items ?? EMPTY_DOCUMENTS;
@@ -2795,8 +2779,8 @@ function DocumentsPageRealMode() {
   // Verification ID search is matched against, since the server's q searches
   // names only.
   const allQuery = useLiveQuery(
-    workspaceId ? `documents:all:${workspaceId}` : null,
-    () => realSigningRequestService.list(workspaceId ?? "", { perPage: 100 }),
+    workspaceId ? draftSources.requestsKey(workspaceId) : null,
+    () => draftSources.readRequests(workspaceId ?? ""),
     { topics: ["documents"] },
   );
   const allRequests = allQuery.data?.items ?? EMPTY_REQUESTS;
@@ -2862,11 +2846,8 @@ function DocumentsPageRealMode() {
   // draft. Someone who may not read templates gets an empty set, and the
   // server still refuses the delete with a message naming the template.
   const templatesQuery = useLiveQuery(
-    workspaceId ? `documents:template-documents:${workspaceId}` : null,
-    () => realTemplatesService.list(workspaceId ?? "").then(
-      items => items.flatMap(t => (t.documentId === null ? [] : [t.documentId])),
-      () => [] as string[],
-    ),
+    workspaceId ? draftSources.templateDocumentsKey(workspaceId) : null,
+    () => draftSources.readTemplateDocumentIds(workspaceId ?? ""),
     { topics: ["documents"] },
   );
   const templateDocumentIds = useMemo(
@@ -2878,14 +2859,11 @@ function DocumentsPageRealMode() {
   // They have no signers yet, so a signer filter excludes them, and they
   // only ever belong in the Draft section.
   const drafts = useMemo(() => {
-    if (requestedDocumentIds === null || templateDocumentIds === null) return [];
     if (list !== "draft" || signer !== "") return [];
     const needle = q.toLowerCase();
-    return documents
-      .filter(d => !requestedDocumentIds.has(d.documentId))
-      // A template's own document belongs to Templates. Listed here it looked
-      // like a draft with a Delete button that could never work.
-      .filter(d => !templateDocumentIds.has(d.documentId))
+    // Which documents are unsent drafts is the shared rule; only the name
+    // filter is this page's own.
+    return selectUnsentDraftDocuments(documents, requestedDocumentIds, templateDocumentIds)
       .filter(d => needle === "" || d.title.toLowerCase().includes(needle))
       .map(unsentDraftRow);
   }, [documents, requestedDocumentIds, templateDocumentIds, q, signer, list]);
@@ -3141,12 +3119,18 @@ function DocumentsPageRealMode() {
           documentId={resendFor.documentId}
           documentTitle={resendFor.documentTitle}
           onClose={() => { setResendFor(null); }}
+          // The request being sent again: its identity checks are what the
+          // dialog reads "locked" and "lighter method allowed" from.
+          signingRequestId={isUnsentDraft(resendFor) ? undefined : resendFor.signingRequestId}
           onSent={() => {
             setResendFor(null);
             // Refetch rather than patching the row: the send produced a NEW
             // request, so the list has an extra entry, not an edited one.
             void listQuery.refresh();
             void allQuery.refresh();
+            // The server gives the new request its own numbered title, which
+            // is the document's title from now on.
+            void documentsQuery.refresh();
           }}
         />
       )}
