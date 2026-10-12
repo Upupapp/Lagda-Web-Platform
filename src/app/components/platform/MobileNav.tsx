@@ -1,4 +1,4 @@
-// Mobile navigation — top bar + slide-in drawer.
+// Mobile navigation — top bar, bottom bar + slide-in drawer.
 // Replaces the sidebar at <768px.
 // Focus-trapped while open. Escape closes. Scroll locked.
 
@@ -6,11 +6,12 @@ import { usePlanCheck, useMyPlan } from "../../hooks/usePlans";
 import { WorkspaceBadge } from "./WorkspaceBadge";
 import { WorkspacePlanLine } from "./WorkspaceSwitcher";
 import { useState, useRef, useEffect, useCallback, lazy, Suspense } from "react";
-import { NavLink, Link } from "react-router";
+import { NavLink, Link, useLocation } from "react-router";
 import {
   Menu, X, LayoutDashboard, FileText, Files, Users, ShieldCheck,
   Bell, Users2, Settings, Settings2, FilePlus, Inbox, HelpCircle, GitBranch, BarChart2, Zap,
-  Search, Compass, Share2, Mail, ChevronDown, LogIn, Building2, UserCog, Lock, Check } from "lucide-react";
+  Search, Compass, Share2, Mail, ChevronDown, LogIn, Building2, UserCog, Lock, Check, Home, LayoutTemplate,
+} from "lucide-react";
 import { JoinWorkspaceDialog } from "./JoinWorkspaceDialog";
 import lagdaHeaderLogo from "../../../brand elements/svg/LagdaLogoPrimaryHorizontalFullColor_Header.svg";
 import { usePlatform } from "../../context/PlatformContext";
@@ -42,6 +43,21 @@ const ICON_MAP: Record<string, React.ElementType> = {
   LayoutDashboard, FileText, Files, Users, ShieldCheck, Bell, Users2, Settings, Settings2, FilePlus,
   Inbox, HelpCircle, GitBranch, BarChart2, Zap, Share2, Mail, Building2, UserCog,
 };
+// The bottom bar: the four places people go most, with Prepare in the middle.
+// Everything else stays in the drawer. Icons only, so each needs one that
+// reads on its own; the label is the accessible name.
+const BOTTOM_BAR_HEIGHT = 60;
+const BOTTOM_BAR_IDS = ["dashboard", "documents", "shared-documents", "templates"] as const;
+const BOTTOM_BAR_ICONS: Record<(typeof BOTTOM_BAR_IDS)[number], React.ElementType> = {
+  dashboard: Home, documents: FileText, "shared-documents": Share2, templates: LayoutTemplate,
+};
+// Prepare Document's own surface: deep navy under a fine diamond weave.
+const PREPARE_NAVY = "#0A1A4F";
+const PREPARE_WEAVE =
+  "repeating-linear-gradient(45deg, rgba(96,140,255,0.16) 0 1px, transparent 1px 6px), " +
+  "repeating-linear-gradient(-45deg, rgba(96,140,255,0.16) 0 1px, transparent 1px 6px)";
+const inBottomBar = (id: string) => (BOTTOM_BAR_IDS as readonly string[]).includes(id);
+
 function NavIcon({ name, size = 18 }: { name: string; size?: number }) {
   const Comp = ICON_MAP[name];
   if (!Comp) return null;
@@ -144,6 +160,21 @@ export function MobileNav() {
   const nav = useNavAccess();
   const canPrepare = nav.canPrepare && hasFlag("prepareFlowEnabled");
 
+  // Which of the bar's five places (Prepare is the third) the page is in, for
+  // the raised circle that slides between them. -1 on a page the bar does not list.
+  const { pathname } = useLocation();
+  const activeBarId = BOTTOM_BAR_IDS.find(id => {
+    const path = PRIMARY_NAV.find(entry => entry.id === id)?.path;
+    return path !== undefined && (pathname === path || pathname.startsWith(`${path}/`));
+  });
+  const activeBarIndex = activeBarId === undefined ? -1 : BOTTOM_BAR_IDS.indexOf(activeBarId);
+  const preparing = pathname === PREPARE_ACTION.path || pathname.startsWith(`${PREPARE_ACTION.path}/`);
+  const activeBarSlot = preparing ? 2 : activeBarIndex < 0 ? -1 : activeBarIndex + (activeBarIndex >= 2 ? 1 : 0);
+  // The circle stays where it last was while it fades out, so it never slides
+  // in from the edge when a listed page is opened next.
+  const lastBarSlot = useRef(0);
+  if (activeBarSlot >= 0) lastBarSlot.current = activeBarSlot;
+
   return (
     <>
       {/* ── Top bar ─────────────────────────────────────────────── */}
@@ -179,7 +210,17 @@ export function MobileNav() {
           <span data-guide="mobile-notification-bell" style={{ display: "flex" }}>
             <NotificationMenu align="right" />
           </span>
-          {user ? <UserAvatar user={user} size={32} fontSize={10} /> : null}
+          {user ? (
+            <Link
+              to="/app/settings/profile"
+              aria-label="Your profile"
+              data-testid="mobile-profile-link"
+              className="mobile-nav-btn"
+              style={{ width: 44, height: 44, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: 8, flexShrink: 0, textDecoration: "none" }}
+            >
+              <UserAvatar user={user} size={32} fontSize={10} />
+            </Link>
+          ) : null}
           <button
             ref={triggerRef}
             onClick={() => setDrawerOpen(true)}
@@ -193,6 +234,102 @@ export function MobileNav() {
           </button>
         </div>
       </header>
+
+      {/* ── Bottom bar ──────────────────────────────────────────── */}
+      <nav
+        aria-label="Main sections"
+        data-testid="mobile-bottom-nav"
+        style={{
+          position: "fixed", left: 0, right: 0, bottom: 0, zIndex: Z.shell,
+          height: `calc(${BOTTOM_BAR_HEIGHT}px + env(safe-area-inset-bottom, 0px))`,
+          paddingBottom: "env(safe-area-inset-bottom, 0px)", boxSizing: "border-box",
+          background: "#ffffff", borderTop: `1px solid ${BORDER}`,
+          display: "grid", gridTemplateColumns: "repeat(5, 1fr)", alignItems: "center",
+        }}
+      >
+        <span
+          aria-hidden
+          className="mnav-bottom-pill"
+          data-testid="mobile-bottom-pill"
+          // The one raised circle in the bar: it marks the place you are in,
+          // Prepare Document included.
+          style={{
+            position: "absolute", top: -5, width: 52, height: 52, borderRadius: 999, boxSizing: "border-box",
+            left: `calc(${lastBarSlot.current * 20 + 10}% - 26px)`,
+            backgroundColor: "#0078D4", border: "3px solid #ffffff", boxShadow: "0 4px 14px rgba(0,120,212,0.35)",
+            pointerEvents: "none",
+            opacity: activeBarSlot >= 0 ? 1 : 0,
+            transform: activeBarSlot >= 0 ? "scale(1)" : "scale(0.6)",
+          }}
+        />
+        {BOTTOM_BAR_IDS.map((id, index) => {
+          const item = PRIMARY_NAV.find(entry => entry.id === id);
+          const shown = item !== undefined && nav.allows(item)
+            && (!item.featureFlag || hasFlag(item.featureFlag))
+            && (item.plan === undefined || planAllows(item.plan));
+          const Icon = BOTTOM_BAR_ICONS[id];
+          const count = id === "documents" ? navCounts.documents : id === "shared-documents" ? navCounts.shared : 0;
+          return (
+            <span key={id} style={{ display: "contents" }}>
+              {/* Prepare takes the middle of the five places. */}
+              {index === 2 && (
+                <span style={{ display: "flex", justifyContent: "center" }}>
+                  {canPrepare && (
+                    <NavLink
+                      to={PREPARE_ACTION.path}
+                      onClick={(event) => { onPrepareClick(PREPARE_ACTION.path)(event); }}
+                      aria-label="Prepare Document"
+                      title="Prepare Document"
+                      data-testid="mobile-bottom-prepare"
+                      className="mnav-bottom-prepare"
+                      // A navy soft square at rest, level with the rest. While
+                      // preparing it rounds off, rises into the circle and
+                      // takes the circle's colour.
+                      style={{
+                        position: "relative", width: 44, height: 44, boxSizing: "border-box",
+                        borderRadius: preparing ? 999 : 14,
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                        backgroundColor: preparing ? "#0078D4" : PREPARE_NAVY,
+                        backgroundImage: preparing ? "none" : PREPARE_WEAVE,
+                        color: "#ffffff", textDecoration: "none",
+                        transform: preparing ? "translateY(-9px)" : "none",
+                      }}
+                    >
+                      <FilePlus size={22} aria-hidden />
+                    </NavLink>
+                  )}
+                </span>
+              )}
+              <span style={{ display: "flex", justifyContent: "center" }}>
+                {shown && item && (
+                  <NavLink
+                    to={item.path}
+                    aria-label={count > 0 ? `${item.label} (${count})` : item.label}
+                    title={item.label}
+                    className="mnav-bottom-link"
+                    style={({ isActive }) => ({
+                      position: "relative", width: 52, height: 44, borderRadius: 12,
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      textDecoration: "none",
+                      color: isActive ? "#ffffff" : "#64748B",
+                      background: "transparent",
+                      // Up into the circle: its centre is 9px above the row's.
+                      transform: isActive ? "translateY(-9px)" : "none",
+                    })}
+                  >
+                    <Icon size={22} aria-hidden />
+                    {count > 0 && (
+                      <span aria-hidden style={{ position: "absolute", top: 4, right: 6, minWidth: 16, height: 16, padding: "0 4px", boxSizing: "border-box", borderRadius: 999, background: "#0078D4", color: "#ffffff", ...GM, fontSize: 9, fontWeight: 700, lineHeight: "16px", textAlign: "center" }}>
+                        {count > 99 ? "99+" : count}
+                      </span>
+                    )}
+                  </NavLink>
+                )}
+              </span>
+            </span>
+          );
+        })}
+      </nav>
 
       {/* ── Backdrop ────────────────────────────────────────────── */}
       {drawerOpen && (
@@ -349,32 +486,13 @@ export function MobileNav() {
           </div>
         )}
 
-        {/* Prepare CTA */}
-        {canPrepare && (
-          <div style={{ padding: "12px 12px 0", flexShrink: 0 }}>
-            <NavLink
-              to={PREPARE_ACTION.path}
-              onClick={(event) => {
-                // The drawer has to close either way: the modal is about to
-                // cover the screen, and a drawer left open behind it would
-                // still be there when the route changes.
-                closeAndNavigate();
-                onPrepareClick(PREPARE_ACTION.path)(event);
-              }}
-              style={{ display: "flex", alignItems: "center", gap: 8, background: "#07111F", color: "white", borderRadius: 8, padding: "10px 14px", textDecoration: "none", ...GF, fontSize: 14, fontWeight: 600 }}
-            >
-              <FilePlus size={16} aria-hidden />
-              Prepare Document
-            </NavLink>
-          </div>
-        )}
-
         {/* Primary nav */}
         <nav aria-label="Platform sections" data-guide="platform-sidebar-nav" style={{ flex: 1, padding: "10px 10px", overflowY: "auto" }}>
           <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: 2 }}>
             {PRIMARY_NAV.map((item) => {
               const allowed = nav.allows(item);
               const enabled = !item.featureFlag || hasFlag(item.featureFlag);
+              if (inBottomBar(item.id)) return null;
               if (!allowed || !enabled || (item.plan !== undefined && !planAllows(item.plan))) return null;
               return (
                 <li key={item.id}>
@@ -400,8 +518,6 @@ export function MobileNav() {
                           </span>
                         )}
                         {item.id === "invitations" && <InvitationCountBubble key={pendingInvitations} count={pendingInvitations} />}
-                        {item.id === "documents" && <NavCountBubble key={navCounts.documents} kind="documents" count={navCounts.documents} />}
-                        {item.id === "shared-documents" && <NavCountBubble key={navCounts.shared} kind="shared" count={navCounts.shared} />}
                         {item.id === "contacts" && <NavCountBubble key={navCounts.contacts} kind="contacts" count={navCounts.contacts} />}
                       </>
                     )}
@@ -562,6 +678,10 @@ export function MobileNav() {
       <style>{`
         .mobile-nav-btn:hover, .mobile-nav-btn:focus-visible { color: #0078D4 !important; background: #EAF6FF !important; }
         .mobile-nav-btn:focus-visible { outline: 2px solid #0078D4; outline-offset: 2px; }
+        .mnav-bottom-link:focus-visible, .mnav-bottom-prepare:focus-visible { outline: 2px solid #0078D4; outline-offset: 2px; }
+        .mnav-bottom-pill { transition: left 360ms cubic-bezier(0.34, 1.4, 0.64, 1), opacity 180ms ease, transform 220ms ease; }
+        .mnav-bottom-link { transition: color 220ms ease 80ms, transform 300ms cubic-bezier(0.34, 1.4, 0.64, 1); }
+        .mnav-bottom-prepare { transition: border-radius 300ms ease, background-color 300ms ease, transform 300ms cubic-bezier(0.34, 1.4, 0.64, 1); }
         ${INVITATION_BUBBLE_STYLES}
         .mnav-tools-panel { transition: grid-template-rows 180ms ease, visibility 0s 180ms; }
         .mnav-tools-panel[data-open="true"] { transition: grid-template-rows 180ms ease, visibility 0s; }
@@ -570,6 +690,7 @@ export function MobileNav() {
         .mnav-tools-toggle:focus-visible { outline: 2px solid #0078D4; outline-offset: 2px; }
         @media (prefers-reduced-motion: reduce) {
           #mobile-nav-drawer { transition: none !important; }
+          .mnav-bottom-pill, .mnav-bottom-link, .mnav-bottom-prepare { transition: none !important; }
           .mnav-tools-panel, .mnav-tools-panel[data-open="true"], .mnav-tools-chevron { transition: none !important; }
         }
       `}</style>

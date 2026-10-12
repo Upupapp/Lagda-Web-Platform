@@ -1,7 +1,7 @@
 // Authenticated customer-platform layout.
 // Guards all /app/* routes with a mock session check.
 // Desktop: fixed sidebar + scrollable content.
-// Mobile (<768px): top bar + slide-in drawer (MobileNav).
+// Mobile (<768px): top bar, bottom bar + slide-in drawer (MobileNav).
 // Tablet (768-1023px): same as mobile.
 
 import { useWorkspaceBrandingSync } from "../hooks/useWorkspaceBrandingSync";
@@ -240,7 +240,7 @@ export function PlatformLayout() {
         </div>
 
         {/* ── Content column ──────────────────────────────────────── */}
-        <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0, overflow: "hidden" }}>
+        <div className="platform-content-column" style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0, overflow: "hidden" }}>
           {/* Desktop header */}
           <div className="platform-desktop-header">
             <PlatformHeader />
@@ -308,6 +308,9 @@ export function PlatformLayout() {
             .platform-mobile-nav     { display: block !important; }
             .platform-desktop-header { display: none  !important; }
             .platform-main           { padding-top: 56px !important; }
+            /* Room for the bottom bar (MobileNav). On the column, not on
+               main, so a page's own sticky footer rests above the bar. */
+            .platform-content-column { padding-bottom: calc(60px + env(safe-area-inset-bottom, 0px)); box-sizing: border-box; }
           }
           /* Focus management */
           #plat-main:focus { outline: none; }
