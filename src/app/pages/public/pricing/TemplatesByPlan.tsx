@@ -13,7 +13,6 @@ const TEMPLATE_DIMENSIONS = [
   { icon: "🎨", title: "Your logo and colours",           free: false, personal: true,  business: true,  enterprise: true  },
   { icon: "🏢", title: "Shared with your team",           free: false, personal: false, business: true,  enterprise: true  },
   { icon: "🔒", title: "Template administrator role",     free: false, personal: false, business: true,  enterprise: true  },
-  { icon: "⏰", title: "Reminder and expiry rules",       free: true,  personal: true,  business: true,  enterprise: true  },
   { icon: "👥", title: "Participant-role placeholders",   free: true,  personal: true,  business: true,  enterprise: true  },
 ];
 
@@ -36,14 +35,14 @@ export function TemplatesByPlan() {
             Template access by plan.
           </h1>
           <p style={{ color: "#64748B", ...GF, fontSize: 16, lineHeight: 1.65 }}>
-            A LAGDA template is a reusable document workflow that may retain document files, fields, participant roles, routing, authentication rules, reminders, branding, and verification settings.
+            A LAGDA template is a reusable document workflow that may retain document files, fields, participant roles, routing, authentication rules, and branding.
           </p>
         </div>
       </section>
 
       <PricingSection id="what-is-template" light bordered>
         <div style={{ maxWidth: 720, margin: "0 auto" }}>
-          <PricingHeading eyebrow="What is a template?" id="def-h2" heading="A template is a reusable workflow, not just a file." sub="Unlike a stored document, a LAGDA template preserves the full workflow configuration — participant roles, routing order, authentication requirements, field placement, reminder schedule, branding, and expiration settings." />
+          <PricingHeading eyebrow="What is a template?" id="def-h2" heading="A template is a reusable workflow, not just a file." sub="Unlike a stored document, a LAGDA template preserves the full workflow configuration — participant roles, routing order, authentication requirements, field placement, and branding." />
           <p style={{ color: "#64748B", ...GF, fontSize: 14, lineHeight: 1.65 }}>
             When you use a template to start a new transaction, a new copy of the document is prepared with the template's configuration pre-applied. You can adjust participant details without changing the underlying template.
           </p>

@@ -89,7 +89,7 @@ export function StorageLimits() {
             { icon: "📊", title: "Review usage",        desc: "Understand what's using storage in your workspace administration view." },
             { icon: "📦", title: "Archive completed transactions", desc: "Archive older completed transactions to reduce active workspace footprint." },
             { icon: "🗑️", title: "Delete eligible drafts", desc: "Drafts that are no longer needed can be deleted to free up space." },
-            { icon: "💾", title: "Export records",       desc: "Download completed records and audit reports before archiving." },
+            { icon: "💾", title: "Export records",       desc: "Download completed documents before archiving." },
             { icon: "⬆️", title: "Upgrade your plan",   desc: "Higher plans or custom Enterprise arrangements may include greater storage." },
             { icon: "🏢", title: "Contact sales",        desc: "Organizations with large storage requirements can discuss custom arrangements." },
           ].map(({ icon, title, desc }) => (

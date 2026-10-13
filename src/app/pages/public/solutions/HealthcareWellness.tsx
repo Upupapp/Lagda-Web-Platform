@@ -98,7 +98,7 @@ const CAPABILITIES = [
   { icon: "📇", title: "Saved contacts",        desc: "Store client contacts for recurring session workflows.", path: "/features/contacts" },
   { icon: "🔑", title: "Signer authentication", desc: "OTP or account-based identity confirmation.", path: "/features/signer-authentication" },
   { icon: "📋", title: "Audit trail",            desc: "Timestamped record of delivery, viewing, and signature for each client.", path: "/features/audit-trail" },
-  { icon: "🔔", title: "Automatic reminders",   desc: "Clients reminded to sign before appointments without manual follow-up.", path: "/features/notifications" },
+  { icon: "🔔", title: "Completion notice",     desc: "You are emailed when everyone has signed.", path: "/features/notifications" },
 ];
 
 export function HealthcareWellness() {

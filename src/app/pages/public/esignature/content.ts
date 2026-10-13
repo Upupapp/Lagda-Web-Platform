@@ -11,7 +11,7 @@ export const ESIG_SUBNAV = [
 ];
 
 export const OVERVIEW_FEATURES = [
-  { icon: "📄", title: "Document Preparation",     desc: "Upload PDFs, configure fields, set instructions, and prepare the document before it goes out." },
+  { icon: "📄", title: "Document Preparation",     desc: "Upload PDFs, configure fields, and prepare the document before it goes out." },
   { icon: "👥", title: "Recipient Management",      desc: "Add signers, approvers, reviewers, and copy recipients — each with their own role and access level." },
   { icon: "🔀", title: "Parallel & Sequential Routing", desc: "Control the order documents move through participants. Send to everyone at once or in a defined sequence." },
   { icon: "🔐", title: "Signer Authentication",     desc: "Confirm participant identity at signing with a secure invitation link and an email code, or by signing from a LAGDA account." },
@@ -51,7 +51,6 @@ export const AUTH_METHODS = [
 export const TRANSACTION_STATUSES = [
   { status: "Draft",               color: "#94A3B8", desc: "Transaction prepared but not yet sent." },
   { status: "Sent",                color: "#38BDF8", desc: "Invitations dispatched to all participants." },
-  { status: "Delivered",           color: "#38BDF8", desc: "Invitation confirmed as received." },
   { status: "Viewed",              color: "#38bdf8", desc: "Participant has opened the document." },
   { status: "Awaiting Signature",  color: "#F59E0B", desc: "Participant's action is pending." },
   { status: "Awaiting Approval",   color: "#F59E0B", desc: "An approver's decision is outstanding." },
@@ -65,7 +64,7 @@ export const TRANSACTION_STATUSES = [
 export const AUDIT_EVENTS = [
   { icon: "📤", event: "Transaction created",         who: "Mabini Legal Solutions",                 time: "14 Jul · 2:00 PM" },
   { icon: "📧", event: "Invitation sent",             who: "Ana Reyes · ana@example.ph",             time: "14 Jul · 2:01 PM" },
-  { icon: "👁", event: "Document viewed",             who: "Ana Reyes · IP ···.42",                  time: "14 Jul · 2:14 PM" },
+  { icon: "👁", event: "Document viewed",             who: "Ana Reyes",                              time: "14 Jul · 2:14 PM" },
   { icon: "🔑", event: "Email OTP verified",          who: "Ana Reyes",                              time: "14 Jul · 2:15 PM" },
   { icon: "✍️", event: "Signed",                      who: "Ana Reyes · signature adopted",          time: "14 Jul · 2:16 PM" },
   { icon: "📧", event: "Approval request sent",       who: "Marco Santos · marco@example.ph",        time: "14 Jul · 2:16 PM" },
@@ -84,10 +83,8 @@ export const ADVANCED_CAPS = [
   { tier: "Core",       icon: "✓",  title: "Parallel signing",          desc: "All participants sign simultaneously. Completion requires all to respond." },
   { tier: "Core",       icon: "✓",  title: "Sequential signing",        desc: "Participants act in a defined order. Each step opens when the previous completes." },
   { tier: "Core",       icon: "✓",  title: "Mixed routing",             desc: "Groups of simultaneous signers with a defined group order between them." },
-  { tier: "Core",       icon: "✓",  title: "Automated reminders",       desc: "Configurable reminder schedules dispatched automatically to pending participants." },
   { tier: "Core",       icon: "✓",  title: "Transaction expiration",    desc: "Set a deadline after which the transaction expires if not completed." },
-  { tier: "Core",       icon: "✓",  title: "Manual reminders",         desc: "Send a manual reminder to a specific pending participant at any time." },
-  { tier: "Core",       icon: "✓",  title: "Private instructions",      desc: "Include instructions visible only to a specific participant." },
+  { tier: "Core",       icon: "✓",  title: "New signing link",         desc: "Send a participant a fresh link when theirs has ended." },
   { tier: "Advanced",   icon: "◐",  title: "Approval steps",            desc: "Insert an approver into the workflow before or after signing steps." },
   { tier: "Advanced",   icon: "◐",  title: "Folder organization",       desc: "Group transactions into folders for easier navigation and reporting." },
   { tier: "Advanced",   icon: "◐",  title: "Tags and search",           desc: "Tag transactions and use filters to find documents quickly across your workspace." },
@@ -111,9 +108,6 @@ export const TEMPLATE_FEATURES = [
   "Participant roles and signing order",
   "Authentication requirements per role",
   "Approval steps",
-  "Reminder schedule and expiration",
-  "Email subject and message",
-  "Private instructions per role",
   "Company branding settings",
   "Verification placement",
   "Tags and category",

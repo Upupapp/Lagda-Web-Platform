@@ -158,7 +158,7 @@ export function ParallelSigning() {
 
       <RelatedPages links={[
         { label: "Sequential Signing",  desc: "Participants acting in a defined order", path: "/features/sequential-signing" },
-        { label: "Advanced Capabilities", desc: "Mixed routing and reminders", path: "/esignature/advanced-capabilities" },
+        { label: "Advanced Capabilities", desc: "Mixed routing and expiration", path: "/esignature/advanced-capabilities" },
         { label: "Participant Roles",   desc: "How roles work within parallel steps", path: "/features/participant-roles" },
       ]} />
 

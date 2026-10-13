@@ -52,7 +52,7 @@ function AuditTimeline() {
                     <span style={{ color: "#334155", ...GM, fontSize: 10 }}>{e.event}</span>
                   </div>
                   <p style={{ color: "#94A3B8", ...GM, fontSize: 9, margin: "4px 0 0", fontStyle: "italic" }}>
-                    Additional details (IP, device, auth method) are access-controlled and not shown publicly.
+                    Participant details are access-controlled and not shown publicly.
                   </p>
                 </div>
               </div>
@@ -66,8 +66,8 @@ function AuditTimeline() {
 
 const ALL_EVENTS = [
   "Transaction created", "Document uploaded", "Participant added", "Invitation sent",
-  "Delivery confirmed", "Document viewed", "Authentication attempted", "Authentication completed",
-  "Field completed", "Signature adopted", "Approval recorded", "Reminder sent",
+  "Document viewed", "Authentication attempted", "Authentication completed",
+  "Field completed", "Signature adopted", "Approval recorded",
   "Participant declined", "Transaction completed", "Transaction cancelled",
   "Transaction expired", "Verification record generated",
 ];
@@ -85,9 +85,9 @@ export function AuditTrail() {
       <PageSection id="timeline" light bordered>
         <div style={{ display: "grid", gap: "32px 48px", alignItems: "start" }} className="at-two-col">
           <div>
-            <SectionHeading eyebrow="Transaction events" id="te-h2" heading="A complete, expandable timeline of every event." sub="Click any event to see what information is recorded. Detailed evidence — IP, device, authentication method — is access-controlled and not exposed publicly." />
+            <SectionHeading eyebrow="Transaction events" id="te-h2" heading="A complete, expandable timeline of every event." sub="Click any event to see what is recorded: the step, the time, and who acted. Participant details are access-controlled and not exposed publicly." />
             <p style={{ color: "#64748B", ...GF, fontSize: 13, lineHeight: 1.6, margin: 0, marginTop: 8 }}>
-              Not every event will contain every data field. The presence of specific data depends on the authentication method, participant behavior, device, and transaction configuration.
+              Not every event will contain every data field. The presence of specific data depends on the authentication method, participant behavior, and transaction configuration. LAGDA does not record an IP address, device, browser or location for a signing step.
             </p>
           </div>
           <AuditTimeline />
@@ -116,8 +116,6 @@ export function AuditTrail() {
             { field: "Participant role",         example: "Marco Santos · Signer" },
             { field: "Date and time",            example: "10:16 AM, 14 Jul 2026" },
             { field: "Authentication method",   example: "Email OTP" },
-            { field: "Device and browser",       example: "Chrome 126 · Windows 11" },
-            { field: "IP address",               example: "Recorded — access-controlled" },
             { field: "Completion state",         example: "All fields completed" },
             { field: "Session identifier",       example: "Unique to this participant session" },
           ].map((d) => (

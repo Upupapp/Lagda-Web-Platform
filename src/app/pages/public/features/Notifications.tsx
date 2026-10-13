@@ -63,21 +63,20 @@ export function Notifications() {
         eyebrow="Notifications"
         headingId="notif-h1"
         heading="Know what's happening with every transaction — without checking manually."
-        sub="LAGDA sends notifications for the events that matter most: when a document is signed, viewed, declined, expiring, or completed. Senders and workspace members can control which channels they use."
+        sub="LAGDA emails you when a document you sent is completed, and shows in-app notices for what needs you: a document waiting for your signature, or a signing link that has ended."
       />
 
       <PageSection id="center" light bordered>
         <div style={{ display: "grid", gap: "32px 48px", alignItems: "start" }} className="notif-two-col">
           <div>
-            <SectionHeading eyebrow="Event types" id="et-h2" heading="Dismiss events from the interactive example." sub="The notification center surfaces the events that require attention. Action-required events are labeled so they stand out." />
+            <SectionHeading eyebrow="Event types" id="et-h2" heading="Dismiss events from the interactive example." sub="The notification center surfaces the events that require attention. Action-required events are labeled so they stand out. A decline, an expiry or a cancellation is not announced today: it shows on the document in your workspace." />
             <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 16 }}>
               {[
-                { label: "Signature completed",   icon: "✍️", when: "When any participant signs" },
-                { label: "Document viewed",       icon: "👁️", when: "When a participant opens the document" },
-                { label: "Request expiring",      icon: "⚠️", when: "Before a transaction deadline passes" },
-                { label: "Participant declined",  icon: "❌", when: "When any participant declines to sign" },
-                { label: "Delivery failed",       icon: "📬", when: "When an invitation cannot be delivered" },
-                { label: "Transaction completed", icon: "✅", when: "When all required participants have acted" },
+                { label: "Signing invitation",    icon: "📧", when: "Emailed to each participant when their turn comes" },
+                { label: "Waiting for your signature", icon: "✍️", when: "In-app, when a document is sent to your account's address" },
+                { label: "Signing link ended",    icon: "🔗", when: "In-app, to the sender, when a participant's link lapses unsigned" },
+                { label: "Document completed",    icon: "✅", when: "Emailed to the sender when all required participants have acted" },
+                { label: "Completed document",    icon: "📄", when: "Emailed to participants, unless the sender switches it off" },
               ].map((e) => (
                 <div key={e.label} style={{ display: "flex", gap: 10, alignItems: "center" }}>
                   <span style={{ fontSize: 14, width: 20, textAlign: "center", flexShrink: 0 }}>{e.icon}</span>
@@ -98,9 +97,8 @@ export function Notifications() {
         <SectionHeading eyebrow="Channels" id="ch-h2" heading="How LAGDA delivers notifications." center />
         <div style={{ display: "grid", gap: 10 }} className="ch-grid">
           {[
-            { icon: "📧", channel: "Email",                   desc: "Notification emails sent to the sender's verified email address. Includes transaction summary and direct link." },
-            { icon: "📱", channel: "In-app",                  desc: "Notifications appear in the LAGDA notification center when the sender or team member is signed in." },
-            { icon: "🔔", channel: "Digest (where available)", desc: "Daily or periodic summaries instead of individual notifications. Availability may vary by plan." },
+            { icon: "📧", channel: "Email",  desc: "Signing invitations, the sender's completion email and each participant's completed document are sent by email." },
+            { icon: "📱", channel: "In-app", desc: "Notices appear in the LAGDA notification center when you are signed in." },
           ].map((c) => (
             <div key={c.channel} style={{ background: "#ffffff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: 12, padding: "16px 14px", boxShadow: "0 1px 4px rgba(7,17,31,0.07)" }}>
               <span aria-hidden style={{ fontSize: 22, display: "block", marginBottom: 8 }}>{c.icon}</span>
@@ -109,17 +107,17 @@ export function Notifications() {
             </div>
           ))}
         </div>
-        <style>{`.ch-grid { grid-template-columns: repeat(3, 1fr); } @media (max-width: 680px) { .ch-grid { grid-template-columns: 1fr; } }`}</style>
+        <style>{`.ch-grid { grid-template-columns: repeat(2, 1fr); } @media (max-width: 680px) { .ch-grid { grid-template-columns: 1fr; } }`}</style>
       </PageSection>
 
-      <PageSection id="reminders" light bordered>
-        <SectionHeading eyebrow="Automatic reminders" id="ar-h2" heading="Pending signers are reminded so you don't have to follow up manually." center />
+      <PageSection id="following-up" light bordered>
+        <SectionHeading eyebrow="Following up" id="ar-h2" heading="What LAGDA does not send yet — and what you can do instead." center />
         <div style={{ display: "grid", gap: 10 }} className="ar-grid">
           {[
-            { title: "Automatic reminders",    desc: "LAGDA can send reminder notifications to participants who have not yet completed their action." },
-            { title: "Configurable schedule",  desc: "Reminder timing and frequency is set during transaction preparation or template configuration." },
-            { title: "Manual resend",          desc: "Senders can manually trigger a resend from the transaction management view." },
-            { title: "Expiry notification",    desc: "As a transaction nears its expiration date, the sender is notified to take action or extend." },
+            { title: "No automatic reminders",  desc: "LAGDA does not remind participants who have not yet acted. Follow up with them yourself." },
+            { title: "Send a new link",         desc: "When a participant's signing link has ended, the sender can send them a new one from the document." },
+            { title: "No decline or expiry notice", desc: "Nobody is emailed or notified when a document is declined, cancelled or expires. Its status changes in your workspace." },
+            { title: "No delivery-failure notice", desc: "LAGDA does not tell the sender when an invitation email could not be delivered. Check the address if a participant says nothing arrived." },
           ].map((r) => (
             <div key={r.title} style={{ background: "#ffffff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: 10, padding: "12px 14px", boxShadow: "0 1px 4px rgba(7,17,31,0.06)" }}>
               <p style={{ color: "#07111F", ...GF, fontSize: 13, fontWeight: 700, margin: 0, marginBottom: 4 }}>{r.title}</p>
@@ -132,7 +130,7 @@ export function Notifications() {
 
       <RelatedPages links={[
         { label: "Audit Trail",       desc: "Full timeline of all transaction events", path: "/features/audit-trail" },
-        { label: "Templates",         desc: "Set reminder schedules in saved templates", path: "/features/templates" },
+        { label: "Templates",         desc: "Reuse a signing workflow", path: "/features/templates" },
         { label: "Team Workspaces",   desc: "Workspace-level notification visibility", path: "/features/team-workspaces" },
       ]} />
 

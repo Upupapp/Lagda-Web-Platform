@@ -18,8 +18,8 @@ export const SECURITY_LAYERS = [
   { layer: "Account security",          icon: "🔐", desc: "Protects access to the LAGDA account or workspace using passwords, MFA, session management, and access history." },
   { layer: "Signing-request access",    icon: "🔗", desc: "Controls how a participant reaches a signing transaction — through a secure link, account login, or enterprise session." },
   { layer: "Signer authentication",     icon: "🔑", desc: "Increases confidence that the right participant is acting — via a secure link, an email code, or account login." },
-  { layer: "Signature adoption",        icon: "✍️", desc: "How the participant creates or applies their visible signature — type, draw, upload, or certificate-based." },
-  { layer: "Audit evidence",            icon: "📋", desc: "Records of every transaction event: delivery, viewing, authentication, signing, completion, and verification." },
+  { layer: "Signature adoption",        icon: "✍️", desc: "How the participant creates or applies their visible signature — type, draw, or upload." },
+  { layer: "Audit evidence",            icon: "📋", desc: "A record of each signing step — sent, opened, signed, completed — with the time and who acted." },
   { layer: "Document integrity",        icon: "🔍", desc: "Reference data that helps determine whether a document matches the recorded completed transaction." },
   { layer: "Storage and access",        icon: "💾", desc: "Secure storage, workspace separation, and controlled access to documents and evidence records." },
 ];
@@ -30,7 +30,7 @@ export const AUTH_COMPARISON = [
     method: "Secure link",
     experience: "Simple — just click the invitation link",
     independentChannel: false,
-    evidenceRecorded: ["Link access event", "IP address", "Browser", "Time"],
+    evidenceRecorded: ["Link access event", "Time"],
     typicalUse: "Standard, low-risk transactions",
     tier: "Core",
   },
@@ -38,7 +38,7 @@ export const AUTH_COMPARISON = [
     method: "Email OTP",
     experience: "Enter a code from the same email account",
     independentChannel: false,
-    evidenceRecorded: ["OTP verified event", "IP address", "Browser", "Time"],
+    evidenceRecorded: ["OTP verified event", "Time"],
     typicalUse: "Additional friction where email confirmation is sufficient",
     tier: "Core",
   },
@@ -62,7 +62,7 @@ export const AUTH_COMPARISON = [
     method: "Account login",
     experience: "Participant signs in to their LAGDA account",
     independentChannel: false,
-    evidenceRecorded: ["Account auth event", "Session", "IP", "Time"],
+    evidenceRecorded: ["Account auth event", "Time"],
     typicalUse: "Internal team transactions with registered users",
     tier: "Core",
   },
@@ -77,15 +77,18 @@ export const AUTH_COMPARISON = [
 ];
 
 // ── Evidence types ────────────────────────────────────────────────────────────
+// What a signing step leaves in the record, and what it does not. The second
+// half is deliberate: nothing below "Identity check" is collected for a signing
+// step, and the page says so rather than leaving it to be assumed.
 export const EVIDENCE_TYPES = [
-  { type: "IP address",        public: false, desc: "Approximate network location at time of action." },
-  { type: "Browser",           public: false, desc: "Browser name and version reported by the device." },
-  { type: "Operating system",  public: false, desc: "Device OS reported at the time of action." },
-  { type: "Device category",   public: false, desc: "Desktop, mobile, or tablet classification." },
-  { type: "User agent",        public: false, desc: "Full browser user-agent string." },
-  { type: "Timestamp",         public: true,  desc: "Date and time of each transaction event." },
-  { type: "Session identifier",public: false, desc: "Unique reference for the participant session." },
-  { type: "Approx. location",  public: false, desc: "IP-based location estimate. May be inaccurate or VPN-affected." },
+  { type: "Signing step",      recorded: true,  desc: "What happened: sent, opened, consented, signed, approved, declined, completed." },
+  { type: "Date and time",     recorded: true,  desc: "Taken from LAGDA's server when the step happens, not from the participant's device." },
+  { type: "Who acted",         recorded: true,  desc: "The participant or sender the step belongs to." },
+  { type: "Identity check",    recorded: true,  desc: "The result, where the sender asked for one (a Business plan option)." },
+  { type: "IP address",        recorded: false, desc: "Not recorded for any signing step." },
+  { type: "Browser",           recorded: false, desc: "Not recorded for any signing step." },
+  { type: "Device",            recorded: false, desc: "No device name, type or operating system is recorded." },
+  { type: "Location",          recorded: false, desc: "Not recorded, whether estimated from the network or asked of the device." },
 ];
 
 // ── Public vs private evidence ────────────────────────────────────────────────
@@ -100,9 +103,7 @@ export const PUBLIC_EVIDENCE = [
 export const PRIVATE_EVIDENCE = [
   "Signer identities and email addresses",
   "Mobile numbers",
-  "IP addresses and device data",
   "Authentication event details",
-  "Exact location information",
   "Audit trail detail",
   "Confidential document content",
 ];
@@ -114,7 +115,7 @@ export const DATA_CATEGORIES = [
   { category: "Document data",     examples: "Uploaded PDFs, field configuration, document status" },
   { category: "Participant data",  examples: "Name, email, mobile number, role, authentication result" },
   { category: "Authentication data", examples: "OTP events, auth method used, verification result" },
-  { category: "Audit data",        examples: "Event log, timestamps, device data, IP addresses" },
+  { category: "Audit data",        examples: "Event log, timestamps, who acted" },
   { category: "Verification data", examples: "Verification ID, record status, file comparison result" },
   { category: "Usage data",        examples: "Transaction volume, storage used" },
 ];
@@ -135,7 +136,7 @@ export const PRIVACY_PRINCIPLES = [
   { icon: "🎯", title: "Purpose limitation",       desc: "Use data only for the purpose it was collected." },
   { icon: "🔒", title: "Controlled access",        desc: "Restrict evidence access by role — not all users see all details." },
   { icon: "🔐", title: "Public/private separation", desc: "Public verification exposes only essential status. Private audit detail is access-controlled." },
-  { icon: "📌", title: "Explicit permission",       desc: "Precise device location requires explicit participant permission." },
+  { icon: "📌", title: "No location tracking",      desc: "LAGDA does not record an IP address, device or location for a signing step." },
   { icon: "🧹", title: "Retention controls",        desc: "Retention periods should be defined per workspace and comply with applicable requirements." },
   { icon: "👁️", title: "User transparency",       desc: "Users should understand what is collected and how it is used." },
   { icon: "🗑️", title: "Secure deletion",          desc: "Deletion requests should result in secure and verifiable removal." },

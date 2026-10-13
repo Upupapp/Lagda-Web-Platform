@@ -178,7 +178,6 @@ export const COMPARE_GROUPS: CompareGroup[] = [
       { id: "roles",          label: "Participant roles (signer, approver, viewer, CC)", ...ALL },
       { id: "parallel",       label: "Parallel signing",                                ...ALL },
       { id: "sequential",     label: "Sequential signing",                              ...ALL },
-      { id: "reminders",      label: "Automatic reminders",                             ...ALL },
       { id: "expiration",     label: "Transaction expiration",                          ...ALL },
     ],
   },
@@ -197,7 +196,7 @@ export const COMPARE_GROUPS: CompareGroup[] = [
     title: "Trust and Evidence",
     rows: [
       { id: "audit-trail",       label: "Audit trail",                 ...ALL },
-      { id: "completion-report", label: "Completion report",           ...ALL },
+      { id: "sealed-document",   label: "Sealed completed document",   ...ALL },
       { id: "doc-verification",  label: "Document Verification",       ...ALL },
       { id: "verification-id",   label: "Verification ID and QR code", ...ALL },
     ],
@@ -399,7 +398,7 @@ export const SAMPLE_COMPARE_GROUPS: readonly CatalogCompareGroup[] = [
     id: "signing", title: "Signing and trust",
     rows: [
       { id: "signer-auth", label: "Signer authentication", cell: p => p.signerAuthentication },
-      { id: "audit", label: "Audit trail and completion report", cell: () => true },
+      { id: "audit", label: "Audit trail and sealed completed document", cell: () => true },
       { id: "verification", label: "Document Verification", cell: () => true },
     ],
   },

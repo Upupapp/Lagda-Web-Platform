@@ -80,7 +80,7 @@ const CAPABILITIES = [
   { icon: "🔑", title: "Signer authentication", desc: "Secure link, email code, or account login — match authentication to transaction risk.", path: "/features/signer-authentication" },
   { icon: "📋", title: "Audit trail",            desc: "Every event — delivery, viewing, signing — timestamped and preserved.", path: "/features/audit-trail" },
   { icon: "🔍", title: "Document Verification", desc: "Confirm any document matches its LAGDA record using a Verification ID.", path: "/features/document-verification" },
-  { icon: "🔔", title: "Automatic reminders",   desc: "Clients are reminded without manual follow-up from your team.", path: "/features/notifications" },
+  { icon: "🔔", title: "Completion notice",     desc: "You are emailed when everyone has signed.", path: "/features/notifications" },
 ];
 
 export function Lawyers() {
@@ -89,7 +89,7 @@ export function Lawyers() {
       <PageHero
         eyebrow="For Lawyers"
         headingId="law-h1"
-        heading="Client documents — prepared, sent, signed, and verified without manual follow-up."
+        heading="Client documents — prepared, sent, signed, and verified in one place."
         sub="LAGDA eSignature helps solo practitioners, in-house counsel, and independent lawyers manage client agreements, engagement letters, and recurring documents — with a complete audit trail and document verification."
         gradient="radial-gradient(ellipse 80% 60% at 40% 0%, rgba(0,120,212,0.12) 0%, transparent 70%)"
       />

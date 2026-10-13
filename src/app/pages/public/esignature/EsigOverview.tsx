@@ -310,7 +310,7 @@ function SenderRecipientSection() {
 
   return (
     <PageSection id="sender-recipient" bordered>
-      <SectionHeading eyebrow="Two experiences" id="sr-heading" heading="Designed differently for senders and recipients." sub="The sender configures and tracks. The recipient signs in a clean, guided experience — no LAGDA account required." center />
+      <SectionHeading eyebrow="Two experiences" id="sr-heading" heading="Designed differently for senders and recipients." sub="The sender configures and tracks. The recipient signs in a clean, guided experience, using a free LAGDA account." center />
       <div style={{ display: "grid", gap: 24 }} className="sr-grid">
         {[{ title: "Sender", color: ON_LIGHT.azure, bg: "rgba(0,120,212,0.06)", border: "rgba(0,120,212,0.2)", steps: SENDER },
           { title: "Recipient", color: ON_LIGHT.gold, bg: "rgba(201,150,12,0.06)", border: "rgba(201,150,12,0.2)", steps: RECIPIENT }].map((col) => (
@@ -453,7 +453,7 @@ export function EsigOverview() {
       <RelatedPages links={[
         { label: "Core Workflow",        desc: "Step-by-step sender and recipient journey", path: "/esignature/core-workflow" },
         { label: "Verification & Audit", desc: "Evidence, audit trail, and public verification", path: "/esignature/verification-and-audit" },
-        { label: "Advanced Capabilities", desc: "Routing, reminders, and enterprise features", path: "/esignature/advanced-capabilities" },
+        { label: "Advanced Capabilities", desc: "Routing, expiration, and enterprise features", path: "/esignature/advanced-capabilities" },
         { label: "Templates & Branding", desc: "Reusable workflows and company branding", path: "/esignature/templates-and-branding" },
       ]} />
 

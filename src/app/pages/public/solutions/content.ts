@@ -77,10 +77,10 @@ export const SHARED_CAPABILITIES = [
   { icon: "↕️", title: "Sequential signing",    desc: "Define who signs first — unlock each step in order.", path: "/features/sequential-signing" },
   { icon: "⚡", title: "Parallel signing",      desc: "Multiple participants sign simultaneously.", path: "/features/parallel-signing" },
   { icon: "🔑", title: "Signer authentication", desc: "Secure link, email code, or account login.", path: "/features/signer-authentication" },
-  { icon: "📋", title: "Audit trail",            desc: "Every event — delivery, viewing, signing — timestamped.", path: "/features/audit-trail" },
+  { icon: "📋", title: "Audit trail",            desc: "Every step — sent, opened, signed — timestamped.", path: "/features/audit-trail" },
   { icon: "🔍", title: "Verification",           desc: "Confirm any document matches its LAGDA record.", path: "/features/document-verification" },
   { icon: "🗂️", title: "Team workspaces",       desc: "Shared templates, contacts, and role-based access.", path: "/features/team-workspaces" },
-  { icon: "🔔", title: "Notifications",          desc: "Alerts when documents are signed, viewed, or expiring.", path: "/features/notifications" },
+  { icon: "🔔", title: "Notifications",          desc: "An email when a document is completed, and in-app notices.", path: "/features/notifications" },
 ] as const;
 
 // ── Legal notices (used across pages) ─────────────────────────────────────────
@@ -101,7 +101,7 @@ export const LAWYER_WORKFLOW: WorkflowStep[] = [
   { num: "03", label: "Configure authentication",          desc: "Choose the authentication method appropriate to the transaction risk level." },
   { num: "04", label: "Assign signature fields",          desc: "Place required fields on the document and bind them to each participant's role." },
   { num: "05", label: "Send the secure request",          desc: "Invitations are delivered to each participant through a secure link." },
-  { num: "06", label: "Monitor and follow up",            desc: "Track delivery, viewing, and signing status. Reminders sent automatically." },
+  { num: "06", label: "Monitor and follow up",            desc: "Track who has opened and signed. Send a new link if one has ended." },
   { num: "07", label: "Download the completed record",    desc: "Download the signed document and attached audit trail." },
   { num: "08", label: "Retain the verification record",   desc: "Use the Verification ID to confirm the document matches its LAGDA record." },
 ];

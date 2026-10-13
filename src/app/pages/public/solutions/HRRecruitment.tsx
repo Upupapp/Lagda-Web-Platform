@@ -85,7 +85,7 @@ const CAPABILITIES = [
   { icon: "📇", title: "Saved contacts",        desc: "Store candidates and managers for recurring workflows.", path: "/features/contacts" },
   { icon: "🔑", title: "Signer authentication", desc: "OTP or account-based authentication for identity assurance.", path: "/features/signer-authentication" },
   { icon: "📋", title: "Audit trail",            desc: "Record of every event — delivery, viewing, signing — per employee.", path: "/features/audit-trail" },
-  { icon: "🔔", title: "Automatic reminders",   desc: "Missing signatures reminded automatically without HR follow-up.", path: "/features/notifications" },
+  { icon: "🔔", title: "Completion notice",     desc: "You are emailed when everyone has signed.", path: "/features/notifications" },
 ];
 
 export function HRRecruitment() {
@@ -95,7 +95,7 @@ export function HRRecruitment() {
         eyebrow="For HR & Recruitment"
         headingId="hr-h1"
         heading="Onboarding, employment, and policy documents — without the paper pile."
-        sub="LAGDA eSignature helps HR teams send offer letters, acknowledgment forms, and policy documents online — with templates, automatic reminders, and a complete audit trail."
+        sub="LAGDA eSignature helps HR teams send offer letters, acknowledgment forms, and policy documents online — with templates, signing status at a glance, and a complete audit trail."
         gradient="radial-gradient(ellipse 80% 60% at 40% 0%, rgba(0,120,212,0.12) 0%, transparent 70%)"
       />
 
@@ -151,7 +151,7 @@ export function HRRecruitment() {
 
       <AccountPageCTA
         heading="Start onboarding your next hire online."
-        sub="Templates, reminders, and a full audit trail — no paper required."
+        sub="Templates, signing status, and a full audit trail — no paper required."
         primaryLabel="Create Free Account"
         primaryPath="/create-account"
         secondaryLabel="Book a Demo"

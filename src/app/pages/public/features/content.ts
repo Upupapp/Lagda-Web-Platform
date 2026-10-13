@@ -62,13 +62,13 @@ export const OVERVIEW_CAPABILITIES = [
   // Trust & Evidence
   { icon: "🔑", title: "Signer Authentication", desc: "Increase confidence with a secure link, an email code, or a LAGDA account sign-in. SMS codes and SSO are planned.", path: "/features/signer-authentication", group: "Trust & Evidence" },
   { icon: "🪪", title: "Identity-Aware Signing", desc: "Layers access, authentication, intent, and document-integrity evidence.", path: "/features/identity-aware-signing", group: "Trust & Evidence" },
-  { icon: "📋", title: "Audit Trail", desc: "Every transaction event — delivery, viewing, authentication, signing — recorded.", path: "/features/audit-trail", group: "Trust & Evidence" },
+  { icon: "📋", title: "Audit Trail", desc: "Every signing step — sent, opened, signed, completed — recorded with its time and who acted.", path: "/features/audit-trail", group: "Trust & Evidence" },
   { icon: "🔍", title: "Document Verification", desc: "QR code, Verification ID, or link to confirm a document matches its record.", path: "/features/document-verification", group: "Trust & Evidence" },
   // Productivity
   { icon: "📑", title: "Templates", desc: "Save any workflow as a reusable template. Build once. Use every time.", path: "/features/templates", group: "Productivity" },
   { icon: "📇", title: "Contacts", desc: "Save participants for recurring document workflows. Reduce setup time.", path: "/features/contacts", group: "Productivity" },
   { icon: "🏢", title: "Company Branding", desc: "Your logo and colours across the workspace. Branded signing pages and emails are planned.", path: "/features/company-branding", group: "Productivity" },
-  { icon: "🔔", title: "Notifications", desc: "Stay informed when documents are signed, viewed, declined, or expiring.", path: "/features/notifications", group: "Productivity" },
+  { icon: "🔔", title: "Notifications", desc: "An email when your document is completed, and in-app notices for what needs you.", path: "/features/notifications", group: "Productivity" },
   // Team & Scale
   { icon: "🗂️", title: "Team Workspaces", desc: "Multiple senders, shared templates, roles, and unified administration.", path: "/features/team-workspaces", group: "Team & Scale" },
   { icon: "📊", title: "Storage & Plan Limits", desc: "Understand capacity, storage, and what to expect as volume grows.", path: "/features/storage-and-plan-limits", group: "Team & Scale" },
@@ -102,7 +102,6 @@ export const AUDIT_EVENTS = [
   { icon: "📄", event: "Transaction created",    who: "Ana Reyes · Sender",        time: "09:00 AM, 14 Jul 2026" },
   { icon: "📎", event: "Document uploaded",       who: "System",                    time: "09:00 AM, 14 Jul 2026" },
   { icon: "📧", event: "Invitation sent",         who: "Marco Santos · Signer",     time: "09:01 AM, 14 Jul 2026" },
-  { icon: "✉️", event: "Delivery confirmed",     who: "System",                    time: "09:01 AM, 14 Jul 2026" },
   { icon: "👁️", event: "Document viewed",       who: "Marco Santos · Signer",     time: "10:14 AM, 14 Jul 2026" },
   { icon: "🔑", event: "Authentication completed", who: "Marco Santos · Signer",   time: "10:14 AM, 14 Jul 2026" },
   { icon: "✍️", event: "Signature adopted",     who: "Marco Santos · Signer",     time: "10:16 AM, 14 Jul 2026" },
@@ -151,13 +150,13 @@ export const VERIFICATION_STATES = [
 ];
 
 // ── Notification events ───────────────────────────────────────────────────────
+// Only notices LAGDA really sends. There is none for a decline, an expiry, a
+// cancellation or an email that could not be delivered, so none is shown.
 export const NOTIFICATION_EVENTS = [
-  { icon: "✍️", title: "Signature completed",    desc: "Marco Santos signed Professional Services Agreement.", time: "Just now",   action: true },
-  { icon: "👁️", title: "Document viewed",       desc: "Lea Cruz opened the NDA — Standard document.",       time: "3 min ago",  action: false },
-  { icon: "⚠️", title: "Request expiring",      desc: "Board Resolution Template expires in 2 days.",       time: "1 hr ago",   action: true },
-  { icon: "❌", title: "Participant declined",  desc: "Juan Reyes declined to sign Engagement Letter.",      time: "2 hrs ago",  action: true },
-  { icon: "📬", title: "Delivery failed",       desc: "Invitation to unknown@example.com could not be delivered.", time: "Yesterday", action: true },
-  { icon: "✅", title: "Transaction completed", desc: "NDA — Standard is now fully signed by all parties.",  time: "Yesterday",  action: false },
+  { icon: "✅", title: "Document completed",      desc: "NDA — Standard is now fully signed by all parties.",   time: "Just now",   action: false },
+  { icon: "✍️", title: "Waiting for your signature", desc: "Mabini Legal Solutions sent you Engagement Letter.", time: "3 min ago",  action: true },
+  { icon: "🔗", title: "Signing link ended",      desc: "Juan Reyes has not signed Board Resolution and his link has ended.", time: "1 hr ago", action: true },
+  { icon: "📄", title: "Document shared with you", desc: "Lea Cruz shared Professional Services Agreement.",    time: "Yesterday",  action: false },
 ];
 
 // ── Template data ─────────────────────────────────────────────────────────────
@@ -168,9 +167,7 @@ export const TEMPLATE_FIELDS = [
   "Routing — parallel or sequential",
   "Authentication requirements per role",
   "Approval step configuration",
-  "Reminder schedule",
   "Expiration policy",
-  "Invitation message",
   "Company branding settings",
   "Verification ID placement",
   "Template version and status",

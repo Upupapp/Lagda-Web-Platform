@@ -212,7 +212,7 @@ export function EsigTeamEnterprise() {
           {[
             { title: "Two-step verification",   desc: "Every member can protect their own sign-in with an authenticator app." },
             { title: "Verified accounts",        desc: "Every account confirms its email address before it can be used." },
-            { title: "Audit trail",              desc: "Every signing event is recorded, with a completion report and Document Verification." },
+            { title: "Audit trail",              desc: "Every signing event is recorded, with a sealed completed document and Document Verification." },
             { title: "Role-based access",        desc: "Each member sees and does only what their role allows." },
             { title: "Custom document volume",   desc: "Volume beyond Business for high-sending organizations.", enterprise: true },
             { title: "Dedicated onboarding and support", desc: "A guided rollout and a direct line to the LAGDA team.", enterprise: true },

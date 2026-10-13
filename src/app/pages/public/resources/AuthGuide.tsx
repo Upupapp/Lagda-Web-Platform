@@ -102,7 +102,7 @@ export function AuthGuide() {
 
         <GuideSection id="signature-adoption" title="Signature adoption and intent">
           <GuidePara>
-            After completing any required authentication, participants review the document and adopt their signature. LAGDA records the moment of adoption with a timestamp and available device context.
+            After completing any required authentication, participants review the document and adopt their signature. LAGDA records the moment of adoption with a timestamp and the participant who acted.
           </GuidePara>
           <GuidePara>
             Signature adoption in LAGDA is designed to reflect the participant's intent to sign. The exact legal effect depends on the document, transaction, and applicable law — LAGDA does not determine legal sufficiency for a specific use.
@@ -114,15 +114,14 @@ export function AuthGuide() {
             LAGDA records authentication events in the audit trail. This typically includes:
           </GuidePara>
           <GuideList items={[
-            "Invitation delivery timestamp",
+            "Invitation sent timestamp",
             "Link opened timestamp",
             "Authentication method used",
             "Authentication completed timestamp",
-            "Approximate device and browser context",
             "Signature adopted timestamp",
           ]} />
           <GuidePara>
-            Authentication evidence is available in the completion report and audit trail associated with each transaction.
+            Authentication evidence is available in the audit trail associated with each transaction.
           </GuidePara>
         </GuideSection>
 

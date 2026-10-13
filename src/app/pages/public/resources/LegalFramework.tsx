@@ -48,11 +48,11 @@ export function LegalFramework() {
           <GuideList items={[
             "Delivery of the invitation to a specific known email address",
             "A configured authentication step that the participant completes",
-            "Recording of contextual evidence including timestamp and device information",
+            "Recording of when each step happened and who acted",
             "A verifiable audit record of the complete signing event",
           ]} />
           <GuidePara>
-            LAGDA records these events and makes them available in the audit trail and completion report. The strength of attribution depends in part on the authentication method chosen by the sender.
+            LAGDA records these events and makes them available in the audit trail. It does not record an IP address, device or location. The strength of attribution depends in part on the authentication method chosen by the sender.
           </GuidePara>
         </GuideSection>
 
@@ -70,13 +70,13 @@ export function LegalFramework() {
             Document integrity refers to the assurance that a document has not been changed since it was finalized. LAGDA records information about the completed document that supports a comparison when someone presents a copy for verification.
           </GuidePara>
           <GuidePara>
-            Where file comparison is supported in Document Verification, a user presenting a file that does not match the recorded version will receive a mismatch result. This does not guarantee that all possible modifications can be detected, and it does not substitute for cryptographic certificate-based signature methods where those are required.
+            Where file comparison is supported in Document Verification, a user presenting a file that does not match the recorded version will receive a mismatch result. This does not guarantee that all possible modifications can be detected, and it does not substitute for cryptographic certificate-based signature methods where those are required. LAGDA's seal is a digest of the completed file kept by LAGDA; it is not a digital signature embedded in the PDF.
           </GuidePara>
         </GuideSection>
 
         <GuideSection id="records-retention" title="Records and retention">
           <GuidePara>
-            LAGDA maintains records of completed transactions, including audit trails, completion reports, and verification records. How long records are retained depends on plan terms and organizational settings. Users and organizations are responsible for their own record-keeping obligations.
+            LAGDA maintains records of completed transactions, including audit trails, sealed completed documents, and verification records. How long records are retained depends on plan terms and organizational settings. Users and organizations are responsible for their own record-keeping obligations.
           </GuidePara>
           <GuidePara>
             LAGDA does not determine or guarantee what retention period applies to a specific document type. Organizations should confirm their own obligations.

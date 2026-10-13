@@ -98,7 +98,7 @@ export const TOP_NAV: NavSection[] = [
       { label: "Identity Verification",           path: "/security/identity-verification",          description: "Know exactly who signed and how." },
       { label: "Audit Trail",                     path: "/security/audit-trail",                    description: "Every action recorded with timestamp and evidence." },
       { label: "Document Verification",           path: "/security/document-verification",          description: "Verify completed documents via QR or Verification ID." },
-      { label: "Device & Location Evidence",      path: "/security/device-and-location-evidence",   description: "Signing evidence captured at each event." },
+      { label: "Device & Location Evidence",      path: "/security/device-and-location-evidence",   description: "What a signing record holds, and what it does not." },
       { label: "Secure Storage",                  path: "/security/secure-storage",                 description: "How documents are stored and kept." },
     ],
   },

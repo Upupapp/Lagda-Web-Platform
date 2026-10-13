@@ -82,7 +82,7 @@ const CAPABILITIES = [
   { icon: "📇", title: "Saved contacts",        desc: "Add tenants and owners to your contact directory.", path: "/features/contacts" },
   { icon: "📋", title: "Audit trail",            desc: "Record of every delivery, viewing, and signature event.", path: "/features/audit-trail" },
   { icon: "🔍", title: "Document Verification", desc: "Confirm any completed document against its LAGDA record.", path: "/features/document-verification" },
-  { icon: "🔔", title: "Automatic reminders",   desc: "Expiring signatures are reminded automatically.", path: "/features/notifications" },
+  { icon: "🔔", title: "Completion notice",     desc: "You are emailed when everyone has signed.", path: "/features/notifications" },
 ];
 
 export function RealEstate() {

@@ -67,12 +67,12 @@ export function SecurityGuide() {
 
         <GuideSection id="audit-evidence" title="5. Audit trail and evidence">
           <GuidePara>
-            Every significant event in a transaction is recorded — invitation delivery, document access, authentication, signature adoption, approval, and completion. These records are available in the audit trail and completion report.
+            Every significant event in a transaction is recorded — invitation, document access, authentication, signature adoption, approval, and completion. These records are available in the audit trail.
           </GuidePara>
           <GuideList items={[
             "Timestamps for all key events",
             "Authentication method and result",
-            "Approximate device and browser context where available",
+            "Who acted at each step",
             "Signing sequence and participant completion status",
           ]} />
           <GuidePara>

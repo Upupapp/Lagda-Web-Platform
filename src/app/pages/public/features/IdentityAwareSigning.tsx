@@ -9,9 +9,9 @@ const GM = { fontFamily: "'Geist Mono', monospace" };
 const LAYERS = [
   { num: "01", label: "Recipient access",    color: "#0078D4", desc: "The participant receives a secure invitation to the transaction. Access is controlled by the invitation method — link, account login, or enterprise session." },
   { num: "02", label: "Authentication",      color: "#0078D4", desc: "A configured method verifies the participant has access to a credential — today an email account or a LAGDA account; a mobile number and an enterprise identity are planned. Different methods provide different evidence." },
-  { num: "03", label: "Signature adoption",  color: "#178A4C", desc: "The participant applies a visible representation — typed, drawn, uploaded, or certificate-based. A signature image is a representation. Authentication is what builds the evidence record." },
+  { num: "03", label: "Signature adoption",  color: "#178A4C", desc: "The participant applies a visible representation — typed, drawn, or uploaded. A signature image is a representation. Authentication is what builds the evidence record." },
   { num: "04", label: "Intent and consent",  color: "#9A7208", desc: "The platform records that the participant took a deliberate action — reviewing, consenting, and completing their assigned fields — not that the document was signed accidentally." },
-  { num: "05", label: "Event evidence",      color: "#7C3AED", desc: "Each action — invitation, delivery, viewing, authentication, signing, completion — is recorded as a timestamped audit event with device and network context." },
+  { num: "05", label: "Event evidence",      color: "#7C3AED", desc: "Each action — invitation, opening, authentication, signing, completion — is recorded as a timestamped audit event naming who acted." },
   { num: "06", label: "Document integrity",  color: "#BE185D", desc: "A reference record helps determine whether the document matches its state at the time of completion. Public verification compares an uploaded file against this record." },
 ];
 
@@ -77,7 +77,7 @@ export function IdentityAwareSigning() {
           <div style={{ background: "rgba(34,197,94,0.06)", border: "1px solid rgba(34,197,94,0.2)", borderRadius: 12, padding: "18px 18px" }}>
             <p style={{ color: "#178A4C", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", marginBottom: 10 }}>IDENTITY EVIDENCE</p>
             <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: 7 }}>
-              {["Authentication event and method", "Timestamps for each key action", "Device, browser, and IP context", "Consent and intent record", "Document integrity reference"].map((t) => (
+              {["Authentication event and method", "Timestamps for each key action", "Who acted at each step", "Consent and intent record", "Document integrity reference"].map((t) => (
                 <li key={t} style={{ color: "#64748B", ...GF, fontSize: 13, lineHeight: 1.45 }}>{t}</li>
               ))}
             </ul>

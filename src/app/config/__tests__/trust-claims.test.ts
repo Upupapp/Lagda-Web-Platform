@@ -72,6 +72,25 @@ function rel(file: string): string {
 
 const FILES = userFacingFiles();
 
+/**
+ * The copy a visitor reads before they have an account: the public pages, the
+ * Help Center's articles, and the three config files those pages are built
+ * from (plan comparison rows, menu descriptions, page descriptions).
+ */
+function publicFiles(): string[] {
+  const out = FILES.filter(f => rel(f).startsWith("pages/public/"));
+  const content = path.join(APP_ROOT, "content");
+  for (const entry of fs.readdirSync(content, { withFileTypes: true })) {
+    if (entry.isFile() && /\.tsx?$/.test(entry.name)) out.push(path.join(content, entry.name));
+  }
+  for (const name of ["pricing.config.ts", "nav.config.ts", "routes.ts"]) {
+    out.push(path.join(APP_ROOT, "config", name));
+  }
+  return out;
+}
+
+const PUBLIC_FILES = publicFiles();
+
 describe("trust invariants", () => {
   it("has files to check", () => {
     // Guards the whole suite: if the walk breaks, every other test below would
@@ -169,6 +188,155 @@ describe("trust invariants", () => {
     const names = FILES.map(rel);
     expect(names).toContain("layouts/AuthLayout.tsx");
     expect(names).toContain("components/auth/AuthCarousel.tsx");
+  });
+
+  // ── Claims about what the product does ─────────────────────────────────────
+  //
+  // A different kind of sentence from the two above: not a legal absolute, but
+  // a plain statement of a feature the server does not have. An audit of the
+  // live system against the public pages found six kinds, all since reworded.
+  // Each invariant below is one of those kinds, so none can come back quietly.
+  //
+  // They read the PUBLIC copy only. The demo build still has reminder settings
+  // and mock notifications inside the app, and those are labelled as a
+  // demonstration where they appear; a visitor deciding whether to trust LAGDA
+  // reads the pages below.
+
+  it("has public copy to check", () => {
+    // Same guard as "has files to check": an empty list would pass everything.
+    expect(PUBLIC_FILES.length).toBeGreaterThan(60);
+    const names = PUBLIC_FILES.map(rel);
+    expect(names).toContain("pages/public/features/Notifications.tsx");
+    expect(names).toContain("pages/public/security/content.ts");
+    expect(names).toContain("content/help-articles.ts");
+    expect(names).toContain("config/pricing.config.ts");
+  });
+
+  /**
+   * Every match of `claim` in the public copy that `allowed` does not excuse.
+   * `allowed` sees the sentence leading up to the match, the match and the 200
+   * characters after it, because an honest denial may sit on either side:
+   * "does not record an IP address", or a table row whose label is "IP address"
+   * and whose description is "Not recorded".
+   */
+  function publicOffenders(claim: RegExp, allowed: RegExp, skip: readonly string[] = []): string[] {
+    const offenders: string[] = [];
+    for (const file of PUBLIC_FILES) {
+      if (skip.includes(rel(file))) continue;
+      const src = read(file);
+      for (const m of src.matchAll(claim)) {
+        const i = m.index ?? 0;
+        let before = src.slice(Math.max(0, i - 150), i);
+        const stop = before.lastIndexOf(". ");
+        if (stop !== -1) before = before.slice(stop);
+        const after = src.slice(i, i + m[0].length + 200);
+        // Joined, so a denial that straddles the match ("no reminders") counts.
+        if (allowed.test(before + after)) continue;
+        offenders.push(
+          `${rel(file)} [${m[0]}]: …${src.slice(Math.max(0, i - 70), i + m[0].length + 50).replace(/\s+/g, " ")}…`,
+        );
+      }
+    }
+    return offenders;
+  }
+
+  it("never says a signing step records an IP address, device, browser or location", () => {
+    // The audit trail holds the step, the server's time and who acted. Nothing
+    // about the network or the machine is recorded for a signing step.
+    const claim =
+      /\b(IP address(es)?|IP (information|context|location)|IP-based|device (data|details|context|evidence|information|fingerprinting|category|location)|device and browser|device, browser|browser context|network (context|location|address)|location (data|information|estimate)|approximate (device )?location|user[- ]agent|geolocation)\b/gi;
+    const denied =
+      /\b(does not (record|collect|estimate|hold|ask)|not recorded|not collected|no (IP|device|location))\b/i;
+    // The Privacy Policy states a different and true fact: the web SERVER logs
+    // the address each request came from. That is not signing evidence.
+    expect(publicOffenders(claim, denied, ["pages/public/legal/Privacy.tsx"])).toEqual([]);
+  });
+
+  it("never offers reminders", () => {
+    // The server sends none, automatic or manual.
+    const claim = /\bremind(er|ers|ed|s)?\b/gi;
+    // "Legal formalities reminder" is a heading addressed to the reader, not a
+    // feature.
+    const denied = /\b(does not (send|remind)|no (automatic )?reminders?)\b|formalities reminder/i;
+    expect(publicOffenders(claim, denied)).toEqual([]);
+  });
+
+  // Notices nobody is sent: a decline, a cancellation, an expiry (or its
+  // approach), an invitation that could not be delivered. The sender is
+  // emailed on completion and told in the app when a signing link lapses, and
+  // that is all.
+  const ABSENT_NOTICES = [
+    "delivery failed",
+    "delivery confirmed",
+    "confirmed as received",
+    "track delivery",
+    "bounce",
+    "request expiring",
+    "expiry notification",
+    "viewed, declined",
+    "viewed, or expiring",
+    "declined or expired, and when",
+    "the sender is told at once",
+    "you are told in lagda when it does",
+  ];
+
+  it.each(ABSENT_NOTICES)("never promises a notice that is not sent: %s", phrase => {
+    const offenders = PUBLIC_FILES.filter(f => read(f).toLowerCase().includes(phrase));
+    expect(offenders.map(rel)).toEqual([]);
+  });
+
+  it("never describes the seal as a digital signature", () => {
+    // The seal is a SHA-256 digest LAGDA keeps and checks at /verify. Nothing
+    // is embedded in the PDF and no certificate is involved, so the words for
+    // that technology may appear only where the copy says LAGDA is not it.
+    const claim =
+      /\b(digitally signed|certificate-based|PKI|public key infrastructure|digital signature embedded|embedded digital signature)\b/gi;
+    expect(publicOffenders(claim, NEGATORS)).toEqual([]);
+  });
+
+  it("never offers a completion report or certificate", () => {
+    // One is generated when a document completes, and there is no way to
+    // download it. What a sender does get is the sealed document itself.
+    const claim = /\b(completion (report|certificate)s?|certificate of completion|audit reports?)\b/gi;
+    expect(publicOffenders(claim, NEGATORS)).toEqual([]);
+  });
+
+  // The invitation email is LAGDA's own wording. A sender cannot change its
+  // subject, add a message or attach instructions for a participant.
+  const CUSTOM_INVITATION_CLAIMS = [
+    "email subject and message",
+    "invitation message",
+    "subject line",
+    "personal note",
+    "private instructions",
+    "signing instructions",
+    "instructions visible",
+    "set instructions",
+    "any instructions",
+  ];
+
+  it.each(CUSTOM_INVITATION_CLAIMS)("never offers a custom invitation: %s", phrase => {
+    const offenders = PUBLIC_FILES.filter(f => read(f).toLowerCase().includes(phrase));
+    expect(offenders.map(rel)).toEqual([]);
+  });
+
+  // Every participant signs in to a LAGDA account, or creates a free one, to
+  // sign. CHECKING a document at /verify needs no account, and the copy may
+  // go on saying so ("no account needed"), which is why these are whole
+  // phrases about signing rather than a pattern.
+  const NO_ACCOUNT_SIGNING_CLAIMS = [
+    "no lagda account required",
+    "no lagda account needed",
+    "no account is needed",
+    "sign without an account",
+    "signed without an account",
+    "signing without an account",
+    "without creating an account",
+  ];
+
+  it.each(NO_ACCOUNT_SIGNING_CLAIMS)("never says signing needs no account: %s", phrase => {
+    const offenders = PUBLIC_FILES.filter(f => read(f).toLowerCase().includes(phrase));
+    expect(offenders.map(rel)).toEqual([]);
   });
 
   // ── Disclaimer integrity ───────────────────────────────────────────────────

@@ -58,7 +58,7 @@ export function Templates() {
         eyebrow="Templates"
         headingId="tmpl-h1"
         heading="Build a signing workflow once. Use it every time."
-        sub="A LAGDA template is more than a stored document — it captures the complete workflow: fields, roles, routing, authentication, branding, reminders, and expiration. Set it up once, then launch a new transaction in seconds."
+        sub="A LAGDA template is more than a stored document — it captures the complete workflow: fields, roles, routing, authentication, and branding. Set it up once, then launch a new transaction in seconds."
       />
 
       <PageSection id="library" light bordered>

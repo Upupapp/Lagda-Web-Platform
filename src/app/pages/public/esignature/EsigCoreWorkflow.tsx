@@ -223,7 +223,6 @@ function ReviewSummaryMockup() {
         { label: "Routing",     value: "Sequential" },
         { label: "Auth",        value: "Email OTP · Secure Link" },
         { label: "Fields",      value: "4 fields placed" },
-        { label: "Reminder",    value: "3 days, then daily" },
         { label: "Expires",     value: "21 July 2026" },
       ].map((row) => (
         <div key={row.label} style={{ padding: "9px 16px", borderBottom: "1px solid rgba(0,0,0,0.05)", display: "flex", gap: 12, alignItems: "flex-start" }}>
@@ -243,7 +242,7 @@ function ReviewSummaryMockup() {
 // ── Recipient journey steps ───────────────────────────────────────────────────
 const RECIPIENT_STEPS = [
   { num: 1, title: "Open the invitation",    desc: "Participant receives a secure invitation via email with a unique link." },
-  { num: 2, title: "Confirm document",       desc: "Participant sees the sender, document name, and any instructions." },
+  { num: 2, title: "Confirm document",       desc: "Participant sees the sender and the document name." },
   { num: 3, title: "Authenticate",           desc: "Participant completes the configured identity verification step." },
   { num: 4, title: "Review the document",    desc: "Participant reads the full document before completing any fields." },
   { num: 5, title: "Complete required fields", desc: "Navigate to signature, initials, and any other assigned fields." },
@@ -276,9 +275,9 @@ export function EsigCoreWorkflow() {
       <PageSection id="prepare" light bordered>
         <div style={{ display: "grid", gap: "32px 48px", alignItems: "start" }} className="cw-two-col">
           <div>
-            <SectionHeading eyebrow="Step 1" id="prepare-heading" heading="Prepare documents faster." sub="Upload PDFs, configure fields, set instructions and reminders, and prepare the complete document before it goes out." />
+            <SectionHeading eyebrow="Step 1" id="prepare-heading" heading="Prepare documents faster." sub="Upload PDFs, configure fields, set a deadline, and prepare the complete document before it goes out." />
             <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>
-              {["Upload one or multiple PDFs", "Define document order in multi-document transactions", "Add instructions visible to all participants", "Set automated reminder schedule", "Set a completion deadline", "Save as a draft before sending"].map((item) => (
+              {["Upload one or multiple PDFs", "Define document order in multi-document transactions", "Set a completion deadline", "Save as a draft before sending"].map((item) => (
                 <li key={item} style={{ display: "flex", gap: 8, alignItems: "flex-start", marginBottom: 8 }}>
                   <span style={{ color: "#0078D4", fontWeight: 700, flexShrink: 0, fontSize: 13 }}>✓</span>
                   <span style={{ color: "#334155", ...GF, fontSize: 14, lineHeight: 1.5 }}>{item}</span>
@@ -367,7 +366,7 @@ export function EsigCoreWorkflow() {
 
       {/* Recipient journey */}
       <PageSection id="recipient">
-        <SectionHeading eyebrow="Recipient experience" id="recip-heading" heading="Make signing simple for every recipient." sub="Recipients follow a guided, step-by-step experience. No LAGDA account required — just the secure invitation link." />
+        <SectionHeading eyebrow="Recipient experience" id="recip-heading" heading="Make signing simple for every recipient." sub="Recipients follow a guided, step-by-step experience. They open their secure invitation link and sign in to a free LAGDA account, or create one on the way." />
         <div style={{ display: "grid", gap: 10 }} className="recip-grid">
           {RECIPIENT_STEPS.map((s) => (
             <div key={s.num} style={{ background: "#ffffff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: 12, padding: "14px 14px", boxShadow: "0 1px 4px rgba(7,17,31,0.06)" }}>
@@ -384,7 +383,7 @@ export function EsigCoreWorkflow() {
 
       <RelatedPages links={[
         { label: "Verification & Audit",   desc: "How evidence is recorded and documents are verified", path: "/esignature/verification-and-audit" },
-        { label: "Advanced Capabilities",  desc: "Reminders, expiration, and complex routing", path: "/esignature/advanced-capabilities" },
+        { label: "Advanced Capabilities",  desc: "Expiration and complex routing", path: "/esignature/advanced-capabilities" },
       ]} />
 
       <AccountPageCTA

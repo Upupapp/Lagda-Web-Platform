@@ -164,7 +164,7 @@ export function EsigTemplatesBranding() {
         eyebrow="Templates & Branding"
         headingId="tb-h1"
         heading="Turn repeat documents into reusable workflows."
-        sub="A LAGDA template is more than a stored document — it captures the full workflow: fields, routing, authentication, reminders, and branding. Build once. Use every time."
+        sub="A LAGDA template is more than a stored document — it captures the full workflow: fields, routing, authentication, and branding. Build once. Use every time."
       />
 
       {/* Template library */}

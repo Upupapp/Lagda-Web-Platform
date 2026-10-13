@@ -70,7 +70,7 @@ export const GENERAL_FAQ_GROUPS = [
       {
         id: "use-templates",
         q: "Can I use templates?",
-        a: "Yes. Templates allow you to save a complete document workflow — including document files, fields, participant roles, routing, authentication rules, and reminders — and reuse it for future transactions. Personal templates are available on all plans; shared templates require Business or Enterprise.",
+        a: "Yes. Templates allow you to save a complete document workflow — including document files, fields, participant roles, routing, and authentication rules — and reuse it for future transactions. Personal templates are available on all plans; shared templates require Business or Enterprise.",
       },
     ],
   },
@@ -101,7 +101,7 @@ export const GENERAL_FAQ_GROUPS = [
       {
         id: "audit-trail-content",
         q: "What is recorded in an audit trail?",
-        a: "An audit trail records significant events in a transaction: when the document was prepared, when invitations were sent, when participants opened the invitation, when authentication was completed, when the document was viewed, when signatures were adopted, and when the transaction was completed. Timestamps and contextual device evidence are recorded.",
+        a: "An audit trail records significant events in a transaction: when the document was prepared, when invitations were sent, when participants opened the invitation, when authentication was completed, when the document was viewed, when signatures were adopted, and when the transaction was completed. Each event is recorded with its time and who acted. LAGDA does not record an IP address, device or location.",
       },
     ],
   },
@@ -142,8 +142,8 @@ export const GENERAL_FAQ_GROUPS = [
       },
       {
         id: "location-collected",
-        q: "Is exact location always collected?",
-        a: "Location data collection depends on device capability, participant consent, and platform settings. LAGDA may record approximate device location as part of audit evidence where available. Exact GPS precision is not guaranteed.",
+        q: "Does LAGDA record a signer's location, device or IP address?",
+        a: "No. The audit trail records each signing step with its time and who acted. It does not record an IP address, device, browser or location for any signing step.",
       },
       {
         id: "auth-choose",

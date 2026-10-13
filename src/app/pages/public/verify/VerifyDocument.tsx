@@ -201,7 +201,7 @@ function DemoVerifyDocument() {
             Verify a LAGDA Document
           </h1>
           <p style={{ color: "#334155", ...GF, fontSize: 15, lineHeight: 1.7, maxWidth: 520, margin: 0 }}>
-            Enter a Verification ID to check the status of a LAGDA-signed transaction. Completed transactions display a Verification ID on the completion report and signed document.
+            Enter a Verification ID to check the status of a LAGDA-signed transaction. Completed transactions display a Verification ID on the signed document.
           </p>
         </div>
       </section>
@@ -248,7 +248,7 @@ function DemoVerifyDocument() {
                   Verification ID <span aria-hidden style={{ color: "#DC2626" }}>*</span>
                 </label>
                 <p id="ver-id-hint" style={{ color: "#64748B", ...GF, fontSize: 11, marginBottom: 6, lineHeight: 1.4 }}>
-                  Format: LAGDA-VER-YYYY-XXXXXX — found on the completion report and signed document.
+                  Format: LAGDA-VER-YYYY-XXXXXX — found on the signed document.
                 </p>
                 <input id="ver-id" type="text" value={verificationId}
                   onChange={(e) => setVerificationId(e.target.value.toUpperCase())}

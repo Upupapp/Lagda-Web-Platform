@@ -53,7 +53,7 @@ function VerificationDemo() {
             ))}
           </div>
           <div style={{ marginTop: 12, padding: "8px 10px", background: "#f8fafb", border: "1px solid rgba(0,0,0,0.07)", borderRadius: 8 }}>
-            <p style={{ color: "#94A3B8", ...GM, fontSize: 9, margin: 0 }}>Private: Signer identities, IP addresses, device data, and authentication details are not shown publicly.</p>
+            <p style={{ color: "#94A3B8", ...GM, fontSize: 9, margin: 0 }}>Private: Signer identities and authentication details are not shown publicly.</p>
           </div>
         </div>
         {/* Explanation */}
@@ -87,7 +87,7 @@ export function DocVerification() {
                 "Locate the transaction record using the Verification ID",
                 "Compare the uploaded file against the recorded completed document",
                 "Return a controlled result — status and match only",
-                "Never expose private signer identity, IP, or authentication data",
+                "Never expose private signer identity or authentication data",
                 "Distinguish record status from file-match status",
               ].map((item) => (
                 <div key={item} style={{ display: "flex", gap: 8 }}>
@@ -134,7 +134,7 @@ export function DocVerification() {
           </div>
           <div style={{ background: "rgba(239,68,68,0.06)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: 12, padding: "16px 16px" }}>
             <p style={{ color: "#DC2626", ...GM, fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", marginBottom: 10 }}>NOT SHOWN PUBLICLY</p>
-            {["Signer names and email addresses", "Mobile numbers", "IP addresses and device data", "Authentication event details", "Confidential document content", "Private audit details"].map((t) => (
+            {["Signer names and email addresses", "Mobile numbers", "Authentication event details", "Confidential document content", "Private audit details"].map((t) => (
               <div key={t} style={{ display: "flex", gap: 8, marginBottom: 6 }}>
                 <span style={{ color: "#DC2626", flexShrink: 0 }}>✕</span>
                 <span style={{ color: "#334155", ...GF, fontSize: 13 }}>{t}</span>

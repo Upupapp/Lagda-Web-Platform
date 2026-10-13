@@ -56,8 +56,8 @@ function ParallelSequentialComparison() {
   );
 }
 
-// â”€â”€ Reminders mockup â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-function RemindersMockup() {
+// â”€â”€ Expiration mockup â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+function ExpirationMockup() {
   return (
     <div aria-hidden style={{
       background: "#ffffff",
@@ -66,12 +66,12 @@ function RemindersMockup() {
       maxWidth: 360, width: "100%",
     }}>
       <div style={{ padding: "12px 16px", borderBottom: "1px solid rgba(0,0,0,0.07)" }}>
-        <span style={{ color: "#07111F", ...GF, fontSize: 12, fontWeight: 700 }}>Reminder Settings</span>
+        <span style={{ color: "#07111F", ...GF, fontSize: 12, fontWeight: 700 }}>Expiration Settings</span>
       </div>
       {[
-        { label: "First reminder",       value: "After 3 days" },
-        { label: "Follow-up reminders",  value: "Every 2 days" },
-        { label: "Completion deadline",  value: "21 July 2026" },
+        { label: "Expiration date",      value: "21 July 2026" },
+        { label: "Signing closes",       value: "End of that day, Philippine time" },
+        { label: "Signing link",         value: "Works for 14 days" },
         { label: "After expiry",         value: "Transaction locked, record retained" },
       ].map((row) => (
         <div key={row.label} style={{ padding: "9px 16px", borderBottom: "1px solid rgba(0,0,0,0.05)", display: "flex", gap: 12 }}>
@@ -81,7 +81,7 @@ function RemindersMockup() {
       ))}
       <div style={{ padding: "10px 16px", background: "#f8fafb" }}>
         <p style={{ color: "#64748B", ...GF, fontSize: 11, margin: 0 }}>
-          Reminder delivery is not guaranteed. LAGDA dispatches reminders but cannot control email delivery.
+          LAGDA does not send automatic reminders. Follow up with a participant yourself, or send them a new link.
         </p>
       </div>
     </div>
@@ -141,7 +141,7 @@ export function EsigAdvancedCapabilities() {
         eyebrow="Advanced Capabilities"
         headingId="ac-h1"
         heading="Advanced tools for faster, clearer signing workflows."
-        sub="Beyond the basic signing journey — LAGDA supports parallel and sequential routing, reminders, expiration, organization features, and enterprise-scale capabilities as the platform expands."
+        sub="Beyond the basic signing journey — LAGDA supports parallel and sequential routing, expiration, organization features, and enterprise-scale capabilities as the platform expands."
       />
 
       {/* Routing comparison */}
@@ -156,18 +156,17 @@ export function EsigAdvancedCapabilities() {
         </div>
       </PageSection>
 
-      {/* Reminders and expiration */}
-      <PageSection id="reminders">
+      {/* Expiration */}
+      <PageSection id="expiration">
         <div style={{ display: "grid", gap: "32px 48px", alignItems: "start" }} className="ac-two-col">
           <div>
-            <SectionHeading eyebrow="Reminders & expiration" id="remind-heading" heading="Keep signing moving with reminders and deadlines." sub="Configure automated reminders for pending participants and set a completion deadline so no document is left waiting." />
+            <SectionHeading eyebrow="Expiration" id="expiration-heading" heading="Keep signing moving with a deadline." sub="Set an expiration date so no document is left waiting. LAGDA does not send automatic reminders today." />
             <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>
               {[
-                "Set a first-reminder delay (e.g., after 3 days)",
-                "Configure follow-up reminder frequency",
-                "Send a manual reminder to a specific participant at any time",
                 "Set an expiration date for the transaction",
-                "Transactions can be extended where permitted",
+                "Signing closes at the end of that day, Philippine time",
+                "Add, move or remove the date while the document is out for signature",
+                "Send a participant a new signing link when theirs has ended",
                 "Expired transactions are locked; records are retained",
               ].map((item) => (
                 <li key={item} style={{ display: "flex", gap: 8, alignItems: "flex-start", marginBottom: 8 }}>
@@ -177,10 +176,10 @@ export function EsigAdvancedCapabilities() {
               ))}
             </ul>
             <p style={{ color: "#64748B", ...GF, fontSize: 12, marginTop: 16, lineHeight: 1.6 }}>
-              Reminder delivery is not guaranteed. LAGDA dispatches reminders by email but cannot control email delivery.
+              LAGDA does not send reminder emails, and nobody is notified when a transaction expires. Check the document in your workspace and follow up with the participant yourself.
             </p>
           </div>
-          <RemindersMockup />
+          <ExpirationMockup />
         </div>
         <style>{`.ac-two-col { grid-template-columns: 1fr 1fr; } @media (max-width: 760px) { .ac-two-col { grid-template-columns: 1fr; } }`}</style>
       </PageSection>

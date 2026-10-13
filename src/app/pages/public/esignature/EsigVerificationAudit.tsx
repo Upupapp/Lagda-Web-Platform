@@ -177,7 +177,7 @@ function VerificationDemo() {
 // ── Public vs private data ────────────────────────────────────────────────────
 function PublicPrivateSection() {
   const PUBLIC = ["Verification status", "Verification ID", "Completion date", "Document description (where permitted)", "Transaction status", "Document-match result"];
-  const PRIVATE = ["Signer email addresses", "Phone numbers", "IP addresses and device details", "Authentication evidence", "Document content", "Private audit records"];
+  const PRIVATE = ["Signer email addresses", "Phone numbers", "Authentication evidence", "Document content", "Private audit records"];
 
   return (
     <PageSection id="public-private" light bordered>
@@ -244,7 +244,7 @@ export function EsigVerificationAudit() {
           <div>
             <SectionHeading eyebrow="Audit trail" id="audit-heading" heading="Create audit-ready records automatically." sub="Every significant action in a transaction is recorded — with a timestamp and relevant contextual evidence." />
             <p style={{ color: "#334155", ...GF, fontSize: 14, lineHeight: 1.65, margin: 0, marginBottom: 16 }}>
-              Recorded events may include: transaction creation, invitation delivery, document views, authentication attempts and completions, field entries, signatures, approvals, completions, cancellations, expirations, and verification record generation.
+              Recorded events may include: transaction creation, invitations sent, document views, authentication attempts and completions, field entries, signatures, approvals, completions, cancellations, expirations, and verification record generation.
             </p>
             <p style={{ color: "#64748B", ...GF, fontSize: 13, lineHeight: 1.6, margin: 0 }}>
               The audit trail supports transparency and accountability. For situations requiring formal legal evidence, consult applicable requirements for what records must be produced.
@@ -262,7 +262,7 @@ export function EsigVerificationAudit() {
             { label: "Date and time",            desc: "Timestamp in Philippine time zone." },
             { label: "Participant role",         desc: "Which participant performed the action." },
             { label: "Authentication method",    desc: "How the participant's identity was verified." },
-            { label: "IP information",           desc: "Network address associated with the action." },
+            { label: "Identity check",           desc: "The result, where the sender asked for one." },
             { label: "Document integrity",       desc: "A reference used to detect changes to the completed document." },
           ].map((e) => (
             <div key={e.label} style={{ background: "#ffffff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: 10, padding: "12px 14px", boxShadow: "0 1px 4px rgba(7,17,31,0.06)" }}>
@@ -272,7 +272,7 @@ export function EsigVerificationAudit() {
           ))}
         </div>
         <p style={{ color: "#64748B", ...GF, fontSize: 13, lineHeight: 1.6, margin: "20px 0 0" }}>
-          Exact device location is never collected automatically. Location information, where shown, is derived from IP address only and is approximate. Precise location should only be collected with explicit participant permission and where justified by the selected workflow.
+          LAGDA does not record an IP address, device, browser or location for any signing step.
         </p>
         <style>{`.ev-grid { grid-template-columns: repeat(3, 1fr); } @media (max-width: 720px) { .ev-grid { grid-template-columns: 1fr; } }`}</style>
       </PageSection>
@@ -300,7 +300,7 @@ export function EsigVerificationAudit() {
 
       <RelatedPages links={[
         { label: "Verify a Document",     desc: "Public verification — no account required", path: "/verify" },
-        { label: "Advanced Capabilities", desc: "Reminders, bulk, and enterprise features", path: "/esignature/advanced-capabilities" },
+        { label: "Advanced Capabilities", desc: "Routing, bulk, and enterprise features", path: "/esignature/advanced-capabilities" },
       ]} />
 
       <AccountPageCTA

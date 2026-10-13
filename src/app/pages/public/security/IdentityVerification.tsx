@@ -53,7 +53,7 @@ export function IdentityVerification() {
               "Evidence-based audit trail per participant",
               "Authentication by secure link, email code or account sign-in (SMS and SSO are planned)",
               "Declared intent confirmation before signing",
-              "IP, device, and session evidence recorded",
+              "Each signing step recorded with its time and who acted",
               "Access-controlled evidence visibility",
             ].map((t) => (
               <div key={t} style={{ display: "flex", gap: 8, marginBottom: 6 }}>

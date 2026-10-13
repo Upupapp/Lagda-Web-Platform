@@ -47,7 +47,7 @@ export function SecurityAuditTrail() {
               level: "Workspace",
               color: "#0078D4",
               desc: "Accessible to authorized workspace members (Sender, Auditor role).",
-              items: ["Full event timeline", "Participant identities", "IP addresses", "Device and browser", "Auth method used"],
+              items: ["Full event timeline", "Participant identities", "Time of each step", "Auth method used"],
             },
             {
               level: "Legal process",

@@ -42,7 +42,7 @@ export function SecurityOverview() {
             { path: "/security/identity-verification",      label: "Identity Verification",     desc: "How LAGDA layers access, intent, and authentication evidence." },
             { path: "/security/audit-trail",                label: "Audit Trail",               desc: "Evidence integrity, access levels, and event detail." },
             { path: "/security/document-verification",      label: "Document Verification",     desc: "File comparison, integrity checks, and privacy boundaries." },
-            { path: "/security/device-and-location-evidence", label: "Device and Location",    desc: "What is recorded, how, and privacy safeguards." },
+            { path: "/security/device-and-location-evidence", label: "Device and Location",    desc: "What a signing record holds, and what is not recorded." },
             { path: "/security/secure-storage",             label: "Secure Storage",            desc: "How documents are stored, retained, and deleted." },
             { path: "/security/privacy-and-data-protection", label: "Privacy and Data Protection", desc: "Data categories, principles, and participant rights." },
             { path: "/security/trust-center",               label: "Trust Center",              desc: "Policies, legal documents, and security contacts." },

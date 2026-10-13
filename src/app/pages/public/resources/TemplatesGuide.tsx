@@ -13,13 +13,13 @@ export function TemplatesGuide() {
           <GuideHero
             eyebrow="Templates Guide"
             title="Building and using LAGDA templates."
-            sub="A template is a reusable document workflow that can include the document file, fields, participant roles, routing, authentication rules, reminders, and branding."
+            sub="A template is a reusable document workflow that can include the document file, fields, participant roles, routing, authentication rules, and branding."
           />
         }
       >
         <GuideSection id="what-is" title="What is a LAGDA template?">
           <GuidePara>
-            A LAGDA template is a reusable configuration that captures all the elements of a document workflow: the document file, required fields, participant role placeholders, routing order, authentication requirements for each participant, reminder schedule, expiration settings, signing instructions, and company branding.
+            A LAGDA template is a reusable configuration that captures all the elements of a document workflow: the document file, required fields, participant role placeholders, routing order, authentication requirements for each participant, and company branding.
           </GuidePara>
           <GuidePara>
             A template is not simply a stored document. It is the complete workflow configuration that LAGDA applies when you start a new transaction from the template.
@@ -42,9 +42,6 @@ export function TemplatesGuide() {
             "Participant-role placeholders — generic roles (e.g., 'Client', 'Authorizing Officer') filled with real contacts when starting a transaction",
             "Routing — parallel, sequential, or mixed order defined in the template",
             "Authentication rules — per-role authentication method requirements",
-            "Reminder schedule — automatic follow-up timing for pending actions",
-            "Expiration settings — transaction deadline from the date of sending",
-            "Signing instructions — messages displayed to each participant",
             "Branding — your logo and colours (Personal, Business and Enterprise plans)",
           ]} />
         </GuideSection>
@@ -84,9 +81,7 @@ export function TemplatesGuide() {
             "Fields are positioned correctly on the document",
             "Participant roles have the right authentication configured",
             "Routing order reflects your intended workflow",
-            "Reminders are set to appropriate intervals",
             "Branding appears correctly in signing invitations",
-            "Signing instructions are clear to participants",
           ]} />
         </GuideSection>
 
