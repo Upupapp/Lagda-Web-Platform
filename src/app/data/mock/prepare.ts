@@ -225,11 +225,6 @@ const AUTH_DEFAULT: PrepAuthConfig = {
 
 const SETTINGS_STANDARD: PrepSettings = {
   ...DEFAULT_PREP_SETTINGS,
-  invitation: {
-    subject:           "Please review and complete: {title}",
-    message:           "",
-    senderDisplayName: "Ana Reyes",
-  },
   expiration: {
     enabled:   true,
     expiresAt: "2026-08-15",

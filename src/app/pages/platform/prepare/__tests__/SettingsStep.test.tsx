@@ -1,0 +1,132 @@
+// Settings offers only what the server takes.
+//
+// Five controls used to sit on this step and reach nothing: an invitation
+// subject, a personal note, a per-document sender name, "notify me when
+// complete" and "create a verification record". They are gone. The one
+// completion switch left is the server's `shareFinalCopy`, named for what it
+// does: it decides whether participants are emailed the completed document.
+
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { MemoryRouter } from "react-router";
+
+vi.mock("../../../../services/backend-flag", () => ({ USE_REAL_BACKEND: true, API_BASE_URL: "http://api.test" }));
+
+const { updateSettings, stable, platform } = vi.hoisted(() => {
+  const updateSettings = vi.fn();
+  const stable: { draft: { id: string; settings?: unknown }; [key: string]: unknown } = {
+    draft: { id: "draft_1" },
+    updateSettings,
+    setStep: () => undefined,
+    validate: () => ({ errors: [], warnings: [] }),
+  };
+  const platform: { user: { preferredSenderName?: string } } = { user: { preferredSenderName: "Reyes Law Office" } };
+  return { updateSettings, stable, platform };
+});
+vi.mock("../../../../context/PrepareContext", () => ({ usePrepare: () => stable }));
+vi.mock("../../../../context/PlatformContext", () => ({ usePlatform: () => platform }));
+
+import { SettingsStep } from "../SettingsStep";
+import { DEFAULT_PREP_SETTINGS, emailsFinalCopy } from "../../../../models/prepare";
+
+const open = () => render(<MemoryRouter><SettingsStep /></MemoryRouter>);
+const copySwitch = () => screen.getByRole("checkbox", { name: /Email participants the completed document/ });
+
+beforeEach(() => {
+  updateSettings.mockReset();
+  stable.draft = { id: "draft_1" };
+  platform.user = { preferredSenderName: "Reyes Law Office" };
+});
+
+describe("Settings: the controls that reached nothing are gone", () => {
+  it.each([
+    ["the invitation subject", /Subject line/],
+    ["the personal note", /^Message/],
+    ["the per-document sender name", /Sender display name/],
+    ["notify me when complete", /Notify me when complete/],
+    ["create a verification record", /Create a verification record/],
+  ])("does not offer %s", (_what, label) => {
+    open();
+    expect(screen.queryByLabelText(label)).toBeNull();
+    expect(screen.queryByText(label)).toBeNull();
+  });
+
+  it("has no text box left to type an invitation into", () => {
+    open();
+    expect(screen.queryAllByRole("textbox")).toEqual([]);
+    expect(screen.queryByPlaceholderText(/personal note/i)).toBeNull();
+  });
+
+  it("still says whose name recipients see, and where to change it", () => {
+    open();
+    const note = screen.getByTestId("sender-display-note");
+    expect(note).toHaveTextContent(
+      "Recipients see Reyes Law Office as the sender — your profile's Sender Display name. Change it in Settings › Profile.");
+  });
+
+  it("says the same without a name to show", () => {
+    platform.user = {};
+    open();
+    expect(screen.getByTestId("sender-display-note")).toHaveTextContent(
+      "Recipients see your profile's Sender Display name as the sender. Change it in Settings › Profile.");
+  });
+
+  it("describes only what is left, and offers no reminders", () => {
+    open();
+    expect(screen.getByText(
+      "Set an optional expiration date, and choose whether participants are emailed the completed document.")).toBeInTheDocument();
+    expect(screen.queryByText(/reminder/i)).toBeNull();
+    expect(screen.queryByText(/Configure how invitations are sent/)).toBeNull();
+  });
+
+  it("does not say the sender is told when a document expires", () => {
+    open();
+    expect(screen.queryByText(/you are told in LAGDA/)).toBeNull();
+  });
+});
+
+describe("Settings: emailing participants the completed document", () => {
+  it("is on by default, and says so in the rail", () => {
+    open();
+    expect(copySwitch()).toBeChecked();
+    expect(screen.getByTestId("rail-final-copy")).toHaveTextContent("Completed document emailed to participantsOn");
+  });
+
+  it("says what switching it off does and does not withhold", () => {
+    open();
+    expect(screen.getByText(/each participant is emailed a link to download the completed document/)).toBeInTheDocument();
+    expect(screen.getByText(/participants can still open it in LAGDA under Records/)).toBeInTheDocument();
+  });
+
+  it("saves the choice when switched off", async () => {
+    open();
+    await userEvent.click(copySwitch());
+    expect(updateSettings).toHaveBeenCalledTimes(1);
+    expect(updateSettings).toHaveBeenCalledWith({
+      ...DEFAULT_PREP_SETTINGS,
+      completion: { emailFinalCopy: false },
+    });
+  });
+
+  it("shows a saved off as off", () => {
+    stable.draft = { id: "draft_1", settings: { ...DEFAULT_PREP_SETTINGS, completion: { emailFinalCopy: false } } };
+    open();
+    expect(copySwitch()).not.toBeChecked();
+    expect(screen.getByTestId("rail-final-copy")).toHaveTextContent("Completed document emailed to participantsOff");
+  });
+
+  it("reads a draft saved before the setting existed as on", () => {
+    // What this browser may still hold: the old completion flags, including
+    // the switch this one replaced, left off when it did nothing.
+    const saved = {
+      ...DEFAULT_PREP_SETTINGS,
+      completion: { notifySenderOnComplete: true, allowParticipantDownload: false, createVerificationRecord: true },
+    };
+    stable.draft = { id: "draft_1", settings: saved };
+    open();
+    expect(copySwitch()).toBeChecked();
+    expect(emailsFinalCopy(saved as never)).toBe(true);
+    expect(emailsFinalCopy({})).toBe(true);
+  });
+});

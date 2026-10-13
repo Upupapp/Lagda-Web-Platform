@@ -13,7 +13,7 @@ import { usePlatform } from "../../../context/PlatformContext";
 import { FieldEditorProvider, useFieldEditor } from "../../../context/FieldEditorContext";
 import { FIELD_TYPE_LABELS, FIELD_TYPE_ICONS } from "../../../models/field-editor";
 import type { FieldDefinition } from "../../../models/field-editor";
-import type { PrepParticipant } from "../../../models/prepare";
+import { emailsFinalCopy, type PrepParticipant } from "../../../models/prepare";
 import { Z } from "../../../utils/z-index";
 import { mockDocumentService } from "../../../services/mock/document.service";
 import { mapPreparationDraftToDocumentListItem } from "../../../services/prepare/draft-to-document";
@@ -245,7 +245,10 @@ function ConfirmationPageInner({ participants }: { participants: PrepParticipant
 
       if (!pending.sendKey) pending.sendKey = crypto.randomUUID();
       pendingSendRef.current = pending;
-      await realSigningRequestService.send(workspaceId, signingRequestId, pending.sendKey);
+      // The sender's choice from Settings. Left out unless it is "off", so a
+      // send that keeps the default is the same request it always was.
+      await realSigningRequestService.send(workspaceId, signingRequestId, pending.sendKey,
+        emailsFinalCopy(draft.settings) ? {} : { shareFinalCopy: false });
 
       // The deadline, when the sender set one. The server takes it only on a
       // request that is already out, so it follows the send. The request IS
@@ -566,9 +569,12 @@ function ConfirmationPageInner({ participants }: { participants: PrepParticipant
         {/* 073. Every participant's copy of the finished document. On by
             default; off for a sensitive document. One switch for signers,
             approvers, reviewers and copy recipients alike (viewers never
-            receive one). */}
+            receive one). The switch is on the Settings step; this says how it
+            was left, before the request goes out. */}
         <p data-testid="final-copy-note" style={{ ...GF, fontSize: 12.5, color: "#475569", margin: "0 0 16px", lineHeight: 1.5 }}>
-          Participants with a LAGDA account can open the completed document under Records.
+          {emailsFinalCopy(draft.settings)
+            ? "When everyone has finished, each participant is emailed a link to the completed document. They can also open it in LAGDA under Records."
+            : "Participants will not be emailed the completed document. They can still open it in LAGDA under Records."}
         </p>
 
         {/* Actions */}

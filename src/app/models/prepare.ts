@@ -77,7 +77,8 @@ export const PREPARATION_STEPS: {
   { id: "upload",         label: "Documents",      shortLabel: "Docs",     route: "/app/prepare/upload",         icon: "FileText",   blurb: "The file everyone will sign" },
   { id: "participants",   label: "Signers",        shortLabel: "Signers",  route: "/app/prepare/participants",   icon: "Users",      blurb: "Who needs to sign it" },
   { id: "routing",        label: "Order",          shortLabel: "Order",    route: "/app/prepare/routing",        icon: "ListOrdered", blurb: "What order they sign in" },
-  { id: "settings",       label: "Settings",       shortLabel: "Settings", route: "/app/prepare/settings",       icon: "SlidersHorizontal", blurb: "Reminders and expiration" },
+  // The server sends no reminders, so the live build does not name them.
+  { id: "settings",       label: "Settings",       shortLabel: "Settings", route: "/app/prepare/settings",       icon: "SlidersHorizontal", blurb: USE_REAL_BACKEND ? "Expiration and completed copies" : "Reminders and expiration" },
   { id: "fields",         label: "Place Fields",   shortLabel: "Fields",   route: "/app/prepare/fields",         icon: "PenLine",    blurb: "Where each signature goes" },
   { id: "authentication", label: "Authentication", shortLabel: "Auth",     route: "/app/prepare/authentication", icon: "ShieldCheck", blurb: "How signers prove who they are" },
   { id: "review",         label: "Review",         shortLabel: "Review",   route: "/app/prepare/review",         icon: "ClipboardCheck", blurb: "Check everything before sending" },
@@ -427,11 +428,9 @@ export const DEFAULT_AUTH_CONFIG: PrepAuthConfig = {
 
 // ── Settings ──────────────────────────────────────────────────────────────────
 
-export interface PrepInvitationSettings {
-  subject:            string;
-  message:            string;
-  senderDisplayName:  string;
-}
+// There are no invitation settings. The invitation email is LAGDA's own
+// wording, sent under the sender's profile name; a subject, a note and a
+// per-document sender name were once offered here and never reached the server.
 
 export interface PrepReminderSettings {
   enabled:            boolean;
@@ -446,26 +445,22 @@ export interface PrepExpirationSettings {
 }
 
 export interface PrepCompletionSettings {
-  notifySenderOnComplete:              boolean;
-  sendCompletionCopyToParticipants:    boolean;
-  sendCompletionCopyToCCRecipients:    boolean;
-  allowParticipantDownload:            boolean;
-  createVerificationRecord:            boolean;
+  /**
+   * Email each participant a link to the completed document when everyone has
+   * finished. This is the server's `shareFinalCopy`, and the only completion
+   * choice a sender has: the sender's own completion email and the
+   * verification record are always produced.
+   */
+  emailFinalCopy: boolean;
 }
 
 export interface PrepSettings {
-  invitation:  PrepInvitationSettings;
   reminders:   PrepReminderSettings;
   expiration:  PrepExpirationSettings;
   completion:  PrepCompletionSettings;
 }
 
 export const DEFAULT_PREP_SETTINGS: PrepSettings = {
-  invitation: {
-    subject:           "Please review and complete: {title}",
-    message:           "",
-    senderDisplayName: "",
-  },
   reminders: {
     enabled:            true,
     firstReminderDays:  3,
@@ -477,13 +472,19 @@ export const DEFAULT_PREP_SETTINGS: PrepSettings = {
     expiresAt: null,
   },
   completion: {
-    notifySenderOnComplete:              true,
-    sendCompletionCopyToParticipants:    true,
-    sendCompletionCopyToCCRecipients:    true,
-    allowParticipantDownload:            true,
-    createVerificationRecord:            true,
+    emailFinalCopy: true,
   },
 };
+
+/**
+ * Whether participants are emailed the completed document. Anything but an
+ * explicit "off" is ON, which is the server's own default: a draft saved in
+ * this browser before the setting existed has no value for it, and must send
+ * the way it always did.
+ */
+export function emailsFinalCopy(settings: { completion?: Partial<PrepCompletionSettings> }): boolean {
+  return settings.completion?.emailFinalCopy !== false;
+}
 
 // ── Source context ────────────────────────────────────────────────────────────
 

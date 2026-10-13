@@ -17,7 +17,7 @@ import { USE_REAL_BACKEND } from "../../../services/backend-flag";
 import { stepEyebrow,
   PREPARATION_STEPS,
   PREP_PARTICIPANT_ROLE_LABELS,
-  DEFAULT_PREP_SETTINGS,
+  DEFAULT_PREP_SETTINGS, emailsFinalCopy,
   DEFAULT_ROUTING_CONFIG,
   DEFAULT_AUTH_CONFIG,
   DEFAULT_TRANSACTION_DETAILS,
@@ -311,8 +311,10 @@ export function ReviewStep() {
               ? new Date(settings.expiration.expiresAt).toLocaleDateString("en-PH", { year: "numeric", month: "long", day: "numeric" })
               : "No expiration set"}
           </div>
-          <div style={{ ...GF, fontSize: 12, color: "#4B5E70" }}>
-            Verification record: {settings.completion.createVerificationRecord ? "Will be created" : "Not created"}
+          <div data-testid="review-final-copy" style={{ ...GF, fontSize: 12, color: "#4B5E70" }}>
+            Completed document: {emailsFinalCopy(settings)
+              ? "Emailed to participants when everyone has finished"
+              : "Not emailed to participants"}
           </div>
         </div>
       </SectionBlock>

@@ -1,6 +1,11 @@
-// Settings — invitation, reminders, expiration, and completion settings.
-// PRIVACY: invitation messages are stored only in React context, never persisted.
-// No invitations are sent from this frontend demonstration.
+// Settings — expiration, and whether participants are emailed the completed
+// document. The demo build also shows reminders.
+//
+// Every control here reaches the server. Five that did not were removed: an
+// invitation subject, a personal note, a per-document sender name, "notify me
+// when complete" and "create a verification record". The invitation is LAGDA's
+// own wording under the sender's profile name, and the sender's completion
+// email and the verification record are always produced.
 // Burgundy (#67023B) is NEVER used. eNotary is NEVER mentioned.
 
 import React, { useEffect, useCallback } from "react";
@@ -10,7 +15,7 @@ import { usePlatform } from "../../../context/PlatformContext";
 import { USE_REAL_BACKEND } from "../../../services/backend-flag";
 import { todayInManila } from "../../../services/prepare/deadline";
 import { stepEyebrow,
-  DEFAULT_PREP_SETTINGS,
+  DEFAULT_PREP_SETTINGS, emailsFinalCopy,
 } from "../../../models/prepare";
 import { StepBanner, StepTwoColumn, RailCard, StepIssueList } from "../../../components/prepare/StepBanner";
 
@@ -166,10 +171,6 @@ export function SettingsStep() {
   const errors     = validation?.errors.filter(e => e.stepId === "settings") ?? [];
   const warnings   = validation?.warnings.filter(e => e.stepId === "settings") ?? [];
 
-  const updateInvitation = useCallback((patch: Partial<typeof settings.invitation>) => {
-    updateSettings({ ...settings, invitation: { ...settings.invitation, ...patch } });
-  }, [settings, updateSettings]);
-
   const updateReminders = useCallback((patch: Partial<typeof settings.reminders>) => {
     updateSettings({ ...settings, reminders: { ...settings.reminders, ...patch } });
   }, [settings, updateSettings]);
@@ -182,6 +183,8 @@ export function SettingsStep() {
     updateSettings({ ...settings, completion: { ...settings.completion, ...patch } });
   }, [settings, updateSettings]);
 
+  const sendsCopy = emailsFinalCopy(settings);
+
   // The earliest deadline is today: it runs to the end of the day in Manila.
   const today = todayInManila();
 
@@ -191,103 +194,20 @@ export function SettingsStep() {
       <StepIssueList issues={errors} severity="error" />
       <StepIssueList issues={warnings} severity="warning" />
 
-      {/* Invitation */}
+      {/* Invitation. Nothing to configure: this says whose name is on it. */}
       <div style={{ marginBottom: 32, padding: "20px", borderRadius: 12, border: "1px solid #E3E8EF" }}>
         <SectionHeader
           title="Invitation"
           subtitle={USE_REAL_BACKEND
-            ? "Customise the email invitation sent to participants."
-            : "Customise the email invitation sent to participants. No invitations are sent in this demonstration."}
+            ? "Each participant is emailed a private signing link when their turn comes."
+            : "Each participant is emailed a private signing link when their turn comes. No invitations are sent in this demonstration."}
         />
-
-        <div style={{ marginBottom: 14 }}>
-          <label htmlFor="inv-subject" style={{ ...GF, fontSize: 12, fontWeight: 600, color: NAVY, display: "block", marginBottom: 5 }}>
-            Subject line
-          </label>
-          <input
-            id="inv-subject"
-            type="text"
-            value={settings.invitation.subject}
-            onChange={e => updateInvitation({ subject: e.target.value })}
-            maxLength={200}
-            style={{
-              ...GF,
-              width: "100%",
-              padding: "8px 10px",
-              borderRadius: 7,
-              border: "1px solid #D1D9E0",
-              background: "#FFFFFF",
-              fontSize: 13,
-              color: NAVY,
-              boxSizing: "border-box",
-            }}
-          />
-          <div style={{ ...GF, fontSize: 11, color: SILVER, marginTop: 3 }}>
-            Use {"{title}"} to insert the transaction title.
-          </div>
-        </div>
-
-        <div style={{ marginBottom: 14 }}>
-          <label htmlFor="inv-message" style={{ ...GF, fontSize: 12, fontWeight: 600, color: NAVY, display: "block", marginBottom: 5 }}>
-            Message <span style={{ color: SILVER, fontWeight: 400 }}>(optional)</span>
-          </label>
-          <textarea
-            id="inv-message"
-            value={settings.invitation.message}
-            onChange={e => updateInvitation({ message: e.target.value })}
-            maxLength={2000}
-            rows={4}
-            placeholder="Add a personal note to participants…"
-            style={{
-              ...GF,
-              width: "100%",
-              padding: "8px 10px",
-              borderRadius: 7,
-              border: "1px solid #D1D9E0",
-              background: "#FFFFFF",
-              fontSize: 13,
-              color: NAVY,
-              resize: "vertical",
-              boxSizing: "border-box",
-            }}
-          />
-          {!USE_REAL_BACKEND && (
-            <div style={{ ...GF, fontSize: 11, color: SILVER, marginTop: 3 }}>
-              Not stored after this browser session. Not transmitted in this demonstration.
-            </div>
-          )}
-        </div>
-
-        <div>
-          <label htmlFor="inv-sender" style={{ ...GF, fontSize: 12, fontWeight: 600, color: NAVY, display: "block", marginBottom: 5 }}>
-            Sender display name <span style={{ color: SILVER, fontWeight: 400 }}>(optional)</span>
-          </label>
-          <input
-            id="inv-sender"
-            type="text"
-            value={settings.invitation.senderDisplayName}
-            onChange={e => updateInvitation({ senderDisplayName: e.target.value })}
-            maxLength={100}
-            placeholder={user?.preferredSenderName ?? "Your name or team name"}
-            style={{
-              ...GF,
-              width: "100%",
-              padding: "8px 10px",
-              borderRadius: 7,
-              border: "1px solid #D1D9E0",
-              background: "#FFFFFF",
-              fontSize: 13,
-              color: NAVY,
-              boxSizing: "border-box",
-            }}
-          />
-          {user?.preferredSenderName && (
-            <p style={{ ...GF, fontSize: 11.5, color: SILVER, margin: "5px 0 0" }}>
-              Recipients see <strong style={{ color: NAVY }}>{user.preferredSenderName}</strong> as
-              the sender — your profile&apos;s Sender Display. Change it in Settings › Profile.
-            </p>
-          )}
-        </div>
+        <p data-testid="sender-display-note" style={{ ...GF, fontSize: 13, color: "#475569", margin: 0, lineHeight: 1.55 }}>
+          {user?.preferredSenderName
+            ? <>Recipients see <strong style={{ color: NAVY }}>{user.preferredSenderName}</strong> as the sender — your profile&apos;s Sender Display name. </>
+            : <>Recipients see your profile&apos;s Sender Display name as the sender. </>}
+          Change it in Settings › Profile.
+        </p>
       </div>
 
       {/* Reminders — the demo build only. The server sends no reminders, so
@@ -340,7 +260,7 @@ export function SettingsStep() {
           <Toggle
             id="expiration-enabled"
             label="Set an expiration date"
-            description="Signing closes at the end of this day, Philippine time. Anyone who has not acted by then can no longer sign, and you are told in LAGDA."
+            description="Signing closes at the end of this day, Philippine time. Anyone who has not acted by then can no longer sign."
             checked={settings.expiration.enabled}
             onChange={v => updateExpiration({ enabled: v, expiresAt: v ? settings.expiration.expiresAt : null })}
           />
@@ -377,29 +297,15 @@ export function SettingsStep() {
           subtitle="What happens when all required participants have completed their actions."
         />
         <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+          {/* The server's `shareFinalCopy`. Off withholds the email and its
+              download link, nothing else: a participant can still open the
+              completed document from their own account. */}
           <Toggle
-            id="notify-sender"
-            label="Notify me when complete"
-            description="Send a completion notification to the transaction sender."
-            checked={settings.completion.notifySenderOnComplete}
-            onChange={v => updateCompletion({ notifySenderOnComplete: v })}
-          />
-          <p data-testid="final-copy-note" style={{ ...GF, fontSize: 13, color: "#475569", margin: 0, lineHeight: 1.55 }}>
-            Participants with a LAGDA account can open the completed document under Records.
-          </p>
-          <Toggle
-            id="allow-download"
-            label="Allow participant download"
-            description="Participants may download the completed document from their access link."
-            checked={settings.completion.allowParticipantDownload}
-            onChange={v => updateCompletion({ allowParticipantDownload: v })}
-          />
-          <Toggle
-            id="create-verification"
-            label="Create a verification record"
-            description="A verification record will be created, enabling this transaction to be checked at lagda.io/verify."
-            checked={settings.completion.createVerificationRecord}
-            onChange={v => updateCompletion({ createVerificationRecord: v })}
+            id="email-final-copy"
+            label="Email participants the completed document"
+            description="When everyone has finished, each participant is emailed a link to download the completed document. The link works for 30 days. Viewers are not sent one. Switch this off for a sensitive document: participants can still open it in LAGDA under Records."
+            checked={sendsCopy}
+            onChange={v => updateCompletion({ emailFinalCopy: v })}
           />
         </div>
       </div>
@@ -410,16 +316,13 @@ export function SettingsStep() {
           <strong style={{ color: "#4B5E70" }}>Frontend demonstration</strong>
           <br />
           No invitations, reminders, or completion notifications are sent from this demonstration.
-          Invitation messages entered here are stored only in this browser session.
         </div>
       )}
     </div>
   );
 
-  const completionFlags: { label: string; on: boolean }[] = [
-    { label: "Notify sender on complete", on: settings.completion.notifySenderOnComplete },
-    { label: "Participant download allowed", on: settings.completion.allowParticipantDownload },
-    { label: "Verification record created", on: settings.completion.createVerificationRecord },
+  const completionFlags: { id: string; label: string; on: boolean }[] = [
+    { id: "final-copy", label: "Completed document emailed to participants", on: sendsCopy },
   ];
 
   const rail = (
@@ -441,7 +344,7 @@ export function SettingsStep() {
       <RailCard title="On completion">
         <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
           {completionFlags.map(f => (
-            <div key={f.label} style={{ ...GF, fontSize: 12, display: "flex", justifyContent: "space-between", gap: 8 }}>
+            <div key={f.id} data-testid={`rail-${f.id}`} style={{ ...GF, fontSize: 12, display: "flex", justifyContent: "space-between", gap: 8 }}>
               <span style={{ color: "#4B5E70" }}>{f.label}</span>
               <span style={{ fontWeight: 700, color: f.on ? AZURE : SILVER }}>{f.on ? "On" : "Off"}</span>
             </div>
@@ -457,6 +360,7 @@ export function SettingsStep() {
   const expirySummary = settings.expiration.enabled && settings.expiration.expiresAt
     ? "Expiration set"
     : "No expiration";
+  const copySummary = sendsCopy ? "Completed copy emailed" : "Completed copy not emailed";
 
   return (
     <div style={GF}>
@@ -464,8 +368,11 @@ export function SettingsStep() {
         icon={SlidersHorizontal}
         eyebrow={stepEyebrow("settings")}
         title="Settings"
-        description="Configure how invitations are sent, when reminders fire, and what happens when the transaction completes or expires."
-        meta={`${reminderSummary} · ${expirySummary}`}
+        description={USE_REAL_BACKEND
+          ? "Set an optional expiration date, and choose whether participants are emailed the completed document."
+          : "Configure when reminders fire, an optional expiration date, and whether participants are emailed the completed document."}
+        // The live build has no reminders to summarise.
+        meta={USE_REAL_BACKEND ? `${expirySummary} · ${copySummary}` : `${reminderSummary} · ${expirySummary}`}
       />
       <StepTwoColumn main={main} rail={rail} />
     </div>
