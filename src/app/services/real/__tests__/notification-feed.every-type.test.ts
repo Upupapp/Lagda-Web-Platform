@@ -62,6 +62,14 @@ const ROWS: Record<string, Record<string, unknown>> = {
   SIGNING_LINK_LAPSED: { recipientName: "Ana", documentTitle: "NDA.pdf", signingRequestId: "sr_1", waitingOn: ["Jose Cruz", "Ben Lim"], waitingOnMore: 0 },
   IDENTITY_CHECK_LOCKED: { recipientName: "Ana", participantName: "Jose Cruz", documentTitle: "NDA.pdf", signingRequestId: "sr_1", participantRecipientId: "srr_1" },
   IDENTITY_NAME_MISMATCH: { recipientName: "Ana", participantName: "Jose Cruz", documentTitle: "NDA.pdf", signingRequestId: "sr_1", participantRecipientId: "srr_1" },
+  SIGNING_COMPLETION_FAILED: { recipientName: "Ana", documentTitle: "NDA.pdf", workspaceName: "Reyes Law", signingRequestId: "sr_1" },
+  SIGNING_DECLINED: { recipientName: "Ana", participantName: "Jose Cruz", documentTitle: "NDA.pdf", workspaceName: "Reyes Law", reason: "needs-correction", signingRequestId: "sr_1", participantRecipientId: "srr_1" },
+  SIGNING_EXPIRED: { recipientName: "Ana", documentTitle: "NDA.pdf", workspaceName: "Reyes Law", signingRequestId: "sr_1" },
+  SIGNING_DECLINED_FOR_PARTICIPANT: { recipientName: "Jose", documentTitle: "NDA.pdf", senderDisplayName: "Ben", workspaceName: "Reyes Law", signingRequestId: "sr_1" },
+  SIGNING_CANCELLED_FOR_PARTICIPANT: { recipientName: "Jose", documentTitle: "NDA.pdf", senderDisplayName: "Ben", workspaceName: "Reyes Law", signingRequestId: "sr_1" },
+  SIGNING_EXPIRED_FOR_PARTICIPANT: { recipientName: "Jose", documentTitle: "NDA.pdf", senderDisplayName: "Ben", workspaceName: "Reyes Law", signingRequestId: "sr_1" },
+  SIGNING_ACCESS_RESTORED: { recipientName: "Jose", documentTitle: "NDA.pdf", senderDisplayName: "Ben", workspaceName: "Reyes Law", signingRequestId: "sr_1" },
+  SIGNING_REMINDER: { recipientName: "Jose", documentTitle: "NDA.pdf", senderDisplayName: "Ben", workspaceName: "Reyes Law", signingRequestId: "sr_1" },
   PUBLIC_INQUIRY_RECEIVED: { recipientName: "Chris", kindLabel: "Demo request", senderName: "Jose Cruz", senderEmail: "jose@example.ph", inquiryId: "pin_1" },
 };
 
@@ -118,6 +126,31 @@ describe("the account notification feed", () => {
     expect(locked?.severity).toBe("warning");
     expect(locked?.actionLabel).toBe("Open participants");
     expect(locked?.actionPath).toBe("/app/documents?list=sent&participants=sr_1");
+  });
+
+  it("tells the sender of a decline and a failed finalization, and opens that request's Participants", async () => {
+    const records = await realNotificationFeedService.list();
+    const declined = records.find(r => r.title === "Jose Cruz declined “NDA.pdf”");
+    expect(declined?.body).toBe("Jose Cruz declined to sign “NDA.pdf”, because the document needs correction. "
+      + "The request has ended and nobody else can sign it.");
+    expect(declined?.actionPath).toBe("/app/documents?list=declined&participants=sr_1");
+    const failed = records.find(r => r.title === "“NDA.pdf” could not be finalized");
+    expect(failed?.body).toMatch(/No signature was lost and nobody needs to sign again\. Open it and choose Try again\./);
+    expect(failed?.actionPath).toBe("/app/documents?list=sent&participants=sr_1");
+  });
+
+  it("tells a participant how a document ended, and opens their own documents, never a signing link", async () => {
+    const records = await realNotificationFeedService.list();
+    for (const title of ["NDA.pdf was declined", "NDA.pdf was cancelled", "NDA.pdf has expired"]) {
+      const notice = records.find(r => r.title === title);
+      expect(notice?.body, title).toMatch(/Nothing more is needed from you\.$/);
+      expect(notice?.actionPath, title).toBe("/app/documents?list=to-sign");
+    }
+    expect(records.find(r => r.title === "Ben cancelled NDA.pdf")).toBeUndefined();
+    expect(records.find(r => r.title === "NDA.pdf was cancelled")?.body).toBe("Ben cancelled NDA.pdf. It can no longer be signed. Nothing more is needed from you.");
+    expect(records.find(r => r.title === "You can now continue with NDA.pdf")?.actionPath).toBe("/app/documents?list=to-sign");
+    expect(records.find(r => r.title === "Reminder: NDA.pdf is waiting for you")?.actionPath).toBe("/app/documents?list=to-sign");
+    for (const r of records) expect(r.actionPath ?? "", r.title).not.toMatch(/^\/sign\//);
   });
 
   it("tells the sender a participant's ID carries another name, and opens Participants to decide", async () => {

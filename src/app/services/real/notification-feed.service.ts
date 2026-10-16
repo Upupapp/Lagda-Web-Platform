@@ -99,6 +99,22 @@ function bool(input: unknown, key: string): boolean | null {
   return typeof value === "boolean" ? value : null;
 }
 
+/** The product's words for the reason a participant chose when declining (110). */
+const DECLINE_REASON_PHRASE: Readonly<Record<string, string>> = {
+  "not-agree": "they do not agree with the document",
+  "not-intended": "they are not the intended participant",
+  "needs-correction": "the document needs correction",
+  "cannot-complete": "they cannot complete this request",
+  other: "another reason",
+};
+
+/** A sender's notice about one request opens that request's Participants. */
+function participantsPath(list: string, requestId: string | null): string {
+  return requestId === null
+    ? `/app/documents?list=${list}`
+    : `/app/documents?list=${list}&participants=${encodeURIComponent(requestId)}`;
+}
+
 /** The page that lists a workspace's join requests, for its owners. */
 const JOIN_REQUESTS_PATH = "/app/invitations?view=sent&panel=requests";
 /** Documents, with the Recycle Bin opened. */
@@ -729,6 +745,107 @@ function present(row: FeedRow): Presentation {
           : `/app/documents?list=sent&participants=${encodeURIComponent(requestId)}`,
         why: "You were sent this because you sent this document and asked this participant for an identity check.",
         inAppOnly: true,
+      };
+    }
+
+    // 109. To the sender, by email and in the app: every signature is in and
+    // the final document could not be produced. Participants is where Try
+    // again is, so the notice opens it.
+    case "SIGNING_COMPLETION_FAILED": {
+      const subject = documentTitle === null ? "A document you sent" : `“${documentTitle}”`;
+      return {
+        category: "documents", severity: "warning", priority: "high",
+        title: `${subject} could not be finalized`,
+        body: `Everyone has signed ${documentTitle === null ? "it" : `“${documentTitle}”`}, but the final document `
+          + "could not be produced. No signature was lost and nobody needs to sign again. Open it and choose Try again.",
+        actionLabel: "Open participants",
+        actionPath: participantsPath("sent", str(row.templateInput, "signingRequestId")),
+        why: "You were sent this because you sent this document and its final document could not be produced.",
+      };
+    }
+
+    // 110. To the sender, by email and in the app: a participant declined,
+    // which ends the request. The reason is a category, never free text.
+    case "SIGNING_DECLINED": {
+      const who = str(row.templateInput, "participantName") ?? "A participant";
+      const subject = documentTitle === null ? "a document you sent" : `“${documentTitle}”`;
+      const reason = DECLINE_REASON_PHRASE[str(row.templateInput, "reason") ?? ""];
+      return {
+        category: "documents", severity: "warning", priority: "high",
+        title: `${who} declined ${subject}`,
+        body: `${who} declined to sign ${subject}${reason === undefined ? "" : `, because ${reason}`}. `
+          + "The request has ended and nobody else can sign it.",
+        actionLabel: "Open participants",
+        actionPath: participantsPath("declined", str(row.templateInput, "signingRequestId")),
+        why: "You were sent this because you sent this document and a participant declined it.",
+      };
+    }
+
+    // 110. Emailed to the sender. The account feed is not expected to list
+    // it, but a row that arrives reads as itself rather than as "unknown".
+    case "SIGNING_EXPIRED": {
+      const subject = documentTitle === null ? "A document you sent" : `“${documentTitle}”`;
+      return {
+        category: "documents", severity: "warning", priority: "normal",
+        title: `${subject} has expired`,
+        body: "The deadline you set passed before everyone signed. The request has ended and its signing links no longer work.",
+        actionLabel: "Open participants",
+        actionPath: participantsPath("declined", str(row.templateInput, "signingRequestId")),
+        why: "You were sent this because you sent this document and set its expiration date.",
+      };
+    }
+
+    // 110. To a participant, by email, and here when their verified address
+    // is this account's. Each says one fact; the link it opens is their own
+    // documents, never the signing link, which no longer works.
+    case "SIGNING_DECLINED_FOR_PARTICIPANT":
+    case "SIGNING_CANCELLED_FOR_PARTICIPANT":
+    case "SIGNING_EXPIRED_FOR_PARTICIPANT": {
+      const title = documentTitle ?? "A document sent to you";
+      const sender = str(row.templateInput, "senderDisplayName") ?? "The sender";
+      const what = row.type === "SIGNING_DECLINED_FOR_PARTICIPANT"
+        ? { title: `${title} was declined`, body: `A participant declined ${title}, so it will not be completed and can no longer be signed.` }
+        : row.type === "SIGNING_CANCELLED_FOR_PARTICIPANT"
+          ? { title: `${title} was cancelled`, body: `${sender} cancelled ${title}. It can no longer be signed.` }
+          : { title: `${title} has expired`, body: `The deadline for ${title} has passed. It can no longer be signed.` };
+      return {
+        category: "documents", severity: "info", priority: "normal",
+        title: what.title,
+        body: `${what.body} Nothing more is needed from you.`,
+        actionLabel: "Open Documents",
+        actionPath: "/app/documents?list=to-sign",
+        why: "You were sent this because this document was sent to your email address.",
+      };
+    }
+
+    // 110. To a participant: the sender lifted what was holding them (an
+    // identity check), so they may continue. Their own documents list, where
+    // Continue signing opens it with a fresh code.
+    case "SIGNING_ACCESS_RESTORED": {
+      const title = documentTitle ?? "A document";
+      const sender = str(row.templateInput, "senderDisplayName") ?? "The sender";
+      return {
+        category: "my-actions", severity: "info", priority: "high",
+        title: `You can now continue with ${title}`,
+        body: `${sender} has let you continue with ${title}. It is under Needs your signature.`,
+        actionLabel: "Open Needs your signature",
+        actionPath: "/app/documents?list=to-sign",
+        why: "You were sent this because the sender changed what this document asks of you.",
+      };
+    }
+
+    // 111. A reminder to a participant who has not acted, listed here too
+    // when their verified address is this account's.
+    case "SIGNING_REMINDER": {
+      const title = documentTitle ?? "A document";
+      const sender = str(row.templateInput, "senderDisplayName") ?? "Someone";
+      return {
+        category: "my-actions", severity: "info", priority: "high",
+        title: `Reminder: ${title} is waiting for you`,
+        body: `${sender} sent you ${title} and it is still waiting for you. It is under Needs your signature.`,
+        actionLabel: "Open Needs your signature",
+        actionPath: "/app/documents?list=to-sign",
+        why: "You were sent this because the document is waiting for you and the sender's reminders are on.",
       };
     }
 
