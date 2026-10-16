@@ -92,6 +92,58 @@ export interface SigningRequestListItem {
   sentAt: string | null;
   completedAt: string | null;
   expiresAt: string | null;
+  /**
+   * 109. Set only while every signature is in and the final document is
+   * being produced (`completion-ready`): still at it, or stopped. Null
+   * otherwise, and absent from an older server.
+   */
+  completion?: CompletionStatus | null;
+}
+
+/** 109. Where producing the final document stands. */
+export interface CompletionStatus {
+  state: "finalizing" | "failed";
+  /** Whether asking for it to be produced again would be taken now. */
+  canRetry: boolean;
+}
+
+/** 111. What the sender chose for one request's reminders. */
+export interface ReminderSettings {
+  enabled: boolean;
+  /** Whole days from the start of a participant's turn to their first reminder. */
+  firstAfterDays: number;
+  /** Whole days between one reminder and the next. */
+  everyDays: number;
+}
+
+/** 111. The request's settings with the server's fixed limits beside them. */
+export interface RequestReminders extends ReminderSettings {
+  /** Automatic reminders per participant's turn. Always 3 today. */
+  maxAutomatic: number;
+  /** "Remind now" presses per participant's turn. Always 10 today. */
+  maxManualPerTurn: number;
+}
+
+/** 111. One participant's reminders, for their current turn. */
+export interface SignatoryReminders {
+  /** Automatic reminders sent this turn. */
+  sentCount: number;
+  manualSentCount: number;
+  lastSentAt: string | null;
+  /** Null: nothing more will be sent. In the past: on the next hourly sweep. */
+  nextDueAt: string | null;
+}
+
+/** 111. What a new request gets when the sender says nothing; the server's own. */
+export const REMINDER_DEFAULTS: ReminderSettings = { enabled: true, firstAfterDays: 3, everyDays: 3 };
+export const REMINDER_DAYS_MIN = 1;
+export const REMINDER_DAYS_MAX = 30;
+/** The server's fixed limit on automatic reminders per turn, for copy written before one is read. */
+export const REMINDER_MAX_AUTOMATIC = 3;
+
+/** Whether two reminder settings say the same thing. */
+export function sameReminderSettings(a: ReminderSettings, b: ReminderSettings): boolean {
+  return a.enabled === b.enabled && a.firstAfterDays === b.firstAfterDays && a.everyDays === b.everyDays;
 }
 
 // GET /workspaces/:id/signing-requests/:id/signatures — who signed, and when.
@@ -133,6 +185,8 @@ export interface Signatory {
    * the past is a link that no longer works.
    */
   linkExpiresAt?: string | null;
+  /** 111. This turn's reminders. Absent from an older server. */
+  reminders?: SignatoryReminders;
 }
 
 
@@ -144,6 +198,10 @@ export interface SigningRequestSignatures {
   signedCount: number;
   requiredCount: number;
   signatories: Signatory[];
+  /** 109. As on the list row. */
+  completion?: CompletionStatus | null;
+  /** 111. Absent from an older server. */
+  reminders?: RequestReminders;
 }
 
 export interface SigningRequestListResult {
@@ -296,16 +354,23 @@ class RealSigningRequestService {
   // Always a body object (the route requires one). `shareFinalCopy` (073):
   // email every participant the final signed copy on completion — the
   // server's default is yes, so only an explicit `false` changes anything.
+  // `reminders` (111) likewise: sent only when the caller passes it, and the
+  // server reads a missing member as its default (on, 3 days, 3 days). What
+  // is not sent is not in the idempotency fingerprint either, so a send that
+  // keeps every default is the same request it always was.
   async send(
     workspaceId: string, signingRequestId: string, idempotencyKey: string,
-    options: { shareFinalCopy?: boolean } = {},
+    options: { shareFinalCopy?: boolean; reminders?: Partial<ReminderSettings> } = {},
   ): Promise<SentResponse> {
     // The documents list (and its counts) change the moment this lands.
     return changes("documents", apiRequest<SentResponse>(
       `/workspaces/${encodeURIComponent(workspaceId)}/signing-requests/${encodeURIComponent(signingRequestId)}/send`,
       {
         method: "POST", headers: { "Idempotency-Key": idempotencyKey },
-        body: options.shareFinalCopy === false ? { shareFinalCopy: false } : {},
+        body: {
+          ...(options.shareFinalCopy === false ? { shareFinalCopy: false } : {}),
+          ...(options.reminders === undefined ? {} : { reminders: options.reminders }),
+        },
       },
     ));
   }
@@ -332,6 +397,52 @@ class RealSigningRequestService {
       + `/recipients/${encodeURIComponent(recipientId)}/reissue-link`,
       { method: "POST", body: {} },
     ));
+  }
+
+  /**
+   * 109. Asks for the final document to be produced again, for a request
+   * whose every signature is in and whose finalization stopped. Asking while
+   * it is already under way is answered `restarted: false`, not refused.
+   * Refused with 409 `signing_completion_not_retryable`; hidden (404) from a
+   * member who may not send.
+   */
+  async retryCompletion(workspaceId: string, signingRequestId: string): Promise<{
+    signingRequestId: string; restarted: boolean; completion: CompletionStatus;
+  }> {
+    return changes("documents", apiRequest(
+      `/workspaces/${encodeURIComponent(workspaceId)}/signing-requests/${encodeURIComponent(signingRequestId)}/completion/retry`,
+      { method: "POST", body: {} },
+    ));
+  }
+
+  /**
+   * 111. Switches a sent request's reminders on or off, or changes the days.
+   * Only while it is out for signing and before its deadline: 409
+   * `signing_reminders_not_configurable` otherwise, 422
+   * `reminder_settings_invalid` for a day outside 1–30.
+   */
+  async setReminders(
+    workspaceId: string, signingRequestId: string,
+    settings: { enabled: boolean; firstAfterDays?: number; everyDays?: number },
+  ): Promise<{ signingRequestId: string; reminders: ReminderSettings }> {
+    return changes("documents", apiRequest(
+      `/workspaces/${encodeURIComponent(workspaceId)}/signing-requests/${encodeURIComponent(signingRequestId)}/reminders`,
+      { method: "PUT", body: settings },
+    ));
+  }
+
+  /**
+   * 111. Reminds one participant now. Refused with 409
+   * `signing_reminder_not_sendable`, whose `details[0].code` says why.
+   */
+  async remind(workspaceId: string, signingRequestId: string, recipientId: string): Promise<{
+    recipientId: string; sentAt: string; manualSentCount: number;
+  }> {
+    return apiRequest(
+      `/workspaces/${encodeURIComponent(workspaceId)}/signing-requests/${encodeURIComponent(signingRequestId)}`
+      + `/recipients/${encodeURIComponent(recipientId)}/remind`,
+      { method: "POST", body: {} },
+    );
   }
 
   // Not called from any UI entry point yet this command (no cancel affordance

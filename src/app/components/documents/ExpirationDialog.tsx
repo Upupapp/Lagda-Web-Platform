@@ -98,7 +98,7 @@ export function ExpirationDialog({
             {expiresAt === null
               ? "This document has no expiration. It waits until it is signed."
               : <>Signing closes at the end of <strong style={{ color: NAVY }}>{formatDeadline(expiresAt)}</strong>, Philippine time.</>}
-            {" "}When a date passes, anyone who has not acted can no longer sign, and you are told in LAGDA.
+            {" "}When a date passes, anyone who has not acted can no longer sign, and you and the participants are emailed.
           </p>
 
           <label htmlFor={dateId} style={{ ...GF, display: "block", fontSize: 12.5, fontWeight: 600, color: NAVY, marginBottom: 6 }}>

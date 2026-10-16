@@ -40,3 +40,34 @@ describe("send and the completed document", () => {
     expect(sentBody()).toEqual({});
   });
 });
+
+describe("send and the reminders (111)", () => {
+  it("passes reminders only when given, beside a withheld copy", async () => {
+    await realSigningRequestService.send("ws_1", "sr_1", "key_1", {
+      shareFinalCopy: false, reminders: { enabled: true, firstAfterDays: 2, everyDays: 5 },
+    });
+    expect(sentBody()).toEqual({ shareFinalCopy: false, reminders: { enabled: true, firstAfterDays: 2, everyDays: 5 } });
+  });
+});
+
+describe("the request's progress calls", () => {
+  const call = () => apiRequest.mock.calls[0] as [string, { method?: string; body?: unknown }];
+
+  it("retries a stopped finalization with an empty POST", async () => {
+    await realSigningRequestService.retryCompletion("ws_1", "sr_1");
+    expect(call()[0]).toBe("/workspaces/ws_1/signing-requests/sr_1/completion/retry");
+    expect(call()[1]).toMatchObject({ method: "POST", body: {} });
+  });
+
+  it("changes reminders with PUT", async () => {
+    await realSigningRequestService.setReminders("ws_1", "sr_1", { enabled: false });
+    expect(call()[0]).toBe("/workspaces/ws_1/signing-requests/sr_1/reminders");
+    expect(call()[1]).toMatchObject({ method: "PUT", body: { enabled: false } });
+  });
+
+  it("reminds one participant with an empty POST", async () => {
+    await realSigningRequestService.remind("ws_1", "sr_1", "srr_1");
+    expect(call()[0]).toBe("/workspaces/ws_1/signing-requests/sr_1/recipients/srr_1/remind");
+    expect(call()[1]).toMatchObject({ method: "POST", body: {} });
+  });
+});

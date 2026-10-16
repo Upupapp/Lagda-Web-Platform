@@ -13,10 +13,10 @@
 // invitation went to, and the exact instant their submission was accepted.
 
 import { useState, useEffect, useCallback, useRef, type CSSProperties } from "react";
-import { X, CheckCircle2, Clock, XCircle, MinusCircle, ShieldCheck, SkipForward, BadgeCheck, AlertTriangle, Send, Loader2, IdCard, UserCheck } from "lucide-react";
+import { X, CheckCircle2, Clock, XCircle, MinusCircle, ShieldCheck, SkipForward, BadgeCheck, AlertTriangle, Send, Loader2, IdCard, UserCheck, BellRing, RotateCcw } from "lucide-react";
 import {
   realSigningRequestService,
-  type SigningRequestSignatures, type Signatory, type RecipientWorkflowState,
+  type SigningRequestSignatures, type Signatory, type RecipientWorkflowState, type RequestReminders,
 } from "../../services/real/signing-request.service";
 import { Z } from "../../utils/z-index";
 import { completedWord } from "../../services/participant-wording";
@@ -29,6 +29,11 @@ import {
 } from "../../services/real/identity-check.service";
 import { LifecycleConfirmDialog, type LifecycleConfirmCopy } from "./LifecycleConfirmDialog";
 import { identityIdTypeLabel, identityNameDifferencesLabel } from "../../models/identity-check";
+import {
+  COMPLETION_FAILED_TITLE, COMPLETION_FAILED_SENTENCE, COMPLETION_FINALIZING_SENTENCE,
+  describeRetryOutcome, describeRetryError, describeParticipantNotice,
+  describeSignatoryReminders, describeReminderRefusal,
+} from "./signing-progress-copy";
 
 const GF: CSSProperties = { fontFamily: "'Geist', sans-serif" };
 
@@ -350,8 +355,25 @@ function acceptNameCopy(verifiedName: string | null, documentName: string): Life
   };
 }
 
-function SignatoryRow({ signatory, link, identity }: {
+/** A line under one participant saying what an action just did. */
+interface RowNote {
+  readonly text: string;
+  readonly tone: "ok" | "warn";
+  /** Their link has ended: offer the new-link button beside the note. */
+  readonly offerNewLink: boolean;
+}
+
+/** What a row needs to show and send reminders (111). Absent once the request is not out. */
+interface ReminderControl {
+  readonly policy: RequestReminders | undefined;
+  /** The recipient a reminder is being sent to right now, if any. */
+  readonly sending: string | null;
+  readonly onRemind: (signatory: Signatory) => void;
+}
+
+function SignatoryRow({ signatory, link, identity, reminder, note }: {
   signatory: Signatory; link?: LinkControl; identity?: IdentityControl;
+  reminder?: ReminderControl; note?: RowNote;
 }) {
   // Falls back rather than crashing if a newer backend sends a state this
   // build does not know yet — the defect this used to have.
@@ -457,6 +479,26 @@ function SignatoryRow({ signatory, link, identity }: {
           )}
           {identity !== undefined && <IdentityCheckLine signatory={signatory} identity={identity} />}
           {link !== undefined && <SigningLink signatory={signatory} link={link} />}
+          {reminder !== undefined && signatory.state === "active" && (
+            <ReminderLine signatory={signatory} reminder={reminder} />
+          )}
+          {note !== undefined && (
+            <div role="status" data-testid="signatory-note" style={{ marginTop: 8 }}>
+              <span style={{ display: "block", fontSize: 12, fontWeight: 600, color: note.tone === "ok" ? GREEN : AMBER, lineHeight: 1.5, ...GF }}>
+                {note.text}
+              </span>
+              {note.offerNewLink && link !== undefined && link.sent.get(signatory.recipientId) === undefined && (
+                <button
+                  type="button" className="srd-action" disabled={link.sending !== null}
+                  onClick={() => { link.onSend(signatory); }}
+                  aria-label={`Send a new link to ${signatory.name}`}
+                  style={{ ...ACTION_BUTTON, marginTop: 6 }}
+                >
+                  {link.sending === signatory.recipientId ? "Sending…" : "Send a new link"}
+                </button>
+              )}
+            </div>
+          )}
           {/* The signer's stated reason, in the words they chose from. Only
               the category is recorded — there is no free-text note to show. */}
           {signatory.declinedAt !== null && signatory.declineReason !== null && (
@@ -541,6 +583,74 @@ function SigningLink({ signatory, link }: { signatory: Signatory; link: LinkCont
   );
 }
 
+/**
+ * 111. Someone the request is waiting on: how many reminders they have had
+ * this turn, when the next one goes, and "Send a reminder now".
+ */
+function ReminderLine({ signatory, reminder }: { signatory: Signatory; reminder: ReminderControl }) {
+  const busy = reminder.sending === signatory.recipientId;
+  const line = reminder.policy === undefined || signatory.reminders === undefined
+    ? null
+    : describeSignatoryReminders(signatory.reminders, reminder.policy);
+  return (
+    <div data-testid="signatory-reminders" style={{ marginTop: 8 }}>
+      {line !== null && (
+        <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: SLATE6, ...GF }}>
+          <BellRing size={12} aria-hidden style={{ color: SLATE4, flexShrink: 0 }} />
+          <span>{line}</span>
+        </div>
+      )}
+      <button
+        type="button" className="srd-action" disabled={reminder.sending !== null}
+        onClick={() => { reminder.onRemind(signatory); }}
+        aria-label={`Send a reminder now to ${signatory.name}`}
+        style={{ ...ACTION_BUTTON, marginTop: 6, display: "inline-flex", alignItems: "center", gap: 6 }}
+      >
+        {busy ? <Loader2 size={13} aria-hidden className="animate-spin" /> : <Send size={13} aria-hidden />}
+        {busy ? "Sending…" : "Send a reminder now"}
+      </button>
+    </div>
+  );
+}
+
+/**
+ * 109. Every signature is in and the final document is being produced, or
+ * producing it stopped. A stop says plainly that nothing is lost, with the
+ * one thing the sender can do: ask for it again.
+ */
+function CompletionBanner({ completion, busy, note, onRetry }: {
+  completion: NonNullable<SigningRequestSignatures["completion"]>;
+  busy: boolean; note: string | null; onRetry: () => void;
+}) {
+  const failed = completion.state === "failed";
+  return (
+    <div data-testid="completion-status" data-state={completion.state} role={failed ? "alert" : "status"} style={{
+      marginTop: 14, padding: "10px 12px", borderRadius: 8,
+      background: failed ? "#FEF2F2" : "#F0FDF4", border: `1px solid ${failed ? "#FECACA" : "#BBF7D0"}`,
+    }}>
+      <div style={{ display: "flex", alignItems: "flex-start", gap: 6 }}>
+        {failed
+          ? <AlertTriangle size={14} aria-hidden style={{ color: RED, flexShrink: 0, marginTop: 2 }} />
+          : <Loader2 size={14} aria-hidden className="animate-spin" style={{ color: GREEN, flexShrink: 0, marginTop: 2 }} />}
+        <span style={{ fontSize: 12.5, color: NAVY, lineHeight: 1.5, ...GF }}>
+          {failed ? <><strong>{COMPLETION_FAILED_TITLE}.</strong> {COMPLETION_FAILED_SENTENCE}</> : COMPLETION_FINALIZING_SENTENCE}
+        </span>
+      </div>
+      {failed && completion.canRetry && (
+        <button type="button" className="srd-action" disabled={busy} onClick={onRetry}
+          aria-label="Try again to finalize this document"
+          style={{ ...ACTION_BUTTON, marginTop: 8, display: "inline-flex", alignItems: "center", gap: 6 }}>
+          {busy ? <Loader2 size={13} aria-hidden className="animate-spin" /> : <RotateCcw size={13} aria-hidden />}
+          {busy ? "Trying again…" : "Try again"}
+        </button>
+      )}
+      {note !== null && (
+        <p role="status" style={{ fontSize: 12, color: SLATE6, margin: "8px 0 0", ...GF }}>{note}</p>
+      )}
+    </div>
+  );
+}
+
 export interface SignatureRecordDialogProps {
   workspaceId: string;
   signingRequestId: string;
@@ -552,10 +662,12 @@ export interface SignatureRecordDialogProps {
    * is not offered.
    */
   onSendToSomeoneElse?: () => void;
+  /** Something here changed the request (a retry, a reminder): the list behind may refresh. */
+  onChanged?: () => void;
 }
 
 export function SignatureRecordDialog({
-  workspaceId, signingRequestId, documentTitle, onClose, onSendToSomeoneElse,
+  workspaceId, signingRequestId, documentTitle, onClose, onSendToSomeoneElse, onChanged,
 }: SignatureRecordDialogProps) {
   const [data, setData] = useState<SigningRequestSignatures | null>(null);
   const [failed, setFailed] = useState(false);
@@ -579,6 +691,63 @@ export function SignatureRecordDialog({
         });
       })
       .finally(() => { setSending(null); });
+  }
+
+  // A line under a participant saying what an action just did.
+  const [rowNotes, setRowNotes] = useState<ReadonlyMap<string, RowNote>>(() => new Map());
+  const noteFor = (recipientId: string, note: RowNote | null) => {
+    setRowNotes(previous => {
+      const next = new Map(previous);
+      if (note === null) next.delete(recipientId); else next.set(recipientId, note);
+      return next;
+    });
+  };
+
+  /** Reads the participants again, keeping what is shown if that fails. */
+  const reload = useCallback(async (): Promise<void> => {
+    try {
+      setData(await realSigningRequestService.signatures(workspaceId, signingRequestId));
+    } catch { /* what is shown stays */ }
+  }, [workspaceId, signingRequestId]);
+
+  // ── 111. "Send a reminder now" ────────────────────────────────────────────
+  const [reminding, setReminding] = useState<string | null>(null);
+  function remindNow(signatory: Signatory) {
+    if (reminding !== null) return;
+    setReminding(signatory.recipientId);
+    noteFor(signatory.recipientId, null);
+    void realSigningRequestService.remind(workspaceId, signingRequestId, signatory.recipientId)
+      .then(async () => {
+        noteFor(signatory.recipientId, { text: `Reminder emailed to ${signatory.email}.`, tone: "ok", offerNewLink: false });
+        await reload();
+        onChanged?.();
+      })
+      .catch((cause: unknown) => {
+        const refusal = describeReminderRefusal(cause, signatory.reminders?.lastSentAt ?? null);
+        noteFor(signatory.recipientId, { text: refusal.text, tone: "warn", offerNewLink: refusal.offerNewLink });
+      })
+      .finally(() => { setReminding(null); });
+  }
+
+  // ── 109. Try again, for a final document that could not be produced ─────
+  const [retryBusy, setRetryBusy] = useState(false);
+  const [retryNote, setRetryNote] = useState<string | null>(null);
+  function retryCompletion() {
+    if (retryBusy) return;
+    setRetryBusy(true);
+    setRetryNote(null);
+    void realSigningRequestService.retryCompletion(workspaceId, signingRequestId)
+      .then(async result => {
+        setRetryNote(describeRetryOutcome(result.restarted));
+        setData(previous => previous === null ? previous : { ...previous, completion: result.completion });
+        await reload();
+        onChanged?.();
+      })
+      .catch((cause: unknown) => {
+        setRetryNote(describeRetryError(cause));
+        void reload();
+      })
+      .finally(() => { setRetryBusy(false); });
   }
 
   // 105. The identity check, where the sender asked one of anybody. `null`
@@ -609,10 +778,16 @@ export function SignatureRecordDialog({
     if (waiving === null || waiveBusy) return;
     setWaiveBusy(true);
     setWaiveError(null);
-    void realIdentityCheckService.waive(workspaceId, signingRequestId, waiving.recipientId, reason)
-      .then(async () => {
+    const target = waiving;
+    void realIdentityCheckService.waive(workspaceId, signingRequestId, target.recipientId, reason)
+      .then(async result => {
         await loadIdentityChecks();
         setWaiving(null);
+        // 110. Whether they were told they can continue, and if not, why.
+        const told = describeParticipantNotice(result.participantNotice, target.name);
+        if (told !== null) {
+          noteFor(target.recipientId, { text: told.text, tone: told.offerNewLink ? "warn" : "ok", offerNewLink: told.offerNewLink });
+        }
       })
       .catch((cause: unknown) => { setWaiveError(describeIdentityWaiveError(cause)); })
       .finally(() => { setWaiveBusy(false); });
@@ -667,6 +842,10 @@ export function SignatureRecordDialog({
         if (!aliveRef.current) return;
         const message = `Accepted as the same person. ${signatory.name} can now open the document.`;
         setResolved(previous => new Map(previous).set(signatory.recipientId, message));
+        const told = describeParticipantNotice(updated.participantNotice, signatory.name);
+        if (told !== null) {
+          noteFor(signatory.recipientId, { text: told.text, tone: told.offerNewLink ? "warn" : "ok", offerNewLink: told.offerNewLink });
+        }
         setAnnouncement(message);
         setResolving(null);
         setFocusResolved(signatory.recipientId);
@@ -784,6 +963,9 @@ export function SignatureRecordDialog({
                 </strong>
                 {" "}required {data.requiredCount === 1 ? "participant has" : "participants have"} completed their part
               </p>
+              {data.completion != null && (
+                <CompletionBanner completion={data.completion} busy={retryBusy} note={retryNote} onRetry={retryCompletion} />
+              )}
               <ul style={{ margin: "8px 0 0", padding: 0 }}>
                 {data.signatories.map(signatory => (
                   <SignatoryRow key={signatory.recipientId} signatory={signatory}
@@ -798,7 +980,13 @@ export function SignatureRecordDialog({
                         ? {} : { onSendElsewhere: () => { onClose(); onSendToSomeoneElse(); } }),
                     }, resolved.get(signatory.recipientId))}
                     {...(data.state === "sent" || data.state === "partially-completed"
-                      ? { link: { sending, sent, error: linkError, onSend: sendNewLink } } : {})} />
+                      ? {
+                        link: { sending, sent, error: linkError, onSend: sendNewLink },
+                        // Viewers and copy recipients are never asked to act, so never reminded.
+                        ...(signatory.type === "viewer" || signatory.type === "carbon-copy"
+                          ? {} : { reminder: { policy: data.reminders, sending: reminding, onRemind: remindNow } }),
+                      } : {})}
+                    {...(rowNotes.has(signatory.recipientId) ? { note: rowNotes.get(signatory.recipientId) } : {})} />
                 ))}
               </ul>
             </>

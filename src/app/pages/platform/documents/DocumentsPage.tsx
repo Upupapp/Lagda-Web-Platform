@@ -42,6 +42,10 @@ import {
   DRAFT_REQUEST_STATES, draftSources, isUnsentDraft, selectUnsentDraftDocuments, unsentDraftRow,
 } from "../../../services/documents/draft-list";
 import { ExpirationDialog } from "../../../components/documents/ExpirationDialog";
+import { RemindersDialog } from "../../../components/documents/RemindersDialog";
+import {
+  COMPLETION_FAILED_TITLE, COMPLETION_FAILED_SENTENCE, describeRetryOutcome, describeRetryError,
+} from "../../../components/documents/signing-progress-copy";
 import { toastSuccess, toastError } from "../../../components/brand/BrandToast";
 import type { RealDocument } from "../../../services/real/document.service";
 import { documentOrganizationService } from "../../../services/mock/document-organization.service";
@@ -2280,9 +2284,14 @@ const OUTBOX_STATUS: Partial<Record<SigningRequestState, { label: string; color:
   "expired":             { label: "Expired",           color: "#B45309" },
 };
 
-function OutboxCard({ item, branding, onView, onSignatures, onAudit, onResend, onExpiration, onCancel }: {
+function OutboxCard({ item, branding, onView, onSignatures, onAudit, onResend, onExpiration, onReminders, onRetry, retrying, onCancel }: {
   /** Stops the request: every signing link ends. Absent where it cannot be cancelled. */
   onCancel?: (() => void) | undefined;
+  /** 111. Opens the request's reminder settings. */
+  onReminders: () => void;
+  /** 109. Asks for a final document that could not be produced, again. */
+  onRetry: () => void;
+  retrying: boolean;
   item: SigningRequestListItem;
   branding: CardBranding;
   onView: () => void;
@@ -2291,7 +2300,11 @@ function OutboxCard({ item, branding, onView, onSignatures, onAudit, onResend, o
   onResend: () => void;
   onExpiration: () => void;
 }) {
-  const status = OUTBOX_STATUS[item.state] ?? { label: TRANSACTION_STATUS_LABELS[SIGNING_REQUEST_STATUS[item.state]], color: "#0078D4" };
+  // 109. "Finalizing" that stopped is its own state, said in red.
+  const failed = item.state === "completion-ready" && item.completion?.state === "failed";
+  const status = failed
+    ? { label: COMPLETION_FAILED_TITLE, color: "#B91C1C" }
+    : OUTBOX_STATUS[item.state] ?? { label: TRANSACTION_STATUS_LABELS[SIGNING_REQUEST_STATUS[item.state]], color: "#0078D4" };
   const total = item.participantCount;
   const done = item.completedParticipantCount;
   const pct = total > 0 ? Math.round((done / total) * 100) : 0;
@@ -2339,6 +2352,25 @@ function OutboxCard({ item, branding, onView, onSignatures, onAudit, onResend, o
             aria-label={`${item.expiresAt !== null ? "Change expiration" : "Set expiration"} of ${item.documentTitle}`}>
             {item.expiresAt !== null ? "Change" : "Set expiration"}
           </button>
+          {" · "}
+          <button type="button" className="mail-inline-link" onClick={onReminders}
+            aria-label={`Reminders for ${item.documentTitle}`}>
+            Reminders
+          </button>
+        </MailLine>
+      )}
+      {failed && (
+        <MailLine>
+          <span data-testid="outbox-completion-failed" style={{ color: "#B91C1C" }}>{COMPLETION_FAILED_SENTENCE}</span>
+          {item.completion?.canRetry === true && (
+            <>
+              {" "}
+              <button type="button" className="mail-inline-link" onClick={onRetry} disabled={retrying}
+                aria-label={`Try again to finalize ${item.documentTitle}`}>
+                {retrying ? "Trying again…" : "Try again"}
+              </button>
+            </>
+          )}
         </MailLine>
       )}
     </MailCard>
@@ -2648,6 +2680,9 @@ function DocumentsPageRealMode() {
   const [signaturesFor, setSignaturesFor] = useState<Pick<SigningRequestListItem, "signingRequestId" | "documentTitle"> | null>(null);
   const [resendFor, setResendFor] = useState<ResendTarget | null>(null);
   const [expirationFor, setExpirationFor] = useState<SigningRequestListItem | null>(null);
+  const [remindersFor, setRemindersFor] = useState<SigningRequestListItem | null>(null);
+  // 109. The request whose final document is being asked for again, if any.
+  const [retryingId, setRetryingId] = useState<string | null>(null);
   const [auditFor, setAuditFor] = useState<SigningRequestListItem | null>(null);
   const [shareFor, setShareFor] = useState<SigningRequestListItem | null>(null);
   const [binOpen, setBinOpen] = useState(false);
@@ -3086,6 +3121,20 @@ function DocumentsPageRealMode() {
                 onAudit={() => { setAuditFor(item); }}
                 onResend={() => { setResendFor(item); }}
                 onExpiration={() => { setExpirationFor(item); }}
+                onReminders={() => { setRemindersFor(item); }}
+                retrying={retryingId === item.signingRequestId}
+                onRetry={() => {
+                  if (!workspaceId || retryingId !== null) return;
+                  setRetryingId(item.signingRequestId);
+                  void realSigningRequestService.retryCompletion(workspaceId, item.signingRequestId)
+                    .then(result => { toastSuccess(describeRetryOutcome(result.restarted)); })
+                    .catch((cause: unknown) => { toastError(describeRetryError(cause)); })
+                    .finally(() => {
+                      setRetryingId(null);
+                      void listQuery.refresh();
+                      void allQuery.refresh();
+                    });
+                }}
                 onCancel={lifecycleFor(item).onCancel} />
             ))}
           </MailCardList>
@@ -3152,12 +3201,25 @@ function DocumentsPageRealMode() {
           }}
         />
       )}
+      {remindersFor && workspaceId && (
+        <RemindersDialog
+          workspaceId={workspaceId}
+          signingRequestId={remindersFor.signingRequestId}
+          documentTitle={remindersFor.documentTitle}
+          onClose={() => { setRemindersFor(null); }}
+          onSaved={saved => {
+            setRemindersFor(null);
+            toastSuccess(saved.enabled ? "Reminders saved" : "Reminders switched off");
+          }}
+        />
+      )}
       {signaturesFor && workspaceId && (
         <SignatureRecordDialog
           workspaceId={workspaceId}
           signingRequestId={signaturesFor.signingRequestId}
           documentTitle={signaturesFor.documentTitle}
           onClose={() => setSignaturesFor(null)}
+          onChanged={() => { void listQuery.refresh(); void allQuery.refresh(); }}
           // "Send to someone else", for a participant whose ID carries another
           // name: the same dialog Send again opens, which starts on new emails.
           onSendToSomeoneElse={() => {

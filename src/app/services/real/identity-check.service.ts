@@ -84,7 +84,17 @@ export interface IdentityCheckWaived {
   recipientId: string;
   status: "waived";
   waivedAt: string;
+  /** 110. What became of telling the participant. Absent from an older server. */
+  participantNotice?: ParticipantNotice;
 }
+
+/**
+ * 110. What became of telling a participant they may continue, after a
+ * lighter method was allowed or their name accepted: told, told before,
+ * nothing waiting on them, or their link has ended (send a new one). Null:
+ * this call told nobody.
+ */
+export type ParticipantNotice = "sent" | "already-sent" | "not-waiting" | "link-lapsed" | null;
 
 export const IDENTITY_CHECK_WAIVE_REASON_MAX = 500;
 
@@ -170,8 +180,8 @@ class RealIdentityCheckService {
    */
   async resolveName(
     workspaceId: string, signingRequestId: string, recipientId: string, resolution: IdentityNameResolution,
-  ): Promise<RecipientIdentityCheck> {
-    return apiRequest<RecipientIdentityCheck>(
+  ): Promise<RecipientIdentityCheck & { participantNotice?: ParticipantNotice }> {
+    return apiRequest<RecipientIdentityCheck & { participantNotice?: ParticipantNotice }>(
       `${ws(workspaceId)}/signing-requests/${encodeURIComponent(signingRequestId)}`
       + `/recipients/${encodeURIComponent(recipientId)}/identity-check/name-resolution`,
       {
