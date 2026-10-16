@@ -220,7 +220,10 @@ describe("failures that have nothing to do with the check", () => {
     acceptConsent.mockRejectedValue(new ApiError(409, { code: "signing_ceremony_unavailable", message: "Not available now." }, "z"));
     renderPage();
     await userEvent.click(await screen.findByRole("button", { name: /I consent — continue/ }));
-    expect((await screen.findByRole("alert")).textContent).toBe("Not available now.");
+    // Said in the page's own words: the server's text for a refused ceremony
+    // is never shown (110), but it is still reported here, on this screen.
+    expect((await screen.findByRole("alert")).textContent).toBe(
+      "This document can't be signed from this link any more. Nothing more is needed from you here.");
     expect(read).not.toHaveBeenCalled();
   });
 });

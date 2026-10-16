@@ -52,6 +52,7 @@ import { LagdaLoader } from "../../components/brand/LagdaLoader";
 import { useMinimumSplash } from "../../hooks/useMinimumSplash";
 import { ceremonyWording } from "../../services/participant-wording";
 import { ConfirmActionDialog } from "../../components/recipient/ConfirmActionDialog";
+import { signingDoorOf, doorScreen, type SigningDoor } from "./signing-door";
 
 // The signer palette lives in `signer-ui`. Only the font alias survives the
 // redesign: every colour this page used is now applied by a primitive from
@@ -88,7 +89,9 @@ function maskRecipientEmail(email: string): string {
 // way) the server withholds consent, the document and the fields, so there is
 // nothing else this page could show. A ceremony that carries no such
 // requirement never enters it.
-type Phase = "loading" | "unavailable" | "choose" | "identity" | "consent" | "ceremony" | "submitted" | "declined" | "decline-form" | "skipped" | "view";
+// "closed": the request ended, or this participant already acted (110). Its
+// own phase, with its own screen per reason, rather than "unavailable".
+type Phase = "loading" | "unavailable" | "closed" | "choose" | "identity" | "consent" | "ceremony" | "submitted" | "declined" | "decline-form" | "skipped" | "view";
 
 // ── Continuing from the app ───────────────────────────────────────────────
 //
@@ -160,6 +163,7 @@ export function RealSigningPage() {
   // a short fade so the page underneath never flashes in.
   const splash = useMinimumSplash(phase !== "loading", SPLASH_MIN_MS, SPLASH_EXIT_MS);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [door, setDoor] = useState<SigningDoor | null>(null);
   const [view, setView] = useState<CeremonyView | null>(null);
   const [values, setValues] = useState<Record<string, string | boolean>>({});
   // The ADOPTED representations, not raw text. A signature may now be drawn,
@@ -180,11 +184,26 @@ export function RealSigningPage() {
   // (ConfirmationPage) — one submission per ceremony, in-memory only.
   const submitKeyRef = useRef<string | null>(null);
 
+  /**
+   * The request ended, or this participant already acted: its own screen.
+   * True when that was the error. Called from every place the server can say
+   * so — opening the link, entering, and any action refused part-way.
+   */
+  const closeAtDoor = (err: unknown): boolean => {
+    const closed = signingDoorOf(err);
+    if (closed === null) return false;
+    setDoor(closed);
+    setErrorMessage(null);
+    setPhase("closed");
+    return true;
+  };
+
   const enterCeremony = async () => {
     try {
       const ceremony = await realSigningAccessService.enter();
       applyView(ceremony);
     } catch (err) {
+      if (closeAtDoor(err)) return;
       setErrorMessage(describeError(err));
       setPhase("unavailable");
     }
@@ -251,6 +270,7 @@ export function RealSigningPage() {
         try {
           applyView(await realSigningAccessService.read());
         } catch (err) {
+          if (closeAtDoor(err)) return;
           setErrorMessage(err instanceof ApiError && err.status === 401
             ? "Your signing session has ended. Open your signing link again to continue."
             : describeReturnError(err));
@@ -269,7 +289,10 @@ export function RealSigningPage() {
           await realSigningAccessService.bootstrap(token);
         }
         await enterCeremony();
-      } catch {
+      } catch (err) {
+        // 110. A real link to a request that ended, or a participant who has
+        // already acted: the server now says which, and so does this page.
+        if (closeAtDoor(err)) return;
         if (fromApp) {
           setErrorMessage(APP_CODE_UNUSABLE);
           setPhase("unavailable");
@@ -327,7 +350,11 @@ export function RealSigningPage() {
           // show as "not yet your turn" for ever.
           if (identityCheckOutstanding(fresh)) { applyView(fresh); return; }
           setView(fresh);
-        } catch { /* transient — the next tick tries again */ }
+        } catch (err) {
+          // Transient errors wait for the next tick. A door is not transient:
+          // the request ended while they waited, and that screen says so.
+          if (!cancelled) closeAtDoor(err);
+        }
       })();
     }, 15000);
 
@@ -364,7 +391,11 @@ export function RealSigningPage() {
           if (fresh.accountLink !== undefined && phaseRef.current === "choose") {
             applyView(fresh);
           }
-        } catch { /* transient; the signer can still act on what is shown */ }
+        } catch (err) {
+          // Transient; the signer can still act on what is shown. Unless the
+          // request ended meanwhile, which has its own screen.
+          closeAtDoor(err);
+        }
       })();
     };
     // Both, because neither alone covers every way a signer comes back.
@@ -448,6 +479,7 @@ export function RealSigningPage() {
       applyView(fresh);
       return null;
     } catch (err) {
+      if (closeAtDoor(err)) return null;
       return describeError(err);
     }
   };
@@ -469,7 +501,7 @@ export function RealSigningPage() {
       const updated = await realSigningAccessService.acceptConsent(view.consent.requiredVersion);
       applyView(updated);
     } catch (err) {
-      if (await recoverIdentityCheckRequired(err)) return;
+      if (closeAtDoor(err) || await recoverIdentityCheckRequired(err)) return;
       setErrorMessage(describeError(err));
     }
   };
@@ -550,7 +582,7 @@ export function RealSigningPage() {
         },
       );
     } catch (err) {
-      if (!(await recoverIdentityCheckRequired(err))) setErrorMessage(describeSubmissionError(err));
+      if (!closeAtDoor(err) && !(await recoverIdentityCheckRequired(err))) setErrorMessage(describeSubmissionError(err));
     } finally {
       setSubmitting(false);
       setConfirmingAction(false);
@@ -570,7 +602,7 @@ export function RealSigningPage() {
         setPhase("skipped");
       });
     } catch (err) {
-      setErrorMessage(describeError(err));
+      if (!closeAtDoor(err)) setErrorMessage(describeError(err));
     } finally {
       setSubmitting(false);
     }
@@ -586,7 +618,7 @@ export function RealSigningPage() {
         setPhase("declined");
       });
     } catch (err) {
-      setErrorMessage(describeError(err));
+      if (!closeAtDoor(err)) setErrorMessage(describeError(err));
     } finally {
       setSubmitting(false);
     }
@@ -630,6 +662,20 @@ export function RealSigningPage() {
           description={errorMessage
             ?? "This signing link is invalid or has expired. Contact the sender for a new link."}
         />
+        {token === CONTINUE_SEGMENT && <GoToDocumentsButton />}
+      </SignerCard>
+    );
+  }
+
+  if (phase === "closed" && door !== null) {
+    const screen = doorScreen(door, view?.recipient.type ?? null);
+    const Icon = screen.tone === "success" ? CheckCircle2 : door === "expired" ? Clock : Ban;
+    return (
+      <SignerCard>
+        <div data-testid="signing-door" data-door={door}>
+          <PhaseBanner icon={Icon} tone={screen.tone} badge={screen.badge}
+            title={screen.title} description={screen.description} />
+        </div>
         {token === CONTINUE_SEGMENT && <GoToDocumentsButton />}
       </SignerCard>
     );
@@ -1182,6 +1228,12 @@ function describeError(err: unknown): string {
   if (err instanceof ApiError) {
     if (err.status === 401) return "Your signing session has ended. Open your signing link again to continue.";
     if (err.status === 403) return "This action could not be verified. Reload the page and try again.";
+    // The server's own text for a refused ceremony names an internal state
+    // ("…not available: already-signed"). A door it names has its own screen
+    // (see closeAtDoor); one it does not gets this, never that text.
+    if (err.body?.code === "signing_ceremony_unavailable") {
+      return "This document can't be signed from this link any more. Nothing more is needed from you here.";
+    }
     return err.message;
   }
   return "Something went wrong. Please try again.";
