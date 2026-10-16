@@ -13,7 +13,7 @@ import { usePlatform } from "../../../context/PlatformContext";
 import { FieldEditorProvider, useFieldEditor } from "../../../context/FieldEditorContext";
 import { FIELD_TYPE_LABELS, FIELD_TYPE_ICONS } from "../../../models/field-editor";
 import type { FieldDefinition } from "../../../models/field-editor";
-import { emailsFinalCopy, type PrepParticipant } from "../../../models/prepare";
+import { emailsFinalCopy, remindersForSend, type PrepParticipant } from "../../../models/prepare";
 import { Z } from "../../../utils/z-index";
 import { mockDocumentService } from "../../../services/mock/document.service";
 import { mapPreparationDraftToDocumentListItem } from "../../../services/prepare/draft-to-document";
@@ -245,10 +245,14 @@ function ConfirmationPageInner({ participants }: { participants: PrepParticipant
 
       if (!pending.sendKey) pending.sendKey = crypto.randomUUID();
       pendingSendRef.current = pending;
-      // The sender's choice from Settings. Left out unless it is "off", so a
-      // send that keeps the default is the same request it always was.
-      await realSigningRequestService.send(workspaceId, signingRequestId, pending.sendKey,
-        emailsFinalCopy(draft.settings) ? {} : { shareFinalCopy: false });
+      // The sender's choices from Settings. Each is left out while it is the
+      // server's default, so a send that keeps every default is the same
+      // request it always was (body and idempotency fingerprint alike).
+      const reminders = remindersForSend(draft.settings);
+      await realSigningRequestService.send(workspaceId, signingRequestId, pending.sendKey, {
+        ...(emailsFinalCopy(draft.settings) ? {} : { shareFinalCopy: false }),
+        ...(reminders === undefined ? {} : { reminders }),
+      });
 
       // The deadline, when the sender set one. The server takes it only on a
       // request that is already out, so it follows the send. The request IS

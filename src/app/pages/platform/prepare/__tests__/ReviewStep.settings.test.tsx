@@ -49,10 +49,22 @@ describe("Review: the Settings summary", () => {
     expect(screen.getByText(/Expiration: November 20, 2026/)).toBeInTheDocument();
   });
 
-  it("no longer reports a verification record, a notification or reminders", () => {
+  it("no longer reports a verification record or a notification", () => {
     open();
     expect(screen.queryByText(/Verification record:/)).toBeNull();
     expect(screen.queryByText(/Notify/)).toBeNull();
-    expect(screen.queryByText(/Reminders:/)).toBeNull();
+  });
+
+  it("states the reminders, by default and as chosen", () => {
+    const { unmount } = open();
+    expect(screen.getByTestId("review-reminders")).toHaveTextContent("Reminders: First after 3 days, then every 3 days");
+    unmount();
+    stable.draft = { id: "draft_1", settings: { ...DEFAULT_PREP_SETTINGS, reminders: { ...DEFAULT_PREP_SETTINGS.reminders, firstReminderDays: 1, repeatIntervalDays: 7 } } };
+    const view = open();
+    expect(screen.getByTestId("review-reminders")).toHaveTextContent("Reminders: First after 1 day, then every 7 days");
+    view.unmount();
+    stable.draft = { id: "draft_1", settings: { ...DEFAULT_PREP_SETTINGS, reminders: { ...DEFAULT_PREP_SETTINGS.reminders, enabled: false } } };
+    open();
+    expect(screen.getByTestId("review-reminders")).toHaveTextContent("Reminders: Off");
   });
 });

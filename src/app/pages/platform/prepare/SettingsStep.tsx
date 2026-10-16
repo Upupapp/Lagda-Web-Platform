@@ -1,5 +1,5 @@
-// Settings — expiration, and whether participants are emailed the completed
-// document. The demo build also shows reminders.
+// Settings — reminders, expiration, and whether participants are emailed the
+// completed document.
 //
 // Every control here reaches the server. Five that did not were removed: an
 // invitation subject, a personal note, a per-document sender name, "notify me
@@ -15,8 +15,9 @@ import { usePlatform } from "../../../context/PlatformContext";
 import { USE_REAL_BACKEND } from "../../../services/backend-flag";
 import { todayInManila } from "../../../services/prepare/deadline";
 import { stepEyebrow,
-  DEFAULT_PREP_SETTINGS, emailsFinalCopy,
+  DEFAULT_PREP_SETTINGS, emailsFinalCopy, draftReminders, describeDraftReminders,
 } from "../../../models/prepare";
+import { REMINDER_RULE } from "../../../components/documents/signing-progress-copy";
 import { StepBanner, StepTwoColumn, RailCard, StepIssueList } from "../../../components/prepare/StepBanner";
 
 const GF     = { fontFamily: "'Geist', sans-serif" };
@@ -184,6 +185,7 @@ export function SettingsStep() {
   }, [settings, updateSettings]);
 
   const sendsCopy = emailsFinalCopy(settings);
+  const reminders = draftReminders(settings);
 
   // The earliest deadline is today: it runs to the end of the day in Manila.
   const today = todayInManila();
@@ -210,45 +212,48 @@ export function SettingsStep() {
         </p>
       </div>
 
-      {/* Reminders — the demo build only. The server sends no reminders, so
-          the live app does not offer settings that would do nothing. */}
-      {!USE_REAL_BACKEND && (
+      {/* Reminders (111). Sent with the request, on by default; the days
+          count from when it became each participant's turn. */}
       <div style={{ marginBottom: 32, padding: "20px", borderRadius: 12, border: "1px solid #E3E8EF" }}>
         <SectionHeader
           title="Reminders"
-          subtitle="Automatic reminder emails sent to participants who have not yet acted."
+          subtitle={USE_REAL_BACKEND
+            ? "Reminder emails to participants who have not yet acted."
+            : "Reminder emails to participants who have not yet acted. None are sent in this demonstration."}
         />
         <div style={{ marginBottom: 14 }}>
           <Toggle
             id="reminders-enabled"
-            label="Enable reminders"
-            description="Send automatic reminders to participants who have not completed their required actions."
-            checked={settings.reminders.enabled}
+            label="Remind participants who have not acted"
+            description="Each participant is reminded by email, counting from when it became their turn."
+            checked={reminders.enabled}
             onChange={v => updateReminders({ enabled: v })}
           />
         </div>
         <NumberInput
           id="first-reminder"
-          label="Send first reminder after"
-          value={settings.reminders.firstReminderDays}
+          label="First reminder after"
+          value={reminders.firstAfterDays}
           min={1}
           max={30}
           unit="days"
-          disabled={!settings.reminders.enabled}
+          disabled={!reminders.enabled}
           onChange={v => updateReminders({ firstReminderDays: v })}
         />
         <NumberInput
           id="repeat-interval"
-          label="Then repeat every"
-          value={settings.reminders.repeatIntervalDays}
+          label="Then every"
+          value={reminders.everyDays}
           min={1}
           max={30}
           unit="days"
-          disabled={!settings.reminders.enabled}
+          disabled={!reminders.enabled}
           onChange={v => updateReminders({ repeatIntervalDays: v })}
         />
+        <p data-testid="reminder-rule" style={{ ...GF, fontSize: 12, color: SILVER, margin: 0, lineHeight: 1.5 }}>
+          {REMINDER_RULE}
+        </p>
       </div>
-      )}
 
       {/* Expiration */}
       <div style={{ marginBottom: 32, padding: "20px", borderRadius: 12, border: "1px solid #E3E8EF" }}>
@@ -327,13 +332,11 @@ export function SettingsStep() {
 
   const rail = (
     <>
-      <RailCard title={USE_REAL_BACKEND ? "Expiration" : "Reminders & expiry"}>
+      <RailCard title="Reminders & expiry">
         <div style={{ ...GF, fontSize: 12, color: "#4B5E70", display: "flex", flexDirection: "column", gap: 8 }}>
-          {!USE_REAL_BACKEND && <div>
-            {settings.reminders.enabled
-              ? `First reminder after ${settings.reminders.firstReminderDays} day${settings.reminders.firstReminderDays !== 1 ? "s" : ""}, then every ${settings.reminders.repeatIntervalDays} day${settings.reminders.repeatIntervalDays !== 1 ? "s" : ""}.`
-              : "Reminders are disabled."}
-          </div>}
+          <div data-testid="rail-reminders">
+            {reminders.enabled ? `Reminders: ${describeDraftReminders(settings).toLowerCase()}.` : "Reminders are off."}
+          </div>
           <div>
             {settings.expiration.enabled && settings.expiration.expiresAt
               ? `Expires ${new Date(settings.expiration.expiresAt).toLocaleDateString("en-PH", { year: "numeric", month: "long", day: "numeric" })}.`
@@ -354,9 +357,7 @@ export function SettingsStep() {
     </>
   );
 
-  const reminderSummary = settings.reminders.enabled
-    ? `Reminders every ${settings.reminders.repeatIntervalDays}d`
-    : "Reminders off";
+  const reminderSummary = reminders.enabled ? "Reminders on" : "Reminders off";
   const expirySummary = settings.expiration.enabled && settings.expiration.expiresAt
     ? "Expiration set"
     : "No expiration";
@@ -368,11 +369,8 @@ export function SettingsStep() {
         icon={SlidersHorizontal}
         eyebrow={stepEyebrow("settings")}
         title="Settings"
-        description={USE_REAL_BACKEND
-          ? "Set an optional expiration date, and choose whether participants are emailed the completed document."
-          : "Configure when reminders fire, an optional expiration date, and whether participants are emailed the completed document."}
-        // The live build has no reminders to summarise.
-        meta={USE_REAL_BACKEND ? `${expirySummary} · ${copySummary}` : `${reminderSummary} · ${expirySummary}`}
+        description="Choose when participants are reminded, set an optional expiration date, and choose whether participants are emailed the completed document."
+        meta={`${reminderSummary} · ${expirySummary} · ${copySummary}`}
       />
       <StepTwoColumn main={main} rail={rail} />
     </div>

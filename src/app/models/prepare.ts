@@ -77,8 +77,7 @@ export const PREPARATION_STEPS: {
   { id: "upload",         label: "Documents",      shortLabel: "Docs",     route: "/app/prepare/upload",         icon: "FileText",   blurb: "The file everyone will sign" },
   { id: "participants",   label: "Signers",        shortLabel: "Signers",  route: "/app/prepare/participants",   icon: "Users",      blurb: "Who needs to sign it" },
   { id: "routing",        label: "Order",          shortLabel: "Order",    route: "/app/prepare/routing",        icon: "ListOrdered", blurb: "What order they sign in" },
-  // The server sends no reminders, so the live build does not name them.
-  { id: "settings",       label: "Settings",       shortLabel: "Settings", route: "/app/prepare/settings",       icon: "SlidersHorizontal", blurb: USE_REAL_BACKEND ? "Expiration and completed copies" : "Reminders and expiration" },
+  { id: "settings",       label: "Settings",       shortLabel: "Settings", route: "/app/prepare/settings",       icon: "SlidersHorizontal", blurb: "Reminders and expiration" },
   { id: "fields",         label: "Place Fields",   shortLabel: "Fields",   route: "/app/prepare/fields",         icon: "PenLine",    blurb: "Where each signature goes" },
   { id: "authentication", label: "Authentication", shortLabel: "Auth",     route: "/app/prepare/authentication", icon: "ShieldCheck", blurb: "How signers prove who they are" },
   { id: "review",         label: "Review",         shortLabel: "Review",   route: "/app/prepare/review",         icon: "ClipboardCheck", blurb: "Check everything before sending" },
@@ -484,6 +483,46 @@ export const DEFAULT_PREP_SETTINGS: PrepSettings = {
  */
 export function emailsFinalCopy(settings: { completion?: Partial<PrepCompletionSettings> }): boolean {
   return settings.completion?.emailFinalCopy !== false;
+}
+
+/** The server's reminder defaults (111): on, first after 3 days, then every 3. */
+export const REMINDER_DEFAULT_DAYS = 3;
+
+/**
+ * A draft's reminders, as the server names them. Read the same tolerant way
+ * as the copy above: a draft with no reminder settings, or a missing or
+ * out-of-range day, reads as the default, and only an explicit "off" is off.
+ */
+export function draftReminders(settings: { reminders?: Partial<PrepReminderSettings> }): {
+  enabled: boolean; firstAfterDays: number; everyDays: number;
+} {
+  const day = (n: unknown) => (typeof n === "number" && Number.isInteger(n) && n >= 1 && n <= 30 ? n : REMINDER_DEFAULT_DAYS);
+  return {
+    enabled: settings.reminders?.enabled !== false,
+    firstAfterDays: day(settings.reminders?.firstReminderDays),
+    everyDays: day(settings.reminders?.repeatIntervalDays),
+  };
+}
+
+/**
+ * What Send passes as `reminders`: nothing when the draft keeps every
+ * default, so a default send stays the empty body it always was (and keeps
+ * its idempotency fingerprint), and the whole setting when anything differs.
+ */
+export function remindersForSend(settings: { reminders?: Partial<PrepReminderSettings> }): {
+  enabled: boolean; firstAfterDays: number; everyDays: number;
+} | undefined {
+  const chosen = draftReminders(settings);
+  return chosen.enabled && chosen.firstAfterDays === REMINDER_DEFAULT_DAYS && chosen.everyDays === REMINDER_DEFAULT_DAYS
+    ? undefined : chosen;
+}
+
+/** "First after 3 days, then every 3 days" / "Off". */
+export function describeDraftReminders(settings: { reminders?: Partial<PrepReminderSettings> }): string {
+  const { enabled, firstAfterDays, everyDays } = draftReminders(settings);
+  if (!enabled) return "Off";
+  const days = (n: number) => `${String(n)} day${n === 1 ? "" : "s"}`;
+  return `First after ${days(firstAfterDays)}, then every ${days(everyDays)}`;
 }
 
 // ── Source context ────────────────────────────────────────────────────────────

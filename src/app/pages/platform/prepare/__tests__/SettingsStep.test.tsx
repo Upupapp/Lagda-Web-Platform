@@ -72,17 +72,54 @@ describe("Settings: the controls that reached nothing are gone", () => {
       "Recipients see your profile's Sender Display name as the sender. Change it in Settings › Profile.");
   });
 
-  it("describes only what is left, and offers no reminders", () => {
+  it("describes what is left: reminders, expiration and the completed copy", () => {
     open();
     expect(screen.getByText(
-      "Set an optional expiration date, and choose whether participants are emailed the completed document.")).toBeInTheDocument();
-    expect(screen.queryByText(/reminder/i)).toBeNull();
+      "Choose when participants are reminded, set an optional expiration date, and choose whether participants are emailed the completed document.")).toBeInTheDocument();
+    expect(screen.getByText("Reminders on · No expiration · Completed copy emailed")).toBeInTheDocument();
     expect(screen.queryByText(/Configure how invitations are sent/)).toBeNull();
   });
 
   it("does not say the sender is told when a document expires", () => {
     open();
     expect(screen.queryByText(/you are told in LAGDA/)).toBeNull();
+  });
+});
+
+describe("Settings: reminders (live build)", () => {
+  const remindersSwitch = () => screen.getByRole("checkbox", { name: /Remind participants who have not acted/ });
+
+  it("are on by default, 3 days then every 3, with the fixed rule beside them", () => {
+    open();
+    expect(remindersSwitch()).toBeChecked();
+    expect(screen.getByLabelText("First reminder after")).toHaveValue(3);
+    expect(screen.getByLabelText("Then every")).toHaveValue(3);
+    expect(screen.getByTestId("reminder-rule")).toHaveTextContent(
+      "Up to 3 reminders, until they act. Reminders stop when the document is completed, declined, cancelled or expires.");
+    expect(screen.getByTestId("rail-reminders")).toHaveTextContent("Reminders: first after 3 days, then every 3 days.");
+  });
+
+  it("saves the switch and the days", async () => {
+    open();
+    await userEvent.click(remindersSwitch());
+    expect(updateSettings).toHaveBeenLastCalledWith(expect.objectContaining({
+      reminders: expect.objectContaining({ enabled: false }),
+    }));
+  });
+
+  it("shows a draft with reminders off as off, its days disabled", () => {
+    stable.draft = { id: "draft_1", settings: { ...DEFAULT_PREP_SETTINGS, reminders: { ...DEFAULT_PREP_SETTINGS.reminders, enabled: false } } };
+    open();
+    expect(remindersSwitch()).not.toBeChecked();
+    expect(screen.getByLabelText("First reminder after")).toBeDisabled();
+    expect(screen.getByTestId("rail-reminders")).toHaveTextContent("Reminders are off.");
+    expect(screen.getByText("Reminders off · No expiration · Completed copy emailed")).toBeInTheDocument();
+  });
+
+  it("reads a draft with no reminder settings as on", () => {
+    stable.draft = { id: "draft_1", settings: { expiration: { enabled: false, expiresAt: null } } };
+    open();
+    expect(remindersSwitch()).toBeChecked();
   });
 });
 

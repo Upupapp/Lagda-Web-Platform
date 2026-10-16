@@ -13,11 +13,10 @@ import React, { useEffect } from "react";
 import { useNavigate } from "react-router";
 import { ClipboardCheck, Check, ChevronRight } from "lucide-react";
 import { usePrepare } from "../../../context/PrepareContext";
-import { USE_REAL_BACKEND } from "../../../services/backend-flag";
 import { stepEyebrow,
   PREPARATION_STEPS,
   PREP_PARTICIPANT_ROLE_LABELS,
-  DEFAULT_PREP_SETTINGS, emailsFinalCopy,
+  DEFAULT_PREP_SETTINGS, emailsFinalCopy, describeDraftReminders,
   DEFAULT_ROUTING_CONFIG,
   DEFAULT_AUTH_CONFIG,
   DEFAULT_TRANSACTION_DETAILS,
@@ -299,13 +298,9 @@ export function ReviewStep() {
       {/* Settings */}
       <SectionBlock title="Settings" stepId="settings" onEdit={goToStep}>
         <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-          {!USE_REAL_BACKEND && (
-            <div style={{ ...GF, fontSize: 12, color: "#4B5E70" }}>
-              Reminders: {settings.reminders.enabled
-                ? `First after ${settings.reminders.firstReminderDays} day${settings.reminders.firstReminderDays !== 1 ? "s" : ""}, then every ${settings.reminders.repeatIntervalDays} day${settings.reminders.repeatIntervalDays !== 1 ? "s" : ""}`
-                : "Disabled"}
-            </div>
-          )}
+          <div data-testid="review-reminders" style={{ ...GF, fontSize: 12, color: "#4B5E70" }}>
+            Reminders: {describeDraftReminders(settings)}
+          </div>
           <div style={{ ...GF, fontSize: 12, color: "#4B5E70" }}>
             Expiration: {settings.expiration.enabled && settings.expiration.expiresAt
               ? new Date(settings.expiration.expiresAt).toLocaleDateString("en-PH", { year: "numeric", month: "long", day: "numeric" })

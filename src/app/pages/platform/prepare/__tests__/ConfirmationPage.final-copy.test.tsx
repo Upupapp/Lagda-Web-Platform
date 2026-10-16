@@ -87,6 +87,42 @@ beforeEach(() => {
   request.send.mockReset().mockResolvedValue({ signingRequestId: "sr_1", state: "sent" });
 });
 
+describe("Send and the reminders", () => {
+  const withReminders = (reminders: Record<string, unknown>) => {
+    stable.draft.settings = { expiration: { enabled: false, expiresAt: null }, reminders };
+  };
+
+  it("leaves reminders out of the body when they keep the defaults", async () => {
+    withReminders({ enabled: true, firstReminderDays: 3, repeatIntervalDays: 3, maxReminders: null });
+    open();
+    await send();
+    expect(request.send).toHaveBeenCalledWith("ws_1", "sr_1", expect.any(String), {});
+  });
+
+  it("sends the whole setting when the days differ", async () => {
+    withReminders({ enabled: true, firstReminderDays: 2, repeatIntervalDays: 5, maxReminders: null });
+    open();
+    await send();
+    expect(request.send).toHaveBeenCalledWith("ws_1", "sr_1", expect.any(String), {
+      reminders: { enabled: true, firstAfterDays: 2, everyDays: 5 },
+    });
+  });
+
+  it("sends reminders off when switched off, beside a withheld copy", async () => {
+    stable.draft.settings = {
+      expiration: { enabled: false, expiresAt: null },
+      reminders: { enabled: false, firstReminderDays: 3, repeatIntervalDays: 3, maxReminders: null },
+      completion: { emailFinalCopy: false },
+    };
+    open();
+    await send();
+    expect(request.send).toHaveBeenCalledWith("ws_1", "sr_1", expect.any(String), {
+      shareFinalCopy: false,
+      reminders: { enabled: false, firstAfterDays: 3, everyDays: 3 },
+    });
+  });
+});
+
 describe("Send and the completed document", () => {
   it("tells the server not to email the copy when the sender switched it off", async () => {
     withCompletion({ emailFinalCopy: false });
