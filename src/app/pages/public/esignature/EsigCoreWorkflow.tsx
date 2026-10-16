@@ -275,7 +275,7 @@ export function EsigCoreWorkflow() {
       <PageSection id="prepare" light bordered>
         <div style={{ display: "grid", gap: "32px 48px", alignItems: "start" }} className="cw-two-col">
           <div>
-            <SectionHeading eyebrow="Step 1" id="prepare-heading" heading="Prepare documents faster." sub="Upload PDFs, configure fields, set a deadline, and prepare the complete document before it goes out." />
+            <SectionHeading eyebrow="Step 1" id="prepare-heading" heading="Prepare documents faster." sub="Upload PDFs, configure fields, set reminders and a deadline, and prepare the complete document before it goes out." />
             <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>
               {["Upload one or multiple PDFs", "Define document order in multi-document transactions", "Set a completion deadline", "Save as a draft before sending"].map((item) => (
                 <li key={item} style={{ display: "flex", gap: 8, alignItems: "flex-start", marginBottom: 8 }}>
@@ -383,7 +383,7 @@ export function EsigCoreWorkflow() {
 
       <RelatedPages links={[
         { label: "Verification & Audit",   desc: "How evidence is recorded and documents are verified", path: "/esignature/verification-and-audit" },
-        { label: "Advanced Capabilities",  desc: "Expiration and complex routing", path: "/esignature/advanced-capabilities" },
+        { label: "Advanced Capabilities",  desc: "Reminders, expiration, and complex routing", path: "/esignature/advanced-capabilities" },
       ]} />
 
       <AccountPageCTA

@@ -71,6 +71,7 @@ function ExpirationMockup() {
       {[
         { label: "Expiration date",      value: "21 July 2026" },
         { label: "Signing closes",       value: "End of that day, Philippine time" },
+        { label: "Reminders",            value: "After 3 days, then every 3 (up to 3)" },
         { label: "Signing link",         value: "Works for 14 days" },
         { label: "After expiry",         value: "Transaction locked, record retained" },
       ].map((row) => (
@@ -81,7 +82,7 @@ function ExpirationMockup() {
       ))}
       <div style={{ padding: "10px 16px", background: "#f8fafb" }}>
         <p style={{ color: "#64748B", ...GF, fontSize: 11, margin: 0 }}>
-          LAGDA does not send automatic reminders. Follow up with a participant yourself, or send them a new link.
+          Reminders are on by default: first after 3 days, then every 3, up to 3. Change the days or switch them off per document.
         </p>
       </div>
     </div>
@@ -141,7 +142,7 @@ export function EsigAdvancedCapabilities() {
         eyebrow="Advanced Capabilities"
         headingId="ac-h1"
         heading="Advanced tools for faster, clearer signing workflows."
-        sub="Beyond the basic signing journey — LAGDA supports parallel and sequential routing, expiration, organization features, and enterprise-scale capabilities as the platform expands."
+        sub="Beyond the basic signing journey — LAGDA supports parallel and sequential routing, reminders, expiration, organization features, and enterprise-scale capabilities as the platform expands."
       />
 
       {/* Routing comparison */}
@@ -160,9 +161,12 @@ export function EsigAdvancedCapabilities() {
       <PageSection id="expiration">
         <div style={{ display: "grid", gap: "32px 48px", alignItems: "start" }} className="ac-two-col">
           <div>
-            <SectionHeading eyebrow="Expiration" id="expiration-heading" heading="Keep signing moving with a deadline." sub="Set an expiration date so no document is left waiting. LAGDA does not send automatic reminders today." />
+            <SectionHeading eyebrow="Reminders & expiration" id="expiration-heading" heading="Keep signing moving with reminders and a deadline." sub="Pending participants are reminded automatically, and an optional expiration date means no document is left waiting." />
             <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>
               {[
+                "Reminders on by default: first after 3 days, then every 3 days, up to 3",
+                "Change the days or switch reminders off for one document",
+                "Send one participant a reminder now",
                 "Set an expiration date for the transaction",
                 "Signing closes at the end of that day, Philippine time",
                 "Add, move or remove the date while the document is out for signature",
@@ -176,7 +180,7 @@ export function EsigAdvancedCapabilities() {
               ))}
             </ul>
             <p style={{ color: "#64748B", ...GF, fontSize: 12, marginTop: 16, lineHeight: 1.6 }}>
-              LAGDA does not send reminder emails, and nobody is notified when a transaction expires. Check the document in your workspace and follow up with the participant yourself.
+              Reminders stop when the participant acts or the document is completed, declined, cancelled or expires. When a document expires, you and the participants are emailed.
             </p>
           </div>
           <ExpirationMockup />

@@ -84,6 +84,8 @@ export const ADVANCED_CAPS = [
   { tier: "Core",       icon: "✓",  title: "Sequential signing",        desc: "Participants act in a defined order. Each step opens when the previous completes." },
   { tier: "Core",       icon: "✓",  title: "Mixed routing",             desc: "Groups of simultaneous signers with a defined group order between them." },
   { tier: "Core",       icon: "✓",  title: "Transaction expiration",    desc: "Set a deadline after which the transaction expires if not completed." },
+  { tier: "Core",       icon: "✓",  title: "Automatic reminders",       desc: "Pending participants are reminded by email: first after 3 days, then every 3, up to 3. Change or switch off per document." },
+  { tier: "Core",       icon: "✓",  title: "Send a reminder now",       desc: "Remind one pending participant yourself, at most once an hour." },
   { tier: "Core",       icon: "✓",  title: "New signing link",         desc: "Send a participant a fresh link when theirs has ended." },
   { tier: "Advanced",   icon: "◐",  title: "Approval steps",            desc: "Insert an approver into the workflow before or after signing steps." },
   { tier: "Advanced",   icon: "◐",  title: "Folder organization",       desc: "Group transactions into folders for easier navigation and reporting." },

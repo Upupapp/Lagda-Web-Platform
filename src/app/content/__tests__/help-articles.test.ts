@@ -39,7 +39,8 @@ describe("help articles", () => {
 
   it("describes nothing that is not built", () => {
     const text = JSON.stringify(HELP_ARTICLES).toLowerCase();
-    for (const absent of ["reminder", "sms", "authenticator code for signers", "enotary", "api key", "webhook"]) {
+    // Reminders exist since 111 and are described; SMS codes, eNotary and an API do not.
+    for (const absent of ["sms", "authenticator code for signers", "enotary", "api key", "webhook"]) {
       expect(text, absent).not.toContain(absent);
     }
   });

@@ -63,18 +63,22 @@ export function Notifications() {
         eyebrow="Notifications"
         headingId="notif-h1"
         heading="Know what's happening with every transaction — without checking manually."
-        sub="LAGDA emails you when a document you sent is completed, and shows in-app notices for what needs you: a document waiting for your signature, or a signing link that has ended."
+        sub="LAGDA emails you when a document you sent is completed or declined, reminds participants who have not acted, and tells everyone on a document when it is cancelled, declined or expires."
       />
 
       <PageSection id="center" light bordered>
         <div style={{ display: "grid", gap: "32px 48px", alignItems: "start" }} className="notif-two-col">
           <div>
-            <SectionHeading eyebrow="Event types" id="et-h2" heading="Dismiss events from the interactive example." sub="The notification center surfaces the events that require attention. Action-required events are labeled so they stand out. A decline, an expiry or a cancellation is not announced today: it shows on the document in your workspace." />
+            <SectionHeading eyebrow="Event types" id="et-h2" heading="Dismiss events from the interactive example." sub="The notification center surfaces the events that require attention. Action-required events are labeled so they stand out." />
             <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 16 }}>
               {[
                 { label: "Signing invitation",    icon: "📧", when: "Emailed to each participant when their turn comes" },
                 { label: "Waiting for your signature", icon: "✍️", when: "In-app, when a document is sent to your account's address" },
+                { label: "Reminder",              icon: "⏰", when: "Emailed to a participant who has not acted, on the sender's schedule" },
                 { label: "Signing link ended",    icon: "🔗", when: "In-app, to the sender, when a participant's link lapses unsigned" },
+                { label: "Participant declined",  icon: "❌", when: "Emailed and in-app to the sender; emailed to the other participants" },
+                { label: "Cancelled or expired",  icon: "⏹️", when: "Emailed to participants; an expiry is emailed to the sender too" },
+                { label: "Could not finalize",    icon: "⚠️", when: "Emailed and in-app to the sender, with Try again" },
                 { label: "Document completed",    icon: "✅", when: "Emailed to the sender when all required participants have acted" },
                 { label: "Completed document",    icon: "📄", when: "Emailed to participants, unless the sender switches it off" },
               ].map((e) => (
@@ -97,8 +101,8 @@ export function Notifications() {
         <SectionHeading eyebrow="Channels" id="ch-h2" heading="How LAGDA delivers notifications." center />
         <div style={{ display: "grid", gap: 10 }} className="ch-grid">
           {[
-            { icon: "📧", channel: "Email",  desc: "Signing invitations, the sender's completion email and each participant's completed document are sent by email." },
-            { icon: "📱", channel: "In-app", desc: "Notices appear in the LAGDA notification center when you are signed in." },
+            { icon: "📧", channel: "Email",  desc: "Invitations, reminders, completion, decline, cancellation and expiry notices, and each participant's completed document are sent by email." },
+            { icon: "📱", channel: "In-app", desc: "Notices appear in the LAGDA notification center when you are signed in. A participant whose email address belongs to a LAGDA account sees theirs there too." },
           ].map((c) => (
             <div key={c.channel} style={{ background: "#ffffff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: 12, padding: "16px 14px", boxShadow: "0 1px 4px rgba(7,17,31,0.07)" }}>
               <span aria-hidden style={{ fontSize: 22, display: "block", marginBottom: 8 }}>{c.icon}</span>
@@ -111,13 +115,14 @@ export function Notifications() {
       </PageSection>
 
       <PageSection id="following-up" light bordered>
-        <SectionHeading eyebrow="Following up" id="ar-h2" heading="What LAGDA does not send yet — and what you can do instead." center />
+        <SectionHeading eyebrow="Automatic reminders" id="ar-h2" heading="Pending participants are reminded, on a schedule you control." center />
         <div style={{ display: "grid", gap: 10 }} className="ar-grid">
           {[
-            { title: "No automatic reminders",  desc: "LAGDA does not remind participants who have not yet acted. Follow up with them yourself." },
-            { title: "Send a new link",         desc: "When a participant's signing link has ended, the sender can send them a new one from the document." },
-            { title: "No decline or expiry notice", desc: "Nobody is emailed or notified when a document is declined, cancelled or expires. Its status changes in your workspace." },
-            { title: "No delivery-failure notice", desc: "LAGDA does not tell the sender when an invitation email could not be delivered. Check the address if a participant says nothing arrived." },
+            { title: "On by default",           desc: "A participant who has not acted is reminded by email 3 days after it became their turn, then every 3 days, up to 3 reminders." },
+            { title: "Your schedule",           desc: "Switch reminders off for one document, or choose the days (1 to 30), when you prepare it or while it is out for signature." },
+            { title: "Send a reminder now",     desc: "Remind one participant yourself from the document's Participants, at most once an hour." },
+            { title: "When reminders stop",     desc: "When the participant acts, or the document is completed, declined, cancelled or expires. A participant whose link has ended needs a new link instead." },
+            { title: "No delivery-failure notice", desc: "LAGDA does not tell the sender when an invitation email could not be delivered; reminders stop for that address. Check the address if a participant says nothing arrived." },
           ].map((r) => (
             <div key={r.title} style={{ background: "#ffffff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: 10, padding: "12px 14px", boxShadow: "0 1px 4px rgba(7,17,31,0.06)" }}>
               <p style={{ color: "#07111F", ...GF, fontSize: 13, fontWeight: 700, margin: 0, marginBottom: 4 }}>{r.title}</p>

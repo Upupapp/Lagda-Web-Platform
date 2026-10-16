@@ -300,7 +300,7 @@ export function EsigVerificationAudit() {
 
       <RelatedPages links={[
         { label: "Verify a Document",     desc: "Public verification — no account required", path: "/verify" },
-        { label: "Advanced Capabilities", desc: "Routing, bulk, and enterprise features", path: "/esignature/advanced-capabilities" },
+        { label: "Advanced Capabilities", desc: "Reminders, bulk, and enterprise features", path: "/esignature/advanced-capabilities" },
       ]} />
 
       <AccountPageCTA

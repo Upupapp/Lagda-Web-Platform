@@ -91,7 +91,7 @@ const CAPABILITIES = [
   { icon: "📇", title: "Saved contacts",        desc: "Store students, guardians, and staff for recurring workflows.", path: "/features/contacts" },
   { icon: "🔑", title: "Signer authentication", desc: "OTP or account-based authentication to confirm participant identity.", path: "/features/signer-authentication" },
   { icon: "📋", title: "Audit trail",            desc: "Timestamped record of delivery, viewing, and completion per participant.", path: "/features/audit-trail" },
-  { icon: "🔔", title: "Completion notice",     desc: "You are emailed when everyone has signed.", path: "/features/notifications" },
+  { icon: "🔔", title: "Automatic reminders",   desc: "Families are reminded by email: first after 3 days, then every 3, up to 3 times.", path: "/features/notifications" },
 ];
 
 export function Education() {
@@ -161,7 +161,7 @@ export function Education() {
 
       <AccountPageCTA
         heading="Get your enrollment forms online."
-        sub="Templates, guardian signing, and a clear view of who has signed — built for institutional workflows."
+        sub="Templates, guardian signing, and automatic reminders — built for institutional workflows."
         primaryLabel="Create Free Account"
         primaryPath="/create-account"
         secondaryLabel="Book a Demo"

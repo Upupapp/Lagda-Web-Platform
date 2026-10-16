@@ -80,7 +80,7 @@ const CAPABILITIES = [
   { icon: "🔑", title: "Signer authentication", desc: "Secure link, email code, or account login — match authentication to transaction risk.", path: "/features/signer-authentication" },
   { icon: "📋", title: "Audit trail",            desc: "Every event — delivery, viewing, signing — timestamped and preserved.", path: "/features/audit-trail" },
   { icon: "🔍", title: "Document Verification", desc: "Confirm any document matches its LAGDA record using a Verification ID.", path: "/features/document-verification" },
-  { icon: "🔔", title: "Completion notice",     desc: "You are emailed when everyone has signed.", path: "/features/notifications" },
+  { icon: "🔔", title: "Automatic reminders",   desc: "Clients are reminded by email: first after 3 days, then every 3, up to 3 times.", path: "/features/notifications" },
 ];
 
 export function Lawyers() {

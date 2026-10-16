@@ -1,6 +1,6 @@
 // The Help Center's articles: one task each, in numbered steps, written from
 // how the screens work today. Nothing here describes a feature that is not
-// built (no reminders, no SMS codes, no eNotary).
+// built (no SMS codes, no eNotary).
 //
 // Each article is plain data so the page that renders it and the test that
 // checks its links stay simple. `related` paths must be routes the app has;
@@ -64,7 +64,7 @@ export const HELP_ARTICLES: readonly HelpArticle[] = [
       "Documents: drop your file onto the page or click to select it. You can add more than one file to the same request. Give the transaction a title if you want something other than the file name, then click Continue.",
       "Signers: add each participant with their full name, email address and role. Roles are Signer, Approver, Reviewer, Acknowledges, Viewer and Copy recipient. You can pick people from your Contacts instead of typing them.",
       "Order: choose whether everyone signs at the same time (parallel) or one after another (sequential). For sequential signing, arrange the participants into steps; a person is only emailed when their step is reached.",
-      "Settings: optionally switch on Expiration and pick a date. Signing closes at the end of that day, Philippine time; the document then moves to Records › Declined & Expired. Choose whether participants are emailed the completed document.",
+      "Settings: reminders are on: a participant who has not acted is emailed first after 3 days, then every 3 days, up to 3 reminders. Change the days or switch them off. Optionally switch on Expiration and pick a date: signing closes at the end of that day, Philippine time, and you and the participants are emailed. Choose whether participants are emailed the completed document.",
       "Place Fields: click a participant, then click on the page where their signature, initials, date or text should go. Every signer needs at least one signature field. The checklist on the right turns green when the document is ready.",
       "Authentication: confirm how signers prove who they are. Every signer receives a private link at their email address; a signer with a LAGDA account can also sign from inside the app.",
       "Review: read the summary of files, participants, order and settings. Use Edit on any part to go back.",
@@ -106,20 +106,21 @@ export const HELP_ARTICLES: readonly HelpArticle[] = [
     summary: "See who has signed, who is still to act, and what to do when a link has lapsed or a date has passed.",
     steps: [
       "Open Documents in the sidebar. Correspondence › Sent lists every document that is out for signature, as a card under your workspace's banner.",
-      "The card shows how many participants have signed, the date it was sent, its expiration if you set one, and the status: Out for signature, Partially signed or Finalizing.",
+      "The card shows how many participants have signed, the date it was sent, its expiration if you set one, and the status: Out for signature, Partially signed, Finalizing, or Could not finalize — every signature is safe, and Try again produces the final document again.",
       "Click Participants to see each person: their role, whether they have signed, approved, declined or are still awaiting, and the exact time of each action.",
       "Click History to read the audit trail: every event on the document, in order, with who did it and when.",
       "If a participant's signing link has ended (links last 14 days), the Participants panel says so and offers Send a new link. Nothing is sent again unless you press it; the person gets a fresh email and the old link stops working.",
-      "Set expiration, or Change, on the card lets you add, move or remove the date on which signing closes.",
+      "Set expiration, or Change, on the card lets you add, move or remove the date on which signing closes. Reminders beside it switches reminders on or off and changes their days.",
+      "In Participants, each person still to act shows how many reminders they have had and when the next one goes. Send a reminder now emails them yourself, at most once an hour.",
       "Send to new email starts a new request for the same document addressed to a different email, for when someone's address was wrong.",
     ],
     notes: [
       "Home › Needs attention lists documents that were declined, have expired, are expiring soon, or have had no signature for several days. View all opens the Declined & Expired list.",
       "When a document expires or is declined it moves from Sent to Records › Declined & Expired. Use Send again there to start a new request.",
-      "The bell in the top bar tells you when a document is completed and when a signing link has lapsed. A decline or an expiry is not announced; look under Home › Needs attention.",
+      "You are emailed, and told by the bell in the top bar, when a document is completed or declined, or could not be finalized; an expiry is emailed. The bell also says when a signing link has lapsed.",
     ],
     related: [{ label: "Prepare and send a document", to: "/help/prepare-and-send-a-document" }, { label: "Find a completed document and its records", to: "/help/completed-documents-and-records" }],
-    tags: ["status", "participants", "history", "audit trail", "expired", "declined", "new link", "track"],
+    tags: ["status", "participants", "history", "audit trail", "expired", "declined", "new link", "track", "reminders", "finalize"],
   },
   {
     slug: "sign-a-document-sent-to-you",
@@ -140,6 +141,7 @@ export const HELP_ARTICLES: readonly HelpArticle[] = [
       "A signing link works for 14 days. If it has expired, ask the sender to send you a new link; they can do it from the document's Participants panel.",
       "The document also appears in your LAGDA account under Documents › I must sign, where you can continue signing after confirming your password.",
       "The sender may have set an expiration date. The card and the email show it; after that day you can no longer sign.",
+      "Until you act, the sender's reminders may email you about the document. If it is cancelled, declined by someone else or expires, you are emailed, and your signing link then says so.",
     ],
     related: [{ label: "Documents you signed, and your copy", to: "/help/documents-you-signed" }, { label: "Signer authentication options", to: "/features/signer-authentication" }],
     tags: ["sign", "signature", "draw", "type", "upload", "consent", "decline", "link"],

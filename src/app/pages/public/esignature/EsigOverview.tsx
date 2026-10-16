@@ -453,7 +453,7 @@ export function EsigOverview() {
       <RelatedPages links={[
         { label: "Core Workflow",        desc: "Step-by-step sender and recipient journey", path: "/esignature/core-workflow" },
         { label: "Verification & Audit", desc: "Evidence, audit trail, and public verification", path: "/esignature/verification-and-audit" },
-        { label: "Advanced Capabilities", desc: "Routing, expiration, and enterprise features", path: "/esignature/advanced-capabilities" },
+        { label: "Advanced Capabilities", desc: "Routing, reminders, and enterprise features", path: "/esignature/advanced-capabilities" },
         { label: "Templates & Branding", desc: "Reusable workflows and company branding", path: "/esignature/templates-and-branding" },
       ]} />
 

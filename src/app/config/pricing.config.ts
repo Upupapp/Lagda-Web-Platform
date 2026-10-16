@@ -178,6 +178,7 @@ export const COMPARE_GROUPS: CompareGroup[] = [
       { id: "roles",          label: "Participant roles (signer, approver, viewer, CC)", ...ALL },
       { id: "parallel",       label: "Parallel signing",                                ...ALL },
       { id: "sequential",     label: "Sequential signing",                              ...ALL },
+      { id: "reminders",      label: "Automatic reminders",                             ...ALL },
       { id: "expiration",     label: "Transaction expiration",                          ...ALL },
     ],
   },

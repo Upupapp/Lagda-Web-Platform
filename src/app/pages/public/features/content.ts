@@ -68,7 +68,7 @@ export const OVERVIEW_CAPABILITIES = [
   { icon: "📑", title: "Templates", desc: "Save any workflow as a reusable template. Build once. Use every time.", path: "/features/templates", group: "Productivity" },
   { icon: "📇", title: "Contacts", desc: "Save participants for recurring document workflows. Reduce setup time.", path: "/features/contacts", group: "Productivity" },
   { icon: "🏢", title: "Company Branding", desc: "Your logo and colours across the workspace. Branded signing pages and emails are planned.", path: "/features/company-branding", group: "Productivity" },
-  { icon: "🔔", title: "Notifications", desc: "An email when your document is completed, and in-app notices for what needs you.", path: "/features/notifications", group: "Productivity" },
+  { icon: "🔔", title: "Notifications", desc: "Reminders for pending participants, and notices when a document is completed, declined, cancelled or expires.", path: "/features/notifications", group: "Productivity" },
   // Team & Scale
   { icon: "🗂️", title: "Team Workspaces", desc: "Multiple senders, shared templates, roles, and unified administration.", path: "/features/team-workspaces", group: "Team & Scale" },
   { icon: "📊", title: "Storage & Plan Limits", desc: "Understand capacity, storage, and what to expect as volume grows.", path: "/features/storage-and-plan-limits", group: "Team & Scale" },
@@ -150,12 +150,13 @@ export const VERIFICATION_STATES = [
 ];
 
 // ── Notification events ───────────────────────────────────────────────────────
-// Only notices LAGDA really sends. There is none for a decline, an expiry, a
-// cancellation or an email that could not be delivered, so none is shown.
+// Only notices LAGDA really sends. There is none for an email that could not
+// be delivered or a deadline that is near, so none is shown.
 export const NOTIFICATION_EVENTS = [
   { icon: "✅", title: "Document completed",      desc: "NDA — Standard is now fully signed by all parties.",   time: "Just now",   action: false },
   { icon: "✍️", title: "Waiting for your signature", desc: "Mabini Legal Solutions sent you Engagement Letter.", time: "3 min ago",  action: true },
-  { icon: "🔗", title: "Signing link ended",      desc: "Juan Reyes has not signed Board Resolution and his link has ended.", time: "1 hr ago", action: true },
+  { icon: "❌", title: "Participant declined",    desc: "Juan Reyes declined Engagement Letter. The request has ended.", time: "1 hr ago", action: true },
+  { icon: "🔗", title: "Signing link ended",      desc: "Juan Reyes has not signed Board Resolution and his link has ended.", time: "2 hrs ago", action: true },
   { icon: "📄", title: "Document shared with you", desc: "Lea Cruz shared Professional Services Agreement.",    time: "Yesterday",  action: false },
 ];
 

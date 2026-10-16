@@ -196,6 +196,9 @@ describe("trust invariants", () => {
   // a plain statement of a feature the server does not have. An audit of the
   // live system against the public pages found six kinds, all since reworded.
   // Each invariant below is one of those kinds, so none can come back quietly.
+  // Two of the six — reminders, and notices of a decline, cancellation or
+  // expiry — became true in releases 109–111; their invariants now hold copy
+  // to the rules the server has, rather than forbidding it.
   //
   // They read the PUBLIC copy only. The demo build still has reminder settings
   // and mock notifications inside the app, and those are labelled as a
@@ -252,32 +255,78 @@ describe("trust invariants", () => {
     expect(publicOffenders(claim, denied, ["pages/public/legal/Privacy.tsx"])).toEqual([]);
   });
 
-  it("never offers reminders", () => {
-    // The server sends none, automatic or manual.
-    const claim = /\bremind(er|ers|ed|s)?\b/gi;
-    // "Legal formalities reminder" is a heading addressed to the reader, not a
-    // feature.
-    const denied = /\b(does not (send|remind)|no (automatic )?reminders?)\b|formalities reminder/i;
-    expect(publicOffenders(claim, denied)).toEqual([]);
+  // ── Reminders, as the server sends them (111) ─────────────────────────────
+  //
+  // They exist now, with fixed rules: by email, first after N days and then
+  // every N (1 to 30, 3 and 3 by default), at most 3 automatic ones per
+  // participant's turn, and a sender's own "remind now" at most once an hour.
+  // Copy may describe that; it may not promise more.
+  const REMINDER_OVERCLAIMS: readonly RegExp[] = [
+    /\bunlimited reminders?\b/i,
+    /\b(daily|hourly|weekly) reminders?\b/i,
+    /\breminders? (every|each) (day|hour|week)\b/i,
+    /\breminded (daily|hourly|every day|every hour)\b/i,
+    /\buntil (they|the participant|everyone|the document is) (sign|signs|signed|completed?)\b/i,
+    /\b(sms|text[- ]message|whatsapp|push) reminders?\b/i,
+    /\breminders? by (sms|text|phone)\b/i,
+    // Any "up to N reminders" but three.
+    /\bup to (?!3\b)(\d+|one|two|four|five|ten) (automatic )?reminders?\b/i,
+    // Reminders are not stored in templates: only the completion copy is.
+    /\btemplates?[^.]{0,80}\breminder (schedule|settings)\b/i,
+  ];
+
+  it.each(REMINDER_OVERCLAIMS.map(re => [re.source, re] as const))(
+    "describes reminders within the server's rules: %s", (_name, pattern) => {
+      const offenders = PUBLIC_FILES.filter(f => pattern.test(read(f))).map(rel);
+      expect(offenders).toEqual([]);
+    });
+
+  it("would catch each overclaim it exists to catch", () => {
+    // The scan above passes on clean copy by design; this proves each pattern
+    // is not dead, one sentence per rule broken.
+    const samples = [
+      "Send unlimited reminders.", "Daily reminders keep it moving.", "Reminders every day.",
+      "Clients are reminded daily.", "Reminded until they sign.", "SMS reminders for every signer.",
+      "Reminders by text.", "Up to 5 reminders per signer.", "Templates keep your reminder schedule.",
+    ];
+    REMINDER_OVERCLAIMS.forEach((pattern, i) => { expect(samples[i], pattern.source).toMatch(pattern); });
   });
 
-  // Notices nobody is sent: a decline, a cancellation, an expiry (or its
-  // approach), an invitation that could not be delivered. The sender is
-  // emailed on completion and told in the app when a signing link lapses, and
-  // that is all.
+  it("states the reminder rules where it states them", () => {
+    // The two numbers a visitor will hold LAGDA to.
+    const text = PUBLIC_FILES.map(read).join("\n");
+    expect(text).toMatch(/first after 3 days, then every 3/i);
+    expect(text).toMatch(/up to 3( automatic)? reminders?/i);
+  });
+
+  // Notices nobody is sent, even now: an invitation that could not be
+  // delivered (a bounce only stops that address's reminders), a deadline that
+  // is NEAR (an expiry is announced once it has passed), a document being
+  // viewed, a single signature to the sender, a digest. Decline, cancellation,
+  // expiry and a failed finalization ARE announced since 109–110, and may be
+  // said.
   const ABSENT_NOTICES = [
     "delivery failed",
     "delivery confirmed",
     "confirmed as received",
     "track delivery",
-    "bounce",
+    "bounce tracking",
+    "bounced invitation",
     "request expiring",
-    "expiry notification",
+    // "Expiring soon" as a Home list is real; as a notice it is not.
+    "expiring soon notice",
+    "notified before it expires",
+    "about to expire",
+    "nears its expiration",
+    "before a transaction deadline passes",
     "viewed, declined",
     "viewed, or expiring",
-    "declined or expired, and when",
+    "when a participant opens the document",
+    "when any participant signs",
     "the sender is told at once",
     "you are told in lagda when it does",
+    "daily digest",
+    "digest (where available)",
   ];
 
   it.each(ABSENT_NOTICES)("never promises a notice that is not sent: %s", phrase => {
