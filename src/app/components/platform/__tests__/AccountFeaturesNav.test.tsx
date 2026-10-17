@@ -41,7 +41,6 @@ import { resolve } from "node:path";
 import { IDENTITY_SECTION, SETTINGS_SECTIONS, settingsSectionForPath, settingsSectionsFor } from "../../../pages/platform/settings/sections";
 import { resetAccountFeatures, publishAccountIdentity } from "../../../hooks/useAccountFeatures";
 import { resetHeldAnswers } from "../../../services/api-client";
-import { runSignOutCleanup } from "../../../services/session-lifecycle";
 import { act } from "@testing-library/react";
 
 type Answer = { status: number; body: unknown } | "network-error";
