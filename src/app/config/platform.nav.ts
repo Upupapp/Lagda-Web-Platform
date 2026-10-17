@@ -17,6 +17,12 @@ export interface PlatformNavItem {
   featureFlag?: PlatformFeatureFlag;
   /** 093. Hidden while the workspace owner's plan is below this. */
   plan?: "personal" | "business";
+  /**
+   * Shown only once the server says this ACCOUNT is offered it (see
+   * hooks/useAccountFeatures). Hidden until then, and for good in the demo
+   * build, so the menu never carries a link that leads nowhere.
+   */
+  account?: "enotary";
   status?: NavStatus;
   showBadge?: boolean;      // dynamic badge (e.g., unread count)
   showOnMobile?: boolean;
@@ -168,6 +174,26 @@ export const PRIMARY_NAV: PlatformNavItem[] = [
     featureFlag: "automationEnabled",
     showOnMobile: false,
     description: "Workflow rules, policies, and defaults",
+  },
+];
+
+// Entries the server offers per ACCOUNT, drawn at the end of the primary rail
+// by both menus. Kept in a list of their own: each is hidden until the server
+// says this account is offered it (hooks/useAccountFeatures), so for most
+// people the rail is exactly PRIMARY_NAV.
+export const ACCOUNT_NAV: PlatformNavItem[] = [
+  {
+    // The signed-in way into LAGDA eNotary: for now, the identity gate and a
+    // preview of the environment. Not a workspace permission and not a plan:
+    // the server says, per account, whether it is offered at all.
+    id: "enotary",
+    label: "eNotary",
+    path: "/app/enotary",
+    icon: "Stamp",
+    group: "primary",
+    account: "enotary",
+    showOnMobile: true,
+    description: "Confirm who you are for LAGDA eNotary",
   },
 ];
 

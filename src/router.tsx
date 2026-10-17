@@ -13,6 +13,8 @@ import { USE_REAL_BACKEND } from "./app/services/backend-flag";
 import { CapabilityGuard } from "./app/components/platform/CapabilityUnavailable";
 import { FeatureGuard } from "./app/components/platform/FeatureGuard";
 import { LegacySettingsRedirect } from "./app/pages/platform/settings/LegacySettingsRedirect";
+import { FullPageRedirect } from "./app/components/shell/FullPageRedirect";
+import { ENOTARY_DIRECTORY_PATH } from "./app/config/enotary-directory";
 // Route-level error boundaries. Every top-level route root carries one, so a
 // thrown render or lazy-chunk error can never reach react-router's default
 // screen (which prints the raw error outside the LAGDA shell). See
@@ -1016,7 +1018,7 @@ const PlanRequestPage = lazy(() =>
     default: m.PlanRequestPage,
   })),
 );
-// Identity verification (My Settings).
+// Identity verification (My Settings) and the eNotary gate.
 const SettingsIdentityPage = lazy(() =>
   import("./app/pages/platform/settings/IdentityVerificationPage").then((m) => ({
     default: m.IdentityVerificationPage,
@@ -1025,6 +1027,21 @@ const SettingsIdentityPage = lazy(() =>
 const IdentityVerificationReturnPage = lazy(() =>
   import("./app/pages/platform/identity/ProviderReturnPage").then((m) => ({
     default: m.IdentityVerificationReturnPage,
+  })),
+);
+const EnotaryReturnPage = lazy(() =>
+  import("./app/pages/platform/identity/ProviderReturnPage").then((m) => ({
+    default: m.EnotaryReturnPage,
+  })),
+);
+const EnotaryAccessPage = lazy(() =>
+  import("./app/pages/platform/enotary/EnotaryAccessPage").then((m) => ({
+    default: m.EnotaryAccessPage,
+  })),
+);
+const EnotarySessionPage = lazy(() =>
+  import("./app/pages/platform/enotary/EnotarySessionPage").then((m) => ({
+    default: m.EnotarySessionPage,
   })),
 );
 const SettingsDataPrivacyPage = lazy(() =>
@@ -2740,6 +2757,16 @@ export const router = createBrowserRouter([
         ],
       },
 
+      // eNotary inside the app: the identity gate and a preview of the
+      // environment. The notarial session itself is not built, and each page
+      // says so. Each asks the server whether eNotary is offered to this
+      // account and shows a plain "not available" where it is not.
+      // /app/enotary (the menu entry, and where sign-in brings a visitor from
+      // the directory back to) is the static Notary Directory: a full page load.
+      { path: "enotary", element: <FullPageRedirect to={ENOTARY_DIRECTORY_PATH} label="Go to the LAGDA Notary Directory" /> },
+      { path: "enotary/access", element: <Suspense fallback={null}><EnotaryAccessPage /></Suspense> },
+      { path: "enotary/session", element: <Suspense fallback={null}><EnotarySessionPage /></Suspense> },
+
       // Permission / session error states
       {
         path: "permission-denied",
@@ -2771,8 +2798,8 @@ export const router = createBrowserRouter([
   },
 
   // ── Back from the identity verification partner ──────────────────────────────
-  // Where the partner sends the browser after a check started from My Settings.
-  // OUTSIDE PlatformLayout on purpose: the shell's
+  // Where the partner sends the browser after a check started from My Settings
+  // or the eNotary gate. OUTSIDE PlatformLayout on purpose: the shell's
   // signed-out redirect keeps the address it was reached at, and this address
   // carries the partner's own query values. These pages strip them at once,
   // never read them, and route on (to sign-in, with a clean way back, for a
@@ -2781,6 +2808,11 @@ export const router = createBrowserRouter([
     path: "/app/settings/identity/return",
     errorElement: <PlatformRouteError />,
     element: <PageMetaRoute><Suspense fallback={null}><IdentityVerificationReturnPage /></Suspense></PageMetaRoute>,
+  },
+  {
+    path: "/app/enotary/return",
+    errorElement: <PlatformRouteError />,
+    element: <PageMetaRoute><Suspense fallback={null}><EnotaryReturnPage /></Suspense></PageMetaRoute>,
   },
 
   // ── Prepare document workflow (Command 18) ────────────────────────────────────

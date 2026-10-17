@@ -10,12 +10,12 @@ import { NavLink, Link, useLocation } from "react-router";
 import {
   Menu, X, LayoutDashboard, FileText, Files, Users, ShieldCheck,
   Bell, Users2, Settings, Settings2, FilePlus, Inbox, HelpCircle, GitBranch, BarChart2, Zap,
-  Search, Compass, Share2, Mail, ChevronDown, LogIn, Building2, UserCog, Lock, Check, BadgeCheck, Home, LayoutTemplate,
+  Search, Compass, Share2, Mail, ChevronDown, LogIn, Building2, UserCog, Lock, Check, Stamp, BadgeCheck, Home, LayoutTemplate,
 } from "lucide-react";
 import { JoinWorkspaceDialog } from "./JoinWorkspaceDialog";
 import lagdaHeaderLogo from "../../../brand elements/svg/LagdaLogoPrimaryHorizontalFullColor_Header.svg";
 import { usePlatform } from "../../context/PlatformContext";
-import { PRIMARY_NAV, UTILITY_NAV, PREPARE_ACTION } from "../../config/platform.nav";
+import { PRIMARY_NAV, UTILITY_NAV, ACCOUNT_NAV, PREPARE_ACTION } from "../../config/platform.nav";
 import { NotificationMenu } from "./NotificationMenu";
 import { useTour } from "../../tour/TourContext";
 import { Z } from "../../utils/z-index";
@@ -42,7 +42,7 @@ const GM     = { fontFamily: "'Geist Mono', monospace" };
 // HelpCircle were absent, so "My Actions" rendered with no icon on mobile only.
 const ICON_MAP: Record<string, React.ElementType> = {
   LayoutDashboard, FileText, Files, Users, ShieldCheck, Bell, Users2, Settings, Settings2, FilePlus,
-  Inbox, HelpCircle, GitBranch, BarChart2, Zap, Share2, Mail, Building2, UserCog,
+  Inbox, HelpCircle, GitBranch, BarChart2, Zap, Share2, Mail, Building2, UserCog, Stamp,
 };
 // The bottom bar: the four places people go most, with Prepare in the middle.
 // Everything else stays in the drawer. Icons only, so each needs one that
@@ -492,7 +492,7 @@ export function MobileNav() {
         {/* Primary nav */}
         <nav aria-label="Platform sections" data-guide="platform-sidebar-nav" style={{ flex: 1, padding: "10px 10px", overflowY: "auto" }}>
           <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: 2 }}>
-            {PRIMARY_NAV.map((item) => {
+            {[...PRIMARY_NAV, ...ACCOUNT_NAV].map((item) => {
               const allowed = nav.allows(item);
               const enabled = !item.featureFlag || hasFlag(item.featureFlag);
               if (inBottomBar(item.id)) return null;
