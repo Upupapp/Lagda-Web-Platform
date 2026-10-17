@@ -4,6 +4,7 @@
 // recipientApiRequest, NEVER apiRequest — see that file's header for why.
 
 import { recipientApiRequest, fetchRecipientDocumentBlob } from "../recipient-api-client";
+import type { IdentityCheckKind } from "../../models/identity-check";
 
 export interface BootstrapResult {
   authenticated: true;
@@ -64,6 +65,13 @@ export interface CeremonyIdentityCheck {
    * to and brought back from. Absent from an older server: `inline`.
    */
   flow?: IdentityCheckFlow;
+  /**
+   * HOSTED FLOW. What the next visit will ask for: `face` where an earlier
+   * verification lets a quick face check stand in for the ID. A prediction
+   * only: the visit's own `kind` is what was actually opened. Absent from an
+   * older server, or null: the full check.
+   */
+  nextCheck?: IdentityCheckKind | null;
 }
 
 export type IdentityCheckFlow = "inline" | "hosted";
@@ -81,6 +89,8 @@ export function identityCheckFlow(check: Pick<CeremonyIdentityCheck, "flow"> | u
 export interface IdentityCheckSession {
   url: string;
   expiresAt: string;
+  /** What this visit asks for. Absent from an older server: the full check. */
+  kind?: IdentityCheckKind;
 }
 
 /**

@@ -242,8 +242,11 @@ export type AuditDetails =
     mode: "test" | "live";
     outcome: "passed" | "failed";
     idType: string | null;
-    /** `provider`: checked on the identity verification partner's page. */
-    capture: "camera" | "upload" | "provider" | null;
+    /**
+     * `provider`: checked on the identity verification partner's page.
+     * `provider-face`: a face check only, against an earlier verification.
+     */
+    capture: "camera" | "upload" | "provider" | "provider-face" | null;
     /** Live events only: who checked it, and their reference for the check. */
     provider?: string;
     providerReference?: string;

@@ -56,12 +56,25 @@
 // finishes the check itself and is sent back), this tab goes there instead,
 // as it always did. The marker then also says a tab was opened, and when,
 // so a reload of this tab comes back to the wait.
+//
+// How the page is opened and how the result is asked for is not this file's:
+// it is `components/identity/provider-session.ts`, shared with My Settings
+// and the eNotary gate. What is here is what an answer means on a signing
+// request: attempts, a lock, and a name the sender must decide about.
+//
+// ── The short face check ───────────────────────────────────────────────────
+//
+// A participant who verified with an ID before may be asked only for a face
+// check. The ceremony predicts it (`nextCheck`); the visit says what was
+// actually opened (`kind`), and the visit's word wins without any error. A
+// face check that is not passed costs an attempt like any other, and the next
+// visit is the full check with the ID.
 
 import {
-  useCallback, useEffect, useId, useRef, useState, type CSSProperties, type ReactNode,
+  useCallback, useEffect, useId, useRef, useState, type ReactNode,
 } from "react";
 import {
-  AlertTriangle, Ban, CheckCircle2, Clock, ExternalLink, Loader2, Lock, RefreshCw, ShieldCheck, Smartphone,
+  Ban, CheckCircle2, Clock, Loader2, Lock, RefreshCw, ShieldCheck, Smartphone,
   UserRoundX,
 } from "lucide-react";
 import {
@@ -73,7 +86,23 @@ import type {
 } from "../../services/real/signing-access.service";
 import {
   IDENTITY_RETURN_FAST_WINDOW_MS, IDENTITY_CHECK_VALID_NOTE, IDENTITY_CHECK_KEPT_NOTE,
+  IDENTITY_CHECK_AGREEMENT, IDENTITY_FACE_HEADING, IDENTITY_FACE_BODY, IDENTITY_FACE_PHONE_NOTICE,
+  IDENTITY_FACE_BUTTON, IDENTITY_FACE_TAB_HEADING, IDENTITY_FACE_DECLINED,
+  identityCheckKind, type IdentityCheckKind,
 } from "../../models/identity-check";
+import {
+  launchProviderSession, useProviderPolling, useAskOnReturn, isTouchDevice,
+  PROVIDER_FAST_POLL_MS, PROVIDER_REVIEW_POLL_MS, PROVIDER_WAIT_MS, PROVIDER_OPENING_GIVE_UP_MS,
+  PROVIDER_TOO_MANY, PROVIDER_NOTHING_YET, PROVIDER_STILL_REVIEWING,
+  type ProviderTab,
+} from "../identity/provider-session";
+import {
+  ProviderStyles, ProviderHeading, ProviderLive, ProviderNote, ProviderConsent, ProviderDeclinedCauses,
+  ProviderTabPanel, ProviderReviewPanel, ProviderNotReceivedPanel, ProviderUnavailablePanel,
+  ProviderArrivingPanel, PROVIDER_BODY,
+} from "../identity/ProviderSessionParts";
+
+export type { ProviderTab } from "../identity/provider-session";
 
 export interface IdentityCheckHostedProps {
   readonly identityCheck: CeremonyIdentityCheck;
@@ -105,50 +134,10 @@ export interface IdentityCheckHostedProps {
   readonly returnedAt?: number | null;
 }
 
-/** A tab opened for the partner's page, not yet pointed anywhere. */
-export interface ProviderTab {
-  /** Points the tab at the partner's page. */
-  readonly go: (url: string) => void;
-  /** Closes it again: the visit could not be opened. */
-  readonly close: () => void;
-}
-
-function openBlankTab(): ProviderTab | null {
-  let tab: Window | null = null;
-  try { tab = window.open("", "_blank"); } catch { tab = null; }
-  if (tab === null) return null;
-  const opened = tab;
-  // The partner's page gets no handle on this one.
-  try { opened.opener = null; } catch { /* already cut */ }
-  return {
-    go: url => { opened.location.replace(url); },
-    close: () => { try { opened.close(); } catch { /* already gone */ } },
-  };
-}
-
-/**
- * Whether this device is a phone or tablet, which finishes the check itself
- * and is sent back by the provider, so it keeps one tab.
- *
- * Deliberately narrower than "has a touch screen": a laptop with a touch
- * screen is still a computer, the provider shows it only the code to scan,
- * and it is the device that finishes (the phone) that is sent back. Treated
- * as a phone, such a laptop would be left on the provider's finished page.
- * So the MAIN pointer must be a finger, or the browser must say it is mobile.
- */
-function isTouchDevice(): boolean {
-  try {
-    if (/Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) return true;
-    return typeof window.matchMedia === "function" && window.matchMedia("(pointer: coarse)").matches;
-  } catch {
-    return false;
-  }
-}
-
 /** How often the result is asked for just after coming back. */
-export const HOSTED_FAST_POLL_MS = 3_000;
+export const HOSTED_FAST_POLL_MS = PROVIDER_FAST_POLL_MS;
 /** How often it is asked for while a person at the partner is reviewing. */
-export const HOSTED_REVIEW_POLL_MS = 10_000;
+export const HOSTED_REVIEW_POLL_MS = PROVIDER_REVIEW_POLL_MS;
 /** How often it is asked for while the sender decides about the name on the ID. */
 export const HOSTED_NAME_POLL_MS = 15_000;
 /**
@@ -157,9 +146,7 @@ export const HOSTED_NAME_POLL_MS = 15_000;
  */
 export const HOSTED_PASSED_PAUSE_MS = 6_000;
 /** How long this tab waits on a check being done in the tab it opened. */
-export const HOSTED_TAB_WAIT_MS = 15 * 60 * 1000;
-/** How long "Opening…" may stand if the browser never left. */
-const OPENING_GIVE_UP_MS = 10_000;
+export const HOSTED_TAB_WAIT_MS = PROVIDER_WAIT_MS;
 
 type View =
   /** A return outside the fast window: one question, then whatever it says. */
@@ -171,7 +158,8 @@ type View =
   | { readonly kind: "tab" }
   | { readonly kind: "review" }
   | { readonly kind: "not-received" }
-  | { readonly kind: "failed"; readonly left: number }
+  /** `face`: the attempt that was not passed was the short face check. */
+  | { readonly kind: "failed"; readonly left: number; readonly face: boolean }
   | { readonly kind: "passed" }
   | { readonly kind: "locked" }
   /** Passed, but the name on the ID is not the one on the document: the sender decides. */
@@ -186,7 +174,7 @@ type View =
 type Origin = "arrival" | "manual" | "quiet";
 
 const NAME_UNCHANGED = "Nothing has changed yet. You can try again later.";
-const TOO_MANY = "Too many tries in a short time. Wait a minute, then try again.";
+const TOO_MANY = PROVIDER_TOO_MANY;
 
 /** In plain words, and never in the server's or the partner's. */
 function describeHostedError(error: unknown): string {
@@ -198,17 +186,6 @@ function describeHostedError(error: unknown): string {
   return "The identity check could not be completed right now. Please try again.";
 }
 
-/** The partner's address is used exactly as given, but only if it is a web address. */
-function isWebAddress(url: unknown): url is string {
-  if (typeof url !== "string") return false;
-  try {
-    const protocol = new URL(url).protocol;
-    return protocol === "https:" || protocol === "http:";
-  } catch {
-    return false;
-  }
-}
-
 // ── What this tab remembers across the trip ─────────────────────────────────
 
 const markerKey = (requestId: string) => `lagda:identity-hosted:${requestId}`;
@@ -218,6 +195,8 @@ interface Marker {
   readonly attempts: number;
   /** When this tab opened the partner's page in a new tab, if that is how they went. */
   readonly tabSince: number | null;
+  /** What the visit asked for, where the marker says. Null: as the ceremony predicts. */
+  readonly checkKind: IdentityCheckKind | null;
 }
 
 /** What this tab kept when it sent the participant away, or null if it never did. */
@@ -225,18 +204,29 @@ function readMarker(requestId: string): Marker | null {
   try {
     const raw = window.sessionStorage.getItem(markerKey(requestId));
     if (raw === null) return null;
-    const [count = "", how, when] = raw.split("|");
+    const [count = "", how, when, what] = raw.split("|");
     const attempts = Number(count);
     if (count === "" || !Number.isInteger(attempts) || attempts < 0) return null;
     const since = how === "tab" ? Number(when) : Number.NaN;
-    return { attempts, tabSince: Number.isFinite(since) ? since : null };
+    return {
+      attempts, tabSince: Number.isFinite(since) ? since : null,
+      checkKind: what === "face" || what === "full" ? what : null,
+    };
   } catch {
     return null;
   }
 }
 
-function writeMarker(requestId: string, attempts: number, tabSince: number | null = null): void {
-  const value = tabSince === null ? String(attempts) : `${String(attempts)}|tab|${String(tabSince)}`;
+/**
+ * `checkKind` is kept only where it is not what would be assumed anyway: a
+ * face check, or a full check where a face check had been predicted.
+ */
+function writeMarker(
+  requestId: string, attempts: number, tabSince: number | null = null, checkKind: IdentityCheckKind | null = null,
+): void {
+  const how = tabSince === null ? "same|0" : `tab|${String(tabSince)}`;
+  const value = checkKind !== null ? `${String(attempts)}|${how}|${checkKind}`
+    : tabSince === null ? String(attempts) : `${String(attempts)}|tab|${String(tabSince)}`;
   try { window.sessionStorage.setItem(markerKey(requestId), value); } catch { /* not kept: the return page still says they came back */ }
 }
 
@@ -246,27 +236,7 @@ function clearMarker(requestId: string): void {
 
 // ── Look ────────────────────────────────────────────────────────────────────
 
-const SR_ONLY: CSSProperties = {
-  position: "absolute", width: 1, height: 1, padding: 0, margin: -1, overflow: "hidden",
-  clip: "rect(0 0 0 0)", whiteSpace: "nowrap", border: 0, opacity: 0,
-};
-
-const BODY: CSSProperties = {
-  ...GF, margin: "0 0 12px", fontSize: "clamp(13px, 3.4vw, 14px)", color: T.inkSoft, lineHeight: 1.6,
-  overflowWrap: "anywhere",
-};
-
-const STYLES = `
-  .idh-stage { animation: idh-in 180ms ease both; min-height: 216px; }
-  @keyframes idh-in { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
-  .idh-spin { animation: idh-spin 900ms linear infinite; }
-  @keyframes idh-spin { to { transform: rotate(360deg); } }
-  .idh-heading:focus { outline: none; }
-  .idh-heading:focus-visible { outline: 2px solid ${T.azure}; outline-offset: 4px; border-radius: 4px; }
-  @media (prefers-reduced-motion: reduce) {
-    .idh-stage, .idh-spin { animation: none; }
-  }
-`;
+const BODY = PROVIDER_BODY;
 
 const HEADINGS: Readonly<Record<View["kind"], string>> = {
   "arriving": "Checking…",
@@ -281,6 +251,13 @@ const HEADINGS: Readonly<Record<View["kind"], string>> = {
   "name-mismatch": "The name on your ID does not match this document",
   "unavailable": "Identity verification is not available right now",
 };
+
+/** A state's heading. The short face check has its own words for two of them. */
+function headingFor(kind: View["kind"], face: boolean): string {
+  if (face && kind === "start") return IDENTITY_FACE_HEADING;
+  if (face && kind === "tab") return IDENTITY_FACE_TAB_HEADING;
+  return HEADINGS[kind];
+}
 
 // ── The step ────────────────────────────────────────────────────────────────
 
@@ -304,6 +281,7 @@ export function IdentityCheckHosted(props: IdentityCheckHostedProps) {
       baseline: marker?.attempts ?? identityCheck.attemptsRemaining,
       fastUntil,
       tabUntil,
+      checkKind: marker?.checkKind ?? null,
     };
   });
   const [touch] = useState(() => props.touch ?? isTouchDevice());
@@ -315,6 +293,17 @@ export function IdentityCheckHosted(props: IdentityCheckHostedProps) {
   const fastUntilRef = useRef(arrival.fastUntil);
   /** Until when this tab waits on the tab it opened. 0: it is not waiting on one. */
   const tabUntilRef = useRef(arrival.tabUntil);
+
+  // What the next visit asks for: the ceremony's prediction until a visit has
+  // answered, then the visit's own word.
+  const predicted: IdentityCheckKind = identityCheckKind(identityCheck.nextCheck);
+  const [sessionKind, setSessionKind] = useState<IdentityCheckKind | null>(arrival.checkKind);
+  const checkKind = sessionKind ?? predicted;
+  const face = checkKind === "face";
+  const checkKindRef = useRef(checkKind);
+  checkKindRef.current = checkKind;
+  const predictedRef = useRef(predicted);
+  predictedRef.current = predicted;
 
   const [view, setView] = useState<View>(() => {
     if (identityCheck.status === "locked") return { kind: "locked" };
@@ -351,7 +340,7 @@ export function IdentityCheckHosted(props: IdentityCheckHostedProps) {
     setView(next);
     if (changed) {
       setNote(null);
-      if (say) setAnnouncement(HEADINGS[next.kind]);
+      if (say) setAnnouncement(headingFor(next.kind, checkKindRef.current === "face"));
     }
   }, []);
 
@@ -460,20 +449,24 @@ export function IdentityCheckHosted(props: IdentityCheckHostedProps) {
       clearMarker(id);
       sentAwayRef.current = false;
       baselineRef.current = answer.attemptsRemaining;
+      setSessionKind(null);
       show({ kind: "start" });
       return;
     }
     if (answer.pendingReview) {
       show({ kind: "review" });
-      if (origin === "manual" && before === "review") tell("It is still being reviewed. Nothing more is needed from you right now.", true);
+      if (origin === "manual" && before === "review") tell(PROVIDER_STILL_REVIEWING, true);
       return;
     }
     if (answer.attemptsRemaining < baselineRef.current) {
       // The only sign of an attempt that was not passed.
       baselineRef.current = answer.attemptsRemaining;
       tabUntilRef.current = 0;
-      show({ kind: "failed", left: answer.attemptsRemaining }, false);
-      setAnnouncement("We could not complete the identity check.");
+      const wasFace = checkKindRef.current === "face";
+      // After a face check that was not passed, what is offered is the ID.
+      if (wasFace) setSessionKind("full");
+      show({ kind: "failed", left: answer.attemptsRemaining, face: wasFace }, false);
+      setAnnouncement(wasFace ? IDENTITY_FACE_DECLINED : "We could not complete the identity check.");
       return;
     }
     // The sender may have given the attempts back.
@@ -484,7 +477,7 @@ export function IdentityCheckHosted(props: IdentityCheckHostedProps) {
     if (before === "failed") return;
     show(resting());
     if (origin === "manual" && (before === "not-received" || before === "tab")) {
-      tell("Nothing has arrived yet. If you finished the check, wait a moment and check again.", true);
+      tell(PROVIDER_NOTHING_YET, true);
     }
   }, [moveOn, resting, show, tell]);
 
@@ -521,43 +514,53 @@ export function IdentityCheckHosted(props: IdentityCheckHostedProps) {
   const go = useCallback(async (): Promise<void> => {
     if (startingRef.current) return;
     startingRef.current = true;
-    // In the click, before anything is awaited: see the note at the top.
-    let tab: ProviderTab | null = null;
-    if (!touch) {
-      try { tab = (propsRef.current.openTab ?? openBlankTab)(); } catch { tab = null; }
-    }
     setBusy("session");
     setNote(null);
     setAnnouncement("Opening…");
     try {
-      const session = await propsRef.current.startSession();
-      if (!aliveRef.current) { tab?.close(); return; }
-      if (!isWebAddress(session.url)) {
-        tab?.close();
+      // The blank tab is opened on this call's first line, still in the click.
+      const result = await launchProviderSession<IdentityCheckSession>({
+        touch,
+        openTab: propsRef.current.openTab,
+        navigate: propsRef.current.navigate,
+        startSession: () => propsRef.current.startSession(),
+        stillWanted: () => aliveRef.current,
+        beforeLeave: (how, session) => {
+          sentAwayRef.current = true;
+          const opened = identityCheckKind(session.kind);
+          // Kept only where a reload could not tell: see `writeMarker`.
+          const kept = opened === "face" || predictedRef.current === "face" ? opened : null;
+          checkKindRef.current = opened;
+          if (how === "tab") {
+            // This tab stays, and is the one that continues.
+            const now = Date.now();
+            tabUntilRef.current = now + HOSTED_TAB_WAIT_MS;
+            writeMarker(propsRef.current.requestId, baselineRef.current, now, kept);
+            return;
+          }
+          tabUntilRef.current = 0;
+          writeMarker(propsRef.current.requestId, baselineRef.current, null, kept);
+          // The page is leaving: the button stays busy so it cannot be pressed
+          // again on the way out. If the browser never leaves, it is given back.
+          openingTimerRef.current = window.setTimeout(stopOpening, PROVIDER_OPENING_GIVE_UP_MS);
+        },
+      });
+      if (result.how === "abandoned") return;
+      if (result.how === "invalid") {
         stopOpening();
         show({ kind: "unavailable", retry: "session" });
         return;
       }
-      sentAwayRef.current = true;
-      if (tab !== null) {
-        // This tab stays, and is the one that continues.
-        const now = Date.now();
-        tabUntilRef.current = now + HOSTED_TAB_WAIT_MS;
-        writeMarker(propsRef.current.requestId, baselineRef.current, now);
-        tab.go(session.url);
+      // What was opened, whatever had been predicted: the wording follows it.
+      const opened = identityCheckKind(result.session.kind);
+      setSessionKind(opened);
+      if (result.how === "tab") {
         stopOpening();
         show({ kind: "tab" }, false);
-        setAnnouncement("The verification page opened in a new tab.");
-        return;
+        setAnnouncement(opened === "face"
+          ? "The face check opened in a new tab." : "The verification page opened in a new tab.");
       }
-      tabUntilRef.current = 0;
-      writeMarker(propsRef.current.requestId, baselineRef.current);
-      // The page is leaving: the button stays busy so it cannot be pressed
-      // again on the way out. If the browser never leaves, it is given back.
-      openingTimerRef.current = window.setTimeout(stopOpening, OPENING_GIVE_UP_MS);
-      (propsRef.current.navigate ?? ((url: string) => { window.location.assign(url); }))(session.url);
     } catch (error) {
-      tab?.close();
       if (!aliveRef.current) return;
       stopOpening();
       await refused(error, "manual", "session");
@@ -584,81 +587,39 @@ export function IdentityCheckHosted(props: IdentityCheckHostedProps) {
 
   // ── Asking again by itself ───────────────────────────────────────────────
 
-  useEffect(() => {
-    if (shownKind !== "review" && shownKind !== "waiting" && shownKind !== "tab" && shownKind !== "name-mismatch") return;
-    const every = shownKind === "name-mismatch" ? HOSTED_NAME_POLL_MS
-      : shownKind === "review" ? HOSTED_REVIEW_POLL_MS : HOSTED_FAST_POLL_MS;
-    let timer: number | null = null;
-    const stop = () => {
-      if (timer !== null) window.clearInterval(timer);
-      timer = null;
-    };
-    const start = () => {
-      stop();
-      // Never while nobody is looking.
-      if (!document.hidden) timer = window.setInterval(() => { void ask("quiet"); }, every);
-    };
-    const onVisibility = () => {
-      if (document.hidden) { stop(); return; }
-      void ask("quiet");
-      start();
-    };
-    start();
-    document.addEventListener("visibilitychange", onVisibility);
+  useProviderPolling({
+    waitKey: shownKind,
+    every: shownKind === "name-mismatch" ? HOSTED_NAME_POLL_MS
+      : shownKind === "review" ? HOSTED_REVIEW_POLL_MS
+        : shownKind === "waiting" || shownKind === "tab" ? HOSTED_FAST_POLL_MS : null,
+    ask: () => { void ask("quiet"); },
     // Waiting on another tab, the participant comes back by switching to this
     // one. That may be a window gaining focus without anything becoming
     // visible, so both are listened for.
-    const onFocus = () => { if (!document.hidden) void ask("quiet"); };
-    if (shownKind === "tab") window.addEventListener("focus", onFocus);
-
+    askOnFocus: shownKind === "tab",
     // Just back: after the fast window, stop asking and say so. Waiting on
     // another tab: the same, after a good deal longer.
-    let settleTimer: number | null = null;
-    if (shownKind === "waiting") {
-      settleTimer = window.setTimeout(() => {
-        if (viewRef.current.kind === "waiting") show({ kind: "not-received" });
-      }, Math.max(0, fastUntilRef.current - Date.now()));
-    }
-    if (shownKind === "tab") {
-      settleTimer = window.setTimeout(() => {
-        if (viewRef.current.kind !== "tab") return;
-        tabUntilRef.current = 0;
-        // A reload from here on is an ordinary return, not a wait.
-        writeMarker(propsRef.current.requestId, baselineRef.current);
-        show({ kind: "not-received" });
-      }, Math.max(0, tabUntilRef.current - Date.now()));
-    }
-    return () => {
-      stop();
-      document.removeEventListener("visibilitychange", onVisibility);
-      window.removeEventListener("focus", onFocus);
-      if (settleTimer !== null) window.clearTimeout(settleTimer);
-    };
-  }, [shownKind, ask, show]);
+    deadline: () => (shownKind === "waiting" ? fastUntilRef.current
+      : shownKind === "tab" ? tabUntilRef.current : null),
+    onTimeout: () => {
+      if (viewRef.current.kind === "waiting") { show({ kind: "not-received" }); return; }
+      if (viewRef.current.kind !== "tab") return;
+      tabUntilRef.current = 0;
+      // A reload from here on is an ordinary return, not a wait.
+      writeMarker(propsRef.current.requestId, baselineRef.current);
+      show({ kind: "not-received" });
+    },
+  });
 
   // The tab coming back to the front, where no timer is running. The partner
   // sends the device that STARTED the check back; a participant who finished
   // on a phone, or pressed Back, is sitting on a screen that has gone stale.
-  useEffect(() => {
-    if (shownKind !== "start" && shownKind !== "not-received") return;
-    const onBack = () => {
-      if (sentAwayRef.current) void ask("quiet");
-    };
-    const onVisible = () => { if (!document.hidden) onBack(); };
-    const onPageShow = (event: PageTransitionEvent) => {
-      // Restored by the Back button with "Opening…" still on the button.
-      if (event.persisted) stopOpening();
-      onBack();
-    };
-    window.addEventListener("focus", onBack);
-    window.addEventListener("pageshow", onPageShow);
-    document.addEventListener("visibilitychange", onVisible);
-    return () => {
-      window.removeEventListener("focus", onBack);
-      window.removeEventListener("pageshow", onPageShow);
-      document.removeEventListener("visibilitychange", onVisible);
-    };
-  }, [shownKind, ask, stopOpening]);
+  useAskOnReturn(
+    shownKind === "start" || shownKind === "not-received",
+    () => { if (sentAwayRef.current) void ask("quiet"); },
+    // Restored by the Back button with "Opening…" still on the button.
+    stopOpening,
+  );
 
   // ── Passed: a moment to read it, then on ─────────────────────────────────
 
@@ -697,6 +658,7 @@ export function IdentityCheckHosted(props: IdentityCheckHostedProps) {
       clearMarker(propsRef.current.requestId);
       sentAwayRef.current = false;
       baselineRef.current = now.attemptsRemaining;
+      setSessionKind(null);
       show({ kind: "start" });
       return;
     }
@@ -720,18 +682,9 @@ export function IdentityCheckHosted(props: IdentityCheckHostedProps) {
 
   // ── Shared pieces ────────────────────────────────────────────────────────
 
-  const heading = (
-    <h2
-      ref={headingRef} tabIndex={-1} className="idh-heading"
-      style={{ ...GF, margin: "0 0 8px", fontSize: "clamp(16px, 4.2vw, 18px)", fontWeight: 800, color: T.ink, lineHeight: 1.3 }}
-    >
-      {HEADINGS[shownKind]}
-    </h2>
-  );
+  const heading = <ProviderHeading ref={headingRef}>{headingFor(shownKind, face)}</ProviderHeading>;
 
-  const noteLine = note !== null && (note.quiet
-    ? <p data-testid="identity-hosted-note" style={BODY}>{note.text}</p>
-    : <Notice icon={AlertTriangle} tone="danger">{note.text}</Notice>);
+  const noteLine = <ProviderNote note={note} testId="identity-hosted-note" />;
 
   const declineLink = onDecline !== undefined && (
     <div style={{ marginTop: 16, textAlign: "center" }}>
@@ -753,13 +706,13 @@ export function IdentityCheckHosted(props: IdentityCheckHostedProps) {
 
   const frame = (children: ReactNode) => (
     <div data-testid="identity-check-hosted">
-      <style>{STYLES}</style>
+      <ProviderStyles />
       <PhaseBanner
         icon={ShieldCheck} tone="info" badge="Required"
         title="Identity check"
         description={`The sender asked for this before you open "${documentTitle}".`}
       />
-      <div role="status" aria-live="polite" style={SR_ONLY}>{announcement}</div>
+      <ProviderLive>{announcement}</ProviderLive>
       <div key={shownKind} className="idh-stage" data-testid={`identity-hosted-${shownKind}`}>{children}</div>
     </div>
   );
@@ -826,65 +779,62 @@ export function IdentityCheckHosted(props: IdentityCheckHostedProps) {
     return frame(
       <>
         {heading}
-        <p style={BODY}>
-          The sender asked that you confirm who you are before you sign this document.
-          It takes about two minutes.
-        </p>
-        {touch ? (
-          <p style={BODY}>
-            When you continue, you will be taken to our identity verification partner&rsquo;s secure
-            page. There you will photograph your ID and take a short selfie video check with this
-            device, and then you will be brought back here.
-          </p>
+        {face ? (
+          // The short check: no ID, so nothing is said about photographing one
+          // or about what is kept from it.
+          <p data-testid="identity-hosted-face-body" style={BODY}>{IDENTITY_FACE_BODY}</p>
         ) : (
-          <p style={BODY}>
-            When you continue, our identity verification partner&rsquo;s secure page opens in a new
-            tab. There you will photograph your ID and take a short selfie video check, and this
-            page continues by itself when you are done.
-          </p>
+          <>
+            <p style={BODY}>
+              The sender asked that you confirm who you are before you sign this document.
+              It takes about two minutes.
+            </p>
+            {touch ? (
+              <p style={BODY}>
+                When you continue, you will be taken to our identity verification partner&rsquo;s secure
+                page. There you will photograph your ID and take a short selfie video check with this
+                device, and then you will be brought back here.
+              </p>
+            ) : (
+              <p style={BODY}>
+                When you continue, our identity verification partner&rsquo;s secure page opens in a new
+                tab. There you will photograph your ID and take a short selfie video check, and this
+                page continues by itself when you are done.
+              </p>
+            )}
+            <ul style={{ ...BODY, paddingLeft: 20, listStyle: "disc" }}>
+              <li style={{ display: "list-item", marginBottom: 4 }}>A photo of your ID</li>
+              <li style={{ display: "list-item", marginBottom: 4 }}>A selfie</li>
+              <li style={{ display: "list-item" }}>The result of the check, which is recorded in the document&rsquo;s history</li>
+            </ul>
+            <p data-testid="identity-check-kept-note" style={BODY}>
+              Our partner checks your ID and selfie. {IDENTITY_CHECK_KEPT_NOTE}
+            </p>
+          </>
         )}
-        <ul style={{ ...BODY, paddingLeft: 20, listStyle: "disc" }}>
-          <li style={{ display: "list-item", marginBottom: 4 }}>A photo of your ID</li>
-          <li style={{ display: "list-item", marginBottom: 4 }}>A selfie</li>
-          <li style={{ display: "list-item" }}>The result of the check, which is recorded in the document&rsquo;s history</li>
-        </ul>
-        <p data-testid="identity-check-kept-note" style={BODY}>
-          Our partner checks your ID and selfie. {IDENTITY_CHECK_KEPT_NOTE}
-        </p>
         {/* On a computer the partner's page hands the camera work to a phone.
             Said before they agree, so the code to scan is not a surprise. */}
         {!touch && (
           <div data-testid="identity-hosted-phone-notice">
             <Notice icon={Smartphone} tone="info">
-              Have your phone ready. You will scan a code and take the photos with your
-              phone&rsquo;s camera.
+              {face ? IDENTITY_FACE_PHONE_NOTICE : (
+                <>
+                  Have your phone ready. You will scan a code and take the photos with your
+                  phone&rsquo;s camera.
+                </>
+              )}
             </Notice>
           </div>
         )}
         {noteLine}
-        <label
-          htmlFor={consentId}
-          style={{
-            ...GF, display: "flex", alignItems: "flex-start", gap: 10, minHeight: TAP, padding: "10px 12px",
-            borderRadius: 10, cursor: "pointer", boxSizing: "border-box",
-            fontSize: "clamp(13px, 3.4vw, 14px)", color: T.ink, lineHeight: 1.5,
-            background: agreed ? T.azureWash : T.surface, border: `1px solid ${agreed ? "#B7DAF5" : T.border}`,
-          }}
-        >
-          <input
-            id={consentId} type="checkbox" checked={agreed} disabled={opening}
-            onChange={event => { setAgreed(event.target.checked); }}
-            style={{ width: 20, height: 20, flexShrink: 0, marginTop: 1, accentColor: T.azure }}
-          />
-          <span style={{ minWidth: 0 }}>
-            I agree to the use of my ID and selfie to verify my identity for this document.
-          </span>
-        </label>
+        <ProviderConsent id={consentId} checked={agreed} disabled={opening} onChange={setAgreed}>
+          {IDENTITY_CHECK_AGREEMENT}
+        </ProviderConsent>
         <ActionRow>
           <ActionButton
             icon={opening ? Loader2 : ShieldCheck} onClick={() => void go()} disabled={!agreed || opening} full
           >
-            {opening ? "Opening…" : "Continue to verification"}
+            {opening ? "Opening…" : face ? IDENTITY_FACE_BUTTON : "Continue to verification"}
           </ActionButton>
         </ActionRow>
         {declineLink}
@@ -927,26 +877,13 @@ export function IdentityCheckHosted(props: IdentityCheckHostedProps) {
 
   if (shown.kind === "review") {
     return frame(
-      <>
-        <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
-          <Clock size={22} aria-hidden style={{ color: T.azure, flexShrink: 0, marginTop: 1 }} />
-          {heading}
-        </div>
-        <p style={BODY}>
-          This can take a few minutes. You can keep this page open, or come back to your
-          signing link later.
-        </p>
-        {noteLine}
-        <ActionRow>
-          <ActionButton
-            icon={checking ? Loader2 : RefreshCw} kind="secondary"
-            onClick={() => void ask("manual")} disabled={busy !== null} full
-          >
-            {checking ? "Checking…" : "Check again"}
-          </ActionButton>
-        </ActionRow>
-        {declineLink}
-      </>,
+      <ProviderReviewPanel
+        heading={heading} note={noteLine} footer={declineLink} busy={busy !== null}
+        checking={checking} onCheckAgain={() => void ask("manual")}
+      >
+        This can take a few minutes. You can keep this page open, or come back to your
+        signing link later.
+      </ProviderReviewPanel>,
     );
   }
 
@@ -954,30 +891,11 @@ export function IdentityCheckHosted(props: IdentityCheckHostedProps) {
 
   if (shown.kind === "tab") {
     return frame(
-      <>
-        {heading}
-        <p style={BODY}>
-          We opened our identity verification partner&rsquo;s secure page in a new tab. Scan the code
-          it shows with your phone and complete the check there. This page will continue by
-          itself when you are done.
-        </p>
-        {noteLine}
-        <ActionRow>
-          <ActionButton
-            icon={opening ? Loader2 : ExternalLink}
-            onClick={() => void go()} disabled={busy !== null} full
-          >
-            {opening ? "Opening…" : "Open the verification page again"}
-          </ActionButton>
-          <ActionButton
-            icon={checking ? Loader2 : RefreshCw} kind="secondary"
-            onClick={() => void ask("manual")} disabled={busy !== null} full
-          >
-            {checking ? "Checking…" : "Check again"}
-          </ActionButton>
-        </ActionRow>
-        {declineLink}
-      </>,
+      <ProviderTabPanel
+        heading={heading} note={noteLine} footer={declineLink} busy={busy !== null} face={face}
+        opening={opening} checking={checking}
+        onOpenAgain={() => void go()} onCheckAgain={() => void ask("manual")}
+      />,
     );
   }
 
@@ -985,29 +903,11 @@ export function IdentityCheckHosted(props: IdentityCheckHostedProps) {
 
   if (shown.kind === "not-received") {
     return frame(
-      <>
-        {heading}
-        <p style={BODY}>
-          If you finished the check, it can take a moment to reach us. If you left before
-          finishing, you can continue where you stopped.
-        </p>
-        {noteLine}
-        <ActionRow>
-          <ActionButton
-            icon={checking ? Loader2 : RefreshCw}
-            onClick={() => void ask("manual")} disabled={busy !== null} full
-          >
-            {checking ? "Checking…" : "Check again"}
-          </ActionButton>
-          <ActionButton
-            icon={opening ? Loader2 : ShieldCheck} kind="secondary"
-            onClick={() => void go()} disabled={busy !== null} full
-          >
-            {opening ? "Opening…" : "Continue verification"}
-          </ActionButton>
-        </ActionRow>
-        {declineLink}
-      </>,
+      <ProviderNotReceivedPanel
+        heading={heading} note={noteLine} footer={declineLink} busy={busy !== null} face={face}
+        opening={opening} checking={checking}
+        onCheckAgain={() => void ask("manual")} onContinue={() => void go()}
+      />,
     );
   }
 
@@ -1018,21 +918,20 @@ export function IdentityCheckHosted(props: IdentityCheckHostedProps) {
     return frame(
       <>
         {heading}
-        <p style={{ ...BODY, marginBottom: 6 }}>This usually happens when:</p>
-        <ul style={{ ...BODY, paddingLeft: 20, listStyle: "disc" }}>
-          <li style={{ display: "list-item", marginBottom: 4 }}>the photo of the ID is blurry, dark or cut off</li>
-          <li style={{ display: "list-item", marginBottom: 4 }}>your face is not clearly lit, or something covers it</li>
-          <li style={{ display: "list-item" }}>the ID belongs to someone else, or has expired</li>
-        </ul>
+        {shown.face ? (
+          // The short face check: what comes next is the ID, and it is said so.
+          <p data-testid="identity-hosted-face-declined" style={BODY}>{IDENTITY_FACE_DECLINED}</p>
+        ) : <ProviderDeclinedCauses />}
         <p data-testid="identity-check-attempts-left" style={{ ...BODY, fontWeight: 700, color: T.ink }}>
           {left === 1 ? "1 attempt left" : `${String(left)} attempts left`}
         </p>
         {noteLine}
         <ActionRow>
           <ActionButton
-            icon={opening ? Loader2 : RefreshCw} onClick={() => void go()} disabled={busy !== null} full
+            icon={opening ? Loader2 : shown.face ? ShieldCheck : RefreshCw}
+            onClick={() => void go()} disabled={busy !== null} full
           >
-            {opening ? "Opening…" : "Try again"}
+            {opening ? "Opening…" : shown.face ? "Verify with my ID" : "Try again"}
           </ActionButton>
         </ActionRow>
         {declineLink}
@@ -1044,32 +943,16 @@ export function IdentityCheckHosted(props: IdentityCheckHostedProps) {
 
   if (shown.kind === "unavailable") {
     const retry = shown.retry;
-    const working = retry === "session" ? opening : checking;
     return frame(
-      <>
-        {heading}
-        <p style={BODY}>Please try again in a few minutes.</p>
-        {noteLine}
-        <ActionRow>
-          <ActionButton
-            icon={working ? Loader2 : RefreshCw}
-            onClick={() => void (retry === "session" ? go() : ask("manual"))} disabled={busy !== null} full
-          >
-            {working ? (retry === "session" ? "Opening…" : "Checking…") : "Try again"}
-          </ActionButton>
-        </ActionRow>
-        {declineLink}
-      </>,
+      <ProviderUnavailablePanel
+        heading={heading} note={noteLine} footer={declineLink} busy={busy !== null} retry={retry}
+        opening={opening} checking={checking}
+        onRetry={() => void (retry === "session" ? go() : ask("manual"))}
+      />,
     );
   }
 
   // ── Waiting for the first answer ─────────────────────────────────────────
 
-  return frame(
-    <div style={{ textAlign: "center", padding: "24px 0" }}>
-      <Loader2 size={28} aria-hidden className="idh-spin" style={{ color: T.azure }} />
-      {heading}
-      <p style={{ ...BODY, marginBottom: 0 }}>This takes a moment. Keep this page open.</p>
-    </div>,
-  );
+  return frame(<ProviderArrivingPanel heading={heading} />);
 }

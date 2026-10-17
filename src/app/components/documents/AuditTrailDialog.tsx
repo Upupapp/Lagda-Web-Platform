@@ -53,7 +53,14 @@ const ACTOR: Record<AuditActorType, { icon: typeof User; label: string }> = {
  * it, it is named as that and never by brand; an attempt that was not passed
  * is not called verified.
  */
-function captureLabel(capture: "camera" | "upload" | "provider", outcome: "passed" | "failed"): string {
+function captureLabel(
+  capture: "camera" | "upload" | "provider" | "provider-face", outcome: "passed" | "failed",
+): string {
+  // A face check alone, against an earlier verification: no ID was shown, so
+  // it is not called a verification of one.
+  if (capture === "provider-face") {
+    return outcome === "passed" ? "Confirmed by a face check" : "Face check only, no ID shown";
+  }
   if (capture === "provider") {
     return outcome === "passed" ? "Verified by our identity partner" : "Checked by our identity partner";
   }
