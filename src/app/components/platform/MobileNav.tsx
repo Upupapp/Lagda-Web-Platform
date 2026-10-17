@@ -10,7 +10,7 @@ import { NavLink, Link, useLocation } from "react-router";
 import {
   Menu, X, LayoutDashboard, FileText, Files, Users, ShieldCheck,
   Bell, Users2, Settings, Settings2, FilePlus, Inbox, HelpCircle, GitBranch, BarChart2, Zap,
-  Search, Compass, Share2, Mail, ChevronDown, LogIn, Building2, UserCog, Lock, Check, Home, LayoutTemplate,
+  Search, Compass, Share2, Mail, ChevronDown, LogIn, Building2, UserCog, Lock, Check, BadgeCheck, Home, LayoutTemplate,
 } from "lucide-react";
 import { JoinWorkspaceDialog } from "./JoinWorkspaceDialog";
 import lagdaHeaderLogo from "../../../brand elements/svg/LagdaLogoPrimaryHorizontalFullColor_Header.svg";
@@ -32,6 +32,7 @@ import { InvitationCountBubble, NavCountBubble, INVITATION_BUBBLE_STYLES } from 
 import { useNavCounts } from "../../hooks/useNavCounts";
 import { useWorkspacePlanLabel } from "../../hooks/useWorkspacePlanLabel";
 import { useNavAccess } from "../../hooks/useCanPrepare";
+import { useAccountFeatures } from "../../hooks/useAccountFeatures";
 
 const BORDER = "rgba(0,0,0,0.08)";
 const GF     = { fontFamily: "'Geist', sans-serif" };
@@ -158,6 +159,8 @@ export function MobileNav() {
   }, [restartTour]);
 
   const nav = useNavAccess();
+  // The person's OWN verification, beside their own name.
+  const { identityVerified } = useAccountFeatures();
   const canPrepare = nav.canPrepare && hasFlag("prepareFlowEnabled");
 
   // Which of the bar's five places (Prepare is the third) the page is in, for
@@ -650,7 +653,21 @@ export function MobileNav() {
             <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
               <UserAvatar user={user} size={32} fontSize={11} />
               <div>
-                <p style={{ color: "#07111F", ...GF, fontSize: 13, fontWeight: 600, margin: 0 }}>{user.displayName}</p>
+                <p style={{ color: "#07111F", ...GF, fontSize: 13, fontWeight: 600, margin: 0, display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+                  <span style={{ minWidth: 0, overflowWrap: "anywhere" }}>{user.displayName}</span>
+                  {identityVerified && (
+                    <span
+                      data-testid="mobile-nav-verified-badge" title="Your identity is verified"
+                      style={{
+                        display: "inline-flex", alignItems: "center", gap: 3, padding: "1px 7px", borderRadius: 999,
+                        fontSize: 10.5, fontWeight: 700, whiteSpace: "nowrap",
+                        color: "#166534", background: "#DCFCE7", border: "1px solid #BBF7D0",
+                      }}
+                    >
+                      <BadgeCheck size={11} aria-hidden />Verified
+                    </span>
+                  )}
+                </p>
                 <p style={{ color: "#64748B", ...GM, fontSize: 10, margin: 0 }}>{user.email}</p>
             {(user.jobTitle || user.department) && (
               <p style={{ color: "#64748B", fontFamily: "'Geist', sans-serif", fontSize: 11, margin: "3px 0 0" }}>

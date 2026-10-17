@@ -3,12 +3,13 @@
 import { USE_REAL_BACKEND } from "../../services/backend-flag";
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Link } from "react-router";
-import { CircleUser, Lock, HelpCircle, LogOut, ChevronUp, Settings, Sparkles } from "lucide-react";
+import { CircleUser, Lock, HelpCircle, LogOut, ChevronUp, Settings, Sparkles, BadgeCheck } from "lucide-react";
 import { usePlatform } from "../../context/PlatformContext";
 import { PLATFORM_ROLE_LABELS } from "../../models";
 import { Z } from "../../utils/z-index";
 import { useTour } from "../../tour/TourContext";
 import { UserAvatar } from "./UserAvatar";
+import { useAccountFeatures } from "../../hooks/useAccountFeatures";
 
 const GF   = { fontFamily: "'Geist', sans-serif" };
 const GM   = { fontFamily: "'Geist Mono', monospace" };
@@ -22,6 +23,8 @@ interface UserMenuProps {
 export function UserMenu({ collapsed, onSignOut }: UserMenuProps) {
   const { user, role } = usePlatform();
   const { restartTour } = useTour();
+  // The person's OWN verification, beside their own name. Nobody else's is shown here.
+  const { identityVerified } = useAccountFeatures();
   const [open, setOpen] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const menuRef    = useRef<HTMLDivElement>(null);
@@ -112,7 +115,21 @@ export function UserMenu({ collapsed, onSignOut }: UserMenuProps) {
         >
           {/* User info header */}
           <div style={{ padding: "12px 14px", borderBottom: `1px solid ${BORDER}` }}>
-            <p style={{ color: "#07111F", ...GF, fontSize: 13, fontWeight: 600, margin: "0 0 2px" }}>{user.displayName}</p>
+            <p style={{ color: "#07111F", ...GF, fontSize: 13, fontWeight: 600, margin: "0 0 2px", display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+              <span style={{ minWidth: 0, overflowWrap: "anywhere" }}>{user.displayName}</span>
+              {identityVerified && (
+                <span
+                  data-testid="account-menu-verified-badge" title="Your identity is verified"
+                  style={{
+                    display: "inline-flex", alignItems: "center", gap: 3, padding: "1px 7px", borderRadius: 999,
+                    fontSize: 10.5, fontWeight: 700, whiteSpace: "nowrap",
+                    color: "#166534", background: "#DCFCE7", border: "1px solid #BBF7D0",
+                  }}
+                >
+                  <BadgeCheck size={11} aria-hidden />Verified
+                </span>
+              )}
+            </p>
             <p style={{ color: "#64748B", ...GM, fontSize: 10, margin: 0 }}>{user.email}</p>
             {(user.jobTitle || user.department) && (
               <p style={{ color: "#64748B", fontFamily: "'Geist', sans-serif", fontSize: 11, margin: "3px 0 0" }}>

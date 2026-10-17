@@ -65,6 +65,11 @@ export interface RecipientIdentityCheck {
   nameDifferences?: string[];
   /** The name the participant is signing under on this request. */
   documentName?: string;
+  /**
+   * This person has verified their own LAGDA account. Absent from an older
+   * server: nothing is said.
+   */
+  accountVerified?: boolean;
 }
 
 /**

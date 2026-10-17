@@ -371,9 +371,11 @@ interface ReminderControl {
   readonly onRemind: (signatory: Signatory) => void;
 }
 
-function SignatoryRow({ signatory, link, identity, reminder, note }: {
+function SignatoryRow({ signatory, link, identity, reminder, note, accountVerified = false }: {
   signatory: Signatory; link?: LinkControl; identity?: IdentityControl;
   reminder?: ReminderControl; note?: RowNote;
+  /** This person has verified their own LAGDA account. */
+  accountVerified?: boolean;
 }) {
   // Falls back rather than crashing if a newer backend sends a state this
   // build does not know yet — the defect this used to have.
@@ -401,6 +403,22 @@ function SignatoryRow({ signatory, link, identity, reminder, note }: {
             <span style={{ fontSize: 10, fontWeight: 400, color: SLATE4, ...GF }}>
               (name in document)
             </span>
+            {/* Their own account's verification, where the server says so.
+                Nothing is shown for anyone it does not say it of. */}
+            {accountVerified && (
+              <span
+                data-testid="signatory-account-verified"
+                title="This person has verified their LAGDA account"
+                style={{
+                  display: "inline-flex", alignItems: "center", gap: 4, fontSize: 10.5, fontWeight: 700, ...GF,
+                  color: GREEN, background: "#F0FDF4", border: "1px solid #BBF7D0", borderRadius: 99, padding: "1px 7px",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                <BadgeCheck size={11} aria-hidden />
+                Verified account
+              </span>
+            )}
             <span style={{
               fontSize: 10.5, fontWeight: 700, color: SLATE6, ...GF,
               background: "#F1F5F9", borderRadius: 99, padding: "1px 7px",
@@ -1024,7 +1042,9 @@ export function SignatureRecordDialog({
 function shownIdentityChecks(
   items: readonly RecipientIdentityCheck[] | null,
 ): ReadonlyMap<string, RecipientIdentityCheck> | null {
-  const shown = (items ?? []).filter(item => item.status !== "not-required");
+  // A participant no check was asked of is kept only where their own account
+  // is verified: that much is said beside their name, and nothing else.
+  const shown = (items ?? []).filter(item => item.status !== "not-required" || item.accountVerified === true);
   return shown.length === 0 ? null : new Map(shown.map(item => [item.recipientId, item]));
 }
 
@@ -1035,11 +1055,13 @@ function identityControlFor(
   requestState: SigningRequestSignatures["state"],
   actions: Pick<IdentityControl, "onAllow" | "onResolve" | "onSendElsewhere">,
   resolved: string | undefined,
-): { identity?: IdentityControl } {
+): { identity?: IdentityControl; accountVerified?: boolean } {
   const check = checks?.get(signatory.recipientId);
   if (check === undefined) return {};
+  if (check.status === "not-required") return check.accountVerified === true ? { accountVerified: true } : {};
+  const verified = check.accountVerified === true ? { accountVerified: true } : {};
   // A lighter method, or a decision about a name, only means something while
   // the request is still out.
   const open = requestState === "sent" || requestState === "partially-completed";
-  return { identity: { check, ...(open ? actions : {}), ...(resolved === undefined ? {} : { resolved }) } };
+  return { ...verified, identity: { check, ...(open ? actions : {}), ...(resolved === undefined ? {} : { resolved }) } };
 }
