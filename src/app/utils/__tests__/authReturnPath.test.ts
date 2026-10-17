@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
 import {
   sanitizeAppReturnTo, buildSignInUrl, noteDeliberateSignOut, isFullLoadReturnPath, continueToReturnPath,
+  isCredentialReturnPath, notaryInvitePath,
 } from "../authReturnPath";
 
 describe("sanitizeAppReturnTo", () => {
@@ -81,6 +82,62 @@ describe("the Notary Directory as a way back", () => {
     continueToReturnPath("/app/documents", navigate, { replace: true });
     expect(navigate).toHaveBeenCalledWith("/app/documents", { replace: true });
     expect(assign).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("a notary invitation as a way back", () => {
+  const token = "AbC_def-0123456789AbC_def-0123456789AbC_def-".slice(0, 43); // 43 base64url characters
+  const path = `/enotary/invite/${token}`;
+
+  it("has a 43-character example", () => {
+    expect(token).toHaveLength(43);
+  });
+
+  it("accepts exactly /enotary/invite/<43 base64url characters>, as typed or encoded once", () => {
+    expect(sanitizeAppReturnTo(path)).toBe(path);
+    expect(sanitizeAppReturnTo(encodeURIComponent(path))).toBe(path);
+    // It is a page of the app's router, not a static site: no full page load.
+    expect(isFullLoadReturnPath(path)).toBe(false);
+    expect(notaryInvitePath(token)).toBe(path);
+    expect(isCredentialReturnPath(path)).toBe(true);
+  });
+
+  it.each([
+    `/enotary/invite/${"a".repeat(42)}`,
+    `/enotary/invite/${"a".repeat(44)}`,
+    `/enotary/invite/${"a".repeat(42)}.`,
+    `/enotary/invite/${"a".repeat(42)}+`,
+    `/enotary/invite/${"a".repeat(42)}=`,
+    `/enotary/invite/${"a".repeat(43)}/`,
+    `/enotary/invite/${"a".repeat(43)}/extra`,
+    `/enotary/invite/${"a".repeat(43)}?next=https://evil.example`,
+    `/enotary/invite/${"a".repeat(43)}#x`,
+    `/enotary/invite/${"a".repeat(21)}/../${"a".repeat(21)}`,
+    `/enotary/invite//${"a".repeat(43)}`,
+    `//enotary/invite/${"a".repeat(43)}`,
+    `https://evil.example/enotary/invite/${"a".repeat(43)}`,
+    `/enotary/invite/%2e%2e${"a".repeat(41)}`,
+    `/enotary/invite/${"a".repeat(43)}%0d%0a`,
+    "/enotary/invite/",
+    "/enotary/invite",
+    `/enotary/invites/${"a".repeat(43)}`,
+    `/Enotary/invite/${"a".repeat(43)}`,
+    `/enotary/${"a".repeat(43)}`,
+  ])("refuses %s", (candidate) => {
+    expect(sanitizeAppReturnTo(candidate)).toBe("/app/dashboard");
+    expect(isCredentialReturnPath(candidate)).toBe(false);
+  });
+
+  it("builds no address for a token of the wrong shape", () => {
+    expect(notaryInvitePath("short")).toBeNull();
+    expect(notaryInvitePath(`${token}x`)).toBeNull();
+    expect(notaryInvitePath(`${"a".repeat(42)}/`)).toBeNull();
+  });
+
+  it("continues to it with the router", () => {
+    const navigate = vi.fn();
+    continueToReturnPath(path, navigate, { replace: true });
+    expect(navigate).toHaveBeenCalledWith(path, { replace: true });
   });
 });
 

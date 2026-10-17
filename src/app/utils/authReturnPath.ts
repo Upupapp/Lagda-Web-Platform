@@ -8,17 +8,29 @@
 
 export const DEFAULT_RETURN_PATH = "/app/dashboard";
 
-// The two credential pages a signed-out visitor is sent away from and must
-// come back to (078): a join link (`/join/<token>`) and an emailed workspace
-// invitation (`/invitations/accept?token=<token>`). Matched exactly — one
+// The credential pages a signed-out visitor is sent away from and must come
+// back to (078): a join link (`/join/<token>`), an emailed workspace
+// invitation (`/invitations/accept?token=<token>`) and a notary invitation
+// (below). Matched exactly — one
 // token of URL-safe characters, nothing after it — so neither can carry an
 // open redirect.
 const JOIN_RETURN = /^\/join\/[A-Za-z0-9._~-]{6,512}$/;
 const INVITATION_RETURN = /^\/invitations\/accept\?token=[A-Za-z0-9._~-]{6,512}$/;
 
+// The link a client gives a notary (`/enotary/invite/<secret>`, notary on-ramp).
+// The secret is exactly 43 base64url characters (32 random bytes), so nothing
+// shorter, longer or with a further segment can ride on it.
+export const NOTARY_INVITE_TOKEN = /^[A-Za-z0-9_-]{43}$/;
+const NOTARY_INVITE_RETURN = /^\/enotary\/invite\/[A-Za-z0-9_-]{43}$/;
+
+/** The address of a notary invitation, or null where the token is not one. */
+export function notaryInvitePath(token: string): string | null {
+  return NOTARY_INVITE_TOKEN.test(token) ? `/enotary/invite/${token}` : null;
+}
+
 /** Whether a path is one of the credential pages above. */
 export function isCredentialReturnPath(path: string): boolean {
-  return JOIN_RETURN.test(path) || INVITATION_RETURN.test(path);
+  return JOIN_RETURN.test(path) || INVITATION_RETURN.test(path) || NOTARY_INVITE_RETURN.test(path);
 }
 
 // The static Notary Directory (config/enotary-directory), the one way back
