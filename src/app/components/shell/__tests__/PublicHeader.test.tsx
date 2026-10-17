@@ -35,7 +35,7 @@ describe("PublicHeader", () => {
     platform.user = null;
   });
 
-  it("gives every top-nav link an icon and keeps the Coming Soon badge", () => {
+  it("gives every top-nav link an icon, and no longer labels eNotary Coming Soon", () => {
     renderAt();
     const nav = screen.getByRole("navigation", { name: "Main navigation", hidden: true });
     const list = nav.querySelector(".phdr-desktop-nav") as HTMLElement;
@@ -43,7 +43,7 @@ describe("PublicHeader", () => {
       const link = within(list).getByRole("link", { name: new RegExp(`^${label}`), hidden: true });
       expect(link.querySelector(".phdr-navico svg")).not.toBeNull();
     }
-    expect(within(list).getByRole("link", { name: /eNotary/, hidden: true })).toHaveTextContent("Coming Soon");
+    expect(within(list).getByRole("link", { name: /eNotary/, hidden: true })).not.toHaveTextContent("Coming Soon");
   });
 
   it("links each section straight to its own page, with no dropdown", () => {
