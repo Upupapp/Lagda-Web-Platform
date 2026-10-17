@@ -98,8 +98,11 @@ export interface AdminApplicationDetail {
   userId: string;
   application: NotaryApplication;
   files: ApplicationFile[];
-  account: { verifiedName: string | null; nameMatch: NameMatch | null; email: string | null };
-  invitations: { id: string; status: string; clientName: string | null; createdAt: string }[];
+  /** `profileName` is the name on the account; `nameMatch` compares it with the verified ID's name. */
+  account: { verifiedName: string | null; profileName: string | null; nameMatch: NameMatch | null; email: string | null };
+  /** The directory entry whose name equals the legal name, if one does, and whether another notary already holds it. */
+  candidate: { directoryId: string; name: string; taken: boolean } | null;
+  invitations: { id: string; status: string; clientName: string | null; notaryName: string; createdAt: string }[];
 }
 
 type Bag = Record<string, unknown>;
@@ -120,15 +123,16 @@ export function readFile(raw: unknown): ApplicationFile {
   };
 }
 
+/** The server keeps the text fields under `fields` and the two dates beside them; this keeps them flat, with "" for nothing. */
 function readApplication(raw: unknown): NotaryApplication | null {
   if (raw === null || typeof raw !== "object") return null;
   const bag = raw as Bag;
+  const inner = (bag.fields ?? {}) as Bag;
   const fields = { ...EMPTY_FIELDS };
   for (const key of Object.keys(EMPTY_FIELDS) as (keyof ApplicationFields)[]) {
-    const value = bag[key];
-    if (key === "listingConsent") fields.listingConsent = value === true;
-    else if (key === "agreementVersion") fields.agreementVersion = nullable(value);
-    else (fields as unknown as Bag)[key] = text(value);
+    if (key === "listingConsent") fields.listingConsent = bag.listingConsent === true;
+    else if (key === "agreementVersion") fields.agreementVersion = nullable(bag.agreementVersion);
+    else (fields as unknown as Bag)[key] = text(inner[key] ?? bag[key]);
   }
   return {
     ...fields,
@@ -142,14 +146,16 @@ function readApplication(raw: unknown): NotaryApplication | null {
 function readView(raw: unknown): ApplicationView {
   const bag = (raw ?? {}) as Bag;
   const agreement = (bag.agreement ?? {}) as Bag;
+  // The agreement is a list of paragraphs.
+  const paragraphs = Array.isArray(agreement.text) ? agreement.text.filter((item): item is string => typeof item === "string") : [text(agreement.text)];
   return {
     application: readApplication(bag.application),
     files: Array.isArray(bag.files) ? bag.files.map(readFile) : [],
-    agreement: { version: text(agreement.version), text: text(agreement.text) },
+    agreement: { version: text(agreement.version), text: paragraphs.join("\n\n") },
   };
 }
 
-/** The list of missing things a 409 `application_incomplete` carries, however the server spells it. */
+/** The names a 409 `application_incomplete` lists: one detail for each missing item. */
 export function missingFromRefusal(error: unknown): string[] {
   const body = (error as { body?: Bag }).body;
   if (body === undefined) return [];
@@ -157,7 +163,7 @@ export function missingFromRefusal(error: unknown): string[] {
   if (Array.isArray(direct)) return direct.filter((item): item is string => typeof item === "string");
   const details = body.details;
   if (Array.isArray(details)) {
-    return details.map(item => text((item as Bag).field) || text((item as Bag).message)).filter(item => item !== "");
+    return details.map(item => text((item as Bag).field) || text((item as Bag).code) || text((item as Bag).message)).filter(item => item !== "");
   }
   return [];
 }
@@ -173,8 +179,22 @@ class RealNotaryApplicationsService {
     }
   }
 
-  async save(fields: Partial<ApplicationFields>): Promise<ApplicationView> {
-    return readView(await apiRequest<unknown>("/me/notary/application", { method: "PUT", body: fields }));
+  /**
+   * Saves what the form holds. The server wants the text fields together under
+   * `fields`, the two dates beside them, and the agreement as "accept it now";
+   * an empty box is saved as nothing.
+   */
+  async save(patch: Partial<ApplicationFields>): Promise<ApplicationView> {
+    const fields: Record<string, string | null> = {};
+    const body: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(patch)) {
+      if (key === "listingConsent") body.listingConsent = value === true;
+      else if (key === "agreementVersion") { if (typeof value === "string" && value !== "") body.acceptAgreement = true; }
+      else if (key === "commissionValidFrom" || key === "commissionValidUntil") body[key] = typeof value === "string" && value !== "" ? value : null;
+      else fields[key] = typeof value === "string" && value !== "" ? value : null;
+    }
+    if (Object.keys(fields).length > 0) body.fields = fields;
+    return readView(await apiRequest<unknown>("/me/notary/application", { method: "PUT", body }));
   }
 
   /** 409 `application_incomplete` (with the missing list) | `file_scan_pending`. */
@@ -224,7 +244,8 @@ class RealNotaryApplicationsService {
     try {
       const raw = await apiRequest<Bag>(`/admin/notary-applications/${encodeURIComponent(userId)}`);
       const account = (raw.account ?? {}) as Bag;
-      const match = text(account.nameMatch ?? account.nameComparison);
+      const comparison = (raw.nameComparison ?? {}) as Bag;
+      const match = text(account.nameMatch ?? comparison.withProfileName);
       const application = readApplication(raw.application ?? raw);
       if (application === null) return null;
       return {
@@ -232,12 +253,15 @@ class RealNotaryApplicationsService {
         application,
         files: Array.isArray(raw.files) ? raw.files.map(readFile) : [],
         account: {
-          verifiedName: nullable(account.verifiedName), email: nullable(account.email),
+          verifiedName: nullable(account.verifiedName), email: nullable(account.email), profileName: nullable(account.displayName),
           nameMatch: match === "match" || match === "close" || match === "mismatch" ? match : null,
+        },
+        candidate: nullable(comparison.candidateDirectoryId) === null ? null : {
+          directoryId: text(comparison.candidateDirectoryId), name: text(comparison.candidateName), taken: comparison.candidateTaken === true,
         },
         invitations: Array.isArray(raw.invitations)
           ? (raw.invitations as Bag[]).map(item => ({
-            id: text(item.id), status: text(item.status), clientName: nullable(item.clientName), createdAt: text(item.createdAt),
+            id: text(item.id), status: text(item.status), clientName: nullable(item.clientName), notaryName: text(item.notaryName), createdAt: text(item.createdAt),
           }))
           : [],
       };

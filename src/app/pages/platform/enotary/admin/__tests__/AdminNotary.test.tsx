@@ -45,8 +45,9 @@ const detail = (over: Partial<AdminApplicationDetail> = {}, status: AdminApplica
     { id: "f1", kind: "commission", filename: "commission.pdf", mediaType: "application/pdf", sizeBytes: 4096, scanState: "clean" },
     { id: "f2", kind: "photo", filename: "me.png", mediaType: "image/png", sizeBytes: 900, scanState: "pending" },
   ],
-  account: { verifiedName: "Ana Maria Cruz", nameMatch: match, email: null },
-  invitations: [{ id: "eni_1", status: "claimed", clientName: "Ben Lim", createdAt: "2026-10-16T05:00:00.000Z" }],
+  account: { verifiedName: "Ana Maria Cruz", profileName: "Ana Cruz", nameMatch: match, email: null },
+  candidate: null,
+  invitations: [{ id: "eni_1", status: "claimed", clientName: "Ben Lim", notaryName: "Ana Maria Cruz", createdAt: "2026-10-16T05:00:00.000Z" }],
   ...over,
 });
 
@@ -139,7 +140,7 @@ describe("one application", () => {
     renderDetail();
     await settle();
     expect(screen.getByTestId("verified-name")).toHaveTextContent("Ana Maria Cruz");
-    expect(screen.getByTestId("legal-name")).toHaveTextContent("Ana Maria Cruz");
+    expect(screen.getByTestId("legal-name")).toHaveTextContent("Ana Cruz");
     expect(screen.getByTestId("name-match")).toHaveTextContent(words);
     expect(NAME_MATCH_WORDS[match].label).toBe(words);
   });
@@ -156,7 +157,7 @@ describe("one application", () => {
     approve.mockResolvedValue(undefined);
     renderDetail();
     await settle();
-    fireEvent.change(screen.getByLabelText(/Search by|Tie to a Notary Directory entry/), { target: { value: "cruz" } });
+    fireEvent.change(screen.getByLabelText(/Tie to a Notary Directory entry/), { target: { value: "cruz" } });
     const picker = screen.getByLabelText("Entry");
     expect(within(picker).getAllByRole("option").map(option => option.textContent)).toEqual([
       "No entry chosen", "Ana Maria Cruz — Cruz Law, Makati City", "Cruz Law Office (office) — Cruz Law, Makati City",
@@ -176,13 +177,34 @@ describe("one application", () => {
     expect(screen.queryByTestId("approve-panel")).toBeNull();
   });
 
+  it("suggests a listing that has exactly the applicant's name and nobody else holds", async () => {
+    adminGet.mockResolvedValue(detail({ candidate: { directoryId: "ana-cruz", name: "Ana Maria Cruz", taken: false } }));
+    approve.mockResolvedValue(undefined);
+    renderDetail();
+    await settle();
+    expect(screen.getByTestId("candidate-hint")).toHaveTextContent("exactly this name and is suggested");
+    expect(screen.getByLabelText("Entry")).toHaveValue("ana-cruz");
+    press(screen.getByRole("button", { name: "Approve" }));
+    press(within(screen.getByRole("alertdialog")).getByRole("button", { name: "Approve" }));
+    await settle();
+    expect(approve).toHaveBeenCalledWith("u1", { directoryId: "ana-cruz", note: "" });
+  });
+
+  it("does not suggest a listing another notary already holds", async () => {
+    adminGet.mockResolvedValue(detail({ candidate: { directoryId: "ana-cruz", name: "Ana Maria Cruz", taken: true } }));
+    renderDetail();
+    await settle();
+    expect(screen.getByTestId("candidate-hint")).toHaveTextContent(/already held by another notary/);
+    expect(screen.getByLabelText("Entry")).toHaveValue("");
+  });
+
   it("approves with no entry when none was chosen", async () => {
     adminGet.mockResolvedValue(detail());
     approve.mockResolvedValue(undefined);
     renderDetail();
     await settle();
     press(screen.getByRole("button", { name: "Approve" }));
-    expect(screen.getByRole("alertdialog")).toHaveTextContent("exact name match");
+    expect(screen.getByRole("alertdialog")).toHaveTextContent("No Notary Directory entry is chosen");
     press(within(screen.getByRole("alertdialog")).getByRole("button", { name: "Approve" }));
     await settle();
     expect(approve).toHaveBeenCalledWith("u1", { directoryId: "", note: "" });

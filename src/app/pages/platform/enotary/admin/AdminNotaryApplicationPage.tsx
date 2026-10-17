@@ -28,9 +28,9 @@ import { APPLICATION_STATUS_WORDS } from "./AdminNotaryApplicationsPage";
 import { entryLabel, filterEntries, loadDirectoryEntries, type DirectoryEntry } from "./directory-entries";
 
 export const NAME_MATCH_WORDS: Record<NameMatch, { label: string; tone: "ok" | "warn" | "bad"; text: string }> = {
-  match: { label: "Names match", tone: "ok", text: "The name on the verified ID is the legal name the applicant gave." },
+  match: { label: "Names match", tone: "ok", text: "The name on the verified ID is the name on the applicant's LAGDA account." },
   close: { label: "Names are close", tone: "warn", text: "The names are nearly the same (a middle name, an initial or a spelling). Look at both before deciding." },
-  mismatch: { label: "Names do not match", tone: "bad", text: "The name on the verified ID is different from the legal name the applicant gave. Do not approve unless the difference is explained." },
+  mismatch: { label: "Names do not match", tone: "bad", text: "The name on the verified ID is different from the name on the applicant's LAGDA account. Do not approve unless the difference is explained." },
 };
 
 type Loaded =
@@ -69,6 +69,12 @@ export function AdminNotaryApplicationPage() {
     return () => { alive.current = false; };
   }, [load]);
 
+  // An exactly equal listing that nobody else holds is suggested; the reviewer can change it.
+  const candidate = loaded.kind === "ready" ? loaded.detail.candidate : null;
+  useEffect(() => {
+    if (candidate !== null && !candidate.taken) setDirectoryId(current => (current === "" ? candidate.directoryId : current));
+  }, [candidate]);
+
   const shown = useMemo(() => filterEntries(entries, query).slice(0, 12), [entries, query]);
 
   if (loaded.kind === "loading") return <EnotaryLoading />;
@@ -96,6 +102,8 @@ export function AdminNotaryApplicationPage() {
         ? "The commission on this application has already ended, so it cannot be approved."
         : code === "directory_entry_taken" || code === "directory_id_taken"
           ? "That Notary Directory entry is already tied to another notary."
+          : code === "review_own_application"
+            ? "You cannot review your own application."
           : code === "enotary_notary_not_listed"
             ? "That entry is not in the Notary Directory."
             : "That could not be done right now. Please try again.");
@@ -108,7 +116,7 @@ export function AdminNotaryApplicationPage() {
     const chosen = entries.find(entry => entry.id === directoryId);
     confirm({
       title: `Approve ${app.legalName ?? "this notary"}?`,
-      body: `${chosen !== undefined ? `Their account will be tied to ${entryLabel(chosen)}. ` : "No Notary Directory entry is chosen; one is tied by an exact name match if there is one. "}They are told, and can then answer requests. This does not make them accredited for online sessions.`,
+      body: `${chosen !== undefined ? `Their account will be tied to ${entryLabel(chosen)}. ` : "No Notary Directory entry is chosen, so requests for a listed notary cannot reach this account until one is. "}They are told, and can then answer requests. This does not make them accredited for online sessions.`,
       confirmLabel: "Approve",
       onConfirm: () => decide(() => realNotaryApplicationsService.approve(userId, { directoryId, note }), "Approved. The notary was told."),
     });
@@ -133,10 +141,10 @@ export function AdminNotaryApplicationPage() {
       {problem !== null && <Notice icon={AlertTriangle} tone="danger">{problem}</Notice>}
 
       <Panel testId="name-comparison" tone={match === "mismatch" ? "maroon" : "plain"}>
-        <PanelTitle>Name on the verified ID</PanelTitle>
+        <PanelTitle>Name check</PanelTitle>
         <dl style={{ ...GF, margin: "0 0 8px", display: "grid", gap: 6 }}>
           <div><dt style={{ fontSize: 12.5, color: E.quiet }}>Verified ID</dt><dd data-testid="verified-name" style={{ margin: 0, fontSize: 15, fontWeight: 700 }}>{detail.account.verifiedName ?? "Not verified"}</dd></div>
-          <div><dt style={{ fontSize: 12.5, color: E.quiet }}>Legal name given</dt><dd data-testid="legal-name" style={{ margin: 0, fontSize: 15, fontWeight: 700 }}>{app.legalName ?? "Not given yet"}</dd></div>
+          <div><dt style={{ fontSize: 12.5, color: E.quiet }}>Name on the LAGDA account</dt><dd data-testid="legal-name" style={{ margin: 0, fontSize: 15, fontWeight: 700 }}>{detail.account.profileName ?? "Not given"}</dd></div>
         </dl>
         {match !== null ? (
           <p data-testid="name-match" data-match={match} style={{ ...bodyText, margin: 0, color: NAME_MATCH_WORDS[match].tone === "ok" ? E.ok : NAME_MATCH_WORDS[match].tone === "warn" ? "#8A5A00" : "#B0182B" }}>
@@ -180,7 +188,7 @@ export function AdminNotaryApplicationPage() {
         <Panel testId="application-invitations">
           <PanelTitle>Requests bound to this account</PanelTitle>
           <ul style={{ margin: 0, paddingLeft: 18, ...bodyText }}>
-            {detail.invitations.map(item => <li key={item.id}>{item.clientName ?? "A client"} · {item.status} · {stampLabel(item.createdAt)}</li>)}
+            {detail.invitations.map(item => <li key={item.id}>{item.clientName ?? "A client"} → {item.notaryName} · {item.status} · {stampLabel(item.createdAt)}</li>)}
           </ul>
         </Panel>
       )}
@@ -194,7 +202,13 @@ export function AdminNotaryApplicationPage() {
           <PanelTitle>Approve</PanelTitle>
           <label htmlFor="dir-search" style={labelStyle}>Tie to a Notary Directory entry (optional)</label>
           <input id="dir-search" value={query} onChange={event => { setQuery(event.target.value); }} placeholder="Search by name, firm or city" style={fieldStyle()} />
-          <p style={hintStyle}>If you leave this empty, an exact match on the legal name is used when there is one and the entry is free.</p>
+          <p style={hintStyle} data-testid="candidate-hint">
+            {detail.candidate === null
+              ? "No listing has exactly this name. Pick one if the applicant is listed, or leave it empty."
+              : detail.candidate.taken
+                ? `${detail.candidate.name} has exactly this name, but that listing is already held by another notary. Pick another or leave it empty.`
+                : `${detail.candidate.name} has exactly this name and is suggested.`}
+          </p>
           <label htmlFor="dir-pick" style={{ ...labelStyle, marginTop: 10 }}>Entry</label>
           <select id="dir-pick" value={directoryId} onChange={event => { setDirectoryId(event.target.value); }} style={fieldStyle()}>
             <option value="">No entry chosen</option>

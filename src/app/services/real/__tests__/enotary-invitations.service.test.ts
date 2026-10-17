@@ -205,3 +205,48 @@ describe("the application routes", () => {
     expect(apps.adminFileUrl("u 1", "f1")).toBe("/admin/notary-applications/u%201/files/f1");
   });
 });
+
+describe("the server's own shapes for an application", () => {
+  it("flattens the fields kept under `fields`, and joins the agreement's paragraphs", async () => {
+    reply = () => ({ status: 200, body: {
+      application: {
+        status: "draft", legalName: "Ana Maria Cruz", fields: { office: "Cruz Law", rollNo: "123", ptrYear: null },
+        commissionValidFrom: "2026-01-01", commissionValidUntil: "2027-12-31", agreementAcceptedAt: null, agreementVersion: "2026-10-v1",
+        listingConsent: true, listed: false, reviewNote: null, submittedAt: null, reviewedAt: null, updatedAt: "2026-10-17T00:00:00.000Z",
+      },
+      files: [], agreement: { version: "2026-10-v1", text: ["One.", "Two."] },
+    } });
+    const view = await apps.read();
+    expect(view?.application).toMatchObject({ office: "Cruz Law", rollNo: "123", ptrYear: "", commissionValidFrom: "2026-01-01", commissionValidUntil: "2027-12-31", listingConsent: true, legalName: "Ana Maria Cruz" });
+    expect(view?.agreement.text).toBe("One.\n\nTwo.");
+  });
+
+  it("saves text fields under `fields`, dates beside them, an empty box as nothing, and the agreement as accepted", async () => {
+    await apps.save({ office: "Cruz Law", phone: "", commissionValidUntil: "2027-12-31", commissionValidFrom: "", listingConsent: true, agreementVersion: "2026-10-v1" });
+    expect(calls[0]?.body).toEqual({
+      fields: { office: "Cruz Law", phone: null }, commissionValidUntil: "2027-12-31", commissionValidFrom: null, listingConsent: true, acceptAgreement: true,
+    });
+    await apps.save({ listingConsent: false, agreementVersion: null });
+    expect(calls[1]?.body).toEqual({ listingConsent: false });
+  });
+
+  it("reads an incomplete submission's details, one for each missing item", () => {
+    const error = new ApiError(409, { code: "application_incomplete", message: "x", details: [
+      { field: "phone", code: "missing", message: "Required." }, { field: "file:roll", code: "missing", message: "Upload this document." },
+    ] }, "x");
+    expect(missingFromRefusal(error)).toEqual(["phone", "file:roll"]);
+  });
+
+  it("reads a review with the name check and the suggested listing", async () => {
+    reply = () => ({ status: 200, body: {
+      userId: "u1", application: { status: "submitted", legalName: "Ana Maria Cruz", fields: {} }, files: [],
+      account: { displayName: "Ana M. Cruz", email: "a@b.ph", verifiedName: "Ana Maria Cruz", nameMatch: "close" },
+      nameComparison: { withProfileName: "close", candidateDirectoryId: "ana-cruz", candidateName: "Ana Maria Cruz", candidateTaken: true },
+      directoryId: null, invitations: [{ id: "eni_1", status: "claimed", notaryName: "Ana Maria Cruz", clientName: "Ben", createdAt: "2026-10-17T00:00:00.000Z" }],
+    } });
+    const detail = await apps.adminGet("u1");
+    expect(detail?.account).toMatchObject({ verifiedName: "Ana Maria Cruz", profileName: "Ana M. Cruz", nameMatch: "close" });
+    expect(detail?.candidate).toEqual({ directoryId: "ana-cruz", name: "Ana Maria Cruz", taken: true });
+    expect(detail?.invitations[0]).toMatchObject({ clientName: "Ben", notaryName: "Ana Maria Cruz" });
+  });
+});

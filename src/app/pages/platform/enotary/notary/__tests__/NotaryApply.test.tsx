@@ -36,7 +36,7 @@ import {
 
 const AGREEMENT = { version: "2026-10", text: "LAGDA notary agreement.\nYou agree to be honest." };
 const FILLED = {
-  office: "Cruz Law", city: "Makati City", province: "Metro Manila", phone: "0917 000 0000", rollNo: "12345", ibpNo: "IBP-9", ptrNo: "PTR-1",
+  office: "Cruz Law", city: "Makati City", province: "Metro Manila", phone: "0917 000 0000", rollNo: "12345", ibpNo: "IBP-9", ptrNo: "PTR-1", ptrYear: "2026", mcleComplianceNo: "MCLE-1",
   commissionNo: "C-77", commissionCourt: "Executive Judge, Makati RTC", commissionValidFrom: "2026-01-01", commissionValidUntil: "2027-12-31",
   notarialJurisdiction: "Makati City",
 };
@@ -74,12 +74,14 @@ describe("the form's rules", () => {
     expect(Object.keys(validateStep("personal", values({ office: " ", phone: "" }), [], today)).sort()).toEqual(["office", "phone"]);
     expect(validateStep("personal", values(), [], today)).toEqual({});
     expect(validateStep("credentials", values({ ibpChapter: "", mclePeriod: "" }), [], today)).toEqual({});
+    // The last day of the commission still counts.
+    expect(validateStep("credentials", values({ commissionValidUntil: "2026-10-17" }), [], today)).toEqual({});
     expect(validateStep("credentials", values({ rollNo: "" }), [], today).rollNo).toMatch(/Enter the roll of Attorneys number/);
   });
 
   it("checks the commission dates: still valid, and not ending before it starts", () => {
-    expect(validateStep("credentials", values({ commissionValidUntil: "2026-10-17" }), [], today).commissionValidUntil).toMatch(/future/);
-    expect(validateStep("credentials", values({ commissionValidUntil: "2025-01-01" }), [], today).commissionValidUntil).toMatch(/future/);
+    expect(validateStep("credentials", values({ commissionValidUntil: "2026-10-16" }), [], today).commissionValidUntil).toMatch(/not passed/);
+    expect(validateStep("credentials", values({ commissionValidUntil: "2025-01-01" }), [], today).commissionValidUntil).toMatch(/not passed/);
     expect(validateStep("credentials", values({ commissionValidFrom: "2028-01-01" }), [], today).commissionValidUntil).toMatch(/before/);
     expect(validateStep("credentials", values({ ptrYear: "26" }), [], today).ptrYear).toMatch(/four-digit/);
   });

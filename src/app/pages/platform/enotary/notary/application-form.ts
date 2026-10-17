@@ -39,13 +39,13 @@ export const FIELDS: readonly FieldSpec[] = [
   { key: "city", label: "City or municipality", step: "personal", required: true, max: 80 },
   { key: "province", label: "Province", step: "personal", required: true, max: 80 },
   { key: "phone", label: "Phone number", step: "personal", required: true, max: 32, type: "tel", hint: "For LAGDA to reach you about this application." },
-  { key: "rollNo", label: "Roll of Attorneys number", step: "credentials", required: true, max: 40 },
-  { key: "ibpNo", label: "IBP number", step: "credentials", required: true, max: 40 },
+  { key: "rollNo", label: "Roll of Attorneys number", step: "credentials", required: true, max: 32 },
+  { key: "ibpNo", label: "IBP number", step: "credentials", required: true, max: 32 },
   { key: "ibpChapter", label: "IBP chapter", step: "credentials", required: false, max: 80 },
-  { key: "ptrNo", label: "PTR number", step: "credentials", required: true, max: 40 },
-  { key: "ptrYear", label: "PTR year", step: "credentials", required: false, max: 4 },
-  { key: "mcleComplianceNo", label: "MCLE compliance number", step: "credentials", required: false, max: 40 },
-  { key: "mclePeriod", label: "MCLE compliance period", step: "credentials", required: false, max: 80, hint: "For example: 7th compliance period." },
+  { key: "ptrNo", label: "PTR number", step: "credentials", required: true, max: 32 },
+  { key: "ptrYear", label: "PTR year", step: "credentials", required: true, max: 4 },
+  { key: "mcleComplianceNo", label: "MCLE compliance number", step: "credentials", required: true, max: 40 },
+  { key: "mclePeriod", label: "MCLE compliance period", step: "credentials", required: false, max: 60, hint: "For example: 7th compliance period." },
   { key: "commissionNo", label: "Notarial commission number", step: "credentials", required: true, max: 40 },
   { key: "commissionCourt", label: "Court or executive judge that issued the commission", step: "credentials", required: true, max: 160 },
   { key: "commissionValidFrom", label: "Commission valid from", step: "credentials", required: true, max: 10, type: "date" },
@@ -73,7 +73,7 @@ export function validateStep(step: ApplyStep, values: FormValues, files: readonl
   if (step === "credentials") {
     const from = values.commissionValidFrom;
     const until = values.commissionValidUntil;
-    if (until !== "" && errors.commissionValidUntil === undefined && until <= today) errors.commissionValidUntil = "The commission must still be valid. Enter a date in the future.";
+    if (until !== "" && errors.commissionValidUntil === undefined && until < today) errors.commissionValidUntil = "The commission must still be valid. Enter a date that has not passed.";
     if (from !== "" && until !== "" && errors.commissionValidUntil === undefined && until < from) errors.commissionValidUntil = "This date is before the date it starts.";
   }
   if (step === "documents") {
@@ -125,6 +125,9 @@ const FIELD_BY_NAME = new Map<string, string>(FIELDS.map(field => [field.key.toL
 
 /** A name from the server's missing list ("roll_no", "commissionNo", "roll file") in the form's own words. */
 export function missingLabel(name: string): string {
+  const kind = /^file:(\w+)$/.exec(name)?.[1] as ApplicationFileKind | undefined;
+  if (kind !== undefined && kind in FILE_KIND_LABEL) return `${FILE_KIND_LABEL[kind]} document`;
+  if (name === "listingConsent") return "Consent to be listed";
   const flat = name.replace(/[_\-\s]/g, "").toLowerCase();
   const field = FIELD_BY_NAME.get(flat);
   if (field !== undefined) return field;
@@ -164,12 +167,24 @@ export function describeSubmitError(error: unknown): SubmitProblem {
   return { kind: "other", text: "That could not be done right now. Please try again.", missing: [] };
 }
 
+/** Why an upload was refused: the server's virus check, its scanner being down, the file's type or size, or the connection. */
+export function describeUploadError(error: unknown, filename: string): string {
+  const code = errorCode(error);
+  const status = error instanceof ApiError ? error.status : -1;
+  if (code === "file_rejected") return `${filename} was refused: a virus was found in it, or it is not a real PDF, JPEG or PNG. Add a clean copy.`;
+  if (code === "dependency_unavailable" || status === 503) return "The virus check is not available right now, so the file could not be added. Try again in a few minutes.";
+  if (status === 413) return `${filename} is larger than 10 MB.`;
+  if (status === 415 || status === 422) return `${filename} could not be added. Use a PDF, JPEG or PNG file of up to 10 MB.`;
+  if (status === 0) return "Could not reach the server. Check your connection and try again.";
+  return `${filename} could not be added. Try again.`;
+}
+
 /** Field errors a refused save carries (422 with details), put next to their fields. */
 export function fieldErrorsFromRefusal(error: unknown): FieldErrors {
   const out: FieldErrors = {};
   if (!(error instanceof ApiError)) return out;
   for (const detail of error.body?.details ?? []) {
-    const key = FIELDS.find(field => field.key === detail.field)?.key;
+    const key = FIELDS.find(field => field.key === (detail.field ?? "").split(".").pop())?.key;
     if (key !== undefined) out[key] = detail.message !== "" ? detail.message : "This was not accepted.";
   }
   return out;

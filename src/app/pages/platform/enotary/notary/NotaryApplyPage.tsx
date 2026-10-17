@@ -27,7 +27,7 @@ import { EnotaryLoadError, EnotaryLoading, EnotaryNotOffered } from "../EnotaryS
 import { OnrampNote, Panel, PanelTitle, TextField, bodyText, linkButton } from "../onramp-ui";
 import { expiryLabel } from "../requests/expiry";
 import {
-  APPLY_STEPS, SCAN_WORDS, describeSubmitError, fieldErrorsFromRefusal, fieldsOf, fileProblem, fileSizeLabel,
+  APPLY_STEPS, SCAN_WORDS, describeSubmitError, describeUploadError, fieldErrorsFromRefusal, fieldsOf, fileProblem, fileSizeLabel,
   firstIncompleteStep, todayIso, validateStep, type ApplyStep, type FieldErrors, type FormValues, type SubmitProblem,
 } from "./application-form";
 
@@ -281,8 +281,8 @@ function ApplicationForm({ view, onView, onSubmitted }: {
     try {
       const added = await realNotaryApplicationsService.upload(kind, picked);
       if (alive.current) setFiles(current => [...current, added]);
-    } catch {
-      if (alive.current) setErrors({ files: `${picked.name} could not be added. Check your connection and try again.` });
+    } catch (error) {
+      if (alive.current) setErrors({ files: describeUploadError(error, picked.name) });
     } finally {
       if (alive.current) setBusy(false);
     }
