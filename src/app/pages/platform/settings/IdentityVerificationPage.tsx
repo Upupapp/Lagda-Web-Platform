@@ -41,6 +41,7 @@ import {
   IDENTITY_ACCOUNT_AGREEMENT, IDENTITY_CHECK_KEPT_NOTE, IDENTITY_FACE_LATER_NOTE, PROFILE_SETTINGS_PATH,
   ACCOUNT_IDENTITY_STORAGE_KEY, providerReturned,
 } from "../../../models/identity-check";
+import { recallInvite } from "../../public/enotary/invite-memory";
 import { useProviderSession, type ProviderOutcome, type ProviderTab } from "../../../components/identity/provider-session";
 import {
   ProviderConsent, ProviderHeading, ProviderLive, ProviderNote, ProviderSessionView, ProviderStyles, PROVIDER_BODY,
@@ -297,6 +298,11 @@ export function IdentityVerificationPage({ openTab, navigate, touch }: IdentityV
           {verifiedOn !== null && <div><dt style={{ display: "inline" }}>Verified on </dt><dd style={{ display: "inline", margin: 0, color: SET.INK, fontWeight: 600 }}>{verifiedOn}</dd></div>}
           {validUntil !== null && <div><dt style={{ display: "inline" }}>Valid until </dt><dd style={{ display: "inline", margin: 0, color: SET.INK, fontWeight: 600 }}>{validUntil}</dd></div>}
         </dl>
+        {recallInvite() !== null && (
+          <p data-testid="identity-back-to-invite" style={PROVIDER_BODY}>
+            <Link to={recallInvite() ?? "/"} style={{ color: T.azureDeep, fontWeight: 700 }}>Back to the notary request you were opening</Link>
+          </p>
+        )}
         {identity.canUseFaceCheck && (
           <p data-testid="identity-face-later" style={PROVIDER_BODY}>Later checks will use a quick face check.</p>
         )}
