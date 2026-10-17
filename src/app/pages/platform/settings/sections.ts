@@ -14,7 +14,7 @@
 import type { LucideIcon } from "lucide-react";
 import {
   UserRound, SlidersHorizontal, ShieldCheck, Bell, PenLine, Database,
-  Palette, CreditCard, BarChart3, Network, Puzzle, Gem,
+  Palette, CreditCard, BarChart3, Network, Puzzle, Gem, ScanFace,
 } from "lucide-react";
 import { isCapabilityInActiveProfile } from "../../../config/capability-resolver";
 
@@ -23,7 +23,7 @@ export const SETTINGS_ROOT = "/app/settings";
 export type SettingsGroup = "personal" | "workspace";
 
 export type SettingsSectionKey =
-  | "profile" | "preferences" | "security" | "notifications" | "signatures" | "data-and-privacy" | "plan"
+  | "profile" | "preferences" | "security" | "identity" | "notifications" | "signatures" | "data-and-privacy" | "plan"
   | "branding" | "billing" | "usage" | "organization" | "integrations";
 
 export interface SettingsSection {
@@ -62,6 +62,24 @@ export const ALL_SETTINGS_SECTIONS: readonly SettingsSection[] = [
 export const SETTINGS_SECTIONS: readonly SettingsSection[] =
   ALL_SETTINGS_SECTIONS.filter(s => s.group === "personal" && (!s.capability || isCapabilityInActiveProfile(s.capability)));
 
+/**
+ * "Identity verification": verifying your own account. Kept out of the lists
+ * above because it is not a section every account has: it is shown only once
+ * the server says this account is offered it (hooks/useAccountFeatures), and
+ * then it sits after Security.
+ */
+export const IDENTITY_SECTION: SettingsSection = {
+  key: "identity", label: "Identity verification", hint: "Verify who you are, once, for your account",
+  path: p("identity"), icon: ScanFace, group: "personal",
+};
+
+/** The My Settings carousel for this account: Identity verification after Security where it is offered. */
+export function settingsSectionsFor(identityAvailable: boolean): readonly SettingsSection[] {
+  if (!identityAvailable) return SETTINGS_SECTIONS;
+  const at = SETTINGS_SECTIONS.findIndex(s => s.key === "security") + 1;
+  return [...SETTINGS_SECTIONS.slice(0, at), IDENTITY_SECTION, ...SETTINGS_SECTIONS.slice(at)];
+}
+
 export const SETTINGS_GROUP_LABELS: Record<SettingsGroup, string> = {
   personal: "Personal",
   workspace: "Workspace",
@@ -73,7 +91,8 @@ export const SETTINGS_GROUP_LABELS: Record<SettingsGroup, string> = {
  * Workspace › General, and anywhere else.
  */
 export function settingsSectionForPath(pathname: string): SettingsSection | null {
-  return ALL_SETTINGS_SECTIONS.find(s => pathname === s.path || pathname.startsWith(`${s.path}/`)) ?? null;
+  return [...ALL_SETTINGS_SECTIONS, IDENTITY_SECTION]
+    .find(s => pathname === s.path || pathname.startsWith(`${s.path}/`)) ?? null;
 }
 
 // ── Security tabs ──────────────────────────────────────────────────────────

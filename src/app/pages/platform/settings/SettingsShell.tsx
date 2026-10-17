@@ -26,15 +26,16 @@ import React, {
   type KeyboardEvent as ReactKeyboardEvent,
 } from "react";
 import { Link, Outlet, useLocation } from "react-router";
-import { Settings, Settings2, UserCog, Building2, Info, ChevronLeft, ChevronRight } from "lucide-react";
+import { Settings, Settings2, UserCog, Building2, Info, ChevronLeft, ChevronRight, BadgeCheck } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { usePlatform } from "../../../context/PlatformContext";
 import { USE_REAL_BACKEND } from "../../../services/backend-flag";
 import { useWorkspaceAccess } from "../../../hooks/useWorkspaceAccess";
 import { workspaceSettingsEntry } from "../workspace/shell/sections";
 import { useWorkspaceAllows } from "../../../hooks/usePlans";
+import { useAccountFeatures } from "../../../hooks/useAccountFeatures";
 import {
-  SETTINGS_ROOT, SETTINGS_SECTIONS, SETTINGS_GROUP_LABELS, SECURITY_TABS, settingsSectionForPath,
+  SETTINGS_ROOT, SETTINGS_GROUP_LABELS, SECURITY_TABS, settingsSectionForPath, settingsSectionsFor,
   type SettingsGroup, type SettingsSection,
 } from "./sections";
 
@@ -227,6 +228,9 @@ export function SettingsLayout() {
   const onSecurity = current?.key === "security";
   const live = USE_REAL_BACKEND;
   const userName = platform.user?.displayName ?? platform.user?.fullName ?? null;
+  // What the server offers this account: the Identity verification section,
+  // and the badge beside the person's own name once they are verified.
+  const features = useAccountFeatures();
 
   return (
     <ShellContext.Provider value={value}>
@@ -239,13 +243,19 @@ export function SettingsLayout() {
                 <div className="st-eyebrow">Personal</div>
                 <h1 className="st-title">My Settings</h1>
                 <div className="st-sub">
-                  {userName && <>Signed in as <strong>{userName}</strong><span aria-hidden> · </span></>}
+                  {userName && <>Signed in as <strong>{userName}</strong>
+                    {features.identityVerified && (
+                      <span className="st-verified" data-testid="settings-verified-badge" title="Your identity is verified">
+                        <BadgeCheck size={12} aria-hidden strokeWidth={2.2} />Verified
+                      </span>
+                    )}
+                    <span aria-hidden> · </span></>}
                   These settings are yours alone.
                 </div>
               </div>
               {!live && <span className="st-demo-pill">Demo build</span>}
             </div>
-            <SettingsCarousel current={current} pathname={location.pathname} />
+            <SettingsCarousel current={current} pathname={location.pathname} sections={settingsSectionsFor(features.identityAvailable)} />
             {hasWorkspace && <p className="st-moved" data-testid="settings-moved-note">
               <Building2 size={14} aria-hidden strokeWidth={2} />
               <span>
@@ -308,11 +318,12 @@ function reducedMotion(): boolean {
   return typeof window.matchMedia === "function" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 }
 
-function SettingsCarousel({ current, pathname }: { current: SettingsSection | null; pathname: string }) {
+function SettingsCarousel({ current, pathname, sections }: {
+  current: SettingsSection | null; pathname: string; sections: readonly SettingsSection[];
+}) {
   const listRef = useRef<HTMLUListElement>(null);
   const labelId = useId();
   const listId = useId();
-  const sections = SETTINGS_SECTIONS;
   const activeIndex = current ? sections.findIndex(s => s.key === current.key) : -1;
   const [rove, setRove] = useState(Math.max(0, activeIndex));
   const [edges, setEdges] = useState({ left: false, right: false });
@@ -477,6 +488,9 @@ const SHELL_CSS = `
 .st-title { font-family: ${SET.FONT}; font-size: 22px; font-weight: 800; color: ${SET.NAVY}; margin: 2px 0 0; line-height: 1.2; }
 .st-sub { font-family: ${SET.FONT}; font-size: 13px; color: ${SET.SLATE}; margin-top: 3px; overflow-wrap: anywhere; }
 .st-sub strong { color: ${SET.INK}; font-weight: 600; }
+.st-verified { display: inline-flex; align-items: center; gap: 3px; margin-left: 6px; padding: 1px 7px; border-radius: 999px; vertical-align: 1px;
+  font-family: ${SET.FONT}; font-size: 11px; font-weight: 700; line-height: 1.4; white-space: nowrap;
+  color: ${TONES.success.fg}; background: ${TONES.success.bg}; border: 1px solid ${TONES.success.border}; }
 .st-demo-pill { flex-shrink: 0; align-self: flex-start; font-family: ${SET.MONO}; font-size: 10px; font-weight: 700; letter-spacing: 0.06em;
   text-transform: uppercase; color: ${TONES.warning.fg}; background: ${TONES.warning.bg}; border: 1px solid ${TONES.warning.border}; border-radius: 999px; padding: 3px 9px; }
 .st-visually-hidden { position: absolute !important; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }

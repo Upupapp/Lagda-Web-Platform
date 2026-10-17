@@ -1016,6 +1016,17 @@ const PlanRequestPage = lazy(() =>
     default: m.PlanRequestPage,
   })),
 );
+// Identity verification (My Settings).
+const SettingsIdentityPage = lazy(() =>
+  import("./app/pages/platform/settings/IdentityVerificationPage").then((m) => ({
+    default: m.IdentityVerificationPage,
+  })),
+);
+const IdentityVerificationReturnPage = lazy(() =>
+  import("./app/pages/platform/identity/ProviderReturnPage").then((m) => ({
+    default: m.IdentityVerificationReturnPage,
+  })),
+);
 const SettingsDataPrivacyPage = lazy(() =>
   import("./app/pages/platform/settings/DataPrivacyPage").then((m) => ({
     default: m.DataPrivacyPage,
@@ -2696,6 +2707,14 @@ export const router = createBrowserRouter([
               <SettingsNotificationsPage />
             ),
           },
+          // Verifying your own account. Shown in the carousel only where the
+          // server offers it; a direct visit elsewhere says "not available".
+          {
+            path: "identity",
+            element: (
+              <SettingsIdentityPage />
+            ),
+          },
           {
             path: "signatures",
             element: (
@@ -2749,6 +2768,19 @@ export const router = createBrowserRouter([
         ),
       },
     ],
+  },
+
+  // ── Back from the identity verification partner ──────────────────────────────
+  // Where the partner sends the browser after a check started from My Settings.
+  // OUTSIDE PlatformLayout on purpose: the shell's
+  // signed-out redirect keeps the address it was reached at, and this address
+  // carries the partner's own query values. These pages strip them at once,
+  // never read them, and route on (to sign-in, with a clean way back, for a
+  // device that is not signed in).
+  {
+    path: "/app/settings/identity/return",
+    errorElement: <PlatformRouteError />,
+    element: <PageMetaRoute><Suspense fallback={null}><IdentityVerificationReturnPage /></Suspense></PageMetaRoute>,
   },
 
   // ── Prepare document workflow (Command 18) ────────────────────────────────────

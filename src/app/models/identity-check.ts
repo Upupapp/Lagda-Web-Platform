@@ -109,6 +109,17 @@ function whenLabel(at: Date): string {
 }
 
 /**
+ * A moment the server named, as the reader's own date and time. `null` when
+ * it is absent or cannot be believed, so nothing is ever shown as a date
+ * that is not one.
+ */
+export function identityWhenLabel(at: string | null | undefined): string | null {
+  if (typeof at !== "string") return null;
+  const when = new Date(at);
+  return Number.isNaN(when.getTime()) ? null : whenLabel(when);
+}
+
+/**
  * What a participant is told when they are NOT asked, because an earlier
  * pass still counts. `null` when there is nothing to say: no check asked of
  * them, not passed, or no record of when.
@@ -269,4 +280,142 @@ export function identityReturnedAt(state: unknown): number | null {
   if (typeof state !== "object" || state === null) return null;
   const at = (state as { identityReturnedAt?: unknown }).identityReturnedAt;
   return typeof at === "number" && Number.isFinite(at) ? at : null;
+}
+
+// ── The short face check ────────────────────────────────────────────────────
+//
+// A person who verified with an ID before may be asked only for a face check:
+// no ID, a few seconds. The server says which kind a visit is; these are the
+// words for the short one, said the same way on the signing page, in My
+// Settings and at the eNotary gate.
+
+/** What a visit to the identity verification partner asks for. */
+export type IdentityCheckKind = "face" | "full";
+
+/** The kind a server answer names. Anything but an explicit `face` is the full check. */
+export function identityCheckKind(value: unknown): IdentityCheckKind {
+  return value === "face" ? "face" : "full";
+}
+
+const AGREEMENT = "I agree to the use of my ID and selfie to verify my identity for";
+
+/** What the participant ticks before any visit is opened, on the signing page. */
+export const IDENTITY_CHECK_AGREEMENT = `${AGREEMENT} this document.`;
+/** The same agreement where a person verifies their own account. */
+export const IDENTITY_ACCOUNT_AGREEMENT = `${AGREEMENT} my LAGDA account.`;
+/** The same agreement at the eNotary gate. */
+export const IDENTITY_ENOTARY_AGREEMENT = `${AGREEMENT} LAGDA eNotary.`;
+
+export const IDENTITY_FACE_HEADING = "Confirm it is you";
+export const IDENTITY_FACE_BODY =
+  "You verified your identity before. This time we only need a quick face check, with no ID. "
+  + "It takes a few seconds.";
+export const IDENTITY_FACE_PHONE_NOTICE =
+  "Have your phone ready. You will scan a code and take a short selfie with your phone.";
+export const IDENTITY_FACE_BUTTON = "Continue to face check";
+export const IDENTITY_FACE_TAB_HEADING = "Finish the face check in the new tab";
+/** Said on the signing page, where the next thing offered is the ID. */
+export const IDENTITY_FACE_DECLINED =
+  "We could not confirm it is you from the face check. You can verify with your ID instead.";
+/** Said at the eNotary gate, which has already moved on to the ID. */
+export const IDENTITY_FACE_DECLINED_GATE =
+  "We could not confirm it is you from the face check. Verify with your ID instead.";
+
+/** Said once, where a person verifies their account: what a later face check uses. */
+export const IDENTITY_FACE_LATER_NOTE =
+  "A later face check compares your face with this verification, which our verification partner keeps.";
+
+// ── Verifying an account, and the eNotary gate ──────────────────────────────
+
+export const ACCOUNT_IDENTITY_PATH = "/app/settings/identity";
+/** Where the partner sends the browser after an account verification. */
+export const ACCOUNT_IDENTITY_RETURN_PATH = "/app/settings/identity/return";
+export const PROFILE_SETTINGS_PATH = "/app/settings/profile";
+
+export const ENOTARY_PATH = "/app/enotary";
+export const ENOTARY_ACCESS_PATH = "/app/enotary/access";
+export const ENOTARY_SESSION_PATH = "/app/enotary/session";
+/** Where the partner sends the browser after a check made for eNotary. */
+export const ENOTARY_RETURN_PATH = "/app/enotary/return";
+
+export type EnotaryRole = "client" | "attorney";
+
+/** The role an address names. Anything but an explicit `attorney` is the client. */
+export function enotaryRole(value: unknown): EnotaryRole {
+  return value === "attorney" ? "attorney" : "client";
+}
+
+export function enotaryAccessPath(role: EnotaryRole): string {
+  return `${ENOTARY_ACCESS_PATH}?role=${role}`;
+}
+
+/**
+ * What a return page hands the page it routes to, in router state and never
+ * in the address: that the person has just come back from the partner.
+ */
+export interface ProviderReturnState {
+  readonly providerReturnedAt: number;
+}
+
+export function providerReturnState(now: number): ProviderReturnState {
+  return { providerReturnedAt: now };
+}
+
+/** Whether router state says the person has just come back from the partner. */
+export function providerReturned(state: unknown): boolean {
+  if (typeof state !== "object" || state === null) return false;
+  const at = (state as { providerReturnedAt?: unknown }).providerReturnedAt;
+  return typeof at === "number" && Number.isFinite(at);
+}
+
+// ── What a tab remembers across the trip to the partner ─────────────────────
+
+/** Where My Settings keeps that a visit was opened, in sessionStorage. */
+export const ACCOUNT_IDENTITY_STORAGE_KEY = "lagda:account-identity";
+
+/** Where the eNotary gate keeps that a visit was opened for a role. */
+export function enotaryAccessStorageKey(role: EnotaryRole): string {
+  return `lagda:enotary-access:${role}`;
+}
+
+/** Where the eNotary gate keeps the role a check was started for. */
+export const ENOTARY_ROLE_STORAGE_KEY = "lagda:enotary:role";
+
+/** The role the gate was last opened for. The client where nothing says. */
+export function rememberedEnotaryRole(): EnotaryRole {
+  try {
+    return enotaryRole(window.sessionStorage.getItem(ENOTARY_ROLE_STORAGE_KEY));
+  } catch {
+    return "client";
+  }
+}
+
+export function rememberEnotaryRole(role: EnotaryRole): void {
+  try { window.sessionStorage.setItem(ENOTARY_ROLE_STORAGE_KEY, role); } catch { /* the client is assumed on return */ }
+}
+
+// ── The eNotary environment ─────────────────────────────────────────────────
+
+/** The steps of a notarial session, in order. Only named here: none is built yet. */
+export const ENOTARY_STEPS: readonly { readonly id: string; readonly label: string; readonly short: string }[] = [
+  { id: "lawyer-selected", label: "Lawyer selected", short: "1" },
+  { id: "verify-identity", label: "Verify your identity", short: "2" },
+  { id: "lawyer-joins", label: "Lawyer joins", short: "3" },
+  { id: "video-call", label: "Video call", short: "4" },
+  { id: "your-document", label: "Your document", short: "5" },
+  { id: "finalized", label: "Finalized for eNotary", short: "6" },
+  { id: "notarized", label: "Notarized", short: "7" },
+  { id: "certified-true-copy", label: "Certified True Copy", short: "8" },
+];
+
+export const ENOTARY_PREVIEW_NOTICE =
+  "Preview. The notarial session (choosing a lawyer, the video call, the document and notarization) "
+  + "is not available yet.";
+
+export function enotaryRoleLabel(role: EnotaryRole): string {
+  return role === "attorney" ? "Notary public" : "Client";
+}
+
+export function enotarySessionPath(role: EnotaryRole): string {
+  return `${ENOTARY_SESSION_PATH}?role=${role}`;
 }
