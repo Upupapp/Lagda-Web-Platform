@@ -172,7 +172,7 @@ export function NotaryInvitePage() {
               <Clock size={16} aria-hidden /> Open until {expiryLabel(phase.expiresAt)}
             </p>
           )}
-          <ol style={{ ...bodyText, paddingLeft: 22 }} data-testid="invite-steps">
+          <ol style={{ ...bodyText, paddingLeft: 22, listStyle: "decimal" }} data-testid="invite-steps">
             <li>Sign in to LAGDA, or create an account.</li>
             <li>Verify your identity with a valid ID and a face check.</li>
             <li>LAGDA checks that the name on your ID is the notary the client chose.</li>
@@ -202,7 +202,7 @@ export function NotaryInvitePage() {
           <Notice icon={AlertTriangle} tone="warn">{words.title}</Notice>
           {heading(words.title)}
           <p style={bodyText}>{words.text}</p>
-          {signedIn && <p style={bodyText}><Link to="/app/enotary/desk" style={{ color: T.azureDeep, fontWeight: 700 }}>Go to your notary desk</Link></p>}
+          {signedIn && <p style={bodyText}><Link to="/app/enotary/desk" style={{ ...linkButton("secondary"), color: T.azureDeep }}>Go to your notary desk</Link></p>}
         </div>
       );
       break;
@@ -237,7 +237,7 @@ export function NotaryInvitePage() {
             Nothing was changed on your account or on the request.
           </p>
           <p style={bodyText}>If you are the notary the client meant, check that you are signed in with your own account. Otherwise, ask the client to send the request to the right notary.</p>
-          <p style={bodyText}><Link to="/app/enotary/desk" style={{ color: T.azureDeep, fontWeight: 700 }}>Go to your notary desk</Link></p>
+          <p style={bodyText}><Link to="/app/enotary/desk" style={{ ...linkButton("secondary"), color: T.azureDeep }}>Go to your notary desk</Link></p>
         </div>
       );
       break;

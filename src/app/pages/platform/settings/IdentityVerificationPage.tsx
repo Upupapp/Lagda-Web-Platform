@@ -300,7 +300,7 @@ export function IdentityVerificationPage({ openTab, navigate, touch }: IdentityV
         </dl>
         {recallInvite() !== null && (
           <p data-testid="identity-back-to-invite" style={PROVIDER_BODY}>
-            <Link to={recallInvite() ?? "/"} style={{ color: T.azureDeep, fontWeight: 700 }}>Back to the notary request you were opening</Link>
+            <Link to={recallInvite() ?? "/"} style={{ display: "inline-flex", alignItems: "center", minHeight: 44, color: T.azureDeep, fontWeight: 700 }}>Back to the notary request you were opening</Link>
           </p>
         )}
         {identity.canUseFaceCheck && (

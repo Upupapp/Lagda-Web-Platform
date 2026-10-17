@@ -429,7 +429,7 @@ function FileSlot({ kind, required, files, busy, onPick, onRemove }: {
       {files.map(file => (
         <div key={file.id} data-testid="file-row" data-scan={file.scanState} style={{ ...GF, display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderTop: `1px solid ${E.line}`, fontSize: 14 }}>
           <span style={{ minWidth: 0, flex: 1 }}>
-            <a href={`${API_BASE_URL ?? ""}${realNotaryApplicationsService.fileUrl(file.id)}`} target="_blank" rel="noreferrer" style={{ color: T.azureDeep, fontWeight: 600, overflowWrap: "anywhere" }}>{file.filename}</a>
+            <a href={`${API_BASE_URL ?? ""}${realNotaryApplicationsService.fileUrl(file.id)}`} target="_blank" rel="noreferrer" style={{ display: "inline-flex", alignItems: "center", minHeight: 44, color: T.azureDeep, fontWeight: 600, overflowWrap: "anywhere" }}>{file.filename}</a>
             <small style={{ display: "block", color: file.scanState === "clean" ? E.ok : file.scanState === "pending" ? E.quiet : "#C0392B", fontSize: 12.5 }}>
               {fileSizeLabel(file.sizeBytes)} · {SCAN_WORDS[file.scanState]}
             </small>

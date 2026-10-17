@@ -60,6 +60,8 @@ function SidebarItem({ to, icon, label, badge, collapsed }: SidebarItemProps) {
     <li>
       <NavLink
         to={to}
+        // The Notary Directory's address is the front of the on-ramp's pages: it is lit on its own only.
+        end={to === "/app/enotary"}
         aria-label={collapsed ? label : undefined}
         title={collapsed ? label : undefined}
         style={({ isActive }) => ({

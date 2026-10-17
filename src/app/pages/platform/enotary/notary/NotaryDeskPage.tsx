@@ -140,7 +140,7 @@ export function NotaryDeskPage() {
         <div data-testid="desk-banner">
           <Notice icon={AlertTriangle} tone={banner.tone}>
             {banner.text}{" "}
-            <Link to={banner.link} style={{ color: "inherit", fontWeight: 700, textDecoration: "underline" }}>{banner.label}</Link>
+            <Link to={banner.link} style={{ display: "inline-flex", alignItems: "center", minHeight: 44, color: "inherit", fontWeight: 700, textDecoration: "underline" }}>{banner.label}</Link>
           </Notice>
         </div>
       )}

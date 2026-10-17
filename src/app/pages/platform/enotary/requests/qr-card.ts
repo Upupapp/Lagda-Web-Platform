@@ -110,7 +110,7 @@ export function buildCardSvg(input: QrCardInput, logoHref?: string): string {
     `<rect width="${String(CARD_WIDTH)}" height="${String(CARD_HEIGHT)}" rx="28" fill="#FFFFFF"/>`,
     `<rect x="1.5" y="1.5" width="${String(CARD_WIDTH - 3)}" height="${String(CARD_HEIGHT - 3)}" rx="27" fill="none" stroke="#DDE6EF" stroke-width="3"/>`,
     `<rect x="0" y="0" width="${String(CARD_WIDTH)}" height="10" rx="5" fill="#8C1D3F"/>`,
-    logoHref === undefined ? "" : `<image href="${logoHref}" x="${String((CARD_WIDTH - 250) / 2)}" y="30" width="250" height="60" preserveAspectRatio="xMidYMid meet"/>`,
+    logoHref === undefined ? "" : `<image href="${logoHref}" x="${String((CARD_WIDTH - 330) / 2)}" y="16" width="330" height="96" preserveAspectRatio="xMidYMid meet"/>`,
     `<text x="300" y="124" text-anchor="middle" font-family="Tinos, 'Times New Roman', Times, serif" font-size="30" font-weight="700" fill="#0B1F44">LAGDA <tspan fill="#8C1D3F">eNotary</tspan> request</text>`,
     `<text x="300" y="154" text-anchor="middle" font-family="Geist, Arial, sans-serif" font-size="15" fill="#647789">Scan this code to open the request</text>`,
     `<rect x="${String(CODE_X)}" y="${String(CODE_Y)}" width="${String(CODE_BOX)}" height="${String(CODE_BOX)}" fill="#FFFFFF"/>`,

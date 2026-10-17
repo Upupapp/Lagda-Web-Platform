@@ -132,7 +132,7 @@ export function AdminNotaryApplicationPage() {
       {said !== null && <div role="status" style={{ ...GF, margin: "0 0 12px", fontSize: 14, fontWeight: 700, color: E.ok }}>{said}</div>}
       {problem !== null && <Notice icon={AlertTriangle} tone="danger">{problem}</Notice>}
 
-      <Panel testId="name-comparison" tone={match === "match" ? "plain" : "maroon"}>
+      <Panel testId="name-comparison" tone={match === "mismatch" ? "maroon" : "plain"}>
         <PanelTitle>Name on the verified ID</PanelTitle>
         <dl style={{ ...GF, margin: "0 0 8px", display: "grid", gap: 6 }}>
           <div><dt style={{ fontSize: 12.5, color: E.quiet }}>Verified ID</dt><dd data-testid="verified-name" style={{ margin: 0, fontSize: 15, fontWeight: 700 }}>{detail.account.verifiedName ?? "Not verified"}</dd></div>
@@ -165,7 +165,7 @@ export function AdminNotaryApplicationPage() {
           <div key={file.id} data-testid="admin-file" style={{ ...GF, display: "flex", gap: 10, alignItems: "center", padding: "8px 0", borderTop: `1px solid ${E.line}`, minHeight: TAP }}>
             <span style={{ minWidth: 0, flex: 1, fontSize: 14 }}>
               <strong>{FILE_KIND_LABEL[file.kind]}</strong>
-              <small style={{ display: "block", color: file.scanState === "clean" ? E.ok : "#C0392B", fontSize: 12.5 }}>{file.filename} · {fileSizeLabel(file.sizeBytes)} · {SCAN_WORDS[file.scanState]}</small>
+              <small style={{ display: "block", color: file.scanState === "clean" ? E.ok : file.scanState === "pending" ? E.quiet : "#C0392B", fontSize: 12.5 }}>{file.filename} · {fileSizeLabel(file.sizeBytes)} · {SCAN_WORDS[file.scanState]}</small>
             </span>
             {file.scanState === "clean" && (
               <a href={fileHref(file.id)} target="_blank" rel="noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: 6, minHeight: TAP, color: T.azureDeep, fontWeight: 700, fontSize: 14 }}>

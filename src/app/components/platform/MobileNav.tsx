@@ -502,6 +502,7 @@ export function MobileNav() {
                 <li key={item.id}>
                   <NavLink
                     to={item.path}
+                    end={item.path === "/app/enotary"}
                     onClick={closeAndNavigate}
                     style={({ isActive }) => ({
                       display: "flex", alignItems: "center", gap: 12,
