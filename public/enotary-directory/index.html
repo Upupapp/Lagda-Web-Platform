@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <!-- Not indexed yet: the directory lists lawyers from their own public profiles, who have not joined LAGDA eNotary, and online sessions are not open. -->
+  <meta name="robots" content="noindex, nofollow, noarchive">
+  <meta name="description" content="Browse lawyers and notarial offices across the Philippines. Online notarial sessions on LAGDA are not open yet: choose a notary to register your interest.">
+  <title>LAGDA eNotary — Notary Directory</title>
+  <link rel="icon" type="image/svg+xml" href="assets/header_browser_domain_logo_svg.svg">
+  <link rel="icon" type="image/png" href="assets/logo.png">
+  <!-- Fonts are files of this site (assets/fonts, declared in css/styles.css): Tinos for reading text, Manrope for controls. Nothing is fetched from elsewhere. -->
+  <!-- Every path here is relative: opened without the closing slash, the page moves to the address with it first. -->
+  <script>if (location.pathname.slice(-18) === "/enotary-directory") location.replace(location.pathname + "/" + location.search + location.hash);</script>
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="css/directory.css">
+</head>
+<body>
+  <div id="site">
+    <header class="top">
+      <a class="brand" href="#" data-go="market"><img src="assets/header_browser_domain_logo_svg.svg" alt="" width="44" height="44"><span class="top-name">LAGDA <b>eNotary</b></span></a>
+      <button type="button" class="menu-btn" id="menu-btn" aria-label="Menu" aria-expanded="false" aria-controls="menu">
+        <svg class="burger" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg><svg class="shut" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg><span>Menu</span>
+      </button>
+      <!-- The three actions of the header live in this panel at every width: a dropdown under the button, a sheet on a phone. -->
+      <nav class="menu" id="menu" aria-label="LAGDA eNotary" hidden></nav>
+    </header>
+    <p class="soon-band" role="note"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg><span>Online notarial sessions are not currently available: LAGDA eNotary is subject to Supreme Court accreditation. Choose a notary to register your interest, and we’ll email you when you can book.</span></p>
+
+    <main id="view" tabindex="-1"></main>
+
+    <footer class="foot">
+      <p class="foot-name">LAGDA <b>eNotary</b></p>
+      <p>The Notary Directory: find a notary public, and register your interest in online notarization on LAGDA.</p>
+      <p class="foot-legal">&copy; 2026 LAGDA. All rights reserved.</p>
+    </footer>
+  </div>
+
+  <div class="menu-veil" id="menu-veil" hidden></div>
+  <div id="modal-root"></div>
+  <div class="toast" id="toast" role="status" hidden></div>
+
+  <script src="js/lawyers.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

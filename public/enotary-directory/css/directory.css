@@ -1,0 +1,34 @@
+/* LAGDA eNotary — the Notary Directory as published: the few rules it adds to css/styles.css (the approved design).
+   White and sky blue are LAGDA and the visitor; maroon belongs to the lawyers. */
+
+/* the quiet line under the header: where eNotary stands */
+.soon-band { margin: 0; display: flex; align-items: center; justify-content: center; gap: 10px; padding: 10px clamp(16px, 4vw, 44px); background: var(--sky-wash); border-bottom: 1px solid var(--sky-line); color: #1F4368; font-size: 14px; font-weight: 600; line-height: 1.450; text-align: left; }
+.soon-band svg { width: 20px; height: 20px; flex: 0 0 auto; fill: none; stroke: var(--sky-deep); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+/* the result card: one action, and no rating */
+.card-foot.solo { justify-content: center; }
+
+/* the other filters: search, then three selects */
+.tools.three { grid-template-columns: minmax(220px, 1.400fr) repeat(3, minmax(0, 1fr)); }
+@media (max-width: 1100px) { .tools.three { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 760px) { .tools.three { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
+
+/* the profile: where online notarization stands */
+.pf-soon { margin-top: 12px; padding: 12px 14px; border: 1px solid var(--sky-line); background: #F3F9FE; border-radius: 6px; font: 400 15.900px/1.500 var(--serif); color: #1F4368; }
+
+/* choosing a notary: four steps, not eight */
+.flow-steps.four { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.idv-res.note { background: #F3F9FE; border: 1px solid var(--sky-line); color: #1F4368; }
+.idv-res.note > span { background: var(--sky); font: italic 700 20px/1 var(--serif); }
+.idv .ho-status { margin-top: 14px; }
+.idv .actions .btn svg, .idv h3 svg { flex: 0 0 auto; }
+.flow-rows dd .state { margin-bottom: 4px; }
+
+@media (max-width: 860px) { .flow-steps.four { display: flex; } }
+@media (max-width: 640px) {
+  .soon-band { font-size: 13px; padding: 9px 14px; align-items: flex-start; } .soon-band svg { margin-top: 1px; }
+  /* nothing to press under 44px */
+  .where-bars li, .where-bars li button { min-height: 44px; } .results .sort select { height: 44px; } .card-name { min-height: 44px; } .results .clear { min-height: 44px; } .link { min-height: 44px; }
+}
+/* a phone: buttons take the width they need, not a fixed one */
+@media (max-width: 480px) { .btn { width: auto; } .hero-acts .btn { flex: 1; } .empty .btn, .where-pick .btn { width: 100%; } }
