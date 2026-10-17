@@ -22,7 +22,7 @@ export interface PlatformNavItem {
    * hooks/useAccountFeatures). Hidden until then, and for good in the demo
    * build, so the menu never carries a link that leads nowhere.
    */
-  account?: "enotary";
+  account?: "enotary" | "notary-requests" | "notary-desk" | "notary-review";
   status?: NavStatus;
   showBadge?: boolean;      // dynamic badge (e.g., unread count)
   showOnMobile?: boolean;
@@ -195,6 +195,54 @@ export const ACCOUNT_NAV: PlatformNavItem[] = [
     description: "Browse notaries public and register your interest",
   },
 ];
+
+// Notary on-ramp (phase 1): a client's requests to notaries, the notary's desk
+// and the LAGDA reviewers' list. Each is drawn only once the server says this
+// ACCOUNT has it (hooks/useAccountFeatures): a 404, a refusal or a failed
+// request leave it hidden. Hidden navigation is presentation, never
+// authorization: the pages ask the server again and the server decides.
+export const ONRAMP_NAV: PlatformNavItem[] = [
+  {
+    id: "notary-requests",
+    label: "Notary requests",
+    path: "/app/enotary/requests",
+    icon: "Mail",
+    group: "primary",
+    account: "notary-requests",
+    showOnMobile: true,
+    description: "Notaries you have asked, and where each request stands",
+  },
+  {
+    id: "notary-desk",
+    label: "Notary desk",
+    path: "/app/enotary/desk",
+    icon: "Stamp",
+    group: "primary",
+    account: "notary-desk",
+    showOnMobile: true,
+    description: "Requests clients sent you, and your application",
+  },
+  {
+    id: "notary-review",
+    label: "Review notaries",
+    path: "/app/admin/notary-applications",
+    icon: "ShieldCheck",
+    group: "primary",
+    account: "notary-review",
+    showOnMobile: true,
+    description: "Notary applications waiting for a LAGDA reviewer",
+  },
+];
+
+/** The on-ramp entries the server offers this account, in order. */
+export function onrampNavFor(features: {
+  readonly notaryRequests: boolean; readonly notaryDesk: boolean; readonly notaryReview: boolean;
+}): PlatformNavItem[] {
+  return ONRAMP_NAV.filter(item =>
+    (item.account === "notary-requests" && features.notaryRequests)
+    || (item.account === "notary-desk" && features.notaryDesk)
+    || (item.account === "notary-review" && features.notaryReview));
+}
 
 // Utility navigation — shown below primary nav (or bottom of sidebar)
 export const UTILITY_NAV: PlatformNavItem[] = [

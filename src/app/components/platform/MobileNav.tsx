@@ -15,7 +15,7 @@ import {
 import { JoinWorkspaceDialog } from "./JoinWorkspaceDialog";
 import lagdaHeaderLogo from "../../../brand elements/svg/LagdaLogoPrimaryHorizontalFullColor_Header.svg";
 import { usePlatform } from "../../context/PlatformContext";
-import { PRIMARY_NAV, UTILITY_NAV, ACCOUNT_NAV, PREPARE_ACTION } from "../../config/platform.nav";
+import { PRIMARY_NAV, UTILITY_NAV, ACCOUNT_NAV, PREPARE_ACTION, onrampNavFor } from "../../config/platform.nav";
 import { NotificationMenu } from "./NotificationMenu";
 import { useTour } from "../../tour/TourContext";
 import { Z } from "../../utils/z-index";
@@ -160,7 +160,8 @@ export function MobileNav() {
 
   const nav = useNavAccess();
   // The person's OWN verification, beside their own name.
-  const { identityVerified } = useAccountFeatures();
+  const accountFeatures = useAccountFeatures();
+  const { identityVerified } = accountFeatures;
   const canPrepare = nav.canPrepare && hasFlag("prepareFlowEnabled");
 
   // Which of the bar's five places (Prepare is the third) the page is in, for
@@ -492,7 +493,7 @@ export function MobileNav() {
         {/* Primary nav */}
         <nav aria-label="Platform sections" data-guide="platform-sidebar-nav" style={{ flex: 1, padding: "10px 10px", overflowY: "auto" }}>
           <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: 2 }}>
-            {[...PRIMARY_NAV, ...ACCOUNT_NAV].map((item) => {
+            {[...PRIMARY_NAV, ...ACCOUNT_NAV, ...onrampNavFor(accountFeatures)].map((item) => {
               const allowed = nav.allows(item);
               const enabled = !item.featureFlag || hasFlag(item.featureFlag);
               if (inBottomBar(item.id)) return null;

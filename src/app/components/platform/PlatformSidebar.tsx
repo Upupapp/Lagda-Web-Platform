@@ -16,7 +16,8 @@ import {
 } from "lucide-react";
 import { usePlatform } from "../../context/PlatformContext";
 import { useNotificationCenter } from "../../context/NotificationCenterContext";
-import { PRIMARY_NAV, UTILITY_NAV, ACCOUNT_NAV, PREPARE_ACTION } from "../../config/platform.nav";
+import { PRIMARY_NAV, UTILITY_NAV, ACCOUNT_NAV, PREPARE_ACTION, onrampNavFor } from "../../config/platform.nav";
+import { useAccountFeatures } from "../../hooks/useAccountFeatures";
 import { WorkspaceSwitcher } from "./WorkspaceSwitcher";
 import { UserMenu } from "./UserMenu";
 import { Z } from "../../utils/z-index";
@@ -246,6 +247,7 @@ export function PlatformSidebar() {
   const { unreadCount } = useNotificationCenter();
   // Split by where each notice leads, so no notice is counted twice.
   const navCounts = useNavCounts();
+  const accountFeatures = useAccountFeatures();
   const docsUnreadCount = navCounts.documents;
 
   // Confirmation + the branded modal now live in one hook, shared with the
@@ -376,7 +378,7 @@ export function PlatformSidebar() {
       {/* ── Primary nav ───────────────────────────────────────────── */}
       <nav aria-label="Platform sections" data-guide="platform-sidebar-nav" style={{ flex: 1, padding: collapsed ? "10px 8px" : "10px 14px", overflowY: "auto" }}>
         <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: 2 }}>
-          {[...PRIMARY_NAV, ...ACCOUNT_NAV].map((item) => {
+          {[...PRIMARY_NAV, ...ACCOUNT_NAV, ...onrampNavFor(accountFeatures)].map((item) => {
             const allowed = nav.allows(item);
             const enabled = !item.featureFlag || hasFlag(item.featureFlag);
             if (!allowed || !enabled || (item.plan !== undefined && !planAllows(item.plan))) return null;

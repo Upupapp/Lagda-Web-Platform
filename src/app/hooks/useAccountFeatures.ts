@@ -21,6 +21,8 @@ import { USE_REAL_BACKEND } from "../services/backend-flag";
 import { registerSessionCleanup } from "../services/session-lifecycle";
 import { realAccountIdentityService, type AccountIdentity } from "../services/real/account-identity.service";
 import { realEnotaryAccessService } from "../services/real/enotary-access.service";
+import { realEnotaryInvitationsService } from "../services/real/enotary-invitations.service";
+import { realNotaryApplicationsService } from "../services/real/notary-applications.service";
 
 export interface AccountFeatures {
   /** "Identity verification" is offered in My Settings. */
@@ -29,9 +31,18 @@ export interface AccountFeatures {
   readonly identityVerified: boolean;
   /** The eNotary entry is offered. */
   readonly enotaryAvailable: boolean;
+  /** Requests to notaries are offered: the client's list of requests has an entry. */
+  readonly notaryRequests: boolean;
+  /** This account has a notary desk: an application, or a request waiting on it. */
+  readonly notaryDesk: boolean;
+  /** This account reviews notary applications (a LAGDA reviewer). */
+  readonly notaryReview: boolean;
 }
 
-const NONE: AccountFeatures = { identityAvailable: false, identityVerified: false, enotaryAvailable: false };
+const NONE: AccountFeatures = {
+  identityAvailable: false, identityVerified: false, enotaryAvailable: false,
+  notaryRequests: false, notaryDesk: false, notaryReview: false,
+};
 
 let state: AccountFeatures = NONE;
 const listeners = new Set<() => void>();
@@ -44,7 +55,10 @@ function set(next: Partial<AccountFeatures>): void {
   const merged = { ...state, ...next };
   if (merged.identityAvailable === state.identityAvailable
     && merged.identityVerified === state.identityVerified
-    && merged.enotaryAvailable === state.enotaryAvailable) return;
+    && merged.enotaryAvailable === state.enotaryAvailable
+    && merged.notaryRequests === state.notaryRequests
+    && merged.notaryDesk === state.notaryDesk
+    && merged.notaryReview === state.notaryReview) return;
   state = merged;
   for (const listener of listeners) listener();
 }
@@ -72,6 +86,18 @@ function ask(): void {
   realEnotaryAccessService.read("client")
     .then(access => { if (generation === started) publishEnotaryAvailable(access?.available === true); })
     .catch(() => { /* not offered, as far as navigation is concerned */ });
+  // The notary on-ramp. Each is its own question, and each answer is one entry.
+  realEnotaryInvitationsService.list()
+    .then(list => { if (generation === started) set({ notaryRequests: list !== null }); })
+    .catch(() => { /* not offered */ });
+  realEnotaryInvitationsService.desk()
+    .then(desk => {
+      if (generation === started) set({ notaryDesk: desk !== null && (desk.applicationStatus !== "none" || desk.requests.length > 0) });
+    })
+    .catch(() => { /* not offered */ });
+  realNotaryApplicationsService.adminList()
+    .then(rows => { if (generation === started) set({ notaryReview: rows !== null }); })
+    .catch(() => { /* not a reviewer, as far as navigation is concerned */ });
 }
 
 // Sign-out: the next account must not inherit this one's entries or badge.

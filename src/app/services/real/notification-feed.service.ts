@@ -904,6 +904,90 @@ function present(row: FeedRow): Presentation {
       };
     }
 
+    // ── Notary on-ramp (phase 1). Email and in-app. ─────────────────────────
+    // To the client: where their request to a notary stands. The notice opens
+    // that request's page (the request's id is the notice's source).
+    case "ENOTARY_INVITATION_CLAIMED":
+    case "ENOTARY_REQUEST_ACCEPTED":
+    case "ENOTARY_REQUEST_DECLINED":
+    case "ENOTARY_INVITATION_EXPIRING":
+    case "ENOTARY_INVITATION_EXPIRED": {
+      const notary = str(row.templateInput, "notaryName") ?? "The notary";
+      const requestId = str(row.templateInput, "invitationId") ?? str(row.templateInput, "requestId") ?? row.sourceId;
+      const path = `/app/enotary/requests/${encodeURIComponent(requestId)}`;
+      const base = { category: "my-actions", priority: "high", actionLabel: "Open request", actionPath: path } as const;
+      const why = "You were sent this because you asked a notary to take a request on LAGDA eNotary.";
+      if (row.type === "ENOTARY_INVITATION_CLAIMED") {
+        return {
+          ...base, severity: "info", title: `${notary} passed the identity check`,
+          body: `${notary} opened your request and passed the ID and face check. Now it waits for their answer.`, why,
+        };
+      }
+      if (row.type === "ENOTARY_REQUEST_ACCEPTED") {
+        return {
+          ...base, severity: "success", title: `${notary} accepted your request`,
+          body: `${notary} accepted your request. The online session opens when LAGDA eNotary does; nothing is booked or notarized yet.`, why,
+        };
+      }
+      if (row.type === "ENOTARY_REQUEST_DECLINED") {
+        return {
+          ...base, severity: "warning", title: `${notary} declined your request`,
+          body: `${notary} declined your request. You can ask another notary from the Notary Directory.`, why,
+        };
+      }
+      if (row.type === "ENOTARY_INVITATION_EXPIRING") {
+        return {
+          ...base, severity: "warning", title: `Your request to ${notary} has a day left`,
+          body: `Your request to ${notary} ends in about 24 hours. Give the notary the link or the card now, or renew it after it ends.`, why,
+        };
+      }
+      return {
+        ...base, severity: "warning", title: `Your request to ${notary} has expired`,
+        body: `Nobody answered your request to ${notary} in time and its link no longer works. Open it to renew it with a new link.`, why,
+      };
+    }
+
+    // To the notary: a request for them, or the outcome of their application.
+    case "ENOTARY_REQUEST_RECEIVED": {
+      const client = str(row.templateInput, "clientName");
+      return {
+        category: "my-actions", severity: "info", priority: "high",
+        title: client === null ? "A client sent you a request" : `${client} sent you a request`,
+        body: "A LAGDA client asked you to take a request on LAGDA eNotary. Open your notary desk to see it, and answer once your application is approved.",
+        actionLabel: "Open the notary desk", actionPath: "/app/enotary/desk",
+        why: "You were sent this because a client chose you in the Notary Directory.",
+      };
+    }
+    case "ENOTARY_APPLICATION_APPROVED":
+      return {
+        category: "my-actions", severity: "success", priority: "high",
+        title: "Your notary application was approved",
+        body: "A LAGDA reviewer approved your application. You can now accept or decline the requests clients send you.",
+        actionLabel: "Open the notary desk", actionPath: "/app/enotary/desk",
+        why: "You were sent this because you applied to receive notary requests on LAGDA.",
+      };
+    case "ENOTARY_APPLICATION_REJECTED":
+      return {
+        category: "my-actions", severity: "warning", priority: "high",
+        title: "Your notary application was not approved",
+        body: "A LAGDA reviewer did not approve your application. Open it to read the reason, correct it and send it again.",
+        actionLabel: "Open my application", actionPath: "/app/enotary/apply",
+        why: "You were sent this because you applied to receive notary requests on LAGDA.",
+      };
+
+    // To a LAGDA reviewer: an application is waiting. Opens that application.
+    case "ENOTARY_APPLICATION_SUBMITTED": {
+      const applicant = str(row.templateInput, "applicantName") ?? "A notary";
+      const userId = str(row.templateInput, "applicantUserId") ?? str(row.templateInput, "userId") ?? row.sourceId;
+      return {
+        category: "my-actions", severity: "info", priority: "high",
+        title: `${applicant} applied to be a notary`,
+        body: `${applicant} sent a notary application for review. Open it to compare the name on their ID and read their documents.`,
+        actionLabel: "Review the application", actionPath: `/app/admin/notary-applications/${encodeURIComponent(userId)}`,
+        why: "You were sent this because your account reviews notary applications.",
+      };
+    }
+
     default:
       // Truthful about what it does not know, rather than guessing.
       return {

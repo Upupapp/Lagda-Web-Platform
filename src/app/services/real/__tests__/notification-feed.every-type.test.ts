@@ -71,6 +71,17 @@ const ROWS: Record<string, Record<string, unknown>> = {
   SIGNING_ACCESS_RESTORED: { recipientName: "Jose", documentTitle: "NDA.pdf", senderDisplayName: "Ben", workspaceName: "Reyes Law", signingRequestId: "sr_1" },
   SIGNING_REMINDER: { recipientName: "Jose", documentTitle: "NDA.pdf", senderDisplayName: "Ben", workspaceName: "Reyes Law", signingRequestId: "sr_1" },
   PUBLIC_INQUIRY_RECEIVED: { recipientName: "Chris", kindLabel: "Demo request", senderName: "Jose Cruz", senderEmail: "jose@example.ph", inquiryId: "pin_1" },
+  // Notary on-ramp (phase 1). The field names are the web app's reading of the
+  // contract; each falls back to the notice's source id when it is absent.
+  ENOTARY_INVITATION_CLAIMED: { recipientName: "Ben", notaryName: "Ana Maria Cruz", invitationId: "eni_1" },
+  ENOTARY_REQUEST_ACCEPTED: { recipientName: "Ben", notaryName: "Ana Maria Cruz", invitationId: "eni_1" },
+  ENOTARY_REQUEST_DECLINED: { recipientName: "Ben", notaryName: "Ana Maria Cruz", invitationId: "eni_1" },
+  ENOTARY_INVITATION_EXPIRING: { recipientName: "Ben", notaryName: "Ana Maria Cruz", invitationId: "eni_1" },
+  ENOTARY_INVITATION_EXPIRED: { recipientName: "Ben", notaryName: "Ana Maria Cruz", invitationId: "eni_1" },
+  ENOTARY_REQUEST_RECEIVED: { recipientName: "Ana", clientName: "Ben Lim", invitationId: "eni_1" },
+  ENOTARY_APPLICATION_APPROVED: { recipientName: "Ana" },
+  ENOTARY_APPLICATION_REJECTED: { recipientName: "Ana" },
+  ENOTARY_APPLICATION_SUBMITTED: { recipientName: "Chris", applicantName: "Ana Maria Cruz", applicantUserId: "usr_9" },
 };
 
 const GENERIC = /you have a new notification/i;
@@ -193,5 +204,53 @@ describe("the account notification feed", () => {
       // /app/documents/<id> is the demo build's transaction page.
       expect(record.actionPath ?? "", record.title).not.toMatch(/^\/app\/documents\/[^?]/);
     }
+  });
+
+  it("tells a client how their request to a notary stands, and opens that request", async () => {
+    const records = await realNotificationFeedService.list();
+    const byTitle = (title: string) => records.find(r => r.title === title);
+    const cases: [string, RegExp][] = [
+      ["Ana Maria Cruz passed the identity check", /passed the ID and face check/],
+      ["Ana Maria Cruz accepted your request", /The online session opens when LAGDA eNotary does/],
+      ["Ana Maria Cruz declined your request", /ask another notary/],
+      ["Your request to Ana Maria Cruz has a day left", /about 24 hours/],
+      ["Your request to Ana Maria Cruz has expired", /renew it/],
+    ];
+    for (const [title, body] of cases) {
+      const notice = byTitle(title);
+      expect(notice?.body, title).toMatch(body);
+      expect(notice?.actionPath, title).toBe("/app/enotary/requests/eni_1");
+      expect(notice?.actionLabel, title).toBe("Open request");
+      expect(notice?.deliveryClass, title).toBe("email-and-in-app");
+    }
+    expect(byTitle("Ana Maria Cruz accepted your request")?.severity).toBe("success");
+    expect(byTitle("Ana Maria Cruz accepted your request")?.body).not.toMatch(/video|payment|accredited/i);
+  });
+
+  it("tells a notary about a request and their application, and opens the desk or the application", async () => {
+    const records = await realNotificationFeedService.list();
+    expect(records.find(r => r.title === "Ben Lim sent you a request")?.actionPath).toBe("/app/enotary/desk");
+    expect(records.find(r => r.title === "Your notary application was approved")?.actionPath).toBe("/app/enotary/desk");
+    const rejected = records.find(r => r.title === "Your notary application was not approved");
+    expect(rejected?.actionPath).toBe("/app/enotary/apply");
+    expect(rejected?.severity).toBe("warning");
+  });
+
+  it("tells a reviewer an application is waiting, and opens that application", async () => {
+    const records = await realNotificationFeedService.list();
+    const waiting = records.find(r => r.title === "Ana Maria Cruz applied to be a notary");
+    expect(waiting?.actionPath).toBe("/app/admin/notary-applications/usr_9");
+    expect(waiting?.actionLabel).toBe("Review the application");
+  });
+
+  it("falls back to the notice's source id when the request id is not in the template input", async () => {
+    vi.stubGlobal("fetch", vi.fn(() => Promise.resolve(new Response(JSON.stringify({ notifications: [
+      { id: "n1", type: "ENOTARY_REQUEST_ACCEPTED", workspaceId: null, sourceKind: "X", sourceId: "eni_77", templateInput: {}, createdAt: "2026-10-17T00:00:00.000Z" },
+      { id: "n2", type: "ENOTARY_APPLICATION_SUBMITTED", workspaceId: null, sourceKind: "X", sourceId: "usr_5", templateInput: {}, createdAt: "2026-10-17T00:00:00.000Z" },
+    ] }), { status: 200, headers: { "content-type": "application/json" } }))));
+    const records = await realNotificationFeedService.list();
+    expect(records[0]?.title).toBe("The notary accepted your request");
+    expect(records[0]?.actionPath).toBe("/app/enotary/requests/eni_77");
+    expect(records[1]?.actionPath).toBe("/app/admin/notary-applications/usr_5");
   });
 });
