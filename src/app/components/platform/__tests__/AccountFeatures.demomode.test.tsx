@@ -54,14 +54,13 @@ afterEach(() => { vi.unstubAllGlobals(); });
 const settle = () => new Promise(resolve => { setTimeout(resolve, 50); });
 
 describe("the demo build", () => {
-  it("shows no eNotary entry in the sidebar or the mobile drawer, and asks the network nothing", async () => {
+  it("lists the Notary Directory in the sidebar and the mobile drawer, and asks the network nothing", async () => {
     render(<MemoryRouter><PlatformSidebar /><MobileNav /></MemoryRouter>);
     await settle();
     expect(screen.getAllByRole("link", { name: "Documents" }).length).toBeGreaterThan(0);
-    expect(screen.queryByRole("link", { name: "eNotary" })).toBeNull();
+    expect(screen.getByRole("link", { name: "Notary Directory" })).toHaveAttribute("href", "/app/enotary");
     await userEvent.click(screen.getByRole("button", { name: "Open navigation" }));
-    expect(within(screen.getByRole("dialog", { name: "Navigation" })).queryByRole("link", { name: "eNotary" })).toBeNull();
-    expect(document.querySelector('a[href="/app/enotary"]')).toBeNull();
+    expect(within(screen.getByRole("dialog", { name: "Navigation" })).getByRole("link", { name: "Notary Directory" })).toHaveAttribute("href", "/app/enotary");
     expect(fetchSpy).not.toHaveBeenCalled();
   });
 

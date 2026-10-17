@@ -91,12 +91,12 @@ const settled = () => waitFor(() => {
   expect(askedFor("/me/enotary/access?role=client")).toBeGreaterThan(0);
 });
 
-describe("the eNotary entry", () => {
-  it("is in the configuration as an entry the server must offer", () => {
+describe("the Notary Directory entry", () => {
+  it("is in the configuration, open to every signed-in person", () => {
     expect(ACCOUNT_NAV).toHaveLength(1);
-    expect(ACCOUNT_NAV[0]).toMatchObject({ id: "enotary", label: "eNotary", path: "/app/enotary", account: "enotary", icon: "Stamp" });
-    // Nothing in the everyday rail depends on what the account is offered.
-    expect([...PRIMARY_NAV, ...UTILITY_NAV].filter(entry => entry.account !== undefined)).toEqual([]);
+    expect(ACCOUNT_NAV[0]).toMatchObject({ id: "enotary", label: "Notary Directory", path: "/app/enotary", icon: "Stamp" });
+    // Nothing in any rail depends on what the account is offered.
+    expect([...PRIMARY_NAV, ...ACCOUNT_NAV, ...UTILITY_NAV].filter(entry => entry.account !== undefined)).toEqual([]);
     // Both menus can draw its icon.
     for (const file of ["PlatformSidebar.tsx", "MobileNav.tsx"]) {
       const source = readFileSync(resolve(__dirname, "..", file), "utf8");
@@ -105,56 +105,25 @@ describe("the eNotary entry", () => {
     }
   });
 
-  it("is shown in the sidebar once the server says eNotary is available", async () => {
-    enotary = { status: 200, body: ACCESS };
-    render(<MemoryRouter><PlatformSidebar /></MemoryRouter>);
-    const link = await screen.findByRole("link", { name: "eNotary" });
-    expect(link).toHaveAttribute("href", "/app/enotary");
-    expect(within(screen.getByRole("navigation", { name: "Platform sections" })).getAllByRole("link")).toContain(link);
-  });
-
   it.each<[string, Answer]>([
-    ["the route is not there (404)", NOT_FOUND],
+    ["the eNotary gate is switched off (404)", NOT_FOUND],
     ["the server says it is not available", { status: 200, body: { ...ACCESS, available: false } }],
-    ["the request is refused", { status: 403, body: { error: { code: "forbidden", message: "no" } } }],
     ["the server cannot be reached", "network-error"],
-  ])("is hidden, with no error, when %s", async (_why, reply) => {
+    ["the gate is on", { status: 200, body: ACCESS }],
+  ])("is in the sidebar when %s", async (_why, reply) => {
     enotary = reply;
     render(<MemoryRouter><PlatformSidebar /></MemoryRouter>);
-    await settled();
-    // Every other row is there; this one is not, and nothing complains.
-    expect(screen.getByRole("link", { name: "Documents" })).toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: "eNotary" })).toBeNull();
+    const link = await screen.findByRole("link", { name: "Notary Directory" });
+    expect(link).toHaveAttribute("href", "/app/enotary");
+    expect(within(screen.getByRole("navigation", { name: "Platform sections" })).getAllByRole("link")).toContain(link);
     expect(screen.queryByRole("alert")).toBeNull();
-    expect(document.querySelector('a[href="/app/enotary"]')).toBeNull();
   });
 
-  it("is shown in the mobile drawer too, and the server is asked once for both menus", async () => {
-    enotary = { status: 200, body: ACCESS };
-    render(<MemoryRouter><PlatformSidebar /><MobileNav /></MemoryRouter>);
-    await screen.findByRole("link", { name: "eNotary" });
-    await userEvent.click(screen.getByRole("button", { name: "Open navigation" }));
-    const drawer = screen.getByRole("dialog", { name: "Navigation" });
-    expect(within(drawer).getByRole("link", { name: "eNotary" })).toHaveAttribute("href", "/app/enotary");
-    expect(askedFor("/me/enotary/access?role=client")).toBe(1);
-    expect(askedFor("/me/identity")).toBe(1);
-  });
-
-  it("is hidden in the mobile drawer where eNotary is not offered", async () => {
+  it("is in the mobile drawer too", async () => {
     render(<MemoryRouter><MobileNav /></MemoryRouter>);
-    await settled();
     await userEvent.click(screen.getByRole("button", { name: "Open navigation" }));
     const drawer = screen.getByRole("dialog", { name: "Navigation" });
-    expect(within(drawer).getByRole("link", { name: "Contacts" })).toBeInTheDocument();
-    expect(within(drawer).queryByRole("link", { name: "eNotary" })).toBeNull();
-  });
-
-  it("goes away on sign-out, so the next account does not inherit it", async () => {
-    enotary = { status: 200, body: ACCESS };
-    render(<MemoryRouter><PlatformSidebar /></MemoryRouter>);
-    await screen.findByRole("link", { name: "eNotary" });
-    act(() => { runSignOutCleanup(); });
-    expect(screen.queryByRole("link", { name: "eNotary" })).toBeNull();
+    expect(within(drawer).getByRole("link", { name: "Notary Directory" })).toHaveAttribute("href", "/app/enotary");
   });
 });
 

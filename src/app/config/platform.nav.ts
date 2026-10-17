@@ -183,17 +183,16 @@ export const PRIMARY_NAV: PlatformNavItem[] = [
 // people the rail is exactly PRIMARY_NAV.
 export const ACCOUNT_NAV: PlatformNavItem[] = [
   {
-    // The signed-in way into LAGDA eNotary: for now, the identity gate and a
-    // preview of the environment. Not a workspace permission and not a plan:
-    // the server says, per account, whether it is offered at all.
+    // The way from the dashboard to the Notary Directory. Open to every signed-in
+    // person, not a workspace permission and not a plan: `/app/enotary` hands the
+    // browser over to the static directory with a full page load.
     id: "enotary",
-    label: "eNotary",
+    label: "Notary Directory",
     path: "/app/enotary",
     icon: "Stamp",
     group: "primary",
-    account: "enotary",
     showOnMobile: true,
-    description: "Confirm who you are for LAGDA eNotary",
+    description: "Browse notaries public and register your interest",
   },
 ];
 
