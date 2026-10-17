@@ -90,7 +90,8 @@ const ROUTES: readonly PublicRoute[] = [
   { path: "/solutions",  name: "solutions",  trackedDefects: [contrast(13)] },
   { path: "/resources",  name: "resources",  trackedDefects: [contrast(10)] },
   { path: "/verify",     name: "verify",     trackedDefects: [contrast(1)] },
-  { path: "/enotary",    name: "eNotary",    trackedDefects: [contrast(14)] },
+  // `/enotary` now hands the visitor to the static Notary Directory, which is
+  // not a React page and is not measured here.
   { path: "/contact",    name: "contact",    trackedDefects: [contrast(1)] },
 ];
 

@@ -17,7 +17,7 @@ import type { Page } from "@playwright/test";
 /** Public routes that mention eNotary, plus the eNotary section itself. */
 const ROUTES = [
   "/",
-  "/enotary",
+  "/enotary-directory/",
   "/enotary/future-capabilities",
   "/enotary/accreditation-roadmap",
   "/enotary/waitlist",

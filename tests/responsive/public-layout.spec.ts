@@ -32,7 +32,7 @@ const ROUTES: readonly PublicRoute[] = [
   { path: "/solutions",   name: "solutions",  proof: /solution/i },
   { path: "/resources",   name: "resources",  proof: /resource|guide/i },
   { path: "/verify",      name: "verify",     proof: /verif/i },
-  { path: "/enotary",     name: "eNotary",    proof: /eNotary/i },
+  { path: "/enotary/faq", name: "eNotary",    proof: /eNotary/i },
   { path: "/contact",     name: "contact",    proof: /contact/i },
 ];
 
