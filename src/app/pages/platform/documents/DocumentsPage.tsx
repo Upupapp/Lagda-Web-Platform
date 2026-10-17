@@ -50,7 +50,7 @@ import { toastSuccess, toastError } from "../../../components/brand/BrandToast";
 import type { RealDocument } from "../../../services/real/document.service";
 import { documentOrganizationService } from "../../../services/mock/document-organization.service";
 import { isCapabilityInActiveProfile } from "../../../config/capability-resolver";
-import { SIGNING_REQUEST_STATUS } from "../../../services/signing-request-status";
+import { SIGNING_REQUEST_STATUS, completionFailed } from "../../../services/signing-request-status";
 import { StatusBadge } from "../../../components/documents/StatusBadge";
 import { VerificationIdActions } from "../../../components/documents/VerificationIdActions";
 import {
@@ -2301,7 +2301,7 @@ function OutboxCard({ item, branding, onView, onSignatures, onAudit, onResend, o
   onExpiration: () => void;
 }) {
   // 109. "Finalizing" that stopped is its own state, said in red.
-  const failed = item.state === "completion-ready" && item.completion?.state === "failed";
+  const failed = completionFailed(item);
   const status = failed
     ? { label: COMPLETION_FAILED_TITLE, color: "#B91C1C" }
     : OUTBOX_STATUS[item.state] ?? { label: TRANSACTION_STATUS_LABELS[SIGNING_REQUEST_STATUS[item.state]], color: "#0078D4" };

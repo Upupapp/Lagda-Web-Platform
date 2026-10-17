@@ -57,6 +57,35 @@ describe("summarize", () => {
   });
 });
 
+describe("a final document that could not be produced (109)", () => {
+  const failed = (over: Partial<SigningRequestListItem> = {}) => req({
+    state: "completion-ready", completedParticipantCount: 2, participantCount: 2,
+    completion: { state: "failed", canRetry: true }, ...over,
+  });
+
+  it("is listed for attention, right after a decline and before an expiry", () => {
+    const out = needsAttention([
+      req({ state: "expired", expiresAt: daysAgo(1) }),
+      failed(),
+      req({ state: "declined" }),
+    ], NOW);
+    expect(out.map(e => e.kind)).toEqual(["declined", "completion-failed", "expired"]);
+  });
+
+  it("is listed once, never also as stalled or expiring", () => {
+    const out = needsAttention([failed({ sentAt: daysAgo(9), completedParticipantCount: 0, expiresAt: daysAhead(2) })], NOW);
+    expect(out.map(e => e.kind)).toEqual(["completion-failed"]);
+  });
+
+  it("is not listed while it is still being produced, or when the server does not say", () => {
+    expect(needsAttention([
+      failed({ completion: { state: "finalizing", canRetry: false } }),
+      failed({ completion: null }),
+      req({ state: "completion-ready" }),
+    ], NOW)).toEqual([]);
+  });
+});
+
 describe("needsAttention", () => {
   it("lists a declined request regardless of age", () => {
     const out = needsAttention([req({ state: "declined", sentAt: daysAgo(0.1) })], NOW);

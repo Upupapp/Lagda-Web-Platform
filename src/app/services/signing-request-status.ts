@@ -12,7 +12,7 @@
 // copies of a nine-entry map is exactly the kind of thing that drifts by one
 // entry and is never noticed until a badge says the wrong word.
 
-import type { SigningRequestState } from "./real/signing-request.service";
+import type { SigningRequestState, CompletionStatus } from "./real/signing-request.service";
 import type { TransactionStatus } from "../models";
 
 export const SIGNING_REQUEST_STATUS: Record<SigningRequestState, TransactionStatus> = {
@@ -26,3 +26,13 @@ export const SIGNING_REQUEST_STATUS: Record<SigningRequestState, TransactionStat
   "cancelled": "cancelled",
   "expired": "expired",
 };
+
+/**
+ * True for a request whose every signature is in and whose final document
+ * could not be produced (109). Everywhere a list says "Finalizing", this says
+ * whether it is still at it or has stopped. Here, not in the request service,
+ * so a screen that only needs the answer does not depend on the service.
+ */
+export function completionFailed(item: { state: SigningRequestState; completion?: CompletionStatus | null }): boolean {
+  return item.state === "completion-ready" && item.completion?.state === "failed";
+}

@@ -19,9 +19,8 @@
 // summary carries `fetched` and `total` separately for that reason, and the
 // page is expected to say so when they differ.
 
-import type {
-  SigningRequestListItem, SigningRequestState,
-} from "../real/signing-request.service";
+import type { SigningRequestListItem, SigningRequestState } from "../real/signing-request.service";
+import { completionFailed } from "../signing-request-status";
 
 export const DAY_MS = 86_400_000;
 
@@ -84,7 +83,7 @@ export function summarize(items: readonly SigningRequestListItem[], total: numbe
 
 // ── Needs attention ────────────────────────────────────────────────────────
 
-export type AttentionKind = "declined" | "expired" | "expiring" | "stalled" | "never-sent";
+export type AttentionKind = "declined" | "completion-failed" | "expired" | "expiring" | "stalled" | "never-sent";
 
 export interface AttentionEntry {
   readonly kind: AttentionKind;
@@ -99,12 +98,14 @@ export interface AttentionEntry {
 
 /**
  * Urgency order. Declined first: somebody has refused and the sender may not
- * know yet. Expired next, most recent first: signing has closed and only the
+ * know yet. A final document that could not be produced next (109): every
+ * signature is in and nothing will happen until the sender asks again.
+ * Expired next, most recent first: signing has closed and only the
  * sender can start it again. Then expiring, soonest first. Then stalled, oldest first. Then
  * drafts that were prepared and forgotten, oldest first.
  */
 const KIND_RANK: Record<AttentionKind, number> = {
-  declined: 0, expired: 1, expiring: 2, stalled: 3, "never-sent": 4,
+  declined: 0, "completion-failed": 1, expired: 2, expiring: 3, stalled: 4, "never-sent": 5,
 };
 
 function daysBetween(fromIso: string, toMs: number): number {
@@ -129,6 +130,13 @@ export function needsAttention(
     if (item.state === "expired") {
       const since = item.expiresAt === null ? 0 : daysBetween(item.expiresAt, now);
       if (since <= thresholds.expiredDays) out.push({ kind: "expired", item, days: Math.max(0, since) });
+      continue;
+    }
+
+    // 109. Stopped at the last step: not "stalled" (everyone has signed) and
+    // not for ever listed under in flight as if it were merely waiting.
+    if (completionFailed(item)) {
+      out.push({ kind: "completion-failed", item });
       continue;
     }
 

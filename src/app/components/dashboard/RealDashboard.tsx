@@ -53,11 +53,12 @@ import {
 import {
   realSigningRequestService, type SigningRequestListItem,
 } from "../../services/real/signing-request.service";
+import { COMPLETION_FAILED_TITLE } from "../documents/signing-progress-copy";
 import {
   summarize, needsAttention, inFlight, recentlyCompleted,
   type AttentionEntry, type AttentionKind,
 } from "../../services/dashboard/attention";
-import { SIGNING_REQUEST_STATUS } from "../../services/signing-request-status";
+import { SIGNING_REQUEST_STATUS, completionFailed } from "../../services/signing-request-status";
 import { StatusBadge } from "../documents/StatusBadge";
 import { SignatureRecordDialog } from "../documents/SignatureRecordDialog";
 import { AuditTrailDialog } from "../documents/AuditTrailDialog";
@@ -102,6 +103,10 @@ const ATTENTION: Record<AttentionKind, {
   declined: {
     icon: XCircle, color: RED,
     label: () => "Declined",
+  },
+  "completion-failed": {
+    icon: AlertTriangle, color: RED,
+    label: () => `${COMPLETION_FAILED_TITLE}: every signature is safe, open Signatures to try again`,
   },
   expired: {
     icon: Clock, color: RED,
@@ -215,7 +220,10 @@ function Title({ item }: { item: SigningRequestListItem }) {
         }} title={item.documentTitle}>
           {item.documentTitle}
         </span>
-        <StatusBadge status={SIGNING_REQUEST_STATUS[item.state]} />
+        {completionFailed(item)
+          // 109. Not "Finalizing": it has stopped, and the sender can act.
+          ? <span data-testid="completion-failed-badge" style={{ fontSize: 11, fontWeight: 600, color: RED, background: "#FEF2F2", border: "1px solid #FECACA", borderRadius: 4, padding: "2px 7px", whiteSpace: "nowrap" }}>{COMPLETION_FAILED_TITLE}</span>
+          : <StatusBadge status={SIGNING_REQUEST_STATUS[item.state]} />}
       </div>
     </div>
   );

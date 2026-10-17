@@ -79,6 +79,17 @@ describe("the real command palette search", () => {
     expect(a?.description).not.toBe(b?.description);
   });
 
+  it("labels a final document that could not be produced, not Finalizing", async () => {
+    apiRequest.mockResolvedValue({ ...EMPTY_PAGE, total: 3, items: [
+      row({ signingRequestId: "sr_a", state: "completion-ready", completion: { state: "failed", canRetry: true } }),
+      row({ signingRequestId: "sr_b", state: "completion-ready", completion: { state: "finalizing", canRetry: false } }),
+      row({ signingRequestId: "sr_c", state: "completion-ready" }),
+    ] });
+    const res = await searchPaletteReal("ws_1", "employ", "documents");
+    const labels = res.groups.find(g => g.scope === "documents")?.results.map(r => r.statusLabel);
+    expect(labels).toEqual(["Could not finalize", "Finalizing", "Finalizing"]);
+  });
+
   it("asks for no Verification IDs when nothing found is completed, and survives the lookup failing", async () => {
     apiRequest.mockResolvedValue({ ...EMPTY_PAGE, items: [row()], total: 1 });
     await searchPaletteReal("ws_1", "employ", "documents");

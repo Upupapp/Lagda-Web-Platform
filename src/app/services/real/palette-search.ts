@@ -31,7 +31,7 @@ import type {
 } from "../../models/search";
 import { SEARCH_SCOPE_ICONS, SEARCH_SCOPE_LABELS } from "../../models/search";
 import { globalSearchService } from "../mock/global-search.service";
-import { SIGNING_REQUEST_STATUS } from "../signing-request-status";
+import { SIGNING_REQUEST_STATUS, completionFailed } from "../signing-request-status";
 import { realSigningRequestService } from "./signing-request.service";
 import { realDocumentService } from "./document.service";
 import type { SigningRequestListItem } from "./signing-request.service";
@@ -113,7 +113,8 @@ async function documentGroup(
         title: item.documentTitle,
         description: documentDescription(item, item.state === "completed" ? ids.get(item.documentId) : null),
         status,
-        statusLabel: titleCase(status),
+        // 109. "Finalizing" that has stopped says so.
+        statusLabel: completionFailed(item) ? "Could not finalize" : titleCase(status),
         updatedAt: item.createdAt,
         matchedFields: start < 0 ? [] : [{
           field: "title", label: "Title", text: item.documentTitle,

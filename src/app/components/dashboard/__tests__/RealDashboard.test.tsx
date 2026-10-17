@@ -86,6 +86,29 @@ describe("with signing requests", () => {
     expect(section.textContent).not.toContain("Fine");
   });
 
+  it("says a final document that could not be produced, instead of Finalizing", async () => {
+    list.mockResolvedValue({
+      items: [
+        req({ state: "completion-ready", documentTitle: "Lease — stuck", completedParticipantCount: 3,
+          completion: { state: "failed", canRetry: true } }),
+        req({ state: "completion-ready", documentTitle: "NDA — working", completedParticipantCount: 3,
+          completion: { state: "finalizing", canRetry: false } }),
+      ],
+      total: 2, page: 1, perPage: 100, hasNextPage: false,
+    });
+    renderPage();
+
+    const attention = await screen.findByRole("region", { name: "Needs attention" });
+    expect(attention.textContent).toContain("Lease — stuck");
+    expect(attention.textContent).toContain("Could not finalize: every signature is safe, open Signatures to try again");
+    expect(attention.textContent).not.toContain("NDA — working");
+    // Its badge in the list below no longer says Finalizing.
+    const flying = screen.getByRole("region", { name: "In flight" });
+    const badges = within(flying).getAllByTestId("completion-failed-badge");
+    expect(badges).toHaveLength(1);
+    expect(within(flying).getAllByText("Finalizing")).toHaveLength(1);
+  });
+
   it("shows progress for what is in flight", async () => {
     list.mockResolvedValue({
       items: [req({ participantCount: 4, completedParticipantCount: 1 })],
