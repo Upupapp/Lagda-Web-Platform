@@ -1,3 +1,4 @@
+/* eslint-disable testing-library/prefer-user-event, testing-library/no-unnecessary-act -- these files run on a held clock (fake timers), where userEvent waits on timers; fireEvent does not. */
 // The notary's landing page: what each state of the link says, the way through
 // sign-in and back, and one screen for each way the claim can be refused.
 

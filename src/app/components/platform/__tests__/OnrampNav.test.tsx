@@ -47,7 +47,8 @@ beforeEach(() => {
   asked.length = 0;
   answers = {};
   vi.stubGlobal("fetch", vi.fn((input: RequestInfo | URL) => {
-    const path = String(input).replace("http://api.test", "");
+    const url = typeof input === "string" ? input : input instanceof URL ? input.toString() : input.url;
+    const path = url.replace("http://api.test", "");
     asked.push(path);
     const reply = answers[path] ?? NOT_FOUND;
     if (reply === "network-error") return Promise.reject(new TypeError("Failed to fetch"));

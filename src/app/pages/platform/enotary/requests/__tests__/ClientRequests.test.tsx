@@ -1,3 +1,4 @@
+/* eslint-disable testing-library/prefer-user-event, testing-library/no-unnecessary-act -- these files run on a held clock (fake timers), where userEvent waits on timers; fireEvent does not. */
 // The client's request pages: the list, and one request with its expiry panel,
 // live countdown, link, QR card, revoke and renew.
 
@@ -113,7 +114,9 @@ describe("one request, waiting for the notary", () => {
     expect(screen.getByTestId("expiry-label")).toHaveTextContent(/^Expires \w{3} \d+ \w{3}, \d+:\d{2} (AM|PM)$/);
     expect(screen.getByTestId("expiry-panel")).toHaveAttribute("data-tone", "calm");
     expect(screen.getByLabelText("Link for the notary")).toHaveValue(LINK);
-    expect(screen.getByTestId("qr-card-image").querySelector("svg")).not.toBeNull();
+    const card = screen.getByTestId("qr-card-image");
+    expect(card.tagName).toBe("IMG");
+    expect(decodeURIComponent(card.getAttribute("src") ?? "")).toContain("Scan only if you are Atty.");
     expect(screen.getByRole("button", { name: "Save the card" })).toBeInTheDocument();
     expect(screen.getByTestId("timeline")).toHaveTextContent("You asked Ana Maria Cruz");
     expect(screen.getByTestId("onramp-note")).toHaveTextContent(/not currently available.*Supreme Court accreditation/);

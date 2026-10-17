@@ -20,7 +20,8 @@ beforeEach(() => {
   calls.length = 0;
   reply = () => ({ status: 200, body: {} });
   vi.stubGlobal("fetch", vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
-    const url = String(input).replace("http://api.test", "");
+    const raw = typeof input === "string" ? input : input instanceof URL ? input.toString() : input.url;
+    const url = raw.replace("http://api.test", "");
     calls.push({ url, method: init?.method ?? "GET", body: typeof init?.body === "string" ? JSON.parse(init.body) as unknown : init?.body });
     const r = reply(url);
     return Promise.resolve(new Response(JSON.stringify(r.body), { status: r.status, headers: { "content-type": "application/json" } }));

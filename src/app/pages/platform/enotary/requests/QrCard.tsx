@@ -1,5 +1,5 @@
-// The QR card on a request's page: shown as the SVG that "Save the card" turns
-// into a PNG (qr-card.ts), so what is saved is what is shown.
+// The QR card on a request's page: shown as the picture that "Save the card"
+// turns into a PNG (qr-card.ts), so what is saved is what is shown.
 
 import { useEffect, useMemo, useState } from "react";
 import { Download } from "lucide-react";
@@ -21,15 +21,15 @@ export function QrCard({ link, notaryName, expiresAt }: { link: string; notaryNa
   }, []);
 
   const label = expiryLabel(expiresAt);
-  const input = { link, notaryName, expiresLabel: label === "" ? "Expires in 3 days" : `Expires ${label}` };
-  // The same card, with the logo inline on screen (the page can load it as an image) and as data for the file.
-  const shown = useMemo(() => buildCardSvg(input, lagdaHeaderLogo), [link, notaryName, label]); // eslint-disable-line react-hooks/exhaustive-deps
-  const saved = useMemo(() => buildCardSvg(input, logo ?? undefined), [link, notaryName, label, logo]); // eslint-disable-line react-hooks/exhaustive-deps
+  const input = { link, notaryName, expiresLabel: label === "" ? "Time-limited link" : `Expires ${label}` };
+  // One card, with the logo once it has loaded: shown as a picture and saved as the same picture.
+  const card = useMemo(() => buildCardSvg(input, logo ?? undefined), [link, notaryName, label, logo]); // eslint-disable-line react-hooks/exhaustive-deps
+  const source = useMemo(() => `data:image/svg+xml;charset=utf-8,${encodeURIComponent(card)}`, [card]);
 
   const save = () => {
     setSaving(true);
     setProblem(null);
-    cardToPng(saved)
+    cardToPng(card)
       .then(blob => {
         const url = URL.createObjectURL(blob);
         const anchor = document.createElement("a");
@@ -46,11 +46,9 @@ export function QrCard({ link, notaryName, expiresAt }: { link: string; notaryNa
 
   return (
     <div data-testid="qr-card" style={{ ...GF }}>
-      <div
-        data-testid="qr-card-image"
-        style={{ maxWidth: 360, margin: "0 auto", borderRadius: 18, boxShadow: "0 10px 30px -14px rgba(10,26,43,0.35)", lineHeight: 0 }}
-        // The card is built by qr-card.ts from numbers and escaped text only.
-        dangerouslySetInnerHTML={{ __html: shown.replace("<svg ", '<svg style="width:100%;height:auto;display:block" ') }}
+      <img
+        data-testid="qr-card-image" src={source} alt={`QR code for the request to ${notaryName}. Scan only if you are Atty. ${notaryName}.`}
+        style={{ display: "block", width: "100%", maxWidth: 360, height: "auto", margin: "0 auto", borderRadius: 18, boxShadow: "0 10px 30px -14px rgba(10,26,43,0.35)" }}
       />
       <div style={{ maxWidth: 360, margin: "14px auto 0" }}>
         <ActionButton icon={Download} kind="secondary" onClick={save} disabled={saving} full>

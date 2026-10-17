@@ -1,3 +1,4 @@
+/* eslint-disable testing-library/prefer-user-event, testing-library/no-unnecessary-act -- these files run on a held clock (fake timers), where userEvent waits on timers; fireEvent does not. */
 // The reviewers' pages: the list by status, and one application with the name
 // comparison, its documents, and Approve (with the directory picker) or Reject.
 

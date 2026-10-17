@@ -1,3 +1,4 @@
+/* eslint-disable testing-library/prefer-user-event, testing-library/no-unnecessary-act -- these files run on a held clock (fake timers), where userEvent waits on timers; fireEvent does not. */
 // The notary desk: tallies, request rows with Accept and Decline, the banner
 // while the application is not approved, and each refusal of an answer.
 

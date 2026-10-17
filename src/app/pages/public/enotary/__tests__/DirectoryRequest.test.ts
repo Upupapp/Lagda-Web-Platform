@@ -45,7 +45,10 @@ for (const target of [document, window] as EventTarget[]) {
 async function openDirectory() {
   document.body.innerHTML = BODY;
   history.replaceState(null, "", `/enotary-directory/?select=${ID}`);
+  // The page is a plain script; run it as the browser does.
+  // eslint-disable-next-line @typescript-eslint/no-implied-eval, no-new-func
   new Function(LAWYERS_JS).call(window);
+  // eslint-disable-next-line @typescript-eslint/no-implied-eval, no-new-func
   new Function(APP_JS).call(window);
   await pass(20);
 }
@@ -59,7 +62,8 @@ beforeEach(() => {
     "GET /me/identity": IDENTITY,
   };
   vi.stubGlobal("fetch", vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
-    const path = String(input).replace(/^\/api/, "");
+    const url = typeof input === "string" ? input : input instanceof URL ? input.toString() : input.url;
+    const path = url.replace(/^\/api/, "");
     const method = init?.method ?? "GET";
     const body = typeof init?.body === "string" ? JSON.parse(init.body) as unknown : undefined;
     asked.push({ method, path, body });

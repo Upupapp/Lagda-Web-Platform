@@ -1,3 +1,4 @@
+/* eslint-disable testing-library/prefer-user-event, testing-library/no-unnecessary-act -- these files run on a held clock (fake timers), where userEvent waits on timers; fireEvent does not. */
 // The notary application: the form's steps and what it says is missing, the
 // uploads and their scan states, the refusals on submit, and the status pages
 // that follow.

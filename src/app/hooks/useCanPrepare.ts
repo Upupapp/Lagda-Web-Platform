@@ -24,7 +24,7 @@ export interface NavAccess {
     id: string;
     permission?: Parameters<ReturnType<typeof usePlatform>["hasPermission"]>[0];
     /** An entry the server offers per account, not per role (platform.nav.ts). */
-    account?: "enotary";
+    account?: string;
   }) => boolean;
 }
 
@@ -38,6 +38,9 @@ export function useNavAccess(): NavAccess {
     allows: (item) => {
       // Offered to this account by the server, or not shown at all.
       if (item.account === "enotary" && !features.enotaryAvailable) return false;
+      if (item.account === "notary-requests" && !features.notaryRequests) return false;
+      if (item.account === "notary-desk" && !features.notaryDesk) return false;
+      if (item.account === "notary-review" && !features.notaryReview) return false;
       if (!item.permission || hasPermission(item.permission)) return true;
       const capability = NAV_CAPABILITY[item.id];
       return capability !== undefined && access.can(capability);
