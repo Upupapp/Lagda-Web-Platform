@@ -17,7 +17,10 @@ import { realAuthService } from "../../services/real/auth.service";
 import { USE_REAL_BACKEND } from "../../services/backend-flag";
 import { ApiError } from "../../services/api-client";
 import { driveFirebaseVerificationSend } from "../../services/firebase-verification-send";
-import { sanitizeAppReturnTo, sanitizeOnboardingReturnTo, DEFAULT_RETURN_PATH } from "../../utils/authReturnPath";
+import {
+  sanitizeAppReturnTo, sanitizeOnboardingReturnTo, DEFAULT_RETURN_PATH, continueToReturnPath, isFullLoadReturnPath,
+} from "../../utils/authReturnPath";
+import { FullPageRedirect } from "../../components/shell/FullPageRedirect";
 
 const GF = { fontFamily: "'Geist', sans-serif" };
 const AZURE = "#0078D4";
@@ -99,6 +102,10 @@ export function SignIn() {
     if (alreadyAuthenticatedNeedsOnboarding) {
       return <Navigate to="/onboarding/profile" replace />;
     }
+    // The static Notary Directory is not a route of this app: a full page load.
+    if (isFullLoadReturnPath(redirectTo)) {
+      return <FullPageRedirect to={redirectTo} label="Go to the LAGDA Notary Directory" />;
+    }
     return <Navigate to={redirectTo} replace state={returnToState} />;
   }
 
@@ -162,7 +169,7 @@ export function SignIn() {
             p.subscription,
             p.notifications,
           );
-        void navigate(redirectTo, { replace: true, state: returnToState });
+        continueToReturnPath(redirectTo, navigate, { replace: true, state: returnToState });
         break;
       }
 
@@ -235,7 +242,7 @@ export function SignIn() {
         void navigate("/onboarding/profile", { replace: true });
         return;
       }
-      void navigate(redirectTo, { replace: true, state: returnToState });
+      continueToReturnPath(redirectTo, navigate, { replace: true, state: returnToState });
     } catch (err) {
       setStatus("error");
       setNeedsVerification(

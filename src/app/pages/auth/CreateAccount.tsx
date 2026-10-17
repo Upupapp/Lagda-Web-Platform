@@ -16,7 +16,8 @@ import { conversionTracker } from "../../services/public";
 import { useOnboarding } from "../../context/OnboardingContext";
 import { usePlatform } from "../../context/PlatformContext";
 import { checkPassword, isPasswordAcceptable } from "../../models/auth";
-import { sanitizeAppReturnTo, DEFAULT_RETURN_PATH } from "../../utils/authReturnPath";
+import { sanitizeAppReturnTo, DEFAULT_RETURN_PATH, isFullLoadReturnPath } from "../../utils/authReturnPath";
+import { FullPageRedirect } from "../../components/shell/FullPageRedirect";
 import { realAuthService } from "../../services/real/auth.service";
 import { USE_REAL_BACKEND } from "../../services/backend-flag";
 import { ApiError } from "../../services/api-client";
@@ -236,6 +237,10 @@ export function CreateAccount() {
   // Already signed in — account creation is a continuation boundary, not a
   // form to fill out again. Send the visitor straight through.
   if (platform.sessionStatus === "authenticated") {
+    // The static Notary Directory is not a route of this app: a full page load.
+    if (isFullLoadReturnPath(returnTo)) {
+      return <FullPageRedirect to={returnTo} label="Go to the LAGDA Notary Directory" />;
+    }
     return <Navigate to={returnTo} replace />;
   }
 

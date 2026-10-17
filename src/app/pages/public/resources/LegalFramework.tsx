@@ -1,4 +1,5 @@
 import { Link } from "react-router";
+import { ENOTARY_DIRECTORY_PATH } from "../../../config/enotary-directory";
 import {
   ResourcesPageShell, GuideLayout, GuideHero, GuideSection, GuidePara, GuideCallout, GuideList, EduDisclaimer,
 } from "../../../components/resources/ResourceComponents";
@@ -142,7 +143,7 @@ export function LegalFramework() {
             <Link to="/security/trust-center" style={{ color: "#38bdf8", ...GF, fontSize: 13, textDecoration: "none", fontWeight: 600 }}>Trust Center →</Link>
             <Link to="/features/audit-trail" style={{ color: "#38bdf8", ...GF, fontSize: 13, textDecoration: "none", fontWeight: 600 }}>Audit Trail →</Link>
             <Link to="/features/document-verification" style={{ color: "#38bdf8", ...GF, fontSize: 13, textDecoration: "none", fontWeight: 600 }}>Document Verification →</Link>
-            <Link to="/enotary" style={{ color: "#c084fc", ...GF, fontSize: 13, textDecoration: "none", fontWeight: 600 }}>LAGDA eNotary →</Link>
+            <a href={ENOTARY_DIRECTORY_PATH} style={{ color: "#c084fc", ...GF, fontSize: 13, textDecoration: "none", fontWeight: 600 }}>LAGDA Notary Directory →</a>
           </div>
         </div>
       </GuideLayout>

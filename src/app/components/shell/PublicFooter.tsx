@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import lagdaLogoFull from "../../../brand elements/svg/LagdaLogoPrimaryHorizontalFullColor.svg";
 import { FOOTER_COLUMNS } from "@/app/config/nav.config";
+import { isStaticSitePath } from "@/app/config/enotary-directory";
 import { ON_LIGHT } from "../../utils/on-light";
 
 // ── Icon system ──────────────────────────────────────────────────────────────
@@ -56,7 +57,7 @@ const LINK_ICON: Record<string, LucideIcon> = {
   "Help Center": Headset,
   "Contact": Mail,
   // eNotary
-  "Overview": Eye,
+  "Notary Directory": Eye,
   "Roadmap": Map,
   "Join Waitlist": Users,
   // Legal
@@ -120,6 +121,8 @@ function FooterLinkRow({ label, path, isComingSoon }: { label: string; path: str
     <li>
       <Link
         to={path}
+        // The static Notary Directory is not an app route: load it in full.
+        reloadDocument={isStaticSitePath(path)}
         className="pf-row"
         style={{
           display: "flex", alignItems: "center", gap: 10,

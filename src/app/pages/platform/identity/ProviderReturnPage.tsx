@@ -20,6 +20,12 @@
 // It sits outside the platform shell on purpose. The shell's own signed-out
 // redirect keeps the address it was reached at, query and all.
 //
+// From the Notary Directory: the directory (a static page outside this app)
+// starts the same account check, and marks this tab before it leaves
+// (config/enotary-directory). Where that mark is here, the page does not route
+// on but offers the way back to the directory, a full page load, where the
+// directory asks LAGDA's server for the result itself.
+//
 // Nothing depends on this page being reached. The device that FINISHES the
 // check is the one sent here, and that is often a phone the person is not
 // signed in on (and, against a developer's server, a phone that cannot open
@@ -27,9 +33,10 @@
 
 import { useLayoutEffect, useState } from "react";
 import { Navigate } from "react-router";
-import { Loader2 } from "lucide-react";
+import { ArrowLeft, Loader2, ScanFace } from "lucide-react";
 import { usePlatform } from "../../../context/PlatformContext";
-import { PhaseBanner, SurfaceCard } from "../../../components/system/design-system";
+import { GF, PhaseBanner, SurfaceCard, T, TAP } from "../../../components/system/design-system";
+import { ENOTARY_DIRECTORY_PATH, identityCheckStartedFromDirectory } from "../../../config/enotary-directory";
 import { buildSignInUrl } from "../../../utils/authReturnPath";
 import {
   ACCOUNT_IDENTITY_PATH, enotaryAccessPath, providerReturnState, rememberedEnotaryRole,
@@ -41,11 +48,16 @@ function stripAddress(): void {
   }
 }
 
-function ProviderReturnPage({ destination }: { destination: () => string }) {
+function ProviderReturnPage({ destination, fromDirectory = () => false }: {
+  destination: () => string;
+  /** The check was started from the Notary Directory in this tab. */
+  fromDirectory?: () => boolean;
+}) {
   const { sessionStatus } = usePlatform();
   // Out of the address bar before anything else happens, and decided once.
   const [to] = useState(() => { stripAddress(); return destination(); });
   const [state] = useState(() => providerReturnState(Date.now()));
+  const [backToDirectory] = useState(fromDirectory);
 
   useLayoutEffect(() => {
     stripAddress();
@@ -59,6 +71,26 @@ function ProviderReturnPage({ destination }: { destination: () => string }) {
     robots.content = "noindex, nofollow";
   }, []);
 
+  if (backToDirectory) {
+    return (
+      <SurfaceCard>
+        <PhaseBanner
+          icon={ScanFace} tone="neutral" title="Back from the identity check"
+          description="Return to the Notary Directory to see the result and continue."
+        />
+        <a
+          href={ENOTARY_DIRECTORY_PATH} data-testid="identity-return-directory"
+          style={{
+            ...GF, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8,
+            minHeight: TAP, padding: "0 22px", borderRadius: 10, boxSizing: "border-box",
+            background: T.azure, color: T.surface, fontSize: 14.5, fontWeight: 700, textDecoration: "none",
+          }}
+        >
+          <ArrowLeft size={16} aria-hidden /> Back to the Notary Directory
+        </a>
+      </SurfaceCard>
+    );
+  }
   if (sessionStatus === "initializing") {
     return (
       <SurfaceCard>
@@ -81,7 +113,7 @@ function ProviderReturnPage({ destination }: { destination: () => string }) {
 
 /** /app/settings/identity/return */
 export function IdentityVerificationReturnPage() {
-  return <ProviderReturnPage destination={() => ACCOUNT_IDENTITY_PATH} />;
+  return <ProviderReturnPage destination={() => ACCOUNT_IDENTITY_PATH} fromDirectory={identityCheckStartedFromDirectory} />;
 }
 
 /** /app/enotary/return — back to the gate, for the role the check was started for. */

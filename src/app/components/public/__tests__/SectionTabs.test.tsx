@@ -68,7 +68,7 @@ describe.each(CASES)("$name sub-navigation", ({ nav, el, path, activeLabel, item
 
 describe("sub-navigation specifics", () => {
   it("eNotary alone uses the eNotary tone", () => {
-    const { unmount } = at("/enotary", <EnotarySubNav />);
+    const { unmount } = at("/enotary/waitlist", <EnotarySubNav />);
     expect(screen.getByRole("navigation", { name: "eNotary navigation" })).toHaveAttribute("data-tone", "enotary");
     unmount();
     at("/esignature", <EsigSubNav />);

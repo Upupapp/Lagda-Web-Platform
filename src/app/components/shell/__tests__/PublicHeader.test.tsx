@@ -52,7 +52,7 @@ describe("PublicHeader", () => {
     const list = nav.querySelector(".phdr-desktop-nav") as HTMLElement;
     const hrefs = LABELS.map(label =>
       within(list).getByRole("link", { name: new RegExp(`^${label}`), hidden: true }).getAttribute("href"));
-    expect(hrefs).toEqual(["/esignature", "/solutions", "/pricing", "/security", "/resources", "/enotary"]);
+    expect(hrefs).toEqual(["/esignature", "/solutions", "/pricing", "/security", "/resources", "/enotary-directory/"]);
 
     const security = within(list).getByRole("link", { name: /^Security/, hidden: true });
     expect(security).toHaveAttribute("aria-current", "page");

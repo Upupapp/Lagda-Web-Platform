@@ -21,6 +21,7 @@
 
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Link } from "react-router";
+import { isStaticSitePath } from "../../config/enotary-directory";
 import { ChevronLeft, ChevronRight, type LucideIcon } from "lucide-react";
 import { Z } from "../../utils/z-index";
 
@@ -215,6 +216,8 @@ export function SectionTabs({ label, tabs, tone = "azure", groupColors }: Sectio
                 <li key={tab.key} className="lsn-item">
                   <Link
                     to={tab.to}
+                    // The static Notary Directory is not an app route: load it in full.
+                    reloadDocument={isStaticSitePath(tab.to)}
                     aria-current={tab.active ? "page" : undefined}
                     className="lsn-tab"
                     data-active={tab.active ? "true" : "false"}

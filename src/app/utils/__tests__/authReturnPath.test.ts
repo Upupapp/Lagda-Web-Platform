@@ -1,5 +1,7 @@
-import { describe, it, expect } from "vitest";
-import { sanitizeAppReturnTo, buildSignInUrl, noteDeliberateSignOut } from "../authReturnPath";
+import { describe, it, expect, vi, afterEach } from "vitest";
+import {
+  sanitizeAppReturnTo, buildSignInUrl, noteDeliberateSignOut, isFullLoadReturnPath, continueToReturnPath,
+} from "../authReturnPath";
 
 describe("sanitizeAppReturnTo", () => {
   it("keeps /app paths and falls back for anything else", () => {
@@ -22,6 +24,63 @@ describe("sanitizeAppReturnTo", () => {
     expect(sanitizeAppReturnTo("/join/abc/../../evil")).toBe("/app/dashboard");
     expect(sanitizeAppReturnTo("/join//evil.example")).toBe("/app/dashboard");
     expect(sanitizeAppReturnTo("/invitations/accept?token=abcdef&next=https://evil")).toBe("/app/dashboard");
+  });
+});
+
+describe("the Notary Directory as a way back", () => {
+  const original = window.location;
+  afterEach(() => {
+    Object.defineProperty(window, "location", { configurable: true, value: original });
+  });
+
+  it.each([
+    "/enotary-directory/",
+    "/enotary-directory/?select=maria-santos-2",
+    `/enotary-directory/?select=${"a".repeat(80)}`,
+  ])("accepts %s, and marks it for a full page load", (path) => {
+    expect(sanitizeAppReturnTo(path)).toBe(path);
+    expect(sanitizeAppReturnTo(encodeURIComponent(path))).toBe(path);
+    expect(isFullLoadReturnPath(path)).toBe(true);
+  });
+
+  it.each([
+    "/enotary-directory",
+    "/enotary-directory/index.html",
+    "/enotary-directory/js/app.js",
+    "/enotary-directory/?select=",
+    "/enotary-directory/?select=Maria",
+    "/enotary-directory/?select=a_b",
+    "/enotary-directory/?select=a.b",
+    `/enotary-directory/?select=${"a".repeat(81)}`,
+    "/enotary-directory/?select=abc&next=https://evil.example",
+    "/enotary-directory/?select=abc#x",
+    "/enotary-directory/?other=abc",
+    "/enotary-directory//evil.example",
+    "/enotary-directory/../app",
+    "//enotary-directory/",
+    "https://evil.example/enotary-directory/",
+    "//evil.example/enotary-directory/",
+    "/enotary-directory/%2F%2Fevil.example",
+    "/enotary-directory/?select=%2e%2e",
+    "%252Fenotary-directory%252F",
+    "/enotary",
+    "/enotary-directory-evil/",
+  ])("refuses %s", (path) => {
+    expect(sanitizeAppReturnTo(path)).toBe("/app/dashboard");
+    expect(isFullLoadReturnPath(path)).toBe(false);
+  });
+
+  it("continues to the directory with a full page load, and to /app with the router", () => {
+    const assign = vi.fn();
+    Object.defineProperty(window, "location", { configurable: true, value: { ...original, assign } });
+    const navigate = vi.fn();
+    continueToReturnPath("/enotary-directory/?select=abc", navigate, { replace: true });
+    expect(assign).toHaveBeenCalledWith("/enotary-directory/?select=abc");
+    expect(navigate).not.toHaveBeenCalled();
+
+    continueToReturnPath("/app/documents", navigate, { replace: true });
+    expect(navigate).toHaveBeenCalledWith("/app/documents", { replace: true });
+    expect(assign).toHaveBeenCalledTimes(1);
   });
 });
 

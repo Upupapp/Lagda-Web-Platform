@@ -10,7 +10,7 @@ import { delay } from "../../services/mock/delay";
 import { USE_REAL_BACKEND } from "../../services/backend-flag";
 import { realAuthService } from "../../services/real/auth.service";
 import { ApiError } from "../../services/api-client";
-import { sanitizeAppReturnTo } from "../../utils/authReturnPath";
+import { sanitizeAppReturnTo, continueToReturnPath } from "../../utils/authReturnPath";
 import { mfaCeremonyEnded } from "./mfa-ceremony";
 
 const GF    = { fontFamily: "'Geist', sans-serif" };
@@ -66,7 +66,7 @@ export function RecoveryCodes() {
         await platform.refreshSessionFromBackend();
         // Long enough to read how many codes are left; that count is shown
         // nowhere else on the way in.
-        setTimeout(() => { void navigate(returnTo, { replace: true }); }, left === null ? 800 : 2600);
+        setTimeout(() => { continueToReturnPath(returnTo, navigate, { replace: true }); }, left === null ? 800 : 2600);
       } catch (err) {
         setStatus("error");
         setEnded(mfaCeremonyEnded(err));
@@ -88,7 +88,7 @@ export function RecoveryCodes() {
       // never enters the session as an undefined workspace.
       const ws = payload.currentWorkspace ?? payload.workspaces[0];
       if (ws) platform.signIn(payload.user, payload.workspaces, ws, payload.subscription, payload.notifications);
-      setTimeout(() => { void navigate(returnTo, { replace: true }); }, 800);
+      setTimeout(() => { continueToReturnPath(returnTo, navigate, { replace: true }); }, 800);
     } else {
       setStatus("error");
       setErrorMsg("Enter a recovery code.");

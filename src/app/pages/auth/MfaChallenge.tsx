@@ -11,7 +11,7 @@ import { ApiError } from "../../services/api-client";
 import { usePlatform } from "../../context/PlatformContext";
 import { useOnboarding } from "../../context/OnboardingContext";
 import { createMockSignInPayload } from "../../context/PlatformContext";
-import { sanitizeAppReturnTo } from "../../utils/authReturnPath";
+import { sanitizeAppReturnTo, continueToReturnPath } from "../../utils/authReturnPath";
 import { mfaCeremonyEnded } from "./mfa-ceremony";
 
 const GF    = { fontFamily: "'Geist', sans-serif" };
@@ -55,7 +55,7 @@ export function MfaChallenge() {
         // refreshSessionFromBackend is still the one shared place that
         // derives identity + workspace state, rather than duplicating it.
         await platform.refreshSessionFromBackend();
-        setTimeout(() => { void navigate(sanitizeAppReturnTo(returnTo), { replace: true }); }, 800);
+        setTimeout(() => { continueToReturnPath(sanitizeAppReturnTo(returnTo), navigate, { replace: true }); }, 800);
       } catch (err) {
         setStatus("error");
         setErrorCode("invalid");
@@ -79,7 +79,7 @@ export function MfaChallenge() {
       // never enters the session as an undefined workspace.
       const ws = payload.currentWorkspace ?? payload.workspaces[0];
       if (ws) platform.signIn(payload.user, payload.workspaces, ws, payload.subscription, payload.notifications);
-      setTimeout(() => { void navigate(sanitizeAppReturnTo(returnTo), { replace: true }); }, 800);
+      setTimeout(() => { continueToReturnPath(sanitizeAppReturnTo(returnTo), navigate, { replace: true }); }, 800);
     } else {
       setStatus("error");
       setErrorCode(result.errorCode ?? "invalid");

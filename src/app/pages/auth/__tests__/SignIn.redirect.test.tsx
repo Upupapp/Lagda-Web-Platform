@@ -13,7 +13,7 @@
 // bug) to pin down what the guard does for an ALREADY-authenticated render,
 // which is exactly the state the race can leave the component in.
 
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { MemoryRouter, Routes, Route, useLocation } from "react-router";
 
@@ -118,5 +118,43 @@ describe("SignIn — already-authenticated redirect (B2)", () => {
 
     expect(await screen.findByText("ONBOARDING_PROFILE")).toBeTruthy();
     expect(setReturnTo).toHaveBeenCalledWith(null);
+  });
+});
+
+// The static Notary Directory sends a signed-out visitor to sign in and back.
+// It is not a route of this app, so the way back is a full page load.
+describe("SignIn — back to the Notary Directory", () => {
+  const original = window.location;
+  let replace: ReturnType<typeof vi.fn>;
+  beforeEach(() => {
+    setReturnTo.mockClear();
+    replace = vi.fn();
+    Object.defineProperty(window, "location", { configurable: true, value: { ...original, replace } });
+  });
+  afterEach(() => {
+    Object.defineProperty(window, "location", { configurable: true, value: original });
+  });
+
+  it("loads the directory in full, with the chosen notary, for a signed-in account", () => {
+    mockPlatform = { sessionStatus: "authenticated", workspaceStatus: "ready" };
+    renderAt(`/sign-in?returnTo=${encodeURIComponent("/enotary-directory/?select=maria-santos")}`);
+    expect(replace).toHaveBeenCalledWith("/enotary-directory/?select=maria-santos");
+    expect(screen.getByRole("link", { name: "Go to the LAGDA Notary Directory" }))
+      .toHaveAttribute("href", "/enotary-directory/?select=maria-santos");
+  });
+
+  it("keeps the directory as the way back through onboarding", () => {
+    mockPlatform = { sessionStatus: "authenticated", workspaceStatus: "empty" };
+    renderAt(`/sign-in?returnTo=${encodeURIComponent("/enotary-directory/")}`);
+    expect(screen.getByText("ONBOARDING_PROFILE")).toBeTruthy();
+    expect(setReturnTo).toHaveBeenCalledWith("/enotary-directory/");
+    expect(replace).not.toHaveBeenCalled();
+  });
+
+  it("does not honour anything else outside /app", () => {
+    mockPlatform = { sessionStatus: "authenticated", workspaceStatus: "ready" };
+    renderAt(`/sign-in?returnTo=${encodeURIComponent("/enotary-directory/?select=x&next=//evil.example")}`);
+    expect(screen.getByText("APP_DASHBOARD")).toBeTruthy();
+    expect(replace).not.toHaveBeenCalled();
   });
 });

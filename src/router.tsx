@@ -471,12 +471,8 @@ const Accessibility = lazy(() =>
   })),
 );
 
-// eNotary family (all pages labeled Coming Soon)
-const EnotaryOverview = lazy(() =>
-  import("./app/pages/public/enotary/EnotaryOverview").then((m) => ({
-    default: m.EnotaryOverview,
-  })),
-);
+// eNotary family (all pages labeled Coming Soon). /enotary itself hands over
+// to the static Notary Directory at /enotary-directory/ (a full page load).
 const FutureCapabilities = lazy(() =>
   import("./app/pages/public/enotary/FutureCapabilities").then((m) => ({
     default: m.FutureCapabilities,
@@ -3114,7 +3110,7 @@ export const router = createBrowserRouter([
       { path: "service-status", element: <ServiceStatus /> },
 
       // ── eNotary pages (Coming Soon — not accredited) ──────────────────────
-      { path: "enotary", element: <EnotaryOverview /> },
+      { path: "enotary", element: <FullPageRedirect to={ENOTARY_DIRECTORY_PATH} label="Go to the LAGDA Notary Directory" /> },
       { path: "enotary/future-capabilities", element: <FutureCapabilities /> },
       {
         path: "enotary/accreditation-roadmap",

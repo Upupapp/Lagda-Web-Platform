@@ -291,6 +291,7 @@ export const PUBLIC_ROUTES: RouteMeta[] = [
 
   // eNotary section — COMING SOON, not yet accredited
   {
+    // Hands over to the static Notary Directory at /enotary-directory/.
     path: "/enotary",
     title: "LAGDA eNotary — Coming Soon",
     description: "LAGDA eNotary is Coming Soon and Subject to Supreme Court Accreditation and applicable rules.",

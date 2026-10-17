@@ -4,6 +4,7 @@ import {
   EnotarySection,
 } from "../../../components/enotary/EnotaryComponents";
 import { ENOTARY_DISCLAIMER } from "./content";
+import { ENOTARY_DIRECTORY_PATH } from "../../../config/enotary-directory";
 import { Link } from "react-router";
 import { USE_REAL_BACKEND } from "../../../services/backend-flag";
 import { publicInquiriesService, inquiryErrorMessage } from "../../../services/real/public-inquiries.service";
@@ -129,7 +130,7 @@ export function EnotaryWaitlist() {
               </p>
             </div>
             <div style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap" }}>
-              <Link to="/enotary" style={{ background: BURGUNDY, color: "white", ...GF, fontSize: 14, fontWeight: 700, padding: "11px 22px", borderRadius: 7, textDecoration: "none" }}>Back to eNotary</Link>
+              <a href={ENOTARY_DIRECTORY_PATH} style={{ background: BURGUNDY, color: "white", ...GF, fontSize: 14, fontWeight: 700, padding: "11px 22px", borderRadius: 7, textDecoration: "none" }}>Notary Directory</a>
               <Link to="/enotary/faq" style={{ background: "#ffffff", color: "#07111F", ...GF, fontSize: 14, fontWeight: 600, padding: "11px 22px", borderRadius: 7, textDecoration: "none", border: "1px solid rgba(0,0,0,0.14)" }}>eNotary FAQ</Link>
             </div>
           </div>

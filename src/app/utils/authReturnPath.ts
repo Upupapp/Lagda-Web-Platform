@@ -21,13 +21,45 @@ export function isCredentialReturnPath(path: string): boolean {
   return JOIN_RETURN.test(path) || INVITATION_RETURN.test(path);
 }
 
+// The static Notary Directory (config/enotary-directory), the one way back
+// that is not a page of this app: its own address, optionally with the notary
+// a visitor chose (`?select=<id>`, lowercase letters, digits and hyphens).
+// Matched exactly, so nothing else outside /app can ride on it.
+const DIRECTORY_RETURN = /^\/enotary-directory\/(?:\?select=[a-z0-9-]{1,80})?$/;
+
+/**
+ * Whether a (sanitized) return path is a static page outside the React
+ * router, which must be reached with a full page load. Only the Notary
+ * Directory is.
+ */
+export function isFullLoadReturnPath(path: string): boolean {
+  return DIRECTORY_RETURN.test(path);
+}
+
+/**
+ * Continues to a sanitized return path: a full page load for the static
+ * Notary Directory, the router's own navigation for everything else.
+ */
+export function continueToReturnPath(
+  path: string,
+  navigate: (to: string, options?: { replace?: boolean; state?: unknown }) => unknown,
+  options?: { replace?: boolean; state?: unknown },
+): void {
+  if (isFullLoadReturnPath(path)) {
+    window.location.assign(path);
+    return;
+  }
+  void navigate(path, options);
+}
+
 /** Validates a `returnTo`/`redirect` query value. Only /app paths (and the
- *  two credential pages above) are safe. */
+ *  two credential pages and the Notary Directory above) are safe. */
 export function sanitizeAppReturnTo(raw: string | null | undefined): string {
   if (!raw) return DEFAULT_RETURN_PATH;
   try {
     const decoded = decodeURIComponent(raw);
     if (isCredentialReturnPath(decoded)) return decoded;
+    if (isFullLoadReturnPath(decoded)) return decoded;
     return decoded.startsWith("/app") ? decoded : DEFAULT_RETURN_PATH;
   } catch {
     return DEFAULT_RETURN_PATH;

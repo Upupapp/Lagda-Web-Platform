@@ -2,6 +2,8 @@
 // All path-based navigation derives from these definitions.
 // PublicHeader and MobileDrawer read TOP_NAV; PublicFooter reads FOOTER_COLUMNS.
 
+import { ENOTARY_DIRECTORY_PATH } from "./enotary-directory";
+
 export interface NavItem {
   label: string;
   path: string;
@@ -123,16 +125,17 @@ export const TOP_NAV: NavSection[] = [
   {
     id: "enotary",
     label: "eNotary",
-    path: "/enotary",
+    // The static Notary Directory (config/enotary-directory): a full page load.
+    path: ENOTARY_DIRECTORY_PATH,
     matchPrefix: "/enotary",
     badge: "Coming Soon",
     isComingSoon: true,
     accent: "burgundy",
     menuTitle: "LAGDA eNotary",
     menuDescription: "Future electronic notarization — subject to Supreme Court accreditation.",
-    menuCtaLabel: "Join Waitlist",
+    menuCtaLabel: "Browse the Notary Directory",
     items: [
-      { label: "Overview",              path: "/enotary",                        description: "The future eNotary layer for Philippine legal documents.",  isComingSoon: true },
+      { label: "Notary Directory",      path: ENOTARY_DIRECTORY_PATH,            description: "Browse notaries public and register your interest. Sessions are not open yet." },
       { label: "Future Capabilities",   path: "/enotary/future-capabilities",    description: "Secure video, electronic notarial book, digital seals.",    isComingSoon: true },
       { label: "Accreditation Roadmap", path: "/enotary/accreditation-roadmap",  description: "Milestones toward Supreme Court accreditation.",            isComingSoon: true },
       { label: "Waitlist",              path: "/enotary/waitlist",               description: "Register interest for LAGDA eNotary when available.",       isComingSoon: true },
@@ -203,7 +206,7 @@ export const FOOTER_COLUMNS: FooterColumn[] = [
     heading: "eNotary",
     isComingSoon: true,
     links: [
-      { label: "Overview",       path: "/enotary",          isComingSoon: true },
+      { label: "Notary Directory", path: ENOTARY_DIRECTORY_PATH },
       { label: "Roadmap",        path: "/enotary/accreditation-roadmap",  isComingSoon: true },
       { label: "Join Waitlist",  path: "/enotary/waitlist", isComingSoon: true },
       { label: "FAQ",            path: "/enotary/faq",      isComingSoon: true },

@@ -6,6 +6,7 @@ import {
 } from "lucide-react";
 import { ENOTARY_SUBNAV, ENOTARY_DISCLAIMER } from "../../pages/public/enotary/content";
 import { SectionTabs } from "../public/SectionTabs";
+import { ENOTARY_DIRECTORY_PATH } from "../../config/enotary-directory";
 import { PublicSection } from "../public/PublicKit";
 import type { PublicSectionProps } from "../public/PublicKit";
 
@@ -17,7 +18,7 @@ const SOFT_BURGUNDY = "rgba(103,2,59,0.06)";
 // ── SubNav ──────────────────────────────────────────────────────────────────
 
 const ENOTARY_ICONS: Record<string, LucideIcon> = {
-  "/enotary": LayoutDashboard,
+  [ENOTARY_DIRECTORY_PATH]: LayoutDashboard,
   "/enotary/future-capabilities": Sparkles,
   "/enotary/accreditation-roadmap": Milestone,
   "/enotary/waitlist": ClipboardList,
@@ -35,9 +36,7 @@ export function EnotarySubNav() {
         label,
         to: path,
         icon: ENOTARY_ICONS[path] ?? Stamp,
-        active: path === "/enotary"
-          ? location.pathname === "/enotary"
-          : location.pathname.startsWith(path),
+        active: location.pathname.startsWith(path),
       }))}
     />
   );

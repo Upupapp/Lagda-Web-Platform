@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "react-router";
+import { isStaticSitePath } from "../../config/enotary-directory";
 import lagdaHeaderLogo from "../../../brand elements/svg/LagdaLogoPrimaryHorizontalFullColor_Header.svg";
 import { TOP_NAV } from "@/app/config/nav.config";
 import { haptic } from "@/app/utils/haptic";
@@ -331,6 +332,7 @@ function MobileDrawer({ onClose }: { onClose: () => void }) {
                       <Link
                         key={item.label}
                         to={item.path}
+                        reloadDocument={isStaticSitePath(item.path)}
                         onClick={() => {
                           haptic("selection");
                           onClose();
@@ -382,6 +384,7 @@ function MobileDrawer({ onClose }: { onClose: () => void }) {
                     {/* Section CTA */}
                     <Link
                       to={nav.path}
+                      reloadDocument={isStaticSitePath(nav.path)}
                       onClick={() => {
                         haptic("light");
                         onClose();
@@ -597,6 +600,8 @@ export function PublicHeader() {
                     <li key={nav.id}>
                       <Link
                         to={nav.path}
+                        // The eNotary tab leads to the static Notary Directory: a full page load.
+                        reloadDocument={isStaticSitePath(nav.path)}
                         aria-current={isActive ? "page" : undefined}
                         className="phdr-navbtn"
                         data-active={isActive ? "true" : "false"}

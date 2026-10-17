@@ -511,6 +511,39 @@ describe("/app/settings/identity/return", () => {
     expect(screen.queryByTestId("elsewhere")).toBeNull();
   });
 
+  // The Notary Directory (a static page) starts the same check and marks the
+  // tab before it leaves: the way back is then to the directory, in full.
+  it.each(["authenticated", "unauthenticated", "initializing"])(
+    "offers the way back to the Notary Directory where the directory started the check (%s)",
+    (status) => {
+      platform.sessionStatus = status;
+      window.sessionStorage.setItem("lagda-directory-check", JSON.stringify({ at: Date.now() }));
+      try {
+        arriveBack();
+        expect(window.location.search).toBe("");
+        const back = screen.getByRole("link", { name: "Back to the Notary Directory" });
+        expect(back).toHaveAttribute("href", "/enotary-directory/");
+        expect(screen.queryByTestId("elsewhere")).toBeNull();
+        expect(document.body.textContent ?? "").not.toMatch(/vs_SECRET123|Approved/);
+        // The mark is the directory's own: left for it to read.
+        expect(window.sessionStorage.getItem("lagda-directory-check")).not.toBeNull();
+      } finally {
+        window.sessionStorage.removeItem("lagda-directory-check");
+      }
+    },
+  );
+
+  it("routes on as usual, with no directory button, where no directory mark is kept", () => {
+    window.sessionStorage.setItem("lagda-directory-check", "null");
+    try {
+      arriveBack();
+      expect(screen.queryByRole("link", { name: "Back to the Notary Directory" })).toBeNull();
+      expect(screen.getByTestId("elsewhere").textContent ?? "").toBe("identity|/app/settings/identity|true");
+    } finally {
+      window.sessionStorage.removeItem("lagda-directory-check");
+    }
+  });
+
   it("is a signed-in app route that is not indexed", () => {
     expect(getRouteMeta("/app/settings/identity/return")).toMatchObject({ requiresAuth: true, isPublic: false, isIndexable: false });
     expect(getRouteMeta("/app/settings/identity")).toMatchObject({ requiresAuth: true, isIndexable: false });

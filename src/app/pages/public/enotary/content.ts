@@ -3,8 +3,11 @@
 // Burgundy (#67023B) is the controlled future-product accent for eNotary.
 // No purchase actions, no active notary roles, no accreditation claims.
 
+import { ENOTARY_DIRECTORY_PATH } from "../../../config/enotary-directory";
+
 export const ENOTARY_SUBNAV = [
-  { label: "Overview",             path: "/enotary"                      },
+  // The overview is now the static Notary Directory (a full page load).
+  { label: "Notary Directory",     path: ENOTARY_DIRECTORY_PATH          },
   { label: "Future Capabilities",  path: "/enotary/future-capabilities"  },
   { label: "Accreditation Roadmap",path: "/enotary/accreditation-roadmap"},
   { label: "Waitlist",             path: "/enotary/waitlist"             },
@@ -30,6 +33,11 @@ export const ENOTARY_FAQ_GROUPS = [
         id: "is-it-available",
         q: "Is the service available now?",
         a: "No. LAGDA eNotary is not currently available. It is Coming Soon and Subject to Supreme Court Accreditation and applicable rules. No notarial acts can be performed through LAGDA at this time.",
+      },
+      {
+        id: "notary-directory",
+        q: "What is the Notary Directory?",
+        a: "The LAGDA Notary Directory lets you browse notaries public and register your interest. eNotary sessions are not open yet: no notarial acts can be performed through LAGDA at this time. LAGDA eNotary is Coming Soon and Subject to Supreme Court Accreditation and applicable rules.",
       },
       {
         id: "is-lagda-accredited",

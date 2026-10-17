@@ -15,6 +15,7 @@ import { useNavigate } from "react-router";
 import { useOnboarding } from "../../context/OnboardingContext";
 import { usePlatform } from "../../context/PlatformContext";
 import { USE_REAL_BACKEND } from "../../services/backend-flag";
+import { continueToReturnPath } from "../../utils/authReturnPath";
 import lagdaHeaderLogo from "../../../brand elements/svg/LagdaLogoPrimaryHorizontalFullColor_Header.svg";
 
 const GF = { fontFamily: "'Geist', sans-serif" };
@@ -77,7 +78,8 @@ export function OnboardingComplete() {
     }
 
     reset(); // clear onboarding state
-    void navigate(destination, { replace: true });
+    // The static Notary Directory (a sign-in started there) is a full page load.
+    continueToReturnPath(destination, navigate, { replace: true });
   }
 
   return (
