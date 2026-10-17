@@ -845,3 +845,8 @@ body.handoff .menu-btn, body.handoff .foot, body.handoff #demo, body.handoff .fl
 @media (max-width: 860px) { .ho-grid { grid-template-columns: minmax(0, 1fr); } .ho-code { justify-self: center; width: min(100%, 280px); } }
 @media (max-width: 640px) { .ho-link > div { grid-template-columns: minmax(0, 1fr); } .ho .btn { width: 100%; min-height: 48px; } .ho h4 { font-size: 18.500px; } }
 @media (prefers-reduced-motion: reduce) { .spin { animation: none; border-top-color: var(--sky); opacity: .600; } }
+
+/* Request this notary: the optional email of the notary. */
+.req-email { margin-top: 18px; } .req-email label { display: block; margin-bottom: 6px; color: var(--ink); font-size: 14.500px; }
+.req-email input { width: 100%; box-sizing: border-box; min-height: 48px; padding: 10px 14px; border: 1px solid #B9C6D4; border-radius: 6px; background: #fff; color: var(--ink); font: inherit; font-size: 16px; }
+.req-email input:focus-visible { outline: 2px solid var(--sky); outline-offset: 2px; }

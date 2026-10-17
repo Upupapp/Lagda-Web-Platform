@@ -419,7 +419,10 @@
   //   2. the account's identity verification, where LAGDA offers it (GET /api/me/identity; a 404 means it is not
   //      offered, and the step is skipped). The check itself is the partner's page, opened in a new tab as the web app
   //      does it (src/app/components/identity/provider-session.ts), or in this tab on a phone;
-  //   3. the interest is registered through LAGDA's public inquiry form (POST /api/public/inquiries, kind "waitlist").
+  //   3. where LAGDA offers requests to notaries (GET /api/me/enotary/invitations answers 200), the last step is "Request this notary":
+  //      POST /api/me/enotary/invitations, then the person is taken to the request's page in the app (/app/enotary/requests/<id>),
+  //      where the private link and QR code for the notary are. Where that answers 404 the step is what it was: the interest is
+  //      registered through LAGDA's public inquiry form (POST /api/public/inquiries, kind "waitlist").
   var CI = {
     check: '<svg viewBox="0 0 24 24"><path d="m5 12 5 5 9-10"/></svg>',
     lock: '<svg viewBox="0 0 24 24"><rect x="5" y="10" width="14" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>',
@@ -432,6 +435,7 @@
   var ME; // undefined: not asked yet; null: not signed in; { name, email }: signed in
   var SEL = null; // { lawyer, step: "identity" | "interest" | "done", idv: phase, outcome: "yes" | "no" | "not offered", error, busy }
   var poll = null, pollEvery = 0, pollUntil = 0, asking = false;
+  var INV; // undefined: not asked yet; null: requests to notaries are not offered (the waitlist step); { list, needsIdentity }: offered
 
   function store(key, value) { try { if (value === null) sessionStorage.removeItem(key); else sessionStorage.setItem(key, JSON.stringify(value)); } catch (err) { /* this visit only */ } }
   function stored(key) { try { return JSON.parse(sessionStorage.getItem(key) || "null"); } catch (err) { return null; } }
@@ -463,6 +467,23 @@
     return "/sign-in?returnTo=" + encodeURIComponent(back);
   }
   function done() { return stored(DONE) || []; }
+  /** Whether LAGDA offers requests to notaries: asked once, after the identity step. 404 (or anything unreadable) keeps the waitlist step. */
+  function probeRequests() {
+    if (INV !== undefined) return Promise.resolve(INV);
+    return api("GET", "/me/enotary/invitations").then(function (r) {
+      if (r.ok && r.data && Array.isArray(r.data.invitations)) INV = { list: r.data.invitations, needsIdentity: false };
+      else if (r.status === 403 && r.code === "client_identity_required") INV = { list: [], needsIdentity: true };
+      else if (r.status === 401) return undefined; // signed out meanwhile: ask again after signing in
+      else INV = null;
+      return INV;
+    });
+  }
+  function openRequestFor(id) {
+    var list = INV && INV.list || [];
+    for (var i = 0; i < list.length; i++) { var q = list[i]; if (q && q.notary && q.notary.directoryId === id && (q.status === "awaiting" || q.status === "claimed")) return q; }
+    return null;
+  }
+  function requestPath(id) { return "/app/enotary/requests/" + encodeURIComponent(id); }
   function plainError(r) {
     if (r.status === 0) return "Could not reach LAGDA. Check your connection and try again.";
     if (r.status === 401) return "Your LAGDA session has ended. Sign in again to continue.";
@@ -472,10 +493,11 @@
     return "That could not be done right now. Please try again.";
   }
 
+  function stepList() { return INV ? STEPS.slice(0, 3).concat([["Request this notary", "Link and QR code"]]) : STEPS; }
   function flowTop(head, sub, at) {
-    var n = STEPS.length;
+    var STEPS = stepList(), n = STEPS.length;
     return '<section class="flow-top"><svg class="flow-wave" viewBox="0 0 1840 300" preserveAspectRatio="none" aria-hidden="true"><path d="M1180 300C1420 250 1640 160 1880 40v260z" fill="#A9D2F3" opacity=".500"/><path d="M1320 300c200-30 380-90 560-190v190z" fill="#F4B6C6" opacity=".550"/><path d="M-40 300C180 220 380 230 560 300z" fill="#C5E0F6" opacity=".700"/></svg>' +
-      '<div class="flow-top-in"><p class="hero-eyebrow">eNotary interest <i>•</i> ' + esc(title(SEL.lawyer)) + '</p><h1 tabindex="-1" id="flow-h">' + head + "</h1><p>" + sub + "</p>" +
+      '<div class="flow-top-in"><p class="hero-eyebrow">' + (INV ? "eNotary request" : "eNotary interest") + ' <i>•</i> ' + esc(title(SEL.lawyer)) + '</p><h1 tabindex="-1" id="flow-h">' + head + "</h1><p>" + sub + "</p>" +
       '<ol class="flow-steps four" aria-label="Steps">' + STEPS.map(function (st, k) { return '<li class="' + (k < at ? "done" : k === at ? "now" : "") + '"' + (k === at ? ' aria-current="step"' : "") + "><span>" + (k < at ? CI.check : k + 1) + "</span><div><b>" + st[0] + "</b><small>" + st[1] + "</small></div></li>"; }).join("") + "</ol>" +
       '<p class="flow-now" aria-hidden="true">' + (at < n ? "Step " + (at + 1) + " of " + n + " <i>·</i> <b>" + STEPS[at][0] + "</b>" : "All " + n + " steps complete") + "</p></div></section>";
   }
@@ -496,6 +518,29 @@
       body = '<h3 id="step-h" tabindex="-1">' + PI.shield + 'Interest registered</h3><div class="idv-res ok" role="status">' + CI.check + "<div><b>Your interest in " + name + " is saved.</b><p>Online notarial sessions are not open yet; we'll email " + esc(ME ? ME.email : "you") + " when you can book.</p></div></div>" +
         '<p class="fine left">Nothing was booked, and nothing was charged.</p>';
       bar = '<button type="button" class="btn outline" data-go="market">Browse other notaries</button><a class="btn big" href="/app/dashboard">Back to LAGDA</a>';
+    } else if (SEL.step === "interest" && INV === undefined) {
+      at = 3; head = "One moment"; sub = "Checking what LAGDA offers for this notary.";
+      body = '<h3 id="step-h" tabindex="-1">' + CI.mail + '</h3><p class="ho-status" role="status"><i class="spin" aria-hidden="true"></i><span>Checking your account…</span></p>';
+      var asked = SEL; probeRequests().then(function () { if (SEL === asked && asked.step === "interest") redraw(false); });
+    } else if (SEL.step === "interest" && INV) {
+      at = 3; head = "Request this notary"; sub = "Ask " + name + " to take your request. Online notarial sessions are not currently available: LAGDA eNotary is subject to Supreme Court accreditation.";
+      var open = openRequestFor(l.id);
+      if (INV.needsIdentity) {
+        body = '<h3 id="step-h" tabindex="-1">' + PI.shield + 'Verify your identity first</h3><div class="idv-res note" role="status"><span aria-hidden="true">i</span><div><b>Your identity is not verified yet</b><p>A request to a notary needs your LAGDA account to show as verified. It takes about two minutes.</p></div></div>';
+        bar = '<button type="button" class="btn outline" data-go="market">Browse other notaries</button><button type="button" class="btn big" data-idv-retry data-back-to-identity>Verify my identity</button>';
+      } else if (open) {
+        body = '<h3 id="step-h" tabindex="-1">' + CI.mail + 'You already asked this notary</h3><div class="idv-res ok" role="status">' + CI.check + "<div><b>Your request to " + name + " is open.</b><p>Its link, QR code and the time it has left are on its page.</p></div></div>";
+        bar = '<button type="button" class="btn outline" data-go="market">Browse other notaries</button><a class="btn big" href="' + requestPath(open.id) + '">Open your request</a>';
+      } else {
+        body = '<h3 id="step-h" tabindex="-1">' + CI.mail + "Request this notary</h3>" +
+          '<p class="lead">LAGDA gives you a private link and a QR code, good for a limited time, to give to the notary. The notary signs in to LAGDA and passes an ID and face check before they can answer your request.</p>' +
+          '<dl class="summary"><div><dt>Notary</dt><dd>' + name + (l.kind === "office" ? "" : ", " + esc(l.firm)) + "<br>" + esc(l.city + ", " + l.province) + "</dd></div>" +
+            "<div><dt>Your name</dt><dd>" + esc(ME.name) + "</dd></div><div><dt>Identity verified in LAGDA</dt><dd>Yes</dd></div></dl>" +
+          '<div class="req-email"><label for="req-email"><b>The notary\'s email (optional)</b></label><input id="req-email" type="email" autocomplete="off" inputmode="email" maxlength="254" value="' + esc(SEL.email || "") + '"><p class="fine left">If you know the notary\'s email address, add it. It is kept with the request. Leave it empty if you do not.</p></div>' +
+          '<p class="fine left">Nothing is booked, paid or notarized by this step. Online notarial sessions are not currently available.</p>' +
+          (SEL.error ? '<p class="err-box" role="alert" id="step-err" tabindex="-1">' + esc(SEL.error) + "</p>" : "");
+        bar = '<button type="button" class="btn outline" data-go="market">Browse other notaries</button><button type="button" class="btn big" data-request' + (SEL.busy ? " disabled" : "") + ">" + (SEL.busy ? "Sending…" : "Request this notary") + "</button>";
+      }
     } else if (SEL.step === "interest") {
       at = 3; head = "Register your interest"; sub = "Online notarial sessions are not open yet. Choose to be told by email when you can book with " + name + ".";
       body = '<h3 id="step-h" tabindex="-1">' + CI.mail + "Register your interest</h3>" +
@@ -547,7 +592,7 @@
         bar = '<button type="button" class="btn big" data-idv-reload>Try again</button>';
       }
     }
-    var state = SEL.step === "done" ? ["in", "Interest registered"] : SEL.step === "interest" ? ["wait", "Interest not saved yet"] : ["wait", "Selected"];
+    var state = SEL.step === "done" ? ["in", "Interest registered"] : SEL.step === "interest" ? ["wait", INV ? "Not requested yet" : "Interest not saved yet"] : ["wait", "Selected"];
     view.innerHTML = flowTop(head, sub, at) + '<div class="wrap flow"><div class="flow-grid">' + lawyerCard(l, state[0], state[1]) +
       '<section class="flow-card idv" aria-labelledby="step-h">' + body + (bar ? '<div class="actions bar">' + bar + "</div>" : "") + "</section></div></div>";
     barHeight();
@@ -564,6 +609,8 @@
     SEL = { lawyer: l, step: done().indexOf(id) >= 0 ? "done" : "identity", idv: "loading", outcome: "", agree: false, error: "", busy: false };
     closeProfile(); go("flow");
     if (SEL.step === "identity") readIdentity();
+    // Interest registered before, but LAGDA now takes requests to notaries: the person can ask this notary now.
+    else probeRequests().then(function (inv) { if (inv && SEL && SEL.step === "done") { SEL.step = "identity"; readIdentity(); } });
   }
   function readIdentity() {
     var sel = SEL; sel.idv = "loading"; sel.error = ""; redraw(false);
@@ -633,6 +680,36 @@
   window.addEventListener("focus", function () { if (SEL && poll) ask(); });
   window.addEventListener("pageshow", function (e) { if (e.persisted && SEL && SEL.step === "identity" && ME) readIdentity(); });
 
+  /** Sends the request, then the person goes to its page in the app, where the link and QR code are. */
+  function request(withEmail) {
+    var sel = SEL, l = sel && sel.lawyer; if (!sel || sel.busy) return;
+    var email = withEmail === false ? "" : String(sel.email || "").trim();
+    sel.busy = true; sel.error = ""; redraw(false);
+    var body = { directoryId: l.id }; if (email) body.notaryEmail = email;
+    api("POST", "/me/enotary/invitations", body).then(function (r) {
+      if (SEL !== sel) return;
+      var inv = r.ok && r.data ? r.data.invitation || r.data : null;
+      if (inv && inv.id) { store(PENDING, null); location.assign(requestPath(inv.id)); return; }
+      sel.busy = false;
+      if (r.status === 422 && r.code === "notary_email_not_allowed") { request(false); return; } // LAGDA already has a way to reach this notary
+      if (r.status === 409 && r.code === "enotary_invitation_open") {
+        // Already asked: go to that request (the answer may carry its id; otherwise find it in the list).
+        var id = r.data && r.data.error && (r.data.error.invitationId || r.data.error.id);
+        if (id) { location.assign(requestPath(id)); return; }
+        INV = undefined;
+        probeRequests().then(function () { var q = openRequestFor(l.id); if (q) location.assign(requestPath(q.id)); else { sel.error = "You already have an open request for this notary."; redraw(false); landed(); } });
+        return;
+      }
+      if (r.status === 409 && r.code === "enotary_invitation_limit") sel.error = "You already have 3 open requests. Cancel one, or wait for it to end, then try again.";
+      else if (r.status === 403 && r.code === "client_identity_required") { INV = { list: INV ? INV.list : [], needsIdentity: true }; sel.error = ""; }
+      else if (r.status === 404 && r.code === "enotary_notary_not_listed") sel.error = "That notary is not listed in the Notary Directory.";
+      else if (r.status === 404) { INV = null; sel.error = ""; } // switched off meanwhile: the waitlist step
+      else if (r.status === 401) { ME = null; sel.step = "identity"; sel.idv = "ended"; sel.error = ""; }
+      else sel.error = plainError(r);
+      redraw(false); landed();
+    });
+  }
+
   function register() {
     var sel = SEL, l = sel.lawyer; if (sel.busy || !sel.agree) return;
     sel.busy = true; sel.error = ""; redraw(false);
@@ -659,6 +736,8 @@
     document.getElementById("menu").innerHTML =
       row('href="#" data-go="market"', '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.500"/><path d="m16 16 4.500 4.500"/></svg>', "Find a notary", "Notary Directory: browse lawyers and law offices", NOW === "market") +
       (SEL ? row('href="#" data-go="flow"', '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg>', "Your choice", esc(title(SEL.lawyer)), NOW === "flow") : "") +
+      (ME ? row('href="/app/enotary/requests"', '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h10"/></svg>', "Your requests", "Notaries you have asked, and where each stands", false) +
+        row('href="/app/enotary/apply"', '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 4 7v5c0 4.500 3.400 8 8 9 4.600-1 8-4.500 8-9V7z"/><path d="m9 12 2 2 4-4"/></svg>', "Become a notary", "Notaries public: apply to receive requests", false) : "") +
       '<span class="menu-rule" aria-hidden="true"></span>' +
       row('href="' + (ME ? "/app/dashboard" : "/") + '" class="back"', '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 6 4 12l6 6M4 12h16"/></svg>', "Back to LAGDA", ME ? "Return to your LAGDA workspace" : "Return to lagda.io", false);
   }
@@ -693,7 +772,7 @@
   }
 
   document.addEventListener("click", function (e) {
-    var t = e.target.closest("[data-go],[data-open],[data-select],[data-close],[data-city],[data-province],[data-page],[data-clear],[data-step],[data-idv-start],[data-idv-ask],[data-idv-retry],[data-idv-reload],[data-register],#clear,#place-clear,#veil");
+    var t = e.target.closest("[data-go],[data-open],[data-select],[data-close],[data-city],[data-province],[data-page],[data-clear],[data-step],[data-idv-start],[data-idv-ask],[data-idv-retry],[data-idv-reload],[data-register],[data-request],#clear,#place-clear,#veil");
     if (!t) return;
     if (t.id === "veil") { if (e.target === t) closeProfile(); return; }
     if (t.hasAttribute("data-go")) { e.preventDefault(); go(t.getAttribute("data-go")); }
@@ -709,9 +788,10 @@
     else if (t.hasAttribute("data-step")) { if (t.hasAttribute("data-outcome")) SEL.outcome = t.getAttribute("data-outcome"); SEL.step = t.getAttribute("data-step"); SEL.error = ""; store(CHECK, null); redraw(true); }
     else if (t.hasAttribute("data-idv-start")) { if (SEL.agree) startCheck(); }
     else if (t.hasAttribute("data-idv-ask")) ask();
-    else if (t.hasAttribute("data-idv-retry")) { SEL.idv = "consent"; SEL.error = ""; store(CHECK, null); redraw(true); }
+    else if (t.hasAttribute("data-idv-retry")) { if (t.hasAttribute("data-back-to-identity")) { SEL.step = "identity"; INV = undefined; } SEL.idv = "consent"; SEL.error = ""; store(CHECK, null); redraw(true); }
     else if (t.hasAttribute("data-idv-reload")) readIdentity();
     else if (t.hasAttribute("data-register")) register();
+    else if (t.hasAttribute("data-request")) request();
   });
   document.addEventListener("change", function (e) {
     var id = e.target.id;
@@ -729,7 +809,7 @@
     if (id === "f-sort" || id === "f-area" || id === "f-firm" || id === "f-position") list(); else { market(); keepPlace(); }
   });
   var typing;
-  document.addEventListener("input", function (e) { if (e.target.id !== "f-q") return; F.q = e.target.value; F.page = 0; clearTimeout(typing); typing = setTimeout(list, 160); });
+  document.addEventListener("input", function (e) { if (e.target.id === "req-email") { if (SEL) SEL.email = e.target.value; return; } if (e.target.id !== "f-q") return; F.q = e.target.value; F.page = 0; clearTimeout(typing); typing = setTimeout(list, 160); });
   document.addEventListener("keydown", function (e) {
     var at = e.target.closest ? e.target : document.body, modal = document.getElementById("modal-root").firstElementChild;
     if (MENU) {
