@@ -1035,6 +1035,43 @@ const EnotaryAccessPage = lazy(() =>
     default: m.EnotaryAccessPage,
   })),
 );
+// Notary on-ramp (phase 1): a client's requests to notaries, the notary's
+// landing page, application and desk, and the LAGDA reviewers' pages.
+const ClientRequestsPage = lazy(() =>
+  import("./app/pages/platform/enotary/requests/ClientRequestsPage").then((m) => ({
+    default: m.ClientRequestsPage,
+  })),
+);
+const ClientRequestPage = lazy(() =>
+  import("./app/pages/platform/enotary/requests/ClientRequestPage").then((m) => ({
+    default: m.ClientRequestPage,
+  })),
+);
+const NotaryApplyPage = lazy(() =>
+  import("./app/pages/platform/enotary/notary/NotaryApplyPage").then((m) => ({
+    default: m.NotaryApplyPage,
+  })),
+);
+const NotaryDeskPage = lazy(() =>
+  import("./app/pages/platform/enotary/notary/NotaryDeskPage").then((m) => ({
+    default: m.NotaryDeskPage,
+  })),
+);
+const AdminNotaryApplicationsPage = lazy(() =>
+  import("./app/pages/platform/enotary/admin/AdminNotaryApplicationsPage").then((m) => ({
+    default: m.AdminNotaryApplicationsPage,
+  })),
+);
+const AdminNotaryApplicationPage = lazy(() =>
+  import("./app/pages/platform/enotary/admin/AdminNotaryApplicationPage").then((m) => ({
+    default: m.AdminNotaryApplicationPage,
+  })),
+);
+const NotaryInvitePage = lazy(() =>
+  import("./app/pages/public/enotary/NotaryInvitePage").then((m) => ({
+    default: m.NotaryInvitePage,
+  })),
+);
 const EnotarySessionPage = lazy(() =>
   import("./app/pages/platform/enotary/EnotarySessionPage").then((m) => ({
     default: m.EnotarySessionPage,
@@ -1496,6 +1533,20 @@ export const router = createBrowserRouter([
       <Suspense fallback={null}>
         <JoinWorkspace />
       </Suspense>
+    ),
+  },
+  // A notary opens the link or QR code a client gave them. Public: the page
+  // itself sends a signed-out visitor through sign-in and back (the return
+  // address is accepted exactly, see utils/authReturnPath).
+  {
+    path: "/enotary/invite/:token",
+    errorElement: <PublicRouteError />,
+    element: (
+      <PageMetaRoute>
+        <Suspense fallback={null}>
+          <NotaryInvitePage />
+        </Suspense>
+      </PageMetaRoute>
     ),
   },
   {
@@ -2762,6 +2813,14 @@ export const router = createBrowserRouter([
       { path: "enotary", element: <FullPageRedirect to={ENOTARY_DIRECTORY_PATH} label="Go to the LAGDA Notary Directory" /> },
       { path: "enotary/access", element: <Suspense fallback={null}><EnotaryAccessPage /></Suspense> },
       { path: "enotary/session", element: <Suspense fallback={null}><EnotarySessionPage /></Suspense> },
+      // Notary on-ramp (phase 1). Each page asks the server whether it is
+      // offered and says "not available" on a 404.
+      { path: "enotary/requests", element: <Suspense fallback={null}><ClientRequestsPage /></Suspense> },
+      { path: "enotary/requests/:id", element: <Suspense fallback={null}><ClientRequestPage /></Suspense> },
+      { path: "enotary/apply", element: <Suspense fallback={null}><NotaryApplyPage /></Suspense> },
+      { path: "enotary/desk", element: <Suspense fallback={null}><NotaryDeskPage /></Suspense> },
+      { path: "admin/notary-applications", element: <Suspense fallback={null}><AdminNotaryApplicationsPage /></Suspense> },
+      { path: "admin/notary-applications/:userId", element: <Suspense fallback={null}><AdminNotaryApplicationPage /></Suspense> },
 
       // Permission / session error states
       {
