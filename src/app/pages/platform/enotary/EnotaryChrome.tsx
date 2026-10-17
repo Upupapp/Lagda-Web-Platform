@@ -41,7 +41,7 @@ const STYLES = `
 `;
 
 /** The scalloped "LAGDA IO CERTIFIED" seal. Decoration: said to nobody. */
-export function EnotarySeal({ className }: { className?: string }) {
+export function EnotarySeal({ className, idPrefix = "eno-seal" }: { className?: string; idPrefix?: string }) {
   const scallops = Array.from({ length: 22 }, (_, i) => {
     const angle = (i / 22) * Math.PI * 2;
     return <circle key={i} cx={80 + Math.cos(angle) * 64} cy={80 + Math.sin(angle) * 64} r={10.5} fill="#8C1D3F" />;
@@ -49,17 +49,17 @@ export function EnotarySeal({ className }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 160 160" aria-hidden="true" focusable="false">
       <defs>
-        <radialGradient id="eno-seal-fill" cx="40%" cy="32%" r="80%">
+        <radialGradient id={`${idPrefix}-fill`} cx="40%" cy="32%" r="80%">
           <stop offset="0%" stopColor="#B0182B" /><stop offset="100%" stopColor="#6F1632" />
         </radialGradient>
-        <path id="eno-seal-arc" d="M 80 80 m -47 0 a 47 47 0 1 1 94 0" />
+        <path id={`${idPrefix}-arc`} d="M 80 80 m -47 0 a 47 47 0 1 1 94 0" />
       </defs>
       {scallops}
-      <circle cx="80" cy="80" r="66" fill="url(#eno-seal-fill)" />
+      <circle cx="80" cy="80" r="66" fill={`url(#${idPrefix}-fill)`} />
       <circle cx="80" cy="80" r="57" fill="none" stroke="#FFFFFF" strokeOpacity="0.85" strokeWidth="1.4" />
       <circle cx="80" cy="80" r="37" fill="none" stroke="#FFFFFF" strokeOpacity="0.4" strokeWidth="1" />
       <text fill="#FFFFFF" fontFamily="'Geist', sans-serif" fontSize="9.4" fontWeight="700" letterSpacing="2.2">
-        <textPath href="#eno-seal-arc" startOffset="50%" textAnchor="middle">LAGDA IO CERTIFIED</textPath>
+        <textPath href={`#${idPrefix}-arc`} startOffset="50%" textAnchor="middle">LAGDA IO CERTIFIED</textPath>
       </text>
       <g transform="translate(69 50)" fill="none" stroke="#FFFFFF" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
         <path d="M5 1h9l5 5v13a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2z" /><path d="M7 9h8M7 13h5" />
