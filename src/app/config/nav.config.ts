@@ -128,8 +128,6 @@ export const TOP_NAV: NavSection[] = [
     // The static Notary Directory (config/enotary-directory): a full page load.
     path: ENOTARY_DIRECTORY_PATH,
     matchPrefix: "/enotary",
-    badge: "Coming Soon",
-    isComingSoon: true,
     accent: "burgundy",
     menuTitle: "LAGDA eNotary",
     menuDescription: "Future electronic notarization — subject to Supreme Court accreditation.",
@@ -204,7 +202,6 @@ export const FOOTER_COLUMNS: FooterColumn[] = [
   },
   {
     heading: "eNotary",
-    isComingSoon: true,
     links: [
       { label: "Notary Directory", path: ENOTARY_DIRECTORY_PATH },
       { label: "Roadmap",        path: "/enotary/accreditation-roadmap",  isComingSoon: true },
