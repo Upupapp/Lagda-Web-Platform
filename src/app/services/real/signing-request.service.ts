@@ -7,6 +7,12 @@
 import { apiRequest, ApiError } from "../api-client";
 import { API_BASE_URL } from "../backend-flag";
 import { changes } from "../live/topics";
+import type { ReminderSettings } from "./reminder-settings";
+
+export {
+  REMINDER_DEFAULTS, REMINDER_DAYS_MIN, REMINDER_DAYS_MAX, REMINDER_MAX_AUTOMATIC, sameReminderSettings,
+  type ReminderSettings,
+} from "./reminder-settings";
 
 export type SigningRequestState =
   | "draft" | "ready-to-send" | "sent" | "partially-completed"
@@ -107,15 +113,6 @@ export interface CompletionStatus {
   canRetry: boolean;
 }
 
-/** 111. What the sender chose for one request's reminders. */
-export interface ReminderSettings {
-  enabled: boolean;
-  /** Whole days from the start of a participant's turn to their first reminder. */
-  firstAfterDays: number;
-  /** Whole days between one reminder and the next. */
-  everyDays: number;
-}
-
 /** 111. The request's settings with the server's fixed limits beside them. */
 export interface RequestReminders extends ReminderSettings {
   /** Automatic reminders per participant's turn. Always 3 today. */
@@ -134,17 +131,6 @@ export interface SignatoryReminders {
   nextDueAt: string | null;
 }
 
-/** 111. What a new request gets when the sender says nothing; the server's own. */
-export const REMINDER_DEFAULTS: ReminderSettings = { enabled: true, firstAfterDays: 3, everyDays: 3 };
-export const REMINDER_DAYS_MIN = 1;
-export const REMINDER_DAYS_MAX = 30;
-/** The server's fixed limit on automatic reminders per turn, for copy written before one is read. */
-export const REMINDER_MAX_AUTOMATIC = 3;
-
-/** Whether two reminder settings say the same thing. */
-export function sameReminderSettings(a: ReminderSettings, b: ReminderSettings): boolean {
-  return a.enabled === b.enabled && a.firstAfterDays === b.firstAfterDays && a.everyDays === b.everyDays;
-}
 
 // GET /workspaces/:id/signing-requests/:id/signatures — who signed, and when.
 //
@@ -192,6 +178,12 @@ export interface Signatory {
 
 export interface SigningRequestSignatures {
   signingRequestId: string;
+  /**
+   * 073. Whether participants are emailed the completed document: the
+   * sender's choice at send time. Absent from an older server, which means
+   * the default (yes).
+   */
+  shareFinalCopy?: boolean;
   state: SigningRequestState;
   /** REQUIRED participants only — they are what the request waits on.
    *  Counts everyone whose part is DONE: signed, approved or skipped. */

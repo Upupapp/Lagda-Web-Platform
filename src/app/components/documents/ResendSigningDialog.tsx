@@ -41,6 +41,8 @@ import {
   identityEmailKey, type IdentityRequirementsControl,
 } from "../../hooks/useIdentityCheckRequirements";
 import { useResendIdentityCheck } from "../../hooks/useResendIdentityCheck";
+import { readPreviousChoices, type RequestChoices } from "../../services/real/resend-choices";
+import { describeKeptChoices } from "./signing-progress-copy";
 import { roleCanBeAskedForIdentityCheck } from "../../models/identity-check";
 
 const GF: CSSProperties = { fontFamily: "'Geist', sans-serif" };
@@ -151,6 +153,16 @@ export function ResendSigningDialog({
   onSent: (signingRequestId: string, sentTo: number) => void;
 }) {
   const [mode, setMode] = useState<Mode>("new");
+  // What the request being repeated was sent with, where it can be read.
+  // Null until then, and for good if it cannot be: the new request then goes
+  // out with the defaults, as it always did, and nothing is said.
+  const [previous, setPrevious] = useState<RequestChoices | null>(null);
+  useEffect(() => {
+    if (!USE_REAL_BACKEND || signingRequestId === undefined) return;
+    let live = true;
+    void readPreviousChoices(workspaceId, signingRequestId).then(choices => { if (live) setPrevious(choices); });
+    return () => { live = false; };
+  }, [workspaceId, signingRequestId]);
   const [raw, setRaw] = useState("");
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -355,7 +367,11 @@ export function ResendSigningDialog({
     setError(null);
     // Passed only where the check is offered, so everywhere else the calls
     // are exactly what they always were.
-    const options = identityToSave === undefined ? [] as const : [{ identity: identityToSave }] as const;
+    const carried = {
+      ...(identityToSave === undefined ? {} : { identity: identityToSave }),
+      ...(previous === null ? {} : { choices: previous }),
+    };
+    const options = Object.keys(carried).length === 0 ? [] as const : [carried] as const;
     void (async () => {
       try {
         const result = mode === "new"
@@ -544,6 +560,11 @@ export function ResendSigningDialog({
                 ? <>The document&rsquo;s current recipient list is replaced by the addresses above, and emails are sent immediately.</>
                 : <>Everyone ticked keeps their role, step and fields; anyone unticked is removed from this document along with their fields. Emails are sent immediately.</>}
             </p>
+            {previous !== null && (
+              <p data-testid="resend-kept-choices" style={{ ...GF, margin: "6px 0 0", fontSize: 11.5, color: "#7A5B00", lineHeight: 1.6 }}>
+                {describeKeptChoices(previous)}
+              </p>
+            )}
             {USE_REAL_BACKEND && (
               <p data-testid="resend-title-note" style={{ ...GF, margin: "6px 0 0", fontSize: 11.5, color: "#7A5B00", lineHeight: 1.6 }}>
                 The new request gets its own numbered title so it can be told apart from the earlier one.

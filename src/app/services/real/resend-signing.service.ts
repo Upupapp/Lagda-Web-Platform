@@ -46,6 +46,7 @@
 
 import { realRecipientService, type RealRecipient } from "./recipient.service";
 import { realSigningRequestService } from "./signing-request.service";
+import { sendOptionsFor, type RequestChoices } from "./resend-choices";
 import { realIdentityCheckService, describeIdentityRequirementError } from "./identity-check.service";
 import { ApiError } from "../api-client";
 
@@ -80,6 +81,11 @@ export interface ResendIdentity {
 export interface ResendOptions {
   /** Absent: the identity check is not offered here, and nothing is saved. */
   readonly identity?: ResendIdentity;
+  /**
+   * What the request being repeated was sent with (see resend-choices.ts).
+   * Absent: the new request goes out with the defaults, as it always did.
+   */
+  readonly choices?: RequestChoices;
 }
 
 /** The identity check could not be saved for the new list. Nothing was sent. */
@@ -227,8 +233,12 @@ class ResendSigningService {
     if (created.state === "draft") {
       await realSigningRequestService.markReadyToSend(workspaceId, created.signingRequestId);
     }
+    // Left empty while every choice is a default, so a plain send again is
+    // the request it always was.
+    const carried = sendOptionsFor(options.choices);
     await realSigningRequestService.send(
-      workspaceId, created.signingRequestId, crypto.randomUUID());
+      workspaceId, created.signingRequestId, crypto.randomUUID(),
+      ...(Object.keys(carried).length === 0 ? [] : [carried]));
     const title = typeof created.documentTitle === "string" ? created.documentTitle.trim() : "";
     return {
       signingRequestId: created.signingRequestId,

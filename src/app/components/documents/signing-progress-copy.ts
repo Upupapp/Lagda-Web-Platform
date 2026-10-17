@@ -102,6 +102,22 @@ export function describeReminderDays(first: number, every: number): string {
   return `first after ${days(first)}, then every ${days(every)}`;
 }
 
+/**
+ * "Send again" keeps what the sender chose the first time (see
+ * resend-choices.ts). One plain line, said before sending.
+ */
+export function describeKeptChoices(choices: {
+  emailFinalCopy: boolean; reminders: { enabled: boolean; firstAfterDays: number; everyDays: number };
+}): string {
+  const copy = choices.emailFinalCopy
+    ? "participants are emailed the completed document"
+    : "participants are not emailed the completed document";
+  const reminders = choices.reminders.enabled
+    ? `reminders ${describeReminderDays(choices.reminders.firstAfterDays, choices.reminders.everyDays)}`
+    : "reminders are off";
+  return `Same as before: ${copy}; ${reminders}.`;
+}
+
 /** The fixed rule, said wherever reminders can be switched on. */
 export const REMINDER_RULE =
   "Up to 3 reminders, until they act. Reminders stop when the document is completed, declined, cancelled or expires.";
