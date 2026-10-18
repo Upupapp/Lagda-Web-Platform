@@ -5,8 +5,9 @@
 // The server owns every fact. This page asks again every 5 seconds while the
 // request is open (and when the tab comes back to the front), counts down on its
 // own clock in between, and re-syncs that clock from each answer. It ends where
-// the notary's answer ends: "accepted" says the session opens when LAGDA eNotary
-// does, and promises nothing more.
+// the notary's answer and the fee end: "accepted" says the session opens when
+// LAGDA eNotary does, and promises nothing more. After the notary accepts, the
+// page keeps asking while a fee is still to be paid or confirmed.
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router";
@@ -23,6 +24,7 @@ import {
   OnrampNote, Panel, PanelTitle, StatusPill, TextField, bodyText, fieldStyle, useNow,
 } from "../onramp-ui";
 import { QrCard } from "./QrCard";
+import { ClientPaymentPanel, paymentIsPending } from "../payments/ClientPaymentPanel";
 import { ExpiryClock, countdownText, expiryLabel, expiryTone, stampLabel, type ExpiryTone } from "./expiry";
 
 export const POLL_MS = 5000;
@@ -67,8 +69,15 @@ function noticeFor(invitation: Invitation): { tone: "info" | "success" | "warn";
       return { tone: "info", text: `Give the link or the card to ${who}. They sign in to LAGDA and pass an ID and face check before they can take the request.` };
     case "claimed":
       return { tone: "info", text: `${who} passed the identity check and has the request. Now it waits for their answer.` };
-    case "accepted":
+    case "accepted": {
+      const payment = invitation.payment;
+      if (paymentIsPending(payment)) {
+        return { tone: "success", text: payment?.status === "proof"
+          ? `${who} accepted your request. They are checking your payment.`
+          : `${who} accepted your request. Pay the fee below to go on.` };
+      }
       return { tone: "success", text: `${who} accepted your request. The session opens when LAGDA eNotary does, and you will be told then.` };
+    }
     case "declined":
       return { tone: "warn", text: `${who} declined this request. You can ask another notary from the Notary Directory.` };
     case "expired":
@@ -116,15 +125,17 @@ export function ClientRequestPage() {
 
   const open = loaded.kind === "ready" && invitationIsOpen(loaded.invitation.status);
   const status = loaded.kind === "ready" ? loaded.invitation.status : null;
+  // A fee still to be paid or confirmed is also worth watching: the notary's answer arrives here.
+  const watching = open || (loaded.kind === "ready" && loaded.invitation.status === "accepted" && paymentIsPending(loaded.invitation.payment));
 
   // Ask again every 5 seconds while the request is open, and when the tab comes back.
   useEffect(() => {
-    if (!open) return;
+    if (!watching) return;
     const timer = setInterval(() => { if (!document.hidden) load(true); }, POLL_MS);
     const visible = () => { if (!document.hidden) load(true); };
     document.addEventListener("visibilitychange", visible);
     return () => { clearInterval(timer); document.removeEventListener("visibilitychange", visible); };
-  }, [open, status, load]);
+  }, [watching, status, load]);
 
   const msLeft = clock.current.msLeft(now);
   // The clock ran out: ask once what the server now says.
@@ -260,6 +271,10 @@ export function ClientRequestPage() {
             <QrCard link={link} notaryName={invitation.notary.name} expiresAt={invitation.expiresAt} />
           </Panel>
         </>
+      )}
+
+      {invitation.status === "accepted" && invitation.payment !== null && invitation.payment !== undefined && (
+        <ClientPaymentPanel invitation={invitation} payment={invitation.payment} onChanged={take} />
       )}
 
       {canSetEmail && (

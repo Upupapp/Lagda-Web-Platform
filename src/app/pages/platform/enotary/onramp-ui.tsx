@@ -12,7 +12,7 @@ import type { InvitationStatus } from "../../../services/real/enotary-invitation
 /** Said on every page of this phase. LAGDA eNotary is not accredited and sessions are not open. */
 export const ONRAMP_NOTE =
   "Online notarial sessions are not currently available. LAGDA eNotary is subject to Supreme Court accreditation and applicable rules. "
-  + "This step only passes the request to the notary: nothing is booked, paid or notarized yet.";
+  + "A notary's fee is paid directly to the notary, who confirms it: LAGDA does not hold the money. Nothing is booked or notarized yet.";
 
 /** The note, as a quiet paragraph at the foot of a page. */
 export function OnrampNote({ extra }: { extra?: ReactNode }) {
