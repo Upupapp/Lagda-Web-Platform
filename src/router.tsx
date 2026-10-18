@@ -1057,6 +1057,11 @@ const NotaryDeskPage = lazy(() =>
     default: m.NotaryDeskPage,
   })),
 );
+const NotaryPaymentPage = lazy(() =>
+  import("./app/pages/platform/enotary/payments/NotaryPaymentPage").then((m) => ({
+    default: m.NotaryPaymentPage,
+  })),
+);
 const AdminNotaryApplicationsPage = lazy(() =>
   import("./app/pages/platform/enotary/admin/AdminNotaryApplicationsPage").then((m) => ({
     default: m.AdminNotaryApplicationsPage,
@@ -2819,6 +2824,7 @@ export const router = createBrowserRouter([
       { path: "enotary/requests/:id", element: <Suspense fallback={null}><ClientRequestPage /></Suspense> },
       { path: "enotary/apply", element: <Suspense fallback={null}><NotaryApplyPage /></Suspense> },
       { path: "enotary/desk", element: <Suspense fallback={null}><NotaryDeskPage /></Suspense> },
+      { path: "enotary/payment", element: <Suspense fallback={null}><NotaryPaymentPage /></Suspense> },
       { path: "admin/notary-applications", element: <Suspense fallback={null}><AdminNotaryApplicationsPage /></Suspense> },
       { path: "admin/notary-applications/:userId", element: <Suspense fallback={null}><AdminNotaryApplicationPage /></Suspense> },
 
