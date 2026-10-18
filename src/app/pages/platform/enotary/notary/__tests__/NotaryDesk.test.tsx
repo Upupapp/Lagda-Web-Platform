@@ -67,7 +67,7 @@ describe("the desk", () => {
     expect(rows[0]).toHaveTextContent("Ben Lim");
     expect(rows[0]).toHaveTextContent("ID verified");
     expect(rows[0]).toHaveTextContent("Waiting for you");
-    expect(rows[1]).toHaveTextContent("The session opens when LAGDA eNotary does");
+    expect(rows[1]).toHaveTextContent("The session can begin.");
     expect(screen.queryByTestId("desk-banner")).toBeNull();
     expect(screen.getByTestId("onramp-note")).toHaveTextContent(/Supreme Court accreditation/);
   });
@@ -98,13 +98,13 @@ describe("the desk", () => {
 });
 
 describe("accepting and declining", () => {
-  it("accepts only once a fee is named, and says nothing is booked or notarized yet", async () => {
+  it("accepts only once a fee is named, and says The online session begins once the fee is settled", async () => {
     accept.mockResolvedValue(undefined);
     await open(deskOf());
     press(screen.getByRole("button", { name: "Accept" }));
     expect(accept).not.toHaveBeenCalled();
     const panel = screen.getByTestId("accept-panel");
-    expect(panel).toHaveTextContent(/nothing is booked or notarized yet/);
+    expect(panel).toHaveTextContent(/The online session begins once the fee is settled/);
     expect(panel).toHaveTextContent(/LAGDA never holds the money/);
     expect(within(panel).getByRole("button", { name: "Accept the request" })).toBeDisabled();
     fireEvent.change(screen.getByTestId("fee-input"), { target: { value: "1,500.50" } });
@@ -242,7 +242,7 @@ describe("confirming the payment", () => {
     expect(screen.getByRole("status")).toHaveTextContent("You confirmed the payment from Ben Lim.");
     expect(screen.getByTestId("desk-payment")).toHaveTextContent("You confirmed the payment of PHP 1,500.00.");
     expect(screen.queryByTestId("desk-proof")).toBeNull();
-    expect(screen.getByTestId("desk-row")).toHaveTextContent("The session opens when LAGDA eNotary does");
+    expect(screen.getByTestId("desk-row")).toHaveTextContent("The session can begin.");
   });
 
   it("tells the client the payment did not arrive, with a note cut to 120 characters", async () => {

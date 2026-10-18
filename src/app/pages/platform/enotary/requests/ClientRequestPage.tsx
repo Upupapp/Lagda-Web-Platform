@@ -24,6 +24,7 @@ import {
   OnrampNote, Panel, PanelTitle, StatusPill, TextField, bodyText, fieldStyle, useNow,
 } from "../onramp-ui";
 import { QrCard } from "./QrCard";
+import { SessionPanel } from "../room/SessionPanel";
 import { ClientPaymentPanel, paymentIsPending } from "../payments/ClientPaymentPanel";
 import { ExpiryClock, countdownText, expiryLabel, expiryTone, stampLabel, type ExpiryTone } from "./expiry";
 
@@ -76,7 +77,7 @@ function noticeFor(invitation: Invitation): { tone: "info" | "success" | "warn";
           ? `${who} accepted your request. They are checking your payment.`
           : `${who} accepted your request. Pay the fee below to go on.` };
       }
-      return { tone: "success", text: `${who} accepted your request. The session opens when LAGDA eNotary does, and you will be told then.` };
+      return { tone: "success", text: `${who} accepted your request. You will be told when the session can begin.` };
     }
     case "declined":
       return { tone: "warn", text: `${who} declined this request. You can ask another notary from the Notary Directory.` };
@@ -276,6 +277,8 @@ export function ClientRequestPage() {
       {invitation.status === "accepted" && invitation.payment !== null && invitation.payment !== undefined && (
         <ClientPaymentPanel invitation={invitation} payment={invitation.payment} onChanged={take} />
       )}
+
+      {invitation.status === "accepted" && <SessionPanel invitationId={invitation.id} role="client" />}
 
       {canSetEmail && (
         <Panel testId="email-panel">

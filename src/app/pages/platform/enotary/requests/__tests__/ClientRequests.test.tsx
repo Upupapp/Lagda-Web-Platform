@@ -285,12 +285,12 @@ describe("a request that has ended", () => {
     expect(screen.getByTestId("where")).toHaveTextContent("/app/enotary/requests/eni_2");
   });
 
-  it("an accepted one says the session opens when LAGDA eNotary does, and promises nothing more", async () => {
+  it("an accepted one says it will say when the session can begin", async () => {
     get.mockResolvedValue(invitation({ status: "accepted", link: null, decidedAt: new Date(T0).toISOString() }));
     renderRequest();
     await settle();
     const notice = screen.getByTestId("request-notice");
-    expect(notice).toHaveTextContent(/accepted your request. The session opens when LAGDA eNotary does/);
+    expect(notice).toHaveTextContent(/accepted your request. You will be told when the session can begin/);
     expect(notice.textContent).not.toMatch(/video|payment|pay |notarized on|book/i);
     expect(screen.queryByRole("button", { name: /Cancel|Renew/ })).toBeNull();
   });

@@ -1012,6 +1012,91 @@ function present(row: FeedRow): Presentation {
       };
     }
 
+    // The session and what follows it (117). The other party's name, the request, and a short detail.
+    case "ENOTARY_SESSION_DOCUMENT_ADDED":
+    case "ENOTARY_SESSION_OPENED":
+    case "ENOTARY_SESSION_CANCELLED":
+    case "ENOTARY_NOTARIZED":
+    case "ENOTARY_CTC_REQUESTED":
+    case "ENOTARY_CTC_QUOTED":
+    case "ENOTARY_CTC_DECLINED":
+    case "ENOTARY_CTC_PROOF_SENT":
+    case "ENOTARY_CTC_PAID":
+    case "ENOTARY_CTC_FULFILLED": {
+      const other = str(row.templateInput, "otherName") ?? "The other person";
+      const detail = str(row.templateInput, "detail");
+      const requestId = str(row.templateInput, "invitationId") ?? str(row.templateInput, "requestId") ?? row.sourceId;
+      const toNotary = str(row.templateInput, "to") === "notary"
+        || row.type === "ENOTARY_SESSION_DOCUMENT_ADDED" || row.type === "ENOTARY_CTC_REQUESTED" || row.type === "ENOTARY_CTC_PROOF_SENT";
+      const requestPath = toNotary ? "/app/enotary/desk" : `/app/enotary/requests/${encodeURIComponent(requestId)}`;
+      const roomPath = `/app/enotary/room/${encodeURIComponent(requestId)}`;
+      const why = toNotary
+        ? "You were sent this because a client you accepted took a step in their notary session."
+        : "You were sent this because you have a notary session with this notary.";
+      switch (row.type) {
+        case "ENOTARY_SESSION_DOCUMENT_ADDED":
+          return {
+            category: "my-actions", severity: "info", priority: "high",
+            title: `${other} added the document`, body: `${other} added the document to be notarized. Open your desk to read it and open the room when you are ready.`,
+            actionLabel: "Open the notary desk", actionPath: requestPath, why,
+          };
+        case "ENOTARY_SESSION_OPENED":
+          return {
+            category: "my-actions", severity: "info", priority: "high",
+            title: `${other} opened the room`, body: `${other} is ready for your session. Join now to talk and review the document together.`,
+            actionLabel: "Join the session", actionPath: roomPath, why,
+          };
+        case "ENOTARY_SESSION_CANCELLED":
+          return {
+            category: "my-actions", severity: "warning", priority: "high",
+            title: `${other} called off the session`, body: `${other} called off the notarization session. Nothing was notarized.`,
+            actionLabel: toNotary ? "Open the notary desk" : "Open request", actionPath: requestPath, why,
+          };
+        case "ENOTARY_NOTARIZED":
+          return {
+            category: "my-actions", severity: "success", priority: "high",
+            title: `${other} notarized your document`, body: `${other} recorded the notarial act on your document. Open your request to download it and to ask for certified true copies.`,
+            actionLabel: "Open request", actionPath: requestPath, why,
+          };
+        case "ENOTARY_CTC_REQUESTED":
+          return {
+            category: "my-actions", severity: "info", priority: "high",
+            title: `${other} asked for certified true copies`, body: `${other} asked for certified true copies of a notarized document. Open your desk to quote the fee or decline.`,
+            actionLabel: "Open the notary desk", actionPath: requestPath, why,
+          };
+        case "ENOTARY_CTC_QUOTED":
+          return {
+            category: "my-actions", severity: "info", priority: "high",
+            title: `${other} quoted your copies`, body: `${other} answered your request for certified true copies${detail === null ? "." : `: ${detail}`} Open your request to go on.`,
+            actionLabel: "Open request", actionPath: requestPath, why,
+          };
+        case "ENOTARY_CTC_DECLINED":
+          return {
+            category: "my-actions", severity: "warning", priority: "high",
+            title: `${other} declined your request for copies`, body: `${other} declined your request for certified true copies${detail === null ? "." : `: ${detail}`}`,
+            actionLabel: "Open request", actionPath: requestPath, why,
+          };
+        case "ENOTARY_CTC_PROOF_SENT":
+          return {
+            category: "my-actions", severity: "info", priority: "high",
+            title: `${other} says they paid for the copies`, body: `${other} sent the reference of their payment for the copies. Check your own bank or e-wallet app, then confirm it on your desk.`,
+            actionLabel: "Open the notary desk", actionPath: requestPath, why,
+          };
+        case "ENOTARY_CTC_PAID":
+          return {
+            category: "my-actions", severity: "success", priority: "high",
+            title: `${other} confirmed your payment for the copies`, body: `${other} confirmed your payment. Your copies are being prepared.`,
+            actionLabel: "Open request", actionPath: requestPath, why,
+          };
+        default:
+          return {
+            category: "my-actions", severity: "success", priority: "high",
+            title: "Your certified true copies are ready", body: `${other} issued your certified true copies${detail === null ? "." : `: ${detail}`} Open your request to see them.`,
+            actionLabel: "Open request", actionPath: requestPath, why,
+          };
+      }
+    }
+
     // To a LAGDA reviewer: an application is waiting. Opens that application.
     case "ENOTARY_APPLICATION_SUBMITTED": {
       const applicant = str(row.templateInput, "applicantName") ?? "A notary";

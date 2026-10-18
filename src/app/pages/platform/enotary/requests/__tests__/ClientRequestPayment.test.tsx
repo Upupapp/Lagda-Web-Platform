@@ -71,7 +71,7 @@ describe("an accepted request with a fee", () => {
     get.mockResolvedValue(accepted({ status: "confirmed", reference: "GC-12345678", qrPayload: null, decidedAt: "2026-10-17T02:01:00.000Z" }));
     await settle(POLL_MS);
     expect(screen.getByTestId("payment-confirmed")).toBeInTheDocument();
-    expect(screen.getByTestId("request-notice")).toHaveTextContent("The session opens when LAGDA eNotary does");
+    expect(screen.getByTestId("request-notice")).toHaveTextContent("You will be told when the session can begin.");
     const calls = get.mock.calls.length;
     await settle(POLL_MS * 3);
     expect(get).toHaveBeenCalledTimes(calls);
@@ -87,7 +87,7 @@ describe("an accepted request with a fee", () => {
   it("shows no payment panel for a request accepted before fees existed", async () => {
     await open(accepted(null));
     expect(screen.queryByTestId("payment-panel")).toBeNull();
-    expect(screen.getByTestId("request-notice")).toHaveTextContent("The session opens when LAGDA eNotary does");
+    expect(screen.getByTestId("request-notice")).toHaveTextContent("You will be told when the session can begin.");
     await settle(POLL_MS * 3);
     expect(get).toHaveBeenCalledTimes(1);
   });

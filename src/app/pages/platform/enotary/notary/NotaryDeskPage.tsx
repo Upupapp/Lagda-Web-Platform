@@ -15,11 +15,12 @@
 // in their own bank or e-wallet app and confirms here. LAGDA never holds the
 // money and a screenshot is never taken as proof: only the notary's own app is.
 //
-// It ends there: "accepted" and paid means the session opens when LAGDA eNotary
-// does. No video or document is offered here.
+// Once the fee is settled, an accepted request shows its session (the room and,
+// after a notarization, the certified copies) from the SessionPanel.
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "react-router";
+import { SessionPanel } from "../room/SessionPanel";
 import { AlertTriangle, Check, Clock, Inbox, QrCode, X } from "lucide-react";
 import { ActionButton, GF, Notice, T } from "../../../../components/system/design-system";
 import { useConfirm } from "../../../../components/platform/ConfirmDialog";
@@ -146,7 +147,7 @@ export function NotaryDeskPage() {
         await realEnotaryInvitationsService.accept(request.id, amount);
         if (!alive.current) return;
         setSaid(amount === 0
-          ? `You accepted the request from ${request.client.name} without a fee. The session opens when LAGDA eNotary does.`
+          ? `You accepted the request from ${request.client.name} without a fee. You will be told when the session can begin.`
           : `You accepted the request from ${request.client.name}. They were asked to pay PHP ${formatPesos(amount)} to your QR.`);
         setAccepting(null);
         setFee("");
@@ -283,11 +284,14 @@ export function NotaryDeskPage() {
                   <div style={{ marginTop: 8 }}>
                     <p style={{ margin: 0, fontSize: 13.5, color: E.text }}>
                       {goesOn
-                        ? "Accepted. The session opens when LAGDA eNotary does."
+                        ? "Accepted. The session can begin."
                         : "Accepted. The request goes on once the fee is paid and you have confirmed it."}
                     </p>
                     {line !== null && (
                       <p data-testid="desk-payment" style={{ margin: "4px 0 0", fontSize: 13.5, fontWeight: 700, color: payment?.status === "proof" ? E.maroon : E.text }}>{line}</p>
+                    )}
+                    {goesOn && (
+                      <div style={{ marginTop: 10 }}><SessionPanel invitationId={request.id} role="notary" /></div>
                     )}
                     {proof && (
                       <div data-testid="desk-proof" style={{ marginTop: 8, padding: "10px 12px", borderRadius: 10, background: E.maroonWash, border: `1px solid ${E.maroonLine}` }}>
@@ -349,7 +353,7 @@ export function NotaryDeskPage() {
                         )}
                         <p style={hintStyle}>
                           The client pays you directly with their bank or e-wallet app, then sends you the reference number. You confirm from your own app.
-                          LAGDA never holds the money. The online session opens when LAGDA eNotary does; nothing is booked or notarized yet.
+                          LAGDA never holds the money. The online session begins once the fee is settled.
                         </p>
                         <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 10 }}>
                           <ActionButton

@@ -4,7 +4,7 @@
 //
 // Presentational. What a page says and does is the page's.
 
-import { useEffect, useId, useState, type CSSProperties, type ReactNode } from "react";
+import { useEffect, useId, useState, useSyncExternalStore, type CSSProperties, type ReactNode } from "react";
 import { GF, T, TAP } from "../../../components/system/design-system";
 import { E } from "./EnotaryChrome";
 import type { InvitationStatus } from "../../../services/real/enotary-invitations.service";
@@ -14,11 +14,32 @@ export const ONRAMP_NOTE =
   "Online notarial sessions are not currently available. LAGDA eNotary is subject to Supreme Court accreditation and applicable rules. "
   + "A notary's fee is paid directly to the notary, who confirms it: LAGDA does not hold the money. Nothing is booked or notarized yet.";
 
+/** Said instead, once the server offers sessions (117). The pilot is named for what it is. */
+export const PILOT_NOTE =
+  "LAGDA eNotary is a pilot. Online sessions are held with notaries who applied and were approved on LAGDA; LAGDA eNotary is subject to Supreme Court "
+  + "accreditation and applicable rules. A notary's fee is paid directly to the notary, who confirms it: LAGDA does not hold the money.";
+
+let sessionsOffered = false;
+const offeredListeners = new Set<() => void>();
+/** A page that has seen the server answer for sessions says so; every note then speaks of the pilot. */
+export function markSessionsOffered(): void {
+  if (sessionsOffered) return;
+  sessionsOffered = true;
+  offeredListeners.forEach(listener => { listener(); });
+}
+function useSessionsOffered(): boolean {
+  return useSyncExternalStore(
+    listener => { offeredListeners.add(listener); return () => { offeredListeners.delete(listener); }; },
+    () => sessionsOffered, () => false,
+  );
+}
+
 /** The note, as a quiet paragraph at the foot of a page. */
 export function OnrampNote({ extra }: { extra?: ReactNode }) {
+  const offered = useSessionsOffered();
   return (
     <p data-testid="onramp-note" style={{ ...GF, margin: "22px 0 0", fontSize: 12.5, color: E.quiet, lineHeight: 1.6 }}>
-      {ONRAMP_NOTE}{extra !== undefined && <> {extra}</>}
+      {offered ? PILOT_NOTE : ONRAMP_NOTE}{extra !== undefined && <> {extra}</>}
     </p>
   );
 }

@@ -1057,6 +1057,16 @@ const NotaryDeskPage = lazy(() =>
     default: m.NotaryDeskPage,
   })),
 );
+const RoomPage = lazy(() =>
+  import("./app/pages/platform/enotary/room/RoomPage").then((m) => ({
+    default: m.RoomPage,
+  })),
+);
+const VerifyNotarizedPage = lazy(() =>
+  import("./app/pages/public/enotary/VerifyNotarizedPage").then((m) => ({
+    default: m.VerifyNotarizedPage,
+  })),
+);
 const NotaryPaymentPage = lazy(() =>
   import("./app/pages/platform/enotary/payments/NotaryPaymentPage").then((m) => ({
     default: m.NotaryPaymentPage,
@@ -1550,6 +1560,18 @@ export const router = createBrowserRouter([
       <PageMetaRoute>
         <Suspense fallback={null}>
           <NotaryInvitePage />
+        </Suspense>
+      </PageMetaRoute>
+    ),
+  },
+  // Anyone may check a verification code from a notarized document (117).
+  {
+    path: "/verify-notarized",
+    errorElement: <PublicRouteError />,
+    element: (
+      <PageMetaRoute>
+        <Suspense fallback={null}>
+          <VerifyNotarizedPage />
         </Suspense>
       </PageMetaRoute>
     ),
@@ -2825,6 +2847,7 @@ export const router = createBrowserRouter([
       { path: "enotary/apply", element: <Suspense fallback={null}><NotaryApplyPage /></Suspense> },
       { path: "enotary/desk", element: <Suspense fallback={null}><NotaryDeskPage /></Suspense> },
       { path: "enotary/payment", element: <Suspense fallback={null}><NotaryPaymentPage /></Suspense> },
+      { path: "enotary/room/:invitationId", element: <Suspense fallback={null}><RoomPage /></Suspense> },
       { path: "admin/notary-applications", element: <Suspense fallback={null}><AdminNotaryApplicationsPage /></Suspense> },
       { path: "admin/notary-applications/:userId", element: <Suspense fallback={null}><AdminNotaryApplicationPage /></Suspense> },
 

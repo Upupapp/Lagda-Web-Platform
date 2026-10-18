@@ -86,6 +86,17 @@ const ROWS: Record<string, Record<string, unknown>> = {
   ENOTARY_PAYMENT_PROOF_SENT: { recipientName: "Ana", otherName: "Ben Lim", invitationId: "eni_1", amount: "PHP 1,500.00" },
   ENOTARY_PAYMENT_CONFIRMED: { recipientName: "Ben", otherName: "Ana Maria Cruz", invitationId: "eni_1", amount: "PHP 1,500.00" },
   ENOTARY_PAYMENT_NOT_RECEIVED: { recipientName: "Ben", otherName: "Ana Maria Cruz", invitationId: "eni_1", amount: "PHP 1,500.00", reason: "No transfer yet" },
+  // The session and the copies (117).
+  ENOTARY_SESSION_DOCUMENT_ADDED: { recipientName: "Ana", otherName: "Ben Lim", invitationId: "eni_1", to: "notary" },
+  ENOTARY_SESSION_OPENED: { recipientName: "Ben", otherName: "Ana Maria Cruz", invitationId: "eni_1", to: "client" },
+  ENOTARY_SESSION_CANCELLED: { recipientName: "Ben", otherName: "Ana Maria Cruz", invitationId: "eni_1", to: "client" },
+  ENOTARY_NOTARIZED: { recipientName: "Ben", otherName: "Ana Maria Cruz", invitationId: "eni_1", to: "client" },
+  ENOTARY_CTC_REQUESTED: { recipientName: "Ana", otherName: "Ben Lim", invitationId: "eni_1", to: "notary" },
+  ENOTARY_CTC_QUOTED: { recipientName: "Ben", otherName: "Ana Maria Cruz", invitationId: "eni_1", to: "client", detail: "PHP 200.00" },
+  ENOTARY_CTC_DECLINED: { recipientName: "Ben", otherName: "Ana Maria Cruz", invitationId: "eni_1", to: "client" },
+  ENOTARY_CTC_PROOF_SENT: { recipientName: "Ana", otherName: "Ben Lim", invitationId: "eni_1", to: "notary" },
+  ENOTARY_CTC_PAID: { recipientName: "Ben", otherName: "Ana Maria Cruz", invitationId: "eni_1", to: "client" },
+  ENOTARY_CTC_FULFILLED: { recipientName: "Ben", otherName: "Ana Maria Cruz", invitationId: "eni_1", to: "client" },
 };
 
 const GENERIC = /you have a new notification/i;
