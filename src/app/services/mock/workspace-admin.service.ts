@@ -42,6 +42,8 @@ import {
 
 const SESSION_MEMBERS     = new Map<WorkspaceMemberId, WorkspaceMember>();
 const SESSION_INVITATIONS = new Map<WorkspaceInvitationId, WorkspaceInvitation>();
+/** Invitations the demonstration user deleted from the sent list. */
+const DELETED_INVITATIONS = new Set<WorkspaceInvitationId>();
 const SESSION_TEAMS       = new Map<WorkspaceTeamId, WorkspaceTeam>();
 const SESSION_ROLES       = new Map<WorkspaceRoleId, WorkspaceRole>();
 const SESSION_ACTIVITY    = new Map<string, WorkspaceActivityEvent>();
@@ -61,7 +63,7 @@ function resolveMembers(): WorkspaceMember[] {
 
 function resolveInvitations(): WorkspaceInvitation[] {
   const base = FIXTURE_INVITATIONS.filter(i => !SESSION_INVITATIONS.has(i.id));
-  return [...base, ...Array.from(SESSION_INVITATIONS.values())];
+  return [...base, ...Array.from(SESSION_INVITATIONS.values())].filter(i => !DELETED_INVITATIONS.has(i.id));
 }
 
 function resolveTeams(): WorkspaceTeam[] {
@@ -302,6 +304,11 @@ export const mockWorkspaceAdminService = {
       targetId: id, targetName: base.email,
       occurredAt: now,
     });
+  },
+
+  async deleteInvitation(id: WorkspaceInvitationId): Promise<void> {
+    await delay();
+    DELETED_INVITATIONS.add(id);
   },
 
   async revokeInvitation(id: WorkspaceInvitationId): Promise<void> {

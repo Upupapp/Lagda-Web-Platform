@@ -134,6 +134,14 @@ export const myInvitationsService = {
     return changes("invitations", changesNavCounts(apiRequest<MyInvitation>(`${mine(id)}/decline`, { method: "POST", body: { reason: reason.trim() } })));
   },
 
+  /**
+   * Deletes an invitation the person accepted or rejected, from their own list for
+   * good. 409 for any other state. Their membership in the workspace is untouched.
+   */
+  async delete(id: string): Promise<void> {
+    await changes("invitations", changesNavCounts(apiRequest<{ deleted: true }>(`${mine(id)}/delete`, { method: "POST" })));
+  },
+
   withdrawDecline(id: string): Promise<MyInvitation> {
     return changes("invitations", changesNavCounts(apiRequest<MyInvitation>(`${mine(id)}/withdraw-decline`, { method: "POST" })));
   },
@@ -141,7 +149,7 @@ export const myInvitationsService = {
 
 // ── Friendly errors ───────────────────────────────────────────────────────
 
-export type InvitationOperation = "load" | "accept" | "decline" | "withdraw";
+export type InvitationOperation = "load" | "accept" | "decline" | "withdraw" | "delete";
 
 /** A sentence a person can act on, keyed on the backend's stable codes. */
 export function invitationErrorMessage(error: unknown, operation: InvitationOperation): string {
@@ -153,6 +161,9 @@ export function invitationErrorMessage(error: unknown, operation: InvitationOper
     return "Confirm your account's email address first. Invitations are matched to a verified email address.";
   }
   if (error.status === 404) return "This invitation is no longer available. Refresh to see your current invitations.";
+  if (error.status === 409 && operation === "delete") {
+    return "Only an invitation you accepted or rejected can be deleted. Refresh to see its current status.";
+  }
   if (error.status === 409) {
     return operation === "withdraw"
       ? "This invitation can no longer be reopened — it has expired or was withdrawn by the workspace."

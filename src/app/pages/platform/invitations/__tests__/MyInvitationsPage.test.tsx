@@ -204,14 +204,60 @@ describe("Invitations page", () => {
     expect(await screen.findByText(/can no longer be reopened/)).toBeInTheDocument();
   });
 
-  it("an accepted invitation is read-only: waiting for approval, or joined once a member", async () => {
+  it("an accepted invitation shows waiting for approval, or joined once a member, and offers only Delete", async () => {
     mockSharingApi(routes());
     renderAt("/app/invitations?status=accepted");
     const [waiting, joined] = await screen.findAllByTestId("invitation-card");
     expect(within(waiting!).getByTestId("invitation-accepted-note")).toHaveTextContent("Waiting for approval — the workspace owner will approve your access.");
     expect(within(joined!).getByTestId("invitation-accepted-note")).toHaveTextContent("Joined");
-    expect(within(waiting!).queryByRole("button")).toBeNull();
-    expect(within(joined!).queryByRole("button")).toBeNull();
+    expect(within(waiting!).getAllByRole("button").map(b => b.textContent?.trim())).toEqual(["Delete"]);
+    expect(within(joined!).getAllByRole("button").map(b => b.textContent?.trim())).toEqual(["Delete"]);
+  });
+
+  it("deletes a rejected invitation only after a Cancel / Continue confirmation, for good", async () => {
+    const api = mockSharingApi(routes({ "POST /me/invitations/inv_d/delete": { deleted: true } }));
+    renderAt("/app/invitations?status=declined");
+    const letter = (await screen.findAllByTestId("invitation-card"))[0]!;
+    await userEvent.click(within(letter).getByRole("button", { name: "Delete: Invitation to join Umbrella as Sender" }));
+    const dialog = await screen.findByRole("alertdialog");
+    expect(dialog).toHaveTextContent("Delete this invitation?");
+    expect(dialog).toHaveTextContent(/deleted permanently and cannot be brought back/);
+    expect(api.calls.some(c => c.path.endsWith("/delete"))).toBe(false);
+    // Cancel leaves it alone.
+    await userEvent.click(within(dialog).getByRole("button", { name: "Cancel" }));
+    expect(screen.queryByRole("alertdialog")).toBeNull();
+    expect(api.calls.some(c => c.path.endsWith("/delete"))).toBe(false);
+    // Continue deletes it.
+    await userEvent.click(within(letter).getByRole("button", { name: /^Delete: / }));
+    await userEvent.click(within(await screen.findByRole("alertdialog")).getByRole("button", { name: "Continue" }));
+    expect(await screen.findByText("The invitation to Umbrella was deleted.")).toBeInTheDocument();
+    expect(api.calls.filter(c => c.method === "POST" && c.path === "/me/invitations/inv_d/delete")).toHaveLength(1);
+  });
+
+  it("says deleting an accepted invitation does not remove the person from the team", async () => {
+    const api = mockSharingApi(routes({ "POST /me/invitations/inv_j/delete": { deleted: true } }));
+    renderAt("/app/invitations?status=accepted");
+    const [, joined] = await screen.findAllByTestId("invitation-card");
+    await userEvent.click(within(joined!).getByRole("button", { name: /^Delete: / }));
+    const dialog = await screen.findByRole("alertdialog");
+    expect(dialog).toHaveTextContent(/does not remove you from the workspace's team/);
+    await userEvent.click(within(dialog).getByRole("button", { name: "Continue" }));
+    await waitFor(() => { expect(api.calls.some(c => c.path === "/me/invitations/inv_j/delete")).toBe(true); });
+  });
+
+  it("explains a 409 when the invitation is no longer one that can be deleted", async () => {
+    mockSharingApi(routes({ "POST /me/invitations/inv_d/delete": apiError(409, "invitation_state_conflict") }));
+    renderAt("/app/invitations?status=declined");
+    await userEvent.click(await screen.findByRole("button", { name: /^Delete: / }));
+    await userEvent.click(within(await screen.findByRole("alertdialog")).getByRole("button", { name: "Continue" }));
+    expect(await screen.findByText(/Only an invitation you accepted or rejected can be deleted/)).toBeInTheDocument();
+  });
+
+  it("offers no Delete on a pending invitation", async () => {
+    mockSharingApi(routes());
+    renderAt("/app/invitations?status=pending");
+    await screen.findAllByTestId("invitation-card");
+    expect(screen.queryByRole("button", { name: /^Delete: / })).toBeNull();
   });
 
   it("switches tabs through the URL and highlights a linked invitation", async () => {

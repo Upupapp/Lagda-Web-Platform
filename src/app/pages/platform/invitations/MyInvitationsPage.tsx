@@ -4,9 +4,14 @@
 //
 //   Pending   Accept (files a join request the workspace owner approves) or
 //             Reject (a required reason, 1–500 characters).
-//   Rejected  The reason given, and "Withdraw rejection" (back to Pending).
-//   Accepted  Read-only: "Waiting for approval" until the account is a
-//             member of that workspace, then "Joined".
+//   Rejected  The reason given, "Withdraw rejection" (back to Pending), and
+//             Delete.
+//   Accepted  "Waiting for approval" until the account is a member of that
+//             workspace, then "Joined"; and Delete.
+//
+// Delete removes the invitation from THIS list for good, after a confirmation
+// (Cancel / Continue). It does not take the person out of the workspace's team:
+// membership is a different record, and only the owner can remove a member.
 //
 // ── Received and Sent ──────────────────────────────────────────────────────
 //
@@ -27,7 +32,8 @@ import { useMyPlan } from "../../../hooks/usePlans";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useLiveRefresh } from "../../../services/live/use-live-refresh";
 import { useSearchParams } from "react-router";
-import { Check, X, Undo2, Inbox, Ban, CircleCheck, Mail } from "lucide-react";
+import { Check, X, Undo2, Inbox, Ban, CircleCheck, Mail, Trash2 } from "lucide-react";
+import { useConfirm } from "../../../components/platform/ConfirmDialog";
 import { AppContent, EmptyStateLayout, PageHeader, SkeletonBlock } from "../../../components/platform";
 import { usePageMeta } from "../../../hooks/usePageMeta";
 import { usePlatform } from "../../../context/PlatformContext";
@@ -104,6 +110,7 @@ export function MyInvitationsPage() {
   const [notice, setNotice] = useState<{ tone: "success" | "error"; text: string } | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [declining, setDeclining] = useState<MyInvitation | null>(null);
+  const { confirm, confirmDialog } = useConfirm();
   // Only the newest load may write: an action's quiet reload can overlap the
   // first load, and a slower, older answer must not overwrite a newer one.
   const loadSeq = useRef(0);
@@ -186,6 +193,33 @@ export function MyInvitationsPage() {
     }
   }
 
+  const deleteInvitation = (item: MyInvitation) => {
+    const joined = item.status === "accepted";
+    confirm({
+      title: "Delete this invitation?",
+      body: joined
+        ? `The invitation to ${item.workspaceName} is deleted permanently and cannot be brought back. Deleting it does not remove you from the workspace's team.`
+        : `The invitation to ${item.workspaceName} and your reason are deleted permanently and cannot be brought back.`,
+      confirmLabel: "Continue",
+      cancelLabel: "Cancel",
+      destructive: true,
+      onConfirm: async () => {
+        setBusyId(item.invitationId);
+        setNotice(null);
+        try {
+          await myInvitationsService.delete(item.invitationId);
+          setNotice({ tone: "success", text: `The invitation to ${item.workspaceName} was deleted.` });
+          await load(true);
+        } catch (err) {
+          setNotice({ tone: "error", text: invitationErrorMessage(err, "delete") });
+          void load(true);
+        } finally {
+          setBusyId(null);
+        }
+      },
+    });
+  };
+
   const ready = state === "ready";
   const tabs = [
     { id: "pending" as const, label: "Pending", count: ready ? lists.pending.length : null, icon: Inbox },
@@ -208,9 +242,17 @@ export function MyInvitationsPage() {
       </>;
     }
     if (item.status === "declined") {
-      return (
+      return <>
+        <SmallButton icon={Trash2} label="Delete" variant="danger" disabled={anyBusy}
+          ariaLabel={`Delete: ${subject}`} onClick={() => { deleteInvitation(item); }} />
         <SmallButton icon={Undo2} label={busyId === item.invitationId ? "Withdrawing…" : "Withdraw rejection"} disabled={anyBusy}
           ariaLabel={`Withdraw rejection: ${subject}`} onClick={() => { void act(item, "withdraw"); }} />
+      </>;
+    }
+    if (item.status === "accepted") {
+      return (
+        <SmallButton icon={Trash2} label="Delete" variant="danger" disabled={anyBusy}
+          ariaLabel={`Delete: ${subject}`} onClick={() => { deleteInvitation(item); }} />
       );
     }
     return null;
@@ -276,6 +318,7 @@ export function MyInvitationsPage() {
           openOnArrival={params.get("panel") === "links" || params.get("panel") === "requests"} />
       )}
 
+      {confirmDialog}
       {declining && (
         <DeclineInvitationDialog item={declining} onClose={() => setDeclining(null)}
           onDeclined={() => {

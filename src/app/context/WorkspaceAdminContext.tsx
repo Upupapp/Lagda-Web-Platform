@@ -230,6 +230,8 @@ interface WorkspaceAdminContextValue {
   asyncSendInvitation:    (input: WorkspaceInviteInput) => Promise<boolean | "already-member">;
   asyncResendInvitation:  (id: WorkspaceInvitationId) => Promise<void>;
   asyncRevokeInvitation:  (id: WorkspaceInvitationId) => Promise<void>;
+  /** Resolves true when the invitation was deleted. */
+  asyncDeleteInvitation:  (id: WorkspaceInvitationId) => Promise<boolean>;
 
   // Teams
   asyncLoadTeams:         (includeArchived?: boolean) => Promise<void>;
@@ -490,6 +492,22 @@ export function WorkspaceAdminProvider({ children }: { children: ReactNode }) {
     } catch { dispatch({ type: "ACTION_ERROR", error: "Failed to revoke invitation." }); }
   }, [isReal, workspaceId]);
 
+  const asyncDeleteInvitation = useCallback(async (id: WorkspaceInvitationId): Promise<boolean> => {
+    dispatch({ type: "ACTION_LOADING" });
+    try {
+      if (isReal) {
+        await realWorkspaceAdminService.deleteInvitation(workspaceId, id);
+      } else {
+        await mockWorkspaceAdminService.deleteInvitation(id);
+      }
+      dispatch({ type: "ACTION_DONE" });
+      return true;
+    } catch {
+      dispatch({ type: "ACTION_ERROR", error: "Failed to delete invitation." });
+      return false;
+    }
+  }, [isReal, workspaceId]);
+
   const asyncLoadTeams = useCallback(async (includeArchived = false) => {
     dispatch({ type: "TEAMS_LOADING" });
     try {
@@ -635,7 +653,7 @@ export function WorkspaceAdminProvider({ children }: { children: ReactNode }) {
     asyncDeactivateMember, asyncRemoveMember, asyncUpdateMemberRole, asyncUpdateMemberTeams,
     clearActiveMember: useCallback(() => dispatch({ type: "MEMBER_CLEAR" }), []),
     asyncLoadInvitations, asyncSendInvitation, asyncResendInvitation, asyncRevokeInvitation,
-    asyncLoadTeams, asyncLoadTeam, asyncCreateTeam, asyncUpdateTeam,
+    asyncDeleteInvitation, asyncLoadTeams, asyncLoadTeam, asyncCreateTeam, asyncUpdateTeam,
     asyncAddTeamMembers, asyncRemoveTeamMembers, asyncArchiveTeam, asyncRestoreTeam,
     clearActiveTeam: useCallback(() => dispatch({ type: "TEAM_CLEAR" }), []),
     asyncLoadRoles, asyncLoadRole, asyncCreateRole, asyncUpdateRole, asyncArchiveRole, asyncRestoreRole,

@@ -25,6 +25,7 @@ import { WORKSPACE_INVITATION_STATUS_LABELS } from "../../../models/workspace-ad
 import { USE_REAL_BACKEND } from "../../../services/backend-flag";
 import { ASSIGNABLE_ROLES, REAL_ROLE_LABELS } from "../../../services/real/workspace-admin.service";
 import { useViewport } from "../../../hooks/useViewport";
+import { useConfirm } from "../../../components/platform/ConfirmDialog";
 import { ManagePage } from "./real/manage-ui";
 
 const GF    = { fontFamily: "'Geist', sans-serif" };
@@ -140,8 +141,9 @@ function InvitationRow({ inv, asCard = false, focused = false, decline }: {
   focused?: boolean;
   decline?: InvitationDeclineDetail;
 }) {
-  const { asyncResendInvitation, asyncRevokeInvitation, asyncLoadInvitations } = useWorkspaceAdmin();
+  const { asyncResendInvitation, asyncRevokeInvitation, asyncDeleteInvitation, asyncLoadInvitations } = useWorkspaceAdmin();
   const [acting, setActing] = useState(false);
+  const { confirm, confirmDialog } = useConfirm();
   const badge = STATUS_BADGE[inv.status];
 
   const resend = async () => {
@@ -155,6 +157,26 @@ function InvitationRow({ inv, asCard = false, focused = false, decline }: {
     await asyncRevokeInvitation(inv.id);
     await asyncLoadInvitations();
     setActing(false);
+  };
+
+  // An accepted or rejected invitation can be deleted from this list for good. A
+  // person who accepted stays in the team: membership is a different record.
+  const remove = () => {
+    confirm({
+      title: "Delete this invitation?",
+      body: inv.status === "accepted"
+        ? `The invitation to ${inv.email} is deleted from this list permanently and cannot be brought back. Deleting it does not remove them from the workspace team.`
+        : `The invitation to ${inv.email} is deleted from this list permanently and cannot be brought back.`,
+      confirmLabel: "Continue",
+      cancelLabel: "Cancel",
+      destructive: true,
+      onConfirm: async () => {
+        setActing(true);
+        await asyncDeleteInvitation(inv.id);
+        await asyncLoadInvitations();
+        setActing(false);
+      },
+    });
   };
 
   const isExpiring = inv.status === "pending" && new Date(inv.expiresAt) < new Date(Date.now() + 2 * 24 * 60 * 60 * 1000);
@@ -175,6 +197,13 @@ function InvitationRow({ inv, asCard = false, focused = false, decline }: {
           Revoke
         </button>
       )}
+      {(inv.status === "accepted" || inv.status === "declined") && (
+        <button onClick={remove} disabled={acting} aria-label={`Delete invitation to ${inv.email}`}
+          style={{ ...GF, fontSize: 12, color: "#DC2626", background: "none", border: "1.5px solid #FECACA", borderRadius: 6, padding: "6px 12px", minHeight: 32, cursor: acting ? "not-allowed" : "pointer", opacity: acting ? 0.5 : 1 }}>
+          Delete
+        </button>
+      )}
+      {confirmDialog}
     </>
   );
 

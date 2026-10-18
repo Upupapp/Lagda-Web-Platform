@@ -183,6 +183,14 @@ class RealWorkspaceAdminService {
     return toInvitation(invitation);
   }
 
+  /** An accepted or rejected invitation, from this workspace's sent list for good. Members stay. */
+  async deleteInvitation(workspaceId: string, invitationId: string): Promise<void> {
+    await changes("invitations", apiRequest<{ invitationId: string; deleted: true }>(
+      `/workspaces/${encodeURIComponent(workspaceId)}/invitations/${encodeURIComponent(invitationId)}/delete`,
+      { method: "POST", body: {} },
+    ));
+  }
+
   async revokeInvitation(workspaceId: string, invitationId: string): Promise<void> {
     await changes("invitations", apiRequest<{ invitationId: string; state: string }>(
       `/workspaces/${encodeURIComponent(workspaceId)}/invitations/${encodeURIComponent(invitationId)}/revoke`,
