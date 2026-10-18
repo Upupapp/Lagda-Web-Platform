@@ -1,5 +1,6 @@
-// /app/enotary/desk — a notary's desk: the requests clients have sent them, and
-// Accept or Decline for each.
+// /app/enotary/desk — a notary's desk: the requests clients have sent them, Accept
+// (naming a fee) or Decline for each, and, once a client says they paid, the
+// confirmation that the money came.
 //
 // A request appears here only after the notary has proved who they are (the ID
 // and face check) and the name matched. The client's name is shown from then on
@@ -7,21 +8,29 @@
 // commission has not ended; until then the desk says where the application stands
 // and the buttons stay off. The server enforces every one of those rules.
 //
-// It ends at the notary's answer: "accepted" means the session opens when LAGDA
-// eNotary does. No video, payment or document is offered here.
+// ── Paying the notary ──────────────────────────────────────────────────────
+//
+// The fee is paid straight to the notary by the notary's own payment QR (see the
+// Payment QR page). The client sends the transfer's reference; the notary looks
+// in their own bank or e-wallet app and confirms here. LAGDA never holds the
+// money and a screenshot is never taken as proof: only the notary's own app is.
+//
+// It ends there: "accepted" and paid means the session opens when LAGDA eNotary
+// does. No video or document is offered here.
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "react-router";
-import { AlertTriangle, Check, Clock, Inbox, X } from "lucide-react";
+import { AlertTriangle, Check, Clock, Inbox, QrCode, X } from "lucide-react";
 import { ActionButton, GF, Notice, T } from "../../../../components/system/design-system";
 import { useConfirm } from "../../../../components/platform/ConfirmDialog";
 import { USE_REAL_BACKEND } from "../../../../services/backend-flag";
 import {
-  errorCode, realEnotaryInvitationsService, type DeskRequest, type NotaryDesk,
+  describePaymentError, errorCode, formatPesos, parsePesos, realEnotaryInvitationsService,
+  FEE_MAX_PESOS, type DeskPayment, type DeskRequest, type NotaryDesk,
 } from "../../../../services/real/enotary-invitations.service";
 import { E, EnotaryFrame } from "../EnotaryChrome";
 import { EnotaryLoadError, EnotaryLoading, EnotaryNotOffered } from "../EnotaryStates";
-import { OnrampNote, Panel, StatusPill, bodyText, fieldStyle, linkButton, useNow } from "../onramp-ui";
+import { OnrampNote, Panel, StatusPill, bodyText, fieldStyle, hintStyle, labelStyle, linkButton, useNow } from "../onramp-ui";
 import { ExpiryClock, countdownText, expiryLabel, expiryTone, stampLabel } from "../requests/expiry";
 
 const POLL_MS = 15_000;
@@ -53,10 +62,34 @@ export function bannerFor(desk: NotaryDesk): { tone: "info" | "warn"; text: stri
   }
 }
 
+/** One line on where an accepted request's fee stands, for the notary. */
+export function paymentLine(payment: DeskPayment | null | undefined, clientName: string): string | null {
+  if (payment === null || payment === undefined) return null;
+  const amount = `PHP ${formatPesos(payment.amountCentavos)}`;
+  switch (payment.status) {
+    case "waived": return "No fee for this request.";
+    case "awaiting": return `Waiting for ${clientName} to pay ${amount}.`;
+    case "proof": return `${clientName} says they paid ${amount}.`;
+    case "confirmed": return `You confirmed the payment of ${amount}.`;
+    case "not_received": return `You told ${clientName} the ${amount} did not arrive. Waiting for another proof.`;
+  }
+}
+
+/** The fee typed on the accept panel, in centavos; 0 when none is charged; null when it is not a sum the server takes. */
+export function feeFrom(text: string, noFee: boolean): number | null {
+  if (noFee) return 0;
+  const parsed = parsePesos(text);
+  return parsed === 0 ? null : parsed;
+}
+
 export function NotaryDeskPage() {
   const [loaded, setLoaded] = useState<Loaded>(USE_REAL_BACKEND ? { kind: "loading" } : { kind: "off" });
   const [working, setWorking] = useState<string | null>(null);
   const [declining, setDeclining] = useState<string | null>(null);
+  const [accepting, setAccepting] = useState<string | null>(null);
+  const [fee, setFee] = useState("");
+  const [noFee, setNoFee] = useState(false);
+  const [missing, setMissing] = useState<string | null>(null);
   const [reason, setReason] = useState("");
   const [problem, setProblem] = useState<string | null>(null);
   const [said, setSaid] = useState<string | null>(null);
@@ -85,45 +118,91 @@ export function NotaryDeskPage() {
 
   const { desk, receivedAt } = loaded;
   const banner = bannerFor(desk);
+  const hasQr = desk.paymentProfile !== null && desk.paymentProfile !== undefined;
   const waiting = desk.requests.filter(r => r.status === "claimed");
   const accepted = desk.requests.filter(r => r.status === "accepted");
+  const toConfirm = desk.requests.filter(r => r.payment?.status === "proof");
   const closed = desk.requests.filter(r => r.status === "declined" || r.status === "expired" || r.status === "revoked");
 
   const refused = (error: unknown) => {
     const code = errorCode(error);
-    if (code === "notary_not_approved") return "Your application is not approved, or your commission has ended, so you cannot answer requests.";
     if (code === "enotary_invitation_unavailable") return "That request is no longer open. The client may have cancelled it, or its time ran out.";
-    return "That could not be done right now. Please try again.";
+    return describePaymentError(error);
   };
+
+  const finish = () => { if (alive.current) { setWorking(null); load(true); } };
 
   const answer = async (request: DeskRequest, kind: "accept" | "decline") => {
     setWorking(request.id);
     setProblem(null);
     setSaid(null);
     try {
-      if (kind === "accept") await realEnotaryInvitationsService.accept(request.id);
-      else await realEnotaryInvitationsService.decline(request.id, reason);
+      if (kind === "accept") {
+        const amount = feeFrom(fee, noFee);
+        if (amount === null) {
+          setProblem(`Enter your fee in pesos (1 to ${FEE_MAX_PESOS.toLocaleString("en-US")}), or say you are not charging one.`);
+          return;
+        }
+        await realEnotaryInvitationsService.accept(request.id, amount);
+        if (!alive.current) return;
+        setSaid(amount === 0
+          ? `You accepted the request from ${request.client.name} without a fee. The session opens when LAGDA eNotary does.`
+          : `You accepted the request from ${request.client.name}. They were asked to pay PHP ${formatPesos(amount)} to your QR.`);
+        setAccepting(null);
+        setFee("");
+        setNoFee(false);
+      } else {
+        await realEnotaryInvitationsService.decline(request.id, reason);
+        if (!alive.current) return;
+        setSaid(`You declined the request from ${request.client.name}.`);
+        setDeclining(null);
+        setReason("");
+      }
+    } catch (error) {
+      if (alive.current) setProblem(refused(error));
+    } finally {
+      finish();
+    }
+  };
+
+  const confirmPayment = (request: DeskRequest) => {
+    const amount = request.payment === null || request.payment === undefined ? "" : ` of PHP ${formatPesos(request.payment.amountCentavos)}`;
+    confirm({
+      title: `Confirm the payment from ${request.client.name}?`,
+      body: `Only confirm if the transfer${amount} (reference ${request.payment?.reference ?? ""}) is in your own bank or e-wallet account. The client is told, and the request goes on.`,
+      confirmLabel: "Yes, I received it",
+      cancelLabel: "Not yet",
+      onConfirm: async () => {
+        setWorking(request.id);
+        setProblem(null);
+        setSaid(null);
+        try {
+          await realEnotaryInvitationsService.confirmPayment(request.id);
+          if (alive.current) setSaid(`You confirmed the payment from ${request.client.name}.`);
+        } catch (error) {
+          if (alive.current) setProblem(refused(error));
+        } finally {
+          finish();
+        }
+      },
+    });
+  };
+
+  const notReceived = async (request: DeskRequest) => {
+    setWorking(request.id);
+    setProblem(null);
+    setSaid(null);
+    try {
+      await realEnotaryInvitationsService.paymentNotReceived(request.id, reason);
       if (!alive.current) return;
-      setSaid(kind === "accept"
-        ? `You accepted the request from ${request.client.name}. The session opens when LAGDA eNotary does.`
-        : `You declined the request from ${request.client.name}.`);
-      setDeclining(null);
+      setSaid(`${request.client.name} was told the payment did not arrive. They can send the reference again.`);
+      setMissing(null);
       setReason("");
     } catch (error) {
       if (alive.current) setProblem(refused(error));
     } finally {
-      if (alive.current) { setWorking(null); load(true); }
+      finish();
     }
-  };
-
-  const accept = (request: DeskRequest) => {
-    confirm({
-      title: `Accept the request from ${request.client.name}?`,
-      body: "The client is told you accepted. The online session opens when LAGDA eNotary does; nothing is booked or notarized yet.",
-      confirmLabel: "Accept the request",
-      cancelLabel: "Not now",
-      onConfirm: () => answer(request, "accept"),
-    });
   };
 
   const tally = (label: string, count: number, testId: string) => (
@@ -132,6 +211,9 @@ export function NotaryDeskPage() {
       <span style={{ fontSize: 13, color: E.quiet, fontWeight: 600 }}>{label}</span>
     </div>
   );
+
+  const feeAmount = feeFrom(fee, noFee);
+  const feeProblem = !noFee && fee.trim() !== "" && feeAmount === null ? "Enter a fee between 1 and 50,000 pesos." : null;
 
   return (
     <EnotaryFrame wide tone="attorney" badge="Notary" eyebrow="Notary desk" description="Requests that clients sent you, once you have proved who you are.">
@@ -144,9 +226,18 @@ export function NotaryDeskPage() {
           </Notice>
         </div>
       )}
+      {banner === null && !hasQr && (
+        <div data-testid="desk-qr-banner">
+          <Notice icon={QrCode} tone="info">
+            To ask for a fee, save your payment QR first: clients scan it to pay you directly.{" "}
+            <Link to="/app/enotary/payment" style={{ display: "inline-flex", alignItems: "center", minHeight: 44, color: "inherit", fontWeight: 700, textDecoration: "underline" }}>Save my payment QR</Link>
+          </Notice>
+        </div>
+      )}
       <div style={{ display: "flex", gap: 10, flexWrap: "wrap", margin: "0 0 18px" }}>
         {tally("Waiting", waiting.length, "tally-waiting")}
         {tally("Accepted", accepted.length, "tally-accepted")}
+        {tally("To confirm", toConfirm.length, "tally-confirm")}
         {tally("Closed", closed.length, "tally-closed")}
       </div>
       {said !== null && <div role="status" style={{ ...GF, margin: "0 0 12px", fontSize: 14, fontWeight: 600, color: E.ok }}>{said}</div>}
@@ -168,8 +259,12 @@ export function NotaryDeskPage() {
             const open = request.status === "claimed" && msLeft > 0;
             const tone = expiryTone(msLeft);
             const busy = working === request.id;
+            const line = paymentLine(request.payment, request.client.name);
+            const payment = request.payment ?? null;
+            const proof = request.status === "accepted" && payment !== null && payment.status === "proof";
+            const goesOn = payment === null || payment.status === "confirmed" || payment.status === "waived";
             return (
-              <li key={request.id} data-testid="desk-row" data-status={request.status} style={{ ...GF, padding: "14px 16px", borderRadius: 12, border: `1px solid ${E.line}`, background: "#FFFFFF" }}>
+              <li key={request.id} data-testid="desk-row" data-status={request.status} data-payment={payment?.status ?? "none"} style={{ ...GF, padding: "14px 16px", borderRadius: 12, border: `1px solid ${E.line}`, background: "#FFFFFF" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
                   <strong style={{ fontSize: 16, color: E.ink, flex: "1 1 180px", minWidth: 0, overflowWrap: "anywhere" }}>{request.client.name}</strong>
                   {request.client.identityVerified && <span style={{ fontSize: 12.5, color: E.ok, fontWeight: 700 }}>ID verified</span>}
@@ -185,7 +280,41 @@ export function NotaryDeskPage() {
                   </p>
                 )}
                 {request.status === "accepted" && (
-                  <p style={{ margin: "8px 0 0", fontSize: 13.5, color: E.text }}>Accepted. The session opens when LAGDA eNotary does.</p>
+                  <div style={{ marginTop: 8 }}>
+                    <p style={{ margin: 0, fontSize: 13.5, color: E.text }}>
+                      {goesOn
+                        ? "Accepted. The session opens when LAGDA eNotary does."
+                        : "Accepted. The request goes on once the fee is paid and you have confirmed it."}
+                    </p>
+                    {line !== null && (
+                      <p data-testid="desk-payment" style={{ margin: "4px 0 0", fontSize: 13.5, fontWeight: 700, color: payment?.status === "proof" ? E.maroon : E.text }}>{line}</p>
+                    )}
+                    {proof && (
+                      <div data-testid="desk-proof" style={{ marginTop: 8, padding: "10px 12px", borderRadius: 10, background: E.maroonWash, border: `1px solid ${E.maroonLine}` }}>
+                        <p style={{ margin: 0, fontSize: 13.5, color: E.text }}>
+                          Reference number: <strong data-testid="desk-reference" style={{ letterSpacing: "0.04em" }}>{payment.reference}</strong>
+                          {payment.proofAt !== null && <> · sent {stampLabel(payment.proofAt)}</>}
+                        </p>
+                        <p style={{ margin: "4px 0 0", fontSize: 12.5, color: E.quiet }}>Look for this transfer in your own bank or e-wallet app. Do not go by a screenshot.</p>
+                        {missing === request.id ? (
+                          <div style={{ marginTop: 10 }}>
+                            <label htmlFor={`missing-${request.id}`} style={labelStyle}>Note for the client (optional)</label>
+                            <input id={`missing-${request.id}`} value={reason} maxLength={120} onChange={event => { setReason(event.target.value); }} style={fieldStyle()} />
+                            <p style={hintStyle}>For example, &ldquo;No transfer with that reference yet.&rdquo; At most 120 characters.</p>
+                            <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 10 }}>
+                              <ActionButton kind="danger" icon={X} disabled={busy} onClick={() => { void notReceived(request); }}>{busy ? "Sending…" : "Tell the client it did not arrive"}</ActionButton>
+                              <ActionButton kind="secondary" disabled={busy} onClick={() => { setMissing(null); setReason(""); }}>Back</ActionButton>
+                            </div>
+                          </div>
+                        ) : (
+                          <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 10 }}>
+                            <ActionButton icon={Check} disabled={busy} onClick={() => { confirmPayment(request); }}>I received it</ActionButton>
+                            <ActionButton kind="secondary" disabled={busy} onClick={() => { setMissing(request.id); setReason(""); }}>Not received</ActionButton>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 )}
                 {open && (
                   <div style={{ marginTop: 12 }}>
@@ -199,10 +328,43 @@ export function NotaryDeskPage() {
                           <ActionButton kind="secondary" disabled={busy} onClick={() => { setDeclining(null); setReason(""); }}>Keep it</ActionButton>
                         </div>
                       </div>
+                    ) : accepting === request.id ? (
+                      <div data-testid="accept-panel">
+                        <label htmlFor={`fee-${request.id}`} style={labelStyle}>Your fee for this request (PHP)</label>
+                        <input
+                          id={`fee-${request.id}`} data-testid="fee-input" inputMode="decimal" autoComplete="off" value={fee} maxLength={12} disabled={noFee}
+                          placeholder="e.g. 1500" aria-invalid={feeProblem !== null ? true : undefined}
+                          onChange={event => { setFee(event.target.value); }} style={fieldStyle(feeProblem !== null)}
+                        />
+                        {feeProblem !== null && <p role="alert" style={{ ...hintStyle, color: T.danger }}>{feeProblem}</p>}
+                        <label style={{ ...GF, display: "flex", alignItems: "center", gap: 8, minHeight: 44, marginTop: 6, fontSize: 14, color: E.text }}>
+                          <input type="checkbox" data-testid="no-fee" checked={noFee} onChange={event => { setNoFee(event.target.checked); }} style={{ width: 18, height: 18 }} />
+                          I am not charging a fee for this request
+                        </label>
+                        {!noFee && !hasQr && (
+                          <p data-testid="accept-needs-qr" style={{ ...hintStyle, color: "#8A5A00" }}>
+                            A fee is paid to your payment QR, and you have not saved one.{" "}
+                            <Link to="/app/enotary/payment" style={{ color: "inherit", fontWeight: 700 }}>Save my payment QR</Link>
+                          </p>
+                        )}
+                        <p style={hintStyle}>
+                          The client pays you directly with their bank or e-wallet app, then sends you the reference number. You confirm from your own app.
+                          LAGDA never holds the money. The online session opens when LAGDA eNotary does; nothing is booked or notarized yet.
+                        </p>
+                        <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 10 }}>
+                          <ActionButton
+                            icon={Check} disabled={busy || feeAmount === null || (!noFee && !hasQr)}
+                            onClick={() => { void answer(request, "accept"); }}
+                          >
+                            {busy ? "Accepting…" : "Accept the request"}
+                          </ActionButton>
+                          <ActionButton kind="secondary" disabled={busy} onClick={() => { setAccepting(null); setFee(""); setNoFee(false); }}>Not now</ActionButton>
+                        </div>
+                      </div>
                     ) : (
                       <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-                        <ActionButton icon={Check} disabled={busy || !desk.canAccept} onClick={() => { accept(request); }}>Accept</ActionButton>
-                        <ActionButton kind="secondary" disabled={busy || !desk.canAccept} onClick={() => { setDeclining(request.id); setReason(""); }}>Decline</ActionButton>
+                        <ActionButton icon={Check} disabled={busy || !desk.canAccept} onClick={() => { setAccepting(request.id); setDeclining(null); setFee(""); setNoFee(false); setReason(""); }}>Accept</ActionButton>
+                        <ActionButton kind="secondary" disabled={busy || !desk.canAccept} onClick={() => { setDeclining(request.id); setAccepting(null); setReason(""); }}>Decline</ActionButton>
                       </div>
                     )}
                     {!desk.canAccept && <p style={{ margin: "8px 0 0", fontSize: 12.5, color: E.quiet }}>You can answer once your application is approved.</p>}
@@ -213,7 +375,8 @@ export function NotaryDeskPage() {
           })}
         </ul>
       )}
-      <p style={{ ...GF, margin: "18px 0 0", fontSize: 14 }}>
+      <p style={{ ...GF, margin: "18px 0 0", fontSize: 14, display: "flex", gap: 10, flexWrap: "wrap" }}>
+        <Link to="/app/enotary/payment" style={{ ...linkButton("secondary"), color: T.ink }}>{hasQr ? "My payment QR" : "Save my payment QR"}</Link>
         <Link to="/app/enotary/apply" style={{ ...linkButton("secondary"), color: T.ink }}>{desk.applicationStatus === "none" ? "Apply to be a notary" : "My application"}</Link>
       </p>
       <OnrampNote />
