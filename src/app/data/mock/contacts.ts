@@ -7,7 +7,6 @@ import type {
   Contact,
   ContactId,
   ContactTagId,
-  ContactGroupId,
   ContactGroup,
   ContactUsageSummary,
   ContactImportPreview,
@@ -45,15 +44,6 @@ const T_REVIEWER   = "tag-reviewer"    as ContactTagId;
 const T_SIGNER     = "tag-signer"      as ContactTagId;
 const T_ACK        = "tag-ack"         as ContactTagId;
 
-// ── Group IDs ─────────────────────────────────────────────────────────────────
-
-export const GRP_CLIENTS       = "grp-clients"         as ContactGroupId;
-export const GRP_VENDORS       = "grp-vendors"         as ContactGroupId;
-export const GRP_INTERNAL      = "grp-internal-reviewers" as ContactGroupId;
-export const GRP_HR            = "grp-hr-participants" as ContactGroupId;
-export const GRP_PROCUREMENT   = "grp-procurement-approvers" as ContactGroupId;
-export const GRP_EXTERNAL      = "grp-external-signers" as ContactGroupId;
-
 // ── Contact ID constants ──────────────────────────────────────────────────────
 
 export const CID_ANA         = "contact-ana-reyes"              as ContactId;
@@ -81,7 +71,7 @@ export const CONTACT_ANA_REYES: Contact = {
   organization: "Mabini Legal Solutions",
   title:        "Senior Legal Counsel",
   tagIds:       [T_LEGAL, T_APPROVER],
-  groupIds:     [GRP_CLIENTS, GRP_INTERNAL],
+  groupIds:     [],
   note:         "Primary contact for Mabini Legal engagement work.",
   createdAt:    "2026-05-01T09:00:00Z",
   updatedAt:    "2026-07-14T11:30:00Z",
@@ -103,7 +93,7 @@ export const CONTACT_MARCO_SANTOS: Contact = {
   organization: "Santos Advisory Group",
   title:        "Managing Consultant",
   tagIds:       [T_CLIENT, T_SIGNER],
-  groupIds:     [GRP_CLIENTS, GRP_EXTERNAL],
+  groupIds:     [],
   createdAt:    "2026-04-15T10:00:00Z",
   updatedAt:    "2026-07-10T09:00:00Z",
   lastUsedAt:   "2026-07-10T09:00:00Z",
@@ -123,7 +113,7 @@ export const CONTACT_LEA_CRUZ: Contact = {
   organization: "Cruz & Co.",
   title:        "Operations Director",
   tagIds:       [T_VENDOR, T_SIGNER],
-  groupIds:     [GRP_VENDORS],
+  groupIds:     [],
   createdAt:    "2026-05-20T14:00:00Z",
   updatedAt:    "2026-06-30T10:00:00Z",
   lastUsedAt:   "2026-06-28T15:00:00Z",
@@ -143,7 +133,7 @@ export const CONTACT_DANIEL_LIM: Contact = {
   organization: "Mabini Legal Solutions",
   title:        "Compliance Reviewer",
   tagIds:       [T_INTERNAL, T_REVIEWER],
-  groupIds:     [GRP_INTERNAL],
+  groupIds:     [],
   createdAt:    "2026-05-10T08:00:00Z",
   updatedAt:    "2026-07-01T14:00:00Z",
   lastUsedAt:   "2026-07-01T14:00:00Z",
@@ -164,7 +154,7 @@ export const CONTACT_SOFIA_NAVARRO: Contact = {
   organization: "Navarro Holdings",
   title:        "Human Resources Manager",
   tagIds:       [T_HR, T_ACK],
-  groupIds:     [GRP_HR],
+  groupIds:     [],
   createdAt:    "2026-06-01T09:30:00Z",
   updatedAt:    "2026-07-05T11:00:00Z",
   lastUsedAt:   "2026-07-05T11:00:00Z",
@@ -204,7 +194,7 @@ export const CONTACT_MARCO_ALT: Contact = {
   organization: "Santos Advisory Services", // slightly different org name
   title:        "Senior Consultant",
   tagIds:       [T_CLIENT],
-  groupIds:     [GRP_EXTERNAL],
+  groupIds:     [],
   createdAt:    "2026-07-01T12:00:00Z",
   updatedAt:    "2026-07-01T12:00:00Z",
   lastUsedAt:   undefined,
@@ -260,81 +250,12 @@ export const CONTACT_OTHER_WORKSPACE: Contact = {
 };
 
 // ── Groups ────────────────────────────────────────────────────────────────────
+//
+// There are none in the demonstration data: a group is something a person makes,
+// and a workspace's own groups are kept by the server (116). The demonstration
+// starts with an empty list and lets a visitor create groups for the session.
 
-export const CONTACT_GROUPS: ContactGroup[] = [
-  {
-    id:          GRP_CLIENTS,
-    name:        "Clients",
-    description: "External client contacts used for signing engagements.",
-    scope:       "workspace",
-    workspaceId: WS_ID,
-    contactIds:  [CID_ANA, CID_MARCO],
-    status:      "active",
-    createdAt:   "2026-04-01T09:00:00Z",
-    updatedAt:   "2026-07-10T09:00:00Z",
-    demonstrationOnly: true,
-  },
-  {
-    id:          GRP_VENDORS,
-    name:        "Vendors",
-    description: "Vendor and supplier contacts.",
-    scope:       "workspace",
-    workspaceId: WS_ID,
-    contactIds:  [CID_LEA],
-    status:      "active",
-    createdAt:   "2026-05-20T14:00:00Z",
-    updatedAt:   "2026-06-30T10:00:00Z",
-    demonstrationOnly: true,
-  },
-  {
-    id:          GRP_INTERNAL,
-    name:        "Internal Reviewers",
-    description: "Internal staff who review and approve documents.",
-    scope:       "workspace",
-    workspaceId: WS_ID,
-    contactIds:  [CID_ANA, CID_DANIEL],
-    status:      "active",
-    createdAt:   "2026-05-10T08:00:00Z",
-    updatedAt:   "2026-07-01T14:00:00Z",
-    demonstrationOnly: true,
-  },
-  {
-    id:          GRP_HR,
-    name:        "HR Participants",
-    description: "Human resources contacts for onboarding and policy acknowledgment.",
-    scope:       "workspace",
-    workspaceId: WS_ID,
-    contactIds:  [CID_SOFIA],
-    status:      "active",
-    createdAt:   "2026-06-01T09:30:00Z",
-    updatedAt:   "2026-07-05T11:00:00Z",
-    demonstrationOnly: true,
-  },
-  {
-    id:          GRP_PROCUREMENT,
-    name:        "Procurement Approvers",
-    description: "Contacts for procurement approval workflows.",
-    scope:       "workspace",
-    workspaceId: WS_ID,
-    contactIds:  [CID_DANIEL],
-    status:      "active",
-    createdAt:   "2026-06-15T10:00:00Z",
-    updatedAt:   "2026-07-02T09:00:00Z",
-    demonstrationOnly: true,
-  },
-  {
-    id:          GRP_EXTERNAL,
-    name:        "External Signers",
-    description: "External parties invited as signers on active transactions.",
-    scope:       "workspace",
-    workspaceId: WS_ID,
-    contactIds:  [CID_MARCO, CID_MARCO_ALT, CID_LEA],
-    status:      "active",
-    createdAt:   "2026-04-20T11:00:00Z",
-    updatedAt:   "2026-07-10T09:00:00Z",
-    demonstrationOnly: true,
-  },
-];
+export const CONTACT_GROUPS: ContactGroup[] = [];
 
 // ── Usage summaries ───────────────────────────────────────────────────────────
 

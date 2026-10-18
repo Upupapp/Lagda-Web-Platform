@@ -17,6 +17,7 @@ import { ContactProvider, useContacts } from "../../../context/ContactContext";
 import type { ContactDuplicateCandidate, ContactUsageSummary, ContactTagId } from "../../../models/contacts";
 import { CONTACT_STATUS_LABELS, CONTACT_SOURCE_LABELS, getContactTagById } from "../../../models/contacts";
 import { usePlatform } from "../../../context/PlatformContext";
+import { listGroups as sourceListGroups } from "../../../services/contacts-source";
 import { useWorkspaceAccess } from "../../../hooks/useWorkspaceAccess";
 import { contactRequestsAvailable } from "../../../services/real/contact-request.service";
 import { ContactRequestDialog, DELIVERY_COPY } from "../../../components/contact-requests/ContactRequestDialog";
@@ -167,6 +168,8 @@ function ContactDetail() {
   const [deleting, setDeleting] = useState(false);
   const navigateTo = useNavigate();
   const [requestKind, setRequestKind] = useState<ContactRequestKind | null>(null);
+  // Group names, to show beside the groups this contact is in (the contact keeps only their ids).
+  const [groupNames, setGroupNames] = useState<Map<string, string>>(new Map());
   const [historyKey, setHistoryKey] = useState(0);
   const platform = usePlatform();
   const access = useWorkspaceAccess();
@@ -175,6 +178,15 @@ function ContactDetail() {
   // real email — and hidden once the server confirms the privilege is missing.
   const canRequest = contactRequestsAvailable(workspaceId)
     && (!access.confirmed || access.can("upload-request.create"));
+
+  useEffect(() => {
+    let alive = true;
+    sourceListGroups(workspaceId).then(
+      groups => { if (alive) setGroupNames(new Map(groups.map(g => [String(g.id), g.name]))); },
+      () => { /* the ids are still links */ },
+    );
+    return () => { alive = false; };
+  }, [workspaceId, contactId]);
 
   useEffect(() => {
     if (contactId) void asyncLoadContact(contactId as ContactId);
@@ -367,7 +379,7 @@ function ContactDetail() {
               {contact.groupIds.map(gid => (
                 <Link key={gid} to={`/app/contacts/groups/${gid}`}
                   style={{ ...GF, fontSize: 12, color: AZURE, border: `1.5px solid ${AZURE}`, borderRadius: 8, padding: "5px 12px", textDecoration: "none", background: LIGHT }}>
-                  {gid}
+                  {groupNames.get(String(gid)) ?? gid}
                 </Link>
               ))}
             </div>

@@ -42,9 +42,9 @@ import { mockContactService } from "../services/mock/contacts.service";
 import { usePlatform } from "./PlatformContext";
 // The workspace's real address book where one is open. Only the six
 // operations the backend actually has go through here — list, get, create,
-// update, archive, restore. Tags, groups, merge, import and usage history
-// have no backend at all and stay on the fixture service, which is why both
-// imports coexist rather than one replacing the other.
+// update, archive, restore, and (since 116) the contact groups. Tags in bulk,
+// merge, import and usage history have no backend and stay on the fixture
+// service, which is why both imports coexist rather than one replacing the other.
 import {
   listContacts as sourceListContacts,
   getContact as sourceGetContact,
@@ -52,6 +52,12 @@ import {
   updateContact as sourceUpdateContact,
   archiveContact as sourceArchiveContact,
   restoreContact as sourceRestoreContact,
+  listGroups as sourceListGroups,
+  createGroup as sourceCreateGroup,
+  archiveGroup as sourceArchiveGroup,
+  restoreGroup as sourceRestoreGroup,
+  addContactsToGroup as sourceAddContactsToGroup,
+  removeContactsFromGroup as sourceRemoveContactsFromGroup,
   realContactsAvailable,
 } from "../services/contacts-source";
 
@@ -286,12 +292,13 @@ export function ContactProvider({ children }: { children: ReactNode }) {
   const asyncLoadGroups = useCallback(async () => {
     dispatch({ type: "GROUPS_LOADING" });
     try {
-      const groups = await mockContactService.listGroups();
+      const groups = await sourceListGroups(workspaceId);
       dispatch({ type: "GROUPS_SUCCESS", payload: groups });
     } catch {
       // Non-fatal — groups sidebar degrades silently
+      dispatch({ type: "GROUPS_SUCCESS", payload: [] });
     }
-  }, []);
+  }, [workspaceId]);
 
   const asyncLoadContact = useCallback(async (id: ContactId) => {
     dispatch({ type: "ACTIVE_LOADING" });
@@ -424,12 +431,12 @@ export function ContactProvider({ children }: { children: ReactNode }) {
   const asyncBulkAddToGroup = useCallback(async (ids: ContactId[], groupId: ContactGroupId) => {
     dispatch({ type: "PENDING_START", payload: "bulk-group" });
     try {
-      await mockContactService.bulkAddToGroup(ids, groupId);
+      await sourceAddContactsToGroup(workspaceId, groupId, ids);
       dispatch({ type: "PENDING_SUCCESS", payload: { message: "Contacts added to group." } });
     } catch {
       dispatch({ type: "PENDING_ERROR", payload: "Could not add to group." });
     }
-  }, []);
+  }, [workspaceId]);
 
   const asyncValidate = useCallback(async (input: Partial<ContactCreateInput>, existingId?: ContactId): Promise<ContactValidationResult> => {
     return mockContactService.validateContact(input, existingId);
@@ -476,54 +483,54 @@ export function ContactProvider({ children }: { children: ReactNode }) {
   const asyncCreateGroup = useCallback(async (name: string, description: string, scope: ContactScope) => {
     dispatch({ type: "PENDING_START", payload: "create-group" });
     try {
-      await mockContactService.createGroup(name, description, scope);
-      const groups = await mockContactService.listGroups();
+      await sourceCreateGroup(workspaceId, name, description, scope);
+      const groups = await sourceListGroups(workspaceId);
       dispatch({ type: "GROUPS_SUCCESS", payload: groups });
-      dispatch({ type: "PENDING_SUCCESS", payload: { message: "Group created in this frontend session." } });
+      dispatch({ type: "PENDING_SUCCESS", payload: { message: isReal ? "Group created." : "Group created in this frontend session." } });
     } catch {
       dispatch({ type: "PENDING_ERROR", payload: "Could not create group." });
     }
-  }, []);
+  }, [workspaceId, isReal]);
 
   const asyncArchiveGroup = useCallback(async (id: ContactGroupId) => {
     dispatch({ type: "PENDING_START", payload: "archive-group" });
     try {
-      await mockContactService.archiveGroup(id);
-      dispatch({ type: "PENDING_SUCCESS", payload: { message: "Group archived in this frontend session." } });
+      await sourceArchiveGroup(workspaceId, id);
+      dispatch({ type: "PENDING_SUCCESS", payload: { message: isReal ? "Group archived." : "Group archived in this frontend session." } });
     } catch {
       dispatch({ type: "PENDING_ERROR", payload: "Could not archive group." });
     }
-  }, []);
+  }, [workspaceId, isReal]);
 
   const asyncRestoreGroup = useCallback(async (id: ContactGroupId) => {
     dispatch({ type: "PENDING_START", payload: "restore-group" });
     try {
-      await mockContactService.restoreGroup(id);
-      dispatch({ type: "PENDING_SUCCESS", payload: { message: "Group restored in this frontend session." } });
+      await sourceRestoreGroup(workspaceId, id);
+      dispatch({ type: "PENDING_SUCCESS", payload: { message: isReal ? "Group restored." : "Group restored in this frontend session." } });
     } catch {
       dispatch({ type: "PENDING_ERROR", payload: "Could not restore group." });
     }
-  }, []);
+  }, [workspaceId, isReal]);
 
   const asyncAddContactsToGroup = useCallback(async (groupId: ContactGroupId, contactIds: ContactId[]) => {
     dispatch({ type: "PENDING_START", payload: "add-to-group" });
     try {
-      await mockContactService.addContactsToGroup(groupId, contactIds);
+      await sourceAddContactsToGroup(workspaceId, groupId, contactIds);
       dispatch({ type: "PENDING_SUCCESS", payload: { message: "Contacts added to group." } });
     } catch {
       dispatch({ type: "PENDING_ERROR", payload: "Could not add contacts to group." });
     }
-  }, []);
+  }, [workspaceId]);
 
   const asyncRemoveContactsFromGroup = useCallback(async (groupId: ContactGroupId, contactIds: ContactId[]) => {
     dispatch({ type: "PENDING_START", payload: "remove-from-group" });
     try {
-      await mockContactService.removeContactsFromGroup(groupId, contactIds);
+      await sourceRemoveContactsFromGroup(workspaceId, groupId, contactIds);
       dispatch({ type: "PENDING_SUCCESS", payload: { message: "Contact removed from group." } });
     } catch {
       dispatch({ type: "PENDING_ERROR", payload: "Could not remove contact from group." });
     }
-  }, []);
+  }, [workspaceId]);
 
   const clearPending = useCallback(() => {
     dispatch({ type: "PENDING_CLEAR" });

@@ -26,9 +26,11 @@
 // empty lists, zero counts -- so nothing on screen claims a value the
 // next reload will contradict.
 //
-// Group membership, merging and usage history remain fixture-only for
-// the same reason: there is no backend for them yet, and a facade cannot
-// invent one.
+// Merging and usage history remain fixture-only for the same reason: there
+// is no backend for them yet, and a facade cannot invent one.
+//
+// Groups ARE real (116): a workspace's contact groups come from the backend, and
+// the same functions answer from fixtures only where there is no workspace to ask.
 
 import { USE_REAL_BACKEND, API_BASE_URL } from "./backend-flag";
 import {
@@ -37,10 +39,14 @@ import {
   type WireContactWrite, type WireContactCreate,
   type WireContactTagId,
 } from "./real/contact.service";
+import {
+  realContactGroupService, type WireContactGroup, type WireContactGroupDetail, type WireGroupMember,
+} from "./real/contact-groups.service";
 import { mockContactService } from "./mock/contacts.service";
 import type {
   Contact, ContactId, ContactListItem, ContactListQuery, ContactListResult,
   ContactCreateInput, ContactUpdateInput, ContactTagId,
+  ContactGroup, ContactGroupId, ContactGroupSummary, ContactScope,
 } from "../models/contacts";
 
 /** Not a React hook despite the shape of the question — a plain predicate,
@@ -267,10 +273,127 @@ export async function getContact(
 ): Promise<Contact | null> {
   if (!realContactsAvailable(workspaceId)) return mockContactService.getContact(id);
   try {
-    return toContact(await realContactService.get(workspaceId!, id), workspaceId!);
+    const contact = toContact(await realContactService.get(workspaceId!, id), workspaceId!);
+    // The groups this contact is in. A failure here must not hide the contact.
+    let groupIds: ContactGroupId[] = [];
+    try {
+      const groups = await realContactGroupService.list(workspaceId!);
+      groupIds = groups.filter(g => g.state === "active" && g.contactIds.includes(id)).map(g => g.groupId as ContactGroupId);
+    } catch { /* the contact is still shown, without its groups */ }
+    return { ...contact, groupIds };
   } catch {
     return null;
   }
+}
+
+// ── Groups (116) ────────────────────────────────────────────────────────────
+
+function toGroupSummary(wire: WireContactGroup): ContactGroupSummary {
+  return {
+    id: wire.groupId as ContactGroupId,
+    name: wire.name,
+    ...(wire.description === null ? {} : { description: wire.description }),
+    scope: wire.scope,
+    contactCount: wire.contactIds.length,
+    memberCount: wire.contactIds.length,
+    status: wire.state,
+    updatedAt: wire.updatedAt,
+  };
+}
+
+function toGroup(wire: WireContactGroup, workspaceId: string): ContactGroup {
+  return {
+    id: wire.groupId as ContactGroupId,
+    name: wire.name,
+    description: wire.description ?? "",
+    scope: wire.scope,
+    workspaceId,
+    contactIds: wire.contactIds as ContactId[],
+    status: wire.state,
+    createdAt: wire.createdAt,
+    updatedAt: wire.updatedAt,
+    demonstrationOnly: false,
+  };
+}
+
+function memberToListItem(member: WireGroupMember, workspaceId: string, groupId: string): ContactListItem {
+  return {
+    id: member.contactId as ContactId,
+    status: member.state,
+    scope: "workspace",
+    name: member.name,
+    email: member.email,
+    ...(member.organization === null ? {} : { organization: member.organization }),
+    ...(member.title === null ? {} : { title: member.title }),
+    tagIds: [],
+    groupIds: [groupId as ContactGroupId],
+    usageCount: 0,
+    updatedAt: "",
+    workspaceId,
+    demonstrationOnly: false,
+  };
+}
+
+export async function listGroups(workspaceId: string | undefined): Promise<ContactGroupSummary[]> {
+  if (!realContactsAvailable(workspaceId)) return mockContactService.listGroups();
+  return (await realContactGroupService.list(workspaceId!)).map(toGroupSummary);
+}
+
+export async function getGroup(
+  workspaceId: string | undefined, id: ContactGroupId,
+): Promise<{ group: ContactGroup; members: ContactListItem[] } | null> {
+  if (!realContactsAvailable(workspaceId)) return mockContactService.getGroup(id);
+  try {
+    const detail: WireContactGroupDetail = await realContactGroupService.get(workspaceId!, id);
+    return {
+      group: toGroup(detail, workspaceId!),
+      members: detail.members.map(member => memberToListItem(member, workspaceId!, detail.groupId)),
+    };
+  } catch {
+    return null;
+  }
+}
+
+export async function createGroup(
+  workspaceId: string | undefined, name: string, description: string, scope: ContactScope,
+): Promise<ContactGroup> {
+  if (!realContactsAvailable(workspaceId)) return mockContactService.createGroup(name, description, scope);
+  return toGroup(await realContactGroupService.create(workspaceId!, {
+    name, ...(description.trim() === "" ? {} : { description }), scope,
+  }), workspaceId!);
+}
+
+export async function updateGroup(
+  workspaceId: string | undefined, id: ContactGroupId, name: string, description: string,
+): Promise<ContactGroup> {
+  if (!realContactsAvailable(workspaceId)) return mockContactService.updateGroup(id, name, description);
+  return toGroup(await realContactGroupService.update(workspaceId!, id, {
+    name, description: description.trim() === "" ? null : description,
+  }), workspaceId!);
+}
+
+export async function archiveGroup(workspaceId: string | undefined, id: ContactGroupId): Promise<ContactGroup> {
+  if (!realContactsAvailable(workspaceId)) return mockContactService.archiveGroup(id);
+  return toGroup(await realContactGroupService.archive(workspaceId!, id), workspaceId!);
+}
+
+export async function restoreGroup(workspaceId: string | undefined, id: ContactGroupId): Promise<ContactGroup> {
+  if (!realContactsAvailable(workspaceId)) return mockContactService.restoreGroup(id);
+  return toGroup(await realContactGroupService.restore(workspaceId!, id), workspaceId!);
+}
+
+export async function addContactsToGroup(
+  workspaceId: string | undefined, groupId: ContactGroupId, contactIds: ContactId[],
+): Promise<ContactGroup> {
+  if (!realContactsAvailable(workspaceId)) return mockContactService.addContactsToGroup(groupId, contactIds);
+  return toGroup(await realContactGroupService.addContacts(workspaceId!, groupId, contactIds), workspaceId!);
+}
+
+export async function removeContactsFromGroup(
+  workspaceId: string | undefined, groupId: ContactGroupId, contactIds: ContactId[],
+): Promise<ContactGroup> {
+  if (!realContactsAvailable(workspaceId)) return mockContactService.removeContactsFromGroup(groupId, contactIds);
+  return toGroup(await realContactGroupService.removeContacts(workspaceId!, groupId, contactIds), workspaceId!);
 }
 
 // ── Writing ─────────────────────────────────────────────────────────────────

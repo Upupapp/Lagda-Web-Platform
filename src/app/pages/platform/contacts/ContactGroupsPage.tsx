@@ -1,6 +1,8 @@
 // /app/contacts/groups — Contact groups list.
 // Shows active and archived groups with member counts. Create group modal.
-// Frontend-only demonstration. No real persistence.
+// A workspace's groups are kept on the server and shared as their visibility says
+// (personal to their owner, or the workspace's); with no workspace open, groups
+// live only for the session.
 // Burgundy never used. eNotary never referenced.
 
 import React, { useEffect, useState } from "react";
@@ -47,16 +49,16 @@ function CreateGroupModal({ onClose, onCreated }: { onClose: () => void; onCreat
         <h2 id="cg-title" style={{ ...GF, fontSize: 17, fontWeight: 800, color: NAVY, margin: "0 0 20px" }}>Create Group</h2>
 
         <div style={{ marginBottom: 16 }}>
-          <label style={{ ...GF, fontSize: 13, fontWeight: 700, color: NAVY, display: "block", marginBottom: 5 }}>
+          <label htmlFor="cg-name" style={{ ...GF, fontSize: 13, fontWeight: 700, color: NAVY, display: "block", marginBottom: 5 }}>
             Group Name <span style={{ color: ERROR }}>*</span>
           </label>
-          <input type="text" value={name} onChange={e => { setName(e.target.value); setNameErr(""); }} autoFocus style={inputStyle()} />
+          <input id="cg-name" type="text" value={name} maxLength={120} onChange={e => { setName(e.target.value); setNameErr(""); }} autoFocus style={inputStyle()} />
           {nameErr && <span role="alert" style={{ ...GF, fontSize: 11, color: ERROR, marginTop: 3, display: "block" }}>{nameErr}</span>}
         </div>
 
         <div style={{ marginBottom: 16 }}>
-          <label style={{ ...GF, fontSize: 13, fontWeight: 700, color: NAVY, display: "block", marginBottom: 5 }}>Description</label>
-          <textarea value={desc} onChange={e => setDesc(e.target.value)} rows={2} style={{ ...inputStyle(), resize: "vertical" }} placeholder="Optional description…" />
+          <label htmlFor="cg-desc" style={{ ...GF, fontSize: 13, fontWeight: 700, color: NAVY, display: "block", marginBottom: 5 }}>Description</label>
+          <textarea id="cg-desc" value={desc} maxLength={500} onChange={e => setDesc(e.target.value)} rows={2} style={{ ...inputStyle(), resize: "vertical" }} placeholder="Optional description…" />
         </div>
 
         <div style={{ marginBottom: 22 }}>
