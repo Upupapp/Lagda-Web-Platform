@@ -82,6 +82,10 @@ const ROWS: Record<string, Record<string, unknown>> = {
   ENOTARY_APPLICATION_APPROVED: { recipientName: "Ana" },
   ENOTARY_APPLICATION_REJECTED: { recipientName: "Ana" },
   ENOTARY_APPLICATION_SUBMITTED: { recipientName: "Chris", applicantName: "Ana Maria Cruz", applicantUserId: "usr_9" },
+  // Paying the notary: the other party's name, the fee as a sentence and the request.
+  ENOTARY_PAYMENT_PROOF_SENT: { recipientName: "Ana", otherName: "Ben Lim", invitationId: "eni_1", amount: "PHP 1,500.00" },
+  ENOTARY_PAYMENT_CONFIRMED: { recipientName: "Ben", otherName: "Ana Maria Cruz", invitationId: "eni_1", amount: "PHP 1,500.00" },
+  ENOTARY_PAYMENT_NOT_RECEIVED: { recipientName: "Ben", otherName: "Ana Maria Cruz", invitationId: "eni_1", amount: "PHP 1,500.00", reason: "No transfer yet" },
 };
 
 const GENERIC = /you have a new notification/i;

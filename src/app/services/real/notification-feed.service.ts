@@ -975,6 +975,43 @@ function present(row: FeedRow): Presentation {
         why: "You were sent this because you applied to receive notary requests on LAGDA.",
       };
 
+    // Paying the notary. The notary is told proof arrived, to check against their
+    // own bank or e-wallet app; the client is told it was confirmed or not found.
+    case "ENOTARY_PAYMENT_PROOF_SENT": {
+      const client = str(row.templateInput, "otherName");
+      const amount = str(row.templateInput, "amount");
+      return {
+        category: "my-actions", severity: "info", priority: "high",
+        title: client === null ? "A client says they paid you" : `${client} says they paid you`,
+        body: `${client ?? "A client"} sent proof of a payment${amount === null ? "" : ` of ${amount}`}. Look for the transfer in your own bank or e-wallet app, then confirm it on your notary desk.`,
+        actionLabel: "Open the notary desk", actionPath: "/app/enotary/desk",
+        why: "You were sent this because a client you accepted says they paid your fee.",
+      };
+    }
+    case "ENOTARY_PAYMENT_CONFIRMED":
+    case "ENOTARY_PAYMENT_NOT_RECEIVED": {
+      const notary = str(row.templateInput, "otherName") ?? "The notary";
+      const amount = str(row.templateInput, "amount");
+      const requestId = str(row.templateInput, "invitationId") ?? str(row.templateInput, "requestId") ?? row.sourceId;
+      const path = `/app/enotary/requests/${encodeURIComponent(requestId)}`;
+      const why = "You were sent this because you told LAGDA you paid a notary's fee.";
+      if (row.type === "ENOTARY_PAYMENT_CONFIRMED") {
+        return {
+          category: "my-actions", severity: "success", priority: "high",
+          title: `${notary} confirmed your payment`,
+          body: `${notary} confirmed your payment${amount === null ? "" : ` of ${amount}`}. Open your request to see the next step.`,
+          actionLabel: "Open request", actionPath: path, why,
+        };
+      }
+      const note = str(row.templateInput, "reason");
+      return {
+        category: "my-actions", severity: "warning", priority: "high",
+        title: `${notary} did not receive your payment`,
+        body: `${notary} could not find your payment${amount === null ? "" : ` of ${amount}`}${note === null ? "." : `: ${note}`} Check the reference number and send it again.`,
+        actionLabel: "Open request", actionPath: path, why,
+      };
+    }
+
     // To a LAGDA reviewer: an application is waiting. Opens that application.
     case "ENOTARY_APPLICATION_SUBMITTED": {
       const applicant = str(row.templateInput, "applicantName") ?? "A notary";
