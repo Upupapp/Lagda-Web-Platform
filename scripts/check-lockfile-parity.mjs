@@ -87,10 +87,16 @@ const mismatches = [];
 for (const [name, range] of Object.entries(declared)) {
   const npmRange = npmDeclared[name];
   const pnpmRange = pnpmDeclared[name];
-  if (npmRange !== undefined && npmRange !== range) {
+  // A dependency a lockfile does not list at all is drift too: Netlify installs from
+  // pnpm-lock.yaml with a frozen lockfile and refuses to install when it lacks one.
+  if (npmRange === undefined) {
+    mismatches.push(`  ${name}: package.json has "${range}", package-lock.json does not list it`);
+  } else if (npmRange !== range) {
     mismatches.push(`  ${name}: package.json has "${range}", package-lock.json has "${npmRange}"`);
   }
-  if (pnpmRange !== undefined && pnpmRange !== range) {
+  if (pnpmRange === undefined) {
+    mismatches.push(`  ${name}: package.json has "${range}", pnpm-lock.yaml does not list it`);
+  } else if (pnpmRange !== range) {
     mismatches.push(`  ${name}: package.json has "${range}", pnpm-lock.yaml has "${pnpmRange}"`);
   }
 }
