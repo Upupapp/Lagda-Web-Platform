@@ -1,6 +1,8 @@
-// Notary on-ramp, phase 1: a client asks a listed notary to take a request, and
-// the notary opens the invitation, proves who they are, and accepts or
-// declines. It ends there: no video, no payment, no document.
+// Notary on-ramp: a client asks a listed notary to take a request, and the
+// notary opens the invitation, proves who they are, and accepts or declines,
+// naming a fee. The client pays the notary directly by the notary's own payment
+// QR and sends the transfer's reference; the notary confirms from their own bank
+// or e-wallet app. LAGDA never holds the money. No video, no document yet.
 //
 // Workspace realm (apiRequest), about the PERSON: every route is under `/me`,
 // except the one public lookup the notary's landing page makes before signing in.
@@ -36,6 +38,42 @@ export interface InvitationTimelineEntry {
   text: string;
 }
 
+export type PaymentStatus = "awaiting" | "proof" | "confirmed" | "not_received" | "waived";
+
+/** What the client sees of the fee. The QR's text is present only while there is something to pay. */
+export interface InvitationPayment {
+  status: PaymentStatus;
+  /** Whole centavos. 0 with status "waived": the notary charges nothing. */
+  amountCentavos: number;
+  payee: { name: string; city: string | null } | null;
+  qrPayload: string | null;
+  reference: string | null;
+  attemptsLeft: number;
+  requestedAt: string;
+  proofAt: string | null;
+  decidedAt: string | null;
+  /** The notary's short note when the payment was not received. */
+  note: string | null;
+}
+
+/** What the notary sees of the same fee: never the QR, which is theirs. */
+export interface DeskPayment {
+  status: PaymentStatus;
+  amountCentavos: number;
+  reference: string | null;
+  attemptsLeft: number;
+  proofAt: string | null;
+  decidedAt: string | null;
+}
+
+/** The notary's own payment QR, as the server read it. */
+export interface PaymentProfile {
+  payeeName: string;
+  payeeCity: string | null;
+  qrPayload: string;
+  updatedAt: string;
+}
+
 export interface Invitation {
   id: string;
   status: InvitationStatus;
@@ -49,6 +87,8 @@ export interface Invitation {
   secondsLeft: number;
   claimedAt: string | null;
   decidedAt: string | null;
+  /** The fee of an accepted request; null before a notary accepts. */
+  payment?: InvitationPayment | null;
   timeline: InvitationTimelineEntry[];
 }
 
@@ -81,12 +121,39 @@ export interface DeskRequest {
   expiresAt: string;
   secondsLeft: number;
   decidedAt: string | null;
+  payment?: DeskPayment | null;
 }
 
 export interface NotaryDesk {
   applicationStatus: NotaryApplicationStatus;
   canAccept: boolean;
+  /** The payee a client would pay; null while the notary has saved no QR. */
+  paymentProfile?: { payeeName: string; payeeCity: string | null } | null;
   requests: DeskRequest[];
+}
+
+/** 100 pesos is the smallest fee; 50,000 the largest. The server enforces both. */
+export const FEE_MIN_PESOS = 1;
+export const FEE_MAX_PESOS = 50_000;
+
+/** `1,500.00`: pesos with thousands separators and two decimals, from whole centavos. */
+export function formatPesos(centavos: number): string {
+  const pesos = Math.floor(centavos / 100);
+  const rest = String(centavos % 100).padStart(2, "0");
+  return `${String(pesos).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}.${rest}`;
+}
+
+/**
+ * Whole centavos from what a person typed as pesos ("1500", "1,500.50"), or null
+ * when it is not a sum of money the server would take. "" and "0" are 0: no fee.
+ */
+export function parsePesos(text: string): number | null {
+  const cleaned = text.trim().replace(/^(php|₱)\s*/i, "").replace(/,/g, "");
+  if (cleaned === "") return null;
+  if (!/^\d{1,6}(\.\d{1,2})?$/.test(cleaned)) return null;
+  const centavos = Math.round(Number(cleaned) * 100);
+  if (centavos === 0) return 0;
+  return centavos >= FEE_MIN_PESOS * 100 && centavos <= FEE_MAX_PESOS * 100 ? centavos : null;
 }
 
 /** The error code the server gave, or "" for anything that is not a structured refusal. */
@@ -191,9 +258,51 @@ class RealEnotaryInvitationsService {
     return orNull(apiRequest<NotaryDesk>("/me/notary/desk"));
   }
 
-  /** 409 `notary_not_approved` | `enotary_invitation_unavailable`. */
-  async accept(id: string): Promise<void> {
-    await apiRequest<unknown>(`/me/notary/requests/${encodeURIComponent(id)}/accept`, { method: "POST", body: {} });
+  /**
+   * 409 `notary_not_approved` | `enotary_invitation_unavailable` | `payment_profile_required`,
+   * 422 for a fee the server does not take. `feeCentavos` is 0 for no fee.
+   */
+  async accept(id: string, feeCentavos?: number): Promise<void> {
+    await apiRequest<unknown>(`/me/notary/requests/${encodeURIComponent(id)}/accept`, {
+      method: "POST", body: feeCentavos === undefined ? {} : { feeCentavos },
+    });
+  }
+
+  /** The notary's own payment QR. */
+  async paymentProfile(): Promise<PaymentProfile | null> {
+    const answer = await apiRequest<{ profile: PaymentProfile | null }>("/me/notary/payment-profile");
+    return answer.profile;
+  }
+
+  /** The text of a QR the page decoded from a picture. 422 `payment_qr_invalid` says why not. */
+  async savePaymentProfile(qrPayload: string): Promise<PaymentProfile> {
+    const answer = await apiRequest<{ profile: PaymentProfile }>("/me/notary/payment-profile", {
+      method: "PUT", body: { qrPayload },
+    });
+    return answer.profile;
+  }
+
+  async removePaymentProfile(): Promise<void> {
+    await apiRequest<unknown>("/me/notary/payment-profile", { method: "DELETE" });
+  }
+
+  /** The client gives the transfer's reference. 422 for a reference that cannot be one, 409 `payment_state`. */
+  async sendPaymentProof(id: string, reference: string): Promise<Invitation> {
+    const answer = await apiRequest<{ invitation: Invitation }>(
+      `/me/enotary/invitations/${encodeURIComponent(id)}/payment-proof`, { method: "POST", body: { reference } });
+    return answer.invitation;
+  }
+
+  /** The notary, having looked in their own app, confirms the money came. */
+  async confirmPayment(id: string): Promise<void> {
+    await apiRequest<unknown>(`/me/notary/requests/${encodeURIComponent(id)}/payment/confirm`, { method: "POST", body: {} });
+  }
+
+  /** …or says it did not, with an optional short note for the client. */
+  async paymentNotReceived(id: string, note?: string): Promise<void> {
+    const body: { note?: string } = {};
+    if (note !== undefined && note.trim() !== "") body.note = note.trim().slice(0, 120);
+    await apiRequest<unknown>(`/me/notary/requests/${encodeURIComponent(id)}/payment/not-received`, { method: "POST", body });
   }
 
   async decline(id: string, reason?: string): Promise<void> {
@@ -219,5 +328,24 @@ export function describeInvitationError(error: unknown): string {
   if (code === "notary_email_not_allowed") return "LAGDA already has a way to reach this notary, so an email address is not needed.";
   if (code === "enotary_invitation_unavailable") return "This request has already ended.";
   if (status === 422 || status === 400) return "That email address was not accepted. Check it and try again.";
+  return "That could not be done right now. Please try again.";
+}
+
+/** Why a payment action failed, in plain words. */
+export function describePaymentError(error: unknown): string {
+  const code = errorCode(error);
+  const status = errorStatus(error);
+  if (status === 0) return "Could not reach the server. Check your connection and try again.";
+  if (status === 401) return "Your session has ended. Sign in again to continue.";
+  if (status === 429) return "Too many tries in a short time. Wait a minute, then try again.";
+  if (code === "payment_profile_required") return "Save your payment QR first, so the client knows where to pay.";
+  if (code === "payment_state") return "That payment has already moved on. Reload the page to see where it stands.";
+  if (code === "payment_qr_invalid") {
+    const detail = error instanceof ApiError ? error.body?.details?.find(item => item.field === "qrPayload") : undefined;
+    return detail !== undefined && detail.message !== "" ? detail.message : "That is not a payment QR the server can use.";
+  }
+  if (code === "notary_not_approved") return "Your application is not approved, or your commission has ended, so you cannot answer requests.";
+  if (code === "enotary_invitation_unavailable") return "That request is no longer open.";
+  if (status === 422) return "That was not accepted. Check what you entered and try again.";
   return "That could not be done right now. Please try again.";
 }
