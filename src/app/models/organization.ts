@@ -61,4 +61,6 @@ export interface WorkspaceMemberOption {
   displayName: string;
   email: string;
   role: string;
+  /** True for the signed-in person's own row. */
+  isCurrentUser?: boolean;
 }

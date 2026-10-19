@@ -27,7 +27,7 @@ class RealWorkspaceMembersService {
       `/workspaces/${encodeURIComponent(workspaceId)}/members`,
     );
     return result.members.map(m => ({
-      userId: m.userId, displayName: m.displayName, email: m.email, role: m.role,
+      userId: m.userId, displayName: m.displayName, email: m.email, role: m.role, isCurrentUser: m.isCurrentUser,
     }));
   }
 }

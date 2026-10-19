@@ -8,7 +8,7 @@ import {
   ChevronLeft, LayoutTemplate, FileText, Star,
   Edit2, Copy, Archive, RotateCcw, CheckCircle2, Eye,
   AlertCircle, AlertTriangle, PenLine, Zap, RefreshCw, Info, X, Trash2,
-  Type,
+  Type, UserPlus,
 } from "lucide-react";
 import { TemplateProvider, useTemplates, useActiveTemplateLoader } from "../../../context/TemplateContext";
 import { SkeletonBlock, SKELETON_STYLE } from "../../../components/platform";
@@ -26,6 +26,9 @@ import { Z } from "../../../utils/z-index";
 import { ConfirmDeleteTemplate } from "../../../components/templates/ConfirmDeleteTemplate";
 import { deleteTemplate } from "../../../services/templates-source";
 import { usePlatform } from "../../../context/PlatformContext";
+import { AssignToMemberDialog } from "../../../components/contact-requests/AssignToMemberDialog";
+import { contactRequestsAvailable } from "../../../services/real/contact-request.service";
+import { useWorkspaceAccess } from "../../../hooks/useWorkspaceAccess";
 import { useProcessing } from "../../../services/processing.service";
 import { processScreen } from "../../../config/process-screens";
 
@@ -76,8 +79,10 @@ function SectionCard({ title, children }: { title: string; children: React.React
 // ── Action button strip ───────────────────────────────────────────────────────
 function ActionStrip({
   template, onMakeAvailable, onReturnToDraft, onArchive, onRestore, onDuplicate, onDelete,
-  canDelete, canEdit, canDuplicate, hasStatusLifecycle, pendingOp,
+  canDelete, canEdit, canDuplicate, hasStatusLifecycle, pendingOp, onAssign,
 }: {
+  /** Opens the "assign to a team member" dialog; absent when this template cannot be assigned. */
+  onAssign?:       () => void;
   /** Edit, Fields and Author: only for someone who may change the template. */
   canEdit:         boolean;
   /** Duplicate makes a new template. */
@@ -125,6 +130,16 @@ function ActionStrip({
           <Zap size={14} />
           Use Template
         </Link>
+      )}
+
+      {onAssign !== undefined && (
+        <button
+          type="button" onClick={onAssign} disabled={busy} data-testid="assign-template"
+          style={{ display: "inline-flex", alignItems: "center", gap: 7, padding: "9px 16px", background: "#F0FDFA", color: "#115E59", borderRadius: 8, ...GF, fontSize: 13, fontWeight: 600, border: "none", cursor: busy ? "default" : "pointer", opacity: busy ? 0.55 : 1, flexShrink: 0, whiteSpace: "nowrap" }}
+        >
+          <UserPlus size={14} />
+          Assign to a team member
+        </button>
       )}
 
       {/* Preview */}
@@ -252,6 +267,8 @@ function TemplateDetailInner() {
   const { isNarrow } = useViewport();
   const [panelOpen, setPanelOpen] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [assignOpen, setAssignOpen] = useState(false);
+  const access = useWorkspaceAccess();
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const platform = usePlatform();
   const { run: runProcessing } = useProcessing();
@@ -280,6 +297,12 @@ function TemplateDetailInner() {
   const { state, makeAvailable, returnToDraft, archive, restore, duplicate, clearOpMessage, canWrite, canManage } = useTemplates();
   const navigate = useNavigate();
   const t = state.activeTemplate;
+  // A real template with a document attached can be handed to a team member to prepare (086).
+  const assignWorkspaceId = platform.currentWorkspace?.id;
+  const assignDocumentId = t !== null && t !== undefined && contactRequestsAvailable(assignWorkspaceId)
+    && (!access.confirmed || access.can("upload-request.create"))
+    ? t.documents.find(doc => !doc.isPlaceholder)?.backendDocumentId ?? null
+    : null;
 
   // Waits for the session bootstrap, and re-reads on a workspace change.
   useActiveTemplateLoader(templateId);
@@ -394,7 +417,16 @@ function TemplateDetailInner() {
           canDuplicate={canManage.create}
           hasStatusLifecycle={!canWrite}
           pendingOp={state.pendingOp}
+          {...(assignDocumentId === null ? {} : { onAssign: () => { setAssignOpen(true); } })}
         />
+        {assignOpen && assignDocumentId !== null && platform.currentWorkspace?.id !== undefined && (
+          <AssignToMemberDialog
+            workspaceId={platform.currentWorkspace.id}
+            document={{ documentId: assignDocumentId, title: t.name }}
+            label={t.name}
+            onClose={() => { setAssignOpen(false); }}
+          />
+        )}
         {deleteError !== null && (
           <div style={{ ...GF, marginTop: 10, padding: "10px 13px", borderRadius: 8, background: "#FEF2F2", border: "1px solid #FECACA", fontSize: 12.5, color: "#B91C1C" }}>
             {deleteError}
