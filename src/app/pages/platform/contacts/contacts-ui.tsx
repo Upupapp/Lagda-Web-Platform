@@ -19,7 +19,7 @@ import { useLiveRefresh as useLiveRefreshOn } from "../../../services/live/use-l
 import { useNavCounts } from "../../../hooks/useNavCounts";
 import { Link } from "react-router";
 import {
-  User as BlankPersonIcon, Users, UserSearch, Inbox, FileText, Archive, Building2,
+  User as BlankPersonIcon, Users, UserSearch, FolderKanban, Inbox, FileText, Archive, Building2,
   Globe, type LucideIcon,
 } from "lucide-react";
 import { TabStrip } from "../../../components/platform/TabStrip";
@@ -51,6 +51,7 @@ export const C = {
 export const ARCHIVED_CONTACTS_ROUTE = "/app/contacts/archived";
 export const PENDING_CONTACTS_ROUTE = "/app/contacts/pending";
 export const FIND_PEOPLE_ROUTE = "/app/contacts/new";
+export const CONTACT_GROUPS_ROUTE = "/app/contacts/groups";
 export const EXTERNAL_CONTACT_ROUTE = "/app/contacts/new/external";
 
 // ── Live refresh ───────────────────────────────────────────────────────────
@@ -277,9 +278,14 @@ export function ContactsHeader({ section, subtitle, stats, pendingCount, action 
           <p className="ct-sub">{subtitle}</p>
         </div>
         {action && (
-          <Link to={FIND_PEOPLE_ROUTE} className="ct-primary" data-testid="find-people-button">
-            <UserSearch size={16} strokeWidth={2.2} aria-hidden /> <span>Find people</span>
-          </Link>
+          <div className="ct-actions">
+            <Link to={CONTACT_GROUPS_ROUTE} className="ct-secondary" data-testid="contact-groups-button">
+              <FolderKanban size={16} strokeWidth={2.2} aria-hidden /> <span>Contact groups</span>
+            </Link>
+            <Link to={FIND_PEOPLE_ROUTE} className="ct-primary" data-testid="find-people-button">
+              <UserSearch size={16} strokeWidth={2.2} aria-hidden /> <span>Find people</span>
+            </Link>
+          </div>
         )}
       </div>
       <ContactsSectionNav current={section} {...(pendingCount === undefined ? {} : { pendingCount })} />
@@ -318,6 +324,11 @@ const HEADER_CSS = `
   background: ${C.AZURE}; color: #FFFFFF; font-family: 'Geist', sans-serif; font-size: 14px; font-weight: 700; text-decoration: none;
   box-shadow: 0 6px 16px -8px rgba(0,120,212,0.6); transition: background-color 150ms ease, box-shadow 150ms ease; }
 .ct-primary:hover { background: #006CBE; }
+.ct-actions { flex-shrink: 0; align-self: flex-start; display: flex; gap: 10px; flex-wrap: wrap; justify-content: flex-end; }
+.ct-secondary { flex-shrink: 0; display: inline-flex; align-items: center; gap: 7px; min-height: 42px; padding: 0 16px; border-radius: 10px;
+  background: #FFFFFF; color: ${C.AZURE_TEXT}; border: 1.5px solid #BAD7F5; font-family: 'Geist', sans-serif; font-size: 14px; font-weight: 700; text-decoration: none; }
+.ct-secondary:hover { background: ${C.LIGHT}; }
+.ct-secondary:focus-visible { outline: 3px solid rgba(0,120,212,0.35); outline-offset: 2px; }
 .ct-primary:focus-visible { outline: 3px solid rgba(0,120,212,0.35); outline-offset: 2px; }
 /* Under the tabs, at the right edge: one row of figures. */
 .ct-stats { list-style: none; margin: 10px 0 4px; padding: 0; display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 10px; }
@@ -334,7 +345,10 @@ const HEADER_CSS = `
   .ct-header-top { flex-wrap: wrap; gap: 12px; }
   .ct-header-icon { width: 40px; height: 40px; border-radius: 10px; }
   .ct-title { font-size: 20px; }
+  .ct-actions { width: 100%; order: 3; flex-wrap: nowrap; }
+  .ct-actions .ct-primary, .ct-actions .ct-secondary { flex: 1 1 0; justify-content: center; padding: 0 10px; }
   .ct-primary { width: 100%; justify-content: center; order: 3; }
+  .ct-actions .ct-primary { width: auto; order: 0; }
   /* Phones: the three figures as one even row, compact. */
   .ct-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; margin: 8px 0 4px; }
   .ct-stats > .ct-stat { min-width: 0; padding: 8px; gap: 6px; flex-direction: column; align-items: flex-start; }
