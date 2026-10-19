@@ -26,6 +26,7 @@ import { stampLabel } from "../requests/expiry";
 import { FIELDS, SCAN_WORDS, fileSizeLabel } from "../notary/application-form";
 import { APPLICATION_STATUS_WORDS } from "./AdminNotaryApplicationsPage";
 import { entryLabel, filterEntries, loadDirectoryEntries, type DirectoryEntry } from "./directory-entries";
+import { withProcess } from "../../../../config/process-screens";
 
 export const NAME_MATCH_WORDS: Record<NameMatch, { label: string; tone: "ok" | "warn" | "bad"; text: string }> = {
   match: { label: "Names match", tone: "ok", text: "The name on the verified ID is the name on the applicant's LAGDA account." },
@@ -118,13 +119,13 @@ export function AdminNotaryApplicationPage() {
       title: `Approve ${app.legalName ?? "this notary"}?`,
       body: `${chosen !== undefined ? `Their account will be tied to ${entryLabel(chosen)}. ` : "No Notary Directory entry is chosen, so requests for a listed notary cannot reach this account until one is. "}They are told, and can then answer requests. This does not make them accredited for online sessions.`,
       confirmLabel: "Approve",
-      onConfirm: () => decide(() => realNotaryApplicationsService.approve(userId, { directoryId, note }), "Approved. The notary was told."),
+      onConfirm: () => decide(() => withProcess("enotary-review-approve", "", () => realNotaryApplicationsService.approve(userId, { directoryId, note })), "Approved. The notary was told."),
     });
   };
 
   const reject = () => {
     if (reason.trim() === "") { setProblem("Write the reason the applicant will read."); return; }
-    void decide(() => realNotaryApplicationsService.reject(userId, reason), "Not approved. The notary was told the reason.");
+    void decide(() => withProcess("enotary-review-reject", "", () => realNotaryApplicationsService.reject(userId, reason)), "Not approved. The notary was told the reason.");
   };
 
   const fileHref = (fileId: string) => `${API_BASE_URL ?? ""}${realNotaryApplicationsService.adminFileUrl(userId, fileId)}`;
@@ -217,7 +218,7 @@ export function AdminNotaryApplicationPage() {
           </select>
           <label htmlFor="approve-note" style={{ ...labelStyle, marginTop: 10 }}>Note (optional)</label>
           <input id="approve-note" value={note} maxLength={400} onChange={event => { setNote(event.target.value); }} style={fieldStyle()} />
-          <ActionRow>
+          <ActionRow align="end">
             <ActionButton icon={Check} disabled={busy} onClick={approve}>Approve</ActionButton>
             <ActionButton icon={X} kind="secondary" disabled={busy} onClick={() => { setRejecting(true); setProblem(null); }}>Do not approve</ActionButton>
           </ActionRow>
@@ -230,7 +231,7 @@ export function AdminNotaryApplicationPage() {
           <label htmlFor="reject-reason" style={labelStyle}>Reason the applicant will read</label>
           <textarea id="reject-reason" value={reason} maxLength={400} rows={4} onChange={event => { setReason(event.target.value); }} style={{ ...fieldStyle(), resize: "vertical" }} />
           <p style={hintStyle}>{reason.length} of 400 characters. Required.</p>
-          <ActionRow>
+          <ActionRow align="end">
             <ActionButton kind="danger" disabled={busy} onClick={reject}>Send: not approved</ActionButton>
             <ActionButton kind="secondary" disabled={busy} onClick={() => { setRejecting(false); }}>Back</ActionButton>
           </ActionRow>

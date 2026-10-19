@@ -20,6 +20,7 @@ import { EnotaryLoadError, EnotaryLoading, EnotaryNotOffered } from "../EnotaryS
 import { Panel, PanelTitle, bodyText, labelStyle, hintStyle } from "../onramp-ui";
 import { PaymentQr } from "./PaymentQr";
 import { QR_PICTURE_TYPES, QrPictureError, decodeQrPicture, qrPictureProblemText } from "./payment-qr";
+import { withProcess } from "../../../../config/process-screens";
 
 type Loaded =
   | { kind: "loading" }
@@ -63,7 +64,7 @@ export function NotaryPaymentPage() {
     setSaid(null);
     try {
       const payload = await decodeQrPicture(file);
-      const saved = await realEnotaryInvitationsService.savePaymentProfile(payload);
+      const saved = await withProcess("enotary-qr-save", "", () => realEnotaryInvitationsService.savePaymentProfile(payload));
       if (!alive.current) return;
       setLoaded({ kind: "ready", profile: saved });
       setSaid(`Saved. Clients will be asked to pay ${saved.payeeName}.`);
@@ -85,7 +86,7 @@ export function NotaryPaymentPage() {
         setWorking(true);
         setProblem(null);
         try {
-          await realEnotaryInvitationsService.removePaymentProfile();
+          await withProcess("enotary-qr-remove", "", () => realEnotaryInvitationsService.removePaymentProfile());
           if (!alive.current) return;
           setLoaded({ kind: "ready", profile: null });
           setSaid("Your payment QR was removed.");

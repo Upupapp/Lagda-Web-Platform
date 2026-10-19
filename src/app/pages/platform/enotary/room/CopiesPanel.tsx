@@ -16,6 +16,7 @@ import { PaymentQr } from "../payments/PaymentQr";
 import { referenceProblem } from "../payments/ClientPaymentPanel";
 import { stampLabel } from "../requests/expiry";
 import { saveBlob } from "./room-bits";
+import { withProcess } from "../../../../config/process-screens";
 
 export const COPIES_POLL_MS = 8_000;
 const STATUS_WORDS: Record<CertifiedCopy["status"], string> = {
@@ -84,7 +85,7 @@ function RequestForm({ sessionId, onDone, onFail }: { sessionId: string; onDone:
   const send = async () => {
     setBusy(true);
     const input: CopyRequestInput = mode === "digital" ? { mode } : { mode, copies: count, deliveryName: name.trim(), deliveryPhone: phone.trim(), deliveryAddress: address.trim() };
-    try { onDone(await realEnotarySessionsService.requestCopy(sessionId, input)); } catch (error) { onFail(error); } finally { setBusy(false); }
+    try { onDone(await withProcess("enotary-copy-request", "", () => realEnotarySessionsService.requestCopy(sessionId, input))); } catch (error) { onFail(error); } finally { setBusy(false); }
   };
   return (
     <div data-testid="copy-request">

@@ -48,6 +48,7 @@ import {
 import { EnotaryLoading, EnotaryLoadError, EnotaryNotOffered } from "./EnotaryStates";
 import { EnotaryFrame } from "./EnotaryChrome";
 import { EnotaryNext } from "./EnotaryNext";
+import { withProcess } from "../../../config/process-screens";
 
 /**
  * What an answer means while the gate waits. What was waited on is the kind
@@ -139,7 +140,7 @@ function EnotaryGate({ role, openTab, navigate, touch }: EnotaryAccessPageProps 
 
   const session = useProviderSession<EnotaryAccess>({
     storageKey: enotaryAccessStorageKey(role),
-    startSession: () => realEnotaryAccessService.startSession(role),
+    startSession: () => withProcess("enotary-access", "", () => realEnotaryAccessService.startSession(role)),
     refresh: () => realEnotaryAccessService.refresh(role),
     interpret,
     onAnswer: (answer, outcome) => {
@@ -291,7 +292,7 @@ function EnotaryGate({ role, openTab, navigate, touch }: EnotaryAccessPageProps 
         </p>
         {/* Room kept for what "Check again" says, so the button does not move under a finger. */}
         <div style={{ minHeight: 34 }}><ProviderNote note={recheckNote} testId="enotary-recheck-note" /></div>
-        <ActionRow>
+        <ActionRow align="end">
           <ActionButton icon={rechecking ? Loader2 : RefreshCw} kind="secondary" onClick={recheck} disabled={rechecking} full>
             {rechecking ? "Checking…" : "Check again"}
           </ActionButton>
@@ -306,7 +307,7 @@ function EnotaryGate({ role, openTab, navigate, touch }: EnotaryAccessPageProps 
         {phoneNotice(IDENTITY_FACE_PHONE_NOTICE)}
         <ProviderNote note={session.note} />
         {consent}
-        <ActionRow>
+        <ActionRow align="end">
           <ActionButton icon={session.opening ? Loader2 : ScanFace} onClick={() => { begin("face"); }} disabled={!agreed || session.busy} full>
             {session.opening ? "Opening…" : IDENTITY_FACE_BUTTON}
           </ActionButton>
@@ -345,7 +346,7 @@ function EnotaryGate({ role, openTab, navigate, touch }: EnotaryAccessPageProps 
         {phoneNotice(<>Have your phone ready. You will scan a code and take the photos with your phone&rsquo;s camera.</>)}
         <ProviderNote note={session.note} />
         {consent}
-        <ActionRow>
+        <ActionRow align="end">
           <ActionButton icon={session.opening ? Loader2 : ShieldCheck} onClick={() => { begin("full"); }} disabled={!agreed || session.busy} full>
             {session.opening ? "Opening…" : "Verify my identity"}
           </ActionButton>
@@ -359,7 +360,7 @@ function EnotaryGate({ role, openTab, navigate, touch }: EnotaryAccessPageProps 
         <ProviderHeading ref={headingRef}>Your access has ended</ProviderHeading>
         <p style={PROVIDER_BODY}>Check again to see what is needed to enter.</p>
         <div style={{ minHeight: 34 }}><ProviderNote note={recheckNote} testId="enotary-recheck-note" /></div>
-        <ActionRow>
+        <ActionRow align="end">
           <ActionButton icon={rechecking ? Loader2 : RefreshCw} onClick={recheck} disabled={rechecking} full>
             {rechecking ? "Checking…" : "Check again"}
           </ActionButton>

@@ -14,6 +14,7 @@ import {
 import { Panel, PanelTitle, bodyText, linkButton, markSessionsOffered } from "../onramp-ui";
 import { stampLabel } from "../requests/expiry";
 import { CopiesPanel } from "./CopiesPanel";
+import { withProcess } from "../../../../config/process-screens";
 
 export const SESSION_LOOKUP_MS = 8_000;
 
@@ -50,7 +51,7 @@ export function SessionPanel({ invitationId, role }: { invitationId: string; rol
     setBusy(true);
     setProblem(null);
     try {
-      const next = await realEnotarySessionsService.start(invitationId);
+      const next = await withProcess("enotary-session-start", "", () => realEnotarySessionsService.start(invitationId));
       if (alive.current) setFound({ session: next, canStart: false, reason: null });
     } catch (error) {
       if (alive.current) setProblem(describeSessionError(error));

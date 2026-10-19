@@ -30,6 +30,7 @@ import {
   APPLY_STEPS, SCAN_WORDS, describeSubmitError, describeUploadError, fieldErrorsFromRefusal, fieldsOf, fileProblem, fileSizeLabel,
   firstIncompleteStep, todayIso, validateStep, type ApplyStep, type FieldErrors, type FormValues, type SubmitProblem,
 } from "./application-form";
+import { withProcess } from "../../../../config/process-screens";
 
 type Loaded =
   | { kind: "loading" }
@@ -106,7 +107,7 @@ function ApplyView({ initial }: { initial: ApplicationView }) {
         setWithdrawing(true);
         setProblem(null);
         try {
-          const next = await realNotaryApplicationsService.withdraw();
+          const next = await withProcess("enotary-application-withdraw", "", () => realNotaryApplicationsService.withdraw());
           if (alive.current) setView(next);
         } catch {
           if (alive.current) setProblem("That could not be done right now. Please try again.");
@@ -131,7 +132,7 @@ function ApplyView({ initial }: { initial: ApplicationView }) {
             {application?.submittedAt != null && <> Sent {expiryLabel(application.submittedAt).replace(/^\w+ /, "")}.</>}
           </p>
           {problem !== null && <Notice icon={XCircle} tone="danger">{problem}</Notice>}
-          <ActionRow>
+          <ActionRow align="end">
             <ActionButton kind="secondary" disabled={withdrawing} onClick={withdraw}>{withdrawing ? "Withdrawing…" : "Withdraw my application"}</ActionButton>
           </ActionRow>
         </div>
@@ -161,7 +162,7 @@ function ApplyView({ initial }: { initial: ApplicationView }) {
             <Panel tone="maroon"><PanelTitle>The reviewer wrote</PanelTitle><p data-testid="review-note" style={{ ...bodyText, margin: 0 }}>{application.reviewNote}</p></Panel>
           )}
           <p style={bodyText}>You can correct what was wrong and send the application again.</p>
-          <ActionRow>
+          <ActionRow align="end">
             <ActionButton onClick={() => { setEditing(true); }}>Update my application</ActionButton>
           </ActionRow>
         </div>
@@ -264,7 +265,7 @@ function ApplicationForm({ view, onView, onSubmitted }: {
     setBusy(true);
     setSubmit(null);
     try {
-      const done = await realNotaryApplicationsService.submit();
+      const done = await withProcess("enotary-application-submit", "", () => realNotaryApplicationsService.submit());
       if (alive.current) onSubmitted(done);
     } catch (error) {
       if (alive.current) setSubmit(describeSubmitError(error));
@@ -279,7 +280,7 @@ function ApplicationForm({ view, onView, onSubmitted }: {
     setErrors({});
     setBusy(true);
     try {
-      const added = await realNotaryApplicationsService.upload(kind, picked);
+      const added = await withProcess("enotary-application-file", "", () => realNotaryApplicationsService.upload(kind, picked));
       if (alive.current) setFiles(current => [...current, added]);
     } catch (error) {
       if (alive.current) setErrors({ files: describeUploadError(error, picked.name) });
@@ -291,7 +292,7 @@ function ApplicationForm({ view, onView, onSubmitted }: {
   const remove = async (file: ApplicationFile) => {
     setBusy(true);
     try {
-      await realNotaryApplicationsService.removeFile(file.id);
+      await withProcess("enotary-application-file-remove", "", () => realNotaryApplicationsService.removeFile(file.id));
       if (alive.current) setFiles(current => current.filter(item => item.id !== file.id));
     } catch {
       if (alive.current) setErrors({ files: `${file.filename} could not be removed. Try again.` });
@@ -384,7 +385,7 @@ function ApplicationForm({ view, onView, onSubmitted }: {
       )}
 
       {saveProblem !== null && <Notice icon={AlertTriangle} tone="danger">{saveProblem}</Notice>}
-      <ActionRow>
+      <ActionRow align="end">
         {step === "review" ? (
           <ActionButton icon={busy ? Loader2 : Check} disabled={busy || pending} onClick={() => { void sendApplication(); }}>
             {busy ? "Sending…" : pending ? "Waiting for the document check…" : "Send my application"}

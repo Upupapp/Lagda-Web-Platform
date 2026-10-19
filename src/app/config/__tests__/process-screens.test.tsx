@@ -100,6 +100,22 @@ const WIRED: Record<string, ProcessKind[]> = {
     "member-move", "member-title", "member-swap", "member-access", "member-role", "member-remove",
     "team-member-remove", "team-member-add", "contact-to-team", "team-create", "team-rename", "team-delete",
   ],
+  // LAGDA eNotary: every action that takes a moment runs behind its own loading screen.
+  "pages/platform/enotary/EnotaryAccessPage.tsx": ["enotary-access"],
+  "pages/public/enotary/NotaryInvitePage.tsx": ["enotary-claim"],
+  "pages/platform/enotary/notary/NotaryDeskPage.tsx": ["enotary-take", "enotary-accept", "enotary-decline", "enotary-payment-confirm", "enotary-payment-missing"],
+  "pages/platform/enotary/payments/ClientPaymentPanel.tsx": ["enotary-payment-proof"],
+  "pages/platform/enotary/payments/NotaryPaymentPage.tsx": ["enotary-qr-save", "enotary-qr-remove"],
+  "pages/platform/enotary/requests/ClientRequestPage.tsx": ["enotary-request-revoke", "enotary-request-renew", "enotary-request-email"],
+  "pages/platform/enotary/room/RoomPage.tsx": [
+    "enotary-document-add", "enotary-document-replace", "enotary-room-open", "enotary-consent", "enotary-notarize", "enotary-session-cancel",
+  ],
+  "pages/platform/enotary/room/SessionPanel.tsx": ["enotary-session-start"],
+  "pages/platform/enotary/room/CopiesPanel.tsx": ["enotary-copy-request"],
+  "pages/platform/enotary/notary/NotaryApplyPage.tsx": [
+    "enotary-application-submit", "enotary-application-withdraw", "enotary-application-file", "enotary-application-file-remove",
+  ],
+  "pages/platform/enotary/admin/AdminNotaryApplicationPage.tsx": ["enotary-review-approve", "enotary-review-reject"],
 };
 
 describe("wiring", () => {

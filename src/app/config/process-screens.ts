@@ -20,7 +20,8 @@ import {
   MailOpen, MailX, Undo2, Share2, UserMinus, Trash2, Send, RefreshCcw, ShieldCheck,
   Fingerprint, KeyRound, UserPlus, UserCheck, UserX, Archive, ArchiveRestore, Search,
   Crown, FilePen, LayoutTemplate, Rocket, Link2, Users, UserCog, FileX, Save, Inbox,
-  Network, ArrowLeftRight, Ban, RotateCcw,
+  Network, ArrowLeftRight, Ban, RotateCcw, Stamp, FileUp, Video, QrCode, Banknote, BadgeCheck, ClipboardCheck,
+  PhoneOff, FileCheck, ScrollText, Mail,
 } from "lucide-react";
 import { runProcess, type ProcessingOptions } from "../services/processing.service";
 
@@ -117,6 +118,34 @@ const SCREENS = {
   "deletion-disapprove": { tag: "Deletion request", icon: UserX, message: () => "Disapproving the deletion request…", detail: "The document stays in the Recycle Bin." },
   "signed-remove": { tag: "Signed by me", icon: Trash2, message: () => "Removing it from your Signed by me list…", detail: "Nothing is erased for anyone else." },
   "deleted-notice-remove": { tag: "Documents", icon: Trash2, message: () => "Removing the deleted-document notice…", detail: "It leaves your list." },
+  // ── LAGDA eNotary ───────────────────────────────────────────────────────
+  "enotary-access": { tag: "eNotary", icon: Stamp, message: () => "Opening LAGDA eNotary…", detail: "Setting up your eNotary pages." },
+  "enotary-claim": { tag: "Notary request", icon: Stamp, message: () => "Opening the request…", detail: "Checking your identity and that this request is for you." },
+  "enotary-take": { tag: "Notary request", icon: Stamp, message: w => w ? `Taking the request from ${w}…` : "Taking the request…", detail: "Checking your identity, then moving it to your waiting list." },
+  "enotary-accept": { tag: "Notary request", icon: BadgeCheck, message: w => w ? `Accepting the request from ${w}…` : "Accepting the request…", detail: "The client is told, and is asked to pay if you set a fee." },
+  "enotary-decline": { tag: "Notary request", icon: MailX, message: w => w ? `Declining the request from ${w}…` : "Declining the request…", detail: "The client is told. This cannot be undone." },
+  "enotary-payment-confirm": { tag: "Payment", icon: Banknote, message: w => w ? `Confirming the payment from ${w}…` : "Confirming the payment…", detail: "The client is told, and the session can begin." },
+  "enotary-payment-missing": { tag: "Payment", icon: Banknote, message: () => "Telling the client the payment did not arrive…", detail: "They can send the reference again." },
+  "enotary-payment-proof": { tag: "Payment", icon: Banknote, message: () => "Sending your payment reference…", detail: "The notary checks it in their own bank or wallet app." },
+  "enotary-qr-save": { tag: "Payment QR", icon: QrCode, message: () => "Saving your payment QR…", detail: "Reading the code, then saving where clients pay you." },
+  "enotary-qr-remove": { tag: "Payment QR", icon: Trash2, message: () => "Removing your payment QR…", detail: "Clients can no longer be asked to pay you through LAGDA." },
+  "enotary-request-revoke": { tag: "Notary request", icon: Undo2, message: () => "Cancelling your request…", detail: "The notary's link stops working." },
+  "enotary-request-renew": { tag: "Notary request", icon: RefreshCcw, message: () => "Making a new request…", detail: "A new link and QR card, good for a limited time." },
+  "enotary-request-email": { tag: "Notary request", icon: Mail, message: () => "Saving the notary's email…", detail: "It is kept with your request." },
+  "enotary-session-start": { tag: "Notary session", icon: Video, message: () => "Starting the session…", detail: "A private room is made for you and the notary." },
+  "enotary-document-add": { tag: "Notary session", icon: FileUp, message: () => "Adding your document…", detail: "Checking the file, then sharing it with the notary only." },
+  "enotary-document-replace": { tag: "Notary session", icon: FileUp, message: () => "Replacing your document…", detail: "The notary sees the new file once it is in." },
+  "enotary-room-open": { tag: "Notary session", icon: Video, message: () => "Opening the room…", detail: "The client can join as soon as it is open." },
+  "enotary-consent": { tag: "Notary session", icon: ClipboardCheck, message: () => "Recording your confirmation…", detail: "The notary can then record the act." },
+  "enotary-notarize": { tag: "Notary session", icon: Stamp, message: () => "Recording the notarial act…", detail: "Sealing the document and writing the register entry. This cannot be undone." },
+  "enotary-session-cancel": { tag: "Notary session", icon: PhoneOff, message: () => "Calling off the session…", detail: "Nothing is notarized. The other person is told." },
+  "enotary-copy-request": { tag: "Certified copy", icon: FileCheck, message: () => "Asking for your certified copy…", detail: "The notary is told and will answer in the session." },
+  "enotary-application-submit": { tag: "Notary application", icon: ScrollText, message: () => "Sending your application…", detail: "A LAGDA reviewer will look at it. You can withdraw it while it is open." },
+  "enotary-application-withdraw": { tag: "Notary application", icon: Undo2, message: () => "Withdrawing your application…", detail: "You can start a new one at any time." },
+  "enotary-application-file": { tag: "Notary application", icon: FileUp, message: () => "Uploading your file…", detail: "It is checked for viruses before the reviewer can open it." },
+  "enotary-application-file-remove": { tag: "Notary application", icon: Trash2, message: () => "Removing the file…", detail: "It is erased from your application." },
+  "enotary-review-approve": { tag: "Notary review", icon: UserCheck, message: () => "Approving the notary…", detail: "They are told, and can begin to answer requests." },
+  "enotary-review-reject": { tag: "Notary review", icon: UserX, message: () => "Recording the decision…", detail: "The notary is told the reason." },
 } as const satisfies Record<string, Screen>;
 
 export type ProcessKind = keyof typeof SCREENS;

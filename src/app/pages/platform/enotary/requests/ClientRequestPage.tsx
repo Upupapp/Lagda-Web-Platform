@@ -27,6 +27,7 @@ import { QrCard } from "./QrCard";
 import { SessionPanel } from "../room/SessionPanel";
 import { ClientPaymentPanel, paymentIsPending } from "../payments/ClientPaymentPanel";
 import { ExpiryClock, countdownText, expiryLabel, expiryTone, stampLabel, type ExpiryTone } from "./expiry";
+import { withProcess } from "../../../../config/process-screens";
 
 export const POLL_MS = 5000;
 
@@ -181,7 +182,7 @@ export function ClientRequestPage() {
       confirmLabel: "Cancel the request",
       cancelLabel: "Keep it",
       destructive: true,
-      onConfirm: () => act("revoke", () => realEnotaryInvitationsService.revoke(invitation.id)),
+      onConfirm: () => act("revoke", () => withProcess("enotary-request-revoke", "", () => realEnotaryInvitationsService.revoke(invitation.id))),
     });
   };
 
@@ -255,7 +256,7 @@ export function ClientRequestPage() {
               onFocus={event => { event.currentTarget.select(); }}
               style={{ ...fieldStyle(), fontFamily: "ui-monospace, Menlo, Consolas, monospace", fontSize: 13 }}
             />
-            <ActionRow>
+            <ActionRow align="end">
               <ActionButton icon={Copy} onClick={() => { void copy(); }} full>Copy link</ActionButton>
               <ActionButton icon={Share2} kind="secondary" onClick={() => { void share(); }} full>Share</ActionButton>
             </ActionRow>
@@ -291,7 +292,7 @@ export function ClientRequestPage() {
             value={email} onChange={setEmail} type="email" inputMode="email" autoComplete="off"
             hint="LAGDA has no email on record for this notary. If you know it, add it here; it is kept with this request."
           />
-          <ActionButton icon={Mail} kind="secondary" disabled={busy !== null || email.trim() === ""} onClick={() => { void act("email", () => realEnotaryInvitationsService.setNotaryEmail(invitation.id, email)); }}>
+          <ActionButton icon={Mail} kind="secondary" disabled={busy !== null || email.trim() === ""} onClick={() => { void act("email", () => withProcess("enotary-request-email", "", () => realEnotaryInvitationsService.setNotaryEmail(invitation.id, email))); }}>
             {busy === "email" ? "Saving…" : "Save the email"}
           </ActionButton>
         </Panel>
@@ -315,15 +316,15 @@ export function ClientRequestPage() {
       )}
 
       {open && (
-        <ActionRow>
+        <ActionRow align="end">
           <ActionButton kind="danger" disabled={busy !== null} onClick={revoke}>
             {busy === "revoke" ? "Cancelling…" : "Cancel this request"}
           </ActionButton>
         </ActionRow>
       )}
       {(invitation.status === "expired" || invitation.status === "revoked") && (
-        <ActionRow>
-          <ActionButton icon={RefreshCw} disabled={busy !== null} onClick={() => { void act("renew", () => realEnotaryInvitationsService.renew(invitation.id)); }}>
+        <ActionRow align="end">
+          <ActionButton icon={RefreshCw} disabled={busy !== null} onClick={() => { void act("renew", () => withProcess("enotary-request-renew", "", () => realEnotaryInvitationsService.renew(invitation.id))); }}>
             {busy === "renew" ? "Renewing…" : "Renew with a new link"}
           </ActionButton>
         </ActionRow>

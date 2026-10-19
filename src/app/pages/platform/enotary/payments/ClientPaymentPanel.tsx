@@ -16,6 +16,7 @@ import { E } from "../EnotaryChrome";
 import { Panel, PanelTitle, TextField, bodyText } from "../onramp-ui";
 import { stampLabel } from "../requests/expiry";
 import { PaymentQr } from "./PaymentQr";
+import { withProcess } from "../../../../config/process-screens";
 
 /** The payment is something the client still has to do, or wait on the notary for. */
 export function paymentIsPending(payment: InvitationPayment | null | undefined): boolean {
@@ -86,7 +87,7 @@ export function ClientPaymentPanel({
     setBusy(true);
     setProblem(null);
     try {
-      const next = await realEnotaryInvitationsService.sendPaymentProof(invitation.id, reference);
+      const next = await withProcess("enotary-payment-proof", "", () => realEnotaryInvitationsService.sendPaymentProof(invitation.id, reference));
       setReference("");
       onChanged(next);
     } catch (failure) {

@@ -29,6 +29,7 @@ import { E, EnotaryFrame, EnotaryHeading } from "../../platform/enotary/EnotaryC
 import { OnrampNote, bodyText, linkButton } from "../../platform/enotary/onramp-ui";
 import { expiryLabel } from "../../platform/enotary/requests/expiry";
 import { forgetInvite, rememberInvite } from "./invite-memory";
+import { withProcess } from "../../../config/process-screens";
 
 type Phase =
   | { kind: "loading" }
@@ -108,7 +109,7 @@ export function NotaryInvitePage() {
     const notaryName = phase.kind === "open" || phase.kind === "identity-required" ? phase.notaryName : phase.notaryName ?? "the notary";
     const expiresAt = phase.kind === "open" ? phase.expiresAt : null;
     setPhase({ kind: "claiming", notaryName, expiresAt });
-    realEnotaryInvitationsService.claim(token).then(
+    withProcess("enotary-claim", "", () => realEnotaryInvitationsService.claim(token)).then(
       () => { forgetInvite(); if (alive.current) void navigate("/app/enotary/desk", { replace: true }); },
       (error: unknown) => {
         if (!alive.current) return;
@@ -183,7 +184,7 @@ export function NotaryInvitePage() {
             Only the notary the client named can take this request. Do not pass this link on.
           </Notice>
           {!known ? null : signedIn ? (
-            <ActionRow>
+            <ActionRow align="end">
               <ActionButton icon={ArrowRight} onClick={claim} full>Continue</ActionButton>
             </ActionRow>
           ) : (
@@ -218,7 +219,7 @@ export function NotaryInvitePage() {
             To take a request for <strong>{phase.notaryName}</strong>, your LAGDA account must be verified with a valid ID and a face check.
             It takes about two minutes, and you only do it once.
           </p>
-          <ActionRow>
+          <ActionRow align="end">
             <Link to="/app/settings/identity" style={{ ...linkButton("maroon"), flex: 1 }}><BadgeCheck size={16} aria-hidden /> Verify my identity</Link>
             <ActionButton kind="secondary" onClick={claim} full>I have verified. Continue</ActionButton>
           </ActionRow>
@@ -253,7 +254,7 @@ export function NotaryInvitePage() {
       content = (
         <div data-testid="invite-error">
           <Notice icon={LinkIcon} tone="danger">The request could not be opened. Check your connection and try again.</Notice>
-          <ActionRow>
+          <ActionRow align="end">
             <ActionButton onClick={() => { if (phase.notaryName === null) look(); else claim(); }} full>Try again</ActionButton>
           </ActionRow>
         </div>
