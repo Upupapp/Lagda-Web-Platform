@@ -20,8 +20,17 @@ import { E, EnotaryFrame, EnotaryHeading } from "../EnotaryChrome";
 import { EnotaryLoadError, EnotaryLoading, EnotaryNotOffered } from "../EnotaryStates";
 import { OnrampNote, Panel, PanelTitle, TextField, bodyText, fieldStyle, labelStyle, linkButton, markSessionsOffered } from "../onramp-ui";
 import { stampLabel } from "../requests/expiry";
+import { useOptionalPlatform } from "../../../../context/PlatformContext";
+import { CompletedDocumentPicker, PickProblem, completedDocumentFile, type CompletedChoice } from "./CompletedDocumentPicker";
 import { Chat, PdfView, VideoPane } from "./room-bits";
 import { useRoomConnection } from "./useRoomConnection";
+import { withProcess, type ProcessKind } from "../../../../config/process-screens";
+
+/** The loading screen each room action runs behind (the chat is not one: it stays quiet). */
+const ROOM_PROCESS: Record<string, ProcessKind | undefined> = {
+  upload: "enotary-document-add", replace: "enotary-document-replace", open: "enotary-room-open",
+  consent: "enotary-consent", notarize: "enotary-notarize", cancel: "enotary-session-cancel",
+};
 
 export const PING_MS = 20_000;
 export const SESSION_MS = 4_000;
@@ -49,6 +58,7 @@ export function RoomPage() {
   const alive = useRef(true);
   const { confirm, confirmDialog } = useConfirm();
 
+  const workspaceId = useOptionalPlatform()?.currentWorkspace?.id ?? null;
   const session = loaded.kind === "ready" ? loaded.session : null;
   const live = session !== null && session.status === "live";
   const connection = useRoomConnection(session?.id ?? null, session?.role ?? null, live);
@@ -98,10 +108,11 @@ export function RoomPage() {
     setBusy(name);
     setProblem(null);
     try {
-      const next = await work();
+      const kind = ROOM_PROCESS[name];
+      const next = kind === undefined ? await work() : await withProcess(kind, "", work);
       if (alive.current) setLoaded({ kind: "ready", session: next });
     } catch (failure) {
-      if (alive.current) setProblem(describeSessionError(failure));
+      if (alive.current) setProblem(failure instanceof PickProblem ? failure.message : describeSessionError(failure));
     } finally {
       if (alive.current) setBusy(null);
     }
@@ -125,6 +136,13 @@ export function RoomPage() {
   const partner = isClient ? s.notaryName : s.clientName;
   const back = isClient ? `/app/enotary/requests/${encodeURIComponent(invitationId)}` : "/app/enotary/desk";
   const over = s.status === "notarized" || s.status === "cancelled";
+
+  // A file from the person's own disk, or a signed document of the workspace: the same call, behind the same loading screen.
+  const addFile = (name: string) => (file: File) => act(name, () => realEnotarySessionsService.addDocument(s.id, file));
+  const addCompleted = (name: string) => (choice: CompletedChoice) => act(name, async () => {
+    if (workspaceId === null) throw new PickProblem("Open a workspace first.");
+    return realEnotarySessionsService.addDocument(s.id, await completedDocumentFile(workspaceId, choice));
+  });
 
   const callOff = () => {
     confirm({
@@ -176,7 +194,7 @@ export function RoomPage() {
             <PanelTitle>The document</PanelTitle>
             {s.document === null ? (
               isClient
-                ? <ClientUpload onFile={file => act("upload", () => realEnotarySessionsService.addDocument(s.id, file))} busy={busy === "upload"} />
+                ? <ClientUpload workspaceId={workspaceId} onFile={addFile("upload")} onPick={addCompleted("upload")} busy={busy === "upload"} />
                 : <p style={bodyText} data-testid="no-document">The client has not added the document yet.</p>
             ) : (
               <>
@@ -187,7 +205,7 @@ export function RoomPage() {
                 <PdfView load={() => realEnotarySessionsService.document(s.id)} fileKey={s.document.sha256} name={s.document.name} />
                 {isClient && s.status === "preparing" && (
                   <div style={{ marginTop: 12 }}>
-                    <ClientUpload onFile={file => act("upload", () => realEnotarySessionsService.addDocument(s.id, file))} busy={busy === "upload"} replace />
+                    <ClientUpload workspaceId={workspaceId} onFile={addFile("replace")} onPick={addCompleted("replace")} busy={busy === "replace"} replace />
                   </div>
                 )}
               </>
@@ -195,7 +213,7 @@ export function RoomPage() {
           </Panel>
 
           {!isClient && s.status === "preparing" && (
-            <ActionRow>
+            <ActionRow align="end">
               <ActionButton icon={CheckCircle2} disabled={busy !== null || s.document === null} onClick={() => { void act("open", () => realEnotarySessionsService.open(s.id)); }}>
                 {busy === "open" ? "Opening…" : "Open the room"}
               </ActionButton>
@@ -228,7 +246,7 @@ export function RoomPage() {
 
           {!isClient && s.status === "live" && <NotarizePanel session={s} busy={busy === "notarize"} onRecord={input => act("notarize", () => realEnotarySessionsService.notarize(s.id, input))} />}
 
-          <ActionRow>
+          <ActionRow align="end">
             <ActionButton kind="danger" disabled={busy !== null} onClick={callOff}>{busy === "cancel" ? "Calling off…" : "Call off the session"}</ActionButton>
           </ActionRow>
         </>
@@ -238,25 +256,47 @@ export function RoomPage() {
   );
 }
 
-function ClientUpload({ onFile, busy, replace = false }: { onFile: (file: File) => Promise<void>; busy: boolean; replace?: boolean }) {
+function ClientUpload({ onFile, onPick, workspaceId, busy, replace = false }: {
+  onFile: (file: File) => Promise<void>; onPick: (choice: CompletedChoice) => Promise<void>;
+  workspaceId: string | null; busy: boolean; replace?: boolean;
+}) {
+  const [mode, setMode] = useState<"upload" | "completed">("upload");
   const [file, setFile] = useState<File | null>(null);
   const problem = file === null ? null
     : file.size > 20 * 1024 * 1024 ? "The file is larger than 20 MB."
       : file.size === 0 ? "The file is empty." : null;
   return (
     <div data-testid="upload">
-      {!replace && <p style={bodyText}>Add the scanned document you want notarized, as a PDF of up to 20 MB. Only you and {"the notary"} can see it.</p>}
-      <label htmlFor="room-file" style={labelStyle}>{replace ? "Replace the document" : "PDF of the document"}</label>
-      <input
-        id="room-file" type="file" accept="application/pdf,.pdf" onChange={event => { setFile(event.target.files?.[0] ?? null); }}
-        aria-invalid={problem !== null ? true : undefined} style={{ ...fieldStyle(problem !== null), padding: 8 }}
-      />
-      {problem !== null && <p role="alert" style={{ ...GF, color: "#B0182B", fontSize: 13.5 }}>{problem}</p>}
-      <div style={{ marginTop: 10 }}>
-        <ActionButton icon={FileUp} disabled={busy || file === null || problem !== null} onClick={() => { if (file !== null) void onFile(file).then(() => { setFile(null); }); }}>
-          {busy ? "Adding…" : replace ? "Replace" : "Add the document"}
-        </ActionButton>
-      </div>
+      {workspaceId !== null && (
+        <div role="tablist" aria-label="Where the document comes from" style={{ display: "flex", gap: 8, flexWrap: "wrap", margin: "0 0 12px" }}>
+          {([["upload", "Upload a PDF"], ["completed", "Choose a completed document"]] as const).map(([value, label]) => (
+            <button
+              key={value} type="button" role="tab" aria-selected={mode === value} data-testid={`source-${value}`} disabled={busy}
+              onClick={() => { setMode(value); }}
+              style={{ ...GF, minHeight: TAP, padding: "0 14px", borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: "pointer",
+                border: `2px solid ${mode === value ? E.maroon : E.maroonLine}`, background: mode === value ? "#FFF7F8" : "#FFFFFF", color: E.ink }}
+            >{label}</button>
+          ))}
+        </div>
+      )}
+      {mode === "completed" && workspaceId !== null ? (
+        <CompletedDocumentPicker workspaceId={workspaceId} onPick={onPick} busy={busy} replace={replace} />
+      ) : (
+        <>
+          {!replace && <p style={bodyText}>Add the scanned document you want notarized, as a PDF of up to 20 MB. Only you and {"the notary"} can see it.</p>}
+          <label htmlFor="room-file" style={labelStyle}>{replace ? "Replace the document" : "PDF of the document"}</label>
+          <input
+            id="room-file" type="file" accept="application/pdf,.pdf" onChange={event => { setFile(event.target.files?.[0] ?? null); }}
+            aria-invalid={problem !== null ? true : undefined} style={{ ...fieldStyle(problem !== null), padding: 8 }}
+          />
+          {problem !== null && <p role="alert" style={{ ...GF, color: "#B0182B", fontSize: 13.5 }}>{problem}</p>}
+          <div style={{ marginTop: 10 }}>
+            <ActionButton icon={FileUp} disabled={busy || file === null || problem !== null} onClick={() => { if (file !== null) void onFile(file).then(() => { setFile(null); }); }}>
+              {busy ? "Adding…" : replace ? "Replace" : "Add the document"}
+            </ActionButton>
+          </div>
+        </>
+      )}
     </div>
   );
 }
