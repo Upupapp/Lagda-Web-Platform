@@ -33,7 +33,7 @@ export function EnotaryLoadError({ onRetry }: { onRetry: () => void }) {
   return (
     <EnotaryFrame tone="neutral">
       <Notice icon={AlertTriangle} tone="danger">This page could not be loaded. Check your connection and try again.</Notice>
-      <ActionRow><ActionButton icon={RefreshCw} kind="secondary" onClick={onRetry}>Try again</ActionButton></ActionRow>
+      <ActionRow align="end"><ActionButton icon={RefreshCw} kind="secondary" onClick={onRetry}>Try again</ActionButton></ActionRow>
     </EnotaryFrame>
   );
 }

@@ -13,7 +13,7 @@ import { describe, it, expect } from "vitest";
 import { render, screen, act } from "@testing-library/react";
 import { ShieldCheck, Users } from "lucide-react";
 import {
-  InfoRow, ProgressRail, PhaseBanner, SurfaceCard, type RailStep,
+  ActionRow, InfoRow, ProgressRail, PhaseBanner, SurfaceCard, type RailStep,
 } from "../design-system";
 
 /** Renders at a chosen viewport width, since several branches key off it. */
@@ -165,5 +165,28 @@ describe("SurfaceCard", () => {
 
     const { container: wide } = render(<SurfaceCard wide>x</SurfaceCard>);
     expect((wide.firstChild as HTMLElement).style.maxWidth).toBe("860px");
+  });
+});
+
+describe("ActionRow", () => {
+  const row = (container: HTMLElement) => container.firstChild as HTMLElement;
+
+  it("keeps the actions at the start unless told otherwise", () => {
+    const { container } = atWidth(1200, <ActionRow><button type="button">Go</button></ActionRow>);
+    expect(row(container).style.justifyContent).toBe("");
+    expect(row(container).style.flexDirection).toBe("row");
+  });
+
+  it("puts the actions on the right on a wide screen when asked to", () => {
+    const { container } = atWidth(1200, <ActionRow align="end"><button type="button">Go</button><button type="button">Back</button></ActionRow>);
+    expect(row(container).style.justifyContent).toBe("flex-end");
+    expect(row(container).style.flexDirection).toBe("row");
+    expect(row(container).style.flexWrap).toBe("wrap");
+  });
+
+  it("stacks the actions in a column on a phone, whatever the alignment", () => {
+    const { container } = atWidth(390, <ActionRow align="end"><button type="button">Go</button></ActionRow>);
+    expect(row(container).style.flexDirection).toBe("column");
+    expect(row(container).style.justifyContent).toBe("");
   });
 });

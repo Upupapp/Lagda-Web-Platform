@@ -331,13 +331,20 @@ export function ActionButton({
  * so it is also first for a screen reader and for a keyboard, rather than
  * being reachable only after the destructive one.
  */
-export function ActionRow({ children }: { children: ReactNode }) {
+/**
+ * A row of actions. `align="end"` puts them on the right on a wide screen (the pages of LAGDA eNotary
+ * use it so the actions sit under the content, not hugging the left edge); on a narrow screen it is the
+ * same column of full-width buttons as ever.
+ */
+export function ActionRow({ children, align = "start" }: { children: ReactNode; align?: "start" | "end" }) {
   const { isCompact } = useViewport();
   return (
     <div
       style={{
         display: "flex",
         flexDirection: isCompact ? "column" : "row",
+        flexWrap: isCompact ? undefined : "wrap",
+        justifyContent: !isCompact && align === "end" ? "flex-end" : undefined,
         gap: 10,
         marginTop: 20,
       }}

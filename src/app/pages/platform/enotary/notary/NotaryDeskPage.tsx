@@ -18,11 +18,11 @@
 // Once the fee is settled, an accepted request shows its session (the room and,
 // after a notarization, the certified copies) from the SessionPanel.
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type CSSProperties } from "react";
 import { Link } from "react-router";
 import { SessionPanel } from "../room/SessionPanel";
 import { AlertTriangle, Check, Clock, Inbox, QrCode, X } from "lucide-react";
-import { ActionButton, GF, Notice, T } from "../../../../components/system/design-system";
+import { ActionButton, GF, Notice, T, useViewport } from "../../../../components/system/design-system";
 import { useConfirm } from "../../../../components/platform/ConfirmDialog";
 import { USE_REAL_BACKEND } from "../../../../services/backend-flag";
 import { announceNavCountsChanged } from "../../../../services/nav-counts-signal";
@@ -34,6 +34,7 @@ import { E, EnotaryFrame } from "../EnotaryChrome";
 import { EnotaryLoadError, EnotaryLoading, EnotaryNotOffered } from "../EnotaryStates";
 import { OnrampNote, Panel, StatusPill, bodyText, fieldStyle, hintStyle, labelStyle, linkButton, useNow } from "../onramp-ui";
 import { ExpiryClock, countdownText, expiryLabel, expiryTone, stampLabel } from "../requests/expiry";
+import { withProcess } from "../../../../config/process-screens";
 
 const POLL_MS = 5_000;
 
@@ -85,6 +86,9 @@ export function feeFrom(text: string, noFee: boolean): number | null {
 }
 
 export function NotaryDeskPage() {
+  const { isCompact } = useViewport();
+  // Actions sit on the right on a wide screen and at the start, wrapping, on a narrow one.
+  const buttonRow = (top = 10): CSSProperties => ({ display: "flex", gap: 10, flexWrap: "wrap", marginTop: top, justifyContent: isCompact ? "flex-start" : "flex-end" });
   const [loaded, setLoaded] = useState<Loaded>(USE_REAL_BACKEND ? { kind: "loading" } : { kind: "off" });
   const [working, setWorking] = useState<string | null>(null);
   const [declining, setDeclining] = useState<string | null>(null);
@@ -167,7 +171,7 @@ export function NotaryDeskPage() {
           setProblem(`Enter your fee in pesos (1 to ${FEE_MAX_PESOS.toLocaleString("en-US")}), or say you are not charging one.`);
           return;
         }
-        await realEnotaryInvitationsService.accept(request.id, amount);
+        await withProcess("enotary-accept", request.client.name, () => realEnotaryInvitationsService.accept(request.id, amount));
         if (!alive.current) return;
         setSaid(amount === 0
           ? `You accepted the request from ${request.client.name} without a fee. You will be told when the session can begin.`
@@ -176,7 +180,7 @@ export function NotaryDeskPage() {
         setFee("");
         setNoFee(false);
       } else {
-        await realEnotaryInvitationsService.decline(request.id, reason);
+        await withProcess("enotary-decline", request.client.name, () => realEnotaryInvitationsService.decline(request.id, reason));
         if (!alive.current) return;
         setSaid(`You declined the request from ${request.client.name}.`);
         setDeclining(null);
@@ -194,7 +198,7 @@ export function NotaryDeskPage() {
     setProblem(null);
     setSaid(null);
     try {
-      await realEnotaryInvitationsService.take(item.id);
+      await withProcess("enotary-take", item.client.name, () => realEnotaryInvitationsService.take(item.id));
       if (alive.current) setSaid(`You took the request from ${item.client.name}. You can accept or decline it now.`);
     } catch (error) {
       if (alive.current) setProblem(describeTakeError(error));
@@ -215,7 +219,7 @@ export function NotaryDeskPage() {
         setProblem(null);
         setSaid(null);
         try {
-          await realEnotaryInvitationsService.confirmPayment(request.id);
+          await withProcess("enotary-payment-confirm", request.client.name, () => realEnotaryInvitationsService.confirmPayment(request.id));
           if (alive.current) setSaid(`You confirmed the payment from ${request.client.name}.`);
         } catch (error) {
           if (alive.current) setProblem(refused(error));
@@ -231,7 +235,7 @@ export function NotaryDeskPage() {
     setProblem(null);
     setSaid(null);
     try {
-      await realEnotaryInvitationsService.paymentNotReceived(request.id, reason);
+      await withProcess("enotary-payment-missing", request.client.name, () => realEnotaryInvitationsService.paymentNotReceived(request.id, reason));
       if (!alive.current) return;
       setSaid(`${request.client.name} was told the payment did not arrive. They can send the reference again.`);
       setMissing(null);
@@ -375,13 +379,13 @@ export function NotaryDeskPage() {
                             <label htmlFor={`missing-${request.id}`} style={labelStyle}>Note for the client (optional)</label>
                             <input id={`missing-${request.id}`} value={reason} maxLength={120} onChange={event => { setReason(event.target.value); }} style={fieldStyle()} />
                             <p style={hintStyle}>For example, &ldquo;No transfer with that reference yet.&rdquo; At most 120 characters.</p>
-                            <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 10 }}>
+                            <div style={buttonRow()}>
                               <ActionButton kind="danger" icon={X} disabled={busy} onClick={() => { void notReceived(request); }}>{busy ? "Sending…" : "Tell the client it did not arrive"}</ActionButton>
                               <ActionButton kind="secondary" disabled={busy} onClick={() => { setMissing(null); setReason(""); }}>Back</ActionButton>
                             </div>
                           </div>
                         ) : (
-                          <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 10 }}>
+                          <div style={buttonRow()}>
                             <ActionButton icon={Check} disabled={busy} onClick={() => { confirmPayment(request); }}>I received it</ActionButton>
                             <ActionButton kind="secondary" disabled={busy} onClick={() => { setMissing(request.id); setReason(""); }}>Not received</ActionButton>
                           </div>
@@ -397,7 +401,7 @@ export function NotaryDeskPage() {
                         <label htmlFor={`reason-${request.id}`} style={{ display: "block", fontSize: 13.5, fontWeight: 700, marginBottom: 6 }}>Reason (optional)</label>
                         <input id={`reason-${request.id}`} value={reason} maxLength={120} onChange={event => { setReason(event.target.value); }} style={fieldStyle()} />
                         <p style={{ margin: "6px 0 0", fontSize: 12.5, color: E.quiet }}>At most 120 characters. The client is told you declined.</p>
-                        <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 10 }}>
+                        <div style={buttonRow()}>
                           <ActionButton kind="danger" icon={X} disabled={busy} onClick={() => { void answer(request, "decline"); }}>{busy ? "Declining…" : "Decline the request"}</ActionButton>
                           <ActionButton kind="secondary" disabled={busy} onClick={() => { setDeclining(null); setReason(""); }}>Keep it</ActionButton>
                         </div>
@@ -462,7 +466,7 @@ export function NotaryDeskPage() {
                             : feeAmount === null ? "Enter an amount to see what the client will be asked to pay."
                               : `You will ask ${request.client.name} to pay PHP ${formatPesos(feeAmount)}.`}
                         </p>
-                        <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 10 }}>
+                        <div style={buttonRow()}>
                           <ActionButton
                             icon={Check} disabled={busy || feeAmount === null || (!noFee && !hasQr)}
                             onClick={() => { void answer(request, "accept"); }}
@@ -473,7 +477,7 @@ export function NotaryDeskPage() {
                         </div>
                       </div>
                     ) : (
-                      <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+                      <div style={buttonRow(0)}>
                         <ActionButton icon={Check} disabled={busy || !desk.canAccept} onClick={() => { setAccepting(request.id); setDeclining(null); setFee(""); setNoFee(false); setReason(""); }}>Accept</ActionButton>
                         <ActionButton kind="secondary" disabled={busy || !desk.canAccept} onClick={() => { setDeclining(request.id); setAccepting(null); setReason(""); }}>Decline</ActionButton>
                       </div>
