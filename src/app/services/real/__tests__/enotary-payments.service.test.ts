@@ -1,6 +1,9 @@
 // The sums, the words and the calls of paying a notary.
 
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+
+// The calls need a server address; CI has no .env.local, so the test supplies its own.
+vi.mock("../../backend-flag", () => ({ USE_REAL_BACKEND: true, API_BASE_URL: "http://api.test" }));
 import { ApiError } from "../../api-client";
 import {
   describePaymentError, formatPesos, parsePesos, realEnotaryInvitationsService,
