@@ -404,33 +404,70 @@ export function NotaryDeskPage() {
                       </div>
                     ) : accepting === request.id ? (
                       <div data-testid="accept-panel">
-                        <label htmlFor={`fee-${request.id}`} style={labelStyle}>Your fee for this request (PHP)</label>
+                        <fieldset style={{ border: "none", margin: 0, padding: 0 }}>
+                          <legend style={labelStyle}>Your fee for this request</legend>
+                          <div role="radiogroup" aria-label="Fee choice" style={{ display: "grid", gap: 8, gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", margin: "0 0 12px" }}>
+                            {([
+                              { free: false, title: "Charge a fee", note: "The client pays you directly.", testId: "fee-mode-charge" },
+                              { free: true, title: "No fee", note: "Free of charge for this client.", testId: "no-fee" },
+                            ] as const).map(option => {
+                              const chosen = noFee === option.free;
+                              return (
+                                <label key={option.testId} style={{ ...GF, display: "flex", gap: 10, alignItems: "flex-start", padding: "12px 14px", borderRadius: 10, cursor: "pointer",
+                                  border: `2px solid ${chosen ? E.maroon : E.maroonLine}`, background: chosen ? "#FFF7F8" : "#FFFFFF" }}>
+                                  <input type="radio" name={`fee-mode-${request.id}`} data-testid={option.testId} checked={chosen}
+                                    onChange={() => { setNoFee(option.free); }} style={{ width: 18, height: 18, marginTop: 2, accentColor: E.maroon }} />
+                                  <span><strong style={{ display: "block", fontSize: 14.5, color: E.ink }}>{option.title}</strong>
+                                    <span style={{ fontSize: 13, color: E.quiet }}>{option.note}</span></span>
+                                </label>
+                              );
+                            })}
+                          </div>
+                        </fieldset>
+                        <label htmlFor={`fee-${request.id}`} style={labelStyle}>{noFee ? "Fee (PHP)" : "Amount to ask for (PHP)"}</label>
                         <input
-                          id={`fee-${request.id}`} data-testid="fee-input" inputMode="decimal" autoComplete="off" value={fee} maxLength={12} disabled={noFee}
+                          id={`fee-${request.id}`} data-testid="fee-input" inputMode="decimal" autoComplete="off"
+                          value={noFee ? "No fee: free of charge" : fee} maxLength={noFee ? undefined : 12} readOnly={noFee} aria-readonly={noFee || undefined}
                           placeholder="e.g. 1500" aria-invalid={feeProblem !== null ? true : undefined}
-                          onChange={event => { setFee(event.target.value); }} style={fieldStyle(feeProblem !== null)}
+                          onChange={event => { if (!noFee) setFee(event.target.value); }}
+                          style={noFee ? { ...fieldStyle(false), background: "#F3F4F6", color: E.quiet, cursor: "not-allowed", fontWeight: 600 } : fieldStyle(feeProblem !== null)}
                         />
                         {feeProblem !== null && <p role="alert" style={{ ...hintStyle, color: T.danger }}>{feeProblem}</p>}
-                        <label style={{ ...GF, display: "flex", alignItems: "center", gap: 8, minHeight: 44, marginTop: 6, fontSize: 14, color: E.text }}>
-                          <input type="checkbox" data-testid="no-fee" checked={noFee} onChange={event => { setNoFee(event.target.checked); }} style={{ width: 18, height: 18 }} />
-                          I am not charging a fee for this request
-                        </label>
-                        {!noFee && !hasQr && (
-                          <p data-testid="accept-needs-qr" style={{ ...hintStyle, color: "#8A5A00" }}>
-                            A fee is paid to your payment QR, and you have not saved one.{" "}
-                            <Link to="/app/enotary/payment" style={{ color: "inherit", fontWeight: 700 }}>Save my payment QR</Link>
-                          </p>
+                        {noFee ? (
+                          <div data-testid="no-fee-notice" role="status" style={{ ...GF, margin: "12px 0 0", padding: "12px 14px", borderRadius: 10, background: "#EEF7F0", border: "1px solid #BFE0C8" }}>
+                            <strong style={{ display: "block", fontSize: 14, color: E.ok, marginBottom: 6 }}>You are accepting this request free of charge</strong>
+                            <ul style={{ margin: 0, paddingLeft: 18, fontSize: 13.5, color: E.text, lineHeight: 1.6 }}>
+                              <li>{request.client.name} will not be asked to pay, and will see that you are not charging a fee.</li>
+                              <li>There is no payment to confirm. The online session can begin as soon as you accept.</li>
+                              <li>Once you accept, the fee cannot be changed. To charge a fee instead, choose "Charge a fee" before you accept.</li>
+                              <li>You do not need a payment QR for a request without a fee.</li>
+                            </ul>
+                          </div>
+                        ) : (
+                          <>
+                            {!hasQr && (
+                              <p data-testid="accept-needs-qr" style={{ ...hintStyle, color: "#8A5A00" }}>
+                                A fee is paid to your payment QR, and you have not saved one.{" "}
+                                <Link to="/app/enotary/payment" style={{ color: "inherit", fontWeight: 700 }}>Save my payment QR</Link>
+                              </p>
+                            )}
+                            <p style={hintStyle}>
+                              The client pays you directly with their bank or e-wallet app, then sends you the reference number. You confirm from your own app.
+                              LAGDA never holds the money. The online session begins once the fee is settled.
+                            </p>
+                          </>
                         )}
-                        <p style={hintStyle}>
-                          The client pays you directly with their bank or e-wallet app, then sends you the reference number. You confirm from your own app.
-                          LAGDA never holds the money. The online session begins once the fee is settled.
+                        <p data-testid="fee-summary" style={{ ...GF, margin: "12px 0 0", fontSize: 14, fontWeight: 700, color: E.ink }}>
+                          {noFee ? `You will accept this request without a fee.`
+                            : feeAmount === null ? "Enter an amount to see what the client will be asked to pay."
+                              : `You will ask ${request.client.name} to pay PHP ${formatPesos(feeAmount)}.`}
                         </p>
                         <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 10 }}>
                           <ActionButton
                             icon={Check} disabled={busy || feeAmount === null || (!noFee && !hasQr)}
                             onClick={() => { void answer(request, "accept"); }}
                           >
-                            {busy ? "Accepting…" : "Accept the request"}
+                            {busy ? "Accepting…" : noFee ? "Accept without a fee" : "Accept the request"}
                           </ActionButton>
                           <ActionButton kind="secondary" disabled={busy} onClick={() => { setAccepting(null); setFee(""); setNoFee(false); }}>Not now</ActionButton>
                         </div>

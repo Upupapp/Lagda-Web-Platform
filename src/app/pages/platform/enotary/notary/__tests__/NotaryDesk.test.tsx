@@ -188,11 +188,40 @@ describe("accepting and declining", () => {
     await open(deskOf());
     press(screen.getByRole("button", { name: "Accept" }));
     press(screen.getByTestId("no-fee"));
-    expect(screen.getByTestId("fee-input")).toBeDisabled();
-    press(within(screen.getByTestId("accept-panel")).getByRole("button", { name: "Accept the request" }));
+    expect(screen.getByTestId("fee-input")).toHaveAttribute("readonly");
+    press(within(screen.getByTestId("accept-panel")).getByRole("button", { name: "Accept without a fee" }));
     await settle();
     expect(accept).toHaveBeenCalledWith("eni_1", 0);
-    expect(screen.getByRole("status")).toHaveTextContent(/without a fee/);
+    expect(screen.getByText(/You accepted the request from Ben Lim without a fee/)).toBeInTheDocument();
+  });
+
+  it("explains a free request: the fee turns read-only, a notice says what changes, and the button and summary say so", async () => {
+    await open(deskOf());
+    press(screen.getByRole("button", { name: "Accept" }));
+    // Charging is the starting choice, with an editable amount and a summary that names it.
+    expect(screen.getByTestId("fee-mode-charge")).toBeChecked();
+    expect(screen.getByTestId("fee-input")).not.toHaveAttribute("readonly");
+    expect(screen.getByTestId("fee-summary")).toHaveTextContent("Enter an amount");
+    fireEvent.change(screen.getByTestId("fee-input"), { target: { value: "1500" } });
+    expect(screen.getByTestId("fee-summary")).toHaveTextContent("You will ask Ben Lim to pay PHP 1,500.00.");
+    expect(screen.queryByTestId("no-fee-notice")).toBeNull();
+
+    press(screen.getByTestId("no-fee"));
+    expect(screen.getByTestId("no-fee")).toBeChecked();
+    expect(screen.getByTestId("fee-input")).toHaveAttribute("readonly");
+    expect(screen.getByTestId("fee-input")).toHaveValue("No fee: free of charge");
+    const notice = screen.getByTestId("no-fee-notice");
+    expect(notice).toHaveTextContent("You are accepting this request free of charge");
+    expect(notice).toHaveTextContent("Ben Lim will not be asked to pay");
+    expect(notice).toHaveTextContent("There is no payment to confirm");
+    expect(notice).toHaveTextContent("the fee cannot be changed");
+    expect(screen.getByTestId("fee-summary")).toHaveTextContent("You will accept this request without a fee.");
+    expect(screen.queryByRole("button", { name: "Accept the request" })).toBeNull();
+
+    // Changing their mind brings the amount back as it was.
+    press(screen.getByTestId("fee-mode-charge"));
+    expect(screen.queryByTestId("no-fee-notice")).toBeNull();
+    expect(screen.getByTestId("fee-input")).toHaveValue("1500");
   });
 
   it("will not ask for a fee without a saved payment QR, and points to where to save one", async () => {
@@ -205,7 +234,8 @@ describe("accepting and declining", () => {
     expect(within(screen.getByTestId("accept-panel")).getByRole("link", { name: "Save my payment QR" })).toHaveAttribute("href", "/app/enotary/payment");
     // No fee needs no QR.
     press(screen.getByTestId("no-fee"));
-    expect(within(screen.getByTestId("accept-panel")).getByRole("button", { name: "Accept the request" })).toBeEnabled();
+    expect(within(screen.getByTestId("accept-panel")).getByRole("button", { name: "Accept without a fee" })).toBeEnabled();
+    expect(screen.queryByTestId("accept-needs-qr")).toBeNull();
   });
 
   it("can back out of accepting", async () => {
