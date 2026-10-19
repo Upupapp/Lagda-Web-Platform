@@ -1062,6 +1062,11 @@ const RoomPage = lazy(() =>
     default: m.RoomPage,
   })),
 );
+const WordingDraftPage = lazy(() =>
+  import("./app/pages/public/enotary/WordingDraftPage").then((m) => ({
+    default: m.WordingDraftPage,
+  })),
+);
 const VerifyNotarizedPage = lazy(() =>
   import("./app/pages/public/enotary/VerifyNotarizedPage").then((m) => ({
     default: m.VerifyNotarizedPage,
@@ -1565,6 +1570,18 @@ export const router = createBrowserRouter([
     ),
   },
   // Anyone may check a verification code from a notarized document (117).
+  // The draft wording about where each person was, for the lawyer to judge. Public, unlisted, not indexed.
+  {
+    path: "/enotary/wording-draft",
+    errorElement: <PublicRouteError />,
+    element: (
+      <PageMetaRoute>
+        <Suspense fallback={null}>
+          <WordingDraftPage />
+        </Suspense>
+      </PageMetaRoute>
+    ),
+  },
   {
     path: "/verify-notarized",
     errorElement: <PublicRouteError />,
