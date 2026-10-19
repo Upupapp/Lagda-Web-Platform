@@ -115,6 +115,50 @@ describe("after the identity step, where requests to notaries are offered", () =
     expect(assigned).toEqual(["/app/enotary/requests/eni_77"]);
   });
 
+  it("shows only the email field, and explains why, when the notary has no LAGDA account", async () => {
+    answers[`GET /me/enotary/listings/${ID}/contact`] = { status: 200, body: { directoryId: ID, accountKnown: false, maskedEmail: null } };
+    await openDirectory();
+    click("[data-step=interest]");
+    await pass(20);
+    expect(document.getElementById("req-email")).not.toBeNull();
+    expect(view()).toContain("has no LAGDA account yet");
+    expect(view()).not.toContain("has a LAGDA account");
+  });
+
+  it("says LAGDA will email a notary who has an account, shows only the masked address, and asks for no email", async () => {
+    answers[`GET /me/enotary/listings/${ID}/contact`] = { status: 200, body: { directoryId: ID, accountKnown: true, maskedEmail: "a***@example.ph" } };
+    answers["POST /me/enotary/invitations"] = { status: 201, body: { invitation: { id: "eni_9" } } };
+    await openDirectory();
+    click("[data-step=interest]");
+    await pass(20);
+    expect(document.getElementById("req-email")).toBeNull();
+    expect(view()).toContain("This notary has a LAGDA account.");
+    expect(view()).toContain("a***@example.ph");
+    expect(view()).toContain("limited number of requests a day");
+    click("[data-request]");
+    await pass(20);
+    expect(asked.find(a => a.method === "POST")?.body).toEqual({ directoryId: ID });
+    expect(assigned).toEqual(["/app/enotary/requests/eni_9"]);
+  });
+
+  it("keeps the email field when the lookup is not available (an older server)", async () => {
+    await openDirectory();
+    click("[data-step=interest]");
+    await pass(20);
+    expect(document.getElementById("req-email")).not.toBeNull();
+  });
+
+  it("says plainly when the client has made the day's requests", async () => {
+    answers["POST /me/enotary/invitations"] = err(409, "enotary_request_rate_limit");
+    await openDirectory();
+    click("[data-step=interest]");
+    await pass(20);
+    click("[data-request]");
+    await pass(20);
+    expect(view()).toContain("most requests allowed in a day");
+    expect(assigned).toEqual([]);
+  });
+
   it("sends no email when none was typed", async () => {
     answers["POST /me/enotary/invitations"] = { status: 201, body: { invitation: { id: "eni_1" } } };
     await openDirectory();

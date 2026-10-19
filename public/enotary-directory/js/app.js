@@ -532,11 +532,25 @@
         body = '<h3 id="step-h" tabindex="-1">' + CI.mail + 'You already asked this notary</h3><div class="idv-res ok" role="status">' + CI.check + "<div><b>Your request to " + name + " is open.</b><p>Its link, QR code and the time it has left are on its page.</p></div></div>";
         bar = '<button type="button" class="btn outline" data-go="market">Browse other notaries</button><a class="btn big" href="' + requestPath(open.id) + '">Open your request</a>';
       } else {
+        // How this notary is reached: by LAGDA, when the listing has an account, or by an email the client may add.
+        var contact = SEL.contact;
+        if (contact === undefined && !SEL.contactAsked) {
+          SEL.contactAsked = true;
+          var askedFor = SEL;
+          api("GET", "/me/enotary/listings/" + encodeURIComponent(l.id) + "/contact").then(function (r) {
+            askedFor.contact = r.ok && r.data ? r.data : null;
+            if (SEL === askedFor) redraw(false);
+          });
+        }
+        var reach;
+        if (contact === undefined) reach = '<p class="ho-status" role="status"><i class="spin" aria-hidden="true"></i><span>Checking how to reach this notary…</span></p>';
+        else if (contact && contact.accountKnown) reach = '<div class="idv-res ok req-account" role="status">' + CI.check + "<div><b>This notary has a LAGDA account.</b><p>LAGDA emails " + (contact.maskedEmail ? "<b>" + esc(contact.maskedEmail) + "</b> " : "them ") + "when you send the request, so you do not need to add an email. To protect the notary’s inbox, each client can send a limited number of requests a day.</p></div></div>";
+        else reach = '<div class="req-email"><label for="req-email"><b>The notary\'s email (optional)</b></label><input id="req-email" type="email" autocomplete="off" inputmode="email" maxlength="254" value="' + esc(SEL.email || "") + '"><p class="fine left">This notary has no LAGDA account yet, so LAGDA cannot email them by itself. If you know their email address, add it. It is kept with the request. Otherwise, give them the link and QR code yourself.</p></div>';
         body = '<h3 id="step-h" tabindex="-1">' + CI.mail + "Request this notary</h3>" +
           '<p class="lead">LAGDA gives you a private link and a QR code, good for a limited time, to give to the notary. The notary signs in to LAGDA and passes an ID and face check before they can answer your request.</p>' +
           '<dl class="summary"><div><dt>Notary</dt><dd>' + name + (l.kind === "office" ? "" : ", " + esc(l.firm)) + "<br>" + esc(l.city + ", " + l.province) + "</dd></div>" +
             "<div><dt>Your name</dt><dd>" + esc(ME.name) + "</dd></div><div><dt>Identity verified in LAGDA</dt><dd>Yes</dd></div></dl>" +
-          '<div class="req-email"><label for="req-email"><b>The notary\'s email (optional)</b></label><input id="req-email" type="email" autocomplete="off" inputmode="email" maxlength="254" value="' + esc(SEL.email || "") + '"><p class="fine left">If you know the notary\'s email address, add it. It is kept with the request. Leave it empty if you do not.</p></div>' +
+          reach +
           '<p class="fine left">Nothing is booked, paid or notarized by this step. Online notarial sessions are not currently available.</p>' +
           (SEL.error ? '<p class="err-box" role="alert" id="step-err" tabindex="-1">' + esc(SEL.error) + "</p>" : "");
         bar = '<button type="button" class="btn outline" data-go="market">Browse other notaries</button><button type="button" class="btn big" data-request' + (SEL.busy ? " disabled" : "") + ">" + (SEL.busy ? "Sending…" : "Request this notary") + "</button>";
@@ -700,7 +714,8 @@
         probeRequests().then(function () { var q = openRequestFor(l.id); if (q) location.assign(requestPath(q.id)); else { sel.error = "You already have an open request for this notary."; redraw(false); landed(); } });
         return;
       }
-      if (r.status === 409 && r.code === "enotary_invitation_limit") sel.error = "You already have 3 open requests. Cancel one, or wait for it to end, then try again.";
+      if (r.status === 409 && r.code === "enotary_request_rate_limit") sel.error = "You have made the most requests allowed in a day. Please try again tomorrow.";
+      else if (r.status === 409 && r.code === "enotary_invitation_limit") sel.error = "You already have 3 open requests. Cancel one, or wait for it to end, then try again.";
       else if (r.status === 403 && r.code === "client_identity_required") { INV = { list: INV ? INV.list : [], needsIdentity: true }; sel.error = ""; }
       else if (r.status === 404 && r.code === "enotary_notary_not_listed") sel.error = "That notary is not listed in the Notary Directory.";
       else if (r.status === 404) { INV = null; sel.error = ""; } // switched off meanwhile: the waitlist step
