@@ -84,6 +84,62 @@ describe("the groups list", () => {
   });
 });
 
+describe("creating a group with its first members", () => {
+  const withAccount = (id: string, name: string, connected: boolean, scope = "workspace") => ({
+    ...wireContact(id, name, scope),
+    account: { userId: "acct_" + id, displayName: name, jobTitle: null, avatarVersion: null, connected },
+  });
+  const routes = (state: { created: boolean }) => ({
+    "GET /workspaces/ws_1/contact-groups": () => ({ groups: state.created ? [group({ name: "Partners", contactIds: ["cnt_1", "cnt_2"] })] : [] }),
+    "GET /workspaces/ws_1/contacts": contactPage([
+      withAccount("cnt_1", "Ana Cruz", true), withAccount("cnt_2", "Ben Lim", true), withAccount("cnt_3", "Carla Reyes", false),
+      withAccount("cnt_4", "Private Pat", true, "personal"),
+    ]),
+    "POST /workspaces/ws_1/contact-groups": () => { state.created = true; return { __reply: true, status: 201, body: group({ name: "Partners", scope: "personal", contactIds: [] }) }; },
+    "POST /workspaces/ws_1/contact-groups/cgr_1/members": () => group({ contactIds: ["cnt_1", "cnt_2", "cnt_4"] }),
+  });
+
+  it("marks the contacts who accepted, selects them in one tap, and adds them as the group is created", async () => {
+    const api = mockSharingApi(routes({ created: false }));
+    render(<MemoryRouter><ContactGroupsPage /></MemoryRouter>);
+    await userEvent.click(await screen.findByRole("button", { name: "Create First Group" }));
+    const panel = await screen.findByTestId("create-group-members");
+    expect(await within(panel).findAllByRole("checkbox")).toHaveLength(4);
+    expect(within(panel).getAllByText("Accepted")).toHaveLength(3);
+    await userEvent.type(screen.getByLabelText(/Group Name/), "Partners");
+    await userEvent.click(within(panel).getByTestId("pick-accepted"));
+    expect(within(panel).getByText("3 selected")).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "Create Group with 3" }));
+    await screen.findByRole("link", { name: /Partners/ });
+    const add = api.calls.find(c => c.method === "POST" && c.path.endsWith("/members"));
+    expect((add?.body as { contactIds: string[] }).contactIds.sort()).toEqual(["cnt_1", "cnt_2", "cnt_4"]);
+  });
+
+  it("offers only workspace-visible contacts when the group is for the workspace, and drops the others from the pick", async () => {
+    mockSharingApi(routes({ created: false }));
+    render(<MemoryRouter><ContactGroupsPage /></MemoryRouter>);
+    await userEvent.click(await screen.findByRole("button", { name: "Create First Group" }));
+    const panel = await screen.findByTestId("create-group-members");
+    await within(panel).findAllByRole("checkbox");
+    await userEvent.click(within(panel).getByTestId("pick-accepted"));
+    expect(within(panel).getByText("3 selected")).toBeInTheDocument();
+    await userEvent.click(screen.getAllByRole("radio")[1]!);
+    expect(await within(panel).findAllByRole("checkbox")).toHaveLength(3);
+    expect(within(panel).getByText("2 selected")).toBeInTheDocument();
+  });
+
+  it("still creates the group when there is nobody to add", async () => {
+    const api = mockSharingApi({ ...routes({ created: false }), "GET /workspaces/ws_1/contacts": contactPage([]) });
+    render(<MemoryRouter><ContactGroupsPage /></MemoryRouter>);
+    await userEvent.click(await screen.findByRole("button", { name: "Create First Group" }));
+    expect(await screen.findByText(/no contacts to add yet/i)).toBeInTheDocument();
+    await userEvent.type(screen.getByLabelText(/Group Name/), "Partners");
+    await userEvent.click(screen.getByRole("button", { name: "Create Group" }));
+    await screen.findByRole("link", { name: /Partners/ });
+    expect(api.calls.some(c => c.path.endsWith("/members"))).toBe(false);
+  });
+});
+
 describe("one group", () => {
   it("shows the group, its scope and its members, linked to their contacts", async () => {
     openDetail({ "GET /workspaces/ws_1/contact-groups/cgr_1": detail() });

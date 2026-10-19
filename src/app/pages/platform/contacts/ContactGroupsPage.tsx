@@ -5,11 +5,13 @@
 // live only for the session.
 // Burgundy never used. eNotary never referenced.
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router";
 import { ContactProvider, useContacts } from "../../../context/ContactContext";
-import type { ContactGroupSummary, ContactScope } from "../../../models/contacts";
-import { CONTACT_SCOPE_LABELS } from "../../../models/contacts";
+import { usePlatform } from "../../../context/PlatformContext";
+import { listContacts } from "../../../services/contacts-source";
+import type { ContactGroupSummary, ContactId, ContactListItem, ContactScope } from "../../../models/contacts";
+import { CONTACT_SCOPE_LABELS, DEFAULT_CONTACT_QUERY } from "../../../models/contacts";
 import { Z } from "../../../utils/z-index";
 
 const GF    = { fontFamily: "'Geist', sans-serif" };
@@ -32,11 +34,43 @@ function CreateGroupModal({ onClose, onCreated }: { onClose: () => void; onCreat
   const [scope,  setScope]  = useState<ContactScope>("personal");
   const [nameErr, setNameErr] = useState("");
   const [saving,  setSaving]  = useState(false);
+  const platform = usePlatform();
+  const workspaceId = platform.currentWorkspace?.id;
+  const [people, setPeople] = useState<ContactListItem[] | null>(null);
+  const [loadFailed, setLoadFailed] = useState(false);
+  const [find, setFind] = useState("");
+  const [picked, setPicked] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    let alive = true;
+    listContacts(workspaceId, { ...DEFAULT_CONTACT_QUERY, statusFilter: "active", perPage: 100 })
+      .then(result => { if (alive) setPeople(result.items); })
+      .catch(() => { if (alive) { setPeople([]); setLoadFailed(true); } });
+    return () => { alive = false; };
+  }, [workspaceId]);
+
+  // A workspace group holds only contacts the whole workspace can see.
+  const eligible = useMemo(() => (people ?? []).filter(c => scope === "personal" || c.scope === "workspace"), [people, scope]);
+  const accepted = eligible.filter(c => c.account?.connected === true);
+  const shown = eligible.filter(c => {
+    const q = find.trim().toLocaleLowerCase();
+    return q === "" || c.name.toLocaleLowerCase().includes(q) || c.email.toLocaleLowerCase().includes(q)
+      || (c.organization ?? "").toLocaleLowerCase().includes(q);
+  });
+  // Picks that stopped being eligible (visibility changed) fall away.
+  const chosen = [...picked].filter(id => eligible.some(c => String(c.id) === id));
+  const toggle = (id: string) => setPicked(prev => { const next = new Set(prev); if (next.has(id)) next.delete(id); else next.add(id); return next; });
+  const allAccepted = accepted.length > 0 && accepted.every(c => picked.has(String(c.id)));
+  const pickAccepted = () => setPicked(prev => {
+    const next = new Set(prev);
+    for (const c of accepted) { if (allAccepted) next.delete(String(c.id)); else next.add(String(c.id)); }
+    return next;
+  });
 
   const handleCreate = async () => {
     if (!name.trim()) { setNameErr("Group name is required."); return; }
     setSaving(true);
-    await asyncCreateGroup(name.trim(), desc.trim(), scope);
+    await asyncCreateGroup(name.trim(), desc.trim(), scope, chosen as ContactId[]);
     setSaving(false);
     onCreated();
     onClose();
@@ -45,7 +79,7 @@ function CreateGroupModal({ onClose, onCreated }: { onClose: () => void; onCreat
   return (
     <div role="dialog" aria-modal="true" aria-labelledby="cg-title" style={{ position: "fixed", inset: 0, zIndex: Z.modal, display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
       <div onClick={onClose} style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.4)" }} />
-      <div style={{ position: "relative", background: "#FFFFFF", borderRadius: 14, padding: "28px 28px 24px", maxWidth: 420, width: "100%", boxShadow: "0 20px 60px rgba(0,0,0,0.2)" }}>
+      <div style={{ position: "relative", background: "#FFFFFF", borderRadius: 14, padding: "28px 28px 24px", maxWidth: 480, width: "100%", maxHeight: "90vh", overflowY: "auto", boxShadow: "0 20px 60px rgba(0,0,0,0.2)" }}>
         <h2 id="cg-title" style={{ ...GF, fontSize: 17, fontWeight: 800, color: NAVY, margin: "0 0 20px" }}>Create Group</h2>
 
         <div style={{ marginBottom: 16 }}>
@@ -73,13 +107,55 @@ function CreateGroupModal({ onClose, onCreated }: { onClose: () => void; onCreat
           </div>
         </div>
 
+        <div data-testid="create-group-members" style={{ marginBottom: 20 }}>
+          <label htmlFor="cg-find" style={{ ...GF, fontSize: 13, fontWeight: 700, color: NAVY, display: "block", marginBottom: 5 }}>
+            Add contacts now <span style={{ ...GF, fontWeight: 500, color: SLATE }}>(optional)</span>
+          </label>
+          {people === null && <p role="status" style={{ ...GF, fontSize: 13, color: SLATE, margin: 0 }}>Loading your contacts…</p>}
+          {loadFailed && <p role="alert" style={{ ...GF, fontSize: 12.5, color: ERROR, margin: "0 0 8px" }}>Your contacts could not be loaded. You can still create the group and add them later.</p>}
+          {people !== null && eligible.length === 0 && !loadFailed && (
+            <p style={{ ...GF, fontSize: 13, color: SLATE, margin: 0 }}>
+              {scope === "workspace" ? "No workspace-visible contacts to add yet." : "You have no contacts to add yet."} You can add people to the group later.
+            </p>
+          )}
+          {eligible.length > 0 && (
+            <>
+              {accepted.length > 0 && (
+                <button type="button" onClick={pickAccepted} data-testid="pick-accepted"
+                  style={{ ...GF, fontSize: 13, fontWeight: 700, color: AZURE, background: LIGHT, border: "1.5px solid #BAD7F5", borderRadius: 8, padding: "8px 12px", minHeight: 40, cursor: "pointer", marginBottom: 8, width: "100%" }}>
+                  {allAccepted ? "Unselect" : "Select"} everyone who accepted my request ({accepted.length})
+                </button>
+              )}
+              <input id="cg-find" type="search" value={find} onChange={e => setFind(e.target.value)} placeholder="Search name, email or organization" style={{ ...inputStyle(), marginBottom: 8 }} />
+              <ul role="list" aria-label="Contacts to add" style={{ margin: 0, padding: 0, listStyle: "none", maxHeight: 220, overflowY: "auto", border: "1px solid #E3E8EF", borderRadius: 8 }}>
+                {shown.length === 0 && <li style={{ ...GF, fontSize: 13, color: SLATE, padding: 10 }}>No contacts match that search.</li>}
+                {shown.map(c => (
+                  <li key={String(c.id)} style={{ borderBottom: "1px solid #F1F5F9" }}>
+                    <label style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 10px", minHeight: 44, cursor: "pointer" }}>
+                      <input type="checkbox" checked={picked.has(String(c.id))} onChange={() => toggle(String(c.id))} style={{ width: 18, height: 18 }} />
+                      <span style={{ minWidth: 0, flex: 1 }}>
+                        <span style={{ ...GF, display: "block", fontSize: 13, fontWeight: 600, color: NAVY, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.name}</span>
+                        <span style={{ ...GM, fontSize: 11, color: SLATE, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", display: "block" }}>{c.email}</span>
+                      </span>
+                      {c.account?.connected === true && (
+                        <span style={{ ...GM, fontSize: 9, padding: "2px 7px", borderRadius: 999, background: "#E6F4EA", color: "#17703C", whiteSpace: "nowrap" }}>Accepted</span>
+                      )}
+                    </label>
+                  </li>
+                ))}
+              </ul>
+              <p style={{ ...GF, fontSize: 12, color: SLATE, margin: "6px 0 0" }} aria-live="polite">{chosen.length} selected</p>
+            </>
+          )}
+        </div>
+
         <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
           <button onClick={onClose} style={{ ...GF, fontSize: 13, color: SLATE, border: "1.5px solid #D1D9E0", borderRadius: 8, padding: "9px 18px", background: "#FFFFFF", cursor: "pointer" }}>
             Cancel
           </button>
           <button onClick={handleCreate} disabled={saving}
             style={{ ...GF, fontSize: 13, fontWeight: 700, color: "#FFFFFF", background: saving ? SILVER : AZURE, border: "none", borderRadius: 8, padding: "9px 22px", cursor: saving ? "not-allowed" : "pointer" }}>
-            {saving ? "Creating…" : "Create Group"}
+            {saving ? "Creating…" : chosen.length > 0 ? `Create Group with ${String(chosen.length)}` : "Create Group"}
           </button>
         </div>
       </div>
