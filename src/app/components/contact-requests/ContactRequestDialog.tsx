@@ -21,6 +21,7 @@ import {
   realContactRequestService, contactRequestErrorMessage,
 } from "../../services/real/contact-request.service";
 import { realDocumentService, type RealDocument } from "../../services/real/document.service";
+import { realTemplatesService } from "../../services/real/templates.service";
 import {
   CONTACT_REQUEST_KIND_LABELS,
   type ContactRequest, type ContactRequestKind,
@@ -31,6 +32,21 @@ const GF = { fontFamily: "'Geist', sans-serif" } as const;
 const NAVY = "#07111F";
 const SLATE = "#475569";
 const BORDER = "#CBD5E1";
+
+export interface DocumentChoice { readonly documentId: string; readonly title: string }
+
+/** The templates in My Templates that have a document attached, by template name. */
+export function templateChoicesOf(templates: readonly { name: string; documentId: string | null }[]): DocumentChoice[] {
+  return templates.flatMap(template => template.documentId === null ? [] : [{ documentId: template.documentId, title: template.name }]);
+}
+
+/** Documents that were completed (they carry a verification ID), except a template's own document. */
+export function completedChoicesOf(documents: readonly RealDocument[], templates: readonly DocumentChoice[]): DocumentChoice[] {
+  const taken = new Set(templates.map(choice => choice.documentId));
+  return documents
+    .filter(document => document.verificationId != null && !taken.has(document.documentId))
+    .map(document => ({ documentId: document.documentId, title: document.title }));
+}
 
 export const TITLE_MAX = 200;
 export const MESSAGE_MAX = 2000;
@@ -84,6 +100,8 @@ export function ContactRequestDialog({ workspaceId, kind, contact, onClose, onCr
   const [due, setDue] = useState("");
   const [documentId, setDocumentId] = useState("");
   const [documents, setDocuments] = useState<RealDocument[] | null>(null);
+  // Preparation is assigned from a workflow, not from any document: a template in My Templates, or a completed document.
+  const [templateChoices, setTemplateChoices] = useState<readonly DocumentChoice[]>([]);
   const [documentsFailed, setDocumentsFailed] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -96,8 +114,15 @@ export function ContactRequestDialog({ workspaceId, kind, contact, onClose, onCr
     realDocumentService.list(workspaceId, { perPage: 100 })
       .then(result => { if (!cancelled) setDocuments(result.items); })
       .catch(() => { if (!cancelled) { setDocuments([]); setDocumentsFailed(true); } });
+    if (documentRequired) {
+      realTemplatesService.list(workspaceId)
+        .then(templates => { if (!cancelled) setTemplateChoices(templateChoicesOf(templates)); })
+        .catch(() => { if (!cancelled) setTemplateChoices([]); });
+    }
     return () => { cancelled = true; };
-  }, [pickDocument, workspaceId]);
+  }, [pickDocument, documentRequired, workspaceId]);
+
+  const completedChoices = documentRequired ? completedChoicesOf(documents ?? [], templateChoices) : [];
 
   const validate = (): boolean => {
     const next: typeof fieldErrors = {};
@@ -239,7 +264,20 @@ export function ContactRequestDialog({ workspaceId, kind, contact, onClose, onCr
               <option value="">
                 {documents === null ? "Loading documents…" : documentRequired ? "Choose a document" : "No specific document"}
               </option>
-              {(documents ?? []).map(document => (
+              {documentRequired ? (
+                <>
+                  {templateChoices.length > 0 && (
+                    <optgroup label="My Templates">
+                      {templateChoices.map(choice => <option key={choice.documentId} value={choice.documentId}>{choice.title}</option>)}
+                    </optgroup>
+                  )}
+                  {completedChoices.length > 0 && (
+                    <optgroup label="Completed documents">
+                      {completedChoices.map(choice => <option key={choice.documentId} value={choice.documentId}>{choice.title}</option>)}
+                    </optgroup>
+                  )}
+                </>
+              ) : (documents ?? []).map(document => (
                 <option key={document.documentId} value={document.documentId}>{document.title}</option>
               ))}
             </select>
@@ -248,7 +286,9 @@ export function ContactRequestDialog({ workspaceId, kind, contact, onClose, onCr
                 ?? (documentsFailed
                   ? "Couldn't load this workspace's documents."
                   : documentRequired
-                    ? "The workspace document they should prepare."
+                    ? (documents !== null && templateChoices.length === 0 && completedChoices.length === 0
+                      ? "Nothing to assign yet. Create a template in My Templates, or finish a document, first."
+                      : "Choose a template from My Templates or a completed document for them to prepare.")
                     : "Pick one if you want the signed copy of a particular document.")}
             </p>
           </div>

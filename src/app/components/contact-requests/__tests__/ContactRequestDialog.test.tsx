@@ -25,9 +25,18 @@ function mockApi(handler: Handler) {
 const DOCS = {
   items: [
     { documentId: "doc_lease", title: "Lease Agreement", originalFilename: "Lease.pdf", createdByUserId: "u", folderId: null, createdAt: "2026-09-01T00:00:00.000Z", updatedAt: "2026-09-01T00:00:00.000Z", source: null },
+    { documentId: "doc_deed", title: "Signed Deed", originalFilename: "Deed.pdf", createdByUserId: "u", folderId: null, createdAt: "2026-09-01T00:00:00.000Z", updatedAt: "2026-09-01T00:00:00.000Z", source: null, verificationId: "LAGDA-1" },
+    { documentId: "doc_tpl", title: "NDA workflow document", originalFilename: "Nda.pdf", createdByUserId: "u", folderId: null, createdAt: "2026-09-01T00:00:00.000Z", updatedAt: "2026-09-01T00:00:00.000Z", source: null, verificationId: null },
   ],
-  total: 1, page: 1, perPage: 100, hasNextPage: false,
+  total: 3, page: 1, perPage: 100, hasNextPage: false,
 };
+
+const TEMPLATES = { items: [
+  { workflowTemplateId: "wt_1", name: "NDA workflow", documentId: "doc_tpl" },
+  { workflowTemplateId: "wt_2", name: "Empty shell", documentId: null },
+] };
+/** Documents and templates, as the preparation picker reads them. */
+const withTemplates = (url: string) => (url.includes("/workflow-templates") ? { body: TEMPLATES } : url.includes("/documents") ? { body: DOCS } : undefined);
 
 const MEMBER = { id: "con_m", name: "Maria Santos", email: "maria@acme.test", workspaceMember: { userId: "usr_maria", displayName: "Maria" } };
 const EXTERNAL = { id: "con_x", name: "Juan Cruz", email: "juan@vendor.test", workspaceMember: null };
@@ -70,7 +79,7 @@ describe("ContactRequestDialog", () => {
   });
 
   it("requires a title, and a document for preparation, before sending", async () => {
-    const fetchMock = mockApi(url => (url.includes("/documents") ? { body: DOCS } : undefined));
+    const fetchMock = mockApi(withTemplates);
     render(<ContactRequestDialog workspaceId="ws_1" kind="preparation" contact={MEMBER} onClose={() => undefined} />);
     await userEvent.click(screen.getByRole("button", { name: /Send request/ }));
     expect(screen.getByText("Enter what you're asking for.")).toBeTruthy();
@@ -81,24 +90,42 @@ describe("ContactRequestDialog", () => {
   it("sends the request and confirms how it was delivered", async () => {
     const onCreated = vi.fn();
     mockApi((url, init) => {
-      if (url.includes("/documents")) return { body: DOCS };
       if (url.endsWith("/contact-requests") && init.method === "POST") {
         posted.push(JSON.parse(init.body as string) as unknown);
         return { status: 201, body: request({ kind: "preparation", documentId: "doc_lease", documentTitle: "Lease Agreement" }) };
       }
-      return undefined;
+      return withTemplates(url);
     });
     render(<ContactRequestDialog workspaceId="ws_1" kind="preparation" contact={MEMBER} onClose={() => undefined} onCreated={onCreated} />);
     await userEvent.type(screen.getByLabelText(/Title/), "Prepare the lease");
     const picker = screen.getByLabelText(/Document/);
-    await waitFor(() => { expect(within(picker).getByRole("option", { name: "Lease Agreement" })).toBeTruthy(); });
-    await userEvent.selectOptions(picker, "doc_lease");
+    await waitFor(() => { expect(within(picker).getByRole("option", { name: "NDA workflow" })).toBeTruthy(); });
+    await userEvent.selectOptions(picker, "doc_tpl");
     await userEvent.type(screen.getByLabelText(/Message/), "Before Friday");
     await userEvent.click(screen.getByRole("button", { name: /Send request/ }));
     expect(await screen.findByRole("dialog", { name: "Request sent" })).toBeTruthy();
     expect(screen.getByText(/No email was sent/)).toBeTruthy();
-    expect(posted).toEqual([{ kind: "preparation", contactId: "con_m", title: "Prepare the lease", message: "Before Friday", documentId: "doc_lease" }]);
+    expect(posted).toEqual([{ kind: "preparation", contactId: "con_m", title: "Prepare the lease", message: "Before Friday", documentId: "doc_tpl" }]);
     expect(onCreated).toHaveBeenCalledTimes(1);
+  });
+
+  it("offers only My Templates and completed documents for a preparation, not drafts or empty templates", async () => {
+    mockApi(withTemplates);
+    render(<ContactRequestDialog workspaceId="ws_1" kind="preparation" contact={MEMBER} onClose={() => undefined} />);
+    const picker = screen.getByLabelText(/Document/);
+    await waitFor(() => { expect(within(picker).getByRole("option", { name: "NDA workflow" })).toBeTruthy(); });
+    const groups = within(picker).getAllByRole("group").map(group => group.getAttribute("label"));
+    expect(groups).toEqual(["My Templates", "Completed documents"]);
+    expect(within(picker).getByRole("option", { name: "Signed Deed" })).toBeTruthy();
+    expect(within(picker).queryByRole("option", { name: "Lease Agreement" })).toBeNull();
+    expect(within(picker).queryByRole("option", { name: "NDA workflow document" })).toBeNull();
+    expect(within(picker).queryByRole("option", { name: "Empty shell" })).toBeNull();
+  });
+
+  it("says there is nothing to assign when the workspace has no template and no completed document", async () => {
+    mockApi(url => (url.includes("/workflow-templates") ? { body: { items: [] } } : url.includes("/documents") ? { body: { ...DOCS, items: [DOCS.items[0]], total: 1 } } : undefined));
+    render(<ContactRequestDialog workspaceId="ws_1" kind="preparation" contact={MEMBER} onClose={() => undefined} />);
+    expect(await screen.findByText(/Nothing to assign yet/)).toBeTruthy();
   });
 
   it("maps a members-only refusal to a friendly sentence", async () => {
