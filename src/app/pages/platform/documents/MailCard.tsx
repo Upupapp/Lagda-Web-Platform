@@ -6,8 +6,8 @@
 // actions along its bottom edge — secondary ones at the very left, the main
 // one at the very right. The same BrandBand the Completed cards draw.
 
-import type { ReactNode } from "react";
-import type { LucideIcon } from "lucide-react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import { ChevronLeft, ChevronRight, type LucideIcon } from "lucide-react";
 import { BrandBand } from "../settings/branding-preview";
 
 const NAVY = "#07111F";
@@ -44,6 +44,7 @@ export function MailCard({
   testId?: string;
 }) {
   const hasBadge = badge !== undefined && badge !== null && badge !== false;
+  const scroller = useActionScroller();
   return (
     <li className={hasBadge ? "mail-card mail-card-with-badge" : "mail-card"} data-testid={testId}>
       <div className="mail-card-banner">
@@ -57,13 +58,77 @@ export function MailCard({
       </div>
       {hasBadge && badge}
       {(footerStart !== undefined || footerEnd !== undefined) && (
-        <div className="mail-card-footer">
-          <div className="mail-card-footer-start">{footerStart}</div>
-          <div className="mail-card-footer-end">{footerEnd}</div>
+        <div className={scroller.scrolling ? "mail-card-footer mail-card-footer-scroll" : "mail-card-footer"}
+          data-testid={`${testId}-footer`} data-scrolling={scroller.scrolling ? "true" : "false"}>
+          <button type="button" className="mail-scroll-btn" aria-label="Show earlier actions" data-testid={`${testId}-scroll-left`}
+            hidden={!scroller.scrolling || !scroller.canLeft} onClick={() => { scroller.by(-1); }}>
+            <ChevronLeft size={18} aria-hidden />
+          </button>
+          <div ref={scroller.track} className="mail-card-footer-track" role="group" aria-label="Document actions"
+            data-fade-left={scroller.scrolling && scroller.canLeft ? "true" : "false"}
+            data-fade-right={scroller.scrolling && scroller.canRight ? "true" : "false"}>
+            <div className="mail-card-footer-start">{footerStart}</div>
+            <div className="mail-card-footer-end">{footerEnd}</div>
+          </div>
+          <button type="button" className="mail-scroll-btn" aria-label="Show more actions" data-testid={`${testId}-scroll-right`}
+            hidden={!scroller.scrolling || !scroller.canRight} onClick={() => { scroller.by(1); }}>
+            <ChevronRight size={18} aria-hidden />
+          </button>
         </div>
       )}
     </li>
   );
+}
+
+/** From this many actions on, a card's actions become one scrolling row instead of wrapping onto lines. */
+export const SCROLL_ACTIONS_FROM = 3;
+
+/**
+ * The card's action row. With three or more actions (counted from what the card
+ * actually drew) they sit side by side in one row that scrolls sideways, with an
+ * arrow at each end that appears only while there is more to see on that side.
+ * Fewer than three keep the plain wrapping row.
+ */
+function useActionScroller() {
+  const track = useRef<HTMLDivElement>(null);
+  const [scrolling, setScrolling] = useState(false);
+  const [canLeft, setCanLeft] = useState(false);
+  const [canRight, setCanRight] = useState(false);
+
+  const measure = useCallback(() => {
+    const el = track.current;
+    if (el === null) return;
+    const many = el.querySelectorAll(".mail-action").length >= SCROLL_ACTIONS_FROM;
+    setScrolling(many);
+    if (!many) { setCanLeft(false); setCanRight(false); return; }
+    const max = el.scrollWidth - el.clientWidth;
+    setCanLeft(el.scrollLeft > 2);
+    setCanRight(max > 2 && el.scrollLeft < max - 2);
+  }, []);
+
+  useEffect(() => {
+    const el = track.current;
+    if (el === null) return;
+    measure();
+    el.addEventListener("scroll", measure, { passive: true });
+    const resize = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(measure);
+    resize?.observe(el);
+    const mutate = typeof MutationObserver === "undefined" ? null : new MutationObserver(measure);
+    mutate?.observe(el, { childList: true, subtree: true });
+    return () => { el.removeEventListener("scroll", measure); resize?.disconnect(); mutate?.disconnect(); };
+  }, [measure]);
+
+  const by = useCallback((direction: -1 | 1) => {
+    const el = track.current;
+    if (el === null) return;
+    const reduce = typeof window !== "undefined" && typeof window.matchMedia === "function"
+      && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const amount = Math.max(120, Math.round(el.clientWidth * 0.7)) * direction;
+    if (typeof el.scrollBy === "function") el.scrollBy({ left: amount, behavior: reduce ? "auto" : "smooth" });
+    else el.scrollLeft += amount;
+  }, []);
+
+  return { track, scrolling, canLeft, canRight, by };
 }
 
 /** A centred secondary line in the card body. */
@@ -137,8 +202,38 @@ const MAIL_STYLES = `
     display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;
     padding: 12px 16px; background: #F8FAFC;
   }
+  .mail-card-footer-track { display: contents; }
+  .mail-scroll-btn { display: none; }
   .mail-card-footer-start, .mail-card-footer-end { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
   .mail-card-footer-end { margin-left: auto; justify-content: flex-end; }
+  /* PHONES ONLY: three or more actions become one row, side by side, scrolling sideways with an arrow at each end.
+     Wider screens keep the plain wrapping row. */
+  @media (max-width: 640px) {
+    .mail-card-footer-scroll { flex-wrap: nowrap; gap: 6px; position: relative; }
+    .mail-card-footer-scroll .mail-card-footer-track {
+      display: flex; flex: 1 1 auto; min-width: 0; align-items: center; gap: 8px; flex-wrap: nowrap; overflow-x: auto; overflow-y: hidden;
+      scrollbar-width: none; -ms-overflow-style: none; scroll-snap-type: x proximity; overscroll-behavior-x: contain; padding: 2px 1px;
+    }
+    .mail-card-footer-scroll .mail-card-footer-track::-webkit-scrollbar { display: none; }
+    .mail-card-footer-scroll .mail-card-footer-start, .mail-card-footer-scroll .mail-card-footer-end {
+      flex: 0 0 auto; flex-wrap: nowrap; margin-left: 0; scroll-snap-align: start;
+    }
+    .mail-card-footer-scroll .mail-action { flex: 0 0 auto; }
+    /* A soft fade tells the eye there is more on that side. */
+    .mail-card-footer-scroll .mail-card-footer-track[data-fade-left="true"] { -webkit-mask-image: linear-gradient(to right, transparent 0, #000 22px); mask-image: linear-gradient(to right, transparent 0, #000 22px); }
+    .mail-card-footer-scroll .mail-card-footer-track[data-fade-right="true"] { -webkit-mask-image: linear-gradient(to left, transparent 0, #000 22px); mask-image: linear-gradient(to left, transparent 0, #000 22px); }
+    .mail-card-footer-scroll .mail-card-footer-track[data-fade-left="true"][data-fade-right="true"] {
+      -webkit-mask-image: linear-gradient(to right, transparent 0, #000 22px, #000 calc(100% - 22px), transparent 100%);
+      mask-image: linear-gradient(to right, transparent 0, #000 22px, #000 calc(100% - 22px), transparent 100%); }
+    .mail-card-footer-scroll .mail-scroll-btn {
+      display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto; width: 34px; height: 34px; border-radius: 999px;
+      border: 1px solid #D1D9E0; background: #FFFFFF; color: ${NAVY}; cursor: pointer; box-shadow: 0 2px 6px -2px rgba(7,17,31,0.25);
+    }
+    .mail-card-footer-scroll .mail-scroll-btn[hidden] { display: none; }
+    .mail-card-footer-scroll .mail-scroll-btn:hover { border-color: #0078D4; color: #005A9E; }
+    .mail-card-footer-scroll .mail-scroll-btn:focus-visible { outline: 2px solid #0078D4; outline-offset: 2px; }
+    @media (prefers-reduced-motion: no-preference) { .mail-card-footer-scroll .mail-card-footer-track { scroll-behavior: smooth; } }
+  }
   .mail-action {
     font-family: 'Geist', sans-serif; display: inline-flex; align-items: center; gap: 6px; min-height: 38px;
     padding: 0 14px; border-radius: 8px; border: 1px solid #D1D9E0; background: #FFFFFF; color: ${NAVY};
@@ -159,6 +254,8 @@ const MAIL_STYLES = `
     .mail-card-body { padding: 18px 16px 14px; }
     .mail-card-title { font-size: 17px; }
     .mail-card-footer { padding: 10px 12px; }
+    .mail-card-footer-scroll { padding: 10px 8px; }
+    .mail-card-footer-scroll .mail-scroll-btn { width: 36px; height: 36px; }
     .mail-action span { font-size: 12.5px; }
   }
 `;
