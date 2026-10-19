@@ -402,6 +402,12 @@ export function PlatformSidebar() {
                   collapsed={collapsed} pending={pendingInvitations} />
               );
             }
+            if (item.id === "notary-desk") {
+              return (
+                <CountedNavItem key={item.id} to={item.path} icon={item.icon} label={item.label}
+                  collapsed={collapsed} count={navCounts.notaryDesk} kind="notaryDesk" />
+              );
+            }
             if (item.id === "shared-documents" || item.id === "contacts") {
               const kind = item.id === "contacts" ? "contacts" : "shared";
               return (

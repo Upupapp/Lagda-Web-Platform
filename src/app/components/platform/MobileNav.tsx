@@ -524,6 +524,7 @@ export function MobileNav() {
                         )}
                         {item.id === "invitations" && <InvitationCountBubble key={pendingInvitations} count={pendingInvitations} />}
                         {item.id === "contacts" && <NavCountBubble key={navCounts.contacts} kind="contacts" count={navCounts.contacts} />}
+                        {item.id === "notary-desk" && <NavCountBubble key={navCounts.notaryDesk} kind="notaryDesk" count={navCounts.notaryDesk} />}
                       </>
                     )}
                   </NavLink>

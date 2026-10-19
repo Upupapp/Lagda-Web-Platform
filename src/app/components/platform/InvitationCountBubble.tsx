@@ -6,7 +6,7 @@
 // than a bare "3" a screen reader would read without context. White on
 // #B42318 is 6.1:1.
 
-import { Mail, FileText, Share2, UserPlus, UserCheck, BadgeCheck, type LucideIcon } from "lucide-react";
+import { Mail, FileText, Share2, UserPlus, UserCheck, BadgeCheck, Stamp, type LucideIcon } from "lucide-react";
 
 const GM = { fontFamily: "'Geist Mono', monospace" };
 
@@ -26,6 +26,7 @@ export const NAV_BUBBLES = {
   shared: { icon: Share2, testId: "shared-bubble", label: (n: number) => `${String(n)} pending shared ${n === 1 ? "document" : "documents"}` },
   contacts: { icon: UserPlus, testId: "contacts-bubble", label: (n: number) => `${String(n)} ${n === 1 ? "request" : "requests"} waiting in Contacts` },
   workspace: { icon: UserCheck, testId: "workspace-bubble", label: (n: number) => `${String(n)} join ${n === 1 ? "request" : "requests"} waiting` },
+  notaryDesk: { icon: Stamp, testId: "notary-desk-bubble", label: (n: number) => `${String(n)} ${n === 1 ? "request needs" : "requests need"} your answer on the notary desk` },
   settings: { icon: BadgeCheck, testId: "settings-bubble", label: (n: number) => `${String(n)} plan ${n === 1 ? "request" : "requests"} waiting` },
 } as const satisfies Record<string, { icon: LucideIcon; testId: string; label: (n: number) => string }>;
 

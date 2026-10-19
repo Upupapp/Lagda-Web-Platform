@@ -35,6 +35,8 @@ import { contactConnectionsService } from "../services/real/contact-connections.
 import { registerSessionCleanup } from "../services/session-lifecycle";
 import { onNavCountsChanged } from "../services/nav-counts-signal";
 import { HEARTBEAT_MS, onHeartbeat } from "../services/live/heartbeat";
+import { realEnotaryInvitationsService } from "../services/real/enotary-invitations.service";
+import { useAccountFeatures } from "./useAccountFeatures";
 
 export const NAV_COUNT_POLL_MS = HEARTBEAT_MS;
 /** Moving between pages re-reads, but not more often than this. */
@@ -49,9 +51,11 @@ export interface NavCounts {
   readonly documentRequests: number;
   readonly workspace: number;
   readonly settings: number;
+  /** Notary desk: requests waiting for the notary's answer, plus payments waiting for the notary's confirmation. */
+  readonly notaryDesk: number;
 }
 
-const ZERO: NavCounts = { documents: 0, shared: 0, contacts: 0, documentRequests: 0, workspace: 0, settings: 0 };
+const ZERO: NavCounts = { documents: 0, shared: 0, contacts: 0, documentRequests: 0, workspace: 0, settings: 0, notaryDesk: 0 };
 /** The Contacts bubble is two reads; each keeps its last good number on its own. */
 let contactParts = { connections: 0, documentRequests: 0 };
 let counts: NavCounts = ZERO;
@@ -70,8 +74,10 @@ interface Asker {
   managesMembers: boolean;
   /** Approves plan upgrades for LAGDA. */
   approver: boolean;
+  /** This account has a notary desk. */
+  notaryDesk: boolean;
 }
-const NOBODY: Asker = { workspaceId: null, userId: null, managesMembers: false, approver: false };
+const NOBODY: Asker = { workspaceId: null, userId: null, managesMembers: false, approver: false, notaryDesk: false };
 let context: Asker = NOBODY;
 
 function emit() { for (const l of listeners) l(); }
@@ -111,6 +117,16 @@ async function planRequestsWaiting(): Promise<number> {
   return (await plansService.pendingReviews()).requests.length;
 }
 
+/** What waits on the notary: requests to answer and payments to confirm. Nobody without a desk is asked. */
+async function notaryDeskWaiting(): Promise<number> {
+  if (!context.notaryDesk) return 0;
+  const desk = await realEnotaryInvitationsService.desk();
+  if (desk === null) return 0;
+  const answer = desk.requests.filter(r => r.status === "claimed").length;
+  const confirm = desk.requests.filter(r => r.payment?.status === "proof").length;
+  return answer + confirm;
+}
+
 /** Asks the backend now. Resolves once every number that could be read is current. */
 export function refreshNavCounts(): Promise<void> {
   if (!USE_REAL_BACKEND) return Promise.resolve();
@@ -136,6 +152,9 @@ export function refreshNavCounts(): Promise<void> {
       .catch(() => undefined),
     planRequestsWaiting()
       .then(settings => { current(() => { set({ settings }); }); })
+      .catch(() => undefined),
+    notaryDeskWaiting()
+      .then(notaryDesk => { current(() => { set({ notaryDesk }); }); })
       .catch(() => undefined),
   ]).then(() => undefined).finally(() => {
     inflight = null;
@@ -206,9 +225,10 @@ export function useNavCounts(): NavCounts {
   const userId = user?.id ?? null;
   const managesMembers = role === "owner" || role === "administrator";
   const approver = useMyPlan().plan?.approver === true;
+  const notaryDesk = useAccountFeatures().notaryDesk;
   useEffect(() => {
     const changed = context.workspaceId !== workspaceId || context.userId !== userId
-      || context.managesMembers !== managesMembers || context.approver !== approver;
+      || context.managesMembers !== managesMembers || context.approver !== approver || context.notaryDesk !== notaryDesk;
     if (context.userId !== null && context.userId !== userId) {
       generation += 1;
       inflight = null;
@@ -218,7 +238,8 @@ export function useNavCounts(): NavCounts {
     // Another workspace, or a role that no longer decides: its number goes at once.
     if (context.workspaceId !== workspaceId || !managesMembers) set({ workspace: 0 });
     if (!approver) set({ settings: 0 });
-    context = { workspaceId, userId, managesMembers, approver };
+    if (!notaryDesk) set({ notaryDesk: 0 });
+    context = { workspaceId, userId, managesMembers, approver, notaryDesk };
     subscribers += 1;
     if (subscribers === 1) start();
     else if (changed) void refreshNavCounts();
@@ -226,6 +247,6 @@ export function useNavCounts(): NavCounts {
       subscribers -= 1;
       if (subscribers === 0) stop();
     };
-  }, [workspaceId, userId, managesMembers, approver]);
+  }, [workspaceId, userId, managesMembers, approver, notaryDesk]);
   return useSyncExternalStore(subscribe, () => counts, () => counts);
 }

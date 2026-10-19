@@ -46,6 +46,14 @@ vi.mock("../../../services/real/document-sharing.service", () => ({
     listAccessRequests: (ws: string, s: string) => listAccessRequests(ws, s),
   },
 }));
+let hasDesk = false;
+vi.mock("../../../hooks/useAccountFeatures", () => ({
+  useAccountFeatures: () => ({ notaryDesk: hasDesk }),
+}));
+const notaryDesk = vi.fn();
+vi.mock("../../../services/real/enotary-invitations.service", () => ({
+  realEnotaryInvitationsService: { desk: () => notaryDesk() },
+}));
 const connections = vi.fn();
 vi.mock("../../../services/real/contact-connections.service", () => ({
   contactConnectionsService: { list: () => connections() },
@@ -57,12 +65,14 @@ import { announce } from "../../../services/live/topics";
 import { NavCountBubble } from "../InvitationCountBubble";
 import { ChatbotShowcase } from "../../dashboard/ChatbotShowcase";
 
-const ALL = { documents: 3, shared: 2, contacts: 5, documentRequests: 2, workspace: 0, settings: 0 };
+const ALL = { documents: 3, shared: 2, contacts: 5, documentRequests: 2, workspace: 0, settings: 0, notaryDesk: 0 };
 
 beforeEach(() => {
   resetNavCounts();
   role = "member";
   approver = false;
+  hasDesk = false;
+  notaryDesk.mockResolvedValue({ requests: [] });
   documentRequests.mockResolvedValue([{ status: "pending" }, { status: "pending" }]);
   joinRequests.mockResolvedValue([{ state: "pending" }, { state: "pending" }, { state: "pending" }]);
   planReviews.mockResolvedValue({ requests: [{}, {}] });
@@ -142,6 +152,34 @@ describe("side panel counts", () => {
 
     const { container } = render(<NavCountBubble kind="documents" count={result.current.documents} />);
     expect(container.textContent).toBe("");
+  });
+
+  it("counts a notary's desk live: requests to answer and payments to confirm, and nothing without a desk", async () => {
+    notaryDesk.mockResolvedValue({ requests: [
+      { status: "claimed", payment: null }, { status: "accepted", payment: { status: "proof" } }, { status: "accepted", payment: { status: "awaiting" } },
+    ] });
+    const view = renderHook(() => useNavCounts());
+    await waitFor(() => { expect(view.result.current).toEqual(ALL); });
+    expect(notaryDesk).not.toHaveBeenCalled();
+    view.unmount();
+    resetNavCounts();
+
+    hasDesk = true;
+    const { result } = renderHook(() => useNavCounts());
+    await waitFor(() => { expect(result.current.notaryDesk).toBe(2); });
+    // A client's new request arrives while the notary has the page open.
+    notaryDesk.mockResolvedValue({ requests: [
+      { status: "claimed", payment: null }, { status: "claimed", payment: null }, { status: "accepted", payment: { status: "proof" } },
+    ] });
+    announceNavCountsChanged();
+    await waitFor(() => { expect(result.current.notaryDesk).toBe(3); });
+    const { container } = render(<NavCountBubble kind="notaryDesk" count={result.current.notaryDesk} />);
+    expect(screen.getByTestId("notary-desk-bubble").getAttribute("aria-label")).toBe("3 requests need your answer on the notary desk");
+    expect(container.textContent).toBe("3");
+    // All answered: the red bubble is gone.
+    notaryDesk.mockResolvedValue({ requests: [] });
+    announceNavCountsChanged();
+    await waitFor(() => { expect(result.current.notaryDesk).toBe(0); });
   });
 
   it("an action during a read still gets a fresh read after it", async () => {

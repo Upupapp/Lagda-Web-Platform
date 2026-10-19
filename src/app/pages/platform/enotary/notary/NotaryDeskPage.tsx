@@ -25,6 +25,7 @@ import { AlertTriangle, Check, Clock, Inbox, QrCode, X } from "lucide-react";
 import { ActionButton, GF, Notice, T } from "../../../../components/system/design-system";
 import { useConfirm } from "../../../../components/platform/ConfirmDialog";
 import { USE_REAL_BACKEND } from "../../../../services/backend-flag";
+import { announceNavCountsChanged } from "../../../../services/nav-counts-signal";
 import {
   describePaymentError, errorCode, formatPesos, parsePesos, realEnotaryInvitationsService,
   FEE_MAX_PESOS, type DeskPayment, type DeskRequest, type NotaryDesk,
@@ -34,7 +35,7 @@ import { EnotaryLoadError, EnotaryLoading, EnotaryNotOffered } from "../EnotaryS
 import { OnrampNote, Panel, StatusPill, bodyText, fieldStyle, hintStyle, labelStyle, linkButton, useNow } from "../onramp-ui";
 import { ExpiryClock, countdownText, expiryLabel, expiryTone, stampLabel } from "../requests/expiry";
 
-const POLL_MS = 15_000;
+const POLL_MS = 5_000;
 
 type Loaded =
   | { kind: "loading" }
@@ -95,13 +96,22 @@ export function NotaryDeskPage() {
   const [problem, setProblem] = useState<string | null>(null);
   const [said, setSaid] = useState<string | null>(null);
   const alive = useRef(true);
+  /** What waited on the notary at the last read, so the menu bubble hears of a change at once. */
+  const lastWaiting = useRef<number | null>(null);
   const { confirm, confirmDialog } = useConfirm();
   const now = useNow(1000);
 
   const load = useCallback((quiet: boolean) => {
     if (!USE_REAL_BACKEND) return;
     realEnotaryInvitationsService.desk().then(
-      desk => { if (alive.current) setLoaded(desk === null ? { kind: "off" } : { kind: "ready", desk, receivedAt: Date.now() }); },
+      desk => {
+        if (!alive.current) return;
+        setLoaded(desk === null ? { kind: "off" } : { kind: "ready", desk, receivedAt: Date.now() });
+        const waiting = desk === null ? 0
+          : desk.requests.filter(r => r.status === "claimed").length + desk.requests.filter(r => r.payment?.status === "proof").length;
+        if (lastWaiting.current !== null && lastWaiting.current !== waiting) announceNavCountsChanged();
+        lastWaiting.current = waiting;
+      },
       () => { if (alive.current && !quiet) setLoaded({ kind: "error" }); },
     );
   }, []);
@@ -110,7 +120,10 @@ export function NotaryDeskPage() {
     alive.current = true;
     load(false);
     const timer = setInterval(() => { if (!document.hidden) load(true); }, POLL_MS);
-    return () => { alive.current = false; clearInterval(timer); };
+    // Coming back to the tab reads at once, not at the next tick.
+    const shown = () => { if (!document.hidden) load(true); };
+    document.addEventListener("visibilitychange", shown);
+    return () => { alive.current = false; clearInterval(timer); document.removeEventListener("visibilitychange", shown); };
   }, [load]);
 
   if (loaded.kind === "loading") return <EnotaryLoading />;

@@ -85,9 +85,9 @@ describe("the desk", () => {
     expect(screen.getByTestId("desk-empty")).toHaveTextContent(/No requests yet/);
   });
 
-  it("asks again every 15 seconds", async () => {
+  it("asks again every 5 seconds, so a new request appears without a refresh", async () => {
     await open(deskOf());
-    await settle(15_000);
+    await settle(5_000);
     expect(desk).toHaveBeenCalledTimes(2);
   });
 
