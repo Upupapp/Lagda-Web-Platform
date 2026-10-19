@@ -245,7 +245,7 @@ interface ContactContextValue {
   asyncLoadImportPreview: () => Promise<void>;
 
   // Group mutations
-  asyncCreateGroup:           (name: string, description: string, scope: ContactScope) => Promise<void>;
+  asyncCreateGroup:           (name: string, description: string, scope: ContactScope, contactIds?: ContactId[]) => Promise<void>;
   asyncArchiveGroup:          (id: ContactGroupId) => Promise<void>;
   asyncRestoreGroup:          (id: ContactGroupId) => Promise<void>;
   asyncAddContactsToGroup:    (groupId: ContactGroupId, contactIds: ContactId[]) => Promise<void>;
@@ -480,13 +480,20 @@ export function ContactProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const asyncCreateGroup = useCallback(async (name: string, description: string, scope: ContactScope) => {
+  const asyncCreateGroup = useCallback(async (name: string, description: string, scope: ContactScope, contactIds: ContactId[] = []) => {
     dispatch({ type: "PENDING_START", payload: "create-group" });
     try {
-      await sourceCreateGroup(workspaceId, name, description, scope);
+      const created = await sourceCreateGroup(workspaceId, name, description, scope);
+      // The first members go in with the group, so a new group is not made empty and filled by hand.
+      let membersFailed = false;
+      if (contactIds.length > 0) {
+        try { await sourceAddContactsToGroup(workspaceId, created.id, contactIds); } catch { membersFailed = true; }
+      }
       const groups = await sourceListGroups(workspaceId);
       dispatch({ type: "GROUPS_SUCCESS", payload: groups });
-      dispatch({ type: "PENDING_SUCCESS", payload: { message: isReal ? "Group created." : "Group created in this frontend session." } });
+      dispatch({ type: "PENDING_SUCCESS", payload: { message: membersFailed
+        ? "Group created, but some contacts could not be added. Open the group to add them."
+        : isReal ? "Group created." : "Group created in this frontend session." } });
     } catch {
       dispatch({ type: "PENDING_ERROR", payload: "Could not create group." });
     }
