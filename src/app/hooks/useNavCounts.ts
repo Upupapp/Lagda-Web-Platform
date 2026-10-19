@@ -117,14 +117,15 @@ async function planRequestsWaiting(): Promise<number> {
   return (await plansService.pendingReviews()).requests.length;
 }
 
-/** What waits on the notary: requests to answer and payments to confirm. Nobody without a desk is asked. */
+/** What waits on the notary: requests to take, requests to answer and payments to confirm. Nobody without a desk is asked. */
 async function notaryDeskWaiting(): Promise<number> {
   if (!context.notaryDesk) return 0;
   const desk = await realEnotaryInvitationsService.desk();
   if (desk === null) return 0;
+  const fresh = (desk.incoming ?? []).length;
   const answer = desk.requests.filter(r => r.status === "claimed").length;
   const confirm = desk.requests.filter(r => r.payment?.status === "proof").length;
-  return answer + confirm;
+  return fresh + answer + confirm;
 }
 
 /** Asks the backend now. Resolves once every number that could be read is current. */

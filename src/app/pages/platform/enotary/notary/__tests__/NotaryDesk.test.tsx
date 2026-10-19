@@ -11,13 +11,14 @@ vi.mock("../../../../../services/backend-flag", () => ({ USE_REAL_BACKEND: true,
 const desk = vi.fn();
 const accept = vi.fn();
 const decline = vi.fn();
+const take = vi.fn();
 const confirmPayment = vi.fn();
 const paymentNotReceived = vi.fn();
 vi.mock("../../../../../services/real/enotary-invitations.service", async (original) => ({
   ...(await original<typeof import("../../../../../services/real/enotary-invitations.service")>()),
   realEnotaryInvitationsService: {
     desk: (...a: unknown[]) => desk(...a) as unknown, accept: (...a: unknown[]) => accept(...a) as unknown,
-    decline: (...a: unknown[]) => decline(...a) as unknown,
+    decline: (...a: unknown[]) => decline(...a) as unknown, take: (...a: unknown[]) => take(...a) as unknown,
     confirmPayment: (...a: unknown[]) => confirmPayment(...a) as unknown,
     paymentNotReceived: (...a: unknown[]) => paymentNotReceived(...a) as unknown,
   },
@@ -25,7 +26,7 @@ vi.mock("../../../../../services/real/enotary-invitations.service", async (origi
 
 import { NotaryDeskPage, bannerFor } from "../NotaryDeskPage";
 import { ApiError } from "../../../../../services/api-client";
-import type { DeskPayment, DeskRequest, NotaryDesk } from "../../../../../services/real/enotary-invitations.service";
+import type { DeskIncoming, DeskPayment, DeskRequest, NotaryDesk } from "../../../../../services/real/enotary-invitations.service";
 
 const request = (over: Partial<DeskRequest> = {}): DeskRequest => ({
   id: "eni_1", status: "claimed", client: { name: "Ben Lim", identityVerified: true },
@@ -52,6 +53,55 @@ beforeEach(() => {
   vi.setSystemTime(new Date("2026-10-17T01:00:00.000Z"));
 });
 afterEach(() => { vi.useRealTimers(); });
+
+const incomingOf = (over: Partial<DeskIncoming> = {}): DeskIncoming => ({
+  id: "eni_new", client: { name: "Rosa Villanueva", identityVerified: true },
+  receivedAt: "2026-10-17T00:55:00.000Z", expiresAt: "2026-10-20T00:55:00.000Z", secondsLeft: 3 * 24 * 3600 - 300, ...over,
+});
+
+describe("requests sent to the notary's own listing", () => {
+  it("are listed as new, with the client's name, a count and the time left, before the notary has opened any link", async () => {
+    await open(deskOf({ requests: [], incoming: [incomingOf()] }));
+    expect(screen.getByTestId("tally-new")).toHaveTextContent("1");
+    const rows = screen.getAllByTestId("desk-new-row");
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toHaveTextContent("Rosa Villanueva");
+    expect(rows[0]).toHaveTextContent("ID verified");
+    expect(screen.getByTestId("desk-new-countdown")).toHaveTextContent(/left/);
+    // With something to take, the desk does not also say there is nothing.
+    expect(screen.queryByTestId("desk-empty")).toBeNull();
+  });
+
+  it("are taken with one press, then the desk is read again", async () => {
+    take.mockResolvedValue({});
+    await open(deskOf({ requests: [], incoming: [incomingOf()] }));
+    desk.mockResolvedValue(deskOf({ incoming: [], requests: [request({ id: "eni_new", client: { name: "Rosa Villanueva", identityVerified: true } })] }));
+    press(screen.getByRole("button", { name: "Take this request" }));
+    await settle();
+    expect(take).toHaveBeenCalledWith("eni_new");
+    expect(screen.getByRole("status")).toHaveTextContent("You took the request from Rosa Villanueva");
+    expect(screen.queryByTestId("desk-new")).toBeNull();
+    expect(screen.getAllByTestId("desk-row")).toHaveLength(1);
+  });
+
+  it("say plainly when the request is gone or the identity does not match", async () => {
+    take.mockRejectedValueOnce(new ApiError(404, { code: "enotary_invitation_unavailable", message: "gone" }, "gone"));
+    await open(deskOf({ requests: [], incoming: [incomingOf()] }));
+    press(screen.getByRole("button", { name: "Take this request" }));
+    await settle();
+    expect(screen.getByText(/no longer open/)).toBeInTheDocument();
+    take.mockRejectedValueOnce(new ApiError(409, { code: "notary_name_mismatch", message: "name" }, "name"));
+    press(screen.getByRole("button", { name: "Take this request" }));
+    await settle();
+    expect(screen.getByText(/name on your verified ID does not match/)).toBeInTheDocument();
+  });
+
+  it("work against an older server that sends no list", async () => {
+    await open(deskOf());
+    expect(screen.queryByTestId("desk-new")).toBeNull();
+    expect(screen.getByTestId("tally-new")).toHaveTextContent("0");
+  });
+});
 
 describe("the desk", () => {
   it("counts waiting, accepted and closed requests and lists each with the client's name", async () => {

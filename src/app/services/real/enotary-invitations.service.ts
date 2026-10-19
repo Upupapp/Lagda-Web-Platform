@@ -124,7 +124,18 @@ export interface DeskRequest {
   payment?: DeskPayment | null;
 }
 
+/** A request sent to this notary's own listing that they have not taken yet. */
+export interface DeskIncoming {
+  id: string;
+  client: { name: string; identityVerified: boolean };
+  receivedAt: string;
+  expiresAt: string;
+  secondsLeft: number;
+}
+
 export interface NotaryDesk {
+  /** Requests addressed to this notary's listing, waiting to be taken. Absent from an older server. */
+  incoming?: DeskIncoming[];
   applicationStatus: NotaryApplicationStatus;
   canAccept: boolean;
   /** The payee a client would pay; null while the notary has saved no QR. */
@@ -251,6 +262,11 @@ class RealEnotaryInvitationsService {
    */
   async claim(token: string): Promise<ClaimResult> {
     return apiRequest<ClaimResult>("/me/enotary/invitations/claim", { method: "POST", body: { token } });
+  }
+
+  /** Takes a request addressed to this notary's listing, without the link. Same refusals as `claim`. */
+  async take(invitationId: string): Promise<ClaimResult> {
+    return apiRequest<ClaimResult>(`/me/notary/requests/${encodeURIComponent(invitationId)}/take`, { method: "POST" });
   }
 
   /** The notary's desk. `null`: the feature is not offered. */

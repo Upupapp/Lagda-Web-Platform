@@ -28,7 +28,7 @@ import { USE_REAL_BACKEND } from "../../../../services/backend-flag";
 import { announceNavCountsChanged } from "../../../../services/nav-counts-signal";
 import {
   describePaymentError, errorCode, formatPesos, parsePesos, realEnotaryInvitationsService,
-  FEE_MAX_PESOS, type DeskPayment, type DeskRequest, type NotaryDesk,
+  FEE_MAX_PESOS, type DeskIncoming, type DeskPayment, type DeskRequest, type NotaryDesk,
 } from "../../../../services/real/enotary-invitations.service";
 import { E, EnotaryFrame } from "../EnotaryChrome";
 import { EnotaryLoadError, EnotaryLoading, EnotaryNotOffered } from "../EnotaryStates";
@@ -108,7 +108,8 @@ export function NotaryDeskPage() {
         if (!alive.current) return;
         setLoaded(desk === null ? { kind: "off" } : { kind: "ready", desk, receivedAt: Date.now() });
         const waiting = desk === null ? 0
-          : desk.requests.filter(r => r.status === "claimed").length + desk.requests.filter(r => r.payment?.status === "proof").length;
+          : (desk.incoming ?? []).length + desk.requests.filter(r => r.status === "claimed").length
+            + desk.requests.filter(r => r.payment?.status === "proof").length;
         if (lastWaiting.current !== null && lastWaiting.current !== waiting) announceNavCountsChanged();
         lastWaiting.current = waiting;
       },
@@ -133,6 +134,7 @@ export function NotaryDeskPage() {
   const { desk, receivedAt } = loaded;
   const banner = bannerFor(desk);
   const hasQr = desk.paymentProfile !== null && desk.paymentProfile !== undefined;
+  const incoming = desk.incoming ?? [];
   const waiting = desk.requests.filter(r => r.status === "claimed");
   const accepted = desk.requests.filter(r => r.status === "accepted");
   const toConfirm = desk.requests.filter(r => r.payment?.status === "proof");
@@ -142,6 +144,14 @@ export function NotaryDeskPage() {
     const code = errorCode(error);
     if (code === "enotary_invitation_unavailable") return "That request is no longer open. The client may have cancelled it, or its time ran out.";
     return describePaymentError(error);
+  };
+
+  const describeTakeError = (error: unknown) => {
+    const code = errorCode(error);
+    if (code === "enotary_invitation_unavailable") return "That request is no longer open. The client may have cancelled it, or its time ran out.";
+    if (code === "identity_required") return "Verify your identity first, then take the request.";
+    if (code === "notary_name_mismatch") return "The name on your verified ID does not match this request.";
+    return refused(error);
   };
 
   const finish = () => { if (alive.current) { setWorking(null); load(true); } };
@@ -174,6 +184,20 @@ export function NotaryDeskPage() {
       }
     } catch (error) {
       if (alive.current) setProblem(refused(error));
+    } finally {
+      finish();
+    }
+  };
+
+  const take = async (item: DeskIncoming) => {
+    setWorking(item.id);
+    setProblem(null);
+    setSaid(null);
+    try {
+      await realEnotaryInvitationsService.take(item.id);
+      if (alive.current) setSaid(`You took the request from ${item.client.name}. You can accept or decline it now.`);
+    } catch (error) {
+      if (alive.current) setProblem(describeTakeError(error));
     } finally {
       finish();
     }
@@ -249,6 +273,7 @@ export function NotaryDeskPage() {
         </div>
       )}
       <div style={{ display: "flex", gap: 10, flexWrap: "wrap", margin: "0 0 18px" }}>
+        {tally("New", incoming.length, "tally-new")}
         {tally("Waiting", waiting.length, "tally-waiting")}
         {tally("Accepted", accepted.length, "tally-accepted")}
         {tally("To confirm", toConfirm.length, "tally-confirm")}
@@ -257,11 +282,43 @@ export function NotaryDeskPage() {
       {said !== null && <div role="status" style={{ ...GF, margin: "0 0 12px", fontSize: 14, fontWeight: 600, color: E.ok }}>{said}</div>}
       {problem !== null && <Notice icon={AlertTriangle} tone="danger">{problem}</Notice>}
 
-      {desk.requests.length === 0 ? (
+      {incoming.length > 0 && (
+        <section aria-labelledby="desk-new-heading" data-testid="desk-new" style={{ margin: "0 0 18px" }}>
+          <h2 id="desk-new-heading" style={{ ...GF, fontSize: 17, color: E.ink, margin: "0 0 4px" }}>New requests for you</h2>
+          <p style={{ ...bodyText, margin: "0 0 10px" }}>Clients sent these to your listing. Take one to see it among your requests, then accept or decline it.</p>
+          <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "grid", gap: 10 }}>
+            {incoming.map(item => {
+              const clock = new ExpiryClock();
+              clock.sync(item.secondsLeft, receivedAt);
+              const msLeft = clock.msLeft(now);
+              const busy = working === item.id;
+              return (
+                <li key={item.id} data-testid="desk-new-row" style={{ ...GF, padding: "14px 16px", borderRadius: 12, border: `1px solid ${E.maroonLine}`, background: "#FFFFFF" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+                    <strong style={{ fontSize: 16, color: E.ink, flex: "1 1 180px", minWidth: 0, overflowWrap: "anywhere" }}>{item.client.name}</strong>
+                    {item.client.identityVerified && <span style={{ fontSize: 12.5, color: E.ok, fontWeight: 700 }}>ID verified</span>}
+                  </div>
+                  <p style={{ margin: "6px 0 0", fontSize: 13, color: E.quiet }}>Sent {stampLabel(item.receivedAt)}</p>
+                  {msLeft > 0 && (
+                    <p data-testid="desk-new-countdown" style={{ margin: "6px 0 0", fontSize: 13.5, fontWeight: 700, color: E.skyDeep, display: "flex", alignItems: "center", gap: 6 }}>
+                      <Clock size={14} aria-hidden /> {countdownText(msLeft)} left · until {expiryLabel(item.expiresAt)}
+                    </p>
+                  )}
+                  <div style={{ marginTop: 10 }}>
+                    <ActionButton disabled={busy || msLeft <= 0} onClick={() => { void take(item); }}>{busy ? "Taking…" : "Take this request"}</ActionButton>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      )}
+
+      {desk.requests.length === 0 && incoming.length > 0 ? null : desk.requests.length === 0 ? (
         <Panel testId="desk-empty">
           <p style={{ ...bodyText, margin: 0, display: "flex", gap: 10 }}>
             <Inbox size={20} aria-hidden style={{ color: E.maroon, flex: "0 0 auto", marginTop: 2 }} />
-            <span>No requests yet. When a client sends you a link or a QR card and you open it, the request appears here.</span>
+            <span>No requests yet. When a client sends you a request, it appears here. A request sent as a link or a QR card appears once you open it.</span>
           </p>
         </Panel>
       ) : (

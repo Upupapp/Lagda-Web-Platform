@@ -155,7 +155,7 @@ describe("side panel counts", () => {
   });
 
   it("counts a notary's desk live: requests to answer and payments to confirm, and nothing without a desk", async () => {
-    notaryDesk.mockResolvedValue({ requests: [
+    notaryDesk.mockResolvedValue({ incoming: [{ id: "n1" }], requests: [
       { status: "claimed", payment: null }, { status: "accepted", payment: { status: "proof" } }, { status: "accepted", payment: { status: "awaiting" } },
     ] });
     const view = renderHook(() => useNavCounts());
@@ -166,16 +166,16 @@ describe("side panel counts", () => {
 
     hasDesk = true;
     const { result } = renderHook(() => useNavCounts());
-    await waitFor(() => { expect(result.current.notaryDesk).toBe(2); });
+    await waitFor(() => { expect(result.current.notaryDesk).toBe(3); });
     // A client's new request arrives while the notary has the page open.
-    notaryDesk.mockResolvedValue({ requests: [
+    notaryDesk.mockResolvedValue({ incoming: [{ id: "n1" }, { id: "n2" }], requests: [
       { status: "claimed", payment: null }, { status: "claimed", payment: null }, { status: "accepted", payment: { status: "proof" } },
     ] });
     announceNavCountsChanged();
-    await waitFor(() => { expect(result.current.notaryDesk).toBe(3); });
+    await waitFor(() => { expect(result.current.notaryDesk).toBe(5); });
     const { container } = render(<NavCountBubble kind="notaryDesk" count={result.current.notaryDesk} />);
-    expect(screen.getByTestId("notary-desk-bubble").getAttribute("aria-label")).toBe("3 requests need your answer on the notary desk");
-    expect(container.textContent).toBe("3");
+    expect(screen.getByTestId("notary-desk-bubble").getAttribute("aria-label")).toBe("5 requests need your answer on the notary desk");
+    expect(container.textContent).toBe("5");
     // All answered: the red bubble is gone.
     notaryDesk.mockResolvedValue({ requests: [] });
     announceNavCountsChanged();
