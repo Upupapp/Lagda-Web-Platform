@@ -1068,6 +1068,11 @@ const RoomPage = lazy(() =>
     default: m.RoomPage,
   })),
 );
+const SealPlacePage = lazy(() =>
+  import("./app/pages/platform/enotary/room/SealPlacePage").then((m) => ({
+    default: m.SealPlacePage,
+  })),
+);
 const WordingDraftPage = lazy(() =>
   import("./app/pages/public/enotary/WordingDraftPage").then((m) => ({
     default: m.WordingDraftPage,
@@ -2926,6 +2931,7 @@ export const router = createBrowserRouter([
       { path: "register", element: <Suspense fallback={null}><NotaryRegisterPage /></Suspense> },
       { path: "payment", element: <Suspense fallback={null}><NotaryPaymentPage /></Suspense> },
       { path: "room/:invitationId", element: <Suspense fallback={null}><RoomPage /></Suspense> },
+      { path: "room/:invitationId/place", element: <Suspense fallback={null}><SealPlacePage /></Suspense> },
     ],
   },
 

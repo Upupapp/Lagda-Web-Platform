@@ -25,6 +25,7 @@ vi.mock("../../../../../services/real/enotary-invitations.service", async (origi
 import { ClientRequestPage, POLL_MS } from "../ClientRequestPage";
 import { ClientRequestsPage } from "../ClientRequestsPage";
 import { ApiError } from "../../../../../services/api-client";
+import * as sessionsService from "../../../../../services/real/enotary-sessions.service";
 import type { Invitation } from "../../../../../services/real/enotary-invitations.service";
 import { countdownText, expiryLabel, expiryTone, ExpiryClock } from "../expiry";
 
@@ -118,7 +119,13 @@ describe("one request, waiting for the notary", () => {
     expect(card.tagName).toBe("IMG");
     expect(decodeURIComponent(card.getAttribute("src") ?? "")).toContain("Scan only if you are Atty.");
     expect(screen.getByRole("button", { name: "Save the card" })).toBeInTheDocument();
+    // The trail is kept out of the way until its button at the bottom right is pressed, and then it is a panel.
+    expect(screen.queryByTestId("audit-trail")).toBeNull();
+    fireEvent.click(screen.getByTestId("audit-toggle"));
+    expect(screen.getByRole("dialog", { name: "Audit trail" })).toBeInTheDocument();
     expect(screen.getByTestId("audit-trail")).toHaveTextContent("You asked Ana Maria Cruz");
+    fireEvent.click(screen.getByTestId("audit-close"));
+    expect(screen.queryByTestId("audit-trail")).toBeNull();
     expect(screen.getByTestId("onramp-note")).toHaveTextContent(/not currently available.*Supreme Court accreditation/);
     expect(screen.getByTestId("party-status")).toHaveTextContent("Waiting for the notary");
   });
@@ -383,5 +390,24 @@ describe("the list", () => {
     renderList();
     await settle();
     expect(screen.getByText("Not available on this account yet.")).toBeInTheDocument();
+  });
+
+  it("offers the invoice of a request that has a fee, with the notary's amount, and downloads it from the server", async () => {
+    const payment = { status: "confirmed" as const, amountCentavos: 150_000, payee: { name: "Ana Cruz", city: null }, qrPayload: null, reference: "GC1", attemptsLeft: 0, requestedAt: new Date(T0).toISOString(), proofAt: null, decidedAt: null, note: null };
+    list.mockResolvedValue([
+      invitation({ id: "eni_2", status: "accepted", link: null, reference: "EN-2026-000002", payment }),
+      invitation({ id: "eni_1", reference: "EN-2026-000001" }),
+    ]);
+    const invoicePdf = vi.spyOn(sessionsService.realEnotarySessionsService, "invoicePdf").mockResolvedValue(new Blob(["%PDF-"]));
+    const save = vi.spyOn(sessionsService, "saveBlobAs").mockImplementation(() => undefined);
+    renderList();
+    await settle();
+    const buttons = screen.getAllByTestId("invoice-download");
+    expect(buttons).toHaveLength(1);
+    expect(buttons[0]).toHaveTextContent("PHP 1,500.00");
+    press(buttons[0]!);
+    await settle();
+    expect(invoicePdf).toHaveBeenCalledWith("eni_2");
+    expect(save).toHaveBeenCalledWith(expect.any(Blob), "EN-2026-000002-invoice.pdf");
   });
 });

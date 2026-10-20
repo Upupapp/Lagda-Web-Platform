@@ -75,6 +75,19 @@ describe("paying the notary", () => {
     expect(sendPaymentProof).toHaveBeenCalledWith("eni_1", "GC-1234 5678");
   });
 
+  it("opens as a panel in the middle of the page, closes, and opens again from the summary", async () => {
+    const user = userEvent.setup();
+    show();
+    expect(screen.getByRole("dialog", { name: /Pay /u })).toBeInTheDocument();
+    expect(screen.getByTestId("payment-due-amount")).toHaveTextContent("1,500.00");
+    await user.click(screen.getByTestId("payment-close"));
+    expect(screen.queryByRole("dialog")).toBeNull();
+    await user.click(screen.getByRole("button", { name: "Open the payment panel" }));
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+    await user.keyboard("{Escape}");
+    expect(screen.queryByRole("dialog")).toBeNull();
+  });
+
   it("says plainly when the server will not take the reference, and keeps what was typed", async () => {
     const user = userEvent.setup();
     show();

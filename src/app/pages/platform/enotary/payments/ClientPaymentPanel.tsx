@@ -6,13 +6,14 @@
 // only keeps the reference the client gives and waits for the notary to confirm
 // from their own app.
 
-import { useState } from "react";
-import { Check, Hourglass, Send, ShieldAlert } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Check, Hourglass, QrCode, Send, ShieldAlert, X } from "lucide-react";
 import { ActionButton, GF, Notice } from "../../../../components/system/design-system";
 import {
   describePaymentError, formatPesos, realEnotaryInvitationsService, type Invitation, type InvitationPayment,
 } from "../../../../services/real/enotary-invitations.service";
 import { E } from "../EnotaryChrome";
+import { Z } from "../../../../utils/z-index";
 import { Panel, PanelTitle, TextField, bodyText } from "../onramp-ui";
 import { stampLabel } from "../requests/expiry";
 import { PaymentQr } from "./PaymentQr";
@@ -38,7 +39,18 @@ export function ClientPaymentPanel({
   const [reference, setReference] = useState("");
   const [busy, setBusy] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
+  // The payment opens as a panel in the middle of the page: the notary's QR, the amount, and where to say it was paid.
+  const [open, setOpen] = useState(true);
+  const dialog = useRef<HTMLDivElement>(null);
   const notary = invitation.notary.name;
+  const paying = payment.status === "awaiting" || payment.status === "not_received";
+  useEffect(() => {
+    if (!open || !paying) return;
+    dialog.current?.focus();
+    const key = (event: KeyboardEvent) => { if (event.key === "Escape") setOpen(false); };
+    document.addEventListener("keydown", key);
+    return () => { document.removeEventListener("keydown", key); };
+  }, [open, paying]);
   const amount = `PHP ${formatPesos(payment.amountCentavos)}`;
 
   if (payment.status === "waived") {
@@ -97,7 +109,7 @@ export function ClientPaymentPanel({
     }
   };
 
-  return (
+  const form = (
     <Panel tone="sky" testId="payment-panel">
       <PanelTitle>Pay {notary}</PanelTitle>
       {payment.status === "not_received" && (
@@ -138,5 +150,29 @@ export function ClientPaymentPanel({
         You pay {notary} directly. LAGDA does not hold or move the money, and cannot refund it: any refund is between you and the notary.
       </p>
     </Panel>
+  );
+
+  return (
+    <>
+      <Panel tone="sky" testId="payment-due">
+        <PanelTitle>Pay {notary}</PanelTitle>
+        <p data-testid="payment-due-amount" style={{ ...GF, margin: "0 0 8px", fontSize: "clamp(24px, 6vw, 30px)", fontWeight: 800, color: E.navy }}>{amount}</p>
+        <p style={{ ...bodyText, margin: "0 0 12px" }}>Pay {notary} with the QR, then say here that you paid. {notary} is told as soon as you send it.</p>
+        <ActionButton icon={QrCode} onClick={() => { setOpen(true); }}>Open the payment panel</ActionButton>
+      </Panel>
+      {open && (
+        <div data-testid="payment-overlay" onMouseDown={event => { if (event.target === event.currentTarget) setOpen(false); }}
+          style={{ position: "fixed", inset: 0, zIndex: Z.modal, display: "grid", placeItems: "center", padding: "clamp(10px, 3vw, 24px)", background: "rgba(10,26,43,0.55)" }}>
+          <div ref={dialog} role="dialog" aria-modal="true" aria-label={`Pay ${notary}`} tabIndex={-1}
+            style={{ position: "relative", width: "min(560px, 100%)", maxHeight: "calc(100dvh - 32px)", overflowY: "auto", borderRadius: 16, background: "#FFFFFF", boxShadow: "0 30px 80px -20px rgba(10,26,43,0.6)", outline: "none" }}>
+            <button type="button" onClick={() => { setOpen(false); }} aria-label="Close the payment panel" data-testid="payment-close"
+              style={{ position: "absolute", right: 10, top: 10, zIndex: 1, width: 40, height: 40, display: "grid", placeItems: "center", borderRadius: 10, border: `1px solid ${E.line}`, background: "#FFFFFF", color: E.navy, cursor: "pointer" }}>
+              <X size={18} aria-hidden />
+            </button>
+            {form}
+          </div>
+        </div>
+      )}
+    </>
   );
 }

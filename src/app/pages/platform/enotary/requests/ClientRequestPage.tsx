@@ -295,7 +295,7 @@ export function ClientRequestPage() {
       steps={CLIENT_STEPS} current={clientStepOf(invitation)} back={{ to: "/app/enotary/requests", label: "All requests" }}
       party={<PartyCard
         name={`Atty. ${invitation.notary.name}`} role={`Notary Public${invitation.notary.firm !== "" ? ` \u00B7 ${invitation.notary.firm}` : ""}`}
-        tone="attorney" status={statusOf(invitation)} rows={rows} auditCount={trail.length} />}
+        tone="attorney" status={statusOf(invitation)} rows={rows} auditCount={trail.length} invitationId={invitation.id} />}
       trail={<RequestTrail invitationId={invitation.id} tone="client" fallback={trail} refreshKey={invitation.status} />}
     >
       {confirmDialog}

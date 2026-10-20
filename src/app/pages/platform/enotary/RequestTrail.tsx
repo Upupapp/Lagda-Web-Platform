@@ -4,7 +4,7 @@
 // entries it can work out itself (`fallback`).
 
 import { useCallback, useEffect, useState } from "react";
-import { realEnotarySessionsService, type AuditTrail } from "../../../services/real/enotary-sessions.service";
+import { realEnotarySessionsService, saveBlobAs, type AuditTrail } from "../../../services/real/enotary-sessions.service";
 import { AuditTrailPanel, type TrailEntry } from "./CaseFrame";
 import { stampLabel } from "./requests/expiry";
 
@@ -37,14 +37,7 @@ export function RequestTrail({ invitationId, tone, fallback = [], refreshKey, tr
   const download = useCallback(() => {
     setDownloading(true);
     realEnotarySessionsService.auditPdf(invitationId).then(blob => {
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = `${found?.reference ?? "eNotary"}-audit-trail.pdf`;
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      setTimeout(() => { URL.revokeObjectURL(url); }, 1000);
+      saveBlobAs(blob, `${found?.reference ?? "eNotary"}-audit-trail.pdf`);
     }).catch(() => undefined).finally(() => { setDownloading(false); });
   }, [invitationId, found?.reference]);
 

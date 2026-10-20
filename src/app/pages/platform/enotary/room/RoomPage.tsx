@@ -26,7 +26,8 @@ import { CompletedDocumentPicker, PickProblem, completedDocumentFile, type Compl
 import { SharedDocumentPicker, sharedDocumentAsFile, type SharedChoice } from "./SharedDocumentPicker";
 import { Chat, PdfView } from "./room-bits";
 import { CallCard } from "./CallCard";
-import { SealPlacer, type Placements } from "./SealPlacer";
+import type { Placements } from "./SealPlacer";
+import { readPlacements } from "./seal-placements";
 import { ClientFlow, NotaryFlow } from "./RoomFlow";
 import { NotarizedPage } from "./NotarizedPage";
 import { RequestTrail, useRequestTrail } from "../RequestTrail";
@@ -353,7 +354,7 @@ export function NotarizePanel({
   const description = stated?.note ?? "";
   const [place, setPlace] = useState("");
   const [remarks, setRemarks] = useState("");
-  const [placements, setPlacements] = useState<Placements>({});
+  const [placements] = useState<Placements>(() => readPlacements(session.id));
   const [hasSignature, setHasSignature] = useState(false);
   const [checks, setChecks] = useState<Record<string, boolean>>({});
   useEffect(() => {
@@ -371,7 +372,13 @@ export function NotarizePanel({
       <TextField label="Place of notarization" value={place} onChange={setPlace} maxLength={400} required hint="Where you are as the notary, for example the city and province of your commission." />
       <fieldset style={{ border: 0, padding: 0, margin: "0 0 14px" }}>
         <legend style={labelStyle}>Your seal and signature</legend>
-        <SealPlacer sessionId={session.id} hasSignature={hasSignature} value={placements} onChange={setPlacements} notaryName={session.notaryName} />
+        <p data-testid="placement-summary" style={{ ...bodyText, margin: "0 0 10px" }}>
+          Seal: {placements.seal === undefined ? "the usual place, lower right of the last page" : `page ${String(placements.seal.page)}`}.
+          {hasSignature ? ` Signature: ${placements.signature === undefined ? "the usual place" : `page ${String(placements.signature.page)}`}.` : " No signature picture is saved, so none is drawn."}
+        </p>
+        <Link to={`/app/enotary/room/${encodeURIComponent(session.invitationId)}/place`} data-testid="open-placer" style={{ ...linkButton("secondary"), display: "inline-flex", alignItems: "center", gap: 8 }}>
+          <Stamp size={16} aria-hidden /> Place my seal and signature
+        </Link>
       </fieldset>
       <TextField label="Remarks for your register (optional)" value={remarks} onChange={setRemarks} maxLength={300} hint="For example: the document was read aloud to the client. They are kept in your notarial register." />
       <fieldset style={{ border: 0, padding: 0, margin: "0 0 14px" }}>

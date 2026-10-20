@@ -84,7 +84,7 @@ export function NotaryRequestView({ focus, request, incoming, banner, said, prob
     <EnotaryCaseFrame
       tone="attorney" eyebrow="eNotary request" title={heading.title} lead={heading.lead} steps={NOTARY_STEPS} current={stepOf(request)}
       back={{ to: "/app/enotary/desk", label: "All requests" }}
-      party={client === null ? undefined : <PartyCard name={client.name} role="Client" tone="client" status={status} rows={rows} auditCount={null} />}
+      party={client === null ? undefined : <PartyCard name={client.name} role="Client" tone="client" status={status} rows={rows} auditCount={null} invitationId={request?.id} />}
       trail={request === null ? undefined : <RequestTrail invitationId={request.id} tone="attorney" refreshKey={request.status} />}
     >
       {confirmDialog}

@@ -4,12 +4,13 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router";
-import { ChevronRight, Clock, Search } from "lucide-react";
+import { ChevronRight, Clock, FileDown, Search } from "lucide-react";
 import { T, TAP } from "../../../../components/system/design-system";
 import { USE_REAL_BACKEND } from "../../../../services/backend-flag";
 import {
   invitationIsOpen, realEnotaryInvitationsService, type Invitation,
 } from "../../../../services/real/enotary-invitations.service";
+import { realEnotarySessionsService, saveBlobAs } from "../../../../services/real/enotary-sessions.service";
 import { ENOTARY_DIRECTORY_PATH } from "../../../../config/enotary-directory";
 import { E } from "../EnotaryChrome";
 import { EnotaryCaseFrame } from "../CaseFrame";
@@ -25,6 +26,9 @@ const ROW_STYLES = `
     text-decoration: none; color: ${T.ink}; box-sizing: border-box; }
   .req-row:hover { border-color: ${E.skyLine}; background: #FBFDFF; }
   .req-row:focus-visible { outline: 3px solid rgba(10,132,214,0.35); outline-offset: 2px; }
+  .req-invoice { margin: 6px 0 0 14px; display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 0 12px; border-radius: 8px; border: 1px solid ${E.skyLine}; background: #FFFFFF; color: ${E.skyDeep}; font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
+  .req-invoice:hover { background: ${E.skyWash}; }
+  .req-invoice:disabled { opacity: 0.6; cursor: default; }
   .req-info { grid-column: 1; grid-row: 1; min-width: 0; display: block; }
   .req-name { display: block; font-size: 16px; line-height: 1.3; overflow-wrap: break-word; }
   .req-meta { display: flex; flex-wrap: wrap; gap: 2px 8px; margin-top: 3px; color: ${E.quiet}; font-size: 13px; line-height: 1.4; }
@@ -63,6 +67,14 @@ const matches = (item: Invitation, query: string): boolean => {
 export function ClientRequestsPage() {
   const [loaded, setLoaded] = useState<Loaded>(USE_REAL_BACKEND ? { kind: "loading" } : { kind: "off" });
   const [filter, setFilter] = useState<Filter>("all");
+  const [invoicing, setInvoicing] = useState<string | null>(null);
+  const downloadInvoice = (item: Invitation) => {
+    setInvoicing(item.id);
+    realEnotarySessionsService.invoicePdf(item.id)
+      .then(blob => { saveBlobAs(blob, `${item.reference ?? "eNotary"}-invoice.pdf`); })
+      .catch(() => undefined)
+      .finally(() => { setInvoicing(null); });
+  };
   const [query, setQuery] = useState("");
   const alive = useRef(true);
   const now = useNow(1000);
@@ -180,6 +192,12 @@ export function ClientRequestsPage() {
                       </span>
                       <ChevronRight size={18} aria-hidden className="req-chevron" />
                     </Link>
+                    {item.payment !== null && item.payment !== undefined && item.payment.amountCentavos > 0 && (
+                      <button type="button" data-testid="invoice-download" className="req-invoice" disabled={invoicing === item.id} onClick={() => { downloadInvoice(item); }}
+                        aria-label={`Download the invoice of request ${item.reference ?? ""}`}>
+                        <FileDown size={15} aria-hidden /> {invoicing === item.id ? "Preparing…" : `Invoice · PHP ${(item.payment.amountCentavos / 100).toLocaleString("en-PH", { minimumFractionDigits: 2 })}`}
+                      </button>
+                    )}
                   </li>
                 );
               })}

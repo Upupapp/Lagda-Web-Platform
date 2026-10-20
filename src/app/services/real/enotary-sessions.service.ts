@@ -124,6 +124,10 @@ export interface CertifiedCopy {
 /** A point on a page of the document: a 1-based page, and fractions of its width and height from the top left. */
 export interface PagePoint { page: number; x: number; y: number }
 
+export interface Counterpart {
+  role: "client" | "notary"; brandColor: string | null; hasAvatar: boolean; avatarVersion: string | null;
+}
+
 export interface NotarizeInput {
   actType: ActType;
   description: string;
@@ -227,6 +231,24 @@ class RealEnotarySessionsService {
   /** Everything that happened to the request, from both sides. */
   async auditTrail(invitationId: string): Promise<AuditTrail> {
     return apiRequest<AuditTrail>(`/me/enotary/requests/${id(invitationId)}/audit`);
+  }
+
+  /** The other party's card: their role, the colour of their banner, and whether they have a profile photo. */
+  async counterpart(invitationId: string): Promise<Counterpart> {
+    return apiRequest<Counterpart>(`/me/enotary/requests/${id(invitationId)}/counterpart`);
+  }
+
+  /** The other party's profile photo. */
+  counterpartAvatar(invitationId: string): Promise<Blob> { return fetchFile(`/me/enotary/requests/${id(invitationId)}/counterpart/avatar`); }
+
+  /** Tells LAGDA the colour of the banner this person's workspace shows (null: LAGDA's own), for the other party's card. */
+  async saveCard(brandColor: string | null): Promise<void> {
+    await apiRequest<unknown>("/me/enotary/card", { method: "PUT", body: { brandColor } });
+  }
+
+  /** The invoice of the notarial service, with the fee the notary named. */
+  async invoicePdf(invitationId: string): Promise<Blob> {
+    return fetchPdf(`/me/enotary/requests/${id(invitationId)}/invoice.pdf`);
   }
 
   /** The trail as a PDF. */
@@ -350,6 +372,18 @@ async function fetchPdf(path: string): Promise<Blob> {
 }
 
 export const realEnotarySessionsService = new RealEnotarySessionsService();
+
+/** Hands a file to the person's browser to keep. */
+export function saveBlobAs(blob: Blob, filename: string): void {
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  setTimeout(() => { URL.revokeObjectURL(url); }, 1000);
+}
 
 /** The SHA-256 of a file, in hex, computed here in the browser: the file is not sent anywhere. */
 export async function sha256Hex(blob: Blob): Promise<string> {

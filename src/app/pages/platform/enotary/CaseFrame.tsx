@@ -1,14 +1,18 @@
 // The page every step of one eNotary request is shown in, for the client and for the notary: a hero with the
 // request's title, the steps as one joined bar, the other person's card on the left with the facts of the
-// request, the step's own panels on the right, and the audit trail under both.
+// request, the step's own panels on the right. The audit trail is kept out of the way: a button at the bottom right
+// opens it as a panel in the middle of the page.
 //
 // It follows the eNotary pages of 13 October (client side and attorney side, wide and narrow): the same parts
 // in the same order. Presentational only: what a page says and does is the page's.
 
-import type { CSSProperties, ReactNode } from "react";
+import { createContext, useContext, useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { Link } from "react-router";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, ClipboardList, X } from "lucide-react";
 import { GF } from "../../../components/system/design-system";
+import { Z } from "../../../utils/z-index";
+import { PersonAvatar, brandGradient } from "../contacts/contacts-ui";
+import { useCounterpart } from "./useCounterpart";
 import { E, EnotaryRail, EnotarySeal, SERIF, type EnotaryTone } from "./EnotaryChrome";
 
 /** The client's eight steps, in the order of the pages. */
@@ -51,12 +55,19 @@ export const initialsOf = (name: string): string => {
   return ((words[0]?.[0] ?? "") + (words.length > 1 ? words[words.length - 1]?.[0] ?? "" : "")).toUpperCase() || "?";
 };
 
+/** Opens the audit trail's panel; a card's "Audit trail" link uses it. Does nothing outside a case frame. */
+const OpenTrail = createContext<() => void>(() => undefined);
+
 /** The other person's card: who they are, where the request stands, and its facts. */
-export function PartyCard({ name, role, tone, status, rows, auditCount }: {
+export function PartyCard({ name, role, tone, status, rows, auditCount, invitationId }: {
   name: string; role: string; tone: EnotaryTone; status: { label: string; tone: "wait" | "ok" | "info" | "end" };
   rows: readonly PartyRow[]; auditCount: number | null;
+  /** The request, so the card can show the person's own photo and banner colour. */
+  invitationId?: string | undefined;
 }) {
+  const look = useCounterpart(invitationId);
   const maroon = tone === "attorney";
+  const openTrail = useContext(OpenTrail);
   const pill: Record<string, CSSProperties> = {
     wait: { background: "#FFF3D6", color: "#7A5200" }, ok: { background: E.okWash, color: E.ok },
     info: { background: E.skyWash, color: E.skyDeep }, end: { background: E.wash, color: E.quiet },
@@ -64,13 +75,17 @@ export function PartyCard({ name, role, tone, status, rows, auditCount }: {
   return (
     <aside className="eno-case-card" data-testid="party-card" aria-label={`${name}, ${role}`}
       style={{ ...GF, background: E.paper, border: `1px solid ${E.line}`, borderRadius: 16, overflow: "hidden", boxShadow: "0 1px 2px rgba(10,26,43,0.05), 0 18px 44px -22px rgba(10,26,43,0.3)" }}>
-      <div style={{ position: "relative", height: 112, background: maroon ? E.crimson : "linear-gradient(120deg, #0563A6 0%, #0A84D6 60%, #5BB0EA 100%)" }}>
+      <div style={{ position: "relative", height: 112, background: look.brandColor !== null ? brandGradient(look.brandColor) : maroon ? E.crimson : "linear-gradient(120deg, #0563A6 0%, #0A84D6 60%, #5BB0EA 100%)" }} data-testid="party-banner">
         {maroon && <div className="eno-party-seal" aria-hidden="true"><EnotarySeal idPrefix="party-seal" /></div>}
       </div>
       <div style={{ position: "relative", zIndex: 1, marginTop: -52, display: "flex", justifyContent: "center" }}>
-        <div aria-hidden="true" style={{ width: 104, height: 104, borderRadius: 22, background: maroon ? E.maroonWash : E.skyWash, border: "5px solid #FFFFFF", boxShadow: "0 6px 18px rgba(10,26,43,0.18)", display: "grid", placeItems: "center", fontFamily: SERIF, fontWeight: 700, fontSize: 38, color: maroon ? E.maroon : E.skyDeep }}>
-          {initialsOf(name)}
-        </div>
+        {look.avatarUrl !== undefined ? (
+          <div data-testid="party-photo"><PersonAvatar name={name} avatarUrl={look.avatarUrl} size={104} ring /></div>
+        ) : (
+          <div aria-hidden="true" style={{ width: 104, height: 104, borderRadius: 22, background: maroon ? E.maroonWash : E.skyWash, border: "5px solid #FFFFFF", boxShadow: "0 6px 18px rgba(10,26,43,0.18)", display: "grid", placeItems: "center", fontFamily: SERIF, fontWeight: 700, fontSize: 38, color: maroon ? E.maroon : E.skyDeep }}>
+            {initialsOf(name)}
+          </div>
+        )}
       </div>
       <div style={{ padding: "12px 20px 20px", textAlign: "center" }}>
         <h2 style={{ margin: 0, fontFamily: SERIF, fontSize: 21, color: E.navy, overflowWrap: "anywhere" }}>{name}</h2>
@@ -90,11 +105,44 @@ export function PartyCard({ name, role, tone, status, rows, auditCount }: {
       </dl>
       {auditCount !== null && (
         <p style={{ margin: 0, padding: "10px 20px 16px", borderTop: `1px solid ${E.line}`, fontSize: 13.5 }}>
-          <a href="#audit-trail" style={{ color: E.skyDeep, fontWeight: 700 }}>Audit trail</a>{" "}
+          <button type="button" onClick={openTrail} style={{ ...GF, padding: 0, border: 0, background: "none", cursor: "pointer", color: E.skyDeep, fontWeight: 700, fontSize: "inherit", textDecoration: "underline" }}>Audit trail</button>{" "}
           <span style={{ color: E.quiet }}>{auditCount} {auditCount === 1 ? "entry" : "entries"}</span>
         </p>
       )}
     </aside>
+  );
+}
+
+/** The audit trail, hidden until asked for: a button at the bottom right of the window, and the trail as a panel in the middle. */
+function TrailToggle({ open, onOpen, onClose, children }: { open: boolean; onOpen: () => void; onClose: () => void; children: ReactNode }) {
+  const panel = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    panel.current?.focus();
+    const key = (event: KeyboardEvent) => { if (event.key === "Escape") onClose(); };
+    document.addEventListener("keydown", key);
+    return () => { document.removeEventListener("keydown", key); };
+  }, [open, onClose]);
+  return (
+    <>
+      <button type="button" onClick={onOpen} data-testid="audit-toggle" aria-haspopup="dialog" aria-expanded={open}
+        style={{ ...GF, position: "fixed", right: "clamp(12px, 3vw, 24px)", bottom: "clamp(12px, 3vw, 24px)", zIndex: Z.sticky, display: "inline-flex", alignItems: "center", gap: 8, minHeight: 46, padding: "0 18px", borderRadius: 999, border: `1px solid ${E.navy}`, background: E.navy, color: "#FFFFFF", fontWeight: 700, fontSize: 14, cursor: "pointer", boxShadow: "0 10px 26px -10px rgba(10,26,43,0.55)" }}>
+        <ClipboardList size={18} aria-hidden /> Audit trail
+      </button>
+      {open && (
+        <div data-testid="audit-overlay" onMouseDown={event => { if (event.target === event.currentTarget) onClose(); }}
+          style={{ position: "fixed", inset: 0, zIndex: Z.modal, display: "grid", placeItems: "center", padding: "clamp(10px, 3vw, 24px)", background: "rgba(10,26,43,0.5)" }}>
+          <div ref={panel} role="dialog" aria-modal="true" aria-label="Audit trail" tabIndex={-1}
+            style={{ position: "relative", width: "min(720px, 100%)", maxHeight: "calc(100dvh - 32px)", overflowY: "auto", borderRadius: 16, background: E.paper, boxShadow: "0 30px 80px -20px rgba(10,26,43,0.6)", outline: "none" }}>
+            <button type="button" onClick={onClose} aria-label="Close the audit trail" data-testid="audit-close"
+              style={{ position: "absolute", right: 10, top: 10, zIndex: 1, width: 40, height: 40, display: "grid", placeItems: "center", borderRadius: 10, border: `1px solid ${E.line}`, background: "#FFFFFF", color: E.navy, cursor: "pointer" }}>
+              <X size={18} aria-hidden />
+            </button>
+            {children}
+          </div>
+        </div>
+      )}
+    </>
   );
 }
 
@@ -104,7 +152,9 @@ export function EnotaryCaseFrame({ tone, eyebrow, reference, title, lead, steps,
   steps?: readonly { readonly id: string; readonly label: string }[]; current?: string;
   back?: { to: string; label: string }; party?: ReactNode; children: ReactNode; trail?: ReactNode;
 }) {
+  const [trailOpen, setTrailOpen] = useState(false);
   return (
+    <OpenTrail.Provider value={() => { setTrailOpen(true); }}>
     <div className="eno-page" style={GF}>
       <style>{CASE_STYLES}</style>
       <div className={tone === "attorney" ? "eno-case-hero is-attorney" : "eno-case-hero"}>
@@ -119,7 +169,7 @@ export function EnotaryCaseFrame({ tone, eyebrow, reference, title, lead, steps,
           <p data-testid="case-eyebrow" style={{ margin: "0 0 8px", fontSize: 11.5, fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase", color: tone === "attorney" ? E.maroon : "#4A9DDB" }}>
             {eyebrow}{reference !== undefined && reference !== null && <> <span aria-hidden="true">&bull;</span> <span style={{ fontFamily: "ui-monospace, Menlo, Consolas, monospace", letterSpacing: "0.08em" }}>{reference}</span></>}
           </p>
-          <h1 data-testid="case-title" style={{ margin: 0, fontFamily: SERIF, fontWeight: 700, color: E.navy, letterSpacing: "-0.015em", fontSize: "clamp(26px, 5.4vw, 42px)", lineHeight: 1.12, maxWidth: "22ch" }}>{title}</h1>
+          <h1 data-testid="case-title" style={{ margin: 0, fontFamily: SERIF, fontWeight: 700, color: E.navy, letterSpacing: "-0.015em", fontSize: "clamp(26px, 5.4vw, 42px)", lineHeight: 1.12, overflowWrap: "anywhere" }}>{title}</h1>
           {lead !== undefined && <p style={{ margin: "12px 0 0", fontSize: "clamp(14px, 3.6vw, 16px)", color: E.quiet, lineHeight: 1.55, maxWidth: "62ch" }}>{lead}</p>}
           {steps !== undefined && current !== undefined && <div style={{ marginTop: 20 }}><EnotaryRail steps={steps} current={current} label="Steps of this request" /></div>}
         </div>
@@ -133,9 +183,12 @@ export function EnotaryCaseFrame({ tone, eyebrow, reference, title, lead, steps,
             <div style={{ minWidth: 0, display: "grid", gap: 16 }}>{children}</div>
           </div>
         )}
-        {trail !== undefined && <div style={{ marginTop: 20 }}>{trail}</div>}
       </div>
+      {trail !== undefined && (
+        <TrailToggle open={trailOpen} onOpen={() => { setTrailOpen(true); }} onClose={() => { setTrailOpen(false); }}>{trail}</TrailToggle>
+      )}
     </div>
+    </OpenTrail.Provider>
   );
 }
 
@@ -149,8 +202,8 @@ export function AuditTrailPanel({ entries, reference, onDownload, downloading, t
   const newest = [...entries].sort((a, b) => (b.sort ?? b.at).localeCompare(a.sort ?? a.at));
   return (
     <section id="audit-trail" data-testid="audit-trail" aria-labelledby="audit-heading"
-      style={{ ...GF, background: E.paper, border: `1px solid ${E.line}`, borderRadius: 14, padding: "20px clamp(14px, 3vw, 28px)" }}>
-      <h2 id="audit-heading" style={{ margin: 0, fontSize: 19, color: E.navy }}>Audit trail</h2>
+      style={{ ...GF, padding: "22px clamp(14px, 3vw, 28px)" }}>
+      <h2 id="audit-heading" style={{ margin: 0, fontSize: 19, color: E.navy, paddingRight: 44 }}>Audit trail</h2>
       <p style={{ margin: "6px 0 14px", fontSize: 13.5, color: E.quiet }}>
         A complete record of this request, kept by LAGDA eNotary. {tone === "attorney" ? "The client sees the same entries. " : ""}Entries cannot be edited or removed.
       </p>
