@@ -10,19 +10,24 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useParams } from "react-router";
-import { ArrowLeft, CheckCircle2, FileUp, ShieldCheck, Stamp, XCircle } from "lucide-react";
-import { ActionButton, ActionRow, GF, Notice, T, TAP } from "../../../../components/system/design-system";
+import { CheckCircle2, FileUp, ShieldCheck, Stamp, XCircle } from "lucide-react";
+import { ActionButton, ActionRow, GF, Notice, TAP } from "../../../../components/system/design-system";
 import { useConfirm } from "../../../../components/platform/ConfirmDialog";
 import {
   BLOCK_WORDS, describeSessionError, realEnotarySessionsService, type ActType, type RoomMessage, type Session,
 } from "../../../../services/real/enotary-sessions.service";
 import { E, EnotaryFrame, EnotaryHeading } from "../EnotaryChrome";
+import { CLIENT_STEPS, EnotaryCaseFrame, NOTARY_STEPS } from "../CaseFrame";
 import { EnotaryLoadError, EnotaryLoading, EnotaryNotOffered } from "../EnotaryStates";
 import { OnrampNote, Panel, PanelTitle, TextField, bodyText, fieldStyle, labelStyle, linkButton, markSessionsOffered } from "../onramp-ui";
 import { stampLabel } from "../requests/expiry";
 import { useOptionalPlatform } from "../../../../context/PlatformContext";
 import { CompletedDocumentPicker, PickProblem, completedDocumentFile, type CompletedChoice } from "./CompletedDocumentPicker";
+import { SharedDocumentPicker, sharedDocumentAsFile, type SharedChoice } from "./SharedDocumentPicker";
 import { Chat, PdfView, VideoPane } from "./room-bits";
+import { ClientFlow, NotaryFlow } from "./RoomFlow";
+import { NotarizedPage } from "./NotarizedPage";
+import { RequestTrail, useRequestTrail } from "../RequestTrail";
 import { useRoomConnection } from "./useRoomConnection";
 import { withProcess, type ProcessKind } from "../../../../config/process-screens";
 
@@ -30,17 +35,12 @@ import { withProcess, type ProcessKind } from "../../../../config/process-screen
 const ROOM_PROCESS: Record<string, ProcessKind | undefined> = {
   upload: "enotary-document-add", replace: "enotary-document-replace", open: "enotary-room-open",
   consent: "enotary-consent", notarize: "enotary-notarize", cancel: "enotary-session-cancel",
+  finalize: "enotary-finalize", identity: "enotary-identity", act: "enotary-act", approve: "enotary-approve",
 };
 
 export const PING_MS = 20_000;
 export const SESSION_MS = 4_000;
 export const CHAT_MS = 3_000;
-
-const ACTS: { value: ActType; label: string; hint: string }[] = [
-  { value: "acknowledgment", label: "Acknowledgment", hint: "The client says the signature on the document is theirs, freely given." },
-  { value: "jurat", label: "Jurat", hint: "The client swears to the contents and signs before the notary." },
-  { value: "signature_witnessing", label: "Signature witnessing", hint: "The notary witnesses the client signing." },
-];
 
 type Loaded =
   | { kind: "loading" }
@@ -62,6 +62,7 @@ export function RoomPage() {
   const session = loaded.kind === "ready" ? loaded.session : null;
   const live = session !== null && session.status === "live";
   const connection = useRoomConnection(session?.id ?? null, session?.role ?? null, live);
+  const requestTrail = useRequestTrail(session?.invitationId ?? null, `${session?.status ?? ""}${session?.statement?.approvedAt ?? ""}${session?.finalizedAt ?? ""}`);
 
   const load = useCallback(async () => {
     try {
@@ -139,6 +140,7 @@ export function RoomPage() {
 
   // A file from the person's own disk, or a signed document of the workspace: the same call, behind the same loading screen.
   const addFile = (name: string) => (file: File) => act(name, () => realEnotarySessionsService.addDocument(s.id, file));
+  const addShared = (name: string) => (choice: SharedChoice) => act(name, async () => realEnotarySessionsService.addDocument(s.id, await sharedDocumentAsFile(choice)));
   const addCompleted = (name: string) => (choice: CompletedChoice) => act(name, async () => {
     if (workspaceId === null) throw new PickProblem("Open a workspace first.");
     return realEnotarySessionsService.addDocument(s.id, await completedDocumentFile(workspaceId, choice));
@@ -153,15 +155,18 @@ export function RoomPage() {
     });
   };
 
+  const step = roomStep(s, isClient);
+  const heading = roomHeading(s, isClient, partner);
+
   return (
-    <EnotaryFrame wide tone={isClient ? "client" : "attorney"} eyebrow="Notary session" badge={isClient ? "Client" : "Notary"} description={`With ${partner}`}>
+    <EnotaryCaseFrame
+      tone={isClient ? "client" : "attorney"} eyebrow={isClient ? `eNotary request \u2022 ${partnerTitle(partner, true)}` : `Notary desk \u2022 ${partner}`}
+      title={heading.title} lead={heading.lead} steps={isClient ? CLIENT_STEPS : NOTARY_STEPS} current={step}
+      back={{ to: back, label: isClient ? "Back to the request" : "All requests" }}
+      reference={s.reference ?? requestTrail?.reference ?? null}
+      trail={<RequestTrail invitationId={s.invitationId} tone={isClient ? "client" : "attorney"} trail={requestTrail} />}
+    >
       {confirmDialog}
-      <p style={{ ...GF, margin: "0 0 14px" }}>
-        <Link to={back} style={{ display: "inline-flex", alignItems: "center", gap: 6, minHeight: TAP, color: T.azureDeep, fontWeight: 700, textDecoration: "none", fontSize: 14 }}>
-          <ArrowLeft size={16} aria-hidden /> {isClient ? "Back to the request" : "Back to the desk"}
-        </Link>
-      </p>
-      <EnotaryHeading>{s.status === "notarized" ? "Notarized" : s.status === "cancelled" ? "Session ended" : "Session with " + partner}</EnotaryHeading>
       <Notice icon={ShieldCheck} tone="info"><span data-testid="pilot-notice">{s.pilotNotice}</span></Notice>
       {problem !== null && <Notice icon={XCircle} tone="danger">{problem}</Notice>}
 
@@ -171,105 +176,132 @@ export function RoomPage() {
         </Notice>
       )}
 
-      {s.status === "notarized" && <Result session={s} />}
+      {s.status === "notarized" && <NotarizedPage session={s} />}
 
       {!over && (
-        <>
-          <Panel testId="presence-panel" tone="sky">
-            <p style={{ ...bodyText, margin: 0 }} data-testid="presence">
-              {s.status === "preparing"
-                ? isClient ? "Waiting for the notary to open the room." : s.document === null ? "Waiting for the client to add the document." : "The document is in. Open the room when you are ready."
-                : <>In the room: {s.presence.client ? "the client" : "—"}, {s.presence.notary ? "the notary" : "—"}.</>}
-            </p>
-          </Panel>
-
-          {s.status === "live" && (
-            <Panel testId="video-panel">
-              <PanelTitle>Video</PanelTitle>
-              <VideoPane connection={connection} partnerLabel={partner} />
+        <div className="eno-split">
+          <div style={{ minWidth: 0, display: "grid", gap: 16 }}>
+            <Panel testId="presence-panel" tone="sky">
+              <p style={{ ...bodyText, margin: 0 }} data-testid="presence">
+                {s.status === "preparing"
+                  ? isClient ? "Waiting for the notary to open the room." : s.document === null ? "Waiting for the client to add the document." : "The document is in. Open the room when you are ready."
+                  : <>In the room: {s.presence.client ? "the client" : "—"}, {s.presence.notary ? "the notary" : "—"}.</>}
+              </p>
             </Panel>
-          )}
 
-          <Panel testId="document-panel">
-            <PanelTitle>The document</PanelTitle>
-            {s.document === null ? (
-              isClient
-                ? <ClientUpload workspaceId={workspaceId} onFile={addFile("upload")} onPick={addCompleted("upload")} busy={busy === "upload"} />
-                : <p style={bodyText} data-testid="no-document">The client has not added the document yet.</p>
-            ) : (
-              <>
-                <p style={{ ...bodyText, margin: "0 0 8px" }} data-testid="document-info">
-                  <strong>{s.document.name}</strong> · {(s.document.size / 1024).toFixed(0)} KB · added {stampLabel(s.document.addedAt)}
-                  <small style={{ display: "block", color: E.quiet, wordBreak: "break-all" }}>SHA-256 {s.document.sha256}</small>
-                </p>
-                <PdfView load={() => realEnotarySessionsService.document(s.id)} fileKey={s.document.sha256} name={s.document.name} />
-                {isClient && s.status === "preparing" && (
-                  <div style={{ marginTop: 12 }}>
-                    <ClientUpload workspaceId={workspaceId} onFile={addFile("replace")} onPick={addCompleted("replace")} busy={busy === "replace"} replace />
-                  </div>
-                )}
-              </>
+            {s.status === "live" && (
+              <Panel testId="video-panel">
+                <PanelTitle>Video</PanelTitle>
+                <VideoPane connection={connection} partnerLabel={partner} />
+              </Panel>
             )}
-          </Panel>
 
-          {!isClient && s.status === "preparing" && (
-            <ActionRow align="end">
-              <ActionButton icon={CheckCircle2} disabled={busy !== null || s.document === null} onClick={() => { void act("open", () => realEnotarySessionsService.open(s.id)); }}>
-                {busy === "open" ? "Opening…" : "Open the room"}
-              </ActionButton>
-            </ActionRow>
-          )}
+            {s.status === "live" && (
+              <Panel testId="chat-panel">
+                <PanelTitle>Chat</PanelTitle>
+                <Chat
+                  messages={messages} me={s.role} disabled={false}
+                  onSend={async body => { const sent = await realEnotarySessionsService.say(s.id, body); setMessages(list => [...list, sent]); }}
+                />
+              </Panel>
+            )}
+          </div>
 
-          {isClient && s.status === "live" && (
-            <Panel testId="consent-panel" tone={s.consent.at === null ? "maroon" : "plain"}>
-              <PanelTitle>Your confirmation</PanelTitle>
-              {s.consent.at === null ? (
+          <div style={{ minWidth: 0, display: "grid", gap: 16 }}>
+            <Panel testId="document-panel">
+              <PanelTitle>Document for notarization</PanelTitle>
+              {s.document === null ? (
+                isClient
+                  ? <ClientUpload workspaceId={workspaceId} onFile={addFile("upload")} onPick={addCompleted("upload")} onShared={addShared("upload")} busy={busy === "upload"} />
+                  : <p style={bodyText} data-testid="no-document">The client has not added the document yet.</p>
+              ) : (
                 <>
-                  <p style={bodyText} data-testid="consent-text">{s.consent.text}</p>
-                  <ActionButton icon={CheckCircle2} disabled={busy !== null || s.document === null} onClick={() => { void act("consent", () => realEnotarySessionsService.consent(s.id)); }}>
-                    {busy === "consent" ? "Saving…" : "I confirm"}
-                  </ActionButton>
+                  <p style={{ ...bodyText, margin: "0 0 8px" }} data-testid="document-info">
+                    <strong>{s.document.name}</strong> · {(s.document.size / 1024).toFixed(0)} KB · added {stampLabel(s.document.addedAt)}
+                    <small style={{ display: "block", color: E.quiet, wordBreak: "break-all" }}>SHA-256 {s.document.sha256}</small>
+                  </p>
+                  <PdfView load={() => realEnotarySessionsService.document(s.id)} fileKey={s.document.sha256} name={s.document.name} />
+                  {isClient && (s.finalizedAt ?? null) === null && (
+                    <div style={{ marginTop: 12 }}>
+                      <ClientUpload workspaceId={workspaceId} onFile={addFile("replace")} onPick={addCompleted("replace")} onShared={addShared("replace")} busy={busy === "replace"} replace />
+                    </div>
+                  )}
                 </>
-              ) : <p style={{ ...bodyText, margin: 0 }} data-testid="consent-done">You confirmed this on {stampLabel(s.consent.at)}.</p>}
+              )}
             </Panel>
-          )}
 
-          {s.status === "live" && (
-            <Panel testId="chat-panel">
-              <PanelTitle>Chat</PanelTitle>
-              <Chat
-                messages={messages} me={s.role} disabled={false}
-                onSend={async body => { const sent = await realEnotarySessionsService.say(s.id, body); setMessages(list => [...list, sent]); }}
+            {!isClient && s.status === "preparing" && (
+              <ActionRow align="end">
+                <ActionButton icon={CheckCircle2} disabled={busy !== null} onClick={() => { void act("open", () => realEnotarySessionsService.open(s.id)); }}>
+                  {busy === "open" ? "Opening…" : "Open the room"}
+                </ActionButton>
+              </ActionRow>
+            )}
+
+            {isClient && <ClientFlow s={s} busy={busy} act={act} onChanged={() => { void load(); }} />}
+
+            {!isClient && (
+              <NotaryFlow
+                s={s} busy={busy} act={act} onChanged={() => { void load(); }}
+                notarizePanel={<NotarizePanel session={s} busy={busy === "notarize"} onRecord={input => act("notarize", () => realEnotarySessionsService.notarize(s.id, input))} />}
               />
-            </Panel>
-          )}
-
-          {!isClient && s.status === "live" && <NotarizePanel session={s} busy={busy === "notarize"} onRecord={input => act("notarize", () => realEnotarySessionsService.notarize(s.id, input))} />}
-
-          <ActionRow align="end">
-            <ActionButton kind="danger" disabled={busy !== null} onClick={callOff}>{busy === "cancel" ? "Calling off…" : "Call off the session"}</ActionButton>
-          </ActionRow>
-        </>
+            )}
+          </div>
+        </div>
+      )}
+      {!over && (
+        <ActionRow align="end">
+          <ActionButton kind="danger" disabled={busy !== null} onClick={callOff}>{busy === "cancel" ? "Calling off…" : "Call off the session"}</ActionButton>
+        </ActionRow>
       )}
       <OnrampNote />
-    </EnotaryFrame>
+    </EnotaryCaseFrame>
   );
 }
 
-function ClientUpload({ onFile, onPick, workspaceId, busy, replace = false }: {
-  onFile: (file: File) => Promise<void>; onPick: (choice: CompletedChoice) => Promise<void>;
+const partnerTitle = (name: string, isNotary: boolean) => (isNotary && !/^atty\.?\s/i.test(name) ? `Atty. ${name}` : name);
+
+/** Where the room is among the eight steps. */
+function roomStep(s: Session, isClient: boolean): string {
+  if (s.status === "notarized") return "notarized";
+  if (s.status === "preparing") return isClient ? "joins" : "accept";
+  if ((s.finalizedAt ?? null) === null) return s.document === null ? "call" : "document";
+  return isClient ? "finalized" : "fee";
+}
+
+function roomHeading(s: Session, isClient: boolean, partner: string): { title: string; lead: string } {
+  if (s.status === "notarized") {
+    return { title: isClient ? "Your document is notarized" : "Notarized",
+      lead: isClient ? `${partnerTitle(partner, true)} performed the notarial act. Preview the document below, or download it.` : "The notarial act is recorded and entered in your register." };
+  }
+  if (s.status === "cancelled") return { title: "Session ended", lead: "Nothing was notarized in this session." };
+  if (s.status === "preparing") {
+    return isClient
+      ? { title: `Waiting for ${partnerTitle(partner, true)} to open the room`, lead: "Add the document you want notarized while you wait. Only you and the notary can see it." }
+      : { title: s.document === null ? `Waiting for ${partner} to add the document` : `Open the room for ${partner}`, lead: "Open the room when you are ready. You meet on a video call, and the client chooses the document with you." };
+  }
+  return isClient
+    ? { title: `On a call with ${partnerTitle(partner, true)}`, lead: "Talk it through, then choose the document to be notarized. Confirm it when you both agree." }
+    : { title: `On a call with ${partner}`, lead: "Confirm who the client is on the call, read the document with them, then record the notarial act." };
+}
+
+function ClientUpload({ onFile, onPick, onShared, workspaceId, busy, replace = false }: {
+  onFile: (file: File) => Promise<void>; onPick: (choice: CompletedChoice) => Promise<void>; onShared: (choice: SharedChoice) => Promise<void>;
   workspaceId: string | null; busy: boolean; replace?: boolean;
 }) {
-  const [mode, setMode] = useState<"upload" | "completed">("upload");
+  const [mode, setMode] = useState<"upload" | "completed" | "shared">("upload");
   const [file, setFile] = useState<File | null>(null);
   const problem = file === null ? null
     : file.size > 20 * 1024 * 1024 ? "The file is larger than 20 MB."
       : file.size === 0 ? "The file is empty." : null;
   return (
     <div data-testid="upload">
-      {workspaceId !== null && (
+      {(
         <div role="tablist" aria-label="Where the document comes from" style={{ display: "flex", gap: 8, flexWrap: "wrap", margin: "0 0 12px" }}>
-          {([["upload", "Upload a PDF"], ["completed", "Choose a completed document"]] as const).map(([value, label]) => (
+          {([
+            ...(workspaceId !== null ? [["completed", "Completed"] as const] : []),
+            ["shared", "Shared documents"] as const, ["upload", "Upload a PDF"] as const,
+          ]).map(([value, label]) => (
             <button
               key={value} type="button" role="tab" aria-selected={mode === value} data-testid={`source-${value}`} disabled={busy}
               onClick={() => { setMode(value); }}
@@ -281,6 +313,8 @@ function ClientUpload({ onFile, onPick, workspaceId, busy, replace = false }: {
       )}
       {mode === "completed" && workspaceId !== null ? (
         <CompletedDocumentPicker workspaceId={workspaceId} onPick={onPick} busy={busy} replace={replace} />
+      ) : mode === "shared" ? (
+        <SharedDocumentPicker onPick={onShared} busy={busy} replace={replace} />
       ) : (
         <>
           {!replace && <p style={bodyText}>Add the scanned document you want notarized, as a PDF of up to 20 MB. Only you and {"the notary"} can see it.</p>}
@@ -304,8 +338,10 @@ function ClientUpload({ onFile, onPick, workspaceId, busy, replace = false }: {
 export function NotarizePanel({
   session, busy, onRecord,
 }: { session: Session; busy: boolean; onRecord: (input: { actType: ActType; description: string; place: string; attestations: Record<string, boolean> }) => Promise<void> }) {
-  const [actType, setActType] = useState<ActType>("acknowledgment");
-  const [description, setDescription] = useState("");
+  // The act and what it is about were stated, and the client approved them: the seal records exactly those.
+  const stated = session.statement ?? null;
+  const actType: ActType = stated?.actType ?? "acknowledgment";
+  const description = stated?.note ?? "";
   const [place, setPlace] = useState("");
   const [checks, setChecks] = useState<Record<string, boolean>>({});
   const allChecked = session.attestations.every(item => checks[item.key] === true);
@@ -313,18 +349,8 @@ export function NotarizePanel({
   const ready = block === null && allChecked && description.trim() !== "" && place.trim() !== "";
   return (
     <Panel testId="notarize-panel" tone="maroon">
-      <PanelTitle>Record the notarial act</PanelTitle>
+      <PanelTitle>{stated !== null ? `Apply your seal: ${stated.actTypeLabel}` : "Record the notarial act"}</PanelTitle>
       {block !== null && <p data-testid="notarize-block" style={{ ...bodyText, color: "#8A3B12" }}>{BLOCK_WORDS[block]}</p>}
-      <fieldset style={{ border: 0, padding: 0, margin: "0 0 14px" }}>
-        <legend style={labelStyle}>Kind of act</legend>
-        {ACTS.map(option => (
-          <label key={option.value} style={{ ...GF, display: "flex", gap: 8, alignItems: "flex-start", minHeight: TAP, padding: "6px 0", fontSize: 14.5 }}>
-            <input type="radio" name="act-type" value={option.value} checked={actType === option.value} onChange={() => { setActType(option.value); }} style={{ marginTop: 5 }} />
-            <span><strong>{option.label}</strong><small style={{ display: "block", color: E.quiet }}>{option.hint}</small></span>
-          </label>
-        ))}
-      </fieldset>
-      <TextField label="Title or description of the document" value={description} onChange={setDescription} maxLength={600} required />
       <TextField label="Place of notarization" value={place} onChange={setPlace} maxLength={400} required hint="Where you are as the notary, for example the city and province of your commission." />
       <fieldset style={{ border: 0, padding: 0, margin: "0 0 14px" }}>
         <legend style={labelStyle}>What you attest</legend>
@@ -341,27 +367,6 @@ export function NotarizePanel({
       <p style={{ ...bodyText, fontSize: 12.5, color: E.quiet, margin: "10px 0 0" }}>
         This adds a certificate page to the document, seals it with its hash and a verification code, and enters it in your register. It cannot be undone.
       </p>
-    </Panel>
-  );
-}
-
-function Result({ session }: { session: Session }) {
-  const done = session.notarized;
-  const act = session.act;
-  if (done === null || act === null) return null;
-  return (
-    <Panel tone="sky" testId="notarized-panel">
-      <PanelTitle>{act.typeLabel} recorded</PanelTitle>
-      <p style={bodyText} data-testid="notarized-facts">
-        {act.notaryName} recorded this {act.typeLabel.toLowerCase()} on {stampLabel(act.at)} at {act.place}. Register entry <strong>{act.registerRef}</strong>.
-      </p>
-      <p style={{ ...bodyText, margin: "0 0 4px" }}>Verification code</p>
-      <p data-testid="verify-code" style={{ ...GF, margin: "0 0 10px", fontSize: 22, fontWeight: 800, letterSpacing: "0.04em", color: E.navy }}>{done.code}</p>
-      <p style={{ ...bodyText, fontSize: 13.5 }}>
-        Anyone can check this code at <a href={done.verifyUrl} style={{ color: E.skyDeep, fontWeight: 700 }}>{done.verifyUrl}</a>.
-        <small style={{ display: "block", color: E.quiet, wordBreak: "break-all" }}>SHA-256 of the notarized file {done.sha256}</small>
-      </p>
-      <PdfView load={() => realEnotarySessionsService.notarized(session.id)} fileKey={done.sha256} name={`${session.document?.name.replace(/\.pdf$/i, "") ?? "document"} (notarized).pdf`} />
     </Panel>
   );
 }

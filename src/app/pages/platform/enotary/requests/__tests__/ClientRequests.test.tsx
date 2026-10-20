@@ -109,7 +109,7 @@ describe("one request, waiting for the notary", () => {
     get.mockResolvedValue(invitation());
     renderRequest();
     await settle();
-    expect(screen.getByRole("heading", { level: 2, name: "Request to Atty. Ana Maria Cruz" })).toBeInTheDocument();
+    expect(screen.getByTestId("case-title")).toHaveTextContent("Waiting for Atty. Ana Maria Cruz to join");
     expect(screen.getByTestId("expiry-countdown")).toHaveTextContent("3 d 0 h 0 m");
     expect(screen.getByTestId("expiry-label")).toHaveTextContent(/^Expires \w{3} \d+ \w{3}, \d+:\d{2} (AM|PM)$/);
     expect(screen.getByTestId("expiry-panel")).toHaveAttribute("data-tone", "calm");
@@ -118,9 +118,9 @@ describe("one request, waiting for the notary", () => {
     expect(card.tagName).toBe("IMG");
     expect(decodeURIComponent(card.getAttribute("src") ?? "")).toContain("Scan only if you are Atty.");
     expect(screen.getByRole("button", { name: "Save the card" })).toBeInTheDocument();
-    expect(screen.getByTestId("timeline")).toHaveTextContent("You asked Ana Maria Cruz");
+    expect(screen.getByTestId("audit-trail")).toHaveTextContent("You asked Ana Maria Cruz");
     expect(screen.getByTestId("onramp-note")).toHaveTextContent(/not currently available.*Supreme Court accreditation/);
-    expect(screen.getByTestId("status-pill")).toHaveTextContent("Waiting for the notary");
+    expect(screen.getByTestId("party-status")).toHaveTextContent("Waiting for the notary");
   });
 
   it("counts down every second on its own clock", async () => {
@@ -161,7 +161,7 @@ describe("one request, waiting for the notary", () => {
     renderRequest();
     await settle();
     await settle(POLL_MS);
-    expect(screen.getByTestId("status-pill")).toHaveTextContent("Notary verified");
+    expect(screen.getByTestId("party-status")).toHaveTextContent("Notary verified");
     expect(screen.getByTestId("request-notice")).toHaveTextContent(/passed the identity check/);
     expect(screen.queryByLabelText("Link for the notary")).toBeNull();
     expect(screen.queryByTestId("qr-card")).toBeNull();
@@ -179,7 +179,7 @@ describe("one request, waiting for the notary", () => {
     await settle();
     await settle(2100);
     expect(get).toHaveBeenCalledTimes(2);
-    expect(screen.getByTestId("status-pill")).toHaveTextContent("Expired");
+    expect(screen.getByTestId("party-status")).toHaveTextContent("Expired");
     expect(screen.queryByTestId("expiry-panel")).toBeNull();
   });
 
@@ -252,7 +252,7 @@ describe("one request, waiting for the notary", () => {
     press(within(dialog).getByRole("button", { name: "Cancel the request" }));
     await settle();
     expect(revoke).toHaveBeenCalledWith("eni_1");
-    expect(screen.getByTestId("status-pill")).toHaveTextContent("Cancelled");
+    expect(screen.getByTestId("party-status")).toHaveTextContent("Cancelled");
     expect(screen.getByRole("button", { name: "Renew with a new link" })).toBeInTheDocument();
     expect(screen.queryByTestId("expiry-panel")).toBeNull();
   });
@@ -300,7 +300,7 @@ describe("a request that has ended", () => {
     renderRequest();
     await settle();
     expect(screen.getByTestId("request-notice")).toHaveTextContent(/declined this request/);
-    expect(screen.getByTestId("status-pill")).toHaveTextContent("Declined");
+    expect(screen.getByTestId("party-status")).toHaveTextContent("Declined");
   });
 });
 

@@ -122,6 +122,15 @@ export interface DeskRequest {
   secondsLeft: number;
   decidedAt: string | null;
   payment?: DeskPayment | null;
+  /** The request's number, EN-2026-000004. Absent from an older server. */
+  reference?: string | null;
+  /** The room this request became. */
+  session?: { id: string; status: "preparing" | "live" | "notarized" | "cancelled"; hasDocument: boolean } | null;
+  /** What the case holds once there is a room. */
+  case?: {
+    documentName: string | null; actLabel: string | null; feeCentavos: number | null;
+    copy: { status: string; mode: "digital" | "physical"; stage: string | null } | null;
+  } | null;
 }
 
 /** A request sent to this notary's own listing that they have not taken yet. */

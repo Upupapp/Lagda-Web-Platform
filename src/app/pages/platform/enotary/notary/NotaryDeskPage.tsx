@@ -1,5 +1,5 @@
 // /app/enotary/desk — a notary's desk: the requests clients have sent them, Accept
-// (naming a fee) or Decline for each, and, once a client says they paid, the
+// or Decline for each, and, once a client says they paid, the
 // confirmation that the money came.
 //
 // A request appears here only after the notary has proved who they are (the ID
@@ -18,21 +18,24 @@
 // Once the fee is settled, an accepted request shows its session (the room and,
 // after a notarization, the certified copies) from the SessionPanel.
 
-import { useCallback, useEffect, useRef, useState, type CSSProperties } from "react";
-import { Link } from "react-router";
+import { useCallback, useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { Link, useParams } from "react-router";
 import { SessionPanel } from "../room/SessionPanel";
 import { AlertTriangle, Check, Clock, Inbox, QrCode, X } from "lucide-react";
 import { ActionButton, GF, Notice, T, useViewport } from "../../../../components/system/design-system";
 import { useConfirm } from "../../../../components/platform/ConfirmDialog";
 import { USE_REAL_BACKEND } from "../../../../services/backend-flag";
+import { NotaryRequestView } from "./NotaryRequestView";
 import { announceNavCountsChanged } from "../../../../services/nav-counts-signal";
 import {
-  describePaymentError, errorCode, formatPesos, parsePesos, realEnotaryInvitationsService,
-  FEE_MAX_PESOS, type DeskIncoming, type DeskPayment, type DeskRequest, type NotaryDesk,
+  describePaymentError, errorCode, formatPesos, realEnotaryInvitationsService,
+  type DeskIncoming, type DeskPayment, type DeskRequest, type NotaryDesk,
 } from "../../../../services/real/enotary-invitations.service";
-import { E, EnotaryFrame } from "../EnotaryChrome";
+import { E, SERIF } from "../EnotaryChrome";
+import { EnotaryCaseFrame } from "../CaseFrame";
+import { useOptionalPlatform } from "../../../../context/PlatformContext";
 import { EnotaryLoadError, EnotaryLoading, EnotaryNotOffered } from "../EnotaryStates";
-import { OnrampNote, Panel, StatusPill, bodyText, fieldStyle, hintStyle, labelStyle, linkButton, useNow } from "../onramp-ui";
+import { OnrampNote, Panel, StatusPill, bodyText, fieldStyle, hintStyle, labelStyle, linkButton, markSessionsOffered, useNow } from "../onramp-ui";
 import { ExpiryClock, countdownText, expiryLabel, expiryTone, stampLabel } from "../requests/expiry";
 import { withProcess } from "../../../../config/process-screens";
 
@@ -78,23 +81,91 @@ export function paymentLine(payment: DeskPayment | null | undefined, clientName:
   }
 }
 
-/** The fee typed on the accept panel, in centavos; 0 when none is charged; null when it is not a sum the server takes. */
-export function feeFrom(text: string, noFee: boolean): number | null {
-  if (noFee) return 0;
-  const parsed = parsePesos(text);
-  return parsed === 0 ? null : parsed;
+/** The desk's three counts and its closed list. A request waits for the notary, is in progress, is done, or is over. */
+export function groupRequests(requests: readonly DeskRequest[]): {
+  waiting: DeskRequest[]; progress: DeskRequest[]; completed: DeskRequest[]; closed: DeskRequest[];
+} {
+  const out = { waiting: [] as DeskRequest[], progress: [] as DeskRequest[], completed: [] as DeskRequest[], closed: [] as DeskRequest[] };
+  for (const request of requests) {
+    if (request.status === "claimed" || (request.status === "accepted" && request.payment?.status === "proof")) out.waiting.push(request);
+    else if (request.status === "accepted" && request.session?.status === "notarized") out.completed.push(request);
+    else if (request.status === "accepted" && request.session?.status !== "cancelled") out.progress.push(request);
+    else out.closed.push(request);
+  }
+  return out;
 }
 
-export function NotaryDeskPage() {
+const initialsOf = (name: string): string =>
+  name.split(/\s+/).filter(part => part !== "").slice(0, 2).map(part => part[0]?.toUpperCase() ?? "").join("");
+
+/** What a notarized case says about its copy, in the words of the desk. */
+export function copyWords(copy: NonNullable<DeskRequest["case"]>["copy"]): string {
+  if (copy === null) return "Notarized";
+  if (copy.status === "received") return "Copy received by the client";
+  if (copy.status === "fulfilled") {
+    if (copy.mode === "digital") return "Digital copy issued";
+    return ({ delivered: "Copy delivered, awaiting receipt", out_for_delivery: "Copy out for delivery", in_transit: "Copy in transit" } as Record<string, string>)[copy.stage ?? ""] ?? "Copy with the courier";
+  }
+  if (copy.status === "declined" || copy.status === "cancelled") return "Notarized";
+  return "Copy requested";
+}
+
+function stageWords(request: DeskRequest): string {
+  const session = request.session ?? null;
+  if (session === null) return "Accepted";
+  if (session.status === "notarized") return copyWords(request.case?.copy ?? null);
+  if (session.status === "cancelled") return "Called off";
+  return session.status === "live" ? "In the room" : "Room not open yet";
+}
+
+/** The document, the act and the fee, as one line. */
+function caseLine(request: DeskRequest): string {
+  const held = request.case ?? null;
+  if (held === null) return "";
+  return [held.documentName, held.actLabel, held.feeCentavos === null ? null : held.feeCentavos === 0 ? "No fee" : `PHP ${formatPesos(held.feeCentavos)}`]
+    .filter((part): part is string => part !== null && part !== "").join(" · ");
+}
+
+function DeskSection({ id, title, count, children }: { id: string; title: string; count: number; children: ReactNode }) {
+  return (
+    <section aria-labelledby={`desk-${id}-heading`} data-testid={`desk-section-${id}`}>
+      <h2 id={`desk-${id}-heading`} style={{ ...GF, fontSize: 19, color: E.navy, margin: "0 0 10px", display: "flex", alignItems: "center", gap: 8 }}>
+        {title} <span style={{ fontSize: 12.5, fontWeight: 700, color: E.quiet, background: E.skyWash, borderRadius: 999, padding: "2px 9px" }}>{count}</span>
+      </h2>
+      <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "grid", gap: 10 }}>{children}</ul>
+    </section>
+  );
+}
+
+function CompletedRow({ request }: { request: DeskRequest }) {
+  const words = copyWords(request.case?.copy ?? null);
+  return (
+    <li data-testid="desk-row" data-status="completed" style={{ ...GF, padding: "14px 16px", borderRadius: 12, border: `1px solid ${E.line}`, background: "#FFFFFF",
+      display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
+      <span aria-hidden="true" style={{ flex: "0 0 auto", width: 44, height: 44, borderRadius: 999, display: "grid", placeItems: "center", background: E.skyWash,
+        border: `1px solid ${E.skyLine}`, color: E.skyDeep, fontFamily: SERIF, fontWeight: 700 }}>{initialsOf(request.client.name)}</span>
+      <span style={{ flex: "1 1 240px", minWidth: 0 }}>
+        <strong style={{ display: "block", fontFamily: SERIF, fontSize: 17, color: E.navy, overflowWrap: "anywhere" }}>{request.client.name}</strong>
+        <small style={{ color: E.quiet, fontSize: 13 }}>
+          {request.reference !== undefined && request.reference !== null && <span data-testid="desk-reference-no" style={{ fontFamily: "ui-monospace, Menlo, Consolas, monospace", color: E.ink, fontWeight: 700 }}>{request.reference}</span>}
+          {" "}· Received {stampLabel(request.receivedAt)}{caseLine(request) !== "" && <> · {caseLine(request)}</>}
+        </small>
+      </span>
+      <span data-testid="desk-copy-state" style={{ fontSize: 13, fontWeight: 700, color: E.ok, background: E.okWash, border: "1px solid #B7E3CA", borderRadius: 999, padding: "5px 12px" }}>{words}</span>
+      <Link to={`/app/enotary/desk/${encodeURIComponent(request.id)}`} data-testid="desk-open" style={{ ...linkButton("secondary"), color: T.ink }}>Open</Link>
+    </li>
+  );
+}
+
+export function NotaryDeskPage({ focus }: { focus?: string } = {}) {
   const { isCompact } = useViewport();
+  const platform = useOptionalPlatform();
   // Actions sit on the right on a wide screen and at the start, wrapping, on a narrow one.
   const buttonRow = (top = 10): CSSProperties => ({ display: "flex", gap: 10, flexWrap: "wrap", marginTop: top, justifyContent: isCompact ? "flex-start" : "flex-end" });
   const [loaded, setLoaded] = useState<Loaded>(USE_REAL_BACKEND ? { kind: "loading" } : { kind: "off" });
   const [working, setWorking] = useState<string | null>(null);
   const [declining, setDeclining] = useState<string | null>(null);
   const [accepting, setAccepting] = useState<string | null>(null);
-  const [fee, setFee] = useState("");
-  const [noFee, setNoFee] = useState(false);
   const [missing, setMissing] = useState<string | null>(null);
   const [reason, setReason] = useState("");
   const [problem, setProblem] = useState<string | null>(null);
@@ -110,6 +181,7 @@ export function NotaryDeskPage() {
     realEnotaryInvitationsService.desk().then(
       desk => {
         if (!alive.current) return;
+        if (desk !== null && desk.requests.some(r => r.session !== undefined)) markSessionsOffered();
         setLoaded(desk === null ? { kind: "off" } : { kind: "ready", desk, receivedAt: Date.now() });
         const waiting = desk === null ? 0
           : (desk.incoming ?? []).length + desk.requests.filter(r => r.status === "claimed").length
@@ -137,12 +209,15 @@ export function NotaryDeskPage() {
 
   const { desk, receivedAt } = loaded;
   const banner = bannerFor(desk);
+  const surname = (platform?.user?.fullName ?? platform?.user?.displayName ?? "").replace(/^atty\.?\s+/i, "").trim().split(/\s+/).filter(part => part !== "").at(-1);
+  const greeting = surname === undefined ? "Good day, counsel" : `Good day, Atty. ${surname}`;
   const hasQr = desk.paymentProfile !== null && desk.paymentProfile !== undefined;
   const incoming = desk.incoming ?? [];
-  const waiting = desk.requests.filter(r => r.status === "claimed");
-  const accepted = desk.requests.filter(r => r.status === "accepted");
-  const toConfirm = desk.requests.filter(r => r.payment?.status === "proof");
-  const closed = desk.requests.filter(r => r.status === "declined" || r.status === "expired" || r.status === "revoked");
+  const groups = groupRequests(desk.requests);
+  const waiting = groups.waiting;
+  const progress = groups.progress;
+  const completed = groups.completed;
+  const closed = groups.closed;
 
   const refused = (error: unknown) => {
     const code = errorCode(error);
@@ -166,19 +241,10 @@ export function NotaryDeskPage() {
     setSaid(null);
     try {
       if (kind === "accept") {
-        const amount = feeFrom(fee, noFee);
-        if (amount === null) {
-          setProblem(`Enter your fee in pesos (1 to ${FEE_MAX_PESOS.toLocaleString("en-US")}), or say you are not charging one.`);
-          return;
-        }
-        await withProcess("enotary-accept", request.client.name, () => realEnotaryInvitationsService.accept(request.id, amount));
+        await withProcess("enotary-accept", request.client.name, () => realEnotaryInvitationsService.accept(request.id));
         if (!alive.current) return;
-        setSaid(amount === 0
-          ? `You accepted the request from ${request.client.name} without a fee. You will be told when the session can begin.`
-          : `You accepted the request from ${request.client.name}. They were asked to pay PHP ${formatPesos(amount)} to your QR.`);
+        setSaid(`You accepted the request from ${request.client.name}. Open the room when you are ready to meet.`);
         setAccepting(null);
-        setFee("");
-        setNoFee(false);
       } else {
         await withProcess("enotary-decline", request.client.name, () => realEnotaryInvitationsService.decline(request.id, reason));
         if (!alive.current) return;
@@ -254,11 +320,130 @@ export function NotaryDeskPage() {
     </div>
   );
 
-  const feeAmount = feeFrom(fee, noFee);
-  const feeProblem = !noFee && fee.trim() !== "" && feeAmount === null ? "Enter a fee between 1 and 50,000 pesos." : null;
+  const renderRequest = (request: DeskRequest) => {
+      const clock = new ExpiryClock();
+      clock.sync(request.secondsLeft, receivedAt);
+      const msLeft = clock.msLeft(now);
+      const open = request.status === "claimed" && msLeft > 0;
+      const tone = expiryTone(msLeft);
+      const busy = working === request.id;
+      const line = paymentLine(request.payment, request.client.name);
+      const payment = request.payment ?? null;
+      const proof = request.status === "accepted" && payment !== null && payment.status === "proof";
+      const goesOn = payment === null || payment.status === "confirmed" || payment.status === "waived";
+      return (
+        <li key={request.id} data-testid="desk-row" data-status={request.status} data-payment={payment?.status ?? "none"} style={{ ...GF, padding: "14px 16px", borderRadius: 12, border: `1px solid ${E.line}`, background: "#FFFFFF" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+            <strong style={{ fontSize: 16, color: E.ink, flex: "1 1 180px", minWidth: 0, overflowWrap: "anywhere" }}>{request.client.name}</strong>
+            {request.client.identityVerified && <span style={{ fontSize: 12.5, color: E.ok, fontWeight: 700 }}>ID verified</span>}
+            <StatusPill status={request.status} label={request.status === "claimed" ? "Waiting for you" : request.status === "accepted" ? stageWords(request) : undefined} />
+            {focus === undefined && <Link to={`/app/enotary/desk/${encodeURIComponent(request.id)}`} data-testid="desk-open" style={{ ...linkButton("secondary"), color: T.ink }}>Open</Link>}
+          </div>
+          <p style={{ margin: "6px 0 0", fontSize: 13, color: E.quiet }}>
+            {request.reference !== undefined && request.reference !== null && <><span data-testid="desk-reference-no" style={{ fontFamily: "ui-monospace, Menlo, Consolas, monospace", color: E.ink, fontWeight: 700 }}>{request.reference}</span> · </>}
+            Received {stampLabel(request.receivedAt)}
+            {request.decidedAt !== null && <> · Answered {stampLabel(request.decidedAt)}</>}
+            {caseLine(request) !== "" && <> · {caseLine(request)}</>}
+          </p>
+          {open && (
+            <p data-testid="desk-countdown" data-tone={tone} style={{ margin: "6px 0 0", fontSize: 13.5, fontWeight: 700, color: tone === "red" ? "#B0182B" : tone === "amber" ? "#8A5A00" : E.skyDeep, display: "flex", gap: 6, alignItems: "center" }}>
+              <Clock size={14} aria-hidden /> {countdownText(msLeft)} left · until {expiryLabel(request.expiresAt)}
+            </p>
+          )}
+          {request.status === "accepted" && (
+            <div style={{ marginTop: 8 }}>
+              <p style={{ margin: 0, fontSize: 13.5, color: E.text }}>
+                {request.session?.status === "cancelled" ? "The session was called off. Nothing was notarized."
+                  : goesOn
+                  ? "Accepted. The session can begin."
+                  : "Accepted. The request goes on once the fee is paid and you have confirmed it."}
+              </p>
+              {line !== null && (
+                <p data-testid="desk-payment" style={{ margin: "4px 0 0", fontSize: 13.5, fontWeight: 700, color: payment?.status === "proof" ? E.maroon : E.text }}>{line}</p>
+              )}
+              {goesOn && (
+                <div style={{ marginTop: 10 }}><SessionPanel invitationId={request.id} role="notary" /></div>
+              )}
+              {proof && (
+                <div data-testid="desk-proof" style={{ marginTop: 8, padding: "10px 12px", borderRadius: 10, background: E.maroonWash, border: `1px solid ${E.maroonLine}` }}>
+                  <p style={{ margin: 0, fontSize: 13.5, color: E.text }}>
+                    Reference number: <strong data-testid="desk-reference" style={{ letterSpacing: "0.04em" }}>{payment.reference}</strong>
+                    {payment.proofAt !== null && <> · sent {stampLabel(payment.proofAt)}</>}
+                  </p>
+                  <p style={{ margin: "4px 0 0", fontSize: 12.5, color: E.quiet }}>Look for this transfer in your own bank or e-wallet app. Do not go by a screenshot.</p>
+                  {missing === request.id ? (
+                    <div style={{ marginTop: 10 }}>
+                      <label htmlFor={`missing-${request.id}`} style={labelStyle}>Note for the client (optional)</label>
+                      <input id={`missing-${request.id}`} value={reason} maxLength={120} onChange={event => { setReason(event.target.value); }} style={fieldStyle()} />
+                      <p style={hintStyle}>For example, &ldquo;No transfer with that reference yet.&rdquo; At most 120 characters.</p>
+                      <div style={buttonRow()}>
+                        <ActionButton kind="danger" icon={X} disabled={busy} onClick={() => { void notReceived(request); }}>{busy ? "Sending…" : "Tell the client it did not arrive"}</ActionButton>
+                        <ActionButton kind="secondary" disabled={busy} onClick={() => { setMissing(null); setReason(""); }}>Back</ActionButton>
+                      </div>
+                    </div>
+                  ) : (
+                    <div style={buttonRow()}>
+                      <ActionButton icon={Check} disabled={busy} onClick={() => { confirmPayment(request); }}>I received it</ActionButton>
+                      <ActionButton kind="secondary" disabled={busy} onClick={() => { setMissing(request.id); setReason(""); }}>Not received</ActionButton>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+          {open && (
+            <div style={{ marginTop: 12 }}>
+              {declining === request.id ? (
+                <div>
+                  <label htmlFor={`reason-${request.id}`} style={{ display: "block", fontSize: 13.5, fontWeight: 700, marginBottom: 6 }}>Reason (optional)</label>
+                  <input id={`reason-${request.id}`} value={reason} maxLength={120} onChange={event => { setReason(event.target.value); }} style={fieldStyle()} />
+                  <p style={{ margin: "6px 0 0", fontSize: 12.5, color: E.quiet }}>At most 120 characters. The client is told you declined.</p>
+                  <div style={buttonRow()}>
+                    <ActionButton kind="danger" icon={X} disabled={busy} onClick={() => { void answer(request, "decline"); }}>{busy ? "Declining…" : "Decline the request"}</ActionButton>
+                    <ActionButton kind="secondary" disabled={busy} onClick={() => { setDeclining(null); setReason(""); }}>Keep it</ActionButton>
+                  </div>
+                </div>
+              ) : accepting === request.id ? (
+                <div data-testid="accept-panel">
+                  <p style={{ margin: "0 0 8px", fontSize: 14, color: E.text }}>
+                    Accept to open a private room with {request.client.name}. You meet on a video call, and they choose the document with you.
+                  </p>
+                  <p data-testid="accept-later" style={hintStyle}>
+                    You do not name a fee now. After you confirm who they are and read the document, you state the notarial act and your fee, or no fee,
+                    and {request.client.name} approves it before paying.
+                  </p>
+                  <div style={buttonRow()}>
+                    <ActionButton icon={Check} disabled={busy} onClick={() => { void answer(request, "accept"); }}>
+                      {busy ? "Accepting…" : "Accept the request"}
+                    </ActionButton>
+                    <ActionButton kind="secondary" disabled={busy} onClick={() => { setAccepting(null); }}>Not now</ActionButton>
+                  </div>
+                </div>
+              ) : (
+                <div style={buttonRow(0)}>
+                  <ActionButton icon={Check} disabled={busy || !desk.canAccept} onClick={() => { setAccepting(request.id); setDeclining(null); setReason(""); }}>Accept</ActionButton>
+                  <ActionButton kind="secondary" disabled={busy || !desk.canAccept} onClick={() => { setDeclining(request.id); setAccepting(null); setReason(""); }}>Decline</ActionButton>
+                </div>
+              )}
+              {!desk.canAccept && <p style={{ margin: "8px 0 0", fontSize: 12.5, color: E.quiet }}>You can answer once your application is approved.</p>}
+            </div>
+          )}
+        </li>
+      );
+  };
+
+  const focused = focus === undefined ? null : desk.requests.find(request => request.id === focus) ?? null;
+  const focusedNew = focus === undefined ? null : incoming.find(item => item.id === focus) ?? null;
+  if (focus !== undefined) {
+    return <NotaryRequestView focus={focus} request={focused} incoming={focusedNew} banner={banner} said={said} problem={problem} confirmDialog={confirmDialog}
+      renderRequest={renderRequest} onTake={item => { void take(item); }} taking={working} receivedAt={receivedAt} now={now} />;
+  }
 
   return (
-    <EnotaryFrame wide tone="attorney" badge="Notary" eyebrow="Notary desk" description="Requests that clients sent you, once you have proved who you are.">
+    <EnotaryCaseFrame
+      tone="attorney" eyebrow="Notary desk" title={greeting}
+      lead="Requests from clients whose identity LAGDA has verified arrive here. Accept one to open a private room with the client."
+    >
       {confirmDialog}
       {banner !== null && (
         <div data-testid="desk-banner">
@@ -277,11 +462,9 @@ export function NotaryDeskPage() {
         </div>
       )}
       <div style={{ display: "flex", gap: 10, flexWrap: "wrap", margin: "0 0 18px" }}>
-        {tally("New", incoming.length, "tally-new")}
-        {tally("Waiting", waiting.length, "tally-waiting")}
-        {tally("Accepted", accepted.length, "tally-accepted")}
-        {tally("To confirm", toConfirm.length, "tally-confirm")}
-        {tally("Closed", closed.length, "tally-closed")}
+        {tally("Waiting", incoming.length + waiting.length, "tally-waiting")}
+        {tally("In progress", progress.length, "tally-progress")}
+        {tally("Completed", completed.length, "tally-completed")}
       </div>
       {said !== null && <div role="status" style={{ ...GF, margin: "0 0 12px", fontSize: 14, fontWeight: 600, color: E.ok }}>{said}</div>}
       {problem !== null && <Notice icon={AlertTriangle} tone="danger">{problem}</Notice>}
@@ -322,179 +505,39 @@ export function NotaryDeskPage() {
         <Panel testId="desk-empty">
           <p style={{ ...bodyText, margin: 0, display: "flex", gap: 10 }}>
             <Inbox size={20} aria-hidden style={{ color: E.maroon, flex: "0 0 auto", marginTop: 2 }} />
-            <span>No requests yet. When a client sends you a request, it appears here. A request sent as a link or a QR card appears once you open it.</span>
+            <span>No request is waiting. A new one appears here by itself, without reloading the page. A request sent as a link or a QR card appears once you open it.</span>
           </p>
         </Panel>
       ) : (
-        <ul data-testid="desk-list" style={{ listStyle: "none", margin: 0, padding: 0, display: "grid", gap: 10 }}>
-          {desk.requests.map(request => {
-            const clock = new ExpiryClock();
-            clock.sync(request.secondsLeft, receivedAt);
-            const msLeft = clock.msLeft(now);
-            const open = request.status === "claimed" && msLeft > 0;
-            const tone = expiryTone(msLeft);
-            const busy = working === request.id;
-            const line = paymentLine(request.payment, request.client.name);
-            const payment = request.payment ?? null;
-            const proof = request.status === "accepted" && payment !== null && payment.status === "proof";
-            const goesOn = payment === null || payment.status === "confirmed" || payment.status === "waived";
-            return (
-              <li key={request.id} data-testid="desk-row" data-status={request.status} data-payment={payment?.status ?? "none"} style={{ ...GF, padding: "14px 16px", borderRadius: 12, border: `1px solid ${E.line}`, background: "#FFFFFF" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-                  <strong style={{ fontSize: 16, color: E.ink, flex: "1 1 180px", minWidth: 0, overflowWrap: "anywhere" }}>{request.client.name}</strong>
-                  {request.client.identityVerified && <span style={{ fontSize: 12.5, color: E.ok, fontWeight: 700 }}>ID verified</span>}
-                  <StatusPill status={request.status} label={request.status === "claimed" ? "Waiting for you" : undefined} />
-                </div>
-                <p style={{ margin: "6px 0 0", fontSize: 13, color: E.quiet }}>
-                  Received {stampLabel(request.receivedAt)}
-                  {request.decidedAt !== null && <> · Answered {stampLabel(request.decidedAt)}</>}
-                </p>
-                {open && (
-                  <p data-testid="desk-countdown" data-tone={tone} style={{ margin: "6px 0 0", fontSize: 13.5, fontWeight: 700, color: tone === "red" ? "#B0182B" : tone === "amber" ? "#8A5A00" : E.skyDeep, display: "flex", gap: 6, alignItems: "center" }}>
-                    <Clock size={14} aria-hidden /> {countdownText(msLeft)} left · until {expiryLabel(request.expiresAt)}
-                  </p>
-                )}
-                {request.status === "accepted" && (
-                  <div style={{ marginTop: 8 }}>
-                    <p style={{ margin: 0, fontSize: 13.5, color: E.text }}>
-                      {goesOn
-                        ? "Accepted. The session can begin."
-                        : "Accepted. The request goes on once the fee is paid and you have confirmed it."}
-                    </p>
-                    {line !== null && (
-                      <p data-testid="desk-payment" style={{ margin: "4px 0 0", fontSize: 13.5, fontWeight: 700, color: payment?.status === "proof" ? E.maroon : E.text }}>{line}</p>
-                    )}
-                    {goesOn && (
-                      <div style={{ marginTop: 10 }}><SessionPanel invitationId={request.id} role="notary" /></div>
-                    )}
-                    {proof && (
-                      <div data-testid="desk-proof" style={{ marginTop: 8, padding: "10px 12px", borderRadius: 10, background: E.maroonWash, border: `1px solid ${E.maroonLine}` }}>
-                        <p style={{ margin: 0, fontSize: 13.5, color: E.text }}>
-                          Reference number: <strong data-testid="desk-reference" style={{ letterSpacing: "0.04em" }}>{payment.reference}</strong>
-                          {payment.proofAt !== null && <> · sent {stampLabel(payment.proofAt)}</>}
-                        </p>
-                        <p style={{ margin: "4px 0 0", fontSize: 12.5, color: E.quiet }}>Look for this transfer in your own bank or e-wallet app. Do not go by a screenshot.</p>
-                        {missing === request.id ? (
-                          <div style={{ marginTop: 10 }}>
-                            <label htmlFor={`missing-${request.id}`} style={labelStyle}>Note for the client (optional)</label>
-                            <input id={`missing-${request.id}`} value={reason} maxLength={120} onChange={event => { setReason(event.target.value); }} style={fieldStyle()} />
-                            <p style={hintStyle}>For example, &ldquo;No transfer with that reference yet.&rdquo; At most 120 characters.</p>
-                            <div style={buttonRow()}>
-                              <ActionButton kind="danger" icon={X} disabled={busy} onClick={() => { void notReceived(request); }}>{busy ? "Sending…" : "Tell the client it did not arrive"}</ActionButton>
-                              <ActionButton kind="secondary" disabled={busy} onClick={() => { setMissing(null); setReason(""); }}>Back</ActionButton>
-                            </div>
-                          </div>
-                        ) : (
-                          <div style={buttonRow()}>
-                            <ActionButton icon={Check} disabled={busy} onClick={() => { confirmPayment(request); }}>I received it</ActionButton>
-                            <ActionButton kind="secondary" disabled={busy} onClick={() => { setMissing(request.id); setReason(""); }}>Not received</ActionButton>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                )}
-                {open && (
-                  <div style={{ marginTop: 12 }}>
-                    {declining === request.id ? (
-                      <div>
-                        <label htmlFor={`reason-${request.id}`} style={{ display: "block", fontSize: 13.5, fontWeight: 700, marginBottom: 6 }}>Reason (optional)</label>
-                        <input id={`reason-${request.id}`} value={reason} maxLength={120} onChange={event => { setReason(event.target.value); }} style={fieldStyle()} />
-                        <p style={{ margin: "6px 0 0", fontSize: 12.5, color: E.quiet }}>At most 120 characters. The client is told you declined.</p>
-                        <div style={buttonRow()}>
-                          <ActionButton kind="danger" icon={X} disabled={busy} onClick={() => { void answer(request, "decline"); }}>{busy ? "Declining…" : "Decline the request"}</ActionButton>
-                          <ActionButton kind="secondary" disabled={busy} onClick={() => { setDeclining(null); setReason(""); }}>Keep it</ActionButton>
-                        </div>
-                      </div>
-                    ) : accepting === request.id ? (
-                      <div data-testid="accept-panel">
-                        <fieldset style={{ border: "none", margin: 0, padding: 0 }}>
-                          <legend style={labelStyle}>Your fee for this request</legend>
-                          <div role="radiogroup" aria-label="Fee choice" style={{ display: "grid", gap: 8, gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", margin: "0 0 12px" }}>
-                            {([
-                              { free: false, title: "Charge a fee", note: "The client pays you directly.", testId: "fee-mode-charge" },
-                              { free: true, title: "No fee", note: "Free of charge for this client.", testId: "no-fee" },
-                            ] as const).map(option => {
-                              const chosen = noFee === option.free;
-                              return (
-                                <label key={option.testId} style={{ ...GF, display: "flex", gap: 10, alignItems: "flex-start", padding: "12px 14px", borderRadius: 10, cursor: "pointer",
-                                  border: `2px solid ${chosen ? E.maroon : E.maroonLine}`, background: chosen ? "#FFF7F8" : "#FFFFFF" }}>
-                                  <input type="radio" name={`fee-mode-${request.id}`} data-testid={option.testId} checked={chosen}
-                                    onChange={() => { setNoFee(option.free); }} style={{ width: 18, height: 18, marginTop: 2, accentColor: E.maroon }} />
-                                  <span><strong style={{ display: "block", fontSize: 14.5, color: E.ink }}>{option.title}</strong>
-                                    <span style={{ fontSize: 13, color: E.quiet }}>{option.note}</span></span>
-                                </label>
-                              );
-                            })}
-                          </div>
-                        </fieldset>
-                        <label htmlFor={`fee-${request.id}`} style={labelStyle}>{noFee ? "Fee (PHP)" : "Amount to ask for (PHP)"}</label>
-                        <input
-                          id={`fee-${request.id}`} data-testid="fee-input" inputMode="decimal" autoComplete="off"
-                          value={noFee ? "No fee: free of charge" : fee} maxLength={noFee ? undefined : 12} readOnly={noFee} aria-readonly={noFee || undefined}
-                          placeholder="e.g. 1500" aria-invalid={feeProblem !== null ? true : undefined}
-                          onChange={event => { if (!noFee) setFee(event.target.value); }}
-                          style={noFee ? { ...fieldStyle(false), background: "#F3F4F6", color: E.quiet, cursor: "not-allowed", fontWeight: 600 } : fieldStyle(feeProblem !== null)}
-                        />
-                        {feeProblem !== null && <p role="alert" style={{ ...hintStyle, color: T.danger }}>{feeProblem}</p>}
-                        {noFee ? (
-                          <div data-testid="no-fee-notice" role="status" style={{ ...GF, margin: "12px 0 0", padding: "12px 14px", borderRadius: 10, background: "#EEF7F0", border: "1px solid #BFE0C8" }}>
-                            <strong style={{ display: "block", fontSize: 14, color: E.ok, marginBottom: 6 }}>You are accepting this request free of charge</strong>
-                            <ul style={{ margin: 0, paddingLeft: 18, fontSize: 13.5, color: E.text, lineHeight: 1.6 }}>
-                              <li>{request.client.name} will not be asked to pay, and will see that you are not charging a fee.</li>
-                              <li>There is no payment to confirm. The online session can begin as soon as you accept.</li>
-                              <li>Once you accept, the fee cannot be changed. To charge a fee instead, choose "Charge a fee" before you accept.</li>
-                              <li>You do not need a payment QR for a request without a fee.</li>
-                            </ul>
-                          </div>
-                        ) : (
-                          <>
-                            {!hasQr && (
-                              <p data-testid="accept-needs-qr" style={{ ...hintStyle, color: "#8A5A00" }}>
-                                A fee is paid to your payment QR, and you have not saved one.{" "}
-                                <Link to="/app/enotary/payment" style={{ color: "inherit", fontWeight: 700 }}>Save my payment QR</Link>
-                              </p>
-                            )}
-                            <p style={hintStyle}>
-                              The client pays you directly with their bank or e-wallet app, then sends you the reference number. You confirm from your own app.
-                              LAGDA never holds the money. The online session begins once the fee is settled.
-                            </p>
-                          </>
-                        )}
-                        <p data-testid="fee-summary" style={{ ...GF, margin: "12px 0 0", fontSize: 14, fontWeight: 700, color: E.ink }}>
-                          {noFee ? `You will accept this request without a fee.`
-                            : feeAmount === null ? "Enter an amount to see what the client will be asked to pay."
-                              : `You will ask ${request.client.name} to pay PHP ${formatPesos(feeAmount)}.`}
-                        </p>
-                        <div style={buttonRow()}>
-                          <ActionButton
-                            icon={Check} disabled={busy || feeAmount === null || (!noFee && !hasQr)}
-                            onClick={() => { void answer(request, "accept"); }}
-                          >
-                            {busy ? "Accepting…" : noFee ? "Accept without a fee" : "Accept the request"}
-                          </ActionButton>
-                          <ActionButton kind="secondary" disabled={busy} onClick={() => { setAccepting(null); setFee(""); setNoFee(false); }}>Not now</ActionButton>
-                        </div>
-                      </div>
-                    ) : (
-                      <div style={buttonRow(0)}>
-                        <ActionButton icon={Check} disabled={busy || !desk.canAccept} onClick={() => { setAccepting(request.id); setDeclining(null); setFee(""); setNoFee(false); setReason(""); }}>Accept</ActionButton>
-                        <ActionButton kind="secondary" disabled={busy || !desk.canAccept} onClick={() => { setDeclining(request.id); setAccepting(null); setReason(""); }}>Decline</ActionButton>
-                      </div>
-                    )}
-                    {!desk.canAccept && <p style={{ margin: "8px 0 0", fontSize: 12.5, color: E.quiet }}>You can answer once your application is approved.</p>}
-                  </div>
-                )}
-              </li>
-            );
-          })}
-        </ul>
+        <div data-testid="desk-list" style={{ display: "grid", gap: 22 }}>
+          {waiting.length > 0 && (
+            <DeskSection id="waiting" title="Waiting for you" count={waiting.length}>{waiting.map(renderRequest)}</DeskSection>
+          )}
+          {progress.length > 0 && (
+            <DeskSection id="progress" title="In progress" count={progress.length}>{progress.map(renderRequest)}</DeskSection>
+          )}
+          {completed.length > 0 && (
+            <DeskSection id="completed" title="Completed" count={completed.length}>
+              {completed.map(request => <CompletedRow key={request.id} request={request} />)}
+            </DeskSection>
+          )}
+          {closed.length > 0 && (
+            <DeskSection id="closed" title="Closed" count={closed.length}>{closed.map(renderRequest)}</DeskSection>
+          )}
+        </div>
       )}
       <p style={{ ...GF, margin: "18px 0 0", fontSize: 14, display: "flex", gap: 10, flexWrap: "wrap" }}>
+        <Link to="/app/enotary/register" data-testid="open-register" style={{ ...linkButton("secondary"), color: T.ink }}>Open the notarial register</Link>
         <Link to="/app/enotary/payment" style={{ ...linkButton("secondary"), color: T.ink }}>{hasQr ? "My payment QR" : "Save my payment QR"}</Link>
         <Link to="/app/enotary/apply" style={{ ...linkButton("secondary"), color: T.ink }}>{desk.applicationStatus === "none" ? "Apply to be a notary" : "My application"}</Link>
       </p>
       <OnrampNote />
-    </EnotaryFrame>
+    </EnotaryCaseFrame>
   );
+}
+
+/** /app/enotary/desk/:id: one request, in its own page. */
+export function NotaryRequestPage() {
+  const { id = "" } = useParams<{ id: string }>();
+  return <NotaryDeskPage focus={id} />;
 }

@@ -10,10 +10,11 @@ const TOKEN = "a".repeat(43);
 const ROUTER = readFileSync(resolve(__dirname, "../../../router.tsx"), "utf8");
 
 const PAGES: [string, string, string][] = [
-  ["/app/enotary/requests", "Your Notary Requests — LAGDA eNotary", "enotary/requests\""],
-  ["/app/enotary/requests/eni_1", "Notary Request — LAGDA eNotary", "enotary/requests/:id\""],
-  ["/app/enotary/apply", "Notary Application — LAGDA eNotary", "enotary/apply\""],
-  ["/app/enotary/desk", "Notary Desk — LAGDA eNotary", "enotary/desk\""],
+  ["/app/enotary/requests", "Your Notary Requests — LAGDA eNotary", "requests\""],
+  ["/app/enotary/requests/eni_1", "Notary Request — LAGDA eNotary", "requests/:id\""],
+  ["/app/enotary/apply", "Notary Application — LAGDA eNotary", "apply\""],
+  ["/app/enotary/desk", "Notary Desk — LAGDA eNotary", "desk\""],
+  ["/app/enotary/desk/eni_1", "Notary Request — LAGDA eNotary", "desk/:id\""],
   ["/app/admin/notary-applications", "Review Notaries — LAGDA", "admin/notary-applications\""],
   ["/app/admin/notary-applications/u1", "Review a Notary — LAGDA", "admin/notary-applications/:userId\""],
   [`/enotary/invite/${TOKEN}`, "A Request for You — LAGDA eNotary", "/enotary/invite/:token\""],
@@ -31,6 +32,16 @@ describe("the notary on-ramp's routes", () => {
       expect(meta?.isIndexable, path).toBe(false);
       expect(meta?.requiresAuth, path).toBe(path.startsWith("/app/"));
     }
+  });
+
+  it("opens the request, desk, application, payment QR and room pages in the eNotary shell, not the app's", () => {
+    const from = ROUTER.indexOf('path: "/app/enotary",' + String.fromCharCode(10) + '    errorElement');
+    expect(from).toBeGreaterThan(-1);
+    const head = ROUTER.slice(from, from + 900);
+    expect(head).toContain("<EnotaryLayout />");
+    for (const child of ['"requests"', '"requests/:id"', '"apply"', '"desk"', '"desk/:id"', '"payment"', '"room/:invitationId"']) expect(head).toContain(`path: ${child}`);
+    // And they are no longer children of the app layout.
+    for (const old of ['path: "enotary/desk"', 'path: "enotary/room/:invitationId"', 'path: "enotary/requests"']) expect(ROUTER).not.toContain(old);
   });
 
   it("does not shadow the existing eNotary routes", () => {

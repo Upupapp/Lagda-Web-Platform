@@ -5,6 +5,7 @@ import { PublicLayout } from "./app/layouts/PublicLayout";
 import { AuthLayout } from "./app/layouts/AuthLayout";
 import { CreateAccountLayout } from "./app/layouts/CreateAccountLayout";
 import { PlatformLayout } from "./app/layouts/PlatformLayout";
+import { EnotaryLayout } from "./app/layouts/EnotaryLayout";
 import { PageMetaRoute } from "./app/hooks/usePageMeta";
 import { RecipientLayout } from "./app/layouts/RecipientLayout";
 import { NotFound } from "./app/pages/public/NotFound";
@@ -1057,6 +1058,11 @@ const NotaryDeskPage = lazy(() =>
     default: m.NotaryDeskPage,
   })),
 );
+const NotaryRequestPage = lazy(() =>
+  import("./app/pages/platform/enotary/notary/NotaryDeskPage").then((m) => ({
+    default: m.NotaryRequestPage,
+  })),
+);
 const RoomPage = lazy(() =>
   import("./app/pages/platform/enotary/room/RoomPage").then((m) => ({
     default: m.RoomPage,
@@ -1070,6 +1076,11 @@ const WordingDraftPage = lazy(() =>
 const VerifyNotarizedPage = lazy(() =>
   import("./app/pages/public/enotary/VerifyNotarizedPage").then((m) => ({
     default: m.VerifyNotarizedPage,
+  })),
+);
+const NotaryRegisterPage = lazy(() =>
+  import("./app/pages/platform/enotary/notary/NotaryRegisterPage").then((m) => ({
+    default: m.NotaryRegisterPage,
   })),
 );
 const NotaryPaymentPage = lazy(() =>
@@ -2859,12 +2870,6 @@ export const router = createBrowserRouter([
       { path: "enotary/session", element: <Suspense fallback={null}><EnotarySessionPage /></Suspense> },
       // Notary on-ramp (phase 1). Each page asks the server whether it is
       // offered and says "not available" on a 404.
-      { path: "enotary/requests", element: <Suspense fallback={null}><ClientRequestsPage /></Suspense> },
-      { path: "enotary/requests/:id", element: <Suspense fallback={null}><ClientRequestPage /></Suspense> },
-      { path: "enotary/apply", element: <Suspense fallback={null}><NotaryApplyPage /></Suspense> },
-      { path: "enotary/desk", element: <Suspense fallback={null}><NotaryDeskPage /></Suspense> },
-      { path: "enotary/payment", element: <Suspense fallback={null}><NotaryPaymentPage /></Suspense> },
-      { path: "enotary/room/:invitationId", element: <Suspense fallback={null}><RoomPage /></Suspense> },
       { path: "admin/notary-applications", element: <Suspense fallback={null}><AdminNotaryApplicationsPage /></Suspense> },
       { path: "admin/notary-applications/:userId", element: <Suspense fallback={null}><AdminNotaryApplicationPage /></Suspense> },
 
@@ -2895,6 +2900,26 @@ export const router = createBrowserRouter([
           </Suspense>
         ),
       },
+    ],
+  },
+
+  // ── A request to a notary: its own shell, away from the app's sidebar ──────────
+  // The client's requests, the notary's desk, application and payment QR, and the room all open in the
+  // eNotary shell (top bar, Menu, footer), as in the eNotary pages of 13 October. The shell guards sign-in
+  // exactly as PlatformLayout does.
+  {
+    path: "/app/enotary",
+    errorElement: <PlatformRouteError />,
+    element: <EnotaryLayout />,
+    children: [
+      { path: "requests", element: <Suspense fallback={null}><ClientRequestsPage /></Suspense> },
+      { path: "requests/:id", element: <Suspense fallback={null}><ClientRequestPage /></Suspense> },
+      { path: "apply", element: <Suspense fallback={null}><NotaryApplyPage /></Suspense> },
+      { path: "desk", element: <Suspense fallback={null}><NotaryDeskPage /></Suspense> },
+      { path: "desk/:id", element: <Suspense fallback={null}><NotaryRequestPage /></Suspense> },
+      { path: "register", element: <Suspense fallback={null}><NotaryRegisterPage /></Suspense> },
+      { path: "payment", element: <Suspense fallback={null}><NotaryPaymentPage /></Suspense> },
+      { path: "room/:invitationId", element: <Suspense fallback={null}><RoomPage /></Suspense> },
     ],
   },
 

@@ -21,7 +21,7 @@ import {
   Fingerprint, KeyRound, UserPlus, UserCheck, UserX, Archive, ArchiveRestore, Search,
   Crown, FilePen, LayoutTemplate, Rocket, Link2, Users, UserCog, FileX, Save, Inbox,
   Network, ArrowLeftRight, Ban, RotateCcw, Stamp, FileUp, Video, QrCode, Banknote, BadgeCheck, ClipboardCheck,
-  PhoneOff, FileCheck, ScrollText, Mail,
+  PhoneOff, FileCheck, ScrollText, Mail, Package,
 } from "lucide-react";
 import { runProcess, type ProcessingOptions } from "../services/processing.service";
 
@@ -137,8 +137,13 @@ const SCREENS = {
   "enotary-document-replace": { tag: "Notary session", icon: FileUp, message: () => "Replacing your document…", detail: "The notary sees the new file once it is in." },
   "enotary-room-open": { tag: "Notary session", icon: Video, message: () => "Opening the room…", detail: "The client can join as soon as it is open." },
   "enotary-consent": { tag: "Notary session", icon: ClipboardCheck, message: () => "Recording your confirmation…", detail: "The notary can then record the act." },
+  "enotary-finalize": { tag: "Notary session", icon: FileCheck, message: () => "Finalizing your document…", detail: "It can no longer be replaced. The notary is told." },
+  "enotary-identity": { tag: "Notary session", icon: ClipboardCheck, message: () => "Recording that you confirmed their identity…", detail: "This goes into the audit trail." },
+  "enotary-act": { tag: "Notary session", icon: Stamp, message: () => "Sending the act and fee to the client…", detail: "The client approves it before any payment." },
+  "enotary-approve": { tag: "Notary session", icon: ClipboardCheck, message: () => "Recording your approval…", detail: "A fee is opened for payment to the notary." },
   "enotary-notarize": { tag: "Notary session", icon: Stamp, message: () => "Recording the notarial act…", detail: "Sealing the document and writing the register entry. This cannot be undone." },
   "enotary-session-cancel": { tag: "Notary session", icon: PhoneOff, message: () => "Calling off the session…", detail: "Nothing is notarized. The other person is told." },
+  "enotary-copy-stage": { tag: "Certified copy", icon: Package, message: () => "Updating the copy's journey…", detail: "The client sees the new step at once." },
   "enotary-copy-request": { tag: "Certified copy", icon: FileCheck, message: () => "Asking for your certified copy…", detail: "The notary is told and will answer in the session." },
   "enotary-application-submit": { tag: "Notary application", icon: ScrollText, message: () => "Sending your application…", detail: "A LAGDA reviewer will look at it. You can withdraw it while it is open." },
   "enotary-application-withdraw": { tag: "Notary application", icon: Undo2, message: () => "Withdrawing your application…", detail: "You can start a new one at any time." },

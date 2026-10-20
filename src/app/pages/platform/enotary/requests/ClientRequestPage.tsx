@@ -10,18 +10,20 @@
 // page keeps asking while a fee is still to be paid or confirmed.
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router";
-import { ArrowLeft, Check, Copy, Hourglass, Mail, RefreshCw, Share2, ShieldCheck, XCircle } from "lucide-react";
-import { ActionButton, ActionRow, GF, Notice, T, TAP } from "../../../../components/system/design-system";
+import { useNavigate, useParams } from "react-router";
+import { Copy, Hourglass, Mail, RefreshCw, Share2, ShieldCheck, XCircle } from "lucide-react";
+import { ActionButton, ActionRow, GF, Notice } from "../../../../components/system/design-system";
 import { useConfirm } from "../../../../components/platform/ConfirmDialog";
 import { USE_REAL_BACKEND } from "../../../../services/backend-flag";
 import {
   describeInvitationError, invitationIsOpen, realEnotaryInvitationsService, type Invitation,
 } from "../../../../services/real/enotary-invitations.service";
-import { E, EnotaryFrame, EnotaryHeading, SERIF } from "../EnotaryChrome";
+import { E, SERIF } from "../EnotaryChrome";
+import { RequestTrail } from "../RequestTrail";
+import { CLIENT_STEPS, EnotaryCaseFrame, PartyCard, type ClientStepId, type PartyRow, type TrailEntry } from "../CaseFrame";
 import { EnotaryLoadError, EnotaryLoading, EnotaryNotOffered } from "../EnotaryStates";
 import {
-  OnrampNote, Panel, PanelTitle, StatusPill, TextField, bodyText, fieldStyle, useNow,
+  OnrampNote, Panel, PanelTitle, TextField, bodyText, fieldStyle, useNow,
 } from "../onramp-ui";
 import { QrCard } from "./QrCard";
 import { SessionPanel } from "../room/SessionPanel";
@@ -88,6 +90,65 @@ function noticeFor(invitation: Invitation): { tone: "info" | "success" | "warn";
       return { tone: "warn", text: "You cancelled this request and its link no longer works. Renew it for a new link and a fresh time limit." };
   }
 }
+
+/** Where the client is among the eight steps, from the request's own state. */
+export function clientStepOf(invitation: Invitation): ClientStepId {
+  switch (invitation.status) {
+    case "accepted": return "call";
+    default: return "joins";
+  }
+}
+
+function titleFor(invitation: Invitation): string {
+  const who = `Atty. ${invitation.notary.name}`;
+  switch (invitation.status) {
+    case "awaiting": return `Waiting for ${who} to join`;
+    case "claimed": return `${who} has your request`;
+    case "accepted": return `${who} accepted your request`;
+    case "declined": return `${who} declined this request`;
+    case "expired": return "This request ran out of time";
+    case "revoked": return "You cancelled this request";
+  }
+}
+
+function leadFor(invitation: Invitation): string {
+  const who = `Atty. ${invitation.notary.name}`;
+  switch (invitation.status) {
+    case "awaiting": case "claimed":
+      return `Your identity is verified. Your request has been sent to ${who}. When they accept, you meet them on a video call and choose the document together.`;
+    case "accepted": return `${who} will meet you in a private room on a video call. You choose the document together.`;
+    case "declined": return "You can ask another notary from the Notary Directory.";
+    default: return "Renew the request for a new link and a fresh time limit.";
+  }
+}
+
+const NEXT_STEPS: readonly { title: string; text: string }[] = [
+  { title: "The lawyer accepts.", text: "You are told here, on this page." },
+  { title: "You meet on a video call.", text: "On the call, the notary confirms it is you, and what you need notarized." },
+  { title: "You choose the document together.", text: "From Completed, Shared Documents, or a file you upload." },
+  { title: "The lawyer confirms the notarial act and the fee.", text: "You are not charged before that." },
+  { title: "The document is notarized.", text: "You preview it, download it, and may ask for a Certified True Copy." },
+];
+
+/** The notary's side of the story, as the entries of the audit trail. */
+function trailOf(invitation: Invitation): TrailEntry[] {
+  const notaryCodes = new Set(["claimed", "accepted", "declined"]);
+  return invitation.timeline.map(entry => {
+    const by = notaryCodes.has(entry.code) ? "notary" : "client";
+    return { at: stampLabel(entry.at), text: entry.text, by, actor: by === "notary" ? `Atty. ${invitation.notary.name}` : "You" } satisfies TrailEntry;
+  });
+}
+
+const statusOf = (invitation: Invitation): { label: string; tone: "wait" | "ok" | "info" | "end" } => {
+  switch (invitation.status) {
+    case "awaiting": return { label: "Waiting for the notary", tone: "wait" };
+    case "claimed": return { label: "Notary verified", tone: "wait" };
+    case "accepted": return { label: "Accepted", tone: "ok" };
+    case "declined": return { label: "Declined", tone: "end" };
+    case "expired": return { label: "Expired", tone: "end" };
+    case "revoked": return { label: "Cancelled", tone: "end" };
+  }
+};
 
 export function ClientRequestPage() {
   const { id = "" } = useParams<{ id: string }>();
@@ -216,25 +277,39 @@ export function ClientRequestPage() {
 
   const canSetEmail = invitation.status === "awaiting" && !invitation.notary.emailOnRecord;
 
+  const place = [invitation.notary.city, invitation.notary.province].filter(part => part !== "").join(", ");
+  const rows: PartyRow[] = [
+    ...(place !== "" ? [{ label: "Place", value: place }] : []),
+    { label: "Your identity", value: "Verified in LAGDA", testId: "party-identity" },
+    ...(invitation.payment !== null && invitation.payment !== undefined ? [{ label: "Fee", value: `PHP ${(invitation.payment.amountCentavos / 100).toLocaleString("en-PH", { minimumFractionDigits: 2 })}` }] : []),
+    { label: "Received by LAGDA", value: stampLabel(invitation.createdAt ?? invitation.expiresAt) },
+  ];
+  const trail = trailOf(invitation);
+
   return (
-    <EnotaryFrame
-      wide eyebrow="Your request" badge="Client" tone="client"
-      description={`${invitation.notary.name}${invitation.notary.firm !== "" ? `, ${invitation.notary.firm}` : ""}`}
+    <EnotaryCaseFrame
+      tone="client" eyebrow={`eNotary request \u2022 Atty. ${invitation.notary.name}`} title={titleFor(invitation)} lead={leadFor(invitation)}
+      steps={CLIENT_STEPS} current={clientStepOf(invitation)} back={{ to: "/app/enotary/requests", label: "All requests" }}
+      party={<PartyCard
+        name={`Atty. ${invitation.notary.name}`} role={`Notary Public${invitation.notary.firm !== "" ? ` \u00B7 ${invitation.notary.firm}` : ""}`}
+        tone="attorney" status={statusOf(invitation)} rows={rows} auditCount={trail.length} />}
+      trail={<RequestTrail invitationId={invitation.id} tone="client" fallback={trail} refreshKey={invitation.status} />}
     >
       {confirmDialog}
-      <p style={{ ...GF, margin: "0 0 14px" }}>
-        <Link to="/app/enotary/requests" style={{ display: "inline-flex", alignItems: "center", gap: 6, minHeight: TAP, color: T.azureDeep, fontWeight: 700, textDecoration: "none", fontSize: 14 }}>
-          <ArrowLeft size={16} aria-hidden /> All requests
-        </Link>
-      </p>
 
-      <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap", marginBottom: 14 }}>
-        <EnotaryHeading>Request to Atty. {invitation.notary.name}</EnotaryHeading>
-        <StatusPill status={invitation.status} />
-      </div>
-      <p style={{ ...bodyText, color: E.quiet, marginTop: -4 }}>
-        {[invitation.notary.city, invitation.notary.province].filter(part => part !== "").join(", ")}
-      </p>
+      {(invitation.status === "awaiting" || invitation.status === "claimed") && (
+        <Panel testId="next-steps">
+          <PanelTitle>What happens next</PanelTitle>
+          <ol style={{ listStyle: "none", margin: 0, padding: 0 }}>
+            {NEXT_STEPS.map((step, i) => (
+              <li key={step.title} style={{ ...GF, display: "flex", gap: 12, padding: "10px 0", borderTop: i === 0 ? "none" : `1px solid ${E.line}`, fontSize: 14.5, color: E.text }}>
+                <span aria-hidden="true" style={{ flex: "0 0 auto", width: 28, height: 28, borderRadius: 999, display: "grid", placeItems: "center", background: E.skyWash, color: E.skyDeep, fontWeight: 800, fontSize: 13 }}>{i + 1}</span>
+                <span><strong style={{ color: E.ink }}>{step.title}</strong> {step.text}</span>
+              </li>
+            ))}
+          </ol>
+        </Panel>
+      )}
 
       {notice !== null && (
         <Notice icon={invitation.status === "accepted" ? ShieldCheck : invitation.status === "awaiting" || invitation.status === "claimed" ? Hourglass : XCircle} tone={notice.tone}>
@@ -298,23 +373,6 @@ export function ClientRequestPage() {
         </Panel>
       )}
 
-      {invitation.timeline.length > 0 && (
-        <Panel testId="timeline">
-          <PanelTitle>What happened</PanelTitle>
-          <ol style={{ listStyle: "none", margin: 0, padding: 0 }}>
-            {invitation.timeline.map((entry, i) => (
-              <li key={`${entry.at}-${entry.code}-${String(i)}`} style={{ ...GF, display: "flex", gap: 10, padding: "7px 0", borderTop: i === 0 ? "none" : `1px solid ${E.line}`, fontSize: 14, color: E.text }}>
-                <Check size={16} aria-hidden style={{ color: E.sky, flex: "0 0 auto", marginTop: 3 }} />
-                <span style={{ minWidth: 0 }}>
-                  {entry.text}
-                  <small style={{ display: "block", color: E.quiet, fontSize: 12.5 }}>{stampLabel(entry.at)}</small>
-                </span>
-              </li>
-            ))}
-          </ol>
-        </Panel>
-      )}
-
       {open && (
         <ActionRow align="end">
           <ActionButton kind="danger" disabled={busy !== null} onClick={revoke}>
@@ -330,6 +388,6 @@ export function ClientRequestPage() {
         </ActionRow>
       )}
       <OnrampNote />
-    </EnotaryFrame>
+    </EnotaryCaseFrame>
   );
 }

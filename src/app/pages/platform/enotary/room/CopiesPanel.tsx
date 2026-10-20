@@ -17,6 +17,7 @@ import { referenceProblem } from "../payments/ClientPaymentPanel";
 import { stampLabel } from "../requests/expiry";
 import { saveBlob } from "./room-bits";
 import { withProcess } from "../../../../config/process-screens";
+import { CopyJourney, nextStage } from "./CopyJourney";
 
 export const COPIES_POLL_MS = 8_000;
 const STATUS_WORDS: Record<CertifiedCopy["status"], string> = {
@@ -129,6 +130,7 @@ function CopyCard({ copy, role, onChange, onFail }: { copy: CertifiedCopy; role:
       <p data-testid="copy-status" style={{ margin: "0 0 8px", fontSize: 13.5, color: E.quiet }}>
         {STATUS_WORDS[copy.status]}{amount !== null && copy.status !== "requested" ? ` · ${amount}` : ""} · {stampLabel(copy.updatedAt)}
       </p>
+      {copy.mode === "physical" && copy.status !== "declined" && copy.status !== "cancelled" && <CopyJourney copy={copy} />}
       {copy.delivery !== null && role === "notary" && (
         <p style={{ ...bodyText, fontSize: 13.5 }} data-testid="copy-delivery">Send to {copy.delivery.name}, {copy.delivery.phone}, {copy.delivery.address}</p>
       )}
@@ -161,6 +163,23 @@ function CopyCard({ copy, role, onChange, onFail }: { copy: CertifiedCopy; role:
         </>
       )}
       {role === "notary" && copy.status === "paid" && <NotaryIssue copy={copy} busy={busy !== null} run={run} />}
+      {role === "notary" && copy.mode === "physical" && (copy.status === "paid" || copy.status === "fulfilled") && (
+        <NotaryStage copy={copy} busy={busy !== null} run={run} />
+      )}
+    </div>
+  );
+}
+
+/** The one next step of a printed copy's journey, as a button: prepared, then in transit, out for delivery, delivered. */
+function NotaryStage({ copy, busy, run }: { copy: CertifiedCopy; busy: boolean; run: (name: string, work: () => Promise<CertifiedCopy>) => Promise<void> }) {
+  const next = nextStage(copy);
+  if (next === null) return null;
+  return (
+    <div data-testid="copy-stage" style={{ marginTop: 10 }}>
+      <ActionButton kind={copy.status === "paid" ? "secondary" : "primary"} icon={Package} disabled={busy}
+        onClick={() => { void run("stage", () => withProcess("enotary-copy-stage", "", () => realEnotarySessionsService.setStage(copy.id, next.stage))); }}>
+        {busy ? "Updating…" : next.action}
+      </ActionButton>
     </div>
   );
 }
@@ -227,7 +246,10 @@ function FulfilledBlock({ copy, role, busy, onReceived }: { copy: CertifiedCopy;
       {copy.shipment !== null && <p style={bodyText} data-testid="copy-shipment">Sent by {copy.shipment.courier}, tracking <strong>{copy.shipment.trackingNo}</strong>.</p>}
       {problem !== null && <Notice icon={ShieldAlert} tone="danger">{problem}</Notice>}
       {role === "client" && copy.mode === "physical" && (
-        <div style={{ marginTop: 8 }}><ActionButton icon={Check} disabled={busy} onClick={() => { void onReceived(); }}>I received them</ActionButton></div>
+        <div style={{ marginTop: 8 }}>
+          {copy.stage === "delivered" && <p style={{ ...bodyText, fontSize: 13.5 }} data-testid="copy-delivered">The courier delivered it. Confirm only when it is in your hands.</p>}
+          <ActionButton icon={Check} disabled={busy} onClick={() => { void onReceived(); }}>I received them</ActionButton>
+        </div>
       )}
     </div>
   );

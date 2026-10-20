@@ -24,6 +24,13 @@ export const SERIF = "Tinos, 'Times New Roman', Times, serif";
 
 export type EnotaryTone = "client" | "attorney" | "neutral";
 
+const RAIL_STYLES = `
+  .eno-rail { display: flex; margin: 0 0 20px; padding: 0; list-style: none; background: ${E.paper}; border: 1px solid ${E.line}; border-radius: 10px; overflow-x: auto; scrollbar-width: thin; }
+  .eno-rail li { flex: 1 1 0; min-width: 0; display: flex; align-items: center; gap: 9px; padding: 11px 9px; border-right: 1px solid ${E.line}; border-bottom: 3px solid transparent; box-sizing: border-box; }
+  .eno-rail li:last-child { border-right: 0; }
+  @media (max-width: 860px) { .eno-rail li { flex: 1 0 auto; min-width: 104px; } }
+`;
+
 const STYLES = `
   .eno-page { background: ${E.ground}; min-height: 100%; }
   .eno-hero { position: relative; overflow: hidden; background: linear-gradient(180deg, #E6F1FB 0%, #F1F7FD 100%); border-bottom: 1px solid ${E.line}; }
@@ -32,10 +39,6 @@ const STYLES = `
   .eno-seal { flex: 0 0 auto; width: clamp(104px, 13vw, 138px); height: auto; filter: drop-shadow(0 10px 18px rgba(111,22,50,0.28)); }
   .eno-card { animation: eno-in 260ms ease both; }
   @keyframes eno-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
-  .eno-rail { display: flex; margin: 0 0 20px; padding: 0; list-style: none; background: ${E.paper}; border: 1px solid ${E.line}; border-radius: 10px; overflow-x: auto; scrollbar-width: thin; }
-  .eno-rail li { flex: 1 1 0; min-width: 0; display: flex; align-items: center; gap: 9px; padding: 11px 9px; border-right: 1px solid ${E.line}; border-bottom: 3px solid transparent; box-sizing: border-box; }
-  .eno-rail li:last-child { border-right: 0; }
-  @media (max-width: 860px) { .eno-rail li { flex: 1 0 auto; min-width: 104px; } }
   @media (max-width: 640px) { .eno-seal { display: none; } }
   @media (prefers-reduced-motion: reduce) { .eno-card { animation: none; } }
 `;
@@ -169,6 +172,8 @@ export function EnotaryRail({ steps, current, label }: {
 }) {
   const index = steps.findIndex(step => step.id === current);
   return (
+    <>
+    <style>{RAIL_STYLES}</style>
     <ol className="eno-rail" aria-label={label}>
       {steps.map((step, i) => {
         const done = i < index;
@@ -196,5 +201,6 @@ export function EnotaryRail({ steps, current, label }: {
         );
       })}
     </ol>
+    </>
   );
 }

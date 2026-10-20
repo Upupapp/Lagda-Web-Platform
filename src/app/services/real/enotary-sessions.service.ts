@@ -18,12 +18,28 @@ import { errorCode, errorStatus } from "./enotary-invitations.service";
 export type SessionStatus = "preparing" | "live" | "notarized" | "cancelled";
 export type SessionRole = "client" | "notary";
 export type ActType = "acknowledgment" | "jurat" | "signature_witnessing";
-export type NotarizeBlock = "not_live" | "no_document" | "no_consent" | "client_absent";
+export type NotarizeBlock =
+  | "not_live" | "no_document" | "not_final" | "no_identity" | "no_act" | "not_approved" | "unpaid" | "no_consent" | "client_absent";
+export type SessionPaymentStatus = "awaiting" | "proof" | "confirmed" | "not_received" | "waived";
 export type CtcStatus = "requested" | "quoted" | "payment_sent" | "paid" | "fulfilled" | "received" | "declined" | "cancelled";
 export type CtcMode = "digital" | "physical";
 
+/** What the notary stated, and whether the client has approved it. */
+export interface SessionStatement {
+  actType: ActType; actTypeLabel: string; feeCentavos: number; note: string; statedAt: string; approvedAt: string | null;
+}
+
+/** The fee as the room shows it: the client's carries the notary's QR, the notary's does not. */
+export interface SessionPayment {
+  status: SessionPaymentStatus; amountCentavos: number; reference: string | null; attemptsLeft: number;
+  proofAt: string | null; decidedAt: string | null; note: string | null;
+  payee: { name: string; city: string | null } | null; qrPayload: string | null;
+}
+
 export interface Session {
   id: string;
+  /** The number of the request: EN-2026-000004. Absent from an older server. */
+  reference?: string | null;
   invitationId: string;
   role: SessionRole;
   status: SessionStatus;
@@ -37,11 +53,19 @@ export interface Session {
   attestations: { key: string; text: string }[];
   presence: { client: boolean; notary: boolean };
   notarizeBlock: NotarizeBlock | null;
-  act: { type: ActType; typeLabel: string; description: string; place: string; at: string; registerRef: string; notaryName: string } | null;
+  /** Absent from an older server: the order before the 13 October pages. */
+  finalizedAt?: string | null;
+  identityConfirmedAt?: string | null;
+  statement?: SessionStatement | null;
+  payment?: SessionPayment | null;
+  act: { type: ActType; typeLabel: string; description: string; place: string; at: string; registerRef: string; docNo?: number; pageNo?: number; bookNo?: string; series?: number; notaryName: string } | null;
   notarized: { size: number; sha256: string; originalSha256: string; code: string; verifyUrl: string } | null;
   cancelledBy: SessionRole | null;
   pilotNotice: string;
 }
+
+export interface AuditEntry { at: string; code: string; text: string; by: "client" | "notary" | "system"; actor: string }
+export interface AuditTrail { reference: string | null; clientName: string; notaryName: string; role: SessionRole; entries: AuditEntry[] }
 
 export interface SessionLookup {
   session: Session | null;
@@ -53,6 +77,21 @@ export interface RoomMessage { id: string; role: SessionRole; body: string; sent
 export type SignalKind = "join" | "offer" | "answer" | "candidate" | "hangup";
 export interface RoomSignal { seq: number; from: SessionRole; kind: SignalKind; connectionId: string; payload: string }
 export interface IceServer { urls: string | string[]; username?: string; credential?: string }
+
+export type ShipmentStage = "prepared" | "handed" | "in_transit" | "out_for_delivery" | "delivered";
+
+/** One notarized document in the notary's register. */
+export interface RegisterEntry {
+  sessionId: string; invitationId: string; reference: string | null;
+  docNo: number; pageNo: number; bookNo: string; series: number; registerRef: string;
+  notarizedAt: string; clientName: string; documentName: string; actLabel: string; feeCentavos: number | null;
+  copy: { status: CtcStatus; mode: CtcMode; stage: ShipmentStage | null; trackingNo: string | null } | null;
+}
+
+export interface NotaryRegister {
+  notaryName: string; commissionNo: string | null; commissionValidUntil: string | null; place: string | null;
+  entries: RegisterEntry[];
+}
 
 export interface CertifiedCopy {
   id: string;
@@ -66,6 +105,9 @@ export interface CertifiedCopy {
   qrPayload: string | null;
   reference: string | null;
   shipment: { courier: string; trackingNo: string } | null;
+  /** Where a printed copy is on its way. Absent from an older server. */
+  stage?: ShipmentStage | null;
+  stageAt?: string | null;
   hasFile: boolean;
   verificationCode: string | null;
   note: string | null;
@@ -146,6 +188,36 @@ class RealEnotarySessionsService {
     return (await apiRequest<{ session: Session }>(`/me/enotary/sessions/${id(sessionId)}/consent`, { method: "POST" })).session;
   }
 
+  /** The client finalizes the document: it cannot be replaced after this. */
+  async finalize(sessionId: string): Promise<Session> {
+    return (await apiRequest<{ session: Session }>(`/me/enotary/sessions/${id(sessionId)}/finalize`, { method: "POST" })).session;
+  }
+
+  /** The notary confirms, on the call, that the person in the room is the client LAGDA verified. */
+  async confirmIdentity(sessionId: string): Promise<Session> {
+    return (await apiRequest<{ session: Session }>(`/me/enotary/sessions/${id(sessionId)}/identity`, { method: "POST" })).session;
+  }
+
+  /** The notary states the act and the fee (0 for none). 409 `payment_profile_required` for a fee without a saved QR. */
+  async stateAct(sessionId: string, input: { actType: ActType; feeCentavos: number; note: string }): Promise<Session> {
+    return (await apiRequest<{ session: Session }>(`/me/enotary/sessions/${id(sessionId)}/act`, { method: "POST", body: input })).session;
+  }
+
+  /** The client approves the act and the fee, and so confirms they act freely. A fee opens its payment. */
+  async approve(sessionId: string): Promise<Session> {
+    return (await apiRequest<{ session: Session }>(`/me/enotary/sessions/${id(sessionId)}/approve`, { method: "POST" })).session;
+  }
+
+  /** Everything that happened to the request, from both sides. */
+  async auditTrail(invitationId: string): Promise<AuditTrail> {
+    return apiRequest<AuditTrail>(`/me/enotary/requests/${id(invitationId)}/audit`);
+  }
+
+  /** The trail as a PDF. */
+  async auditPdf(invitationId: string): Promise<Blob> {
+    return fetchPdf(`/me/enotary/requests/${id(invitationId)}/audit.pdf`);
+  }
+
   async cancel(sessionId: string): Promise<Session> {
     return (await apiRequest<{ session: Session }>(`/me/enotary/sessions/${id(sessionId)}/cancel`, { method: "POST" })).session;
   }
@@ -208,6 +280,13 @@ class RealEnotarySessionsService {
   }
   fulfil(ctcId: string, shipment?: { courier: string; trackingNo: string }) { return this.act(ctcId, "fulfil", shipment ?? {}); }
   received(ctcId: string) { return this.act(ctcId, "received"); }
+  /** The notary moves a printed copy on: prepared, in transit, out for delivery, delivered. */
+  setStage(ctcId: string, stage: Exclude<ShipmentStage, "handed">) { return this.act(ctcId, "stage", { stage }); }
+
+  /** The notary's register, in the order of its entries. */
+  async register(): Promise<NotaryRegister> {
+    return apiRequest<NotaryRegister>("/me/enotary/register");
+  }
   cancelCopy(ctcId: string) { return this.act(ctcId, "cancel"); }
 
   /** Public, no session. Anything the server does not recognise is `unknown`. */
@@ -245,6 +324,11 @@ export async function sha256Hex(blob: Blob): Promise<string> {
 export const BLOCK_WORDS: Record<NotarizeBlock, string> = {
   not_live: "The room is not open yet.",
   no_document: "There is no document in the room.",
+  not_final: "The client has not finalized the document yet.",
+  no_identity: "Confirm the client's identity on the call first.",
+  no_act: "State the notarial act and your fee first.",
+  not_approved: "The client has not approved the act and the fee yet.",
+  unpaid: "The fee is not settled yet: the client has not paid, or you have not confirmed the payment.",
   no_consent: "The client has not yet confirmed that they are signing freely.",
   client_absent: "The client has not been in the room in the last two minutes.",
 };

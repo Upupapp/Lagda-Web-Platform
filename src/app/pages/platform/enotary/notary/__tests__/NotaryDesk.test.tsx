@@ -62,7 +62,7 @@ const incomingOf = (over: Partial<DeskIncoming> = {}): DeskIncoming => ({
 describe("requests sent to the notary's own listing", () => {
   it("are listed as new, with the client's name, a count and the time left, before the notary has opened any link", async () => {
     await open(deskOf({ requests: [], incoming: [incomingOf()] }));
-    expect(screen.getByTestId("tally-new")).toHaveTextContent("1");
+    expect(screen.getByTestId("tally-waiting")).toHaveTextContent("1");
     const rows = screen.getAllByTestId("desk-new-row");
     expect(rows).toHaveLength(1);
     expect(rows[0]).toHaveTextContent("Rosa Villanueva");
@@ -99,19 +99,20 @@ describe("requests sent to the notary's own listing", () => {
   it("work against an older server that sends no list", async () => {
     await open(deskOf());
     expect(screen.queryByTestId("desk-new")).toBeNull();
-    expect(screen.getByTestId("tally-new")).toHaveTextContent("0");
+    expect(screen.getByTestId("tally-waiting")).toHaveTextContent("1");
   });
 });
 
 describe("the desk", () => {
-  it("counts waiting, accepted and closed requests and lists each with the client's name", async () => {
+  it("counts waiting, in progress and completed requests, and lists each in its own section", async () => {
     await open(deskOf({ requests: [
       request({ id: "a" }), request({ id: "b", status: "accepted", client: { name: "Cara Tan", identityVerified: true }, decidedAt: "2026-10-17T00:30:00.000Z" }),
       request({ id: "c", status: "declined", client: { name: "Dan Uy", identityVerified: true } }), request({ id: "d", status: "expired", client: { name: "Eve Go", identityVerified: true } }),
     ] }));
     expect(screen.getByTestId("tally-waiting")).toHaveTextContent("1");
-    expect(screen.getByTestId("tally-accepted")).toHaveTextContent("1");
-    expect(screen.getByTestId("tally-closed")).toHaveTextContent("2");
+    expect(screen.getByTestId("tally-progress")).toHaveTextContent("1");
+    expect(screen.getByTestId("tally-completed")).toHaveTextContent("0");
+    expect(within(screen.getByTestId("desk-section-closed")).getAllByTestId("desk-row")).toHaveLength(2);
     const rows = screen.getAllByTestId("desk-row");
     expect(rows.map(row => row.getAttribute("data-status"))).toEqual(["claimed", "accepted", "declined", "expired"]);
     expect(rows[0]).toHaveTextContent("Ben Lim");
@@ -120,6 +121,35 @@ describe("the desk", () => {
     expect(rows[1]).toHaveTextContent("The session can begin.");
     expect(screen.queryByTestId("desk-banner")).toBeNull();
     expect(screen.getByTestId("onramp-note")).toHaveTextContent(/Supreme Court accreditation/);
+  });
+
+  it("lists a notarized request among the completed, with its number, document, act, fee and where its copy is", async () => {
+    const done = (id: string, copy: NonNullable<DeskRequest["case"]>["copy"]) => request({
+      id, status: "accepted", client: { name: "Angela Ramos", identityVerified: true }, reference: "EN-2026-000004",
+      session: { id: `ens_${id}`, status: "notarized", hasDocument: true },
+      case: { documentName: "Deed of Sale", actLabel: "Acknowledgment", feeCentavos: 60_000, copy },
+    });
+    await open(deskOf({ requests: [
+      done("a", { status: "received", mode: "physical", stage: "delivered" }),
+      done("b", { status: "fulfilled", mode: "physical", stage: "delivered" }),
+      done("c", null),
+    ] }));
+    expect(screen.getByTestId("tally-completed")).toHaveTextContent("3");
+    expect(screen.getByTestId("tally-progress")).toHaveTextContent("0");
+    const rows = within(screen.getByTestId("desk-section-completed")).getAllByTestId("desk-row");
+    expect(rows[0]).toHaveTextContent("Angela Ramos");
+    expect(rows[0]).toHaveTextContent("EN-2026-000004");
+    expect(rows[0]).toHaveTextContent("Deed of Sale · Acknowledgment · PHP 600.00");
+    expect(within(rows[0]!).getByTestId("desk-copy-state")).toHaveTextContent("Copy received by the client");
+    expect(within(rows[1]!).getByTestId("desk-copy-state")).toHaveTextContent("Copy delivered, awaiting receipt");
+    expect(within(rows[2]!).getByTestId("desk-copy-state")).toHaveTextContent("Notarized");
+    expect(screen.getByTestId("open-register")).toHaveAttribute("href", "/app/enotary/register");
+  });
+
+  it("keeps a request whose room was called off out of progress", async () => {
+    await open(deskOf({ requests: [request({ status: "accepted", session: { id: "ens_1", status: "cancelled", hasDocument: false } })] }));
+    expect(screen.getByTestId("tally-progress")).toHaveTextContent("0");
+    expect(within(screen.getByTestId("desk-section-closed")).getByTestId("desk-row")).toHaveTextContent("The session was called off");
   });
 
   it("counts down the time left on a waiting request", async () => {
@@ -132,7 +162,7 @@ describe("the desk", () => {
 
   it("says what to expect when there are no requests", async () => {
     await open(deskOf({ requests: [] }));
-    expect(screen.getByTestId("desk-empty")).toHaveTextContent(/No requests yet/);
+    expect(screen.getByTestId("desk-empty")).toHaveTextContent(/No request is waiting/);
   });
 
   it("asks again every 5 seconds, so a new request appears without a refresh", async () => {
@@ -148,94 +178,29 @@ describe("the desk", () => {
 });
 
 describe("accepting and declining", () => {
-  it("accepts only once a fee is named, and says The online session begins once the fee is settled", async () => {
+  it("accepts without naming a fee, and says the act and fee come later in the room", async () => {
     accept.mockResolvedValue(undefined);
     await open(deskOf());
     press(screen.getByRole("button", { name: "Accept" }));
     expect(accept).not.toHaveBeenCalled();
     const panel = screen.getByTestId("accept-panel");
-    expect(panel).toHaveTextContent(/The online session begins once the fee is settled/);
-    expect(panel).toHaveTextContent(/LAGDA never holds the money/);
-    expect(within(panel).getByRole("button", { name: "Accept the request" })).toBeDisabled();
-    fireEvent.change(screen.getByTestId("fee-input"), { target: { value: "1,500.50" } });
-    desk.mockResolvedValue(deskOf({ requests: [request({ status: "accepted", payment: paid({ amountCentavos: 150_050 }) })] }));
+    expect(panel).toHaveTextContent(/video call/);
+    expect(screen.getByTestId("accept-later")).toHaveTextContent(/state the notarial act and your fee, or no fee/);
+    expect(screen.queryByTestId("fee-input")).toBeNull();
+    desk.mockResolvedValue(deskOf({ requests: [request({ status: "accepted" })] }));
     press(within(panel).getByRole("button", { name: "Accept the request" }));
     await settle();
-    expect(accept).toHaveBeenCalledWith("eni_1", 150_050);
-    expect(screen.getByRole("status")).toHaveTextContent(/accepted the request from Ben Lim. They were asked to pay PHP 1,500.50/);
-    expect(screen.getByTestId("tally-accepted")).toHaveTextContent("1");
-    expect(screen.getByTestId("desk-payment")).toHaveTextContent("Waiting for Ben Lim to pay PHP 1,500.50.");
+    expect(accept).toHaveBeenCalledWith("eni_1");
+    expect(screen.getByRole("status")).toHaveTextContent(/accepted the request from Ben Lim. Open the room when you are ready/);
+    expect(screen.getByTestId("tally-progress")).toHaveTextContent("1");
     expect(screen.queryByRole("button", { name: "Accept" })).toBeNull();
   });
 
-  it("refuses a fee that is not a sum of pesos within bounds before asking the server", async () => {
-    await open(deskOf());
-    press(screen.getByRole("button", { name: "Accept" }));
-    const accepting = () => within(screen.getByTestId("accept-panel")).getByRole("button", { name: "Accept the request" });
-    for (const bad of ["abc", "0.5", "50001", "12.345", "-5", "1e3"]) {
-      fireEvent.change(screen.getByTestId("fee-input"), { target: { value: bad } });
-      expect(screen.getByRole("alert"), bad).toHaveTextContent(/between 1 and 50,000 pesos/);
-      expect(accepting(), bad).toBeDisabled();
-    }
-    fireEvent.change(screen.getByTestId("fee-input"), { target: { value: "PHP 2,000" } });
-    expect(screen.queryByRole("alert")).toBeNull();
-    expect(accepting()).toBeEnabled();
-    expect(accept).not.toHaveBeenCalled();
-  });
-
-  it("accepts with no fee when the notary says they are not charging one", async () => {
-    accept.mockResolvedValue(undefined);
-    await open(deskOf());
-    press(screen.getByRole("button", { name: "Accept" }));
-    press(screen.getByTestId("no-fee"));
-    expect(screen.getByTestId("fee-input")).toHaveAttribute("readonly");
-    press(within(screen.getByTestId("accept-panel")).getByRole("button", { name: "Accept without a fee" }));
-    await settle();
-    expect(accept).toHaveBeenCalledWith("eni_1", 0);
-    expect(screen.getByText(/You accepted the request from Ben Lim without a fee/)).toBeInTheDocument();
-  });
-
-  it("explains a free request: the fee turns read-only, a notice says what changes, and the button and summary say so", async () => {
-    await open(deskOf());
-    press(screen.getByRole("button", { name: "Accept" }));
-    // Charging is the starting choice, with an editable amount and a summary that names it.
-    expect(screen.getByTestId("fee-mode-charge")).toBeChecked();
-    expect(screen.getByTestId("fee-input")).not.toHaveAttribute("readonly");
-    expect(screen.getByTestId("fee-summary")).toHaveTextContent("Enter an amount");
-    fireEvent.change(screen.getByTestId("fee-input"), { target: { value: "1500" } });
-    expect(screen.getByTestId("fee-summary")).toHaveTextContent("You will ask Ben Lim to pay PHP 1,500.00.");
-    expect(screen.queryByTestId("no-fee-notice")).toBeNull();
-
-    press(screen.getByTestId("no-fee"));
-    expect(screen.getByTestId("no-fee")).toBeChecked();
-    expect(screen.getByTestId("fee-input")).toHaveAttribute("readonly");
-    expect(screen.getByTestId("fee-input")).toHaveValue("No fee: free of charge");
-    const notice = screen.getByTestId("no-fee-notice");
-    expect(notice).toHaveTextContent("You are accepting this request free of charge");
-    expect(notice).toHaveTextContent("Ben Lim will not be asked to pay");
-    expect(notice).toHaveTextContent("There is no payment to confirm");
-    expect(notice).toHaveTextContent("the fee cannot be changed");
-    expect(screen.getByTestId("fee-summary")).toHaveTextContent("You will accept this request without a fee.");
-    expect(screen.queryByRole("button", { name: "Accept the request" })).toBeNull();
-
-    // Changing their mind brings the amount back as it was.
-    press(screen.getByTestId("fee-mode-charge"));
-    expect(screen.queryByTestId("no-fee-notice")).toBeNull();
-    expect(screen.getByTestId("fee-input")).toHaveValue("1500");
-  });
-
-  it("will not ask for a fee without a saved payment QR, and points to where to save one", async () => {
+  it("does not need a saved payment QR to accept, and still points to where to save one for a fee", async () => {
     await open(deskOf({ paymentProfile: null }));
     expect(screen.getByTestId("desk-qr-banner")).toHaveTextContent(/save your payment QR first/);
     press(screen.getByRole("button", { name: "Accept" }));
-    fireEvent.change(screen.getByTestId("fee-input"), { target: { value: "1500" } });
-    expect(screen.getByTestId("accept-needs-qr")).toHaveTextContent(/you have not saved one/);
-    expect(within(screen.getByTestId("accept-panel")).getByRole("button", { name: "Accept the request" })).toBeDisabled();
-    expect(within(screen.getByTestId("accept-panel")).getByRole("link", { name: "Save my payment QR" })).toHaveAttribute("href", "/app/enotary/payment");
-    // No fee needs no QR.
-    press(screen.getByTestId("no-fee"));
-    expect(within(screen.getByTestId("accept-panel")).getByRole("button", { name: "Accept without a fee" })).toBeEnabled();
-    expect(screen.queryByTestId("accept-needs-qr")).toBeNull();
+    expect(within(screen.getByTestId("accept-panel")).getByRole("button", { name: "Accept the request" })).toBeEnabled();
   });
 
   it("can back out of accepting", async () => {
@@ -275,20 +240,9 @@ describe("accepting and declining", () => {
     accept.mockRejectedValue(new ApiError(409, { code, message: code }, code));
     await open(deskOf());
     press(screen.getByRole("button", { name: "Accept" }));
-    fireEvent.change(screen.getByTestId("fee-input"), { target: { value: "1500" } });
     press(within(screen.getByTestId("accept-panel")).getByRole("button", { name: "Accept the request" }));
     await settle();
     expect(screen.getByRole("alert")).toHaveTextContent(words);
-  });
-
-  it("tells a notary whose payment QR was removed meanwhile to save one", async () => {
-    accept.mockRejectedValue(new ApiError(409, { code: "payment_profile_required", message: "x" }, "payment_profile_required"));
-    await open(deskOf());
-    press(screen.getByRole("button", { name: "Accept" }));
-    fireEvent.change(screen.getByTestId("fee-input"), { target: { value: "1500" } });
-    press(within(screen.getByTestId("accept-panel")).getByRole("button", { name: "Accept the request" }));
-    await settle();
-    expect(screen.getByRole("alert")).toHaveTextContent(/Save your payment QR first/);
   });
 });
 
@@ -300,7 +254,7 @@ describe("confirming the payment", () => {
 
   it("shows the reference the client gave, and says to look in the notary's own app", async () => {
     await open(proofDesk());
-    expect(screen.getByTestId("tally-confirm")).toHaveTextContent("1");
+    expect(screen.getByTestId("tally-waiting")).toHaveTextContent("1");
     expect(screen.getByTestId("desk-reference")).toHaveTextContent("GC-12345678");
     expect(screen.getByTestId("desk-proof")).toHaveTextContent(/own bank or e-wallet app. Do not go by a screenshot/);
     expect(screen.getByTestId("desk-payment")).toHaveTextContent("Ben Lim says they paid PHP 1,500.00.");
@@ -357,7 +311,7 @@ describe("confirming the payment", () => {
     await open(deskOf({ requests: [request({ status: "accepted", payment: paid({ status, amountCentavos: status === "waived" ? 0 : 150_000 }) })] }));
     expect(screen.getByTestId("desk-payment")).toHaveTextContent(words);
     expect(screen.queryByTestId("desk-proof")).toBeNull();
-    expect(screen.getByTestId("tally-confirm")).toHaveTextContent("0");
+    expect(screen.getByTestId("tally-waiting")).toHaveTextContent("0");
   });
 });
 
@@ -378,5 +332,54 @@ describe("the banner while the notary cannot accept", () => {
 
   it("is absent when the notary can accept", () => {
     expect(bannerFor(deskOf())).toBeNull();
+  });
+});
+
+const openOne = async (d: NotaryDesk, focus: string) => {
+  desk.mockResolvedValue(d);
+  render(<MemoryRouter><NotaryDeskPage focus={focus} /></MemoryRouter>);
+  await settle();
+};
+
+describe("one request, in its own page", () => {
+  it("is linked from every row of the list", async () => {
+    await open(deskOf());
+    expect(screen.getByTestId("desk-open")).toHaveAttribute("href", "/app/enotary/desk/eni_1");
+  });
+
+  it("lays a waiting request out as the attorney pages do: its title, the client's card, what happens on accepting, then the answer", async () => {
+    await openOne(deskOf(), "eni_1");
+    expect(screen.getByTestId("case-title")).toHaveTextContent("Ben Lim asks you to notarize a document");
+    expect(screen.getByTestId("party-card")).toHaveTextContent("Ben Lim");
+    expect(screen.getByTestId("party-status")).toHaveTextContent("Waiting for you");
+    expect(screen.getByTestId("party-identity")).toHaveTextContent("Verified by LAGDA");
+    const panel = screen.getByTestId("new-request");
+    expect(panel).toHaveTextContent("What happens when you accept");
+    expect(panel).toHaveTextContent("A private room opens.");
+    expect(screen.getAllByRole("listitem").some(item => item.textContent?.startsWith("1A private room opens."))).toBe(true);
+    // The steps of the notary, in the order of the pages.
+    expect(screen.getByRole("list", { name: "Steps of this request" })).toHaveTextContent("Request received");
+    // The answer is the same as on the desk.
+    press(screen.getByRole("button", { name: "Accept" }));
+    expect(screen.getByTestId("accept-panel")).toBeInTheDocument();
+    expect(screen.queryByTestId("desk-open")).toBeNull();
+  });
+
+  it("offers a request not yet taken for taking, with its own title", async () => {
+    take.mockResolvedValue({});
+    await openOne(deskOf({ requests: [], incoming: [incomingOf()] }), "eni_new");
+    expect(screen.getByTestId("case-title")).toHaveTextContent("Rosa Villanueva asks you to notarize a document");
+    expect(screen.getByTestId("party-status")).toHaveTextContent("New: take it to answer");
+    desk.mockResolvedValue(deskOf({ incoming: [], requests: [request({ id: "eni_new", client: { name: "Rosa Villanueva", identityVerified: true } })] }));
+    press(screen.getByRole("button", { name: "Take this request" }));
+    await settle();
+    expect(take).toHaveBeenCalledWith("eni_new");
+    expect(screen.getByRole("status")).toHaveTextContent("You took the request from Rosa Villanueva");
+  });
+
+  it("says plainly when the request is not on the desk, and leads back", async () => {
+    await openOne(deskOf(), "nobody");
+    expect(screen.getByTestId("request-missing")).toHaveTextContent("not on your desk");
+    expect(screen.getByRole("link", { name: "Back to the desk" })).toHaveAttribute("href", "/app/enotary/desk");
   });
 });

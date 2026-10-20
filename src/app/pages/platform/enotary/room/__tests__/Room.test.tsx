@@ -3,7 +3,7 @@
 // person sees and can do in each state the server may report.
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes } from "react-router";
 
@@ -11,11 +11,17 @@ const svc = {
   lookup: vi.fn(), start: vi.fn(), get: vi.fn(), ping: vi.fn(), addDocument: vi.fn(), open: vi.fn(), consent: vi.fn(),
   cancel: vi.fn(), notarize: vi.fn(), messages: vi.fn(), say: vi.fn(), document: vi.fn(), notarized: vi.fn(),
   copies: vi.fn(), requestCopy: vi.fn(), quote: vi.fn(), decline: vi.fn(), sendProof: vi.fn(), confirmPayment: vi.fn(),
-  paymentNotReceived: vi.fn(), fulfil: vi.fn(), received: vi.fn(), cancelCopy: vi.fn(), copyFile: vi.fn(), verify: vi.fn(),
+  paymentNotReceived: vi.fn(), auditTrail: vi.fn(), auditPdf: vi.fn(), setStage: vi.fn(), finalize: vi.fn(), confirmIdentity: vi.fn(), stateAct: vi.fn(), approve: vi.fn(), fulfil: vi.fn(), received: vi.fn(), cancelCopy: vi.fn(), copyFile: vi.fn(), verify: vi.fn(),
 };
 vi.mock("../../../../../services/real/enotary-sessions.service", async (original) => ({
   ...(await original<typeof import("../../../../../services/real/enotary-sessions.service")>()),
   realEnotarySessionsService: new Proxy({}, { get: (_t, name: string) => (...args: unknown[]) => (svc as Record<string, (...a: unknown[]) => unknown>)[name]?.(...args) }),
+}));
+const sharedWithMe = vi.fn();
+const sharedDocumentFile = vi.fn();
+vi.mock("../../../../../services/real/document-sharing.service", async (original) => ({
+  ...(await original<typeof import("../../../../../services/real/document-sharing.service")>()),
+  documentSharingService: { sharedWithMe: (...a: unknown[]) => sharedWithMe(...a) as unknown, sharedDocumentFile: (...a: unknown[]) => sharedDocumentFile(...a) as unknown },
 }));
 vi.mock("../useRoomConnection", () => ({
   useRoomConnection: () => ({ media: "ready", link: "waiting", local: null, remote: null, micOn: true, camOn: true, toggleMic: vi.fn(), toggleCam: vi.fn(), retry: vi.fn() }),
@@ -55,6 +61,7 @@ beforeEach(() => {
   for (const fn of Object.values(svc)) fn.mockReset();
   svc.messages.mockResolvedValue([]);
   svc.copies.mockResolvedValue([]);
+  svc.auditTrail.mockResolvedValue({ reference: "EN-2026-000004", clientName: "Rosa Villanueva", notaryName: "Aiyana Cruz", role: "client", entries: [] });
   svc.ping.mockImplementation(() => Promise.resolve(svc.get.getMockImplementation() === undefined ? null : undefined));
   svc.document.mockResolvedValue(new Blob(["%PDF-1.7"], { type: "application/pdf" }));
   svc.notarized.mockResolvedValue(new Blob(["%PDF-1.7"], { type: "application/pdf" }));
@@ -138,50 +145,151 @@ describe("the room", () => {
     expect(await screen.findByTestId("document-info")).toHaveTextContent(/deed\.pdf/);
   });
 
-  it("keeps the notary from opening the room without a document, and opens it with one", async () => {
+  it("lets the client choose a document that was shared with them, from the Shared documents tab", async () => {
     const user = userEvent.setup();
-    svc.lookup.mockResolvedValue({ session: session({ role: "notary" }), canStart: false, reason: null });
-    svc.get.mockResolvedValue(session({ role: "notary" }));
-    svc.ping.mockResolvedValue(session({ role: "notary" }));
-    const view = room();
-    expect(await screen.findByTestId("no-document")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Open the room" })).toBeDisabled();
-    view.unmount();
-    const withDoc = session({ role: "notary", document: DOC });
-    svc.lookup.mockResolvedValue({ session: withDoc, canStart: false, reason: null });
-    svc.get.mockResolvedValue(withDoc); svc.ping.mockResolvedValue(withDoc);
-    const live = session({ role: "notary", document: DOC, status: "live", notarizeBlock: "no_consent" });
+    const live = session({ status: "live" });
+    svc.lookup.mockResolvedValue({ session: live, canStart: false, reason: null });
+    svc.get.mockResolvedValue(live); svc.ping.mockResolvedValue(live);
+    sharedWithMe.mockResolvedValue([
+      { id: "sh_1", documentTitle: "Lease Contract", completedAt: "2026-10-10T01:00:00.000Z", owner: { displayName: "Acme" }, sharedBy: { displayName: "Ana" }, actions: ["open"] },
+      { id: "sh_2", documentTitle: "Still signing", completedAt: null, owner: { displayName: "Acme" }, sharedBy: null, actions: ["open"] },
+    ]);
+    sharedDocumentFile.mockResolvedValue(new Blob(["%PDF-1.7"], { type: "application/pdf" }));
+    svc.addDocument.mockResolvedValue({ ...live, document: DOC });
+    room();
+    await user.click(await screen.findByRole("tab", { name: "Shared documents" }));
+    expect(await screen.findAllByTestId("shared-option")).toHaveLength(1);
+    expect(screen.getByText(/Shared by Ana/)).toBeInTheDocument();
+    await user.click(screen.getByTestId("shared-option"));
+    await user.click(screen.getByRole("button", { name: "Use this document" }));
+    await waitFor(() => { expect(svc.addDocument).toHaveBeenCalled(); });
+    expect(sharedDocumentFile).toHaveBeenCalledWith("sh_1");
+    const file = svc.addDocument.mock.calls[0]?.[1] as File;
+    expect(file.name).toBe("Lease Contract.pdf");
+  });
+
+  describe("a notarized request", () => {
+    const placed = { ...NOTARIZED, act: { ...NOTARIZED.act, docNo: 4, pageNo: 1, bookNo: "I", series: 2026 } };
+    const valid = { state: "notarization", code: "LAGDA-NOT-ABCD-2345", actLabel: "Acknowledgment", notaryName: "Aiyana Cruz", registerRef: "2026-0004", performedAt: "2026-10-18T02:30:00.000Z", notarizedSha256: "b".repeat(64), originalSha256: "a".repeat(64) };
+
+    it("shows the document, its register place, the seal with its fingerprint and QR, and says the seal is valid", async () => {
+      svc.lookup.mockResolvedValue({ session: session({ status: "notarized", document: DOC, ...placed }), canStart: false, reason: null });
+      svc.verify.mockResolvedValue(valid);
+      room();
+      expect(await screen.findByTestId("notarized-facts")).toHaveTextContent("Doc. No. 4; Page No. 1; Book No. I; Series of 2026.");
+      expect(screen.getByTestId("verify-code")).toHaveTextContent("LAGDA-NOT-ABCD-2345");
+      expect(screen.getByTestId("fingerprint")).toHaveTextContent("b".repeat(64));
+      expect(await screen.findByTestId("verify-qr")).toHaveAttribute("src", "data:image/png;base64,AAAA");
+      await waitFor(() => { expect(screen.getByTestId("seal-status")).toHaveAttribute("data-state", "valid"); });
+      expect(screen.getByTestId("seal-status")).toHaveTextContent("Seal valid");
+      expect(svc.verify).toHaveBeenCalledWith("LAGDA-NOT-ABCD-2345");
+      // The client may ask for a certified true copy from here.
+      expect(await screen.findByTestId("copies-panel")).toBeInTheDocument();
+    });
+
+    it("does not say the seal is valid when the public check disagrees with the file", async () => {
+      svc.lookup.mockResolvedValue({ session: session({ status: "notarized", document: DOC, ...placed }), canStart: false, reason: null });
+      svc.verify.mockResolvedValue({ ...valid, notarizedSha256: "c".repeat(64) });
+      room();
+      await waitFor(() => { expect(screen.getByTestId("seal-status")).toHaveAttribute("data-state", "invalid"); });
+      expect(screen.getByTestId("seal-status")).toHaveTextContent("could not be confirmed");
+    });
+
+    it("compares a file here, without sending it", async () => {
+      const user = userEvent.setup();
+      const bytes = new TextEncoder().encode("%PDF-1.7 sealed");
+      const digest = Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256", bytes)), b => b.toString(16).padStart(2, "0")).join("");
+      svc.lookup.mockResolvedValue({ session: session({ status: "notarized", document: DOC, ...placed, notarized: { ...placed.notarized, sha256: digest } }), canStart: false, reason: null });
+      svc.verify.mockResolvedValue({ ...valid, notarizedSha256: digest });
+      room();
+      const input = await screen.findByLabelText("PDF to check");
+      await user.upload(input, new File([bytes], "copy.pdf", { type: "application/pdf" }));
+      expect(await screen.findByTestId("check-result")).toHaveAttribute("data-match", "true");
+      await user.upload(input, new File([new TextEncoder().encode("different")], "other.pdf", { type: "application/pdf" }));
+      await waitFor(() => { expect(screen.getByTestId("check-result")).toHaveAttribute("data-match", "false"); });
+    });
+  });
+
+  it("lets the notary open the room before any document is in, since the client chooses it on the call", async () => {
+    const user = userEvent.setup();
+    const before = session({ role: "notary" });
+    svc.lookup.mockResolvedValue({ session: before, canStart: false, reason: null });
+    svc.get.mockResolvedValue(before); svc.ping.mockResolvedValue(before);
+    const live = session({ role: "notary", status: "live", notarizeBlock: "no_document" });
     svc.open.mockImplementation(() => { svc.get.mockResolvedValue(live); svc.ping.mockResolvedValue(live); return Promise.resolve(live); });
     room();
     await user.click(await screen.findByRole("button", { name: "Open the room" }));
     expect(svc.open).toHaveBeenCalledWith("ens_1");
     expect(await screen.findByTestId("video-panel")).toBeInTheDocument();
-    expect(screen.getByTestId("notarize-block")).toHaveTextContent(/not yet confirmed that they are signing freely/);
-    expect(screen.getByRole("button", { name: "Notarize the document" })).toBeDisabled();
+    expect(screen.queryByRole("button", { name: "Notarize the document" })).toBeNull();
   });
 
-  it("asks the client to confirm before the act, and records the confirmation", async () => {
+  it("has the client finalize the document, and then wait for the notary's statement", async () => {
     const user = userEvent.setup();
-    const live = session({ status: "live", document: DOC, notarizeBlock: "no_consent" });
+    const live = session({ status: "live", document: DOC, notarizeBlock: "not_final" });
+    const final = { ...live, finalizedAt: "2026-10-18T02:15:00.000Z", notarizeBlock: "no_identity" as const };
     svc.lookup.mockResolvedValue({ session: live, canStart: false, reason: null });
     svc.get.mockResolvedValue(live); svc.ping.mockResolvedValue(live);
-    svc.consent.mockResolvedValue(session({ status: "live", document: DOC, notarizeBlock: null, consent: { text: "x", version: "v1", at: "2026-10-18T02:20:00.000Z" } }));
+    svc.finalize.mockImplementation(() => { svc.get.mockResolvedValue(final); svc.ping.mockResolvedValue(final); return Promise.resolve(final); });
     room();
-    expect(await screen.findByTestId("consent-text")).toHaveTextContent(/signing freely/);
-    await user.click(screen.getByRole("button", { name: "I confirm" }));
-    expect(await screen.findByTestId("consent-done")).toBeInTheDocument();
+    await user.click(await screen.findByRole("button", { name: "Finalize this document for eNotary" }));
+    expect(svc.finalize).toHaveBeenCalledWith("ens_1");
+    expect(await screen.findByTestId("finalized-panel")).toHaveTextContent(/not charged before you approve/);
+    expect(screen.queryByLabelText("PDF of the document")).toBeNull();
   });
 
-  it("lets the notary record the act only with every attestation and both fields", async () => {
+  it("shows the client the stated act and fee, and records the approval with the consent in its words", async () => {
     const user = userEvent.setup();
-    const live = session({ role: "notary", status: "live", document: DOC, notarizeBlock: null, consent: { text: "x", version: "v1", at: "2026-10-18T02:20:00.000Z" } });
+    const statement = { actType: "acknowledgment" as const, actTypeLabel: "Acknowledgment", feeCentavos: 0, note: "Deed of Sale", statedAt: "2026-10-18T02:20:00.000Z", approvedAt: null };
+    const stated = session({ status: "live", document: DOC, finalizedAt: "2026-10-18T02:15:00.000Z", identityConfirmedAt: "2026-10-18T02:18:00.000Z", statement, notarizeBlock: "not_approved" });
+    const approved = { ...stated, statement: { ...statement, approvedAt: "2026-10-18T02:22:00.000Z" }, notarizeBlock: null };
+    svc.lookup.mockResolvedValue({ session: stated, canStart: false, reason: null });
+    svc.get.mockResolvedValue(stated); svc.ping.mockResolvedValue(stated);
+    svc.approve.mockImplementation(() => { svc.get.mockResolvedValue(approved); svc.ping.mockResolvedValue(approved); return Promise.resolve(approved); });
+    room();
+    expect(await screen.findByTestId("stated-fee")).toHaveTextContent("No fee");
+    expect(screen.getByTestId("consent-text")).toHaveTextContent(/signing freely/);
+    await user.click(screen.getByRole("button", { name: "Approve" }));
+    expect(svc.approve).toHaveBeenCalledWith("ens_1");
+    expect(await screen.findByTestId("approved-note")).toHaveTextContent(/No fee for this request/);
+  });
+
+  it("makes the notary confirm identity first, then state the act and a fee, and says what no fee means", async () => {
+    const user = userEvent.setup();
+    const base = { role: "notary" as const, status: "live" as const, document: DOC, finalizedAt: "2026-10-18T02:15:00.000Z", presence: { client: true, notary: true } };
+    const first = session({ ...base, notarizeBlock: "no_identity" });
+    const next = session({ ...base, identityConfirmedAt: "2026-10-18T02:18:00.000Z", notarizeBlock: "no_act" });
+    svc.lookup.mockResolvedValue({ session: first, canStart: false, reason: null });
+    svc.get.mockResolvedValue(first); svc.ping.mockResolvedValue(first);
+    svc.confirmIdentity.mockImplementation(() => { svc.get.mockResolvedValue(next); svc.ping.mockResolvedValue(next); return Promise.resolve(next); });
+    svc.stateAct.mockResolvedValue({ ...next, statement: { actType: "jurat", actTypeLabel: "Jurat", feeCentavos: 0, note: "Affidavit", statedAt: "2026-10-18T02:19:00.000Z", approvedAt: null } });
+    room();
+    await user.click(await screen.findByRole("button", { name: "I confirmed their identity on the call" }));
+    expect(svc.confirmIdentity).toHaveBeenCalledWith("ens_1");
+    const send = await screen.findByRole("button", { name: "Send the act and fee to the client" });
+    expect(send).toBeDisabled();
+    await user.click(screen.getByLabelText(/Jurat/));
+    await user.type(screen.getByLabelText(/What the document is/), "Affidavit");
+    await user.click(screen.getByTestId("no-fee"));
+    expect(screen.getByTestId("no-fee-notice")).toHaveTextContent(/cannot be changed/);
+    await user.click(send);
+    expect(svc.stateAct).toHaveBeenCalledWith("ens_1", { actType: "jurat", feeCentavos: 0, note: "Affidavit" });
+  });
+
+  it("lets the notary record the act only with every attestation and the place, using what was approved", async () => {
+    const user = userEvent.setup();
+    const statement = { actType: "acknowledgment" as const, actTypeLabel: "Acknowledgment", feeCentavos: 0, note: "Deed of Sale", statedAt: "2026-10-18T02:20:00.000Z", approvedAt: "2026-10-18T02:22:00.000Z" };
+    const live = session({
+      role: "notary", status: "live", document: DOC, notarizeBlock: null, finalizedAt: "2026-10-18T02:15:00.000Z",
+      identityConfirmedAt: "2026-10-18T02:18:00.000Z", statement, consent: { text: "x", version: "v1", at: "2026-10-18T02:22:00.000Z" },
+    });
     svc.lookup.mockResolvedValue({ session: live, canStart: false, reason: null });
     svc.get.mockResolvedValue(live); svc.ping.mockResolvedValue(live);
     svc.notarize.mockResolvedValue(session({ role: "notary", status: "notarized", document: DOC, ...NOTARIZED }));
     room();
     const go = await screen.findByRole("button", { name: "Notarize the document" });
     expect(go).toBeDisabled();
-    await user.type(screen.getByLabelText(/Title or description/), "Deed of Sale");
+    expect(screen.queryByLabelText(/Title or description/)).toBeNull();
     await user.type(screen.getByLabelText(/Place of notarization/), "Naga City");
     expect(go).toBeDisabled();
     await user.click(screen.getByLabelText("I saw the client."));
@@ -192,19 +300,22 @@ describe("the room", () => {
       actType: "acknowledgment", description: "Deed of Sale", place: "Naga City", attestations: { sawClient: true, knewClient: true },
     });
     expect(await screen.findByTestId("verify-code")).toHaveTextContent("LAGDA-NOT-ABCD-2345");
-    expect(screen.getByTestId("notarized-facts")).toHaveTextContent(/register entry 2026-0001/i);
+    expect(screen.getByTestId("notarized-facts")).toHaveTextContent(/Entry 2026-0001/);
   });
 
   it("says why the server refused an act, in words", async () => {
     const user = userEvent.setup();
-    const live = session({ role: "notary", status: "live", document: DOC, notarizeBlock: null });
+    const statement = { actType: "acknowledgment" as const, actTypeLabel: "Acknowledgment", feeCentavos: 0, note: "Deed", statedAt: "2026-10-18T02:20:00.000Z", approvedAt: "2026-10-18T02:22:00.000Z" };
+    const live = session({
+      role: "notary", status: "live", document: DOC, notarizeBlock: null, finalizedAt: "2026-10-18T02:15:00.000Z",
+      identityConfirmedAt: "2026-10-18T02:18:00.000Z", statement,
+    });
     svc.lookup.mockResolvedValue({ session: live, canStart: false, reason: null });
     svc.get.mockResolvedValue(live); svc.ping.mockResolvedValue(live);
     const { ApiError } = await import("../../../../../services/api-client");
     svc.notarize.mockRejectedValue(new ApiError(409, { code: "notarize_blocked", message: "x", details: [{ code: "client_absent", message: "x" }] }, "x"));
     room();
-    await user.type(await screen.findByLabelText(/Title or description/), "Deed");
-    await user.type(screen.getByLabelText(/Place of notarization/), "Naga");
+    await user.type(await screen.findByLabelText(/Place of notarization/), "Naga");
     await user.click(screen.getByLabelText("I saw the client."));
     await user.click(screen.getByLabelText("I verified who they are."));
     await user.click(screen.getByRole("button", { name: "Notarize the document" }));
@@ -267,6 +378,44 @@ describe("certified true copies", () => {
     await user.click(await screen.findByRole("button", { name: "Issue the copy" }));
     expect(svc.fulfil).toHaveBeenCalledWith("ctc_1", undefined);
     expect(await screen.findByTestId("copy-code")).toHaveTextContent("LAGDA-CTC-AAAA-BBBB");
+  });
+
+  it("shows the client where printed copies are, with the courier's tracking number, and lets them confirm receipt", async () => {
+    const user = userEvent.setup();
+    const sent = copy({ status: "fulfilled", mode: "physical", copies: 2, feeCentavos: 0, shipment: { courier: "LBC", trackingNo: "123456" }, stage: "delivered", stageAt: "2026-10-18T05:00:00.000Z" });
+    svc.copies.mockResolvedValue([sent]);
+    svc.received.mockResolvedValue({ ...sent, status: "received" });
+    render(<CopiesPanel sessionId="ens_1" role="client" />);
+    const journey = await screen.findByTestId("copy-journey");
+    expect(journey).toHaveAttribute("data-done", "6");
+    expect(within(journey).getByText("Delivered").closest("li")).toHaveAttribute("data-state", "current");
+    expect(within(journey).getByText("Received").closest("li")).toHaveAttribute("data-state", "todo");
+    expect(screen.getByTestId("copy-tracking")).toHaveTextContent(/LBC.*123456/);
+    expect(screen.getByTestId("copy-delivered")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "I received them" }));
+    expect(await screen.findByTestId("copy-journey")).toHaveAttribute("data-done", "7");
+  });
+
+  it("gives the notary one next step at a time: prepared, then in transit, out for delivery, delivered", async () => {
+    const user = userEvent.setup();
+    svc.copies.mockResolvedValue([copy({ status: "paid", mode: "physical", feeCentavos: 0, delivery: { name: "Rosa", phone: "0917", address: "12 Rizal St" } })]);
+    svc.setStage.mockResolvedValue(copy({ status: "paid", mode: "physical", feeCentavos: 0, stage: "prepared", delivery: { name: "Rosa", phone: "0917", address: "12 Rizal St" } }));
+    render(<CopiesPanel sessionId="ens_1" role="notary" />);
+    await user.click(await screen.findByRole("button", { name: "Mark as prepared" }));
+    expect(svc.setStage).toHaveBeenCalledWith("ctc_1", "prepared");
+    await waitFor(() => { expect(screen.queryByRole("button", { name: "Mark as prepared" })).toBeNull(); });
+    expect(screen.getByTestId("copy-journey")).toHaveAttribute("data-done", "2");
+  });
+
+  it("offers a notary the next courier step once the copy is with the courier, and none after delivery", async () => {
+    const user = userEvent.setup();
+    const base = { status: "fulfilled" as const, mode: "physical" as const, feeCentavos: 0, shipment: { courier: "LBC", trackingNo: "123456" } };
+    svc.copies.mockResolvedValue([copy({ ...base, stage: "handed" })]);
+    svc.setStage.mockResolvedValue(copy({ ...base, stage: "in_transit" }));
+    render(<CopiesPanel sessionId="ens_1" role="notary" />);
+    await user.click(await screen.findByRole("button", { name: "Mark as in transit" }));
+    expect(svc.setStage).toHaveBeenCalledWith("ctc_1", "in_transit");
+    expect(await screen.findByRole("button", { name: "Mark as out for delivery" })).toBeInTheDocument();
   });
 
   it("asks a notary for the courier and tracking number of printed copies", async () => {
