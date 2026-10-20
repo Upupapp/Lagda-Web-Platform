@@ -9,7 +9,7 @@
 // server sends.
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Link, useParams } from "react-router";
+import { Link, useNavigate, useParams } from "react-router";
 import { CheckCircle2, FileUp, ShieldCheck, Stamp, XCircle } from "lucide-react";
 import { ActionButton, ActionRow, GF, Notice, TAP } from "../../../../components/system/design-system";
 import { useConfirm } from "../../../../components/platform/ConfirmDialog";
@@ -24,7 +24,8 @@ import { stampLabel } from "../requests/expiry";
 import { useOptionalPlatform } from "../../../../context/PlatformContext";
 import { CompletedDocumentPicker, PickProblem, completedDocumentFile, type CompletedChoice } from "./CompletedDocumentPicker";
 import { SharedDocumentPicker, sharedDocumentAsFile, type SharedChoice } from "./SharedDocumentPicker";
-import { Chat, PdfView, VideoPane } from "./room-bits";
+import { Chat, PdfView } from "./room-bits";
+import { CallCard } from "./CallCard";
 import { ClientFlow, NotaryFlow } from "./RoomFlow";
 import { NotarizedPage } from "./NotarizedPage";
 import { RequestTrail, useRequestTrail } from "../RequestTrail";
@@ -57,6 +58,7 @@ export function RoomPage() {
   const [busy, setBusy] = useState<string | null>(null);
   const alive = useRef(true);
   const { confirm, confirmDialog } = useConfirm();
+  const navigate = useNavigate();
 
   const workspaceId = useOptionalPlatform()?.currentWorkspace?.id ?? null;
   const session = loaded.kind === "ready" ? loaded.session : null;
@@ -181,24 +183,30 @@ export function RoomPage() {
       {!over && (
         <div className="eno-split">
           <div style={{ minWidth: 0, display: "grid", gap: 16 }}>
-            <Panel testId="presence-panel" tone="sky">
+            {s.status !== "live" && <Panel testId="presence-panel" tone="sky">
               <p style={{ ...bodyText, margin: 0 }} data-testid="presence">
                 {s.status === "preparing"
                   ? isClient ? "Waiting for the notary to open the room." : s.document === null ? "Waiting for the client to add the document." : "The document is in. Open the room when you are ready."
                   : <>In the room: {s.presence.client ? "the client" : "—"}, {s.presence.notary ? "the notary" : "—"}.</>}
               </p>
-            </Panel>
+            </Panel>}
 
             {s.status === "live" && (
-              <Panel testId="video-panel">
-                <PanelTitle>Video</PanelTitle>
-                <VideoPane connection={connection} partnerLabel={partner} />
-              </Panel>
+              <div data-testid="video-panel">
+                <CallCard
+                  session={s} connection={connection} partnerName={partnerTitle(partner, isClient)} partnerRole={isClient ? "Notary public" : "Client"}
+                  selfIdentityVerified={isClient} partnerPresent={isClient ? s.presence.notary : s.presence.client} messages={messages}
+                  onSend={async body => { const sent = await realEnotarySessionsService.say(s.id, body); setMessages(list => [...list, sent]); }}
+                  onLeave={() => { void navigate(back); }}
+                  document={s.document === null ? <p style={bodyText}>The client has not chosen the document yet.</p>
+                    : <PdfView load={() => realEnotarySessionsService.document(s.id)} fileKey={s.document.sha256} name={s.document.name} height={420} />}
+                />
+              </div>
             )}
 
             {s.status === "live" && (
               <Panel testId="chat-panel">
-                <PanelTitle>Chat</PanelTitle>
+                <PanelTitle>{`Chat with ${partnerTitle(partner, isClient)}`}</PanelTitle>
                 <Chat
                   messages={messages} me={s.role} disabled={false}
                   onSend={async body => { const sent = await realEnotarySessionsService.say(s.id, body); setMessages(list => [...list, sent]); }}

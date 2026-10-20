@@ -47,7 +47,7 @@ const CASE_STYLES = `
 export interface PartyRow { readonly label: string; readonly value: ReactNode; readonly mono?: boolean; readonly testId?: string }
 
 export const initialsOf = (name: string): string => {
-  const words = name.replace(/^atty\.?\s+/i, "").split(/\s+/).filter(word => word !== "");
+  const words = name.replace(/\([^)]*\)/g, " ").replace(/^\s*atty\.?\s+/i, "").split(/\s+/).filter(word => word !== "");
   return ((words[0]?.[0] ?? "") + (words.length > 1 ? words[words.length - 1]?.[0] ?? "" : "")).toUpperCase() || "?";
 };
 
@@ -67,7 +67,7 @@ export function PartyCard({ name, role, tone, status, rows, auditCount }: {
       <div style={{ position: "relative", height: 112, background: maroon ? E.crimson : "linear-gradient(120deg, #0563A6 0%, #0A84D6 60%, #5BB0EA 100%)" }}>
         {maroon && <div className="eno-party-seal" aria-hidden="true"><EnotarySeal idPrefix="party-seal" /></div>}
       </div>
-      <div style={{ marginTop: -52, display: "flex", justifyContent: "center" }}>
+      <div style={{ position: "relative", zIndex: 1, marginTop: -52, display: "flex", justifyContent: "center" }}>
         <div aria-hidden="true" style={{ width: 104, height: 104, borderRadius: 22, background: maroon ? E.maroonWash : E.skyWash, border: "5px solid #FFFFFF", boxShadow: "0 6px 18px rgba(10,26,43,0.18)", display: "grid", placeItems: "center", fontFamily: SERIF, fontWeight: 700, fontSize: 38, color: maroon ? E.maroon : E.skyDeep }}>
           {initialsOf(name)}
         </div>
