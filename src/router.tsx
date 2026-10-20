@@ -1078,6 +1078,11 @@ const VerifyNotarizedPage = lazy(() =>
     default: m.VerifyNotarizedPage,
   })),
 );
+const NotarySealPage = lazy(() =>
+  import("./app/pages/platform/enotary/notary/NotarySealPage").then((m) => ({
+    default: m.NotarySealPage,
+  })),
+);
 const NotaryRegisterPage = lazy(() =>
   import("./app/pages/platform/enotary/notary/NotaryRegisterPage").then((m) => ({
     default: m.NotaryRegisterPage,
@@ -2917,6 +2922,7 @@ export const router = createBrowserRouter([
       { path: "apply", element: <Suspense fallback={null}><NotaryApplyPage /></Suspense> },
       { path: "desk", element: <Suspense fallback={null}><NotaryDeskPage /></Suspense> },
       { path: "desk/:id", element: <Suspense fallback={null}><NotaryRequestPage /></Suspense> },
+      { path: "seal", element: <Suspense fallback={null}><NotarySealPage /></Suspense> },
       { path: "register", element: <Suspense fallback={null}><NotaryRegisterPage /></Suspense> },
       { path: "payment", element: <Suspense fallback={null}><NotaryPaymentPage /></Suspense> },
       { path: "room/:invitationId", element: <Suspense fallback={null}><RoomPage /></Suspense> },

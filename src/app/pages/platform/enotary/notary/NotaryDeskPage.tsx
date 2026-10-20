@@ -21,6 +21,7 @@
 import { useCallback, useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { Link, useParams } from "react-router";
 import { SessionPanel } from "../room/SessionPanel";
+import { DetailNotes, detailsLine } from "../request-details";
 import { AlertTriangle, Check, Clock, Inbox, QrCode, X } from "lucide-react";
 import { ActionButton, GF, Notice, T, useViewport } from "../../../../components/system/design-system";
 import { useConfirm } from "../../../../components/platform/ConfirmDialog";
@@ -345,6 +346,12 @@ export function NotaryDeskPage({ focus }: { focus?: string } = {}) {
             {request.decidedAt !== null && <> · Answered {stampLabel(request.decidedAt)}</>}
             {caseLine(request) !== "" && <> · {caseLine(request)}</>}
           </p>
+          {request.details !== undefined && request.details !== null && request.status !== "accepted" && (
+            <>
+              <p data-testid="desk-details" style={{ margin: "4px 0 0", fontSize: 13, color: E.text }}>Asked for: {detailsLine(request.details)}</p>
+              <DetailNotes details={request.details} />
+            </>
+          )}
           {open && (
             <p data-testid="desk-countdown" data-tone={tone} style={{ margin: "6px 0 0", fontSize: 13.5, fontWeight: 700, color: tone === "red" ? "#B0182B" : tone === "amber" ? "#8A5A00" : E.skyDeep, display: "flex", gap: 6, alignItems: "center" }}>
               <Clock size={14} aria-hidden /> {countdownText(msLeft)} left · until {expiryLabel(request.expiresAt)}
@@ -486,6 +493,8 @@ export function NotaryDeskPage({ focus }: { focus?: string } = {}) {
                     {item.client.identityVerified && <span style={{ fontSize: 12.5, color: E.ok, fontWeight: 700 }}>ID verified</span>}
                   </div>
                   <p style={{ margin: "6px 0 0", fontSize: 13, color: E.quiet }}>Sent {stampLabel(item.receivedAt)}</p>
+                  {item.details !== undefined && item.details !== null && <p data-testid="desk-new-details" style={{ margin: "4px 0 0", fontSize: 13, color: E.text }}>Asked for: {detailsLine(item.details)}</p>}
+                  <DetailNotes details={item.details} />
                   {msLeft > 0 && (
                     <p data-testid="desk-new-countdown" style={{ margin: "6px 0 0", fontSize: 13.5, fontWeight: 700, color: E.skyDeep, display: "flex", alignItems: "center", gap: 6 }}>
                       <Clock size={14} aria-hidden /> {countdownText(msLeft)} left · until {expiryLabel(item.expiresAt)}

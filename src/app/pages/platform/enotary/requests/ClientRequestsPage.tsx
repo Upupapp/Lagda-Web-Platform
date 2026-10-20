@@ -1,7 +1,8 @@
-// /app/enotary/requests — the client's requests to notaries, newest first, each
-// with where it stands and (while open) how long it has left.
+// /app/enotary/requests — the client's Notarial Request History: every request they made to a notary, newest first, with
+// its number, what they asked for, where it stands (and, while open, how long it has left). They can find one by what
+// they remember of it, and filter by where it stands.
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router";
 import { ChevronRight, Clock, Search } from "lucide-react";
 import { T, TAP } from "../../../../components/system/design-system";
@@ -10,10 +11,11 @@ import {
   invitationIsOpen, realEnotaryInvitationsService, type Invitation,
 } from "../../../../services/real/enotary-invitations.service";
 import { ENOTARY_DIRECTORY_PATH } from "../../../../config/enotary-directory";
-import { E, EnotaryFrame } from "../EnotaryChrome";
+import { E } from "../EnotaryChrome";
+import { EnotaryCaseFrame } from "../CaseFrame";
 import { EnotaryLoadError, EnotaryLoading, EnotaryNotOffered } from "../EnotaryStates";
-import { OnrampNote, StatusPill, bodyText, linkButton, useNow } from "../onramp-ui";
-import { ExpiryClock, countdownText, expiryTone } from "./expiry";
+import { OnrampNote, Panel, StatusPill, bodyText, fieldStyle, labelStyle, linkButton, useNow } from "../onramp-ui";
+import { ExpiryClock, countdownText, expiryTone, stampLabel } from "./expiry";
 
 // One request: the notary's name and office read as full lines, and where the request stands sits under them
 // on a phone (status and time left side by side) or at the right on a wide screen.
@@ -43,8 +45,25 @@ type Loaded =
   | { kind: "off" }
   | { kind: "ready"; invitations: Invitation[]; receivedAt: number };
 
+type Filter = "all" | "open" | "notarized" | "closed";
+
+/** Where a request stands for the client, past the invitation's own status: its room and whether it was notarized. */
+export function standing(item: Invitation): "open" | "notarized" | "closed" {
+  if (item.session?.status === "notarized") return "notarized";
+  if (invitationIsOpen(item.status) || (item.status === "accepted" && item.session?.status !== "cancelled")) return "open";
+  return "closed";
+}
+
+const matches = (item: Invitation, query: string): boolean => {
+  if (query === "") return true;
+  const haystack = [item.notary.name, item.notary.firm, item.notary.city, item.reference ?? "", item.details?.actWantedLabel ?? "", item.details?.documentLabel ?? ""].join(" ").toLowerCase();
+  return query.toLowerCase().split(/\s+/).filter(part => part !== "").every(part => haystack.includes(part));
+};
+
 export function ClientRequestsPage() {
   const [loaded, setLoaded] = useState<Loaded>(USE_REAL_BACKEND ? { kind: "loading" } : { kind: "off" });
+  const [filter, setFilter] = useState<Filter>("all");
+  const [query, setQuery] = useState("");
   const alive = useRef(true);
   const now = useNow(1000);
 
@@ -63,66 +82,112 @@ export function ClientRequestsPage() {
     return () => { alive.current = false; };
   }, [load]);
 
-  const anyOpen = loaded.kind === "ready" && loaded.invitations.some(item => invitationIsOpen(item.status));
+  const invitations = useMemo(() => (loaded.kind === "ready" ? loaded.invitations : []), [loaded]);
+  const anyOpen = invitations.some(item => invitationIsOpen(item.status));
   useEffect(() => {
     if (!anyOpen) return;
     const timer = setInterval(() => { if (!document.hidden) load(); }, 15_000);
     return () => { clearInterval(timer); };
   }, [anyOpen, load]);
 
+  const counts = useMemo(() => ({
+    open: invitations.filter(item => standing(item) === "open").length,
+    notarized: invitations.filter(item => standing(item) === "notarized").length,
+    closed: invitations.filter(item => standing(item) === "closed").length,
+  }), [invitations]);
+  const shown = useMemo(
+    () => invitations.filter(item => (filter === "all" || standing(item) === filter) && matches(item, query.trim())),
+    [invitations, filter, query],
+  );
+
   if (loaded.kind === "loading") return <EnotaryLoading />;
   if (loaded.kind === "error") return <EnotaryLoadError onRetry={load} />;
   if (loaded.kind === "off") return <EnotaryNotOffered />;
 
-  const { invitations, receivedAt } = loaded;
+  const { receivedAt } = loaded;
+  const chips: [Filter, string, number][] = [["all", "All", invitations.length], ["open", "Open", counts.open], ["notarized", "Notarized", counts.notarized], ["closed", "Closed", counts.closed]];
   return (
-    <EnotaryFrame wide eyebrow="Your requests" badge="Client" tone="client" description="The notaries you have asked, and where each request stands.">
+    <EnotaryCaseFrame
+      tone="client" eyebrow="eNotary" title="Notarial Request History"
+      lead="Every request you made to a notary: what you asked for, where it stands, and the notarized documents you received."
+    >
       <style>{ROW_STYLES}</style>
       {invitations.length === 0 ? (
-        <div data-testid="requests-empty">
+        <Panel testId="requests-empty">
           <p style={bodyText}>You have not asked a notary yet. Find a notary in the Notary Directory and choose Request this notary.</p>
           <a href={ENOTARY_DIRECTORY_PATH} style={linkButton()}><Search size={16} aria-hidden /> Go to the Notary Directory</a>
-        </div>
+        </Panel>
       ) : (
-        <ul data-testid="requests-list" style={{ listStyle: "none", margin: 0, padding: 0, display: "grid", gap: 10 }}>
-          {invitations.map(item => {
-            const clock = new ExpiryClock();
-            clock.sync(item.secondsLeft, receivedAt);
-            const msLeft = clock.msLeft(now);
-            const open = invitationIsOpen(item.status);
-            const tone = expiryTone(msLeft);
-            return (
-              <li key={item.id}>
-                <Link to={`/app/enotary/requests/${encodeURIComponent(item.id)}`} className="req-row" data-testid="request-row">
-                  <span className="req-info">
-                    <strong className="req-name">Atty. {item.notary.name}</strong>
-                    {[item.notary.firm, item.notary.city].some(part => part !== "") && (
-                      <small className="req-meta">
-                        {[item.notary.firm, item.notary.city].filter(part => part !== "").map((part, i) => (
-                          <span key={i} className="req-meta-part">{part}</span>
-                        ))}
-                      </small>
-                    )}
-                  </span>
-                  <span className="req-foot">
-                    <StatusPill status={item.status} />
-                    {open && (
-                      <small
-                        data-testid="row-countdown" data-tone={tone} className="req-clock"
-                        style={{ color: tone === "red" ? "#B0182B" : tone === "amber" ? "#8A5A00" : E.skyDeep }}
-                      >
-                        <Clock size={13} aria-hidden /> {tone === "ended" ? "Expired" : `${countdownText(msLeft)} left`}
-                      </small>
-                    )}
-                  </span>
-                  <ChevronRight size={18} aria-hidden className="req-chevron" />
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
+        <>
+          <div data-testid="history-tools" style={{ display: "grid", gap: 12, gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", alignItems: "end" }}>
+            <div>
+              <label htmlFor="history-search" style={labelStyle}>Find a request</label>
+              <div style={{ position: "relative" }}>
+                <Search size={16} aria-hidden style={{ position: "absolute", left: 12, top: 14, color: E.quiet }} />
+                <input id="history-search" type="search" value={query} placeholder="Notary, number or document" autoComplete="off"
+                  onChange={event => { setQuery(event.target.value); }} style={{ ...fieldStyle(false), paddingLeft: 36 }} />
+              </div>
+            </div>
+            <div role="group" aria-label="Show" style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+              {chips.map(([key, label, count]) => (
+                <button key={key} type="button" aria-pressed={filter === key} data-testid={`filter-${key}`} onClick={() => { setFilter(key); }}
+                  style={{ minHeight: 44, padding: "0 14px", borderRadius: 999, fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: "'Geist', sans-serif",
+                    border: `2px solid ${filter === key ? E.skyDeep : E.line}`, background: filter === key ? E.skyWash : "#FFFFFF", color: E.ink }}>
+                  {label} <span style={{ color: E.quiet, fontWeight: 600 }}>{count}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+          {shown.length === 0 ? (
+            <p data-testid="history-none" style={{ ...bodyText, padding: 16, border: `1px dashed ${E.line}`, borderRadius: 10, textAlign: "center" }}>No request matches. Try fewer words, or another filter.</p>
+          ) : (
+            <ul data-testid="requests-list" style={{ listStyle: "none", margin: 0, padding: 0, display: "grid", gap: 10 }}>
+              {shown.map(item => {
+                const clock = new ExpiryClock();
+                clock.sync(item.secondsLeft, receivedAt);
+                const msLeft = clock.msLeft(now);
+                const open = invitationIsOpen(item.status);
+                const tone = expiryTone(msLeft);
+                const notarized = item.session?.status === "notarized";
+                const asked = item.details === undefined || item.details === null ? "" : `${item.details.actWantedLabel} · ${item.details.documentLabel}`;
+                const meta = [
+                  item.reference ?? "", asked, [item.notary.firm, item.notary.city].filter(part => part !== "").join(", "),
+                  item.createdAt === undefined ? "" : `Sent ${stampLabel(item.createdAt)}`,
+                ].filter(part => part !== "");
+                return (
+                  <li key={item.id}>
+                    <Link to={`/app/enotary/requests/${encodeURIComponent(item.id)}`} className="req-row" data-testid="request-row">
+                      <span className="req-info">
+                        <strong className="req-name">Atty. {item.notary.name}</strong>
+                        {meta.length > 0 && (
+                          <small className="req-meta">
+                            {meta.map((part, i) => (
+                              <span key={part} className="req-meta-part" style={i === 0 && part === item.reference ? { fontFamily: "ui-monospace, Menlo, Consolas, monospace", color: E.ink, fontWeight: 700 } : undefined}>{part}</span>
+                            ))}
+                          </small>
+                        )}
+                      </span>
+                      <span className="req-foot">
+                        <StatusPill status={item.status} {...(notarized ? { label: "Notarized" } : {})} />
+                        {open && (
+                          <small
+                            data-testid="row-countdown" data-tone={tone} className="req-clock"
+                            style={{ color: tone === "red" ? "#B0182B" : tone === "amber" ? "#8A5A00" : E.skyDeep }}
+                          >
+                            <Clock size={13} aria-hidden /> {tone === "ended" ? "Expired" : `${countdownText(msLeft)} left`}
+                          </small>
+                        )}
+                      </span>
+                      <ChevronRight size={18} aria-hidden className="req-chevron" />
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </>
       )}
       <OnrampNote />
-    </EnotaryFrame>
+    </EnotaryCaseFrame>
   );
 }

@@ -3,6 +3,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, waitFor, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
+import userEvent from "@testing-library/user-event";
 
 const register = vi.fn();
 vi.mock("../../../../../services/backend-flag", () => ({ USE_REAL_BACKEND: true }));
@@ -33,7 +34,7 @@ describe("the notarial register", () => {
       entry({ sessionId: "ens_2", invitationId: "eni_2", docNo: 2, reference: "EN-2026-000002", documentName: "Special Power of Attorney", copy: { status: "received", mode: "physical", stage: "delivered", trackingNo: "123456789012" } }),
     ]));
     open();
-    expect(await screen.findByRole("heading", { level: 1, name: "Notarial register" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { level: 1, name: "Notary Book" })).toBeInTheDocument();
     expect(screen.getByTestId("register-commission")).toHaveTextContent("Commission No. 2026-0147, until 31 December 2027 · Cebu City, Cebu");
     const rows = screen.getAllByTestId("register-entry");
     expect(rows).toHaveLength(2);
@@ -44,6 +45,29 @@ describe("the notarial register", () => {
     expect(within(rows[1]!).getByTestId("register-copy")).toHaveTextContent("Copy received by the client");
     expect(within(rows[1]!).getByTestId("register-copy")).toHaveTextContent("123456789012");
     expect(within(rows[1]!).getByRole("link", { name: "Special Power of Attorney" })).toHaveAttribute("href", "/app/enotary/desk/eni_2");
+  });
+
+  it("finds an entry by what a person would type, and by year, and offers the spreadsheet and the monthly report", async () => {
+    const user = userEvent.setup();
+    register.mockResolvedValue(book([
+      entry({ clientPlace: "Naga City, Camarines Sur", clientIdType: "Passport", documentKindLabel: "Affidavit or sworn statement", remarks: "Read aloud" }),
+      entry({ sessionId: "ens_2", invitationId: "eni_2", docNo: 1, series: 2025, clientName: "Dan Uy", documentName: "Lease", reference: "EN-2025-000009", notarizedAt: "2025-03-02T01:00:00.000Z" }),
+    ]));
+    open();
+    expect(await screen.findAllByTestId("register-entry")).toHaveLength(2);
+    expect(screen.getAllByTestId("register-entry")[0]).toHaveTextContent("Naga City, Camarines Sur · Passport");
+    expect(screen.getAllByTestId("register-entry")[0]).toHaveTextContent("Read aloud");
+    await user.type(screen.getByLabelText("Find an entry"), "dan lease");
+    expect(screen.getAllByTestId("register-entry")).toHaveLength(1);
+    expect(screen.getByTestId("register-count")).toHaveTextContent("1 of 2 entries");
+    await user.clear(screen.getByLabelText("Find an entry"));
+    await user.selectOptions(screen.getByLabelText("Year"), "2026");
+    expect(screen.getAllByTestId("register-entry")).toHaveLength(1);
+    await user.type(screen.getByLabelText("Find an entry"), "nobody");
+    expect(screen.getByTestId("register-none")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Export as a spreadsheet/ })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Prepare the report/ })).toBeInTheDocument();
+    expect(screen.getByLabelText("Month of the report")).toBeInTheDocument();
   });
 
   it("says plainly that nothing is in the register yet", async () => {

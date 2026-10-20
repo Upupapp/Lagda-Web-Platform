@@ -37,9 +37,9 @@ describe("the notary on-ramp's routes", () => {
   it("opens the request, desk, application, payment QR and room pages in the eNotary shell, not the app's", () => {
     const from = ROUTER.indexOf('path: "/app/enotary",' + String.fromCharCode(10) + '    errorElement');
     expect(from).toBeGreaterThan(-1);
-    const head = ROUTER.slice(from, from + 900);
+    const head = ROUTER.slice(from, from + 1500);
     expect(head).toContain("<EnotaryLayout />");
-    for (const child of ['"requests"', '"requests/:id"', '"apply"', '"desk"', '"desk/:id"', '"payment"', '"room/:invitationId"']) expect(head).toContain(`path: ${child}`);
+    for (const child of ['"requests"', '"requests/:id"', '"apply"', '"desk"', '"desk/:id"', '"payment"', '"register"', '"seal"', '"room/:invitationId"']) expect(head).toContain(`path: ${child}`);
     // And they are no longer children of the app layout.
     for (const old of ['path: "enotary/desk"', 'path: "enotary/room/:invitationId"', 'path: "enotary/requests"']) expect(ROUTER).not.toContain(old);
   });

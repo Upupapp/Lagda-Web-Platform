@@ -550,10 +550,11 @@
           '<p class="lead">LAGDA gives you a private link and a QR code, good for a limited time, to give to the notary. The notary signs in to LAGDA and passes an ID and face check before they can answer your request.</p>' +
           '<dl class="summary"><div><dt>Notary</dt><dd>' + name + (l.kind === "office" ? "" : ", " + esc(l.firm)) + "<br>" + esc(l.city + ", " + l.province) + "</dd></div>" +
             "<div><dt>Your name</dt><dd>" + esc(ME.name) + "</dd></div><div><dt>Identity verified in LAGDA</dt><dd>Yes</dd></div></dl>" +
+          detailsForm(SEL) +
           reach +
           '<p class="fine left">Nothing is booked, paid or notarized by this step. Online notarial sessions are not currently available.</p>' +
           (SEL.error ? '<p class="err-box" role="alert" id="step-err" tabindex="-1">' + esc(SEL.error) + "</p>" : "");
-        bar = '<button type="button" class="btn outline" data-go="market">Browse other notaries</button><button type="button" class="btn big" data-request' + (SEL.busy ? " disabled" : "") + ">" + (SEL.busy ? "Sending…" : "Request this notary") + "</button>";
+        bar = '<button type="button" class="btn outline" data-go="market">Browse other notaries</button><button type="button" class="btn big" data-request' + (SEL.busy || !detailsReady(SEL) ? " disabled" : "") + ">" + (SEL.busy ? "Sending…" : "Request this notary") + "</button>";
       }
     } else if (SEL.step === "interest") {
       at = 3; head = "Register your interest"; sub = "Online notarial sessions are not open yet. Choose to be told by email when you can book with " + name + ".";
@@ -694,12 +695,51 @@
   window.addEventListener("focus", function () { if (SEL && poll) ask(); });
   window.addEventListener("pageshow", function (e) { if (e.persisted && SEL && SEL.step === "identity" && ME) readIdentity(); });
 
+  // What a client asks for, before the notary sees the request. The lists mirror the rules in LAGDA's backend
+  // (packages/core/src/enotary/request-details.ts): the server checks them again, and refuses a kind that is not done remotely.
+  var ACTS = [["acknowledgment", "Acknowledgment"], ["jurat", "Jurat (sworn statement)"], ["signature_witnessing", "Signature witnessing"], ["not_sure", "I am not sure: the notary decides"]];
+  var KINDS = [
+    ["affidavit", "Affidavit or sworn statement", "ok", ""], ["spa", "Special power of attorney", "ok", ""], ["authorization", "Authorization or consent letter", "ok", ""],
+    ["contract", "Contract or agreement", "ok", ""], ["certification", "Certification or declaration", "ok", ""],
+    ["deed_of_sale", "Deed of sale", "warn", "A deed to be registered with the Registry of Deeds or another office may need an original with a handwritten signature. Ask that office before you pay."],
+    ["deed_other", "Other deed (donation, partition, mortgage)", "warn", "A deed to be registered with the Registry of Deeds or another office may need an original with a handwritten signature. Ask that office before you pay."],
+    ["other", "Another kind of document", "warn", "The notary decides whether they can notarize it. They may decline it."],
+    ["will", "Will or testament", "blocked", "A will is not notarized remotely. The witnesses must be together with the person making it."],
+    ["public_record_copy", "Certified copy of a public record (PSA, court or government record)", "blocked", "Only the office that keeps a public record can certify a copy of it."],
+  ];
+  function kindOf(id) { for (var i = 0; i < KINDS.length; i++) if (KINDS[i][0] === id) return KINDS[i]; return null; }
+  function details(sel) { return sel.details || (sel.details = { act: "", kind: "", city: "", province: "", usedAbroad: false }); }
+  function detailsReady(sel) { var d = details(sel); return !!(d.act && d.kind && kindOf(d.kind) && kindOf(d.kind)[2] !== "blocked" && d.city.trim() && d.province.trim()); }
+  /** The "what do you need" form: the act, the kind of document, where the client will be. */
+  function detailsForm(sel) {
+    var d = details(sel), k = kindOf(d.kind);
+    var acts = '<option value="">Choose…</option>' + ACTS.map(function (a) { return '<option value="' + a[0] + '"' + (d.act === a[0] ? " selected" : "") + ">" + esc(a[1]) + "</option>"; }).join("");
+    var kinds = '<option value="">Choose…</option>' + KINDS.map(function (x) { return '<option value="' + x[0] + '"' + (d.kind === x[0] ? " selected" : "") + (x[2] === "blocked" ? " disabled" : "") + ">" + esc(x[1]) + (x[2] === "blocked" ? " (not notarized remotely)" : "") + "</option>"; }).join("");
+    return '<fieldset class="req-details"><legend><b>What do you need?</b></legend>' +
+      '<div class="field"><label for="rd-act">What do you want the notary to do?</label><select id="rd-act">' + acts + "</select></div>" +
+      '<div class="field"><label for="rd-kind">What kind of document is it?</label><select id="rd-kind">' + kinds + "</select></div>" +
+      (k && k[2] === "warn" ? '<p class="fine left" role="note" id="rd-note"><b>Please note.</b> ' + esc(k[3]) + "</p>" : "") +
+      '<p class="fine left" id="rd-blocked" role="note" hidden>Wills and certified copies of public records cannot be notarized remotely.</p>' +
+      '<div class="req-where"><b>Where will you be during the call?</b>' +
+        '<label class="idv-agree"><input type="radio" name="rd-where" id="rd-ph" checked><span>In the Philippines</span></label>' +
+        '<label class="idv-agree" aria-disabled="true"><input type="radio" name="rd-where" id="rd-abroad" disabled><span>Outside the Philippines <em class="idchip">Coming soon</em></span></label>' +
+        '<p class="fine left">LAGDA eNotary serves people who are in the Philippines for now. Notarizing for Filipinos abroad is coming soon.</p>' +
+        '<div class="two"><div class="field"><label for="rd-city">City or municipality</label><input id="rd-city" type="text" maxlength="80" autocomplete="address-level2" value="' + esc(d.city) + '"></div>' +
+        '<div class="field"><label for="rd-province">Province</label><input id="rd-province" type="text" maxlength="80" autocomplete="address-level1" value="' + esc(d.province) + '"></div></div></div>' +
+      '<label class="idv-agree"><input type="checkbox" id="rd-abroad-use"' + (d.usedAbroad ? " checked" : "") + '><span>The document will be used outside the Philippines.</span></label>' +
+      (d.usedAbroad ? '<p class="fine left" role="note"><b>Please note.</b> A document for use abroad may need an apostille after it is notarized. Ask the office that will receive it what it needs.</p>' : "") +
+      "</fieldset>";
+  }
+
   /** Sends the request, then the person goes to its page in the app, where the link and QR code are. */
   function request(withEmail) {
     var sel = SEL, l = sel && sel.lawyer; if (!sel || sel.busy) return;
     var email = withEmail === false ? "" : String(sel.email || "").trim();
     sel.busy = true; sel.error = ""; redraw(false);
-    var body = { directoryId: l.id }; if (email) body.notaryEmail = email;
+    if (!detailsReady(sel)) { sel.busy = false; sel.error = "Say what you need, the kind of document and where you will be."; redraw(false); return; }
+    var d = details(sel);
+    var body = { directoryId: l.id, details: { actWanted: d.act, documentKind: d.kind, inPhilippines: true, city: d.city.trim(), province: d.province.trim(), usedAbroad: !!d.usedAbroad } };
+    if (email) body.notaryEmail = email;
     api("POST", "/me/enotary/invitations", body).then(function (r) {
       if (SEL !== sel) return;
       var inv = r.ok && r.data ? r.data.invitation || r.data : null;
@@ -714,7 +754,8 @@
         probeRequests().then(function () { var q = openRequestFor(l.id); if (q) location.assign(requestPath(q.id)); else { sel.error = "You already have an open request for this notary."; redraw(false); landed(); } });
         return;
       }
-      if (r.status === 409 && r.code === "enotary_request_rate_limit") sel.error = "You have made the most requests allowed in a day. Please try again tomorrow.";
+      if (r.status === 422 && (r.code === "abroad_coming_soon" || r.code === "document_blocked" || r.code === "request_details_invalid")) sel.error = (r.data && r.data.error && r.data.error.message) || "Check what you asked for.";
+      else if (r.status === 409 && r.code === "enotary_request_rate_limit") sel.error = "You have made the most requests allowed in a day. Please try again tomorrow.";
       else if (r.status === 409 && r.code === "enotary_invitation_limit") sel.error = "You already have 3 open requests. Cancel one, or wait for it to end, then try again.";
       else if (r.status === 403 && r.code === "client_identity_required") { INV = { list: INV ? INV.list : [], needsIdentity: true }; sel.error = ""; }
       else if (r.status === 404 && r.code === "enotary_notary_not_listed") sel.error = "That notary is not listed in the Notary Directory.";
@@ -808,8 +849,14 @@
     else if (t.hasAttribute("data-register")) register();
     else if (t.hasAttribute("data-request")) request();
   });
+  function syncRequestButton() { var b = document.querySelector("[data-request]"); if (b && SEL) b.disabled = !!SEL.busy || !detailsReady(SEL); }
   document.addEventListener("change", function (e) {
     var id = e.target.id;
+    if (SEL && (id === "rd-act" || id === "rd-kind" || id === "rd-abroad-use")) {
+      var dd = details(SEL);
+      if (id === "rd-act") dd.act = e.target.value; else if (id === "rd-kind") dd.kind = e.target.value; else dd.usedAbroad = e.target.checked;
+      SEL.error = ""; redraw(false); return;
+    }
     if (id === "idv-agree" || id === "int-agree") { if (SEL) { SEL.agree = e.target.checked; var b = document.querySelector(id === "idv-agree" ? "[data-idv-start]" : "[data-register]"); if (b) b.disabled = !SEL.agree || SEL.busy; } return; }
     if (id === "f-island") { F.island = e.target.value; F.region = F.province = F.city = ""; }
     else if (id === "f-region") { F.region = e.target.value; F.province = F.city = ""; }
@@ -824,7 +871,9 @@
     if (id === "f-sort" || id === "f-area" || id === "f-firm" || id === "f-position") list(); else { market(); keepPlace(); }
   });
   var typing;
-  document.addEventListener("input", function (e) { if (e.target.id === "req-email") { if (SEL) SEL.email = e.target.value; return; } if (e.target.id !== "f-q") return; F.q = e.target.value; F.page = 0; clearTimeout(typing); typing = setTimeout(list, 160); });
+  document.addEventListener("input", function (e) {
+    if (SEL && (e.target.id === "rd-city" || e.target.id === "rd-province")) { details(SEL)[e.target.id === "rd-city" ? "city" : "province"] = e.target.value; syncRequestButton(); return; }
+    if (e.target.id === "req-email") { if (SEL) SEL.email = e.target.value; return; } if (e.target.id !== "f-q") return; F.q = e.target.value; F.page = 0; clearTimeout(typing); typing = setTimeout(list, 160); });
   document.addEventListener("keydown", function (e) {
     var at = e.target.closest ? e.target : document.body, modal = document.getElementById("modal-root").firstElementChild;
     if (MENU) {

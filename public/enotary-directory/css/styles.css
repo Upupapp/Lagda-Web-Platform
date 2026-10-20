@@ -850,3 +850,15 @@ body.handoff .menu-btn, body.handoff .foot, body.handoff #demo, body.handoff .fl
 .req-email { margin-top: 18px; } .req-email label { display: block; margin-bottom: 6px; color: var(--ink); font-size: 14.500px; }
 .req-email input { width: 100%; box-sizing: border-box; min-height: 48px; padding: 10px 14px; border: 1px solid #B9C6D4; border-radius: 6px; background: #fff; color: var(--ink); font: inherit; font-size: 16px; }
 .req-email input:focus-visible { outline: 2px solid var(--sky); outline-offset: 2px; }
+
+/* What the client asks for, before the notary sees the request. */
+.req-details { border: 0; padding: 0; margin: 18px 0 0; display: grid; gap: 14px; min-width: 0; }
+.req-details legend { padding: 0; margin: 0 0 4px; font-size: 16px; color: var(--ink); }
+.req-details .field select, .req-details .field input { height: 48px; border-radius: 6px; border: 1px solid #B9C6D4; font-size: 16px; padding: 0 12px; background: #fff; color: var(--ink); width: 100%; box-sizing: border-box; }
+.req-details .field select:focus-visible, .req-details .field input:focus-visible { outline: 2px solid var(--sky); outline-offset: 2px; }
+.req-where { display: grid; gap: 8px; }
+.req-where .two { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 4px; }
+@media (max-width: 560px) { .req-where .two { grid-template-columns: minmax(0, 1fr); } }
+.req-details [aria-disabled="true"] { opacity: 0.8; }
+.req-details .idchip { font-style: normal; font-size: 11.5px; font-weight: 700; padding: 1px 8px; border-radius: 999px; background: #E6F1FB; color: #0563A6; margin-left: 6px; }
+

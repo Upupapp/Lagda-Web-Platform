@@ -42,6 +42,22 @@ for (const target of [document, window] as EventTarget[]) {
   };
 }
 
+/** What a client says before a request is sent: the act, the kind of document, and where they will be. */
+async function fillDetails(over: { kind?: string } = {}) {
+  const set = (id: string, value: string) => {
+    const field = document.getElementById(id) as HTMLInputElement | HTMLSelectElement;
+    field.value = value;
+    field.dispatchEvent(new Event(field.tagName === "SELECT" ? "change" : "input", { bubbles: true }));
+  };
+  set("rd-act", "acknowledgment");
+  await pass(5);
+  set("rd-kind", over.kind ?? "affidavit");
+  await pass(5);
+  set("rd-city", "Naga City");
+  set("rd-province", "Camarines Sur");
+}
+const DETAILS = { actWanted: "acknowledgment", documentKind: "affidavit", inPhilippines: true, city: "Naga City", province: "Camarines Sur", usedAbroad: false };
+
 async function openDirectory() {
   document.body.innerHTML = BODY;
   history.replaceState(null, "", `/enotary-directory/?select=${ID}`);
@@ -109,10 +125,25 @@ describe("after the identity step, where requests to notaries are offered", () =
     const email = document.getElementById("req-email") as HTMLInputElement;
     email.value = "atty@example.ph";
     email.dispatchEvent(new Event("input", { bubbles: true }));
+    await fillDetails();
     click("[data-request]");
     await pass(20);
-    expect(asked.find(a => a.method === "POST")?.body).toEqual({ directoryId: ID, notaryEmail: "atty@example.ph" });
+    expect(asked.find(a => a.method === "POST")?.body).toEqual({ directoryId: ID, notaryEmail: "atty@example.ph", details: DETAILS });
     expect(assigned).toEqual(["/app/enotary/requests/eni_77"]);
+  });
+
+  it("asks what is needed first: abroad is coming soon, a will cannot be chosen, a deed carries its notice, and the request waits", async () => {
+    await openDirectory();
+    click("[data-step=interest]");
+    await pass(20);
+    expect((document.getElementById("rd-abroad") as HTMLInputElement).disabled).toBe(true);
+    expect(view()).toContain("Coming soon");
+    expect((document.querySelector("#rd-kind option[value=will]") as HTMLOptionElement).disabled).toBe(true);
+    expect((document.querySelector("[data-request]") as HTMLButtonElement).disabled).toBe(true);
+    await fillDetails({ kind: "deed_of_sale" });
+    await pass(5);
+    expect(view()).toContain("Registry of Deeds");
+    expect((document.querySelector("[data-request]") as HTMLButtonElement).disabled).toBe(false);
   });
 
   it("shows only the email field, and explains why, when the notary has no LAGDA account", async () => {
@@ -135,9 +166,10 @@ describe("after the identity step, where requests to notaries are offered", () =
     expect(view()).toContain("This notary has a LAGDA account.");
     expect(view()).toContain("a***@example.ph");
     expect(view()).toContain("limited number of requests a day");
+    await fillDetails();
     click("[data-request]");
     await pass(20);
-    expect(asked.find(a => a.method === "POST")?.body).toEqual({ directoryId: ID });
+    expect(asked.find(a => a.method === "POST")?.body).toEqual({ directoryId: ID, details: DETAILS });
     expect(assigned).toEqual(["/app/enotary/requests/eni_9"]);
   });
 
@@ -153,6 +185,7 @@ describe("after the identity step, where requests to notaries are offered", () =
     await openDirectory();
     click("[data-step=interest]");
     await pass(20);
+    await fillDetails();
     click("[data-request]");
     await pass(20);
     expect(view()).toContain("most requests allowed in a day");
@@ -164,9 +197,10 @@ describe("after the identity step, where requests to notaries are offered", () =
     await openDirectory();
     click("[data-step=interest]");
     await pass(20);
+    await fillDetails();
     click("[data-request]");
     await pass(20);
-    expect(asked.find(a => a.method === "POST")?.body).toEqual({ directoryId: ID });
+    expect(asked.find(a => a.method === "POST")?.body).toEqual({ directoryId: ID, details: DETAILS });
   });
 
   it("retries without the email when LAGDA already has one for the notary", async () => {
@@ -181,9 +215,10 @@ describe("after the identity step, where requests to notaries are offered", () =
     const email = document.getElementById("req-email") as HTMLInputElement;
     email.value = "x@example.ph";
     email.dispatchEvent(new Event("input", { bubbles: true }));
+    await fillDetails();
     click("[data-request]");
     await pass(30);
-    expect(posts).toEqual([{ directoryId: ID, notaryEmail: "x@example.ph" }, { directoryId: ID }]);
+    expect(posts).toEqual([{ directoryId: ID, notaryEmail: "x@example.ph", details: DETAILS }, { directoryId: ID, details: DETAILS }]);
     expect(assigned).toEqual(["/app/enotary/requests/eni_5"]);
   });
 
@@ -192,6 +227,7 @@ describe("after the identity step, where requests to notaries are offered", () =
     await openDirectory();
     click("[data-step=interest]");
     await pass(20);
+    await fillDetails();
     click("[data-request]");
     await pass(20);
     expect(assigned).toEqual(["/app/enotary/requests/eni_9"]);
@@ -203,6 +239,7 @@ describe("after the identity step, where requests to notaries are offered", () =
     click("[data-step=interest]");
     await pass(20);
     answers["GET /me/enotary/invitations"] = { status: 200, body: { invitations: [{ id: "eni_3", status: "awaiting", notary: { directoryId: ID } }] } };
+    await fillDetails();
     click("[data-request]");
     await pass(40);
     expect(assigned).toEqual(["/app/enotary/requests/eni_3"]);
@@ -227,6 +264,7 @@ describe("after the identity step, where requests to notaries are offered", () =
     await openDirectory();
     click("[data-step=interest]");
     await pass(20);
+    await fillDetails();
     click("[data-request]");
     await pass(20);
     expect(view()).toMatch(words);

@@ -14,7 +14,7 @@ import { CheckCircle2, FileUp, ShieldCheck, Stamp, XCircle } from "lucide-react"
 import { ActionButton, ActionRow, GF, Notice, TAP } from "../../../../components/system/design-system";
 import { useConfirm } from "../../../../components/platform/ConfirmDialog";
 import {
-  BLOCK_WORDS, describeSessionError, realEnotarySessionsService, type ActType, type RoomMessage, type Session,
+  BLOCK_WORDS, describeSessionError, realEnotarySessionsService, type ActType, type NotarizeInput, type RoomMessage, type Session,
 } from "../../../../services/real/enotary-sessions.service";
 import { E, EnotaryFrame, EnotaryHeading } from "../EnotaryChrome";
 import { CLIENT_STEPS, EnotaryCaseFrame, NOTARY_STEPS } from "../CaseFrame";
@@ -26,6 +26,7 @@ import { CompletedDocumentPicker, PickProblem, completedDocumentFile, type Compl
 import { SharedDocumentPicker, sharedDocumentAsFile, type SharedChoice } from "./SharedDocumentPicker";
 import { Chat, PdfView } from "./room-bits";
 import { CallCard } from "./CallCard";
+import { SealPlacer, type Placements } from "./SealPlacer";
 import { ClientFlow, NotaryFlow } from "./RoomFlow";
 import { NotarizedPage } from "./NotarizedPage";
 import { RequestTrail, useRequestTrail } from "../RequestTrail";
@@ -345,13 +346,21 @@ function ClientUpload({ onFile, onPick, onShared, workspaceId, busy, replace = f
 
 export function NotarizePanel({
   session, busy, onRecord,
-}: { session: Session; busy: boolean; onRecord: (input: { actType: ActType; description: string; place: string; attestations: Record<string, boolean> }) => Promise<void> }) {
+}: { session: Session; busy: boolean; onRecord: (input: NotarizeInput) => Promise<void> }) {
   // The act and what it is about were stated, and the client approved them: the seal records exactly those.
   const stated = session.statement ?? null;
   const actType: ActType = stated?.actType ?? "acknowledgment";
   const description = stated?.note ?? "";
   const [place, setPlace] = useState("");
+  const [remarks, setRemarks] = useState("");
+  const [placements, setPlacements] = useState<Placements>({});
+  const [hasSignature, setHasSignature] = useState(false);
   const [checks, setChecks] = useState<Record<string, boolean>>({});
+  useEffect(() => {
+    let alive = true;
+    void Promise.resolve(realEnotarySessionsService.signature()).then(found => { if (alive) setHasSignature(found !== null && found !== undefined); }, () => undefined);
+    return () => { alive = false; };
+  }, []);
   const allChecked = session.attestations.every(item => checks[item.key] === true);
   const block = session.notarizeBlock;
   const ready = block === null && allChecked && description.trim() !== "" && place.trim() !== "";
@@ -361,6 +370,11 @@ export function NotarizePanel({
       {block !== null && <p data-testid="notarize-block" style={{ ...bodyText, color: "#8A3B12" }}>{BLOCK_WORDS[block]}</p>}
       <TextField label="Place of notarization" value={place} onChange={setPlace} maxLength={400} required hint="Where you are as the notary, for example the city and province of your commission." />
       <fieldset style={{ border: 0, padding: 0, margin: "0 0 14px" }}>
+        <legend style={labelStyle}>Your seal and signature</legend>
+        <SealPlacer sessionId={session.id} hasSignature={hasSignature} value={placements} onChange={setPlacements} notaryName={session.notaryName} />
+      </fieldset>
+      <TextField label="Remarks for your register (optional)" value={remarks} onChange={setRemarks} maxLength={300} hint="For example: the document was read aloud to the client. They are kept in your notarial register." />
+      <fieldset style={{ border: 0, padding: 0, margin: "0 0 14px" }}>
         <legend style={labelStyle}>What you attest</legend>
         {session.attestations.map(item => (
           <label key={item.key} style={{ ...GF, display: "flex", gap: 8, alignItems: "flex-start", minHeight: TAP, padding: "6px 0", fontSize: 14.5 }}>
@@ -369,7 +383,11 @@ export function NotarizePanel({
           </label>
         ))}
       </fieldset>
-      <ActionButton icon={Stamp} disabled={busy || !ready} onClick={() => { void onRecord({ actType, description: description.trim(), place: place.trim(), attestations: checks }); }}>
+      <ActionButton icon={Stamp} disabled={busy || !ready} onClick={() => { void onRecord({
+        actType, description: description.trim(), place: place.trim(), attestations: checks,
+        ...(placements.seal === undefined && placements.signature === undefined ? {} : { placements }),
+        ...(remarks.trim() === "" ? {} : { remarks: remarks.trim() }),
+      }); }}>
         {busy ? "Recording…" : "Notarize the document"}
       </ActionButton>
       <p style={{ ...bodyText, fontSize: 12.5, color: E.quiet, margin: "10px 0 0" }}>

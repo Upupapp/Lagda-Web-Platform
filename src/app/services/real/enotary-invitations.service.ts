@@ -74,8 +74,27 @@ export interface PaymentProfile {
   updatedAt: string;
 }
 
+/** What the client asked for: the act, the kind of document and where they will be (the Philippines only for now). */
+export interface RequestDetails {
+  actWanted: string;
+  actWantedLabel: string;
+  documentKind: string;
+  documentLabel: string;
+  /** A notice for a kind of document that may need more than a remote notarization. */
+  documentNote: string | null;
+  city: string;
+  province: string;
+  usedAbroad: boolean;
+}
+
 export interface Invitation {
   id: string;
+  /** The request's number, EN-2026-000004. Absent from an older server. */
+  reference?: string | null;
+  /** What the client asked for. Null on a request made before it was asked. */
+  details?: RequestDetails | null;
+  /** The room this request became, if it has begun. */
+  session?: { id: string; status: "preparing" | "live" | "notarized" | "cancelled"; hasDocument: boolean } | null;
   status: InvitationStatus;
   notary: InvitationNotary;
   notaryEmail: string | null;
@@ -115,6 +134,7 @@ export interface ClaimResult {
 
 export interface DeskRequest {
   id: string;
+  details?: RequestDetails | null;
   status: InvitationStatus;
   client: { name: string; identityVerified: boolean };
   receivedAt: string;
@@ -136,6 +156,7 @@ export interface DeskRequest {
 /** A request sent to this notary's own listing that they have not taken yet. */
 export interface DeskIncoming {
   id: string;
+  details?: RequestDetails | null;
   client: { name: string; identityVerified: boolean };
   receivedAt: string;
   expiresAt: string;

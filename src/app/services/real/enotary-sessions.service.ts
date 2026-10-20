@@ -85,6 +85,7 @@ export interface RegisterEntry {
   sessionId: string; invitationId: string; reference: string | null;
   docNo: number; pageNo: number; bookNo: string; series: number; registerRef: string;
   notarizedAt: string; clientName: string; documentName: string; actLabel: string; feeCentavos: number | null;
+  documentKindLabel?: string | null; clientPlace?: string | null; clientIdType?: string | null; remarks?: string | null;
   copy: { status: CtcStatus; mode: CtcMode; stage: ShipmentStage | null; trackingNo: string | null } | null;
 }
 
@@ -120,11 +121,26 @@ export interface CertifiedCopy {
   receivedAt: string | null;
 }
 
+/** A point on a page of the document: a 1-based page, and fractions of its width and height from the top left. */
+export interface PagePoint { page: number; x: number; y: number }
+
 export interface NotarizeInput {
   actType: ActType;
   description: string;
   place: string;
   attestations: Record<string, boolean>;
+  /** Where the notary dropped the seal and the signature. Left out, the seal goes lower right of the last page. */
+  placements?: { seal?: PagePoint; signature?: PagePoint };
+  remarks?: string;
+}
+
+/** The notary's signature picture. */
+export interface NotarySignature {
+  mediaType: "image/png" | "image/jpeg";
+  sizeBytes: number;
+  updatedAt: string;
+  /** The picture, base64. */
+  image: string;
 }
 
 export interface CopyRequestInput {
@@ -287,12 +303,38 @@ class RealEnotarySessionsService {
   async register(): Promise<NotaryRegister> {
     return apiRequest<NotaryRegister>("/me/enotary/register");
   }
+
+  /** The register as a spreadsheet, of one year or all of them. */
+  async registerCsv(year?: number): Promise<Blob> {
+    return fetchFile(`/me/enotary/register.csv${year === undefined ? "" : `?year=${String(year)}`}`);
+  }
+
+  /** One month of the register as the report to the Clerk of Court. */
+  async registerReport(year: number, month: number): Promise<Blob> {
+    return fetchFile(`/me/enotary/register/report.pdf?year=${String(year)}&month=${String(month)}`);
+  }
+
+  async signature(): Promise<NotarySignature | null> {
+    return (await apiRequest<{ signature: NotarySignature | null }>("/me/notary/signature")).signature;
+  }
+
+  async saveSignature(mediaType: NotarySignature["mediaType"], image: string): Promise<NotarySignature | null> {
+    return (await apiRequest<{ signature: NotarySignature | null }>("/me/notary/signature", { method: "PUT", body: { mediaType, image } })).signature;
+  }
+
+  async removeSignature(): Promise<void> {
+    await apiRequest<unknown>("/me/notary/signature", { method: "DELETE" });
+  }
   cancelCopy(ctcId: string) { return this.act(ctcId, "cancel"); }
 
   /** Public, no session. Anything the server does not recognise is `unknown`. */
   async verify(code: string): Promise<Verification> {
     return apiRequest<Verification>(`/public/enotary/verify?code=${encodeURIComponent(code)}`);
   }
+}
+
+async function fetchFile(path: string): Promise<Blob> {
+  return fetchPdf(path);
 }
 
 async function fetchPdf(path: string): Promise<Blob> {

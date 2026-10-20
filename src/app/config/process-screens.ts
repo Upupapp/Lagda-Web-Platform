@@ -21,7 +21,7 @@ import {
   Fingerprint, KeyRound, UserPlus, UserCheck, UserX, Archive, ArchiveRestore, Search,
   Crown, FilePen, LayoutTemplate, Rocket, Link2, Users, UserCog, FileX, Save, Inbox,
   Network, ArrowLeftRight, Ban, RotateCcw, Stamp, FileUp, Video, QrCode, Banknote, BadgeCheck, ClipboardCheck,
-  PhoneOff, FileCheck, ScrollText, Mail, Package,
+  PhoneOff, FileCheck, ScrollText, Mail, Package, PenLine,
 } from "lucide-react";
 import { runProcess, type ProcessingOptions } from "../services/processing.service";
 
@@ -143,6 +143,10 @@ const SCREENS = {
   "enotary-approve": { tag: "Notary session", icon: ClipboardCheck, message: () => "Recording your approval…", detail: "A fee is opened for payment to the notary." },
   "enotary-notarize": { tag: "Notary session", icon: Stamp, message: () => "Recording the notarial act…", detail: "Sealing the document and writing the register entry. This cannot be undone." },
   "enotary-session-cancel": { tag: "Notary session", icon: PhoneOff, message: () => "Calling off the session…", detail: "Nothing is notarized. The other person is told." },
+  "enotary-signature-save": { tag: "Notary seal", icon: PenLine, message: () => "Saving your signature…", detail: "Only you can see this picture. It is drawn where you drop it on each document." },
+  "enotary-signature-remove": { tag: "Notary seal", icon: Trash2, message: () => "Removing your signature…", detail: "Documents you notarize from now on carry no signature picture." },
+  "enotary-register-export": { tag: "Notary Book", icon: ScrollText, message: () => "Preparing your spreadsheet…", detail: "Your entries, one row each, ready to open in a spreadsheet." },
+  "enotary-register-report": { tag: "Notary Book", icon: FileCheck, message: () => "Preparing the monthly report…", detail: "A cover letter to the Clerk of Court and the month's entries. You read, sign and submit it." },
   "enotary-copy-stage": { tag: "Certified copy", icon: Package, message: () => "Updating the copy's journey…", detail: "The client sees the new step at once." },
   "enotary-copy-request": { tag: "Certified copy", icon: FileCheck, message: () => "Asking for your certified copy…", detail: "The notary is told and will answer in the session." },
   "enotary-application-submit": { tag: "Notary application", icon: ScrollText, message: () => "Sending your application…", detail: "A LAGDA reviewer will look at it. You can withdraw it while it is open." },

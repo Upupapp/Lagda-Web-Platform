@@ -20,6 +20,7 @@ import {
 } from "../../../../services/real/enotary-invitations.service";
 import { E, SERIF } from "../EnotaryChrome";
 import { RequestTrail } from "../RequestTrail";
+import { DetailNotes, detailRows } from "../request-details";
 import { CLIENT_STEPS, EnotaryCaseFrame, PartyCard, type ClientStepId, type PartyRow, type TrailEntry } from "../CaseFrame";
 import { EnotaryLoadError, EnotaryLoading, EnotaryNotOffered } from "../EnotaryStates";
 import {
@@ -280,6 +281,8 @@ export function ClientRequestPage() {
   const place = [invitation.notary.city, invitation.notary.province].filter(part => part !== "").join(", ");
   const rows: PartyRow[] = [
     ...(place !== "" ? [{ label: "Place", value: place }] : []),
+    ...(invitation.reference !== undefined && invitation.reference !== null ? [{ label: "Reference", value: invitation.reference, mono: true, testId: "party-reference" }] : []),
+    ...detailRows(invitation.details),
     { label: "Your identity", value: "Verified in LAGDA", testId: "party-identity" },
     ...(invitation.payment !== null && invitation.payment !== undefined ? [{ label: "Fee", value: `PHP ${(invitation.payment.amountCentavos / 100).toLocaleString("en-PH", { minimumFractionDigits: 2 })}` }] : []),
     { label: "Received by LAGDA", value: stampLabel(invitation.createdAt ?? invitation.expiresAt) },
@@ -311,6 +314,7 @@ export function ClientRequestPage() {
         </Panel>
       )}
 
+      <DetailNotes details={invitation.details} />
       {notice !== null && (
         <Notice icon={invitation.status === "accepted" ? ShieldCheck : invitation.status === "awaiting" || invitation.status === "claimed" ? Hourglass : XCircle} tone={notice.tone}>
           <span data-testid="request-notice">{notice.text}</span>

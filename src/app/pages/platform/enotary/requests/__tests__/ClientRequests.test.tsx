@@ -345,6 +345,33 @@ describe("the list", () => {
     expect(screen.getByTestId("row-countdown")).toHaveTextContent("1 h 59 m 59 s left");
   });
 
+  it("is the Notarial Request History: it shows the number and what was asked, finds a request, and filters by where it stands", async () => {
+    const asked = { actWanted: "jurat", actWantedLabel: "Jurat (sworn statement)", documentKind: "affidavit", documentLabel: "Affidavit or sworn statement", documentNote: null, city: "Cebu City", province: "Cebu", usedAbroad: false };
+    list.mockResolvedValue([
+      invitation({ id: "eni_3", reference: "EN-2026-000003", details: asked }),
+      invitation({ id: "eni_2", status: "accepted", link: null, reference: "EN-2026-000002", notary: { ...invitation().notary, name: "Ben Lim" }, session: { id: "ens_2", status: "notarized", hasDocument: true } }),
+      invitation({ id: "eni_1", status: "expired", link: null, reference: "EN-2026-000001", notary: { ...invitation().notary, name: "Cara Tan" } }),
+    ]);
+    renderList();
+    await settle();
+    expect(screen.getByRole("heading", { level: 1, name: "Notarial Request History" })).toBeInTheDocument();
+    const rows = screen.getAllByTestId("request-row");
+    expect(rows[0]).toHaveTextContent("EN-2026-000003");
+    expect(rows[0]).toHaveTextContent("Jurat (sworn statement) · Affidavit or sworn statement");
+    expect(within(rows[1]!).getByTestId("status-pill")).toHaveTextContent("Notarized");
+    expect(screen.getByTestId("filter-all")).toHaveTextContent("3");
+    expect(screen.getByTestId("filter-notarized")).toHaveTextContent("1");
+    press(screen.getByTestId("filter-notarized"));
+    expect(screen.getAllByTestId("request-row")).toHaveLength(1);
+    press(screen.getByTestId("filter-closed"));
+    expect(screen.getAllByTestId("request-row")[0]).toHaveTextContent("Cara Tan");
+    press(screen.getByTestId("filter-all"));
+    fireEvent.change(screen.getByLabelText("Find a request"), { target: { value: "ben 000002" } });
+    expect(screen.getAllByTestId("request-row")).toHaveLength(1);
+    fireEvent.change(screen.getByLabelText("Find a request"), { target: { value: "nobody" } });
+    expect(screen.getByTestId("history-none")).toBeInTheDocument();
+  });
+
   it("says what to do when there are none, and when eNotary is not offered", async () => {
     list.mockResolvedValue([]);
     const view = renderList();
