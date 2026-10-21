@@ -25,10 +25,14 @@ export const SERIF = "Tinos, 'Times New Roman', Times, serif";
 export type EnotaryTone = "client" | "attorney" | "neutral";
 
 const RAIL_STYLES = `
-  .eno-rail { display: flex; margin: 0 0 20px; padding: 0; list-style: none; background: ${E.paper}; border: 1px solid ${E.line}; border-radius: 10px; overflow-x: auto; scrollbar-width: thin; }
-  .eno-rail li { flex: 1 1 0; min-width: 0; display: flex; align-items: center; gap: 9px; padding: 11px 9px; border-right: 1px solid ${E.line}; border-bottom: 3px solid transparent; box-sizing: border-box; }
+  .eno-rail { display: flex; margin: 0 0 20px; padding: 0; list-style: none; background: ${E.paper}; border: 1px solid ${E.line}; border-radius: 12px; overflow-x: auto; scrollbar-width: thin; box-shadow: 0 1px 2px rgba(10,26,43,0.04); }
+  .eno-rail li { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 8px; padding: 14px 8px 12px; border-right: 1px solid ${E.line}; border-bottom: 3px solid transparent; box-sizing: border-box; text-align: center; }
   .eno-rail li:last-child { border-right: 0; }
-  @media (max-width: 860px) { .eno-rail li { flex: 1 0 auto; min-width: 104px; } }
+  .eno-rail li.is-now { border-bottom-color: ${E.maroon}; background: linear-gradient(180deg, #FFFFFF 0%, #FBEFF3 100%); }
+  .eno-rail-dot { flex: 0 0 auto; display: grid; place-items: center; width: 28px; height: 28px; border-radius: 999px; font-size: 13px; font-weight: 700; box-sizing: border-box; }
+  .eno-rail-label { font-size: 13px; line-height: 1.25; }
+  @media (max-width: 860px) { .eno-rail li { flex: 1 0 auto; min-width: 108px; } }
+  @media (max-width: 520px) { .eno-rail li { min-width: 96px; padding: 12px 6px 10px; } .eno-rail-label { font-size: 12px; } }
 `;
 
 const STYLES = `
@@ -179,21 +183,21 @@ export function EnotaryRail({ steps, current, label }: {
         const done = i < index;
         const now = i === index;
         return (
-          <li key={step.id} style={now ? { borderBottomColor: E.sky, background: "#FBFDFF" } : undefined}>
+          <li key={step.id} className={now ? "is-now" : undefined}>
             <span
-              aria-hidden="true"
+              aria-hidden="true" className="eno-rail-dot"
               style={{
-                flex: "0 0 auto", display: "grid", placeItems: "center", width: 26, height: 26, borderRadius: 999,
-                fontSize: 13, fontWeight: 700,
-                background: done ? E.ok : now ? E.sky : E.paper, color: done || now ? "#FFFFFF" : E.quiet,
-                border: `1.5px solid ${done ? E.ok : now ? E.sky : "#C3D0DF"}`,
+                background: done ? E.navy : now ? E.maroon : E.paper, color: done || now ? "#FFFFFF" : E.faint,
+                border: `1.5px solid ${done ? E.navy : now ? E.maroon : "#C9D4E0"}`,
+                boxShadow: now ? "0 0 0 4px rgba(140,29,63,0.14)" : "none",
               }}
             >
               {done ? <Check size={15} /> : i + 1}
             </span>
             <span
+              className="eno-rail-label"
               {...(now ? { "aria-current": "step" as const } : {})}
-              style={{ fontSize: 13, fontWeight: now || done ? 700 : 600, color: now ? E.ink : done ? E.ok : E.quiet, lineHeight: 1.25 }}
+              style={{ fontWeight: now || done ? 700 : 600, color: now ? E.maroon : done ? E.navy : E.faint }}
             >
               {step.label}
             </span>

@@ -7,6 +7,7 @@
 import { useEffect, useId, useState, useSyncExternalStore, type CSSProperties, type ReactNode } from "react";
 import { GF, T, TAP } from "../../../components/system/design-system";
 import { E } from "./EnotaryChrome";
+import { Scale } from "lucide-react";
 import type { InvitationStatus } from "../../../services/real/enotary-invitations.service";
 
 /** Said on every page of this phase. LAGDA eNotary is not accredited and sessions are not open. */
@@ -38,8 +39,9 @@ function useSessionsOffered(): boolean {
 export function OnrampNote({ extra }: { extra?: ReactNode }) {
   const offered = useSessionsOffered();
   return (
-    <p data-testid="onramp-note" style={{ ...GF, margin: "22px 0 0", fontSize: 12.5, color: E.quiet, lineHeight: 1.6 }}>
-      {offered ? PILOT_NOTE : ONRAMP_NOTE}{extra !== undefined && <> {extra}</>}
+    <p data-testid="onramp-note" style={{ ...GF, margin: "22px 0 0", padding: "14px 18px", borderRadius: 12, background: "#EEF2F8", border: `1px solid ${E.line}`, fontSize: 12.5, color: E.text, lineHeight: 1.65, display: "flex", gap: 12, alignItems: "flex-start" }}>
+      <Scale size={17} aria-hidden style={{ flex: "0 0 auto", marginTop: 1, color: E.navy }} />
+      <span><strong style={{ color: E.ink }}>{offered ? "Pilot programme notice." : "Notice."}</strong> {offered ? PILOT_NOTE : ONRAMP_NOTE}{extra !== undefined && <> {extra}</>}</span>
     </p>
   );
 }

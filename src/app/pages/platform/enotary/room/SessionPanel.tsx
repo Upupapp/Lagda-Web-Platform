@@ -6,13 +6,14 @@
 
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { Link, useNavigate } from "react-router";
-import { CalendarDays, Mail, Video, XCircle } from "lucide-react";
+import { BadgeCheck, CalendarDays, Clock, Hash, Hourglass, Mail, PhoneOff, Video, XCircle } from "lucide-react";
+import { RecordCard, type RecordBadge } from "../RecordCard";
 import { ActionButton, Notice } from "../../../../components/system/design-system";
 import {
   describeSessionError, realEnotarySessionsService, type SessionLookup, type SessionRole,
 } from "../../../../services/real/enotary-sessions.service";
 import { ApiError } from "../../../../services/api-client";
-import { Panel, PanelTitle, bodyText, linkButton, markSessionsOffered } from "../onramp-ui";
+import { bodyText, linkButton, markSessionsOffered } from "../onramp-ui";
 import { E } from "../EnotaryChrome";
 import { stampLabel } from "../requests/expiry";
 import { CopiesPanel } from "./CopiesPanel";
@@ -24,10 +25,11 @@ export const SESSION_LOOKUP_MS = 8_000;
 export const REOPEN_PREPARE_MS = 900;
 
 /** A panel of its own (the request page), or the band at the foot of a desk card: a heading and a white box. */
-function Frame({ variant, title, tone = "plain", testId, children }: {
-  variant: "panel" | "band"; title: string; tone?: "plain" | "sky"; testId: string; children: ReactNode;
+function Frame({ variant, title, tone = "plain", testId, children, badge }: {
+  variant: "panel" | "band"; title: string; tone?: "plain" | "sky"; testId: string; children: ReactNode; badge?: RecordBadge;
 }) {
-  if (variant === "panel") return <Panel tone={tone} testId={testId}><PanelTitle>{title}</PanelTitle>{children}</Panel>;
+  void tone;
+  if (variant === "panel") return <RecordCard icon={Video} title={title === "Notarized" ? "Notarization Record" : "Session Record"} badge={badge} testId={testId}>{children}</RecordCard>;
   return (
     <section data-testid={testId}>
       <h3 style={{ margin: "0 0 10px", display: "flex", alignItems: "center", gap: 8, fontSize: 15, fontWeight: 800, color: E.navy }}>
@@ -119,7 +121,7 @@ export function SessionPanel({ invitationId, role, variant = "panel" }: { invita
   if (session === null) {
     if (found.reason === "payment_pending") {
       return (
-        <Frame variant={variant} title="The session" testId="session-panel">
+        <Frame variant={variant} title="The session" testId="session-panel" badge={{ icon: Hourglass, label: "Awaiting payment", tone: "warn" }}>
           <p style={{ ...bodyText, margin: 0 }} data-testid="session-wait-fee">
             {role === "client" ? "The session opens once the notary's fee is paid and confirmed." : "The session can begin once the client's payment is confirmed."}
           </p>
@@ -128,7 +130,7 @@ export function SessionPanel({ invitationId, role, variant = "panel" }: { invita
     }
     if (!found.canStart) return null;
     return (
-      <Frame variant={variant} title="The session" tone="sky" testId="session-panel">
+      <Frame variant={variant} title="The session" tone="sky" testId="session-panel" badge={{ icon: Clock, label: "Not started", tone: "info" }}>
         {problem !== null && <Notice icon={XCircle} tone="danger">{problem}</Notice>}
         {role === "client" ? (
           <>
@@ -141,12 +143,32 @@ export function SessionPanel({ invitationId, role, variant = "panel" }: { invita
   }
 
   if (session.status === "cancelled") {
+    const who = session.cancelledBy === role ? "You called off" : `${role === "client" ? session.notaryName : session.clientName} called off`;
+    const stamp = session.endedAt === null ? null : stampLabel(session.endedAt);
+    const cut = stamp === null ? -1 : stamp.lastIndexOf(", ");
+    const ended = stamp === null ? null : cut < 0 ? { date: stamp, time: "" } : { date: stamp.slice(0, cut), time: stamp.slice(cut + 2) };
     return (
-      <Frame variant={variant} title="The session" testId="session-panel">
-        <p style={{ ...bodyText, margin: 0 }} data-testid="session-cancelled">
-          {session.cancelledBy === role ? "You called off" : `${role === "client" ? session.notaryName : session.clientName} called off`} the session
-          {session.endedAt !== null ? ` on ${stampLabel(session.endedAt)}` : ""}. Nothing was notarized.
-        </p>
+      <Frame variant={variant} title="The session" testId="session-panel" badge={{ icon: PhoneOff, label: "Session ended", tone: "warn" }}>
+        {variant === "band" ? (
+          <p style={{ ...bodyText, margin: 0 }} data-testid="session-cancelled">
+            {who} the session{session.endedAt !== null ? ` on ${stampLabel(session.endedAt)}` : ""}. Nothing was notarized.
+          </p>
+        ) : (
+          <div style={{ display: "flex", gap: 14, alignItems: "flex-start" }}>
+            <span aria-hidden="true" style={{ flex: "0 0 auto", width: 44, height: 44, borderRadius: 10, display: "grid", placeItems: "center", background: "#FFF5DC", border: "1px solid #F0D9A8", color: "#8A5A00" }}><PhoneOff size={20} /></span>
+            <div style={{ minWidth: 0, flex: 1 }}>
+              <p style={{ margin: 0, fontSize: 15.5, fontWeight: 800, color: E.ink }}>Session called off: no document notarized</p>
+              <p data-testid="session-cancelled" style={{ ...bodyText, margin: "6px 0 0" }}>
+                {who} the session{session.endedAt !== null ? ` on ${stampLabel(session.endedAt)}` : ""}. Nothing was notarized: <strong style={{ color: E.ink }}>no notarial act was performed</strong> and no notarial certificate was issued for this request.
+              </p>
+              <p style={{ margin: "12px 0 0", paddingTop: 10, borderTop: `1px dashed ${E.line}`, display: "flex", flexWrap: "wrap", gap: "6px 18px", fontSize: 13, color: E.quiet }}>
+                {ended !== null && <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}><CalendarDays size={14} aria-hidden /> Called off on <strong style={{ color: E.ink }}>{ended.date}</strong></span>}
+                {ended !== null && ended.time !== "" && <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}><Clock size={14} aria-hidden /> at <strong style={{ color: E.ink }}>{ended.time}</strong></span>}
+                {session.reference !== undefined && session.reference !== null && <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}><Hash size={14} aria-hidden /> Ref. <strong style={{ color: E.ink, fontFamily: "ui-monospace, Menlo, Consolas, monospace" }}>{session.reference}</strong></span>}
+              </p>
+            </div>
+          </div>
+        )}
         {said !== null && <p role="status" data-testid="reopen-said" style={{ ...bodyText, margin: "10px 0 0" }}>{said}</p>}
         {problem !== null && <Notice icon={XCircle} tone="danger">{problem}</Notice>}
         <div data-testid="reopen-action" style={{ display: "flex", justifyContent: "flex-end", marginTop: 14 }}>
@@ -161,7 +183,7 @@ export function SessionPanel({ invitationId, role, variant = "panel" }: { invita
   if (session.status === "notarized") {
     return (
       <>
-        <Frame variant={variant} title="Notarized" tone="sky" testId="session-panel">
+        <Frame variant={variant} title="Notarized" tone="sky" testId="session-panel" badge={{ icon: BadgeCheck, label: "Notarized", tone: "ok" }}>
           <p style={bodyText} data-testid="session-notarized">
             {session.act?.typeLabel} recorded{session.act !== null ? ` on ${stampLabel(session.act.at)}` : ""} · register entry {session.act?.registerRef} · code {session.notarized?.code}
           </p>
@@ -173,7 +195,8 @@ export function SessionPanel({ invitationId, role, variant = "panel" }: { invita
   }
 
   return (
-    <Frame variant={variant} title="The session" tone="sky" testId="session-panel">
+    <Frame variant={variant} title="The session" tone="sky" testId="session-panel"
+      badge={session.status === "live" ? { icon: Video, label: "In session", tone: "info" } : { icon: Clock, label: "Preparing", tone: "info" }}>
       <p style={bodyText} data-testid="session-state">
         {session.status === "live" ? "The room is open." : role === "client"
           ? session.document === null ? "Add your document, then wait for the notary to open the room." : "Your document is in. Waiting for the notary to open the room."

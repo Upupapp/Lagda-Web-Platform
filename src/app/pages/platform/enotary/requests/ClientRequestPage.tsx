@@ -27,6 +27,7 @@ import {
   OnrampNote, Panel, PanelTitle, TextField, bodyText, fieldStyle, useNow,
 } from "../onramp-ui";
 import { QrCard } from "./QrCard";
+import { StatusBanner } from "../RecordCard";
 import { SessionPanel } from "../room/SessionPanel";
 import { ClientPaymentPanel, paymentIsPending } from "../payments/ClientPaymentPanel";
 import { ExpiryClock, countdownText, expiryLabel, expiryTone, stampLabel, type ExpiryTone } from "./expiry";
@@ -95,7 +96,13 @@ function noticeFor(invitation: Invitation): { tone: "info" | "success" | "warn";
 /** Where the client is among the eight steps, from the request's own state. */
 export function clientStepOf(invitation: Invitation): ClientStepId {
   switch (invitation.status) {
-    case "accepted": return "call";
+    case "accepted": {
+      // Once there is a session, the step follows it: notarized, the document added, or the call.
+      const session = invitation.session ?? null;
+      if (session?.status === "notarized") return "notarized";
+      if (session !== null && session.status !== "cancelled" && session.hasDocument) return "document";
+      return "call";
+    }
     default: return "joins";
   }
 }
@@ -280,12 +287,12 @@ export function ClientRequestPage() {
 
   const place = [invitation.notary.city, invitation.notary.province].filter(part => part !== "").join(", ");
   const rows: PartyRow[] = [
-    ...(place !== "" ? [{ label: "Place", value: place }] : []),
-    ...(invitation.reference !== undefined && invitation.reference !== null ? [{ label: "Reference", value: invitation.reference, mono: true, testId: "party-reference" }] : []),
+    ...(place !== "" ? [{ label: "Place of notarization", value: place }] : []),
+    ...(invitation.reference !== undefined && invitation.reference !== null ? [{ label: "Reference no.", value: invitation.reference, mono: true, testId: "party-reference" }] : []),
     ...detailRows(invitation.details),
-    { label: "Your identity", value: "Verified in LAGDA", testId: "party-identity" },
-    ...(invitation.payment !== null && invitation.payment !== undefined ? [{ label: "Fee", value: `PHP ${(invitation.payment.amountCentavos / 100).toLocaleString("en-PH", { minimumFractionDigits: 2 })}` }] : []),
-    { label: "Received by LAGDA", value: stampLabel(invitation.createdAt ?? invitation.expiresAt) },
+    { label: "Identity status", value: "Verified in LAGDA", testId: "party-identity", good: true },
+    ...(invitation.payment !== null && invitation.payment !== undefined ? [{ label: "Notarial fee", value: `PHP ${(invitation.payment.amountCentavos / 100).toLocaleString("en-PH", { minimumFractionDigits: 2 })}` }] : []),
+    { label: "Request received", value: stampLabel(invitation.createdAt ?? invitation.expiresAt) },
   ];
   const trail = trailOf(invitation);
 
@@ -316,9 +323,13 @@ export function ClientRequestPage() {
 
       <DetailNotes details={invitation.details} />
       {notice !== null && (
-        <Notice icon={invitation.status === "accepted" ? ShieldCheck : invitation.status === "awaiting" || invitation.status === "claimed" ? Hourglass : XCircle} tone={notice.tone}>
+        <StatusBanner
+          icon={invitation.status === "accepted" ? ShieldCheck : invitation.status === "awaiting" || invitation.status === "claimed" ? Hourglass : XCircle}
+          tone={notice.tone === "success" ? "ok" : notice.tone === "warn" ? "warn" : "info"}
+          lead={invitation.status === "accepted" ? "Request accepted." : invitation.status === "claimed" ? "With the notary." : invitation.status === "awaiting" ? "Waiting for the notary." : undefined}
+        >
           <span data-testid="request-notice">{notice.text}</span>
-        </Notice>
+        </StatusBanner>
       )}
 
       {open && <ExpiryPanel expiresAt={invitation.expiresAt} msLeft={msLeft} />}

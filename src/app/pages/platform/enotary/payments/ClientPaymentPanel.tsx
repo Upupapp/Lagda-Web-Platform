@@ -7,7 +7,8 @@
 // from their own app.
 
 import { useEffect, useRef, useState } from "react";
-import { Check, Hourglass, QrCode, Send, ShieldAlert, X } from "lucide-react";
+import { Banknote, CalendarDays, Check, Hash, Hourglass, QrCode, ReceiptText, Send, ShieldAlert, UserRound, X } from "lucide-react";
+import { RecordCard, RecordGrid } from "../RecordCard";
 import { ActionButton, GF, Notice } from "../../../../components/system/design-system";
 import {
   describePaymentError, formatPesos, realEnotaryInvitationsService, type Invitation, type InvitationPayment,
@@ -55,39 +56,43 @@ export function ClientPaymentPanel({
 
   if (payment.status === "waived") {
     return (
-      <Panel tone="sky" testId="payment-panel">
-        <PanelTitle>Fee</PanelTitle>
+      <RecordCard icon={ReceiptText} title="Notarial Fee" badge={{ icon: Check, label: "No fee", tone: "end" }} testId="payment-panel">
         <p data-testid="payment-waived" style={{ ...bodyText, margin: 0 }}>{notary} is not charging a fee for this request. Nothing to pay.</p>
-      </Panel>
+      </RecordCard>
     );
   }
 
   if (payment.status === "confirmed") {
     return (
-      <Panel tone="sky" testId="payment-panel">
-        <PanelTitle>Payment</PanelTitle>
-        <p data-testid="payment-confirmed" style={{ ...bodyText, margin: 0, display: "flex", gap: 8, alignItems: "flex-start" }}>
-          <Check size={18} aria-hidden style={{ color: E.ok, flex: "0 0 auto", marginTop: 3 }} />
+      <RecordCard icon={ReceiptText} title="Payment Confirmation" badge={{ icon: Check, label: "Confirmed", tone: "ok" }} testId="payment-panel" flush>
+        <RecordGrid cells={[
+          { icon: Banknote, label: "Amount paid", lead: true, testId: "payment-amount-paid",
+            value: <span style={{ fontFamily: "Tinos, 'Times New Roman', serif", fontSize: 26, color: E.navy }}><small style={{ fontFamily: "'Geist', sans-serif", fontSize: 13, color: "#8A6A2E", marginRight: 6 }}>PHP</small>{formatPesos(payment.amountCentavos)}</span> },
+          { icon: Hash, label: "Payment reference", value: payment.reference ?? "None given", mono: true },
+          { icon: UserRound, label: "Confirmed by", value: /^atty\.?\s/i.test(notary) ? notary : `Atty. ${notary}` },
+          { icon: CalendarDays, label: "Date & time", value: payment.decidedAt === null ? "Not recorded" : stampLabel(payment.decidedAt) },
+        ]} />
+        <p data-testid="payment-confirmed" style={{ ...bodyText, margin: 0, padding: "12px 20px", borderTop: `1px solid ${E.line}`, fontSize: 13.5, display: "flex", gap: 8, alignItems: "flex-start" }}>
+          <Check size={16} aria-hidden style={{ color: E.ok, flex: "0 0 auto", marginTop: 3 }} />
           <span>{notary} confirmed your payment of <strong>{amount}</strong>
             {payment.reference !== null && <> (reference {payment.reference})</>}
             {payment.decidedAt !== null && <>, {stampLabel(payment.decidedAt)}</>}.</span>
         </p>
-      </Panel>
+      </RecordCard>
     );
   }
 
   if (payment.status === "proof") {
     return (
-      <Panel tone="sky" testId="payment-panel">
-        <PanelTitle>Payment</PanelTitle>
+      <RecordCard icon={ReceiptText} title="Payment" badge={{ icon: Hourglass, label: "Awaiting confirmation", tone: "warn" }} testId="payment-panel">
         <p data-testid="payment-waiting" style={{ ...bodyText, margin: 0, display: "flex", gap: 8, alignItems: "flex-start" }}>
-          <Hourglass size={18} aria-hidden style={{ color: E.skyDeep, flex: "0 0 auto", marginTop: 3 }} />
+          <Hourglass size={18} aria-hidden style={{ color: "#8A5A00", flex: "0 0 auto", marginTop: 3 }} />
           <span>
             You told us you paid <strong>{amount}</strong> (reference <strong data-testid="payment-reference">{payment.reference}</strong>).
             Now {notary} checks their own account and confirms. You will be told when they do.
           </span>
         </p>
-      </Panel>
+      </RecordCard>
     );
   }
 

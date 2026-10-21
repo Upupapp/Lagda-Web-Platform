@@ -8,7 +8,8 @@
 
 import { createContext, useContext, useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { Link } from "react-router";
-import { ArrowLeft, ClipboardList, X } from "lucide-react";
+import { ArrowLeft, Banknote, ClipboardList, Clock, FileText, Hash, MapPin, ScrollText, ShieldCheck, Stamp, X, type LucideProps } from "lucide-react";
+import type { ComponentType } from "react";
 import { GF } from "../../../components/system/design-system";
 import { Z } from "../../../utils/z-index";
 import { PersonAvatar, brandGradient } from "../contacts/contacts-ui";
@@ -48,7 +49,19 @@ const CASE_STYLES = `
   .eno-party-seal svg { width: 84px; height: auto; display: block; }
 `;
 
-export interface PartyRow { readonly label: string; readonly value: ReactNode; readonly mono?: boolean; readonly testId?: string }
+export interface PartyRow { readonly label: string; readonly value: ReactNode; readonly mono?: boolean; readonly testId?: string; readonly icon?: ComponentType<LucideProps>; readonly good?: boolean }
+
+/** The icon a fact is shown with, from its label when the page names none. */
+function rowIcon(row: PartyRow): ComponentType<LucideProps> {
+  if (row.icon !== undefined) return row.icon;
+  const label = row.label.toLowerCase();
+  if (/place|city|where/.test(label)) return MapPin;
+  if (/reference|number|no\./.test(label)) return Hash;
+  if (/identity|verified|id\b/.test(label)) return ShieldCheck;
+  if (/fee|paid|amount/.test(label)) return Banknote;
+  if (/received|sent|date|time|answered/.test(label)) return Clock;
+  return FileText;
+}
 
 export const initialsOf = (name: string): string => {
   const words = name.replace(/\([^)]*\)/g, " ").replace(/^\s*atty\.?\s+/i, "").split(/\s+/).filter(word => word !== "");
@@ -89,25 +102,32 @@ export function PartyCard({ name, role, tone, status, rows, auditCount, invitati
       </div>
       <div style={{ padding: "12px 20px 20px", textAlign: "center" }}>
         <h2 style={{ margin: 0, fontFamily: SERIF, fontSize: 21, color: E.navy, overflowWrap: "anywhere" }}>{name}</h2>
-        <p style={{ margin: "4px 0 0", fontSize: 13, color: E.quiet }}>{role}</p>
-        <div style={{ width: 48, height: 3, background: maroon ? E.maroon : E.sky, margin: "12px auto 14px", borderRadius: 2 }} />
+        <p style={{ margin: "6px 0 0", fontSize: 13, color: E.quiet, display: "inline-flex", alignItems: "center", gap: 6 }}><Stamp size={13} aria-hidden color={maroon ? "#B08A3E" : E.skyDeep} /> {role}</p>
+        <div style={{ width: "62%", height: 1, background: E.line, margin: "14px auto 14px" }} />
         <span data-testid="party-status" style={{ ...pill[status.tone], display: "inline-flex", alignItems: "center", gap: 6, padding: "4px 12px", borderRadius: 999, fontSize: 12.5, fontWeight: 700 }}>
           <span aria-hidden="true" style={{ width: 7, height: 7, borderRadius: 999, background: "currentColor" }} />{status.label}
         </span>
       </div>
-      <dl style={{ margin: 0, padding: "0 20px 6px", textAlign: "left" }}>
-        {rows.map(row => (
-          <div key={row.label} data-testid={row.testId} style={{ padding: "9px 0", borderTop: `1px solid ${E.line}` }}>
-            <dt style={{ fontSize: 12, color: E.quiet, fontWeight: 700 }}>{row.label}</dt>
-            <dd style={{ margin: "2px 0 0", fontSize: 14, color: E.ink, overflowWrap: "anywhere", fontFamily: row.mono === true ? "ui-monospace, Menlo, Consolas, monospace" : undefined }}>{row.value}</dd>
-          </div>
-        ))}
+      <dl style={{ margin: 0, padding: 0, textAlign: "left" }}>
+        {rows.map(row => {
+          const Icon = rowIcon(row);
+          return (
+            <div key={row.label} data-testid={row.testId} style={{ display: "flex", gap: 14, alignItems: "flex-start", padding: "13px 20px", borderTop: `1px solid ${E.line}`, background: "#FCFDFE" }}>
+              <span aria-hidden="true" style={{ flex: "0 0 auto", width: 30, height: 30, borderRadius: 8, display: "grid", placeItems: "center", background: maroon ? "#F6EFDF" : E.skyWash, color: maroon ? "#9A7A3A" : E.skyDeep }}><Icon size={15} /></span>
+              <div style={{ minWidth: 0 }}>
+                <dt style={{ fontSize: 11, color: E.quiet, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" }}>{row.label}</dt>
+                <dd style={{ margin: "3px 0 0", fontSize: 14.5, fontWeight: 700, color: row.good === true ? E.ok : E.ink, overflowWrap: "anywhere", fontFamily: row.mono === true ? "ui-monospace, Menlo, Consolas, monospace" : undefined }}>{row.value}</dd>
+              </div>
+            </div>
+          );
+        })}
       </dl>
       {auditCount !== null && (
-        <p style={{ margin: 0, padding: "10px 20px 16px", borderTop: `1px solid ${E.line}`, fontSize: 13.5 }}>
-          <button type="button" onClick={openTrail} style={{ ...GF, padding: 0, border: 0, background: "none", cursor: "pointer", color: E.skyDeep, fontWeight: 700, fontSize: "inherit", textDecoration: "underline" }}>Audit trail</button>{" "}
-          <span style={{ color: E.quiet }}>{auditCount} {auditCount === 1 ? "entry" : "entries"}</span>
-        </p>
+        <button type="button" onClick={openTrail} data-testid="party-audit"
+          style={{ ...GF, width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "14px 20px", border: 0, background: E.navy, color: "#FFFFFF", cursor: "pointer", fontSize: 14.5, fontWeight: 700, textAlign: "left" }}>
+          <ScrollText size={17} aria-hidden /> <span style={{ flex: 1 }}>View Audit Trail</span>
+          <span style={{ fontSize: 12, fontWeight: 700, background: "rgba(255,255,255,0.16)", borderRadius: 999, padding: "3px 10px" }}>{auditCount} {auditCount === 1 ? "entry" : "entries"}</span>
+        </button>
       )}
     </aside>
   );
@@ -125,9 +145,10 @@ function TrailToggle({ open, onOpen, onClose, children }: { open: boolean; onOpe
   }, [open, onClose]);
   return (
     <>
-      <button type="button" onClick={onOpen} data-testid="audit-toggle" aria-haspopup="dialog" aria-expanded={open}
+      <style>{`@media (max-width: 860px) { .eno-trail-fab { width: 48px; padding: 0 !important; justify-content: center; } .eno-trail-fab span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); } }`}</style>
+      <button type="button" onClick={onOpen} data-testid="audit-toggle" aria-haspopup="dialog" aria-expanded={open} aria-label="Audit trail" className="eno-trail-fab"
         style={{ ...GF, position: "fixed", right: "clamp(12px, 3vw, 24px)", bottom: "clamp(12px, 3vw, 24px)", zIndex: Z.sticky, display: "inline-flex", alignItems: "center", gap: 8, minHeight: 46, padding: "0 18px", borderRadius: 999, border: `1px solid ${E.navy}`, background: E.navy, color: "#FFFFFF", fontWeight: 700, fontSize: 14, cursor: "pointer", boxShadow: "0 10px 26px -10px rgba(10,26,43,0.55)" }}>
-        <ClipboardList size={18} aria-hidden /> Audit trail
+        <ClipboardList size={18} aria-hidden /> <span>Audit trail</span>
       </button>
       {open && (
         <div data-testid="audit-overlay" onMouseDown={event => { if (event.target === event.currentTarget) onClose(); }}
