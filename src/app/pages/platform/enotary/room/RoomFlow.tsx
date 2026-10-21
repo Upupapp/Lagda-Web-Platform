@@ -20,6 +20,8 @@ import { E } from "../EnotaryChrome";
 import { ClientPaymentPanel } from "../payments/ClientPaymentPanel";
 import { Panel, PanelTitle, TextField, bodyText, fieldStyle, hintStyle, labelStyle } from "../onramp-ui";
 import { stampLabel } from "../requests/expiry";
+import { maskAccountName } from "../../../../utils/screenshot-image";
+import { StateActCard } from "./StateActCard";
 
 const ACTS: { value: ActType; label: string; hint: string }[] = [
   { value: "acknowledgment", label: "Acknowledgment", hint: "The client says the signature on the document is theirs, freely given." },
@@ -179,8 +181,10 @@ export function ClientFlow({ s, busy, act, onChanged }: { s: Session; busy: stri
 
 // ── The notary ───────────────────────────────────────────────────────────────
 
-export function NotaryFlow({ s, busy, act, onChanged, notarizePanel }: {
+export function NotaryFlow({ s, busy, act, onChanged, notarizePanel, look }: {
   s: Session; busy: string | null; act: Act; onChanged: () => void; notarizePanel: ReactNode;
+  /** "v4": the step-6 console's card for stating the act and the fee. */
+  look?: "v4";
 }) {
   const [actType, setActType] = useState<ActType>("acknowledgment");
   const [note, setNote] = useState("");
@@ -193,6 +197,16 @@ export function NotaryFlow({ s, busy, act, onChanged, notarizePanel }: {
   const [working, setWorking] = useState(false);
   const statement = s.statement ?? null;
   const payment = s.payment ?? null;
+  // The step-6 card names the payment QR a fee is paid to: the notary's own, its name masked.
+  const [payee, setPayee] = useState<string | null>(null);
+  useEffect(() => {
+    if (look !== "v4") return;
+    let alive = true;
+    void Promise.resolve(realEnotaryInvitationsService.paymentProfile()).then(found => {
+      if (alive) setPayee(found === null || found === undefined ? null : maskAccountName(found.payeeName));
+    }, () => undefined);
+    return () => { alive = false; };
+  }, [look]);
 
   if (s.status !== "live") return null;
   const identity = (s.identityConfirmedAt ?? null) !== null;
@@ -237,6 +251,21 @@ export function NotaryFlow({ s, busy, act, onChanged, notarizePanel }: {
   }
 
   // 3. state the act and the fee (until the client approves)
+  if ((statement === null || (editing && statement.approvedAt === null)) && look === "v4") {
+    const send = () => {
+      void act("act", async () => {
+        try { const next = await realEnotarySessionsService.stateAct(s.id, { actType, feeCentavos: feeCentavos ?? 0, note }); setEditing(false); return next; }
+        catch (error) { setProblem(error instanceof Error ? describePaymentError(error) : "That could not be sent."); throw error; }
+      });
+    };
+    return (
+      <StateActCard
+        s={s} actType={actType} setActType={setActType} note={note} setNote={setNote} fee={fee} setFee={setFee} noFee={noFee} setNoFee={setNoFee}
+        feeCentavos={feeCentavos} feeProblem={feeProblem} ready={ready} problem={problem} busy={busy} payee={payee} onSend={send}
+        {...(statement !== null ? { onKeep: () => { setEditing(false); } } : {})}
+      />
+    );
+  }
   if (statement === null || (editing && statement.approvedAt === null)) {
     return (
       <Panel testId="state-panel" tone="maroon">

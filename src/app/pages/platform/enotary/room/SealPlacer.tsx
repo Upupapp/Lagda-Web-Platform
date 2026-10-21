@@ -20,9 +20,11 @@ export interface Placements { seal?: PagePoint; signature?: PagePoint }
 type Tool = "seal" | "signature";
 
 /** The seal and the signature as the server draws them, in points of a page; the markers are scaled from these. */
-const SEAL_POINTS = 140;
-const SIGNATURE_W = 120;
-const SIGNATURE_H = 44;
+export const SEAL_POINTS = 140;
+export const SIGNATURE_W = 120;
+export const SIGNATURE_H = 44;
+/** Where each goes when the notary does not place it (the server's own choice): the last page, lower right. */
+export const USUAL_PLACE = { seal: { x: 0.8, y: 0.84 }, signature: { x: 0.52, y: 0.86 } } as const;
 const STEP = 0.02;
 const MAX_WIDTH = 720;
 

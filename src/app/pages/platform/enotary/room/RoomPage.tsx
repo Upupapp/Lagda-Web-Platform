@@ -27,7 +27,7 @@ import { SharedDocumentPicker, sharedDocumentAsFile, type SharedChoice } from ".
 import { Chat, PdfView } from "./room-bits";
 import { CallCard } from "./CallCard";
 import type { Placements } from "./SealPlacer";
-import { readPlacements } from "./seal-placements";
+import { placementsOf } from "./seal-placements";
 import { ClientFlow, NotaryFlow } from "./RoomFlow";
 import { NotarizedPage } from "./NotarizedPage";
 import { RequestTrail, useRequestTrail } from "../RequestTrail";
@@ -35,6 +35,7 @@ import { useRoomConnection } from "./useRoomConnection";
 import { WaitingRoom } from "./WaitingRoom";
 import { ClientAddressPanel, ClientAddressView } from "./ClientAddressPanel";
 import { ClientStepSix } from "./ClientStepSix";
+import { NotaryStepSix } from "./NotaryStepSix";
 import { withProcess, type ProcessKind } from "../../../../config/process-screens";
 
 /** The loading screen each room action runs behind (the chat is not one: it stays quiet). */
@@ -187,8 +188,10 @@ export function RoomPage() {
       )}
     </Panel>
   );
-  // Step 6 of the client's room: the document is final and the act and the fee come next (the console's own layout).
+  // Step 6 (the client's "Finalized for eNotary", the notary's "Act and fee"): the document is final and the act and the
+  // fee come next, each side in the console's own layout.
   const stepSix = isClient && s.status === "live" && (s.finalizedAt ?? null) !== null;
+  const notaryStepSix = !isClient && s.status === "live" && (s.finalizedAt ?? null) !== null;
   const say = async (body: string) => { const sent = await realEnotarySessionsService.say(s.id, body); setMessages(list => [...list, sent]); };
   const addressPanel = isClient
     ? <ClientAddressPanel session={s} onSave={address => realEnotarySessionsService.giveAddress(s.id, address)} onSaved={next => { if (alive.current) setLoaded({ kind: "ready", session: next }); }} />
@@ -245,7 +248,28 @@ export function RoomPage() {
         />
       )}
 
-      {s.status === "live" && !stepSix && (
+      {notaryStepSix && (
+        <NotaryStepSix
+          s={s} partner={partner} connection={connection} messages={messages} onSend={say} address={addressPanel}
+          call={
+            <CallCard
+              look="v2" session={s} connection={connection} partnerName={partner} partnerRole="Client"
+              selfIdentityVerified={false} partnerPresent={s.presence.client} messages={messages}
+              onSend={say} onLeave={() => { void navigate(back); }}
+              document={s.document === null ? <p style={bodyText}>The client has not chosen the document yet.</p>
+                : <PdfView load={() => realEnotarySessionsService.document(s.id)} fileKey={s.document.sha256} name={s.document.name} height={420} />}
+            />
+          }
+          flow={
+            <NotaryFlow
+              look="v4" s={s} busy={busy} act={act} onChanged={() => { void load(); }}
+              notarizePanel={<NotarizePanel session={s} busy={busy === "notarize"} onRecord={input => act("notarize", () => realEnotarySessionsService.notarize(s.id, input))} />}
+            />
+          }
+        />
+      )}
+
+      {s.status === "live" && !stepSix && !notaryStepSix && (
         <div className="eno-split">
           <div style={{ minWidth: 0, display: "grid", gap: 16 }}>
             <div data-testid="video-panel">
@@ -378,7 +402,8 @@ export function NotarizePanel({
   const description = stated?.note ?? "";
   const [place, setPlace] = useState("");
   const [remarks, setRemarks] = useState("");
-  const [placements] = useState<Placements>(() => readPlacements(session.id));
+  // Saved with the session on the page where the notary places them; the act uses them.
+  const placements: Placements = placementsOf(session);
   const [hasSignature, setHasSignature] = useState(false);
   const [checks, setChecks] = useState<Record<string, boolean>>({});
   useEffect(() => {

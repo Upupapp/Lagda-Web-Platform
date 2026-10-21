@@ -22,7 +22,8 @@ import type { RoomConnection } from "./useRoomConnection";
 
 type Act = (name: string, work: () => Promise<Session>) => Promise<void>;
 
-const CSS = `
+/** The console's look, shared by the client's step 6 and the notary's. */
+export const CONSOLE_CSS = `
   .s6 { display: grid; gap: 16px; min-width: 0; }
   .s6-strip { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 18px; padding: 12px 16px; background: ${E.paper}; border: 1px solid ${E.line}; border-radius: 16px; box-shadow: 0 1px 2px rgba(10,26,43,0.05), 0 18px 44px -28px rgba(10,26,43,0.3); }
   .s6-pills, .s6-people { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
@@ -96,6 +97,9 @@ const CSS = `
   .s6-next li span { flex: 0 0 auto; width: 22px; height: 22px; border-radius: 999px; display: grid; place-items: center; font-size: 11px; font-weight: 800; border: 1.5px solid ${E.skyLine}; color: ${E.skyDeep}; background: #FFFFFF; }
   .s6-note { display: flex; gap: 9px; align-items: flex-start; padding: 10px 12px; border-radius: 10px; background: ${E.skyWash}; border: 1px solid ${E.skyLine}; font-size: 13.5px; color: ${E.text}; line-height: 1.55; }
 
+  .s6.notary .s6-track .now span { border-color: ${E.maroon}; background: ${E.maroon}; }
+  .s6.notary .s6-act { border-top-color: ${E.maroon}; }
+  .s6.notary .s6-eyebrow { color: ${E.maroon}; }
   @media (max-width: 520px) {
     .s6-strip { padding: 12px; }
     .s6-person { flex: 1 1 100%; }
@@ -159,7 +163,23 @@ export function stepSixStages(s: Session): { readonly label: string; readonly st
   return stages.map((stage, i) => ({ label: stage.label, state: stage.reached ? "done" : i === firstOpen ? "now" : "todo" }));
 }
 
-function SessionStrip({ s, connection, partner }: { s: Session; connection: RoomConnection; partner: string }) {
+/** Where the notary's step 6 stands: the act and fee stated, the client's approval, the payment (when there is a fee), the seal. */
+export function notaryStepSixStages(s: Session): { readonly label: string; readonly state: "done" | "now" | "todo" }[] {
+  const statement = s.statement ?? null;
+  const payment = s.payment ?? null;
+  const noFee = (statement !== null && statement.feeCentavos === 0) || payment?.status === "waived";
+  const stages: { label: string; reached: boolean }[] = [
+    { label: "State", reached: statement !== null },
+    { label: "Client approves", reached: statement?.approvedAt != null },
+    ...(noFee ? [] : [{ label: "Payment", reached: payment?.status === "confirmed" }]),
+    { label: "Seal", reached: s.status === "notarized" },
+  ];
+  const firstOpen = stages.findIndex(stage => !stage.reached);
+  return stages.map((stage, i) => ({ label: stage.label, state: stage.reached ? "done" : i === firstOpen ? "now" : "todo" }));
+}
+
+/** The strip at the top of the console: the time, the room, the video, both people, and where step 6 stands. */
+export function SessionStrip({ s, connection, partner }: { s: Session; connection: RoomConnection; partner: string }) {
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
     const timer = setInterval(() => { setNow(Date.now()); }, 1000);
@@ -172,7 +192,9 @@ function SessionStrip({ s, connection, partner }: { s: Session; connection: Room
       : link === "connecting" ? { tone: "sky", text: "Connecting the video…" }
         : { tone: "wait", text: "Waiting for the video" };
   const verified = s.clientIdentity?.verified === true;
-  const stages = stepSixStages(s);
+  const notary = s.role === "notary";
+  const stages = notary ? notaryStepSixStages(s) : stepSixStages(s);
+  const partnerHere = notary ? s.presence.client : s.presence.notary;
   return (
     <section className="s6-strip" aria-label="The session" data-testid="s6-strip">
       <div className="s6-pills">
@@ -182,12 +204,13 @@ function SessionStrip({ s, connection, partner }: { s: Session; connection: Room
       </div>
       <div className="s6-people">
         <span className="s6-person" data-testid="s6-partner">
-          <span className="s6-ava notary" aria-hidden="true">{initialsOf(partner)}</span>
-          <span><b>{partner}</b><small><span className={`s6-dot${s.presence.notary ? "" : " off"}`} aria-hidden="true" />Notary public · {s.presence.notary ? "Joined" : "Not here yet"}</small></span>
+          <span className={`s6-ava ${notary ? "client" : "notary"}`} aria-hidden="true">{initialsOf(partner)}</span>
+          <span><b>{partner}</b><small><span className={`s6-dot${partnerHere ? "" : " off"}`} aria-hidden="true" />
+            {notary ? `Client${verified ? " · Identity verified by LAGDA" : ""}` : "Notary public"} · {partnerHere ? "Joined" : "Not here yet"}</small></span>
         </span>
         <span className="s6-person" data-testid="s6-self">
-          <span className="s6-ava client" aria-hidden="true">{initialsOf(s.clientName)}</span>
-          <span><b>You</b><small><span className="s6-dot" aria-hidden="true" />Client{verified ? " · Identity verified by LAGDA" : ""}</small></span>
+          <span className={`s6-ava ${notary ? "notary" : "client"}`} aria-hidden="true">{initialsOf(notary ? s.notaryName : s.clientName)}</span>
+          <span><b>You</b><small><span className="s6-dot" aria-hidden="true" />{notary ? "Notary public · In the room" : `Client${verified ? " · Identity verified by LAGDA" : ""}`}</small></span>
         </span>
       </div>
       <ol className="s6-track" aria-label="Where step 6 stands" data-testid="s6-track">
@@ -222,7 +245,7 @@ function DocumentCard({ s, viewer }: { s: Session; viewer: ReactNode }) {
   );
 }
 
-function ChatCard({ s, partner, messages, onSend }: { s: Session; partner: string; messages: readonly RoomMessage[]; onSend: (body: string) => Promise<void> }) {
+export function ChatCard({ s, partner, messages, onSend }: { s: Session; partner: string; messages: readonly RoomMessage[]; onSend: (body: string) => Promise<void> }) {
   return (
     <section className="s6-card s6-chat" data-testid="chat-panel" aria-labelledby="s6-chat-h">
       <h3 id="s6-chat-h" className="s6-small-h">Chat with {partner}<span>{messages.length} {messages.length === 1 ? "message" : "messages"}</span></h3>
@@ -335,7 +358,7 @@ export function ClientStepSix({ s, partner, connection, call, viewer, address, m
       : [[video, step, where, doc, chat]];
   return (
     <div className="s6" data-testid="client-step-six" data-width={width} style={GF}>
-      <style>{CSS}</style>
+      <style>{CONSOLE_CSS}</style>
       <SessionStrip s={s} connection={connection} partner={partner} />
       <div className={`s6-cols ${width}`}>
         {columns.map((column, i) => <div key={i} className="s6-col">{column}</div>)}

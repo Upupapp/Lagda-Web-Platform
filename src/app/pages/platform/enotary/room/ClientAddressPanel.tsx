@@ -116,17 +116,23 @@ export function ClientAddressPanel({ session, onSave, onSaved }: {
 export function ClientAddressView({ session }: { session: Session }) {
   const given = session.clientAddress ?? null;
   return (
-    <Panel testId="address-view" tone={given === null ? "plain" : "sky"}>
-      <PanelTitle>Client&rsquo;s address for the notarial record</PanelTitle>
-      {given === null ? (
-        <p data-testid="address-missing" style={{ ...bodyText, margin: 0 }}>{session.clientName} has not given it yet. They type it in the room, and you cannot record the act without it.</p>
-      ) : (
-        <p data-testid="address-given" style={{ ...bodyText, margin: 0, display: "flex", gap: 8, alignItems: "flex-start" }}>
-          <MapPin size={17} aria-hidden style={{ flex: "0 0 auto", marginTop: 3, color: E.skyDeep }} />
-          <span><strong style={{ color: E.ink }}>{formatClientAddress(given)}</strong>
-            <small style={{ display: "block", color: E.quiet }}>Typed by the client {stampLabel(given.givenAt)}. It goes into your register entry and the information sheet.</small></span>
-        </p>
-      )}
-    </Panel>
+    <section data-testid="address-view" aria-labelledby="address-view-h"
+      style={{ ...GF, display: "grid", gridTemplateColumns: "38px minmax(0, 1fr)", gap: 12, alignItems: "start", padding: "14px 16px", borderRadius: 16, background: "#FFFFFF", border: `1px solid ${E.line}`, boxShadow: "0 1px 2px rgba(10,26,43,0.05), 0 18px 44px -28px rgba(10,26,43,0.3)", boxSizing: "border-box" }}>
+      <span aria-hidden="true" style={{ width: 38, height: 38, borderRadius: 10, display: "grid", placeItems: "center", background: E.skyWash, color: E.skyDeep }}><MapPin size={18} /></span>
+      <div style={{ minWidth: 0 }}>
+        <h3 id="address-view-h" style={{ margin: 0, fontSize: 14.5, fontWeight: 800, color: E.navy }}>Client&rsquo;s address for the notarial record</h3>
+        {given === null ? (
+          <p data-testid="address-missing" style={{ margin: "4px 0 0", fontSize: 13.5, lineHeight: 1.5, color: E.text }}>{session.clientName} has not given it yet. They type it in the room, and you cannot record the act without it.</p>
+        ) : (
+          <>
+            <p data-testid="address-given" style={{ margin: "4px 0 0", fontSize: 14, lineHeight: 1.45, color: E.ink, overflowWrap: "anywhere" }}>
+              <strong>{formatClientAddress(given)}</strong>
+              <small style={{ display: "block", marginTop: 3, fontSize: 12, color: E.quiet, fontWeight: 400 }}>Typed by the client {stampLabel(given.givenAt)}. It goes into your register entry and the information sheet.</small>
+            </p>
+            <span style={{ display: "inline-flex", alignItems: "center", gap: 5, marginTop: 8, padding: "3px 9px", borderRadius: 999, background: E.okWash, color: E.ok, fontSize: 11.5, fontWeight: 800 }}><CheckCircle2 size={12} aria-hidden /> Given</span>
+          </>
+        )}
+      </div>
+    </section>
   );
 }

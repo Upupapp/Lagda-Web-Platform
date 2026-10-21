@@ -295,10 +295,10 @@ describe("the room", () => {
     room();
     await user.click(await screen.findByRole("button", { name: "I confirmed their identity on the call" }));
     expect(svc.confirmIdentity).toHaveBeenCalledWith("ens_1");
-    const send = await screen.findByRole("button", { name: "Send the act and fee to the client" });
+    const send = await screen.findByRole("button", { name: "Send to the client for approval" });
     expect(send).toBeDisabled();
     await user.click(screen.getByLabelText(/Jurat/));
-    await user.type(screen.getByLabelText(/What the document is/), "Affidavit");
+    await user.type(screen.getByLabelText(/What it is about/), "Affidavit");
     await user.click(screen.getByTestId("no-fee"));
     expect(screen.getByTestId("no-fee-notice")).toHaveTextContent(/cannot be changed/);
     await user.click(send);
