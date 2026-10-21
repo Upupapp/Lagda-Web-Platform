@@ -361,8 +361,11 @@ export function NotaryDeskPage({ focus }: { focus?: string } = {}) {
         <DeskCard
           key={request.id} name={request.client.name} reference={request.reference} verified={request.client.identityVerified}
           pills={[pillOf(request)]}
-          // A called-off request is answered from its session band ("Open the session again"), so it has no Open of its own.
-          openTo={focus === undefined && request.session?.status !== "cancelled" ? `/app/enotary/desk/${encodeURIComponent(request.id)}` : undefined}
+          // Open is shown only where the card has no way forward of its own. Once there is a session, its band leads on:
+          // "Go to the room" or "Join the room" while it is preparing or live (a reopened one too), "Open the session again"
+          // once it is called off.
+          openTo={focus === undefined && !(request.status === "accepted" && goesOn && ["preparing", "live", "cancelled"].includes(request.session?.status ?? ""))
+            ? `/app/enotary/desk/${encodeURIComponent(request.id)}` : undefined}
           facts={factsOf(request)} tiles={tilesOf(request)}
           data={{ "data-status": request.status, "data-payment": payment?.status ?? "none" }}
           band={request.status === "accepted" && goesOn ? <SessionPanel invitationId={request.id} role="notary" variant="band" /> : undefined}
