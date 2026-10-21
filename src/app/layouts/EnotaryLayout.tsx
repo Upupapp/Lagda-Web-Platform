@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 import { usePlatform } from "../context/PlatformContext";
 import { LagdaLoader } from "../components/brand/LagdaLoader";
-import { LagdaLogo } from "../components/brand/LagdaLogo";
+import lagdaLogo from "../../brand elements/svg/LagdaLogoPrimaryHorizontalFullColor_Header.svg";
 import { buildSignInUrl } from "../utils/authReturnPath";
 import { useAccountFeatures } from "../hooks/useAccountFeatures";
 import { useNavCounts } from "../hooks/useNavCounts";
@@ -213,11 +213,14 @@ export function EnotaryLayout() {
           <Outlet />
         </Suspense>
       </main>
-      <footer style={{ background: "#FFFFFF", borderTop: `1px solid ${E.line}`, padding: "28px 16px 34px", textAlign: "center" }}>
-        <div data-testid="footer-logo" style={{ display: "flex", justifyContent: "center", margin: "0 0 10px" }}><LagdaLogo variant="colored-icon" size="lg" decorative /></div>
-        <p style={{ margin: 0, fontFamily: SERIF, fontWeight: 700, fontSize: 18, color: E.navy }}>LAGDA <span style={{ color: E.maroon }}>eNotary</span></p>
-        <p style={{ margin: "6px auto 0", maxWidth: 640, fontSize: 13.5, color: E.quiet }}>{onDesk ? FOOTER.notary : FOOTER.client}</p>
-        <p style={{ margin: "8px 0 0", fontSize: 12.5, color: E.faint }}>&copy; {new Date().getFullYear()} LAGDA. All rights reserved.</p>
+      <footer data-testid="enotary-footer" style={{ background: "linear-gradient(180deg, #0B1F44 0%, #081833 100%)", borderTop: "3px solid #C9A24A", padding: "30px 16px 34px", textAlign: "center", color: "#FFFFFF" }}>
+        <div data-testid="footer-logo" style={{ display: "inline-flex", alignItems: "center", gap: 12, padding: "8px 16px 8px 10px", borderRadius: 12, background: "#FFFFFF", boxShadow: "0 8px 22px -12px rgba(0,0,0,0.6)", maxWidth: "100%", boxSizing: "border-box" }}>
+          <img src={lagdaLogo} alt="LAGDA" style={{ display: "block", width: "clamp(118px, 34vw, 150px)", aspectRatio: "200 / 58", height: "auto", objectFit: "cover", objectPosition: "left center" }} />
+          <span aria-hidden="true" style={{ width: 1, alignSelf: "stretch", background: E.line }} />
+          <span style={{ fontFamily: SERIF, fontWeight: 700, fontSize: "clamp(19px, 5vw, 23px)", color: E.maroon, letterSpacing: "0.01em" }}>eNotary</span>
+        </div>
+        <p style={{ margin: "14px auto 0", maxWidth: 640, fontSize: 13.5, color: "#FFFFFF", lineHeight: 1.6 }}>{onDesk ? FOOTER.notary : FOOTER.client}</p>
+        <p style={{ margin: "8px 0 0", fontSize: 12.5, color: "rgba(255,255,255,0.78)" }}>&copy; {new Date().getFullYear()} LAGDA. All rights reserved.</p>
       </footer>
     </div>
   );
