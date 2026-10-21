@@ -10,7 +10,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router";
-import { CheckCircle2, FileUp, ShieldCheck, Stamp, XCircle } from "lucide-react";
+import { FileUp, ShieldCheck, Stamp, XCircle } from "lucide-react";
 import { ActionButton, ActionRow, GF, Notice, TAP } from "../../../../components/system/design-system";
 import { useConfirm } from "../../../../components/platform/ConfirmDialog";
 import {
@@ -32,6 +32,8 @@ import { ClientFlow, NotaryFlow } from "./RoomFlow";
 import { NotarizedPage } from "./NotarizedPage";
 import { RequestTrail, useRequestTrail } from "../RequestTrail";
 import { useRoomConnection } from "./useRoomConnection";
+import { WaitingRoom } from "./WaitingRoom";
+import { ClientAddressPanel, ClientAddressView } from "./ClientAddressPanel";
 import { withProcess, type ProcessKind } from "../../../../config/process-screens";
 
 /** The loading screen each room action runs behind (the chat is not one: it stays quiet). */
@@ -140,7 +142,6 @@ export function RoomPage() {
   const isClient = s.role === "client";
   const partner = isClient ? s.notaryName : s.clientName;
   const back = isClient ? `/app/enotary/requests/${encodeURIComponent(invitationId)}` : "/app/enotary/desk";
-  const over = s.status === "notarized" || s.status === "cancelled";
 
   // A file from the person's own disk, or a signed document of the workspace: the same call, behind the same loading screen.
   const addFile = (name: string) => (file: File) => act(name, () => realEnotarySessionsService.addDocument(s.id, file));
@@ -162,6 +163,33 @@ export function RoomPage() {
   const step = roomStep(s, isClient);
   const heading = roomHeading(s, isClient, partner);
 
+  const documentPanel = (
+    <Panel testId="document-panel">
+      <PanelTitle>Document for notarization</PanelTitle>
+      {s.document === null ? (
+        isClient
+          ? <ClientUpload workspaceId={workspaceId} onFile={addFile("upload")} onPick={addCompleted("upload")} onShared={addShared("upload")} busy={busy === "upload"} />
+          : <p style={bodyText} data-testid="no-document">The client has not added the document yet.</p>
+      ) : (
+        <>
+          <p style={{ ...bodyText, margin: "0 0 8px" }} data-testid="document-info">
+            <strong>{s.document.name}</strong> · {(s.document.size / 1024).toFixed(0)} KB · added {stampLabel(s.document.addedAt)}
+            <small style={{ display: "block", color: E.quiet, wordBreak: "break-all" }}>SHA-256 {s.document.sha256}</small>
+          </p>
+          <PdfView load={() => realEnotarySessionsService.document(s.id)} fileKey={s.document.sha256} name={s.document.name} />
+          {isClient && (s.finalizedAt ?? null) === null && (
+            <div style={{ marginTop: 12 }}>
+              <ClientUpload workspaceId={workspaceId} onFile={addFile("replace")} onPick={addCompleted("replace")} onShared={addShared("replace")} busy={busy === "replace"} replace />
+            </div>
+          )}
+        </>
+      )}
+    </Panel>
+  );
+  const addressPanel = isClient
+    ? <ClientAddressPanel session={s} onSave={address => realEnotarySessionsService.giveAddress(s.id, address)} onSaved={next => { if (alive.current) setLoaded({ kind: "ready", session: next }); }} />
+    : <ClientAddressView session={s} />;
+
   return (
     <EnotaryCaseFrame
       tone={isClient ? "client" : "attorney"} eyebrow={isClient ? `eNotary request \u2022 ${partnerTitle(partner, true)}` : `Notary desk \u2022 ${partner}`}
@@ -182,71 +210,45 @@ export function RoomPage() {
 
       {s.status === "notarized" && <NotarizedPage session={s} />}
 
-      {!over && (
+      {s.status === "preparing" && (
+        <WaitingRoom
+          session={s} isClient={isClient} partner={isClient ? partnerTitle(partner, true) : partner} busy={busy} onCallOff={callOff}
+          {...(isClient ? {} : { onOpen: () => { void act("open", () => realEnotarySessionsService.open(s.id)); } })}
+        />
+      )}
+
+      {s.status === "preparing" && (
+        isClient
+          ? <div className="eno-split"><div style={{ minWidth: 0 }}>{documentPanel}</div><div style={{ minWidth: 0 }}>{addressPanel}</div></div>
+          : documentPanel
+      )}
+
+      {s.status === "live" && (
         <div className="eno-split">
           <div style={{ minWidth: 0, display: "grid", gap: 16 }}>
-            {s.status !== "live" && <Panel testId="presence-panel" tone="sky">
-              <p style={{ ...bodyText, margin: 0 }} data-testid="presence">
-                {s.status === "preparing"
-                  ? isClient ? "Waiting for the notary to open the room." : s.document === null ? "Waiting for the client to add the document." : "The document is in. Open the room when you are ready."
-                  : <>In the room: {s.presence.client ? "the client" : "—"}, {s.presence.notary ? "the notary" : "—"}.</>}
-              </p>
-            </Panel>}
+            <div data-testid="video-panel">
+              <CallCard
+                session={s} connection={connection} partnerName={partnerTitle(partner, isClient)} partnerRole={isClient ? "Notary public" : "Client"}
+                selfIdentityVerified={isClient} partnerPresent={isClient ? s.presence.notary : s.presence.client} messages={messages}
+                onSend={async body => { const sent = await realEnotarySessionsService.say(s.id, body); setMessages(list => [...list, sent]); }}
+                onLeave={() => { void navigate(back); }}
+                document={s.document === null ? <p style={bodyText}>The client has not chosen the document yet.</p>
+                  : <PdfView load={() => realEnotarySessionsService.document(s.id)} fileKey={s.document.sha256} name={s.document.name} height={420} />}
+              />
+            </div>
 
-            {s.status === "live" && (
-              <div data-testid="video-panel">
-                <CallCard
-                  session={s} connection={connection} partnerName={partnerTitle(partner, isClient)} partnerRole={isClient ? "Notary public" : "Client"}
-                  selfIdentityVerified={isClient} partnerPresent={isClient ? s.presence.notary : s.presence.client} messages={messages}
-                  onSend={async body => { const sent = await realEnotarySessionsService.say(s.id, body); setMessages(list => [...list, sent]); }}
-                  onLeave={() => { void navigate(back); }}
-                  document={s.document === null ? <p style={bodyText}>The client has not chosen the document yet.</p>
-                    : <PdfView load={() => realEnotarySessionsService.document(s.id)} fileKey={s.document.sha256} name={s.document.name} height={420} />}
-                />
-              </div>
-            )}
-
-            {s.status === "live" && (
-              <Panel testId="chat-panel">
-                <PanelTitle>{`Chat with ${partnerTitle(partner, isClient)}`}</PanelTitle>
-                <Chat
-                  messages={messages} me={s.role} disabled={false}
-                  onSend={async body => { const sent = await realEnotarySessionsService.say(s.id, body); setMessages(list => [...list, sent]); }}
-                />
-              </Panel>
-            )}
+            <Panel testId="chat-panel">
+              <PanelTitle>{`Chat with ${partnerTitle(partner, isClient)}`}</PanelTitle>
+              <Chat
+                messages={messages} me={s.role} disabled={false}
+                onSend={async body => { const sent = await realEnotarySessionsService.say(s.id, body); setMessages(list => [...list, sent]); }}
+              />
+            </Panel>
           </div>
 
           <div style={{ minWidth: 0, display: "grid", gap: 16 }}>
-            <Panel testId="document-panel">
-              <PanelTitle>Document for notarization</PanelTitle>
-              {s.document === null ? (
-                isClient
-                  ? <ClientUpload workspaceId={workspaceId} onFile={addFile("upload")} onPick={addCompleted("upload")} onShared={addShared("upload")} busy={busy === "upload"} />
-                  : <p style={bodyText} data-testid="no-document">The client has not added the document yet.</p>
-              ) : (
-                <>
-                  <p style={{ ...bodyText, margin: "0 0 8px" }} data-testid="document-info">
-                    <strong>{s.document.name}</strong> · {(s.document.size / 1024).toFixed(0)} KB · added {stampLabel(s.document.addedAt)}
-                    <small style={{ display: "block", color: E.quiet, wordBreak: "break-all" }}>SHA-256 {s.document.sha256}</small>
-                  </p>
-                  <PdfView load={() => realEnotarySessionsService.document(s.id)} fileKey={s.document.sha256} name={s.document.name} />
-                  {isClient && (s.finalizedAt ?? null) === null && (
-                    <div style={{ marginTop: 12 }}>
-                      <ClientUpload workspaceId={workspaceId} onFile={addFile("replace")} onPick={addCompleted("replace")} onShared={addShared("replace")} busy={busy === "replace"} replace />
-                    </div>
-                  )}
-                </>
-              )}
-            </Panel>
-
-            {!isClient && s.status === "preparing" && (
-              <ActionRow align="end">
-                <ActionButton icon={CheckCircle2} disabled={busy !== null} onClick={() => { void act("open", () => realEnotarySessionsService.open(s.id)); }}>
-                  {busy === "open" ? "Opening…" : "Open the room"}
-                </ActionButton>
-              </ActionRow>
-            )}
+            {documentPanel}
+            {addressPanel}
 
             {isClient && <ClientFlow s={s} busy={busy} act={act} onChanged={() => { void load(); }} />}
 
@@ -259,7 +261,7 @@ export function RoomPage() {
           </div>
         </div>
       )}
-      {!over && (
+      {s.status === "live" && (
         <ActionRow align="end">
           <ActionButton kind="danger" disabled={busy !== null} onClick={callOff}>{busy === "cancel" ? "Calling off…" : "Call off the session"}</ActionButton>
         </ActionRow>
@@ -287,7 +289,7 @@ function roomHeading(s: Session, isClient: boolean, partner: string): { title: s
   if (s.status === "cancelled") return { title: "Session ended", lead: "Nothing was notarized in this session." };
   if (s.status === "preparing") {
     return isClient
-      ? { title: `Waiting for ${partnerTitle(partner, true)} to open the room`, lead: "Add the document you want notarized while you wait. Only you and the notary can see it." }
+      ? { title: `Waiting for ${partnerTitle(partner, true)} to open the room`, lead: "While you wait, add the document you want notarized and say where you are. Only you and the notary see them." }
       : { title: s.document === null ? `Waiting for ${partner} to add the document` : `Open the room for ${partner}`, lead: "Open the room when you are ready. You meet on a video call, and the client chooses the document with you." };
   }
   return isClient
