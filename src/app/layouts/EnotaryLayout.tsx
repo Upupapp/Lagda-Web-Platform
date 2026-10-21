@@ -78,6 +78,8 @@ export function EnotaryLayout() {
   const scroller = useRef<HTMLDivElement>(null);
   const [edges, setEdges] = useState({ left: false, right: false });
   const onDesk = location.pathname.startsWith("/app/enotary/desk");
+  // The Notarial Request History has its own way back to the dashboard in its hero, so the client's Menu is left out there.
+  const onHistory = location.pathname === "/app/enotary/requests" || location.pathname === "/app/enotary/requests/";
   const notary = features.notaryDesk;
   useEnotaryCardSync(sessionStatus === "authenticated");
   const [open, setOpen] = useState(false);
@@ -169,7 +171,7 @@ export function EnotaryLayout() {
               <span className="eno-shell-badge" style={{ background: E.maroon, color: "#FFFFFF", borderRadius: 999, padding: "4px 12px", fontSize: 12, fontWeight: 700, whiteSpace: "nowrap" }}>Notary Public</span>
             </span>
           )}
-          {!notary && (
+          {!notary && !onHistory && (
             <div ref={menuRef} style={{ position: "relative" }}>
               <button type="button" onClick={() => { setOpen(value => !value); }} aria-expanded={open} aria-haspopup="true" data-testid="shell-menu"
                 style={{ display: "inline-flex", alignItems: "center", gap: 8, minHeight: 44, padding: "0 16px", borderRadius: 10, border: `1.5px solid ${E.navy}`, background: "#FFFFFF", color: E.navy, fontWeight: 700, fontSize: 14, cursor: "pointer" }}>

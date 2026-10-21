@@ -28,6 +28,7 @@ const at = (path: string) => render(
     <Routes>
       <Route path="/app/enotary" element={<EnotaryLayout />}>
         <Route path="requests" element={<p>The requests page</p>} />
+        <Route path="requests/:id" element={<p>One of my requests</p>} />
         <Route path="desk" element={<p>The desk page</p>} />
         <Route path="desk/:id" element={<p>One request</p>} />
       </Route>
@@ -64,7 +65,7 @@ describe("the eNotary shell", () => {
   });
 
   it("gives a client the Menu, not the row: back to LAGDA, their requests and the directory", () => {
-    at("/app/enotary/requests");
+    at("/app/enotary/requests/eni_1");
     expect(screen.queryByTestId("back-to-dashboard")).toBeNull();
     expect(screen.queryByTestId("shell-nav")).toBeNull();
     fireEvent.click(screen.getByTestId("shell-menu"));
@@ -73,6 +74,13 @@ describe("the eNotary shell", () => {
     expect(list).toHaveTextContent("My notary requests");
     expect(list).toHaveTextContent("Notary Directory");
     expect(list).not.toHaveTextContent("Notary desk");
+  });
+
+  it("leaves the client's Menu out of the Notarial Request History, which has its own way back", () => {
+    at("/app/enotary/requests");
+    expect(screen.getByText("The requests page")).toBeInTheDocument();
+    expect(screen.queryByTestId("shell-menu")).toBeNull();
+    expect(screen.getByRole("link", { name: "LAGDA eNotary home" })).toBeInTheDocument();
   });
 
   it("shows a notary's name and badge, the desk's footer, and the pages only a notary has, with the red count", () => {
