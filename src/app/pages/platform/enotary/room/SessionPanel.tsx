@@ -24,6 +24,11 @@ export const SESSION_LOOKUP_MS = 8_000;
 /** How long the notary sees "Opening the session again" before it is opened, so the step is never a flicker. */
 export const REOPEN_PREPARE_MS = 900;
 
+/** A panel's action, set at the right of its box. */
+function ActionEnd({ children, testId }: { children: ReactNode; testId?: string }) {
+  return <div data-testid={testId} style={{ display: "flex", justifyContent: "flex-end", flexWrap: "wrap", gap: 10, marginTop: 14 }}>{children}</div>;
+}
+
 /** A panel of its own (the request page), or the band at the foot of a desk card: a heading and a white box. */
 function Frame({ variant, title, tone = "plain", testId, children, badge }: {
   variant: "panel" | "band"; title: string; tone?: "plain" | "sky"; testId: string; children: ReactNode; badge?: RecordBadge;
@@ -135,7 +140,7 @@ export function SessionPanel({ invitationId, role, variant = "panel" }: { invita
         {role === "client" ? (
           <>
             <p style={bodyText}>Start the session to add your document and meet your notary online. The video runs between your browsers and is not recorded.</p>
-            <ActionButton icon={Video} disabled={busy} onClick={() => { void start(); }}>{busy ? "Starting…" : "Start the session"}</ActionButton>
+            <ActionEnd><ActionButton icon={Video} disabled={busy} onClick={() => { void start(); }}>{busy ? "Starting…" : "Start the session"}</ActionButton></ActionEnd>
           </>
         ) : <p style={{ ...bodyText, margin: 0 }} data-testid="session-wait-client">The client has not started the session yet. You will be told when they add the document.</p>}
       </Frame>
@@ -187,7 +192,7 @@ export function SessionPanel({ invitationId, role, variant = "panel" }: { invita
           <p style={bodyText} data-testid="session-notarized">
             {session.act?.typeLabel} recorded{session.act !== null ? ` on ${stampLabel(session.act.at)}` : ""} · register entry {session.act?.registerRef} · code {session.notarized?.code}
           </p>
-          <Link to={roomPath} style={linkButton("secondary")}>Open the notarized document</Link>
+          <ActionEnd><Link to={roomPath} style={linkButton("secondary")}>Open the notarized document</Link></ActionEnd>
         </Frame>
         <CopiesPanel sessionId={session.id} role={role} />
       </>
@@ -197,12 +202,14 @@ export function SessionPanel({ invitationId, role, variant = "panel" }: { invita
   return (
     <Frame variant={variant} title="The session" tone="sky" testId="session-panel"
       badge={session.status === "live" ? { icon: Video, label: "In session", tone: "info" } : { icon: Clock, label: "Preparing", tone: "info" }}>
-      <p style={bodyText} data-testid="session-state">
+      <p style={{ ...bodyText, margin: 0 }} data-testid="session-state">
         {session.status === "live" ? "The room is open." : role === "client"
           ? session.document === null ? "Add your document, then wait for the notary to open the room." : "Your document is in. Waiting for the notary to open the room."
           : session.document === null ? "Waiting for the client to add the document." : "The document is in. Open the room when you are ready."}
       </p>
-      <Link to={roomPath} style={linkButton("primary")}><Video size={16} aria-hidden /> {session.status === "live" ? "Join the room" : "Go to the room"}</Link>
+      <ActionEnd testId="room-action">
+        <Link to={roomPath} style={linkButton("primary")}><Video size={16} aria-hidden /> {session.status === "live" ? "Join the room" : "Go to the room"}</Link>
+      </ActionEnd>
     </Frame>
   );
 }
