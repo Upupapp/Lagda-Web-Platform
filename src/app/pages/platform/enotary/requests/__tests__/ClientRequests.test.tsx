@@ -395,6 +395,23 @@ describe("the list", () => {
     expect(screen.getByTestId("history-none")).toBeInTheDocument();
   });
 
+  it("draws where each request stands as four steps, and names a test account as one", async () => {
+    list.mockResolvedValue([
+      invitation({ id: "eni_2", status: "accepted", link: null, notary: { ...invitation().notary, name: "Jake Smith (TEST ACCOUNT)" } }),
+      invitation({ id: "eni_1", status: "revoked", link: null, notary: { ...invitation().notary, name: "Cara Tan" } }),
+    ]);
+    renderList();
+    await settle();
+    const rows = screen.getAllByTestId("request-row");
+    expect(rows[0]).toHaveTextContent("Atty. Jake Smith");
+    expect(rows[0]).toHaveTextContent("Test account");
+    expect(rows[0]).not.toHaveTextContent("(TEST ACCOUNT)");
+    const steps = (row: HTMLElement) => within(row).getAllByRole("listitem").map(step => `${step.textContent ?? ""}:${step.className || "todo"}`);
+    expect(steps(rows[0]!)).toEqual(["Sent:done", "Accepted:done", "Awaiting session:now", "Notarized:todo"]);
+    expect(steps(rows[1]!)).toEqual(["Sent:done", "Cancelled:end", "Session:todo", "Notarized:todo"]);
+    expect(screen.getByTestId("history-back")).toHaveAttribute("href", "/app/dashboard");
+  });
+
   it("says what to do when there are none, and when eNotary is not offered", async () => {
     list.mockResolvedValue([]);
     const view = renderList();
@@ -420,7 +437,8 @@ describe("the list", () => {
     await settle();
     const buttons = screen.getAllByTestId("invoice-download");
     expect(buttons).toHaveLength(1);
-    expect(buttons[0]).toHaveTextContent("PHP 1,500.00");
+    expect(screen.getByTestId("invoice-amount")).toHaveTextContent("PHP 1,500.00");
+    expect(screen.getByTestId("invoice-box")).toHaveTextContent("Amount paid");
     press(buttons[0]!);
     await settle();
     expect(invoicePdf).toHaveBeenCalledWith("eni_2");

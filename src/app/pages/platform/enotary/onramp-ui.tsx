@@ -36,11 +36,12 @@ function useSessionsOffered(): boolean {
 }
 
 /** The note, as a quiet paragraph at the foot of a page. */
-export function OnrampNote({ extra }: { extra?: ReactNode }) {
+export function OnrampNote({ extra, tone = "plain" }: { extra?: ReactNode; tone?: "plain" | "maroon" }) {
   const offered = useSessionsOffered();
+  const maroon = tone === "maroon";
   return (
-    <p data-testid="onramp-note" style={{ ...GF, margin: "22px 0 0", padding: "14px 18px", borderRadius: 12, background: "#EEF2F8", border: `1px solid ${E.line}`, fontSize: 12.5, color: E.text, lineHeight: 1.65, display: "flex", gap: 12, alignItems: "flex-start" }}>
-      <Scale size={17} aria-hidden style={{ flex: "0 0 auto", marginTop: 1, color: E.navy }} />
+    <p data-testid="onramp-note" style={{ ...GF, margin: "22px 0 0", padding: "14px 18px", borderRadius: 12, background: maroon ? "#FFFFFF" : "#EEF2F8", border: `1px solid ${E.line}`, borderLeft: maroon ? `4px solid ${E.maroon}` : `1px solid ${E.line}`, fontSize: 12.5, color: E.text, lineHeight: 1.65, display: "flex", gap: 12, alignItems: "flex-start" }}>
+      <Scale size={17} aria-hidden style={{ flex: "0 0 auto", marginTop: 1, color: maroon ? E.maroon : E.navy }} />
       <span><strong style={{ color: E.ink }}>{offered ? "Pilot programme notice." : "Notice."}</strong> {offered ? PILOT_NOTE : ONRAMP_NOTE}{extra !== undefined && <> {extra}</>}</span>
     </p>
   );
