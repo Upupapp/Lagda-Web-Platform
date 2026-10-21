@@ -145,6 +145,7 @@ const SCREENS = {
   "enotary-session-cancel": { tag: "Notary session", icon: PhoneOff, message: () => "Calling off the session…", detail: "Nothing is notarized. The other person is told." },
   "enotary-session-reopen-request": { tag: "Notary session", icon: Mail, message: () => "Emailing your notary…", detail: "They are told you want to continue. Nothing is charged." },
   "enotary-session-reopen": { tag: "Notary session", icon: Video, message: () => "Opening the session again…", detail: "The client is told. The same document and request carry on." },
+  "enotary-seal-save": { tag: "Notary seal", icon: Stamp, message: () => "Saving your seal…", detail: "Documents you notarize from now on carry it as shown." },
   "enotary-signature-save": { tag: "Notary seal", icon: PenLine, message: () => "Saving your signature…", detail: "Only you can see this picture. It is drawn where you drop it on each document." },
   "enotary-signature-remove": { tag: "Notary seal", icon: Trash2, message: () => "Removing your signature…", detail: "Documents you notarize from now on carry no signature picture." },
   "enotary-register-export": { tag: "Notary Book", icon: ScrollText, message: () => "Preparing your spreadsheet…", detail: "Your entries, one row each, ready to open in a spreadsheet." },

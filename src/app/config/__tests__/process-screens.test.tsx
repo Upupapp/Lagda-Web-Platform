@@ -112,7 +112,7 @@ const WIRED: Record<string, ProcessKind[]> = {
     "enotary-finalize", "enotary-identity", "enotary-act", "enotary-approve",
   ],
   "pages/platform/enotary/room/RoomFlow.tsx": ["enotary-payment-confirm", "enotary-payment-missing"],
-  "pages/platform/enotary/notary/NotarySealPage.tsx": ["enotary-signature-save", "enotary-signature-remove"],
+  "pages/platform/enotary/notary/NotarySealPage.tsx": ["enotary-seal-save", "enotary-signature-save", "enotary-signature-remove"],
   "pages/platform/enotary/notary/NotaryRegisterPage.tsx": ["enotary-register-export", "enotary-register-report"],
   "pages/platform/enotary/room/SessionPanel.tsx": ["enotary-session-start", "enotary-session-reopen-request", "enotary-session-reopen"],
   "pages/platform/enotary/room/CopiesPanel.tsx": ["enotary-copy-request", "enotary-copy-stage"],

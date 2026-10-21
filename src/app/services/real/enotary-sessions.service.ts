@@ -138,6 +138,13 @@ export interface NotarizeInput {
   remarks?: string;
 }
 
+/** 123. How the notary's seal reads; the commission facts are the application's. */
+export interface NotarySeal {
+  sealName: string; jurisdictionLine: string | null; officeLine: string | null;
+  commissionNo: string | null; commissionValidUntil: string | null; rollNo: string | null;
+  customised: boolean; updatedAt: string | null;
+}
+
 /** The notary's signature picture. */
 export interface NotarySignature {
   mediaType: "image/png" | "image/jpeg";
@@ -344,6 +351,15 @@ class RealEnotarySessionsService {
   /** One month of the register as the report to the Clerk of Court. */
   async registerReport(year: number, month: number): Promise<Blob> {
     return fetchFile(`/me/enotary/register/report.pdf?year=${String(year)}&month=${String(month)}`);
+  }
+
+  /** 123. How the seal reads. */
+  async seal(): Promise<NotarySeal> {
+    return (await apiRequest<{ seal: NotarySeal }>("/me/notary/seal")).seal;
+  }
+
+  async saveSeal(input: { sealName: string; jurisdictionLine: string | null; officeLine: string | null }): Promise<NotarySeal> {
+    return (await apiRequest<{ seal: NotarySeal }>("/me/notary/seal", { method: "PUT", body: input })).seal;
   }
 
   async signature(): Promise<NotarySignature | null> {
