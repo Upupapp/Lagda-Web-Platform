@@ -20,7 +20,7 @@ export interface Placements { seal?: PagePoint; signature?: PagePoint }
 type Tool = "seal" | "signature";
 
 /** The seal and the signature as the server draws them, in points of a page; the markers are scaled from these. */
-const SEAL_POINTS = 124;
+const SEAL_POINTS = 140;
 const SIGNATURE_W = 120;
 const SIGNATURE_H = 44;
 const STEP = 0.02;

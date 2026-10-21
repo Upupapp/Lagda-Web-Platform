@@ -56,6 +56,28 @@ const STYLES = `
   @media (max-width: 560px) { .ns-facts, .ns-edit-grid { grid-template-columns: minmax(0, 1fr); } .ns-foot { margin: 16px -16px -16px; padding: 14px 16px; } .ns-foot > :last-child { width: 100%; } }
 `;
 
+/** The scalloped edge of the seal, centred on the origin: the same shape the notarized document prints. */
+function scallop(radius: number, bumps = 30, depth = 0.055): string {
+  const steps = bumps * 8;
+  const points: string[] = [];
+  for (let i = 0; i <= steps; i++) {
+    const angle = (i / steps) * Math.PI * 2;
+    const r = radius * (1 - depth / 2 + (depth / 2) * Math.cos(angle * bumps));
+    points.push(`${i === 0 ? "M" : "L"} ${(r * Math.cos(angle)).toFixed(2)} ${(r * Math.sin(angle)).toFixed(2)}`);
+  }
+  return `${points.join(" ")} Z`;
+}
+const SCALLOP = scallop(98);
+const STAR = (() => {
+  const points: string[] = [];
+  for (let i = 0; i < 10; i++) {
+    const r = i % 2 === 0 ? 4.2 : 1.8;
+    const angle = -Math.PI / 2 + (i * Math.PI) / 5;
+    points.push(`${i === 0 ? "M" : "L"} ${(r * Math.cos(angle)).toFixed(2)} ${(r * Math.sin(angle)).toFixed(2)}`);
+  }
+  return `${points.join(" ")} Z`;
+})();
+
 /** The seal as it will be drawn: the notary's wording, and the commission from the application. */
 export function SealPreview({ wording, application }: { wording: SealWording; application: NotaryApplication | null }) {
   const facts = [
@@ -64,23 +86,30 @@ export function SealPreview({ wording, application }: { wording: SealWording; ap
     application === null || application.rollNo === "" ? null : `Roll No. ${application.rollNo}`,
   ].filter((line): line is string => line !== null);
   const name = wording.name.trim() === "" ? "Your name" : wording.name.trim();
+  // The centre, as the notarized document prints it: the name, the jurisdiction line, the commission, the office line.
+  const centre: { text: string; big?: boolean }[] = [
+    { text: name, big: true },
+    ...(wording.jurisdictionLine !== null && wording.jurisdictionLine !== "" ? [{ text: wording.jurisdictionLine.slice(0, 34) }] : []),
+    ...facts.map(text => ({ text })),
+    ...(wording.officeLine !== null && wording.officeLine !== "" ? [{ text: wording.officeLine.slice(0, 34) }] : []),
+  ];
+  const centreTop = 104 - ((centre.length - 1) * 10.5) / 2;
   const label = ["Notary Public", name, wording.jurisdictionLine, ...facts, wording.officeLine].filter(part => part !== null && part !== "").join(", ");
   return (
-    <svg data-testid="seal-preview" role="img" aria-label={`Your seal: ${label}`} viewBox="0 0 200 200" width="176" height="176" style={{ display: "block", filter: "drop-shadow(0 6px 14px rgba(140,29,63,0.18))" }}>
-      <defs><path id="ns-arc" d="M 28 100 A 72 72 0 0 1 172 100" /></defs>
-      <circle cx="100" cy="100" r="94" fill="#FFFFFF" stroke={E.maroon} strokeWidth="6" />
-      <circle cx="100" cy="100" r="84" fill="none" stroke={E.maroon} strokeWidth="1.4" />
-      <text fill={E.maroon} style={{ fontFamily: SERIF, fontSize: 12.5, fontWeight: 700, letterSpacing: "0.18em" }}><textPath href="#ns-arc" startOffset="50%" textAnchor="middle">NOTARY PUBLIC</textPath></text>
-      <text x="100" y="108" textAnchor="middle" fill={E.maroon} style={{ fontFamily: SERIF, fontSize: name.length > 18 ? 14 : 17, fontWeight: 700 }}>{name}</text>
-      {wording.jurisdictionLine !== null && wording.jurisdictionLine !== "" && (
-        <text x="100" y="122" textAnchor="middle" fill={E.maroon} style={{ fontFamily: "'Geist', sans-serif", fontSize: 7.5 }}>{wording.jurisdictionLine.slice(0, 40)}</text>
-      )}
-      {facts.map((line, i) => (
-        <text key={line} x="100" y={136 + i * 11} textAnchor="middle" fill={E.maroon} style={{ fontFamily: "'Geist', sans-serif", fontSize: 8.5 }}>{line}</text>
+    <svg data-testid="seal-preview" role="img" aria-label={`Your seal: ${label}`} viewBox="0 0 200 200" width="184" height="184" style={{ display: "block", filter: "drop-shadow(0 8px 16px rgba(111,22,50,0.3))" }}>
+      <defs>
+        <path id="ns-arc" d="M 30 100 A 70 70 0 0 1 170 100" />
+        <radialGradient id="ns-fill" cx="50%" cy="40%" r="65%"><stop offset="0%" stopColor="#A8213E" /><stop offset="100%" stopColor="#7E1229" /></radialGradient>
+      </defs>
+      <path d={SCALLOP} transform="translate(100 100)" fill="url(#ns-fill)" stroke="#6F0F24" strokeWidth="1" />
+      <circle cx="100" cy="100" r="83" fill="none" stroke="#FFFFFF" strokeWidth="2" opacity="0.95" />
+      <circle cx="100" cy="100" r="63" fill="none" stroke="#FFFFFF" strokeWidth="1" opacity="0.8" />
+      <text fill="#FFFFFF" style={{ fontFamily: "'Geist', sans-serif", fontSize: 12, fontWeight: 800, letterSpacing: "0.2em" }}><textPath href="#ns-arc" startOffset="50%" textAnchor="middle">NOTARY PUBLIC</textPath></text>
+      {centre.map((line, i) => (
+        <text key={`${line.text}-${String(i)}`} x="100" y={centreTop + i * 10.5 + (line.big ? 0 : 1)} textAnchor="middle" fill="#FFFFFF"
+          style={{ fontFamily: "'Geist', sans-serif", fontSize: line.big ? (name.length > 22 ? 9.5 : 11) : 7, fontWeight: line.big ? 800 : 500 }}>{line.text}</text>
       ))}
-      {wording.officeLine !== null && wording.officeLine !== "" && (
-        <text x="100" y={136 + facts.length * 11} textAnchor="middle" fill={E.maroon} style={{ fontFamily: "'Geist', sans-serif", fontSize: 7.2 }}>{wording.officeLine.slice(0, 40)}</text>
-      )}
+      {[-11, 0, 11].map(dx => <path key={dx} d={STAR} transform={`translate(${String(100 + dx)} 175)`} fill="#FFFFFF" />)}
     </svg>
   );
 }
