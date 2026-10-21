@@ -37,7 +37,7 @@ function copyLine(entry: RegisterEntry): { words: string; tracking: string | nul
 
 const matches = (entry: RegisterEntry, query: string): boolean => {
   if (query === "") return true;
-  const haystack = [entry.clientName, entry.documentName, entry.reference ?? "", entry.actLabel, entry.clientPlace ?? "", entry.documentKindLabel ?? "", String(entry.docNo)].join(" ").toLowerCase();
+  const haystack = [entry.clientName, entry.documentName, entry.reference ?? "", entry.actLabel, entry.clientAddress ?? "", entry.clientPlace ?? "", entry.documentKindLabel ?? "", String(entry.docNo)].join(" ").toLowerCase();
   return query.toLowerCase().split(/\s+/).filter(part => part !== "").every(part => haystack.includes(part));
 };
 
@@ -148,7 +148,7 @@ export function NotaryRegisterPage() {
           <ul data-testid="register-list" style={{ listStyle: "none", margin: 0, padding: 0, display: "grid", gap: 10 }}>
             {shown.map(entry => {
               const copy = copyLine(entry);
-              const person = present(entry.clientPlace, entry.clientIdType);
+              const person = present(entry.clientAddress ?? entry.clientPlace, entry.clientIdType);
               return (
                 <li key={entry.sessionId} data-testid="register-entry" style={{ ...GF, border: `1px solid ${E.line}`, borderRadius: 12, padding: "12px 14px", background: "#FFFFFF" }}>
                   <p style={{ margin: 0, fontFamily: SERIF, fontWeight: 700, color: E.navy }}>Doc. No. {entry.docNo} · Page {entry.pageNo} · Book {entry.bookNo} · Series {entry.series}</p>
@@ -179,7 +179,7 @@ export function NotaryRegisterPage() {
               <tbody>
                 {shown.map(entry => {
                   const copy = copyLine(entry);
-                  const person = present(entry.clientPlace, entry.clientIdType);
+                  const person = present(entry.clientAddress ?? entry.clientPlace, entry.clientIdType);
                   return (
                     <tr key={entry.sessionId} data-testid="register-entry" style={{ borderBottom: `1px solid ${E.line}`, verticalAlign: "top" }}>
                       <td style={{ padding: "12px 8px", fontFamily: SERIF, fontWeight: 700 }}>{entry.docNo}</td>

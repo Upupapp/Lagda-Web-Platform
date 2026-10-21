@@ -15,7 +15,7 @@ import { withProcess } from "../../../../config/process-screens";
 import {
   formatPesos, parsePesos, realEnotaryInvitationsService, describePaymentError, FEE_MAX_PESOS, type Invitation,
 } from "../../../../services/real/enotary-invitations.service";
-import { realEnotarySessionsService, type ActType, type Session } from "../../../../services/real/enotary-sessions.service";
+import { formatClientAddress, realEnotarySessionsService, type ActType, type Session } from "../../../../services/real/enotary-sessions.service";
 import { E } from "../EnotaryChrome";
 import { ClientPaymentPanel } from "../payments/ClientPaymentPanel";
 import { Panel, PanelTitle, TextField, bodyText, fieldStyle, hintStyle, labelStyle } from "../onramp-ui";
@@ -342,6 +342,9 @@ export function NotaryFlow({ s, busy, act, onChanged, notarizePanel }: {
           {row("Notarial act", statement.actTypeLabel)}
           {row("Fee", statement.feeCentavos === 0 ? "No fee" : pesos(statement.feeCentavos))}
           {row("Client's identity", <span style={{ color: E.ok, fontWeight: 700 }}>Confirmed by you on the call</span>)}
+          {row("Client's address", (s.clientAddress ?? null) === null
+            ? <span data-testid="seal-address-missing" style={{ color: "#8A5A00", fontWeight: 700 }}>Not given yet: the client types it in the room</span>
+            : <span data-testid="seal-address">{formatClientAddress(s.clientAddress!)}</span>)}
         </dl>
         <p style={hintStyle}>Applying the seal writes the next entry of your notarial register and completes the document. It cannot be undone.</p>
       </Panel>

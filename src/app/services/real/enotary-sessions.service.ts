@@ -19,7 +19,7 @@ export type SessionStatus = "preparing" | "live" | "notarized" | "cancelled";
 export type SessionRole = "client" | "notary";
 export type ActType = "acknowledgment" | "jurat" | "signature_witnessing";
 export type NotarizeBlock =
-  | "not_live" | "no_document" | "not_final" | "no_identity" | "no_act" | "not_approved" | "unpaid" | "no_consent" | "client_absent";
+  | "not_live" | "no_document" | "not_final" | "no_identity" | "no_act" | "not_approved" | "unpaid" | "no_consent" | "no_address" | "client_absent";
 export type SessionPaymentStatus = "awaiting" | "proof" | "confirmed" | "not_received" | "waived";
 export type CtcStatus = "requested" | "quoted" | "payment_sent" | "paid" | "fulfilled" | "received" | "declined" | "cancelled";
 export type CtcMode = "digital" | "physical";
@@ -62,7 +62,18 @@ export interface Session {
   notarized: { size: number; sha256: string; originalSha256: string; code: string; verifyUrl: string } | null;
   cancelledBy: SessionRole | null;
   pilotNotice: string;
+  /** Where the client says they are during the act, as they typed it. Absent from an older server. */
+  clientAddress?: ClientAddress | null;
+  /** LAGDA verified the client's ID and face when they made the request. Absent from an older server. */
+  clientIdentity?: { verified: boolean; idType: string | null };
 }
+
+/** The client's address for the notarial record: street or barangay, city or municipality, province. */
+export interface ClientAddress { street: string; city: string; province: string; givenAt: string }
+export type ClientAddressInput = Pick<ClientAddress, "street" | "city" | "province">;
+
+/** The address on one line. */
+export const formatClientAddress = (address: ClientAddressInput): string => `${address.street}, ${address.city}, ${address.province}`;
 
 export interface AuditEntry { at: string; code: string; text: string; by: "client" | "notary" | "system"; actor: string }
 export interface AuditTrail { reference: string | null; clientName: string; notaryName: string; role: SessionRole; entries: AuditEntry[] }
@@ -86,6 +97,8 @@ export interface RegisterEntry {
   docNo: number; pageNo: number; bookNo: string; series: number; registerRef: string;
   notarizedAt: string; clientName: string; documentName: string; actLabel: string; feeCentavos: number | null;
   documentKindLabel?: string | null; clientPlace?: string | null; clientIdType?: string | null; remarks?: string | null;
+  /** Where the client said, in the room, they were during the act. Absent on an entry made before. */
+  clientAddress?: string | null;
   copy: { status: CtcStatus; mode: CtcMode; stage: ShipmentStage | null; trackingNo: string | null } | null;
 }
 
@@ -211,6 +224,11 @@ class RealEnotarySessionsService {
     return (await apiRequest<{ session: Session }>(`/me/enotary/sessions/${id(sessionId)}/open`, { method: "POST" })).session;
   }
 
+  /** The client gives or corrects where they are during the act, typed by them. 422 when a part is missing or not an address. */
+  async giveAddress(sessionId: string, address: ClientAddressInput): Promise<Session> {
+    return (await apiRequest<{ session: Session }>(`/me/enotary/sessions/${id(sessionId)}/address`, { method: "PUT", body: address })).session;
+  }
+
   async consent(sessionId: string): Promise<Session> {
     return (await apiRequest<{ session: Session }>(`/me/enotary/sessions/${id(sessionId)}/consent`, { method: "POST" })).session;
   }
@@ -245,8 +263,10 @@ class RealEnotarySessionsService {
     return apiRequest<Counterpart>(`/me/enotary/requests/${id(invitationId)}/counterpart`);
   }
 
-  /** The other party's profile photo. */
-  counterpartAvatar(invitationId: string): Promise<Blob> { return fetchFile(`/me/enotary/requests/${id(invitationId)}/counterpart/avatar`); }
+  /** The other party's profile photo; the version makes a changed photo a new address, past any cache. */
+  counterpartAvatar(invitationId: string, version?: string | null): Promise<Blob> {
+    return fetchFile(`/me/enotary/requests/${id(invitationId)}/counterpart/avatar${version === undefined || version === null ? "" : `?v=${encodeURIComponent(version)}`}`);
+  }
 
   /** Tells LAGDA the colour of the banner this person's workspace shows (null: LAGDA's own), for the other party's card. */
   async saveCard(brandColor: string | null): Promise<void> {
@@ -432,6 +452,7 @@ export const BLOCK_WORDS: Record<NotarizeBlock, string> = {
   not_approved: "The client has not approved the act and the fee yet.",
   unpaid: "The fee is not settled yet: the client has not paid, or you have not confirmed the payment.",
   no_consent: "The client has not yet confirmed that they are signing freely.",
+  no_address: "The client has not given their address for the notarial record yet.",
   client_absent: "The client has not been in the room in the last two minutes.",
 };
 
