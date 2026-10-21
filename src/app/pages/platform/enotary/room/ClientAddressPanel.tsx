@@ -70,18 +70,21 @@ export function ClientAddressPanel({ session, onSave, onSaved }: {
 
   if (!editing && given !== null) {
     return (
-      <Panel testId="address-panel" tone="sky">
-        <PanelTitle>Your address for the notarial record</PanelTitle>
-        <p data-testid="address-given" style={{ ...bodyText, margin: 0, display: "flex", gap: 8, alignItems: "flex-start" }}>
-          <MapPin size={17} aria-hidden style={{ flex: "0 0 auto", marginTop: 3, color: E.skyDeep }} />
-          <span><strong style={{ color: E.ink }}>{formatClientAddress(given)}</strong>
-            <small style={{ display: "block", color: E.quiet }}>Given {stampLabel(given.givenAt)}. Only you and the notary see it.</small></span>
-        </p>
-        {said !== null && <p role="status" style={{ ...GF, margin: "10px 0 0", fontSize: 13.5, fontWeight: 600, color: E.ok, display: "flex", gap: 6, alignItems: "center" }}><CheckCircle2 size={15} aria-hidden /> {said}</p>}
-        <ActionRow align="end">
-          <ActionButton kind="secondary" icon={Pencil} onClick={() => { setEditing(true); setSaid(null); setTried(false); }}>Change the address</ActionButton>
-        </ActionRow>
-      </Panel>
+      <section data-testid="address-panel" aria-labelledby="address-given-h"
+        style={{ ...GF, display: "grid", gridTemplateColumns: "38px minmax(0, 1fr)", gap: 12, alignItems: "start", padding: "14px 16px", borderRadius: 16, background: "#FFFFFF", border: `1px solid ${E.line}`, boxShadow: "0 1px 2px rgba(10,26,43,0.05), 0 18px 44px -28px rgba(10,26,43,0.3)", boxSizing: "border-box" }}>
+        <span aria-hidden="true" style={{ width: 38, height: 38, borderRadius: 10, display: "grid", placeItems: "center", background: E.skyWash, color: E.skyDeep }}><MapPin size={18} /></span>
+        <div style={{ minWidth: 0 }}>
+          <h3 id="address-given-h" style={{ margin: 0, fontSize: 14.5, fontWeight: 800, color: E.navy }}>Your address for the notarial record</h3>
+          <p data-testid="address-given" style={{ margin: "4px 0 0", fontSize: 14, lineHeight: 1.45, color: E.ink, overflowWrap: "anywhere" }}>
+            <strong>{formatClientAddress(given)}</strong>
+            <small style={{ display: "block", marginTop: 3, fontSize: 12, color: E.quiet, fontWeight: 400 }}>Given {stampLabel(given.givenAt)}. Only you and the notary see it.</small>
+          </p>
+          {said !== null && <p role="status" style={{ margin: "10px 0 0", fontSize: 13.5, fontWeight: 600, color: E.ok, display: "flex", gap: 6, alignItems: "center" }}><CheckCircle2 size={15} aria-hidden /> {said}</p>}
+          <div style={{ marginTop: 10 }}>
+            <ActionButton kind="secondary" icon={Pencil} onClick={() => { setEditing(true); setSaid(null); setTried(false); }}>Change the address</ActionButton>
+          </div>
+        </div>
+      </section>
     );
   }
 

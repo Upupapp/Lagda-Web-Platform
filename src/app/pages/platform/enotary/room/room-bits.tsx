@@ -21,7 +21,11 @@ export function saveBlob(blob: Blob, filename: string): void {
 }
 
 /** A private PDF, fetched with the session's cookie and shown from memory. `key` changes when the file does. */
-export function PdfView({ load, fileKey, name, height = 460 }: { load: () => Promise<Blob>; fileKey: string; name: string; height?: number }) {
+export function PdfView({ load, fileKey, name, height = 460, actionsEnd = false }: {
+  load: () => Promise<Blob>; fileKey: string; name: string; height?: number;
+  /** The two buttons at the right of the viewer instead of the left. */
+  actionsEnd?: boolean;
+}) {
   const [state, setState] = useState<{ kind: "loading" } | { kind: "error" } | { kind: "ready"; url: string; blob: Blob }>({ kind: "loading" });
   const loader = useRef(load);
   loader.current = load;
@@ -42,7 +46,7 @@ export function PdfView({ load, fileKey, name, height = 460 }: { load: () => Pro
   return (
     <div data-testid="pdf-view">
       <iframe title={`Document: ${name}`} src={state.url} style={{ width: "100%", height, border: `1px solid ${E.line}`, borderRadius: 8, background: E.wash }} />
-      <p style={{ ...GF, display: "flex", gap: 10, flexWrap: "wrap", margin: "8px 0 0" }}>
+      <p style={{ ...GF, display: "flex", gap: 10, flexWrap: "wrap", margin: "8px 0 0", justifyContent: actionsEnd ? "flex-end" : undefined }}>
         <a href={state.url} target="_blank" rel="noopener noreferrer" style={{ ...linkButton("secondary"), minHeight: 44 }}>
           <ExternalLink size={16} aria-hidden /> Open in a new tab
         </a>

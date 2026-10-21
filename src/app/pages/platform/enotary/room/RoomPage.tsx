@@ -34,6 +34,7 @@ import { RequestTrail, useRequestTrail } from "../RequestTrail";
 import { useRoomConnection } from "./useRoomConnection";
 import { WaitingRoom } from "./WaitingRoom";
 import { ClientAddressPanel, ClientAddressView } from "./ClientAddressPanel";
+import { ClientStepSix } from "./ClientStepSix";
 import { withProcess, type ProcessKind } from "../../../../config/process-screens";
 
 /** The loading screen each room action runs behind (the chat is not one: it stays quiet). */
@@ -186,6 +187,9 @@ export function RoomPage() {
       )}
     </Panel>
   );
+  // Step 6 of the client's room: the document is final and the act and the fee come next (the console's own layout).
+  const stepSix = isClient && s.status === "live" && (s.finalizedAt ?? null) !== null;
+  const say = async (body: string) => { const sent = await realEnotarySessionsService.say(s.id, body); setMessages(list => [...list, sent]); };
   const addressPanel = isClient
     ? <ClientAddressPanel session={s} onSave={address => realEnotarySessionsService.giveAddress(s.id, address)} onSaved={next => { if (alive.current) setLoaded({ kind: "ready", session: next }); }} />
     : <ClientAddressView session={s} />;
@@ -223,7 +227,25 @@ export function RoomPage() {
           : documentPanel
       )}
 
-      {s.status === "live" && (
+      {stepSix && (
+        <ClientStepSix
+          s={s} partner={partnerTitle(partner, true)} connection={connection} messages={messages} onSend={say}
+          busy={busy} act={act} onChanged={() => { void load(); }} address={addressPanel}
+          call={
+            <CallCard
+              look="v2" session={s} connection={connection} partnerName={partnerTitle(partner, true)} partnerRole="Notary public"
+              selfIdentityVerified={s.clientIdentity?.verified ?? true} partnerPresent={s.presence.notary} messages={messages}
+              onSend={say} onLeave={() => { void navigate(back); }}
+              document={s.document === null ? <p style={bodyText}>The client has not chosen the document yet.</p>
+                : <PdfView load={() => realEnotarySessionsService.document(s.id)} fileKey={s.document.sha256} name={s.document.name} height={420} />}
+            />
+          }
+          viewer={height => (s.document === null ? <p style={bodyText}>There is no document in the room.</p>
+            : <PdfView load={() => realEnotarySessionsService.document(s.id)} fileKey={s.document.sha256} name={s.document.name} height={height} actionsEnd />)}
+        />
+      )}
+
+      {s.status === "live" && !stepSix && (
         <div className="eno-split">
           <div style={{ minWidth: 0, display: "grid", gap: 16 }}>
             <div data-testid="video-panel">

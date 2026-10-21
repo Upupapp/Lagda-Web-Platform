@@ -87,6 +87,15 @@ const CSS = `
     .cc-stage.gallery { grid-template-columns: 1fr; }
   }
   @media (max-width: 520px) { .cc-stage { aspect-ratio: 4 / 3; } .cc-btn span.lbl { display: none; } .cc-self .cc-chip { display: none; } }
+  /* The step-6 console's look (the client's room): the time and the room move to the console's strip, the picture is
+     taller. The full-screen view keeps its own look. */
+  .cc.v2:not(.max) { background: radial-gradient(120% 90% at 50% 25%, #1E3A6E 0%, #0E2147 58%, #081631 100%); }
+  .cc.v2:not(.max) .cc-meta { display: none; }
+  .cc.v2:not(.max) .cc-stage { aspect-ratio: 4 / 3; background: rgba(8,22,49,0.55); }
+  .cc.v2:not(.max) .cc-them .cc-name { font-size: 14px; }
+  .cc.v2:not(.max) .cc-c { border-radius: 12px; background: rgba(255,255,255,0.1); }
+  .cc.v2:not(.max) .cc-c.end { background: #D93A3A; border-color: #D93A3A; }
+  .cc.v2:not(.max) .cc-said { border-left-color: ${E.sky}; }
 `;
 
 function Tile({ stream, muted, cls, children, off, avatar, note }: {
@@ -106,10 +115,12 @@ function Tile({ stream, muted, cls, children, off, avatar, note }: {
 }
 
 export function CallCard({
-  session, connection, partnerName, partnerRole, selfIdentityVerified, partnerPresent, messages, onSend, onLeave, document: documentView, children,
+  session, connection, partnerName, partnerRole, selfIdentityVerified, partnerPresent, messages, onSend, onLeave, document: documentView, children, look,
 }: {
   session: Session; connection: RoomConnection; partnerName: string; partnerRole: string; selfIdentityVerified: boolean; partnerPresent: boolean;
   messages: readonly RoomMessage[]; onSend: (body: string) => Promise<void>; onLeave: () => void; document: ReactNode; children?: ReactNode;
+  /** "v2": the step-6 console's look, where the console's strip shows the time and the room. */
+  look?: "v2";
 }) {
   const root = useRef<HTMLDivElement>(null);
   const minimise = useRef<HTMLButtonElement>(null);
@@ -191,7 +202,7 @@ export function CallCard({
   return (
     <>
       <style>{CSS}</style>
-      <div ref={root} className={`cc${max ? " max" : ""}`} data-testid="call-card" data-max={max} {...(max ? { role: "dialog", "aria-modal": true, "aria-label": title } : {})}>
+      <div ref={root} className={`cc${look === "v2" ? " v2" : ""}${max ? " max" : ""}`} data-testid="call-card" data-max={max} {...(max ? { role: "dialog", "aria-modal": true, "aria-label": title } : {})}>
         <div className="cc-top">
           {max && <h2 className="cc-title">{title}</h2>}
           <p className="cc-meta">
