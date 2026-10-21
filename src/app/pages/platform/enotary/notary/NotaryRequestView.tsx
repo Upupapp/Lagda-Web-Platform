@@ -15,6 +15,7 @@ import { EnotaryCaseFrame, NOTARY_STEPS, PartyCard, type NotaryStepId, type Part
 import { OnrampNote, Panel, PanelTitle, bodyText, linkButton } from "../onramp-ui";
 import { ExpiryClock, countdownText, expiryLabel, stampLabel } from "../requests/expiry";
 import { Clock } from "lucide-react";
+import { DESK_CARD_STYLES } from "./DeskCard";
 import type { DeskIncoming, DeskRequest } from "../../../../services/real/enotary-invitations.service";
 
 type Banner = { tone: "info" | "warn"; text: string; link: string; label: string } | null;
@@ -145,7 +146,7 @@ export function NotaryRequestView({ focus, request, incoming, banner, said, prob
         </div>
       )}
 
-      {request !== null && <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>{renderRequest(request)}</ul>}
+      {request !== null && <><style>{DESK_CARD_STYLES}</style><ul style={{ listStyle: "none", margin: 0, padding: 0 }}>{renderRequest(request)}</ul></>}
       <OnrampNote />
     </EnotaryCaseFrame>
   );

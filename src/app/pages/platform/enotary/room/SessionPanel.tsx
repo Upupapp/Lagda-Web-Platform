@@ -4,22 +4,42 @@
 //
 // Renders nothing when the feature is not offered.
 
-import { useCallback, useEffect, useRef, useState } from "react";
-import { Link } from "react-router";
-import { Mail, Video, XCircle } from "lucide-react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import { Link, useNavigate } from "react-router";
+import { CalendarDays, Mail, Video, XCircle } from "lucide-react";
 import { ActionButton, Notice } from "../../../../components/system/design-system";
 import {
   describeSessionError, realEnotarySessionsService, type SessionLookup, type SessionRole,
 } from "../../../../services/real/enotary-sessions.service";
 import { ApiError } from "../../../../services/api-client";
 import { Panel, PanelTitle, bodyText, linkButton, markSessionsOffered } from "../onramp-ui";
+import { E } from "../EnotaryChrome";
 import { stampLabel } from "../requests/expiry";
 import { CopiesPanel } from "./CopiesPanel";
 import { withProcess } from "../../../../config/process-screens";
 
 export const SESSION_LOOKUP_MS = 8_000;
 
-export function SessionPanel({ invitationId, role }: { invitationId: string; role: SessionRole }) {
+/** How long the notary sees "Opening the session again" before it is opened, so the step is never a flicker. */
+export const REOPEN_PREPARE_MS = 900;
+
+/** A panel of its own (the request page), or the band at the foot of a desk card: a heading and a white box. */
+function Frame({ variant, title, tone = "plain", testId, children }: {
+  variant: "panel" | "band"; title: string; tone?: "plain" | "sky"; testId: string; children: ReactNode;
+}) {
+  if (variant === "panel") return <Panel tone={tone} testId={testId}><PanelTitle>{title}</PanelTitle>{children}</Panel>;
+  return (
+    <section data-testid={testId}>
+      <h3 style={{ margin: "0 0 10px", display: "flex", alignItems: "center", gap: 8, fontSize: 15, fontWeight: 800, color: E.navy }}>
+        <CalendarDays size={17} aria-hidden /> {title}
+      </h3>
+      <div style={{ background: "#FFFFFF", border: `1px solid ${E.line}`, borderRadius: 10, padding: "14px 16px" }}>{children}</div>
+    </section>
+  );
+}
+
+export function SessionPanel({ invitationId, role, variant = "panel" }: { invitationId: string; role: SessionRole; variant?: "panel" | "band" }) {
+  const navigate = useNavigate();
   const [found, setFound] = useState<SessionLookup | null | undefined>(undefined);
   const [busy, setBusy] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
@@ -81,8 +101,14 @@ export function SessionPanel({ invitationId, role }: { invitationId: string; rol
     if (session === null) return;
     setBusy(true); setProblem(null); setSaid(null);
     try {
-      const next = await withProcess("enotary-session-reopen", "", () => realEnotarySessionsService.reopen(session.id));
-      if (alive.current) setFound({ session: next, canStart: false, reason: null });
+      // The loading screen comes first and stays a moment; only then is the session opened, and the notary is taken to the room.
+      const next = await withProcess("enotary-session-reopen", "", async () => {
+        await new Promise(resolve => { setTimeout(resolve, REOPEN_PREPARE_MS); });
+        return realEnotarySessionsService.reopen(session.id);
+      });
+      if (!alive.current) return;
+      setFound({ session: next, canStart: false, reason: null });
+      void navigate(roomPath);
     } catch (error) {
       if (alive.current) setProblem(describeSessionError(error));
     } finally {
@@ -93,18 +119,16 @@ export function SessionPanel({ invitationId, role }: { invitationId: string; rol
   if (session === null) {
     if (found.reason === "payment_pending") {
       return (
-        <Panel testId="session-panel">
-          <PanelTitle>The session</PanelTitle>
+        <Frame variant={variant} title="The session" testId="session-panel">
           <p style={{ ...bodyText, margin: 0 }} data-testid="session-wait-fee">
             {role === "client" ? "The session opens once the notary's fee is paid and confirmed." : "The session can begin once the client's payment is confirmed."}
           </p>
-        </Panel>
+        </Frame>
       );
     }
     if (!found.canStart) return null;
     return (
-      <Panel tone="sky" testId="session-panel">
-        <PanelTitle>The session</PanelTitle>
+      <Frame variant={variant} title="The session" tone="sky" testId="session-panel">
         {problem !== null && <Notice icon={XCircle} tone="danger">{problem}</Notice>}
         {role === "client" ? (
           <>
@@ -112,14 +136,13 @@ export function SessionPanel({ invitationId, role }: { invitationId: string; rol
             <ActionButton icon={Video} disabled={busy} onClick={() => { void start(); }}>{busy ? "Starting…" : "Start the session"}</ActionButton>
           </>
         ) : <p style={{ ...bodyText, margin: 0 }} data-testid="session-wait-client">The client has not started the session yet. You will be told when they add the document.</p>}
-      </Panel>
+      </Frame>
     );
   }
 
   if (session.status === "cancelled") {
     return (
-      <Panel testId="session-panel">
-        <PanelTitle>The session</PanelTitle>
+      <Frame variant={variant} title="The session" testId="session-panel">
         <p style={{ ...bodyText, margin: 0 }} data-testid="session-cancelled">
           {session.cancelledBy === role ? "You called off" : `${role === "client" ? session.notaryName : session.clientName} called off`} the session
           {session.endedAt !== null ? ` on ${stampLabel(session.endedAt)}` : ""}. Nothing was notarized.
@@ -131,34 +154,32 @@ export function SessionPanel({ invitationId, role }: { invitationId: string; rol
             ? <ActionButton icon={Mail} disabled={busy} onClick={() => { void askToReopen(); }}>{busy ? "Sending…" : `Email ${session.notaryName} to continue`}</ActionButton>
             : <ActionButton icon={Video} disabled={busy} onClick={() => { void reopen(); }}>{busy ? "Opening…" : "Open the session again"}</ActionButton>}
         </div>
-      </Panel>
+      </Frame>
     );
   }
 
   if (session.status === "notarized") {
     return (
       <>
-        <Panel tone="sky" testId="session-panel">
-          <PanelTitle>Notarized</PanelTitle>
+        <Frame variant={variant} title="Notarized" tone="sky" testId="session-panel">
           <p style={bodyText} data-testid="session-notarized">
             {session.act?.typeLabel} recorded{session.act !== null ? ` on ${stampLabel(session.act.at)}` : ""} · register entry {session.act?.registerRef} · code {session.notarized?.code}
           </p>
           <Link to={roomPath} style={linkButton("secondary")}>Open the notarized document</Link>
-        </Panel>
+        </Frame>
         <CopiesPanel sessionId={session.id} role={role} />
       </>
     );
   }
 
   return (
-    <Panel tone="sky" testId="session-panel">
-      <PanelTitle>The session</PanelTitle>
+    <Frame variant={variant} title="The session" tone="sky" testId="session-panel">
       <p style={bodyText} data-testid="session-state">
         {session.status === "live" ? "The room is open." : role === "client"
           ? session.document === null ? "Add your document, then wait for the notary to open the room." : "Your document is in. Waiting for the notary to open the room."
           : session.document === null ? "Waiting for the client to add the document." : "The document is in. Open the room when you are ready."}
       </p>
       <Link to={roomPath} style={linkButton("primary")}><Video size={16} aria-hidden /> {session.status === "live" ? "Join the room" : "Go to the room"}</Link>
-    </Panel>
+    </Frame>
   );
 }

@@ -139,7 +139,9 @@ describe("the desk", () => {
     const rows = within(screen.getByTestId("desk-section-completed")).getAllByTestId("desk-row");
     expect(rows[0]).toHaveTextContent("Angela Ramos");
     expect(rows[0]).toHaveTextContent("EN-2026-000004");
-    expect(rows[0]).toHaveTextContent("Deed of Sale · Acknowledgment · PHP 600.00");
+    // The facts of the card, each under its own label.
+    const facts = within(rows[0]!).getAllByRole("term").map(term => `${term.textContent ?? ""}: ${term.nextElementSibling?.textContent ?? ""}`);
+    expect(facts).toEqual(expect.arrayContaining(["Document: Deed of Sale", "Service: Acknowledgment", "Fee: PHP 600.00", "Reference no.: EN-2026-000004"]));
     expect(within(rows[0]!).getByTestId("desk-copy-state")).toHaveTextContent("Copy received by the client");
     expect(within(rows[1]!).getByTestId("desk-copy-state")).toHaveTextContent("Copy delivered, awaiting receipt");
     expect(within(rows[2]!).getByTestId("desk-copy-state")).toHaveTextContent("Notarized");
@@ -150,6 +152,24 @@ describe("the desk", () => {
     await open(deskOf({ requests: [request({ status: "accepted", session: { id: "ens_1", status: "cancelled", hasDocument: false } })] }));
     expect(screen.getByTestId("tally-progress")).toHaveTextContent("0");
     expect(within(screen.getByTestId("desk-section-closed")).getByTestId("desk-row")).toHaveTextContent("The session was called off");
+  });
+
+  it("shows a called-off request as the card: badges, the session's and the payment's states side by side, and the way in", async () => {
+    await open(deskOf({ requests: [request({
+      status: "accepted", reference: "EN-2026-000002", decidedAt: "2026-10-20T01:56:00.000Z",
+      client: { name: "Christopher Oliva Cortes", identityVerified: true },
+      session: { id: "ens_1", status: "cancelled", hasDocument: true },
+      case: { documentName: "Receipt Signature.pdf", actLabel: "Signature witnessing", feeCentavos: 60_000, copy: null },
+      payment: { status: "confirmed", amountCentavos: 60_000, reference: "GC-1", attemptsLeft: 0, proofAt: null, decidedAt: null },
+    })] }));
+    const card = within(screen.getByTestId("desk-section-closed")).getByTestId("desk-row");
+    expect(within(card).getByRole("heading", { name: "Christopher Oliva Cortes" })).toBeInTheDocument();
+    expect(card).toHaveTextContent("ID verified");
+    expect(within(card).getByTestId("status-pill")).toHaveTextContent("Called off");
+    expect(within(card).getByTestId("desk-session-state")).toHaveTextContent("The session was called off. Nothing was notarized.");
+    expect(within(card).getByTestId("desk-payment")).toHaveTextContent("You confirmed the payment of PHP 600.00.");
+    expect(within(card).getByTestId("desk-open")).toHaveAttribute("href", "/app/enotary/desk/eni_1");
+    expect(within(screen.getByTestId("desk-section-closed")).getByRole("heading", { level: 2 })).toHaveTextContent("Closed1");
   });
 
   it("counts down the time left on a waiting request", async () => {

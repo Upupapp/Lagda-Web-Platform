@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { usePlatform } from "../context/PlatformContext";
 import { LagdaLoader } from "../components/brand/LagdaLoader";
+import { LagdaLogo } from "../components/brand/LagdaLogo";
 import { buildSignInUrl } from "../utils/authReturnPath";
 import { useAccountFeatures } from "../hooks/useAccountFeatures";
 import { useNavCounts } from "../hooks/useNavCounts";
@@ -213,6 +214,7 @@ export function EnotaryLayout() {
         </Suspense>
       </main>
       <footer style={{ background: "#FFFFFF", borderTop: `1px solid ${E.line}`, padding: "28px 16px 34px", textAlign: "center" }}>
+        <div data-testid="footer-logo" style={{ display: "flex", justifyContent: "center", margin: "0 0 10px" }}><LagdaLogo variant="colored-icon" size="lg" decorative /></div>
         <p style={{ margin: 0, fontFamily: SERIF, fontWeight: 700, fontSize: 18, color: E.navy }}>LAGDA <span style={{ color: E.maroon }}>eNotary</span></p>
         <p style={{ margin: "6px auto 0", maxWidth: 640, fontSize: 13.5, color: E.quiet }}>{onDesk ? FOOTER.notary : FOOTER.client}</p>
         <p style={{ margin: "8px 0 0", fontSize: 12.5, color: E.faint }}>&copy; {new Date().getFullYear()} LAGDA. All rights reserved.</p>
