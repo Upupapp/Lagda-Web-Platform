@@ -24,8 +24,9 @@ import { SessionPanel } from "../room/SessionPanel";
 import { DetailNotes, detailsLine } from "../request-details";
 import {
   AlertTriangle, Archive, BadgeCheck, Banknote, BookOpen, CalendarDays, Check, CheckCircle2, Clock, FileText, Hash, Hourglass, Inbox,
-  PenLine, QrCode, Video, X, XCircle,
+  Image as ImageIcon, PenLine, QrCode, Video, X, XCircle,
 } from "lucide-react";
+import { Z } from "../../../../utils/z-index";
 import { DESK_CARD_STYLES, DeskCard, DeskGroup, type DeskFact, type DeskPill, type DeskTile } from "./DeskCard";
 import { ActionButton, GF, Notice, T, useViewport } from "../../../../components/system/design-system";
 import { useConfirm } from "../../../../components/platform/ConfirmDialog";
@@ -182,6 +183,7 @@ export function NotaryDeskPage({ focus }: { focus?: string } = {}) {
   const [reason, setReason] = useState("");
   const [problem, setProblem] = useState<string | null>(null);
   const [said, setSaid] = useState<string | null>(null);
+  const [viewing, setViewing] = useState<{ id: string; url: string | null; name: string } | null>(null);
   const alive = useRef(true);
   /** What waited on the notary at the last read, so the menu bubble hears of a change at once. */
   const lastWaiting = useRef<number | null>(null);
@@ -308,6 +310,19 @@ export function NotaryDeskPage({ focus }: { focus?: string } = {}) {
     });
   };
 
+  const showScreenshot = async (request: DeskRequest) => {
+    setViewing({ id: request.id, url: null, name: request.client.name });
+    try {
+      const blob = await realEnotaryInvitationsService.paymentScreenshot(request.id);
+      if (!alive.current) return;
+      if (blob === null) { setViewing(null); setProblem(`${request.client.name} sent no screenshot with this payment.`); return; }
+      setViewing({ id: request.id, url: URL.createObjectURL(blob), name: request.client.name });
+    } catch {
+      if (alive.current) { setViewing(null); setProblem("The screenshot could not be opened. Try again."); }
+    }
+  };
+  const closeScreenshot = () => { if (viewing?.url !== null && viewing?.url !== undefined) URL.revokeObjectURL(viewing.url); setViewing(null); };
+
   const notReceived = async (request: DeskRequest) => {
     setWorking(request.id);
     setProblem(null);
@@ -367,7 +382,11 @@ export function NotaryDeskPage({ focus }: { focus?: string } = {}) {
                 Reference number: <strong data-testid="desk-reference" style={{ letterSpacing: "0.04em" }}>{payment.reference}</strong>
                 {payment.proofAt !== null && <> · sent {stampLabel(payment.proofAt)}</>}
               </p>
-              <p style={{ margin: "4px 0 0", fontSize: 12.5, color: E.quiet }}>Look for this transfer in your own bank or e-wallet app. Do not go by a screenshot.</p>
+              <p style={{ margin: "4px 0 0", fontSize: 12.5, color: E.quiet }}>Look for this transfer in your own bank or e-wallet app. The client&rsquo;s screenshot helps you find it; do not go by the screenshot alone.</p>
+              <button type="button" className="dk-open" data-testid="view-screenshot" style={{ marginTop: 10, cursor: "pointer" }} disabled={viewing?.id === request.id && viewing.url === null}
+                onClick={() => { void showScreenshot(request); }}>
+                <ImageIcon size={15} aria-hidden /> View the receipt screenshot
+              </button>
               {missing === request.id ? (
                 <div style={{ marginTop: 10 }}>
                   <label htmlFor={`missing-${request.id}`} style={labelStyle}>Note for the client (optional)</label>
@@ -427,11 +446,24 @@ export function NotaryDeskPage({ focus }: { focus?: string } = {}) {
       );
   };
 
+  const screenshotDialog = viewing === null || viewing.url === null ? null : (
+    <div data-testid="screenshot-overlay" onMouseDown={event => { if (event.target === event.currentTarget) closeScreenshot(); }}
+      style={{ position: "fixed", inset: 0, zIndex: Z.modal, display: "grid", placeItems: "center", padding: "clamp(10px, 3vw, 24px)", background: "rgba(10,26,43,0.6)" }}>
+      <div role="dialog" aria-modal="true" aria-label={`Receipt screenshot from ${viewing.name}`}
+        style={{ position: "relative", width: "min(560px, 100%)", maxHeight: "calc(100dvh - 32px)", overflow: "auto", borderRadius: 16, background: "#FFFFFF", padding: 18, boxSizing: "border-box" }}>
+        <button type="button" onClick={closeScreenshot} aria-label="Close the screenshot" style={{ position: "absolute", right: 10, top: 10, width: 40, height: 40, display: "grid", placeItems: "center", borderRadius: 10, border: `1px solid ${E.line}`, background: "#FFFFFF", cursor: "pointer" }}><X size={18} aria-hidden /></button>
+        <h2 style={{ margin: "0 48px 6px 0", fontSize: 17, fontWeight: 800, color: E.navy }}>Receipt from {viewing.name}</h2>
+        <p style={{ margin: "0 0 12px", fontSize: 13, color: E.quiet }}>Check it against your own GCash or bank app before you confirm.</p>
+        <img src={viewing.url} alt={`Receipt screenshot from ${viewing.name}`} data-testid="screenshot-image" style={{ display: "block", width: "100%", height: "auto", borderRadius: 10, border: `1px solid ${E.line}` }} />
+      </div>
+    </div>
+  );
+
   const focused = focus === undefined ? null : desk.requests.find(request => request.id === focus) ?? null;
   const focusedNew = focus === undefined ? null : incoming.find(item => item.id === focus) ?? null;
   if (focus !== undefined) {
-    return <NotaryRequestView focus={focus} request={focused} incoming={focusedNew} banner={banner} said={said} problem={problem} confirmDialog={confirmDialog}
-      renderRequest={renderRequest} onTake={item => { void take(item); }} taking={working} receivedAt={receivedAt} now={now} />;
+    return <>{screenshotDialog}<NotaryRequestView focus={focus} request={focused} incoming={focusedNew} banner={banner} said={said} problem={problem} confirmDialog={confirmDialog}
+      renderRequest={renderRequest} onTake={item => { void take(item); }} taking={working} receivedAt={receivedAt} now={now} /></>;
   }
 
   return (
@@ -440,6 +472,7 @@ export function NotaryDeskPage({ focus }: { focus?: string } = {}) {
       lead="Requests from clients whose identity LAGDA has verified arrive here. Accept one to open a private room with the client."
     >
       {confirmDialog}
+      {screenshotDialog}
       <style>{`${DESK_CARD_STYLES}
         .dk-link { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 16px; border-radius: 10px; border: 1px solid ${E.line}; background: #FFFFFF; color: ${T.ink}; font-weight: 700; text-decoration: none; transition: background 140ms ease, border-color 140ms ease, transform 100ms ease; }
         .dk-link:hover { background: ${E.wash}; border-color: #C5D2DF; }

@@ -101,8 +101,8 @@ describe("the calls", () => {
 
   it("sends the client's reference, and the notary's answers", async () => {
     answer({ invitation: { id: "eni_1" } });
-    expect(await realEnotaryInvitationsService.sendPaymentProof("eni_1", "GC-1234")).toEqual({ id: "eni_1" });
-    expect(lastCall()).toMatchObject({ method: "POST", body: { reference: "GC-1234" } });
+    expect(await realEnotaryInvitationsService.sendPaymentProof("eni_1", "GC-1234", { mediaType: "image/png", image: "AAAA" })).toEqual({ id: "eni_1" });
+    expect(lastCall()).toMatchObject({ method: "POST", body: { reference: "GC-1234", screenshot: { mediaType: "image/png", image: "AAAA" } } });
     expect(lastCall().url).toContain("/me/enotary/invitations/eni_1/payment-proof");
     answer({ payment: {} });
     await realEnotaryInvitationsService.confirmPayment("eni_1");

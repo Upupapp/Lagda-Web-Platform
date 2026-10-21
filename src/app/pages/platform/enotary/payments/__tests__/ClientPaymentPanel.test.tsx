@@ -44,20 +44,25 @@ describe("paying the notary", () => {
   it("names the amount and the payee, shows the QR the notary saved, and says how to pay", async () => {
     show();
     expect(screen.getByTestId("payment-amount")).toHaveTextContent("PHP 1,500.00");
-    expect(screen.getByTestId("payment-payee")).toHaveTextContent("Pay to ATTY AMADOR SIMANDO · NAGA CITY");
-    expect(screen.getByTestId("payment-payee")).toHaveTextContent(/different name, do not pay/);
+    // The e-wallet account name as GCash shows a payer, and a warning to check it.
+    expect(screen.getByTestId("payment-payee")).toHaveTextContent("AM***R S.");
+    expect(screen.getByTestId("payment-panel")).toHaveTextContent(/different name or amount, do not pay/);
     expect(await screen.findByTestId("payment-qr-image")).toHaveAttribute("alt", "Payment QR code of ATTY AMADOR SIMANDO");
     expect(screen.getByRole("button", { name: "Save the QR" })).toBeEnabled();
-    expect(screen.getByTestId("payment-steps")).toHaveTextContent(/Type the amount exactly: PHP 1,500.00/);
-    expect(screen.getByText(/LAGDA does not hold or move the money, and cannot refund it/)).toBeInTheDocument();
+    const steps = within(screen.getByTestId("payment-steps")).getAllByRole("listitem");
+    expect(steps).toHaveLength(4);
+    expect(steps[0]).toHaveTextContent(/tap “Pay QR\.”/);
+    expect(steps[2]).toHaveTextContent(/AM\*\*\*R S\..*PHP 1,500\.00/);
+    expect(screen.getByText(/LAGDA cannot refund a payment/)).toBeInTheDocument();
   });
 
-  it("asks for nothing but a reference number, and sends it once it looks like one", async () => {
-    const user = userEvent.setup();
+  it("needs a reference number that looks like one and a screenshot of the receipt, and sends both", async () => {
+    const user = userEvent.setup({ applyAccept: false });
+    URL.createObjectURL = vi.fn(() => "blob:receipt"); URL.revokeObjectURL = vi.fn();
     const changed = show();
-    const send = screen.getByRole("button", { name: "I have paid" });
+    const send = screen.getByRole("button", { name: /I have paid/ });
     expect(send).toBeDisabled();
-    const box = screen.getByLabelText("Reference number of your transfer");
+    const box = screen.getByLabelText(/Reference number of your transfer/);
     await user.type(box, "ab");
     expect(send).toBeDisabled();
     expect(screen.getByRole("alert")).toHaveTextContent(/6 to 40 characters/);
@@ -67,12 +72,18 @@ describe("paying the notary", () => {
     expect(send).toBeDisabled();
     await user.clear(box);
     await user.type(box, "GC-1234 5678");
+    // Still not without the screenshot, and only a picture is taken.
+    expect(send).toBeDisabled();
+    await user.upload(screen.getByLabelText("Screenshot of your receipt"), new File(["text"], "notes.txt", { type: "text/plain" }));
+    expect(screen.getByRole("alert")).toHaveTextContent(/PNG, JPEG or WebP/);
+    await user.upload(screen.getByLabelText("Screenshot of your receipt"), new File([new Uint8Array([137, 80, 78, 71])], "receipt.png", { type: "image/png" }));
+    expect(screen.getByTestId("screenshot-preview")).toHaveAttribute("src", "blob:receipt");
     expect(send).toBeEnabled();
     const next = invitation({ status: "proof", reference: "GC-12345678", qrPayload: PAYLOAD, attemptsLeft: 4 });
     sendPaymentProof.mockResolvedValue(next);
     await user.click(send);
     await waitFor(() => { expect(changed).toHaveBeenCalledWith(next); });
-    expect(sendPaymentProof).toHaveBeenCalledWith("eni_1", "GC-1234 5678");
+    expect(sendPaymentProof).toHaveBeenCalledWith("eni_1", "GC-1234 5678", { mediaType: "image/png", image: "iVBORw==" });
   });
 
   it("opens as a panel in the middle of the page, closes, and opens again from the summary", async () => {
@@ -91,11 +102,13 @@ describe("paying the notary", () => {
   it("says plainly when the server will not take the reference, and keeps what was typed", async () => {
     const user = userEvent.setup();
     show();
+    URL.createObjectURL = vi.fn(() => "blob:receipt"); URL.revokeObjectURL = vi.fn();
     sendPaymentProof.mockRejectedValue(new ApiError(409, { code: "payment_state", message: "x" }, "payment_state"));
-    await user.type(screen.getByLabelText("Reference number of your transfer"), "GC-12345678");
-    await user.click(screen.getByRole("button", { name: "I have paid" }));
+    await user.type(screen.getByLabelText(/Reference number of your transfer/), "GC-12345678");
+    await user.upload(screen.getByLabelText("Screenshot of your receipt"), new File([new Uint8Array([137, 80, 78, 71])], "receipt.png", { type: "image/png" }));
+    await user.click(screen.getByRole("button", { name: /I have paid/ }));
     expect(await screen.findByText(/already moved on/)).toBeInTheDocument();
-    expect(screen.getByLabelText("Reference number of your transfer")).toHaveValue("GC-12345678");
+    expect(screen.getByLabelText(/Reference number of your transfer/)).toHaveValue("GC-12345678");
   });
 
   it("tells the client the notary did not find the payment, with the note, and how many sends are left", () => {
@@ -103,14 +116,14 @@ describe("paying the notary", () => {
     const notice = screen.getByTestId("payment-not-received");
     expect(notice).toHaveTextContent(/could not find your payment: No transfer with that reference/);
     expect(notice).toHaveTextContent("You can send it 3 more times.");
-    expect(screen.getByRole("button", { name: "I have paid" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: /I have paid/ })).toBeDisabled();
     expect(screen.getByTestId("payment-qr")).toBeInTheDocument();
   });
 
   it("stops offering to send proof when none is left", () => {
     show({ status: "not_received", attemptsLeft: 0 });
     expect(screen.getByTestId("payment-not-received")).toHaveTextContent(/contact the notary/);
-    expect(screen.getByRole("button", { name: "I have paid" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: /I have paid/ })).toBeDisabled();
   });
 
   it("waits for the notary once proof is sent, and shows no QR to pay to again", () => {
@@ -118,7 +131,7 @@ describe("paying the notary", () => {
     expect(screen.getByTestId("payment-waiting")).toHaveTextContent(/paid PHP 1,500.00 \(reference GC-12345678\)/);
     expect(screen.getByTestId("payment-waiting")).toHaveTextContent(/checks their own account and confirms/);
     expect(screen.queryByTestId("payment-qr")).toBeNull();
-    expect(screen.queryByRole("button", { name: "I have paid" })).toBeNull();
+    expect(screen.queryByRole("button", { name: /I have paid/ })).toBeNull();
   });
 
   it("ends with the notary's confirmation, without the QR", () => {

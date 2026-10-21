@@ -14,6 +14,7 @@ const decline = vi.fn();
 const take = vi.fn();
 const confirmPayment = vi.fn();
 const paymentNotReceived = vi.fn();
+const paymentScreenshot = vi.fn();
 vi.mock("../../../../../services/real/enotary-invitations.service", async (original) => ({
   ...(await original<typeof import("../../../../../services/real/enotary-invitations.service")>()),
   realEnotaryInvitationsService: {
@@ -21,6 +22,7 @@ vi.mock("../../../../../services/real/enotary-invitations.service", async (origi
     decline: (...a: unknown[]) => decline(...a) as unknown, take: (...a: unknown[]) => take(...a) as unknown,
     confirmPayment: (...a: unknown[]) => confirmPayment(...a) as unknown,
     paymentNotReceived: (...a: unknown[]) => paymentNotReceived(...a) as unknown,
+    paymentScreenshot: (...a: unknown[]) => paymentScreenshot(...a) as unknown,
   },
 }));
 
@@ -276,9 +278,25 @@ describe("confirming the payment", () => {
     await open(proofDesk());
     expect(screen.getByTestId("tally-waiting")).toHaveTextContent("1");
     expect(screen.getByTestId("desk-reference")).toHaveTextContent("GC-12345678");
-    expect(screen.getByTestId("desk-proof")).toHaveTextContent(/own bank or e-wallet app. Do not go by a screenshot/);
+    expect(screen.getByTestId("desk-proof")).toHaveTextContent(/own bank or e-wallet app. The client’s screenshot helps you find it; do not go by the screenshot alone/);
     expect(screen.getByTestId("desk-payment")).toHaveTextContent("Ben Lim says they paid PHP 1,500.00.");
     expect(screen.getByTestId("desk-row")).toHaveTextContent(/goes on once the fee is paid and you have confirmed it/);
+  });
+
+  it("opens the client's receipt screenshot in a panel, and says when there is none", async () => {
+    URL.createObjectURL = vi.fn(() => "blob:receipt"); URL.revokeObjectURL = vi.fn();
+    paymentScreenshot.mockResolvedValueOnce(new Blob(["x"], { type: "image/png" })).mockResolvedValueOnce(null);
+    await open(proofDesk());
+    fireEvent.click(screen.getByTestId("view-screenshot"));
+    await settle();
+    expect(paymentScreenshot).toHaveBeenCalledWith("eni_1");
+    expect(screen.getByRole("dialog", { name: "Receipt screenshot from Ben Lim" })).toBeInTheDocument();
+    expect(screen.getByTestId("screenshot-image")).toHaveAttribute("src", "blob:receipt");
+    fireEvent.click(screen.getByRole("button", { name: "Close the screenshot" }));
+    expect(screen.queryByRole("dialog")).toBeNull();
+    fireEvent.click(screen.getByTestId("view-screenshot"));
+    await settle();
+    expect(screen.getByText("Ben Lim sent no screenshot with this payment.")).toBeInTheDocument();
   });
 
   it("confirms only after the notary says the money is in their account", async () => {

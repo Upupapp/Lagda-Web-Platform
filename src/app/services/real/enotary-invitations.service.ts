@@ -17,6 +17,7 @@
 // so a change of path or shape is made in one place.
 
 import { apiRequest, ApiError } from "../api-client";
+import { API_BASE_URL } from "../backend-flag";
 
 export type InvitationStatus = "awaiting" | "claimed" | "accepted" | "declined" | "expired" | "revoked";
 
@@ -333,10 +334,20 @@ class RealEnotaryInvitationsService {
   }
 
   /** The client gives the transfer's reference. 422 for a reference that cannot be one, 409 `payment_state`. */
-  async sendPaymentProof(id: string, reference: string): Promise<Invitation> {
+  /** The client says they paid: the transfer's reference and a screenshot of the receipt (124), both required. */
+  async sendPaymentProof(id: string, reference: string, screenshot: { mediaType: "image/png" | "image/jpeg"; image: string }): Promise<Invitation> {
     const answer = await apiRequest<{ invitation: Invitation }>(
-      `/me/enotary/invitations/${encodeURIComponent(id)}/payment-proof`, { method: "POST", body: { reference } });
+      `/me/enotary/invitations/${encodeURIComponent(id)}/payment-proof`, { method: "POST", body: { reference, screenshot } });
     return answer.invitation;
+  }
+
+  /** 124. The screenshot sent with the latest proof: for the client who sent it and the notary of the request. */
+  async paymentScreenshot(id: string): Promise<Blob | null> {
+    const base = API_BASE_URL ?? "";
+    const response = await fetch(`${base}/me/enotary/invitations/${encodeURIComponent(id)}/payment-proof/screenshot`, { credentials: "include" });
+    if (response.status === 404) return null;
+    if (!response.ok) throw new Error(`Request failed with status ${String(response.status)}.`);
+    return response.blob();
   }
 
   /** The notary, having looked in their own app, confirms the money came. */
