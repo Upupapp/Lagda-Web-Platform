@@ -360,7 +360,9 @@ export function NotaryDeskPage({ focus }: { focus?: string } = {}) {
       return (
         <DeskCard
           key={request.id} name={request.client.name} reference={request.reference} verified={request.client.identityVerified}
-          pills={[pillOf(request)]} openTo={focus === undefined ? `/app/enotary/desk/${encodeURIComponent(request.id)}` : undefined}
+          pills={[pillOf(request)]}
+          // A called-off request is answered from its session band ("Open the session again"), so it has no Open of its own.
+          openTo={focus === undefined && request.session?.status !== "cancelled" ? `/app/enotary/desk/${encodeURIComponent(request.id)}` : undefined}
           facts={factsOf(request)} tiles={tilesOf(request)}
           data={{ "data-status": request.status, "data-payment": payment?.status ?? "none" }}
           band={request.status === "accepted" && goesOn ? <SessionPanel invitationId={request.id} role="notary" variant="band" /> : undefined}

@@ -170,7 +170,8 @@ describe("the desk", () => {
     expect(within(card).getByTestId("status-pill")).toHaveTextContent("Called off");
     expect(within(card).getByTestId("desk-session-state")).toHaveTextContent("The session was called off. Nothing was notarized.");
     expect(within(card).getByTestId("desk-payment")).toHaveTextContent("You confirmed the payment of PHP 600.00.");
-    expect(within(card).getByTestId("desk-open")).toHaveAttribute("href", "/app/enotary/desk/eni_1");
+    // Its session band offers "Open the session again", so the card has no Open beside its badges.
+    expect(within(card).queryByTestId("desk-open")).toBeNull();
     expect(within(screen.getByTestId("desk-section-closed")).getByRole("heading", { level: 2 })).toHaveTextContent("Closed1");
   });
 
