@@ -62,6 +62,16 @@ export function ExpiryPanel({ expiresAt, msLeft }: { expiresAt: string; msLeft: 
   );
 }
 
+/**
+ * The notary's name as this page shows it: as their valid ID reads (LAGDA's identity check when they took the request,
+ * never typed by them), or the Notary Directory's name until a verified one exists.
+ */
+export const notaryNameOf = (invitation: Invitation): string => {
+  const verified = invitation.notary.verifiedName ?? null;
+  return verified !== null && verified.trim() !== "" ? verified.trim() : invitation.notary.name;
+};
+const hasVerifiedName = (invitation: Invitation): boolean => (invitation.notary.verifiedName ?? "").trim() !== "";
+
 type Loaded =
   | { kind: "loading" }
   | { kind: "error" }
@@ -69,7 +79,7 @@ type Loaded =
   | { kind: "ready"; invitation: Invitation };
 
 function noticeFor(invitation: Invitation): { tone: "info" | "success" | "warn"; text: string } | null {
-  const who = invitation.notary.name;
+  const who = notaryNameOf(invitation);
   switch (invitation.status) {
     case "awaiting":
       return { tone: "info", text: `Give the link or the card to ${who}. They sign in to LAGDA and pass an ID and face check before they can take the request.` };
@@ -108,7 +118,7 @@ export function clientStepOf(invitation: Invitation): ClientStepId {
 }
 
 function titleFor(invitation: Invitation): string {
-  const who = `Atty. ${invitation.notary.name}`;
+  const who = `Atty. ${notaryNameOf(invitation)}`;
   switch (invitation.status) {
     case "awaiting": return `Waiting for ${who} to join`;
     case "claimed": return `${who} has your request`;
@@ -120,7 +130,7 @@ function titleFor(invitation: Invitation): string {
 }
 
 function leadFor(invitation: Invitation): string {
-  const who = `Atty. ${invitation.notary.name}`;
+  const who = `Atty. ${notaryNameOf(invitation)}`;
   switch (invitation.status) {
     case "awaiting": case "claimed":
       return `Your identity is verified. Your request has been sent to ${who}. When they accept, you meet them on a video call and choose the document together.`;
@@ -143,7 +153,7 @@ function trailOf(invitation: Invitation): TrailEntry[] {
   const notaryCodes = new Set(["claimed", "accepted", "declined"]);
   return invitation.timeline.map(entry => {
     const by = notaryCodes.has(entry.code) ? "notary" : "client";
-    return { at: stampLabel(entry.at), text: entry.text, by, actor: by === "notary" ? `Atty. ${invitation.notary.name}` : "You" } satisfies TrailEntry;
+    return { at: stampLabel(entry.at), text: entry.text, by, actor: by === "notary" ? `Atty. ${notaryNameOf(invitation)}` : "You" } satisfies TrailEntry;
   });
 }
 
@@ -247,7 +257,7 @@ export function ClientRequestPage() {
   const revoke = () => {
     confirm({
       title: "Cancel this request?",
-      body: `The link and the card stop working at once. ${invitation.notary.name} will not be able to open it. You can renew it later for a new link.`,
+      body: `The link and the card stop working at once. ${notaryNameOf(invitation)} will not be able to open it. You can renew it later for a new link.`,
       confirmLabel: "Cancel the request",
       cancelLabel: "Keep it",
       destructive: true,
@@ -272,7 +282,7 @@ export function ClientRequestPage() {
     if (typeof navigator.share === "function") {
       try {
         await navigator.share({
-          title: "LAGDA eNotary request", text: `A request for ${invitation.notary.name} on LAGDA eNotary.`, url: link,
+          title: "LAGDA eNotary request", text: `A request for ${notaryNameOf(invitation)} on LAGDA eNotary.`, url: link,
         });
         return;
       } catch (error) {
@@ -298,11 +308,12 @@ export function ClientRequestPage() {
 
   return (
     <EnotaryCaseFrame
-      tone="client" eyebrow={`eNotary request \u2022 Atty. ${invitation.notary.name}`} title={titleFor(invitation)} lead={leadFor(invitation)}
+      tone="client" eyebrow={`eNotary request \u2022 Atty. ${notaryNameOf(invitation)}`} title={titleFor(invitation)} lead={leadFor(invitation)}
       steps={CLIENT_STEPS} current={clientStepOf(invitation)} back={{ to: "/app/enotary/requests", label: "All requests" }}
       party={<PartyCard
-        name={`Atty. ${invitation.notary.name}`} role={`Notary Public${invitation.notary.firm !== "" ? ` \u00B7 ${invitation.notary.firm}` : ""}`}
-        tone="attorney" status={statusOf(invitation)} rows={rows} auditCount={trail.length} invitationId={invitation.id} />}
+        name={`Atty. ${notaryNameOf(invitation)}`} role={`Notary Public${invitation.notary.firm !== "" ? ` \u00B7 ${invitation.notary.firm}` : ""}`}
+        tone="attorney" status={statusOf(invitation)} rows={rows} auditCount={trail.length} invitationId={invitation.id}
+        verifiedName={hasVerifiedName(invitation)} />}
       trail={<RequestTrail invitationId={invitation.id} tone="client" fallback={trail} refreshKey={invitation.status} />}
     >
       {confirmDialog}
@@ -352,7 +363,7 @@ export function ClientRequestPage() {
             </ActionRow>
             {invitation.notary.accountKnown && (
               <p style={{ ...bodyText, margin: "12px 0 0", fontSize: 13.5 }}>
-                {invitation.notary.name} already has a LAGDA account and was told about this request there.
+                {notaryNameOf(invitation)} already has a LAGDA account and was told about this request there.
               </p>
             )}
           </Panel>
@@ -360,7 +371,7 @@ export function ClientRequestPage() {
           <Panel testId="card-panel">
             <PanelTitle>The QR card</PanelTitle>
             <p style={{ ...bodyText, fontSize: 13.5 }}>Show it on your screen or save it as a picture. It opens the same request as the link.</p>
-            <QrCard link={link} notaryName={invitation.notary.name} expiresAt={invitation.expiresAt} />
+            <QrCard link={link} notaryName={notaryNameOf(invitation)} expiresAt={invitation.expiresAt} />
           </Panel>
         </>
       )}

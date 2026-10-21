@@ -77,11 +77,13 @@ export const initialsOf = (name: string): string => {
 const OpenTrail = createContext<() => void>(() => undefined);
 
 /** The other person's card: who they are, where the request stands, and its facts. */
-export function PartyCard({ name, role, tone, status, rows, auditCount, invitationId }: {
+export function PartyCard({ name, role, tone, status, rows, auditCount, invitationId, verifiedName = false }: {
   name: string; role: string; tone: EnotaryTone; status: { label: string; tone: "wait" | "ok" | "info" | "end" };
   rows: readonly PartyRow[]; auditCount: number | null;
   /** The request, so the card can show the person's own photo and banner colour. */
   invitationId?: string | undefined;
+  /** The name is the one LAGDA's identity check read from the person's valid ID: the card says so under it. */
+  verifiedName?: boolean;
 }) {
   const look = useCounterpart(invitationId);
   const maroon = tone === "attorney";
@@ -106,8 +108,13 @@ export function PartyCard({ name, role, tone, status, rows, auditCount, invitati
         )}
       </div>
       <div style={{ padding: "12px 20px 20px", textAlign: "center" }}>
-        <h2 style={{ margin: 0, fontFamily: SERIF, fontSize: 21, color: E.navy, overflowWrap: "anywhere" }}>{name}</h2>
-        <p style={{ margin: "6px 0 0", fontSize: 13, color: E.quiet, display: "inline-flex", alignItems: "center", gap: 6 }}><Stamp size={13} aria-hidden color={maroon ? "#B08A3E" : E.skyDeep} /> {role}</p>
+        <h2 data-testid="party-name" style={{ margin: 0, fontFamily: SERIF, fontSize: 21, color: E.navy, overflowWrap: "anywhere" }}>{name}</h2>
+        {verifiedName && (
+          <p data-testid="party-name-verified" style={{ margin: "7px 0 0", display: "inline-flex", alignItems: "center", gap: 6, padding: "3px 10px", borderRadius: 999, background: E.okWash, color: E.ok, fontSize: 11.5, fontWeight: 700, letterSpacing: "0.02em" }}>
+            <ShieldCheck size={13} aria-hidden /> Name on valid ID &middot; Verified by LAGDA
+          </p>
+        )}
+        <p style={{ margin: verifiedName ? "8px 0 0" : "6px 0 0", fontSize: 13, color: E.quiet, display: "flex", justifyContent: "center", alignItems: "center", gap: 6 }}><Stamp size={13} aria-hidden color={maroon ? "#B08A3E" : E.skyDeep} /> {role}</p>
         <div style={{ width: "62%", height: 1, background: E.line, margin: "14px auto 14px" }} />
         <span data-testid="party-status" style={{ ...pill[status.tone], display: "inline-flex", alignItems: "center", gap: 6, padding: "4px 12px", borderRadius: 999, fontSize: 12.5, fontWeight: 700 }}>
           <span aria-hidden="true" style={{ width: 7, height: 7, borderRadius: 999, background: "currentColor" }} />{status.label}

@@ -241,6 +241,22 @@ describe("one request, waiting for the notary", () => {
     expect(screen.queryByTestId("email-panel")).toBeNull();
   });
 
+  it("names the notary as their verified ID reads once they take the request, and by the Directory's name before", async () => {
+    get.mockResolvedValue(invitation());
+    const view = renderRequest();
+    await settle();
+    expect(screen.getByTestId("party-name")).toHaveTextContent("Atty. Ana Maria Cruz");
+    expect(screen.queryByTestId("party-name-verified")).toBeNull();
+    view.unmount();
+
+    get.mockResolvedValue(invitation({ status: "claimed", link: null, notary: { ...invitation().notary, verifiedName: "ANA MARIA SANTOS CRUZ" } }));
+    renderRequest();
+    await settle();
+    expect(screen.getByTestId("party-name")).toHaveTextContent("Atty. ANA MARIA SANTOS CRUZ");
+    expect(screen.getByTestId("party-name-verified")).toHaveTextContent("Name on valid ID · Verified by LAGDA");
+    expect(screen.getByTestId("case-title")).toHaveTextContent("Atty. ANA MARIA SANTOS CRUZ has your request");
+  });
+
   it("says when the notary already has a LAGDA account", async () => {
     get.mockResolvedValue(invitation({ notary: { ...invitation().notary, accountKnown: true } }));
     renderRequest();

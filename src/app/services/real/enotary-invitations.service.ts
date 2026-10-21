@@ -24,6 +24,11 @@ export type InvitationStatus = "awaiting" | "claimed" | "accepted" | "declined" 
 export interface InvitationNotary {
   directoryId: string;
   name: string;
+  /**
+   * The notary's name as their valid ID reads, from LAGDA's identity check when they took the request (never typed by
+   * them). Null before a notary takes it; absent from an older server.
+   */
+  verifiedName?: string | null;
   firm: string;
   city: string;
   province: string;

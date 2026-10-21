@@ -1,20 +1,22 @@
 // The card of the other person: the initials in its avatar, and the avatar standing above the banner it overlaps.
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { act, render, screen, waitFor } from "@testing-library/react";
 
 const counterpart = vi.fn();
 const counterpartAvatar = vi.fn();
 vi.mock("../../../../services/real/enotary-sessions.service", () => ({
-  realEnotarySessionsService: { counterpart: (id: string) => counterpart(id) as unknown, counterpartAvatar: (id: string) => counterpartAvatar(id) as unknown },
+  realEnotarySessionsService: { counterpart: (id: string) => counterpart(id) as unknown, counterpartAvatar: (id: string, version?: string | null) => counterpartAvatar(id, version) as unknown },
 }));
 
 import { PartyCard, initialsOf } from "../CaseFrame";
 
+const revokeObjectURL = vi.fn();
+
 beforeEach(() => {
-  counterpart.mockReset(); counterpartAvatar.mockReset();
+  counterpart.mockReset(); counterpartAvatar.mockReset(); revokeObjectURL.mockReset();
   URL.createObjectURL = vi.fn(() => "blob:photo");
-  URL.revokeObjectURL = vi.fn();
+  URL.revokeObjectURL = revokeObjectURL;
 });
 
 describe("the initials of the avatar", () => {
@@ -54,6 +56,28 @@ describe("the party card's own look", () => {
     expect(screen.getByText("JS")).toBeInTheDocument();
     expect(screen.queryByTestId("party-photo")).toBeNull();
     expect(counterpartAvatar).not.toHaveBeenCalled();
+  });
+
+  it("fetches a changed photo again while the page is open, and only when its version changes", async () => {
+    counterpart.mockResolvedValue({ role: "notary", brandColor: null, hasAvatar: true, avatarVersion: "v1" });
+    counterpartAvatar.mockResolvedValue(new Blob(["x"], { type: "image/png" }));
+    render(card("eni_1"));
+    await waitFor(() => { expect(screen.getByTestId("party-photo")).toBeInTheDocument(); });
+    expect(counterpartAvatar).toHaveBeenLastCalledWith("eni_1", "v1");
+    // The tab comes back to the front: the card asks again; the same version is not fetched twice.
+    await act(async () => { document.dispatchEvent(new Event("visibilitychange")); await Promise.resolve(); });
+    await waitFor(() => { expect(counterpart).toHaveBeenCalledTimes(2); });
+    expect(counterpartAvatar).toHaveBeenCalledTimes(1);
+    counterpart.mockResolvedValue({ role: "notary", brandColor: null, hasAvatar: true, avatarVersion: "v2" });
+    await act(async () => { document.dispatchEvent(new Event("visibilitychange")); await Promise.resolve(); });
+    await waitFor(() => { expect(counterpartAvatar).toHaveBeenLastCalledWith("eni_1", "v2"); });
+    expect(revokeObjectURL).toHaveBeenCalled();
+  });
+
+  it("says under a name read from a valid ID that LAGDA verified it", () => {
+    render(<PartyCard name="Atty. AIYANA YASMIN A. CRUZ" role="Notary Public" tone="attorney" status={{ label: "Accepted", tone: "ok" }} rows={[]} auditCount={null} verifiedName />);
+    expect(screen.getByTestId("party-name")).toHaveTextContent("Atty. AIYANA YASMIN A. CRUZ");
+    expect(screen.getByTestId("party-name-verified")).toHaveTextContent("Name on valid ID · Verified by LAGDA");
   });
 
   it("asks for nothing without a request, and survives a server that has no card", async () => {
