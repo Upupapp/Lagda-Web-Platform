@@ -63,10 +63,10 @@ describe("the seal and signature page", () => {
     open();
     await screen.findByTestId("seal-preview");
     await user.upload(screen.getByLabelText("Picture of your signature"), new File(["text"], "notes.txt", { type: "text/plain" }));
-    expect(screen.getByRole("alert")).toHaveTextContent("Choose a PNG or JPEG picture.");
+    expect(screen.getByRole("alert")).toHaveTextContent("Choose a PNG, JPEG or WebP picture.");
     expect(screen.getByRole("button", { name: /Save my signature/ })).toBeDisabled();
-    await user.upload(screen.getByLabelText("Picture of your signature"), new File([new Uint8Array(300_001)], "big.png", { type: "image/png" }));
-    expect(screen.getByRole("alert")).toHaveTextContent("at most 300 KB");
+    await user.upload(screen.getByLabelText("Picture of your signature"), new File([new Uint8Array(8 * 1024 * 1024 + 1)], "big.png", { type: "image/png" }));
+    expect(screen.getByRole("alert")).toHaveTextContent("larger than 8 MB");
     expect(saveSignature).not.toHaveBeenCalled();
   });
 });

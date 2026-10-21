@@ -5,11 +5,12 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { ApiError } from "../../../../../services/api-client";
 import { MemoryRouter, Route, Routes } from "react-router";
 
 const svc = {
   lookup: vi.fn(), start: vi.fn(), get: vi.fn(), ping: vi.fn(), addDocument: vi.fn(), open: vi.fn(), consent: vi.fn(),
-  cancel: vi.fn(), notarize: vi.fn(), messages: vi.fn(), say: vi.fn(), document: vi.fn(), notarized: vi.fn(),
+  cancel: vi.fn(), requestReopen: vi.fn(), reopen: vi.fn(), notarize: vi.fn(), messages: vi.fn(), say: vi.fn(), document: vi.fn(), notarized: vi.fn(),
   copies: vi.fn(), requestCopy: vi.fn(), quote: vi.fn(), decline: vi.fn(), sendProof: vi.fn(), confirmPayment: vi.fn(),
   paymentNotReceived: vi.fn(), auditTrail: vi.fn(), auditPdf: vi.fn(), setStage: vi.fn(), finalize: vi.fn(), confirmIdentity: vi.fn(), stateAct: vi.fn(), approve: vi.fn(), fulfil: vi.fn(), received: vi.fn(), cancelCopy: vi.fn(), copyFile: vi.fn(), verify: vi.fn(),
 };
@@ -104,6 +105,34 @@ describe("the session panel on a request", () => {
     render(<MemoryRouter><SessionPanel invitationId="eni_1" role="notary" /></MemoryRouter>);
     expect(await screen.findByTestId("session-wait-client")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Start the session" })).toBeNull();
+  });
+
+  it("lets the client email the notary to continue a called-off session, from the session panel, and shows what the server says", async () => {
+    const user = userEvent.setup();
+    svc.lookup.mockResolvedValue({ session: session({ status: "cancelled", cancelledBy: "client", endedAt: "2026-10-18T02:40:00.000Z" }), canStart: false, reason: null });
+    svc.requestReopen.mockResolvedValueOnce(session({ status: "cancelled", cancelledBy: "client" }))
+      .mockRejectedValueOnce(new ApiError(409, { code: "session_state", message: "You asked the notary a moment ago. Please wait a few minutes before asking again." }, "x"));
+    render(<MemoryRouter><SessionPanel invitationId="eni_1" role="client" /></MemoryRouter>);
+    expect(await screen.findByTestId("session-cancelled")).toHaveTextContent(/You called off the session/);
+    await user.click(screen.getByRole("button", { name: /Email Aiyana Cruz to continue/ }));
+    await waitFor(() => { expect(svc.requestReopen).toHaveBeenCalledWith("ens_1"); });
+    expect(await screen.findByTestId("reopen-said")).toHaveTextContent(/emailed Aiyana Cruz/);
+    await user.click(screen.getByRole("button", { name: /Email Aiyana Cruz to continue/ }));
+    expect(await screen.findByText(/wait a few minutes/)).toBeInTheDocument();
+  });
+
+  it("lets the notary open a called-off session again", async () => {
+    const user = userEvent.setup();
+    svc.lookup.mockResolvedValue({ session: session({ role: "notary", status: "cancelled", cancelledBy: "client", endedAt: "2026-10-18T02:40:00.000Z" }), canStart: false, reason: null });
+    svc.reopen.mockImplementation(() => {
+      const open = session({ role: "notary", status: "preparing" });
+      svc.lookup.mockResolvedValue({ session: open, canStart: false, reason: null });
+      return Promise.resolve(open);
+    });
+    render(<MemoryRouter><SessionPanel invitationId="eni_1" role="notary" /></MemoryRouter>);
+    await user.click(await screen.findByRole("button", { name: "Open the session again" }));
+    await waitFor(() => { expect(svc.reopen).toHaveBeenCalledWith("ens_1"); });
+    expect(await screen.findByRole("link", { name: /Go to the room/ })).toBeInTheDocument();
   });
 
   it("says how a called-off session ended, and what a notarized one holds", async () => {
@@ -290,6 +319,16 @@ describe("the room", () => {
     const go = await screen.findByRole("button", { name: "Notarize the document" });
     expect(go).toBeDisabled();
     expect(screen.queryByLabelText(/Title or description/)).toBeNull();
+    // The panel says what it is, formally, and a pill that stays on screen (above a maximised call) leads to it.
+    expect(screen.getByTestId("notarize-intro")).toHaveTextContent("Final step: record the notarial act.");
+    expect(screen.getByTestId("final-step-banner")).toHaveTextContent("Final step: record the notarial act");
+    expect(screen.getByLabelText(/Place of notarization/)).toHaveAttribute("placeholder", "e.g. Naga City, Camarines Sur");
+    expect(screen.getByLabelText(/Remarks for your register/)).toHaveAttribute("placeholder", expect.stringContaining("read aloud"));
+    const minimised = vi.fn();
+    window.addEventListener("enotary:minimise-call", minimised);
+    await user.click(screen.getByTestId("final-step-go"));
+    expect(minimised).toHaveBeenCalledTimes(1);
+    window.removeEventListener("enotary:minimise-call", minimised);
     await user.type(screen.getByLabelText(/Place of notarization/), "Naga City");
     expect(go).toBeDisabled();
     await user.click(screen.getByLabelText("I saw the client."));

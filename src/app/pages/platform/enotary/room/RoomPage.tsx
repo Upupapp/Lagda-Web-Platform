@@ -365,11 +365,28 @@ export function NotarizePanel({
   const allChecked = session.attestations.every(item => checks[item.key] === true);
   const block = session.notarizeBlock;
   const ready = block === null && allChecked && description.trim() !== "" && place.trim() !== "";
+  const panel = useRef<HTMLDivElement>(null);
+  const showForm = () => {
+    window.dispatchEvent(new Event("enotary:minimise-call"));
+    setTimeout(() => { panel.current?.scrollIntoView({ behavior: "smooth", block: "start" }); }, 60);
+  };
   return (
+    <div ref={panel} style={{ scrollMarginTop: 72 }}>
+    <style>{`.eno-final { position: fixed; top: 10px; left: 50%; transform: translateX(-50%); z-index: 2100; max-width: calc(100vw - 24px); display: flex; align-items: center; gap: 10px; padding: 6px 8px 6px 14px; border-radius: 999px; background: ${E.maroon}; color: #FFFFFF; font: 700 13px/1.3 'Geist', sans-serif; box-shadow: 0 8px 24px -8px rgba(10,26,43,0.6); }
+      .eno-final button { flex: 0 0 auto; min-height: 32px; padding: 0 12px; border-radius: 999px; border: 0; background: #FFFFFF; color: ${E.maroon}; font: inherit; cursor: pointer; }
+      .eno-final button:hover { background: #FFE9EF; } .eno-final button:focus-visible { outline: 3px solid #FFFFFF; outline-offset: 2px; }
+      @media (max-width: 520px) { .eno-final span { display: none; } }`}</style>
+    <div className="eno-final" data-testid="final-step-banner" role="status">
+      <span>Final step: record the notarial act</span>
+      <button type="button" onClick={showForm} data-testid="final-step-go">Go to the form</button>
+    </div>
     <Panel testId="notarize-panel" tone="maroon">
       <PanelTitle>{stated !== null ? `Apply your seal: ${stated.actTypeLabel}` : "Record the notarial act"}</PanelTitle>
+      <p data-testid="notarize-intro" style={{ ...bodyText, margin: "0 0 12px" }}>
+        <strong>Final step: record the notarial act.</strong> Say where you are, place your seal and signature, tick what you attest, and notarize. The document is then sealed and entered in your register.
+      </p>
       {block !== null && <p data-testid="notarize-block" style={{ ...bodyText, color: "#8A3B12" }}>{BLOCK_WORDS[block]}</p>}
-      <TextField label="Place of notarization" value={place} onChange={setPlace} maxLength={400} required hint="Where you are as the notary, for example the city and province of your commission." />
+      <TextField label="Place of notarization" value={place} onChange={setPlace} maxLength={400} required placeholder="e.g. Naga City, Camarines Sur" hint="Where you are as the notary, for example the city and province of your commission." />
       <fieldset style={{ border: 0, padding: 0, margin: "0 0 14px" }}>
         <legend style={labelStyle}>Your seal and signature</legend>
         <p data-testid="placement-summary" style={{ ...bodyText, margin: "0 0 10px" }}>
@@ -380,7 +397,7 @@ export function NotarizePanel({
           <Stamp size={16} aria-hidden /> Place my seal and signature
         </Link>
       </fieldset>
-      <TextField label="Remarks for your register (optional)" value={remarks} onChange={setRemarks} maxLength={300} hint="For example: the document was read aloud to the client. They are kept in your notarial register." />
+      <TextField label="Remarks for your register (optional)" value={remarks} onChange={setRemarks} maxLength={300} placeholder="e.g. The document was read aloud to the client before the act." hint="For example: the document was read aloud to the client. They are kept in your notarial register." />
       <fieldset style={{ border: 0, padding: 0, margin: "0 0 14px" }}>
         <legend style={labelStyle}>What you attest</legend>
         {session.attestations.map(item => (
@@ -401,5 +418,6 @@ export function NotarizePanel({
         This adds a certificate page to the document, seals it with its hash and a verification code, and enters it in your register. It cannot be undone.
       </p>
     </Panel>
+    </div>
   );
 }

@@ -114,6 +114,12 @@ export function CallCard({
   const root = useRef<HTMLDivElement>(null);
   const minimise = useRef<HTMLButtonElement>(null);
   const [max, setMax] = useState(false);
+  // The notary's "final step" reminder asks for the call to be minimised, so the form under it is in view.
+  useEffect(() => {
+    const minimise = () => { setMax(false); };
+    window.addEventListener("enotary:minimise-call", minimise);
+    return () => { window.removeEventListener("enotary:minimise-call", minimise); };
+  }, []);
   const [side, setSide] = useState<Side>("");
   const [view, setView] = useState<"speaker" | "gallery">("speaker");
   const [now, setNow] = useState(() => Date.now());

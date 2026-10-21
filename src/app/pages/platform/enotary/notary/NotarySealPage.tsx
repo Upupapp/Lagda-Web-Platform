@@ -16,18 +16,9 @@ import { E, SERIF } from "../EnotaryChrome";
 import { EnotaryLoadError, EnotaryLoading, EnotaryNotOffered } from "../EnotaryStates";
 import { OnrampNote, Panel, PanelTitle, bodyText, hintStyle, labelStyle } from "../onramp-ui";
 
-export const SIGNATURE_MAX_BYTES = 300_000;
+import { prepareSignature, signatureFileProblem } from "../../../../utils/signature-image";
 
 type Loaded = { kind: "loading" } | { kind: "error" } | { kind: "off" } | { kind: "ready"; application: NotaryApplication | null; signature: NotarySignature | null };
-
-function readBase64(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => { resolve((typeof reader.result === "string" ? reader.result : "").replace(/^data:[^,]*,/, "")); };
-    reader.onerror = () => { reject(new Error("The file could not be read.")); };
-    reader.readAsDataURL(file);
-  });
-}
 
 /** The seal as it will be drawn: from the commission, and nothing else. */
 export function SealPreview({ application }: { application: NotaryApplication | null }) {
@@ -76,17 +67,14 @@ export function NotarySealPage() {
   if (loaded.kind === "off") return <EnotaryNotOffered />;
   const { application, signature } = loaded;
 
-  const fileProblem = picked === null ? null
-    : picked.type !== "image/png" && picked.type !== "image/jpeg" ? "Choose a PNG or JPEG picture."
-      : picked.size > SIGNATURE_MAX_BYTES ? `The picture is at most ${String(SIGNATURE_MAX_BYTES / 1000)} KB.`
-        : picked.size === 0 ? "The file is empty." : null;
+  const fileProblem = picked === null ? null : signatureFileProblem(picked);
 
   const save = async () => {
     if (picked === null || fileProblem !== null) return;
     setProblem(null); setSaid(null);
     try {
-      const image = await readBase64(picked);
-      const next = await withProcess("enotary-signature-save", "", () => realEnotarySessionsService.saveSignature(picked.type as NotarySignature["mediaType"], image));
+      const prepared = await prepareSignature(picked);
+      const next = await withProcess("enotary-signature-save", "", () => realEnotarySessionsService.saveSignature(prepared.mediaType, prepared.base64));
       if (!alive.current) return;
       setLoaded({ kind: "ready", application, signature: next });
       setPicked(null);
@@ -139,9 +127,9 @@ export function NotarySealPage() {
           </div>
         )}
         <label htmlFor="signature-file" style={labelStyle}>{signature === null ? "Picture of your signature" : "Replace your signature"}</label>
-        <input id="signature-file" ref={input} type="file" accept="image/png,image/jpeg" onChange={event => { setPicked(event.target.files?.[0] ?? null); }}
+        <input id="signature-file" ref={input} type="file" accept="image/png,image/jpeg,image/webp" onChange={event => { setPicked(event.target.files?.[0] ?? null); }}
           aria-invalid={fileProblem !== null ? true : undefined} style={{ display: "block", maxWidth: "100%", margin: "0 0 6px" }} />
-        <p style={hintStyle}>A PNG or JPEG of up to 300 KB, ideally your signature in dark ink on a white or clear background.</p>
+        <p style={hintStyle}>A PNG, JPEG or WebP picture of your signature, ideally in dark ink on a white or clear background. A large picture is made smaller for you.</p>
         {fileProblem !== null && <p role="alert" style={{ ...GF, color: "#B0182B", fontSize: 13.5 }}>{fileProblem}</p>}
         <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 10 }}>
           <ActionButton icon={Upload} disabled={picked === null || fileProblem !== null} onClick={() => { void save(); }}>Save my signature</ActionButton>

@@ -6,11 +6,12 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "react-router";
-import { Video, XCircle } from "lucide-react";
+import { Mail, Video, XCircle } from "lucide-react";
 import { ActionButton, Notice } from "../../../../components/system/design-system";
 import {
   describeSessionError, realEnotarySessionsService, type SessionLookup, type SessionRole,
 } from "../../../../services/real/enotary-sessions.service";
+import { ApiError } from "../../../../services/api-client";
 import { Panel, PanelTitle, bodyText, linkButton, markSessionsOffered } from "../onramp-ui";
 import { stampLabel } from "../requests/expiry";
 import { CopiesPanel } from "./CopiesPanel";
@@ -22,6 +23,7 @@ export function SessionPanel({ invitationId, role }: { invitationId: string; rol
   const [found, setFound] = useState<SessionLookup | null | undefined>(undefined);
   const [busy, setBusy] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
+  const [said, setSaid] = useState<string | null>(null);
   const alive = useRef(true);
   const roomPath = `/app/enotary/room/${encodeURIComponent(invitationId)}`;
 
@@ -52,6 +54,34 @@ export function SessionPanel({ invitationId, role }: { invitationId: string; rol
     setProblem(null);
     try {
       const next = await withProcess("enotary-session-start", "", () => realEnotarySessionsService.start(invitationId));
+      if (alive.current) setFound({ session: next, canStart: false, reason: null });
+    } catch (error) {
+      if (alive.current) setProblem(describeSessionError(error));
+    } finally {
+      if (alive.current) setBusy(false);
+    }
+  };
+
+  // 122. A called-off session: the client asks the notary by email to open it again; the notary opens it.
+  const whyNot = (error: unknown): string =>
+    error instanceof ApiError && error.body?.code === "session_state" && error.body.message !== "" ? error.body.message : describeSessionError(error);
+  const askToReopen = async () => {
+    if (session === null) return;
+    setBusy(true); setProblem(null); setSaid(null);
+    try {
+      await withProcess("enotary-session-reopen-request", "", () => realEnotarySessionsService.requestReopen(session.id));
+      if (alive.current) setSaid(`We emailed ${session.notaryName} that you want to continue. You are told as soon as they open the session again.`);
+    } catch (error) {
+      if (alive.current) setProblem(whyNot(error));
+    } finally {
+      if (alive.current) setBusy(false);
+    }
+  };
+  const reopen = async () => {
+    if (session === null) return;
+    setBusy(true); setProblem(null); setSaid(null);
+    try {
+      const next = await withProcess("enotary-session-reopen", "", () => realEnotarySessionsService.reopen(session.id));
       if (alive.current) setFound({ session: next, canStart: false, reason: null });
     } catch (error) {
       if (alive.current) setProblem(describeSessionError(error));
@@ -94,6 +124,13 @@ export function SessionPanel({ invitationId, role }: { invitationId: string; rol
           {session.cancelledBy === role ? "You called off" : `${role === "client" ? session.notaryName : session.clientName} called off`} the session
           {session.endedAt !== null ? ` on ${stampLabel(session.endedAt)}` : ""}. Nothing was notarized.
         </p>
+        {said !== null && <p role="status" data-testid="reopen-said" style={{ ...bodyText, margin: "10px 0 0" }}>{said}</p>}
+        {problem !== null && <Notice icon={XCircle} tone="danger">{problem}</Notice>}
+        <div data-testid="reopen-action" style={{ display: "flex", justifyContent: "flex-end", marginTop: 14 }}>
+          {role === "client"
+            ? <ActionButton icon={Mail} disabled={busy} onClick={() => { void askToReopen(); }}>{busy ? "Sending…" : `Email ${session.notaryName} to continue`}</ActionButton>
+            : <ActionButton icon={Video} disabled={busy} onClick={() => { void reopen(); }}>{busy ? "Opening…" : "Open the session again"}</ActionButton>}
+        </div>
       </Panel>
     );
   }

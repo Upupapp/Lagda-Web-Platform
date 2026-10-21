@@ -260,6 +260,16 @@ class RealEnotarySessionsService {
     return (await apiRequest<{ session: Session }>(`/me/enotary/sessions/${id(sessionId)}/cancel`, { method: "POST" })).session;
   }
 
+  /** 122. The client asks the notary to open a called-off session again; the notary is told by email. 409 `session_state` when it is too soon to ask again. */
+  async requestReopen(sessionId: string): Promise<Session> {
+    return (await apiRequest<{ session: Session }>(`/me/enotary/sessions/${id(sessionId)}/reopen-request`, { method: "POST" })).session;
+  }
+
+  /** 122. The notary opens a called-off session again. */
+  async reopen(sessionId: string): Promise<Session> {
+    return (await apiRequest<{ session: Session }>(`/me/enotary/sessions/${id(sessionId)}/reopen`, { method: "POST" })).session;
+  }
+
   /** 409 `notarize_blocked` (with the reason), 422 for an incomplete act. */
   async notarize(sessionId: string, input: NotarizeInput): Promise<Session> {
     return (await apiRequest<{ session: Session }>(`/me/enotary/sessions/${id(sessionId)}/notarize`, { method: "POST", body: input })).session;
