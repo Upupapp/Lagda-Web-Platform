@@ -37,7 +37,12 @@ export type NotaryStepId = (typeof NOTARY_STEPS)[number]["id"];
 
 const CASE_STYLES = `
   .eno-case-hero { position: relative; overflow: hidden; background: linear-gradient(180deg, #E6F1FB 0%, #F1F7FD 100%); border-bottom: 1px solid ${E.line}; }
-  .eno-case-hero.is-attorney { background: linear-gradient(180deg, #F6E8EE 0%, #FBF3F6 100%); }
+  .eno-case-hero.is-attorney { background: linear-gradient(110deg, #7E1229 0%, #951A33 48%, #A81E36 100%); border-bottom: 3px solid #C9A24A; }
+  .eno-case-hero.is-attorney::before, .eno-case-hero.is-attorney::after { content: ""; position: absolute; border-radius: 50%; pointer-events: none; }
+  .eno-case-hero.is-attorney::before { width: 520px; height: 520px; right: -120px; top: -230px; border: 46px solid rgba(255,255,255,0.06); }
+  .eno-case-hero.is-attorney::after { width: 300px; height: 300px; right: 60px; top: -150px; border: 2px solid rgba(255,255,255,0.08); }
+  .eno-case-hero.is-attorney .eno-back { color: #FFFFFF !important; opacity: 0.9; }
+  .eno-case-hero.is-attorney .eno-back:hover { opacity: 1; text-decoration: underline !important; }
   .eno-case-hero-in { position: relative; margin: 0 auto; padding: clamp(18px, 3vw, 28px) clamp(14px, 4vw, 28px) clamp(16px, 3vw, 26px); box-sizing: border-box; max-width: 1180px; }
   .eno-case-body { margin: 0 auto; padding: clamp(14px, 3vw, 22px) clamp(10px, 4vw, 28px) 56px; box-sizing: border-box; max-width: 1180px; }
   .eno-case-grid { display: grid; grid-template-columns: minmax(250px, 330px) minmax(0, 1fr); gap: 20px; align-items: start; }
@@ -182,16 +187,16 @@ export function EnotaryCaseFrame({ tone, eyebrow, reference, title, lead, steps,
         <div className="eno-case-hero-in">
           {back !== undefined && (
             <p style={{ margin: "0 0 10px" }}>
-              <Link to={back.to} style={{ display: "inline-flex", alignItems: "center", gap: 6, minHeight: 36, color: E.navy, fontWeight: 700, textDecoration: "none", fontSize: 14 }}>
+              <Link to={back.to} className="eno-back" style={{ display: "inline-flex", alignItems: "center", gap: 6, minHeight: 36, color: E.navy, fontWeight: 700, textDecoration: "none", fontSize: 14 }}>
                 <ArrowLeft size={16} aria-hidden /> {back.label}
               </Link>
             </p>
           )}
-          <p data-testid="case-eyebrow" style={{ margin: "0 0 8px", fontSize: 11.5, fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase", color: tone === "attorney" ? E.maroon : "#4A9DDB" }}>
-            {eyebrow}{reference !== undefined && reference !== null && <> <span aria-hidden="true">&bull;</span> <span style={{ fontFamily: "ui-monospace, Menlo, Consolas, monospace", letterSpacing: "0.08em" }}>{reference}</span></>}
+          <p data-testid="case-eyebrow" style={{ margin: "0 0 8px", fontSize: 12, fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase", color: tone === "attorney" ? "#F3D9A4" : "#4A9DDB", display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+            {tone === "attorney" && <Stamp size={15} aria-hidden color="#E9C27A" />}{eyebrow}{reference !== undefined && reference !== null && <> <span aria-hidden="true">&bull;</span> <span style={{ fontFamily: "ui-monospace, Menlo, Consolas, monospace", letterSpacing: "0.08em" }}>{reference}</span></>}
           </p>
-          <h1 data-testid="case-title" style={{ margin: 0, fontFamily: SERIF, fontWeight: 700, color: E.navy, letterSpacing: "-0.015em", fontSize: "clamp(26px, 5.4vw, 42px)", lineHeight: 1.12, overflowWrap: "anywhere" }}>{title}</h1>
-          {lead !== undefined && <p style={{ margin: "12px 0 0", fontSize: "clamp(14px, 3.6vw, 16px)", color: E.quiet, lineHeight: 1.55, maxWidth: "62ch" }}>{lead}</p>}
+          <h1 data-testid="case-title" style={{ margin: 0, fontFamily: SERIF, fontWeight: 700, color: tone === "attorney" ? "#FFFFFF" : E.navy, letterSpacing: "-0.015em", fontSize: "clamp(26px, 5.4vw, 42px)", textShadow: tone === "attorney" ? "0 1px 2px rgba(0,0,0,0.18)" : undefined, lineHeight: 1.12, overflowWrap: "anywhere" }}>{title}</h1>
+          {lead !== undefined && <p style={{ margin: "12px 0 0", fontSize: "clamp(14px, 3.6vw, 16px)", color: tone === "attorney" ? "rgba(255,255,255,0.9)" : E.quiet, lineHeight: 1.55, maxWidth: "62ch" }}>{lead}</p>}
           {steps !== undefined && current !== undefined && <div style={{ marginTop: 20 }}><EnotaryRail steps={steps} current={current} label="Steps of this request" /></div>}
         </div>
       </div>
