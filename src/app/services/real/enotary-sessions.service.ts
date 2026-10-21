@@ -66,6 +66,8 @@ export interface Session {
   clientAddress?: ClientAddress | null;
   /** LAGDA verified the client's ID and face when they made the request. Absent from an older server. */
   clientIdentity?: { verified: boolean; idType: string | null };
+  /** The notary's own: where the seal and the signature go, as saved with the session; null for the client. */
+  placements?: { seal: PagePoint | null; signature: PagePoint | null; savedAt: string | null } | null;
 }
 
 /** The client's address for the notarial record: street or barangay, city or municipality, province. */
@@ -227,6 +229,11 @@ class RealEnotarySessionsService {
   /** The client gives or corrects where they are during the act, typed by them. 422 when a part is missing or not an address. */
   async giveAddress(sessionId: string, address: ClientAddressInput): Promise<Session> {
     return (await apiRequest<{ session: Session }>(`/me/enotary/sessions/${id(sessionId)}/address`, { method: "PUT", body: address })).session;
+  }
+
+  /** The notary saves where the seal and the signature go; either left out goes to its usual place. */
+  async savePlacements(sessionId: string, placements: { seal?: PagePoint; signature?: PagePoint }): Promise<Session> {
+    return (await apiRequest<{ session: Session }>(`/me/enotary/sessions/${id(sessionId)}/placements`, { method: "PUT", body: placements })).session;
   }
 
   async consent(sessionId: string): Promise<Session> {
