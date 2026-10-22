@@ -16,7 +16,7 @@ import { PaymentQr } from "../payments/PaymentQr";
 import { referenceProblem } from "../payments/ClientPaymentPanel";
 import { stampLabel } from "../requests/expiry";
 import { saveBlob } from "./room-bits";
-import { withProcess } from "../../../../config/process-screens";
+import { withProcess, type ProcessKind } from "../../../../config/process-screens";
 import { CopyJourney, nextStage } from "./CopyJourney";
 
 export const COPIES_POLL_MS = 8_000;
@@ -114,11 +114,19 @@ function RequestForm({ sessionId, onDone, onFail }: { sessionId: string; onDone:
   );
 }
 
+/** The loading screen, then the result, each step of a copy runs behind. */
+const COPY_PROCESS: Readonly<Record<string, ProcessKind>> = {
+  quote: "enotary-copy-quote", decline: "enotary-copy-decline", cancel: "enotary-copy-cancel", proof: "enotary-copy-proof",
+  confirm: "enotary-copy-pay-confirm", notreceived: "enotary-copy-pay-missing", stage: "enotary-copy-stage",
+  fulfil: "enotary-copy-fulfil", received: "enotary-copy-received",
+};
+
 function CopyCard({ copy, role, onChange, onFail }: { copy: CertifiedCopy; role: SessionRole; onChange: (copy: CertifiedCopy) => void; onFail: (error: unknown) => void }) {
   const [busy, setBusy] = useState<string | null>(null);
   const run = async (name: string, work: () => Promise<CertifiedCopy>) => {
     setBusy(name);
-    try { onChange(await work()); } catch (error) { onFail(error); } finally { setBusy(null); }
+    const kind = COPY_PROCESS[name];
+    try { onChange(await (kind === undefined ? work() : withProcess(kind, "", work, describeSessionError))); } catch (error) { onFail(error); } finally { setBusy(null); }
   };
   const service = realEnotarySessionsService;
   const what = copy.mode === "digital" ? "digital certified copy" : `${String(copy.copies)} printed certified ${copy.copies === 1 ? "copy" : "copies"}`;
@@ -177,7 +185,7 @@ function NotaryStage({ copy, busy, run }: { copy: CertifiedCopy; busy: boolean; 
   return (
     <div data-testid="copy-stage" style={{ marginTop: 10 }}>
       <ActionButton kind={copy.status === "paid" ? "secondary" : "primary"} icon={Package} disabled={busy}
-        onClick={() => { void run("stage", () => withProcess("enotary-copy-stage", "", () => realEnotarySessionsService.setStage(copy.id, next.stage), describeSessionError)); }}>
+        onClick={() => { void run("stage", () => realEnotarySessionsService.setStage(copy.id, next.stage)); }}>
         {busy ? "Updating…" : next.action}
       </ActionButton>
     </div>
