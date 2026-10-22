@@ -121,13 +121,14 @@ export function SealPlacer({ sessionId, hasSignature, value, onChange, notaryNam
             style={{
               position: "absolute", left: `${String(point.x * 100)}%`, top: `${String(point.y * 100)}%`, width: w, height: h,
               transform: "translate(-50%, -50%)", display: "grid", placeItems: "center", cursor: "grab", touchAction: "none", textAlign: "center",
-              fontFamily: "'Geist', sans-serif", fontSize: Math.max(8, 10 * scale * 1.6), fontWeight: 700, color: E.maroon,
+              // The words are sized to the marker, so they stay inside the seal's circle on any page size.
+              fontFamily: "'Geist', sans-serif", fontSize: Math.min(14, Math.max(7, (which === "seal" ? w * 0.075 : h * 0.3))), lineHeight: 1.15, fontWeight: 700, color: E.maroon,
               border: `2px ${which === "seal" ? "solid" : "dashed"} ${E.maroon}`, borderRadius: which === "seal" ? "999px" : 6,
               background: "rgba(194,24,91,0.1)", boxSizing: "border-box", overflow: "hidden", padding: 2,
               boxShadow: tool === which ? "0 0 0 3px rgba(194,24,91,0.25)" : "none",
             }}
           >
-            {which === "seal" ? <span>NOTARY PUBLIC<br />{notaryName}</span> : <span>Signature</span>}
+            {which === "seal" ? <span style={{ maxWidth: "72%", overflowWrap: "anywhere" }}>NOTARY PUBLIC<br />{notaryName}</span> : <span>Signature</span>}
           </div>
         );
       };
