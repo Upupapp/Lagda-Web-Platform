@@ -360,8 +360,9 @@ export function ClientStepSix({ s, partner, connection, call, viewer, address, m
   const doc = <DocumentCard key="doc" s={s} viewer={viewer(width === "narrow" ? 380 : 470)} />;
   const where = <div key="address">{address}</div>;
   const step = <StepSixCard key="step" s={s} busy={busy} act={act} onChanged={onChanged} partner={partner} />;
-  const columns: ReactNode[][] = width === "wide" ? [[video, chat], [doc, where], [step]]
-    : width === "medium" ? [[video, chat, where], [step, doc]]
+  // The client's address sits right under where step 6 stands, at every width.
+  const columns: ReactNode[][] = width === "wide" ? [[video, chat], [doc], [step, where]]
+    : width === "medium" ? [[video, chat], [step, where, doc]]
       : [[video, step, where, doc, chat]];
   return (
     <div className="s6" data-testid="client-step-six" data-width={width} style={GF}>
