@@ -27,6 +27,12 @@
 // MIN_DISPLAY_MS — but once it IS up, it stays long enough to be read. A modal
 // that appears and vanishes within 100ms reads as a glitch and the user cannot
 // tell what happened.
+//
+// ── The result ────────────────────────────────────────────────────────────
+//
+// Work run with a `result` is followed by ResultModal in the same place: how it
+// ended, success or failure, instead of the screen just closing. Without one
+// the screen closes as it always has.
 
 import {
   createContext,
@@ -44,6 +50,18 @@ import {
   type ProcessingStep,
   type ProcessingModalProps,
 } from "../components/brand/ProcessingModal";
+import { ResultModal, type ResultModalProps } from "../components/brand/ResultModal";
+
+/** What the person is told once the work is done (ResultModal). */
+export interface ProcessingResult {
+  /** Shown when the work succeeds: the result, and what happens next. */
+  readonly success: { readonly title: string; readonly detail: string };
+  /** The reason a failure is shown with, worded as the page words it. Without it a failure shows no result. */
+  readonly failure?: (error: unknown) => string;
+}
+
+/** The title every failure is shown with. */
+export const RESULT_FAILURE_TITLE = "It did not go through";
 
 export interface ProcessingOptions {
   /** What is happening, in the user's terms. */
@@ -66,6 +84,8 @@ export interface ProcessingOptions {
    * making someone wait to be told something went wrong is just rude.
    */
   minDuration?: number;
+  /** Follow the work with its result, success or failure, in the screen's place. */
+  result?: ProcessingResult;
 }
 
 /** Handed to the body of `run` so it can narrate its own progress. */
@@ -127,6 +147,8 @@ export function ProcessingProvider({ children }: { children: ReactNode }) {
   const [visible, setVisible] = useState(false);
   const [exiting, setExiting] = useState(false);
   const [options, setOptions] = useState<ProcessingOptions>({ message: "Working…" });
+  const [outcome, setOutcome] = useState<(Omit<ResultModalProps, "onClose"> & { id: number }) | null>(null);
+  const outcomes = useRef(0);
 
   const count = useRef(0);
   const visibleRef = useRef(false);
@@ -138,6 +160,7 @@ export function ProcessingProvider({ children }: { children: ReactNode }) {
   const show = useCallback((next: ProcessingOptions) => {
     count.current += 1;
     setOptions(next);
+    setOutcome(null);
 
     // A show() arriving mid-exit cancels the exit rather than queueing behind
     // it, so back-to-back operations look like one continuous wait.
@@ -188,6 +211,7 @@ export function ProcessingProvider({ children }: { children: ReactNode }) {
     ): Promise<T> => {
       show(opts);
       const startedAt = Date.now();
+      let ended: Omit<ResultModalProps, "onClose"> | null = null;
       try {
         const result = await work({ update });
         if (opts.minDuration !== undefined) {
@@ -196,8 +220,14 @@ export function ProcessingProvider({ children }: { children: ReactNode }) {
             await new Promise<void>(resolve => setTimeout(resolve, remaining));
           }
         }
+        if (opts.result !== undefined) ended = { tone: "success", ...opts.result.success, tag: opts.tag };
         return result;
+      } catch (error) {
+        if (opts.result?.failure !== undefined) ended = { tone: "failure", title: RESULT_FAILURE_TITLE, detail: opts.result.failure(error), tag: opts.tag };
+        throw error;
       } finally {
+        // The result takes the screen's place before the screen goes, so the two read as one step.
+        if (ended !== null) { outcomes.current += 1; setOutcome({ ...ended, id: outcomes.current }); }
         hide();
       }
     },
@@ -226,7 +256,9 @@ export function ProcessingProvider({ children }: { children: ReactNode }) {
   return (
     <ProcessingContext.Provider value={value}>
       {children}
-      {visible && (
+      {outcome !== null ? (
+        <ResultModal key={outcome.id} tone={outcome.tone} title={outcome.title} detail={outcome.detail} tag={outcome.tag} onClose={() => { setOutcome(null); }} />
+      ) : visible && (
         <ProcessingModal
           message={options.message}
           detail={options.detail}
