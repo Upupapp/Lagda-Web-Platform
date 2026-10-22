@@ -15,7 +15,7 @@ vi.mock("../../../../../services/real/enotary-invitations.service", async (origi
   realEnotaryInvitationsService: { get: () => Promise.resolve(null) },
 }));
 
-import { ClientStepSix, StepSixCard, stepSixStages } from "../ClientStepSix";
+import { ClientStepSix, StepSixCard, notaryStepSixStages, stepSixStages } from "../ClientStepSix";
 import type { Session } from "../../../../../services/real/enotary-sessions.service";
 import type { RoomConnection } from "../useRoomConnection";
 
@@ -61,7 +61,15 @@ describe("where step 6 stands", () => {
       ["Act and fee stated", "done"], ["You approve", "now"], ["You pay", "todo"], ["Notary confirms", "todo"], ["Notarized", "todo"],
     ]);
     const paying = session({ statement: statement(60_000, "2026-10-18T02:22:00.000Z"), payment: { status: "proof", amountCentavos: 60_000, reference: "R1", attemptsLeft: 4, proofAt: null, decidedAt: null, note: null, payee: null, qrPayload: null } });
-    expect(stepSixStages(paying).find(stage => stage.state === "now")?.label).toBe("Notary confirms");
+    // The payment is aside (2026-10-22): it shows done once it is, but the seal is what is waited for.
+    expect(stepSixStages(paying).map(stage => [stage.label, stage.state])).toEqual([
+      ["Act and fee stated", "done"], ["You approve", "done"], ["You pay", "done"], ["Notary confirms", "todo"], ["Notarized", "now"],
+    ]);
+    const unpaid = session({ statement: statement(60_000, "2026-10-18T02:22:00.000Z"), payment: { status: "awaiting", amountCentavos: 60_000, reference: null, attemptsLeft: 5, proofAt: null, decidedAt: null, note: null, payee: null, qrPayload: null } });
+    expect(stepSixStages(unpaid).find(stage => stage.state === "now")?.label).toBe("Notarized");
+    expect(notaryStepSixStages(unpaid).map(stage => [stage.label, stage.state])).toEqual([
+      ["State", "done"], ["Client approves", "done"], ["Payment", "todo"], ["Seal", "now"],
+    ]);
   });
 
   it("leaves the payment out when there is no fee", () => {

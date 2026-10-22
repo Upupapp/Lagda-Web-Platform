@@ -125,9 +125,9 @@ export function StateActCard({
             <li><span>2</span>You apply your seal and the document is notarized.</li>
           ) : (
             <>
-              <li><span>2</span>They pay {charged && feeCentavos !== null ? pesos(feeCentavos) : "your fee"} to your GCash QR.</li>
-              <li><span>3</span>You confirm the payment from your own app.</li>
-              <li><span>4</span>You apply your seal and the document is notarized.</li>
+              <li><span>2</span>You apply your seal and the document is notarized.</li>
+              <li><span>3</span>They pay {charged && feeCentavos !== null ? pesos(feeCentavos) : "your fee"} to your GCash QR, before or after the seal.</li>
+              <li><span>4</span>You confirm the payment from your own app.</li>
             </>
           )}
         </ol>

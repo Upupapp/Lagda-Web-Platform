@@ -35,12 +35,7 @@ function headingOf(request: DeskRequest | null, incoming: DeskIncoming | null): 
   const client = request.client.name;
   switch (request.status) {
     case "claimed": return { title: `${client} asks you to notarize a document`, lead: "Accept to open a private room with the client. You meet on a video call, and they choose the document with you." };
-    case "accepted": {
-      const payment = request.payment ?? null;
-      return payment === null || payment.status === "confirmed" || payment.status === "waived"
-        ? { title: `Start the session with ${client}`, lead: "You and the client meet in a private room on a video call." }
-        : { title: `Waiting for ${client}'s payment`, lead: "The request goes on once the fee is paid and you have confirmed it in your own bank or e-wallet app." };
-    }
+    case "accepted": return { title: `Start the session with ${client}`, lead: "You and the client meet in a private room on a video call." };
     case "declined": return { title: "You declined this request", lead: "The client was told." };
     case "expired": return { title: "This request ran out of time", lead: "The client can send a new one." };
     case "revoked": return { title: "The client cancelled this request", lead: "Nothing more to do." };
@@ -51,7 +46,7 @@ function headingOf(request: DeskRequest | null, incoming: DeskIncoming | null): 
 const NEXT_STEPS: readonly { title: string; text: string }[] = [
   { title: "A private room opens.", text: "You and the client join it for the video call." },
   { title: "You confirm who the client is,", text: "and they choose the document to be notarized." },
-  { title: "You state the notarial act and your fee.", text: "The client pays before you apply your seal." },
+  { title: "You state the notarial act and your fee.", text: "Any fee is paid to you directly, and it does not hold up your seal." },
 ];
 
 export function NotaryRequestView({ focus, request, incoming, banner, said, problem, confirmDialog, renderRequest, onTake, taking, receivedAt, now }: {

@@ -281,7 +281,8 @@ describe("confirming the payment", () => {
     expect(screen.getByTestId("desk-reference")).toHaveTextContent("GC-12345678");
     expect(screen.getByTestId("desk-proof")).toHaveTextContent(/own bank or e-wallet app. The client’s screenshot helps you find it; do not go by the screenshot alone/);
     expect(screen.getByTestId("desk-payment")).toHaveTextContent("Ben Lim says they paid PHP 1,500.00.");
-    expect(screen.getByTestId("desk-row")).toHaveTextContent(/goes on once the fee is paid and you have confirmed it/);
+    // The fee does not hold the request up (2026-10-22): the session can begin while it is being paid.
+    expect(screen.getByTestId("desk-row")).toHaveTextContent(/Accepted. The session can begin./);
   });
 
   it("opens the client's receipt screenshot in a panel, and says when there is none", async () => {

@@ -149,7 +149,6 @@ function pillOf(request: DeskRequest): DeskPill {
 function tilesOf(request: DeskRequest): DeskTile[] {
   if (request.status !== "accepted") return [];
   const payment = request.payment ?? null;
-  const settled = payment === null || payment.status === "confirmed" || payment.status === "waived";
   const session = request.session ?? null;
   const sessionTile: DeskTile = session?.status === "cancelled"
     ? { icon: XCircle, label: "Session status", text: "The session was called off. Nothing was notarized.", tone: "warn", testId: "desk-session-state" }
@@ -157,9 +156,7 @@ function tilesOf(request: DeskRequest): DeskTile[] {
       ? { icon: BadgeCheck, label: "Session status", text: `Notarized. ${copyWords(request.case?.copy ?? null)}.`, tone: "ok", testId: "desk-session-state" }
       : session?.status === "live"
         ? { icon: Video, label: "Session status", text: "The room is open.", tone: "info", testId: "desk-session-state" }
-        : settled
-          ? { icon: Video, label: "Session status", text: "Accepted. The session can begin.", tone: "info", testId: "desk-session-state" }
-          : { icon: Hourglass, label: "Session status", text: "Accepted. The request goes on once the fee is paid and you have confirmed it.", tone: "info", testId: "desk-session-state" };
+        : { icon: Video, label: "Session status", text: "Accepted. The session can begin.", tone: "info", testId: "desk-session-state" };
   const tiles = [sessionTile];
   const words = paymentLine(payment, request.client.name);
   if (payment !== null && words !== null) {

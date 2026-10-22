@@ -146,21 +146,29 @@ export function useConsoleWidth(): ConsoleWidth {
 }
 
 /** Where step 6 stands, from the session: the act and fee stated, approved, paid, confirmed, notarized. */
+/**
+ * The stages with where each stands. The payment is "aside" (2026-10-22): it is paid to the notary directly and does
+ * not hold up the seal, so it is never the stage being waited for; it shows done once it is.
+ */
+function stagesOf(stages: readonly { label: string; reached: boolean; aside?: boolean }[]): { readonly label: string; readonly state: "done" | "now" | "todo" }[] {
+  const firstOpen = stages.findIndex(stage => !stage.reached && stage.aside !== true);
+  return stages.map((stage, i) => ({ label: stage.label, state: stage.reached ? "done" : i === firstOpen ? "now" : "todo" }));
+}
+
 export function stepSixStages(s: Session): { readonly label: string; readonly state: "done" | "now" | "todo" }[] {
   const statement = s.statement ?? null;
   const payment = s.payment ?? null;
   const noFee = (statement !== null && statement.feeCentavos === 0) || payment?.status === "waived";
-  const stages: { label: string; reached: boolean }[] = [
+  const stages: { label: string; reached: boolean; aside?: boolean }[] = [
     { label: "Act and fee stated", reached: statement !== null },
     { label: "You approve", reached: statement?.approvedAt != null },
     ...(noFee ? [] : [
-      { label: "You pay", reached: payment !== null && (payment.status === "proof" || payment.status === "confirmed") },
-      { label: "Notary confirms", reached: payment?.status === "confirmed" },
+      { label: "You pay", reached: payment !== null && (payment.status === "proof" || payment.status === "confirmed"), aside: true },
+      { label: "Notary confirms", reached: payment?.status === "confirmed", aside: true },
     ]),
     { label: "Notarized", reached: s.status === "notarized" },
   ];
-  const firstOpen = stages.findIndex(stage => !stage.reached);
-  return stages.map((stage, i) => ({ label: stage.label, state: stage.reached ? "done" : i === firstOpen ? "now" : "todo" }));
+  return stagesOf(stages);
 }
 
 /** Where the notary's step 6 stands: the act and fee stated, the client's approval, the payment (when there is a fee), the seal. */
@@ -168,14 +176,13 @@ export function notaryStepSixStages(s: Session): { readonly label: string; reado
   const statement = s.statement ?? null;
   const payment = s.payment ?? null;
   const noFee = (statement !== null && statement.feeCentavos === 0) || payment?.status === "waived";
-  const stages: { label: string; reached: boolean }[] = [
+  const stages: { label: string; reached: boolean; aside?: boolean }[] = [
     { label: "State", reached: statement !== null },
     { label: "Client approves", reached: statement?.approvedAt != null },
-    ...(noFee ? [] : [{ label: "Payment", reached: payment?.status === "confirmed" }]),
+    ...(noFee ? [] : [{ label: "Payment", reached: payment?.status === "confirmed", aside: true }]),
     { label: "Seal", reached: s.status === "notarized" },
   ];
-  const firstOpen = stages.findIndex(stage => !stage.reached);
-  return stages.map((stage, i) => ({ label: stage.label, state: stage.reached ? "done" : i === firstOpen ? "now" : "todo" }));
+  return stagesOf(stages);
 }
 
 /** The strip at the top of the console: the time, the room, the video, both people, and where step 6 stands. */
@@ -299,7 +306,7 @@ export function StepSixCard({ s, busy, act, onChanged, partner }: { s: Session; 
         </dl>
         <div className="s6-fee"><span>Fee</span><b data-testid="stated-fee">{free ? "No fee" : pesos(statement.feeCentavos)}</b></div>
         <div className="s6-consent" data-testid="consent-text"><ShieldCheck size={18} aria-hidden style={{ flex: "0 0 auto", color: E.skyDeep, marginTop: 1 }} /><span>{s.consent.text}</span></div>
-        <p className="s6-hint"><Info size={14} aria-hidden /> You pay only when you approve. The notary completes the notarization after that.</p>
+        <p className="s6-hint"><Info size={14} aria-hidden /> {free ? "There is nothing to pay. The notary completes the notarization after you approve." : "You pay the notary directly, by their QR. The notary can complete the notarization before the payment arrives."}</p>
         <button type="button" className="s6-approve" disabled={busy !== null} onClick={() => { void act("approve", () => realEnotarySessionsService.approve(s.id)); }}>
           <ShieldCheck size={17} aria-hidden />{busy === "approve" ? "Approving…" : free ? "Approve" : `Approve and pay ${pesos(statement.feeCentavos)}`}
         </button>
@@ -310,10 +317,10 @@ export function StepSixCard({ s, busy, act, onChanged, partner }: { s: Session; 
               <li><span>1</span>There is nothing to pay. The notary applies the seal, and you are told here.</li>
             ) : (
               <>
-                <li><span>1</span>Pay {pesos(statement.feeCentavos)} to the notary&rsquo;s GCash QR.</li>
-                <li><span>2</span>Send the reference number and a screenshot of your receipt.</li>
-                <li><span>3</span>The notary confirms the payment from their own GCash.</li>
-                <li><span>4</span>The notary applies the seal, and you are told here.</li>
+                <li><span>1</span>The notary applies the seal, and you are told here.</li>
+                <li><span>2</span>Pay {pesos(statement.feeCentavos)} to the notary&rsquo;s GCash QR, before or after the seal.</li>
+                <li><span>3</span>Send the reference number and a screenshot of your receipt.</li>
+                <li><span>4</span>The notary confirms the payment from their own GCash.</li>
               </>
             )}
           </ol>

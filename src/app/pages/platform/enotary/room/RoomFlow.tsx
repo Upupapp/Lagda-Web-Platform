@@ -152,7 +152,7 @@ export function ClientFlow({ s, busy, act, onChanged }: { s: Session; busy: stri
           {row("Fee", <strong data-testid="stated-fee">{statement.feeCentavos === 0 ? "No fee" : pesos(statement.feeCentavos)}</strong>)}
         </dl>
         <p data-testid="consent-text" style={{ ...bodyText, margin: "12px 0" }}>{s.consent.text}</p>
-        <p style={{ ...hintStyle, margin: "0 0 4px" }}>You pay only when you approve. The notary completes the notarization after that.</p>
+        <p style={{ ...hintStyle, margin: "0 0 4px" }}>{statement.feeCentavos === 0 ? "There is nothing to pay. The notary completes the notarization after you approve." : "You pay the notary directly, by their QR. The notary can complete the notarization before the payment arrives."}</p>
         <ActionRow align="end">
           <ActionButton icon={BadgeCheck} disabled={busy !== null} onClick={() => { void act("approve", () => realEnotarySessionsService.approve(s.id)); }}>
             {busy === "approve" ? "Approving…" : statement.feeCentavos === 0 ? "Approve" : `Approve and pay ${pesos(statement.feeCentavos)}`}
@@ -325,17 +325,14 @@ export function NotaryFlow({ s, busy, act, onChanged, notarizePanel, look }: {
     );
   }
 
-  // 5. the fee
-  if (payment !== null && payment.status === "awaiting") {
-    return (
-      <Panel testId="await-payment" tone="sky">
-        <PanelTitle>Waiting for {s.clientName}&rsquo;s payment</PanelTitle>
-        <p style={{ ...bodyText, margin: 0 }}>{s.clientName} approved the act and the fee and was asked to pay {pesos(payment.amountCentavos)} to your QR. You confirm it here once it arrives.</p>
-      </Panel>
-    );
-  }
-  if (payment !== null && (payment.status === "proof" || payment.status === "not_received")) {
-    return (
+  // 5. the fee, while it is open. It does not hold up the seal (2026-10-22): the client pays the notary directly, and the
+  // notary can follow it up with them at any time, before or after the act.
+  const feePanel = payment !== null && payment.status === "awaiting" ? (
+    <Panel testId="await-payment" tone="sky">
+      <PanelTitle>Payment of {pesos(payment.amountCentavos)}: not received yet</PanelTitle>
+      <p style={{ ...bodyText, margin: 0 }}>{s.clientName} was asked to pay {pesos(payment.amountCentavos)} to your QR. You can apply your seal now, and confirm the payment here whenever it arrives.</p>
+    </Panel>
+  ) : payment !== null && (payment.status === "proof" || payment.status === "not_received") ? (
       <Panel testId="confirm-payment" tone="maroon">
         <PanelTitle>Payment of {pesos(payment.amountCentavos)}</PanelTitle>
         {payment.status === "proof" ? (
@@ -358,12 +355,12 @@ export function NotaryFlow({ s, busy, act, onChanged, notarizePanel, look }: {
         ) : <p style={{ ...bodyText, margin: 0 }}>You told {s.clientName} the payment did not arrive. They can send the reference again.</p>}
         {said !== null && <div role="status" style={{ ...GF, margin: "10px 0 0", fontSize: 14, fontWeight: 600, color: E.ok }}>{said}</div>}
       </Panel>
-    );
-  }
+  ) : null;
 
-  // 6. everything is in: the seal
+  // 6. approved: the seal
   return (
     <>
+      {feePanel}
       <Panel testId="ready-to-seal" tone="sky">
         <PanelTitle>{payment !== null && payment.status === "confirmed" ? "Payment received. Apply your seal." : "Approved. Apply your seal."}</PanelTitle>
         <dl style={{ margin: 0 }}>
