@@ -29,6 +29,8 @@ export interface ApplicationFile {
 /** The fields of the form, as the server stores them. All strings so a draft can be partial. */
 export interface ApplicationFields {
   office: string;
+  /** 127. The office's street address, printed on the notarized document. */
+  officeAddress: string;
   city: string;
   province: string;
   phone: string;
@@ -37,6 +39,9 @@ export interface ApplicationFields {
   ibpChapter: string;
   ptrNo: string;
   ptrYear: string;
+  /** 127. Where and when (YYYY-MM-DD) the PTR was issued. */
+  ptrPlace: string;
+  ptrIssuedOn: string;
   mcleComplianceNo: string;
   mclePeriod: string;
   commissionNo: string;
@@ -68,8 +73,8 @@ export interface ApplicationView {
 }
 
 export const EMPTY_FIELDS: ApplicationFields = {
-  office: "", city: "", province: "", phone: "", rollNo: "", ibpNo: "", ibpChapter: "", ptrNo: "", ptrYear: "",
-  mcleComplianceNo: "", mclePeriod: "", commissionNo: "", commissionCourt: "", commissionValidFrom: "",
+  office: "", officeAddress: "", city: "", province: "", phone: "", rollNo: "", ibpNo: "", ibpChapter: "", ptrNo: "", ptrYear: "",
+  ptrPlace: "", ptrIssuedOn: "", mcleComplianceNo: "", mclePeriod: "", commissionNo: "", commissionCourt: "", commissionValidFrom: "",
   commissionValidUntil: "", notarialJurisdiction: "", listingConsent: false, agreementVersion: null,
 };
 
@@ -190,7 +195,7 @@ class RealNotaryApplicationsService {
     for (const [key, value] of Object.entries(patch)) {
       if (key === "listingConsent") body.listingConsent = value === true;
       else if (key === "agreementVersion") { if (typeof value === "string" && value !== "") body.acceptAgreement = true; }
-      else if (key === "commissionValidFrom" || key === "commissionValidUntil") body[key] = typeof value === "string" && value !== "" ? value : null;
+      else if (key === "commissionValidFrom" || key === "commissionValidUntil" || key === "ptrIssuedOn") body[key] = typeof value === "string" && value !== "" ? value : null;
       else fields[key] = typeof value === "string" && value !== "" ? value : null;
     }
     if (Object.keys(fields).length > 0) body.fields = fields;

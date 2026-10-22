@@ -1,17 +1,20 @@
-// The notary's card for the document in step 6: the client's final document and the notary's own marks in one place.
-// The page where the seal and the signature sit is drawn with them on it (their saved places, or their usual places
-// when they have not been placed), the places in words, when they were saved, and one way to the page where they are
-// placed. Only the notary sees the marks; the client sees the seal and the signature on the notarized document.
+// The notary's card for the document in step 6: the client's final document and the notary's own mark in one place.
+// The page where the notarial block sits (127: the seal and signature, with the notary's name and commission, drawn
+// together) is shown with it on it (its saved place, or across the foot of the last page when it has not been placed),
+// the place in words, when it was saved, and one way to the page where it is placed. Only the notary sees the mark; the
+// client sees the block on the notarized document.
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "react-router";
 import { CheckCircle2, Download, Eye, FileText, Lock, Stamp } from "lucide-react";
 import { DocumentPageSurface, useRealDocument } from "../../../../components/pdf/DocumentPageSurface";
-import { realEnotarySessionsService, saveBlobAs, type PagePoint, type Session } from "../../../../services/real/enotary-sessions.service";
+import { realEnotarySessionsService, saveBlobAs, type Session } from "../../../../services/real/enotary-sessions.service";
 import { E, SERIF } from "../EnotaryChrome";
 import { stampLabel } from "../requests/expiry";
-import { SEAL_POINTS, SIGNATURE_H, SIGNATURE_W, USUAL_PLACE } from "./SealPlacer";
-import { placementsOf, whereOnPage } from "./seal-placements";
+import { NotarialBlockPreview } from "./NotarialBlockPreview";
+import { blockBox, blockOf, blockWords, defaultBlockPoint } from "./notarial-block";
+import { placementsOf } from "./seal-placements";
+import { useBlockFacts } from "./useBlockFacts";
 
 const CSS = `
   .nd { padding: 16px; display: grid; gap: 12px; border-top: 4px solid #C9A24A; min-width: 0; }
@@ -27,14 +30,8 @@ const CSS = `
   .nd-stage { position: relative; padding: 36px 12px 12px; border-radius: 12px; background: #E9EEF4; border: 1px solid ${E.line}; display: grid; justify-items: center; min-width: 0; }
   .nd-cap { position: absolute; left: 10px; top: 8px; margin: 0; display: inline-flex; align-items: center; gap: 6px; max-width: calc(100% - 20px); padding: 3px 10px; border-radius: 999px; background: rgba(10,26,43,0.72); color: #FFFFFF; font-size: 11px; font-weight: 700; box-sizing: border-box; }
   .nd-sheet { position: relative; background: #FFFFFF; box-shadow: 0 6px 18px -8px rgba(10,26,43,0.35); }
-  .nd-mark { position: absolute; transform: translate(-50%, -50%); box-sizing: border-box; display: grid; place-items: center; pointer-events: none; }
-  .nd-mark em { position: absolute; top: -19px; left: 50%; transform: translateX(-50%); padding: 1px 8px; border-radius: 999px; font-size: 10.5px; font-weight: 800; font-style: normal; color: #FFFFFF; white-space: nowrap; }
-  .nd-mark.seal { border-radius: 999px; border: 1.5px dashed ${E.maroon}; background: radial-gradient(circle at 40% 32%, rgba(176,24,43,0.88) 0%, rgba(111,22,50,0.88) 100%); box-shadow: inset 0 0 0 5px rgba(255,255,255,0.85); color: #FFFFFF; font-size: 10px; font-weight: 800; letter-spacing: 0.16em; }
-  .nd-mark.seal em { background: ${E.maroon}; }
-  .nd-mark.sig { border-radius: 6px; border: 1.5px dashed ${E.sky}; background: rgba(10,132,214,0.07); color: ${E.skyDeep}; font-size: 10.5px; font-weight: 700; overflow: visible; }
-  .nd-mark.sig em { background: ${E.sky}; }
-  .nd-mark.sig img { max-width: 92%; max-height: 90%; object-fit: contain; }
-  .nd-mark.usual { opacity: 0.55; }
+  .nd-mark { position: absolute; pointer-events: none; }
+  .nd-mark em { position: absolute; top: -19px; left: 50%; transform: translateX(-50%); padding: 1px 8px; border-radius: 999px; font-size: 10.5px; font-weight: 800; font-style: normal; color: #FFFFFF; white-space: nowrap; background: ${E.maroon}; }
   .nd-note { margin: 0; font-size: 13px; color: ${E.quiet}; text-align: center; padding: 18px 8px; }
   .nd-marks { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
   .nd-marks li { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; padding: 7px 10px; border-radius: 10px; border: 1px solid ${E.line}; background: #FBFCFE; font-size: 12.5px; color: ${E.text}; }
@@ -42,6 +39,7 @@ const CSS = `
   .nd-marks b { color: ${E.ink}; }
   .nd-dot { flex: 0 0 auto; width: 12px; height: 12px; border-radius: 999px; background: ${E.maroon}; }
   .nd-dot.sig { background: ${E.sky}; border-radius: 3px; }
+  .nd-dot.block { border-radius: 3px; }
   .nd-tag { display: inline-flex; align-items: center; gap: 4px; padding: 3px 9px; border-radius: 999px; font-size: 11.5px; font-weight: 800; white-space: nowrap; }
   .nd-tag.placed { background: ${E.okWash}; color: ${E.ok}; }
   .nd-tag.usual { background: ${E.wash}; color: ${E.quiet}; border: 1px solid ${E.line}; }
@@ -68,16 +66,10 @@ export function NotaryDocumentCard({ s }: { s: Session }) {
   const savedAt = s.placements?.savedAt ?? null;
   const load = useCallback(() => realEnotarySessionsService.document(s.id), [s.id]);
   const state = useRealDocument(doc === null ? null : load);
-  const [signature, setSignature] = useState<{ image: string; mediaType: string } | null | undefined>(undefined);
+  const { facts, signature } = useBlockFacts(s);
   const [width, setWidth] = useState(0);
   const [downloading, setDownloading] = useState(false);
   const holder = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    let alive = true;
-    void Promise.resolve(realEnotarySessionsService.signature()).then(found => { if (alive) setSignature(found ?? null); }, () => { if (alive) setSignature(null); });
-    return () => { alive = false; };
-  }, []);
 
   useEffect(() => {
     const element = holder.current;
@@ -92,13 +84,11 @@ export function NotaryDocumentCard({ s }: { s: Session }) {
 
   const ready = state.status === "ready";
   const lastPage = ready ? state.pageCount : 1;
-  const hasSignature = signature !== null && signature !== undefined;
-  // The page the marks sit on: the seal's, else the signature's, else the last page (where both go by default).
-  const page = placements.seal?.page ?? placements.signature?.page ?? lastPage;
-  const sealAt: { point: PagePoint; usual: boolean } = placements.seal !== undefined
-    ? { point: placements.seal, usual: false } : { point: { page: lastPage, ...USUAL_PLACE.seal }, usual: true };
-  const sigAt: { point: PagePoint; usual: boolean } | null = !hasSignature ? null : placements.signature !== undefined
-    ? { point: placements.signature, usual: false } : { point: { page: lastPage, ...USUAL_PLACE.signature }, usual: true };
+  // The page the block sits on: its own place, else the last page (across its foot). On a page of its own, the last page
+  // of the client's document is shown without it.
+  const ownPage = placements.blockOwnPage === true;
+  const placed = ownPage ? undefined : blockOf(placements);
+  const page = Math.min(placed?.page ?? lastPage, lastPage);
 
   const download = () => {
     if (doc === null) return;
@@ -115,31 +105,24 @@ export function NotaryDocumentCard({ s }: { s: Session }) {
     const pageWidth = Math.min(width, 520);
     const pageHeight = pageWidth === 0 ? 0 : Math.round((pageWidth * size.height) / size.width);
     const scale = pageWidth === 0 ? 0 : pageWidth / size.width;
-    const mark = (which: "seal" | "sig", at: { point: PagePoint; usual: boolean } | null) => {
-      if (at === null || at.point.page !== page || scale === 0) return null;
-      const w = (which === "seal" ? SEAL_POINTS : SIGNATURE_W) * scale;
-      const h = (which === "seal" ? SEAL_POINTS : SIGNATURE_H) * scale;
-      return (
-        <div key={which} className={`nd-mark ${which}${at.usual ? " usual" : ""}`} data-testid={`nd-mark-${which}`} aria-hidden="true"
-          style={{ left: `${String(at.point.x * 100)}%`, top: `${String(at.point.y * 100)}%`, width: w, height: h }}>
-          <em>{which === "seal" ? "Seal" : "Signature"}{at.usual ? " · usual place" : ""}</em>
-          {which === "seal" ? <span>SEAL</span>
-            : signature !== null && signature !== undefined ? <img src={`data:${signature.mediaType};base64,${signature.image}`} alt="" /> : <span>Signature</span>}
-        </div>
-      );
-    };
+    const box = ownPage || scale === 0 ? null : blockBox(placed ?? defaultBlockPoint(size.width, size.height), size.width, size.height);
     sheet = (
       <div className="nd-sheet" data-testid="nd-sheet" data-page={page} style={{ width: pageWidth, height: pageHeight }}>
         {pageWidth > 0 && <DocumentPageSurface doc={state.doc} pageNumber={page} width={pageWidth} height={pageHeight} />}
-        {mark("seal", sealAt)}
-        {mark("sig", sigAt)}
+        {box !== null && facts !== null && (
+          <div className="nd-mark" data-testid={placed === undefined ? "nd-mark-block-usual" : "nd-mark-block"} aria-hidden="true"
+            style={{ left: box.left * scale, top: box.top * scale }}>
+            <em>{placed === undefined ? "Notarial block · default place" : "Notarial block"}</em>
+            <NotarialBlockPreview facts={facts} width={box.width * scale} ghost={placed === undefined} />
+          </div>
+        )}
       </div>
     );
   }
 
-  const caption = placements.seal !== undefined || placements.signature !== undefined
-    ? `Page ${String(page)}, where your seal and signature sit`
-    : `Page ${String(page)}: your marks go here unless you place them`;
+  const caption = ownPage ? "The last page: your notarial block goes on a page of its own after it"
+    : placed !== undefined ? `Page ${String(page)}, where your notarial block sits`
+      : `Page ${String(page)}: your notarial block goes here unless you place it`;
 
   return (
     <section className="s6-card nd" data-testid="document-panel" aria-labelledby="nd-h">
@@ -168,40 +151,33 @@ export function NotaryDocumentCard({ s }: { s: Session }) {
         {sheet}
       </div>
 
-      <ul className="nd-marks" aria-label="Your seal and signature">
-        <li data-testid="nd-seal">
-          <i className="nd-dot" aria-hidden="true" />
-          <span><b>Seal</b> · {placements.seal !== undefined ? `page ${String(placements.seal.page)}, ${whereOnPage(placements.seal)}` : "the usual place, lower right of the last page"}</span>
-          {placements.seal !== undefined ? <em className="nd-tag placed"><CheckCircle2 size={11} aria-hidden /> Placed</em> : <em className="nd-tag usual">Usual place</em>}
+      <ul className="nd-marks" aria-label="Your notarial block">
+        <li data-testid="nd-block">
+          <i className="nd-dot block" aria-hidden="true" />
+          <span><b>Notarial block</b> · {blockWords(placements)}</span>
+          {ownPage || placed !== undefined ? <em className="nd-tag placed"><CheckCircle2 size={11} aria-hidden /> Placed</em> : <em className="nd-tag usual">Default place</em>}
         </li>
-        <li data-testid="nd-signature">
-          <i className="nd-dot sig" aria-hidden="true" />
-          {signature === null ? (
-            <>
-              <span><b>Signature</b> · no signature picture is saved, so none is drawn</span>
-              <em className="nd-tag usual"><Link to="/app/enotary/seal">Add my signature</Link></em>
-            </>
-          ) : (
-            <>
-              <span><b>Signature</b> · {placements.signature !== undefined ? `page ${String(placements.signature.page)}, ${whereOnPage(placements.signature)}` : "the usual place, beside the seal"}</span>
-              {placements.signature !== undefined ? <em className="nd-tag placed"><CheckCircle2 size={11} aria-hidden /> Placed</em> : <em className="nd-tag usual">Usual place</em>}
-            </>
-          )}
-        </li>
+        {signature === null && (
+          <li data-testid="nd-signature">
+            <i className="nd-dot sig" aria-hidden="true" />
+            <span><b>Signature</b> · no signature picture is saved, so the block shows none</span>
+            <em className="nd-tag usual"><Link to="/app/enotary/seal">Add my signature</Link></em>
+          </li>
+        )}
       </ul>
       {savedAt !== null
         ? <p className="nd-saved" data-testid="nd-saved"><CheckCircle2 size={13} aria-hidden /> Saved with the session at {stampLabel(savedAt)} · kept even if the session is called off</p>
-        : <p className="nd-saved none" data-testid="nd-saved">Not placed yet: your seal and signature go to their usual places unless you place them.</p>}
+        : <p className="nd-saved none" data-testid="nd-saved">Not placed yet: your notarial block goes across the foot of the last page unless you place it.</p>}
 
       <div className="nd-actions">
         <Link to={`/app/enotary/room/${encodeURIComponent(s.invitationId)}/place`} className="nd-review" data-testid="nd-review">
-          <Stamp size={17} aria-hidden /> Review document &amp; place signature or seal
+          <Stamp size={17} aria-hidden /> Review document &amp; place the notarial block
         </Link>
         <button type="button" className="nd-dl" data-testid="nd-download" disabled={doc === null || downloading} onClick={download}>
           <Download size={16} aria-hidden /> {downloading ? "Preparing…" : "Download"}
         </button>
       </div>
-      <p className="nd-foot">The client sees your seal and signature only on the notarized document.</p>
+      <p className="nd-foot">The client sees your notarial block only on the notarized document.</p>
     </section>
   );
 }

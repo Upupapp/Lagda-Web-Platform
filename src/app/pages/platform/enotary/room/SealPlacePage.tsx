@@ -1,8 +1,8 @@
-// /app/enotary/room/:invitationId/place — the notary's page for placing the seal and the signature on the client's
-// document, apart from the video session, as fields are placed when a document is prepared. The way back to the session is
-// at the top and at the bottom. Every change is saved with the session on the server a moment after it is made, so the
-// places survive a reload and a session called off and opened again; the act uses them. The notary can come here at any
-// time until the document is notarized.
+// /app/enotary/room/:invitationId/place — the notary's page for placing their seal and signature on the client's
+// document, as ONE notarial block (127), apart from the video session, as fields are placed when a document is prepared.
+// The way back to the session is at the top and at the bottom. Every change is saved with the session on the server a
+// moment after it is made, so the place survives a reload and a session called off and opened again; the act uses it.
+// The notary can come here at any time until the document is notarized.
 
 import { useEffect, useRef, useState } from "react";
 import { Link, useParams } from "react-router";
@@ -13,6 +13,7 @@ import { E, SERIF } from "../EnotaryChrome";
 import { EnotaryLoadError, EnotaryLoading, EnotaryNotOffered } from "../EnotaryStates";
 import { bodyText, linkButton } from "../onramp-ui";
 import { SealPlacer, type Placements } from "./SealPlacer";
+import { useBlockFacts } from "./useBlockFacts";
 import { placementsOf, writePlacements } from "./seal-placements";
 import { stampLabel } from "../requests/expiry";
 
@@ -25,14 +26,18 @@ const PING_MS = 20_000;
 
 type Loaded = { kind: "loading" } | { kind: "error" } | { kind: "off" } | { kind: "none" } | { kind: "ready"; session: Session };
 
+/** The block's facts before anything is read: the name alone. */
+const blockFallback = (name: string) => ({ notaryName: name, firm: name, commissionLine: null, actLabel: "NOTARIAL ACT", dateLabel: "", sealName: name, signature: null });
+
 export function SealPlacePage() {
   const { invitationId = "" } = useParams();
   const [loaded, setLoaded] = useState<Loaded>({ kind: "loading" });
   const [placements, setPlacements] = useState<Placements>({});
-  const [hasSignature, setHasSignature] = useState(false);
+
   const [attempt, setAttempt] = useState(0);
   const [save, setSave] = useState<SaveState>({ kind: "idle" });
   const pending = useRef<{ sessionId: string; value: Placements; timer: ReturnType<typeof setTimeout> } | null>(null);
+  const { facts, signature } = useBlockFacts(loaded.kind === "ready" ? loaded.session : null);
   const alive = useRef(true);
   const room = `/app/enotary/room/${encodeURIComponent(invitationId)}`;
 
@@ -52,11 +57,6 @@ export function SealPlacePage() {
     return () => { alive = false; };
   }, [invitationId, attempt]);
 
-  useEffect(() => {
-    let alive = true;
-    void Promise.resolve(realEnotarySessionsService.signature()).then(found => { if (alive) setHasSignature(found !== null && found !== undefined); }, () => undefined);
-    return () => { alive = false; };
-  }, []);
 
   // A change waiting to be saved goes at once when the page closes.
   const send = (sessionId: string, value: Placements) => {
@@ -118,6 +118,7 @@ export function SealPlacePage() {
           <div style={{ minWidth: 0, flex: "1 1 240px" }}>
             <p style={{ margin: 0, fontSize: 11.5, fontWeight: 700, letterSpacing: "0.18em", textTransform: "uppercase", color: E.maroon }}>Notarial act</p>
             <h1 data-testid="place-title" style={{ margin: 0, fontFamily: SERIF, fontSize: "clamp(20px, 4vw, 28px)", color: E.navy, overflowWrap: "anywhere" }}>Place your seal and signature</h1>
+            <p style={{ ...bodyText, margin: "2px 0 0", fontSize: 13.5 }}>As one notarial block, at the size it will be printed.</p>
           </div>
           {allowed && open && <span style={{ ...bodyText, display: "inline-flex", alignItems: "center", gap: 6, margin: 0, fontSize: 13 }}><Video size={15} aria-hidden /> The session stays open while you are here.</span>}
           {allowed && status !== null && (
@@ -128,12 +129,12 @@ export function SealPlacePage() {
       <div style={{ maxWidth: 1180, margin: "0 auto", padding: "20px clamp(12px, 3vw, 28px) 56px" }}>
         {!allowed || session === null ? (
           <div data-testid="place-unavailable">
-            <p style={bodyText}>{session === null ? "There is no session for this request yet." : session.role !== "notary" ? "Only the notary public places the seal and signature." : "The document is notarized, so the seal and signature can no longer move."}</p>
+            <p style={bodyText}>{session === null ? "There is no session for this request yet." : session.role !== "notary" ? "Only the notary public places the notarial block." : "The document is notarized, so the notarial block can no longer move."}</p>
             <p>{back("Back to the request", "back-to-request")}</p>
           </div>
         ) : (
           <>
-            <SealPlacer sessionId={session.id} hasSignature={hasSignature} value={placements} onChange={change} notaryName={session.notaryName} />
+            <SealPlacer sessionId={session.id} hasSignature={signature !== null && signature !== undefined} value={placements} onChange={change} facts={facts ?? blockFallback(session.notaryName)} />
             <div style={{ marginTop: 18, display: "flex", justifyContent: "flex-end" }}>{back("Done: back to the video session", "done-back")}</div>
           </>
         )}

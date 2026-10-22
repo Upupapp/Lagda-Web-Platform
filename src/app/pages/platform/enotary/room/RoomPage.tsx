@@ -36,6 +36,7 @@ import { WaitingRoom } from "./WaitingRoom";
 import { ClientAddressPanel, ClientAddressView } from "./ClientAddressPanel";
 import { ClientStepSix } from "./ClientStepSix";
 import { NotaryStepSix } from "./NotaryStepSix";
+import { blockWords } from "./notarial-block";
 import { withProcess, type ProcessKind } from "../../../../config/process-screens";
 
 /** The loading screen each room action runs behind (the chat is not one: it stays quiet). */
@@ -449,18 +450,17 @@ export function NotarizePanel({
     <Panel testId="notarize-panel" tone="maroon">
       <PanelTitle>{stated !== null ? `Apply your seal: ${stated.actTypeLabel}` : "Record the notarial act"}</PanelTitle>
       <p data-testid="notarize-intro" style={{ ...bodyText, margin: "0 0 12px" }}>
-        <strong>Final step: record the notarial act.</strong> Say where you are, place your seal and signature, tick what you attest, and notarize. The document is then sealed and entered in your register.
+        <strong>Final step: record the notarial act.</strong> Say where you are, place your notarial block, tick what you attest, and notarize. The document is then sealed and entered in your register.
       </p>
       {block !== null && <p data-testid="notarize-block" style={{ ...bodyText, color: "#8A3B12" }}>{BLOCK_WORDS[block]}</p>}
       <TextField label="Place of notarization" value={place} onChange={setPlace} maxLength={400} required placeholder="e.g. Naga City, Camarines Sur" hint="Where you are as the notary, for example the city and province of your commission." />
       <fieldset style={{ border: 0, padding: 0, margin: "0 0 14px" }}>
-        <legend style={labelStyle}>Your seal and signature</legend>
+        <legend style={labelStyle}>Your notarial block (seal and signature)</legend>
         <p data-testid="placement-summary" style={{ ...bodyText, margin: "0 0 10px" }}>
-          Seal: {placements.seal === undefined ? "the usual place, lower right of the last page" : `page ${String(placements.seal.page)}`}.
-          {hasSignature ? ` Signature: ${placements.signature === undefined ? "the usual place" : `page ${String(placements.signature.page)}`}.` : " No signature picture is saved, so none is drawn."}
+          {blockWords(placements)}.{hasSignature ? "" : " No signature picture is saved, so the block shows none."}
         </p>
         <Link to={`/app/enotary/room/${encodeURIComponent(session.invitationId)}/place`} data-testid="open-placer" style={{ ...linkButton("secondary"), display: "inline-flex", alignItems: "center", gap: 8 }}>
-          <Stamp size={16} aria-hidden /> Place my seal and signature
+          <Stamp size={16} aria-hidden /> Place my notarial block
         </Link>
       </fieldset>
       <TextField label="Remarks for your register (optional)" value={remarks} onChange={setRemarks} maxLength={300} placeholder="e.g. The document was read aloud to the client before the act." hint="For example: the document was read aloud to the client. They are kept in your notarial register." />
@@ -475,13 +475,13 @@ export function NotarizePanel({
       </fieldset>
       <ActionButton icon={Stamp} disabled={busy || !ready} onClick={() => { void onRecord({
         actType, description: description.trim(), place: place.trim(), attestations: checks,
-        ...(placements.seal === undefined && placements.signature === undefined ? {} : { placements }),
+        ...(Object.keys(placements).length === 0 ? {} : { placements }),
         ...(remarks.trim() === "" ? {} : { remarks: remarks.trim() }),
       }); }}>
         {busy ? "Recording…" : "Notarize the document"}
       </ActionButton>
       <p style={{ ...bodyText, fontSize: 12.5, color: E.quiet, margin: "10px 0 0" }}>
-        This adds a certificate page to the document, seals it with its hash and a verification code, and enters it in your register. It cannot be undone.
+        This puts the information sheet in front of the document and your notarial block on it, seals it with its hash and a verification code, and enters it in your register. It cannot be undone.
       </p>
     </Panel>
     </div>

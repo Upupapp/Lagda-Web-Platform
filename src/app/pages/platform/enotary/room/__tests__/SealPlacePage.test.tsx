@@ -1,5 +1,5 @@
-// The notary's own page for placing the seal and the signature: apart from the video session, with the way back to it at
-// the top and the bottom, and what they placed saved with the session for the act to use.
+// The notary's own page for placing their seal and signature, as one notarial block (127): apart from the video session,
+// with the way back to it at the top and the bottom, and what they placed saved with the session for the act to use.
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
@@ -20,8 +20,13 @@ vi.mock("../../../../../services/real/enotary-sessions.service", async (original
   realEnotarySessionsService: {
     lookup: (id: string) => lookup(id) as unknown, document: () => Promise.resolve(new Blob(["%PDF-1.7"])),
     signature: () => Promise.resolve(null), ping: () => Promise.resolve(),
+    seal: () => Promise.resolve({ sealName: "Aiyana Cruz", jurisdictionLine: null, officeLine: null, commissionNo: "2026-0147", commissionValidUntil: "2027-12-31", rollNo: "58214", customised: false, updatedAt: null }),
     savePlacements: (...args: unknown[]) => savePlacements(...args) as unknown,
   },
+}));
+vi.mock("../../../../../services/real/notary-applications.service", async (original) => ({
+  ...(await original<typeof import("../../../../../services/real/notary-applications.service")>()),
+  realNotaryApplicationsService: { read: () => Promise.resolve({ application: { office: "Del Rosario & Del Rosario" }, files: [], agreement: { version: "v1", text: "" } }) },
 }));
 
 import { SealPlacePage } from "../SealPlacePage";
@@ -45,7 +50,7 @@ beforeEach(() => {
   Object.defineProperty(HTMLElement.prototype, "clientWidth", { configurable: true, get: () => 520 });
 });
 
-describe("the seal and signature page", () => {
+describe("the seal and signature page (one notarial block)", () => {
   it("shows the document and the way back to the video session at the top and at the bottom", async () => {
     open();
     expect(await screen.findByTestId("seal-placer")).toBeInTheDocument();
@@ -54,11 +59,14 @@ describe("the seal and signature page", () => {
     expect(screen.getByTestId("done-back")).toHaveAttribute("href", "/app/enotary/room/eni_1");
   });
 
-  it("starts from the places saved with the session, and says when they were saved", async () => {
+  it("starts from the place saved with the session, and says when it was saved", async () => {
     saved = { seal: { page: 1, x: 0.4, y: 0.6 }, signature: null, savedAt: "2026-10-18T12:16:00.000Z" };
     open();
-    await waitFor(() => { expect(screen.getByTestId("marker-seal")).toBeInTheDocument(); });
+    await waitFor(() => { expect(screen.getByTestId("marker-block")).toBeInTheDocument(); });
     expect(screen.getByTestId("placements-saved")).toHaveTextContent(/Saved with the session at/);
+    // The preview prints the commission from the seal's facts and the office's initials.
+    await waitFor(() => { expect(screen.getByTestId("block-preview")).toHaveTextContent("Commission No. 2026-0147"); });
+    expect(screen.getByTestId("block-preview")).toHaveTextContent("DR");
   });
 
   it("saves a place with the session a moment after it is made", async () => {
@@ -68,9 +76,9 @@ describe("the seal and signature page", () => {
     // eslint-disable-next-line testing-library/prefer-user-event -- the place comes from the click's coordinates, which only fireEvent sets.
     fireEvent.click(surface, { clientX: 260, clientY: 368 });
     expect(screen.getByTestId("placements-saved")).toHaveTextContent("Saving…");
-    await waitFor(() => { expect(savePlacements).toHaveBeenCalledWith("ens_1", { seal: { page: 1, x: 0.5, y: 0.5 } }); });
+    await waitFor(() => { expect(savePlacements).toHaveBeenCalledWith("ens_1", { block: { page: 1, x: 0.5, y: 0.5 } }); });
     await waitFor(() => { expect(screen.getByTestId("placements-saved")).toHaveTextContent(/Saved with the session/); });
-    expect(readPlacements("ens_1")).toEqual({ seal: { page: 1, x: 0.5, y: 0.5 } });
+    expect(readPlacements("ens_1")).toEqual({ block: { page: 1, x: 0.5, y: 0.5 } });
   });
 
   it("stays open for a session that was called off, so the places are kept for when it opens again", async () => {
@@ -98,6 +106,8 @@ describe("what is kept between the pages", () => {
     writePlacements("ens_9", { seal: { page: 2, x: 0.1, y: 0.2 } });
     expect(readPlacements("ens_9")).toEqual({ seal: { page: 2, x: 0.1, y: 0.2 } });
     expect(readPlacements("ens_8")).toEqual({});
+    writePlacements("ens_9", { blockOwnPage: true });
+    expect(readPlacements("ens_9")).toEqual({ blockOwnPage: true });
     writePlacements("ens_9", {});
     expect(readPlacements("ens_9")).toEqual({});
   });
@@ -105,6 +115,8 @@ describe("what is kept between the pages", () => {
   it("reads the places from the session, and says where a point sits in words", () => {
     const s = { id: "ens_7", placements: { seal: { page: 2, x: 0.8, y: 0.84 }, signature: null, savedAt: null } } as unknown as Session;
     expect(placementsOf(s)).toEqual({ seal: { page: 2, x: 0.8, y: 0.84 } });
+    const block = { id: "ens_6", placements: { seal: null, signature: null, savedAt: null, block: { page: 1, x: 0.5, y: 0.9 }, blockOwnPage: true } } as unknown as Session;
+    expect(placementsOf(block)).toEqual({ block: { page: 1, x: 0.5, y: 0.9 }, blockOwnPage: true });
     expect(whereOnPage({ page: 2, x: 0.8, y: 0.84 })).toBe("lower right");
     expect(whereOnPage({ page: 1, x: 0.5, y: 0.5 })).toBe("middle");
     expect(whereOnPage({ page: 1, x: 0.1, y: 0.1 })).toBe("top left");

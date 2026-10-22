@@ -140,9 +140,10 @@ describe("the form, step by step", () => {
     type(/City or municipality/, "Makati City");
     type(/Province/, "Metro Manila");
     type(/Phone number/, "0917 000 0000");
+    type(/Office address/, "2/F Cruz Building, Ayala Avenue");
     press(screen.getByRole("button", { name: "Save and continue" }));
     await settle();
-    expect(save).toHaveBeenCalledWith({ office: "Cruz Law", city: "Makati City", province: "Metro Manila", phone: "0917 000 0000" });
+    expect(save).toHaveBeenCalledWith({ office: "Cruz Law", officeAddress: "2/F Cruz Building, Ayala Avenue", city: "Makati City", province: "Metro Manila", phone: "0917 000 0000" });
     expect(screen.getByRole("heading", { level: 2, name: "Credentials" })).toBeInTheDocument();
   });
 

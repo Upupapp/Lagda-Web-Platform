@@ -11,7 +11,14 @@ vi.mock("../../../../../components/pdf/DocumentPageSurface", () => ({
 const signature = vi.fn();
 vi.mock("../../../../../services/real/enotary-sessions.service", async (original) => ({
   ...(await original<typeof import("../../../../../services/real/enotary-sessions.service")>()),
-  realEnotarySessionsService: { signature: () => signature() as unknown, document: () => Promise.resolve(new Blob(["%PDF-1.7"])) },
+  realEnotarySessionsService: {
+    signature: () => signature() as unknown, document: () => Promise.resolve(new Blob(["%PDF-1.7"])),
+    seal: () => Promise.resolve({ sealName: "Aiyana Cruz", jurisdictionLine: null, officeLine: null, commissionNo: "C-1", commissionValidUntil: "2027-12-31", rollNo: "123", customised: false, updatedAt: null }),
+  },
+}));
+vi.mock("../../../../../services/real/notary-applications.service", async (original) => ({
+  ...(await original<typeof import("../../../../../services/real/notary-applications.service")>()),
+  realNotaryApplicationsService: { read: () => Promise.resolve({ application: { office: "Del Rosario & Del Rosario" }, files: [], agreement: { version: "v1", text: "" } }) },
 }));
 
 import { NotaryStepSix } from "../NotaryStepSix";
@@ -44,15 +51,15 @@ afterEach(() => { window.matchMedia = original; });
 
 const card = (s: Session) => render(<MemoryRouter><NotaryDocumentCard s={s} /></MemoryRouter>);
 
-describe("the document with the notary's own marks", () => {
-  it("shows the marks on the page they sit on, says where in words, and when they were saved", async () => {
-    card(session({ placements: { seal: { page: 2, x: 0.8, y: 0.84 }, signature: { page: 2, x: 0.3, y: 0.7 }, savedAt: "2026-10-21T12:16:00.000Z" } }));
-    expect(await screen.findByTestId("nd-mark-sig")).toBeInTheDocument();
+describe("the document with the notary's own mark: the notarial block", () => {
+  it("shows the block on the page it sits on, says where in words, and when it was saved", async () => {
+    card(session({ placements: { seal: null, signature: null, savedAt: "2026-10-21T12:16:00.000Z", block: { page: 2, x: 0.5, y: 0.8 }, blockOwnPage: false } }));
+    expect(await screen.findByTestId("nd-mark-block")).toBeInTheDocument();
     expect(screen.getByTestId("nd-sheet")).toHaveAttribute("data-page", "2");
-    expect(screen.getByTestId("nd-mark-seal")).toBeInTheDocument();
-    expect(screen.getByTestId("nd-caption")).toHaveTextContent("Page 2, where your seal and signature sit");
-    expect(screen.getByTestId("nd-seal")).toHaveTextContent("page 2, lower right");
-    expect(screen.getByTestId("nd-seal")).toHaveTextContent("Placed");
+    expect(screen.getByTestId("block-preview")).toHaveTextContent("Atty. Aiyana Cruz");
+    expect(screen.getByTestId("nd-caption")).toHaveTextContent("Page 2, where your notarial block sits");
+    expect(screen.getByTestId("nd-block")).toHaveTextContent("Page 2, at the foot");
+    expect(screen.getByTestId("nd-block")).toHaveTextContent("Placed");
     expect(screen.getByTestId("nd-saved")).toHaveTextContent(/Saved with the session at .* kept even if the session is called off/);
     expect(screen.getByTestId("nd-review")).toHaveAttribute("href", "/app/enotary/room/eni_1/place");
     expect(screen.getByTestId("nd-finalized")).toHaveTextContent(/Finalized by the client/);
@@ -60,16 +67,24 @@ describe("the document with the notary's own marks", () => {
     expect(screen.queryByText("Open in a new tab")).toBeNull();
   });
 
-  it("shows the usual places on the last page until the notary places them, and says a missing signature picture", async () => {
+  it("shows the block across the foot of the last page until the notary places it, and says a missing signature picture", async () => {
     signature.mockResolvedValue(null);
     card(session());
     expect(await screen.findByText(/no signature picture is saved/)).toBeInTheDocument();
     expect(screen.getByTestId("nd-sheet")).toHaveAttribute("data-page", "2");
-    expect(screen.getByTestId("nd-mark-seal")).toHaveClass("usual");
-    expect(screen.queryByTestId("nd-mark-sig")).toBeNull();
-    expect(screen.getByTestId("nd-seal")).toHaveTextContent("Usual place");
-    expect(screen.getByTestId("nd-saved")).toHaveTextContent("Not placed yet");
+    expect(screen.getByTestId("nd-mark-block-usual")).toHaveTextContent("Notarial block · default place");
+    expect(screen.getByTestId("nd-block")).toHaveTextContent("Across the foot of the last page");
+    expect(screen.getByTestId("nd-block")).toHaveTextContent("Default place");
+    expect(screen.getByTestId("nd-saved")).toHaveTextContent("Not placed yet: your notarial block goes across the foot of the last page");
     expect(screen.getByRole("link", { name: "Add my signature" })).toHaveAttribute("href", "/app/enotary/seal");
+  });
+
+  it("says when the block goes on a page of its own, and shows the last page without it", async () => {
+    card(session({ placements: { seal: null, signature: null, savedAt: "2026-10-21T12:16:00.000Z", block: null, blockOwnPage: true } }));
+    expect(await screen.findByTestId("nd-caption")).toHaveTextContent("your notarial block goes on a page of its own after it");
+    expect(screen.queryByTestId("nd-mark-block")).toBeNull();
+    expect(screen.queryByTestId("nd-mark-block-usual")).toBeNull();
+    expect(screen.getByTestId("nd-block")).toHaveTextContent("On a page of its own at the end");
   });
 });
 

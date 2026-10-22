@@ -66,8 +66,11 @@ export interface Session {
   clientAddress?: ClientAddress | null;
   /** LAGDA verified the client's ID and face when they made the request. Absent from an older server. */
   clientIdentity?: { verified: boolean; idType: string | null };
-  /** The notary's own: where the seal and the signature go, as saved with the session; null for the client. */
-  placements?: { seal: PagePoint | null; signature: PagePoint | null; savedAt: string | null } | null;
+  /**
+   * The notary's own: where the seal and the signature go, as saved with the session; null for the client. `block`, the
+   * notarial block's place, and `blockOwnPage` (a page of its own at the end) are absent from an older server.
+   */
+  placements?: { seal: PagePoint | null; signature: PagePoint | null; savedAt: string | null; block?: PagePoint | null; blockOwnPage?: boolean } | null;
 }
 
 /** The client's address for the notarial record: street or barangay, city or municipality, province. */
@@ -139,6 +142,12 @@ export interface CertifiedCopy {
 /** A point on a page of the document: a 1-based page, and fractions of its width and height from the top left. */
 export interface PagePoint { page: number; x: number; y: number }
 
+/**
+ * Where the notary's marks go on the client's pages: the notarial block's centre, or a page of its own at the end. The
+ * seal's and the signature's own places are what a session saved before the block (the block then takes the seal's page).
+ */
+export interface BlockPlacements { block?: PagePoint; blockOwnPage?: boolean; seal?: PagePoint; signature?: PagePoint }
+
 export interface Counterpart {
   role: "client" | "notary"; brandColor: string | null; hasAvatar: boolean; avatarVersion: string | null;
 }
@@ -148,8 +157,8 @@ export interface NotarizeInput {
   description: string;
   place: string;
   attestations: Record<string, boolean>;
-  /** Where the notary dropped the seal and the signature. Left out, the seal goes lower right of the last page. */
-  placements?: { seal?: PagePoint; signature?: PagePoint };
+  /** Where the notarial block goes (or a page of its own at the end). Left out, it goes across the foot of the last page. */
+  placements?: BlockPlacements;
   remarks?: string;
 }
 
@@ -231,8 +240,8 @@ class RealEnotarySessionsService {
     return (await apiRequest<{ session: Session }>(`/me/enotary/sessions/${id(sessionId)}/address`, { method: "PUT", body: address })).session;
   }
 
-  /** The notary saves where the seal and the signature go; either left out goes to its usual place. */
-  async savePlacements(sessionId: string, placements: { seal?: PagePoint; signature?: PagePoint }): Promise<Session> {
+  /** The notary saves where the notarial block goes (or a page of its own); left out, it goes across the foot of the last page. */
+  async savePlacements(sessionId: string, placements: BlockPlacements): Promise<Session> {
     return (await apiRequest<{ session: Session }>(`/me/enotary/sessions/${id(sessionId)}/placements`, { method: "PUT", body: placements })).session;
   }
 
