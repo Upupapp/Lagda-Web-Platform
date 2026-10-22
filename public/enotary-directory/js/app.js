@@ -517,7 +517,7 @@
       at = STEPS.length; head = "Your interest is saved"; sub = "Online notarial sessions are not open yet. We will email you when you can book.";
       body = '<h3 id="step-h" tabindex="-1">' + PI.shield + 'Interest registered</h3><div class="idv-res ok" role="status">' + CI.check + "<div><b>Your interest in " + name + " is saved.</b><p>Online notarial sessions are not open yet; we'll email " + esc(ME ? ME.email : "you") + " when you can book.</p></div></div>" +
         '<p class="fine left">Nothing was booked, and nothing was charged.</p>';
-      bar = '<button type="button" class="btn outline" data-go="market">Browse other notaries</button><a class="btn big" href="/app/dashboard">Back to LAGDA</a>';
+      bar = '<button type="button" class="btn outline" data-go="market" data-forget>Browse other notaries</button><a class="btn big" href="/app/dashboard">Back to LAGDA</a>';
     } else if (SEL.step === "interest" && INV === undefined) {
       at = 3; head = "One moment"; sub = "Checking what LAGDA offers for this notary.";
       body = '<h3 id="step-h" tabindex="-1">' + CI.mail + '</h3><p class="ho-status" role="status"><i class="spin" aria-hidden="true"></i><span>Checking your account…</span></p>';
@@ -527,10 +527,10 @@
       var open = openRequestFor(l.id);
       if (INV.needsIdentity) {
         body = '<h3 id="step-h" tabindex="-1">' + PI.shield + 'Verify your identity first</h3><div class="idv-res note" role="status"><span aria-hidden="true">i</span><div><b>Your identity is not verified yet</b><p>A request to a notary needs your LAGDA account to show as verified. It takes about two minutes.</p></div></div>';
-        bar = '<button type="button" class="btn outline" data-go="market">Browse other notaries</button><button type="button" class="btn big" data-idv-retry data-back-to-identity>Verify my identity</button>';
+        bar = '<button type="button" class="btn outline" data-go="market" data-forget>Browse other notaries</button><button type="button" class="btn big" data-idv-retry data-back-to-identity>Verify my identity</button>';
       } else if (open) {
         body = '<h3 id="step-h" tabindex="-1">' + CI.mail + 'You already asked this notary</h3><div class="idv-res ok" role="status">' + CI.check + "<div><b>Your request to " + name + " is open.</b><p>Its link, QR code and the time it has left are on its page.</p></div></div>";
-        bar = '<button type="button" class="btn outline" data-go="market">Browse other notaries</button><a class="btn big" href="' + requestPath(open.id) + '">Open your request</a>';
+        bar = '<button type="button" class="btn outline" data-go="market" data-forget>Browse other notaries</button><a class="btn big" href="' + requestPath(open.id) + '">Open your request</a>';
       } else {
         // How this notary is reached: by LAGDA, when the listing has an account, or by an email the client may add.
         var contact = SEL.contact;
@@ -554,7 +554,7 @@
           reach +
           '<p class="fine left">Nothing is booked, paid or notarized by this step. Online notarial sessions are not currently available.</p>' +
           (SEL.error ? '<p class="err-box" role="alert" id="step-err" tabindex="-1">' + esc(SEL.error) + "</p>" : "");
-        bar = '<button type="button" class="btn outline" data-go="market">Browse other notaries</button><button type="button" class="btn big" data-request' + (SEL.busy || !detailsReady(SEL) ? " disabled" : "") + ">" + (SEL.busy ? "Sending…" : "Request this notary") + "</button>";
+        bar = '<button type="button" class="btn outline" data-go="market" data-forget>Browse other notaries</button><button type="button" class="btn big" data-request' + (SEL.busy || !detailsReady(SEL) ? " disabled" : "") + ">" + (SEL.busy ? "Sending…" : "Request this notary") + "</button>";
       }
     } else if (SEL.step === "interest") {
       at = 3; head = "Register your interest"; sub = "Online notarial sessions are not open yet. Choose to be told by email when you can book with " + name + ".";
@@ -565,7 +565,7 @@
         '<p class="fine left">Your name and email come from your LAGDA account. To change them, update your profile in LAGDA.</p>' +
         '<label class="idv-agree"><input type="checkbox" id="int-agree"' + (SEL.agree ? " checked" : "") + "><span>LAGDA may email me about eNotary.</span></label>" +
         (SEL.error ? '<p class="err-box" role="alert" id="step-err" tabindex="-1">' + esc(SEL.error) + "</p>" : "");
-      bar = '<button type="button" class="btn outline" data-go="market">Browse other notaries</button><button type="button" class="btn big" data-register' + (SEL.agree && !SEL.busy ? "" : " disabled") + ">" + (SEL.busy ? "Saving…" : "Register my interest") + "</button>";
+      bar = '<button type="button" class="btn outline" data-go="market" data-forget>Browse other notaries</button><button type="button" class="btn big" data-register' + (SEL.agree && !SEL.busy ? "" : " disabled") + ">" + (SEL.busy ? "Saving…" : "Register my interest") + "</button>";
     } else {
       at = 2; head = "Verify your identity"; sub = "A notary must be sure who you are before meeting you. You verify your identity once, in LAGDA.";
       var p = SEL.idv, err = SEL.error ? '<p class="err-box" role="alert" id="step-err" tabindex="-1">' + esc(SEL.error) + "</p>" : "", wait = function (text) { return '<p class="ho-status" role="status"><i class="spin" aria-hidden="true"></i><span>' + text + "</span></p>"; };
@@ -573,14 +573,14 @@
       else if (p === "verified") {
         body = '<h3 id="step-h" tabindex="-1">' + PI.shield + 'Identity verified</h3><div class="idv-res ok" role="status">' + CI.check + "<div><b>Identity verified</b><p>Your identity was verified in LAGDA, so you do not need to do it again.</p></div></div>" +
           (SEL.verifiedName ? '<dl class="summary"><div><dt>Name</dt><dd>' + esc(SEL.verifiedName) + "</dd></div><div><dt>Verified by</dt><dd>LAGDA</dd></div></dl>" : "");
-        bar = '<button type="button" class="btn outline" data-go="market">Browse other notaries</button><button type="button" class="btn big" data-step="interest">Continue</button>';
+        bar = '<button type="button" class="btn outline" data-go="market" data-forget>Browse other notaries</button><button type="button" class="btn big" data-step="interest">Continue</button>';
       } else if (p === "consent") {
         body = '<h3 id="step-h" tabindex="-1">' + PI.shield + "Verify your identity</h3>" +
           '<p class="lead">This takes about two minutes. You photograph a government ID and take a short selfie on the page of LAGDA\'s identity verification partner.</p>' +
           '<dl class="summary"><div><dt>What is collected</dt><dd>An image of your ID, a selfie, and the result of the check.</dd></div><div><dt>Why</dt><dd>So that a notary meets the person the ID belongs to, and nobody can ask for a notarization in your name.</dd></div>' +
             "<div><dt>Where it happens</dt><dd>" + (touchDevice() ? "On the partner's page, in this tab. You come back to LAGDA when you finish." : "On the partner's page, in a new tab. This page waits and continues by itself.") + "</dd></div><div><dt>Where it is kept</dt><dd>On your LAGDA account. You verify once.</dd></div></dl>" +
           '<label class="idv-agree"><input type="checkbox" id="idv-agree"' + (SEL.agree ? " checked" : "") + "><span>I agree to the use of my ID and selfie to verify my identity for my LAGDA account.</span></label>" + err;
-        bar = '<button type="button" class="btn outline" data-go="market">Browse other notaries</button><button type="button" class="btn big" data-idv-start' + (SEL.agree ? "" : " disabled") + ">" + CI.out + "Verify my identity</button>";
+        bar = '<button type="button" class="btn outline" data-go="market" data-forget>Browse other notaries</button><button type="button" class="btn big" data-idv-start' + (SEL.agree ? "" : " disabled") + ">" + CI.out + "Verify my identity</button>";
       } else if (p === "opening") body = '<h3 id="step-h" tabindex="-1">' + PI.shield + "Verify your identity</h3>" + wait("Opening the identity check…");
       else if (p === "tab" || p === "waiting") {
         body = '<h3 id="step-h" tabindex="-1">' + PI.shield + "Finish the check" + (p === "tab" ? " in the new tab" : "") + "</h3>" +
@@ -627,6 +627,8 @@
     // Interest registered before, but LAGDA now takes requests to notaries: the person can ask this notary now.
     else probeRequests().then(function (inv) { if (inv && SEL && SEL.step === "done") { SEL.step = "identity"; readIdentity(); } });
   }
+  /** "Browse other notaries": the choice is let go, here and in the tab, so it does not come back on a reload. The identity check is the account's and is kept. */
+  function forget() { stopPoll(); SEL = null; store(PENDING, null); }
   function readIdentity() {
     var sel = SEL; sel.idv = "loading"; sel.error = ""; redraw(false);
     api("GET", "/me/identity").then(function (r) {
@@ -831,7 +833,7 @@
     var t = e.target.closest("[data-go],[data-open],[data-select],[data-close],[data-city],[data-province],[data-page],[data-clear],[data-step],[data-idv-start],[data-idv-ask],[data-idv-retry],[data-idv-reload],[data-register],[data-request],#clear,#place-clear,#veil");
     if (!t) return;
     if (t.id === "veil") { if (e.target === t) closeProfile(); return; }
-    if (t.hasAttribute("data-go")) { e.preventDefault(); go(t.getAttribute("data-go")); }
+    if (t.hasAttribute("data-go")) { e.preventDefault(); if (t.hasAttribute("data-forget")) forget(); go(t.getAttribute("data-go")); }
     else if (t.hasAttribute("data-open")) profile(t.getAttribute("data-open"));
     else if (t.hasAttribute("data-page")) { if (t.getAttribute("aria-disabled") !== "true") turn(t.getAttribute("data-page")); }
     else if (t.hasAttribute("data-select")) choose(t.getAttribute("data-select"));
