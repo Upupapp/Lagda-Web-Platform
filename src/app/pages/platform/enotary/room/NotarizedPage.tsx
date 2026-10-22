@@ -125,7 +125,8 @@ export function NotarizedPage({ session, onCopies }: { session: Session; onCopie
             Choose the PDF you downloaded or were sent. It is compared with the sealed original on this device. The file is not uploaded.
           </p>
           <label htmlFor="check-copy" style={labelStyle}>PDF to check</label>
-          <input id="check-copy" ref={picker} type="file" accept="application/pdf,.pdf" onChange={event => { void compare(event.target.files?.[0]); }} style={{ display: "block", maxWidth: "100%" }} />
+          {/* A width in percent: a file input's own width would otherwise widen the page on a phone. */}
+          <input id="check-copy" ref={picker} type="file" accept="application/pdf,.pdf" onChange={event => { void compare(event.target.files?.[0]); }} style={{ display: "block", width: "100%", minWidth: 0, boxSizing: "border-box" }} />
           {compared !== null && (
             <p role="status" data-testid="check-result" data-match={String(compared.match)} style={{ ...GF, margin: "10px 0 0", fontWeight: 700, fontSize: 14, display: "flex", gap: 6, alignItems: "center", color: compared.match ? E.ok : "#B0182B" }}>
               {compared.match ? <><BadgeCheck size={16} aria-hidden /> {compared.name} is the same file as the sealed original.</>
