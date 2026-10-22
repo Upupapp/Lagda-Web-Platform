@@ -195,6 +195,19 @@ export function NotaryFlow({ s, busy, act, onChanged, notarizePanel, look }: {
   const [said, setSaid] = useState<string | null>(null);
   const [missing, setMissing] = useState(false);
   const [working, setWorking] = useState(false);
+  const [shot, setShot] = useState<"idle" | "opening" | "none" | "failed">("idle");
+  /** The client's receipt screenshot, opened in a new tab: the notary still checks the transfer in their own app. */
+  const openShot = async () => {
+    setShot("opening");
+    const tab = window.open("", "_blank");
+    try {
+      const blob = await realEnotaryInvitationsService.paymentScreenshot(s.invitationId);
+      if (blob === null) { tab?.close(); setShot("none"); return; }
+      const url = URL.createObjectURL(blob);
+      if (tab !== null) tab.location.href = url; else window.open(url, "_blank");
+      setShot("idle");
+    } catch { tab?.close(); setShot("failed"); }
+  };
   const statement = s.statement ?? null;
   const payment = s.payment ?? null;
   // The step-6 card names the payment QR a fee is paid to: the notary's own, its name masked.
@@ -339,7 +352,12 @@ export function NotaryFlow({ s, busy, act, onChanged, notarizePanel, look }: {
           <div data-testid="desk-proof">
             <p style={bodyText}>Reference number: <strong data-testid="desk-reference" style={{ letterSpacing: "0.04em" }}>{payment.reference}</strong>
               {payment.proofAt !== null && <> · sent {stampLabel(payment.proofAt)}</>}</p>
-            <p style={hintStyle}>Look for this transfer in your own bank or e-wallet app. Do not go by a screenshot.</p>
+            <p style={hintStyle}>Look for this transfer in your own bank or e-wallet app. The client&rsquo;s screenshot helps you find it, but do not go by it alone.</p>
+            <ActionRow align="start">
+              <ActionButton kind="secondary" disabled={shot === "opening"} onClick={() => { void openShot(); }}>{shot === "opening" ? "Opening…" : "View the screenshot"}</ActionButton>
+            </ActionRow>
+            {shot === "none" && <p style={hintStyle}>{s.clientName} sent no screenshot with this payment.</p>}
+            {shot === "failed" && <p style={{ ...hintStyle, color: "#B0182B" }}>The screenshot could not be opened. Try again.</p>}
             {missing && <p style={hintStyle}>The client is told the payment did not arrive and can send the reference again.</p>}
             {problem !== null && <Notice icon={X} tone="danger">{problem}</Notice>}
             <ActionRow align="end">
