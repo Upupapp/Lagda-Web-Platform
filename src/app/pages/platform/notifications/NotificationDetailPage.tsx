@@ -223,7 +223,7 @@ export function NotificationDetailPage() {
 
           {/* Metadata */}
           <div style={{ ...GM, fontSize: 11, color: SILVER, marginBottom: 16 }}>
-            Received: {formatFullDate(n.createdAt)} · Workspace: {n.workspaceName}
+            Received: {formatFullDate(n.createdAt)}{n.workspaceName.trim() !== "" && <> · Workspace: {n.workspaceName}</>}
           </div>
 
           {/* Action button */}

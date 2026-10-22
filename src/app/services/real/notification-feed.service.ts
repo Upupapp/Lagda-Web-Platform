@@ -1016,6 +1016,8 @@ function present(row: FeedRow): Presentation {
     case "ENOTARY_SESSION_DOCUMENT_ADDED":
     case "ENOTARY_SESSION_OPENED":
     case "ENOTARY_SESSION_CANCELLED":
+    case "ENOTARY_SESSION_REOPEN_REQUESTED":
+    case "ENOTARY_SESSION_REOPENED":
     case "ENOTARY_NOTARIZED":
     case "ENOTARY_CTC_REQUESTED":
     case "ENOTARY_CTC_QUOTED":
@@ -1027,7 +1029,8 @@ function present(row: FeedRow): Presentation {
       const detail = str(row.templateInput, "detail");
       const requestId = str(row.templateInput, "invitationId") ?? str(row.templateInput, "requestId") ?? row.sourceId;
       const toNotary = str(row.templateInput, "to") === "notary"
-        || row.type === "ENOTARY_SESSION_DOCUMENT_ADDED" || row.type === "ENOTARY_CTC_REQUESTED" || row.type === "ENOTARY_CTC_PROOF_SENT";
+        || row.type === "ENOTARY_SESSION_DOCUMENT_ADDED" || row.type === "ENOTARY_SESSION_REOPEN_REQUESTED"
+        || row.type === "ENOTARY_CTC_REQUESTED" || row.type === "ENOTARY_CTC_PROOF_SENT";
       const requestPath = toNotary ? "/app/enotary/desk" : `/app/enotary/requests/${encodeURIComponent(requestId)}`;
       const roomPath = `/app/enotary/room/${encodeURIComponent(requestId)}`;
       const why = toNotary
@@ -1051,6 +1054,21 @@ function present(row: FeedRow): Presentation {
             category: "my-actions", severity: "warning", priority: "high",
             title: `${other} called off the session`, body: `${other} called off the notarization session. Nothing was notarized.`,
             actionLabel: toNotary ? "Open the notary desk" : "Open request", actionPath: requestPath, why,
+          };
+        // 122. The client asks the notary to open a called-off session again; the notary does.
+        case "ENOTARY_SESSION_REOPEN_REQUESTED":
+          return {
+            category: "my-actions", severity: "info", priority: "high",
+            title: `${other} asks to continue the session`,
+            body: `${other} called off the notarization session earlier and now asks to continue it. Open your desk to open the session again when you are ready.`,
+            actionLabel: "Open the notary desk", actionPath: requestPath, why,
+          };
+        case "ENOTARY_SESSION_REOPENED":
+          return {
+            category: "my-actions", severity: "success", priority: "high",
+            title: `${other} opened the session again`,
+            body: `${other} opened the called-off session again. Open your request to continue the notarization.`,
+            actionLabel: "Open request", actionPath: requestPath, why,
           };
         case "ENOTARY_NOTARIZED":
           return {
