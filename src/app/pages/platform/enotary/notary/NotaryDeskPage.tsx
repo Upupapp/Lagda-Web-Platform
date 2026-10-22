@@ -254,7 +254,7 @@ export function NotaryDeskPage({ focus }: { focus?: string } = {}) {
       if (kind === "accept") {
         await withProcess("enotary-accept", request.client.name, () => realEnotaryInvitationsService.accept(request.id), refused);
         if (!alive.current) return;
-        setSaid(`You accepted the request from ${request.client.name}. Open the room when you are ready to meet.`);
+        setSaid(`You accepted the request from ${request.client.name}. Once they start the session, you open the room from here.`);
         setAccepting(null);
       } else {
         await withProcess("enotary-decline", request.client.name, () => realEnotaryInvitationsService.decline(request.id, reason), refused);

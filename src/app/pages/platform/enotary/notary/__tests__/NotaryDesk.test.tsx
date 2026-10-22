@@ -214,7 +214,7 @@ describe("accepting and declining", () => {
     press(within(panel).getByRole("button", { name: "Accept the request" }));
     await settle();
     expect(accept).toHaveBeenCalledWith("eni_1");
-    expect(screen.getByRole("status")).toHaveTextContent(/accepted the request from Ben Lim. Open the room when you are ready/);
+    expect(screen.getByRole("status")).toHaveTextContent(/accepted the request from Ben Lim. Once they start the session, you open the room from here/);
     expect(screen.getByTestId("tally-progress")).toHaveTextContent("1");
     expect(screen.queryByRole("button", { name: "Accept" })).toBeNull();
   });
