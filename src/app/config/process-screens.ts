@@ -14,6 +14,11 @@
 //     can still be shown inside it; the screen covers its buttons meanwhile.
 //   · Not for background work (autosave, counts, search-as-you-type): those
 //     stay silent or show an inline spinner.
+//
+// The result (2026-10-22): an action with `done` wording is followed, in the
+// screen's place, by how it ended: its success title and what happens next, or
+// "It did not go through" with the reason the caller passes to withProcess
+// (the same words the page shows). The eNotary actions have it.
 
 import type { LucideIcon } from "lucide-react";
 import {
@@ -33,6 +38,8 @@ interface Screen {
   readonly icon: LucideIcon;
   readonly message: (who: string) => string;
   readonly detail: string;
+  /** The result once it has gone through: a short title and what happens next. */
+  readonly done?: (who: string) => { readonly title: string; readonly detail: string };
 }
 
 /** `who` fills a name in where one reads better ("Joining Reyes Law Office…"). */
@@ -121,56 +128,100 @@ const SCREENS = {
   // ── LAGDA eNotary ───────────────────────────────────────────────────────
   "enotary-access": { tag: "eNotary", icon: Stamp, message: () => "Opening LAGDA eNotary…", detail: "Setting up your eNotary pages." },
   "enotary-claim": { tag: "Notary request", icon: Stamp, message: () => "Opening the request…", detail: "Checking your identity and that this request is for you." },
-  "enotary-take": { tag: "Notary request", icon: Stamp, message: w => w ? `Taking the request from ${w}…` : "Taking the request…", detail: "Checking your identity, then moving it to your waiting list." },
-  "enotary-accept": { tag: "Notary request", icon: BadgeCheck, message: w => w ? `Accepting the request from ${w}…` : "Accepting the request…", detail: "The client is told, and is asked to pay if you set a fee." },
-  "enotary-decline": { tag: "Notary request", icon: MailX, message: w => w ? `Declining the request from ${w}…` : "Declining the request…", detail: "The client is told. This cannot be undone." },
-  "enotary-payment-confirm": { tag: "Payment", icon: Banknote, message: w => w ? `Confirming the payment from ${w}…` : "Confirming the payment…", detail: "The client is told, and the session can begin." },
-  "enotary-payment-missing": { tag: "Payment", icon: Banknote, message: () => "Telling the client the payment did not arrive…", detail: "They can send the reference again." },
-  "enotary-payment-proof": { tag: "Payment", icon: Banknote, message: () => "Sending your payment reference…", detail: "The notary checks it in their own bank or wallet app." },
-  "enotary-qr-save": { tag: "Payment QR", icon: QrCode, message: () => "Saving your payment QR…", detail: "Reading the code, then saving where clients pay you." },
-  "enotary-qr-remove": { tag: "Payment QR", icon: Trash2, message: () => "Removing your payment QR…", detail: "Clients can no longer be asked to pay you through LAGDA." },
-  "enotary-request-revoke": { tag: "Notary request", icon: Undo2, message: () => "Cancelling your request…", detail: "The notary's link stops working." },
-  "enotary-request-renew": { tag: "Notary request", icon: RefreshCcw, message: () => "Making a new request…", detail: "A new link and QR card, good for a limited time." },
-  "enotary-request-email": { tag: "Notary request", icon: Mail, message: () => "Saving the notary's email…", detail: "It is kept with your request." },
-  "enotary-session-start": { tag: "Notary session", icon: Video, message: () => "Starting the session…", detail: "A private room is made for you and the notary." },
-  "enotary-document-add": { tag: "Notary session", icon: FileUp, message: () => "Adding your document…", detail: "Checking the file, then sharing it with the notary only." },
-  "enotary-document-replace": { tag: "Notary session", icon: FileUp, message: () => "Replacing your document…", detail: "The notary sees the new file once it is in." },
-  "enotary-room-open": { tag: "Notary session", icon: Video, message: () => "Opening the room…", detail: "The client can join as soon as it is open." },
-  "enotary-consent": { tag: "Notary session", icon: ClipboardCheck, message: () => "Recording your confirmation…", detail: "The notary can then record the act." },
-  "enotary-finalize": { tag: "Notary session", icon: FileCheck, message: () => "Finalizing your document…", detail: "It can no longer be replaced. The notary is told." },
-  "enotary-identity": { tag: "Notary session", icon: ClipboardCheck, message: () => "Recording that you confirmed their identity…", detail: "This goes into the audit trail." },
-  "enotary-act": { tag: "Notary session", icon: Stamp, message: () => "Sending the act and fee to the client…", detail: "The client approves it before any payment." },
-  "enotary-approve": { tag: "Notary session", icon: ClipboardCheck, message: () => "Recording your approval…", detail: "A fee is opened for payment to the notary." },
-  "enotary-notarize": { tag: "Notary session", icon: Stamp, message: () => "Recording the notarial act…", detail: "Sealing the document and writing the register entry. This cannot be undone." },
-  "enotary-session-cancel": { tag: "Notary session", icon: PhoneOff, message: () => "Calling off the session…", detail: "Nothing is notarized. The other person is told." },
-  "enotary-session-reopen-request": { tag: "Notary session", icon: Mail, message: () => "Emailing your notary…", detail: "They are told you want to continue. Nothing is charged." },
-  "enotary-session-reopen": { tag: "Notary session", icon: Video, message: () => "Opening the session again…", detail: "The client is told. The same document and request carry on." },
-  "enotary-seal-save": { tag: "Notary seal", icon: Stamp, message: () => "Saving your seal…", detail: "Documents you notarize from now on carry it as shown." },
-  "enotary-signature-save": { tag: "Notary seal", icon: PenLine, message: () => "Saving your signature…", detail: "Only you can see this picture. It is drawn where you drop it on each document." },
-  "enotary-signature-remove": { tag: "Notary seal", icon: Trash2, message: () => "Removing your signature…", detail: "Documents you notarize from now on carry no signature picture." },
-  "enotary-register-export": { tag: "Notary Book", icon: ScrollText, message: () => "Preparing your spreadsheet…", detail: "Your entries, one row each, ready to open in a spreadsheet." },
-  "enotary-register-report": { tag: "Notary Book", icon: FileCheck, message: () => "Preparing the monthly report…", detail: "A cover letter to the Clerk of Court and the month's entries. You read, sign and submit it." },
-  "enotary-copy-stage": { tag: "Certified copy", icon: Package, message: () => "Updating the copy's journey…", detail: "The client sees the new step at once." },
-  "enotary-copy-request": { tag: "Certified copy", icon: FileCheck, message: () => "Asking for your certified copy…", detail: "The notary is told and will answer in the session." },
-  "enotary-application-submit": { tag: "Notary application", icon: ScrollText, message: () => "Sending your application…", detail: "A LAGDA reviewer will look at it. You can withdraw it while it is open." },
-  "enotary-application-withdraw": { tag: "Notary application", icon: Undo2, message: () => "Withdrawing your application…", detail: "You can start a new one at any time." },
-  "enotary-application-file": { tag: "Notary application", icon: FileUp, message: () => "Uploading your file…", detail: "It is checked for viruses before the reviewer can open it." },
-  "enotary-application-file-remove": { tag: "Notary application", icon: Trash2, message: () => "Removing the file…", detail: "It is erased from your application." },
-  "enotary-review-approve": { tag: "Notary review", icon: UserCheck, message: () => "Approving the notary…", detail: "They are told, and can begin to answer requests." },
-  "enotary-review-reject": { tag: "Notary review", icon: UserX, message: () => "Recording the decision…", detail: "The notary is told the reason." },
+  "enotary-take": { tag: "Notary request", icon: Stamp, message: w => w ? `Taking the request from ${w}…` : "Taking the request…", detail: "Checking your identity, then moving it to your waiting list.",
+    done: w => ({ title: "Request taken", detail: w ? `The request from ${w} is on your waiting list. You can accept or decline it now.` : "It is on your waiting list. You can accept or decline it now." }) },
+  "enotary-accept": { tag: "Notary request", icon: BadgeCheck, message: w => w ? `Accepting the request from ${w}…` : "Accepting the request…", detail: "The client is told, and is asked to pay if you set a fee.",
+    done: () => ({ title: "Request accepted", detail: "The client is told, and is asked to pay if you set a fee." }) },
+  "enotary-decline": { tag: "Notary request", icon: MailX, message: w => w ? `Declining the request from ${w}…` : "Declining the request…", detail: "The client is told. This cannot be undone.",
+    done: () => ({ title: "Request declined", detail: "The client is told." }) },
+  "enotary-payment-confirm": { tag: "Payment", icon: Banknote, message: w => w ? `Confirming the payment from ${w}…` : "Confirming the payment…", detail: "The client is told, and the session can begin.",
+    done: () => ({ title: "Payment confirmed", detail: "The client is told, and the session can begin." }) },
+  "enotary-payment-missing": { tag: "Payment", icon: Banknote, message: () => "Telling the client the payment did not arrive…", detail: "They can send the reference again.",
+    done: () => ({ title: "The client is told", detail: "The payment did not arrive. They can send the reference again." }) },
+  "enotary-payment-proof": { tag: "Payment", icon: Banknote, message: () => "Sending your payment reference…", detail: "The notary checks it in their own bank or wallet app.",
+    done: () => ({ title: "Payment reference sent", detail: "The notary checks it in their own bank or wallet app." }) },
+  "enotary-qr-save": { tag: "Payment QR", icon: QrCode, message: () => "Saving your payment QR…", detail: "Reading the code, then saving where clients pay you.",
+    done: () => ({ title: "Payment QR saved", detail: "Clients can be asked to pay you through it." }) },
+  "enotary-qr-remove": { tag: "Payment QR", icon: Trash2, message: () => "Removing your payment QR…", detail: "Clients can no longer be asked to pay you through LAGDA.",
+    done: () => ({ title: "Payment QR removed", detail: "Clients can no longer be asked to pay you through LAGDA." }) },
+  "enotary-request-revoke": { tag: "Notary request", icon: Undo2, message: () => "Cancelling your request…", detail: "The notary's link stops working.",
+    done: () => ({ title: "Request cancelled", detail: "The notary's link no longer works." }) },
+  "enotary-request-renew": { tag: "Notary request", icon: RefreshCcw, message: () => "Making a new request…", detail: "A new link and QR card, good for a limited time.",
+    done: () => ({ title: "New request made", detail: "It has a new link and QR card, good for a limited time." }) },
+  "enotary-request-email": { tag: "Notary request", icon: Mail, message: () => "Saving the notary's email…", detail: "It is kept with your request.",
+    done: () => ({ title: "Notary's email saved", detail: "It is kept with your request." }) },
+  "enotary-session-start": { tag: "Notary session", icon: Video, message: () => "Starting the session…", detail: "A private room is made for you and the notary.",
+    done: () => ({ title: "Session started", detail: "A private room is ready for you and the notary." }) },
+  "enotary-document-add": { tag: "Notary session", icon: FileUp, message: () => "Adding your document…", detail: "Checking the file, then sharing it with the notary only.",
+    done: () => ({ title: "Document added", detail: "It is shared with the notary only." }) },
+  "enotary-document-replace": { tag: "Notary session", icon: FileUp, message: () => "Replacing your document…", detail: "The notary sees the new file once it is in.",
+    done: () => ({ title: "Document replaced", detail: "The notary sees the new file." }) },
+  "enotary-room-open": { tag: "Notary session", icon: Video, message: () => "Opening the room…", detail: "The client can join as soon as it is open.",
+    done: () => ({ title: "Room open", detail: "The client can join now." }) },
+  "enotary-consent": { tag: "Notary session", icon: ClipboardCheck, message: () => "Recording your confirmation…", detail: "The notary can then record the act.",
+    done: () => ({ title: "Confirmation recorded", detail: "The notary can now record the act." }) },
+  "enotary-finalize": { tag: "Notary session", icon: FileCheck, message: () => "Finalizing your document…", detail: "It can no longer be replaced. The notary is told.",
+    done: () => ({ title: "Document finalized", detail: "It can no longer be replaced. The notary is told." }) },
+  "enotary-identity": { tag: "Notary session", icon: ClipboardCheck, message: () => "Recording that you confirmed their identity…", detail: "This goes into the audit trail.",
+    done: () => ({ title: "Identity confirmed", detail: "It is in the audit trail." }) },
+  "enotary-act": { tag: "Notary session", icon: Stamp, message: () => "Sending the act and fee to the client…", detail: "The client approves it before any payment.",
+    done: () => ({ title: "Sent to the client", detail: "The client approves the act and the fee before any payment." }) },
+  "enotary-approve": { tag: "Notary session", icon: ClipboardCheck, message: () => "Recording your approval…", detail: "A fee is opened for payment to the notary.",
+    done: () => ({ title: "Approval recorded", detail: "The notary is told. Any fee is paid to the notary next." }) },
+  "enotary-notarize": { tag: "Notary session", icon: Stamp, message: () => "Recording the notarial act…", detail: "Sealing the document and writing the register entry. This cannot be undone.",
+    done: () => ({ title: "Document notarized", detail: "The sealed document and its register entry are ready." }) },
+  "enotary-session-cancel": { tag: "Notary session", icon: PhoneOff, message: () => "Calling off the session…", detail: "Nothing is notarized. The other person is told.",
+    done: () => ({ title: "Session called off", detail: "Nothing is notarized. The other person is told." }) },
+  "enotary-session-reopen-request": { tag: "Notary session", icon: Mail, message: () => "Emailing your notary…", detail: "They are told you want to continue. Nothing is charged.",
+    done: w => ({ title: "Email sent to your notary", detail: `We emailed ${w === "" ? "your notary" : w} that you want to continue. You are told as soon as they open the session again.` }) },
+  "enotary-session-reopen": { tag: "Notary session", icon: Video, message: () => "Opening the session again…", detail: "The client is told. The same document and request carry on.",
+    done: () => ({ title: "Session open again", detail: "The client is told. The same document and request carry on." }) },
+  "enotary-seal-save": { tag: "Notary seal", icon: Stamp, message: () => "Saving your seal…", detail: "Documents you notarize from now on carry it as shown.",
+    done: () => ({ title: "Seal saved", detail: "Documents you notarize from now on carry it as shown." }) },
+  "enotary-signature-save": { tag: "Notary seal", icon: PenLine, message: () => "Saving your signature…", detail: "Only you can see this picture. It is drawn where you drop it on each document.",
+    done: () => ({ title: "Signature saved", detail: "Only you can see this picture. It is drawn where you drop it on each document." }) },
+  "enotary-signature-remove": { tag: "Notary seal", icon: Trash2, message: () => "Removing your signature…", detail: "Documents you notarize from now on carry no signature picture.",
+    done: () => ({ title: "Signature removed", detail: "Documents you notarize from now on carry no signature picture." }) },
+  "enotary-register-export": { tag: "Notary Book", icon: ScrollText, message: () => "Preparing your spreadsheet…", detail: "Your entries, one row each, ready to open in a spreadsheet.",
+    done: () => ({ title: "Spreadsheet ready", detail: "Your entries, one row each, are saved like any download." }) },
+  "enotary-register-report": { tag: "Notary Book", icon: FileCheck, message: () => "Preparing the monthly report…", detail: "A cover letter to the Clerk of Court and the month's entries. You read, sign and submit it.",
+    done: () => ({ title: "Monthly report ready", detail: "It is saved like any download. You read, sign and submit it." }) },
+  "enotary-copy-stage": { tag: "Certified copy", icon: Package, message: () => "Updating the copy's journey…", detail: "The client sees the new step at once.",
+    done: () => ({ title: "Copy updated", detail: "The client sees the new step at once." }) },
+  "enotary-copy-request": { tag: "Certified copy", icon: FileCheck, message: () => "Asking for your certified copy…", detail: "The notary is told and will answer in the session.",
+    done: () => ({ title: "Certified copy requested", detail: "The notary is told and will answer in the session." }) },
+  "enotary-application-submit": { tag: "Notary application", icon: ScrollText, message: () => "Sending your application…", detail: "A LAGDA reviewer will look at it. You can withdraw it while it is open.",
+    done: () => ({ title: "Application sent", detail: "A LAGDA reviewer will look at it. You can withdraw it while it is open." }) },
+  "enotary-application-withdraw": { tag: "Notary application", icon: Undo2, message: () => "Withdrawing your application…", detail: "You can start a new one at any time.",
+    done: () => ({ title: "Application withdrawn", detail: "You can start a new one at any time." }) },
+  "enotary-application-file": { tag: "Notary application", icon: FileUp, message: () => "Uploading your file…", detail: "It is checked for viruses before the reviewer can open it.",
+    done: () => ({ title: "File uploaded", detail: "It is checked for viruses before the reviewer can open it." }) },
+  "enotary-application-file-remove": { tag: "Notary application", icon: Trash2, message: () => "Removing the file…", detail: "It is erased from your application.",
+    done: () => ({ title: "File removed", detail: "It is erased from your application." }) },
+  "enotary-review-approve": { tag: "Notary review", icon: UserCheck, message: () => "Approving the notary…", detail: "They are told, and can begin to answer requests.",
+    done: () => ({ title: "Notary approved", detail: "They are told, and can begin to answer requests." }) },
+  "enotary-review-reject": { tag: "Notary review", icon: UserX, message: () => "Recording the decision…", detail: "The notary is told the reason.",
+    done: () => ({ title: "Decision recorded", detail: "The notary is told the reason." }) },
 } as const satisfies Record<string, Screen>;
 
 export type ProcessKind = keyof typeof SCREENS;
 
-/** The processing options for `kind`, held for PROCESS_HOLD_MS. */
-export function processScreen(kind: ProcessKind, who = ""): ProcessingOptions {
+/** The processing options for `kind`, held for PROCESS_HOLD_MS, and followed by its result when it has `done` wording. */
+export function processScreen(kind: ProcessKind, who = "", failure?: (error: unknown) => string): ProcessingOptions {
   const s: Screen = SCREENS[kind];
-  return { message: s.message(who.trim()), detail: s.detail, tag: { label: s.tag, icon: s.icon }, minDuration: PROCESS_HOLD_MS };
+  const done = s.done?.(who.trim());
+  return {
+    message: s.message(who.trim()), detail: s.detail, tag: { label: s.tag, icon: s.icon }, minDuration: PROCESS_HOLD_MS,
+    ...(done === undefined ? {} : { result: { success: done, ...(failure === undefined ? {} : { failure }) } }),
+  };
 }
 
 export const PROCESS_KINDS = Object.keys(SCREENS) as ProcessKind[];
 
-/** Runs `work` behind `kind`'s loading screen (held PROCESS_HOLD_MS on success). */
-export function withProcess<T>(kind: ProcessKind, who: string, work: () => Promise<T>): Promise<T> {
-  return runProcess(processScreen(kind, who), work);
+/**
+ * Runs `work` behind `kind`'s loading screen (held PROCESS_HOLD_MS on success), then shows how it ended where the kind
+ * has `done` wording. `failure` words a failure as the page does; without it a failure shows no result.
+ */
+export function withProcess<T>(kind: ProcessKind, who: string, work: () => Promise<T>, failure?: (error: unknown) => string): Promise<T> {
+  return runProcess(processScreen(kind, who, failure), work);
 }

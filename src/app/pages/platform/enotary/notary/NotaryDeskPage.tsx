@@ -255,12 +255,12 @@ export function NotaryDeskPage({ focus }: { focus?: string } = {}) {
     setSaid(null);
     try {
       if (kind === "accept") {
-        await withProcess("enotary-accept", request.client.name, () => realEnotaryInvitationsService.accept(request.id));
+        await withProcess("enotary-accept", request.client.name, () => realEnotaryInvitationsService.accept(request.id), refused);
         if (!alive.current) return;
         setSaid(`You accepted the request from ${request.client.name}. Open the room when you are ready to meet.`);
         setAccepting(null);
       } else {
-        await withProcess("enotary-decline", request.client.name, () => realEnotaryInvitationsService.decline(request.id, reason));
+        await withProcess("enotary-decline", request.client.name, () => realEnotaryInvitationsService.decline(request.id, reason), refused);
         if (!alive.current) return;
         setSaid(`You declined the request from ${request.client.name}.`);
         setDeclining(null);
@@ -278,7 +278,7 @@ export function NotaryDeskPage({ focus }: { focus?: string } = {}) {
     setProblem(null);
     setSaid(null);
     try {
-      await withProcess("enotary-take", item.client.name, () => realEnotaryInvitationsService.take(item.id));
+      await withProcess("enotary-take", item.client.name, () => realEnotaryInvitationsService.take(item.id), describeTakeError);
       if (alive.current) setSaid(`You took the request from ${item.client.name}. You can accept or decline it now.`);
     } catch (error) {
       if (alive.current) setProblem(describeTakeError(error));
@@ -299,7 +299,7 @@ export function NotaryDeskPage({ focus }: { focus?: string } = {}) {
         setProblem(null);
         setSaid(null);
         try {
-          await withProcess("enotary-payment-confirm", request.client.name, () => realEnotaryInvitationsService.confirmPayment(request.id));
+          await withProcess("enotary-payment-confirm", request.client.name, () => realEnotaryInvitationsService.confirmPayment(request.id), refused);
           if (alive.current) setSaid(`You confirmed the payment from ${request.client.name}.`);
         } catch (error) {
           if (alive.current) setProblem(refused(error));
@@ -328,7 +328,7 @@ export function NotaryDeskPage({ focus }: { focus?: string } = {}) {
     setProblem(null);
     setSaid(null);
     try {
-      await withProcess("enotary-payment-missing", request.client.name, () => realEnotaryInvitationsService.paymentNotReceived(request.id, reason));
+      await withProcess("enotary-payment-missing", request.client.name, () => realEnotaryInvitationsService.paymentNotReceived(request.id, reason), refused);
       if (!alive.current) return;
       setSaid(`${request.client.name} was told the payment did not arrive. They can send the reference again.`);
       setMissing(null);

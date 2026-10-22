@@ -135,3 +135,62 @@ describe("wiring", () => {
     expect(PROCESS_KINDS.filter(k => !used.has(k))).toEqual([]);
   });
 });
+
+// After the loading screen, an eNotary action says how it ended: its result in the screen's place.
+describe("the result", () => {
+  beforeEach(() => { vi.useFakeTimers(); });
+  afterEach(() => { vi.useRealTimers(); });
+
+  it("every eNotary action has its result, except opening eNotary and a request (the page that opens says it)", () => {
+    const missing = PROCESS_KINDS.filter(k => k.startsWith("enotary-") && k !== "enotary-access" && k !== "enotary-claim" && processScreen(k).result === undefined);
+    expect(missing).toEqual([]);
+    expect(processScreen("enotary-access").result).toBeUndefined();
+    expect(processScreen("contact-create").result).toBeUndefined();
+    expect(processScreen("enotary-session-reopen-request", "Atty. Aiyana Cruz").result?.success.detail).toContain("We emailed Atty. Aiyana Cruz");
+  });
+
+  it("a success follows the loading screen, then closes by itself after four seconds", async () => {
+    render(<ProcessingProvider><button type="button">Ask</button></ProcessingProvider>);
+    act(() => { void withProcess("enotary-session-reopen-request", "Atty. Aiyana Cruz", () => Promise.resolve("ok"), () => "no"); });
+    await act(async () => { await vi.advanceTimersByTimeAsync(300); });
+    expect(screen.getByRole("alertdialog", { name: "Emailing your notary…" })).toBeTruthy();
+    await act(async () => { await vi.advanceTimersByTimeAsync(2000); });
+    const result = screen.getByRole("alertdialog", { name: "Email sent to your notary" });
+    expect(result).toHaveAttribute("data-tone", "success");
+    expect(result).toHaveTextContent("We emailed Atty. Aiyana Cruz that you want to continue.");
+    expect(screen.getByTestId("result-tag")).toHaveTextContent("Notary session");
+    expect(screen.queryByRole("alertdialog", { name: "Emailing your notary…" })).toBeNull();
+    expect(screen.getByRole("button", { name: "OK" })).toHaveFocus();
+    await act(async () => { await vi.advanceTimersByTimeAsync(3900); });
+    expect(screen.getByRole("alertdialog", { name: "Email sent to your notary" })).toBeTruthy();
+    await act(async () => { await vi.advanceTimersByTimeAsync(200); });
+    expect(screen.queryByRole("alertdialog", { name: "Email sent to your notary" })).toBeNull();
+  });
+
+  it("a failure says it did not go through, with the page's own reason, and stays until OK", async () => {
+    render(<ProcessingProvider><p>page</p></ProcessingProvider>);
+    let caught: unknown = null;
+    act(() => { void withProcess("enotary-session-reopen-request", "", () => Promise.reject(new Error("offline")), () => "Could not reach the server. Check your connection and try again.").catch((error: unknown) => { caught = error; }); });
+    await act(async () => { await vi.advanceTimersByTimeAsync(0); });
+    expect(caught).toBeInstanceOf(Error);
+    const result = screen.getByRole("alertdialog", { name: "It did not go through" });
+    expect(result).toHaveAttribute("data-tone", "failure");
+    expect(result).toHaveAccessibleDescription("Could not reach the server. Check your connection and try again.");
+    await act(async () => { await vi.advanceTimersByTimeAsync(10_000); });
+    expect(screen.getByRole("alertdialog", { name: "It did not go through" })).toBeTruthy();
+    act(() => { screen.getByRole("button", { name: "OK" }).click(); });
+    expect(screen.queryByRole("alertdialog", { name: "It did not go through" })).toBeNull();
+  });
+
+  it("Escape closes it, and an action without a result just closes its screen", async () => {
+    render(<ProcessingProvider><p>page</p></ProcessingProvider>);
+    act(() => { void withProcess("enotary-seal-save", "", () => Promise.resolve(1), () => "no"); });
+    await act(async () => { await vi.advanceTimersByTimeAsync(2100); });
+    expect(screen.getByRole("alertdialog", { name: "Seal saved" })).toBeTruthy();
+    act(() => { document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true })); });
+    expect(screen.queryByRole("alertdialog", { name: "Seal saved" })).toBeNull();
+    act(() => { void withProcess("contact-create", "Maria Santos", () => Promise.resolve(1)); });
+    await act(async () => { await vi.advanceTimersByTimeAsync(4000); });
+    expect(screen.queryByRole("alertdialog")).toBeNull();
+  });
+});

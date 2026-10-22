@@ -91,7 +91,7 @@ export function NotaryRegisterPage() {
 
   const download = async (work: () => Promise<Blob>, name: string, kind: "enotary-register-export" | "enotary-register-report") => {
     setProblem(null);
-    try { saveBlob(await withProcess(kind, "", work), name); } catch (error) { if (alive.current) setProblem(describeSessionError(error)); }
+    try { saveBlob(await withProcess(kind, "", work, describeSessionError), name); } catch (error) { if (alive.current) setProblem(describeSessionError(error)); }
   };
 
   return (

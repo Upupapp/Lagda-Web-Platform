@@ -87,6 +87,20 @@ export function AdminNotaryApplicationPage() {
   const decidable = app.status === "submitted";
   const match = detail.account.nameMatch;
 
+  /** Why a decision was refused, in the reviewer's terms. */
+  const whyRefused = (error: unknown): string => {
+    const code = errorCode(error);
+    return code === "commission_expired" || code === "commission_not_valid"
+      ? "The commission on this application has already ended, so it cannot be approved."
+      : code === "directory_entry_taken" || code === "directory_id_taken"
+        ? "That Notary Directory entry is already tied to another notary."
+        : code === "review_own_application"
+          ? "You cannot review your own application."
+        : code === "enotary_notary_not_listed"
+          ? "That entry is not in the Notary Directory."
+          : "That could not be done right now. Please try again.";
+  };
+
   const decide = async (run: () => Promise<void>, done: string) => {
     setBusy(true);
     setProblem(null);
@@ -98,16 +112,7 @@ export function AdminNotaryApplicationPage() {
       load();
     } catch (error) {
       if (!alive.current) return;
-      const code = errorCode(error);
-      setProblem(code === "commission_expired" || code === "commission_not_valid"
-        ? "The commission on this application has already ended, so it cannot be approved."
-        : code === "directory_entry_taken" || code === "directory_id_taken"
-          ? "That Notary Directory entry is already tied to another notary."
-          : code === "review_own_application"
-            ? "You cannot review your own application."
-          : code === "enotary_notary_not_listed"
-            ? "That entry is not in the Notary Directory."
-            : "That could not be done right now. Please try again.");
+      setProblem(whyRefused(error));
     } finally {
       if (alive.current) setBusy(false);
     }
@@ -119,13 +124,13 @@ export function AdminNotaryApplicationPage() {
       title: `Approve ${app.legalName ?? "this notary"}?`,
       body: `${chosen !== undefined ? `Their account will be tied to ${entryLabel(chosen)}. ` : "No Notary Directory entry is chosen, so requests for a listed notary cannot reach this account until one is. "}They are told, and can then answer requests. This does not make them accredited for online sessions.`,
       confirmLabel: "Approve",
-      onConfirm: () => decide(() => withProcess("enotary-review-approve", "", () => realNotaryApplicationsService.approve(userId, { directoryId, note })), "Approved. The notary was told."),
+      onConfirm: () => decide(() => withProcess("enotary-review-approve", "", () => realNotaryApplicationsService.approve(userId, { directoryId, note }), whyRefused), "Approved. The notary was told."),
     });
   };
 
   const reject = () => {
     if (reason.trim() === "") { setProblem("Write the reason the applicant will read."); return; }
-    void decide(() => withProcess("enotary-review-reject", "", () => realNotaryApplicationsService.reject(userId, reason)), "Not approved. The notary was told the reason.");
+    void decide(() => withProcess("enotary-review-reject", "", () => realNotaryApplicationsService.reject(userId, reason), whyRefused), "Not approved. The notary was told the reason.");
   };
 
   const fileHref = (fileId: string) => `${API_BASE_URL ?? ""}${realNotaryApplicationsService.adminFileUrl(userId, fileId)}`;

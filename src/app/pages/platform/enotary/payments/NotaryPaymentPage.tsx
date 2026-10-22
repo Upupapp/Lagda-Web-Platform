@@ -64,7 +64,7 @@ export function NotaryPaymentPage() {
     setSaid(null);
     try {
       const payload = await decodeQrPicture(file);
-      const saved = await withProcess("enotary-qr-save", "", () => realEnotaryInvitationsService.savePaymentProfile(payload));
+      const saved = await withProcess("enotary-qr-save", "", () => realEnotaryInvitationsService.savePaymentProfile(payload), describePaymentError);
       if (!alive.current) return;
       setLoaded({ kind: "ready", profile: saved });
       setSaid(`Saved. Clients will be asked to pay ${saved.payeeName}.`);
@@ -86,7 +86,7 @@ export function NotaryPaymentPage() {
         setWorking(true);
         setProblem(null);
         try {
-          await withProcess("enotary-qr-remove", "", () => realEnotaryInvitationsService.removePaymentProfile());
+          await withProcess("enotary-qr-remove", "", () => realEnotaryInvitationsService.removePaymentProfile(), describePaymentError);
           if (!alive.current) return;
           setLoaded({ kind: "ready", profile: null });
           setSaid("Your payment QR was removed.");

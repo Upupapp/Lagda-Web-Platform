@@ -45,6 +45,9 @@ const ROOM_PROCESS: Record<string, ProcessKind | undefined> = {
   finalize: "enotary-finalize", identity: "enotary-identity", act: "enotary-act", approve: "enotary-approve",
 };
 
+/** A room action's failure, as the page and its result say it. */
+const roomProblem = (failure: unknown): string => failure instanceof PickProblem ? failure.message : describeSessionError(failure);
+
 export const PING_MS = 20_000;
 export const SESSION_MS = 4_000;
 export const CHAT_MS = 3_000;
@@ -118,10 +121,10 @@ export function RoomPage() {
     setProblem(null);
     try {
       const kind = ROOM_PROCESS[name];
-      const next = kind === undefined ? await work() : await withProcess(kind, "", work);
+      const next = kind === undefined ? await work() : await withProcess(kind, "", work, roomProblem);
       if (alive.current) setLoaded({ kind: "ready", session: next });
     } catch (failure) {
-      if (alive.current) setProblem(failure instanceof PickProblem ? failure.message : describeSessionError(failure));
+      if (alive.current) setProblem(roomProblem(failure));
     } finally {
       if (alive.current) setBusy(null);
     }

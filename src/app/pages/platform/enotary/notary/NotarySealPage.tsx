@@ -204,7 +204,7 @@ export function NotarySealPage() {
       const next = await withProcess("enotary-seal-save", "", () => realEnotarySessionsService.saveSeal({
         sealName: words.name, jurisdictionLine: words.jurisdictionLine.trim() === "" ? null : words.jurisdictionLine,
         officeLine: words.officeLine.trim() === "" ? null : words.officeLine,
-      }));
+      }), describeSessionError);
       if (!alive.current) return;
       setLoaded({ kind: "ready", application, signature, seal: next });
       setWording({ name: next.sealName, jurisdictionLine: next.jurisdictionLine ?? "", officeLine: next.officeLine ?? "" });
@@ -222,7 +222,7 @@ export function NotarySealPage() {
     try {
       const png = signaturePngOf(captured);
       if (png === null) { setProblem("Draw, type or upload your signature first."); return; }
-      const next = await withProcess("enotary-signature-save", "", () => realEnotarySessionsService.saveSignature("image/png", png));
+      const next = await withProcess("enotary-signature-save", "", () => realEnotarySessionsService.saveSignature("image/png", png), describeSessionError);
       if (!alive.current) return;
       setLoaded({ kind: "ready", application, signature: next, seal });
       setCaptured(null);
@@ -234,7 +234,7 @@ export function NotarySealPage() {
   const remove = async () => {
     setProblem(null); setSaid(null);
     try {
-      await withProcess("enotary-signature-remove", "", () => realEnotarySessionsService.removeSignature());
+      await withProcess("enotary-signature-remove", "", () => realEnotarySessionsService.removeSignature(), describeSessionError);
       if (!alive.current) return;
       setLoaded({ kind: "ready", application, signature: null, seal });
       setSaid("Your signature picture was removed. Documents you notarize from now on carry no signature picture.");

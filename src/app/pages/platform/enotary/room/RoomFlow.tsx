@@ -348,10 +348,10 @@ export function NotaryFlow({ s, busy, act, onChanged, notarizePanel, look }: {
             <ActionRow align="end">
               <ActionButton kind="secondary" disabled={working} onClick={() => {
                 setMissing(true);
-                void settle(() => withProcess("enotary-payment-missing", s.clientName, () => realEnotaryInvitationsService.paymentNotReceived(s.invitationId, "")), "The client was told the payment did not arrive.");
+                void settle(() => withProcess("enotary-payment-missing", s.clientName, () => realEnotaryInvitationsService.paymentNotReceived(s.invitationId, ""), describePaymentError), "The client was told the payment did not arrive.");
               }}>Not received</ActionButton>
               <ActionButton icon={CheckCircle2} disabled={working} onClick={() => {
-                void settle(() => withProcess("enotary-payment-confirm", s.clientName, () => realEnotaryInvitationsService.confirmPayment(s.invitationId)), "You confirmed the payment.");
+                void settle(() => withProcess("enotary-payment-confirm", s.clientName, () => realEnotaryInvitationsService.confirmPayment(s.invitationId), describePaymentError), "You confirmed the payment.");
               }}>I received it</ActionButton>
             </ActionRow>
           </div>

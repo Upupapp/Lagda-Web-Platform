@@ -178,7 +178,7 @@ export function ClientPaymentPanel({
     setProblem(null);
     try {
       const prepared = await prepareScreenshot(shot.file);
-      const next = await withProcess("enotary-payment-proof", "", () => realEnotaryInvitationsService.sendPaymentProof(invitation.id, reference, { mediaType: prepared.mediaType, image: prepared.base64 }));
+      const next = await withProcess("enotary-payment-proof", "", () => realEnotaryInvitationsService.sendPaymentProof(invitation.id, reference, { mediaType: prepared.mediaType, image: prepared.base64 }), describePaymentError);
       setReference("");
       URL.revokeObjectURL(shot.preview);
       setShot(null);

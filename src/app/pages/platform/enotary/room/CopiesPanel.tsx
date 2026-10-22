@@ -86,7 +86,7 @@ function RequestForm({ sessionId, onDone, onFail }: { sessionId: string; onDone:
   const send = async () => {
     setBusy(true);
     const input: CopyRequestInput = mode === "digital" ? { mode } : { mode, copies: count, deliveryName: name.trim(), deliveryPhone: phone.trim(), deliveryAddress: address.trim() };
-    try { onDone(await withProcess("enotary-copy-request", "", () => realEnotarySessionsService.requestCopy(sessionId, input))); } catch (error) { onFail(error); } finally { setBusy(false); }
+    try { onDone(await withProcess("enotary-copy-request", "", () => realEnotarySessionsService.requestCopy(sessionId, input), describeSessionError)); } catch (error) { onFail(error); } finally { setBusy(false); }
   };
   return (
     <div data-testid="copy-request">
@@ -177,7 +177,7 @@ function NotaryStage({ copy, busy, run }: { copy: CertifiedCopy; busy: boolean; 
   return (
     <div data-testid="copy-stage" style={{ marginTop: 10 }}>
       <ActionButton kind={copy.status === "paid" ? "secondary" : "primary"} icon={Package} disabled={busy}
-        onClick={() => { void run("stage", () => withProcess("enotary-copy-stage", "", () => realEnotarySessionsService.setStage(copy.id, next.stage))); }}>
+        onClick={() => { void run("stage", () => withProcess("enotary-copy-stage", "", () => realEnotarySessionsService.setStage(copy.id, next.stage), describeSessionError)); }}>
         {busy ? "Updating…" : next.action}
       </ActionButton>
     </div>

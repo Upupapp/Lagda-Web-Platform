@@ -107,7 +107,7 @@ function ApplyView({ initial }: { initial: ApplicationView }) {
         setWithdrawing(true);
         setProblem(null);
         try {
-          const next = await withProcess("enotary-application-withdraw", "", () => realNotaryApplicationsService.withdraw());
+          const next = await withProcess("enotary-application-withdraw", "", () => realNotaryApplicationsService.withdraw(), () => "That could not be done right now. Please try again.");
           if (alive.current) setView(next);
         } catch {
           if (alive.current) setProblem("That could not be done right now. Please try again.");
@@ -265,7 +265,7 @@ function ApplicationForm({ view, onView, onSubmitted }: {
     setBusy(true);
     setSubmit(null);
     try {
-      const done = await withProcess("enotary-application-submit", "", () => realNotaryApplicationsService.submit());
+      const done = await withProcess("enotary-application-submit", "", () => realNotaryApplicationsService.submit(), error => describeSubmitError(error).text);
       if (alive.current) onSubmitted(done);
     } catch (error) {
       if (alive.current) setSubmit(describeSubmitError(error));
@@ -280,7 +280,7 @@ function ApplicationForm({ view, onView, onSubmitted }: {
     setErrors({});
     setBusy(true);
     try {
-      const added = await withProcess("enotary-application-file", "", () => realNotaryApplicationsService.upload(kind, picked));
+      const added = await withProcess("enotary-application-file", "", () => realNotaryApplicationsService.upload(kind, picked), error => describeUploadError(error, picked.name));
       if (alive.current) setFiles(current => [...current, added]);
     } catch (error) {
       if (alive.current) setErrors({ files: describeUploadError(error, picked.name) });
@@ -292,7 +292,7 @@ function ApplicationForm({ view, onView, onSubmitted }: {
   const remove = async (file: ApplicationFile) => {
     setBusy(true);
     try {
-      await withProcess("enotary-application-file-remove", "", () => realNotaryApplicationsService.removeFile(file.id));
+      await withProcess("enotary-application-file-remove", "", () => realNotaryApplicationsService.removeFile(file.id), () => `${file.filename} could not be removed. Try again.`);
       if (alive.current) setFiles(current => current.filter(item => item.id !== file.id));
     } catch {
       if (alive.current) setErrors({ files: `${file.filename} could not be removed. Try again.` });

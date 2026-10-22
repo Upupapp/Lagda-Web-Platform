@@ -80,7 +80,7 @@ export function SessionPanel({ invitationId, role, variant = "panel" }: { invita
     setBusy(true);
     setProblem(null);
     try {
-      const next = await withProcess("enotary-session-start", "", () => realEnotarySessionsService.start(invitationId));
+      const next = await withProcess("enotary-session-start", "", () => realEnotarySessionsService.start(invitationId), describeSessionError);
       if (alive.current) setFound({ session: next, canStart: false, reason: null });
     } catch (error) {
       if (alive.current) setProblem(describeSessionError(error));
@@ -96,7 +96,7 @@ export function SessionPanel({ invitationId, role, variant = "panel" }: { invita
     if (session === null) return;
     setBusy(true); setProblem(null); setSaid(null);
     try {
-      await withProcess("enotary-session-reopen-request", "", () => realEnotarySessionsService.requestReopen(session.id));
+      await withProcess("enotary-session-reopen-request", session.notaryName, () => realEnotarySessionsService.requestReopen(session.id), whyNot);
       if (alive.current) setSaid(`We emailed ${session.notaryName} that you want to continue. You are told as soon as they open the session again.`);
     } catch (error) {
       if (alive.current) setProblem(whyNot(error));
@@ -112,7 +112,7 @@ export function SessionPanel({ invitationId, role, variant = "panel" }: { invita
       const next = await withProcess("enotary-session-reopen", "", async () => {
         await new Promise(resolve => { setTimeout(resolve, REOPEN_PREPARE_MS); });
         return realEnotarySessionsService.reopen(session.id);
-      });
+      }, describeSessionError);
       if (!alive.current) return;
       setFound({ session: next, canStart: false, reason: null });
       void navigate(roomPath);
