@@ -34,7 +34,7 @@ vi.mock("../../payments/payment-qr", async (original) => ({
 }));
 
 import { SessionPanel } from "../SessionPanel";
-import { RoomPage } from "../RoomPage";
+import { NotarizePanel, RoomPage } from "../RoomPage";
 import { CopiesPanel } from "../CopiesPanel";
 import { VerifyNotarizedPage } from "../../../../public/enotary/VerifyNotarizedPage";
 import type { CertifiedCopy, Session } from "../../../../../services/real/enotary-sessions.service";
@@ -376,6 +376,22 @@ describe("the room", () => {
     await user.click(screen.getByLabelText("I verified who they are."));
     await user.click(screen.getByRole("button", { name: "Notarize the document" }));
     expect(await screen.findByText(/has not been in the room in the last two minutes/)).toBeInTheDocument();
+  });
+
+  it("keeps what the notary wrote and ticked when the room's layout draws the act's panel anew", async () => {
+    const user = userEvent.setup();
+    const statement = { actType: "acknowledgment" as const, actTypeLabel: "Acknowledgment", feeCentavos: 0, note: "Deed", statedAt: "2026-10-18T02:20:00.000Z", approvedAt: "2026-10-18T02:22:00.000Z" };
+    const live = session({ id: "ens_draft", role: "notary", status: "live", document: DOC, notarizeBlock: null, statement });
+    const { unmount } = render(<MemoryRouter><NotarizePanel session={live} busy={false} onRecord={() => Promise.resolve()} /></MemoryRouter>);
+    await user.type(screen.getByLabelText(/Place of notarization/), "Naga City");
+    await user.type(screen.getByLabelText(/Remarks for your register/), "Read aloud");
+    await user.click(screen.getByLabelText("I saw the client."));
+    unmount();
+    render(<MemoryRouter><NotarizePanel session={live} busy={false} onRecord={() => Promise.resolve()} /></MemoryRouter>);
+    expect(screen.getByLabelText(/Place of notarization/)).toHaveValue("Naga City");
+    expect(screen.getByLabelText(/Remarks for your register/)).toHaveValue("Read aloud");
+    expect(screen.getByLabelText("I saw the client.")).toBeChecked();
+    expect(screen.getByLabelText("I verified who they are.")).not.toBeChecked();
   });
 
   // 128. Where the parties are (Rule III).

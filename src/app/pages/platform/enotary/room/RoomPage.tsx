@@ -53,6 +53,9 @@ const ROOM_PROCESS: Record<string, ProcessKind | undefined> = {
 const roomProblem = (failure: unknown): string =>
   failure instanceof PickProblem || failure instanceof LocationProblem ? failure.message : describeSessionError(failure);
 
+/** The act panel's place, remarks and ticks for each session, kept for the tab until the act is recorded. */
+const actDrafts = new Map<string, { place: string; remarks: string; checks: Record<string, boolean> }>();
+
 export const PING_MS = 20_000;
 export const SESSION_MS = 4_000;
 export const CHAT_MS = 3_000;
@@ -211,7 +214,9 @@ export function RoomPage() {
   // The act checks both locations again first (the client's device answers by itself), then records it.
   const notarize = (input: NotarizeInput) => act("notarize", async () => {
     if (locationWanted(s)) await confirmLocationsForAct(s.id);
-    return realEnotarySessionsService.notarize(s.id, input);
+    const done = await realEnotarySessionsService.notarize(s.id, input);
+    actDrafts.delete(s.id);
+    return done;
   });
 
   return (
@@ -435,13 +440,17 @@ export function NotarizePanel({
   const description = stated?.note ?? "";
   // 128. Where the location check placed the notary: the place of notarization, unless they write another.
   const located = session.location?.notary?.outcome === "within" ? session.location.notary.place : null;
-  const [place, setPlace] = useState(located ?? "");
+  // What the notary has written and ticked so far: a change of layout (a resized window, a turned tablet) draws this
+  // panel anew, and it starts from the draft.
+  const draft = actDrafts.get(session.id);
+  const [place, setPlace] = useState(draft?.place ?? located ?? "");
   useEffect(() => { if (located !== null) setPlace(current => (current === "" ? located : current)); }, [located]);
-  const [remarks, setRemarks] = useState("");
+  const [remarks, setRemarks] = useState(draft?.remarks ?? "");
   // Saved with the session on the page where the notary places them; the act uses them.
   const placements: Placements = placementsOf(session);
   const [hasSignature, setHasSignature] = useState(false);
-  const [checks, setChecks] = useState<Record<string, boolean>>({});
+  const [checks, setChecks] = useState<Record<string, boolean>>(draft?.checks ?? {});
+  useEffect(() => { actDrafts.set(session.id, { place, remarks, checks }); }, [session.id, place, remarks, checks]);
   useEffect(() => {
     let alive = true;
     void Promise.resolve(realEnotarySessionsService.signature()).then(found => { if (alive) setHasSignature(found !== null && found !== undefined); }, () => undefined);
