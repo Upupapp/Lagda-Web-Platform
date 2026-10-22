@@ -1,7 +1,8 @@
-// The client's address for the notarial record: where they are while the act is done, typed by them in the room. LAGDA
-// never asks the browser for a location. The client gives it (in the waiting room or the open room) and may correct it
-// until the act is recorded; the notary sees it in the room, and it goes into the notarial register entry and the
-// notarized document's information sheet. Only the client and the notary of the request see it.
+// The client's address for the notarial record: where they are while the act is done, typed by them in the room, as
+// their own disclosure. (The device's location is checked apart from it, by the location card: 128.) The client gives it
+// (in the waiting room or the open room) and may correct it until the act is recorded; the notary sees it in the room,
+// and it goes into the notarial register entry and the notarized document's information sheet. Only the client and the
+// notary of the request see it.
 
 import { useState } from "react";
 import { CheckCircle2, MapPin, Pencil, XCircle } from "lucide-react";

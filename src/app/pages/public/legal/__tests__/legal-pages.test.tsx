@@ -13,11 +13,12 @@ import { Privacy } from "../Privacy";
 import { Terms } from "../Terms";
 
 const PAGES = [
-  { name: "Privacy Policy", Page: Privacy, sections: 14 },
-  { name: "Terms of Service", Page: Terms, sections: 20 },
+  // 1.1: the eNotary location check (22 Oct 2026).
+  { name: "Privacy Policy", Page: Privacy, sections: 14, version: "1.1", date: "22 October 2026" },
+  { name: "Terms of Service", Page: Terms, sections: 20, version: "1.0", date: "5 October 2026" },
 ] as const;
 
-describe.each(PAGES)("$name", ({ name, Page, sections }) => {
+describe.each(PAGES)("$name", ({ name, Page, sections, version, date }) => {
   function open() {
     const view = render(<MemoryRouter><Page /></MemoryRouter>);
     // What a visitor reads: the page's own <style> text is not part of it.
@@ -36,9 +37,9 @@ describe.each(PAGES)("$name", ({ name, Page, sections }) => {
   it("carries its title, version and date, and no review notice", () => {
     const { root, text } = open();
     expect(root.querySelector("h1")?.textContent).toBe(name);
-    expect(text).toContain("Version 1.0");
+    expect(text).toContain(`Version ${version}`);
     expect(text).not.toMatch(/\(draft\)/i);
-    expect(text).toContain("Dated 5 October 2026");
+    expect(text).toContain(`Dated ${date}`);
     // Removed at the owner's instruction (5 Oct 2026).
     expect(root.querySelector('[role="note"]')).toBeNull();
     expect(text).not.toMatch(/under legal review/i);

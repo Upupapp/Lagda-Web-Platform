@@ -13,6 +13,7 @@ const svc = {
   cancel: vi.fn(), requestReopen: vi.fn(), reopen: vi.fn(), notarize: vi.fn(), messages: vi.fn(), say: vi.fn(), document: vi.fn(), notarized: vi.fn(),
   copies: vi.fn(), requestCopy: vi.fn(), quote: vi.fn(), decline: vi.fn(), sendProof: vi.fn(), confirmPayment: vi.fn(),
   paymentNotReceived: vi.fn(), auditTrail: vi.fn(), auditPdf: vi.fn(), setStage: vi.fn(), finalize: vi.fn(), confirmIdentity: vi.fn(), stateAct: vi.fn(), approve: vi.fn(), fulfil: vi.fn(), received: vi.fn(), cancelCopy: vi.fn(), copyFile: vi.fn(), verify: vi.fn(),
+  checkLocation: vi.fn(), requestLocationRecheck: vi.fn(),
 };
 vi.mock("../../../../../services/real/enotary-sessions.service", async (original) => ({
   ...(await original<typeof import("../../../../../services/real/enotary-sessions.service")>()),
@@ -375,6 +376,57 @@ describe("the room", () => {
     await user.click(screen.getByLabelText("I verified who they are."));
     await user.click(screen.getByRole("button", { name: "Notarize the document" }));
     expect(await screen.findByText(/has not been in the room in the last two minutes/)).toBeInTheDocument();
+  });
+
+  // 128. Where the parties are (Rule III).
+  const located = (place: string, at: string) => ({ outcome: "within" as const, reason: null, place, accuracyM: 20, at, words: `Within the Philippines: ${place}` });
+
+  it("holds the session while a party's location is missing, and says so to both, with the card to share it", async () => {
+    const live = session({
+      status: "live", document: DOC, notarizeBlock: "not_final",
+      location: { required: true, client: null, notary: located("Taguig City, Metro Manila", "2026-10-18T02:05:00.000Z"), recheckRequestedAt: null, block: "client_location_missing", actLine: null },
+    });
+    svc.lookup.mockResolvedValue({ session: live, canStart: false, reason: null });
+    svc.get.mockResolvedValue(live); svc.ping.mockResolvedValue(live);
+    room();
+    expect(await screen.findByTestId("location-hold")).toHaveTextContent("Share your location to go on: every party must be in the Philippines");
+    expect(screen.getByTestId("location-panel")).toBeInTheDocument();
+    expect(screen.getByTestId("location-theirs")).toHaveTextContent("Atty. Aiyana Cruz: within the Philippines: Taguig City, Metro Manila");
+  });
+
+  it("checks both locations again just before the act, and takes the place of notarization from the notary's", async () => {
+    const user = userEvent.setup();
+    Object.defineProperty(navigator, "geolocation", { configurable: true, value: { getCurrentPosition: (ok: PositionCallback) => { ok({ coords: { latitude: 14.52, longitude: 121.05, accuracy: 20 } } as GeolocationPosition); } } });
+    const statement = { actType: "acknowledgment" as const, actTypeLabel: "Acknowledgment", feeCentavos: 0, note: "Deed", statedAt: "2026-10-18T02:20:00.000Z", approvedAt: "2026-10-18T02:22:00.000Z" };
+    const location = {
+      required: true, client: located("Naga City, Camarines Sur", "2026-10-18T02:10:00.000Z"), notary: located("Taguig City, Metro Manila", "2026-10-18T02:10:00.000Z"),
+      recheckRequestedAt: null, block: null, actLine: null,
+    };
+    // The checks are older than three minutes: the act's own block says so, and pressing the button checks again.
+    const live = session({
+      id: "ens_geo", role: "notary", status: "live", document: DOC, notarizeBlock: "client_location", finalizedAt: "2026-10-18T02:15:00.000Z",
+      identityConfirmedAt: "2026-10-18T02:18:00.000Z", statement, location,
+    });
+    svc.lookup.mockResolvedValue({ session: live, canStart: false, reason: null });
+    svc.get.mockResolvedValue(live); svc.ping.mockResolvedValue(live);
+    const asked = { ...live, location: { ...location, recheckRequestedAt: "2026-10-18T02:30:00.000Z" } };
+    svc.requestLocationRecheck.mockResolvedValue(asked);
+    svc.checkLocation.mockResolvedValue({ ...asked, location: { ...asked.location, notary: located("Taguig City, Metro Manila", "2026-10-18T02:30:02.000Z") } });
+    svc.notarize.mockResolvedValue(session({ role: "notary", status: "notarized", document: DOC, ...NOTARIZED }));
+    room();
+    expect(await screen.findByLabelText(/Place of notarization/)).toHaveValue("Taguig City, Metro Manila");
+    expect(screen.queryByTestId("notarize-block")).toBeNull();
+    await user.click(screen.getByLabelText("I saw the client."));
+    await user.click(screen.getByLabelText("I verified who they are."));
+    const go = screen.getByRole("button", { name: "Notarize the document" });
+    expect(go).toBeEnabled();
+    // The client's device answers the request by itself; the room sees its fresh check.
+    svc.get.mockResolvedValue({ ...asked, location: { ...asked.location, client: located("Naga City, Camarines Sur", "2026-10-18T02:30:05.000Z") } });
+    await user.click(go);
+    await waitFor(() => { expect(svc.notarize).toHaveBeenCalledWith("ens_geo", expect.objectContaining({ place: "Taguig City, Metro Manila" })); });
+    expect(svc.requestLocationRecheck).toHaveBeenCalledWith("ens_geo");
+    expect(svc.checkLocation).toHaveBeenCalledWith("ens_geo", { latitude: 14.52, longitude: 121.05, accuracy: 20 });
+    Object.defineProperty(navigator, "geolocation", { configurable: true, value: undefined });
   });
 });
 

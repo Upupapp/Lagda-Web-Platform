@@ -10,7 +10,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router";
-import { FileUp, ShieldCheck, Stamp, XCircle } from "lucide-react";
+import { FileUp, MapPin, ShieldCheck, Stamp, XCircle } from "lucide-react";
 import { ActionButton, ActionRow, GF, Notice, TAP } from "../../../../components/system/design-system";
 import { useConfirm } from "../../../../components/platform/ConfirmDialog";
 import {
@@ -36,6 +36,9 @@ import { WaitingRoom } from "./WaitingRoom";
 import { ClientAddressPanel, ClientAddressView } from "./ClientAddressPanel";
 import { ClientStepSix } from "./ClientStepSix";
 import { NotaryStepSix } from "./NotaryStepSix";
+import { LocationPanel } from "./LocationPanel";
+import { holdWords, locationWanted } from "./location-check";
+import { LocationProblem, confirmLocationsForAct } from "./device-location";
 import { blockWords } from "./notarial-block";
 import { withProcess, type ProcessKind } from "../../../../config/process-screens";
 
@@ -47,7 +50,8 @@ const ROOM_PROCESS: Record<string, ProcessKind | undefined> = {
 };
 
 /** A room action's failure, as the page and its result say it. */
-const roomProblem = (failure: unknown): string => failure instanceof PickProblem ? failure.message : describeSessionError(failure);
+const roomProblem = (failure: unknown): string =>
+  failure instanceof PickProblem || failure instanceof LocationProblem ? failure.message : describeSessionError(failure);
 
 export const PING_MS = 20_000;
 export const SESSION_MS = 4_000;
@@ -201,6 +205,14 @@ export function RoomPage() {
   const addressPanel = isClient
     ? <ClientAddressPanel session={s} onSave={address => realEnotarySessionsService.giveAddress(s.id, address)} onSaved={next => { if (alive.current) setLoaded({ kind: "ready", session: next }); }} />
     : <ClientAddressView session={s} />;
+  // 128. Where each party is (Rule III), beside the address the client types.
+  const locationPanel = <LocationPanel session={s} onChanged={next => { if (alive.current) setLoaded({ kind: "ready", session: next }); }} />;
+  const whereabouts = locationWanted(s) ? <div style={{ display: "grid", gap: 12, minWidth: 0 }}>{locationPanel}{addressPanel}</div> : addressPanel;
+  // The act checks both locations again first (the client's device answers by itself), then records it.
+  const notarize = (input: NotarizeInput) => act("notarize", async () => {
+    if (locationWanted(s)) await confirmLocationsForAct(s.id);
+    return realEnotarySessionsService.notarize(s.id, input);
+  });
 
   return (
     <EnotaryCaseFrame
@@ -213,6 +225,9 @@ export function RoomPage() {
       {confirmDialog}
       <Notice icon={ShieldCheck} tone="info"><span data-testid="pilot-notice">{s.pilotNotice}</span></Notice>
       {problem !== null && <Notice icon={XCircle} tone="danger">{problem}</Notice>}
+      {s.status === "live" && (s.location?.block ?? null) !== null && (
+        <Notice icon={MapPin} tone="warn"><span data-testid="location-hold">{holdWords(s.location!.block!, s)}</span></Notice>
+      )}
 
       {s.status === "cancelled" && (
         <Notice icon={XCircle} tone="warn">
@@ -231,14 +246,14 @@ export function RoomPage() {
 
       {s.status === "preparing" && (
         isClient
-          ? <div className="eno-split"><div style={{ minWidth: 0 }}>{documentPanel}</div><div style={{ minWidth: 0 }}>{addressPanel}</div></div>
-          : documentPanel
+          ? <div className="eno-split"><div style={{ minWidth: 0 }}>{documentPanel}</div><div style={{ minWidth: 0 }}>{whereabouts}</div></div>
+          : locationWanted(s) ? <div className="eno-split"><div style={{ minWidth: 0 }}>{documentPanel}</div><div style={{ minWidth: 0 }}>{locationPanel}</div></div> : documentPanel
       )}
 
       {stepSix && (
         <ClientStepSix
           s={s} partner={partnerTitle(partner, true)} connection={connection} messages={messages} onSend={say}
-          busy={busy} act={act} onChanged={() => { void load(); }} address={addressPanel}
+          busy={busy} act={act} onChanged={() => { void load(); }} address={whereabouts}
           call={
             <CallCard
               look="v2" session={s} connection={connection} partnerName={partnerTitle(partner, true)} partnerRole="Notary public"
@@ -255,7 +270,7 @@ export function RoomPage() {
 
       {notaryStepSix && (
         <NotaryStepSix
-          s={s} partner={partner} connection={connection} messages={messages} onSend={say} address={addressPanel}
+          s={s} partner={partner} connection={connection} messages={messages} onSend={say} address={whereabouts}
           call={
             <CallCard
               look="v2" session={s} connection={connection} partnerName={partner} partnerRole="Client"
@@ -268,7 +283,7 @@ export function RoomPage() {
           flow={
             <NotaryFlow
               look="v4" s={s} busy={busy} act={act} onChanged={() => { void load(); }}
-              notarizePanel={<NotarizePanel session={s} busy={busy === "notarize"} onRecord={input => act("notarize", () => realEnotarySessionsService.notarize(s.id, input))} />}
+              notarizePanel={<NotarizePanel session={s} busy={busy === "notarize"} onRecord={notarize} />}
             />
           }
         />
@@ -299,14 +314,14 @@ export function RoomPage() {
 
           <div style={{ minWidth: 0, display: "grid", gap: 16 }}>
             {documentPanel}
-            {addressPanel}
+            {whereabouts}
 
             {isClient && <ClientFlow s={s} busy={busy} act={act} onChanged={() => { void load(); }} />}
 
             {!isClient && (
               <NotaryFlow
                 s={s} busy={busy} act={act} onChanged={() => { void load(); }}
-                notarizePanel={<NotarizePanel session={s} busy={busy === "notarize"} onRecord={input => act("notarize", () => realEnotarySessionsService.notarize(s.id, input))} />}
+                notarizePanel={<NotarizePanel session={s} busy={busy === "notarize"} onRecord={notarize} />}
               />
             )}
           </div>
@@ -418,7 +433,10 @@ export function NotarizePanel({
   const stated = session.statement ?? null;
   const actType: ActType = stated?.actType ?? "acknowledgment";
   const description = stated?.note ?? "";
-  const [place, setPlace] = useState("");
+  // 128. Where the location check placed the notary: the place of notarization, unless they write another.
+  const located = session.location?.notary?.outcome === "within" ? session.location.notary.place : null;
+  const [place, setPlace] = useState(located ?? "");
+  useEffect(() => { if (located !== null) setPlace(current => (current === "" ? located : current)); }, [located]);
   const [remarks, setRemarks] = useState("");
   // Saved with the session on the page where the notary places them; the act uses them.
   const placements: Placements = placementsOf(session);
@@ -430,7 +448,9 @@ export function NotarizePanel({
     return () => { alive = false; };
   }, []);
   const allChecked = session.attestations.every(item => checks[item.key] === true);
-  const block = session.notarizeBlock;
+  // A location check that is only older than three minutes does not hold the button: pressing it checks both again.
+  const refreshOnly = (session.notarizeBlock === "client_location" || session.notarizeBlock === "notary_location") && (session.location?.block ?? null) === null;
+  const block = refreshOnly ? null : session.notarizeBlock;
   const ready = block === null && allChecked && description.trim() !== "" && place.trim() !== "";
   const panel = useRef<HTMLDivElement>(null);
   const showForm = () => {
@@ -451,9 +471,11 @@ export function NotarizePanel({
       <PanelTitle>{stated !== null ? `Apply your seal: ${stated.actTypeLabel}` : "Record the notarial act"}</PanelTitle>
       <p data-testid="notarize-intro" style={{ ...bodyText, margin: "0 0 12px" }}>
         <strong>Final step: record the notarial act.</strong> Say where you are, place your notarial block, tick what you attest, and notarize. The document is then sealed and entered in your register.
+        {locationWanted(session) && " Both of your locations are checked again just before the act."}
       </p>
       {block !== null && <p data-testid="notarize-block" style={{ ...bodyText, color: "#8A3B12" }}>{BLOCK_WORDS[block]}</p>}
-      <TextField label="Place of notarization" value={place} onChange={setPlace} maxLength={400} required placeholder="e.g. Naga City, Camarines Sur" hint="Where you are as the notary, for example the city and province of your commission." />
+      <TextField label="Place of notarization" value={place} onChange={setPlace} maxLength={400} required placeholder="e.g. Naga City, Camarines Sur"
+        hint={located !== null ? "Where your location check placed you. Change it only if it is wrong." : "Where you are as the notary, for example the city and province of your commission."} />
       <fieldset style={{ border: 0, padding: 0, margin: "0 0 14px" }}>
         <legend style={labelStyle}>Your notarial block (seal and signature)</legend>
         <p data-testid="placement-summary" style={{ ...bodyText, margin: "0 0 10px" }}>

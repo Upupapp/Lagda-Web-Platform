@@ -79,6 +79,7 @@ export function NotarizedPage({ session, onCopies }: { session: Session; onCopie
           {row("Notary", act.notaryName)}
           {row("Notarized on", stampLabel(act.at))}
           {row("Place", act.place)}
+          {(session.location?.actLine ?? null) !== null && row("Where the parties were", session.location?.actLine, "notarized-location")}
           {row("Notarial register", hasPlace ? register : `Entry ${act.registerRef}`, "notarized-facts")}
           {row("Verification ID", <strong data-testid="verify-code" style={{ letterSpacing: "0.04em", color: E.navy }}>{done.code}</strong>)}
         </dl>

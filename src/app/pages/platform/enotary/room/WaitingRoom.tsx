@@ -9,7 +9,7 @@
 //
 // Presentational: the page owns the session, the calls and the confirmation.
 
-import { CheckCircle2, CircleDashed, DoorOpen, MapPin, ShieldCheck, FileText, UserRound, XCircle } from "lucide-react";
+import { CheckCircle2, CircleDashed, DoorOpen, LocateFixed, MapPin, ShieldCheck, FileText, UserRound, XCircle } from "lucide-react";
 import { ActionButton, ActionRow, GF } from "../../../../components/system/design-system";
 import { formatClientAddress, type Session } from "../../../../services/real/enotary-sessions.service";
 import { E, SERIF } from "../EnotaryChrome";
@@ -33,7 +33,7 @@ const WAIT_STYLES = `
 `;
 
 export interface ReadinessItem {
-  readonly key: "present" | "document" | "identity" | "address";
+  readonly key: "present" | "document" | "identity" | "address" | "location";
   readonly label: string;
   readonly done: boolean;
   readonly detail: string;
@@ -65,7 +65,21 @@ export function readinessOf(s: Session, isClient: boolean): readonly ReadinessIt
       detail: address !== null ? formatClientAddress(address)
         : isClient ? "Type where you are during the notarization, below." : "The client types it in the room. It is needed before you record the act.",
     },
+    // 128. Where the server checks locations: both parties within the Philippines (Rule III).
+    ...(s.location?.required === true ? [locationItem(s, isClient)] : []),
   ];
+}
+
+function locationItem(s: Session, isClient: boolean): ReadinessItem {
+  const mine = s.location?.[isClient ? "client" : "notary"] ?? null;
+  const theirs = s.location?.[isClient ? "notary" : "client"] ?? null;
+  const other = isClient ? "The notary" : s.clientName;
+  const done = mine?.outcome === "within" && theirs?.outcome === "within";
+  const detail = done ? `Both of you are within the Philippines: you in ${mine.place ?? "the Philippines"}, ${isClient ? "the notary" : s.clientName} in ${theirs.place ?? "the Philippines"}.`
+    : mine === null ? "Share your location below: every party must be in the Philippines."
+      : mine.outcome !== "within" ? `Your location check did not pass: ${mine.words.charAt(0).toLowerCase()}${mine.words.slice(1)}.`
+        : theirs === null ? `${other} has not shared their location yet.` : `${other}'s location check did not pass.`;
+  return { key: "location", label: "Both in the Philippines", done, detail };
 }
 
 const NOTARY_STEPS: readonly { title: string; text: string }[] = [
@@ -85,7 +99,7 @@ const CLIENT_STEPS: readonly { title: string; text: string }[] = [
 ];
 
 const ITEM_ICON: Record<ReadinessItem["key"], typeof UserRound> = {
-  present: UserRound, document: FileText, identity: ShieldCheck, address: MapPin,
+  present: UserRound, document: FileText, identity: ShieldCheck, address: MapPin, location: LocateFixed,
 };
 
 export function WaitingRoom({ session: s, isClient, partner, busy, onOpen, onCallOff }: {

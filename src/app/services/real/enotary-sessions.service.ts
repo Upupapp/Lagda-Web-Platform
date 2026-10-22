@@ -19,7 +19,41 @@ export type SessionStatus = "preparing" | "live" | "notarized" | "cancelled";
 export type SessionRole = "client" | "notary";
 export type ActType = "acknowledgment" | "jurat" | "signature_witnessing";
 export type NotarizeBlock =
-  | "not_live" | "no_document" | "not_final" | "no_identity" | "no_act" | "not_approved" | "unpaid" | "no_consent" | "no_address" | "client_absent";
+  | "not_live" | "no_document" | "not_final" | "no_identity" | "no_act" | "not_approved" | "unpaid" | "no_consent" | "no_address"
+  | "client_location" | "notary_location" | "client_absent";
+
+/** What a location check found (Rule III of the Rules on Electronic Notarization). */
+export type LocationOutcome = "within" | "outside" | "connection" | "refused" | "unavailable" | "imprecise";
+/** Why a check did not pass. */
+export type LocationReason =
+  | "abroad" | "at_sea" | "vpn" | "proxy" | "tor" | "hosting" | "connection_abroad" | "check_failed"
+  | "denied" | "unavailable" | "timeout" | "unsupported";
+/** Why the session waits on the location check. */
+export type LocationBlock =
+  | "client_location_missing" | "client_location_failed" | "client_location_stale"
+  | "notary_location_missing" | "notary_location_failed" | "notary_location_stale";
+
+/** One party's latest check: the place the map found ("Naga City, Camarines Sur"), never the position. */
+export interface PartyLocation {
+  outcome: LocationOutcome; reason: LocationReason | null; place: string | null; accuracyM: number | null; at: string; words: string;
+}
+
+export interface SessionLocation {
+  /** Whether this server checks the parties' locations. */
+  required: boolean;
+  client: PartyLocation | null;
+  notary: PartyLocation | null;
+  /** When the notary asked both devices to check again, just before the act. */
+  recheckRequestedAt: string | null;
+  block: LocationBlock | null;
+  /** The line the act recorded: "All parties were within the Philippines…". */
+  actLine: string | null;
+}
+
+/** What a device sends: its position, or why it gave none. */
+export type LocationInput =
+  | { latitude: number; longitude: number; accuracy: number }
+  | { refused: "denied" | "unavailable" | "timeout" | "unsupported" };
 export type SessionPaymentStatus = "awaiting" | "proof" | "confirmed" | "not_received" | "waived";
 export type CtcStatus = "requested" | "quoted" | "payment_sent" | "paid" | "fulfilled" | "received" | "declined" | "cancelled";
 export type CtcMode = "digital" | "physical";
@@ -71,6 +105,8 @@ export interface Session {
    * notarial block's place, and `blockOwnPage` (a page of its own at the end) are absent from an older server.
    */
   placements?: { seal: PagePoint | null; signature: PagePoint | null; savedAt: string | null; block?: PagePoint | null; blockOwnPage?: boolean } | null;
+  /** Where the parties are (Rule III). Absent from an older server. */
+  location?: SessionLocation;
 }
 
 /** The client's address for the notarial record: street or barangay, city or municipality, province. */
@@ -104,6 +140,8 @@ export interface RegisterEntry {
   documentKindLabel?: string | null; clientPlace?: string | null; clientIdType?: string | null; remarks?: string | null;
   /** Where the client said, in the room, they were during the act. Absent on an entry made before. */
   clientAddress?: string | null;
+  /** Where the location check placed the parties at the act. Absent on an entry made before. */
+  partiesLocation?: string | null;
   copy: { status: CtcStatus; mode: CtcMode; stage: ShipmentStage | null; trackingNo: string | null } | null;
 }
 
@@ -313,6 +351,19 @@ class RealEnotarySessionsService {
     return (await apiRequest<{ session: Session }>(`/me/enotary/sessions/${id(sessionId)}/reopen`, { method: "POST" })).session;
   }
 
+  /**
+   * 128. Where this device is, or why it gave nothing. The server places the position on the map of the Philippines and
+   * checks the connection; it answers the session with the place found, never the position.
+   */
+  async checkLocation(sessionId: string, input: LocationInput): Promise<Session> {
+    return (await apiRequest<{ session: Session }>(`/me/enotary/sessions/${id(sessionId)}/location`, { method: "POST", body: input })).session;
+  }
+
+  /** 128. The notary asks both devices to check again, just before recording the act. */
+  async requestLocationRecheck(sessionId: string): Promise<Session> {
+    return (await apiRequest<{ session: Session }>(`/me/enotary/sessions/${id(sessionId)}/location/recheck`, { method: "POST" })).session;
+  }
+
   /** 409 `notarize_blocked` (with the reason), 422 for an incomplete act. */
   async notarize(sessionId: string, input: NotarizeInput): Promise<Session> {
     return (await apiRequest<{ session: Session }>(`/me/enotary/sessions/${id(sessionId)}/notarize`, { method: "POST", body: input })).session;
@@ -469,6 +520,8 @@ export const BLOCK_WORDS: Record<NotarizeBlock, string> = {
   unpaid: "The fee is not settled yet: the client has not paid, or you have not confirmed the payment.",
   no_consent: "The client has not yet confirmed that they are signing freely.",
   no_address: "The client has not given their address for the notarial record yet.",
+  client_location: "The client's location has not been confirmed within the Philippines in the last three minutes.",
+  notary_location: "Your location has not been confirmed within the Philippines in the last three minutes.",
   client_absent: "The client has not been in the room in the last two minutes.",
 };
 
@@ -479,6 +532,11 @@ export function describeSessionError(error: unknown): string {
   if (status === 401) return "Your session has ended. Sign in again to continue.";
   if (status === 429) return "Too many tries in a short time. Wait a minute, then try again.";
   if (code === "session_unavailable") return "A session cannot start yet. The notary's fee has to be settled first.";
+  if (code === "location_required") {
+    // The server says whose location holds the step back, and why, in words written for the room.
+    const detail = error instanceof ApiError ? error.body?.message : undefined;
+    return detail !== undefined && detail !== "" ? detail : "Both of you must be confirmed within the Philippines before the session goes on.";
+  }
   if (code === "session_state") return "That has already moved on. Reload the page to see where it stands.";
   if (code === "ctc_state") return "That copy has already moved on. Reload the page to see where it stands.";
   if (code === "session_document_rejected") {

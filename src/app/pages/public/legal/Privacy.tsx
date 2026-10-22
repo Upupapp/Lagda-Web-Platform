@@ -12,8 +12,8 @@ import { LegalShell, Section, H3, P, UL, Facts, Plain, resetSections, COMPANY, t
 
 const META = {
   title: "Privacy Policy",
-  version: "1.0",
-  date: "5 October 2026",
+  version: "1.1",
+  date: "22 October 2026",
   summary: "How LAGDA collects, uses, keeps and protects personal information when you create an account, prepare and send documents, or sign a document someone sent you.",
 };
 
@@ -52,7 +52,7 @@ export function Privacy() {
           "Workspaces: membership, invitations, join links, roles, contacts and document sharing between accounts",
           "The public website at lagda.io, including the Contact, Book a Demo and eNotary waitlist forms",
         ]} />
-        <P>LAGDA eNotary is a separate product that is not yet offered. It is subject to Supreme Court accreditation and will have its own privacy terms before it opens. Joining its waitlist is covered by this policy.</P>
+        <P>LAGDA eNotary, remote notarization with a notary public on a video call, is offered as a pilot, subject to Supreme Court accreditation. This policy covers its location check (section 3); the rest of its terms are shown in the service before a request is made. Joining its waitlist is covered by this policy.</P>
       </Section>
 
       <Section id="collected" title="What we collect">
@@ -79,7 +79,17 @@ export function Privacy() {
         <Facts caption="Technical information" rows={[
           ["Server logs", "Each request to our servers is logged with its time, the address it came from (IP address), the page or action requested and the result. These logs are used for security and for diagnosing faults, and are kept briefly (section 8)."],
           ["Email delivery", "Which emails LAGDA sent you, when, and whether they could be delivered."],
-          ["Not collected", "LAGDA does not record device names, precise locations, or a history of your sign-ins in your account, and does not use analytics or advertising trackers on the website or in the app."],
+          ["Not collected", "LAGDA does not record device names or a history of your sign-ins in your account, and does not use analytics or advertising trackers on the website or in the app. It records a precise location only in a LAGDA eNotary session, when you share it (below)."],
+        ]} />
+
+        <H3>In a LAGDA eNotary session: where you are</H3>
+        <P>The Rules on Electronic Notarization (A.M. No. 24-10-14-SC) require every party to an electronic notarization to be in the Philippines, which the notary must confirm through the facility’s location function, and require the facility to detect VPNs and other tools that hide where a person is. So in a session room, LAGDA checks the location of the client and of the notary.</P>
+        <Facts caption="The eNotary location check" rows={[
+          ["When", "Only in a session room, after the room explains the check, when you press “Share my location”; and, once you have allowed it, again just before the notary records the act. Never outside a session, and never in the background."],
+          ["What is recorded", "For each check: your device’s position (latitude and longitude, to about one metre), how precise the device says it is, the city or municipality and province it falls in, the result, and the time. If your browser gives no position, only that it did not and why."],
+          ["The connection check", "The internet address your browser connects from is checked for a VPN, a proxy, Tor or a hosting network, and for its country. The address is sent to the checking service (section 6) and is not kept by LAGDA; only its country is."],
+          ["Who sees it", "Only you and the other party of that request. They see your city or municipality and province, how precise the check was and when it was made, never your exact position. The notarized document and the notary’s register record that all parties were within the Philippines, with each party’s city or municipality and province."],
+          ["Your address", "The address you type in the room, in your own words, is kept beside the check, as the Rules also ask each party to state where they are."],
         ]} />
 
         <H3>When you contact us</H3>
@@ -107,6 +117,7 @@ export function Privacy() {
           ["Security", "Checking passwords and codes, keeping sessions, scanning uploaded files for malware, rate limiting, server logs. Basis: our legitimate interest in keeping the service and your data safe."],
           ["Telling you what happened", "Emails and in-app notices about documents waiting for you, documents completed, invitations, and changes to your account. Basis: performance of the contract. You can turn off non-essential emails in Notification settings; security emails cannot be turned off."],
           ["Answering you", "Replying to messages sent through the website. Basis: your request."],
+          ["The eNotary location check", "Confirming that every party to an electronic notarization is in the Philippines, and keeping that record with the notarization. Basis: compliance with the Rules on Electronic Notarization, which require it."],
           ["Legal obligations", "Responding to lawful orders and keeping the records the law requires. Basis: compliance with law."],
         ]} />
         <P>We do not use your information for advertising, do not sell it, and do not make automated decisions about you that have legal or similarly significant effects.</P>
@@ -120,6 +131,7 @@ export function Privacy() {
           ["Google (Firebase Authentication)", "Sends and checks the email verification link when you create an account or change your email."],
           ["Google (Gmail)", "Sends LAGDA’s email notifications: signing links, completion notices, invitations, password resets and security codes."],
           ["OPSWAT MetaDefender", "Scans every uploaded file for malware before LAGDA accepts it. The file is sent to OPSWAT for analysis; OPSWAT’s own privacy terms govern what it retains about the scan."],
+          ["proxycheck.io", "Checks, for the eNotary location check, whether an internet address is a VPN, a proxy, Tor or a hosting network, and its country. It receives the address only. Location: Singapore, where it answers queries from Asia and keeps them in the region."],
         ]} />
         <P>Within LAGDA, information is visible to the people you share it with: the participants of a document, the members of a workspace according to their roles, and anyone you share a completed document with. If you let people find you by email, another LAGDA user who types your exact address can see your name, title and photo and send you a contact request.</P>
         <H3>Public verification</H3>
@@ -138,6 +150,7 @@ export function Privacy() {
           ["Completed documents, their audit trails and verification records", "Ten (10) years from completion, the period within which an action on a written contract may be brought under the Civil Code, and longer where another law requires it. They are kept even if the sender’s account is closed, because the other parties rely on them."],
           ["Drafts and unsent documents", "Until you delete them, or 90 days after the workspace that holds them is closed."],
           ["Cancelled, declined and expired requests", "Kept with their records as above, since they document what was and was not signed."],
+          ["eNotary location checks", "With the record of the notarial session they belong to, for as long as that record is kept, since they show that the parties were in the Philippines when the act was done."],
           ["Account information", "While your account is open, and for 30 days after it is closed so that a mistaken closure can be reversed. After that the account is deleted; your name stays on records of documents you signed or sent, as part of their audit trail."],
           ["Workspace activity log", "While the workspace exists."],
           ["Website messages (Contact, Book a Demo, waitlist)", "Two (2) years from the last reply."],

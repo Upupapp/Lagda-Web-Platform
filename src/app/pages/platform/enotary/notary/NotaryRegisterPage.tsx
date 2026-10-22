@@ -161,6 +161,7 @@ export function NotaryRegisterPage() {
                     Certified true copy: {copy.words}{copy.tracking !== null && <> · <span style={{ fontFamily: "ui-monospace, Menlo, Consolas, monospace" }}>{copy.tracking}</span></>}
                   </p>
                   {entry.remarks !== null && entry.remarks !== undefined && <p style={{ margin: "4px 0 0", fontSize: 13, color: E.text }}>Remarks: {entry.remarks}</p>}
+                  {entry.partiesLocation !== null && entry.partiesLocation !== undefined && <p data-testid="register-location" style={{ margin: "4px 0 0", fontSize: 13, color: E.quiet }}>{entry.partiesLocation}</p>}
                 </li>
               );
             })}
@@ -199,7 +200,10 @@ export function NotaryRegisterPage() {
                         {copy.words}
                         {copy.tracking !== null && <small style={{ display: "block", fontFamily: "ui-monospace, Menlo, Consolas, monospace" }}>{copy.tracking}</small>}
                       </td>
-                      <td style={{ padding: "12px 8px", color: E.text }}>{entry.remarks ?? ""}</td>
+                      <td style={{ padding: "12px 8px", color: E.text }}>
+                        {entry.remarks ?? ""}
+                        {entry.partiesLocation !== null && entry.partiesLocation !== undefined && <small data-testid="register-location" style={{ display: "block", marginTop: entry.remarks ? 4 : 0, color: E.quiet }}>{entry.partiesLocation}</small>}
+                      </td>
                     </tr>
                   );
                 })}
