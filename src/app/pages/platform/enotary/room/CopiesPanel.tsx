@@ -25,8 +25,12 @@ const STATUS_WORDS: Record<CertifiedCopy["status"], string> = {
   paid: "Paid — being prepared", fulfilled: "Issued", received: "Received", declined: "Declined", cancelled: "Cancelled",
 };
 
-export function CopiesPanel({ sessionId, role }: { sessionId: string; role: SessionRole }) {
+/** `onCopies` hears the list whenever it changes, so the page can say which step the case is on. */
+export function CopiesPanel({ sessionId, role, onCopies }: { sessionId: string; role: SessionRole; onCopies?: (copies: readonly CertifiedCopy[]) => void }) {
   const [copies, setCopies] = useState<CertifiedCopy[] | null>(null);
+  const heard = useRef(onCopies);
+  heard.current = onCopies;
+  useEffect(() => { if (copies !== null) heard.current?.(copies); }, [copies]);
   const [problem, setProblem] = useState<string | null>(null);
   const alive = useRef(true);
 

@@ -9,7 +9,7 @@
 import { useEffect, useRef, useState } from "react";
 import { BadgeCheck, Copy, ShieldAlert, ShieldCheck } from "lucide-react";
 import { ActionButton, GF } from "../../../../components/system/design-system";
-import { realEnotarySessionsService, sha256Hex, type Session } from "../../../../services/real/enotary-sessions.service";
+import { realEnotarySessionsService, sha256Hex, type CertifiedCopy, type Session } from "../../../../services/real/enotary-sessions.service";
 import { E } from "../EnotaryChrome";
 import { Panel, PanelTitle, bodyText, labelStyle } from "../onramp-ui";
 import { qrDataUrl } from "../payments/payment-qr";
@@ -26,7 +26,7 @@ const row = (label: string, value: React.ReactNode, testId?: string) => (
   </div>
 );
 
-export function NotarizedPage({ session }: { session: Session }) {
+export function NotarizedPage({ session, onCopies }: { session: Session; onCopies?: (copies: readonly CertifiedCopy[]) => void }) {
   const done = session.notarized;
   const act = session.act;
   const [seal, setSeal] = useState<Seal>("checking");
@@ -137,7 +137,7 @@ export function NotarizedPage({ session }: { session: Session }) {
         </div>
       </Panel>
 
-      <CopiesPanel sessionId={session.id} role={session.role} />
+      <CopiesPanel sessionId={session.id} role={session.role} onCopies={onCopies} />
     </>
   );
 }

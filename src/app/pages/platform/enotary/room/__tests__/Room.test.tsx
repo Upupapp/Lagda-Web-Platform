@@ -201,6 +201,22 @@ describe("the room", () => {
     const placed = { ...NOTARIZED, act: { ...NOTARIZED.act, docNo: 4, pageNo: 1, bookNo: "I", series: 2026 } };
     const valid = { state: "notarization", code: "LAGDA-NOT-ABCD-2345", actLabel: "Acknowledgment", notaryName: "Aiyana Cruz", registerRef: "2026-0004", performedAt: "2026-10-18T02:30:00.000Z", notarizedSha256: "b".repeat(64), originalSha256: "a".repeat(64) };
 
+    it("moves to step 8 while a certified copy is on its way, and ticks every step once it is received", async () => {
+      svc.lookup.mockResolvedValue({ session: session({ status: "notarized", document: DOC, ...placed }), canStart: false, reason: null });
+      svc.verify.mockResolvedValue(valid);
+      svc.copies.mockResolvedValue([copy({ status: "paid", mode: "physical", copies: 1, feeCentavos: 0 })]);
+      const { unmount } = room();
+      const rail = await screen.findByRole("list", { name: "Steps of this request" });
+      await waitFor(() => { expect(within(rail).getByText("Certified True Copy").closest("li")).toHaveClass("is-now"); });
+      unmount();
+      svc.copies.mockResolvedValue([copy({ status: "received", mode: "physical", copies: 1, feeCentavos: 0 })]);
+      room();
+      expect(await screen.findByRole("heading", { name: "Your eNotary request is complete" })).toBeInTheDocument();
+      const done = screen.getByRole("list", { name: "Steps of this request" });
+      expect(within(done).queryByText("Certified True Copy")?.closest("li")).not.toHaveClass("is-now");
+      expect(within(done).getAllByRole("listitem").filter(item => item.classList.contains("is-now"))).toHaveLength(0);
+    });
+
     it("shows the document, its register place, the seal with its fingerprint and QR, and says the seal is valid", async () => {
       svc.lookup.mockResolvedValue({ session: session({ status: "notarized", document: DOC, ...placed }), canStart: false, reason: null });
       svc.verify.mockResolvedValue(valid);

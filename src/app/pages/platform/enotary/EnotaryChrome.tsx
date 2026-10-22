@@ -171,10 +171,13 @@ export function EnotaryHeading({ children }: { children: ReactNode }) {
  * The steps of a notarial session, as one joined row: done steps ticked, the
  * current one filled, the rest numbered. Scrolls sideways where it must.
  */
+/** `current` names the step the case is on, or RAIL_COMPLETE once every step is done. */
+export const RAIL_COMPLETE = "complete";
+
 export function EnotaryRail({ steps, current, label }: {
   steps: readonly { readonly id: string; readonly label: string }[]; current: string; label: string;
 }) {
-  const index = steps.findIndex(step => step.id === current);
+  const index = current === RAIL_COMPLETE ? steps.length : steps.findIndex(step => step.id === current);
   return (
     <>
     <style>{RAIL_STYLES}</style>

@@ -14,9 +14,9 @@ import { FileUp, ShieldCheck, Stamp, XCircle } from "lucide-react";
 import { ActionButton, ActionRow, GF, Notice, TAP } from "../../../../components/system/design-system";
 import { useConfirm } from "../../../../components/platform/ConfirmDialog";
 import {
-  BLOCK_WORDS, describeSessionError, realEnotarySessionsService, type ActType, type NotarizeInput, type RoomMessage, type Session,
+  BLOCK_WORDS, describeSessionError, realEnotarySessionsService, type ActType, type CertifiedCopy, type NotarizeInput, type RoomMessage, type Session,
 } from "../../../../services/real/enotary-sessions.service";
-import { E, EnotaryFrame, EnotaryHeading } from "../EnotaryChrome";
+import { E, EnotaryFrame, EnotaryHeading, RAIL_COMPLETE } from "../EnotaryChrome";
 import { CLIENT_STEPS, EnotaryCaseFrame, NOTARY_STEPS } from "../CaseFrame";
 import { EnotaryLoadError, EnotaryLoading, EnotaryNotOffered } from "../EnotaryStates";
 import { OnrampNote, Panel, PanelTitle, TextField, bodyText, fieldStyle, labelStyle, linkButton, markSessionsOffered } from "../onramp-ui";
@@ -63,6 +63,7 @@ export function RoomPage() {
   const { invitationId = "" } = useParams();
   const [loaded, setLoaded] = useState<Loaded>({ kind: "loading" });
   const [messages, setMessages] = useState<RoomMessage[]>([]);
+  const [copies, setCopies] = useState<readonly CertifiedCopy[]>([]);
   const [problem, setProblem] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const alive = useRef(true);
@@ -165,8 +166,8 @@ export function RoomPage() {
     });
   };
 
-  const step = roomStep(s, isClient);
-  const heading = roomHeading(s, isClient, partner);
+  const step = roomStep(s, isClient, copies);
+  const heading = roomHeading(s, isClient, partner, step === RAIL_COMPLETE);
 
   const documentPanel = (
     <Panel testId="document-panel">
@@ -218,7 +219,7 @@ export function RoomPage() {
         </Notice>
       )}
 
-      {s.status === "notarized" && <NotarizedPage session={s} />}
+      {s.status === "notarized" && <NotarizedPage session={s} onCopies={setCopies} />}
 
       {s.status === "preparing" && (
         <WaitingRoom
@@ -323,14 +324,27 @@ export function RoomPage() {
 const partnerTitle = (name: string, isNotary: boolean) => (isNotary && !/^atty\.?\s/i.test(name) ? `Atty. ${name}` : name);
 
 /** Where the room is among the eight steps. */
-function roomStep(s: Session, isClient: boolean): string {
-  if (s.status === "notarized") return "notarized";
+/**
+ * The step the case is on. After the act: step 8 while a certified copy is asked for or on its way, and every step done
+ * once the client has received it (or a digital copy is issued). Without a copy, the case rests at step 7.
+ */
+function roomStep(s: Session, isClient: boolean, copies: readonly CertifiedCopy[]): string {
+  if (s.status === "notarized") {
+    if (copies.some(copy => copy.status === "received" || (copy.mode === "digital" && copy.status === "fulfilled"))) return RAIL_COMPLETE;
+    if (copies.some(copy => copy.status !== "declined" && copy.status !== "cancelled")) return "copy";
+    return "notarized";
+  }
   if (s.status === "preparing") return isClient ? "joins" : "accept";
   if ((s.finalizedAt ?? null) === null) return s.document === null ? "call" : "document";
   return isClient ? "finalized" : "fee";
 }
 
-function roomHeading(s: Session, isClient: boolean, partner: string): { title: string; lead: string } {
+function roomHeading(s: Session, isClient: boolean, partner: string, complete = false): { title: string; lead: string } {
+  if (s.status === "notarized" && complete) {
+    return isClient
+      ? { title: "Your eNotary request is complete", lead: "Your document is notarized, and your certified true copy is in your hands. Both stay here for you to open again." }
+      : { title: "Complete", lead: "The act is in your register, and the client has their certified true copy." };
+  }
   if (s.status === "notarized") {
     return { title: isClient ? "Your document is notarized" : "Notarized",
       lead: isClient ? `${partnerTitle(partner, true)} performed the notarial act. Preview the document below, or download it.` : "The notarial act is recorded and entered in your register." };
