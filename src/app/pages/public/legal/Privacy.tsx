@@ -12,8 +12,8 @@ import { LegalShell, Section, H3, P, UL, Facts, Plain, resetSections, COMPANY, t
 
 const META = {
   title: "Privacy Policy",
-  version: "1.1",
-  date: "22 October 2026",
+  version: "1.2",
+  date: "23 October 2026",
   summary: "How LAGDA collects, uses, keeps and protects personal information when you create an account, prepare and send documents, or sign a document someone sent you.",
 };
 
@@ -89,8 +89,10 @@ export function Privacy() {
           ["What is recorded", "For each check: your device’s position (latitude and longitude, to about one metre), how precise the device says it is, the city or municipality and province it falls in, the result, and the time. If your browser gives no position, only that it did not and why."],
           ["The connection check", "The internet address your browser connects from is checked for a VPN, a proxy, Tor or a hosting network, and for its country. The address is sent to the checking service (section 6) and is not kept by LAGDA; only its country is."],
           ["Who sees it", "Only you and the other party of that request. They see your city or municipality and province, how precise the check was and when it was made, never your exact position. The notarized document and the notary’s register record that all parties were within the Philippines, with each party’s city or municipality and province."],
+          ["Your declaration", "Once your location is verified, you confirm a statement that you are physically present at that place in the Philippines, as Rule III, Section 2(c) of the Rules requires each party to disclose their actual physical location. The declaration, the place and the time are kept with the session and stated on the notarized document."],
           ["Your address", "The address you type in the room, in your own words, is kept beside the check, as the Rules also ask each party to state where they are."],
         ]} />
+        <P>The personal information of the parties to an electronic notarization is processed under the Data Privacy Act of 2012 and is shared with the Supreme Court of the Philippines as the Rules and the Supreme Court’s guidelines on sharing electronic notarization data require: the notarized document and the notary’s electronic notarial book are transmitted to the Supreme Court, and its authorized officers may inspect them. Otherwise, information from an electronic notarization is disclosed only on the order of a court or where a law requires it.</P>
 
         <H3>When you contact us</H3>
         <P>Messages sent through the Contact, Book a Demo and eNotary waitlist forms are stored with the name, email address and any details you include, so that we can reply and keep a record of the conversation.</P>
@@ -131,7 +133,7 @@ export function Privacy() {
           ["Google (Firebase Authentication)", "Sends and checks the email verification link when you create an account or change your email."],
           ["Google (Gmail)", "Sends LAGDA’s email notifications: signing links, completion notices, invitations, password resets and security codes."],
           ["OPSWAT MetaDefender", "Scans every uploaded file for malware before LAGDA accepts it. The file is sent to OPSWAT for analysis; OPSWAT’s own privacy terms govern what it retains about the scan."],
-          ["proxycheck.io", "Checks, for the eNotary location check, whether an internet address is a VPN, a proxy, Tor or a hosting network, and its country. It receives the address only. Location: Singapore, where it answers queries from Asia and keeps them in the region."],
+          ["proxycheck.io", "Checks, for the eNotary location check, whether an internet address is a VPN, a proxy, Tor or a hosting network, and its country. It receives the address only, and LAGDA asks it to keep no log of the address. Locations: servers in Canada, the United Kingdom, Germany, Finland, Poland and Singapore; a query is handled and stored in the region it comes from (from the Philippines, Singapore)."],
         ]} />
         <P>Within LAGDA, information is visible to the people you share it with: the participants of a document, the members of a workspace according to their roles, and anyone you share a completed document with. If you let people find you by email, another LAGDA user who types your exact address can see your name, title and photo and send you a contact request.</P>
         <H3>Public verification</H3>
@@ -150,7 +152,8 @@ export function Privacy() {
           ["Completed documents, their audit trails and verification records", "Ten (10) years from completion, the period within which an action on a written contract may be brought under the Civil Code, and longer where another law requires it. They are kept even if the sender’s account is closed, because the other parties rely on them."],
           ["Drafts and unsent documents", "Until you delete them, or 90 days after the workspace that holds them is closed."],
           ["Cancelled, declined and expired requests", "Kept with their records as above, since they document what was and was not signed."],
-          ["eNotary location checks", "With the record of the notarial session they belong to, for as long as that record is kept, since they show that the parties were in the Philippines when the act was done."],
+          ["eNotary location checks and declarations", "With the record of the notarial session they belong to, for as long as that record is kept, since they show that the parties were in the Philippines when the act was done."],
+          ["Notarized documents and the electronic notarial book", "For the duration of the notary’s electronic notarial commission, or longer where a court of competent jurisdiction directs, as Rule XII, Section 2 of the Rules on Electronic Notarization requires."],
           ["Account information", "While your account is open, and for 30 days after it is closed so that a mistaken closure can be reversed. After that the account is deleted; your name stays on records of documents you signed or sent, as part of their audit trail."],
           ["Workspace activity log", "While the workspace exists."],
           ["Website messages (Contact, Book a Demo, waitlist)", "Two (2) years from the last reply."],
@@ -172,7 +175,7 @@ export function Privacy() {
           "Uploaded files are scanned for malware before they are accepted.",
           "Accounts can turn on two-step verification with an authenticator app, and can sign out other sessions at any time.",
         ]} />
-        <P>No system is perfectly secure. If we learn of a breach that is likely to cause you real risk, we will tell you and the National Privacy Commission within the time the law requires. Please report any security concern to us through the Contact page under the Security topic, or see our <Link to="/security/trust-center">responsible disclosure</Link> page.</P>
+        <P>No system is perfectly secure. If we learn of a breach that is likely to cause you real risk, we will tell you and the National Privacy Commission within the time the law requires (72 hours from knowledge of it); for a breach that touches an electronic notarization, we will also tell the Supreme Court’s office that oversees electronic notarization. Please report any security concern to us through the Contact page under the Security topic, or see our <Link to="/security/trust-center">responsible disclosure</Link> page.</P>
       </Section>
 
       <Section id="rights" title="Your rights">
