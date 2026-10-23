@@ -13,8 +13,8 @@ import { Privacy } from "../Privacy";
 import { Terms } from "../Terms";
 
 const PAGES = [
-  // 1.2: the parties' location declarations, sharing with the Supreme Court, notarial retention (23 Oct 2026).
-  { name: "Privacy Policy", Page: Privacy, sections: 14, version: "1.2", date: "23 October 2026" },
+  // 1.3: the connection check from public lists on LAGDA's own servers; proxycheck.io no longer receives addresses (23 Oct 2026).
+  { name: "Privacy Policy", Page: Privacy, sections: 14, version: "1.3", date: "23 October 2026" },
   { name: "Terms of Service", Page: Terms, sections: 20, version: "1.0", date: "5 October 2026" },
 ] as const;
 
