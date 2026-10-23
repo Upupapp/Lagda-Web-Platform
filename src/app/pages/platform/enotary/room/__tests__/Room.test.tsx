@@ -233,6 +233,84 @@ describe("the room", () => {
       expect(await screen.findByTestId("copies-panel")).toBeInTheDocument();
     });
 
+    it("at step 7, tells the client about step 8 above it and in the corner, and opens the request in the middle of the page", async () => {
+      const user = userEvent.setup();
+      window.sessionStorage.clear();
+      svc.lookup.mockResolvedValue({ session: session({ status: "notarized", document: DOC, ...placed }), canStart: false, reason: null });
+      svc.verify.mockResolvedValue(valid);
+      svc.requestCopy.mockResolvedValue(copy());
+      room();
+      const prompt = await screen.findByTestId("copy-prompt");
+      expect(prompt).toHaveTextContent("Need a certified true copy?");
+      expect(prompt).toHaveTextContent("Ask Atty. Aiyana Cruz for a certified true copy of your notarized document. Once you ask, your request moves on to step 8.");
+      expect(prompt).toHaveClass("is-asking");
+      expect(screen.getByTestId("copy-prompt-fab")).toBeInTheDocument();
+      expect(screen.getByTestId("copy-prompt-phone-bubble")).toHaveTextContent("Your request then moves on to step 8.");
+      const step8 = screen.getByTestId("rail-action-copy");
+      expect(step8.closest("li")).toHaveClass("is-action", "is-lit");
+      expect(screen.queryByRole("dialog", { name: "Certified true copies" })).toBeNull();
+
+      await user.click(screen.getByTestId("copy-prompt-open"));
+      const dialog = screen.getByRole("dialog", { name: "Certified true copies" });
+      expect(within(dialog).getByRole("radio", { name: "Digital certified copy" })).toHaveAttribute("aria-checked", "true");
+      expect(within(dialog).getByRole("radio", { name: "Printed copies by courier" })).toHaveAttribute("aria-checked", "false");
+      expect(screen.getByTestId("copy-prompt")).not.toHaveClass("is-asking");
+      await user.click(within(dialog).getByRole("button", { name: "Ask the notary for copies" }));
+      expect(svc.requestCopy).toHaveBeenCalledWith("ens_1", { mode: "digital" });
+      // The request is at step 8 now: the dialog closes, the prompt goes, and step 8 is the current step.
+      await waitFor(() => { expect(screen.queryByRole("dialog", { name: "Certified true copies" })).toBeNull(); });
+      expect(screen.queryByTestId("copy-prompt")).toBeNull();
+      expect(screen.queryByTestId("copy-prompt-fab")).toBeNull();
+      const rail = screen.getByRole("list", { name: "Steps of this request" });
+      expect(within(rail).getByText("Certified True Copy").closest("li")).toHaveClass("is-now");
+      expect(await screen.findByTestId("copy-status")).toHaveTextContent(/Waiting for the notary's fee/);
+    });
+
+    it("opens the request from step 8 on the rail and from the corner button, and hides the bubbles for the tab on Not now", async () => {
+      const user = userEvent.setup();
+      window.sessionStorage.clear();
+      svc.lookup.mockResolvedValue({ session: session({ status: "notarized", document: DOC, ...placed }), canStart: false, reason: null });
+      svc.verify.mockResolvedValue(valid);
+      const { unmount } = room();
+      await user.click(await screen.findByTestId("rail-action-copy"));
+      expect(screen.getByRole("dialog", { name: "Certified true copies" })).toBeInTheDocument();
+      await user.keyboard("{Escape}");
+      expect(screen.queryByRole("dialog", { name: "Certified true copies" })).toBeNull();
+      await user.click(screen.getByTestId("copy-prompt-fab"));
+      expect(screen.getByRole("dialog", { name: "Certified true copies" })).toBeInTheDocument();
+      await user.click(screen.getByRole("button", { name: "Cancel" }));
+
+      await user.click(screen.getByTestId("copy-prompt-later"));
+      expect(screen.queryByTestId("copy-prompt")).toBeNull();
+      expect(screen.queryByTestId("copy-prompt-phone-bubble")).toBeNull();
+      expect(screen.getByTestId("copy-prompt-fab")).toBeInTheDocument();
+      expect(screen.getByTestId("rail-action-copy").closest("li")).not.toHaveClass("is-lit");
+      unmount();
+      room();
+      expect(await screen.findByTestId("rail-action-copy")).toBeInTheDocument();
+      expect(screen.queryByTestId("copy-prompt")).toBeNull();
+      window.sessionStorage.clear();
+    });
+
+    it("says nothing of step 8 to the notary, nor to a client whose copy is already asked for", async () => {
+      window.sessionStorage.clear();
+      svc.lookup.mockResolvedValue({ session: session({ role: "notary", status: "notarized", document: DOC, ...placed }), canStart: false, reason: null });
+      svc.verify.mockResolvedValue(valid);
+      const { unmount } = room();
+      expect(await screen.findByTestId("copies-panel")).toBeInTheDocument();
+      expect(screen.queryByTestId("copy-prompt")).toBeNull();
+      expect(screen.queryByTestId("copy-prompt-fab")).toBeNull();
+      expect(screen.queryByTestId("rail-action-copy")).toBeNull();
+      unmount();
+      svc.lookup.mockResolvedValue({ session: session({ status: "notarized", document: DOC, ...placed }), canStart: false, reason: null });
+      svc.copies.mockResolvedValue([copy()]);
+      room();
+      expect(await screen.findByTestId("copy-card")).toBeInTheDocument();
+      expect(screen.queryByTestId("copy-prompt")).toBeNull();
+      expect(screen.queryByTestId("copy-prompt-fab")).toBeNull();
+      expect(screen.queryByTestId("rail-action-copy")).toBeNull();
+    });
+
     it("does not say the seal is valid when the public check disagrees with the file", async () => {
       svc.lookup.mockResolvedValue({ session: session({ status: "notarized", document: DOC, ...placed }), canStart: false, reason: null });
       svc.verify.mockResolvedValue({ ...valid, notarizedSha256: "c".repeat(64) });
@@ -484,25 +562,62 @@ describe("the room", () => {
 });
 
 describe("certified true copies", () => {
-  it("lets the client ask for a digital copy, and for printed ones only with a delivery address", async () => {
+  it("lets the client ask for a digital copy in a dialog, and for printed ones only with a delivery address", async () => {
     const user = userEvent.setup();
     svc.requestCopy.mockResolvedValue(copy());
-    render(<CopiesPanel sessionId="ens_1" role="client" />);
-    await user.click(await screen.findByRole("button", { name: "Ask the notary for copies" }));
+    render(<CopiesPanel sessionId="ens_1" role="client" notaryName="Aiyana Cruz" />);
+    expect(screen.queryByRole("radio")).toBeNull();
+    await user.click(await screen.findByRole("button", { name: "Request a certified true copy" }));
+    const dialog = screen.getByRole("dialog", { name: "Certified true copies" });
+    expect(dialog).toHaveTextContent("A certified true copy is a copy Atty. Aiyana Cruz certifies as a true copy of your notarized document.");
+    await user.click(within(dialog).getByRole("button", { name: "Ask the notary for copies" }));
     expect(svc.requestCopy).toHaveBeenCalledWith("ens_1", { mode: "digital" });
     expect(await screen.findByTestId("copy-status")).toHaveTextContent(/Waiting for the notary's fee/);
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(screen.queryByRole("button", { name: "Request a certified true copy" })).toBeNull();
   });
 
-  it("asks for the delivery details of printed copies", async () => {
+  it("asks for the delivery details of printed copies, with buttons for the number of copies", async () => {
     const user = userEvent.setup();
+    svc.requestCopy.mockResolvedValue(copy({ mode: "physical", copies: 2 }));
     render(<CopiesPanel sessionId="ens_1" role="client" />);
-    await user.click(await screen.findByLabelText("Printed certified copies, sent by courier"));
+    await user.click(await screen.findByRole("button", { name: "Request a certified true copy" }));
+    expect(screen.queryByTestId("copy-delivery-fields")).toBeNull();
+    await user.click(screen.getByRole("radio", { name: "Printed copies by courier" }));
+    expect(screen.getByRole("radio", { name: "Printed copies by courier" })).toHaveAttribute("aria-checked", "true");
     const ask = screen.getByRole("button", { name: "Ask the notary for copies" });
     expect(ask).toBeDisabled();
+    expect(screen.getByRole("button", { name: "One copy fewer" })).toBeDisabled();
+    await user.click(screen.getByRole("button", { name: "One copy more" }));
+    expect(screen.getByLabelText("How many copies (1 to 10)")).toHaveValue("2");
     await user.type(screen.getByLabelText(/Send to \(name\)/), "Rosa");
     await user.type(screen.getByLabelText(/Phone number/), "0917 000 0000");
     await user.type(screen.getByLabelText(/Delivery address/), "12 Rizal St");
     expect(ask).toBeEnabled();
+    await user.click(ask);
+    expect(svc.requestCopy).toHaveBeenCalledWith("ens_1", { mode: "physical", copies: 2, deliveryName: "Rosa", deliveryPhone: "0917 000 0000", deliveryAddress: "12 Rizal St" });
+  });
+
+  it("moves between the two choices with the arrow keys, closes on Esc, and keeps a refused request's reason in the dialog", async () => {
+    const user = userEvent.setup();
+    svc.requestCopy.mockRejectedValue(new ApiError(409, { code: "session_state", message: "A request for copies is already open." }, "x"));
+    render(<CopiesPanel sessionId="ens_1" role="client" />);
+    await user.click(await screen.findByRole("button", { name: "Request a certified true copy" }));
+    expect(screen.getByRole("dialog", { name: "Certified true copies" })).toHaveFocus();
+    const digital = screen.getByRole("radio", { name: "Digital certified copy" });
+    await user.click(digital);
+    expect(digital).toHaveFocus();
+    await user.keyboard("{ArrowRight}");
+    expect(screen.getByRole("radio", { name: "Printed copies by courier" })).toHaveAttribute("aria-checked", "true");
+    expect(screen.getByRole("radio", { name: "Printed copies by courier" })).toHaveFocus();
+    await user.keyboard("{ArrowLeft}");
+    expect(digital).toHaveAttribute("aria-checked", "true");
+    await user.click(screen.getByRole("button", { name: "Ask the notary for copies" }));
+    expect(await screen.findByTestId("copy-dialog-problem")).toBeInTheDocument();
+    expect(screen.getByRole("dialog", { name: "Certified true copies" })).toBeInTheDocument();
+    await user.keyboard("{Escape}");
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(screen.getByRole("button", { name: "Request a certified true copy" })).toHaveFocus();
   });
 
   it("shows the fee and the notary's QR when quoted, and sends only the reference", async () => {

@@ -194,7 +194,7 @@ export function SessionPanel({ invitationId, role, variant = "panel" }: { invita
           </p>
           <ActionEnd><Link to={roomPath} style={linkButton("secondary")}>Open the notarized document</Link></ActionEnd>
         </Frame>
-        <CopiesPanel sessionId={session.id} role={role} />
+        <CopiesPanel sessionId={session.id} role={role} notaryName={session.notaryName} />
       </>
     );
   }

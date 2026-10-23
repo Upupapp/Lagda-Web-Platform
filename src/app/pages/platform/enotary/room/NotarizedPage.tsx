@@ -139,7 +139,7 @@ export function NotarizedPage({ session, onCopies }: { session: Session; onCopie
         </div>
       </Panel>
 
-      <CopiesPanel sessionId={session.id} role={session.role} onCopies={onCopies} />
+      <CopiesPanel sessionId={session.id} role={session.role} onCopies={onCopies} notaryName={session.notaryName} />
     </>
   );
 }

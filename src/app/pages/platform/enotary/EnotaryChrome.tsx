@@ -31,8 +31,13 @@ const RAIL_STYLES = `
   .eno-rail li.is-now { border-bottom-color: ${E.maroon}; background: linear-gradient(180deg, #FFFFFF 0%, #FBEFF3 100%); }
   .eno-rail-dot { flex: 0 0 auto; display: grid; place-items: center; width: 28px; height: 28px; border-radius: 999px; font-size: 13px; font-weight: 700; box-sizing: border-box; }
   .eno-rail-label { font-size: 13px; line-height: 1.25; }
+  .eno-rail li.is-action { padding: 0; }
+  .eno-rail li.is-lit { box-shadow: inset 0 0 0 2px ${E.skyLine}; background: linear-gradient(180deg, #FFFFFF 0%, #F3F8FD 100%); }
+  .eno-rail-act { flex: 1 1 auto; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 8px; padding: 14px 8px 12px; border: 0; border-radius: 0; background: transparent; font: inherit; color: inherit; text-align: center; cursor: pointer; box-sizing: border-box; }
+  .eno-rail-act:hover { background: ${E.skyWash}; }
+  .eno-rail-act:focus-visible { outline: 3px solid ${E.skyDeep}; outline-offset: -3px; }
   @media (max-width: 860px) { .eno-rail li { flex: 1 0 auto; min-width: 108px; } }
-  @media (max-width: 520px) { .eno-rail li { min-width: 96px; padding: 12px 6px 10px; } .eno-rail-label { font-size: 12px; } }
+  @media (max-width: 520px) { .eno-rail li { min-width: 96px; padding: 12px 6px 10px; } .eno-rail-act { padding: 12px 6px 10px; } .eno-rail-label { font-size: 12px; } }
 `;
 
 const STYLES = `
@@ -174,24 +179,29 @@ export function EnotaryHeading({ children }: { children: ReactNode }) {
 /** `current` names the step the case is on, or RAIL_COMPLETE once every step is done. */
 export const RAIL_COMPLETE = "complete";
 
-export function EnotaryRail({ steps, current, label }: {
+/** A step still to come that the person can press: it opens what the step is about. `lit` marks it while a prompt points at it. */
+export interface RailAction { readonly id: string; readonly label: string; readonly onSelect: () => void; readonly lit?: boolean | undefined }
+
+export function EnotaryRail({ steps, current, label, action, above }: {
   steps: readonly { readonly id: string; readonly label: string }[]; current: string; label: string;
+  action?: RailAction | undefined;
+  /** Drawn over the rail in a box as wide as it: a prompt that points at a step. */
+  above?: ReactNode;
 }) {
   const index = current === RAIL_COMPLETE ? steps.length : steps.findIndex(step => step.id === current);
-  return (
-    <>
-    <style>{RAIL_STYLES}</style>
+  const rail = (
     <ol className="eno-rail" aria-label={label}>
       {steps.map((step, i) => {
         const done = i < index;
         const now = i === index;
-        return (
-          <li key={step.id} className={now ? "is-now" : undefined}>
+        const act = action !== undefined && action.id === step.id && !done && !now ? action : null;
+        const body = (
+          <>
             <span
               aria-hidden="true" className="eno-rail-dot"
               style={{
-                background: done ? E.navy : now ? E.maroon : E.paper, color: done || now ? "#FFFFFF" : E.faint,
-                border: `1.5px solid ${done ? E.navy : now ? E.maroon : "#C9D4E0"}`,
+                background: done ? E.navy : now ? E.maroon : E.paper, color: done || now ? "#FFFFFF" : act !== null ? E.skyDeep : E.faint,
+                border: `1.5px solid ${done ? E.navy : now ? E.maroon : act !== null ? E.sky : "#C9D4E0"}`,
                 boxShadow: now ? "0 0 0 4px rgba(140,29,63,0.14)" : "none",
               }}
             >
@@ -200,14 +210,27 @@ export function EnotaryRail({ steps, current, label }: {
             <span
               className="eno-rail-label"
               {...(now ? { "aria-current": "step" as const } : {})}
-              style={{ fontWeight: now || done ? 700 : 600, color: now ? E.maroon : done ? E.navy : E.faint }}
+              style={{ fontWeight: now || done || act !== null ? 700 : 600, color: now ? E.maroon : done ? E.navy : act !== null ? E.skyDeep : E.faint }}
             >
               {step.label}
             </span>
+          </>
+        );
+        const names = [now ? "is-now" : "", act !== null ? "is-action" : "", act?.lit === true ? "is-lit" : ""].filter(name => name !== "").join(" ");
+        return (
+          <li key={step.id} className={names === "" ? undefined : names}>
+            {act === null ? body : (
+              <button type="button" className="eno-rail-act" onClick={act.onSelect} aria-label={act.label} data-testid={`rail-action-${step.id}`}>{body}</button>
+            )}
           </li>
         );
       })}
     </ol>
+  );
+  return (
+    <>
+    <style>{RAIL_STYLES}</style>
+    {above === undefined || above === null ? rail : <div style={{ position: "relative" }}>{above}{rail}</div>}
     </>
   );
 }

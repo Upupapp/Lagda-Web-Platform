@@ -14,7 +14,7 @@ import { GF } from "../../../components/system/design-system";
 import { Z } from "../../../utils/z-index";
 import { PersonAvatar, brandGradient } from "../contacts/contacts-ui";
 import { useCounterpart } from "./useCounterpart";
-import { E, EnotaryRail, EnotarySeal, SERIF, type EnotaryTone } from "./EnotaryChrome";
+import { E, EnotaryRail, EnotarySeal, SERIF, type EnotaryTone, type RailAction } from "./EnotaryChrome";
 
 /** The client's eight steps, in the order of the pages. */
 export const CLIENT_STEPS = [
@@ -179,11 +179,15 @@ function TrailToggle({ open, onOpen, onClose, children }: { open: boolean; onOpe
   );
 }
 
-/** One page of a request. `party` is the card on the left; `children` are the step's panels on the right. */
-export function EnotaryCaseFrame({ tone, eyebrow, reference, title, lead, steps, current, back, party, children, trail }: {
+/**
+ * One page of a request. `party` is the card on the left; `children` are the step's panels on the right. `railAction`
+ * makes a step still to come pressable, and `railCallout` is drawn over the rail (a prompt pointing at that step).
+ */
+export function EnotaryCaseFrame({ tone, eyebrow, reference, title, lead, steps, current, back, party, children, trail, railAction, railCallout }: {
   tone: EnotaryTone; eyebrow: string; reference?: string | null; title: string; lead?: ReactNode;
   steps?: readonly { readonly id: string; readonly label: string }[]; current?: string;
   back?: { to: string; label: string }; party?: ReactNode; children: ReactNode; trail?: ReactNode;
+  railAction?: RailAction | undefined; railCallout?: ReactNode;
 }) {
   const [trailOpen, setTrailOpen] = useState(false);
   return (
@@ -204,7 +208,7 @@ export function EnotaryCaseFrame({ tone, eyebrow, reference, title, lead, steps,
           </p>
           <h1 data-testid="case-title" style={{ margin: 0, fontFamily: SERIF, fontWeight: 700, color: tone === "attorney" ? "#FFFFFF" : E.navy, letterSpacing: "-0.015em", fontSize: "clamp(26px, 5.4vw, 42px)", textShadow: tone === "attorney" ? "0 1px 2px rgba(0,0,0,0.18)" : undefined, lineHeight: 1.12, overflowWrap: "anywhere" }}>{title}</h1>
           {lead !== undefined && <p style={{ margin: "12px 0 0", fontSize: "clamp(14px, 3.6vw, 16px)", color: tone === "attorney" ? "rgba(255,255,255,0.9)" : E.quiet, lineHeight: 1.55, maxWidth: "62ch" }}>{lead}</p>}
-          {steps !== undefined && current !== undefined && <div style={{ marginTop: 20 }}><EnotaryRail steps={steps} current={current} label="Steps of this request" /></div>}
+          {steps !== undefined && current !== undefined && <div style={{ marginTop: 20 }}><EnotaryRail steps={steps} current={current} label="Steps of this request" action={railAction} above={railCallout} /></div>}
         </div>
       </div>
       <div className="eno-case-body">

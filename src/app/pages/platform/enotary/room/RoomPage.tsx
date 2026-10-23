@@ -37,6 +37,8 @@ import { ClientAddressPanel, ClientAddressView } from "./ClientAddressPanel";
 import { ClientStepSix } from "./ClientStepSix";
 import { NotaryStepSix } from "./NotaryStepSix";
 import { LocationLocator } from "./LocationLocator";
+import { CopyPromptCallout, CopyPromptFab, useCopyPrompt } from "./CopyPrompt";
+import { openCopyRequest } from "./copy-request";
 import { holdWords, locationWanted, openLocationCheck } from "./location-check";
 import { LocationProblem, confirmLocationsForAct } from "./device-location";
 import { blockWords } from "./notarial-block";
@@ -71,7 +73,8 @@ export function RoomPage() {
   const { invitationId = "" } = useParams();
   const [loaded, setLoaded] = useState<Loaded>({ kind: "loading" });
   const [messages, setMessages] = useState<RoomMessage[]>([]);
-  const [copies, setCopies] = useState<readonly CertifiedCopy[]>([]);
+  // Null until the copies panel has heard the server: the step-7 prompt waits for it.
+  const [copies, setCopies] = useState<readonly CertifiedCopy[] | null>(null);
   const [problem, setProblem] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const alive = useRef(true);
@@ -82,6 +85,7 @@ export function RoomPage() {
   const session = loaded.kind === "ready" ? loaded.session : null;
   const live = session !== null && session.status === "live";
   const connection = useRoomConnection(session?.id ?? null, session?.role ?? null, live);
+  const copyPrompt = useCopyPrompt(session?.id ?? null);
   const requestTrail = useRequestTrail(session?.invitationId ?? null, `${session?.status ?? ""}${session?.statement?.approvedAt ?? ""}${session?.finalizedAt ?? ""}`);
 
   const load = useCallback(async () => {
@@ -174,8 +178,10 @@ export function RoomPage() {
     });
   };
 
-  const step = roomStep(s, isClient, copies);
+  const step = roomStep(s, isClient, copies ?? []);
   const heading = roomHeading(s, isClient, partner, step === RAIL_COMPLETE);
+  // Step 7 with no copy asked for: the client is told about step 8, above it on a wide screen and in the corner on a phone.
+  const askCopy = isClient && s.status === "notarized" && copies !== null && step === "notarized";
 
   const documentPanel = (
     <Panel testId="document-panel">
@@ -228,9 +234,12 @@ export function RoomPage() {
       back={{ to: back, label: isClient ? "Back to the request" : "All requests" }}
       reference={s.reference ?? requestTrail?.reference ?? null}
       trail={<RequestTrail invitationId={s.invitationId} tone={isClient ? "client" : "attorney"} trail={requestTrail} />}
+      railAction={askCopy ? { id: "copy", label: "Certified True Copy: ask the notary for a certified true copy", onSelect: openCopyRequest, lit: copyPrompt.bubble } : undefined}
+      railCallout={askCopy && copyPrompt.bubble ? <CopyPromptCallout notaryName={s.notaryName} quiet={copyPrompt.quiet} onHide={copyPrompt.hide} /> : undefined}
     >
       {confirmDialog}
       {locator}
+      {askCopy && <CopyPromptFab bubble={copyPrompt.bubble} quiet={copyPrompt.quiet} onHide={copyPrompt.hide} />}
       <Notice icon={ShieldCheck} tone="info"><span data-testid="pilot-notice">{s.pilotNotice}</span></Notice>
       {problem !== null && <Notice icon={XCircle} tone="danger">{problem}</Notice>}
       {s.status === "live" && (s.location?.block ?? null) !== null && (

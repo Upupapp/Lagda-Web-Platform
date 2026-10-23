@@ -4,20 +4,22 @@
 // confirms from their own app and issues the copy. LAGDA never holds the money.
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Check, Download, Hourglass, Package, Send, ShieldAlert } from "lucide-react";
+import { Check, Download, FileCheck2, Hourglass, Package, Send, ShieldAlert } from "lucide-react";
 import { ActionButton, GF, Notice } from "../../../../components/system/design-system";
 import { formatPesos, parsePesos } from "../../../../services/real/enotary-invitations.service";
 import {
-  describeSessionError, realEnotarySessionsService, type CertifiedCopy, type CopyRequestInput, type CtcMode, type SessionRole,
+  describeSessionError, realEnotarySessionsService, type CertifiedCopy, type SessionRole,
 } from "../../../../services/real/enotary-sessions.service";
 import { E } from "../EnotaryChrome";
-import { Panel, PanelTitle, TextField, bodyText, labelStyle, fieldStyle } from "../onramp-ui";
+import { Panel, PanelTitle, TextField, bodyText } from "../onramp-ui";
 import { PaymentQr } from "../payments/PaymentQr";
 import { referenceProblem } from "../payments/ClientPaymentPanel";
 import { stampLabel } from "../requests/expiry";
 import { saveBlob } from "./room-bits";
 import { withProcess, type ProcessKind } from "../../../../config/process-screens";
 import { CopyJourney, nextStage } from "./CopyJourney";
+import { CopyRequestDialog } from "./CopyRequestDialog";
+import { OPEN_COPY_REQUEST_EVENT } from "./copy-request";
 
 export const COPIES_POLL_MS = 8_000;
 const STATUS_WORDS: Record<CertifiedCopy["status"], string> = {
@@ -25,14 +27,28 @@ const STATUS_WORDS: Record<CertifiedCopy["status"], string> = {
   paid: "Paid — being prepared", fulfilled: "Issued", received: "Received", declined: "Declined", cancelled: "Cancelled",
 };
 
-/** `onCopies` hears the list whenever it changes, so the page can say which step the case is on. */
-export function CopiesPanel({ sessionId, role, onCopies }: { sessionId: string; role: SessionRole; onCopies?: (copies: readonly CertifiedCopy[]) => void }) {
+/**
+ * `onCopies` hears the list whenever it changes, so the page can say which step the case is on. The client asks for
+ * copies in a dialog in the middle of the page, opened from this panel or by `openCopyRequest` (the step-7 prompt and
+ * step 8 on the rail).
+ */
+export function CopiesPanel({ sessionId, role, onCopies, notaryName }: {
+  sessionId: string; role: SessionRole; onCopies?: (copies: readonly CertifiedCopy[]) => void; notaryName?: string | undefined;
+}) {
   const [copies, setCopies] = useState<CertifiedCopy[] | null>(null);
   const heard = useRef(onCopies);
   heard.current = onCopies;
   useEffect(() => { if (copies !== null) heard.current?.(copies); }, [copies]);
   const [problem, setProblem] = useState<string | null>(null);
+  const [asking, setAsking] = useState(false);
   const alive = useRef(true);
+
+  useEffect(() => {
+    if (role !== "client") return;
+    const open = () => { setAsking(true); };
+    window.addEventListener(OPEN_COPY_REQUEST_EVENT, open);
+    return () => { window.removeEventListener(OPEN_COPY_REQUEST_EVENT, open); };
+  }, [role]);
 
   const load = useCallback(async () => {
     try {
@@ -72,49 +88,16 @@ export function CopiesPanel({ sessionId, role, onCopies }: { sessionId: string; 
       {copies.map(copy => (
         <CopyCard key={copy.id} copy={copy} role={role} onChange={replace} onFail={fail} />
       ))}
-      {role === "client" && !openOne && <RequestForm sessionId={sessionId} onDone={replace} onFail={fail} />}
-    </Panel>
-  );
-}
-
-function RequestForm({ sessionId, onDone, onFail }: { sessionId: string; onDone: (copy: CertifiedCopy) => void; onFail: (error: unknown) => void }) {
-  const [mode, setMode] = useState<CtcMode>("digital");
-  const [copies, setCopies] = useState("1");
-  const [name, setName] = useState("");
-  const [phone, setPhone] = useState("");
-  const [address, setAddress] = useState("");
-  const [busy, setBusy] = useState(false);
-  const count = Number(copies);
-  const countOk = Number.isInteger(count) && count >= 1 && count <= 10;
-  const ready = mode === "digital" || (countOk && name.trim() !== "" && phone.trim() !== "" && address.trim() !== "");
-  const send = async () => {
-    setBusy(true);
-    const input: CopyRequestInput = mode === "digital" ? { mode } : { mode, copies: count, deliveryName: name.trim(), deliveryPhone: phone.trim(), deliveryAddress: address.trim() };
-    try { onDone(await withProcess("enotary-copy-request", "", () => realEnotarySessionsService.requestCopy(sessionId, input), describeSessionError)); } catch (error) { onFail(error); } finally { setBusy(false); }
-  };
-  return (
-    <div data-testid="copy-request">
-      <fieldset style={{ border: 0, padding: 0, margin: "0 0 12px" }}>
-        <legend style={labelStyle}>What do you need?</legend>
-        {([["digital", "A digital certified copy (a PDF)"], ["physical", "Printed certified copies, sent by courier"]] as const).map(([value, label]) => (
-          <label key={value} style={{ ...GF, display: "flex", gap: 8, alignItems: "center", minHeight: 44, fontSize: 14.5 }}>
-            <input type="radio" name="copy-mode" value={value} checked={mode === value} onChange={() => { setMode(value); }} /> {label}
-          </label>
-        ))}
-      </fieldset>
-      {mode === "physical" && (
-        <>
-          <div style={{ marginBottom: 16 }}>
-            <label htmlFor="copy-count" style={labelStyle}>How many copies (1 to 10)</label>
-            <input id="copy-count" inputMode="numeric" value={copies} onChange={event => { setCopies(event.target.value); }} style={{ ...fieldStyle(!countOk), maxWidth: 120 }} />
-          </div>
-          <TextField label="Send to (name)" value={name} onChange={setName} maxLength={200} autoComplete="name" required />
-          <TextField label="Phone number for the courier" value={phone} onChange={setPhone} maxLength={50} inputMode="tel" autoComplete="tel" required />
-          <TextField label="Delivery address" value={address} onChange={setAddress} maxLength={500} autoComplete="street-address" required />
-        </>
+      {role === "client" && !openOne && (
+        <div data-testid="copy-request">
+          <ActionButton icon={FileCheck2} onClick={() => { setAsking(true); }}>Request a certified true copy</ActionButton>
+        </div>
       )}
-      <ActionButton icon={Send} disabled={busy || !ready} onClick={() => { void send(); }}>{busy ? "Asking…" : "Ask the notary for copies"}</ActionButton>
-    </div>
+      {role === "client" && !openOne && asking && (
+        <CopyRequestDialog sessionId={sessionId} notaryName={notaryName} onClose={() => { setAsking(false); }}
+          onDone={copy => { replace(copy); setAsking(false); }} />
+      )}
+    </Panel>
   );
 }
 
