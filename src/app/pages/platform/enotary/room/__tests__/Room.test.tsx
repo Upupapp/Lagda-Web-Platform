@@ -408,6 +408,11 @@ describe("the room", () => {
     expect(await screen.findByTestId("location-hold")).toHaveTextContent("Share your location to go on: every party must be in the Philippines");
     expect(screen.getByTestId("location-panel")).toBeInTheDocument();
     expect(screen.getByTestId("location-theirs")).toHaveTextContent("Atty. Aiyana Cruz: within the Philippines: Taguig City, Metro Manila");
+    // The card waits behind its button above the audit trail's; the hold notice opens it too.
+    expect(screen.getByTestId("locator-overlay")).not.toBeVisible();
+    expect(screen.getByTestId("locator-toggle")).toHaveAttribute("data-tone", "wait");
+    await userEvent.setup().click(screen.getByTestId("location-hold-open"));
+    expect(screen.getByRole("dialog", { name: "Location verification" })).toBeVisible();
   });
 
   it("checks both locations again just before the act, and takes the place of notarization from the notary's", async () => {

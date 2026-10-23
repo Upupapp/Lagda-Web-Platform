@@ -50,7 +50,7 @@ export function LocationPanel({ session: s, onChanged }: { session: Session; onC
         </h3>
         <p data-testid="location-notice" style={{ ...hintStyle, margin: 0 }}>
           The Rules on Electronic Notarization (A.M. No. 24-10-14-SC) require every party to be in the Philippines during the notarization.
-          LAGDA checks your device&rsquo;s location and your internet connection to confirm it. Only {other} sees where you are: your city or municipality and province.
+          LAGDA checks your device&rsquo;s location{location.connectionChecked === true ? " and your internet connection" : ""} to confirm it. Only {other} sees where you are: your city or municipality and province.
           Your exact position is kept with the notarial record and shown to no one. <Link to="/legal/privacy" style={{ color: "inherit", fontWeight: 700 }}>Privacy Policy</Link>
         </p>
 

@@ -36,8 +36,8 @@ import { WaitingRoom } from "./WaitingRoom";
 import { ClientAddressPanel, ClientAddressView } from "./ClientAddressPanel";
 import { ClientStepSix } from "./ClientStepSix";
 import { NotaryStepSix } from "./NotaryStepSix";
-import { LocationPanel } from "./LocationPanel";
-import { holdWords, locationWanted } from "./location-check";
+import { LocationLocator } from "./LocationLocator";
+import { holdWords, locationWanted, openLocationCheck } from "./location-check";
 import { LocationProblem, confirmLocationsForAct } from "./device-location";
 import { blockWords } from "./notarial-block";
 import { withProcess, type ProcessKind } from "../../../../config/process-screens";
@@ -208,9 +208,11 @@ export function RoomPage() {
   const addressPanel = isClient
     ? <ClientAddressPanel session={s} onSave={address => realEnotarySessionsService.giveAddress(s.id, address)} onSaved={next => { if (alive.current) setLoaded({ kind: "ready", session: next }); }} />
     : <ClientAddressView session={s} />;
-  // 128. Where each party is (Rule III), beside the address the client types.
-  const locationPanel = <LocationPanel session={s} onChanged={next => { if (alive.current) setLoaded({ kind: "ready", session: next }); }} />;
-  const whereabouts = locationWanted(s) ? <div style={{ display: "grid", gap: 12, minWidth: 0 }}>{locationPanel}{addressPanel}</div> : addressPanel;
+  // 128. Where each party is (Rule III): the check sits behind its own button above the audit trail's, in a dialog.
+  const locator = locationWanted(s)
+    ? <LocationLocator session={s} onChanged={next => { if (alive.current) setLoaded({ kind: "ready", session: next }); }} />
+    : null;
+  const whereabouts = addressPanel;
   // The act checks both locations again first (the client's device answers by itself), then records it.
   const notarize = (input: NotarizeInput) => act("notarize", async () => {
     if (locationWanted(s)) await confirmLocationsForAct(s.id);
@@ -228,10 +230,17 @@ export function RoomPage() {
       trail={<RequestTrail invitationId={s.invitationId} tone={isClient ? "client" : "attorney"} trail={requestTrail} />}
     >
       {confirmDialog}
+      {locator}
       <Notice icon={ShieldCheck} tone="info"><span data-testid="pilot-notice">{s.pilotNotice}</span></Notice>
       {problem !== null && <Notice icon={XCircle} tone="danger">{problem}</Notice>}
       {s.status === "live" && (s.location?.block ?? null) !== null && (
-        <Notice icon={MapPin} tone="warn"><span data-testid="location-hold">{holdWords(s.location!.block!, s)}</span></Notice>
+        <Notice icon={MapPin} tone="warn">
+          <span data-testid="location-hold">{holdWords(s.location!.block!, s)}</span>{" "}
+          <button type="button" onClick={openLocationCheck} data-testid="location-hold-open"
+            style={{ ...GF, padding: 0, border: 0, background: "transparent", color: "inherit", fontWeight: 800, textDecoration: "underline", cursor: "pointer", fontSize: "inherit" }}>
+            Open the location verification
+          </button>
+        </Notice>
       )}
 
       {s.status === "cancelled" && (
@@ -252,7 +261,7 @@ export function RoomPage() {
       {s.status === "preparing" && (
         isClient
           ? <div className="eno-split"><div style={{ minWidth: 0 }}>{documentPanel}</div><div style={{ minWidth: 0 }}>{whereabouts}</div></div>
-          : locationWanted(s) ? <div className="eno-split"><div style={{ minWidth: 0 }}>{documentPanel}</div><div style={{ minWidth: 0 }}>{locationPanel}</div></div> : documentPanel
+          : documentPanel
       )}
 
       {stepSix && (

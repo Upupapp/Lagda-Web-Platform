@@ -46,8 +46,10 @@ export interface SessionLocation {
   /** When the notary asked both devices to check again, just before the act. */
   recheckRequestedAt: string | null;
   block: LocationBlock | null;
-  /** The line the act recorded: "All parties were within the Philippines…". */
+  /** The line the act recorded: "All parties were situated within the territory of the Philippines…". */
   actLine: string | null;
+  /** Whether the parties' internet connections are screened too, not only their devices (absent from an older server). */
+  connectionChecked?: boolean;
 }
 
 /** What a device sends: its position, or why it gave none. */

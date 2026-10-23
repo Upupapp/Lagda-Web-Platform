@@ -12,6 +12,26 @@ import { checkedSince, locationPermission, readDevicePosition } from "./device-l
 export const locationWanted = (s: Session): boolean =>
   s.location?.required === true && (s.status === "preparing" || s.status === "live");
 
+/** Sent by any part of the room (the hold notice) to open the location dialog behind its button. */
+export const OPEN_LOCATION_EVENT = "enotary:open-location";
+export const openLocationCheck = (): void => { window.dispatchEvent(new Event(OPEN_LOCATION_EVENT)); };
+
+export type LocatorTone = "ok" | "wait" | "bad";
+export interface LocatorStanding { readonly tone: LocatorTone; readonly key: string; readonly title: string; readonly detail: string }
+
+/** Where this party's own check stands, in the words of the location button's bubble. */
+export function standingOf(s: Session): LocatorStanding {
+  const location = s.location!;
+  const mine = location[s.role];
+  const other = s.role === "client" ? `Atty. ${s.notaryName}` : s.clientName;
+  if (s.role === "client" && location.recheckRequestedAt !== null && checkedSince(mine, location.recheckRequestedAt) === null) {
+    return { tone: "wait", key: `asked:${location.recheckRequestedAt}`, title: "Check your location again", detail: `${other} asked to verify your location again before the act.` };
+  }
+  if (mine === null) return { tone: "wait", key: "none", title: "Share your location", detail: "Required by the Rules: every party must be within the Philippines." };
+  if (mine.outcome === "within") return { tone: "ok", key: `ok:${mine.at}`, title: "Location verified", detail: mine.place ?? "Within the Philippines" };
+  return { tone: "bad", key: `bad:${mine.at}`, title: mine.words, detail: "The session cannot go on until your location is verified." };
+}
+
 /** The check of `s` for this party: run it, and run it by itself on entering the room and when the notary asks again. */
 export function useLocationCheck(s: Session, onChanged: (next: Session) => void): { check: () => Promise<void>; checking: boolean; problem: string | null } {
   const [checking, setChecking] = useState(false);
@@ -90,6 +110,6 @@ export function holdWords(block: LocationBlock, s: Session): string {
     return mine ? "Share your location to go on: every party must be in the Philippines during the notarization."
       : `Waiting for ${other} to share their location: every party must be in the Philippines during the notarization.`;
   }
-  return mine ? "The session is on hold: your location check did not pass. See Your location below."
+  return mine ? "The session is on hold: your location check did not pass. The location verification says what to do."
     : `The session is on hold: the location check of ${other} did not pass. They see on their screen what to do.`;
 }
