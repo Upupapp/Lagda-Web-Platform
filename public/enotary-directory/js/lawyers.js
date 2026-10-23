@@ -23,6 +23,28 @@ window.LAWYERS = [
   "gender": ""
  },
  {
+  "id": "karina-watson-lagda-test-notary",
+  "kind": "lawyer",
+  "name": "Karina Watson (TEST ACCOUNT)",
+  "firm": "LAGDA Test Notary Office",
+  "position": "Test notary. Not a real lawyer.",
+  "city": "Baguio City",
+  "province": "Benguet",
+  "region": "Cordillera Administrative Region",
+  "island": "Luzon",
+  "address": "TEST ACCOUNT. Not a real law office. Baguio City, Benguet.",
+  "areas": [],
+  "education": "",
+  "barYear": null,
+  "profile": "https://lagda.io/",
+  "website": "https://lagda.io/",
+  "photo": "assets/logo.png",
+  "photoSource": "LAGDA logo",
+  "about": "TEST ACCOUNT. This notary exists only so LAGDA can try the eNotary flow. The credentials are mock values. Please do not send a real document to this notary. It can be removed at any time.",
+  "notaryAdvertised": false,
+  "gender": ""
+ },
+ {
   "id": "aiyana-yasmin-a-cruz",
   "kind": "lawyer",
   "name": "Aiyana Yasmin A. Cruz",
