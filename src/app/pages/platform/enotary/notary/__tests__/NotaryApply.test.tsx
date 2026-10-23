@@ -39,6 +39,9 @@ const FILLED = {
   office: "Cruz Law", city: "Makati City", province: "Metro Manila", phone: "0917 000 0000", rollNo: "12345", ibpNo: "IBP-9", ptrNo: "PTR-1", ptrYear: "2026", mcleComplianceNo: "MCLE-1",
   commissionNo: "C-77", commissionCourt: "Executive Judge, Makati RTC", commissionValidFrom: "2026-01-01", commissionValidUntil: "2027-12-31",
   notarialJurisdiction: "Makati City",
+  // 129. What the electronic notarial certificate must also state (Rule X, Sec. 2).
+  officeAddress: "Unit 5, Cruz Bldg, Ayala Ave.", ptrPlace: "Makati City", ptrIssuedOn: "2026-01-08",
+  mcleComplianceDate: "2025-04-14", ulasComplianceNo: "ULAS-1", ulasComplianceDate: "2026-02-02",
 };
 const file = (kind: ApplicationFile["kind"], over: Partial<ApplicationFile> = {}): ApplicationFile =>
   ({ id: `f_${kind}`, kind, filename: `${kind}.pdf`, mediaType: "application/pdf", sizeBytes: 2048, scanState: "clean", ...over });
@@ -72,6 +75,10 @@ describe("the form's rules", () => {
 
   it("asks for what is required on each step and nothing else", () => {
     expect(Object.keys(validateStep("personal", values({ office: " ", phone: "" }), [], today)).sort()).toEqual(["office", "phone"]);
+    // 129. The office address, the PTR's place and date, and the MCLE and ULAS compliance are required too.
+    expect(Object.keys(validateStep("personal", values({ officeAddress: "" }), [], today))).toEqual(["officeAddress"]);
+    expect(Object.keys(validateStep("credentials", values({ ptrPlace: "", ptrIssuedOn: "", mcleComplianceDate: "", ulasComplianceNo: "", ulasComplianceDate: "" }), [], today)).sort())
+      .toEqual(["mcleComplianceDate", "ptrIssuedOn", "ptrPlace", "ulasComplianceDate", "ulasComplianceNo"]);
     expect(validateStep("personal", values(), [], today)).toEqual({});
     expect(validateStep("credentials", values({ ibpChapter: "", mclePeriod: "" }), [], today)).toEqual({});
     // The last day of the commission still counts.
@@ -161,7 +168,7 @@ describe("the form, step by step", () => {
   });
 
   it("opens a draft on the first step that is not complete", async () => {
-    await open(viewOf(application({ office: "Cruz Law", city: "Makati", province: "Metro Manila", phone: "1" })));
+    await open(viewOf(application({ office: "Cruz Law", officeAddress: "Unit 5, Cruz Bldg", city: "Makati", province: "Metro Manila", phone: "1" })));
     expect(screen.getByRole("heading", { level: 2, name: "Credentials" })).toBeInTheDocument();
   });
 

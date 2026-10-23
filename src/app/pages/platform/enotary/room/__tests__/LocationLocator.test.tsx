@@ -113,6 +113,9 @@ describe("the location button and its dialog", () => {
     expect(standingOf(session("client", { client: within("Naga City, Camarines Sur"), recheckRequestedAt: "2026-10-22T09:30:00.000Z" })))
       .toMatchObject({ tone: "wait", title: "Check your location again", detail: "Atty. Aiyana Cruz asked to verify your location again before the act." });
     expect(standingOf(session("notary", { notary: within("Taguig City, Metro Manila") }))).toMatchObject({ tone: "ok", detail: "Taguig City, Metro Manila" });
+    // 129. Verified but not yet declared: the bubble asks for the declaration.
+    expect(standingOf(session("notary", { notary: { ...within("Taguig City, Metro Manila"), declaredAt: null } })))
+      .toMatchObject({ tone: "wait", title: "Confirm your location statement", detail: "Verified: Taguig City, Metro Manila. Declare it to go on." });
   });
 
   it("explains formally how LAGDA's automatic locator verifies that both parties are within Philippine territory", async () => {

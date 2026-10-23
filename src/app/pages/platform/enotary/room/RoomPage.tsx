@@ -470,7 +470,10 @@ export function NotarizePanel({
   // A location check that is only older than three minutes does not hold the button: pressing it checks both again.
   const refreshOnly = (session.notarizeBlock === "client_location" || session.notarizeBlock === "notary_location") && (session.location?.block ?? null) === null;
   const block = refreshOnly ? null : session.notarizeBlock;
-  const ready = block === null && allChecked && description.trim() !== "" && place.trim() !== "";
+  // 129. Both parties must have declared their location (Rule III, Sec. 2(c)); `undefined` is an older server that asks none.
+  const declareWait = !locationWanted(session) ? null
+    : session.location?.notary?.declaredAt === null ? "notary" : session.location?.client?.declaredAt === null ? "client" : null;
+  const ready = block === null && declareWait === null && allChecked && description.trim() !== "" && place.trim() !== "";
   const panel = useRef<HTMLDivElement>(null);
   const showForm = () => {
     window.dispatchEvent(new Event("enotary:minimise-call"));
@@ -493,6 +496,14 @@ export function NotarizePanel({
         {locationWanted(session) && " Both of your locations are checked again just before the act."}
       </p>
       {block !== null && <p data-testid="notarize-block" style={{ ...bodyText, color: "#8A3B12" }}>{BLOCK_WORDS[block]}</p>}
+      {block === null && declareWait !== null && (
+        <p data-testid="notarize-declaration" style={{ ...bodyText, color: "#8A3B12" }}>
+          {declareWait === "notary"
+            ? <>Declare your own location first: Rule III requires every party to disclose where they are.{" "}
+              <button type="button" onClick={openLocationCheck} style={{ ...GF, padding: 0, border: 0, background: "transparent", color: "inherit", fontWeight: 800, textDecoration: "underline", cursor: "pointer", fontSize: "inherit" }}>Open the location verification</button></>
+            : `${session.clientName} has not yet declared their location. They confirm it in their location verification; the act can be recorded after.`}
+        </p>
+      )}
       <TextField label="Place of notarization" value={place} onChange={setPlace} maxLength={400} required placeholder="e.g. Naga City, Camarines Sur"
         hint={located !== null ? "Where your location check placed you. Change it only if it is wrong." : "Where you are as the notary, for example the city and province of your commission."} />
       <fieldset style={{ border: 0, padding: 0, margin: "0 0 14px" }}>

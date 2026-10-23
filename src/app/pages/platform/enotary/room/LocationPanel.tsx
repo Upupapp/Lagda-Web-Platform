@@ -8,9 +8,10 @@
 // both devices to check again (just before recording the act), the client's device does so by itself.
 
 import { Link } from "react-router";
-import { CheckCircle2, Loader2, LocateFixed, MapPin, ShieldAlert, XCircle } from "lucide-react";
+import { useState } from "react";
+import { CheckCircle2, FileSignature, Loader2, LocateFixed, MapPin, ShieldAlert, XCircle } from "lucide-react";
 import { ActionButton, GF } from "../../../../components/system/design-system";
-import type { PartyLocation, Session } from "../../../../services/real/enotary-sessions.service";
+import { describeSessionError, realEnotarySessionsService, type PartyLocation, type Session } from "../../../../services/real/enotary-sessions.service";
 import { E } from "../EnotaryChrome";
 import { hintStyle } from "../onramp-ui";
 import { stampLabel } from "../requests/expiry";
@@ -28,6 +29,9 @@ const partyLine = (party: PartyLocation): string =>
 
 export function LocationPanel({ session: s, onChanged }: { session: Session; onChanged: (next: Session) => void }) {
   const { check, checking, problem } = useLocationCheck(s, onChanged);
+  // 129. The party's own declaration of the place the check found (Rule III, Sec. 2(c)).
+  const [declaring, setDeclaring] = useState(false);
+  const [declareProblem, setDeclareProblem] = useState<string | null>(null);
   if (!locationWanted(s)) return null;
   const location = s.location!;
   const mine = location[s.role];
@@ -79,6 +83,27 @@ export function LocationPanel({ session: s, onChanged }: { session: Session; onC
           </div>
         )}
 
+        {passed && mine.declaredAt !== undefined && (mine.declaredAt === null ? (
+          <div data-testid="location-declaration" style={{ padding: "12px 14px", borderRadius: 12, background: E.skyWash, border: `1px solid ${E.line}` }}>
+            <p style={{ margin: "0 0 4px", fontSize: 11.5, fontWeight: 800, letterSpacing: "0.08em", textTransform: "uppercase", color: E.navy }}>Your declaration &middot; Rule III, Sec. 2(c)</p>
+            <p data-testid="declaration-text" style={{ margin: "0 0 10px", fontSize: 14, lineHeight: 1.55, color: E.ink }}>
+              I declare that I am physically present in <strong>{mine.place}</strong>, Philippines, during this notarization, and that this is my actual location.
+            </p>
+            {declareProblem !== null && <p role="alert" style={{ margin: "0 0 8px", fontSize: 13.5, color: "#B0182B" }}>{declareProblem}</p>}
+            <ActionButton icon={declaring ? Loader2 : FileSignature} disabled={declaring} onClick={() => {
+              setDeclaring(true); setDeclareProblem(null);
+              void realEnotarySessionsService.declareLocation(s.id).then(onChanged, (error: unknown) => { setDeclareProblem(describeSessionError(error)); })
+                .finally(() => { setDeclaring(false); });
+            }}>
+              {declaring ? "Recording your declaration…" : "I confirm this statement"}
+            </ActionButton>
+          </div>
+        ) : (
+          <p data-testid="location-declared" style={{ margin: 0, display: "flex", gap: 6, alignItems: "center", fontSize: 13.5, fontWeight: 700, color: E.ok }}>
+            <FileSignature size={15} aria-hidden /> You declared this location on {stampLabel(mine.declaredAt)}.
+          </p>
+        ))}
+
         {problem !== null && <p role="alert" style={{ margin: 0, fontSize: 13.5, color: "#B0182B" }}>{problem}</p>}
 
         <div>
@@ -89,7 +114,7 @@ export function LocationPanel({ session: s, onChanged }: { session: Session; onC
 
         <p data-testid="location-theirs" style={{ margin: 0, paddingTop: 8, borderTop: `1px solid ${E.line}`, fontSize: 13, color: E.text }}>
           {theirs === null ? `${other} has not shared their location yet.`
-            : theirs.outcome === "within" ? <><strong>{other}:</strong> {theirs.words.replace(/^Within/, "within")} <span style={{ color: E.quiet }}>({partyLine(theirs)})</span></>
+            : theirs.outcome === "within" ? <><strong>{other}:</strong> {theirs.words.replace(/^Within/, "within")} <span style={{ color: E.quiet }}>({partyLine(theirs)}{theirs.declaredAt === undefined ? "" : theirs.declaredAt === null ? " · not yet declared" : " · declared"})</span></>
               : <><strong style={{ color: "#B0182B" }}>{other}&rsquo;s location check did not pass:</strong> {theirs.words.charAt(0).toLowerCase()}{theirs.words.slice(1)}.
                 {s.role === "notary" && theirs.reason === "denied" ? " Their screen shows them how to allow it; you can also guide them on the call." : " The session waits until it passes."}</>}
         </p>

@@ -28,7 +28,11 @@ export function standingOf(s: Session): LocatorStanding {
     return { tone: "wait", key: `asked:${location.recheckRequestedAt}`, title: "Check your location again", detail: `${other} asked to verify your location again before the act.` };
   }
   if (mine === null) return { tone: "wait", key: "none", title: "Share your location", detail: "Required by the Rules: every party must be within the Philippines." };
-  if (mine.outcome === "within") return { tone: "ok", key: `ok:${mine.at}`, title: "Location verified", detail: mine.place ?? "Within the Philippines" };
+  // 129. Verified, but not yet declared by the party (Rule III, Sec. 2(c)); `undefined` is an older server that asks none.
+  if (mine.outcome === "within" && mine.declaredAt === null) {
+    return { tone: "wait", key: `declare:${mine.at}`, title: "Confirm your location statement", detail: `Verified: ${mine.place ?? "within the Philippines"}. Declare it to go on.` };
+  }
+  if (mine.outcome === "within") return { tone: "ok", key: `ok:${mine.at}:${mine.declaredAt ?? ""}`, title: "Location verified", detail: mine.place ?? "Within the Philippines" };
   return { tone: "bad", key: `bad:${mine.at}`, title: mine.words, detail: "The session cannot go on until your location is verified." };
 }
 

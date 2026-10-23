@@ -375,6 +375,22 @@ describe("the room", () => {
     expect(screen.getByTestId("placement-summary")).not.toHaveTextContent("No signature picture");
   });
 
+  it("holds the act until both parties have declared their location, and leads the notary to declare their own (129)", async () => {
+    const statement = { actType: "acknowledgment" as const, actTypeLabel: "Acknowledgment", feeCentavos: 0, note: "Deed of Sale", statedAt: "2026-10-18T02:20:00.000Z", approvedAt: "2026-10-18T02:22:00.000Z" };
+    const placed = (place: string, declaredAt: string | null) => ({ outcome: "within" as const, reason: null, place, accuracyM: 20, at: "2026-10-18T02:23:00.000Z", words: `Within the Philippines: ${place}`, declaredAt });
+    const live = (notaryDeclared: string | null, clientDeclared: string | null) => session({
+      role: "notary", status: "live", document: DOC, notarizeBlock: null, finalizedAt: "2026-10-18T02:15:00.000Z",
+      identityConfirmedAt: "2026-10-18T02:18:00.000Z", statement, consent: { text: "x", version: "v1", at: "2026-10-18T02:22:00.000Z" },
+      location: { required: true, client: placed("Naga City, Camarines Sur", clientDeclared), notary: placed("Taguig City, Metro Manila", notaryDeclared), recheckRequestedAt: null, block: null, actLine: null },
+    });
+    const own = live(null, null);
+    svc.lookup.mockResolvedValue({ session: own, canStart: false, reason: null });
+    svc.get.mockResolvedValue(own); svc.ping.mockResolvedValue(own);
+    room();
+    expect(await screen.findByTestId("notarize-declaration")).toHaveTextContent("Declare your own location first: Rule III requires every party to disclose where they are.");
+    expect(screen.getByRole("button", { name: "Notarize the document" })).toBeDisabled();
+  });
+
   it("says why the server refused an act, in words", async () => {
     const user = userEvent.setup();
     const statement = { actType: "acknowledgment" as const, actTypeLabel: "Acknowledgment", feeCentavos: 0, note: "Deed", statedAt: "2026-10-18T02:20:00.000Z", approvedAt: "2026-10-18T02:22:00.000Z" };

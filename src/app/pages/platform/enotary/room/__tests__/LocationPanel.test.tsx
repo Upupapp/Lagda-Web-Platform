@@ -7,9 +7,13 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
 
 const checkLocation = vi.fn();
+const declareLocation = vi.fn();
 vi.mock("../../../../../services/real/enotary-sessions.service", async (original) => ({
   ...(await original<typeof import("../../../../../services/real/enotary-sessions.service")>()),
-  realEnotarySessionsService: { checkLocation: (...args: unknown[]) => checkLocation(...args) as unknown },
+  realEnotarySessionsService: {
+    checkLocation: (...args: unknown[]) => checkLocation(...args) as unknown,
+    declareLocation: (...args: unknown[]) => declareLocation(...args) as unknown,
+  },
 }));
 
 import { LocationPanel } from "../LocationPanel";
@@ -27,6 +31,7 @@ let permission: PermissionState = "prompt";
 let position: (ok: PositionCallback, fail: PositionErrorCallback) => void;
 beforeEach(() => {
   checkLocation.mockReset();
+  declareLocation.mockReset();
   permission = "prompt";
   position = ok => { ok({ coords: { latitude: 13.62, longitude: 123.19, accuracy: 18 } } as GeolocationPosition); };
   Object.defineProperty(navigator, "geolocation", { configurable: true, value: { getCurrentPosition: (ok: PositionCallback, fail: PositionErrorCallback) => { position(ok, fail); } } });
@@ -116,5 +121,39 @@ describe("the location card", () => {
     show(session("notary", { notary: within("Taguig City, Metro Manila", "2026-10-22T09:20:00.000Z"), recheckRequestedAt: "2026-10-22T09:30:00.000Z" }));
     await new Promise(resolve => { setTimeout(resolve, 20); });
     expect(checkLocation).not.toHaveBeenCalled();
+  });
+
+  it("asks the party to declare the place the check found, records it on a press, and then says when (129)", async () => {
+    const user = userEvent.setup();
+    const verified = session("client", { client: { ...within("Naga City, Camarines Sur"), declaredAt: null } });
+    const declared = session("client", { client: { ...within("Naga City, Camarines Sur"), declaredAt: "2026-10-22T09:29:10.000Z" } });
+    declareLocation.mockResolvedValue(declared);
+    const onChanged = show(verified);
+    expect(screen.getByTestId("declaration-text")).toHaveTextContent(
+      "I declare that I am physically present in Naga City, Camarines Sur, Philippines, during this notarization, and that this is my actual location.");
+    await user.click(screen.getByRole("button", { name: "I confirm this statement" }));
+    await waitFor(() => { expect(onChanged).toHaveBeenCalledWith(declared); });
+    expect(declareLocation).toHaveBeenCalledWith("ens_1");
+  });
+
+  it("says when the party declared, tells the other party whether they have, and asks nothing of an older server (129)", () => {
+    show(session("client", {
+      client: { ...within("Naga City, Camarines Sur"), declaredAt: "2026-10-22T09:29:10.000Z" },
+      notary: { ...within("Taguig City, Metro Manila"), declaredAt: null },
+    }));
+    expect(screen.getByTestId("location-declared")).toHaveTextContent("You declared this location on");
+    expect(screen.queryByTestId("location-declaration")).toBeNull();
+    expect(screen.getByTestId("location-theirs")).toHaveTextContent("not yet declared");
+    // A server without declarations sends no declaredAt: nothing is asked.
+    show(session("notary", { notary: within("Taguig City, Metro Manila") }));
+    expect(screen.queryAllByTestId("location-declaration")).toHaveLength(0);
+  });
+
+  it("says why a declaration was not recorded", async () => {
+    const user = userEvent.setup();
+    declareLocation.mockRejectedValue(new Error("offline"));
+    show(session("client", { client: { ...within("Naga City, Camarines Sur"), declaredAt: null } }));
+    await user.click(screen.getByRole("button", { name: "I confirm this statement" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent(/could not be done|try again/i);
   });
 });

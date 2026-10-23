@@ -78,7 +78,7 @@ export function NotarialBlockPreview({ facts, width, ghost = false }: { facts: B
           </div>
           <div style={{ borderLeft: `1px solid ${E.line}`, margin: "10px 0", padding: "0 12px", display: "flex", flexDirection: "column", justifyContent: "center", minWidth: 0 }}>
             <span style={{ fontFamily: SERIF, fontWeight: 700, fontSize: 14, lineHeight: "18px", color: E.navy, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>Atty. {facts.notaryName}</span>
-            <span style={{ ...eyebrow, letterSpacing: 1.3, marginTop: 4 }}>Notary public</span>
+            <span style={{ ...eyebrow, letterSpacing: 1.3, marginTop: 4 }}>Electronic notary public</span>
             {facts.commissionLine !== null && <span style={{ ...quiet, marginTop: 4, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{facts.commissionLine}</span>}
             <span style={quiet}>Register entry: given when the act is recorded</span>
           </div>

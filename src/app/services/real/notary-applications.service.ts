@@ -44,6 +44,11 @@ export interface ApplicationFields {
   ptrIssuedOn: string;
   mcleComplianceNo: string;
   mclePeriod: string;
+  /** 129. When the MCLE compliance was had, and the ULAS compliance and its date (YYYY-MM-DD), which the electronic
+   * notarial certificate states (Rule X, Sec. 2(k)). */
+  mcleComplianceDate: string;
+  ulasComplianceNo: string;
+  ulasComplianceDate: string;
   commissionNo: string;
   commissionCourt: string;
   commissionValidFrom: string;
@@ -72,9 +77,13 @@ export interface ApplicationView {
   agreement: ApplicationAgreement;
 }
 
+/** The dates the server takes beside the text fields, not among them. */
+const DATE_KEYS: ReadonlySet<string> = new Set(["commissionValidFrom", "commissionValidUntil", "ptrIssuedOn", "mcleComplianceDate", "ulasComplianceDate"]);
+
 export const EMPTY_FIELDS: ApplicationFields = {
   office: "", officeAddress: "", city: "", province: "", phone: "", rollNo: "", ibpNo: "", ibpChapter: "", ptrNo: "", ptrYear: "",
-  ptrPlace: "", ptrIssuedOn: "", mcleComplianceNo: "", mclePeriod: "", commissionNo: "", commissionCourt: "", commissionValidFrom: "",
+  ptrPlace: "", ptrIssuedOn: "", mcleComplianceNo: "", mclePeriod: "", mcleComplianceDate: "", ulasComplianceNo: "", ulasComplianceDate: "",
+  commissionNo: "", commissionCourt: "", commissionValidFrom: "",
   commissionValidUntil: "", notarialJurisdiction: "", listingConsent: false, agreementVersion: null,
 };
 
@@ -195,7 +204,7 @@ class RealNotaryApplicationsService {
     for (const [key, value] of Object.entries(patch)) {
       if (key === "listingConsent") body.listingConsent = value === true;
       else if (key === "agreementVersion") { if (typeof value === "string" && value !== "") body.acceptAgreement = true; }
-      else if (key === "commissionValidFrom" || key === "commissionValidUntil" || key === "ptrIssuedOn") body[key] = typeof value === "string" && value !== "" ? value : null;
+      else if (DATE_KEYS.has(key)) body[key] = typeof value === "string" && value !== "" ? value : null;
       else fields[key] = typeof value === "string" && value !== "" ? value : null;
     }
     if (Object.keys(fields).length > 0) body.fields = fields;

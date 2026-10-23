@@ -36,6 +36,8 @@ export type LocationBlock =
 /** One party's latest check: the place the map found ("Naga City, Camarines Sur"), never the position. */
 export interface PartyLocation {
   outcome: LocationOutcome; reason: LocationReason | null; place: string | null; accuracyM: number | null; at: string; words: string;
+  /** 129. When the party declared being at this place (Rule III, Sec. 2(c)); null until then; absent from an older server. */
+  declaredAt?: string | null;
 }
 
 export interface SessionLocation {
@@ -361,6 +363,11 @@ class RealEnotarySessionsService {
     return (await apiRequest<{ session: Session }>(`/me/enotary/sessions/${id(sessionId)}/location`, { method: "POST", body: input })).session;
   }
 
+  /** 129. The caller declares being where their latest check placed them (Rule III, Sec. 2(c)). */
+  async declareLocation(sessionId: string): Promise<Session> {
+    return (await apiRequest<{ session: Session }>(`/me/enotary/sessions/${id(sessionId)}/location/declaration`, { method: "POST" })).session;
+  }
+
   /** 128. The notary asks both devices to check again, just before recording the act. */
   async requestLocationRecheck(sessionId: string): Promise<Session> {
     return (await apiRequest<{ session: Session }>(`/me/enotary/sessions/${id(sessionId)}/location/recheck`, { method: "POST" })).session;
@@ -538,6 +545,10 @@ export function describeSessionError(error: unknown): string {
     // The server says whose location holds the step back, and why, in words written for the room.
     const detail = error instanceof ApiError ? error.body?.message : undefined;
     return detail !== undefined && detail !== "" ? detail : "Both of you must be confirmed within the Philippines before the session goes on.";
+  }
+  if (code === "location_declaration_required") {
+    const detail = error instanceof ApiError ? error.body?.message : undefined;
+    return detail !== undefined && detail !== "" ? detail : "Each party must declare their location in the location verification before the act.";
   }
   if (code === "session_state") return "That has already moved on. Reload the page to see where it stands.";
   if (code === "ctc_state") return "That copy has already moved on. Reload the page to see where it stands.";
