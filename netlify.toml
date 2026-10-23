@@ -10,10 +10,32 @@
   VITE_LAUNCH_PROFILE = "launch-default"
   NODE_VERSION = "22"
 
-# All redirect/proxy rules live in public/_redirects, not here — Netlify
-# processes that file's rules BEFORE this file's [[redirects]], so a rule
-# defined only here can be silently shadowed by that file's catch-all.
-# Confirmed the hard way: an /api/* proxy rule placed only in this file
-# never matched anything, because public/_redirects' `/* /index.html 200`
-# always won first. Keeping every rule in one file (that one) avoids two
-# sources of truth with different precedence.
+# Every redirect and proxy rule lives HERE, in order: the API proxy first, then
+# the app's catch-all. There is deliberately no public/_redirects: Netlify reads
+# that file's rules BEFORE these, so its catch-all would shadow the proxy below
+# (confirmed the hard way: an /api/* rule here never matched while
+# public/_redirects held `/* /index.html 200`). And only a rule in this file can
+# be signed, which the proxy needs.
+
+# Proxies the backend through this same origin so session cookies are genuinely
+# first-party (cross-site SameSite=Lax cookies don't reliably survive a
+# fetch()/XHR round trip in a real browser, confirmed live in production).
+#
+# `signed`: Netlify signs every proxied request with the secret held in the
+# LAGDA_API_SIGNATURE environment variable (an HS256 JWS in the x-nf-sign
+# header; the variable's scopes must include Runtime). The API believes the
+# visitor's address Netlify passes on (x-nf-client-connection-ip) only when that
+# signature checks out against PROXY_SIGNATURE_SECRET on the server; without it,
+# the API sees the Netlify machine that forwarded the request, not the visitor.
+[[redirects]]
+  from = "/api/*"
+  to = "https://172-236-149-148.sslip.io/:splat"
+  status = 200
+  force = true
+  signed = "LAGDA_API_SIGNATURE"
+
+# The single-page app: every other path that is not a file is the app.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

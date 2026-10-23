@@ -20,7 +20,7 @@ export default defineConfig({
 
   server: {
     proxy: {
-      // Mirrors production's own transport: Netlify's public/_redirects
+      // Mirrors production's own transport: netlify.toml's /api rule
       // proxies /api/* to the backend, stripping the /api prefix, so the
       // frontend never talks cross-origin and its session cookie is
       // genuinely first-party (see that file's own comment for why that

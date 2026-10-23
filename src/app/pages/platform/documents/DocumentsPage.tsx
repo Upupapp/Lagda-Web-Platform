@@ -2525,7 +2525,7 @@ function DocumentViewerDialog({
         onClose={onClose}
         // The download is a plain anchor, not `window.open` or a fetch-and-blob
         // dance. `/api` is proxied through this same origin by
-        // `public/_redirects` — done precisely so the session cookie is
+        // the /api rule in `netlify.toml` — done precisely so the session cookie is
         // first-party — so an ordinary same-origin navigation carries it. The
         // route answers with `Content-Disposition: attachment`, so the browser
         // downloads and the page never navigates away. `window.open` would
