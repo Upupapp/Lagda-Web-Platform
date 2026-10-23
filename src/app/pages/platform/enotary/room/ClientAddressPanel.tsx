@@ -93,7 +93,7 @@ export function ClientAddressPanel({ session, onSave, onSaved }: {
     <Panel testId="address-panel" tone="maroon">
       <PanelTitle>Where are you during the notarization?</PanelTitle>
       <p style={bodyText}>
-        The notarial record states where you are while the act is done. Type it yourself: LAGDA does not read your location. Only you and the notary see it.
+        The notarial record states where you are while the act is done, in your own words: type the street or barangay, city or municipality, and province. It is recorded beside the city LAGDA&rsquo;s location verification finds. Only you and the notary see it.
       </p>
       <TextField label="Street or barangay" value={street} onChange={setStreet} maxLength={STREET_MAX} required autoComplete="address-line1"
         placeholder="e.g. 12 Rizal St., Brgy. San Jose" error={tried ? problems.street : null} />

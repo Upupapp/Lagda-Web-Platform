@@ -13,7 +13,7 @@ const svc = {
   cancel: vi.fn(), requestReopen: vi.fn(), reopen: vi.fn(), notarize: vi.fn(), messages: vi.fn(), say: vi.fn(), document: vi.fn(), notarized: vi.fn(),
   copies: vi.fn(), requestCopy: vi.fn(), quote: vi.fn(), decline: vi.fn(), sendProof: vi.fn(), confirmPayment: vi.fn(),
   paymentNotReceived: vi.fn(), auditTrail: vi.fn(), auditPdf: vi.fn(), setStage: vi.fn(), finalize: vi.fn(), confirmIdentity: vi.fn(), stateAct: vi.fn(), approve: vi.fn(), fulfil: vi.fn(), received: vi.fn(), cancelCopy: vi.fn(), copyFile: vi.fn(), verify: vi.fn(),
-  checkLocation: vi.fn(), requestLocationRecheck: vi.fn(),
+  checkLocation: vi.fn(), requestLocationRecheck: vi.fn(), signature: vi.fn(),
 };
 vi.mock("../../../../../services/real/enotary-sessions.service", async (original) => ({
   ...(await original<typeof import("../../../../../services/real/enotary-sessions.service")>()),
@@ -335,6 +335,8 @@ describe("the room", () => {
     room();
     const go = await screen.findByRole("button", { name: "Notarize the document" });
     expect(go).toBeDisabled();
+    // With no signature picture on file, the panel says the block shows none.
+    expect(screen.getByTestId("placement-summary")).toHaveTextContent("No signature picture is saved, so the block shows none.");
     expect(screen.queryByLabelText(/Title or description/)).toBeNull();
     // The panel says what it is, formally, and a pill that stays on screen (above a maximised call) leads to it.
     expect(screen.getByTestId("notarize-intro")).toHaveTextContent("Final step: record the notarial act.");
@@ -357,6 +359,20 @@ describe("the room", () => {
     });
     expect(await screen.findByTestId("verify-code")).toHaveTextContent("LAGDA-NOT-ABCD-2345");
     expect(screen.getByTestId("notarized-facts")).toHaveTextContent(/Entry 2026-0001/);
+  });
+
+  it("says nothing about the signature picture until the server has answered whether there is one", async () => {
+    const statement = { actType: "acknowledgment" as const, actTypeLabel: "Acknowledgment", feeCentavos: 0, note: "Deed of Sale", statedAt: "2026-10-18T02:20:00.000Z", approvedAt: "2026-10-18T02:22:00.000Z" };
+    const live = session({
+      role: "notary", status: "live", document: DOC, notarizeBlock: null, finalizedAt: "2026-10-18T02:15:00.000Z",
+      identityConfirmedAt: "2026-10-18T02:18:00.000Z", statement, consent: { text: "x", version: "v1", at: "2026-10-18T02:22:00.000Z" },
+    });
+    svc.lookup.mockResolvedValue({ session: live, canStart: false, reason: null });
+    svc.get.mockResolvedValue(live); svc.ping.mockResolvedValue(live);
+    svc.signature.mockReturnValue(new Promise(() => undefined));
+    room();
+    expect(await screen.findByTestId("placement-summary")).toHaveTextContent("Across the foot of the last page.");
+    expect(screen.getByTestId("placement-summary")).not.toHaveTextContent("No signature picture");
   });
 
   it("says why the server refused an act, in words", async () => {

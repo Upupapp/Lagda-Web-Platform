@@ -457,7 +457,8 @@ export function NotarizePanel({
   const [remarks, setRemarks] = useState(draft?.remarks ?? "");
   // Saved with the session on the page where the notary places them; the act uses them.
   const placements: Placements = placementsOf(session);
-  const [hasSignature, setHasSignature] = useState(false);
+  // Not known until the server answers: the panel says nothing about the signature picture until then.
+  const [hasSignature, setHasSignature] = useState<boolean | null>(null);
   const [checks, setChecks] = useState<Record<string, boolean>>(draft?.checks ?? {});
   useEffect(() => { actDrafts.set(session.id, { place, remarks, checks }); }, [session.id, place, remarks, checks]);
   useEffect(() => {
@@ -497,7 +498,7 @@ export function NotarizePanel({
       <fieldset style={{ border: 0, padding: 0, margin: "0 0 14px" }}>
         <legend style={labelStyle}>Your notarial block (seal and signature)</legend>
         <p data-testid="placement-summary" style={{ ...bodyText, margin: "0 0 10px" }}>
-          {blockWords(placements)}.{hasSignature ? "" : " No signature picture is saved, so the block shows none."}
+          {blockWords(placements)}.{hasSignature === false ? " No signature picture is saved, so the block shows none." : ""}
         </p>
         <Link to={`/app/enotary/room/${encodeURIComponent(session.invitationId)}/place`} data-testid="open-placer" style={{ ...linkButton("secondary"), display: "inline-flex", alignItems: "center", gap: 8 }}>
           <Stamp size={16} aria-hidden /> Place my notarial block
