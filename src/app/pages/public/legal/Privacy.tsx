@@ -13,7 +13,7 @@ import { LegalShell, Section, H3, P, UL, Facts, Plain, resetSections, COMPANY, t
 const META = {
   title: "Privacy Policy",
   version: "1.3",
-  date: "23 October 2026",
+  date: "24 October 2026",
   summary: "How LAGDA collects, uses, keeps and protects personal information when you create an account, prepare and send documents, or sign a document someone sent you.",
 };
 
