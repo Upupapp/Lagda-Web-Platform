@@ -128,6 +128,9 @@ interface Presentation {
   readonly body: string;
   readonly actionLabel: string | null;
   readonly actionPath: string | null;
+  /** 131. A second way forward (an eNotary notice to a notary: the request alone on the desk). */
+  readonly secondaryActionLabel?: string;
+  readonly secondaryActionPath?: string;
   readonly why: string;
   /** Defaults to email-and-in-app; the in-app-only types say so. */
   readonly inAppOnly?: boolean;
@@ -980,11 +983,14 @@ function present(row: FeedRow): Presentation {
     case "ENOTARY_PAYMENT_PROOF_SENT": {
       const client = str(row.templateInput, "otherName");
       const amount = str(row.templateInput, "amount");
+      const requestId = enotaryRequestOf(row);
       return {
         category: "my-actions", severity: "info", priority: "high",
         title: client === null ? "A client says they paid you" : `${client} says they paid you`,
         body: `${client ?? "A client"} sent proof of a payment${amount === null ? "" : ` of ${amount}`}. Look for the transfer in your own bank or e-wallet app, then confirm it on your notary desk.`,
-        actionLabel: "Open the notary desk", actionPath: "/app/enotary/desk",
+        ...(requestId === null
+          ? { actionLabel: "Open the notary desk", actionPath: "/app/enotary/desk" }
+          : { actionLabel: "Open the request", actionPath: notaryRequestPath(requestId), secondaryActionLabel: ON_THE_DESK, secondaryActionPath: notaryDeskFilteredPath(requestId) }),
         why: "You were sent this because a client you accepted says they paid your fee.",
       };
     }
@@ -1031,7 +1037,9 @@ function present(row: FeedRow): Presentation {
       const toNotary = str(row.templateInput, "to") === "notary"
         || row.type === "ENOTARY_SESSION_DOCUMENT_ADDED" || row.type === "ENOTARY_SESSION_REOPEN_REQUESTED"
         || row.type === "ENOTARY_CTC_REQUESTED" || row.type === "ENOTARY_CTC_PROOF_SENT";
-      const requestPath = toNotary ? "/app/enotary/desk" : `/app/enotary/requests/${encodeURIComponent(requestId)}`;
+      // 131. A notice to the notary opens that very request on the desk, with the desk filtered to it as a second way.
+      const requestPath = toNotary ? notaryRequestPath(requestId) : `/app/enotary/requests/${encodeURIComponent(requestId)}`;
+      const onDesk = toNotary ? { secondaryActionLabel: ON_THE_DESK, secondaryActionPath: notaryDeskFilteredPath(requestId) } : {};
       const roomPath = `/app/enotary/room/${encodeURIComponent(requestId)}`;
       const why = toNotary
         ? "You were sent this because a client you accepted took a step in their notary session."
@@ -1040,8 +1048,8 @@ function present(row: FeedRow): Presentation {
         case "ENOTARY_SESSION_DOCUMENT_ADDED":
           return {
             category: "my-actions", severity: "info", priority: "high",
-            title: `${other} added the document`, body: `${other} added the document to be notarized. Open your desk to read it and open the room when you are ready.`,
-            actionLabel: "Open the notary desk", actionPath: requestPath, why,
+            title: `${other} added the document`, body: `${other} added the document to be notarized. Open the request to read it and open the room when you are ready.`,
+            actionLabel: "Open the request", actionPath: requestPath, ...onDesk, why,
           };
         case "ENOTARY_SESSION_OPENED":
           return {
@@ -1053,15 +1061,17 @@ function present(row: FeedRow): Presentation {
           return {
             category: "my-actions", severity: "warning", priority: "high",
             title: `${other} called off the session`, body: `${other} called off the notarization session. Nothing was notarized.`,
-            actionLabel: toNotary ? "Open the notary desk" : "Open request", actionPath: requestPath, why,
+            actionLabel: toNotary ? "Open the request" : "Open request", actionPath: requestPath, ...onDesk, why,
           };
-        // 122. The client asks the notary to open a called-off session again; the notary does.
+        // 122. The client asks the notary to open a called-off session again; the notary does. 131: straight to the
+        // room (the request page opens the session again by itself), or the request alone on the desk first.
         case "ENOTARY_SESSION_REOPEN_REQUESTED":
           return {
             category: "my-actions", severity: "info", priority: "high",
             title: `${other} asks to continue the session`,
-            body: `${other} called off the notarization session earlier and now asks to continue it. Open your desk to open the session again when you are ready.`,
-            actionLabel: "Open the notary desk", actionPath: requestPath, why,
+            body: `${other} called off the notarization session earlier and now asks to continue it. Open the session again to go straight to the room, or see the request on your desk first.`,
+            actionLabel: "Open the session again and go to the room", actionPath: `${notaryRequestPath(requestId)}?then=reopen`,
+            secondaryActionLabel: ON_THE_DESK, secondaryActionPath: notaryDeskFilteredPath(requestId), why,
           };
         case "ENOTARY_SESSION_REOPENED":
           return {
@@ -1079,8 +1089,8 @@ function present(row: FeedRow): Presentation {
         case "ENOTARY_CTC_REQUESTED":
           return {
             category: "my-actions", severity: "info", priority: "high",
-            title: `${other} asked for certified true copies`, body: `${other} asked for certified true copies of a notarized document. Open your desk to quote the fee or decline.`,
-            actionLabel: "Open the notary desk", actionPath: requestPath, why,
+            title: `${other} asked for certified true copies`, body: `${other} asked for certified true copies of a notarized document. Open the request to quote the fee or decline.`,
+            actionLabel: "Open the request", actionPath: requestPath, ...onDesk, why,
           };
         case "ENOTARY_CTC_QUOTED":
           return {
@@ -1097,8 +1107,8 @@ function present(row: FeedRow): Presentation {
         case "ENOTARY_CTC_PROOF_SENT":
           return {
             category: "my-actions", severity: "info", priority: "high",
-            title: `${other} says they paid for the copies`, body: `${other} sent the reference of their payment for the copies. Check your own bank or e-wallet app, then confirm it on your desk.`,
-            actionLabel: "Open the notary desk", actionPath: requestPath, why,
+            title: `${other} says they paid for the copies`, body: `${other} sent the reference of their payment for the copies. Check your own bank or e-wallet app, then confirm it on the request.`,
+            actionLabel: "Open the request", actionPath: requestPath, ...onDesk, why,
           };
         case "ENOTARY_CTC_PAID":
           return {
@@ -1140,6 +1150,17 @@ function present(row: FeedRow): Presentation {
   }
 }
 
+/** 131. The eNotary request an ENOTARY_* notice is about, from what it carries; null for any other notice. */
+function enotaryRequestOf(row: FeedRow): string | null {
+  if (!row.type.startsWith("ENOTARY_")) return null;
+  return str(row.templateInput, "invitationId") ?? str(row.templateInput, "requestId");
+}
+
+/** 131. A notary's eNotary notice opens that request; its second way forward shows the request alone on the desk. */
+export const notaryRequestPath = (requestId: string): string => `/app/enotary/desk/${encodeURIComponent(requestId)}`;
+export const notaryDeskFilteredPath = (requestId: string): string => `/app/enotary/desk?request=${encodeURIComponent(requestId)}`;
+const ON_THE_DESK = "Show it on my desk";
+
 function toRecord(row: FeedRow): NotificationRecord {
   const p = present(row);
   return {
@@ -1165,6 +1186,9 @@ function toRecord(row: FeedRow): NotificationRecord {
     hasAction: p.actionPath !== null,
     actionLabel: p.actionLabel,
     actionPath: p.actionPath,
+    ...(p.secondaryActionLabel === undefined || p.secondaryActionPath === undefined ? {} : { secondaryActionLabel: p.secondaryActionLabel, secondaryActionPath: p.secondaryActionPath }),
+    notificationType: row.type,
+    ...(enotaryRequestOf(row) === null ? {} : { enotaryRequestId: enotaryRequestOf(row)! }),
     whyReceivedReason: p.why,
     // The account's own state, persisted server-side (090). A backend that
     // predates it sends neither flag, which reads as unread.

@@ -226,21 +226,38 @@ export function NotificationDetailPage() {
             Received: {formatFullDate(n.createdAt)}{n.workspaceName.trim() !== "" && <> · Workspace: {n.workspaceName}</>}
           </div>
 
-          {/* Action button */}
+          {/* Action buttons: the main way forward, and a second one where the notice has it (131). */}
           {n.hasAction && n.actionPath && !isDismissed && (
-            <Link
-              to={n.actionPath}
-              style={{
-                display: "inline-flex", alignItems: "center", gap: 6,
-                background: AZURE, color: "white",
-                ...GF, fontSize: 13, fontWeight: 600,
-                padding: "9px 16px", borderRadius: 8, textDecoration: "none",
-                marginBottom: 16,
-              }}
-              className="notif-detail-action"
-            >
-              {n.actionLabel ?? "View"} <ChevronRight size={14} aria-hidden />
-            </Link>
+            <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 16 }}>
+              <Link
+                to={n.actionPath}
+                data-testid="notif-detail-action"
+                style={{
+                  display: "inline-flex", alignItems: "center", gap: 6,
+                  background: AZURE, color: "white",
+                  ...GF, fontSize: 13, fontWeight: 600,
+                  padding: "9px 16px", borderRadius: 8, textDecoration: "none",
+                }}
+                className="notif-detail-action"
+              >
+                {n.actionLabel ?? "View"} <ChevronRight size={14} aria-hidden />
+              </Link>
+              {n.secondaryActionPath !== undefined && (
+                <Link
+                  to={n.secondaryActionPath}
+                  data-testid="notif-detail-secondary"
+                  style={{
+                    display: "inline-flex", alignItems: "center", gap: 6,
+                    background: "white", color: AZURE, border: `1px solid ${AZURE}`,
+                    ...GF, fontSize: 13, fontWeight: 600,
+                    padding: "8px 15px", borderRadius: 8, textDecoration: "none",
+                  }}
+                  className="notif-detail-action"
+                >
+                  {n.secondaryActionLabel ?? "View"} <ChevronRight size={14} aria-hidden />
+                </Link>
+              )}
+            </div>
           )}
 
           {/* Controls */}

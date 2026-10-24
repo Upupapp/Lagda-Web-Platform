@@ -1154,6 +1154,11 @@ const NotificationsPage = lazy(() =>
     default: m.NotificationsPage,
   })),
 );
+const NotificationRequestRedirect = lazy(() =>
+  import("./app/pages/platform/notifications/NotificationRequestRedirect").then(
+    (m) => ({ default: m.NotificationRequestRedirect }),
+  ),
+);
 const NotificationDetailPage = lazy(() =>
   import("./app/pages/platform/notifications/NotificationDetailPage").then(
     (m) => ({ default: m.NotificationDetailPage }),
@@ -2474,6 +2479,15 @@ export const router = createBrowserRouter([
         element: (
           <Suspense fallback={null}>
             <NotificationDetailPage />
+          </Suspense>
+        ),
+      },
+      // 131. Where an emailed eNotary notice to a notary leads: the notice itself, found by its type and request.
+      {
+        path: "notifications/request/:type/:requestId",
+        element: (
+          <Suspense fallback={null}>
+            <NotificationRequestRedirect />
           </Suspense>
         ),
       },

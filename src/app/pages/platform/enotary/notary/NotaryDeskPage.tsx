@@ -19,12 +19,13 @@
 // after a notarization, the certified copies) from the SessionPanel.
 
 import { useCallback, useEffect, useRef, useState, type CSSProperties } from "react";
-import { Link, useParams } from "react-router";
+import { Link, useNavigate, useParams, useSearchParams } from "react-router";
+import { describeSessionError, realEnotarySessionsService } from "../../../../services/real/enotary-sessions.service";
 import { SessionPanel } from "../room/SessionPanel";
 import { DetailNotes, detailsLine } from "../request-details";
 import {
   AlertTriangle, Archive, BadgeCheck, Banknote, BookOpen, CalendarDays, Check, CheckCircle2, Clock, FileText, Hash, Hourglass, Inbox,
-  Image as ImageIcon, PenLine, QrCode, Video, X, XCircle,
+  Image as ImageIcon, PenLine, QrCode, Search, Video, X, XCircle,
 } from "lucide-react";
 import { Z } from "../../../../utils/z-index";
 import { DESK_CARD_STYLES, DeskCard, DeskGroup, type DeskFact, type DeskPill, type DeskTile } from "./DeskCard";
@@ -101,6 +102,18 @@ export function groupRequests(requests: readonly DeskRequest[]): {
   return out;
 }
 
+/** 131. Which of the desk's groups is shown: every one, or one of the four the counts name. */
+export type DeskShow = "all" | "waiting" | "progress" | "completed" | "closed";
+const DESK_SHOWS: readonly DeskShow[] = ["all", "waiting", "progress", "completed", "closed"];
+export const deskShowOf = (value: string | null): DeskShow => (DESK_SHOWS as readonly string[]).includes(value ?? "") ? value as DeskShow : "all";
+
+/** 131. Whether a request answers the desk's search: the client's name or the request's reference, in any case. */
+export function deskMatches(item: { readonly client: { readonly name: string }; readonly reference?: string | null | undefined }, query: string): boolean {
+  const words = query.trim().toLowerCase();
+  if (words === "") return true;
+  return item.client.name.toLowerCase().includes(words) || (item.reference ?? "").toLowerCase().includes(words);
+}
+
 /** What a notarized case says about its copy, in the words of the desk. */
 export function copyWords(copy: NonNullable<DeskRequest["case"]>["copy"]): string {
   if (copy === null) return "Notarized";
@@ -167,8 +180,19 @@ function tilesOf(request: DeskRequest): DeskTile[] {
   return tiles;
 }
 
-export function NotaryDeskPage({ focus }: { focus?: string } = {}) {
+/**
+ * `focus`: one request on its own page. `then: "reopen"` (131, from a client's "asks to continue" notice): the request's
+ * called-off session is opened again by itself and the notary taken to the room; one already open goes straight there.
+ */
+export function NotaryDeskPage({ focus, then }: { focus?: string; then?: "reopen" | undefined } = {}) {
   const { isCompact } = useViewport();
+  const navigate = useNavigate();
+  // 131. The desk's filters: one request (from a notice), a group, and a search by name or reference.
+  const [params, setParams] = useSearchParams();
+  const only = params.get("request");
+  const show = deskShowOf(params.get("show"));
+  const [query, setQuery] = useState("");
+  const reopening = useRef(false);
   const platform = useOptionalPlatform();
   // Actions sit on the right on a wide screen and at the start, wrapping, on a narrow one.
   const buttonRow = (top = 10): CSSProperties => ({ display: "flex", gap: 10, flexWrap: "wrap", marginTop: top, justifyContent: isCompact ? "flex-start" : "flex-end" });
@@ -213,6 +237,30 @@ export function NotaryDeskPage({ focus }: { focus?: string } = {}) {
     document.addEventListener("visibilitychange", shown);
     return () => { alive.current = false; clearInterval(timer); document.removeEventListener("visibilitychange", shown); };
   }, [load]);
+
+  // 131. Open the session again and go to the room, once, as the notice asked. Anything that stops it is said on the
+  // request's page, which stays open.
+  useEffect(() => {
+    if (then !== "reopen" || focus === undefined || loaded.kind !== "ready" || reopening.current) return;
+    const request = loaded.desk.requests.find(item => item.id === focus);
+    if (request === undefined) return;
+    reopening.current = true;
+    const room = `/app/enotary/room/${encodeURIComponent(focus)}`;
+    const status = request.session?.status;
+    if (status === "preparing" || status === "live") { void navigate(room, { replace: true }); return; }
+    if (status !== "cancelled") return;
+    void (async () => {
+      try {
+        const found = await realEnotarySessionsService.lookup(focus);
+        const session = found?.session ?? null;
+        if (session === null) throw new Error("This request has no session to open again.");
+        await withProcess("enotary-session-reopen", request.client.name, () => realEnotarySessionsService.reopen(session.id), describeSessionError);
+        if (alive.current) void navigate(room, { replace: true });
+      } catch (error) {
+        if (alive.current) setProblem(describeSessionError(error));
+      }
+    })();
+  }, [then, focus, loaded, navigate]);
 
   if (loaded.kind === "loading") return <EnotaryLoading />;
   if (loaded.kind === "error") return <EnotaryLoadError onRetry={() => { setLoaded({ kind: "loading" }); load(false); }} />;
@@ -337,12 +385,26 @@ export function NotaryDeskPage({ focus }: { focus?: string } = {}) {
     }
   };
 
-  const tally = (label: string, count: number, testId: string) => (
-    <div data-testid={testId} style={{ ...GF, flex: "1 1 0", minWidth: 96, padding: "12px 14px", borderRadius: 12, background: "#FFFFFF", border: `1px solid ${E.maroonLine}`, textAlign: "center" }}>
-      <strong style={{ display: "block", fontSize: 26, color: E.maroon, lineHeight: 1.1 }}>{count}</strong>
-      <span style={{ fontSize: 13, color: E.quiet, fontWeight: 600 }}>{label}</span>
-    </div>
-  );
+  // 131. The counts are the desk's filter: pressing one shows that group alone, pressing it again shows every group.
+  const setFilter = (value: DeskShow) => {
+    setParams(previous => { const next = new URLSearchParams(previous); if (value === "all") next.delete("show"); else next.set("show", value); return next; }, { replace: true });
+  };
+  const showEverything = () => {
+    setQuery("");
+    setParams(previous => { const next = new URLSearchParams(previous); next.delete("show"); next.delete("request"); return next; }, { replace: true });
+  };
+  const tally = (label: string, count: number, testId: string, value: DeskShow) => {
+    const on = show === value;
+    return (
+      <button type="button" data-testid={testId} aria-pressed={on} className="dk-tally" title={on ? "Show every request" : `Show only: ${label}`}
+        onClick={() => { setFilter(on ? "all" : value); }}
+        style={{ ...GF, flex: "1 1 0", minWidth: 96, padding: "12px 14px", borderRadius: 12, background: on ? E.maroonWash : "#FFFFFF",
+          border: `1px solid ${on ? E.maroon : E.maroonLine}`, boxShadow: on ? `inset 0 0 0 1px ${E.maroon}` : "none", textAlign: "center", cursor: "pointer" }}>
+        <strong style={{ display: "block", fontSize: 26, color: E.maroon, lineHeight: 1.1 }}>{count}</strong>
+        <span style={{ fontSize: 13, color: on ? E.maroon : E.quiet, fontWeight: on ? 800 : 600 }}>{label}</span>
+      </button>
+    );
+  };
 
   const renderRequest = (request: DeskRequest) => {
       const clock = new ExpiryClock();
@@ -461,6 +523,19 @@ export function NotaryDeskPage({ focus }: { focus?: string } = {}) {
     </div>
   );
 
+  // 131. What the filters leave: one request when a notice asked for it, the group pressed, and what the search finds.
+  const fits = (item: { readonly id: string; readonly client: { readonly name: string }; readonly reference?: string | null | undefined }) =>
+    (only === null || item.id === only) && deskMatches(item, query);
+  const wants = (group: DeskShow) => show === "all" || show === group;
+  const shownIncoming = wants("waiting") ? incoming.filter(fits) : [];
+  const shownWaiting = wants("waiting") ? waiting.filter(fits) : [];
+  const shownProgress = wants("progress") ? progress.filter(fits) : [];
+  const shownCompleted = wants("completed") ? completed.filter(fits) : [];
+  const shownClosed = wants("closed") ? closed.filter(fits) : [];
+  const filtering = only !== null || show !== "all" || query.trim() !== "";
+  const nothingShown = shownIncoming.length + shownWaiting.length + shownProgress.length + shownCompleted.length + shownClosed.length === 0;
+  const onlyOne = only === null ? null : desk.requests.find(request => request.id === only) ?? incoming.find(item => item.id === only) ?? null;
+
   const focused = focus === undefined ? null : desk.requests.find(request => request.id === focus) ?? null;
   const focusedNew = focus === undefined ? null : incoming.find(item => item.id === focus) ?? null;
   if (focus !== undefined) {
@@ -497,20 +572,43 @@ export function NotaryDeskPage({ focus }: { focus?: string } = {}) {
           </Notice>
         </div>
       )}
-      <div style={{ display: "flex", gap: 10, flexWrap: "wrap", margin: "0 0 18px" }}>
-        {tally("Waiting", incoming.length + waiting.length, "tally-waiting")}
-        {tally("In progress", progress.length, "tally-progress")}
-        {tally("Completed", completed.length, "tally-completed")}
+      <div role="group" aria-label="Show requests by status" style={{ display: "flex", gap: 10, flexWrap: "wrap", margin: "0 0 12px" }}>
+        {tally("Waiting", incoming.length + waiting.length, "tally-waiting", "waiting")}
+        {tally("In progress", progress.length, "tally-progress", "progress")}
+        {tally("Completed", completed.length, "tally-completed", "completed")}
+        {tally("Closed", closed.length, "tally-closed", "closed")}
       </div>
+      <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center", margin: "0 0 18px" }}>
+        <label htmlFor="desk-search" style={{ position: "relative", flex: "1 1 260px", minWidth: 0 }}>
+          <span style={{ position: "absolute", width: 1, height: 1, overflow: "hidden", clip: "rect(0 0 0 0)" }}>Search requests by client or reference</span>
+          <Search size={16} aria-hidden style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: E.quiet }} />
+          <input id="desk-search" data-testid="desk-search" type="search" value={query} placeholder="Search by client name or reference (EN-2026-…)"
+            onChange={event => { setQuery(event.target.value); }} style={{ ...fieldStyle(), paddingLeft: 36 }} />
+        </label>
+        {filtering && (
+          <button type="button" className="dk-link" data-testid="desk-show-all" onClick={showEverything} style={{ cursor: "pointer" }}>
+            <X size={16} aria-hidden /> Show all requests
+          </button>
+        )}
+      </div>
+      {only !== null && (
+        <div data-testid="desk-only">
+          <Notice icon={Inbox} tone="info">
+            {onlyOne === null
+              ? "The request this link names is not on your desk any more."
+              : <>Showing only the request from <strong>{onlyOne.client.name}</strong>{"reference" in onlyOne && onlyOne.reference !== null && onlyOne.reference !== undefined ? <> ({onlyOne.reference})</> : null}.</>}
+          </Notice>
+        </div>
+      )}
       {said !== null && <div role="status" style={{ ...GF, margin: "0 0 12px", fontSize: 14, fontWeight: 600, color: E.ok }}>{said}</div>}
       {problem !== null && <Notice icon={AlertTriangle} tone="danger">{problem}</Notice>}
 
-      {incoming.length > 0 && (
+      {shownIncoming.length > 0 && (
         <section aria-labelledby="desk-new-heading" data-testid="desk-new" style={{ margin: "0 0 18px" }}>
           <h2 id="desk-new-heading" style={{ ...GF, fontSize: 17, color: E.ink, margin: "0 0 4px" }}>New requests for you</h2>
           <p style={{ ...bodyText, margin: "0 0 10px" }}>Clients sent these to your listing. Take one to see it among your requests, then accept or decline it.</p>
           <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "grid", gap: 14 }}>
-            {incoming.map(item => {
+            {shownIncoming.map(item => {
               const clock = new ExpiryClock();
               clock.sync(item.secondsLeft, receivedAt);
               const msLeft = clock.msLeft(now);
@@ -549,17 +647,25 @@ export function NotaryDeskPage({ focus }: { focus?: string } = {}) {
             <span>No request is waiting. A new one appears here by itself, without reloading the page. A request sent as a link or a QR card appears once you open it.</span>
           </p>
         </Panel>
+      ) : filtering && nothingShown ? (
+        <Panel testId="desk-no-match">
+          <p style={{ ...bodyText, margin: 0, display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+            <Search size={20} aria-hidden style={{ color: E.maroon, flex: "0 0 auto" }} />
+            <span style={{ flex: "1 1 240px" }}>No request matches what you chose.</span>
+            <button type="button" className="dk-link" onClick={showEverything} style={{ cursor: "pointer" }}>Show all requests</button>
+          </p>
+        </Panel>
       ) : (
         <div data-testid="desk-list" style={{ display: "grid", gap: 22 }}>
-          {waiting.length > 0 && (
-            <DeskGroup id="waiting" title="Waiting for you" icon={Hourglass} count={waiting.length}>{waiting.map(renderRequest)}</DeskGroup>
+          {shownWaiting.length > 0 && (
+            <DeskGroup id="waiting" title="Waiting for you" icon={Hourglass} count={shownWaiting.length}>{shownWaiting.map(renderRequest)}</DeskGroup>
           )}
-          {progress.length > 0 && (
-            <DeskGroup id="progress" title="In progress" icon={Video} count={progress.length}>{progress.map(renderRequest)}</DeskGroup>
+          {shownProgress.length > 0 && (
+            <DeskGroup id="progress" title="In progress" icon={Video} count={shownProgress.length}>{shownProgress.map(renderRequest)}</DeskGroup>
           )}
-          {completed.length > 0 && (
-            <DeskGroup id="completed" title="Completed" icon={BadgeCheck} count={completed.length}>
-              {completed.map(request => (
+          {shownCompleted.length > 0 && (
+            <DeskGroup id="completed" title="Completed" icon={BadgeCheck} count={shownCompleted.length}>
+              {shownCompleted.map(request => (
                 <DeskCard
                   key={request.id} name={request.client.name} reference={request.reference} verified={request.client.identityVerified}
                   pills={[{ ...pillOf(request), testId: "desk-copy-state" }]} openTo={`/app/enotary/desk/${encodeURIComponent(request.id)}`}
@@ -568,8 +674,8 @@ export function NotaryDeskPage({ focus }: { focus?: string } = {}) {
               ))}
             </DeskGroup>
           )}
-          {closed.length > 0 && (
-            <DeskGroup id="closed" title="Closed" icon={Archive} count={closed.length}>{closed.map(renderRequest)}</DeskGroup>
+          {shownClosed.length > 0 && (
+            <DeskGroup id="closed" title="Closed" icon={Archive} count={shownClosed.length}>{shownClosed.map(renderRequest)}</DeskGroup>
           )}
         </div>
       )}
@@ -586,5 +692,7 @@ export function NotaryDeskPage({ focus }: { focus?: string } = {}) {
 /** /app/enotary/desk/:id: one request, in its own page. */
 export function NotaryRequestPage() {
   const { id = "" } = useParams<{ id: string }>();
-  return <NotaryDeskPage focus={id} />;
+  // 131. `?then=reopen`: from the client's "asks to continue" notice, open the session again and go to the room.
+  const [params] = useSearchParams();
+  return <NotaryDeskPage focus={id} then={params.get("then") === "reopen" ? "reopen" : undefined} />;
 }

@@ -103,6 +103,12 @@ export interface NotificationRecord {
   readonly hasAction: boolean;
   readonly actionLabel: string | null;
   readonly actionPath: string | null;
+  /** 131. A second way forward, beside the main one (an eNotary notice to a notary: the request alone on the desk). */
+  readonly secondaryActionLabel?: string;
+  readonly secondaryActionPath?: string;
+  /** 131. The notice's type and the eNotary request it is about, so an emailed link can find the notice again. */
+  readonly notificationType?: string;
+  readonly enotaryRequestId?: string;
   readonly whyReceivedReason: string;
   status: NotificationStatus;
   /**
