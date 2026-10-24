@@ -12,7 +12,7 @@ import { LegalShell, Section, H3, P, UL, Facts, Plain, resetSections, COMPANY, t
 
 const META = {
   title: "Privacy Policy",
-  version: "1.3",
+  version: "1.4",
   date: "24 October 2026",
   summary: "How LAGDA collects, uses, keeps and protects personal information when you create an account, prepare and send documents, or sign a document someone sent you.",
 };
@@ -87,7 +87,7 @@ export function Privacy() {
         <Facts caption="The eNotary location check" rows={[
           ["When", "Only in a session room, after the room explains the check, when you press “Share my location”; and, once you have allowed it, again just before the notary records the act. Never outside a session, and never in the background."],
           ["What is recorded", "For each check: your device’s position (latitude and longitude, to about one metre), how precise the device says it is, the city or municipality and province it falls in, the result, and the time. If your browser gives no position, only that it did not and why."],
-          ["The connection check", "The internet address your browser connects from is compared, on LAGDA’s own servers, with free public lists of VPN, hosting and Tor addresses (X4BNet’s VPN and datacenter lists, MIT licence; the Tor Project’s exit list), which LAGDA downloads daily. The address is not sent to any other company, and LAGDA does not keep it; only the result is kept."],
+          ["The connection check", "The internet address your browser connects from is compared, on LAGDA’s own servers, with free public lists of VPN, hosting and Tor addresses (X4BNet’s VPN and datacenter lists, MIT licence; the Tor Project’s exit list), which LAGDA downloads daily. An address that is on none of them is then placed in a country with a free country database (DB-IP’s IP to Country Lite, which LAGDA downloads weekly); a connection from outside the Philippines does not pass, even when your device’s position is in the Philippines. The address is not sent to any other company, and LAGDA does not keep it; only the result is kept."],
           ["Who sees it", "Only you and the other party of that request. They see your city or municipality and province, how precise the check was and when it was made, never your exact position. The notarized document and the notary’s register record that all parties were within the Philippines, with each party’s city or municipality and province."],
           ["Your declaration", "Once your location is verified, you confirm a statement that you are physically present at that place in the Philippines, as Rule III, Section 2(c) of the Rules requires each party to disclose their actual physical location. The declaration, the place and the time are kept with the session and stated on the notarized document."],
           ["Your address", "The address you type in the room, in your own words, is kept beside the check, as the Rules also ask each party to state where they are."],
@@ -134,7 +134,7 @@ export function Privacy() {
           ["Google (Gmail)", "Sends LAGDA’s email notifications: signing links, completion notices, invitations, password resets and security codes."],
           ["OPSWAT MetaDefender", "Scans every uploaded file for malware before LAGDA accepts it. The file is sent to OPSWAT for analysis; OPSWAT’s own privacy terms govern what it retains about the scan."],
         ]} />
-        <P>The eNotary connection check uses public lists that LAGDA downloads to its own servers (X4BNet’s VPN and datacenter lists and the Tor Project’s exit list). Their publishers receive nothing about you.</P>
+        <P>The eNotary connection check uses public lists and a country database that LAGDA downloads to its own servers (X4BNet’s VPN and datacenter lists, the Tor Project’s exit list, and DB-IP’s IP to Country Lite database, used under the Creative Commons Attribution 4.0 licence: <a href="https://db-ip.com" target="_blank" rel="noopener noreferrer">IP Geolocation by DB-IP</a>). Their publishers receive nothing about you.</P>
         <P>Within LAGDA, information is visible to the people you share it with: the participants of a document, the members of a workspace according to their roles, and anyone you share a completed document with. If you let people find you by email, another LAGDA user who types your exact address can see your name, title and photo and send you a contact request.</P>
         <H3>Public verification</H3>
         <P>Anyone who has a completed document’s Verification ID or QR code can check it at lagda.io/verify. That check shows only: that a completed record exists, its completion date, how many participants it had, and the cryptographic digest and seal of the final document. It does not show the document, participant names or email addresses. A participant may request access to the full record by proving their email address with a code; the owner may share it with others.</P>
