@@ -12,7 +12,7 @@ import {
   LegalNote,
 } from "../../../components/esignature/EsigPageShell";
 import { OVERVIEW_FEATURES, LIFECYCLE_STEPS, TRANSACTION_STATUSES } from "./content";
-import lagdaLogoFull from "../../../../brand elements/png/LagdaLogoPrimaryHorizontalFullColor.png";
+import lagdaLogoFull from "../../../assets/brand/LagdaLogoPrimaryHorizontalFullColor.png";
 import { ON_LIGHT } from "../../../utils/on-light";
 import { useAccountCta } from "../../../hooks/useSignedIn";
 

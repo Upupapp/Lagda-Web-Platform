@@ -20,7 +20,7 @@ import {
   previewJoinLink, submitJoinRequest, isPlausibleJoinToken,
   JOIN_MESSAGES, JOIN_REASON_MAX, JOIN_FULL_NAME_MAX,
 } from "../../services/real/workspace-join.service";
-import lagdaHeaderLogo from "../../../brand elements/png/LagdaLogoPrimaryHorizontalFullColor.png";
+import lagdaHeaderLogo from "../../assets/brand/LagdaLogoPrimaryHorizontalFullColor.png";
 
 export const JOIN_SPLASH_MIN_MS = 1500;
 const JOIN_SPLASH_EXIT_MS = 240;

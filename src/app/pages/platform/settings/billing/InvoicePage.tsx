@@ -11,7 +11,7 @@
 import { useState } from "react";
 import { Link, useParams } from "react-router";
 import { ArrowLeft, Printer, ReceiptText, History, Download } from "lucide-react";
-import lagdaLogo from "../../../../../brand elements/png/LagdaLogoPrimaryHorizontalFullColor.png";
+import lagdaLogo from "../../../../assets/brand/LagdaLogoPrimaryHorizontalFullColor.png";
 import { SettingsPage, SCard, Badge, BTN_SECONDARY, SET, TONES } from "../SettingsShell";
 import { VerificationQRCode } from "../../../../components/verification/VerificationQRCode";
 import { formatPeso } from "../../../../config/pricing.config";

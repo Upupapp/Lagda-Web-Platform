@@ -24,7 +24,7 @@ import {
   errorCode, errorStatus, realEnotaryInvitationsService, refusedState, type PublicLookupState,
 } from "../../../services/real/enotary-invitations.service";
 import { NOTARY_INVITE_TOKEN, notaryInvitePath } from "../../../utils/authReturnPath";
-import lagdaHeaderLogo from "../../../../brand elements/png/LagdaLogoPrimaryHorizontalFullColor.png";
+import lagdaHeaderLogo from "../../../assets/brand/LagdaLogoPrimaryHorizontalFullColor.png";
 import { E, EnotaryFrame, EnotaryHeading } from "../../platform/enotary/EnotaryChrome";
 import { OnrampNote, bodyText, linkButton } from "../../platform/enotary/onramp-ui";
 import { expiryLabel } from "../../platform/enotary/requests/expiry";

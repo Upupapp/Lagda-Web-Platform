@@ -16,7 +16,7 @@ import { useOnboarding } from "../../context/OnboardingContext";
 import { usePlatform } from "../../context/PlatformContext";
 import { USE_REAL_BACKEND } from "../../services/backend-flag";
 import { continueToReturnPath } from "../../utils/authReturnPath";
-import lagdaHeaderLogo from "../../../brand elements/png/LagdaLogoPrimaryHorizontalFullColor.png";
+import lagdaHeaderLogo from "../../assets/brand/LagdaLogoPrimaryHorizontalFullColor.png";
 
 const GF = { fontFamily: "'Geist', sans-serif" };
 const GM = { fontFamily: "'Geist Mono', monospace" };

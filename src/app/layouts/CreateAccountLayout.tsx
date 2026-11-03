@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { Link } from "react-router";
 import { usePageMeta } from "../hooks/usePageMeta";
-import lagdaLogo from "../../brand elements/png/LagdaLogoPrimaryHorizontalFullColor.png";
+import lagdaLogo from "../assets/brand/LagdaLogoPrimaryHorizontalFullColor.png";
 
 export function CreateAccountLayout({ children }: { children: ReactNode }) {
   usePageMeta();
