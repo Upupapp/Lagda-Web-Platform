@@ -13,7 +13,7 @@ import {
   Search, Compass, Share2, Mail, ChevronDown, LogIn, Building2, UserCog, Lock, Check, Stamp, BadgeCheck, Home, LayoutTemplate,
 } from "lucide-react";
 import { JoinWorkspaceDialog } from "./JoinWorkspaceDialog";
-import lagdaHeaderLogo from "../../../brand elements/svg/LagdaLogoPrimaryHorizontalFullColor_Header.svg";
+import lagdaHeaderLogo from "../../../brand elements/png/LagdaLogoPrimaryHorizontalFullColor.png";
 import { usePlatform } from "../../context/PlatformContext";
 import { PRIMARY_NAV, UTILITY_NAV, ACCOUNT_NAV, PREPARE_ACTION, onrampNavFor } from "../../config/platform.nav";
 import { NotificationMenu } from "./NotificationMenu";

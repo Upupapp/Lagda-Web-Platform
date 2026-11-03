@@ -16,7 +16,7 @@ const CommandPalette = lazy(() =>
   import("./CommandPalette").then(m => ({ default: m.CommandPalette })),
 );
 import { Z } from "../../utils/z-index";
-import lagdaLogoFull from "../../../brand elements/svg/LagdaLogoPrimaryHorizontalFullColor.svg";
+import lagdaLogoFull from "../../../brand elements/png/LagdaLogoPrimaryHorizontalFullColor.png";
 import { isPaletteShortcut, paletteShortcutLabel } from "../../utils/keyboard-shortcuts";
 import { usePageMeta } from "../../hooks/usePageMeta";
 import { useDetailTitleFor } from "../../hooks/useDetailTitle";

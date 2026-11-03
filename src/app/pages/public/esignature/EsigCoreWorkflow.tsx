@@ -12,7 +12,7 @@ import {
 import { AccountPageCTA } from "../../../components/shell/AccountPageCTA";
 import { useSignedIn } from "../../../hooks/useSignedIn";
 import { PARTICIPANT_ROLES, AUTH_METHODS, FIELD_TYPES } from "./content";
-import lagdaLogoFull from "../../../../brand elements/svg/LagdaLogoPrimaryHorizontalFullColor.svg";
+import lagdaLogoFull from "../../../../brand elements/png/LagdaLogoPrimaryHorizontalFullColor.png";
 
 const GF = { fontFamily: "'Geist', sans-serif" };
 const GM = { fontFamily: "'Geist Mono', monospace" };

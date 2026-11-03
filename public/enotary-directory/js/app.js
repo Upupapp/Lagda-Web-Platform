@@ -370,7 +370,7 @@
 
     // Centre: the badge. An office's own picture is framed whole, as wide as the badge allows.
     var badge = '<section class="pf-badge"><span class="pf-hang" aria-hidden="true"></span>' +
-      '<p class="pf-brand"><img src="assets/logo.svg" alt="LAGDA"><i aria-hidden="true"></i><b>eNotary</b></p>' +
+      '<p class="pf-brand"><img src="assets/brand-logo.png" alt="LAGDA"><i aria-hidden="true"></i><b>eNotary</b></p>' +
       '<div class="pf-portrait' + (big ? " entire" + (l.photoW > l.photoH * 1.3 ? " landscape" : l.photoW > l.photoH * 0.8 ? " squarish" : "") + '" style="width:min(100%, ' + Math.round((l.photoW > l.photoH * 1.3 || l.photoW <= l.photoH * 0.8 ? 300 : 236) * l.photoW / l.photoH) + 'px)' : "") + '">' + rosette(big && l.photoW > l.photoH * 1.3) +
         '<div class="pf-photo">' + (big ? '<img src="' + esc(l.photo) + '" alt="" width="' + l.photoW + '" height="' + l.photoH + '">' : pic(l)) + '</div><span class="pf-bar" aria-hidden="true"></span>' + miniSeal() + "</div>" +
       '<h2 id="pf-name">' + esc(title(l)) + "</h2>" +

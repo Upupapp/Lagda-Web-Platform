@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 import { usePlatform } from "../context/PlatformContext";
 import { LagdaLoader } from "../components/brand/LagdaLoader";
-import lagdaLogo from "../../brand elements/svg/LagdaLogoPrimaryHorizontalFullColor_Header.svg";
+import lagdaLogo from "../../brand elements/png/LagdaLogoPrimaryHorizontalFullColor.png";
 import { buildSignInUrl } from "../utils/authReturnPath";
 import { useAccountFeatures } from "../hooks/useAccountFeatures";
 import { useNavCounts } from "../hooks/useNavCounts";

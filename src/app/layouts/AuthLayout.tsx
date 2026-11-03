@@ -3,7 +3,7 @@ import { Link } from "react-router";
 import { APP_CONFIG } from "../config/app.config";
 import { usePageMeta } from "../hooks/usePageMeta";
 
-import lagdaLogo from "../../brand elements/svg/LagdaLogoPrimaryHorizontalFullColor.svg";
+import lagdaLogo from "../../brand elements/png/LagdaLogoPrimaryHorizontalFullColor.png";
 
 // Minimal shell for authentication routes (/sign-in, /create-account, etc.)
 // Uses the deep navy background with the white-horizontal logo variant.

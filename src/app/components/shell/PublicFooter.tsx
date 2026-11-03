@@ -7,7 +7,7 @@ import {
   CircleHelp, Headset, Mail, Eye, Map,
   ChevronRight, type LucideIcon,
 } from "lucide-react";
-import lagdaLogoFull from "../../../brand elements/svg/LagdaLogoPrimaryHorizontalFullColor.svg";
+import lagdaLogoFull from "../../../brand elements/png/LagdaLogoPrimaryHorizontalFullColor.png";
 import { FOOTER_COLUMNS } from "@/app/config/nav.config";
 import { isStaticSitePath } from "@/app/config/enotary-directory";
 import { ON_LIGHT } from "../../utils/on-light";

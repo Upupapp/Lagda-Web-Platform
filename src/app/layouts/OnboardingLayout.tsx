@@ -8,7 +8,7 @@ import { LogOut, type LucideIcon } from "lucide-react";
 import { ONBOARDING_STEPS, type OnboardingProgress, type OnboardingStepId } from "../models/auth";
 import { useOnboarding } from "../context/OnboardingContext";
 import { Z } from "../utils/z-index";
-import lagdaHeaderLogo from "../../brand elements/svg/LagdaLogoPrimaryHorizontalFullColor_Header.svg";
+import lagdaHeaderLogo from "../../brand elements/png/LagdaLogoPrimaryHorizontalFullColor.png";
 // The shared design system, rather than this file's own hex constants. See
 // components/system/design-system.tsx for why onboarding and the signer are
 // deliberately on one palette.

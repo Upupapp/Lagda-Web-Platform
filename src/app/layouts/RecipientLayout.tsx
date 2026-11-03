@@ -16,7 +16,7 @@ import React from "react";
 import { Outlet, Link } from "react-router";
 import { USE_REAL_BACKEND } from "../services/backend-flag";
 import { ShieldCheck, ArrowLeft } from "lucide-react";
-import lagdaHeaderLogo from "../../brand elements/svg/LagdaLogoPrimaryHorizontalFullColor_Header.svg";
+import lagdaHeaderLogo from "../../brand elements/png/LagdaLogoPrimaryHorizontalFullColor.png";
 
 export function RecipientLayout({ documentsLink = true }: {
   /**

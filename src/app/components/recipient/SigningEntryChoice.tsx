@@ -28,7 +28,7 @@
 // rather than a banner. Every size is fluid, and it is usable at 320px.
 
 import { ShieldCheck, PenLine, History, UserPlus, ArrowRight, Mail } from "lucide-react";
-import lagdaHeaderLogo from "../../../brand elements/svg/LagdaLogoPrimaryHorizontalFullColor_Header.svg";
+import lagdaHeaderLogo from "../../../brand elements/png/LagdaLogoPrimaryHorizontalFullColor.png";
 import { GF, T, TAP, useViewport } from "../system/design-system";
 
 export interface SigningEntryChoiceProps {

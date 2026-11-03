@@ -4,7 +4,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Download } from "lucide-react";
 import { ActionButton, GF } from "../../../../components/system/design-system";
-import lagdaHeaderLogo from "../../../../../brand elements/svg/LagdaLogoPrimaryHorizontalFullColor_Header.svg";
+import lagdaHeaderLogo from "../../../../../brand elements/png/LagdaLogoPrimaryHorizontalFullColor.png";
 import { buildCardSvg, cardFileName, cardToPng, logoDataUri } from "./qr-card";
 import { expiryLabel } from "./expiry";
 import { E } from "../EnotaryChrome";

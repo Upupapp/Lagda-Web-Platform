@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "react-router";
 import { isStaticSitePath } from "../../config/enotary-directory";
-import lagdaHeaderLogo from "../../../brand elements/svg/LagdaLogoPrimaryHorizontalFullColor_Header.svg";
+import lagdaHeaderLogo from "../../../brand elements/png/LagdaLogoPrimaryHorizontalFullColor.png";
 import { TOP_NAV } from "@/app/config/nav.config";
 import { haptic } from "@/app/utils/haptic";
 import { Z } from "../../utils/z-index";
