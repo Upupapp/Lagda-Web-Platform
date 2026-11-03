@@ -239,7 +239,7 @@ function present(row: FeedRow): Presentation {
         body: "A test-mode payment is waiting for you to confirm it. No money was moved.",
         actionLabel: "Review the payment",
         actionPath: requestId === null ? "/app/plan-requests" : `/app/plan-requests/${encodeURIComponent(requestId)}`,
-        why: "You were sent this because you confirm plan payments for LAGDA.",
+        why: "You were sent this because you can confirm this payment.",
       };
     }
 
