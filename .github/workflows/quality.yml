@@ -105,7 +105,12 @@ jobs:
 
   browser:
     name: Browser flows and accessibility
-    runs-on: ubuntu-latest
+    # Pinned. `ubuntu-latest` moved to a newer Ubuntu in November 2026, where the
+    # system packages this Playwright's `--with-deps` installs (libicu74, libvpx9,
+    # libxml2, libx264-164) no longer exist: the browser install failed and every
+    # suite after it ran without browsers (run 41593770990). 24.04 is the image
+    # every earlier run passed on. Unpin together with a Playwright upgrade.
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     needs: quality
 
