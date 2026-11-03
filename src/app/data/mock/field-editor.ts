@@ -10,9 +10,18 @@ const A4 = 595 / 842; // ≈ 0.7068
 
 // ── Page factory ──────────────────────────────────────────────────────────────
 
+/**
+ * The id of page `n` of an editor document. Every page list is built with this
+ * one scheme, so a page keeps its id — and the fields placed on it — when the
+ * list is rebuilt from the real file or the server's page count.
+ */
+export function editorPageId(docId: string, n: number): string {
+  return `epage_${docId}_${n}`;
+}
+
 function makePage(docId: string, n: number): EditorPage {
   return {
-    id:          `epage_${docId}_${n}`,
+    id:          editorPageId(docId, n),
     documentId:  docId,
     pageNumber:  n,
     aspectRatio: A4,

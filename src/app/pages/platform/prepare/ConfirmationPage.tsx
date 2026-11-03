@@ -28,7 +28,7 @@ import { describeSendDetail } from "../../../services/prepare/send-readiness";
 import { deadlineFromDate } from "../../../services/prepare/deadline";
 import { toastInfo, toastWarning } from "../../../components/brand/BrandToast";
 import { realPreparationService } from "../../../services/real/preparation.service";
-import { fromBackendField } from "../../../services/prepare/field-sync";
+import { fromBackendField, pageIdsForSavedFields } from "../../../services/prepare/field-sync";
 import { computeSendReadiness, buildActionUrl } from "../../../services/prepare/send-readiness";
 import { processScreen } from "../../../config/process-screens";
 
@@ -55,7 +55,7 @@ function ConfirmationPageInner({ participants }: { participants: PrepParticipant
   const { draft, setStep, discardDraft, syncError, multiDocumentSigningGap, setFieldsSnapshot, saveTitle } = usePrepare();
   const { user, currentWorkspace } = usePlatform();
   const {
-    initialize, fields, documents, runValidation, validation, loadRealFields,
+    initialize, fields, documents, runValidation, validation, loadRealFields, syncRealPages,
   } = useFieldEditor();
 
   // Keeps the cross-step Help panel's readiness calculation current while
@@ -137,7 +137,10 @@ function ConfirmationPageInner({ participants }: { participants: PrepParticipant
         if (!backendDocId) continue;
         try {
           const prep = await realPreparationService.get(workspaceId, backendDocId);
-          const pageIdForNumber = (n: number) => doc.pages.find((p) => p.pageNumber === n)?.id ?? null;
+          // This page never reads the PDF, so its page list stays the size
+          // guess: take the real count the server sends with the fields.
+          if (prep.pageCount > 0) syncRealPages(doc.id, prep.pageCount, []);
+          const pageIdForNumber = pageIdsForSavedFields(doc.id, doc.pages, prep.pageCount);
           for (const f of prep.fields) {
             const translated = fromBackendField(f, doc.id, pageIdForNumber);
             if (translated) loaded.push(translated);

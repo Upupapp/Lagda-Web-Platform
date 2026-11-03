@@ -7,6 +7,7 @@
 // either — see isBackendFieldType() and its callers in FieldsPage.tsx.
 
 import type { FieldDefinition, FieldType } from "../../models/field-editor";
+import { editorPageId } from "../../data/mock/field-editor";
 import type { BackendFieldType, BackendPreparationField, BackendPreparationFieldInput } from "../real/preparation.service";
 
 const BACKEND_FIELD_TYPES = new Set<FieldType>([
@@ -68,6 +69,24 @@ export function toBackendFieldInput(
       ? { staticValue: field.staticValue, recipientId: null }
       : { recipientId: field.participantId }),
   };
+}
+
+/**
+ * Page ids for a document's saved fields, from the page count the server
+ * returns WITH them. The editor's own page list is only a guess (from the
+ * file's size) until the PDF is read, so a field past the guessed last page
+ * used to be dropped on load: Review counted "0 fields" and refused to send.
+ * Without a usable count, the editor's list is all there is.
+ */
+export function pageIdsForSavedFields(
+  documentId: string,
+  editorPages: readonly { id: string; pageNumber: number }[],
+  serverPageCount: number,
+): (pageNumber: number) => string | null {
+  if (!Number.isInteger(serverPageCount) || serverPageCount < 1) {
+    return (n) => editorPages.find((p) => p.pageNumber === n)?.id ?? null;
+  }
+  return (n) => (Number.isInteger(n) && n >= 1 && n <= serverPageCount ? editorPageId(documentId, n) : null);
 }
 
 /** Reverse direction — used when loading real fields into the editor for a

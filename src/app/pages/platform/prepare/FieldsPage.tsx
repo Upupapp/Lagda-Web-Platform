@@ -24,7 +24,7 @@ import { FieldEditorProvider, useFieldEditor } from "../../../context/FieldEdito
 import { USE_REAL_BACKEND } from "../../../services/backend-flag";
 import { ApiError } from "../../../services/api-client";
 import { realPreparationService } from "../../../services/real/preparation.service";
-import { isBackendFieldType, placeableFieldTypeGroups, toBackendFieldInput, fromBackendField } from "../../../services/prepare/field-sync";
+import { isBackendFieldType, placeableFieldTypeGroups, toBackendFieldInput, fromBackendField, pageIdsForSavedFields } from "../../../services/prepare/field-sync";
 import {
   clampRectOntoPage, pushInsideSafeMargin, nudgeOffOverlap,
   resolveAssignmentFor, computeBackendFieldIssues, preferredAssignee,
@@ -2788,7 +2788,11 @@ function FieldsPageInner() {
             anyDocumentHadRealData = true;
           }
           const doc = documents.find((d) => d.id === editorDocId);
-          const pageIdForNumber = (n: number) => doc?.pages.find((p) => p.pageNumber === n)?.id ?? null;
+          // The PDF may not be read yet (its page list still the size guess):
+          // the server's count comes with the fields, so a field on a later
+          // page is never dropped here and then missing from the next save.
+          if (prep.pageCount > 0) syncRealPages(editorDocId, prep.pageCount, []);
+          const pageIdForNumber = pageIdsForSavedFields(editorDocId, doc?.pages ?? [], prep.pageCount);
           for (const f of prep.fields) {
             const translated = fromBackendField(f, editorDocId, pageIdForNumber);
             if (translated) loaded.push(translated);
@@ -2864,7 +2868,7 @@ function FieldsPageInner() {
         setSavedFieldsLoad("empty");
       }
     })();
-  }, [draft, platform.currentWorkspace, realDocumentIdByEditorDocId, documents, loadRealFields, addFields]);
+  }, [draft, platform.currentWorkspace, realDocumentIdByEditorDocId, documents, loadRealFields, addFields, syncRealPages]);
 
   // ── First-arrival auto-placement ──────────────────────────────────────────
   //

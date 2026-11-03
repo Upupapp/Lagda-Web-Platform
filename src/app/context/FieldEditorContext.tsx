@@ -34,6 +34,7 @@ import {
   makeFieldId,
 } from "../models/field-editor";
 import type { PreparationDraft } from "../models/prepare";
+import { editorPageId } from "../data/mock/field-editor";
 import { fieldEditorService } from "../services/mock/field-editor.service";
 // fieldEditorService is used only for initialization and validation (stateless).
 
@@ -129,6 +130,10 @@ type FieldEditorAction =
        * (0.707), while `PAGE_RATIO` in the editor is `842/595` (1.415). They
        * are reciprocals, and passing the wrong one shapes every page
        * inside-out without failing anything.
+       *
+       * EMPTY means the count alone is known (the server states it with the
+       * saved fields, before the file has been read): pages keep the shapes
+       * they have, and the document is not marked verified.
        */
       aspectRatios: readonly number[];
     };
@@ -303,17 +308,20 @@ function reducer(state: FieldEditorState, action: FieldEditorAction): FieldEdito
       const target = state.documents.find(doc => doc.id === action.documentId);
       if (target === undefined) return state;
 
+      const countOnly = action.aspectRatios.length === 0;
       const sameCount = target.pageCount === action.pageCount;
-      const sameShape = target.pages.every(
+      const sameShape = countOnly || target.pages.every(
         (page, index) => page.aspectRatio === action.aspectRatios[index]);
+      // Verified means the page SHAPES came from the file too; a count alone
+      // leaves them a guess, and auto-placement waits for the real ones.
       const alreadyVerified = state.verifiedDocumentIds.includes(action.documentId);
-      const verifiedDocumentIds = alreadyVerified
+      const verifiedDocumentIds = alreadyVerified || countOnly
         ? state.verifiedDocumentIds
         : [...state.verifiedDocumentIds, action.documentId];
       // Identical is the COMMON case — every re-render of a loaded document
       // reaches here. Returning the same state keeps React from looping.
       if (sameCount && sameShape) {
-        return alreadyVerified ? state : { ...state, verifiedDocumentIds };
+        return verifiedDocumentIds === state.verifiedDocumentIds ? state : { ...state, verifiedDocumentIds };
       }
 
       // Ids are rebuilt with the same deterministic scheme the initial pages
@@ -321,7 +329,7 @@ function reducer(state: FieldEditorState, action: FieldEditorAction): FieldEdito
       // it, every field already placed on that page and the current page
       // selection. Only pages that genuinely no longer exist are lost.
       const pages = Array.from({ length: action.pageCount }, (_, index) => ({
-        id: `epage_${action.documentId}_${String(index + 1)}`,
+        id: editorPageId(action.documentId, index + 1),
         documentId: action.documentId,
         pageNumber: index + 1,
         aspectRatio: action.aspectRatios[index] ?? target.pages[index]?.aspectRatio ?? 595 / 842,

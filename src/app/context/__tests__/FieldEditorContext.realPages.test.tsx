@@ -54,7 +54,7 @@ const DRAFT = {
 /** Exposes the bits of editor state these tests assert on. */
 function Probe() {
   const {
-    documents, currentPageId, fields, initialize, syncRealPages, addField,
+    documents, currentPageId, fields, initialize, syncRealPages, addField, verifiedDocumentIds,
   } = useFieldEditor();
   const doc = documents[0];
 
@@ -71,6 +71,11 @@ function Probe() {
           if (doc) syncRealPages(doc.id, 5, Array.from({ length: 5 }, () => 595 / 842));
         }}
       >five-a4-pages</button>
+      <button
+        onClick={() => {
+          if (doc) syncRealPages(doc.id, 5, []);
+        }}
+      >five-pages-count-only</button>
       <button
         onClick={() => {
           const page = doc?.pages[2];
@@ -96,6 +101,8 @@ function Probe() {
       <output data-testid="ratio">{doc?.pages[0]?.aspectRatio.toFixed(4) ?? ""}</output>
       <output data-testid="fields">{fields.length}</output>
       <output data-testid="current">{currentPageId ?? ""}</output>
+      <output data-testid="verified">{doc && verifiedDocumentIds.includes(doc.id) ? "yes" : "no"}</output>
+      <output data-testid="page5">{doc?.pages[4]?.id ?? ""}</output>
     </div>
   );
 }
@@ -195,5 +202,47 @@ describe("correcting to the real document", () => {
 
     expect(read("pages")).toBe(after);
     expect(read("count")).toBe("1");
+  });
+});
+
+// The server states a document's page count with its saved fields, before
+// anyone has read the file. That count alone is enough to put the fields on
+// the right pages, and it must not pretend the page shapes are known.
+describe("correcting the count alone (no page shapes yet)", () => {
+  it("takes the server's count, with page ids the fields can be placed on", () => {
+    setup();
+    act(() => { screen.getByText("five-pages-count-only").click(); });
+
+    expect(read("count")).toBe("5");
+    expect(read("pages")).toBe("5");
+    expect(read("page5")).toMatch(/^epage_.+_5$/);
+  });
+
+  it("keeps the shapes the pages already had", () => {
+    setup();
+    act(() => { screen.getByText("five-pages-count-only").click(); });
+
+    expect(read("ratio")).toBe((595 / 842).toFixed(4));
+  });
+
+  it("does not mark the document verified: auto-placement still waits for the real shapes", () => {
+    setup();
+    act(() => { screen.getByText("five-pages-count-only").click(); });
+    expect(read("verified")).toBe("no");
+
+    // The file read that follows still verifies it.
+    act(() => { screen.getByText("five-a4-pages").click(); });
+    expect(read("verified")).toBe("yes");
+  });
+
+  it("changes nothing once the file has been read", () => {
+    setup();
+    act(() => { screen.getByText("one-letter-page").click(); });
+    act(() => { screen.getByText("five-pages-count-only").click(); });
+    act(() => { screen.getByText("one-letter-page").click(); });
+
+    expect(read("count")).toBe("1");
+    expect(read("ratio")).toBe((612 / 792).toFixed(4));
+    expect(read("verified")).toBe("yes");
   });
 });
