@@ -23,7 +23,7 @@ import {
 } from "../../../models/reports";
 
 // ── Design tokens ──────────────────────────────────────────────────────────────
-export const GF     = { fontFamily: "'Geist', 'Inter', system-ui, sans-serif" };
+export const GF     = { fontFamily: "'Geist', system-ui, sans-serif" };
 export const GM     = { fontFamily: "'Geist Mono', 'Fira Code', monospace" };
 export const NAVY   = "#07111F";
 export const AZURE  = "#0078D4";

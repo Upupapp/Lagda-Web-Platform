@@ -14,7 +14,7 @@
 // The official LAGDA logo is never used as a stage icon, participant icon,
 // completion check, drag handle, progress marker, or button content.
 
-export const GF = { fontFamily: "'Geist', 'Inter', system-ui, sans-serif" } as const;
+export const GF = { fontFamily: "'Geist', system-ui, sans-serif" } as const;
 
 export const WF = {
   navy:    "#07111F",
@@ -66,7 +66,7 @@ export const TONES: Record<
  * and no endless motion that would imply a live backend connection.
  */
 export const WORKFLOW_STYLES = `
-  .wf-root { font-family: 'Geist', 'Inter', system-ui, sans-serif; }
+  .wf-root { font-family: 'Geist', system-ui, sans-serif; }
 
   /* ── Buttons ──────────────────────────────────────────────────────────── */
   .wf-btn {

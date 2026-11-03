@@ -26,7 +26,7 @@ const SLATE6 = "#64748B";
 const SLATE4 = "#94A3B8";
 const SLATE2 = "#E2E8F0";
 const AZURE  = "#0078D4";
-const GF     = { fontFamily: "'Geist', 'Inter', system-ui, sans-serif" };
+const GF     = { fontFamily: "'Geist', system-ui, sans-serif" };
 
 interface CapabilityUnavailableProps {
   /** The resolution outcome that caused gating */

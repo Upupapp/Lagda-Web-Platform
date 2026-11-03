@@ -147,7 +147,7 @@ export function AuthLayout({ children }: AuthLayoutProps) {
       )}
 
       <style>{`
-        .auth-shell { min-height: 100vh; background: #f5faff; color: #07111f; font-family: 'Geist', 'Inter', sans-serif; padding: 28px clamp(20px, 5vw, 72px); position: relative; overflow: hidden; }
+        .auth-shell { min-height: 100vh; background: #f5faff; color: #07111f; font-family: 'Geist', sans-serif; padding: 28px clamp(20px, 5vw, 72px); position: relative; overflow: hidden; }
         .auth-shell::before { content: ''; position: absolute; inset: 0; pointer-events: none; opacity: .65; background-image: linear-gradient(rgba(0,120,212,.07) 1px, transparent 1px), linear-gradient(90deg, rgba(0,120,212,.07) 1px, transparent 1px); background-size: 48px 48px; mask-image: linear-gradient(to bottom right, black, transparent 64%); }
         .auth-frame { max-width: 1180px; min-height: calc(100vh - 56px); margin: 0 auto; position: relative; display: flex; flex-direction: column; }
         .auth-brand-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; }

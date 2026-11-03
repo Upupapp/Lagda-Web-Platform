@@ -141,7 +141,7 @@ export function DesignSystemShowcase() {
       style={{
         minHeight: "100vh",
         background: "#f8fafb",
-        fontFamily: "'Geist', 'Inter', sans-serif",
+        fontFamily: "'Geist', sans-serif",
         color: "#07111F",
       }}
     >

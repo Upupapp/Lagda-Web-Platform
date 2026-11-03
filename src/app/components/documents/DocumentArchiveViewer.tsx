@@ -37,7 +37,7 @@ import { Z } from "../../utils/z-index";
 pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
 
 const GF: CSSProperties = { fontFamily: "'Geist', sans-serif" };
-const SERIF: CSSProperties = { fontFamily: "'Source Serif 4', Georgia, 'Times New Roman', serif" };
+const TITLE_FACE: CSSProperties = { fontFamily: "'Geist', system-ui, sans-serif" };
 
 // ── Archive palette ───────────────────────────────────────────────────────
 // Distinct from the rest of the platform's white/azure SaaS surfaces on
@@ -384,7 +384,7 @@ export function DocumentArchiveViewer({
             title={title}
             style={{
               fontSize: isCompact ? 13 : 14, fontWeight: 600, color: CREAM,
-              overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", ...SERIF,
+              overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", ...TITLE_FACE,
             }}
           >
             {title}

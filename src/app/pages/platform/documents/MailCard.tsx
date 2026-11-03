@@ -191,7 +191,7 @@ const MAIL_STYLES = `
     border-bottom: 1px solid #F1F5F9;
   }
   .mail-card-title {
-    font-family: 'Source Serif 4', Georgia, 'Times New Roman', serif; font-size: 19px; font-weight: 600; line-height: 1.35;
+    font-family: 'Geist', system-ui, sans-serif; font-size: 19px; font-weight: 600; line-height: 1.35;
     color: ${NAVY}; margin: 0 0 2px; overflow-wrap: anywhere; max-width: 640px;
   }
   .mail-card-line { font-family: 'Geist', sans-serif; font-size: 13.5px; margin: 0; line-height: 1.5; overflow-wrap: anywhere; }

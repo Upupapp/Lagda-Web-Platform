@@ -35,7 +35,7 @@ import {
   type ContactSourcePayload,
 } from "../../services/contact-recipient-source";
 
-const GF = { fontFamily: "'Geist', 'Inter', system-ui, sans-serif" } as const;
+const GF = { fontFamily: "'Geist', system-ui, sans-serif" } as const;
 const NAVY = "#07111F", AZURE = "#0078D4";
 const SLATE9 = "#0F172A", SLATE6 = "#475569", SLATE5 = "#64748B", SLATE4 = "#94A3B8";
 const SLATE3 = "#CBD5E1", SLATE2 = "#E2E8F0", SLATE1 = "#F1F5F9", SLATE0 = "#F8FAFC";

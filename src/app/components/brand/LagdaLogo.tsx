@@ -184,7 +184,7 @@ export function LagdaLogo({
           style={{ display: "flex", flexDirection: "column", alignItems: "center", lineHeight: 1 }}
           aria-hidden="true"
         >
-          <span style={{ fontFamily: "'Geist', 'Inter', sans-serif", fontWeight: 800, fontSize: wordSz.name, color: wordCfg.nameColor, letterSpacing: "0.12em", marginBottom: -2 }}>
+          <span style={{ fontFamily: "'Geist', sans-serif", fontWeight: 800, fontSize: wordSz.name, color: wordCfg.nameColor, letterSpacing: "0.12em", marginBottom: -2 }}>
             LAGDA
           </span>
           <span style={{ fontFamily: "'Geist Mono', 'Courier New', monospace", fontWeight: 600, fontSize: wordSz.tagline, color: wordCfg.taglineColor, letterSpacing: "0.2em" }}>
@@ -208,7 +208,7 @@ export function LagdaLogo({
       >
         <span
           style={{
-            fontFamily: "'Geist', 'Inter', sans-serif",
+            fontFamily: "'Geist', sans-serif",
             fontWeight: 800,
             fontSize: wordSz.name,
             color: wordCfg.nameColor,

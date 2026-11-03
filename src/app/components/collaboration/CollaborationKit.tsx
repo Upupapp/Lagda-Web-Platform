@@ -30,7 +30,7 @@ import {
 } from "../../models/collaboration";
 import { Z } from "../../utils/z-index";
 
-export const GF = { fontFamily: "'Geist', 'Inter', system-ui, sans-serif" } as const;
+export const GF = { fontFamily: "'Geist', system-ui, sans-serif" } as const;
 
 export const CO = {
   navy: "#07111F", azure: "#0078D4", azureDeep: "#005EA2",
@@ -56,7 +56,7 @@ export const TONES: Record<"neutral" | "muted" | "azure" | "success" | "warning"
 };
 
 export const COLLABORATION_STYLES = `
-  .co-root { font-family: 'Geist', 'Inter', system-ui, sans-serif; }
+  .co-root { font-family: 'Geist', system-ui, sans-serif; }
 
   .co-btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px;
     min-height: 44px; padding: 10px 16px; border-radius: 8px; font-size: 14px;

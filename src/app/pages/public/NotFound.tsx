@@ -24,7 +24,7 @@ export function NotFound() {
         alignItems: "center",
         justifyContent: "center",
         padding: "48px 24px",
-        fontFamily: "'Geist', 'Inter', sans-serif",
+        fontFamily: "'Geist', sans-serif",
       }}
     >
       {/* Logo — icon-only at compact size */}
