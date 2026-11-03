@@ -57,9 +57,12 @@ describe("the location card", () => {
     const answered = session("client", { client: within("Naga City, Camarines Sur") });
     checkLocation.mockResolvedValue(answered);
     const onChanged = show(session("client"));
-    expect(screen.getByTestId("location-notice")).toHaveTextContent("A.M. No. 24-10-14-SC");
+    expect(screen.getByTestId("location-notice")).toHaveTextContent("Every party must be in the Philippines during the notarization.");
     expect(screen.getByTestId("location-notice")).toHaveTextContent("Only Atty. Aiyana Cruz sees where you are: your city or municipality and province.");
-    expect(screen.getByTestId("location-notice")).toHaveTextContent("kept with the notarial record");
+    // The legal reference and the keeping of the position are the footnote, not the notice.
+    expect(screen.getByTestId("location-notice")).not.toHaveTextContent("A.M. No. 24-10-14-SC");
+    expect(screen.getByTestId("location-footnote")).toHaveTextContent("Rule III, Sec. 2(c), Rules on Electronic Notarization (A.M. No. 24-10-14-SC)");
+    expect(screen.getByTestId("location-footnote")).toHaveTextContent("kept with the notarial record");
     expect(screen.getByTestId("location-mine")).toHaveTextContent("You have not shared your location yet.");
     await user.click(screen.getByRole("button", { name: "Share my location" }));
     await waitFor(() => { expect(checkLocation).toHaveBeenCalledWith("ens_1", { latitude: 13.62, longitude: 123.19, accuracy: 18 }); });

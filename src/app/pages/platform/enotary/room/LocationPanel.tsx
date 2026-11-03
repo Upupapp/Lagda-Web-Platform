@@ -52,10 +52,10 @@ export function LocationPanel({ session: s, onChanged }: { session: Session; onC
           Your location
           <span style={{ fontSize: 11, fontWeight: 800, letterSpacing: "0.06em", textTransform: "uppercase", color: E.maroon, background: E.maroonWash, border: `1px solid ${E.maroonLine}`, borderRadius: 999, padding: "2px 8px" }}>Required by the Rules</span>
         </h3>
+        {/* One plain sentence; the legal reference is the footnote at the foot of the card (client's request, 30 October). */}
         <p data-testid="location-notice" style={{ ...hintStyle, margin: 0 }}>
-          The Rules on Electronic Notarization (A.M. No. 24-10-14-SC) require every party to be in the Philippines during the notarization.
+          Every party must be in the Philippines during the notarization.<sup aria-hidden="true">1</sup>{" "}
           LAGDA checks your device&rsquo;s location{location.connectionChecked === true ? " and your internet connection" : ""} to confirm it. Only {other} sees where you are: your city or municipality and province.
-          Your exact position is kept with the notarial record and shown to no one. <Link to="/legal/privacy" style={{ color: "inherit", fontWeight: 700 }}>Privacy Policy</Link>
         </p>
 
         {asked && (
@@ -85,7 +85,7 @@ export function LocationPanel({ session: s, onChanged }: { session: Session; onC
 
         {passed && mine.declaredAt !== undefined && (mine.declaredAt === null ? (
           <div data-testid="location-declaration" style={{ padding: "12px 14px", borderRadius: 12, background: E.skyWash, border: `1px solid ${E.line}` }}>
-            <p style={{ margin: "0 0 4px", fontSize: 11.5, fontWeight: 800, letterSpacing: "0.08em", textTransform: "uppercase", color: E.navy }}>Your declaration &middot; Rule III, Sec. 2(c)</p>
+            <p style={{ margin: "0 0 4px", fontSize: 11.5, fontWeight: 800, letterSpacing: "0.08em", textTransform: "uppercase", color: E.navy }}>Your declaration</p>
             <p data-testid="declaration-text" style={{ margin: "0 0 10px", fontSize: 14, lineHeight: 1.55, color: E.ink }}>
               I declare that I am physically present in <strong>{mine.place}</strong>, Philippines, during this notarization, and that this is my actual location.
             </p>
@@ -117,6 +117,11 @@ export function LocationPanel({ session: s, onChanged }: { session: Session; onC
             : theirs.outcome === "within" ? <><strong>{other}:</strong> {theirs.words.replace(/^Within/, "within")} <span style={{ color: E.quiet }}>({partyLine(theirs)}{theirs.declaredAt === undefined ? "" : theirs.declaredAt === null ? " · not yet declared" : " · declared"})</span></>
               : <><strong style={{ color: "#B0182B" }}>{other}&rsquo;s location check did not pass:</strong> {theirs.words.charAt(0).toLowerCase()}{theirs.words.slice(1)}.
                 {s.role === "notary" && theirs.reason === "denied" ? " Their screen shows them how to allow it; you can also guide them on the call." : " The session waits until it passes."}</>}
+        </p>
+
+        <p data-testid="location-footnote" style={{ margin: 0, fontSize: 11.5, lineHeight: 1.5, color: E.quiet }}>
+          <sup>1</sup> Rule III, Sec. 2(c), Rules on Electronic Notarization (A.M. No. 24-10-14-SC). Your exact position is kept with the
+          notarial record and shown to no one. <Link to="/legal/privacy" style={{ color: "inherit", fontWeight: 700 }}>Privacy Policy</Link>
         </p>
       </div>
     </section>

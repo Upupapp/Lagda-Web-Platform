@@ -121,7 +121,7 @@ export function LocationLocator({ session: s, onChanged }: { session: Session; o
             style={{ position: "absolute", right: 10, top: 10, zIndex: 1, width: 40, height: 40, display: "grid", placeItems: "center", borderRadius: 10, border: `1px solid ${E.line}`, background: "#FFFFFF", color: E.navy, cursor: "pointer" }}>
             <X size={18} aria-hidden />
           </button>
-          <p style={{ margin: "0 48px 4px 0", fontSize: 11.5, fontWeight: 800, letterSpacing: "0.14em", textTransform: "uppercase", color: E.maroon }}>Rule III, Sec. 2(c) &middot; <span style={{ whiteSpace: "nowrap" }}>A.M. No. 24-10-14-SC</span></p>
+          <p style={{ margin: "0 48px 4px 0", fontSize: 11.5, fontWeight: 800, letterSpacing: "0.14em", textTransform: "uppercase", color: E.maroon }}>LAGDA eNotary</p>
           <h2 id="locator-h" style={{ margin: "0 48px 14px 0", fontSize: 20, color: E.navy }}>Location verification</h2>
           <LocationPanel session={s} onChanged={onChanged} />
           <LocatorExplainer session={s} />
@@ -131,7 +131,11 @@ export function LocationLocator({ session: s, onChanged }: { session: Session; o
   );
 }
 
-/** How LAGDA's automatic location verification works, and why: formally, for both parties. */
+/**
+ * How LAGDA's automatic location verification works, and why: formally, for both parties. Closed by default, a
+ * reference rather than reading matter (the client found the steps text-heavy, 30 October); the notarized document
+ * itself states where each party was.
+ */
 export function LocatorExplainer({ session: s }: { session: Session }) {
   const connection = s.location?.connectionChecked === true;
   const steps: { title: string; text: string }[] = [
@@ -143,9 +147,11 @@ export function LocatorExplainer({ session: s }: { session: Session }) {
     { title: "Notarial record", text: "The verified city or municipality and province of the client and of the notary public, with the accuracy and time of each verification, are stated in the notarized document and entered in the notary public's electronic notarial book (Rule VIII, Sec. 2(a)(viii))." },
   ];
   return (
-    <section data-testid="locator-explainer" aria-labelledby="locator-how-h" style={{ marginTop: 16, padding: "16px 16px 14px", borderRadius: 14, background: E.wash, border: `1px solid ${E.line}` }}>
-      <h3 id="locator-how-h" style={{ margin: "0 0 8px", fontSize: 15, fontWeight: 800, color: E.navy }}>How LAGDA verifies the location of the parties</h3>
-      <p style={{ margin: "0 0 12px", fontSize: 13.5, lineHeight: 1.6, color: E.text }}>
+    <details data-testid="locator-explainer" style={{ marginTop: 14, padding: "10px 14px", borderRadius: 12, background: E.wash, border: `1px solid ${E.line}` }}>
+      <summary data-testid="locator-explainer-toggle" style={{ cursor: "pointer", fontSize: 13, fontWeight: 700, color: E.navy }}>
+        How the location check works, and the rules behind it
+      </summary>
+      <p style={{ margin: "12px 0 12px", fontSize: 13.5, lineHeight: 1.6, color: E.text }}>
         Under Rule III, Section 2(c) of the Rules on Electronic Notarization (A.M. No. 24-10-14-SC), the notary public must ascertain that all parties
         are present in the Philippines through the geolocation function of the electronic notarization facility. LAGDA performs this verification
         with an automatic location verification tool, for the client and for the notary public alike.
@@ -162,6 +168,6 @@ export function LocatorExplainer({ session: s }: { session: Session }) {
         Only the other party sees your city or municipality and province. Your exact position is kept with the notarial record and shown to no one.{" "}
         <Link to="/legal/privacy" style={{ color: "inherit", fontWeight: 700 }}>Privacy Policy</Link>
       </p>
-    </section>
+    </details>
   );
 }

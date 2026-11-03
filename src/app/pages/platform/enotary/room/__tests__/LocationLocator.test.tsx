@@ -123,6 +123,10 @@ describe("the location button and its dialog", () => {
     show(session("client"));
     await user.click(screen.getByTestId("locator-toggle"));
     const how = screen.getByTestId("locator-explainer");
+    // A reference, closed until asked for: the dialog itself stays short.
+    expect(how).not.toHaveAttribute("open");
+    await user.click(screen.getByTestId("locator-explainer-toggle"));
+    expect(how).toHaveAttribute("open");
     expect(how).toHaveTextContent("Under Rule III, Section 2(c) of the Rules on Electronic Notarization (A.M. No. 24-10-14-SC)");
     expect(how).toHaveTextContent("automatic location verification tool, for the client and for the notary public alike");
     expect(how).toHaveTextContent("official boundaries of the cities and municipalities of the Philippines");
