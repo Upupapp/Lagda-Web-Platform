@@ -206,7 +206,7 @@ describe("with signing requests", () => {
     renderPage();
     const hero = await screen.findByTestId("free-hero");
     expect(within(hero).getByRole("heading", { level: 1, name: "You've used your free document" })).toBeTruthy();
-    expect(within(hero).getByTestId("free-hero-pending").textContent).toContain("Business is waiting for approval");
+    expect(within(hero).getByTestId("free-hero-pending").textContent).toContain("Business: payment being confirmed");
     expect(within(hero).queryByTestId("free-hero-tile-business")).toBeNull();
     myPlan = PAID;
   });

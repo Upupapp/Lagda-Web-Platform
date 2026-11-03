@@ -9,7 +9,7 @@
 //
 //   fresh    — the free document is still unused
 //   used     — it has been sent; upgrading is the way to send more
-//   pending  — a request is waiting for approval; the tiles give way to it
+//   pending  — a payment is waiting to be confirmed; the tiles give way to it
 //   lapsed   — a paid month ended; nothing was deleted
 //
 // A Free person working in a PAID owner's workspace is told they have that
@@ -107,9 +107,9 @@ export function FreePlanHero({ plan }: { plan: MyPlan }) {
             <div className="fp-pending" role="status" data-testid="free-hero-pending">
               <Hourglass size={22} aria-hidden />
               <div>
-                <strong>{PLAN_NAMES[pending.plan]} is waiting for approval</strong>
-                <p>We&apos;ll email you and send a notification as soon as LAGDA decides. It usually takes a day.</p>
-                <Link to="/app/settings/plan">View your request <ArrowRight size={14} aria-hidden /></Link>
+                <strong>{PLAN_NAMES[pending.plan]}: payment being confirmed</strong>
+                <p>We&apos;ll email you and send a notification as soon as LAGDA confirms your payment. It usually takes a day.</p>
+                <Link to="/app/settings/plan">View your payment <ArrowRight size={14} aria-hidden /></Link>
               </div>
             </div>
           ) : (

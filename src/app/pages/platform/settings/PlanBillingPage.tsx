@@ -1,7 +1,7 @@
 // /app/settings/plan — My Settings › Plan & Billing: YOUR plan (backend 093).
 //
 // A plan belongs to a person; every workspace you OWN has its features. This
-// page shows the plan, the Free allowance, a request waiting for approval, and
+// page shows the plan, the Free allowance, a payment waiting to be confirmed, and
 // the plan cards. Choosing Personal or Business opens the test-mode form:
 // a clear TEST MODE banner, a sample account with Copy buttons, and fields
 // that accept only that sample. Submitting sends the request to the LAGDA
@@ -81,10 +81,10 @@ function CurrentPlanCard({ plan, onCancel, cancelling }: { plan: MyPlan; onCance
           <Hourglass size={18} aria-hidden color={TONES.warning.dot} style={{ flexShrink: 0, marginTop: 2 }} />
           <div style={{ flex: "1 1 240px", minWidth: 0 }}>
             <div style={{ ...GF, fontSize: 14, fontWeight: 700, color: SET.NAVY }}>
-              Waiting for approval: {PLAN_NAMES[pending.plan]} · {formatPeso(pending.amountPesos, true)} a month
+              Payment being confirmed: {PLAN_NAMES[pending.plan]} · {formatPeso(pending.amountPesos, true)} a month
             </div>
             <div style={{ ...GF, fontSize: 13, color: SET.SLATE, marginTop: 2, lineHeight: 1.5 }}>
-              Sent {longDate(pending.createdAt)}. LAGDA will approve or decline it by {longDate(pending.expiresAt)}; you will get an email and a notification.
+              Sent {longDate(pending.createdAt)}. LAGDA will confirm the payment by {longDate(pending.expiresAt)}; you will get an email and a notification.
             </div>
           </div>
           <button type="button" onClick={onCancel} disabled={cancelling} style={BTN_SECONDARY} data-testid="my-plan-cancel-request">
@@ -153,9 +153,9 @@ function UpgradeDialog({ plan, onClose, onSent }: { plan: RequestablePlan; onClo
         setBad(new Set((err.body.details ?? []).map(d => (d.field ?? "").replace(/^bank\./, ""))));
         setError("Test mode: please use the sample account shown.");
       } else if (err instanceof ApiError && err.body?.code === PLAN_ERROR.pending) {
-        setError("You already have a request waiting for approval.");
+        setError("You already have a payment waiting to be confirmed.");
       } else {
-        setError(err instanceof Error && err.message.trim() !== "" ? err.message : "Your request could not be sent. Please try again.");
+        setError(err instanceof Error && err.message.trim() !== "" ? err.message : "Your payment details could not be sent. Please try again.");
       }
     } finally {
       setSending(false);
@@ -170,7 +170,7 @@ function UpgradeDialog({ plan, onClose, onSent }: { plan: RequestablePlan; onClo
           <div style={{ minWidth: 0 }}>
             <h3 id={titleId} style={{ ...GF, fontSize: 19, fontWeight: 800, color: SET.NAVY, margin: 0 }}>Upgrade to {PLAN_NAMES[plan]}</h3>
             <div style={{ ...GF, fontSize: 13.5, color: SET.SLATE, marginTop: 4 }}>
-              {formatPeso(PLAN_PRICES[plan], true)}{plan === "business" ? " per user" : ""} a month · one month, approved by LAGDA
+              {formatPeso(PLAN_PRICES[plan], true)}{plan === "business" ? " per user" : ""} a month · one month, active once LAGDA confirms the payment
             </div>
           </div>
           <button type="button" onClick={onClose} disabled={sending} aria-label="Close" className="pb-x"><X size={18} aria-hidden /></button>
@@ -217,7 +217,7 @@ function UpgradeDialog({ plan, onClose, onSent }: { plan: RequestablePlan; onClo
             <div style={{ display: "flex", gap: 10, justifyContent: "flex-end", flexWrap: "wrap", marginTop: 4 }}>
               <button type="button" onClick={onClose} disabled={sending} style={BTN_SECONDARY}>Cancel</button>
               <button type="submit" disabled={sending} style={BTN_PRIMARY} data-testid="upgrade-submit">
-                {sending ? <><Loader2 size={15} aria-hidden className="pb-spin" /> Sending…</> : "Send for approval"}
+                {sending ? <><Loader2 size={15} aria-hidden className="pb-spin" /> Sending…</> : "Send payment details"}
               </button>
             </div>
           </form>
@@ -292,7 +292,7 @@ export function PlanBillingPage() {
           <CurrentPlanCard plan={plan} onCancel={() => { void cancel(); }} cancelling={cancelling} />
           {plan.approver && (
             <Notice tone="accent" icon={Inbox}>
-              You approve plan upgrades for LAGDA. <Link to="/app/plan-requests" data-testid="plan-requests-link" style={{ color: "inherit", fontWeight: 700 }}>Review upgrade requests</Link>
+              You confirm plan payments for LAGDA. <Link to="/app/plan-requests" data-testid="plan-requests-link" style={{ color: "inherit", fontWeight: 700 }}>Review payments</Link>
             </Notice>
           )}
           {websiteMessages !== null && (
@@ -311,13 +311,13 @@ export function PlanBillingPage() {
             <>
               <PlanShowcase current={plan.plan} disabled={blocked}
                 onChoose={id => { setNotice(null); setChoosing(id); }}
-                description={plan.pendingRequest ? "You have a request waiting for approval. Cancel it to choose another plan." : undefined} />
+                description={plan.pendingRequest ? "You have a payment waiting to be confirmed. Cancel it to choose another plan." : undefined} />
               <SSection title="How upgrading works" icon={FlaskConical}>
                 <ol style={{ ...GF, fontSize: 13.5, color: SET.INK, lineHeight: 1.65, margin: 0, paddingLeft: 20 }}>
                   <li>Choose Personal or Business.</li>
                   <li>Copy the sample account into the form. It is test mode: no money is moved.</li>
-                  <li>LAGDA approves or declines your request, usually within a day. You get an email and a notification.</li>
-                  <li>Once approved, your plan runs for one month. When it ends you return to Free, and nothing is deleted.</li>
+                  <li>LAGDA confirms your payment, usually within a day. You get an email and a notification.</li>
+                  <li>Once the payment is confirmed, your plan runs for one month. When it ends you return to Free, and nothing is deleted.</li>
                 </ol>
               </SSection>
             </>
@@ -328,7 +328,7 @@ export function PlanBillingPage() {
         <UpgradeDialog plan={open} onClose={() => { setChoosing(null); }}
           onSent={() => {
             setChoosing(null);
-            setNotice("Your request was sent. LAGDA will approve or decline it, and you will get an email and a notification.");
+            setNotice("Your payment details were sent. LAGDA will confirm the payment, and you will get an email and a notification.");
             void refresh();
             announcePlanChanged();
           }} />

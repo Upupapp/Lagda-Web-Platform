@@ -119,7 +119,7 @@ describe("My Settings › Plan & Billing", () => {
     await waitFor(() => { expect(screen.queryByTestId("upgrade-dialog")).toBeNull(); });
     const sent = calls.filter(c => c.path === "/me/plan/upgrade-requests").at(-1);
     expect(sent?.body).toEqual({ plan: "business", bank: { ...SAMPLE_BANK_ACCOUNT } });
-    expect(await screen.findByTestId("my-plan-pending")).toHaveTextContent("Waiting for approval: Business");
+    expect(await screen.findByTestId("my-plan-pending")).toHaveTextContent("Payment being confirmed: Business");
   });
 
   it("opens the form from ?choose=, and a pending request can be cancelled", async () => {
@@ -219,7 +219,7 @@ describe("the approver", () => {
     expect(await screen.findByTestId("plan-request")).toHaveTextContent("Ana Reyes");
     expect(screen.getByTestId("plan-request")).toHaveTextContent("No money was moved");
     await user.click(screen.getByTestId("plan-request-approve"));
-    await waitFor(() => { expect(screen.getByTestId("plan-request-status")).toHaveTextContent("Approved"); });
+    await waitFor(() => { expect(screen.getByTestId("plan-request-status")).toHaveTextContent("Payment confirmed"); });
     expect(screen.queryByTestId("plan-request-approve")).toBeNull();
   });
 
@@ -231,6 +231,6 @@ describe("the approver", () => {
         <Routes><Route path="/app/plan-requests/:requestId" element={<PlanRequestPage />} /></Routes>
       </MemoryRouter>,
     );
-    expect(await screen.findByRole("alert")).toHaveTextContent("not the plan approver");
+    expect(await screen.findByRole("alert")).toHaveTextContent("you do not confirm plan payments");
   });
 });

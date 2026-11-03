@@ -236,10 +236,10 @@ function present(row: FeedRow): Presentation {
       return {
         category: "my-actions", severity: "info", priority: "high",
         title: `${who} asked for the ${plan} plan`,
-        body: "A test-mode upgrade request is waiting for your approval. No money was moved.",
-        actionLabel: "Review the request",
+        body: "A test-mode payment is waiting for you to confirm it. No money was moved.",
+        actionLabel: "Review the payment",
         actionPath: requestId === null ? "/app/plan-requests" : `/app/plan-requests/${encodeURIComponent(requestId)}`,
-        why: "You were sent this because you approve plan upgrades for LAGDA.",
+        why: "You were sent this because you confirm plan payments for LAGDA.",
       };
     }
 
@@ -265,7 +265,7 @@ function present(row: FeedRow): Presentation {
       return {
         category: "workspace", severity: "success", priority: "normal",
         title: `Your ${plan} plan is active`,
-        body: until === null ? "Your upgrade was approved." : `Your upgrade was approved. It runs until ${until}.`,
+        body: until === null ? "Your payment was confirmed." : `Your payment was confirmed. It runs until ${until}.`,
         actionLabel: "Open Plan & Billing",
         actionPath: "/app/settings/plan",
         why: "You were sent this because you asked to upgrade your plan.",
@@ -276,8 +276,8 @@ function present(row: FeedRow): Presentation {
       const plan = str(row.templateInput, "planName") ?? "paid plan";
       return {
         category: "workspace", severity: "warning", priority: "normal",
-        title: `Your ${plan} plan request was declined`,
-        body: "You can send a new request from Plan & Billing.",
+        title: `Your ${plan} plan payment was not confirmed`,
+        body: "You can send your payment details again from Plan & Billing.",
         actionLabel: "Open Plan & Billing",
         actionPath: "/app/settings/plan",
         why: "You were sent this because you asked to upgrade your plan.",

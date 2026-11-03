@@ -33,6 +33,6 @@ describe("plan notifications (093)", () => {
     expect(approved!.title).toBe("Your Business plan is active");
     expect(approved!.body).toContain("30 October 2026");
     expect(approved!.actionPath).toBe("/app/settings/plan");
-    expect(declined!.title).toBe("Your Personal plan request was declined");
+    expect(declined!.title).toBe("Your Personal plan payment was not confirmed");
   });
 });

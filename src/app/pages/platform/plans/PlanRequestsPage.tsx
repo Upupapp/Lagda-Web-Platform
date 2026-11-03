@@ -1,5 +1,5 @@
-// /app/plan-requests and /app/plan-requests/:requestId — the LAGDA owner's
-// upgrade approvals (backend 093).
+// /app/plan-requests and /app/plan-requests/:requestId — where the LAGDA owner
+// confirms the payments for plan upgrades (backend 093).
 //
 // The approval email links here: deciding needs the approver's own session,
 // so the email carries no credential. For anyone else the server answers
@@ -18,8 +18,8 @@ const when = (iso: string) =>
   new Date(iso).toLocaleString("en-PH", { day: "numeric", month: "long", year: "numeric", hour: "numeric", minute: "2-digit" });
 
 const STATUS_TEXT: Record<UpgradeReview["status"], string> = {
-  pending: "Waiting for your decision",
-  approved: "Approved",
+  pending: "Waiting for you to confirm",
+  approved: "Payment confirmed",
   declined: "Declined",
   expired: "Expired",
   cancelled: "Cancelled by the requester",
@@ -37,8 +37,8 @@ function Shell({ title, children }: { title: string; children: React.ReactNode }
 
 function NotFound() {
   return (
-    <Shell title="Upgrade request">
-      <div className="pr-card" role="alert">This request does not exist, or you are not the plan approver.</div>
+    <Shell title="Plan payment">
+      <div className="pr-card" role="alert">This payment does not exist, or you do not confirm plan payments.</div>
     </Shell>
   );
 }
@@ -53,8 +53,8 @@ export function PlanRequestsPage() {
   }, []);
   if (missing) return <NotFound />;
   return (
-    <Shell title="Upgrade requests">
-      <p className="pr-lead">Test-mode requests waiting for your decision. No money was moved for any of them.</p>
+    <Shell title="Plan payments">
+      <p className="pr-lead">Test-mode payments waiting for you to confirm. No money was moved for any of them.</p>
       {list === null ? <div className="pr-card">Loading…</div>
         : list.length === 0 ? <div className="pr-card pr-empty"><Inbox size={20} aria-hidden /> Nothing is waiting.</div>
         : (
@@ -103,12 +103,12 @@ export function PlanRequestPage() {
   };
 
   if (missing) return <NotFound />;
-  if (review === null) return <Shell title="Upgrade request"><div className="pr-card">Loading…</div></Shell>;
+  if (review === null) return <Shell title="Plan payment"><div className="pr-card">Loading…</div></Shell>;
 
   const pending = review.status === "pending";
   return (
-    <Shell title="Upgrade request">
-      <Link to="/app/plan-requests" className="pr-back"><ArrowLeft size={15} aria-hidden /> All requests</Link>
+    <Shell title="Plan payment">
+      <Link to="/app/plan-requests" className="pr-back"><ArrowLeft size={15} aria-hidden /> All payments</Link>
       <div className="pr-card" data-testid="plan-request">
         <div className={`pr-status pr-status-${review.status}`} data-testid="plan-request-status">
           {review.status === "approved" ? <CheckCircle2 size={16} aria-hidden />
@@ -130,7 +130,7 @@ export function PlanRequestPage() {
               {busy === "decline" ? <Loader2 size={15} aria-hidden className="pr-spin" /> : <XCircle size={15} aria-hidden />} Decline
             </button>
             <button type="button" className="pr-btn pr-approve" disabled={busy !== null} onClick={() => { void decide("approve"); }} data-testid="plan-request-approve">
-              {busy === "approve" ? <Loader2 size={15} aria-hidden className="pr-spin" /> : <CheckCircle2 size={15} aria-hidden />} Approve one month
+              {busy === "approve" ? <Loader2 size={15} aria-hidden className="pr-spin" /> : <CheckCircle2 size={15} aria-hidden />} Confirm payment (one month)
             </button>
           </div>
         )}
