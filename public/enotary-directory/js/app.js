@@ -88,12 +88,31 @@
   }
   /** Escaped text that keeps each time ("8:00 AM") and "(Philippine time)" on one line. The words are unchanged. */
   function keepTogether(text) { return esc(text).replace(/\d{1,2}:\d{2} [AP]M|\(Philippine time\)/g, function (m) { return '<span class="nw">' + m + "</span>"; }); }
+  // Who is in a session right now, from LAGDA (GET /api/public/enotary/availability): { directoryId: { until } }. Read when the
+  // page opens and with every status refresh; while it cannot be read, nobody shows as in a session (the server decides in any case).
+  var BUSY = {};
+  function busy(l) { return Object.prototype.hasOwnProperty.call(BUSY, l.id); }
+  function readAvailability() {
+    return api("GET", "/public/enotary/availability").then(function (r) {
+      if (!r.ok || !r.data || !Array.isArray(r.data.listings)) return;
+      var next = {};
+      r.data.listings.forEach(function (x) { if (x && typeof x.directoryId === "string") next[x.directoryId] = { until: x.until ? Date.parse(x.until) : null }; });
+      BUSY = next;
+    });
+  }
+  /** "10:30 AM", in the notary's time zone. */
+  function clockAt(ms) { return new Intl.DateTimeFormat("en-US", { timeZone: OFFICE_HOURS.timeZone, hour: "numeric", minute: "2-digit" }).format(ms); }
+  /** online, busy (online but in a session) or offline. */
+  function stateOf(l) { return !online(l) ? "off" : busy(l) ? "busy" : "on"; }
   /** The status on a card and in the profile: a dot and the word (a screen reader hears "Status: Online"); offline, the hours too. */
   function statusBadge(l) {
-    var on = online(l);
-    return '<div class="avail ' + (on ? "is-on" : "is-off") + '" data-status="' + esc(l.id) + '">' +
-      '<p class="avail-state"><span class="ho-sr">Status: </span><i aria-hidden="true"></i>' + (on ? "Online" : "Offline") + "</p>" +
-      (on ? "" : '<p class="avail-hours">' + keepTogether("Available " + hoursOf(l).text + ".") + "</p>") + "</div>";
+    var state = stateOf(l), until = busy(l) ? BUSY[l.id].until : null;
+    var word = state === "on" ? "Online" : state === "busy" ? "In a session" : "Offline";
+    var line = state === "off" ? "Available " + hoursOf(l).text + "."
+      : state === "busy" ? (until ? "Free again at about " + clockAt(until) + ". You can book a time now." : "You can book a time now.") : "";
+    return '<div class="avail is-' + state + '" data-status="' + esc(l.id) + '" data-state="' + state + '">' +
+      '<p class="avail-state"><span class="ho-sr">Status: </span><i aria-hidden="true"></i>' + word + "</p>" +
+      (line ? '<p class="avail-hours">' + keepTogether(line) + "</p>" : "") + "</div>";
   }
 
   // ── state ───────────────────────────────────────────────────────────────
@@ -617,10 +636,11 @@
           '<dl class="summary"><div><dt>Notary</dt><dd>' + name + (l.kind === "office" ? "" : ", " + esc(l.firm)) + "<br>" + esc(l.city + ", " + l.province) + "</dd></div>" +
             "<div><dt>Your name</dt><dd>" + esc(ME.name) + "</dd></div><div><dt>Identity verified in LAGDA</dt><dd>Yes</dd></div></dl>" +
           detailsForm(SEL) +
+          bookingForm(SEL) +
           reach +
           '<p class="fine left">Nothing is booked, paid or notarized by this step. Online notarial sessions are not currently available.</p>' +
           (SEL.error ? '<p class="err-box" role="alert" id="step-err" tabindex="-1">' + esc(SEL.error) + "</p>" : "");
-        bar = '<button type="button" class="btn outline" data-go="market" data-forget>Browse other notaries</button><button type="button" class="btn big" data-request' + (SEL.busy || !detailsReady(SEL) || !on ? " disabled" : "") + ">" + (SEL.busy ? "Sending…" : "Request this notary") + "</button>";
+        bar = '<button type="button" class="btn outline" data-go="market" data-forget>Browse other notaries</button><button type="button" class="btn big" data-request' + (SEL.busy || !detailsReady(SEL) || !bookingReady(SEL) || !on ? " disabled" : "") + ">" + (SEL.busy ? "Sending…" : requestWord(SEL)) + "</button>";
       }
     } else if (SEL.step === "interest") {
       at = 3; head = "Register your interest"; sub = "Online notarial sessions are not open yet. Choose to be told by email when you can book with " + name + ".";
@@ -799,6 +819,60 @@
       "</fieldset>";
   }
 
+  // ── when: "Right now" (the notary has 15 minutes to answer) or "Book a time" (a 30-minute slot within office hours) ──
+  // The server keeps the same rules: it refuses "now" while the notary is in a session, and a time that is not a free slot.
+  var SLOT_DAY = new Intl.DateTimeFormat("en-US", { timeZone: OFFICE_HOURS.timeZone, weekday: "short", month: "short", day: "numeric" });
+  var SLOT_LONG = new Intl.DateTimeFormat("en-US", { timeZone: OFFICE_HOURS.timeZone, weekday: "long", month: "long", day: "numeric" });
+  var SLOT_KEY = new Intl.DateTimeFormat("en-CA", { timeZone: OFFICE_HOURS.timeZone, year: "numeric", month: "2-digit", day: "2-digit" });
+  function booking(sel) { return sel.booking || (sel.booking = busy(sel.lawyer) ? { kind: "scheduled", at: null, day: "" } : { kind: "now", at: null, day: "" }); }
+  function bookingReady(sel) { var b = booking(sel); return b.kind === "now" ? !busy(sel.lawyer) : !!b.at; }
+  function requestWord(sel) { return booking(sel).kind === "now" ? "Request this notary now" : "Book this time"; }
+  /** The free and booked slots of the next 14 days, grouped by day: asked once per choice of notary. */
+  function readSlots(sel) {
+    if (sel.slotsAsked) return;
+    sel.slotsAsked = true;
+    api("GET", "/me/enotary/listings/" + encodeURIComponent(sel.lawyer.id) + "/slots").then(function (r) {
+      var days = [], byKey = {};
+      if (r.ok && r.data && Array.isArray(r.data.slots)) {
+        r.data.slots.forEach(function (x) {
+          var at = Date.parse(x.at); if (!at) return;
+          var key = SLOT_KEY.format(at);
+          if (!byKey[key]) { byKey[key] = { key: key, label: SLOT_DAY.format(at), slots: [] }; days.push(byKey[key]); }
+          byKey[key].slots.push({ at: at, iso: new Date(at).toISOString(), taken: !!x.taken });
+        });
+      }
+      sel.slots = r.ok ? days : null;
+      var b = booking(sel);
+      if (!b.day && days.length) { var first = days.filter(function (d) { return d.slots.some(function (x) { return !x.taken; }); })[0]; b.day = (first || days[0]).key; }
+      if (SEL === sel) redraw(false);
+    });
+  }
+  function bookingForm(sel) {
+    var b = booking(sel), l = sel.lawyer, isBusy = busy(l);
+    var nowNote = isBusy ? '<em class="idchip">In a session</em> This notary is in a session right now, so a request for right now cannot be sent.' : "The notary has 15 minutes to answer. If they do not, the request ends and you can book a time instead.";
+    var html = '<fieldset class="req-booking"><legend><b>When do you need the notary?</b></legend>' +
+      '<label class="idv-agree"' + (isBusy ? ' aria-disabled="true"' : "") + '><input type="radio" name="rb-kind" id="rb-now"' + (b.kind === "now" ? " checked" : "") + (isBusy ? " disabled" : "") + "><span><b>Right now</b><br>" + nowNote + "</span></label>" +
+      '<label class="idv-agree"><input type="radio" name="rb-kind" id="rb-later"' + (b.kind === "scheduled" ? " checked" : "") + "><span><b>Book a time</b><br>Choose a 30-minute time within office hours, " + keepTogether(OFFICE_HOURS.text) + ", up to 14 days ahead.</span></label>";
+    if (b.kind === "scheduled") {
+      readSlots(sel);
+      if (sel.slots === undefined) html += '<p class="ho-status" role="status"><i class="spin" aria-hidden="true"></i><span>Finding the free times…</span></p>';
+      else if (sel.slots === null || !sel.slots.length) html += '<p class="fine left" role="status">' + (sel.slots === null ? "The free times could not be read. Check your connection, then choose Book a time again." : "There are no free times in the next 14 days.") + "</p>";
+      else {
+        var day = sel.slots.filter(function (d) { return d.key === b.day; })[0] || sel.slots[0];
+        html += '<div class="slot-days" role="group" aria-label="Day">' + sel.slots.map(function (d) {
+          var free = d.slots.filter(function (x) { return !x.taken; }).length;
+          return '<button type="button" class="slot-day' + (d.key === day.key ? " is-on" : "") + '" data-day="' + esc(d.key) + '" aria-pressed="' + (d.key === day.key) + '"' + (free ? "" : " disabled") + "><b>" + esc(d.label) + "</b><span>" + (free ? free + " free" : "Fully booked") + "</span></button>";
+        }).join("") + "</div>" +
+          '<div class="slot-grid" role="group" aria-label="Time on ' + esc(day.label) + '">' + day.slots.map(function (x) {
+            var on = b.at === x.iso;
+            return '<button type="button" class="slot' + (on ? " is-on" : "") + '" data-slot="' + esc(x.iso) + '" aria-pressed="' + on + '"' + (x.taken ? " disabled" : "") + ">" + esc(clockAt(x.at)) + (x.taken ? '<span class="ho-sr"> (booked)</span>' : "") + "</button>";
+          }).join("") + "</div>";
+        if (b.at) { var at = Date.parse(b.at); html += '<p class="slot-pick" role="status"><b>Your booking:</b> ' + esc(SLOT_LONG.format(at)) + ', <span class="nw">' + esc(clockAt(at)) + "</span> to <span class=\"nw\">" + esc(clockAt(at + 30 * 60000)) + "</span> (Philippine time). The notary accepts or declines it; if they do not answer by then, it ends.</p>"; }
+      }
+    }
+    return html + "</fieldset>";
+  }
+
   /** Sends the request, then the person goes to its page in the app, where the link and QR code are. */
   function request(withEmail) {
     var sel = SEL, l = sel && sel.lawyer; if (!sel || sel.busy) return;
@@ -808,6 +882,9 @@
     var d = details(sel);
     var body = { directoryId: l.id, details: { actWanted: d.act, documentKind: d.kind, inPhilippines: true, city: d.city.trim(), province: d.province.trim(), usedAbroad: !!d.usedAbroad } };
     if (email) body.notaryEmail = email;
+    var b = booking(sel);
+    if (!bookingReady(sel)) { sel.busy = false; sel.error = b.kind === "now" ? "This notary is in a session right now. Book a time instead." : "Choose a time."; redraw(false); landed(); return; }
+    body.booking = b.kind === "now" ? { kind: "now" } : { kind: "scheduled", at: b.at };
     // Offline: nothing is sent, even if the button was forced on (the server refuses a request to an offline notary too).
     if (!online(l)) { sel.busy = false; redraw(false); var note = document.getElementById("req-offline"); if (note) note.focus(); return; }
     api("POST", "/me/enotary/invitations", body).then(function (r) {
@@ -827,6 +904,9 @@
       if (r.status === 422 && (r.code === "abroad_coming_soon" || r.code === "document_blocked" || r.code === "request_details_invalid")) sel.error = (r.data && r.data.error && r.data.error.message) || "Check what you asked for.";
       else if (r.status === 409 && r.code === "enotary_request_rate_limit") sel.error = "You have made the most requests allowed in a day. Please try again tomorrow.";
       else if (r.status === 409 && r.code === "enotary_notary_offline") sel.error = (r.data && r.data.error && r.data.error.message) || "This notary is offline. Requests can be sent Monday to Friday, 8:00 AM to 5:00 PM (Philippine time)."; // the server's own office-hours check
+      else if (r.status === 409 && r.code === "enotary_notary_busy") { BUSY[l.id] = { until: null }; sel.booking = { kind: "scheduled", at: null, day: "" }; sel.error = (r.data && r.data.error && r.data.error.message) || "This notary is in a session right now. Book a time instead, or try again shortly."; }
+      else if (r.status === 409 && r.code === "enotary_slot_taken") { b.at = null; sel.slots = undefined; sel.slotsAsked = false; sel.error = (r.data && r.data.error && r.data.error.message) || "That time was just booked. Choose another time."; }
+      else if (r.status === 422 && r.code === "enotary_booking_invalid") { b.at = null; sel.error = (r.data && r.data.error && r.data.error.message) || "Choose another time."; }
       else if (r.status === 409 && r.code === "enotary_invitation_limit") sel.error = "You already have 3 open requests. Cancel one, or wait for it to end, then try again.";
       else if (r.status === 403 && r.code === "client_identity_required") { INV = { list: INV ? INV.list : [], needsIdentity: true }; sel.error = ""; }
       else if (r.status === 404 && r.code === "enotary_notary_not_listed") sel.error = "That notary is not listed in the Notary Directory.";
@@ -899,7 +979,7 @@
   }
 
   document.addEventListener("click", function (e) {
-    var t = e.target.closest("[data-go],[data-open],[data-select],[data-close],[data-city],[data-province],[data-page],[data-clear],[data-step],[data-idv-start],[data-idv-ask],[data-idv-retry],[data-idv-reload],[data-register],[data-request],#clear,#place-clear,#veil,[data-wait-hide],[data-wait-show],[data-sel-wrap]");
+    var t = e.target.closest("[data-go],[data-open],[data-select],[data-close],[data-city],[data-province],[data-page],[data-clear],[data-step],[data-idv-start],[data-idv-ask],[data-idv-retry],[data-idv-reload],[data-register],[data-request],#clear,#place-clear,#veil,[data-wait-hide],[data-wait-show],[data-sel-wrap],[data-day],[data-slot]");
     if (!t) return;
     if (t.id === "veil") { if (e.target === t) closeProfile(); return; }
     if (t.hasAttribute("data-go")) { e.preventDefault(); if (t.hasAttribute("data-forget")) forget(); go(t.getAttribute("data-go")); }
@@ -922,6 +1002,8 @@
     else if (t.hasAttribute("data-idv-reload")) readIdentity();
     else if (t.hasAttribute("data-register")) register();
     else if (t.hasAttribute("data-request")) request();
+    else if (t.hasAttribute("data-day")) { booking(SEL).day = t.getAttribute("data-day"); redraw(false); var d = document.querySelector('[data-day="' + t.getAttribute("data-day") + '"]'); if (d) d.focus(); }
+    else if (t.hasAttribute("data-slot")) { booking(SEL).at = t.getAttribute("data-slot"); SEL.error = ""; redraw(false); var x = document.querySelector('[data-slot="' + t.getAttribute("data-slot") + '"]'); if (x) x.focus(); }
   });
   /** The request step: "Request this notary" can be pressed once the details are given, and only while the notary is online. */
   function syncRequestButton() {
@@ -929,7 +1011,7 @@
     var on = online(SEL.lawyer), note = document.getElementById("req-offline");
     if (note) note.hidden = on;
     if (!on && note && document.activeElement === b) note.focus(); // the focus does not vanish with the button
-    b.disabled = !!SEL.busy || !detailsReady(SEL) || !on;
+    b.disabled = !!SEL.busy || !detailsReady(SEL) || !bookingReady(SEL) || !on;
   }
   /** The offline note put away (a small "Why can't I select" chip takes its place) or brought back; brought back by a press on
       the disabled button or the chip, it lifts once to show where the answer is. */
@@ -954,16 +1036,20 @@
   // The status, kept current: worked out again every minute, on the minute, so that it changes at the opening and the
   // closing time without a reload. Only a status that changed is drawn again.
   function refreshStatus() {
-    [].forEach.call(document.querySelectorAll("[data-status]"), function (el) {
-      var l = byId(el.getAttribute("data-status"));
-      if (l && el.classList.contains("is-on") !== online(l)) el.outerHTML = statusBadge(l);
+    return readAvailability().then(function () {
+      [].forEach.call(document.querySelectorAll("[data-status]"), function (el) {
+        var l = byId(el.getAttribute("data-status"));
+        if (l && el.getAttribute("data-state") !== stateOf(l)) el.outerHTML = statusBadge(l);
+      });
+      syncProfile(); syncRequestButton();
     });
-    syncProfile(); syncRequestButton();
   }
+  refreshStatus();
   (function tick() { setTimeout(function () { refreshStatus(); tick(); }, 60000 - Date.now() % 60000 + 250); })();
   document.addEventListener("visibilitychange", function () { if (!document.hidden) refreshStatus(); });
   document.addEventListener("change", function (e) {
     var id = e.target.id;
+    if (SEL && (id === "rb-now" || id === "rb-later")) { var bk = booking(SEL); bk.kind = id === "rb-now" ? "now" : "scheduled"; SEL.error = ""; redraw(false); var r0 = document.getElementById(id); if (r0) r0.focus(); return; }
     if (SEL && (id === "rd-act" || id === "rd-kind" || id === "rd-abroad-use")) {
       var dd = details(SEL);
       if (id === "rd-act") dd.act = e.target.value; else if (id === "rd-kind") dd.kind = e.target.value; else dd.usedAbroad = e.target.checked;

@@ -424,3 +424,46 @@ describe("one request, in its own page", () => {
     expect(screen.getByRole("link", { name: "Back to the desk" })).toHaveAttribute("href", "/app/enotary/desk");
   });
 });
+
+describe("bookings (130)", () => {
+  // The desk's clock: Saturday, October 17, 2026, 9:00 AM in Manila.
+  const BOOKED = { kind: "scheduled" as const, at: "2026-10-19T02:00:00.000Z", answerBy: null }; // Mon, Oct 19, 10:00 AM
+  const URGENT = { kind: "now" as const, at: null, answerBy: "2026-10-17T01:15:00.000Z" }; // answer by 9:15 AM
+
+  it("marks a request for right now, with the time to answer by", async () => {
+    await open(deskOf({ requests: [], incoming: [incomingOf({ booking: URGENT })] }));
+    const row = screen.getByTestId("desk-new-row");
+    expect(row).toHaveTextContent("Right now");
+    expect(within(row).getByTestId("desk-booking")).toHaveTextContent("Right now · answer by 9:15 AM");
+  });
+
+  it("shows a booked time on the request's card", async () => {
+    await open(deskOf({ requests: [request({ booking: BOOKED })] }));
+    expect(screen.getByTestId("desk-booking")).toHaveTextContent("Mon, Oct 19, 10:00 AM");
+  });
+
+  it("lists the accepted bookings still to come, soonest first, and leaves out the past and the finished", async () => {
+    await open(deskOf({ requests: [
+      request({ id: "eni_b", status: "accepted", client: { name: "Later Client", identityVerified: true }, booking: { ...BOOKED, at: "2026-10-20T03:00:00.000Z" } }),
+      request({ id: "eni_a", status: "accepted", client: { name: "Sooner Client", identityVerified: true }, booking: BOOKED }),
+      request({ id: "eni_c", status: "accepted", client: { name: "Past Client", identityVerified: true }, booking: { ...BOOKED, at: "2026-10-16T02:00:00.000Z" } }),
+      request({ id: "eni_d", status: "claimed", client: { name: "Not Yet Accepted", identityVerified: true }, booking: BOOKED }),
+    ] }));
+    const rows = within(screen.getByTestId("desk-upcoming")).getAllByTestId("desk-upcoming-row");
+    expect(rows.map(r => r.textContent)).toEqual([
+      expect.stringContaining("Sooner Client"), expect.stringContaining("Later Client"),
+    ]);
+    expect(rows[0]).toHaveTextContent("Mon, Oct 19, 10:00 AM");
+  });
+
+  it("says plainly that a time is already taken when accepting a second booking for it", async () => {
+    accept.mockRejectedValue(new ApiError(409, { code: "enotary_slot_taken", message: "That time was just booked." }, "That time was just booked."));
+    await open(deskOf({ requests: [request({ booking: BOOKED })] }));
+    press(screen.getByRole("button", { name: /^Accept/ }));
+    await settle();
+    const confirm = screen.queryAllByRole("button", { name: /^Accept/ }).at(-1);
+    if (confirm !== undefined) press(confirm);
+    await settle(2500);
+    expect(document.body.textContent).toContain("You already accepted another booking at that time");
+  });
+});

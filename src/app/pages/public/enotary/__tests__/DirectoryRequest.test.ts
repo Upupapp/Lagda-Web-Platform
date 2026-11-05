@@ -1,7 +1,8 @@
 // The static Notary Directory (public/enotary-directory/js/app.js) after the
 // identity step: where LAGDA takes requests to notaries it shows "Request this
 // notary" and sends the person to the request's page; where that answers 404 the
-// waitlist step is exactly what it was.
+// waitlist step is exactly what it was. A request is "right now" or a booked
+// time (130), and only while the notary is online (Mon–Fri, 8 AM–5 PM, Manila).
 //
 // The page is plain JavaScript with no build step, so it is run here as the
 // browser runs it: the real index.html, lawyers.js and app.js in jsdom, with
@@ -57,6 +58,11 @@ async function fillDetails(over: { kind?: string } = {}) {
   set("rd-province", "Camarines Sur");
 }
 const DETAILS = { actWanted: "acknowledgment", documentKind: "affidavit", inPhilippines: true, city: "Naga City", province: "Camarines Sur", usedAbroad: false };
+const NOW = { kind: "now" };
+/** Thursday, November 5, 2026, 10:00 AM in Manila: the notary is online. */
+const OPEN_HOURS = new Date("2026-11-05T02:00:00.000Z");
+/** Saturday, November 7, 2026, 10:00 AM in Manila: offline. */
+const WEEKEND = new Date("2026-11-07T02:00:00.000Z");
 
 async function openDirectory() {
   document.body.innerHTML = BODY;
@@ -70,6 +76,9 @@ async function openDirectory() {
 }
 
 beforeEach(() => {
+  // Only the date is faked: the page's own timers run as they do in a browser.
+  vi.useFakeTimers({ toFake: ["Date"] });
+  vi.setSystemTime(OPEN_HOURS);
   asked.length = 0;
   assigned = [];
   sessionStorage.clear();
@@ -94,6 +103,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+  vi.useRealTimers();
   // The page registers listeners on document and window each time it is run; drop them so the next run is alone.
   for (const [target, type, listener, options] of listeners) target.removeEventListener(type, listener, options);
   listeners.length = 0;
@@ -128,7 +138,7 @@ describe("after the identity step, where requests to notaries are offered", () =
     await fillDetails();
     click("[data-request]");
     await pass(20);
-    expect(asked.find(a => a.method === "POST")?.body).toEqual({ directoryId: ID, notaryEmail: "atty@example.ph", details: DETAILS });
+    expect(asked.find(a => a.method === "POST")?.body).toEqual({ directoryId: ID, notaryEmail: "atty@example.ph", details: DETAILS, booking: NOW });
     expect(assigned).toEqual(["/app/enotary/requests/eni_77"]);
   });
 
@@ -169,7 +179,7 @@ describe("after the identity step, where requests to notaries are offered", () =
     await fillDetails();
     click("[data-request]");
     await pass(20);
-    expect(asked.find(a => a.method === "POST")?.body).toEqual({ directoryId: ID, details: DETAILS });
+    expect(asked.find(a => a.method === "POST")?.body).toEqual({ directoryId: ID, details: DETAILS, booking: NOW });
     expect(assigned).toEqual(["/app/enotary/requests/eni_9"]);
   });
 
@@ -200,7 +210,7 @@ describe("after the identity step, where requests to notaries are offered", () =
     await fillDetails();
     click("[data-request]");
     await pass(20);
-    expect(asked.find(a => a.method === "POST")?.body).toEqual({ directoryId: ID, details: DETAILS });
+    expect(asked.find(a => a.method === "POST")?.body).toEqual({ directoryId: ID, details: DETAILS, booking: NOW });
   });
 
   it("retries without the email when LAGDA already has one for the notary", async () => {
@@ -218,7 +228,7 @@ describe("after the identity step, where requests to notaries are offered", () =
     await fillDetails();
     click("[data-request]");
     await pass(30);
-    expect(posts).toEqual([{ directoryId: ID, notaryEmail: "x@example.ph", details: DETAILS }, { directoryId: ID, details: DETAILS }]);
+    expect(posts).toEqual([{ directoryId: ID, notaryEmail: "x@example.ph", details: DETAILS, booking: NOW }, { directoryId: ID, details: DETAILS, booking: NOW }]);
     expect(assigned).toEqual(["/app/enotary/requests/eni_5"]);
   });
 
@@ -278,6 +288,112 @@ describe("after the identity step, where requests to notaries are offered", () =
     click("[data-step=interest]");
     await pass(20);
     expect(view()).toContain("Verify your identity first");
+  });
+});
+
+describe("when: right now, or a booked time (130)", () => {
+  const SLOTS = { slotMinutes: 30, timeZone: "Asia/Manila", slots: [
+    { at: "2026-11-05T04:00:00.000Z", taken: false }, // Thu 12:00 PM
+    { at: "2026-11-05T04:30:00.000Z", taken: true }, // Thu 12:30 PM, booked by someone else
+    { at: "2026-11-06T01:00:00.000Z", taken: false }, // Fri 9:00 AM
+  ] };
+  const choose = (id: string) => {
+    const radio = document.getElementById(id) as HTMLInputElement;
+    radio.checked = true;
+    radio.dispatchEvent(new Event("change", { bubbles: true }));
+  };
+  beforeEach(() => {
+    answers["GET /me/enotary/invitations"] = { status: 200, body: { invitations: [] } };
+    answers[`GET /me/enotary/listings/${ID}/slots`] = { status: 200, body: SLOTS };
+  });
+
+  it("asks for right now by default, and says the notary has 15 minutes to answer", async () => {
+    await openDirectory();
+    click("[data-step=interest]");
+    await pass(20);
+    expect(view()).toContain("When do you need the notary?");
+    expect((document.getElementById("rb-now") as HTMLInputElement).checked).toBe(true);
+    expect(view()).toContain("15 minutes to answer");
+    expect(document.querySelector("[data-request]")?.textContent).toBe("Request this notary now");
+  });
+
+  it("books a free time: the days and times come from LAGDA, a booked one cannot be chosen, and the time is sent", async () => {
+    answers["POST /me/enotary/invitations"] = { status: 201, body: { invitation: { id: "eni_44" } } };
+    await openDirectory();
+    click("[data-step=interest]");
+    await pass(20);
+    choose("rb-later");
+    await pass(20);
+    expect(asked.some(a => a.path === `/me/enotary/listings/${ID}/slots`)).toBe(true);
+    expect(view()).toMatch(/Thu, Nov 5/);
+    expect((document.querySelector('[data-slot="2026-11-05T04:30:00.000Z"]') as HTMLButtonElement).disabled).toBe(true);
+    await fillDetails();
+    // No time chosen yet: nothing can be sent.
+    expect((document.querySelector("[data-request]") as HTMLButtonElement).disabled).toBe(true);
+    click('[data-slot="2026-11-05T04:00:00.000Z"]');
+    await pass(5);
+    expect(view()).toContain("Your booking: Thursday, November 5, 12:00 PM to 12:30 PM");
+    expect(document.querySelector("[data-request]")?.textContent).toBe("Book this time");
+    click("[data-request]");
+    await pass(20);
+    expect(asked.find(a => a.method === "POST")?.body).toEqual({ directoryId: ID, details: DETAILS, booking: { kind: "scheduled", at: "2026-11-05T04:00:00.000Z" } });
+    expect(assigned).toEqual(["/app/enotary/requests/eni_44"]);
+  });
+
+  it("asks for another time when the one chosen was just booked", async () => {
+    answers["POST /me/enotary/invitations"] = err(409, "enotary_slot_taken", { message: "That time was just booked. Choose another time." });
+    await openDirectory();
+    click("[data-step=interest]");
+    await pass(20);
+    choose("rb-later");
+    await pass(20);
+    await fillDetails();
+    click('[data-slot="2026-11-05T04:00:00.000Z"]');
+    await pass(5);
+    const reads = asked.filter(a => a.path === `/me/enotary/listings/${ID}/slots`).length;
+    click("[data-request]");
+    await pass(30);
+    expect(view()).toContain("That time was just booked");
+    expect(assigned).toEqual([]);
+    // The free times are read again, and nothing stays chosen.
+    expect(asked.filter(a => a.path === `/me/enotary/listings/${ID}/slots`).length).toBe(reads + 1);
+    expect((document.querySelector("[data-request]") as HTMLButtonElement).disabled).toBe(true);
+  });
+
+  it("shows a notary in a session, and offers only a booked time", async () => {
+    answers["GET /public/enotary/availability"] = { status: 200, body: { listings: [{ directoryId: ID, status: "in_session", until: "2026-11-05T02:30:00.000Z" }] } };
+    await openDirectory();
+    click("[data-step=interest]");
+    await pass(30);
+    expect(view()).toContain("In a session");
+    expect(view()).toContain("Free again at about 10:30 AM");
+    expect((document.getElementById("rb-now") as HTMLInputElement).disabled).toBe(true);
+    expect((document.getElementById("rb-later") as HTMLInputElement).checked).toBe(true);
+  });
+
+  it("moves to a booked time when LAGDA says the notary just went into a session", async () => {
+    answers["POST /me/enotary/invitations"] = err(409, "enotary_notary_busy", { message: "This notary is in a session right now. Book a time instead, or try again shortly." });
+    await openDirectory();
+    click("[data-step=interest]");
+    await pass(20);
+    await fillDetails();
+    click("[data-request]");
+    await pass(30);
+    expect(view()).toContain("This notary is in a session right now");
+    expect((document.getElementById("rb-later") as HTMLInputElement).checked).toBe(true);
+    expect(assigned).toEqual([]);
+  });
+
+  it("sends nothing while the notary is offline", async () => {
+    vi.setSystemTime(WEEKEND);
+    answers["POST /me/enotary/invitations"] = { status: 201, body: { invitation: { id: "eni_x" } } };
+    await openDirectory();
+    click("[data-step=interest]");
+    await pass(20);
+    expect(view()).toContain("This notary is offline.");
+    await fillDetails();
+    expect((document.querySelector("[data-request]") as HTMLButtonElement).disabled).toBe(true);
+    expect(asked.some(a => a.method === "POST")).toBe(false);
   });
 });
 

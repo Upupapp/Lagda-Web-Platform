@@ -10,7 +10,7 @@ import { Link } from "react-router";
 import { ActionButton, GF, Notice } from "../../../../components/system/design-system";
 import { E } from "../EnotaryChrome";
 import { RequestTrail } from "../RequestTrail";
-import { DetailNotes, detailRows } from "../request-details";
+import { DetailNotes, bookingRows, detailRows } from "../request-details";
 import { EnotaryCaseFrame, NOTARY_STEPS, PartyCard, type NotaryStepId, type PartyRow } from "../CaseFrame";
 import { OnrampNote, Panel, PanelTitle, bodyText, linkButton } from "../onramp-ui";
 import { ExpiryClock, countdownText, expiryLabel, stampLabel } from "../requests/expiry";
@@ -61,6 +61,7 @@ export function NotaryRequestView({ focus, request, incoming, banner, said, prob
     { label: "Identity", value: <>Verified by LAGDA.<br />You confirm it yourself on the call.</>, testId: "party-identity" },
     ...(received !== null ? [{ label: "Received", value: stampLabel(received) }] : []),
     ...(request?.reference !== undefined && request.reference !== null ? [{ label: "Reference", value: request.reference, mono: true, testId: "party-reference" }] : []),
+    ...bookingRows(request?.booking ?? incoming?.booking),
     ...detailRows(request?.details ?? incoming?.details),
     ...(request?.payment !== null && request?.payment !== undefined
       ? [{ label: "Fee", value: request.payment.status === "waived" ? "No fee" : `PHP ${(request.payment.amountCentavos / 100).toLocaleString("en-PH", { minimumFractionDigits: 2 })}` }] : []),

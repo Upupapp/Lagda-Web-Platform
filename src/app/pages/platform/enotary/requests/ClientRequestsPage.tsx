@@ -7,6 +7,7 @@
 // one card per request: the notary, its number, office and when it was sent, where it stands as four small steps, and the
 // invoice when there is a fee. The page's shell (its header and footer) is the eNotary layout's, unchanged.
 
+import { bookingWords } from "../request-details";
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { Link } from "react-router";
 import {
@@ -320,7 +321,8 @@ export function ClientRequestsPage() {
                   const notarized = item.session?.status === "notarized";
                   const test = TEST_MARK.test(item.notary.name);
                   const name = item.notary.name.replace(TEST_MARK, " ").trim();
-                  const asked = item.details === undefined || item.details === null ? "" : `${item.details.actWantedLabel} · ${item.details.documentLabel}`;
+                  const when = bookingWords(item.booking);
+                  const asked = [when?.short ?? "", item.details === undefined || item.details === null ? "" : `${item.details.actWantedLabel} · ${item.details.documentLabel}`].filter(part => part !== "").join(" · ");
                   const office = [item.notary.firm, item.notary.city].filter(part => part !== "").join(", ");
                   const accent = where === "notarized" ? E.ok : where === "open" ? E.maroon : "#5D6B7A";
                   const fee = item.payment !== null && item.payment !== undefined && item.payment.amountCentavos > 0 ? item.payment : null;

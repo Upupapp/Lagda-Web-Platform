@@ -93,8 +93,20 @@ export interface RequestDetails {
   usedAbroad: boolean;
 }
 
+/** When the client wants the notary (130): right now (answered within 15 minutes), a booked 30-minute time, or neither (older requests). */
+export type BookingKind = "standard" | "now" | "scheduled";
+export interface RequestBooking {
+  kind: BookingKind;
+  /** The booked time's start; only for a booking. */
+  at: string | null;
+  /** By when the notary is asked to answer; only for "right now". */
+  answerBy: string | null;
+}
+
 export interface Invitation {
   id: string;
+  /** When the client wants the notary. Absent from an older server. */
+  booking?: RequestBooking | null;
   /** The request's number, EN-2026-000004. Absent from an older server. */
   reference?: string | null;
   /** What the client asked for. Null on a request made before it was asked. */
@@ -140,6 +152,7 @@ export interface ClaimResult {
 
 export interface DeskRequest {
   id: string;
+  booking?: RequestBooking | null;
   details?: RequestDetails | null;
   status: InvitationStatus;
   client: { name: string; identityVerified: boolean };
@@ -162,6 +175,7 @@ export interface DeskRequest {
 /** A request sent to this notary's own listing that they have not taken yet. */
 export interface DeskIncoming {
   id: string;
+  booking?: RequestBooking | null;
   details?: RequestDetails | null;
   client: { name: string; identityVerified: boolean };
   receivedAt: string;

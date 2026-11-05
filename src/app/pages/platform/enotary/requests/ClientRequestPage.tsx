@@ -21,7 +21,7 @@ import {
 import { describeRequestError } from "./request-errors";
 import { E, SERIF } from "../EnotaryChrome";
 import { RequestTrail } from "../RequestTrail";
-import { DetailNotes, detailRows } from "../request-details";
+import { DetailNotes, bookingRows, detailRows } from "../request-details";
 import { CLIENT_STEPS, EnotaryCaseFrame, PartyCard, type ClientStepId, type PartyRow, type TrailEntry } from "../CaseFrame";
 import { EnotaryLoadError, EnotaryLoading, EnotaryNotOffered } from "../EnotaryStates";
 import {
@@ -305,6 +305,7 @@ export function ClientRequestPage() {
   const rows: PartyRow[] = [
     ...(place !== "" ? [{ label: "Place of notarization", value: place }] : []),
     ...(invitation.reference !== undefined && invitation.reference !== null ? [{ label: "Reference no.", value: invitation.reference, mono: true, testId: "party-reference" }] : []),
+    ...bookingRows(invitation.booking),
     ...detailRows(invitation.details),
     { label: "Identity status", value: "Verified in LAGDA", testId: "party-identity", good: true },
     ...(invitation.payment !== null && invitation.payment !== undefined ? [{ label: "Notarial fee", value: `PHP ${(invitation.payment.amountCentavos / 100).toLocaleString("en-PH", { minimumFractionDigits: 2 })}` }] : []),

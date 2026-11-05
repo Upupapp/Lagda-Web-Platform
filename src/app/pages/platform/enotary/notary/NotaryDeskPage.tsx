@@ -22,10 +22,10 @@ import { useCallback, useEffect, useRef, useState, type CSSProperties } from "re
 import { Link, useNavigate, useParams, useSearchParams } from "react-router";
 import { describeSessionError, realEnotarySessionsService } from "../../../../services/real/enotary-sessions.service";
 import { SessionPanel } from "../room/SessionPanel";
-import { DetailNotes, detailsLine } from "../request-details";
+import { DetailNotes, bookingWords, detailsLine, isUpcomingBooking } from "../request-details";
 import {
-  AlertTriangle, Archive, BadgeCheck, Banknote, BookOpen, CalendarDays, Check, CheckCircle2, Clock, FileText, Hash, Hourglass, Inbox,
-  Image as ImageIcon, PenLine, QrCode, Search, Video, X, XCircle,
+  AlertTriangle, Archive, BadgeCheck, Banknote, BookOpen, CalendarClock, CalendarDays, Check, CheckCircle2, Clock, FileText, Hash, Hourglass, Inbox,
+  Image as ImageIcon, PenLine, QrCode, Search, Video, X, XCircle, Zap,
 } from "lucide-react";
 import { Z } from "../../../../utils/z-index";
 import { DESK_CARD_STYLES, DeskCard, DeskGroup, type DeskFact, type DeskPill, type DeskTile } from "./DeskCard";
@@ -133,6 +133,8 @@ const fee = (centavos: number | null | undefined): string | null =>
 function factsOf(request: DeskRequest): DeskFact[] {
   const held = request.case ?? null;
   const facts: DeskFact[] = [{ icon: CalendarDays, label: "Received", value: stampLabel(request.receivedAt) }];
+  const when = bookingFact(request.booking);
+  if (when !== null) facts.push(when);
   if (request.decidedAt !== null) facts.push({ icon: Clock, label: "Answered", value: stampLabel(request.decidedAt) });
   const document = held?.documentName ?? request.details?.documentLabel ?? null;
   if (document !== null && document !== "") facts.push({ icon: FileText, label: "Document", value: document });
@@ -142,6 +144,15 @@ function factsOf(request: DeskRequest): DeskFact[] {
   if (amount !== null) facts.push({ icon: Banknote, label: "Fee", value: amount });
   if (request.reference !== undefined && request.reference !== null) facts.push({ icon: Hash, label: "Reference no.", value: request.reference, mono: true });
   return facts;
+}
+
+/** When the client wants the notary, as a card's fact: a booked time, or "right now" with the time to answer by. */
+function bookingFact(booking: DeskRequest["booking"]): DeskFact | null {
+  const words = bookingWords(booking);
+  if (words === null) return null;
+  return booking?.kind === "now"
+    ? { icon: Zap, label: "When", value: words.short, testId: "desk-booking" }
+    : { icon: CalendarClock, label: "Booked for", value: words.short, testId: "desk-booking" };
 }
 
 /** The badge that says where a request stands. */
@@ -283,6 +294,8 @@ export function NotaryDeskPage({ focus, then }: { focus?: string; then?: "reopen
     if (code === "enotary_invitation_unavailable") return "That request is no longer open. The client may have cancelled it, or its time ran out.";
     // The server refuses an answer from an account that is not the notary the request names (its listing is another's).
     if (code === "notary_name_mismatch") return "This request is reserved for the notary the client named. It cannot be answered with your account.";
+    // 130. Two clients asked for the same time; one booking was accepted first.
+    if (code === "enotary_slot_taken") return "You already accepted another booking at that time. Decline this one, or ask the client to choose another time.";
     return describePaymentError(error);
   };
 
@@ -545,6 +558,12 @@ export function NotaryDeskPage({ focus, then }: { focus?: string; then?: "reopen
       renderRequest={renderRequest} onTake={item => { void take(item); }} taking={working} receivedAt={receivedAt} now={now} /></>;
   }
 
+  // 130. Accepted bookings whose time has not ended, soonest first: the notary's calendar.
+  const upcoming = desk.requests
+    .filter(request => request.status === "accepted" && isUpcomingBooking(request.booking, now)
+      && request.session?.status !== "notarized" && request.session?.status !== "cancelled")
+    .sort((a, b) => Date.parse(a.booking?.at ?? "") - Date.parse(b.booking?.at ?? ""));
+
   return (
     <EnotaryCaseFrame
       tone="attorney" eyebrow="Notary desk" title={greeting}
@@ -618,9 +637,10 @@ export function NotaryDeskPage({ focus, then }: { focus?: string; then?: "reopen
               return (
                 <DeskCard
                   key={item.id} testId="desk-new-row" name={item.client.name} verified={item.client.identityVerified}
-                  pills={[{ icon: Inbox, label: "New request", tone: "alert" }]}
+                  pills={[{ icon: Inbox, label: "New request", tone: "alert" }, ...(item.booking?.kind === "now" ? [{ icon: Zap, label: "Right now", tone: "alert" as const }] : [])]}
                   facts={[
                     { icon: CalendarDays, label: "Sent", value: stampLabel(item.receivedAt) },
+                    ...(bookingFact(item.booking) === null ? [] : [bookingFact(item.booking)!]),
                     ...(item.details?.documentLabel !== undefined && item.details.documentLabel !== "" ? [{ icon: FileText, label: "Document", value: item.details.documentLabel }] : []),
                     ...(item.details?.actWantedLabel !== undefined && item.details.actWantedLabel !== "" ? [{ icon: PenLine, label: "Service", value: item.details.actWantedLabel }] : []),
                   ]}
@@ -659,6 +679,24 @@ export function NotaryDeskPage({ focus, then }: { focus?: string; then?: "reopen
         </Panel>
       ) : (
         <div data-testid="desk-list" style={{ display: "grid", gap: 22 }}>
+          {upcoming.length > 0 && (
+            <section aria-labelledby="desk-upcoming-heading" data-testid="desk-upcoming"
+              style={{ ...GF, background: "#FFFFFF", border: `1px solid ${E.line}`, borderRadius: 14, padding: "16px 20px" }}>
+              <h2 id="desk-upcoming-heading" style={{ margin: "0 0 4px", fontSize: 17, color: E.ink, display: "flex", alignItems: "center", gap: 8 }}>
+                <CalendarClock size={18} aria-hidden style={{ color: E.maroon }} /> Upcoming bookings
+              </h2>
+              <p style={{ ...bodyText, margin: "0 0 10px" }}>Times you accepted. Each one is kept for you alone: no other client can book it.</p>
+              <ol style={{ listStyle: "none", margin: 0, padding: 0 }}>
+                {upcoming.map((request, i) => (
+                  <li key={request.id} data-testid="desk-upcoming-row" style={{ display: "flex", alignItems: "baseline", gap: 12, flexWrap: "wrap", padding: "9px 0", borderTop: i === 0 ? "none" : `1px solid ${E.line}` }}>
+                    <span style={{ fontWeight: 800, color: E.navy, minWidth: 170, fontVariantNumeric: "tabular-nums" }}>{bookingWords(request.booking)?.short}</span>
+                    <span style={{ flex: "1 1 180px", minWidth: 0, color: E.text }}>{request.client.name}{request.reference !== undefined && request.reference !== null ? ` · ${request.reference}` : ""}</span>
+                    <Link to={`/app/enotary/desk/${encodeURIComponent(request.id)}`} className="dk-link">Open</Link>
+                  </li>
+                ))}
+              </ol>
+            </section>
+          )}
           {shownWaiting.length > 0 && (
             <DeskGroup id="waiting" title="Waiting for you" icon={Hourglass} count={shownWaiting.length}>{shownWaiting.map(renderRequest)}</DeskGroup>
           )}
