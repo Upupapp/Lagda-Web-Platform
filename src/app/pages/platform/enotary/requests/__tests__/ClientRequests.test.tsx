@@ -351,6 +351,20 @@ describe("a request that has ended", () => {
     expect(describeRequestError(new ApiError(409, { code: "enotary_invitation_limit", message: "x" }, "x"))).toMatch(/3 open requests/);
   });
 
+  it("an unanswered request for right now says the notary did not answer in 15 minutes, and offers a booked time or asking again", async () => {
+    const now = { kind: "now" as const, at: null, answerBy: new Date(T0).toISOString() };
+    get.mockResolvedValue(invitation({ status: "expired", link: null, secondsLeft: 0, booking: now }));
+    renew.mockResolvedValue(invitation({ id: "eni_2", booking: now }));
+    renderRequest();
+    await settle();
+    expect(screen.getByTestId("request-notice")).toHaveTextContent(/did not answer within 15 minutes, so this request ended. Book a time with this notary, or ask again for right now/);
+    expect(screen.getByTestId("book-instead")).toHaveAttribute("href", `/enotary-directory/?select=${invitation().notary.directoryId}`);
+    press(screen.getByRole("button", { name: "Ask again for right now" }));
+    await settle();
+    expect(renew).toHaveBeenCalledWith("eni_1");
+    expect(screen.getByTestId("where")).toHaveTextContent("/app/enotary/requests/eni_2");
+  });
+
   it("an accepted one says it will say when the session can begin", async () => {
     get.mockResolvedValue(invitation({ status: "accepted", link: null, decidedAt: new Date(T0).toISOString() }));
     renderRequest();

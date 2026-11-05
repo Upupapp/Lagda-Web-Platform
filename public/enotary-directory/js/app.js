@@ -858,15 +858,15 @@
       if (sel.slots === undefined) html += '<p class="ho-status" role="status"><i class="spin" aria-hidden="true"></i><span>Finding the free times…</span></p>';
       else if (sel.slots === null || !sel.slots.length) html += '<p class="fine left" role="status">' + (sel.slots === null ? "The free times could not be read. Check your connection, then choose Book a time again." : "There are no free times in the next 14 days.") + "</p>";
       else {
+        // Two plain lists, the date then the time: a booked time is listed but cannot be chosen.
         var day = sel.slots.filter(function (d) { return d.key === b.day; })[0] || sel.slots[0];
-        html += '<div class="slot-days" role="group" aria-label="Day">' + sel.slots.map(function (d) {
+        html += '<div class="two slot-pickers"><div class="field"><label for="rb-day">Date</label><select id="rb-day">' + sel.slots.map(function (d) {
           var free = d.slots.filter(function (x) { return !x.taken; }).length;
-          return '<button type="button" class="slot-day' + (d.key === day.key ? " is-on" : "") + '" data-day="' + esc(d.key) + '" aria-pressed="' + (d.key === day.key) + '"' + (free ? "" : " disabled") + "><b>" + esc(d.label) + "</b><span>" + (free ? free + " free" : "Fully booked") + "</span></button>";
-        }).join("") + "</div>" +
-          '<div class="slot-grid" role="group" aria-label="Time on ' + esc(day.label) + '">' + day.slots.map(function (x) {
-            var on = b.at === x.iso;
-            return '<button type="button" class="slot' + (on ? " is-on" : "") + '" data-slot="' + esc(x.iso) + '" aria-pressed="' + on + '"' + (x.taken ? " disabled" : "") + ">" + esc(clockAt(x.at)) + (x.taken ? '<span class="ho-sr"> (booked)</span>' : "") + "</button>";
-          }).join("") + "</div>";
+          return '<option value="' + esc(d.key) + '"' + (d.key === day.key ? " selected" : "") + (free ? "" : " disabled") + ">" + esc(SLOT_LONG.format(d.slots[0].at)) + (free ? "" : " (fully booked)") + "</option>";
+        }).join("") + "</select></div>" +
+          '<div class="field"><label for="rb-time">Time (30 minutes, Philippine time)</label><select id="rb-time"><option value="">Choose a time</option>' + day.slots.map(function (x) {
+            return '<option value="' + esc(x.iso) + '"' + (b.at === x.iso ? " selected" : "") + (x.taken ? " disabled" : "") + ">" + esc(clockAt(x.at)) + " to " + esc(clockAt(x.at + 30 * 60000)) + (x.taken ? " (booked)" : "") + "</option>";
+          }).join("") + "</select></div></div>";
         if (b.at) { var at = Date.parse(b.at); html += '<p class="slot-pick" role="status"><b>Your booking:</b> ' + esc(SLOT_LONG.format(at)) + ', <span class="nw">' + esc(clockAt(at)) + "</span> to <span class=\"nw\">" + esc(clockAt(at + 30 * 60000)) + "</span> (Philippine time). The notary accepts or declines it; if they do not answer by then, it ends.</p>"; }
       }
     }
@@ -979,7 +979,7 @@
   }
 
   document.addEventListener("click", function (e) {
-    var t = e.target.closest("[data-go],[data-open],[data-select],[data-close],[data-city],[data-province],[data-page],[data-clear],[data-step],[data-idv-start],[data-idv-ask],[data-idv-retry],[data-idv-reload],[data-register],[data-request],#clear,#place-clear,#veil,[data-wait-hide],[data-wait-show],[data-sel-wrap],[data-day],[data-slot]");
+    var t = e.target.closest("[data-go],[data-open],[data-select],[data-close],[data-city],[data-province],[data-page],[data-clear],[data-step],[data-idv-start],[data-idv-ask],[data-idv-retry],[data-idv-reload],[data-register],[data-request],#clear,#place-clear,#veil,[data-wait-hide],[data-wait-show],[data-sel-wrap]");
     if (!t) return;
     if (t.id === "veil") { if (e.target === t) closeProfile(); return; }
     if (t.hasAttribute("data-go")) { e.preventDefault(); if (t.hasAttribute("data-forget")) forget(); go(t.getAttribute("data-go")); }
@@ -1002,8 +1002,6 @@
     else if (t.hasAttribute("data-idv-reload")) readIdentity();
     else if (t.hasAttribute("data-register")) register();
     else if (t.hasAttribute("data-request")) request();
-    else if (t.hasAttribute("data-day")) { booking(SEL).day = t.getAttribute("data-day"); redraw(false); var d = document.querySelector('[data-day="' + t.getAttribute("data-day") + '"]'); if (d) d.focus(); }
-    else if (t.hasAttribute("data-slot")) { booking(SEL).at = t.getAttribute("data-slot"); SEL.error = ""; redraw(false); var x = document.querySelector('[data-slot="' + t.getAttribute("data-slot") + '"]'); if (x) x.focus(); }
   });
   /** The request step: "Request this notary" can be pressed once the details are given, and only while the notary is online. */
   function syncRequestButton() {
@@ -1049,6 +1047,8 @@
   document.addEventListener("visibilitychange", function () { if (!document.hidden) refreshStatus(); });
   document.addEventListener("change", function (e) {
     var id = e.target.id;
+    if (SEL && id === "rb-day") { var bd = booking(SEL); bd.day = e.target.value; bd.at = null; SEL.error = ""; redraw(false); var dd = document.getElementById("rb-day"); if (dd) dd.focus(); return; }
+    if (SEL && id === "rb-time") { booking(SEL).at = e.target.value || null; SEL.error = ""; redraw(false); var tt = document.getElementById("rb-time"); if (tt) tt.focus(); return; }
     if (SEL && (id === "rb-now" || id === "rb-later")) { var bk = booking(SEL); bk.kind = id === "rb-now" ? "now" : "scheduled"; SEL.error = ""; redraw(false); var r0 = document.getElementById(id); if (r0) r0.focus(); return; }
     if (SEL && (id === "rd-act" || id === "rd-kind" || id === "rd-abroad-use")) {
       var dd = details(SEL);

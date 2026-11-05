@@ -297,6 +297,11 @@ describe("when: right now, or a booked time (130)", () => {
     { at: "2026-11-05T04:30:00.000Z", taken: true }, // Thu 12:30 PM, booked by someone else
     { at: "2026-11-06T01:00:00.000Z", taken: false }, // Fri 9:00 AM
   ] };
+  const pickTime = (iso: string) => {
+    const list = document.getElementById("rb-time") as HTMLSelectElement;
+    list.value = iso;
+    list.dispatchEvent(new Event("change", { bubbles: true }));
+  };
   const choose = (id: string) => {
     const radio = document.getElementById(id) as HTMLInputElement;
     radio.checked = true;
@@ -325,12 +330,14 @@ describe("when: right now, or a booked time (130)", () => {
     choose("rb-later");
     await pass(20);
     expect(asked.some(a => a.path === `/me/enotary/listings/${ID}/slots`)).toBe(true);
-    expect(view()).toMatch(/Thu, Nov 5/);
-    expect((document.querySelector('[data-slot="2026-11-05T04:30:00.000Z"]') as HTMLButtonElement).disabled).toBe(true);
+    expect((document.getElementById("rb-day") as HTMLSelectElement).selectedOptions[0]?.textContent).toBe("Thursday, November 5");
+    const booked = document.querySelector('#rb-time option[value="2026-11-05T04:30:00.000Z"]') as HTMLOptionElement;
+    expect(booked.disabled).toBe(true);
+    expect(booked.textContent).toBe("12:30 PM to 1:00 PM (booked)");
     await fillDetails();
     // No time chosen yet: nothing can be sent.
     expect((document.querySelector("[data-request]") as HTMLButtonElement).disabled).toBe(true);
-    click('[data-slot="2026-11-05T04:00:00.000Z"]');
+    pickTime("2026-11-05T04:00:00.000Z");
     await pass(5);
     expect(view()).toContain("Your booking: Thursday, November 5, 12:00 PM to 12:30 PM");
     expect(document.querySelector("[data-request]")?.textContent).toBe("Book this time");
@@ -348,7 +355,7 @@ describe("when: right now, or a booked time (130)", () => {
     choose("rb-later");
     await pass(20);
     await fillDetails();
-    click('[data-slot="2026-11-05T04:00:00.000Z"]');
+    pickTime("2026-11-05T04:00:00.000Z");
     await pass(5);
     const reads = asked.filter(a => a.path === `/me/enotary/listings/${ID}/slots`).length;
     click("[data-request]");

@@ -11,7 +11,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router";
-import { Copy, Hourglass, Mail, RefreshCw, Share2, ShieldCheck, XCircle } from "lucide-react";
+import { CalendarClock, Copy, Hourglass, Mail, RefreshCw, Share2, ShieldCheck, XCircle } from "lucide-react";
 import { ActionButton, ActionRow, GF, Notice } from "../../../../components/system/design-system";
 import { useConfirm } from "../../../../components/platform/ConfirmDialog";
 import { USE_REAL_BACKEND } from "../../../../services/backend-flag";
@@ -25,8 +25,9 @@ import { DetailNotes, bookingRows, detailRows } from "../request-details";
 import { CLIENT_STEPS, EnotaryCaseFrame, PartyCard, type ClientStepId, type PartyRow, type TrailEntry } from "../CaseFrame";
 import { EnotaryLoadError, EnotaryLoading, EnotaryNotOffered } from "../EnotaryStates";
 import {
-  OnrampNote, Panel, PanelTitle, TextField, bodyText, fieldStyle, useNow,
+  OnrampNote, Panel, PanelTitle, TextField, bodyText, fieldStyle, linkButton, useNow,
 } from "../onramp-ui";
+import { ENOTARY_DIRECTORY_PATH } from "../../../../config/enotary-directory";
 import { QrCard } from "./QrCard";
 import { shortRequestId } from "./qr-card";
 import { StatusBanner } from "../RecordCard";
@@ -103,6 +104,8 @@ function noticeFor(invitation: Invitation): { tone: "info" | "success" | "warn";
     case "declined":
       return { tone: "warn", text: `${who} declined this request. You can ask another notary from the Notary Directory.` };
     case "expired":
+      // 130. A request for right now ends after 15 minutes: the way on is a booked time, or asking again.
+      if (invitation.booking?.kind === "now") return { tone: "warn", text: `${who} did not answer within 15 minutes, so this request ended. Book a time with this notary, or ask again for right now.` };
       return { tone: "warn", text: "This request ran out of time before it was answered. The old link no longer works. Renew it for a new link and a fresh time limit." };
     case "revoked":
       return { tone: "warn", text: "You cancelled this request and its link no longer works. Renew it for a new link and a fresh time limit." };
@@ -130,7 +133,7 @@ function titleFor(invitation: Invitation): string {
     case "claimed": return `${who} has your request`;
     case "accepted": return `${who} accepted your request`;
     case "declined": return `${who} declined this request`;
-    case "expired": return "This request ran out of time";
+    case "expired": return invitation.booking?.kind === "now" ? `${who} did not answer in time` : "This request ran out of time";
     case "revoked": return "You cancelled this request";
   }
 }
@@ -419,8 +422,14 @@ export function ClientRequestPage() {
       )}
       {(invitation.status === "expired" || invitation.status === "revoked") && (
         <ActionRow align="end">
+          {/* 130. An unanswered request for right now: book a time with the same notary, or ask again for 15 minutes. */}
+          {invitation.status === "expired" && invitation.booking?.kind === "now" && (
+            <a href={`${ENOTARY_DIRECTORY_PATH}?select=${encodeURIComponent(invitation.notary.directoryId)}`} style={linkButton("secondary")} data-testid="book-instead">
+              <CalendarClock size={16} aria-hidden /> Book a time instead
+            </a>
+          )}
           <ActionButton icon={RefreshCw} disabled={busy !== null} onClick={() => { void act("renew", () => withProcess("enotary-request-renew", "", () => realEnotaryInvitationsService.renew(invitation.id), describeRequestError)); }}>
-            {busy === "renew" ? "Renewing…" : "Renew with a new link"}
+            {busy === "renew" ? "Renewing…" : invitation.status === "expired" && invitation.booking?.kind === "now" ? "Ask again for right now" : "Renew with a new link"}
           </ActionButton>
         </ActionRow>
       )}

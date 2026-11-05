@@ -99,17 +99,10 @@
 .req-booking .idv-agree span { line-height: 1.5; }
 .req-booking .idv-agree[aria-disabled="true"] { color: var(--quiet); cursor: not-allowed; }
 .req-booking .idchip { margin-right: 6px; }
-.slot-days { display: flex; gap: 8px; overflow-x: auto; padding: 4px 2px 8px; margin-top: 10px; scroll-snap-type: x proximity; }
-.slot-day { flex: 0 0 auto; display: grid; gap: 2px; min-width: 104px; padding: 9px 12px; border: 1px solid #C9D6E4; border-radius: 8px; background: var(--paper); color: #0B1F44; text-align: left; cursor: pointer; scroll-snap-align: start; }
-.slot-day b { font-size: 14px; } .slot-day span { font-size: 12.500px; color: #56677D; }
-.slot-day:hover:not([disabled]) { border-color: var(--sky); }
-.slot-day.is-on { border-color: #0B1F44; box-shadow: inset 0 0 0 1px #0B1F44; background: var(--sky-wash); }
-.slot-day[disabled] { opacity: .55; cursor: not-allowed; }
-.slot-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 8px; margin-top: 8px; }
-.slot { min-height: 44px; border: 1px solid #C9D6E4; border-radius: 8px; background: var(--paper); color: #0B1F44; font: 700 14px/1 var(--sans); font-variant-numeric: tabular-nums; cursor: pointer; }
-.slot:hover:not([disabled]) { border-color: var(--sky); background: var(--wash); }
-.slot.is-on { background: #0B1F44; border-color: #0B1F44; color: #fff; }
-.slot[disabled] { background: #F1F4F8; color: #8FA0B2; text-decoration: line-through; cursor: not-allowed; }
-.slot:focus-visible, .slot-day:focus-visible { outline: 3px solid var(--sky); outline-offset: 2px; }
+.slot-pickers { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 12px; }
+.slot-pickers .field { display: grid; gap: 6px; min-width: 0; }
+.slot-pickers label { font-weight: 600; font-size: 14px; color: #0B1F44; }
+.slot-pickers select { width: 100%; min-height: 46px; padding: 0 12px; border: 1px solid #9DB3CC; border-radius: 6px; background: var(--paper); color: #0B1F44; font: 500 15px var(--sans); }
+.slot-pickers select:focus-visible { outline: 3px solid var(--sky); outline-offset: 2px; }
+@media (max-width: 560px) { .slot-pickers { grid-template-columns: minmax(0, 1fr); } }
 .slot-pick { margin: 12px 0 0; padding: 10px 12px; border-radius: 8px; background: var(--ok-wash); color: #14532D; font-size: 14px; line-height: 1.5; }
-@media (max-width: 480px) { .slot-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } .slot-day { min-width: 92px; } }
