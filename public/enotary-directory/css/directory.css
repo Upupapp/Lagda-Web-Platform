@@ -32,3 +32,58 @@
 }
 /* a phone: buttons take the width they need, not a fixed one */
 @media (max-width: 480px) { .btn { width: auto; } .hero-acts .btn { flex: 1; } .empty .btn, .where-pick .btn { width: 100%; } }
+
+/* ── online or offline: a dot and the word, never the colour alone; offline, the hours too ── */
+.avail { margin-top: 14px; display: grid; justify-items: center; gap: 4px; text-align: center; }
+.avail-state { display: inline-flex; align-items: center; gap: 8px; font: 700 13.500px/1.300 var(--sans); letter-spacing: .010em; }
+.avail-state i { width: 9px; height: 9px; border-radius: 50%; flex: 0 0 auto; }
+.avail.is-on .avail-state { color: var(--ok); } .avail.is-on .avail-state i { background: #1F9D55; box-shadow: 0 0 0 3px rgba(31,157,85,.180); }
+.avail.is-off .avail-state { color: #56677D; } .avail.is-off .avail-state i { background: #8FA0B2; }
+.avail-hours { font-size: 12.500px; line-height: 1.450; color: #56677D; max-width: 36ch; text-wrap: balance; }
+.nw { white-space: nowrap; } /* a time ("8:00 AM") or "(Philippine time)" never breaks across two lines */
+.pf-badge .avail { margin-top: 12px; } .pf-badge .avail-state { font-size: 14.500px; } .pf-badge .avail-hours { font-size: 13.500px; }
+/* the profile, offline: a note above "Select this notary", its tail on the button, saying why it cannot be pressed and
+   when to come back. It rises in once; a press on the disabled button lifts it again. Put away, a small chip remains. */
+.pf-wait { position: absolute; right: clamp(14px, 2.300vw, 26px); bottom: calc(100% + 14px); width: min(410px, calc(100% - 28px)); z-index: 3; transform-origin: 78% 100%; animation: pf-wait-in .55s cubic-bezier(.22, 1, .36, 1) .2s both; }
+.pf-wait[hidden], .pf-wait-chip[hidden] { display: none; }
+.pf-wait-card { position: relative; display: grid; grid-template-columns: 44px minmax(0, 1fr) 32px; gap: 14px; align-items: start; padding: 18px 12px 16px 18px; background: var(--paper); border: 1px solid #C9D6E4; border-radius: 10px; box-shadow: 0 2px 6px rgba(11, 31, 68, .06), 0 22px 40px -20px rgba(11, 31, 68, .5); }
+/* a maroon cap along the top, like the bar under the portrait */
+.pf-wait-card::before { content: ""; position: absolute; top: -1px; left: 18px; right: 18px; height: 3px; border-radius: 0 0 3px 3px; background: var(--maroon); }
+/* the tail, over the middle of "Select this notary" */
+.pf-wait-card::after { content: ""; position: absolute; right: 92px; bottom: -8px; width: 14px; height: 14px; background: var(--paper); border-right: 1px solid #C9D6E4; border-bottom: 1px solid #C9D6E4; transform: rotate(45deg); }
+.pf-wait-ic { width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; color: var(--maroon); background: var(--maroon-wash); box-shadow: inset 0 0 0 1px var(--maroon-line), inset 0 0 0 4px var(--maroon-wash), inset 0 0 0 5px rgba(140, 29, 63, .25); }
+.pf-wait-ic svg, .pf-wait-chip svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; }
+.pf-wait-ic .hand-h, .pf-wait-ic .hand-m { transform-origin: 12px 12px; transform-box: view-box; }
+.pf-wait-ic .hand-m { animation: pf-wait-sweep 1.1s cubic-bezier(.22, 1, .36, 1) .45s both; }
+.pf-wait-title { margin: 1px 0 0; font: 700 17.5px/1.25 var(--serif); color: #0B1F44; }
+.pf-wait-text { margin: 6px 0 0; font-size: 14px; line-height: 1.55; color: #34465F; text-wrap: pretty; }
+.pf-wait-text b { color: #0B1F44; font-weight: 700; }
+.pf-wait-meta { margin: 12px 0 0; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; font-size: 12.5px; line-height: 1.45; color: #56677D; }
+.pf-wait-count { display: inline-flex; align-items: center; min-height: 24px; padding: 0 10px; border-radius: 999px; background: var(--maroon-wash); box-shadow: inset 0 0 0 1px var(--maroon-line); color: var(--maroon-deep); font-weight: 700; font-variant-numeric: tabular-nums; }
+.pf-wait-x { width: 32px; height: 32px; margin: -6px -2px 0 0; display: grid; place-items: center; border: 0; border-radius: 6px; background: transparent; color: #56677D; cursor: pointer; }
+.pf-wait-x svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
+.pf-wait-x:hover { background: var(--wash); color: #0B1F44; }
+.pf-wait-x:focus-visible, .pf-wait-chip:focus-visible { outline: 3px solid var(--sky); outline-offset: 2px; }
+.pf-wait.is-nudged .pf-wait-card { animation: pf-wait-nudge .7s cubic-bezier(.22, 1, .36, 1); }
+.pf-wait-chip { position: absolute; right: clamp(14px, 2.300vw, 26px); bottom: calc(100% + 12px); z-index: 3; display: inline-flex; align-items: center; gap: 8px; min-height: 38px; padding: 0 16px 0 11px; border: 1px solid #C9D6E4; border-radius: 999px; background: var(--paper); color: #0B1F44; font: 700 13.5px/1 var(--sans); box-shadow: 0 10px 22px -14px rgba(11, 31, 68, .5); cursor: pointer; animation: pf-wait-in .35s cubic-bezier(.22, 1, .36, 1) both; }
+.pf-wait-chip svg { color: var(--maroon); width: 19px; height: 19px; }
+.pf-wait-chip:hover { background: var(--wash); }
+/* the disabled button passes a press to its wrapper, which brings the note back */
+.pf-sel { display: inline-flex; }
+.pf-sel:has(.btn[disabled]) { cursor: not-allowed; }
+.pf-sel .btn[disabled] { pointer-events: none; }
+@keyframes pf-wait-in { from { opacity: 0; transform: translateY(10px) scale(.97); } to { opacity: 1; transform: none; } }
+@keyframes pf-wait-sweep { from { transform: rotate(-150deg); } to { transform: none; } }
+@keyframes pf-wait-nudge { 0% { transform: none; } 35% { transform: translateY(-5px); box-shadow: 0 0 0 4px rgba(140, 29, 63, .14), 0 26px 44px -20px rgba(11, 31, 68, .55); } 100% { transform: none; } }
+@media (max-width: 640px) {
+  .pf-wait { right: 12px; width: calc(100% - 24px); bottom: calc(100% + 12px); }
+  .pf-wait-card { grid-template-columns: 38px minmax(0, 1fr) 32px; gap: 12px; padding: 16px 10px 14px 14px; }
+  .pf-wait-card::after { right: calc(25% - 7px); }
+  .pf-wait-ic { width: 38px; height: 38px; } .pf-wait-ic svg { width: 20px; height: 20px; }
+  .pf-wait-title { font-size: 16.5px; } .pf-wait-text { font-size: 13.5px; }
+  .pf-wait-chip { right: 12px; }
+  .pf-sel { flex: 1; display: flex; } .pf-sel .btn { width: 100%; }
+}
+@media (prefers-reduced-motion: reduce) { .pf-wait, .pf-wait-chip, .pf-wait-ic .hand-m, .pf-wait.is-nudged .pf-wait-card { animation: none; } }
+/* the request step, offline: the note before the form */
+.idv-res.note.req-off { margin: 12px 0 16px; }

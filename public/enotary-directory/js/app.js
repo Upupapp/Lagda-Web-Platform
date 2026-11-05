@@ -4,13 +4,18 @@
 // where LAGDA offers it, verifying their identity); nothing is booked and nothing is charged.
 // Only lawyers and offices with their own published picture are listed (js/lawyers.js holds only those).
 // What each profile shows is the lawyer's own published information: name, firm, position, office, practice areas,
-// education, Bar admission, a link to their own page. No rating, review, fee or open time is shown: none is known.
+// education, Bar admission, a link to their own page. No rating, review or fee is shown: none is known.
+// A notary shows as online during their office hours (OFFICE_HOURS below) and can be sent a request only then.
 (function () {
   "use strict";
   // Only entries with their own picture, whatever the data file holds.
   var LAWYERS = (window.LAWYERS || []).filter(function (l) { return typeof l.photo === "string" && l.photo && !/default_/.test(l.photo); });
   function byId(id) { return LAWYERS.filter(function (l) { return l.id === id; })[0] || null; }
   var SOON = "Online notarial sessions are not currently available: LAGDA eNotary is subject to Supreme Court accreditation. Choose a notary to register your interest, and we\u2019ll email you when you can book.";
+  // When a notary can receive requests. One set of hours for every notary for now: hoursOf() below is where a notary's own
+  // hours would come in. days: 0 is Sunday, 6 Saturday. open and close are "HH:MM" in timeZone; close is the first minute
+  // that is no longer open. text says the same in words: change the two together.
+  var OFFICE_HOURS = { days: [1, 2, 3, 4, 5], open: "08:00", close: "17:00", timeZone: "Asia/Manila", text: "Monday to Friday, 8:00 AM to 5:00 PM (Philippine time)" };
   var PAGE = 24;
 
   function hash(text) { var h = 5381; for (var i = 0; i < text.length; i++) h = ((h << 5) + h + text.charCodeAt(i)) >>> 0; return h; }
@@ -38,6 +43,58 @@
   function toast(text) { var t = document.getElementById("toast"); t.textContent = text; t.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(function () { t.hidden = true; }, 2800); }
 
   function years(l) { return l.barYear ? 2026 - l.barYear : null; }
+
+  // ── online or offline: whether a notary can receive a request now ───────
+  // Worked out in the notary's time zone (OFFICE_HOURS.timeZone, Asia/Manila), never in the visitor's own zone:
+  // the visitor's clock gives only the moment.
+  var WEEKDAY = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 }, CLOCKS = {};
+  function hoursOf(l) { return OFFICE_HOURS; } // the same hours for every notary for now; a notary's own hours (from l) would come in here
+  /** The day (0 Sunday to 6 Saturday) and the time ("HH:MM", 24-hour) at this moment in a time zone. */
+  function nowIn(zone) {
+    var f = CLOCKS[zone] || (CLOCKS[zone] = new Intl.DateTimeFormat("en-US", { timeZone: zone, weekday: "short", hour: "2-digit", minute: "2-digit", hourCycle: "h23" }));
+    var p = {}; f.formatToParts(Date.now()).forEach(function (x) { p[x.type] = x.value; });
+    return { day: WEEKDAY[p.weekday], time: (p.hour === "24" ? "00" : p.hour) + ":" + p.minute };
+  }
+  /** Online: on one of the notary's days, from the opening time up to, not including, the closing time. */
+  function online(l) {
+    var h = hoursOf(l), now;
+    try { now = nowIn(h.timeZone); } catch (err) { return false; } // the time there cannot be told: offline (the server decides in any case)
+    return h.days.indexOf(now.day) >= 0 && now.time >= h.open && now.time < h.close;
+  }
+  /** Said wherever a request cannot be sent because the notary is offline: the fact, then when requests can be sent. */
+  function offlineWords(l) { return ["This notary is offline.", "Requests can be sent " + hoursOf(l).text + "."]; }
+  /** When an offline notary opens next, in their time zone: the day in words ("today", "tomorrow, Tuesday, November 10",
+      "on Monday, November 9"), the opening time, and the minutes until then. */
+  function nextOpening(l) {
+    var h = hoursOf(l), now = nowIn(h.timeZone), ahead = 0;
+    var minutes = function (t) { return +t.slice(0, 2) * 60 + +t.slice(3, 5); };
+    if (!(h.days.indexOf(now.day) >= 0 && now.time < h.open)) { ahead = 1; while (ahead < 8 && h.days.indexOf((now.day + ahead) % 7) < 0) ahead++; }
+    var date = new Intl.DateTimeFormat("en-US", { timeZone: h.timeZone, weekday: "long", month: "long", day: "numeric" }).format(Date.now() + ahead * 86400000);
+    var hh = +h.open.slice(0, 2);
+    return { day: ahead === 0 ? "today" : ahead === 1 ? "tomorrow, " + date : "on " + date, time: (hh % 12 || 12) + ":" + h.open.slice(3, 5) + (hh < 12 ? " AM" : " PM"), mins: ahead * 1440 + minutes(h.open) - minutes(now.time) };
+  }
+  /** "14 h 32 min", "2 days 15 h", "25 min". */
+  function untilWords(m) { var d = Math.floor(m / 1440), hr = Math.floor(m % 1440 / 60), mn = m % 60; return d ? d + (d > 1 ? " days" : " day") + (hr ? " " + hr + " h" : "") : (hr ? hr + " h " : "") + mn + " min"; }
+  var CLOCK = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path class="hand-h" d="M12 12V7.5"/><path class="hand-m" d="M12 12h4.5"/></svg>';
+  /** The profile's note above "Select this notary" while the notary is offline: why it cannot be pressed, and when to come back. */
+  function waitNote(l) {
+    var n = null; try { n = nextOpening(l); } catch (err) { /* the time there cannot be told: the hours alone */ }
+    var back = n ? "Please come back <b>" + esc(n.day) + ', from <span class="nw">' + n.time + "</span></b> (Philippine time) to request it." : "Please come back during office hours to request it.";
+    return '<div class="pf-wait-card"><span class="pf-wait-ic">' + CLOCK + '</span><div class="pf-wait-body">' +
+      '<p class="pf-wait-title">Requests are closed for now</p>' +
+      '<p class="pf-wait-text">' + esc(title(l)) + " is offline, so notarial service cannot be requested at this time. " + back + "</p>" +
+      '<p class="pf-wait-meta">' + (n ? '<span class="pf-wait-count">Opens in ' + untilWords(n.mins) + "</span>" : "") + "<span>Office hours: " + keepTogether(hoursOf(l).text) + "</span></p></div>" +
+      '<button type="button" class="pf-wait-x" data-wait-hide aria-label="Hide this message"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>';
+  }
+  /** Escaped text that keeps each time ("8:00 AM") and "(Philippine time)" on one line. The words are unchanged. */
+  function keepTogether(text) { return esc(text).replace(/\d{1,2}:\d{2} [AP]M|\(Philippine time\)/g, function (m) { return '<span class="nw">' + m + "</span>"; }); }
+  /** The status on a card and in the profile: a dot and the word (a screen reader hears "Status: Online"); offline, the hours too. */
+  function statusBadge(l) {
+    var on = online(l);
+    return '<div class="avail ' + (on ? "is-on" : "is-off") + '" data-status="' + esc(l.id) + '">' +
+      '<p class="avail-state"><span class="ho-sr">Status: </span><i aria-hidden="true"></i>' + (on ? "Online" : "Offline") + "</p>" +
+      (on ? "" : '<p class="avail-hours">' + keepTogether("Available " + hoursOf(l).text + ".") + "</p>") + "</div>";
+  }
 
   // ── state ───────────────────────────────────────────────────────────────
   var F = { q: "", island: "", region: "", province: "", city: "", area: "", firm: "", position: "", photo: false, sort: "photo", page: 0 };
@@ -93,8 +150,9 @@
   /**
    * The top of a lawyer's card, shared by the directory's result card and the request's lawyer card so the two cannot drift apart:
    * the banner with its waves and seal, the picture in its white frame across the banner's edge, then the name, "position · firm",
-   * the maroon rule and the place. o.open: the picture and the name open the profile (the result card). o.areas: add the practice areas.
-   * o.h: the heading's tag. o.id: the id given to the name, which labels the card.
+   * the maroon rule and the place, and last the notary's status (online or offline). o.open: the picture and the name open the
+   * profile (the result card). o.areas: add the practice areas. o.h: the heading's tag. o.id: the id given to the name, which
+   * labels the card. o.after: what comes between the place and the status.
    */
   function cardShape(l) { var r = whole(l) ? l.photoW / l.photoH : 0; return whole(l) ? " wide" + (r > 1.3 ? " landscape" : r < 0.8 ? " tall" : "") : ""; }
   function cardTop(l, o) {
@@ -111,6 +169,7 @@
         '<div class="card-facts"><span class="meta">' + ICON.pin + "<span>" + esc(l.city + ", " + l.province) + "</span></span>" +
           (o.areas && l.areas.length ? '<i class="sep" aria-hidden="true"></i><span class="meta">' + ICON.brief + '<span class="a3">' + areas(3) + '</span><span class="a2">' + areas(2) + "</span></span>" : "") + "</div>" +
         (o.after || "") +
+        statusBadge(l) +
       "</div>";
   }
   function card(l) {
@@ -361,7 +420,7 @@
   function profile(id) {
     var l = byId(id); if (!l) return;
     closeMenu(false);
-    var y = years(l), big = whole(l), place = l.city + ", " + l.province;
+    var y = years(l), big = whole(l), place = l.city + ", " + l.province, on = online(l);
     lastFocus = document.activeElement;
     var about = l.about || (l.kind === "office" ? "A " + (l.position || "law office").toLowerCase() + " in " + l.city + " offering notarial services." : (/^[aeiou]/i.test(l.position || "lawyer") ? "An " : "A ") + (l.position || "lawyer").toLowerCase() + " at " + l.firm + ", " + l.city + ".");
     var link = l.profile || l.website;
@@ -378,6 +437,7 @@
       (l.kind === "office" ? "" : '<p class="pf-firm">' + esc(l.firm) + "</p>") +
       '<p class="pf-place">' + PI.pin + "<span>" + esc(place) + "</span></p>" +
       '<p class="pf-notar">' + ICON.seal + (l.notaryAdvertised ? "<b>Notary Public</b>" : "<b>Notarization</b>") + "</p>" +
+      statusBadge(l) +
       '<p class="pf-about">' + esc(about) + "</p></section>";
 
     // Left: credentials, from the lawyer's own published profile.
@@ -395,8 +455,11 @@
 
     document.getElementById("modal-root").innerHTML = '<div class="veil" id="veil"><div class="pf" role="dialog" aria-modal="true" aria-labelledby="pf-name">' +
       '<div class="pf-scroll"><div class="pf-cols"><button type="button" class="pf-x" data-close aria-label="Close">×</button>' + badge + left + right + "</div></div>" +
-      '<div class="pf-foot"><p class="pf-note">The profile shown is the lawyer\'s own published information. Choose this notary to be told when you can book.</p>' +
-        '<button type="button" class="btn outline" data-close>Close</button><button type="button" class="btn" data-select="' + esc(l.id) + '">Select this notary</button></div></div></div>';
+      '<div class="pf-foot"><div class="pf-wait" id="pf-wait" role="note" aria-label="Why this notary cannot be selected"' + (on ? " hidden" : "") + ">" + (on ? "" : waitNote(l)) + "</div>" +
+        '<button type="button" class="pf-wait-chip" data-wait-show hidden>' + CLOCK + "Why can\u2019t I select this notary?</button>" +
+        '<p class="pf-note">The profile shown is the lawyer\'s own published information. Choose this notary to be told when you can book.</p>' +
+        '<button type="button" class="btn outline" data-close>Close</button><span class="pf-sel" data-sel-wrap><button type="button" class="btn" data-select="' + esc(l.id) + '" aria-describedby="pf-wait"' + (on ? "" : " disabled") + ">Select this notary</button></span></div></div></div>";
+    WAIT_HIDDEN = false;
     document.body.style.overflow = "hidden";
     document.querySelector(".pf .pf-x").focus();
   }
@@ -546,7 +609,10 @@
         if (contact === undefined) reach = '<p class="ho-status" role="status"><i class="spin" aria-hidden="true"></i><span>Checking how to reach this notary…</span></p>';
         else if (contact && contact.accountKnown) reach = '<div class="idv-res ok req-account" role="status">' + CI.check + "<div><b>This notary has a LAGDA account.</b><p>LAGDA emails " + (contact.maskedEmail ? "<b>" + esc(contact.maskedEmail) + "</b> " : "them ") + "when you send the request, so you do not need to add an email. To protect the notary’s inbox, each client can send a limited number of requests a day.</p></div></div>";
         else reach = '<div class="req-email"><label for="req-email"><b>The notary\'s email (optional)</b></label><input id="req-email" type="email" autocomplete="off" inputmode="email" maxlength="254" value="' + esc(SEL.email || "") + '"><p class="fine left">This notary has no LAGDA account yet, so LAGDA cannot email them by itself. If you know their email address, add it. It is kept with the request. Otherwise, give them the link and QR code yourself.</p></div>';
+        // Offline: said first, before the form, and "Request this notary" cannot be pressed (syncRequestButton() keeps both current).
+        var on = online(l), off = offlineWords(l);
         body = '<h3 id="step-h" tabindex="-1">' + CI.mail + "Request this notary</h3>" +
+          '<div class="idv-res note req-off" id="req-offline" role="status" tabindex="-1"' + (on ? " hidden" : "") + '><span aria-hidden="true">i</span><div><b>' + esc(off[0]) + "</b><p>" + keepTogether(off[1]) + "</p></div></div>" +
           '<p class="lead">LAGDA gives you a private link and a QR code, good for a limited time, to give to the notary. The notary signs in to LAGDA and passes an ID and face check before they can answer your request.</p>' +
           '<dl class="summary"><div><dt>Notary</dt><dd>' + name + (l.kind === "office" ? "" : ", " + esc(l.firm)) + "<br>" + esc(l.city + ", " + l.province) + "</dd></div>" +
             "<div><dt>Your name</dt><dd>" + esc(ME.name) + "</dd></div><div><dt>Identity verified in LAGDA</dt><dd>Yes</dd></div></dl>" +
@@ -554,7 +620,7 @@
           reach +
           '<p class="fine left">Nothing is booked, paid or notarized by this step. Online notarial sessions are not currently available.</p>' +
           (SEL.error ? '<p class="err-box" role="alert" id="step-err" tabindex="-1">' + esc(SEL.error) + "</p>" : "");
-        bar = '<button type="button" class="btn outline" data-go="market" data-forget>Browse other notaries</button><button type="button" class="btn big" data-request' + (SEL.busy || !detailsReady(SEL) ? " disabled" : "") + ">" + (SEL.busy ? "Sending…" : "Request this notary") + "</button>";
+        bar = '<button type="button" class="btn outline" data-go="market" data-forget>Browse other notaries</button><button type="button" class="btn big" data-request' + (SEL.busy || !detailsReady(SEL) || !on ? " disabled" : "") + ">" + (SEL.busy ? "Sending…" : "Request this notary") + "</button>";
       }
     } else if (SEL.step === "interest") {
       at = 3; head = "Register your interest"; sub = "Online notarial sessions are not open yet. Choose to be told by email when you can book with " + name + ".";
@@ -742,6 +808,8 @@
     var d = details(sel);
     var body = { directoryId: l.id, details: { actWanted: d.act, documentKind: d.kind, inPhilippines: true, city: d.city.trim(), province: d.province.trim(), usedAbroad: !!d.usedAbroad } };
     if (email) body.notaryEmail = email;
+    // Offline: nothing is sent, even if the button was forced on (the server refuses a request to an offline notary too).
+    if (!online(l)) { sel.busy = false; redraw(false); var note = document.getElementById("req-offline"); if (note) note.focus(); return; }
     api("POST", "/me/enotary/invitations", body).then(function (r) {
       if (SEL !== sel) return;
       var inv = r.ok && r.data ? r.data.invitation || r.data : null;
@@ -758,6 +826,7 @@
       }
       if (r.status === 422 && (r.code === "abroad_coming_soon" || r.code === "document_blocked" || r.code === "request_details_invalid")) sel.error = (r.data && r.data.error && r.data.error.message) || "Check what you asked for.";
       else if (r.status === 409 && r.code === "enotary_request_rate_limit") sel.error = "You have made the most requests allowed in a day. Please try again tomorrow.";
+      else if (r.status === 409 && r.code === "enotary_notary_offline") sel.error = (r.data && r.data.error && r.data.error.message) || "This notary is offline. Requests can be sent Monday to Friday, 8:00 AM to 5:00 PM (Philippine time)."; // the server's own office-hours check
       else if (r.status === 409 && r.code === "enotary_invitation_limit") sel.error = "You already have 3 open requests. Cancel one, or wait for it to end, then try again.";
       else if (r.status === 403 && r.code === "client_identity_required") { INV = { list: INV ? INV.list : [], needsIdentity: true }; sel.error = ""; }
       else if (r.status === 404 && r.code === "enotary_notary_not_listed") sel.error = "That notary is not listed in the Notary Directory.";
@@ -830,7 +899,7 @@
   }
 
   document.addEventListener("click", function (e) {
-    var t = e.target.closest("[data-go],[data-open],[data-select],[data-close],[data-city],[data-province],[data-page],[data-clear],[data-step],[data-idv-start],[data-idv-ask],[data-idv-retry],[data-idv-reload],[data-register],[data-request],#clear,#place-clear,#veil");
+    var t = e.target.closest("[data-go],[data-open],[data-select],[data-close],[data-city],[data-province],[data-page],[data-clear],[data-step],[data-idv-start],[data-idv-ask],[data-idv-retry],[data-idv-reload],[data-register],[data-request],#clear,#place-clear,#veil,[data-wait-hide],[data-wait-show],[data-sel-wrap]");
     if (!t) return;
     if (t.id === "veil") { if (e.target === t) closeProfile(); return; }
     if (t.hasAttribute("data-go")) { e.preventDefault(); if (t.hasAttribute("data-forget")) forget(); go(t.getAttribute("data-go")); }
@@ -838,6 +907,9 @@
     else if (t.hasAttribute("data-page")) { if (t.getAttribute("aria-disabled") !== "true") turn(t.getAttribute("data-page")); }
     else if (t.hasAttribute("data-select")) choose(t.getAttribute("data-select"));
     else if (t.hasAttribute("data-close")) closeProfile();
+    else if (t.hasAttribute("data-wait-hide")) waitShown(false);
+    else if (t.hasAttribute("data-wait-show")) waitShown(true, true);
+    else if (t.hasAttribute("data-sel-wrap")) { if (t.querySelector("[data-select]").disabled) waitShown(true, true); } // a press on the disabled button
     else if (t.hasAttribute("data-province")) { var prov = t.getAttribute("data-province"); var was = F.province === prov && !F.city; var one = LAWYERS.filter(function (x) { return x.province === prov; })[0]; F.city = ""; F.province = was ? "" : prov; F.region = was ? "" : one.region; F.island = was ? "" : one.island; F.page = 0; market(); keepPlace(); }
     else if (t.hasAttribute("data-city")) { var c = t.getAttribute("data-city"); var on = F.city !== c; var ref = LAWYERS.filter(function (x) { return x.city === c; })[0]; F.city = on ? c : ""; F.province = on ? ref.province : ""; F.region = on ? ref.region : ""; F.island = on ? ref.island : ""; F.page = 0; market(); keepPlace(); }
     else if (t.hasAttribute("data-clear") || t.id === "clear") reset();
@@ -851,7 +923,45 @@
     else if (t.hasAttribute("data-register")) register();
     else if (t.hasAttribute("data-request")) request();
   });
-  function syncRequestButton() { var b = document.querySelector("[data-request]"); if (b && SEL) b.disabled = !!SEL.busy || !detailsReady(SEL); }
+  /** The request step: "Request this notary" can be pressed once the details are given, and only while the notary is online. */
+  function syncRequestButton() {
+    var b = document.querySelector("[data-request]"); if (!b || !SEL) return;
+    var on = online(SEL.lawyer), note = document.getElementById("req-offline");
+    if (note) note.hidden = on;
+    if (!on && note && document.activeElement === b) note.focus(); // the focus does not vanish with the button
+    b.disabled = !!SEL.busy || !detailsReady(SEL) || !on;
+  }
+  /** The offline note put away (a small "Why can't I select" chip takes its place) or brought back; brought back by a press on
+      the disabled button or the chip, it lifts once to show where the answer is. */
+  var WAIT_HIDDEN = false;
+  function waitShown(show, nudge) {
+    var w = document.getElementById("pf-wait"), chip = document.querySelector(".pf-wait-chip"); if (!w || !chip) return;
+    WAIT_HIDDEN = !show; w.hidden = !show; chip.hidden = show;
+    if (show && nudge) { w.classList.remove("is-nudged"); void w.offsetWidth; w.classList.add("is-nudged"); }
+    (show ? w.querySelector(".pf-wait-x") : chip).focus();
+  }
+  /** The open profile: "Select this notary" only while the notary is online; offline, the note says why and when. */
+  function syncProfile() {
+    var b = document.querySelector(".pf [data-select]"), w = document.getElementById("pf-wait"), chip = document.querySelector(".pf-wait-chip"); if (!b) return;
+    var l = byId(b.getAttribute("data-select")), on = online(l);
+    // Drawn again each minute for the countdown, unless the visitor is on its close button.
+    if (w && !on && !w.contains(document.activeElement)) w.innerHTML = waitNote(l);
+    if (w) w.hidden = on || WAIT_HIDDEN;
+    if (chip) chip.hidden = on || !WAIT_HIDDEN;
+    if (!on && document.activeElement === b) document.querySelector(".pf .pf-x").focus();
+    b.disabled = !on;
+  }
+  // The status, kept current: worked out again every minute, on the minute, so that it changes at the opening and the
+  // closing time without a reload. Only a status that changed is drawn again.
+  function refreshStatus() {
+    [].forEach.call(document.querySelectorAll("[data-status]"), function (el) {
+      var l = byId(el.getAttribute("data-status"));
+      if (l && el.classList.contains("is-on") !== online(l)) el.outerHTML = statusBadge(l);
+    });
+    syncProfile(); syncRequestButton();
+  }
+  (function tick() { setTimeout(function () { refreshStatus(); tick(); }, 60000 - Date.now() % 60000 + 250); })();
+  document.addEventListener("visibilitychange", function () { if (!document.hidden) refreshStatus(); });
   document.addEventListener("change", function (e) {
     var id = e.target.id;
     if (SEL && (id === "rd-act" || id === "rd-kind" || id === "rd-abroad-use")) {
