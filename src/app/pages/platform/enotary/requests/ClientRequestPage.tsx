@@ -145,6 +145,9 @@ function leadFor(invitation: Invitation): string {
       return `Your identity is verified. Your request has been sent to ${who}. When they accept, you meet them on a video call and choose the document together.`;
     case "accepted": return `${who} will meet you in a private room on a video call. You choose the document together.`;
     case "declined": return "You can ask another notary from the Notary Directory.";
+    case "expired":
+      if (invitation.booking?.kind === "now") return "A request for right now waits 15 minutes for an answer. Book a time with this notary, or ask again for right now.";
+      return "Renew the request for a new link and a fresh time limit.";
     default: return "Renew the request for a new link and a fresh time limit.";
   }
 }
