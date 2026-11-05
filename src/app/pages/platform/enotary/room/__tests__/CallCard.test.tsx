@@ -39,6 +39,13 @@ describe("the call card", () => {
     expect(screen.getByTestId("call-said")).toHaveTextContent("Waiting for Atty. Aiyana Cruz to join.");
   });
 
+  it("counts the other person as here while their video reaches the page, even between the server's presence pings", () => {
+    card({ partnerPresent: false, messages: [], connection: connection({ link: "connected" }) });
+    expect(screen.getByText("Joined")).toBeInTheDocument();
+    expect(screen.queryByText("Not here yet")).toBeNull();
+    expect(screen.getByTestId("call-said")).toHaveTextContent("Atty. Aiyana Cruz is in the room.");
+  });
+
   it("mutes, stops the camera and leaves", async () => {
     const user = userEvent.setup();
     const toggleMic = vi.fn();

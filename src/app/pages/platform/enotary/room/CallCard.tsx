@@ -115,13 +115,15 @@ function Tile({ stream, muted, cls, children, off, avatar, note }: {
 }
 
 export function CallCard({
-  session, connection, partnerName, partnerRole, selfIdentityVerified, partnerPresent, messages, onSend, onLeave, document: documentView, children, look,
+  session, connection, partnerName, partnerRole, selfIdentityVerified, partnerPresent: heard, messages, onSend, onLeave, document: documentView, children, look,
 }: {
   session: Session; connection: RoomConnection; partnerName: string; partnerRole: string; selfIdentityVerified: boolean; partnerPresent: boolean;
   messages: readonly RoomMessage[]; onSend: (body: string) => Promise<void>; onLeave: () => void; document: ReactNode; children?: ReactNode;
   /** "v2": the step-6 console's look, where the console's strip shows the time and the room. */
   look?: "v2";
 }) {
+  // Present by the server's last ping, or plainly so while their video reaches this page.
+  const partnerPresent = heard || connection.link === "connected";
   const root = useRef<HTMLDivElement>(null);
   const minimise = useRef<HTMLButtonElement>(null);
   const [max, setMax] = useState(false);

@@ -58,7 +58,8 @@ const roomProblem = (failure: unknown): string =>
 /** The act panel's place, remarks and ticks for each session, kept for the tab until the act is recorded. */
 const actDrafts = new Map<string, { place: string; remarks: string; checks: Record<string, boolean> }>();
 
-export const PING_MS = 20_000;
+/** Inside the server's 15-second presence window (PRESENCE_WINDOW_MS), so the other side never reads "not here" between pings. */
+export const PING_MS = 10_000;
 export const SESSION_MS = 4_000;
 /** While the room is not open yet: read often, so the video starts the moment the notary opens it. */
 export const WAITING_SESSION_MS = 1_000;
