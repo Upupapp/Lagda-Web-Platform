@@ -30,7 +30,7 @@ describe("the catalogue", () => {
     expect(processScreen("invitation-accept", "Reyes Law Office").message).toBe("Joining Reyes Law Office…");
     expect(processScreen("invitation-accept").message).toBe("Accepting the invitation…");
     expect(processScreen("share-create", "Maria Santos").message).toBe("Sharing with Maria Santos…");
-    expect(processScreen("plan-request", "Business").message).toBe("Sending your Business payment details…");
+    expect(processScreen("plan-request", "Business").message).toBe("Confirming your Business payment…");
   });
 });
 

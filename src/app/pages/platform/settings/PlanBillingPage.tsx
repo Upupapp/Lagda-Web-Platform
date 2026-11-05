@@ -4,8 +4,9 @@
 // page shows the plan, the Free allowance, a payment waiting to be confirmed, and
 // the plan cards. Choosing Personal or Business opens the test-mode form:
 // a clear TEST MODE banner, a sample account with Copy buttons, and fields
-// that accept only that sample. Submitting sends the request to the LAGDA
-// owner, who approves or declines it; approval starts a paid month.
+// that accept only that sample. Confirming the payment starts the paid month
+// at once: the mock payment confirms itself, nobody approves it. (A payment
+// sent before that may still be waiting; it shows here until it is decided.)
 //
 // `?choose=personal|business` opens the form straight away (the workspace
 // Billing page and the "used your free document" message link here).
@@ -51,7 +52,7 @@ function CurrentPlanCard({ plan, onCancel, cancelling }: { plan: MyPlan; onCance
             <span data-testid="my-plan-name" style={{ ...GM, fontSize: 20, fontWeight: 800, letterSpacing: "0.06em", color: SET.NAVY, display: "inline-flex", alignItems: "center", gap: 8 }}>
               <Sparkles size={18} aria-hidden color="#A16207" /> {PLAN_NAMES[plan.plan].toUpperCase()}
             </span>
-            <Badge tone={free ? "neutral" : "success"} dot>{free ? "Free" : plan.autoRenew ? "Renews monthly" : "Active"}</Badge>
+            <Badge tone={free ? "neutral" : "success"} dot>{free ? "Free" : plan.autoRenew ? "Renews monthly" : "Subscribed"}</Badge>
           </div>
           <p style={{ ...GF, fontSize: 13.5, color: SET.INK, margin: "8px 0 0", lineHeight: 1.6, maxWidth: "62ch" }}>
             {lapsed
@@ -122,7 +123,7 @@ function CopyButton({ value, label }: { value: string; label: string }) {
   );
 }
 
-function UpgradeDialog({ plan, onClose, onSent }: { plan: RequestablePlan; onClose: () => void; onSent: () => void }) {
+function UpgradeDialog({ plan, onClose, onSent }: { plan: RequestablePlan; onClose: () => void; onSent: (plan: RequestablePlan) => void }) {
   const titleId = useId();
   const firstRef = useRef<HTMLInputElement>(null);
   const [values, setValues] = useState<BankDetails>({ bankName: "", accountName: "", accountNumber: "", branch: "", swiftCode: "" });
@@ -147,7 +148,7 @@ function UpgradeDialog({ plan, onClose, onSent }: { plan: RequestablePlan; onClo
     setSending(true); setError(null); setBad(new Set());
     try {
       await withProcess("plan-request", PLAN_NAMES[plan], () => plansService.requestUpgrade(plan, values));
-      onSent();
+      onSent(plan);
     } catch (err) {
       if (err instanceof ApiError && err.body?.code === PLAN_ERROR.sampleOnly) {
         setBad(new Set((err.body.details ?? []).map(d => (d.field ?? "").replace(/^bank\./, ""))));
@@ -155,7 +156,7 @@ function UpgradeDialog({ plan, onClose, onSent }: { plan: RequestablePlan; onClo
       } else if (err instanceof ApiError && err.body?.code === PLAN_ERROR.pending) {
         setError("You already have a payment waiting to be confirmed.");
       } else {
-        setError(err instanceof Error && err.message.trim() !== "" ? err.message : "Your payment details could not be sent. Please try again.");
+        setError(err instanceof Error && err.message.trim() !== "" ? err.message : "Your payment could not be confirmed. Please try again.");
       }
     } finally {
       setSending(false);
@@ -170,7 +171,7 @@ function UpgradeDialog({ plan, onClose, onSent }: { plan: RequestablePlan; onClo
           <div style={{ minWidth: 0 }}>
             <h3 id={titleId} style={{ ...GF, fontSize: 19, fontWeight: 800, color: SET.NAVY, margin: 0 }}>Upgrade to {PLAN_NAMES[plan]}</h3>
             <div style={{ ...GF, fontSize: 13.5, color: SET.SLATE, marginTop: 4 }}>
-              {formatPeso(PLAN_PRICES[plan], true)}{plan === "business" ? " per user" : ""} a month · one month, active once LAGDA confirms the payment
+              {formatPeso(PLAN_PRICES[plan], true)}{plan === "business" ? " per user" : ""} a month · one month, active as soon as you confirm the payment
             </div>
           </div>
           <button type="button" onClick={onClose} disabled={sending} aria-label="Close" className="pb-x"><X size={18} aria-hidden /></button>
@@ -217,7 +218,7 @@ function UpgradeDialog({ plan, onClose, onSent }: { plan: RequestablePlan; onClo
             <div style={{ display: "flex", gap: 10, justifyContent: "flex-end", flexWrap: "wrap", marginTop: 4 }}>
               <button type="button" onClick={onClose} disabled={sending} style={BTN_SECONDARY}>Cancel</button>
               <button type="submit" disabled={sending} style={BTN_PRIMARY} data-testid="upgrade-submit">
-                {sending ? <><Loader2 size={15} aria-hidden className="pb-spin" /> Sending…</> : "Send payment details"}
+                {sending ? <><Loader2 size={15} aria-hidden className="pb-spin" /> Confirming…</> : "Confirm payment"}
               </button>
             </div>
           </form>
@@ -316,8 +317,8 @@ export function PlanBillingPage() {
                 <ol style={{ ...GF, fontSize: 13.5, color: SET.INK, lineHeight: 1.65, margin: 0, paddingLeft: 20 }}>
                   <li>Choose Personal or Business.</li>
                   <li>Copy the sample account into the form. It is test mode: no money is moved.</li>
-                  <li>LAGDA confirms your payment, usually within a day. You get an email and a notification.</li>
-                  <li>Once the payment is confirmed, your plan runs for one month. When it ends you return to Free, and nothing is deleted.</li>
+                  <li>Click Confirm payment. Your payment is confirmed at once and you are subscribed straight away. You get an email and a notification.</li>
+                  <li>Your plan runs for one month. When it ends you return to Free, and nothing is deleted.</li>
                 </ol>
               </SSection>
             </>
@@ -326,9 +327,9 @@ export function PlanBillingPage() {
       )}
       {open && (
         <UpgradeDialog plan={open} onClose={() => { setChoosing(null); }}
-          onSent={() => {
+          onSent={bought => {
             setChoosing(null);
-            setNotice("Your payment details were sent. LAGDA will confirm the payment, and you will get an email and a notification.");
+            setNotice(`Payment confirmed. You are subscribed to ${PLAN_NAMES[bought]}, and every workspace you own has its features now.`);
             void refresh();
             announcePlanChanged();
           }} />

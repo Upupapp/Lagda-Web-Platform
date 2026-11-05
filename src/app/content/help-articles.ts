@@ -330,7 +330,7 @@ export const HELP_ARTICLES: readonly HelpArticle[] = [
     summary: "Move from Free to Personal or Business, see what each includes, and download the invoice for each change.",
     steps: [
       "Open My Settings › Plan & Billing. Your current plan and what it includes are at the top; Compare all features opens the full table.",
-      "Click Choose Personal or Choose Business, copy the sample account into the form and click Send payment details. LAGDA is in test mode: no card is asked for and no money is moved. LAGDA confirms the payment, usually within a day, and your plan changes.",
+      "Click Choose Personal or Choose Business, copy the sample account into the form and click Confirm payment. LAGDA is in test mode: no card is asked for and no money is moved. Your payment is confirmed at once and you are subscribed straight away.",
       "Once you are on a paid plan, the plan cards are replaced by your invoices. Open an invoice to view it, print it, or download it as a PDF.",
       "A workspace uses its owner's plan. If you own a workspace, moving to Business is what unlocks members, roles, teams and join links for it.",
       "To go back to Free, choose it on the same page; paid features stop but your documents and records stay.",

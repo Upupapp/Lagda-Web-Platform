@@ -1,7 +1,8 @@
 // Plans with a real backend (093): My Settings › Plan & Billing shows the plan
 // and the Free document; choosing a plan opens the TEST MODE form whose sample
-// account can be copied or filled in, and only that is sent; a pending
-// request can be cancelled. Paid features on a Free owner's workspace show an
+// account can be copied or filled in, and only that is sent; confirming the
+// payment subscribes at once (no approval); a pending request left from before
+// can be cancelled. Paid features on a Free owner's workspace show an
 // upgrade card (with "See plans" for the owner only), the approver decides a
 // request, and "You've used your free document" leads to the plans.
 
@@ -68,8 +69,8 @@ beforeEach(() => {
           details: [{ field: "accountNumber", code: "sample_only", message: "x" }],
         } }));
       }
-      mine = { ...mine, pendingRequest: PENDING };
-      return Promise.resolve(json(201, PENDING));
+      mine = { ...mine, plan: "business", storedPlan: "business", paidUntil: "2026-10-30T09:00:00.000Z" };
+      return Promise.resolve(json(201, { ...PENDING, status: "approved", decidedAt: "2026-09-30T09:00:00.000Z" }));
     }
     if (path === "/me/plan/upgrade-requests/cancel") { mine = { ...mine, pendingRequest: null }; return Promise.resolve(json(204, null)); }
     if (path === "/plan-requests/pur_1" && method === "GET") return Promise.resolve(json(200, review));
@@ -96,7 +97,7 @@ describe("My Settings › Plan & Billing", () => {
     expect(screen.getByTestId("plan-choose-free")).toBeDisabled();
   });
 
-  it("opens the TEST MODE form with the sample account, and sends only the sample", async () => {
+  it("opens the TEST MODE form with the sample account, sends only the sample, and subscribes at once", async () => {
     const user = userEvent.setup();
     renderPlan();
     await user.click(await screen.findByTestId("plan-choose-business"));
@@ -119,13 +120,17 @@ describe("My Settings › Plan & Billing", () => {
     await waitFor(() => { expect(screen.queryByTestId("upgrade-dialog")).toBeNull(); });
     const sent = calls.filter(c => c.path === "/me/plan/upgrade-requests").at(-1);
     expect(sent?.body).toEqual({ plan: "business", bank: { ...SAMPLE_BANK_ACCOUNT } });
-    expect(await screen.findByTestId("my-plan-pending")).toHaveTextContent("Payment being confirmed: Business");
+    expect(await screen.findByRole("status")).toHaveTextContent("Payment confirmed. You are subscribed to Business");
+    await waitFor(() => { expect(screen.getByTestId("my-plan-name")).toHaveTextContent("BUSINESS"); });
+    expect(screen.getByText("Subscribed")).toBeInTheDocument();
+    expect(screen.queryByTestId("my-plan-pending")).toBeNull();
   });
 
   it("opens the form from ?choose=, and a pending request can be cancelled", async () => {
     const user = userEvent.setup();
     const view = renderPlan("/app/settings/plan?choose=personal");
     expect(await screen.findByRole("heading", { name: "Upgrade to Personal" })).toBeInTheDocument();
+    expect(screen.getByTestId("upgrade-submit")).toHaveTextContent("Confirm payment");
     await user.click(screen.getByRole("button", { name: "Cancel" }));
     view.unmount();
     mine = { ...mine, pendingRequest: PENDING };

@@ -86,7 +86,7 @@ const SCREENS = {
   "contact-request-decline": { tag: "Contact request", icon: UserX, message: () => "Declining the contact request…", detail: "They will not be added to your contacts." },
   "contact-request-cancel": { tag: "Contact request", icon: Undo2, message: () => "Cancelling your contact request…", detail: "It is withdrawn before they answer." },
   // ── Plans ────────────────────────────────────────────────────────────────
-  "plan-request": { tag: "Plan request", icon: Crown, message: w => w ? `Sending your ${w} payment details…` : "Sending your payment details…", detail: "LAGDA gets an email to confirm the payment." },
+  "plan-request": { tag: "Plan payment", icon: Crown, message: w => w ? `Confirming your ${w} payment…` : "Confirming your payment…", detail: "Test mode: no money is moved, and your plan starts at once." },
   "plan-request-cancel": { tag: "Plan request", icon: Undo2, message: () => "Cancelling your plan request…", detail: "You stay on your current plan." },
   // ── Templates ────────────────────────────────────────────────────────────
   "template-generate": { tag: "Template", icon: FilePen, message: () => "Generating your document…", detail: "Rendering the content into a PDF and saving it." },
