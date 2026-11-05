@@ -7,13 +7,18 @@
 // the room without a document (the client may bring it on the call), and refuses the act itself until everything the
 // act needs is in.
 //
+// The camera is made ready here, before the room opens (useRoomConnection's `warm`), so the call starts at once; the
+// camera check shows the person their own picture, which is also why the camera's light is on.
+//
 // Presentational: the page owns the session, the calls and the confirmation.
 
-import { CheckCircle2, CircleDashed, DoorOpen, LocateFixed, MapPin, ShieldCheck, FileText, UserRound, XCircle } from "lucide-react";
+import { useEffect, useRef } from "react";
+import { Camera, CameraOff, CheckCircle2, CircleDashed, DoorOpen, LocateFixed, MapPin, ShieldCheck, FileText, UserRound, XCircle } from "lucide-react";
 import { ActionButton, ActionRow, GF } from "../../../../components/system/design-system";
 import { formatClientAddress, type Session } from "../../../../services/real/enotary-sessions.service";
 import { E, SERIF } from "../EnotaryChrome";
 import { stampLabel } from "../requests/expiry";
+import type { MediaState } from "./useRoomConnection";
 
 const WAIT_STYLES = `
   .eno-wait { animation: eno-in 260ms ease both; }
@@ -25,6 +30,9 @@ const WAIT_STYLES = `
   }
   .eno-wait-actions { display: flex; flex-direction: row-reverse; justify-content: flex-start; align-items: stretch; gap: 10px; margin-top: 20px; }
   .eno-wait-action { flex: 0 0 auto; display: flex; }
+  .eno-cam { display: grid; grid-template-columns: 112px minmax(0, 1fr); gap: 14px; align-items: center; margin-bottom: 16px; padding-bottom: 16px; border-bottom: 1px solid ${E.line}; }
+  .eno-cam-frame { position: relative; width: 112px; aspect-ratio: 4 / 3; border-radius: 10px; overflow: hidden; background: #0B1B2E; display: grid; place-items: center; color: #8FA6BF; }
+  .eno-cam-frame video { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
   @media (max-width: 640px) {
     .eno-wait-action { flex: 1 1 0; min-width: 0; }
     .eno-wait-action button { white-space: normal !important; text-align: center; line-height: 1.25; padding: 6px 10px !important; }
@@ -102,11 +110,38 @@ const ITEM_ICON: Record<ReadinessItem["key"], typeof UserRound> = {
   present: UserRound, document: FileText, identity: ShieldCheck, address: MapPin, location: LocateFixed,
 };
 
-export function WaitingRoom({ session: s, isClient, partner, busy, onOpen, onCallOff }: {
+/** The person's own picture before the call, and whether the camera and microphone are ready. */
+function CameraCheck({ media, local }: { media: MediaState; local: MediaStream | null }) {
+  const video = useRef<HTMLVideoElement>(null);
+  useEffect(() => {
+    const el = video.current;
+    if (el !== null && el.srcObject !== local) el.srcObject = local;
+  }, [local]);
+  const ready = media === "ready" && local !== null;
+  const words = ready ? { title: "Your camera and microphone are ready", text: "The call starts the moment the room opens." }
+    : media === "denied" ? { title: "Camera or microphone not allowed", text: "Allow them in your browser's address bar, then reload this page. The notary must see and hear you." }
+      : media === "unsupported" ? { title: "This browser cannot make the call", text: "Use a recent Chrome, Edge, Safari or Firefox." }
+        : { title: "Getting your camera ready…", text: "Your browser may ask to use the camera and microphone. Allow both." };
+  return (
+    <div className="eno-cam" data-testid="camera-check" data-ready={ready ? "yes" : "no"}>
+      <div className="eno-cam-frame">
+        {ready ? <video ref={video} autoPlay playsInline muted aria-label="Your camera" /> : media === "denied" || media === "unsupported" ? <CameraOff size={22} aria-hidden /> : <Camera size={22} aria-hidden />}
+      </div>
+      <div style={{ minWidth: 0 }} role="status">
+        <span style={{ display: "block", fontSize: 14, fontWeight: 700, color: ready ? E.ok : E.ink }}>{words.title}</span>
+        <span style={{ display: "block", marginTop: 2, fontSize: 13, color: E.quiet, lineHeight: 1.5 }}>{words.text}</span>
+      </div>
+    </div>
+  );
+}
+
+export function WaitingRoom({ session: s, isClient, partner, busy, onOpen, onCallOff, camera }: {
   session: Session; isClient: boolean; partner: string; busy: string | null;
   /** The notary opens the room; absent for the client. */
   onOpen?: () => void;
   onCallOff: () => void;
+  /** The camera being made ready before the room opens; absent where no call follows. */
+  camera?: { media: MediaState; local: MediaStream | null };
 }) {
   const items = readinessOf(s, isClient);
   const ready = items.filter(item => item.done).length;
@@ -162,6 +197,7 @@ export function WaitingRoom({ session: s, isClient, partner, busy, onOpen, onCal
         </section>
 
         <section aria-labelledby="session-steps-title" style={{ padding: "clamp(16px, 3vw, 22px) clamp(16px, 3vw, 26px)", background: "#FBFCFE" }}>
+          {camera !== undefined && <CameraCheck media={camera.media} local={camera.local} />}
           <h3 id="session-steps-title" style={{ margin: 0, fontSize: 12, fontWeight: 800, letterSpacing: "0.12em", textTransform: "uppercase", color: E.quiet }}>The steps of the session</h3>
           <ol style={{ listStyle: "none", margin: "12px 0 0", padding: 0 }}>
             {steps.map((step, i) => (

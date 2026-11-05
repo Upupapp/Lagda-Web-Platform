@@ -141,3 +141,24 @@ describe("the client's address", () => {
     expect(screen.getByTestId("address-given")).toHaveTextContent("12 Rizal St., Brgy. San Jose, Naga City, Camarines Sur");
   });
 });
+
+describe("the camera check before the room opens", () => {
+  it("says the camera is being made ready, then shows the person their picture", () => {
+    const { rerender } = render(<WaitingRoom session={session()} isClient partner="Atty. Aiyana Cruz" busy={null} onCallOff={vi.fn()} camera={{ media: "asking", local: null }} />);
+    expect(screen.getByTestId("camera-check")).toHaveTextContent("Getting your camera ready");
+    rerender(<WaitingRoom session={session()} isClient partner="Atty. Aiyana Cruz" busy={null} onCallOff={vi.fn()} camera={{ media: "ready", local: {} as MediaStream }} />);
+    expect(screen.getByTestId("camera-check")).toHaveAttribute("data-ready", "yes");
+    expect(screen.getByTestId("camera-check")).toHaveTextContent("Your camera and microphone are ready");
+    expect(screen.getByLabelText("Your camera")).toBeInTheDocument();
+  });
+
+  it("tells the person how to allow a camera that was refused", () => {
+    render(<WaitingRoom session={session()} isClient partner="Atty. Aiyana Cruz" busy={null} onCallOff={vi.fn()} camera={{ media: "denied", local: null }} />);
+    expect(screen.getByTestId("camera-check")).toHaveTextContent("Camera or microphone not allowed");
+  });
+
+  it("is not shown where no call follows", () => {
+    render(<WaitingRoom session={session()} isClient partner="Atty. Aiyana Cruz" busy={null} onCallOff={vi.fn()} />);
+    expect(screen.queryByTestId("camera-check")).toBeNull();
+  });
+});

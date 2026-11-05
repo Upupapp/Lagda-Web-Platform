@@ -60,6 +60,8 @@ const actDrafts = new Map<string, { place: string; remarks: string; checks: Reco
 
 export const PING_MS = 20_000;
 export const SESSION_MS = 4_000;
+/** While the room is not open yet: read often, so the video starts the moment the notary opens it. */
+export const WAITING_SESSION_MS = 1_500;
 export const CHAT_MS = 3_000;
 
 type Loaded =
@@ -84,7 +86,8 @@ export function RoomPage() {
   const workspaceId = useOptionalPlatform()?.currentWorkspace?.id ?? null;
   const session = loaded.kind === "ready" ? loaded.session : null;
   const live = session !== null && session.status === "live";
-  const connection = useRoomConnection(session?.id ?? null, session?.role ?? null, live);
+  // The camera warms up in the waiting room, so the call starts as soon as the room opens.
+  const connection = useRoomConnection(session?.id ?? null, session?.role ?? null, live, session !== null && session.status === "preparing");
   const copyPrompt = useCopyPrompt(session?.id ?? null);
   const requestTrail = useRequestTrail(session?.invitationId ?? null, `${session?.status ?? ""}${session?.statement?.approvedAt ?? ""}${session?.finalizedAt ?? ""}`);
 
@@ -117,7 +120,7 @@ export function RoomPage() {
     const read = () => { realEnotarySessionsService.get(sessionId).then(next => { if (alive.current) setLoaded({ kind: "ready", session: next }); }).catch(() => { /* next round */ }); };
     ping();
     const pingTimer = setInterval(ping, PING_MS);
-    const readTimer = setInterval(read, SESSION_MS);
+    const readTimer = setInterval(read, status === "preparing" ? WAITING_SESSION_MS : SESSION_MS);
     return () => { clearInterval(pingTimer); clearInterval(readTimer); };
   }, [sessionId, status]);
 
@@ -263,6 +266,7 @@ export function RoomPage() {
       {s.status === "preparing" && (
         <WaitingRoom
           session={s} isClient={isClient} partner={isClient ? partnerTitle(partner, true) : partner} busy={busy} onCallOff={callOff}
+          camera={{ media: connection.media, local: connection.local }}
           {...(isClient ? {} : { onOpen: () => { void act("open", () => realEnotarySessionsService.open(s.id)); } })}
         />
       )}
