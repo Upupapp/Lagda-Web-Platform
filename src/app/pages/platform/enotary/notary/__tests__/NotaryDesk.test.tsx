@@ -258,6 +258,7 @@ describe("accepting and declining", () => {
   it.each([
     ["notary_not_approved", /application is not approved, or your commission has ended/],
     ["enotary_invitation_unavailable", /no longer open/],
+    ["notary_name_mismatch", /reserved for the notary the client named\. It cannot be answered with your account\./],
     ["something_else", /could not be done right now/],
   ])("says plainly what a refusal (%s) means", async (code, words) => {
     accept.mockRejectedValue(new ApiError(409, { code, message: code }, code));

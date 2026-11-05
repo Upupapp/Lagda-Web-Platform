@@ -63,6 +63,8 @@ describe("an open link", () => {
     expect(lookup).toHaveBeenCalledWith(TOKEN);
     expect(text("invite-open")).toContain("Atty. Ana Maria Cruz");
     expect(text("invite-open")).toContain("Open until Tue 20 Oct, 9:14 AM");
+    expect(text("invite-reserved")).toBe("This request is reserved for Atty. Ana Maria Cruz. It opens only after that notary’s "
+      + "identity is verified; any other account is refused. Do not pass this link on.");
     expect(screen.getByTestId("invite-steps").querySelectorAll("li")).toHaveLength(5);
     expect(screen.getByTestId("onramp-note")).toHaveTextContent(/not currently available.*Supreme Court accreditation/);
     expect(screen.getByRole("main")).toBeInTheDocument();
@@ -127,13 +129,31 @@ describe("each way a claim is refused", () => {
     expect(screen.getByTestId("where")).toHaveTextContent("/app/enotary/desk");
   });
 
-  it("name mismatch: says it is for a different notary, and names nobody", async () => {
+  it("name mismatch: refuses formally, naming the notary the request is reserved for", async () => {
     claim.mockRejectedValue(refusal(409, "notary_name_mismatch"));
     await open();
     const words = text("invite-name-mismatch");
-    expect(words).toContain("This request is for a different notary");
-    expect(words).toContain("Nothing was changed");
-    expect(words).not.toContain("Ana Maria Cruz");
+    expect(words).toContain("Access refused");
+    expect(text("invite-refusal")).toBe("This request is reserved for Atty. Ana Maria Cruz. It cannot be opened with your account.");
+    expect(words).toContain("Nothing was changed on your account or on the request.");
+    expect(words).toContain("If you are Atty. Ana Maria Cruz, sign in with your own LAGDA account");
+    // The name is the one the public lookup gave the page; the refusal itself names nobody.
+    expect(JSON.stringify(refusal(409, "notary_name_mismatch").body)).not.toContain("Ana Maria Cruz");
+  });
+
+  it("name mismatch after verifying: still names the notary the page was opened for", async () => {
+    claim.mockRejectedValueOnce(refusal(409, "identity_required")).mockRejectedValueOnce(refusal(409, "notary_name_mismatch"));
+    await open();
+    press(screen.getByRole("button", { name: /I have verified/ }));
+    await settle();
+    expect(text("invite-refusal")).toBe("This request is reserved for Atty. Ana Maria Cruz. It cannot be opened with your account.");
+  });
+
+  it("name mismatch with no name to give: refuses for the notary the client named", async () => {
+    lookup.mockResolvedValue({ state: "open" });
+    claim.mockRejectedValue(refusal(409, "notary_name_mismatch"));
+    await open();
+    expect(text("invite-refusal")).toBe("This request is reserved for the notary the client named. It cannot be opened with your account.");
   });
 
   it.each([

@@ -281,6 +281,8 @@ export function NotaryDeskPage({ focus, then }: { focus?: string; then?: "reopen
   const refused = (error: unknown) => {
     const code = errorCode(error);
     if (code === "enotary_invitation_unavailable") return "That request is no longer open. The client may have cancelled it, or its time ran out.";
+    // The server refuses an answer from an account that is not the notary the request names (its listing is another's).
+    if (code === "notary_name_mismatch") return "This request is reserved for the notary the client named. It cannot be answered with your account.";
     return describePaymentError(error);
   };
 

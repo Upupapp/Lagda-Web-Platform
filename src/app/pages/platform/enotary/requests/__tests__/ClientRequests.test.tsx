@@ -23,6 +23,7 @@ vi.mock("../../../../../services/real/enotary-invitations.service", async (origi
 }));
 
 import { ClientRequestPage, POLL_MS } from "../ClientRequestPage";
+import { describeRequestError } from "../request-errors";
 import { ClientRequestsPage } from "../ClientRequestsPage";
 import { ApiError } from "../../../../../services/api-client";
 import * as sessionsService from "../../../../../services/real/enotary-sessions.service";
@@ -117,7 +118,18 @@ describe("one request, waiting for the notary", () => {
     expect(screen.getByLabelText("Link for the notary")).toHaveValue(LINK);
     const card = screen.getByTestId("qr-card-image");
     expect(card.tagName).toBe("IMG");
-    expect(decodeURIComponent(card.getAttribute("src") ?? "")).toContain("Scan only if you are Atty.");
+    const drawn = decodeURIComponent(card.getAttribute("src") ?? "");
+    expect(drawn).toContain("Notarial request for");
+    expect(drawn).toContain("Atty. Ana Maria Cruz");
+    expect(drawn).toContain("FOR THE NAMED NOTARY ONLY");
+    // This answer has no number yet: the short form of the id stands in. Issued, and valid until, in Philippine time.
+    expect(drawn).toContain("ENI-1");
+    expect(drawn).toContain("17 October 2026");
+    expect(drawn).toContain("20 October 2026, 9:00 AM (Philippine time)");
+    expect(card.getAttribute("alt")).toBe("Notarial request for Atty. Ana Maria Cruz. This QR code is issued for the exclusive use of "
+      + "Atty. Ana Maria Cruz, Notary Public. It opens a private notarial request on LAGDA eNotary and may be opened only by that "
+      + "notary after identity verification. Any other person will be refused access.");
+    expect(screen.getByTestId("qr-card-note")).toHaveTextContent(/reserved for Atty\. Ana Maria Cruz.*refuses anyone else/);
     expect(screen.getByRole("button", { name: "Save the card" })).toBeInTheDocument();
     // The trail is kept out of the way until its button at the bottom right is pressed, and then it is a panel.
     expect(screen.queryByTestId("audit-trail")).toBeNull();
@@ -128,6 +140,22 @@ describe("one request, waiting for the notary", () => {
     expect(screen.queryByTestId("audit-trail")).toBeNull();
     expect(screen.getByTestId("onramp-note")).toHaveTextContent(/not currently available.*Supreme Court accreditation/);
     expect(screen.getByTestId("party-status")).toHaveTextContent("Waiting for the notary");
+  });
+
+  it("puts the request's number on the card once it has one, and an office's notaries for an office's listing", async () => {
+    get.mockResolvedValue(invitation({
+      reference: "EN-2026-000004",
+      notary: { ...invitation().notary, name: "BCF Law Offices", firm: "BCF Law Offices", kind: "office" } as Invitation["notary"],
+    }));
+    renderRequest();
+    await settle();
+    const card = screen.getByTestId("qr-card-image");
+    const drawn = decodeURIComponent(card.getAttribute("src") ?? "");
+    expect(drawn).toContain("EN-2026-000004");
+    expect(drawn).not.toContain("ENI-1");
+    expect(drawn).toContain("FOR THE NAMED OFFICE ONLY");
+    expect(card.getAttribute("alt")).toContain("for the exclusive use of the notaries public of BCF Law Offices.");
+    expect(card.getAttribute("alt")).not.toContain("Atty.");
   });
 
   it("counts down every second on its own clock", async () => {
@@ -306,6 +334,21 @@ describe("a request that has ended", () => {
     await settle();
     expect(renew).toHaveBeenCalledWith("eni_1");
     expect(screen.getByTestId("where")).toHaveTextContent("/app/enotary/requests/eni_2");
+  });
+
+  it("says the notary is offline when a renewal is refused outside their office hours, and stays on the old request", async () => {
+    const offline = "This notary is offline. Requests can be sent Monday to Friday, 8:00 AM to 5:00 PM (Philippine time).";
+    get.mockResolvedValue(invitation({ status: "expired", link: null, secondsLeft: 0 }));
+    renew.mockRejectedValue(new ApiError(409, { code: "enotary_notary_offline", message: offline }, offline));
+    renderRequest();
+    await settle();
+    press(screen.getByRole("button", { name: "Renew with a new link" }));
+    await settle();
+    expect(screen.getByRole("alert")).toHaveTextContent(offline);
+    expect(screen.getByTestId("where")).toHaveTextContent("/app/enotary/requests/eni_1");
+    // The same words when the server gave its code without a sentence; any other refusal keeps its own words.
+    expect(describeRequestError(new ApiError(409, { code: "enotary_notary_offline", message: "" }, "x"))).toBe(offline);
+    expect(describeRequestError(new ApiError(409, { code: "enotary_invitation_limit", message: "x" }, "x"))).toMatch(/3 open requests/);
   });
 
   it("an accepted one says it will say when the session can begin", async () => {

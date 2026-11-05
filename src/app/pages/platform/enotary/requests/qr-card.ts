@@ -1,9 +1,15 @@
 // The QR card a client hands to a notary: the invitation link as a QR code with
-// the LAGDA eNotary seal in the middle, the notary's name, a plain "scan only if
-// you are" line, the expiry and the short link.
+// the LAGDA eNotary seal in the middle, under a formal heading that names the
+// notary ("Notarial request for Atty. …"), a statement that the code is for that
+// notary's exclusive use and that anyone else is refused, the request's
+// reference, the date it was issued, how long it is valid, and the short link.
 //
 // The card is one SVG string. The page shows that SVG and the "Save the card"
 // button turns the same string into a PNG, so what is saved is what is shown.
+//
+// The statement is a promise the server keeps: the request opens only for the
+// listed notary (the account bound to the listing, or else an account whose
+// verified ID is the listed name) and refuses everyone else.
 //
 // ── The code ───────────────────────────────────────────────────────────────
 //
@@ -70,12 +76,98 @@ export function darkPath(matrix: QrMatrix): string {
 
 export interface QrCardInput {
   readonly link: string;
+  /** The notary as the Notary Directory lists them: a lawyer's name, or an office's. */
   readonly notaryName: string;
-  /** "Expires Mon 20 Oct, 9:14 AM" */
-  readonly expiresLabel: string;
+  /** A lawyer's listing names one notary; an office's names no person. Absent: a lawyer's. */
+  readonly listing?: "lawyer" | "office";
+  /** For an office's listing, the office the notary must belong to ("BCF Law Offices"). */
+  readonly office?: string;
+  /** The request's number ("EN-2026-000004"), or a short form of its id while it has none. */
+  readonly reference: string;
+  /** "4 November 2026": the day the request was made, in the Philippines. */
+  readonly issuedLabel: string;
+  /** "7 November 2026, 9:14 AM (Philippine time)", or null when the expiry is not known. */
+  readonly validUntilLabel: string | null;
 }
 
 const xml = (text: string) => text.replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c] ?? c);
+
+/** Who the card is for: "Atty. Ana Maria Cruz", or an office by its own name. */
+export function cardAddressee(input: Pick<QrCardInput, "notaryName" | "listing">): string {
+  return input.listing === "office" ? input.notaryName : `Atty. ${input.notaryName}`;
+}
+
+/** "Notarial request for Atty. Ana Maria Cruz" */
+export function cardHeading(input: Pick<QrCardInput, "notaryName" | "listing">): string {
+  return `Notarial request for ${cardAddressee(input)}`;
+}
+
+/** The card's statement that the code is for the named notary alone, and refuses anyone else. */
+export function cardStatement(input: Pick<QrCardInput, "notaryName" | "listing" | "office">): string {
+  if (input.listing === "office") {
+    const office = input.office !== undefined && input.office.trim() !== "" ? input.office.trim() : input.notaryName;
+    return `This QR code is issued for the exclusive use of the notaries public of ${office}. It opens a private notarial request `
+      + "on LAGDA eNotary and may be opened only by a notary public of that office after identity verification. "
+      + "Any other person will be refused access.";
+  }
+  return `This QR code is issued for the exclusive use of Atty. ${input.notaryName}, Notary Public. It opens a private notarial `
+    + "request on LAGDA eNotary and may be opened only by that notary after identity verification. "
+    + "Any other person will be refused access.";
+}
+
+/** Joins two words so that a line never breaks between them; drawn as a space. */
+export const NO_BREAK_SPACE = String.fromCharCode(0xa0);
+
+/** Words into lines of at most `width` characters; a word longer than a line is cut. A no-break space joins two words. */
+export function wrapLines(text: string, width: number): string[] {
+  const lines: string[] = [];
+  let line = "";
+  for (const raw of text.split(/[ \t\r\n]+/).filter(word => word !== "")) {
+    let word = raw;
+    while (word.length > width) {
+      if (line !== "") { lines.push(line); line = ""; }
+      lines.push(word.slice(0, width));
+      word = word.slice(width);
+    }
+    if (word === "") continue;
+    if (line === "") line = word;
+    else if (line.length + 1 + word.length <= width) line = `${line} ${word}`;
+    else { lines.push(line); line = word; }
+  }
+  if (line !== "") lines.push(line);
+  return lines;
+}
+
+/** "ENI-1A2B3C4D": a short form of a request's id, for a request that has no number yet. */
+export function shortRequestId(id: string): string {
+  const cut = id.indexOf("_");
+  const prefix = cut > 0 ? id.slice(0, cut).toUpperCase() : "";
+  const tail = (cut > 0 ? id.slice(cut + 1) : id).replace(/[^A-Za-z0-9]/g, "").slice(0, 8).toUpperCase();
+  return prefix === "" ? tail : `${prefix}-${tail}`;
+}
+
+const PHILIPPINE_PARTS = new Intl.DateTimeFormat("en-US", {
+  timeZone: "Asia/Manila", day: "numeric", month: "long", year: "numeric", hour: "numeric", minute: "2-digit", hour12: true,
+});
+
+function philippineParts(iso: string): Record<string, string> | null {
+  const at = new Date(iso);
+  if (Number.isNaN(at.getTime())) return null;
+  return Object.fromEntries(PHILIPPINE_PARTS.formatToParts(at).map(part => [part.type, part.value]));
+}
+
+/** "4 November 2026": the day in the Philippines. Empty for a time that cannot be read. */
+export function philippineDate(iso: string): string {
+  const parts = philippineParts(iso);
+  return parts === null ? "" : `${parts["day"] ?? ""} ${parts["month"] ?? ""} ${parts["year"] ?? ""}`;
+}
+
+/** "7 November 2026, 9:14 AM (Philippine time)". Empty for a time that cannot be read. */
+export function philippineDateTime(iso: string): string {
+  const parts = philippineParts(iso);
+  if (parts === null) return "";
+  return `${philippineDate(iso)}, ${parts["hour"] ?? ""}:${parts["minute"] ?? ""} ${(parts["dayPeriod"] ?? "").toUpperCase()} (Philippine time)`;
+}
 
 /** The link without its scheme, split so both halves fit the card. */
 export function shortLinkLines(link: string): [string, string] {
@@ -85,10 +177,23 @@ export function shortLinkLines(link: string): [string, string] {
 }
 
 export const CARD_WIDTH = 600;
-export const CARD_HEIGHT = 860;
 const CODE_BOX = 440;
 const CODE_X = (CARD_WIDTH - CODE_BOX) / 2;
-const CODE_Y = 176;
+const CODE_Y = 184;
+const TEXT_X = 56;
+/** Characters of the statement on one line: 15px sans over 488px, with room for wide capitals. */
+const STATEMENT_CHARS = 62;
+const STATEMENT_LEADING = 22;
+const SANS = "Geist, Arial, sans-serif";
+const SERIF = "Tinos, 'Times New Roman', Times, serif";
+const MONO = "ui-monospace, Menlo, Consolas, monospace";
+
+/** The card's width and height in its own units, as its SVG says. */
+export function cardSize(svg: string): { width: number; height: number } {
+  const root = /^<svg[^>]*>/.exec(svg)?.[0] ?? "";
+  const read = (name: string, fallback: number) => Number(new RegExp(`\\s${name}="([\\d.]+)"`).exec(root)?.[1] ?? fallback);
+  return { width: read("width", CARD_WIDTH), height: read("height", CARD_WIDTH) };
+}
 
 /** The card as SVG. `logoHref` is the LAGDA header logo as a data address, where there is one. */
 export function buildCardSvg(input: QrCardInput, logoHref?: string): string {
@@ -104,24 +209,58 @@ export function buildCardSvg(input: QrCardInput, logoHref?: string): string {
   const seal = renderToStaticMarkup(createElement(EnotarySeal, { idPrefix: "qr-seal" }))
     .replace("<svg ", `<svg x="${String(sealX)}" y="${String(sealY)}" width="${String(sealSize)}" height="${String(sealSize)}" `);
   const [head, tail] = shortLinkLines(input.link);
-  const name = input.notaryName.length > 44 ? `${input.notaryName.slice(0, 43)}…` : input.notaryName;
+
+  // The heading names the notary on one line, as large as fits.
+  const whole = cardAddressee(input);
+  const addressee = whole.length > 56 ? `${whole.slice(0, 55)}…` : whole;
+  const addresseeSize = Math.max(18, Math.min(30, Math.floor(1040 / Math.max(1, addressee.length))));
+  // "Atty." stays on the line of the name it belongs to.
+  const statement = wrapLines(cardStatement(input).replace(/\bAtty\. /g, `Atty.${NO_BREAK_SPACE}`), STATEMENT_CHARS);
+
+  // Below the code, top to bottom: the statement in its panel, the reference and the dates, the short link.
+  const panelTop = CODE_Y + CODE_BOX + 20;
+  const panelLabelY = panelTop + 28;
+  const firstLineY = panelTop + 54;
+  const panelBottom = firstLineY + (statement.length - 1) * STATEMENT_LEADING + 18;
+  const factsLabelY = panelBottom + 30;
+  const factsValueY = factsLabelY + 24;
+  const validLabelY = factsValueY + 32;
+  const validValueY = validLabelY + 24;
+  const ruleY = (input.validUntilLabel === null ? factsValueY : validValueY) + 22;
+  const linkY = ruleY + 24;
+  const height = linkY + 20 + 28;
+
+  const label = (x: number, y: number, text: string) =>
+    `<text x="${String(x)}" y="${String(y)}" font-family="${SANS}" font-size="11.5" font-weight="700" letter-spacing="1.2" fill="#647789">${xml(text)}</text>`;
+  const value = (x: number, y: number, text: string, family = SANS) =>
+    `<text x="${String(x)}" y="${String(y)}" font-family="${family}" font-size="16" font-weight="700" fill="#0A1A2B">${xml(text)}</text>`;
+
   return [
-    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${String(CARD_WIDTH)} ${String(CARD_HEIGHT)}" width="${String(CARD_WIDTH)}" height="${String(CARD_HEIGHT)}" role="img" aria-label="${xml(`QR code for the request to ${input.notaryName}`)}">`,
-    `<rect width="${String(CARD_WIDTH)}" height="${String(CARD_HEIGHT)}" rx="28" fill="#FFFFFF"/>`,
-    `<rect x="1.5" y="1.5" width="${String(CARD_WIDTH - 3)}" height="${String(CARD_HEIGHT - 3)}" rx="27" fill="none" stroke="#DDE6EF" stroke-width="3"/>`,
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${String(CARD_WIDTH)} ${String(height)}" width="${String(CARD_WIDTH)}" height="${String(height)}" role="img" aria-label="${xml(`${cardHeading(input)}. ${cardStatement(input)}`)}">`,
+    `<rect width="${String(CARD_WIDTH)}" height="${String(height)}" rx="28" fill="#FFFFFF"/>`,
+    `<rect x="1.5" y="1.5" width="${String(CARD_WIDTH - 3)}" height="${String(height - 3)}" rx="27" fill="none" stroke="#DDE6EF" stroke-width="3"/>`,
     `<rect x="0" y="0" width="${String(CARD_WIDTH)}" height="10" rx="5" fill="#8C1D3F"/>`,
     logoHref === undefined ? "" : `<image href="${logoHref}" x="${String((CARD_WIDTH - 330) / 2)}" y="16" width="330" height="96" preserveAspectRatio="xMidYMid meet"/>`,
-    `<text x="300" y="124" text-anchor="middle" font-family="Tinos, 'Times New Roman', Times, serif" font-size="30" font-weight="700" fill="#0B1F44">LAGDA <tspan fill="#8C1D3F">eNotary</tspan> request</text>`,
-    `<text x="300" y="154" text-anchor="middle" font-family="Geist, Arial, sans-serif" font-size="15" fill="#647789">Scan this code to open the request</text>`,
+    `<text x="300" y="134" text-anchor="middle" font-family="${SERIF}" font-size="22" font-weight="700" fill="#0B1F44">Notarial request for</text>`,
+    `<text x="300" y="170" text-anchor="middle" font-family="${SERIF}" font-size="${String(addresseeSize)}" font-weight="700" fill="#8C1D3F">${xml(addressee)}</text>`,
+    // The code: a white box holding the quiet zone, dark modules on white, the seal over the centre.
     `<rect x="${String(CODE_X)}" y="${String(CODE_Y)}" width="${String(CODE_BOX)}" height="${String(CODE_BOX)}" fill="#FFFFFF"/>`,
     `<g transform="translate(${String(CODE_X)} ${String(CODE_Y)}) scale(${String(cell)})"><path data-qr="modules" d="${darkPath(matrix)}" fill="#0A1A2B" shape-rendering="crispEdges"/></g>`,
     `<circle cx="${String(CODE_X + centre)}" cy="${String(CODE_Y + centre)}" r="${String(logoBox / 2)}" fill="#FFFFFF"/>`,
     seal,
-    `<text x="300" y="${String(CODE_Y + CODE_BOX + 52)}" text-anchor="middle" font-family="Geist, Arial, sans-serif" font-size="21" font-weight="700" fill="#0A1A2B">Scan only if you are Atty.</text>`,
-    `<text x="300" y="${String(CODE_Y + CODE_BOX + 84)}" text-anchor="middle" font-family="Tinos, 'Times New Roman', Times, serif" font-size="28" font-weight="700" fill="#8C1D3F">${xml(name)}</text>`,
-    `<text x="300" y="${String(CODE_Y + CODE_BOX + 120)}" text-anchor="middle" font-family="Geist, Arial, sans-serif" font-size="18" font-weight="600" fill="#33475B">${xml(input.expiresLabel)}</text>`,
-    `<text x="300" y="${String(CODE_Y + CODE_BOX + 152)}" text-anchor="middle" font-family="ui-monospace, Menlo, Consolas, monospace" font-size="13" fill="#647789">${xml(head)}</text>`,
-    `<text x="300" y="${String(CODE_Y + CODE_BOX + 172)}" text-anchor="middle" font-family="ui-monospace, Menlo, Consolas, monospace" font-size="13" fill="#647789">${xml(tail)}</text>`,
+    `<rect x="40" y="${String(panelTop)}" width="${String(CARD_WIDTH - 80)}" height="${String(panelBottom - panelTop)}" rx="14" fill="#F6F8FB" stroke="#DDE6EF" stroke-width="1.5"/>`,
+    `<text x="${String(TEXT_X)}" y="${String(panelLabelY)}" font-family="${SANS}" font-size="12" font-weight="800" letter-spacing="1.6" fill="#8C1D3F">${input.listing === "office" ? "FOR THE NAMED OFFICE ONLY" : "FOR THE NAMED NOTARY ONLY"}</text>`,
+    ...statement.map((line, index) =>
+      `<text data-card="statement" x="${String(TEXT_X)}" y="${String(firstLineY + index * STATEMENT_LEADING)}" font-family="${SANS}" font-size="15" fill="#1B2B3D">${xml(line)}</text>`),
+    label(TEXT_X, factsLabelY, "REQUEST REFERENCE"),
+    value(TEXT_X, factsValueY, input.reference, MONO),
+    label(320, factsLabelY, "DATE ISSUED"),
+    value(320, factsValueY, input.issuedLabel),
+    input.validUntilLabel === null ? "" : label(TEXT_X, validLabelY, "VALID UNTIL"),
+    input.validUntilLabel === null ? "" : value(TEXT_X, validValueY, input.validUntilLabel),
+    `<line x1="${String(TEXT_X)}" y1="${String(ruleY)}" x2="${String(CARD_WIDTH - TEXT_X)}" y2="${String(ruleY)}" stroke="#DDE6EF" stroke-width="1.5"/>`,
+    `<text x="300" y="${String(linkY)}" text-anchor="middle" font-family="${MONO}" font-size="12.5" fill="#647789">${xml(head)}</text>`,
+    `<text x="300" y="${String(linkY + 20)}" text-anchor="middle" font-family="${MONO}" font-size="12.5" fill="#647789">${xml(tail)}</text>`,
     `</svg>`,
   ].join("");
 }
@@ -170,12 +309,13 @@ export async function logoDataUri(url: string): Promise<string | null> {
 
 /** The card as a PNG, twice the size of the SVG so it prints sharply. */
 export function cardToPng(svg: string): Promise<Blob> {
+  const { width, height } = cardSize(svg);
   return new Promise((resolve, reject) => {
     const image = new Image();
     image.onload = () => {
       const canvas = document.createElement("canvas");
-      canvas.width = CARD_WIDTH * 2;
-      canvas.height = CARD_HEIGHT * 2;
+      canvas.width = width * 2;
+      canvas.height = height * 2;
       const context = canvas.getContext("2d");
       if (context === null) { reject(new Error("no canvas")); return; }
       context.fillStyle = "#FFFFFF";

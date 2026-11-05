@@ -7,8 +7,12 @@
 // invitation.
 //
 // The server decides the claim, in this order: the link is still open; the
+// request is not reserved for another account (a lawyer's listing bound to
+// another account, or the caller bound to another lawyer's listing); the
 // account has a verified identity; the verified name matches the notary the
-// client chose. Each refusal has its own screen. A success goes to the notary
+// client chose. Each refusal has its own screen: the wrong person is told,
+// formally, whom the request is reserved for (the name the public lookup gave,
+// never one from the refusal, which names nobody). A success goes to the notary
 // desk, where the application (first time) and the request wait.
 //
 // Nothing here promises a video call, a payment or a notarization. Phase 1 ends
@@ -37,7 +41,7 @@ type Phase =
   | { kind: "ended"; state: Exclude<PublicLookupState, "open"> }
   | { kind: "claiming"; notaryName: string; expiresAt: string | null }
   | { kind: "identity-required"; notaryName: string }
-  | { kind: "name-mismatch" }
+  | { kind: "name-mismatch"; notaryName: string }
   | { kind: "not-offered" }
   | { kind: "error"; notaryName: string | null; expiresAt: string | null };
 
@@ -58,6 +62,12 @@ const ENDED_WORDS: Record<Exclude<PublicLookupState, "open">, { title: string; t
     title: "This link is not valid",
     text: "Check that you opened the whole link, or scan the client's QR card again. If it still fails, ask the client for a new one.",
   },
+};
+
+/** The notary as the page names them: "Atty. Ana Maria Cruz", or "the notary the client named" when the lookup gave no name. */
+const reservedFor = (notaryName: string): string => {
+  const name = notaryName.trim();
+  return name === "" || name === "the notary" ? "the notary the client named" : `Atty. ${name}`;
 };
 
 export function NotaryInvitePage() {
@@ -117,7 +127,7 @@ export function NotaryInvitePage() {
         const status = errorStatus(error);
         if (status === 401) { void navigate(`/sign-in?returnTo=${encodeURIComponent(path ?? "/")}`); return; }
         if (code === "identity_required") { setPhase({ kind: "identity-required", notaryName }); return; }
-        if (code === "notary_name_mismatch") { setPhase({ kind: "name-mismatch" }); return; }
+        if (code === "notary_name_mismatch") { setPhase({ kind: "name-mismatch", notaryName }); return; }
         if (code === "enotary_invitation_unavailable" || status === 410) {
           const state = refusedState(error);
           if (state !== null && state !== "open") { setPhase({ kind: "ended", state }); return; }
@@ -181,7 +191,10 @@ export function NotaryInvitePage() {
             <li>You see the request on your notary desk and accept or decline it.</li>
           </ol>
           <Notice icon={ShieldCheck} tone="info">
-            Only the notary the client named can take this request. Do not pass this link on.
+            <span data-testid="invite-reserved">
+              This request is reserved for {reservedFor(phase.notaryName)}. It opens only after that notary&rsquo;s identity is
+              verified; any other account is refused. Do not pass this link on.
+            </span>
           </Notice>
           {!known ? null : signedIn ? (
             <ActionRow align="end">
@@ -226,22 +239,27 @@ export function NotaryInvitePage() {
         </div>
       );
       break;
-    case "name-mismatch":
+    case "name-mismatch": {
+      const who = reservedFor(phase.notaryName);
       content = (
         <div data-testid="invite-name-mismatch">
           <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
             <UserRoundX size={22} aria-hidden style={{ color: "#B45309", flexShrink: 0, marginTop: 3 }} />
-            {heading("This request is for a different notary")}
+            {heading("Access refused")}
           </div>
-          <p style={bodyText}>
-            The name on your verified ID is not the name of the notary the client chose, so this request cannot be opened with your account.
-            Nothing was changed on your account or on the request.
+          <p style={{ ...bodyText, fontWeight: 700, color: E.ink }} data-testid="invite-refusal">
+            This request is reserved for {who}. It cannot be opened with your account.
           </p>
-          <p style={bodyText}>If you are the notary the client meant, check that you are signed in with your own account. Otherwise, ask the client to send the request to the right notary.</p>
+          <p style={bodyText}>Nothing was changed on your account or on the request.</p>
+          <p style={bodyText}>
+            If you are {who}, sign in with your own LAGDA account and open the link again. If you are not, this request is not
+            yours to open: the client can send it to the right notary.
+          </p>
           <p style={bodyText}><Link to="/app/enotary/desk" style={{ ...linkButton("secondary"), color: T.azureDeep }}>Go to your notary desk</Link></p>
         </div>
       );
       break;
+    }
     case "not-offered":
       content = (
         <div data-testid="invite-not-offered">

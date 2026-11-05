@@ -18,6 +18,7 @@ import { USE_REAL_BACKEND } from "../../../../services/backend-flag";
 import {
   describeInvitationError, invitationIsOpen, realEnotaryInvitationsService, type Invitation,
 } from "../../../../services/real/enotary-invitations.service";
+import { describeRequestError } from "./request-errors";
 import { E, SERIF } from "../EnotaryChrome";
 import { RequestTrail } from "../RequestTrail";
 import { DetailNotes, detailRows } from "../request-details";
@@ -27,6 +28,7 @@ import {
   OnrampNote, Panel, PanelTitle, TextField, bodyText, fieldStyle, useNow,
 } from "../onramp-ui";
 import { QrCard } from "./QrCard";
+import { shortRequestId } from "./qr-card";
 import { StatusBanner } from "../RecordCard";
 import { SessionPanel } from "../room/SessionPanel";
 import { ClientPaymentPanel, paymentIsPending } from "../payments/ClientPaymentPanel";
@@ -71,6 +73,10 @@ export const notaryNameOf = (invitation: Invitation): string => {
   return verified !== null && verified.trim() !== "" ? verified.trim() : invitation.notary.name;
 };
 const hasVerifiedName = (invitation: Invitation): boolean => (invitation.notary.verifiedName ?? "").trim() !== "";
+
+/** The listing's kind as the server gives it: an office's listing names no person. A server that does not say: a lawyer's. */
+const listingOf = (invitation: Invitation): "lawyer" | "office" =>
+  (invitation.notary as { readonly kind?: unknown }).kind === "office" ? "office" : "lawyer";
 
 type Loaded =
   | { kind: "loading" }
@@ -248,7 +254,7 @@ export function ClientRequestPage() {
       setSaid(kind === "revoke" ? "The request was cancelled and its link no longer works." : "The email address was saved.");
       if (kind === "email") setEmail("");
     } catch (error) {
-      if (alive.current) setProblem(describeInvitationError(error));
+      if (alive.current) setProblem(describeRequestError(error));
     } finally {
       if (alive.current) setBusy(null);
     }
@@ -371,7 +377,11 @@ export function ClientRequestPage() {
           <Panel testId="card-panel">
             <PanelTitle>The QR card</PanelTitle>
             <p style={{ ...bodyText, fontSize: 13.5 }}>Show it on your screen or save it as a picture. It opens the same request as the link.</p>
-            <QrCard link={link} notaryName={notaryNameOf(invitation)} expiresAt={invitation.expiresAt} />
+            <QrCard
+              link={link} notaryName={notaryNameOf(invitation)} listing={listingOf(invitation)} office={invitation.notary.firm}
+              reference={invitation.reference !== undefined && invitation.reference !== null && invitation.reference.trim() !== "" ? invitation.reference : shortRequestId(invitation.id)}
+              issuedAt={invitation.createdAt} expiresAt={invitation.expiresAt}
+            />
           </Panel>
         </>
       )}
@@ -408,7 +418,7 @@ export function ClientRequestPage() {
       )}
       {(invitation.status === "expired" || invitation.status === "revoked") && (
         <ActionRow align="end">
-          <ActionButton icon={RefreshCw} disabled={busy !== null} onClick={() => { void act("renew", () => withProcess("enotary-request-renew", "", () => realEnotaryInvitationsService.renew(invitation.id), describeInvitationError)); }}>
+          <ActionButton icon={RefreshCw} disabled={busy !== null} onClick={() => { void act("renew", () => withProcess("enotary-request-renew", "", () => realEnotaryInvitationsService.renew(invitation.id), describeRequestError)); }}>
             {busy === "renew" ? "Renewing…" : "Renew with a new link"}
           </ActionButton>
         </ActionRow>
