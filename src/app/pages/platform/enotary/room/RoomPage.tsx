@@ -61,7 +61,7 @@ const actDrafts = new Map<string, { place: string; remarks: string; checks: Reco
 export const PING_MS = 20_000;
 export const SESSION_MS = 4_000;
 /** While the room is not open yet: read often, so the video starts the moment the notary opens it. */
-export const WAITING_SESSION_MS = 1_500;
+export const WAITING_SESSION_MS = 1_000;
 export const CHAT_MS = 3_000;
 
 type Loaded =

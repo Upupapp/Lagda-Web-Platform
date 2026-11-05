@@ -39,13 +39,14 @@ class Box {
   fetch = (after: number) => Promise.resolve(this.signals.filter(signal => signal.seq > after));
 }
 
+let clock = 0;
 function page(box: Box, role: SessionRole, connectionId: string) {
   const states: LinkState[] = [];
   const remote: unknown[] = [];
   const link = new RoomLink({
     role, connectionId, iceServers: [{ urls: "stun:x" }], localStream: { getTracks: () => ["audio", "video"] },
     createPeer: () => new FakePeer(), send: box.sender(role, connectionId), fetchSignals: box.fetch,
-    onState: state => states.push(state), onRemoteStream: stream => remote.push(stream),
+    onState: state => states.push(state), onRemoteStream: stream => remote.push(stream), now: () => clock,
   });
   return { link, states, remote };
 }
@@ -134,5 +135,60 @@ describe("the peer link", () => {
     await notary.link.poll();
     expect(notary.states.at(-1)).toBe("waiting");
     expect(client.states.at(-1)).toBe("closed");
+  });
+
+  it("makes one offer when both pages arrive at once, so two offers never cross", async () => {
+    FakePeer.all = [];
+    clock = 0;
+    const box = new Box();
+    const notary = page(box, "notary", "n-conn-0001");
+    // The client's page says "join" twice: when it starts, and again on seeing the notary's page.
+    await box.sender("client", "c-conn-0001")("join", "");
+    await notary.link.start();
+    await box.sender("client", "c-conn-0001")("join", "");
+    await notary.link.poll();
+    clock = 1500;
+    await notary.link.poll();
+    expect(box.signals.filter(signal => signal.from === "notary" && signal.kind === "offer")).toHaveLength(1);
+    expect(FakePeer.all.filter(peer => peer.localDescription?.type === "offer")).toHaveLength(1);
+  });
+
+  it("offers again when the client calls out after the link failed, or after an offer went unanswered", async () => {
+    FakePeer.all = [];
+    clock = 0;
+    const box = new Box();
+    const notary = page(box, "notary", "n-conn-0001");
+    await notary.link.start();
+    await box.sender("client", "c-conn-0001")("join", "");
+    await notary.link.poll();
+    const offers = () => box.signals.filter(signal => signal.from === "notary" && signal.kind === "offer").length;
+    expect(offers()).toBe(1);
+    // Unanswered for longer than REOFFER_AFTER_MS: a new call-out gets a new offer.
+    clock = 5000;
+    await box.sender("client", "c-conn-0001")("join", "");
+    await notary.link.poll();
+    expect(offers()).toBe(2);
+    // A failed link: the client's retry gets a new offer at once.
+    const peer = FakePeer.all.at(-1)!;
+    peer.connectionState = "failed"; peer.onconnectionstatechange?.();
+    clock = 5100;
+    await box.sender("client", "c-conn-0001")("join", "");
+    await notary.link.poll();
+    expect(offers()).toBe(3);
+  });
+
+  it("applies the client's answer once, and not to a later offer", async () => {
+    FakePeer.all = [];
+    clock = 0;
+    const box = new Box();
+    const notary = page(box, "notary", "n-conn-0001");
+    await notary.link.start();
+    await box.sender("client", "c-conn-0001")("join", "");
+    await notary.link.poll();
+    const peer = FakePeer.all[0]!;
+    await box.sender("client", "c-conn-0001")("answer", "{\"type\":\"answer\",\"sdp\":\"first\"}");
+    await box.sender("client", "c-conn-0001")("answer", "{\"type\":\"answer\",\"sdp\":\"second\"}");
+    await notary.link.poll();
+    expect(peer.remoteDescription).toEqual({ type: "answer", sdp: "first" });
   });
 });

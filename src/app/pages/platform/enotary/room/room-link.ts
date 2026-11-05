@@ -7,6 +7,12 @@
 // ignores what was said before it came, says "join", and the other side, on
 // seeing a new page of its partner, starts the exchange over.
 //
+// One offer per partner page: when both pages arrive at once the client says
+// "join" twice, and two offers would cross (the answer to the first reaching the
+// second), leaving the call stuck. A repeated "join" from the same page is
+// therefore answered only when the link is not already being made: no peer, a
+// failed or closed one, or an offer left unanswered for REOFFER_AFTER_MS.
+//
 // No browser API is named here except through `deps`, so the exchange can be
 // tested with plain objects.
 
@@ -40,9 +46,13 @@ export interface RoomLinkDeps {
   readonly fetchSignals: (after: number) => Promise<readonly RoomSignal[]>;
   readonly onState: (state: LinkState) => void;
   readonly onRemoteStream: (stream: unknown) => void;
+  /** The clock, for tests; Date.now otherwise. */
+  readonly now?: () => number;
 }
 
 const PAGE = 100;
+/** An offer not answered by then may be made again when the partner calls out. */
+export const REOFFER_AFTER_MS = 4000;
 
 export class RoomLink {
   private peer: PeerLike | null = null;
@@ -51,6 +61,7 @@ export class RoomLink {
   private pendingCandidates: unknown[] = [];
   private stopped = false;
   private busy = false;
+  private lastOfferAt = 0;
 
   constructor(private readonly deps: RoomLinkDeps) {}
 
@@ -88,7 +99,7 @@ export class RoomLink {
         // A new page of the partner. The client calls out again so the notary, who offers, sees it.
         const fresh = signal.connectionId !== this.partnerConnection;
         this.partnerConnection = signal.connectionId;
-        if (this.deps.role === "notary") await this.offer();
+        if (this.deps.role === "notary") { if (fresh || this.needsOffer()) await this.offer(); }
         else if (fresh) { this.closePeer(); await this.deps.send("join", ""); }
         return;
       }
@@ -99,7 +110,8 @@ export class RoomLink {
         return;
       }
       case "answer": {
-        if (this.deps.role !== "notary" || signal.connectionId !== this.partnerConnection || this.peer === null) return;
+        // An answer to an offer this page already settled (or to an earlier one) is not applied twice.
+        if (this.deps.role !== "notary" || signal.connectionId !== this.partnerConnection || this.peer === null || this.peer.remoteDescription !== null) return;
         await this.peer.setRemoteDescription(JSON.parse(signal.payload));
         await this.flushCandidates();
         return;
@@ -138,7 +150,16 @@ export class RoomLink {
     return peer;
   }
 
+  /** The notary's link needs a new offer: none yet, a broken one, or one left unanswered too long. */
+  private needsOffer(): boolean {
+    const peer = this.peer;
+    if (peer === null || ["failed", "closed", "disconnected"].includes(peer.connectionState)) return true;
+    if (peer.connectionState === "connected") return false;
+    return peer.remoteDescription === null && (this.deps.now ?? Date.now)() - this.lastOfferAt >= REOFFER_AFTER_MS;
+  }
+
   private async offer(): Promise<void> {
+    this.lastOfferAt = (this.deps.now ?? Date.now)();
     const peer = this.makePeer();
     this.deps.onState("connecting");
     const description = await peer.createOffer();
