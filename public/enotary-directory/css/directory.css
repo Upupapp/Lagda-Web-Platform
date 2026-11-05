@@ -106,3 +106,31 @@
 .slot-pickers select:focus-visible { outline: 3px solid var(--sky); outline-offset: 2px; }
 @media (max-width: 560px) { .slot-pickers { grid-template-columns: minmax(0, 1fr); } }
 .slot-pick { margin: 12px 0 0; padding: 10px 12px; border-radius: 8px; background: var(--ok-wash); color: #14532D; font-size: 14px; line-height: 1.5; }
+
+/* a link to the directory or to "How it works" lands below the sticky header, not under it */
+#find, .how { scroll-margin-top: 84px; }
+@media (max-width: 760px) { #find, .how { scroll-margin-top: 56px; } }
+
+/* ── How it works: the ten steps of a remote notarization, numbered, in two columns between thin rules ──
+   The columns read down: steps I to V on the left (the request), VI to X on the right (the session and after). */
+.how { background: var(--paper); border-bottom: 1px solid var(--line); }
+.how-in { max-width: 1380px; margin: 0 auto; padding: clamp(44px, 5.200vw, 76px) clamp(16px, 4vw, 44px) clamp(40px, 4.400vw, 64px); }
+.how-head { max-width: 46rem; }
+.how-head h2 { font: 700 clamp(30px, 2.700vw, 42px)/1.150 var(--serif); letter-spacing: -.010em; color: #0B1F44; }
+.how-head p { margin-top: 12px; font: 400 clamp(16.500px, 1.250vw, 19px)/1.550 var(--serif); color: var(--text); }
+.how-steps { list-style: none; margin: clamp(28px, 3vw, 40px) 0 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: repeat(5, auto); grid-auto-flow: column; column-gap: clamp(32px, 4.400vw, 72px); }
+.how-steps li { display: grid; grid-template-columns: 3.750rem minmax(0, 1fr); align-items: baseline; padding: 22px 0 24px; border-bottom: 1px solid var(--line); } /* wide enough for VIII */
+.how-steps li:nth-child(5n + 1) { border-top: 1.500px solid #0B1F44; } /* the head of each column */
+.how-n { font: 700 21px/1.250 var(--serif); color: var(--maroon); letter-spacing: .030em; }
+.how-steps h3 { font: 700 clamp(18.500px, 1.380vw, 21px)/1.250 var(--serif); color: #0B1F44; }
+.how-steps p { margin-top: 6px; font: 400 16.500px/1.550 var(--serif); color: var(--text); max-width: 62ch; }
+.how-head p, .how-steps p { text-wrap: pretty; } /* no word left alone on a last line */
+.how-steps a { color: var(--sky-deep); text-underline-offset: 3px; overflow-wrap: anywhere; }
+@media (max-width: 720px) {
+  /* one column, I to X */
+  .how-steps { grid-template-columns: minmax(0, 1fr); grid-template-rows: none; grid-auto-flow: row; }
+  .how-steps li:nth-child(6) { border-top: 0; }
+  .how-steps li { grid-template-columns: 3.250rem minmax(0, 1fr); padding: 18px 0 20px; }
+  .how-n { font-size: 19px; } .how-steps h3 { font-size: 18px; } .how-steps p { font-size: 15.500px; }
+}
+

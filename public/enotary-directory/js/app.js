@@ -116,12 +116,21 @@
   }
 
   // ── state ───────────────────────────────────────────────────────────────
+  // island and region are no longer chosen on this page (the Location filter sets city and province), but matches() still reads them.
   var F = { q: "", island: "", region: "", province: "", city: "", area: "", firm: "", position: "", photo: false, sort: "photo", page: 0 };
   var view = document.getElementById("view");
   function uniq(list) { return list.filter(function (v, i, a) { return v && a.indexOf(v) === i; }).sort(); }
-  function count(key, value) { return LAWYERS.filter(function (l) { return l[key] === value; }).length; }
   var AREAS = (function () { var m = {}; LAWYERS.forEach(function (l) { l.areas.forEach(function (a) { m[a] = (m[a] || 0) + 1; }); }); return Object.keys(m).filter(function (a) { return m[a] >= Math.max(3, Math.round(LAWYERS.length / 100)); }).sort(); })(); // enough entries to be worth a filter, whatever the size of the list
   var SOME_DEFAULT = LAWYERS.some(function (l) { return !l.photo; }); // false while the data holds only entries with their own picture
+  // The places in the data, for the Location filter: "City, Province", in alphabetical order. Choosing one filters on its
+  // city and province, through the same matching as before (matches() below).
+  var PLACES = (function () {
+    var seen = {}, list = [];
+    LAWYERS.forEach(function (l) { var label = l.city + ", " + l.province; if (l.city && !seen[label]) { seen[label] = true; list.push({ label: label, city: l.city, province: l.province }); } });
+    return list.sort(function (a, b) { return a.label.localeCompare(b.label); });
+  })();
+  /** The place chosen in the Location filter, as its label; "" for all locations. */
+  function placeLabel() { return F.city ? F.city + ", " + F.province : ""; }
   function group(pos) { pos = pos.toLowerCase(); if (/office/.test(pos)) return "Law or notarial office"; if (/partner|founder|founding|managing|chair|president/.test(pos)) return "Partner"; if (/counsel|consultant/.test(pos)) return "Counsel"; if (/associate/.test(pos)) return "Associate"; return "Attorney"; }
 
   function matches(l) {
@@ -148,7 +157,6 @@
 
   // ── the Notary Directory ─────────────────────────────────────────────────────────
   function options(list, current, any) { return '<option value="">' + esc(any) + "</option>" + list.map(function (v) { return '<option value="' + esc(v) + '"' + (v === current ? " selected" : "") + ">" + esc(v) + "</option>"; }).join(""); }
-  function placeOptions(key, parentKey, parentValue) { return uniq(LAWYERS.filter(function (l) { return !parentValue || l[parentKey] === parentValue; }).map(function (l) { return l[key]; })); }
 
   // The lawyer's card (cardTop below is its shared top): a crimson banner with the seal in outline, the picture in a white frame across the banner's lower edge,
   // then everything centred: name, position and firm, a short maroon rule, place and practice areas, the service, and the
@@ -199,8 +207,8 @@
     "</article>";
   }
 
-  // The landing: what this place is, who is in it, and how it works.
-  function hero(cityCount) {
+  // The landing: what this place is and who is in it. How it works follows it (how() below).
+  function hero() {
     var faces = LAWYERS.filter(function (l) { return l.photo && l.kind !== "office" && !l.wide; });
     // A fixed pick, spread across firms and cities, so the page looks the same on every visit.
     var want = ["arturo-t-del-rosario-jr", "cindy-a-ilagan-cayco", "amador-l-simando", "maria-ahren-p-vergara", "myra-s-montecalvo-quilatan"];
@@ -241,7 +249,6 @@
     var ico = {
       people: '<svg viewBox="0 0 48 40"><circle cx="24" cy="11" r="6.500"/><path d="M12 36c1-8 5.500-12 12-12s11 4 12 12"/><circle cx="9" cy="14" r="4.500"/><path d="M2 32c.600-5 3-8 7-8.500"/><circle cx="39" cy="14" r="4.500"/><path d="M46 32c-.600-5-3-8-7-8.500"/></svg>',
       scales: '<svg viewBox="0 0 48 40"><path d="M24 4v32M14 36h20M8 10h32M24 6l-4 4M24 6l4 4"/><path d="M8 10 2 24h12zM40 10l-6 14h12z"/><path d="M2 24a6 6 0 0 0 12 0M34 24a6 6 0 0 0 12 0"/></svg>',
-      building: '<svg viewBox="0 0 48 40"><path d="M10 37V5h20v32M30 15h9v22M5 37h39"/><path d="M16 11h2.500M22 11h2.500M16 18h2.500M22 18h2.500M16 25h2.500M22 25h2.500M18 37v-6h4v6"/></svg>',
     };
     var stat = function (icon, n, label) { return '<div class="stat">' + icon + "<div><dt>" + n + "</dt><dd>" + label + "</dd></div></div>"; };
 
@@ -249,91 +256,47 @@
       '<div class="hero-text"><p class="hero-eyebrow">Legal services <i>\u2022</i> Trusted professionals <i>\u2022</i> Philippines</p>' +
         '<h1>Choose the <em>lawyer<svg viewBox="0 0 220 22" preserveAspectRatio="none" aria-hidden="true"><path d="M4 14C60 4 120 3 216 9" /><path d="M150 17c24-4 44-5 64-4"/></svg></em> who will notarize your document</h1>' +
         "<p>Browse lawyers and law offices across the Philippines. Read each one\u2019s profile and choose the notary you trust. Online notarial sessions are not open yet: choose a notary to register your interest, and we\u2019ll email you when you can book.</p>" +
-        '<div class="hero-acts"><a class="btn big" href="#where">Find a lawyer</a><a class="btn outline big" href="#how">How it works</a></div>' +
-        '<dl class="hero-stats">' + stat(ico.people, LAWYERS.length, "lawyers and offices") + stat(ico.scales, firms, "law firms") + stat(ico.building, cityCount, "cities") + "</dl></div>" +
+        '<div class="hero-acts"><a class="btn big" href="#find">Find a lawyer</a><a class="btn outline big" href="#how">How it works</a></div>' +
+        '<dl class="hero-stats">' + stat(ico.people, LAWYERS.length, "lawyers and offices") + stat(ico.scales, firms, "law firms") + "</dl></div>" +
       '<div class="hero-faces">' + picked.map(function (l, i) {
         return '<figure class="face f' + i + '">' + pic(l, title(l)) + '<figcaption><b>' + esc(title(l)) + "</b><span>" + esc(l.firm) + "</span></figcaption></figure>";
       }).join("") + seal + "</div>" +
-    "</div></section>" +
-    '<section class="how" id="how"><div class="how-in"><h2>How it works</h2><ol>' +
-      [["Find a notary", "Filter by place first, then by practice area, firm or position. Open a profile to read about them."],
-       ["Register your interest", "Sign in to LAGDA, verify your identity where LAGDA offers it, and choose to be told when you can book."],
-       ["We email you", "Online notarial sessions are not open yet. When they open, you are told first, by email."]]
-        .map(function (st, i) { return "<li><span>" + (i + 1) + "</span><div><b>" + st[0] + "</b><p>" + st[1] + "</p></div></li>"; }).join("") +
-    "</ol></div></section>";
-  }
-
-  // ── where: the place filter, a count by city, and the map ───────────────
-  // The islands, simplified, as longitude and latitude. Drawn for orientation only.
-  var ISLANDS = [
-    [[120.57,18.5],[121.0,18.62],[121.9,18.3],[122.2,17.4],[122.45,16.9],[122.2,16.2],[121.6,15.8],[121.6,14.9],[121.8,14.2],[122.3,13.95],[122.9,14.1],[123.3,13.9],[123.9,13.8],[124.1,13.0],[124.1,12.55],[123.8,12.9],[123.3,13.2],[122.8,13.5],[122.5,13.6],[122.0,13.8],[121.6,13.9],[121.3,13.65],[120.9,13.75],[120.6,14.2],[120.95,14.5],[120.6,14.5],[120.4,14.6],[120.25,14.85],[120.1,15.3],[119.9,15.8],[119.8,16.3],[120.3,16.05],[120.35,16.6],[120.4,17.5]],
-    [[120.4,13.5],[121.1,13.5],[121.5,13.1],[121.55,12.6],[121.2,12.25],[120.9,12.4],[120.75,13.0]],
-    [[119.5,11.4],[119.75,11.1],[119.3,10.5],[118.7,9.8],[118.0,9.1],[117.3,8.5],[117.15,8.35],[117.6,9.0],[118.5,10.0],[119.0,10.6],[119.3,11.2]],
-    [[121.9,11.9],[122.6,11.6],[123.15,11.55],[123.0,11.0],[122.6,10.65],[122.0,10.45],[121.9,10.9],[122.05,11.6]],
-    [[123.2,10.95],[123.55,10.75],[123.4,10.3],[123.3,9.6],[123.15,9.05],[122.65,9.35],[122.4,9.8],[122.75,10.1],[122.85,10.6]],
-    [[124.05,11.3],[124.0,10.8],[123.7,10.2],[123.4,9.45],[123.35,9.75],[123.6,10.4],[123.85,11.0]],
-    [[123.8,10.15],[124.45,10.1],[124.6,9.8],[124.2,9.6],[123.85,9.7]],
-    [[124.3,11.5],[124.9,11.4],[125.05,10.9],[125.25,10.3],[124.95,10.05],[124.75,10.5],[124.4,10.8],[124.35,11.2]],
-    [[124.3,12.55],[125.0,12.6],[125.5,12.2],[125.75,11.3],[125.5,11.05],[125.0,11.3],[124.8,11.7],[124.5,12.1]],
-    [[123.2,12.55],[123.9,12.25],[124.05,11.9],[123.6,11.95],[123.25,12.2]],
-    [[125.4,9.8],[126.2,9.2],[126.4,8.3],[126.6,7.3],[126.2,6.4],[125.7,6.1],[125.7,7.0],[125.4,6.8],[125.4,5.6],[125.1,5.9],[124.6,6.0],[124.0,6.4],[124.05,7.1],[123.6,7.6],[123.3,7.4],[122.9,7.6],[122.2,7.0],[121.9,6.95],[122.1,7.6],[122.6,8.1],[123.0,8.5],[123.5,8.6],[123.8,8.15],[124.2,8.2],[124.6,8.5],[124.8,9.0],[125.1,8.9]],
-    [[121.75,20.5],[121.95,20.5],[121.95,20.3],[121.75,20.3]], [[121.7,19.4],[121.95,19.4],[121.95,19.2],[121.7,19.2]], [[121.35,18.95],[121.55,18.95],[121.55,18.8],[121.35,18.8]],
-    [[122.0,12.6],[122.15,12.6],[122.15,12.3],[122.0,12.3]], [[124.15,13.9],[124.4,13.95],[124.4,13.6],[124.15,13.6]], [[120.0,12.2],[120.3,12.2],[120.3,11.95],[120.0,11.95]],
-    [[121.0,6.1],[121.35,6.05],[121.3,5.9],[121.0,5.95]], [[119.9,5.3],[120.2,5.3],[120.2,5.1],[119.9,5.1]], [[126.0,9.95],[126.15,9.95],[126.15,9.7],[126.0,9.7]],
-  ];
-  var CITY_AT = { "Makati City": [121.02, 14.55], "Taguig City": [121.05, 14.52], "Pasig City": [121.08, 14.58], "Quezon City": [121.05, 14.68], "Manila": [120.98, 14.6], "Naga City": [123.18, 13.62], "Cebu City": [123.89, 10.31], "Davao City": [125.6, 7.07] };
-  function where(cities) {
-    var max = count("city", cities[0]) || 1;
-    var bars = cities.map(function (c) {
-      var n = count("city", c);
-      return '<li><button type="button" data-city="' + esc(c) + '" class="' + (F.city === c ? "is-on" : "") + '" aria-pressed="' + (F.city === c) + '">' + esc(c) + '</button><span class="bar-track"><i style="width:' + Math.max(2.5, n / max * 100).toFixed(1) + '%"></i><b>' + n + "</b></span></li>";
-    }).join("");
-
-    // Map: one mark per place. Metro Manila's cities share a mark, since they sit on top of each other at this scale.
-    var X = function (lon) { return (lon - 116.3) * 30; }, Y = function (lat) { return (21 - lat) * 31; };
-    var land = ISLANDS.map(function (poly) { return '<path d="M' + poly.map(function (pt) { return X(pt[0]).toFixed(1) + " " + Y(pt[1]).toFixed(1); }).join("L") + 'Z"/>'; }).join("");
-    var groups = {};
-    LAWYERS.forEach(function (l) {
-      var key = l.province === "Metro Manila" ? "Metro Manila" : l.city, at = l.province === "Metro Manila" ? [121.03, 14.58] : CITY_AT[l.city];
-      if (!at) return;
-      groups[key] = groups[key] || { name: key, n: 0, at: at, metro: key === "Metro Manila", region: l.region, province: l.province };
-      groups[key].n++;
-    });
-    var marks = Object.keys(groups).map(function (k) { return groups[k]; }).sort(function (a, b) { return b.n - a.n; });
-    var top = marks[0] ? marks[0].n : 1;
-    var dots = "", labels = "";
-    marks.forEach(function (m) {
-      var cx = X(m.at[0]), cy = Y(m.at[1]), r = Math.max(4.5, Math.sqrt(m.n / top) * 26);
-      var left = m.metro, lx = left ? cx - r - 54 : 345, ly = left ? cy : cy + (m.name === "Naga City" ? -30 : 0);
-      var on = m.metro ? F.province === "Metro Manila" && !F.city : F.city === m.name;
-      dots += '<path class="lead" d="M' + cx.toFixed(1) + " " + cy.toFixed(1) + (left ? "H" + (lx + 4).toFixed(1) : "L" + (cx + 28).toFixed(1) + " " + ly.toFixed(1) + "H" + (lx - 6)) + '"/>' +
-        '<circle class="dot' + (on ? " is-on" : "") + '" cx="' + cx.toFixed(1) + '" cy="' + cy.toFixed(1) + '" r="' + r.toFixed(1) + '"/>';
-      labels += '<g class="map-label' + (on ? " is-on" : "") + '" role="button" tabindex="0" ' + (m.metro ? 'data-province="Metro Manila"' : 'data-city="' + esc(m.name) + '"') + ' aria-label="' + esc(m.name) + ", " + m.n + ' listed">' +
-        (left
-          ? '<text x="' + lx.toFixed(1) + '" y="' + (ly - 3).toFixed(1) + '" text-anchor="end">' + esc(m.name) + '</text><text class="n" x="' + lx.toFixed(1) + '" y="' + (ly + 17).toFixed(1) + '" text-anchor="end">' + m.n + "</text>"
-          : '<text x="' + lx + '" y="' + (ly + 5).toFixed(1) + '">' + esc(m.name) + '<tspan class="n" dx="9">' + m.n + "</tspan></text>") + "</g>";
-    });
-
-    return '<section class="where" id="where"><div class="where-in">' +
-      '<div class="where-head"><h2>Where should your notary be?</h2><p>A notary acts within the place of their commission, so start with the place.</p></div>' +
-      '<div class="where-pick">' +
-        '<div class="field"><label for="f-island">Island group</label><select id="f-island">' + options(placeOptions("island"), F.island, "All of the Philippines") + "</select></div>" +
-        '<div class="field"><label for="f-region">Region</label><select id="f-region">' + options(placeOptions("region", "island", F.island), F.region, "All regions") + "</select></div>" +
-        '<div class="field"><label for="f-province">Province</label><select id="f-province">' + options(placeOptions("province", "region", F.region), F.province, "All provinces") + "</select></div>" +
-        '<div class="field"><label for="f-city">City or municipality</label><select id="f-city">' + options(placeOptions("city", "province", F.province), F.city, "All cities") + "</select></div>" +
-        '<button type="button" class="btn outline" id="place-clear">Show all places</button></div>' +
-      '<div class="where-bars"><h3>Lawyers and offices listed, by city</h3><ul>' + bars + "</ul></div>" +
-      '<div class="where-map"><svg viewBox="-60 0 520 500" role="group" aria-label="Map of the Philippines with the places listed">' +
-        '<g class="land">' + land + "</g>" + dots + labels + "</svg></div>" +
     "</div></section>";
   }
 
-  function market() {
-    var cities = uniq(LAWYERS.map(function (l) { return l.city; })).sort(function (a, b) { return count("city", b) - count("city", a); });
-    view.innerHTML = hero(cities.length) + where(cities) + '<div class="wrap" id="find">' +
+  // How it works: a remote notarization on LAGDA, from the request to the notarized document, in ten steps.
+  // Two columns on a wide screen that read down (I to V, then VI to X), one column on a phone.
+  var HOW = [
+    ["Choose a notary", "Browse the directory and select a commissioned notary public who is online. Notaries receive requests " + OFFICE_HOURS.text + "."],
+    ["Verify your identity", "Confirm your identity with a government-issued ID and a selfie through LAGDA's identity verification partner."],
+    ["Submit your request", "State the notarial act and the document, and confirm that you will be in the Philippines during the session. Wills and certified copies of public records cannot be notarized online."],
+    ["Review by the notary", "The notary verifies their own identity, then accepts or declines your request. If a request is declined, you may choose another notary."],
+    ["Prepare the session", "Upload the final PDF of your document (up to 20 MB; every file is scanned for malware) and state your address during the notarization."],
+    ["Appear by video", "The notary opens the session room, and you appear before the notary by live video, which is not recorded. Both parties confirm that they are in the Philippines."],
+    ["Confirm identity and document", "The notary confirms your identity during the call, and you finalize the document. A finalized document can no longer be replaced."],
+    ["The notarial act", "The notary selects the act (acknowledgment, jurat or signature witnessing) and states the fee, if any. You review the details and approve."],
+    ["Notarization and register", "The notary affixes the notarial block. The document receives a register entry (document, page, book and series) and a LAGDA-NOT verification code on every page, with a QR code on its information sheet. Any fee is paid directly to the notary."],
+    ["Copies and verification", "Request certified true copies when you need them. Anyone can verify a notarized document at lagda.io/verify-notarized."],
+  ];
+  var ROMAN = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X"];
+  function how() {
+    // The numeral is for the eye; a screen reader has the list's own numbering. The verification address is a link to that page.
+    var text = function (t) { return keepTogether(t).replace("lagda.io/verify-notarized", '<a href="/verify-notarized">lagda.io/verify-notarized</a>'); };
+    return '<section class="how" id="how" aria-labelledby="how-h"><div class="how-in">' +
+      '<div class="how-head"><h2 id="how-h">How it works</h2><p>A remote notarization on LAGDA, from request to notarized document.</p></div>' +
+      '<ol class="how-steps" role="list">' + HOW.map(function (st, i) {
+        return '<li><span class="how-n" aria-hidden="true">' + ROMAN[i] + "</span><div><h3>" + esc(st[0]) + "</h3><p>" + text(st[1]) + "</p></div></li>";
+      }).join("") + "</ol></div></section>";
+  }
 
-      '<section class="tools ' + (SOME_DEFAULT ? "four" : "three") + '" aria-label="Other filters">' +
+  function market() {
+    view.innerHTML = hero() + how() + '<div class="wrap" id="find">' +
+
+
+      // The filters: search, then the location, practice area, law firm and position (and "With a photo" when some have none).
+      '<section class="tools' + (SOME_DEFAULT ? "" : " four") + '" aria-label="Filters">' +
         '<div class="field"><label for="f-q">Search</label><input id="f-q" type="search" placeholder="Name, firm or practice area" value="' + esc(F.q) + '"></div>' +
+        '<div class="field"><label for="f-location">Location</label><select id="f-location">' + options(PLACES.map(function (p) { return p.label; }), placeLabel(), "All locations") + "</select></div>" +
         '<div class="field"><label for="f-area">Practice area</label><select id="f-area">' + options(AREAS, F.area, "Any practice area") + "</select></div>" +
         '<div class="field"><label for="f-firm">Law firm</label><select id="f-firm">' + options(uniq(LAWYERS.map(function (l) { return l.firm; })), F.firm, "Any firm") + "</select></div>" +
         '<div class="field"><label for="f-position">Position</label><select id="f-position">' + options(["Partner", "Counsel", "Associate", "Attorney", "Law or notarial office"], F.position, "Any position") + "</select></div>" +
@@ -365,8 +328,8 @@
   }
   function list(dir) {
     FOUND = sorted(LAWYERS.filter(matches));
-    var where = F.city || F.province || F.region || F.island || "the Philippines";
-    document.getElementById("count").innerHTML = FOUND.length + (FOUND.length === 1 ? " result" : " results") + " <span>in " + esc(where) + "</span>";
+    var where = placeLabel(); // "All locations": no place is named
+    document.getElementById("count").innerHTML = FOUND.length + (FOUND.length === 1 ? " result" : " results") + (where ? " <span>in " + esc(where) + "</span>" : "");
     var active = F.q || F.island || F.region || F.province || F.city || F.area || F.firm || F.position || F.photo;
     document.getElementById("clear").hidden = !active;
     var grid = document.getElementById("grid"), nav = document.getElementById("pager");
@@ -935,7 +898,6 @@
   // ── the page frame: the bar for a phone, the menu, the views ──
   function barHeight() { var bar = document.querySelector(".flow .bar"), h = bar && getComputedStyle(bar).position === "fixed" ? Math.ceil(bar.getBoundingClientRect().height) : 0; document.body.style.setProperty("--bar", h + "px"); }
   window.addEventListener("resize", barHeight);
-  function keepPlace() { var el = document.getElementById("where"); if (el) el.scrollIntoView({ block: "start" }); }
   // One button at every width: a dropdown, or a sheet on a phone.
   var MENU = false, NOW = "market";
   function menuFill() {
@@ -979,7 +941,7 @@
   }
 
   document.addEventListener("click", function (e) {
-    var t = e.target.closest("[data-go],[data-open],[data-select],[data-close],[data-city],[data-province],[data-page],[data-clear],[data-step],[data-idv-start],[data-idv-ask],[data-idv-retry],[data-idv-reload],[data-register],[data-request],#clear,#place-clear,#veil,[data-wait-hide],[data-wait-show],[data-sel-wrap]");
+    var t = e.target.closest("[data-go],[data-open],[data-select],[data-close],[data-page],[data-clear],[data-step],[data-idv-start],[data-idv-ask],[data-idv-retry],[data-idv-reload],[data-register],[data-request],#clear,#veil,[data-wait-hide],[data-wait-show],[data-sel-wrap]");
     if (!t) return;
     if (t.id === "veil") { if (e.target === t) closeProfile(); return; }
     if (t.hasAttribute("data-go")) { e.preventDefault(); if (t.hasAttribute("data-forget")) forget(); go(t.getAttribute("data-go")); }
@@ -990,10 +952,7 @@
     else if (t.hasAttribute("data-wait-hide")) waitShown(false);
     else if (t.hasAttribute("data-wait-show")) waitShown(true, true);
     else if (t.hasAttribute("data-sel-wrap")) { if (t.querySelector("[data-select]").disabled) waitShown(true, true); } // a press on the disabled button
-    else if (t.hasAttribute("data-province")) { var prov = t.getAttribute("data-province"); var was = F.province === prov && !F.city; var one = LAWYERS.filter(function (x) { return x.province === prov; })[0]; F.city = ""; F.province = was ? "" : prov; F.region = was ? "" : one.region; F.island = was ? "" : one.island; F.page = 0; market(); keepPlace(); }
-    else if (t.hasAttribute("data-city")) { var c = t.getAttribute("data-city"); var on = F.city !== c; var ref = LAWYERS.filter(function (x) { return x.city === c; })[0]; F.city = on ? c : ""; F.province = on ? ref.province : ""; F.region = on ? ref.region : ""; F.island = on ? ref.island : ""; F.page = 0; market(); keepPlace(); }
     else if (t.hasAttribute("data-clear") || t.id === "clear") reset();
-    else if (t.id === "place-clear") { F.island = F.region = F.province = F.city = ""; F.page = 0; market(); keepPlace(); }
     else if (!SEL) return;
     else if (t.hasAttribute("data-step")) { if (t.hasAttribute("data-outcome")) SEL.outcome = t.getAttribute("data-outcome"); SEL.step = t.getAttribute("data-step"); SEL.error = ""; store(CHECK, null); redraw(true); }
     else if (t.hasAttribute("data-idv-start")) { if (SEL.agree) startCheck(); }
@@ -1056,17 +1015,14 @@
       SEL.error = ""; redraw(false); return;
     }
     if (id === "idv-agree" || id === "int-agree") { if (SEL) { SEL.agree = e.target.checked; var b = document.querySelector(id === "idv-agree" ? "[data-idv-start]" : "[data-register]"); if (b) b.disabled = !SEL.agree || SEL.busy; } return; }
-    if (id === "f-island") { F.island = e.target.value; F.region = F.province = F.city = ""; }
-    else if (id === "f-region") { F.region = e.target.value; F.province = F.city = ""; }
-    else if (id === "f-province") { F.province = e.target.value; F.city = ""; }
-    else if (id === "f-city") { F.city = e.target.value; }
+    if (id === "f-location") { var at = PLACES.filter(function (p) { return p.label === e.target.value; })[0]; F.city = at ? at.city : ""; F.province = at ? at.province : ""; }
     else if (id === "f-area") F.area = e.target.value;
     else if (id === "f-firm") F.firm = e.target.value;
     else if (id === "f-position") F.position = e.target.value;
     else if (id === "f-sort") F.sort = e.target.value;
     else return;
     F.page = 0; // any filter, search or sort starts again from the first page
-    if (id === "f-sort" || id === "f-area" || id === "f-firm" || id === "f-position") list(); else { market(); keepPlace(); }
+    list();
   });
   var typing;
   document.addEventListener("input", function (e) {
@@ -1084,7 +1040,6 @@
     else if (e.key === "Tab") { if (modal) trap(e, modal); }
     // Left and right arrows turn the page of results while the pager has the focus; Home and End go to the first and last page.
     else if (at.closest("#pager") && (e.key === "ArrowRight" || e.key === "ArrowLeft" || e.key === "Home" || e.key === "End")) { e.preventDefault(); turn({ ArrowRight: "next", ArrowLeft: "prev", Home: "first", End: "last" }[e.key]); }
-    else if ((e.key === "Enter" || e.key === " ") && at.closest(".map-label")) { e.preventDefault(); at.closest(".map-label").dispatchEvent(new MouseEvent("click", { bubbles: true })); }
   });
   // A sideways swipe on the cards turns the page on a touch screen.
   var swipe = null;

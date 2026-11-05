@@ -320,42 +320,12 @@ button { cursor: pointer; }
 .face.f1 { grid-column: 6 / 10; grid-row: 2 / 3; }
 .face.f2 { grid-column: 1 / 5; grid-row: 3; } .face.f3 { grid-column: 5 / 9; grid-row: 3; } .face.f4 { grid-column: 9 / 13; grid-row: 3; }
 .hero-seal { grid-column: 9 / 13; grid-row: 1 / 3; align-self: start; justify-self: end; width: clamp(180px, 16.500vw, 290px); margin: -34px clamp(-110px, -5.200vw, -40px) 0 0; filter: drop-shadow(0 12px 22px rgba(111,22,50,.300)); position: relative; z-index: 2; }
-.how { background: #0B1B2E; color: #C4D2E0; border-top: 3px solid var(--sky); }
-.how-in { max-width: 1640px; margin: 0 auto; padding: 46px clamp(16px, 4.200vw, 72px) 50px; display: grid; grid-template-columns: minmax(180px, .800fr) minmax(0, 3fr); gap: 20px; align-items: start; }
-.how h2 { color: #fff; font: 800 clamp(24px, 2vw, 32px)/1.200 var(--sans); letter-spacing: -.02em; padding-top: 10px; }
-.how ol { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
-.how li { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 22px; align-items: start; padding: 0 30px; border-left: 1px solid rgba(255,255,255,.160); }
-.how li > span { font: 500 clamp(44px, 4vw, 64px)/.900 var(--sans); color: var(--sky); width: auto; height: auto; border: 0; border-radius: 0; display: block; }
-.how b { color: #fff; font-size: clamp(17px, 1.300vw, 21px); font-weight: 800; display: block; } .how p { font-size: 15.500px; line-height: 1.550; margin-top: 8px; }
-
-.where { background: #EFF4F9; border-bottom: 1px solid var(--line); scroll-margin-top: 84px; }
-.where-in { max-width: 1640px; margin: 0 auto; padding: 52px clamp(16px, 4.200vw, 72px) 60px; display: grid; grid-template-columns: minmax(0, 1.050fr) minmax(0, 1fr) minmax(0, 1fr); gap: 26px clamp(24px, 4vw, 70px); align-items: start; }
-.where-head { grid-column: 1 / -1; } .where-head h2 { font: 800 clamp(26px, 2.300vw, 36px)/1.150 var(--sans); letter-spacing: -.025em; color: #0B1B2E; } .where-head p { margin-top: 10px; font-size: 17px; color: var(--text); }
-.where-pick { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 26px 18px; align-content: start; }
-.where-pick .field label { font-weight: 600; font-size: 14.500px; color: var(--text); }
-.where-pick .field select { height: 50px; border: 1px solid #B9C6D4; border-radius: 5px; font-size: 16px; padding: 0 14px; }
-.where-pick .btn { grid-column: 1 / -1; justify-self: start; margin-top: 14px; min-height: 46px; border-radius: 5px; padding: 0 22px; font-size: 15.500px; background: #fff; }
-.where-bars h3 { font: 600 14.500px var(--sans); color: var(--text); margin-bottom: 16px; }
-.where-bars ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 0; }
-.where-bars li { display: grid; grid-template-columns: 122px minmax(0, 1fr); align-items: center; min-height: 29px; }
-.where-bars li button { background: none; border: 0; padding: 2px 0; text-align: left; color: var(--sky-deep); font-weight: 600; font-size: 15.500px; }
-.where-bars li button:hover, .where-bars li button.is-on { text-decoration: underline; text-underline-offset: 3px; } .where-bars li button.is-on { color: var(--maroon); }
-.bar-track { display: flex; align-items: center; gap: 10px; border-left: 1px solid #8FA2B6; padding: 6px 0; min-width: 0; }
-.bar-track i { height: 8px; background: var(--sky); border-radius: 0 6px 6px 0; display: block; flex: 0 1 auto; } .where-bars li button.is-on + .bar-track i { background: var(--maroon); }
-.bar-track b { font-size: 15px; font-weight: 700; color: var(--ink); font-variant-numeric: tabular-nums; }
-.where-map svg { width: 100%; max-width: 520px; height: auto; display: block; margin: -30px auto 0; overflow: visible; }
-.where-map .land path { fill: #CFE2F5; stroke: #CFE2F5; stroke-width: 5; stroke-linejoin: round; }
-.where-map .lead { fill: none; stroke: #5B6E84; stroke-width: 1; }
-.where-map .dot { fill: var(--sky); stroke: #fff; stroke-width: 1.500; } .where-map .dot.is-on { fill: var(--maroon); }
-.map-label { cursor: pointer; } .map-label text { font: 600 15px var(--sans); fill: var(--ink); } .map-label .n { font-weight: 800; }
-.map-label:hover text, .map-label.is-on text { fill: var(--sky-deep); text-decoration: underline; } .map-label:focus-visible { outline: 2px solid var(--sky); outline-offset: 3px; }
+/* "How it works" (ten steps) is styled in css/directory.css. The place block (island, region, province and city selects),
+   its count by city and its map of the Philippines were taken out: one Location filter sits with the others. */
 .tools { margin-top: 0; padding-bottom: 26px; border-bottom: 1px solid var(--line); }
 .tools .field select, .tools .field input { height: 48px; border-radius: 5px; border-color: #B9C6D4; }
 @media (max-width: 1180px) { .hero-seal { margin-right: -10px; width: 170px; } .stat { padding: 0 18px; } .btn.big { min-height: 56px; padding: 0 30px; font-size: 17px; } }
-@media (max-width: 1180px) { .where-in { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } .where-map { grid-column: 1 / -1; } .where-map svg { margin-top: 0; } }
 @media (max-width: 980px) {
-  .how-in { grid-template-columns: minmax(0, 1fr); } .how ol { grid-template-columns: minmax(0, 1fr); gap: 22px; } .how li { border-left: 0; padding: 0; }
-  .where-in { grid-template-columns: minmax(0, 1fr); padding-block: 34px 40px; }
   .hero-in { grid-template-columns: minmax(0, 1fr); }
   .hero-faces { max-width: 640px; grid-template-rows: 30px minmax(0, 250px) minmax(0, 210px); gap: 12px; }
 }
@@ -368,8 +338,6 @@ button { cursor: pointer; }
   .face figcaption { padding: 30px 9px 8px; } .face.f2 figcaption span, .face.f3 figcaption span, .face.f4 figcaption span { display: none; }
   .hero-seal { width: 104px; margin: -8px -4px 0 0; }
 }
-/* the card's footer: rating on its own line, the two actions side by side */
-@media (max-width: 520px) { .where-pick { grid-template-columns: minmax(0, 1fr); gap: 16px; } .where-bars li { grid-template-columns: 108px minmax(0, 1fr); } .map-label text { font-size: 17px; } }
 
 /* ── pictures: the default portrait, and an office's own picture shown whole ── */
 img.is-default { background: linear-gradient(180deg, #EEF4FA 0%, #D5E3F1 100%); }
@@ -627,7 +595,7 @@ img.is-default { background: linear-gradient(180deg, #EEF4FA 0%, #D5E3F1 100%); 
 @media (max-width: 1100px) { .tools.four { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
 @media (max-width: 760px) { .tools.four { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
 .empty { padding: clamp(32px, 5vw, 56px) 20px; } .empty h3 { font: 700 22px/1.250 var(--serif); } .empty p { color: var(--quiet); max-width: 44ch; } .empty .btn { margin-top: 6px; border-radius: 6px; }
-@media (max-width: 640px) { .hero-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); } .stat, .stat:first-child { flex-direction: column; align-items: flex-start; gap: 6px; padding: 0 10px; } .stat:first-child { padding-left: 2px; } .stat dd { margin-top: 4px; } }
+@media (max-width: 640px) { .hero-stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); } .stat, .stat:first-child { flex-direction: column; align-items: flex-start; gap: 6px; padding: 0 10px; } .stat:first-child { padding-left: 2px; } .stat dd { margin-top: 4px; } }
 /* tracking on a tablet or phone: the reference number and the timeline come first, who the notary is after */
 @media (max-width: 860px) { .flow-grid.main-first .flow-lawyer { order: 2; } }
 /* the product name beside the logo: "eNotary", in the lawyers' maroon */
