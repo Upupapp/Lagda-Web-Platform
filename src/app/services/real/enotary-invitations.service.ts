@@ -186,6 +186,8 @@ export interface DeskIncoming {
 export interface NotaryDesk {
   /** Requests addressed to this notary's listing, waiting to be taken. Absent from an older server. */
   incoming?: DeskIncoming[];
+  /** 130. Requests to this notary's listing that ran out before they were taken, the last seven days. Absent from an older server. */
+  missed?: DeskIncoming[];
   applicationStatus: NotaryApplicationStatus;
   canAccept: boolean;
   /** The payee a client would pay; null while the notary has saved no QR. */

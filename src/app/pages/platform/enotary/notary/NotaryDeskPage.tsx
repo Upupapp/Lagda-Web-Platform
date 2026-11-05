@@ -662,6 +662,28 @@ export function NotaryDeskPage({ focus, then }: { focus?: string; then?: "reopen
         </section>
       )}
 
+      {(desk.missed ?? []).length > 0 && (
+        // 130. Requests that ran out before the notary took them: a request for right now waits only 15 minutes.
+        <section aria-labelledby="desk-missed-heading" data-testid="desk-missed" style={{ margin: "0 0 18px" }}>
+          <h2 id="desk-missed-heading" style={{ ...GF, fontSize: 17, color: E.ink, margin: "0 0 4px" }}>Missed requests</h2>
+          <p style={{ ...bodyText, margin: "0 0 10px" }}>These clients asked for you, but the request ran out before it was taken. A request for right now waits 15 minutes. The client can book a time with you or ask again; a new request appears above.</p>
+          <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "grid", gap: 14 }}>
+            {(desk.missed ?? []).map(item => (
+              <DeskCard
+                key={item.id} testId="desk-missed-row" name={item.client.name} verified={item.client.identityVerified}
+                pills={[{ icon: XCircle, label: "Missed", tone: "end" }, ...(item.booking?.kind === "now" ? [{ icon: Zap, label: "Right now", tone: "warn" as const }] : [])]}
+                facts={[
+                  { icon: CalendarDays, label: "Sent", value: stampLabel(item.receivedAt) },
+                  { icon: Clock, label: "Ran out", value: stampLabel(item.expiresAt) },
+                  ...(bookingFact(item.booking) === null ? [] : [bookingFact(item.booking)!]),
+                  ...(item.details?.actWantedLabel !== undefined && item.details.actWantedLabel !== "" ? [{ icon: PenLine, label: "Service", value: item.details.actWantedLabel }] : []),
+                ]}
+              />
+            ))}
+          </ul>
+        </section>
+      )}
+
       {desk.requests.length === 0 && incoming.length > 0 ? null : desk.requests.length === 0 ? (
         <Panel testId="desk-empty">
           <p style={{ ...bodyText, margin: 0, display: "flex", gap: 10 }}>
