@@ -1048,7 +1048,7 @@
   document.addEventListener("change", function (e) {
     var id = e.target.id;
     if (SEL && id === "rb-day") { var bd = booking(SEL); bd.day = e.target.value; bd.at = null; SEL.error = ""; redraw(false); var dd = document.getElementById("rb-day"); if (dd) dd.focus(); return; }
-    if (SEL && id === "rb-time") { booking(SEL).at = e.target.value || null; SEL.error = ""; redraw(false); var tt = document.getElementById("rb-time"); if (tt) tt.focus(); return; }
+    if (SEL && id === "rb-time") { var opt = e.target.selectedOptions && e.target.selectedOptions[0]; booking(SEL).at = opt && !opt.disabled ? e.target.value || null : null; SEL.error = ""; redraw(false); var tt = document.getElementById("rb-time"); if (tt) tt.focus(); return; }
     if (SEL && (id === "rb-now" || id === "rb-later")) { var bk = booking(SEL); bk.kind = id === "rb-now" ? "now" : "scheduled"; SEL.error = ""; redraw(false); var r0 = document.getElementById(id); if (r0) r0.focus(); return; }
     if (SEL && (id === "rd-act" || id === "rd-kind" || id === "rd-abroad-use")) {
       var dd = details(SEL);
