@@ -8,11 +8,14 @@ vi.mock("../../../../../components/pdf/DocumentPageSurface", () => ({
   useRealDocument: () => ({ status: "ready", doc: {}, pageCount: 2, pageSizes: [{ width: 595, height: 842 }, { width: 595, height: 842 }] }),
   DocumentPageSurface: () => <canvas />,
 }));
+// The page itself is not drawn here: where the clear space is, is auto-place.test.ts's matter.
+vi.mock("../auto-place", () => ({ autoPlacement: () => Promise.resolve({ block: { page: 2, x: 0.5, y: 0.86 } }) }));
 const signature = vi.fn();
 vi.mock("../../../../../services/real/enotary-sessions.service", async (original) => ({
   ...(await original<typeof import("../../../../../services/real/enotary-sessions.service")>()),
   realEnotarySessionsService: {
     signature: () => signature() as unknown, document: () => Promise.resolve(new Blob(["%PDF-1.7"])),
+    savePlacements: () => Promise.resolve({}),
     seal: () => Promise.resolve({ sealName: "Aiyana Cruz", jurisdictionLine: null, officeLine: null, commissionNo: "C-1", commissionValidUntil: "2027-12-31", rollNo: "123", customised: false, updatedAt: null }),
   },
 }));
@@ -67,16 +70,24 @@ describe("the document with the notary's own mark: the notarial block", () => {
     expect(screen.queryByText("Open in a new tab")).toBeNull();
   });
 
-  it("shows the block across the foot of the last page until the notary places it, and says a missing signature picture", async () => {
+  it("places the block for the notary once the document is final, at the foot of the last page, and says a missing signature picture", async () => {
     signature.mockResolvedValue(null);
     card(session());
     expect(await screen.findByText(/no signature picture is saved/)).toBeInTheDocument();
     expect(screen.getByTestId("nd-sheet")).toHaveAttribute("data-page", "2");
-    expect(screen.getByTestId("nd-mark-block-usual")).toHaveTextContent("Notarial block · default place");
-    expect(screen.getByTestId("nd-block")).toHaveTextContent("Across the foot of the last page");
-    expect(screen.getByTestId("nd-block")).toHaveTextContent("Default place");
-    expect(screen.getByTestId("nd-saved")).toHaveTextContent("Not placed yet: your notarial block goes across the foot of the last page");
+    expect(await screen.findByTestId("nd-auto")).toHaveTextContent("Placed for you at the foot of page 2, below the document's text. Check it and notarize");
+    expect(screen.getByTestId("nd-block")).toHaveTextContent("Placed");
+    expect(screen.getByRole("link", { name: "Review document, or move the notarial block" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Add my signature" })).toHaveAttribute("href", "/app/enotary/seal");
+  });
+
+  it("waits for the client to finalize the document before placing the block", async () => {
+    signature.mockResolvedValue(null);
+    card(session({ id: "ens_waiting", finalizedAt: null }));
+    expect(await screen.findByText(/no signature picture is saved/)).toBeInTheDocument();
+    expect(screen.getByTestId("nd-block")).toHaveTextContent("Default place");
+    expect(screen.getByTestId("nd-saved")).toHaveTextContent("Once the client finalizes the document, your notarial block is placed for you");
+    expect(screen.queryByTestId("nd-auto")).toBeNull();
   });
 
   it("says when the block goes on a page of its own, and shows the last page without it", async () => {

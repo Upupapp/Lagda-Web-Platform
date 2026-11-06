@@ -24,7 +24,8 @@ export function writePlacements(sessionId: string, value: Placements): void {
 /** The place as the session holds it (the notary's view), or this tab's when the server has none to say. */
 export function placementsOf(session: Session): Placements {
   const saved = session.placements ?? null;
-  if (saved === null) return readPlacements(session.id);
+  // Nothing placed on the server yet (none, or one being saved right now): this tab's.
+  if (saved === null || (saved.block == null && saved.blockOwnPage !== true && saved.seal == null && saved.signature == null)) return readPlacements(session.id);
   const block = saved.block ?? undefined;
   const seal = saved.seal ?? undefined;
   const signature = saved.signature ?? undefined;

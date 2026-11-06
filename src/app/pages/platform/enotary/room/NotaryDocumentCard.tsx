@@ -3,6 +3,10 @@
 // together) is shown with it on it (its saved place, or across the foot of the last page when it has not been placed),
 // the place in words, when it was saved, and one way to the page where it is placed. Only the notary sees the mark; the
 // client sees the block on the notarized document.
+//
+// Placed for the notary (auto-place.ts): once the client has finalized the document, a block the notary has not placed is
+// put at the foot of the last page below its text, or on a page of its own when there is no room, and saved with the
+// session. The notary only checks it and notarizes; they may still move it.
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "react-router";
@@ -13,7 +17,8 @@ import { E, SERIF } from "../EnotaryChrome";
 import { stampLabel } from "../requests/expiry";
 import { NotarialBlockPreview } from "./NotarialBlockPreview";
 import { blockBox, blockOf, blockWords, defaultBlockPoint } from "./notarial-block";
-import { placementsOf } from "./seal-placements";
+import { placementsOf, readPlacements, writePlacements } from "./seal-placements";
+import { autoPlacement } from "./auto-place";
 import { useBlockFacts } from "./useBlockFacts";
 
 const CSS = `
@@ -58,6 +63,9 @@ const CSS = `
   @media (max-width: 520px) { .nd { padding: 14px; } .nd-dl { justify-self: stretch; justify-content: center; } }
 `;
 
+/** Sessions whose block this tab placed automatically: how it was placed, for the words under the page. */
+const autoPlaced = new Map<string, "foot" | "own">();
+
 const short = (sha: string): string => (sha.length > 20 ? `${sha.slice(0, 8)}…${sha.slice(-8)}` : sha);
 
 export function NotaryDocumentCard({ s }: { s: Session }) {
@@ -83,6 +91,28 @@ export function NotaryDocumentCard({ s }: { s: Session }) {
   }, [state.status]);
 
   const ready = state.status === "ready";
+  // Placed for the notary once the document is final, when neither the session nor this tab holds a place.
+  const [placing, setPlacing] = useState(false);
+  const [placedHow, setPlacedHow] = useState<"foot" | "own" | null>(autoPlaced.get(s.id) ?? null);
+  const finalized = s.finalizedAt != null;
+  const unplaced = savedAt === null && Object.keys(readPlacements(s.id)).length === 0;
+  const readyDoc = state.status === "ready" ? state.doc : null;
+  useEffect(() => {
+    if (readyDoc === null || !finalized || !unplaced || autoPlaced.has(s.id)) return;
+    let live = true;
+    setPlacing(true);
+    autoPlacement(readyDoc)
+      .then(async value => {
+        const how = value.blockOwnPage === true ? "own" : "foot";
+        autoPlaced.set(s.id, how);
+        writePlacements(s.id, value);
+        if (live) setPlacedHow(how);
+        await realEnotarySessionsService.savePlacements(s.id, value);
+      })
+      .catch(() => { autoPlaced.delete(s.id); writePlacements(s.id, {}); if (live) setPlacedHow(null); })
+      .finally(() => { if (live) setPlacing(false); });
+    return () => { live = false; };
+  }, [readyDoc, finalized, unplaced, s.id]);
   const lastPage = ready ? state.pageCount : 1;
   // The page the block sits on: its own place, else the last page (across its foot). On a page of its own, the last page
   // of the client's document is shown without it.
@@ -165,13 +195,20 @@ export function NotaryDocumentCard({ s }: { s: Session }) {
           </li>
         )}
       </ul>
-      {savedAt !== null
-        ? <p className="nd-saved" data-testid="nd-saved"><CheckCircle2 size={13} aria-hidden /> Saved with the session at {stampLabel(savedAt)} · kept even if the session is called off</p>
-        : <p className="nd-saved none" data-testid="nd-saved">Not placed yet: your notarial block goes across the foot of the last page unless you place it.</p>}
+      {placedHow !== null && (
+        <p className="nd-saved" data-testid="nd-auto"><CheckCircle2 size={13} aria-hidden /> {placedHow === "foot"
+          ? `Placed for you at the foot of page ${String(lastPage)}, below the document's text. Check it and notarize; move it only if you wish.`
+          : "Placed for you on a page of its own at the end: the last page has no room below its text. Check it and notarize; move it only if you wish."}</p>
+      )}
+      {placing ? <p className="nd-saved none" role="status" data-testid="nd-saved">Placing your notarial block in the clear space…</p>
+        : savedAt !== null
+          ? <p className="nd-saved" data-testid="nd-saved"><CheckCircle2 size={13} aria-hidden /> Saved with the session at {stampLabel(savedAt)} · kept even if the session is called off</p>
+          : placedHow !== null ? null
+            : <p className="nd-saved none" data-testid="nd-saved">{finalized ? "Not placed yet: your notarial block goes across the foot of the last page unless you place it." : "Once the client finalizes the document, your notarial block is placed for you in the clear space at the foot of the last page."}</p>}
 
       <div className="nd-actions">
         <Link to={`/app/enotary/room/${encodeURIComponent(s.invitationId)}/place`} className="nd-review" data-testid="nd-review">
-          <Stamp size={17} aria-hidden /> Review document &amp; place the notarial block
+          <Stamp size={17} aria-hidden /> {ownPage || placed !== undefined ? "Review document, or move the notarial block" : "Review document & place the notarial block"}
         </Link>
         <button type="button" className="nd-dl" data-testid="nd-download" disabled={doc === null || downloading} onClick={download}>
           <Download size={16} aria-hidden /> {downloading ? "Preparing…" : "Download"}
