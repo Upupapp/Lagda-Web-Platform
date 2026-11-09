@@ -650,13 +650,18 @@ export function NotaryDeskPage({ focus, then }: { focus?: string; then?: "reopen
                 >
                   {item.details !== undefined && item.details !== null && <p data-testid="desk-new-details" style={{ margin: 0, fontSize: 13.5, color: E.text }}>Asked for: {detailsLine(item.details)}</p>}
                   <DetailNotes details={item.details} />
-                  {(item.document ?? null) !== null && <p data-testid="desk-new-document" style={{ margin: 0, fontSize: 13.5, color: E.text }}>Document attached: <strong>{item.document?.name}</strong> (open the request to read it)</p>}
+                  {(item.document ?? null) !== null && (
+                    <p data-testid="desk-new-document" style={{ margin: 0, fontSize: 13.5, color: E.text }}>Document attached: <strong>{item.document?.name}</strong></p>
+                  )}
                   {msLeft > 0 && (
                     <p data-testid="desk-new-countdown" style={{ margin: "8px 0 0", fontSize: 13.5, fontWeight: 700, color: E.skyDeep, display: "flex", alignItems: "center", gap: 6 }}>
                       <Clock size={14} aria-hidden /> {countdownText(msLeft)} left · until {expiryLabel(item.expiresAt)}
                     </p>
                   )}
                   <div style={buttonRow()}>
+                    {(item.document ?? null) !== null && (
+                      <Link to={`/app/enotary/desk/${encodeURIComponent(item.id)}`} className="dk-link" data-testid="desk-new-read"><FileText size={16} aria-hidden /> Read the document</Link>
+                    )}
                     <ActionButton icon={Check} disabled={busy || msLeft <= 0} onClick={() => { void take(item); }}>{busy ? "Taking…" : "Take this request"}</ActionButton>
                   </div>
                 </DeskCard>

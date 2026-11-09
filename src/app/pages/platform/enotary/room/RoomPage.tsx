@@ -396,7 +396,9 @@ function roomHeading(s: Session, isClient: boolean, partner: string, complete = 
   if (s.status === "cancelled") return { title: "Session ended", lead: "Nothing was notarized in this session." };
   if (s.status === "preparing") {
     return isClient
-      ? { title: `Waiting for ${partnerTitle(partner, true)} to open the room`, lead: "While you wait, add the document you want notarized and say where you are. Only you and the notary see them." }
+      ? { title: `Waiting for ${partnerTitle(partner, true)} to open the room`, lead: s.document === null
+        ? "While you wait, add the document you want notarized and say where you are. Only you and the notary see them."
+        : "While you wait, check your document and say where you are. Only you and the notary see them." }
       : { title: s.document === null ? `Waiting for ${partner} to add the document` : `Open the room for ${partner}`, lead: "Open the room when you are ready. You meet on a video call, and the client chooses the document with you." };
   }
   return isClient

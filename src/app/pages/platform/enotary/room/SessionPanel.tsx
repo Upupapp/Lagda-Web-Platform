@@ -139,10 +139,10 @@ export function SessionPanel({ invitationId, role, variant = "panel" }: { invita
         {problem !== null && <Notice icon={XCircle} tone="danger">{problem}</Notice>}
         {role === "client" ? (
           <>
-            <p style={bodyText}>Start the session to add your document and meet your notary online. The video runs between your browsers and is not recorded.</p>
+            <p style={bodyText}>Start the session to meet your notary online. A document you attached to this request is already in it; if you attached none, you add it in the room. The video runs between your browsers and is not recorded.</p>
             <ActionEnd><ActionButton icon={Video} disabled={busy} onClick={() => { void start(); }}>{busy ? "Starting…" : "Start the session"}</ActionButton></ActionEnd>
           </>
-        ) : <p style={{ ...bodyText, margin: 0 }} data-testid="session-wait-client">The client has not started the session yet. You will be told when they add the document.</p>}
+        ) : <p style={{ ...bodyText, margin: 0 }} data-testid="session-wait-client">The client has not started the session yet. You will be told when they do.</p>}
       </Frame>
     );
   }
