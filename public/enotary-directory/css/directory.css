@@ -196,3 +196,11 @@ body.dir-busy-open { overflow: hidden; }
 .dir-busy .db-detail:empty { display: none; }
 @keyframes db-spin { to { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) { .dir-busy .db-spin { animation-duration: 2.4s; } }
+
+/* ── the document picker: a clear button in place of the browser's own file box ── */
+.req-doc-pick { display: flex !important; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.req-doc-pick .req-doc-label { flex: 1 1 100%; font-weight: 600; font-size: 14px; color: #0B1F44; }
+.req-doc-input { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; border: 0; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; pointer-events: none; }
+.req-doc-btn { cursor: pointer; min-height: 44px; display: inline-flex; align-items: center; }
+.req-doc-input:focus-visible + .req-doc-btn { outline: 3px solid var(--sky, #0A84D6); outline-offset: 2px; }
+.req-doc-none { font-size: 14px; color: #56677D; }

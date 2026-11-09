@@ -82,7 +82,7 @@ export function RequestDocumentPanel({ invitationId, document, role, editable, f
       ? "The client has not attached the document yet. They can still attach it before the call, or bring it to the session."
       : "The client attached the document to be notarized. Read it before you accept and before the call."
     : document === null
-      ? "Attach the PDF you want notarized, so the notary can read it before they accept and before the call. You can also bring it to the session."
+      ? "Upload the document you want notarized, so the notary can read it before accepting and before the call. You may also bring it to the session."
       : "The notary can read this document before they accept and before the call. It becomes the session's document when the session begins.";
 
   return (
@@ -111,18 +111,18 @@ export function RequestDocumentPanel({ invitationId, document, role, editable, f
       {role === "client" && editable && (
         <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
           <input
-            ref={input} type="file" accept="application/pdf,.pdf" data-testid="request-document-input" aria-label="Attach the PDF to be notarized"
+            ref={input} type="file" accept="application/pdf,.pdf" data-testid="request-document-input" aria-label="Upload the document to be notarized (PDF format only)"
             style={{ display: "none" }} onChange={event => { attach(event.target.files?.[0]); event.target.value = ""; }}
           />
           <button type="button" disabled={busy !== null} onClick={() => input.current?.click()} style={{ ...linkButton(document === null ? "primary" : "secondary"), cursor: busy !== null ? "default" : "pointer", opacity: busy !== null ? 0.7 : 1 }}>
-            <Paperclip size={16} aria-hidden /> {busy === "attach" ? "Attaching…" : document === null ? "Attach the PDF" : "Replace the PDF"}
+            <Paperclip size={16} aria-hidden /> {busy === "attach" ? "Uploading…" : document === null ? "Choose a PDF file" : "Replace with another PDF"}
           </button>
           {document !== null && (
             <button type="button" disabled={busy !== null} onClick={remove} style={{ ...linkButton("secondary"), cursor: busy !== null ? "default" : "pointer" }}>
               {busy === "remove" ? "Removing…" : "Remove"}
             </button>
           )}
-          <span style={{ ...GF, alignSelf: "center", fontSize: 13, color: E.quiet }}>PDF only, up to 20 MB.</span>
+          <span style={{ ...GF, alignSelf: "center", fontSize: 13, color: E.quiet }}>Accepted format: PDF only (.pdf), up to 20 MB. Save scanned papers and photos as a PDF first.</span>
         </div>
       )}
     </Panel>

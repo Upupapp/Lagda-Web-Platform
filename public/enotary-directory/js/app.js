@@ -957,9 +957,11 @@
     var f = sel.file;
     return '<fieldset class="req-doc"><legend><b>The document to be notarized</b> <span class="fine">(optional)</span></legend>' +
       (f ? '<p class="req-doc-file" role="status"><b>' + esc(f.name) + "</b> · PDF · " + esc(fileSize(f.size)) + ' <span class="req-doc-acts"><button type="button" class="btn outline small" data-doc-view>View</button><button type="button" class="btn outline small" data-doc-remove>Remove</button></span></p>'
-        : '<div class="field"><label for="rf-doc">Attach the PDF</label><input id="rf-doc" type="file" accept="application/pdf,.pdf"></div>') +
+        : '<div class="field req-doc-pick"><span class="req-doc-label" id="rf-doc-label">Upload the document <span class="fine">(PDF format only)</span></span>' +
+          '<input id="rf-doc" class="req-doc-input" type="file" accept="application/pdf,.pdf" aria-labelledby="rf-doc-label" aria-describedby="rf-doc-help">' +
+          '<label for="rf-doc" class="btn outline req-doc-btn">Choose a PDF file</label><span class="req-doc-none">No file chosen</span></div>') +
       (sel.fileError ? '<p class="err-box" role="alert">' + esc(sel.fileError) + "</p>" : "") +
-      '<p class="fine left">PDF only, up to 20 MB. The notary can read it before they accept and before the call. You can also add it later, on your request’s page or in the session.</p>' +
+      '<p class="fine left" id="rf-doc-help">Accepted format: PDF only (.pdf), up to 20 MB. Scanned papers and photos must first be saved as a PDF. The notary can read the document before accepting your request and before the call. You may also add it later, on your request’s page or during the session.</p>' +
       "</fieldset>";
   }
   /** The page's own checks on a chosen file: "" when it may be attached, else why not. */

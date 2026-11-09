@@ -33,7 +33,7 @@ describe("the document attached to a request", () => {
     attachDocument.mockResolvedValue(DOC);
     const onChanged = vi.fn();
     render(<RequestDocumentPanel invitationId="eni_1" document={null} role="client" editable onChanged={onChanged} />);
-    expect(screen.getByRole("button", { name: /Attach the PDF/ })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Choose a PDF file/ })).toBeInTheDocument();
     await user().upload(screen.getByTestId("request-document-input"), pdf());
     await waitFor(() => { expect(onChanged).toHaveBeenCalledWith(DOC); });
     expect(attachDocument).toHaveBeenCalledWith("eni_1", expect.any(File));
@@ -54,7 +54,7 @@ describe("the document attached to a request", () => {
     const onChanged = vi.fn();
     render(<RequestDocumentPanel invitationId="eni_1" document={DOC} role="client" editable onChanged={onChanged} />);
     expect(screen.getByTestId("request-document-file")).toHaveTextContent("Affidavit of Loss.pdf");
-    expect(screen.getByRole("button", { name: /Replace the PDF/ })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Replace with another PDF/ })).toBeInTheDocument();
     await user().click(screen.getByRole("button", { name: "Remove" }));
     await waitFor(() => { expect(onChanged).toHaveBeenCalledWith(null); });
   });
@@ -64,7 +64,7 @@ describe("the document attached to a request", () => {
     URL.createObjectURL = vi.fn(() => "blob:doc"); URL.revokeObjectURL = vi.fn();
     render(<RequestDocumentPanel invitationId="eni_1" document={DOC} role="notary" editable={false} />);
     expect(screen.getByText(/Read it before you accept and before the call/)).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /Replace the PDF|Attach the PDF|Remove/ })).toBeNull();
+    expect(screen.queryByRole("button", { name: /Replace with another PDF|Choose a PDF file|Remove/ })).toBeNull();
     await user().click(screen.getByRole("button", { name: "Open the document" }));
     expect(await screen.findByTestId("request-document-preview")).toHaveAttribute("src", "blob:doc");
     expect(screen.getByRole("link", { name: "Open in a new tab" })).toHaveAttribute("href", "blob:doc");
