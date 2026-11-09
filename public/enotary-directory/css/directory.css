@@ -245,3 +245,10 @@ body.dir-busy-open { overflow: hidden; }
   .dd-title span { display: block; margin-top: 2px; }
   .dd-sub { display: none; }  /* a phone has no file to drag */
 }
+
+/* Balance: the drop area's content centred as one column at every width (the art above the words and the button). */
+.dd-drop { flex-direction: column; justify-content: center; text-align: center; gap: 10px; padding: 22px 20px 20px; }
+.dd-art { width: 92px; height: 92px; }
+.dd-copy { display: flex; flex-direction: column; align-items: center; }
+.dd-title span { margin-left: 4px; }
+.dd-btn { margin-top: 12px; }
